@@ -168,6 +168,10 @@ export const STORAGE_KEYS = {
   INTRO_CINEMATICA_VISTA: 'soulmon-intro-cinematica-vista',
   /** ONBOARDING_VELADO: a sequência narrativa (puzzle/tarefa/alimentar/duelo) já foi vista. */
   ONBOARDING_VELADO_VISTO: 'soulmon-onboarding-velado-visto',
+  /** INTRO_NARRATIVA: a intro narrativa jogável (pós-criação até a Home) já foi concluída. Não é save: só decide se ela volta a tocar. */
+  INTRO_NARRATIVA_VISTA: 'soulmon-intro-narrativa-vista',
+  /** INTRO_NARRATIVA: onde parou, por cena: `{cena, quadro, tarefaId?, alimentou?}`. Local, nunca vai ao servidor; retomar nunca repete tarefa nem comida. */
+  INTRO_NARRATIVA_PROGRESSO: 'soulmon-intro-narrativa-progresso',
   /** Até quando o botão "Gerar personagem" (Configurações › Sua conta) fica em espera (ms epoch). */
   GENERATE_CHARACTER_UNTIL: 'soulmon-generate-character-until',
   /** Quantos dos usos do botão "Gerar Soulmon" (teste fechado, `utils/generateCharacterUses.ts`) já foram gastos neste aparelho. */
