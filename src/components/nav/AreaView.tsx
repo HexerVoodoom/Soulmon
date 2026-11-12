@@ -366,7 +366,9 @@ export function AreaView(props: AreaViewProps) {
   const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
   const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
-  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
+  /* Plaquinha da Home "Ir à Fenda": com o Soulmon lá, `initialSheet: 'fenda'` abre direto a TELA da descida (como o toque no lote), sem a folha de início. */
+  const initialFenda = props.area === 'exploracao' && props.initialSheet === 'fenda' && !!props.naMasmorra && !initialLock && !initialDemoBlocked;
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialFenda ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
     cristalBlocks(props.initialSheet) ? crystalRefusalText(language === 'pt-BR')
       : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
@@ -396,7 +398,7 @@ export function AreaView(props: AreaViewProps) {
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
-  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
+  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
   const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
   /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta

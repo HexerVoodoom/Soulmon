@@ -119,7 +119,7 @@ export async function onRequest({ request, env }) {
     const razao = await lerRazao(store, id, fj.day);
     const { progress, dungeonKeyDay, concluiu } = pagar(fj, razao, now, action === 'claim');
     await gravar(store, `fjd:${id}:${fj.day}`, razao);
-    // Semanal "Complete a Focus Workshop em 3 dias" (REGISTRO §308): o dia da jornada concluida COM recibo entra no razao (1 por dia). Melhor esforco.
+    // Semanal "Complete a Focus Workshop em 3 dias" (REGISTRO §309): o dia da jornada concluida COM recibo entra no razao (1 por dia). Melhor esforco.
     if (concluiu) { try { await recordMissionEvent(store, id, 'f', fj.day, now); } catch { /* o razao das missoes nao pode derrubar o pagamento */ } }
     const terminou = action === 'end' || (progress >= 1 && razao.claims.includes(`${fj.sid}:done`));
     if (terminou) await store.delete(`fj:${id}`);

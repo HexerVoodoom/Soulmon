@@ -2179,7 +2179,7 @@ export default function App() {
    * desenho de produto, 100% cliente.
    */
   /** Fragmento do Soulsmith, Fragmento de Boss e Essências para a aba Materiais da Mochila (memo: o `CompanionHUD` é `memo`). */
-  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards, essences: gameState.essences }), [gameState.equipment?.fragments, gameState.bossShards, gameState.essences]);
+  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards }), [gameState.equipment?.fragments, gameState.bossShards]);
   const tierForRules: AccountTier = gameState.accountTier === 'demo' ? 'demo' : 'paid';
   /**
    * O TETO EFETIVO de hábitos ativos — o número que a UI mostra e o portão usa.
@@ -4653,6 +4653,12 @@ export default function App() {
   /* O "Ir lá" do material na Mochila. A missão que estiver no menu da Home (`LISTED_QUEST_BUILDINGS`, hoje nenhuma) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
      Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
+  /** Plaquinha da Home → "Ir à Fenda": fecha o aviso e abre a tela da descida (Exploração > Fenda, com o Soulmon lá). */
+  const irAFenda = useCallback(() => {
+    setOcupadoAviso(null);
+    setPendingSheet({ area: 'exploracao', lot: 'fenda' });
+    goTo(areaView('exploracao'));
+  }, [goTo]);
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
     if (!dest) return;
@@ -6088,7 +6094,7 @@ export default function App() {
       const c1 = f(c0);
       if (c1 === c0) return prev;
       // O EVENTO REAL do journal: um registro NOVO guardado conta a semanal "journal em 3 dias" (no máx. 1 por dia). A diária do
-      // Caderno saiu (12/11/2026, REGISTRO §308); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
+      // Caderno saiu (12/11/2026, REGISTRO §309); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
       if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date());
       return { ...prev, caderno: c1 };
@@ -9810,6 +9816,7 @@ export default function App() {
         acao={ocupadoAviso?.acao ?? null}
         language={language}
         onRetire={() => void retirarDaMasmorra()}
+        onGo={irAFenda}
         onClose={() => setOcupadoAviso(null)}
         busy={retirando}
       /></Suspense>}

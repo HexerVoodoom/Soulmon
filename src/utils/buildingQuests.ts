@@ -70,7 +70,7 @@ export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATE
 
 /**
  * Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita.
- * VAZIA desde 12/11/2026 (dono, REGISTRO §308): o "Caderno diário" ("Faça um registro no journaling") saiu das diárias porque a semanal
+ * VAZIA desde 12/11/2026 (dono, REGISTRO §309): o "Caderno diário" ("Faça um registro no journaling") saiu das diárias porque a semanal
  * "Fazer o journal 3× na semana" o substitui. O prédio do Caderno continua existindo e, como os demais, paga o material (tinta) na entrada.
  */
 export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = [];

@@ -86,7 +86,7 @@ describe('missão do dia', () => {
   });
 });
 
-describe('nenhuma missão é LISTADA: o Caderno diário saiu (12/11/2026, REGISTRO §308)', () => {
+describe('nenhuma missão é LISTADA: o Caderno diário saiu (12/11/2026, REGISTRO §309)', () => {
   it('LISTED_QUEST_BUILDINGS está vazia: o menu não lista prédio e nenhum acende marca', () => {
     expect(LISTED_QUEST_BUILDINGS).toEqual([]);
     expect(buildingMarks(undefined, D1, MAXB)).toEqual({});

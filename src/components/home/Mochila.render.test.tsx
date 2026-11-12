@@ -237,7 +237,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const pop = document.querySelector('[data-material-pop="moss"]')!;
-    expect(pop.textContent).toMatch(/How to get it: The daily mission at/);
+    expect(pop.textContent).toMatch(/Found at Refuge, Focus expeditions/);
     expect(pop.textContent).not.toMatch(/corra|hurry|only|acaba/i);
     fireEvent.click(btn);
     expect(document.querySelector('[data-material-pop]')).toBeNull();
@@ -266,7 +266,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
     fireEvent.click(await screen.findByLabelText('Faísca × 0'));
     expect(document.querySelector('[data-material-go]')!.textContent).toBe('Ir lá');
-    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Como conseguir: Missão diária de/);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/^Encontrado em .*Expedições do Foco$/);
   });
 
   it('demo: prédio social bloqueado não recebe o "Go there" e diz que não está disponível; os liberados seguem', async () => {
@@ -303,8 +303,7 @@ describe('Mochila — materiais: para que serve e onde usar (10/11/2026)', () =>
     await abrir();
     fireEvent.click(document.querySelector('[data-material-btn="gear"]')!);
     const usos = [...document.querySelectorAll('[data-material-use]')].map(e => e.textContent).join(' | ');
-    expect(usos).toMatch(/Para que serve: Soulsmith: material principal para aprimorar Rastro polido/);
-    expect(usos).toMatch(/material de apoio \(a partir do nível 3\) para aprimorar Núcleo de cobre e Rastro ornado/);
+    expect(usos).toMatch(/^Usar em Soulsmith/);
   }, 60000);
   it('material sem uso hoje diz isso (Cifra), em PT', async () => {
     await abrir();
@@ -316,14 +315,17 @@ describe('Mochila — materiais: para que serve e onde usar (10/11/2026)', () =>
     fireEvent.click(document.querySelector('[data-material-btn="cipher"]')!);
     expect(document.querySelector('[data-material-no-use]')!.textContent).toBe('No use yet: for now it is just collected.');
   }, 60000);
-  it('os recursos extras aparecem com a quantidade: Fragmento do Soulsmith, Fragmento de Boss e Essências (soma)', async () => {
-    await abrir({ extras: { fragments: 7, bossShards: 2, essences: { fogo: 5, agua: 3 } } });
+  it('os recursos extras aparecem com a quantidade: Fragmento do Soulsmith e Fragmento de Boss; as Essências NÃO ficam na Bolsa', async () => {
+    await abrir({ extras: { fragments: 7, bossShards: 2 } });
     const q = (id: string) => document.querySelector(`[data-material="${id}"] small`)!.textContent;
     expect(q('soulsmith-fragment')).toBe('×7');
     expect(q('boss-shard')).toBe('×2');
-    expect(q('essences')).toBe('×8');
+    expect(document.querySelector('[data-material="essences"]')).toBeNull();
+    fireEvent.click(document.querySelector('[data-material-btn="soulsmith-fragment"]')!);
+    expect(document.querySelector('[data-material-where]')!.textContent).toBe('Encontrado em Fenda (descer, marcos de profundidade, Rift Sem Fim)');
+    expect(document.querySelector('[data-material-use]')!.textContent).toBe('Usar em Soulsmith');
     fireEvent.click(document.querySelector('[data-material-btn="boss-shard"]')!);
-    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Boss do Elemental Fusion/);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/^Encontrado em Elemental Fusion/);
     expect(document.querySelector('[data-material-no-use]')).not.toBeNull();
   }, 60000);
 });

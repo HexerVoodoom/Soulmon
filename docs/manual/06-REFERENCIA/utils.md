@@ -4054,7 +4054,7 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
 
-**12/11/2026 (REGISTRO §308):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
+**12/11/2026 (REGISTRO §309):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
 
 ## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
 
@@ -4533,6 +4533,8 @@ Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `
 ### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
 
 O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
+
+**Atualização 12/11/2026 (REGISTRO §308):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
 
 ### `src/utils/formaEquip.ts` (10/11/2026)
 

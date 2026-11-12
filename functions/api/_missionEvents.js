@@ -1,5 +1,5 @@
 /**
- * EVENTOS CONFIRMADOS DAS MISSÕES (12/11/2026, REGISTRO §308): o servidor guarda o que VIU acontecer e reconfere o save contra isso.
+ * EVENTOS CONFIRMADOS DAS MISSÕES (12/11/2026, REGISTRO §309): o servidor guarda o que VIU acontecer e reconfere o save contra isso.
  *
  * As semanais `journal-days` e `focus-days`, a de presente `gift-sent` e a diária `d-presente` eram contadas SÓ no app (o save é
  * local-first). Agora cada uma tem um evento que o servidor presenciou, num razão por semana (`mval:<id>:<semana>:<tipo>`):

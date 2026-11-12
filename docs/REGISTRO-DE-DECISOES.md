@@ -4777,9 +4777,9 @@ Limite honesto: a contagem diária segue escrita pelo cliente (economia local-fi
 
 ## §297 — Journal e Focus Workshop viram missões SEMANAIS 3× (11/11/2026, decisão do dono)
 
-Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", saiu da lista em 12/11/2026, §308). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
+Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", saiu da lista em 12/11/2026, §309). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
 
-Limite honesto (superado em §308): as semanais não tinham espelho nem validação no servidor; journal, foco e presente passaram a ser validados em 12/11/2026.
+Limite honesto (superado em §309): as semanais não tinham espelho nem validação no servidor; journal, foco e presente passaram a ser validados em 12/11/2026.
 
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
@@ -4854,6 +4854,12 @@ Decisão: depois dos 4 focos recompensados do dia (§247), os focos 5º, 6º e 7
 
 **Falsifica:** botão cobrindo a Coroa ou cortado no topo do mapa; chama ainda laranja. **Rollback:** reverter o PR. **APK:** nada.
 
+## §307 — Plaquinha da Fenda: tocar leva até a Fenda, retirar vira ação secundária (12/11/2026, pedido do dono)
+
+Decisão: com o Soulmon na Fenda, tocar na plaquinha da Home abre o aviso com **Ir à Fenda** / **Go to the Rift** como ação principal (abre direto a tela da descida, Exploração > Fenda) e **Trazer de volta** / **Bring him back** como ação secundária menor, com confirmação ("Deixar lá" / "Trazer de volta"); a capacidade de retirar não se perde. Isso **antecipa o item G2 da beta12** (`docs/BACKLOG-BETA12.md`): a plaquinha já oferece ir ao Rift; o **balão dourado** que a anuncia continua previsto para a beta12. Os outros avisos de "ocupado" (sem `onGo`) mantêm o formato antigo.
+
+**Falsifica:** o toque na plaquinha oferecer só "retirar", ou "Ir à Fenda" retirar o Soulmon (`DungeonBusyModal.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+
 ## §305 — Hexsmith: a tabela de criação mostra POÇÃO como custo, com tooltip de como conseguir (12/11/2026, pedido do dono)
 
 Decisão: na forja da Hexsmith o catálogo é uma tabela de duas colunas, **Item** e **Custo**. O custo lê da esquerda para a direita: Bits + (poção do elemento, como o ÍCONE da poção, com `tem/precisa` embaixo) + (fragmentos, ícone e `tem/precisa`), separados por "+". Tocar o ícone da poção abre um tooltip (o `InfoTip`, agora com `trigger` próprio e camada de voltar; fecha ao tocar fora, Esc, Voltar ou modal novo) dizendo COMO conseguir: base = 100 essências do elemento no Centro de Evolução (a Vesca avisa) ou à venda na Feira; composto = 1 poção de cada base + 50 essências. Textos em `potionHowTo` (`hexsmithCopy.ts`), números de `POTION_COSTS`. Nenhum custo mudou.
@@ -4871,8 +4877,13 @@ Decisão: (1) a pergunta da Vesca ("quer fazer a poção?") não interrompe mais
 Decisão: a coluna Custo da tabela da Hexsmith fica numa única fileira horizontal (poção + fragmentos + Bits, "+" entre eles), cada item com ícone de 28 px e a quantidade embaixo do próprio ícone; Bits é item da mesma fileira (não mais linha separada). Poção, fragmentos e Bits têm tooltip curto "como conseguir" (`hexCostHowTo`). Mais espaço entre as linhas; sem linha separadora (vetada pelo dono). Nome do HEX quebra em vez de cortar.
 
 **Alternativa que perdeu:** Bits abaixo dos itens e linha cinza fina (pedido anterior, substituído no mesmo dia). **Falsifica:** custo em 2 linhas a 360 px, texto cortado, item do custo sem tooltip (`HexsmithSheet.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+## §308 — Bolsa de materiais: sem Essências, tooltip "Encontrado em / Usar em" (12/11/2026, pedido do dono)
 
-## §308 — Caderno diário sai das diárias; semanais de journal/foco/presente e a diária de presente passam a ser validadas no servidor (12/11/2026, decisões do dono)
+Decisão: (1) a aba Materiais da Mochila não lista mais as Essências elementais (o tile "Essências" e a lista por elemento saíram); elas continuam só no Laboratório › Arquivo (`EssencesSection`, onde já existiam). (2) O tooltip de cada material ficou enxuto, em tabela única no código (`utils/materialGuide.ts`): **Encontrado em** + lugares (prédio dono da missão diária, Expedições do Foco; Fenda/Elemental Fusion para os fragmentos) e **Usar em** + lugares (Soulsmith pelas receitas `FORGE_PIECES`, Restaurante pelos `DISHES`); sem uso hoje continua dizendo isso.
+
+**Alternativa que perdeu:** manter as frases longas ("1 por dia, só por entrar…"): o dono quer leitura de relance. **Falsifica:** Essências voltando à aba, material usado no Soulsmith/Restaurante sem aparecer em "Usar em" (`materialGuide.test.ts`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §309 — Caderno diário sai das diárias; semanais de journal/foco/presente e a diária de presente passam a ser validadas no servidor (12/11/2026, decisões do dono)
 
 **Decisão 1.** A diária de prédio do Caderno («Faça um registro no journaling») saiu da lista de Missões porque a semanal «Fazer o journal 3× na semana» (§297) a substitui. `LISTED_QUEST_BUILDINGS` ficou vazia: o menu da Home não lista prédio e nenhum lote acende marca. O prédio do Caderno continua existindo e, como os outros 15, conta a presença e paga a tinta (`ink`) na entrada (`applyBuildingEntry`). `handleCaderno` deixou de chamar `completeBuildingQuest`: um registro novo conta SÓ a semanal. A tinta aparece no guia de materiais como «só por entrar». **Migração segura:** o `buildingQuests` mantém a forma; quem tinha o Caderno PRONTO e sem resgate (o botão saiu) recebe a tinta uma vez no load do dia corrente (`settleRetiredListed`, idempotente: a 2ª passada é no-op; dia diferente expirou como sempre expirou); progresso e estoque passam intactos.
 

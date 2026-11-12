@@ -584,7 +584,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Régua:** `functions/api/dailyMissions.parity.test.js`.
 
 ### `functions/api/_missionEvents.js`
-**Dono de:** o RAZÃO dos eventos que confirmam as missões `journal-days`, `focus-days`, `gift-sent` e `d-presente` (REGISTRO §308) e a conferência delas no POST do save. Razão por semana `mval:<saveId>:<semana ISO>:j|f|g` (dias do journal, dias do foco, presentes por dia), TTL 45 dias.
+**Dono de:** o RAZÃO dos eventos que confirmam as missões `journal-days`, `focus-days`, `gift-sent` e `d-presente` (REGISTRO §309) e a conferência delas no POST do save. Razão por semana `mval:<saveId>:<semana ISO>:j|f|g` (dias do journal, dias do foco, presentes por dia), TTL 45 dias.
 **Exports:** `WEEKLY_VALIDATED`, `DAILY_VALIDATED`, `LEGACY_WEEKLY`, `toIsoDay`, `isoWeekOf`, `recordMissionEvent(store, saveId, kind, dia, nowMs)` (idempotente por dia em `j`/`f`; soma 1 por dia em `g`; janela ±36 h, 8 dias para trás no journal), `recordJournalDays`, `enforceWeeklyMissions`, `enforceDailyMissions` (contagem = `max(gravado, min(recebido, confirmado))`; resgate novo só com contagem >= alvo; `friend-visit` só vale se já gravado).
 **Chamado por:** `save.js` (POST, antes dos contadores diários monotônicos), `focus-journey.js` (conclusão com recibo), `community.js` (`action=gift` aceito).
 **Régua:** `functions/api/missionEvents.test.js`, `missionEvents.gift.test.js`, `missionEvents.parity.test.js`, `focus-journey.test.js`.
@@ -832,7 +832,7 @@ Espelho no servidor da regra que paga a jornada do foco. Decisão: REGISTRO §24
 
 ### `functions/api/focus-journey.js`
 
-Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o relógio do servidor e o razão do dia por recibo; a 1ª conclusão do dia devolve a chave da masmorra e grava o dia no razão da semanal `focus-days` (`_missionEvents.js`, §308). Decisão: REGISTRO §247. **Régua:** `functions/api/focus-journey.test.js`.
+Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o relógio do servidor e o razão do dia por recibo; a 1ª conclusão do dia devolve a chave da masmorra e grava o dia no razão da semanal `focus-days` (`_missionEvents.js`, §309). Decisão: REGISTRO §247. **Régua:** `functions/api/focus-journey.test.js`.
 
 ### `functions/api/_bossShards.js`
 **Dono de:** o espelho no servidor do Fragmento de Boss (03/11/2026, moeda nova do save, ainda sem uso; +1 por BOSS vencido no Elemental Fusion). **Exports:** `BOSS_SHARDS_MAX` (1 000 000) · `sanitizeBossShards(raw)` (inteiro 0..1 000 000, lixo = `undefined`). **Chamado por:** `save.js` (POST: só a FORMA; ausente/lixo apaga o campo; nunca recusa o save). **Régua:** `functions/api/bossShards.parity.test.js` (paridade com `src/utils/bossShards.ts`).

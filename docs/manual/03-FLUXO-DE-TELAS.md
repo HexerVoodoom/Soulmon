@@ -1110,7 +1110,7 @@ type ShopSegment = 'shop' | 'tournament';
 - **Dono**: `src/components/mercado/MercadoSheets.tsx` · **Régua**:
   `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
-- **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (desde 12/11/2026, REGISTRO §308, nenhum prédio é listado: o Caderno diário saiu das diárias); o lote **não** leva marca
+- **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (desde 12/11/2026, REGISTRO §309, nenhum prédio é listado: o Caderno diário saiu das diárias); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
   (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
   desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio e as 3 missões do dia dos outros
@@ -2376,7 +2376,7 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 
 - **Masmorra (luta):** título único "Camada N · luta k de 6"; **Pausar** à esquerda e **avanço rápido 1×/2×/3×** no canto inferior direito; o especial é automático (sem anel nem esquiva); drop de item abre o modalzinho (ícone, nome, quantidade) sem pausar a luta. O × pergunta "Sair da tela? Ele continua descendo sozinho…" com **Ficar / Sair / Retirar da masmorra**.
 - **Voltar à masmorra:** se a descida seguiu fora da tela, abre o cartão "Enquanto você esteve fora, a descida seguiu" (**Ver a descida** / **Retirar da masmorra**) ou, se ela terminou sozinha, a tela de fim com a nota.
-- **Home com o Soulmon na masmorra:** o pet some e a plaquinha "Estou na masmorra, volto logo" fica no lugar; tocar abre o aviso com **Retirar da masmorra**. Evoluir, renascer, missão da guilda, Duelo, Torneio e Passeio abrem o mesmo aviso.
+- **Home com o Soulmon na masmorra:** o pet some e a plaquinha "Estou na masmorra, volto logo" fica no lugar; tocar abre o aviso com **Ir à Fenda** (leva à tela da descida, em Exploração) e, menor, **Trazer de volta** (pede confirmação e só então retira). Evoluir, renascer, missão da guilda, Duelo, Torneio e Passeio abrem o mesmo aviso.
 - **Salão de Jogos:** terceiro card, **Elemental Fusion** (recorde, "até 8 Bits"); a tela do jogo tem movimentos, pontos e Bits, o tabuleiro 7×7, **Dica** e, no fim, o resultado com **De novo / Sair**.
 
 ## Delta de 13/10/2026 (beta-2, frente D): mercado, jogos, Arena, Santuário, Evolução e Perfil
@@ -2463,3 +2463,7 @@ Cobertura só no nível de existência de superfície e de ponto de entrada (reg
 - **Hexsmith, tabela de criação (12/11/2026, REGISTRO §305):** o catálogo de cada Porta é uma tabela **Item | Custo**; o custo é Bits + ícone da poção do elemento (com `tem/precisa` embaixo) + fragmentos, ligados por "+". Tocar o ícone da poção abre o tooltip "como conseguir" (`InfoTip` com `trigger`, fecha ao tocar fora/Voltar); tocar o item o seleciona para forjar.
 
 - **Vesca espera o ócio; poção criada (12/11/2026, REGISTRO §306):** a oferta da poção (essência de um base chegou a 100) fica numa fila e só abre quando o jogador está ocioso: fora de Arena/Jogos/Exploração, fora da Masmorra, sem foco rodando/pausado e sem modal aberto. Ao concluir a atividade a Vesca aparece (modal de sempre, "Fazer a poção" / "Depois"). Fazer abre a tela cheia **Poção de <elemento> criada**: véu escuro, ícone da poção grande, luz girando atrás (parada com movimento reduzido), texto e OK centralizado, sem caixa.
+
+### Delta de 12/11/2026 — Mochila › Materiais
+
+O tooltip de cada material tem 2 linhas: **Encontrado em** (lugares) e **Usar em** (Soulsmith/Restaurante). As Essências saíram da aba (a lista fica em Laboratório › Arquivo, `EssencesSection`). REGISTRO §308.
