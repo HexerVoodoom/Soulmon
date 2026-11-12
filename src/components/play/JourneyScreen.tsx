@@ -19,7 +19,7 @@ import { BAG_SIZE, FlyingItem, FocusBag } from './FocusBag';
 import { JOURNEY_BLOCK_H, JOURNEY_TOP_PAD, JOURNEY_VIEW_BLOCKS, journeyCamera } from '../../utils/focusJourneyCamera';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
-import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET, CHEST_GLOW_SHEET } from './journeyArt';
+import { JOURNEY_ART, KEY_ART, CHEST_ART, CHEST_OPEN_SHEET, CHEST_GLOW_SHEET, OASIS_TONE } from './journeyArt';
 
 export const KEY_COLOR: Record<JourneyKeyId, string> = {
   bancada: 'var(--sm2-key-bancada)', relampago: 'var(--sm2-key-relampago)', quadrantes: 'var(--sm2-key-quadrantes)',
@@ -32,6 +32,9 @@ const ENV_TONE: Record<string, [string, string]> = {
 const VIEW_BLOCKS = JOURNEY_VIEW_BLOCKS;
 const ROUND: CSSProperties = { width: 48, height: 48, borderRadius: '50%', border: 'none', background: 'transparent', color: 'var(--sm2-ink)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' };
 const SVG = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+/** Duração da dissolução do mapa para a sala de descanso (ms). */
+export const JOURNEY_LEAVE_MS = 900;
+const prefersReducedMotion = (): boolean => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 const H = JOURNEY_BLOCK_H; // altura do bloco em unidades do SVG (arte 1:2)
 
 export function itemLabel(it: JourneyItem, isPt: boolean): string {
@@ -68,8 +71,21 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
   const reached = chests.filter(c => c.at <= p).length;
   const claimed = useRef(-1);
   useEffect(() => {
-    if (reached > claimed.current || p >= 1) { if (claimed.current !== reached || p >= 1) { claimed.current = reached; onClaim(); } }
+    if (p >= 1) return;
+    if (reached > claimed.current) { claimed.current = reached; onClaim(); }
   }, [reached, p >= 1]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* O fim do trajeto é o fim de uma SEÇÃO do mapa (§312): em vez de carregar a próxima, o cenário se dissolve na cor da sala de descanso
+     e a sala (tela cheia, mesmo fundo) assume. Movimento reduzido ou jornada já terminada ao abrir: passa direto, sem fade. */
+  const [leaving, setLeaving] = useState(false);
+  const openedArrived = useRef(p >= 1);
+  useEffect(() => {
+    if (p < 1) return;
+    claimed.current = reached;
+    if (openedArrived.current || prefersReducedMotion()) { onClaim(); return; }
+    setLeaving(true);
+    const id = setTimeout(onClaim, JOURNEY_LEAVE_MS);
+    return () => clearTimeout(id);
+  }, [p >= 1]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const left = Math.max(0, JOURNEY_MODES[active.mode].focusMin * 60_000 - focusElapsed(active, now));
   const pet = trailAt(spine, p);
@@ -128,12 +144,6 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
           {[0.12, 0.88].map(x => <polygon key={x} points={`${x * 100},${Y(b + 0.5) - 6} ${x * 100 + 3},${Y(b + 0.5)} ${x * 100},${Y(b + 0.5) + 6} ${x * 100 - 3},${Y(b + 0.5)}`} fill="#4fe3d6" opacity={0.55} />)}
         </g>)}
         <rect data-journey-top x={0} y={-JOURNEY_TOP_PAD} width={100} height={JOURNEY_TOP_PAD + 1} fill={tone[0]} />
-        <g data-journey-door data-open={p >= 1} transform={`translate(${spine[spine.length - 1].x * 100},${Y(blocks)})`}>
-          <path d="M-11 0 V-22 A11 11 0 0 1 11 -22 V0 Z" fill="#06181a" stroke="#b8733a" strokeWidth={1.6} />
-          <path d="M-7 0 V-21 A7 7 0 0 1 7 -21 V0 Z" fill={p >= 1 ? '#bff5ee' : '#0f3f44'} opacity={p >= 1 ? 0.95 : 0.9} />
-          <circle cx={4} cy={-9} r={0.9} fill="#b8733a" />
-        </g>
-        <image data-journey-arrival href={ARRIVAL_ART} x={20} y={Y(blocks)} width={60} height={60} opacity={p >= 1 ? 1 : 0.85} />
         {chests.map(c => {
           const at = trailAt(spine, c.at);
           const side = at.x > 0.5 ? -1 : 1;
@@ -158,6 +168,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
           : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 6} r={5.5} fill="#e9f5f2" />}
       </svg>
 
+      <div data-journey-leave data-leaving={leaving} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none', background: (OASIS_TONE[active.env] ?? OASIS_TONE.forest).sky, opacity: leaving ? 1 : 0, transition: `opacity ${JOURNEY_LEAVE_MS}ms ease-in-out` }} />
       <FocusBag ref={bagRef} language={language} items={collected} pending={inFlight} />
       {flights.map(f => <FlyingItem key={f.id} item={f.item} isPt={isPt} from={f.from} to={f.to} onDone={() => setFlights(x => x.filter(y => y.id !== f.id))} />)}
 
