@@ -66,9 +66,9 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     note: isPt ? 'Base: 100 essências da própria. Composta: 1 poção de cada base + 50 essências dela. Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando.' : 'Base: 100 of its own essence. Compound: 1 potion of each base + 50 of its essence. Giving a potion to your Soulmon (item folder) replaces the one already waiting.',
     potionOf: (id: string) => (isPt ? 'Poção de ' : '') + elName(id, isPt) + (isPt ? '' : ' potion'),
   };
-  const art = (id: string, size: number) => (potionArt(id)
-    ? <img src={potionArt(id)} alt="" aria-hidden="true" width={size} height={size} draggable={false} data-potion-art={id} style={{ width: size, height: size, objectFit: 'contain' }} />
-    : <Icon id={id} size={size - 8} />);
+  const art = (id: string, big: boolean) => (potionArt(id)
+    ? <img src={potionArt(id)} alt="" aria-hidden="true" width={big ? 40 : 24} height={big ? 40 : 24} draggable={false} data-potion-art={id} style={{ width: big ? 40 : 24, height: big ? 40 : 24, objectFit: 'contain' }} />
+    : (big ? <Icon id={id} size={32} /> : <Icon id={id} size={24} />));
   const confirmDisabled = !sel || !canAffordPotion(essences, sel, inventory);
 
   const row = (r: PotionRecipe) => {
@@ -83,14 +83,14 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     return (
       <li key={r.id} data-potion-item={r.id} data-can-craft={r.canCraft ? 'true' : 'false'} className="sm2-pocao-item">
         <div className="sm2-pocao-head">
-          {art(r.id, 40)}
+          {art(r.id, true)}
           <strong style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{t.potionOf(r.id)}</strong>
           <button type="button" data-potion-create={r.id} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
         </div>
         <ul className="sm2-pocao-ing">
           {r.potions.map(p => (
             <li key={`p-${p.id}`} data-ing-potion={p.id} data-ok={p.have >= p.need ? 'true' : 'false'}>
-              {art(p.id, 24)}<span style={{ flex: 1 }}>{t.potionOf(p.id)}</span><span className="sm2-num">{p.have}/{p.need}</span>
+              {art(p.id, false)}<span style={{ flex: 1 }}>{t.potionOf(p.id)}</span><span className="sm2-num">{p.have}/{p.need}</span>
             </li>
           ))}
           {r.essences.map(e => (
@@ -140,7 +140,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
 
         {sel && (
           <div data-potion-cost>
-            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}>{art(sel, 40)}<strong>{elName(sel, isPt)}</strong></p>
+            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}>{art(sel, true)}<strong>{elName(sel, isPt)}</strong></p>
             <p style={sm2Hint}>{t.confirmQ}</p>
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
               {costRows.map(c => (
