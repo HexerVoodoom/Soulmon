@@ -358,6 +358,11 @@ import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
 import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan } from './utils/dayPlan';
 import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
+import { purposeFromOnboarding } from './utils/purposeOnboarding';
+import { emptyPurpose } from './utils/purpose';
+import { reviewOffer, dismissReview, completeReview, recordWeekly, weeklyAnswered, weekEvidence, type ReviewInput } from './utils/purposeReview';
+import { purposeVoiceKey, markSpoken, isBadDay, type PurposeTrigger } from './utils/purposeVoice';
+import { localDayKey as purposeDayKey, type MotiveKey } from './utils/purpose';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
@@ -874,6 +879,11 @@ const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ def
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
 // O convite curto da contagem de passos (REGISTRO §283): intersticial `stepsInvite`, só no app Android com contador.
+// Objetivo anual (12/11/2026): todas as folhas em chunk próprio (`purpose/PurposeSheets`).
+const MeuObjetivoSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.MeuObjetivoSheet })));
+const PurposeInviteModal = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.PurposeInviteModal })));
+const GoalReviewSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.GoalReviewSheet })));
+const WeeklyPriorities = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.WeeklyPriorities })));
 const StepsInviteModal = lazy(() => import('./components/StepsInviteModal').then(m => ({ default: m.StepsInviteModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
@@ -1227,7 +1237,7 @@ export default function App() {
   const [fullSignal, setFullSignal] = useState(0);
   /** WP3.2 — os gestos que eram mudos. O `kind` escolhe a tabela de frases
    *  (`utils/petVoice.ts`); o `n` é o que dispara. */
-  const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind } | undefined>();
+  const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind; motive?: MotiveKey } | undefined>();
   /** WP1.3 — marca um dos três gestos do primeiro dia. Pura e idempotente
    *  (`markGesture` devolve a MESMA referência), então pode entrar direto no
    *  updater sem violar o footgun 6. */
@@ -1600,10 +1610,22 @@ export default function App() {
     [bigFive, voiceModeRaw, onboardingProfileRaw],
   );
   useEffect(() => { setPetVoiceArchetype(soulmonCharacter.archetype); }, [soulmonCharacter.archetype]);
-  const chatPersonality = useMemo(
-    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter),
-    [onboardingProfileRaw, aiSettings, soulmonCharacter],
-  );
+  const purposeSave = gameState.purpose;
+  const chatPersonality = useMemo(() => {
+    const base = chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter);
+    // Objetivo anual (E12, autorizado pelo dono): só os campos de texto e as chaves, que o SERVIDOR limita, redige e confere
+    // (`purposeBlock` em functions/api/chat.js, com o detector de sofrimento). Sem objetivo, nada vai.
+    const g = purposeSave?.goal;
+    if (!g) return base;
+    return {
+      ...base,
+      purpose: {
+        goal: g.text,
+        ...(purposeSave.motive ? { motiveKey: purposeSave.motive.key, motiveCustom: purposeSave.motive.customText, phrase: purposeSave.motive.phrase } : {}),
+        ...(purposeSave.plan ? { obstacleKey: purposeSave.plan.obstacleKey, obstacleText: purposeSave.plan.obstacleText, response: purposeSave.plan.response } : {}),
+      },
+    };
+  }, [onboardingProfileRaw, aiSettings, soulmonCharacter, purposeSave]);
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
   const [language, setLanguage] = useState<Language>(
@@ -2538,7 +2560,58 @@ export default function App() {
      aparece no Hoje; o resto fica de fora e a virada não o julga. `dayPlan` (no save) guarda o instantâneo do que foi oferecido, o que foi
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
+  /* OBJETIVO ANUAL (12/11/2026, docs/PLANO-OBJETIVO-ANUAL.md): "Meu objetivo" (Perfil e linha da Home), o convite único do jogador existente
+     (E3, entra na fila de modais) e a folha de revisão mensal/semestral/anual (E7-E9, aberta pelo card da Home). */
+  const [meuObjetivoOpen, setMeuObjetivoOpen] = useState(false);
+  const [purposeInviteOpen, setPurposeInviteOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const purposeInviteTried = useRef(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
+  /* E3: quem já jogava vê o convite UMA vez (quem fez o onboarding novo já foi perguntado: `promptedExisting`). "Agora não" também conta. */
+  useEffect(() => {
+    if (purposeInviteTried.current || demo || !hasCompletedOnboarding || !hasCompletedTutorial || currentView !== 'home') return;
+    if (gameState.purpose?.promptedExisting === true || gameState.purpose?.goal) return;
+    purposeInviteTried.current = true;
+    setPurposeInviteOpen(true);
+  }, [demo, hasCompletedOnboarding, hasCompletedTutorial, currentView, gameState.purpose]);
+  /* E11: o Soulmon lembra o porquê, raro (1 por semana), só em momento positivo, nunca depois de um dia ruim, e desligável.
+     Sem permissão, fala a frase de sempre do gesto. A decisão mora em `utils/purposeVoice.ts`. */
+  const falarComPorque = useCallback((kind: PetVoiceKind, trigger: PurposeTrigger) => {
+    const g = gameStateRef.current;
+    const agora = new Date();
+    const hoje = purposeDayKey(agora);
+    const key = purposeVoiceKey({
+      purpose: g.purpose, today: hoje, trigger,
+      badDay: isBadDay({
+        mood: moodFor(g.moodLog, playerDayKey(agora, g.playerDayTz)),
+        lastDay: g.lastDayReport ? { done: g.lastDayReport.done, required: g.lastDayReport.required } : null,
+      }),
+    });
+    if (!key) { falar(kind); return; }
+    setGameState(prev => ({ ...prev, purpose: markSpoken(prev.purpose, hoje) }));
+    setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind, motive: key }));
+  }, [falar]);
+  const purposeActivities = useMemo(
+    () => (gameState.activities ?? []).map((a: any) => ({ id: String(a.id), name: String(a.name ?? ''), emoji: typeof a.emoji === 'string' ? a.emoji : undefined })),
+    [gameState.activities],
+  );
+  const purposeNames = useMemo(() => new Map(purposeActivities.map(a => [a.id, a])), [purposeActivities]);
+  const savePurpose = useCallback((next: NonNullable<GameState['purpose']>) => setGameState(prev => ({ ...prev, purpose: next })), []);
+  const reviewHoje = new Date();
+  const reviewOfferNow = reviewOffer(gameState.purpose, reviewHoje);
+  const handleCompleteReview = useCallback((input: ReviewInput) => {
+    const hoje = new Date();
+    setGameState(prev => {
+      const offer = reviewOffer(prev.purpose, hoje);
+      if (!offer) return prev;
+      const r = completeReview(prev.purpose, offer, input, hoje);
+      const owned = prev.ownedFrames ?? [];
+      return { ...prev, purpose: r.purpose, ...(r.grantedFrame && !owned.includes(r.grantedFrame) ? { ownedFrames: [...owned, r.grantedFrame] } : {}) };
+    });
+    setReviewOpen(false);
+    falarComPorque('milestone', 'reviewDone');
+    if (input.decision === 'change' || input.archiveGoal) setMeuObjetivoOpen(true);
+  }, [falarComPorque]);
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
   const dayPlanViewNow = useMemo(
     () => dayPlanView(gameState.dayPlan, dayPlanToday, dayPlanActive),
@@ -2636,6 +2709,7 @@ export default function App() {
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
       restSetup: needsRestSetup,
       // O convite curto dos passos (§283): só com contador no aparelho, depois do onboarding, e só quem ainda não respondeu.
+      purposeInvite: purposeInviteOpen,
       stepsInvite: shouldShowStepsInvite({ available: stepsAvailable, consent: gameState.stepsConsent, onboarded: hasCompletedOnboarding }),
     }),
     // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
@@ -2682,6 +2756,9 @@ export default function App() {
           lastCheckInDate: dia,
         }));
         track('checkin_shown');
+      } else if (id === 'purposeInvite') {
+        // "visto" ao MOSTRAR: aparece UMA vez, e "agora não" também conta (depois disso fica em Perfil > Meu objetivo)
+        setGameState(prev => (prev.purpose?.promptedExisting === true ? prev : { ...prev, purpose: { ...(prev.purpose ?? emptyPurpose()), promptedExisting: true } }));
       } else if (id === 'checkIn') {
         // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
@@ -2711,6 +2788,7 @@ export default function App() {
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
         case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
+        case 'purposeInvite': setPurposeInviteOpen(false); break; // voltar do Android = "agora não"
         case 'stepsInvite': break; // as duas saídas são os botões: voltar do Android não decide por ninguém
         case 'restSetup': break; // obrigatório: voltar do Android não pula; só "Confirmar" fecha (o erro de render cai no `fail`)
         default: break; // catalogOnboarding: sem "pular" por decisão do dono (C11); o erro de render cai no `fail`
@@ -3092,7 +3170,7 @@ export default function App() {
     playEvolve();
     // WP3.2: o marco ganhou fala PRÓPRIA. O `setMessageTrigger` genérico
     // repetia a fala de humor do momento, que não tem nada a ver com o marco.
-    falar('milestone');
+    falarComPorque('milestone', 'milestone');
     /* WP2.4 — a CERIMÔNIA. Cruzar 7/21/66 dias era um som, um toast e uma
        fala: três coisas que o app faz o tempo todo por qualquer motivo, ou
        seja, o momento mais raro da constância era indistinguível de concluir
@@ -3115,7 +3193,7 @@ export default function App() {
       }),
       reducedMotion: movimentoReduzido,
     });
-  }, [gameState, language, falar]);
+  }, [gameState, language, falar, falarComPorque]);
 
   const handleUpdateStep = (activityId: string, stepId: string) => handleCompleteSteps(activityId, [stepId]);
 
@@ -7228,6 +7306,8 @@ export default function App() {
     // 20/10/2026 (dono): quem acabou de gerar o Soulmon já respondeu as metas no onboarding — o convite "Set goals" NUNCA reaparece
     // logo depois, mesmo que nenhuma atividade do catálogo tenha sido mantida (antes: só marcava com ≥1 atividade).
     const catalogSeen = markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>;
+    // Objetivo anual (E1/E2): o destino, o porquê, o plano e as prioridades (catálogo → id da atividade criada).
+    const onboardingPurpose = purposeFromOnboarding(data.purpose, catalogActivities, new Date());
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -7258,6 +7338,7 @@ export default function App() {
         demoTint: data.demoTint ?? 0,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
+        purpose: onboardingPurpose ?? { ...emptyPurpose(), promptedExisting: true },
         // Forças + o que atrapalha, em ids do catálogo → `derivePersonality`.
         onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
         // 01/10/2026 (dono): as 20 do teste longo entram no save também no
@@ -7331,6 +7412,7 @@ export default function App() {
       ...paidArrivalVitals(Date.now()),
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
+      purpose: onboardingPurpose ?? { ...emptyPurpose(), promptedExisting: true },
       onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
       soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
       ...catalogSeen,
@@ -8834,6 +8916,15 @@ export default function App() {
                 )}
               />
 
+              {/* O OBJETIVO (E5): uma linha, o texto da pessoa sem retoque; o toque abre "Meu objetivo". Some sem objetivo. */}
+              {!demo && gameState.purpose?.goal && (
+                <button type="button" data-home-goal aria-label={`${language === 'pt-BR' ? 'Abrir Meu objetivo' : 'Open My goal'}: ${gameState.purpose.goal.text}`}
+                  onClick={() => setMeuObjetivoOpen(true)}
+                  style={{ ...sm2Text, display: 'block', width: '100%', minHeight: 44, padding: '0 16px', textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sm2-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {gameState.purpose.goal.text}
+                </button>
+              )}
+
               {/* Pet — acima, sem estar contido em uma caixa */}
               <CompanionHUD
                 onChatSent={() => contarDiaria('humor')}
@@ -9129,6 +9220,16 @@ export default function App() {
                       language={language}
                       onDismiss={handleDismissWeeklyReport}
                     />
+                    {/* E6: X de Y das prioridades + 1 pergunta opcional, dentro do mesmo cartão de domingo. */}
+                    {(gameState.purpose?.priorities.length ?? 0) > 0 && (
+                      <WeeklyPriorities
+                        language={language}
+                        rows={weekEvidence(gameState.purpose!.priorities, gameState.habitRhythms, Object.fromEntries((gameState.activities as any[]).map(a => [String(a.id), { schedule: a.schedule, weekDays: a.weekDays }])), agoraA)}
+                        names={purposeNames}
+                        answered={weeklyAnswered(gameState.purpose, agoraA)}
+                        onAnswer={ob => setGameState(prev => ({ ...prev, purpose: recordWeekly(prev.purpose, ob, new Date()) }))}
+                      />
+                    )}
                     </Suspense>
                   ),
                 });
@@ -9187,6 +9288,30 @@ export default function App() {
                       </button>
                     </div>
                   </section>
+                  ),
+                });
+
+                // ── 4b. REVISÃO DO OBJETIVO (E7-E9) ───────────────────────
+                // Cartão, nunca modal: do dia 1 ao 7, some sozinho no dia 8 e NÃO acumula (revisão perdida não vira dívida).
+                if (reviewOfferNow) avisos.push({
+                  key: 'revisaoObjetivo',
+                  node: (
+                    <div className="sm2-notice" data-review-card={reviewOfferNow.kind}>
+                      <p className="sm2-notice-title">{reviewOfferNow.kind === 'month'
+                        ? (isPtA ? 'Um olhar para o mês que passou' : 'A look at the month that passed')
+                        : reviewOfferNow.kind === 'semester'
+                          ? (isPtA ? 'Seis meses de caminho' : 'Six months on the path')
+                          : (isPtA ? 'Um ano depois' : 'A year later')}</p>
+                      <div className="sm2-notice-actions">
+                        <button type="button" className="sm-btn" style={{ fontSize: 12, padding: '10px 14px' }} onClick={() => setReviewOpen(true)}>
+                          {isPtA ? 'Ver o mês' : 'See the month'}
+                        </button>
+                        <button type="button" className="sm-btn sm-btn-secondary" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => setGameState(prev => ({ ...prev, purpose: dismissReview(prev.purpose, reviewOfferNow) }))}>
+                          {isPtA ? 'Deixar para depois' : 'Leave it for later'}
+                        </button>
+                      </div>
+                    </div>
                   ),
                 });
 
@@ -9497,6 +9622,7 @@ export default function App() {
                 writeLocal(STORAGE_KEYS.LANGUAGE, lang, { silent: true });
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
+              onOpenObjetivo={() => setMeuObjetivoOpen(true)}
               onReplayWelcomeTour={handleReplayWelcomeTour}
               onOpenGlossary={() => setShowHelpModal(true)}
               review={reviewSnapshot ? reviewRow : undefined}
@@ -10329,6 +10455,35 @@ export default function App() {
           onConfirm={handleConfirmRestWindow}
         />
         </PresentationSlot>
+      )}
+
+      {/* O CONVITE ÚNICO DO OBJETIVO (E3): jogador que já existia. "Agora não" fecha e não volta; fica em Perfil > Meu objetivo. */}
+      {interstitial === 'purposeInvite' && (
+        <PresentationSlot id="purposeInvite" onFail={() => presentation.fail('purposeInvite')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <PurposeInviteModal
+            language={language}
+            areas={[...new Set(purposeActivities.length ? (gameState.activities as any[]).map(a => String(a.category ?? '')).filter(Boolean) : [])].slice(0, 3)}
+            activities={purposeActivities}
+            onSave={next => { savePurpose(next); setPurposeInviteOpen(false); }}
+            onNotNow={() => setPurposeInviteOpen(false)}
+          />
+        </PresentationSlot>
+      )}
+
+      {/* MEU OBJETIVO (E4): aberta pela linha da Home ou pelo Perfil. */}
+      {meuObjetivoOpen && (
+        <Suspense fallback={null}>
+          <MeuObjetivoSheet open onClose={() => setMeuObjetivoOpen(false)} language={language}
+            purpose={gameState.purpose} activities={purposeActivities} onSave={savePurpose} />
+        </Suspense>
+      )}
+
+      {/* REVISÃO (E7-E9): mensal / semestral / anual, aberta pelo card da Home. */}
+      {reviewOpen && reviewOfferNow && gameState.purpose && (
+        <Suspense fallback={null}>
+          <GoalReviewSheet open onClose={() => setReviewOpen(false)} language={language} purpose={gameState.purpose}
+            offer={reviewOfferNow} names={purposeNames} onComplete={handleCompleteReview} />
+        </Suspense>
       )}
 
       {/* O CONVITE CURTO DOS PASSOS (§283): sim/não + meta. Aceitar grava a meta e SÓ ENTÃO abre o diálogo do sistema. */}

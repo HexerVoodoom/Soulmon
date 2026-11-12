@@ -59,9 +59,11 @@ function escolherPrimeira(pt: boolean): void {
   clicarContinuar(pt);
 }
 
-/** Áreas → dificuldades → forças → ponto de partida, e para na 1ª pergunta de nascimento (Faixa E: o nome completo). */
+/** Áreas → (destino pulado) → dificuldades → forças → ponto de partida, e para na 1ª pergunta de nascimento (Faixa E: o nome completo). */
 export function responderMetas(pt = false): void {
   escolherPrimeira(pt); // o que melhorar
+  // Objetivo anual (12/11/2026): o destino, o porquê e o obstáculo são puláveis; pular o destino pula os dois seguintes.
+  fireEvent.click(document.querySelector('[data-skip-purpose]')!);
   escolherPrimeira(pt); // o que atrapalha
   escolherPrimeira(pt); // forças
   clicarContinuar(pt);  // ponto de partida (tudo vem marcado)

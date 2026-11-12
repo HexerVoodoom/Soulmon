@@ -20,6 +20,18 @@ import { sumMonths } from './purposeAgg';
  *    (id de concessão idempotente), para QUALQUER resposta (não é prêmio por resultado).
  */
 
+/**
+ * A pergunta "Você quer rever suas tarefas?" da revisão mensal (decisão do dono, 12/11/2026). `'always'` = SEMPRE (vale hoje);
+ * `'only_if_all_done'` = só quando todas as tarefas do mês foram feitas. Uma constante só, para trocar fácil se o dono corrigir.
+ * Aceitar = Satisfação/Ressurgimento refazem a escolha de tarefas pelas 3 cartas; Ambição não vê as cartas, exceto pela opção
+ * explícita "meus planos mudaram". (A tela das cartas e o refazer da escolha ainda não existem: TODO da etapa das cartas.)
+ */
+export type ReviewTasksAskMode = 'always' | 'only_if_all_done';
+export const REVIEW_TASKS_ASK_MODE: ReviewTasksAskMode = 'always';
+export function shouldAskReviewTasks(allDone: boolean, mode: ReviewTasksAskMode = REVIEW_TASKS_ASK_MODE): boolean {
+  return mode === 'always' ? true : allDone;
+}
+
 export type OfferKind = 'month' | 'semester' | 'year';
 
 export interface ReviewOffer {

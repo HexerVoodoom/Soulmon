@@ -45,6 +45,10 @@ import { readJson, writeJson, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { normalizeConsent, type ConsentRecord } from './consent';
 import { cidadeValida } from './oracleDraft';
+import {
+  MOTIVE_KEYS, OBSTACLE_KEYS, PURPOSE_GOAL_MAX, PURPOSE_MAX_PRIORITIES, PURPOSE_MOTIVE_CUSTOM_MAX, PURPOSE_PHRASE_MAX, PURPOSE_PLAN_MAX,
+  type MotiveKey, type ObstacleKey,
+} from './purpose';
 import type { City } from './soulProfile/cities';
 import type { Answers as SoulAnswers } from './soulProfile/personality/types';
 import {
@@ -90,8 +94,43 @@ export interface GateDraft {
   birthTime?: string;
   birthCity?: City | null;
   timeUnknown?: boolean;
+  /** Objetivo anual (12/11/2026, E1): o que a pessoa já escreveu nos 3 passos novos e as prioridades (ids do catálogo).
+   *  Opcional na leitura (rascunho antigo = vazio, sem trocar a versão). Texto livre: tetos de `utils/purpose.ts`. */
+  purpose?: GateDraftPurpose;
   /** ISO de quando foi gravado — só para o leitor humano do storage. */
   savedAt: string;
+}
+
+export interface GateDraftPurpose {
+  goalText: string;
+  motiveKey?: MotiveKey;
+  motiveCustom: string;
+  phrase: string;
+  obstacleKey?: ObstacleKey;
+  obstacleText: string;
+  response: string;
+  skipped: boolean;
+  priorities: string[];
+}
+
+const txt = (v: unknown, max: number): string => (typeof v === 'string' ? v.slice(0, max) : '');
+
+function purposeValido(v: unknown): GateDraftPurpose | undefined {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const d = v as Record<string, unknown>;
+  const mk = (MOTIVE_KEYS as readonly string[]).includes(d.motiveKey as string) ? (d.motiveKey as MotiveKey) : undefined;
+  const ok = (OBSTACLE_KEYS as readonly string[]).includes(d.obstacleKey as string) ? (d.obstacleKey as ObstacleKey) : undefined;
+  return {
+    goalText: txt(d.goalText, PURPOSE_GOAL_MAX),
+    ...(mk ? { motiveKey: mk } : {}),
+    motiveCustom: txt(d.motiveCustom, PURPOSE_MOTIVE_CUSTOM_MAX),
+    phrase: txt(d.phrase, PURPOSE_PHRASE_MAX),
+    ...(ok ? { obstacleKey: ok } : {}),
+    obstacleText: txt(d.obstacleText, PURPOSE_PLAN_MAX),
+    response: txt(d.response, PURPOSE_PLAN_MAX),
+    skipped: d.skipped === true,
+    priorities: Array.isArray(d.priorities) ? d.priorities.filter((x): x is string => typeof x === 'string').slice(0, PURPOSE_MAX_PRIORITIES) : [],
+  };
 }
 
 /**
@@ -135,6 +174,7 @@ export function readGateDraft(): GateDraft | null {
     birthTime: typeof d.birthTime === 'string' ? d.birthTime : '12:00',
     birthCity: cidadeValida(d.birthCity),
     timeUnknown: d.timeUnknown === true,
+    purpose: purposeValido(d.purpose),
     savedAt: typeof d.savedAt === 'string' ? d.savedAt : '',
   };
 }
@@ -175,7 +215,7 @@ function itensValidos(v: unknown): SoulAnswers {
 export function writeGateDraft(
   dados: Pick<GateDraft, 'soulGoal' | 'soulStruggle' | 'consent' | 'areas' | 'struggles' | 'strengths'
     | 'step' | 'nickname' | 'answers' | 'testAnswers' | 'starterOff'
-    | 'fullName' | 'birthDate' | 'birthDateText' | 'birthTime' | 'birthCity' | 'timeUnknown'>,
+    | 'fullName' | 'birthDate' | 'birthDateText' | 'birthTime' | 'birthCity' | 'timeUnknown' | 'purpose'>,
   now: Date = new Date(),
 ): boolean {
   return writeJson(
@@ -199,6 +239,7 @@ export function writeGateDraft(
       ...(dados.birthTime !== undefined ? { birthTime: dados.birthTime } : {}),
       ...(dados.birthCity !== undefined ? { birthCity: dados.birthCity } : {}),
       ...(dados.timeUnknown !== undefined ? { timeUnknown: dados.timeUnknown } : {}),
+      ...(dados.purpose !== undefined ? { purpose: dados.purpose } : {}),
       savedAt: now.toISOString(),
     } satisfies GateDraft,
     { silent: true },

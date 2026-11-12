@@ -26,6 +26,8 @@ import { monthKeyOf, parseLocalDay, type MonthCell, type MonthlyAgg, type Purpos
 export interface AggActivity { id: string; schedule?: Schedule; weekDays?: number[] }
 
 const DAY_MS = 86_400_000;
+/** Save antigo/ritmo incompleto: lista ausente vale vazia (o fechamento roda no load e na virada, nunca pode lançar). */
+const L = (a: unknown): string[] => (Array.isArray(a) ? (a as string[]) : []);
 
 function startOfMonth(y: number, m: number): Date { return new Date(y, m, 1); }
 
@@ -59,14 +61,14 @@ export function monthCell(
   m: number,
   away?: { from: number; to: number },
 ): MonthCell | null {
-  const recorded = [...rhythm.done, ...rhythm.shielded, ...rhythm.missed];
+  const recorded = [...L(rhythm.done), ...L(rhythm.shielded), ...L(rhythm.missed)];
   const times = recorded.map(keyToTime).filter((t): t is number => t !== null);
   if (times.length === 0) return null;
   const first = Math.min(...times);
   const monthEnd = new Date(y, m + 1, 0).getTime();
   if (first > monthEnd) return null; // o hábito ainda não existia
 
-  const doneKeys = new Set([...rhythm.done, ...rhythm.shielded].filter(k => inMonth(k, y, m)));
+  const doneKeys = new Set([...L(rhythm.done), ...L(rhythm.shielded)].filter(k => inMonth(k, y, m)));
   const recordedKeys = new Set(recorded.filter(k => inMonth(k, y, m)));
   const done = doneKeys.size;
 
@@ -114,7 +116,7 @@ export function closePastMonths({ rhythms, activities, purpose, today, lastSeen 
 
   let earliest = Infinity;
   for (const r of Object.values(rhythms)) {
-    for (const k of [...r.done, ...r.shielded, ...r.missed]) {
+    for (const k of [...L(r?.done), ...L(r?.shielded), ...L(r?.missed)]) {
       const t = keyToTime(k);
       if (t !== null && t < earliest) earliest = t;
     }

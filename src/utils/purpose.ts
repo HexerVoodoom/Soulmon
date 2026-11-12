@@ -44,6 +44,16 @@ export type Perceived = (typeof PERCEIVED_KEYS)[number];
 export const DECISION_KEYS = ['keep', 'adjust', 'change'] as const;
 export type ReviewDecision = (typeof DECISION_KEYS)[number];
 
+/**
+ * O CAMINHO escolhido na tela das 3 cartas (decisão do dono, 12/11/2026, PLANO §2b). A carta SÓ orienta a escolha das tarefas
+ * (e, em `ambicao`, liga o fluxo do objetivo anual): streak, corações, revisões e falas são iguais nos 3 caminhos.
+ * `satisfacao` = o fluxo atual de PRD; `ressurgimento` = lista-base de cuidados com entrada gradual (TODO: conteúdo, `docs/design/RESSURGIMENTO-PESQUISA.md`).
+ * A tela das cartas ainda NÃO existe: enquanto isso o onboarding assume `ambicao`.
+ */
+export const PURPOSE_PATHS = ['ambicao', 'satisfacao', 'ressurgimento'] as const;
+export type PurposePath = (typeof PURPOSE_PATHS)[number];
+export const DEFAULT_PURPOSE_PATH: PurposePath = 'ambicao';
+
 export type ReviewKind = 'week' | 'month' | 'semester' | 'year';
 export type MilestoneStatus = 'open' | 'done' | 'partial' | 'not';
 
@@ -93,6 +103,8 @@ export interface MonthCell { done: number; due: number }
 export type MonthlyAgg = Record<string, Record<string, MonthCell>>;
 
 export interface Purpose {
+  /** Caminho das cartas. Ausente = ainda não escolhido. Não espalhar por outros sistemas. */
+  path?: PurposePath;
   goal?: PurposeGoal;
   /** Âncora de 6/12 meses. Não muda quando o objetivo muda. */
   firstCreatedAt?: string;
@@ -238,8 +250,10 @@ export function sanitizePurpose(raw: unknown): Purpose | undefined {
   const prefs = isObj(raw.prefs) ? { voiceReminder: raw.prefs.voiceReminder !== false } : base.prefs;
   const firstCreatedAt = dayStr(raw.firstCreatedAt) || goal?.createdAt || history[0]?.createdAt || undefined;
   const lastVoiceAt = dayStr(raw.lastVoiceAt);
+  const path = oneOf(PURPOSE_PATHS, raw.path);
   return {
     ...base,
+    ...(path ? { path } : {}),
     ...(goal ? { goal } : {}),
     ...(firstCreatedAt ? { firstCreatedAt } : {}),
     history,

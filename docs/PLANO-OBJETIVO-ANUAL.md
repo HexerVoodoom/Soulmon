@@ -27,7 +27,31 @@ Status: rascunho para aprovação do dono (12/11/2026). Insumos: `docs/design/OB
 - Revisão mensal no dia 1 aproveita o fresh start effect (Dai, Milkman & Riis 2014).
 - SDT: motivação autônoma > controlada. A família pode ser a motivação, mas nunca é usada como pressão.
 
-## 3. Fluxo do onboarding (novo trecho)
+## 2b. As 3 cartas (pedido do dono, 12/11, depois da aprovação)
+
+Antes das áreas de meta, uma tela "Em que momento você está?" com 3 cartas lado a lado, ilustradas como arquétipos de tarô (arte nova, fila de assets) e com texto curto:
+
+| Carta | Texto | Caminho |
+|---|---|---|
+| **Ambição** | "Tenho um objetivo maior e uma meta clara." | Fluxo do objetivo anual deste plano (destino, motivação, se-então, prioridades, revisões) |
+| **Satisfação** | "Quero melhorar meus hábitos e minha rotina no geral." | Fluxo atual de PRD (áreas, sugestões de hábitos gerais), sem objetivo anual |
+| **Ressurgimento** | "Quero me reerguer." | Fluxo novo: cuidados básicos pequenos com cronograma + rede de apoio (pesquisa em `docs/design/RESSURGIMENTO-PESQUISA.md`) |
+
+Interação: tocar a carta a traz para a frente com animação, escurece o fundo, mostra um X para fechar e os botões "Escolher esta carta" e "Escolher outra". Ao escolher, avança; a próxima tela tem "Voltar".
+
+Decisões (modal de 12/11):
+- Posição: antes das áreas de meta (depois do teste).
+- Jogador existente: **não** vê as cartas (só os novos). O modal de objetivo para quem já joga continua como antes.
+- Troca de carta: livre no Perfil; nas revisões, quem está em Ressurgimento com base firme recebe convite sem pressão para subir.
+- Ressurgimento tem versão leve: sem objetivo de 1 ano; "o que te ajuda a seguir" opcional; semanal curtíssima ("o que deu pra fazer"); incentivo à rede de apoio; sem métricas pesadas.
+- Ressurgimento, conteúdo (modal 12/11, base `docs/design/RESSURGIMENTO-PESQUISA.md`): lista-base de 22 cuidados aprovada (11 ids existentes + 10 `ressurg-*` novos). Entrada gradual: 3-4 itens de 2 min nas semanas 1-2, teto de 6-7 ativos. Convite para subir de caminho **depois de 6 semanas** (recusável, nada é apagado). Sequência e custo de coração **iguais aos outros caminhos**. Sem revisão externa de psicólogo (decisão do dono); o veto ético interno continua, e a linguagem e os vetos da pesquisa são obrigatórios.
+- **Revisão do dono (12/11, depois): a carta só orienta a escolha das tarefas.** Ela não muda nada fora disso. Sequência, corações, revisões e falas são iguais para os três caminhos. Ficam **cancelados**: a "versão leve" de revisões do Ressurgimento e o convite automático de 6 semanas para subir de caminho.
+- **Revisão de fim de mês, igual para todos:** pergunta sempre "Você quer rever suas tarefas?" (interpretação **assumida, a confirmar com o dono no teste**: perguntar todo mês, e não só quando a pessoa cumpriu tudo. A regra fica numa constante única, `REVIEW_TASKS_ASK_MODE = 'always' | 'only_if_all_done'`). Respostas:
+  - Satisfação e Ressurgimento: ao aceitar, as 3 cartas aparecem de novo e a escolha de tarefas é refeita.
+  - Ambição: não mostra as cartas, a não ser que o usuário diga "meus planos mudaram" (opção explícita na revisão). Sem isso, a revisão de tarefas fica dentro do fluxo do objetivo.
+- Dado: `purpose.path: 'ambicao' | 'satisfacao' | 'ressurgimento'`.
+
+## 3. Fluxo do onboarding (novo trecho, caminho Ambição)
 
 Ordem atual: conta → termos → nome → Ambra → oráculo → teste → **áreas de meta (GOAL_STEP)** → dificuldades → forças → ponto de partida → ovo.
 

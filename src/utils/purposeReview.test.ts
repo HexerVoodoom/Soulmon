@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { completeReview, dismissReview, evidence, monthsEndingAt, recordWeekly, reviewOffer, weekEvidence, weeklyAnswered, SEMESTER_REWARD_FRAME_ID, isWeeklyDay } from './purposeReview';
-import { emptyPurpose, setGoal } from './purpose';
+import { emptyPurpose, setGoal, sanitizePurpose } from './purpose';
+import { REVIEW_TASKS_ASK_MODE, shouldAskReviewTasks } from './purposeReview';
 import { emptyRhythm, dayKeyOf } from './habitRhythm';
 
 const base = () => setGoal(emptyPurpose(), { text: 'Correr 5 km', areas: ['corpo'] }, new Date(2026, 0, 15));
@@ -103,5 +104,22 @@ describe('purposeReview: evidência e semanal', () => {
     expect(weeklyAnswered(p, hoje)).toBe(true);
     expect(p.reviews[0].obstacles).toEqual(['energy']);
     expect(recordWeekly(p, ['time'], hoje)).toBe(p);
+  });
+});
+
+describe('rever as tarefas (constante única) e o caminho das cartas', () => {
+  it('a constante vale always; os dois modos se comportam como o nome diz', () => {
+    expect(REVIEW_TASKS_ASK_MODE).toBe('always');
+    expect(shouldAskReviewTasks(false)).toBe(true);
+    expect(shouldAskReviewTasks(true)).toBe(true);
+    expect(shouldAskReviewTasks(false, 'always')).toBe(true);
+    expect(shouldAskReviewTasks(false, 'only_if_all_done')).toBe(false);
+    expect(shouldAskReviewTasks(true, 'only_if_all_done')).toBe(true);
+  });
+  it('purpose.path só aceita os 3 valores', () => {
+    expect(sanitizePurpose({ path: 'ressurgimento' })!.path).toBe('ressurgimento');
+    expect(sanitizePurpose({ path: 'ambicao' })!.path).toBe('ambicao');
+    expect(sanitizePurpose({ path: 'outro' })!.path).toBeUndefined();
+    expect(sanitizePurpose({})!.path).toBeUndefined();
   });
 });

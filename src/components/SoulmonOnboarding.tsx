@@ -34,6 +34,9 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { readGateDraft, writeGateDraft, clearGateDraft } from '../utils/gateDraft';
+import { tx as ptx } from '../utils/purposeCopy';
+import { PURPOSE_MAX_PRIORITIES, PURPOSE_GOAL_MIN, DEFAULT_PURPOSE_PATH, type MotiveKey, type ObstacleKey, type PurposePath } from '../utils/purpose';
+import type { PurposeDraft } from './purpose/PurposeFields';
 import {
   buildConsentRecord, isAgeBlocked, isConsentCurrent, MIN_AGE_YEARS,
   type ConsentRecord,
@@ -69,6 +72,11 @@ import type { ActivityCategory } from '../types/attributes';
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
 // motivo do lazy() em App.tsx).
 const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.OraclePage })));
+// Objetivo anual (docs/PLANO-OBJETIVO-ANUAL.md, E1/E2): os campos dos 3 passos novos moram em chunk próprio — o de entrada já estoura o orçamento de bytes.
+const YearGoalFields = lazy(() => import('./purpose/PurposeFields').then(m => ({ default: m.YearGoalFields })));
+const MotiveFields = lazy(() => import('./purpose/PurposeFields').then(m => ({ default: m.MotiveFields })));
+const PlanFields = lazy(() => import('./purpose/PurposeFields').then(m => ({ default: m.PlanFields })));
+const PriorityStar = lazy(() => import('./purpose/PurposeFields').then(m => ({ default: m.PriorityStar })));
 
 // ---------------------------------------------------------------------------
 // SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
@@ -221,6 +229,20 @@ export type OnboardingCompleteData = {
   soulTestAnswers?: SoulAnswers;
   /** O traço (id de `PET_PASSIVES`) que o Soulmon DISSE na apresentação: o App grava este mesmo no save. */
   petPassive?: string;
+  /**
+   * Objetivo anual (12/11/2026, E1/E2): o destino, o porquê, o plano e as até 3
+   * prioridades (ids do CATÁLOGO: as atividades ainda não existem; o `App` mapeia
+   * para o id da atividade criada). Ausente = a pessoa pulou. Texto livre da
+   * pessoa, sem retoque.
+   */
+  purpose?: {
+    path?: PurposePath;
+    goalText: string;
+    areas: string[];
+    motive?: { key: MotiveKey; customText?: string; phrase?: string };
+    plan?: { obstacleKey: ObstacleKey; obstacleText?: string; response: string };
+    priorityItemIds: string[];
+  };
 } & (
   | {
       mode: 'oracle';
@@ -472,6 +494,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // a telemetria ganhou folga para eles (`NEGATIVE_STEP_BASE`).
   const STRENGTH_STEP = -11;
   const STARTER_STEP = -12;
+  // Objetivo anual (12/11/2026): três passos novos DEPOIS das áreas e ANTES das dificuldades. Ids negativos novos, sem renumerar nada.
+  // Todos puláveis (R1 do plano); a telemetria usa códigos próprios (`onboardingStepCode`).
+  const YEAR_GOAL_STEP = -16;
+  const MOTIVE_STEP = -17;
+  const PLAN_STEP = -18;
   // DEMO LOCAL: a escolha dos 5 iniciais aberta pelo botão DEMO do portão (código de telemetria 37).
   const DEMO_LOCAL_PICK = -13;
   /** A ordem do onboarding ANTES da escolha grátis/próprio — é o trecho que o
@@ -483,7 +510,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const RITUAL_PAGO = [1, 2, 3, 4];
   const PRE_ESCOLHA = [
     NAME_STEP, ...QUIZ_STEPS, ...DEEP_STEPS,
-    GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, ...RITUAL_PAGO, CHOICE_STEP,
+    GOAL_STEP, YEAR_GOAL_STEP, MOTIVE_STEP, PLAN_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, ...RITUAL_PAGO, CHOICE_STEP,
   ];
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
@@ -610,6 +637,19 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [strengths, setStrengths] = useState<StrengthId[]>(gate?.strengths ?? []);
   /** Itens do ponto de partida que a pessoa DESMARCOU (o resto entra). */
   const [starterOff, setStarterOff] = useState<string[]>(gate?.starterOff ?? []);
+  // Objetivo anual (E1/E2). O rascunho do portão guarda tudo, para sobreviver a fechar o app.
+  const [purposeDraft, setPurposeDraft] = useState<PurposeDraft>(() => ({
+    goalText: gate?.purpose?.goalText ?? '', motiveKey: gate?.purpose?.motiveKey, motiveCustom: gate?.purpose?.motiveCustom ?? '',
+    phrase: gate?.purpose?.phrase ?? '', obstacleKey: gate?.purpose?.obstacleKey, obstacleText: gate?.purpose?.obstacleText ?? '',
+    response: gate?.purpose?.response ?? '',
+  }));
+  // Caminho das 3 cartas (PLANO §2b). TODO: vem da tela das cartas (antes das áreas, só para jogadores novos); sem ela, Ambição.
+  // Só em `ambicao` rodam o destino, o porquê, o obstáculo e as prioridades.
+  const purposePath: PurposePath = DEFAULT_PURPOSE_PATH;
+  const usaObjetivo = purposePath === 'ambicao';
+  const [yearSkipped, setYearSkipped] = useState<boolean>(gate?.purpose?.skipped === true);
+  const [priorityIds, setPriorityIds] = useState<string[]>(gate?.purpose?.priorities ?? []);
+  const [priorityLimit, setPriorityLimit] = useState(false);
   const starterSet = useMemo(
     () => recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG),
     [areas, struggles, strengths],
@@ -745,8 +785,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     isUpgrade ? 0
       : step >= QUIZ_START && step < QUIZ_END ? 1
         : step >= DEEP_START && step < DEEP_END ? 2
-          : [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP].includes(step) ? 3
+          : [GOAL_STEP, YEAR_GOAL_STEP, MOTIVE_STEP, PLAN_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP].includes(step) ? 3
             : 0;
+
+  /** Há destino escrito (e não pulado)? Muda o título do ponto de partida e liga as estrelas de prioridade. */
+  const temObjetivo = usaObjetivo && !yearSkipped && purposeDraft.goalText.trim().length >= PURPOSE_GOAL_MIN;
 
   /** Um passo está respondido? B1/B4/B5 + 01/10/2026 — tudo obrigatório,
    *  sem "pular" e sem "prefiro não dizer". Serve ao "Continuar" E à
@@ -754,6 +797,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const passoCompleto = (s: number): boolean => {
     if (s === NAME_STEP) return nickname.trim().length >= 2;
     if (s === GOAL_STEP) return areas.length > 0;
+    // Destino: texto (>=3) OU "pular por agora". Motivo e plano são sempre puláveis.
+    if (s === YEAR_GOAL_STEP) return yearSkipped || purposeDraft.goalText.trim().length >= PURPOSE_GOAL_MIN;
+    if (s === MOTIVE_STEP || s === PLAN_STEP) return true;
     if (s === STRUGGLE_STEP) return struggles.length > 0;
     if (s === STRENGTH_STEP) return strengths.length > 0;
     // Ponto de partida: ≥1 item mantido (catálogo sem sugestão nenhuma não
@@ -902,9 +948,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       soulGoal, soulStruggle, consent, areas, struggles, strengths,
       step: passoGravado, nickname, answers, testAnswers, starterOff,
       fullName, birthDate, birthDateText, birthTime, birthCity, timeUnknown,
+      purpose: { ...purposeDraft, skipped: yearSkipped, priorities: priorityIds },
     });
   }, [noPortao, passoGravado, soulGoal, soulStruggle, consent, areas, struggles, strengths,
-    nickname, answers, testAnswers, starterOff, fullName, birthDate, birthDateText, birthTime, birthCity, timeUnknown]);
+    nickname, answers, testAnswers, starterOff, fullName, birthDate, birthDateText, birthTime, birthCity, timeUnknown, purposeDraft, yearSkipped, priorityIds]);
 
   // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
   // ao último item do teste) e só enquanto não existe resultado. Fora disso o
@@ -1126,7 +1173,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (!canAdvance()) return;
     // B1 + 01/10/2026: do nome vai-se direto às perguntas do ritual.
     if (step === NAME_STEP) { setStep(gate?.step === undefined && !ambraVista.current ? AMBRA_INTRO : QUIZ_START); return; }
-    if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === GOAL_STEP) { setStep(usaObjetivo ? YEAR_GOAL_STEP : STRUGGLE_STEP); return; }
+    if (step === YEAR_GOAL_STEP) { setStep(yearSkipped ? STRUGGLE_STEP : MOTIVE_STEP); return; }
+    if (step === MOTIVE_STEP) { setStep(PLAN_STEP); return; }
+    if (step === PLAN_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
     // Faixa E: nome completo, data, hora e cidade vêm ANTES do ovo (no upgrade/ritual o fluxo antigo segue).
@@ -1174,7 +1224,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // os dois, não é pergunta).
     if (step === DEEP_START) { setStep(QUIZ_END - 1); return; }
     if (step === GOAL_STEP) { setStep(DEEP_END - 1); return; }
-    if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
+    if (step === YEAR_GOAL_STEP) { setStep(GOAL_STEP); return; }
+    if (step === MOTIVE_STEP) { setStep(YEAR_GOAL_STEP); return; }
+    if (step === PLAN_STEP) { setStep(MOTIVE_STEP); return; }
+    if (step === STRUGGLE_STEP) { setStep(!usaObjetivo ? GOAL_STEP : yearSkipped ? YEAR_GOAL_STEP : PLAN_STEP); return; }
     if (step === STRENGTH_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STARTER_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === CHOICE_STEP) { setStep(FAVORITE_STEP - 1); return; }
@@ -1466,6 +1519,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     clearGateDraft();
     const catalogChoice = { areas, struggles, strengths, itemIds: starterKept.map(i => i.id) };
     const firstTask = firstTaskFrom(firstTaskValue, areas, isPt) ?? undefined;
+    // Objetivo anual: só vai se a pessoa escreveu o destino (pular = nada gravado).
+    const purpose: OnboardingCompleteData['purpose'] = usaObjetivo && !yearSkipped && purposeDraft.goalText.trim().length >= PURPOSE_GOAL_MIN
+      ? {
+          path: purposePath,
+          goalText: purposeDraft.goalText.trim(),
+          areas,
+          ...(purposeDraft.motiveKey ? { motive: { key: purposeDraft.motiveKey, ...(purposeDraft.motiveKey === 'other' && purposeDraft.motiveCustom.trim() ? { customText: purposeDraft.motiveCustom.trim() } : {}), ...(purposeDraft.phrase.trim() ? { phrase: purposeDraft.phrase.trim() } : {}) } } : {}),
+          ...(purposeDraft.obstacleKey && purposeDraft.response.trim() ? { plan: { obstacleKey: purposeDraft.obstacleKey, ...(purposeDraft.obstacleText.trim() ? { obstacleText: purposeDraft.obstacleText.trim() } : {}), response: purposeDraft.response.trim() } } : {}),
+          priorityItemIds: priorityIds.filter(id => starterKept.some(i => i.id === id)).slice(0, PURPOSE_MAX_PRIORITIES),
+        }
+      : undefined;
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
@@ -1476,6 +1540,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         initialActivities: [],
         catalogChoice,
         firstTask,
+        purpose,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1495,6 +1560,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         initialActivities: [],
         catalogChoice,
         firstTask,
+        purpose,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1607,7 +1673,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
   const temVolta = !oracleDebugOpen && (
-    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, DEMO_PICK].includes(step)
+    [GOAL_STEP, YEAR_GOAL_STEP, MOTIVE_STEP, PLAN_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, DEMO_PICK].includes(step)
     || (step === CHOICE_STEP && !comprado && luz.fase === null) // comprou: não se volta atrás do que já foi pago
     || (step === DEMO_LOCAL_PICK && !isEmbedMode())
     || (step >= 1 && step < FAVORITE_STEP)
@@ -1989,17 +2055,71 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           );
         })()}
 
+        {/* OBJETIVO ANUAL (12/11/2026, E1): destino, porquê e obstáculo. Os três são PULÁVEIS e moram em chunk
+            próprio (`purpose/PurposeFields`). Pular o destino pula os dois seguintes. */}
+        {step === YEAR_GOAL_STEP && (
+          <StepShell title={ptx('yearTitle', isPt)} hint={ptx('yearHint', isPt)}>
+            <Suspense fallback={null}>
+              <YearGoalFields isPt={isPt} areas={areas} draft={purposeDraft}
+                onChange={d => { setPurposeDraft(d); if (yearSkipped) setYearSkipped(false); }} />
+            </Suspense>
+            <button type="button" style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 24 }}
+              onClick={next} aria-disabled={!canAdvance() || undefined}>
+              {ptx('continue', isPt)}
+            </button>
+            <button type="button" data-skip-purpose style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }}
+              onClick={() => { setYearSkipped(true); setStep(STRUGGLE_STEP); }}>
+              {ptx('skip', isPt)}
+            </button>
+          </StepShell>
+        )}
+        {step === MOTIVE_STEP && (
+          <StepShell title={ptx('motiveTitle', isPt)} hint={ptx('motiveHint', isPt)}>
+            <Suspense fallback={null}>
+              <MotiveFields isPt={isPt} draft={purposeDraft} onChange={setPurposeDraft} />
+            </Suspense>
+            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginTop: 24 }} onClick={next}>
+              {ptx('continue', isPt)}
+            </button>
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }}
+              onClick={() => { setPurposeDraft(d => ({ ...d, motiveKey: undefined, motiveCustom: '', phrase: '' })); next(); }}>
+              {ptx('skip', isPt)}
+            </button>
+          </StepShell>
+        )}
+        {step === PLAN_STEP && (
+          <StepShell title={ptx('planTitle', isPt)} hint={ptx('planHint', isPt)}>
+            <Suspense fallback={null}>
+              <PlanFields isPt={isPt} draft={purposeDraft} onChange={setPurposeDraft} />
+            </Suspense>
+            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginTop: 24 }} onClick={next}>
+              {ptx('continue', isPt)}
+            </button>
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }}
+              onClick={() => { setPurposeDraft(d => ({ ...d, obstacleKey: undefined, obstacleText: '', response: '' })); next(); }}>
+              {ptx('skip', isPt)}
+            </button>
+          </StepShell>
+        )}
+
         {/* STARTER_STEP — B4: o ponto de partida (o starter set do catálogo,
             `recommendStarterSet`) agora mora no onboarding. Tudo vem marcado;
             desmarcar tira. ≥1 mantido para seguir — sem "pular" (C11 pede o
             mesmo na Home). O recomendador PROPÕE, a pessoa decide. */}
         {step === STARTER_STEP && (
-          <StepShell title={isPt ? 'Adicionar tarefas à lista' : 'Add tasks to list'}
-            hint={isPt ? 'Fique com o que quiser começar.' : 'Keep what you want to start with.'}>
+          <StepShell title={temObjetivo ? ptx('starterTitle', isPt) : (isPt ? 'Adicionar tarefas à lista' : 'Add tasks to list')}
+            hint={temObjetivo ? ptx('priorityHint', isPt) : (isPt ? 'Fique com o que quiser começar.' : 'Keep what you want to start with.')}>
+            {temObjetivo && (
+              <p data-starter-goal style={{ ...sm2Text, margin: '0 0 12px' }}>
+                <span style={sm2Hint}>{ptx('starterGoalLead', isPt)}: </span>{purposeDraft.goalText.trim()}
+              </p>
+            )}
             <p style={{ ...sm2Hint, margin: '0 0 8px' }}>{isPt ? 'Hábitos para repetir' : 'Habits to repeat'}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {starterSet.map(item => (
                 <div key={item.id} data-starter-item={item.id}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <CheckRow
                     checked={!starterOff.includes(item.id)}
                     onChange={on => setStarterOff(v => (on ? v.filter(x => x !== item.id) : [...v, item.id]))}
@@ -2009,10 +2129,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                       <span>{isPt ? item.name.pt : item.name.en}</span>
                     </span>
                   </CheckRow>
+                  </div>
+                  {temObjetivo && (
+                    <Suspense fallback={null}>
+                      <PriorityStar isPt={isPt} on={priorityIds.includes(item.id)} onToggle={() => {
+                        if (priorityIds.includes(item.id)) { setPriorityIds(v => v.filter(x => x !== item.id)); setPriorityLimit(false); return; }
+                        if (priorityIds.length >= PURPOSE_MAX_PRIORITIES) { setPriorityLimit(true); return; }
+                        setPriorityIds(v => [...v, item.id]);
+                      }} />
+                    </Suspense>
+                  )}
+                  </div>
                   <p style={{ ...sm2Hint, margin: '0 0 8px 34px' }}>{isPt ? item.why.pt : item.why.en}</p>
                 </div>
               ))}
             </div>
+            {temObjetivo && priorityLimit && <p role="status" data-priority-limit style={{ ...sm2Hint, margin: '4px 0 8px' }}>{ptx('priorityMax', isPt)}</p>}
             {/* A TAREFA (11/10/2026): hábito é para repetir, tarefa é para
                 terminar. Já vem preenchida, a pessoa reescreve ou esvazia. */}
             <div data-first-task style={{ marginTop: 16 }}>

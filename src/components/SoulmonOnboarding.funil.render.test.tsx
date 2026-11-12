@@ -98,6 +98,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(seta.compareDocumentPosition(screen.getByText('What do you want to improve?')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
+    fireEvent.click(document.querySelector('[data-skip-purpose]')!); // objetivo anual: o destino é pulável
     expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
@@ -117,6 +118,7 @@ describe('funil grátis — identidade do canvas', () => {
     for (let i = 0; i < 3; i++) {
       fireEvent.click(screen.getByRole('group').querySelector('button')!);
       fireEvent.click(btn('Continue'));
+      if (i === 0) fireEvent.click(document.querySelector('[data-skip-purpose]')!); // objetivo anual: o destino é pulável
     }
     const caixas = Array.from(document.querySelectorAll('[data-starter-item] input[type=checkbox]')) as HTMLInputElement[];
     expect(caixas.length).toBeGreaterThan(0);
@@ -132,6 +134,7 @@ describe('funil grátis — identidade do canvas', () => {
     for (let i = 0; i < 3; i++) {
       fireEvent.click(screen.getByRole('group').querySelector('button')!);
       fireEvent.click(btn('Continue'));
+      if (i === 0) fireEvent.click(document.querySelector('[data-skip-purpose]')!); // objetivo anual: o destino é pulável
     }
     const campo = document.querySelector('[data-first-task] input') as HTMLInputElement;
     expect(campo.value.length).toBeGreaterThan(5);
@@ -254,6 +257,7 @@ describe('01/10/2026 — fechar no meio e voltar de onde parou', () => {
     await ateAsMetas(false, 'Ana Lua');
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(btn('Continue'));
+    fireEvent.click(document.querySelector('[data-skip-purpose]')!); // objetivo anual: o destino é pulável
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
     primeira.unmount();
