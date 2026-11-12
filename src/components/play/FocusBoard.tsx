@@ -1,3 +1,4 @@
+import { CtaButton } from '../ui/CtaButton';
 /**
  * O QUADRO DA OFICINA (§247): card Sessão em destaque + 6 cards de chave (as técnicas de antes, agora opcionais).
  * O servidor guarda a jornada; aqui se escolhe ritmo, cenário e chaves, se começa e se volta à jornada em andamento.
@@ -230,7 +231,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
             {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
           {online === false && <p role="status" data-focus-offline style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Precisa de conexão para começar.' : 'Needs a connection to start.'}</p>}
-          <button type="button" data-focus-start disabled={online === false || busy || !saveId} onClick={start} style={{ ...sm2Button('primary', online === false || busy || !saveId), minHeight: 48 }}>{isPt ? 'Começar jornada' : 'Start journey'}</button>
+          <CtaButton data-focus-start disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
         </>}
         {doneNote && <p role="status" data-focus-done style={{ ...sm2Text, margin: 0 }}>{doneNote}</p>}
       </article>

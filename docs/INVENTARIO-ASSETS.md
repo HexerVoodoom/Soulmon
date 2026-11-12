@@ -450,3 +450,7 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 ## Cosméticos de tema e de elemento (11/11/2026)
 
 Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cosmeticos.mjs` (idempotente; fonte = arquivo canônico da pasta): **32 cenários** (`src/assets/backgrounds/<id>.webp` 1200×648 + miniatura `thumbs/<id>.png` 96×52), **32 molduras** (`src/assets/soulmon/molduras/<id>.png`, 192², alfa binário, miolo 64² vazio) e **24 decorações** (`src/assets/decor/<id>.webp`, caixa do slot × 3; tapete × 2). Peso somado ≈ 4,5 MB (WebP/PNG pequeno, medido pelo próprio script). Catálogo e nomes: `src/utils/cosmeticosNovos.ts`. Faltam 20 decorações (Ruínas × 4 e `furn-el-*` × 16) — ver `ASSETS-A-GERAR.md`. O registro do banco (`_banco/registro.jsonl`) segue `uso: pendente-instalar` nessas 88 linhas: o arquivo tem linhas corrompidas e reescrever não é seguro; a verdade de instalação é esta seção.
+
+## Botão especial CTA (12/11/2026)
+
+`src/assets/soulmon/ui/btn-cta.webp` (720x121, ~13 KB): origem `E:/Soulmon-marketing/site-assets/botao-beta.png` (botão do site do beta, 2172x724), recortado na caixa visível e reduzido; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
