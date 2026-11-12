@@ -4883,3 +4883,9 @@ Decisão: (1) a aba Materiais da Mochila não lista mais as Essências elementai
 
 **Alternativa que perdeu:** manter as frases longas ("1 por dia, só por entrar…"): o dono quer leitura de relance. **Falsifica:** Essências voltando à aba, material usado no Soulsmith/Restaurante sem aparecer em "Usar em" (`materialGuide.test.ts`). **Rollback:** reverter o PR. **APK:** nada.
 
+
+## §309 — Tabela de Soulmons por forma/linhagem e tipo Absoluto no Ultra (12/11/2026, pedido do dono)
+
+Decisão: (1) a Tabela de Soulmons (artefato do dono, `scripts/gerar-tabela-soulmons.mjs`) passa a ter como unidade a ESPÉCIE/FORMA (736 linhas, 307 linhagens), cada uma uma vez; os 170 simulados `sim_*` viram referências (colunas "usado por" e "apelidos"), porque o sprite de um simulado é o da criatura do elemento dele e vários simulados compartilham as mesmas formas. (2) Só Rookie: os 217 combinados + Ashimp, Tailhorn e Corvinho só têm Rookie no código (sem evolução cadastrada); os 5 iniciais (Crato, Brooka, Zefi, Oaken, Bolid) têm evolução gerada pelo Oráculo por jogador, sem arte/nome fixo. (3) Todo Ultra, inclusive o do jogador, é do tipo ABSOLUTO (os três tipos ao mesmo tempo, neutro): no jogo entra só como constante de exibição `ABSOLUTE_TYPE` (`src/types/attributes.ts`) e linha no glossário; nenhuma regra de combate muda.
+
+**Alternativa que perdeu:** 5 estágios por simulado (linhas repetidas por apelido). **Falsifica:** o mesmo sprite/forma aparecendo em duas linhas da tabela, Ultra com tipo diferente de Absoluto. **Rollback:** reverter o PR. **APK:** nada.

@@ -53,7 +53,11 @@ td .sub { color: var(--muted); font-size: 12px; }
 .col-spr { width: 76px; }
 .cartao .topo-c { display: flex; gap: 10px; align-items: center; }
 .cartao .topo-c .txt { flex: 1; min-width: 0; }
-.col-nome { width: 20%; } .col-pers { width: 11%; } .col-elem { width: 11%; } .col-est { width: 9%; } .col-atk { width: 13%; } .col-esp { width: 13%; } .col-ctx { width: 13%; } .col-id { width: 10%; }
+.col-nome { width: 19%; } .col-pers { width: 10%; } .col-elem { width: 9%; } .col-est { width: 8%; } .col-atk { width: 11%; } .col-esp { width: 10%; } .col-ctx { width: 21%; } .col-id { width: 12%; }
+tr.grupo td { background: var(--surface2); color: var(--teal); font-weight: 600; font-size: 13px; border-top: 2px solid var(--teal); cursor: default; padding: 6px 10px; }
+tr.grupo td span { color: var(--muted); font-weight: 400; }
+.cartao-grupo { margin: 14px 0 6px; padding: 6px 2px; color: var(--teal); font-weight: 600; font-size: 13px; border-top: 3px solid var(--teal); }
+.cartao-grupo span { color: var(--muted); font-weight: 400; }
 
 .cartoes { display: none; }
 .cartao { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
@@ -108,11 +112,12 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   <header class="topo">
     <h1>Tabela de Soulmons <small id="gerado"></small></h1>
     <div class="barra">
-      <input id="busca" class="busca" type="search" placeholder="Buscar por nome ou id" aria-label="Buscar por nome">
+      <input id="busca" class="busca" type="search" placeholder="Buscar por nome, apelido ou id (ex.: sim_0007)" aria-label="Buscar por nome">
       <button id="btnFiltros" class="btn" type="button" aria-label="Filtros">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         Filtros <span id="nFiltros" class="badge" hidden>0</span>
       </button>
+      <button id="btnSemEvo" class="btn" type="button">Sem evolução</button>
       <button id="btnCsv" class="btn primario" type="button">Exportar CSV</button>
       <button id="btnCsvEd" class="btn cobre" type="button">Exportar só editados</button>
     </div>
@@ -124,13 +129,13 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     <table>
       <thead><tr>
         <th class="col-spr">Sprite</th><th class="col-nome">Nome</th><th class="col-pers">Personalidade</th><th class="col-elem">Elemento base</th><th class="col-est">Estágio</th>
-        <th class="col-atk">Tipo de ataque</th><th class="col-esp">Ataque especial</th><th class="col-ctx">Contexto</th><th class="col-id">Id</th>
+        <th class="col-atk">Tipo de ataque</th><th class="col-esp">Ataque especial</th><th class="col-ctx">Usado por</th><th class="col-id">Id</th>
       </tr></thead>
       <tbody id="corpo"></tbody>
     </table>
   </div>
   <div class="cartoes" id="cartoes"></div>
-  <div id="vazio" class="vazio" hidden>Nenhum Soulmon com esses filtros.</div>
+  <div id="vazio" class="vazio" hidden>Nenhuma forma com esses filtros.</div>
 </div>
 
 <div class="fundo" id="fundo"></div>
@@ -162,13 +167,15 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   var BASE = DADOS.linhas;
   var CHAVE = 'tabela-soulmons-edicoes-v1';
   var CAMPOS = ['nome', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto'];
+  var SPLIM = 6;
 
   var ROT = {
     estagio: { rookie: 'Rookie', champion: 'Champion', ultimate: 'Ultimate', mega: 'Mega', ultra: 'Ultra' },
     ataque_tipo: { ranged_corte: 'Ranged · corte', ranged_splash: 'Ranged · splash (magia)', melee_corte: 'Melee · corte', melee_splash: 'Melee · splash', variavel_ficha: 'Variável (ficha)' },
     especial_tipo: { direto: 'Direto', dot: 'DoT', cura: 'Cura', hot: 'HoT', buff: 'Buff', debuff: 'Debuff', variavel: 'Variável (sorteio)', escolha_jogador: 'Escolha do jogador' },
     contexto: { simulado: 'Simulado', arena: 'Arena', rift: 'Rift / Masmorra', selvagem: 'Selvagem', jogador: 'Jogador', catalogo: 'Catálogo' },
-    personalidade: { poder: 'Poder', harmonia: 'Harmonia', benevolencia: 'Benevolência', neutro: 'Neutro' }
+    personalidade: { poder: 'Poder', harmonia: 'Harmonia', benevolencia: 'Benevolência', absoluto: 'Absoluto', neutro: 'Neutro' },
+    evolucao: { evolui: 'Evolui (arte cadastrada)', so_rookie: 'Só Rookie (sem evolução)', gerada: 'Gerada pelo Oráculo (inicial)' }
   };
   function rot(campo, v) { return (ROT[campo] && ROT[campo][v]) || v; }
   function distintos(campo) {
@@ -186,9 +193,10 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     elemento_base: ordenar('elemento_base', distintos('elemento_base')),
     ataque_tipo: Object.keys(ROT.ataque_tipo),
     especial_tipo: Object.keys(ROT.especial_tipo),
-    contexto: Object.keys(ROT.contexto)
+    contexto: Object.keys(ROT.contexto),
+    evolucao: Object.keys(ROT.evolucao)
   };
-  var COL_FILTRO = [['personalidade', 'Personalidade'], ['elemento_base', 'Elemento base'], ['estagio', 'Estágio'], ['ataque_tipo', 'Tipo de ataque'], ['especial_tipo', 'Ataque especial'], ['contexto', 'Contexto']];
+  var COL_FILTRO = [['personalidade', 'Personalidade'], ['elemento_base', 'Elemento base'], ['estagio', 'Estágio'], ['ataque_tipo', 'Tipo de ataque'], ['especial_tipo', 'Ataque especial'], ['contexto', 'Contexto'], ['evolucao', 'Evolução']];
 
   var edicoes = {};
   try { edicoes = JSON.parse(localStorage.getItem(CHAVE) || '{}') || {}; } catch (e) { edicoes = {}; }
@@ -200,7 +208,7 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   var busca = '';
   function nFiltrosAtivos() { var n = 0; COL_FILTRO.forEach(function (c) { n += Object.keys(filtros[c[0]]).length; }); return n; }
   function passa(l) {
-    if (busca && (valor(l, 'nome') + ' ' + l.id + ' ' + valor(l, 'linha')).toLowerCase().indexOf(busca) < 0) return false;
+    if (busca && (valor(l, 'nome') + ' ' + l.id + ' ' + valor(l, 'linha') + ' ' + (l.apelidos || []).join(' ') + ' ' + (l.usado_por || []).join(' ')).toLowerCase().indexOf(busca) < 0) return false;
     for (var i = 0; i < COL_FILTRO.length; i++) {
       var c = COL_FILTRO[i][0];
       if (!Object.keys(filtros[c]).length) continue;
@@ -213,40 +221,54 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function tags(campo, v) { return (Array.isArray(v) ? v : [v]).map(function (x) { return '<span class="tag">' + esc(rot(campo, x)) + '</span>'; }).join(''); }
 
+  function usadoPor(l) {
+    var ctx = (valor(l, 'contexto') || []).filter(function (x) { return x !== 'simulado'; });
+    var sims = (l.usado_por || []).filter(function (x) { return /^sim_/.test(x); });
+    var h = tags('contexto', ctx);
+    if (sims.length) h += '<span class="tag">' + esc(rot('contexto', 'simulado')) + ' ×' + sims.length + '</span><div class="sub">' + esc(sims.slice(0, SPLIM).join(', ') + (sims.length > SPLIM ? ' +' + (sims.length - SPLIM) : '')) + '</div>';
+    return h;
+  }
   var SPR = DADOS.sprites || [];
   function spr(l) { return l.sp >= 0 && SPR[l.sp] ? '<img class="spr" loading="lazy" alt="" src="' + SPR[l.sp] + '">' : '<div class="spr-nada" title="sem sprite">?</div>'; }
   var visiveis = [];
   function render() {
     visiveis = BASE.filter(passa);
     var h = '', c = '', ant = null;
+    var cont = {}; BASE.forEach(function (l) { cont[l.linha] = (cont[l.linha] || 0) + 1; });
     visiveis.forEach(function (l, i) {
       var nova = l.linha !== ant; ant = l.linha;
+      if (nova) {
+        var nSim = l.linhagem_sims || 0;
+        var tit = '<b>' + esc(l.linhagem_nome || l.linha) + '</b> <span>· linhagem ' + esc(l.linha) + ' · ' + cont[l.linha] + ' forma' + (cont[l.linha] === 1 ? '' : 's') + (l.evolucao && l.evolucao !== 'evolui' ? ' · ' + esc(rot('evolucao', l.evolucao)) : '') + (nSim ? ' · ' + nSim + ' simulados' : '') + '</span>';
+        h += '<tr class="grupo"><td colspan="9">' + tit + '</td></tr>';
+        c += '<div class="cartao-grupo">' + tit + '</div>';
+      }
       var ed = editado(l);
       var sp = spr(l);
-      h += '<tr data-i="' + i + '" class="' + (ed ? 'editado ' : '') + (nova ? 'novo-grupo' : '') + '">' +
-        '<td>' + sp + '</td><td><b>' + esc(valor(l, 'nome')) + '</b><div class="sub">' + esc(valor(l, 'linha')) + '</div></td>' +
+      h += '<tr data-i="' + i + '" class="' + (ed ? 'editado' : '') + '">' +
+        '<td>' + sp + '</td><td><b>' + esc(valor(l, 'nome')) + '</b><div class="sub">' + esc(l.apelidos && l.apelidos.length ? 'apelidos: ' + l.apelidos.slice(0, 4).join(', ') + (l.apelidos.length > 4 ? ' +' + (l.apelidos.length - 4) : '') : '') + '</div></td>' +
         '<td>' + tags('personalidade', valor(l, 'personalidade')) + '</td>' +
         '<td>' + esc(valor(l, 'elemento_base')) + (l.elementos && l.elementos.length > 1 ? '<div class="sub">' + esc(l.elementos.join(' + ')) + '</div>' : '') + '</td>' +
         '<td>' + esc(rot('estagio', valor(l, 'estagio'))) + '</td>' +
         '<td>' + esc(rot('ataque_tipo', valor(l, 'ataque_tipo'))) + '</td>' +
         '<td>' + esc(rot('especial_tipo', valor(l, 'especial_tipo'))) + '</td>' +
-        '<td>' + tags('contexto', valor(l, 'contexto')) + '</td>' +
+        '<td>' + usadoPor(l) + '</td>' +
         '<td class="sub">' + esc(l.id) + '</td></tr>';
-      c += '<div class="cartao ' + (ed ? 'editado ' : '') + (nova ? 'novo-grupo' : '') + '" data-i="' + i + '">' +
+      c += '<div class="cartao ' + (ed ? 'editado' : '') + '" data-i="' + i + '">' +
         '<div class="topo-c">' + sp + '<div class="txt"><h3>' + esc(valor(l, 'nome')) + '<span>' + esc(rot('estagio', valor(l, 'estagio'))) + '</span></h3>' +
-        '<div class="linha-id">' + esc(valor(l, 'linha')) + ' · ' + esc(l.id) + '</div></div></div>' +
+        '<div class="linha-id">' + esc(l.id) + '</div></div></div>' +
         '<div class="grade">' +
         '<div><b>Personalidade</b>' + esc(rot('personalidade', valor(l, 'personalidade'))) + '</div>' +
         '<div><b>Elemento</b>' + esc(valor(l, 'elemento_base')) + '</div>' +
         '<div><b>Ataque</b>' + esc(rot('ataque_tipo', valor(l, 'ataque_tipo'))) + '</div>' +
         '<div><b>Especial</b>' + esc(rot('especial_tipo', valor(l, 'especial_tipo'))) + '</div>' +
-        '</div><div style="margin-top:6px">' + tags('contexto', valor(l, 'contexto')) + '</div></div>';
+        '</div><div style="margin-top:6px">' + usadoPor(l) + '</div></div>';
     });
     document.getElementById('corpo').innerHTML = h;
     document.getElementById('cartoes').innerHTML = c;
     document.getElementById('vazio').hidden = visiveis.length > 0;
     var nEd = BASE.filter(editado).length;
-    document.getElementById('resumo').textContent = visiveis.length + ' de ' + BASE.length + ' Soulmons · ' + (DADOS.sem_sprite || 0) + ' sem sprite · ' + nEd + ' editado' + (nEd === 1 ? '' : 's');
+    document.getElementById('resumo').textContent = visiveis.length + ' de ' + BASE.length + ' formas · ' + (DADOS.linhagens || 0) + ' linhagens · ' + (DADOS.simulados || 0) + ' simulados (referências) · ' + (DADOS.sem_sprite || 0) + ' sem sprite · ' + nEd + ' editado' + (nEd === 1 ? '' : 's');
     var n = nFiltrosAtivos(), b = document.getElementById('nFiltros'); b.hidden = n === 0; b.textContent = n;
     var chips = '';
     COL_FILTRO.forEach(function (col) { Object.keys(filtros[col[0]]).forEach(function (v) { chips += '<button class="chip" type="button" data-c="' + col[0] + '" data-v="' + esc(v) + '">' + esc(rot(col[0], v)) + ' ✕</button>'; }); });
@@ -326,6 +348,10 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     if (l.basico || l.especial_nome) extra.push('Golpes: ' + (l.basico || '-') + ' / ' + (l.especial_nome || '-'));
     if (l.ataque_especial_forma) extra.push('Forma do ataque especial: ' + l.ataque_especial_forma);
     if (l.especial_mix) extra.push('Sorteio do especial: ' + l.especial_mix);
+    if (l.apelidos && l.apelidos.length) extra.push('Apelidos (nomes dados por simulados): ' + l.apelidos.join(', '));
+    var simsL = (l.usado_por || []).filter(function (x) { return /^sim_/.test(x); });
+    if (simsL.length) extra.push('Simulados que usam esta forma (' + simsL.length + '): ' + simsL.join(', '));
+    extra.push('Linhagem: ' + (l.linhagem_nome || l.linha) + ' (' + l.linha + ') · ' + rot('evolucao', l.evolucao));
     if (l.nota) extra.push('Nota: ' + l.nota);
     extra.push('Derivado (calculado, pode estar errado): ' + (l.derivado.length ? l.derivado.join(', ') : 'nenhum'));
     h += '<div class="campo"><label>Informações</label><div class="ro">' + extra.map(esc).join('<br>') + '</div></div>' +
@@ -361,14 +387,14 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     if (!atual) return; delete edicoes[atual.id]; gravar(); fechar(); render();
   });
 
-  var COLS_CSV = ['id', 'nome', 'sprite', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'editado', 'fonte'];
+  var COLS_CSV = ['id', 'nome', 'apelidos', 'sprite', 'linha', 'linhagem_nome', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'usado_por', 'evolucao', 'editado', 'fonte'];
   function cel(v) { var s = Array.isArray(v) ? v.join(';') : String(v == null ? '' : v); return /[",\r\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
   function exportar(soEditados) {
     var rows = BASE.filter(function (l) { return !soEditados || editado(l); });
     if (!rows.length) { mostrarCsv('Nenhuma linha editada ainda. Edite uma linha e volte aqui.', 'Só editados'); return; }
     var linhas = [COLS_CSV.join(',')];
     rows.forEach(function (l) {
-      linhas.push(COLS_CSV.map(function (c) { return cel(c === 'editado' ? (editado(l) ? 'sim' : 'nao') : (c === 'id' || c === 'fonte' || c === 'sprite') ? l[c] : valor(l, c)); }).join(','));
+      linhas.push(COLS_CSV.map(function (c) { return cel(c === 'editado' ? (editado(l) ? 'sim' : 'nao') : (c === 'id' || c === 'fonte' || c === 'sprite' || c === 'apelidos' || c === 'usado_por' || c === 'linhagem_nome' || c === 'evolucao') ? l[c] : valor(l, c)); }).join(','));
     });
     mostrarCsv(linhas.join('\n'), soEditados ? 'CSV só editados (' + rows.length + ' linhas)' : 'CSV completo (' + rows.length + ' linhas)');
   }
@@ -384,6 +410,11 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     var ta = document.getElementById('csvTexto'), msg = document.getElementById('csvMsg');
     function sel() { ta.focus(); ta.select(); msg.textContent = 'Selecionado: use Copiar do sistema.'; }
     try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copiado.'; }, sel); } catch (e) { sel(); }
+  });
+  document.getElementById('btnSemEvo').addEventListener('click', function () {
+    var on = filtros.evolucao.so_rookie && filtros.evolucao.gerada && !filtros.evolucao.evolui;
+    filtros.evolucao = on ? {} : { so_rookie: true, gerada: true };
+    render();
   });
   document.getElementById('btnCsv').addEventListener('click', function () { exportar(false); });
   document.getElementById('btnCsvEd').addEventListener('click', function () { exportar(true); });
