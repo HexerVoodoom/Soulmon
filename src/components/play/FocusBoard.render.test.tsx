@@ -119,12 +119,17 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
     expect(server.active).toBeNull();
     fireEvent.click(document.querySelector('[data-focus-pick="t2"]')!);
     expect((document.querySelector('[data-focus-pick-go]') as HTMLButtonElement).disabled).toBe(false);
+    // o ✓ aparece na linha marcada (o check turquesa não pode sumir sobre o fill do botão)
+    const marcada = document.querySelector('[data-focus-pick="t2"]') as HTMLElement;
+    expect([...marcada.querySelectorAll('.sm2-icon')].some(e => e.textContent === 'check' && !!e.querySelector('svg path'))).toBe(true);
+    expect(marcada.style.backgroundColor).not.toBe('var(--sm2-primary-fill)');
     await act(async () => { fireEvent.click(document.querySelector('[data-focus-pick-go]')!); });
     await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_SESSION)!).taskId).toBe('t2');
-    // a escolhida aparece primeiro no dock, com a etiqueta
-    expect(document.querySelector('[data-focus-dock-chosen]')).not.toBeNull();
-    expect(document.querySelector('[data-focus-dock] li')!.textContent).toContain('Em foco');
+    // o dock mostra SÓ a escolhida, sem etiqueta nem cabeçalho
+    expect(document.querySelector('[data-focus-dock-chosen]')).toBeNull();
+    expect(document.querySelectorAll('[data-focus-dock] > div > ul > li').length).toBe(1);
+    expect(document.querySelector('[data-focus-dock]')!.textContent).not.toContain('Em foco');
   });
   it('sem tarefas abertas, o modal oferece criar uma na hora', async () => {
     const onCreateTask = vi.fn(() => true);

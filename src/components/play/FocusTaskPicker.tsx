@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Field, ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
+import { checkBoxStyle, CheckMark, pickRowStyle } from '../pixel/RitualPanel';
 import type { Language } from '../../utils/i18n';
 import type { DockTask } from './FocusTaskDock';
 
@@ -48,8 +48,8 @@ export function FocusTaskPicker({ language, tasks, initialId, busy, onClose, onP
           {open.map(t => {
             const on = t.id === sel;
             return <button key={t.id} type="button" role="radio" aria-checked={on} data-focus-pick={t.id} onClick={() => setSel(t.id)}
-              style={{ ...sm2Button(on ? 'primary' : 'outline'), justifyContent: 'flex-start', gap: 8, minHeight: 48, textAlign: 'left' }}>
-              <span aria-hidden="true" style={checkBoxStyle({ checked: on })}>{on && <CheckMark />}</span>
+              style={{ ...pickRowStyle(sm2Button('outline'), on), justifyContent: 'flex-start', gap: 8, minHeight: 48, textAlign: 'left' }}>
+              <span aria-hidden="true" className={on ? 'sm2-check-halo' : undefined} style={checkBoxStyle({ checked: on })}>{on && <CheckMark />}</span>
               <span style={{ overflowWrap: 'anywhere', flex: 1 }}>{t.name}</span>
               {t.kind === 'habit' && <span style={sm2Hint}>{isPt ? 'Hábito' : 'Habit'}</span>}
             </button>;
