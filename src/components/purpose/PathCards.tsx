@@ -25,7 +25,7 @@ function Face({ id, isPt, big }: { id: PurposePath; isPt: boolean; big: boolean 
   return (
     <>
       <span aria-hidden="true" style={{ fontSize: big ? 'var(--sm2-text-lg)' : 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{NUMERAL[id]}</span>
-      <Icon name={c.icon} size={big ? 64 : 36} fill={1} tone="primary" />
+      {big ? <Icon name={c.icon} size={32} fill={1} tone="primary" /> : <Icon name={c.icon} size={24} fill={1} tone="primary" />}
       <span style={{ ...sm2Text, fontWeight: 600, fontSize: big ? 'var(--sm2-text-lg)' : 'var(--sm2-text-md)', margin: 0 }}>{isPt ? c.name.pt : c.name.en}</span>
       <span style={{ ...sm2Hint, margin: 0, fontSize: big ? 'var(--sm2-text-sm)' : 'var(--sm2-text-xs)' }}>{isPt ? c.text.pt : c.text.en}</span>
     </>
@@ -64,8 +64,8 @@ export function PathCards({ isPt, onChoose, selected, title }: { isPt: boolean; 
           style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16,
             backgroundColor: 'rgba(4, 18, 20, .78)', opacity: reduced || shown ? 1 : 0, transition: reduced ? 'none' : 'opacity 260ms ease', outline: 'none' }}>
           <button type="button" data-path-close aria-label={isPt ? 'Fechar' : 'Close'} onClick={() => setOpen(null)}
-            style={{ position: 'absolute', top: 'max(12px, env(safe-area-inset-top))', right: 12, minWidth: 44, minHeight: 44, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sm2-ink-on-scrim, #fff)' }}>
-            <Icon name="close" size={28} tone="inherit" />
+            style={{ position: 'absolute', top: 'max(12px, env(safe-area-inset-top))', left: 12, minWidth: 44, minHeight: 44, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sm2-ink-on-scrim, #fff)' }}>
+            <Icon name="close" size={24} tone="inherit" />
           </button>
           <div style={{ ...cardFace(true), transform: reduced || shown ? 'scale(1)' : 'scale(.82)', opacity: reduced || shown ? 1 : 0, transition: trans }}>
             <Face id={open} isPt={isPt} big />

@@ -33,6 +33,7 @@ const TABELA: Record<string, Classe> = {
   'components/ritual/RitualKit.tsx': 'base-esquerda', // o ramo `end` é só do pesadelo (atividade)
   'components/form/FormKit.tsx': 'base-esquerda', // idem: `closeSide="end"` só para atividade
   'components/nav/AreaSheet.tsx': 'base-esquerda',
+  'components/purpose/PathCards.tsx': 'base-esquerda', // a carta em destaque (as 3 cartas): ✕ no topo ESQUERDO, igual às outras bases
   'components/guild/GroveFolha.tsx': 'base-esquerda', // o panorama do Bosque: tela cheia, ✕ no topo ESQUERDO
   'components/AdventureDiary.tsx': 'base-esquerda', // modal de tela cheia (rodada 7, I7): ✕ no topo ESQUERDO
   'components/home/Mochila.tsx': 'base-esquerda',

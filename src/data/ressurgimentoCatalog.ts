@@ -33,7 +33,7 @@ export const RESSURGIMENTO_ITEMS: CatalogItem[] = [
     addresses: ['comecar', 'energia'], leverages: [], evidence: { level: 'C', refs: [], note: NOTE },
   },
   {
-    id: 'ressurg-luz-do-dia', pathOnly: 'ressurgimento', kind: 'especifica', area: 'corpo', category: 'corpo', emoji: '🪟',
+    id: 'ressurg-luz-do-dia', pathOnly: 'ressurgimento', kind: 'especifica', area: 'corpo', category: 'corpo', emoji: '🌅',
     name: { pt: 'Abrir a janela', en: 'Open the window' },
     why: { pt: 'Um pouco de luz do dia faz parte de um dia mais leve. Dois minutos perto da janela já contam.', en: 'A bit of daylight is part of a lighter day. Two minutes by the window already count.' },
     levels: lv('Ficar 2 min perto da janela ou na porta', 'Spend 2 min by the window or the door', 'Ficar 5 min na janela, com a luz do dia', 'Spend 5 min at the window in daylight', 'Tomar o café perto da luz do dia', 'Have your coffee near the daylight', daily),
@@ -58,7 +58,7 @@ export const RESSURGIMENTO_ITEMS: CatalogItem[] = [
     addresses: ['comecar'], leverages: [], evidence: { level: 'C', refs: [], note: NOTE },
   },
   {
-    id: 'ressurg-dentes', pathOnly: 'ressurgimento', kind: 'especifica', area: 'corpo', category: 'corpo', emoji: '🪥',
+    id: 'ressurg-dentes', pathOnly: 'ressurgimento', kind: 'especifica', area: 'corpo', category: 'corpo', emoji: '🦷',
     name: { pt: 'Escovar os dentes', en: 'Brush your teeth' },
     why: { pt: 'Um gesto curto, de 30 segundos, que já é um cuidado.', en: 'A short, 30-second gesture that is already a form of care.' },
     levels: lv('Escovar uma vez, por 30 segundos', 'Brush once, for 30 seconds', 'Escovar de manhã', 'Brush in the morning', 'Escovar de manhã e à noite', 'Brush morning and night', daily),
