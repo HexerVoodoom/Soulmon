@@ -146,9 +146,12 @@ describe('fiação', () => {
     const i = app.indexOf('const resgatarPredio');
     expect(app.slice(i, i + 1400)).toContain('claimBuildingQuest(prev.buildingQuests');
     expect(app).toContain('onVisitBuilding={visitarPredio}');
-    // o journal conta SÓ a semanal (a diária saiu): um registro novo, no mesmo updater do Caderno
+    // o journal conta SÓ na missão do Trilho (`n-trilho`; a semanal anda no resgate dela, REGISTRO §318): um registro novo, no mesmo updater do Caderno
     const j = app.indexOf('const handleCaderno');
-    expect(app.slice(j, j + 900)).toContain("countWeeklyMission(prev, 'journal-days'");
+    expect(app.slice(j, j + 1200)).toContain("bumpDailyIn(prev, 'journal')");
+    expect(app.slice(j, j + 1200)).not.toContain('countWeeklyMission');
+    const r = app.indexOf('const resgatarDiaria');
+    expect(app.slice(r, r + 1200)).toContain("id === 'n-trilho' ? countWeeklyMission(r.state, 'journal-days'");
     expect(app.slice(j, j + 900)).not.toContain('completeBuildingQuest');
   });
 });

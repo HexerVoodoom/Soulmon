@@ -30,7 +30,7 @@ describe('catálogo', () => {
       expect(`${m.descPt} ${m.descEn}`).not.toMatch(/tarefa|task|todos? os|every|streak|sequência|perder|lose|não esqueça|don.t forget|hurry|corra para/i);
     }
   });
-  it('até 6 por dia e a pessoa nova (Vínculo 1) sempre tem as 6, todas abertas', () => {
+  it('até 8 por dia e a pessoa nova (Vínculo 1) sempre tem as 8, todas abertas', () => {
     for (let d = 1; d <= 28; d += 1) {
       const list = dailyMissionsFor(`2026-10-${String(d).padStart(2, '0')}`, 1);
       expect(list.length).toBe(DAILY_MISSION_COUNT);
@@ -119,7 +119,7 @@ describe('condição, 1 recompensa por dia, sem duplicar', () => {
 });
 
 describe('economia (REGISTRO §52): o máximo diário por faixa de Vínculo', () => {
-  it('no máximo DAILY_MISSION_COUNT (6) materiais por dia, sempre materiais (sem moeda nova)', () => {
+  it('no máximo DAILY_MISSION_COUNT (8) materiais por dia, sempre materiais (sem moeda nova)', () => {
     for (const bond of [1, 2, 3, 5]) {
       for (let d = 0; d < 50; d += 1) {
         const list = dailyMissionsFor(`eco-${d}`, bond);
@@ -140,11 +140,11 @@ describe('sanitize', () => {
   });
 });
 
-describe('rotação com 6 por dia', () => {
-  it('quem tem menos recursos abertos recebe menos que 6, nunca mais; o Vínculo 1 enche as 6', () => {
-    expect(DAILY_MISSION_COUNT).toBe(6);
-    expect(dailyMissionsFor('2026-10-14', 1).length).toBe(6);
-    expect(new Set(dailyMissionsFor('2026-10-14', 99).map(m => m.id)).size).toBe(6);
+describe('rotação com 8 por dia', () => {
+  it('quem tem menos recursos abertos recebe menos que 8, nunca mais; o Vínculo 1 enche as 8', () => {
+    expect(DAILY_MISSION_COUNT).toBe(8);
+    expect(dailyMissionsFor('2026-10-14', 1).length).toBe(8);
+    expect(new Set(dailyMissionsFor('2026-10-14', 99).map(m => m.id)).size).toBe(8);
   });
 });
 

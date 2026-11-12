@@ -40,6 +40,7 @@ O runbook de operação é [`BETA-CONTINGENCIA.md`](../BETA-CONTINGENCIA.md) §0
 | Nome | O que faz | Quem lê |
 |---|---|---|
 | `BETA_CLOSED` + `BETA_EMAILS` | Beta fechado: com `BETA_CLOSED` ligado, e-mail fora de `BETA_EMAILS` recebe **403 `beta-closed`** em save, IA, compra e inscrição de push; desligado, só a IA exige a lista (se ela existir). A mesma lista dá o **beta-full**: o e-mail listado enxerga o plano pago sem comprar (derivado na leitura, nunca gravado em `ent:`). | `_betaAccess.js`, `_betaFull.js`, `_auth.js` › `authorizeSaveAccess`, `_aiGuard.js` |
+| `OPEN_TEST_UNTIL` (constante em `_betaAccess.js`) · `OPEN_TEST_OFF` (var) | Janela aberta de teste (§317): até 27/11/2026 00:00 -03:00 qualquer e-mail verificado passa do portão do beta e vira beta-full; `OPEN_TEST_OFF=1` encerra antes, sem deploy de código. Nenhuma KV nova, nenhuma escrita extra. | `_betaAccess.js`, `_betaFull.js` |
 | `BILLING_DISABLED` | Loja fechada: comprovante novo ou de outra conta → **503 `billing-disabled`**; restaurar o que a conta já tem passa. | `billing.js` › `recusaSeLojaFechada` |
 | `CHAT_DISABLED` | `/api/chat` → **503 `chat-disabled`** antes de gastar cota. `GET /api/config` expõe `billingDisabled`/`chatDisabled` para a UI esconder os botões. | `chat.js`, `config.js` |
 | `SPRITE_DISABLED` · `SPRITE_REGEN_DISABLED` | `/api/generate-sprite` → **503 `sprite-disabled`**; o segundo desliga só o "Gerar de novo" pago (**503 `sprite-regen-disabled`**), antes de qualquer débito. | `generate-sprite.js` |

@@ -50,7 +50,9 @@ describe('journal e Focus Workshop são semanais 3x, nunca diárias', () => {
     expect(s.weeklyMissions.counts['focus-days']).toBe(2);
   });
   it('fiação: salvar entrada do journal e concluir sessão do foco contam; as diárias saíram', () => {
-    expect(app).toContain("countWeeklyMission(prev, 'journal-days'");
+    // o Caderno conta na diária do Trilho; a semanal de journal anda no RESGATE dela (REGISTRO §318)
+    expect(app).toContain("bumpDailyIn(prev, 'journal')");
+    expect(app).toContain("countWeeklyMission(r.state, 'journal-days'");
     expect(app).toContain("countWeeklyMission(prev, 'focus-days'");
     expect(dailyMissionPool().some(m => m.id === 'd-foco')).toBe(false);
   });

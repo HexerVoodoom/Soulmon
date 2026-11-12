@@ -6105,10 +6105,11 @@ export default function App() {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
       if (c1 === c0) return prev;
-      // O EVENTO REAL do journal: um registro NOVO guardado conta a semanal "journal em 3 dias" (no máx. 1 por dia). A diária do
-      // Caderno saiu (12/11/2026, REGISTRO §309); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
+      // O EVENTO REAL do journal: um registro NOVO guardado conta na missão do Trilho (`n-trilho`, REGISTRO §318). O Caderno NÃO conta
+      // direto na semanal de journal: ela anda quando a diária do Trilho é RESGATADA (`resgatarDiaria`); o servidor reconfere o dia pelas
+      // entradas salvas (`_missionEvents.js`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
-      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date());
+      if (novo) prev = bumpDailyIn(prev, 'journal');
       return { ...prev, caderno: c1 };
     });
   }, [setGameState]);
@@ -7428,7 +7429,11 @@ export default function App() {
       const r = claimDaily(cur, dia, bondLevelFor(cur.totalXP ?? 0), id);
       if (r.paid) anunciarMaterial(language === 'pt-BR' ? 'Missão resgatada' : 'Mission claimed', r.paid, (r.state.buildingQuests?.materials[r.paid] ?? 0) - (cur.buildingQuests?.materials?.[r.paid] ?? 0));
     }
-    setGameState(prev => claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
+    setGameState(prev => {
+      const r = claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id);
+      // A diária do Trilho é a ÚNICA ligação do Caderno com a semanal "journal em 3 dias" (REGISTRO §318; no máx. 1 por dia).
+      return r.paid && id === 'n-trilho' ? countWeeklyMission(r.state, 'journal-days', new Date()) : r.state;
+    });
   }, []);
 
   /** Resgata uma PRIMEIRA VEZ (missão única). Idempotente sobre o `prev`. */

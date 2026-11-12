@@ -37,12 +37,12 @@ const mk = (over: Partial<Parameters<typeof MissionsSheet>[0]> = {}) => (
 );
 
 describe('um cartão por missão, com o "!" amarelo', () => {
-  it('Diárias: o passeio, as 6 do dia e as primeiras vezes são cartões separados, cada um com seu "!" dourado e sem azul', async () => {
+  it('Diárias: o passeio, as 8 do dia e as primeiras vezes são cartões separados, cada um com seu "!" dourado e sem azul', async () => {
     render(mk());
     await waitFor(() => expect(document.querySelectorAll('[data-first-time]').length).toBeGreaterThan(0), T);
     const cartoes = [...document.querySelectorAll('li[data-mission-card]')];
     const dosDias = document.querySelectorAll('[data-daily-mission]').length;
-    expect(dosDias).toBe(6);
+    expect(dosDias).toBe(8);
     expect(cartoes.length).toBe(1 + dosDias + document.querySelectorAll('[data-first-time]').length);
     for (const c of cartoes) {
       expect(c.parentElement!.tagName).toBe('UL');
@@ -83,7 +83,7 @@ describe('toda missão com lugar leva até ele', () => {
   it('diária de minijogo: tocar no título chama onGoBuilding com o prédio; cuidado leva à Home', async () => {
     const onGo = vi.fn();
     render(mk({ onGoBuilding: onGo }));
-    await waitFor(() => expect(document.querySelectorAll('[data-daily-mission]').length).toBe(6), T);
+    await waitFor(() => expect(document.querySelectorAll('[data-daily-mission]').length).toBe(8), T);
     const lista = dailyMissionsFor(DAY, 99);
     const predio = lista.find(m => dailyTarget(m) !== 'home' && dailyTarget(m) !== null);
     if (predio) {
@@ -149,7 +149,7 @@ describe('tabela de destinos', () => {
 });
 
 describe('recompensa: só quando PRONTA (dono, 15/10/2026), exceto na lista do DIA, que a mostra sempre (dono, 12/11/2026)', () => {
-  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído, sem recompensa', async () => {
+  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído e a recompensa CONTINUA à vista (§318)', async () => {
     const m = dailyMissionsFor(DAY, 99)[0];
     const { rerender } = render(mk());
     await waitFor(() => expect(document.querySelector(`[data-daily-mission="${m.id}"]`)).not.toBeNull(), T);
@@ -163,7 +163,7 @@ describe('recompensa: só quando PRONTA (dono, 15/10/2026), exceto na lista do D
     expect(card().querySelector('[data-claim-daily]')).not.toBeNull();
     rerender(mk({ dailies: { state: { ...pronta, claimed: [m.id] }, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
     expect(card().getAttribute('data-status')).toBe('claimed');
-    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 \S+/);
   });
 
   it('semanal: não pronta sem "Honra"; pronta mostra "+N" no Resgatar', async () => {
