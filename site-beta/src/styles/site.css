@@ -1191,3 +1191,8 @@ body:has(.ciclo.foco) .topo { visibility: hidden; }
   .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) [data-recomecar] { grid-column: 1; grid-row: 2; justify-self: end; }
   .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .ciclo-fim .botao { grid-column: 3; grid-row: 2; justify-self: start; }
 }
+
+/* 12/11 (dono): Trailer e Colete ganham mapa de fundo escurecido (antes: fundo liso). O véu garante a leitura. */
+.cena.calmo.trailer, .cena.calmo.colete { background: var(--sb-fundo-2); }
+.cena.calmo.trailer .cena-fundo::after, .cena.calmo.colete .cena-fundo::after { content: ''; position: absolute; inset: 0; background: rgba(1,12,14,.55); pointer-events: none; }
+.cena.calmo.trailer > :not(.cena-fundo), .cena.calmo.colete > :not(.cena-fundo) { position: relative; z-index: 1; }

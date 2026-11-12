@@ -257,7 +257,8 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
 
     <!-- 4b · Colete todas as formas (pedido do dono, 09/11). variantes elementais do fogo (caminho Poder) em public/sprites/colete/;
          -->
-    <section class="calmo colete" id="colete" aria-labelledby="colete-h">
+    <section class="cena calmo colete" id="colete" aria-labelledby="colete-h">
+      <Mapa id="jogos" desk="jogos-d" aD={841 / 600} fy={0.5} dfy={0.5} />
       <div class="colete-cab">
         <h2 id="colete-h">{t.colete.h2}</h2>
         <p class="frase">{t.colete.frase}</p>
@@ -377,7 +378,8 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
 
     <!-- 7 · Trailer de 59 s: telas reais + cartelas + arte aprovada; rotulado Trailer, nunca Gameplay real -->
     {trailer && (
-      <section class="calmo trailer" id="trailer" aria-labelledby="trailer-h">
+      <section class="cena calmo trailer" id="trailer" aria-labelledby="trailer-h">
+        <Mapa id="arena" desk="arena-d" aD={721 / 560} fy={0.5} dfy={0.5} />
         <div class="trailer-texto">
           <h2 id="trailer-h">{t.video.h2}</h2>
           <p class="frase">{t.video.legenda}</p>
