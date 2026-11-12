@@ -4574,3 +4574,11 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/atividadeEmCurso.ts`
 
 **`atividadeEmCurso` (12/11/2026, §306):** `atividadeEmCurso(sinais) → 'area' | 'masmorra' | 'foco' | 'modal' | null`, `estaOcioso`, `focoEmAndamento`, `ATIVIDADE_AREAS` (`arena`, `jogos`, `exploracao`). Puro; dono único do que conta como "atividade em curso".
+
+### `src/utils/balaoDourado.ts`
+
+**Balões dourados (beta12 §G, 12/11/2026):** `BALAO_TIPOS` (`grove`, `rift`, `achado`, na ordem de prioridade), `balaoKey(tipo, dia)` (`balaoDourado:<tipo>:<AAAA-MM-DD>`), `foiDispensado`, `dispensar(reg, tipo, dia)` (grava o dia e solta as chaves de outros dias; idempotente devolve o MESMO objeto), `sanitizeBalaoDourado`, `escolherBalao(presentes, reg, dia)` (um por vez), `balaoDouradoText` e `balaoDouradoAria` (PT-BR e EN, sem cobrança). O registro vive no save (`GameState.balaoDourado`). **Régua:** `balaoDourado.test.ts`, `CompanionHUD.balaoDourado.render.test.tsx`, `balaoDouradoETarefaLink.contract.test.ts`.
+
+### `src/utils/tarefaLink.ts`
+
+**Tarefas linkadas a recursos (beta12 §J, 12/11/2026):** `recursoDaAtividade` (via `catalogId` + `data/catalogResources.ts`), `gatilhoDoRecurso` (`steps` / `caderno` / `foco`), `atividadesParaAutoCheck(gatilho, args)` (hábito adotado, devido hoje, não feito, sem chave do dia; passos exigem permissão, registro de hoje e meta batida), `registrarAuto` / `jaFezAuto` / `chaveAuto` (`<AAAA-MM-DD>|<id>`, `GameState.tarefaAuto`), `progressoDePassos`, `passosLinha`, `irLaLabel`, `autoTagText` / `autoTagAria`. Passo nunca pontua sozinho: o check dá o que o toque manual dá. **Régua:** `tarefaLink.test.ts`, `catalogResources.contract.test.ts`, `DailyRituals.recurso.render.test.tsx`, `NoticeToast.taskTag.render.test.tsx`.

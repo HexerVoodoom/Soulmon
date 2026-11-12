@@ -2,6 +2,8 @@ import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
 import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
+import { sanitizeBalaoDourado, type BalaoDispensados } from '../utils/balaoDourado';
+import { sanitizeTarefaAuto } from '../utils/tarefaLink';
 import { sanitizeFunSession } from '../utils/funSession';
 import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
@@ -658,6 +660,10 @@ export interface GameState {
   dungeonKeyDay?: string;
   /** Recibos da jornada do foco já creditados no dia (§247). */
   journeyCredited?: { day: string; ids: string[] };
+  /** beta12 §G: balões dourados já tocados HOJE (`balaoDourado:<tipo>:<AAAA-MM-DD>` → true; só o dia corrente; `utils/balaoDourado.ts`). Opcional: save antigo não tem. */
+  balaoDourado?: BalaoDispensados;
+  /** beta12 §J: check automático por recurso já feito (`<AAAA-MM-DD>|<id da atividade>`; só o dia corrente; `utils/tarefaLink.ts`). Garante 1×/dia e nunca desmarca. Opcional. */
+  tarefaAuto?: string[];
   /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
   refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
@@ -1604,6 +1610,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
         journeyCredited: sanitizeJourneyCredited(loadedState.journeyCredited),
         refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
+        balaoDourado: sanitizeBalaoDourado(loadedState.balaoDourado),
+        tarefaAuto: sanitizeTarefaAuto(loadedState.tarefaAuto),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),

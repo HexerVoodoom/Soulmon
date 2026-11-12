@@ -141,6 +141,8 @@ export interface PlayHandlers {
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
   focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
+  /** beta12 §J: uma sessão de foco concluída com a tarefa escolhida (`habit:<id>` = hábito): marca o hábito de foco adotado que ela usou. */
+  onFocusSessionTask?: (taskId?: string) => void;
   onToggleFocusStep?: (taskId: string, stepId: string) => void;
   /** Prioridades (ICE): grava/limpa as 4 notas na tarefa. */
   onSetFocusIce?: (taskId: string, ice: Ice | null) => void;
@@ -658,7 +660,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
-            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}

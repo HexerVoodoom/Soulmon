@@ -307,3 +307,7 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 ### `src/hooks/useOcioso.ts` e `src/hooks/useOfertaPendente.ts`
 
 **`useOcioso` e `useOfertaPendente` (12/11/2026, §306):** `useOcioso({ view, naMasmorra, esperando }) → { ocioso, motivo }` lê `utils/atividadeEmCurso.ts` (área de atividade, masmorra, foco em andamento relido a cada 2 s só com `esperando`, `useModalDepth`). `useOfertaPendente(fila, ocioso, onMostrar?) → id | null`: a cabeça da fila só entra com ócio e fica até sair da fila; `onMostrar` roda uma vez. Uso: Vesca em `App.tsx`. `utils/modalDepth` ganhou `useModalDepth()`.
+
+### `src/hooks/useGroveAtaque.ts`
+
+**`useGroveAtaque({ saveId, playerDayTz, enabled, reler }) → boolean` (beta12 §G, 12/11/2026):** lê o `underAttack` de `claPlantio` (`claApi.getPlantio`) só com memória de roda neste aparelho, ao montar, ao voltar ao app e ao voltar à Home, com intervalo mínimo `GROVE_ATAQUE_MIN_MS` (60 s) e sem timer. `bosqueSobAtaque(vista)` é a regra pura (planta de pé, não madura, atacada, ainda sem proteção). Nada vai para o save (`guildNoSave.contract`).
