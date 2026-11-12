@@ -183,7 +183,7 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
 });
 
 
-describe('porta, sala de descanso e ciclos (§301)', () => {
+describe('sala de descanso e ciclos (§301, §312)', () => {
   const key = (k: string) => JSON.parse(localStorage.getItem(k) ?? 'null');
   /** Servidor com `claim`: ao fim do foco devolve o baú de conclusão e a chave do Calabouço, e a jornada some. */
   const stubServer = () => {
@@ -223,11 +223,28 @@ describe('porta, sala de descanso e ciclos (§301)', () => {
     expect(key(STORAGE_KEYS.FOCO_REST).mode).toBe('p25');
     expect(Math.abs(key(STORAGE_KEYS.FOCO_REST).startedAt - (Date.now() - 60_000))).toBeLessThan(5_000);
   });
-  it('a porta existe no fim do mapa e só abre quando o Soulmon chega', async () => {
+  it('não existe porta nem quadrado de chegada no mapa (§312): o fim do trajeto é o fim de uma seção', async () => {
     server.active = finished(5);
     const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
     await openJourney(container);
-    expect(document.querySelector('[data-journey-door]')!.getAttribute('data-open')).toBe('false');
+    expect(document.querySelector('[data-journey-door]')).toBeNull();
+    expect(document.querySelector('[data-journey-arrival]')).toBeNull();
+    expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('false');
+  });
+  it('ao chegar ao fim o mapa se dissolve e a sala de descanso assume em tela cheia, sem caixa nem placeholder', async () => {
+    stubServer(); seedSession();
+    server.active = { ...finished(), startAt: Date.now() - 25 * 60_000 + 400 };
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await openJourney(container);
+    expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('false');
+    await waitFor(() => expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('true'), { timeout: 3000 });
+    await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull(), { timeout: 4000 });
+    const room = document.querySelector('[data-rest-room]') as HTMLElement;
+    expect(room.style.position).toBe('fixed');
+    expect(room.style.inset).toMatch(/^0/);
+    expect(document.querySelector('[data-rest-bg] [data-rest-fallback]')).not.toBeNull();
+    expect(document.querySelector('[data-journey]')).toBeNull();
+    expect(document.querySelector('[data-journey-door], [data-journey-arrival]')).toBeNull();
   });
   it('o descanso é por timestamp: voltar depois do fim mostra «concluído», e o card da Oficina leva de volta a ele', async () => {
     seedSession(1);
