@@ -6,6 +6,13 @@
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
 
+# Molduras do widget (beta12 A1, docs/design/PLANO-WIDGET-MOLDURAS-REMOTAS.md): o manifesto SEMPRE revalida (ETag do edge permite 304);
+# as imagens levam o hash no nome, entao sao imutaveis. Regras disjuntas de proposito (o Cloudflare soma cabecalhos de regras que casam).
+/widget-frames/manifest.json
+  Cache-Control: no-cache
+/widget-frames/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
 # Never cache the service worker
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate

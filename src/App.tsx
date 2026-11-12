@@ -2819,6 +2819,12 @@ export default function App() {
       .catch(() => SoulmonReview.openStore().catch(() => {}));
   };
 
+  // Beta12 (A1): molduras novas do widget chegam pela web. Uma vez por sessão o Android sincroniza o manifesto (no máximo 1x por hora;
+  // APK anterior não tem o método e rejeita: engolido). A posse/preço da moldura NÃO muda: segue sendo do app e do servidor.
+  useEffect(() => {
+    try { void SoulmonWidget.syncWidgetFrames().catch(() => {}); } catch { /* sem plugin */ }
+  }, []);
+
   // Sync game state to Android home screen widget
   const widgetSpriteUrl = widgetOwnSpriteUrl(minhaCriaturaUrl, petIsCorvo);
   useEffect(() => {

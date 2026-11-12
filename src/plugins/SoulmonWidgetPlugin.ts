@@ -188,12 +188,19 @@ export interface DigiWidgetData {
 
 export interface SoulmonWidgetPlugin {
   updateWidgetData(data: DigiWidgetData): Promise<void>;
+  /**
+   * Beta12 (A1): pede ao Android que sincronize o manifesto de molduras do widget (`/widget-frames/manifest.json`, servido pelo
+   * Worker). Sem argumentos de proposito: a URL e constante nativa, a web nao manda URL. Resolve de imediato; o download corre
+   * em segundo plano, no maximo 1x por hora. No APK anterior o metodo nao existe (rejeita): quem chama engole o erro.
+   */
+  syncWidgetFrames(): Promise<void>;
 }
 
 const SoulmonWidget = registerPlugin<SoulmonWidgetPlugin>('SoulmonWidget', {
   // No-op web implementation — widget only exists on Android
   web: {
     async updateWidgetData() {},
+    async syncWidgetFrames() {},
   },
 });
 
