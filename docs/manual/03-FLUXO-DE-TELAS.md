@@ -2463,3 +2463,7 @@ Cobertura só no nível de existência de superfície e de ponto de entrada (reg
 - **Hexsmith, tabela de criação (12/11/2026, REGISTRO §305):** o catálogo de cada Porta é uma tabela **Item | Custo**; o custo é Bits + ícone da poção do elemento (com `tem/precisa` embaixo) + fragmentos, ligados por "+". Tocar o ícone da poção abre o tooltip "como conseguir" (`InfoTip` com `trigger`, fecha ao tocar fora/Voltar); tocar o item o seleciona para forjar.
 
 - **Vesca espera o ócio; poção criada (12/11/2026, REGISTRO §306):** a oferta da poção (essência de um base chegou a 100) fica numa fila e só abre quando o jogador está ocioso: fora de Arena/Jogos/Exploração, fora da Masmorra, sem foco rodando/pausado e sem modal aberto. Ao concluir a atividade a Vesca aparece (modal de sempre, "Fazer a poção" / "Depois"). Fazer abre a tela cheia **Poção de <elemento> criada**: véu escuro, ícone da poção grande, luz girando atrás (parada com movimento reduzido), texto e OK centralizado, sem caixa.
+
+### Delta de 12/11/2026 — Mochila › Materiais
+
+O tooltip de cada material tem 2 linhas: **Encontrado em** (lugares) e **Usar em** (Soulsmith/Restaurante). As Essências saíram da aba (a lista fica em Laboratório › Arquivo, `EssencesSection`). REGISTRO §308.

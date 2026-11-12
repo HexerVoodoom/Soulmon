@@ -4,7 +4,7 @@ import { MATERIALS } from './buildingQuestsCopy';
 import { FORGE_PIECES } from './forge';
 import { DISHES } from './restaurant';
 import { FOCUS_ENVIRONMENTS } from './focusExpedition';
-import { EXTRA_MATERIALS, guideOfMaterial, guideOfExtra, usesOfMaterial, expeditionsOf } from './materialGuide';
+import { EXTRA_MATERIALS, guideOfMaterial, guideOfExtra, usesOfMaterial, usePlacesOfMaterial, expeditionsOf } from './materialGuide';
 
 describe('guia dos materiais: onde conseguir e para que serve (derivado do código)', () => {
   it('os 16 materiais têm nome/ícone e prédio dono', () => {
@@ -33,19 +33,11 @@ describe('guia dos materiais: onde conseguir e para que serve (derivado do códi
       expect(usesOfMaterial(id, true).some(u => u.startsWith('Restaurante')), id).toBe(usados.has(id));
     }
   });
-  it('"só por entrar" só vale para prédio que paga na entrada: o Caderno (listado) pede registro + resgate', () => {
-    for (const id of MATERIAL_IDS) {
-      const listado = (LISTED_QUEST_BUILDINGS as readonly string[]).includes(MATERIAL_BUILDING[id]);
-      expect(guideOfMaterial(id, true, 'X').sources.includes('só por entrar'), id).toBe(!listado);
-      expect(guideOfMaterial(id, false, 'X').sources.includes('just by stepping in'), id).toBe(!listado);
-    }
-    expect(guideOfMaterial('ink', true, 'Caderno').sources).toMatch(/registro/);
-  });
   it('as expedições do Foco entram na fonte', () => {
     for (const id of MATERIAL_IDS) {
       const envs = expeditionsOf(id);
       expect(envs.length, id).toBeGreaterThan(0);
-      for (const e of envs) expect(guideOfMaterial(id, true, 'X').sources).toContain(e.pt);
+      expect(guideOfMaterial(id, true, 'X').sources).toContain('Expedições do Foco');
     }
     expect(FOCUS_ENVIRONMENTS.length).toBeGreaterThan(0);
   });
@@ -53,16 +45,22 @@ describe('guia dos materiais: onde conseguir e para que serve (derivado do códi
     const semUso = MATERIAL_IDS.filter(id => usesOfMaterial(id, true).length === 0).sort();
     expect(semUso).toEqual(['cipher', 'essence', 'ink', 'keepsake', 'page', 'prism']);
   });
-  it('os 3 recursos extras têm fonte e (ou) uso reais', () => {
-    expect(EXTRA_MATERIALS.map(x => x.id)).toEqual(['soulsmith-fragment', 'boss-shard', 'essences']);
+  it('os 2 recursos extras (sem Essências: ficam só no Arquivo) têm fonte e uso reais', () => {
+    expect(EXTRA_MATERIALS.map(x => x.id)).toEqual(['soulsmith-fragment', 'boss-shard']);
     const frag = guideOfExtra('soulsmith-fragment', true);
     expect(frag.sources).toMatch(/Fenda/);
-    expect(frag.uses.join(' ')).toMatch(/refazer a escolha/);
+    expect(frag.uses).toEqual(['Soulsmith']);
     const boss = guideOfExtra('boss-shard', false);
     expect(boss.sources).toMatch(/Elemental Fusion/);
     expect(boss.uses).toEqual([]); // sem uso hoje
-    const ess = guideOfExtra('essences', true);
-    expect(ess.uses.join(' ')).toMatch(/Poção de Elemento/);
-    expect(ess.uses.join(' ')).toMatch(/Restaurante/);
+  });
+  it('formato enxuto: "onde conseguir" é só lugares; "onde usa" é só lugares (Soulsmith/Restaurante)', () => {
+    expect(guideOfMaterial('ore', true, 'Mina').sources).toMatch(/^Mina(, Expedições do Foco)?$/);
+    expect(guideOfMaterial('ore', false, 'Mine').sources).toMatch(/^Mine(, Focus expeditions)?$/);
+    for (const id of MATERIAL_IDS) {
+      for (const u of usePlacesOfMaterial(id, true)) expect(['Soulsmith', 'Restaurante']).toContain(u);
+      expect(guideOfMaterial(id, true, 'X').uses).toEqual(usePlacesOfMaterial(id, true));
+    }
+    expect(guideOfMaterial('cipher', true, 'X').uses).toEqual([]);
   });
 });

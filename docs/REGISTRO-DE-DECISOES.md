@@ -4871,3 +4871,9 @@ Decisão: (1) a pergunta da Vesca ("quer fazer a poção?") não interrompe mais
 Decisão: a coluna Custo da tabela da Hexsmith fica numa única fileira horizontal (poção + fragmentos + Bits, "+" entre eles), cada item com ícone de 28 px e a quantidade embaixo do próprio ícone; Bits é item da mesma fileira (não mais linha separada). Poção, fragmentos e Bits têm tooltip curto "como conseguir" (`hexCostHowTo`). Mais espaço entre as linhas; sem linha separadora (vetada pelo dono). Nome do HEX quebra em vez de cortar.
 
 **Alternativa que perdeu:** Bits abaixo dos itens e linha cinza fina (pedido anterior, substituído no mesmo dia). **Falsifica:** custo em 2 linhas a 360 px, texto cortado, item do custo sem tooltip (`HexsmithSheet.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+## §308 — Bolsa de materiais: sem Essências, tooltip "Encontrado em / Usar em" (12/11/2026, pedido do dono)
+
+Decisão: (1) a aba Materiais da Mochila não lista mais as Essências elementais (o tile "Essências" e a lista por elemento saíram); elas continuam só no Laboratório › Arquivo (`EssencesSection`, onde já existiam). (2) O tooltip de cada material ficou enxuto, em tabela única no código (`utils/materialGuide.ts`): **Encontrado em** + lugares (prédio dono da missão diária, Expedições do Foco; Fenda/Elemental Fusion para os fragmentos) e **Usar em** + lugares (Soulsmith pelas receitas `FORGE_PIECES`, Restaurante pelos `DISHES`); sem uso hoje continua dizendo isso.
+
+**Alternativa que perdeu:** manter as frases longas ("1 por dia, só por entrar…"): o dono quer leitura de relance. **Falsifica:** Essências voltando à aba, material usado no Soulsmith/Restaurante sem aparecer em "Usar em" (`materialGuide.test.ts`). **Rollback:** reverter o PR. **APK:** nada.
+
