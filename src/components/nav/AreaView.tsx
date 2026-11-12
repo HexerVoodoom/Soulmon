@@ -140,6 +140,7 @@ export interface PlayHandlers {
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
   focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
+  onToggleFocusStep?: (taskId: string, stepId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
   /** beta3 F1: a chave do dia ("Prepare to Focus" concluído) libera a Focus Workshop. Ausente = sem trava (testes antigos). */
@@ -147,6 +148,8 @@ export interface PlayHandlers {
   onFocusPrepared?: () => void;
   /** §239: a chave do Calabouço: concluir uma sessão da Oficina abre a dungeon naquele dia. Ausente = sem trava (testes antigos). */
   dungeonKeyActive?: boolean;
+  /** §299: a chave existe no save mas passou das 48 h (o portão diz que expirou). */
+  dungeonKeyExpired?: boolean;
   onFocusSessionComplete?: () => void;
   /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
   onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
@@ -648,7 +651,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
-            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
@@ -663,7 +666,7 @@ export function AreaView(props: AreaViewProps) {
         </AreaSheet>
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
-        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} /></Suspense>}
+        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} /></Suspense>}
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>

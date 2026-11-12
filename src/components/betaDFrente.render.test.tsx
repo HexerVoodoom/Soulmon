@@ -39,8 +39,10 @@ describe('9.1 — Salão de Jogos', () => {
 });
 
 describe('10.1 — ícones de categoria no Santuário', () => {
-  it('as 8 categorias têm arte (qualquer caixa) e a categoria inválida não quebra', () => {
-    expect(Object.keys(CATEGORY_ICON_ART).sort()).toEqual(Object.keys(CATEGORY_ICONS).sort());
+  it('as categorias com arte (as 7 herdadas; as outras são slots a gerar, caem no glifo) aceitam qualquer caixa e a inválida não quebra', () => {
+    const comIcone = Object.keys(CATEGORY_ICONS);
+    for (const id of Object.keys(CATEGORY_ICON_ART)) expect(comIcone).toContain(id);
+    expect(Object.keys(CATEGORY_ICON_ART).length).toBeGreaterThanOrEqual(7);
     expect(categoryIconArt('study')).toBe(CATEGORY_ICON_ART.aprendizado);
     expect(categoryIconArt('STUDY')).toBe(CATEGORY_ICON_ART.aprendizado);
     expect(categoryIconArt('nada')).toBeUndefined();

@@ -8,7 +8,7 @@ const PODER: SoulmonIntroInput = {
   name: 'Lumi', element: 'agua', alignment: 'poder', petPassive: 'guloso', categories: ['corpo', 'corpo', 'corpo'],
 };
 const HARMONIA: SoulmonIntroInput = {
-  name: 'Lumi', element: 'planta', alignment: 'harmonia', petPassive: 'carinhoso', categories: ['corpo'],
+  name: 'Lumi', element: 'planta', alignment: 'harmonia', petPassive: 'carinhoso', categories: ['mente'],
 };
 const BENEVOLENCIA: SoulmonIntroInput = {
   name: 'Lumi', element: 'industrial', alignment: 'benevolencia', petPassive: 'sortudo', categories: ['relacoes'],

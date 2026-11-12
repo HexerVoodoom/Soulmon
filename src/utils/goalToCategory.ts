@@ -47,7 +47,7 @@ const KEYWORDS: Array<{ category: ActivityCategory; words: readonly string[] }> 
     'curso', 'course', 'ler', 'leitura', 'read', 'ingles', 'english', 'idioma',
     'language', 'concurso', 'aprend', 'learn', 'escola', 'school',
   ] },
-  { category: 'financas', words: [
+  { category: 'foco', words: [
     'trabalh', 'work', 'emprego', 'job', 'carreira', 'career', 'projeto',
     'project', 'cliente', 'client', 'freela', 'negocio', 'business',
     'produtiv', 'productiv', 'prazo', 'deadline', 'email', 'reuni', 'meeting',

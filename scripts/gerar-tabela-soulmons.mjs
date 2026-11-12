@@ -1,13 +1,15 @@
 // Gera a TABELA DE SOULMONS (artefato do dono): todos os Soulmons em ordem de evolução por linha, com personalidade, elemento, estágio,
 // tipo de ataque, tipo de especial, contexto e id estável. Só LÊ o repo; escreve FORA dele (padrão E:\Soulmon-assets\tabela-soulmons):
-//   soulmons.json, soulmons.csv e tabela.html (autocontido, dados embutidos; molde em `scripts/tabela-soulmons.template.html`).
+//   soulmons.json, soulmons.csv e tabela.html (autocontido, dados e miniaturas dos sprites embutidos; molde em `scripts/tabela-soulmons.template.html`).
+// O HTML segue o formato do visualizador de artefatos (sem doctype/html/head/body, sem download: o CSV sai num painel com Copiar).
 // Uso: node scripts/gerar-tabela-soulmons.mjs [pastaDeSaida]
 // Os módulos TS do jogo são empacotados em memória com o esbuild do repo (assets viram vazio): a fonte da verdade continua sendo o código.
 // Colunas `fonte` e `derivado`: cada linha diz de onde veio e quais campos foram CALCULADOS (podem divergir do que o jogo faz num encontro real).
 import { build } from 'esbuild';
-import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import sharp from 'sharp';
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SAIDA = resolve(process.argv[2] || 'E:/Soulmon-assets/tabela-soulmons');
@@ -62,10 +64,35 @@ function ataqueInimigo(elemento, chave, nome) {
 }
 const mix = (estagio) => { const m = J.FOE_MIX[estagio === 'rookie' ? 'rookie' : 'adulto']; return `direto ${m.direct}% / buff ${m.buff}% / dot ${m.dot}% / cura ${m.heal}% / hot ${m.hot}% / debuff ${m.debuff}%`; };
 
+
+// ── sprites: mesmas regras de `rosterSpriteOf` (src/utils/novosSoulmon.ts) e `enemyRosterArt.ts`, resolvidas no disco ─────────────
+const ASSETS = 'src/assets/soulmon';
+const arq = (rel) => (existsSync(join(RAIZ, ASSETS, rel)) ? `${ASSETS}/${rel}` : '');
+// os PNGs de `novos/` se chamam pelo ELEMENTO da criatura base (`fogo-rookie.png` = Embrit), nao pelo id
+const NOVOS_ESTAGIO = (id, est) => { const el = NOVO_POR_ID[id]?.element; return el ? arq(`novos/${el}-${est}.png`) || (est === 'rookie' ? '' : arq(`novos/${el}-champion.png`)) : ''; };
+function spriteDoRoster(e) {
+  if (e.kind === 'mascote') return arq('corvo-neutro/corvo-neutro.png');
+  const a = e.artFile ?? '';
+  if (e.kind === 'ramo') return arq(`novos-arquivo/ramos/${a}.png`);
+  if (e.kind === 'paralelo') return arq(`novos-arquivo/paralelos/${a}.png`);
+  if (e.kind === 'forma') return arq(`novos-arquivo/combinados-formas/${a}.png`);
+  if (e.kind === 'base') return NOVOS_ESTAGIO(e.id, e.stage);
+  if (e.kind === 'api') return arq(`inimigos-api/${a}.png`);
+  // combinado: arte propria; sem ela, o app cai no rookie da criatura base do elemento dominante (1o componente)
+  return arq(`novos-arquivo/combinados/${a}.png`) || (NOVO_POR_ELEMENTO[e.elements[0]] ? arq(`novos/${e.elements[0]}-rookie.png`) : '');
+}
+/** Simulado/catalogo: a criatura do ELEMENTO do sprite (base do elemento; senao a entrada do roster daquele elemento). */
+function spriteDoElemento(elemento, estagio) {
+  const n = NOVO_POR_ELEMENTO[elemento];
+  if (n) return NOVOS_ESTAGIO(n.id, estagio);
+  const e = J.ENEMY_ROSTER.find(x => x.element === elemento && x.stage === estagio) || J.ENEMY_ROSTER.find(x => x.element === elemento && x.stage === 'rookie');
+  return e ? spriteDoRoster(e) : '';
+}
+
 const linhas = [];
 let ordem = 0;
 function add(l) {
-  linhas.push({ ordem: ordem++, elementos: [], ramo: '', basico: '', especial_nome: '', ataque_especial_forma: '', especial_mix: '', nota: '', derivado: [], ...l });
+  linhas.push({ ordem: ordem++, sprite: '', elementos: [], ramo: '', basico: '', especial_nome: '', ataque_especial_forma: '', especial_mix: '', nota: '', derivado: [], ...l });
 }
 const estIdx = (e) => ESTAGIOS.indexOf(e);
 
@@ -94,7 +121,7 @@ for (const e of J.ENEMY_ROSTER) {
   if (J.isStrayFoe(e.stage) && (strayKinds.has(e.kind) || e.kind === 'ramo')) contexto.push('selvagem');
   if (e.kind === 'mascote') contexto.push('jogador');
   add({
-    id: e.key, nome: e.name, linha, estagio: e.stage, personalidade, elemento_base: e.element, elementos: [...e.elements], ramo: ramoNome,
+    id: e.key, nome: e.name, sprite: spriteDoRoster(e), linha, estagio: e.stage, personalidade, elemento_base: e.element, elementos: [...e.elements], ramo: ramoNome,
     ataque_tipo: a.tipo, ataque_especial_forma: a.especialForma, especial_tipo: 'variavel', especial_mix: mix(e.stage), contexto,
     basico: e.basico?.pt ?? '', especial_nome: e.especial?.pt ?? '',
     nota: `tipo do roster: ${e.kind}${e.artFile ? `; arte ${e.artFile}` : ''}`,
@@ -107,7 +134,7 @@ for (const { id, ultra } of ultraOraculo) {
   const base = J.ENEMY_ROSTER.find(e => e.id === id && e.stage === 'rookie');
   const a = ataqueInimigo(base.element, ultra, ultra);
   add({
-    id: `${id}-ultra`, nome: ultra, linha: id, estagio: 'ultra', personalidade: 'todas (forma unica)', elemento_base: base.element, elementos: [...base.elements],
+    id: `${id}-ultra`, nome: ultra, sprite: arq(`novos/${NOVO_POR_ID[id]?.element}-ultra.png`) || spriteDoRoster(base), linha: id, estagio: 'ultra', personalidade: 'todas (forma unica)', elemento_base: base.element, elementos: [...base.elements],
     ataque_tipo: a.tipo, ataque_especial_forma: a.especialForma, especial_tipo: 'variavel', especial_mix: mix('ultra'), contexto: ['arena'],
     basico: base.basico.pt, especial_nome: base.especial.pt, nota: 'chefe Ultra da Arena (ARENA_CHEFES_ULTRA)',
     fonte: 'ELENCO_ORACULO_DATA[6] / ARENA_CHEFES_ULTRA (src/utils/arena.ts); ataque e especial como o roster', derivado: ['personalidade', 'ataque_tipo', 'especial_tipo'],
@@ -118,7 +145,7 @@ for (const n of J.NOVOS_DATA) {
   if (!nome) continue;
   const a = ataqueInimigo(n.element, nome, nome);
   add({
-    id: `${n.id}-ultra`, nome, linha: n.id, estagio: 'ultra', personalidade: n.line, elemento_base: n.element, elementos: [n.element],
+    id: `${n.id}-ultra`, nome, sprite: arq(`novos/${n.element}-ultra.png`), linha: n.id, estagio: 'ultra', personalidade: n.line, elemento_base: n.element, elementos: [n.element],
     ataque_tipo: a.tipo, ataque_especial_forma: a.especialForma, especial_tipo: 'variavel', especial_mix: mix('ultra'), contexto: ['catalogo'],
     basico: n.basico.pt, especial_nome: n.especial.pt, nota: 'forma Ultra com arte instalada; o roster de inimigos nao a sorteia (ENEMY_STAGES vai ate Mega)',
     fonte: 'FORMAS_ALTAS (src/utils/novosSoulmonData.ts)', derivado: ['ataque_tipo', 'especial_tipo'],
@@ -134,7 +161,7 @@ for (const id of J.STARTER_IDS) {
     linha: `starter:${id}`, elemento_base: el, elementos: [el], contexto: ['jogador'], ataque_tipo: 'variavel_ficha', especial_tipo: 'escolha_jogador',
     ataque_especial_forma: '', especial_mix: '', basico: '', especial_nome: '',
   };
-  add({ ...comum, id: `starter:${id}:rookie`, nome, estagio: 'rookie', personalidade: raiz,
+  add({ ...comum, id: `starter:${id}:rookie`, nome, sprite: arq(`starters/${id}.png`), estagio: 'rookie', personalidade: raiz,
     nota: 'inicial oferecido na criacao; golpes por ficha (escola) e especial escolhido pelo jogador',
     fonte: 'STARTER_IDS / STARTER_NAMES (src/utils/sprites.ts); STARTER_ELEMENT e STARTER_ALIGNMENT (src/utils/starterElements.ts)', derivado: ['ataque_tipo', 'especial_tipo'] });
   for (const est of ['champion', 'ultimate', 'mega']) {
@@ -159,12 +186,12 @@ for (const p of J.SIMULADOS) {
     const impacto = forma === 'ranged' ? (magia ? 'concussao' : 'corte') : J.meleeImpactOf({ element: p.element, key: p.id });
     const kind = J.foeKindOf(est, `sim|${p.id}|${est}`);
     add({
-      id: `${p.id}:${est === 'rookie' || est === 'ultra' ? est : `${est}-${SUFIXO[p.line]}`}`, nome: p.petName, linha: p.id, estagio: est, personalidade: p.line, elemento_base: p.element, elementos: [p.element],
+      sprite: est === 'ultra' ? arq(`novos/${p.element}-ultra.png`) : spriteDoElemento(p.element, est), id: `${p.id}:${est === 'rookie' || est === 'ultra' ? est : `${est}-${SUFIXO[p.line]}`}`, nome: p.petName, linha: p.id, estagio: est, personalidade: p.line, elemento_base: p.element, elementos: [p.element],
       ataque_tipo: forma === 'ranged' ? (impacto === 'concussao' ? 'ranged_splash' : 'ranged_corte') : (impacto === 'concussao' ? 'melee_splash' : 'melee_corte'),
       ataque_especial_forma: formaEsp, especial_tipo: TIPO_POR_KIND[kind], contexto: ['simulado'],
       nota: `apelido ${p.nick}; faixa ${p.faixa}; ancora ${p.ancora.estagio}; escola ${escola}` + (kind === 'hot' ? '; no duelo 1v1 o HoT vira escudo' : ''),
       fonte: 'SIMULADOS (functions/api/_simulados.data.js: id, petName, line, element); escola/magia: escolaDoSimulado e simulaMagia (_simulados.js); especial: foeKindOf (functions/api/_foeFamilies.js)',
-      derivado: ['ataque_tipo', 'especial_tipo'],
+      derivado: ['ataque_tipo', 'especial_tipo', 'sprite'],
     });
   }
 }
@@ -181,12 +208,23 @@ for (const g of [...grupos.entries()].sort((a, b) => Number(a[0][0]) - Number(b[
 }
 final.forEach((l, i) => { l.ordem = i + 1; });
 
+// ── miniaturas: 1 por ARQUIVO (dedup), webp 72px de altura, data URI; linha referencia por indice ───────────
+const ALTURA_MINI = 72;
+const semSprite = final.filter(l => !l.sprite);
+const indiceSprite = new Map(); const miniaturas = [];
+for (const l of final) {
+  if (!l.sprite || indiceSprite.has(l.sprite)) continue;
+  const buf = await sharp(join(RAIZ, l.sprite)).resize({ height: ALTURA_MINI, fit: 'inside', withoutEnlargement: false }).webp({ quality: 78, alphaQuality: 90, effort: 5 }).toBuffer();
+  indiceSprite.set(l.sprite, miniaturas.length); miniaturas.push('data:image/webp;base64,' + buf.toString('base64'));
+}
+
 // ── saidas ───────────────────────────────────────────────────────────────────
 const porContexto = {};
 for (const l of final) for (const c of l.contexto) porContexto[c] = (porContexto[c] || 0) + 1;
 const doc = {
   gerado_em: new Date().toISOString(),
   total: final.length, por_contexto: porContexto,
+  sem_sprite: { total: semSprite.length, ids: semSprite.map(l => l.id) },
   campos_derivados: {
     ataque_tipo: 'calculado: foeStrikeForm (forma pelo elemento) + magiaOuCorte/meleeImpactOf (acabamento por sorteio estavel); chave de sorteio aproximada pelo nome (no jogo e o nome em PT/EN do encontro)',
     especial_tipo: 'inimigos do roster: sorteado POR ENCONTRO (FOE_MIX), por isso "variavel"; simulados: foeKindOf(estagio, "sim|id|estagio"), fixo; jogador: escolhido na ficha',
@@ -197,14 +235,16 @@ const doc = {
 mkdirSync(SAIDA, { recursive: true });
 writeFileSync(join(SAIDA, 'soulmons.json'), JSON.stringify(doc, null, 1));
 
-const COLUNAS = ['id', 'nome', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'derivado', 'fonte'];
+const COLUNAS = ['id', 'nome', 'sprite', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'derivado', 'fonte'];
 const csvCel = (v) => { const s = Array.isArray(v) ? v.join(';') : String(v ?? ''); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 writeFileSync(join(SAIDA, 'soulmons.csv'), '\ufeff' + [COLUNAS.join(','), ...final.map(l => COLUNAS.map(c => csvCel(l[c])).join(','))].join('\r\n') + '\r\n');
 
 // HTML autocontido: o molde recebe o JSON no lugar de __DADOS__ (sem `</` para nao fechar o script).
 const molde = readFileSync(join(RAIZ, 'scripts', 'tabela-soulmons.template.html'), 'utf8');
-const dados = JSON.stringify({ gerado_em: doc.gerado_em, linhas: final.map(({ ordem, ...r }) => r) }).replace(/</g, '\\u003c');
+const dados = JSON.stringify({ gerado_em: doc.gerado_em, linhas: final.map(({ ordem, ...r }) => ({ ...r, sp: r.sprite ? indiceSprite.get(r.sprite) : -1 })), sprites: miniaturas, sem_sprite: semSprite.length }).replace(/</g, '\\u003c');
 writeFileSync(join(SAIDA, 'tabela.html'), molde.replace('__DADOS__', () => dados));
 
 console.log(`Tabela de Soulmons: ${final.length} linhas -> ${SAIDA}`);
 console.log(JSON.stringify(porContexto));
+console.log(`Sprites: ${miniaturas.length} miniaturas unicas; ${semSprite.length} linhas sem sprite`);
+console.log(`sem sprite: ${semSprite.map(l => l.id).join(', ')}`);

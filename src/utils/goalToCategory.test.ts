@@ -12,7 +12,7 @@ import { categoryForGoal, orderCategoriesForGoal, normalizeGoalText } from './go
 import type { ActivityCategory } from '../types/attributes';
 
 const TODAS: ActivityCategory[] = [
-  'corpo', 'criatividade', 'foco', 'aprendizado', 'foco', 'relacoes', 'mente', 'corpo',
+  'sono', 'corpo', 'mente', 'foco', 'aprendizado', 'relacoes', 'casa', 'financas', 'proposito', 'criatividade',
 ];
 
 const CASOS: Array<[string, ActivityCategory]> = [
