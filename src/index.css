@@ -9215,6 +9215,23 @@ button.sm2-hex-row {
   background: none; border: 0; border-radius: var(--sm2-radius-md);
 }
 
+/* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
+.sm2-pocao-item {
+  display: grid; gap: var(--sm2-space-2); padding: var(--sm2-space-2) var(--sm2-space-3);
+  border-radius: var(--sm2-radius-md); background: var(--sm2-surface); border: 1.5px solid var(--sm2-line);
+  &[data-can-craft="true"] { border-color: var(--sm2-primary-ink); background: var(--sm2-primary-soft); }
+}
+.sm2-pocao-head { display: flex; align-items: center; gap: var(--sm2-space-2); }
+.sm2-pocao-ing {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1);
+  & > li { display: flex; align-items: center; gap: var(--sm2-space-2); font-size: var(--sm2-text-sm); color: var(--sm2-muted); }
+  & > li[data-ok="true"] { color: var(--sm2-ink); }
+}
+.sm2-pocao-chip {
+  background-color: var(--sm2-surface); color: var(--sm2-ink); box-shadow: inset 0 0 0 1px var(--sm2-muted);
+  &[aria-pressed="true"] { background-color: var(--sm2-primary-soft); color: var(--sm2-primary-ink); box-shadow: inset 0 0 0 2px var(--sm2-primary-ink); font-weight: 700; }
+}
+
 /* ── Carta de jogo (GameCard, 04/11/2026) ───────────────────────────────────
    Retrato 3:4, arte sangrando no topo, nome em Cinzel numa faixa, moldura
    arcana discreta (linha dupla turquesa, cantos de cristal). Só tokens sm2. */
