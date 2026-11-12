@@ -269,7 +269,7 @@ Ainda em aberto: **nenhuma pergunta de modal pendente**. As seis perguntas da ta
 
 ## H. Keep-awake nativo no Focus Workshop
 
-A jornada do Foco já pede a tela acordada pela web (`navigator.wakeLock`, `src/utils/keepAwake.ts`, REGISTRO §298) e usa, se existir, o plugin Capacitor `KeepAwake` registrado em `window.Capacitor.Plugins`. O que depende da beta12/APK:
+A jornada do Foco já pede a tela acordada pela web (`navigator.wakeLock`, `src/utils/keepAwake.ts`, REGISTRO §304) e usa, se existir, o plugin Capacitor `KeepAwake` registrado em `window.Capacitor.Plugins`. O que depende da beta12/APK:
 
 - Adicionar `@capacitor-community/keep-awake` (ou `FLAG_KEEP_SCREEN_ON` no `MainActivity`) e `npx cap sync`; nenhum código web novo é preciso, o hook já o detecta.
 - Medir em aparelho real se o WebView Android segura o wake lock da web com a tela bloqueada/economia de bateria; se não, o nativo passa a ser a via principal.

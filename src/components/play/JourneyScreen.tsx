@@ -41,7 +41,7 @@ export function itemLabel(it: JourneyItem, isPt: boolean): string {
 
 export function JourneyScreen({ language, active, delta, petSprite, lastItems, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
   language: Language; active: ActiveJourney; delta: number; petSprite?: string; lastItems: JourneyItem[] | null;
-  /** Lista de tarefas da sessão (§298): as da Home, com subtópicos; marcar usa os handlers da Home. */
+  /** Lista de tarefas da sessão (§304): as da Home, com subtópicos; marcar usa os handlers da Home. */
   tasks?: readonly DockTask[]; onToggleTask?: (id: string) => void; onToggleStep?: (taskId: string, stepId: string) => void;
   onPause: () => void; onResume: () => void; onClaim: () => void; onEnd: () => void; onClose: () => void;
 }) {
@@ -74,7 +74,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
   const Y = (y: number) => (blocks - y) * H;
   const art = JOURNEY_ART[active.env];
   const paused = active.pausedAt !== null;
-  /* Tela acordada só com o timer rodando: pausa, chegada e saída soltam (§298). */
+  /* Tela acordada só com o timer rodando: pausa, chegada e saída soltam (§304). */
   const awake = useKeepAwake(p < 1 && !paused);
   const clockRef = useRef<HTMLElement>(null);
   const [clockBottom, setClockBottom] = useState(190);
