@@ -615,6 +615,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'CareSystem.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** ⚠️ `scheduleCareEvents` é código morto sem consumidor (`grep -rn "scheduleCareEvents" src` só acha a própria definição, 09/09/2026) e usa `new Date().toDateString()` — o dia do APARELHO, não `playerDayKey` — não reative sem migrar para `src/utils/playerDay.ts`; `getCareMessage` foi removida de propósito (era cobrança factualmente errada) e o comentário adverte para não recriá-la sem uma linha de contexto.
 
+### `src/components/ChatPanel.tsx`
+
+**Dono de:** o painel do chat da beta12 (meia tela estilo WhatsApp e tela cheia com o sprite no canto); recebe a barra de digitar do `ChatBox` e a lista de até 20 mensagens da sessão (`role="log"`). Decisões em `docs/beta12/DECISOES-C.md`.
+
+**Chamado por:** `src/components/ChatBox.tsx`.
+
 ### `src/components/ChatBox.tsx`
 **Dono de:** a caixa de chat do pet — texto e transcrição de voz via `/api/transcribe`, com contexto de jogo em inteiros (`chatContext`) e detecção de categoria de mensagem.
 **Props principais:** `ChatBoxProps` — `petName`, `mood`, `evolutionStage`, `dominantBranch?`, `useAI`, `onSendMessage(response)`, `aiSettings?`, ⚰️ `onOpenAISettings?` (saiu em `4a8b8049`, #37 — era destruturada e nunca chamada), `language?`, `chatContext?` (`hp`/`energy`/`bond`/`daysAway`/`moodToday`, sempre inteiros — nunca texto, `soulGoal`/`soulStruggle` não passam por rota de IA), `onCreateActivity?`.
