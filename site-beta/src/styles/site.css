@@ -1196,3 +1196,15 @@ body:has(.ciclo.foco) .topo { visibility: hidden; }
 .cena.calmo.trailer, .cena.calmo.colete { background: var(--sb-fundo-2); }
 .cena.calmo.trailer .cena-fundo::after, .cena.calmo.colete .cena-fundo::after { content: ''; position: absolute; inset: 0; background: rgba(1,12,14,.55); pointer-events: none; }
 .cena.calmo.trailer > :not(.cena-fundo), .cena.calmo.colete > :not(.cena-fundo) { position: relative; z-index: 1; }
+
+/* 12/11 (dono): Instagram — ícone outline branco. Celular: no header, ao lado da bandeira. Desktop: canto inferior direito da faixa fixa do CTA. */
+.ig { display: inline-grid; place-items: center; width: 44px; height: 44px; color: #fff; border-radius: 8px; opacity: .92; transition: opacity .15s, transform .15s; }
+.ig:hover, .ig:focus-visible { opacity: 1; transform: translateY(-1px); }
+.ig:focus-visible { outline: 2px solid var(--sb-pri); outline-offset: 2px; }
+.topo .ig-topo { margin-left: auto; }
+@media (max-width: 1023px) { .topo .ig-topo + .idioma { margin-left: 4px; } }
+.ig-fixo { display: none; }
+@media (min-width: 1024px) {
+  .topo .ig-topo { display: none; }
+  .fixo .ig-fixo { display: inline-grid; position: absolute; right: 24px; bottom: 22px; pointer-events: auto; }
+}
