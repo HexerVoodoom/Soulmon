@@ -4854,6 +4854,12 @@ Decisão: depois dos 4 focos recompensados do dia (§247), os focos 5º, 6º e 7
 
 **Falsifica:** botão cobrindo a Coroa ou cortado no topo do mapa; chama ainda laranja. **Rollback:** reverter o PR. **APK:** nada.
 
+## §307 — Plaquinha da Fenda: tocar leva até a Fenda, retirar vira ação secundária (12/11/2026, pedido do dono)
+
+Decisão: com o Soulmon na Fenda, tocar na plaquinha da Home abre o aviso com **Ir à Fenda** / **Go to the Rift** como ação principal (abre direto a tela da descida, Exploração > Fenda) e **Trazer de volta** / **Bring him back** como ação secundária menor, com confirmação ("Deixar lá" / "Trazer de volta"); a capacidade de retirar não se perde. Isso **antecipa o item G2 da beta12** (`docs/BACKLOG-BETA12.md`): a plaquinha já oferece ir ao Rift; o **balão dourado** que a anuncia continua previsto para a beta12. Os outros avisos de "ocupado" (sem `onGo`) mantêm o formato antigo.
+
+**Falsifica:** o toque na plaquinha oferecer só "retirar", ou "Ir à Fenda" retirar o Soulmon (`DungeonBusyModal.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+
 ## §305 — Hexsmith: a tabela de criação mostra POÇÃO como custo, com tooltip de como conseguir (12/11/2026, pedido do dono)
 
 Decisão: na forja da Hexsmith o catálogo é uma tabela de duas colunas, **Item** e **Custo**. O custo lê da esquerda para a direita: Bits + (poção do elemento, como o ÍCONE da poção, com `tem/precisa` embaixo) + (fragmentos, ícone e `tem/precisa`), separados por "+". Tocar o ícone da poção abre um tooltip (o `InfoTip`, agora com `trigger` próprio e camada de voltar; fecha ao tocar fora, Esc, Voltar ou modal novo) dizendo COMO conseguir: base = 100 essências do elemento no Centro de Evolução (a Vesca avisa) ou à venda na Feira; composto = 1 poção de cada base + 50 essências. Textos em `potionHowTo` (`hexsmithCopy.ts`), números de `POTION_COSTS`. Nenhum custo mudou.

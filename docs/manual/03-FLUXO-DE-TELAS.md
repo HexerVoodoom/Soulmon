@@ -2376,7 +2376,7 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 
 - **Masmorra (luta):** título único "Camada N · luta k de 6"; **Pausar** à esquerda e **avanço rápido 1×/2×/3×** no canto inferior direito; o especial é automático (sem anel nem esquiva); drop de item abre o modalzinho (ícone, nome, quantidade) sem pausar a luta. O × pergunta "Sair da tela? Ele continua descendo sozinho…" com **Ficar / Sair / Retirar da masmorra**.
 - **Voltar à masmorra:** se a descida seguiu fora da tela, abre o cartão "Enquanto você esteve fora, a descida seguiu" (**Ver a descida** / **Retirar da masmorra**) ou, se ela terminou sozinha, a tela de fim com a nota.
-- **Home com o Soulmon na masmorra:** o pet some e a plaquinha "Estou na masmorra, volto logo" fica no lugar; tocar abre o aviso com **Retirar da masmorra**. Evoluir, renascer, missão da guilda, Duelo, Torneio e Passeio abrem o mesmo aviso.
+- **Home com o Soulmon na masmorra:** o pet some e a plaquinha "Estou na masmorra, volto logo" fica no lugar; tocar abre o aviso com **Ir à Fenda** (leva à tela da descida, em Exploração) e, menor, **Trazer de volta** (pede confirmação e só então retira). Evoluir, renascer, missão da guilda, Duelo, Torneio e Passeio abrem o mesmo aviso.
 - **Salão de Jogos:** terceiro card, **Elemental Fusion** (recorde, "até 8 Bits"); a tela do jogo tem movimentos, pontos e Bits, o tabuleiro 7×7, **Dica** e, no fim, o resultado com **De novo / Sair**.
 
 ## Delta de 13/10/2026 (beta-2, frente D): mercado, jogos, Arena, Santuário, Evolução e Perfil
