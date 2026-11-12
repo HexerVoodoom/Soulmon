@@ -72,7 +72,7 @@ import { sanitizeHexsmith, type HexsmithState } from '../utils/hexsmith';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, sanitizeConquistasPagas, type AchievementId } from '../utils/achievements';
 import {
-  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
+  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs, playerDayKey,
   type PlayerDayAnchor,
 } from '../utils/playerDay';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
@@ -96,7 +96,7 @@ import { sanitizeMealRhythm, sanitizeMealRitual, type MealRhythmSettings, type M
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import { migrateWeeklyLegacy, type WeeklyMissionProgress } from '../utils/weeklyMissions';
-import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { sanitizeBuildingQuests, settleRetiredListed, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeFeats, type Feats } from '../utils/feats';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
@@ -1553,7 +1553,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             ...(w.last && typeof w.last === 'object' && !Array.isArray(w.last) ? { last: Object.fromEntries(Object.entries(w.last as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.length <= 40)) as WeeklyMissionProgress['last'] } : {}),
           });
         })(),
-        buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        // Caderno saiu das diárias (12/11/2026): o que estava pronto e sem resgate é pago aqui (`settleRetiredListed`), nada pendente se perde.
+        buildingQuests: settleRetiredListed(sanitizeBuildingQuests(loadedState.buildingQuests), playerDayKey(new Date(), ancoraDoDia), bondLevelFor(num(loadedState.totalXP, 0))),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),
         missionsClaimed: sanitizeMissionsClaimed(loadedState.missionsClaimed),
         feats: sanitizeFeats(loadedState.feats),

@@ -28,6 +28,7 @@ import { feiraHexOnServer, validarCompraFeiraLoja, marcarCompraFeiraLoja, diaDoJ
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
+import { recordJournalDays, enforceWeeklyMissions, enforceDailyMissions } from './_missionEvents.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
 import { sanitizeLibrarySeen, sanitizeLibraryForms } from './_libraryMemory.js';
@@ -60,6 +61,7 @@ const CORS = {
 
 /** Campos que o cliente NUNCA define — sempre vêm do entitlement do servidor. */
 const SERVER_OWNED_FIELDS = ['accountTier', 'credits'];
+const isPlainObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /**
  * Teto do save serializado. O KV aceita 25 MB por chave; sem teto nenhum, um
@@ -587,6 +589,32 @@ async function onRequestBruto({ request, env }) {
         const pedidos = Array.isArray(veio?.owned) ? veio.owned : [];
         const ignorados = pedidos.filter((id) => typeof id === 'string' && !state.hexsmith.owned.includes(id));
         if (ignorados.length) console.warn('save: HEX fora da posse gravada ignorado', { saveIdPrefix: saveId.slice(0, 8), ignorados: ignorados.slice(0, 10) });
+      }
+    }
+    // Missoes validadas no servidor (12/11/2026, REGISTRO §307, `_missionEvents.js`): semanais journal-days / focus-days / gift-sent e a diaria
+    // d-presente so contam o que o servidor confirmou (entrada do Caderno salva, jornada do foco concluida com recibo, presente aceito).
+    // O journal e registrado AQUI (as entradas vem neste POST), antes da conferencia; o resto ja foi gravado pelas rotas dos eventos.
+    // Monotonico: nunca baixa o ja gravado, nunca sobe alem do razao. Melhor esforco: falha de KV no razao nao recusa o save.
+    {
+      const temSemanal = isPlainObj(state.weeklyMissions) && (state.weeklyMissions.counts !== undefined || state.weeklyMissions.claimed !== undefined);
+      const temDiaria = isPlainObj(state.dailyMissions);
+      if (Array.isArray(state.caderno) && state.caderno.length) {
+        try { await recordJournalDays(kvOrThrow(env), saveId, state.caderno); } catch (err) { console.warn('save: razao do journal indisponivel', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) }); }
+      }
+      if (temSemanal || temDiaria) {
+        let gravado = {};
+        if (typeof prev?.value === 'string' && (prev.value.includes('"weeklyMissions"') || prev.value.includes('"dailyMissions"'))) {
+          try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; }
+        }
+        try {
+          if (temSemanal) state.weeklyMissions = await enforceWeeklyMissions(kvOrThrow(env), saveId, state.weeklyMissions, gravado.weeklyMissions);
+          if (temDiaria) state.dailyMissions = await enforceDailyMissions(kvOrThrow(env), saveId, state.dailyMissions, gravado.dailyMissions);
+        } catch (err) {
+          // Sem o razao nao ha como provar: o que veio de NOVO nessas missoes e descartado (volta ao gravado), o resto do save segue.
+          console.warn('save: razao das missoes indisponivel, mantido o gravado', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+          if (temSemanal) { if (gravado.weeklyMissions !== undefined) state.weeklyMissions = gravado.weeklyMissions; else delete state.weeklyMissions; }
+          if (temDiaria) { if (gravado.dailyMissions !== undefined) state.dailyMissions = gravado.dailyMissions; else delete state.dailyMissions; }
+        }
       }
     }
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so

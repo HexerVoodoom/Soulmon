@@ -31,7 +31,7 @@ import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { lotCoins, lotMissionMarks } from './utils/lotMarks';
-import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
+import { buildingMarks, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
@@ -4650,7 +4650,7 @@ export default function App() {
     setCurrentView(v);
   }, [contarMissao, contarDiaria, demo]);
 
-  /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
+  /* O "Ir lá" do material na Mochila. A missão que estiver no menu da Home (`LISTED_QUEST_BUILDINGS`, hoje nenhuma) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
      Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
   /** Plaquinha da Home → "Ir à Fenda": fecha o aviso e abre a tela da descida (Exploração > Fenda, com o Soulmon lá). */
@@ -6093,14 +6093,11 @@ export default function App() {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
       if (c1 === c0) return prev;
-      // O EVENTO REAL da missão do journaling (07/10/2026): um registro NOVO guardado. Mesmo updater, PURO sobre `prev`;
-      // idempotente por dia do jogador (`completeBuildingQuest` só age em `available`).
+      // O EVENTO REAL do journal: um registro NOVO guardado conta a semanal "journal em 3 dias" (no máx. 1 por dia). A diária do
+      // Caderno saiu (12/11/2026, REGISTRO §309); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
-      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date()); // semanal "journal em 3 dias" (no máx. 1 por dia)
-      const bq = novo
-        ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'forja.caderno', bondLevelFor(prev.totalXP ?? 0))
-        : prev.buildingQuests;
-      return bq === prev.buildingQuests ? { ...prev, caderno: c1 } : { ...prev, caderno: c1, buildingQuests: bq };
+      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date());
+      return { ...prev, caderno: c1 };
     });
   }, [setGameState]);
 

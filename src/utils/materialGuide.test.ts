@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MATERIAL_IDS, MATERIAL_BUILDING, LISTED_QUEST_BUILDINGS } from './buildingQuests';
+import { MATERIAL_IDS, MATERIAL_BUILDING } from './buildingQuests';
 import { MATERIALS } from './buildingQuestsCopy';
 import { FORGE_PIECES } from './forge';
 import { DISHES } from './restaurant';

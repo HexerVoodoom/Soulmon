@@ -32,8 +32,7 @@
 // a UI de missão (painel, lista, RECOLHER) NUNCA fica dentro do prédio; só no menu de Missões da
 // Home. Desde 19/10 o lote do prédio mostra apenas o MARCADOR: "!" com a missão disponível (some
 // ao fazer) e "?" com a missão completa (o recolher continua só na Home). Entrar no prédio continua CONTANDO (`visitBuilding`),
-// e o menu lista apenas `LISTED_QUEST_BUILDINGS` (hoje o Caderno: "Escrever no
-// caderno"). O material continua no modelo (a missão paga 1), mas nenhuma tela de
+// e o menu lista apenas `LISTED_QUEST_BUILDINGS` (hoje nenhum: o Caderno saiu em 12/11/2026). O material continua no modelo (a missão paga 1), mas nenhuma tela de
 // missão o exibe — o Ferreiro o mostra sem lista.
 //
 // COR DAS MARCAS: "!" disponível e "?" pronta, em tom `gold` (o mesmo do Passeio
@@ -69,8 +68,25 @@ export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 /** Os prédios que dão missão: todos menos `mercado.*` e o Perfil do Soulmon (beta-2: é uma LEITURA da ficha — sem missão, sem material, sem peça do Soulsmith) e a Guerra de Clãs (a guerra rende na casa do clã, não em material) e o Grove (D-50: o bosque rende no clã, não em material). */
 export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'forja.ferreiro' && id !== 'forja.hexsmith' && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.dungeon');
 
-/** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
-export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['forja.caderno'];
+/**
+ * Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita.
+ * VAZIA desde 12/11/2026 (dono, REGISTRO §309): o "Caderno diário" ("Faça um registro no journaling") saiu das diárias porque a semanal
+ * "Fazer o journal 3× na semana" o substitui. O prédio do Caderno continua existindo e, como os demais, paga o material (tinta) na entrada.
+ */
+export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = [];
+
+/** O prédio que já foi listado (a missão diária do Caderno, aposentada em 12/11/2026). */
+export const RETIRED_LISTED_BUILDING: BuildingId = 'forja.caderno';
+
+/**
+ * Migração da aposentadoria: quem tinha o Caderno PRONTO e não resgatou (o único jeito de resgatar era o botão da lista, que saiu)
+ * recebe a tinta aqui, uma vez, no dia corrente. Nada de pendente se perde; sem pendência (ou de outro dia) devolve o MESMO `s`.
+ */
+export function settleRetiredListed(s: BuildingQuestState | undefined, day: string, bondLevel: unknown): BuildingQuestState | undefined {
+  if (!s || s.day !== day) return s;
+  if (!s.visited.includes(RETIRED_LISTED_BUILDING) || s.claimed.includes(RETIRED_LISTED_BUILDING)) return s;
+  return claimBuildingQuest(s, day, RETIRED_LISTED_BUILDING, bondLevel).state;
+}
 
 const BY_BUILDING = new Map(MATERIAL_IDS.map(id => [MATERIAL_BUILDING[id], id] as const));
 
@@ -108,8 +124,8 @@ export function questStatus(s: BuildingQuestState | undefined, day: string, id: 
  *
  * ⚠️ Desde 07/10/2026 (pedido do dono: "a missão só APONTA; conclui quando a ação
  * acontece") entrar NÃO conclui a missão LISTADA (`LISTED_QUEST_BUILDINGS`): ela
- * só fica pronta por `completeBuildingQuest`, quando a ação real acontece (o
- * Caderno: guardar um registro). Prédio não listado segue contando a presença.
+ * só fica pronta por `completeBuildingQuest`, quando a ação real acontece.
+ * Prédio não listado segue contando a presença.
  */
 export function visitBuilding(s: BuildingQuestState | undefined, day: string, id: BuildingId, bondLevel: unknown): BuildingQuestState | undefined {
   if (LISTED_QUEST_BUILDINGS.includes(id)) return s;
