@@ -60,7 +60,7 @@ export function fakeKV(seed = {}) {
 }
 
 export function envWith(extra = {}) {
-  return { FIREBASE_PROJECT_ID: PROJECT, ADMIN_EMAILS: ADMIN, DIGIAPP_SAVES: fakeKV(), ...extra };
+  return { OPEN_TEST_OFF: '1', FIREBASE_PROJECT_ID: PROJECT, ADMIN_EMAILS: ADMIN, DIGIAPP_SAVES: fakeKV(), ...extra };
 }
 
 export const reqWith = (tok, url = 'https://x/api', init = {}) => new Request(url, {

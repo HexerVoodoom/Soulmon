@@ -6407,6 +6407,8 @@ Tudo abaixo é o que o código de `62f204e1b` faz. Decisões: `REGISTRO-DE-DECIS
 
 E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servidor devolve `tier: 'paid'` + `betaFull: true` (derivado do token, nunca gravado), o ovo vai direto a "Chocar" e o ritual completo roda sem compra. Remover o e-mail da lista rebaixa na leitura seguinte. Ver `functions/api/_betaFull.js` e `docs/BETA-FECHADO-RUNBOOK.md`.
 
+**Janela aberta de teste (REGISTRO §317, 12/11 a 26/11/2026):** enquanto o relógio do SERVIDOR estiver antes de `OPEN_TEST_UNTIL` (`_betaAccess.js`, `2026-11-27T00:00:00-03:00`), QUALQUER e-mail verificado conta como da lista e como beta-full (tier `paid`, sem compra); sem e-mail verificado nada muda (fail-closed). Depois da data a restrição volta sozinha. Encerrar antes: var `OPEN_TEST_OFF=1`.
+
 ## 🌿 Ramos evoluídos como inimigos (04/11/2026, REGISTRO §220)
 
 - Os 120 sprites de ramo são inimigos só nos tetos do estágio: champion a partir do level 7, ultimate 14, mega 22. Nunca rookie.

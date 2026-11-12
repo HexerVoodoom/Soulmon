@@ -103,3 +103,23 @@ it('nenhum log da sessao contem e-mail', async () => {
   expect(JSON.stringify(spy.mock.calls)).not.toMatch(/example\.test/);
   spy.mockRestore();
 });
+
+describe('janela aberta: beta-full para qualquer e-mail verificado (12/11 a 26/11/2026)', () => {
+  it('dentro da janela: conta fora da lista (e sem lista) vira paid/betaFull; token inválido não', async () => {
+    const { OPEN_TEST_OFF: _off, ...aberto } = env();
+    expect((await verifiedBetaFull({ ...aberto, BETA_EMAILS: '' }, reqWith(await token(OTHER)))).betaFull).toBe(true);
+    const j = await (await get(aberto, await token(OTHER), OTHER_ID)).json();
+    expect(j.tier).toBe('paid');
+    expect(j.betaFull).toBe(true);
+    expect((await verifiedBetaFull(aberto, reqWith(null))).betaFull).toBe(false);
+    expect((await verifiedBetaFull(aberto, reqWith(await token(OTHER)), BETA_ID)).betaFull).toBe(false); // token de OUTRO save
+  });
+  it('depois da data: relógio do servidor em 27/11 → volta a demo', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.parse('2026-11-27T00:00:00-03:00') });
+    try {
+      const { OPEN_TEST_OFF: _off, ...aberto } = env();
+      // token foi assinado com exp relativo ao relógio real; só `Date` é falsificado aqui, então emite com ele já fixado
+      expect((await verifiedBetaFull(aberto, reqWith(await token(OTHER)))).betaFull).toBe(false);
+    } finally { vi.useRealTimers(); }
+  });
+});
