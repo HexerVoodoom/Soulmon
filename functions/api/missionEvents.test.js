@@ -145,6 +145,12 @@ describe('save: semanal gift-sent e diaria d-presente', () => {
     expect(salvo(e).weeklyMissions.counts['gift-sent']).toBe(1);
     expect(salvo(e).dailyMissions.counts.presente).toBe(1);
   });
+  it('missoes de NPC de presente (Zumi 2, Papus 1): o resgate so passa com o confirmado; 1 presente nao paga a Zumi', async () => {
+    const e = mk();
+    await M.recordMissionEvent(e.DIGIAPP_SAVES, ID, 'g', QUARTA);
+    await postSave(e, { dailyMissions: diaria('Wed Nov 11 2026', 2, ['n-zumi', 'n-papus']) });
+    expect(salvo(e).dailyMissions).toEqual(diaria('Wed Nov 11 2026', 1, ['n-papus']));
+  });
   it('a chave legada friend-visit nao e atalho: so vale o que ja estava gravado', async () => {
     const e = mk();
     await postSave(e, { weeklyMissions: { week: WEEK, counts: { 'friend-visit': 4 }, claimed: ['friend-visit'] } });

@@ -24,6 +24,10 @@ export const DAILY_EVENT_BUILDING: Readonly<Record<DailyEvent, BuildingId | null
   arena: 'arena.duelo', torneio: 'arena.torneio',
   mercado: 'mercado.itens', amigo: 'laboratorio.amigos', presente: 'laboratorio.amigos',
   banho: null, carinho: null, comida: null, humor: null, sono: null,
+  // Missões dos NPCs (12/11/2026): cada uma marca o prédio de quem a passa (`m.building`); o mapa de evento cobre o tipo.
+  essencia: 'laboratorio.evolucao', hex: 'forja.hexsmith', melhoria: 'forja.ferreiro', compra: 'mercado.itens', conquista: 'mercado.conquistas',
+  cambio: 'mercado.itens', prato: 'mercado.itens', feira: 'hall.feira', cla: 'hall.guilda', passeio: 'exploracao.passeio',
+  salao: 'jogos.salao', mente: 'jogos.mente', cenario: 'mercado.background',
 };
 
 export interface LotMarkInput {
@@ -51,7 +55,7 @@ export function lotMissionMarks(i: LotMarkInput): Partial<Record<BuildingId, Que
   put('mercado.conquistas', i.conquistas);
   if (i.friendsAlert) put('laboratorio.amigos', 'available');
   for (const m of dailyMissionsFor(i.day, i.bondLevel)) {
-    const b = DAILY_EVENT_BUILDING[m.event];
+    const b = m.npc ? m.building : DAILY_EVENT_BUILDING[m.event];
     if (!b) continue;
     const st = dailyStatus(i.dailyMissions, i.day, m);
     if (st === 'ready') put(b, 'ready'); else if (st === 'available') put(b, 'available');

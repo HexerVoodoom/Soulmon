@@ -148,18 +148,18 @@ describe('tabela de destinos', () => {
   });
 });
 
-describe('recompensa só quando a missão está PRONTA (dono, 15/10/2026)', () => {
-  it('diária: cartão não pronto não mostra recompensa; pronto mostra "+1 material" e o Claim; resgatado vira concluído, sem recompensa', async () => {
+describe('recompensa: só quando PRONTA (dono, 15/10/2026), exceto na lista do DIA, que a mostra sempre (dono, 12/11/2026)', () => {
+  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído, sem recompensa', async () => {
     const m = dailyMissionsFor(DAY, 99)[0];
     const { rerender } = render(mk());
     await waitFor(() => expect(document.querySelector(`[data-daily-mission="${m.id}"]`)).not.toBeNull(), T);
     const card = () => document.querySelector(`[data-daily-mission="${m.id}"]`)!;
     expect(card().getAttribute('data-status')).toBe('available');
-    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
-    const pronta = bumpDaily(undefined, DAY, m.event);
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 \S+/);
+    const pronta = bumpDaily(undefined, DAY, m.event, m.target);
     rerender(mk({ dailies: { state: pronta, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
     expect(card().getAttribute('data-status')).toBe('ready');
-    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toBe('+1 material');
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 \S+/);
     expect(card().querySelector('[data-claim-daily]')).not.toBeNull();
     rerender(mk({ dailies: { state: { ...pronta, claimed: [m.id] }, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
     expect(card().getAttribute('data-status')).toBe('claimed');

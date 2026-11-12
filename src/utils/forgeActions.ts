@@ -11,6 +11,7 @@ import { stockOf, MATERIAL_CAP, LISTED_QUEST_BUILDINGS, visitBuilding, claimBuil
 import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
 import type { BuildingId } from './gates';
+import { bumpDailyIn } from './dailyMissions';
 import {
   FORGE_MAX_LEVEL, FORGE_SCHEMA, LEVEL_MIN_BOND, PIECE_BY_BUILDING, PIECE_BY_ID, REDO_BITS, upgradeBitsCost, REDO_FRAGMENTS, UPGRADE_COST, pieceChoices, pieceLevel, sanitizeForge,
   type ForgeChoice, type ForgePiece, type ForgeState,
@@ -80,7 +81,8 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   const f = sanitizeForge(prev.forge);
   const picks = [...pieceChoices(id, level, prev.forge), choice];
   const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
-  return { ok: true, state: { ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge } };
+  // Missão da Vitra (12/11/2026, REGISTRO §311): aprimorar 1 peça.
+  return { ok: true, state: bumpDailyIn({ ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge }, 'melhoria') };
 }
 
 /** O preço em Bits de refazer uma escolha, com o Comércio (`tal-com-01`). */

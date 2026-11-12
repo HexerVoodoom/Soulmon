@@ -46,8 +46,11 @@ export function achievementTarget(category: MissionCategory, id?: string): GoTar
 }
 
 /** Diárias: o cuidado do Refúgio (banho, carinho, comida, humor, descanso, brincar) se faz na Home; o resto, no prédio da missão. */
-export function dailyTarget(m: Pick<DailyMission, 'building'> & { id?: string }): GoTarget {
+export function dailyTarget(m: Pick<DailyMission, 'building'> & { id?: string; event?: string }): GoTarget {
   // "Conte como você está se sentindo hoje" se cumpre CONVERSANDO com o Soulmon: o toque abre o campo de conversa.
-  if (m.id === 'd-humor') return 'chat';
+  // 12/11/2026: vale também para a missão do NPC que pede o mesmo gesto (Sumi, `n-sumi`, evento `humor`).
+  if (m.id === 'd-humor' || m.event === 'humor') return 'chat';
+  // O cuidado (carinho, banho, comida, sono) se faz na Home, mesmo quando é a missão de um NPC de outro prédio (Tinta).
+  if (m.event === 'carinho' || m.event === 'banho' || m.event === 'comida' || m.event === 'sono') return 'home';
   return m.building === 'forja.refugio' ? 'home' : m.building;
 }

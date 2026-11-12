@@ -29,7 +29,7 @@ import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from '.
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
-import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { bumpDaily, bumpDailyIn, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
@@ -4869,7 +4869,7 @@ export default function App() {
     if (!(gameStateRef.current.missionsClaimed ?? []).includes(id)) {
       toast(language === 'pt-BR' ? 'Conquista resgatada: já dá para comprar o item no Mercado.' : 'Achievement claimed: you can now buy the item at the Market.');
     }
-    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : { ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }));
+    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : bumpDailyIn({ ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }, 'conquista'))); // 12/11/2026: missão da Medra
   }, [missionProgress, setGameState, language]);
   /* CONQUISTAS (30/10/2026): o prêmio em Bits sai UMA vez por conquista (`conquistasPagas`); save sem o campo é semeado com as já abertas
      (sem Bits retroativos). Os Pontos de Conquista são derivados — aqui só se MOSTRA o ganho. */
@@ -5045,7 +5045,7 @@ export default function App() {
         : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
+    setGameState(prev => bumpDailyIn({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }, 'cambio')); // 12/11/2026: missão do Farthing
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
@@ -5083,7 +5083,11 @@ export default function App() {
     // dois — saldo negativo, e o cenário entrando duas vezes na lista de posse.
     if (shopBuyRefusal(gameState, item)) return false;
 
-    setGameState(prev => applyShopBuy(prev, item).state);
+    // Missão da Lamela/Lasca (12/11/2026, REGISTRO §311): comprar no Mercado (recusa devolve o MESMO `prev`).
+    setGameState(prev => { const r = applyShopBuy(prev, item); if (r.refused) return prev;
+      const comprou = bumpDailyIn(r.state, 'compra');
+      return item.kind === 'bg' ? bumpDailyIn(comprou, 'cenario') : comprou; // cenário também conta para a Panora
+    });
     // C-3 (run `som-01`): comprar deixa de soar como COMER. Era o mesmo som
     // para o unico evento do app que gasta moeda, e o gasto e irreversivel —
     // quem nao olha a tela nao tinha como distinguir os dois. Categoria
@@ -5116,8 +5120,10 @@ export default function App() {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
     if (frameBuyRefusal(gameState, frameId)) return false;
     setGameState(prev => {
-      const { state, refused } = applyFrameBuy(prev, frameId);
-      if (refused || !equipar) return state;
+      const { state: comprado, refused } = applyFrameBuy(prev, frameId);
+      if (refused) return comprado;
+      const state = bumpDailyIn(comprado, 'compra');
+      if (!equipar) return state;
       return { ...state, equippedFrame: sanitizeEquippedFrame(frameId) };
     });
     return true;
@@ -5181,7 +5187,7 @@ export default function App() {
   const handleGuildMissionSend = useCallback(() => {
     setGameState(prev => {
       if (prev.guildMission) return prev;
-      return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
+      return bumpDailyIn({ ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) }, 'cla'); // 12/11/2026: missão da Aurea
     });
   }, [setGameState]);
 
@@ -6075,7 +6081,11 @@ export default function App() {
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       const c1 = f(c0);
-      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+      if (c1 === c0) return prev;
+      // Missão da Lisel (12/11/2026, REGISTRO §311): o passeio foi CONCLUÍDO hoje (a transição, 1× por dia).
+      const hoje = playerDayIso(new Date(), prev.playerDayTz);
+      const salvo = { ...prev, crossings: c1 };
+      return c0.doneDay !== hoje && c1.doneDay === hoje ? bumpDailyIn(salvo, 'passeio') : salvo;
     });
   }, [setGameState]);
 

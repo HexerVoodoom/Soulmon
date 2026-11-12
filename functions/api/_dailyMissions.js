@@ -13,11 +13,14 @@ export const DAILY_EVENTS = [
   'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho',
   'comida', 'humor', 'sono', 'mercado', 'presente', 'arena', 'torneio',
   'barrage', 'eco', 'zip', 'patches', 'calabouco', 'selo', 'amigo',
+  // Missoes dos NPCs (12/11/2026, REGISTRO secao 309): eventos novos; 'salao' e 'mente' sao agregados dos jogos do Salao e do Atelie.
+  'essencia', 'salao', 'compra', 'melhoria', 'mente', 'cla', 'cambio', 'cenario', 'prato', 'hex', 'feira', 'passeio', 'conquista',
 ];
 export const DAILY_MISSION_IDS = [
   'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho',
   'd-comida', 'd-humor', 'd-sono', 'd-mercado', 'd-presente', 'd-arena', 'd-torneio',
   'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco', 'd-selo', 'd-amigo',
+  'n-vesca', 'n-pipo', 'n-lamela', 'n-tessaria', 'n-yuzu', 'n-vitra', 'n-tessela', 'n-zeph', 'n-aurea', 'n-farthing', 'n-lume', 'n-sumi', 'n-vultrak', 'n-lasca', 'n-panora', 'n-corva', 'n-tinta', 'n-snapjaw', 'n-zumi', 'n-hexsmith', 'n-fanfare', 'n-lisel', 'n-medra', 'n-papus', 'n-nuri',
 ];
 export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',
@@ -25,7 +28,7 @@ export const FIRST_TIME_IDS = [
   'visit:jogos.salao', 'visit:forja.refugio', 'visit:jogos.mente',
   'visit:exploracao.passeio', 'visit:exploracao.fenda', 'visit:forja.caderno', 'visit:forja.oficina',
   'visit:arena.duelo', 'visit:arena.torneio',
-  'visit:laboratorio.evolucao', 'visit:laboratorio.pet', 'visit:laboratorio.stats',
+  'visit:laboratorio.pet', 'visit:laboratorio.stats',
   'visit:laboratorio.biblioteca', 'visit:laboratorio.amigos', 'visit:hall.guilda', 'visit:hall.feira',
 ];
 /** Ids das conquistas (`MISSIONS`) — espelho de `src/utils/missions.ts`, travado pela paridade. */

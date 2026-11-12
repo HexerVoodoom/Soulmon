@@ -1,0 +1,62 @@
+// @vitest-environment jsdom
+/** A lista de missões do dia mostra, em cada cartão, NOME, o que fazer, RECOMPENSA e QUEM passa (REGISTRO §311). */
+import { describe, it, expect, afterEach } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import { dailyMissionEntries } from './DailyMissionList';
+import { dailyMissionsFor, npcOfDay } from '../../utils/dailyMissions';
+import { NPC_MISSIONS } from '../../utils/npcMissions';
+import { giverOf } from './npcGiver';
+import { LOT_NPC_VOICE } from '../../utils/areaNpcVoice';
+
+afterEach(cleanup);
+
+const lista = (day: string, bond: number, language: 'pt-BR' | 'en-US') => render(
+  <ul>{dailyMissionEntries({ language, state: undefined, day, bondLevel: bond, onClaim: () => {} }).map(e => e.node)}</ul>,
+);
+
+describe('cartões das missões do dia: nome, descrição, recompensa e NPC', () => {
+  it('missão de NPC: nome em destaque, o que fazer, recompensa visível (mesmo sem estar pronta) e "Com <NPC>" com retrato', () => {
+    const day = '2026-12-01';
+    const m = npcOfDay(day, 10)!;
+    lista(day, 10, 'pt-BR');
+    const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
+    expect(li.getAttribute('data-status')).toBe('available');
+    expect(li.textContent).toContain(m.namePt!);
+    expect(li.querySelector('[data-mission-desc]')!.textContent).toBe(m.descPt);
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Recompensa: \+1 \S+/);
+    const g = giverOf(m.npc, 'pt-BR')!;
+    expect(li.querySelector('[data-mission-giver]')!.textContent).toBe(`Com ${g.name}`);
+    expect(li.querySelector('[data-mission-giver-art]')!.getAttribute('src')).toBe(g.art);
+  });
+
+  it('EN: Reward / From', () => {
+    const day = '2026-12-01';
+    const m = npcOfDay(day, 10)!;
+    lista(day, 10, 'en-US');
+    const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 /);
+    expect(li.querySelector('[data-mission-giver]')!.textContent).toMatch(/^From /);
+  });
+
+  it('TODA missão do dia mostra recompensa e quem a passa (as diárias comuns usam o anfitrião do prédio delas)', () => {
+    for (const d of ['2026-12-01', '2026-12-02', '2026-12-03', '2026-12-04']) {
+      cleanup();
+      lista(d, 10, 'pt-BR');
+      const cards = [...document.querySelectorAll('[data-daily-mission]')];
+      expect(cards.length).toBe(dailyMissionsFor(d, 10).length);
+      for (const c of cards) {
+        expect(c.querySelector('[data-mission-reward-text]'), c.getAttribute('data-daily-mission')!).not.toBeNull();
+        expect(c.querySelector('[data-mission-giver]'), c.getAttribute('data-daily-mission')!).not.toBeNull();
+      }
+    }
+  });
+
+  it('todo NPC com missão resolve nome e retrato (PT e EN)', () => {
+    for (const m of NPC_MISSIONS) for (const l of ['pt-BR', 'en-US'] as const) {
+      const g = giverOf(m.npc, l);
+      expect(g?.name, `${m.npc} ${l}`).toBeTruthy();
+      expect(g?.art, `${m.npc} arte`).toBeTruthy();
+    }
+    expect(Object.keys(LOT_NPC_VOICE).length).toBeGreaterThan(10);
+  });
+});

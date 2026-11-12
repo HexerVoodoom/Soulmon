@@ -2467,3 +2467,7 @@ Cobertura só no nível de existência de superfície e de ponto de entrada (reg
 ### Delta de 12/11/2026 — Mochila › Materiais
 
 O tooltip de cada material tem 2 linhas: **Encontrado em** (lugares) e **Usar em** (Soulsmith/Restaurante). As Essências saíram da aba (a lista fica em Laboratório › Arquivo, `EssencesSection`). REGISTRO §308.
+
+### Delta de 12/11/2026 — Missões do dia com NPC
+
+Cada cartão da lista do dia mostra NOME (missões de NPC), o que fazer, RECOMPENSA (sempre, não só pronta: "Recompensa: +1 Essência") e "Com <NPC>" com retrato pequeno (`npcGiver.ts`; as diárias comuns usam o anfitrião do prédio). A primeira é a do NPC do dia. REGISTRO §311.

@@ -125,7 +125,10 @@ describe('bestiário (M10)', () => {
   it('abate grava a chave elemento+estágio; visto sem abate não mexe em dungeonKills; ambos idempotentes', () => {
     const base = { dungeonKills: 0, bestiary: [] as string[] };
     const a = applyEnemyDefeated(base, 'embrit-champion');
-    expect(a).toEqual({ dungeonKills: 1, bestiary: ['embrit-champion'], defeatedElements: ['fogo'], essences: { fogo: 2 } }); // dex de elementos: a vitória libera o elemento; REGISTRO §183: champion dropa 2 essências do próprio elemento
+    // + a missão da Vesca (REGISTRO §311): o que entra conta em `dailyMissions` (evento `essencia`)
+    const { dailyMissions, ...semDiaria } = a as typeof a & { dailyMissions?: { counts: Record<string, number> } };
+    expect(dailyMissions?.counts.essencia).toBe(2);
+    expect(semDiaria).toEqual({ dungeonKills: 1, bestiary: ['embrit-champion'], defeatedElements: ['fogo'], essences: { fogo: 2 } }); // dex de elementos: a vitória libera o elemento; REGISTRO §183: champion dropa 2 essências do próprio elemento
     const b = applyBestiarySeen(a, 'cmb003-rookie');
     expect(b.dungeonKills).toBe(1);
     expect(b.bestiary).toEqual(['embrit-champion', 'cmb003-rookie']);

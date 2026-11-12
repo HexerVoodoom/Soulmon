@@ -10,6 +10,7 @@ import { BASE_ELEMENT_IDS, elementIdOfFoe, isEssenceElement } from './elementDex
 import { NIGHTMARE_ELEMENT } from './nightmareElement';
 import { elementLabel } from './elementLabels';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
+import { bumpDailyIn } from './dailyMissions';
 
 /** Teto por elemento no save (sanidade, não regra de jogo). */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
@@ -96,12 +97,15 @@ type EssenceState = { essences?: Record<string, number>; essenceAway?: EssenceAw
 export function applyEssences<T extends EssenceState>(prev: T, drops: readonly (EssenceDrop | undefined)[]): T {
   const have = prev.essences ?? {};
   let next: Record<string, number> | null = null;
+  let ganhas = 0;
   for (const d of drops) {
     if (!d || !isEssenceId(d.id) || !(d.qty >= 1)) continue;
     next ??= { ...have };
     next[d.id] = Math.min(ESSENCE_MAX_PER_ELEMENT, (next[d.id] ?? 0) + Math.floor(d.qty));
+    ganhas += Math.floor(d.qty);
   }
-  return next ? { ...prev, essences: next } : prev;
+  // Missão da Vesca (12/11/2026, REGISTRO §311): "coletar 30 essências" conta tudo que ENTROU (drop, Cambista, chefe da Feira, Pesadelo).
+  return next ? bumpDailyIn({ ...prev, essences: next }, 'essencia', ganhas) : prev;
 }
 
 /** A versão da descida AUTOMÁTICA: corta o que passar do teto do dia (`dayKey` = dia do jogador) e conta o que entrou. */

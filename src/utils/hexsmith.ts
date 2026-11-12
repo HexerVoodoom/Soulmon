@@ -25,6 +25,7 @@ import { ALL_ELEMENT_IDS, isDexElement } from './elementDex';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { spendBits } from './equipment';
+import { bumpDailyIn } from './dailyMissions';
 import { potionKey } from './elementPotion';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 import type { FighterIdentity } from './fighterIdentity';
@@ -170,7 +171,8 @@ export function forgeHexItem<T extends HexForgeState>(prev: T, idRaw: string): T
   if (cost.bits > 0) next = spendBits(next, cost.bits);
   const slot = parseHexItem(id)!.slot;
   const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
-  return { ...next, hexsmith: { owned: [...hx.owned, id], equipped } };
+  // Missão da Hexsmith (12/11/2026, REGISTRO §311): forjar 1 HEX.
+  return bumpDailyIn({ ...next, hexsmith: { owned: [...hx.owned, id], equipped } }, 'hex');
 }
 
 /**
@@ -199,7 +201,8 @@ export function applyServerHexForge<T extends HexForgeState>(prev: T, idRaw: str
   }
   const slot = parseHexItem(id)!.slot;
   const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
-  return { ...next, hexsmith: { owned: [...hx.owned, id], equipped } };
+  // Missão da Hexsmith (12/11/2026, REGISTRO §311): forjar 1 HEX.
+  return bumpDailyIn({ ...next, hexsmith: { owned: [...hx.owned, id], equipped } }, 'hex');
 }
 
 /** Equipa um item possuído no slot dele (troca o que estava). Não possuído = o MESMO objeto. Nada se perde: o anterior fica na posse. */
