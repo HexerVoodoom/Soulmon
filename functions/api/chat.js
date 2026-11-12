@@ -1,4 +1,5 @@
 import { guardAiRequest, perMinuteGate } from './_aiGuard.js';
+import { CATEGORIES } from './_categories.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { VALID_ID } from './_entitlements.js';
 import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
@@ -312,7 +313,7 @@ const BEHAVIOR_SCALARS = {
   moodDays: { min: 0, max: 14 },
 };
 const BEHAVIOR_MAPS = {
-  byCategory: ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'],
+  byCategory: [...CATEGORIES, 'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'], // novas + antigas (cliente velho)
   byPart: ['morning', 'afternoon', 'evening', 'night'],
 };
 
@@ -543,14 +544,14 @@ export function detectCreateIntent(message) {
   const nameMatch = msg.match(/\b(?:create|add|make|new)\s+(?:an?\s+|new\s+)*(?:activity|task|habit)\s*(?:to\s+|called\s+|named\s+|:\s*)?(.+)/i);
   const name = (nameMatch?.[1] ?? '').trim().replace(/[.!?]+$/, '').slice(0, 60);
   if (!name) return null;
-  let category = 'Wellness';
-  if (msg.match(/exercise|workout|run|gym/i)) category = 'Fitness';
-  else if (msg.match(/study|read|learn|course/i)) category = 'Study';
-  else if (msg.match(/work|project|meeting/i)) category = 'Work';
-  else if (msg.match(/draw|paint|write|creat/i)) category = 'Creativity';
-  else if (msg.match(/friend|family|social/i)) category = 'Social';
-  else if (msg.match(/clean|organi|plan/i)) category = 'Discipline';
-  else if (msg.match(/health|doctor|medic/i)) category = 'Health';
+  let category = 'mente';
+  if (msg.match(/exercise|workout|run|gym/i)) category = 'corpo';
+  else if (msg.match(/study|read|learn|course/i)) category = 'aprendizado';
+  else if (msg.match(/work|project|meeting/i)) category = 'foco';
+  else if (msg.match(/draw|paint|write|creat/i)) category = 'criatividade';
+  else if (msg.match(/friend|family|social/i)) category = 'relacoes';
+  else if (msg.match(/clean|organi|plan/i)) category = 'casa';
+  else if (msg.match(/health|doctor|medic/i)) category = 'corpo';
   return { name, category };
 }
 

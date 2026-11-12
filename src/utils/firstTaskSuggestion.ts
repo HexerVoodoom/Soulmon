@@ -24,20 +24,21 @@ export interface FirstTaskDraft {
 type Bilingual = { en: string; pt: string };
 
 const BY_AREA: Record<LifeArea, { name: Bilingual; category: ActivityCategory; emoji: string }> = {
-  sono: { name: { en: "Set tonight's bedtime alarm", pt: 'Programar o despertador de hoje à noite' }, category: 'Wellness', emoji: '🌙' },
-  corpo: { name: { en: 'Book a check-up or a class', pt: 'Marcar uma consulta ou uma aula' }, category: 'Health', emoji: '🏥' },
-  mente: { name: { en: 'Write down what is on my mind', pt: 'Anotar o que está na minha cabeça' }, category: 'Wellness', emoji: '📝' },
-  foco: { name: { en: 'Clear my desk for 10 minutes', pt: 'Arrumar minha mesa por 10 minutos' }, category: 'Work', emoji: '🧹' },
-  aprendizado: { name: { en: 'Pick the next thing I want to learn', pt: 'Escolher a próxima coisa que quero aprender' }, category: 'Study', emoji: '📚' },
-  relacoes: { name: { en: 'Message someone I miss', pt: 'Mandar mensagem para alguém de quem sinto falta' }, category: 'Social', emoji: '💌' },
-  casa: { name: { en: 'Tidy one corner of the house', pt: 'Arrumar um cantinho da casa' }, category: 'Discipline', emoji: '🏠' },
-  financas: { name: { en: 'Check my balance and one bill', pt: 'Conferir meu saldo e uma conta' }, category: 'Discipline', emoji: '💰' },
-  proposito: { name: { en: 'Write one thing I want this month', pt: 'Escrever uma coisa que quero neste mês' }, category: 'Creativity', emoji: '🧭' },
+  sono: { name: { en: "Set tonight's bedtime alarm", pt: 'Programar o despertador de hoje à noite' }, category: 'sono', emoji: '🌙' },
+  corpo: { name: { en: 'Book a check-up or a class', pt: 'Marcar uma consulta ou uma aula' }, category: 'corpo', emoji: '🏥' },
+  mente: { name: { en: 'Write down what is on my mind', pt: 'Anotar o que está na minha cabeça' }, category: 'mente', emoji: '📝' },
+  foco: { name: { en: 'Clear my desk for 10 minutes', pt: 'Arrumar minha mesa por 10 minutos' }, category: 'foco', emoji: '🧹' },
+  aprendizado: { name: { en: 'Pick the next thing I want to learn', pt: 'Escolher a próxima coisa que quero aprender' }, category: 'aprendizado', emoji: '📚' },
+  relacoes: { name: { en: 'Message someone I miss', pt: 'Mandar mensagem para alguém de quem sinto falta' }, category: 'relacoes', emoji: '💌' },
+  casa: { name: { en: 'Tidy one corner of the house', pt: 'Arrumar um cantinho da casa' }, category: 'casa', emoji: '🏠' },
+  financas: { name: { en: 'Check my balance and one bill', pt: 'Conferir meu saldo e uma conta' }, category: 'financas', emoji: '💰' },
+  proposito: { name: { en: 'Write one thing I want this month', pt: 'Escrever uma coisa que quero neste mês' }, category: 'proposito', emoji: '🧭' },
+  criatividade: { name: { en: 'Doodle or jot an idea for 2 minutes', pt: 'Rabiscar ou anotar uma ideia por 2 minutos' }, category: 'criatividade', emoji: '🎨' },
 };
 
 const GENERIC = {
   name: { en: 'Finish one small thing I have been putting off', pt: 'Terminar uma coisinha que venho adiando' },
-  category: 'Discipline' as ActivityCategory,
+  category: 'foco' as ActivityCategory,
   emoji: '✅',
 };
 

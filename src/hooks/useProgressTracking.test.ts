@@ -32,7 +32,7 @@ function ativ(
   const passos: Passo[] = (opts.passos ?? []).map((c, i) => ({ id: `${id}-${i}`, label: `p${i}`, completed: c }));
   return {
     id,
-    category: (opts.categoria ?? 'Health') as any,
+    category: (opts.categoria ?? 'corpo') as any,
     steps: passos,
     weekDays: opts.weekDays ?? TODO_DIA,
     completedToday: !!opts.feita,
@@ -182,12 +182,12 @@ describe('useProgressTracking — todayAttributes', () => {
   });
 
   it('acumula os atributos das atividades concluídas', () => {
-    const r = ver(estado({ activities: [ativ('a', { passos: [true], categoria: 'Health' })] }));
-    expect(r.todayAttributes).toEqual(CATEGORY_ATTRIBUTES['Health']);
+    const r = ver(estado({ activities: [ativ('a', { passos: [true], categoria: 'corpo' })] }));
+    expect(r.todayAttributes).toEqual(CATEGORY_ATTRIBUTES['corpo']);
   });
 
   it('atividade incompleta não rende atributo', () => {
-    const r = ver(estado({ activities: [ativ('a', { passos: [false], categoria: 'Study' })] }));
+    const r = ver(estado({ activities: [ativ('a', { passos: [false], categoria: 'aprendizado' })] }));
     expect(r.todayAttributes).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
@@ -195,13 +195,13 @@ describe('useProgressTracking — todayAttributes', () => {
     const r = ver(
       estado({
         activities: [
-          ativ('a', { passos: [true], categoria: 'Health' }),
-          ativ('b', { passos: [true], categoria: 'Study' }),
+          ativ('a', { passos: [true], categoria: 'corpo' }),
+          ativ('b', { passos: [true], categoria: 'aprendizado' }),
         ],
       }),
     );
-    expect(r.todayAttributes.power).toBe(CATEGORY_ATTRIBUTES.Health.power + CATEGORY_ATTRIBUTES.Study.power);
-    expect(r.todayAttributes.harmony).toBe(CATEGORY_ATTRIBUTES.Health.harmony + CATEGORY_ATTRIBUTES.Study.harmony);
-    expect(r.todayAttributes.benevolence).toBe(CATEGORY_ATTRIBUTES.Health.benevolence + CATEGORY_ATTRIBUTES.Study.benevolence);
+    expect(r.todayAttributes.power).toBe(CATEGORY_ATTRIBUTES.corpo.power + CATEGORY_ATTRIBUTES.aprendizado.power);
+    expect(r.todayAttributes.harmony).toBe(CATEGORY_ATTRIBUTES.corpo.harmony + CATEGORY_ATTRIBUTES.aprendizado.harmony);
+    expect(r.todayAttributes.benevolence).toBe(CATEGORY_ATTRIBUTES.corpo.benevolence + CATEGORY_ATTRIBUTES.aprendizado.benevolence);
   });
 });

@@ -8,7 +8,7 @@ import { categoryLabel } from '../types/category-icons';
 import { useState } from 'react';
 
 function Harness({ isPt }: { isPt: boolean }) {
-  const [c, setC] = useState<ActivityCategory>('Health');
+  const [c, setC] = useState<ActivityCategory>('corpo');
   return <CategoryChips category={c} setCategory={setC} isPt={isPt} />;
 }
 
@@ -17,7 +17,7 @@ describe('pontos por categoria no criar', () => {
     it(`mostra os 3 valores da regra (${isPt ? 'PT' : 'EN'})`, () => {
       vi.clearAllMocks();
       render(<Harness isPt={isPt} />);
-      const cat: ActivityCategory = 'Wellness';
+      const cat: ActivityCategory = 'mente';
       fireEvent.click(screen.getByText(categoryLabel(cat, isPt)));
       const box = screen.getByTestId('category-points');
       for (const a of ['power', 'harmony', 'benevolence'] as BranchType[]) {

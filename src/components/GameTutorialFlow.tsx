@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react';
+import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
 import { BackArrow } from './ui/BackArrow';
 import { Viewport } from './ui/Viewport';
@@ -78,7 +79,7 @@ export const SHOP_AND_CURRENCY_PRIMER = {
   bodyEn: 'Play the minigames in the Activities tab to earn Bits and spend them in the shop (items, backdrops, furniture). Credits are a special currency for extra help.',
 } as const;
 
-const CATEGORIES: ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+const CATEGORIES: ActivityCategory[] = [...ACTIVITY_CATEGORIES];
 
 /**
  * Tarefas locais para quando a IA não responde. Todas são versões de dois
@@ -86,18 +87,20 @@ const CATEGORIES: ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'S
  * Motivação, e a primeira tarefa da vida do usuário é onde isso mais importa.
  */
 const FALLBACK_BY_CATEGORY: Record<ActivityCategory, { pt: string; en: string }> = {
-  Health:     { pt: 'Beber um copo de água', en: 'Drink a glass of water' },
-  Creativity: { pt: 'Rabiscar por 2 minutos', en: 'Doodle for 2 minutes' },
-  Discipline: { pt: 'Arrumar a cama', en: 'Make the bed' },
-  Study:      { pt: 'Ler 1 página', en: 'Read 1 page' },
-  Work:       { pt: 'Escrever a primeira linha', en: 'Write the first line' },
-  Social:     { pt: 'Mandar uma mensagem pra alguém', en: 'Text someone' },
-  Wellness:   { pt: 'Respirar fundo 3 vezes', en: 'Take 3 deep breaths' },
-  Fitness:    { pt: 'Alongar por 2 minutos', en: 'Stretch for 2 minutes' },
+  sono:         { pt: 'Deixar o celular longe da cama', en: 'Leave the phone away from the bed' },
+  corpo:        { pt: 'Beber um copo de água', en: 'Drink a glass of water' },
+  mente:        { pt: 'Respirar fundo 3 vezes', en: 'Take 3 deep breaths' },
+  foco:         { pt: 'Escrever a primeira linha', en: 'Write the first line' },
+  aprendizado:  { pt: 'Ler 1 página', en: 'Read 1 page' },
+  relacoes:     { pt: 'Mandar uma mensagem pra alguém', en: 'Text someone' },
+  casa:         { pt: 'Arrumar a cama', en: 'Make the bed' },
+  financas:     { pt: 'Conferir o saldo', en: 'Check my balance' },
+  proposito:    { pt: 'Escrever uma coisa que importa pra mim', en: 'Write one thing that matters to me' },
+  criatividade: { pt: 'Rabiscar por 2 minutos', en: 'Doodle for 2 minutes' },
 };
 
 function fallbackTasks(cats: ActivityCategory[], isPt: boolean): SuggestedTask[] {
-  const usadas = cats.length > 0 ? cats : (['Health', 'Study', 'Wellness'] as ActivityCategory[]);
+  const usadas = cats.length > 0 ? cats : (['corpo', 'aprendizado', 'mente'] as ActivityCategory[]);
   return usadas.slice(0, 4).map(category => ({
     name: isPt ? FALLBACK_BY_CATEGORY[category].pt : FALLBACK_BY_CATEGORY[category].en,
     category,

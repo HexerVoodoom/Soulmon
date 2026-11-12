@@ -41,7 +41,7 @@ describe('QuickAddBar — confirmação antes de gravar', () => {
   it('mostra o que entendeu enquanto se digita', () => {
     const { campo } = abrir();
     fireEvent.change(campo, { target: { value: 'pagar boleto !2 #trabalho' } });
-    expect(screen.getByText('Work')).toBeTruthy();
+    expect(screen.getByText('foco')).toBeTruthy();
     expect(screen.getByText('esforço 2')).toBeTruthy();
   });
 
