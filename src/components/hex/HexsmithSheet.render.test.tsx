@@ -201,6 +201,13 @@ describe('HexsmithSheet', () => {
     expect(pot.querySelector('[data-hex-potion-qty]')!.textContent).toBe(`1/${HEX_COSTS.element.potions}`);
     expect(cell.querySelector('[data-hex-cost-fragments]')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
     expect(cell.querySelectorAll('.sm2-hex-plus')).toHaveLength(2);
+    expect(cell.querySelector('[data-hex-cost-bits]')!.textContent).toMatch(/\d/);
+    click(cell.querySelector('[data-hex-cost-bits] button[data-info-tip]')!);
+    expect(document.querySelector('[data-hex-bits-tip]')).not.toBeNull();
+    act(() => { fireEvent.pointerDown(document.body); });
+    click(cell.querySelector('[data-hex-cost-fragments] button[data-info-tip]')!);
+    expect(document.querySelector('[data-hex-fragments-tip]')!.textContent).toMatch(/Masmorra/);
+    act(() => { fireEvent.pointerDown(document.body); });
     expect(document.querySelector('[data-hex-potion-tip]')).toBeNull();
     click(pot.querySelector('button[data-info-tip]')!);
     expect(document.querySelector('[data-hex-potion-tip]')!.textContent).toMatch(/essências de Água/);

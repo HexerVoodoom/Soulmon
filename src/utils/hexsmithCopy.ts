@@ -137,3 +137,13 @@ export function potionHowTo(isPt: boolean, name: string, baseNames: readonly str
     ? `No Centro de Evolução, no Laboratório: 1 poção de cada elemento base (${list}) + ${costs.compositeFinal} essências de ${name}. Cada poção base se faz com essências ou se compra na Feira.`
     : `At the Evolution Center in the Lab: 1 potion of each base element (${list}) + ${costs.compositeFinal} ${name} essences. Each base potion is brewed from essences or bought at the Fair.`;
 }
+
+/** Tooltip curto "como conseguir" dos itens do custo que não são poção (fragmentos e Bits). */
+export function hexCostHowTo(kind: 'fragments' | 'bits', isPt: boolean): string {
+  return kind === 'fragments'
+    ? (isPt ? 'Fragmentos de Alma: a Masmorra os deixa a cada profundidade nova.' : 'Soul Fragments: the Dungeon leaves them at each new depth.')
+    : (isPt ? 'Bits ganhos jogando: concluindo hábitos, dias completos e minijogos. Bits de Crédito não entram.' : 'Bits earned by playing: completing habits, full days and minigames. Credit Bits do not count.');
+}
+export function hexCostTipLabel(kind: 'fragments' | 'bits', isPt: boolean): string {
+  return kind === 'fragments' ? (isPt ? 'Como conseguir fragmentos' : 'How to get fragments') : (isPt ? 'Como conseguir Bits' : 'How to get Bits');
+}

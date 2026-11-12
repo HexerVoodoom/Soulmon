@@ -9141,7 +9141,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* 09/11 (dono): linha do que a Porta faz, sob o título — branco, bold, menor, mesma fonte. */
 .sm2-hex-desc { margin: calc(-1 * var(--sm2-space-2)) 0 0; color: #fff; font-weight: 700; font-size: 0.8125rem; line-height: 1.35; }
 .sm2-hex-group { display: grid; gap: var(--sm2-space-2); }
-.sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-balance {
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm2-space-2); margin: 0;
   font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted);
@@ -9167,7 +9167,7 @@ button.sm2-hex-row {
   display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0; flex: none; white-space: nowrap;
   font-size: var(--sm2-text-xs); font-weight: 400; color: var(--sm2-muted);
 }
-.sm2-hex-table { display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-table { display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-thead, .sm2-hex-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sm2-space-2); }
 .sm2-hex-thead { padding: 0 var(--sm2-space-3); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-muted); }
 .sm2-hex-thead > span:last-child { text-align: right; }
@@ -9175,11 +9175,13 @@ button.sm2-hex-row {
 .sm2-hex-line[data-on="true"] { background-color: var(--sm2-primary-soft); }
 .sm2-hex-pick { background: none; }
 .sm2-hex-line[data-on="true"] .sm2-hex-pick { background-color: transparent; border-color: transparent; }
-.sm2-hex-cost { display: inline-flex; align-items: flex-start; justify-content: flex-end; gap: var(--sm2-space-1); flex-wrap: nowrap; color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
-.sm2-hex-cost-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 0; }
+.sm2-hex-cost { display: inline-flex; align-items: flex-start; justify-content: flex-end; gap: var(--sm2-space-1); flex-wrap: nowrap; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
+.sm2-hex-cost-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 40px; }
+.sm2-hex-line .sm2-hex-row-name { white-space: normal; overflow-wrap: anywhere; }
+.sm2-hex-line .sm2-hex-row { min-height: 56px; }
 .sm2-hex-cost-cell[data-have="false"] .sm2-num { color: var(--sm2-muted); opacity: 0.7; }
 .sm2-hex-cost-cell[data-have="true"] .sm2-num { color: var(--sm2-ink); }
-.sm2-hex-plus { align-self: center; padding-bottom: 1px; }
+.sm2-hex-plus { align-self: flex-start; line-height: 32px; }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
 
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
