@@ -10,11 +10,11 @@ import { readJson, writeJson } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 
 /** A chave sai quando a técnica foi feita de verdade, mas nunca exige contagem (§238, D-3). */
-export function keyEarned(key: JourneyKeyId, d: SessionDraft, opts: { noTasks: boolean; dumpDone: boolean }): boolean {
+export function keyEarned(key: JourneyKeyId, d: SessionDraft, opts: { noTasks: boolean; dumpDone: boolean; /** Alguma tarefa já tem as 4 notas de Prioridades. */ classified?: boolean }): boolean {
   switch (key) {
     case 'bancada': return Object.values(d.prepChecked).some(Boolean);
     case 'relampago': return opts.noTasks || d.twoMin.length > 0;
-    case 'quadrantes': return opts.noTasks || Object.keys(d.matrix).length > 0;
+    case 'quadrantes': return opts.noTasks || (opts.classified ?? Object.keys(d.matrix).length > 0);
     case 'brejo': return opts.noTasks || d.frog !== '';
     case 'elo': return d.ifThen.cue.trim() !== '' && d.ifThen.action.trim() !== '';
     case 'pena': return opts.dumpDone || d.dump.trim() !== '';

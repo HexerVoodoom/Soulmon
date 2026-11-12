@@ -84,6 +84,7 @@ import { createNightmareState, sanitizeNightmareState } from '../utils/nightmare
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
+import { sanitizeIce, type Ice } from '../utils/iceScore';
 import { sanitizeMercMission, type MercMissionState } from '../utils/mercMissionSave';
 import { sanitizeBossShards } from '../utils/bossShards';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
@@ -253,6 +254,8 @@ export interface Task {
   /** XP por subtarefa (REGISTRO §44): quantas subtarefas desta tarefa JÁ pagaram XP. Só sobe; teto
    *  `XP_STEP_MAX_PAID`. Ausente (save antigo) = as subtarefas já feitas contam como pagas. */
   stepXpPaid?: number;
+  /** PRIORIDADES (12/11/2026, modelo ICE adaptado — `utils/iceScore.ts`): as 4 notas de 1 a 5. Ausente = não classificada (save antigo lê assim). */
+  ice?: Ice;
 }
 
 export interface CompletedTask {
@@ -1088,6 +1091,8 @@ function hydrateTask(v: unknown): Task | null {
     emoji: str(raw.emoji) ?? '⭐',
     completed: raw.completed === true,
     ...(raw.steps !== undefined ? { steps: arr<unknown>(raw.steps).map(hydrateStep) } : {}),
+    /* ice: lixo/incompleto vira "não classificada" (nunca derruba a lista). */
+    ice: sanitizeIce(raw.ice),
   } as Task;
 }
 

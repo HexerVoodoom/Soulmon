@@ -186,6 +186,7 @@ import {
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
 import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
+import type { Ice } from './utils/iceScore';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
@@ -8601,6 +8602,8 @@ export default function App() {
                     else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
                   onToggleFocusStep: (taskId: string, stepId: string) => handleToggleTaskStep(taskId, stepId),
+                  /* Prioridades (ICE): só grava `ice` na tarefa; a ordem da Home não muda. */
+                  onSetFocusIce: (taskId: string, ice: Ice | null) => setGameState(prev => ({ ...prev, tasks: prev.tasks.map(t => { if (t.id !== taskId) return t; const { ice: _old, ...rest } = t; return ice ? { ...rest, ice } : rest; }) })),
                   onCreateFocusTask: (name: string) => handleQuickAdd({ kind: 'task', name, tokens: [] }),
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
