@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { CheckRow, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
-import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
+import { checkBoxStyle, CheckMark, pickRowStyle } from '../pixel/RitualPanel';
 import { TagChips } from './OficinaTags';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
@@ -62,7 +62,7 @@ const selectStyle: CSSProperties = { minHeight: 44, color: 'var(--sm2-ink)', bac
 /** Uma linha tocável de lista (picker): 44px de alvo, estado em aria-checked, sem ícone em caixa. */
 function PickRow({ role, checked, onClick, children, habit, ...rest }: { role: 'checkbox' | 'radio'; checked: boolean; onClick: () => void; children: React.ReactNode; habit?: React.ReactNode } & Record<string, unknown>) {
   return <button type="button" role={role} aria-checked={checked} onClick={onClick} {...rest}
-    style={{ ...sm2Button(checked ? 'primary' : 'outline'), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, textAlign: 'left', width: '100%', minHeight: 44 }}>
+    style={{ ...(role === 'checkbox' ? pickRowStyle(sm2Button('outline'), checked) : sm2Button(checked ? 'primary' : 'outline')), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, textAlign: 'left', width: '100%', minHeight: 44 }}>
     {role === 'checkbox'
       ? <span aria-hidden="true" className={checked ? 'sm2-check-halo' : undefined} style={checkBoxStyle({ checked })}>{checked && <CheckMark />}</span>
       : <Icon name={checked ? 'check_circle' : 'radio_button_unchecked'} size={20} tone="inherit" />}

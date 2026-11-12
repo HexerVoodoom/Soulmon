@@ -97,6 +97,15 @@ export function checkBoxStyle(
   };
 }
 
+/**
+ * Linha de ESCOLHA que leva a caixa do check (modal "Qual tarefa você vai fazer?", pickers). Selecionada NÃO enche o botão de
+ * `--sm2-primary-fill`: o check é `--sm2-primary-ink` (turquesa) e sumia sobre o fill turquesa do botão `primary`. Fica o botão
+ * `outline` (fundo de superfície) e a seleção vira borda turquesa de 2px, então o check turquesa tem contraste com o fundo.
+ */
+export function pickRowStyle(base: CSSProperties, checked: boolean): CSSProperties {
+  return checked ? { ...base, border: '2px solid var(--sm2-primary-ink)' } : base;
+}
+
 /** O check turquesa com o glow baixo: só existe marcado (nada de `opacity: 0`). */
 export function CheckMark() {
   return (
