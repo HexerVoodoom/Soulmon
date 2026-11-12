@@ -19,6 +19,13 @@ export const ALIGN_TO_ATTR: Record<'poder' | 'harmonia' | 'benevolencia', 'power
 };
 
 /**
+ * Tipo ABSOLUTO (nome do dono, 12/11/2026): o estágio Ultra reúne os três tipos ao mesmo tempo, ou seja, é NEUTRO. Só rótulo/dado de
+ * exibição: NÃO é um `AlignmentId`/atributo (o motor já trata o Ultra sem branch: `creatureFormId` devolve 'ultra') e não entra em
+ * nenhuma conta de combate, vantagem ou balanceamento. REGISTRO §310.
+ */
+export const ABSOLUTE_TYPE = { id: 'absoluto', pt: 'Absoluto', en: 'Absolute' } as const;
+
+/**
  * Pontos por atividade concluída em cada categoria (Poder/Harmonia/Benevolência).
  * REGRA (11/11/2026, decisão do dono): toda categoria soma 3 e o conjunto é EXATAMENTE equilibrado
  * (Poder 10 · Harmonia 10 · Benevolência 10, 10 categorias x 3 = 30). Corpo, foco, criatividade e propósito

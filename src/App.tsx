@@ -29,9 +29,9 @@ import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from '.
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
-import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { bumpDaily, bumpDailyIn, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { lotCoins, lotMissionMarks } from './utils/lotMarks';
-import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
+import { buildingMarks, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
 import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
@@ -186,6 +186,7 @@ import {
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
 import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
+import type { Ice } from './utils/iceScore';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
@@ -694,6 +695,7 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
+import { CtaButton } from './components/ui/CtaButton';
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
 import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
 // Oferta da Vesca: só monta com 100 essências; a copy dos prédios (→ areaNpcVoice → guildCopy) fica fora da entrada.
@@ -2179,7 +2181,7 @@ export default function App() {
    * desenho de produto, 100% cliente.
    */
   /** Fragmento do Soulsmith, Fragmento de Boss e Essências para a aba Materiais da Mochila (memo: o `CompanionHUD` é `memo`). */
-  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards, essences: gameState.essences }), [gameState.equipment?.fragments, gameState.bossShards, gameState.essences]);
+  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards }), [gameState.equipment?.fragments, gameState.bossShards]);
   const tierForRules: AccountTier = gameState.accountTier === 'demo' ? 'demo' : 'paid';
   /**
    * O TETO EFETIVO de hábitos ativos — o número que a UI mostra e o portão usa.
@@ -4650,9 +4652,15 @@ export default function App() {
     setCurrentView(v);
   }, [contarMissao, contarDiaria, demo]);
 
-  /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
+  /* O "Ir lá" do material na Mochila. A missão que estiver no menu da Home (`LISTED_QUEST_BUILDINGS`, hoje nenhuma) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
      Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
+  /** Plaquinha da Home → "Ir à Fenda": fecha o aviso e abre a tela da descida (Exploração > Fenda, com o Soulmon lá). */
+  const irAFenda = useCallback(() => {
+    setOcupadoAviso(null);
+    setPendingSheet({ area: 'exploracao', lot: 'fenda' });
+    goTo(areaView('exploracao'));
+  }, [goTo]);
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
     if (!dest) return;
@@ -4862,7 +4870,7 @@ export default function App() {
     if (!(gameStateRef.current.missionsClaimed ?? []).includes(id)) {
       toast(language === 'pt-BR' ? 'Conquista resgatada: já dá para comprar o item no Mercado.' : 'Achievement claimed: you can now buy the item at the Market.');
     }
-    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : { ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }));
+    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : bumpDailyIn({ ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }, 'conquista'))); // 12/11/2026: missão da Medra
   }, [missionProgress, setGameState, language]);
   /* CONQUISTAS (30/10/2026): o prêmio em Bits sai UMA vez por conquista (`conquistasPagas`); save sem o campo é semeado com as já abertas
      (sem Bits retroativos). Os Pontos de Conquista são derivados — aqui só se MOSTRA o ganho. */
@@ -5038,7 +5046,7 @@ export default function App() {
         : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
+    setGameState(prev => bumpDailyIn({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }, 'cambio')); // 12/11/2026: missão do Farthing
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
@@ -5076,7 +5084,11 @@ export default function App() {
     // dois — saldo negativo, e o cenário entrando duas vezes na lista de posse.
     if (shopBuyRefusal(gameState, item)) return false;
 
-    setGameState(prev => applyShopBuy(prev, item).state);
+    // Missão da Lamela/Lasca (12/11/2026, REGISTRO §314): comprar no Mercado (recusa devolve o MESMO `prev`).
+    setGameState(prev => { const r = applyShopBuy(prev, item); if (r.refused) return prev;
+      const comprou = bumpDailyIn(r.state, 'compra');
+      return item.kind === 'bg' ? bumpDailyIn(comprou, 'cenario') : comprou; // cenário também conta para a Panora
+    });
     // C-3 (run `som-01`): comprar deixa de soar como COMER. Era o mesmo som
     // para o unico evento do app que gasta moeda, e o gasto e irreversivel —
     // quem nao olha a tela nao tinha como distinguir os dois. Categoria
@@ -5109,8 +5121,10 @@ export default function App() {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
     if (frameBuyRefusal(gameState, frameId)) return false;
     setGameState(prev => {
-      const { state, refused } = applyFrameBuy(prev, frameId);
-      if (refused || !equipar) return state;
+      const { state: comprado, refused } = applyFrameBuy(prev, frameId);
+      if (refused) return comprado;
+      const state = bumpDailyIn(comprado, 'compra');
+      if (!equipar) return state;
       return { ...state, equippedFrame: sanitizeEquippedFrame(frameId) };
     });
     return true;
@@ -5174,7 +5188,7 @@ export default function App() {
   const handleGuildMissionSend = useCallback(() => {
     setGameState(prev => {
       if (prev.guildMission) return prev;
-      return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
+      return bumpDailyIn({ ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) }, 'cla'); // 12/11/2026: missão da Aurea
     });
   }, [setGameState]);
 
@@ -6068,7 +6082,11 @@ export default function App() {
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       const c1 = f(c0);
-      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+      if (c1 === c0) return prev;
+      // Missão da Lisel (12/11/2026, REGISTRO §314): o passeio foi CONCLUÍDO hoje (a transição, 1× por dia).
+      const hoje = playerDayIso(new Date(), prev.playerDayTz);
+      const salvo = { ...prev, crossings: c1 };
+      return c0.doneDay !== hoje && c1.doneDay === hoje ? bumpDailyIn(salvo, 'passeio') : salvo;
     });
   }, [setGameState]);
 
@@ -6087,14 +6105,11 @@ export default function App() {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
       if (c1 === c0) return prev;
-      // O EVENTO REAL da missão do journaling (07/10/2026): um registro NOVO guardado. Mesmo updater, PURO sobre `prev`;
-      // idempotente por dia do jogador (`completeBuildingQuest` só age em `available`).
+      // O EVENTO REAL do journal: um registro NOVO guardado conta a semanal "journal em 3 dias" (no máx. 1 por dia). A diária do
+      // Caderno saiu (12/11/2026, REGISTRO §309); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
-      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date()); // semanal "journal em 3 dias" (no máx. 1 por dia)
-      const bq = novo
-        ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'forja.caderno', bondLevelFor(prev.totalXP ?? 0))
-        : prev.buildingQuests;
-      return bq === prev.buildingQuests ? { ...prev, caderno: c1 } : { ...prev, caderno: c1, buildingQuests: bq };
+      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date());
+      return { ...prev, caderno: c1 };
     });
   }, [setGameState]);
 
@@ -7781,11 +7796,11 @@ export default function App() {
 
           {labTab === 'evolution' && (
             <div style={{ padding: '0 4px 10px' }}>
-              <button type="button" data-open-element-potion className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ width: '100%' }}
+              <CtaButton data-open-element-potion
                 aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
                 <Icon name="auto_awesome" size={20} />
-                {language === 'pt-BR' ? 'Criar poção de elemento' : 'Create element potion'}
-              </button>
+                {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
+              </CtaButton>
             </div>
           )}
           {labTab === 'evolution' && potionOpen && <Suspense fallback={null}><ElementPotionSheet
@@ -8598,6 +8613,8 @@ export default function App() {
                     else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
                   onToggleFocusStep: (taskId: string, stepId: string) => handleToggleTaskStep(taskId, stepId),
+                  /* Prioridades (ICE): só grava `ice` na tarefa; a ordem da Home não muda. */
+                  onSetFocusIce: (taskId: string, ice: Ice | null) => setGameState(prev => ({ ...prev, tasks: prev.tasks.map(t => { if (t.id !== taskId) return t; const { ice: _old, ...rest } = t; return ice ? { ...rest, ice } : rest; }) })),
                   onCreateFocusTask: (name: string) => handleQuickAdd({ kind: 'task', name, tokens: [] }),
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
@@ -9813,6 +9830,7 @@ export default function App() {
         acao={ocupadoAviso?.acao ?? null}
         language={language}
         onRetire={() => void retirarDaMasmorra()}
+        onGo={irAFenda}
         onClose={() => setOcupadoAviso(null)}
         busy={retirando}
       /></Suspense>}

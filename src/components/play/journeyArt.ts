@@ -20,7 +20,6 @@ import chaveBrejo from '../../assets/focus-jornada/chave-brejo.webp';
 import chaveElo from '../../assets/focus-jornada/chave-elo.webp';
 import chavePena from '../../assets/focus-jornada/chave-pena.webp';
 import chaveRelampago from '../../assets/focus-jornada/chave-relampago.webp';
-import chegada from '../../assets/focus-jornada/cena-chegada.webp';
 import bauAbrindo from '../../assets/focus-jornada/bau-abrindo-sheet.webp';
 
 export const JOURNEY_ART: Record<string, string | undefined> = {
@@ -32,7 +31,6 @@ export const CHEST_ART: Partial<Record<JourneyKeyId | 'common', string>> = {
 export const KEY_ART: Partial<Record<JourneyKeyId, string>> = {
   bancada: chaveBancada, brejo: chaveBrejo, elo: chaveElo, pena: chavePena, relampago: chaveRelampago, quadrantes: chaveQuadrantes,
 };
-export const ARRIVAL_ART = chegada;
 /** Folha 768×256, 4 quadros de 192 (fechado → aberto). */
 export const CHEST_OPEN_SHEET = bauAbrindo;
 /** Folha 384×128, 3 quadros de 128; o 1º brilha atrás do baú especial cuja chave o jogador tem. */

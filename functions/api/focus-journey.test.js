@@ -72,4 +72,30 @@ describe('/api/focus-journey (§247)', () => {
     vi.useFakeTimers(); at(0);
     expect((await call(envFake(), { action: 'start', mode: 'p25', env: 'forest', keys: [], day: '2026-11-20' })).status).toBe(400);
   });
+  it('a jornada concluida com recibo entra no razao das missoes (1 por dia); baus e encerrar cedo nao contam (REGISTRO §309)', async () => {
+    vi.useFakeTimers(); at(0);
+    const env = envFake();
+    const { active } = await call(env, { action: 'start', mode: 'p25', env: 'forest', keys: [], day: DIA });
+    at(5);
+    await call(env, { action: 'claim' }); // cedo: so baus, sem conclusao
+    expect(env.store.get(`mval:${ID}:2026-W45:f`)).toBeUndefined();
+    at(40);
+    await call(env, { action: 'claim' });
+    expect(JSON.parse(env.store.get(`mval:${ID}:2026-W45:f`))).toEqual([DIA]);
+    expect(active.day).toBe(DIA);
+    // 2a jornada no mesmo dia: o dia nao entra duas vezes
+    at(41);
+    await call(env, { action: 'start', mode: 'p25', env: 'forest', keys: [], day: DIA });
+    at(80);
+    await call(env, { action: 'claim' });
+    expect(JSON.parse(env.store.get(`mval:${ID}:2026-W45:f`))).toEqual([DIA]);
+  });
+  it('encerrar (end) nao conta para a semanal', async () => {
+    vi.useFakeTimers(); at(0);
+    const env = envFake();
+    await call(env, { action: 'start', mode: 'p25', env: 'forest', keys: [], day: DIA });
+    at(40);
+    await call(env, { action: 'end' });
+    expect(env.store.get(`mval:${ID}:2026-W45:f`)).toBeUndefined();
+  });
 });

@@ -1,5 +1,6 @@
+import { CtaButton } from '../ui/CtaButton';
 /**
- * A SALA DE DESCANSO (§301, 12/11/2026, pedido do dono): o Soulmon atravessa a porta no fim do mapa e chega a um oásis calmo,
+ * A SALA DE DESCANSO (§301/§312, 12/11/2026, pedido do dono): o fim do trajeto troca o fundo do mapa, em tela cheia, por um oásis calmo (sem porta, sem moldura),
  * um por cenário do Foco (caverna → gruta de água cristalina). O descanso dura 5 min (10 no 50/10) e é contado por TIMESTAMP
  * (`utils/focusRest.ts`): sair do app não para o relógio. Aqui mora o «Baú aberto» do fim do foco, com a chave do Calabouço.
  * Dois botões: «Seguir» (outro foco, nova travessia) e «Concluir a missão» (encerra a sessão inteira, com o resumo).
@@ -53,22 +54,26 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
   const left = restLeftMs(rest, now);
   const over = restOver(rest, now);
   const art = OASIS_ART[rest.env];
-  const root = useRef<HTMLDivElement>(null);
+  const bg = useRef<HTMLDivElement>(null);
   const [fadedIn, setFadedIn] = useState(false);
   useEffect(() => {
     // Chegar pela porta: a sala aparece devagar (sem animação com movimento reduzido).
-    const el = root.current;
+    const el = bg.current;
     if (!el || reduced() || typeof el.animate !== 'function') { setFadedIn(true); return; }
     const a = el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 700, easing: 'ease-out' });
     a.onfinish = () => setFadedIn(true);
     return () => a.cancel();
   }, []);
-  const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: '#0b1e24', overflow: 'hidden', color: '#e9f5f2' };
+  const tone = OASIS_TONE[rest.env] ?? OASIS_TONE.forest;
+  /* Fundo sólido na cor do céu do oásis (a mesma em que o mapa se dissolveu): só a camada de arte aparece devagar. */
+  const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: tone.sky, overflow: 'hidden', color: '#e9f5f2' };
   return createPortal(
-    <div ref={root} role="dialog" aria-modal="true" aria-label={isPt ? 'Sala de descanso' : 'Rest room'} data-rest-room data-rest-over={over} data-rest-faded={fadedIn} style={box}>
-      {art
-        ? <img data-rest-art={rest.env} src={art} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        : <OasisFallback env={rest.env} />}
+    <div role="dialog" aria-modal="true" aria-label={isPt ? 'Sala de descanso' : 'Rest room'} data-rest-room data-rest-over={over} data-rest-faded={fadedIn} style={box}>
+      <div ref={bg} data-rest-bg style={{ position: 'absolute', inset: 0 }}>
+        {art
+          ? <img data-rest-art={rest.env} src={art} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <OasisFallback env={rest.env} />}
+      </div>
 
       <section data-rest-card style={{ ...JOURNEY_GLASS, position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: JOURNEY_CARD_WIDTH, zIndex: 2, padding: '8px 12px 10px', display: 'grid', justifyItems: 'center', gap: 4 }}>
         <span style={{ ...sm2Hint, margin: 0 }}>{over ? (isPt ? 'Descanso concluído' : 'Break is over') : (isPt ? 'Descanso' : 'Rest')}</span>
@@ -96,7 +101,7 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
         </section>
         {error && <p role="status" data-rest-error style={{ ...sm2Hint, margin: 0, color: '#e9f5f2', textAlign: 'center' }}>{error}</p>}
         <div style={{ display: 'flex', gap: 8, width: JOURNEY_CARD_WIDTH }}>
-          <button type="button" data-rest-next onClick={onNext} disabled={busy} style={{ ...sm2Button('primary', !!busy), flex: 1, minHeight: 48 }}>{isPt ? 'Seguir' : 'Keep going'}</button>
+          <CtaButton data-rest-next onClick={onNext} disabled={!!busy} width="auto" style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
           <button type="button" data-rest-finish onClick={onFinish} disabled={busy} style={{ ...sm2Button('outline', !!busy), flex: 1, minHeight: 48 }}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</button>
         </div>
         <button type="button" data-rest-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (o descanso continua)' : 'Leave to the Workshop (the break goes on)'} style={{ ...sm2Button('quiet'), minHeight: 44, color: '#e9f5f2' }}>{isPt ? 'Sair (o descanso continua)' : 'Leave (the break goes on)'}</button>

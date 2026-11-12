@@ -5,8 +5,6 @@ import type { PlanTag } from '../../utils/focoSessao';
 export const TAG_LABEL: Record<PlanTag, { pt: string; en: string }> = {
   habit: { pt: 'Hábito', en: 'Habit' },
   quick: { pt: '2 min', en: '2 min' }, frog: { pt: 'Sapo', en: 'Frog' },
-  do: { pt: 'Fazer', en: 'Do' }, schedule: { pt: 'Agendar', en: 'Schedule' },
-  delegate: { pt: 'Delegar', en: 'Delegate' }, drop: { pt: 'Deixar de lado', en: 'Drop' },
 };
 
 export function TagChips({ tags, isPt }: { tags: PlanTag[]; isPt: boolean }) {

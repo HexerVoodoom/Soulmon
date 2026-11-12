@@ -34,6 +34,7 @@ Termo padrão por conceito. Nomes próprios e de marca ficam como estão. Regras
 | Soulsmith, Hexsmith | manter | Nomes próprios |
 | Fragmentos | Fragmentos | Sempre plural, minúsculo no meio da frase |
 | Estágios | Desperto, Ascendente, Transcendente, Apoteose, Zênite | Concordar com o gênero do Soulmon ("Ele está Desperto") |
+| Tipos de personalidade | Poder, Harmonia, Benevolência; no Ultra: Absoluto | Absoluto (en: Absolute) = os três tipos ao mesmo tempo, neutro; só o Ultra. Constante `ABSOLUTE_TYPE` em `src/types/attributes.ts` |
 | Stats | Atributos | "Estatísticas" só para dados históricos |
 | Mood/saúde do pet | "bem", "feliz" | Nunca prometer saúde real |
 

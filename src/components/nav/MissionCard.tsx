@@ -5,6 +5,7 @@ import type { GoTarget } from '../../utils/missionTargets';
 import { Icon } from '../ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { MissionMark } from '../play/MissionMark';
+import type { MissionGiver } from './npcGiver';
 
 /**
  * COMO UMA MISSÃO SE MOVE (dono, 14/10/2026, REGISTRO §62): quem renderiza a lista recebe isto e só pergunta por alvo.
@@ -36,7 +37,7 @@ export interface MissionEntry { key: string; state: MissionCardStatus; node: Rea
  * fazer; concluída vira o check. Título (vira botão "Ir" quando a missão tem lugar), descrição curta, progresso, recompensa e
  * estado. Estável em layout: altura mínima fixa e a ação sempre à direita.
  */
-export function MissionCard({ language, attrs, status, title, desc, progress, reward, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, quiet = false }: {
+export function MissionCard({ language, attrs, status, title, desc, progress, reward, rewardAlways = false, giver, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, quiet = false }: {
   language: Language;
   /** Atributos `data-*` do cartão (os ids que os testes e o manual citam). */
   attrs: Record<string, string>;
@@ -46,6 +47,10 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   progress?: { cur: number; target: number } | null;
   /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
   reward?: ReactNode;
+  /** Missões do DIA (12/11/2026, pedido do dono): a recompensa aparece sempre, não só com a missão pronta. */
+  rewardAlways?: boolean;
+  /** Quem passa a missão (12/11/2026): retrato pequeno + nome do NPC. */
+  giver?: MissionGiver;
   onGo?: () => void;
   goAttr?: string;
   goValue?: string;
@@ -87,7 +92,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             {title}
           </button>
         ) : <p style={titleStyle}>{title}</p>}
-        {desc && <p style={{ ...sm2Hint, margin: 0 }}>{desc}</p>}
+        {desc && <p data-mission-desc style={{ ...sm2Hint, margin: 0 }}>{desc}</p>}
         {progress && progress.cur > 0 && status === 'open' && (
           <>
             <p className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{progress.cur}/{progress.target}</p>
@@ -96,7 +101,13 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             </span>
           </>
         )}
-        {reward && (quiet || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {reward && (quiet || (rewardAlways && !claimed) || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {giver && (
+          <p data-mission-giver style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <img src={giver.art} alt="" aria-hidden="true" width={20} height={20} draggable={false} data-mission-giver-art style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', objectPosition: 'center top', imageRendering: 'pixelated', flex: 'none' }} />
+            <span>{isPt ? 'Com ' : 'From '}{giver.name}</span>
+          </p>
+        )}
         {lockNote && !claimed && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{lockNote}</p>}
       </div>
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>

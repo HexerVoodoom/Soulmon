@@ -5900,6 +5900,7 @@ select:focus-visible {
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
+  .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled) { transform: none; } /* CtaButton */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -9141,7 +9142,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* 09/11 (dono): linha do que a Porta faz, sob o título — branco, bold, menor, mesma fonte. */
 .sm2-hex-desc { margin: calc(-1 * var(--sm2-space-2)) 0 0; color: #fff; font-weight: 700; font-size: 0.8125rem; line-height: 1.35; }
 .sm2-hex-group { display: grid; gap: var(--sm2-space-2); }
-.sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-balance {
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm2-space-2); margin: 0;
   font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted);
@@ -9167,7 +9168,7 @@ button.sm2-hex-row {
   display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0; flex: none; white-space: nowrap;
   font-size: var(--sm2-text-xs); font-weight: 400; color: var(--sm2-muted);
 }
-.sm2-hex-table { display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-table { display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-thead, .sm2-hex-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sm2-space-2); }
 .sm2-hex-thead { padding: 0 var(--sm2-space-3); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-muted); }
 .sm2-hex-thead > span:last-child { text-align: right; }
@@ -9175,11 +9176,13 @@ button.sm2-hex-row {
 .sm2-hex-line[data-on="true"] { background-color: var(--sm2-primary-soft); }
 .sm2-hex-pick { background: none; }
 .sm2-hex-line[data-on="true"] .sm2-hex-pick { background-color: transparent; border-color: transparent; }
-.sm2-hex-cost { display: inline-flex; align-items: flex-start; justify-content: flex-end; gap: var(--sm2-space-1); flex-wrap: nowrap; color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
-.sm2-hex-cost-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 0; }
+.sm2-hex-cost { display: inline-flex; align-items: flex-start; justify-content: flex-end; gap: var(--sm2-space-1); flex-wrap: nowrap; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
+.sm2-hex-cost-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 40px; }
+.sm2-hex-line .sm2-hex-row-name { white-space: normal; overflow-wrap: anywhere; }
+.sm2-hex-line .sm2-hex-row { min-height: 56px; }
 .sm2-hex-cost-cell[data-have="false"] .sm2-num { color: var(--sm2-muted); opacity: 0.7; }
 .sm2-hex-cost-cell[data-have="true"] .sm2-num { color: var(--sm2-ink); }
-.sm2-hex-plus { align-self: center; padding-bottom: 1px; }
+.sm2-hex-plus { align-self: flex-start; line-height: 32px; }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
 
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
@@ -9211,6 +9214,42 @@ button.sm2-hex-row {
 .sm2-lab-essence {
   display: inline-flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; min-width: 44px; padding: 0 var(--sm2-space-1);
   background: none; border: 0; border-radius: var(--sm2-radius-md);
+}
+
+/* ── Botão especial CTA (12/11/2026): arte do site do beta em 9-slice; só tokens sm2 no resto ──────────────────
+   Moldura = `border-image` (pontas com cristal/folhas não esticam; o miolo turquesa estica). Texto claro sobre o miolo escuro nos dois
+   temas (o miolo é sempre escuro). Pressed = desce 1px e escurece; disabled = dessatura; foco = anel `primary-ink` com fresta. */
+.sm2-cta {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 44px; margin: 0;
+  padding: 0 var(--sm2-space-2); cursor: pointer; background: transparent;
+  border-style: solid; border-width: 14px 36px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 34 92 fill / 14px 36px stretch;
+  border-image-outset: 0; image-rendering: pixelated;
+  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 700; line-height: var(--sm2-leading-body);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  transition: transform var(--sm2-dur-tap) var(--sm2-ease), filter var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-cta-width="full"] { width: 100%; }
+  &[data-cta-width="auto"] { min-width: 200px; }
+  &:active:not(:disabled) { transform: translateY(1px); filter: brightness(.82); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
+  &:disabled { cursor: not-allowed; filter: grayscale(1) brightness(.7); opacity: .75; transform: none; }
+}
+.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2); text-align: center; }
+
+/* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
+.sm2-pocao-item {
+  display: grid; gap: var(--sm2-space-2); padding: var(--sm2-space-2) var(--sm2-space-3);
+  border-radius: var(--sm2-radius-md); background: var(--sm2-surface); border: 1.5px solid var(--sm2-line);
+  &[data-can-craft="true"] { border-color: var(--sm2-primary-ink); background: var(--sm2-primary-soft); }
+}
+.sm2-pocao-head { display: flex; align-items: center; gap: var(--sm2-space-2); }
+.sm2-pocao-ing {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1);
+  & > li { display: flex; align-items: center; gap: var(--sm2-space-2); font-size: var(--sm2-text-sm); color: var(--sm2-muted); }
+  & > li[data-ok="true"] { color: var(--sm2-ink); }
+}
+.sm2-pocao-chip {
+  background-color: var(--sm2-surface); color: var(--sm2-ink); box-shadow: inset 0 0 0 1px var(--sm2-muted);
+  &[aria-pressed="true"] { background-color: var(--sm2-primary-soft); color: var(--sm2-primary-ink); box-shadow: inset 0 0 0 2px var(--sm2-primary-ink); font-weight: 700; }
 }
 
 /* ── Carta de jogo (GameCard, 04/11/2026) ───────────────────────────────────

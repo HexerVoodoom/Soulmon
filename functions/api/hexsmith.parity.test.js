@@ -8,6 +8,9 @@ import * as app from '../../src/utils/hexsmith';
 import { ALL_ELEMENT_IDS } from '../../src/utils/elementDex';
 import { SPECIAL_FAMILIES } from '../../src/utils/combate/specials';
 
+// A missao diaria da Hexsmith (12/11/2026, REGISTRO secao 309) conta no CLIENTE (`dailyMissions`); o servidor nao mexe nesse campo.
+const semDiaria = ({ dailyMissions: _d, ...resto }) => resto;
+
 describe('hexsmith: servidor = app', () => {
   it('constantes', () => {
     expect(srv.HEX_SLOTS).toEqual([...app.HEX_SLOTS]);
@@ -30,7 +33,7 @@ describe('hexsmith: servidor = app', () => {
         const a = app.forgeHexItem(st, id);
         const r = srv.forgeOnServer(st, id);
         if (a === st) expect(r.ok === false || r.already).toBe(true);
-        else { expect(r.ok && !r.already).toBe(true); expect(r.state).toEqual(a); }
+        else { expect(r.ok && !r.already).toBe(true); expect(r.state).toEqual(semDiaria(a)); }
       }
     }
   });
@@ -66,6 +69,6 @@ describe('hexsmith: servidor = app', () => {
     const st = { gamePoints: 5000, foodInventory: {}, equipment: { owned: [], equipped: {}, fragments: 20 } };
     const r = srv.forgeOnServer(st, 'luvas:melee');
     expect(r.ok && r.state.hexsmith.owned).toEqual(['luvas:melee-slash']);
-    expect(r.state).toEqual(app.forgeHexItem(st, 'luvas:melee'));
+    expect(r.state).toEqual(semDiaria(app.forgeHexItem(st, 'luvas:melee')));
   });
 });

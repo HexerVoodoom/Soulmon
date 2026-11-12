@@ -119,12 +119,17 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
     expect(server.active).toBeNull();
     fireEvent.click(document.querySelector('[data-focus-pick="t2"]')!);
     expect((document.querySelector('[data-focus-pick-go]') as HTMLButtonElement).disabled).toBe(false);
+    // o ✓ aparece na linha marcada (o check turquesa não pode sumir sobre o fill do botão)
+    const marcada = document.querySelector('[data-focus-pick="t2"]') as HTMLElement;
+    expect([...marcada.querySelectorAll('.sm2-icon')].some(e => e.textContent === 'check' && !!e.querySelector('svg path'))).toBe(true);
+    expect(marcada.style.backgroundColor).not.toBe('var(--sm2-primary-fill)');
     await act(async () => { fireEvent.click(document.querySelector('[data-focus-pick-go]')!); });
     await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_SESSION)!).taskId).toBe('t2');
-    // a escolhida aparece primeiro no dock, com a etiqueta
-    expect(document.querySelector('[data-focus-dock-chosen]')).not.toBeNull();
-    expect(document.querySelector('[data-focus-dock] li')!.textContent).toContain('Em foco');
+    // o dock mostra SÓ a escolhida, sem etiqueta nem cabeçalho
+    expect(document.querySelector('[data-focus-dock-chosen]')).toBeNull();
+    expect(document.querySelectorAll('[data-focus-dock] > div > ul > li').length).toBe(1);
+    expect(document.querySelector('[data-focus-dock]')!.textContent).not.toContain('Em foco');
   });
   it('sem tarefas abertas, o modal oferece criar uma na hora', async () => {
     const onCreateTask = vi.fn(() => true);
@@ -178,7 +183,7 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
 });
 
 
-describe('porta, sala de descanso e ciclos (§301)', () => {
+describe('sala de descanso e ciclos (§301, §312)', () => {
   const key = (k: string) => JSON.parse(localStorage.getItem(k) ?? 'null');
   /** Servidor com `claim`: ao fim do foco devolve o baú de conclusão e a chave do Calabouço, e a jornada some. */
   const stubServer = () => {
@@ -218,11 +223,28 @@ describe('porta, sala de descanso e ciclos (§301)', () => {
     expect(key(STORAGE_KEYS.FOCO_REST).mode).toBe('p25');
     expect(Math.abs(key(STORAGE_KEYS.FOCO_REST).startedAt - (Date.now() - 60_000))).toBeLessThan(5_000);
   });
-  it('a porta existe no fim do mapa e só abre quando o Soulmon chega', async () => {
+  it('não existe porta nem quadrado de chegada no mapa (§312): o fim do trajeto é o fim de uma seção', async () => {
     server.active = finished(5);
     const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
     await openJourney(container);
-    expect(document.querySelector('[data-journey-door]')!.getAttribute('data-open')).toBe('false');
+    expect(document.querySelector('[data-journey-door]')).toBeNull();
+    expect(document.querySelector('[data-journey-arrival]')).toBeNull();
+    expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('false');
+  });
+  it('ao chegar ao fim o mapa se dissolve e a sala de descanso assume em tela cheia, sem caixa nem placeholder', async () => {
+    stubServer(); seedSession();
+    server.active = { ...finished(), startAt: Date.now() - 25 * 60_000 + 400 };
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await openJourney(container);
+    expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('false');
+    await waitFor(() => expect(document.querySelector('[data-journey-leave]')!.getAttribute('data-leaving')).toBe('true'), { timeout: 3000 });
+    await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull(), { timeout: 4000 });
+    const room = document.querySelector('[data-rest-room]') as HTMLElement;
+    expect(room.style.position).toBe('fixed');
+    expect(room.style.inset).toMatch(/^0/);
+    expect(document.querySelector('[data-rest-bg] [data-rest-fallback]')).not.toBeNull();
+    expect(document.querySelector('[data-journey]')).toBeNull();
+    expect(document.querySelector('[data-journey-door], [data-journey-arrival]')).toBeNull();
   });
   it('o descanso é por timestamp: voltar depois do fim mostra «concluído», e o card da Oficina leva de volta a ele', async () => {
     seedSession(1);

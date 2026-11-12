@@ -8,20 +8,22 @@
  *    do hábito com etapas (num só updater, no App — `handleCompleteSteps`).
  * A lista de hábitos do dia vem de fora (`activitiesForWeekDay`), a mesma do resto do app.
  */
+import { sanitizeIce, type Ice } from './iceScore';
+
 export const HABIT_PREFIX = 'habit:';
 
-interface OriginTask { id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> }
+interface OriginTask { id: string; name: string; completed: boolean; ice?: unknown; steps?: Array<{ id: string; label: string; completed: boolean }> }
 interface OriginDone { id: string; name: string; completedAt: string }
 interface OriginHabit { id: string; name: string; steps: Array<{ id: string; completed: boolean }>; completedToday?: boolean; lastCompletedDate?: string }
 
-export type FocusTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: OriginTask['steps'] };
+export type FocusTask = { id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: OriginTask['steps'] };
 
 /** `dayKey` = `Date.toDateString()` do dia (a mesma chave de `completedToday`/`lastCompletedDate`). */
 export const habitDone = (a: OriginHabit, dayKey: string): boolean =>
   a.steps.length > 0 ? a.steps.every(s => s.completed) : !!a.completedToday && a.lastCompletedDate === dayKey;
 
 export function focusTasksFor(tasks: readonly OriginTask[], completedTasks: readonly OriginDone[], habitsToday: readonly OriginHabit[], dayKey: string): FocusTask[] {
-  const abertas = tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps }));
+  const abertas = tasks.map(({ id, name, completed, steps, ice }) => { const i = sanitizeIce(ice); return { id, name, completed, steps, ...(i ? { ice: i } : {}) }; });
   const ids = new Set(abertas.map(t => t.id));
   const feitasHoje = completedTasks
     .filter(t => !ids.has(t.id) && new Date(t.completedAt).toDateString() === dayKey)

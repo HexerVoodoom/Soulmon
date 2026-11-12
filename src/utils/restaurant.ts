@@ -22,6 +22,7 @@ import { earnedBits, spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { spendEssences } from './essences';
 import { MATERIAL_CAP, type MaterialId, type BuildingQuestState } from './buildingQuests';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
+import { bumpDailyIn } from './dailyMissions';
 import { MEAL_BUFF_MS, type MealBuffKind, type RestaurantState } from './restaurantState';
 
 export { MEAL_BUFF_HOURS, MEAL_BUFF_VALUE_CAP, activeMealBuff, mealAttrBonus, sanitizeRestaurant, type MealBuff, type MealBuffKind, type RestaurantState } from './restaurantState';
@@ -178,7 +179,8 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
     // regeneração: acerta o relógio ANTES de o buff começar (a velocidade nova vale só daqui para frente)
     restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
   }
-  return { state: { ...s, restaurant } };
+  // Missão da Snapjaw (12/11/2026, REGISTRO §314): pedir 1 prato no Restaurante (a Feira de verdade, `applyFeiraDish`, é outro gesto).
+  return { state: bumpDailyIn({ ...s, restaurant }, 'prato', 1, new Date(now)) };
 }
 
 /**

@@ -209,6 +209,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 **Dono de:** o mapa da Guilda dos Mercenários: cinco prédios pintados no fundo (`GUILDA_PREDIOS`); as três Ordens abrem o líder em `MercGuildSheet` (folha `AreaSheet`: a missão primeiro, depois Aceito ou Vou pensar), Remendados e Desfeitos abrem só o NPC. A entrada é secreta: `MapPage` › `onSecretoGuilda`, segurar o cristal por 3 s.
 
+### `src/components/nav/npcGiver.ts` (12/11/2026 — REGISTRO §314)
+**Dono de:** quem passa a missão no cartão da lista do dia: `giverOf(chave, language)` devolve nome curto e retrato do NPC (`LOT_NPC_VOICE`/`LOT_NPC_ART`, Papus, Nuri) e `npcKeyOfBuilding` dá a chave do anfitrião de um prédio. **Chamado por:** `DailyMissionList.tsx`. **Régua:** `npcMissionCards.render.test.tsx`.
+
 ### `src/components/nav/lotHalo.ts`
 **Dono de:** o HALO PRETO dos prédios (20/10/2026, REGISTRO §140): `lotArtFilter({ locked?, accent? })` devolve o `filter` único dos sprites de lote — contorno preto (`LOT_HALO_BLACK`) + sombra de chão; trancado = cinza (`LOT_LOCKED_FILTER`) com o mesmo halo; `LOT_HALO_ACCENT` é o acento claro do Caderno. **Chamado por:** `AreaScene` e `MapPage`. **Régua:** `lotHalo.contract.test.ts` (as 6 áreas, abertos e trancados; só o `AreaScene` desenha sprite de lote).
 
@@ -422,8 +425,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Achado de ontem (15/10/2026, REGISTRO §66):** prop `achado?` (`PasseioAchado` = `adventure`/`isNew`/`stroll`); com ela a folha abre com a seção `data-passeio-achado` ("Da aventura de ontem") desenhada pelo `StrollFind` — o mesmo achado do resumo do dia, no contexto do passeio. O `App` só a entrega enquanto o relatório é recente (≤ 2 dias).
 
 ### `src/components/play/OficinaPlano.tsx`
-**Dono de:** o planejamento da sessão da Oficina em ETAPAS (10/10/2026): preparar → ritmo/ambiente → regra dos 2 minutos (picker tocável, até 5) → Eisenhower (um `select` por tarefa + a ordem resultante ao vivo) → sapo (um só) → se-então (com sugestões) → brain dump (tempo 3/5/10 min por timestamp) → lista organizada. Cada etapa tem "Pular" (avança sem apagar nada). Só desenha e coleta; a regra é de `utils/focoSessao`. **Exports:** `OficinaPlano({ language, tasks, initial, onSave, onCancel })`. Não conclui nem reordena tarefa do jogo. Barra de etapas = classe `sm-oficina-bar` (reduced-motion no bloco canônico).
+**Dono de:** o planejamento da sessão da Oficina em ETAPAS (10/10/2026): preparar → ritmo/ambiente → regra dos 2 minutos (picker tocável, até 5) → **Prioridades** (ICE, §313: monta `OficinaPrioridades`; era a Matriz de Eisenhower) → sapo (um só) → se-então (com sugestões) → brain dump (tempo 3/5/10 min por timestamp) → lista organizada. Cada etapa tem "Pular" (avança sem apagar nada). Só desenha e coleta; a regra é de `utils/focoSessao`. **Exports:** `OficinaPlano({ language, tasks, initial, onSave, onCancel, only?, onSetIce?, onCompleteTask? })` (`onSetIce` grava/limpa `Task.ice`; `only.onKey` recebe também `classified`). Não conclui nem reordena tarefa do jogo. Barra de etapas = classe `sm-oficina-bar` (reduced-motion no bloco canônico).
 **Sync 09/11/2026 (`5229b1be..62f204e1b`):** continua vivo, mas não é mais montado pela folha apagada ⚰️ `OficinaSheet`: o `FocusBoard` o usa em modo `only` (uma técnica/chave por card).
+
+### `src/components/play/OficinaPrioridades.tsx`
+**Dono de:** a etapa/card **Prioridades** (12/11/2026, REGISTRO §313; substitui a Matriz de Eisenhower): `OficinaPrioridades({ language, tasks, onSetIce?, onComplete? })` lista TODAS as tarefas abertas (hábito fica de fora), ordenadas por `sortByIce` (maior pontuação no topo; sem nota no fim com o chip «Classificar»); cada linha tem o ✓ (conclui pela origem), o nome, a pontuação em destaque discreto e os 4 valores em chips curtos. Tocar na linha abre `IceSheet` — um `ModalSheet` (modalDepth/Voltar) com 4 seletores 1–5 (`role=radiogroup`, alvo ≥ 48 px, legenda do 1 e do 5 em `ICE_COPY`), a pontuação ao vivo e «Salvar»/«Tirar a classificação». Só desenha e coleta; a conta é de `utils/iceScore`. Não muda a ordem da Home. **Régua:** `OficinaPrioridades.render.test.tsx`.
 
 ### `src/components/play/OficinaTags.tsx`
 **Dono de:** as etiquetas (2 min / Sapo / Fazer / Agendar / Delegar) da lista da Oficina — arquivo à parte para a folha e o planejamento compartilharem sem circularidade. **Exports:** `TagChips`, `TAG_LABEL`.
@@ -1800,6 +1806,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/components/nav/CornerLink.tsx` e o `AreaTopBar`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/ui/CtaButton.tsx`
+**Dono de:** o botão especial dos CTAs principais (REGISTRO §316): `CtaButton({ width: 'full' | 'auto', ...button })`, visual em `.sm2-cta` (`index.css`, arte `assets/soulmon/ui/btn-cta.webp` em 9-slice). Estados pressed/disabled/foco, alvo >= 48, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir).
+
 ### `src/components/ui/InfoTip.tsx`
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
 **Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`.
@@ -1957,7 +1966,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/DungeonBusyModal.tsx`
 
-**Dono de:** o aviso "Ele está na masmorra" (REGISTRO §36) sobre o `ModalSheet` base. **Exports:** `DungeonBusyModal`, `OcupadoAcao`, `ocupadoVerbo`, `ocupadoMensagem`. **Chamado por:** `App.tsx` (`bloqueiaOcupado`, a plaquinha) e `nav/AreaView.tsx` (via `onBusy`).
+**Dono de:** o aviso "Ele está na masmorra" (REGISTRO §36) sobre o `ModalSheet` base. Com `onGo` (plaquinha) a ação principal é **Ir à Fenda** (`data-dungeon-busy-go`) e **Trazer de volta** (`data-dungeon-busy-bring`) é secundária, com confirmação. **Régua:** `DungeonBusyModal.render.test.tsx`. **Exports:** `DungeonBusyModal`, `OcupadoAcao`, `ocupadoVerbo`, `ocupadoMensagem`. **Chamado por:** `App.tsx` (`bloqueiaOcupado`, a plaquinha) e `nav/AreaView.tsx` (via `onBusy`).
 
 ### `src/components/games/DropNotice.tsx`
 
@@ -2207,13 +2216,15 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 
 **§304 (11/11/2026):** `JourneyScreen` ganhou as props `tasks`, `onToggleTask`, `onToggleStep` e renderiza `play/FocusTaskDock.tsx` (`FocusTaskDock`, `DockTask`, `JOURNEY_CARD_WIDTH`, `JOURNEY_GLASS`; props `language`, `tasks`, `onToggleTask`, `onToggleStep`, `top`, `bottom`; linhas = `RitualRow` + `StepRow`); `FocusBoard` ganhou `onToggleStep` (e `steps` em `BoardTask`) e `AreaView` a prop `play.onToggleFocusStep` (App: `handleToggleTaskStep`). `utils/keepAwake.ts`: `useKeepAwake(active)` e `keepAwakeSupported()`. **Régua:** `FocusTaskDock.render.test.tsx`.
 
+**§312 (12/11/2026):** `FocusTaskDock` mostra SÓ a tarefa de `focusId` e os subtópicos dela (sem cabeçalho nem «Em foco»; sem `focusId`/tarefa, o vazio `data-focus-dock-empty`); altura auto até 25dvh; a alça `data-focus-dock-handle` só existe se o conteúdo transborda (ou já está aumentado). `RitualPanel.tsx` exporta `pickRowStyle(base, checked)` (linha de escolha selecionada = `outline` + borda `--sm2-primary-ink`, nunca fill primário), usado por `FocusTaskPicker` e `OficinaPlano`.
+
 ### `src/components/play/FocusTaskPicker.tsx` · `src/components/play/FocusBag.tsx` (12/11/2026 — REGISTRO §300)
 
 `FocusTaskPicker({ language, tasks, initialId?, busy?, onClose, onPick, onCreate? })`: `ModalSheet` que escolhe a tarefa da sessão (sempre; sem abertas, campo para criar). `FocusBag` (baú da sessão: `items`, `pending`, ref no botão; tooltip com o coletado, fecha ao tocar fora/Voltar), `FlyingItem` (voo do item; `onDone` ao terminar, na hora sem Web Animations ou com movimento reduzido) e `ItemIcon` (imagem do slot ou emoji). `FocusBoard` ganhou `onCreateTask`, `JourneyScreen` ganhou `collected` e `focusTaskId`, `FocusTaskDock` ganhou `focusId`; `AreaView`: `play.onCreateFocusTask`. **Régua:** `FocusBoard.render.test.tsx`, `FocusBag.render.test.tsx`.
 
 ### `src/components/play/RestRoom.tsx` (12/11/2026 — REGISTRO §301)
 
-`RestRoom({ language, rest, petSprite, cycles, now, onNext, onFinish, onClose, busy?, error? })`: a sala de descanso em tela cheia (portal, z 210): card do relógio (`mm:ss` restante, «Descanso concluído» no fim), Soulmon, «Baú aberto» com itens e chave do Calabouço e os botões «Seguir» / «Concluir a missão». Fundo = `OASIS_ART[env]` (slot) ou `OasisFallback` (gradiente + lagoa, paleta `OASIS_TONE`), ambos em `journeyArt.ts`. `JourneyScreen` ganhou a porta (`data-journey-door`); `FocusBoard` guarda o `RestState` e faz `nextCycle`/`finishMission`. **Régua:** `FocusBoard.render.test.tsx` (descrição «porta, sala de descanso e ciclos»).
+`RestRoom({ language, rest, petSprite, cycles, now, onNext, onFinish, onClose, busy?, error? })`: a sala de descanso em tela cheia (portal, z 210): card do relógio (`mm:ss` restante, «Descanso concluído» no fim), Soulmon, «Baú aberto» com itens e chave do Calabouço e os botões «Seguir» / «Concluir a missão». Fundo = `OASIS_ART[env]` (slot) ou `OasisFallback` (gradiente + lagoa, paleta `OASIS_TONE`), ambos em `journeyArt.ts`. §315: sem porta nem `ARRIVAL_ART` (o quadrado no meio era a arte opaca `cena-chegada.webp`, 60×60 no fim do mapa; apagada); `JourneyScreen` ao chegar a `p>=1` mostra `data-journey-leave` (camada na cor `OASIS_TONE[env].sky`, `JOURNEY_LEAVE_MS`=900) e só então chama `onClaim`; a `RestRoom` tem fundo sólido nessa cor e a camada `data-rest-bg` (arte ou fallback) aparece em fade. `FocusBoard` guarda o `RestState` e faz `nextCycle`/`finishMission`. **Régua:** `FocusBoard.render.test.tsx` (descrição «sala de descanso e ciclos»).
 
 ### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
 
@@ -2243,7 +2254,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 **Dono de:** a leitura do nome do especial no Perfil (§287). Substituiu `EspecialNomeEditor`: o Perfil só mostra os nomes e aponta para a Hexsmith. Usado por `ProfileEditor` e `SoulmonPerfil`.
 
-**`ui/InfoTip` (12/11/2026):** prop nova `trigger?: ReactNode` (gatilho próprio no lugar do "i", ex.: o ícone de uma poção na tabela da Hexsmith) e o tooltip aberto registra uma camada de voltar (`useBackLayer`). `hex/HexsmithSheet`: catálogo em tabela Item/Custo (`.sm2-hex-table`, `data-hex-cost`, `data-hex-cost-potion`, `data-hex-potion-tip`). Textos: `hexsmithCopy.potionHowTo`.
+**`ui/InfoTip` (12/11/2026):** prop nova `trigger?: ReactNode` (gatilho próprio no lugar do "i", ex.: o ícone de uma poção na tabela da Hexsmith) e o tooltip aberto registra uma camada de voltar (`useBackLayer`). `hex/HexsmithSheet`: catálogo em tabela Item/Custo (`.sm2-hex-table`, `data-hex-cost`, `data-hex-cost-potion`, `data-hex-potion-tip`). Textos: `hexsmithCopy.potionHowTo`, `hexCostHowTo`. Custo (§307): fileira única poção + fragmentos + Bits, cada um com `InfoTip` (`data-hex-cost-bits`, `data-hex-bits-tip`, `data-hex-fragments-tip`).
 
 ### `src/components/PocaoCriada.tsx`
 

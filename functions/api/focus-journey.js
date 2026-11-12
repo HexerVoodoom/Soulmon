@@ -9,6 +9,7 @@
 import { authorizeSaveAccess } from './_auth.js';
 import { kv } from './_kv.js';
 import { VALID_ID } from './_entitlements.js';
+import { recordMissionEvent } from './_missionEvents.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   JOURNEY_KEYS, JOURNEY_MAX_PAUSES, JOURNEY_MODES, capLoot, chestLoot, completionLoot, emptyLedger, journeyChests, journeyProgress,
@@ -45,6 +46,7 @@ function diaValido(day, now) {
 function pagar(fj, razao, now, concluir) {
   const p = journeyProgress(fj, now);
   let dungeonKeyDay;
+  let concluiu = false;
   for (const ch of journeyChests(fj.seed, fj.mode)) {
     if (ch.at > p) continue;
     const id = `${fj.sid}:${ch.k}`;
@@ -57,9 +59,10 @@ function pagar(fj, razao, now, concluir) {
     const r = capLoot(razao, doneId, completionLoot(fj.seed, nth, fj.env));
     Object.assign(razao, r.ledger, { done: nth });
     razao.grants[doneId] = r.granted;
+    concluiu = true;
     if (nth === 1) dungeonKeyDay = fj.day;
   }
-  return { progress: p, dungeonKeyDay };
+  return { progress: p, dungeonKeyDay, concluiu };
 }
 
 const publico = (razao) => ({ ledger: { day: razao.day, items: razao.items, ess: razao.ess, done: razao.done }, grants: razao.grants });
@@ -114,8 +117,10 @@ export async function onRequest({ request, env }) {
   }
   if (action === 'claim' || action === 'end') {
     const razao = await lerRazao(store, id, fj.day);
-    const { progress, dungeonKeyDay } = pagar(fj, razao, now, action === 'claim');
+    const { progress, dungeonKeyDay, concluiu } = pagar(fj, razao, now, action === 'claim');
     await gravar(store, `fjd:${id}:${fj.day}`, razao);
+    // Semanal "Complete a Focus Workshop em 3 dias" (REGISTRO §309): o dia da jornada concluida COM recibo entra no razao (1 por dia). Melhor esforco.
+    if (concluiu) { try { await recordMissionEvent(store, id, 'f', fj.day, now); } catch { /* o razao das missoes nao pode derrubar o pagamento */ } }
     const terminou = action === 'end' || (progress >= 1 && razao.claims.includes(`${fj.sid}:done`));
     if (terminou) await store.delete(`fj:${id}`);
     return json({ active: terminou ? null : fj, ...publico(razao), ...(dungeonKeyDay ? { dungeonKeyDay } : {}), now });

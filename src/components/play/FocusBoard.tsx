@@ -1,3 +1,4 @@
+import { CtaButton } from '../ui/CtaButton';
 /**
  * O QUADRO DA OFICINA (§247): card Sessão em destaque + 6 cards de chave (as técnicas de antes, agora opcionais).
  * O servidor guarda a jornada; aqui se escolhe ritmo, cenário e chaves, se começa e se volta à jornada em andamento.
@@ -14,6 +15,7 @@ import { FOCUS_ENVIRONMENTS, isFocusEnvironmentId, type FocusEnvironmentId } fro
 import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
 import { keyEarned, loadBoardKeys, saveBoardKeys } from '../../utils/focusBoard';
 import { journeyAction, journeyStart, journeyState, type ActiveJourney, type JourneyResponse } from '../../utils/focusJourneyApi';
+import type { Ice } from '../../utils/iceScore';
 import { buildPlan, emptyDraft, normalizeSession, toDraft, type SessionDraft } from '../../utils/focoSessao';
 import { readJson, writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -27,11 +29,11 @@ import { loadFocusSession, saveFocusSession, type FocusSessionState } from '../.
 import { mergeItems } from '../../utils/journeyItemInfo';
 import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
 
-type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
+type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> };
 const CARD: Record<JourneyKeyId, { pt: string; en: string; keyPt: string; keyEn: string }> = {
   bancada: { pt: 'Preparar o espaço', en: 'Prepare your space', keyPt: 'Chave de Bancada', keyEn: 'Bench Key' },
   relampago: { pt: 'Dois minutos', en: 'Two minutes', keyPt: 'Chave Relâmpago', keyEn: 'Lightning Key' },
-  quadrantes: { pt: 'Matriz', en: 'Matrix', keyPt: 'Chave dos Quadrantes', keyEn: 'Quadrant Key' },
+  quadrantes: { pt: 'Prioridades', en: 'Priorities', keyPt: 'Chave das Prioridades', keyEn: 'Priorities Key' },
   brejo: { pt: 'O sapo primeiro', en: 'Eat the frog', keyPt: 'Chave do Brejo', keyEn: 'Marsh Key' },
   elo: { pt: 'Se… então…', en: 'If… then…', keyPt: 'Chave de Elo', keyEn: 'Link Key' },
   pena: { pt: 'Descarregar a mente', en: 'Brain dump', keyPt: 'Chave de Pena', keyEn: 'Quill Key' },
@@ -44,11 +46,13 @@ const loadPrefs = (): { mode: JourneyMode; env: FocusEnvironmentId } => {
   return { mode: r?.mode === 'p50' ? 'p50' : 'p25', env: isFocusEnvironmentId(r?.env) ? r!.env as FocusEnvironmentId : 'forest' };
 };
 
-export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onToggleStep = () => {}, onCreateTask, onGrants, onFocusCycle }: {
+export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onToggleStep = () => {}, onSetIce, onCreateTask, onGrants, onFocusCycle }: {
   language: Language; todayKey: string; saveId?: string; tasks?: BoardTask[]; petSprite?: string;
   onCompleteTask?: (id: string) => void;
   /** Subtópico de tarefa marcado na lista da sessão: o mesmo handler da Home (`handleToggleTaskStep`). */
   onToggleStep?: (taskId: string, stepId: string) => void;
+  /** Prioridades: grava (ou limpa, com `null`) as 4 notas ICE na tarefa. */
+  onSetIce?: (taskId: string, ice: Ice | null) => void;
   /** Cria uma tarefa na hora (o modal de escolha oferece isso quando não há tarefa aberta). `false` = não coube. */
   onCreateTask?: (name: string) => boolean;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
@@ -189,7 +193,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
     const k = openCard;
     return <div data-focus-board-card={k} style={{ display: 'grid', gap: 10 }}>
       <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><KeyGlyph k={k} size={20} />{isPt ? CARD[k].keyPt : CARD[k].keyEn}</p>
-      <OficinaPlano language={language} tasks={tasks} initial={draft} onSave={() => {}} onCancel={() => setOpenCard(null)} only={{
+      <OficinaPlano language={language} tasks={tasks} initial={draft} onSetIce={onSetIce} onCompleteTask={onCompleteTask} onSave={() => {}} onCancel={() => setOpenCard(null)} only={{
         step: KEY_OF_STEP[k],
         onKey: (d, info) => {
           setDraft(d); saveDraft(d);
@@ -227,7 +231,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
             {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
           {online === false && <p role="status" data-focus-offline style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Precisa de conexão para começar.' : 'Needs a connection to start.'}</p>}
-          <button type="button" data-focus-start disabled={online === false || busy || !saveId} onClick={start} style={{ ...sm2Button('primary', online === false || busy || !saveId), minHeight: 48 }}>{isPt ? 'Começar jornada' : 'Start journey'}</button>
+          <CtaButton data-focus-start disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
         </>}
         {doneNote && <p role="status" data-focus-done style={{ ...sm2Text, margin: 0 }}>{doneNote}</p>}
       </article>

@@ -89,6 +89,7 @@ const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteShee
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const RogueKeyGate = lazy(() => import('../play/RogueKeyGate').then(m => ({ default: m.RogueKeyGate })));
+import type { Ice } from '../../utils/iceScore';
 const FocusBoard = lazy(() => import('../play/FocusBoard').then(m => ({ default: m.FocusBoard })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
@@ -138,9 +139,11 @@ export interface PlayHandlers {
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
-  focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
+  focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
   onToggleFocusStep?: (taskId: string, stepId: string) => void;
+  /** Prioridades (ICE): grava/limpa as 4 notas na tarefa. */
+  onSetFocusIce?: (taskId: string, ice: Ice | null) => void;
   /** Cria uma tarefa a partir do modal de escolha da sessão de foco (§300). `false` = não coube. */
   onCreateFocusTask?: (name: string) => boolean;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
@@ -366,7 +369,9 @@ export function AreaView(props: AreaViewProps) {
   const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
   const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
-  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
+  /* Plaquinha da Home "Ir à Fenda": com o Soulmon lá, `initialSheet: 'fenda'` abre direto a TELA da descida (como o toque no lote), sem a folha de início. */
+  const initialFenda = props.area === 'exploracao' && props.initialSheet === 'fenda' && !!props.naMasmorra && !initialLock && !initialDemoBlocked;
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialFenda ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
     cristalBlocks(props.initialSheet) ? crystalRefusalText(language === 'pt-BR')
       : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
@@ -396,7 +401,7 @@ export function AreaView(props: AreaViewProps) {
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
-  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
+  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
   const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
   /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
@@ -653,7 +658,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
-            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}

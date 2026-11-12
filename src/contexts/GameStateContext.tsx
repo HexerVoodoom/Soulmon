@@ -72,7 +72,7 @@ import { sanitizeHexsmith, type HexsmithState } from '../utils/hexsmith';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, sanitizeConquistasPagas, type AchievementId } from '../utils/achievements';
 import {
-  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
+  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs, playerDayKey,
   type PlayerDayAnchor,
 } from '../utils/playerDay';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
@@ -84,6 +84,7 @@ import { createNightmareState, sanitizeNightmareState } from '../utils/nightmare
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
+import { sanitizeIce, type Ice } from '../utils/iceScore';
 import { sanitizeMercMission, type MercMissionState } from '../utils/mercMissionSave';
 import { sanitizeBossShards } from '../utils/bossShards';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
@@ -96,7 +97,7 @@ import { sanitizeMealRhythm, sanitizeMealRitual, type MealRhythmSettings, type M
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
 import { migrateWeeklyLegacy, type WeeklyMissionProgress } from '../utils/weeklyMissions';
-import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { sanitizeBuildingQuests, settleRetiredListed, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeFeats, type Feats } from '../utils/feats';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
@@ -253,6 +254,8 @@ export interface Task {
   /** XP por subtarefa (REGISTRO §44): quantas subtarefas desta tarefa JÁ pagaram XP. Só sobe; teto
    *  `XP_STEP_MAX_PAID`. Ausente (save antigo) = as subtarefas já feitas contam como pagas. */
   stepXpPaid?: number;
+  /** PRIORIDADES (12/11/2026, modelo ICE adaptado — `utils/iceScore.ts`): as 4 notas de 1 a 5. Ausente = não classificada (save antigo lê assim). */
+  ice?: Ice;
 }
 
 export interface CompletedTask {
@@ -1088,6 +1091,8 @@ function hydrateTask(v: unknown): Task | null {
     emoji: str(raw.emoji) ?? '⭐',
     completed: raw.completed === true,
     ...(raw.steps !== undefined ? { steps: arr<unknown>(raw.steps).map(hydrateStep) } : {}),
+    /* ice: lixo/incompleto vira "não classificada" (nunca derruba a lista). */
+    ice: sanitizeIce(raw.ice),
   } as Task;
 }
 
@@ -1553,7 +1558,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             ...(w.last && typeof w.last === 'object' && !Array.isArray(w.last) ? { last: Object.fromEntries(Object.entries(w.last as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.length <= 40)) as WeeklyMissionProgress['last'] } : {}),
           });
         })(),
-        buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        // Caderno saiu das diárias (12/11/2026): o que estava pronto e sem resgate é pago aqui (`settleRetiredListed`), nada pendente se perde.
+        buildingQuests: settleRetiredListed(sanitizeBuildingQuests(loadedState.buildingQuests), playerDayKey(new Date(), ancoraDoDia), bondLevelFor(num(loadedState.totalXP, 0))),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),
         missionsClaimed: sanitizeMissionsClaimed(loadedState.missionsClaimed),
         feats: sanitizeFeats(loadedState.feats),

@@ -1902,6 +1902,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `nightmareWake.test.ts`
 **Regra de negócio:** O pesadelo é a primeira coisa do dia, ao acordar o Soulmon, a qualquer hora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/npcMissions.ts` (12/11/2026 — REGISTRO §314)
+**Dono de:** a tabela das MISSÕES DOS NPCs (`NPC_MISSIONS`, 25 entradas `n-*`: NPC `area:lote`/`papus`/`nuri`, evento, alvo, prédio, material, nome e descrição PT/EN) e `NPCS_SEM_MISSAO` (quem não tem, com o motivo). A ordem é a do rodízio.
+**Exports:** `NpcMissionDef` (type), `NPC_MISSIONS`, `NPC_MISSION_IDS`, `NPCS_SEM_MISSAO`.
+**Chamado por:** `src/utils/dailyMissions.ts` (entram no catálogo; `npcOfDay` escolhe a do dia).
+**Régua:** `src/utils/npcMissions.test.ts`, `functions/api/dailyMissions.parity.test.js`.
+
 ### `src/utils/notificationPermission.ts`
 **Dono de:** a decisão (PURA) de PEDIR a permissão de notificação (07/10/2026): cruza plataforma (APK × web), estado da permissão e gatilho (`first-open` × `toggle`) e devolve a ação — pedir o modal nativo, só registrar, orientar às configurações do sistema ou nada. Também lê/pede a permissão da plataforma (Capacitor `PushNotifications` no APK, `Notification` na web, que exige gesto) e abre as configurações de notificação do app. Quem pediu e foi negado nunca é cobrado de novo sozinho.
 **Exports:** `decidePermissionAction`, `platformForPermission`, `readPlatformPermission`, `requestPlatformPermission`, `openSystemNotificationSettings`, `settingsGuidance` e os tipos `PermissionPlatform`/`PermissionTrigger`/`PermissionAction`/`PermissionDecisionInput`.
@@ -3201,8 +3207,11 @@ Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolea
 ### `src/utils/focusOrigin.ts`
 **Dono de:** a ORIGEM do que a Focus Workshop lista (01/11/2026): `focusTasksFor` (tarefas abertas + concluídas hoje + hábitos do dia como `habit:<id>`, `kind: 'habit'`) e `focusCheckTarget` (o ✓ da Oficina conclui a tarefa, o hábito simples ou todas as etapas abertas do hábito com etapas, via `handleCompleteSteps` no App). Puro. **Régua:** `components/play/OficinaOrigem.sync.render.test.tsx`.
 
+### `src/utils/iceScore.ts`
+**Dono de:** a regra pura das **Prioridades** (modelo ICE adaptado, 12/11/2026, REGISTRO §313). `Ice { tempo, esforco, recompensa, urgencia }`, cada nota um inteiro de 1 a 5 (Tempo 1 rápido/5 demorado; Esforço 1 fácil/5 pesado; Recompensa 1 pouca/5 muita; Urgência 1 sem pressa/5 vence logo). **`iceScore(i) = (recompensa × urgência) ÷ (esforço × tempo)`**, decimal, de 0,04 a 25 (notas fora da faixa são presas em 1..5; nunca NaN). `sanitizeIce(raw)`: lixo/incompleto/fora de 1..5 → `undefined` (tarefa "não classificada"; é o que `hydrateTask` e `focusTasksFor` usam). `sortByIce(items)`: classificadas primeiro, maior pontuação primeiro; empate estável = maior urgência → maior recompensa → menor esforço → ordem de entrada (criação); as não classificadas ficam no FIM na ordem de entrada; não muta a entrada. `formatIceScore(score, isPt)`: vírgula em PT, ponto em EN. A pontuação NÃO é gravada no save (só as 4 notas em `Task.ice`). **Régua:** `iceScore.test.ts`.
+
 ### `src/utils/focoSessao.ts`
-**Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setQuadrant`/`setFrog`, `matrixOrder`, `buildPlan` (a lista organizada: dois minutos → sapo → quadrantes; "deixar de lado" sai), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
+**Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setFrog`, `iceOrder` (tarefas abertas classificadas por pontuação ICE; §313), `buildPlan` (a lista organizada: dois minutos → sapo → pontuação ICE; sem nota não entra sozinha; o item leva `score`). ⚰️ `setQuadrant`/`matrixOrder` e as etiquetas Fazer/Agendar/Delegar/Deixar de lado saíram em 12/11/2026; `SessionDraft.matrix` é LEGADO (lido, ignorado, nunca apagado), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
 **Hábitos no plano e botão que explica:** `PlanTask.kind?: 'habit'` (hábito de hoje que entrou na escolha; id `habit:<id>`, montado no App) e `PlanTag` ganhou `'habit'` (a leitura tolerante do plano aceita a tag). `missingToSave(d)` devolve o que falta para salvar (`'name'` | `'environment'` | `null`); `canSave` agora é `missingToSave(d) === null` (a folha diz o que falta e leva ao campo).
 
 ### `src/utils/focusExpedition.ts`
@@ -3227,7 +3236,7 @@ Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolea
 **Dono de:** a ponte da folha com o aparelho: reexporta `cadernoSave` e `sinaisDeSofrimento` (= `needsBridge` do chat, local, só para a linha de apoio). Separado para o `App` não puxar o léxico de crise ao chunk de entrada.
 
 ### `src/data/focoTecnicas.ts`
-**Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Eisenhower, o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).
+**Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Prioridades (ICE; era Eisenhower), o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).
 
 ### `src/utils/travessias.ts`
 **Dono de:** o Passeio e as Travessias (30/09/2026, `REGISTRO-DE-DECISOES.md` §5.6) — funções PURAS (sem React, sem `localStorage`, `dayKey` por parâmetro): regiões abertas e em névoa, a oferta (os 3 desafios do catálogo, sem sorteio), escolher/trocar entre os mesmos 3, "deixar pra lá", "Fiz" (vira `pending`, sem data, nunca expira), a noite que abre no máximo `REGIONS_OPENED_PER_DAY` região (`settleNight`, idempotente — mesma referência na 2ª chamada), o destino e o interruptor, e o achado da noite FUNDIDO (`passeioFindOfDay`: já guardado → ele; região que abriu → chegada; destino aberto ≠ casa → com `PASSEIO_REGION_FIND_CHANCE` um achado exclusivo não coletado; senão, e sempre em casa, exatamente `adventureOfDay`). Nenhum sistema do núcleo importa este módulo (contrato).
@@ -3279,6 +3288,7 @@ Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolea
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
 ### `src/utils/elementPotion.ts`
+**Sincronização 12/11/2026 (§311):** `PotionFilter`/`POTION_FILTERS` (all, can, enough, base, composite), `potionRecipe(id, essences, inventory)` (receita com TEM/PRECISA por essência e por poção-base; `canCraft`) e `potionListFor(essences, inventory, bases, filter, unlocked)` (lista completa, criáveis primeiro) — a lista da Vesca (`ElementPotionSheet`).
 **Sincronização 09/11/2026:** `POTION_MAX_COMPONENTS` (4: curados têm até 4 bases), `potionIngredients(elementId)` (a poção de CADA base componente, ids únicos; base = nada), `readVescaOffered()`/`writeVescaOffered(ids)` (elementos que a Vesca já ofereceu, por aparelho, para não repetir o modal) e o filtro por bases (E) — `selectedBases(selected)`, `compositionHasBases(comp, selected)`, `elementMatchesBases(id, selected)`: a composição contém TODAS as bases escolhidas; sem escolha passa tudo; composição desconhecida só passa sem escolha.
 
 Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §250), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
@@ -3791,6 +3801,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 ### `src/utils/dailyMissions.ts`
 **Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
 **Sincronização 09/11/2026:** `DailyEvent` (união dos eventos de missão) ganhou `selo` e `DailyMission` ganhou `retired?: true` (04/11/2026): a missão `d-selo` ("Complete uma rodada do Selo Faltante") substitui `d-patches` (a Colcha) no rodízio do Ateliê (`ROTA_MENTE` = `d-eco`, `d-zip`, `d-selo`); a Colcha fica no catálogo só para save antigo e nunca é sorteada — `dailyMissionPool()` e o resto do sorteio filtram `retired`.
+**Atualização 12/11/2026 (REGISTRO §314):** o catálogo ganhou as MISSÕES DOS NPCs (`utils/npcMissions.ts`, 25 entradas `n-*`, campos novos `npc`/`namePt`/`nameEn` em `DailyMission`); `npcOfDay(day, bond)` escolhe a do dia (`n mod 25` pelo dia do jogador, pulando prédio ainda fechado) e `dailyMissionsFor` a põe em 1º lugar (a lista segue com `DAILY_MISSION_COUNT` itens). 13 eventos novos (`cenario`, `essencia`, `salao`, `compra`, `melhoria`, `mente`, `cla`, `cambio`, `prato`, `hex`, `feira`, `passeio`, `conquista`); `bumpDaily(s, day, event, qty = 1)` soma quantidade (30 essências) e `salao`/`mente` são AGREGADOS dos minijogos; `bumpDailyIn(prev, event, qty)` é o mesmo sobre o estado inteiro, chamado no ramo de sucesso dos utilitários donos de cada gesto (`applyEssences`, `applyUpgrade`, `forgeHexItem`/`applyServerHexForge`, `applyCook`, `applyFeiraLojaBuy`/`applyServerFeiraHex`) e dos handlers do `App` (compra do Mercado/moldura, Cambista, conquista, missão do Clã, passeio). `visit:laboratorio.evolucao` saiu das primeiras vezes (a Vesca passa `n-vesca`: colete 30 essências). Espelho do servidor: `functions/api/_dailyMissions.js` (paridade travada).
 **Exports:**
 - `DailyEvent` (type) — os 15 eventos reais que contam (`dino`, `ppt`, `match3`, `foco`, `masmorra`, `banho`...).
 - `DailyMission` (interface) — uma missão do catálogo (`id`, `event`, `target`...).
@@ -4053,6 +4064,8 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 `MATERIALS` (1 por prédio), `MATERIAL_CAP`, `MATERIAL_PER_QUEST`, `QUEST_BUILDINGS`. `questMarks.ts`
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
+
+**12/11/2026 (REGISTRO §309):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
 
 ## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
 
@@ -4531,6 +4544,8 @@ Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `
 ### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
 
 O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
+
+**Atualização 12/11/2026 (REGISTRO §308):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
 
 ### `src/utils/formaEquip.ts` (10/11/2026)
 

@@ -11,7 +11,9 @@ const D2 = '2026-10-15';
 
 describe('catálogo', () => {
   it('ids únicos, PT/EN presentes, alvo baixo (1–2), material e prédio válidos', () => {
-    const pool = dailyMissionPool();
+    // As missões dos NPCs (12/11/2026) têm teste próprio (`npcMissions.test.ts`): alvos maiores e eventos que se repetem entre NPCs.
+    const pool = dailyMissionPool().filter(m => !m.npc);
+    expect(new Set(dailyMissionPool().map(m => m.id)).size).toBe(dailyMissionPool().length);
     expect(new Set(pool.map(m => m.id)).size).toBe(pool.length);
     expect(new Set(pool.map(m => m.event)).size).toBe(pool.length);
     for (const m of pool) {
@@ -58,7 +60,7 @@ describe('rotação determinística', () => {
   it('as missões dos recursos novos aparecem quando o Vínculo os abre', () => {
     const vistos = new Set<string>();
     for (let d = 0; d < 200; d += 1) for (const m of dailyMissionsFor(`seed-${d}`, 99)) vistos.add(m.event);
-    expect(vistos.size).toBe(dailyMissionPool().length);
+    expect(vistos.size).toBe(new Set(dailyMissionPool().map(m => m.event)).size);
   });
 });
 

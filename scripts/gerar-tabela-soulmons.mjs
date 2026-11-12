@@ -1,5 +1,7 @@
-// Gera a TABELA DE SOULMONS (artefato do dono): todos os Soulmons em ordem de evolução por linha, com personalidade, elemento, estágio,
-// tipo de ataque, tipo de especial, contexto e id estável. Só LÊ o repo; escreve FORA dele (padrão E:\Soulmon-assets\tabela-soulmons):
+// Gera a TABELA DE SOULMONS (artefato do dono). UNIDADE = a ESPECIE/FORMA (arte/estagio/ramo unico), uma vez so, agrupada por LINHAGEM
+// (Rookie -> Champion x3 -> Ultimate x3 -> Mega x3 -> Ultra). Os simulados sim_* sao REFERENCIAS (coluna `usado_por`/`apelidos`), nao linhas:
+// cada um usa as formas da criatura do seu ELEMENTO (spriteDoElemento), entao varios sims da mesma linhagem apontam para as mesmas formas.
+// Ultra = tipo ABSOLUTO (os tres tipos ao mesmo tempo, neutro). Só LÊ o repo; escreve FORA dele (padrão E:\Soulmon-assets\tabela-soulmons):
 //   soulmons.json, soulmons.csv e tabela.html (autocontido, dados e miniaturas dos sprites embutidos; molde em `scripts/tabela-soulmons.template.html`).
 // O HTML segue o formato do visualizador de artefatos (sem doctype/html/head/body, sem download: o CSV sai num painel com Copiar).
 // Uso: node scripts/gerar-tabela-soulmons.mjs [pastaDeSaida]
@@ -134,7 +136,7 @@ for (const { id, ultra } of ultraOraculo) {
   const base = J.ENEMY_ROSTER.find(e => e.id === id && e.stage === 'rookie');
   const a = ataqueInimigo(base.element, ultra, ultra);
   add({
-    id: `${id}-ultra`, nome: ultra, sprite: arq(`novos/${NOVO_POR_ID[id]?.element}-ultra.png`) || spriteDoRoster(base), linha: id, estagio: 'ultra', personalidade: 'todas (forma unica)', elemento_base: base.element, elementos: [...base.elements],
+    id: `${id}-ultra`, nome: ultra, sprite: arq(`novos/${NOVO_POR_ID[id]?.element}-ultra.png`) || spriteDoRoster(base), linha: id, estagio: 'ultra', personalidade: 'absoluto', elemento_base: base.element, elementos: [...base.elements],
     ataque_tipo: a.tipo, ataque_especial_forma: a.especialForma, especial_tipo: 'variavel', especial_mix: mix('ultra'), contexto: ['arena'],
     basico: base.basico.pt, especial_nome: base.especial.pt, nota: 'chefe Ultra da Arena (ARENA_CHEFES_ULTRA)',
     fonte: 'ELENCO_ORACULO_DATA[6] / ARENA_CHEFES_ULTRA (src/utils/arena.ts); ataque e especial como o roster', derivado: ['personalidade', 'ataque_tipo', 'especial_tipo'],
@@ -145,10 +147,10 @@ for (const n of J.NOVOS_DATA) {
   if (!nome) continue;
   const a = ataqueInimigo(n.element, nome, nome);
   add({
-    id: `${n.id}-ultra`, nome, sprite: arq(`novos/${n.element}-ultra.png`), linha: n.id, estagio: 'ultra', personalidade: n.line, elemento_base: n.element, elementos: [n.element],
+    id: `${n.id}-ultra`, nome, sprite: arq(`novos/${n.element}-ultra.png`), linha: n.id, estagio: 'ultra', personalidade: 'absoluto', elemento_base: n.element, elementos: [n.element],
     ataque_tipo: a.tipo, ataque_especial_forma: a.especialForma, especial_tipo: 'variavel', especial_mix: mix('ultra'), contexto: ['catalogo'],
     basico: n.basico.pt, especial_nome: n.especial.pt, nota: 'forma Ultra com arte instalada; o roster de inimigos nao a sorteia (ENEMY_STAGES vai ate Mega)',
-    fonte: 'FORMAS_ALTAS (src/utils/novosSoulmonData.ts)', derivado: ['ataque_tipo', 'especial_tipo'],
+    fonte: 'FORMAS_ALTAS (src/utils/novosSoulmonData.ts)', derivado: ['personalidade', 'ataque_tipo', 'especial_tipo'],
   });
 }
 
@@ -171,33 +173,48 @@ for (const id of J.STARTER_IDS) {
         fonte: 'ramos champion/ultimate/mega por tipo: src/utils/oracle.ts (StageId, linhas Poder/Harmonia/Benevolencia); elemento: STARTER_ELEMENT', derivado: ['nome', 'ataque_tipo', 'especial_tipo'] });
     }
   }
-  add({ ...comum, id: `starter:${id}:ultra`, nome: `${nome} (ultra)`, estagio: 'ultra', personalidade: raiz,
+  add({ ...comum, id: `starter:${id}:ultra`, nome: `${nome} (ultra)`, estagio: 'ultra', personalidade: 'absoluto',
     nota: 'o Oraculo chama o ultimate de "perfeito"; Ultra e a forma unica final',
     fonte: 'src/utils/oracle.ts (StageId) e src/utils/libraryForms.ts (STAGE_KEY)', derivado: ['nome', 'personalidade', 'ataque_tipo', 'especial_tipo'] });
 }
 
-// ── 3) Simulados sim_* (jogadores falsos): 5 estagios ao longo do caminho (linha) de cada um ─────────────
+// ── 3) Simulados sim_*: NAO sao linhas; viram REFERENCIAS nas formas que usam ──────────────────────────────
+// O sprite de um simulado vem do ELEMENTO (spriteDoElemento): a criatura base daquele elemento, estagio a estagio. Entao o simulado aponta para
+// as formas da linhagem base do elemento (rookie/champion/ultimate/mega/ultra); se a forma do estagio nao existe, cai no maior estagio existente
+// (mesma regra de spriteDoElemento). Varios sims do mesmo elemento = mesma linhagem, mesmas formas.
+const formaPorId = new Map(linhas.map(l => [l.id, l]));
+const simulados = [];
+const simSemForma = [];
 for (const p of J.SIMULADOS) {
+  const n = NOVO_POR_ELEMENTO[p.element];
   const escola = J.escolaDoSimulado(p.id);
-  const forma = J.SCHOOL_STRIKE_FORM[escola].basica;
-  const magia = J.simulaMagia(p.id);
-  const formaEsp = J.SCHOOL_STRIKE_FORM[escola].especial;
+  const ref = { id: p.id, nick: p.nick, apelido: p.petName, caminho: p.line, elemento: p.element, escola, faixa: p.faixa, ancora: p.ancora.estagio, formas: [] };
   for (const est of ESTAGIOS) {
-    const impacto = forma === 'ranged' ? (magia ? 'concussao' : 'corte') : J.meleeImpactOf({ element: p.element, key: p.id });
-    const kind = J.foeKindOf(est, `sim|${p.id}|${est}`);
-    add({
-      sprite: est === 'ultra' ? arq(`novos/${p.element}-ultra.png`) : spriteDoElemento(p.element, est), id: `${p.id}:${est === 'rookie' || est === 'ultra' ? est : `${est}-${SUFIXO[p.line]}`}`, nome: p.petName, linha: p.id, estagio: est, personalidade: p.line, elemento_base: p.element, elementos: [p.element],
-      ataque_tipo: forma === 'ranged' ? (impacto === 'concussao' ? 'ranged_splash' : 'ranged_corte') : (impacto === 'concussao' ? 'melee_splash' : 'melee_corte'),
-      ataque_especial_forma: formaEsp, especial_tipo: TIPO_POR_KIND[kind], contexto: ['simulado'],
-      nota: `apelido ${p.nick}; faixa ${p.faixa}; ancora ${p.ancora.estagio}; escola ${escola}` + (kind === 'hot' ? '; no duelo 1v1 o HoT vira escudo' : ''),
-      fonte: 'SIMULADOS (functions/api/_simulados.data.js: id, petName, line, element); escola/magia: escolaDoSimulado e simulaMagia (_simulados.js); especial: foeKindOf (functions/api/_foeFamilies.js)',
-      derivado: ['ataque_tipo', 'especial_tipo', 'sprite'],
-    });
+    let alvo = null;
+    if (n) {
+      for (let i = estIdx(est); i >= 0 && !alvo; i--) alvo = formaPorId.get(`${n.id}-${ESTAGIOS[i]}`) ?? null;
+    } else {
+      const e = J.ENEMY_ROSTER.find(x => x.element === p.element && x.stage === est) || J.ENEMY_ROSTER.find(x => x.element === p.element && x.stage === 'rookie');
+      alvo = e ? formaPorId.get(e.key) ?? null : null;
+    }
+    if (!alvo) { simSemForma.push(`${p.id}:${est}`); continue; }
+    ref.formas.push({ estagio: est, forma: alvo.id });
+    alvo.sims = alvo.sims || new Map();
+    alvo.sims.set(p.id, p.petName);
   }
+  simulados.push(ref);
+}
+for (const l of linhas) {
+  const sims = l.sims ? [...l.sims.entries()] : [];
+  delete l.sims;
+  l.usado_por = [...l.contexto.filter(c => c !== 'simulado'), ...(sims.length ? ['simulado'] : []), ...sims.map(([id]) => id)];
+  if (sims.length && !l.contexto.includes('simulado')) l.contexto.push('simulado');
+  // apelidos: nomes dados pelos sims diferentes do nome canonico da especie
+  l.apelidos = [...new Set(sims.map(([, nome]) => nome).filter(nome => nome !== l.nome))];
 }
 
 // ── ordem: bloco (jogador, simulado, inimigos), linha, estagio, personalidade ───────────────────────────
-const bloco = (l) => (l.contexto.includes('jogador') && l.id.startsWith('starter:') ? 0 : l.contexto.includes('simulado') ? 1 : 2);
+const bloco = (l) => (l.id.startsWith('starter:') ? 0 : 2);
 // dentro de cada linha: estagio e personalidade
 const grupos = new Map();
 for (const l of linhas) { const k = `${bloco(l)}|${l.linha}`; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(l); }
@@ -207,6 +224,18 @@ for (const g of [...grupos.entries()].sort((a, b) => Number(a[0][0]) - Number(b[
   final.push(...g);
 }
 final.forEach((l, i) => { l.ordem = i + 1; });
+// linhagem: nome (do Rookie, senao da 1a forma) e se evolui. So Rookie = nada alem do Rookie cadastrado; jogador = formas geradas pelo Oraculo por jogador.
+const porLinha = new Map();
+for (const l of final) { if (!porLinha.has(l.linha)) porLinha.set(l.linha, []); porLinha.get(l.linha).push(l); }
+const soRookie = [];
+for (const [, g] of porLinha) {
+  const raiz = g.find(x => x.estagio === 'rookie') ?? g[0];
+  const estagios = new Set(g.map(x => x.estagio));
+  const evo = g[0].id.startsWith('starter:') ? 'gerada' : (estagios.size === 1 && estagios.has('rookie') ? 'so_rookie' : 'evolui');
+  const nSims = new Set(g.flatMap(x => x.usado_por.filter(u => u.startsWith('sim_')))).size;
+  for (const x of g) { x.linhagem_nome = raiz.nome; x.evolucao = evo; x.linhagem_sims = nSims; }
+  if (evo !== 'evolui') soRookie.push({ linha: g[0].linha, nome: raiz.nome, motivo: evo === 'gerada' ? 'inicial do jogador: champion/ultimate/mega/ultra sao gerados pelo Oraculo por jogador (sem arte/nome fixo)' : 'so existe a forma Rookie no codigo (COMBINADOS_DATA/INIMIGOS_API_DATA: sem evolucao cadastrada)' });
+}
 
 // ── miniaturas: 1 por ARQUIVO (dedup), webp 72px de altura, data URI; linha referencia por indice ───────────
 const ALTURA_MINI = 72;
@@ -221,30 +250,36 @@ for (const l of final) {
 // ── saidas ───────────────────────────────────────────────────────────────────
 const porContexto = {};
 for (const l of final) for (const c of l.contexto) porContexto[c] = (porContexto[c] || 0) + 1;
+const porEvolucao = {};
+for (const g of porLinha.values()) porEvolucao[g[0].evolucao] = (porEvolucao[g[0].evolucao] || 0) + 1;
 const doc = {
   gerado_em: new Date().toISOString(),
-  total: final.length, por_contexto: porContexto,
+  total: final.length, linhagens: porLinha.size, linhagens_por_evolucao: porEvolucao, por_contexto: porContexto, simulados_total: simulados.length, simulados_sem_forma: simSemForma,
+  so_rookie: soRookie,
   sem_sprite: { total: semSprite.length, ids: semSprite.map(l => l.id) },
   campos_derivados: {
     ataque_tipo: 'calculado: foeStrikeForm (forma pelo elemento) + magiaOuCorte/meleeImpactOf (acabamento por sorteio estavel); chave de sorteio aproximada pelo nome (no jogo e o nome em PT/EN do encontro)',
     especial_tipo: 'inimigos do roster: sorteado POR ENCONTRO (FOE_MIX), por isso "variavel"; simulados: foeKindOf(estagio, "sim|id|estagio"), fixo; jogador: escolhido na ficha',
+    tipo_absoluto: 'todo Ultra (inclusive o do jogador) tem personalidade ABSOLUTO: os tres tipos ao mesmo tempo (neutro). No motor o ultra ja nao tem branch (creatureFormId)',
     personalidade: 'combinados, paralelos, formas e mascote: derivada da criatura base do 1o componente; formas evoluidas do jogador: rotulo',
   },
   linhas: final,
+  simulados_ref: simulados,
 };
 mkdirSync(SAIDA, { recursive: true });
 writeFileSync(join(SAIDA, 'soulmons.json'), JSON.stringify(doc, null, 1));
 
-const COLUNAS = ['id', 'nome', 'sprite', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'derivado', 'fonte'];
+const COLUNAS = ['id', 'nome', 'apelidos', 'sprite', 'linha', 'linhagem_nome', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'usado_por', 'evolucao', 'derivado', 'fonte'];
 const csvCel = (v) => { const s = Array.isArray(v) ? v.join(';') : String(v ?? ''); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 writeFileSync(join(SAIDA, 'soulmons.csv'), '\ufeff' + [COLUNAS.join(','), ...final.map(l => COLUNAS.map(c => csvCel(l[c])).join(','))].join('\r\n') + '\r\n');
 
 // HTML autocontido: o molde recebe o JSON no lugar de __DADOS__ (sem `</` para nao fechar o script).
 const molde = readFileSync(join(RAIZ, 'scripts', 'tabela-soulmons.template.html'), 'utf8');
-const dados = JSON.stringify({ gerado_em: doc.gerado_em, linhas: final.map(({ ordem, ...r }) => ({ ...r, sp: r.sprite ? indiceSprite.get(r.sprite) : -1 })), sprites: miniaturas, sem_sprite: semSprite.length }).replace(/</g, '\\u003c');
+const dados = JSON.stringify({ gerado_em: doc.gerado_em, linhas: final.map(({ ordem, ...r }) => ({ ...r, sp: r.sprite ? indiceSprite.get(r.sprite) : -1 })), sprites: miniaturas, sem_sprite: semSprite.length, linhagens: porLinha.size, so_rookie: soRookie, simulados: simulados.length }).replace(/</g, '\\u003c');
 writeFileSync(join(SAIDA, 'tabela.html'), molde.replace('__DADOS__', () => dados));
 
 console.log(`Tabela de Soulmons: ${final.length} linhas -> ${SAIDA}`);
 console.log(JSON.stringify(porContexto));
 console.log(`Sprites: ${miniaturas.length} miniaturas unicas; ${semSprite.length} linhas sem sprite`);
+console.log(`linhagens: ${porLinha.size} ${JSON.stringify(porEvolucao)}; so Rookie/gerada: ${soRookie.length}; simulados: ${simulados.length}, sem forma: ${simSemForma.length}`);
 console.log(`sem sprite: ${semSprite.map(l => l.id).join(', ')}`);

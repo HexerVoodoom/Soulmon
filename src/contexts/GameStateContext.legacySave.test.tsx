@@ -98,6 +98,20 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
     expect(s.ownedBackgrounds).toEqual(expect.arrayContaining(['bg-matrix', 'bg-ocean', 'bg-room']));
   });
 
+  it('Prioridades (ICE): tarefa antiga sem `ice` segue válida; ice bom é mantido e ice quebrado vira "não classificada"', () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ ...SAVE_LEGADO, tasks: [
+      { id: 't1', name: 'Ler', category: 'study', emoji: '📖', completed: false },
+      { id: 't2', name: 'Boa', category: 'study', emoji: '📖', completed: false, ice: { tempo: 2, esforco: 1, recompensa: 5, urgencia: 4 } },
+      { id: 't3', name: 'Quebrada', category: 'study', emoji: '📖', completed: false, ice: { tempo: 9, esforco: 'x' } },
+    ] }));
+    const s = montar();
+    expect(s.tasks).toHaveLength(3);
+    expect(s.tasks[0].ice).toBeUndefined();
+    expect(s.tasks[1].ice).toEqual({ tempo: 2, esforco: 1, recompensa: 5, urgencia: 4 });
+    expect(s.tasks[2].ice).toBeUndefined();
+    expect(s.tasks[2].name).toBe('Quebrada');
+  });
+
   it('tarefas, atividades e histórico sobrevivem', () => {
     const s = montar();
     expect(s.tasks).toHaveLength(1);

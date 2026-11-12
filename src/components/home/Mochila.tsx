@@ -88,8 +88,8 @@ export interface MochilaProps {
    *  vistos na aba Materiais. Nomes e ícones vêm de `buildingQuestsCopy`. */
   materials?: Partial<Record<string, number>>;
   /** Os OUTROS recursos que o jogo concede e que moram fora de `buildingQuests` (10/11/2026): Fragmento do Soulsmith (`equipment.fragments`),
-   *  Fragmento de Boss (`bossShards`) e Essências dos elementos (`essences`). SOMENTE LEITURA, vistos na aba Materiais. */
-  extras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
+   *  Fragmento de Boss (`bossShards`). SOMENTE LEITURA, vistos na aba Materiais. */
+  extras?: { fragments?: number; bossShards?: number };
   /** O "Ir lá" do material: leva ao prédio/missão que o dá. O App fecha a Mochila e navega (`handleMaterialGoTo`). */
   onGoToBuilding?: (building: BuildingId) => void;
   /** DEMO LOCAL: o prédio social bloqueado na demo não recebe o "Ir lá". */
@@ -140,27 +140,21 @@ export function Mochila({
   // Dono único dos nomes/ícones: `buildingQuestsCopy` (fora da entrada, então
   // carrega sob demanda — só quando a aba Materiais abre). O nome do prédio vem
   // do mesmo lugar que o Mapa lê (`nameOf`), também sob demanda.
-  type Copia = { materiais: typeof import('../../utils/buildingQuestsCopy').MATERIALS; nomeDoPredio: (id: BuildingId, l: Language) => string; guia: typeof import('../../utils/materialGuide'); essencia: (id: string, isPt: boolean) => string };
+  type Copia = { materiais: typeof import('../../utils/buildingQuestsCopy').MATERIALS; nomeDoPredio: (id: BuildingId, l: Language) => string; guia: typeof import('../../utils/materialGuide') };
   const [copia, setCopia] = useState<Copia | null>(null);
   useEffect(() => {
     if (!open || aba !== 'materiais' || copia) return;
     let vivo = true;
-    void Promise.all([import('../../utils/buildingQuestsCopy'), import('../nav/BuildingQuestList'), import('../../utils/materialGuide'), import('../../utils/essences')])
-      .then(([c, l, g, e]) => { if (vivo) setCopia({ materiais: c.MATERIALS, nomeDoPredio: l.nameOf, guia: g, essencia: e.essenceName }); }).catch(() => {});
+    void Promise.all([import('../../utils/buildingQuestsCopy'), import('../nav/BuildingQuestList'), import('../../utils/materialGuide')])
+      .then(([c, l, g]) => { if (vivo) setCopia({ materiais: c.MATERIALS, nomeDoPredio: l.nameOf, guia: g }); }).catch(() => {});
     return () => { vivo = false; };
   }, [open, aba, copia]);
   /* REGRA ESPECÍFICA desta categoria (ingrediente-recurso, pedido do dono 07/10/2026): o material APARECE SEMPRE, com ×0 — é a
      única forma de a pessoa descobrir ONDE conseguir. Os outros especiais seguem só com estoque (`mochilaTabs`). */
   const listaMateriais = copia?.materiais ?? [];
   const [matAberto, setMatAberto] = useState<string | null>(null);
-  /** Quantidade de cada recurso extra (Essências = soma de todos os elementos). */
-  const extraQty = (id: string): number => id === 'soulsmith-fragment' ? (extras?.fragments ?? 0)
-    : id === 'boss-shard' ? (extras?.bossShards ?? 0)
-    : Object.values(extras?.essences ?? {}).reduce((a, v) => a + (typeof v === 'number' && v > 0 ? v : 0), 0);
-  /** As essências que a pessoa tem, por elemento (só as com saldo). */
-  const essenciasTexto = copia && extras?.essences
-    ? Object.entries(extras.essences).filter(([, v]) => typeof v === 'number' && v > 0).sort((a, b) => b[1] - a[1]).map(([id, v]) => `${copia.essencia(id, isPt)} ×${v}`).join(' · ')
-    : '';
+  /** Quantidade de cada recurso extra. As Essências dos elementos NÃO ficam na Bolsa (12/11/2026): só no Laboratório › Arquivo. */
+  const extraQty = (id: string): number => id === 'soulsmith-fragment' ? (extras?.fragments ?? 0) : (extras?.bossShards ?? 0);
   const popRef = useRef<HTMLDivElement | null>(null);
   // O tooltip fecha com Esc (sem fechar a folha) e com toque fora dele.
   useEffect(() => {
@@ -413,11 +407,10 @@ export function Mochila({
                   return (
                     <div ref={popRef} id="sm3-material-pop" className="sm3-material-pop" data-material-pop={extra.id} role="group" aria-label={nome}>
                       <p className="sm3-material-pop-nome"><span aria-hidden="true">{extra.icon}</span> {nome} <span className="sm2-num">×{extraQty(extra.id)}</span></p>
-                      <p className="sm3-material-pop-texto" data-material-where>{isPt ? 'Como conseguir: ' : 'How to get it: '}{g.sources}</p>
+                      <p className="sm3-material-pop-texto" data-material-where><strong>{isPt ? 'Encontrado em' : 'Found at'}</strong> {g.sources}</p>
                       {g.uses.length > 0
-                        ? g.uses.map((u, i) => <p key={i} className="sm3-material-pop-texto" data-material-use>{isPt ? 'Para que serve: ' : 'What it is for: '}{u}</p>)
+                        ? <p className="sm3-material-pop-texto" data-material-use><strong>{isPt ? 'Usar em' : 'Use'}</strong> {g.uses.join(', ')}</p>
                         : <p className="sm3-material-pop-texto" data-material-use data-material-no-use>{g.usoAinda}</p>}
-                      {extra.id === 'essences' && essenciasTexto && <p className="sm3-material-pop-texto" data-material-essences>{essenciasTexto}</p>}
                     </div>
                   );
                 }
@@ -430,11 +423,9 @@ export function Mochila({
                 return (
                   <div ref={popRef} id="sm3-material-pop" className="sm3-material-pop" data-material-pop={m.id} role="group" aria-label={nome}>
                     <p className="sm3-material-pop-nome"><MaterialIcon id={m.id} emoji={m.icon} size={20} /> {nome} <span className="sm2-num">×{materials?.[m.id] ?? 0}</span></p>
-                    <p className="sm3-material-pop-texto" data-material-where>
-                      {isPt ? 'Como conseguir: ' : 'How to get it: '}{g.sources}
-                    </p>
+                    <p className="sm3-material-pop-texto" data-material-where><strong>{isPt ? 'Encontrado em' : 'Found at'}</strong> {g.sources}</p>
                     {g.uses.length > 0
-                      ? g.uses.map((u, i) => <p key={i} className="sm3-material-pop-texto" data-material-use>{isPt ? 'Para que serve: ' : 'What it is for: '}{u}</p>)
+                      ? <p className="sm3-material-pop-texto" data-material-use><strong>{isPt ? 'Usar em' : 'Use'}</strong> {g.uses.join(', ')}</p>
                       : <p className="sm3-material-pop-texto" data-material-use data-material-no-use>{g.usoAinda}</p>}
                     {bloqueado
                       ? <p className="sm3-material-pop-texto" data-material-demo>{demoRefusalText(isPt)}</p>
