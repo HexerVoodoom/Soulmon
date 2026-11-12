@@ -408,6 +408,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `collectionDates.test.ts`
 **Regra de negócio:** Data de coleção de formas/sonhos/achados, para as vitrines de coleção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/demoButton.ts`
+**Dono de:** O interruptor ÚNICO do botão DEMO do portão — `DEMO_BUTTON_ENABLED` (12/11/2026). Módulo FOLHA. `false` esconde só a porta; a lógica da demo e quem já está em demo seguem intactos.
+**Exports:**
+- `DEMO_BUTTON_ENABLED` — `false` por ora; trocar para `true` religa o botão.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx`
+**Régua:** `SoulmonOnboarding.demoOff.render.test.tsx` (desligado), `SoulmonOnboarding.demoLocal.render.test.tsx` (fluxo, com o interruptor mockado em `true`).
+**Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/demoMode.ts`
 **Dono de:** O PREDICADO da demo local — `isDemoMode(state)` — e só ele (07/10/2026). Módulo FOLHA (sem imports): `bond.ts` e `cloudSave.ts` o importam, e um ciclo derrubaria os dois. Não é `accountTier: 'demo'` (o plano grátis, com conta): a demo local é um save que nunca sai do aparelho, aberto pelo botão DEMO da home.
 **Exports:**
