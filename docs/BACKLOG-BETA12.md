@@ -267,6 +267,14 @@ Decididas pelo dono; **prevalecem sobre qualquer "Perguntas em aberto" dos itens
 
 Ainda em aberto: **nenhuma pergunta de modal pendente**. As seis perguntas da tabela anterior (widget vertical e opções, moldura vertical, veto em SIMILAR, derivação G7, chat e falas fora dos lotes de PT) foram respondidas nas decisões 9 a 13 e nos itens 1 a 8 acima. Restam só as perguntas de detalhe marcadas nos itens A2 (teto de altura) e A3 (layout 2x2/3x3), que não estão na lista de §F.
 
+## H. Keep-awake nativo no Focus Workshop
+
+A jornada do Foco já pede a tela acordada pela web (`navigator.wakeLock`, `src/utils/keepAwake.ts`, REGISTRO §304) e usa, se existir, o plugin Capacitor `KeepAwake` registrado em `window.Capacitor.Plugins`. O que depende da beta12/APK:
+
+- Adicionar `@capacitor-community/keep-awake` (ou `FLAG_KEEP_SCREEN_ON` no `MainActivity`) e `npx cap sync`; nenhum código web novo é preciso, o hook já o detecta.
+- Medir em aparelho real se o WebView Android segura o wake lock da web com a tela bloqueada/economia de bateria; se não, o nativo passa a ser a via principal.
+- `versionCode` junto do APK único da beta12.
+
 ## G. Balões dourados do Soulmon (pedido do dono, 11/11/2026; item "F" do pedido, renumerado G porque a seção F já é "Decisões do dono")
 
 Execução: beta12, **domingo 15/11/2026 às 03:00** (nenhuma implementação antes). Falas **PERSISTENTES** do Soulmon, em balão diferente (**borda dourada**), que **levam o jogador ao lugar**. Três casos:

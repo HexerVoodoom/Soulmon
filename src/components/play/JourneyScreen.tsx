@@ -2,7 +2,7 @@
  * A JORNADA DO FOCO em tela cheia (§247). Posição = função do tempo de foco do SERVIDOR (`now` corrigido por `delta`); sair,
  * ir para o fundo ou recarregar não muda nada. Desenho em SVG, com arte provisória (gradiente + motivos) até a fila de geração.
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { sm2Hint, sm2Text } from '../form/FormKit';
 import { Icon } from '../ui/Icon';
@@ -13,6 +13,8 @@ import {
 import type { ActiveJourney } from '../../utils/focusJourneyApi';
 import { formatClock } from '../../utils/focoTimer';
 import { useBackLayer } from '../../utils/backStack';
+import { useKeepAwake } from '../../utils/keepAwake';
+import { FocusTaskDock, JOURNEY_CARD_WIDTH, JOURNEY_GLASS, type DockTask } from './FocusTaskDock';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
 import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET, CHEST_GLOW_SHEET } from './journeyArt';
@@ -37,8 +39,10 @@ export function itemLabel(it: JourneyItem, isPt: boolean): string {
   return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn} ×${it.qty}` : `${it.id} ×${it.qty}`;
 }
 
-export function JourneyScreen({ language, active, delta, petSprite, lastItems, onPause, onResume, onClaim, onEnd, onClose }: {
+export function JourneyScreen({ language, active, delta, petSprite, lastItems, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
   language: Language; active: ActiveJourney; delta: number; petSprite?: string; lastItems: JourneyItem[] | null;
+  /** Lista de tarefas da sessão (§304): as da Home, com subtópicos; marcar usa os handlers da Home. */
+  tasks?: readonly DockTask[]; onToggleTask?: (id: string) => void; onToggleStep?: (taskId: string, stepId: string) => void;
   onPause: () => void; onResume: () => void; onClaim: () => void; onEnd: () => void; onClose: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -70,6 +74,17 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
   const Y = (y: number) => (blocks - y) * H;
   const art = JOURNEY_ART[active.env];
   const paused = active.pausedAt !== null;
+  /* Tela acordada só com o timer rodando: pausa, chegada e saída soltam (§304). */
+  const awake = useKeepAwake(p < 1 && !paused);
+  const clockRef = useRef<HTMLElement>(null);
+  const [clockBottom, setClockBottom] = useState(190);
+  useLayoutEffect(() => {
+    const measure = () => { const b = clockRef.current?.getBoundingClientRect().bottom; if (b && b > 0) setClockBottom(Math.ceil(b)); };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [paused, p >= 1]);
+  const dockBottom = `calc(${lastItems && lastItems.length > 0 ? 112 : active.keys.length > 0 ? 56 : 16}px + env(safe-area-inset-bottom, 0px))`;
 
   const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: tone[0], overflow: 'hidden' };
   return createPortal(
@@ -116,7 +131,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
       {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ position: 'absolute', zIndex: 2, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', display: 'flex', gap: 6 }}>
         {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
       </span>}
-      <section data-journey-modal style={{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: 'min(320px, calc(100% - 24px))', zIndex: 2, background: 'color-mix(in srgb, var(--sm2-surface) 80%, transparent)', color: 'var(--sm2-ink)', borderRadius: 14, padding: '8px 12px 10px', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'grid', justifyItems: 'center', gap: 6 }}>
+      <section ref={clockRef} data-journey-modal style={{ ...JOURNEY_GLASS, position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: JOURNEY_CARD_WIDTH, zIndex: 2, padding: '8px 12px 10px', display: 'grid', justifyItems: 'center', gap: 6 }}>
         <span data-journey-clock role="timer" aria-label={isPt ? (p >= 1 ? 'Chegou' : paused ? 'Tempo restante, em pausa' : 'Tempo restante') : (p >= 1 ? 'Arrived' : paused ? 'Time left, paused' : 'Time left')} className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'calc(var(--sm2-text-2xl) * 1.6)', lineHeight: 1.1, opacity: paused ? 0.7 : 1 }}>{formatClock(left)}</span>
         <div data-journey-actions style={{ display: 'flex', gap: 36, alignItems: 'center', justifyContent: 'center' }}>
           <button type="button" data-journey-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (a jornada continua)' : 'Leave to the Workshop (the journey goes on)'} style={ROUND}>
@@ -140,6 +155,8 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
         {confirmEnd && p < 1 && <p role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Toque de novo para encerrar e voltar' : 'Tap again to end and go back'}</p>}
         {p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
       </section>
+      <FocusTaskDock language={language} tasks={tasks} onToggleTask={onToggleTask} onToggleStep={onToggleStep} top={clockBottom} bottom={dockBottom} />
+      {!awake && p < 1 && !paused && <p role="status" data-journey-awake-hint style={{ ...sm2Hint, position: 'absolute', zIndex: 1, top: `calc(${clockBottom}px + 4px)`, left: 16, right: 16, margin: 0, textAlign: 'center', color: '#e9f5f2' }}>{isPt ? 'Este aparelho não segura a tela acesa: mantenha-a ligada.' : "This device can't keep the screen on: keep it awake yourself."}</p>}
     </div>,
     document.body,
   );
