@@ -47,7 +47,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   progress?: { cur: number; target: number } | null;
   /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
   reward?: ReactNode;
-  /** Missões do DIA (12/11/2026, pedido do dono, REGISTRO §317): a recompensa aparece SEMPRE, também depois de resgatada. */
+  /** Missões do DIA (12/11/2026, pedido do dono, REGISTRO §318): a recompensa aparece SEMPRE, também depois de resgatada. */
   rewardAlways?: boolean;
   /** Quem passa a missão (12/11/2026): retrato pequeno + nome do NPC. */
   giver?: MissionGiver;

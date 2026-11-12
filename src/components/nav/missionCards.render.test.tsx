@@ -149,7 +149,7 @@ describe('tabela de destinos', () => {
 });
 
 describe('recompensa: só quando PRONTA (dono, 15/10/2026), exceto na lista do DIA, que a mostra sempre (dono, 12/11/2026)', () => {
-  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído e a recompensa CONTINUA à vista (§317)', async () => {
+  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído e a recompensa CONTINUA à vista (§318)', async () => {
     const m = dailyMissionsFor(DAY, 99)[0];
     const { rerender } = render(mk());
     await waitFor(() => expect(document.querySelector(`[data-daily-mission="${m.id}"]`)).not.toBeNull(), T);

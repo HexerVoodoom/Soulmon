@@ -4,7 +4,7 @@
  * ao dono a 80 %. Derivado dos critérios do coordenador, não do código.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseBetaEmails, betaGate, betaAllows, betaRuleApplies, normalizeEmail as normLocal } from './_betaAccess.js';
+import { OPEN_TEST_UNTIL, openTestActive, parseBetaEmails, betaGate, betaAllows, betaRuleApplies, normalizeEmail as normLocal } from './_betaAccess.js';
 import { normalizeEmail } from './_auth.js';
 import { ipHash, takeIpQuota, IP_HASH_TTL_SECONDS, IP_LIMITS } from './_ipHash.js';
 import { cruzouLimiar, alertAdmin } from './_adminAlert.js';
@@ -29,7 +29,7 @@ describe('allowlist BETA_EMAILS', () => {
   // Gate adversarial C1: no GMAIL ponto e +tag são o MESMO endereço para a lista
   // (o saveId não muda — segue `normalizeEmail`). Fora do Gmail, não.
   it('C1: Gmail sem ponto e sem +tag (gmail.com = googlemail.com); outros domínios literais', () => {
-    const env = { BETA_EMAILS: 'Ana.Maria@gmail.com, beto@empresa.com' };
+    const env = { OPEN_TEST_OFF: '1', BETA_EMAILS: 'Ana.Maria@gmail.com, beto@empresa.com' };
     expect(betaAllows(env, 'ANA@gmail.com ')).toBe(false);
     expect(betaAllows(env, 'anamaria@gmail.com')).toBe(true);
     expect(betaAllows(env, 'a.n.a.maria+beta@googlemail.com')).toBe(true);
@@ -44,13 +44,13 @@ describe('allowlist BETA_EMAILS', () => {
     expect(betaRuleApplies({ BETA_CLOSED: 'true' }, 'core')).toBe(true);
   });
   it('fail-closed: regra ligada e sem e-mail verificado → recusa; lista vazia com flag on → ninguém entra', () => {
-    expect(betaGate({ BETA_CLOSED: '1', BETA_EMAILS: 'a@b.c' }, { ok: true }, 'core')).toEqual({ status: 403, reason: 'beta-closed' });
-    expect(betaGate({ BETA_CLOSED: '1' }, { ok: true, email: 'a@b.c' }, 'core')).not.toBeNull();
-    expect(betaGate({ BETA_CLOSED: '1', BETA_EMAILS: 'a@b.c' }, { ok: true, email: 'A@B.C' }, 'core')).toBeNull();
+    expect(betaGate({ OPEN_TEST_OFF: '1', BETA_CLOSED: '1', BETA_EMAILS: 'a@b.c' }, { ok: true }, 'core')).toEqual({ status: 403, reason: 'beta-closed' });
+    expect(betaGate({ OPEN_TEST_OFF: '1', BETA_CLOSED: '1' }, { ok: true, email: 'a@b.c' }, 'core')).not.toBeNull();
+    expect(betaGate({ OPEN_TEST_OFF: '1', BETA_CLOSED: '1', BETA_EMAILS: 'a@b.c' }, { ok: true, email: 'A@B.C' }, 'core')).toBeNull();
   });
   it('Q8: e-mail fora da lista → 403 beta-closed no portão de IA (antes de qualquer cota)', async () => {
     const kv = kvFalso();
-    const env = { DIGIAPP_SAVES: kv, BETA_EMAILS: 'convidada@x.com' };
+    const env = { OPEN_TEST_OFF: '1', DIGIAPP_SAVES: kv, BETA_EMAILS: 'convidada@x.com' };
     const preAuth = { ok: true, email: 'intrusa@x.com' };
     const r = await guardAiRequest(reqIp('1.1.1.1'), env, 'chat', 'abcdefgh12345678', 1, null, preAuth);
     expect(r).toMatchObject({ ok: false, status: 403, reason: 'beta-closed' });
@@ -173,5 +173,32 @@ describe('rotas: save e compra com o beta FECHADO; contas novas por ip-hash', as
     expect(r.status).toBe(429);
     expect((await r.json()).error).toBe('ip-new-account-limit');
     expect((await save({ request: postSave('8'.repeat(32), '8.8.8.8'), env })).status).toBe(200);
+  });
+});
+
+// JANELA ABERTA (12/11 a 26/11/2026): qualquer e-mail verificado entra; depois da data volta a lista.
+describe('janela aberta de teste (OPEN_TEST_UNTIL)', () => {
+  const dentro = Date.parse('2026-11-12T12:00:00-03:00');
+  const ultimoSegundo = Date.parse('2026-11-26T23:59:59-03:00');
+  const fora = Date.parse('2026-11-27T00:00:00-03:00');
+  const env = { BETA_CLOSED: '1', BETA_EMAILS: 'convidada@x.com' };
+  it('a data é 27/11/2026 00:00 (-03:00), 26/11 inclusive', () => {
+    expect(OPEN_TEST_UNTIL).toBe('2026-11-27T00:00:00-03:00');
+    expect(openTestActive({}, ultimoSegundo)).toBe(true);
+    expect(openTestActive({}, fora)).toBe(false);
+  });
+  it('dentro: e-mail fora da lista passa; sem e-mail continua recusado (fail-closed)', () => {
+    expect(betaGate(env, { email: 'qualquer@y.z' }, 'core', dentro)).toBeNull();
+    expect(betaGate(env, { email: 'qualquer@y.z' }, 'ai', ultimoSegundo)).toBeNull();
+    expect(betaGate(env, { ok: true }, 'core', dentro)).toEqual({ status: 403, reason: 'beta-closed' });
+    expect(betaGate(env, null, 'core', dentro)).toEqual({ status: 403, reason: 'beta-closed' });
+  });
+  it('fora (a partir de 27/11): volta a lista, sem mudar código', () => {
+    expect(betaGate(env, { email: 'qualquer@y.z' }, 'core', fora)).toEqual({ status: 403, reason: 'beta-closed' });
+    expect(betaGate(env, { email: 'convidada@x.com' }, 'core', fora)).toBeNull();
+  });
+  it('OPEN_TEST_OFF=1 encerra a janela antes, sem deploy de código', () => {
+    expect(openTestActive({ OPEN_TEST_OFF: '1' }, dentro)).toBe(false);
+    expect(betaAllows({ ...env, OPEN_TEST_OFF: 'true' }, 'qualquer@y.z', dentro)).toBe(false);
   });
 });

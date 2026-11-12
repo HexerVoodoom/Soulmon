@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------
 // MISSÕES DOS NPCs (pedido do dono, 12/11/2026, REGISTRO §314): cada NPC do jogo passa UMA missão simples, ligada ao papel dele, e
-// elas ROTACIONAM POR SEMANA (REGISTRO §317, revisão do dono): a cada semana um conjunto de NPCs (`npcsOfWeek`) fica disponível na
+// elas ROTACIONAM POR SEMANA (REGISTRO §318, revisão do dono): a cada semana um conjunto de NPCs (`npcsOfWeek`) fica disponível na
 // lista do dia, e só entram NPCs cujo prédio o jogador já abriu. O Trilho (Caderno) é a exceção: missão diária FIXA, fora do rodízio.
 //
 // Dado puro (sem React, sem imagem): as missões entram no catálogo de `dailyMissions.ts` (mesmo estado `dailyMissions`, mesmo
@@ -93,7 +93,7 @@ export const NPC_MISSIONS: readonly NpcMissionDef[] = [
 
 /** O rodízio semanal: as missões de NPC fora a fixa do Trilho. */
 export const NPC_MISSIONS_RODIZIO: readonly NpcMissionDef[] = NPC_MISSIONS.filter(m => !m.fixa);
-/** Quantos NPCs entram por semana no rodízio (REGISTRO §317). */
+/** Quantos NPCs entram por semana no rodízio (REGISTRO §318). */
 export const NPCS_POR_SEMANA = 2;
 
 /** Os ids das missões de NPC (o catálogo de `dailyMissions` os trata à parte: nunca entram no sorteio comum). */

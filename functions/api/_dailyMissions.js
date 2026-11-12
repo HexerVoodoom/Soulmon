@@ -15,7 +15,7 @@ export const DAILY_EVENTS = [
   'barrage', 'eco', 'zip', 'patches', 'calabouco', 'selo', 'amigo',
   // Missoes dos NPCs (12/11/2026, REGISTRO secao 309): eventos novos; 'salao' e 'mente' sao agregados dos jogos do Salao e do Atelie.
   'essencia', 'salao', 'compra', 'melhoria', 'mente', 'cla', 'cambio', 'cenario', 'prato', 'hex', 'feira', 'passeio', 'conquista',
-  // Trilho (REGISTRO secao 317): registro novo no Caderno.
+  // Trilho (REGISTRO secao 318): registro novo no Caderno.
   'journal',
 ];
 export const DAILY_MISSION_IDS = [

@@ -29,7 +29,7 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
     expect(li.querySelector('[data-mission-giver-art]')!.getAttribute('src')).toBe(g.art);
   });
 
-  it('a recompensa continua visível DEPOIS de resgatada (REGISTRO §317)', () => {
+  it('a recompensa continua visível DEPOIS de resgatada (REGISTRO §318)', () => {
     const day = '2026-12-01';
     const m = npcsOfWeek(day, 10)[0];
     cleanup();

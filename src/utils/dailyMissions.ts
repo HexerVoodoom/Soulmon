@@ -37,7 +37,7 @@ export type DailyEvent =
   | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
   // Missões dos NPCs (12/11/2026, REGISTRO §314): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
   | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario'
-  // Trilho (REGISTRO §317): um registro novo guardado no Caderno.
+  // Trilho (REGISTRO §318): um registro novo guardado no Caderno.
   | 'journal';
 
 export interface DailyMission {
@@ -92,7 +92,7 @@ const POOL: readonly DailyMission[] = [
   // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
   { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
-  // 12/11/2026 (REGISTRO §314/§317): uma missão por NPC, em rodízio SEMANAL (`npcsOfWeek`) + a fixa do Trilho; nunca entram no sorteio comum.
+  // 12/11/2026 (REGISTRO §314/§318): uma missão por NPC, em rodízio SEMANAL (`npcsOfWeek`) + a fixa do Trilho; nunca entram no sorteio comum.
   ...NPC_MISSIONS.map((n): DailyMission => ({ id: n.id, event: n.event, target: n.target, building: n.building, material: n.material, descPt: n.descPt, descEn: n.descEn, namePt: n.namePt, nameEn: n.nameEn, npc: n.npc })),
 ];
 
@@ -110,7 +110,7 @@ function numeroDoDia(day: string): number {
 }
 
 /**
- * Até 8 por dia: eram 6 (dono, 14/10/2026, REGISTRO §54) e, com as missões de NPC (o Trilho fixo + `NPCS_POR_SEMANA` da semana, REGISTRO §317),
+ * Até 8 por dia: eram 6 (dono, 14/10/2026, REGISTRO §54) e, com as missões de NPC (o Trilho fixo + `NPCS_POR_SEMANA` da semana, REGISTRO §318),
  * passaram a 6 + 2 para o sorteio comum continuar com o mesmo espaço (3 rodízios fixos + 2 sorteadas). Quem tem menos recursos abertos
  * recebe menos (o filtro de portão vem antes do corte).
  */
@@ -150,7 +150,7 @@ export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[
 function numeroDaSemana(day: string): number { return Math.floor((numeroDoDia(day) + 3) / 7); }
 
 /**
- * Os NPCs DA SEMANA (12/11/2026, REGISTRO §317). Rodízio semanal e determinístico pelo dia do jogador: a semana `w` parte da posição
+ * Os NPCs DA SEMANA (12/11/2026, REGISTRO §318). Rodízio semanal e determinístico pelo dia do jogador: a semana `w` parte da posição
  * `w × NPCS_POR_SEMANA` da lista do rodízio e pega os próximos NPCs cujo prédio o jogador JÁ ABRIU (pula os fechados; nunca repete).
  * A missão fica na lista do dia em TODOS os dias da semana (cada dia paga a sua, como toda diária). Sem prédio aberto = lista vazia.
  */

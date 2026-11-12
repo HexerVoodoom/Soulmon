@@ -1,3 +1,6 @@
+// JANELA ABERTA (12/11 a 26/11/2026, `_betaAccess.js` › OPEN_TEST_UNTIL): qualquer e-mail verificado
+// é beta-full; passada a data, volta só a allowlist. Efeito derivado na leitura, nunca gravado.
+//
 // BETA-FULL (decisão do dono, 18/10/2026): e-mail da allowlist `BETA_EMAILS` entra
 // como se JÁ tivesse o plano pago (versão cheia, Soulmon próprio), sem comprar.
 //
@@ -13,7 +16,7 @@
 // cliente além do Bearer token. Sem PII nos logs (nem e-mail, nem saveId).
 
 import { verifyIdToken, emailToSaveId, bearerToken } from './_auth.js';
-import { betaAllows, parseBetaEmails } from './_betaAccess.js';
+import { betaAllows, parseBetaEmails, openTestActive } from './_betaAccess.js';
 
 /**
  * @param {any} env
@@ -25,7 +28,7 @@ export async function verifiedBetaFull(env, request, saveId) {
   try {
     const projectId = env?.FIREBASE_PROJECT_ID;
     if (!projectId) return { betaFull: false };
-    if (parseBetaEmails(env?.BETA_EMAILS).length === 0) return { betaFull: false };
+    if (!openTestActive(env) && parseBetaEmails(env?.BETA_EMAILS).length === 0) return { betaFull: false };
     const claims = await verifyIdToken(bearerToken(request), projectId);
     if (!claims || !betaAllows(env, claims.email)) return { betaFull: false };
     if (saveId !== undefined && (await emailToSaveId(claims.email)) !== saveId) return { betaFull: false };
