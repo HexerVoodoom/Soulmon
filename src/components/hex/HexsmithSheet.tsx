@@ -240,6 +240,7 @@ interface PanelProps {
 function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip, onClear }: PanelProps) {
   const [bases, setBases] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
+  const [onlyCan, setOnlyCan] = useState(false);
   const refusalId = useId();
   const hx = sanitizeHexsmith(gs.hexsmith);
   const isEl = HEX_ELEMENT_SLOTS.includes(slot);
@@ -248,7 +249,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const bits = earnedBits(gs);
   const frags = gs.equipment?.fragments ?? 0;
 
-  const catalog = useMemo(() => {
+  const allCatalog = useMemo(() => {
     const values = isEl
       ? elementsMatchingBases(bases).filter((v) => isPotionUnlocked(v, gs.defeatedElements))
       : hexValuesOf(slot);
@@ -257,6 +258,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
       .filter((id) => !hx.owned.includes(id))
       .sort((a, b) => Number(!!hexForgeRefusal(gs, a)) - Number(!!hexForgeRefusal(gs, b)));
   }, [slot, isEl, bases, gs, hx.owned]);
+  const catalog = useMemo(() => (onlyCan ? allCatalog.filter((id) => !hexForgeRefusal(gs, id)) : allCatalog), [onlyCan, allCatalog, gs]);
 
   const sel = picked && catalog.includes(picked) ? picked : null;
   const selRefusal = sel ? hexForgeRefusal(gs, sel) : undefined;
@@ -327,10 +329,14 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
               <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, id) => { setBases((v) => v.map((x, j) => (j === i ? id : x))); setPicked(null); }} />
             </>
           )}
-          {catalog.length === 0 ? <p style={sm2Hint} data-hex-none>{tx(HEX_UI.noMatch, isPt)}</p> : (
-            <div data-hex-catalog-table className="sm2-hex-table">
-              <div className="sm2-hex-thead" aria-hidden="true"><span>{tx(HEX_UI.colItem, isPt)}</span><span>{tx(HEX_UI.colCost, isPt)}</span></div>
-            <ul data-hex-catalog className="sm2-hex-list">
+          <div role="group" aria-label={tx(HEX_UI.filters, isPt)} data-hex-filters style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {([false, true] as const).map((f) => (
+              <button key={String(f)} type="button" data-hex-filter={f ? 'can' : 'all'} aria-pressed={onlyCan === f} onClick={() => { setOnlyCan(f); setPicked(null); }}
+                className="sm2-kit-btn sm2-kit-btn-sm sm2-pocao-chip">{tx(f ? HEX_UI.filterCan : HEX_UI.filterAll, isPt)}</button>
+            ))}
+          </div>
+          {catalog.length === 0 ? <p style={sm2Hint} data-hex-none>{tx(onlyCan && allCatalog.length > 0 ? HEX_UI.noneCan : HEX_UI.noMatch, isPt)}</p> : (
+            <ul data-hex-catalog style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
               {catalog.map((id) => {
                 const v = parseHexItem(id)!.value;
                 const c = hexCost(id)!;
@@ -340,44 +346,46 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                 const art = isEl ? potionArt(v) : undefined;
                 const comp = isEl ? elementComposition(v) ?? [v] : [];
                 const potLabel = tx(HEX_UI.potionTipLabel, isPt);
-                const parts: ReactNode[] = [];
                 const tipBtn = (label: string, trigger: ReactNode, tip: string, attr: string) => (
                   <InfoTip language={language as Language} label={label} align="right"
                     style={{ minWidth: 32, minHeight: 32, color: 'inherit' }} trigger={trigger}>
                     <span {...{ [attr]: true }}>{tip}</span>
                   </InfoTip>);
-                if (c.potions > 0) parts.push(
-                  <span key="pot" data-hex-cost-potion={v} data-have={pot >= c.potions} className="sm2-hex-cost-cell">
-                    {tipBtn(`${potLabel}: ${elName(v, isPt)}`,
-                      art ? <img src={art} alt="" aria-hidden="true" width={ICON_COST} height={ICON_COST} draggable={false} data-hex-potion-art /> : <ElementIcon id={v} size={ICON_COST} />,
-                      potionHowTo(isPt, elName(v, isPt), [...new Set(comp)].length > 1 ? [...new Set(comp)].map((x) => elName(x, isPt)) : [], POTION_COSTS), 'data-hex-potion-tip')}
-                    <span className="sm2-num" data-hex-potion-qty>{pot}/{c.potions}</span>
-                  </span>);
-                if (c.fragments > 0) parts.push(
-                  <span key="frag" data-hex-cost-fragments data-have={frags >= c.fragments} className="sm2-hex-cost-cell">
-                    {tipBtn(hexCostTipLabel('fragments', isPt), <SoulFragmentIcon size={ICON_COST} label={tx(HEX_UI.fragments, isPt)} />, hexCostHowTo('fragments', isPt), 'data-hex-fragments-tip')}
-                    <span className="sm2-num">{frags}/{c.fragments}</span>
-                  </span>);
-                parts.push(
-                  <span key="bits" data-hex-cost-bits data-have={bits >= c.bits} className="sm2-hex-cost-cell">
-                    {tipBtn(hexCostTipLabel('bits', isPt), <BitsIcon size={ICON_COST} />, hexCostHowTo('bits', isPt), 'data-hex-bits-tip')}
-                    <span className="sm2-num"><span className="sm2-sr-only">Bits </span>{c.bits}</span>
-                  </span>);
                 return (
-                  <li key={id} className="sm2-hex-line" data-on={on} data-ok={ok}>
-                    <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row sm2-hex-pick"
-                      data-on={on} data-ok={ok} onClick={() => setPicked(on ? null : id)}>
-                      {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_ROW} />}
-                      <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
-                    </button>
-                    <div className="sm2-hex-cost" data-hex-cost>
-                      {parts.flatMap((x, i) => (i ? [<span key={`p${i}`} aria-hidden="true" className="sm2-hex-plus">+</span>, x] : [x]))}
+                  <li key={id} className="sm2-pocao-item" data-hex-line data-can-craft={ok ? 'true' : 'false'} data-on={on ? 'true' : 'false'} data-ok={ok}>
+                    <div className="sm2-pocao-head">
+                      <SlotFace slot={slot} value={v} size={ICON_MAP} />
+                      <strong style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</strong>
+                      <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} data-on={on} data-ok={ok}
+                        className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" onClick={() => setPicked(on ? null : id)}>{tx(HEX_UI.forge, isPt)}</button>
                     </div>
+                    <ul className="sm2-pocao-ing" data-hex-cost>
+                      {c.potions > 0 && (
+                        <li data-hex-cost-potion={v} data-have={pot >= c.potions} data-ok={pot >= c.potions ? 'true' : 'false'}>
+                          {tipBtn(`${potLabel}: ${elName(v, isPt)}`,
+                            art ? <img src={art} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} draggable={false} data-hex-potion-art style={{ objectFit: 'contain' }} /> : <ElementIcon id={v} size={ICON_ROW} />,
+                            potionHowTo(isPt, elName(v, isPt), [...new Set(comp)].length > 1 ? [...new Set(comp)].map((x) => elName(x, isPt)) : [], POTION_COSTS), 'data-hex-potion-tip')}
+                          <span style={{ flex: 1 }}>{(isPt ? 'Poção de ' : '') + elName(v, isPt) + (isPt ? '' : ' potion')}</span>
+                          <span className="sm2-num" data-hex-potion-qty>{pot}/{c.potions}</span>
+                        </li>
+                      )}
+                      {c.fragments > 0 && (
+                        <li data-hex-cost-fragments data-have={frags >= c.fragments} data-ok={frags >= c.fragments ? 'true' : 'false'}>
+                          {tipBtn(hexCostTipLabel('fragments', isPt), <SoulFragmentIcon size={ICON_ROW} label={tx(HEX_UI.fragments, isPt)} />, hexCostHowTo('fragments', isPt), 'data-hex-fragments-tip')}
+                          <span style={{ flex: 1 }}>{tx(HEX_UI.fragments, isPt)}</span>
+                          <span className="sm2-num">{frags}/{c.fragments}</span>
+                        </li>
+                      )}
+                      <li data-hex-cost-bits data-have={bits >= c.bits} data-ok={bits >= c.bits ? 'true' : 'false'}>
+                        {tipBtn(hexCostTipLabel('bits', isPt), <BitsIcon size={ICON_ROW} />, hexCostHowTo('bits', isPt), 'data-hex-bits-tip')}
+                        <span style={{ flex: 1 }}>Bits</span>
+                        <span className="sm2-num">{bits}/{c.bits}</span>
+                      </li>
+                    </ul>
                   </li>
                 );
               })}
             </ul>
-            </div>
           )}
         </section>
       </div>
