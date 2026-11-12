@@ -1806,6 +1806,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/components/nav/CornerLink.tsx` e o `AreaTopBar`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/ui/CtaButton.tsx`
+**Dono de:** o botão especial dos CTAs principais (REGISTRO §316): `CtaButton({ width: 'full' | 'auto', ...button })`, visual em `.sm2-cta` (`index.css`, arte `assets/soulmon/ui/btn-cta.webp` em 9-slice). Estados pressed/disabled/foco, alvo >= 48, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir).
+
 ### `src/components/ui/InfoTip.tsx`
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
 **Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`.

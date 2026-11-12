@@ -695,6 +695,7 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
+import { CtaButton } from './components/ui/CtaButton';
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
 import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
 // Oferta da Vesca: só monta com 100 essências; a copy dos prédios (→ areaNpcVoice → guildCopy) fica fora da entrada.
@@ -7795,11 +7796,11 @@ export default function App() {
 
           {labTab === 'evolution' && (
             <div style={{ padding: '0 4px 10px' }}>
-              <button type="button" data-open-element-potion className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ width: '100%' }}
+              <CtaButton data-open-element-potion
                 aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
                 <Icon name="auto_awesome" size={20} />
                 {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
-              </button>
+              </CtaButton>
             </div>
           )}
           {labTab === 'evolution' && potionOpen && <Suspense fallback={null}><ElementPotionSheet

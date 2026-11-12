@@ -1,3 +1,4 @@
+import { CtaButton } from './ui/CtaButton';
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { potionArt } from '../utils/potionArt';
@@ -107,10 +108,10 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
       footer={sel ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button type="button" data-potion-confirm className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ minWidth: 220 }} disabled={confirmDisabled}
+          <CtaButton data-potion-confirm width="auto" disabled={confirmDisabled}
             onClick={() => { onCraft(sel); setDone(sel); setSel(null); }}>
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
-          </button>
+          </CtaButton>
         </div>
       ) : undefined}>
       <div data-element-potion style={{ display: 'grid', gap: 12 }}>

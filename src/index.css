@@ -5900,6 +5900,7 @@ select:focus-visible {
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
+  .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled) { transform: none; } /* CtaButton */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -9214,6 +9215,25 @@ button.sm2-hex-row {
   display: inline-flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; min-width: 44px; padding: 0 var(--sm2-space-1);
   background: none; border: 0; border-radius: var(--sm2-radius-md);
 }
+
+/* ── Botão especial CTA (12/11/2026): arte do site do beta em 9-slice; só tokens sm2 no resto ──────────────────
+   Moldura = `border-image` (pontas com cristal/folhas não esticam; o miolo turquesa estica). Texto claro sobre o miolo escuro nos dois
+   temas (o miolo é sempre escuro). Pressed = desce 1px e escurece; disabled = dessatura; foco = anel `primary-ink` com fresta. */
+.sm2-cta {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 44px; margin: 0;
+  padding: 0 var(--sm2-space-2); cursor: pointer; background: transparent;
+  border-style: solid; border-width: 14px 36px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 34 92 fill / 14px 36px stretch;
+  border-image-outset: 0; image-rendering: pixelated;
+  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 700; line-height: var(--sm2-leading-body);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+  transition: transform var(--sm2-dur-tap) var(--sm2-ease), filter var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-cta-width="full"] { width: 100%; }
+  &[data-cta-width="auto"] { min-width: 200px; }
+  &:active:not(:disabled) { transform: translateY(1px); filter: brightness(.82); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
+  &:disabled { cursor: not-allowed; filter: grayscale(1) brightness(.7); opacity: .75; transform: none; }
+}
+.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2); text-align: center; }
 
 /* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
 .sm2-pocao-item {

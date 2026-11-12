@@ -1,3 +1,4 @@
+import { CtaButton } from './ui/CtaButton';
 import { useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { ElementIcon as Icon, elName } from './ElementBaseSlots';
@@ -34,9 +35,9 @@ export function VescaPotionOffer({ language, elementId, onMake, onDismiss }: Ves
       footer={(
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           <button type="button" data-vesca-later style={sm2Button('quiet')} onClick={close}>{isPt ? 'Depois' : 'Later'}</button>
-          <button type="button" data-vesca-make style={sm2Button('primary')} onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
+          <CtaButton data-vesca-make width="auto" onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
             {isPt ? 'Fazer a poção' : 'Make the potion'}
-          </button>
+          </CtaButton>
         </div>
       )}>
       <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
