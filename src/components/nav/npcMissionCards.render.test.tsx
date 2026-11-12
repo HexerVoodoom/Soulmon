@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** A lista de missões do dia mostra, em cada cartão, NOME, o que fazer, RECOMPENSA e QUEM passa (REGISTRO §313). */
+/** A lista de missões do dia mostra, em cada cartão, NOME, o que fazer, RECOMPENSA e QUEM passa (REGISTRO §314). */
 import { describe, it, expect, afterEach } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { dailyMissionEntries } from './DailyMissionList';

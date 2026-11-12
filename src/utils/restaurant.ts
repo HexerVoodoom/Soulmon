@@ -179,7 +179,7 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
     // regeneração: acerta o relógio ANTES de o buff começar (a velocidade nova vale só daqui para frente)
     restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
   }
-  // Missão da Snapjaw (12/11/2026, REGISTRO §313): pedir 1 prato no Restaurante (a Feira de verdade, `applyFeiraDish`, é outro gesto).
+  // Missão da Snapjaw (12/11/2026, REGISTRO §314): pedir 1 prato no Restaurante (a Feira de verdade, `applyFeiraDish`, é outro gesto).
   return { state: bumpDailyIn({ ...s, restaurant }, 'prato', 1, new Date(now)) };
 }
 

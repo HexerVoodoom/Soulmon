@@ -4920,7 +4920,7 @@ Convertido/mantido: a matriz era só um rascunho local da sessão (`SessionDraft
 
 **Alternativa que perdeu:** manter os quatro quadrantes e só tirar «Delegar» (continuaria exigindo julgar «importante»/«urgente» em dois eixos binários e não ordenaria dentro do quadrante). **Falsifica:** a maioria das tarefas ficar sem nota depois de uma semana (a etapa pesa mais do que ajuda), ou a pessoa classificar tudo com as mesmas notas (a ordenação não distingue nada).
 
-## §313 — Missões dos NPCs em rodízio, com NPC e recompensa à vista (12/11/2026, pedido do dono)
+## §314 — Missões dos NPCs em rodízio, com NPC e recompensa à vista (12/11/2026, pedido do dono)
 
 Decisão: (1) cada NPC passa uma missão simples do papel dele (`utils/npcMissions.ts`, 25 missões `n-*`); a cada dia UM NPC abre a lista do dia (`npcOfDay`, pelo dia do jogador, ciclo de 25 dias, pula prédio fechado); reaproveita `dailyMissions`/`claimDaily` (idempotente) e o espelho do servidor. (2) A Vesca deixou de pedir "visitar": passa "Colete 30 essências elementais" (`applyEssences` conta tudo que entra); `visit:laboratorio.evolucao` saiu das primeiras vezes. (3) O cartão do dia mostra nome, o que fazer, recompensa (agora SEMPRE visível nas diárias; antes só pronta, regra de 15/10/2026) e o NPC com retrato. (4) A recompensa segue a das outras diárias: 1 material do prédio. Sem missão: Glifa, Mirevesper, Ramo, Corvo do Perfil (sem ação que contar) e Trilho (o Caderno diário saiu no §309). As de presente (Zumi 2, Papus 1) valem pelo razão do servidor de `d-presente` (`DAILY_VALIDATED_EXTRA`).
 
