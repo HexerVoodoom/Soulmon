@@ -12,13 +12,15 @@ import { cleanKey } from './_llm.js';
 import { guardAiRequest } from './_aiGuard.js';
 import { minimizeForAi, redactionCount } from './_redact.js';
 
+import { CATEGORIES, normalizeCategory } from './_categories.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const VALID_CATEGORIES = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+const VALID_CATEGORIES = CATEGORIES;
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -38,7 +40,7 @@ export async function onRequestPost({ request, env }) {
         truncated: goalMin.truncated,
       });
     }
-    const categories = Array.isArray(body.categories) ? body.categories.filter(c => VALID_CATEGORIES.includes(c)) : [];
+    const categories = Array.isArray(body.categories) ? body.categories.map(normalizeCategory).filter(Boolean) : [];
     const isPt = body.language === 'pt-BR';
 
     if (!goalText && categories.length === 0) {
@@ -110,7 +112,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     const suggestions = (Array.isArray(parsed) ? parsed : [])
       .map(item => ({
         name: (item?.name || '').toString().trim().slice(0, 60),
-        category: VALID_CATEGORIES.includes(item?.category) ? item.category : 'Wellness',
+        category: normalizeCategory(item?.category) ?? 'mente',
       }))
       .filter(item => item.name.length > 0)
       .slice(0, 6);

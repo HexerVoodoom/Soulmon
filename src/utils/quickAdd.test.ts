@@ -41,7 +41,7 @@ describe('quickAdd — o caso de sobrevivência (nunca explodir, nunca perder o 
     const r = parseQuickAdd('!2 #trabalho amanhã 14h', PT);
     expect(r.name).toBe('!2 #trabalho amanhã 14h');
     expect(r.effort).toBe(2);
-    expect(r.category).toBe('Work');
+    expect(r.category).toBe('foco');
     expect(r.date).toBe('2026-03-12');
     expect(r.time).toBe('14:00');
   });
@@ -72,25 +72,25 @@ describe('quickAdd — esforço', () => {
 
 describe('quickAdd — categoria', () => {
   it.each([
-    ['#saude', 'Health'],
-    ['#saúde', 'Health'],
-    ['#SAUDE', 'Health'],
-    ['#health', 'Health'],
-    ['#trabalho', 'Work'],
-    ['#work', 'Work'],
-    ['#estudo', 'Study'],
-    ['#study', 'Study'],
-    ['#treino', 'Fitness'],
-    ['#fitness', 'Fitness'],
-    ['#criatividade', 'Creativity'],
-    ['#creativity', 'Creativity'],
-    ['#disciplina', 'Discipline'],
-    ['#discipline', 'Discipline'],
-    ['#social', 'Social'],
-    ['#amigos', 'Social'],
-    ['#bem-estar', 'Wellness'],
-    ['#bemestar', 'Wellness'],
-    ['#wellness', 'Wellness'],
+    ['#saude', 'corpo'],
+    ['#saúde', 'corpo'],
+    ['#SAUDE', 'corpo'],
+    ['#health', 'corpo'],
+    ['#trabalho', 'foco'],
+    ['#work', 'foco'],
+    ['#estudo', 'aprendizado'],
+    ['#study', 'aprendizado'],
+    ['#treino', 'corpo'],
+    ['#fitness', 'corpo'],
+    ['#criatividade', 'criatividade'],
+    ['#creativity', 'criatividade'],
+    ['#disciplina', 'foco'],
+    ['#discipline', 'foco'],
+    ['#social', 'relacoes'],
+    ['#amigos', 'relacoes'],
+    ['#bem-estar', 'mente'],
+    ['#bemestar', 'mente'],
+    ['#wellness', 'mente'],
   ] as const)('%s → %s', (tag, cat) => {
     const r = parseQuickAdd(`fazer coisa ${tag}`, PT);
     expect(r.category).toBe(cat);
@@ -105,7 +105,7 @@ describe('quickAdd — categoria', () => {
 
   it('duas tags conhecidas: a primeira vence, as duas saem do nome', () => {
     const r = parseQuickAdd('correr #treino #saude', PT);
-    expect(r.category).toBe('Fitness');
+    expect(r.category).toBe('corpo');
     expect(r.name).toBe('correr');
   });
 
@@ -354,7 +354,7 @@ describe('quickAdd — combinações (o caso real da caixa de captura)', () => {
     expect(r).toMatchObject({
       kind: 'task',
       name: 'pagar boleto',
-      category: 'Work',
+      category: 'foco',
       effort: 2,
       date: '2026-03-12',
       time: '14:00',
@@ -368,7 +368,7 @@ describe('quickAdd — combinações (o caso real da caixa de captura)', () => {
     expect(r).toMatchObject({
       kind: 'task',
       name: 'pay the bill',
-      category: 'Work',
+      category: 'foco',
       effort: 2,
       date: '2026-03-12',
       time: '14:00',
@@ -380,7 +380,7 @@ describe('quickAdd — combinações (o caso real da caixa de captura)', () => {
     expect(r).toMatchObject({
       kind: 'activity',
       name: 'academia',
-      category: 'Fitness',
+      category: 'corpo',
       effort: 3,
       time: '07:00',
       schedule: { kind: 'timesPerWeek', target: 3 },
@@ -392,7 +392,7 @@ describe('quickAdd — combinações (o caso real da caixa de captura)', () => {
     expect(r).toMatchObject({
       kind: 'activity',
       name: 'deep clean',
-      category: 'Wellness',
+      category: 'mente',
       effort: 3,
       schedule: { kind: 'everyNDays', n: 5, from: 'completion' },
     });
@@ -439,7 +439,7 @@ describe('quickAddHint', () => {
     const ptHint = quickAddHint('pt-BR');
     const enHint = quickAddHint('en');
     expect(ptHint).not.toBe(enHint);
-    expect(parseQuickAdd(ptHint, PT)).toMatchObject({ category: 'Work', effort: 2, time: '14:00' });
-    expect(parseQuickAdd(enHint, EN)).toMatchObject({ category: 'Work', effort: 2, time: '14:00' });
+    expect(parseQuickAdd(ptHint, PT)).toMatchObject({ category: 'foco', effort: 2, time: '14:00' });
+    expect(parseQuickAdd(enHint, EN)).toMatchObject({ category: 'foco', effort: 2, time: '14:00' });
   });
 });

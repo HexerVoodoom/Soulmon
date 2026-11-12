@@ -211,6 +211,10 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Régua:** cobertura indireta via testes de render dos componentes que o usam; nenhum `attributes.test.ts` próprio.
 **Avisos do arquivo:** `ATTR_LABEL` — "este comentário..." (nota sobre não expor `power`/`harmony`/`benevolence` na UI).
 
+### `src/types/categories.ts`
+
+Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relações, casa, finanças, propósito, criatividade): `LIFE_AREAS`, `ACTIVITY_CATEGORIES`, `LIFE_AREA_LABEL` e `normalizeCategory` (migra ids antigos Health, Fitness, Wellness, Discipline, Work, Study, Social, Creativity). Hábito e tarefa usam a mesma lista; cada categoria soma 3 pontos e o conjunto fecha Poder 10 / Harmonia 10 / Benevolência 10 (`attributes.ts`). Travado por `categories.contract.test.ts`.
+
 ### `src/types/category-icons.ts`
 **Dono de:** o ícone (Material Symbol) e o rótulo PT de cada categoria de atividade, tolerantes a categoria vinda de save antigo/seed que não bate com `ActivityCategory`.
 **Exports:**

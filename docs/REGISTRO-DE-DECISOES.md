@@ -4784,7 +4784,31 @@ Limite honesto: as semanais não têm espelho nem validação no servidor (o pro
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
 **Rollback:** reverter o PR (o campo `last` é aditivo). **APK:** nada obrigatório.
-## §298 — Foco: lista de tarefas na jornada e tela sempre acordada (11/11/2026, pedido do dono)
+
+## §298 — Categorias: uma lista só (hábito = tarefa), P/H/B equilibrado e Criatividade (11/11/2026, pedido do dono)
+
+**Decisão.** Tarefas e hábitos usam as MESMAS 10 categorias (`src/types/categories.ts`): Sono, Corpo, Mente, Foco, Aprendizado, Relações, Casa, Finanças, Propósito, Criatividade. O id gravado no save é o da área. Antes: 8 categorias em inglês (chips/save) e 9 áreas (catálogo/onboarding).
+
+**Balanceamento (decisão do dono: 3 pontos por categoria, 10/10/10).** Auditoria: as 8 antigas somavam 4 cada, mas Poder 9 / Harmonia 12 / Benevolência 11. Agora toda categoria soma 3 e o total é Poder 10 / Harmonia 10 / Benevolência 10 (igualdade exata). Tabela final (P/H/B): sono 0/2/1, corpo 2/1/0, mente 0/2/1, foco 2/0/1, aprendizado 1/2/0, relações 0/1/2, casa 0/1/2, finanças 1/1/1, propósito 2/0/1, criatividade 2/0/1. Corpo, foco, criatividade e propósito pendem a Poder; sono, mente e aprendizado a Harmonia; relações e casa a Benevolência. **Alternativa que perdeu:** soma 4 com P14/H13/B13 (igualdade impossível). **Custo:** cada atividade rende 25% menos pontos de atributo que antes (4 para 3); a progressão por atributo fica mais lenta na mesma proporção, conferir no beta.
+
+**Migração.** `normalizeCategory` no load (atividade, tarefa, histórico, stats): Health e Fitness -> corpo, Wellness -> mente, Discipline e Work -> foco, Study -> aprendizado, Social -> relações, Creativity -> criatividade. Id desconhecido passa intacto. Servidor de IA aceita os dois vocabulários e devolve o novo.
+
+**Falsifica:** `categories.contract.test.ts` (soma igual, equilíbrio, mesma lista em hábito/tarefa/chat/servidor, migração).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório.
+## §299 — Chave do Calabouço vale 48 h, 1 uso por dia (11/11/2026, pedido do dono)
+
+Decisão: a chave (§239) deixa de valer só o dia em que foi ganha. Agora vale o dia do jogador da conquista + o seguinte (48 h, `DUNGEON_KEY_VALID_HOURS`), com 1 uso por dia (a incursão é uma por dia do jogador, `runForDay`; virada do dia = incursão nova com a mesma chave ainda válida). Continua uma só (não acumula; a nova renova). Passou das 48 h: o portão do Bastion diz que expirou e manda concluir outra sessão. Textos: «Válida por 48 h · 1 uso por dia».
+
+Migração: nenhuma no save. `dungeonKeyDay` é o mesmo campo e a janela é calculada na leitura (`hasDungeonKey`), então a chave de ontem ainda vale hoje e a de anteontem não; dia futuro (relógio que volta) e data lixo não valem. O servidor (`save.js`, `fjd:`) segue validando só a CONQUISTA da chave (jornada concluída no razão); a expiração é por dia do jogador (âncora), sem relógio cru.
+
+Limite honesto: o 1 uso por dia é o da incursão diária já existente, não um contador novo; a leitura da validade é do cliente (a economia da masmorra é local-first).
+
+**Falsifica:** chave de ontem não abrir hoje, chave de 2 dias atrás abrir, ou duas incursões no mesmo dia (`focusKey.dungeon.test.ts`).
+
+**Rollback:** reverter o PR (o campo não mudou). **APK:** nada obrigatório.
+
+## §304 — Foco: lista de tarefas na jornada e tela sempre acordada (11/11/2026, pedido do dono)
 
 Decisão: (1) a jornada do Foco (`JourneyScreen`) ganhou, na metade de baixo e acima do aviso «Baú aberto», a lista de TAREFAS do dia (`FocusTaskDock`): mesma largura e mesmo vidro do card do relógio, ~1/4 da tela com rolagem interna, alça (arrastar para cima ou botão com a setinha) para crescer até perto do relógio (12 px de folga) e minimizar para voltar; Voltar fecha o modo grande antes de sair. As linhas são as da Home (`RitualRow` + `StepRow`, mesmo checkbox): tarefa com subtópicos mostra-os e o pai só reflete; marcar chama os MESMOS handlers do App (`handleToggleTask`/`handleToggleActivityCompletion` via `onCompleteFocusTask`; subtópico via `handleToggleTaskStep`, novo `onToggleFocusStep`), então XP, Bits e regras são os da Home e nada foi duplicado. (2) Tela acordada: `useKeepAwake` (`utils/keepAwake.ts`) pede `navigator.wakeLock.request('screen')` enquanto o timer roda (não pausado, não chegou), reaquisita no `visibilitychange`, solta ao pausar, chegar ou sair e engole rejeição; se o app tiver o plugin nativo `KeepAwake` do Capacitor registrado, usa-o; sem nenhum dos dois, a jornada avisa «mantenha a tela ligada».
 
@@ -4793,6 +4817,14 @@ Limite honesto: o WebView do Capacitor Android (Chromium) expõe a Wake Lock API
 **Falsifica:** lista fora da jornada, marcar na sessão não dar o mesmo pagamento da Home, o lock não ser pedido ao iniciar ou ficar preso depois de pausar/sair (`FocusTaskDock.render.test.tsx`).
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório (o plugin nativo é o item H da beta12).
+
+## §303 — Arte final dos botões de renomear da Hexsmith (lápis e chama) instalada (11/11/2026, pedido do dono)
+
+Os slots `src/assets/soulmon/hexsmith/btn-lapis.webp` e `btn-chama.webp` (256×256, alfa real, hexágono de aro rosa-magenta com lápis e aro laranja com chama, no estilo dos 5 hexágonos da tela) agora existem; `HexRenameButton` passa a usá-los no lugar do hexágono generativo, sem mudança de código. Gerados no ChatGPT com um hexágono do `mapa-portas.png` como referência de estilo; fundo removido pelo «Remover fundo» do ChatGPT (sem chroma), alfa conferido. Prompt e tags em `E:/Soulmon-assets/_banco/registro.jsonl`.
+
+**Falsifica:** o botão voltar ao SVG generativo com a arte presente (`HexsmithRename.arte.test.tsx`).
+
+**Rollback:** reverter o PR (volta ao generativo). **APK:** nada obrigatório.
 
 ## §300 — Foco: escolher a tarefa ao começar, baú da sessão e câmera que protege o relógio (12/11/2026, pedido do dono)
 

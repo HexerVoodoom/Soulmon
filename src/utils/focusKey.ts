@@ -27,13 +27,33 @@ export function grantFocusKey<T extends FocusKeyState>(prev: T, nowMs: number): 
 }
 
 /**
- * A CHAVE DA DUNGEON (dono, 05/11/2026, §239): concluir uma sessão na Oficina abre o Calabouço naquele dia do jogador. Não acumula.
+ * A CHAVE DA DUNGEON (dono, 05/11/2026, §239; validade 48 h e 1 uso por dia em §299): concluir uma sessão na Oficina dá a chave. Não acumula (uma só; a nova a renova).
  * Quem já tinha incursão andando hoje quando a regra chegou (`step > 0`) não é trancado no meio.
  */
 export interface DungeonKeyState { dungeonKeyDay?: string; playerDayTz?: PlayerDayAnchor; rogueDungeon?: { day: string; step: number } }
+/**
+ * §299 (dono, 11/11/2026): a chave vale 48 h (o dia do jogador em que foi ganha + o seguinte) e dá UMA entrada por dia
+ * (a incursão é uma por dia do jogador, `runForDay`; o dia vem da âncora do jogador, nunca do relógio cru do aparelho).
+ * Chave de dia FUTURO (relógio que volta) não vale. Save antigo (`dungeonKeyDay` de ontem) ganha a janela nova sem migração.
+ */
+export const DUNGEON_KEY_VALID_HOURS = 48;
+const DUNGEON_KEY_VALID_DAYS = DUNGEON_KEY_VALID_HOURS / 24;
+const diasEntre = (a: string, b: string): number => Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) - Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 86_400_000);
+/** Último dia do jogador (AAAA-MM-DD) em que a chave ganha em `keyDay` ainda vale (o dia da conquista + 1). */
+export function dungeonKeyLastDay(keyDay: string): string {
+  const d = new Date(Date.UTC(+keyDay.slice(0, 4), +keyDay.slice(5, 7) - 1, +keyDay.slice(8, 10) + DUNGEON_KEY_VALID_DAYS - 1));
+  return d.toISOString().slice(0, 10);
+}
 export function hasDungeonKey(state: DungeonKeyState, nowMs: number): boolean {
   const hoje = playerDayIso(new Date(nowMs), state.playerDayTz);
-  return sanitizeFocusKeyDay(state.dungeonKeyDay) === hoje || (state.rogueDungeon?.day === hoje && state.rogueDungeon.step > 0);
+  const k = sanitizeFocusKeyDay(state.dungeonKeyDay);
+  const idade = k ? diasEntre(k, hoje) : -1;
+  return (idade >= 0 && idade < DUNGEON_KEY_VALID_DAYS) || (state.rogueDungeon?.day === hoje && state.rogueDungeon.step > 0);
+}
+/** A chave existe no save mas já passou das 48 h (para a UI dizer "expirou"). */
+export function dungeonKeyExpired(state: DungeonKeyState, nowMs: number): boolean {
+  const k = sanitizeFocusKeyDay(state.dungeonKeyDay);
+  return !!k && diasEntre(k, playerDayIso(new Date(nowMs), state.playerDayTz)) >= DUNGEON_KEY_VALID_DAYS;
 }
 /** Idempotente: já tendo a de hoje, devolve a MESMA referência. */
 export function grantDungeonKey<T extends DungeonKeyState>(prev: T, nowMs: number): T {

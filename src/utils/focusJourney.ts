@@ -4,7 +4,6 @@
  * do relógio e do pagamento; aqui mora o desenho (trilha), a mesma lista de baús pela seed e os tetos.
  * Puro: sem React, sem storage, `now` por parâmetro.
  */
-import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { FOCUS_ENVIRONMENTS, type FocusEnvironmentId } from './focusExpedition';
 import type { MaterialId } from './buildingQuests';
 
@@ -34,7 +33,8 @@ export const JOURNEY_MAX_PAUSED_MS = 30 * 60_000;
 export const ENV_ELEMENT: Record<FocusEnvironmentId, string> = {
   forest: 'planta', shore: 'agua', cavern: 'terra', garden: 'fada', workshop: 'industrial', observatory: 'espaco',
 };
-export const JOURNEY_FOODS: readonly string[] = Object.values(FOOD_BY_CATEGORY).map(f => f.emoji);
+// Ordem FIXA e igual à do servidor (functions/api/_focusJourney.js): a ordem alimenta o sorteio, então não derivar de UNIQUE_FOODS (que segue a ordem das categorias).
+export const JOURNEY_FOODS: readonly string[] = ['🥩', '🥗', '🍎', '☕', '🧃', '🍚', '🍕', '🍭'];
 
 export function mulberry(seed: number): () => number {
   let a = seed >>> 0;

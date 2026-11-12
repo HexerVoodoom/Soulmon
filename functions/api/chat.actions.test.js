@@ -52,7 +52,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('validateToolCall: schema fechado', () => {
   it('hábito diário às 9h', () => {
     const r = validateToolCall('create_habit', { name: 'Beber água', category: 'Health', cadence: 'daily', time: '9:00' });
-    expect(r).toEqual({ ok: true, action: { type: 'create_habit', habit: { name: 'Beber água', category: 'Health', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' } } });
+    expect(r).toEqual({ ok: true, action: { type: 'create_habit', habit: { name: 'Beber água', category: 'corpo', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' } } });
   });
 
   it('dias da semana, vezes por semana e a cada N dias', () => {
@@ -63,7 +63,7 @@ describe('validateToolCall: schema fechado', () => {
 
   it('tarefa com data; esforço inválido cai em 1', () => {
     const r = validateToolCall('create_task', { name: 'Ligar pro médico', effort: 9, date: '2026-10-12' });
-    expect(r.action).toEqual({ type: 'create_task', task: { name: 'Ligar pro médico', category: 'Discipline', effort: 1, date: '2026-10-12' } });
+    expect(r.action).toEqual({ type: 'create_task', task: { name: 'Ligar pro médico', category: 'foco', effort: 1, date: '2026-10-12' } });
     expect(validateToolCall('create_task', { name: 'x', date: '2026-02-31' }).action.task.date).toBeUndefined();
   });
 

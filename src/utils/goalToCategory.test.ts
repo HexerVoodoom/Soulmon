@@ -12,31 +12,31 @@ import { categoryForGoal, orderCategoriesForGoal, normalizeGoalText } from './go
 import type { ActivityCategory } from '../types/attributes';
 
 const TODAS: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
+  'sono', 'corpo', 'mente', 'foco', 'aprendizado', 'relacoes', 'casa', 'financas', 'proposito', 'criatividade',
 ];
 
 const CASOS: Array<[string, ActivityCategory]> = [
-  ['quero dormir melhor', 'Health'],
-  ['parar de virar a noite e ter mais sono de qualidade', 'Health'],
-  ['I want to sleep better and drink more water', 'Health'],
-  ['voltar pra academia', 'Fitness'],
-  ['correr 5km sem parar', 'Fitness'],
-  ['get back to the gym and work out again', 'Fitness'],
-  ['estudar pra prova da faculdade', 'Study'],
-  ['ler mais livros esse ano', 'Study'],
-  ['study english every day', 'Study'],
-  ['dar conta dos prazos do trabalho', 'Work'],
-  ['organizar os projetos dos clientes', 'Work'],
-  ['stop missing deadlines at work', 'Work'],
-  ['voltar a desenhar', 'Creativity'],
-  ['escrever um pouco todo dia', 'Creativity'],
-  ['play guitar again', 'Creativity'],
-  ['ver mais os amigos e a familia', 'Social'],
-  ['ligar para minha mae toda semana', 'Social'],
-  ['parar de procrastinar', 'Discipline'],
-  ['largar o celular e ter foco', 'Discipline'],
-  ['lidar melhor com a ansiedade', 'Wellness'],
-  ['deal with stress and burnout', 'Wellness'],
+  ['quero dormir melhor', 'corpo'],
+  ['parar de virar a noite e ter mais sono de qualidade', 'corpo'],
+  ['I want to sleep better and drink more water', 'corpo'],
+  ['voltar pra academia', 'corpo'],
+  ['correr 5km sem parar', 'corpo'],
+  ['get back to the gym and work out again', 'corpo'],
+  ['estudar pra prova da faculdade', 'aprendizado'],
+  ['ler mais livros esse ano', 'aprendizado'],
+  ['study english every day', 'aprendizado'],
+  ['dar conta dos prazos do trabalho', 'foco'],
+  ['organizar os projetos dos clientes', 'foco'],
+  ['stop missing deadlines at work', 'foco'],
+  ['voltar a desenhar', 'criatividade'],
+  ['escrever um pouco todo dia', 'criatividade'],
+  ['play guitar again', 'criatividade'],
+  ['ver mais os amigos e a familia', 'relacoes'],
+  ['ligar para minha mae toda semana', 'relacoes'],
+  ['parar de procrastinar', 'foco'],
+  ['largar o celular e ter foco', 'foco'],
+  ['lidar melhor com a ansiedade', 'mente'],
+  ['deal with stress and burnout', 'mente'],
 ];
 
 describe('goalToCategory — o que a pessoa escreveu vira a primeira sugestão', () => {
@@ -49,7 +49,7 @@ describe('goalToCategory — o que a pessoa escreveu vira a primeira sugestão',
   it('lê as DUAS perguntas juntas', () => {
     // O objetivo e a dificuldade descrevem a mesma vida; usar só uma jogaria
     // fora metade do que a pessoa contou.
-    expect(categoryForGoal('', 'não consigo acordar cedo, durmo mal')).toBe('Health');
+    expect(categoryForGoal('', 'não consigo acordar cedo, durmo mal')).toBe('corpo');
   });
 });
 
@@ -76,7 +76,7 @@ describe('goalToCategory — não saber é resposta legítima', () => {
 describe('goalToCategory — reordena, nunca esconde', () => {
   it('a sugerida vai para a frente e o resto continua inteiro', () => {
     const ordem = orderCategoriesForGoal(TODAS, 'quero voltar a correr');
-    expect(ordem[0]).toBe('Fitness');
+    expect(ordem[0]).toBe('corpo');
     expect(ordem).toHaveLength(TODAS.length);
     expect([...ordem].sort()).toEqual([...TODAS].sort());
   });

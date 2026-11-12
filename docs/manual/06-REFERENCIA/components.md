@@ -2205,7 +2205,7 @@ Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `Np
 
 A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de `OficinaPlano.tsx` em modo `only`), e a jornada em tela cheia (arte pintada de `journeyArt.ts` em `src/assets/focus-jornada/`, com fallback SVG/ícone quando falta um asset; modal pequeno do relógio, pausas e encerrar). Posição = tempo do servidor. **Régua:** `FocusBoard.render.test.tsx`, `playArea.render.test.tsx`.
 
-**§298 (11/11/2026):** `JourneyScreen` ganhou as props `tasks`, `onToggleTask`, `onToggleStep` e renderiza `play/FocusTaskDock.tsx` (`FocusTaskDock`, `DockTask`, `JOURNEY_CARD_WIDTH`, `JOURNEY_GLASS`; props `language`, `tasks`, `onToggleTask`, `onToggleStep`, `top`, `bottom`; linhas = `RitualRow` + `StepRow`); `FocusBoard` ganhou `onToggleStep` (e `steps` em `BoardTask`) e `AreaView` a prop `play.onToggleFocusStep` (App: `handleToggleTaskStep`). `utils/keepAwake.ts`: `useKeepAwake(active)` e `keepAwakeSupported()`. **Régua:** `FocusTaskDock.render.test.tsx`.
+**§304 (11/11/2026):** `JourneyScreen` ganhou as props `tasks`, `onToggleTask`, `onToggleStep` e renderiza `play/FocusTaskDock.tsx` (`FocusTaskDock`, `DockTask`, `JOURNEY_CARD_WIDTH`, `JOURNEY_GLASS`; props `language`, `tasks`, `onToggleTask`, `onToggleStep`, `top`, `bottom`; linhas = `RitualRow` + `StepRow`); `FocusBoard` ganhou `onToggleStep` (e `steps` em `BoardTask`) e `AreaView` a prop `play.onToggleFocusStep` (App: `handleToggleTaskStep`). `utils/keepAwake.ts`: `useKeepAwake(active)` e `keepAwakeSupported()`. **Régua:** `FocusTaskDock.render.test.tsx`.
 
 ### `src/components/play/FocusTaskPicker.tsx` · `src/components/play/FocusBag.tsx` (12/11/2026 — REGISTRO §300)
 

@@ -9,9 +9,9 @@ import { emptyRhythm, dayKeyOf } from './habitRhythm';
 
 const habito: CreateHabitAction = {
   type: 'create_habit',
-  habit: { name: 'Beber água', category: 'Health', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' },
+  habit: { name: 'Beber água', category: 'corpo', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' },
 };
-const tarefa: CreateTaskAction = { type: 'create_task', task: { name: 'Ligar pro médico', category: 'Health', effort: 1 } };
+const tarefa: CreateTaskAction = { type: 'create_task', task: { name: 'Ligar pro médico', category: 'corpo', effort: 1 } };
 
 describe('parseChatAction: a última trava antes do save', () => {
   it('aceita ações bem formadas e ignora campo extra', () => {
@@ -22,9 +22,9 @@ describe('parseChatAction: a última trava antes do save', () => {
   it('rejeita tipo desconhecido, forma errada e injetada', () => {
     for (const x of [
       { type: 'set_tier', tier: 'paid' }, { type: 'delete_save' }, { type: 'create_habit' },
-      { type: 'create_habit', habit: { name: 'x', category: 'Health', schedule: { kind: 'weekdays', days: [8] } } },
-      { type: 'create_habit', habit: { name: 'x', category: 'Health', schedule: { kind: 'timesPerWeek', target: 30 } } },
-      { type: 'create_task', task: { name: '', category: 'Work' } },
+      { type: 'create_habit', habit: { name: 'x', category: 'corpo', schedule: { kind: 'weekdays', days: [8] } } },
+      { type: 'create_habit', habit: { name: 'x', category: 'corpo', schedule: { kind: 'timesPerWeek', target: 30 } } },
+      { type: 'create_task', task: { name: '', category: 'foco' } },
       undefined, 3, 'create_habit',
     ]) expect(parseChatAction(x)).toBeNull();
   });
@@ -71,11 +71,11 @@ describe('resumo de comportamento: só números e categorias fixas', () => {
   const now = new Date(2026, 9, 11, 15, 0, 0);
   const estado = {
     activities: [
-      { id: 'a1', name: 'SEGREDO-NOME-HABITO', category: 'Health', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6], completedToday: true },
-      { id: 'a2', name: 'outro', category: 'Study', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6] },
+      { id: 'a1', name: 'SEGREDO-NOME-HABITO', category: 'corpo', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6], completedToday: true },
+      { id: 'a2', name: 'outro', category: 'aprendizado', emoji: 'x', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6] },
     ],
-    tasks: [{ id: 't', name: 'SEGREDO-NOME-TAREFA', category: 'Work', emoji: 'x', completed: false }],
-    completedTasks: [{ id: 'c', name: 'SEGREDO-TAREFA-FEITA', category: 'Work', emoji: 'x', completedAt: new Date(2026, 9, 10, 9).toISOString() }],
+    tasks: [{ id: 't', name: 'SEGREDO-NOME-TAREFA', category: 'foco', emoji: 'x', completed: false }],
+    completedTasks: [{ id: 'c', name: 'SEGREDO-TAREFA-FEITA', category: 'foco', emoji: 'x', completedAt: new Date(2026, 9, 10, 9).toISOString() }],
     habitRhythms: { a1: { ...emptyRhythm(), done: [dayKeyOf(new Date(2026, 9, 10))] } },
     activityLog: [new Date(2026, 9, 10, 8).toISOString(), new Date(2026, 9, 11, 14).toISOString()],
     moodLog: [{ date: '2026-10-10', mood: 4 as const }],

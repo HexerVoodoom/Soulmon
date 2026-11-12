@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
 import { chaveDoItem, useHabitSchedule } from '../hooks/useItemForm';
@@ -54,9 +55,7 @@ interface EditModalProps {
   canEditWeekdays?: boolean; // Se a atividade foi criada quando podia selecionar dias
 }
 
-const CATEGORIES: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
-];
+const CATEGORIES: ActivityCategory[] = ACTIVITY_CATEGORIES as ActivityCategory[];
 
 export function EditModal({
   isOpen, onClose, onSave, onDelete, initialData, language = 'en-US', canEditWeekdays = true,

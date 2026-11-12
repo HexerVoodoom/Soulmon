@@ -46,9 +46,11 @@ describe('a casa da guilda', () => {
   it('no dia seguinte do jogador a doação volta a valer', async () => {
     const { e } = await setup();
     const doar = (dayKey) => call(e, 'guildDonate', { body: { id: A, bits: 50, dayKey } });
-    expect((await doar('2026-11-10')).status).toBe(200);
-    expect((await doar('2026-11-10')).status).toBe(429);
-    expect((await doar('2026-11-11')).status).toBe(200);
+    const hoje = new Date().toISOString().slice(0, 10);
+    const amanha = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    expect((await doar(hoje)).status).toBe(200);
+    expect((await doar(hoje)).status).toBe(429);
+    expect((await doar(amanha)).status).toBe(200);
   });
   it('alternar o dayKey (±1 dia) NÃO reabre a doação: dia igual ou anterior ao último doado = 429 (segurança, rodada 1)', async () => {
     const { e } = await setup();

@@ -8,7 +8,7 @@ afterEach(cleanup);
 
 const habito: CreateAction = {
   type: 'create_habit',
-  habit: { name: 'Beber água', category: 'Health', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' },
+  habit: { name: 'Beber água', category: 'corpo', schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }, time: '09:00' },
 };
 
 describe('ChatActionCard — o modelo propõe, a pessoa decide', () => {
@@ -51,7 +51,7 @@ describe('ChatActionCard — o modelo propõe, a pessoa decide', () => {
   });
 
   it('tarefa: texto próprio', () => {
-    render(<ChatActionCard action={{ type: 'create_task', task: { name: 'Pagar luz', category: 'Work', effort: 1, date: '2026-10-12' } }} isPt={false} onConfirm={() => {}} onDismiss={() => {}} />);
+    render(<ChatActionCard action={{ type: 'create_task', task: { name: 'Pagar luz', category: 'foco', effort: 1, date: '2026-10-12' } }} isPt={false} onConfirm={() => {}} onDismiss={() => {}} />);
     expect(screen.getByText('Create task “Pagar luz” for 2026-10-12?')).toBeTruthy();
   });
 });

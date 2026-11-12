@@ -28,7 +28,7 @@ describe('o crédito dos prédios do clã é idempotente por recibo', () => {
     const s = applyClaRewards(base(), 'r1', [{ kind: 'chip', id: 'chip-harmony' }], DAY);
     expect(s.foodInventory[CHIP_EMOJI.harmony]).toBe(1);
     const f = applyClaRewards(s, 'r2', [{ kind: 'food' }], DAY);
-    expect(f.foodInventory[FOOD_BY_CATEGORY.Study.emoji]).toBe(1);
+    expect(f.foodInventory[FOOD_BY_CATEGORY.aprendizado.emoji]).toBe(1);
   });
 
   it('o MESMO recibo uma 2ª vez devolve a MESMA referência e não credita de novo', () => {

@@ -42,7 +42,7 @@ import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensagei
 import { useMailbox } from './hooks/useMailbox';
 import { applyJourneyGrants } from './utils/focusBoard';
 import type { JourneyGrants } from './utils/focusJourney';
-import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey } from './utils/focusKey';
+import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
@@ -386,7 +386,7 @@ import { resolveSpecialMission, tomorrowSpecialKind, specialMissionGoal } from '
  * exatamente igual, ganha exatamente a mesma comida e a mesma meta do dia —
  * só não vê o selo. Ver a regra 1 de `utils/steps.ts`.
  */
-const STEP_VERIFIABLE: readonly ActivityCategory[] = ['Health', 'Fitness', 'Wellness'];
+const STEP_VERIFIABLE: readonly ActivityCategory[] = ['corpo', 'mente'];
 
 /**
  * Limiar do selo: METADE da meta de referência, e é DERIVADO dela de propósito
@@ -3917,7 +3917,7 @@ export default function App() {
    * para a pessoa não perder o que digitou.
    */
   const handleQuickAdd = useCallback((r: QuickAddResult): boolean => {
-    const categoria = (r.category ?? 'Discipline') as ActivityCategory;
+    const categoria = (r.category ?? 'foco') as ActivityCategory;
     const emoji = CATEGORY_ICONS[categoria];
     const agora = new Date().toISOString();
 
@@ -6990,7 +6990,7 @@ export default function App() {
   const conhecerTask = (): Task => ({
     id: `meet-${Date.now()}`,
     name: language === 'pt-BR' ? 'Conhecer o seu Soulmon' : 'Get to know your Soulmon',
-    category: 'Wellness' as ActivityCategory,
+    category: 'mente' as ActivityCategory,
     emoji: '💫',
     completed: false,
     status: 'open',
@@ -8552,6 +8552,7 @@ export default function App() {
                     return { ...prev, rogueDungeon: run, feats: applyFeat(prev.feats, 'rogueFloors', ganhos), dailyMissions: bumpDaily(prev.dailyMissions, dia, 'calabouco') };
                   }), combatant: soulCombatant(gameState) },
                   dungeonKeyActive: hasDungeonKey(gameState, Date.now()),
+                  dungeonKeyExpired: dungeonKeyExpired(gameState, Date.now()),
                   onJourneyGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => setGameState(prev => applyJourneyGrants(prev, day, grants, dungeonKeyDay)),
                   onFocusSessionComplete: () => setGameState(prev => grantDungeonKey(prev, Date.now())),
                   onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
