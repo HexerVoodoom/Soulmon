@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Icon } from './ui/Icon';
+import './ChatPanel.css';
 
 /**
  * Beta12 / C1 + C2 — o PAINEL do chat com o Soulmon.

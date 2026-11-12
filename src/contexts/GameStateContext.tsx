@@ -127,6 +127,7 @@ import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
+import { loadCatalog } from '../data/catalogoCarga';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
@@ -1330,7 +1331,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
         activities: arr<unknown>(loadedState.activities)
           .map(hydrateActivity).filter((a): a is Activity => a !== null)
-          .map(migrateCatalogHabitDaily),
+          .map(a => migrateCatalogHabitDaily(a)),
         tasks: arr<unknown>(loadedState.tasks)
           .map(hydrateTask).filter((t): t is Task => t !== null),
         completedTasks: arr<unknown>(loadedState.completedTasks)
@@ -2131,6 +2132,23 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const [pedidoReconciliar, setPedidoReconciliar] = useState(0);
   const montado = useRef(true);
   useEffect(() => { montado.current = true; return () => { montado.current = false; }; }, []);
+
+  // Migração "hábito do catálogo = todo dia" (§295): precisa do catálogo, que mora fora do chunk de entrada (`catalogoCarga.ts`).
+  // Roda quando o índice chega (e a cada save carregado que traga hábito do catálogo); idempotente: sem mudança devolve o MESMO estado.
+  const temCatalogId = (gameState.activities ?? []).some((a: { catalogId?: unknown }) => !!a.catalogId);
+  useEffect(() => {
+    if (!temCatalogId) return;
+    let vivo = true;
+    void loadCatalog().then(porId => {
+      if (!vivo) return;
+      setGameState(s => {
+        const acts = s.activities ?? [];
+        const novas = acts.map(a => migrateCatalogHabitDaily(a, porId));
+        return novas.some((a, i) => a !== acts[i]) ? { ...s, activities: novas } : s;
+      });
+    }).catch(() => {});
+    return () => { vivo = false; };
+  }, [temCatalogId, gameState.activities]);
 
   /** 409: a revisão que o servidor informou; a leitura da reconciliação abaixo dela é réplica atrasada. */
   const revisaoDo409 = useRef<number | undefined>(undefined);

@@ -16,9 +16,7 @@ const nativePlugin = (): NativeKeepAwake | null => {
   try {
     // Plugin nativo nosso: o cabeçalho do plugin existe no APK novo; no antigo (ou na web) isto é falso e segue o resto.
     if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('KeepAwake')) return KeepAwake;
-    const cap = (window as unknown as { Capacitor?: { Plugins?: Record<string, NativeKeepAwake | undefined> } }).Capacitor;
-    const p = cap?.Plugins?.KeepAwake;
-    return p && typeof p.keepAwake === 'function' ? p : null;
+    return null;
   } catch { return null; }
 };
 const webWakeLock = (): { request: (t: 'screen') => Promise<WakeSentinel> } | null => {
