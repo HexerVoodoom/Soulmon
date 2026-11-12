@@ -1902,6 +1902,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `nightmareWake.test.ts`
 **Regra de negócio:** O pesadelo é a primeira coisa do dia, ao acordar o Soulmon, a qualquer hora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/npcMissions.ts` (12/11/2026 — REGISTRO §314)
+**Dono de:** a tabela das MISSÕES DOS NPCs (`NPC_MISSIONS`, 25 entradas `n-*`: NPC `area:lote`/`papus`/`nuri`, evento, alvo, prédio, material, nome e descrição PT/EN) e `NPCS_SEM_MISSAO` (quem não tem, com o motivo). A ordem é a do rodízio.
+**Exports:** `NpcMissionDef` (type), `NPC_MISSIONS`, `NPC_MISSION_IDS`, `NPCS_SEM_MISSAO`.
+**Chamado por:** `src/utils/dailyMissions.ts` (entram no catálogo; `npcOfDay` escolhe a do dia).
+**Régua:** `src/utils/npcMissions.test.ts`, `functions/api/dailyMissions.parity.test.js`.
+
 ### `src/utils/notificationPermission.ts`
 **Dono de:** a decisão (PURA) de PEDIR a permissão de notificação (07/10/2026): cruza plataforma (APK × web), estado da permissão e gatilho (`first-open` × `toggle`) e devolve a ação — pedir o modal nativo, só registrar, orientar às configurações do sistema ou nada. Também lê/pede a permissão da plataforma (Capacitor `PushNotifications` no APK, `Notification` na web, que exige gesto) e abre as configurações de notificação do app. Quem pediu e foi negado nunca é cobrado de novo sozinho.
 **Exports:** `decidePermissionAction`, `platformForPermission`, `readPlatformPermission`, `requestPlatformPermission`, `openSystemNotificationSettings`, `settingsGuidance` e os tipos `PermissionPlatform`/`PermissionTrigger`/`PermissionAction`/`PermissionDecisionInput`.
@@ -3795,6 +3801,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 ### `src/utils/dailyMissions.ts`
 **Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
 **Sincronização 09/11/2026:** `DailyEvent` (união dos eventos de missão) ganhou `selo` e `DailyMission` ganhou `retired?: true` (04/11/2026): a missão `d-selo` ("Complete uma rodada do Selo Faltante") substitui `d-patches` (a Colcha) no rodízio do Ateliê (`ROTA_MENTE` = `d-eco`, `d-zip`, `d-selo`); a Colcha fica no catálogo só para save antigo e nunca é sorteada — `dailyMissionPool()` e o resto do sorteio filtram `retired`.
+**Atualização 12/11/2026 (REGISTRO §314):** o catálogo ganhou as MISSÕES DOS NPCs (`utils/npcMissions.ts`, 25 entradas `n-*`, campos novos `npc`/`namePt`/`nameEn` em `DailyMission`); `npcOfDay(day, bond)` escolhe a do dia (`n mod 25` pelo dia do jogador, pulando prédio ainda fechado) e `dailyMissionsFor` a põe em 1º lugar (a lista segue com `DAILY_MISSION_COUNT` itens). 13 eventos novos (`cenario`, `essencia`, `salao`, `compra`, `melhoria`, `mente`, `cla`, `cambio`, `prato`, `hex`, `feira`, `passeio`, `conquista`); `bumpDaily(s, day, event, qty = 1)` soma quantidade (30 essências) e `salao`/`mente` são AGREGADOS dos minijogos; `bumpDailyIn(prev, event, qty)` é o mesmo sobre o estado inteiro, chamado no ramo de sucesso dos utilitários donos de cada gesto (`applyEssences`, `applyUpgrade`, `forgeHexItem`/`applyServerHexForge`, `applyCook`, `applyFeiraLojaBuy`/`applyServerFeiraHex`) e dos handlers do `App` (compra do Mercado/moldura, Cambista, conquista, missão do Clã, passeio). `visit:laboratorio.evolucao` saiu das primeiras vezes (a Vesca passa `n-vesca`: colete 30 essências). Espelho do servidor: `functions/api/_dailyMissions.js` (paridade travada).
 **Exports:**
 - `DailyEvent` (type) — os 15 eventos reais que contam (`dino`, `ppt`, `match3`, `foco`, `masmorra`, `banho`...).
 - `DailyMission` (interface) — uma missão do catálogo (`id`, `event`, `target`...).

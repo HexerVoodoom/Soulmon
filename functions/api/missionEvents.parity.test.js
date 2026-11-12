@@ -25,6 +25,16 @@ describe('missoes validadas: servidor e app concordam', () => {
     expect(d.event).toBe(srv.DAILY_VALIDATED.event);
     expect(d.target).toBe(srv.DAILY_VALIDATED.target);
   });
+  it('as missoes de NPC que contam presente existem com o mesmo evento e alvo (Zumi, Papus)', () => {
+    for (const v of srv.DAILY_VALIDATED_EXTRA) {
+      const d = dailyMissionPool().find(m => m.id === v.id);
+      expect(d.event, v.id).toBe(v.event);
+      expect(d.target, v.id).toBe(v.target);
+    }
+    // toda missao de NPC com evento `presente` esta na lista validada
+    const ids = dailyMissionPool().filter(m => m.event === 'presente').map(m => m.id).sort();
+    expect(ids).toEqual([srv.DAILY_VALIDATED.id, ...srv.DAILY_VALIDATED_EXTRA.map(v => v.id)].sort());
+  });
   it('a chave legada friend-visit e a que o app migra para gift-sent', () => {
     expect(srv.LEGACY_WEEKLY).toBe('friend-visit');
   });

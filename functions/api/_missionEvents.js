@@ -33,6 +33,11 @@ export const WEEKLY_VALIDATED = {
 };
 /** A diária validada: id, evento e alvo (espelho de `dailyMissions.ts`). */
 export const DAILY_VALIDATED = { id: 'd-presente', event: 'presente', target: 1 };
+/** Missoes de NPC que contam o MESMO evento `presente` (12/11/2026, REGISTRO secao 314): Zumi (2) e Papus (1); espelho de `npcMissions.ts`. */
+export const DAILY_VALIDATED_EXTRA = [
+  { id: 'n-zumi', event: 'presente', target: 2 },
+  { id: 'n-papus', event: 'presente', target: 1 },
+];
 /** Id antigo de `gift-sent` (migração do app, 11/11/2026). */
 export const LEGACY_WEEKLY = 'friend-visit';
 
@@ -171,18 +176,19 @@ export async function enforceWeeklyMissions(store, saveId, incoming, gravado) {
  */
 export async function enforceDailyMissions(store, saveId, incoming, gravado) {
   if (!isObj(incoming) || typeof incoming.day !== 'string') return incoming;
-  const { id, event, target } = DAILY_VALIDATED;
+  const { event } = DAILY_VALIDATED;
+  const todas = [DAILY_VALIDATED, ...DAILY_VALIDATED_EXTRA];
   const counts = isObj(incoming.counts) ? { ...incoming.counts } : {};
   let claimed = lista(incoming.claimed);
-  if (cnt(counts, event) === 0 && !claimed.includes(id)) return incoming;
+  if (cnt(counts, event) === 0 && !todas.some((v) => claimed.includes(v.id))) return incoming;
   const baseMesmoDia = isObj(gravado) && gravado.day === incoming.day;
   const baseN = baseMesmoDia ? cnt(gravado.counts, event) : 0;
-  const pagoAntes = baseMesmoDia && lista(gravado.claimed).includes(id);
+  const pagoAntes = (id) => baseMesmoDia && lista(gravado.claimed).includes(id);
   const iso = toIsoDay(incoming.day);
   const week = iso ? isoWeekOf(iso) : null;
   const confirmado = iso && week ? ((await lerRazao(store, saveId, week, 'g'))[iso] ?? 0) : 0;
   const n = Math.max(baseN, Math.min(cnt(counts, event), confirmado));
   if (n > 0) counts[event] = n; else delete counts[event];
-  if (claimed.includes(id) && !pagoAntes && n < target) claimed = claimed.filter((x) => x !== id);
+  for (const v of todas) if (claimed.includes(v.id) && !pagoAntes(v.id) && n < v.target) claimed = claimed.filter((x) => x !== v.id);
   return { ...incoming, counts, claimed: [...new Set(claimed)] };
 }

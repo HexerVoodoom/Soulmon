@@ -27,11 +27,16 @@ import { hashString, mulberry32 } from './oracle/base';
 import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
 import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import type { QuestMark } from './questMarks';
+import { NPC_MISSIONS } from './npcMissions';
+import type { PlayerDayAnchor } from './playerDay';
+import { playerDayKey } from './playerDay';
 
 export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
-  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente';
+  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
+  // Missões dos NPCs (12/11/2026, REGISTRO §314): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
+  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -45,6 +50,10 @@ export interface DailyMission {
   material: MaterialId;
   descPt: string;
   descEn: string;
+  /** Missão de NPC (12/11/2026): NOME da missão (a `desc` é o que fazer) e a CHAVE de quem a passa (`area:lote`, `papus`, `nuri`). */
+  namePt?: string;
+  nameEn?: string;
+  npc?: string;
   /** Aposentada: fica no catálogo só para o save antigo (ids/eventos válidos); nunca é sorteada. */
   retired?: true;
 }
@@ -81,6 +90,8 @@ const POOL: readonly DailyMission[] = [
   // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
   { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
+  // 12/11/2026 (REGISTRO §314): uma missão por NPC, uma por dia em rodízio (`npcOfDay`); nunca entram no sorteio comum.
+  ...NPC_MISSIONS.map((n): DailyMission => ({ id: n.id, event: n.event, target: n.target, building: n.building, material: n.material, descPt: n.descPt, descEn: n.descEn, namePt: n.namePt, nameEn: n.nameEn, npc: n.npc })),
 ];
 
 /** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */
@@ -106,7 +117,7 @@ export function dailyMissionPool(): readonly DailyMission[] { return POOL.filter
 
 /** Listas fechadas que o servidor espelha (`functions/api/_dailyMissions.js`, travado por `dailyMissions.parity.test.js`). */
 export const DAILY_MISSION_IDS: readonly string[] = POOL.map(m => m.id);
-export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
+export const DAILY_EVENTS: readonly DailyEvent[] = [...new Set(POOL.map(m => m.event))];
 
 /**
  * As missões do dia. DETERMINÍSTICO por `day` (dia do jogador): a mesma chave devolve a mesma ordem em qualquer aparelho.
@@ -115,7 +126,7 @@ export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
  */
 export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[] {
   const rng = mulberry32(hashString(`daily-missions:${day}`));
-  const resto = POOL.filter(m => !NA_ROTA.includes(m.id) && !m.retired);
+  const resto = POOL.filter(m => !NA_ROTA.includes(m.id) && !m.retired && !m.npc);
   for (let i = resto.length - 1; i > 0; i -= 1) {
     const j = Math.floor(rng() * (i + 1));
     [resto[i], resto[j]] = [resto[j], resto[i]];
@@ -125,8 +136,26 @@ export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[
   const n = numeroDoDia(day);
   const byId = (id: string) => POOL.find(m => m.id === id)!;
   const fixas = [byId(ROTA_SALAO[n % ROTA_SALAO.length]), byId(ROTA_MENTE[n % ROTA_MENTE.length]), byId(FIXA_CALABOUCO)];
-  return [...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
+  const npc = npcOfDay(day, bondLevel);
+  // A missão do NPC do dia abre a lista; o resto (rodízios + sorteio) completa até `DAILY_MISSION_COUNT`.
+  return [...(npc ? [npc] : []), ...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
 }
+
+/**
+ * A missão do NPC DO DIA (12/11/2026, REGISTRO §314). Rodízio determinístico pelo número do dia do jogador: `n mod N`; se o prédio dele
+ * ainda não abriu no Vínculo da pessoa, vale o próximo da fila que abriu (o dia nunca fica sem NPC enquanto algum estiver aberto).
+ * Ciclo de `NPC_MISSIONS.length` dias: todo NPC passa a missão uma vez por ciclo.
+ */
+export function npcOfDay(day: string, bondLevel: unknown): DailyMission | undefined {
+  const lista = POOL.filter(m => m.npc);
+  const n = numeroDoDia(day);
+  for (let i = 0; i < lista.length; i += 1) {
+    const m = lista[(n + i) % lista.length];
+    if (buildingGateFor(m.building, bondLevel).open) return m;
+  }
+  return undefined;
+}
+
 
 export interface DailyMissionsState {
   day: string;
@@ -142,12 +171,29 @@ export function dailyForDay(s: DailyMissionsState | undefined, day: string): Dai
   return { day, counts: {}, claimed: [] };
 }
 
-/** Um evento real aconteceu. Soma 1 (até o teto) na contagem do dia. */
-export function bumpDaily(s: DailyMissionsState | undefined, day: string, event: DailyEvent): DailyMissionsState {
-  const cur = dailyForDay(s, day);
+/** Os minijogos do Salão e do Ateliê também contam no AGREGADO da missão do NPC (Pipo / Tessela). */
+const AGREGADO: Partial<Record<DailyEvent, DailyEvent>> = { dino: 'salao', ppt: 'salao', match3: 'salao', barrage: 'salao', eco: 'mente', zip: 'mente', selo: 'mente' };
+
+/** Um evento real aconteceu. Soma `qty` (padrão 1, até o teto) na contagem do dia; jogo do Salão/Ateliê soma também no agregado. */
+export function bumpDaily(s: DailyMissionsState | undefined, day: string, event: DailyEvent, qty = 1): DailyMissionsState {
+  const add = Math.floor(qty);
+  if (!(add >= 1)) return dailyForDay(s, day);
+  let cur = dailyForDay(s, day);
   const n = cur.counts[event] ?? 0;
-  if (n >= DAILY_COUNT_CAP) return cur;
-  return { ...cur, counts: { ...cur.counts, [event]: n + 1 } };
+  if (n < DAILY_COUNT_CAP) cur = { ...cur, counts: { ...cur.counts, [event]: Math.min(DAILY_COUNT_CAP, n + add) } };
+  const agg = AGREGADO[event];
+  if (agg) cur = bumpDaily(cur, day, agg, add);
+  return cur;
+}
+
+/**
+ * O mesmo evento sobre um save/estado inteiro (dia do jogador pela âncora dele). PURO: o `prev` do updater; o utilitário dono do gesto
+ * (`applyEssences`, `applyUpgrade`, `applyShopBuy`...) chama no ramo de SUCESSO — recusa devolve o MESMO `prev` e não conta.
+ */
+export function bumpDailyIn<T extends object>(prev: T, event: DailyEvent, qty = 1, now: Date = new Date()): T {
+  const h = prev as T & { dailyMissions?: DailyMissionsState; playerDayTz?: PlayerDayAnchor };
+  const next = bumpDaily(h.dailyMissions, playerDayKey(now, h.playerDayTz), event, qty);
+  return next === h.dailyMissions ? prev : { ...prev, dailyMissions: next };
 }
 
 export function dailyCount(s: DailyMissionsState | undefined, day: string, m: DailyMission): number {
@@ -190,7 +236,7 @@ export function dailyMissionsMark(s: DailyMissionsState | undefined, day: string
   return st.includes('available') ? 'available' : null;
 }
 
-const EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
+const EVENTS: readonly DailyEvent[] = DAILY_EVENTS;
 
 /** Higienização do load (e do que vem da nuvem): eventos só do catálogo, contagem inteira 0..cap, `claimed` só de ids do catálogo. */
 export function sanitizeDailyMissions(raw: unknown): DailyMissionsState | undefined {
@@ -228,7 +274,8 @@ export interface FirstTime {
 }
 
 // Prédios placeholder (exploracao.dungeon) não pagam material: sem tela própria para "visitar" (QA 25/10/2026).
-const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'exploracao.dungeon'];
+// 12/11/2026: o Centro de Evolução também sai — "visitar a Vesca" não era missão; ela agora passa a de coletar 30 essências (`n-vesca`).
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'exploracao.dungeon', 'laboratorio.evolucao'];
 
 const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
   .filter(b => !NO_VISIT.includes(b))

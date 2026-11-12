@@ -15,6 +15,7 @@ import { spendBitsPaidFirst } from './bitsOrigin';
 import { applyShopBuy, type ShopBuyState } from './shopBuy';
 import { spendBits } from './equipment';
 import { parseHexItem, sanitizeHexsmith, type HexsmithState } from './hexsmith';
+import { bumpDailyIn } from './dailyMissions';
 
 /** Os vendedores que o servidor sorteia HOJE (espelho de `FEIRA_LOJA_VENDEDORES` ativos). Reuso de arte: nada novo; Vesca e Tessaria ficam de fora. */
 export const FEIRA_LOJA_VENDORS = ['mercado', 'colheita', 'aranha', 'hexsmith', 'morcego', 'salamandra', 'vitra', 'serpente'] as const;
@@ -113,6 +114,12 @@ export function shopItemOnOffer(offer: FeiraLojaItem): ShopItem | null {
  *  · `material`: +1 no estoque (teto `MATERIAL_CAP`); `potion`: +1 poção na pastinha; `dish`: o prato pronto (`applyFeiraDish`).
  */
 export function applyFeiraLojaBuy<T extends ShopBuyState & Partial<CookState>>(prev: T, offer: FeiraLojaItem, now: number = Date.now()): { state: T; refused?: string } {
+  const r = feiraLojaBuyRaw(prev, offer, now);
+  // Missão da Fanfare (12/11/2026, REGISTRO §314): comprar 1 oferta da Feira (recusa devolve o MESMO `prev`: não conta).
+  return r.refused ? r : { ...r, state: bumpDailyIn(r.state, 'feira', 1, new Date(now)) };
+}
+
+function feiraLojaBuyRaw<T extends ShopBuyState & Partial<CookState>>(prev: T, offer: FeiraLojaItem, now: number): { state: T; refused?: string } {
   const ref = feiraLojaRef(offer.id);
   if (offer.type === 'shop') {
     const item = shopItemOnOffer(offer);
@@ -151,5 +158,5 @@ export function applyServerFeiraHex<T extends { hexsmith?: HexsmithState; gamePo
   let next: T = prev;
   if (paid && price > 0) next = spendBits(next, Math.min(next.gamePoints ?? 0, price));
   const equipped = hx.equipped[parsed.slot] ? hx.equipped : { ...hx.equipped, [parsed.slot]: itemId };
-  return { ...next, hexsmith: { owned: [...hx.owned, itemId], equipped } };
+  return bumpDailyIn({ ...next, hexsmith: { owned: [...hx.owned, itemId], equipped } }, 'feira');
 }
