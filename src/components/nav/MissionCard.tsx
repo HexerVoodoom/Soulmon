@@ -47,7 +47,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   progress?: { cur: number; target: number } | null;
   /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
   reward?: ReactNode;
-  /** Missões do DIA (12/11/2026, pedido do dono): a recompensa aparece sempre, não só com a missão pronta. */
+  /** Missões do DIA (12/11/2026, pedido do dono, REGISTRO §317): a recompensa aparece SEMPRE, também depois de resgatada. */
   rewardAlways?: boolean;
   /** Quem passa a missão (12/11/2026): retrato pequeno + nome do NPC. */
   giver?: MissionGiver;
@@ -101,7 +101,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             </span>
           </>
         )}
-        {reward && (quiet || (rewardAlways && !claimed) || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {reward && (quiet || rewardAlways || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
         {giver && (
           <p data-mission-giver style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
             <img src={giver.art} alt="" aria-hidden="true" width={20} height={20} draggable={false} data-mission-giver-art style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', objectPosition: 'center top', imageRendering: 'pixelated', flex: 'none' }} />

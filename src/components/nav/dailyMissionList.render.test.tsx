@@ -46,21 +46,22 @@ describe('DailyMissionList na aba Diárias', () => {
 
   it('evento real deixa a linha pronta; "Claim" chama o resgate uma vez; paga vira "Claimed" sem botão; reabrir não repete', async () => {
     const onClaim = vi.fn();
-    const ev = lista[0].event;
+    const alvo = lista.find(m => m.target === 1)!; // alvo 1: um evento deixa pronta
+    const ev = alvo.event;
     const pronta = bumpDaily(undefined, DAY, ev);
     const { unmount } = render(mk(pronta, onClaim));
-    await waitFor(() => expect(document.querySelector(`[data-daily-mission="${lista[0].id}"]`)).not.toBeNull());
-    const li = document.querySelector(`[data-daily-mission="${lista[0].id}"]`)!;
+    await waitFor(() => expect(document.querySelector(`[data-daily-mission="${alvo.id}"]`)).not.toBeNull());
+    const li = document.querySelector(`[data-daily-mission="${alvo.id}"]`)!;
     expect(li.getAttribute('data-status')).toBe('ready');
     const btn = li.querySelector('button')!;
     expect(btn.textContent).toBe('Claim');
     fireEvent.click(btn);
-    expect(onClaim).toHaveBeenCalledWith(lista[0].id);
-    const pago = claimDaily({ dailyMissions: pronta, buildingQuests: undefined }, DAY, 1, lista[0].id).state;
+    expect(onClaim).toHaveBeenCalledWith(alvo.id);
+    const pago = claimDaily({ dailyMissions: pronta, buildingQuests: undefined }, DAY, 1, alvo.id).state;
     unmount();
     render(mk(pago.dailyMissions, onClaim));
-    await waitFor(() => expect(document.querySelector(`[data-daily-mission="${lista[0].id}"]`)).not.toBeNull());
-    const li2 = document.querySelector(`[data-daily-mission="${lista[0].id}"]`)!;
+    await waitFor(() => expect(document.querySelector(`[data-daily-mission="${alvo.id}"]`)).not.toBeNull());
+    const li2 = document.querySelector(`[data-daily-mission="${alvo.id}"]`)!;
     expect(li2.getAttribute('data-status')).toBe('claimed');
     expect(li2.querySelector('button')).toBeNull();
     expect(li2.textContent).toContain('Claimed');

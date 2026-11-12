@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { NPC_MISSIONS, NPCS_SEM_MISSAO } from './npcMissions';
+import { NPC_MISSIONS, NPC_MISSIONS_RODIZIO, NPCS_POR_SEMANA, NPCS_SEM_MISSAO } from './npcMissions';
 import { LOT_NPC_VOICE } from './areaNpcVoice';
 import { BUILDING_GATES } from './gates';
 import { MATERIAL_PER_QUEST, type BuildingQuestState } from './buildingQuests';
 import {
   DAILY_COUNT_CAP, DAILY_EVENTS, DAILY_MISSION_COUNT, FIRST_TIME_IDS, bumpDaily, bumpDailyIn, claimDaily, dailyMissionPool, dailyMissionsFor,
-  dailyStatus, npcOfDay, sanitizeDailyMissions, type DailyMissionsState,
+  dailyStatus, npcMissionsOfDay, npcsOfWeek, trilhoMission, sanitizeDailyMissions, type DailyMissionsState,
 } from './dailyMissions';
 import { applyEssences } from './essences';
 
@@ -44,35 +44,72 @@ describe('missões dos NPCs (REGISTRO §314)', () => {
     expect(FIRST_TIME_IDS).not.toContain('visit:laboratorio.evolucao');
   });
 
-  it('rotação DETERMINÍSTICA por dia: mesmo dia = mesmo NPC; um ciclo inteiro passa cada NPC exatamente uma vez', () => {
-    const n = NPC_MISSIONS.length;
-    for (let i = 0; i < 6; i += 1) expect(npcOfDay(dia(i), BOND_MAX)?.id).toBe(npcOfDay(dia(i), BOND_MAX)?.id);
-    const ciclo = Array.from({ length: n }, (_, i) => npcOfDay(`2026-12-${String(1 + i).padStart(2, '0')}`, BOND_MAX)!.id);
-    expect(new Set(ciclo).size).toBe(n);
-    expect([...ciclo].sort()).toEqual(NPC_MISSIONS.map(m => m.id).sort());
-    // dias seguidos mudam o NPC
-    expect(npcOfDay('2026-12-01', BOND_MAX)!.id).not.toBe(npcOfDay('2026-12-02', BOND_MAX)!.id);
-    // o ciclo recomeça igual (dia + N)
-    const d0 = Date.UTC(2026, 11, 1);
-    const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
-    expect(npcOfDay(iso(d0 + n * 86400000), BOND_MAX)!.id).toBe(npcOfDay(iso(d0), BOND_MAX)!.id);
+  const segunda = '2026-11-02';
+  const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+
+  it('rodízio SEMANAL determinístico: a semana inteira (segunda a domingo) tem os MESMOS NPCs; a semana seguinte, outros', () => {
+    const base = Date.UTC(2026, 10, 2); // segunda
+    const ids = (d: string) => npcsOfWeek(d, BOND_MAX).map(m => m.id).join();
+    for (let sem = 0; sem < 4; sem += 1) {
+      const dias = Array.from({ length: 7 }, (_, k) => iso(base + (sem * 7 + k) * 86400000));
+      expect(new Set(dias.map(ids)).size, `semana ${sem}`).toBe(1);
+    }
+    expect(ids(segunda)).not.toBe(ids(iso(base + 7 * 86400000)));
+    // o domingo anterior ainda é da semana passada
+    expect(ids('2026-11-01')).not.toBe(ids(segunda));
+    expect(npcsOfWeek(segunda, BOND_MAX)).toHaveLength(NPCS_POR_SEMANA);
   });
 
-  it('Vínculo baixo: o dia traz o próximo NPC com prédio aberto (nunca um trancado)', () => {
-    for (let i = 0; i < 30; i += 1) {
-      const m = npcOfDay(dia(i % 28), 1)!;
-      expect(m).toBeTruthy();
-      expect(BUILDING_GATES[m.building].minBond).toBeLessThanOrEqual(1);
+  it('o ciclo cobre todo NPC do rodízio e recomeça igual', () => {
+    // `N` NPCs, `NPCS_POR_SEMANA` por semana: cobre todos em ceil(N/K) semanas; a posição só repete depois de N semanas (N ímpar vs K = 2)
+    const N = NPC_MISSIONS_RODIZIO.length;
+    const semanas = N;
+    const base = Date.UTC(2026, 10, 2);
+    const vistos = new Set<string>();
+    for (let w = 0; w < Math.ceil(N / NPCS_POR_SEMANA); w += 1) for (const m of npcsOfWeek(iso(base + w * 7 * 86400000), BOND_MAX)) vistos.add(m.id);
+    expect([...vistos].sort()).toEqual(NPC_MISSIONS_RODIZIO.map(m => m.id).sort());
+    expect(npcsOfWeek(iso(base + semanas * 7 * 86400000), BOND_MAX).map(m => m.id)).toEqual(npcsOfWeek(segunda, BOND_MAX).map(m => m.id));
+  });
+
+  it('só entram NPCs com o prédio ABERTO pelo Vínculo (nunca um trancado) e o Trilho nunca está no rodízio', () => {
+    for (let i = 0; i < 40; i += 1) {
+      for (const bond of [1, 2, 3]) {
+        const l = npcsOfWeek(iso(Date.UTC(2026, 10, 2) + i * 7 * 86400000), bond);
+        for (const m of l) expect(BUILDING_GATES[m.building].minBond, m.id).toBeLessThanOrEqual(bond);
+        expect(l.map(m => m.id)).not.toContain('n-trilho');
+        expect(new Set(l.map(m => m.id)).size).toBe(l.length);
+      }
     }
   });
 
-  it('a lista do dia abre com a missão do NPC e continua com no máximo DAILY_MISSION_COUNT (sem NPC repetido)', () => {
+  it('Trilho: missão diária FIXA "Faça 1 registro" (journal), só com o Caderno aberto; fora do rodízio', () => {
+    const t = trilhoMission(BOND_MAX)!;
+    expect(t).toMatchObject({ id: 'n-trilho', event: 'journal', target: 1, building: 'forja.caderno', npc: 'forja:caderno' });
+    expect(t.descPt).toBe('Faça 1 registro no Caderno');
+    expect(trilhoMission(0)).toBeUndefined();
+    expect(NPC_MISSIONS_RODIZIO.map(m => m.id)).not.toContain('n-trilho');
+    for (let i = 0; i < 10; i += 1) expect(npcMissionsOfDay(dia(i), BOND_MAX)[0].id).toBe('n-trilho');
+  });
+
+  it('a lista do dia abre com o Trilho + os NPCs da semana e continua com no máximo DAILY_MISSION_COUNT (sem NPC repetido)', () => {
     for (let i = 0; i < 20; i += 1) {
       const l = dailyMissionsFor(dia(i), BOND_MAX);
       expect(l.length).toBeLessThanOrEqual(DAILY_MISSION_COUNT);
-      expect(l[0].npc).toBeTruthy();
-      expect(l.filter(m => m.npc)).toHaveLength(1);
+      expect(l.slice(0, 1 + NPCS_POR_SEMANA).every(m => m.npc)).toBe(true);
+      expect(l.filter(m => m.npc)).toHaveLength(1 + NPCS_POR_SEMANA);
     }
+  });
+
+  it('claim do Trilho: 1 registro deixa pronta; resgata 1× e paga tinta', () => {
+    const d = '2026-11-03';
+    const m = dailyMissionsFor(d, BOND_MAX).find(x => x.id === 'n-trilho')!;
+    let st: { dailyMissions?: DailyMissionsState; buildingQuests?: BuildingQuestState } = { dailyMissions: undefined };
+    expect(dailyStatus(st.dailyMissions, d, m)).toBe('available');
+    st = { ...st, dailyMissions: bumpDaily(undefined, d, 'journal') };
+    expect(dailyStatus(st.dailyMissions, d, m)).toBe('ready');
+    const r = claimDaily(st, d, BOND_MAX, 'n-trilho');
+    expect(r.paid).toBe('ink');
+    expect(claimDaily(r.state, d, BOND_MAX, 'n-trilho').paid).toBeNull();
   });
 
   it('o catálogo vivo inclui as missões de NPC (o servidor/sanitize as conhece)', () => {
@@ -86,9 +123,9 @@ describe('missões dos NPCs (REGISTRO §314)', () => {
   it('progresso e resgate: 30 essências (por qualquer fonte) deixam a Vesca pronta; resgata 1× (idempotente) e paga 1 Essência (material)', () => {
     // Acha um dia em que a Vesca abre a lista
     let d = '';
-    for (let i = 0; i < NPC_MISSIONS.length; i += 1) { const c = `2027-01-${String(1 + i).padStart(2, '0')}`; if (npcOfDay(c, BOND_MAX)!.id === 'n-vesca') { d = c; break; } }
+    for (let i = 0; i < NPC_MISSIONS.length * 7; i += 7) { const c = iso(Date.UTC(2027, 0, 4) + i * 86400000); if (npcsOfWeek(c, BOND_MAX).some(x => x.id === 'n-vesca')) { d = c; break; } }
     expect(d).not.toBe('');
-    const m = dailyMissionsFor(d, BOND_MAX)[0];
+    const m = dailyMissionsFor(d, BOND_MAX).find(x => x.id === 'n-vesca')!;
     expect(m.id).toBe('n-vesca');
     type Est = { dailyMissions?: DailyMissionsState; essences?: Record<string, number>; playerDayTz?: undefined; buildingQuests?: BuildingQuestState };
     let st: Est = {};

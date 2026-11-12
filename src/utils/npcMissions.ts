@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------------
 // MISSÕES DOS NPCs (pedido do dono, 12/11/2026, REGISTRO §314): cada NPC do jogo passa UMA missão simples, ligada ao papel dele, e
-// elas ROTACIONAM — a cada dia a lista do dia traz a missão de um NPC diferente (`npcOfDay`, determinístico pelo dia do jogador).
+// elas ROTACIONAM POR SEMANA (REGISTRO §317, revisão do dono): a cada semana um conjunto de NPCs (`npcsOfWeek`) fica disponível na
+// lista do dia, e só entram NPCs cujo prédio o jogador já abriu. O Trilho (Caderno) é a exceção: missão diária FIXA, fora do rodízio.
 //
 // Dado puro (sem React, sem imagem): as missões entram no catálogo de `dailyMissions.ts` (mesmo estado `dailyMissions`, mesmo
 // `claimDaily`, mesma recompensa de 1 material do prédio do NPC — o padrão das outras diárias). O que o jogo EMITE como evento real
@@ -27,11 +28,13 @@ export interface NpcMissionDef {
   nameEn: string;
   descPt: string;
   descEn: string;
+  /** Fora do rodízio: aparece TODO dia (enquanto o prédio estiver aberto). Só o Trilho (Caderno). */
+  fixa?: boolean;
 }
 
 /**
- * A ORDEM do rodízio: áreas alternadas, para dois dias seguidos não saírem do mesmo canto do mapa. Ciclo = `NPC_MISSIONS.length` dias;
- * cada NPC volta a cada ciclo. Quem o Vínculo ainda não abriu é pulado (o dia sempre traz a primeira missão ABERTA a partir da vez).
+ * A ORDEM do rodízio: áreas alternadas, para duas semanas seguidas não saírem do mesmo canto do mapa. Cada semana pega `NPCS_POR_SEMANA`
+ * NPCs seguidos a partir da vez dela; o ciclo fecha em `rodizio / NPCS_POR_SEMANA` semanas. Quem o Vínculo ainda não abriu é pulado.
  */
 export const NPC_MISSIONS: readonly NpcMissionDef[] = [
   { id: 'n-vesca', npc: 'laboratorio:evolucao', event: 'essencia', target: 30, building: 'laboratorio.evolucao', material: 'essence',
@@ -80,18 +83,24 @@ export const NPC_MISSIONS: readonly NpcMissionDef[] = [
     namePt: 'Passeio do dia', nameEn: 'Stroll of the day', descPt: 'Conclua 1 passeio', descEn: 'Finish 1 stroll' },
   { id: 'n-medra', npc: 'mercado:conquistas', event: 'conquista', target: 1, building: 'mercado.conquistas', material: 'ribbon',
     namePt: 'Conquista no bolso', nameEn: 'Feat in hand', descPt: 'Resgate 1 conquista', descEn: 'Claim 1 achievement' },
+  { id: 'n-trilho', npc: 'forja:caderno', event: 'journal', target: 1, building: 'forja.caderno', material: 'ink', fixa: true,
+    namePt: 'Registro do dia', nameEn: 'Entry of the day', descPt: 'Faça 1 registro no Caderno', descEn: 'Write 1 entry in the Notebook' },
   { id: 'n-papus', npc: 'papus', event: 'presente', target: 1, building: 'laboratorio.amigos', material: 'keepsake',
     namePt: 'Entrega do Papus', nameEn: 'Papus delivery', descPt: 'Envie 1 presente a um amigo', descEn: 'Send 1 gift to a friend' },
   { id: 'n-nuri', npc: 'nuri', event: 'comida', target: 1, building: 'forja.refugio', material: 'moss',
     namePt: 'Lanchinho', nameEn: 'Snack time', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
 ];
 
+/** O rodízio semanal: as missões de NPC fora a fixa do Trilho. */
+export const NPC_MISSIONS_RODIZIO: readonly NpcMissionDef[] = NPC_MISSIONS.filter(m => !m.fixa);
+/** Quantos NPCs entram por semana no rodízio (REGISTRO §317). */
+export const NPCS_POR_SEMANA = 2;
+
 /** Os ids das missões de NPC (o catálogo de `dailyMissions` os trata à parte: nunca entram no sorteio comum). */
 export const NPC_MISSION_IDS: readonly string[] = NPC_MISSIONS.map(m => m.id);
 
 /** NPCs que HOJE não passam missão (sem ação real do jogo para contar) — documentado e travado por teste, para a lacuna não ser silenciosa. */
 export const NPCS_SEM_MISSAO: Readonly<Record<string, string>> = {
-  'forja:caderno': 'Trilho: o Caderno diário saiu das diárias por decisão do dono (REGISTRO §309); a semanal de journal já cobre',
   'laboratorio:biblioteca': 'Glifa: a Biblioteca só LÊ (sem ação que conte)',
   'arena:guerra': 'Mirevesper: a Guerra de Clãs rende na casa do clã, sem evento diário',
   'hall:grove': 'Ramo: o Grove é do clã, sem evento diário',

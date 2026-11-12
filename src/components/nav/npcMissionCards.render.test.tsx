@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { dailyMissionEntries } from './DailyMissionList';
-import { dailyMissionsFor, npcOfDay } from '../../utils/dailyMissions';
+import { dailyMissionsFor, npcsOfWeek } from '../../utils/dailyMissions';
 import { NPC_MISSIONS } from '../../utils/npcMissions';
 import { giverOf } from './npcGiver';
 import { LOT_NPC_VOICE } from '../../utils/areaNpcVoice';
@@ -17,7 +17,7 @@ const lista = (day: string, bond: number, language: 'pt-BR' | 'en-US') => render
 describe('cartões das missões do dia: nome, descrição, recompensa e NPC', () => {
   it('missão de NPC: nome em destaque, o que fazer, recompensa visível (mesmo sem estar pronta) e "Com <NPC>" com retrato', () => {
     const day = '2026-12-01';
-    const m = npcOfDay(day, 10)!;
+    const m = npcsOfWeek(day, 10)[0];
     lista(day, 10, 'pt-BR');
     const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
     expect(li.getAttribute('data-status')).toBe('available');
@@ -29,9 +29,19 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
     expect(li.querySelector('[data-mission-giver-art]')!.getAttribute('src')).toBe(g.art);
   });
 
+  it('a recompensa continua visível DEPOIS de resgatada (REGISTRO §317)', () => {
+    const day = '2026-12-01';
+    const m = npcsOfWeek(day, 10)[0];
+    cleanup();
+    render(<ul>{dailyMissionEntries({ language: 'pt-BR', state: { day, counts: {}, claimed: [m.id] }, day, bondLevel: 10, onClaim: () => {} }).map(e => e.node)}</ul>);
+    const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
+    expect(li.getAttribute('data-status')).toBe('claimed');
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Recompensa: \+1 /);
+  });
+
   it('EN: Reward / From', () => {
     const day = '2026-12-01';
-    const m = npcOfDay(day, 10)!;
+    const m = npcsOfWeek(day, 10)[0];
     lista(day, 10, 'en-US');
     const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
     expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 /);

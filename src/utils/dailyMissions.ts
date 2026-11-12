@@ -27,7 +27,7 @@ import { hashString, mulberry32 } from './oracle/base';
 import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
 import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import type { QuestMark } from './questMarks';
-import { NPC_MISSIONS } from './npcMissions';
+import { NPC_MISSIONS, NPC_MISSIONS_RODIZIO, NPCS_POR_SEMANA } from './npcMissions';
 import type { PlayerDayAnchor } from './playerDay';
 import { playerDayKey } from './playerDay';
 
@@ -36,7 +36,9 @@ export type DailyEvent =
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
   | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
   // Missões dos NPCs (12/11/2026, REGISTRO §314): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
-  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario';
+  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario'
+  // Trilho (REGISTRO §317): um registro novo guardado no Caderno.
+  | 'journal';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -90,7 +92,7 @@ const POOL: readonly DailyMission[] = [
   // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
   { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
-  // 12/11/2026 (REGISTRO §314): uma missão por NPC, uma por dia em rodízio (`npcOfDay`); nunca entram no sorteio comum.
+  // 12/11/2026 (REGISTRO §314/§317): uma missão por NPC, em rodízio SEMANAL (`npcsOfWeek`) + a fixa do Trilho; nunca entram no sorteio comum.
   ...NPC_MISSIONS.map((n): DailyMission => ({ id: n.id, event: n.event, target: n.target, building: n.building, material: n.material, descPt: n.descPt, descEn: n.descEn, namePt: n.namePt, nameEn: n.nameEn, npc: n.npc })),
 ];
 
@@ -107,8 +109,12 @@ function numeroDoDia(day: string): number {
   return (hashString(`daily-rota:${day}`) >>> 0) % 100000;
 }
 
-/** Até 6 por dia (dono, 14/10/2026, REGISTRO §54): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
-export const DAILY_MISSION_COUNT = 6;
+/**
+ * Até 8 por dia: eram 6 (dono, 14/10/2026, REGISTRO §54) e, com as missões de NPC (o Trilho fixo + `NPCS_POR_SEMANA` da semana, REGISTRO §317),
+ * passaram a 6 + 2 para o sorteio comum continuar com o mesmo espaço (3 rodízios fixos + 2 sorteadas). Quem tem menos recursos abertos
+ * recebe menos (o filtro de portão vem antes do corte).
+ */
+export const DAILY_MISSION_COUNT = 8;
 /** Teto de contagem por evento (higiene do save; nenhum alvo passa de 2). */
 export const DAILY_COUNT_CAP = 99;
 
@@ -136,26 +142,41 @@ export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[
   const n = numeroDoDia(day);
   const byId = (id: string) => POOL.find(m => m.id === id)!;
   const fixas = [byId(ROTA_SALAO[n % ROTA_SALAO.length]), byId(ROTA_MENTE[n % ROTA_MENTE.length]), byId(FIXA_CALABOUCO)];
-  const npc = npcOfDay(day, bondLevel);
-  // A missão do NPC do dia abre a lista; o resto (rodízios + sorteio) completa até `DAILY_MISSION_COUNT`.
-  return [...(npc ? [npc] : []), ...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
+  // As missões de NPC abrem a lista (a fixa do Trilho + as da semana); o resto (rodízios + sorteio) completa até `DAILY_MISSION_COUNT`.
+  return [...npcMissionsOfDay(day, bondLevel), ...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
 }
+
+/** Número da semana (segunda a domingo) a partir do número do dia: 1970-01-01 foi quinta, então `(n + 3) / 7` vira na segunda. */
+function numeroDaSemana(day: string): number { return Math.floor((numeroDoDia(day) + 3) / 7); }
 
 /**
- * A missão do NPC DO DIA (12/11/2026, REGISTRO §314). Rodízio determinístico pelo número do dia do jogador: `n mod N`; se o prédio dele
- * ainda não abriu no Vínculo da pessoa, vale o próximo da fila que abriu (o dia nunca fica sem NPC enquanto algum estiver aberto).
- * Ciclo de `NPC_MISSIONS.length` dias: todo NPC passa a missão uma vez por ciclo.
+ * Os NPCs DA SEMANA (12/11/2026, REGISTRO §317). Rodízio semanal e determinístico pelo dia do jogador: a semana `w` parte da posição
+ * `w × NPCS_POR_SEMANA` da lista do rodízio e pega os próximos NPCs cujo prédio o jogador JÁ ABRIU (pula os fechados; nunca repete).
+ * A missão fica na lista do dia em TODOS os dias da semana (cada dia paga a sua, como toda diária). Sem prédio aberto = lista vazia.
  */
-export function npcOfDay(day: string, bondLevel: unknown): DailyMission | undefined {
-  const lista = POOL.filter(m => m.npc);
-  const n = numeroDoDia(day);
-  for (let i = 0; i < lista.length; i += 1) {
-    const m = lista[(n + i) % lista.length];
-    if (buildingGateFor(m.building, bondLevel).open) return m;
+export function npcsOfWeek(day: string, bondLevel: unknown): DailyMission[] {
+  const ids = new Set(NPC_MISSIONS_RODIZIO.map(m => m.id));
+  const lista = POOL.filter(m => ids.has(m.id));
+  const start = (numeroDaSemana(day) * NPCS_POR_SEMANA) % lista.length;
+  const out: DailyMission[] = [];
+  for (let i = 0; i < lista.length && out.length < NPCS_POR_SEMANA; i += 1) {
+    const m = lista[(start + i) % lista.length];
+    if (buildingGateFor(m.building, bondLevel).open) out.push(m);
   }
-  return undefined;
+  return out;
 }
 
+/** A missão FIXA do Trilho (journal): todo dia, fora do rodízio, enquanto o Caderno estiver aberto. */
+export function trilhoMission(bondLevel: unknown): DailyMission | undefined {
+  const t = POOL.find(m => NPC_MISSIONS.some(n => n.id === m.id && n.fixa));
+  return t && buildingGateFor(t.building, bondLevel).open ? t : undefined;
+}
+
+/** Todas as missões de NPC de HOJE: a fixa do Trilho e as da semana. */
+export function npcMissionsOfDay(day: string, bondLevel: unknown): DailyMission[] {
+  const t = trilhoMission(bondLevel);
+  return [...(t ? [t] : []), ...npcsOfWeek(day, bondLevel)];
+}
 
 export interface DailyMissionsState {
   day: string;
