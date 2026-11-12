@@ -83,8 +83,8 @@ describe('fiação da telemetria — onboarding', () => {
     const teste = Array.from({ length: 14 }, (_, i) => onboardingStepCode(13 + i));
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
       onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-10), onboardingStepCode(-14), ...ritual, ...teste,
-      onboardingStepCode(-2), onboardingStepCode(-16), // objetivo anual: o destino (pulado pelo helper)
-      onboardingStepCode(-3),
+      onboardingStepCode(-19), // as 3 cartas (Satisfação pelo helper: o fluxo de sempre)
+      onboardingStepCode(-2), onboardingStepCode(-3),
       onboardingStepCode(-11), onboardingStepCode(-12),
       // Faixa E: nome completo, data, hora e cidade vêm ANTES do ovo
       onboardingStepCode(1), onboardingStepCode(2), onboardingStepCode(3), onboardingStepCode(4),

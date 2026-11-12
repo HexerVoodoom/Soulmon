@@ -5,10 +5,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { installFakeStorage } from '../../test/renderEnv';
-import { GoalReviewSheet, MeuObjetivoSheet, PurposeInviteModal, WeeklyPriorities } from './PurposeSheets';
+import { GoalReviewSheet, MeuObjetivoSheet, PathSwitchSheet, PurposeInviteModal, TaskSuggestionsSheet, WeeklyPriorities } from './PurposeSheets';
+import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import { emptyPurpose, setGoal, setMotive } from '../../utils/purpose';
 import { reviewOffer } from '../../utils/purposeReview';
 
+const ACTIVITY_CATALOG_ITEMS = ACTIVITY_CATALOG;
 const acts = [
   { id: 'a1', name: 'Caminhar', emoji: '🚶' }, { id: 'a2', name: 'Ler', emoji: '📖' },
   { id: 'a3', name: 'Alongar', emoji: '🧘' }, { id: 'a4', name: 'Beber água', emoji: '💧' },
@@ -148,5 +150,74 @@ describe('GoalReviewSheet (E7-E9)', () => {
     render(<GoalReviewSheet open onClose={() => {}} language="en-US" purpose={p} offer={ano} names={new Map()} onComplete={() => {}} />);
     for (let i = 0; i < 4; i++) fireEvent.click(document.querySelector('[data-review-next]')!);
     expect(screen.getByRole('button', { name: 'Keep this goal and start another' })).toBeTruthy();
+  });
+});
+
+describe('as 3 cartas depois do onboarding (PLANO §2b)', () => {
+  it('"Meu objetivo" tem a troca de carta livre', () => {
+    const onSwitchCard = vi.fn();
+    render(<MeuObjetivoSheet open onClose={() => {}} language="en-US" purpose={{ ...comObjetivo(), path: 'ambicao' }} activities={acts} onSave={() => {}} onSwitchCard={onSwitchCard} />);
+    fireEvent.click(document.querySelector('[data-switch-card]')!);
+    expect(onSwitchCard).toHaveBeenCalledTimes(1);
+  });
+
+  it('PathSwitchSheet: mostra a carta atual e a escolha devolve o caminho', () => {
+    const onChoose = vi.fn();
+    render(<PathSwitchSheet open onClose={() => {}} language="en-US" current="satisfacao" onChoose={onChoose} />);
+    expect(document.body.textContent).toContain('Your card: Contentment');
+    fireEvent.click(document.querySelector('[data-path-card="ressurgimento"]')!);
+    fireEvent.click(document.querySelector('[data-path-choose]')!);
+    expect(onChoose).toHaveBeenCalledWith('ressurgimento');
+  });
+
+  it('TaskSuggestionsSheet: tudo vem marcado, desmarcar tira, "Adicionar" entrega só o mantido; sem itens diz que não há nada', () => {
+    const onAdd = vi.fn();
+    const items = ACTIVITY_CATALOG_ITEMS.slice(0, 3);
+    const { unmount } = render(<TaskSuggestionsSheet open onClose={() => {}} language="en-US" items={items} title="Let us go slowly" onAdd={onAdd} />);
+    const chips = Array.from(document.querySelectorAll('[data-suggest-list] button')) as HTMLElement[];
+    expect(chips).toHaveLength(3);
+    fireEvent.click(chips[0]);
+    fireEvent.click(document.querySelector('[data-suggest-add]')!);
+    expect(onAdd.mock.calls[0][0].map((i: { id: string }) => i.id)).toEqual(items.slice(1).map(i => i.id));
+    unmount();
+    render(<TaskSuggestionsSheet open onClose={() => {}} language="en-US" items={[]} title="x" onAdd={onAdd} />);
+    expect(document.body.textContent).toContain('Nothing new to suggest right now.');
+  });
+
+  it('revisão: o passo "Você quer rever suas tarefas?" aparece (askTasks) e só a Ambição tem "meus planos mudaram"', () => {
+    const run = (path: 'ambicao' | 'satisfacao') => {
+      const p = { ...comObjetivo(), path };
+      const offer = reviewOffer(p, new Date(2026, 1, 2))!;
+      const onComplete = vi.fn();
+      const { unmount } = render(<GoalReviewSheet open onClose={() => {}} language="en-US" purpose={p} offer={offer} names={new Map()} onComplete={onComplete} askTasks />);
+      for (let i = 0; i < 4; i++) fireEvent.click(document.querySelector('[data-review-next]')!);
+      expect(document.querySelector('[data-review-step="tasks"]')).toBeTruthy();
+      expect(document.body.textContent).toContain('Do you want to look over your tasks?');
+      const mudou = screen.queryByRole('button', { name: 'My plans have changed' });
+      if (path === 'ambicao') {
+        fireEvent.click(mudou!);
+        fireEvent.click(document.querySelector('[data-review-next]')!);
+      } else {
+        expect(mudou).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Yes, let us look' }));
+        fireEvent.click(document.querySelector('[data-review-next]')!);
+      }
+      fireEvent.click(document.querySelector('[data-review-next]')!);
+      const input = onComplete.mock.calls[0][0];
+      unmount();
+      return input;
+    };
+    expect(run('ambicao')).toMatchObject({ reviewTasks: false, plansChanged: true });
+    expect(run('satisfacao')).toMatchObject({ reviewTasks: true });
+    expect(run('satisfacao').plansChanged).toBeUndefined();
+  });
+
+  it('sem askTasks o passo não existe', () => {
+    const p = comObjetivo();
+    const offer = reviewOffer(p, new Date(2026, 1, 2))!;
+    render(<GoalReviewSheet open onClose={() => {}} language="en-US" purpose={p} offer={offer} names={new Map()} onComplete={() => {}} />);
+    for (let i = 0; i < 4; i++) fireEvent.click(document.querySelector('[data-review-next]')!);
+    expect(document.querySelector('[data-review-step="tasks"]')).toBeNull();
+    expect(document.querySelector('[data-review-step="next"]')).toBeTruthy();
   });
 });

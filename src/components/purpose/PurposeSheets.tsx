@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Chip, Field, ModalSheet, SwitchRow, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { Language } from '../../utils/i18n';
+import type { CatalogItem } from '../../types/activityCatalog';
+import { PathCards } from './PathCards';
+import { PATH_COPY } from '../../utils/purposePaths';
 import {
   PURPOSE_GOAL_MIN, PURPOSE_MAX_PRIORITIES, PURPOSE_NOTE_MAX, OBSTACLE_KEYS, PERCEIVED_KEYS, DECISION_KEYS,
-  type MilestoneStatus, type ObstacleKey, type Perceived, type Purpose, type ReviewDecision,
+  type MilestoneStatus, type ObstacleKey, type Perceived, type Purpose, type PurposePath, type ReviewDecision,
 } from '../../utils/purpose';
 import { DECISION_LABEL, MOTIVE_LABEL, OBSTACLE_LABEL, PERCEIVED_LABEL, PLAN_SUGGESTIONS, evidenceSentence, tx } from '../../utils/purposeCopy';
 import {
@@ -47,9 +50,11 @@ function PriorityPicker({ isPt, activities, value, onChange }: { isPt: boolean; 
 
 // ── E4: Meu objetivo ────────────────────────────────────────────────────────
 
-export function MeuObjetivoSheet({ open, onClose, language, purpose, activities, onSave, startEditing = false }: {
+export function MeuObjetivoSheet({ open, onClose, language, purpose, activities, onSave, startEditing = false, onSwitchCard }: {
   open: boolean; onClose: () => void; language: Language; purpose: Purpose | undefined; activities: ActivityLite[];
   onSave: (next: Purpose) => void; startEditing?: boolean;
+  /** Troca de carta livre (Perfil): abre as 3 cartas. */
+  onSwitchCard?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const [editing, setEditing] = useState(startEditing || !purpose?.goal);
@@ -128,6 +133,11 @@ export function MeuObjetivoSheet({ open, onClose, language, purpose, activities,
           <button type="button" style={{ ...sm2Button('primary'), width: '100%' }} onClick={startEdit}>{tx('setGoal', isPt)}</button>
         </div>
       )}
+      {onSwitchCard && (
+        <button type="button" data-switch-card style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={onSwitchCard}>
+          {tx('switchCard', isPt)}{purpose?.path ? ` (${isPt ? PATH_COPY[purpose.path].name.pt : PATH_COPY[purpose.path].name.en})` : ''}
+        </button>
+      )}
     </ModalSheet>
   );
 }
@@ -196,18 +206,23 @@ export function WeeklyPriorities({ language, rows, names, answered, onAnswer }: 
 
 // ── E7-E9: mensal / semestral / anual ───────────────────────────────────────
 
-type Step = 'evidence' | 'perceived' | 'obstacles' | 'note' | 'decision' | 'next';
+type Step = 'evidence' | 'perceived' | 'obstacles' | 'note' | 'decision' | 'tasks' | 'next';
 
-export function GoalReviewSheet({ open, onClose, language, purpose, offer, names, onComplete }: {
+export function GoalReviewSheet({ open, onClose, language, purpose, offer, names, onComplete, askTasks = false }: {
   open: boolean; onClose: () => void; language: Language; purpose: Purpose; offer: ReviewOffer; names: Map<string, ActivityLite>;
   onComplete: (input: ReviewInput) => void;
+  /** `shouldAskReviewTasks(...)`: mostra o passo "Você quer rever suas tarefas?" antes do último. */
+  askTasks?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const months = useMemo(() => monthsEndingAt(offer.monthKey, offer.kind === 'month' ? 1 : 6), [offer]);
   const ev = useMemo(() => evidence(purpose, months), [purpose, months]);
-  const steps: Step[] = offer.kind === 'month'
+  const base: Step[] = offer.kind === 'month'
     ? ['evidence', 'perceived', 'obstacles', 'decision', 'next']
     : ['evidence', 'perceived', 'obstacles', 'note', 'decision', 'next'];
+  const steps: Step[] = askTasks ? [...base.slice(0, -1), 'tasks', 'next'] : base;
+  const [reviewTasks, setReviewTasks] = useState<boolean | undefined>();
+  const [plansChanged, setPlansChanged] = useState(false);
   const [i, setI] = useState(0);
   const [perceived, setPerceived] = useState<Perceived | undefined>();
   const [obstacles, setObstacles] = useState<ObstacleKey[]>([]);
@@ -221,7 +236,7 @@ export function GoalReviewSheet({ open, onClose, language, purpose, offer, names
   const last = i === steps.length - 1;
 
   const title = offer.kind === 'month' ? tx('monthTitle', isPt) : offer.kind === 'semester' ? tx('semesterTitle', isPt) : tx('yearTitleReview', isPt);
-  const finish = () => onComplete({ perceived, obstacles, decision, note, previousStatus: prevStatus, nextMilestone: next, archiveGoal: offer.kind === 'year' && archive });
+  const finish = () => onComplete({ perceived, obstacles, decision, note, previousStatus: prevStatus, nextMilestone: next, archiveGoal: offer.kind === 'year' && archive, reviewTasks: askTasks ? !!reviewTasks : undefined, plansChanged: askTasks && purpose.path === 'ambicao' ? plansChanged : undefined });
 
   return (
     <ModalSheet open={open} title={title} onClose={onClose} language={language} dismissOnBackdrop={false}
@@ -289,6 +304,20 @@ export function GoalReviewSheet({ open, onClose, language, purpose, offer, names
             )}
           </>
         )}
+        {step === 'tasks' && (
+          <>
+            <p style={{ ...sm2Text, margin: '0 0 10px' }}>{tx('tasksAsk', isPt)}</p>
+            <div role="radiogroup" aria-label={tx('tasksAsk', isPt)} style={row}>
+              <Chip selected={reviewTasks === true} onToggle={() => setReviewTasks(reviewTasks === true ? undefined : true)}>{tx('tasksYes', isPt)}</Chip>
+              <Chip selected={reviewTasks === false} onToggle={() => { setReviewTasks(reviewTasks === false ? undefined : false); setPlansChanged(false); }}>{tx('tasksNo', isPt)}</Chip>
+            </div>
+            {purpose.path === 'ambicao' && (
+              <div style={{ ...row, marginTop: 14 }}>
+                <Chip selected={plansChanged} onToggle={() => setPlansChanged(v => !v)}>{tx('plansChanged', isPt)}</Chip>
+              </div>
+            )}
+          </>
+        )}
         {step === 'next' && (
           <>
             {prev && (
@@ -308,6 +337,51 @@ export function GoalReviewSheet({ open, onClose, language, purpose, offer, names
           </>
         )}
       </div>
+    </ModalSheet>
+  );
+}
+
+// ── as 3 cartas fora do onboarding: trocar de carta e refazer a escolha de tarefas ──
+
+export function PathSwitchSheet({ open, onClose, language, current, onChoose }: {
+  open: boolean; onClose: () => void; language: Language; current?: PurposePath; onChoose: (p: PurposePath) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  return (
+    <ModalSheet open={open} title={tx('switchCardTitle', isPt)} onClose={onClose} language={language}>
+      <p style={{ ...sm2Hint, margin: '0 0 12px' }}>{tx('switchCardHint', isPt)}</p>
+      {current && <p style={{ ...sm2Hint, margin: '0 0 8px' }}>{tx('currentCard', isPt)}: {isPt ? PATH_COPY[current].name.pt : PATH_COPY[current].name.en}</p>}
+      <PathCards isPt={isPt} selected={current} onChoose={onChoose} />
+    </ModalSheet>
+  );
+}
+
+/** Sugestões de tarefas (Ressurgimento: "quero mais" e a lista-base; Satisfação: o recomendador). Nada é adicionado sem o toque. */
+export function TaskSuggestionsSheet({ open, onClose, language, items, title, hint, onAdd }: {
+  open: boolean; onClose: () => void; language: Language; items: CatalogItem[]; title: string; hint?: string; onAdd: (items: CatalogItem[]) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const [off, setOff] = useState<string[]>([]);
+  const kept = items.filter(i => !off.includes(i.id));
+  return (
+    <ModalSheet open={open} title={title} onClose={onClose} language={language}
+      footer={items.length > 0 ? (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" style={{ ...sm2Button('outline'), flex: 1 }} onClick={onClose}>{tx('suggestSkip', isPt)}</button>
+          <button type="button" data-suggest-add style={{ ...sm2Button('primary', kept.length === 0), flex: 1 }} aria-disabled={kept.length === 0 || undefined}
+            onClick={() => { if (kept.length) onAdd(kept); }}>{tx('suggestAdd', isPt)}</button>
+        </div>
+      ) : undefined}>
+      {hint && <p style={{ ...sm2Hint, margin: '0 0 12px' }}>{hint}</p>}
+      {items.length === 0 ? <p style={sm2Text}>{tx('suggestNone', isPt)}</p> : (
+        <div data-suggest-list style={row}>
+          {items.map(i => (
+            <Chip key={i.id} selected={!off.includes(i.id)} onToggle={() => setOff(v => (v.includes(i.id) ? v.filter(x => x !== i.id) : [...v, i.id]))}>
+              {i.emoji} {isPt ? i.name.pt : i.name.en}
+            </Chip>
+          ))}
+        </div>
+      )}
     </ModalSheet>
   );
 }

@@ -136,6 +136,8 @@ export interface CatalogItem {
    * `recommendStarterSet` filtra `optInOnly` antes de pontuar.
    */
   optInOnly?: boolean;
+  /** Item de um CAMINHO (as 3 cartas): fica fora do starter set automático dos outros caminhos (`recommendStarterSet`); continua no navegador. */
+  pathOnly?: 'ressurgimento';
   /** Recurso do jogo ligado a este item (ver CatalogResource); só os itens mapeados em data/catalogResources.ts o declaram. */
   resource?: CatalogResource;
 }

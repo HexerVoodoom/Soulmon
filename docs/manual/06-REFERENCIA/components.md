@@ -2273,3 +2273,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/purpose/PurposeSheets.tsx`
 
 **Dono de:** as folhas do objetivo: `MeuObjetivoSheet` (E4), `PurposeInviteModal` (E3, entra na fila de modais como `purposeInvite`), `WeeklyPriorities` (E6, dentro do cartão de domingo) e `GoalReviewSheet` (E7-E9, aberta pelo cartão da Home).
+
+### `src/components/purpose/PathCards.tsx`
+
+**Dono de:** a tela das 3 cartas (onboarding, antes das áreas, só jogador novo; e a troca livre em "Meu objetivo"/revisão): 3 cartas lado a lado, tocar traz a carta à frente (animação, sem ela em movimento reduzido), fundo escuro, X, "Escolher esta carta"/"Escolher outra". Arte placeholder em CSS (TODO arte).

@@ -47,7 +47,7 @@ import { normalizeConsent, type ConsentRecord } from './consent';
 import { cidadeValida } from './oracleDraft';
 import {
   MOTIVE_KEYS, OBSTACLE_KEYS, PURPOSE_GOAL_MAX, PURPOSE_MAX_PRIORITIES, PURPOSE_MOTIVE_CUSTOM_MAX, PURPOSE_PHRASE_MAX, PURPOSE_PLAN_MAX,
-  type MotiveKey, type ObstacleKey,
+  PURPOSE_PATHS, type MotiveKey, type ObstacleKey, type PurposePath,
 } from './purpose';
 import type { City } from './soulProfile/cities';
 import type { Answers as SoulAnswers } from './soulProfile/personality/types';
@@ -102,6 +102,7 @@ export interface GateDraft {
 }
 
 export interface GateDraftPurpose {
+  path?: PurposePath;
   goalText: string;
   motiveKey?: MotiveKey;
   motiveCustom: string;
@@ -120,7 +121,9 @@ function purposeValido(v: unknown): GateDraftPurpose | undefined {
   const d = v as Record<string, unknown>;
   const mk = (MOTIVE_KEYS as readonly string[]).includes(d.motiveKey as string) ? (d.motiveKey as MotiveKey) : undefined;
   const ok = (OBSTACLE_KEYS as readonly string[]).includes(d.obstacleKey as string) ? (d.obstacleKey as ObstacleKey) : undefined;
+  const pth = (PURPOSE_PATHS as readonly string[]).includes(d.path as string) ? (d.path as PurposePath) : undefined;
   return {
+    ...(pth ? { path: pth } : {}),
     goalText: txt(d.goalText, PURPOSE_GOAL_MAX),
     ...(mk ? { motiveKey: mk } : {}),
     motiveCustom: txt(d.motiveCustom, PURPOSE_MOTIVE_CUSTOM_MAX),

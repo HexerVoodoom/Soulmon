@@ -105,6 +105,10 @@ export type MonthlyAgg = Record<string, Record<string, MonthCell>>;
 export interface Purpose {
   /** Caminho das cartas. Ausente = ainda não escolhido. Não espalhar por outros sistemas. */
   path?: PurposePath;
+  /** dayKey local em que o caminho foi escolhido (só para as semanas do Ressurgimento). */
+  pathAt?: string;
+  /** Dispensas do cartão da rede de apoio (Ressurgimento): silencia em 2. */
+  supportDismissed?: number;
   goal?: PurposeGoal;
   /** Âncora de 6/12 meses. Não muda quando o objetivo muda. */
   firstCreatedAt?: string;
@@ -251,9 +255,13 @@ export function sanitizePurpose(raw: unknown): Purpose | undefined {
   const firstCreatedAt = dayStr(raw.firstCreatedAt) || goal?.createdAt || history[0]?.createdAt || undefined;
   const lastVoiceAt = dayStr(raw.lastVoiceAt);
   const path = oneOf(PURPOSE_PATHS, raw.path);
+  const pathAt = dayStr(raw.pathAt);
+  const supportDismissed = Math.max(0, Math.min(2, Math.floor(Number(raw.supportDismissed) || 0)));
   return {
     ...base,
     ...(path ? { path } : {}),
+    ...(path && pathAt ? { pathAt } : {}),
+    ...(supportDismissed ? { supportDismissed } : {}),
     ...(goal ? { goal } : {}),
     ...(firstCreatedAt ? { firstCreatedAt } : {}),
     history,
@@ -273,6 +281,13 @@ export function sanitizePurpose(raw: unknown): Purpose | undefined {
 }
 
 // ── edição (sempre guarda histórico) ────────────────────────────────────────
+
+/** Escolhe (ou troca) o caminho das cartas. Trocar é livre e não apaga nada. */
+export function setPath(p: Purpose | undefined, path: PurposePath, now: Date): Purpose {
+  const cur = p ?? emptyPurpose();
+  if (cur.path === path) return cur;
+  return { ...cur, path, pathAt: localDayKey(now) };
+}
 
 /** Define/edita o objetivo. Texto novo arquiva o anterior no histórico. */
 export function setGoal(p: Purpose | undefined, input: { text: string; areas: string[] }, now: Date): Purpose {

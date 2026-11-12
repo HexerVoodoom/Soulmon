@@ -66,7 +66,7 @@ export function recommendStarterSet(
   // aviso. Filtrar ANTES de pontuar, não depois: pontuar e descartar deixaria
   // a pontuação vazar (ex.: um item quase escolhido "empurrando" outro para
   // fora por engano de ordenação).
-  const eligible = catalog.filter((item) => !item.optInOnly);
+  const eligible = catalog.filter((item) => !item.optInOnly && !item.pathOnly);
   const scored = eligible
     .map((item, index) => ({ item, index, score: scoreItem(item, profile) }))
     .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.index - b.index));

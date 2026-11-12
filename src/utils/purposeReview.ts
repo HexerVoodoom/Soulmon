@@ -131,6 +131,10 @@ export interface ReviewInput {
   nextMilestone?: string;
   /** Anual: guardar o objetivo e liberar um novo. */
   archiveGoal?: boolean;
+  /** "Você quer rever suas tarefas?" (`REVIEW_TASKS_ASK_MODE`): a resposta. Quem age é o App. */
+  reviewTasks?: boolean;
+  /** Ambição: a opção explícita "meus planos mudaram" (reabre as 3 cartas). */
+  plansChanged?: boolean;
 }
 
 export function openMilestone(p: Purpose | undefined, period: 'month' | 'semester'): PurposeMilestone | undefined {

@@ -359,8 +359,9 @@ import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFro
 import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan } from './utils/dayPlan';
 import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
 import { purposeFromOnboarding } from './utils/purposeOnboarding';
-import { emptyPurpose } from './utils/purpose';
-import { reviewOffer, dismissReview, completeReview, recordWeekly, weeklyAnswered, weekEvidence, type ReviewInput } from './utils/purposeReview';
+import { emptyPurpose, setPath, type PurposePath } from './utils/purpose';
+import { RESSURG_BASE_IDS, RESSURG_ACTIVE_CAP, RESSURG_COPY, showSupportCard, dismissSupportCard, weeksOnPath } from './utils/ressurgimento';
+import { reviewOffer, dismissReview, completeReview, recordWeekly, weeklyAnswered, weekEvidence, evidence as reviewEvidence, shouldAskReviewTasks, type ReviewInput } from './utils/purposeReview';
 import { purposeVoiceKey, markSpoken, isBadDay, type PurposeTrigger } from './utils/purposeVoice';
 import { localDayKey as purposeDayKey, type MotiveKey } from './utils/purpose';
 import { loadCatalog } from './data/catalogoCarga';
@@ -883,6 +884,8 @@ const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m =
 const MeuObjetivoSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.MeuObjetivoSheet })));
 const PurposeInviteModal = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.PurposeInviteModal })));
 const GoalReviewSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.GoalReviewSheet })));
+const PathSwitchSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.PathSwitchSheet })));
+const TaskSuggestionsSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.TaskSuggestionsSheet })));
 const WeeklyPriorities = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.WeeklyPriorities })));
 const StepsInviteModal = lazy(() => import('./components/StepsInviteModal').then(m => ({ default: m.StepsInviteModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
@@ -2565,6 +2568,10 @@ export default function App() {
   const [meuObjetivoOpen, setMeuObjetivoOpen] = useState(false);
   const [purposeInviteOpen, setPurposeInviteOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  /* AS 3 CARTAS fora do onboarding (PLANO §2b): trocar de carta (Meu objetivo, livre) e refazer a escolha de tarefas (revisão). A carta SÓ orienta as tarefas. */
+  const [pathSwitchOpen, setPathSwitchOpen] = useState(false);
+  const [meuObjetivoEdit, setMeuObjetivoEdit] = useState(false);
+  const [suggest, setSuggest] = useState<{ items: any[]; path: PurposePath } | null>(null);
   const purposeInviteTried = useRef(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
   /* E3: quem já jogava vê o convite UMA vez (quem fez o onboarding novo já foi perguntado: `promptedExisting`). "Agora não" também conta. */
@@ -2610,8 +2617,40 @@ export default function App() {
     });
     setReviewOpen(false);
     falarComPorque('milestone', 'reviewDone');
-    if (input.decision === 'change' || input.archiveGoal) setMeuObjetivoOpen(true);
+    const caminho = gameStateRef.current.purpose?.path;
+    if (input.plansChanged || (input.reviewTasks && caminho !== 'ambicao')) {
+      // Satisfação/Ressurgimento aceitaram rever as tarefas, ou a Ambição disse "meus planos mudaram": as 3 cartas de novo.
+      setPathSwitchOpen(true);
+    } else if (input.reviewTasks) {
+      // Ambição sem mudança de planos: a revisão de tarefas fica dentro do fluxo do objetivo (as prioridades).
+      setMeuObjetivoEdit(true); setMeuObjetivoOpen(true);
+    } else if (input.decision === 'change' || input.archiveGoal) setMeuObjetivoOpen(true);
   }, [falarComPorque]);
+  /** Carta escolhida (troca livre ou refazer na revisão): grava o caminho e abre as SUGESTÕES de tarefas daquele caminho (nada entra sem o toque). */
+  const handleChoosePath = useCallback(async (p: PurposePath) => {
+    const hoje = new Date();
+    setGameState(prev => ({ ...prev, purpose: setPath(prev.purpose, p, hoje) }));
+    setPathSwitchOpen(false);
+    const [{ loadCatalog: carregar }, rec, res] = await Promise.all([import('./data/catalogoCarga'), import('./utils/recommend'), import('./utils/ressurgimento')]);
+    const catalogo = Object.values(await carregar());
+    const g = gameStateRef.current;
+    const ativos = new Set((g.activities as any[]).map(a => a.catalogId).filter(Boolean) as string[]);
+    let items: any[] = [];
+    if (p === 'ressurgimento') {
+      const temBase = [...ativos].some(id => res.RESSURG_BASE_IDS.includes(id));
+      items = temBase ? res.ressurgNextSuggestions(catalogo, ativos, res.weeksOnPath({ ...(g.purpose ?? {}), path: p, pathAt: purposeDayKey(hoje) } as any, hoje)) : res.ressurgInitialSet(catalogo);
+    } else if (p === 'satisfacao') {
+      const areas = [...new Set((g.activities as any[]).map(a => a.category).filter(Boolean))].slice(0, 3);
+      items = rec.recommendStarterSet({ areas: areas as any, struggles: (g.onboardingProfile?.struggles ?? []) as any, strengths: (g.onboardingProfile?.strengths ?? []) as any }, catalogo);
+    }
+    items = withoutExisting(items, g.activities as ReadonlyArray<{ catalogId?: string | null }>);
+    setSuggest({ items, path: p });
+  }, []);
+  const handleAddSuggested = useCallback((items: any[]) => {
+    const novos = withoutExisting(items, gameStateRef.current.activities as ReadonlyArray<{ catalogId?: string | null }>);
+    if (novos.length) commitHabitCreate(activitiesFromCatalogChoice(novos, language === 'pt-BR') as unknown as Activity[], TELEMETRY_CREATE_PATH.create_modal);
+    setSuggest(null);
+  }, [commitHabitCreate, language]);
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
   const dayPlanViewNow = useMemo(
     () => dayPlanView(gameState.dayPlan, dayPlanToday, dayPlanActive),
@@ -7307,7 +7346,7 @@ export default function App() {
     // logo depois, mesmo que nenhuma atividade do catálogo tenha sido mantida (antes: só marcava com ≥1 atividade).
     const catalogSeen = markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>;
     // Objetivo anual (E1/E2): o destino, o porquê, o plano e as prioridades (catálogo → id da atividade criada).
-    const onboardingPurpose = purposeFromOnboarding(data.purpose, catalogActivities, new Date());
+    const onboardingPurpose = purposeFromOnboarding(data.purpose, catalogActivities, new Date(), data.path);
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -8916,6 +8955,12 @@ export default function App() {
                 )}
               />
 
+              {/* RESSURGIMENTO: rodapé discreto e permanente com o CVV (pesquisa §3). Não é alarme: só está lá. */}
+              {!demo && gameState.purpose?.path === 'ressurgimento' && (
+                <p data-ressurg-footer style={{ ...sm2Hint, textAlign: 'center', margin: '0 16px 4px' }}>
+                  {language === 'pt-BR' ? RESSURG_COPY.footer.pt : RESSURG_COPY.footer.en}
+                </p>
+              )}
               {/* O OBJETIVO (E5): uma linha, o texto da pessoa sem retoque; o toque abre "Meu objetivo". Some sem objetivo. */}
               {!demo && gameState.purpose?.goal && (
                 <button type="button" data-home-goal aria-label={`${language === 'pt-BR' ? 'Abrir Meu objetivo' : 'Open My goal'}: ${gameState.purpose.goal.text}`}
@@ -9288,6 +9333,38 @@ export default function App() {
                       </button>
                     </div>
                   </section>
+                  ),
+                });
+
+                // ── 4a. RESSURGIMENTO: rede de apoio (convite) e "quero mais" ──────────────
+                // Convite, nunca tarefa: some depois de 2 dispensas. Texto e vetos: docs/design/RESSURGIMENTO-PESQUISA.md §3.
+                if (showSupportCard(gameState.purpose, agoraA)) avisos.push({
+                  key: 'redeApoio',
+                  node: (
+                    <div className="sm2-notice" data-support-card>
+                      <p className="sm2-notice-body">{isPtA ? RESSURG_COPY.supportCard.pt : RESSURG_COPY.supportCard.en}</p>
+                      <p className="sm2-notice-body" style={{ opacity: 1, color: 'var(--sm2-muted)' }}>{isPtA ? RESSURG_COPY.supportPro.pt : RESSURG_COPY.supportPro.en}</p>
+                      <div className="sm2-notice-actions">
+                        <button type="button" className="sm-btn" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => { toast(isPtA ? RESSURG_COPY.supportToast.pt : RESSURG_COPY.supportToast.en); setGameState(prev => (prev.purpose ? { ...prev, purpose: { ...prev.purpose, supportDismissed: 2 } } : prev)); }}>
+                          {isPtA ? RESSURG_COPY.supportYes.pt : RESSURG_COPY.supportYes.en}
+                        </button>
+                        <button type="button" className="sm-btn sm-btn-secondary" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => setGameState(prev => ({ ...prev, purpose: dismissSupportCard(prev.purpose) }))}>
+                          {isPtA ? RESSURG_COPY.supportNo.pt : RESSURG_COPY.supportNo.en}
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                });
+                if (gameState.purpose?.path === 'ressurgimento' && weeksOnPath(gameState.purpose, agoraA) >= 1
+                  && (gameState.activities as any[]).filter(a => RESSURG_BASE_IDS.includes(a.catalogId)).length < RESSURG_ACTIVE_CAP) avisos.push({
+                  key: 'ressurgMais',
+                  node: (
+                    <button type="button" data-ressurg-more className="sm2-notice-more" style={{ borderStyle: 'solid', color: 'var(--sm2-ink)' }}
+                      onClick={() => handleChoosePath('ressurgimento')}>
+                      <span>{isPtA ? RESSURG_COPY.more.pt : RESSURG_COPY.more.en}</span>
+                    </button>
                   ),
                 });
 
@@ -10473,8 +10550,9 @@ export default function App() {
       {/* MEU OBJETIVO (E4): aberta pela linha da Home ou pelo Perfil. */}
       {meuObjetivoOpen && (
         <Suspense fallback={null}>
-          <MeuObjetivoSheet open onClose={() => setMeuObjetivoOpen(false)} language={language}
-            purpose={gameState.purpose} activities={purposeActivities} onSave={savePurpose} />
+          <MeuObjetivoSheet open onClose={() => { setMeuObjetivoOpen(false); setMeuObjetivoEdit(false); }} language={language}
+            purpose={gameState.purpose} activities={purposeActivities} onSave={savePurpose} startEditing={meuObjetivoEdit}
+            onSwitchCard={() => setPathSwitchOpen(true)} />
         </Suspense>
       )}
 
@@ -10482,7 +10560,22 @@ export default function App() {
       {reviewOpen && reviewOfferNow && gameState.purpose && (
         <Suspense fallback={null}>
           <GoalReviewSheet open onClose={() => setReviewOpen(false)} language={language} purpose={gameState.purpose}
-            offer={reviewOfferNow} names={purposeNames} onComplete={handleCompleteReview} />
+            offer={reviewOfferNow} names={purposeNames} onComplete={handleCompleteReview}
+            askTasks={shouldAskReviewTasks((() => { const t = reviewEvidence(gameState.purpose, [reviewOfferNow.monthKey]).total; return t.due > 0 && t.done >= t.due; })())} />
+        </Suspense>
+      )}
+
+      {/* AS 3 CARTAS depois do onboarding: trocar de carta (livre) e refazer a escolha das tarefas na revisão. */}
+      {pathSwitchOpen && (
+        <Suspense fallback={null}>
+          <PathSwitchSheet open onClose={() => setPathSwitchOpen(false)} language={language} current={gameState.purpose?.path} onChoose={handleChoosePath} />
+        </Suspense>
+      )}
+      {suggest && (
+        <Suspense fallback={null}>
+          <TaskSuggestionsSheet open onClose={() => setSuggest(null)} language={language} items={suggest.items} onAdd={handleAddSuggested}
+            title={suggest.path === 'ressurgimento' ? (language === 'pt-BR' ? RESSURG_COPY.suggestTitle.pt : RESSURG_COPY.suggestTitle.en) : (language === 'pt-BR' ? 'Sugestões para você' : 'Suggestions for you')}
+            hint={suggest.path === 'ressurgimento' ? (language === 'pt-BR' ? RESSURG_COPY.suggestHint.pt : RESSURG_COPY.suggestHint.en) : undefined} />
         </Suspense>
       )}
 

@@ -1,4 +1,4 @@
-import { emptyPurpose, PURPOSE_MAX_PRIORITIES, setGoal, setMotive, setPlan, type Purpose } from './purpose';
+import { emptyPurpose, PURPOSE_MAX_PRIORITIES, setGoal, setMotive, setPath, setPlan, type Purpose, type PurposePath } from './purpose';
 import type { OnboardingCompleteData } from '../components/SoulmonOnboarding';
 
 /**
@@ -12,9 +12,11 @@ export function purposeFromOnboarding(
   data: OnboardingCompleteData['purpose'],
   createdActivities: ReadonlyArray<{ id: string; catalogId?: string | null }>,
   now: Date,
+  path?: PurposePath,
 ): Purpose | undefined {
-  if (!data) return undefined;
-  let p: Purpose = setGoal({ ...emptyPurpose(), ...(data.path ? { path: data.path } : {}) }, { text: data.goalText, areas: data.areas }, now);
+  // Sem destino (Satisfação, Ressurgimento ou destino pulado): só o caminho, se houve escolha das cartas.
+  if (!data) return path ? { ...setPath(emptyPurpose(), path, now), promptedExisting: true } : undefined;
+  let p: Purpose = setGoal(setPath(emptyPurpose(), data.path ?? path ?? 'ambicao', now), { text: data.goalText, areas: data.areas }, now);
   if (!p.goal) return undefined;
   if (data.motive) p = setMotive(p, data.motive);
   if (data.plan) p = setPlan(p, data.plan);

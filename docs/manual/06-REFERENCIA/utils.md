@@ -4618,3 +4618,13 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 
 **Dono de:** as falas do PORQUÊ do Soulmon (E11): `purposeVoiceKey` decide (1 por semana, só em gatilho positivo, nunca depois de dia ruim, desligável) e devolve só a CATEGORIA do motivo; `PURPOSE_VOICE_LINES`/`purposeVoiceLine` são as frases.
 **Régua:** `src/utils/purposeVoice.test.ts` (a régua de tom de `petVoice.carater.test.ts`).
+
+### `src/utils/purposePaths.ts`
+
+**Dono de:** os textos das 3 cartas (Ambição, Satisfação, Ressurgimento), PT/EN, e o ícone placeholder de cada uma. A carta SÓ orienta a escolha das tarefas (decisão do dono, 12/11/2026, PLANO §2b); `purpose.path` é o único dado.
+**Régua:** `src/utils/ressurgimento.test.ts` (nomes nos dois idiomas, vetos de linguagem).
+
+### `src/utils/ressurgimento.ts`
+
+**Dono de:** o caminho Ressurgimento: a lista-base de 21 ids (os 22 cuidados da pesquisa, `docs/design/RESSURGIMENTO-PESQUISA.md`), a ENTRADA GRADUAL (`ressurgInitialSet`: 4 itens de 2 min; `ressurgNextSuggestions`: no máximo 2 por vez, por semana, teto de 7 ativos), `weeksOnPath`, o cartão da rede de apoio (`showSupportCard`/`dismissSupportCard`: do 3º semana, silencia em 2 dispensas) e os textos (`RESSURG_COPY`, com o rodapé do CVV 188). Cancelado pelo dono: convite automático de 6 semanas e revisões "versão leve". Os 10 itens `ressurg-*` moram em `src/data/ressurgimentoCatalog.ts` (`pathOnly`: fora do starter dos outros caminhos).
+**Régua:** `src/utils/ressurgimento.test.ts`.

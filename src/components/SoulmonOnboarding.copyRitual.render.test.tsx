@@ -66,7 +66,6 @@ describe('SoulmonOnboarding — o "porquê" é objetivo (B2/B3, 01/10/2026)', ()
     expect(screen.queryByText(/rather not say/)).toBeNull();
     fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(screen.getByText('Continue').closest('button')!);
-    fireEvent.click(document.querySelector('[data-skip-purpose]')!); // objetivo anual: o destino é pulável
     expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
     expect(screen.queryByText(/Your Soulmon will remember/)).toBeNull();
   });

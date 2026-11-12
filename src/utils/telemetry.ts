@@ -455,7 +455,7 @@ export const TELEMETRY_CREATE_PATH = {
 export const NEGATIVE_STEP_BASE = 50;
 // Objetivo anual (12/11/2026): os 3 passos novos (-16 destino, -17 motivo, -18 obstáculo) cairiam em 34/33/32 — códigos de
 // GERAÇÃO/REVEAL/último item do teste. Usam os três códigos que SOBRAM no esquema: 42 (era -8), 46 (era -4) e 50 (o passo 0, que não existe mais).
-const PURPOSE_STEP_CODES: Readonly<Record<number, number>> = { [-16]: 42, [-17]: 46, [-18]: 50 };
+const PURPOSE_STEP_CODES: Readonly<Record<number, number>> = { [-16]: 42, [-17]: 46, [-18]: 50, [-19]: 5 };
 export function onboardingStepCode(step: number): number | null {
   if (!Number.isFinite(step)) return null;
   if (step in PURPOSE_STEP_CODES) return PURPOSE_STEP_CODES[step];

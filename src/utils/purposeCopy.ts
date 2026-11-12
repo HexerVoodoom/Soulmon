@@ -97,6 +97,18 @@ export const PC = {
   yearArchive: { pt: 'Guardar este objetivo e começar outro', en: 'Keep this goal and start another' },
   yearKeep: { pt: 'Continuar com este objetivo', en: 'Keep going with this goal' },
   notePlaceholder: { pt: 'Escreva do seu jeito (opcional)', en: 'Write it your way (optional)' },
+  // ── as 3 cartas e a revisão de tarefas (PLANO §2b) ────────────────────────
+  tasksAsk: { pt: 'Você quer rever suas tarefas?', en: 'Do you want to look over your tasks?' },
+  tasksYes: { pt: 'Sim, quero rever', en: 'Yes, let us look' },
+  tasksNo: { pt: 'Agora não', en: 'Not now' },
+  plansChanged: { pt: 'Meus planos mudaram', en: 'My plans have changed' },
+  switchCard: { pt: 'Trocar de carta', en: 'Switch card' },
+  switchCardTitle: { pt: 'Em que momento você está?', en: 'Where are you right now?' },
+  switchCardHint: { pt: 'A carta só ajuda a escolher suas tarefas. Trocar não apaga nada.', en: 'The card only helps pick your tasks. Switching erases nothing.' },
+  currentCard: { pt: 'Sua carta', en: 'Your card' },
+  suggestAdd: { pt: 'Adicionar', en: 'Add' },
+  suggestNone: { pt: 'Nada novo para sugerir agora.', en: 'Nothing new to suggest right now.' },
+  suggestSkip: { pt: 'Agora não', en: 'Not now' },
   // ── falas do Soulmon (E11) ────────────────────────────────────────────────
   voiceReviewDone: { pt: 'Você olhou para o caminho. Eu gostei de ver junto.', en: 'You looked at the path. I liked seeing it with you.' },
   voiceGoalHit: { pt: 'Lembra do seu porquê? Hoje ele estava bem perto.', en: 'Remember your why? Today it was right here.' },
