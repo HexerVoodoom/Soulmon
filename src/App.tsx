@@ -198,6 +198,8 @@ import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/ter
 import { PRIVACY_VERSION, TERMS_VERSION, buildConsentRecord, isConsentCurrent } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
+import { useOcioso } from './hooks/useOcioso';
+import { useOfertaPendente } from './hooks/useOfertaPendente';
 import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightmareWake';
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
@@ -954,9 +956,13 @@ export default function App() {
     const veterans = BASE_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= POTION_COSTS.baseOwn && !offered.has(id));
     const hit = [...new Set([...crossed, ...veterans])].filter(id => isPotionUnlocked(id, gameState.defeatedElements));
     if (!hit.length) return;
-    writeVescaOffered(new Set([...offered, ...hit]));
+    // 12/11/2026: o "já ofereci" só é gravado quando a Vesca de fato APARECE (`useOfertaPendente`); fechar o app no meio de uma
+    // atividade não perde a oferta (o veterano volta na próxima abertura).
     setVescaQueue(q => [...q, ...hit.filter(id => !q.includes(id))]);
   }, [gameState.essences, gameState.defeatedElements]);
+  // A Vesca só fala quando o jogador está ocioso: masmorra, arena, minigame, foco, combate e qualquer modal seguram a pergunta até acabar.
+  const { ocioso: jogadorOcioso } = useOcioso({ view: currentView, naMasmorra: soulmonNaMasmorra(gameState), esperando: vescaQueue.length > 0 });
+  const vescaAtual = useOfertaPendente(vescaQueue, jogadorOcioso, (id) => writeVescaOffered(new Set([...readVescaOffered(), id])));
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
@@ -9581,10 +9587,10 @@ export default function App() {
       )}
 
       {/* Vesca: oferta da poção ao juntar 100 essências de um elemento base (08/11/2026). */}
-      {vescaQueue[0] && (
+      {vescaAtual && (
         <Suspense fallback={null}>
-          <VescaPotionOffer language={language} elementId={vescaQueue[0]} key={vescaQueue[0]}
-            onMake={(id) => { if (canAffordPotion(gameState.essences, id, gameState.foodInventory)) setGameState(prev => craftPotion(prev, id)); }}
+          <VescaPotionOffer language={language} elementId={vescaAtual} key={vescaAtual}
+            onMake={(id) => { if (!canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false; setGameState(prev => craftPotion(prev, id)); return true; }}
             onDismiss={() => setVescaQueue(q => q.slice(1))} />
         </Suspense>
       )}

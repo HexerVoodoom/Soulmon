@@ -280,7 +280,7 @@ A jornada do Foco já pede a tela acordada pela web (`navigator.wakeLock`, `src/
 Execução: beta12, **domingo 15/11/2026 às 03:00** (nenhuma implementação antes). Falas **PERSISTENTES** do Soulmon, em balão diferente (**borda dourada**), que **levam o jogador ao lugar**. Três casos:
 
 1. **Volta da missão / do Mercador (antes "feira"):** quando o Soulmon volta e encontrou algo, o balão fica na Home até ser tocado; tocar leva ao encontro (`encontro`/`guildRaidHit`) ou ao Mercador.
-2. **Plaquinha do Rift:** a plaquinha de que ele está no Rift ganha o balão dourado; **[JÁ FEITO em 12/11, REGISTRO §305: a plaquinha já oferece "Ir à Fenda" e "Trazer de volta"; falta só o balão dourado]** tocar oferece a opção de ir ao Rift (aviso "Ele está na masmorra", com "Retirar da masmorra" e o novo "Ir ao Rift").
+2. **Plaquinha do Rift:** a plaquinha de que ele está no Rift ganha o balão dourado; **[JÁ FEITO em 12/11, REGISTRO §307: a plaquinha já oferece "Ir à Fenda" e "Trazer de volta"; falta só o balão dourado]** tocar oferece a opção de ir ao Rift (aviso "Ele está na masmorra", com "Retirar da masmorra" e o novo "Ir ao Rift").
 3. **Grove sob ataque:** o Soulmon avisa que o Grove está sendo ATACADO; o balão leva até lá **mesmo que o jogador ainda não tenha condição de defender** (não fez as tarefas): o balão só encaminha, nunca bloqueia nem cobra.
 
 **Regra comum:** depois de tocar e ser direcionado, o balão fecha e **NÃO aparece mais naquele dia** (por conta).

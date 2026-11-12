@@ -73,6 +73,9 @@ export const HEX_UI = {
   filterHint: p('Filter by up to 3 base elements: only elements that contain all of them are listed. What you can forge comes first.', 'Filtre por até 3 elementos base: aparecem só os elementos que contêm todos eles. O que dá para forjar vem primeiro.'),
   balance: p('You have', 'Você tem'),
   potions: p('potions', 'poções'),
+  colItem: p('Item', 'Item'),
+  colCost: p('Cost', 'Custo'),
+  potionTipLabel: p('How to get this potion', 'Como conseguir esta poção'),
   fragments: p('fragments', 'fragmentos'),
   bitsEarned: p('earned Bits', 'Bits ganhos'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
@@ -117,3 +120,20 @@ export const HEX_RENAME_COPY = {
   },
   readonlyHint: p('Change it at the Hexsmith.', 'Troque na Hexsmith.'),
 } as const;
+
+/**
+ * COMO CONSEGUIR uma poção de elemento (tooltip da tabela de custo da Hexsmith, 12/11/2026). Base: 100 essências do próprio elemento no
+ * Centro de Evolução (a Vesca avisa ao juntar) ou à venda na Feira. Composto: 1 poção de cada base + 50 essências do composto.
+ * `name` resolve o nome do elemento; `bases` são os ids base do composto (vazio/1 = base). Números de `elementPotion.ts` (`POTION_COSTS`).
+ */
+export function potionHowTo(isPt: boolean, name: string, baseNames: readonly string[], costs: { baseOwn: number; compositeFinal: number }): string {
+  if (baseNames.length < 2) {
+    return isPt
+      ? `Junte ${costs.baseOwn} essências de ${name} (elas caem de inimigos desse elemento) e a Vesca faz a poção no Centro de Evolução, no Laboratório. Às vezes a Vitra a vende na Feira.`
+      : `Gather ${costs.baseOwn} ${name} essences (they drop from foes of that element) and Vesca brews the potion at the Evolution Center in the Lab. Vitra sometimes sells it at the Fair.`;
+  }
+  const list = baseNames.join(', ');
+  return isPt
+    ? `No Centro de Evolução, no Laboratório: 1 poção de cada elemento base (${list}) + ${costs.compositeFinal} essências de ${name}. Cada poção base se faz com essências ou se compra na Feira.`
+    : `At the Evolution Center in the Lab: 1 potion of each base element (${list}) + ${costs.compositeFinal} ${name} essences. Each base potion is brewed from essences or bought at the Fair.`;
+}

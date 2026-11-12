@@ -10,7 +10,7 @@
  * Regras: TODAS em `utils/hexsmith.ts` (a tela só mostra e chama os puros, e o motivo que desabilita o botão é o que aparece em texto).
  * Textos: `utils/hexsmithCopy.ts`. Arte final: `assets/soulmon/hex` (glob; sem arquivo → glifos SVG). Sem botão de vender/descartar.
  */
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { ActionRow, Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
@@ -18,7 +18,10 @@ import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBas
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { earnedBits } from '../../utils/bitsOrigin';
-import { elementsMatchingBases, isPotionUnlocked, potionKey } from '../../utils/elementPotion';
+import { elementComposition, elementsMatchingBases, isPotionUnlocked, potionKey, POTION_COSTS } from '../../utils/elementPotion';
+import { potionArt } from '../../utils/potionArt';
+import { InfoTip } from '../ui/InfoTip';
+import { SoulFragmentIcon } from '../ui/SoulFragmentIcon';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
 import { fighterIdentity } from '../../utils/fighterIdentity';
 import { fichaStageOf } from '../../utils/soulProfile/ficha/stageSkillsFor';
@@ -29,7 +32,7 @@ import {
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
+import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge, cloudHexRename } from '../../utils/cloudSave';
 import { HexRenameButton } from './HexRenameButton';
@@ -323,6 +326,8 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
             </>
           )}
           {catalog.length === 0 ? <p style={sm2Hint} data-hex-none>{tx(HEX_UI.noMatch, isPt)}</p> : (
+            <div data-hex-catalog-table className="sm2-hex-table">
+              <div className="sm2-hex-thead" aria-hidden="true"><span>{tx(HEX_UI.colItem, isPt)}</span><span>{tx(HEX_UI.colCost, isPt)}</span></div>
             <ul data-hex-catalog className="sm2-hex-list">
               {catalog.map((id) => {
                 const v = parseHexItem(id)!.value;
@@ -330,22 +335,40 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                 const ok = !hexForgeRefusal(gs, id);
                 const pot = isEl ? gs.foodInventory[potionKey(v)] ?? 0 : 0;
                 const on = sel === id;
+                const art = isEl ? potionArt(v) : undefined;
+                const comp = isEl ? elementComposition(v) ?? [v] : [];
+                const potLabel = tx(HEX_UI.potionTipLabel, isPt);
+                const parts: ReactNode[] = [];
+                parts.push(<BitsAmount key="bits" value={c.bits} size={ICON_INLINE} dim={bits < c.bits} />);
+                if (c.potions > 0) parts.push(
+                  <span key="pot" data-hex-cost-potion={v} data-have={pot >= c.potions} className="sm2-hex-cost-cell">
+                    <InfoTip language={language as Language} label={`${potLabel}: ${elName(v, isPt)}`} align="right"
+                      style={{ minWidth: 28, minHeight: 28, color: 'inherit' }}
+                      trigger={art ? <img src={art} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} draggable={false} data-hex-potion-art /> : <ElementIcon id={v} size={ICON_ROW} />}>
+                      <span data-hex-potion-tip>{potionHowTo(isPt, elName(v, isPt), [...new Set(comp)].length > 1 ? [...new Set(comp)].map((x) => elName(x, isPt)) : [], POTION_COSTS)}</span>
+                    </InfoTip>
+                    <span className="sm2-num" data-hex-potion-qty>{pot}/{c.potions}</span>
+                  </span>);
+                if (c.fragments > 0) parts.push(
+                  <span key="frag" data-hex-cost-fragments data-have={frags >= c.fragments} className="sm2-hex-cost-cell">
+                    <SoulFragmentIcon size={ICON_ROW} label={tx(HEX_UI.fragments, isPt)} />
+                    <span className="sm2-num">{frags}/{c.fragments}</span>
+                  </span>);
                 return (
-                  <li key={id}>
-                    <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row"
+                  <li key={id} className="sm2-hex-line" data-on={on} data-ok={ok}>
+                    <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row sm2-hex-pick"
                       data-on={on} data-ok={ok} onClick={() => setPicked(on ? null : id)}>
                       {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_ROW} />}
                       <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
-                      <span className="sm2-hex-row-cost sm2-num">
-                        {c.potions > 0 && <span>{pot}/{c.potions} {tx(HEX_UI.potions, isPt)}</span>}
-                        {c.fragments > 0 && <span>{frags}/{c.fragments} {tx(HEX_UI.fragments, isPt)}</span>}
-                        <BitsAmount value={c.bits} size={ICON_INLINE} dim={bits < c.bits} />
-                      </span>
                     </button>
+                    <div className="sm2-hex-cost" data-hex-cost>
+                      {parts.flatMap((x, i) => (i ? [<span key={`p${i}`} aria-hidden="true" className="sm2-hex-plus">+</span>, x] : [x]))}
+                    </div>
                   </li>
                 );
               })}
             </ul>
+            </div>
           )}
         </section>
       </div>

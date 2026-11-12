@@ -4854,8 +4854,20 @@ Decisão: depois dos 4 focos recompensados do dia (§247), os focos 5º, 6º e 7
 
 **Falsifica:** botão cobrindo a Coroa ou cortado no topo do mapa; chama ainda laranja. **Rollback:** reverter o PR. **APK:** nada.
 
-## §305 — Plaquinha da Fenda: tocar leva até a Fenda, retirar vira ação secundária (12/11/2026, pedido do dono)
+## §307 — Plaquinha da Fenda: tocar leva até a Fenda, retirar vira ação secundária (12/11/2026, pedido do dono)
 
 Decisão: com o Soulmon na Fenda, tocar na plaquinha da Home abre o aviso com **Ir à Fenda** / **Go to the Rift** como ação principal (abre direto a tela da descida, Exploração > Fenda) e **Trazer de volta** / **Bring him back** como ação secundária menor, com confirmação ("Deixar lá" / "Trazer de volta"); a capacidade de retirar não se perde. Isso **antecipa o item G2 da beta12** (`docs/BACKLOG-BETA12.md`): a plaquinha já oferece ir ao Rift; o **balão dourado** que a anuncia continua previsto para a beta12. Os outros avisos de "ocupado" (sem `onGo`) mantêm o formato antigo.
 
 **Falsifica:** o toque na plaquinha oferecer só "retirar", ou "Ir à Fenda" retirar o Soulmon (`DungeonBusyModal.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §305 — Hexsmith: a tabela de criação mostra POÇÃO como custo, com tooltip de como conseguir (12/11/2026, pedido do dono)
+
+Decisão: na forja da Hexsmith o catálogo é uma tabela de duas colunas, **Item** e **Custo**. O custo lê da esquerda para a direita: Bits + (poção do elemento, como o ÍCONE da poção, com `tem/precisa` embaixo) + (fragmentos, ícone e `tem/precisa`), separados por "+". Tocar o ícone da poção abre um tooltip (o `InfoTip`, agora com `trigger` próprio e camada de voltar; fecha ao tocar fora, Esc, Voltar ou modal novo) dizendo COMO conseguir: base = 100 essências do elemento no Centro de Evolução (a Vesca avisa) ou à venda na Feira; composto = 1 poção de cada base + 50 essências. Textos em `potionHowTo` (`hexsmithCopy.ts`), números de `POTION_COSTS`. Nenhum custo mudou.
+
+**Alternativa que perdeu:** deixar "N/3 poções" em texto solto (leitura ambígua: parecia recompensa). **Falsifica:** o ícone da poção sumir da linha, tocá-lo selecionar o item em vez de abrir a dica, ou o tooltip citar número diferente de `POTION_COSTS` (`HexsmithSheet.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §306 — Vesca espera o ócio e a poção criada vira tela cheia (12/11/2026, pedido do dono)
+
+Decisão: (1) a pergunta da Vesca ("quer fazer a poção?") não interrompe mais: ela entra numa fila de OFERTA PENDENTE e só aparece quando o jogador está OCIOSO. Atividade em curso (`utils/atividadeEmCurso.ts`, dono único do gate) = estar em área de atividade (Arena, Jogos/minigames, Exploração: Calabouço, Fenda, Passeio, combates), Soulmon na Masmorra, foco rodando/pausado ou qualquer modal aberto. Mecanismo reutilizável: `hooks/useOcioso` (sinais) + `hooks/useOfertaPendente` (a cabeça da fila entra ao ficar ocioso e FICA até ser dispensada; o modal dela abre um `aria-modal` e não pode derrubar a si mesma). O "já ofereci" passou a ser gravado quando a Vesca APARECE, não ao enfileirar (fechar o app no meio de uma atividade não perde a oferta). (2) "Fazer a poção" não abre mais o modalzinho com OK: abre `PocaoCriada`, tela cheia sem caixa nem card: véu escuro, ícone da poção grande, luz de raios girando atrás (CSS; parada em `prefers-reduced-motion`), "Poção de fogo criada" / "Fire potion created" e o OK centralizado. Sem saldo, a tela de "criada" não aparece (antes o aviso saía mesmo sem criar).
+
+**Alternativa que perdeu:** só adiar por tempo fixo (não sabe se a atividade acabou). **Falsifica:** a Vesca aparecer com `area:arena|jogos|exploracao`, masmorra, foco rodando ou modal aberto; sumir sozinha ao abrir o próprio modal; a tela "criada" ter painel/caixa (`atividadeEmCurso.test.ts`, `useOfertaPendente.test.tsx`, `VescaPotionOffer.render.test.tsx`). **Rollback:** reverter o PR (nenhum save muda). **APK:** nada.

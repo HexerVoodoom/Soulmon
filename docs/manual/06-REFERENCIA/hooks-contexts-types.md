@@ -303,3 +303,7 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 
 ### `src/hooks/useHexOverrides.ts`
 **Dono de:** ler do save (`GameState.hexsmith`) o que os itens da Hexsmith equipados reescrevem (`hexOverrides`). Usado por Arena, Masmorra, Pesadelo, Bosque, Desafio e treino do Torneio. Sem Provider = nada.
+
+### `src/hooks/useOcioso.ts` e `src/hooks/useOfertaPendente.ts`
+
+**`useOcioso` e `useOfertaPendente` (12/11/2026, §306):** `useOcioso({ view, naMasmorra, esperando }) → { ocioso, motivo }` lê `utils/atividadeEmCurso.ts` (área de atividade, masmorra, foco em andamento relido a cada 2 s só com `esperando`, `useModalDepth`). `useOfertaPendente(fila, ocioso, onMostrar?) → id | null`: a cabeça da fila só entra com ócio e fica até sair da fila; `onMostrar` roda uma vez. Uso: Vesca em `App.tsx`. `utils/modalDepth` ganhou `useModalDepth()`.
