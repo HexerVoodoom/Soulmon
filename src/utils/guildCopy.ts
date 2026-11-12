@@ -74,6 +74,8 @@ export const GUILD_COPY = {
   'guild.missao.mandar': ['Mandar investigar', 'Send to investigate'],
   'guild.missao.historia': ['A feira abriu e algo chegou da névoa. Seu Soulmon vai ver de perto o que é e volta com o que achar. O que ele achar, a roda leva para a casa.', 'The fair opened and something came in from the mist. Your Soulmon goes to take a close look and comes back with what it finds. What it finds, the circle carries to the house.'],
   'guild.missao.fora': ['Seu Soulmon foi investigar. Volta às {hora}, em {min} min.', 'Your Soulmon went to investigate. Back at {hora}, in {min} min.'],
+  'guild.missao.registrando': ['Seu Soulmon voltou. Estou buscando o que ele achou…', 'Your Soulmon is back. Fetching what it found…'],
+  'guild.missao.verAchado': ['Ver o que ele achou', 'See what it found'],
   'guild.missao.volta.titulo': ['Seu Soulmon voltou da investigação.', 'Your Soulmon is back from investigating.'],
   'guild.missao.volta.cla': ['Para o clã: o que ele achou foi para a roda e regou a casa.', 'For the clan: what it found went into the circle and watered the house.'],
   'guild.missao.volta.eu': ['Para você: um lugar no resgate da semana. Se a roda desfizer {nome}, você colhe Honra e, às vezes, a Concha da Maré. Se não, nada se perde.', 'For you: a place in this week’s rescue. If the circle undoes {nome}, you gather Honor and, now and then, the Tide Shell. If not, nothing is lost.'],

@@ -60,6 +60,7 @@ import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
 import { feiraDesafioStatus, readFeiraDesafio } from '../../utils/feiraDesafio';
+import { readFeiraVolta, feiraVoltaDoDia, feiraVoltaPendente, markFeiraVoltaSeen } from '../../utils/feiraVolta';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -138,7 +139,7 @@ interface GuildSheetProps {
     onSlot: (item: string | null) => void;
   };
   /** A MISSÃO (PR3, ex-Feira): o estado da ida do Soulmon (no save) e o gesto de mandá-lo. */
-  missao?: { state: GuildMissionState | null; onSend: () => void };
+  missao?: { state: GuildMissionState | null; onSend: () => void; /** Reabre o que a volta achou (guardado em `utils/feiraVolta.ts`). */ onVerAchado?: () => void };
   /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
   /** FEIRA DO CHEFE: reabrir o evento pela sala (a folha de volta é uma só vez). Só aparece quando o servidor manda `guild.feira`. */
   feira?: { me: BossFightMe; onCredit: (c: FeiraCredit) => void };
@@ -1236,7 +1237,13 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   // O DESAFIO DO DIA (dono, 04/11/2026): com a Missão, o inimigo só está na sala no MESMO dia em que o Soulmon voltou com
   // ele; noutro dia sem luta ele "escapou" e a sala volta a pedir a investigação. Sem Missão (Feira antiga) nada muda.
   const desafioSt = missao ? feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), tz)) : 'open';
-  const desafioAtivo = !!feira && feira.resumo.state !== 'rest' && (desafioSt === 'open' || desafioSt === 'done' || !!raid?.hitToday);
+  // A VOLTA GUARDADA (`utils/feiraVolta.ts`): conta como "voltou hoje" mesmo que a releitura da vista venha velha, e guarda o que ele achou até ser visto.
+  const hojeJogador = playerDayKey(new Date(), tz);
+  const [, relerVolta] = useState(0);
+  const voltaGuardada = missao ? feiraVoltaDoDia(readFeiraVolta(), hojeJogador) : null;
+  const voltaPendente = missao ? feiraVoltaPendente(voltaGuardada, hojeJogador) : null;
+  const voltouHoje = !!raid?.hitToday || !!voltaGuardada;
+  const desafioAtivo = !!feira && feira.resumo.state !== 'rest' && (desafioSt === 'open' || desafioSt === 'done' || voltouHoje);
   // Relógio da volta ("volta em X min"): só roda enquanto o Soulmon está fora.
   const [agora, setAgora] = useState(() => Date.now());
   const returnAt = missao?.state?.returnAt ?? 0;
@@ -1321,16 +1328,25 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora, min })}</p>;
         }
         // Voltou hoje: SÓ o que a vista já pode mostrar (sem número por pessoa). O ganho é o direito ao resgate da semana.
-        if (raid.hitToday) return (
+        if (voltouHoje) return (
           <>
           <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
           </div>
-          {!desafioAtivo && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {voltaPendente && missao.onVerAchado && (
+            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+              <Icon name="search" size={20} />
+              {t('guild.missao.verAchado')}
+            </button>
+          )}
+          {!desafioAtivo && !voltaPendente && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           </>
         );
+        // Passou da hora de voltar mas a volta ainda não foi registrada (app em segundo plano, sem rede, servidor ocupado):
+        // NUNCA oferecer "Mandar investigar" agora (era o bug) — ele já voltou, o registro é que espera.
+        if (missao.state) return <p className="sm2-stats-t" style={{ margin: 0 }} role="status" data-missao-registrando>{t('guild.missao.registrando')}</p>;
         // UM botão só: o desafio do mistério (FeiraMisterio) tem prioridade sobre "Investigar".
         if (desafioAtivo) return null;
         return (
