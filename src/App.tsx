@@ -8590,6 +8590,7 @@ export default function App() {
                     else if (alvo?.kind === 'habit') handleToggleActivityCompletion(alvo.id);
                     else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
+                  onToggleFocusStep: (taskId: string, stepId: string) => handleToggleTaskStep(taskId, stepId),
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
                     const preview = applyFocusLoot(gameState, request, roll);
