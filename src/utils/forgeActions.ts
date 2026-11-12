@@ -81,7 +81,7 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   const f = sanitizeForge(prev.forge);
   const picks = [...pieceChoices(id, level, prev.forge), choice];
   const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
-  // Missão da Vitra (12/11/2026, REGISTRO §312): aprimorar 1 peça.
+  // Missão da Vitra (12/11/2026, REGISTRO §313): aprimorar 1 peça.
   return { ok: true, state: bumpDailyIn({ ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge }, 'melhoria') };
 }
 

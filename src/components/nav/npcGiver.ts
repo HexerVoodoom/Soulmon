@@ -1,4 +1,4 @@
-// QUEM PASSA A MISSÃO (12/11/2026, REGISTRO §312): nome curto e retrato do NPC de uma missão do dia. Um dono só — as falas/nomes vêm
+// QUEM PASSA A MISSÃO (12/11/2026, REGISTRO §313): nome curto e retrato do NPC de uma missão do dia. Um dono só — as falas/nomes vêm
 // de `utils/areaNpcVoice.ts` e a arte de `assets/soulmon/npcs`; aqui só se resolve a CHAVE (`area:lote`, `papus`, `nuri`).
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';

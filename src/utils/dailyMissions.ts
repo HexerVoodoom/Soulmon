@@ -35,7 +35,7 @@ export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
   | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
-  // Missões dos NPCs (12/11/2026, REGISTRO §312): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
+  // Missões dos NPCs (12/11/2026, REGISTRO §313): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
   | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario';
 
 export interface DailyMission {
@@ -90,7 +90,7 @@ const POOL: readonly DailyMission[] = [
   // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
   { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
-  // 12/11/2026 (REGISTRO §312): uma missão por NPC, uma por dia em rodízio (`npcOfDay`); nunca entram no sorteio comum.
+  // 12/11/2026 (REGISTRO §313): uma missão por NPC, uma por dia em rodízio (`npcOfDay`); nunca entram no sorteio comum.
   ...NPC_MISSIONS.map((n): DailyMission => ({ id: n.id, event: n.event, target: n.target, building: n.building, material: n.material, descPt: n.descPt, descEn: n.descEn, namePt: n.namePt, nameEn: n.nameEn, npc: n.npc })),
 ];
 
@@ -142,7 +142,7 @@ export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[
 }
 
 /**
- * A missão do NPC DO DIA (12/11/2026, REGISTRO §312). Rodízio determinístico pelo número do dia do jogador: `n mod N`; se o prédio dele
+ * A missão do NPC DO DIA (12/11/2026, REGISTRO §313). Rodízio determinístico pelo número do dia do jogador: `n mod N`; se o prédio dele
  * ainda não abriu no Vínculo da pessoa, vale o próximo da fila que abriu (o dia nunca fica sem NPC enquanto algum estiver aberto).
  * Ciclo de `NPC_MISSIONS.length` dias: todo NPC passa a missão uma vez por ciclo.
  */

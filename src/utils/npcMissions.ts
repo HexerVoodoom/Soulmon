@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// MISSÕES DOS NPCs (pedido do dono, 12/11/2026, REGISTRO §312): cada NPC do jogo passa UMA missão simples, ligada ao papel dele, e
+// MISSÕES DOS NPCs (pedido do dono, 12/11/2026, REGISTRO §313): cada NPC do jogo passa UMA missão simples, ligada ao papel dele, e
 // elas ROTACIONAM — a cada dia a lista do dia traz a missão de um NPC diferente (`npcOfDay`, determinístico pelo dia do jogador).
 //
 // Dado puro (sem React, sem imagem): as missões entram no catálogo de `dailyMissions.ts` (mesmo estado `dailyMissions`, mesmo
