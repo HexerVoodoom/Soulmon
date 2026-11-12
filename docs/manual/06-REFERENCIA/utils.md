@@ -4532,6 +4532,8 @@ Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `
 
 O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
 
+**Atualização 12/11/2026 (REGISTRO §308):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
+
 ### `src/utils/formaEquip.ts` (10/11/2026)
 
 Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.

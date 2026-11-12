@@ -2179,7 +2179,7 @@ export default function App() {
    * desenho de produto, 100% cliente.
    */
   /** Fragmento do Soulsmith, Fragmento de Boss e Essências para a aba Materiais da Mochila (memo: o `CompanionHUD` é `memo`). */
-  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards, essences: gameState.essences }), [gameState.equipment?.fragments, gameState.bossShards, gameState.essences]);
+  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards }), [gameState.equipment?.fragments, gameState.bossShards]);
   const tierForRules: AccountTier = gameState.accountTier === 'demo' ? 'demo' : 'paid';
   /**
    * O TETO EFETIVO de hábitos ativos — o número que a UI mostra e o portão usa.

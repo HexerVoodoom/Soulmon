@@ -5,20 +5,15 @@
  * Só a Mochila (lazy, aba Materiais) importa este módulo — fora do chunk de entrada.
  *
  * Além dos 16 materiais de prédio (`buildingQuests.materials`), a aba lista os OUTROS recursos que o jogo concede e que antes não tinham
- * lugar no inventário: Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e as Essências dos elementos
- * (`essences`). Material sem uso HOJE diz isso com franqueza (`usoAinda`), em vez de inventar um.
+ * lugar no inventário: Fragmento do Soulsmith (`equipment.fragments`) e Fragmento de Boss (`bossShards`). Material sem uso HOJE diz isso com franqueza (`usoAinda`), em vez de inventar um.
  */
-import { LISTED_QUEST_BUILDINGS, MATERIAL_BUILDING, type MaterialId } from './buildingQuests';
-import { FORGE_PIECES, REDO_BITS, REDO_FRAGMENTS } from './forge';
+import { MATERIAL_BUILDING, type MaterialId } from './buildingQuests';
+import { FORGE_PIECES } from './forge';
 import { itemName } from './equipmentCopy';
 import { FOCUS_ENVIRONMENTS } from './focusExpedition';
 import { DISHES } from './restaurant';
-import { FRAGMENTS_PER_RUN } from './equipment';
-import { DUNGEON_DEPTH_MARKS } from './dungeonIdle';
-import { POTION_COSTS } from './elementPotion';
-import { ESSENCE_BY_STAGE } from './essences';
 
-export type ExtraMaterialId = 'soulsmith-fragment' | 'boss-shard' | 'essences';
+export type ExtraMaterialId = 'soulsmith-fragment' | 'boss-shard';
 
 export interface ExtraMaterialDef {
   readonly id: ExtraMaterialId;
@@ -31,13 +26,12 @@ export interface ExtraMaterialDef {
 export const EXTRA_MATERIALS: readonly ExtraMaterialDef[] = [
   { id: 'soulsmith-fragment', icon: '🔩', namePt: 'Fragmento do Soulsmith', nameEn: 'Soulsmith Fragment' },
   { id: 'boss-shard', icon: '💠', namePt: 'Fragmento de Boss', nameEn: 'Boss Shard' },
-  { id: 'essences', icon: '💧', namePt: 'Essências', nameEn: 'Essences' },
 ];
 
 export interface MaterialGuide {
-  /** Onde conseguir (frase completa, sem o nome do prédio — quem chama costura o "Ir lá"). */
+  /** "Found at …": só os lugares, separados por vírgula (quem chama põe o rótulo em negrito e o "Ir lá"). */
   readonly sources: string;
-  /** Para que serve: uma linha por uso. Vazio = sem uso hoje (`usoAinda` diz isso). */
+  /** "Use …": os lugares onde se usa. Vazio = sem uso hoje (`usoAinda` diz isso). */
   readonly uses: readonly string[];
   /** Frase para quando não há uso hoje. */
   readonly usoAinda: string;
@@ -76,66 +70,46 @@ export function usesOfMaterial(id: MaterialId, isPt: boolean): string[] {
   return out;
 }
 
+/** ONDE se usa um material (nomes dos lugares, enxuto): Soulsmith (receitas) e Restaurante (pratos). Vazio = sem uso hoje. */
+export function usePlacesOfMaterial(id: MaterialId, isPt: boolean): string[] {
+  const out: string[] = [];
+  if (FORGE_PIECES.some(p => p.mats.includes(id))) out.push('Soulsmith');
+  if (DISHES.some(d => d.extra.type === 'material' && d.extra.id === id)) out.push(isPt ? 'Restaurante' : 'Restaurant');
+  return out;
+}
+
 /** O guia de um material de prédio. `buildingName` é o nome do prédio dono (o mesmo que o Mapa mostra). */
 export function guideOfMaterial(id: MaterialId, isPt: boolean, buildingName: string): MaterialGuide {
   const exp = expeditionsOf(id).map(e => (isPt ? e.pt : e.en));
   /* Prédio LISTADO (hoje o Caderno): a missão NÃO conclui ao entrar — pede a ação real (um registro) e o "Resgatar" na Home
      (`applyBuildingEntry`). Os outros pagam na própria entrada. A frase tem que dizer o que de fato acontece. */
-  const listado = (LISTED_QUEST_BUILDINGS as readonly string[]).includes(MATERIAL_BUILDING[id]);
-  const como = listado
-    ? (isPt ? '1 por dia, ao fazer um registro e resgatar a missão' : '1 a day, by writing an entry and claiming the mission')
-    : (isPt ? '1 por dia, só por entrar no prédio' : '1 a day, just by stepping in');
-  const sources = isPt
-    ? `Missão diária de ${buildingName} (${como})${exp.length ? ` e expedições do Foco: ${lista(exp, true)}` : ''}.`
-    : `The daily mission at ${buildingName} (${como})${exp.length ? ` and Focus expeditions: ${lista(exp, false)}` : ''}.`;
+  /* ENXUTO (pedido do dono, 12/11/2026): só os LUGARES, "Encontrado em A, B" / "Found at A, B". O "como" detalhado (1 por dia, ao entrar etc.)
+     continua no botão "Ir lá" e na própria missão do prédio. */
+  const lugares = [buildingName, ...(exp.length ? [isPt ? 'Expedições do Foco' : 'Focus expeditions'] : [])];
+  const sources = lugares.join(', ');
   return {
     sources,
-    uses: usesOfMaterial(id, isPt),
+    uses: usePlacesOfMaterial(id, isPt),
     usoAinda: isPt ? 'Ainda não tem uso: por enquanto só coleciona.' : 'No use yet: for now it is just collected.',
   };
 }
 
-/** O guia dos outros recursos. */
+/** O guia dos outros recursos. (As Essências saíram da Bolsa em 12/11/2026: ficam só no Laboratório › Arquivo.) */
 export function guideOfExtra(id: ExtraMaterialId, isPt: boolean): MaterialGuide {
   const noUse = isPt ? 'Ainda não tem uso: por enquanto só coleciona.' : 'No use yet: for now it is just collected.';
   switch (id) {
-    case 'soulsmith-fragment': {
-      const marcos = DUNGEON_DEPTH_MARKS.map(m => m.layer).join(', ');
+    case 'soulsmith-fragment':
       return {
-        sources: isPt
-          ? `Descer na Fenda: ${FRAGMENTS_PER_RUN} ao completar uma descida, mais os marcos de profundidade (camadas ${marcos}, uma vez cada) e a faixa de 25 camadas do Rift Sem Fim.`
-          : `Descending the Rift: ${FRAGMENTS_PER_RUN} for a completed run, plus the depth marks (layers ${marcos}, once each) and the 25-layer tier of the Endless Rift.`,
-        uses: [isPt
-          ? `Soulsmith: refazer a escolha de um nível do aprimoramento custa ${REDO_FRAGMENTS} fragmentos (ou ${REDO_BITS} Bits ganhos jogando).`
-          : `Soulsmith: redoing the choice of an upgrade level costs ${REDO_FRAGMENTS} fragments (or ${REDO_BITS} Bits earned by playing).`],
+        sources: isPt ? 'Fenda (descer, marcos de profundidade, Rift Sem Fim)' : 'Rift (runs, depth marks, Endless Rift)',
+        uses: ['Soulsmith'],
         usoAinda: noUse,
       };
-    }
     case 'boss-shard':
       return {
-        sources: isPt
-          ? 'Vencer o Boss do Elemental Fusion: 1 fragmento por vitória.'
-          : 'Beating the Boss in Elemental Fusion: 1 shard per win.',
+        sources: isPt ? 'Elemental Fusion (vencer o Boss)' : 'Elemental Fusion (beat the Boss)',
         uses: [],
         usoAinda: noUse,
       };
-    case 'essences': {
-      const est = `${ESSENCE_BY_STAGE.rookie}/${ESSENCE_BY_STAGE.champion}/${ESSENCE_BY_STAGE.ultimate}`;
-      return {
-        sources: isPt
-          ? `Todo inimigo derrotado deixa a essência do próprio elemento (${est} conforme o estágio) e os chefes da Feira deixam mais; o Cambista, no Mercado, também as vende.`
-          : `Every defeated enemy drops the essence of its own element (${est} by stage) and the Fair bosses drop more; the Money Changer at the Market also sells them.`,
-        uses: [
-          isPt
-            ? `Laboratório › Centro de Evolução: viram uma Poção de Elemento (elemento base: ${POTION_COSTS.baseOwn} da própria essência; composto: 1 poção de cada base + ${POTION_COSTS.compositeFinal} do composto). Na próxima evolução, o elemento da poção vira o do Soulmon.`
-            : `Laboratory › Evolution Center: they become an Element Potion (base element: ${POTION_COSTS.baseOwn} of its own essence; compound: 1 potion of each base + ${POTION_COSTS.compositeFinal} of the compound). On the next evolution, the potion element becomes the Soulmon's.`,
-          isPt
-            ? 'Restaurante: 2 a 3 essências de um elemento por prato de energia ou de regeneração.'
-            : 'Restaurant: 2 to 3 essences of one element per energy or regeneration dish.',
-        ],
-        usoAinda: noUse,
-      };
-    }
   }
 }
 
