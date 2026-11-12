@@ -2242,3 +2242,5 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/perfil/EspecialNomeLeitura.tsx`
 
 **Dono de:** a leitura do nome do especial no Perfil (§287). Substituiu `EspecialNomeEditor`: o Perfil só mostra os nomes e aponta para a Hexsmith. Usado por `ProfileEditor` e `SoulmonPerfil`.
+
+**`ui/InfoTip` (12/11/2026):** prop nova `trigger?: ReactNode` (gatilho próprio no lugar do "i", ex.: o ícone de uma poção na tabela da Hexsmith) e o tooltip aberto registra uma camada de voltar (`useBackLayer`). `hex/HexsmithSheet`: catálogo em tabela Item/Custo (`.sm2-hex-table`, `data-hex-cost`, `data-hex-cost-potion`, `data-hex-potion-tip`). Textos: `hexsmithCopy.potionHowTo`.

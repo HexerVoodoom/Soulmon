@@ -2459,3 +2459,5 @@ Cobertura só no nível de existência de superfície e de ponto de entrada (reg
 - **Opening** — mesma regra da nota "Opening" do delta de 01/11/2026 (`SeletorIdiomaAbertura` e `IntroCinematica`, 1ª abertura de quem é novo, independe do `ONBOARDING_VELADO`: `deveTocarIntro` em `introGate`); nada mudou desde.
 - **Privacidade (`PRIVACY_VERSION` 2026-11-09)** — o bump (`utils/consent.ts`: passos pelo Health Connect, só o total do dia, só com opt-in) reabre o re-aceite para quem aceitou a versão anterior; `TERMS_VERSION` segue 2026-10-26.
 - ⚠️ As páginas `/gm/*` não abrem no navegador hoje (o SPA fallback devolve o `index.html`); `run_worker_first` no `wrangler` foi tentado e REVERTIDO em `9454d68a8` porque derrubava `/api/*` — não habilitar.
+
+- **Hexsmith, tabela de criação (12/11/2026, REGISTRO §305):** o catálogo de cada Porta é uma tabela **Item | Custo**; o custo é Bits + ícone da poção do elemento (com `tem/precisa` embaixo) + fragmentos, ligados por "+". Tocar o ícone da poção abre o tooltip "como conseguir" (`InfoTip` com `trigger`, fecha ao tocar fora/Voltar); tocar o item o seleciona para forjar.

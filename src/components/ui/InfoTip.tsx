@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
+import { useBackLayer } from '../../utils/backStack';
 
 /** Garante área de toque ≥ 44 sem mudar o espaço que o "i" ocupa no layout (padding + margem negativa iguais). */
 export function alvo44(style: CSSProperties | undefined): CSSProperties {
@@ -36,7 +37,7 @@ export function alvo44(style: CSSProperties | undefined): CSSProperties {
  *   (footgun do `index.css.contract`).
  */
 export function InfoTip({
-  children, label, language, align = 'center', style,
+  children, label, language, align = 'center', style, trigger,
 }: {
   children: ReactNode;
   /** Nome acessível do "?" (ex.: "Como funciona a Feira" / "How the Fair works"). */
@@ -45,6 +46,8 @@ export function InfoTip({
   /** Âncora horizontal preferida do tooltip em relação ao "?". */
   align?: 'left' | 'center' | 'right';
   style?: React.CSSProperties;
+  /** Gatilho próprio no lugar do "i" (ex.: o ícone de uma poção que explica de onde ela vem). Mesmo popover, mesmo fechar. */
+  trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; maxHeight: number; left: number; width: number } | null>(null);
@@ -71,6 +74,8 @@ export function InfoTip({
   }, [align]);
 
   useLayoutEffect(() => { if (open) place(); }, [open, place]);
+  // O voltar do Android/navegador fecha só a dica (camada própria), sem sair da tela.
+  useBackLayer(open, () => setOpen(false));
 
   useEffect(() => {
     if (!open) return;
@@ -127,7 +132,7 @@ export function InfoTip({
           ...alvo44(style),
         }}
       >
-        <Icon name="info" size={20} tone="inherit" />
+        {trigger ?? <Icon name="info" size={20} tone="inherit" />}
       </button>
       {open && pos && typeof document !== 'undefined' && createPortal(
         <div

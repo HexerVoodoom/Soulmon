@@ -189,4 +189,23 @@ describe('HexsmithSheet', () => {
       cleanup();
     }
   });
+
+  it('tabela de custo (12/11): colunas Item/Custo; poção como ÍCONE com o estoque embaixo; tocar abre o tooltip de como conseguir; fecha ao tocar fora', () => {
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 1 }, equipment: { owned: [], equipped: {}, fragments: 5 } });
+    click(q('[data-hex-slot="garra"]'));
+    const head = document.querySelector('.sm2-hex-thead')!;
+    expect(head.textContent).toBe('ItemCusto');
+    const cell = q('[data-hex-item="garra:agua"]').closest('li')!;
+    const pot = cell.querySelector('[data-hex-cost-potion="agua"]')!;
+    expect(pot.querySelector('img')).not.toBeNull();
+    expect(pot.querySelector('[data-hex-potion-qty]')!.textContent).toBe(`1/${HEX_COSTS.element.potions}`);
+    expect(cell.querySelector('[data-hex-cost-fragments]')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
+    expect(cell.querySelectorAll('.sm2-hex-plus')).toHaveLength(2);
+    expect(document.querySelector('[data-hex-potion-tip]')).toBeNull();
+    click(pot.querySelector('button[data-info-tip]')!);
+    expect(document.querySelector('[data-hex-potion-tip]')!.textContent).toMatch(/essências de Água/);
+    expect(q('[data-hex-item="garra:agua"]').getAttribute('aria-pressed')).toBe('false'); // tocar a poção não seleciona o item
+    act(() => { fireEvent.pointerDown(document.body); });
+    expect(document.querySelector('[data-hex-potion-tip]')).toBeNull();
+  });
 });
