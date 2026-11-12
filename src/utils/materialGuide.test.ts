@@ -33,13 +33,13 @@ describe('guia dos materiais: onde conseguir e para que serve (derivado do códi
       expect(usesOfMaterial(id, true).some(u => u.startsWith('Restaurante')), id).toBe(usados.has(id));
     }
   });
-  it('"só por entrar" só vale para prédio que paga na entrada: o Caderno (listado) pede registro + resgate', () => {
+  it('"só por entrar" só vale para prédio que paga na entrada: o prédio listado (hoje nenhum) pediria ação + resgate', () => {
     for (const id of MATERIAL_IDS) {
       const listado = (LISTED_QUEST_BUILDINGS as readonly string[]).includes(MATERIAL_BUILDING[id]);
       expect(guideOfMaterial(id, true, 'X').sources.includes('só por entrar'), id).toBe(!listado);
       expect(guideOfMaterial(id, false, 'X').sources.includes('just by stepping in'), id).toBe(!listado);
     }
-    expect(guideOfMaterial('ink', true, 'Caderno').sources).toMatch(/registro/);
+    expect(guideOfMaterial('ink', true, 'Caderno').sources).toContain('só por entrar'); // o Caderno diário saiu (12/11/2026)
   });
   it('as expedições do Foco entram na fonte', () => {
     for (const id of MATERIAL_IDS) {

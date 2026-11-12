@@ -83,6 +83,7 @@ import { frameIdOrNull } from './_frames.js';
 import { EVO_FEED_KEY, EVO_FEED_VIEW, EVO_FEED_BLOB_TTL_S, peakOf, parseStage, decideEvo, buildEvent, readFeed, pushEvent, purgeFeedOf, liveFeed, publicEvent } from './_evoFeed.js';
 import { flagOn } from './_killSwitch.js';
 import { isStrayProfile, strayView, STRAY_POOL_MAX, markStrayIfInactive, strayFieldsOf, strayRecoveryProgress, playerDayOf, STRAY_RECOVERY_DAYS } from './_strays.js';
+import { recordMissionEvent } from './_missionEvents.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -1723,6 +1724,8 @@ async function handleCommunity(context) {
       const hoje = await presentesDeHoje(env, id, diaMeu);
       if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === diaMeu)) return json({ error: 'already gifted today' }, 429);
       await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      // Missoes de presente (REGISTRO §307): o presente ACEITO aqui e o evento confirmado da semanal gift-sent e da diaria d-presente. Melhor esforco.
+      try { await recordMissionEvent(kvOrThrow(env), id, 'g', diaMeu); } catch { /* o razao das missoes nao pode derrubar o presente */ }
 
       // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta
       // é a mesma de um presente real; o limite diário acima já valeu).

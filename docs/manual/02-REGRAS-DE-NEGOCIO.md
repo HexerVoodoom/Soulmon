@@ -4556,14 +4556,14 @@ Resgate duplo não paga 2× (`claimBuildingQuest` reconfere sobre o `prev`).
 **Onde a missão vive (decisão do dono, 07/10/2026).** NUNCA dentro do prédio nem sobre o lote:
 sem marca "!"/"?" no lote, sem painel de missão na folha do prédio. Só na Home, em **dois
 acessos separados** (cada um com seu ícone pelado no canto, sua folha `MissionsSheet kind=`
-e suas marcas): **Diárias / Daily** (Primeiro dia + o Passeio + `LISTED_QUEST_BUILDINGS`, hoje o
-Caderno) e **Semanais / Weekly** (Esta semana, em azul, + as Conquistas permanentes).
-**A missão só APONTA, e depois RESGATA:** a linha diz o que fazer em uma frase ("Write an
-entry in your journal" / "Faça um registro no journaling"), sem botão; quando a AÇÃO real
+e suas marcas): **Diárias / Daily** (Primeiro dia + o Passeio + `LISTED_QUEST_BUILDINGS`, hoje
+vazia: o Caderno diário saiu em 12/11/2026, §307) e **Semanais / Weekly** (Esta semana, em azul, + as Conquistas permanentes).
+**A missão só APONTA, e depois RESGATA:** a linha diz o que fazer em uma frase, sem botão; quando a AÇÃO real
 acontece a linha fica pronta ("?") com **Claim / Resgatar** como única ação, e só então
-entra a recompensa. O evento do journaling é **guardar um registro novo no Caderno**
-(`handleCaderno` → `completeBuildingQuest`, 1×/dia do jogador); **entrar no prédio não conclui**
-(`visitBuilding` ignora os prédios listados). O material continua pago pelo modelo, sem lista.
+entra a recompensa. Hoje nenhum prédio é listado (`LISTED_QUEST_BUILDINGS` vazia, §307): o **Caderno diário saiu**
+porque a semanal «Faça o journal em 3 dias» o substitui; o prédio continua e paga a tinta na entrada, como os demais
+(`visitBuilding` conta a presença). Quem tinha o Caderno pronto e sem resgate recebe a tinta uma vez no load
+(`settleRetiredListed`). Um registro novo no Caderno conta SÓ a semanal (`handleCaderno` → `countWeeklyMission`).
 Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!", semanal em azul).
 
 **EXCEÇÃO: o Passeio fica com o NPC (decisão do dono, 08/10/2026, "Stroll fica com o NPC").**
@@ -4574,7 +4574,7 @@ missão, o Registro/Logbook, "abre amanhã" — vive na folha do lote `exploraca
 Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, e resgatada. **O Claim é só
 RECIBO**: o pagamento (Marcos, região guardada, viagem da noite) sai no `markDone` do NPC; o
 Claim grava `crossings.claimDay` (`claimStroll`, idempotente por dia do jogador — a 2ª chamada
-devolve o mesmo objeto) e não paga nada de novo. As OUTRAS missões (Caderno, semanais, Primeiro
+devolve o mesmo objeto) e não paga nada de novo. As OUTRAS missões (semanais, Primeiro
 dia) continuam só no menu.
 
 **Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão do card no NPC
@@ -6425,3 +6425,5 @@ Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estági
 **💠 Buffs do clã e doação diária (10/11/2026, REGISTRO §281).** *Doação:* uma por pessoa por dia do jogador, 50 ou 100 Bits (`CASA_DOACOES`), só Bits ganhos (`spendEarnedBits`); o servidor recusa outro valor (400) e a 2ª no dia (429); o valor mostra o `BitsAmount`. *Tesouro:* Bits doados (`bitsDaCasa`) − gasto em Buffs (`coopBuffs:<gid>`); a doação também rende seiva (10 Bits = 1 ponto) do mesmo registro, e gastar o tesouro não tira seiva. *Buffs* (`_buffsCla.js`, ação `guildBuffBuy`, só o anfitrião, `buffId`+`opId`): gauge +5% no crédito diário, nunca acima do teto do estágio (`aplicarBuffClaGauge`); Feira de verdade 8% → 12% (`FEIRA_LOJA_PCT_BUFF`); drop ×1,10 (`heartDropChance`); energia +10% (`regenPoints`, multiplica com o sono). 7 dias desde a compra, recomprar estende, um por tipo. Preço `round(0,9 × 12 × 100 × 7) = 7560`. A ação `guildShopBuy` devolve 410.
 
 - **Focos extras do dia (§302)** — depois dos 4 focos recompensados, o 5º, 6º e 7º dão um item simples cada (sem Bits); o 8º em diante não rende. Regra do servidor (`completionLoot`), com os tetos diários de itens da jornada.
+
+**Missões validadas no servidor (12/11/2026, REGISTRO §307).** As semanais `journal-days` (3), `focus-days` (3) e `gift-sent` (1) e a diária `d-presente` (1) só contam eventos que o servidor confirmou, num razão por semana (`mval:<id>:<semana>:j|f|g`): **journal** = dia com entrada do Caderno salva na nuvem (o servidor lê só o dia, nunca o texto; sincronizar até 8 dias depois ainda vale); **foco** = jornada do foco concluída com recibo (`/api/focus-journey`, `<sid>:done`; encerrar antes ou receber cedo não conta); **presente** = envio aceito por `/api/community?action=gift` (o dia do remetente). No salvamento, a contagem da nuvem é `max(gravado, min(app, confirmado))` e o resgate novo só entra com contagem confirmada >= alvo; o que já estava gravado ou pago nunca baixa nem se repete. Journal e foco contam no máximo 1 por dia. Limite: o saldo de Emblemas é escrito pelo app; o servidor garante o progresso e o resgate registrados, não o saldo.
