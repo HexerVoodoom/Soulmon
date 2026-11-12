@@ -33,6 +33,7 @@ import { creditGauge, gaugeContribution, gaugeFull, aplicarBuffClaGauge } from '
 import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
+import { closePastMonths } from './purposeAgg';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
 import { isBBStage, BB_MAX_HP } from './bbStage';
 
@@ -1358,6 +1359,13 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     maxActivityCap: newMaxActivityCap,
     attributesSinceLastEvolution: newRecentAttrs,
     habitRhythms: rhythms,
+    // Objetivo anual (E10): na virada que muda o mês, o mês que acabou fecha AGORA, com o ritmo de ontem já dentro.
+    // Só escreve `purpose` quando algo fechou (o mesmo objeto = sem mudança).
+    ...(() => {
+      const atual = (prev as any).purpose;
+      const fechado = closePastMonths({ rhythms, activities: prev.activities, purpose: atual, today: now, lastSeen: prev.lastResetDate });
+      return fechado && fechado !== atual ? { purpose: fechado } : {};
+    })(),
     // Energia NÃO zera na virada (dono, 18/10/2026, checklist B7; revoga a parte "zera todo dia" do §30/§40): ela segue só o relógio
     // de regeneração (`energyClock`) e a fome. Por isso não há mais `setEnergy(..., () => 0)` aqui.
     // Penalidade de fome (REGISTRO §45): a âncora e as janelas pagas atravessam a virada; só o que o resumo vai CONTAR é zerado.
