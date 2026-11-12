@@ -324,8 +324,8 @@ function ovo() {
   const o = $('[data-ovo]'); if (!o) return;
   const tocar = (c: string) => { o.classList.remove('toca'); void o.offsetWidth; o.classList.add(c); };
   o.addEventListener('click', () => tocar('toca'));
-  // Celular (dono, 12/11): ao passar pelo cristal no scroll, ele brilha e mexe UMA vez, sem toque.
-  if ('IntersectionObserver' in window && matchMedia('(max-width: 1023px)').matches) {
+  // Desktop e celular (dono, 12/11): ao passar pelo cristal no scroll, ele brilha e mexe UMA vez, sem toque.
+  if ('IntersectionObserver' in window) {
     new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) tocar('toca'); }, { threshold: 0.6 }).observe(o);
   }
 }
