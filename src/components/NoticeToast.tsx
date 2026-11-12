@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Language } from '../utils/i18n';
+import { checkBoxStyle, CheckMark } from './pixel/RitualPanel';
+import { autoTagText, autoTagAria } from '../utils/tarefaLink';
 
 /** Quanto o balão fica na tela sozinho. */
 export const NOTICE_TOAST_MS = 8000;
@@ -74,5 +76,42 @@ export function NoticeToast({ noticeKey, language, onOpen, onDone }: { noticeKey
     >
       {noticeToastText(noticeKey, language)}
     </button>
+  );
+}
+
+/**
+ * TAG "TAREFA" do check automático (beta12 §J, A7): borda arredondada, a palavra "Tarefa" e o checkbox JÁ marcado, como um recorte da
+ * linha da tarefa na Home, no mesmo canto e estilo do `NoticeToast` (no topo, `NOTICE_TOAST_MS`). Não é modal, não pega foco e NÃO
+ * bloqueia os botões de cuidado do pet (`pointerEvents: 'none'`: é só um aviso de que marcou). `role="status"` anuncia
+ * "Tarefa concluída automaticamente: <nome>" ao leitor de tela. Sem animação própria (o respeito a `prefers-reduced-motion` é por
+ * construção: nada se move). A fila é do App: no máximo UM aviso por vez no topo.
+ */
+export function TaskAutoTag({ name, language, onDone }: { name: string; language: Language; onDone: () => void }) {
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
+  useEffect(() => {
+    const t = setTimeout(() => doneRef.current(), NOTICE_TOAST_MS);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div
+      role="status"
+      aria-label={autoTagAria(name, language)}
+      data-task-auto-tag
+      style={{
+        position: 'fixed', zIndex: 150, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none',
+        top: 'calc(env(safe-area-inset-top, 0px) + 12px)', maxWidth: 'min(92vw, 420px)', minHeight: 44,
+        padding: '6px 16px 6px 10px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8,
+        background: 'rgba(15,42,41,.96)', color: '#E9F5F2',
+        border: '2px solid var(--sm2-gold-fill)', borderRadius: 999,
+        boxShadow: '0 6px 18px rgba(0,0,0,.45)',
+        font: '500 14px/1.35 var(--sm2-font-text)',
+      }}
+    >
+      <span aria-hidden="true" data-task-auto-check style={checkBoxStyle({ checked: true, mixed: false, dashed: false })}>
+        <CheckMark />
+      </span>
+      <span aria-hidden="true">{autoTagText(language)}</span>
+    </div>
   );
 }

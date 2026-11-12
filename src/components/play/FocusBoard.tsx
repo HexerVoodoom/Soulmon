@@ -56,8 +56,8 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   /** Cria uma tarefa na hora (o modal de escolha oferece isso quando não há tarefa aberta). `false` = não coube. */
   onCreateTask?: (name: string) => boolean;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
-  /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). */
-  onFocusCycle?: () => void;
+  /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). Leva o id da tarefa ESCOLHIDA na sessão (`habit:<id>` = hábito): o App marca o hábito de foco adotado que a sessão usou (beta12 §J, Q5). */
+  onFocusCycle?: (taskId?: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const [keys, setKeys] = useState<JourneyKeyId[]>(loadBoardKeys);
@@ -139,7 +139,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
           setRestState(restFromFocusEnd(focusEndAt(had), r.now - Date.now(), Date.now(), { mode: had.mode, env: had.env, items: itens, key: dKey }));
           updateSession(s => ({ ...s, cycles: s.cycles + 1, ...(dKey ? { key: true } : {}) }));
           setRestNote(null); setDoneNote(null);
-          onFocusCycle?.();
+          onFocusCycle?.(session?.taskId);
           return;
         }
         setSession(null); saveFocusSession(null);
