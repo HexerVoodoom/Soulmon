@@ -56,6 +56,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-foco-journey-keys',
   'soulmon-foco-journey-prefs',
   'soulmon-foco-session',
+  'soulmon-foco-rest',
   'soulmon-evo-seen-at',
   'soulmon-chama-pago',
   'soulmon-chama-aviso',

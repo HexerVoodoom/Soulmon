@@ -11,7 +11,7 @@ import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import { FOCUS_ENVIRONMENTS, isFocusEnvironmentId, type FocusEnvironmentId } from '../../utils/focusExpedition';
-import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
+import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
 import { keyEarned, loadBoardKeys, saveBoardKeys } from '../../utils/focusBoard';
 import { journeyAction, journeyStart, journeyState, type ActiveJourney, type JourneyResponse } from '../../utils/focusJourneyApi';
 import { buildPlan, emptyDraft, normalizeSession, toDraft, type SessionDraft } from '../../utils/focoSessao';
@@ -19,6 +19,9 @@ import { readJson, writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { formatClock } from '../../utils/focoTimer';
 import { OficinaPlano } from './OficinaPlano';
+import { RestRoom } from './RestRoom';
+import { loadRest, restFromFocusEnd, restLeftMs, restEndsAt, saveRest, type RestState } from '../../utils/focusRest';
+import { cancelFocusAlarm, scheduleFocusAlarm } from '../../utils/focusNotify';
 import { FocusTaskPicker } from './FocusTaskPicker';
 import { loadFocusSession, saveFocusSession, type FocusSessionState } from '../../utils/focusSession';
 import { mergeItems } from '../../utils/journeyItemInfo';
@@ -68,6 +71,19 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   const [envOpen, setEnvOpen] = useState(false);
   const [session, setSession] = useState<FocusSessionState | null>(loadFocusSession);
   const [pickOpen, setPickOpen] = useState(false);
+  const [rest, setRest] = useState<RestState | null>(() => loadRest());
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [restNote, setRestNote] = useState<string | null>(null);
+  const setRestState = useCallback((r: RestState | null) => { setRest(r); saveRest(r); }, []);
+  /* O relógio do descanso é o do aparelho, por timestamp: sair e voltar não muda a conta. */
+  useEffect(() => {
+    if (!rest) return;
+    const tick = () => setNowMs(Date.now());
+    tick();
+    const id = setInterval(tick, 1000);
+    document.addEventListener('visibilitychange', tick);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', tick); };
+  }, [rest]);
   const updateSession = useCallback((fn: (s: FocusSessionState) => FocusSessionState) => {
     setSession(prev => { if (!prev) return prev; const n = fn(prev); saveFocusSession(n); return n; });
   }, []);
@@ -82,6 +98,15 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
     setActive(r.active);
   }, [onGrants, updateSession]);
   const [seen, setSeen] = useState<Set<string>>(new Set());
+  /* Avisos com o app fechado (§301): «hora do descanso» no fim do foco (anda com as pausas) e «descanso acabou» no fim do descanso. */
+  useEffect(() => {
+    const end = active ? focusEndAt(active) : null;
+    if (end === null) cancelFocusAlarm('focus-end'); else scheduleFocusAlarm('focus-end', end - delta, language);
+  }, [active, delta, language]);
+  useEffect(() => {
+    if (!rest) { cancelFocusAlarm('rest-end'); return; }
+    scheduleFocusAlarm('rest-end', restEndsAt(rest), language);
+  }, [rest, language]);
 
   const refresh = useCallback(() => {
     if (!saveId) { setOnline(false); return; }
@@ -102,10 +127,20 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
       setSeen(new Set(Object.keys(r.grants ?? {})));
       if (!r.active && had) {
         setKeys([]); saveBoardKeys([]);
-        setSession(null); saveFocusSession(null);
         setDraft(emptyDraft()); saveDraft(emptyDraft());
+        if (action === 'claim') {
+          /* O foco acabou: o Soulmon atravessa a porta e chega à sala de descanso (§301). A sessão (tarefa, achados) continua. */
+          const itens = Object.keys(r.grants ?? {}).filter(k => !seen.has(k)).flatMap(k => r.grants![k]);
+          const dKey = !!r.dungeonKeyDay;
+          setRestState(restFromFocusEnd(focusEndAt(had), r.now - Date.now(), Date.now(), { mode: had.mode, env: had.env, items: itens, key: dKey }));
+          updateSession(s => ({ ...s, cycles: s.cycles + 1, ...(dKey ? { key: true } : {}) }));
+          setRestNote(null); setDoneNote(null);
+          onFocusCycle?.();
+          return;
+        }
+        setSession(null); saveFocusSession(null);
+        setRestState(null);
         setShowJourney(false);
-        if (action === 'claim') onFocusCycle?.();
         setDoneNote(action === 'end'
           ? (isPt ? 'Jornada encerrada. O que o Soulmon achou pelo caminho já é seu.' : 'Journey ended. What your Soulmon found on the way is yours.')
           : r.dungeonKeyDay ? (isPt ? 'Jornada concluída. A chave do Calabouço é sua. Válida por 48 h · 1 uso por dia.' : 'Journey complete. The Dungeon key is yours. Valid for 48 h · 1 use per day.')
@@ -125,6 +160,24 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
       .then(r => { setOnline(true); absorb(r); if (r.active) { setPickOpen(false); setShowJourney(true); } else { setSession(null); saveFocusSession(null); } })
       .catch(() => { setOnline(false); setSession(null); saveFocusSession(null); setPickOpen(false); })
       .finally(() => setBusy(false));
+  };
+  /** «Seguir»: outro foco, nova travessia, na mesma sessão (mesma tarefa, mesmo ritmo e cenário). */
+  const nextCycle = () => {
+    if (!saveId || busy || !rest) return;
+    setBusy(true); setRestNote(null);
+    journeyStart(saveId, { mode: rest.mode, env: rest.env, keys: [], day: todayKey })
+      .then(r => { setOnline(true); absorb(r); if (r.active) { setRestState(null); setShowJourney(true); } else setRestNote(isPt ? 'Não deu para seguir agora.' : "Couldn't keep going right now."); })
+      .catch(() => { setOnline(false); setRestNote(isPt ? 'Precisa de conexão para seguir.' : 'Needs a connection to keep going.'); })
+      .finally(() => setBusy(false));
+  };
+  /** «Concluir a missão»: encerra a sessão inteira, com o resumo. O que foi achado já é do jogador. */
+  const finishMission = () => {
+    const n = session?.cycles ?? 1;
+    const key = !!(session?.key || rest?.key);
+    setRestState(null); setSession(null); saveFocusSession(null); setShowJourney(false); setRestNote(null);
+    setDoneNote(isPt
+      ? `Missão concluída: ${n} ${n === 1 ? 'foco' : 'focos'}. O que o Soulmon achou já é seu.${key ? ' A chave do Calabouço é sua hoje.' : ''}`
+      : `Mission complete: ${n} ${n === 1 ? 'focus' : 'focuses'}. What your Soulmon found is yours.${key ? ' The Dungeon key is yours today.' : ''}`);
   };
   const setPref = (p: Partial<typeof prefs>) => { const n = { ...prefs, ...p }; setPrefs(n); writeJson(STORAGE_KEYS.FOCO_JOURNEY_PREFS, n, { silent: true }); };
   const envIdx = FOCUS_ENVIRONMENTS.findIndex(e => e.id === prefs.env);
@@ -153,7 +206,11 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
     <div data-focus-board style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <article data-focus-session style={{ ...sheetCard, alignItems: 'stretch', gap: 10 }}>
         <h3 style={{ ...sheetCardTitle, margin: 0 }}>{isPt ? 'Sessão de foco' : 'Focus session'}</h3>
-        {active ? <>
+        {rest && !active ? <>
+          <p className="sm2-num" data-focus-rest-line style={{ ...sm2Text, margin: 0 }}>{isPt ? 'O Soulmon está descansando' : 'Your Soulmon is resting'} · {formatClock(restLeftMs(rest, nowMs))}</p>
+          {session && <p data-focus-session-task style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Tarefa: ' : 'Task: '}{session.taskName}</p>}
+          <button type="button" data-focus-return-rest onClick={() => setShowJourney(true)} style={{ ...sm2Button('primary'), minHeight: 48 }}>{isPt ? 'Voltar ao descanso' : 'Back to the break'}</button>
+        </> : active ? <>
           <p className="sm2-num" style={{ ...sm2Text, margin: 0 }}>{isPt ? 'O Soulmon está em jornada' : 'Your Soulmon is on a journey'} · {formatClock(left)}</p>
           {session && <p data-focus-session-task style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Tarefa: ' : 'Task: '}{session.taskName}</p>}
           <button type="button" data-focus-return onClick={() => setShowJourney(true)} style={{ ...sm2Button('primary'), minHeight: 48 }}>{isPt ? 'Voltar à jornada' : 'Back to the journey'}</button>
@@ -200,6 +257,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
       {pickOpen && <FocusTaskPicker language={language} tasks={tasks} initialId={session?.taskId} busy={busy} onClose={() => setPickOpen(false)} onPick={begin} onCreate={onCreateTask} />}
       {envOpen && <EnvModal isPt={isPt} current={prefs.env} onPick={id => { setPref({ env: id }); setEnvOpen(false); }} onClose={() => setEnvOpen(false)} />}
 
+      {showJourney && !active && rest && <RestRoom language={language} rest={rest} petSprite={petSprite} cycles={session?.cycles ?? 1} now={nowMs} busy={busy} error={restNote} onNext={nextCycle} onFinish={finishMission} onClose={() => setShowJourney(false)} />}
       {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} collected={session?.collected ?? []} focusTaskId={session?.taskId} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
         onPause={() => act('pause')} onResume={() => act('resume')} onClaim={() => act('claim')} onEnd={() => act('end')} onClose={() => setShowJourney(false)} />}
     </div>

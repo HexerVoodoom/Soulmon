@@ -7,7 +7,7 @@ import type { JourneyItem } from './focusJourney';
 import { readJson, removeLocal, writeJson } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 
-export interface FocusSessionState { taskId: string; taskName: string; collected: JourneyItem[]; cycles: number }
+export interface FocusSessionState { taskId: string; taskName: string; collected: JourneyItem[]; cycles: number; /** Algum foco da sessão deu a chave do Calabouço (§301). */ key?: boolean }
 
 const isItem = (x: unknown): x is JourneyItem => {
   const o = x as Partial<JourneyItem> | null;
@@ -21,6 +21,7 @@ export function normalizeFocusSession(raw: unknown): FocusSessionState | null {
     taskId: o.taskId.slice(0, 120), taskName: o.taskName.slice(0, 200),
     collected: Array.isArray(o.collected) ? o.collected.filter(isItem).slice(0, 200) : [],
     cycles: typeof o.cycles === 'number' && o.cycles >= 0 && o.cycles < 1000 ? Math.floor(o.cycles) : 0,
+    ...(o.key === true ? { key: true } : {}),
   };
 }
 export const loadFocusSession = (): FocusSessionState | null => normalizeFocusSession(readJson<unknown>(STORAGE_KEYS.FOCO_SESSION, null));

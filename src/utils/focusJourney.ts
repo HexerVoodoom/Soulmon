@@ -23,6 +23,8 @@ export const SPECIAL_CHANCE = 0.4;
 export const JOURNEY_ITEMS_DAILY_CAP = 16;
 export const JOURNEY_ESSENCES_DAILY_CAP = 8;
 export const JOURNEY_COMPLETIONS_REWARDED = 4;
+/** Focos extras por dia (depois dos 4 recompensados) que ainda dão um item simples (§302). */
+export const JOURNEY_EXTRA_COMPLETIONS = 3;
 /** Pausas por foco (D-4). */
 export const JOURNEY_MAX_PAUSES = 3;
 export const JOURNEY_MAX_PAUSED_MS = 30 * 60_000;
@@ -68,6 +70,11 @@ export function focusElapsed(c: JourneyClock, now: number): number {
   const parado = Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0));
   return Math.max(0, now - c.startAt - parado);
 }
+/** Instante (relógio do servidor) em que o foco acaba, ou `null` em pausa (o fim anda enquanto pausado). Dono do aviso "hora do descanso". */
+export function focusEndAt(c: JourneyClock): number | null {
+  if (c.pausedAt !== null) return null;
+  return c.startAt + JOURNEY_MODES[c.mode].focusMin * 60_000 + Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs);
+}
 /** Progresso 0..1 do foco. */
 export function journeyProgress(c: JourneyClock, now: number): number {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 60_000));
@@ -102,6 +109,8 @@ export function completionLoot(seed: number, nth: number, env: FocusEnvironmentI
     const rng = mulberry((seed ^ 0xc0ffee) >>> 0);
     return [{ kind: 'essence', id: ENV_ELEMENT[env], qty: 1 }, { kind: 'food', id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
   }
+  /* Ciclos extras do Pomodoro (§302): do 5º ao 7º foco do dia, UM item simples (baú comum), sem Bits; depois disso nada. */
+  if (nth <= JOURNEY_COMPLETIONS_REWARDED + JOURNEY_EXTRA_COMPLETIONS) return chestLoot(seed, { k: 998, at: 1, type: 'common' }, [], env);
   return [];
 }
 

@@ -177,6 +177,96 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
   });
 });
 
+
+describe('porta, sala de descanso e ciclos (§301)', () => {
+  const key = (k: string) => JSON.parse(localStorage.getItem(k) ?? 'null');
+  /** Servidor com `claim`: ao fim do foco devolve o baú de conclusão e a chave do Calabouço, e a jornada some. */
+  const stubServer = () => {
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) : null;
+      const now = Date.now();
+      if (body?.action === 'start') {
+        server.active = { sid: 's' + now, seed: 7, mode: body.mode, env: body.env, keys: body.keys, day: body.day, startAt: now, pausedMs: 0, pausedAt: null, pauses: 0 };
+      } else if (body?.action === 'claim' && server.active) {
+        const a = server.active as { startAt: number };
+        if (now - a.startAt >= 25 * 60_000) { server.grants = { done1: [{ kind: 'material', id: 'ore', qty: 1 }] }; server.active = null; return new Response(JSON.stringify({ active: null, ledger: { day: DIA, items: 1, ess: 0, done: 1 }, grants: server.grants, dungeonKeyDay: DIA, now }), { status: 200 }); }
+      }
+      return new Response(JSON.stringify({ active: server.active, ledger: { day: DIA, items: 0, ess: 0, done: 0 }, grants: server.grants, now }), { status: 200 });
+    }));
+  };
+  const finished = (minAgo = 26) => ({ sid: 's0', seed: 7, mode: 'p25', env: 'cavern', keys: [], day: DIA, startAt: Date.now() - minAgo * 60_000, pausedMs: 0, pausedAt: null, pauses: 0 });
+  const seedSession = (cycles = 0) => localStorage.setItem(STORAGE_KEYS.FOCO_SESSION, JSON.stringify({ taskId: 't1', taskName: 'Escrever o relatório', collected: [], cycles }));
+  const openJourney = async (container: HTMLElement) => {
+    await waitFor(() => expect(q(container, '[data-focus-return]')).not.toBeNull());
+    await act(async () => { fireEvent.click(q(container, '[data-focus-return]')!); });
+  };
+
+  it('a sala de descanso chega quando o foco acaba, com o Baú aberto e a chave dentro dela', async () => {
+    stubServer(); seedSession(); server.active = finished();
+    const onFocusCycle = vi.fn();
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} onFocusCycle={onFocusCycle} />);
+    await openJourney(container);
+    await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull());
+    expect(document.querySelector('[data-journey]')).toBeNull();
+    expect(document.querySelector('[data-rest-fallback="cavern"]')).not.toBeNull(); // sem arte: fundo gerado em código
+    expect(document.querySelector('[data-rest-key]')!.textContent).toContain('chave do Calabouço');
+    expect(document.querySelector('[data-rest-chest]')!.textContent).toContain('Minério');
+    expect(document.querySelector('[data-rest-cycles]')!.textContent).toBe('1 foco concluído');
+    expect(onFocusCycle).toHaveBeenCalledTimes(1);
+    // o descanso começou no FIM do foco (há ~1 min), não agora
+    expect(document.querySelector('[data-rest-clock]')!.textContent).toMatch(/^0[34]:[0-5]\d$/);
+    expect(key(STORAGE_KEYS.FOCO_REST).mode).toBe('p25');
+    expect(Math.abs(key(STORAGE_KEYS.FOCO_REST).startedAt - (Date.now() - 60_000))).toBeLessThan(5_000);
+  });
+  it('a porta existe no fim do mapa e só abre quando o Soulmon chega', async () => {
+    server.active = finished(5);
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await openJourney(container);
+    expect(document.querySelector('[data-journey-door]')!.getAttribute('data-open')).toBe('false');
+  });
+  it('o descanso é por timestamp: voltar depois do fim mostra «concluído», e o card da Oficina leva de volta a ele', async () => {
+    seedSession(1);
+    localStorage.setItem(STORAGE_KEYS.FOCO_REST, JSON.stringify({ startedAt: Date.now() - 6 * 60_000, mode: 'p25', env: 'forest', items: [], key: false }));
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await waitFor(() => expect(q(container, '[data-focus-return-rest]')).not.toBeNull());
+    expect(q(container, '[data-focus-rest-line]')!.textContent).toContain('00:00');
+    fireEvent.click(q(container, '[data-focus-return-rest]')!);
+    expect(document.querySelector('[data-rest-room]')!.getAttribute('data-rest-over')).toBe('true');
+    expect(document.querySelector('[data-rest-clock]')!.textContent).toBe('00:00');
+    // sair da sala não encerra o descanso
+    fireEvent.click(document.querySelector('[data-rest-close]')!);
+    expect(document.querySelector('[data-rest-room]')).toBeNull();
+    expect(key(STORAGE_KEYS.FOCO_REST)).not.toBeNull();
+  });
+  it('«Seguir» começa outro foco na mesma sessão; «Concluir a missão» encerra tudo com o resumo', async () => {
+    stubServer(); seedSession(); server.active = finished();
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await openJourney(container);
+    await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull());
+    await act(async () => { fireEvent.click(document.querySelector('[data-rest-next]')!); });
+    await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
+    expect(document.querySelector('[data-rest-room]')).toBeNull();
+    expect(key(STORAGE_KEYS.FOCO_REST)).toBeNull();
+    expect(key(STORAGE_KEYS.FOCO_SESSION).taskId).toBe('t1'); // a tarefa continua
+    expect(key(STORAGE_KEYS.FOCO_SESSION).cycles).toBe(1);
+    expect((server.active as { mode: string }).mode).toBe('p25');
+    expect((server.active as { env: string }).env).toBe('cavern');
+    // segundo ciclo acaba: de novo a sala, agora com 2 focos
+    server.active = finished();
+    fireEvent.click(document.querySelector('[data-journey-close]')!);
+    await act(async () => { fireEvent.click(q(container, '[data-focus-return]')!); });
+    await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull());
+    expect(document.querySelector('[data-rest-cycles]')!.textContent).toBe('2 focos concluídos');
+    await act(async () => { fireEvent.click(document.querySelector('[data-rest-finish]')!); });
+    expect(document.querySelector('[data-rest-room]')).toBeNull();
+    expect(q(container, '[data-focus-done]')!.textContent).toContain('Missão concluída: 2 focos');
+    expect(q(container, '[data-focus-done]')!.textContent).toContain('chave do Calabouço');
+    expect(key(STORAGE_KEYS.FOCO_REST)).toBeNull();
+    expect(key(STORAGE_KEYS.FOCO_SESSION)).toBeNull();
+    expect(q(container, '[data-focus-start]')).not.toBeNull();
+  });
+});
+
 describe('aviso do baú', () => {
   it('mostra o nome do material e da essência, não o id', async () => {
     const { itemLabel } = await import('./JourneyScreen');

@@ -2211,6 +2211,10 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 
 `FocusTaskPicker({ language, tasks, initialId?, busy?, onClose, onPick, onCreate? })`: `ModalSheet` que escolhe a tarefa da sessão (sempre; sem abertas, campo para criar). `FocusBag` (baú da sessão: `items`, `pending`, ref no botão; tooltip com o coletado, fecha ao tocar fora/Voltar), `FlyingItem` (voo do item; `onDone` ao terminar, na hora sem Web Animations ou com movimento reduzido) e `ItemIcon` (imagem do slot ou emoji). `FocusBoard` ganhou `onCreateTask`, `JourneyScreen` ganhou `collected` e `focusTaskId`, `FocusTaskDock` ganhou `focusId`; `AreaView`: `play.onCreateFocusTask`. **Régua:** `FocusBoard.render.test.tsx`, `FocusBag.render.test.tsx`.
 
+### `src/components/play/RestRoom.tsx` (12/11/2026 — REGISTRO §301)
+
+`RestRoom({ language, rest, petSprite, cycles, now, onNext, onFinish, onClose, busy?, error? })`: a sala de descanso em tela cheia (portal, z 210): card do relógio (`mm:ss` restante, «Descanso concluído» no fim), Soulmon, «Baú aberto» com itens e chave do Calabouço e os botões «Seguir» / «Concluir a missão». Fundo = `OASIS_ART[env]` (slot) ou `OasisFallback` (gradiente + lagoa, paleta `OASIS_TONE`), ambos em `journeyArt.ts`. `JourneyScreen` ganhou a porta (`data-journey-door`); `FocusBoard` guarda o `RestState` e faz `nextCycle`/`finishMission`. **Régua:** `FocusBoard.render.test.tsx` (descrição «porta, sala de descanso e ciclos»).
+
 ### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
 
 `TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.

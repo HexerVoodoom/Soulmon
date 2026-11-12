@@ -246,6 +246,8 @@ export const STORAGE_KEYS = {
   FOCO_JOURNEY_PREFS: 'soulmon-foco-journey-prefs',
   /** A SESSÃO em andamento (§300): tarefa escolhida, o que o Soulmon achou e quantos focos já fecharam. Aparelho, não save. Dono: `utils/focusSession.ts`. */
   FOCO_SESSION: 'soulmon-foco-session',
+  /** O DESCANSO em curso (§301): quando começou (timestamp), ritmo, cenário e o que o baú deu. Timestamps, não timers: o tempo segue com o app fechado. Aparelho. Dono: `utils/focusRest.ts`. */
+  FOCO_REST: 'soulmon-foco-rest',
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
    *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
   FOCO_VIBRATE: 'soulmon-foco-vibrate',
