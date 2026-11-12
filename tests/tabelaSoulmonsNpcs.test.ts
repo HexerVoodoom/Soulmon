@@ -20,7 +20,8 @@ import { CORVO_FORM_IDS } from '../src/utils/corvoPet';
 
 type Linha = Record<string, string>;
 const RAIZ = path.resolve(__dirname, '..');
-const CABECALHO = 'id,tipo_entidade,linha_id,estagio,ramo,nome_pt,nome_en,elemento,ataque_basico,ataque_especial_escola,ataque_especial_familia,origem_ataque,fonte_codigo';
+const CABECALHO = 'id,tipo_entidade,linha_id,estagio,ramo,nome_pt,nome_en,elemento,ataque_basico,ataque_especial_escola,ataque_especial_familia,origem_ataque,fonte_codigo,usar_no_jogo';
+const NL = String.fromCharCode(10);
 const ORACLE_IDS = ['agua', 'fogo', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial'];
 
 let linhas: Linha[]; let vocab: { elementos: string[]; escolas: string[]; familias: string[] }; let contagem: Record<string, number>;
@@ -51,7 +52,7 @@ function logica() {
     toCsv: (l: Linha[]) => string; parseCsv: (t: string) => { registros: string[][] }; COLUNAS: string[]; NOME_ARQUIVO_CSV: string;
   };
 }
-const ENUMS = { estagio: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'], ramo: ['power', 'harmony', 'benevolence'], origem_ataque: ['ficha', 'padrao', 'sem_ataque'] };
+const ENUMS = { estagio: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'], ramo: ['power', 'harmony', 'benevolence'], origem_ataque: ['ficha', 'padrao', 'sem_ataque'], usar_no_jogo: ['sim', 'nao'] };
 const listas = () => ({ ...ENUMS, elemento: vocab.elementos, ataque_basico: vocab.escolas, ataque_especial_escola: vocab.escolas, ataque_especial_familia: vocab.familias });
 
 describe('E2.6-1 total e contagem', () => {
@@ -157,8 +158,8 @@ describe('E2.6-5 filtro (lógica do HTML gerado)', () => {
     const idx = L.filtrarIndices(linhas, { tipo_entidade: ['npc'] }, '');
     expect(L.parseCsv(L.toCsv(idx.map((i) => linhas[i]))).registros.length - 1).toBe(contagem.npc);
   });
-  it('os 9 filtros do E2.5 existem no cabeçalho do HTML', () => {
-    for (const c of ['tipo_entidade', 'linha_id', 'estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque']) expect(html).toContain(`'${c}'`);
+  it('os 9 filtros do E2.5 + usar_no_jogo existem no cabeçalho do HTML', () => {
+    for (const c of ['usar_no_jogo', 'tipo_entidade', 'linha_id', 'estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque']) expect(html).toContain(`'${c}'`);
   });
 });
 
@@ -172,7 +173,7 @@ describe('E2.6-6 painel de edição', () => {
       for (const c of campos) {
         if (c.valor !== linhas[i][c.col]) diferencas++;
         if (['id', 'tipo_entidade', 'fonte_codigo'].includes(c.col)) expect(c.tipo).toBe('ro');
-        if (['estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque'].includes(c.col)) {
+        if (['estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque', 'usar_no_jogo'].includes(c.col)) {
           expect(c.tipo, c.col).toBe('select');
           expect(c.opcoes, `${linhas[i].id}:${c.col}`).toContain(linhas[i][c.col]); // o valor atual SEMPRE é uma opção (select abre nele)
         }
@@ -194,7 +195,7 @@ describe('E2.6-7/8 CSV: round trip e diff de edição', () => {
     expect(a.includes(String.fromCharCode(13))).toBe(false);
     expect(a).toBe(toCsv(linhas)); // o código embutido no HTML = o código do script
     expect(readFileSync(path.join(pasta, NOME_ARQUIVO_CSV), 'utf8')).toBe(a);
-    expect(L.NOME_ARQUIVO_CSV).toBe('soulmon-npcs-beta12-v1.csv');
+    expect(L.NOME_ARQUIVO_CSV).toBe('soulmon-npcs-beta12-v2.csv');
     // reler o CSV e exportar de novo dá o mesmo texto (round trip byte a byte)
     const reg = L.parseCsv(a).registros; const volta = reg.slice(1).map((r) => Object.fromEntries(L.COLUNAS.map((c, i) => [c, r[i]])) as Linha);
     expect(L.toCsv(volta)).toBe(a);
@@ -225,7 +226,7 @@ describe('E2.6-9 importação (validador)', () => {
   });
   it('id desconhecido é recusado com o número da linha', () => {
     const csv = toCsv(linhas.slice(0, 3)).trimEnd().split('\n');
-    csv.splice(2, 0, 'soulmon.fantasma.rookie,soulmon,fantasma,rookie,,X,X,fogo,conjuracao,conjuracao,direct,padrao,teste');
+    csv.splice(2, 0, 'soulmon.fantasma.rookie,soulmon,fantasma,rookie,,X,X,fogo,conjuracao,conjuracao,direct,padrao,teste,sim');
     const r = validarImportacao(csv.join('\n') + '\n', linhas, vocab);
     expect(r.ok).toBe(false);
     expect(r.erros).toHaveLength(1);
@@ -244,6 +245,45 @@ describe('E2.6-9 importação (validador)', () => {
     expect(validarImportacao('a,b\n1,2\n', linhas, vocab).erros[0].linha).toBe(1);
     const r = validarImportacao(toCsv([{ ...linhas[0], fonte_codigo: 'outra' }]), linhas, vocab);
     expect(r.ok).toBe(false); expect(r.erros[0].linha).toBe(2);
+  });
+});
+
+describe('v2: coluna usar_no_jogo', () => {
+  it('default sim em todas as linhas; é a última coluna do cabeçalho', () => {
+    expect(linhas.every((l) => l.usar_no_jogo === 'sim')).toBe(true);
+    expect((COLUNAS as string[])[COLUNAS.length - 1]).toBe('usar_no_jogo');
+    expect(jsonGerado.linhas.every((l) => l.usar_no_jogo === 'sim')).toBe(true);
+  });
+  it('filtro por usar_no_jogo: nao mostra só as marcadas; painel o trata como seleção sem opção vazia', () => {
+    const L = logica();
+    const ed = linhas.map((l) => ({ ...l })); ed[1].usar_no_jogo = 'nao'; ed[5].usar_no_jogo = 'nao';
+    expect(L.filtrarIndices(ed, { usar_no_jogo: ['nao'] }, '')).toEqual([1, 5]);
+    expect(L.filtrarIndices(ed, { usar_no_jogo: ['sim', 'nao'] }, '').length).toBe(ed.length);
+    const campo = L.camposDoPainel(ed[1], listas()).find((c) => c.col === 'usar_no_jogo')!;
+    expect(campo.tipo).toBe('select'); expect(campo.opcoes).toEqual(['sim', 'nao']); expect(campo.valor).toBe('nao');
+  });
+  it('round trip v2 preserva usar_no_jogo; editar muda só essa coluna', () => {
+    const L = logica();
+    const ed = linhas.map((l) => ({ ...l })); ed[2].usar_no_jogo = 'nao';
+    const csv = L.toCsv(ed);
+    const reg = L.parseCsv(csv).registros;
+    expect(reg[0].at(-1)).toBe('usar_no_jogo'); expect(reg[3].at(-1)).toBe('nao');
+    const volta = reg.slice(1).map((r) => Object.fromEntries(L.COLUNAS.map((c, i) => [c, r[i]])) as Linha);
+    expect(L.toCsv(volta)).toBe(csv);
+    const r = validarImportacao(csv, linhas, vocab);
+    expect(r.ok).toBe(true);
+    expect(r.atualizacoes).toHaveLength(1);
+    expect(r.atualizacoes[0].campos).toEqual({ usar_no_jogo: { de: 'sim', para: 'nao' } });
+  });
+  it('importador aceita v1 (sem a coluna) como sim e v2; valor inválido é erro com a linha', () => {
+    const v1 = toCsv(linhas.slice(0, 4)).trimEnd().split(NL).map((ln: string) => ln.replace(/,[^,]*$/, '')); // tira a última coluna
+    const csv1 = v1.join(NL) + NL;
+    expect(csv1.split(NL)[0]).toBe(CABECALHO.replace(',usar_no_jogo', ''));
+    const r1 = validarImportacao(csv1, linhas, vocab);
+    expect(r1.erros).toEqual([]); expect(r1.atualizacoes).toEqual([]); expect(r1.ok).toBe(true);
+    const ruim = validarImportacao(toCsv([linhas[0], { ...linhas[1], usar_no_jogo: 'talvez' }, { ...linhas[2], usar_no_jogo: '' }]), linhas, vocab);
+    expect(ruim.ok).toBe(false);
+    expect(ruim.erros.map((e: { linha: number }) => e.linha)).toEqual([3, 4]);
   });
 });
 

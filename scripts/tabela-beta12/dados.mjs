@@ -61,7 +61,7 @@ export async function gerarDados() {
     origem_ataque: 'padrao',
   });
   const semAtaque = { ataque_basico: '', ataque_especial_escola: '', ataque_especial_familia: '', origem_ataque: 'sem_ataque' };
-  const add = (l, sprite) => { linhas.push(l); if (sprite) sprites[l.id] = sprite; };
+  const add = (l, sprite) => { linhas.push({ ...l, usar_no_jogo: 'sim' }); if (sprite) sprites[l.id] = sprite; };
 
   // Soulmon 1: o corvo, escada de 11 formas (CORVO_FORM_IDS)
   for (const forma of J.CORVO_FORM_IDS) {

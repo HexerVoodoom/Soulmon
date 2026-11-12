@@ -142,7 +142,7 @@ td.id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, 
       if (SO_LEITURA.indexOf(c) >= 0) return { col: c, tipo: 'ro', valor: l[c] };
       if (listas[c]) {
         var ops = listas[c].slice();
-        var obrigatorio = (c === 'estagio' || c === 'elemento') && l.tipo_entidade === 'soulmon';
+        var obrigatorio = c === 'usar_no_jogo' || ((c === 'estagio' || c === 'elemento') && l.tipo_entidade === 'soulmon');
         if (!obrigatorio && ops.indexOf('') < 0) ops.unshift('');
         if (l[c] && ops.indexOf(l[c]) < 0) ops.push(l[c]);
         if (!l[c] && ops.indexOf('') < 0) ops.unshift('');
@@ -156,8 +156,8 @@ td.id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, 
   var CANON = DADOS.linhas;
   var LINHAS = CANON.map(function (l) { return Object.assign({}, l); });
   var VOCAB = DADOS.vocab, ENUMS = DADOS.enums;
-  var FILTRAVEIS = ['tipo_entidade', 'linha_id', 'estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque'];
-  var COLS_TABELA = [['nome', 'Nome'], ['tipo_entidade', 'Entidade'], ['linha_id', 'Linha'], ['estagio', 'Estágio'], ['ramo', 'Tipo (ramo)'], ['elemento', 'Elemento base'], ['ataque_basico', 'Ataque básico'], ['ataque_especial_escola', 'Especial · escola'], ['ataque_especial_familia', 'Especial · família'], ['origem_ataque', 'Origem do ataque'], ['id', 'Id']];
+  var FILTRAVEIS = ['tipo_entidade', 'linha_id', 'estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque', 'usar_no_jogo'];
+  var COLS_TABELA = [['nome', 'Nome'], ['tipo_entidade', 'Entidade'], ['linha_id', 'Linha'], ['estagio', 'Estágio'], ['ramo', 'Tipo (ramo)'], ['elemento', 'Elemento base'], ['ataque_basico', 'Ataque básico'], ['ataque_especial_escola', 'Especial · escola'], ['ataque_especial_familia', 'Especial · família'], ['origem_ataque', 'Origem do ataque'], ['usar_no_jogo', 'Usar no jogo'], ['id', 'Id']];
   var ROT = { vazio: '(vazio)' };
   var filtros = {}; var busca = ''; var atual = null;
   var $ = function (id) { return document.getElementById(id); };
@@ -231,7 +231,7 @@ td.id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, 
   $('btnLimpar').addEventListener('click', function () { filtros = {}; busca = ''; $('busca').value = ''; fechaPop(); desenha(); });
   $('busca').addEventListener('input', function () { busca = this.value; desenha(); });
   // painel de edicao
-  var LISTAS = { estagio: ENUMS.estagio, ramo: ENUMS.ramo, elemento: VOCAB.elementos, ataque_basico: VOCAB.escolas, ataque_especial_escola: VOCAB.escolas, ataque_especial_familia: VOCAB.familias, origem_ataque: ENUMS.origem_ataque };
+  var LISTAS = { estagio: ENUMS.estagio, ramo: ENUMS.ramo, elemento: VOCAB.elementos, ataque_basico: VOCAB.escolas, ataque_especial_escola: VOCAB.escolas, ataque_especial_familia: VOCAB.familias, origem_ataque: ENUMS.origem_ataque, usar_no_jogo: ENUMS.usar_no_jogo };
   function abreEdicao(i) {
     atual = i; var l = LINHAS[i];
     $('tituloEdicao').textContent = l.nome_pt + ' · ' + l.id;

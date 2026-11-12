@@ -16,5 +16,8 @@ Escolhas abertas de E2.7, seguidas na opção mais conservadora (sem modal ao do
 10. **Testes em `tests/`** (não em `src/`): `tests/tabelaSoulmonsNpcs.test.ts`. O jsdom do `node_modules` compartilhado está quebrado (falta `@asamuzakjp/css-color`), então o teste do filtro e do painel roda o trecho `LOGICA` extraído do HTML gerado; a cola de DOM foi conferida no navegador.
 
 ## Como regenerar
-`node scripts/gerar-tabela-soulmons-npcs.mjs [pasta]` (padrão `docs/beta12/`): grava `tabela-soulmons-npcs.html` (publicar como Artifact privado), `.json` e `soulmon-npcs-beta12-v1.csv` (linha de base).
+`node scripts/gerar-tabela-soulmons-npcs.mjs [pasta]` (padrão `docs/beta12/`): grava `tabela-soulmons-npcs.html` (publicar como Artifact privado), `.json` e `soulmon-npcs-beta12-v2.csv` (linha de base).
 Validar um CSV editado antes de importar: `validarImportacao` em `scripts/tabela-beta12/importar.mjs`.
+
+## Formato v2: coluna `usar_no_jogo`
+11. **`usar_no_jogo`** ∈ {`sim`, `nao`}, default `sim`, ao FIM do cabecalho (14 colunas). Como a coluna muda, o formato sobe para v2: arquivo `soulmon-npcs-beta12-v2.csv` (o v1 gerado foi removido). No HTML e selecao editavel (sem opcao vazia) e filtravel (10 filtros). No importador: aceita v2 e v1 (sem a coluna; todas as linhas contam como `sim`); valor fora de {sim,nao} ou vazio e erro com o numero da linha. A coluna e so uma marca do dono: nada no jogo le `usar_no_jogo` ainda.

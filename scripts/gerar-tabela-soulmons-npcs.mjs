@@ -1,6 +1,6 @@
 // BETA12 E2 — gera a Tabela de Soulmons e NPCs (artefato do dono, FORA do jogo).
 // Uso: node scripts/gerar-tabela-soulmons-npcs.mjs [pastaDeSaida]   (padrao: docs/beta12)
-// Saidas: tabela-soulmons-npcs.json (linhas + contagem), tabela-soulmons-npcs.html (autocontido, miniaturas em data URI) e soulmon-npcs-beta12-v1.csv (linha de base).
+// Saidas: tabela-soulmons-npcs.json (linhas + contagem), tabela-soulmons-npcs.html (autocontido, miniaturas em data URI) e soulmon-npcs-beta12-v2.csv (linha de base).
 // So LE o repo. Nao publica nada. Formato do CSV: scripts/tabela-beta12/csv.mjs (E2.4). Validador de importacao: scripts/tabela-beta12/importar.mjs.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
