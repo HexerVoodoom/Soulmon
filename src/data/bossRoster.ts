@@ -125,7 +125,7 @@ export const BOSS_ROSTER: readonly BossEntry[] = [
     id: 'glimmerswarm', namePt: 'Glimmerswarm', nameEn: 'Glimmerswarm', tier: 'guardiao', funcao: 'feira',
     papelPt: 'Guardião da Feira (vitrine e multidão)', papelEn: 'Fair guardian (stalls and crowd)',
     elements: [el('alento', 'Alento'), el('fulgor', 'Fulgor')],
-    lorePt: 'Mil pontinhos de luz formam uma asa enorme e, no fim do dia, se dispersam sem pressa.',
+    lorePt: 'Mil pontinhos de luz formam uma asa enorme e, no fim do dia, se dispersam devagar.',
     loreEn: "A thousand points of light form one huge wing and, at day's end, drift apart without hurry.",
   },
   {

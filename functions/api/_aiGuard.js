@@ -98,7 +98,8 @@ export const AI_LIMITS = {
   // release/beta-1 (dono, 11/10): global 250 (cabe no Groq ~105 + Gemini ~250
   // gratuitos com folga) e `perMinute` 4 por conta (amortecedor de rajada: o Groq
   // gratuito é 30 RPM para a org inteira; memória do isolate, não exato).
-  chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 250, perMinute: 4 },
+  // 12/11/2026 (dono, beta12 §F 3): 20 mensagens por dia no plano grátis (demo 15 → 20); passado o limite o servidor responde uma fala padrão do Soulmon (`chat.js`), não erro. O teto global (250) não muda.
+  chat: { perAccount: 15, perAccountByTier: { demo: 20, paid: 20 }, global: 250, perMinute: 4 },
   // Transcrição (voz → Groq Whisper, direto do Worker desde 19/10/2026): passava sem cota nenhuma (`abuso-e-custo` V4.5).
   transcribe: { perAccount: 10, global: 100, perMinute: 4 },
   suggest: { perAccount: 30, global: 3000 },
