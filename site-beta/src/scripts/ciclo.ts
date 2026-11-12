@@ -99,7 +99,6 @@ export async function iniciar(S: Strs, fraco: boolean) {
   let sairModo = () => {};
   const sair = () => { sairModo(); const prox = secao.nextElementSibling as HTMLElement | null; (prox ?? secao).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   document.querySelector('[data-demo-fechar]')?.addEventListener('click', sair);
-  document.querySelector('[data-continuar]')?.addEventListener('click', sair);
   if (matchMedia('(max-width: 1023px)').matches) modoFoco(); else travarRolagem();
 
   // Celular (dono, 09/11): ao chegar na demo a tela escurece e a cena sobe sozinha na frente:

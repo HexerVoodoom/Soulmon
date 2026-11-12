@@ -1120,10 +1120,9 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .ovo-brilho { position: absolute; inset: -10%; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95), rgba(95,243,224,.55) 35%, transparent 65%); opacity: 0; pointer-events: none; }
 .ovo.toca img { animation: ovo-chacoalha .5s steps(6); transform-origin: 50% 90%; }
 .ovo.toca .ovo-brilho { animation: ovo-brilha .7s ease-out; }
-.ovo.toca2 img { animation: ovo-chacoalha .5s steps(6) 2; transform-origin: 50% 90%; }
 @keyframes ovo-chacoalha { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(3deg); } }
 @keyframes ovo-brilha { 0% { opacity: 0; transform: scale(.6); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
-@media (prefers-reduced-motion: reduce) { .ovo.toca img, .ovo.toca2 img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ovo.toca img { animation: none; } }
 
 /* 09/11: rótulo de forma e fim da demo com fundo esfumado (borda suave, igual ao véu do título) */
 .forma-titulo, .lista-bloco .demo-linha { background: none !important; position: relative; isolation: isolate; }
@@ -1180,3 +1179,15 @@ body:has(.ciclo.foco) .topo { visibility: hidden; }
 .comp-x { position: absolute; top: 4px; right: 6px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-size: 1.2rem; line-height: 1; font-weight: 700; color: #011c1f; cursor: pointer; }
 .comp-x:hover, .comp-x:focus-visible { background: rgba(1,28,31,.12); outline: none; }
 @media (max-width: 1023px) { .fixo .botao.primario.fixo-cta { height: 76px; border-width: 24px 28px; } .fixo { padding-bottom: calc(18px + env(safe-area-inset-bottom)); } .soul { --fixo-h: 100px; } }
+
+/* 12/11 (dono): desktop, fim da demo — Recomeçar e Entrar no beta na MESMA linha da palavra do estágio (esq. / centro / dir.). */
+@media (min-width: 1024px) {
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; column-gap: 24px; row-gap: 16px; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .cena-central { display: contents; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .disco-caixa { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .forma-titulo { grid-column: 2; grid-row: 2; margin: 0; order: 0; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .ciclo-fim { display: contents; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .ciclo-fim::before { display: none; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) [data-recomecar] { grid-column: 1; grid-row: 2; justify-self: end; }
+  .ciclo .demo-cena:has(.ciclo-fim:not([hidden])) .ciclo-fim .botao { grid-column: 3; grid-row: 2; justify-self: start; }
+}

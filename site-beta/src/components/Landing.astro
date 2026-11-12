@@ -73,7 +73,7 @@ const LINHA_DEMO = c.formas.every((fm) => temForma('noturno', fm)) ? 'noturno' :
 const LINHAS = [['planta', s.linhas[0]], ['fada', s.linhas[1]], ['fogo', s.linhas[2]], ...(NOTURNO ? [['noturno', s.linhaNoturno]] : [])] as [string, string][];
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 // Linha Som fora do sorteio (dono, 09/11: era o "sapinho").
-const POOL = JSON.stringify(elenco.elegiveis.filter((x) => !x.el.split(',').includes('som')).map((x) => [x.id, x.el, x.forma]));
+const POOL = JSON.stringify(elenco.elegiveis.filter((x) => x.el && !x.el.split(',').includes('som')).map((x) => [x.id, x.el, x.forma]));
 const lugarDados = universoDados.lugares as Record<string, { npc: string; pt: string; en: string; habita: { pt: string; en: string } }>;
 const falas = JSON.stringify(Object.fromEntries(Object.entries(lugarDados).map(([k, v]) => [k, { fala: v[lang], habita: v.habita[lang], npc: b(v.npc) }])));
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
@@ -188,7 +188,6 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <div class="ciclo-fim" data-fim hidden>
             <button type="button" class="link" data-recomecar>{c.recomecar}</button>
             <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
-            <button type="button" class="botao" data-continuar>{c.continuar}</button>
           </div>
           <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
           <p class="sr" aria-live="polite" data-anuncio></p>

@@ -294,13 +294,11 @@ function sorteio() {
   let ant = -1;
   bt.addEventListener('click', () => {
     const i = proximoSorteio(pool.length, ant); ant = i;
-    const [id, el, forma] = pool[i];
+    const [id, el] = pool[i];
     const nome = el.split(',').map((e) => els[e] ?? e).join(' + ');
     // Duas linhas (pedido do dono, 09/11): elemento com o ícone dele; forma com o ícone dela (PROVISÓRIO: .ico-forma vazio até o anexo).
-    const nomesF = JSON.parse(raiz.dataset.nomes!) as string[];
-    const nomeForma = forma ? nomesF[forma - 1] ?? '' : '';
     const pronto = () => {
-      img.alt = `${raiz.dataset.alt} ${nome}${nomeForma ? `, ${nomeForma}` : ''}`;
+      img.alt = `${raiz.dataset.alt} ${nome}`;
       img.hidden = false; sombra.hidden = true;
       info.replaceChildren();
       // Só ícones (dono, 09/11): par com elemento fundido mostra o ícone da fusão; senão, o ícone de cada elemento. O nome fica no alt.
@@ -310,7 +308,6 @@ function sorteio() {
       const icone = (src: string, alt: string) => { const ic = document.createElement('img'); ic.src = src; ic.width = ic.height = 48; ic.alt = alt; ic.title = alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; l1.append(ic); };
       if (f) icone(`${raiz.dataset.elBase}fusao/${f[0]}.webp`, f[raiz.dataset.lang === 'en' ? 2 : 1]);
       else for (const e of lista) icone(`${raiz.dataset.elBase}${e}.webp`, els[e] ?? e);
-      if (nomeForma) { const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'][forma - 1]; ic.title = nomeForma; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', nomeForma); l1.append(ic); }
       info.append(l1);
       raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' });
       if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
@@ -325,11 +322,11 @@ const OLHA_DIR: Record<string, number[]> = { arcano: [0,0,1,1,0], espaco: [1,1,1
 // Cristal-ovo do "Seu Soulmon está esperando" (dono, 09/11): toque = chacoalhada + brilho.
 function ovo() {
   const o = $('[data-ovo]'); if (!o) return;
-  const tocar = (c: string) => { o.classList.remove('toca', 'toca2'); void o.offsetWidth; o.classList.add(c); };
+  const tocar = (c: string) => { o.classList.remove('toca'); void o.offsetWidth; o.classList.add(c); };
   o.addEventListener('click', () => tocar('toca'));
-  // Celular (dono, 11/11): ao passar pelo cristal no scroll, duas mexidinhas sozinho.
+  // Celular (dono, 12/11): ao passar pelo cristal no scroll, ele brilha e mexe UMA vez, sem toque.
   if ('IntersectionObserver' in window && matchMedia('(max-width: 1023px)').matches) {
-    new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) tocar('toca2'); }, { threshold: 0.6 }).observe(o);
+    new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) tocar('toca'); }, { threshold: 0.6 }).observe(o);
   }
 }
 // ---------- Versão B: sorteio do Rookie e companheiro que evolui rolando (dono, 09/11) ----------
