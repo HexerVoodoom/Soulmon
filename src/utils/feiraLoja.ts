@@ -115,7 +115,7 @@ export function shopItemOnOffer(offer: FeiraLojaItem): ShopItem | null {
  */
 export function applyFeiraLojaBuy<T extends ShopBuyState & Partial<CookState>>(prev: T, offer: FeiraLojaItem, now: number = Date.now()): { state: T; refused?: string } {
   const r = feiraLojaBuyRaw(prev, offer, now);
-  // Missão da Fanfare (12/11/2026, REGISTRO §311): comprar 1 oferta da Feira (recusa devolve o MESMO `prev`: não conta).
+  // Missão da Fanfare (12/11/2026, REGISTRO §312): comprar 1 oferta da Feira (recusa devolve o MESMO `prev`: não conta).
   return r.refused ? r : { ...r, state: bumpDailyIn(r.state, 'feira', 1, new Date(now)) };
 }
 

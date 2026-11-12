@@ -171,7 +171,7 @@ export function forgeHexItem<T extends HexForgeState>(prev: T, idRaw: string): T
   if (cost.bits > 0) next = spendBits(next, cost.bits);
   const slot = parseHexItem(id)!.slot;
   const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
-  // Missão da Hexsmith (12/11/2026, REGISTRO §311): forjar 1 HEX.
+  // Missão da Hexsmith (12/11/2026, REGISTRO §312): forjar 1 HEX.
   return bumpDailyIn({ ...next, hexsmith: { owned: [...hx.owned, id], equipped } }, 'hex');
 }
 
@@ -201,7 +201,7 @@ export function applyServerHexForge<T extends HexForgeState>(prev: T, idRaw: str
   }
   const slot = parseHexItem(id)!.slot;
   const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
-  // Missão da Hexsmith (12/11/2026, REGISTRO §311): forjar 1 HEX.
+  // Missão da Hexsmith (12/11/2026, REGISTRO §312): forjar 1 HEX.
   return bumpDailyIn({ ...next, hexsmith: { owned: [...hx.owned, id], equipped } }, 'hex');
 }
 

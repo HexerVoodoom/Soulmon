@@ -5083,7 +5083,7 @@ export default function App() {
     // dois — saldo negativo, e o cenário entrando duas vezes na lista de posse.
     if (shopBuyRefusal(gameState, item)) return false;
 
-    // Missão da Lamela/Lasca (12/11/2026, REGISTRO §311): comprar no Mercado (recusa devolve o MESMO `prev`).
+    // Missão da Lamela/Lasca (12/11/2026, REGISTRO §312): comprar no Mercado (recusa devolve o MESMO `prev`).
     setGameState(prev => { const r = applyShopBuy(prev, item); if (r.refused) return prev;
       const comprou = bumpDailyIn(r.state, 'compra');
       return item.kind === 'bg' ? bumpDailyIn(comprou, 'cenario') : comprou; // cenário também conta para a Panora
@@ -6082,7 +6082,7 @@ export default function App() {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       const c1 = f(c0);
       if (c1 === c0) return prev;
-      // Missão da Lisel (12/11/2026, REGISTRO §311): o passeio foi CONCLUÍDO hoje (a transição, 1× por dia).
+      // Missão da Lisel (12/11/2026, REGISTRO §312): o passeio foi CONCLUÍDO hoje (a transição, 1× por dia).
       const hoje = playerDayIso(new Date(), prev.playerDayTz);
       const salvo = { ...prev, crossings: c1 };
       return c0.doneDay !== hoje && c1.doneDay === hoje ? bumpDailyIn(salvo, 'passeio') : salvo;

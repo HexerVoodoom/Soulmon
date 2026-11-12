@@ -33,7 +33,7 @@ export const WEEKLY_VALIDATED = {
 };
 /** A diária validada: id, evento e alvo (espelho de `dailyMissions.ts`). */
 export const DAILY_VALIDATED = { id: 'd-presente', event: 'presente', target: 1 };
-/** Missoes de NPC que contam o MESMO evento `presente` (12/11/2026, REGISTRO secao 311): Zumi (2) e Papus (1); espelho de `npcMissions.ts`. */
+/** Missoes de NPC que contam o MESMO evento `presente` (12/11/2026, REGISTRO secao 312): Zumi (2) e Papus (1); espelho de `npcMissions.ts`. */
 export const DAILY_VALIDATED_EXTRA = [
   { id: 'n-zumi', event: 'presente', target: 2 },
   { id: 'n-papus', event: 'presente', target: 1 },

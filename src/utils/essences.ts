@@ -104,7 +104,7 @@ export function applyEssences<T extends EssenceState>(prev: T, drops: readonly (
     next[d.id] = Math.min(ESSENCE_MAX_PER_ELEMENT, (next[d.id] ?? 0) + Math.floor(d.qty));
     ganhas += Math.floor(d.qty);
   }
-  // Missão da Vesca (12/11/2026, REGISTRO §311): "coletar 30 essências" conta tudo que ENTROU (drop, Cambista, chefe da Feira, Pesadelo).
+  // Missão da Vesca (12/11/2026, REGISTRO §312): "coletar 30 essências" conta tudo que ENTROU (drop, Cambista, chefe da Feira, Pesadelo).
   return next ? bumpDailyIn({ ...prev, essences: next }, 'essencia', ganhas) : prev;
 }
 

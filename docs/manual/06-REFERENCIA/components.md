@@ -209,7 +209,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 **Dono de:** o mapa da Guilda dos Mercenários: cinco prédios pintados no fundo (`GUILDA_PREDIOS`); as três Ordens abrem o líder em `MercGuildSheet` (folha `AreaSheet`: a missão primeiro, depois Aceito ou Vou pensar), Remendados e Desfeitos abrem só o NPC. A entrada é secreta: `MapPage` › `onSecretoGuilda`, segurar o cristal por 3 s.
 
-### `src/components/nav/npcGiver.ts` (12/11/2026 — REGISTRO §311)
+### `src/components/nav/npcGiver.ts` (12/11/2026 — REGISTRO §312)
 **Dono de:** quem passa a missão no cartão da lista do dia: `giverOf(chave, language)` devolve nome curto e retrato do NPC (`LOT_NPC_VOICE`/`LOT_NPC_ART`, Papus, Nuri) e `npcKeyOfBuilding` dá a chave do anfitrião de um prédio. **Chamado por:** `DailyMissionList.tsx`. **Régua:** `npcMissionCards.render.test.tsx`.
 
 ### `src/components/nav/lotHalo.ts`

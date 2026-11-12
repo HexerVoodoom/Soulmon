@@ -12,7 +12,7 @@ import { applyEssences } from './essences';
 const BOND_MAX = 10;
 const dia = (i: number) => `2026-11-${String(1 + i).padStart(2, '0')}`;
 
-describe('missões dos NPCs (REGISTRO §311)', () => {
+describe('missões dos NPCs (REGISTRO §312)', () => {
   it('cada NPC de lote do jogo tem missão — ou está na lista explícita de quem não tem (e por quê)', () => {
     const com = new Set(NPC_MISSIONS.map(m => m.npc));
     for (const key of Object.keys(LOT_NPC_VOICE)) {

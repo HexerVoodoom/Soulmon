@@ -17,7 +17,7 @@ describe('todo evento do catálogo diário tem emissor', () => {
     expect(app).toContain("applyFeat(prev.feats, 'rogueFloors', ganhos)");
   });
 
-  // Missões dos NPCs (12/11/2026, REGISTRO §311): o emissor mora no utilitário dono do gesto (ramo de sucesso) ou no handler do App.
+  // Missões dos NPCs (12/11/2026, REGISTRO §312): o emissor mora no utilitário dono do gesto (ramo de sucesso) ou no handler do App.
   const porUtilitario: Record<string, [string, string]> = {
     essencia: ['src/utils/essences.ts', "'essencia'"], hex: ['src/utils/hexsmith.ts', "'hex'"], melhoria: ['src/utils/forgeActions.ts', "'melhoria'"],
     prato: ['src/utils/restaurant.ts', "'prato'"], feira: ['src/utils/feiraLoja.ts', "'feira'"],
