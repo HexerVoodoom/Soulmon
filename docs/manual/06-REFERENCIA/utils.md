@@ -1022,6 +1022,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`), `FeiraEventoSheet.tsx` (lutou/cumpriu).
 **Régua:** `src/utils/feiraDesafio.test.ts`, `GuildSheet.feira.chefe.render.test.tsx`.
 
+### `src/utils/feiraVolta.ts`
+**Dono de:** o resultado da volta da Missão guardado até o jogador vê-lo (bug do dono, 12/11/2026: "mandei investigar, ele voltou, abri a Feira e apareceu investigar de novo"): a volta grava `{ day, seen, kind, ... }` em `STORAGE_KEYS.FEIRA_VOLTA` (aparelho, nunca no save); a sala mostra "Ver o que ele achou" até `seen` e só então libera "Mandar investigar" (a trava de 1 por dia segue do servidor).
+**Exports:** `sanitizeFeiraVolta`, `readFeiraVolta`, `feiraVoltaDoDia`, `feiraVoltaPendente`, `recordFeiraVolta`, `markFeiraVoltaSeen`, `FeiraVolta`.
+**Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`).
+**Régua:** `GuildSheet.feira.voltaPendente.render.test.tsx`, `saveCompat.contract.test.ts`.
+
 ### `src/utils/funSession.ts`
 **Dono de:** a sessão dos minijogos de DIVERSÃO do Salão (dono, 04/11/2026): 1 energia da Home abre 3 rodadas (dino/ppt/match3/barrage) por 30 min; depois cobra de novo. Porta única pura `startFunRound` (sobre `setEnergy`); save `funSession` opcional.
 **Exports:** `startFunRound`, `funSessionStatus`, `funRoundRefusal`, `activeFunSession`, `sanitizeFunSession`, `isFunGame`, `formatMmSs`, `FUN_SESSION_COST`, `FUN_SESSION_ROUNDS`, `FUN_SESSION_MS`, `FUN_GAMES`.
