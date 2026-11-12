@@ -7787,7 +7787,7 @@ export default function App() {
               <button type="button" data-open-element-potion className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ width: '100%' }}
                 aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
                 <Icon name="auto_awesome" size={20} />
-                {language === 'pt-BR' ? 'Criar poção de elemento' : 'Create element potion'}
+                {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
               </button>
             </div>
           )}

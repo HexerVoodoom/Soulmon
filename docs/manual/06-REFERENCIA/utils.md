@@ -3279,6 +3279,7 @@ Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolea
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
 ### `src/utils/elementPotion.ts`
+**Sincronização 12/11/2026 (§310):** `PotionFilter`/`POTION_FILTERS` (all, can, enough, base, composite), `potionRecipe(id, essences, inventory)` (receita com TEM/PRECISA por essência e por poção-base; `canCraft`) e `potionListFor(essences, inventory, bases, filter, unlocked)` (lista completa, criáveis primeiro) — a lista da Vesca (`ElementPotionSheet`).
 **Sincronização 09/11/2026:** `POTION_MAX_COMPONENTS` (4: curados têm até 4 bases), `potionIngredients(elementId)` (a poção de CADA base componente, ids únicos; base = nada), `readVescaOffered()`/`writeVescaOffered(ids)` (elementos que a Vesca já ofereceu, por aparelho, para não repetir o modal) e o filtro por bases (E) — `selectedBases(selected)`, `compositionHasBases(comp, selected)`, `elementMatchesBases(id, selected)`: a composição contém TODAS as bases escolhidas; sem escolha passa tudo; composição desconhecida só passa sem escolha.
 
 Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §250), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
@@ -4054,7 +4055,7 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
 
-**12/11/2026 (REGISTRO §309):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
+**12/11/2026 (REGISTRO §310):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
 
 ## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
 
@@ -4534,7 +4535,7 @@ Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `
 
 O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
 
-**Atualização 12/11/2026 (REGISTRO §308):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
+**Atualização 12/11/2026 (REGISTRO §310):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
 
 ### `src/utils/formaEquip.ts` (10/11/2026)
 
