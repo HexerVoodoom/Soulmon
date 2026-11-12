@@ -15,6 +15,8 @@ import { formatClock } from '../../utils/focoTimer';
 import { useBackLayer } from '../../utils/backStack';
 import { useKeepAwake } from '../../utils/keepAwake';
 import { FocusTaskDock, JOURNEY_CARD_WIDTH, JOURNEY_GLASS, type DockTask } from './FocusTaskDock';
+import { BAG_SIZE, FlyingItem, FocusBag } from './FocusBag';
+import { JOURNEY_BLOCK_H, JOURNEY_TOP_PAD, JOURNEY_VIEW_BLOCKS, journeyCamera } from '../../utils/focusJourneyCamera';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
 import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET, CHEST_GLOW_SHEET } from './journeyArt';
@@ -27,10 +29,10 @@ const ENV_TONE: Record<string, [string, string]> = {
   forest: ['#0d2b27', '#15463a'], shore: ['#0b2a33', '#14495a'], cavern: ['#0a1f22', '#1a3438'],
   garden: ['#10302c', '#1d5246'], workshop: ['#0e2626', '#2a3b33'], observatory: ['#081c22', '#0f3640'],
 };
-const VIEW_BLOCKS = 1.2;
+const VIEW_BLOCKS = JOURNEY_VIEW_BLOCKS;
 const ROUND: CSSProperties = { width: 48, height: 48, borderRadius: '50%', border: 'none', background: 'transparent', color: 'var(--sm2-ink)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' };
 const SVG = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
-const H = 200; // altura do bloco em unidades do SVG (arte 1:2)
+const H = JOURNEY_BLOCK_H; // altura do bloco em unidades do SVG (arte 1:2)
 
 export function itemLabel(it: JourneyItem, isPt: boolean): string {
   if (it.kind === 'food') return `${it.id} ×${it.qty}`;
@@ -39,9 +41,11 @@ export function itemLabel(it: JourneyItem, isPt: boolean): string {
   return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn} ×${it.qty}` : `${it.id} ×${it.qty}`;
 }
 
-export function JourneyScreen({ language, active, delta, petSprite, lastItems, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
+export function JourneyScreen({ language, active, delta, petSprite, lastItems, collected = [], focusTaskId, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
   language: Language; active: ActiveJourney; delta: number; petSprite?: string; lastItems: JourneyItem[] | null;
   /** Lista de tarefas da sessão (§304): as da Home, com subtópicos; marcar usa os handlers da Home. */
+  /** Tudo o que o Soulmon achou na sessão (o baú do canto) e a tarefa escolhida ao começar (§300). */
+  collected?: readonly JourneyItem[]; focusTaskId?: string | null;
   tasks?: readonly DockTask[]; onToggleTask?: (id: string) => void; onToggleStep?: (taskId: string, stepId: string) => void;
   onPause: () => void; onResume: () => void; onClaim: () => void; onEnd: () => void; onClose: () => void;
 }) {
@@ -69,7 +73,6 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
 
   const left = Math.max(0, JOURNEY_MODES[active.mode].focusMin * 60_000 - focusElapsed(active, now));
   const pet = trailAt(spine, p);
-  const camY = Math.min(blocks - VIEW_BLOCKS, Math.max(0, pet.y - VIEW_BLOCKS * 0.45));
   const tone = ENV_TONE[active.env] ?? ENV_TONE.forest;
   const Y = (y: number) => (blocks - y) * H;
   const art = JOURNEY_ART[active.env];
@@ -77,19 +80,44 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
   /* Tela acordada só com o timer rodando: pausa, chegada e saída soltam (§304). */
   const awake = useKeepAwake(p < 1 && !paused);
   const clockRef = useRef<HTMLElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const [clockBottom, setClockBottom] = useState(190);
+  const [screen, setScreen] = useState(() => ({ w: typeof window !== 'undefined' ? window.innerWidth : 390, h: typeof window !== 'undefined' ? window.innerHeight : 844 }));
   useLayoutEffect(() => {
-    const measure = () => { const b = clockRef.current?.getBoundingClientRect().bottom; if (b && b > 0) setClockBottom(Math.ceil(b)); };
+    const measure = () => {
+      const b = clockRef.current?.getBoundingClientRect().bottom; if (b && b > 0) setClockBottom(Math.ceil(b));
+      const r = boxRef.current?.getBoundingClientRect(); if (r && r.width > 0 && r.height > 0) setScreen({ w: r.width, h: r.height });
+    };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [paused, p >= 1]);
-  const dockBottom = `calc(${lastItems && lastItems.length > 0 ? 112 : active.keys.length > 0 ? 56 : 16}px + env(safe-area-inset-bottom, 0px))`;
+  const cam = journeyCamera({ petY: pet.y, blocks, screenW: screen.w, screenH: screen.h, clockBottom });
+  const dockBottom = `calc(${16 + BAG_SIZE + 8}px + env(safe-area-inset-bottom, 0px))`;
+
+  /* Itens achados: saem do baú do mapa e entram no baú do canto (§300). */
+  const bagRef = useRef<HTMLButtonElement>(null);
+  const seenItems = useRef(lastItems);
+  const flightSeq = useRef(0);
+  const [flights, setFlights] = useState<Array<{ id: number; item: JourneyItem; from: { x: number; y: number }; to: { x: number; y: number } }>>([]);
+  useEffect(() => {
+    if (!lastItems || lastItems.length === 0 || lastItems === seenItems.current) return;
+    seenItems.current = lastItems;
+    const box = boxRef.current?.getBoundingClientRect();
+    const bag = bagRef.current?.getBoundingClientRect();
+    const chestEl = reached > 0 ? document.querySelector(`[data-journey-chest="${reached - 1}"]`) : null;
+    const c = chestEl?.getBoundingClientRect();
+    const from = c && c.width > 0 && c.bottom > 0 && c.top < (box?.bottom ?? 9999) ? { x: c.left + c.width / 2, y: c.top + c.height / 2 } : { x: (box?.left ?? 0) + (box?.width ?? 360) / 2, y: (box?.top ?? 0) + (box?.height ?? 640) * 0.55 };
+    const to = bag ? { x: bag.left + bag.width / 2, y: bag.top + bag.height / 2 } : { x: 38, y: (box?.bottom ?? 640) - 38 };
+    setFlights(f => [...f, ...lastItems.map(item => ({ id: ++flightSeq.current, item, from, to }))]);
+  }, [lastItems]); // eslint-disable-line react-hooks/exhaustive-deps
+  const inFlight = flights.reduce((n, f) => n + f.item.qty, 0);
+
 
   const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: tone[0], overflow: 'hidden' };
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={isPt ? 'Jornada do foco' : 'Focus journey'} data-journey style={box}>
-      <svg data-journey-scene viewBox={`0 ${Y(camY + VIEW_BLOCKS)} 100 ${VIEW_BLOCKS * H}`} preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: paused ? 0.6 : 1 }}>
+    <div ref={boxRef} role="dialog" aria-modal="true" aria-label={isPt ? 'Jornada do foco' : 'Focus journey'} data-journey style={box}>
+      <svg data-journey-scene viewBox={`0 ${cam.vbTop} 100 ${VIEW_BLOCKS * H}`} preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: paused ? 0.6 : 1 }}>
         <defs><linearGradient id="jt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={tone[1]} /><stop offset="1" stopColor={tone[0]} /></linearGradient></defs>
         {Array.from({ length: blocks }, (_, b) => art
           ? <image key={b} data-journey-block href={art} x={0} y={Y(b + 1)} width={100} height={H} preserveAspectRatio="none" />
@@ -99,6 +127,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
           <line x1={50} x2={50} y1={Y(b + 1)} y2={Y(b + 1) + 6} stroke="#b8733a" strokeWidth={0.8} />
           {[0.12, 0.88].map(x => <polygon key={x} points={`${x * 100},${Y(b + 0.5) - 6} ${x * 100 + 3},${Y(b + 0.5)} ${x * 100},${Y(b + 0.5) + 6} ${x * 100 - 3},${Y(b + 0.5)}`} fill="#4fe3d6" opacity={0.55} />)}
         </g>)}
+        <rect data-journey-top x={0} y={-JOURNEY_TOP_PAD} width={100} height={JOURNEY_TOP_PAD + 1} fill={tone[0]} />
         <image data-journey-arrival href={ARRIVAL_ART} x={20} y={Y(blocks)} width={60} height={60} opacity={p >= 1 ? 1 : 0.85} />
         {chests.map(c => {
           const at = trailAt(spine, c.at);
@@ -124,11 +153,10 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
           : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 6} r={5.5} fill="#e9f5f2" />}
       </svg>
 
-      {lastItems && lastItems.length > 0 && <p role="status" data-journey-toast style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: active.keys.length > 0 ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : 'calc(16px + env(safe-area-inset-bottom, 0px))', margin: 0, padding: '8px 12px', borderRadius: 10, background: 'rgba(4,16,18,.85)', color: '#e9f5f2', textAlign: 'center', zIndex: 1 }}>
-        {(isPt ? 'Baú aberto: ' : 'Chest opened: ') + lastItems.map(i => itemLabel(i, isPt)).join(' · ')}
-      </p>}
+      <FocusBag ref={bagRef} language={language} items={collected} pending={inFlight} />
+      {flights.map(f => <FlyingItem key={f.id} item={f.item} isPt={isPt} from={f.from} to={f.to} onDone={() => setFlights(x => x.filter(y => y.id !== f.id))} />)}
 
-      {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ position: 'absolute', zIndex: 2, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', display: 'flex', gap: 6 }}>
+      {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ position: 'absolute', zIndex: 2, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', height: BAG_SIZE, display: 'flex', alignItems: 'center', gap: 6 }}>
         {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
       </span>}
       <section ref={clockRef} data-journey-modal style={{ ...JOURNEY_GLASS, position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: JOURNEY_CARD_WIDTH, zIndex: 2, padding: '8px 12px 10px', display: 'grid', justifyItems: 'center', gap: 6 }}>
@@ -155,7 +183,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
         {confirmEnd && p < 1 && <p role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Toque de novo para encerrar e voltar' : 'Tap again to end and go back'}</p>}
         {p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
       </section>
-      <FocusTaskDock language={language} tasks={tasks} onToggleTask={onToggleTask} onToggleStep={onToggleStep} top={clockBottom} bottom={dockBottom} />
+      <FocusTaskDock language={language} tasks={tasks} focusId={focusTaskId} onToggleTask={onToggleTask} onToggleStep={onToggleStep} top={clockBottom} bottom={dockBottom} />
       {!awake && p < 1 && !paused && <p role="status" data-journey-awake-hint style={{ ...sm2Hint, position: 'absolute', zIndex: 1, top: `calc(${clockBottom}px + 4px)`, left: 16, right: 16, margin: 0, textAlign: 'center', color: '#e9f5f2' }}>{isPt ? 'Este aparelho não segura a tela acesa: mantenha-a ligada.' : "This device can't keep the screen on: keep it awake yourself."}</p>}
     </div>,
     document.body,

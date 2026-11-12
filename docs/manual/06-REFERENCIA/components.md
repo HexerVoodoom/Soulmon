@@ -2207,6 +2207,10 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 
 **§304 (11/11/2026):** `JourneyScreen` ganhou as props `tasks`, `onToggleTask`, `onToggleStep` e renderiza `play/FocusTaskDock.tsx` (`FocusTaskDock`, `DockTask`, `JOURNEY_CARD_WIDTH`, `JOURNEY_GLASS`; props `language`, `tasks`, `onToggleTask`, `onToggleStep`, `top`, `bottom`; linhas = `RitualRow` + `StepRow`); `FocusBoard` ganhou `onToggleStep` (e `steps` em `BoardTask`) e `AreaView` a prop `play.onToggleFocusStep` (App: `handleToggleTaskStep`). `utils/keepAwake.ts`: `useKeepAwake(active)` e `keepAwakeSupported()`. **Régua:** `FocusTaskDock.render.test.tsx`.
 
+### `src/components/play/FocusTaskPicker.tsx` · `src/components/play/FocusBag.tsx` (12/11/2026 — REGISTRO §300)
+
+`FocusTaskPicker({ language, tasks, initialId?, busy?, onClose, onPick, onCreate? })`: `ModalSheet` que escolhe a tarefa da sessão (sempre; sem abertas, campo para criar). `FocusBag` (baú da sessão: `items`, `pending`, ref no botão; tooltip com o coletado, fecha ao tocar fora/Voltar), `FlyingItem` (voo do item; `onDone` ao terminar, na hora sem Web Animations ou com movimento reduzido) e `ItemIcon` (imagem do slot ou emoji). `FocusBoard` ganhou `onCreateTask`, `JourneyScreen` ganhou `collected` e `focusTaskId`, `FocusTaskDock` ganhou `focusId`; `AreaView`: `play.onCreateFocusTask`. **Régua:** `FocusBoard.render.test.tsx`, `FocusBag.render.test.tsx`.
+
 ### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
 
 `TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.

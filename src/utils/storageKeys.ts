@@ -244,6 +244,8 @@ export const STORAGE_KEYS = {
   FOCO_JOURNEY_KEYS: 'soulmon-foco-journey-keys',
   /** Ritmo e cenário escolhidos por último no quadro da Oficina (§247). */
   FOCO_JOURNEY_PREFS: 'soulmon-foco-journey-prefs',
+  /** A SESSÃO em andamento (§300): tarefa escolhida, o que o Soulmon achou e quantos focos já fecharam. Aparelho, não save. Dono: `utils/focusSession.ts`. */
+  FOCO_SESSION: 'soulmon-foco-session',
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
    *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
   FOCO_VIBRATE: 'soulmon-foco-vibrate',

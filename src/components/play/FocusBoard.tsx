@@ -19,6 +19,9 @@ import { readJson, writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { formatClock } from '../../utils/focoTimer';
 import { OficinaPlano } from './OficinaPlano';
+import { FocusTaskPicker } from './FocusTaskPicker';
+import { loadFocusSession, saveFocusSession, type FocusSessionState } from '../../utils/focusSession';
+import { mergeItems } from '../../utils/journeyItemInfo';
 import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
 
 type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
@@ -38,11 +41,13 @@ const loadPrefs = (): { mode: JourneyMode; env: FocusEnvironmentId } => {
   return { mode: r?.mode === 'p50' ? 'p50' : 'p25', env: isFocusEnvironmentId(r?.env) ? r!.env as FocusEnvironmentId : 'forest' };
 };
 
-export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onToggleStep = () => {}, onGrants, onFocusCycle }: {
+export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onToggleStep = () => {}, onCreateTask, onGrants, onFocusCycle }: {
   language: Language; todayKey: string; saveId?: string; tasks?: BoardTask[]; petSprite?: string;
   onCompleteTask?: (id: string) => void;
   /** Subtópico de tarefa marcado na lista da sessão: o mesmo handler da Home (`handleToggleTaskStep`). */
   onToggleStep?: (taskId: string, stepId: string) => void;
+  /** Cria uma tarefa na hora (o modal de escolha oferece isso quando não há tarefa aberta). `false` = não coube. */
+  onCreateTask?: (name: string) => boolean;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). */
   onFocusCycle?: () => void;
@@ -61,16 +66,21 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   const [doneNote, setDoneNote] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [envOpen, setEnvOpen] = useState(false);
+  const [session, setSession] = useState<FocusSessionState | null>(loadFocusSession);
+  const [pickOpen, setPickOpen] = useState(false);
+  const updateSession = useCallback((fn: (s: FocusSessionState) => FocusSessionState) => {
+    setSession(prev => { if (!prev) return prev; const n = fn(prev); saveFocusSession(n); return n; });
+  }, []);
 
   const absorb = useCallback((r: JourneyResponse, prevGrants?: Set<string>) => {
     setDelta(r.now - Date.now());
     if (r.grants && r.ledger) {
       const novos = Object.keys(r.grants).filter(k => !prevGrants?.has(k));
-      if (novos.length) setLastItems(novos.flatMap(k => r.grants![k]));
+      if (novos.length) { const itens = novos.flatMap(k => r.grants![k]); setLastItems(itens); updateSession(s => ({ ...s, collected: mergeItems(s.collected, itens) })); }
       onGrants(r.ledger.day, r.grants, r.dungeonKeyDay);
     }
     setActive(r.active);
-  }, [onGrants]);
+  }, [onGrants, updateSession]);
   const [seen, setSeen] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(() => {
@@ -92,6 +102,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
       setSeen(new Set(Object.keys(r.grants ?? {})));
       if (!r.active && had) {
         setKeys([]); saveBoardKeys([]);
+        setSession(null); saveFocusSession(null);
         setDraft(emptyDraft()); saveDraft(emptyDraft());
         setShowJourney(false);
         if (action === 'claim') onFocusCycle?.();
@@ -103,12 +114,16 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
     }).catch(() => setOnline(false));
   };
 
-  const start = () => {
+  /** Começar abre a ESCOLHA DA TAREFA (sempre; sem sessão livre). Confirmada, `begin` liga a tarefa e abre a jornada. */
+  const start = () => { if (!saveId || busy) return; setDoneNote(null); setPickOpen(true); };
+  const begin = (task: { id: string; name: string }) => {
     if (!saveId || busy) return;
     setBusy(true); setDoneNote(null);
+    const fresh: FocusSessionState = { taskId: task.id, taskName: task.name, collected: [], cycles: 0 };
+    setSession(fresh); saveFocusSession(fresh);
     journeyStart(saveId, { mode: prefs.mode, env: prefs.env, keys, day: todayKey })
-      .then(r => { setOnline(true); absorb(r); if (r.active) setShowJourney(true); })
-      .catch(() => setOnline(false))
+      .then(r => { setOnline(true); absorb(r); if (r.active) { setPickOpen(false); setShowJourney(true); } else { setSession(null); saveFocusSession(null); } })
+      .catch(() => { setOnline(false); setSession(null); saveFocusSession(null); setPickOpen(false); })
       .finally(() => setBusy(false));
   };
   const setPref = (p: Partial<typeof prefs>) => { const n = { ...prefs, ...p }; setPrefs(n); writeJson(STORAGE_KEYS.FOCO_JOURNEY_PREFS, n, { silent: true }); };
@@ -140,6 +155,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         <h3 style={{ ...sheetCardTitle, margin: 0 }}>{isPt ? 'Sessão de foco' : 'Focus session'}</h3>
         {active ? <>
           <p className="sm2-num" style={{ ...sm2Text, margin: 0 }}>{isPt ? 'O Soulmon está em jornada' : 'Your Soulmon is on a journey'} · {formatClock(left)}</p>
+          {session && <p data-focus-session-task style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Tarefa: ' : 'Task: '}{session.taskName}</p>}
           <button type="button" data-focus-return onClick={() => setShowJourney(true)} style={{ ...sm2Button('primary'), minHeight: 48 }}>{isPt ? 'Voltar à jornada' : 'Back to the journey'}</button>
         </> : <>
           <div role="radiogroup" aria-label={isPt ? 'Ritmo' : 'Rhythm'} style={{ display: 'flex', gap: 8 }}>
@@ -181,9 +197,10 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         })}
       </section>}
 
+      {pickOpen && <FocusTaskPicker language={language} tasks={tasks} initialId={session?.taskId} busy={busy} onClose={() => setPickOpen(false)} onPick={begin} onCreate={onCreateTask} />}
       {envOpen && <EnvModal isPt={isPt} current={prefs.env} onPick={id => { setPref({ env: id }); setEnvOpen(false); }} onClose={() => setEnvOpen(false)} />}
 
-      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
+      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} collected={session?.collected ?? []} focusTaskId={session?.taskId} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
         onPause={() => act('pause')} onResume={() => act('resume')} onClaim={() => act('claim')} onEnd={() => act('end')} onClose={() => setShowJourney(false)} />}
     </div>
   );

@@ -8592,6 +8592,7 @@ export default function App() {
                     else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
                   onToggleFocusStep: (taskId: string, stepId: string) => handleToggleTaskStep(taskId, stepId),
+                  onCreateFocusTask: (name: string) => handleQuickAdd({ kind: 'task', name, tokens: [] }),
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
                     const preview = applyFocusLoot(gameState, request, roll);
