@@ -1724,7 +1724,7 @@ async function handleCommunity(context) {
       const hoje = await presentesDeHoje(env, id, diaMeu);
       if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === diaMeu)) return json({ error: 'already gifted today' }, 429);
       await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
-      // Missoes de presente (REGISTRO §307): o presente ACEITO aqui e o evento confirmado da semanal gift-sent e da diaria d-presente. Melhor esforco.
+      // Missoes de presente (REGISTRO §308): o presente ACEITO aqui e o evento confirmado da semanal gift-sent e da diaria d-presente. Melhor esforco.
       try { await recordMissionEvent(kvOrThrow(env), id, 'g', diaMeu); } catch { /* o razao das missoes nao pode derrubar o presente */ }
 
       // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta

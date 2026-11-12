@@ -4557,10 +4557,10 @@ Resgate duplo não paga 2× (`claimBuildingQuest` reconfere sobre o `prev`).
 sem marca "!"/"?" no lote, sem painel de missão na folha do prédio. Só na Home, em **dois
 acessos separados** (cada um com seu ícone pelado no canto, sua folha `MissionsSheet kind=`
 e suas marcas): **Diárias / Daily** (Primeiro dia + o Passeio + `LISTED_QUEST_BUILDINGS`, hoje
-vazia: o Caderno diário saiu em 12/11/2026, §307) e **Semanais / Weekly** (Esta semana, em azul, + as Conquistas permanentes).
+vazia: o Caderno diário saiu em 12/11/2026, §308) e **Semanais / Weekly** (Esta semana, em azul, + as Conquistas permanentes).
 **A missão só APONTA, e depois RESGATA:** a linha diz o que fazer em uma frase, sem botão; quando a AÇÃO real
 acontece a linha fica pronta ("?") com **Claim / Resgatar** como única ação, e só então
-entra a recompensa. Hoje nenhum prédio é listado (`LISTED_QUEST_BUILDINGS` vazia, §307): o **Caderno diário saiu**
+entra a recompensa. Hoje nenhum prédio é listado (`LISTED_QUEST_BUILDINGS` vazia, §308): o **Caderno diário saiu**
 porque a semanal «Faça o journal em 3 dias» o substitui; o prédio continua e paga a tinta na entrada, como os demais
 (`visitBuilding` conta a presença). Quem tinha o Caderno pronto e sem resgate recebe a tinta uma vez no load
 (`settleRetiredListed`). Um registro novo no Caderno conta SÓ a semanal (`handleCaderno` → `countWeeklyMission`).
@@ -6426,4 +6426,4 @@ Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estági
 
 - **Focos extras do dia (§302)** — depois dos 4 focos recompensados, o 5º, 6º e 7º dão um item simples cada (sem Bits); o 8º em diante não rende. Regra do servidor (`completionLoot`), com os tetos diários de itens da jornada.
 
-**Missões validadas no servidor (12/11/2026, REGISTRO §307).** As semanais `journal-days` (3), `focus-days` (3) e `gift-sent` (1) e a diária `d-presente` (1) só contam eventos que o servidor confirmou, num razão por semana (`mval:<id>:<semana>:j|f|g`): **journal** = dia com entrada do Caderno salva na nuvem (o servidor lê só o dia, nunca o texto; sincronizar até 8 dias depois ainda vale); **foco** = jornada do foco concluída com recibo (`/api/focus-journey`, `<sid>:done`; encerrar antes ou receber cedo não conta); **presente** = envio aceito por `/api/community?action=gift` (o dia do remetente). No salvamento, a contagem da nuvem é `max(gravado, min(app, confirmado))` e o resgate novo só entra com contagem confirmada >= alvo; o que já estava gravado ou pago nunca baixa nem se repete. Journal e foco contam no máximo 1 por dia. Limite: o saldo de Emblemas é escrito pelo app; o servidor garante o progresso e o resgate registrados, não o saldo.
+**Missões validadas no servidor (12/11/2026, REGISTRO §308).** As semanais `journal-days` (3), `focus-days` (3) e `gift-sent` (1) e a diária `d-presente` (1) só contam eventos que o servidor confirmou, num razão por semana (`mval:<id>:<semana>:j|f|g`): **journal** = dia com entrada do Caderno salva na nuvem (o servidor lê só o dia, nunca o texto; sincronizar até 8 dias depois ainda vale); **foco** = jornada do foco concluída com recibo (`/api/focus-journey`, `<sid>:done`; encerrar antes ou receber cedo não conta); **presente** = envio aceito por `/api/community?action=gift` (o dia do remetente). No salvamento, a contagem da nuvem é `max(gravado, min(app, confirmado))` e o resgate novo só entra com contagem confirmada >= alvo; o que já estava gravado ou pago nunca baixa nem se repete. Journal e foco contam no máximo 1 por dia. Limite: o saldo de Emblemas é escrito pelo app; o servidor garante o progresso e o resgate registrados, não o saldo.

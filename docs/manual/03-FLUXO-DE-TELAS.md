@@ -1110,7 +1110,7 @@ type ShopSegment = 'shop' | 'tournament';
 - **Dono**: `src/components/mercado/MercadoSheets.tsx` · **Régua**:
   `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
-- **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (desde 12/11/2026, REGISTRO §307, nenhum prédio é listado: o Caderno diário saiu das diárias); o lote **não** leva marca
+- **Missão por prédio (07/10/2026).** O lote **não** conta mais a visita da missão listada (desde 12/11/2026, REGISTRO §308, nenhum prédio é listado: o Caderno diário saiu das diárias); o lote **não** leva marca
   e a folha do prédio **não** tem painel de missão (**exceção: o Passeio**, cuja experiência inteira fica no lote — 08/10/2026; a Home só lista a linha "Take a stroll"): a UI das demais vive só no menu de Missões da Home
   (`MissionsSheet`, **UMA folha com três ABAS compactas** — `PixelTabs variant="compact"`, o mesmo componente do Centro de Evolução —
   desde 14/10/2026 (REGISTRO §52): **Diárias** ("Primeiro dia" + "Hoje"/"Today": Passeio e as 3 missões do dia dos outros

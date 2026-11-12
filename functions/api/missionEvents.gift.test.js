@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
 import { isoWeekOf } from './_missionEvents.js';
 
-// REGISTRO §307: o presente ACEITO pelo servidor e o evento confirmado da semanal gift-sent e da diaria d-presente.
+// REGISTRO §308: o presente ACEITO pelo servidor e o evento confirmado da semanal gift-sent e da diaria d-presente.
 const A = 'a'.repeat(32);
 const B = 'b'.repeat(32);
 const PA = 'pida0000000000000000000a';

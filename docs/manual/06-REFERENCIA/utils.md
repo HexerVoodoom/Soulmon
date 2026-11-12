@@ -4054,7 +4054,7 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
 
-**12/11/2026 (REGISTRO §307):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
+**12/11/2026 (REGISTRO §308):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
 
 ## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
 

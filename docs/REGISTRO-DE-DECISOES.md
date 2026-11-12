@@ -4777,9 +4777,9 @@ Limite honesto: a contagem diária segue escrita pelo cliente (economia local-fi
 
 ## §297 — Journal e Focus Workshop viram missões SEMANAIS 3× (11/11/2026, decisão do dono)
 
-Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", saiu da lista em 12/11/2026, §307). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
+Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", saiu da lista em 12/11/2026, §308). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
 
-Limite honesto (superado em §307): as semanais não tinham espelho nem validação no servidor; journal, foco e presente passaram a ser validados em 12/11/2026.
+Limite honesto (superado em §308): as semanais não tinham espelho nem validação no servidor; journal, foco e presente passaram a ser validados em 12/11/2026.
 
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
@@ -4866,7 +4866,13 @@ Decisão: (1) a pergunta da Vesca ("quer fazer a poção?") não interrompe mais
 
 **Alternativa que perdeu:** só adiar por tempo fixo (não sabe se a atividade acabou). **Falsifica:** a Vesca aparecer com `area:arena|jogos|exploracao`, masmorra, foco rodando ou modal aberto; sumir sozinha ao abrir o próprio modal; a tela "criada" ter painel/caixa (`atividadeEmCurso.test.ts`, `useOfertaPendente.test.tsx`, `VescaPotionOffer.render.test.tsx`). **Rollback:** reverter o PR (nenhum save muda). **APK:** nada.
 
-## §307 — Caderno diário sai das diárias; semanais de journal/foco/presente e a diária de presente passam a ser validadas no servidor (12/11/2026, decisões do dono)
+## §307 — Hexsmith: custo numa fileira só, com tooltip em cada item (12/11/2026, pedido do dono)
+
+Decisão: a coluna Custo da tabela da Hexsmith fica numa única fileira horizontal (poção + fragmentos + Bits, "+" entre eles), cada item com ícone de 28 px e a quantidade embaixo do próprio ícone; Bits é item da mesma fileira (não mais linha separada). Poção, fragmentos e Bits têm tooltip curto "como conseguir" (`hexCostHowTo`). Mais espaço entre as linhas; sem linha separadora (vetada pelo dono). Nome do HEX quebra em vez de cortar.
+
+**Alternativa que perdeu:** Bits abaixo dos itens e linha cinza fina (pedido anterior, substituído no mesmo dia). **Falsifica:** custo em 2 linhas a 360 px, texto cortado, item do custo sem tooltip (`HexsmithSheet.render.test.tsx`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §308 — Caderno diário sai das diárias; semanais de journal/foco/presente e a diária de presente passam a ser validadas no servidor (12/11/2026, decisões do dono)
 
 **Decisão 1.** A diária de prédio do Caderno («Faça um registro no journaling») saiu da lista de Missões porque a semanal «Fazer o journal 3× na semana» (§297) a substitui. `LISTED_QUEST_BUILDINGS` ficou vazia: o menu da Home não lista prédio e nenhum lote acende marca. O prédio do Caderno continua existindo e, como os outros 15, conta a presença e paga a tinta (`ink`) na entrada (`applyBuildingEntry`). `handleCaderno` deixou de chamar `completeBuildingQuest`: um registro novo conta SÓ a semanal. A tinta aparece no guia de materiais como «só por entrar». **Migração segura:** o `buildingQuests` mantém a forma; quem tinha o Caderno PRONTO e sem resgate (o botão saiu) recebe a tinta uma vez no load do dia corrente (`settleRetiredListed`, idempotente: a 2ª passada é no-op; dia diferente expirou como sempre expirou); progresso e estoque passam intactos.
 

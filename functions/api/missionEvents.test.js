@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Missoes validadas no servidor (12/11/2026, REGISTRO §307): semanais journal-days / focus-days / gift-sent e a diaria d-presente
+// Missoes validadas no servidor (12/11/2026, REGISTRO §308): semanais journal-days / focus-days / gift-sent e a diaria d-presente
 // so contam o que o servidor CONFIRMOU. Aqui: o razao (`_missionEvents.js`) e a conferencia no POST do save.
 vi.mock('./_auth.js', () => ({
   requireVerifiedOwner: async () => ({ ok: true, email: 'quem@exemplo.com' }),

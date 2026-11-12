@@ -6088,7 +6088,7 @@ export default function App() {
       const c1 = f(c0);
       if (c1 === c0) return prev;
       // O EVENTO REAL do journal: um registro NOVO guardado conta a semanal "journal em 3 dias" (no máx. 1 por dia). A diária do
-      // Caderno saiu (12/11/2026, REGISTRO §307); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
+      // Caderno saiu (12/11/2026, REGISTRO §308); o servidor reconfere o dia pelas entradas salvas (`_missionEvents.js`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
       if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date());
       return { ...prev, caderno: c1 };

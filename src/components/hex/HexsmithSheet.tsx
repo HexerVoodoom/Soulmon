@@ -21,6 +21,7 @@ import { earnedBits } from '../../utils/bitsOrigin';
 import { elementComposition, elementsMatchingBases, isPotionUnlocked, potionKey, POTION_COSTS } from '../../utils/elementPotion';
 import { potionArt } from '../../utils/potionArt';
 import { InfoTip } from '../ui/InfoTip';
+import { BitsIcon } from '../ui/BitsIcon';
 import { SoulFragmentIcon } from '../ui/SoulFragmentIcon';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
 import { fighterIdentity } from '../../utils/fighterIdentity';
@@ -32,7 +33,7 @@ import {
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
+import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge, cloudHexRename } from '../../utils/cloudSave';
 import { HexRenameButton } from './HexRenameButton';
@@ -73,6 +74,7 @@ const RENAME_PORTS: Readonly<Record<HexRenameKind, { x: number; y: number }>> = 
 const ICON_MAP = 32;
 const ICON_ROW = 24;
 const ICON_INLINE = 20;
+const ICON_COST = 28;
 
 /** Nome legível do VALOR de um item (elemento, família ou alcance). */
 export function hexValueName(slot: HexSlot, value: string, isPt: boolean): string {
@@ -339,20 +341,27 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                 const comp = isEl ? elementComposition(v) ?? [v] : [];
                 const potLabel = tx(HEX_UI.potionTipLabel, isPt);
                 const parts: ReactNode[] = [];
-                parts.push(<BitsAmount key="bits" value={c.bits} size={ICON_INLINE} dim={bits < c.bits} />);
+                const tipBtn = (label: string, trigger: ReactNode, tip: string, attr: string) => (
+                  <InfoTip language={language as Language} label={label} align="right"
+                    style={{ minWidth: 32, minHeight: 32, color: 'inherit' }} trigger={trigger}>
+                    <span {...{ [attr]: true }}>{tip}</span>
+                  </InfoTip>);
                 if (c.potions > 0) parts.push(
                   <span key="pot" data-hex-cost-potion={v} data-have={pot >= c.potions} className="sm2-hex-cost-cell">
-                    <InfoTip language={language as Language} label={`${potLabel}: ${elName(v, isPt)}`} align="right"
-                      style={{ minWidth: 28, minHeight: 28, color: 'inherit' }}
-                      trigger={art ? <img src={art} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} draggable={false} data-hex-potion-art /> : <ElementIcon id={v} size={ICON_ROW} />}>
-                      <span data-hex-potion-tip>{potionHowTo(isPt, elName(v, isPt), [...new Set(comp)].length > 1 ? [...new Set(comp)].map((x) => elName(x, isPt)) : [], POTION_COSTS)}</span>
-                    </InfoTip>
+                    {tipBtn(`${potLabel}: ${elName(v, isPt)}`,
+                      art ? <img src={art} alt="" aria-hidden="true" width={ICON_COST} height={ICON_COST} draggable={false} data-hex-potion-art /> : <ElementIcon id={v} size={ICON_COST} />,
+                      potionHowTo(isPt, elName(v, isPt), [...new Set(comp)].length > 1 ? [...new Set(comp)].map((x) => elName(x, isPt)) : [], POTION_COSTS), 'data-hex-potion-tip')}
                     <span className="sm2-num" data-hex-potion-qty>{pot}/{c.potions}</span>
                   </span>);
                 if (c.fragments > 0) parts.push(
                   <span key="frag" data-hex-cost-fragments data-have={frags >= c.fragments} className="sm2-hex-cost-cell">
-                    <SoulFragmentIcon size={ICON_ROW} label={tx(HEX_UI.fragments, isPt)} />
+                    {tipBtn(hexCostTipLabel('fragments', isPt), <SoulFragmentIcon size={ICON_COST} label={tx(HEX_UI.fragments, isPt)} />, hexCostHowTo('fragments', isPt), 'data-hex-fragments-tip')}
                     <span className="sm2-num">{frags}/{c.fragments}</span>
+                  </span>);
+                parts.push(
+                  <span key="bits" data-hex-cost-bits data-have={bits >= c.bits} className="sm2-hex-cost-cell">
+                    {tipBtn(hexCostTipLabel('bits', isPt), <BitsIcon size={ICON_COST} />, hexCostHowTo('bits', isPt), 'data-hex-bits-tip')}
+                    <span className="sm2-num"><span className="sm2-sr-only">Bits </span>{c.bits}</span>
                   </span>);
                 return (
                   <li key={id} className="sm2-hex-line" data-on={on} data-ok={ok}>
