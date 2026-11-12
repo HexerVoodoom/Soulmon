@@ -1285,6 +1285,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         getBehavior={getBehavior}
         onUserMessage={onChatSent}
         focusRequest={chatFocusRequest}
+        spriteSrc={sprite || undefined}
         chatContext={chatContext}
         language={language}
       />
