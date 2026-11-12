@@ -14,7 +14,7 @@ const TASKS: DockTask[] = [
 ];
 const q = (s: string) => document.querySelector(s) as HTMLElement | null;
 
-describe('lista de tarefas na sessão do Foco (§298)', () => {
+describe('lista de tarefas na sessão do Foco (§304)', () => {
   it('mostra tarefas e, ao expandir a tarefa, os subtópicos; checkbox chama os handlers da Home', () => {
     const onTask = vi.fn(); const onStep = vi.fn();
     render(<FocusTaskDock language="pt-BR" tasks={TASKS} onToggleTask={onTask} onToggleStep={onStep} top={190} bottom="16px" />);
@@ -50,7 +50,7 @@ describe('lista de tarefas na sessão do Foco (§298)', () => {
 
 const ACTIVE = (over: Partial<ActiveJourney> = {}): ActiveJourney => ({ sid: 's1', seed: 7, mode: 'p25', env: 'forest', keys: [], day: '2026-11-11', startAt: Date.now(), pausedMs: 0, pausedAt: null, pauses: 0, ...over } as ActiveJourney);
 
-describe('tela acordada na jornada (§298)', () => {
+describe('tela acordada na jornada (§304)', () => {
   const stub = () => {
     const release = vi.fn(async () => {});
     const request = vi.fn(async () => ({ release }));

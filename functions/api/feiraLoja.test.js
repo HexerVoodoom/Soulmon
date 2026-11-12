@@ -30,6 +30,8 @@ const hojeUtc = () => new Date().toISOString().slice(0, 10);
 const diasDe = n => Array.from({ length: n }, (_, i) => new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10));
 /** Uma conta que ganha a feira no dia `dia`. */
 const contaQueGanha = (dia) => { for (let i = 0; i < 5000; i++) { const s = `acct${i}`.padEnd(16, 'x'); if (haFeiraDeVerdade(s, dia) && sortearFeiraLoja(s, dia)?.vendor !== 'hexsmith') return s; } throw new Error('nenhuma'); };
+// Conta que ganha feira no dia E cuja oferta tem item que satisfaz `pred` (a oferta varia por dia: nao depender da sorte do dia).
+const contaCom = (dia, pred) => { for (let i = 0; i < 20000; i++) { const s = `acct${i}`.padEnd(16, 'x'); const o = haFeiraDeVerdade(s, dia) ? sortearFeiraLoja(s, dia) : null; if (o && o.vendor !== 'hexsmith' && o.items.some(pred)) return s; } throw new Error('nenhuma com o item'); };
 
 describe('a feira de verdade: o sorteio', () => {
   it('é determinístico por (conta, dia): a mesma entrada dá a mesma oferta, sempre', () => {
@@ -179,9 +181,9 @@ describe('a feira de verdade: gravação, limite de 1/item, expiração', () => 
   it('item único que a pessoa ganhou por fora depois do sorteio não se compra', async () => {
     const e = env();
     const dia = hojeUtc();
-    const conta = contaQueGanha(dia);
+    const conta = contaCom(dia, i => i.kind === 'bg' || i.kind === 'furniture');
     const o = await abrirFeiraLoja(e, conta, dia);
-    const unico = o.items.find(i => i.kind !== 'chip');
+    const unico = o.items.find(i => i.kind === 'bg' || i.kind === 'furniture');
     e.SOULMON_SAVES.store.set(conta, JSON.stringify({ ownedBackgrounds: [unico.id], ownedFurniture: [unico.id], hexsmith: { owned: [unico.id], equipped: {} } }));
     expect(await validarCompraFeiraLoja(e, conta, dia, unico.id)).toEqual({ ok: false, reason: 'owned' });
   });
@@ -263,7 +265,7 @@ describe('as rotas guildFeiraLoja e guildFeiraLojaBuy', () => {
   it('lê a loja de hoje; comprar item do Mercado devolve o PREÇO DA OFERTA e a 2a compra dá 409', async () => {
     const e = env();
     const dia = hojeUtc();
-    const conta = contaQueGanha(dia);
+    const conta = contaCom(dia, i => i.type === 'shop');
     const o = await abrirFeiraLoja(e, conta, dia);
     const r = await chamar(e, 'guildFeiraLoja', { id: conta, dayKey: dia }, 'GET');
     expect(r.status).toBe(200);

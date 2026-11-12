@@ -1,4 +1,5 @@
 import { CATEGORY_ICONS } from '../types/category-icons';
+import { normalizeCategory } from '../types/categories';
 import type { ActivityCategory } from '../types/attributes';
 
 export interface SuggestedTask {
@@ -49,11 +50,10 @@ export async function suggestTasksResult(
     const raw = Array.isArray(data.suggestions) ? data.suggestions : [];
     return {
       ok: true,
-      items: raw.map((s: { name: string; category: ActivityCategory }) => ({
-        name: s.name,
-        category: s.category,
-        emoji: CATEGORY_ICONS[s.category] ?? '✨',
-      })),
+      items: raw.map((s: { name: string; category: string }) => {
+        const category = normalizeCategory(s.category) ?? 'mente'; // o modelo pode falar o vocabulário antigo
+        return { name: s.name, category, emoji: CATEGORY_ICONS[category] ?? '✨' };
+      }),
     };
   } catch {
     return { ok: false, reason: semRede ? 'offline' : 'error' };

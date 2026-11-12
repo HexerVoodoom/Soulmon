@@ -22,7 +22,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); });
 const AGORA = new Date(2026, 10, 4, 10, 0, 0);
 const noop = () => {};
 const pendente = { id: 't1', name: 'Lavar louça', category: 'Personal', emoji: 'x', completed: false, effort: 1 } as unknown as Task;
-const feita: CompletedTask = { id: 't9', name: 'Pagar conta', category: 'Work', emoji: 'x', completedAt: AGORA.toISOString() };
+const feita: CompletedTask = { id: 't9', name: 'Pagar conta', category: 'foco', emoji: 'x', completedAt: AGORA.toISOString() };
 
 function montar() {
   const fns = { onToggleTask: vi.fn(), onEditTask: vi.fn(), onHoldDoneTask: vi.fn() };
