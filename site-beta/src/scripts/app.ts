@@ -170,6 +170,15 @@ function mostrarErro(msg: string, comContato = false, info = false) {
   if (email && !info) email.setAttribute('aria-describedby', 'email-dica email-erro');
 }
 
+// Passo a passo (dono, 12/11): a mãozinha começa no passo 1 e segue o clique; o passo atual fica 100%, os outros 75% (CSS por data-ativo).
+function passoAPasso() {
+  const ol = $('[data-passos]'); const mao = $('[data-passo-mao]'); if (!ol || !mao) return;
+  const lis = $$('.passo', ol);
+  const ir = (n: number) => { ol.setAttribute('data-ativo', String(n)); lis[n]?.appendChild(mao); };
+  ir(0);
+  lis.forEach((li, i) => li.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => { if (i >= Number(ol.getAttribute('data-ativo'))) ir(Math.min(i + 1, lis.length - 1)); })));
+}
+
 // Clique no Google Group (dono, 12/11): conta por dia + UTM (allowlist), sem dado pessoal. Não atrasa nem bloqueia a navegação.
 function cliqueGrupo() {
   const links = $$('[data-clique]'); if (!links.length) return;
@@ -563,7 +572,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); cliqueGrupo(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); cliqueGrupo(); passoAPasso(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
