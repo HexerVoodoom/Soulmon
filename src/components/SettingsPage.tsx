@@ -32,6 +32,7 @@ import { requestOpenFrameShop } from '../utils/frameShopNav';
 import { SpritePoseRows } from './SpritePoseRows';
 import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
+import type { SoulmonVoiceMode } from '../utils/soulmonCharacter';
 
 
 /**
@@ -83,6 +84,9 @@ interface SettingsPageProps {
   /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
   mealRhythm?: MealRhythmSettings;
   onChangeMealRhythm?: (next: MealRhythmSettings) => void;
+  /** Beta12 (B2): como o Soulmon se relaciona com o seu jeito (`complementar` é o padrão). Sem o callback a linha não existe. */
+  voiceMode?: SoulmonVoiceMode;
+  onChangeVoiceMode?: (next: SoulmonVoiceMode) => void;
   /** Pose do sprite (`utils/spritePose.ts`). A escrita é do `applySpritePose`, não de callback. */
   spritePose?: Partial<SpritePose>;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
@@ -283,6 +287,8 @@ export function SettingsPage({
   generateCharacter,
   mealRhythm,
   onChangeMealRhythm,
+  voiceMode = 'complementar',
+  onChangeVoiceMode,
   spritePose,
   redeemed = false,
   showRedeemed = false,
@@ -653,6 +659,21 @@ export function SettingsPage({
           </div>
         </div>
         <SpritePoseRows language={language} pose={spritePose} />
+        {/* Beta12 (B2): COMPLEMENTAR (padrão) ou o mesmo jeito do jogador. O rótulo não diz o tipo de ninguém. */}
+        {onChangeVoiceMode && (
+          <div className="sm2-conta-rg">
+            <span className="sm2-conta-rg-lb" id="sm-conta-voice-lb">{t.settings.voiceMode}</span>
+            <div role="radiogroup" aria-labelledby="sm-conta-voice-lb" className="sm2-conta-rg-seg">
+              {([
+                { k: 'complementar' as const, l: t.settings.voiceModeComplementary },
+                { k: 'similar' as const, l: t.settings.voiceModeSimilar },
+              ]).map(o => (
+                <Segment key={o.k} tonal selected={voiceMode === o.k} onSelect={() => onChangeVoiceMode(o.k)} label={o.l} />
+              ))}
+            </div>
+            <span className="sm2-conta-rg-lb" style={{ display: 'block', marginTop: 4 }}>{t.settings.voiceModeHint}</span>
+          </div>
+        )}
         <div className="sm2-conta-rg">
           <span className="sm2-conta-rg-lb" id="sm-conta-lang-lb">{t.settings.language}</span>
           <div role="radiogroup" aria-labelledby="sm-conta-lang-lb" className="sm2-conta-rg-seg">

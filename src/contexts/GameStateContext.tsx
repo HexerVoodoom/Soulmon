@@ -134,6 +134,7 @@ import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantSta
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
 import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
+import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
 /**
@@ -838,6 +839,14 @@ export interface GameState {
    * `public/privacidade.html`.
    */
   soulTestAnswers?: Answers;
+  /**
+   * 12/11/2026 (beta12, B2) — como o Soulmon se relaciona com o jeito do
+   * jogador: `complementar` (padrão; o que equilibra) ou `similar` (o mesmo
+   * jeito). Escolha das Configurações; o rótulo nunca revela o tipo. Opcional:
+   * save anterior não tem = complementar. Em `similar` o veto de
+   * vulnerabilidade prevalece (`utils/soulmonCharacter.ts`).
+   */
+  soulmonVoiceMode?: SoulmonVoiceMode;
   /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
@@ -1684,6 +1693,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // As 20 do teste (01/10/2026): só resposta bem formada passa; sem o
         // campo, continua ausente.
         soulTestAnswers: sanitizeSoulTestAnswers(loadedState.soulTestAnswers),
+        // Beta12: só os dois valores conhecidos passam; ausente = padrão (complementar).
+        soulmonVoiceMode: sanitizeVoiceMode(loadedState.soulmonVoiceMode),
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);

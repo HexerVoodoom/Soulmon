@@ -6,7 +6,7 @@
  * efeito (L8), e não diz "subir de nível" (a bíblia §12): o Vínculo cresceu, e o lugar já estava ali.
  *
  * Três balões por prédio, nesta ordem: `hello` (quem sou — `{name}` vira o primeiro nome do NPC, lido de
- * `LOT_NPC_VOICE`, que é o dono do nome), `what` (o que se faz aqui, concreto) e `invite` (a porta aberta, sem pressa).
+ * `LOT_NPC_VOICE`, que é o dono do nome), `what` (o que se faz aqui, concreto) e `invite` (a porta aberta: direta, sem enchimento).
  * EN primeiro (idioma-base do produto), PT-BR em seguida.
  */
 import type { BuildingId } from './gates';
@@ -22,19 +22,19 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Item Shop', pt: 'Loja de Itens' },
     hello: { en: "I'm {name}. This little stall is mine.", pt: 'Eu sou {name}. Esta barraquinha é minha.' },
     what: { en: 'Small things for your Soulmon, laid out where you can see them.', pt: 'Coisinhas para o seu Soulmon, postas onde dá para ver.' },
-    invite: { en: 'Stop by whenever you like.', pt: 'Passe por aqui quando quiser.' },
+    invite: { en: 'Stop by.', pt: 'Passa por aqui.' },
   },
   'mercado.conquistas': {
     place: { en: 'Achievements', pt: 'Conquistas' },
     hello: { en: "I'm {name}. I keep the milestones.", pt: 'Eu sou {name}. Guardo os marcos.' },
     what: { en: 'Each stretch you cross gets a plate here, and the plates stay.', pt: 'Cada trecho atravessado ganha uma placa aqui, e as placas ficam.' },
-    invite: { en: 'Come look at them, at your own pace.', pt: 'Venha olhar, no seu ritmo.' },
+    invite: { en: 'Come take a look.', pt: 'Vem olhar.' },
   },
   'mercado.decoracao': {
     place: { en: 'Decor', pt: 'Decoração' },
     hello: { en: "I'm {name}. The workshop behind me is new to you.", pt: 'Eu sou {name}. A oficina atrás de mim é nova por aqui.' },
     what: { en: 'I make pieces for the corners of your Soulmon’s den, sanded by hand.', pt: 'Faço peças para os cantos do abrigo do seu Soulmon, lixadas à mão.' },
-    invite: { en: 'Pick a corner for one, if you like.', pt: 'Escolha um canto para uma delas, se quiser.' },
+    invite: { en: 'Pick a corner for one of them.', pt: 'Escolhe um canto pra uma delas.' },
   },
   'mercado.background': {
     place: { en: 'Backdrops', pt: 'Cenários' },
@@ -46,13 +46,13 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Soulsmith', pt: 'Soulsmith' },
     hello: { en: "I'm {name}. The furnace is lit.", pt: 'Eu sou {name}. O forno está aceso.' },
     what: { en: 'Pieces arrive rough here and take shape with the materials you bring.', pt: 'As peças chegam cruas e ganham forma com os materiais que você traz.' },
-    invite: { en: 'Choose the side you want to strengthen, no rush.', pt: 'Escolha o lado que quer reforçar, sem pressa.' },
+    invite: { en: 'Pick the side you want to strengthen.', pt: 'Escolhe o lado que quer reforçar.' },
   },
   'forja.hexsmith': {
     place: { en: 'Hexsmith', pt: 'Hexsmith' },
     hello: { en: "I'm {name}. I read the hex code that runs through every Soulmon.", pt: 'Eu sou {name}. Eu leio o código hex que corre em cada Soulmon.' },
     what: { en: 'With element potions, I forge HEXes and set them in its Ports, rewriting a few lines of it.', pt: 'Com poções de elemento, eu forjo HEXes e os encaixo nas Portas dele, reescrevendo algumas linhas.' },
-    invite: { en: 'Bring a potion whenever you like, no rush.', pt: 'Traga uma poção quando quiser, sem pressa.' },
+    invite: { en: 'Bring a potion.', pt: 'Traz uma poção.' },
   },
   'jogos.salao': {
     place: { en: 'Game Hall', pt: 'Salão de Jogos' },
@@ -76,7 +76,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Mind Workshop', pt: 'Ateliê da Mente' },
     hello: { en: "I'm {name}. I set puzzles out on the table.", pt: 'Eu sou {name}. Eu deixo quebra-cabeças sobre a mesa.' },
     what: { en: 'Games of memory, rules and logic. They describe what they ask, and promise nothing.', pt: 'Jogos de memória, regras e lógica. Eles dizem o que pedem, e não prometem nada.' },
-    invite: { en: 'The pieces are not going anywhere. Sit down when you want.', pt: 'As peças não vão a lugar nenhum. Sente-se quando quiser.' },
+    invite: { en: 'The pieces are not going anywhere. Sit down.', pt: 'As peças não vão a lugar nenhum. Senta aí.' },
   },
   'arena.duelo': {
     place: { en: 'Duel', pt: 'Duelo' },
@@ -100,7 +100,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Fair', pt: 'Feira' },
     hello: { en: "I'm {name}, and this is the Fair.", pt: 'Eu sou {name}, e esta é a Feira.' },
     what: { en: 'A ring of friends gathers under the lanterns, and every stall is a small song.', pt: 'Uma roda de amigos se junta sob as lanternas, e cada barraca é uma canção pequena.' },
-    invite: { en: 'Come hear it, whenever you wish.', pt: 'Venha ouvir, quando quiser.' },
+    invite: { en: 'Come hear it.', pt: 'Vem ouvir.' },
   },
   'exploracao.passeio': {
     place: { en: 'Stroll', pt: 'Passeio' },
@@ -123,7 +123,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
   'forja.oficina': {
     place: { en: 'Focus Workshop', pt: 'Oficina do Foco' },
     hello: { en: "I'm {name}. I keep the beat for the lights.", pt: 'Eu sou {name}. Eu marco o ritmo das luzes.' },
-    what: { en: 'Focus techniques, laid out as a few steady rhythms. Each light glows in its own time.', pt: 'Técnicas de foco, em alguns ritmos constantes. Cada luz acende no seu tempo.' },
+    what: { en: 'Focus techniques, laid out as a few steady rhythms. Each light glows when its turn comes.', pt: 'Técnicas de foco, em alguns ritmos constantes. Cada luz acende na hora dela.' },
     invite: { en: 'Try one when it suits you.', pt: 'Experimente uma quando combinar com você.' },
   },
   'laboratorio.evolucao': {
@@ -136,7 +136,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Archive', pt: 'Arquivo' },
     hello: { en: "I'm {name}. I write the Archive.", pt: 'Eu sou {name}. Eu escrevo o Arquivo.' },
     what: { en: 'Your Soulmon’s forms, its bestiary and its keepsakes, all kept in order.', pt: 'As formas do seu Soulmon, o bestiário e as lembranças, tudo em ordem.' },
-    invite: { en: 'Find me inside the Profile, under Archive. Look at your own pace.', pt: 'Me encontre dentro do Perfil, na aba Arquivo. Olhe no seu ritmo.' },
+    invite: { en: 'Find me inside the Profile, under Archive. Take a look.', pt: 'Me encontra dentro do Perfil, na aba Arquivo. Dá uma olhada.' },
   },
   'laboratorio.stats': {
     place: { en: 'Bond Sanctum', pt: 'Santuário do Vínculo' },

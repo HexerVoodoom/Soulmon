@@ -1,0 +1,14 @@
+# Decisões da frente B (personalidade) — beta12
+
+Seguidas as decisões do dono de `docs/BACKLOG-BETA12.md` §F (1, 2, 4, 5, 6, 10, 12) e do briefing (limite de 20 mensagens/dia). Onde o backlog deixou lacuna, a opção recomendada:
+
+1. **Modelo.** Big Five (5 dimensões); a 6ª do teste (Honestidade-Humildade) e os eixos Jung não entram. Complemento = espelho por dimensão, com UMA exceção: neuroticismo nunca passa do neutro no Soulmon (não fabricamos um bichinho ansioso). Mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`.
+2. **Teste válido.** ≥ 10 respostas (o onboarding grava 20); abaixo disso, Soulmon neutro (§F 4).
+3. **Arquétipos.** 7 de Soulmon + 3 só de NPC (protetor, irônico, enigmático). O jogador nunca vê nenhum.
+4. **Veto (§F 10 e 12).** Ansiedade, perfeccionismo e cansaço restringem às vozes acolhedor/calmo/curioso/brincalhão, em COMPLEMENTAR e em SIMILAR. As três travas de `personality.ts` não mudaram.
+5. **Falas do Soulmon.** Variantes por arquétipo nos 5 gestos mais frequentes (fome, ócio, tarefa, carinho, "tô bem"); o resto segue genérico (§F 6, lotes depois). Mecanismo: `setPetVoiceArchetype` (módulo-nível) chamado pelo App; `CompanionHUD.tsx` e `ChatBox.tsx` NÃO foram tocados.
+6. **Configurações.** Rótulos "Jeito do Soulmon" / "Complementar" / "Igual ao meu" (en: "Soulmon's manner" / "Complementary" / "Like mine"); campo `soulmonVoiceMode` opcional no save, default complementar.
+7. **Chat.** `aiSettings.character` por lista fechada no servidor; bloco "Character" no prompt; instrução de fala humana e direta. Limite: `AI_LIMITS.chat.perAccountByTier.demo` 15 -> 20; a 21ª mensagem do dia responde 200 com a fala padrão (`CHAT_DAILY_LIMIT_MESSAGE`), não erro. Teto global (250) inalterado: a conta de testadores do teste `chat.freeTier` passou de 15 para 12 testadores a 20/dia.
+8. **NPCs (§F 5).** Ficha aplicada sem pedir aprovação; tabela em `docs/beta12/TABELA-NPCS.md`. Vesca, Hexsmith e Tessária Ultra; também Ultra: Iris, Selene, Arauto do Fim, Aeonyx (7 de 90, 7,8%). Tessária = Marcial + Vileza = Serrilha (elemento combinado real), classe Mestre de Armas. Chefes: tier manda o estágio (chefe Mega/Ultra, guardião Ultimate); elementos da ficha = os do roster (o teste confere).
+9. **Classe nunca vaza.** A ficha guarda o ID da classe, nunca o nome; o contrato impede que a fala/lore cite nome de classe e que o rótulo do NPC entregue a própria classe (por isso Vesca é Arquimago, não Alquimista, e o Arauto do Fim é Inquisidor).
+10. **Falas reescritas (§F 6, §F 13).** Só os NPCs principais (`areaNpcVoice.ts` inteiro, convites de `buildingIntroCopy.ts`, mensagens da Forja, Clã, Refúgio e Torneio); lore de chefes só 1 palavra. Fora dos lotes de revisão de português (D). Ficou para depois: diálogos longos de missão, textos de tela, `welcomeTour` (o "pode pular quando quiser" é funcional) e o `pet_line` do widget.

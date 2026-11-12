@@ -191,7 +191,8 @@ import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
 import { soulmonDisplayName, notificationPetName } from './utils/petName';
-import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
+import { rolledRareCheer, setPetVoiceArchetype, type PetVoiceKind } from './utils/petVoice';
+import { soulmonCharacterFor, loadBigFive, type SoulmonCharacter, type TraitPoints } from './utils/soulmonCharacter';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
@@ -1569,9 +1570,34 @@ export default function App() {
      guardado sobra só o que não é personalidade (instruções livres,
      criatividade). Perfil ausente = fallback seguro. */
   const onboardingProfileRaw = (gameState as { onboardingProfile?: unknown }).onboardingProfile;
+  /* Beta12 (B1/B2): o CARÁTER do Soulmon vem do Big Five do teste do onboarding
+     (`utils/soulmonCharacter.ts`; mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`),
+     COMPLEMENTAR por padrão ou SIMILAR (Configurações). O teste decide o caráter;
+     as forças/dificuldades decidem o veto. O `scoreProfile` entra por `import()`
+     (o banco de perguntas não vai para o chunk de entrada) e o resultado nunca
+     chega à tela: só à fala. Sem teste = neutro. */
+  const soulTestAnswersRaw = (gameState as { soulTestAnswers?: unknown }).soulTestAnswers;
+  const voiceModeRaw = (gameState as { soulmonVoiceMode?: unknown }).soulmonVoiceMode;
+  const [bigFive, setBigFive] = useState<{ traitPoints: TraitPoints; answered: number } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (!soulTestAnswersRaw) { setBigFive(null); return; }
+    void loadBigFive(soulTestAnswersRaw).then(r => { if (vivo) setBigFive(r); });
+    return () => { vivo = false; };
+  }, [soulTestAnswersRaw]);
+  const soulmonCharacter = useMemo<SoulmonCharacter>(
+    () => soulmonCharacterFor({
+      traitPoints: bigFive?.traitPoints,
+      answered: bigFive?.answered,
+      mode: voiceModeRaw === 'similar' ? 'similar' : 'complementar',
+      struggles: personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }).struggles,
+    }),
+    [bigFive, voiceModeRaw, onboardingProfileRaw],
+  );
+  useEffect(() => { setPetVoiceArchetype(soulmonCharacter.archetype); }, [soulmonCharacter.archetype]);
   const chatPersonality = useMemo(
-    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings),
-    [onboardingProfileRaw, aiSettings],
+    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter),
+    [onboardingProfileRaw, aiSettings, soulmonCharacter],
   );
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
@@ -9338,6 +9364,8 @@ export default function App() {
               onToggleShowRedeemed={() => setGameState(prev => ({ ...prev, showRedeemed: !prev.showRedeemed }))}
               showInPublicList={gameState.hideFromPublicList !== true}
               onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
+              voiceMode={gameState.soulmonVoiceMode ?? 'complementar'}
+              onChangeVoiceMode={(m) => setGameState(prev => ({ ...prev, soulmonVoiceMode: m }))}
               gm={isAdmin ? gmActions : undefined}
               generateCharacter={{ onGenerate: handleGenerateCharacter, until: generateUntil, usesLeft: generateUsesLeft, maxUses: MAX_GENERATE_CHARACTER_USES }}
               profile={{

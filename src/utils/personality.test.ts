@@ -87,3 +87,30 @@ describe('chatSettingsFor', () => {
     expect(chatSettingsFor(undefined, null)).toEqual({ tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'supportive', customKeywords: '', temperature: 0.85 });
   });
 });
+
+describe('chatSettingsFor — o caráter do teste (beta12, B1): CONVIVE com a derivação por forças/dificuldades', () => {
+  const calmo = { archetype: 'calmo', traits: { extraversion: 'low' as const, neuroticism: 'low' as const } };
+  const animado = { archetype: 'animado', traits: { extraversion: 'high' as const } };
+
+  it('sem caráter (ou neutro) nada muda: o objeto é o de sempre, sem a chave `character`', () => {
+    const base = chatSettingsFor({ struggles: ['tempo'] }, null);
+    expect(chatSettingsFor({ struggles: ['tempo'] }, null, undefined)).toEqual(base);
+    expect(chatSettingsFor({ struggles: ['tempo'] }, null, { archetype: 'neutro', traits: {} })).toEqual(base);
+    expect('character' in base).toBe(false);
+  });
+  it('o teste decide o caráter (tom) e o envia ao chat; a motivação continua da derivação', () => {
+    const s = chatSettingsFor({ strengths: ['disciplina'], struggles: ['tempo'] }, null, animado);
+    expect(s.tone).toBe('energetic');
+    expect(s.character).toEqual({ archetype: 'animado', traits: animado.traits });
+    expect(s.motivationStyle).toBe(derivePersonality({ strengths: ['disciplina'], struggles: ['tempo'] }).motivationStyle);
+  });
+  it('as forças/dificuldades decidem o VETO: `challenging` nunca chega a quem é vulnerável, não importa o caráter', () => {
+    const s = chatSettingsFor({ strengths: ['disciplina', 'persistencia'], struggles: ['ansiedade'] }, null, animado);
+    expect(s.motivationStyle).not.toBe('challenging');
+    expect(chatSettingsFor({ strengths: ['disciplina'], struggles: [] }, null, calmo).motivationStyle)
+      .toBe(derivePersonality({ strengths: ['disciplina'], struggles: [] }).motivationStyle);
+  });
+  it('voz calma pede pouco emoji', () => {
+    expect(chatSettingsFor({ struggles: ['tempo'] }, null, calmo).emojiIntensity).toBe('low');
+  });
+});

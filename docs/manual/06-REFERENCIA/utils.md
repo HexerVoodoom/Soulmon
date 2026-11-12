@@ -3944,10 +3944,17 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/personality.ts`
 **Dono de:** a personalidade do chat DERIVADA das forças/dificuldades do onboarding (G7, 01/10/2026).
-**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored)`, `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
+**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored, character?)` (beta12: o 3º argumento é o caráter do teste, que ajusta o tom e segue ao chat; o veto não muda), `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/personality.test.ts`.
 **Regra de negócio:** ansiedade/perfeccionismo/cansaço nunca recebem `challenging`; desafio só com disciplina/persistência; perfil vazio = `casual` + `supportive`. Lê `gameState.onboardingProfile`. Racional em `docs/PERSONALIDADE-DERIVADA.md`.
+
+### `src/utils/soulmonCharacter.ts`
+**Dono de:** o CARÁTER do Soulmon (beta12, B1/B2): Big Five do teste do onboarding → arquétipo de personalidade (complementar por dimensão, ou similar), com o veto de vulnerabilidade de `personality.ts`. Função pura; o jogador nunca vê o tipo, só ouve o jeito.
+**Exports:** `soulmonCharacterFor(input)`, `soulmonValue(dim, score, mode)`, `loadBigFive(answers)` (import dinâmico do `scoreProfile`), `sanitizeVoiceMode`, `isVulnerable`, `SOULMON_ARCHETYPES`, `NPC_ONLY_ARCHETYPES`, `ALL_ARCHETYPES`, `SAFE_ARCHETYPES`, `MIN_ANSWERS_FOR_CHARACTER`, `NEUTRAL_CHARACTER`, `DEFAULT_VOICE_MODE`, tipos `SoulmonVoiceMode`, `SoulmonCharacter`, `Archetype`, `VoiceArchetype`.
+**Chamado por:** `src/App.tsx`, `src/utils/petVoice.ts` (só tipo), `src/data/npcFichas.ts` (só tipo).
+**Régua:** `src/utils/soulmonCharacter.test.ts`, `src/utils/petVoice.carater.test.ts`, `src/utils/voiceModeSettings.contract.test.ts`.
+**Regra de negócio:** sem teste (menos de 10 respostas) = neutro; COMPLEMENTAR (padrão) = espelho por dimensão, exceto neuroticismo (nunca acima do neutro); SIMILAR = a mesma personalidade do jogador; ansiedade/perfeccionismo/cansaço restringem às vozes acolhedor/calmo/curioso/brincalhão nos dois modos. Mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`.
 
 ### `src/utils/notificationDefault.ts`
 **Dono de:** o padrão LIGADO da preferência de notificações (G6, 01/10/2026), condicionado à permissão do sistema.

@@ -1411,7 +1411,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           ) : sparResult.won && sparResult.honorCapped ? (
             <p data-treino-honra-teto style={sm2Hint}>{isPt ? 'A Honra do treino de hoje já está completa. Volte amanhã.' : "Today's sparring Honor is complete. Come back tomorrow."}</p>
           ) : (
-            <p style={sm2Hint}>{isPt ? 'Sem pressa: nada se perde. Treine de novo quando quiser.' : 'No rush, nothing is lost. Spar again whenever you like.'}</p>
+            <p style={sm2Hint}>{isPt ? 'Nada se perde. Treina de novo.' : 'Nothing is lost. Spar again.'}</p>
           )}
           <button type="button" onClick={() => { setSparResult(null); loadSpar(); }} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
             {isPt ? 'Continuar' : 'Continue'}
