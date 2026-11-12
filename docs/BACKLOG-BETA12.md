@@ -324,3 +324,76 @@ A jornada do Foco avisa «hora do descanso» (fim dos 25 min) e «o descanso aca
 - **Web/PWA com o app FECHADO**: sem push do servidor para o foco não há como avisar (o timer da web só vive com a aba em segundo plano). Exigiria um `focus-end` no worker de push (`functions/api`), com o horário de fim vindo do servidor da jornada, que já o conhece.
 - **Alarme esquecido depois do reboot**: o `BootReceiver` reagenda o que está em `SoulmonAlarms`; o app cancela o alarme ao seguir ou concluir, mas um alarme que disparou fica guardado até o próximo `cancelFocusAlarm`. Conferir em aparelho real se reaparece um aviso velho após reiniciar.
 - Permissão de notificação: o app só usa a que o jogador já deu (não pede sozinho nesta tela).
+
+## J. Tarefas e hábitos sugeridos linkados a recursos do jogo
+
+> **Pedido do dono:** 12/11/2026. **Execução:** beta12, domingo 15/11/2026 às 03:00 (nenhuma implementação antes). Só web (JS/React/copy, sai pelo Worker, sem APK), **exceto** a leitura nativa de passos, que já existe no APK (plugin `SoulmonSteps`, PRs #764 e #784).
+
+### Regra
+
+Toda tarefa ou hábito **sugerido** pelo catálogo de atividades (`src/data/activityCatalog.ts`) que tenha um recurso no jogo aparece **linkado** a esse recurso. Três casos pedidos pelo dono:
+
+1. **Caminhar → contador de passos.** A tarefa mostra os passos do dia na própria linha. Ao atingir a meta, ela é marcada **sozinha** (check automático).
+2. **Journaling → prédio do Caderno.** A tarefa tem um link que leva ao prédio do Caderno (`forja.caderno`). Ao completar lá, a tarefa é marcada.
+3. **Aviso do check automático.** Quando o check automático acontece, aparece no topo da tela uma tag de borda arredondada, no estilo dos avisos (balão de `NoticeToast`), com o texto "Tarefa" e o checkbox já marcado. O visual é o da linha da tarefa na Home, como um recorte dela, para o jogador ver que marcou.
+
+### Mapeamento catálogo → recurso (lido no código em `origin/main`, 29c4eae)
+
+| Atividade do catálogo (id) | Recurso no jogo | Situação |
+|---|---|---|
+| `corpo-caminhar` | Contador de passos (Health Connect; reserva no contador do aparelho; `src/utils/steps.ts`) | **Linkar.** Ver riscos (regra 1 de `steps.ts`). |
+| `mente-gratidao` (diário de gratidão) e `criatividade-escrita-livre` (escrita livre) | Caderno (`forja.caderno`, `CadernoSheet`) | **Linkar** como "journaling". O Caderno diário saiu das diárias em 12/11 (REGISTRO §309) e foi substituído pela semanal "journal 3× na semana"; o prédio continua existindo e paga tinta na entrada. Gatilho a confirmar (A5). |
+| `foco-bloco-25min` | Focus Workshop (prédio Foco, na Forja; sessão concluída já alimenta a semanal "3 dias") | **Candidato forte.** Pergunta Q5. |
+| `foco-uma-tarefa-por-vez` | Focus Workshop (escolha de tarefas e hábitos de hoje, desde 01/11) | **Candidato.** Mesma pergunta Q5. |
+| `sono-horario-fixo`, `sono-telas-fora`, `sono-preparar-quarto` | Nenhum do jogador. A janela de descanso (`src/utils/restWindow.ts`) nasce de pôr o **pet** para dormir, sem sensor; o "Z" do widget é o pet dormindo. | **Não linkar** (Q6). |
+| `corpo-beber-agua` | Nenhum contador de água no jogo | **Não linkar.** Contador de copos seria item novo (Q7). |
+| Demais atividades (força, alongar, respiração, ler, mensagens, casa, finanças, propósito etc.) | Nenhum recurso no jogo hoje | Sem link. |
+
+### Critérios de aceite (testáveis)
+
+- **A1. Catálogo.** Cada atividade com recurso mapeado declara o campo novo (proposta: `resource`, com valores `steps`, `building:forja.caderno` e `building:forja.foco`). Um contract test em `src/data/` varre o catálogo: atividade com recurso sem campo, ou campo com valor inválido, falha. Atividades sem recurso não ganham campo.
+- **A2. Linha da tarefa.** Tarefa criada a partir de uma sugestão com recurso mostra o indicador na própria linha: "N de M passos" para caminhar; botão "Ir ao Caderno" para journaling. Teste de render, nos temas claro e escuro.
+- **A3. Passos, check automático.** Com permissão concedida e leitura de hoje igual ou acima da meta, a tarefa **adotada** de caminhar fica marcada sem toque. Como o polling de passos roda a cada 5 min (`STEPS_POLL_MS`), aceitar até 5 min de atraso. Sem permissão ou sem sensor, nada muda: o check segue manual.
+- **A4. Passos abaixo da meta.** Nunca marca. Mostra só o progresso.
+- **A5. Caderno.** Um registro guardado no Caderno marca a tarefa de journaling (no máximo uma vez por dia). Fechar o Caderno sem salvar não marca. O link abre o prédio do Caderno. Reusar o evento real de registro guardado que já existe em `App.tsx` (perto da contagem da semanal "journal"), sem criar gatilho paralelo.
+- **A6. Foco.** Conforme a resposta de Q5: a sessão concluída (ou só a que usou a tarefa escolhida) marca a tarefa, uma vez por dia.
+- **A7. Aviso.** Ao check automático, aparece a tag no topo: borda arredondada, texto "Tarefa", checkbox marcado, tempo na tela conforme Q8. Não bloqueia os botões de cuidado do pet. Contraste AA. O leitor de tela anuncia "Tarefa concluída automaticamente: <nome>". Respeita `prefers-reduced-motion`.
+- **A8. Idempotência.** O check automático grava a chave `<AAAA-MM-DD>|<id da tarefa>`. Recarregar, reabrir o app, trocar de aba ou repetir o gatilho não duplica recompensa, não reabre o aviso e não desmarca nada.
+- **A9. Dia da conta.** O "dia" é o dia do jogador (mesmo corte das tarefas diárias e de `stepsDayKey`). Passos da noite anterior não marcam a tarefa de hoje. Teste na virada da meia-noite local.
+- **A10. Sem desmarcar.** O check automático segue a regra de `handleToggleTask` (tarefa concluída não desmarca). Queda do contador de passos (reboot ou reabertura do app) nunca desmarca.
+- **A11. Regra de passos.** Nenhuma recompensa nova ligada só a passo. O check automático dá o mesmo que o toque manual (Q2) e só marca tarefa que o jogador adotou (Q1).
+- **A12. Textos.** Textos novos (tag, indicador, link, anúncio para leitor de tela) em EN e PT-BR, e passam pela régua de PT (`pt-lint`).
+
+### Onde toca no código (sem número de linha, para não envelhecer)
+
+- Catálogo: `src/data/activityCatalog.ts`, `src/types/activityCatalog.ts`, `src/utils/catalogHabitMigrate.ts` (ids de hábitos já adotados não podem mudar).
+- Tarefas e hábitos: `src/types/taskModel.ts`; em `src/App.tsx`, os handlers de check da Home: `handleToggleTask`, `handleToggleActivityCompletion`, `handleCompleteSteps` e `handleToggleTaskStep`; estado em `src/contexts/GameStateContext.tsx`.
+- Passos: `src/utils/steps.ts` (`readStepsToday`, `applyHealthTotal`, `stepsDeltaFrom`, `DEFAULT_STEP_GOAL`, `STEP_GOAL_OPTIONS`), `src/plugins/SoulmonStepsPlugin.ts`, `src/components/StepsCard.tsx`, polling em `src/App.tsx` (`STEPS_POLL_MS`, `STEPS_VERIFIED_MIN`).
+- Caderno: `src/components/play/CadernoSheet.tsx`, `src/utils/buildingQuests.ts` (`forja.caderno`, `RETIRED_LISTED_BUILDING`), evento de registro guardado em `src/App.tsx`.
+- Focus Workshop: `src/App.tsx` (sessão concluída e `handleCheckInConfirm`), `src/utils/buildingIntroCopy.ts`.
+- Avisos e toasts: `src/components/NoticeToast.tsx` (`NOTICE_TOAST_MS`, `NOTICE_TOAST_KEYS`; a nova chave entraria aqui), `src/components/Toasts*`, fila `filaDeAvisos`. A tag nova respeita a fila: no máximo um aviso visível (ver balões dourados, item G).
+- Linha da tarefa na Home: componente a confirmar na execução (`src/components/TaskMeta.tsx` é o candidato).
+
+### Riscos
+
+- **Check automático indevido.** O Health Connect soma passos de outros apps, e o celular pode contar passos que não são do jogador. Mitigação: só marca tarefa adotada, com meta; mostrar a fonte "Health Connect" na linha.
+- **Regra 1 de `steps.ts`.** "Passo nunca pontua sozinho". O check automático só é compatível se a tarefa foi declarada (adotada) pelo jogador e o passo apenas confirma. Por isso Q1 e A11 existem. Se o dono decidir diferente, a regra 1 precisa ser revista antes, no código.
+- **Privacidade.** Passos são dado de saúde (Play Data Safety e LGPD). Guardar só o agregado diário (regra 4 de `steps.ts`), sem série. O texto de consentimento (`stepsConsentCopy`) diz PARA QUÊ o dado é lido: revisar para cobrir "mostrar na tarefa e marcar sozinho" **antes** de pedir de novo. Quem já concedeu não passa de novo pelo diálogo do sistema.
+- **Idempotência e reset do contador.** O contador zera no reboot e ao reabrir o app. O baseline (`updateStepBaseline`) cuida disso; o check não pode depender do valor cru.
+- **Dia da conta.** Passos da noite contados como do dia seguinte; UTC no servidor e dia local no cliente. Mesmo risco do item G.
+- **Duplicar gatilho.** Caderno e Focus já alimentam a semanal. O check da tarefa precisa reusar esses eventos, não criar contagem nova.
+- **Poluição de avisos.** A tag nova pode competir com os balões dourados (item G) e com `NoticeToast`. Limite de um visível.
+- **Mudança de id.** Trocar id de atividade quebra hábitos já adotados (`catalogId`). Só adicionar campo; não renomear.
+- **Canal.** Tudo é JS/CSS (sai pelo Worker). O único ponto nativo é o plugin de passos, que já está no APK. Se o plugin mudar, exige APK (seção 0).
+
+### Perguntas em aberto (modal ao dono, em lote)
+
+- **Q1. Quem pode ser marcado sozinho?** Recomendada: só tarefa ADOTADA pelo jogador. Sugestão não aceita não marca.
+- **Q2. Recompensa do check automático.** Recomendada: a mesma do toque manual, sem bônus extra.
+- **Q3. Meta de passos.** Recomendada: a meta de passos configurada em Configurações (`STEP_GOAL_OPTIONS`, padrão 7.000), e não os minutos do catálogo ("10 min, 3× na semana").
+- **Q4. Journaling.** Recomendada: marcar ao SALVAR qualquer registro no Caderno, uma vez por dia.
+- **Q5. Foco.** Recomendada: marcar a tarefa escolhida quando a sessão concluída a usa. Sessão sem tarefa escolhida não marca.
+- **Q6. Sono.** Recomendada: sem link. O "Z" é do pet, não do jogador.
+- **Q7. Água.** Recomendada: fora da beta12. Contador de copos vira item próprio.
+- **Q8. Tempo do aviso no topo.** Recomendada: o mesmo tempo dos balões atuais (8 s, `NOTICE_TOAST_MS`).
+- **Q9. Caminhada sem meta batida.** Recomendada: mostrar só o contador de passos, sem cobrança.
