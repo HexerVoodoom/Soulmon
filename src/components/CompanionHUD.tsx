@@ -42,6 +42,7 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
+import type { BalaoTipo } from '../utils/balaoDourado';
 const Mochila = lazy(() => import('./home/Mochila').then(m => ({ default: m.Mochila })));
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
@@ -255,6 +256,10 @@ interface CompanionHUDProps {
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;
+  /** beta12 §G: o BALÃO DOURADO persistente (borda dourada, sem timeout) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala. */
+  balaoDourado?: { tipo: BalaoTipo; text: string; ariaLabel: string } | null;
+  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`). */
+  onBalaoDourado?: (tipo: BalaoTipo) => void;
   /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
   onSinalMasmorra?: () => void;
   /** Ms até o Soulmon voltar da masmorra (`useDungeonReturn`, estado persistido) — a placa de madeira mostra. `null` = sem número. */
@@ -360,6 +365,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   statsSlots,
   missionAway = false,
   naMasmorra = false,
+  balaoDourado = null,
+  onBalaoDourado,
   onSinalMasmorra,
   masmorraRetornoMs,
   daysAway = 0,
@@ -1285,6 +1292,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         getBehavior={getBehavior}
         onUserMessage={onChatSent}
         focusRequest={chatFocusRequest}
+        spriteSrc={sprite || undefined}
         chatContext={chatContext}
         language={language}
       />
@@ -1847,6 +1855,49 @@ export const CompanionHUD = memo(function CompanionHUD({
               />
             </div>
           </div>
+          );
+        })()}
+
+        {/* BALÃO DOURADO (beta12 §G): persistente, borda dourada, leva ao lugar. Mesma faixa do balão comum (fora do fluxo, não muda
+            a altura da Home); só um por vez e cede a vez enquanto o pet fala (`showBubble`). É um BOTÃO nomeado pelo destino, alvo >= 44. */}
+        {balaoDourado && !showBubble && (() => {
+          const x = balaoDourado.tipo === 'rift' ? 84 : Math.min(100, Math.max(0, 50 + (position - 50) * CENA_ZOOM));
+          return (
+            <div data-pet-gold-bubble-row style={{ position: 'absolute', top: BUBBLE_TOP, left: 0, right: 0, zIndex: 25, pointerEvents: 'none' }}>
+              <button
+                type="button"
+                data-pet-gold-bubble={balaoDourado.tipo}
+                aria-label={balaoDourado.ariaLabel}
+                className={reducedMotion ? undefined : 'sm3-balao'}
+                onClick={() => onBalaoDourado?.(balaoDourado.tipo)}
+                style={{
+                  pointerEvents: 'auto', cursor: 'pointer', position: 'relative', display: 'block', width: 'fit-content', maxWidth: '80%', minHeight: 44,
+                  left: `${x}%`, transform: `translateX(-${x}%)`, textAlign: 'left',
+                  background: 'var(--sm2-surface)', border: '2px solid var(--sm2-gold-fill)', borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px',
+                  boxShadow: '0 2px 8px color-mix(in srgb, var(--sm2-ink) 18%, transparent)',
+                }}
+              >
+                <span
+                  className="break-words"
+                  style={{
+                    display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden', overflowWrap: 'anywhere',
+                    fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)',
+                  }}
+                >
+                  {balaoDourado.text}
+                </span>
+                <span
+                  aria-hidden="true"
+                  data-pet-gold-bubble-tail
+                  style={{
+                    position: 'absolute', bottom: -7, left: `clamp(16px, ${x}%, calc(100% - 16px))`, marginLeft: -5,
+                    width: 10, height: 10, background: 'var(--sm2-surface)',
+                    borderRight: '2px solid var(--sm2-gold-fill)', borderBottom: '2px solid var(--sm2-gold-fill)',
+                    transform: 'rotate(45deg)',
+                  }}
+                />
+              </button>
+            </div>
           );
         })()}
 

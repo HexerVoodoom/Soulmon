@@ -210,7 +210,13 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 05/11/2026: 895_367 -> 906_777 (+11 KB): a base limpa já estava em 903_361 (no teto + folga) antes desta mudança; +3,4 KB da
   // recuperação da forma atual sem arte (bug "evoluiu para a mesma forma") e das formas alternativas (sanitizadores do save, visor do acervo).
   // A tela delas e os nomes de elemento já ficaram fora da entrada (EvolutionPath lazy + import() no pedido do sprite).
-  'index.js': 906_777,
+  // 12/11/2026 (beta12): 906_777 -> 1_091_309 (+184,5 KB), build limpo da branch. NÃO é das 5 frentes da beta12: a `main` limpa (merge-base 8367d278e,
+  // `vite build` sem dist commitado) já media 1_113_267 B — o `dist/` commitado era de 09/11 e escondia 7 dias de merges (elementoDescritores.data
+  // 47 KB, shop 25 KB, cosmeticosNovos 17 KB, enemyRosterData 14 KB, derivedElements 13 KB...). Esta branch JÁ TIROU o catálogo de atividades
+  // (31 KB+) da entrada (`catalogHabitMigrate` importava `activityCatalog` estático desde #821; agora usa `catalogoCarga`) e as frentes somam só
+  // ~19 KB (petVoice, tarefaLink, balaoDourado, soulmonCharacter; ChatPanel/ChatBox/npcFichas ficam em chunk lazy). Corte real segue = partir o `App.tsx`
+  // (169 KB do chunk) e mover `elementoDescritores.data` para `import()` (só `pistasVisuaisDoElemento`, 1 consumidor).
+  'index.js': 1_091_309,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

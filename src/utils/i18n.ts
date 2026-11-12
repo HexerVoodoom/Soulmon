@@ -191,6 +191,11 @@ export interface Translations {
     guideDescription: string;
     openGuide: string;
     openGlossary: string;
+    /** Beta12 (B2): como o Soulmon se relaciona com o jeito do jogador. Os rótulos NUNCA revelam o tipo do jogador. */
+    voiceMode: string;
+    voiceModeComplementary: string;
+    voiceModeSimilar: string;
+    voiceModeHint: string;
     saveData: string;
     loadData: string;
     resetApp: string;
@@ -489,6 +494,10 @@ export const translations: Record<Language, Translations> = {
       guideDescription: 'Learn how the evolution system, complete days, HP and more work.',
       openGuide: 'Open Guide',
       openGlossary: 'Open Glossary',
+      voiceMode: "Soulmon's manner",
+      voiceModeComplementary: 'Complementary',
+      voiceModeSimilar: 'Like mine',
+      voiceModeHint: 'Complementary: a manner that balances yours. Like mine: the same manner as yours.',
       saveData: 'Save Data',
       loadData: 'Load Data',
       resetApp: 'Reset App',
@@ -777,6 +786,10 @@ export const translations: Record<Language, Translations> = {
       guideDescription: 'Aprenda como funcionam o sistema de evolução, dias completos, HP e mais.',
       openGuide: 'Abrir Guia',
       openGlossary: 'Abrir Glossário',
+      voiceMode: 'Jeito do Soulmon',
+      voiceModeComplementary: 'Complementar',
+      voiceModeSimilar: 'Igual ao meu',
+      voiceModeHint: 'Complementar: um jeito que equilibra o seu. Igual ao meu: o mesmo jeito que o seu.',
       saveData: 'Salvar Dados',
       loadData: 'Carregar Dados',
       resetApp: 'Resetar App',

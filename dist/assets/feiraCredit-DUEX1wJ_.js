@@ -1,0 +1,1 @@
+import{gj as i,gk as t}from"./index-DVVseRBR.js";import"./vendor-CwVo-7cq.js";import"./vendor-sonner-DFGy8XPf.js";import"./vendor-capacitor-BLfbYhNv.js";function c(e,r){return!e.receipt||i(e.receipt)?!1:(r(e),t(e.receipt),!0)}export{c as creditFeiraOnce};

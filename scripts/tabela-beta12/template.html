@@ -1,0 +1,276 @@
+<title>Tabela de Soulmons e NPCs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root {
+  --bg: #eef3f2; --surface: #ffffff; --surface2: #e2ecea; --ink: #0f2e2d; --muted: #4d6967; --line: #c3d4d1;
+  --teal: #0d5b5b; --teal-ink: #ffffff; --copper: #b3622f; --edit-bg: #fbeee2; --edit-line: #b3622f; --focus: #b3622f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1c1e; --surface: #11292b; --surface2: #173436; --ink: #e3f0ee; --muted: #93b1ae; --line: #25494b;
+    --teal: #2fb3ad; --teal-ink: #062022; --copper: #e0955d; --edit-bg: #3a2616; --edit-line: #e0955d; --focus: #e0955d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1c1e; --surface: #11292b; --surface2: #173436; --ink: #e3f0ee; --muted: #93b1ae; --line: #25494b;
+  --teal: #2fb3ad; --teal-ink: #062022; --copper: #e0955d; --edit-bg: #3a2616; --edit-line: #e0955d; --focus: #e0955d;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.app { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1600px; margin: 0 auto; padding-bottom: 40px; }
+header.topo { padding: 16px 0 8px; }
+h1 { margin: 0 0 8px; font-size: 20px; color: var(--teal); }
+h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+.barra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.busca { flex: 1 1 220px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.btn { padding: 10px 14px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 8px; }
+.btn.primario { background: var(--teal); color: var(--teal-ink); border-color: var(--teal); font-weight: 600; }
+.btn.cobre { border-color: var(--copper); color: var(--copper); }
+.resumo { color: var(--muted); font-size: 13px; padding: 8px 0 4px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0 8px; }
+.chip { border: 1px solid var(--teal); color: var(--teal); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+.tabela-wrap { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: auto; max-height: calc(100vh - 210px); min-height: 220px; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; white-space: nowrap; }
+thead th { position: sticky; top: 0; background: var(--surface2); z-index: 2; font-size: 12px; color: var(--muted); font-weight: 600; }
+th .th { display: flex; align-items: center; gap: 4px; }
+.fbtn { border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 3px; display: inline-flex; color: var(--muted); }
+.fbtn:hover { border-color: var(--line); }
+.fbtn.on { background: var(--copper); color: #fff; }
+.fbtn svg { width: 14px; height: 14px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--surface2); }
+tbody tr.editado td { background: var(--edit-bg); }
+td.mudou { box-shadow: inset 3px 0 0 var(--edit-line); font-weight: 600; }
+td .sp { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; vertical-align: middle; margin-right: 8px; }
+td .sp.vazio { display: inline-block; }
+td.nome { min-width: 230px; }
+td.nome > span { display: inline-block; vertical-align: middle; }
+td.nome small { color: var(--muted); display: block; font-size: 11px; }
+td.id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--surface2); font-size: 12px; }
+.pop { position: fixed; z-index: 40; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); padding: 10px; width: min(300px, calc(100vw - 24px)); max-height: 70vh; display: none; flex-direction: column; gap: 8px; }
+.pop.aberto { display: flex; }
+.pop h3 { margin: 0; font-size: 13px; color: var(--teal); }
+.pop .lista { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.pop label { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 6px; min-height: 36px; }
+.pop label:hover { background: var(--surface2); }
+.pop input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--teal); margin: 0; }
+.pop .rodape { display: flex; gap: 8px; }
+.pop .rodape .btn { min-height: 38px; padding: 6px 10px; }
+.fundo { position: fixed; inset: 0; background: rgba(5, 20, 20, .55); z-index: 20; display: none; }
+.fundo.aberto { display: block; }
+.painel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: var(--surface); z-index: 21; display: none; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,.35); }
+.painel.aberto { display: flex; }
+.painel header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.painel header h2 { margin: 0; font-size: 18px; color: var(--teal); overflow-wrap: anywhere; }
+.painel .corpo { padding: 12px 16px; overflow-y: auto; flex: 1; }
+.painel footer { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; }
+.painel footer .btn { flex: 1 1 120px; justify-content: center; }
+.campo { margin-bottom: 12px; }
+.campo > label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.campo input[type=text], .campo select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-height: 44px; font-size: 16px; }
+.campo .ro { padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.campo.mudou input[type=text], .campo.mudou select { border-color: var(--edit-line); background: var(--edit-bg); }
+.vazio { padding: 40px 16px; text-align: center; color: var(--muted); }
+.painel-csv { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; gap: 8px; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.painel-csv[hidden] { display: none; }
+.painel-csv h2 { margin: 0; font-size: 18px; color: var(--teal); }
+.painel-csv p { margin: 0; color: var(--muted); font-size: 13px; }
+.painel-csv textarea { flex: 1; min-height: 0; width: 100%; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: none; }
+.painel-csv .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.painel-csv .msg { min-height: 18px; color: var(--copper); font-size: 13px; }
+@media (max-width: 600px) { .btn { flex: 1 1 auto; justify-content: center; } .busca { flex-basis: 100%; } }
+</style>
+<div class="app">
+  <header class="topo">
+    <h1>Tabela de Soulmons e NPCs <small id="gerado"></small></h1>
+    <div class="barra">
+      <input id="busca" class="busca" type="search" placeholder="Buscar por nome ou id" aria-label="Buscar por nome ou id">
+      <button id="btnLimpar" class="btn" type="button">Limpar filtros</button>
+      <button id="btnDesfazer" class="btn cobre" type="button" hidden>Descartar edições</button>
+      <button id="btnCsv" class="btn primario" type="button">Exportar CSV</button>
+    </div>
+    <div id="resumo" class="resumo"></div>
+    <div id="chips" class="chips"></div>
+  </header>
+  <div class="tabela-wrap"><table>
+    <thead><tr id="cabecalho"></tr></thead>
+    <tbody id="corpo"></tbody>
+  </table></div>
+  <div id="vazio" class="vazio" hidden>Nenhuma linha com esses filtros.</div>
+</div>
+<div class="pop" id="pop" role="dialog" aria-label="Filtro da coluna"></div>
+<div class="fundo" id="fundo"></div>
+<aside class="painel" id="painelEdicao" role="dialog" aria-modal="true" aria-label="Editar linha">
+  <header><h2 id="tituloEdicao">Editar</h2><button class="btn" id="fecharEdicao" type="button">Fechar</button></header>
+  <div class="corpo" id="corpoEdicao"></div>
+  <footer><button class="btn" id="restaurar" type="button">Restaurar linha</button><button class="btn primario" id="ok" type="button">Pronto</button></footer>
+</aside>
+<script id="dados" type="application/json">__DADOS__</script>
+<section id="painelCsv" class="painel-csv" hidden aria-label="Exportar CSV">
+  <h2 id="csvTitulo">CSV</h2>
+  <p id="csvAjuda">Copie o CSV (ou tente baixar) e entregue ao operador.</p>
+  <textarea id="csvTexto" readonly spellcheck="false"></textarea>
+  <div id="csvMsg" class="msg" role="status"></div>
+  <div class="acoes"><button id="csvCopiar" class="btn primario" type="button">Copiar</button><button id="csvBaixar" class="btn" type="button">Baixar arquivo</button><button id="csvFechar" class="btn" type="button">Fechar</button></div>
+</section>
+<script>
+(function () {
+  'use strict';
+/*__CSV__*/
+/*LOGICA*/
+  var SO_LEITURA = ['id', 'tipo_entidade', 'fonte_codigo'];
+  /** Indices das linhas que passam: OU dentro de uma coluna, E entre colunas; a busca (nome ou id) tambem e E. */
+  function filtrarIndices(linhas, filtros, busca) {
+    var q = String(busca || '').trim().toLowerCase();
+    var out = [];
+    linhas.forEach(function (l, i) {
+      for (var c in filtros) { var sel = filtros[c]; if (sel && sel.length && sel.indexOf(l[c]) < 0) return; }
+      if (q && (l.nome_pt + ' ' + l.nome_en + ' ' + l.id).toLowerCase().indexOf(q) < 0) return;
+      out.push(i);
+    });
+    return out;
+  }
+  /** O que o painel de edicao mostra para UMA linha: todos os campos, na ordem do CSV; lista fechada = select; id/tipo/fonte = somente leitura. */
+  function camposDoPainel(l, listas) {
+    return COLUNAS.map(function (c) {
+      if (SO_LEITURA.indexOf(c) >= 0) return { col: c, tipo: 'ro', valor: l[c] };
+      if (listas[c]) {
+        var ops = listas[c].slice();
+        var obrigatorio = c === 'usar_no_jogo' || ((c === 'estagio' || c === 'elemento') && l.tipo_entidade === 'soulmon');
+        if (!obrigatorio && ops.indexOf('') < 0) ops.unshift('');
+        if (l[c] && ops.indexOf(l[c]) < 0) ops.push(l[c]);
+        if (!l[c] && ops.indexOf('') < 0) ops.unshift('');
+        return { col: c, tipo: 'select', valor: l[c], opcoes: ops };
+      }
+      return { col: c, tipo: 'text', valor: l[c] };
+    });
+  }
+/*FIM-LOGICA*/
+  var DADOS = JSON.parse(document.getElementById('dados').textContent);
+  var CANON = DADOS.linhas;
+  var LINHAS = CANON.map(function (l) { return Object.assign({}, l); });
+  var VOCAB = DADOS.vocab, ENUMS = DADOS.enums;
+  var FILTRAVEIS = ['tipo_entidade', 'linha_id', 'estagio', 'ramo', 'elemento', 'ataque_basico', 'ataque_especial_escola', 'ataque_especial_familia', 'origem_ataque', 'usar_no_jogo'];
+  var COLS_TABELA = [['nome', 'Nome'], ['tipo_entidade', 'Entidade'], ['linha_id', 'Linha'], ['estagio', 'Estágio'], ['ramo', 'Tipo (ramo)'], ['elemento', 'Elemento base'], ['ataque_basico', 'Ataque básico'], ['ataque_especial_escola', 'Especial · escola'], ['ataque_especial_familia', 'Especial · família'], ['origem_ataque', 'Origem do ataque'], ['usar_no_jogo', 'Usar no jogo'], ['id', 'Id']];
+  var ROT = { vazio: '(vazio)' };
+  var filtros = {}; var busca = ''; var atual = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var ICONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function valor(l, c) { return c === 'nome' ? l.nome_pt : l[c]; }
+  function editada(i) { return COLUNAS.some(function (c) { return LINHAS[i][c] !== CANON[i][c]; }); }
+  function visiveis() { return filtrarIndices(LINHAS, filtros, busca); }
+  function opcoes(c) {
+    var m = {}; CANON.forEach(function (l) { m[l[c]] = 1; });
+    return Object.keys(m).sort(function (a, b) { if (c === 'estagio') return ENUMS.estagio.indexOf(a) - ENUMS.estagio.indexOf(b); return a.localeCompare(b); });
+  }
+  function desenhaCab() {
+    $('cabecalho').innerHTML = COLS_TABELA.map(function (p) {
+      var f = FILTRAVEIS.indexOf(p[0]) >= 0;
+      return '<th><div class="th">' + esc(p[1]) + (f ? '<button type="button" class="fbtn' + ((filtros[p[0]] || []).length ? ' on' : '') + '" data-col="' + p[0] + '" aria-label="Filtrar ' + esc(p[1]) + '">' + ICONE + '</button>' : '') + '</div></th>';
+    }).join('');
+  }
+  function desenha() {
+    var idx = visiveis(); var corpo = '';
+    idx.forEach(function (i) {
+      var l = LINHAS[i], ed = editada(i);
+      var sp = DADOS.sprites[CANON[i].id];
+      var tds = COLS_TABELA.map(function (p) {
+        var c = p[0], v = valor(l, c), mud = c === 'nome' ? (l.nome_pt !== CANON[i].nome_pt || l.nome_en !== CANON[i].nome_en) : l[c] !== CANON[i][c];
+        if (c === 'nome') return '<td class="nome' + (mud ? ' mudou' : '') + '"><span><b>' + esc(l.nome_pt) + '</b><small>' + esc(l.nome_en) + '</small></span></td>';
+        return '<td class="' + (c === 'id' ? 'id ' : '') + (mud ? 'mudou' : '') + '">' + (c === 'tipo_entidade' ? '<span class="tag">' + esc(v) + '</span>' : esc(v)) + '</td>';
+      });
+      var img = sp != null ? '<img class="sp" alt="" src="' + DADOS.miniaturas[sp] + '">' : '<span class="sp vazio"></span>';
+      // sprite ANTES do nome: o sprite vive dentro da celula do nome
+      tds[0] = tds[0].replace('><span><b>', '>' + img + '<span><b>');
+      corpo += '<tr data-i="' + i + '" class="' + (ed ? 'editado' : '') + '">' + tds.join('') + '</tr>';
+    });
+    $('corpo').innerHTML = corpo;
+    var nEd = LINHAS.filter(function (l, i) { return editada(i); }).length;
+    var nS = idx.filter(function (i) { return CANON[i].tipo_entidade === 'soulmon'; }).length;
+    $('resumo').textContent = idx.length + ' de ' + CANON.length + ' linhas (' + nS + ' Soulmon, ' + (idx.length - nS) + ' NPC)' + (nEd ? ' · ' + nEd + ' editada(s)' : '');
+    $('vazio').hidden = idx.length > 0;
+    $('btnDesfazer').hidden = !nEd;
+    var chips = '';
+    Object.keys(filtros).forEach(function (c) { (filtros[c] || []).forEach(function (v) { chips += '<button type="button" class="chip" data-c="' + c + '" data-v="' + esc(v) + '">' + esc(c) + ': ' + esc(v === '' ? ROT.vazio : v) + ' ×</button>'; }); });
+    $('chips').innerHTML = chips;
+    desenhaCab();
+  }
+  // popover de filtro por coluna: OU dentro da coluna, E entre colunas
+  function abrePop(col, ancora) {
+    var ops = opcoes(col), sel = filtros[col] || [];
+    var h = '<h3>' + esc(col) + '</h3><div class="lista">' + ops.map(function (o) { return '<label><input type="checkbox" value="' + esc(o) + '"' + (sel.indexOf(o) >= 0 ? ' checked' : '') + '>' + esc(o === '' ? ROT.vazio : o) + '</label>'; }).join('') + '</div><div class="rodape"><button type="button" class="btn" id="popLimpa">Limpar coluna</button><button type="button" class="btn primario" id="popFecha">Fechar</button></div>';
+    var pop = $('pop'); pop.innerHTML = h; pop.dataset.col = col; pop.classList.add('aberto');
+    var r = ancora.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
+    pop.style.top = Math.min(r.bottom + 4, window.innerHeight - pop.offsetHeight - 8) + 'px';
+  }
+  function fechaPop() { $('pop').classList.remove('aberto'); }
+  $('pop').addEventListener('change', function (e) {
+    var col = $('pop').dataset.col;
+    filtros[col] = Array.prototype.map.call($('pop').querySelectorAll('input:checked'), function (x) { return x.value; });
+    if (!filtros[col].length) delete filtros[col];
+    desenha();
+  });
+  $('pop').addEventListener('click', function (e) {
+    if (e.target.id === 'popFecha') fechaPop();
+    if (e.target.id === 'popLimpa') { delete filtros[$('pop').dataset.col]; fechaPop(); desenha(); }
+  });
+  $('cabecalho').addEventListener('click', function (e) { var b = e.target.closest('.fbtn'); if (b) { e.stopPropagation(); abrePop(b.dataset.col, b); } });
+  document.addEventListener('click', function (e) { if (!e.target.closest('#pop') && !e.target.closest('.fbtn')) fechaPop(); });
+  $('chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var c = b.dataset.c; filtros[c] = (filtros[c] || []).filter(function (v) { return v !== b.dataset.v; }); if (!filtros[c].length) delete filtros[c]; desenha();
+  });
+  $('btnLimpar').addEventListener('click', function () { filtros = {}; busca = ''; $('busca').value = ''; fechaPop(); desenha(); });
+  $('busca').addEventListener('input', function () { busca = this.value; desenha(); });
+  // painel de edicao
+  var LISTAS = { estagio: ENUMS.estagio, ramo: ENUMS.ramo, elemento: VOCAB.elementos, ataque_basico: VOCAB.escolas, ataque_especial_escola: VOCAB.escolas, ataque_especial_familia: VOCAB.familias, origem_ataque: ENUMS.origem_ataque, usar_no_jogo: ENUMS.usar_no_jogo };
+  function abreEdicao(i) {
+    atual = i; var l = LINHAS[i];
+    $('tituloEdicao').textContent = l.nome_pt + ' · ' + l.id;
+    $('corpoEdicao').innerHTML = camposDoPainel(l, LISTAS).map(function (f) {
+      var c = f.col, mud = l[c] !== CANON[i][c];
+      if (f.tipo === 'ro') return '<div class="campo"><label>' + c + ' (somente leitura)</label><div class="ro">' + esc(f.valor) + '</div></div>';
+      if (f.tipo === 'select') return '<div class="campo' + (mud ? ' mudou' : '') + '"><label for="f_' + c + '">' + c + '</label><select id="f_' + c + '" data-c="' + c + '">' + f.opcoes.map(function (o) { return '<option value="' + esc(o) + '"' + (o === f.valor ? ' selected' : '') + '>' + esc(o === '' ? '(vazio)' : o) + '</option>'; }).join('') + '</select></div>';
+      return '<div class="campo' + (mud ? ' mudou' : '') + '"><label for="f_' + c + '">' + c + '</label><input type="text" id="f_' + c + '" data-c="' + c + '" value="' + esc(f.valor) + '"></div>';
+    }).join('');
+    $('painelEdicao').classList.add('aberto'); $('fundo').classList.add('aberto');
+  }
+  function fechaEdicao() { $('painelEdicao').classList.remove('aberto'); $('fundo').classList.remove('aberto'); atual = null; desenha(); }
+  $('corpoEdicao').addEventListener('input', function (e) { var c = e.target.dataset.c; if (c == null || atual == null) return; LINHAS[atual][c] = e.target.value; e.target.parentNode.classList.toggle('mudou', e.target.value !== CANON[atual][c]); });
+  $('corpoEdicao').addEventListener('change', function (e) { var c = e.target.dataset.c; if (c == null || atual == null) return; LINHAS[atual][c] = e.target.value; e.target.parentNode.classList.toggle('mudou', e.target.value !== CANON[atual][c]); });
+  $('corpo').addEventListener('click', function (e) { var tr = e.target.closest('tr'); if (tr) abreEdicao(+tr.dataset.i); });
+  $('restaurar').addEventListener('click', function () { if (atual == null) return; var i = atual; LINHAS[i] = Object.assign({}, CANON[i]); abreEdicao(i); });
+  $('ok').addEventListener('click', fechaEdicao); $('fecharEdicao').addEventListener('click', fechaEdicao); $('fundo').addEventListener('click', fechaEdicao);
+  $('btnDesfazer').addEventListener('click', function () { LINHAS = CANON.map(function (l) { return Object.assign({}, l); }); desenha(); });
+  // exportar CSV: as linhas VISIVEIS (com filtro e busca), formato E2.4
+  var csvAtual = '';
+  $('btnCsv').addEventListener('click', function () {
+    csvAtual = toCsv(visiveis().map(function (i) { return LINHAS[i]; }));
+    $('csvTitulo').textContent = NOME_ARQUIVO_CSV + ' · ' + visiveis().length + ' linha(s)';
+    $('csvTexto').value = csvAtual; $('csvMsg').textContent = ''; $('painelCsv').hidden = false;
+  });
+  $('csvFechar').addEventListener('click', function () { $('painelCsv').hidden = true; });
+  $('csvCopiar').addEventListener('click', function () {
+    var t = $('csvTexto'); t.focus(); t.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    if (!ok && navigator.clipboard) { navigator.clipboard.writeText(csvAtual).then(function () { $('csvMsg').textContent = 'Copiado.'; }, function () { $('csvMsg').textContent = 'Não consegui copiar: selecione o texto e copie.'; }); return; }
+    $('csvMsg').textContent = ok ? 'Copiado.' : 'Não consegui copiar: selecione o texto e copie.';
+  });
+  $('csvBaixar').addEventListener('click', function () {
+    try {
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csvAtual], { type: 'text/csv;charset=utf-8' })); a.download = NOME_ARQUIVO_CSV; document.body.appendChild(a); a.click(); a.remove();
+      $('csvMsg').textContent = 'Download pedido; se nada baixar, use Copiar.';
+    } catch (e) { $('csvMsg').textContent = 'Download indisponível aqui: use Copiar.'; }
+  });
+  $('gerado').textContent = 'gerado em ' + DADOS.gerado_em.slice(0, 10) + ' · formato ' + NOME_ARQUIVO_CSV;
+  desenha();
+})();
+</script>

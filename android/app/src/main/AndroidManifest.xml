@@ -89,6 +89,19 @@
                 android:resource="@xml/soulmon_widget_vpet_info" />
         </receiver>
 
+        <!-- Widget "Companheiro" (beta12 A3): o Cage com o Soulmon grande. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetCompanionProvider"
+            android:label="@string/widget_companion_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_companion_info" />
+        </receiver>
+
         <!-- WIDGET F — redimensionável: quadrado, horizontal ou vertical (REGISTRO §221).
              Os A..E ficam registrados: tirar um receiver apaga o widget já colocado. -->
         <receiver
@@ -202,6 +215,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Beta12 (item I): so o aviso de fim do Pomodoro (Foco) pede o minuto exato com o app fechado. Permissao que o usuario pode
+         conceder em "Alarmes e lembretes"; sem ela o app cai no alarme inexato (SoulmonAlarmPlugin.scheduleAtInternal). Na Play:
+         declarar o uso na ficha de permissoes de alarme (timer/pomodoro). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- Contador de passos (@capgo/capacitor-pedometer → Sensor.TYPE_STEP_COUNTER).
          O manifesto do plugin já declara esta permissão e o merger a traria de
          qualquer jeito; está repetida aqui DE PROPÓSITO, porque é a permissão

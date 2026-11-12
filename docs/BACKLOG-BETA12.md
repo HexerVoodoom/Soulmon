@@ -210,6 +210,7 @@ Uma tabela única com todos os sprites do Soulmon em ordem de evolução (por li
 - `origem_ataque` = `padrao` quando o valor veio de `ESCOLA_FAMILY_PADRAO` e não da ficha; `fonte_codigo` = caminho do arquivo e nome do registro de onde a linha saiu.
 - **Importação (feita pela sessão operacional, não pelo artefato):** é atualização, não substituição. `id` desconhecido = erro com a linha; `id` ausente no CSV não é apagado; célula vazia em campo obrigatório = erro; `nome_pt`, `estagio` e `elemento` são obrigatórios para `soulmon`.
 - Nome do arquivo exportado: `soulmon-npcs-beta12-v1.csv`. A versão do formato sobe (`v2`) se uma coluna mudar.
+- **v2 (vigente):** acrescenta `usar_no_jogo` ∈ {`sim`, `nao`} (default `sim`) ao FIM do cabeçalho; arquivo `soulmon-npcs-beta12-v2.csv`. O importador aceita v2 e v1 (sem a coluna = `sim`); valor fora de {`sim`,`nao`} é erro com a linha.
 
 ### E2.5 Interface (artefato)
 
