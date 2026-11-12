@@ -1072,6 +1072,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Cenário próprio do elemento fundido (30/10/2026; +151 compostos `.webp` 450×800 em 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`, cores em `combatArtElementoMedias2.data.ts`):** `combate/elemento/<id>.{png,webp}` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
 **Mudou (30/10/2026):** ⚰️ `combatShadow` e as imagens `combate/sombra-clara.png`/`sombra-escura.png` (a plataforma sob os pés) saíram do módulo; a assinatura de cor do elemento vem de `elementVisual.data.ts` (CIELAB → hex com luminosidade mínima). `bg-` base próprio de `fada`, `industrial` e `planta` (o fallback de domínio só vale para save sem a arte).
 
+### `src/utils/combatArtElementoMedias3.data.ts`
+**Dono de:** a cor média dos 93 fundos regerados "darker dusk" de 12/11/2026 (`ELEMENTO_BG_MEAN_V3`, vence V1/V2). GERADO por `tools/instalar-cenarios-masmorra-darker.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
+
 ### `src/utils/combatArtElementoMedias2.data.ts`
 **Dono de:** a cor média dos 151 cenários compostos de 11/11/2026 (`ELEMENTO_BG_MEAN_V2`). GERADO por `tools/instalar-cenarios-masmorra-compostos.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
 
