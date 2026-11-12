@@ -6,7 +6,7 @@
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ## Índice
-- [src/plugins](#src-plugins) — `SoulmonAlarmPlugin.ts` · `SoulmonWidgetPlugin.ts`
+- [src/plugins](#src-plugins) — `SoulmonAlarmPlugin.ts` · `SoulmonWidgetPlugin.ts` · `KeepAwakePlugin.ts`
 - [src/constants](#src-constants) — `labels.ts`
 - [src/translations](#src-translations) — `en.ts` · `pt.ts`
 - [Guards de repositório](#guards-de-repositório) — `i18nSemPtSozinho` · `docsSemMentira` · `docsManual` · `index.css.contract`
@@ -140,6 +140,14 @@ O inventário (`node scripts/docs-inventario.mjs`, 09/09/2026) mostra **0 módul
 - **`renderEnv.selfcheck.test.tsx`** — reprova o próprio ambiente de teste de render parando de enxergar (ex.: `index.css` mudar de formato, `@layer` virar outra coisa, jsdom parar de resolver a cascata); existe para que o PRIMEIRO teste a cair, nesse cenário, seja este, e não todos os testes de componente virando verdes vazios em silêncio.
 - **`renderEnv.tsx`** — não é teste; é o suporte que monta um componente COM o `index.css` real no `document` e lê o estilo computado (jsdom não faz layout — `getBoundingClientRect()` sempre 0 — mas resolve a cascata CSS, que é onde a fronteira JSX↔CSS do footgun 1 quebra). Usado por `renderEnv.selfcheck.test.tsx` e pelos testes de render de componentes em `src/components/`.
 - **`tsAst.ts`** — não é teste; carrega o compilador TypeScript UMA vez, fora do orçamento de cada teste, para os cinco guards de elo do repositório que leem código de produção como AST (`playerDay.contract`, `spriteBirth.contract`, `spriteTuneUnseen`, `useDailyReset.rollover`, `assets.contract`) — evita o flake medido de cada um importar `typescript` no próprio corpo.
+
+### `src/plugins/KeepAwakePlugin.ts`
+**Dono de:** a interface TypeScript do plugin nativo `KeepAwake` (beta12, item H; `KeepAwakePlugin.kt`, `FLAG_KEEP_SCREEN_ON`), que mantém a tela acesa na sessão do Foco.
+**Exports:**
+- `KeepAwakePlugin` — interface: `keepAwake()`, `allowSleep()`, `isSupported()`, `isKeptAwake()` (a forma de `@capacitor-community/keep-awake`).
+- `KeepAwake` — `registerPlugin<KeepAwakePlugin>('KeepAwake', { web: {...no-op...} })`; `isSupported` devolve `false` na web.
+**Chamado por:** `src/utils/keepAwake.ts`, só se `Capacitor.isPluginAvailable('KeepAwake')` (APK da beta12 em diante); senão cai no Screen Wake Lock da web.
+**Régua:** `src/plugins/widgetBeta12.contract.test.ts` (plugin Kotlin registrado na `MainActivity`, sem dependência nova).
 
 ### `src/plugins/SoulmonReviewPlugin.ts`
 

@@ -21,8 +21,9 @@ android {
         // 05/11/2026 (onda 2): 22/1.3.0-beta2 → 24/1.3.0-beta4 (o 23 fica reservado à rodada5-passos).
         // 06/11/2026: 24/1.3.0-beta4 → 25/1.3.0-beta5 (AAB sem assinatura para o dono assinar).
         // 08/11/2026: 25/1.3.0-beta5 → 26/1.3.0-beta6 (AAB sem assinatura).
-        versionCode 31
-        versionName "1.3.0-beta11"
+        // 12/11/2026: 31/1.3.0-beta11 → 32/1.3.0-beta12 (molduras remotas, widget sem moldura vertical, widget Companheiro, KeepAwake, alarme exato do foco).
+        versionCode 32
+        versionName "1.3.0-beta12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
