@@ -1276,3 +1276,9 @@ Prioridade **baixa**. Os enfeites da Honra (`honraDecor`) mantêm por enquanto o
 
 - [ ] Versão APAGADA (autoral, ChatGPT, reprodução fiel) de lamp, lantern, campfire, lanterna de pétalas, altar de magma, flor de brasa; hoje o apagado é filtro CSS (§480). Fogueira: feito em §481 (sem fogo + fogo pixelfx). Cogumelos: arte atual = aceso; gerar versão apagada.
 - [ ] Quadros de animação da Ampulheta (areia caindo, grãos turquesa).
+
+## Linha Lightning: Transcendent (e talvez Apotheosis) novos (12/11/2026)
+O dono reprovou a linha `eletricidade-*` como exemplo: o meio da linha é uma cobra que não combina com o resto.
+- Gerar novo `eletricidade-ultimate.png` (Transcendent) e, se ainda destoar, novo `eletricidade-mega.png` (Apotheosis), coerentes com o `rookie`, o `champion` e o `ultra`.
+- Pipeline: sprites só pela API (Higgsfield alpha), nunca pelo ChatGPT. Passar antes pela squad de design. Sem cristal, cano ou folha da marca: o elemento manda.
+- Depois de aprovado: rodar `E:\Soulmon-marketing\instagram-posts\_make_posts_2.py` de novo (post `12-evolution-electric`, 22/11).
