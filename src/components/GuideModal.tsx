@@ -536,8 +536,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond}. Lv N é o do seu Soulmon.`,
-              `The Arena and the Tournament open at Bond ${GATES.pvp.minBond}. Lv N is your Soulmon's.`,
+              `Só a Ranqueada do Torneio pede Vínculo ${GATES.ranqueada.minBond}; o resto é livre. Lv N é o do seu Soulmon.`,
+              `Only the Tournament's Ranked mode asks for Bond ${GATES.ranqueada.minBond}; everything else is open. Lv N is your Soulmon's.`,
             )}
           </p>
           <p style={para}>

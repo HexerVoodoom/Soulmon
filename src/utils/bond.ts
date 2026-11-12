@@ -558,7 +558,7 @@ export function awardBondXP<T extends BondState>(state: T, event: BondEvent, day
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Nível mínimo para LIGAR o PvP: **3** (dono 28/10/2026; a derivação abaixo é a do 5 original).
+ * Nível mínimo para LIGAR o PvP: **1** (dono 12/11/2026: sem limite por level, exceto a Ranqueada — `BOND_RANKED_MIN_LEVEL`, 5). A derivação abaixo é a do 5 original.
  *
  * Não é número escolhido: os níveis 1–4 são o funil de retenção D1–D7 declarado
  * na própria curva (seção 3), e o 5 é o primeiro degrau FORA dele — 700 XP,
@@ -590,6 +590,19 @@ export const BOND_PVP_MIN_LEVEL = GATES.pvp.minBond;
  */
 export function meetsPvpBond(totalXP: number): boolean {
   return gateFor('pvp', bondLevelFor(Math.max(0, safe(totalXP)))).open;
+}
+
+/** Vínculo mínimo da Ranqueada do Torneio: a ÚNICA porta que ainda tem limite por level (dono 12/11/2026). */
+export const BOND_RANKED_MIN_LEVEL = GATES.ranqueada.minBond;
+
+/** A Ranqueada já abre para este XP? (Treino/Duelo/Arena livre não têm mais limite.) */
+export function meetsRankedBond(totalXP: number): boolean {
+  return gateFor('ranqueada', bondLevelFor(Math.max(0, safe(totalXP)))).open;
+}
+
+/** Quanto falta para a Ranqueada abrir. `0` quando já está. Nunca negativo. */
+export function xpToRankedBond(totalXP: number): number {
+  return Math.max(0, xpForLevel(BOND_RANKED_MIN_LEVEL) - Math.max(0, safe(totalXP)));
 }
 
 /** Quanto falta para o PvP ficar disponível. `0` quando já está. Nunca negativo. */

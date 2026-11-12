@@ -35,11 +35,10 @@ describe('tabela prédio → material', () => {
 });
 
 describe('missão do dia', () => {
-  it('trancada pelo Vínculo; aberta vira disponível → pronta → resgatada', () => {
+  it('sem trancas por Vínculo (12/11/2026); disponível → pronta → resgatada', () => {
     // A Masmorra abre no Vínculo 1 desde 14/10/2026 (pedido do dono); a Oficina do Foco segue no 3.
     expect(questStatus(undefined, D1, 'exploracao.fenda', 1)).toBe('available');
-    expect(questStatus(undefined, D1, 'forja.oficina', 2)).toBe('locked');
-    expect(questStatus(undefined, D1, 'forja.oficina', 3)).toBe('available');
+    expect(questStatus(undefined, D1, 'forja.oficina', 1)).toBe('available'); // era trancada até o Vínculo 3
     const v = visitBuilding(undefined, D1, 'forja.oficina', 3);
     expect(questStatus(v, D1, 'forja.oficina', 3)).toBe('ready');
     const c = claimBuildingQuest(v, D1, 'forja.oficina', 3);
@@ -54,10 +53,10 @@ describe('missão do dia', () => {
     expect(b.paid).toBeNull();
     expect(b.state).toBe(a.state);
   });
-  it('sem entrar não resgata; Mercado e trancado não visitam', () => {
+  it('sem entrar não resgata; o Mercado não visita; sem tranca por Vínculo', () => {
     expect(claimBuildingQuest(undefined, D1, 'arena.duelo', MAXB).paid).toBeNull();
     expect(visitBuilding(undefined, D1, 'mercado.itens' as BuildingId, MAXB)).toBeUndefined();
-    expect(visitBuilding(undefined, D1, 'arena.duelo', 1)).toBeUndefined();
+    expect(visitBuilding(undefined, D1, 'arena.duelo', 1)).toBeDefined(); // abre no Vínculo 1 (dono 12/11/2026)
   });
   it('visitar de novo é no-op (mesma referência)', () => {
     const v = visitBuilding(undefined, D1, 'jogos.salao', 1)!;

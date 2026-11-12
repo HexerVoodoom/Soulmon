@@ -134,12 +134,12 @@ describe('recusa de PvP do servidor (H13: sem interruptor, nada a desfazer)', ()
     } finally { vi.useRealTimers(); }
   });
 
-  it('abaixo do Vínculo 5 (XP local) o perfil nem sobe: nada a recusar', async () => {
+  it('sem nível mínimo de PvP (12/11/2026): com pouco XP o perfil sobe igual', async () => {
     vi.useFakeTimers();
     try {
       abrirComSave({ ...COM_PVP_LIGADO, totalXP: 100 });
       await gesto();
-      expect(perfis).toHaveLength(0);
+      expect(perfis).toHaveLength(1);
       expect(estado().pvpEnabled).toBe(true);
     } finally { vi.useRealTimers(); }
   });

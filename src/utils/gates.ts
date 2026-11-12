@@ -12,7 +12,7 @@
  * Nunca "faltam só N", nunca contagem, nunca urgência.
  */
 
-export type GateFeature = 'pvp' | 'torneio' | 'masmorraAlto' | 'renascimento';
+export type GateFeature = 'pvp' | 'torneio' | 'ranqueada' | 'masmorraAlto' | 'renascimento';
 
 export interface GateRule {
   /** Vínculo mínimo para abrir. */
@@ -20,14 +20,15 @@ export interface GateRule {
 }
 
 /**
- * Os números são DEFAULTS DA SQUAD (o dono decidiu os portões, não os valores): `pvp` e `torneio`
- * mantêm o 5 que já valia (funil D1–D7 termina no 4); Masmorra alta e Renascimento são propostas.
+ * DONO 12/11/2026: "tirar todos os limites por level, exceto a ranqueada". Tudo abre no Vínculo 1; só `ranqueada` fica em 5
+ * (o funil D1–D7 termina no 4). A infraestrutura de portões continua (ajustar um número aqui reativa o portão).
  */
 export const GATES: Readonly<Record<GateFeature, GateRule>> = {
-  pvp: { minBond: 3 },
-  torneio: { minBond: 3 },
-  masmorraAlto: { minBond: 8 },
-  renascimento: { minBond: 12 },
+  pvp: { minBond: 1 },
+  torneio: { minBond: 1 },
+  ranqueada: { minBond: 5 }, // a ÚNICA que mantém limite (dono 12/11/2026): a aba Ranqueada do Torneio (e as ações `opponents`/`duelStart`/`match` do servidor)
+  masmorraAlto: { minBond: 1 },
+  renascimento: { minBond: 1 },
 };
 
 /** Andares da Masmorra a partir daqui são "altos" (o andar 1 e os baixos seguem livres, sem portão de entrada). */
@@ -78,6 +79,7 @@ const NOME: Record<GateFeature, { pt: string; en: string }> = {
   torneio: { pt: 'O Torneio', en: 'The Tournament' },
   masmorraAlto: { pt: 'As camadas mais fundas da Fenda', en: 'The deepest Endless Rift layers' },
   renascimento: { pt: 'O Renascimento', en: 'Rebirth' },
+  ranqueada: { pt: 'A Ranqueada', en: 'Ranked' },
 };
 
 /** O nome do portão no idioma (para listas de "o que abriu"). */
@@ -148,38 +150,38 @@ export function currentBuildingId<T>(x: T): T | BuildingId {
 export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'mercado.itens': { minBond: 1 },
   'mercado.conquistas': { minBond: 1 },
-  'mercado.decoracao': { minBond: 2 },
-  'mercado.background': { minBond: 3 },
+  'mercado.decoracao': { minBond: 1 },
+  'mercado.background': { minBond: 1 },
   // O Soulsmith (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
   // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
-  'forja.ferreiro': { minBond: 2 },
-  'forja.hexsmith': { minBond: 2 }, // 01/11/2026: a Hexsmith; mesmo Vínculo do Soulsmith (default — o dono ajusta aqui)
+  'forja.ferreiro': { minBond: 1 },
+  'forja.hexsmith': { minBond: 1 }, // 01/11/2026: a Hexsmith; mesmo Vínculo do Soulsmith (default — o dono ajusta aqui)
   'jogos.salao': { minBond: 1 },
-  'exploracao.dungeon': { minBond: 3 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
+  'exploracao.dungeon': { minBond: 1 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
   'forja.refugio': { minBond: 1 }, // beta3 M3: o Refúgio mudou de Jogos para a Exploração (sempre livre)
-  'jogos.mente': { minBond: 3 },
+  'jogos.mente': { minBond: 1 },
   'exploracao.passeio': { minBond: 1 },
   // A Masmorra abre desde o Vínculo 1 (14/10/2026, pedido do dono: é a atividade mais gacha/idle; o limite diário, a energia e o
   // portão do andar alto — `masmorraAlto` — seguem valendo). Era 2 até esta data.
   'exploracao.fenda': { minBond: 1 },
-  'forja.caderno': { minBond: 2 },
-  'forja.oficina': { minBond: 3 },
+  'forja.caderno': { minBond: 1 },
+  'forja.oficina': { minBond: 1 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.guerra': { minBond: 3 }, // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
+  'arena.guerra': { minBond: 1 }, // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
   'laboratorio.evolucao': { minBond: 1 },
-  'laboratorio.pet': { minBond: 2 },
-  'laboratorio.stats': { minBond: 3 },
+  'laboratorio.pet': { minBond: 1 },
+  'laboratorio.stats': { minBond: 1 },
   // O PERFIL do Soulmon (beta-2, 11): lê a ficha do Arquivo (elemento, golpes) — por isso abre no MESMO Vínculo dele. Default da squad; o dono ajusta só aqui.
-  'laboratorio.perfil': { minBond: 2 },
+  'laboratorio.perfil': { minBond: 1 },
   // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos saíram do Hall e foram para o Laboratório — o Vínculo é o de antes.
-  'laboratorio.biblioteca': { minBond: 2 },
-  'laboratorio.amigos': { minBond: 2 },
-  'hall.guilda': { minBond: 2 },
+  'laboratorio.biblioteca': { minBond: 1 },
+  'laboratorio.amigos': { minBond: 1 },
+  'hall.guilda': { minBond: 1 },
   // O Grove (D-50): o bosque do clã vira prédio do Hall; abre no mesmo Vínculo do Salão do Clã (2, REGISTRO #187 emenda 28/10).
-  'hall.grove': { minBond: 2 },
+  'hall.grove': { minBond: 1 },
   // A Feira (a Missão da guilda) mudou da Arena para o Hall em 11/10/2026 — o id e o Vínculo (5) são os de antes; fixo em 5 (não segue mais o gate de PvP).
-  'hall.feira': { minBond: 5 },
+  'hall.feira': { minBond: 1 },
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */

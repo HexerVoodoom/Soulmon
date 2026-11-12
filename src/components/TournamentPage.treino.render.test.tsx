@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 const opp = (n: number) => ({ id: `p${n}`, name: `Amigo${n}`, petName: `Bicho${n}`, stage: 'rookie', duel: { level: 4 } });
 const getSparOpponents = vi.fn();
@@ -27,7 +27,7 @@ import { TournamentPage } from './TournamentPage';
 
 const props = {
   saveId: 'a'.repeat(32), petStage: 'rookie', onMatchPlayed: () => {}, trophies: [], language: 'pt-BR', emblems: 0,
-  onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_PVP_MIN_LEVEL),
+  onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_RANKED_MIN_LEVEL),
 };
 
 afterEach(() => { cleanup(); getSparOpponents.mockReset(); getOpponents.mockReset(); });
@@ -46,10 +46,11 @@ describe('Torneio: duas abas, Ranqueada e Treino', () => {
     expect(getSparOpponents).not.toHaveBeenCalled();
   });
 
-  it('abaixo do Vínculo mínimo não há abas (o requisito explica)', () => {
+  it('abaixo do Vínculo da Ranqueada o Treino segue aberto (12/11/2026); só a Ranqueada explica o requisito', () => {
     setup();
     render(<TournamentPage {...props} totalXP={0} />);
-    expect(screen.queryByRole('radio', { name: 'Treino' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'Treino' })).not.toBeNull();
+    expect(document.querySelector('[data-torneio-requisito]')).not.toBeNull();
   });
 
   it('o Treino lista os 5 do servidor, sem cota de partidas e sem número de ranking', async () => {

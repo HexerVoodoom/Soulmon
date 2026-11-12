@@ -21,9 +21,9 @@ describe('D-50: as listas de lotes', () => {
     expect(Object.keys(BUILDING_GATES)).not.toContain('hall.biblioteca');
     expect(Object.keys(BUILDING_GATES)).not.toContain('hall.amigos');
   });
-  it('o Vínculo de Biblioteca e Amigos é o de antes (2); o Grove abre com o Clan Hall', () => {
-    expect(BUILDING_GATES['laboratorio.biblioteca'].minBond).toBe(2);
-    expect(BUILDING_GATES['laboratorio.amigos'].minBond).toBe(2);
+  it('o Vínculo de Biblioteca e Amigos sem limite (1; era 2); o Grove abre com o Clan Hall', () => {
+    expect(BUILDING_GATES['laboratorio.biblioteca'].minBond).toBe(1);
+    expect(BUILDING_GATES['laboratorio.amigos'].minBond).toBe(1);
     expect(BUILDING_GATES['hall.grove'].minBond).toBe(BUILDING_GATES['hall.guilda'].minBond);
     expect(QUEST_BUILDINGS).toContain('laboratorio.biblioteca');
     expect(materialOf('laboratorio.biblioteca')).toBe('page');

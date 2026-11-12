@@ -146,11 +146,11 @@ describe('community › evoFeed', () => {
     const ev = await feed(env);
     expect(ev.map(e => e.name)).toEqual(['Bruno']);
   });
-  it('sem PvP aberto (abaixo do gate de Vínculo) o perfil não gera aviso', async () => {
+  it('sem PvP ligado (a pessoa pediu desligado) o perfil não gera aviso', async () => {
     const env = mundo();
     env.DIGIAPP_SAVES.store.set(ALICE, JSON.stringify({ evolutionStage: 'rookie', totalXP: 0 }));
     env.DIGIAPP_SAVES.store.set(`profile:${ALICE}`, perfil(ALICE, PID_A, 'Mateus', { pvpEnabled: false }));
-    await post(env, ALICE, { name: 'Mateus', petName: 'Sombra', stage: 'champion-power', pvpEnabled: true });
+    await post(env, ALICE, { name: 'Mateus', petName: 'Sombra', stage: 'champion-power', pvpEnabled: false });
     expect(await feed(env)).toEqual([]);
   });
   it('estágio malformado do cliente não vira aviso', async () => {

@@ -63,9 +63,9 @@ describe('marcadores de missão nos prédios', () => {
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   });
 
-  it('prédio trancado pelo Vínculo não mostra marcador', () => {
+  it('sem trancas por Vínculo (12/11/2026): mesmo com Vínculo 0 (lixo → 1) o prédio mostra o marcador', () => {
     const { container } = renderWithCss(<AreaView {...base({ bondLevel: 0, buildingMarks: { 'forja.caderno': 'available' } })} />);
-    expect(marca(container, 'caderno')).toBeNull();
+    expect(marca(container, 'caderno')).not.toBeNull();
   });
 
   it('sem pulso: o marcador não tem animação (vale com prefers-reduced-motion)', () => {

@@ -116,14 +116,13 @@ describe('toda missão com lugar leva até ele', () => {
     expect(onGo).toHaveBeenCalledWith('exploracao.fenda');
   });
 
-  it('PRÉDIO FECHADO não navega: sem "Ir", mostra o requisito de Vínculo', async () => {
+  it('sem prédio fechado por Vínculo (12/11/2026): no Vínculo 1 o Torneio mostra "Ir" e nenhum cadeado', async () => {
     const onGo = vi.fn();
     render(mk({ initialTab: 'weekly', bondLevel: 1, onGoBuilding: onGo, weekly: [{ mission: semanal('tournament-match'), count: 0, done: false, claimed: false }] }));
     await waitFor(() => expect(document.querySelector('[data-weekly-mission="tournament-match"]')).not.toBeNull(), T);
     const c = document.querySelector('[data-weekly-mission="tournament-match"]')!;
-    expect(c.querySelector('[data-mission-go]')).toBeNull();
-    expect(c.querySelector('[data-mission-lock]')!.textContent).toMatch(/Opens at Bond \d/);
-    expect(onGo).not.toHaveBeenCalled();
+    expect(c.querySelector('[data-mission-go]')).not.toBeNull();
+    expect(c.querySelector('[data-mission-lock]')).toBeNull();
   });
 
   it('conquista de Masmorra leva à Masmorra', async () => {
