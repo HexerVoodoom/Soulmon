@@ -9149,6 +9149,19 @@ button.sm2-hex-row {
   display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0; flex: none; white-space: nowrap;
   font-size: var(--sm2-text-xs); font-weight: 400; color: var(--sm2-muted);
 }
+.sm2-hex-table { display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-thead, .sm2-hex-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sm2-space-2); }
+.sm2-hex-thead { padding: 0 var(--sm2-space-3); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-muted); }
+.sm2-hex-thead > span:last-child { text-align: right; }
+.sm2-hex-line { border-radius: var(--sm2-radius-md); padding-right: var(--sm2-space-2); }
+.sm2-hex-line[data-on="true"] { background-color: var(--sm2-primary-soft); }
+.sm2-hex-pick { background: none; }
+.sm2-hex-line[data-on="true"] .sm2-hex-pick { background-color: transparent; border-color: transparent; }
+.sm2-hex-cost { display: inline-flex; align-items: flex-start; justify-content: flex-end; gap: var(--sm2-space-1); flex-wrap: nowrap; color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
+.sm2-hex-cost-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 0; }
+.sm2-hex-cost-cell[data-have="false"] .sm2-num { color: var(--sm2-muted); opacity: 0.7; }
+.sm2-hex-cost-cell[data-have="true"] .sm2-num { color: var(--sm2-ink); }
+.sm2-hex-plus { align-self: center; padding-bottom: 1px; }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
 
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
