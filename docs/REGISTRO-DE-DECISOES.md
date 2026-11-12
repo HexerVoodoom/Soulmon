@@ -4847,3 +4847,9 @@ Decisão: (1) A jornada de 25 min **coincide com o Soulmon atravessar uma porta*
 Decisão: depois dos 4 focos recompensados do dia (§247), os focos 5º, 6º e 7º dão UM item simples cada (baú comum, 4 em 5 de ser material do cenário; nunca Bits), idempotente pelo recibo `<sid>:done` e dentro dos tetos diários de itens do `focus-journey`; do 8º em diante, nada. A regra mora em `completionLoot` (`functions/api/_focusJourney.js`, autoridade, e `src/utils/focusJourney.ts`, espelho; `JOURNEY_EXTRA_COMPLETIONS = 3`) e o servidor já a aplica em `pagar`. A chave da masmorra continua só no 1º foco.
 
 **Falsifica:** o 8º foco pagar algo, o extra pagar Bits ou duplicar ao repetir o `claim` (`focusJourney.parity.test.ts`, `focus-journey.test.js`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §303 — Hexsmith: chama do botão do especial vira turquesa e os 2 botões de renomear sobem (12/11/2026, pedido do dono)
+
+**Decisão:** o foguinho laranja do botão `btn-chama` ficou TURQUESA (cor da identidade: núcleo `#7ff7ee`, bordas `#1fb5ad`), por recoloração com Pillow só dos pixels quentes da chama (mapeamento por luminância, alfa e aro dourado intactos; 256², alfa real). Os botões do lápis (nome do Soulmon) e da chama (nome da skill) subiram juntos de y 16,5 para 11,5 % do mapa (x 73,5 e 91 inalterados), ainda sem tocar a Coroa nem sair do mapa em 360-430 px. A laranja original foi guardada em `E:\Soulmon-assets\hexsmith-btns\btn-chama-laranja.png`; prompt/tags no `_banco/registro.jsonl`.
+
+**Falsifica:** botão cobrindo a Coroa ou cortado no topo do mapa; chama ainda laranja. **Rollback:** reverter o PR. **APK:** nada.
