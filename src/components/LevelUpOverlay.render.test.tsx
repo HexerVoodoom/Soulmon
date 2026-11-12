@@ -63,6 +63,31 @@ describe('LevelUpOverlay — abre e escurece', () => {
     expect(container.querySelector('[data-lvup-pet]')?.getAttribute('src')).toBe('/pet.png');
   });
 
+  it('12/11/2026: layout — BOND UP no topo, pet grande no meio, LV e "Tap to continue" por último (base)', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const col = container.querySelector('[data-lvup-column]') as HTMLElement;
+    const ordem = ['[data-lvup-banner]', '[data-lvup-pet]', '[data-lvup-gains]', '[data-lvup-number]', '[data-lvup-continue]']
+      .map((q) => container.querySelector(q) as Node);
+    ordem.forEach((n) => expect(n).not.toBeNull());
+    for (let i = 0; i < ordem.length - 1; i++) {
+      expect(ordem[i].compareDocumentPosition(ordem[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(col.style.flexDirection).toBe('column');
+    // o meio (pet) ocupa o espaço que sobra; topo e base não encolhem
+    const palco = container.querySelector('[data-lvup-stage]') as HTMLElement;
+    expect(palco.style.flexGrow).toBe('1');
+    expect((container.querySelector('[data-lvup-top]') as HTMLElement).style.flexGrow).toBe('0');
+    expect((container.querySelector('[data-lvup-plate]') as HTMLElement).style.flexGrow).toBe('0');
+    // sprite grande, proporcional (contain), pixel nítido; teto de 512
+    const pet = container.querySelector('[data-lvup-pet]') as HTMLElement;
+    expect(pet.style.height).toBe('100%');
+    expect(pet.style.maxHeight).toBe('512px');
+    expect(pet.style.objectFit).toBe('contain');
+    expect(pet.style.imageRendering).toBe('pixelated');
+    // o glow é filho do palco do pet (centrado nele)
+    expect(palco.contains(container.querySelector('[data-lvup-glow]'))).toBe(true);
+  });
+
   it('com a arte do banner instalada (28/10/2026): a imagem substitui o texto procedural', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toBeTruthy();
