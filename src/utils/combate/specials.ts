@@ -18,12 +18,14 @@ export const OVER_TIME_BONUS = 1.15;
  * pode absorver (o resto passa para a vida):
  *  · `basic` = 1: o golpe básico segue absorvido por inteiro (a regra de antes, mantida);
  *  · `direct` = `SHIELD_DIRECT_SPECIAL_ABSORB`: o especial de dano direto passa metade pela barreira;
- *  · `tick` = 0: o dano contínuo (DoT, queimadura, veneno) nunca é absorvido, lançado antes ou depois do escudo.
+ *  · `tick` = `SHIELD_DOT_TICK_ABSORB`: cada tick de dano contínuo (DoT, queimadura, veneno) passa METADE pela barreira, lançado
+ *    antes ou depois do escudo (decisão do dono 13/11/2026: "não imunidade, mas alguma proteção"; revoga o "tick nunca é absorvido").
  * Debuffs (quebra de defesa, lentidão, silêncio, maldição) nunca passaram pelo escudo e seguem assim.
  * Espelho: `functions/api/_combate.js`.
  */
 export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
-export const SHIELD_ABSORB = { basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: 0 } as const;
+export const SHIELD_DOT_TICK_ABSORB = 0.5;
+export const SHIELD_ABSORB = { basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB } as const;
 export type ShieldSource = keyof typeof SHIELD_ABSORB;
 /** Pontos que o escudo `sh` absorve de um golpe de `d` pontos vindo de `src`. A fração arredonda PARA BAIXO: o escudo nunca come mais que ela. */
 export function shieldAbsorbPoints(sh: number, d: number, src: ShieldSource): number {

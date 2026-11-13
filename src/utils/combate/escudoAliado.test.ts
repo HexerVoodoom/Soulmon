@@ -1,7 +1,8 @@
 /**
  * §327 (dono, 13/11/2026). Duas regras novas do núcleo:
- *  1. ESCUDO não é imunidade: não para o DoT (lançado antes OU depois dele), não bloqueia debuff, e absorve só METADE do
- *     especial de dano direto (`SHIELD_DIRECT_SPECIAL_ABSORB`). O golpe básico segue absorvido inteiro (regra de antes).
+ *  1. ESCUDO não é imunidade: absorve só METADE de cada tick de DoT (`SHIELD_DOT_TICK_ABSORB`, lançado antes OU depois dele;
+ *     decisão do dono 13/11/2026, revoga o "tick nunca é absorvido"), não bloqueia debuff, e absorve só METADE do especial de
+ *     dano direto (`SHIELD_DIRECT_SPECIAL_ABSORB`). O golpe básico segue absorvido inteiro (regra de antes).
  *  2. ALVO ALIADO: escudo, cura e reforços podem ir num aliado mirado; sem aliado, vão em quem soltou (`alvoAliado.ts`).
  * Cliente e servidor (`functions/api/_combate.js`) iguais.
  */
@@ -10,7 +11,7 @@ import { fightSteps, hpPoints, type FightEvent, type FightFxPair, type FightSide
 import { groupFightSteps, type GroupEvent } from './group';
 import { combatantAt, REFERENCE_BUILDS } from './level';
 import {
-  SHIELD_ABSORB, SHIELD_DIRECT_SPECIAL_ABSORB, shieldAbsorbPoints, specialOf, type Special, type SpecialFamily,
+  SHIELD_ABSORB, SHIELD_DIRECT_SPECIAL_ABSORB, SHIELD_DOT_TICK_ABSORB, shieldAbsorbPoints, specialOf, type Special, type SpecialFamily,
 } from './specials';
 import {
   ALLY_TARGET_FAMILIES, MIRA_VAZIA, aceitaAliado, aplicarEspecialPessoal, receptorPessoal, tocarAliado, tocarInimigo, type ReceptorPessoal,
@@ -38,18 +39,22 @@ function grupo(p: FightSide, foes: FightSide[], seed: number, startEnergy = 100)
 }
 
 describe('§327 escudo: a régua da absorção', () => {
-  it('básico inteiro, especial direto pela METADE (arredonda para baixo), DoT nada; nunca mais que o escudo', () => {
+  it('básico inteiro, especial direto e tick de DoT pela METADE (arredondam para baixo); nunca mais que o escudo', () => {
     expect(SHIELD_DIRECT_SPECIAL_ABSORB).toBe(0.5);
-    expect(SHIELD_ABSORB).toEqual({ basic: 1, direct: 0.5, tick: 0 });
+    expect(SHIELD_DOT_TICK_ABSORB).toBe(0.5);
+    expect(SHIELD_ABSORB).toEqual({ basic: 1, direct: 0.5, tick: 0.5 });
     expect(shieldAbsorbPoints(100, 40, 'basic')).toBe(40);
     expect(shieldAbsorbPoints(100, 41, 'direct')).toBe(20);
-    expect(shieldAbsorbPoints(100, 40, 'tick')).toBe(0);
+    expect(shieldAbsorbPoints(100, 40, 'tick')).toBe(20);
+    expect(shieldAbsorbPoints(100, 41, 'tick')).toBe(20);
+    expect(shieldAbsorbPoints(100, 1, 'tick')).toBe(0);
     expect(shieldAbsorbPoints(7, 40, 'direct')).toBe(7);
     expect(shieldAbsorbPoints(0, 40, 'basic')).toBe(0);
   });
 
   it('servidor espelha a régua', () => {
     expect(srv.SHIELD_DIRECT_SPECIAL_ABSORB).toBe(SHIELD_DIRECT_SPECIAL_ABSORB);
+    expect(srv.SHIELD_DOT_TICK_ABSORB).toBe(SHIELD_DOT_TICK_ABSORB);
     expect(srv.SHIELD_ABSORB).toEqual(SHIELD_ABSORB);
     for (const [sh, d] of [[100, 41], [3, 9], [0, 5], [50, 1]]) {
       for (const s of ['basic', 'direct', 'tick'] as const) expect(srv.shieldAbsorbPoints(sh, d, s)).toBe(shieldAbsorbPoints(sh, d, s));
@@ -57,8 +62,8 @@ describe('§327 escudo: a régua da absorção', () => {
   });
 });
 
-describe('§327 escudo não para o DoT que já está correndo', () => {
-  it('1v1: B levanta o escudo DEPOIS do DoT de A e os ticks seguem tirando vida, sem tocar no escudo', () => {
+describe('§327 escudo absorve METADE de cada tick de DoT (arredonda para baixo) e o resto cai na vida', () => {
+  it('1v1: B levanta o escudo DEPOIS do DoT de A; cada tick com escudo de sobra perde exatamente floor(50%) para o escudo', () => {
     let ticks = 0;
     for (let seed = 1; seed <= 30; seed++) {
       // A solta o DoT em t=0; B chega a 100 logo depois e levanta o escudo no meio dos ticks
@@ -66,16 +71,20 @@ describe('§327 escudo não para o DoT que já está correndo', () => {
       const castB = evs.findIndex((e) => e.kind === 'cast' && e.side === 1);
       expect(castB).toBeGreaterThan(0);
       evs.forEach((e, i) => {
-        if (e.kind !== 'tick' || i < castB || fx[i - 1][1].shield <= 0) return;
+        if (e.kind !== 'tick' || i < castB) return;
+        const sh0 = fx[i - 1][1].shield, sh1 = fx[i][1].shield;
+        if (sh0 <= 0 || sh1 <= 0) return; // só ticks com escudo de sobra medem a fração
         ticks++;
-        expect(e.frac, `seed ${seed}`).toBeGreaterThan(0);
-        expect(fx[i][1].shield, `seed ${seed}: o tick comeu escudo`).toBeCloseTo(fx[i - 1][1].shield, 12);
+        const comido = Math.round((sh0 - sh1) * PTS), vida = Math.round(e.frac * PTS);
+        expect(vida, `seed ${seed}: o resto do tick cai na vida`).toBeGreaterThan(0);
+        expect(comido, `seed ${seed}`).toBe(Math.floor((comido + vida) * SHIELD_DOT_TICK_ABSORB));
+        expect(vida, `seed ${seed}: o escudo nunca come mais que a metade`).toBeGreaterThanOrEqual(comido);
       });
     }
     expect(ticks).toBeGreaterThan(20);
   });
 
-  it('grupo: com escudo já levantado (inclusive o de largada) o DoT também passa inteiro', () => {
+  it('grupo: com escudo já levantado (inclusive o de largada) cada tick também perde metade para o escudo, nunca mais', () => {
     let ticks = 0;
     for (let seed = 1; seed <= 30; seed++) {
       const evs = grupo(lado(specialOf('dot')), [lado(specialOf('shield'), { startShield: 0.01 }), lado(specialOf('shield'))], seed);
@@ -83,8 +92,12 @@ describe('§327 escudo não para o DoT que já está correndo', () => {
         if (e.kind !== 'tick' || e.who !== 0 || i === 0) return;
         const antes = evs[i - 1].fx!, agora = e.fx!;
         for (let f = 1; f < agora.length; f++) {
-          if (antes[f].shield <= 0) continue;
-          expect(agora[f].shield, `seed ${seed} inimigo ${f}`).toBeCloseTo(antes[f].shield, 12);
+          if (antes[f].shield <= 0 || agora[f].shield <= 0) continue;
+          const comido = Math.round((antes[f].shield - agora[f].shield) * PTS);
+          const vida = Math.round((evs[i - 1].foesHp[f - 1] - e.foesHp[f - 1]) * PTS);
+          if (comido + vida === 0) continue; // este tick não pegou neste inimigo
+          expect(vida, `seed ${seed} inimigo ${f}`).toBeGreaterThan(0);
+          expect(comido, `seed ${seed} inimigo ${f}`).toBe(Math.floor((comido + vida) * SHIELD_DOT_TICK_ABSORB));
           ticks++;
         }
       });

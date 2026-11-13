@@ -66,6 +66,7 @@ export declare function toAttrBonus(b: number | Partial<AttrBonus> | undefined):
 export declare const SPECIAL_BUDGET_HITS: number;
 /** §327: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` de `combate/specials.ts`. */
 export declare const SHIELD_DIRECT_SPECIAL_ABSORB: number;
+export declare const SHIELD_DOT_TICK_ABSORB: number;
 export declare const SHIELD_ABSORB: Readonly<{ basic: number; direct: number; tick: number }>;
 export declare function shieldAbsorbPoints(sh: number, d: number, src: 'basic' | 'direct' | 'tick'): number;
 export declare const SPECIAL_FAMILIES: SpecialFamily[];

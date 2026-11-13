@@ -214,7 +214,7 @@ export function* groupFightSteps(
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // §327: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
     const ab = shieldAbsorbPoints(sh, lose, from);
     if (ab > 0) {
@@ -260,7 +260,7 @@ export function* groupFightSteps(
             fn: () => {
               dots.splice(dots.indexOf(rec), 1);
               const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §327: o escudo não absorve DoT
+              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §327: o escudo absorve metade de cada tick
             },
           });
         }
