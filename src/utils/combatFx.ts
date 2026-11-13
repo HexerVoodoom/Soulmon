@@ -468,7 +468,7 @@ export function statusFxOfFamily(family: SpecialFamily | null | undefined, escol
   return family ? FAMILY_STATUS[family] ?? null : null;
 }
 
-/** Quantos efeitos cabem como selo por ZONA de um lutador (debuffs em cima à esquerda, buffs embaixo à direita; dono, 13/11/2026); o resto vira "+k". */
+/** Quantos efeitos cabem como selo por lutador; o resto vira "+k". Também o teto de marcadores de efeito por canto do sprite (dono, 13/11/2026). */
 export const MAX_STATUS_CHIPS = 3;
 
 /** Um efeito no lutador, como a cena o desenha. `turns` = o que falta (a contagem do selo). */
@@ -506,7 +506,7 @@ function nextSince(board: StatusBoard): number {
   return m + 1;
 }
 
-/** Polaridade do efeito (dono, 13/11/2026): `buff` = a favor de quem carrega (canto de baixo à direita do sprite); `debuff` = contra (canto de cima à esquerda). DoT e controle são `debuff`; cura, HoT e escudo são `buff`. */
+/** Polaridade do efeito (dono, 13/11/2026): `buff` = a favor de quem carrega (o marcador do efeito vai ao canto de baixo à direita do sprite); `debuff` = contra (canto de cima à esquerda). DoT e controle são `debuff`; cura, HoT e escudo são `buff`. */
 export type StatusPolarity = 'buff' | 'debuff';
 const BENEFICIOS: readonly StatusFxKind[] = ['buff', 'cura', 'hot', 'escudo'];
 export function statusPolarity(kind: StatusFxKind): StatusPolarity {

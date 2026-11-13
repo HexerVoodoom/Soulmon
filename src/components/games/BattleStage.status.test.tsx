@@ -6,9 +6,8 @@
  */
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
 import { render, cleanup, waitFor } from '@testing-library/react';
-import { BattleStage, type StageAction, type StageFighter } from './BattleStage';
+import { BattleStage, STAGE_FX_MARK_MAX, Z_FX_MARK, type StageAction, type StageFighter } from './BattleStage';
 import { STATUS_FX, STATUS_FX_KINDS, MAX_STATUS_CHIPS, statusAriaLabel, statusPolarity, type StageStatus, type StatusFxKind } from '../../utils/combatFx';
-import { Z_STATUS } from './BattleStage';
 import { COMBAT_V3_ART_IDS, loadCombatV3Art, resetCombatV3ArtCache } from '../../utils/combatV3Art';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); resetCombatV3ArtCache(); });
@@ -65,23 +64,17 @@ describe('selos de status — um por efeito, com efeito e turnos no aria-label',
     expect(chips().map(c => c.getAttribute('aria-label'))).toEqual(['Defesa em baixa, 3 turnos', 'Ataque em alta, 2 turnos']) // ordem do DOM: inimigos, depois o pet;
   });
 
-  it('vários no mesmo alvo: cada ZONA mostra até o limite e o excedente dela vira "+k"', () => {
+  it('vários no mesmo alvo: empilha até o limite e o excedente vira "+k"', () => {
     const status: StageStatus[] = [
-      { kind: 'buff', variant: 'atk', turns: 3 }, { kind: 'buff', variant: 'spd', turns: 2 }, { kind: 'escudo', turns: 3 }, { kind: 'hot', turns: 2 },
+      { kind: 'buff', variant: 'atk', turns: 3 }, { kind: 'buff', variant: 'spd', turns: 2 }, { kind: 'escudo', turns: 3 },
       { kind: 'dot', turns: 3 }, { kind: 'debuff', variant: 'def', turns: 1 },
     ];
     render(<BattleStage {...base} me={me} foes={[foe({ status })]} />);
-    const buffRow = document.querySelector('[data-stage-status-zone="buff"]') as HTMLElement;
-    const debuffRow = document.querySelector('[data-stage-status-zone="debuff"]') as HTMLElement;
-    expect(buffRow.querySelectorAll('[data-stage-status]')).toHaveLength(MAX_STATUS_CHIPS);
-    expect(debuffRow.querySelectorAll('[data-stage-status]')).toHaveLength(2);
-    expect(debuffRow.querySelector('[data-stage-status-more]')).toBeNull();
-    const more = buffRow.querySelector('[data-stage-status-more]') as HTMLElement;
-    expect(more.getAttribute('data-stage-status-more')).toBe('1');
-    expect(more.getAttribute('aria-label')).toBe('1 more effect');
-    expect(more.textContent).toBe('+1');
-    // os mais antigos ficam: o 4º buff (o mais novo) é o que vira "+1"
-    expect([...buffRow.querySelectorAll('[data-stage-status]')].map((c) => c.getAttribute('data-stage-status'))).toEqual(['buff', 'buff', 'escudo']);
+    expect(chips()).toHaveLength(MAX_STATUS_CHIPS);
+    const more = document.querySelector('[data-stage-status-more]') as HTMLElement;
+    expect(more.getAttribute('data-stage-status-more')).toBe(String(status.length - MAX_STATUS_CHIPS));
+    expect(more.getAttribute('aria-label')).toBe('2 more effects');
+    expect(more.textContent).toBe('+2');
   });
 
   it('último turno: o selo marca "acabando" por borda tracejada e atributo, e mostra o 1', () => {
@@ -110,77 +103,83 @@ describe('selos de status — um por efeito, com efeito e turnos no aria-label',
     expect(document.querySelector('[data-stage-fx-loop]')).toBeNull(); // o loop só entra com a folha carregada
   });
 
-  it('a arte chega depois (carga preguiçosa): o glifo e o loop aparecem, e é UMA camada animada por lutador', async () => {
+  it('a arte chega depois (carga preguiçosa): o glifo e os marcadores aparecem, um por efeito, pequenos no canto', async () => {
     render(<BattleStage {...base} me={me} foes={[foe({ status: [{ kind: 'debuff', variant: 'def', turns: 3 }, { kind: 'dot', turns: 3 }, { kind: 'buff', variant: 'atk', turns: 2 }] })]} />);
-    await quando(() => chip('debuff')?.querySelector('img') && document.querySelector('[data-stage-fx-loop]'));
+    await quando(() => chip('debuff')?.querySelector('img') && document.querySelectorAll('[data-stage-fx-mark]').length === 3);
     expect(chip('debuff')!.getAttribute('data-stage-status-art')).toBe('img');
-    expect(chip('debuff')!.querySelector('img')).not.toBeNull();
-    expect(document.querySelectorAll('[data-stage-fx-loop]')).toHaveLength(1); // orçamento: no máximo 1 camada animada por lutador
-    expect(document.querySelector('[data-stage-fx-loop]')!.getAttribute('data-stage-fx-loop')).toBe('debuff'); // o de maior prioridade
+    expect([...document.querySelectorAll('[data-stage-fx-loop]')].map((e) => e.getAttribute('data-stage-fx-loop'))).toEqual(['debuff', 'dot', 'buff']);
+    // o marcador é pequeno (canto), não mais a folha do tamanho do sprite
+    for (const m of document.querySelectorAll<HTMLElement>('[data-stage-fx-mark]')) expect(parseFloat(m.style.width)).toBeLessThanOrEqual(STAGE_FX_MARK_MAX);
   });
 
-  it('cura e escudo desenham a peça estática existente (fx-heal / fx-shield) — sem loop', async () => {
+  it('o ESCUDO segue sobre o corpo (fx-shield, como era); a cura vira marcador no canto dos buffs (fx-heal)', async () => {
     render(<BattleStage {...base} me={{ ...me, status: [{ kind: 'escudo', turns: 3 }] }} foes={[foe({ status: [{ kind: 'cura', turns: 1 }] })]} />);
-    await quando(() => document.querySelector('[data-stage-fx-still="escudo"]') && document.querySelector('[data-stage-fx-still="cura"]'));
-    expect(document.querySelector('[data-stage-fx-still="escudo"]')).not.toBeNull();
-    expect(document.querySelector('[data-stage-fx-still="cura"]')).not.toBeNull();
+    await quando(() => document.querySelector('[data-stage-fx-still="escudo"]') && document.querySelector('[data-stage-fx-mark="cura"]'));
+    const escudo = document.querySelector('[data-stage-fx-still="escudo"]') as HTMLElement;
+    expect(escudo.closest('[data-stage-fx-row]')).toBeNull();
+    expect(document.querySelector('[data-stage-fx-mark="escudo"]')).toBeNull();
+    expect(document.querySelector('[data-stage-fx-still="cura"]')).toBeNull();
+    expect(document.querySelector('[data-stage-fx-mark="cura"]')!.closest('[data-stage-fx-row]')!.getAttribute('data-stage-fx-zone')).toBe('buff');
     expect(document.querySelector('[data-stage-fx-loop]')).toBeNull();
   });
 });
 
-describe('selos: zona por tipo, ordem de início e sempre na frente (dono, 13/11/2026)', () => {
+describe('marcadores de efeito no sprite: canto por tipo, ordem de início, sempre na frente (dono, 13/11/2026)', () => {
+  // ordem de início (o mais antigo primeiro), como o stageStatusOf entrega
   const dois: StageStatus[] = [
-    { kind: 'veneno', turns: 3 }, { kind: 'buff', variant: 'atk', turns: 2 }, { kind: 'lento', turns: 2 }, { kind: 'escudo', turns: 4 },
+    { kind: 'veneno', turns: 3 }, { kind: 'buff', variant: 'atk', turns: 2 }, { kind: 'lento', turns: 2 }, { kind: 'hot', turns: 4 }, { kind: 'escudo', turns: 2 },
   ];
-  const row = (side: 'me' | 'foe', zone: 'buff' | 'debuff') => document.querySelector(`[data-stage-status-side="${side}"][data-stage-status-zone="${zone}"]`) as HTMLElement | null;
-  const kinds = (r: HTMLElement | null) => [...(r?.querySelectorAll('[data-stage-status]') ?? [])].map((c) => c.getAttribute('data-stage-status'));
+  const row = (side: 'me' | 'foe', zone: 'buff' | 'debuff') => document.querySelector(`[data-stage-fx-side="${side}"][data-stage-fx-zone="${zone}"]`) as HTMLElement | null;
+  const kinds = (r: HTMLElement | null) => [...(r?.querySelectorAll('[data-stage-fx-mark]') ?? [])].map((c) => c.getAttribute('data-stage-fx-mark'));
+  const pronto = () => quando(() => document.querySelectorAll('[data-stage-fx-mark]').length === 8 && document.querySelectorAll('[data-stage-fx-still="escudo"]').length === 2);
 
-  it('cada efeito cai na zona do seu tipo: contra quem carrega = debuff; a favor = buff', () => {
+  it('cada efeito com arte de cena vai ao canto do seu tipo; só o escudo fica sobre o corpo', async () => {
     expect(STATUS_FX_KINDS.filter((k) => statusPolarity(k) === 'buff').sort()).toEqual(['buff', 'cura', 'escudo', 'hot']);
-    for (const kind of STATUS_FX_KINDS) {
+    for (const kind of STATUS_FX_KINDS.filter((k) => k !== 'escudo')) {
       render(<BattleStage {...base} me={me} foes={[foe({ status: [{ kind, turns: 2 }] })]} />);
-      expect(chip(kind)!.closest('[data-stage-status-row]')!.getAttribute('data-stage-status-zone'), kind).toBe(statusPolarity(kind));
+      await quando(() => document.querySelector(`[data-stage-fx-mark="${kind}"]`));
+      expect(document.querySelector(`[data-stage-fx-mark="${kind}"]`)!.closest('[data-stage-fx-row]')!.getAttribute('data-stage-fx-zone'), kind).toBe(statusPolarity(kind));
       cleanup();
     }
   });
 
-  it('2 debuffs e 2 buffs nos dois lados: lado a lado na zona, na ordem em que começaram; inimigo RTL, pet LTR', () => {
+  it('2 debuffs e 2 buffs nos dois lados: lado a lado no canto, na ordem de início; inimigo RTL, pet LTR; os selos da barra não mudam', async () => {
     render(<BattleStage {...base} me={{ ...me, status: dois }} foes={[foe({ status: dois })]} />);
+    await pronto();
     for (const side of ['me', 'foe'] as const) {
       // o DOM guarda a ordem de início (o mais antigo primeiro); a direção da fileira põe o mais novo à esquerda (inimigo) ou à direita (pet)
       expect(kinds(row(side, 'debuff'))).toEqual(['veneno', 'lento']);
-      expect(kinds(row(side, 'buff'))).toEqual(['buff', 'escudo']);
+      expect(kinds(row(side, 'buff'))).toEqual(['buff', 'hot']);
       for (const z of ['debuff', 'buff'] as const) {
         expect(row(side, z)!.style.flexDirection).toBe(side === 'foe' ? 'row-reverse' : 'row');
-        expect(row(side, z)!.getAttribute('data-stage-status-order')).toBe(side === 'foe' ? 'rtl' : 'ltr');
+        expect(row(side, z)!.getAttribute('data-stage-fx-order')).toBe(side === 'foe' ? 'rtl' : 'ltr');
       }
     }
+    // os selos ao lado da cabeça seguem como eram (coluna, até o limite + "+k")
+    expect(chips()).toHaveLength(2 * MAX_STATUS_CHIPS);
+    for (const r of document.querySelectorAll<HTMLElement>('[data-stage-status-row]')) expect(r.style.flexDirection).toBe('column');
   });
 
-  it('o contador de turnos continua no selo, legível (>= 11 px, com fundo)', () => {
-    render(<BattleStage {...base} me={me} foes={[foe({ status: dois })]} />);
-    for (const c of chips()) {
-      const n = c.querySelector('[data-stage-status-count]') as HTMLElement;
-      expect(n.textContent).toBe(c.getAttribute('data-stage-status-turns'));
-      expect(parseFloat(n.style.fontSize)).toBeGreaterThanOrEqual(11);
-      expect(n.style.backgroundColor).not.toBe('');
-    }
-  });
-
-  it('SEMPRE na frente: acima do sprite, do véu, da aura e de quem conjura — no especial do pet e no do inimigo', () => {
+  it('SEMPRE na frente: acima do sprite, do escudo, do véu, da aura e de quem conjura — no especial do pet e no do inimigo', async () => {
     for (const actor of ['me', 'foe'] as const) {
       render(<BattleStage {...base} me={{ ...me, status: dois }} foes={[foe({ status: dois })]} action={acao('special', { actor, strike: 'ranged' })} />);
+      await pronto();
       const zs = [...document.querySelectorAll<HTMLElement>('[data-stage-sprite]')].map((e) => Number(e.closest<HTMLElement>('[style*="z-index"]')!.style.zIndex));
-      const fx = [...document.querySelectorAll<HTMLElement>('[data-stage-cutscene], [data-stage-special], [data-stage-cast], [data-stage-fx], [data-stage-fx-loop], [data-stage-fx-still]')].map((e) => Number(e.style.zIndex));
-      const top = Math.max(...zs, ...fx);
-      const rows = [...document.querySelectorAll<HTMLElement>('[data-stage-status-row]')];
+      const fx = [...document.querySelectorAll<HTMLElement>('[data-stage-cutscene], [data-stage-special], [data-stage-cast], [data-stage-fx], [data-stage-fx-still], [data-stage-bars-row], [data-stage-status-row]')].map((e) => Number(e.style.zIndex));
+      const rows = [...document.querySelectorAll<HTMLElement>('[data-stage-fx-row]')];
       expect(rows).toHaveLength(4);
-      for (const r of rows) {
-        expect(Number(r.style.zIndex)).toBe(Z_STATUS);
-        expect(Z_STATUS, actor).toBeGreaterThan(top);
-      }
+      for (const r of rows) expect(Number(r.style.zIndex)).toBe(Z_FX_MARK);
+      expect(Z_FX_MARK, actor).toBeGreaterThan(Math.max(...zs, ...fx));
       cleanup();
     }
+  });
+
+  it('mais de 3 num canto: os 3 mais antigos e "+k" na ponta dos novos', async () => {
+    const st: StageStatus[] = [{ kind: 'veneno', turns: 3 }, { kind: 'lento', turns: 2 }, { kind: 'queimadura', turns: 2 }, { kind: 'silencio', turns: 1 }, { kind: 'maldicao', turns: 2 }];
+    render(<BattleStage {...base} me={me} foes={[foe({ status: st })]} />);
+    await quando(() => document.querySelectorAll('[data-stage-fx-mark]').length === 3);
+    expect(kinds(row('foe', 'debuff'))).toEqual(['veneno', 'lento', 'queimadura']);
+    expect(row('foe', 'debuff')!.querySelector('[data-stage-fx-more]')!.textContent).toBe('+2');
   });
 });
 

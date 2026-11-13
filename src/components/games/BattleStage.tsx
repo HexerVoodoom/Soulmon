@@ -145,18 +145,27 @@ const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
 const STAGE_EL_ICON_W = 44;
 /**
- * Selos de status (dono, 13/11/2026; substitui o §197 de 30/10): o tamanho é o que o dono marcou nos prints (~40 px num
- * inimigo sozinho de 152 px num campo de 360 px), PROPORCIONAL ao sprite como o resto da cena: 26% do lado do sprite,
- * entre 28 px (3 inimigos) e 44 px (o seu Soulmon; o mesmo teto do ícone de elemento).
+ * §197 (dono, 30/10/2026): o selo de buff/DoT mora de LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — não
+ * centrado em cima dele. O pedido de tamanho foi "2× o ícone de elemento"; o literal (2 × 44 = 88 px por selo) cobre o
+ * sprite num campo de 360 px com 3 inimigos, então ficou 22 px (2× o selo antigo de 12 px; metade do ícone de elemento)
+ * ATÉ O DONO CONFIRMAR — é uma constante só (REGISTRO §197, pergunta em aberto).
  */
-export const STAGE_STATUS_ICON_MIN = 28;
-export const STAGE_STATUS_ICON_MAX = STAGE_EL_ICON_W;
-const STAGE_STATUS_ICON_FRAC = 0.26;
-const STAGE_STATUS_GAP = 4;
-/** Margem mínima dos selos até a borda do campo (px). */
-const STAGE_STATUS_EDGE = 2;
-export function stageStatusIconSize(spot: Spot): number {
-  return Math.round(Math.max(STAGE_STATUS_ICON_MIN, Math.min(STAGE_STATUS_ICON_MAX, spot.size * STAGE_STATUS_ICON_FRAC)));
+export const STAGE_STATUS_ICON = 22;
+/**
+ * MARCADOR DO EFEITO no sprite (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de
+ * veneno, queimadura, debuff, reforço… e a cura) vira um marcador no CANTO do sprite, do tamanho que o dono marcou nos
+ * prints (~40 px num inimigo sozinho de 152 px num campo de 360 px): 26% do sprite, entre 28 e 44 px. Com 3 inimigos,
+ * o piso (28 px) — o campo fica cheio. Só o ESCUDO continua sobre o sprite.
+ */
+export const STAGE_FX_MARK_MIN = 28;
+export const STAGE_FX_MARK_MAX = STAGE_EL_ICON_W;
+const STAGE_FX_MARK_FRAC = 0.26;
+const STAGE_FX_MARK_GAP = 4;
+/** Margem mínima até a borda do campo e até a caixa de HP/especial de qualquer lutador (px). */
+const STAGE_FX_MARK_EDGE = 2;
+export function stageFxMarkSize(spot: Spot, crowded = false): number {
+  if (crowded) return STAGE_FX_MARK_MIN;
+  return Math.round(Math.max(STAGE_FX_MARK_MIN, Math.min(STAGE_FX_MARK_MAX, spot.size * STAGE_FX_MARK_FRAC)));
 }
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
@@ -278,26 +287,39 @@ function energyPendingOf(f: StageFighter): number {
  * As barras EM CIMA do lutador, coladas nele (indicando que são DELE): nome (+ HP numérico quando
  * `numeric`), a barra de HP e, logo abaixo, a de ENERGIA — cheia, ela pulsa (o especial é o próximo golpe).
  */
+/** Um retângulo no campo (px). */
+export interface StageRect { left: number; top: number; width: number; height: number }
+
+/**
+ * Onde fica a caixa de HP/especial (as barras + o ícone do elemento) de um lutador — a MESMA conta que o `FighterBars`
+ * desenha (pura; é a régua de que os marcadores de efeito nunca entram por baixo dela).
+ */
+export function stageBarsRect(spot: Spot, tone: 'cyan' | 'gold', hasElementIcon: boolean, barsH: number, fieldW: number): StageRect & { blockWidth: number } {
+  const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
+  const iconOnLeft = tone === 'cyan';
+  const total = width + (hasElementIcon ? STAGE_EL_ICON_W : 0);
+  const blockLeft = Math.round(spot.x - width / 2);
+  const ownLeft = hasElementIcon && iconOnLeft ? blockLeft - STAGE_EL_ICON_W : blockLeft;
+  const left = fieldW > 0 ? Math.max(2, Math.min(ownLeft, fieldW - total - 2)) : ownLeft;
+  return { left, top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT), width: total, height: barsH, blockWidth: width };
+}
+
 function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
   fighter: StageFighter; spot: Spot; tone: 'cyan' | 'gold'; numeric: boolean; barsH: number; fieldW: number; isPt: boolean;
 }) {
   const pending = energyPendingOf(fighter);
-  const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
   const energy = fighter.energy;
   const full = energy !== undefined && energy >= 0.999;
   // O ícone do ELEMENTO fica FORA do bloco, encostado na borda externa (o seu: à esquerda; o do oponente: à direita),
   // pelado (sem caixa) e com a MESMA altura do bloco. Elemento sem arte = nada (o bloco não muda).
   const iconSrc = elementIcon(fighter.element);
   const iconOnLeft = tone === 'cyan';
-  const total = width + (iconSrc ? STAGE_EL_ICON_W : 0);
-  const blockLeft = Math.round(spot.x - width / 2);
-  const ownLeft = iconSrc && iconOnLeft ? blockLeft - STAGE_EL_ICON_W : blockLeft;
-  const left = fieldW > 0 ? Math.max(2, Math.min(ownLeft, fieldW - total - 2)) : ownLeft;
+  const { left, top, width: total, blockWidth: width } = stageBarsRect(spot, tone, !!iconSrc, barsH, fieldW);
   return (
     <div
       data-stage-bars-row
       style={{
-        position: 'absolute', left, top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT), width: total,
+        position: 'absolute', left, top, width: total,
         display: 'flex', flexDirection: iconOnLeft ? 'row' : 'row-reverse', alignItems: 'stretch', zIndex: 3, pointerEvents: 'none',
       }}
     >
@@ -455,11 +477,11 @@ const Z_CUTSCENE_AURA = 8;
 const Z_CUTSCENE_ACTOR = 9;
 const Z_CUTSCENE_NAME = 10;
 /**
- * Os selos de status ficam SEMPRE na frente (dono, 13/11/2026): acima do sprite, do véu e da aura do especial, de quem
- * conjura e do nome do golpe. Só o diálogo de saída fica por cima. O campo (`data-stage-field`) não cria contexto de
- * empilhamento (sem z-index/transform), então este número compete direto com o véu e o nome, que moram fora dele.
+ * Os MARCADORES de efeito ficam SEMPRE na frente (dono, 13/11/2026): acima do sprite, do véu e da aura do especial, de
+ * quem conjura e do nome do golpe. Só o diálogo de saída fica por cima. O campo (`data-stage-field`) não cria contexto
+ * de empilhamento (sem z-index/transform), então este número compete direto com o véu e o nome, que moram fora dele.
  */
-export const Z_STATUS = 11;
+export const Z_FX_MARK = 11;
 const Z_CONFIRM = 12;
 
 /**
@@ -541,155 +563,199 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
 }
 
 /**
- * A camada de STATUS de um lutador (PR11): (1) UMA camada animada em loop sobre o corpo (a de maior prioridade
- * que tem folha), (2) a peça estática do efeito (cura/escudo) e (3) os selos, cada um com glifo + forma (seta/sinal) +
- * turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca depende só da cor nem só da imagem: sem arte, a
- * forma e o texto continuam. Movimento reduzido: sem o loop, o selo fica parado — a mesma informação.
+ * A camada de STATUS de um lutador (PR11): (1) o ESCUDO sobre o corpo (a peça estática `fx-shield`, como sempre foi),
+ * (2) os MARCADORES DE EFEITO nos cantos do sprite e (3) a fileira de selos ao lado da cabeça, cada um com glifo + forma
+ * (seta/sinal) + texto curto + turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca depende só da cor nem
+ * só da imagem: sem arte, a forma e o texto continuam.
  *
- * Onde os selos moram (dono, 13/11/2026):
- *  · DEBUFF (contra quem carrega: debuff, maldição, DoT, controle) no canto de CIMA à ESQUERDA do sprite;
- *  · BUFF (a favor: reforço, cura, HoT, escudo) no canto de BAIXO à DIREITA;
- *  · em FILEIRA (nunca coluna), na ordem em que cada efeito começou (`status` já chega assim, `stageStatusOf`):
- *    inimigo da direita para a esquerda (o mais novo mais à esquerda), o seu Soulmon da esquerda para a direita;
- *  · SEMPRE na frente (`Z_STATUS`), inclusive durante o especial.
+ * Os marcadores (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de veneno, queimadura,
+ * debuff, reforço…, a cura) vira UM marcador por efeito, do tamanho que o dono marcou nos prints:
+ *  · DEBUFF (contra quem carrega) no canto de CIMA à ESQUERDA; BUFF (a favor) no canto de BAIXO à DIREITA (`statusPolarity`);
+ *  · em FILEIRA, na ordem em que o efeito começou (`status` já chega assim, `stageStatusOf`): inimigo da direita para a
+ *    esquerda (o mais novo mais à esquerda), o seu Soulmon da esquerda para a direita;
+ *  · a fileira começa ALINHADA à borda do sprite (a esquerda nos debuffs, a direita nos buffs) e cresce para a outra borda;
+ *  · nunca entra por baixo de uma caixa de HP/especial (a própria ou a do vizinho): desvia dela (`fxMarkRowPlacement`);
+ *  · SEMPRE na frente (`Z_FX_MARK`), inclusive durante o especial;
+ *  · até `MAX_STATUS_CHIPS` por canto (os mais antigos); o resto vira "+k" na ponta dos novos.
+ * Movimento reduzido: o marcador fica no 1º quadro da folha, parado — a mesma informação, sem loop.
  */
-const LOOP_PRIORITY = ['maldicao', 'debuff', 'lento', 'queimadura', 'veneno', 'dot', 'buff'] as const;
-
 export type StatusSide = 'me' | 'foe';
-export interface StatusRowPlace { left: number; top: number; width: number; icon: number; dir: 'row' | 'row-reverse' }
+export interface FxMarkRowPlace { left: number; top: number; width: number; icon: number; dir: 'row' | 'row-reverse'; fits: boolean }
+
+const overlaps = (a: StageRect, b: StageRect) =>
+  a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
 
 /**
- * Onde fica a fileira de `n` selos de uma zona (pura; testada em `BattleStage.lado.test.tsx`). `fieldW`/`fieldH` = a
- * caixa do campo (0 = ainda não medida: sem trava de borda). A fileira nunca sai do campo: encosta na borda e cresce para dentro.
+ * Onde fica a fileira de `n` marcadores de uma zona (pura; testada em `BattleStage.lado.test.tsx` em todas as contagens).
+ * `avoid` = as caixas de HP/especial desenhadas; `fieldW`/`fieldH` = o campo (0 = ainda não medido: sem trava de borda).
+ * `fits` = a fileira coube dentro da altura do sprite sem cruzar nenhuma caixa (falso = a geometria não deixou; a fileira
+ * fica na frente da caixa, nunca atrás dela).
  */
-export function statusRowPlacement(spot: Spot, side: StatusSide, zone: StatusPolarity, n: number, fieldW: number, fieldH: number): StatusRowPlace {
-  const icon = stageStatusIconSize(spot);
-  const width = Math.max(0, n * icon + (n - 1) * STAGE_STATUS_GAP);
+export function fxMarkRowPlacement(
+  spot: Spot, side: StatusSide, zone: StatusPolarity, n: number,
+  opts: { crowded?: boolean; avoid?: readonly StageRect[]; fieldW?: number; fieldH?: number } = {},
+): FxMarkRowPlace {
+  const { crowded = false, avoid = [], fieldW = 0, fieldH = 0 } = opts;
+  const icon = stageFxMarkSize(spot, crowded);
+  const width = Math.max(0, n * icon + (n - 1) * STAGE_FX_MARK_GAP);
   const boxL = spot.x - spot.size / 2;
   const boxR = spot.x + spot.size / 2;
   const boxTop = spot.y - spot.size * SPRITE_TOP;
-  // inimigo: a fileira cresce para a ESQUERDA a partir da âncora (borda direita); o seu Soulmon: para a DIREITA (borda esquerda)
-  let left = side === 'foe'
-    ? (zone === 'debuff' ? boxL + icon : boxR) - width
-    : zone === 'debuff' ? boxL : boxR - icon;
-  if (fieldW > 0) left = Math.min(left, fieldW - width - STAGE_STATUS_EDGE);
-  left = Math.max(STAGE_STATUS_EDGE, left);
-  let top = zone === 'debuff' ? boxTop + 2 : spot.y - spot.size * 0.06 - icon;
+  // começa na borda do sprite (debuff: a esquerda; buff: a direita) e cresce para a outra borda
+  let left = zone === 'debuff' ? boxL : boxR - width;
+  if (fieldW > 0) left = Math.min(left, fieldW - width - STAGE_FX_MARK_EDGE);
+  left = Math.round(Math.max(STAGE_FX_MARK_EDGE, left));
+  let top = zone === 'debuff' ? boxTop + STAGE_FX_MARK_EDGE : spot.y - spot.size * 0.06 - icon;
   // o seu Soulmon pisa ABAIXO do campo (ME_BELOW_FIELD): os buffs dele sobem até caber no campo, sem descer sobre o HUD do pé
-  if (fieldH > 0) top = Math.min(top, fieldH - icon - STAGE_STATUS_EDGE);
-  return { left: Math.round(left), top: Math.round(top), width, icon, dir: side === 'foe' ? 'row-reverse' : 'row' };
+  if (fieldH > 0) top = Math.min(top, fieldH - icon - STAGE_FX_MARK_EDGE);
+  // desvia das caixas de HP/especial: o debuff DESCE para baixo da caixa que cruza; o buff SOBE para cima dela
+  const pad = STAGE_FX_MARK_EDGE;
+  for (let k = 0; k < avoid.length + 1; k++) {
+    const r = { left, top, width, height: icon };
+    const hit = avoid.find((b) => overlaps(r, { left: b.left - pad, top: b.top - pad, width: b.width + 2 * pad, height: b.height + 2 * pad }));
+    if (!hit) break;
+    top = zone === 'debuff' ? hit.top + hit.height + pad : hit.top - icon - pad;
+  }
+  top = Math.round(top);
+  const rect = { left, top, width, height: icon };
+  const fits = !avoid.some((b) => overlaps(rect, b)) && top >= Math.floor(boxTop) && top + icon <= Math.ceil(spot.y);
+  return { left, top, width, icon, dir: side === 'foe' ? 'row-reverse' : 'row', fits };
 }
 
-function StatusLayer({ status, spot, side, fieldW, fieldH, isPt, reduced }: { status: StageStatus[]; spot: Spot; side: StatusSide; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean }) {
-  const loopOf = LOOP_PRIORITY.map((k) => status.find((st) => st.kind === k)).find(Boolean);
-  const stills = status.filter((st) => STATUS_FX[st.kind].still).slice(0, 1);
+function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt, reduced }: {
+  status: StageStatus[]; spot: Spot; side: StatusSide; crowded: boolean; avoid: readonly StageRect[]; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean;
+}) {
+  const shield = status.find((st) => st.kind === 'escudo');
+  const shown = status.slice(0, MAX_STATUS_CHIPS);
+  const extra = status.length - shown.length;
+  // um marcador por efeito que tem arte de cena (a folha em loop ou a peça estática) — menos o escudo, que segue sobre o corpo
+  const markArt = (st: StageStatus) => STATUS_FX[st.kind].loop ?? STATUS_FX[st.kind].still;
   const zones = (['debuff', 'buff'] as const).map((zone) => {
-    const all = status.filter((st) => statusPolarity(st.kind) === zone);
-    // os MAIS ANTIGOS ficam (o selo não pula de lugar quando entra um novo); o excedente vira "+k" na ponta dos novos
-    const shown = all.slice(0, MAX_STATUS_CHIPS);
-    return { zone, shown, extra: all.length - shown.length };
+    const all = status.filter((st) => st.kind !== 'escudo' && markArt(st) && statusPolarity(st.kind) === zone);
+    const marks = all.slice(0, MAX_STATUS_CHIPS);
+    return { zone, marks, more: all.length - marks.length };
   });
   const ids = [
-    ...zones.flatMap((z) => z.shown.map((st) => statusGlyphId(st.kind, st.variant))),
-    !reduced && loopOf ? STATUS_FX[loopOf.kind].loop : null,
-    ...stills.map((st) => STATUS_FX[st.kind].still),
+    ...shown.map((st) => statusGlyphId(st.kind, st.variant)),
+    ...zones.flatMap((z) => z.marks.map(markArt)),
+    shield ? STATUS_FX.escudo.still : null,
   ];
   const art = useCombatV3Art(ids);
   const c = bodyCenter(spot);
-  const loopSrc = !reduced && loopOf ? art[STATUS_FX[loopOf.kind].loop ?? ''] : undefined;
+  const shieldSrc = shield ? art[STATUS_FX.escudo.still ?? ''] : undefined;
+  const shieldSize = Math.round(spot.size * 1.05);
   return (
     <>
-      {loopOf && loopSrc && (
-        <div
+      {shield && shieldSrc && (
+        <img
+          src={shieldSrc}
+          alt=""
           aria-hidden="true"
-          data-stage-fx-loop={loopOf.kind}
-          className="sm-bs-sheet"
+          data-stage-fx-still="escudo"
+          width={shieldSize}
+          height={shieldSize}
           style={{
-            position: 'absolute', left: c.x - spot.size / 2, top: c.y - spot.size / 2, width: spot.size, height: spot.size, zIndex: 4, pointerEvents: 'none',
-            backgroundImage: `url("${loopSrc}")`, backgroundSize: '300% 200%', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated', opacity: 0.85,
+            position: 'absolute', left: c.x - shieldSize / 2, top: c.y - shieldSize / 2, width: shieldSize, height: shieldSize, maxWidth: 'none',
+            zIndex: 4, pointerEvents: 'none', imageRendering: 'pixelated', opacity: 0.6,
           }}
         />
       )}
-      {stills.map((st) => {
-        const src = art[STATUS_FX[st.kind].still ?? ''];
-        if (!src) return null;
-        const size = Math.round(spot.size * (st.kind === 'escudo' ? 1.05 : 0.55));
-        return (
-          <img
-            key={`still-${st.kind}`}
-            src={src}
-            alt=""
-            aria-hidden="true"
-            data-stage-fx-still={st.kind}
-            width={size}
-            height={size}
-            style={{
-              position: 'absolute', left: c.x - size / 2, top: (st.kind === 'escudo' ? c.y : c.y - spot.size * 0.3) - size / 2, width: size, height: size, maxWidth: 'none',
-              zIndex: 4, pointerEvents: 'none', imageRendering: 'pixelated', opacity: 0.6,
-            }}
-          />
-        );
-      })}
-      {zones.map(({ zone, shown, extra }) => {
-        if (!shown.length) return null;
-        const p = statusRowPlacement(spot, side, zone, shown.length + (extra > 0 ? 1 : 0), fieldW, fieldH);
+      {zones.map(({ zone, marks, more }) => {
+        // só entra na fileira o marcador cuja arte já chegou (carga sob demanda); o "+k" conta sempre
+        const ready = marks.filter((st) => art[markArt(st) ?? '']);
+        if (!ready.length) return null;
+        const p = fxMarkRowPlacement(spot, side, zone, ready.length + (more > 0 ? 1 : 0), { crowded, avoid, fieldW, fieldH });
         const icon = p.icon;
-        const turnsFont = Math.max(11, Math.round(icon * 0.32));
         return (
           <div
             key={zone}
-            data-stage-status-row
-            data-stage-status-zone={zone}
-            data-stage-status-side={side}
-            data-stage-status-order={side === 'foe' ? 'rtl' : 'ltr'}
+            aria-hidden="true"
+            data-stage-fx-row
+            data-stage-fx-zone={zone}
+            data-stage-fx-side={side}
+            data-stage-fx-order={side === 'foe' ? 'rtl' : 'ltr'}
+            data-stage-fx-fits={p.fits ? '1' : '0'}
             style={{
               position: 'absolute', left: p.left, top: p.top, width: p.width, height: icon,
-              display: 'flex', flexDirection: p.dir, alignItems: 'center', gap: STAGE_STATUS_GAP, zIndex: Z_STATUS, pointerEvents: 'none',
+              display: 'flex', flexDirection: p.dir, alignItems: 'center', gap: STAGE_FX_MARK_GAP, zIndex: Z_FX_MARK, pointerEvents: 'none',
             }}
           >
-            {shown.map((st, i) => {
+            {ready.map((st, i) => {
               const def = STATUS_FX[st.kind];
-              const glyph = art[statusGlyphId(st.kind, st.variant)];
-              const last = st.turns <= 1;
-              return (
-                <span
+              const src = art[markArt(st) ?? ''];
+              const box: CSSProperties = { flex: 'none', width: icon, height: icon, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' };
+              return def.loop ? (
+                <div
                   key={`${st.kind}-${st.variant ?? ''}-${i}`}
-                  role="img"
-                  aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
-                  data-stage-status={st.kind}
-                  data-stage-status-variant={st.variant}
-                  data-stage-status-turns={st.turns}
-                  data-stage-status-last={last ? '1' : '0'}
-                  data-stage-status-art={glyph ? 'img' : 'css'}
-                  className={reduced ? undefined : 'sm-bs-stpop'}
-                  style={{
-                    position: 'relative', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon,
-                    boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', color: 'var(--sm2-ink)', lineHeight: 1, whiteSpace: 'nowrap',
-                    border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
-                    filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))',
-                  }}
-                >
-                  {glyph
-                    ? <img src={glyph} alt="" aria-hidden="true" width={icon} height={icon} style={{ width: icon, height: icon, maxWidth: 'none', imageRendering: 'pixelated' }} />
-                    : null}
-                  <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: Math.round(icon * 0.55) }}>{def.mark}</span>
-                  <span aria-hidden="true" data-stage-status-count className="sm2-num" style={{ position: 'absolute', right: -3, bottom: -3, minWidth: turnsFont, fontSize: turnsFont, lineHeight: 1.1, textAlign: 'center', padding: '0 3px', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, border: '1px solid var(--sm2-line)' }}>{st.turns}</span>
-                </span>
+                  data-stage-fx-mark={st.kind}
+                  data-stage-fx-loop={reduced ? undefined : st.kind}
+                  className={reduced ? undefined : 'sm-bs-sheet'}
+                  style={{ ...box, backgroundImage: `url("${src}")`, backgroundSize: '300% 200%', backgroundPosition: '0 0', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated' }}
+                />
+              ) : (
+                <img key={`${st.kind}-${st.variant ?? ''}-${i}`} src={src} alt="" data-stage-fx-mark={st.kind} width={icon} height={icon} style={{ ...box, display: 'block', maxWidth: 'none', imageRendering: 'pixelated' }} />
               );
             })}
-            {extra > 0 && (
+            {more > 0 && (
               <span
-                role="img"
-                aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
-                data-stage-status-more={extra}
-                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: turnsFont, border: '1px solid var(--sm2-line)' }}
+                data-stage-fx-more={more}
+                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: Math.max(11, Math.round(icon * 0.32)), border: '1px solid var(--sm2-line)' }}
               >
-                <span aria-hidden="true">+{extra}</span>
+                +{more}
               </span>
             )}
           </div>
         );
       })}
+      <div
+        data-stage-status-row
+        data-stage-status-side="right"
+        style={{
+          // ao LADO da cabeça (canto de cima, à direita do sprite), em coluna — nunca centrado em cima dele
+          position: 'absolute', left: Math.round(spot.x + spot.size * 0.3), top: Math.round(spot.y - spot.size * SPRITE_TOP),
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, zIndex: 3, pointerEvents: 'none',
+        }}
+      >
+        {shown.map((st, i) => {
+          const def = STATUS_FX[st.kind];
+          const glyph = art[statusGlyphId(st.kind, st.variant)];
+          const last = st.turns <= 1;
+          return (
+            <span
+              key={`${st.kind}-${st.variant ?? ''}-${i}`}
+              role="img"
+              aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
+              data-stage-status={st.kind}
+              data-stage-status-variant={st.variant}
+              data-stage-status-turns={st.turns}
+              data-stage-status-last={last ? '1' : '0'}
+              data-stage-status-art={glyph ? 'img' : 'css'}
+              className={reduced ? undefined : 'sm-bs-stpop'}
+              style={{
+                position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON,
+                boxSizing: 'border-box', borderRadius: 4, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
+                border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
+              }}
+            >
+              {glyph
+                ? <img src={glyph} alt="" aria-hidden="true" width={STAGE_STATUS_ICON} height={STAGE_STATUS_ICON} style={{ width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON, maxWidth: 'none', imageRendering: 'pixelated' }} />
+                : null}
+              <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: 13 }}>{def.mark}</span>
+              <span aria-hidden="true" className="sm2-num" style={{ position: 'absolute', right: -6, bottom: -3, fontSize: 9, padding: '0 2px', borderRadius: 3, backgroundColor: SCRIM }}>{st.turns}</span>
+            </span>
+          );
+        })}
+        {extra > 0 && (
+          <span
+            role="img"
+            aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
+            data-stage-status-more={extra}
+            style={{ display: 'inline-flex', alignItems: 'center', height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4, backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, border: '1px solid var(--sm2-line)' }}
+          >
+            <span aria-hidden="true">+{extra}</span>
+          </span>
+        )}
+      </div>
     </>
   );
 }
@@ -981,6 +1047,11 @@ export function BattleStage({
   }, [actionId, reduced]);
   const cutActor = action?.kind === 'special' ? action.actor : null;
   const meBody = bodyCenter(layout.me);
+  /** As caixas de HP/especial desenhadas agora (as dos inimigos de pé e a do pet): os marcadores de efeito desviam de todas. */
+  const barsRects: StageRect[] = [
+    ...(boss ? [] : foes.flatMap((f, i) => (layout.foes[i] && !f.down ? [stageBarsRect(layout.foes[i], 'gold', !!elementIcon(f.element), layout.barsH, w)] : []))),
+    stageBarsRect(layout.me, 'cyan', !!elementIcon(me.element), layout.barsH, w),
+  ];
   const domainScene = combatDomainSceneBg(sceneDomain, sceneVariant);
   const elementScene = domainScene ?? combatSceneBg(sceneElement);
 
@@ -1063,9 +1134,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s || f.down || !f.status?.length) return null;
-          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} side="foe" fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />;
+          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} side="foe" crowded={foes.length >= 3} avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />;
         })}
-        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} side="me" fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />}
+        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} side="me" crowded={false} avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />}
 
         {/* ALVO POR TOQUE: o botão invisível sobre cada inimigo vivo + o marcador do escolhido (anel dourado). */}
         {onPickFoe && foes.length > 1 && !boss && foes.map((f, i) => {

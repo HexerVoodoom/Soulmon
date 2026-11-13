@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 /**
- * §200 (dono, 30/10/2026): com 3 inimigos em triângulo, o da ESQUERDA olha para a direita (espelhado em relação aos outros).
- * Selos de status (dono, 13/11/2026; substitui o §197): debuff em cima à esquerda do sprite, buff embaixo à direita, em
- * FILEIRA, maiores (proporcionais ao sprite) — o detalhe da ordem e do z mora em `BattleStage.status.test.tsx`.
+ * §197 e §200 (dono, 30/10/2026):
+ *  - o selo de buff/DoT fica DE LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — nunca centrado em cima dele;
+ *  - com 3 inimigos em triângulo, o da ESQUERDA olha para a direita (espelhado em relação aos outros).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 
 vi.mock('../../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn() }));
 
-import { BattleStage, foeFacesRight, stageLayout, stageStatusIconSize, statusRowPlacement, STAGE_STATUS_ICON_MAX, STAGE_STATUS_ICON_MIN, type StageFighter } from './BattleStage';
+import { BattleStage, foeFacesRight, stageLayout, stageBarsRect, stageFxMarkSize, fxMarkRowPlacement, STAGE_FX_MARK_MAX, STAGE_FX_MARK_MIN, STAGE_STATUS_ICON, type StageFighter } from './BattleStage';
 
 afterEach(() => cleanup());
 
@@ -29,54 +29,55 @@ describe('§200 triângulo: o inimigo da esquerda olha para a direita', () => {
   });
 });
 
-describe('selos de status: zona por tipo, fileira, tamanho proporcional (dono, 13/11/2026)', () => {
-  it('cada zona é uma FILEIRA (nunca coluna); o DoT do inimigo é debuff e o buff do pet é buff', () => {
+describe('§197 selo de status de lado, pequeno', () => {
+  it('a coluna dos selos fica à DIREITA do centro do sprite, na altura da cabeça; cada selo tem o tamanho da constante', () => {
     const { container } = render(<BattleStage scene="#123" me={me} foes={[foe(0)]} title="Arena" closeLabel="Sair" onClose={() => {}} />);
     const rows = [...container.querySelectorAll<HTMLElement>('[data-stage-status-row]')];
-    expect(rows.map((r) => [r.dataset.stageStatusSide, r.dataset.stageStatusZone])).toEqual([['foe', 'debuff'], ['me', 'buff']]);
+    expect(rows.length).toBe(2);
     for (const r of rows) {
-      expect(r.style.transform).toBe('');
-      expect(r.style.flexDirection).not.toBe('column');
+      expect(r.style.transform).toBe(''); // não sobe centrado acima das barras
+      expect(r.style.flexDirection).toBe('column');
     }
-    expect(rows[0].style.flexDirection).toBe('row-reverse'); // inimigo: da direita para a esquerda
-    expect(rows[1].style.flexDirection).toBe('row'); // pet: da esquerda para a direita
-  });
-
-  it('o tamanho segue o sprite (26%), entre o piso e o teto; bem maior que o selo antigo de 22 px', () => {
-    expect(stageStatusIconSize({ x: 0, y: 0, size: 152 })).toBe(40); // um inimigo num campo de 360 px (o print do dono)
-    expect(stageStatusIconSize({ x: 0, y: 0, size: 230 })).toBe(STAGE_STATUS_ICON_MAX);
-    expect(stageStatusIconSize({ x: 0, y: 0, size: 60 })).toBe(STAGE_STATUS_ICON_MIN);
-    expect(STAGE_STATUS_ICON_MIN).toBeGreaterThan(22);
-    const { container } = render(<BattleStage scene="#123" me={me} foes={[foe(0)]} title="Arena" closeLabel="Sair" onClose={() => {}} />);
     for (const chip of container.querySelectorAll<HTMLElement>('[data-stage-status]')) {
-      const px = parseFloat(chip.style.width);
-      expect(px).toBeGreaterThanOrEqual(STAGE_STATUS_ICON_MIN);
-      expect(chip.style.height).toBe(chip.style.width);
+      expect(chip.style.width).toBe(`${STAGE_STATUS_ICON}px`);
+      expect(chip.style.height).toBe(`${STAGE_STATUS_ICON}px`);
     }
   });
+});
 
-  it('geometria: debuff no canto de cima à esquerda, buff no canto de baixo à direita, dos dois lados', () => {
-    const l = stageLayout(360, 560, 1);
-    for (const [side, spot] of [['foe', l.foes[0]], ['me', l.me]] as const) {
-      const top = spot.y - spot.size * 0.94;
-      const d = statusRowPlacement(spot, side, 'debuff', 1, 360, 560);
-      const b = statusRowPlacement(spot, side, 'buff', 1, 360, 560);
-      expect(d.left + d.width / 2, `${side} debuff à esquerda do centro`).toBeLessThan(spot.x);
-      expect(b.left + b.width / 2, `${side} buff à direita do centro`).toBeGreaterThan(spot.x);
-      expect(d.top, `${side} debuff no alto do sprite`).toBeLessThan(top + spot.size * 0.25);
-      expect(b.top, `${side} buff embaixo`).toBeGreaterThan(d.top + spot.size * 0.3);
-    }
+describe('marcadores de efeito: canto, borda do sprite, nunca sob a caixa de HP (dono, 13/11/2026)', () => {
+  const telas: Array<[number, number]> = [[320, 480], [360, 500], [360, 560], [360, 640], [393, 660], [412, 720], [430, 760]];
+  const cruza = (a: { left: number; top: number; width: number; height: number }, b: typeof a) =>
+    a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
+
+  it('tamanho: ~40 px num inimigo sozinho (o que o dono marcou), 28 px com 3 inimigos, até 44 px no pet', () => {
+    expect(stageFxMarkSize({ x: 0, y: 0, size: 152 })).toBe(40);
+    expect(stageFxMarkSize({ x: 0, y: 0, size: 115 }, true)).toBe(STAGE_FX_MARK_MIN);
+    expect(STAGE_FX_MARK_MIN).toBe(28);
+    expect(stageFxMarkSize({ x: 0, y: 0, size: 230 })).toBe(STAGE_FX_MARK_MAX);
   });
 
-  it('a fileira nunca sai do campo: o inimigo da esquerda (triângulo) e o pet colado na borda crescem para dentro', () => {
-    const l = stageLayout(360, 560, 3);
-    for (const spot of l.foes) for (const zone of ['debuff', 'buff'] as const) {
-      const p = statusRowPlacement(spot, 'foe', zone, 3, 360, 560);
-      expect(p.left).toBeGreaterThanOrEqual(2);
-      expect(p.left + p.width).toBeLessThanOrEqual(358);
+  it('em toda contagem (1, 2 e 3 inimigos; 1 a 3 marcadores + "+k"; 7 telas): começa na borda do sprite, cresce para a outra, cabe na altura do sprite e não cruza nenhuma caixa de HP/especial', () => {
+    let n0 = 0;
+    for (const [w, h] of telas) for (const nf of [1, 2, 3]) {
+      const l = stageLayout(w, h, nf);
+      const caixas = [...l.foes.map((s) => stageBarsRect(s, 'gold', true, l.barsH, w)), stageBarsRect(l.me, 'cyan', true, l.barsH, w)];
+      for (const [side, s] of [...l.foes.map((f) => ['foe', f] as const), ['me', l.me] as const]) for (const zone of ['debuff', 'buff'] as const) for (const n of [1, 2, 3, 4]) {
+        const p = fxMarkRowPlacement(s, side, zone, n, { crowded: side === 'foe' && nf >= 3, avoid: caixas, fieldW: w, fieldH: h });
+        const tag = `${w}x${h} ${nf} inimigo(s) ${side}@${s.x} ${zone} n=${n}`;
+        const r = { left: p.left, top: p.top, width: p.width, height: p.icon };
+        expect(p.fits, tag).toBe(true);
+        for (const c of caixas) expect(cruza(r, c), `${tag} cruza a caixa ${JSON.stringify(c)}`).toBe(false);
+        // a borda: debuff encosta na esquerda do sprite, buff na direita (só a borda do campo empurra)
+        const borda = zone === 'debuff' ? Math.max(2, Math.round(s.x - s.size / 2)) : Math.min(w - 2, Math.round(s.x + s.size / 2));
+        const ancora = zone === 'debuff' ? p.left : p.left + p.width;
+        if (zone === 'debuff' ? borda + p.width <= w - 2 : borda - p.width >= 2) expect(Math.abs(ancora - borda), `${tag} borda`).toBeLessThanOrEqual(1);
+        expect(p.left, tag).toBeGreaterThanOrEqual(2);
+        expect(p.left + p.width, tag).toBeLessThanOrEqual(w - 2);
+        expect(p.dir).toBe(side === 'foe' ? 'row-reverse' : 'row');
+        n0++;
+      }
     }
-    const pb = statusRowPlacement(l.me, 'me', 'buff', 3, 360, 560);
-    expect(pb.left + pb.width).toBeLessThanOrEqual(358);
-    expect(pb.top + pb.icon).toBeLessThanOrEqual(558); // o pet pisa abaixo do campo; os buffs dele não descem sobre o HUD
+    expect(n0).toBe(telas.length * (2 + 3 + 4) * 2 * 4);
   });
 });
