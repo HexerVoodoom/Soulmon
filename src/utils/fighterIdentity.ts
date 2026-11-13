@@ -44,9 +44,9 @@ export interface FighterFx {
   elEspecial?: string | null;
   /** Só dos simulados (`sim_NNNN`): o golpe À DISTÂNCIA dele é Magic (`true`, splash) ou Ranged Slash (`false`, corte). Ausente = jogador real: sem mudança. */
   magia?: boolean;
-  /** REGISTRO §327: família e elementos SEM Coroa/Amuleto/Garra (o servidor só publica com algum deles equipado). Base do TIPO do básico. Ausente = comportamento antigo. */
+  /** REGISTRO §332: família e elementos SEM Coroa/Amuleto/Garra (o servidor só publica com algum deles equipado). Base do TIPO do básico. Ausente = comportamento antigo. */
   orig?: { familia?: string | null; elBasica?: string | null; elEspecial?: string | null } | null;
-  /** REGISTRO §327: o ataque das Luvas (`HEX_STRIKES`): o ÚNICO item que troca o tipo do básico. Ausente = sem Luvas. */
+  /** REGISTRO §332: o ataque das Luvas (`HEX_STRIKES`): o ÚNICO item que troca o tipo do básico. Ausente = sem Luvas. */
   golpe?: string | null;
 }
 
@@ -114,7 +114,7 @@ export function fighterIdentityFromFx(fx: Partial<FighterFx> | null | undefined,
   const esp = golpe(fx?.especial, elEspecial, 'especial');
   // Simulado: no golpe à distância o acabamento vem da flag do servidor (80% Magic). Corpo a corpo e jogador real ficam como estão.
   const mag = typeof fx?.magia === 'boolean' ? (f: FighterStrike): FighterStrike => (f.forma === 'ranged' ? { ...f, impacto: fx!.magia ? 'concussao' : 'corte' } : f) : (f: FighterStrike) => f;
-  // §327: as Luvas do oponente (publicadas em `golpe`) trocam a forma e o acabamento do básico, igual a `hexIdentity` no aparelho dele.
+  // §332: as Luvas do oponente (publicadas em `golpe`) trocam a forma e o acabamento do básico, igual a `hexIdentity` no aparelho dele.
   const luvas = golpeDasLuvas(fx?.golpe);
   return {
     basico: luvas ? { ...basico, forma: luvas.forma, impacto: luvas.impacto } : mag(basico),
@@ -124,7 +124,7 @@ export function fighterIdentityFromFx(fx: Partial<FighterFx> | null | undefined,
 }
 
 /**
- * REGISTRO §327: a identidade do lutador do `fx` como ela era SEM Coroa/Amuleto/Garra (o `orig` publicado; sem ele, a própria).
+ * REGISTRO §332: a identidade do lutador do `fx` como ela era SEM Coroa/Amuleto/Garra (o `orig` publicado; sem ele, a própria).
  * É a BASE do sorteio estável do TIPO do básico (`chaveDaIdentidade` + `meleeImpactOf`): trocar esses itens não muda o tipo,
  * como `hexIdentity` faz no aparelho do dono do Soulmon (§321/§325). Só visual: nada de dano lê isto.
  */
@@ -136,7 +136,7 @@ export function fighterIdentitySemItensFromFx(fx: Partial<FighterFx> | null | un
 }
 
 /**
- * REGISTRO §327: o TIPO (acabamento corte × splash) do ataque BÁSICO no PvP. Luvas/simulado (`id.basico.impacto`) mandam; senão
+ * REGISTRO §332: o TIPO (acabamento corte × splash) do ataque BÁSICO no PvP. Luvas/simulado (`id.basico.impacto`) mandam; senão
  * o sorteio estável da identidade SEM itens (`semItens`). `elementoVisual` = o mapeamento que a tela aplica ao elemento
  * (`fxElementId` no Duelo). Só visual.
  */

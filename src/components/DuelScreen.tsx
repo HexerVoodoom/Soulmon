@@ -122,7 +122,7 @@ export function DuelScreen({
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
   const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
-  // REGISTRO §327: o TIPO do básico sai da identidade SEM Coroa/Amuleto/Garra (o `fx.orig` do servidor); só as Luvas trocam.
+  // REGISTRO §332: o TIPO do básico sai da identidade SEM Coroa/Amuleto/Garra (o `fx.orig` do servidor); só as Luvas trocam.
   const meSemItens = useMemo(() => (par ? meId : fighterIdentitySemItensFromFx(me.fx, petElement)), [par, meId, me.fx, petElement]);
   const oppSemItens = useMemo(() => fighterIdentitySemItensFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
   const meEl = fxElementId(meId.basico.elemento);

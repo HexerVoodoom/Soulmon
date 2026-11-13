@@ -1,5 +1,5 @@
 /**
- * REGISTRO §327 (13/11/2026, dono): no PvP o TIPO do ataque básico do OPONENTE (corte × splash) não muda com Coroa, Amuleto ou
+ * REGISTRO §332 (13/11/2026, dono): no PvP o TIPO do ataque básico do OPONENTE (corte × splash) não muda com Coroa, Amuleto ou
  * Garra; só as Luvas trocam. O cliente recalcula o tipo do `fx` que o servidor publica, e esse `fx` já leva os itens: por isso o
  * servidor publica também `orig` (família/elementos sem itens) e `golpe` (as Luvas). Só visual: o duelo dá o MESMO resultado.
  */
@@ -46,7 +46,7 @@ const ITENS_DE_IDENTIDADE: string[][] = [
   ['coroa:dot', 'amuleto:morte', 'garra:vida'],
 ];
 
-describe('PvP §327: só as Luvas trocam o tipo do básico do oponente', () => {
+describe('PvP §332: só as Luvas trocam o tipo do básico do oponente', () => {
   it('Coroa/Amuleto/Garra (sozinhos ou juntos) não trocam o tipo visto pelo oponente', () => {
     for (const { save, el } of SAVES) {
       const antes = tipoVisto(fxDe(save), el);

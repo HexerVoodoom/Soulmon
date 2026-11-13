@@ -247,7 +247,7 @@ export function duelSide(save, opts = {}) {
   const family = hx.specialFamily ?? familyFicha;
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  // REGISTRO §327 (13/11/2026): o TIPO do ataque básico (o acabamento corte × splash) do oponente sai de um sorteio estável pela
+  // REGISTRO §332 (13/11/2026): o TIPO do ataque básico (o acabamento corte × splash) do oponente sai de um sorteio estável pela
   // identidade SEM itens; só as Luvas trocam. `orig` = família e elementos antes de Coroa/Amuleto/Garra (só com algum deles
   // equipado); `golpe` = o ataque das Luvas (lista fechada `HEX_STRIKES`). Os dois são SÓ visuais: nenhum cálculo do duelo os lê,
   // e o cliente antigo os ignora (campo ausente = comportamento antigo).
