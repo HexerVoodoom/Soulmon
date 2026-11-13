@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
- * §329 — Soulmon dormindo: a pergunta "Quer acordá-lo?" montada de verdade (AreaView real + o provedor real). As folhas são stubs
- * (aqui só importa se ABREM): dormindo, o toque no prédio de atividade abre a pergunta e NÃO a folha; "Acordar" acorda (o gesto do
- * App) e entra; "Agora não" fecha e fica; acordado, entra direto; ler (Mercado, Biblioteca) nunca pergunta.
+ * §329 — Soulmon dormindo: a pergunta "Quer acordá-lo?" montada de verdade (AreaView real + o provedor real). As folhas são stubs.
+ * Emenda do dono (13/11/2026): a pergunta mora no gesto que LEVA o Soulmon. O Calabouço (a entrada já é a incursão) pergunta na
+ * porta; as folhas com leitura (Arena, Torneio, Guerra, Fenda, Passeio, Oficina, Feira, Grove) entram livres e o botão de
+ * lutar/agir lá dentro pergunta — no toque, então o sono que chega com a folha aberta também é visto.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -14,12 +15,14 @@ import { WakeToEnterProvider, useRequireAwake } from './WakeToEnter';
 
 vi.mock('./TournamentPage', () => ({ TournamentPage: () => <p data-stub="torneio">torneio</p> }));
 vi.mock('./guild/GuildSheet', () => ({ GuildSheet: ({ room }: { room: string }) => <p data-stub={room}>{room}</p> }));
-vi.mock('./arena/DueloSheet', () => ({ DueloSheet: () => <p data-stub="duelo">duelo</p> }));
+vi.mock('./arena/DueloSheet', () => ({ DueloSheet: ({ onStart }: { onStart: (seed?: number) => void }) => <button type="button" data-stub="duelo" onClick={() => onStart(7)}>lutar</button> }));
+vi.mock('./ArenaGame', () => ({ ArenaGame: () => <div data-stub-game="arena">arena</div> }));
+vi.mock('./play/RogueDungeonPlaceholder', () => ({ RogueDungeonPlaceholder: () => <p data-stub="dungeon">dungeon</p> }));
 vi.mock('./play/PasseioSheet', () => ({ PasseioSheet: () => <p data-stub="passeio">passeio</p> }));
 vi.mock('./play/FocusBoard', () => ({ FocusBoard: () => <p data-stub="oficina">oficina</p> }));
 vi.mock('./mercado/MercadoSheets', () => ({ MercadoStallSheet: () => <p data-stub="mercado">mercado</p> }));
 vi.mock('./play/PlaySheets', () => ({
-  MasmorraSheet: () => <p data-stub="fenda">fenda</p>,
+  MasmorraSheet: ({ onStart }: { onStart: () => void }) => <button type="button" data-stub="fenda" onClick={onStart}>descer</button>,
   SalaoSheet: ({ onStart }: { onStart: (g: string) => void }) => <button type="button" data-stub="salao" onClick={() => onStart('ppt')}>jogar</button>,
   MenteSheet: () => <p data-stub="mente">mente</p>,
   RefugioSheet: ({ onStart }: { onStart: (g: string) => void }) => <button type="button" data-stub="refugio" onClick={() => onStart('respiracao')}>respirar</button>,
@@ -70,15 +73,18 @@ async function esperaStub(id: string) {
   return stub(id);
 }
 
-const ATIVIDADES: Array<[Area, string]> = [
+/** A ENTRADA já é a atividade: pergunta na porta. */
+const PORTA: Array<[Area, string]> = [['exploracao', 'dungeon']];
+/** A folha tem leitura: entra livre; o botão de lutar/agir pergunta. */
+const FOLHAS: Array<[Area, string]> = [
   ['arena', 'duelo'], ['arena', 'torneio'], ['arena', 'guerra'],
   ['exploracao', 'fenda'], ['exploracao', 'passeio'],
   ['forja', 'oficina'],
   ['hall', 'feira'], ['hall', 'grove'],
 ];
 
-describe('§329 — dormindo, entrar numa atividade pergunta antes', () => {
-  for (const [area, id] of ATIVIDADES) {
+describe('§329 — dormindo, o Calabouço pergunta na porta', () => {
+  for (const [area, id] of PORTA) {
     it(`${area}.${id}: dormindo → a pergunta, sem folha; "Agora não" fica`, async () => {
       const { container, onWake } = montar(area, { isSleeping: true }, { bondLevel: 99 });
       await toque(lote(container, id));
@@ -109,29 +115,115 @@ describe('§329 — dormindo, entrar numa atividade pergunta antes', () => {
     });
   }
 
-  it('o sono real diz o que acordar muda; o "Acordar" do dia não diz nada a mais', async () => {
-    const real = montar('arena', { isSleeping: true }, { bondLevel: 99 });
-    await toque(lote(real.container, 'duelo'));
-    expect(document.body.querySelector('[data-wake-effect]')?.textContent).toContain('energia recarrega mais rápido');
-    cleanup();
-    const dia = montar('arena', { isSleeping: false, dayWakePending: true }, { bondLevel: 99 });
-    await toque(lote(dia.container, 'duelo'));
-    expect(pergunta()).not.toBeNull();
-    expect(document.body.querySelector('[data-wake-effect]')).toBeNull();
-  });
-
-  it('atalho da Home/missão (`initialSheet`) para a Arena: a pergunta abre no lugar da folha; "Acordar" abre a folha', async () => {
+  it('atalho da Home/missão (`initialSheet`) para o Calabouço: a pergunta abre no lugar da folha; "Acordar" abre', async () => {
     const onVisit = vi.fn();
-    const { onWake } = montar('arena', { isSleeping: true }, { bondLevel: 99, initialSheet: 'duelo', onVisitBuilding: onVisit });
+    const { onWake } = montar('exploracao', { isSleeping: true }, { bondLevel: 99, initialSheet: 'dungeon', onVisitBuilding: onVisit });
     expect(pergunta()).not.toBeNull();
-    expect(stub('duelo')).toBeNull();
+    expect(stub('dungeon')).toBeNull();
     expect(onVisit).not.toHaveBeenCalled();
     await toque(document.body.querySelector('[data-wake-yes]'));
     expect(onWake).toHaveBeenCalledTimes(1);
+    expect(onVisit).toHaveBeenCalledWith('exploracao.dungeon');
+    expect(await esperaStub('dungeon')).not.toBeNull();
+  });
+});
+
+describe('§329 — folhas com leitura: entrar é livre, LUTAR/AGIR pergunta', () => {
+  for (const [area, id] of FOLHAS) {
+    it(`${area}.${id}: dormindo, a folha abre direto (sem pergunta)`, async () => {
+      const { container, onWake } = montar(area, { isSleeping: true, dayWakePending: true }, { bondLevel: 99 });
+      await toque(lote(container, id));
+      expect(pergunta()).toBeNull();
+      expect(await esperaStub(id)).not.toBeNull();
+      expect(onWake).not.toHaveBeenCalled();
+    });
+  }
+
+  it('atalho da Home (`initialSheet`) para a Arena: a folha abre direto, dormindo', async () => {
+    const onVisit = vi.fn();
+    montar('arena', { isSleeping: true }, { bondLevel: 99, initialSheet: 'duelo', onVisitBuilding: onVisit });
+    expect(pergunta()).toBeNull();
     expect(onVisit).toHaveBeenCalledWith('arena.duelo');
     expect(await esperaStub('duelo')).not.toBeNull();
   });
 
+  const arena = () => document.body.querySelector('[data-stub-game="arena"]');
+  it('Arena livre: "Lutar" pergunta; "Agora não" fica na folha; "Acordar" acorda e abre a luta', async () => {
+    const { container, onWake } = montar('arena', { isSleeping: true }, { bondLevel: 99 });
+    await toque(lote(container, 'duelo'));
+    await toque(await esperaStub('duelo'));
+    expect(pergunta()).not.toBeNull();
+    expect(arena()).toBeNull();
+    await toque(document.body.querySelector('[data-wake-later]'));
+    expect(pergunta()).toBeNull();
+    expect(stub('duelo')).not.toBeNull(); // continua na folha
+    await toque(stub('duelo'));
+    await toque(document.body.querySelector('[data-wake-yes]'));
+    expect(onWake).toHaveBeenCalledTimes(1);
+    for (let i = 0; i < 30 && !arena(); i++) await act(async () => { await new Promise(r => setTimeout(r, 5)); });
+    expect(arena()).not.toBeNull();
+  });
+
+  it('o sono que chega com a folha ABERTA: entrou acordado, dormiu, "Lutar" pergunta no toque', async () => {
+    const onWake = vi.fn();
+    const arvore = (isSleeping: boolean) => (
+      <WakeToEnterProvider isSleeping={isSleeping} dayWakePending={false} language="pt-BR" onWake={onWake}>
+        <AreaView {...base('arena', { bondLevel: 99 })} />
+      </WakeToEnterProvider>
+    );
+    const { container, rerender } = renderWithCss(arvore(false));
+    await toque(lote(container, 'duelo'));
+    expect(await esperaStub('duelo')).not.toBeNull();
+    rerender(arvore(true)); // o sono automático chegou com a folha aberta
+    await toque(stub('duelo'));
+    expect(pergunta()).not.toBeNull();
+    expect(arena()).toBeNull();
+  });
+
+  it('Fenda: a folha entra livre; "Descer" (o jogo `masmorra`) pergunta', async () => {
+    const { container, onWake } = montar('exploracao', { isSleeping: true }, { bondLevel: 99 });
+    await toque(lote(container, 'fenda'));
+    expect(pergunta()).toBeNull();
+    await toque(await esperaStub('fenda'));
+    expect(pergunta()).not.toBeNull();
+    await toque(document.body.querySelector('[data-wake-yes]'));
+    expect(onWake).toHaveBeenCalledTimes(1);
+  });
+
+  it('o sono real diz o que acordar muda; o "Acordar" do dia não diz nada a mais', async () => {
+    const real = montar('arena', { isSleeping: true }, { bondLevel: 99 });
+    await toque(lote(real.container, 'duelo'));
+    await toque(await esperaStub('duelo'));
+    expect(document.body.querySelector('[data-wake-effect]')?.textContent).toContain('energia recarrega mais rápido');
+    cleanup();
+    const dia = montar('arena', { isSleeping: false, dayWakePending: true }, { bondLevel: 99 });
+    await toque(lote(dia.container, 'duelo'));
+    await toque(await esperaStub('duelo'));
+    expect(pergunta()).not.toBeNull();
+    expect(document.body.querySelector('[data-wake-effect]')).toBeNull();
+  });
+
+  it('os botões de lutar/agir das outras folhas passam pelo gancho, com a entrada do prédio (fonte)', () => {
+    const fonte = (f: string) => readFileSync(f, 'utf8');
+    const torneio = fonte('src/components/TournamentPage.tsx');
+    expect(torneio).toContain("requireAwake('arena.torneio', () => startTraining(n))");
+    expect(torneio).toContain("requireAwake('arena.torneio', () => startTraining(undefined, stray))");
+    expect(torneio).toContain("requireAwake('arena.torneio', () => { void fight(o); })");
+    expect(torneio).toContain("requireAwake('arena.torneio', () => { void fightSpar(o); })");
+    const guild = fonte('src/components/guild/GuildSheet.tsx');
+    expect(guild).toContain("requireAwake('arena.guerra', buscarGuerra)");
+    expect(guild).toContain("requireAwake('hall.feira', onRodada)");
+    const plantio = fonte('src/components/guild/PlantioVisor.tsx');
+    expect(plantio).toContain("requireAwake('hall.grove', () => { void cuidar(); })");
+    expect(plantio).toContain("requireAwake('hall.grove', () => setLutando(true))");
+    expect(plantio).toContain("onClick={() => void fazer('claColher')}"); // colher é livre
+    expect(fonte('src/components/play/PasseioSheet.tsx')).toContain("requireAwake('exploracao.passeio', () => escolher(region, challengeId))");
+    expect(fonte('src/components/play/FocusBoard.tsx')).toContain("requireAwake('forja.oficina', () => { setDoneNote(null); setPickOpen(true); })");
+    expect(fonte('src/components/nav/AreaView.tsx')).toContain("wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); })");
+  });
+});
+
+describe('§329 — jogos, Refúgio e leitura', () => {
   it('minijogo: a folha do Salão abre (ler é livre); JOGAR pergunta; "Acordar" segue para o jogo', async () => {
     const { container, onWake } = montar('jogos', { isSleeping: true }, { bondLevel: 99 });
     await toque(lote(container, 'salao'));

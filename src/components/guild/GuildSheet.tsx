@@ -165,6 +165,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   /** Saída do clã em DUAS confirmações (dono, 30/10/2026 — revoga o "um toque" do LV-G5: saiu sem querer, era o único
    *  membro e o clã foi apagado com tudo que tinha sido doado). 0 = fechado, 1 = "sair?", 2 = a confirmação final. */
+  /* 💤 §329: a Guerra entra livre (ver a guerra); BUSCAR a guerra leva o Soulmon e pergunta com ele dormindo, no toque. */
+  const requireAwake = useRequireAwake();
   const [sairEtapa, setSairEtapa] = useState<0 | 1 | 2>(0);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -613,7 +615,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         ocupado={ocupado}
         mySprite={meuSprite}
         reducedMotion={reducedMotion}
-        onBuscar={buscarGuerra}
+        onBuscar={() => { requireAwake('arena.guerra', buscarGuerra); }}
       />
     );
     const renderPredio = (id: PredioId) => {
@@ -1235,7 +1237,8 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
-  /* 💤 §329: mandar o Soulmon na missão com ele dormindo (o sono automático pode chegar com a folha aberta) pergunta antes. */
+  /* 💤 §329: a Feira entra livre (ler a sala, colher o prêmio); a RODADA do chefe e MANDAR o Soulmon na missão perguntam com ele
+     dormindo, no toque (o sono automático pode chegar com a folha aberta). */
   const requireAwake = useRequireAwake();
   // O DESAFIO DO DIA (dono, 04/11/2026): com a Missão, o inimigo só está na sala no MESMO dia em que o Soulmon voltou com
   // ele; noutro dia sem luta ele "escapou" e a sala volta a pedir a investigação. Sem Missão (Feira antiga) nada muda.
@@ -1308,7 +1311,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           aria-disabled={ocupado || raid.hitToday ? true : undefined}
           aria-busy={ocupado ? true : undefined}
           aria-label={raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.aria.rodada')}
-          onClick={onRodada}
+          onClick={() => { requireAwake('hall.feira', onRodada); }}
           className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
         >
           <Icon name={ocupado ? 'sync' : raid.hitToday ? 'check_circle' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />

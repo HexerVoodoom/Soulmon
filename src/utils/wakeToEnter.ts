@@ -1,10 +1,15 @@
 /**
  * SOULMON DORMINDO NÃO VAI A ATIVIDADE (13/11/2026, pedido do dono — REGISTRO §329).
  *
- * Com o Soulmon dormindo, ENTRAR numa atividade que precisa dele (Arena, Fenda, Calabouço, Passeio, Oficina do Foco, Feira,
- * Grove, Guerra, minijogos, treino com amigo, missão da guilda) não acontece direto: abre a pergunta "Seu Soulmon está dormindo.
- * Quer acordá-lo?" com "Acordar" (acorda pelo gesto de sempre e segue para a atividade escolhida) e "Agora não" (fecha e fica).
- * Olhar não para: Home, Mapa, áreas, lojas, Biblioteca, Laboratório, Forja de equipar e o Refúgio seguem livres.
+ * Com o Soulmon dormindo, COMEÇAR uma atividade que precisa dele não acontece direto: abre a pergunta "Seu Soulmon está dormindo.
+ * Quer acordá-lo?" com "Acordar" (acorda pelo gesto de sempre e segue para o que foi tocado) e "Agora não" (fecha e fica).
+ *
+ * ONDE a pergunta mora (emenda do dono, 13/11/2026): no gesto que LEVA o Soulmon, não na porta. Duas listas de prédio:
+ *  - `SLEEP_BLOCKED_LOTS`: a ENTRADA já é a atividade (o Calabouço abre o mapa da incursão em tela cheia) — pergunta ao tocar o prédio;
+ *  - `SLEEP_ACTION_LOTS`: a folha tem parte de leitura (ranking, oponentes, sala do clã, bosque, quadro de foco, missões do passeio).
+ *    Entrar e olhar são livres; só o botão de LUTAR/AGIR pergunta — e pergunta na hora do toque, então o sono automático que chega
+ *    com a folha aberta também é visto.
+ * Olhar não para: Home, Mapa, áreas, lojas, Biblioteca, Laboratório (a Vesca), Forja de equipar, a Hexsmith e o Refúgio seguem livres.
  *
  * "Dormindo" = o que a Home desenha dormindo: o sono REAL (`isSleeping`: gesto, sono automático) OU o Soulmon à espera do
  * "Acordar" do início de dia (`dayWakePending`, §110). Acordar é o MESMO gesto do deck (`handleSleep` no `App`); este módulo
@@ -12,21 +17,28 @@
  * `poopDrain.ts`, `useCareSystem.ts`).
  *
  * Módulo PURO: o `App` e o `components/WakeToEnter.tsx` só delegam. Mesmo desenho do cristal da evolução
- * (`evolutionCrystal.ts` › `CRYSTAL_BLOCKED_LOTS`): a lista mora aqui e o portão vale na ENTRADA.
+ * (`evolutionCrystal.ts` › `CRYSTAL_BLOCKED_LOTS`): as listas moram aqui; quem tem o botão só chama o gancho com a entrada.
  */
 import { WAKE_BLOCKED_GAMES } from './dayWake';
 
-/** Prédios (`área.lote`) cuja ENTRADA é a atividade com o Soulmon. Mudar esta lista é decisão do dono. */
+/** Prédios (`área.lote`) cuja ENTRADA já é a atividade com o Soulmon: tocar o prédio pergunta. Mudar esta lista é decisão do dono. */
 export const SLEEP_BLOCKED_LOTS: readonly string[] = [
-  'arena.duelo',        // Arena livre
-  'arena.torneio',      // Torneio
-  'arena.guerra',       // Guerra de clãs
-  'exploracao.fenda',   // Fenda Sem Fim (e o Pesadelo da noite: já não abre com ele dormindo, `nightmareWake.ts`)
-  'exploracao.dungeon', // Calabouço (rogue)
-  'exploracao.passeio', // Passeio
-  'forja.oficina',      // Oficina do Foco e a Jornada
-  'hall.feira',         // Feira do Chefe (raid da guilda) e a missão
-  'hall.grove',         // Grove do clã
+  'exploracao.dungeon', // Calabouço (rogue): o toque abre direto o mapa da incursão em tela cheia, sem folha de leitura
+];
+
+/**
+ * Prédios cuja folha tem parte de LEITURA: entrar é livre; o botão de lutar/agir dentro dela pergunta (chamando o gancho com
+ * esta mesma `área.lote`). Mudar esta lista é decisão do dono.
+ */
+export const SLEEP_ACTION_LOTS: readonly string[] = [
+  'arena.duelo',        // Arena livre: ver oponentes e sortear é livre; "Lutar" (`DueloSheet` › onStart) pergunta
+  'arena.torneio',      // Torneio: ranking, histórico e molduras livres; lutar, treinar e o desgarrado (`TournamentPage`) perguntam
+  'arena.guerra',       // Guerra de clãs: ver a guerra é livre; "Buscar guerra" (`GuildSheet` › SalaGuerra) pergunta
+  'exploracao.fenda',   // Fenda Sem Fim: a folha é livre; "Descer" é o jogo `masmorra` (`SLEEP_BLOCKED_GAMES`). O Pesadelo da noite já não abre dormindo (`nightmareWake.ts`)
+  'exploracao.passeio', // Passeio: ver missões e o registro é livre; escolher a missão (mandar o Soulmon) pergunta; "Fiz" é da pessoa e nunca para
+  'forja.oficina',      // Oficina do Foco: cards, chaves e concluir tarefa são livres (G-01); "Começar jornada" pergunta
+  'hall.feira',         // Feira do Chefe: ler a sala e colher o prêmio é livre; a rodada do chefe pergunta (a missão, por `missao`)
+  'hall.grove',         // Grove do clã: ver o bosque e colher é livre; plantar, cuidar e lutar na defesa perguntam
 ];
 
 /** Ações que não são prédio e também levam o Soulmon (o gesto que manda, não a tela que mostra). */
@@ -42,7 +54,7 @@ export const SLEEP_NEVER_BLOCKED: readonly string[] = [
   'forja.ferreiro', 'forja.hexsmith', 'forja.caderno', 'forja.refugio',
   'jogos.salao', 'jogos.mente', // a folha (ler, comprar rodada) é livre; o JOGO pergunta (`SLEEP_BLOCKED_GAMES`)
   'laboratorio.evolucao', 'laboratorio.pet', 'laboratorio.stats', 'laboratorio.perfil', 'laboratorio.biblioteca', 'laboratorio.amigos',
-  'hall.guilda', // a sala é leitura; MANDAR o Soulmon na missão pergunta (`missao`)
+  'hall.guilda', // a sala do clã é leitura (a missão é mandada na Feira, `missao`)
   'respiracao', 'bolhas-calmas', 'chama',
   'completeTask', 'completeHabit', 'focusTask',
 ];
@@ -69,6 +81,7 @@ export function isAsleep(s: SleepSignals): boolean {
 export function entryNeedsSoulmon(entry: WakeEntry): boolean {
   if (SLEEP_NEVER_BLOCKED.includes(entry)) return false;
   return SLEEP_BLOCKED_LOTS.includes(entry)
+    || SLEEP_ACTION_LOTS.includes(entry)
     || SLEEP_BLOCKED_GAMES.includes(entry)
     || (SLEEP_BLOCKED_ACTIONS as readonly string[]).includes(entry);
 }
@@ -78,9 +91,14 @@ export function needsWakeToEnter(entry: WakeEntry, s: SleepSignals): boolean {
   return isAsleep(s) && entryNeedsSoulmon(entry);
 }
 
-/** Atalho do `AreaView`: o lote `área.lote` pergunta com o Soulmon dormindo? */
+/** Tocar o PRÉDIO `área.lote` já é a atividade (pergunta na porta)? Os de `SLEEP_ACTION_LOTS` entram livres. */
+export function lotEntryAsks(entry: WakeEntry): boolean {
+  return SLEEP_BLOCKED_LOTS.includes(entry) && !SLEEP_NEVER_BLOCKED.includes(entry);
+}
+
+/** Atalho do `AreaView`: tocar o lote `área.lote` pergunta com o Soulmon dormindo? */
 export function sleepBlocksLot(area: string, lotId: string | null | undefined, s: SleepSignals): boolean {
-  return !!lotId && needsWakeToEnter(`${area}.${lotId}`, s);
+  return !!lotId && isAsleep(s) && lotEntryAsks(`${area}.${lotId}`);
 }
 
 export interface WakePromptCopy {

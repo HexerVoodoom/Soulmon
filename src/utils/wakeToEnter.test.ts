@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SLEEP_BLOCKED_ACTIONS, SLEEP_BLOCKED_GAMES, SLEEP_BLOCKED_LOTS, SLEEP_NEVER_BLOCKED,
-  entryNeedsSoulmon, isAsleep, needsWakeToEnter, sleepBlocksLot, wakePromptCopy,
+  SLEEP_ACTION_LOTS, SLEEP_BLOCKED_ACTIONS, SLEEP_BLOCKED_GAMES, SLEEP_BLOCKED_LOTS, SLEEP_NEVER_BLOCKED,
+  entryNeedsSoulmon, isAsleep, lotEntryAsks, needsWakeToEnter, sleepBlocksLot, wakePromptCopy,
 } from './wakeToEnter';
 import { WAKE_BLOCKED_GAMES } from './dayWake';
 import { BUILDING_GATES } from './gates';
@@ -18,7 +18,7 @@ describe('§329 — Soulmon dormindo pergunta antes de entrar numa atividade', (
   });
 
   it('cada tipo de entrada pergunta dormindo e segue acordado', () => {
-    const entradas = [...SLEEP_BLOCKED_LOTS, ...SLEEP_BLOCKED_GAMES, ...SLEEP_BLOCKED_ACTIONS];
+    const entradas = [...SLEEP_BLOCKED_LOTS, ...SLEEP_ACTION_LOTS, ...SLEEP_BLOCKED_GAMES, ...SLEEP_BLOCKED_ACTIONS];
     expect(entradas).toEqual(expect.arrayContaining([
       'arena.duelo', 'arena.torneio', 'arena.guerra', 'exploracao.fenda', 'exploracao.dungeon', 'exploracao.passeio',
       'forja.oficina', 'hall.feira', 'hall.grove', 'masmorra', 'dino', 'match3', 'eco', 'treino', 'missao',
@@ -30,6 +30,26 @@ describe('§329 — Soulmon dormindo pergunta antes de entrar numa atividade', (
     }
   });
 
+  it('emenda do dono (13/11): Torneio, Guerra, Feira e Grove (e as outras folhas com leitura) entram livres; só o Calabouço pergunta na porta', () => {
+    expect([...SLEEP_BLOCKED_LOTS]).toEqual(['exploracao.dungeon']);
+    for (const e of ['arena.torneio', 'arena.guerra', 'hall.feira', 'hall.grove', 'arena.duelo', 'exploracao.fenda', 'exploracao.passeio', 'forja.oficina']) {
+      expect(SLEEP_ACTION_LOTS, e).toContain(e);
+      expect(lotEntryAsks(e), e).toBe(false); // a porta é livre
+      expect(needsWakeToEnter(e, DORMINDO), e).toBe(true); // o botão de lutar/agir pergunta
+    }
+    const [area, lote] = 'arena.torneio'.split('.');
+    expect(sleepBlocksLot(area, lote, DORMINDO)).toBe(false);
+    expect(sleepBlocksLot('exploracao', 'dungeon', DORMINDO)).toBe(true);
+    expect(sleepBlocksLot('exploracao', 'dungeon', ACORDADO)).toBe(false);
+  });
+
+  it('a Vesca (Laboratório) e a Hexsmith seguem livres', () => {
+    for (const e of ['laboratorio.evolucao', 'laboratorio.pet', 'laboratorio.stats', 'laboratorio.perfil', 'laboratorio.biblioteca', 'forja.hexsmith']) {
+      expect(SLEEP_NEVER_BLOCKED, e).toContain(e);
+      expect(needsWakeToEnter(e, DORMINDO), e).toBe(false);
+    }
+  });
+
   it('Home, Mapa, lojas, Biblioteca, Laboratório, Forja de equipar, Refúgio e tarefa NUNCA perguntam', () => {
     for (const e of SLEEP_NEVER_BLOCKED) {
       expect(needsWakeToEnter(e, DORMINDO), e).toBe(false);
@@ -37,15 +57,16 @@ describe('§329 — Soulmon dormindo pergunta antes de entrar numa atividade', (
     }
     expect(sleepBlocksLot('mercado', 'itens', DORMINDO)).toBe(false);
     expect(sleepBlocksLot('laboratorio', 'biblioteca', DORMINDO)).toBe(false);
-    expect(sleepBlocksLot('arena', 'duelo', DORMINDO)).toBe(true);
+    expect(sleepBlocksLot('arena', 'duelo', DORMINDO)).toBe(false); // a folha entra; LUTAR pergunta
     expect(sleepBlocksLot('arena', null, DORMINDO)).toBe(false);
   });
 
-  it('as listas não se cruzam e todo prédio do Mapa está numa delas (decidido, não esquecido)', () => {
-    for (const e of SLEEP_BLOCKED_LOTS) expect(SLEEP_NEVER_BLOCKED, e).not.toContain(e);
+  it('todo prédio do Mapa está em EXATAMENTE uma lista: porta, ação ou livre (decidido, não esquecido)', () => {
     for (const id of Object.keys(BUILDING_GATES)) {
-      expect(SLEEP_BLOCKED_LOTS.includes(id) || SLEEP_NEVER_BLOCKED.includes(id), id).toBe(true);
+      const em = [SLEEP_BLOCKED_LOTS, SLEEP_ACTION_LOTS, SLEEP_NEVER_BLOCKED].filter(l => l.includes(id)).length;
+      expect(em, id).toBe(1);
     }
+    for (const l of [SLEEP_BLOCKED_LOTS, SLEEP_ACTION_LOTS]) for (const e of l) expect(Object.keys(BUILDING_GATES), e).toContain(e);
     expect(entryNeedsSoulmon('qualquer-coisa')).toBe(false); // entrada desconhecida segue livre
   });
 

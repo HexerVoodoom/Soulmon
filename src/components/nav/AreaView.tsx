@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { useWakeGate } from '../WakeToEnter';
-import { entryNeedsSoulmon } from '../../utils/wakeToEnter';
+import { lotEntryAsks } from '../../utils/wakeToEnter';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
@@ -369,11 +369,12 @@ export function AreaView(props: AreaViewProps) {
   const bbBlocks = (lotId: string | null | undefined) =>
     !!lotId && `${area}.${lotId}` in BB_LOCKED_BUILDINGS && bbRefusal({ evolutionStage: props.evolutionStage }) !== null;
   const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
-  /* 💤 Soulmon dormindo (REGISTRO §329, `utils/wakeToEnter.ts`): entrar num prédio de atividade pergunta antes ("Quer acordá-lo?").
-     Ler o resto (Mapa, lojas, Laboratório, folhas do Salão/Ateliê) segue livre. Com o Soulmon JÁ na descida, ver a Fenda não pergunta. */
+  /* 💤 Soulmon dormindo (REGISTRO §329, `utils/wakeToEnter.ts`): só o prédio cuja ENTRADA já é a atividade (`SLEEP_BLOCKED_LOTS`, o
+     Calabouço) pergunta na porta. As folhas com parte de leitura (Arena, Torneio, Guerra, Fenda, Passeio, Oficina, Feira, Grove —
+     `SLEEP_ACTION_LOTS`) entram livres; o botão de lutar/agir lá dentro pergunta na hora do toque. Mapa, lojas e Laboratório, livres. */
   const wakeGate = useWakeGate();
   const sleepEntry = (lotId: string | null | undefined): string | null =>
-    lotId && !(area === 'exploracao' && lotId === 'fenda' && props.naMasmorra) && entryNeedsSoulmon(`${area}.${lotId}`) ? `${area}.${lotId}` : null;
+    lotId && lotEntryAsks(`${area}.${lotId}`) ? `${area}.${lotId}` : null;
   const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
   /* Atalho da Home/missão para um prédio de atividade com o Soulmon dormindo: a folha não abre na montagem; a pergunta abre (efeito abaixo). */
@@ -611,7 +612,8 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 evolutionStage={props.evolutionStage}
                 arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
-                onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
+                // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
+                onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
               />
             )}
             {open?.id === 'guerra' && (
