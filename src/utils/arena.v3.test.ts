@@ -213,13 +213,16 @@ describe('AC5. skill (P4): "does not act" × "plays well" ≤ 25pp', () => {
     console.log(`[AC5 RED] old tables: ${(100 * gap).toFixed(1)}pp`);
     expect(gap).toBeGreaterThan(0.25);
   });
-  it('PR4b (contexto §2.19): the cheer ALONE (same skill, ceiling × nobody cheering) moves the run win rate ≤ 25pp, for the skill that does not act and for the one that plays well', () => {
+  // §324 (dono, 13/11/2026): limite 25pp → 26pp. Com `PVE_FAMILY_POWER.arena.dot` 0,95 → 1,1 (regra "o que dura rende mais que o
+  // imediato") a torcida sozinha passou a mover 25,8pp para quem não age (com 0,95 passava; com 1,0 já dava 25,3pp). Decisão do dono:
+  // manter o DoT em 1,1, não mexer em `CHEER.energyPerDischarge` e afrouxar este gate em 1pp.
+  it('PR4b (contexto §2.19, §324): the cheer ALONE (same skill, ceiling × nobody cheering) moves the run win rate ≤ 26pp, for the skill that does not act and for the one that plays well', () => {
     expect(CHEER.energyPerDischarge).toBe(9);
     const dN = wins('nenhuma', { cheer: 'teto' }) - wins('nenhuma');
     const dB = wins('boa', { cheer: 'teto' }) - wins('boa');
     console.log(`[AC5 cheer] cheer alone: nenhuma +${(100 * dN).toFixed(1)}pp · boa +${(100 * dB).toFixed(1)}pp (nenhuma ${pct(wins('nenhuma'))} → ${pct(wins('nenhuma', { cheer: 'teto' }))})`);
-    expect(dN).toBeLessThanOrEqual(0.25);
-    expect(dB).toBeLessThanOrEqual(0.25);
+    expect(dN).toBeLessThanOrEqual(0.26);
+    expect(dB).toBeLessThanOrEqual(0.26);
     expect(dN).toBeGreaterThan(0); // the cheer still helps
   });
   it('RED: the PR4 yield (CHEER.energyPerDischarge = 90) lets the cheer alone win the run — far above 25pp', () => {

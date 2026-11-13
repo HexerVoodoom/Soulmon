@@ -1,5 +1,5 @@
 /**
- * REGRA DO DONO (13/11/2026, REGISTRO §321): o que DURA rende MAIS, no total, que o equivalente imediato.
+ * REGRA DO DONO (13/11/2026, REGISTRO §324): o que DURA rende MAIS, no total, que o equivalente imediato.
  *  · DoT (total dos ticks) > dano direto do mesmo nível;
  *  · HoT (total dos pulsos) > cura imediata;
  *  · buff/debuff (velocidade, ataque, quebra de defesa, lentidão, silêncio), ao longo da duração > o especial de dano direto.
@@ -122,15 +122,12 @@ function medirTudo(): Linha[] {
 }
 
 /**
- * Exceções: as propostas de 13/11/2026 pvp|dot, pvp|spdBuff e arena|dot foram aprovadas e aplicadas (§321). Sobra UMA, à espera do dono:
- * a lentidão do Pesadelo. Neste espelho ela rende 0,73× do direto, mas no Pesadelo real o gate pareado do §228 mede a lentidão igual ao
- * `defDebuff` (±3pp), e a tune aprovada (0,3/0,58) a põe +16,4pp acima. NÃO acrescentar nada aqui sem decisão do dono.
+ * Exceções aprovadas pelo dono: NENHUMA. As quatro propostas de 13/11/2026 (pvp|dot, pvp|spdBuff, arena|dot, pesadelo|slow) foram aprovadas e
+ * aplicadas (§324). NÃO acrescentar nada aqui sem decisão do dono.
  */
-const PENDENTES_DO_DONO: Readonly<Record<string, string>> = {
-  'pesadelo|slow': '0,73 no espelho; ver §321 (conflito com o gate ±3pp do §228)',
-};
+const PENDENTES_DO_DONO: Readonly<Record<string, string>> = {};
 
-describe('regra do dono: o que dura rende mais que o imediato (§321)', () => {
+describe('regra do dono: o que dura rende mais que o imediato (§324)', () => {
   const linhas = medirTudo();
 
   it('mede todas as famílias e efeitos que duram (nada fica de fora)', () => {
