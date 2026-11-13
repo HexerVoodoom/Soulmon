@@ -8,7 +8,7 @@ export interface DuelSide {
   cheerScale?: number;
   startEnergy?: number;
   dotResist?: number;
-  fx: { basica: string | null; especial: string | null; familia?: string | null; elBasica?: string | null; elEspecial?: string | null; elVantagem?: string | null };
+  fx: { basica: string | null; especial: string | null; familia?: string | null; elBasica?: string | null; elEspecial?: string | null; elVantagem?: string | null; /** §332: família/elementos SEM Coroa/Amuleto/Garra (só com algum equipado); só visual. */ orig?: { familia?: string | null; elBasica?: string | null; elEspecial?: string | null } | null; /** §332: o ataque das Luvas (`HEX_STRIKES`); só visual. */ golpe?: string | null };
 }
 export type DuelWinner = 'me' | 'opp' | 'draw';
 export interface DuelResult {

@@ -30,7 +30,7 @@
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
-import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
+import { fighterIdentity, fighterIdentityFromFx, fighterIdentitySemItensFromFx, tipoDoBasicoPvp } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
@@ -122,6 +122,9 @@ export function DuelScreen({
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
   const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
+  // REGISTRO §332: o TIPO do básico sai da identidade SEM Coroa/Amuleto/Garra (o `fx.orig` do servidor); só as Luvas trocam.
+  const meSemItens = useMemo(() => (par ? meId : fighterIdentitySemItensFromFx(me.fx, petElement)), [par, meId, me.fx, petElement]);
+  const oppSemItens = useMemo(() => fighterIdentitySemItensFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
   const meEl = fxElementId(meId.basico.elemento);
   const oppEl = fxElementId(oppId.basico.elemento);
   /** O elemento do golpe do lado no papel dado (o básico é o principal; o especial, o dele). */
@@ -204,7 +207,9 @@ export function DuelScreen({
     let portao: Portao | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
-      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, impacto: (!meu && (a.kind === 'special' ? oppId.especial.impacto : oppId.basico.impacto)) || meleeImpactOf({ element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), key: chaveDaIdentidade(meu ? meId : oppId) }), element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
+      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, impacto: a.kind === 'special'
+        ? (!meu && oppId.especial.impacto) || meleeImpactOf({ element: elementoDe(meu ? 0 : 1, 'especial'), key: chaveDaIdentidade(meu ? meId : oppId) })
+        : tipoDoBasicoPvp(meu ? meId : oppId, meu ? meSemItens : oppSemItens, fxElementId), element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
     };
     const start = (e: FightEvent) => {
       const a = actionOf(e);
