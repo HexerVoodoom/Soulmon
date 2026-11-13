@@ -58,5 +58,7 @@ const hrefEn = lang === 'en' ? eu : outro;
 </head>
 <body>
   <slot />
+  {/* Analytics anonimo, sem cookie (fonte: E:/Projetos/site-analytics). connect-src em edge/_headers libera o coletor. */}
+  <script is:inline src={b("/_a.js")} defer></script>
 </body>
 </html>
