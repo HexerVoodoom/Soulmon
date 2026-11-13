@@ -178,7 +178,7 @@ export function toAttrBonus(b) {
 // ── specials.ts ──────────────────────────────────────────────────────────────
 export const SPECIAL_BUDGET_HITS = 3;
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
-export const SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
+export const SPECIAL_POWER = { direct: 1, dot: 1.15, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
 /** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
 export function specialOf(family) {
   const f = typeof family === 'string' && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : 'direct';
