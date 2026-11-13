@@ -1,5 +1,5 @@
 /**
- * A AGENDA DOS BALÕES DE DICA (§327, `utils/balaoDica.ts`).
+ * A AGENDA DOS BALÕES DE DICA (§333, `utils/balaoDica.ts`).
  *
  *  · `useDicaVistas`: o registro "quando cada dica apareceu" NESTE aparelho (`STORAGE_KEYS.BALAO_DICAS_VISTAS`). Conveniência de UI,
  *    fora do save: no pior caso uma dica repete num aparelho novo.

@@ -1,5 +1,5 @@
 /**
- * BALÕES DE DICA DO SOULMON (pedido do dono, 13/11/2026 — REGISTRO §327).
+ * BALÕES DE DICA DO SOULMON (pedido do dono, 13/11/2026 — REGISTRO §333).
  *
  * Falas de CONTEXTO que também ensinam uma regra verdadeira do jogo. Quatro tipos, dois jeitos de aparecer:
  *   · DOURADO (tocável, leva ao lugar pelo `requestGoToBuilding`): `relaxar` (Refúgio da Forja) e `lilia` (Grove);

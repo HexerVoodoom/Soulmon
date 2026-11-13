@@ -16,7 +16,7 @@ import { isGuildSheetOpen, readGroveLocal } from '../utils/groveLocal';
 export const bosqueSobAtaque = (v: { planted: boolean; mature: boolean; underAttack: boolean; protectedToday: boolean } | null | undefined): boolean =>
   !!v && v.planted && !v.mature && v.underAttack && !v.protectedToday;
 
-/** Há cuidado do DIA para fazer no Grove (§327, a dica da Lilia): planta de pé, ainda não madura, e a ação do dia ainda sorteável
+/** Há cuidado do DIA para fazer no Grove (§333, a dica da Lilia): planta de pé, ainda não madura, e a ação do dia ainda sorteável
  *  (`canDraw`) ou sorteada e por fazer (`task`) — a MESMA condição que desenha o botão "Cuidar" do Bosque (`PlantioVisor`). A meta do
  *  dia (que libera o toque) é do App (`fioMetaCumprida`); aqui só o fato do servidor. Exportada para teste. */
 export const bosqueCuidavel = (v: { planted: boolean; mature: boolean; canDraw: boolean; task: 'water' | 'protect' | null } | null | undefined): boolean =>

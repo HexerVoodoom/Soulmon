@@ -92,7 +92,7 @@ describe('§J tarefas linkadas: fiação', () => {
   });
 });
 
-describe('§327 balões de dica: fiação', () => {
+describe('§333 balões de dica: fiação', () => {
   it('a dica dourada navega pelo evento do app (requestGoToBuilding), nunca por caminho próprio', () => {
     const toque = app.slice(app.indexOf('const handleBalaoDourado'), app.indexOf('const balaoDouradoHud'));
     expect(toque).toContain('if (ehDicaDourada(tipo)) { encerrarDicaDourada(); requestGoToBuilding(DICA_DESTINO[tipo]); return; }');

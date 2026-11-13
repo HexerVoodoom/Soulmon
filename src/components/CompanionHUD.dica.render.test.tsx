@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** §327: a dica COMUM ocupa o turno da fala ociosa (nunca um turno a mais); a dica DOURADA é o mesmo botão dourado, nomeado pelo destino, e respeita o movimento reduzido. */
+/** §333: a dica COMUM ocupa o turno da fala ociosa (nunca um turno a mais); a dica DOURADA é o mesmo botão dourado, nomeado pelo destino, e respeita o movimento reduzido. */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';

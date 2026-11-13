@@ -187,3 +187,28 @@ describe('selo de MALDIÇÃO (só apresentação)', () => {
     expect(board[0].map((e) => e.kind)).toEqual(['debuff']); // veio do lado 1 (escola comum)
   });
 });
+
+describe('ordem de início dos selos (`since`, dono 13/11/2026)', () => {
+  it('a cena recebe os efeitos na ordem em que COMEÇARAM, não na ordem fixa dos contadores; recontar ou renovar não muda a ordem', () => {
+    // 1º acende o DoT, depois o debuff de defesa, depois o reforço de ataque — a ordem fixa do withRealFx seria buff, debuff, dot
+    let b = emptyStatusBoard(1);
+    b = withRealFx(b, [{ ...ZERO, dot: 3 }, ZERO]);
+    b = withRealFx(b, [{ ...ZERO, dot: 2, nVuln: 2 }, ZERO]);
+    b = withRealFx(b, [{ ...ZERO, dot: 1, nVuln: 1.5, nAtk: 3 }, ZERO]);
+    expect(stageStatusOf(b[0]).map((s) => s.kind)).toEqual(['dot', 'debuff', 'buff']);
+    // o DoT acaba e volta: começou de novo, então vai para o fim
+    b = withRealFx(b, [{ ...ZERO, nVuln: 1, nAtk: 2 }, ZERO]);
+    b = withRealFx(b, [{ ...ZERO, nVuln: 1, nAtk: 2, dot: 3 }, ZERO]);
+    expect(stageStatusOf(b[0]).map((s) => s.kind)).toEqual(['debuff', 'buff', 'dot']);
+  });
+
+  it('castStatus: renovar o mesmo efeito do mesmo conjurador mantém o lugar; um novo entra no fim', () => {
+    const cast = (board: ReturnType<typeof emptyStatusBoard>, family: SpecialFamily) => castStatus(board, { caster: 0, family, power: 1, area: false, targets: [1] });
+    let b = cast(emptyStatusBoard(1), 'atkBuff');
+    b = cast(b, 'shield');
+    b = cast(b, 'atkBuff'); // renova: o quadro o põe no fim, mas ele começou antes do escudo
+    expect(b[0].map((e) => e.kind)).toEqual(['escudo', 'buff']);
+    expect(stageStatusOf(b[0]).map((s) => s.kind)).toEqual(['buff', 'escudo']);
+  });
+
+});

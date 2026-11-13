@@ -4720,7 +4720,7 @@ export default function App() {
   }, [setGameState]);
   const dispensarBalaoRef = useRef(dispensarBalao);
   dispensarBalaoRef.current = dispensarBalao;
-  /* ── BALÕES DE DICA (§327, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
+  /* ── BALÕES DE DICA (§333, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
      e fora da Home não entra; a comum ocupa o turno da fala ociosa do HUD. Cooldown por tipo, no aparelho (`useDicaVistas`). */
   const agoraDica = Date.now();
   const energiaDica = settleEnergy(gameState, agoraDica);
@@ -4741,7 +4741,7 @@ export default function App() {
   const dicaFalaHud = useMemo(() => (dicaComumTipo ? { tipo: dicaComumTipo, text: dicaTexto(dicaComumTipo, language) } : null), [dicaComumTipo, language]);
   const encerrarDicaDourada = dicaDourada.encerrar;
   /** O toque: Bosque → abre o Bosque (sem pré-requisito) e dispensa; Fenda → o aviso com "Ir à Fenda" (dispensa ao ESCOLHER ir); achado → abre o encontro.
-   *  Dica dourada (§327) → o evento de navegação do app (`requestGoToBuilding`), o mesmo do "pode ser obtido em". */
+   *  Dica dourada (§333) → o evento de navegação do app (`requestGoToBuilding`), o mesmo do "pode ser obtido em". */
   const handleBalaoDourado = useCallback((tipo: BalaoTipo | DicaDouradaTipo) => {
     if (ehDicaDourada(tipo)) { encerrarDicaDourada(); requestGoToBuilding(DICA_DESTINO[tipo]); return; }
     if (tipo === 'rift') { abrirAvisoMasmorra(null); return; }

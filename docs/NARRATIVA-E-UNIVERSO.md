@@ -736,7 +736,7 @@ guarda segredo sobre a pessoa. Fundo é **velho**, não maligno.
 
 ### 7.4 Quem cuida dos lugares — Lilia, a musa do jardim (Grove)
 
-Adicionada em 13/11/2026 (dono, PR #879, REGISTRO §327: "mantenha o nome Lilia"). Escrita a partir do que o
+Adicionada em 13/11/2026 (dono, PR #879, REGISTRO §333: "mantenha o nome Lilia"). Escrita a partir do que o
 código já mostra; onde a bíblia e o código discordarem, vale o código.
 
 | | |

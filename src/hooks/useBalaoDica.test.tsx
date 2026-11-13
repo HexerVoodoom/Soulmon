@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** §327: a agenda da dica dourada (aparece, grava a aparição, sai sozinha, não empilha) e o registro no aparelho. */
+/** §333: a agenda da dica dourada (aparece, grava a aparição, sai sozinha, não empilha) e o registro no aparelho. */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDicaDourada, useDicaVistas } from './useBalaoDica';

@@ -259,9 +259,9 @@ interface CompanionHUDProps {
   naMasmorra?: boolean;
   /** beta12 §G: o BALÃO DOURADO persistente (borda dourada, sem timeout) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala. */
   balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string } | null;
-  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§327) navega pelo `requestGoToBuilding`. */
+  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§333) navega pelo `requestGoToBuilding`. */
   onBalaoDourado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
-  /** §327: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
+  /** §333: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
    *  nunca por cima de outra fala; ao falar, o HUD avisa `onDicaFalada` para o App gravar a aparição. `null`/ausente = a escada de sempre. */
   dicaFala?: { tipo: DicaTipo; text: string } | null;
   onDicaFalada?: (tipo: DicaTipo) => void;
@@ -913,7 +913,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (document.hidden) return;
       const p = propsRef.current;
       if (p.isSleeping) return;
-      /* §327: a dica da vez (fome/cochilo) ocupa ESTE turno da fala ociosa — nunca um turno a mais, nunca por cima de outra fala.
+      /* §333: a dica da vez (fome/cochilo) ocupa ESTE turno da fala ociosa — nunca um turno a mais, nunca por cima de outra fala.
          Ausente (masmorra/missão), `speak` já cala; aí não grava a aparição. */
       if (p.dicaFala && !ausenteRef.current) {
         speak(p.dicaFala.text, 6000);
@@ -2244,7 +2244,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 });
 
 /**
- * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §327): diz "este balão leva
+ * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333): diz "este balão leva
  * a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
  * · A seta é o glifo autoral `arrow_forward` (`ui/NavGlyphs.tsx`); o círculo é só o CONTORNO em CSS (sem fundo): faz parte do
  *   desenho, como o anel do `check_circle`, não é placa em volta do ícone. Nada de arte nova.

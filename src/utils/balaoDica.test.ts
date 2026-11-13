@@ -16,7 +16,7 @@ const base: DicaEntrada = {
 const NOW = Date.UTC(2026, 10, 13, 15, 0, 0);
 const H = 3_600_000;
 
-describe('§327 condições', () => {
+describe('§333 condições', () => {
   it('energia baixa = 20% do máximo ou menos (zero incluso; sem máximo, nunca)', () => {
     expect(energiaBaixa(0, 10)).toBe(true);
     expect(energiaBaixa(2, 10)).toBe(true);
@@ -90,7 +90,7 @@ describe('§327 condições', () => {
   });
 });
 
-describe('§327 destinos alcançáveis', () => {
+describe('§333 destinos alcançáveis', () => {
   it('o Refúgio está na Forja e é sempre aberto; o Grove é do Hall e abre no Vínculo 2', () => {
     expect(DICA_DESTINO).toEqual({ relaxar: 'forja.refugio', lilia: 'hall.grove' });
     expect(BUILDINGS_ALWAYS_OPEN).toContain('forja.refugio');
@@ -101,7 +101,7 @@ describe('§327 destinos alcançáveis', () => {
   });
 });
 
-describe('§327 frequência (cooldown por tipo)', () => {
+describe('§333 frequência (cooldown por tipo)', () => {
   it('um tipo não volta antes do seu cooldown; depois volta', () => {
     const p = dicasPresentes({ ...base, refugioDaEnergia: false });
     const vistas = marcarVista({}, 'cochilo', NOW);
@@ -131,7 +131,7 @@ describe('§327 frequência (cooldown por tipo)', () => {
   });
 });
 
-describe('§327 falas: voz do Soulmon, sem cobrança, nos dois idiomas', () => {
+describe('§333 falas: voz do Soulmon, sem cobrança, nos dois idiomas', () => {
   const PROIBIDAS = /deveria|devia|atras|falh|esquece|finalmente|até que enfim|preguiç|desculpa|culpa|perdeu|n[ãa]o perca|você precisa|should|late\b|failed|forgot|finally|lazy|guilt|lost|don'?t miss|you must|hurry|\d/i;
   for (const t of DICA_TIPOS) {
     for (const lang of ['pt-BR', 'en-US'] as const) {
