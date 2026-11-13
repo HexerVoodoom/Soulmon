@@ -1,7 +1,7 @@
 /**
  * CONVIDAR PARA O CLÃ (13/11/2026, pedido do dono, REGISTRO §321).
  *
- * Abre pelo `CtaButton` "Convidar" do Salão (`GuildSheet`). É a busca enquanto digita (`PlayerSearch`: prefixo do nome, sem
+ * Abre pelo botão "Convidar" do Salão (`GuildSheet`, botão simples do kit). É a busca enquanto digita (`PlayerSearch`: prefixo do nome, sem
  * acento e sem caixa, a partir de 2 letras, pausa de 200 ms) com UM toque por linha: o servidor (`guildInvite`) manda ao
  * convidado uma carta do Papus com o nome do clã e o código — quem recebe entra pelo "Entrar com código" de sempre.
  *
@@ -74,6 +74,9 @@ export function GuildInviteSheet({ saveId, language, guildName, tz, onClose, inv
           aria-busy={enviando ? true : undefined}
           aria-label={ativo ? t('guild.convidar.acao.aria', { nome: h.name }) : undefined}
           onClick={() => void convidar(h)}
+          // Largura FIXA (`.sm2-guild-invite-btn`, pedido do dono 13/11): "Convidar", "Já está na roda", "Já tem clã" e
+          // "Convite enviado" ocupam a mesma coluna; rótulo longo quebra em 2 linhas dentro dela, nunca alarga o botão.
+          className="sm2-guild-invite-btn"
           style={{ ...sm2Button(final === 'sent' || !ativo ? 'outline' : 'primary', !ativo, 'sm'), gap: 6 }}
         >
           {final === 'sent' && <Icon name="check" size={20} tone="primary" />}

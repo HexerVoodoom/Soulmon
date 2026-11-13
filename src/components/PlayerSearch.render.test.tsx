@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, act, waitFor } from '@testing-library/react';
-import { renderWithCss } from '../test/renderEnv';
+import { computed, renderWithCss } from '../test/renderEnv';
 import { PlayerName } from './ui/PlayerName';
 import { PlayerSearch } from './PlayerSearch';
 import { GuildInviteSheet } from './guild/GuildInviteSheet';
@@ -96,5 +96,21 @@ describe('GuildInviteSheet — convite de um toque', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Convidar Joana para o clã' }));
     await waitFor(() => expect(document.querySelector('[data-guild-invite="pid0000000002"]')!.textContent).toMatch(/Convite enviado$/));
     expect(convidar).toHaveBeenCalledWith('save-1', 'pid0000000002', undefined);
+  });
+  it('§321 (dono, 13/11): todo botão de linha tem a MESMA largura, qualquer que seja o rótulo (Convidar / Já está na roda / Já tem clã / Convite enviado)', async () => {
+    renderWithCss(<GuildInviteSheet saveId="save-1" language="pt-BR" guildName="Os Lumes" onClose={() => {}} search={buscaFalsa} invite={vi.fn(async () => 'sent' as const)} />);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'joa' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    await waitFor(() => expect(document.querySelectorAll('[data-guild-invite]')).toHaveLength(3));
+    fireEvent.click(screen.getByRole('button', { name: 'Convidar Joana para o clã' }));
+    await waitFor(() => expect(document.querySelector('[data-guild-invite="pid0000000002"]')!.getAttribute('data-guild-invite-state')).toBe('sent'));
+    const botoes = [...document.querySelectorAll('[data-guild-invite]')] as HTMLElement[];
+    expect(new Set(botoes.map(b => b.textContent)).size).toBe(3); // três rótulos diferentes…
+    for (const b of botoes) {
+      expect(b.classList.contains('sm2-guild-invite-btn')).toBe(true);
+      expect(computed(b, 'width')).toBe('11.5rem'); // …e uma largura só
+      expect(b.style.width).toBe(''); // nenhum estilo em linha sobrepõe a régua
+      expect(parseFloat(b.style.minHeight)).toBeGreaterThanOrEqual(44);
+    }
   });
 });

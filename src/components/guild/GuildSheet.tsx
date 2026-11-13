@@ -789,17 +789,21 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             )}
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
-          {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores — o CTA principal do Salão. Clã cheio = o botão
-              fica, apagado, com o porquê (nunca some em silêncio). */}
-          <CtaButton
+          {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores. Botão SIMPLES do kit (não a arte do
+              `CtaButton`, decisão do dono), com a MESMA largura dos outros botões da ficha (`sm2-guild-btn` = largura total,
+              alvo de 48 px). Clã cheio = o botão fica, apagado, com o porquê (nunca some em silêncio). */}
+          <button
+            type="button"
             ref={convidarRef}
             data-guild-convidar
             disabled={g.full}
+            aria-disabled={g.full ? true : undefined}
             aria-describedby={g.full ? `${ajustesId}-convidar-cheio` : undefined}
             onClick={() => setConvidando(true)}
+            className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}
           >
             {t('guild.convidar.botao')}
-          </CtaButton>
+          </button>
           {g.full && <p id={`${ajustesId}-convidar-cheio`} className="sm2-lib-s" style={{ margin: 0 }} data-guild-convidar-cheio>{t('guild.convidar.cheio')}</p>}
           {g.size <= 1 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.criar.codigo.corpo', { n: guildInviteRoom() })}</p>}
 
