@@ -107,8 +107,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   return (
     <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
       footer={sel ? (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <CtaButton data-potion-confirm width="auto" disabled={confirmDisabled}
+        <div>
+          <CtaButton data-potion-confirm disabled={confirmDisabled}
             onClick={() => { onCraft(sel); setDone(sel); setSel(null); }}>
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </CtaButton>

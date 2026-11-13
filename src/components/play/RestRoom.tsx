@@ -100,9 +100,10 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
           </div>
         </section>
         {error && <p role="status" data-rest-error style={{ ...sm2Hint, margin: 0, color: '#e9f5f2', textAlign: 'center' }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8, width: JOURNEY_CARD_WIDTH }}>
-          <CtaButton data-rest-next onClick={onNext} disabled={!!busy} width="auto" style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
-          <button type="button" data-rest-finish onClick={onFinish} disabled={busy} style={{ ...sm2Button('outline', !!busy), flex: 1, minHeight: 48 }}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</button>
+        {/* CTA em coluna (13/11/2026): Seguir em cima, largura total; Concluir a missão embaixo, contorno (secundária, não destrutiva). */}
+        <div data-cta-stack style={{ display: 'grid', gap: 8, width: JOURNEY_CARD_WIDTH }}>
+          <CtaButton data-rest-next onClick={onNext} disabled={!!busy}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
+          <button type="button" data-rest-finish onClick={onFinish} disabled={busy} style={{ ...sm2Button('outline', !!busy), width: '100%', minHeight: 48 }}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</button>
         </div>
         <button type="button" data-rest-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (o descanso continua)' : 'Leave to the Workshop (the break goes on)'} style={{ ...sm2Button('quiet'), minHeight: 44, color: '#e9f5f2' }}>{isPt ? 'Sair (o descanso continua)' : 'Leave (the break goes on)'}</button>
       </div>
