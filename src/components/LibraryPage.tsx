@@ -396,7 +396,10 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), language, { sensitivity: 'base' }))
     : directoryAll;
 
-  /** C7: adiciona um amigo digitando o nome do jogador (o diretório devolve quem ligou a presença pública). */
+  /**
+   * C7: adiciona um amigo digitando o nome do jogador. §351 (13/11/2026, decisão do dono): a busca acha qualquer jogador
+   * VISÍVEL, com PvP ligado ou desligado — a mesma régua das sugestões (`names`); o servidor já tira a própria conta.
+   */
   const addByName = async () => {
     const q = addName.trim().toLowerCase();
     if (!q || addBusy) return;
@@ -405,7 +408,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     if (friends.length >= MAX_FRIENDS) { setAddMsg(isPt ? `Limite de ${MAX_FRIENDS} amigos.` : `Limit of ${MAX_FRIENDS} friends.`); return; }
     setAddBusy(true);
     try {
-      const r = await listPlayers(addName.trim());
+      const r = await listPlayers(addName.trim(), { friendOf: saveId });
       const todos = (r.players ?? []).filter(p => p.id !== saveId);
       const exatos = todos.filter(p => p.name.toLowerCase() === q);
       const cand = exatos.length > 0 ? exatos : todos.filter(p => p.name.toLowerCase().includes(q));

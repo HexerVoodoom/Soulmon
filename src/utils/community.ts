@@ -152,8 +152,19 @@ export interface DirectoryPlayer {
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
   especialNome?: string;
 }
-export const listPlayers = (search = '') =>
-  call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+/** Vista mínima que a busca do "Convidar amigo" devolve (§351): só o que o convite precisa. */
+export type FriendLookupPlayer = Pick<DirectoryPlayer, 'id' | 'name' | 'stage'> & { spriteUrl?: string | null };
+/**
+ * Diretório (sem `friendOf`): só quem ligou o PvP, como sempre.
+ * Com `friendOf` (saveId de quem convida, §351, decisão do dono): a busca por apelido do "Convidar amigo" — acha qualquer
+ * jogador VISÍVEL, com PvP ligado ou desligado (a mesma régua das sugestões `names`), sem a própria conta. Exige busca.
+ */
+export function listPlayers(search?: string): Promise<{ players: DirectoryPlayer[] }>;
+export function listPlayers(search: string, opts: { friendOf: string }): Promise<{ players: FriendLookupPlayer[] }>;
+export function listPlayers(search = '', opts?: { friendOf: string }) {
+  if (opts?.friendOf) return call<{ players: FriendLookupPlayer[] }>('players', { params: { search, lookup: 'friend', id: opts.friendOf } });
+  return call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+}
 
 export interface PlayerDetail extends DirectoryPlayer {
   friends: string[]; wins: number; losses: number;

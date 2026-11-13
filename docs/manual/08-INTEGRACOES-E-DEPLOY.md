@@ -467,6 +467,8 @@ o cliente exibe esses, nunca uma constante própria.
 
 **Teto por IP em dois baldes (§346, 13/11/2026).** Toda chamada de `/api/community` gasta do balde `community` (`LIGHT_LIMIT`, 120/min/IP); só a varredura que chega ao KV (`HEAVY_ACTIONS`, sem acerto de cache) gasta TAMBÉM do balde `community-heavy` (`HEAVY_LIMIT`, 20/min/IP). Antes era um balde só medido com limites diferentes: a varredura conferia "20 chamadas de qualquer tipo no minuto", e abrir a aba Amigos já passava disso — a busca por apelido do "Convidar" respondia 429 e a tela mostrava a mensagem genérica. `names` (sugestões de apelido, 1 `list` de 8 chaves) saiu de `HEAVY_ACTIONS`. O cliente traduz cada erro do convite (`src/utils/amizadeErro.ts`); "não existe" e "escondido" seguem iguais (`friend not found`). Régua: `functions/api/community.amigoPorNome429.test.js`.
 
+**Busca do "Convidar amigo" sem gate de PvP (§351, 13/11/2026, decisão do dono).** `GET ?action=players&search=<termo>&lookup=friend&id=<saveId>` (cliente: `listPlayers(termo, { friendOf: saveId })`, usado só por `addByName`) acha qualquer jogador visível (não `publicHidden`), com PvP ligado ou desligado, menos a própria conta — a mesma régua das sugestões `names`. Exige o dono do `id` (`denyUnlessOwner`), termo não vazio (senão 400), não entra no cache de borda e devolve só `{ id: pid, name, stage, spriteUrl? }`; perfil com PvP desligado tem o pid só lido (`pidSoLeitura`), nunca emitido. O diretório (`players` sem `lookup`), `opponents` e `sparOpponents` continuam exigindo `pvpEnabled`. Régua: `functions/api/community.amigoPvpOff.test.js`.
+
 ### 2.11-A A Guilda — `/api/guild`
 
 | | |

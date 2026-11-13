@@ -80,6 +80,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/ChatBox.tsx`, `src/components/CompanionHUD.tsx`, `src/utils/spriteGen.ts`, `src/utils/taskSuggestions.ts`
 **Régua:** nenhuma (`ls src/utils/aiClient*.test.ts` vazio).
 
+### `src/utils/amizadeErro.ts`
+**Dono de:** O texto da tela quando convidar um amigo falha (§346): teto, não achado, convites demais, lista cheia, sessão, rede; a genérica só para o desconhecido.
+**Exports:**
+- `function mensagemFalhaConvite(err: unknown, isPt: boolean): string` — Lê o `error` que `call` põe na mensagem do `Error` e devolve o que fazer. "Não existe" e "escondido" chegam iguais do servidor (`friend not found`) e continuam iguais aqui.
+**Chamado por:** `src/components/LibraryPage.tsx`
+**Régua:** `amizadeErro.test.ts`
+
 ### `src/utils/anniversary.ts`
 **Dono de:** Marca o dia em que a relação com a criatura faz um mês ou um ano, a partir de `bornAt` — módulo puro, `now` por parâmetro.
 **Exports:**
@@ -466,7 +473,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `ProfilePushResult` (interface) — O que o servidor RESPONDE ao gravar o perfil — e não é só `ok`.
 - `pushProfile` — `(p: PublicProfileInput) => call<ProfilePushResult>('profile', { method: 'POST', body: p })`. **Desde `592e2c14` o `call` genérico trata 410:** `account-deleted` → `reagirContaExcluida({ excluidaEm: deletedAt })` (import de `./cloudSave`) e lança `Error('account-deleted')` — a R1 deixava o `pushProfile` recriar `profile:`/`pid:` 3 s depois da exclusão. E o `GameStateContext` só publica o perfil (`publicarPerfil`) DEPOIS de `cloudSaveComRetry` resolver ok.
 - `DirectoryPlayer` (interface) — O que o diretório devolve de OUTRA pessoa. `rankPoints` e `tasksDone` saíram em 06/09/2026 (WP4.11 / proibição #21): desempenho alheio não trafega, e o corte é no servidor justamente para que uma UI futura não consiga reintroduzi-lo por descuido.
-- `listPlayers` — `(search = '') => call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} })`
+- `listPlayers` — `(search = '', opts?: { friendOf: string })` — sem `opts`: o diretório (`players`, só PvP ligado). Com `{ friendOf: saveId }` (§351, decisão do dono): a busca do "Convidar amigo" (`players&lookup=friend&id=`), que acha qualquer jogador visível com PvP ligado ou desligado, sem a própria conta, e devolve só `FriendLookupPlayer`.
+- `FriendLookupPlayer` (type) — `{ id, name, stage, spriteUrl? }`: a vista mínima da busca do convite (§351).
 - `PlayerDetail` (interface) — campos: `friends`.
 - `getPlayer` — `(id: string) => call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } })`
 - `Opponent` (interface) — campos: `id`, `name`, `petName`, `stage` e `duel?: { level } | null` (duelo fantasma v3 de `functions/api/_duel.js` — só o level que o servidor diz que a pessoa luta; o que vinha aqui como `DuelStats`: `functions/api/_duel.js`; servidor antigo pode não mandar). O módulo passou a importar os tipos `DuelStats`/`DuelEvent` de `functions/api/_duel.js`.
