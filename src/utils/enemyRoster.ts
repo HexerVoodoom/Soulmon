@@ -15,6 +15,9 @@
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
+import { ELEMENTO_FORMA_OVERRIDE } from './soulmonOverrides';
+import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { curatedComponents } from './elementosCurados';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
@@ -256,7 +259,14 @@ function buildElencoOraculo(): RosterEntry[] {
 }
 
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo()];
+/** REGISTRO §333: o elemento que o dono trocou na Tabela de Soulmons (`ELEMENTO_FORMA_OVERRIDE`). Troca `element` e os componentes; golpes, arte e chave ficam. */
+function comElementoDoDono(e: RosterEntry): RosterEntry {
+  const el = ELEMENTO_FORMA_OVERRIDE[e.key];
+  if (!el) return e;
+  const comps = DERIVED_ELEMENT_PAIRS.find(d => d.id === el)?.componentes ?? curatedComponents(el);
+  return comps ? { ...e, element: el, elements: [...comps] } : e;
+}
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo()].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

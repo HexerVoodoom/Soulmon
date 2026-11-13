@@ -271,6 +271,10 @@ export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
 
+/** A chave da FORMA para os ajustes do dono (`soulmonOverrides.ts`): a do bestiário; o chefe Ultra (fora do roster) = `<espécie>-ultra`. */
+export const arenaFoeFormKey = (e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form' | 'chefeUltra'> & { ramoKey?: string; paraleloKey?: string }): string | undefined =>
+  (e.chefeUltra ? `${e.chefeUltra}-ultra` : arenaFoeKey(e));
+
 export const ARENA_ROUNDS = 5;
 
 // ── O chefe ULTRA (dono, 10/11/2026) ────────────────────────────────────────
