@@ -850,6 +850,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `combate/group.ts` (`GroupOptions.target`), `components/games/useGroupBattle.ts` (`picked`/`target`/`pickTarget`, passados ao `BattleStage` por `ArenaGame` e `GroveRaidFight` via `onPickFoe`/`picked`), `match3Combat.ts` (`M3Combat.target`, `mirarInimigo`) e `Match3Game`.
 **Régua:** `src/utils/combate/alvo.test.ts`, `src/utils/match3Combat.alvo.test.ts`, `src/components/games/BattleStage.alvo.test.tsx` e o bloco ALVO POR TOQUE de `src/components/Match3Game.render.test.tsx`.
 
+### `src/utils/combate/alvoAliado.ts`
+**Dono de:** ALVO ALIADO (§322, 13/11/2026, dono): numa luta com aliados, escudo, cura (e cura contínua) e reforços de ataque/velocidade podem ir num ALIADO tocado; sem aliado mirado (ou o mirado caiu), vão em quem soltou, como sempre. As famílias ofensivas seguem no alvo inimigo. Uma mira por vez: tocar aliado apaga a do inimigo e vice-versa. **Nenhuma luta do app tem aliado hoje** (o núcleo de grupo é jogador × N inimigos; a Guerra de guilda são duelos 1v1 resolvidos no servidor): a regra e o efeito estão prontos e testados, a fiação na cena depende do modo com aliados.
+**Exports:**
+- `ALLY_TARGET_FAMILIES` (`heal`, `shield`, `atkBuff`, `spdBuff`) · `aceitaAliado(family)`.
+- `Mira` (`{ inimigo, aliado }`), `MIRA_VAZIA` · `tocarAliado(mira, aliadosHp, tocado, family)` (liga só para família pessoal e aliado vivo; tocar de novo desliga) · `tocarInimigo(mira, inimigosHp, tocado)` (apaga a mira de aliado; a escolha do inimigo segue `tocarAlvo`) · `inimigoMirado(inimigosHp, mira)`.
+- `receptorPessoal(family, aliadosHp, aliado)` — índice do aliado que recebe ou `null` = o lançador.
+- `ReceptorPessoal` (interface) · `aplicarEspecialPessoal(rx, sp, scale, hitsOnRx, t0, iv)` — o efeito de `heal`/`shield`/`atkBuff`/`spdBuff` em qualquer receptor (o mesmo que o lançador recebia).
+**Chamado por:** `combate/group.ts` (o `cast` aplica as famílias pessoais por ela, com receptor = o próprio lançador; a cura contínua usa o mesmo receptor). UI: `components/games/AlvoAliadoMarca.tsx` (a marca de apoio: losango turquesa contínuo com "+", diferente da mira dourada tracejada do inimigo; ainda sem tela que a monte).
+**Régua:** `src/utils/combate/escudoAliado.test.ts`.
+
 ### `src/utils/combate/bonus.ts`
 **Dono de:** O teto único de bônus de dano do combate v3: `min(talento + equipamento + Comércio + Renascimento, 5%)`, não empilhável, vale no PvP (REGISTRO §24).
 **Exports:**
@@ -980,6 +990,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `SPECIAL_BUDGET_HITS` (const) — `3`. `OVER_TIME_BONUS` (const) — `1.15`, usado só pelos inimigos (`foeFamilies.ts`). `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
 - `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
 - `specialOf(family)`.
+- §322 (13/11/2026): `SHIELD_DIRECT_SPECIAL_ABSORB` (const) = 0.5 e `SHIELD_ABSORB` (`basic` 1, `direct` 0,5, `tick` 0), `ShieldSource` (type), `shieldAbsorbPoints(sh, d, src)` — quanto o escudo absorve de cada fonte: o golpe básico inteiro, METADE do especial direto (arredonda para baixo), nada do DoT (lançado antes ou depois do escudo). Debuffs nunca passaram pelo escudo. Substitui o `shieldCap` do DoT (29/10). Espelho em `functions/api/_combate.js`.
 - PR3a: `AREA_FAMILIES` (`direct`, `dot`, `defDebuff`: as que miram o inimigo), `AREA_EFFICIENCY` (1: o núcleo NÃO usa a eficiência 0,9 do class-system), `PVE_FAMILY_POWER` (`arena`/`dungeon`), `CHEER`, `cheerEvents(taps, side)`, `RING_MULT_V3`, `DODGE_REDUCE_V3` (tabelas de habilidade do motor v3; o `energia.ts` ao vivo mantém as antigas até o PR3b).
 **Chamado por:** `combate/fight.ts`, `combate/group.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5) e `combate.v11.test.ts`.
