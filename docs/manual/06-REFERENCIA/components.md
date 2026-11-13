@@ -1594,6 +1594,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `BlockedActionModal` · `useBlockedAction(language, onGo?)` → `[modal, explain]`.
 **Régua:** `ui/BlockedActionModal.render.test.tsx`.
 
+### `src/components/WakeToEnter.tsx` (13/11/2026, REGISTRO §329)
+**Dono de:** o portão ÚNICO das atividades com o Soulmon dormindo. `WakeToEnterProvider` (montado na raiz do `App` com `isSleeping`, `dayWakePending`, `language` e `onWake` = o `handleSleep` de sempre, só chamado dormindo) guarda a entrada pedida e mostra `WakeToEnterPrompt`: "Seu Soulmon está dormindo. Quer acordá-lo?", "Acordar" (acorda e SEGUE para a atividade escolhida) e "Agora não" (fecha e fica; o fechar, Esc e toque fora fazem o mesmo). `ModalSheet` centralizado em portal (foco preso, Esc, `aria-label`), botões `sm2-kit-btn` de 48 px, sem `CtaButton`. Sem provedor tudo segue direto.
+**Exports:** `WakeToEnterProvider` · `WakeToEnterPrompt` · `useWakeGate()` → `{ require(entrada, seguir), held(entrada) }` · `useRequireAwake()` (atalho do `require`).
+**Usado por:** `nav/AreaView.tsx` (prédios de atividade, a folha inicial dos atalhos da Home/missão, o `start` dos jogos), `LibraryPage.tsx` (Treinar com amigo), `guild/GuildSheet.tsx` (mandar o Soulmon na missão).
+**Régua:** `WakeToEnter.render.test.tsx`.
+
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 

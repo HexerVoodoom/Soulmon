@@ -95,6 +95,7 @@ import { SalaPlantio } from './PlantioVisor';
 import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
 import { emitFeat } from '../../utils/feats';
+import { useRequireAwake } from '../WakeToEnter';
 
 interface GuildSheetProps {
   saveId: string;
@@ -1234,6 +1235,8 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
+  /* 💤 §329: mandar o Soulmon na missão com ele dormindo (o sono automático pode chegar com a folha aberta) pergunta antes. */
+  const requireAwake = useRequireAwake();
   // O DESAFIO DO DIA (dono, 04/11/2026): com a Missão, o inimigo só está na sala no MESMO dia em que o Soulmon voltou com
   // ele; noutro dia sem luta ele "escapou" e a sala volta a pedir a investigação. Sem Missão (Feira antiga) nada muda.
   const desafioSt = missao ? feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), tz)) : 'open';
@@ -1343,7 +1346,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
               data-missao-mandar
               disabled={ocupado || !!missao.state}
               aria-disabled={ocupado || missao.state ? true : undefined}
-              onClick={missao.onSend}
+              onClick={() => { requireAwake('missao', missao.onSend); }}
               className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
             >
               <Icon name="search" size={20} />
