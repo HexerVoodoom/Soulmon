@@ -5223,3 +5223,12 @@ Conserto (só servidor, `functions/api/community.js`): o `playerSearch` lê o `n
 **Pendência de operação (dono, opcional):** rodar `backfillNicks` deixa o `nickf:` completo; com ele, a busca sem acento acha também em índices `nick:` maiores que `NICK_SCAN_PAGES` páginas.
 
 **Rollback:** reverter o PR. **Deploy:** só servidor (Functions/worker); vai no deploy do merge, sem APK.
+
+## §357 — O check automático do hábito linkado ao Caderno roda DEPOIS do commit do "Guardar", nunca no mesmo evento (13/11/2026, bug reportado pelo dono)
+
+**Sintoma:** abrir o Caderno pela linha "Ir ao Caderno" do hábito "Diário de gratidão", digitar e tocar em Guardar travava o app; ao reabrir, entrada, hábito e missão do Trilho já constavam como concluídos.
+**Medido (app real, dev):** os handlers terminavam; em seguida entrava um loop infinito de render em que o updater de `handleCaderno` era reprocessado a cada render junto do toggle do hábito. Sem `autoCheck('caderno')` não travava; com o check mas sem o `toggleHabitRef.current(id, { auto: true })` também não.
+**Decisão:** `handleCaderno` (`src/App.tsx`) só anota "registro novo guardado" (`setCadernoGuardado`); um efeito pós-commit chama `autoCheckRef.current('caderno')` lendo o estado já gravado. A idempotência segue na chave `tarefaAuto` (1×/dia por hábito); pagamento e missão do Trilho não mudam. Contrato em `balaoDouradoETarefaLink.contract.test.ts` (A5).
+**Alternativa que perdeu:** manter o check no mesmo evento e só tirar a tag do topo — não explicava o loop medido.
+**Falsifica:** se o app ainda travar ao salvar pela missão com o check já pós-commit, a causa está no render da fila `welcome`/`TaskAutoTag` e esta decisão não basta.
+**Não verificado na tela** após o conserto (o navegador de teste foi cancelado pelo usuário).
