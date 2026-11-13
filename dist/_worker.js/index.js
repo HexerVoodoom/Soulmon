@@ -988,6 +988,16 @@ async function legacyPidFor(saveId) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 __name(legacyPidFor, "legacyPidFor");
+var PID_VALIDO = /^[a-zA-Z0-9_-]{8,64}$/;
+var PID_PLACEHOLDER = "0".repeat(32);
+async function saveIdForPublicId(env, pid) {
+  if (!PID_VALIDO.test(pid || "")) return null;
+  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
+  const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
+  if (!saveId || pid === legado) return null;
+  return saveId;
+}
+__name(saveIdForPublicId, "saveIdForPublicId");
 function newPid() {
   const b = crypto.getRandomValues(new Uint8Array(12));
   return Array.from(b).map((x2) => x2.toString(16).padStart(2, "0")).join("");
@@ -1030,186 +1040,44 @@ async function claimNick(env, saveId, name) {
   if (dono && dono !== saveId) return false;
   const antiga = await kv2.get(`nickof:${saveId}`);
   if (antiga && antiga !== key2 && await kv2.get(antiga) === saveId) await kv2.delete(antiga);
+  if (antiga && antiga !== key2) {
+    const velha = nickFoldKeyDaChave(antiga, saveId);
+    if (velha && velha !== nickFoldKey(name, saveId)) await kv2.delete(velha);
+  }
   const ttl = { expirationTtl: 86400 * 400 };
   await kv2.put(key2, saveId, ttl);
   await kv2.put(`nickof:${saveId}`, key2, ttl);
+  const dobrada = nickFoldKey(name, saveId);
+  if (dobrada) await kv2.put(dobrada, "", ttl);
   return true;
 }
 __name(claimNick, "claimNick");
-
-// api/_rankings.js
-var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "soul-barrage-2", "zip", "patches"]);
-var LOWER_IS_BETTER = Object.freeze(["zip", "patches"]);
-var isLowerBetter = /* @__PURE__ */ __name((game) => LOWER_IS_BETTER.includes(game), "isLowerBetter");
-var PERIODS = Object.freeze(["weekly", "monthly"]);
-var DEFAULT_PERIOD = "weekly";
-var MAX_SCORE = 1e9;
-var INV_WIDTH = 10;
-var TOP_DEFAULT = 10;
-var TOP_MAX = 50;
-var RANK_SCAN_PAGES = 5;
-var TIER_IDS = Object.freeze(["madeira", "bronze", "prata", "ouro", "platina", "diamante"]);
-var TIER_CUTS = Object.freeze({
-  dino: [0, 300, 800, 1500, 2500, 4e3],
-  "dino-1": [0, 300, 800, 1500, 2500, 4e3],
-  "dino-2": [0, 300, 800, 1500, 2500, 4e3],
-  ppt: [0, 10, 20, 30, 40, 50],
-  match3: [0, 300, 800, 1500, 2500, 4e3],
-  eco: [0, 4, 6, 8, 10, 13],
-  // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
-  // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
-  "endless-rift": [0, 25, 100, 250, 500, 999],
-  "rogue-dungeon": [0, 6, 12, 18, 24, 30],
-  "soul-barrage": [0, 150, 400, 800, 1400, 2200],
-  "soul-barrage-2": [0, 150, 400, 800, 1400, 2200]
-});
-var MAX_SCORE_BY_GAME = Object.freeze({
-  "endless-rift": 999,
-  "rogue-dungeon": 33,
-  dino: 1e5,
-  "dino-1": 1e5,
-  "dino-2": 1e5,
-  ppt: 200,
-  match3: 1e5,
-  eco: 100,
-  "soul-barrage": 5e4,
-  "soul-barrage-2": 5e4
-});
-var TIME_BOUNDS_MS = Object.freeze({ zip: [2e3, 18e5], patches: [2e3, 18e5] });
-function scoreIsPlausible(game, score) {
-  const tb = TIME_BOUNDS_MS[game];
-  if (tb) return score >= tb[0] && score <= tb[1];
-  const cap = MAX_SCORE_BY_GAME[game];
-  return cap === void 0 || score <= cap;
+var NICK_FOLD_PREFIX = "nickf:";
+function foldNome(raw) {
+  return String(raw ?? "").normalize("NFKD").replace(/\p{M}/gu, "").normalize("NFKC").replace(/\p{C}/gu, " ").replace(/\s+/g, " ").trim().toLowerCase();
 }
-__name(scoreIsPlausible, "scoreIsPlausible");
-function isRankedGame(game) {
-  return typeof game === "string" && RANKED_GAMES.includes(game);
+__name(foldNome, "foldNome");
+var dobradoCodificado = /* @__PURE__ */ __name((dobrado) => encodeURIComponent(dobrado).slice(0, 200), "dobradoCodificado");
+function nickFoldKey(name, saveId) {
+  const d = foldNome(name);
+  return d && saveId ? `${NICK_FOLD_PREFIX}${dobradoCodificado(d)}:${saveId}` : null;
 }
-__name(isRankedGame, "isRankedGame");
-function isPeriod(p) {
-  return typeof p === "string" && PERIODS.includes(p);
+__name(nickFoldKey, "nickFoldKey");
+function nickFoldPrefix(termo) {
+  const d = foldNome(termo);
+  return d ? `${NICK_FOLD_PREFIX}${dobradoCodificado(d)}` : null;
 }
-__name(isPeriod, "isPeriod");
-function cleanScore(raw, game) {
-  const max2 = game && (TIME_BOUNDS_MS[game]?.[1] ?? MAX_SCORE_BY_GAME[game]) || MAX_SCORE;
-  const n = typeof raw === "number" ? raw : Number.NaN;
-  if (!Number.isFinite(n)) return null;
-  const s = Math.floor(n);
-  return s >= 0 && s <= max2 ? s : null;
-}
-__name(cleanScore, "cleanScore");
-var pad = /* @__PURE__ */ __name((n, w = 2) => String(n).padStart(w, "0"), "pad");
-function isoWeekKey(now = /* @__PURE__ */ new Date()) {
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const dow = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dow);
-  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
-  const week = Math.ceil(((d.getTime() - yearStart) / 864e5 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${pad(week)}`;
-}
-__name(isoWeekKey, "isoWeekKey");
-function monthKey(now = /* @__PURE__ */ new Date()) {
-  return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}`;
-}
-__name(monthKey, "monthKey");
-function periodKey(period, now = /* @__PURE__ */ new Date()) {
-  return period === "monthly" ? monthKey(now) : isoWeekKey(now);
-}
-__name(periodKey, "periodKey");
-function tierFor(game, score) {
-  const cuts = TIER_CUTS[game];
-  if (!cuts) return TIER_IDS[0];
-  let idx = 0;
-  for (let i2 = 0; i2 < cuts.length; i2++) if (score >= cuts[i2]) idx = i2;
-  return TIER_IDS[idx];
-}
-__name(tierFor, "tierFor");
-var scoreKey = /* @__PURE__ */ __name((game, pk, score, saveId) => `rk:${game}:${pk}:${String(isLowerBetter(game) ? score : MAX_SCORE - score).padStart(INV_WIDTH, "0")}:${saveId}`, "scoreKey");
-var rkKeyFor = /* @__PURE__ */ __name((game, pk, score, saveId) => scoreKey(game, pk, score, saveId), "rkKeyFor");
-var meKey = /* @__PURE__ */ __name((game, pk, saveId) => `rkme:${game}:${pk}:${saveId}`, "meKey");
-var boardPrefix = /* @__PURE__ */ __name((game, pk) => `rk:${game}:${pk}:`, "boardPrefix");
-var pagoPor = /* @__PURE__ */ __name((game) => game === "endless-rift" ? 3 : 0, "pagoPor");
-function cleanName(name) {
-  const s = String(name ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 40);
-  return s || "An\xF4nimo";
-}
-__name(cleanName, "cleanName");
-async function submitScore(env, { game, period, saveId, score, now = /* @__PURE__ */ new Date() }) {
-  const pk = periodKey(period, now);
-  const store = kvOrThrow(env);
-  const mk = meKey(game, pk, saveId);
-  const prevRaw = await store.get(mk);
-  const prev = prevRaw === null || prevRaw === void 0 ? null : Number(prevRaw);
-  const hasPrev = prev !== null && Number.isFinite(prev);
-  if (hasPrev && (isLowerBetter(game) ? score >= prev : score <= prev)) return { improved: false, best: prev };
-  const profile = await getProfile(env, saveId).catch(() => null);
-  const hidden = profile?.publicHidden === true;
-  const ttl = { expirationTtl: 86400 * 70 };
-  await store.put(scoreKey(game, pk, score, saveId), "", {
-    ...ttl,
-    metadata: { s: score, n: hidden ? "An\xF4nimo" : cleanName(profile?.name), ...hidden ? { h: true } : {}, sim: profile?.simulated === true, t: now.getTime() }
-  });
-  if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
-  await store.put(mk, String(score), ttl);
-  return { improved: true, best: score };
-}
-__name(submitScore, "submitScore");
-async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /* @__PURE__ */ new Date() }) {
-  const pk = periodKey(period, now);
-  const store = kvOrThrow(env);
-  const n = Math.max(1, Math.min(TOP_MAX, Math.floor(top) || TOP_DEFAULT));
-  const prefix = boardPrefix(game, pk);
-  const page = await store.list({ prefix, limit: n });
-  const simRow = /* @__PURE__ */ __name((k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(":") + 1)), "simRow");
-  const rows = page.keys.map((k, i2) => ({
-    rank: i2 + 1,
-    name: k.metadata?.h === true ? "An\xF4nimo" : cleanName(k.metadata?.n),
-    score: Number(k.metadata?.s) || 0,
-    me: !!saveId && k.name.endsWith(`:${saveId}`)
-  }));
-  if (pagoPor(game)) {
-    let p = 0;
-    page.keys.forEach((k, i2) => {
-      if (!simRow(k) && p < pagoPor(game)) rows[i2].prizePlace = ++p;
-    });
+__name(nickFoldPrefix, "nickFoldPrefix");
+function nickFoldKeyDaChave(chaveNick, saveId) {
+  if (typeof chaveNick !== "string" || !chaveNick.startsWith("nick:")) return null;
+  try {
+    return nickFoldKey(decodeURIComponent(chaveNick.slice(5)), saveId);
+  } catch {
+    return null;
   }
-  let me = null;
-  if (saveId) {
-    const raw = await store.get(meKey(game, pk, saveId));
-    const best = raw === null || raw === void 0 ? null : Number(raw);
-    if (best !== null && Number.isFinite(best)) {
-      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
-    }
-  }
-  return { game, period, periodKey: pk, top: rows, me };
 }
-__name(readBoard, "readBoard");
-async function rankOf(store, prefix, key2) {
-  let seen = 0;
-  let cursor;
-  for (let p = 0; p < RANK_SCAN_PAGES; p++) {
-    const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
-    const idx = page.keys.findIndex((k) => k.name === key2);
-    if (idx >= 0) return seen + idx + 1;
-    seen += page.keys.length;
-    if (page.list_complete || !page.cursor) return null;
-    cursor = page.cursor;
-  }
-  return null;
-}
-__name(rankOf, "rankOf");
-function payablePlacements(entries, n) {
-  const out = [];
-  for (const e of entries ?? []) {
-    if (out.length >= n) break;
-    if (e?.simulated === true || e?.sim === true) continue;
-    if (typeof e?.saveId === "string" && /^sim_[0-9]{4}$/.test(e.saveId)) continue;
-    out.push(e);
-  }
-  return out;
-}
-__name(payablePlacements, "payablePlacements");
+__name(nickFoldKeyDaChave, "nickFoldKeyDaChave");
+var saveIdDaChaveDobrada = /* @__PURE__ */ __name((chave) => String(chave).slice(String(chave).lastIndexOf(":") + 1), "saveIdDaChaveDobrada");
 
 // api/_redact.js
 var DATE_RECENT_YEARS = 5;
@@ -1641,8 +1509,15 @@ function toAttrBonus(b) {
 }
 __name(toAttrBonus, "toAttrBonus");
 var SPECIAL_BUDGET_HITS = 3;
+var SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
+var SHIELD_DOT_TICK_ABSORB = 0.5;
+var SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB });
+function shieldAbsorbPoints(sh, d, src) {
+  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
+}
+__name(shieldAbsorbPoints, "shieldAbsorbPoints");
 var SPECIAL_FAMILIES = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
-var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
+var SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
 function specialOf(family) {
   const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
   return { family: f, power: SPECIAL_POWER[f] };
@@ -1707,6 +1582,7 @@ __name(startPoints, "startPoints");
 var EPS = 1e-9;
 var DRAW_EPS = 1e-6;
 var MAX_EVENTS = 2e5;
+var DOT_TICKS = 3;
 function windowSeconds(level) {
   const d = combatantAt(level, REFERENCE_BUILDS.balanced);
   return MIRROR_SECONDS * attacksPerWindow(d.spd) / hitsToKnockOut(d, d);
@@ -1748,7 +1624,8 @@ function* fightSteps(a, b, opts) {
       nVuln: 0,
       nSpd: 0,
       nHit: 0,
-      dotResist: cleanDotResist(s.dotResist)
+      dotResist: cleanDotResist(s.dotResist),
+      dots: []
     };
   }, "mk");
   const F = [mk(a, 0), mk(b, 1)];
@@ -1770,13 +1647,13 @@ function* fightSteps(a, b, opts) {
   const gain = /* @__PURE__ */ __name((f, x2, per) => {
     if (f.sp && f.dead === Infinity) f.en += per * x2;
   }, "gain");
-  const hit = /* @__PURE__ */ __name((src, v, frac, kind, shieldCap = Infinity) => {
+  const hit = /* @__PURE__ */ __name((src, v, frac, kind, from) => {
     if (v.dead < Infinity) return;
     const d = damagePoints(frac, v.pts);
     let lose = d;
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -1787,21 +1664,26 @@ function* fightSteps(a, b, opts) {
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   }, "hit");
+  const tickOwnTurn = /* @__PURE__ */ __name((me) => {
+    if (!me.dots.length || me.dead < Infinity || me.hp <= EPS) return false;
+    for (const d of me.dots) {
+      d.left--;
+      if (me.hp > EPS) hit(d.src, me, d.E / DOT_TICKS * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), "tick", "tick");
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    return me.hp <= EPS;
+  }, "tickOwnTurn");
   const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
     const sp = me.sp;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
     switch (sp.family) {
       case "direct":
-        hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack");
+        hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack", "direct");
         break;
-      case "dot": {
-        const cap = foe.shield;
-        for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick", cap), "fn") });
-        }
+      case "dot":
+        foe.dots.push({ src: me, E, left: DOT_TICKS });
         break;
-      }
       case "heal":
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round(E / hitsOn(foe, me) * me.pts)) / me.pts;
         break;
@@ -1836,6 +1718,9 @@ function* fightSteps(a, b, opts) {
   function* tryCast(i2, tt) {
     const me = F[i2];
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const m = yield ev("cast", i2, 0, tt);
@@ -1879,6 +1764,10 @@ function* fightSteps(a, b, opts) {
       const me = F[i2];
       const foe = F[1 - i2];
       if (me.next - t >= EPS) continue;
+      if (tickOwnTurn(me)) {
+        me.next = t + interval(me.c.spd);
+        continue;
+      }
       let mulN = 1;
       if (me.nAtk > EPS) {
         const x2 = Math.min(1, me.nAtk);
@@ -1892,7 +1781,7 @@ function* fightSteps(a, b, opts) {
       }
       const hs = opts.hitScale ? opts.hitScale(i2, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack");
+      hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack", "basic");
       if (me.nSpd > EPS) {
         const x2 = Math.min(1, me.nSpd);
         me.nSpd -= x2;
@@ -1936,10 +1825,11 @@ __name(soulCombatant, "soulCombatant");
 
 // api/_gates.js
 var GATES = {
-  pvp: { minBond: 3 },
-  torneio: { minBond: 3 },
-  masmorraAlto: { minBond: 8 },
-  renascimento: { minBond: 12 }
+  pvp: { minBond: 1 },
+  torneio: { minBond: 1 },
+  ranqueada: { minBond: 5 },
+  masmorraAlto: { minBond: 1 },
+  renascimento: { minBond: 1 }
 };
 function gateFor(feature, bondLevel) {
   const lvl = typeof bondLevel === "number" && Number.isFinite(bondLevel) ? Math.max(1, Math.floor(bondLevel)) : 1;
@@ -1950,30 +1840,30 @@ __name(gateFor, "gateFor");
 var BUILDING_GATES = {
   "mercado.itens": { minBond: 1 },
   "mercado.conquistas": { minBond: 1 },
-  "mercado.decoracao": { minBond: 2 },
-  "mercado.background": { minBond: 3 },
-  "forja.ferreiro": { minBond: 2 },
-  "forja.hexsmith": { minBond: 2 },
+  "mercado.decoracao": { minBond: 1 },
+  "mercado.background": { minBond: 1 },
+  "forja.ferreiro": { minBond: 1 },
+  "forja.hexsmith": { minBond: 1 },
   "jogos.salao": { minBond: 1 },
-  "exploracao.dungeon": { minBond: 3 },
-  "jogos.mente": { minBond: 3 },
+  "exploracao.dungeon": { minBond: 1 },
+  "jogos.mente": { minBond: 1 },
   "exploracao.fenda": { minBond: 1 },
-  "forja.caderno": { minBond: 2 },
-  "forja.oficina": { minBond: 3 },
+  "forja.caderno": { minBond: 1 },
+  "forja.oficina": { minBond: 1 },
   "forja.refugio": { minBond: 1 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
   "arena.torneio": { minBond: GATES.torneio.minBond },
-  "arena.guerra": { minBond: 3 },
-  // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
+  "arena.guerra": { minBond: 1 },
+  // dono 12/11/2026: sem limite por level (era 3)
   "laboratorio.evolucao": { minBond: 1 },
-  "laboratorio.pet": { minBond: 2 },
-  "laboratorio.stats": { minBond: 3 },
-  "laboratorio.perfil": { minBond: 2 },
-  "laboratorio.biblioteca": { minBond: 2 },
-  "laboratorio.amigos": { minBond: 2 },
-  "hall.guilda": { minBond: 2 },
-  "hall.grove": { minBond: 2 },
-  "hall.feira": { minBond: 5 }
+  "laboratorio.pet": { minBond: 1 },
+  "laboratorio.stats": { minBond: 1 },
+  "laboratorio.perfil": { minBond: 1 },
+  "laboratorio.biblioteca": { minBond: 1 },
+  "laboratorio.amigos": { minBond: 1 },
+  "hall.guilda": { minBond: 1 },
+  "hall.grove": { minBond: 1 },
+  "hall.feira": { minBond: 1 }
 };
 var MOVED_BUILDINGS = {
   "arena.feira": "hall.feira",
@@ -3276,7 +3166,10 @@ function duelSide(save, opts = {}) {
   const hx = hexOverrides(state.hexsmith);
   const family = hx.specialFamily ?? familyFicha;
   const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : pet.el ?? elementoDoBasico(skills)), elEspecial: hx.specialElement ?? (pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId)), ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {}, ...typeof state.simMagia === "boolean" ? { magia: state.simMagia } : {}, ...!hx.basicElement && pet.base ? { elVantagem: pet.base } : {} } };
+  const elBasicaOrig = pet.neutro ? null : pet.el ?? elementoDoBasico(skills);
+  const elEspecialOrig = pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId);
+  const comItemDeIdentidade = Boolean(hx.specialFamily || hx.specialElement || hx.basicElement);
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {}, ...typeof state.simMagia === "boolean" ? { magia: state.simMagia } : {}, ...!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}, ...comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}, ...hx.strike ? { golpe: hx.strike } : {} } };
 }
 __name(duelSide, "duelSide");
 function duelSeed(...parts) {
@@ -3317,11 +3210,14 @@ __name(simulateDuel, "simulateDuel");
 // api/_claDiretorio.js
 var DIR_PREFIX = "coopDir:";
 var coopDirKey = /* @__PURE__ */ __name((dirId) => `${DIR_PREFIX}${dirId}`, "coopDirKey");
+var DIR_FULL_PREFIX = "coopDirFull:";
+var coopDirFullKey = /* @__PURE__ */ __name((dirId) => `${DIR_FULL_PREFIX}${dirId}`, "coopDirFullKey");
 var coopReqKey = /* @__PURE__ */ __name((save) => `coopReq:${save}`, "coopReqKey");
 var coopReqInPrefix = /* @__PURE__ */ __name((gid) => `coopReqIn:${gid}:`, "coopReqInPrefix");
 var coopReqInKey = /* @__PURE__ */ __name((gid, rid) => `${coopReqInPrefix(gid)}${rid}`, "coopReqInKey");
 var PEDIDO_TTL = 86400 * 7;
 var DIRETORIO_MAX = 30;
+var DIRETORIO_CHEIOS_MAX = 12;
 var PEDIDOS_MAX = 30;
 var VALID_OPACO = /^[0-9a-f]{16}$/;
 var idOpacoValido = /* @__PURE__ */ __name((s) => typeof s === "string" && VALID_OPACO.test(s), "idOpacoValido");
@@ -3334,49 +3230,93 @@ async function idDoDiretorio(env, gid) {
 __name(idDoDiretorio, "idDoDiretorio");
 function assinaturaDoDiretorio(g, max2) {
   const size = Array.isArray(g?.members) ? g.members.length : 0;
-  return size > 0 && size < max2 && g.dirClosed !== true ? `${g.name}|${size}` : "x";
+  if (!(size > 0) || g.dirClosed === true) return "x";
+  return size < max2 ? `${g.name}|${size}` : `${g.name}|${size}|cheia`;
 }
 __name(assinaturaDoDiretorio, "assinaturaDoDiretorio");
-async function sincronizarDiretorio(env, g, max2, { prazo = {} } = {}) {
+function tipoDaAssinatura(sig) {
+  if (typeof sig !== "string" || sig === "x" || !sig) return null;
+  return sig.endsWith("|cheia") ? "cheia" : "aberta";
+}
+__name(tipoDaAssinatura, "tipoDaAssinatura");
+async function sincronizarDiretorio(env, g, max2, { prazo = {}, antes } = {}) {
   const size = Array.isArray(g?.members) ? g.members.length : 0;
   const dirId = await idDoDiretorio(env, g.id);
-  if (assinaturaDoDiretorio(g, max2) !== "x") await kvOrThrow(env).put(coopDirKey(dirId), JSON.stringify({ gid: g.id, n: g.name, s: size }), { ...prazo, metadata: { n: g.name, s: size } });
-  else await kvOrThrow(env).delete(coopDirKey(dirId));
+  const tipo = tipoDaAssinatura(assinaturaDoDiretorio(g, max2));
+  const tipoAntes = antes === void 0 ? "?" : tipoDaAssinatura(antes);
+  const kv2 = kvOrThrow(env);
+  const apagar = /* @__PURE__ */ __name((t) => tipoAntes === "?" || tipoAntes === t, "apagar");
+  if (tipo) {
+    const valor = JSON.stringify({ gid: g.id, n: g.name, s: size });
+    await kv2.put(tipo === "cheia" ? coopDirFullKey(dirId) : coopDirKey(dirId), valor, { ...prazo, metadata: { n: g.name, s: size } });
+  }
+  if (tipo !== "aberta" && apagar("aberta")) await kv2.delete(coopDirKey(dirId));
+  if (tipo !== "cheia" && apagar("cheia")) await kv2.delete(coopDirFullKey(dirId));
 }
 __name(sincronizarDiretorio, "sincronizarDiretorio");
 async function tirarDoDiretorio(env, gid) {
-  await kvOrThrow(env).delete(coopDirKey(await idDoDiretorio(env, gid)));
+  const dirId = await idDoDiretorio(env, gid);
+  await kvOrThrow(env).delete(coopDirKey(dirId));
+  await kvOrThrow(env).delete(coopDirFullKey(dirId));
 }
 __name(tirarDoDiretorio, "tirarDoDiretorio");
 async function lerEntrada(env, dirId) {
   if (!idOpacoValido(dirId)) return null;
-  const raw = await kvOrThrow(env).get(coopDirKey(dirId));
-  if (!raw) return null;
-  try {
-    const e = JSON.parse(raw);
-    return e && typeof e.gid === "string" ? e : null;
-  } catch {
-    return null;
-  }
+  const parse7 = /* @__PURE__ */ __name((raw) => {
+    try {
+      const e2 = JSON.parse(raw);
+      return e2 && typeof e2.gid === "string" ? e2 : null;
+    } catch {
+      return null;
+    }
+  }, "parse");
+  const aberta = await kvOrThrow(env).get(coopDirKey(dirId));
+  if (aberta) return parse7(aberta);
+  const cheia = await kvOrThrow(env).get(coopDirFullKey(dirId));
+  const e = cheia ? parse7(cheia) : null;
+  return e ? { ...e, full: true } : null;
 }
 __name(lerEntrada, "lerEntrada");
-async function listarDiretorio(env, max2) {
-  const r = await kvOrThrow(env).list({ prefix: DIR_PREFIX, limit: DIRETORIO_MAX * 2 });
+async function apagarEntrada(env, dirId) {
+  if (!idOpacoValido(dirId)) return;
+  await kvOrThrow(env).delete(coopDirKey(dirId));
+  await kvOrThrow(env).delete(coopDirFullKey(dirId));
+}
+__name(apagarEntrada, "apagarEntrada");
+async function listarPrefixo(env, prefixo, teto, aceita) {
+  const r = await kvOrThrow(env).list({ prefix: prefixo, limit: teto * 2 });
   const out = [];
   for (const k of r?.keys ?? []) {
-    const dirId = String(k.name).slice(DIR_PREFIX.length);
+    const dirId = String(k.name).slice(prefixo.length);
     if (!idOpacoValido(dirId)) continue;
     let meta = k.metadata;
     if (!meta || typeof meta !== "object") {
-      meta = await lerEntrada(env, dirId);
-      if (!meta) continue;
+      const raw = await kvOrThrow(env).get(`${prefixo}${dirId}`);
+      try {
+        meta = raw ? JSON.parse(raw) : null;
+      } catch {
+        meta = null;
+      }
+      if (!meta || typeof meta !== "object") continue;
     }
     const size = Math.floor(Number(meta.s));
     const name = typeof meta.n === "string" ? meta.n : "";
-    if (!name || !(size > 0) || size >= max2) continue;
-    out.push({ dirId, name, size, max: max2 });
+    if (!name || !(size > 0) || !aceita(size)) continue;
+    out.push({ dirId, name, size });
   }
   return out;
+}
+__name(listarPrefixo, "listarPrefixo");
+async function listarDiretorio(env, max2) {
+  const porNome = /* @__PURE__ */ __name((a, b) => a.name.localeCompare(b.name), "porNome");
+  const [abertas, cheias] = await Promise.all([
+    listarPrefixo(env, DIR_PREFIX, DIRETORIO_MAX, (s) => s < max2),
+    listarPrefixo(env, DIR_FULL_PREFIX, DIRETORIO_CHEIOS_MAX, (s) => s >= max2)
+  ]);
+  return [
+    ...abertas.sort((a, b) => b.size - a.size || porNome(a, b)).slice(0, DIRETORIO_MAX).map((c) => ({ ...c, max: max2 })),
+    ...cheias.sort(porNome).slice(0, DIRETORIO_CHEIOS_MAX).map((c) => ({ ...c, size: max2, max: max2, full: true }))
+  ];
 }
 __name(listarDiretorio, "listarDiretorio");
 async function lerPedido(env, save) {
@@ -3546,13 +3486,14 @@ async function gravarGrupo(env, g, opcoes = {}) {
   }
   const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1e3)) };
   const sigDir = assinaturaDoDiretorio(g, COOP_MAX_MEMBERS);
-  const diretorio = conjunta || g.dirSig !== sigDir;
+  const sigAntes = g.dirSig;
+  const diretorio = conjunta || sigAntes !== sigDir;
   g.dirSig = sigDir;
   await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
   try {
     await gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo });
   } finally {
-    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo });
+    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo, antes: sigAntes });
   }
 }
 __name(gravarGrupo, "gravarGrupo");
@@ -4184,6 +4125,216 @@ async function exportarFeiraDaPessoa(env, gid, save) {
 }
 __name(exportarFeiraDaPessoa, "exportarFeiraDaPessoa");
 
+// api/_guildaNome.js
+async function nomeDaGuildaDe(env, saveId, memo = /* @__PURE__ */ new Map()) {
+  if (typeof saveId !== "string" || !saveId) return null;
+  try {
+    const gid = await kvOrThrow(env).get(coopOfKey(saveId));
+    if (!gid) return null;
+    let entrada = memo.get(gid);
+    if (!entrada) {
+      entrada = lerGrupo(env, gid).then((g2) => g2 && Array.isArray(g2.members) ? { members: g2.members, name: sanitizarNomeDeGuilda(g2.name) } : null).catch(() => null);
+      memo.set(gid, entrada);
+    }
+    const g = await entrada;
+    if (!g || !g.members.includes(saveId) || !g.name) return null;
+    return g.name;
+  } catch {
+    return null;
+  }
+}
+__name(nomeDaGuildaDe, "nomeDaGuildaDe");
+var campoGuilda = /* @__PURE__ */ __name((nome) => typeof nome === "string" && nome ? { guildName: nome } : {}, "campoGuilda");
+async function comGuildas(env, linhas, saveIdDe) {
+  const memo = /* @__PURE__ */ new Map();
+  return Promise.all(linhas.map(async (l) => {
+    const save = saveIdDe(l);
+    const nome = save ? await nomeDaGuildaDe(env, save, memo) : null;
+    return { ...l, ...campoGuilda(nome) };
+  }));
+}
+__name(comGuildas, "comGuildas");
+
+// api/_rankings.js
+var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "soul-barrage-2", "zip", "patches"]);
+var LOWER_IS_BETTER = Object.freeze(["zip", "patches"]);
+var isLowerBetter = /* @__PURE__ */ __name((game) => LOWER_IS_BETTER.includes(game), "isLowerBetter");
+var PERIODS = Object.freeze(["weekly", "monthly"]);
+var DEFAULT_PERIOD = "weekly";
+var MAX_SCORE = 1e9;
+var INV_WIDTH = 10;
+var TOP_DEFAULT = 10;
+var TOP_MAX = 50;
+var RANK_SCAN_PAGES = 5;
+var TIER_IDS = Object.freeze(["madeira", "bronze", "prata", "ouro", "platina", "diamante"]);
+var TIER_CUTS = Object.freeze({
+  dino: [0, 300, 800, 1500, 2500, 4e3],
+  "dino-1": [0, 300, 800, 1500, 2500, 4e3],
+  "dino-2": [0, 300, 800, 1500, 2500, 4e3],
+  ppt: [0, 10, 20, 30, 40, 50],
+  match3: [0, 300, 800, 1500, 2500, 4e3],
+  eco: [0, 4, 6, 8, 10, 13],
+  // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
+  // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
+  "endless-rift": [0, 25, 100, 250, 500, 999],
+  "rogue-dungeon": [0, 6, 12, 18, 24, 30],
+  "soul-barrage": [0, 150, 400, 800, 1400, 2200],
+  "soul-barrage-2": [0, 150, 400, 800, 1400, 2200]
+});
+var MAX_SCORE_BY_GAME = Object.freeze({
+  "endless-rift": 999,
+  "rogue-dungeon": 33,
+  dino: 1e5,
+  "dino-1": 1e5,
+  "dino-2": 1e5,
+  ppt: 200,
+  match3: 1e5,
+  eco: 100,
+  "soul-barrage": 5e4,
+  "soul-barrage-2": 5e4
+});
+var TIME_BOUNDS_MS = Object.freeze({ zip: [2e3, 18e5], patches: [2e3, 18e5] });
+function scoreIsPlausible(game, score) {
+  const tb = TIME_BOUNDS_MS[game];
+  if (tb) return score >= tb[0] && score <= tb[1];
+  const cap = MAX_SCORE_BY_GAME[game];
+  return cap === void 0 || score <= cap;
+}
+__name(scoreIsPlausible, "scoreIsPlausible");
+function isRankedGame(game) {
+  return typeof game === "string" && RANKED_GAMES.includes(game);
+}
+__name(isRankedGame, "isRankedGame");
+function isPeriod(p) {
+  return typeof p === "string" && PERIODS.includes(p);
+}
+__name(isPeriod, "isPeriod");
+function cleanScore(raw, game) {
+  const max2 = game && (TIME_BOUNDS_MS[game]?.[1] ?? MAX_SCORE_BY_GAME[game]) || MAX_SCORE;
+  const n = typeof raw === "number" ? raw : Number.NaN;
+  if (!Number.isFinite(n)) return null;
+  const s = Math.floor(n);
+  return s >= 0 && s <= max2 ? s : null;
+}
+__name(cleanScore, "cleanScore");
+var pad = /* @__PURE__ */ __name((n, w = 2) => String(n).padStart(w, "0"), "pad");
+function isoWeekKey(now = /* @__PURE__ */ new Date()) {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dow = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dow);
+  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - yearStart) / 864e5 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${pad(week)}`;
+}
+__name(isoWeekKey, "isoWeekKey");
+function monthKey(now = /* @__PURE__ */ new Date()) {
+  return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}`;
+}
+__name(monthKey, "monthKey");
+function periodKey(period, now = /* @__PURE__ */ new Date()) {
+  return period === "monthly" ? monthKey(now) : isoWeekKey(now);
+}
+__name(periodKey, "periodKey");
+function tierFor(game, score) {
+  const cuts = TIER_CUTS[game];
+  if (!cuts) return TIER_IDS[0];
+  let idx = 0;
+  for (let i2 = 0; i2 < cuts.length; i2++) if (score >= cuts[i2]) idx = i2;
+  return TIER_IDS[idx];
+}
+__name(tierFor, "tierFor");
+var scoreKey = /* @__PURE__ */ __name((game, pk, score, saveId) => `rk:${game}:${pk}:${String(isLowerBetter(game) ? score : MAX_SCORE - score).padStart(INV_WIDTH, "0")}:${saveId}`, "scoreKey");
+var rkKeyFor = /* @__PURE__ */ __name((game, pk, score, saveId) => scoreKey(game, pk, score, saveId), "rkKeyFor");
+var meKey = /* @__PURE__ */ __name((game, pk, saveId) => `rkme:${game}:${pk}:${saveId}`, "meKey");
+var boardPrefix = /* @__PURE__ */ __name((game, pk) => `rk:${game}:${pk}:`, "boardPrefix");
+var pagoPor = /* @__PURE__ */ __name((game) => game === "endless-rift" ? 3 : 0, "pagoPor");
+function cleanName(name) {
+  const s = String(name ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 40);
+  return s || "An\xF4nimo";
+}
+__name(cleanName, "cleanName");
+async function submitScore(env, { game, period, saveId, score, now = /* @__PURE__ */ new Date() }) {
+  const pk = periodKey(period, now);
+  const store = kvOrThrow(env);
+  const mk = meKey(game, pk, saveId);
+  const prevRaw = await store.get(mk);
+  const prev = prevRaw === null || prevRaw === void 0 ? null : Number(prevRaw);
+  const hasPrev = prev !== null && Number.isFinite(prev);
+  if (hasPrev && (isLowerBetter(game) ? score >= prev : score <= prev)) return { improved: false, best: prev };
+  const profile = await getProfile(env, saveId).catch(() => null);
+  const hidden = profile?.publicHidden === true;
+  const ttl = { expirationTtl: 86400 * 70 };
+  await store.put(scoreKey(game, pk, score, saveId), "", {
+    ...ttl,
+    metadata: { s: score, n: hidden ? "An\xF4nimo" : cleanName(profile?.name), ...hidden ? { h: true } : {}, sim: profile?.simulated === true, t: now.getTime() }
+  });
+  if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
+  await store.put(mk, String(score), ttl);
+  return { improved: true, best: score };
+}
+__name(submitScore, "submitScore");
+async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /* @__PURE__ */ new Date() }) {
+  const pk = periodKey(period, now);
+  const store = kvOrThrow(env);
+  const n = Math.max(1, Math.min(TOP_MAX, Math.floor(top) || TOP_DEFAULT));
+  const prefix = boardPrefix(game, pk);
+  const page = await store.list({ prefix, limit: n });
+  const simRow = /* @__PURE__ */ __name((k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(":") + 1)), "simRow");
+  const memoGuilda = /* @__PURE__ */ new Map();
+  const rows = await Promise.all(page.keys.map(async (k, i2) => {
+    const escondido = k.metadata?.h === true;
+    const guilda = escondido ? null : await nomeDaGuildaDe(env, k.name.slice(k.name.lastIndexOf(":") + 1), memoGuilda);
+    return {
+      rank: i2 + 1,
+      name: escondido ? "An\xF4nimo" : cleanName(k.metadata?.n),
+      ...campoGuilda(guilda),
+      score: Number(k.metadata?.s) || 0,
+      me: !!saveId && k.name.endsWith(`:${saveId}`)
+    };
+  }));
+  if (pagoPor(game)) {
+    let p = 0;
+    page.keys.forEach((k, i2) => {
+      if (!simRow(k) && p < pagoPor(game)) rows[i2].prizePlace = ++p;
+    });
+  }
+  let me = null;
+  if (saveId) {
+    const raw = await store.get(meKey(game, pk, saveId));
+    const best = raw === null || raw === void 0 ? null : Number(raw);
+    if (best !== null && Number.isFinite(best)) {
+      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
+    }
+  }
+  return { game, period, periodKey: pk, top: rows, me };
+}
+__name(readBoard, "readBoard");
+async function rankOf(store, prefix, key2) {
+  let seen = 0;
+  let cursor;
+  for (let p = 0; p < RANK_SCAN_PAGES; p++) {
+    const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
+    const idx = page.keys.findIndex((k) => k.name === key2);
+    if (idx >= 0) return seen + idx + 1;
+    seen += page.keys.length;
+    if (page.list_complete || !page.cursor) return null;
+    cursor = page.cursor;
+  }
+  return null;
+}
+__name(rankOf, "rankOf");
+function payablePlacements(entries, n) {
+  const out = [];
+  for (const e of entries ?? []) {
+    if (out.length >= n) break;
+    if (e?.simulated === true || e?.sim === true) continue;
+    if (typeof e?.saveId === "string" && /^sim_[0-9]{4}$/.test(e.saveId)) continue;
+    out.push(e);
+  }
+  return out;
+}
+__name(payablePlacements, "payablePlacements");
+
 // api/_especialNomeRegra.js
 var ESPECIAL_NOME_MAX = 20;
 var ESPECIAL_NOME_COOLDOWN_MS = 0;
@@ -4676,6 +4827,8 @@ async function collectRankingKeys(env, saveId) {
   if (nickKey2) {
     if (typeof nickKey2 === "string" && nickKey2.startsWith("nick:") && await store.get(nickKey2) === saveId) keys.push(nickKey2);
     keys.push(`nickof:${saveId}`);
+    const dobrada = nickFoldKeyDaChave(nickKey2, saveId);
+    if (dobrada) keys.push(dobrada);
   }
   return { keys, ranking: ranking2 };
 }
@@ -7818,7 +7971,9 @@ var EVENT_SCHEMA = {
   task_done: { kind: { min: 0, max: 1 } },
   task_skipped: { kind: { min: 0, max: 1 } },
   day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
-  session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } }
+  session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
+  gate_login: { outcome: { min: 0, max: 7 } }
+  // ESPELHO de src/utils/telemetry.ts
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS2 = 100;
@@ -7958,6 +8113,9 @@ function applyAggregate(agg, events) {
       const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
       bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? "yes" : "no"}`);
       bump(`reveal_seen.duration.${p.duration}`);
+    }
+    if (record.e === "gate_login" && p) {
+      bump(`gate_login.outcome_${p.outcome}`);
     }
     if (record.e === "checkin_commit" && p) {
       bump(`checkin_commit.focus_${p.focus_count}`);
@@ -11420,6 +11578,11 @@ var WAR_RES_TTL = 86400 * 30;
 var coopWarQKey = /* @__PURE__ */ __name((size) => `coopWarQ:${size}`, "coopWarQKey");
 var coopWarWaitKey = /* @__PURE__ */ __name((gid) => `coopWarWait:${gid}`, "coopWarWaitKey");
 var coopWarResKey = /* @__PURE__ */ __name((gid) => `coopWarRes:${gid}`, "coopWarResKey");
+var coopWarSeedKey = /* @__PURE__ */ __name((gid) => `coopWarSeed:${gid}`, "coopWarSeedKey");
+var SEED_REGISTRY_KEY = "seedGuild:v1";
+var SEED_TAG = "seed-guildas-v1";
+var SEED_TENTATIVAS = 2;
+var SEED_RESERVA_TTL = 86400;
 var parse2 = /* @__PURE__ */ __name((raw) => {
   try {
     return raw ? JSON.parse(raw) : null;
@@ -11474,7 +11637,10 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
   const size = meus.length;
   const fila = parse2(await kvs.get(coopWarQKey(size)));
   const rival = fila && typeof fila.gid === "string" && fila.gid !== g.id && Array.isArray(fila.roster) ? await lerGrupo2(fila.gid) : null;
+  const cache3 = {};
   if (!rival) {
+    const contraSemente = await guerraContraSemente(env, g, meus, hoje, lerGrupo2, cache3);
+    if (contraSemente) return contraSemente;
     await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x2) => x2.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: "waiting", waiting: { size }, last: antes.last };
@@ -11482,6 +11648,8 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
   await kvs.delete(coopWarQKey(size));
   const deles = (await Promise.all(fila.roster.filter((m) => rival.members.includes(m)).map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })))).filter((x2) => x2.side).slice(0, WAR_MAX);
   if (deles.length < WAR_MIN) {
+    const contraSemente = await guerraContraSemente(env, g, meus, hoje, lerGrupo2, cache3);
+    if (contraSemente) return contraSemente;
     await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map((x2) => x2.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: "waiting", waiting: { size }, last: antes.last };
@@ -11508,6 +11676,70 @@ async function buscarGuerra(env, g, requester, hoje, lerGrupo2) {
   return { state: "done", waiting: null, last: { day: hoje, outcome: meu, duels: duelosDe(duels, "a"), size: n, enemy: rival.name } };
 }
 __name(buscarGuerra, "buscarGuerra");
+function gidsDoRegistro(reg) {
+  const slots = reg && typeof reg === "object" && reg.slots && typeof reg.slots === "object" && !Array.isArray(reg.slots) ? reg.slots : {};
+  const vistos = /* @__PURE__ */ new Set();
+  for (const slot of Object.keys(slots).sort()) {
+    const gid = slots[slot]?.gid;
+    if (typeof gid === "string" && gid) vistos.add(gid);
+  }
+  return [...vistos];
+}
+__name(gidsDoRegistro, "gidsDoRegistro");
+var hash322 = /* @__PURE__ */ __name((txt) => {
+  let h = 2166136261;
+  for (const ch of txt) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h;
+}, "hash32");
+function ordemDasSementes(gids, gidReal, hoje) {
+  const lista2 = gids.filter((x2) => x2 !== gidReal);
+  if (lista2.length === 0) return [];
+  const k = hash322(`${gidReal}|${hoje}`) % lista2.length;
+  return [...lista2.slice(k), ...lista2.slice(0, k)];
+}
+__name(ordemDasSementes, "ordemDasSementes");
+async function esquadraoSemente(env, sims, size) {
+  const deles = [];
+  let i2 = 0;
+  while (deles.length < size && i2 < sims.length) {
+    const lote = sims.slice(i2, i2 + (size - deles.length));
+    i2 += lote.length;
+    const lidos = await Promise.all(lote.map(async (m) => ({ save: m, side: await loadDuelSide(env, m) })));
+    deles.push(...lidos.filter((x2) => x2.side));
+  }
+  return deles.slice(0, size);
+}
+__name(esquadraoSemente, "esquadraoSemente");
+async function guerraContraSemente(env, g, meus, hoje, lerGrupo2, cache3) {
+  const kvs = kvOrThrow(env);
+  if (!("reg" in cache3)) cache3.reg = parse2(await kvs.get(SEED_REGISTRY_KEY));
+  const ordem = ordemDasSementes(gidsDoRegistro(cache3.reg), g.id, hoje).slice(0, SEED_TENTATIVAS);
+  const size = meus.length;
+  for (const sid of ordem) {
+    const [reserva, semente] = await Promise.all([kvs.get(coopWarSeedKey(sid)), lerGrupo2(sid)]);
+    if (reserva) continue;
+    if (!semente || semente.id !== sid || semente.seed?.tag !== SEED_TAG || !Array.isArray(semente.members)) continue;
+    const sims = (Array.isArray(semente.seed.members) ? semente.seed.members : []).filter((m) => typeof m === "string" && semente.members.includes(m) && !g.members.includes(m));
+    const B2 = await esquadraoSemente(env, sims, size);
+    if (B2.length < size) continue;
+    await kvs.put(coopWarSeedKey(sid), JSON.stringify({ day: hoje, gid: g.id, at: Date.now() }), { expirationTtl: SEED_RESERVA_TTL });
+    const { aWins, bWins, duels } = resolverGuerra(meus, B2, `guerra|${g.id}|${sid}|${hoje}`);
+    const meu = resultadoDe(aWins, bWins);
+    const last = { day: hoje, outcome: meu, duels: duelosDe(duels, "a"), size, enemy: semente.name };
+    await Promise.all([
+      kvs.put(coopWarResKey(g.id), JSON.stringify(last), { expirationTtl: WAR_RES_TTL }),
+      // Seiva só para o lado REAL (a mesma de uma guerra entre guildas reais); o lado semente não recebe nada.
+      ...meus.map((x2) => somarPontos(env, g.id, x2.save, "guerra", WAR_PTS[meu]))
+    ]);
+    console.log("guild war: rival semente", { size, outcome: meu });
+    return { state: "done", waiting: null, last };
+  }
+  return null;
+}
+__name(guerraContraSemente, "guerraContraSemente");
 
 // api/_claPraca.js
 var PRACA_TTL = 86400 * 120;
@@ -11842,7 +12074,7 @@ async function regar(env, g, save, hoje) {
   return { ok: true };
 }
 __name(regar, "regar");
-function hash322(str) {
+function hash323(str) {
   let h = 2166136261;
   for (let i2 = 0; i2 < str.length; i2++) {
     h ^= str.charCodeAt(i2);
@@ -11850,7 +12082,7 @@ function hash322(str) {
   }
   return h >>> 0;
 }
-__name(hash322, "hash32");
+__name(hash323, "hash32");
 function funcaoAtribuida(g, save, hoje) {
   const membros = Array.isArray(g?.members) ? g.members : [];
   let cands = membros.filter((m) => {
@@ -11859,9 +12091,9 @@ function funcaoAtribuida(g, save, hoje) {
   });
   if (!cands.length && membros.length) cands = [membros[0]];
   if (!cands.length) return "water";
-  let protetor = cands[0], menor = hash322(`${g.id}|${hoje}|${cands[0]}`);
+  let protetor = cands[0], menor = hash323(`${g.id}|${hoje}|${cands[0]}`);
   for (const m of cands.slice(1)) {
-    const h = hash322(`${g.id}|${hoje}|${m}`);
+    const h = hash323(`${g.id}|${hoje}|${m}`);
     if (h < menor || h === menor && m < protetor) {
       menor = h;
       protetor = m;
@@ -12127,7 +12359,7 @@ var CHEFE_EMBLEMAS_TETO = 10;
 var TRILHA_SEIVA = 3;
 var TRILHA_EMBLEMAS = 1;
 var TRILHA_TENTATIVAS_DIA = 12;
-function hash323(texto2) {
+function hash324(texto2) {
   let h = 2166136261;
   const s = String(texto2);
   for (let i2 = 0; i2 < s.length; i2++) {
@@ -12136,7 +12368,7 @@ function hash323(texto2) {
   }
   return h >>> 0;
 }
-__name(hash323, "hash32");
+__name(hash324, "hash32");
 function nivelDoMisterio(k) {
   const n = Math.max(0, Math.floor(Number(k) || 0));
   return Math.min(NIVEL_MAX, 1 + n);
@@ -12161,7 +12393,7 @@ __name(danoBaseFor, "danoBaseFor");
 function kindDoMisterio(gid, k) {
   const n = Math.max(0, Math.floor(Number(k) || 0));
   if (n === 0) return "boss";
-  return hash323(`${gid}:${n}`) % 100 < TRAIL_PCT ? "trail" : "boss";
+  return hash324(`${gid}:${n}`) % 100 < TRAIL_PCT ? "trail" : "boss";
 }
 __name(kindDoMisterio, "kindDoMisterio");
 var BOSS_ROSTER = Object.freeze([
@@ -12192,8 +12424,8 @@ var BOSS_ROSTER = Object.freeze([
 var ARAUTO = Object.freeze({ id: "arauto-do-fim", element: "juizo_final" });
 function bossDoMisterio(gid, k) {
   const level = nivelDoMisterio(k);
-  if (level >= ARAUTO_NIVEL_MIN && (level === NIVEL_MAX || hash323(`${gid}:${k}:arauto`) % 4 === 0)) return ARAUTO;
-  return BOSS_ROSTER[hash323(`${gid}:${k}:boss`) % BOSS_ROSTER.length];
+  if (level >= ARAUTO_NIVEL_MIN && (level === NIVEL_MAX || hash324(`${gid}:${k}:arauto`) % 4 === 0)) return ARAUTO;
+  return BOSS_ROSTER[hash324(`${gid}:${k}:boss`) % BOSS_ROSTER.length];
 }
 __name(bossDoMisterio, "bossDoMisterio");
 var maisDias = /* @__PURE__ */ __name((dia, n) => diaDeNum(numDia(dia) + n), "maisDias");
@@ -12487,7 +12719,7 @@ function seededRng(seed) {
   };
 }
 __name(seededRng, "seededRng");
-var jogoDaTrilha = /* @__PURE__ */ __name((save, dia, k) => TRAIL_GAMES[hash323(`${save}:${dia}:${k}`) % TRAIL_GAMES.length], "jogoDaTrilha");
+var jogoDaTrilha = /* @__PURE__ */ __name((save, dia, k) => TRAIL_GAMES[hash324(`${save}:${dia}:${k}`) % TRAIL_GAMES.length], "jogoDaTrilha");
 function vizinhos(cell, size) {
   const r = Math.floor(cell / size), c = cell % size, out = [];
   if (r > 0) out.push(cell - size);
@@ -13025,13 +13257,13 @@ function possuidosDoSave(stored) {
   return /* @__PURE__ */ new Set([...lista2(s.ownedBackgrounds), ...lista2(s.ownedFurniture), ...sanitizeHexsmith(s.hexsmith).owned]);
 }
 __name(possuidosDoSave, "possuidosDoSave");
-var descontoDoItem = /* @__PURE__ */ __name((semente, id) => DESCONTO_MIN + hash323(`${semente}:desc:${id}`) % (DESCONTO_MAX - DESCONTO_MIN + 1), "descontoDoItem");
+var descontoDoItem = /* @__PURE__ */ __name((semente, id) => DESCONTO_MIN + hash324(`${semente}:desc:${id}`) % (DESCONTO_MAX - DESCONTO_MIN + 1), "descontoDoItem");
 var precoComDesconto = /* @__PURE__ */ __name((preco, pct) => Math.max(1, Math.round(preco * (100 - pct) / 100)), "precoComDesconto");
 function haFeiraDeVerdade(save, hoje, bonusPct = 0) {
-  return ISO_DIA2.test(hoje) && hash323(`feiraLoja:${save}:${hoje}:roll`) % 100 < FEIRA_LOJA_PCT + Math.max(0, bonusPct);
+  return ISO_DIA2.test(hoje) && hash324(`feiraLoja:${save}:${hoje}:roll`) % 100 < FEIRA_LOJA_PCT + Math.max(0, bonusPct);
 }
 __name(haFeiraDeVerdade, "haFeiraDeVerdade");
-var ordenar2 = /* @__PURE__ */ __name((lista2, semente, rotulo) => [...lista2].sort((a, b) => hash323(`${semente}:${rotulo}:${a.id}`) - hash323(`${semente}:${rotulo}:${b.id}`) || (a.id < b.id ? -1 : 1)), "ordenar");
+var ordenar2 = /* @__PURE__ */ __name((lista2, semente, rotulo) => [...lista2].sort((a, b) => hash324(`${semente}:${rotulo}:${a.id}`) - hash324(`${semente}:${rotulo}:${b.id}`) || (a.id < b.id ? -1 : 1)), "ordenar");
 function candidatosHex() {
   const ids3 = [
     ...SPECIAL_FAMILIES.map((f) => `coroa:${f}`),
@@ -13044,10 +13276,10 @@ __name(candidatosHex, "candidatosHex");
 function sortearFeiraLoja(save, hoje, possuidos = /* @__PURE__ */ new Set(), bonusPct = 0) {
   if (!haFeiraDeVerdade(save, hoje, bonusPct)) return null;
   const semente = `${save}:${hoje}`;
-  let r = hash323(`feiraLoja:${semente}:vendedor`) % 100;
+  let r = hash324(`feiraLoja:${semente}:vendedor`) % 100;
   const vendedor = FEIRA_LOJA_VENDEDORES.find((v) => v.ativo && (r -= v.peso) < 0) ?? FEIRA_LOJA_VENDEDORES[0];
   const livres = /* @__PURE__ */ __name((i2) => !(unico(i2.tipo) && possuidos.has(i2.id)), "livres");
-  const quer = ITENS_MIN + hash323(`feiraLoja:${semente}:n`) % (ITENS_MAX - ITENS_MIN + 1);
+  const quer = ITENS_MIN + hash324(`feiraLoja:${semente}:n`) % (ITENS_MAX - ITENS_MIN + 1);
   const escolhidos = vendedor.hex ? ordenar2(candidatosHex().filter(livres), semente, "hex").slice(0, quer) : ordenar2(CATALOGO.filter(vendedor.pool).filter(livres), semente, "item").slice(0, quer);
   if (escolhidos.length === 0) return null;
   const items = escolhidos.map((i2) => {
@@ -13164,7 +13396,7 @@ function sortearEncontro(save, hoje, bonusPct = 0) {
   if (!ISO_DIA3.test(hoje)) return "chefe";
   if (haFeiraDeVerdade(save, hoje, bonusPct)) return "mercador";
   const sobra = 100 - 8 - Math.max(0, bonusPct);
-  return hash323(`encontro:${save}:${hoje}:desafio`) % 1e4 < Math.round(DESAFIO_PCT / sobra * 1e4) ? "desafio" : "chefe";
+  return hash324(`encontro:${save}:${hoje}:desafio`) % 1e4 < Math.round(DESAFIO_PCT / sobra * 1e4) ? "desafio" : "chefe";
 }
 __name(sortearEncontro, "sortearEncontro");
 function resolverEncontro(sorteado, abre) {
@@ -13176,7 +13408,7 @@ function resolverEncontro(sorteado, abre) {
 }
 __name(resolverEncontro, "resolverEncontro");
 function achadoDoDia(save, hoje) {
-  return { bits: ACHADO_BITS_MIN + hash323(`achado:${save}:${hoje}`) % (ACHADO_BITS_MAX - ACHADO_BITS_MIN + 1) };
+  return { bits: ACHADO_BITS_MIN + hash324(`achado:${save}:${hoje}`) % (ACHADO_BITS_MAX - ACHADO_BITS_MIN + 1) };
 }
 __name(achadoDoDia, "achadoDoDia");
 function eventoDoDesafio(hoje, level, cumprido = false) {
@@ -13331,8 +13563,10 @@ var GUILD_ACTIONS = Object.freeze({
   guildRequestCancel: "POST",
   guildRequests: "GET",
   guildRequestDecide: "POST",
-  guildRequestsOpen: "POST"
+  guildRequestsOpen: "POST",
+  guildInvite: "POST"
 });
+var GUILD_INVITE_LIMIT = { limit: 20, windowMs: 36e5 };
 var GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 36e5 };
 var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
 async function onRequestOptions7() {
@@ -13544,7 +13778,7 @@ async function handleGuild({ request, env }) {
     if (await grupoDe(env, id, semana)) return json15({ clans: [], pending: null });
     const pend = await lerPedido(env, id);
     const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
-    const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS)).sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
+    const clans = await listarDiretorio(env, COOP_MAX_MEMBERS);
     return json15({ clans, pending });
   }
   if (action === "guildRequestCancel") {
@@ -13557,7 +13791,7 @@ async function handleGuild({ request, env }) {
     const entrada = idOpacoValido(dirId) ? await lerEntrada(env, dirId) : null;
     const g = entrada ? await lerGrupo(env, entrada.gid) : null;
     if (!g) {
-      if (entrada) await kvOrThrow(env).delete(coopDirKey(dirId));
+      if (entrada) await apagarEntrada(env, dirId);
       return erro("invalid clan", 404);
     }
     const atual = await lerPedido(env, id);
@@ -13603,6 +13837,35 @@ async function handleGuild({ request, env }) {
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
     return json15({ result: "approved", guild: await montar(r.g, id, hoje) });
+  }
+  if (action === "guildInvite") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const to = String(body.to ?? "");
+    if (!VALID_ID3.test(to)) return erro("invalid target", 400);
+    const alvo = await saveIdForPublicId(env, to);
+    const perfil = alvo ? await getProfile(env, alvo).catch(() => null) : null;
+    if (!alvo || !perfil || perfil.publicHidden === true) return erro("player not found", 404);
+    if (alvo === id || g.members.includes(alvo)) return erro("already member", 409);
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
+    if (await grupoDe(env, alvo, semana)) return erro("already in a {g}", 409);
+    const gate2 = takeToken("guildInvite", id, GUILD_INVITE_LIMIT);
+    if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS7);
+    const eu = await getProfile(env, id).catch(() => null);
+    const quem = eu && eu.publicHidden !== true && typeof eu.name === "string" ? eu.name.slice(0, 40) : "";
+    try {
+      await enqueueMail(env, kvOrThrow(env), alvo, {
+        mid: `ginv:${g.id}:${hoje}`,
+        titlePt: "Convite para um cl\xE3",
+        titleEn: "Clan invite",
+        bodyPt: `${quem || "Algu\xE9m"} convidou voc\xEA para o cl\xE3 ${g.name}. Para entrar, abra o Sal\xE3o do cl\xE3 e use o c\xF3digo ${g.code}.`,
+        bodyEn: `${quem || "Someone"} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
+        at: Date.now()
+      });
+    } catch {
+      return erro("try again", 503);
+    }
+    return json15({ invited: true });
   }
   if ((action === "guildCreate" || action === "guildJoin") && (await loadDuelSideWithSprite(env, id)).bbLocked) {
     return erro("bb-locked", 403, { reason: "bb-locked", ...BB_LOCKED_MESSAGE });
@@ -14846,22 +15109,13 @@ async function withDuelLock(key2, fn) {
   }
 }
 __name(withDuelLock, "withDuelLock");
-var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names", "strays", "evoFeed", "sparOpponents"]);
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "strays", "evoFeed", "sparOpponents"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
 var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult", "strays", "evoFeed"]);
 var EDGE_TTL_SECONDS = 60;
 var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
-var PID_PLACEHOLDER = "0".repeat(32);
-async function saveIdForPublicId(env, pid) {
-  if (!VALID_ID4.test(pid || "")) return null;
-  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
-  const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
-  if (!saveId || pid === legado) return null;
-  return saveId;
-}
-__name(saveIdForPublicId, "saveIdForPublicId");
 async function pidDeSaveId(env, saveId, { semEscondidos = false } = {}) {
   const p = await getProfile(env, saveId);
   if (semEscondidos && isHidden(p)) return null;
@@ -14927,6 +15181,11 @@ async function listPrefix2(env, prefix, limit = 100) {
   return out;
 }
 __name(listPrefix2, "listPrefix");
+var PLAYER_SEARCH_MIN = 2;
+var PLAYER_SEARCH_MAX = 10;
+var PLAYER_SEARCH_SCAN = 30;
+var PLAYER_SEARCH_Q_MAX = 24;
+var PLAYER_SEARCH_LIMIT = { limit: 30, windowMs: 6e4 };
 var NICK_SCAN_PAGES = 10;
 var NICK_CANDIDATOS = 120;
 var BACKFILL_LOTE = 40;
@@ -14970,14 +15229,14 @@ async function onRequest4(context) {
   const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && // `rank&id=` devolve o `me` DA PESSOA (ator autorizado, TORC-5): resposta
   // por pessoa não vai para cache de URL, que serviria o `me` dela a quem
   // repetisse o endereço e pularia a autorização.
-  !(action === "rank" && url.searchParams.has("id")) && typeof caches !== "undefined" && caches.default;
+  !(action === "rank" && url.searchParams.has("id")) && // §351: a busca do "Convidar amigo" (`players&lookup=friend`) é autorizada por conta e tira a própria conta da resposta —
+  // mesma razão do `rank&id=`: cache de URL serviria a resposta de um a outro e pularia a autorização.
+  !(action === "players" && url.searchParams.get("lookup") === "friend") && typeof caches !== "undefined" && caches.default;
   let hit = null;
   if (cacheable) hit = await caches.default.match(request).catch(() => null);
-  const gate2 = takeToken(
-    "community",
-    ip,
-    hit ? LIGHT_LIMIT : HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT
-  );
+  const pesada = !hit && HEAVY_ACTIONS.has(action);
+  let gate2 = takeToken("community", ip, LIGHT_LIMIT);
+  if (gate2.ok && pesada) gate2 = takeToken("community-heavy", ip, HEAVY_LIMIT);
   if (!gate2.ok) {
     console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate2.retryAfter });
     return tooManyRequests(gate2.retryAfter, CORS8);
@@ -15128,7 +15387,7 @@ async function handleCommunity(context) {
       nameTaken = true;
       apelidoFinal = null;
     }
-    let nickIx = prev.nickIx === true || !!apelidoPedido && !nameTaken;
+    let nickIx = prev.nickIx === true && prev.nickfIx === true || !!apelidoPedido && !nameTaken;
     if (!nickIx) {
       const gravado = sanitizarNomeDeGuilda(prev.name);
       if (gravado && !/^(an[ôo]nimo|anonymous)$/i.test(gravado)) {
@@ -15182,7 +15441,7 @@ async function handleCommunity(context) {
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO2.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
-      ...nickIx ? { nickIx: true } : {},
+      ...nickIx ? { nickIx: true, nickfIx: true } : {},
       ...especialNome ? { especialNome } : {},
       ...especialNomeAt ? { especialNomeAt } : {},
       // Faixa de evoluções: atravessam a regravação; o bloco abaixo só os faz subir.
@@ -15288,9 +15547,57 @@ async function handleCommunity(context) {
     nomes.sort((a, b) => a.localeCompare(b));
     return json3({ names: nomes.slice(0, 8) });
   }
+  if (action === "playerSearch" && method === "GET") {
+    if (!VALID_ID4.test(id || "")) return json3({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const termo = Array.from(foldNome(String(url.searchParams.get("q") || "").slice(0, 80))).slice(0, PLAYER_SEARCH_Q_MAX).join("");
+    if (Array.from(termo).length < PLAYER_SEARCH_MIN) return json3({ error: "query too short", min: PLAYER_SEARCH_MIN }, 400);
+    const gate2 = takeToken("player-search", id, PLAYER_SEARCH_LIMIT);
+    if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS8);
+    const prefixo = nickFoldPrefix(termo);
+    if (!prefixo) return json3({ error: "query too short", min: PLAYER_SEARCH_MIN }, 400);
+    const page = await kvOrThrow(env).list({ prefix: prefixo, limit: PLAYER_SEARCH_SCAN });
+    const memoGuilda = /* @__PURE__ */ new Map();
+    const vistos = /* @__PURE__ */ new Set();
+    const achados = [];
+    for (const k of page.keys ?? []) {
+      if (achados.length >= PLAYER_SEARCH_MAX) break;
+      const dono = saveIdDaChaveDobrada(k.name);
+      if (!VALID_ID4.test(dono) || dono === id || vistos.has(dono)) continue;
+      vistos.add(dono);
+      let p = null;
+      try {
+        p = await getProfile(env, dono);
+      } catch {
+        continue;
+      }
+      if (!p || isHidden(p) || typeof p.name !== "string") continue;
+      if (!foldNome(p.name).startsWith(termo)) continue;
+      const pid = await pidSoLeitura(p);
+      if (!pid) continue;
+      const sUrl = spriteUrlOrNull(p.spriteUrl);
+      const linha = artLineOrNull(p.artLine);
+      achados.push({
+        id: pid,
+        name: p.name,
+        ...campoGuilda(await nomeDaGuildaDe(env, dono, memoGuilda)),
+        stage: /^[A-Za-z0-9_.-]{1,40}$/.test(String(p.stage ?? "")) ? p.stage : "rookie",
+        ...sUrl ? { spriteUrl: sUrl } : {},
+        ...linha ? { artLine: linha } : {}
+      });
+    }
+    return json3({ players: achados });
+  }
   if (action === "players" && method === "GET") {
     const search = (url.searchParams.get("search") || "").normalize("NFKC").trim().toLowerCase().slice(0, 40);
     const season = currentSeason();
+    const lookupAmigo = url.searchParams.get("lookup") === "friend";
+    if (lookupAmigo) {
+      if (!search) return json3({ error: "search required" }, 400);
+      const denied = await denyUnlessOwner(id);
+      if (denied) return denied;
+    }
     const players = [];
     let keys;
     let searchTruncated = false;
@@ -15302,6 +15609,7 @@ async function handleCommunity(context) {
       keys = await listPrefix2(env, "profile:", 300);
     }
     const vistos = /* @__PURE__ */ new Set();
+    const memoGuilda = /* @__PURE__ */ new Map();
     for (const k of keys) {
       let profileKey = k;
       if (search) {
@@ -15319,9 +15627,23 @@ async function handleCommunity(context) {
       } catch {
         continue;
       }
-      if (!p.pvpEnabled || isHidden(p)) continue;
+      if (isHidden(p)) continue;
+      if (lookupAmigo ? p.id === id : !p.pvpEnabled) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
-      players.push(await publicProfile(env, p));
+      if (lookupAmigo) {
+        const pid = p.pvpEnabled ? await ensurePid(env, p) : await pidSoLeitura(p);
+        if (!pid) continue;
+        const sUrl = spriteUrlOrNull(p.spriteUrl);
+        players.push({
+          id: pid,
+          name: p.name,
+          stage: /^[A-Za-z0-9_.-]{1,40}$/.test(String(p.stage ?? "")) ? p.stage : "rookie",
+          ...sUrl ? { spriteUrl: sUrl } : {}
+        });
+        if (players.length >= 50) break;
+        continue;
+      }
+      players.push({ ...await publicProfile(env, p), ...campoGuilda(await nomeDaGuildaDe(env, p.id, memoGuilda)) });
       if (players.length >= 50) break;
     }
     players.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
@@ -15405,7 +15727,8 @@ async function handleCommunity(context) {
         friends: friendPids2,
         rankPoints: rank.points,
         wins: rank.wins,
-        losses: rank.losses
+        losses: rank.losses,
+        ...campoGuilda(await nomeDaGuildaDe(env, targetSave))
       })
     });
   }
@@ -15461,6 +15784,7 @@ async function handleCommunity(context) {
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
     const publicDuel = /* @__PURE__ */ __name((side) => side ? { level: side.combatant.level } : null, "publicDuel");
     const meSide = id ? await loadDuelSide2(id) : null;
+    const memoGuilda = /* @__PURE__ */ new Map();
     const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
       const effectiveSprite = await spriteVivoDoSimulado(env, saveId) ?? pub.spriteUrl ?? spriteUrl;
@@ -15469,6 +15793,7 @@ async function handleCommunity(context) {
         ...pub,
         artLine: pub.artLine ?? artLine,
         ...effectiveSprite ? { spriteUrl: effectiveSprite } : {},
+        ...campoGuilda(await nomeDaGuildaDe(env, saveId, memoGuilda)),
         duel: publicDuel(side)
       };
     }));
@@ -15485,6 +15810,8 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return { res: json3({ error: "pvp disabled" }, 403) };
+    const meuVinculo = await bondLevelOf(env, id);
+    if (meuVinculo > 0 && !gateFor("ranqueada", meuVinculo).open) return { res: json3({ error: "ranked locked", minBondLevel: gateFor("ranqueada", 1).minBond }, 403) };
     if (!opp?.pvpEnabled || isHidden(opp) || (await adminSaveIds(env)).has(oppSave)) return { res: json3({ error: "opponent unavailable" }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today2()) {
@@ -15683,7 +16010,7 @@ async function handleCommunity(context) {
       const pub = await publicProfile(env, profile);
       const effectiveSprite = await spriteVivoDoSimulado(env, saveId) ?? pub.spriteUrl ?? spriteUrl;
       await formaVista(env, saveId);
-      opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...effectiveSprite ? { spriteUrl: effectiveSprite } : {}, duel: { level: side.combatant.level } });
+      opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...effectiveSprite ? { spriteUrl: effectiveSprite } : {}, ...campoGuilda(await nomeDaGuildaDe(env, saveId)), duel: { level: side.combatant.level } });
     }
     const meSide = await loadDuelSide2(id);
     const tickets = sparTicketStatus(await readSparTicket(env, id, diaDe(await fixarTzTreino(env, id, tzDe(url.searchParams.get("zone"), url.searchParams.get("off"))))));
@@ -15787,6 +16114,7 @@ async function handleCommunity(context) {
     const meId = meIdIdx;
     let meRow = null;
     const allPoints = [];
+    const saveDaLinha = /* @__PURE__ */ new Map();
     for (const k of keys) {
       if (ordenados && rows.length >= 50) break;
       const raw = await kvOrThrow(env).get(k);
@@ -15810,7 +16138,7 @@ async function handleCommunity(context) {
         continue;
       }
       const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
-      rows.push({
+      const linha = {
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
         // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
@@ -15828,11 +16156,14 @@ async function handleCommunity(context) {
         losses: rec.losses,
         // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
         lifetime: p?.lifetimePoints ?? 0
-      });
+      };
+      if (p) saveDaLinha.set(linha, ownerSave);
+      rows.push(linha);
     }
     rows.sort((a, b) => b.points - a.points);
+    const publicas = await comGuildas(env, rows.slice(0, 50), (r) => saveDaLinha.get(r));
     if (autenticado && semLinha.length) await podarIndice(env, season, semLinha);
-    if (action === "seasonResult") return json3({ season, top3: rows.slice(0, 3) });
+    if (action === "seasonResult") return json3({ season, top3: publicas.slice(0, 3) });
     let myPlace = null;
     if (meId && admins.has(meId)) {
       myPlace = null;
@@ -15851,7 +16182,7 @@ async function handleCommunity(context) {
       const at = allPoints.findIndex((r) => r.owner === meId);
       if (at >= 0) myPlace = at + 1;
     }
-    return json3({ season, rank: rows.slice(0, 50), ...meRow ? { me: meRow } : {}, ...myPlace ? { myPlace } : {} });
+    return json3({ season, rank: publicas, ...meRow ? { me: meRow } : {}, ...myPlace ? { myPlace } : {} });
   }
   if (action === "seasonHistory" && method === "GET") {
     const denied = await denyUnlessOwner(id);
@@ -16097,7 +16428,7 @@ async function handleCommunity(context) {
     for (const r of convites.in.slice(-MAX_IN).reverse()) {
       const p = await getProfile(env, r.from);
       if (!p || isHidden(p) || p.simulated === true) continue;
-      incoming.push({ id: await ensurePid(env, p), name: p.name, at: r.at });
+      incoming.push({ id: await ensurePid(env, p), name: p.name, ...campoGuilda(await nomeDaGuildaDe(env, r.from)), at: r.at });
       if (incoming.length >= 20) break;
     }
     const outgoing = [];
@@ -18822,7 +19153,6 @@ var DAILY_EVENTS = [
   "melhoria",
   "mente",
   "cla",
-  "cambio",
   "cenario",
   "prato",
   "hex",
@@ -18863,7 +19193,6 @@ var DAILY_MISSION_IDS = [
   "n-tessela",
   "n-zeph",
   "n-aurea",
-  "n-farthing",
   "n-lume",
   "n-sumi",
   "n-vultrak",
@@ -20933,7 +21262,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-o60KS6/functionsRoutes-0.5177997061093841.mjs
+// ../.wrangler/tmp/pages-lCSbqQ/functionsRoutes-0.2073489275199335.mjs
 var routes = [
   {
     routePath: "/api/account",
