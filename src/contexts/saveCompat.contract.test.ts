@@ -61,6 +61,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-chama-pago',
   'soulmon-chama-aviso',
   'soulmon-feira-desafio',
+  'soulmon-feira-volta',
   'soulmon-barrage-best-2',
   'soulmon-library-forms',
   'soulmon-intro-cinematica-vista',

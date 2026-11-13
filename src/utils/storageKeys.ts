@@ -232,6 +232,7 @@ export const STORAGE_KEYS = {
   /** Feira (04/11/2026): o desafio que a volta da Missão trouxe HOJE (`{ day, k, done }`). Só do aparelho, nunca no
    *  save — inimigo de um dia anterior não cumprido "escapou". Dono: `utils/feiraDesafio.ts`. */
   FEIRA_DESAFIO: 'soulmon-feira-desafio',
+  FEIRA_VOLTA: 'soulmon-feira-volta',
   /** OFICINA DO FOCO (04/10/2026) — o timer em curso (modo, fase, `endAt` em timestamp). Só do
    *  aparelho, nunca no save. Dono: `utils/focoTimer.ts`. */
   FOCO_TIMER: 'soulmon-foco-timer',

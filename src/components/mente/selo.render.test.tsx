@@ -31,6 +31,16 @@ describe('SeloGame', () => {
     expect(onEarn).toHaveBeenCalledTimes(1);
   });
 
+  it('as 6 opções descem para a base da tela, separadas da grade (marginTop auto, gap largo)', () => {
+    const { container } = renderWithCss(<SeloGame {...base} language="pt-BR" onEarnPoints={() => {}} />);
+    fireEvent.click(container.querySelector('[data-selo-start]')!);
+    const opts = container.querySelector('[data-selo-options]') as HTMLElement;
+    expect(opts.querySelectorAll('[data-selo-option]').length).toBe(6);
+    expect(opts.style.marginTop).toBe('auto');
+    expect(parseInt(opts.style.gap, 10)).toBeGreaterThanOrEqual(12);
+    expect(parseInt(opts.style.paddingTop, 10)).toBeGreaterThanOrEqual(16);
+  });
+
   it('modo desafio (Calabouço): uma escolha devolve o resultado, sem Bits', () => {
     const onResult = vi.fn();
     const onEarn = vi.fn();

@@ -239,6 +239,7 @@ import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTick
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
 import { recordFeiraDesafio } from './utils/feiraDesafio';
+import { recordFeiraVolta, markFeiraVoltaSeen, readFeiraVolta, feiraVoltaPendente } from './utils/feiraVolta';
 import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 // Prédios do clã: só TIPO aqui. O código entra por import() dinâmico (fora do chunk de entrada; `/api/guild` não pode
 // entrar nele — entradaEnxuta.contract.test.ts).
@@ -5395,6 +5396,14 @@ export default function App() {
   // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Soulmon aparece de novo.
   // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
   // Qualquer outra resposta (limite do dia, fenômeno dissipado, sem guilda, sem login) encerra a missão em silêncio.
+  /** "Ver o que ele achou": reabre o resultado guardado da volta (mistério ou Feira de verdade). Só marca como visto ao FECHAR. */
+  const handleFeiraVoltaVer = useCallback(() => {
+    const p = feiraVoltaPendente(readFeiraVolta(), playerDayKey(new Date(), gameState.playerDayTz));
+    if (!p) return;
+    if (p.kind === 'loja') setFeiraLoja(p.loja);
+    else if (p.kind === 'evento') setFeiraEvento(p.evento);
+    else markFeiraVoltaSeen();
+  }, [gameState.playerDayTz]);
   const guildMission = gameState.guildMission ?? null;
   const [, voltouDaMissao] = useState(0); // re-render na hora da volta: o pet reaparece mesmo se o registro estiver esperando a rede
   useEffect(() => {
@@ -5413,6 +5422,12 @@ export default function App() {
         const { hitGuildRaidEvento } = await import('./utils/community');
         const volta = await hitGuildRaidEvento(saveId, gameState.playerDayTz);
         cancelFeiraVolta();
+        // O RESULTADO DA VOLTA fica guardado até o jogador vê-lo (a sala da Feira mostra "Ver o que ele achou"; `utils/feiraVolta.ts`).
+        { const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+          if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja)) recordFeiraVolta({ day: hoje, kind: 'loja', loja: volta.feiraLoja });
+          else if (volta.evento && feiraEventoAbre(volta.evento)) recordFeiraVolta({ day: hoje, kind: 'evento', evento: volta.evento });
+          else if (volta.achado) recordFeiraVolta({ day: hoje, kind: 'achado', achado: volta.achado, seen: true }); // o toast abaixo já o diz
+          else recordFeiraVolta({ day: hoje, kind: 'nada' }); }
         // O DESAFIO DO DIA: o inimigo que ele trouxe só vale HOJE (amanhã "escapou"). Descanso não é desafio.
         if (volta.evento && feiraEventoAbre(volta.evento)) recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
@@ -8920,7 +8935,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, earned: earnedBits(gameState), ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, earned: earnedBits(gameState), ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
               </ResultExtrasContext.Provider>
             </Suspense>
@@ -10481,7 +10496,7 @@ export default function App() {
             tz={gameState.playerDayTz}
             evento={feiraEvento}
             me={feiraMe}
-            onClose={() => setFeiraEvento(null)}
+            onClose={() => { markFeiraVoltaSeen(); setFeiraEvento(null); }}
             onCredit={handleFeiraCredit}
           />
         </PresentationSlot>
@@ -10508,7 +10523,7 @@ export default function App() {
             getState={() => gameStateRef.current}
             onBuyShop={handleFeiraLojaBuy}
             onHexBought={handleFeiraHexBought}
-            onClose={() => setFeiraLoja(null)}
+            onClose={() => { markFeiraVoltaSeen(); setFeiraLoja(null); }}
           />
         </PresentationSlot>
       )}
