@@ -311,3 +311,9 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 ### `src/hooks/useGroveAtaque.ts`
 
 **`useGroveAtaque({ saveId, playerDayTz, enabled, reler }) → boolean` (beta12 §G, 12/11/2026):** lê o `underAttack` de `claPlantio` (`claApi.getPlantio`) só com memória de roda neste aparelho, ao montar, ao voltar ao app e ao voltar à Home, com intervalo mínimo `GROVE_ATAQUE_MIN_MS` (60 s) e sem timer. `bosqueSobAtaque(vista)` é a regra pura (planta de pé, não madura, atacada, ainda sem proteção). Nada vai para o save (`guildNoSave.contract`).
+
+**`useGroveEstado(...) → { atacado, cuidavel }` (§327, 13/11/2026):** a MESMA consulta serve os dois sinais; `useGroveAtaque` virou um invólucro que devolve só `atacado`. `bosqueCuidavel(vista)` = planta de pé, não madura e ação do dia sorteável (`canDraw`) ou sorteada (`task`), a condição do botão "Cuidar" do `PlantioVisor`.
+
+### `src/hooks/useBalaoDica.ts`
+
+**§327 (13/11/2026):** `useDicaVistas()` → `[vistas, marcar]` (registro de aparições no aparelho, `STORAGE_KEYS.BALAO_DICAS_VISTAS`, leitura tolerante). `useDicaDourada({ presentes, vistas, bloqueado, onMostrar })` → `{ ativa, encerrar }`: escolhe a dica dourada fora do cooldown quando nada bloqueia (Home na tela e nenhum balão dourado de evento na vez), grava a aparição e a tira do visor em `DICA_DOURADA_VISIVEL_MS`; sai na hora se a condição acabar.

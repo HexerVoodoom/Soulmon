@@ -34,7 +34,7 @@ import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungerTierAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -43,7 +43,7 @@ import { useMailbox } from './hooks/useMailbox';
 import { applyJourneyGrants } from './utils/focusBoard';
 import type { JourneyGrants } from './utils/focusJourney';
 import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired } from './utils/focusKey';
-import { grantRefugioEnergy } from './utils/refugio/energia';
+import { grantRefugioEnergy, refugioEnergyTaken } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -58,7 +58,7 @@ import {
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
 import { OPEN_FRAME_SHOP_EVENT } from './utils/frameShopNav';
-import { GO_TO_BUILDING_EVENT } from './utils/blockedAction';
+import { GO_TO_BUILDING_EVENT, requestGoToBuilding } from './utils/blockedAction';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -207,7 +207,9 @@ import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWa
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, type BalaoTipo } from './utils/balaoDourado';
-import { useGroveAtaque } from './hooks/useGroveAtaque';
+import { useGroveEstado } from './hooks/useGroveAtaque';
+import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
+import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
 import { atividadesParaAutoCheck, registrarAuto, progressoDePassos, type AutoRecurso } from './utils/tarefaLink';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
@@ -219,7 +221,7 @@ import { feiraLojaAbre, feiraLojaShownKey, applyFeiraLojaBuy, applyServerFeiraHe
 import type { FeiraCredit } from './utils/feiraCredit';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
-import { gateLine } from './utils/gates';
+import { gateLine, buildingGateFor } from './utils/gates';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -4706,7 +4708,7 @@ export default function App() {
   /* ── BALÕES DOURADOS (beta12 §G, `utils/balaoDourado.ts`) ──────────────────────────────────────────────────────────────────────
      Condições: Bosque sob ataque (`useGroveAtaque`: o `underAttack` do servidor, sem exigir tarefa feita); Soulmon na Fenda; encontro
      da volta ainda fechado. UM visível, por prioridade; o dispensado do DIA (gravado no SAVE ao tocar e ser direcionado) libera o próximo. */
-  const bosqueAtacado = useGroveAtaque({ saveId, playerDayTz: gameState.playerDayTz, enabled: !demo, reler: currentView === 'home' });
+  const { atacado: bosqueAtacado, cuidavel: bosqueCuidavel } = useGroveEstado({ saveId, playerDayTz: gameState.playerDayTz, enabled: !demo, reler: currentView === 'home' });
   const diaBalao = playerDayIso(new Date(), gameState.playerDayTz);
   const balaoTipo: BalaoTipo | null = escolherBalao({ grove: bosqueAtacado, rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao);
   const dispensarBalao = useCallback((tipo: BalaoTipo) => {
@@ -4718,8 +4720,31 @@ export default function App() {
   }, [setGameState]);
   const dispensarBalaoRef = useRef(dispensarBalao);
   dispensarBalaoRef.current = dispensarBalao;
-  /** O toque: Bosque → abre o Bosque (sem pré-requisito) e dispensa; Fenda → o aviso com "Ir à Fenda" (dispensa ao ESCOLHER ir); achado → abre o encontro. */
-  const handleBalaoDourado = useCallback((tipo: BalaoTipo) => {
+  /* ── BALÕES DE DICA (§327, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
+     e fora da Home não entra; a comum ocupa o turno da fala ociosa do HUD. Cooldown por tipo, no aparelho (`useDicaVistas`). */
+  const agoraDica = Date.now();
+  const energiaDica = settleEnergy(gameState, agoraDica);
+  const bondDica = bondLevelFor(gameState.totalXP ?? 0);
+  const presentesDica = dicasPresentes({
+    presente: !naMasmorra && !isMissionAway(gameState.guildMission ?? null, agoraDica) && !isSleeping && !dayWakePending,
+    energia: energiaDica.energyPoints ?? 0,
+    energiaMax: maxEnergyOf(gameState),
+    fome: hungerTierAt(gameState.hunger, agoraDica),
+    temComida: Object.values(gameState.foodInventory ?? {}).some(n => (n ?? 0) > 0),
+    refugioDaEnergia: buildingGateFor('forja.refugio', bondDica).open && !refugioEnergyTaken(gameState, agoraDica) && (energiaDica.energyPoints ?? 0) < maxEnergyOf(gameState),
+    metaDoDia: fioMetaCumprida,
+    groveAberto: !demo && buildingGateFor('hall.grove', bondDica).open,
+    bosqueCuidavel,
+  });
+  const [dicaVistas, marcarDica] = useDicaVistas();
+  const dicaDourada = useDicaDourada({ presentes: presentesDica, vistas: dicaVistas, bloqueado: currentView !== 'home' || balaoTipo !== null, onMostrar: marcarDica });
+  const dicaComumTipo = escolherDica(presentesDica, dicaVistas, agoraDica, 'comum');
+  const dicaFalaHud = useMemo(() => (dicaComumTipo ? { tipo: dicaComumTipo, text: dicaTexto(dicaComumTipo, language) } : null), [dicaComumTipo, language]);
+  const encerrarDicaDourada = dicaDourada.encerrar;
+  /** O toque: Bosque → abre o Bosque (sem pré-requisito) e dispensa; Fenda → o aviso com "Ir à Fenda" (dispensa ao ESCOLHER ir); achado → abre o encontro.
+   *  Dica dourada (§327) → o evento de navegação do app (`requestGoToBuilding`), o mesmo do "pode ser obtido em". */
+  const handleBalaoDourado = useCallback((tipo: BalaoTipo | DicaDouradaTipo) => {
+    if (ehDicaDourada(tipo)) { encerrarDicaDourada(); requestGoToBuilding(DICA_DESTINO[tipo]); return; }
     if (tipo === 'rift') { abrirAvisoMasmorra(null); return; }
     dispensarBalao(tipo);
     if (tipo === 'grove') {
@@ -4732,8 +4757,9 @@ export default function App() {
     if (a?.loja) setFeiraLoja(a.loja);
     else if (a?.evento) setFeiraEvento(a.evento);
     else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
-  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo]);
-  const balaoDouradoHud = balaoTipo ? { tipo: balaoTipo, text: balaoDouradoText(balaoTipo, language), ariaLabel: balaoDouradoAria(balaoTipo, language) } : null;
+  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
+  const balaoDouradoHud = balaoTipo ? { tipo: balaoTipo, text: balaoDouradoText(balaoTipo, language), ariaLabel: balaoDouradoAria(balaoTipo, language) }
+    : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
@@ -8934,6 +8960,8 @@ export default function App() {
                 naMasmorra={naMasmorra}
                 balaoDourado={balaoDouradoHud}
                 onBalaoDourado={handleBalaoDourado}
+                dicaFala={dicaFalaHud}
+                onDicaFalada={marcarDica}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
                 masmorraRetornoMs={naMasmorra ? masmorraRetorno.msLeft : null}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório

@@ -91,3 +91,29 @@ describe('§J tarefas linkadas: fiação', () => {
     expect(link).not.toMatch(/foodInventory|awardBondXP|bumpDaily|energyPoints|perfectDays|healthPoints/);
   });
 });
+
+describe('§327 balões de dica: fiação', () => {
+  it('a dica dourada navega pelo evento do app (requestGoToBuilding), nunca por caminho próprio', () => {
+    const toque = app.slice(app.indexOf('const handleBalaoDourado'), app.indexOf('const balaoDouradoHud'));
+    expect(toque).toContain('if (ehDicaDourada(tipo)) { encerrarDicaDourada(); requestGoToBuilding(DICA_DESTINO[tipo]); return; }');
+  });
+  it('a dica dourada só entra sem balão de evento na vez e só na Home (nunca empilha)', () => {
+    expect(app).toContain("bloqueado: currentView !== 'home' || balaoTipo !== null");
+    expect(app).toContain(': dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language)');
+  });
+  it('relaxar usa a régua da moeda do Refúgio (o do dia não tomado e energia não cheia) e o portão do prédio', () => {
+    expect(app).toContain("refugioDaEnergia: buildingGateFor('forja.refugio', bondDica).open && !refugioEnergyTaken(gameState, agoraDica)");
+  });
+  it('a Lilia usa a MESMA meta que libera o cuidado do Grove e o portão do prédio', () => {
+    expect(app).toContain('metaDoDia: fioMetaCumprida,');
+    expect(app).toContain("groveAberto: !demo && buildingGateFor('hall.grove', bondDica).open,");
+  });
+  it('o HUD recebe a dica comum e devolve a aparição', () => {
+    expect(app).toContain('dicaFala={dicaFalaHud}');
+    expect(app).toContain('onDicaFalada={marcarDica}');
+  });
+  it('uma consulta ao servidor serve os dois sinais do Grove', () => {
+    expect(hook).toContain('export function useGroveEstado');
+    expect(app).toContain('const { atacado: bosqueAtacado, cuidavel: bosqueCuidavel } = useGroveEstado(');
+  });
+});
