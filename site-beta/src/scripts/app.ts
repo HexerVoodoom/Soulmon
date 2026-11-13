@@ -1,6 +1,7 @@
 // JS inicial do site. GSAP só entra por import dinâmico, em ciclo.ts.
 import { proximoSorteio } from '../lib/sorteio';
 import { limparUtm } from '../../functions/_lib/utm.js'; // mesma allowlist do servidor
+import { SECOES, refCategoria } from '../../functions/_lib/evento.js';
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => [...r.querySelectorAll<T>(s)];
 
@@ -186,6 +187,33 @@ function cliqueGrupo() {
   for (const a of links) a.addEventListener('click', () => {
     try { void fetch('/api/clique', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idioma: lang, utm: utm() }) }).catch(() => {}); } catch { /* medição é opcional */ }
   });
+}
+
+// Medição agregada (relatório 13/11): visita, aparelho, origem, rolagem, tempo e seções vistas. Sem cookie nem ID;
+// cada evento sai no máximo UMA vez por carregamento, em lote, no pagehide/hidden (sendBeacon).
+function medicao() {
+  const lang = document.documentElement.lang.startsWith('pt') ? 'pt-BR' : 'en';
+  const ap = matchMedia('(pointer: coarse)').matches || innerWidth < 768 ? 'mobile' : 'desktop';
+  const ref = refCategoria(document.referrer);
+  const vistos = new Set<string>(['view']); let enviados = new Set<string>();
+  const enviar = () => {
+    const novos = [...vistos].filter((e) => !enviados.has(e)); if (!novos.length) return;
+    enviados = new Set(vistos);
+    const corpo = JSON.stringify({ e: novos, idioma: lang, ap, ref, utm: utm() });
+    try { if (!navigator.sendBeacon?.('/api/evento', new Blob([corpo], { type: 'application/json' }))) void fetch('/api/evento', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: corpo }).catch(() => {}); } catch { /* medição é opcional */ }
+  };
+  addEventListener('scroll', () => {
+    const p = (scrollY + innerHeight) / document.documentElement.scrollHeight;
+    for (const m of [25, 50, 75, 100]) if (p >= m / 100 - 0.02) vistos.add('scroll' + m);
+  }, { passive: true });
+  setTimeout(() => vistos.add('tempo30'), 30000); setTimeout(() => vistos.add('tempo90'), 90000);
+  for (const id of SECOES) {
+    const el = document.getElementById(id);
+    if (el) new IntersectionObserver((es, o) => { if (es.some((x) => x.isIntersecting)) { vistos.add('sec_' + id); o.disconnect(); } }, { threshold: 0.3 }).observe(el);
+  }
+  for (const a of $$('[data-clique], [data-cta]')) a.addEventListener('click', () => { vistos.add('cta'); enviar(); });
+  addEventListener('pagehide', enviar);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviar(); });
 }
 
 function utm() {
@@ -572,7 +600,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); cliqueGrupo(); passoAPasso(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); cliqueGrupo(); medicao(); passoAPasso(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
