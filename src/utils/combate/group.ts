@@ -21,6 +21,7 @@ import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
+import { aplicarEspecialPessoal } from './alvoAliado';
 import {
   AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
@@ -236,6 +237,9 @@ export function* groupFightSteps(
     const tgt = me === pl ? target() : enemies[0];
     if (!tgt) return;
     const isArea = me.area === 'area' && AREA_FAMILIES.includes(sp.family);
+    // §322 (`alvoAliado.ts`): quem RECEBE o especial pessoal. O núcleo de grupo ainda não tem aliados (o lado do jogador é só ele),
+    // então é sempre o próprio lançador; o efeito já é o de `aplicarEspecialPessoal`, que aceita qualquer receptor.
+    const rx: G = me;
     const spread = isArea ? enemies : [tgt];
     // same total budget: the area divides it (times the area efficiency, 1), the single concentrates it
     const share = isArea ? (Eb * (opts.areaEfficiency ?? AREA_EFFICIENCY)) / spread.length : Eb;
@@ -269,27 +273,22 @@ export function* groupFightSteps(
           else v.nVuln += share;
         }
         break;
-      case 'heal':
-        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
-        break;
       case 'shield':
         if (sp.effect === 'hot') {
-          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
-          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, me)) * me.pts);
-          me.nHot += 3;
+          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem RECEBE.
+          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, rx)) * rx.pts);
+          rx.nHot += 3;
           for (let k = 1; k <= 3; k++) {
-            timed.push({ t: t0 + iv * k, fn: () => { me.nHot--; if (me.dead === Infinity) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + pulse) / me.pts; } });
+            timed.push({ t: t0 + iv * k, fn: () => { rx.nHot--; if (rx.dead === Infinity) rx.hp = Math.min(rx.pts, Math.round(rx.hp * rx.pts) + pulse) / rx.pts; } });
           }
           break;
         }
-        me.shield = (Math.round(me.shield * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
+      case 'heal':
       case 'atkBuff':
-        me.nAtk += Eb;
-        break;
       case 'spdBuff':
-        me.nSpd += Eb;
-        me.next = Math.min(me.next, t0 + iv / 2);
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
     }
   };
