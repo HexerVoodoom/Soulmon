@@ -453,4 +453,4 @@ Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cos
 
 ## Botão especial CTA (12/11/2026)
 
-`src/assets/soulmon/ui/btn-cta.webp` (720x121, ~13 KB): origem `E:/Soulmon-marketing/site-assets/botao-beta.png` (botão do site do beta, 2172x724), recortado na caixa visível e reduzido; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
+`src/assets/soulmon/ui/btn-cta.webp`, `btn-cta-hover.webp`, `btn-cta-press.webp`, `btn-cta-off.webp` (551x180 cada, 10-16 KB): cópia byte a byte de `site-beta/public/dono/botao{,-hover,-press,-off}.webp` (branch `site-beta`, o CTA `.botao.primario` do soulmon.pages.dev/beta; fatia `62 74 fill`), um arquivo por estado; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
