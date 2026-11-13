@@ -177,7 +177,7 @@ export function toAttrBonus(b) {
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
 export const SPECIAL_BUDGET_HITS = 3;
-/** §322: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, DoT 0). */
+/** §325: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, DoT 0). */
 export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
 export const SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: 0 });
 /** @param {number} sh @param {number} d @param {'basic'|'direct'|'tick'} src */
@@ -185,7 +185,7 @@ export function shieldAbsorbPoints(sh, d, src) {
   return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
 }
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
-export const SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
+export const SPECIAL_POWER = { direct: 1, dot: 1.15, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
 /** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
 export function specialOf(family) {
   const f = typeof family === 'string' && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : 'direct';
@@ -317,7 +317,7 @@ export function* fightSteps(a, b, opts) {
     // VIDA INTEIRA: o golpe vale pontos inteiros (min 1); o evento leva os pontos que SAIRAM da barra
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // §322: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
+    // §325: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
     const ab = shieldAbsorbPoints(sh, lose, from);
     if (ab > 0) {

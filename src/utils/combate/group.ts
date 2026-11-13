@@ -214,7 +214,7 @@ export function* groupFightSteps(
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // §322: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
+    // §325: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
     const ab = shieldAbsorbPoints(sh, lose, from);
     if (ab > 0) {
@@ -237,7 +237,7 @@ export function* groupFightSteps(
     const tgt = me === pl ? target() : enemies[0];
     if (!tgt) return;
     const isArea = me.area === 'area' && AREA_FAMILIES.includes(sp.family);
-    // §322 (`alvoAliado.ts`): quem RECEBE o especial pessoal. O núcleo de grupo ainda não tem aliados (o lado do jogador é só ele),
+    // §325 (`alvoAliado.ts`): quem RECEBE o especial pessoal. O núcleo de grupo ainda não tem aliados (o lado do jogador é só ele),
     // então é sempre o próprio lançador; o efeito já é o de `aplicarEspecialPessoal`, que aceita qualquer receptor.
     const rx: G = me;
     const spread = isArea ? enemies : [tgt];
@@ -260,7 +260,7 @@ export function* groupFightSteps(
             fn: () => {
               dots.splice(dots.indexOf(rec), 1);
               const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §322: o escudo não absorve DoT
+              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §325: o escudo não absorve DoT
             },
           });
         }

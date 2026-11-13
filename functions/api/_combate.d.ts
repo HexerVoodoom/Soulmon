@@ -64,7 +64,7 @@ export interface AttrBonus { atk: number; def: number; spd: number }
 export declare function combinedAttrBonus(sources: { talent?: Partial<AttrBonus>; equipment?: Partial<AttrBonus>; commerce?: Partial<AttrBonus>; rebirth?: Partial<AttrBonus> }): AttrBonus;
 export declare function toAttrBonus(b: number | Partial<AttrBonus> | undefined): AttrBonus;
 export declare const SPECIAL_BUDGET_HITS: number;
-/** §322: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` de `combate/specials.ts`. */
+/** §325: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` de `combate/specials.ts`. */
 export declare const SHIELD_DIRECT_SPECIAL_ABSORB: number;
 export declare const SHIELD_ABSORB: Readonly<{ basic: number; direct: number; tick: number }>;
 export declare function shieldAbsorbPoints(sh: number, d: number, src: 'basic' | 'direct' | 'tick'): number;
