@@ -41,12 +41,16 @@ export function foeKindOf(stage: string, key: string): FoeKind {
 export function foeSpecialOf(stage: string, key: string, pvp = false): Special {
   const kind = foeKindOf(stage, key);
   const par = foeHash(`buff|${key}`) % 2 === 0;
+  // §321 (dono, 13/11/2026): buff e debuff que duram têm de render MAIS que o dano direto. Medido no motor de grupo, o `spdBuff` do inimigo
+  // rendia 0,99× do direto (o "inimigo acelerado" batia menos que o especial direto) e atk/def 1,01×. Recebem o mesmo `OVER_TIME_BONUS`
+  // do DoT/HoT (só PvE; o 1v1 do servidor segue o `SPECIAL_POWER`). Gate: `efeitosRegraTotal.test.ts`.
+  const bonus = (sp: Special): Special => (pvp ? sp : { ...sp, power: sp.power * OVER_TIME_BONUS });
   switch (kind) {
-    case 'buff': return specialOf(par ? 'atkBuff' : 'spdBuff');
+    case 'buff': return bonus(specialOf(par ? 'atkBuff' : 'spdBuff'));
     case 'dot': return pvp ? specialOf('dot') : { ...specialOf('dot'), power: OVER_TIME_BONUS };
     case 'heal': return specialOf('heal');
     case 'hot': return pvp ? specialOf('shield') : { ...specialOf('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
-    case 'debuff': return specialOf('defDebuff');
+    case 'debuff': return bonus(specialOf('defDebuff'));
     default: return specialOf('direct');
   }
 }
