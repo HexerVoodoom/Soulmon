@@ -22,7 +22,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
-import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
+import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special } from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
 export const MIRROR_SECONDS = 25;
@@ -277,15 +277,15 @@ export function* fightSteps(
   const gain = (f: Fighter, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
+  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
     if (v.dead < Infinity) return; // leftover damage expires
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §322: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -302,12 +302,11 @@ export function* fightSteps(
     const iv = interval(me.c.spd);
     switch (sp.family) {
       case 'direct':
-        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
+        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
         break;
       case 'dot': {
-        const cap = foe.shield; // escudo do alvo no instante do cast
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
+          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', 'tick') });
         }
         break;
       }
@@ -383,7 +382,7 @@ export function* fightSteps(
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack');
+      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;
