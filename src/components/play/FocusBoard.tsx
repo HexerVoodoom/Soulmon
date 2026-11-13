@@ -231,7 +231,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
             {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
           {online === false && <p role="status" data-focus-offline style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Precisa de conexão para começar.' : 'Needs a connection to start.'}</p>}
-          <CtaButton data-focus-start disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
+          <CtaButton data-focus-start tone="acao" disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
         </>}
         {doneNote && <p role="status" data-focus-done style={{ ...sm2Text, margin: 0 }}>{doneNote}</p>}
       </article>

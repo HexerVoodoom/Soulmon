@@ -7910,7 +7910,7 @@ export default function App() {
 
           {labTab === 'evolution' && (
             <div style={{ padding: '0 4px 10px' }}>
-              <CtaButton data-open-element-potion
+              <CtaButton data-open-element-potion tone="acao"
                 aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
                 <Icon name="auto_awesome" size={20} />
                 {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
