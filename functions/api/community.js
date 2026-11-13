@@ -288,6 +288,30 @@ async function buscarNicks(env, termo) {
   return { nickKeys: [...inicio, ...meio].slice(0, NICK_CANDIDATOS), truncated };
 }
 
+/**
+ * Chaves `nick:` cujo apelido, DOBRADO (`foldNome`: sem acento, sem caixa), COMEÇA com o termo já dobrado. Rede do `playerSearch`
+ * (§356) para quem ainda não está no índice `nickf:`. Lê só os NOMES das chaves (sem `get`), no máximo `NICK_SCAN_PAGES` páginas,
+ * e devolve no máximo `max` chaves.
+ */
+async function buscarNicksPorInicioDobrado(env, termoDobrado, max) {
+  const out = [];
+  let cursor;
+  let paginas = 0;
+  do {
+    const page = await kvOrThrow(env).list({ prefix: 'nick:', cursor, limit: 1000 });
+    paginas++;
+    for (const k of page.keys ?? []) {
+      let n;
+      try { n = decodeURIComponent(String(k.name).slice(5)); } catch { continue; }
+      if (!foldNome(n).startsWith(termoDobrado)) continue;
+      out.push(k.name);
+      if (out.length >= max) return out;
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor && paginas < NICK_SCAN_PAGES);
+  return out;
+}
+
 // (`nickKey` e `claimNick` — apelido único — moram em `_profile.js` desde o M11, para o motor dos simulados reservar nicks pela MESMA régua.)
 
 export async function onRequestOptions() {
@@ -775,9 +799,22 @@ async function handleCommunity(context) {
     const memoGuilda = new Map();
     const vistos = new Set();
     const achados = [];
-    for (const k of page.keys ?? []) {
+    // §356 (13/11/2026, bug em produção): o índice `nickf:` só nasce em `claimNick` — perfil salvo DEPOIS do deploy ou
+    // `backfillNicks`. Em produção havia 178 chaves `nick:` e 2 `nickf:`, e o perfil só sobe com o PvP LIGADO
+    // (`GameStateContext` › `publicarPerfil`): quem está com PvP desligado nunca entraria sozinho. Resultado: o convite do clã e
+    // as sugestões da aba Amigos não achavam ninguém, nem pelo nome completo. Por isso o índice dobrado vem PRIMEIRO e, se ele
+    // tiver sido lido inteiro (menos chaves que o teto de varredura), completa com o índice `nick:` (o mesmo de `names` e do `lookup=friend`), dobrado aqui na comparação,
+    // com o MESMO teto de páginas da busca por apelido (`NICK_SCAN_PAGES`) e de candidatos (`PLAYER_SEARCH_SCAN`). Só leitura.
+    const candidatos = (page.keys ?? []).map(k => saveIdDaChaveDobrada(k.name));
+    if (candidatos.length < PLAYER_SEARCH_SCAN) {
+      const legado = await buscarNicksPorInicioDobrado(env, termo, PLAYER_SEARCH_SCAN);
+      for (const chave of legado) {
+        const dono = await kvOrThrow(env).get(chave).catch(() => null);
+        if (typeof dono === 'string' && dono) candidatos.push(dono);
+      }
+    }
+    for (const dono of candidatos) {
       if (achados.length >= PLAYER_SEARCH_MAX) break;
-      const dono = saveIdDaChaveDobrada(k.name);
       if (!VALID_ID.test(dono) || dono === id || vistos.has(dono)) continue;
       vistos.add(dono);
       let p = null;
