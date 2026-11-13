@@ -23,7 +23,7 @@ describe('todo evento do catálogo diário tem emissor', () => {
     prato: ['src/utils/restaurant.ts', "'prato'"], feira: ['src/utils/feiraLoja.ts', "'feira'"],
     salao: ['src/utils/dailyMissions.ts', "dino: 'salao'"], mente: ['src/utils/dailyMissions.ts', "eco: 'mente'"],
   };
-  const porBumpNoApp = ['compra', 'cenario', 'cambio', 'cla', 'passeio', 'conquista', 'journal'];
+  const porBumpNoApp = ['compra', 'cenario', 'cla', 'passeio', 'conquista', 'journal'];
 
   for (const m of dailyMissionPool().filter(x => x.event !== 'calabouco')) {
     it(`${m.event}${m.npc ? ` (${m.npc})` : ''}`, () => {

@@ -36,7 +36,7 @@ export type DailyEvent =
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
   | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
   // Missões dos NPCs (12/11/2026, REGISTRO §314): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
-  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'cambio' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario'
+  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente' | 'cenario'
   // Trilho (REGISTRO §318): um registro novo guardado no Caderno.
   | 'journal';
 

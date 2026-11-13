@@ -5247,7 +5247,7 @@ export default function App() {
         : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => bumpDailyIn({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }, 'cambio')); // 12/11/2026: missão do Farthing
+    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 

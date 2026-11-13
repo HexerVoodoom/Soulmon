@@ -55,8 +55,6 @@ export const NPC_MISSIONS: readonly NpcMissionDef[] = [
     namePt: 'Descida na Fenda', nameEn: 'Rift descent', descPt: 'Limpe 3 camadas da Fenda', descEn: 'Clear 3 Endless Rift layers' },
   { id: 'n-aurea', npc: 'hall:guilda', event: 'cla', target: 1, building: 'hall.guilda', material: 'crest',
     namePt: 'Missão do Clã', nameEn: 'Clan errand', descPt: 'Mande o Soulmon numa missão do Clã', descEn: 'Send your Soulmon on a Clan mission' },
-  { id: 'n-farthing', npc: 'mercado:cambista', event: 'cambio', target: 1, building: 'mercado.itens', material: 'ribbon',
-    namePt: 'Troca no bazar', nameEn: 'Bazaar trade', descPt: 'Compre 1 essência do Cambista', descEn: 'Buy 1 essence from the Money Changer' },
   { id: 'n-lume', npc: 'forja:oficina', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear',
     namePt: 'Ciclo de foco', nameEn: 'Focus cycle', descPt: 'Faça 1 ciclo de foco na Oficina', descEn: 'Do 1 focus cycle in the Workshop' },
   { id: 'n-sumi', npc: 'laboratorio:stats', event: 'humor', target: 1, building: 'laboratorio.stats', material: 'cipher',
@@ -105,4 +103,5 @@ export const NPCS_SEM_MISSAO: Readonly<Record<string, string>> = {
   'arena:guerra': 'Mirevesper: a Guerra de Clãs rende na casa do clã, sem evento diário',
   'hall:grove': 'Ramo: o Grove é do clã, sem evento diário',
   'laboratorio:perfil': 'Corvo do Perfil: leitura da ficha, sem ação',
+  'mercado:cambista': 'Farthing: o Cambista não passa missão (dono, 12/11/2026: a troca no bazar foi excluída)',
 };
