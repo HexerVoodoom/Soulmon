@@ -25,6 +25,7 @@ import { BitsAmount } from './ui/BitsAmount';
 import { loadTalentArt } from '../utils/talentArt';
 import { spendBits, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { TALENT_COPY, talentEffectLine } from '../utils/talentCopy';
+import { CtaButton } from './ui/CtaButton';
 
 const PATHS: readonly { id: TalentPath; art: string; root: string; pt: string; en: string; hintPt: string; hintEn: string }[] = [
   { id: 'pvp', art: 'talent-path-pvp', root: 'talent-root-pvp', pt: 'Duelo', en: 'Duel', hintPt: 'Vale só nos Duelos e no Torneio.', hintEn: 'Counts only in Duels and the Tournament.' },
@@ -485,9 +486,9 @@ function TalentModal(p: ModalProps) {
             {!p.takeBack.can && <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Outro nó depende deste grau. Tire primeiro o que ele abriu.' : 'Another node depends on this rank. Take back what it opened first.'}</p>}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
           <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-talent-cancel onClick={p.onCancel}>{isPt ? 'Cancelar' : 'Cancel'}</button>
-          <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</button>
+          <CtaButton width="auto" data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</CtaButton>
         </div>
       </div>
     </div>

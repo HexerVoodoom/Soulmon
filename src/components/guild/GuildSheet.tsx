@@ -73,6 +73,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
+import { CtaButton } from '../ui/CtaButton';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
@@ -487,10 +488,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           </div>
         )}
         {semConta && onLogin && (
-          <button type="button" onClick={onLogin} data-guild-entrar className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}>
+          <CtaButton onClick={onLogin} data-guild-entrar>
             <Icon name="lock_open" size={20} />
             {t('guild.erro.entrar')}
-          </button>
+          </CtaButton>
         )}
         <button type="button" onClick={() => void carregar(false)} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
           <Icon name="refresh" size={20} />
