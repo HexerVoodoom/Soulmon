@@ -74,11 +74,82 @@ describe('playerSearch — prefixo, sem acento e sem caixa', () => {
     const { players } = await (await buscar(env, 'joã')).json();
     expect(players.map(p => p.name)).toEqual(['Joao']);
   });
-  it('é uma list por PREFIXO no índice dobrado, limitada (não varre perfis)', async () => {
+  it('lê primeiro o índice dobrado por PREFIXO e depois só os NOMES das chaves `nick:` (não varre perfis)', async () => {
     const env = await mundo([[1, 'Eu'], [2, 'João']]);
     env.DIGIAPP_SAVES.listCalls.length = 0;
     await buscar(env, 'joa');
-    expect(env.DIGIAPP_SAVES.listCalls).toEqual([{ prefix: 'nickf:joa', limit: 30 }]);
+    expect(env.DIGIAPP_SAVES.listCalls).toEqual([{ prefix: 'nickf:joa', limit: 30 }, { prefix: 'nick:', limit: 1000 }]);
+  });
+});
+
+// §356 (13/11/2026, bug em produção): o KV de produção tinha 178 chaves `nick:` e só 2 `nickf:` — o índice dobrado só nasce
+// em `claimNick` (perfil salvo depois do deploy ou `backfillNicks`), e o perfil só sobe com PvP LIGADO. A busca não achava ninguém.
+// Este mundo é o de PRODUÇÃO: apelido no índice `nick:` (com `nickof:`), perfil marcado `nickIx`, e NENHUMA chave `nickf:`.
+async function mundoSemIndiceDobrado(pessoas) {
+  const env = { DIGIAPP_SAVES: fakeKV() };
+  for (const [n, name, more] of pessoas) {
+    const p = perfil(n, name, { nickIx: true, ...more });
+    const s = env.DIGIAPP_SAVES.store;
+    s.set(`profile:${p.id}`, JSON.stringify(p));
+    s.set(`pid:${p.pid}`, p.id);
+    s.set(nickKey(name), p.id);
+    s.set(`nickof:${p.id}`, nickKey(name));
+  }
+  for (const k of env.DIGIAPP_SAVES.store.keys()) expect(k.startsWith('nickf:')).toBe(false);
+  return env;
+}
+const amigo = (env, search, id = sid(1)) => onRequest({
+  request: new Request(`https://x.dev/api/community?${new URLSearchParams({ action: 'players', search, lookup: 'friend', id })}`, { headers: { 'CF-Connecting-IP': `10.1.0.${(ip++ % 250) + 1}` } }),
+  env,
+});
+
+describe('playerSearch — jogador ainda fora do índice dobrado (o estado de produção, §356)', () => {
+  it('o nome COMPLETO acha a pessoa', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'Mari Silva'], [3, 'Pedro']]);
+    const { players } = await (await buscar(env, 'Mari Silva')).json();
+    expect(players.map(p => p.name)).toEqual(['Mari Silva']);
+  });
+  it('2 letras já sugerem, sem acento e sem caixa ("JO" acha João e Joana; não Ana Joaquina)', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'João'], [3, 'Joana'], [4, 'Ana Joaquina']]);
+    const { players } = await (await buscar(env, 'JO')).json();
+    expect(players.map(p => p.name).sort()).toEqual(['Joana', 'João']);
+    const sem = await (await buscar(env, 'joao')).json();
+    expect(sem.players.map(p => p.name)).toEqual(['João']);
+  });
+  it('quem está com o PvP DESLIGADO aparece (o perfil dele nunca sobe sozinho para reindexar)', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'Joana', { pvpEnabled: false }]]);
+    const { players } = await (await buscar(env, 'joana')).json();
+    expect(players.map(p => p.name)).toEqual(['Joana']);
+    expect(players[0].id).toBe(pidDe(2));
+  });
+  it('a própria conta e quem saiu da lista pública (publicHidden) continuam fora', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Joel'], [2, 'João', { publicHidden: true }], [3, 'Joana']]);
+    const { players } = await (await buscar(env, 'jo', sid(1))).json();
+    expect(players.map(p => p.name)).toEqual(['Joana']);
+  });
+  it('índice dobrado parcial: quem já está nele e quem ainda não está aparecem juntos, sem repetir ninguém', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'João'], [3, 'Joana']]);
+    await claimNick(env, sid(2), 'João');
+    const { players } = await (await buscar(env, 'jo')).json();
+    expect(players.map(p => p.name).sort()).toEqual(['Joana', 'João']);
+  });
+  it('só campos públicos também pelo caminho do índice `nick:`', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'João']]);
+    const corpo = await (await buscar(env, 'joa')).text();
+    for (const k of Object.keys(JSON.parse(corpo).players[0])) expect(['id', 'name', 'guildName', 'stage', 'spriteUrl', 'artLine']).toContain(k);
+    for (const segredo of [sid(2), 'pessoa2@exemplo.com', 'aparelho-2', '1234', sid(99)]) expect(corpo).not.toContain(segredo);
+  });
+  it('a busca só LÊ: nenhuma chave nova no KV', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'João', { pvpEnabled: false }]]);
+    const antes = [...env.DIGIAPP_SAVES.store.keys()].sort();
+    await buscar(env, 'joa');
+    expect([...env.DIGIAPP_SAVES.store.keys()].sort()).toEqual(antes);
+  });
+  it('o "Convidar" pelo nome da aba Amigos (`lookup=friend`) acha o nome completo, inclusive com PvP desligado', async () => {
+    const env = await mundoSemIndiceDobrado([[1, 'Eu'], [2, 'Mari Silva', { pvpEnabled: false }]]);
+    const r = await amigo(env, 'Mari Silva');
+    expect(r.status).toBe(200);
+    expect((await r.json()).players.map(p => p.name)).toEqual(['Mari Silva']);
   });
 });
 
