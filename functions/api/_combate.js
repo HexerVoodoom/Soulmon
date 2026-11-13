@@ -177,7 +177,7 @@ export function toAttrBonus(b) {
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
 export const SPECIAL_BUDGET_HITS = 3;
-/** §325: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, DoT 0). */
+/** §327: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, DoT 0). */
 export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
 export const SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: 0 });
 /** @param {number} sh @param {number} d @param {'basic'|'direct'|'tick'} src */
@@ -317,7 +317,7 @@ export function* fightSteps(a, b, opts) {
     // VIDA INTEIRA: o golpe vale pontos inteiros (min 1); o evento leva os pontos que SAIRAM da barra
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // §325: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e NADA do DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
     const ab = shieldAbsorbPoints(sh, lose, from);
     if (ab > 0) {

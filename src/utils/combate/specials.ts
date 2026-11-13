@@ -14,7 +14,7 @@
 export const OVER_TIME_BONUS = 1.15;
 
 /**
- * §325 (dono, 13/11/2026): o ESCUDO é defesa contra golpe, não imunidade. Fração de cada fonte de dano que o escudo do alvo
+ * §327 (dono, 13/11/2026): o ESCUDO é defesa contra golpe, não imunidade. Fração de cada fonte de dano que o escudo do alvo
  * pode absorver (o resto passa para a vida):
  *  · `basic` = 1: o golpe básico segue absorvido por inteiro (a regra de antes, mantida);
  *  · `direct` = `SHIELD_DIRECT_SPECIAL_ABSORB`: o especial de dano direto passa metade pela barreira;
@@ -45,7 +45,7 @@ export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 
 
 /**
  * Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout) — o do 1v1 (PvP, simulados, treino).
- * §324 (dono, 13/11/2026): `dot` 1 → 1,15 e `spdBuff` 1,82 → 2 (o que dura rende mais que o dano direto). Espelho: `_combate.js`.
+ * §325 (dono, 13/11/2026): `dot` 1 → 1,15 e `spdBuff` 1,82 → 2 (o que dura rende mais que o dano direto). Espelho: `_combate.js`.
  * O PvE NÃO lê esta tabela: usa `SPECIAL_POWER_PVE` (o vetor `PVE_FAMILY_POWER` foi calibrado sobre ela).
  */
 export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
@@ -59,7 +59,7 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
 };
 
 /**
- * §324: o poder de família do PvE (Arena, Masmorra, Pesadelo, inimigos) = a tabela do spike de antes do ajuste do 1v1. Separada para a
+ * §325: o poder de família do PvE (Arena, Masmorra, Pesadelo, inimigos) = a tabela do spike de antes do ajuste do 1v1. Separada para a
  * mudança de `SPECIAL_POWER` (pedida para o PvP) não se multiplicar com `PVE_FAMILY_POWER`, que foi calibrado em cima destes números.
  */
 export const SPECIAL_POWER_PVE: Readonly<Record<SpecialFamily, number>> = {
@@ -87,7 +87,7 @@ export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.3, slo
 export type EffectTune = typeof EFFECT_TUNE;
 /** §228 (dono, 05/11): o Pesadelo pode ter balanço próprio para qualquer mecânica. */
 /**
- * §324 (dono, 13/11/2026): lentidão do Pesadelo 0,15/0,4 → 0,3/0,58 (a mesma da Arena e da Masmorra). O dono ACEITOU que o Pesadelo fique
+ * §325 (dono, 13/11/2026): lentidão do Pesadelo 0,15/0,4 → 0,3/0,58 (a mesma da Arena e da Masmorra). O dono ACEITOU que o Pesadelo fique
  * ~16,4pp mais fácil para quem tem lentidão (gate pareado em `efeitosPve.medicao.test.ts`). Os outros botões seguem os de `EFFECT_TUNE`.
  */
 export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.3, slowKeep: 0.58 };
@@ -95,7 +95,7 @@ export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.3
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };
 }
-/** §324: o especial com o poder do PvE (`SPECIAL_POWER_PVE`). Quem monta luta de Arena/Masmorra/Pesadelo/inimigo usa este. */
+/** §325: o especial com o poder do PvE (`SPECIAL_POWER_PVE`). Quem monta luta de Arena/Masmorra/Pesadelo/inimigo usa este. */
 export function specialOfPve(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER_PVE[family] };
 }

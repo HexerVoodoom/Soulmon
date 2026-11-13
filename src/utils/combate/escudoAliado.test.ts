@@ -1,5 +1,5 @@
 /**
- * §325 (dono, 13/11/2026). Duas regras novas do núcleo:
+ * §327 (dono, 13/11/2026). Duas regras novas do núcleo:
  *  1. ESCUDO não é imunidade: não para o DoT (lançado antes OU depois dele), não bloqueia debuff, e absorve só METADE do
  *     especial de dano direto (`SHIELD_DIRECT_SPECIAL_ABSORB`). O golpe básico segue absorvido inteiro (regra de antes).
  *  2. ALVO ALIADO: escudo, cura e reforços podem ir num aliado mirado; sem aliado, vão em quem soltou (`alvoAliado.ts`).
@@ -37,7 +37,7 @@ function grupo(p: FightSide, foes: FightSide[], seed: number, startEnergy = 100)
   return evs;
 }
 
-describe('§325 escudo: a régua da absorção', () => {
+describe('§327 escudo: a régua da absorção', () => {
   it('básico inteiro, especial direto pela METADE (arredonda para baixo), DoT nada; nunca mais que o escudo', () => {
     expect(SHIELD_DIRECT_SPECIAL_ABSORB).toBe(0.5);
     expect(SHIELD_ABSORB).toEqual({ basic: 1, direct: 0.5, tick: 0 });
@@ -57,7 +57,7 @@ describe('§325 escudo: a régua da absorção', () => {
   });
 });
 
-describe('§325 escudo não para o DoT que já está correndo', () => {
+describe('§327 escudo não para o DoT que já está correndo', () => {
   it('1v1: B levanta o escudo DEPOIS do DoT de A e os ticks seguem tirando vida, sem tocar no escudo', () => {
     let ticks = 0;
     for (let seed = 1; seed <= 30; seed++) {
@@ -93,7 +93,7 @@ describe('§325 escudo não para o DoT que já está correndo', () => {
   });
 });
 
-describe('§325 escudo não bloqueia debuff', () => {
+describe('§327 escudo não bloqueia debuff', () => {
   it('1v1: quebra de defesa cai inteira em quem está de escudo', () => {
     for (let seed = 1; seed <= 20; seed++) {
       // B levanta o escudo em t=0; A solta a quebra de defesa logo depois
@@ -122,7 +122,7 @@ describe('§325 escudo não bloqueia debuff', () => {
   });
 });
 
-describe('§325 escudo absorve METADE do especial direto (o básico segue inteiro)', () => {
+describe('§327 escudo absorve METADE do especial direto (o básico segue inteiro)', () => {
   it('1v1: o golpe do especial direto passa pelo menos metade para a vida; o básico com escudo de sobra passa nada', () => {
     let diretos = 0, basicos = 0;
     for (let seed = 1; seed <= 30; seed++) {
@@ -151,7 +151,7 @@ describe('§325 escudo absorve METADE do especial direto (o básico segue inteir
   });
 });
 
-describe('§325 alvo aliado', () => {
+describe('§327 alvo aliado', () => {
   const mk = (): ReceptorPessoal => ({ pts: 600, hp: 0.5, shield: 0, nAtk: 0, nSpd: 0, next: 10 });
 
   it('as famílias pessoais aceitam aliado; as ofensivas não', () => {

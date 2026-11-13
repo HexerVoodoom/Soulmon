@@ -1,5 +1,5 @@
 /**
- * MARCA DE ALVO ALIADO (§325, dono 13/11/2026): o botão sobre um ALIADO na luta em grupo. Tocar liga a mira de apoio
+ * MARCA DE ALVO ALIADO (§327, dono 13/11/2026): o botão sobre um ALIADO na luta em grupo. Tocar liga a mira de apoio
  * (o próximo escudo/cura/reforço do jogador vai nele, `combate/alvoAliado.ts`); tocar de novo desliga.
  *
  * É de propósito DIFERENTE da mira no inimigo (`BattleStage`, anel dourado tracejado que pisca 1 s): aqui é um LOSANGO

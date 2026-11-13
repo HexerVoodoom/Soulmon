@@ -1,5 +1,5 @@
 /**
- * ALVO ALIADO (§325, dono 13/11/2026): numa luta com aliados, o especial que normalmente vai em quem o solta (escudo, cura,
+ * ALVO ALIADO (§327, dono 13/11/2026): numa luta com aliados, o especial que normalmente vai em quem o solta (escudo, cura,
  * cura contínua, reforço de ataque e de velocidade) pode ir num ALIADO tocado. Regra pura, sem cena:
  *  · só as famílias pessoais (`ALLY_TARGET_FAMILIES`) aceitam aliado; as ofensivas seguem no alvo inimigo;
  *  · sem aliado escolhido (ou o escolhido caiu), o especial vai em quem o soltou, como sempre;

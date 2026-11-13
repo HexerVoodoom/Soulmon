@@ -738,9 +738,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `ArenaGame.tsx`.
 
 ### `src/components/games/AlvoAliadoMarca.tsx`
-**Dono de:** a marca de ALVO ALIADO (§325, 13/11/2026): o botão sobre um aliado na luta em grupo; tocar liga a mira de apoio (o próximo escudo/cura/reforço vai nele, `utils/combate/alvoAliado.ts`), tocar de novo desliga. Losango turquesa contínuo (`--sm2-primary-fill`) com "+", aceso enquanto a mira vale — de propósito diferente do anel dourado tracejado do inimigo (`BattleStage`, pisca 1 s). Alvo de toque ≥ 44 px, `aria-pressed`, rótulo "Apoiar X"/"Support X", foco visível (`.sm-alvo-aliado:focus-visible`), pulso desligado com movimento reduzido.
+**Dono de:** a marca de ALVO ALIADO (§327, 13/11/2026): o botão sobre um aliado na luta em grupo; tocar liga a mira de apoio (o próximo escudo/cura/reforço vai nele, `utils/combate/alvoAliado.ts`), tocar de novo desliga. Losango turquesa contínuo (`--sm2-primary-fill`) com "+", aceso enquanto a mira vale — de propósito diferente do anel dourado tracejado do inimigo (`BattleStage`, pisca 1 s). Alvo de toque ≥ 44 px, `aria-pressed`, rótulo "Apoiar X"/"Support X", foco visível (`.sm-alvo-aliado:focus-visible`), pulso desligado com movimento reduzido.
 **Exports:** `AlvoAliadoMarca({ x, y, size, name, on, isPt, reduced, onPick })`, `AlvoAliadoMarcaProps`.
-**Quem chama:** ninguém. **Pronto e testado, mas desligado: não está ligado a nenhuma tela** (decisão do dono, 13/11/2026, §325). Nenhuma luta tem aliado na tela; liga quando existir um modo com aliados. Prévia local com a `BattleStage` real em `E:\Soulmon-assets\_prints-aliado\`.
+**Quem chama:** ninguém. **Pronto e testado, mas desligado: não está ligado a nenhuma tela** (decisão do dono, 13/11/2026, §327). Nenhuma luta tem aliado na tela; liga quando existir um modo com aliados. Prévia local com a `BattleStage` real em `E:\Soulmon-assets\_prints-aliado\`.
 
 ### `src/components/games/BattleSpeed.tsx`
 **Dono de:** o botão de velocidade PADRÃO dos combates (03/11/2026, dono): "1x" ↔ "Fast" (o fator interno segue 3×, `DUNGEON_SPEEDS`), com UMA preferência por aparelho (`STORAGE_KEYS.DUNGEON_SPEED`). Só encurta o relógio da cena (`useGroupBattle.speed`); o resultado da luta é o mesmo.

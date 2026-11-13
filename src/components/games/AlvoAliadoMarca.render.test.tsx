@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** §325: a marca de ALVO ALIADO — botão acessível, losango turquesa só quando a mira de apoio está nele, toque alterna. */
+/** §327: a marca de ALVO ALIADO — botão acessível, losango turquesa só quando a mira de apoio está nele, toque alterna. */
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, screen } from '@testing-library/react';
 import { useState } from 'react';

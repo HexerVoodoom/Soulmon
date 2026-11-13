@@ -41,7 +41,7 @@ export function foeKindOf(stage: string, key: string): FoeKind {
 export function foeSpecialOf(stage: string, key: string, pvp = false): Special {
   const kind = foeKindOf(stage, key);
   const par = foeHash(`buff|${key}`) % 2 === 0;
-  // §324 (dono, 13/11/2026): buff e debuff que duram têm de render MAIS que o dano direto. Medido no motor de grupo, o `spdBuff` do inimigo
+  // §325 (dono, 13/11/2026): buff e debuff que duram têm de render MAIS que o dano direto. Medido no motor de grupo, o `spdBuff` do inimigo
   // rendia 0,99× do direto (o "inimigo acelerado" batia menos que o especial direto) e atk/def 1,01×. Recebem o mesmo `OVER_TIME_BONUS`
   // do DoT/HoT (só PvE; o 1v1 do servidor segue o `SPECIAL_POWER`). Gate: `efeitosRegraTotal.test.ts`.
   const bonus = (f: SpecialFamily): Special => (pvp ? specialOf(f) : { ...specialOfPve(f), power: SPECIAL_POWER_PVE[f] * OVER_TIME_BONUS });
@@ -49,7 +49,7 @@ export function foeSpecialOf(stage: string, key: string, pvp = false): Special {
     case 'buff': return bonus(par ? 'atkBuff' : 'spdBuff');
     case 'dot': return pvp ? specialOf('dot') : { ...specialOf('dot'), power: OVER_TIME_BONUS };
     case 'heal': return specialOf('heal');
-    // §325: o HoT do PvE lê o poder do PvE (`specialOfPve`), para um ajuste do `SPECIAL_POWER.shield` do 1v1 não vazar para cá.
+    // §327: o HoT do PvE lê o poder do PvE (`specialOfPve`), para um ajuste do `SPECIAL_POWER.shield` do 1v1 não vazar para cá.
     case 'hot': return pvp ? specialOf('shield') : { ...specialOfPve('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
     case 'debuff': return bonus('defDebuff');
     default: return specialOf('direct');

@@ -35,7 +35,7 @@ const GRADE = process.env.EFEITOS_GRADE === '1';
 
 /**
  * Limite do gate por modo (0 = Arena, 1 = Masmorra, 2 = Pesadelo): ±3pp em tudo, MENOS a lentidão no Pesadelo.
- * §324 (DECISÃO DO DONO, 13/11/2026): com `EFFECT_TUNE_PESADELO` de lentidão 0,15/0,4 → 0,3/0,58 a lentidão rende +16,4pp de vitória no
+ * §325 (DECISÃO DO DONO, 13/11/2026): com `EFFECT_TUNE_PESADELO` de lentidão 0,15/0,4 → 0,3/0,58 a lentidão rende +16,4pp de vitória no
  * Pesadelo sobre o `defDebuff` puro (N = 1600). O dono aceitou o Pesadelo mais fácil; a faixa 13–20pp trava o valor medido nos dois sentidos.
  */
 const PESADELO_LENTIDAO_PP = { min: 13, max: 20 };

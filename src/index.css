@@ -5910,7 +5910,7 @@ select:focus-visible {
      bloco novo: acrescente a regra AQUI. */
   /* "+N EXP": sem deslize — aparece parado no centro, a pausa de 1 s fica. */
   .sm-xp-gain { animation-name: sm-xp-gain-still !important; transform: translateX(-50%) !important; }
-  .sm-alvo-aliado [data-stage-ally-mark] { animation: none !important; } /* §325: marca de alvo aliado sem pulso */
+  .sm-alvo-aliado [data-stage-ally-mark] { animation: none !important; } /* §327: marca de alvo aliado sem pulso */
   .sm-talent-backdrop > [role="dialog"] { animation: none !important; }
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
@@ -9328,7 +9328,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-blocked-link { display: inline; padding: 0; min-height: 0; border: 0; background: none; color: var(--sm2-primary-ink); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 
 
-/* §325 (13/11/2026): a marca de ALVO ALIADO (`games/AlvoAliadoMarca.tsx`) — losango turquesa contínuo com "+", diferente da
+/* §327 (13/11/2026): a marca de ALVO ALIADO (`games/AlvoAliadoMarca.tsx`) — losango turquesa contínuo com "+", diferente da
    mira dourada tracejada do inimigo. Foco de teclado visível no mesmo turquesa; o pulso some com movimento reduzido (regra no bloco canônico). */
 .sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
 @keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }
