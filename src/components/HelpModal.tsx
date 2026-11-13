@@ -1,4 +1,5 @@
 import { ModalSheet, sm2Hint } from './form/FormKit';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { Language } from '../utils/i18n';
 import {
@@ -288,8 +289,8 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
       <dl className="sm2-conta-gl">
         {TERMS.map(t => (
           <div key={t.en}>
-            <dt>{isPt ? t.pt : t.en}</dt>
-            <dd>{isPt ? t.descPt : t.descEn}</dd>
+            <dt>{emphasizeSoulFragment(isPt ? t.pt : t.en)}</dt>
+            <dd>{emphasizeSoulFragment(isPt ? t.descPt : t.descEn)}</dd>
           </div>
         ))}
       </dl>

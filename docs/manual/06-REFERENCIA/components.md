@@ -1857,6 +1857,20 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/components/EvolutionPath.gauge.render.test.tsx`, `src/components/EvolutionCeremony.fragmentos.render.test.tsx`.
 
+### `src/components/ui/SoulFragmentTerm.tsx`
+**Dono de:** o destaque do termo "Fragmento(s) de Alma" / "Soul Fragment(s)" em texto de UI (13/11/2026): negrito + turquesa (`--sm2-primary-ink`).
+**Props principais:** `children`.
+**Exports:** `SoulFragmentTerm` · `emphasizeSoulFragment(text)` · `SOUL_FRAGMENT_TERM_RE`.
+**Chamado por:** `CompletionTag`, `HelpModal`, `GuideModal`, `EvolveTaskModal`, `EvolutionCeremony`, `EvolutionGaugeMini`, `EvolutionPath`, `hex/HexsmithSheet`, `WelcomeTour`.
+**Régua:** `src/components/BonusTaskIntroModal.render.test.tsx`.
+
+### `src/components/BonusTaskIntroModal.tsx`
+**Dono de:** a apresentação da tarefa bônus (13/11/2026), aberta UMA vez na primeira conclusão de uma tarefa bônus (`GameState.bonusIntroSeen`). Dois exemplos lado a lado com a mesma `RitualRow` ("Item comum" / "Item especial" com título bronze) e a frase do dono, PT + EN.
+**Props principais:** `open`, `language`, `onClose`.
+**Exports:** `BonusTaskIntroModal`.
+**Chamado por:** `src/App.tsx` (lazy).
+**Régua:** `src/components/BonusTaskIntroModal.render.test.tsx`.
+
 ### `src/components/nav/playPrefetch.ts`
 **Dono de:** o prefetch dos chunks de jogar (rodada 7 · J1, 04/10/2026). Causa do "Opening…" demorado: o APK carrega o app de URL remota e cada `lazy()` só baixava no toque (cascata `PlaySheets` → jogo → `GameKit`/`BattleStage` → arte; chunks de 6–30 KB, o custo é a latência de cada ida). Os `load*` são os MESMOS `import()` que o `lazy()` do `AreaView`/`App` usa (o Vite deduplica), chamados em tempo ocioso, um por tick, com falha silenciosa.
 **Props principais:** —

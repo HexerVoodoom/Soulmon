@@ -1,4 +1,5 @@
 import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
+import { sanitizeBonusTask, type BonusTaskState } from '../utils/bonusTask';
 import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
@@ -964,6 +965,14 @@ export interface GameState {
    * evolução, como bônus acima do teto; fora do selo, do coração e da meta.
    */
   specialMission?: SpecialMissionState;
+  /**
+   * ⭐ Tarefa bônus do dia (utils/bonusTask.ts, 13/11/2026): o hábito aceito na
+   * oferta reduzida. NÃO vem concluído; concluir rende +1 Fragmento de Alma
+   * acima do teto diário, na virada (que limpa o campo).
+   */
+  bonusTask?: BonusTaskState;
+  /** O modal de apresentação da tarefa bônus já foi visto (mostrado uma vez só). */
+  bonusIntroSeen?: boolean;
   /** Meta de passos escolhida pelo jogador. Ausente = DEFAULT_STEP_GOAL (ler com `??`). */
   stepGoal?: number;
   /**
@@ -1876,6 +1885,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         playLog: hydratePlayLog(loadedState.playLog),
         steps: hydrateSteps(loadedState.steps),
         specialMission: sanitizeSpecialMission(loadedState.specialMission),
+        bonusTask: sanitizeBonusTask(loadedState.bonusTask),
+        bonusIntroSeen: loadedState.bonusIntroSeen === true ? true : undefined,
         stepGoal: loadedState.stepGoal === undefined ? undefined : sanitizeStepGoal(loadedState.stepGoal),
         // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
         // "ainda não perguntei", que é o estado seguro (perguntar de novo é

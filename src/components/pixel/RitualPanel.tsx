@@ -235,6 +235,11 @@ export interface RitualRowProps {
    */
   haunted?: boolean;
   /**
+   * ⭐ TAREFA BÔNUS (13/11/2026, `utils/bonusTask.ts`): a MESMA linha e a mesma caixa; a ÚNICA diferença é o título no
+   * bronze do checkbox (`--sm2-check-fill`). Nenhum texto explicativo na linha (pedido do dono).
+   */
+  bonus?: boolean;
+  /**
    * Linha de HISTÓRICO (concluída hoje, já fora de `tasks`): editar é inerte
    * (`aria-disabled`), o checkbox é cheio e inerte. Ela existe para o
    * "feitos/total" contar o que foi feito (A4) — some na virada do dia.
@@ -262,7 +267,7 @@ export interface RitualRowProps {
 }
 
 export function RitualRow({
-  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
+  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, bonus = false, inert = false,
   onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
   children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
 }: RitualRowProps) {
@@ -272,6 +277,7 @@ export function RitualRow({
   /* A tinta do título: uma só regra, por estado (D-A3). */
   const tinta = isHaunted
     ? 'var(--sm2-haunted)'
+    : bonus ? 'var(--sm2-check-fill)'
     : (done || dimmed) ? 'var(--sm2-muted)' : 'var(--sm2-ink)';
   /* PAI × FILHOS (beta-2, 2.2): linha com filhos NUNCA conclui direto. O
      checkbox à esquerda só REFLETE (marcado = todos feitos; `mixed` = alguns) e
@@ -304,6 +310,7 @@ export function RitualRow({
       data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
+      data-bonus={bonus ? 'true' : undefined}
       data-kind={kind}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit

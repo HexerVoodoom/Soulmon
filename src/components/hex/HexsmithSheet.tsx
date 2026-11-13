@@ -10,6 +10,7 @@
  * Regras: TODAS em `utils/hexsmith.ts` (a tela só mostra e chama os puros, e o motivo que desabilita o botão é o que aparece em texto).
  * Textos: `utils/hexsmithCopy.ts`. Arte final: `assets/soulmon/hex` (glob; sem arquivo → glifos SVG). Sem botão de vender/descartar.
  */
+import { emphasizeSoulFragment } from '../ui/SoulFragmentTerm';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
@@ -349,7 +350,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                 const tipBtn = (label: string, trigger: ReactNode, tip: string, attr: string) => (
                   <InfoTip language={language as Language} label={label} align="right"
                     style={{ minWidth: 32, minHeight: 32, color: 'inherit' }} trigger={trigger}>
-                    <span {...{ [attr]: true }}>{tip}</span>
+                    <span {...{ [attr]: true }}>{emphasizeSoulFragment(tip)}</span>
                   </InfoTip>);
                 return (
                   <li key={id} className="sm2-pocao-item" data-hex-line data-can-craft={ok ? 'true' : 'false'} data-on={on ? 'true' : 'false'} data-ok={ok}>

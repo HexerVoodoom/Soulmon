@@ -94,6 +94,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
+import { bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
@@ -700,6 +701,7 @@ const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m 
 const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
 const MailboxSheet = lazyOverlay(() => import('./components/MailboxSheet').then(m => ({ default: m.MailboxSheet })));
 const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
+const BonusTaskIntroModal = lazyOverlay(() => import('./components/BonusTaskIntroModal').then(m => ({ default: m.BonusTaskIntroModal })));
 const CompletionTag = lazyOverlay(() => import('./components/CompletionTag').then(m => ({ default: m.CompletionTag })));
 const DemoSoundButton = lazyOverlay(() => import('./components/perfil/DemoSoundButton').then(m => ({ default: m.DemoSoundButton })));
 const SpritePoseRows = lazyOverlay(() => import('./components/SpritePoseRows').then(m => ({ default: m.SpritePoseRows })));
@@ -3386,6 +3388,14 @@ export default function App() {
 
   // Handler para atividades sem etapas
   /** `opts.auto` (beta12 §J): o check AUTOMÁTICO por recurso. Faz exatamente o que o toque manual faz (mesmo pagamento, Q2), só sem oferecer o Desfazer (o aviso é a tag do topo). */
+  /** ⭐ Aceitar a oferta reduzida: o hábito vira a tarefa bônus de HOJE. Não conclui nada (13/11/2026). */
+  const handleAcceptBonusTask = useCallback((activityId: string) => {
+    const day = new Date().toDateString();
+    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : { ...prev, bonusTask: { day, activityId } }));
+  }, []);
+  /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
+  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
+
   const handleToggleActivityCompletion = (activityId: string, opts?: { auto?: boolean }) => {
     const today = new Date().toDateString();
     const activity = gameState.activities.find(a => a.id === activityId);
@@ -3482,6 +3492,11 @@ export default function App() {
     // que a reversão precisa.
     if (activity && opts?.auto !== true && !(activity.completedToday && activity.lastCompletedDate === today)) {
       ofereceDesfazer(gameState, activity.name);
+    }
+    // ⭐ Primeira conclusão de uma tarefa bônus: a apresentação, uma vez só.
+    if (activity && isBonusActivity(gameState.bonusTask, activityId, today) && !gameState.bonusIntroSeen
+      && !(activity.completedToday && activity.lastCompletedDate === today)) {
+      setBonusIntroOpen(true);
     }
 
     // Marco de maturidade (7/21/66 dias de Lally et al.) — celebra UMA vez, no
@@ -3931,11 +3946,16 @@ export default function App() {
    * `duration` = `UNDO_WINDOW_MS` porque a janela do toast **é** a janela da
    * reversão: o botão nunca some antes de expirar nem fica morto na tela.
    */
-  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion> & { tasks?: unknown; completedTasks?: unknown }; xp0: number; bits0: number; gain: PreviewItem[] | null } | null>(null);
+  /** 💠 Fragmentos de Alma que HOJE já rende (prévia da virada): peso feito até o teto + a tarefa bônus concluída. */
+  const fragmentosHoje = gaugeContribution(dailyDone, gameState.evolutionStage)
+    + bonusTaskGaugeBonus(gameState.bonusTask, gameState.activities, new Date().toDateString());
+  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion> & { tasks?: unknown; completedTasks?: unknown }; xp0: number; bits0: number; frag0: number; gain: PreviewItem[] | null; fragments?: number } | null>(null);
+  const fragmentosHojeRef = useRef(fragmentosHoje);
+  fragmentosHojeRef.current = fragmentosHoje;
   const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string, comTarefas = false) => {
     // Tarefa avulsa: a conclusão também mexe em `tasks`/`completedTasks` (e na próxima ocorrência), então o snapshot os leva.
     const snapshot = comTarefas ? { ...snapshotCompletion(antes), tasks: antes.tasks, completedTasks: antes.completedTasks } : snapshotCompletion(antes);
-    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot, xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, gain: null });
+    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot, xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, frag0: fragmentosHojeRef.current, gain: null });
   }, []);
   // Ganho exato = diferença entre o estado de antes e o primeiro estado depois da conclusão.
   useEffect(() => {
@@ -3945,8 +3965,9 @@ export default function App() {
     const gain: PreviewItem[] = [];
     if (xp > 0) gain.push({ kind: 'xp', amount: xp });
     if (bits > 0) gain.push({ kind: 'bits', amount: bits });
-    setDoneTag(t => (t && t.id === doneTag.id && !t.gain ? { ...t, gain } : t));
-  }, [doneTag, gameState.totalXP, gameState.gamePoints]);
+    const fragments = Math.max(0, fragmentosHoje - doneTag.frag0);
+    setDoneTag(t => (t && t.id === doneTag.id && !t.gain ? { ...t, gain, fragments } : t));
+  }, [doneTag, gameState.totalXP, gameState.gamePoints, fragmentosHoje]);
   useEffect(() => {
     if (!doneTag) return;
     const id = doneTag.id;
@@ -9598,6 +9619,7 @@ export default function App() {
                     </button>
                   )}
                   <DailyRituals
+                    bonusActivityId={gameState.bonusTask?.day === new Date().toDateString() ? gameState.bonusTask.activityId : undefined}
                     tasks={gameState.tasks}
                     activities={gameState.activities}
                     completedTasks={gameState.completedTasks}
@@ -10442,12 +10464,9 @@ export default function App() {
              reconhecer o que a pessoa contou não é enfeite: a segunda falta
              seguida, quando o pet oferece a versão de 5 minutos. */
           soulStruggle={gameState.soulStruggle}
-          /* WP2.10 — aceitar a versão reduzida usa o MESMO caminho de conclusão
-             de sempre. "Conta como feito" é literal: mesma constância, mesmos
-             atributos, mesmo XP de Vínculo. Um caminho paralelo aqui seria uma
-             segunda regra de conclusão (footgun 9) e um "meio-feito" que a
-             tese do produto não tem. */
-          onTinyHabit={handleToggleActivityCompletion}
+          /* WP2.10 → 13/11/2026: aceitar a versão reduzida NÃO conclui mais (o "já conta como feito" pré-marcava a
+             tarefa). Vira a TAREFA BÔNUS do dia (`utils/bonusTask.ts`): a pessoa marca pelo caminho de sempre. */
+          onTinyHabit={handleAcceptBonusTask}
           /* D-R5 — a etiqueta do hábito leva o `eco` de maturidade (o mesmo
              glifo da lista), então o check-in precisa do tier de cada um. */
           habitTiers={Object.fromEntries(checkInPlanData.habitsToday.map(h =>
@@ -10727,7 +10746,7 @@ export default function App() {
             fuse={{
               plan: checkInPlan(gameState as any, new Date()),
               taskIds: new Set(gameState.tasks.map(t => String(t.id))),
-              onTinyHabit: handleToggleActivityCompletion,
+              onTinyHabit: handleAcceptBonusTask,
               soulStruggle: gameState.soulStruggle,
             }}
             onConfirm={(ids, focusIds) => {
@@ -10793,6 +10812,7 @@ export default function App() {
             language={language}
             name={doneTag.name}
             items={doneTag.gain ?? []}
+            fragments={doneTag.fragments}
             onUndo={() => {
               const snap = doneTag.snapshot;
               setGameState(prev => {
@@ -10801,6 +10821,15 @@ export default function App() {
               });
               setDoneTag(null);
             }}
+          />
+        </Suspense>
+      )}
+      {bonusIntroOpen && (
+        <Suspense fallback={null}>
+          <BonusTaskIntroModal
+            open
+            language={language}
+            onClose={() => { setBonusIntroOpen(false); setGameState(prev => (prev.bonusIntroSeen ? prev : { ...prev, bonusIntroSeen: true })); }}
           />
         </Suspense>
       )}

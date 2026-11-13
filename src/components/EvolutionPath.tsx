@@ -29,6 +29,7 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { EvolveButton } from './pixel/EvolveButton';
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
@@ -1154,7 +1155,7 @@ export function EvolutionPath({
               </span>
             </p>
           )}
-          <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
+          <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{emphasizeSoulFragment(fraseProgresso)}</p>
           {/* 🌀 Buff do Glitchtama (10/11/2026): ativo = +10% nos pontos que entram; mostra até quando e que o próximo uso só depois. */}
           {glitchtamaBuffAte !== undefined && (
             <p data-glitchtama-buff style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
@@ -1174,7 +1175,7 @@ export function EvolutionPath({
           )}
           {!prontoParaEvoluir && gaugeGoal > 0 && (
             <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-              {fragmentHowText(language)}
+              {emphasizeSoulFragment(fragmentHowText(language))}
             </p>
           )}
         </div>}

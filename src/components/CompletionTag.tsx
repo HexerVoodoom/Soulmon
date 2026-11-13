@@ -12,10 +12,15 @@
  */
 import { Icon } from './ui/Icon';
 import { RewardPreview, type PreviewItem } from './ui/RewardPreview';
+import { SoulFragmentTerm } from './ui/SoulFragmentTerm';
+import { soulFragmentWord } from '../utils/soulFragment';
 import type { Language } from '../utils/i18n';
 
-export function CompletionTag({ language, name, items, onUndo }: {
-  language: Language; name: string; items: readonly PreviewItem[]; onUndo: () => void;
+export function CompletionTag({ language, name, items, fragments = 0, onUndo }: {
+  language: Language; name: string; items: readonly PreviewItem[];
+  /** 💠 Fragmentos de Alma que ESTA conclusão rendeu hoje (13/11/2026): "+1 fragmento de alma", termo destacado. 0 = não aparece. */
+  fragments?: number;
+  onUndo: () => void;
 }) {
   const isPt = language === 'pt-BR';
   return (
@@ -36,6 +41,11 @@ export function CompletionTag({ language, name, items, onUndo }: {
           {name} · {isPt ? 'feito' : 'done'}
         </span>
         <RewardPreview items={items} mode="after" language={language} size={14} />
+        {fragments > 0 && (
+          <span data-completion-fragments style={{ whiteSpace: 'nowrap' }}>
+            +{fragments} <SoulFragmentTerm>{soulFragmentWord(fragments, language)}</SoulFragmentTerm>
+          </span>
+        )}
       </span>
       <button
         type="button"
