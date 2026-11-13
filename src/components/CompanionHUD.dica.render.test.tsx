@@ -37,6 +37,7 @@ describe('dica comum no turno da fala ociosa', () => {
     expect(onDica).not.toHaveBeenCalled(); // não fala no momento de abrir: só no turno ocioso
     await act(async () => { await vi.advanceTimersByTimeAsync(180_000); });
     expect(fala(container)).toContain('cochilo');
+    expect(container.querySelector('[data-pet-bubble] [data-pet-gold-bubble-arrow]')).toBeNull(); // dica comum não leva a lugar: sem seta
     expect(onDica).toHaveBeenCalledWith('cochilo');
     expect(onDica).toHaveBeenCalledTimes(1);
   });
@@ -72,6 +73,8 @@ describe('dica dourada no balão dourado', () => {
       expect(b.tagName).toBe('BUTTON');
       expect(b.getAttribute('aria-label')).toBe(dicaAria(tipo, 'pt-BR'));
       expect(b.textContent).toContain(dicaTexto(tipo, 'pt-BR'));
+      // leva a algum lugar → a seta no círculo no fim da linha (aria-hidden: o rótulo já diz o destino)
+      expect(b.querySelectorAll('[data-pet-gold-bubble-arrow][aria-hidden="true"]')).toHaveLength(1);
       fireEvent.click(b);
       expect(onTap).toHaveBeenCalledWith(tipo);
     });
@@ -80,5 +83,10 @@ describe('dica dourada no balão dourado', () => {
     movimentoReduzido(true);
     const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={{ tipo: 'relaxar', text: dicaTexto('relaxar', 'pt-BR'), ariaLabel: dicaAria('relaxar', 'pt-BR') }} onBalaoDourado={() => {}} />);
     expect((container.querySelector('[data-pet-gold-bubble]') as HTMLElement).className).not.toContain('sm3-balao');
+    // a seta continua, estática (sem classe de animação)
+    const seta = container.querySelector('[data-pet-gold-bubble-arrow]') as HTMLElement;
+    expect(seta).not.toBeNull();
+    expect(seta.className).toBe('');
+    expect(seta.style.animation).toBe('');
   });
 });

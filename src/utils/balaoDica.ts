@@ -11,9 +11,9 @@
  *     o do dia não foi tomado e a energia não está cheia) E o prédio abre neste Vínculo (`buildingGateFor`);
  *   · `cochilo` = energia baixa, o Refúgio NÃO dá energia agora, e o Soulmon não está faminto: dormir multiplica a regeneração
  *     (`SLEEP_ENERGY_REGEN_BONUS`), mas faminto a regeneração é 0 e 0 × 1,5 = 0 — aí a dica seria falsa e quem fala é a `fome`;
- *   · `fome` = abaixo de "bem alimentado" (`HUNGER_FED_MIN`) E há comida na pastinha. Sem estoque o Soulmon NÃO pede: sugerir
- *     comer sem estoque é cobrar tarefa por tabela (a mesma regra de `needsAttention`, `petNeeds.ts`). A dica é verdadeira:
- *     bem alimentado regenera a 100%, mediano a 50%, faminto a 0 (`REGEN_*_PCT`);
+ *   · `fome` = abaixo de "bem alimentado" (`HUNGER_FED_MIN`), COM OU SEM comida na pastinha (dono, 13/11: a fome aparece mesmo de
+ *     pastinha vazia). A fala é a MESMA nos dois casos porque não pede nada: o Soulmon diz que está com fome e a regra verdadeira
+ *     (bem alimentado regenera a 100%, mediano a 50%, faminto a 0, `REGEN_*_PCT`). Sem verbo de tarefa, sem "vá", sem culpa;
  *   · `lilia` = a meta do dia foi cumprida (a MESMA régua que libera aguar/defender: `fioMetaCumprida`, `groveTend.ts`), o Grove
  *     abre neste Vínculo, e o servidor diz que há cuidado do dia por fazer (`bosqueCuidavel`).
  *
@@ -56,8 +56,6 @@ export interface DicaEntrada {
   energia: number;
   energiaMax: number;
   fome: HungerTier;
-  /** Há comida na pastinha. */
-  temComida: boolean;
   /** O Refúgio dá energia agora (prédio aberto, o do dia não tomado, energia não cheia). */
   refugioDaEnergia: boolean;
   /** A meta do dia está cumprida (`fioMetaCumprida`). */
@@ -76,7 +74,7 @@ export function dicasPresentes(e: DicaEntrada): Record<DicaTipo, boolean> {
   const cansado = energiaBaixa(e.energia, e.energiaMax);
   return {
     relaxar: cansado && e.refugioDaEnergia,
-    fome: e.fome !== 'fed' && e.temComida,
+    fome: e.fome !== 'fed',
     cochilo: cansado && !e.refugioDaEnergia && e.fome !== 'starving',
     lilia: e.metaDoDia && e.groveAberto && e.bosqueCuidavel,
   };

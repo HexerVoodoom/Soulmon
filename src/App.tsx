@@ -4730,7 +4730,6 @@ export default function App() {
     energia: energiaDica.energyPoints ?? 0,
     energiaMax: maxEnergyOf(gameState),
     fome: hungerTierAt(gameState.hunger, agoraDica),
-    temComida: Object.values(gameState.foodInventory ?? {}).some(n => (n ?? 0) > 0),
     refugioDaEnergia: buildingGateFor('forja.refugio', bondDica).open && !refugioEnergyTaken(gameState, agoraDica) && (energiaDica.energyPoints ?? 0) < maxEnergyOf(gameState),
     metaDoDia: fioMetaCumprida,
     groveAberto: !demo && buildingGateFor('hall.grove', bondDica).open,

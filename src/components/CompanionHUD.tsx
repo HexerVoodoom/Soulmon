@@ -1898,7 +1898,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)',
                   }}
                 >
-                  {balaoDourado.text}
+                  <BalaoDouradoTexto text={balaoDourado.text} />
                 </span>
                 <span
                   aria-hidden="true"
@@ -2242,3 +2242,38 @@ export const CompanionHUD = memo(function CompanionHUD({
     </div>
   );
 });
+
+/**
+ * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §327): diz "este balão leva
+ * a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
+ * · A seta é o glifo autoral `arrow_forward` (`ui/NavGlyphs.tsx`); o círculo é só o CONTORNO em CSS (sem fundo): faz parte do
+ *   desenho, como o anel do `check_circle`, não é placa em volta do ícone. Nada de arte nova.
+ * · Tinta = a do texto do balão (`--sm2-ink` sobre `--sm2-surface`, o mesmo par do texto, bem acima de 3:1).
+ * · ~1,15em (16px numa linha de 14px), na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
+ *   sozinha para a linha de baixo.
+ * · `aria-hidden`: o nome acessível do botão já diz o destino (`balaoDouradoAria`/`dicaAria`). Estática: sem animação própria.
+ */
+function BalaoDouradoTexto({ text }: { text: string }) {
+  const corte = text.trimEnd().lastIndexOf(' ');
+  const inicio = corte >= 0 ? text.slice(0, corte + 1) : '';
+  const ultima = corte >= 0 ? text.trimEnd().slice(corte + 1) : text.trimEnd();
+  return (
+    <>
+      {inicio}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {ultima}
+        <span
+          aria-hidden="true"
+          data-pet-gold-bubble-arrow
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+            width: 16, height: 16, marginLeft: 4, verticalAlign: '-0.2em',
+            border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
+          }}
+        >
+          <Icon name="arrow_forward" size={11} weight={600} />
+        </span>
+      </span>
+    </>
+  );
+}

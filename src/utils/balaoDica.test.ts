@@ -10,7 +10,7 @@ import { BUILDINGS_ALWAYS_OPEN, buildingGateFor } from './gates';
 import { buildingDestination } from '../navigation';
 
 const base: DicaEntrada = {
-  presente: true, energia: 1, energiaMax: 10, fome: 'fed', temComida: false,
+  presente: true, energia: 1, energiaMax: 10, fome: 'fed',
   refugioDaEnergia: true, metaDoDia: false, groveAberto: true, bosqueCuidavel: false,
 };
 const NOW = Date.UTC(2026, 10, 13, 15, 0, 0);
@@ -38,7 +38,7 @@ describe('§327 condições', () => {
     expect(escolherDica(p, {}, NOW, 'comum')).toBe('cochilo');
   });
   it('faminto, o cochilo NÃO aparece (dormir multiplica a regeneração, e faminto ela é 0): quem fala é a fome', () => {
-    const p = dicasPresentes({ ...base, refugioDaEnergia: false, fome: 'starving', temComida: true });
+    const p = dicasPresentes({ ...base, refugioDaEnergia: false, fome: 'starving' });
     expect(p.cochilo).toBe(false);
     expect(escolherDica(p, {}, NOW, 'comum')).toBe('fome');
     // e a própria regra confirma: 0% × bônus de sono = 0
@@ -48,11 +48,17 @@ describe('§327 condições', () => {
     const p = dicasPresentes({ ...base, energia: 5 });
     expect(p.relaxar || p.cochilo).toBe(false);
   });
-  it('fome: abaixo de "bem alimentado" E com comida na pastinha; sem estoque o Soulmon não pede', () => {
-    expect(dicasPresentes({ ...base, energia: 9, fome: 'fair', temComida: true }).fome).toBe(true);
-    expect(dicasPresentes({ ...base, energia: 9, fome: 'starving', temComida: true }).fome).toBe(true);
-    expect(dicasPresentes({ ...base, energia: 9, fome: 'fair', temComida: false }).fome).toBe(false);
-    expect(dicasPresentes({ ...base, energia: 9, fome: 'fed', temComida: true }).fome).toBe(false);
+  it('fome: abaixo de "bem alimentado", MESMO com a pastinha vazia (dono, 13/11); bem alimentado não fala', () => {
+    expect(dicasPresentes({ ...base, energia: 9, fome: 'fair' }).fome).toBe(true);
+    expect(dicasPresentes({ ...base, energia: 9, fome: 'starving' }).fome).toBe(true);
+    expect(dicasPresentes({ ...base, energia: 9, fome: 'fed' }).fome).toBe(false);
+    // a entrada nem conhece o estoque: não há como a pastinha vazia calar a fome
+    expect(Object.keys(base)).not.toContain('temComida');
+  });
+  it('a fala da fome não pede tarefa nem culpa: só a fome e a regra verdadeira (vale de pastinha vazia)', () => {
+    for (const lang of ['pt-BR', 'en-US'] as const) {
+      expect(dicaTexto('fome', lang)).not.toMatch(/tarefa|task|complet|precisa|need to|você deve|you should|culpa|por favor|please|me (dá|alimenta)|feed me/i);
+    }
   });
   it('a dica da fome é VERDADE no motor: bem alimentado regenera mais que mediano, que regenera mais que faminto', () => {
     expect(REGEN_FED_PCT).toBeGreaterThan(REGEN_FAIR_PCT);
@@ -70,7 +76,7 @@ describe('§327 condições', () => {
   it('relaxar vence a Lilia (prioridade), e ausente/dormindo nada aparece', () => {
     const p = dicasPresentes({ ...base, metaDoDia: true, bosqueCuidavel: true });
     expect(escolherDica(p, {}, NOW, 'dourada')).toBe('relaxar');
-    expect(Object.values(dicasPresentes({ ...base, presente: false, fome: 'starving', temComida: true, metaDoDia: true, bosqueCuidavel: true })).some(Boolean)).toBe(false);
+    expect(Object.values(dicasPresentes({ ...base, presente: false, fome: 'starving', metaDoDia: true, bosqueCuidavel: true })).some(Boolean)).toBe(false);
     expect(DICA_PRIORIDADE).toEqual(['relaxar', 'fome', 'cochilo', 'lilia']);
   });
   it('o fato do servidor para o Grove: planta de pé, não madura, ação sorteável ou sorteada', () => {
@@ -103,7 +109,7 @@ describe('§327 frequência (cooldown por tipo)', () => {
     expect(escolherDica(p, vistas, NOW + DICA_COOLDOWN_MS.cochilo, 'comum')).toBe('cochilo');
   });
   it('é por TIPO: a fome em cooldown não segura o cochilo', () => {
-    const p = dicasPresentes({ ...base, refugioDaEnergia: false, fome: 'fair', temComida: true });
+    const p = dicasPresentes({ ...base, refugioDaEnergia: false, fome: 'fair' });
     expect(escolherDica(p, {}, NOW, 'comum')).toBe('fome');
     expect(escolherDica(p, marcarVista({}, 'fome', NOW), NOW + 1000, 'comum')).toBe('cochilo');
   });
