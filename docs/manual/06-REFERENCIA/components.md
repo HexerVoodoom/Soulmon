@@ -1691,8 +1691,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Dono de:** o NOME DE OUTRO JOGADOR com o nome do CLÃ embaixo, em toda tela que mostra outra pessoa. O nome mantém o estilo de quem chama (`nameStyle`); o clã vem numa linha própria, menor e calma: `--sm2-text-xs`, peso 400, `--sm2-muted`, `--sm2-font-text`. Sem clã não desenha nada. As duas linhas cortam com reticências; o leitor de tela ouve "Clã <nome>".
 **Props principais:** `name`, `guildName?` (ausente/vazio = nada), `suffix?` (na linha do nome, ex. " (você)"), `nameStyle?`, `guildStyle?`, `align?` (`center` no pódio), `isPt?`.
 **Exports:** `PlayerName`.
-**Chamado por:** `RankingList` (pódio e linhas dos placares dos jogos), `TournamentPage` (oponentes do Torneio, Treino e ranking da temporada), `PlayerDetailModal` (título do perfil), `LibraryPage` (linhas do Drive/Amigos e convites de amizade recebidos), `guild/GuildSheet` (Roda), `PlayerSearch` (sugestões).
+**Chamado por:** `RankingPodium` (pódio dos placares dos jogos), `RankingList` (linhas dos placares), `TournamentPage` (oponentes do Torneio, Treino e ranking da temporada), `PlayerDetailModal` (título do perfil), `LibraryPage` (linhas do Drive/Amigos e convites de amizade recebidos), `guild/GuildSheet` (Roda), `PlayerSearch` (sugestões).
 **Régua:** `src/components/PlayerSearch.render.test.tsx` (com e sem clã); `GuildSheet.render.test.tsx` (a linha do nome continua só o nome).
+**Régua:** `src/components/RankingPodium.render.test.tsx` (com e sem clã).
 
 ### `src/components/ui/NavGlyphs.tsx`
 **Dono de:** os glifos SVG próprios do Soulmon (nav + deck do aparelho + lista diária + moedas + utilitários) — mesma métrica da Material Symbols Rounded (caixa 24dp, traço 2.1×wght/500).
@@ -2100,7 +2101,15 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** a coleção do Bestiário (M10): uma célula por criatura × estágio do `enemyRoster`; vista = arte e nome, não vista = silhueta sem nome. O número é de coleção ("N de M"), nunca percentual. Chaves antigas fora do roster não contam. **Exports:** `BestiaryCollection({ seen, language })`.
 
 ### `src/components/RankingList.tsx`
-**Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze, top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`.
+**Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze (desenhado pelo `RankingPodium`, §326), top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`, `RankingPodium`.
+
+### `src/components/RankingPodium.tsx` (13/11/2026, o pódio refeito — REGISTRO §326)
+**Dono de:** o PÓDIO dos placares dos jogos (o único pódio do app: o ranking da temporada do Torneio é uma janela de ±3 "sem ouro no top 3" e a Guilda não tem ranking, por regra). Grade 2º · 1º · 3º com o DOM em 1 · 2 · 3; o 1º no centro, coluna 1,25×, pedestal mais alto, coroa, medalha 44, nome 16 e pontos 20 em `gold-ink` com brilho atrás. Cada lugar: [coroa] · medalha · `ui/PlayerName` (clã embaixo) · pontos (`sm2-num`, tabulares) · [prêmio] · pedestal (`role="img"`, rótulo "Nº lugar"; medalha e coroa `aria-hidden`). Lugar sem ninguém (placar com 1 ou 2): pedestal apagado, `aria-hidden`, para o 1º continuar no centro. Estilo em `index.css` (`.sm-rank-podium*`), tokens `--sm2-gold-fill`/`--sm2-silver-fill`/`--sm2-bronze-fill` + `--sm2-on-*`.
+**Arte por slot:** `resolvePodiumArt(place)` de `src/assets/soulmon/ranking/index.ts` (`import.meta.glob`, mesmo padrão de `resolveHexCrownArt`): `podio-1..3.png` (360×240, 288×180, 288×144), `medalha-1..3.png` (128²), `coroa-1.png` (128×96). Sem o PNG, cada peça cai na versão em CSS (pedestal em gradiente do metal com a lasca turquesa; medalha em disco com o número; coroa = glifo `emoji_events`). Soltar o PNG na pasta basta. Fila: `docs/ASSETS-A-GERAR.md` → "Pódio do ranking".
+**Props principais:** `rows: PodiumRow[]` (até 3; `PodiumRow = RankingRow & { guildName? }`), `language`, `format?`, `art?` (só teste).
+**Exports:** `RankingPodium`, `PodiumRow`.
+**Chamado por:** `RankingList`.
+**Régua:** `src/components/RankingPodium.render.test.tsx` (ordem, rótulos, fallback CSS × arte, lugar vazio, clã, tabulares); `RankingList.render.test.tsx`; contraste do numeral em `src/styles/tokens.contrast.test.ts`.
 
 ### `src/components/RankingPanel.tsx`
 **Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period?, inline? })` (`inline` = a lista direto na tela, sem botão nem modal, usada dentro do modal do `MinigameModeGate`). **Usa:** `src/utils/rankings.ts`.
