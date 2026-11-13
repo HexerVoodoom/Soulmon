@@ -9,7 +9,7 @@
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
 import { curatedComponents } from '../elementosCurados';
-import { EFFECT_TUNE_PESADELO, type Special, type SpecialEffect, type SpecialFamily } from './specials';
+import { EFFECT_TUNE_PESADELO, effectTuneMasmorra, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 
 export type EfeitoElemento =
   | 'queimadura' | 'veneno' | 'maldicao' | 'silencio' | 'lentidao' | 'curaContinua'
@@ -94,9 +94,14 @@ export function efeitoElementoPve(family: SpecialFamily, elemento: string | null
   return e && EFEITOS_PVE_LIGADOS.includes(e) ? (elemento as string) : undefined;
 }
 
-/** O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama. */
-export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined, pesadelo = false): Special {
+/**
+ * O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama.
+ * `masmorra` (§334): a cura contínua usa `effectTuneMasmorra()` (Masmorra, Fenda e Raid); o Pesadelo segue a tune dele.
+ */
+export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined, pesadelo = false, masmorra = false): Special {
   const e = efeitoDoEspecial(sp.family, elemento);
   const effect = e ? MECANICA[e] : undefined;
-  return effect ? { ...sp, effect, ...(pesadelo ? { tune: EFFECT_TUNE_PESADELO } : {}) } : sp;
+  if (!effect) return sp;
+  if (pesadelo) return { ...sp, effect, tune: EFFECT_TUNE_PESADELO };
+  return masmorra && effect === 'hot' ? { ...sp, effect, tune: effectTuneMasmorra() } : { ...sp, effect };
 }
