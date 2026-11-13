@@ -68,8 +68,6 @@ interface SettingsPageProps {
   language: Language;
   onChangeLanguage: (lang: Language) => void;
   onOpenGuide: () => void;
-  /** Objetivo anual (E4): abre "Meu objetivo". Sem isto a linha nao existe. */
-  onOpenObjetivo?: () => void;
   /** Rever o tour do corvo (sem recompensa nem marca nova). */
   onReplayWelcomeTour?: () => void;
   /** Glossário (HelpModal). */
@@ -280,7 +278,6 @@ export function SettingsPage({
   onChangeLanguage,
   language,
   onOpenGuide,
-  onOpenObjetivo,
   onReplayWelcomeTour,
   onOpenGlossary,
   review,
@@ -428,7 +425,6 @@ export function SettingsPage({
             especialNome={profile.especial?.nome}
             onOpenFrameShop={requestOpenFrameShop}
           />
-          {onOpenObjetivo && <ActionRow label={isPt ? 'Meu objetivo' : 'My goal'} onClick={onOpenObjetivo} />}
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />
         </GroupCard>
       )}

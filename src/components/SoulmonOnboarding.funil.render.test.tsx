@@ -18,7 +18,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { abrirGuias, entrarNaDemoPeloOvo, tocarOvo, escolherGuiaEConfirmar } from '../test/ovoOnboarding';
-import { responderNome, escolherCarta, ateAsMetas, atravessarPerguntasIniciais, responderNascimento, responderPerguntas, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
+import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderNascimento, responderPerguntas, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 import { ORACLE_QUESTIONS } from '../utils/oracle';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
 
@@ -78,8 +78,6 @@ describe('funil grátis — identidade do canvas', () => {
     fireEvent.click(btn('Back'));
     expect(document.body.textContent).not.toMatch(/Question \d+ of/);
     await responderPerguntas(1 + SOUL_TEST_ITEMS.length);
-    expect(screen.getByText('Where are you right now?')).toBeTruthy(); // as 3 cartas vêm antes das áreas
-    escolherCarta();
     expect(screen.getByText('What do you want to improve?')).toBeTruthy();
     // e das metas volta-se ao último item do teste
     fireEvent.click(btn('Back'));

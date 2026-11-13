@@ -9,8 +9,6 @@ import { getSpriteForStage, demoTintFilter, artFacesLeft, type StarterId } from 
 import { usePetScale, useGroundDrop } from '../hooks/usePetScale';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
-import { purposeVoiceLine } from '../utils/purposeVoice';
-import type { MotiveKey } from '../utils/purpose';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
 import { Icon } from './ui/Icon';
@@ -209,7 +207,7 @@ interface CompanionHUDProps {
   /** WP3.2 — fala nos momentos que eram mudos. Mesmo padrão de `fullSignal`:
    *  um contador que só cresce, e o `kind` diz QUAL frase. As frases vivem em
    *  `utils/petVoice.ts` (o teste de tom varre lá, não aqui). */
-  speakSignal?: { n: number; kind: PetVoiceKind; /** E11: a CATEGORIA do porquê (nunca o texto livre); com ela a fala é a do porquê. */ motive?: MotiveKey };
+  speakSignal?: { n: number; kind: PetVoiceKind };
   /** Ritmo das refeições: o cartão da Home pede para abrir a mochila (bump). */
   openBackpackSignal?: number;
   /** WP3.3 — o nome do pet. B1 (02/10/2026): NÃO é mais desenhado sob o pet
@@ -710,9 +708,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     // WP3.10 — o traço entra aqui, lido do ESTADO (nunca por parâmetro que
     // quem chama possa esquecer). Sem traço, ou sem fala para este gesto, cai
     // na genérica.
-    speak(speakSignal.motive
-      ? purposeVoiceLine(speakSignal.motive, language === 'pt-BR', Math.random())
-      : petVoiceLine(speakSignal.kind, language === 'pt-BR', Math.random(), petPassive), 3500);
+    speak(petVoiceLine(speakSignal.kind, language === 'pt-BR', Math.random(), petPassive), 3500);
     // `kind` fora das deps de propósito: quem dispara é a mudança do CONTADOR.
     // Com `kind` na lista, trocar de idioma ou remontar repetiria a fala.
     // eslint-disable-next-line react-hooks/exhaustive-deps

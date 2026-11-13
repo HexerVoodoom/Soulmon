@@ -39,12 +39,6 @@ export function responderNome(nome = 'Corvo Azul', pt = false): void {
   passarApresentacaoDaAmbra(); // a Ambra vem DEPOIS do nome
 }
 
-/** As 3 cartas (PLANO §2b): toca a carta e confirma. O padrão é Satisfação = o fluxo de sempre (áreas, dificuldades, forças). */
-export function escolherCarta(path: 'ambicao' | 'satisfacao' | 'ressurgimento' = 'satisfacao'): void {
-  fireEvent.click(document.querySelector(`[data-path-card="${path}"]`)!);
-  fireEvent.click(document.querySelector('[data-path-choose]')!);
-}
-
 /** As 6 do ritual + os 20 itens do teste (sempre a 1ª opção). Para na 1ª
  *  meta ("o que melhorar"). `quantas` limita, para parar no meio. */
 export async function responderPerguntas(quantas = ORACLE_QUESTIONS.length + SOUL_TEST_ITEMS.length): Promise<void> {
@@ -65,7 +59,7 @@ function escolherPrimeira(pt: boolean): void {
   clicarContinuar(pt);
 }
 
-/** Áreas → (destino pulado) → dificuldades → forças → ponto de partida, e para na 1ª pergunta de nascimento (Faixa E: o nome completo). */
+/** Áreas → dificuldades → forças → ponto de partida, e para na 1ª pergunta de nascimento (Faixa E: o nome completo). */
 export function responderMetas(pt = false): void {
   escolherPrimeira(pt); // o que melhorar
   escolherPrimeira(pt); // o que atrapalha
@@ -88,10 +82,9 @@ export function responderNascimento(pt = false, nomeCompleto = 'Jane Doe'): void
 }
 
 /** Nome + as 26 perguntas: da saída do portão até a 1ª meta. */
-export async function ateAsMetas(pt = false, nome = 'Corvo Azul', carta: 'ambicao' | 'satisfacao' | 'ressurgimento' = 'satisfacao'): Promise<void> {
+export async function ateAsMetas(pt = false, nome = 'Corvo Azul'): Promise<void> {
   responderNome(nome, pt);
   await responderPerguntas();
-  escolherCarta(carta);
 }
 
 /** Nome + perguntas + metas + nascimento: da saída do portão até a tela do ovo-cristal. */

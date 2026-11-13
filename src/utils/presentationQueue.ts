@@ -57,7 +57,6 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  ── FORA do início de dia ──
  * 12. `catalogLevelInvite`, 13. `restSetup`, 13b. `stepsInvite` — convite e configuração: só numa abertura sem nada do início de dia
  *     (`stepsInvite` = o convite curto da contagem de passos, só no app Android com contador e SÓ depois do onboarding; REGISTRO §283);
- * 13c. `purposeInvite` — o convite ÚNICO do objetivo anual para quem já jogava (12/11/2026, E3): "agora não" também o encerra; depois fica em Perfil > Meu objetivo;
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
  * 14b. `noticeToast` — balãozinho NÃO bloqueante de um aviso acionável (refeição, Refúgio, termos, triagem, recomeço), 1× por dia cada, o mais leve de todos;
  * 15. `welcome` — ocioso (o pedido de instalar/notificar decide sozinho se tem algo a dizer; não aparece no início de dia).
@@ -84,7 +83,6 @@ export const PRESENTATION_ORDER = [
   'catalogLevelInvite',
   'restSetup',
   'stepsInvite',
-  'purposeInvite',
   'unlockToast',
   'noticeToast',
   PRESENTATION_IDLE,
@@ -110,7 +108,7 @@ export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', '
 export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone', 'messenger'];
 
 /** Convites e configuração: SAEM do início de dia (próxima abertura ou ação). */
-export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup', 'stepsInvite', 'purposeInvite'];
+export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup', 'stepsInvite'];
 
 /** Quem o Soulmon dormindo (`holdDayStart`) segura: início de dia, celebrações e convites. O que nasce de GESTO (triagem, intro de prédio, mapa) e o onboarding não. */
 const HELD_WHILE_ASLEEP: ReadonlySet<PresentationId> = new Set<PresentationId>([...DAY_START_IDS, ...CELEBRATION_IDS, ...INVITE_IDS]);

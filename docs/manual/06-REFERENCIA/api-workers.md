@@ -889,8 +889,3 @@ Registros de nomes (telas, features, minigames) e faixas de tempo usados por `ap
 ### `functions/api/_hexRename.js` (11/11/2026, §287)
 
 **Dono de:** `renameOnServer` e `HEX_RENAME_COST` (200). Ação `POST /api/save?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }` (`save.js`): valida o nome (`nomeEspecialValido` + `sanitizarNomeDeGuilda`), debita Bits ganhos e grava `soulmonMeta.petName` ou `especialNome`/`especialNomeAt` numa escrita (revisão +1); 400 nome recusado, 402 saldo, 409 revisão. Régua: `save.hexRename.test.js`, `hexsmithRename.parity.test.js`. `ESPECIAL_NOME_COOLDOWN_MS` = 0 (o limite é o preço).
-
-### `functions/api/_chatSafety.js`
-
-**Dono de:** o detector de sofrimento NO SERVIDOR (E12): espelho de `src/utils/chatSafety.ts` (`needsBridge`), usado por `chat.js` (`purposeBlock`) para NÃO enviar à IA o objetivo do jogador quando algum campo casa. Nada é gravado, logado ou medido.
-**Régua:** `functions/api/chat.purpose.test.js` (paridade de listas com o cliente e o teste "não envia").

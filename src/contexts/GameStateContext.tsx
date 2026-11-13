@@ -140,8 +140,6 @@ import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
-import { sanitizePurpose, type Purpose } from '../utils/purpose';
-import { closePastMonths } from '../utils/purposeAgg';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -858,14 +856,6 @@ export interface GameState {
    */
   soulmonVoiceMode?: SoulmonVoiceMode;
   /**
-   * 12/11/2026 (beta12, objetivo anual, docs/PLANO-OBJETIVO-ANUAL.md): o objetivo,
-   * o porquê, o plano, as prioridades, as revisões e o AGREGADO MENSAL
-   * (`monthlyAgg`: feitas/oportunidades por hábito, que fecha o teto de 120 dias
-   * do `habitRhythms`). Dono: `utils/purpose.ts`. Sobe no save e é lido pela IA
-   * do chat (só objetivo/porquê/frase/plano, e nunca com sinal de risco).
-   */
-  purpose?: Purpose;
-  /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
    * **Opcional de propósito**: save anterior aos Termos não tem o campo, e
@@ -1307,13 +1297,7 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
  * no registro do nível — o elemento da última evolução paralela (bug do dono, 11/11/2026). Saves já afetados se curam aqui, sem apagar dado.
  */
 function carregarSave(rawState: Partial<GameState>): GameState {
-  const h = forcarOriginal(hydrateSave(rawState));
-  // Fecha, retroativamente, os meses inteiros que passaram com o app fechado (E10).
-  const purpose = closePastMonths({
-    rhythms: h.habitRhythms, activities: h.activities, purpose: h.purpose,
-    today: new Date(), lastSeen: h.lastResetDate,
-  });
-  return purpose === h.purpose ? h : { ...h, purpose };
+  return forcarOriginal(hydrateSave(rawState));
 }
 
 export function hidratarNuvem(nuvem: Partial<GameState>, atual?: GameState): GameState {
@@ -1729,8 +1713,6 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         soulTestAnswers: sanitizeSoulTestAnswers(loadedState.soulTestAnswers),
         // Beta12: só os dois valores conhecidos passam; ausente = padrão (complementar).
         soulmonVoiceMode: sanitizeVoiceMode(loadedState.soulmonVoiceMode),
-        // Objetivo anual: lixo vira ausente; limites e ids saneados em `sanitizePurpose`.
-        purpose: sanitizePurpose(loadedState.purpose),
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);
