@@ -5157,3 +5157,39 @@ Decisão: o Soulmon ganha quatro falas de contexto que ensinam uma regra VERDADE
 **NÃO aplicado (estágio).** `salsolurapoder-champion` → mega, `salsolurapoder-ultimate` → mega e `salsolurabenevolencia-ultimate` → mega: o ramo já tem um mega (`salsolurapoder-mega`, `salsolurabenevolencia-mega`); aplicar duplicaria o estágio na mesma chave (`salsolurapoder-mega` três vezes, colidindo no bestiário) e deixaria o ramo Poder sem champion/ultimate. Fica para o dono decidir (ex.: trocar a ARTE entre formas em vez do estágio). [pendente do dono]
 
 **Alternativa que perdeu:** editar o elemento direto em `INIMIGOS_API_DATA`/`ELENCO_ORACULO_DATA` (o elemento ali também escolhe os golpes da criatura base, e `armaria`/`sopro_do_dragao` não têm criatura base: quebraria os golpes) e aplicar o tipo nos dois golpes (a tabela separa básico e especial). **Falsifica:** algum id da tabela sumir do roster (`soulmonOverrides.test.ts` reprova). **Rollback:** reverter o PR. **APK:** nada.
+## §336 — FX de status com arte nova, sem identidade Soulmon: 13 folhas em loop + 13 glifos instalados; cada efeito toca a SUA folha (13/11/2026, pedido do dono)
+
+**Decisão (dono).** O dono aprovou o piloto do veneno. Pediu as 13 folhas e os glifos regerados sem os canos de cobre, as folhas e os cristais antigos, porque desde 09/11 a identidade Soulmon NÃO vale para FX e status. Depois respondeu: "instala, e corrige os 2 pulos". Este PR instala tudo com o mesmo nome e formato. Também liga as folhas novas: cada efeito passa a tocar a sua, e nenhum pega emprestada a folha genérica.
+
+1. **Arte nova.** As folhas ficam em `combate-v3/fx/fx-<id>-loop-sheet.png`: 384×256, 3×2 quadros de 128 px, alfa binário. São estes 13 ids: `veneno`, `queimadura`, `dot`, `maldicao`, `lento` (nova), `silencio`, `debuff-def` (nova), `debuff`, `buff-atk` (nova), `buff-spd` (nova), `buff`, `regen`, `cura` (nova). Os glifos ficam em `combate-v3/status/st-*.png`, 64×64: `veneno`, `queimadura`, `dot`, `maldicao`, `retardo`, `silencio`, `debuff-def`, `seta-desce`, `seta-sobe`, `buff-atk`, `buff-spd`, `hot` e `cura`. Os quadros soltos antigos (`fx-{buff,debuff,dot,maldicao}-loop-1..6.png`, 24 arquivos) não tinham consumidor e saíram, porque a folha nova os substitui.
+2. **Os 2 saltos foram corrigidos por edição de pixel, sem regerar** (`E:\Soulmon-assets\_fx-status\fix\corrigir_saltos.py`; os originais ficam em `novo\_backup-pre-fix\`).
+   - `fx-debuff-def`: o quadro 6 virou um cross-fade do quadro 6 para o quadro 1, e o escudo quebrado já não volta inteiro de repente.
+   - `fx-cura`: o quadro 6 foi normalizado para o brilho e a área do quadro 1.
+   - Detalhe em `docs/FX-STATUS-PROMPTS.md`.
+3. **Código.** `STATUS_FX[kind].loop` passou a ser um mapa por variante, como o `glyph`. A folha sai de `statusLoopId(kind, variant)`:
+   - `buff/atk|fisico|magico` → `fx-buff-atk`;
+   - `buff/spd|aceleracao` → `fx-buff-spd`;
+   - `debuff/def` → `fx-debuff-def`;
+   - `lento` → `fx-lento`;
+   - `cura` → `fx-cura` (a peça `fx-heal` segue como a peça estática);
+   - o resto continua como era.
+   
+   O marcador do canto (`StatusLayer`/`LoopMark` no `BattleStage`) usa essa folha e expõe `data-stage-fx-sheet`. O `STATUS_LOOP_CROP` foi remedido nas 13 folhas (união dos 6 quadros, alfa > 24). `LOOP_PRIORITY` não existe mais nesta base (§328): cada efeito com folha toca a sua no próprio marcador, `silencio` e `hot` incluídos.
+4. **Base do PR.** Este PR está empilhado sobre o PR #877 (`fix/efeitos-so-visual`, §328/§331), porque o `STATUS_LOOP_CROP` e o marcador de ~17% do campo vivem lá. Quando o #877 entrar na `feat/beta12`, o diff deste PR fica só com o §336.
+
+**Fonte dos prompts.** O §4.3 de `D:\Soulmon\planos\efeitos-combate.md`, que exigia cobre, circuito, folhas e cristal, foi marcado como REVOGADO para FX/status. Esse arquivo não é rastreado pelo git. A cópia da revogação e os prompts que valem estão em `docs/FX-STATUS-PROMPTS.md`.
+
+**Alternativa que perdeu.** Gerar só as 8 folhas que entravam sem mudar código e deixar lento, defesa em baixa, ataque e velocidade em alta e cura dividindo a folha genérica. Isso quebrava a regra de que cada efeito tem a sua silhueta.
+
+**Falsifica:**
+- um efeito com variante própria tocando a folha genérica;
+- uma folha citada sem recorte em `STATUS_LOOP_CROP`, ou um recorte sobrando;
+- um glifo citado que não existe;
+- cano, folha de máquina ou cristal turquesa num FX ou glifo de status;
+- o loop do `fx-debuff-def` ou do `fx-cura` pulando no quadro 6 → 1.
+
+**Régua.**
+- `combatFx.status.test.ts`: «§336 cada efeito com loop toca a SUA folha» e «§336 os glifos instalados resolvem».
+- `BattleStage.status.test.tsx`: «§328/§336 toda folha… tem recorte», «<efeito>/<variante>: o marcador no canto é a SUA folha» e «§336 as 13 folhas aparecem».
+
+Prints: `E:\Soulmon-assets\_prints-fx-novos\`. **Rollback:** reverter o PR. A arte antiga está em `E:\Soulmon-assets\_fx-status\atual\`.
