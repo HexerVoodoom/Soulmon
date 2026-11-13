@@ -480,7 +480,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
     const semConta = load.kind === 'login';
     const demo = semConta && accountTier === 'demo';
     corpo = (
-      <div className="sm2-guild-sec">
+      <div className="sm2-guild-sec" style={{ gap: 'var(--sm2-space-2)' }}>
         <p role="alert" className="sm2-lib-alert">{t(demo ? 'guild.erro.demo' : GUILD_ERROR_KEY[load.kind])}</p>
         {demo && onUnlock && (
           <div style={{ maxWidth: 280 }} data-guild-unlock>
