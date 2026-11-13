@@ -147,17 +147,19 @@ const STAGE_EL_ICON_W = 44;
 /**
  * MARCADOR DO EFEITO no sprite (dono, 13/11/2026; tamanho por §328): o efeito que antes cobria o Soulmon inteiro (a folha
  * em loop de veneno, queimadura, debuff, reforço… e a cura) vira um marcador no CANTO do sprite, do tamanho que o dono
- * marcou nos prints (65–80 px num print de 720 px ≈ 10% da largura do campo: ~36 px em 360 px), entre 24 e 44 px. O
- * mesmo tamanho com 1 ou 3 inimigos, desde que caibam os 3 marcadores do canto sem sair do campo nem entrar sob uma caixa
- * de HP/especial — se não couberem, encolhe até caber (`fxMarkIconSize`). Só o ESCUDO continua sobre o sprite.
+ * marcou nos prints: 65–80 px num print de 720 px ≈ 10% do campo; no PR #877 o dono pediu ~70% maior, 17% da largura
+ * do campo: ~61 px em 360 px), entre 24 e 75 px. O mesmo tamanho com 1 ou 3 inimigos, desde que caibam os 3 marcadores
+ * do canto sem sair do campo nem entrar sob uma caixa de HP/especial — se não couberem, encolhe só o necessário, de 1 em
+ * 1 px (`fxMarkIconSize`; na prática só o inimigo do MEIO com 3 inimigos, e com 2 inimigos em 360×500). Só o ESCUDO
+ * continua sobre o sprite.
  */
 export const STAGE_FX_MARK_MIN = 24;
-export const STAGE_FX_MARK_MAX = STAGE_EL_ICON_W;
-const STAGE_FX_MARK_FRAC = 0.1;
+export const STAGE_FX_MARK_MAX = 75;
+const STAGE_FX_MARK_FRAC = 0.17;
 const STAGE_FX_MARK_GAP = 4;
 /** Margem mínima até a borda do campo e até a caixa de HP/especial de qualquer lutador (px). */
 const STAGE_FX_MARK_EDGE = 2;
-/** O tamanho-alvo do marcador para um campo de `fieldW` px (10% da largura, entre o piso e o teto). */
+/** O tamanho-alvo do marcador para um campo de `fieldW` px (17% da largura, entre o piso e o teto). */
 export function stageFxMarkSize(fieldW: number): number {
   return Math.round(Math.max(STAGE_FX_MARK_MIN, Math.min(STAGE_FX_MARK_MAX, fieldW * STAGE_FX_MARK_FRAC)));
 }

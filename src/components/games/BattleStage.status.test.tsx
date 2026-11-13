@@ -156,9 +156,11 @@ describe('marcadores de efeito no sprite: canto por tipo, ordem de início, semp
       // debuff em cima, buff embaixo
       expect(parseFloat(row(side, 'debuff')!.style.top)).toBeLessThan(parseFloat(row(side, 'buff')!.style.top));
     }
-    // inimigo: debuff à esquerda do buff; pet: o contrário
-    expect(parseFloat(row('foe', 'debuff')!.style.left)).toBeLessThan(parseFloat(row('foe', 'buff')!.style.left));
-    expect(parseFloat(row('me', 'buff')!.style.left)).toBeLessThan(parseFloat(row('me', 'debuff')!.style.left));
+    // inimigo: o debuff parte da borda ESQUERDA e o buff da DIREITA; pet: o contrário. Com 17% do campo a fileira de 3 é
+    // mais larga que o sprite, então compara as bordas de partida (a ponta onde fica o 1º), não o `left` de cada fileira.
+    const ponta = (r: HTMLElement) => (r.getAttribute('data-stage-fx-anchor') === 'left' ? parseFloat(r.style.left) : parseFloat(r.style.left) + parseFloat(r.style.width));
+    expect(ponta(row('foe', 'debuff')!)).toBeLessThan(ponta(row('foe', 'buff')!));
+    expect(ponta(row('me', 'buff')!)).toBeLessThan(ponta(row('me', 'debuff')!));
     semSeloDaBarra();
   });
 
@@ -282,4 +284,34 @@ describe('círculo de cast do especial (`data-stage-cast="special"`)', () => {
     expect(document.querySelector('.sm-bs-cast, .sm-bs-fly, .sm-bs-circle, .sm-bs-sheet')).toBeNull();
     expect(document.querySelector('[data-stage-special]')).not.toBeNull(); // o texto do especial segue
   });
+});
+
+/**
+ * Antes do §328 o loop no corpo saía de uma lista fixa de prioridade (`LOOP_PRIORITY`, ainda na feat/beta12) que
+ * esquecia `silencio` e `hot`: o silêncio e a regeneração (HoT) nunca tocavam a folha deles. Agora cada efeito tem o
+ * próprio marcador com a própria folha; esta trava garante que TODO tipo com `loop` em `STATUS_FX` chega no canto
+ * animado — ou está na lista de exclusões abaixo, com o motivo.
+ */
+describe('§328 todo efeito com folha em loop toca o loop dele no marcador do canto (silêncio e HoT incluídos)', () => {
+  /** Tipos com `loop` que NÃO viram marcador animado no canto, e por quê. Hoje: nenhum (o escudo não tem `loop`). */
+  const EXCLUIDOS: Partial<Record<StatusFxKind, string>> = {};
+  const comLoop = STATUS_FX_KINDS.filter((k) => STATUS_FX[k].loop);
+
+  it('a lista cobre silêncio e HoT, e toda folha tem recorte medido', () => {
+    expect(comLoop).toEqual(expect.arrayContaining(['silencio', 'hot']));
+    for (const k of comLoop) if (!EXCLUIDOS[k]) expect(STATUS_LOOP_CROP[STATUS_FX[k].loop!], k).toBeDefined();
+    // a exclusão só vale com motivo escrito
+    for (const [k, motivo] of Object.entries(EXCLUIDOS)) expect(motivo, k).toMatch(/\S{8,}/);
+  });
+
+  for (const kind of comLoop.filter((k) => !EXCLUIDOS[k])) {
+    it(`${kind}: o marcador no canto é a folha ${STATUS_FX[kind].loop} em loop`, async () => {
+      const { container } = render(<BattleStage {...base} me={{ ...me, status: [{ kind, turns: 2 }] }} foes={[foe({ status: [{ kind, turns: 2 }] })]} />);
+      await quando(() => container.querySelectorAll(`[data-stage-fx-mark="${kind}"]`).length === 2);
+      for (const el of container.querySelectorAll(`[data-stage-fx-mark="${kind}"]`)) {
+        expect(el.getAttribute('data-stage-fx-loop'), kind).toBe(kind);
+        expect(el.querySelector('.sm-bs-sheet'), kind).not.toBeNull();
+      }
+    });
+  }
 });

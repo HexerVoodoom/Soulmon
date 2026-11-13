@@ -40,7 +40,7 @@ describe('§327 o efeito aparece UMA vez: só o marcador no canto do sprite, sem
   });
 });
 
-describe('§328 marcadores de efeito: canto por lado, 1º na borda, ~10% do campo, nunca sob a caixa de HP (dono, 13/11/2026)', () => {
+describe('§328 marcadores de efeito: canto por lado, 1º na borda, ~17% do campo, nunca sob a caixa de HP (dono, 13/11/2026)', () => {
   const telas: Array<[number, number]> = [[320, 480], [360, 500], [360, 560], [360, 640], [393, 660], [412, 720], [430, 760]];
   const cruza = (a: { left: number; top: number; width: number; height: number }, b: typeof a) =>
     a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
@@ -52,14 +52,26 @@ describe('§328 marcadores de efeito: canto por lado, 1º na borda, ~10% do camp
     expect(fxMarkAnchor('me', 'buff')).toBe('left');
   });
 
-  it('tamanho: ~10% da largura do campo (o que o dono marcou: 65–80 px num print de 720 ≈ 36 px em 360), entre 24 e 44', () => {
-    expect(stageFxMarkSize(360)).toBe(36);
-    expect(stageFxMarkSize(320)).toBe(32);
-    expect(stageFxMarkSize(430)).toBe(43);
-    expect(stageFxMarkSize(200)).toBe(STAGE_FX_MARK_MIN);
+  it('tamanho: ~17% da largura do campo (PR #877: ~70% maior que os 10% marcados; ~61 px em 360), entre 24 e 75', () => {
+    expect(stageFxMarkSize(360)).toBe(61);
+    expect(stageFxMarkSize(320)).toBe(54);
+    expect(stageFxMarkSize(393)).toBe(67);
+    expect(stageFxMarkSize(412)).toBe(70);
+    expect(stageFxMarkSize(430)).toBe(73);
+    expect(stageFxMarkSize(100)).toBe(STAGE_FX_MARK_MIN);
     expect(stageFxMarkSize(900)).toBe(STAGE_FX_MARK_MAX);
     expect(STAGE_FX_MARK_MIN).toBe(24);
+    expect(STAGE_FX_MARK_MAX).toBe(75);
   });
+
+  /**
+   * Onde os 3 marcadores no tamanho cheio não cabem (medido, 7 telas × 1–3 inimigos): só o inimigo do MEIO com 3
+   * inimigos (as caixas de HP dos vizinhos apertam) e o 2º inimigo com 2 inimigos em 360×500. Chave = `tela nf índice`.
+   */
+  const ENCOLHE: Record<string, number> = {
+    '320x480 3 1': 46, '360x500 2 1': 59, '360x500 3 1': 48, '360x560 3 1': 55, '360x640 3 1': 56,
+    '393x660 3 1': 64, '412x720 3 1': 66, '430x760 3 1': 68,
+  };
 
   it('em toda contagem (1, 2 e 3 inimigos; 1 a 3 marcadores; 7 telas): o 1º na borda do sprite, os seguintes para dentro, dentro do campo, sem cruzar caixa de HP/especial, o MESMO tamanho com 1 ou 3 inimigos', () => {
     let n0 = 0;
@@ -68,8 +80,13 @@ describe('§328 marcadores de efeito: canto por lado, 1º na borda, ~10% do camp
       const caixas = [...l.foes.map((s) => stageBarsRect(s, 'gold', true, l.barsH, w)), stageBarsRect(l.me, 'cyan', true, l.barsH, w)];
       for (const [side, s] of [...l.foes.map((f) => ['foe', f] as const), ['me', l.me] as const]) {
         const icon = fxMarkIconSize(s, side, { avoid: caixas, fieldW: w, fieldH: h });
-        // cabe o alvo inteiro (10% do campo) em todas as telas medidas: com 3 inimigos o marcador não encolhe
-        expect(icon, `${w}x${h} ${nf} ${side}`).toBe(stageFxMarkSize(w));
+        // o alvo cheio (17% do campo), exceto onde está na tabela ENCOLHE; e encolhe SÓ o necessário: 1 px a mais não cabe
+        const idx = side === 'me' ? -1 : l.foes.indexOf(s);
+        expect(icon, `${w}x${h} ${nf} ${side}${idx}`).toBe(ENCOLHE[`${w}x${h} ${nf} ${idx}`] ?? stageFxMarkSize(w));
+        if (icon < stageFxMarkSize(w)) {
+          const maior = (['debuff', 'buff'] as const).every((z) => fxMarkRowPlacement(s, side, z, 3, { icon: icon + 1, avoid: caixas, fieldW: w, fieldH: h }).fits);
+          expect(maior, `${w}x${h} ${nf} ${side}${idx} +1 px`).toBe(false);
+        }
         for (const zone of ['debuff', 'buff'] as const) for (const n of [1, 2, 3]) {
           const p = fxMarkRowPlacement(s, side, zone, n, { icon, avoid: caixas, fieldW: w, fieldH: h });
           const tag = `${w}x${h} ${nf} inimigo(s) ${side}@${s.x} ${zone} n=${n}`;
