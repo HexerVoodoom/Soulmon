@@ -10157,6 +10157,7 @@ export default function App() {
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}
           onClose={closeDailyReport}
+          onGoHome={() => { setCurrentView('home'); closeDailyReport(); }}
           onRecoverHearts={handleRecoverHearts}
           moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
           onPickMood={handlePickMood}
