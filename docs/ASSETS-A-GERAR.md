@@ -1194,3 +1194,14 @@ O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar 
 ## Beta12 (frente A, widgets)
 
 - **Prévia do widget Companheiro** (`android/app/src/main/res/drawable-nodpi/widget_preview_companion.png`, hoje o `soulmon_widget_companion_info.xml` reusa `widget_preview_vpet` como placeholder): captura do widget 2x2 com a criatura grande em pé na frente da moldura. Sem rosto de pessoa; criatura: o que a regra de categoria mandar (sprite do jogador/inicial). Gerar pelo ChatGPT, nunca Higgsfield. Tags: `tipo:ui`, `origem:chatgpt`, `uso:widget-preview`.
+
+## Intro narrativa pós-criação (PR #855) — 6 silhuetas a substituir
+
+Hoje placeholders (silhueta) em `src/assets/soulmon/onboarding/`; trocar mantendo nome e proporção. Fundos: ChatGPT (máx. 3 por conversa, apagar a conversa depois, registrar em `E:\Soulmon-assets\_banco\registro.jsonl`). Personagem: SÓ Higgsfield API, nunca ChatGPT. Identidade Soulmon vale (túnel, penhasco, cristal, cidade); sem engrenagem.
+
+- **velado-anciao-costas.png** — tags `intro, velado, anciao, costas, personagem`. Higgsfield API (alpha real), mesmo molde do `velado-*` existente, mas visto de COSTAS, correndo/caminhando. Prompt: `Painted 16-bit style, full body elder of the Remendados seen from behind, patched dark-turquoise cloak with copper stitching, hooded, walking away, transparent background.`
+- **penhasco-borda.png** — `intro, penhasco, primeiro-plano, fundo`. ChatGPT, alfa via "Remover fundo". Prompt: `Painted 16-bit style foreground ledge of a cliff edge, dark rock with copper veins and small turquoise crystals and leaves, wide horizontal strip, transparent background.`
+- **penhasco-panorama.jpg** — `intro, penhasco, ilhas-flutuantes, panorama, fundo`. ChatGPT. Prompt: `Painted 16-bit style panoramic cut of a vast sky seen from a cliff: floating islands with ancient ruins, turquoise crystals, soft clouds, dusk light, wide 16:9.`
+- **bg-penhasco-topo.jpg** — `intro, penhasco-topo, cristal, fundo`. ChatGPT. Prompt: `Painted 16-bit style top of a cliff at dusk, stone platform with a large turquoise soul crystal in the center, copper pipes, leaves, vertical 9:20.`
+- **cristal-praca.png** — `intro, cristal, praca-central, objeto`. ChatGPT, alfa. Prompt: `Painted 16-bit style tall turquoise soul crystal on a copper-ringed stone pedestal, inner flame glow, transparent background.` Igual ao cristal da praça central dos Remendados (usar como referência).
+- **anciao-soulmon.png** — `intro, soulmon, aliado, anciao, criatura`. SÓ Higgsfield API (sprite de criatura, alfa real). Prompt na linha do banco de Soulmons existentes: criatura aliada do ancião, calma, cor própria, sem cristal/cano/folha por padrão.
