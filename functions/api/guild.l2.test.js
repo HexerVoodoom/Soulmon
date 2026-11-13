@@ -243,7 +243,9 @@ export const ORCAMENTO = {
   // +1 escrita (30/10, §203): a entrada do clã no diretório `coopDir:<dirId>` nasce junto.
   criar: { get: 17, put: 6 },
   // +1 leitura (30/10, §203): entrar apaga o pedido pendente de quem entra (`coopReq:<save>`).
-  entrar: { get: 30, put: 3 },
+  // +1 escrita (13/11/2026, §322): quem ENCHE o clã (o 12º, o caso medido aqui) move a entrada do diretório para
+  // `coopDirFull:` (grava a nova + apaga a antiga). Só na transição; as outras entradas continuam em 3.
+  entrar: { get: 30, put: 4 },
   // +1 leitura (29/09, M-2): o PRIMEIRO fio numa guilda lê `coopDias` para
   // herdar os dias distintos; os fios seguintes não leem.
   fio: { get: 27, put: 2 },

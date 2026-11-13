@@ -788,9 +788,12 @@ export const createGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
 export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildJoin', { method: 'POST', body: { id, code, dayKey: dia(tz) } }).then(viewOf);
 
-// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga + pedido aprovado pelo anfitrião ──
-/** Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código. */
-export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number }
+// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga (e os cheios, §322) + pedido aprovado pelo anfitrião ──
+/**
+ * Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código.
+ * `full` (§322): o clã está cheio — aparece com o selo "Cheia" e sem botão de pedir.
+ */
+export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number; full: boolean }
 export interface GuildPending { dirId: string; name: string | null }
 export interface GuildDirectory { clans: GuildDirectoryClan[]; pending: GuildPending | null }
 /** Um pedido visto pelo anfitrião: id opaco por clã + o nome público de quem pediu. */
@@ -810,10 +813,12 @@ export function sanitizeGuildDirectory(raw: unknown): GuildDirectory {
     const x = c as Record<string, unknown>;
     const size = Math.floor(Number(x.size)), max = Math.floor(Number(x.max));
     if (typeof x.dirId !== 'string' || !OPACO.test(x.dirId) || typeof x.name !== 'string' || !x.name) return [];
-    if (!(size > 0) || !(max > 0) || size >= max) return [];
-    return [{ dirId: x.dirId, name: str(x.name, 40), size, max }];
+    if (!(size > 0) || !(max > 0) || size > max) return [];
+    // Cheio = o servidor disse `full` OU o tamanho chegou ao teto (nunca mostra "pedir" num clã sem vaga).
+    return [{ dirId: x.dirId, name: str(x.name, 40), size, max, full: x.full === true || size >= max }];
   }).slice(0, 50);
-  return { clans, pending: sanitizePending(r.pending) };
+  // §322: os com vaga primeiro (ordem estável: a do servidor dentro de cada grupo).
+  return { clans: [...clans.filter(c => !c.full), ...clans.filter(c => c.full)], pending: sanitizePending(r.pending) };
 }
 export function sanitizeJoinRequests(raw: unknown): GuildJoinRequest[] {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
