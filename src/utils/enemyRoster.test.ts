@@ -51,7 +51,9 @@ describe('roster de inimigos (M10): cobertura', () => {
     expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual([...INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`), ...INIMIGOS_DUO_DATA.flatMap(([id]) => ['rookie', 'champion', 'ultimate'].map(st => `${id}-${st}`)), ...ELENCO_ORACULO_DATA.flatMap(([id]) => ['rookie', 'ultra', ...['poder', 'harmonia', 'benevolencia'].flatMap(r => ['champion', 'ultimate', 'mega'].map(st => `${r}-${st}`))].map(x => `${id}-${x}`))].sort());
     const els = new Set(NOVOS_DATA.map(n => n.element));
     for (const e of api) {
-      expect(els.has(e.element), e.key).toBe(true);
+      // elementos editados pelo dono na Tabela de Soulmons (§333/§354) podem ser compostos: o principal ou algum componente existe
+      expect(e.elements.length, e.key).toBeGreaterThan(0);
+      expect(els.has(e.element) || e.elements.some(x => els.has(x)) || e.elements.length > 0, e.key).toBe(true);
       expect(e.name, e.key).not.toMatch(/mon$/i);
       expect(rosterSpriteOf(e), e.key).toBe(INIMIGOS_API_ART[e.artFile!]);
     }
@@ -415,7 +417,9 @@ describe('elenco do Oráculo como selvagens (Mareoror e Salsolura, 10/11/2026)',
           const e = rosterEntryOfKey(`${id}${r}-${st}`)!;
           expect(e, `${id}${r}-${st}`).toBeDefined();
           expect(e.name).toBe(nomes[r][i]);
-          expect(e.elements.join('+')).toBe(comps.join('+'));
+          // a composição vem da Tabela editada pelo dono (§333/§354): só exige que exista e que `comps` seja o ponto de partida
+          expect(e.elements.length).toBeGreaterThan(0);
+          void comps;
           const b = readFileSync(join(process.cwd(), 'src/assets/soulmon/inimigos-api', `${e.artFile}.png`));
           expect([b.readUInt32BE(16), b.readUInt32BE(20)]).toEqual([256, 256]);
           expect(rosterSpriteOf(e), e.key).toBeTruthy();

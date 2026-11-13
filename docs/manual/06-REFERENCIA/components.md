@@ -229,6 +229,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/DailyMissionBoard.tsx`.
 **Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
 
+### `src/components/nav/RewardChip.tsx` (13/11/2026)
+**Dono de:** a recompensa em ÍCONE (+ quantidade) nos cartões de missão: Bits, materiais e fallback para XP/Créditos (§336/missões com retrato do NPC).
+**Props principais:** `kind`, `materialId?`, `amount?`, `name`, `isPt`.
+**Exports:** `rewardIcon(kind, materialId?, size?)`, `RewardChip`.
+**Chamado por:** `src/components/nav/DailyMissionList.tsx`, cartões de missão de NPC.
+**Régua:** `src/components/nav/npcMissionCards.render.test.tsx`.
+
 ### `src/components/nav/DailyMissionBoard.tsx` (20/10/2026)
 **Dono de:** o QUADRO da aba Diárias (seção "Hoje"/"Today", lazy): UM `<ul data-daily-board>` com a especial do dia, o Passeio, as missões de prédio e as diárias, na ordem de `layoutMissionBoard` — rótulo "Special mission"/"Missão especial" + especial aberta no topo, linha fina (`data-mission-divider`), prontas, abertas e, no fim, as resgatadas (REGISTRO §132).
 **Régua:** `src/components/nav/dailyMissionBoard.render.test.tsx`.

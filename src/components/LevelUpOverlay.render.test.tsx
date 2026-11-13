@@ -151,21 +151,21 @@ describe('LevelUpOverlay — vários níveis de uma vez', () => {
 
 describe('LevelUpOverlay — o que ganhou', () => {
   it('a recompensa do Vínculo e, sob "Now Open", o que abriu — SEM pontos de talento e SEM "Your bond grew"', () => {
-    // 4 → 5: o nível 5 dá o sonho "À deriva num barquinho". O Duelo e o Torneio abrem no Vínculo 3 (c4f7078c0: a Arena
-    // inteira abre no 3), então o "Now Open" é checado numa subida 2 → 3.
+    // 4 → 5: o nível 5 dá o sonho "À deriva num barquinho". Sem limite por level (dono 12/11/2026), o único portão que
+    // sobrou é a Ranqueada, no Vínculo 5: o "Now Open" é checado nesta mesma subida 4 → 5.
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-talent]')).toBeNull();
     expect(container.textContent).not.toMatch(/talent|Your bond grew/i);
     expect(container.querySelector('[data-lvup-reward]')?.textContent).toMatch(/Adrift on a little boat/);
     cleanup();
-    const abre = renderWithCss(<LevelUpOverlay {...base} event={{ from: 2, to: 3 }} onDone={() => {}} />).container;
+    const abre = renderWithCss(<LevelUpOverlay {...base} event={{ from: 4, to: 5 }} onDone={() => {}} />).container;
     expect(abre.querySelector('[data-lvup-open-label]')?.textContent).toBe('Now Open');
     const gates = [...abre.querySelectorAll('[data-lvup-gate]')].map(n => n.textContent);
-    expect(gates).toEqual(expect.arrayContaining(['The Duel', 'The Tournament']));
+    expect(gates).toEqual(expect.arrayContaining(['Ranked']));
   });
 
   it('PT-BR: "Agora aberto"; sem desbloqueio, o rótulo nem aparece', () => {
-    const { container } = renderWithCss(<LevelUpOverlay {...base} event={{ from: 2, to: 3 }} language="pt-BR" onDone={() => {}} />);
+    const { container } = renderWithCss(<LevelUpOverlay {...base} event={{ from: 4, to: 5 }} language="pt-BR" onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-open-label]')?.textContent).toBe('Agora aberto');
     expect(container.textContent).not.toMatch(/talento/);
     cleanup();

@@ -1089,6 +1089,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
+### `src/utils/soulmonOverrides.data.ts` (13/11/2026)
+**Dono de:** os DADOS da Tabela de Soulmons editada pelo dono (tipo de ataque por forma, flutua/flip, trocas de linha; REGISTRO §354), gerados da planilha do dono.
+**Exports:** a tabela de overrides consumida por `soulmonOverrides.ts`.
+**Chamado por:** `src/utils/soulmonOverrides.ts`.
+**Régua:** `src/utils/soulmonOverrides.test.ts`.
+
 ### `src/utils/soulmonOverrides.ts`
 **Dono de:** os ajustes do dono POR FORMA vindos da Tabela de Soulmons (REGISTRO §333, 13/11/2026). Chave = chave do bestiário (`<id>-<estágio>`; ultra = `<id>-ultra`).
 **Exports:**

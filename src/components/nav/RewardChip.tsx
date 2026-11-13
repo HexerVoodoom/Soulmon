@@ -12,6 +12,7 @@ export type RewardKind = 'bits' | 'xp' | 'credits' | 'material';
  * REAIS: Bits (`BitsIcon`) e os 16 materiais (`MaterialIcon`, arte pixel de `assets/soulmon/materiais`).
  * FALLBACK (ainda sem arte própria): XP e Créditos viram uma pílula com um glifo existente do app. Quando a arte chegar, é só trocar aqui.
  */
+const ICON_ACTION = 20;
 export function rewardIcon(kind: RewardKind, materialId?: string, size = 20): ReactNode {
   if (kind === 'bits') return <BitsIcon size={size} />;
   if (kind === 'material') {
@@ -21,7 +22,7 @@ export function rewardIcon(kind: RewardKind, materialId?: string, size = 20): Re
   const glyph = kind === 'xp' ? 'bolt' : kind === 'credits' ? 'diamond' : 'inventory_2';
   return (
     <span aria-hidden="true" data-reward-fallback style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, borderRadius: 999, border: '1px solid var(--sm2-line)', flex: 'none' }}>
-      <Icon name={glyph} size={Math.round(size * 0.7)} fill={1} tone="gold" />
+      <Icon name={glyph} size={ICON_ACTION} fill={1} tone="gold" />
     </span>
   );
 }

@@ -91,13 +91,12 @@ describe('§333 condições', () => {
 });
 
 describe('§333 destinos alcançáveis', () => {
-  it('o Refúgio está na Forja e é sempre aberto; o Grove é do Hall e abre no Vínculo 2', () => {
+  it('o Refúgio está na Forja e é sempre aberto; o Grove é do Hall e (sem limite por level) abre no Vínculo 1', () => {
     expect(DICA_DESTINO).toEqual({ relaxar: 'forja.refugio', lilia: 'hall.grove' });
     expect(BUILDINGS_ALWAYS_OPEN).toContain('forja.refugio');
     expect(buildingDestination('forja.refugio')).toEqual({ kind: 'lot', area: 'forja', lot: 'refugio' });
     expect(buildingDestination('hall.grove')).toEqual({ kind: 'lot', area: 'hall', lot: 'grove' });
-    expect(buildingGateFor('hall.grove', 1).open).toBe(false);
-    expect(buildingGateFor('hall.grove', 2).open).toBe(true);
+    expect(buildingGateFor('hall.grove', 1).open).toBe(true);
   });
 });
 

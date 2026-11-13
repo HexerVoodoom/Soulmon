@@ -75,10 +75,10 @@ describe('8.3 — correção: entrar no prédio paga (uma vez por dia do jogador
     s = applyBuildingEntry(s, '2026-11-05', 'exploracao.fenda');
     expect(stockOf(s.buildingQuests, 'ore')).toBe(1);
   });
-  it('Vínculo insuficiente não paga (nada é liberado de graça): Duelo exige Vínculo 5', () => {
+  it('sem limite por level (dono 12/11/2026): o Duelo paga já no Vínculo 2', () => {
     const baixo = applyBuildingEntry(base(xpForLevel(2)), '2026-11-01', 'arena.duelo');
-    expect(owned(baixo)).toEqual([]);
-    expect(stockOf(baixo.buildingQuests, 'fang')).toBe(0);
+    expect(owned(baixo)).toEqual(['eq-nucleo-t2']);
+    expect(stockOf(baixo.buildingQuests, 'fang')).toBe(1);
     const alto = applyBuildingEntry(base(xpForLevel(5)), '2026-11-01', 'arena.duelo');
     expect(owned(alto)).toEqual(['eq-nucleo-t2']);
     expect(stockOf(alto.buildingQuests, 'fang')).toBe(1);

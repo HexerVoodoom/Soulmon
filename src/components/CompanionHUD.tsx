@@ -2271,7 +2271,7 @@ function BalaoDouradoTexto({ text }: { text: string }) {
             border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
           }}
         >
-          <Icon name="arrow_forward" size={11} weight={600} />
+          <span aria-hidden="true" style={{ fontSize: 11, lineHeight: 1, fontWeight: 700 }}>→</span>
         </span>
       </span>
     </>
