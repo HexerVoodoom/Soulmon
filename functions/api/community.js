@@ -130,7 +130,10 @@ async function withDuelLock(key, fn) {
 // demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
 // sparOpponents (Treino, 10/11/2026): lista até 300 chaves e lê até 120 perfis + 120 SAVES inteiros (Vínculo) por chamada, sem cache
 // de borda (cada GET sorteia de novo). No teto leve (120/min/IP) eram ~30 mil leituras de KV por minuto por IP. Segurança, rodada 1.
-const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed', 'sparOpponents']); // evoFeed: até 20 perfis por leitura
+// `names` SAIU daqui (§346, 13/11/2026): é 1 `list` de no máximo 8 chaves + até 16 `get` — custo de ação leve —, e o app a chama a
+// cada pausa da digitação no campo "convidar amigo". Contada como varredura, digitar um apelido gastava o teto da busca que o próprio
+// "Convidar" faz logo depois.
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'strays', 'evoFeed', 'sparOpponents']); // evoFeed: até 20 perfis por leitura
 const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
 const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 
@@ -342,12 +345,13 @@ export async function onRequest(context) {
   let hit = null;
   if (cacheable) hit = await caches.default.match(request).catch(() => null);
 
-  // Acerto de cache = teto leve; qualquer coisa que chegue ao KV = teto da ação.
-  const gate = takeToken(
-    'community',
-    ip,
-    hit ? LIGHT_LIMIT : (HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT),
-  );
+  // Acerto de cache = só o teto leve; varredura que chegue ao KV = teto leve E o teto da varredura, cada um no SEU balde.
+  // ⚠️ §346 (13/11/2026): eram um balde só ('community') medido com limites diferentes. A varredura conferia "≤ 20 chamadas de
+  // QUALQUER tipo no minuto": abrir a aba Amigos (estado social, perfil e formas de cada amigo) já passava de 20 chamadas leves,
+  // e a busca por apelido do "Convidar" respondia 429 — a tela mostrava "Não deu para adicionar agora" quase sempre.
+  const pesada = !hit && HEAVY_ACTIONS.has(action);
+  let gate = takeToken('community', ip, LIGHT_LIMIT);
+  if (gate.ok && pesada) gate = takeToken('community-heavy', ip, HEAVY_LIMIT);
   if (!gate.ok) {
     console.warn('[community] rate limited', { action, cached: !!hit, retryAfter: gate.retryAfter });
     return tooManyRequests(gate.retryAfter, CORS);
