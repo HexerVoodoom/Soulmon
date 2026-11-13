@@ -9716,6 +9716,7 @@ export default function App() {
           onDelete={mailbox.remove}
           onDeleteRead={mailbox.removeRead}
           onAnswerInvite={mailbox.answerInvite}
+          onJoinGuild={mailbox.joinGuildFromLetter}
         />
       )}
       {currentView === 'home' && (

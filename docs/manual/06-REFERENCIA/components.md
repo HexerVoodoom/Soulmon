@@ -2290,7 +2290,7 @@ A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma c
 
 ### `src/components/CartaTutorialWidget.tsx`
 
-A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
+A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`); nas cartas `guild-invite` (§358), "Entrar no clã" (`onJoinGuild` = `useMailbox.joinGuildFromLetter`, o mesmo `guildJoin` do Salão) e "Recusar" (só apaga a carta). Carta de clã antiga, sem `kind`, segue como carta comum (o corpo traz o código). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
 
 ### `src/components/nav/MailLink.tsx`
 

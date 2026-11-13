@@ -4580,7 +4580,7 @@ Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Esp
 
 ### `src/utils/mensageiro.ts`
 
-Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), estado da caixa de cartas (nova, item pendente, lidas apagáveis, recuperação do que o servidor já entregou), totais do pop-up e o aviso do Papus. Decisão: REGISTRO §241 e §246. **Régua:** `src/utils/mensageiro.test.ts`.
+Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), estado da caixa de cartas (nova, item pendente, lidas apagáveis, recuperação do que o servidor já entregou), totais do pop-up e o aviso do Papus. `MailKind` inclui `guild-invite` (§358) e `isGuildInvite` (carta com `guildCode`). Decisão: REGISTRO §241, §246, §288 e §358. **Régua:** `src/utils/mensageiro.test.ts`.
 Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), separação entre carta nova e carta só a confirmar, e a fala do Papus. Decisão: REGISTRO §241. **Régua:** `src/utils/mensageiro.test.ts`.
 
 ### `src/utils/focusJourney.ts`
