@@ -5901,6 +5901,7 @@ select:focus-visible {
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
   .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled), .sm2-cta[data-cta-state="pressed"]:not(:disabled) { transform: none; } /* CtaButton */
+  .sm2-cta-texto { transition: none; } /* CtaTextButton */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -9240,6 +9241,24 @@ button.sm2-hex-row {
   &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-cta-off.webp'); color: #C9D2D0; transform: none; }
 }
 .sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
+/* Secundária do CTA (`CtaTextButton`, §316c, 13/11/2026, pedido do dono): ao lado de um `.sm2-cta` a outra ação é SÓ TEXTO —
+   sem fundo, sem borda, cor quieta; o sublinhado aparece ao tocar (e no hover/foco) como affordance; alvo >= 44. Fundo escuro
+   (sala de descanso) usa `--sm2-viewport-ink`. */
+.sm2-cta-texto {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2);
+  min-height: 44px; min-width: 44px; margin: 0; padding: 0 var(--sm2-space-3); justify-self: center; align-self: center;
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--sm2-muted); font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 600; line-height: var(--sm2-leading-body);
+  text-decoration: underline 1.5px; text-decoration-color: transparent; text-underline-offset: 4px;
+  transition: text-decoration-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-cta-width="full"] { width: 100%; }
+  &[data-cta-surface="escuro"] { color: var(--sm2-viewport-ink); }
+  @media (hover: hover) { &:hover:not(:disabled) { text-decoration-color: currentColor; } }
+  &:active:not(:disabled) { text-decoration-color: currentColor; color: var(--sm2-ink); }
+  &[data-cta-surface="escuro"]:active:not(:disabled) { color: var(--sm2-viewport-ink); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; border-radius: var(--sm2-radius-sm); text-decoration-color: currentColor; }
+  &:disabled { cursor: not-allowed; opacity: .55; }
+}
 
 /* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
 .sm2-pocao-item {

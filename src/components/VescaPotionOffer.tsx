@@ -1,4 +1,3 @@
-import { CtaButton } from './ui/CtaButton';
 import { useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { ElementIcon as Icon, elName } from './ElementBaseSlots';
@@ -33,11 +32,12 @@ export function VescaPotionOffer({ language, elementId, onMake, onDismiss }: Ves
   return (
     <ModalSheet open title={vesca} onClose={close} language={language}
       footer={(
-        <div data-cta-stack style={{ display: 'grid', gap: 8 }}>
-          <CtaButton data-vesca-make onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
+        // §316c (13/11/2026, dono): popup branco pequeno volta ao par padrão do app, em linha (sem o CTA do site).
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+          <button type="button" data-vesca-later style={sm2Button('quiet')} onClick={close}>{isPt ? 'Depois' : 'Later'}</button>
+          <button type="button" data-vesca-make style={sm2Button('primary')} onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
             {isPt ? 'Fazer a poção' : 'Make the potion'}
-          </CtaButton>
-          <button type="button" data-vesca-later style={{ ...sm2Button('quiet'), width: '100%' }} onClick={close}>{isPt ? 'Depois' : 'Later'}</button>
+          </button>
         </div>
       )}>
       <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>

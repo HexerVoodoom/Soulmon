@@ -281,6 +281,9 @@ describe('sala de descanso e ciclos (§301, §312)', () => {
     await act(async () => { fireEvent.click(q(container, '[data-focus-return]')!); });
     await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull());
     expect(document.querySelector('[data-rest-cycles]')!.textContent).toBe('2 focos concluídos');
+    // §316c: ao lado do CTA «Seguir», as secundárias são SÓ TEXTO (sem fundo, sem borda).
+    expect(document.querySelector('[data-rest-next]')!.hasAttribute('data-cta-button')).toBe(true);
+    for (const sel of ['[data-rest-finish]', '[data-rest-close]']) expect(document.querySelector(sel)!.hasAttribute('data-cta-texto')).toBe(true);
     await act(async () => { fireEvent.click(document.querySelector('[data-rest-finish]')!); });
     expect(document.querySelector('[data-rest-room]')).toBeNull();
     expect(q(container, '[data-focus-done]')!.textContent).toContain('Missão concluída: 2 focos');
