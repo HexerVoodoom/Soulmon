@@ -67,7 +67,8 @@ export const HEX_UI = {
   noneOwned: p('No HEX forged for this Port yet.', 'Nenhum HEX forjado para esta Porta ainda.'),
   equip: p('Equip', 'Equipar'),
   equipped: p('Equipped', 'Equipado'),
-  clear: p('Empty the Port', 'Esvaziar a porta'),
+  /** 13/11/2026 (dono): o "Esvaziar a porta" saiu; o próprio botão do HEX equipado desequipa. */
+  unequip: p('Unequip', 'Desequipar'),
   forge: p('Forge', 'Forjar'),
   catalog: p('Forge', 'Forja'),
   filterHint: p('Filter by up to 3 base elements: only elements that contain all of them are listed. What you can forge comes first.', 'Filtre por até 3 elementos base: aparecem só os elementos que contêm todos eles. O que dá para forjar vem primeiro.'),
