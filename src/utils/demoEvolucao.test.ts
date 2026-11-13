@@ -12,15 +12,20 @@ describe('modo demo de evolução (só para gravar vídeo)', () => {
     expect(demoEvolucaoAtiva()).toBe(false);
   });
 
-  it('liga só com a variável em build que não é de produção', () => {
+  it('liga só com a variável E o modo de build demo', () => {
     vi.stubEnv('VITE_DEMO_EVOLUCAO', '1');
-    vi.stubEnv('PROD', false);
+    vi.stubEnv('MODE', 'demo');
     expect(demoEvolucaoAtiva()).toBe(true);
   });
 
   it('RELEASE: desligado mesmo se a variável vazar para o build de produção', () => {
     vi.stubEnv('VITE_DEMO_EVOLUCAO', '1');
-    vi.stubEnv('PROD', true);
+    vi.stubEnv('MODE', 'production');
+    expect(demoEvolucaoAtiva()).toBe(false);
+  });
+
+  it('o modo demo sem a variável também fica desligado', () => {
+    vi.stubEnv('MODE', 'demo');
     expect(demoEvolucaoAtiva()).toBe(false);
   });
 

@@ -6,12 +6,11 @@
  * marcada. Este modo faz exatamente isso e mais nada.
  *
  * NUNCA chega ao usuário: exige a variável de build `VITE_DEMO_EVOLUCAO=1` E
- * um build que NÃO seja de produção (`import.meta.env.PROD` é constante em
- * tempo de build, então no release o corpo vira `false` e o resto é removido).
- * Como ligar: `VITE_DEMO_EVOLUCAO=1 npx vite --mode development` (ou build com
- * `--mode development`). Nenhum .env versionado, script ou workflow o define
+ * o modo de build `demo` (`import.meta.env.MODE` é constante em tempo de
+ * build: o release usa o modo `production`, então o corpo vira `false` e o
+ * resto é removido). Como ligar: `VITE_DEMO_EVOLUCAO=1 npx vite build --mode demo`. Nenhum .env versionado, script ou workflow o define
  * (teste: demoEvolucao.test.ts).
  */
 export function demoEvolucaoAtiva(): boolean {
-  return !import.meta.env.PROD && import.meta.env.VITE_DEMO_EVOLUCAO === '1';
+  return import.meta.env.MODE === 'demo' && import.meta.env.VITE_DEMO_EVOLUCAO === '1';
 }
