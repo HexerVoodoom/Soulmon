@@ -5146,6 +5146,12 @@ select:focus-visible {
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
   --sm2-wood-ink: #f8ecd2;
+  /* METAIS DO PÓDIO (§326): prata e bronze do pódio do ranking. Objeto físico como a madeira — mesmo valor nos dois temas.
+     Antes a prata era `muted` (lia como desabilitado) e o bronze era `wood` (a faixa Madeira). O ouro é o `gold-fill` do tema. */
+  --sm2-silver-fill: #A9B8BC;
+  --sm2-on-silver: #0E2422;
+  --sm2-bronze-fill: #8E4A2B;
+  --sm2-on-bronze: #FFFFFF;
   /* perigo */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
@@ -5209,6 +5215,12 @@ select:focus-visible {
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
   --sm2-wood-ink: #f8ecd2;
+  /* METAIS DO PÓDIO (§326): prata e bronze do pódio do ranking. Objeto físico como a madeira — mesmo valor nos dois temas.
+     Antes a prata era `muted` (lia como desabilitado) e o bronze era `wood` (a faixa Madeira). O ouro é o `gold-fill` do tema. */
+  --sm2-silver-fill: #A9B8BC;
+  --sm2-on-silver: #0E2422;
+  --sm2-bronze-fill: #8E4A2B;
+  --sm2-on-bronze: #FFFFFF;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -9074,6 +9086,138 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* Podio do ranking (RankingList): entrada em subida, so sem reduced-motion. */
 @keyframes sm-rank-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sm-rank-podium li{animation:sm-rank-rise .4s ease-out both}.sm-rank-podium li[data-place="1"]{animation-delay:.12s}.sm-rank-podium li[data-place="3"]{animation-delay:.2s}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PÓDIO DO RANKING (`components/RankingPodium.tsx`, REGISTRO §326, 13/11/2026)
+   Grade 2º · 1º · 3º (o DOM fica 1 · 2 · 3). O 1º: coluna 1,25×, pedestal mais alto, coroa, medalha 44, nome 16 e pontos 20 em
+   `gold-ink`, brilho de fundo. Pedestal com PROPORÇÃO fixa (3:2 · 8:5 · 2:1): a arte `podio-N.png` entra com `contain` ancorada
+   embaixo e a altura não pula quando ela chega. Sem arte: metal em gradiente de tokens + a lasca turquesa (o acento de identidade).
+   Só tokens; `color-mix` faz luz (`viewport-ink`) e sombra (`viewport-bg`) do próprio metal — os dois são fixos nos dois temas,
+   então o metal não inverte no escuro. */
+.sm-rank-podium {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  align-items: end;
+  column-gap: var(--sm2-space-2);
+  margin: 0;
+  padding: var(--sm2-space-2) 0 0;
+  list-style: none;
+  /* a "linha do chão": o pódio pousa numa base, não flutua sobre a lista */
+  border-bottom: 2px solid var(--sm2-line);
+}
+.sm-rank-podium__slot {
+  --pod-fill: var(--sm2-silver-fill);
+  --pod-ink: var(--sm2-on-silver);
+  --pod-ratio: 8 / 5;
+  position: relative;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  list-style: none;
+}
+.sm-rank-podium__slot[data-place="1"] { grid-column: 2; --pod-fill: var(--sm2-gold-fill); --pod-ink: var(--sm2-on-gold); --pod-ratio: 3 / 2; }
+.sm-rank-podium__slot[data-place="2"] { grid-column: 1; }
+.sm-rank-podium__slot[data-place="3"] { grid-column: 3; --pod-fill: var(--sm2-bronze-fill); --pod-ink: var(--sm2-on-bronze); --pod-ratio: 2 / 1; }
+/* o brilho do vencedor: um halo de ouro atrás da coroa e da medalha (decorativo, fica atrás do texto) */
+.sm-rank-podium__slot[data-place="1"]:not([data-podium-empty])::before {
+  content: '';
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: -12px;
+  height: 96px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sm2-gold-fill) 34%, transparent), transparent);
+  pointer-events: none;
+}
+.sm-rank-podium__head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sm2-space-half);
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--sm2-space-half) var(--sm2-space-2);
+  text-align: center;
+}
+.sm-rank-podium__crown { display: block; line-height: 0; margin-bottom: -2px; }
+.sm-rank-podium__crown img { display: block; width: 40px; height: 30px; object-fit: contain; }
+.sm-rank-podium__medal {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: var(--sm2-text-md);
+  font-weight: 700;
+  line-height: 1;
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__medal { width: 44px; height: 44px; font-size: var(--sm2-text-lg); }
+.sm-rank-podium__medal[data-podium-medal="css"] {
+  color: var(--pod-ink);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-ink)) 0%, var(--pod-fill) 55%, color-mix(in srgb, var(--pod-fill) 70%, var(--sm2-viewport-bg)) 100%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-bg)), 0 1px 0 color-mix(in srgb, var(--sm2-viewport-bg) 25%, transparent);
+}
+.sm-rank-podium__medal img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sm-rank-podium__name {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--sm2-text-sm);
+  font-weight: 700;
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-ink);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__name { font-size: var(--sm2-text-md); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__name { color: var(--sm2-primary-ink); }
+.sm-rank-podium__score {
+  font-size: var(--sm2-text-md);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--sm2-ink);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__score { font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-gold-ink); }
+.sm-rank-podium__prize { font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+.sm-rank-podium__pedestal {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--pod-ratio);
+}
+.sm-rank-podium__pedestal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.sm-rank-podium__pedestal[data-podium-pedestal="css"] {
+  border-radius: var(--sm2-radius-sm) var(--sm2-radius-sm) 0 0;
+  /* tampo claro de 6px, face do metal, base escurecida */
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-ink)) 0 6px,
+    var(--pod-fill) 6px,
+    color-mix(in srgb, var(--pod-fill) 72%, var(--sm2-viewport-bg)) 100%);
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg));
+}
+/* a lasca turquesa no meio da face: o único acento de identidade do pódio em CSS */
+.sm-rank-podium__pedestal[data-podium-pedestal="css"]::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -25%) rotate(45deg);
+  background: var(--sm2-primary-ink);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sm2-primary-ink) 70%, transparent);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after { width: 10px; height: 10px; }
+/* a posição do jogador: o anel turquesa do idioma de seleção, também no pedestal */
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg)), 0 0 0 2px var(--sm2-primary-ink); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="art"] { box-shadow: none; outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
+/* lugar vazio: o mesmo pedestal, apagado (a arte também), e nada de nome nem pontos */
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__pedestal,
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__medal { opacity: .28; filter: grayscale(1); }
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__name { color: var(--sm2-muted); font-weight: 400; }
 /* o corte em movimento reduzido mora no bloco canonico (nao abrir outro @media prefers-reduced-motion aqui). */
 
 /* Sequencia do onboarding (SequenciaPlayer): keyframes; o corte em movimento reduzido de .seq-anim mora no bloco canonico. */
