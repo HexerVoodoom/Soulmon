@@ -10,15 +10,14 @@
  * lançador (em golpes do alvo), lido de 9 a 12 intervalos depois do lançamento (o horizonte varia por semente para não contar golpe
  * inteiro num corte fixo). Escala do lançamento = a da cena (`PVE_FAMILY_POWER` no jogador do PvE; 1 no PvP e no inimigo).
  *
- * `PENDENTES_DO_DONO`: violações medidas que mexem na calibração do JOGADOR (gates da régua, §290) e por isso ficaram como proposta.
- * Qualquer violação NOVA falha aqui. Se uma pendente passar a cumprir, tire-a da lista.
+ * `PENDENTES_DO_DONO`: exceções aprovadas pelo dono (hoje vazia: a regra vale para todos os efeitos). Qualquer violação falha aqui.
  */
 import { describe, expect, it } from 'vitest';
 import { fightSteps, hitUnit, windowSeconds, type FightSide } from './fight';
 import { groupFightSteps } from './group';
 import { combatantAt, REFERENCE_BUILDS } from './level';
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { EFFECT_TUNE_PESADELO, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type Special, type SpecialEffect, type SpecialFamily } from './specials';
+import { EFFECT_TUNE_PESADELO, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 import { foeKindOf, foeSpecialOf, type FoeKind } from './foeFamilies';
 
 const LV = 30;
@@ -97,12 +96,12 @@ function medirTudo(): Linha[] {
   // PvE do jogador: Arena e Masmorra, com a escala do motor; o Pesadelo usa as regras da Masmorra e a tune própria.
   for (const motor of ['arena', 'dungeon'] as const) {
     const P = PVE_FAMILY_POWER[motor];
-    const ref = { direct: impacto('pve-player', specialOf('direct'), P.direct), heal: impacto('pve-player', specialOf('heal'), P.heal) };
-    for (const f of SPECIAL_FAMILIES) if (BASE[f]) add(`${motor}|${f}`, impacto('pve-player', specialOf(f), P[f]), ref.direct);
+    const ref = { direct: impacto('pve-player', specialOfPve('direct'), P.direct), heal: impacto('pve-player', specialOfPve('heal'), P.heal) };
+    for (const f of SPECIAL_FAMILIES) if (BASE[f]) add(`${motor}|${f}`, impacto('pve-player', specialOfPve(f), P[f]), ref.direct);
     for (const e of EFEITOS) {
       const { family, base } = BASE_EFEITO[e];
-      add(`${motor}|${e}`, impacto('pve-player', { ...specialOf(family), effect: e }, P[family]), ref[base]);
-      if (motor === 'dungeon') add(`pesadelo|${e}`, impacto('pve-player', { ...specialOf(family), effect: e, tune: EFFECT_TUNE_PESADELO }, P[family]), ref[base]);
+      add(`${motor}|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e }, P[family]), ref[base]);
+      if (motor === 'dungeon') add(`pesadelo|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e, tune: EFFECT_TUNE_PESADELO }, P[family]), ref[base]);
     }
   }
   // PvE dos inimigos: o especial sorteado de `foeSpecialOf` (Arena/Rift), escala 1 (sem esquiva).
@@ -122,12 +121,13 @@ function medirTudo(): Linha[] {
   return out;
 }
 
-/** Propostas ao dono (§321), com a razão medida em 13/11/2026 no nível 30. NÃO aumentar esta lista sem decisão do dono. */
+/**
+ * Exceções: as propostas de 13/11/2026 pvp|dot, pvp|spdBuff e arena|dot foram aprovadas e aplicadas (§321). Sobra UMA, à espera do dono:
+ * a lentidão do Pesadelo. Neste espelho ela rende 0,73× do direto, mas no Pesadelo real o gate pareado do §228 mede a lentidão igual ao
+ * `defDebuff` (±3pp), e a tune aprovada (0,3/0,58) a põe +16,4pp acima. NÃO acrescentar nada aqui sem decisão do dono.
+ */
 const PENDENTES_DO_DONO: Readonly<Record<string, string>> = {
-  'pvp|dot': '1,00 — SPECIAL_POWER.dot = 1 (régua do 1v1; §290 manteve o jogador fora do bônus)',
-  'pvp|spdBuff': '0,98 — SPECIAL_POWER.spdBuff = 1,82 (régua do 1v1)',
-  'arena|dot': '0,95 — PVE_FAMILY_POWER.arena.dot = 0,95 (vetor calibrado da Arena)',
-  'pesadelo|slow': '0,73 — EFFECT_TUNE_PESADELO slowScale 0,15 / slowKeep 0,4',
+  'pesadelo|slow': '0,73 no espelho; ver §321 (conflito com o gate ±3pp do §228)',
 };
 
 describe('regra do dono: o que dura rende mais que o imediato (§321)', () => {
@@ -140,7 +140,7 @@ describe('regra do dono: o que dura rende mais que o imediato (§321)', () => {
 
   it('o dano direto de referência vale 3 golpes (a medição está calibrada)', () => {
     expect(impacto('pvp', specialOf('direct'))).toBeCloseTo(3, 2);
-    expect(impacto('pve-player', specialOf('direct'))).toBeCloseTo(3, 2);
+    expect(impacto('pve-player', specialOfPve('direct'))).toBeCloseTo(3, 2);
   });
 
   it('todo efeito que dura rende MAIS que o imediato (exceto as pendentes listadas)', () => {
