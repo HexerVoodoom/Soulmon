@@ -118,14 +118,14 @@ describe('DayGoalsModal em modo "Hoje" (fuse)', () => {
     expect(onConfirm).toHaveBeenLastCalledWith(['t4'], ['t4']);
   });
 
-  it('a oferta reduzida (never miss twice) continua: aceitar chama o MESMO caminho de conclusão e vira "contou"; não há botão de recusar', () => {
+  it('a oferta reduzida (never miss twice) continua: aceitar vira a tarefa bônus (não conclui); não há botão de recusar', () => {
     const f = fuse();
     renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={f} onConfirm={vi.fn()} onClose={vi.fn()} />);
     const oferta = document.querySelector('[data-day-goals-tiny-offer="h2"]') as HTMLElement;
     expect(oferta.textContent).toBe('Alongar: hoje, só 5 minutos?');
     fireEvent.click(oferta);
     expect(f.onTinyHabit).toHaveBeenCalledWith('h2');
-    expect(document.querySelector('[data-day-goals-tiny-accepted]')!.textContent).toMatch(/Alongar · contou/);
+    expect(document.querySelector('[data-day-goals-tiny-accepted]')!.textContent).toMatch(/Alongar · tarefa bônus/);
     expect(document.querySelector('[data-day-goals-tiny-offer]')).toBeNull();
   });
 

@@ -1329,6 +1329,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/soulFragment.test.ts` (vocabulário sem cobrança; save antigo vira fragmentos 1:1, idempotente; por esforço com teto).
 
+### `src/utils/bonusTask.ts`
+**Dono de:** a TAREFA BÔNUS (13/11/2026). Aceitar a oferta reduzida (never miss twice) NÃO conclui mais o hábito: ele vira a tarefa bônus do dia (`GameState.bonusTask = { day, activityId }`). Concluída no próprio dia, rende `BONUS_TASK_GAUGE_WEIGHT` (+1) Fragmento de Alma ACIMA do teto diário, somado na virada (`computeDailyReset`, junto do bônus da missão especial); a virada limpa o campo, então paga uma vez só. O servidor não valida `evolutionPoints`.
+**Exports:** `BonusTaskState` · `BONUS_TASK_GAUGE_WEIGHT` · `sanitizeBonusTask` · `isBonusActivity` · `bonusTaskGaugeBonus`.
+**Chamado por:** `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx` (hidratação), `src/App.tsx` (aceite, linha bronze, prévia de fragmentos do toast, modal de apresentação).
+**Régua:** `src/utils/bonusTask.test.ts`.
+
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
 **Exports:**

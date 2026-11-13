@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
 import { sm2Button, sm2Text } from './form/FormKit';
@@ -79,7 +80,7 @@ export function WelcomeTour({ language, onDone }: { language: Language; onDone: 
                 }}
               >
                 <b style={{ ...sm2Text, display: 'block', margin: 0, color: 'var(--sm2-primary-ink)' }}>{t(a.name)}</b>
-                <span style={{ ...sm2Text, margin: 0 }}>{t(a.line)}</span>
+                <span style={{ ...sm2Text, margin: 0 }}>{emphasizeSoulFragment(t(a.line))}</span>
               </li>
             ))}
           </ul>

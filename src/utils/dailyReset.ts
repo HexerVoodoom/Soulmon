@@ -34,6 +34,7 @@ import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
+import { bonusTaskGaugeBonus } from './bonusTask';
 import { isBBStage, BB_MAX_HP } from './bbStage';
 
 /**
@@ -982,7 +983,11 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
   // Missão especial (REGISTRO §106): BÔNUS ACIMA do teto diário (guard-rail G-01:
   // não reduz o peso das tarefas reais). Fora do selo de dia completo, do
   // coração e de dailyGoalFor — por isso NÃO entra em `dailyDone`.
-  const specialBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
+  const specialMissionBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
+  // ⭐ Tarefa bônus (13/11/2026, `utils/bonusTask.ts`): +1 ACIMA do teto diário se a tarefa bônus do dia julgado foi concluída.
+  // Somada ao `specialBonus` — mesma natureza (fora do selo, do coração e de `dailyDone`) e mesmos buffs.
+  const bonusTaskGain = bonusTaskGaugeBonus((prev as any).bonusTask, prev.activities as any, yesterdayString);
+  const specialBonus = specialMissionBonus + bonusTaskGain;
   const gaugeGainBase = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
   /* 🌀 Buff do Glitchtama (10/11/2026): +10% sobre o GANHO deste crédito (tarefas + missão especial), só com o buff ativo na virada.
      É o ÚNICO ponto onde pontos de progressão entram (`creditGauge` abaixo); o que já estava acumulado não muda. A fração vai no carry. */
@@ -1309,7 +1314,9 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     perfectDays: newPerfectDays,
     evolutionPoints: newEvolutionPoints,
     ...((prev as any).glitchtamaCarry !== undefined || buffGlitch.carry > 0 ? { glitchtamaCarry: buffGlitch.carry } : {}),
-    ...(specialBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
+    ...(specialMissionBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
+    // A tarefa bônus vale só para o dia dela: a virada a encerra (paga ou não), então nunca paga duas vezes.
+    ...((prev as any).bonusTask ? { bonusTask: undefined } : {}),
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,
     poopEventsScheduled: [],
@@ -1394,7 +1401,9 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
       /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
       gaugeGain,
       /** Parte de `gaugeGain` que veio da missão especial (0 ou 1). */
-      specialBonus,
+      specialBonus: specialMissionBonus,
+      /** Parte de `gaugeGain` que veio da tarefa bônus (0 ou 1, `utils/bonusTask.ts`). */
+      bonusTaskBonus: bonusTaskGain,
       evolutionPoints: newEvolutionPoints,
       degenerated: wasDegeneratedByHP,
       // Modo boas-vindas: a UI deve receber quem voltou sem nenhuma cobrança.
