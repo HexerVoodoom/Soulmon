@@ -5232,3 +5232,22 @@ Conserto (só servidor, `functions/api/community.js`): o `playerSearch` lê o `n
 **Alternativa que perdeu:** manter o check no mesmo evento e só tirar a tag do topo — não explicava o loop medido.
 **Falsifica:** se o app ainda travar ao salvar pela missão com o check já pós-commit, a causa está no render da fila `welcome`/`TaskAutoTag` e esta decisão não basta.
 **Não verificado na tela** após o conserto (o navegador de teste foi cancelado pelo usuário).
+
+## §358 — Convite de amizade e de clã chegam por carta, uma por par e no máximo 20 pendentes; a carta do clã ganha "Entrar no clã" (13/11/2026, pedido do dono)
+
+Pedido do dono: "Invite de amizade e clã deve enviar carta". **Como estava:** o convite de amizade já deixava carta do Papus com Aceitar/Recusar (§288, `kind: 'friend-invite'`, `removerConvitesDe` ao aceitar/recusar/cancelar) e o convite de clã já deixava carta (§321, `mid` `ginv:<gid>:<dia>`, uma por clã por pessoa por dia), mas só de texto: sem botão, e a carta ficava na caixa depois de a pessoa entrar no clã; não havia teto de cartas de convite por pessoa nem garantia de UMA carta pendente por par (um clã convidando em dias seguidos empilhava até 3 cartas, pela validade de 3 dias).
+
+Decisão (só no correio que já existe, `mail:<saveId>` no KV; nada de estado novo de convite nem campo novo no save):
+1. **Uma carta pendente por par** (`_mensageiro.js` › `enqueueInvite`): amizade = mesmo `fromPid`; clã = mesmo clã (`ginv:<gid>:`), venha o convite de qualquer membro ou de outro dia. Carta já na caixa = o convite novo não vira outra.
+2. **Teto por pessoa:** `INVITE_PENDING_MAX` = **20** cartas de convite (amizade + clã) pendentes. Passou disso, o convite segue valendo (lista de Amigos; o código do clã), só não vira carta — a caixa (30 cartas) não vira mural de spam nem empurra cartas de prêmio. Quem convida recebe a MESMA resposta (não fica sabendo da caixa do outro).
+3. **Carta de clã com ação:** `kind: 'guild-invite'` + `guildCode` (o código que o corpo já mostrava; nada além do que o convite expõe). Na caixa: **"Entrar no clã"** chama o MESMO `guildJoin` do "Entrar com código" do Salão (`useMailbox.joinGuildFromLetter`; nenhum fluxo novo de aceitar) e **"Recusar"** só apaga a carta. Cheio = a carta fica; já em clã ou código morto = a carta sai.
+4. **Coerência:** entrar num clã (por código, pela carta ou por aprovação do anfitrião, `entrarNoGrupo`) tira da caixa TODO convite de clã pendente, inclusive o formato antigo sem `kind`. Amizade: sem mudança (§288 já tirava a carta ao aceitar/recusar/cancelar).
+5. **Mantido:** rate limits por conta e baldes separados (`friend-invite` 30/h, `guildInvite` 20/h): convite recusado por limite não deposita carta. Convidado com PvP desligado recebe as duas cartas (amigo achável, §351). Quem convida escondido (`publicHidden`) segue sem carta de amizade (§288) e com carta de clã sem o próprio nome (§321). Não existe bloqueio entre jogadores no app; nada foi inventado. Carta sem prêmio continua sumindo em 3 dias (o convite de amizade segue na lista de Amigos).
+
+**Contrato:** aditivo. `kind: 'guild-invite'` e `guildCode` são campos novos da carta; app em cache não conhece o tipo e mostra a carta comum, cujo corpo já traz o código (o mesmo de antes). `guildInvite` responde `{ invited: true }` como antes. **Custo:** `guildJoin` lê +1 chave (`mail:<save>`); escreve só se havia convite (`guild.l2.test.js`, orçamento `entrar` 30 → 31 leituras).
+
+**Alternativas que perderam:** (a) estado de convite de clã no servidor com aceitar/recusar próprio — o §321 já tinha descartado (mais superfície); (b) navegar da caixa até o Salão com o código preenchido — a caixa mora na Home e o Salão numa área: mais cliques e um caminho de navegação novo para o mesmo `guildJoin`; (c) convite que estoura o teto responder erro ao remetente — revelaria a caixa do outro.
+
+**Falsifica:** duas cartas de convite do mesmo par na caixa; mais de 20 cartas de convite pendentes; convite de clã aceito com a carta ainda na caixa; carta de convite depositada num 429 (`functions/api/cartas.convite.test.js`); a caixa sem "Entrar no clã"/"Recusar" na carta `guild-invite` ou com texto pt/en errado (`MailboxSheet.cartas.render.test.tsx`, `useMailbox.cla.test.tsx`).
+
+**Rollback:** reverter o PR. Cartas `guild-invite` já entregues viram carta comum no cliente antigo (o corpo tem o código). **APK:** nada (servidor + web, que o app carrega remoto).

@@ -62,7 +62,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick, saveIdForPublicId, nickFoldPrefix, foldNome, saveIdDaChaveDobrada,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
+import { ackMail, claimMail, deleteMail, enqueueInvite, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
@@ -1731,13 +1731,14 @@ async function handleCommunity(context) {
       try {
         const pid = await ensurePid(env, me);
         const nome = me.name || '';
-        await enqueueMail(env, kvOrThrow(env), friendSave, {
+        // §358: uma carta pendente por par e no máximo 20 convites pendentes na caixa (`enqueueInvite`).
+        await enqueueInvite(env, kvOrThrow(env), friendSave, {
           mid: `invite:${pid}:${Date.now().toString(36)}`, kind: 'friend-invite', fromPid: pid,
           titlePt: 'Convite de amizade', titleEn: 'Friend invite',
           bodyPt: `${nome || 'Alguém'} convidou você para ser amigo. Aceitar?`,
           bodyEn: `${nome || 'Someone'} invited you to be friends. Accept?`,
           at: Date.now(),
-        });
+        }, m => m.kind === 'friend-invite' && m.fromPid === pid);
       } catch { /* a carta é cosmética: o convite segue na lista de Amigos */ }
     }
     minha.out.push(friendSave);

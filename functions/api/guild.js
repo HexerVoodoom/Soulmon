@@ -80,7 +80,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
 import { BB_LOCKED_MESSAGE } from './_velado.js';
 import { getProfile, newPid, stagePower, saveIdForPublicId } from './_profile.js';
-import { enqueueMail } from './_mensageiro.js';
+import { enqueueInvite, removerConvitesDeCla } from './_mensageiro.js';
 import {
   COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -444,6 +444,8 @@ export async function handleGuild({ request, env }) {
     // Entrou (por código OU aprovação): o pedido pendente, se havia, deixa de existir.
     await apagarPedido(env, quem);
     await renovarCartao(env, confirmado.id, quem);
+    // §358: as cartas de convite de clã que ainda estavam na caixa perdem o sentido (melhor esforço: a entrada já está gravada).
+    await removerConvitesDeCla(kvOrThrow(env), quem).catch(() => {});
     return { g: rolarSemana(confirmado, semana) };
   }
 
@@ -540,14 +542,17 @@ export async function handleGuild({ request, env }) {
     const eu = await getProfile(env, id).catch(() => null);
     // Quem saiu da lista pública convida sem o próprio nome na carta (o mesmo cuidado da carta de amizade).
     const quem = eu && eu.publicHidden !== true && typeof eu.name === 'string' ? eu.name.slice(0, 40) : '';
+    // §358: a carta leva `kind: 'guild-invite'` e o código (o botão "Entrar no clã" da caixa chama o mesmo `guildJoin`). Uma carta PENDENTE
+    // por clã por pessoa (o `mid` do dia continua, mas outro dia não empilha enquanto a anterior está na caixa) e no máximo 20 convites
+    // pendentes por pessoa. Duplicada ou caixa no teto respondem igual ao sucesso: quem convida não fica sabendo da caixa do outro.
     try {
-      await enqueueMail(env, kvOrThrow(env), alvo, {
-        mid: `ginv:${g.id}:${hoje}`,
+      await enqueueInvite(env, kvOrThrow(env), alvo, {
+        mid: `ginv:${g.id}:${hoje}`, kind: 'guild-invite', guildCode: g.code,
         titlePt: 'Convite para um clã', titleEn: 'Clan invite',
         bodyPt: `${quem || 'Alguém'} convidou você para o clã ${g.name}. Para entrar, abra o Salão do clã e use o código ${g.code}.`,
         bodyEn: `${quem || 'Someone'} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
         at: Date.now(),
-      });
+      }, m => m.mid.startsWith(`ginv:${g.id}:`));
     } catch {
       return erro('try again', 503);
     }

@@ -16,7 +16,7 @@
 ## src/hooks
 
 ### `src/hooks/useMailbox.ts`
-**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
+**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`, `answerInvite` (convite de amizade, §288) e `joinGuildFromLetter` (convite de clã, §358: o `joinGuild` do Salão com o `guildCode` da carta; entrou = tira da caixa todo convite de clã; já em clã ou código morto = a carta sai; cheio = fica; sem rede = lança); relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
 
 ### `src/hooks/useLibraryMemory.ts`
 **Dono de:** a porta única da memória da Biblioteca (10/11/2026). `useLibraryMemory()` devolve `{ seen, formsMap, markSeen, record }`: com provider lê/escreve `GameState.librarySeen`/`libraryForms` (nuvem; updaters devolvem o mesmo objeto se nada muda), sem provider cai nas chaves locais.
