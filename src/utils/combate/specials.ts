@@ -141,12 +141,14 @@ export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDeb
 export const AREA_EFFICIENCY = 1;
 
 /**
- * §334: eficiência da área SÓ do DoT. Com o DoT ticando no turno de quem o carrega (3 golpes dele, antes 0,75 intervalo do
+ * §334: eficiência da área SÓ do DoT, e só quando a área pega 2+ inimigos (com 1 só, área = único: os gates N = 1 ≡ 1v1 e
+ * "área no 1v1 = único" exigem). Com o DoT ticando no turno de quem o carrega (3 golpes dele; antes, 0,75 intervalo do
  * lançador), o que sobra num inimigo que cai antes dos 3 golpes se perde na área (só o alvo único repassa ao próximo vivo), e a
- * área perdeu 12pp de vitória para o único (gate AC7/AC4 ±6pp). 1,12 devolve a diferença medida antes da mudança
- * (−1,2pp → −1,4pp; tempo +1,9% → −0,7%, `areaDelta('dot', 3200)`). O orçamento do alvo único não muda.
+ * área caiu de −1,2pp para −12,0pp de vitória contra o único (gate AC7/AC4, ±6pp). `areaDelta('dot', 3200)`: 1,20 → −5,0pp;
+ * 1,25 → −3,2pp (tempo +0,5%); 1,30 → −2,6pp. O orçamento do alvo único não muda. Alternativa sem constante (fica com o dono):
+ * o DoT em área também repassar o que sobra ao próximo vivo (−3,0pp), contra a regra "só quem estava no raio".
  */
-export const AREA_DOT_EFFICIENCY = 1.12;
+export const AREA_DOT_EFFICIENCY = 1.25;
 
 export type PveEngine = 'arena' | 'dungeon';
 

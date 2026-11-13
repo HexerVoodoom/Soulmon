@@ -265,8 +265,10 @@ export function* groupFightSteps(
     const rx: G = me;
     const spread = isArea ? enemies : [tgt];
     // same total budget: the area divides it (times the area efficiency, 1), the single concentrates it
-    // §334: o DoT em área tem a eficiência própria (`AREA_DOT_EFFICIENCY`); a régua pode trocar as duas por `opts.areaEfficiency`
-    const share = isArea ? (Eb * (opts.areaEfficiency ?? (sp.family === 'dot' ? AREA_DOT_EFFICIENCY : AREA_EFFICIENCY))) / spread.length : Eb;
+    // §334: o DoT em área sobre 2+ inimigos tem a eficiência própria (`AREA_DOT_EFFICIENCY`; com 1 só, área = único, nada se
+    // perde); a régua pode trocar as duas por `opts.areaEfficiency`
+    const areaEff = sp.family === 'dot' && spread.length > 1 ? AREA_DOT_EFFICIENCY : AREA_EFFICIENCY;
+    const share = isArea ? (Eb * (opts.areaEfficiency ?? areaEff)) / spread.length : Eb;
     switch (sp.family) {
       case 'direct':
         for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack', 'direct');
