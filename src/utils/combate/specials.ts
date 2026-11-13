@@ -26,15 +26,27 @@ export const REFERENCE_FAMILY: SpecialFamily = 'direct';
 /** Families that get the rookie tolerance (−15%) in the ruler. */
 export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 'spdBuff'];
 
-/** Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout). */
+/**
+ * Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout) — o do 1v1 (PvP, simulados, treino).
+ * §325 (dono, 13/11/2026): `dot` 1 → 1,15 e `spdBuff` 1,82 → 2 (o que dura rende mais que o dano direto). Espelho: `_combate.js`.
+ * O PvE NÃO lê esta tabela: usa `SPECIAL_POWER_PVE` (o vetor `PVE_FAMILY_POWER` foi calibrado sobre ela).
+ */
 export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   direct: 1,
-  dot: 1,
+  dot: 1.15,
   heal: 1,
   shield: 1,
   atkBuff: 1.01,
   defDebuff: 1.01,
-  spdBuff: 1.82,
+  spdBuff: 2,
+};
+
+/**
+ * §325: o poder de família do PvE (Arena, Masmorra, Pesadelo, inimigos) = a tabela do spike de antes do ajuste do 1v1. Separada para a
+ * mudança de `SPECIAL_POWER` (pedida para o PvP) não se multiplicar com `PVE_FAMILY_POWER`, que foi calibrado em cima destes números.
+ */
+export const SPECIAL_POWER_PVE: Readonly<Record<SpecialFamily, number>> = {
+  direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82,
 };
 
 /** §228: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
@@ -57,10 +69,18 @@ export interface Special {
 export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.58, hotScale: 1.05 };
 export type EffectTune = typeof EFFECT_TUNE;
 /** §228 (dono, 05/11): o Pesadelo pode ter balanço próprio para qualquer mecânica. */
-export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.15, slowKeep: 0.4 };
+/**
+ * §325 (dono, 13/11/2026): lentidão do Pesadelo 0,15/0,4 → 0,3/0,58 (a mesma da Arena e da Masmorra). O dono ACEITOU que o Pesadelo fique
+ * ~16,4pp mais fácil para quem tem lentidão (gate pareado em `efeitosPve.medicao.test.ts`). Os outros botões seguem os de `EFFECT_TUNE`.
+ */
+export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.3, slowKeep: 0.58 };
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };
+}
+/** §325: o especial com o poder do PvE (`SPECIAL_POWER_PVE`). Quem monta luta de Arena/Masmorra/Pesadelo/inimigo usa este. */
+export function specialOfPve(family: SpecialFamily): Special {
+  return { family, power: SPECIAL_POWER_PVE[family] };
 }
 
 /**
@@ -95,7 +115,7 @@ export type PveEngine = 'arena' | 'dungeon';
  * Values from builder/balanco-motores.md §3 (dungeon) and §6 (arena, groups).
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
-  arena: { direct: 1, dot: 0.95, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
+  arena: { direct: 1, dot: 1.1, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
   dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
 };
 
