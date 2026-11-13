@@ -4669,3 +4669,6 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/tarefaLink.ts`
 
 **Tarefas linkadas a recursos (beta12 §J, 12/11/2026):** `recursoDaAtividade` (via `catalogId` + `data/catalogResources.ts`), `gatilhoDoRecurso` (`steps` / `caderno` / `foco`), `atividadesParaAutoCheck(gatilho, args)` (hábito adotado, devido hoje, não feito, sem chave do dia; passos exigem permissão, registro de hoje e meta batida), `registrarAuto` / `jaFezAuto` / `chaveAuto` (`<AAAA-MM-DD>|<id>`, `GameState.tarefaAuto`), `progressoDePassos`, `passosLinha`, `irLaLabel`, `autoTagText` / `autoTagAria`. Passo nunca pontua sozinho: o check dá o que o toque manual dá. **Régua:** `tarefaLink.test.ts`, `catalogResources.contract.test.ts`, `DailyRituals.recurso.render.test.tsx`, `NoticeToast.taskTag.render.test.tsx`.
+### `src/utils/motivoTempo.ts` (13/11/2026)
+
+Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMotivoDeTempo` troca a outra família no prompt e põe a cláusula negativa `Time motif: …` (idempotente), `motivoTempoPorSemente` (hash estável), `motivosNoTexto`. A variante por elemento mora em `elementoCombinado.ts › motivoTempoDoElemento`. **Chamado por:** `src/utils/oracle/motor.ts`, `src/utils/elementoCombinado.ts`. **Régua:** `motivoTempo.test.ts`.
