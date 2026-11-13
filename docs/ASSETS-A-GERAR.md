@@ -1195,7 +1195,7 @@ O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar 
 
 - **Prévia do widget Companheiro** (`android/app/src/main/res/drawable-nodpi/widget_preview_companion.png`, hoje o `soulmon_widget_companion_info.xml` reusa `widget_preview_vpet` como placeholder): captura do widget 2x2 com a criatura grande em pé na frente da moldura. Sem rosto de pessoa; criatura: o que a regra de categoria mandar (sprite do jogador/inicial). Gerar pelo ChatGPT, nunca Higgsfield. Tags: `tipo:ui`, `origem:chatgpt`, `uso:widget-preview`.
 
-## Intro narrativa pós-criação (PR #855) — 6 silhuetas a substituir
+## Intro narrativa pós-criação (PR #855) — prompts prontos em `docs/PROMPTS-ARTE-INTRO-NARRATIVA.md` — 6 silhuetas a substituir
 
 Hoje placeholders (silhueta) em `src/assets/soulmon/onboarding/`; trocar mantendo nome e proporção. Fundos: ChatGPT (máx. 3 por conversa, apagar a conversa depois, registrar em `E:\Soulmon-assets\_banco\registro.jsonl`). Personagem: SÓ Higgsfield API, nunca ChatGPT. Identidade Soulmon vale (túnel, penhasco, cristal, cidade); sem engrenagem.
 
