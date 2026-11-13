@@ -506,7 +506,8 @@ export function DailyRituals({
       <RitualRow
         key={activity.id}
         flipKey={`h:${activity.id}`}
-        below={link}
+        below={recurso === 'steps' ? link : undefined}
+        lead={recurso === 'steps' ? undefined : link}
         kind="habit"
         name={activity.name}
         bonus={bonusActivityId === activity.id}
