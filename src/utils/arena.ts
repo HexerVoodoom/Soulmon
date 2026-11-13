@@ -27,7 +27,7 @@ import type { FightSide } from './combate/fight';
 import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 import { comEfeitoDoElemento } from './combate/elementEffects';
 import { foeSpecialOf } from './combate/foeFamilies';
-import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
+import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
@@ -554,7 +554,7 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
   const role = roleOf(p);
   return {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
-    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento),
     area: p.area,
   };
 }
