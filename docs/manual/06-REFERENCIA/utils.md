@@ -4591,3 +4591,7 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/atividadeEmCurso.ts`
 
 **`atividadeEmCurso` (12/11/2026, §306):** `atividadeEmCurso(sinais) → 'area' | 'masmorra' | 'foco' | 'modal' | null`, `estaOcioso`, `focoEmAndamento`, `ATIVIDADE_AREAS` (`arena`, `jogos`, `exploracao`). Puro; dono único do que conta como "atividade em curso".
+
+### `src/utils/motivoTempo.ts` (13/11/2026)
+
+Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMotivoDeTempo` troca a outra família no prompt e põe a cláusula negativa `Time motif: …` (idempotente), `motivoTempoPorSemente` (hash estável), `motivosNoTexto`. A variante por elemento mora em `elementoCombinado.ts › motivoTempoDoElemento`. **Chamado por:** `src/utils/oracle/motor.ts`, `src/utils/elementoCombinado.ts`. **Régua:** `motivoTempo.test.ts`.
