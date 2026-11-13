@@ -316,7 +316,7 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 
 **`useGroveAtaque({ saveId, playerDayTz, enabled, reler }) → boolean` (beta12 §G, 12/11/2026):** lê o `underAttack` de `claPlantio` (`claApi.getPlantio`) só com memória de roda neste aparelho, ao montar, ao voltar ao app e ao voltar à Home, com intervalo mínimo `GROVE_ATAQUE_MIN_MS` (60 s) e sem timer. `bosqueSobAtaque(vista)` é a regra pura (planta de pé, não madura, atacada, ainda sem proteção). Nada vai para o save (`guildNoSave.contract`).
 
-**`useGroveEstado(...) → { atacado, cuidavel }` (§333, 13/11/2026):** a MESMA consulta serve os dois sinais; `useGroveAtaque` virou um invólucro que devolve só `atacado`. `bosqueCuidavel(vista)` = planta de pé, não madura e ação do dia sorteável (`canDraw`) ou sorteada (`task`), a condição do botão "Cuidar" do `PlantioVisor`.
+**`useGroveEstado(...) → { atacado, cuidavel }` (§333, 13/11/2026):** a MESMA consulta serve os dois sinais; `useGroveAtaque` virou um invólucro que devolve só `atacado`. `bosqueCuidavel(vista)` = planta de pé, não madura e ação do dia sorteável (`canDraw`) ou sorteada (`task`), a condição do botão "Cuidar" do `PlantioVisor`. **§355 (13/11/2026):** `bosqueDefendivel({ atacado, cuidavel }, metaCumprida)` decide o balão dourado do Bosque: só sob ataque, com a meta do dia cumprida (`fioMetaCumprida`) e cuidado do dia por fazer; sem ação possível não há balão.
 
 ### `src/hooks/useBalaoDica.ts`
 

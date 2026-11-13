@@ -1,7 +1,7 @@
 /** beta12 §G e §J: a fiação do App (lida do fonte, como os demais contratos de fiação) e o sinal do Bosque. */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { bosqueSobAtaque } from './hooks/useGroveAtaque';
+import { bosqueSobAtaque, bosqueDefendivel } from './hooks/useGroveAtaque';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const hud = readFileSync(new URL('./components/CompanionHUD.tsx', import.meta.url), 'utf8');
@@ -17,7 +17,7 @@ describe('§G balões dourados: fiação', () => {
     expect(app).not.toMatch(/localStorage[^\n]*balaoDourado/);
   });
   it('a fila é única: um balão por vez, escolhido por prioridade (Bosque > Fenda > achado)', () => {
-    expect(app).toContain('escolherBalao({ grove: bosqueAtacado, rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao)');
+    expect(app).toContain('escolherBalao({ grove: bosqueDefendivel({ atacado: bosqueAtacado, cuidavel: bosqueCuidavel }, fioMetaCumprida), rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao)');
   });
   it('grava ao TOCAR e ser direcionado, não ao exibir: Bosque e achado dispensam no toque; a Fenda dispensa ao ESCOLHER ir', () => {
     const toque = app.slice(app.indexOf('const handleBalaoDourado'), app.indexOf('const balaoDouradoHud'));
@@ -115,5 +115,23 @@ describe('§333 balões de dica: fiação', () => {
   it('uma consulta ao servidor serve os dois sinais do Grove', () => {
     expect(hook).toContain('export function useGroveEstado');
     expect(app).toContain('const { atacado: bosqueAtacado, cuidavel: bosqueCuidavel } = useGroveEstado(');
+  });
+});
+
+describe('balão do Bosque só com ação possível (13/11/2026)', () => {
+  it('sob ataque mas SEM meta do dia (não dá para defender): sem balão', () => {
+    expect(bosqueDefendivel({ atacado: true, cuidavel: true }, false)).toBe(false);
+  });
+  it('sob ataque, meta cumprida, mas sem cuidado do dia por fazer: sem balão', () => {
+    expect(bosqueDefendivel({ atacado: true, cuidavel: false }, true)).toBe(false);
+  });
+  it('sob ataque + meta cumprida + cuidado por fazer: balão', () => {
+    expect(bosqueDefendivel({ atacado: true, cuidavel: true }, true)).toBe(true);
+  });
+  it('sem ataque nunca há balão', () => {
+    expect(bosqueDefendivel({ atacado: false, cuidavel: true }, true)).toBe(false);
+  });
+  it('o App usa a MESMA meta (`fioMetaCumprida`) que libera o cuidado, não uma cópia da regra', () => {
+    expect(app).toContain('bosqueDefendivel({ atacado: bosqueAtacado, cuidavel: bosqueCuidavel }, fioMetaCumprida)');
   });
 });
