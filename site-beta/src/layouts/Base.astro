@@ -38,7 +38,13 @@ const hrefEn = lang === 'en' ? eu : outro;
   <link rel="icon" href={b('/favicon-192.png')} />
   <meta property="og:title" content={titulo ?? t.titulo} />
   <meta property="og:description" content={desc ?? t.desc} />
-  <meta property="og:image" content={base + b('/og.png')} />
+  <meta property="og:image" content={base + b('/og-hero-v2.jpg')} />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={lang === 'pt' ? 'Soulmon: criaturas em ilhas flutuantes cobertas de folhas e cristais turquesa' : 'Soulmon: creatures on floating islands covered in leaves and turquoise crystals'} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={base + b('/og-hero-v2.jpg')} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={base + (canonico ?? aqui)} />
   <link rel="preload" href={b('/fonts/cinzel-latin.woff2')} as="font" type="font/woff2" crossorigin />
