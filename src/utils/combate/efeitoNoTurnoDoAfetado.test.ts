@@ -7,6 +7,8 @@
  *  · a cura contínua (HoT) pulsa do mesmo jeito, no começo de cada golpe de quem a recebe;
  *  · a duração conta os golpes do afetado: 3 ticks = os 3 próximos golpes dele;
  *  · quem cai no tick não golpeia naquele turno; o escudo absorve metade de cada tick (§327).
+ *  · (dono, 13/11/2026: "Sim, o especial também") lançar o especial também é turno: o tick sai no começo da ação, antes do
+ *    `cast`, na mesma ordem (DoT, depois cura contínua); quem cai no tick não lança.
  */
 import { describe, expect, it } from 'vitest';
 import * as srv from '../../../functions/api/_combate.js';
@@ -177,11 +179,108 @@ describe('§334 grupo: DoT e cura contínua no turno do afetado', () => {
   });
 });
 
+/**
+ * §334 (dono, 13/11/2026: "Sim, o especial também"): lançar o especial também é turno do afetado. O tick sai no começo da ação,
+ * no mesmo instante e ANTES do `cast`; DoT primeiro, depois a cura contínua; quem cai no tick não lança.
+ */
+describe('§334: o especial do afetado também é turno', () => {
+  /**
+   * As ações de `lado` depois do índice `de`: golpe básico OU especial. O dano do especial direto também sai como `attack`, logo
+   * depois do `cast` do mesmo lado e instante (o golpe básico do mesmo instante vem ANTES do cast): esse não é ação nova.
+   */
+  const doEspecial = <E extends { kind: string; t: number }>(events: readonly E[], i: number, mesmo: (e: E) => boolean) =>
+    events.slice(0, i).some((e) => e.kind === 'cast' && mesmo(e) && Math.abs(e.t - events[i].t) < 1e-9);
+  const acoes = (events: readonly FightEvent[], lado: 0 | 1, de: number) =>
+    events.flatMap((e, i) => (i > de && e.side === lado && (e.kind === 'cast' || (e.kind === 'attack' && !doEspecial(events, i, (x) => x.side === lado))) ? [i] : []));
+
+  it('1v1: os 3 ticks saem nas 3 próximas AÇÕES do envenenado, e o especial dele é uma delas', () => {
+    let comCast = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      const { events, fx } = play(side('dot'), side('direct'), { seed, hpScale: 20, variance: null, startEnergy: [100, 99], stopAtFirstKo: true });
+      const cast = events.findIndex((e) => e.kind === 'cast' && e.side === 0);
+      const prox = events.findIndex((e, i) => i > cast && e.kind === 'cast' && e.side === 0);
+      const ticks = events.flatMap((e, i) => (e.kind === 'tick' && i > cast && (prox < 0 || i < prox) ? [i] : []));
+      const deB = acoes(events, 1, cast).slice(0, DOT_TICKS);
+      expect(ticks.map((i) => events[i].t)).toEqual(deB.map((i) => events[i].t));
+      for (const i of ticks) {
+        const g = turnoDoTick(events, i);
+        expect(g?.side).toBe(1);
+        expect(['attack', 'cast']).toContain(g?.kind);
+      }
+      const castB = deB.find((i) => events[i].kind === 'cast');
+      if (castB === undefined) continue;
+      comCast++;
+      // o tick vem logo antes do especial, no mesmo instante, e o contador do selo já mostra o que falta
+      expect(events[castB - 1].kind).toBe('tick');
+      expect(events[castB - 1].t).toBe(events[castB].t);
+      expect(fx[castB - 1][1].dot).toBeLessThan(DOT_TICKS);
+    }
+    expect(comCast).toBeGreaterThan(0);
+  });
+
+  it('1v1: quem cai no tick do começo do especial não lança (sem cast, ko no mesmo instante)', () => {
+    let vistos = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const { events } = play(side('dot'), side('direct'), { seed, variance: null, startEnergy: [100, 99.9], startHp: [1, 0.01], stopAtFirstKo: true });
+      const i = events.findIndex((e) => e.kind === 'tick');
+      if (i < 0) continue;
+      const mesmo = events.filter((e, j) => j > i && Math.abs(e.t - events[i].t) < 1e-9);
+      expect(mesmo.some((e) => e.side === 1 && (e.kind === 'attack' || e.kind === 'cast'))).toBe(false);
+      expect(mesmo.some((e) => e.kind === 'ko' && e.side === 1)).toBe(true);
+      if (!events.some((e) => e.kind === 'cast' && e.side === 1)) vistos++;
+    }
+    expect(vistos).toBeGreaterThan(0);
+  });
+
+  it('grupo: a cura contínua pulsa no começo do especial de quem a recebe (antes do cast)', () => {
+    const hot = { combatant: C, special: { ...specialOfPve('shield'), effect: 'hot' as const } };
+    let k = 0;
+    // o 1º cast liga a cura; uma torcida de 108 de energia logo depois força um 2º cast com os pulsos ainda pendentes
+    const g = groupFightSteps(hot, [side(null)], { seed: 4, hpScale: 20, variance: null, startEnergy: 100, startHp: 0.5, withFx: true, cheerDrain: () => (++k === 3 ? 12 : 0) });
+    const evs: GroupEvent[] = [];
+    let r = g.next();
+    while (!r.done && evs.length < 4000) { evs.push(r.value); r = g.next(r.value.kind === 'cast' ? 1 : undefined); }
+    const casts = evs.flatMap((e, i) => (e.kind === 'cast' && e.who === 0 ? [i] : []));
+    expect(casts.length).toBeGreaterThanOrEqual(2);
+    const [c1, c2] = casts;
+    const golpesEntre = evs.filter((e, i) => i > c1 && i < c2 && e.kind === 'attack' && e.who === 0).length;
+    expect(golpesEntre).toBeLessThan(DOT_TICKS);
+    // a vida sobe no evento do cast (o pulso saiu antes de o especial sair) e o contador gastou 1 pulso nele
+    expect(evs[c2].hp).toBeGreaterThan(evs[c2 - 1].hp);
+    expect(evs[c2].fx?.[0].hot).toBe(DOT_TICKS - golpesEntre - 1 + DOT_TICKS);
+  });
+
+  it('grupo: o DoT do inimigo tica no especial do jogador, antes do cast dele', () => {
+    let vistos = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      // o jogador ganha 108 de energia (torcida) logo depois de o inimigo soltar o veneno: o especial dele cai nos 3 turnos do DoT
+      let armar = false;
+      const g = groupFightSteps(side('direct'), [side('dot')], {
+        seed, hpScale: 20, variance: null, withFx: true, cheerDrain: () => (armar ? ((armar = false), 12) : 0),
+      });
+      const evs: GroupEvent[] = [];
+      let r = g.next();
+      let c1 = -1;
+      while (!r.done && evs.length < 4000) {
+        evs.push(r.value);
+        if (c1 < 0 && r.value.kind === 'cast' && r.value.who === 1) { c1 = evs.length - 1; armar = true; }
+        r = g.next(r.value.kind === 'cast' ? 1 : undefined);
+      }
+      if (c1 < 0) continue;
+      const acoesPl = evs.flatMap((e, i) => (i > c1 && e.who === 0 && (e.kind === 'cast' || (e.kind === 'attack' && !doEspecial(evs, i, (x) => x.who === 0))) ? [i] : [])).slice(0, DOT_TICKS);
+      const tTicks = evs.filter((e, i) => i > c1 && e.kind === 'tick' && e.who === 1).map((e) => e.t).slice(0, DOT_TICKS);
+      expect(tTicks).toEqual(acoesPl.map((i) => evs[i].t));
+      for (const i of acoesPl) if (evs[i].kind === 'cast') { expect(evs[i - 1].kind).toBe('tick'); vistos++; }
+    }
+    expect(vistos).toBeGreaterThan(0);
+  });
+});
+
 describe('§334 paridade: servidor (`_combate.js`) = cliente (`fight.ts`) com DoT', () => {
   it('mesmo log de eventos em lutas de DoT, inclusive com morte no tick', () => {
     for (let seed = 1; seed <= 25; seed++) {
       for (const [ha, hb] of [[1, 1], [1, 0.02], [0.02, 1]] as const) {
-        const a = side('dot'), b = side(seed % 2 ? 'dot' : 'shield');
+        const a = side('dot'), b = side((['dot', 'shield', 'direct'] as const)[seed % 3]); // §334: o especial do envenenado também tica
         const o = { seed, startEnergy: [100, 100] as [number, number], startHp: [ha, hb] as [number, number], hpScale: 1.7 };
         const app = play(a, b, o).events;
         const g = srv.fightSteps(a, b, o);

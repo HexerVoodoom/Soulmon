@@ -366,6 +366,11 @@ export function* fightSteps(
   function* tryCast(i: 0 | 1, tt: number): Generator<FightEvent, void, number | undefined> {
     const me = F[i];
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026: "Sim, o especial também"): lançar o especial também é turno do afetado. O DoT tica no começo
+      // da ação, antes de o especial sair; quem cai no tick não lança (a energia fica, ele já caiu).
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const e = ev('cast', i, 0, tt);

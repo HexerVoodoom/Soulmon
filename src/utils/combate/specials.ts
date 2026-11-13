@@ -48,11 +48,14 @@ export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 
 /**
  * Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout) — o do 1v1 (PvP, simulados, treino).
  * §325 (dono, 13/11/2026): `dot` 1 → 1,15 e `spdBuff` 1,82 → 2 (o que dura rende mais que o dano direto). Espelho: `_combate.js`.
+ * §334 (dono, 13/11/2026: lançar o especial também é turno do afetado): o DoT termina mais cedo e a régua pareada do 1v1
+ * (gate 5, ±5%) foi a +5,3% com 1,15 (antes: +3,7%). `dot` 1,15 → 1,14 (+4,8%; 1,13 → +4,5%; 1,12 → +4,2%): o maior que passa.
+ * O total segue acima do direto (`efeitosRegraTotal`: pvp|dot 1,14).
  * O PvE NÃO lê esta tabela: usa `SPECIAL_POWER_PVE` (o vetor `PVE_FAMILY_POWER` foi calibrado sobre ela).
  */
 export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   direct: 1,
-  dot: 1.15,
+  dot: 1.14,
   heal: 1,
   shield: 1,
   atkBuff: 1.01,
@@ -150,15 +153,24 @@ export const AREA_EFFICIENCY = 1;
  */
 export const AREA_DOT_EFFICIENCY = 1.25;
 
-export type PveEngine = 'arena' | 'dungeon';
+export type PveEngine = 'arena' | 'dungeon' | 'pesadelo';
 
 /**
  * Per-engine multiplier of SPECIAL_POWER, PvE only (outside the mirror ruler).
  * Values from builder/balanco-motores.md §3 (dungeon) and §6 (arena, groups).
+ * §334 (dono, 13/11/2026: o veneno tem de vencer pelo menos tanto quanto o dano direto em cada modo PvE). O Pesadelo joga no
+ * motor da Masmorra mas tem o vetor próprio (`pesadelo`, lido por `dungeonFight` com `pesadelo: true`), igual ao da Masmorra
+ * menos o `dot`. Vitória dot − direct, pareado N = 1600 (`efeitosPve.medicao`), já com o tick também no especial:
+ *  · Arena `dot` 1,1 → 1,11: +1,9pp → +3,1pp (a área estava −0,1pp; foi a +1,5pp; o único +4,8pp);
+ *  · Masmorra `dot` 1,1 (sem mudança): +0,6pp;
+ *  · Pesadelo `dot` 1,1 → 1,4: −5,4pp → +0,1pp (1,3 → −1,9pp; 1,5 → +1,8pp). Na cena do jogo (`simulateNightmareScenario`) o
+ *    veneno já empatava: com torcida e anel +1,0pp → +6,2pp; sem nada +4,7pp → +20,1pp (10,3% → 30,3% de vitória).
+ * O 1v1 (PvP) não lê esta tabela.
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
-  arena: { direct: 1, dot: 1.1, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
+  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
   dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
+  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
 };
 
 /**

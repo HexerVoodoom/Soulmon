@@ -599,7 +599,8 @@ export function clearHolders(board: StatusBoard, down: readonly number[]): Statu
  * §334 (dono, 13/11/2026): o tick de DoT sai no COMEÇO do turno de quem o carrega, no MESMO instante do golpe dele (o núcleo
  * emite o tick e logo depois o golpe). Na cena o tick se aplica quando a ação desse golpe COMEÇA (`leadS(golpe)` antes do
  * instante), não quando o golpe chega; sem golpe logo depois (o tick derrubou quem o carregava), no próprio instante. Os outros
- * eventos seguem no instante deles. Só encenação: a ordem e o resultado do motor não mudam.
+ * eventos seguem no instante deles. Só encenação: a ordem e o resultado do motor não mudam. Lançar o especial também é turno
+ * (dono, 13/11/2026: "Sim, o especial também"): o tick logo antes de um `cast` entra quando a ação do especial começa.
  */
 export function sceneTimeOf<E extends { readonly kind: string; readonly t: number }>(
   events: readonly E[], i: number, leadS: (golpe: E) => number,
@@ -608,7 +609,7 @@ export function sceneTimeOf<E extends { readonly kind: string; readonly t: numbe
   if (!e || e.kind !== 'tick') return e?.t ?? Infinity;
   for (let j = i + 1; j < events.length && Math.abs(events[j].t - e.t) < 1e-9; j++) {
     if (events[j].kind === 'tick') continue;
-    return events[j].kind === 'attack' ? e.t - Math.max(0, leadS(events[j])) : e.t;
+    return events[j].kind === 'attack' || events[j].kind === 'cast' ? e.t - Math.max(0, leadS(events[j])) : e.t;
   }
   return e.t;
 }

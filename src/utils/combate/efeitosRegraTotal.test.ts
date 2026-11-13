@@ -106,6 +106,9 @@ function medirTudo(): Linha[] {
       if (motor === 'dungeon') add(`pesadelo|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e, tune: EFFECT_TUNE_PESADELO }, P[family]), ref[base]);
     }
   }
+  // §334: o Pesadelo tem o vetor próprio (`PVE_FAMILY_POWER.pesadelo`, só o `dot` difere do da Masmorra)
+  const PP = PVE_FAMILY_POWER.pesadelo;
+  add('pesadelo|dot', impacto('pve-player', specialOfPve('dot'), PP.dot), impacto('pve-player', specialOfPve('direct'), PP.direct));
   // PvE dos inimigos: o especial sorteado de `foeSpecialOf` (Arena/Rift), escala 1 (sem esquiva).
   const achar = (k: FoeKind, fam?: SpecialFamily) => {
     for (let i = 0; i < 99999; i++) {
@@ -133,8 +136,8 @@ describe('regra do dono: o que dura rende mais que o imediato (§325)', () => {
   const linhas = medirTudo();
 
   it('mede todas as famílias e efeitos que duram (nada fica de fora)', () => {
-    // 1v1: 4 famílias · Arena: 4 + 3 efeitos · Masmorra: 4 + 3 · Pesadelo: 3 efeitos · inimigos: 5
-    expect(linhas.length).toBe(4 + 7 + 7 + 3 + 5);
+    // 1v1: 4 famílias · Arena: 4 + 3 efeitos · Masmorra: 4 + 3 · Pesadelo: 3 efeitos + o veneno (§334) · inimigos: 5
+    expect(linhas.length).toBe(4 + 7 + 7 + 4 + 5);
   });
 
   it('o dano direto de referência vale 3 golpes (a medição está calibrada)', () => {
@@ -143,6 +146,7 @@ describe('regra do dono: o que dura rende mais que o imediato (§325)', () => {
   });
 
   it('todo efeito que dura rende MAIS que o imediato (exceto as pendentes listadas)', () => {
+    console.log(`[regra-total] ${linhas.map((l) => `${l.id} ${l.razao.toFixed(3)}`).join(' · ')}`);
     const viola = linhas.filter((l) => !(l.id in PENDENTES_DO_DONO) && l.razao <= 1.001).map((l) => `${l.id}: ${l.razao.toFixed(3)}`);
     expect(viola).toEqual([]);
   });

@@ -85,7 +85,7 @@ export const dungeonFightSeed = (runSeed: number, floor: number, slot: number): 
  */
 export function dungeonFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, opening = true): DungeonFight {
   const j = jeitoOf(p);
-  const castMult = j.cast * PVE_FAMILY_POWER.dungeon[p.family];
+  const castMult = j.cast * PVE_FAMILY_POWER[p.pesadelo ? 'pesadelo' : 'dungeon'][p.family]; // §334: o Pesadelo tem o vetor próprio
   let pending = 0;
   return {
     player: dungeonPlayerSide(p, opening),
@@ -306,7 +306,8 @@ export const SCENARIO_NONE: NightmareScenario = { cheerEvery: null, ring: 'ruim'
 
 /** Plays the Nightmare of the tier `top` for a scenario; the foe is `nightmareFoe`. Deterministic by `seed`. */
 export function simulateNightmareScenario(cfg: SequenceConfig, top: number, seed: number, sc: NightmareScenario, k: NightmareKnobs = NIGHTMARE_KNOBS): { won: boolean; hpLeft: number; t: number } {
-  const p: DungeonPlayerCfg = { combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito };
+  // §334: `pesadelo` como o jogo passa (`NightmareBattle`): os botões e o vetor de família do Pesadelo
+  const p: DungeonPlayerCfg = { combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito, pesadelo: true };
   let drained = 0;
   let lastT = 0;
   const f = nightmareFight(p, nightmareFoe(cfg.level, top, cfg.knobs?.foe), dungeonFightSeed(seed, 1, top), () => drained, k);

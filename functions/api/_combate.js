@@ -186,7 +186,7 @@ export function shieldAbsorbPoints(sh, d, src) {
   return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
 }
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
-export const SPECIAL_POWER = { direct: 1, dot: 1.15, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
+export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
 /** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
 export function specialOf(family) {
   const f = typeof family === 'string' && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : 'direct';
@@ -388,6 +388,10 @@ export function* fightSteps(a, b, opts) {
   function* tryCast(i, tt) {
     const me = F[i];
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026): lancar o especial tambem e turno do afetado (espelho de `fight.ts`): o DoT tica antes; quem cai nao lanca
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const m = yield ev('cast', i, 0, tt);
