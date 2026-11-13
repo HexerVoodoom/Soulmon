@@ -79,6 +79,8 @@ export function tipoDaAssinatura(sig) {
  * Grava a entrada no prefixo certo e apaga a do outro prefixo. `antes` = a assinatura anterior (de `g.dirSig`):
  * quando ela é conhecida, só apaga a chave que de fato existia (no dia a dia, 1 escrita); sem ela (`undefined`),
  * apaga as duas por segurança.
+ * @param {*} env @param {*} g @param {number} max
+ * @param {{ prazo?: {}, antes?: string | null }} [opts]
  */
 export async function sincronizarDiretorio(env, g, max, { prazo = {}, antes } = {}) {
   const size = Array.isArray(g?.members) ? g.members.length : 0;
