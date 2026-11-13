@@ -1687,10 +1687,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
 
 ### `src/utils/modalDepth.ts`
-**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele.
+**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele. "Por cima" (hotfix §341, 13/11/2026) = não contém o botão E vem DEPOIS do modal do próprio botão na ordem do documento; o modal de BAIXO que abriu um portal (ex.: a `AreaSheet` do Salão sob a folha do Bosque, `GroveFolha`) não conta — antes contava e o único voltar da folha ficava `disabled`, prendendo o jogador.
 **Exports:** `modalsAbove(el?)`, `modalDepth()`, `useBackDimmed(ref)` — hook.
 **Chamado por:** `src/components/nav/AreaTopBar.tsx` e `src/components/ui/BackCircleButton.tsx`.
-**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento).
+**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento) e `src/components/guild/GroveFolha.voltar.render.test.tsx` (portal sobre a folha do Salão: voltar habilitado, fecha por toque e pelo voltar do sistema; o de baixo segue esmaecido).
 
 ### `src/utils/playAreaLots.ts`
 
