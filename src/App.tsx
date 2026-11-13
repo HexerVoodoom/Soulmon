@@ -6245,11 +6245,15 @@ export default function App() {
   }, [setGameState]);
 
   /** O Caderno muda a lista por uma função PURA sobre `prev` (footgun 6). */
+  /* REGISTRO §357: o check automático do hábito linkado NÃO roda no mesmo evento do "Guardar" (antes o toggle do hábito e a gravação
+     da entrada entravam juntos na fila do `setGameState` e o app travava num loop de render ao salvar pela missão). O handler só
+     anota que um registro NOVO foi guardado; o efeito abaixo dispara o check DEPOIS do commit, lendo o estado já gravado. */
+  const [cadernoGuardado, setCadernoGuardado] = useState(0);
   const handleCaderno = useCallback((f: (c: CadernoEntry[]) => CadernoEntry[]) => {
     // beta12 §J (A5): o MESMO evento (registro NOVO guardado) marca o hábito de journaling adotado, 1×/dia. Fora do updater (footgun 6).
     const antes = gameStateRef.current.caderno ?? [];
     const depois = f(antes);
-    if (depois !== antes && depois.some(e => !antes.some(o => o.id === e.id))) autoCheckRef.current('caderno');
+    if (depois !== antes && depois.some(e => !antes.some(o => o.id === e.id))) setCadernoGuardado(n => n + 1);
     setGameState(prev => {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
@@ -6915,6 +6919,10 @@ export default function App() {
   }, [demo, setGameState]);
   const autoCheckRef = useRef(autoCheck);
   autoCheckRef.current = autoCheck;
+  // §357: pós-commit do "Guardar" do Caderno (idempotente: `tarefaAuto` garante 1×/dia por hábito).
+  useEffect(() => {
+    if (cadernoGuardado > 0) autoCheckRef.current('caderno');
+  }, [cadernoGuardado]);
   // Passos: a cada leitura (polling de 5 min) ou mudança de meta/permissão/lista, o gatilho reavalia. Abaixo da meta não faz nada (A4).
   useEffect(() => {
     autoCheckRef.current('steps');

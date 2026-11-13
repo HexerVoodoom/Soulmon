@@ -76,7 +76,10 @@ describe('§J tarefas linkadas: fiação', () => {
   });
   it('A5: o MESMO evento de registro novo do Caderno dispara o check (sem gatilho paralelo); fechar sem salvar não dispara', () => {
     const cad = app.slice(app.indexOf('const handleCaderno = useCallback'), app.indexOf('Migração ÚNICA'));
-    expect(cad).toContain("depois.some(e => !antes.some(o => o.id === e.id))) autoCheckRef.current('caderno')");
+    expect(cad).toContain("depois.some(e => !antes.some(o => o.id === e.id))) setCadernoGuardado(n => n + 1)");
+    // §357: o check NUNCA roda dentro do evento do Guardar (travava o app); só no efeito pós-commit
+    expect(cad).not.toContain("autoCheckRef.current('caderno')");
+    expect(app).toContain("if (cadernoGuardado > 0) autoCheckRef.current('caderno');");
     expect(cad).toContain("bumpDailyIn(prev, 'journal')"); // o gatilho da semanal continua o mesmo
   });
   it('Q5: sessão de foco concluída marca só o hábito `habit:<id>` escolhido', () => {
