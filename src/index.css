@@ -9232,6 +9232,9 @@ button.sm2-hex-row {
   transition: transform var(--sm2-dur-tap) var(--sm2-ease);
   &[data-cta-width="full"] { width: 100%; }
   &[data-cta-width="auto"] { min-width: 200px; }
+  /* Tom `acao` (13/11/2026): a ação procurada já repousa na arte cheia (a de hover); pressionado e desabilitado (abaixo, mesma
+     especificidade ou maior) seguem com a arte própria. Fica ANTES de `:disabled` de propósito: a ordem decide o empate. */
+  &[data-cta-tone="acao"] { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); }
   @media (hover: hover) { &:hover:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); } }
   &:active:not(:disabled), &[data-cta-state="pressed"]:not(:disabled) { transform: translateY(2px); border-image-source: url('./assets/soulmon/ui/btn-cta-press.webp'); }
   &:focus-visible { outline: none; border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }

@@ -61,6 +61,7 @@ describe('TalentTreeEntry', () => {
   it('inglês e Esc', () => {
     abrir({ totalXP: xpForLevel(6) }, 'en-US');
     expect(document.querySelector('[data-talent-open]')!.textContent).toBe('Open talent tree');
+    expect(document.querySelector('[data-talent-open]')!.getAttribute('data-cta-tone')).toBe('acao');
     act(() => { fireEvent.click(document.querySelector('[data-talent-open]')!); });
     act(() => { fireEvent.keyDown(document, { key: 'Escape' }); });
     expect(document.querySelector('[data-talent-fullscreen]')).toBeNull();

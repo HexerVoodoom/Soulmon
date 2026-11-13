@@ -1818,7 +1818,19 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/ui/CtaButton.tsx`
-**Dono de:** o botão especial dos CTAs principais (REGISTRO §316): `CtaButton({ width: 'full' | 'auto', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir), `TalentTreeEntry` (Abrir árvore de talentos), `TalentTree` (Confirmar o nó), `GuildSheet` (Entrar, sem conta).
+**Dono de:** o botão especial dos CTAs principais (REGISTRO §316, §316b): `CtaButton({ width: 'full' | 'auto', tone: 'padrao' | 'acao', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir), `TalentTreeEntry` (Abrir árvore de talentos), `TalentTree` (Confirmar o nó), `GuildSheet` (Entrar, sem conta).
+**Tom (§316b, 13/11/2026):** `tone="acao"` (`data-cta-tone="acao"`) = a ação que a pessoa VEIO buscar, não uma escolha: repousa na arte CHEIA (`btn-cta-hover.webp`), porque no celular não existe hover. Pressionado (`btn-cta-press`) e desabilitado (`btn-cta-off`) mantêm a arte própria; hover e foco usam a mesma arte cheia (o foco ainda ganha o brilho turquesa). `padrao` (omissão) = confirmar, seguir, entrar, aceitar uma oferta. Hoje em `acao`: "Criar poção" (Laboratório), "Abrir árvore de talentos", "Começar jornada" (Foco).
+**Padrão de layout: CTA em coluna (§316b).** Com 76 px de altura e moldura larga, o CTA não cabe bem ao lado de outro botão num celular. Quando há CTA + outra ação: (1) CTA em cima, largura total (`width="full"`); (2) a outra ação embaixo, mais quieta (`sm2Button('outline')` se for alternativa real, `quiet`/`sm2-kit-btn-quiet` se for cancelar/depois/sair); (3) `display: grid; gap: 8px` (>= 8), alvo >= 44 em todos; (4) ordem do DOM = ordem visual = ordem de tab (CTA primeiro); (5) marcar o contêiner com `data-cta-stack`. **Não empilhar** quando as duas ações têm o mesmo peso (Sim/Não curto, `ConfirmDialog`) ou a linha é uma barra de ferramentas compacta; aí nenhuma delas é `CtaButton`.
+
+| Tela | Botões | Decisão |
+|---|---|---|
+| `TalentTree` (modal do nó) | Confirmar + Cancelar | empilhado: Confirmar em cima, Cancelar quieto embaixo |
+| `RestRoom` | Seguir + Concluir a missão (+ Sair) | empilhado: Seguir em cima; Concluir (contorno) embaixo; Sair (quieto) por último |
+| `VescaPotionOffer` | Fazer a poção + Depois | empilhado: Fazer em cima, Depois quieto embaixo |
+| `GuildSheet` (erro sem conta) | Entrar na conta + Tentar de novo | já era coluna; o vão subiu de 4 para 8 px |
+| `ElementPotionSheet` (rodapé) | Confirmar (sozinho) | passou de `auto` centralizado para largura total |
+| `App.tsx` Laboratório, `FocusBoard`, `TalentTreeEntry`, `EvoRecapModal` | CTA sozinho, largura total | sem mudança de layout |
+| `ConfirmDialog`, folhas de confirmar/cancelar sem `CtaButton` | Sim/Não de peso igual | mantidos em linha (escolha simétrica e curta; nenhum é `CtaButton`) |
 
 ### `src/components/ui/InfoTip.tsx`
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.

@@ -106,6 +106,8 @@ describe('quadro da Oficina (§247)', () => {
     const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
     await waitFor(() => expect(q(container, '[data-focus-offline]')).not.toBeNull());
     expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(true);
+    // Ação que a pessoa veio buscar: tom `acao` (arte cheia em repouso; desativado mantém a arte própria).
+    expect(q(container, '[data-focus-start]')!.getAttribute('data-cta-tone')).toBe('acao');
   });
 });
 
