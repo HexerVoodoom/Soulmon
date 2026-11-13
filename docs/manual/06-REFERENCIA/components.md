@@ -517,6 +517,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - `LOT_WIDTH_DEFAULT` (`'38%'`) — largura padrão de um lote, em % da cena (molde F4).
 **Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
+**Delta 13/11/2026 (REGISTRO §319):** prop `palco?: ReactNode`, desenhada DENTRO do palco da imagem (só com prédios pintados), em % da arte; a Exploração passa a `DungeonKeyBadge`.
+
+### `src/components/nav/DungeonKeyBadge.tsx` (13/11/2026 — REGISTRO §319)
+**Dono de:** a chave do Calabouço no mapa da Exploração: com a chave valendo, o ícone `recompensa-chave.png` (arte do dono, `icones-ui/interacao`) + o relógio até ela expirar (`formatEnergyCountdown`, anda de 1 em 1 s), na caixa `EXPLORACAO_CHAVE_BOX` (ponte entre Passeio e Calabouço). Sem chave ou relógio zerado: não desenha nada. Só visual (sem toque); `role="img"` com o rótulo falado em h/min.
+**Exports:** `DungeonKeyBadge({ expiresAt, language })` (`expiresAt` = `dungeonKeyExpiresAt` do `App`, via `play.dungeonKeyExpiresAt`).
+**Chamado por:** `src/components/nav/AreaView.tsx` (prop `palco` da `AreaScene`). **Régua:** `src/components/nav/DungeonKeyBadge.render.test.tsx`.
 
 ### `src/components/nav/AreaSheet.tsx`
 **Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4). ⚠️ **Proporção redecidida pelo dono em 28/09/2026: a folha ocupa `height: 66.6667dvh` (2/3 da tela), fixo — não é mais um range `min-height`/`max-height`.** A metade de cima da folha é do NPC **do lote** + balão de fala (`data-area-sheet-npc-zone`/`data-area-sheet-npc-line`; a fala continua vindo de `src/utils/areaNpcVoice.ts`, nunca escrita aqui); a metade de baixo é o conteúdo rolável (`children`). Backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. O NPC não é mais um único anfitrião da área espiando por cima — é o de CADA lote, resolvido por `lotNpcArt(areaId, lotId)` (`src/assets/soulmon/npcs/index.ts`): cai no NPC histórico da área se o lote não tiver mapeamento próprio, e em `PLACEHOLDER_NPC_ART` (coruja-cervo/poring) para sub-lojas ainda sem NPC dedicado.
@@ -1353,6 +1359,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** a sequência de falas de um NPC em TELA CHEIA (14/10/2026, pedido do dono): NPC bem grande (`min(135vw, 82dvh)`), janela de texto embaixo (`TypewriterText`), toque em qualquer lugar avança, a última fala fecha, "Pular/Skip" discreto no canto superior ESQUERDO (≥ 44 px, safe-area). Genérico: o tutorial do mapa pode usá-lo.
 **Props principais:** `lines` (`NpcSequenceLine[]`: `speaker`, `art`, `text`), `language`, `onFinish('done' | 'skip')`, `label?`.
 **Exports:** `NpcSequence(props)`, `NpcSequenceLine` (type).
+**Delta 13/11/2026 (REGISTRO §319):** prop `action?: ReactNode` — ação opcional na ÚLTIMA fala, dentro da janela de texto (`data-npc-action`, recebe toque); não avança nem fecha sozinha. Chamado também por `src/components/play/RogueKeyGate.tsx`.
 **Chamado por:** `src/components/BuildingIntro.tsx`, `src/components/MapTutorial.tsx`.
 **Régua:** `src/components/NpcSequence.render.test.tsx` (toque avança, pular, última fala, teclado, voltar do Android, alvo de 44 px, PT/EN, `onFinish` uma vez).
 **Avisos do arquivo:** o botão de avançar cobre a tela e é o PRIMEIRO focável (Enter/Espaço avançam; Esc e voltar pulam); o texto do "Pular" vem depois no foco; usa `useDialogA11y` e `useBackLayer`; nenhum som, nenhum timer.
@@ -2247,6 +2254,7 @@ O ícone de carta da Home, linha 1 da pilha do canto direito (entre o Mapa e as 
 ### `src/components/play/RogueKeyGate.tsx`
 
 Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `NpcSequence` manda à Oficina do Foco. Decisão: REGISTRO §239. **Régua:** `RogueKeyGate.render.test.tsx`.
+**Delta 13/11/2026 (REGISTRO §319):** prop `onGoToWorkshop?` — com ela, a fala ("Você precisa de uma chave…") ganha o `CtaButton` "Ir para a Oficina do Foco" / "Go to the Focus Workshop" (`data-rogue-gate-workshop`); o `AreaView` fecha o portão e pede `requestGoToBuilding('forja.oficina')`.
 
 ### `src/components/play/FocusBoard.tsx` · `src/components/play/JourneyScreen.tsx` · `src/components/play/FocusTaskDock.tsx` · `src/components/play/journeyArt.ts`
 

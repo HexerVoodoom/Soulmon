@@ -171,6 +171,12 @@ export const LOT_PINTADO: Record<string, LotBounds> = {
   'hall:guilda': [6, 45, 94, 73],
 };
 
+/**
+ * A chave do Calabouço no mapa da Exploração (13/11/2026, dono): a ponte entre o Passeio e o Calabouço, à esquerda da Fenda.
+ * Mesma medida de `LOT_PINTADO` (% da imagem: esquerda, topo, direita, base), lida no print do dono (720 px: x 90–310, y 630–720).
+ */
+export const EXPLORACAO_CHAVE_BOX: LotBounds = [12, 39.5, 43, 45];
+
 /** Os distritos pintados no mapa-mundo, com a mesma medida de `LOT_PINTADO`. */
 export const MAPA_MUNDO_PINTADO: Record<AreaId, LotBounds> = {
 mercado: [1, 10, 50, 26],

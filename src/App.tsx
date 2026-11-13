@@ -42,7 +42,7 @@ import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensagei
 import { useMailbox } from './hooks/useMailbox';
 import { applyJourneyGrants } from './utils/focusBoard';
 import type { JourneyGrants } from './utils/focusJourney';
-import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired } from './utils/focusKey';
+import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired, dungeonKeyExpiresAt } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
@@ -8854,6 +8854,7 @@ export default function App() {
                   }), combatant: soulCombatant(gameState) },
                   dungeonKeyActive: hasDungeonKey(gameState, Date.now()),
                   dungeonKeyExpired: dungeonKeyExpired(gameState, Date.now()),
+                  dungeonKeyExpiresAt: dungeonKeyExpiresAt(gameState, Date.now()),
                   onJourneyGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => setGameState(prev => applyJourneyGrants(prev, day, grants, dungeonKeyDay)),
                   onFocusSessionComplete: () => setGameState(prev => grantDungeonKey(prev, Date.now())),
                   onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
