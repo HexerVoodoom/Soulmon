@@ -167,9 +167,9 @@ function CenaCristal({ language, reduzido, onFim }: { language: Language; reduzi
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }} data-testid="intro-cristal" data-fase={fase}>
       <div style={{ position: 'absolute', inset: 0, opacity: fase === 'escuro' ? 0 : 1, transition: 'opacity .8s' }}>
-        <ArteIntro k="bg-malha-escura" language={language} extra={{ position: 'absolute', inset: 0, opacity: 0.35 }} />
+        <ArteIntro k="bg-penhasco-topo" language={language} extra={{ position: 'absolute', inset: 0 }} />
         <ArteIntro k="velado-anciao-mao" language={language} contain extra={{ position: 'absolute', bottom: '14%', left: '4%', width: '34%', height: '46%' }} />
-        <ArteIntro k="cristal-praca" language={language} contain extra={{ position: 'absolute', left: '34%', bottom: '18%', width: '32%', height: '44%' }} />
+        <ArteIntro k="cristal-praca" language={language} contain extra={{ position: 'absolute', left: '32%', bottom: '27%', width: '36%', height: '52%' }} />
         <ArteIntro k="velado-mao" language={language} contain extra={{ position: 'absolute', bottom: '14%', right: '4%', width: '34%', height: '46%' }} />
       </div>
       <div aria-hidden="true" data-testid="intro-luz-radial"

@@ -37,7 +37,7 @@ export const ASSETS: Record<AssetKey, AssetDef> = {
   'anciao-soulmon': { arquivo: 'anciao-soulmon.png', cenas: [5], tipo: 'imagem', pendente: true },
   'penhasco-borda': { arquivo: 'penhasco-borda.png', cenas: [3], tipo: 'imagem', pendente: true },
   'penhasco-panorama': { arquivo: 'penhasco-panorama.jpg', cenas: [3], tipo: 'imagem', pendente: true },
-  'bg-penhasco-topo': { arquivo: 'bg-penhasco-topo.jpg', cenas: [6], tipo: 'imagem', pendente: true },
+  'bg-penhasco-topo': { arquivo: 'bg-penhasco-topo.jpg', cenas: [6, 7], tipo: 'imagem', pendente: true },
   'cristal-praca': { arquivo: 'cristal-praca.png', cenas: [7, 8], tipo: 'imagem', pendente: true },
 };
 
