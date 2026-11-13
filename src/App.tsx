@@ -1040,6 +1040,9 @@ export default function App() {
   /* Opening pré-login (1ª abertura de quem é novo, com Pular; independe do ONBOARDING_VELADO) e "Ver abertura" das Configurações. */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
   const [reverIntro, setReverIntro] = useState(false);
+  /* Idioma já escolhido? ESTADO, não leitura do localStorage no render (bug 13/11/2026): o `language` nasce 'en-US', então tocar
+     English era `setLanguage('en-US')` sem mudança, o React não re-renderizava e o seletor só saía no próximo render de outra causa. */
+  const [idiomaEscolhido, setIdiomaEscolhido] = useState(() => readLocal(STORAGE_KEYS.LANGUAGE) !== null);
   /* INTRO_NARRATIVA: a intro roda uma vez, depois do nascimento. Quem já tinha onboarding ao abrir é jogador estabelecido: nunca interrompe. */
   const [introVista, setIntroVista] = useState(() => readFlag(STORAGE_KEYS.INTRO_NARRATIVA_VISTA) || readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE));
   const currentViewRef = useRef(currentView);
@@ -7842,8 +7845,8 @@ export default function App() {
   // Opening antes do login, só na 1ª abertura de quem é novo (com Pular). Retorno cedo: nada da fila de apresentação monta por cima.
   if (!hasCompletedOnboarding && introCinePendente) {
     // Ordem do dono: idioma (só se ainda não escolheu) -> opening no idioma escolhido -> resto.
-    if (!isEmbedMode() && readLocal(STORAGE_KEYS.LANGUAGE) === null) {
-      return <Suspense fallback={null}><SeletorIdiomaAbertura onEscolher={l => { writeLocal(STORAGE_KEYS.LANGUAGE, l, { silent: true }); setLanguage(l); }} /></Suspense>;
+    if (!isEmbedMode() && !idiomaEscolhido) {
+      return <Suspense fallback={null}><SeletorIdiomaAbertura onEscolher={l => { writeLocal(STORAGE_KEYS.LANGUAGE, l, { silent: true }); setLanguage(l); setIdiomaEscolhido(true); }} /></Suspense>;
     }
     return <Suspense fallback={null}><IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} /></Suspense>;
   }
