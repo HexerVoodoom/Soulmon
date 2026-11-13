@@ -82,11 +82,11 @@ describe('missões dos NPCs (REGISTRO §314)', () => {
     }
   });
 
-  it('Trilho: missão diária FIXA "Faça 1 registro" (journal), só com o Caderno aberto; fora do rodízio', () => {
+  it('Trilho: missão diária FIXA "Faça 1 registro" (journal), Caderno sem trava por Vínculo; fora do rodízio', () => {
     const t = trilhoMission(BOND_MAX)!;
     expect(t).toMatchObject({ id: 'n-trilho', event: 'journal', target: 1, building: 'forja.caderno', npc: 'forja:caderno' });
     expect(t.descPt).toBe('Faça 1 registro no Caderno');
-    expect(trilhoMission(0)).toBeUndefined();
+    expect(trilhoMission(0)).toBeDefined(); // Vínculo lixo cai em 1 e o Caderno abre no 1 (dono 12/11/2026)
     expect(NPC_MISSIONS_RODIZIO.map(m => m.id)).not.toContain('n-trilho');
     for (let i = 0; i < 10; i += 1) expect(npcMissionsOfDay(dia(i), BOND_MAX)[0].id).toBe('n-trilho');
   });

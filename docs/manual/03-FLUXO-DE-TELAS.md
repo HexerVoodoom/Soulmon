@@ -1637,7 +1637,7 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   placar de derrota é tinta neutra; perder também rende Honra e a tela diz. A marca da faixa (`TierMark`) é, desde a rodada 7 (A1, 04/10/2026), um GLIFO sem box (`TIER_ICON`: park · military_tech · star · emoji_events · auto_awesome · diamond · swords para Madeira→Mestre; 32 px na faixa atual e 24 px na escada de sete); `TIER_INSIGNIA_ART` ficou vazio (as insígnias antigas da rodada 3 não casam com as faixas novas — arte de metal por faixa é o prompt P3 do dono). A aba de Missões do Torneio usa o "?" amarelo (`question`, A2). O oponente continua com o sprite do ESTÁGIO REAL dele; `dueloArt.ts` (`dueloOponenteArt`, seis retratos de criatura por elemento) está **sem chamada** (DUELO-1 em `PERGUNTAS-DO-DONO.md`).
 - **Estados**: **requisito** — desde 02/10/2026 (H13) NÃO há interruptor de PvP (o
   personagem já nasce nele). Abaixo do Vínculo `BOND_PVP_MIN_LEVEL` (5) a aba Desafiar
-  mostra o card `data-torneio-requisito`: "O Torneio abre no Vínculo 3", barra de
+  mostra o card `data-torneio-requisito`: "A Ranqueada abre no Vínculo 5" (só na aba Ranqueada; o Treino abre no Vínculo 1), barra de
   progresso, onde a pessoa está e quanto falta, o porquê (é social) e "sem pressa"; o
   gate real continua sendo decidido pelo servidor. Aberto, sobra o aviso do apelido
   público (`data-torneio-aviso-publico`).

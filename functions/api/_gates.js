@@ -4,12 +4,17 @@
  * Vinculo com um numero de portao.
  */
 
-/** @type {Readonly<Record<'pvp' | 'torneio' | 'masmorraAlto' | 'renascimento', { minBond: number }>>} */
+/**
+ * Dono 12/11/2026: "tirar todos os limites por level, exceto a ranqueada" — so a Ranqueada do Torneio (`ranqueada`) segue
+ * com Vinculo 5; todo o resto abre no Vinculo 1.
+ * @type {Readonly<Record<'pvp' | 'torneio' | 'ranqueada' | 'masmorraAlto' | 'renascimento', { minBond: number }>>}
+ */
 export const GATES = {
-  pvp: { minBond: 3 },
-  torneio: { minBond: 3 },
-  masmorraAlto: { minBond: 8 },
-  renascimento: { minBond: 12 },
+  pvp: { minBond: 1 },
+  torneio: { minBond: 1 },
+  ranqueada: { minBond: 5 },
+  masmorraAlto: { minBond: 1 },
+  renascimento: { minBond: 1 },
 };
 
 export const MASMORRA_ALTO_A_PARTIR_DO_ANDAR = 4;
@@ -33,29 +38,29 @@ export function gateFor(feature, bondLevel) {
 export const BUILDING_GATES = {
   'mercado.itens': { minBond: 1 },
   'mercado.conquistas': { minBond: 1 },
-  'mercado.decoracao': { minBond: 2 },
-  'mercado.background': { minBond: 3 },
-  'forja.ferreiro': { minBond: 2 },
-  'forja.hexsmith': { minBond: 2 },
+  'mercado.decoracao': { minBond: 1 },
+  'mercado.background': { minBond: 1 },
+  'forja.ferreiro': { minBond: 1 },
+  'forja.hexsmith': { minBond: 1 },
   'jogos.salao': { minBond: 1 },
-  'exploracao.dungeon': { minBond: 3 },
-  'jogos.mente': { minBond: 3 },
+  'exploracao.dungeon': { minBond: 1 },
+  'jogos.mente': { minBond: 1 },
   'exploracao.fenda': { minBond: 1 },
-  'forja.caderno': { minBond: 2 },
-  'forja.oficina': { minBond: 3 },
+  'forja.caderno': { minBond: 1 },
+  'forja.oficina': { minBond: 1 },
   'forja.refugio': { minBond: 1 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.guerra': { minBond: 3 }, // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
+  'arena.guerra': { minBond: 1 }, // dono 12/11/2026: sem limite por level (era 3)
   'laboratorio.evolucao': { minBond: 1 },
-  'laboratorio.pet': { minBond: 2 },
-  'laboratorio.stats': { minBond: 3 },
-  'laboratorio.perfil': { minBond: 2 },
-  'laboratorio.biblioteca': { minBond: 2 },
-  'laboratorio.amigos': { minBond: 2 },
-  'hall.guilda': { minBond: 2 },
-  'hall.grove': { minBond: 2 },
-  'hall.feira': { minBond: 5 },
+  'laboratorio.pet': { minBond: 1 },
+  'laboratorio.stats': { minBond: 1 },
+  'laboratorio.perfil': { minBond: 1 },
+  'laboratorio.biblioteca': { minBond: 1 },
+  'laboratorio.amigos': { minBond: 1 },
+  'hall.guilda': { minBond: 1 },
+  'hall.grove': { minBond: 1 },
+  'hall.feira': { minBond: 1 },
 };
 
 /** Predios que mudaram de id (espelho de `MOVED_BUILDINGS` em `src/utils/gates.ts`; D-50). */

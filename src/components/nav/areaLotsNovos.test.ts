@@ -104,11 +104,11 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
 });
 
 describe('o Ferreiro (07/10/2026; #187: agora lote da Forja) para os equipamentos', () => {
-  it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Vitra', () => {
+  it('existe, com rótulo EN/PT, sem Vínculo mínimo e o NPC Vitra', () => {
     expect(forjaLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect(forjaLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect((mercadoLots('en-US') as { id: string }[]).some(l => l.id === 'ferreiro')).toBe(false);
-    expect(BUILDING_GATES['forja.ferreiro'].minBond).toBe(2);
+    expect(BUILDING_GATES['forja.ferreiro'].minBond).toBe(1);
     expect(lotNpcVoice('forja', 'ferreiro', 'en-US').name).toContain('Vitra');
     expect(lotNpcVoice('forja', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });

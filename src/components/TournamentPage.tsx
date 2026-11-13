@@ -107,7 +107,7 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet, Segment } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
-import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 import { coliseuSceneFor } from '../utils/coliseuScenes';
 import { SCENE_BG } from '../utils/fxPackArt';
@@ -387,7 +387,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
-     nasce no PvP. O que sobra é o requisito de Vínculo (`BOND_PVP_MIN_LEVEL`,
+     nasce no PvP. O que sobra é o requisito de Vínculo da Ranqueada (`BOND_RANKED_MIN_LEVEL`,
      REGISTRO: o único destrave não-cosmético e social), e a tela o EXPLICA em
      vez de parecer quebrada. A trava inforjável continua sendo a do servidor. */
   /* Duelo, faixas/ranking e moldura cobrem a folha com o voltar PADRÃO próprio: a folha esconde o dela (uma seta só). */
@@ -399,9 +399,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   }, [coverOpen]);
 
   const pvpAberto = meetsPvpBond(totalXP);
+  /** Dono 12/11/2026: só a aba Ranqueada mantém limite por Vínculo (`BOND_RANKED_MIN_LEVEL`); o Treino abre para todos. */
+  const rankedAberto = meetsRankedBond(totalXP);
 
   const loadOpponents = (reroll = false) => {
-    if (!pvpAberto) return;
+    if (!pvpAberto || !rankedAberto) return;
     setLoadFailed(false);
     getOpponents(saveId, reroll)
       .then(r => {
@@ -417,7 +419,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       .catch(() => { setOpponents([]); setLoadFailed(true); });
   };
 
-  useEffect(() => { loadOpponents(); }, [pvpAberto, saveId]);
+  useEffect(() => { loadOpponents(); }, [pvpAberto, rankedAberto, saveId]);
 
   /** Sorteia os 3 de novo. O servidor recusa o segundo pedido sem combate no meio (429): aí só some o botão. */
   const rerollOpponents = () => {
@@ -651,12 +653,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           </span>
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Desafiar' : 'Challenge'}>
-          {!pvpAberto
+          {!rankedAberto
             ? (
               <span data-torneio-social>
                 {isPt
-                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa, ele entra sozinho.`
-                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush, it joins on its own.`}
+                  ? `A Ranqueada abre no Vínculo ${BOND_RANKED_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa, ele entra sozinho. O Treino já está aberto.`
+                  : `Ranked opens at Bond ${BOND_RANKED_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush, it joins on its own. Sparring is already open.`}
               </span>
             )
             : (
@@ -884,25 +886,25 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
           dívida. Aberto, só o aviso do apelido público (informação, não gesto). */}
-      {!pvpAberto && (
+      {pvpAberto && tab === 'ranked' && !rankedAberto && (
         <div data-torneio-requisito style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0 -8px 0' }}>
             <p style={{ ...sm2Text, margin: 0, fontWeight: 500, flex: 1, minWidth: 0 }}>
-              {isPt ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}` : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}`}
+              {isPt ? `A Ranqueada abre no Vínculo ${BOND_RANKED_MIN_LEVEL}` : `Ranked opens at Bond ${BOND_RANKED_MIN_LEVEL}`}
             </p>
           </div>
           <PixelMeter
-            ratio={totalXP / Math.max(1, xpForLevel(BOND_PVP_MIN_LEVEL))}
+            ratio={totalXP / Math.max(1, xpForLevel(BOND_RANKED_MIN_LEVEL))}
             tone="gold"
             height={10}
-            label={isPt ? `Caminho até o Vínculo ${BOND_PVP_MIN_LEVEL}` : `Progress to Bond ${BOND_PVP_MIN_LEVEL}`}
+            label={isPt ? `Caminho até o Vínculo ${BOND_RANKED_MIN_LEVEL}` : `Progress to Bond ${BOND_RANKED_MIN_LEVEL}`}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Icon name="link" size={20} tone="muted" />
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
               {isPt
-                ? `Vínculo ${bondLevelFor(totalXP)} · faltam ${xpToPvpBond(totalXP)} XP`
-                : `Bond ${bondLevelFor(totalXP)} · ${xpToPvpBond(totalXP)} XP to go`}
+                ? `Vínculo ${bondLevelFor(totalXP)} · faltam ${xpToRankedBond(totalXP)} XP`
+                : `Bond ${bondLevelFor(totalXP)} · ${xpToRankedBond(totalXP)} XP to go`}
             </p>
           </div>
         </div>
@@ -917,7 +919,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </div>
       )}
 
-      {pvpAberto && tab === 'ranked' && (
+      {pvpAberto && rankedAberto && tab === 'ranked' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>

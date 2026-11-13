@@ -1010,6 +1010,10 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return { res: json({ error: 'pvp disabled' }, 403) };
+    // Dono 12/11/2026: a Ranqueada é o ÚNICO modo com limite por Vínculo (5). O treino (`sparContext`) não passa por aqui.
+    // (Sem save no servidor `bondLevelOf` é 0: o caminho de sempre — 409 "save sumiu" — responde, não este.)
+    const meuVinculo = await bondLevelOf(env, id);
+    if (meuVinculo > 0 && !gateFor('ranqueada', meuVinculo).open) return { res: json({ error: 'ranked locked', minBondLevel: gateFor('ranqueada', 1).minBond }, 403) };
     if (!opp?.pvpEnabled || isHidden(opp) || (await adminSaveIds(env)).has(oppSave)) return { res: json({ error: 'opponent unavailable' }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; myRank.pairs = {}; }

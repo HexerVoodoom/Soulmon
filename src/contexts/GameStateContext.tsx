@@ -2350,7 +2350,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       function publicarPerfil() {
       if (!gameState.pvpEnabled) return;
       // H13: sem interruptor, o que segura a publicação é o Vínculo. Abaixo do
-      // nível 5 o servidor recusaria de qualquer jeito — não vale mandar nome e
+      // o nível mínimo do PvP (hoje 1, `GATES.pvp`) o servidor recusaria de qualquer jeito — não vale mandar nome e
       // pet de quem ainda não está no Torneio nem gastar a leitura do save.
       if (!meetsPvpBond(gameState.totalXP ?? 0)) return;
       pushProfile({

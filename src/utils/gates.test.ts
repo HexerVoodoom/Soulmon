@@ -6,7 +6,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BUILDING_GATES, BUILDINGS_ALWAYS_OPEN, buildingGateFor, areaMinBond, buildingLockLine, type BuildingId, GATES, gateFor, gateLine, masmorraFloorOpen, MASMORRA_ALTO_A_PARTIR_DO_ANDAR, type GateFeature } from './gates';
-import { BOND_PVP_MIN_LEVEL, meetsPvpBond, xpForLevel } from './bond';
+import { BOND_PVP_MIN_LEVEL, BOND_RANKED_MIN_LEVEL, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel } from './bond';
 import { rebirthRefusal } from './rebirthGate';
 
 const RAIZ = fileURLToPath(new URL('../..', import.meta.url));
@@ -16,33 +16,42 @@ describe('gateFor', () => {
   it('abre exatamente no Vínculo pedido, em todas as portas', () => {
     for (const f of FEATURES) {
       const min = GATES[f].minBond;
-      expect(gateFor(f, min - 1).open, `${f} ${min - 1}`).toBe(false);
+      expect(gateFor(f, min - 1).open, `${f} ${min - 1}`).toBe(min <= 1);
       expect(gateFor(f, min).open, `${f} ${min}`).toBe(true);
       expect(gateFor(f, min + 40).open).toBe(true);
     }
   });
 
   it('lixo cai em Vínculo 1 (ausência de prova não é prova)', () => {
-    for (const f of FEATURES) for (const lixo of [NaN, null, undefined, -4, 'x', {}]) expect(gateFor(f, lixo).open, `${f} ${String(lixo)}`).toBe(false);
+    for (const f of FEATURES) for (const lixo of [NaN, null, undefined, -4, 'x', {}]) expect(gateFor(f, lixo).open, `${f} ${String(lixo)}`).toBe(GATES[f].minBond <= 1);
   });
 
-  it('o PvP abre no 3 (emenda 28/10/2026; era 5), e meetsPvpBond é a MESMA entrada', () => {
-    expect(GATES.pvp.minBond).toBe(3);
+  it('o PvP abre no 1 (dono 12/11/2026: sem limite por level; era 3), e meetsPvpBond é a MESMA entrada', () => {
+    expect(GATES.pvp.minBond).toBe(1);
     expect(BOND_PVP_MIN_LEVEL).toBe(GATES.pvp.minBond);
-    expect(meetsPvpBond(xpForLevel(2))).toBe(false);
+    expect(meetsPvpBond(0)).toBe(true);
     expect(meetsPvpBond(xpForLevel(3))).toBe(true);
   });
 
-  it('as portas pedidas pelo dono existem: Arena/PvP, Torneio, andares altos, Renascimento', () => {
-    expect(FEATURES.sort()).toEqual(['masmorraAlto', 'pvp', 'renascimento', 'torneio']);
+  it('SÓ a Ranqueada mantém limite: Vínculo 5 (dono 12/11/2026); todo o resto abre no 1', () => {
+    expect(GATES.ranqueada.minBond).toBe(5);
+    expect(BOND_RANKED_MIN_LEVEL).toBe(5);
+    expect(meetsRankedBond(xpForLevel(4))).toBe(false);
+    expect(meetsRankedBond(xpForLevel(5))).toBe(true);
+    expect(xpToRankedBond(0)).toBe(xpForLevel(5));
+    expect(xpToRankedBond(xpForLevel(5))).toBe(0);
+    for (const f of FEATURES) if (f !== 'ranqueada') expect(GATES[f].minBond, f).toBe(1);
+  });
+
+  it('as portas existem: Arena/PvP, Torneio, Ranqueada, andares altos, Renascimento', () => {
+    expect([...FEATURES].sort()).toEqual(['masmorraAlto', 'pvp', 'ranqueada', 'renascimento', 'torneio']);
   });
 });
 
-describe('D7: só andares ALTOS da Masmorra têm portão; o andar 1 é livre', () => {
-  it('com Vínculo 1 os andares abaixo do alto entram; o alto não', () => {
-    for (let f = 1; f < MASMORRA_ALTO_A_PARTIR_DO_ANDAR; f++) expect(masmorraFloorOpen(f, 1), `andar ${f}`).toBe(true);
-    expect(masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, 1)).toBe(false);
-    expect(masmorraFloorOpen(5, 1)).toBe(false);
+describe('D7: sem portão por Vínculo nos andares da Masmorra (dono 12/11/2026)', () => {
+  it('com Vínculo 1 todos os andares entram (o teto por Lv do Soulmon segue, é dificuldade)', () => {
+    for (let f = 1; f <= 8; f++) expect(masmorraFloorOpen(f, 1), `andar ${f}`).toBe(true);
+    expect(GATES.masmorraAlto.minBond).toBe(1);
   });
   it('com o Vínculo do portão todos entram', () => {
     for (let f = 1; f <= 5; f++) expect(masmorraFloorOpen(f, GATES.masmorraAlto.minBond), `andar ${f}`).toBe(true);
@@ -51,9 +60,9 @@ describe('D7: só andares ALTOS da Masmorra têm portão; o andar 1 é livre', (
 
 describe('Renascimento = conta paga + Vínculo (o Vínculo nunca é pago)', () => {
   const ultra = { evolutionStage: 'ultra', accountTier: 'paid' as const };
-  it('paga + ápice + Vínculo abaixo do portão = low-bond', () => {
-    expect(rebirthRefusal({ ...ultra, totalXP: xpForLevel(GATES.renascimento.minBond - 1) })).toBe('low-bond');
-    expect(rebirthRefusal({ ...ultra })).toBe('low-bond');
+  it('sem portão de Vínculo (dono 12/11/2026): paga + ápice no Vínculo 1 já é elegível', () => {
+    expect(GATES.renascimento.minBond).toBe(1);
+    expect(rebirthRefusal({ ...ultra })).toBeNull();
   });
   it('paga + ápice + Vínculo no portão = elegível', () => {
     expect(rebirthRefusal({ ...ultra, totalXP: xpForLevel(GATES.renascimento.minBond) })).toBeNull();
@@ -61,8 +70,8 @@ describe('Renascimento = conta paga + Vínculo (o Vínculo nunca é pago)', () =
   it('NÃO paga nunca renasce, por mais Vínculo que tenha (e o motivo continua sendo a conta)', () => {
     expect(rebirthRefusal({ evolutionStage: 'ultra', accountTier: 'demo', totalXP: xpForLevel(40) })).toBe('not-paid');
   });
-  it('conta paga não compra Vínculo: com Vínculo 1 ela continua recusada', () => {
-    expect(rebirthRefusal({ ...ultra, totalXP: 0 })).toBe('low-bond');
+  it('conta paga continua exigida: sem ela, nem Vínculo 1 nem 40 renascem', () => {
+    expect(rebirthRefusal({ evolutionStage: 'ultra', accountTier: 'demo', totalXP: 0 })).toBe('not-paid');
   });
 });
 
@@ -71,6 +80,7 @@ describe('copy do portão fechado (semFomo): neutra, com o Vínculo pedido', () 
     for (const f of FEATURES) {
       const pt = gateLine(f, 1, 'pt-BR');
       const en = gateLine(f, 1, 'en-US');
+      if (GATES[f].minBond <= 1) { expect(pt, f).toBe(''); expect(en, f).toBe(''); continue; }
       expect(pt).toContain(`Vínculo ${GATES[f].minBond}`);
       expect(en).toContain(`Bond ${GATES[f].minBond}`);
       expect(gateLine(f, GATES[f].minBond, 'pt-BR')).toBe('');
@@ -145,19 +155,19 @@ describe('prédios por Vínculo (Tarefa A)', () => {
   it('Masmorra livre desde o Vínculo 1 (14/10/2026); só os andares ALTOS seguem no portão', () => {
     expect(buildingGateFor('exploracao.fenda', 1)).toMatchObject({ open: true, minBond: 1 });
     expect(masmorraFloorOpen(1, 1)).toBe(true);
-    expect(masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, 1)).toBe(false);
+    expect(masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, 1)).toBe(true);
     expect(areaMinBond('exploracao')).toBe(1);
   });
   it('Arena/Feira/Torneio leem a tabela de portões (um número só)', () => {
     expect(BUILDING_GATES['arena.duelo'].minBond).toBe(GATES.pvp.minBond);
-    expect(BUILDING_GATES['hall.feira'].minBond).toBe(5);
+    expect(BUILDING_GATES['hall.feira'].minBond).toBe(1); // era 5; dono 12/11/2026
     expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
-    expect(areaMinBond('arena')).toBe(3); // emenda 28/10/2026: Arena inteira no Vínculo 3. Antes: // #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração, então a ÁREA da Arena só abre no Vínculo 5 (Duelo/Torneio/Guerra), como antes de beta3 N10
+    expect(areaMinBond('arena')).toBe(1); // dono 12/11/2026: sem limite por level (a Ranqueada é aba dentro do Torneio)
     expect(areaMinBond('forja')).toBe(1); // o Refúgio (Vínculo 1, sempre livre) mora na Forja
     expect(areaMinBond('exploracao')).toBe(1);
-    expect(areaMinBond('hall')).toBe(2); // emenda 28/10/2026: o Salão do Clã (e o Grove) abre no Vínculo 2
+    expect(areaMinBond('hall')).toBe(1);
     expect(areaMinBond('laboratorio')).toBe(1);
     expect(areaMinBond('mercado')).toBe(1);
     expect(buildingLockLine(4, 'en-US')).toBe('Opens at Bond 4. It grows with what you already do here.');
@@ -167,11 +177,11 @@ describe('prédios por Vínculo (Tarefa A)', () => {
 });
 
 describe('beta-2 (11): o Perfil do Soulmon', () => {
-  it('abre no Vínculo 2 (o mesmo do Arquivo, de onde lê a ficha), fecha no 1 e nunca é prédio de entrada', () => {
+  it('abre no mesmo Vínculo do Arquivo (de onde lê a ficha) e nunca é prédio de entrada', () => {
     expect(BUILDING_GATES['laboratorio.perfil'].minBond).toBe(BUILDING_GATES['laboratorio.pet'].minBond);
-    expect(buildingGateFor('laboratorio.perfil', 1).open).toBe(false);
+    expect(buildingGateFor('laboratorio.perfil', 1).open).toBe(true); // dono 12/11/2026: sem limite por level
     expect(buildingGateFor('laboratorio.perfil', 2).open).toBe(true);
-    expect(buildingGateFor('laboratorio.perfil', undefined).open).toBe(false); // ausência de prova não é prova
+    expect(buildingGateFor('laboratorio.perfil', undefined).open).toBe(true);
     expect(BUILDINGS_ALWAYS_OPEN).not.toContain('laboratorio.perfil');
     expect(areaMinBond('laboratorio')).toBe(1); // o Centro de Evolução mantém a área aberta
   });

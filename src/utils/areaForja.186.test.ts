@@ -63,14 +63,14 @@ describe('#187: os ids de prédio acompanham o lote, e o save antigo migra sozin
     }
     for (const alvo of Object.values(MOVED_BUILDINGS)) expect(MOVED_BUILDINGS).not.toHaveProperty([alvo]);
   });
-  it('o Vínculo mínimo de cada prédio movido é o de antes', () => {
+  it('o Vínculo mínimo de cada prédio movido: todos 1 (dono 12/11/2026: sem limite por level)', () => {
     const bond = (id: keyof typeof BUILDING_GATES) => BUILDING_GATES[id].minBond;
-    expect(bond('forja.oficina')).toBe(3);
-    expect(bond('forja.caderno')).toBe(2);
+    expect(bond('forja.oficina')).toBe(1);
+    expect(bond('forja.caderno')).toBe(1);
     expect(bond('forja.refugio')).toBe(1);
-    expect(bond('forja.ferreiro')).toBe(2);
+    expect(bond('forja.ferreiro')).toBe(1);
     expect(bond('exploracao.fenda')).toBe(1);
-    expect(bond('exploracao.dungeon')).toBe(3);
+    expect(bond('exploracao.dungeon')).toBe(1);
     expect(buildingGateFor('forja.refugio', 1).open).toBe(true); // o Refúgio segue sempre livre
   });
   it('missões de prédio, apresentações vistas e primeiras vezes: save velho segue (progresso e estoque), 2ª rodada = no-op', () => {

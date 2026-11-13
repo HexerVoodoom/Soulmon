@@ -45,13 +45,13 @@ const postProfile = (env, id, body) => onRequest({
 
 const perfilGravado = (env, id) => JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${id}`));
 
-describe('gate de PvP no servidor — nível mínimo 3', () => {
+describe('gate de PvP no servidor — sem nível mínimo (12/11/2026)', () => {
   it('cliente pedindo pvpEnabled:true SEM Vínculo suficiente não entra', async () => {
     const env = { DIGIAPP_SAVES: fakeKV({ [ALICE]: JSON.stringify({ totalXP: XP_NIVEL_5 - 1 }) }) };
     const res = await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: true });
-    expect(res.status).toBe(200); // o resto do perfil é gravado; só o PvP não liga
-    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(false);
-    expect((await res.json()).pvpBlocked).toBe(true);
+    expect(res.status).toBe(200);
+    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(true); // sem portão por nível
+    expect((await res.json()).pvpBlocked).toBeUndefined();
   });
 
   it('com o Vínculo no nível 3, liga', async () => {
@@ -60,16 +60,16 @@ describe('gate de PvP no servidor — nível mínimo 3', () => {
     expect(perfilGravado(env, ALICE).pvpEnabled).toBe(true);
   });
 
-  it('sem save no servidor, NÃO liga — ausência de prova não é prova', async () => {
+  it('sem save no servidor liga igual: não há mais nível a provar', async () => {
     const env = { DIGIAPP_SAVES: fakeKV({}) };
     await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: true });
-    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(false);
+    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(true);
   });
 
-  it('save com totalXP forjado como string/NaN não libera', async () => {
+  it('save com totalXP forjado como string/NaN também liga (nada a forjar)', async () => {
     const env = { DIGIAPP_SAVES: fakeKV({ [ALICE]: JSON.stringify({ totalXP: 'muito' }) }) };
     await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: true });
-    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(false);
+    expect(perfilGravado(env, ALICE).pvpEnabled).toBe(true);
   });
 });
 
@@ -94,5 +94,31 @@ describe('não se tira de quem já tem', () => {
     };
     await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: false });
     expect(perfilGravado(env, ALICE).pvpEnabled).toBe(false);
+  });
+});
+
+describe('a Ranqueada é a ÚNICA com nível mínimo (5) — dono 12/11/2026', () => {
+  const BRUNO = 'b'.repeat(32);
+  const PID_B = 'p'.repeat(16);
+  const mundo = (xp) => ({
+    DIGIAPP_SAVES: fakeKV({
+      [ALICE]: JSON.stringify({ totalXP: xp }),
+      [`profile:${ALICE}`]: JSON.stringify({ id: ALICE, name: 'Alice', pvpEnabled: true, friends: [] }),
+      [`profile:${BRUNO}`]: JSON.stringify({ id: BRUNO, name: 'Bruno', pid: PID_B, pvpEnabled: true, friends: [] }),
+      [`pid:${PID_B}`]: BRUNO,
+    }),
+  });
+  const duelStart = (env) => onRequest({
+    request: new Request('https://x.dev/api/community?action=duelStart', { method: 'POST', body: JSON.stringify({ id: ALICE, opponentId: PID_B }) }),
+    env,
+  });
+  it('Vínculo 4: o duelo ranqueado é recusado (403 ranked locked)', async () => {
+    const res = await duelStart(mundo(xpForLevel(4)));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe('ranked locked');
+  });
+  it('Vínculo 5: o portão da Ranqueada não barra mais', async () => {
+    const res = await duelStart(mundo(xpForLevel(5)));
+    expect((await res.json().catch(() => ({}))).error).not.toBe('ranked locked');
   });
 });
