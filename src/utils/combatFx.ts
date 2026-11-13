@@ -468,8 +468,35 @@ export function statusFxOfFamily(family: SpecialFamily | null | undefined, escol
   return family ? FAMILY_STATUS[family] ?? null : null;
 }
 
-/** Quantos efeitos cabem como selo por lutador; o resto vira "+k". Também o teto de marcadores de efeito por canto do sprite (dono, 13/11/2026). */
+/** O teto de marcadores de efeito por canto do sprite: até 3 debuffs e 3 buffs (dono, 13/11/2026, §328 — sem "+k"). */
 export const MAX_STATUS_CHIPS = 3;
+
+/**
+ * O RECORTE de cada folha em loop quando ela vira marcador pequeno no canto do sprite (§328, dono 13/11/2026): a folha
+ * foi desenhada para cobrir o corpo (128 px por quadro, com muita borda vazia); no marcador mostra-se só a caixa que tem
+ * conteúdo em ALGUM dos 6 quadros (a união, alfa > 24), para o ícone ler grande e não "dançar" entre quadros.
+ * Medido nos PNGs de `assets/soulmon/combate-v3/fx/*-loop-sheet.png` (x, y, largura, altura no quadro de 128 px).
+ * Arte nova ou redesenhada: medir de novo (o teste só garante que toda folha usada tem recorte e que ele cabe no quadro).
+ */
+export const STATUS_LOOP_FRAME_PX = 128;
+export interface LoopCrop { readonly x: number; readonly y: number; readonly w: number; readonly h: number }
+export const STATUS_LOOP_CROP: Readonly<Record<string, LoopCrop>> = {
+  'fx-buff-loop-sheet': { x: 34, y: 1, w: 60, h: 126 },
+  'fx-debuff-loop-sheet': { x: 37, y: 1, w: 55, h: 126 },
+  'fx-dot-loop-sheet': { x: 31, y: 1, w: 66, h: 126 },
+  'fx-maldicao-loop-sheet': { x: 4, y: 6, w: 120, h: 115 },
+  'fx-queimadura-loop-sheet': { x: 25, y: 7, w: 77, h: 107 },
+  'fx-regen-loop-sheet': { x: 33, y: 25, w: 61, h: 94 },
+  'fx-silencio-loop-sheet': { x: 13, y: 17, w: 100, h: 100 },
+  'fx-veneno-loop-sheet': { x: 23, y: 9, w: 80, h: 116 },
+};
+/**
+ * O lado do quadrado do recorte que vai ocupar o marcador inteiro. Arte ALTA e fina (buff, debuff, DoT: ~60 × 126 px) só
+ * no maior lado ficaria um palito de ~17 px num marcador de 36; então a altura usada é no máximo 1,5× a largura — o
+ * meio da arte enche o marcador e a ponta de cima/baixo (faísca, rastro) sai pela moldura.
+ */
+export const STATUS_LOOP_MAX_TALL = 1.5;
+export const statusLoopCropSide = (c: LoopCrop): number => Math.max(c.w, Math.min(c.h, c.w * STATUS_LOOP_MAX_TALL));
 
 /** Um efeito no lutador, como a cena o desenha. `turns` = o que falta (a contagem do selo). */
 export interface StageStatus {

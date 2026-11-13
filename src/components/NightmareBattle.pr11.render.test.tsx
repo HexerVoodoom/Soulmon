@@ -8,7 +8,7 @@
  * (`vi.mock`) que põe energia inicial e anota a resposta que a cena deu a cada `cast` (o ponto onde o anel e
  * a esquiva viram multiplicador) e as descargas de cheer que o núcleo recolheu.
  */
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach, beforeAll } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { NightmareBattle } from './NightmareBattle';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
@@ -17,6 +17,10 @@ import type { DungeonEnemy } from '../utils/dungeon';
 import { REFERENCE_BUILDS, combatantAt } from '../utils/combate/level';
 import { specialOf } from '../utils/combate/specials';
 import type { FightSide } from '../utils/combate/fight';
+import { COMBAT_V3_ART_IDS, loadCombatV3Art } from '../utils/combatV3Art';
+// §331: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o import frio passa do
+// teto curto de espera sob carga — a arte entra no cache uma vez, antes dos testes.
+beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
 
 const H = vi.hoisted(() => ({
   startEnergy: [] as (number | undefined)[],
@@ -102,18 +106,18 @@ describe('Pesadelo — FX de status e cast (PR11)', () => {
     const wave = [{ ...inimigo({ hpMul: 40, bonus: -0.5 }), foe: { ...foeDe({ hpMul: 40, bonus: -0.5 }), special: specialOf('atkBuff') } }];
     montar(wave);
     entrar();
-    expect(document.querySelector('[data-stage-status]')).toBeNull(); // nada antes do cast
+    expect(document.querySelector('[data-stage-fx-mark]')).toBeNull(); // nada antes do cast
     expect(await ate(() => document.querySelector('[data-dodge-button]') !== null, 200_000)).toBe(true);
-    expect(document.querySelector('[data-stage-status]')).toBeNull(); // o cast ainda está na janela da esquiva
+    expect(document.querySelector('[data-stage-fx-mark]')).toBeNull(); // o cast ainda está na janela da esquiva
     fireEvent.click(screen.getByRole('button', { name: 'Esquivar para a direita' }));
-    expect(await ate(() => document.querySelector('[data-stage-status="buff"]') !== null, 10_000)).toBe(true);
-    const el = document.querySelector('[data-stage-status="buff"]') as HTMLElement;
+    expect(await ate(() => document.querySelector('[data-stage-fx-mark="buff"]') !== null, 10_000)).toBe(true);
+    const el = document.querySelector('[data-stage-fx-mark="buff"]') as HTMLElement;
     expect(el.getAttribute('aria-label')).toMatch(/^Ataque em alta, [1-5] turnos?$/);
-    expect(el.getAttribute('data-stage-status-variant')).toBe('atk');
-    const turnos0 = Number(el.getAttribute('data-stage-status-turns'));
+    expect(el.getAttribute('data-stage-fx-variant')).toBe('atk');
+    const turnos0 = Number(el.getAttribute('data-stage-fx-turns'));
     expect(turnos0).toBeGreaterThanOrEqual(1); // contador real do núcleo (PR16), não o nominal do orçamento
     expect(turnos0).toBeLessThanOrEqual(5);
     // os golpes do inimigo gastam os turnos e, no zero, o selo some
-    expect(await ate(() => document.querySelector('[data-stage-status="buff"]') === null, 120_000)).toBe(true);
+    expect(await ate(() => document.querySelector('[data-stage-fx-mark="buff"]') === null, 120_000)).toBe(true);
   });
 });
