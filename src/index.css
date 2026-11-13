@@ -8788,7 +8788,7 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 
 /* FX DE STATUS E CÍRCULO DE CAST (PR11, `components/games/BattleStage.tsx`). Só tokens e a arte de `combate-v3`.
    `.sm-bs-sheet`: a folha de loop 3×2 (128 px por quadro) corre em 6 passos secos — sem interpolar, é pixel art.
-   `.sm-bs-circle`: o círculo de cast do especial no chão. (O `.sm-bs-stpop` do selo de status saiu com o selo, §326.)
+   `.sm-bs-circle`: o círculo de cast do especial no chão. (O `.sm-bs-stpop` do selo de status saiu com o selo, §327.)
    Com `prefers-reduced-motion`: a folha para (e o JS nem a monta) e o círculo vira o flash único (`sm-bs-flash`) —
    o marcador fica no 1º quadro, com o mesmo `aria-label` (efeito + turnos) (regras no bloco canônico lá embaixo). */
 @keyframes sm-bs-sheet {

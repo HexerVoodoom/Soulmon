@@ -41,7 +41,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusPolarity,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, STATUS_LOOP_CROP, STATUS_LOOP_FRAME_PX, statusLoopCropSide, statusAriaLabel, statusPolarity,
   type StageActionKind, type StageStatus, type StatusPolarity, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
@@ -145,20 +145,21 @@ const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
 const STAGE_EL_ICON_W = 44;
 /**
- * MARCADOR DO EFEITO no sprite (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de
- * veneno, queimadura, debuff, reforço… e a cura) vira um marcador no CANTO do sprite, do tamanho que o dono marcou nos
- * prints (~40 px num inimigo sozinho de 152 px num campo de 360 px): 26% do sprite, entre 28 e 44 px. Com 3 inimigos,
- * o piso (28 px) — o campo fica cheio. Só o ESCUDO continua sobre o sprite.
+ * MARCADOR DO EFEITO no sprite (dono, 13/11/2026; tamanho por §328): o efeito que antes cobria o Soulmon inteiro (a folha
+ * em loop de veneno, queimadura, debuff, reforço… e a cura) vira um marcador no CANTO do sprite, do tamanho que o dono
+ * marcou nos prints (65–80 px num print de 720 px ≈ 10% da largura do campo: ~36 px em 360 px), entre 24 e 44 px. O
+ * mesmo tamanho com 1 ou 3 inimigos, desde que caibam os 3 marcadores do canto sem sair do campo nem entrar sob uma caixa
+ * de HP/especial — se não couberem, encolhe até caber (`fxMarkIconSize`). Só o ESCUDO continua sobre o sprite.
  */
-export const STAGE_FX_MARK_MIN = 28;
+export const STAGE_FX_MARK_MIN = 24;
 export const STAGE_FX_MARK_MAX = STAGE_EL_ICON_W;
-const STAGE_FX_MARK_FRAC = 0.26;
+const STAGE_FX_MARK_FRAC = 0.1;
 const STAGE_FX_MARK_GAP = 4;
 /** Margem mínima até a borda do campo e até a caixa de HP/especial de qualquer lutador (px). */
 const STAGE_FX_MARK_EDGE = 2;
-export function stageFxMarkSize(spot: Spot, crowded = false): number {
-  if (crowded) return STAGE_FX_MARK_MIN;
-  return Math.round(Math.max(STAGE_FX_MARK_MIN, Math.min(STAGE_FX_MARK_MAX, spot.size * STAGE_FX_MARK_FRAC)));
+/** O tamanho-alvo do marcador para um campo de `fieldW` px (10% da largura, entre o piso e o teto). */
+export function stageFxMarkSize(fieldW: number): number {
+  return Math.round(Math.max(STAGE_FX_MARK_MIN, Math.min(STAGE_FX_MARK_MAX, fieldW * STAGE_FX_MARK_FRAC)));
 }
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
@@ -557,45 +558,57 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
 
 /**
  * A camada de STATUS de um lutador (PR11): (1) o ESCUDO sobre o corpo (a peça estática `fx-shield`, como sempre foi) e
- * (2) os MARCADORES DE EFEITO nos cantos do sprite. Desde §326 (dono, 13/11/2026) é a ÚNICA leitura do efeito: o selo
+ * (2) os MARCADORES DE EFEITO nos cantos do sprite. Desde §327 (dono, 13/11/2026) é a ÚNICA leitura do efeito: o selo
  * de 22 px com o contador de turnos ao lado da barra de HP/especial saiu (o efeito aparecia duas vezes). Cada marcador
  * (e o escudo) leva o `aria-label` EN/PT com efeito + turnos (`statusAriaLabel`), para o leitor de tela não perder nada.
  *
- * Os marcadores (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de veneno, queimadura,
- * debuff, reforço…, a cura) vira UM marcador por efeito, do tamanho que o dono marcou nos prints:
- *  · DEBUFF (contra quem carrega) no canto de CIMA à ESQUERDA; BUFF (a favor) no canto de BAIXO à DIREITA (`statusPolarity`);
- *  · em FILEIRA, na ordem em que o efeito começou (`status` já chega assim, `stageStatusOf`): inimigo da direita para a
- *    esquerda (o mais novo mais à esquerda), o seu Soulmon da esquerda para a direita;
- *  · a fileira começa ALINHADA à borda do sprite (a esquerda nos debuffs, a direita nos buffs) e cresce para a outra borda;
- *  · nunca entra por baixo de uma caixa de HP/especial (a própria ou a do vizinho): desvia dela (`fxMarkRowPlacement`);
- *  · SEMPRE na frente (`Z_FX_MARK`), inclusive durante o especial;
- *  · até `MAX_STATUS_CHIPS` por canto (os mais antigos); o resto vira "+k" na ponta dos novos.
+ * O desenho dos cantos (§328, dono, 13/11/2026, prints marcados): UM marcador por efeito, o ícone ANIMADO do efeito (a
+ * mesma folha em loop que antes cobria o corpo, recortada no conteúdo, `STATUS_LOOP_CROP`; a cura é a peça `fx-heal`):
+ *  · INIMIGO (em cima): DEBUFF no canto de CIMA à ESQUERDA, o 1º encostado na borda esquerda do sprite e os seguintes à
+ *    direita dele; BUFF no canto de BAIXO à DIREITA, o 1º encostado na borda direita e os seguintes à esquerda;
+ *  · SEU SOULMON (embaixo), espelhado: DEBUFF em CIMA à DIREITA (1º na borda direita, seguintes à esquerda); BUFF em
+ *    BAIXO à ESQUERDA (1º na borda esquerda, seguintes à direita);
+ *  · "1º" = o efeito que começou primeiro (`status` já chega nessa ordem, `stageStatusOf`); polaridade por `statusPolarity`;
+ *  · até `MAX_STATUS_CHIPS` (3) por canto, sem "+k";
+ *  · nunca sai do campo nem entra por baixo de uma caixa de HP/especial (a própria ou a do vizinho) (`fxMarkRowPlacement`);
+ *  · SEMPRE na frente (`Z_FX_MARK`), inclusive durante o especial.
  * Movimento reduzido: o marcador fica no 1º quadro da folha, parado — a mesma informação, sem loop.
  */
 export type StatusSide = 'me' | 'foe';
-export interface FxMarkRowPlace { left: number; top: number; width: number; icon: number; dir: 'row' | 'row-reverse'; fits: boolean }
+export interface FxMarkRowPlace {
+  left: number; top: number; width: number; icon: number;
+  /** De que borda do sprite a fileira parte: o 1º marcador fica nela e os seguintes vão para dentro. */
+  anchor: 'left' | 'right';
+  dir: 'row' | 'row-reverse';
+  fits: boolean;
+}
 
 const overlaps = (a: StageRect, b: StageRect) =>
   a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
 
+/** A borda de onde a fileira parte (§328): inimigo — debuff à esquerda, buff à direita; o seu Soulmon, espelhado. */
+export const fxMarkAnchor = (side: StatusSide, zone: StatusPolarity): 'left' | 'right' =>
+  (side === 'foe') === (zone === 'debuff') ? 'left' : 'right';
+
+type FxMarkOpts = { icon?: number; avoid?: readonly StageRect[]; fieldW?: number; fieldH?: number };
+
 /**
  * Onde fica a fileira de `n` marcadores de uma zona (pura; testada em `BattleStage.lado.test.tsx` em todas as contagens).
- * `avoid` = as caixas de HP/especial desenhadas; `fieldW`/`fieldH` = o campo (0 = ainda não medido: sem trava de borda).
- * `fits` = a fileira coube dentro da altura do sprite sem cruzar nenhuma caixa (falso = a geometria não deixou; a fileira
- * fica na frente da caixa, nunca atrás dela).
+ * `icon` = o lado do marcador (sem ele, `fxMarkIconSize`); `avoid` = as caixas de HP/especial desenhadas;
+ * `fieldW`/`fieldH` = o campo (0 = ainda não medido: sem trava de borda).
+ * `fits` = a fileira coube dentro da altura do sprite e do campo sem cruzar nenhuma caixa (falso = a geometria não
+ * deixou; a fileira fica na frente da caixa, nunca atrás dela).
  */
-export function fxMarkRowPlacement(
-  spot: Spot, side: StatusSide, zone: StatusPolarity, n: number,
-  opts: { crowded?: boolean; avoid?: readonly StageRect[]; fieldW?: number; fieldH?: number } = {},
-): FxMarkRowPlace {
-  const { crowded = false, avoid = [], fieldW = 0, fieldH = 0 } = opts;
-  const icon = stageFxMarkSize(spot, crowded);
+export function fxMarkRowPlacement(spot: Spot, side: StatusSide, zone: StatusPolarity, n: number, opts: FxMarkOpts = {}): FxMarkRowPlace {
+  const { avoid = [], fieldW = 0, fieldH = 0 } = opts;
+  const icon = opts.icon ?? fxMarkIconSize(spot, side, opts);
   const width = Math.max(0, n * icon + (n - 1) * STAGE_FX_MARK_GAP);
+  const anchor = fxMarkAnchor(side, zone);
   const boxL = spot.x - spot.size / 2;
   const boxR = spot.x + spot.size / 2;
   const boxTop = spot.y - spot.size * SPRITE_TOP;
-  // começa na borda do sprite (debuff: a esquerda; buff: a direita) e cresce para a outra borda
-  let left = zone === 'debuff' ? boxL : boxR - width;
+  // o 1º marcador encosta na borda do sprite e a fileira cresce para dentro; a borda do campo empurra de volta
+  let left = anchor === 'left' ? boxL : boxR - width;
   if (fieldW > 0) left = Math.min(left, fieldW - width - STAGE_FX_MARK_EDGE);
   left = Math.round(Math.max(STAGE_FX_MARK_EDGE, left));
   let top = zone === 'debuff' ? boxTop + STAGE_FX_MARK_EDGE : spot.y - spot.size * 0.06 - icon;
@@ -611,21 +624,71 @@ export function fxMarkRowPlacement(
   }
   top = Math.round(top);
   const rect = { left, top, width, height: icon };
-  const fits = !avoid.some((b) => overlaps(rect, b)) && top >= Math.floor(boxTop) && top + icon <= Math.ceil(spot.y);
-  return { left, top, width, icon, dir: side === 'foe' ? 'row-reverse' : 'row', fits };
+  const fits = !avoid.some((b) => overlaps(rect, b)) && top >= Math.floor(boxTop) && top + icon <= Math.ceil(spot.y)
+    && (fieldW <= 0 || left + width <= fieldW - STAGE_FX_MARK_EDGE);
+  return { left, top, width, icon, anchor, dir: anchor === 'left' ? 'row' : 'row-reverse', fits };
 }
 
-function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt, reduced }: {
-  status: StageStatus[]; spot: Spot; side: StatusSide; crowded: boolean; avoid: readonly StageRect[]; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean;
+/**
+ * O lado do marcador de um lutador (§328): o alvo do campo (`stageFxMarkSize`), encolhido de 1 em 1 px até os
+ * `MAX_STATUS_CHIPS` marcadores caberem nos DOIS cantos (sem sair do campo nem entrar sob caixa de HP/especial). O
+ * mesmo tamanho nos dois cantos, com 1 marcador ou com 3: o canto não muda de escala quando um efeito entra.
+ */
+export function fxMarkIconSize(spot: Spot, side: StatusSide, opts: Omit<FxMarkOpts, 'icon'> = {}): number {
+  const fieldW = opts.fieldW ?? 0;
+  let icon = stageFxMarkSize(fieldW > 0 ? fieldW : 360);
+  for (; icon > STAGE_FX_MARK_MIN; icon--) {
+    const ok = (['debuff', 'buff'] as const).every((z) => fxMarkRowPlacement(spot, side, z, MAX_STATUS_CHIPS, { ...opts, icon }).fits);
+    if (ok) break;
+  }
+  return icon;
+}
+
+/**
+ * Um marcador ANIMADO (§328): a folha 3×2 em loop, recortada na caixa que tem conteúdo (`STATUS_LOOP_CROP`) e escalada
+ * para o lado `icon` (`statusLoopCropSide`: arte alta e fina usa o miolo) — a moldura `icon × icon` corta o resto; dentro dela, o quadro inteiro corre os 6 passos
+ * (`.sm-bs-sheet`). Sem recorte medido, o quadro inteiro (como antes).
+ */
+function LoopMark({ sheet, src, icon, reduced, loopKind, a11y }: {
+  sheet: string; src: string; icon: number; reduced: boolean; loopKind: string;
+  a11y: Record<string, string | number | undefined>;
+}) {
+  const F = STATUS_LOOP_FRAME_PX;
+  const crop = STATUS_LOOP_CROP[sheet] ?? { x: 0, y: 0, w: F, h: F };
+  const k = icon / statusLoopCropSide(crop);
+  const frame = F * k;
+  const left = icon / 2 - (crop.x + crop.w / 2) * k;
+  const top = icon / 2 - (crop.y + crop.h / 2) * k;
+  return (
+    <div
+      role="img"
+      {...a11y}
+      data-stage-fx-loop={reduced ? undefined : loopKind}
+      data-stage-fx-crop={`${crop.x},${crop.y},${crop.w},${crop.h}`}
+      style={{ position: 'relative', flex: 'none', width: icon, height: icon, overflow: 'hidden', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' }}
+    >
+      <div
+        aria-hidden="true"
+        className={reduced ? undefined : 'sm-bs-sheet'}
+        style={{
+          position: 'absolute', left, top, width: frame, height: frame,
+          backgroundImage: `url("${src}")`, backgroundSize: '300% 200%', backgroundPosition: '0 0', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated',
+        }}
+      />
+    </div>
+  );
+}
+
+function StatusLayer({ status, spot, side, avoid, fieldW, fieldH, isPt, reduced }: {
+  status: StageStatus[]; spot: Spot; side: StatusSide; avoid: readonly StageRect[]; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean;
 }) {
   const shield = status.find((st) => st.kind === 'escudo');
   // um marcador por efeito que tem arte de cena (a folha em loop ou a peça estática) — menos o escudo, que segue sobre o corpo
   const markArt = (st: StageStatus) => STATUS_FX[st.kind].loop ?? STATUS_FX[st.kind].still;
-  const zones = (['debuff', 'buff'] as const).map((zone) => {
-    const all = status.filter((st) => st.kind !== 'escudo' && markArt(st) && statusPolarity(st.kind) === zone);
-    const marks = all.slice(0, MAX_STATUS_CHIPS);
-    return { zone, marks, more: all.length - marks.length };
-  });
+  const zones = (['debuff', 'buff'] as const).map((zone) => ({
+    zone,
+    marks: status.filter((st) => st.kind !== 'escudo' && markArt(st) && statusPolarity(st.kind) === zone).slice(0, MAX_STATUS_CHIPS),
+  }));
   const ids = [
     ...zones.flatMap((z) => z.marks.map(markArt)),
     shield ? STATUS_FX.escudo.still : null,
@@ -634,6 +697,8 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
   const c = bodyCenter(spot);
   const shieldSrc = shield ? art[STATUS_FX.escudo.still ?? ''] : undefined;
   const shieldSize = Math.round(spot.size * 1.05);
+  const geo = { avoid, fieldW, fieldH };
+  const icon = fxMarkIconSize(spot, side, geo);
   return (
     <>
       {shield && shieldSrc && (
@@ -650,19 +715,19 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
           }}
         />
       )}
-      {zones.map(({ zone, marks, more }) => {
-        // só entra na fileira o marcador cuja arte já chegou (carga sob demanda); o "+k" conta sempre
+      {zones.map(({ zone, marks }) => {
+        // só entra na fileira o marcador cuja arte já chegou (carga sob demanda)
         const ready = marks.filter((st) => art[markArt(st) ?? '']);
         if (!ready.length) return null;
-        const p = fxMarkRowPlacement(spot, side, zone, ready.length + (more > 0 ? 1 : 0), { crowded, avoid, fieldW, fieldH });
-        const icon = p.icon;
+        const p = fxMarkRowPlacement(spot, side, zone, ready.length, { ...geo, icon });
         return (
           <div
             key={zone}
             data-stage-fx-row
             data-stage-fx-zone={zone}
             data-stage-fx-side={side}
-            data-stage-fx-order={side === 'foe' ? 'rtl' : 'ltr'}
+            data-stage-fx-anchor={p.anchor}
+            data-stage-fx-order={p.dir === 'row' ? 'ltr' : 'rtl'}
             data-stage-fx-fits={p.fits ? '1' : '0'}
             style={{
               position: 'absolute', left: p.left, top: p.top, width: p.width, height: icon,
@@ -671,33 +736,16 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
           >
             {ready.map((st, i) => {
               const def = STATUS_FX[st.kind];
-              const src = art[markArt(st) ?? ''];
-              const box: CSSProperties = { flex: 'none', width: icon, height: icon, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' };
-              // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §326): o leitor de tela ouve efeito + turnos
+              const src = art[markArt(st) ?? ''] as string;
+              // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §327): o leitor de tela ouve efeito + turnos
               const a11y = { 'aria-label': statusAriaLabel(st.kind, st.turns, isPt, st.variant), 'data-stage-fx-mark': st.kind, 'data-stage-fx-variant': st.variant, 'data-stage-fx-turns': st.turns };
+              const key = `${st.kind}-${st.variant ?? ''}-${i}`;
               return def.loop ? (
-                <div
-                  key={`${st.kind}-${st.variant ?? ''}-${i}`}
-                  role="img"
-                  {...a11y}
-                  data-stage-fx-loop={reduced ? undefined : st.kind}
-                  className={reduced ? undefined : 'sm-bs-sheet'}
-                  style={{ ...box, backgroundImage: `url("${src}")`, backgroundSize: '300% 200%', backgroundPosition: '0 0', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated' }}
-                />
+                <LoopMark key={key} sheet={def.loop} src={src} icon={icon} reduced={reduced} loopKind={st.kind} a11y={a11y} />
               ) : (
-                <img key={`${st.kind}-${st.variant ?? ''}-${i}`} src={src} alt={a11y['aria-label']} data-stage-fx-mark={st.kind} data-stage-fx-variant={st.variant} data-stage-fx-turns={st.turns} width={icon} height={icon} style={{ ...box, display: 'block', maxWidth: 'none', imageRendering: 'pixelated' }} />
+                <img key={key} src={src} alt={a11y['aria-label']} data-stage-fx-mark={st.kind} data-stage-fx-variant={st.variant} data-stage-fx-turns={st.turns} width={icon} height={icon} style={{ flex: 'none', width: icon, height: icon, display: 'block', maxWidth: 'none', imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' }} />
               );
             })}
-            {more > 0 && (
-              <span
-                role="img"
-                aria-label={isPt ? `mais ${more} ${more === 1 ? 'efeito' : 'efeitos'}` : `${more} more ${more === 1 ? 'effect' : 'effects'}`}
-                data-stage-fx-more={more}
-                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: Math.max(11, Math.round(icon * 0.32)), border: '1px solid var(--sm2-line)' }}
-              >
-                <span aria-hidden="true">+{more}</span>
-              </span>
-            )}
           </div>
         );
       })}
@@ -1079,9 +1127,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s || f.down || !f.status?.length) return null;
-          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} side="foe" crowded={foes.length >= 3} avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />;
+          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} side="foe" avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />;
         })}
-        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} side="me" crowded={false} avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />}
+        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} side="me" avoid={barsRects} fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />}
 
         {/* ALVO POR TOQUE: o botão invisível sobre cada inimigo vivo + o marcador do escolhido (anel dourado). */}
         {onPickFoe && foes.length > 1 && !boss && foes.map((f, i) => {

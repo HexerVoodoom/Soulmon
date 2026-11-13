@@ -18,7 +18,7 @@ import { REFERENCE_BUILDS, combatantAt } from '../utils/combate/level';
 import { specialOf } from '../utils/combate/specials';
 import type { FightSide } from '../utils/combate/fight';
 import { COMBAT_V3_ART_IDS, loadCombatV3Art } from '../utils/combatV3Art';
-// §326: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o import frio passa do
+// §327: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o import frio passa do
 // teto curto de espera sob carga — a arte entra no cache uma vez, antes dos testes.
 beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
 
