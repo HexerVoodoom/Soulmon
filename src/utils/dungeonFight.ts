@@ -27,7 +27,7 @@ import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/gr
 import type { AttrBonus } from './combate/bonus';
 import { combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
-import { PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
+import { PVE_FAMILY_POWER, specialOf, specialOfPve, type SpecialFamily } from './combate/specials';
 import type { EscolaId } from './soulProfile/ficha/types';
 
 export type DungeonSkill = ArenaSkill;
@@ -59,7 +59,7 @@ const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO
 export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
-    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento, p.pesadelo),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento, p.pesadelo),
     area: 'single',
     startShield: opening ? p.startShield : 0,
   };
