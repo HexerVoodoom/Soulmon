@@ -2263,7 +2263,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ Resíduo do achado X-4 (commit 9e9f679f): o conserto anterior tornou `rubHealRecordFor` ordem-consciente, mas não resolve sozinho o caso de aparelhos em fusos diferentes — daí este módulo.
 **Regra de negócio:** O dia do jogador usa fuso FIXO gravado no save, nunca o do aparelho. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
-### `src/utils/playerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §319)
+### `src/utils/playerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §321)
 **Dono de:** a BUSCA DE JOGADORES POR PREFIXO do lado do cliente — o convite do clã (`guild/GuildInviteSheet`) e o "Convidar" da aba Amigos (`LibraryPage`). Casa o COMEÇO do nome, em ordem, sem acento e sem caixa ("JOA" acha "João"). A busca de verdade é do servidor (`functions/api/community.js` › `action=playerSearch`, índice `nickf:` de `_profile.js`).
 **Exports:**
 - `PLAYER_SEARCH_MIN` (2), `PLAYER_SEARCH_MAX` (10), `PLAYER_SEARCH_DEBOUNCE_MS` (200) — espelhos das constantes do servidor (o mínimo também evita gastar chamada que o servidor recusaria).

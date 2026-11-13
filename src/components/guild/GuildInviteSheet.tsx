@@ -1,5 +1,5 @@
 /**
- * CONVIDAR PARA O CLÃ (13/11/2026, pedido do dono, REGISTRO §319).
+ * CONVIDAR PARA O CLÃ (13/11/2026, pedido do dono, REGISTRO §321).
  *
  * Abre pelo `CtaButton` "Convidar" do Salão (`GuildSheet`). É a busca enquanto digita (`PlayerSearch`: prefixo do nome, sem
  * acento e sem caixa, a partir de 2 letras, pausa de 200 ms) com UM toque por linha: o servidor (`guildInvite`) manda ao

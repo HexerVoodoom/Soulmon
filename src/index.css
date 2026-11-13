@@ -9221,21 +9221,25 @@ button.sm2-hex-row {
    (`botao-hover`), pressionado (`botao-press`, desce 2px), desabilitado (`botao-off`, moldura cinza); foco = arte de hover + brilho
    turquesa (igual ao site). Borda 19px 23px = a variante de 56 px de altura do site (`.fixo .botao.primario`). */
 .sm2-cta {
-  box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 56px; min-width: 44px;
-  margin: 0; padding: 0 var(--sm2-space-1); cursor: pointer; background: transparent;
-  border-style: solid; border-width: 19px 23px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 62 74 fill / 19px 23px stretch;
+  box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 76px; min-width: 44px;
+  /* geometria do CTA fixo do site do beta no celular (site-beta/src/styles/site.css:1181 `.fixo .botao.primario.fixo-cta`, 13/11/2026): 76 px, borda 24/28, texto 20 px */
+  margin: 0; padding: 0 var(--sm2-space-2); cursor: pointer; background: #0F2A29 padding-box;
+  border-style: solid; border-width: 24px 28px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 62 74 fill / 24px 28px stretch;
   border-image-outset: 0; image-rendering: pixelated;
-  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 700; line-height: 1.1;
+  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-lg); font-weight: 700; line-height: 1;
   text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
   transition: transform var(--sm2-dur-tap) var(--sm2-ease);
   &[data-cta-width="full"] { width: 100%; }
   &[data-cta-width="auto"] { min-width: 200px; }
+  /* Tom `acao` (13/11/2026): a ação procurada já repousa na arte cheia (a de hover); pressionado e desabilitado (abaixo, mesma
+     especificidade ou maior) seguem com a arte própria. Fica ANTES de `:disabled` de propósito: a ordem decide o empate. */
+  &[data-cta-tone="acao"] { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); }
   @media (hover: hover) { &:hover:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); } }
   &:active:not(:disabled), &[data-cta-state="pressed"]:not(:disabled) { transform: translateY(2px); border-image-source: url('./assets/soulmon/ui/btn-cta-press.webp'); }
   &:focus-visible { outline: none; border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
   &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-cta-off.webp'); color: #C9D2D0; transform: none; }
 }
-.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2); text-align: center; }
+.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 
 /* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
 .sm2-pocao-item {

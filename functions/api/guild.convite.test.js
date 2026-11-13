@@ -4,7 +4,7 @@ import { onRequest as community } from './community.js';
 import { fakeKV } from './_claKv.testkit.js';
 import { nomeDaGuildaDe } from './_guildaNome.js';
 
-// §319 (13/11/2026): o "Convidar" do Salão (`guildInvite`) e o nome do clã embaixo do nome nas rotas públicas.
+// §321 (13/11/2026): o "Convidar" do Salão (`guildInvite`) e o nome do clã embaixo do nome nas rotas públicas.
 
 const sid = r => r.padEnd(32, '0');
 const A = sid('cvA'), B = sid('cvB'), C = sid('cvC'), D = sid('cvD');
@@ -69,7 +69,7 @@ describe('guildInvite — o convite vira carta do Papus com o nome e o código d
   });
 });
 
-describe('nome do clã embaixo do nome (§319)', () => {
+describe('nome do clã embaixo do nome (§321)', () => {
   it('nomeDaGuildaDe: só de quem é membro; índice órfão e sem clã = null', async () => {
     const { e } = await setup();
     expect(await nomeDaGuildaDe(e, A)).toBe('Os Lumes');

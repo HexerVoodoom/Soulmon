@@ -151,7 +151,7 @@ export interface DirectoryPlayer {
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
   especialNome?: string;
-  /** §319 (13/11/2026): nome do clã da pessoa, mostrado embaixo do nome (`ui/PlayerName`). Ausente = sem clã. */
+  /** §321 (13/11/2026): nome do clã da pessoa, mostrado embaixo do nome (`ui/PlayerName`). Ausente = sem clã. */
   guildName?: string;
 }
 export const listPlayers = (search = '') =>
@@ -182,7 +182,7 @@ export interface Opponent {
   duel?: { level: number } | null;
   /** Nome do especial que o jogador escolheu (já filtrado no servidor); ausente = nome padrão. */
   especialNome?: string;
-  /** §319: nome do clã (ausente = sem clã). */
+  /** §321: nome do clã (ausente = sem clã). */
   guildName?: string;
 }
 /** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
@@ -316,7 +316,7 @@ export async function playSparComRetry(id: string, opponentId: string, taps: num
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
-  /** §319: nome do clã (ausente = sem clã). */
+  /** §321: nome do clã (ausente = sem clã). */
   guildName?: string;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
@@ -352,7 +352,7 @@ export const answerFriendInvite = (id: string, friendId: string, decline = false
   call<{ ok: true; status?: 'friends'; friends: string[] }>('friendAccept', { method: 'POST', body: { id, friendId, ...(decline ? { decline: true } : {}) } });
 export interface FriendsState {
   friends: string[];
-  incoming: { id: string; name: string; /** §319: nome do clã de quem convidou (ausente = sem clã). */ guildName?: string; at: number }[];
+  incoming: { id: string; name: string; /** §321: nome do clã de quem convidou (ausente = sem clã). */ guildName?: string; at: number }[];
   outgoing: string[];
   /** Pids de quem já recebeu presente DESTA conta hoje (o servidor é a autoridade). */
   sentToday: string[];
@@ -876,7 +876,7 @@ export const leaveGuild = (id: string) =>
   guildCall<{ ok: true }>('guildLeave', { method: 'POST', body: { id } });
 
 /**
- * Convidar alguém para o clã (§319, o "Convidar" do Salão): o servidor manda ao convidado uma carta do Papus com o nome e o
+ * Convidar alguém para o clã (§321, o "Convidar" do Salão): o servidor manda ao convidado uma carta do Papus com o nome e o
  * código do clã. `to` é o pid público (da busca de jogadores). O resultado é um ESTADO da linha, não uma exceção:
  * cada um tem a sua frase na folha de convite.
  */

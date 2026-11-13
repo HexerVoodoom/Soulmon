@@ -1,5 +1,5 @@
 /**
- * BUSCA DE JOGADORES ENQUANTO DIGITA (13/11/2026, pedido do dono, REGISTRO §319).
+ * BUSCA DE JOGADORES ENQUANTO DIGITA (13/11/2026, pedido do dono, REGISTRO §321).
  *
  * UM componente para os dois convites: o do clã (`guild/GuildInviteSheet`) e o "Convidar" da aba Amigos (`LibraryPage`).
  * Quem chama decide só a AÇÃO de um toque de cada linha (`renderAction`); campo, pausa de 200 ms, estados e linhas são daqui.

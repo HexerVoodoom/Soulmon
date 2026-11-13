@@ -1,5 +1,5 @@
 /**
- * Busca enquanto digita (REGISTRO §319): espera `PLAYER_SEARCH_DEBOUNCE_MS` depois da última tecla, cancela a chamada
+ * Busca enquanto digita (REGISTRO §321): espera `PLAYER_SEARCH_DEBOUNCE_MS` depois da última tecla, cancela a chamada
  * anterior (só a resposta do termo ATUAL chega à tela) e guarda o resultado de cada termo na sessão da folha
  * (apagar uma letra e digitar de novo não chama o servidor outra vez).
  *

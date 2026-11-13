@@ -77,7 +77,7 @@ const ACOES_COM_ATOR = [
   { action: 'sparMatch', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'sparBuyTicket', method: 'POST', body: { id: VITIMA } },
   { action: 'sparOpponents', method: 'GET', params: { id: VITIMA } },
-  // §319: a busca de jogadores tem teto POR CONTA — só o dono do `id` pergunta (senão o teto seria de quem a pessoa disser ser).
+  // §321: a busca de jogadores tem teto POR CONTA — só o dono do `id` pergunta (senão o teto seria de quem a pessoa disser ser).
   { action: 'playerSearch', method: 'GET', params: { id: VITIMA, q: 'jo' } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },

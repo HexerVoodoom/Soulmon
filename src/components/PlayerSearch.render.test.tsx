@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * §319 (13/11/2026): o nome do clã embaixo do nome (`ui/PlayerName`), a busca enquanto digita (`PlayerSearch`) e o convite do
+ * §321 (13/11/2026): o nome do clã embaixo do nome (`ui/PlayerName`), a busca enquanto digita (`PlayerSearch`) e o convite do
  * clã de um toque (`guild/GuildInviteSheet`).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

@@ -175,7 +175,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const [codigo, setCodigo] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [ajustes, setAjustes] = useState(false);
-  /** §319: a folha "Convidar" (busca de jogadores) aberta; o foco volta ao botão ao fechar. */
+  /** §321: a folha "Convidar" (busca de jogadores) aberta; o foco volta ao botão ao fechar. */
   const [convidando, setConvidando] = useState(false);
   const convidarRef = useRef<HTMLButtonElement>(null);
   const [novoNome, setNovoNome] = useState('');
@@ -485,7 +485,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
     const semConta = load.kind === 'login';
     const demo = semConta && accountTier === 'demo';
     corpo = (
-      <div className="sm2-guild-sec">
+      <div className="sm2-guild-sec" style={{ gap: 'var(--sm2-space-2)' }}>
         <p role="alert" className="sm2-lib-alert">{t(demo ? 'guild.erro.demo' : GUILD_ERROR_KEY[load.kind])}</p>
         {demo && onUnlock && (
           <div style={{ maxWidth: 280 }} data-guild-unlock>
@@ -789,7 +789,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             )}
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
-          {/* §319 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores — o CTA principal do Salão. Clã cheio = o botão
+          {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores — o CTA principal do Salão. Clã cheio = o botão
               fica, apagado, com o porquê (nunca some em silêncio). */}
           <CtaButton
             ref={convidarRef}
@@ -1183,7 +1183,7 @@ function SalaRoda({ guild, t, nominal, language }: {
       <ul className="sm2-coop-mem">
         {guild.members.map((m, i) => (
           <li key={m.id ?? `m${i}`}>
-            {/* §319: o nome do clã embaixo do nome, como em toda lista de jogadores (aqui é o da própria roda). */}
+            {/* §321: o nome do clã embaixo do nome, como em toda lista de jogadores (aqui é o da própria roda). */}
             <span className="t"><PlayerName name={m.name ?? t('guild.roda.alguem')} guildName={m.name ? guild.name : null} isPt={language === 'pt-BR'} /></span>
             {m.euMesmo && (
               <span className="sm2-guild-you">

@@ -61,7 +61,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
         className="sm2-lib-h2"
         style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}
       >
-        {/* §319: o clã embaixo do nome (o título continua sendo o nome; o clã é a linha calma de baixo). */}
+        {/* §321: o clã embaixo do nome (o título continua sendo o nome; o clã é a linha calma de baixo). */}
         <PlayerName name={player.name} guildName={player.guildName} isPt={isPt} />
       </h2>
 

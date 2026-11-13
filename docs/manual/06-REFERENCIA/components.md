@@ -1140,7 +1140,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/PlayerDetailModal.semMetrica.render.test.tsx`; também tocado por `src/components/spriteUrl.beacon.render.test.tsx`.
 **Avisos do arquivo:** o progresso mostrado vem sempre de `unlockedStages` — nunca vaza forma além da já alcançada; `LEVEL_LABEL` era uma SEGUNDA cópia do mapa de `types/attributes.ts` (idêntica à de `EvolutionPath`) — duas cópias que concordam ainda são duas cópias (footgun 9), e a `StatsPage` não usava nenhuma das duas.
 
-### `src/components/PlayerSearch.tsx` (13/11/2026, busca de jogadores — REGISTRO §319)
+### `src/components/PlayerSearch.tsx` (13/11/2026, busca de jogadores — REGISTRO §321)
 **Dono de:** a BUSCA ENQUANTO DIGITA dos dois convites. `PlayerSearch` = campo (`role="searchbox"`, `inputMode="search"`, rótulo acessível) + `PlayerSearchResults`; `PlayerSearchResults` = o status (`role="status"`, `aria-live="polite"`) e as linhas, para quem já tem o próprio campo (a aba Amigos). Linha = miniatura do Soulmon (`opponentIcon`/`opponentSprite`, `alt=""`) + `ui/PlayerName` (nome com o clã embaixo) + a ação de UM toque que quem chama passa em `renderAction`. Estados: menos de 2 letras (dica, nenhuma chamada), procurando, vazio ("Ninguém com um nome que comece assim."), erro por tipo (sem rede / muitas buscas / sem conta / servidor, com "Tentar de novo" onde faz sentido).
 **Props principais:** `saveId`, `language`, `label`, `placeholder?`, `renderAction(hit)`, `hide?(hit)`, `search?` (injetável em teste/prévia), `autoFocus?`; `PlayerSearchResults` recebe `query`, `state`/`retry` de `usePlayerSearch` e `quiet?` (sem a dica com o campo vazio).
 **Exports:** `PlayerSearch`, `PlayerSearchResults`.
@@ -1675,7 +1675,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/App.tsx` (menu da Home → `acoes`), `src/components/nav/CornerLink.tsx` (`mapa`/`home`), `src/components/CompanionHUD.tsx` (cuidados `itens`/`dormir`/`banho`, stats `hp`/`energia`), `src/components/ChatBox.tsx` (`enviar`) — 24/09/2026. A moldura `chip-moeda` do mesmo pacote é usada direto pelo `MapPage` (9-slice).
 **Régua:** `size` entra na varredura de `src/styles/iconScale.contract.test.ts` (mesma escala de §6.1); o `CornerLink` é exercitado em `src/components/nav/nav.render.test.tsx`.
 
-### `src/components/ui/PlayerName.tsx` (13/11/2026, o clã embaixo do nome — REGISTRO §319)
+### `src/components/ui/PlayerName.tsx` (13/11/2026, o clã embaixo do nome — REGISTRO §321)
 **Dono de:** o NOME DE OUTRO JOGADOR com o nome do CLÃ embaixo, em toda tela que mostra outra pessoa. O nome mantém o estilo de quem chama (`nameStyle`); o clã vem numa linha própria, menor e calma: `--sm2-text-xs`, peso 400, `--sm2-muted`, `--sm2-font-text`. Sem clã não desenha nada. As duas linhas cortam com reticências; o leitor de tela ouve "Clã <nome>".
 **Props principais:** `name`, `guildName?` (ausente/vazio = nada), `suffix?` (na linha do nome, ex. " (você)"), `nameStyle?`, `guildStyle?`, `align?` (`center` no pódio), `isPt?`.
 **Exports:** `PlayerName`.
@@ -1827,7 +1827,19 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/ui/CtaButton.tsx`
-**Dono de:** o botão especial dos CTAs principais (REGISTRO §316): `CtaButton({ width: 'full' | 'auto', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir), `TalentTreeEntry` (Abrir árvore de talentos), `TalentTree` (Confirmar o nó), `GuildSheet` (Entrar, sem conta).
+**Dono de:** o botão especial dos CTAs principais (REGISTRO §316, §316b): `CtaButton({ width: 'full' | 'auto', tone: 'padrao' | 'acao', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir), `TalentTreeEntry` (Abrir árvore de talentos), `TalentTree` (Confirmar o nó), `GuildSheet` (Entrar, sem conta).
+**Tom (§316b, 13/11/2026):** `tone="acao"` (`data-cta-tone="acao"`) = a ação que a pessoa VEIO buscar, não uma escolha: repousa na arte CHEIA (`btn-cta-hover.webp`), porque no celular não existe hover. Pressionado (`btn-cta-press`) e desabilitado (`btn-cta-off`) mantêm a arte própria; hover e foco usam a mesma arte cheia (o foco ainda ganha o brilho turquesa). `padrao` (omissão) = confirmar, seguir, entrar, aceitar uma oferta. Hoje em `acao`: "Criar poção" (Laboratório), "Abrir árvore de talentos", "Começar jornada" (Foco).
+**Padrão de layout: CTA em coluna (§316b).** Com 76 px de altura e moldura larga, o CTA não cabe bem ao lado de outro botão num celular. Quando há CTA + outra ação: (1) CTA em cima, largura total (`width="full"`); (2) a outra ação embaixo, mais quieta (`sm2Button('outline')` se for alternativa real, `quiet`/`sm2-kit-btn-quiet` se for cancelar/depois/sair); (3) `display: grid; gap: 8px` (>= 8), alvo >= 44 em todos; (4) ordem do DOM = ordem visual = ordem de tab (CTA primeiro); (5) marcar o contêiner com `data-cta-stack`. **Não empilhar** quando as duas ações têm o mesmo peso (Sim/Não curto, `ConfirmDialog`) ou a linha é uma barra de ferramentas compacta; aí nenhuma delas é `CtaButton`.
+
+| Tela | Botões | Decisão |
+|---|---|---|
+| `TalentTree` (modal do nó) | Confirmar + Cancelar | empilhado: Confirmar em cima, Cancelar quieto embaixo |
+| `RestRoom` | Seguir + Concluir a missão (+ Sair) | empilhado: Seguir em cima; Concluir (contorno) embaixo; Sair (quieto) por último |
+| `VescaPotionOffer` | Fazer a poção + Depois | empilhado: Fazer em cima, Depois quieto embaixo |
+| `GuildSheet` (erro sem conta) | Entrar na conta + Tentar de novo | já era coluna; o vão subiu de 4 para 8 px |
+| `ElementPotionSheet` (rodapé) | Confirmar (sozinho) | passou de `auto` centralizado para largura total |
+| `App.tsx` Laboratório, `FocusBoard`, `TalentTreeEntry`, `EvoRecapModal` | CTA sozinho, largura total | sem mudança de layout |
+| `ConfirmDialog`, folhas de confirmar/cancelar sem `CtaButton` | Sim/Não de peso igual | mantidos em linha (escolha simétrica e curta; nenhum é `CtaButton`) |
 
 ### `src/components/ui/InfoTip.tsx`
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
@@ -2037,7 +2049,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/guild/ClaProcurar.tsx` (30/10/2026, procurar clã — REGISTRO §203)
 **Dono de:** `ProcurarCla` (sem clã: lista de clãs com vaga com nome e "n de max", "Pedir para entrar", pendente com "Cancelar pedido") e `PedidosDeEntrada` (só o anfitrião, na ficha do clã: Recusar à esquerda, Aceitar à direita; sem pedido = silêncio). Cada peça carrega o próprio dado por `utils/community.ts` (`getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`); copy em `utils/guildCopy.ts` (`guild.procurar.*`, `guild.pedidos.*`). **Chamado por:** `GuildSheet.tsx`. **Régua:** `ClaProcurar.render.test.tsx`.
 
-### `src/components/guild/GuildInviteSheet.tsx` (13/11/2026, convidar para o clã — REGISTRO §319)
+### `src/components/guild/GuildInviteSheet.tsx` (13/11/2026, convidar para o clã — REGISTRO §321)
 **Dono de:** a folha "Convidar para o clã", aberta pelo `CtaButton` "Convidar" do Salão (`GuildSheet`, ficha do clã; com o clã cheio o botão fica apagado com o porquê). É um `RitualDialog` com `PlayerSearch` e UM toque por linha (`inviteToGuild` de `utils/community.ts` → `POST /api/guild?action=guildInvite`): o convidado recebe uma carta do Papus com o nome e o código do clã. Cada linha guarda o próprio desfecho (enviado / já está na roda / já tem clã / clã cheio / muitos convites / sem rede / erro); quem já tem clã nasce sem botão ativo. Copy em `utils/guildCopy.ts` (`guild.convidar.*`). O foco volta ao botão ao fechar.
 **Chamado por:** `GuildSheet.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx` (convite de um toque); servidor: `functions/api/guild.convite.test.js`.
 

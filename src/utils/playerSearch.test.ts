@@ -5,7 +5,7 @@ import {
 // @ts-expect-error — módulo JS do servidor, sem tipos: a paridade da régua de dobra é o ponto do teste.
 import { foldNome } from '../../functions/api/_profile.js';
 
-// §319: a busca de jogadores — o lado do cliente (dobra espelhada, mínimo, saneamento) e a paridade com o servidor.
+// §321: a busca de jogadores — o lado do cliente (dobra espelhada, mínimo, saneamento) e a paridade com o servidor.
 
 describe('foldPlayerName — espelho de foldNome do servidor', () => {
   const casos = ['João', 'JOÃO', '  joão  da   silva ', 'Ágata', 'Çarina', 'Ñandu', 'Zoë', 'ŁUKASZ', 'ｊｏａ', 'Lia\u0000x', '🦊 Raposa'];

@@ -144,7 +144,7 @@ export async function claimNick(env, saveId, name) {
   return true;
 }
 
-// ── Índice DOBRADO de apelidos: a busca de jogadores (13/11/2026, REGISTRO §319) ────────────────────
+// ── Índice DOBRADO de apelidos: a busca de jogadores (13/11/2026, REGISTRO §321) ────────────────────
 // `nickf:<dobrado>:<saveId>` → ''. "Dobrado" = sem acento, minúsculo, NFKC (`foldNome`): "João", "JOAO" e "joão" viram `joao`,
 // e a busca por PREFIXO é uma `list({ prefix })` do KV — que já devolve as chaves em ordem: o índice é a própria chave.
 // O saveId vai NA CHAVE porque dois apelidos distintos podem dobrar igual ("João" e "Joao" são contas diferentes); o nome da chave

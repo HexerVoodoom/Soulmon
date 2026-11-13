@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 /**
- * O NOME DE OUTRO JOGADOR, com o nome do CLÃ embaixo (13/11/2026, pedido do dono, REGISTRO §319).
+ * O NOME DE OUTRO JOGADOR, com o nome do CLÃ embaixo (13/11/2026, pedido do dono, REGISTRO §321).
  *
  * Dono único dessa dupla em toda tela que mostra outra pessoa (ranking, Torneio, Treino, Drive/Amigos, perfil, Roda do clã,
  * busca de jogadores). O nome continua com o estilo de quem chama (`nameStyle`); o clã vem SEMPRE embaixo, numa linha própria,

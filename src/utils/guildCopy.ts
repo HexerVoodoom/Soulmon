@@ -382,7 +382,7 @@ export const GUILD_COPY = {
   'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
   'guild.guide.titulo': ['O Clã', 'The Clan'],
   'guild.guide.corpo': ['Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido.', 'A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale.'],
-  // CONVIDAR (§319, 13/11/2026): o botão do Salão e a folha de convite (busca enquanto digita).
+  // CONVIDAR (§321, 13/11/2026): o botão do Salão e a folha de convite (busca enquanto digita).
   'guild.convidar.botao': ['Convidar', 'Invite'],
   'guild.convidar.titulo': ['Convidar para o clã', 'Invite to the clan'],
   'guild.convidar.corpo': ['Procure pelo começo do nome. A pessoa recebe uma carta do Papus com o nome do clã e o código.', 'Search by the start of the name. The person gets a letter from Papus with the clan name and code.'],

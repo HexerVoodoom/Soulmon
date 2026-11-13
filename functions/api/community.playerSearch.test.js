@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { onRequest, PLAYER_SEARCH_MAX, PLAYER_SEARCH_LIMIT } from './community.js';
 import { claimNick, foldNome, nickFoldKey, nickKey } from './_profile.js';
 
-// §319 (13/11/2026): a busca de jogadores por PREFIXO do convite do clã e da aba Amigos.
+// §321 (13/11/2026): a busca de jogadores por PREFIXO do convite do clã e da aba Amigos.
 // Régua: começo do nome, sem acento e sem caixa; mínimo de 2 caracteres; no máximo 10; só campos públicos; quem se escondeu
 // não aparece; teto por conta; o índice é uma `list` por prefixo (sem varrer perfis).
 

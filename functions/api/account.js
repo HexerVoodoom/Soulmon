@@ -324,7 +324,7 @@ async function collectRankingKeys(env, saveId) {
   if (nickKey) {
     if (typeof nickKey === 'string' && nickKey.startsWith('nick:') && (await store.get(nickKey)) === saveId) keys.push(nickKey);
     keys.push(`nickof:${saveId}`);
-    // Busca de jogadores (§319): a chave DOBRADA tem o saveId no nome, então é sempre deste titular.
+    // Busca de jogadores (§321): a chave DOBRADA tem o saveId no nome, então é sempre deste titular.
     const dobrada = nickFoldKeyDaChave(nickKey, saveId);
     if (dobrada) keys.push(dobrada);
   }

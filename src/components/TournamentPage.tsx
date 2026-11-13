@@ -1026,7 +1026,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                   <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
                 </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* §319: o clã embaixo do nome do oponente. */}
+                  {/* §321: o clã embaixo do nome do oponente. */}
                   <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
                     <PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />
                   </div>

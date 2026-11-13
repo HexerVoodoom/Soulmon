@@ -1,4 +1,4 @@
-// O NOME DO CLÃ embaixo do nome do jogador (13/11/2026, pedido do dono; REGISTRO §319).
+// O NOME DO CLÃ embaixo do nome do jogador (13/11/2026, pedido do dono; REGISTRO §321).
 //
 // Toda rota que mostra o nome de OUTRA pessoa (diretório, perfil, oponentes, treino, ranking do Torneio, placares dos jogos,
 // convites de amizade, busca de jogadores) acrescenta `guildName` — e SÓ quando a pessoa está num clã. Sem clã, o campo não

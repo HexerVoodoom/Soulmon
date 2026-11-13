@@ -66,7 +66,7 @@
 //                                            recusa pedido novo com 409 requests closed; os pendentes seguem decidíveis; o código vale igual)
 //   POST guildRequestDecide {id, requestId, approve} → { guild, result:'approved'|'declined'|'gone' }
 //                                            404 no guild · 403 not host · 409 guild full (o pedido fica para depois)
-//   (CONVIDAR — §319: a carta do Papus com o nome e o código do clã)
+//   (CONVIDAR — §321: a carta do Papus com o nome e o código do clã)
 //   POST guildInvite {id, dayKey, to: pid} → { invited: true }   404 no guild · 400 invalid target · 404 player not found
 //                                            · 409 already member · 409 guild full · 409 already in a guild · 429 · 503 try again
 // Não existe expulsão (G7): o código novo é a ferramenta de fechar a porta.
@@ -182,7 +182,7 @@ export const GUILD_ACTIONS = Object.freeze({
   guildInvite: 'POST',
 });
 
-/** Convidar (§319): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. */
+/** Convidar (§321): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. */
 export const GUILD_INVITE_LIMIT = { limit: 20, windowMs: 3_600_000 };
 
 /** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
@@ -519,7 +519,7 @@ export async function handleGuild({ request, env }) {
     return json({ result: 'approved', guild: await montar(r.g, id, hoje) });
   }
 
-  // ── CONVIDAR PARA O CLÃ (13/11/2026, REGISTRO §319): o botão "Convidar" do Salão. ──
+  // ── CONVIDAR PARA O CLÃ (13/11/2026, REGISTRO §321): o botão "Convidar" do Salão. ──
   // Qualquer membro convida (o código do clã já é visível a todo membro; o convite só o entrega a UMA pessoa escolhida).
   // O convite é uma CARTA do Papus (`_mensageiro.js`) com o nome do clã e o código — quem recebe entra pelo mesmo "Entrar com
   // código" de sempre, sem estado novo no servidor. Uma carta por clã por pessoa por dia (o `mid` é estável e a fila deduplica).

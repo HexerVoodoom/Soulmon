@@ -253,7 +253,7 @@ async function listPrefix(env, prefix, limit = 100) {
   return out;
 }
 
-/** Busca de jogadores (§319): mínimo de caracteres, máximo de resultados, chaves lidas por chamada, teto do termo e teto POR CONTA. */
+/** Busca de jogadores (§321): mínimo de caracteres, máximo de resultados, chaves lidas por chamada, teto do termo e teto POR CONTA. */
 export const PLAYER_SEARCH_MIN = 2;
 export const PLAYER_SEARCH_MAX = 10;
 export const PLAYER_SEARCH_SCAN = 30;
@@ -575,7 +575,7 @@ async function handleCommunity(context) {
     // Indexação preguiçosa (busca de jogadores): perfil anterior ao índice `nick:` entra sozinho ao salvar, sem backfill do dono.
     // Marcador `nickIx` no próprio perfil = já indexado, custo zero. Sem ele, tenta o apelido GRAVADO uma vez (claimNick não rouba
     // apelido alheio e ignora "Anônimo"); só marca em sucesso. Melhor esforço: falha do KV nunca derruba o save.
-    // §319: `nickfIx` = também já está no índice DOBRADO (`nickf:`, a busca de jogadores). Perfil marcado só com `nickIx` (anterior a ele)
+    // §321: `nickfIx` = também já está no índice DOBRADO (`nickf:`, a busca de jogadores). Perfil marcado só com `nickIx` (anterior a ele)
     // re-reivindica o apelido gravado UMA vez — `claimNick` grava as duas chaves — e passa a carregar os dois marcadores.
     let nickIx = (prev.nickIx === true && prev.nickfIx === true) || (!!apelidoPedido && !nameTaken);
     if (!nickIx) {
@@ -745,7 +745,7 @@ async function handleCommunity(context) {
     return json({ names: nomes.slice(0, 8) });
   }
 
-  // ── Busca de jogadores por PREFIXO (13/11/2026, REGISTRO §319): o convite do clã e o "Convidar" da aba Amigos ──
+  // ── Busca de jogadores por PREFIXO (13/11/2026, REGISTRO §321): o convite do clã e o "Convidar" da aba Amigos ──
   // GET ?action=playerSearch&id=<saveId>&q=<termo> → { players: [{ id: pid, name, guildName?, stage, spriteUrl?, artLine? }] }
   // Guarda-corpos (todos no SERVIDOR, o cliente só repete o mínimo para não gastar chamada):
   //  · só o DONO do `id` pergunta (`denyUnlessOwner`) e o teto é POR CONTA (`PLAYER_SEARCH_LIMIT`), além do teto leve por IP;
@@ -843,7 +843,7 @@ async function handleCommunity(context) {
       // social como efeito colateral — não se emite para quem não pediu.
       if (!p.pvpEnabled || isHidden(p)) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
-      // §319: o nome do clã vai junto do nome (ausente = sem clã).
+      // §321: o nome do clã vai junto do nome (ausente = sem clã).
       players.push({ ...(await publicProfile(env, p)), ...campoGuilda(await nomeDaGuildaDe(env, p.id, memoGuilda)) });
       if (players.length >= 50) break;
     }
@@ -1375,7 +1375,7 @@ async function handleCommunity(context) {
     // O limite antigo de 300 chaves em ordem de saveId só vale enquanto o índice ordenado da season
     // (REGISTRO §23, acima) não terminou de ser preenchido.
     const allPoints = [];
-    /** §319: linha → saveId dono, para o nome do clã ser lido DEPOIS do corte (só das linhas que saem), sem campo extra na linha. */
+    /** §321: linha → saveId dono, para o nome do clã ser lido DEPOIS do corte (só das linhas que saem), sem campo extra na linha. */
     const saveDaLinha = new Map();
     for (const k of keys) {
       // Lista pública cheia: no caminho do índice o resto da varredura não muda nada (só o `me` oculto, abaixo).

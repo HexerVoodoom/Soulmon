@@ -285,7 +285,7 @@ describe('a roda por tamanho', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(4, {}, [0, 2]));
     await montar();
     const itens = within(textoDaRoda()).getAllByRole('listitem');
-    // §319: o nome do clã vem EMBAIXO do nome (`[data-player-guild]`); a linha do nome continua só o nome.
+    // §321: o nome do clã vem EMBAIXO do nome (`[data-player-guild]`); a linha do nome continua só o nome.
     expect(itens.map(li => li.querySelector('.t [data-player-name-text]')!.textContent)).toEqual(['Ana', 'Bia', 'Caio', 'Dani']);
     expect(itens.map(li => !!li.querySelector('.sm2-guild-pres'))).toEqual([true, false, true, false]);
     // nenhum estado de ausência, nenhum ícone de estado, nenhum número por pessoa

@@ -58,7 +58,7 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
       }}
     >
       <span className="sm2-num" style={{ width: 32, flexShrink: 0, textAlign: 'right', color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.rank}</span>
-      {/* §319: o clã embaixo do nome (a própria linha também: é o que os outros veem). */}
+      {/* §321: o clã embaixo do nome (a própria linha também: é o que os outros veem). */}
       <span style={{ flex: 1, minWidth: 0 }}>
         <PlayerName name={r.name} suffix={r.me && r.name !== youLabel ? youTag : ''} guildName={r.guildName} isPt={isPt} nameStyle={{ fontWeight: r.me ? 700 : 400 }} />
       </span>

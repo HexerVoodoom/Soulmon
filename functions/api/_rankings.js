@@ -200,7 +200,7 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
   /** @type {{ rank: number, name: string, guildName?: string, score: number, me: boolean, prizePlace?: number }[]} */
   const rows = await Promise.all(page.keys.map(async (k, i) => {
     const escondido = k.metadata?.h === true;
-    // §319: o nome do clã embaixo do nome (lido na hora, do estado vivo do clã). Quem se escondeu segue "Anônimo" e sem clã.
+    // §321: o nome do clã embaixo do nome (lido na hora, do estado vivo do clã). Quem se escondeu segue "Anônimo" e sem clã.
     const guilda = escondido ? null : await nomeDaGuildaDe(env, k.name.slice(k.name.lastIndexOf(':') + 1), memoGuilda);
     return {
       rank: i + 1,

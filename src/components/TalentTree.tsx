@@ -486,9 +486,10 @@ function TalentModal(p: ModalProps) {
             {!p.takeBack.can && <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Outro nó depende deste grau. Tire primeiro o que ele abriu.' : 'Another node depends on this rank. Take back what it opened first.'}</p>}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
+        {/* CTA em coluna (13/11/2026): Confirmar em cima, largura total; Cancelar embaixo, quieto (foco e tab na mesma ordem). */}
+        <div data-cta-stack style={{ display: 'grid', gap: 8 }}>
+          <CtaButton data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</CtaButton>
           <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-talent-cancel onClick={p.onCancel}>{isPt ? 'Cancelar' : 'Cancel'}</button>
-          <CtaButton width="auto" data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</CtaButton>
         </div>
       </div>
     </div>

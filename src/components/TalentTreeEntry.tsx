@@ -44,7 +44,7 @@ export default function TalentTreeEntry({ language = 'pt-BR' }: { language?: str
           ? (isPt ? `${free} ${free === 1 ? 'ponto disponível' : 'pontos disponíveis'}` : `${free} ${free === 1 ? 'point' : 'points'} available`)
           : (isPt ? 'Nenhum ponto livre agora.' : 'No free points right now.')}
       </p>
-      <CtaButton ref={opener} data-talent-open aria-haspopup="dialog" onClick={() => setOpen(true)}>
+      <CtaButton ref={opener} tone="acao" data-talent-open aria-haspopup="dialog" onClick={() => setOpen(true)}>
         {isPt ? 'Abrir árvore de talentos' : 'Open talent tree'}
       </CtaButton>
       {open && createPortal(

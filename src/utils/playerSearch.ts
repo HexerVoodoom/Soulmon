@@ -1,5 +1,5 @@
 /**
- * BUSCA DE JOGADORES POR PREFIXO (13/11/2026, pedido do dono, REGISTRO §319): o convite do clã (Salão → "Convidar") e o
+ * BUSCA DE JOGADORES POR PREFIXO (13/11/2026, pedido do dono, REGISTRO §321): o convite do clã (Salão → "Convidar") e o
  * "Convidar" da aba Amigos. A busca de verdade é do SERVIDOR (`functions/api/community.js` › `action=playerSearch`, índice
  * `nickf:` em `_profile.js`); aqui ficam a régua de dobra (espelho do servidor, com teste de paridade), o mínimo de caracteres
  * (o cliente não gasta chamada que o servidor recusaria) e o cliente HTTP.

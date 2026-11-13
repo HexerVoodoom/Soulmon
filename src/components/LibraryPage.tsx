@@ -208,7 +208,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [addName, setAddName] = useState('');
   const [addBusy, setAddBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<string | null>(null);
-  /** §319 (13/11/2026): busca enquanto digita no MESMO campo — começo do nome, sem acento e sem caixa, a partir de 2 letras,
+  /** §321 (13/11/2026): busca enquanto digita no MESMO campo — começo do nome, sem acento e sem caixa, a partir de 2 letras,
    *  pausa de 200 ms; cada sugestão traz o Soulmon, o nome com o clã embaixo e o "Convidar" de um toque. Fora da aba Amigos o
    *  termo é vazio (nenhuma chamada). */
   const busca = usePlayerSearch(saveId, tab === 'friends' ? addName : '');
@@ -419,7 +419,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       setAddBusy(false);
     }
   };
-  /** §319: o "Convidar" de UM toque de uma sugestão da busca (o mesmo `addFriend` do botão da linha). */
+  /** §321: o "Convidar" de UM toque de uma sugestão da busca (o mesmo `addFriend` do botão da linha). */
   const convidarSugestao = async (h: PlayerSearchHit) => {
     if (busyId) return;
     setAddMsg(null);
@@ -807,7 +807,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 </MiniGlass>
                 <span className="sm2-lib-nm">
                   <span className="t">
-                    {/* §319: o clã embaixo do nome do JOGADOR (no Hall a linha é o nome da criatura, e o clã fica no perfil). */}
+                    {/* §321: o clã embaixo do nome do JOGADOR (no Hall a linha é o nome da criatura, e o clã fica no perfil). */}
                     <PlayerName
                       name={nomeDe(p)}
                       suffix={isNpc ? <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span> : null}

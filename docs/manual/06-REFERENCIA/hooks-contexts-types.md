@@ -65,7 +65,7 @@
 **Chamado por:** `src/components/DailyRituals.tsx` (os dois `sort`: tarefas `t:<id>` e hábitos `h:<id>`).
 **Régua:** `src/hooks/useOrdemCongelada.test.ts`.
 
-### `src/hooks/usePlayerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §319)
+### `src/hooks/usePlayerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §321)
 **Dono de:** a busca enquanto digita: espera `PLAYER_SEARCH_DEBOUNCE_MS` (200 ms) depois da última tecla, cancela a chamada anterior (`AbortController`), guarda o resultado de cada termo enquanto o componente vive e devolve `{ state, retry }` — `state` é `short` | `loading` | `ready` (`hits`) | `error` (`errorKind`); offline (`navigator.onLine === false`) vira erro `offline` sem chamar.
 **Chamado por:** `src/components/PlayerSearch.tsx`, `src/components/LibraryPage.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx`.
 
