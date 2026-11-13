@@ -34,6 +34,8 @@ export interface StrollSceneProps {
   /** Sair da cena (o último botão: "Começar o dia" ou "Continuar"). */
   onFinish: () => void;
   finishLabel: string;
+  /** Depois de registrar o Soulmon avistado, o botão final leva para a Home (pedido do dono, 13/11/2026). Sem ele, cai em `onFinish`. */
+  onGoHome?: () => void;
   language: Language;
 }
 
@@ -60,7 +62,7 @@ function ScenePet({ src, xPct, size, trackH, label, 'data-scene-pet': tag }: { s
   );
 }
 
-export function StrollScene({ regionId, bgId, playerSprite, adventure, adventureIsNew, stroll, discovery, onDiscover, onFinish, finishLabel, language }: StrollSceneProps) {
+export function StrollScene({ regionId, bgId, playerSprite, adventure, adventureIsNew, stroll, discovery, onDiscover, onFinish, finishLabel, onGoHome, language }: StrollSceneProps) {
   const isPt = language === 'pt-BR';
   const reduced = prefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('intro');
@@ -162,7 +164,7 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
 
       {phase === 'back' && (
         <div data-scene-card="back" style={{ ...topCard, top: 'auto', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
-          <button type="button" data-scene-next="back" autoFocus onClick={onFinish} style={{ ...sm2Button('primary'), width: '100%' }}>{finishLabel}</button>
+          <button type="button" data-scene-next="back" autoFocus onClick={onGoHome ?? onFinish} style={{ ...sm2Button('primary'), width: '100%' }}>{isPt ? 'Voltar para casa' : 'Back home'}</button>
         </div>
       )}
     </div>
