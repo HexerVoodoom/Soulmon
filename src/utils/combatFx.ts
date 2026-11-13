@@ -18,6 +18,7 @@
  * Este arquivo só decide QUAL arte e QUANTO tempo; não desenha nada.
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
+import { ATAQUE_TIPO_MOTOR, ataqueTipoOverride } from './soulmonOverrides';
 import { lineElementOf } from './spriteElement';
 import { rosterEntryOfKey } from './enemyRoster';
 import { attackFx, type AttackFxState } from './attackFxArt';
@@ -153,7 +154,10 @@ export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 
  * levando o mix {ranged,melee} × {corte,splash} a ~25% cada (REGISTRO §282; `mixAtaques.test.ts`). NÃO vale para o jogador, os 5 iniciais nem o PvP.
  */
 export const FOE_MELEE_BASICA: ReadonlySet<string> = new Set(['agua', 'vida', 'som', 'ar', 'luz', 'tempo']);
-export function foeStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
+/** `formKey` (chave do bestiário do inimigo): o tipo escolhido pelo dono na Tabela de Soulmons (`ATAQUE_TIPO_OVERRIDE`, REGISTRO §333) manda no BÁSICO. */
+export function foeStrikeForm(element: string | undefined | null, role: SkillRole, formKey?: string | null): StrikeForm {
+  const dono = role === 'basica' ? ataqueTipoOverride(formKey) : undefined;
+  if (dono) return ATAQUE_TIPO_MOTOR[dono].forma;
   if (role === 'basica' && element && FOE_MELEE_BASICA.has(element)) return 'melee';
   return elementStrikeForm(element, role);
 }

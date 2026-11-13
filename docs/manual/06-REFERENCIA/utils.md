@@ -1059,6 +1059,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
+### `src/utils/soulmonOverrides.ts`
+**Dono de:** os ajustes do dono POR FORMA vindos da Tabela de Soulmons (REGISTRO §333, 13/11/2026). Chave = chave do bestiário (`<id>-<estágio>`; ultra = `<id>-ultra`).
+**Exports:**
+- `AtaqueTipo` — `'ranged_corte' | 'ranged_splash' | 'melee_corte' | 'melee_splash'`; `ATAQUE_TIPO_MOTOR` — cada tipo em forma (`ranged`/`melee`) × acabamento (`corte`/`concussao`; splash = concussão).
+- `ATAQUE_TIPO_OVERRIDE`, `ataqueTipoOverride(formKey)` — o tipo do ataque BÁSICO do inimigo; `foeStrikeForm(el, 'basica', formKey)` (`combatFx.ts`) e `meleeImpactOf({ ..., formKey })` (`combate/golpeImpacto.ts`) leem primeiro e caem na regra derivada sem linha. O especial não muda.
+- `flutuaDe(formKey)`, `flipDe(formKey)`, `FLUTUA_ALTURA` (0,08 da altura) — bandeiras de sprite, padrão desligado (nenhuma ligada no export de 13/11).
+- `ELEMENTO_FORMA_OVERRIDE` — elemento trocado pelo dono; aplicado no `ENEMY_ROSTER` (troca `element` e componentes; golpes, arte e chave ficam). `PERSONALIDADE_OVERRIDE` — só rótulo.
+**Dados:** `soulmonOverrides.data.ts`, GERADO por `node scripts/gerar-soulmon-overrides.mjs <export.csv>` (aceita o formato posicional e o com cabeçalho `id,...,ataque_tipo,...,flutua,flip`).
+**Quem chama:** `combatFx.ts`, `combate/golpeImpacto.ts`, `enemyRoster.ts`; a chave vem de `arenaFoeFormKey` (Arena), `enemy.stage` (Masmorra, Fenda).
+**Régua:** `src/utils/soulmonOverrides.test.ts` (sem id velho, override vence, elementos válidos, linha do Salsolura intacta), `src/utils/soulmonOverrides.flags.test.ts`.
+
 ### `src/utils/spriteFeetTable.ts`
 **Dono de:** a tabela GERADA de onde fica o PÉ de cada sprite de criatura (`node scripts/sprite-feet.mjs` mede o último pixel opaco, alfa > 16, dos PNG de `lines/`, `bosses/`, `dino/` etc.; não editar à mão). Chave = nome do arquivo sem extensão; valor = base visível em milésimos da altura. Existe porque os PNG têm até ~25% de linhas transparentes embaixo e o layout ancorava a sombra pela caixa — o bicho flutuava acima dela.
 **Exports:** `SPRITE_FEET_TABLE`.

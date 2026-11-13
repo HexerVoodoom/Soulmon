@@ -15,6 +15,7 @@ import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
 import { applyBestiarySeen, applyEnemyDefeated } from './dungeonRewards';
 import { mulberry32 } from './combate/rng';
+import { ELEMENTO_FORMA_OVERRIDE } from './soulmonOverrides';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { STRAY_ROSTER, strayForTournament } from './strayFoes';
 import { buildArenaRound, arenaFoeKey, arenaLadderStage } from './arena';
@@ -379,7 +380,8 @@ describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', ()
         const e = pickEnemy(lv, mulberry32(5), { element: el, stage: 'mega' });
         expect(e.element, el).toBe(el);
         expect(e.stage, `${el} Lv${lv}`).toBe(st);
-        expect(e.kind).toBe(st === 'rookie' ? 'combinado' : 'forma');
+        // REGISTRO §333: forma que o dono moveu para este elemento na Tabela (ex.: Salsolura → sopro_do_dragao) também vale
+        if (!ELEMENTO_FORMA_OVERRIDE[e.key]) expect(e.kind).toBe(st === 'rookie' ? 'combinado' : 'forma');
       }
     }
   });
