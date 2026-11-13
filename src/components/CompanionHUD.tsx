@@ -45,6 +45,7 @@ import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
 import type { BalaoTipo } from '../utils/balaoDourado';
+import type { DicaDouradaTipo, DicaTipo } from '../utils/balaoDica';
 const Mochila = lazy(() => import('./home/Mochila').then(m => ({ default: m.Mochila })));
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
@@ -259,9 +260,13 @@ interface CompanionHUDProps {
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;
   /** beta12 §G: o BALÃO DOURADO persistente (borda dourada, sem timeout) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala. */
-  balaoDourado?: { tipo: BalaoTipo; text: string; ariaLabel: string } | null;
-  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`). */
-  onBalaoDourado?: (tipo: BalaoTipo) => void;
+  balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string } | null;
+  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§333) navega pelo `requestGoToBuilding`. */
+  onBalaoDourado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
+  /** §333: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
+   *  nunca por cima de outra fala; ao falar, o HUD avisa `onDicaFalada` para o App gravar a aparição. `null`/ausente = a escada de sempre. */
+  dicaFala?: { tipo: DicaTipo; text: string } | null;
+  onDicaFalada?: (tipo: DicaTipo) => void;
   /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
   onSinalMasmorra?: () => void;
   /** Ms até o Soulmon voltar da masmorra (`useDungeonReturn`, estado persistido) — a placa de madeira mostra. `null` = sem número. */
@@ -369,6 +374,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   naMasmorra = false,
   balaoDourado = null,
   onBalaoDourado,
+  dicaFala = null,
+  onDicaFalada,
   onSinalMasmorra,
   masmorraRetornoMs,
   daysAway = 0,
@@ -550,8 +557,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const rubBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada };
 
   /* Fase 3 do Oráculo — a fala do TALENTO. A tabela (65 pares PT+EN,
      `utils/talentoVoice.ts`) entra por import DINÂMICO: no bundle de entrada
@@ -910,6 +917,13 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (document.hidden) return;
       const p = propsRef.current;
       if (p.isSleeping) return;
+      /* §333: a dica da vez (fome/cochilo) ocupa ESTE turno da fala ociosa — nunca um turno a mais, nunca por cima de outra fala.
+         Ausente (masmorra/missão), `speak` já cala; aí não grava a aparição. */
+      if (p.dicaFala && !ausenteRef.current) {
+        speak(p.dicaFala.text, 6000);
+        p.onDicaFalada?.(p.dicaFala.tipo);
+        return;
+      }
       speak(getIdlePhrase(), 5000);
       /* Decisão do dono (19/10/2026): fala ociosa é SÓ frase local. A cota inteira
          da IA fica para o chat aberto; 15 falas ociosas esgotavam a cota em ~45 min. */
@@ -1888,7 +1902,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)',
                   }}
                 >
-                  {balaoDourado.text}
+                  <BalaoDouradoTexto text={balaoDourado.text} />
                 </span>
                 <span
                   aria-hidden="true"
@@ -2232,3 +2246,38 @@ export const CompanionHUD = memo(function CompanionHUD({
     </div>
   );
 });
+
+/**
+ * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333): diz "este balão leva
+ * a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
+ * · A seta é o glifo autoral `arrow_forward` (`ui/NavGlyphs.tsx`); o círculo é só o CONTORNO em CSS (sem fundo): faz parte do
+ *   desenho, como o anel do `check_circle`, não é placa em volta do ícone. Nada de arte nova.
+ * · Tinta = a do texto do balão (`--sm2-ink` sobre `--sm2-surface`, o mesmo par do texto, bem acima de 3:1).
+ * · ~1,15em (16px numa linha de 14px), na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
+ *   sozinha para a linha de baixo.
+ * · `aria-hidden`: o nome acessível do botão já diz o destino (`balaoDouradoAria`/`dicaAria`). Estática: sem animação própria.
+ */
+function BalaoDouradoTexto({ text }: { text: string }) {
+  const corte = text.trimEnd().lastIndexOf(' ');
+  const inicio = corte >= 0 ? text.slice(0, corte + 1) : '';
+  const ultima = corte >= 0 ? text.trimEnd().slice(corte + 1) : text.trimEnd();
+  return (
+    <>
+      {inicio}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {ultima}
+        <span
+          aria-hidden="true"
+          data-pet-gold-bubble-arrow
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+            width: 16, height: 16, marginLeft: 4, verticalAlign: '-0.2em',
+            border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
+          }}
+        >
+          <Icon name="arrow_forward" size={11} weight={600} />
+        </span>
+      </span>
+    </>
+  );
+}

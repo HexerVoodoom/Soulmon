@@ -68,4 +68,32 @@ describe('balão dourado do CompanionHUD', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={dourado()} onBalaoDourado={() => {}} />);
     expect(container.querySelector('[data-pet-gold-bubble]')?.closest('[data-chat-dock], .sm-chatdock')).toBeNull();
   });
+
+  /* §333 (dono, 13/11): todo balão dourado LEVA a algum lugar, e diz isso com a seta no círculo no fim da linha. */
+  for (const tipo of ['grove', 'rift', 'achado'] as const) {
+    it(`seta no círculo (${tipo}): no FIM da linha, presa à última palavra, aria-hidden, tinta do balão`, () => {
+      const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={dourado(tipo)} onBalaoDourado={() => {}} />);
+      const b = container.querySelector(`[data-pet-gold-bubble="${tipo}"]`) as HTMLElement;
+      const setas = b.querySelectorAll('[data-pet-gold-bubble-arrow]');
+      expect(setas).toHaveLength(1);
+      const seta = setas[0] as HTMLElement;
+      expect(seta.getAttribute('aria-hidden')).toBe('true');
+      expect(seta.style.borderRadius).toBe('50%');
+      expect(seta.style.color).toBe('var(--sm2-ink)');
+      expect(seta.querySelector('.sm2-icon')?.textContent).toBe('arrow_forward');
+      // nunca quebra sozinha: mora num nowrap junto da última palavra ("olhada?")
+      const presa = seta.parentElement as HTMLElement;
+      expect(presa.style.whiteSpace).toBe('nowrap');
+      expect(presa.firstChild?.textContent).toBe('olhada?');
+      // é o último elemento do texto e o nome acessível segue sendo o destino
+      expect(b.textContent?.startsWith('O Bosque está sendo atacado. Quer dar uma olhada?')).toBe(true);
+      expect(b.getAttribute('aria-label')).toBe('Abrir o Bosque');
+    });
+  }
+  it('o balão COMUM (fala) não tem seta', async () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1500); });
+    expect(container.querySelector('[data-pet-bubble]')).not.toBeNull();
+    expect(container.querySelector('[data-pet-gold-bubble-arrow]')).toBeNull();
+  });
 });

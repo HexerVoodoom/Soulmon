@@ -16,17 +16,26 @@ import { isGuildSheetOpen, readGroveLocal } from '../utils/groveLocal';
 export const bosqueSobAtaque = (v: { planted: boolean; mature: boolean; underAttack: boolean; protectedToday: boolean } | null | undefined): boolean =>
   !!v && v.planted && !v.mature && v.underAttack && !v.protectedToday;
 
+/** Há cuidado do DIA para fazer no Grove (§333, a dica da Lilia): planta de pé, ainda não madura, e a ação do dia ainda sorteável
+ *  (`canDraw`) ou sorteada e por fazer (`task`) — a MESMA condição que desenha o botão "Cuidar" do Bosque (`PlantioVisor`). A meta do
+ *  dia (que libera o toque) é do App (`fioMetaCumprida`); aqui só o fato do servidor. Exportada para teste. */
+export const bosqueCuidavel = (v: { planted: boolean; mature: boolean; canDraw: boolean; task: 'water' | 'protect' | null } | null | undefined): boolean =>
+  !!v && v.planted && !v.mature && (v.canDraw || v.task !== null);
+
+export interface GroveEstado { atacado: boolean; cuidavel: boolean }
+const NADA: GroveEstado = { atacado: false, cuidavel: false };
+
 /** Intervalo mínimo entre duas consultas (voltar à Home várias vezes não vira rajada de requisições). */
 export const GROVE_ATAQUE_MIN_MS = 60_000;
 
-/** `reler` muda quando a Home volta à tela (quem passa sabe); a consulta respeita `GROVE_ATAQUE_MIN_MS`. */
-export function useGroveAtaque({ saveId, playerDayTz, enabled = true, reler }: { saveId: string; playerDayTz?: PlayerDayAnchor; enabled?: boolean; reler?: unknown }): boolean {
-  const [atacado, setAtacado] = useState(false);
+/** `reler` muda quando a Home volta à tela (quem passa sabe); a consulta respeita `GROVE_ATAQUE_MIN_MS`. UMA consulta serve os dois sinais. */
+export function useGroveEstado({ saveId, playerDayTz, enabled = true, reler }: { saveId: string; playerDayTz?: PlayerDayAnchor; enabled?: boolean; reler?: unknown }): GroveEstado {
+  const [estado, setEstado] = useState<GroveEstado>(NADA);
   const tz = useRef(playerDayTz);
   const ultima = useRef(0);
   tz.current = playerDayTz;
   useEffect(() => {
-    if (!enabled || !saveId) { setAtacado(false); return; }
+    if (!enabled || !saveId) { setEstado(NADA); return; }
     let vivo = true;
     const olhar = async () => {
       if (reler === false || document.hidden || isGuildSheetOpen() || !readGroveLocal()) return;
@@ -35,12 +44,20 @@ export function useGroveAtaque({ saveId, playerDayTz, enabled = true, reler }: {
       try {
         const { getPlantio } = await import('../utils/claApi');
         const v = await getPlantio(saveId, tz.current);
-        if (vivo) setAtacado(bosqueSobAtaque(v));
+        if (!vivo) return;
+        const atacado = bosqueSobAtaque(v);
+        const cuidavel = bosqueCuidavel(v);
+        setEstado(prev => (prev.atacado === atacado && prev.cuidavel === cuidavel ? prev : { atacado, cuidavel }));
       } catch { /* sem rede / sem login / sem roda: sem balão */ }
     };
     void olhar();
     document.addEventListener('visibilitychange', olhar);
     return () => { vivo = false; document.removeEventListener('visibilitychange', olhar); };
   }, [saveId, enabled, reler]);
-  return atacado;
+  return estado;
+}
+
+/** Só o "sob ataque" (o balão dourado de evento). */
+export function useGroveAtaque(p: { saveId: string; playerDayTz?: PlayerDayAnchor; enabled?: boolean; reler?: unknown }): boolean {
+  return useGroveEstado(p).atacado;
 }
