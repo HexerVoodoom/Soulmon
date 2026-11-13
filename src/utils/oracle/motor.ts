@@ -11,6 +11,7 @@
 import { escolherChaveDeMatiz } from '../../../functions/api/_chromaHue.js';
 import { SPRITE_FACING_PROMPT } from '../spritePose';
 import { isOnboardingVelado } from '../bbStage';
+import { umMotivoDeTempo, motivoTempoPorSemente, motivosNoTexto, MOTIVO_TEMPO_EN, type MotivoTempo } from '../motivoTempo';
 import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
 import { REALM_MOTIFS, ROLE_METAMORPHS_EXTRA } from './formasReino';
 import type { OracleInputSync, OracleInputWithClass, FamiliasOraculo, ElementId, RoleId, AlignmentId, RealmId, LText, OracleInput, OracleOverrides, ScoreEntry, ArchetypeResult, CreatureStage, OracleResult, FamilySlot, FamilyResult, QuestionEffects, CaminhoRitual } from '../oracle';
@@ -375,14 +376,16 @@ function pickShape(
 /** Sorteia o MOTIVO (eixo separado da morfologia): pool do(s) elemento(s) do
  *  Soulmon + temas afins (vileza, morte, arcano…); nunca repete entre as
  *  evoluções da mesma criatura. */
-function pickMotif(rng: () => number, elements: ElementId[], used: Set<string>): LText {
+function pickMotif(rng: () => number, elements: ElementId[], used: Set<string>, tempo: MotivoTempo): LText {
+  // §324: o motivo de tempo da OUTRA família (ampulheta x relógio) nem entra no sorteio — a criatura tem um lado só.
+  const doLado = (x: LText) => motivosNoTexto(x.en).every(m => m === tempo);
   const pool: LText[] = [];
-  for (const e of elements) pool.push(...ELEMENT_MOTIFS[e]);
+  for (const e of elements) pool.push(...ELEMENT_MOTIFS[e].filter(doLado));
   for (const th of Object.values(THEME_MOTIFS)) {
-    if (th.elements.some(e => elements.includes(e))) pool.push(...th.motifs);
+    if (th.elements.some(e => elements.includes(e))) pool.push(...th.motifs.filter(doLado));
   }
   let cand = pool.filter(x => !used.has(x.en));
-  if (cand.length === 0) cand = Object.values(ELEMENT_MOTIFS).flat().filter(x => !used.has(x.en));
+  if (cand.length === 0) cand = Object.values(ELEMENT_MOTIFS).flat().filter(x => doLado(x) && !used.has(x.en));
   if (cand.length === 0) cand = pool;
   const m = pick(rng, cand);
   used.add(m.en);
@@ -2346,7 +2349,19 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     ? Object.keys(MOTIVO_ELEMENTO_CLASSE)
       .sort((a, b) => (soul.oracle.classElements[b as keyof typeof soul.oracle.classElements] ?? 0) - (soul.oracle.classElements[a as keyof typeof soul.oracle.classElements] ?? 0))[0]
     : undefined;
-  const motivo = motivoId ? MOTIVO_ELEMENTO_CLASSE[motivoId] : undefined;
+  // Tempo (dono, 13/11/2026, REGISTRO §324): UM motivo por criatura, OU ampulheta OU relógio, pelo hash estável da criatura (+ salt do
+  // reroll). Vale para o motivo de classe e para TODA forma (pós-passe `umTempo` abaixo troca a outra família e põe a cláusula negativa).
+  const sementeTempo = `${inputKey}|${salt}`;
+  const motivoTempo = motivoTempoPorSemente(sementeTempo);
+  const motivoBruto = motivoId ? MOTIVO_ELEMENTO_CLASSE[motivoId] : undefined;
+  const motivo = motivoBruto && motivoId === 'tempo'
+    ? { ...motivoBruto, en: `a single small ${MOTIVO_TEMPO_EN[motivoTempo]} motif` }
+    : motivoBruto;
+  const umTempo = <P extends { imagePrompt: string; imagePromptFallback: string }>(p: P): P => ({
+    ...p,
+    imagePrompt: umMotivoDeTempo(p.imagePrompt, { preferido: motivoTempo, semente: sementeTempo, forcar: motivoId === 'tempo' }),
+    imagePromptFallback: umMotivoDeTempo(p.imagePromptFallback, { preferido: motivoTempo, semente: sementeTempo, forcar: motivoId === 'tempo' }),
+  });
   const family = pickFamilies(
     CREATURE_FAMILIES, rng, dominantElement, secondaryElement, dominantRealm,
     descText, bestiaryFamilyHint,
@@ -2602,9 +2617,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
     const bAccent = accentFor(branch, colorDesc, dominantElement, goldTrim);
     const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes, speciesKin);
-    const champMotif = pickMotif(lookRng, petElements, usedMotifs);
-    const perfMotif = pickMotif(lookRng, petElements, usedMotifs);
-    const megaMotif = pickMotif(lookRng, petElements, usedMotifs);
+    const champMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
+    const perfMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
+    const megaMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
     const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
     megaShapeByBranch[branch] = megaShape;
@@ -2712,8 +2727,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       bio,
       fusion: { a: { pt: fusionA.pt, en: fusionA.en }, b: { pt: fusionB.pt, en: fusionB.en } },
       family,
-      stages,
-      ...(bbPrompts ? { bbPrompts } : {}),
+      stages: stages.map(umTempo),
+      ...(bbPrompts ? { bbPrompts: umTempo(bbPrompts) } : {}),
     },
   };
 }
