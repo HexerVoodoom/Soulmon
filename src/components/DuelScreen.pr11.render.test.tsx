@@ -13,7 +13,7 @@ import { duelSide } from '../../functions/api/_duel.js';
 import { COMBAT_V3_ART_IDS, loadCombatV3Art } from '../utils/combatV3Art';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
-// §327: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o relógio falso daqui
+// §331: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o relógio falso daqui
 // não deixa o import frio terminar dentro do laço síncrono do observar() — a arte entra no cache antes, uma vez.
 beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
 

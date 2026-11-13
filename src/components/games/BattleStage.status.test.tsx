@@ -2,7 +2,7 @@
 /**
  * BATTLE STAGE — FX de status e círculo de cast (PR11, run `combate-v3-01`).
  * Estados: sem status · 1 · vários (até 3 por canto, §328) · expirando · alvo derrubado · movimento reduzido · arte ainda carregando.
- * §327 (dono, 13/11/2026): o efeito aparece UMA vez — só o marcador no canto do sprite (e o escudo sobre o corpo); o selo
+ * §331 (dono, 13/11/2026): o efeito aparece UMA vez — só o marcador no canto do sprite (e o escudo sobre o corpo); o selo
  * de 22 px com contador ao lado da barra saiu. O marcador leva o `aria-label` (efeito + turnos), com e sem movimento.
  */
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
@@ -31,14 +31,14 @@ const marks = () => [...document.querySelectorAll('[data-stage-fx-mark]')] as HT
 const mark = (kind: StatusFxKind) => document.querySelector(`[data-stage-fx-mark="${kind}"]`) as HTMLElement | null;
 /** O texto acessível do marcador: `aria-label` (folha em loop, `role="img"`) ou `alt` (peça estática `<img>`). */
 const rotulo = (el: Element) => el.getAttribute('aria-label') ?? el.getAttribute('alt');
-/** §327: o selo com contador ao lado da barra de HP/especial não existe mais, em estado nenhum. */
+/** §331: o selo com contador ao lado da barra de HP/especial não existe mais, em estado nenhum. */
 const semSeloDaBarra = () => {
   expect(document.querySelector('[data-stage-status-row]')).toBeNull();
   expect(document.querySelector('[data-stage-status]')).toBeNull();
 };
 const acao = (kind: StageAction['kind'], extra: Partial<StageAction> = {}): StageAction => ({ id: 1, actor: 'me', foe: 0, kind, element: 'fogo', ...extra });
 
-describe('§327 o efeito aparece UMA vez: o marcador no canto é a leitura, com efeito e turnos no aria-label', () => {
+describe('§331 o efeito aparece UMA vez: o marcador no canto é a leitura, com efeito e turnos no aria-label', () => {
   for (const kind of STATUS_FX_KINDS.filter((k) => k !== 'escudo')) {
     it(`${kind}: o marcador leva o efeito e os turnos (EN e PT), sem selo com contador na barra; quando a duração acaba, some`, async () => {
       const turns = 3;
@@ -133,7 +133,7 @@ describe('marcadores de efeito no sprite: canto por tipo, ordem de início, semp
     }
   });
 
-  it('§328 3 debuffs e 3 buffs nos dois lados: o 1º (que começou antes) na borda do sprite, os seguintes para dentro; inimigo debuff ←/buff →, pet espelhado; sem o selo da barra (§327)', async () => {
+  it('§328 3 debuffs e 3 buffs nos dois lados: o 1º (que começou antes) na borda do sprite, os seguintes para dentro; inimigo debuff ←/buff →, pet espelhado; sem o selo da barra (§331)', async () => {
     const tres: StageStatus[] = [
       { kind: 'veneno', turns: 3 }, { kind: 'buff', variant: 'atk', turns: 2 }, { kind: 'lento', turns: 2 }, { kind: 'hot', turns: 4 },
       { kind: 'queimadura', turns: 2 }, { kind: 'cura', turns: 1 }, { kind: 'escudo', turns: 2 },

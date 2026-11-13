@@ -560,7 +560,7 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
 
 /**
  * A camada de STATUS de um lutador (PR11): (1) o ESCUDO sobre o corpo (a peça estática `fx-shield`, como sempre foi) e
- * (2) os MARCADORES DE EFEITO nos cantos do sprite. Desde §327 (dono, 13/11/2026) é a ÚNICA leitura do efeito: o selo
+ * (2) os MARCADORES DE EFEITO nos cantos do sprite. Desde §331 (dono, 13/11/2026) é a ÚNICA leitura do efeito: o selo
  * de 22 px com o contador de turnos ao lado da barra de HP/especial saiu (o efeito aparecia duas vezes). Cada marcador
  * (e o escudo) leva o `aria-label` EN/PT com efeito + turnos (`statusAriaLabel`), para o leitor de tela não perder nada.
  *
@@ -739,7 +739,7 @@ function StatusLayer({ status, spot, side, avoid, fieldW, fieldH, isPt, reduced 
             {ready.map((st, i) => {
               const def = STATUS_FX[st.kind];
               const src = art[markArt(st) ?? ''] as string;
-              // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §327): o leitor de tela ouve efeito + turnos
+              // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §331): o leitor de tela ouve efeito + turnos
               const a11y = { 'aria-label': statusAriaLabel(st.kind, st.turns, isPt, st.variant), 'data-stage-fx-mark': st.kind, 'data-stage-fx-variant': st.variant, 'data-stage-fx-turns': st.turns };
               const key = `${st.kind}-${st.variant ?? ''}-${i}`;
               return def.loop ? (

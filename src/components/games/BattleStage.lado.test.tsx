@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * §197 e §200 (dono, 30/10/2026):
- *  - o selo de buff/DoT fica DE LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — substituído em §327: o selo
+ *  - o selo de buff/DoT fica DE LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — substituído em §331: o selo
  *    com contador saiu e o marcador no canto do sprite é a única leitura do efeito;
  *  - com 3 inimigos em triângulo, o da ESQUERDA olha para a direita (espelhado em relação aos outros).
  */
@@ -30,7 +30,7 @@ describe('§200 triângulo: o inimigo da esquerda olha para a direita', () => {
   });
 });
 
-describe('§327 o efeito aparece UMA vez: só o marcador no canto do sprite, sem o selo com contador ao lado da barra', () => {
+describe('§331 o efeito aparece UMA vez: só o marcador no canto do sprite, sem o selo com contador ao lado da barra', () => {
   it('nenhuma coluna de selos nem selo com turnos; o pet e cada inimigo ficam só com o marcador', async () => {
     const { container } = render(<BattleStage scene="#123" me={me} foes={[foe(0)]} title="Arena" closeLabel="Sair" onClose={() => {}} />);
     await waitFor(() => expect(container.querySelectorAll('[data-stage-fx-mark]').length).toBe(2), { timeout: 10_000 });
