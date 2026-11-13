@@ -68,3 +68,20 @@ for (const tema of ['light', 'dark'] as const) {
     });
   });
 }
+
+describe('o link de ação vem NA FRENTE do nome (13/11/2026)', () => {
+  it('"Ir ao Caderno" mora na mesma linha, antes do nome, e não numa segunda linha embaixo', () => {
+    const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: noop });
+    const btn = container.querySelector('button[data-habit-link]') as HTMLButtonElement;
+    const linha = btn.closest('[data-ritual-lead-row]') as HTMLElement;
+    expect(linha).not.toBeNull();
+    expect(btn.closest('[data-ritual-below]')).toBeNull();
+    const nome = linha.querySelector('.sm2-ritual-name') as HTMLElement;
+    expect(btn.compareDocumentPosition(nome) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+  it('o contador de passos (não é ação) continua embaixo', () => {
+    const { container } = mount([mk('w', 'Caminhar', 'corpo-caminhar')], { stepsInfo: { hoje: 1, meta: 7000 } });
+    expect(container.querySelector('[data-ritual-below] [data-habit-link="steps"]')).not.toBeNull();
+    expect(container.querySelector('[data-ritual-lead]')).toBeNull();
+  });
+});

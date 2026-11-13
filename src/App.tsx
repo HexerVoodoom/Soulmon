@@ -208,7 +208,7 @@ import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWa
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, type BalaoTipo } from './utils/balaoDourado';
-import { useGroveEstado } from './hooks/useGroveAtaque';
+import { useGroveEstado, bosqueDefendivel } from './hooks/useGroveAtaque';
 import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
 import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
 import { atividadesParaAutoCheck, registrarAuto, progressoDePassos, type AutoRecurso } from './utils/tarefaLink';
@@ -4741,7 +4741,7 @@ export default function App() {
      da volta ainda fechado. UM visível, por prioridade; o dispensado do DIA (gravado no SAVE ao tocar e ser direcionado) libera o próximo. */
   const { atacado: bosqueAtacado, cuidavel: bosqueCuidavel } = useGroveEstado({ saveId, playerDayTz: gameState.playerDayTz, enabled: !demo, reler: currentView === 'home' });
   const diaBalao = playerDayIso(new Date(), gameState.playerDayTz);
-  const balaoTipo: BalaoTipo | null = escolherBalao({ grove: bosqueAtacado, rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao);
+  const balaoTipo: BalaoTipo | null = escolherBalao({ grove: bosqueDefendivel({ atacado: bosqueAtacado, cuidavel: bosqueCuidavel }, fioMetaCumprida), rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao);
   const dispensarBalao = useCallback((tipo: BalaoTipo) => {
     setGameState(prev => {
       const dia = playerDayIso(new Date(), prev.playerDayTz);

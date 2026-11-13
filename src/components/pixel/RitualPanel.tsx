@@ -222,6 +222,9 @@ export interface RitualRowProps {
   /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
    *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
   below?: ReactNode;
+  /** Link de AÇÃO na frente do nome, na MESMA linha, à esquerda (dono, 13/11/2026: "Ir ao Caderno" vem antes do texto, não embaixo).
+   *  Some quando a linha está feita. */
+  lead?: ReactNode;
   /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */
   value: number;
   max: number;
@@ -269,7 +272,7 @@ export interface RitualRowProps {
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, bonus = false, inert = false,
   onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
-  children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey, below, lead,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
   const segurar = useLongPress(onLongPress);
@@ -356,6 +359,11 @@ export function RitualRow({
             >
               {nomeSpan}
             </button>
+          ) : lead && !done ? (
+            <span data-ritual-lead-row style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span data-ritual-lead style={{ flex: '0 0 auto' }}>{lead}</span>
+              {nomeSpan}
+            </span>
           ) : nomeSpan}
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>

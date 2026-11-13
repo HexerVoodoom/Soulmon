@@ -22,6 +22,11 @@ export const bosqueSobAtaque = (v: { planted: boolean; mature: boolean; underAtt
 export const bosqueCuidavel = (v: { planted: boolean; mature: boolean; canDraw: boolean; task: 'water' | 'protect' | null } | null | undefined): boolean =>
   !!v && v.planted && !v.mature && (v.canDraw || v.task !== null);
 
+/** O balão dourado "o Bosque está sendo atacado" só vale com AÇÃO possível lá (dono, 13/11/2026): sob ataque E a meta do dia cumprida (a
+ *  régua que libera aguar/defender, `tendGate`/`fioMetaCumprida`) E cuidado do dia por fazer (`bosqueCuidavel`, a condição do botão
+ *  "Cuidar"). Sem isso o jogador chegaria ao Bosque sem poder defender. Exportada para teste. */
+export const bosqueDefendivel = (e: { atacado: boolean; cuidavel: boolean }, metaCumprida: boolean): boolean => e.atacado && e.cuidavel && metaCumprida;
+
 export interface GroveEstado { atacado: boolean; cuidavel: boolean }
 const NADA: GroveEstado = { atacado: false, cuidavel: false };
 
