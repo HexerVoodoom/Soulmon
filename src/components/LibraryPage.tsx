@@ -24,6 +24,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
+import { mensagemFalhaConvite } from '../utils/amizadeErro';
 import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
 import type { FriendTrainerProps } from './FriendTraining';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
@@ -344,8 +345,11 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       const r: { friends: string[]; status?: 'pending' | 'friends' } = isFriend ? await removeFriend(saveId, p.id) : await addFriend(saveId, p.id);
       onFriendsChange(r.friends);
       if (!isFriend) setSocial(prev => (prev && r.status === 'pending' ? { ...prev, outgoing: [...prev.outgoing, p.id] } : prev));
-    } catch {
-      setActionError(isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.");
+    } catch (err) {
+      const isFriend = friends.includes(p.id);
+      setActionError(isFriend
+        ? (isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.")
+        : mensagemFalhaConvite(err, isPt));
     } finally {
       setBusyId(null);
     }
@@ -418,8 +422,9 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         setSocial(prev => (prev ? { ...prev, outgoing: [...prev.outgoing, alvo.id] } : prev));
         setAddMsg(isPt ? `Convite enviado para ${alvo.name}.` : `Invite sent to ${alvo.name}.`);
       }
-    } catch {
-      setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
+    } catch (err) {
+      // §346: cada falha conhecida (teto, não achado, convites demais, sessão) diz o que fazer; a genérica fica só para o desconhecido.
+      setActionError(mensagemFalhaConvite(err, isPt));
     } finally {
       setAddBusy(false);
     }
