@@ -59,7 +59,7 @@ import { ehViolacaoDeChave } from './_entitlements.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
-  getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
+  getProfile, putProfile, pidSoLeitura, nickKey, claimNick, saveIdForPublicId, nickFoldPrefix, foldNome, saveIdDaChaveDobrada,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
 import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
@@ -84,6 +84,7 @@ import { EVO_FEED_KEY, EVO_FEED_VIEW, EVO_FEED_BLOB_TTL_S, peakOf, parseStage, d
 import { flagOn } from './_killSwitch.js';
 import { isStrayProfile, strayView, STRAY_POOL_MAX, markStrayIfInactive, strayFieldsOf, strayRecoveryProgress, playerDayOf, STRAY_RECOVERY_DAYS } from './_strays.js';
 import { recordMissionEvent } from './_missionEvents.js';
+import { nomeDaGuildaDe, campoGuilda, comGuildas } from './_guildaNome.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -164,27 +165,7 @@ const currentSeason = () => new Date().toISOString().slice(0, 7); // YYYY-MM
 
 
 
-/**
- * pid → saveId. `null` quando o alvo não existe (ou ainda não se registrou).
- *
- * Recusa explicitamente um pid que seja a derivação antiga do saveId ao qual
- * ele aponta: enquanto esses índices existirem no KV, a cadeia
- * e-mail → saveId → pid continuaria resolvendo e o oráculo continuaria vivo.
- * A recusa é imediata e não depende da migração ter passado por aquele perfil.
- *
- * O hash é calculado nos DOIS ramos (com um saveId de mentira do mesmo
- * tamanho quando não há acerto) e não há escrita em ramo nenhum: um KV `get`,
- * um SHA-256, sempre. Sem isso, "pid inexistente" e "pid legado de conta
- * existente" gastariam trabalhos diferentes e o oráculo voltaria pelo relógio.
- */
-const PID_PLACEHOLDER = '0'.repeat(32);
-async function saveIdForPublicId(env, pid) {
-  if (!VALID_ID.test(pid || '')) return null;
-  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
-  const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
-  if (!saveId || pid === legado) return null;
-  return saveId;
-}
+// `saveIdForPublicId` (pid → saveId) mora em `_profile.js` desde 13/11/2026: o convite do clã (`guild.js`) resolve o alvo pela MESMA régua.
 
 /**
  * pid público de um saveId que NÃO é o autor da requisição (amigo, dono de uma
@@ -275,6 +256,12 @@ async function listPrefix(env, prefix, limit = 100) {
   return out;
 }
 
+/** Busca de jogadores (§321): mínimo de caracteres, máximo de resultados, chaves lidas por chamada, teto do termo e teto POR CONTA. */
+export const PLAYER_SEARCH_MIN = 2;
+export const PLAYER_SEARCH_MAX = 10;
+export const PLAYER_SEARCH_SCAN = 30;
+export const PLAYER_SEARCH_Q_MAX = 24;
+export const PLAYER_SEARCH_LIMIT = { limit: 30, windowMs: 60_000 };
 /** Páginas de 1000 nomes de chave lidas por busca (custo de LISTA, sem `get`) e teto de candidatos que viram `get`. */
 const NICK_SCAN_PAGES = 10;
 const NICK_CANDIDATOS = 120;
@@ -592,7 +579,9 @@ async function handleCommunity(context) {
     // Indexação preguiçosa (busca de jogadores): perfil anterior ao índice `nick:` entra sozinho ao salvar, sem backfill do dono.
     // Marcador `nickIx` no próprio perfil = já indexado, custo zero. Sem ele, tenta o apelido GRAVADO uma vez (claimNick não rouba
     // apelido alheio e ignora "Anônimo"); só marca em sucesso. Melhor esforço: falha do KV nunca derruba o save.
-    let nickIx = prev.nickIx === true || (!!apelidoPedido && !nameTaken);
+    // §321: `nickfIx` = também já está no índice DOBRADO (`nickf:`, a busca de jogadores). Perfil marcado só com `nickIx` (anterior a ele)
+    // re-reivindica o apelido gravado UMA vez — `claimNick` grava as duas chaves — e passa a carregar os dois marcadores.
+    let nickIx = (prev.nickIx === true && prev.nickfIx === true) || (!!apelidoPedido && !nameTaken);
     if (!nickIx) {
       const gravado = sanitizarNomeDeGuilda(prev.name);
       if (gravado && !/^(an[ôo]nimo|anonymous)$/i.test(gravado)) {
@@ -650,7 +639,7 @@ async function handleCommunity(context) {
         : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
-      ...(nickIx ? { nickIx: true } : {}),
+      ...(nickIx ? { nickIx: true, nickfIx: true } : {}),
       ...(especialNome ? { especialNome } : {}),
       ...(especialNomeAt ? { especialNomeAt } : {}),
       // Faixa de evoluções: atravessam a regravação; o bloco abaixo só os faz subir.
@@ -760,11 +749,61 @@ async function handleCommunity(context) {
     return json({ names: nomes.slice(0, 8) });
   }
 
+  // ── Busca de jogadores por PREFIXO (13/11/2026, REGISTRO §321): o convite do clã e o "Convidar" da aba Amigos ──
+  // GET ?action=playerSearch&id=<saveId>&q=<termo> → { players: [{ id: pid, name, guildName?, stage, spriteUrl?, artLine? }] }
+  // Guarda-corpos (todos no SERVIDOR, o cliente só repete o mínimo para não gastar chamada):
+  //  · só o DONO do `id` pergunta (`denyUnlessOwner`) e o teto é POR CONTA (`PLAYER_SEARCH_LIMIT`), além do teto leve por IP;
+  //  · termo de no mínimo `PLAYER_SEARCH_MIN` caracteres DEPOIS de dobrado — vazio/curto é 400, nunca "lista todo mundo";
+  //  · casa só o COMEÇO do nome, sem acento e sem caixa ("joa" acha "João"), pelo índice `nickf:` — uma `list` por prefixo, sem varrer perfis;
+  //  · no máximo `PLAYER_SEARCH_MAX` resultados, e no máximo `PLAYER_SEARCH_SCAN` chaves lidas por chamada (custo fixo);
+  //  · quem saiu da lista pública (`publicHidden`) não aparece; a própria conta não aparece;
+  //  · sai SÓ vista pública: pid, apelido, nome do clã, estágio e arte. Nunca saveId, e-mail, aparelho, pontos, amigos ou save.
+  if (action === 'playerSearch' && method === 'GET') {
+    if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const termo = Array.from(foldNome(String(url.searchParams.get('q') || '').slice(0, 80))).slice(0, PLAYER_SEARCH_Q_MAX).join('');
+    if (Array.from(termo).length < PLAYER_SEARCH_MIN) return json({ error: 'query too short', min: PLAYER_SEARCH_MIN }, 400);
+    const gate = takeToken('player-search', id, PLAYER_SEARCH_LIMIT);
+    if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    const prefixo = nickFoldPrefix(termo);
+    if (!prefixo) return json({ error: 'query too short', min: PLAYER_SEARCH_MIN }, 400);
+    const page = await kvOrThrow(env).list({ prefix: prefixo, limit: PLAYER_SEARCH_SCAN });
+    const memoGuilda = new Map();
+    const vistos = new Set();
+    const achados = [];
+    for (const k of page.keys ?? []) {
+      if (achados.length >= PLAYER_SEARCH_MAX) break;
+      const dono = saveIdDaChaveDobrada(k.name);
+      if (!VALID_ID.test(dono) || dono === id || vistos.has(dono)) continue;
+      vistos.add(dono);
+      let p = null;
+      try { p = await getProfile(env, dono); } catch { continue; }
+      if (!p || isHidden(p) || typeof p.name !== 'string') continue;
+      // O índice pode ter ficado para trás (renomeou e a chave velha não saiu por falha do KV): vale o nome ATUAL do perfil.
+      if (!foldNome(p.name).startsWith(termo)) continue;
+      // Leitura de TERCEIRO não escreve (L07-04): perfil ainda com o pid derivado antigo fica de fora até o dono salvar.
+      const pid = await pidSoLeitura(p);
+      if (!pid) continue;
+      const sUrl = spriteUrlOrNull(p.spriteUrl);
+      const linha = artLineOrNull(p.artLine);
+      achados.push({
+        id: pid,
+        name: p.name,
+        ...campoGuilda(await nomeDaGuildaDe(env, dono, memoGuilda)),
+        stage: /^[A-Za-z0-9_.-]{1,40}$/.test(String(p.stage ?? '')) ? p.stage : 'rookie',
+        ...(sUrl ? { spriteUrl: sUrl } : {}),
+        ...(linha ? { artLine: linha } : {}),
+      });
+    }
+    return json({ players: achados });
+  }
+
   // ── Diretório / busca ─────────────────────────────────────────────────────
   if (action === 'players' && method === 'GET') {
     const search = (url.searchParams.get('search') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
     const season = currentSeason();
-    /** @type {Array<{ name?: string }>} */
+    /** @type {Array<{ name?: string, guildName?: string }>} */
     const players = [];
     // SEM busca: os primeiros 300 perfis (a lista de apresentação, como sempre). COM busca: o índice de apelidos
     // (`nick:<minúsculas>`, todo jogador com apelido entra), lido em PÁGINAS só pelos NOMES das chaves, sem ler valor;
@@ -780,6 +819,7 @@ async function handleCommunity(context) {
       keys = await listPrefix(env, 'profile:', 300);
     }
     const vistos = new Set();
+    const memoGuilda = new Map();
     for (const k of keys) {
       let profileKey = k;
       if (search) {
@@ -807,7 +847,8 @@ async function handleCommunity(context) {
       // social como efeito colateral — não se emite para quem não pediu.
       if (!p.pvpEnabled || isHidden(p)) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
-      players.push(await publicProfile(env, p));
+      // §321: o nome do clã vai junto do nome (ausente = sem clã).
+      players.push({ ...(await publicProfile(env, p)), ...campoGuilda(await nomeDaGuildaDe(env, p.id, memoGuilda)) });
       if (players.length >= 50) break;
     }
     /* WP4.11 (exposição E3, proibição #21) — o diretório deixou de ser um
@@ -916,6 +957,7 @@ async function handleCommunity(context) {
       player: await publicProfile(env, p, {
         friends: friendPids,
         rankPoints: rank.points, wins: rank.wins, losses: rank.losses,
+        ...campoGuilda(await nomeDaGuildaDe(env, targetSave)),
       }),
     });
   }
@@ -976,6 +1018,7 @@ async function handleCommunity(context) {
     // (stats, família, forma do golpe) só sai em `duelStart`, junto da semente. +1 leitura de KV por oponente.
     const publicDuel = (side) => (side ? { level: side.combatant.level } : null);
     const meSide = id ? await loadDuelSide(id) : null;
+    const memoGuilda = new Map();
     const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
       // Simulado: o sprite publicado em `sim:sprite:<id>` vence (o perfil pode estar defasado até o motor rodar).
@@ -985,6 +1028,7 @@ async function handleCommunity(context) {
         ...pub,
         artLine: pub.artLine ?? artLine,
         ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}),
+        ...campoGuilda(await nomeDaGuildaDe(env, saveId, memoGuilda)),
         duel: publicDuel(side),
       };
     }));
@@ -1222,7 +1266,7 @@ async function handleCommunity(context) {
       const pub = await publicProfile(env, profile);
       const effectiveSprite = (await spriteVivoDoSimulado(env, saveId)) ?? pub.spriteUrl ?? spriteUrl;
       await formaVista(env, saveId);
-      opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}), duel: { level: side.combatant.level } });
+      opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}), ...campoGuilda(await nomeDaGuildaDe(env, saveId)), duel: { level: side.combatant.level } });
     }
     const meSide = await loadDuelSide(id);
     const tickets = sparTicketStatus(await readSparTicket(env, id, diaDe(await fixarTzTreino(env, id, tzDe(url.searchParams.get('zone'), url.searchParams.get('off'))))));
@@ -1339,6 +1383,8 @@ async function handleCommunity(context) {
     // O limite antigo de 300 chaves em ordem de saveId só vale enquanto o índice ordenado da season
     // (REGISTRO §23, acima) não terminou de ser preenchido.
     const allPoints = [];
+    /** §321: linha → saveId dono, para o nome do clã ser lido DEPOIS do corte (só das linhas que saem), sem campo extra na linha. */
+    const saveDaLinha = new Map();
     for (const k of keys) {
       // Lista pública cheia: no caminho do índice o resto da varredura não muda nada (só o `me` oculto, abaixo).
       if (ordenados && rows.length >= 50) break;
@@ -1359,7 +1405,7 @@ async function handleCommunity(context) {
         continue;
       }
       const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
-      rows.push({
+      const linha = {
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
         // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
@@ -1371,11 +1417,14 @@ async function handleCommunity(context) {
         points: rec.points, wins: rec.wins, losses: rec.losses,
         // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
         lifetime: p?.lifetimePoints ?? 0,
-      });
+      };
+      if (p) saveDaLinha.set(linha, ownerSave);
+      rows.push(linha);
     }
     rows.sort((a, b) => b.points - a.points);
+    const publicas = await comGuildas(env, rows.slice(0, 50), r => saveDaLinha.get(r));
     if (autenticado && semLinha.length) await podarIndice(env, season, semLinha); // conta apagada / linha vencida: sai da ordem
-    if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
+    if (action === 'seasonResult') return json({ season, top3: publicas.slice(0, 3) });
     let myPlace = null;
     if (meId && admins.has(meId)) {
       myPlace = null; // GM/admin não ocupa posição
@@ -1395,7 +1444,7 @@ async function handleCommunity(context) {
       const at = allPoints.findIndex(r => r.owner === meId);
       if (at >= 0) myPlace = at + 1;
     }
-    return json({ season, rank: rows.slice(0, 50), ...(meRow ? { me: meRow } : {}), ...(myPlace ? { myPlace } : {}) });
+    return json({ season, rank: publicas, ...(meRow ? { me: meRow } : {}), ...(myPlace ? { myPlace } : {}) });
   }
 
   // Histórico de temporadas do PRÓPRIO jogador (modal "Última temporada"). Só o dono lê; reconstrói do KV o que falta (`_seasonHist.js`).
@@ -1671,7 +1720,7 @@ async function handleCommunity(context) {
     for (const r of convites.in.slice(-MAX_IN).reverse()) {
       const p = await getProfile(env, r.from);
       if (!p || isHidden(p) || p.simulated === true) continue;
-      incoming.push({ id: await ensurePid(env, p), name: p.name, at: r.at });
+      incoming.push({ id: await ensurePid(env, p), name: p.name, ...campoGuilda(await nomeDaGuildaDe(env, r.from)), at: r.at });
       if (incoming.length >= 20) break;
     }
     const outgoing = [];

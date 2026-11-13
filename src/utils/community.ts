@@ -151,6 +151,8 @@ export interface DirectoryPlayer {
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
   especialNome?: string;
+  /** §321 (13/11/2026): nome do clã da pessoa, mostrado embaixo do nome (`ui/PlayerName`). Ausente = sem clã. */
+  guildName?: string;
 }
 export const listPlayers = (search = '') =>
   call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
@@ -180,6 +182,8 @@ export interface Opponent {
   duel?: { level: number } | null;
   /** Nome do especial que o jogador escolheu (já filtrado no servidor); ausente = nome padrão. */
   especialNome?: string;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
 }
 /** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
 export const getOpponents = (id: string, reroll = false) =>
@@ -312,6 +316,8 @@ export async function playSparComRetry(id: string, opponentId: string, taps: num
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
    *  `points` acima são da season e caem (derrota, ser sorteado, virada de
@@ -346,7 +352,7 @@ export const answerFriendInvite = (id: string, friendId: string, decline = false
   call<{ ok: true; status?: 'friends'; friends: string[] }>('friendAccept', { method: 'POST', body: { id, friendId, ...(decline ? { decline: true } : {}) } });
 export interface FriendsState {
   friends: string[];
-  incoming: { id: string; name: string; at: number }[];
+  incoming: { id: string; name: string; /** §321: nome do clã de quem convidou (ausente = sem clã). */ guildName?: string; at: number }[];
   outgoing: string[];
   /** Pids de quem já recebeu presente DESTA conta hoje (o servidor é a autoridade). */
   sentToday: string[];
@@ -873,6 +879,30 @@ export const guildGesture = (id: string, kind: GuildGesture, tz?: PlayerDayAncho
 /** Sair. Um toque, sem confirmação de ninguém e sem penalidade nenhuma. */
 export const leaveGuild = (id: string) =>
   guildCall<{ ok: true }>('guildLeave', { method: 'POST', body: { id } });
+
+/**
+ * Convidar alguém para o clã (§321, o "Convidar" do Salão): o servidor manda ao convidado uma carta do Papus com o nome e o
+ * código do clã. `to` é o pid público (da busca de jogadores). O resultado é um ESTADO da linha, não uma exceção:
+ * cada um tem a sua frase na folha de convite.
+ */
+export type GuildInviteResult = 'sent' | 'member' | 'inGuild' | 'full' | 'notFound' | 'rate' | 'offline' | 'login' | 'error';
+export async function inviteToGuild(id: string, to: string, tz?: PlayerDayAnchor): Promise<GuildInviteResult> {
+  try {
+    await guildCall<{ invited: true }>('guildInvite', { method: 'POST', body: { id, to, dayKey: dia(tz) } });
+    return 'sent';
+  } catch (e) {
+    if (!(e instanceof GuildError)) return 'error';
+    const erro = (e.raw && typeof e.raw === 'object' ? (e.raw as { error?: unknown }).error : '') ?? '';
+    if (e.kind === 'unavailable') return 'offline';
+    if (e.kind === 'login' || e.kind === 'deleted') return 'login';
+    if (e.kind === 'rateLimit') return 'rate';
+    if (e.kind === 'full') return 'full';
+    if (e.kind === 'alreadyIn') return 'inGuild';
+    if (erro === 'already member') return 'member';
+    if (erro === 'player not found') return 'notFound';
+    return 'error';
+  }
+}
 
 export const renameGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildRename', { method: 'POST', body: { id, name, dayKey: dia(tz) } }).then(viewOf);
