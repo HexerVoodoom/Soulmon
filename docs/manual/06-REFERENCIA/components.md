@@ -2283,3 +2283,15 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/PocaoCriada.tsx`
 
 **`PocaoCriada` (12/11/2026, §306):** `{ language, elementId, onClose }` — tela cheia (portal, `aria-modal`, voltar/Esc fecham) com `.sm2-potion-made`, `.sm2-potion-rays` (luz girando), `.sm2-potion-icon`, texto `data-pocao-texto` e `data-vesca-ok`. `VescaPotionOffer.onMake` agora pode devolver `false` (sem saldo: não mostra "criada").
+
+### `src/components/purpose/PurposeFields.tsx`
+
+**Dono de:** as peças de formulário do objetivo (`YearGoalFields`, `MotiveFields`, `PlanFields`, `PriorityStar`, `PurposeDraft`/`applyDraft`), usadas pelo onboarding (3 passos novos, E1/E2), pelo convite do jogador existente (E3) e por "Meu objetivo" (E4). Carregado por `lazy()`: fora do chunk de entrada.
+
+### `src/components/purpose/PurposeSheets.tsx`
+
+**Dono de:** as folhas do objetivo: `MeuObjetivoSheet` (E4), `PurposeInviteModal` (E3, entra na fila de modais como `purposeInvite`), `WeeklyPriorities` (E6, dentro do cartão de domingo) e `GoalReviewSheet` (E7-E9, aberta pelo cartão da Home).
+
+### `src/components/purpose/PathCards.tsx`
+
+**Dono de:** a tela das 3 cartas (onboarding, antes das áreas, só jogador novo; e a troca livre em "Meu objetivo"/revisão): 3 cartas lado a lado, tocar traz a carta à frente (animação, sem ela em movimento reduzido), fundo escuro, X, "Escolher esta carta"/"Escolher outra". Arte placeholder em CSS (TODO arte).

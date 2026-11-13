@@ -11,6 +11,7 @@
  */
 import type { CatalogItem } from '../types/activityCatalog';
 import type { Schedule } from '../types/taskModel';
+import { RESSURGIMENTO_ITEMS } from './ressurgimentoCatalog';
 
 const daily: Schedule = { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] };
 const weekdays5: Schedule = { kind: 'weekdays', days: [1, 2, 3, 4, 5] };
@@ -777,6 +778,8 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     leverages: ['criatividade', 'curiosidade'],
     evidence: { level: 'B', refs: ['Scott, Leritz & Mumford 2004 (Creativity Research Journal)'] },
   },
+  // Caminho Ressurgimento (12/11/2026): 10 cuidados novos, versão de 2 min no nível 1.
+  ...RESSURGIMENTO_ITEMS,
 ];
 
 /** Índice por id, para lookups O(1) no recomendador e no catálogo UI. */

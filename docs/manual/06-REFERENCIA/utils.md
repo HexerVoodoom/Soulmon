@@ -4606,3 +4606,42 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/tarefaLink.ts`
 
 **Tarefas linkadas a recursos (beta12 §J, 12/11/2026):** `recursoDaAtividade` (via `catalogId` + `data/catalogResources.ts`), `gatilhoDoRecurso` (`steps` / `caderno` / `foco`), `atividadesParaAutoCheck(gatilho, args)` (hábito adotado, devido hoje, não feito, sem chave do dia; passos exigem permissão, registro de hoje e meta batida), `registrarAuto` / `jaFezAuto` / `chaveAuto` (`<AAAA-MM-DD>|<id>`, `GameState.tarefaAuto`), `progressoDePassos`, `passosLinha`, `irLaLabel`, `autoTagText` / `autoTagAria`. Passo nunca pontua sozinho: o check dá o que o toque manual dá. **Régua:** `tarefaLink.test.ts`, `catalogResources.contract.test.ts`, `DailyRituals.recurso.render.test.tsx`, `NoticeToast.taskTag.render.test.tsx`.
+
+### `src/utils/purpose.ts`
+
+**Dono de:** o modelo do OBJETIVO ANUAL (`GameState.purpose`, 12/11/2026, `docs/PLANO-OBJETIVO-ANUAL.md`): tipos, tetos (objetivo 200, frase 120, motivo livre 80, plano 120), `sanitizePurpose` (load do save: lixo vira ausente, ids e textos limitados), `setGoal`/`setMotive`/`setPlan`/`togglePriority` (editar guarda histórico; `firstCreatedAt`, a âncora do semestre, nunca muda) e `trimReviews` (a semanal guarda só 12). Dia = data LOCAL (`localDayKey`, `monthKeyOf`).
+**Régua:** `src/utils/purposeAgg.test.ts`, `functions/api/save.purpose.test.js`.
+
+### `src/utils/purposeAgg.ts`
+
+**Dono de:** o AGREGADO MENSAL feitas/oportunidades (`purpose.monthlyAgg`, E10), que fecha o teto de 120 dias de `habitRhythms`. `closePastMonths` fecha, retroativamente e de forma idempotente, todo mês inteiro anterior ao de hoje que ainda não tem registro (chamado no load, em `carregarSave`, e na virada do dia, em `computeDailyReset`); os dias com o app fechado não contam como oportunidade. `sumMonths` soma meses para as revisões.
+**Régua:** `src/utils/purposeAgg.test.ts` (inclui "app fechado 150 dias" e a virada de mês por data local).
+
+### `src/utils/purposeReview.ts`
+
+**Dono de:** as REVISÕES (E6-E9): `reviewOffer` (mensal do dia 1 ao 7, semestral/anual no mês de aniversário do objetivo, nunca acumula), `dismissReview`, `evidence`, `completeReview` (idempotente; semestral concede o cosmético UMA vez por semestre, id `semester:<âncora>:C<n>`; `SEMESTER_REWARD_FRAME_ID` é PLACEHOLDER, TODO de arte), `weekEvidence`/`recordWeekly` (a semanal de domingo).
+**Régua:** `src/utils/purposeReview.test.ts`.
+
+### `src/utils/purposeCopy.ts`
+
+**Dono de:** os textos PT/EN do objetivo (tabela `PC`, rótulos de motivo/obstáculo/percepção/decisão, exemplos por área). Linguagem descritiva, sem culpa e sem promessa.
+**Régua:** `src/utils/purposeCopy.test.ts` (paridade PT/EN e palavras proibidas).
+
+### `src/utils/purposeOnboarding.ts`
+
+**Dono de:** `purposeFromOnboarding` — o que o onboarding colheu vira `Purpose` (as prioridades chegam como ids do catálogo e viram o id da atividade criada).
+
+### `src/utils/purposeVoice.ts`
+
+**Dono de:** as falas do PORQUÊ do Soulmon (E11): `purposeVoiceKey` decide (1 por semana, só em gatilho positivo, nunca depois de dia ruim, desligável) e devolve só a CATEGORIA do motivo; `PURPOSE_VOICE_LINES`/`purposeVoiceLine` são as frases.
+**Régua:** `src/utils/purposeVoice.test.ts` (a régua de tom de `petVoice.carater.test.ts`).
+
+### `src/utils/purposePaths.ts`
+
+**Dono de:** os textos das 3 cartas (Ambição, Satisfação, Ressurgimento), PT/EN, e o ícone placeholder de cada uma. A carta SÓ orienta a escolha das tarefas (decisão do dono, 12/11/2026, PLANO §2b); `purpose.path` é o único dado.
+**Régua:** `src/utils/ressurgimento.test.ts` (nomes nos dois idiomas, vetos de linguagem).
+
+### `src/utils/ressurgimento.ts`
+
+**Dono de:** o caminho Ressurgimento: a lista-base de 21 ids (os 22 cuidados da pesquisa, `docs/design/RESSURGIMENTO-PESQUISA.md`), a ENTRADA GRADUAL (`ressurgInitialSet`: 4 itens de 2 min; `ressurgNextSuggestions`: no máximo 2 por vez, por semana, teto de 7 ativos), `weeksOnPath`, o cartão da rede de apoio (`showSupportCard`/`dismissSupportCard`: do 3º semana, silencia em 2 dispensas) e os textos (`RESSURG_COPY`, com o rodapé do CVV 188). Cancelado pelo dono: convite automático de 6 semanas e revisões "versão leve". Os 10 itens `ressurg-*` moram em `src/data/ressurgimentoCatalog.ts` (`pathOnly`: fora do starter dos outros caminhos).
+**Régua:** `src/utils/ressurgimento.test.ts`.

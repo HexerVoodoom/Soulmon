@@ -360,6 +360,12 @@ import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
 import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan } from './utils/dayPlan';
 import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
+import { purposeFromOnboarding } from './utils/purposeOnboarding';
+import { emptyPurpose, setPath, type PurposePath } from './utils/purpose';
+import { RESSURG_BASE_IDS, RESSURG_ACTIVE_CAP, RESSURG_COPY, showSupportCard, dismissSupportCard, weeksOnPath } from './utils/ressurgimento';
+import { reviewOffer, dismissReview, completeReview, recordWeekly, weeklyAnswered, weekEvidence, evidence as reviewEvidence, shouldAskReviewTasks, type ReviewInput } from './utils/purposeReview';
+import { purposeVoiceKey, markSpoken, isBadDay, type PurposeTrigger } from './utils/purposeVoice';
+import { localDayKey as purposeDayKey, type MotiveKey } from './utils/purpose';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
@@ -876,6 +882,13 @@ const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ def
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
 // O convite curto da contagem de passos (REGISTRO §283): intersticial `stepsInvite`, só no app Android com contador.
+// Objetivo anual (12/11/2026): todas as folhas em chunk próprio (`purpose/PurposeSheets`).
+const MeuObjetivoSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.MeuObjetivoSheet })));
+const PurposeInviteModal = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.PurposeInviteModal })));
+const GoalReviewSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.GoalReviewSheet })));
+const PathSwitchSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.PathSwitchSheet })));
+const TaskSuggestionsSheet = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.TaskSuggestionsSheet })));
+const WeeklyPriorities = lazy(() => import('./components/purpose/PurposeSheets').then(m => ({ default: m.WeeklyPriorities })));
 const StepsInviteModal = lazy(() => import('./components/StepsInviteModal').then(m => ({ default: m.StepsInviteModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
@@ -1236,7 +1249,7 @@ export default function App() {
   const [fullSignal, setFullSignal] = useState(0);
   /** WP3.2 — os gestos que eram mudos. O `kind` escolhe a tabela de frases
    *  (`utils/petVoice.ts`); o `n` é o que dispara. */
-  const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind } | undefined>();
+  const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind; motive?: MotiveKey } | undefined>();
   /** WP1.3 — marca um dos três gestos do primeiro dia. Pura e idempotente
    *  (`markGesture` devolve a MESMA referência), então pode entrar direto no
    *  updater sem violar o footgun 6. */
@@ -1609,10 +1622,22 @@ export default function App() {
     [bigFive, voiceModeRaw, onboardingProfileRaw],
   );
   useEffect(() => { setPetVoiceArchetype(soulmonCharacter.archetype); }, [soulmonCharacter.archetype]);
-  const chatPersonality = useMemo(
-    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter),
-    [onboardingProfileRaw, aiSettings, soulmonCharacter],
-  );
+  const purposeSave = gameState.purpose;
+  const chatPersonality = useMemo(() => {
+    const base = chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter);
+    // Objetivo anual (E12, autorizado pelo dono): só os campos de texto e as chaves, que o SERVIDOR limita, redige e confere
+    // (`purposeBlock` em functions/api/chat.js, com o detector de sofrimento). Sem objetivo, nada vai.
+    const g = purposeSave?.goal;
+    if (!g) return base;
+    return {
+      ...base,
+      purpose: {
+        goal: g.text,
+        ...(purposeSave.motive ? { motiveKey: purposeSave.motive.key, motiveCustom: purposeSave.motive.customText, phrase: purposeSave.motive.phrase } : {}),
+        ...(purposeSave.plan ? { obstacleKey: purposeSave.plan.obstacleKey, obstacleText: purposeSave.plan.obstacleText, response: purposeSave.plan.response } : {}),
+      },
+    };
+  }, [onboardingProfileRaw, aiSettings, soulmonCharacter, purposeSave]);
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
   const [language, setLanguage] = useState<Language>(
@@ -2547,7 +2572,94 @@ export default function App() {
      aparece no Hoje; o resto fica de fora e a virada não o julga. `dayPlan` (no save) guarda o instantâneo do que foi oferecido, o que foi
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
+  /* OBJETIVO ANUAL (12/11/2026, docs/PLANO-OBJETIVO-ANUAL.md): "Meu objetivo" (Perfil e linha da Home), o convite único do jogador existente
+     (E3, entra na fila de modais) e a folha de revisão mensal/semestral/anual (E7-E9, aberta pelo card da Home). */
+  const [meuObjetivoOpen, setMeuObjetivoOpen] = useState(false);
+  const [purposeInviteOpen, setPurposeInviteOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  /* AS 3 CARTAS fora do onboarding (PLANO §2b): trocar de carta (Meu objetivo, livre) e refazer a escolha de tarefas (revisão). A carta SÓ orienta as tarefas. */
+  const [pathSwitchOpen, setPathSwitchOpen] = useState(false);
+  const [meuObjetivoEdit, setMeuObjetivoEdit] = useState(false);
+  const [suggest, setSuggest] = useState<{ items: any[]; path: PurposePath } | null>(null);
+  const purposeInviteTried = useRef(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
+  /* E3: quem já jogava vê o convite UMA vez (quem fez o onboarding novo já foi perguntado: `promptedExisting`). "Agora não" também conta. */
+  useEffect(() => {
+    if (purposeInviteTried.current || demo || !hasCompletedOnboarding || !hasCompletedTutorial || currentView !== 'home') return;
+    if (gameState.purpose?.promptedExisting === true || gameState.purpose?.goal) return;
+    purposeInviteTried.current = true;
+    setPurposeInviteOpen(true);
+  }, [demo, hasCompletedOnboarding, hasCompletedTutorial, currentView, gameState.purpose]);
+  /* E11: o Soulmon lembra o porquê, raro (1 por semana), só em momento positivo, nunca depois de um dia ruim, e desligável.
+     Sem permissão, fala a frase de sempre do gesto. A decisão mora em `utils/purposeVoice.ts`. */
+  const falarComPorque = useCallback((kind: PetVoiceKind, trigger: PurposeTrigger) => {
+    const g = gameStateRef.current;
+    const agora = new Date();
+    const hoje = purposeDayKey(agora);
+    const key = purposeVoiceKey({
+      purpose: g.purpose, today: hoje, trigger,
+      badDay: isBadDay({
+        mood: moodFor(g.moodLog, playerDayKey(agora, g.playerDayTz)),
+        lastDay: g.lastDayReport ? { done: g.lastDayReport.done, required: g.lastDayReport.required } : null,
+      }),
+    });
+    if (!key) { falar(kind); return; }
+    setGameState(prev => ({ ...prev, purpose: markSpoken(prev.purpose, hoje) }));
+    setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind, motive: key }));
+  }, [falar]);
+  const purposeActivities = useMemo(
+    () => (gameState.activities ?? []).map((a: any) => ({ id: String(a.id), name: String(a.name ?? ''), emoji: typeof a.emoji === 'string' ? a.emoji : undefined })),
+    [gameState.activities],
+  );
+  const purposeNames = useMemo(() => new Map(purposeActivities.map(a => [a.id, a])), [purposeActivities]);
+  const savePurpose = useCallback((next: NonNullable<GameState['purpose']>) => setGameState(prev => ({ ...prev, purpose: next })), []);
+  const reviewHoje = new Date();
+  const reviewOfferNow = reviewOffer(gameState.purpose, reviewHoje);
+  const handleCompleteReview = useCallback((input: ReviewInput) => {
+    const hoje = new Date();
+    setGameState(prev => {
+      const offer = reviewOffer(prev.purpose, hoje);
+      if (!offer) return prev;
+      const r = completeReview(prev.purpose, offer, input, hoje);
+      const owned = prev.ownedFrames ?? [];
+      return { ...prev, purpose: r.purpose, ...(r.grantedFrame && !owned.includes(r.grantedFrame) ? { ownedFrames: [...owned, r.grantedFrame] } : {}) };
+    });
+    setReviewOpen(false);
+    falarComPorque('milestone', 'reviewDone');
+    const caminho = gameStateRef.current.purpose?.path;
+    if (input.plansChanged || (input.reviewTasks && caminho !== 'ambicao')) {
+      // Satisfação/Ressurgimento aceitaram rever as tarefas, ou a Ambição disse "meus planos mudaram": as 3 cartas de novo.
+      setPathSwitchOpen(true);
+    } else if (input.reviewTasks) {
+      // Ambição sem mudança de planos: a revisão de tarefas fica dentro do fluxo do objetivo (as prioridades).
+      setMeuObjetivoEdit(true); setMeuObjetivoOpen(true);
+    } else if (input.decision === 'change' || input.archiveGoal) setMeuObjetivoOpen(true);
+  }, [falarComPorque]);
+  /** Carta escolhida (troca livre ou refazer na revisão): grava o caminho e abre as SUGESTÕES de tarefas daquele caminho (nada entra sem o toque). */
+  const handleChoosePath = useCallback(async (p: PurposePath) => {
+    const hoje = new Date();
+    setGameState(prev => ({ ...prev, purpose: setPath(prev.purpose, p, hoje) }));
+    setPathSwitchOpen(false);
+    const [{ loadCatalog: carregar }, rec, res] = await Promise.all([import('./data/catalogoCarga'), import('./utils/recommend'), import('./utils/ressurgimento')]);
+    const catalogo = Object.values(await carregar());
+    const g = gameStateRef.current;
+    const ativos = new Set((g.activities as any[]).map(a => a.catalogId).filter(Boolean) as string[]);
+    let items: any[] = [];
+    if (p === 'ressurgimento') {
+      const temBase = [...ativos].some(id => res.RESSURG_BASE_IDS.includes(id));
+      items = temBase ? res.ressurgNextSuggestions(catalogo, ativos, res.weeksOnPath({ ...(g.purpose ?? {}), path: p, pathAt: purposeDayKey(hoje) } as any, hoje)) : res.ressurgInitialSet(catalogo);
+    } else if (p === 'satisfacao') {
+      const areas = [...new Set((g.activities as any[]).map(a => a.category).filter(Boolean))].slice(0, 3);
+      items = rec.recommendStarterSet({ areas: areas as any, struggles: (g.onboardingProfile?.struggles ?? []) as any, strengths: (g.onboardingProfile?.strengths ?? []) as any }, catalogo);
+    }
+    items = withoutExisting(items, g.activities as ReadonlyArray<{ catalogId?: string | null }>);
+    setSuggest({ items, path: p });
+  }, []);
+  const handleAddSuggested = useCallback((items: any[]) => {
+    const novos = withoutExisting(items, gameStateRef.current.activities as ReadonlyArray<{ catalogId?: string | null }>);
+    if (novos.length) commitHabitCreate(activitiesFromCatalogChoice(novos, language === 'pt-BR') as unknown as Activity[], TELEMETRY_CREATE_PATH.create_modal);
+    setSuggest(null);
+  }, [commitHabitCreate, language]);
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
   const dayPlanViewNow = useMemo(
     () => dayPlanView(gameState.dayPlan, dayPlanToday, dayPlanActive),
@@ -2645,6 +2757,7 @@ export default function App() {
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
       restSetup: needsRestSetup,
       // O convite curto dos passos (§283): só com contador no aparelho, depois do onboarding, e só quem ainda não respondeu.
+      purposeInvite: purposeInviteOpen,
       stepsInvite: shouldShowStepsInvite({ available: stepsAvailable, consent: gameState.stepsConsent, onboarded: hasCompletedOnboarding }),
     }),
     // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
@@ -2691,6 +2804,9 @@ export default function App() {
           lastCheckInDate: dia,
         }));
         track('checkin_shown');
+      } else if (id === 'purposeInvite') {
+        // "visto" ao MOSTRAR: aparece UMA vez, e "agora não" também conta (depois disso fica em Perfil > Meu objetivo)
+        setGameState(prev => (prev.purpose?.promptedExisting === true ? prev : { ...prev, purpose: { ...(prev.purpose ?? emptyPurpose()), promptedExisting: true } }));
       } else if (id === 'checkIn') {
         // compromisso da manhã: "visto" ao MOSTRAR (REGISTRO §53) — reabrir/recarregar no meio não repete nem repaga o Vínculo
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
@@ -2720,6 +2836,7 @@ export default function App() {
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
         case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
+        case 'purposeInvite': setPurposeInviteOpen(false); break; // voltar do Android = "agora não"
         case 'stepsInvite': break; // as duas saídas são os botões: voltar do Android não decide por ninguém
         case 'restSetup': break; // obrigatório: voltar do Android não pula; só "Confirmar" fecha (o erro de render cai no `fail`)
         default: break; // catalogOnboarding: sem "pular" por decisão do dono (C11); o erro de render cai no `fail`
@@ -3101,7 +3218,7 @@ export default function App() {
     playEvolve();
     // WP3.2: o marco ganhou fala PRÓPRIA. O `setMessageTrigger` genérico
     // repetia a fala de humor do momento, que não tem nada a ver com o marco.
-    falar('milestone');
+    falarComPorque('milestone', 'milestone');
     /* WP2.4 — a CERIMÔNIA. Cruzar 7/21/66 dias era um som, um toast e uma
        fala: três coisas que o app faz o tempo todo por qualquer motivo, ou
        seja, o momento mais raro da constância era indistinguível de concluir
@@ -3124,7 +3241,7 @@ export default function App() {
       }),
       reducedMotion: movimentoReduzido,
     });
-  }, [gameState, language, falar]);
+  }, [gameState, language, falar, falarComPorque]);
 
   const handleUpdateStep = (activityId: string, stepId: string) => handleCompleteSteps(activityId, [stepId]);
 
@@ -7237,6 +7354,8 @@ export default function App() {
     // 20/10/2026 (dono): quem acabou de gerar o Soulmon já respondeu as metas no onboarding — o convite "Set goals" NUNCA reaparece
     // logo depois, mesmo que nenhuma atividade do catálogo tenha sido mantida (antes: só marcava com ≥1 atividade).
     const catalogSeen = markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>;
+    // Objetivo anual (E1/E2): o destino, o porquê, o plano e as prioridades (catálogo → id da atividade criada).
+    const onboardingPurpose = purposeFromOnboarding(data.purpose, catalogActivities, new Date(), data.path);
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -7267,6 +7386,7 @@ export default function App() {
         demoTint: data.demoTint ?? 0,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
+        purpose: onboardingPurpose ?? { ...emptyPurpose(), promptedExisting: true },
         // Forças + o que atrapalha, em ids do catálogo → `derivePersonality`.
         onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
         // 01/10/2026 (dono): as 20 do teste longo entram no save também no
@@ -7340,6 +7460,7 @@ export default function App() {
       ...paidArrivalVitals(Date.now()),
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
+      purpose: onboardingPurpose ?? { ...emptyPurpose(), promptedExisting: true },
       onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
       soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
       ...catalogSeen,
@@ -8843,6 +8964,21 @@ export default function App() {
                 )}
               />
 
+              {/* RESSURGIMENTO: rodapé discreto e permanente com o CVV (pesquisa §3). Não é alarme: só está lá. */}
+              {!demo && gameState.purpose?.path === 'ressurgimento' && (
+                <p data-ressurg-footer style={{ ...sm2Hint, textAlign: 'center', margin: '0 16px 4px' }}>
+                  {language === 'pt-BR' ? RESSURG_COPY.footer.pt : RESSURG_COPY.footer.en}
+                </p>
+              )}
+              {/* O OBJETIVO (E5): uma linha, o texto da pessoa sem retoque; o toque abre "Meu objetivo". Some sem objetivo. */}
+              {!demo && gameState.purpose?.goal && (
+                <button type="button" data-home-goal aria-label={`${language === 'pt-BR' ? 'Abrir Meu objetivo' : 'Open My goal'}: ${gameState.purpose.goal.text}`}
+                  onClick={() => setMeuObjetivoOpen(true)}
+                  style={{ ...sm2Text, display: 'block', width: '100%', minHeight: 44, padding: '0 16px', textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sm2-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {gameState.purpose.goal.text}
+                </button>
+              )}
+
               {/* Pet — acima, sem estar contido em uma caixa */}
               <CompanionHUD
                 onChatSent={() => contarDiaria('humor')}
@@ -9138,6 +9274,16 @@ export default function App() {
                       language={language}
                       onDismiss={handleDismissWeeklyReport}
                     />
+                    {/* E6: X de Y das prioridades + 1 pergunta opcional, dentro do mesmo cartão de domingo. */}
+                    {(gameState.purpose?.priorities.length ?? 0) > 0 && (
+                      <WeeklyPriorities
+                        language={language}
+                        rows={weekEvidence(gameState.purpose!.priorities, gameState.habitRhythms, Object.fromEntries((gameState.activities as any[]).map(a => [String(a.id), { schedule: a.schedule, weekDays: a.weekDays }])), agoraA)}
+                        names={purposeNames}
+                        answered={weeklyAnswered(gameState.purpose, agoraA)}
+                        onAnswer={ob => setGameState(prev => ({ ...prev, purpose: recordWeekly(prev.purpose, ob, new Date()) }))}
+                      />
+                    )}
                     </Suspense>
                   ),
                 });
@@ -9196,6 +9342,62 @@ export default function App() {
                       </button>
                     </div>
                   </section>
+                  ),
+                });
+
+                // ── 4a. RESSURGIMENTO: rede de apoio (convite) e "quero mais" ──────────────
+                // Convite, nunca tarefa: some depois de 2 dispensas. Texto e vetos: docs/design/RESSURGIMENTO-PESQUISA.md §3.
+                if (showSupportCard(gameState.purpose, agoraA)) avisos.push({
+                  key: 'redeApoio',
+                  node: (
+                    <div className="sm2-notice" data-support-card>
+                      <p className="sm2-notice-body">{isPtA ? RESSURG_COPY.supportCard.pt : RESSURG_COPY.supportCard.en}</p>
+                      <p className="sm2-notice-body" style={{ opacity: 1, color: 'var(--sm2-muted)' }}>{isPtA ? RESSURG_COPY.supportPro.pt : RESSURG_COPY.supportPro.en}</p>
+                      <div className="sm2-notice-actions">
+                        <button type="button" className="sm-btn" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => { toast(isPtA ? RESSURG_COPY.supportToast.pt : RESSURG_COPY.supportToast.en); setGameState(prev => (prev.purpose ? { ...prev, purpose: { ...prev.purpose, supportDismissed: 2 } } : prev)); }}>
+                          {isPtA ? RESSURG_COPY.supportYes.pt : RESSURG_COPY.supportYes.en}
+                        </button>
+                        <button type="button" className="sm-btn sm-btn-secondary" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => setGameState(prev => ({ ...prev, purpose: dismissSupportCard(prev.purpose) }))}>
+                          {isPtA ? RESSURG_COPY.supportNo.pt : RESSURG_COPY.supportNo.en}
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                });
+                if (gameState.purpose?.path === 'ressurgimento' && weeksOnPath(gameState.purpose, agoraA) >= 1
+                  && (gameState.activities as any[]).filter(a => RESSURG_BASE_IDS.includes(a.catalogId)).length < RESSURG_ACTIVE_CAP) avisos.push({
+                  key: 'ressurgMais',
+                  node: (
+                    <button type="button" data-ressurg-more className="sm2-notice-more" style={{ borderStyle: 'solid', color: 'var(--sm2-ink)' }}
+                      onClick={() => handleChoosePath('ressurgimento')}>
+                      <span>{isPtA ? RESSURG_COPY.more.pt : RESSURG_COPY.more.en}</span>
+                    </button>
+                  ),
+                });
+
+                // ── 4b. REVISÃO DO OBJETIVO (E7-E9) ───────────────────────
+                // Cartão, nunca modal: do dia 1 ao 7, some sozinho no dia 8 e NÃO acumula (revisão perdida não vira dívida).
+                if (reviewOfferNow) avisos.push({
+                  key: 'revisaoObjetivo',
+                  node: (
+                    <div className="sm2-notice" data-review-card={reviewOfferNow.kind}>
+                      <p className="sm2-notice-title">{reviewOfferNow.kind === 'month'
+                        ? (isPtA ? 'Um olhar para o mês que passou' : 'A look at the month that passed')
+                        : reviewOfferNow.kind === 'semester'
+                          ? (isPtA ? 'Seis meses de caminho' : 'Six months on the path')
+                          : (isPtA ? 'Um ano depois' : 'A year later')}</p>
+                      <div className="sm2-notice-actions">
+                        <button type="button" className="sm-btn" style={{ fontSize: 12, padding: '10px 14px' }} onClick={() => setReviewOpen(true)}>
+                          {isPtA ? 'Ver o mês' : 'See the month'}
+                        </button>
+                        <button type="button" className="sm-btn sm-btn-secondary" style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={() => setGameState(prev => ({ ...prev, purpose: dismissReview(prev.purpose, reviewOfferNow) }))}>
+                          {isPtA ? 'Deixar para depois' : 'Leave it for later'}
+                        </button>
+                      </div>
+                    </div>
                   ),
                 });
 
@@ -9503,6 +9705,7 @@ export default function App() {
                 writeLocal(STORAGE_KEYS.LANGUAGE, lang, { silent: true });
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
+              onOpenObjetivo={() => setMeuObjetivoOpen(true)}
               onReplayWelcomeTour={handleReplayWelcomeTour}
               onOpenGlossary={() => setShowHelpModal(true)}
               review={reviewSnapshot ? reviewRow : undefined}
@@ -10336,6 +10539,51 @@ export default function App() {
           onConfirm={handleConfirmRestWindow}
         />
         </PresentationSlot>
+      )}
+
+      {/* O CONVITE ÚNICO DO OBJETIVO (E3): jogador que já existia. "Agora não" fecha e não volta; fica em Perfil > Meu objetivo. */}
+      {interstitial === 'purposeInvite' && (
+        <PresentationSlot id="purposeInvite" onFail={() => presentation.fail('purposeInvite')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <PurposeInviteModal
+            language={language}
+            areas={[...new Set(purposeActivities.length ? (gameState.activities as any[]).map(a => String(a.category ?? '')).filter(Boolean) : [])].slice(0, 3)}
+            activities={purposeActivities}
+            onSave={next => { savePurpose(next); setPurposeInviteOpen(false); }}
+            onNotNow={() => setPurposeInviteOpen(false)}
+          />
+        </PresentationSlot>
+      )}
+
+      {/* MEU OBJETIVO (E4): aberta pela linha da Home ou pelo Perfil. */}
+      {meuObjetivoOpen && (
+        <Suspense fallback={null}>
+          <MeuObjetivoSheet open onClose={() => { setMeuObjetivoOpen(false); setMeuObjetivoEdit(false); }} language={language}
+            purpose={gameState.purpose} activities={purposeActivities} onSave={savePurpose} startEditing={meuObjetivoEdit}
+            onSwitchCard={() => setPathSwitchOpen(true)} />
+        </Suspense>
+      )}
+
+      {/* REVISÃO (E7-E9): mensal / semestral / anual, aberta pelo card da Home. */}
+      {reviewOpen && reviewOfferNow && gameState.purpose && (
+        <Suspense fallback={null}>
+          <GoalReviewSheet open onClose={() => setReviewOpen(false)} language={language} purpose={gameState.purpose}
+            offer={reviewOfferNow} names={purposeNames} onComplete={handleCompleteReview}
+            askTasks={shouldAskReviewTasks((() => { const t = reviewEvidence(gameState.purpose, [reviewOfferNow.monthKey]).total; return t.due > 0 && t.done >= t.due; })())} />
+        </Suspense>
+      )}
+
+      {/* AS 3 CARTAS depois do onboarding: trocar de carta (livre) e refazer a escolha das tarefas na revisão. */}
+      {pathSwitchOpen && (
+        <Suspense fallback={null}>
+          <PathSwitchSheet open onClose={() => setPathSwitchOpen(false)} language={language} current={gameState.purpose?.path} onChoose={handleChoosePath} />
+        </Suspense>
+      )}
+      {suggest && (
+        <Suspense fallback={null}>
+          <TaskSuggestionsSheet open onClose={() => setSuggest(null)} language={language} items={suggest.items} onAdd={handleAddSuggested}
+            title={suggest.path === 'ressurgimento' ? (language === 'pt-BR' ? RESSURG_COPY.suggestTitle.pt : RESSURG_COPY.suggestTitle.en) : (language === 'pt-BR' ? 'Sugestões para você' : 'Suggestions for you')}
+            hint={suggest.path === 'ressurgimento' ? (language === 'pt-BR' ? RESSURG_COPY.suggestHint.pt : RESSURG_COPY.suggestHint.en) : undefined} />
+        </Suspense>
       )}
 
       {/* O CONVITE CURTO DOS PASSOS (§283): sim/não + meta. Aceitar grava a meta e SÓ ENTÃO abre o diálogo do sistema. */}
