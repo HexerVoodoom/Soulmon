@@ -12,6 +12,8 @@
  *  · abre direto na escolha dos 5 iniciais da DEMO local — sem portão de login;
  *  · não pede permissão de notificação (num iframe de outra origem o navegador
  *    nega em silêncio e o pedido só gastaria o "uma vez" do dono);
+ *  · sem termo de consentimento e sem a abertura (vídeo de marca + cinemática),
+ *    e por isso SEM NENHUM DADO saindo (ver `installEmbedNetworkGuard`);
  *  · o service worker não intercepta `/embed` (ver `public/sw.js`).
  *
  * A demo em si (salva só no aparelho, sem XP/compra/PvP) é de `demoMode.ts`.
@@ -32,4 +34,46 @@ export function isEmbedMode(): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * SEM TERMO, SEM DADO (13/11/2026, condição do dono para o embed pular o termo de
+ * consentimento): no `/embed` NADA sai do aparelho — nem telemetria, nem crash, nem
+ * conta/login/nuvem, nem push, nem dado de visitante. Pular o termo NUNCA vale como
+ * "consentiu": nenhum registro de consentimento é gravado, e a telemetria fica DESLIGADA
+ * por um `isEmbedMode()` duro em `isTelemetryEnabled` (telemetry.ts, que também segura o
+ * crash e o tempo de uso) e nas inscrições de push (notifications.ts).
+ *
+ * Este guard é a rede por baixo daqueles `if`s: instalado no boot (`main.tsx`), antes de
+ * qualquer provider, e só no embed. Corta TODA chamada `fetch` a `/api/*` (503 local, como
+ * o guard da demo em `demoMode.ts`) e TODO `navigator.sendBeacon` (devolve `false`: "não
+ * enviado"). Fora do embed não instala nada — o app normal não muda.
+ */
+export const EMBED_BLOCKED_API = /^(https?:\/\/[^/]+)?\/api\//;
+let embedGuardInstalled = false;
+export function installEmbedNetworkGuard(): boolean {
+  if (embedGuardInstalled || !isEmbedMode()) return false;
+  embedGuardInstalled = true;
+  if (typeof window.fetch === 'function') {
+    const real = window.fetch.bind(window);
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (EMBED_BLOCKED_API.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify({ error: 'embed' }), { status: 503, headers: { 'Content-Type': 'application/json' } }));
+      }
+      return real(input, init);
+    };
+  }
+  const nav = window.navigator as Navigator | undefined;
+  if (nav && typeof nav.sendBeacon === 'function') {
+    try {
+      Object.defineProperty(nav, 'sendBeacon', { configurable: true, writable: true, value: () => false });
+    } catch { /* navegador que não deixa redefinir: os guards duros de telemetry/push continuam valendo */ }
+  }
+  return true;
+}
+
+/** Só para teste. */
+export function resetEmbedGuardForTest(): void {
+  embedGuardInstalled = false;
 }
