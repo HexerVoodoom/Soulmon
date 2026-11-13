@@ -118,6 +118,16 @@ describe('TalentTree', () => {
     expect(estadoTxt()).toMatch(/^0\/1 points spent/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/Level|Nível/);
   });
+
+  it('CTA em coluna: Confirmar em cima (largura total) e Cancelar embaixo, na mesma ordem de tab', () => {
+    abrir({ totalXP: 0 });
+    abrirNo('tal-pvp-01');
+    const conf = confirmBtn();
+    const canc = document.querySelector('[data-talent-cancel]')!;
+    expect(conf.compareDocumentPosition(canc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(conf.parentElement!.hasAttribute('data-cta-stack')).toBe(true);
+    expect(conf.getAttribute('data-cta-width')).toBe('full');
+  });
 });
 
 describe('PR7b: os nós redesenhados na tela', () => {

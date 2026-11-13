@@ -33,11 +33,11 @@ export function VescaPotionOffer({ language, elementId, onMake, onDismiss }: Ves
   return (
     <ModalSheet open title={vesca} onClose={close} language={language}
       footer={(
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button type="button" data-vesca-later style={sm2Button('quiet')} onClick={close}>{isPt ? 'Depois' : 'Later'}</button>
-          <CtaButton data-vesca-make width="auto" onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
+        <div data-cta-stack style={{ display: 'grid', gap: 8 }}>
+          <CtaButton data-vesca-make onClick={() => { if (onMake(elementId) !== false) setMade(true); }}>
             {isPt ? 'Fazer a poção' : 'Make the potion'}
           </CtaButton>
+          <button type="button" data-vesca-later style={{ ...sm2Button('quiet'), width: '100%' }} onClick={close}>{isPt ? 'Depois' : 'Later'}</button>
         </div>
       )}>
       <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
