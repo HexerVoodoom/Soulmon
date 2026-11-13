@@ -213,10 +213,10 @@ describe('AC5. skill (P4): "does not act" × "plays well" ≤ 25pp', () => {
     console.log(`[AC5 RED] old tables: ${(100 * gap).toFixed(1)}pp`);
     expect(gap).toBeGreaterThan(0.25);
   });
-  // §324 (dono, 13/11/2026): limite 25pp → 26pp. Com `PVE_FAMILY_POWER.arena.dot` 0,95 → 1,1 (regra "o que dura rende mais que o
+  // §325 (dono, 13/11/2026): limite 25pp → 26pp. Com `PVE_FAMILY_POWER.arena.dot` 0,95 → 1,1 (regra "o que dura rende mais que o
   // imediato") a torcida sozinha passou a mover 25,8pp para quem não age (com 0,95 passava; com 1,0 já dava 25,3pp). Decisão do dono:
   // manter o DoT em 1,1, não mexer em `CHEER.energyPerDischarge` e afrouxar este gate em 1pp.
-  it('PR4b (contexto §2.19, §324): the cheer ALONE (same skill, ceiling × nobody cheering) moves the run win rate ≤ 26pp, for the skill that does not act and for the one that plays well', () => {
+  it('PR4b (contexto §2.19, §325): the cheer ALONE (same skill, ceiling × nobody cheering) moves the run win rate ≤ 26pp, for the skill that does not act and for the one that plays well', () => {
     expect(CHEER.energyPerDischarge).toBe(9);
     const dN = wins('nenhuma', { cheer: 'teto' }) - wins('nenhuma');
     const dB = wins('boa', { cheer: 'teto' }) - wins('boa');

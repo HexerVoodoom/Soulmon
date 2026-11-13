@@ -38,4 +38,13 @@ describe('VescaPotionOffer: poção criada', () => {
     fireEvent.click(document.querySelector('[data-vesca-make]')!);
     expect(document.querySelector('[data-pocao-criada]')).toBeNull();
   });
+  it('CTA em coluna: "Fazer a poção" vem primeiro (largura total, tom padrão: é uma oferta), "Depois" embaixo', () => {
+    render(<VescaPotionOffer language="pt-BR" elementId="fogo" onMake={() => false} onDismiss={() => {}} />);
+    const make = document.querySelector('[data-vesca-make]')!;
+    const later = document.querySelector('[data-vesca-later]')!;
+    expect(make.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(make.parentElement!.hasAttribute('data-cta-stack')).toBe(true);
+    expect(make.getAttribute('data-cta-width')).toBe('full');
+    expect(make.getAttribute('data-cta-tone')).toBe('padrao');
+  });
 });
