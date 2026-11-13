@@ -468,7 +468,7 @@ export function statusFxOfFamily(family: SpecialFamily | null | undefined, escol
   return family ? FAMILY_STATUS[family] ?? null : null;
 }
 
-/** Quantos efeitos cabem como selo por lutador; o resto vira "+k". */
+/** Quantos efeitos cabem como selo por ZONA de um lutador (debuffs em cima à esquerda, buffs embaixo à direita; dono, 13/11/2026); o resto vira "+k". */
 export const MAX_STATUS_CHIPS = 3;
 
 /** Um efeito no lutador, como a cena o desenha. `turns` = o que falta (a contagem do selo). */
@@ -485,13 +485,32 @@ export function statusTurnsFor(family: SpecialFamily, power: number): number {
   return Math.max(1, Math.round(SPECIAL_BUDGET_HITS * power));
 }
 
-/** Uma entrada do quadro: o efeito, de quem veio (`source`); quem o carrega é o índice do quadro. */
-export interface BoardEntry extends StageStatus { source: number }
+/**
+ * Uma entrada do quadro: o efeito, de quem veio (`source`); quem o carrega é o índice do quadro.
+ * `since` (dono, 13/11/2026): a ORDEM EM QUE O EFEITO COMEÇOU — carimbo crescente no quadro inteiro (o maior já usado + 1).
+ * Renovar ou recontar o mesmo efeito mantém o carimbo; é ele que ordena os selos na cena (`stageStatusOf`).
+ * É uma dobra pura (sem relógio): replay e ressimulação dão a mesma ordem.
+ */
+export interface BoardEntry extends StageStatus { source: number; since?: number }
 /** O quadro de efeitos de uma luta: índice 0 = o pet, 1+i = inimigo i. */
 export type StatusBoard = readonly (readonly BoardEntry[])[];
 
 export function emptyStatusBoard(nFoes: number): StatusBoard {
   return Array.from({ length: nFoes + 1 }, () => []);
+}
+
+/** O próximo carimbo de início (`since`): o maior do quadro + 1. */
+function nextSince(board: StatusBoard): number {
+  let m = 0;
+  for (const l of board) for (const e of l) if ((e.since ?? 0) > m) m = e.since ?? 0;
+  return m + 1;
+}
+
+/** Polaridade do efeito (dono, 13/11/2026): `buff` = a favor de quem carrega (canto de baixo à direita do sprite); `debuff` = contra (canto de cima à esquerda). DoT e controle são `debuff`; cura, HoT e escudo são `buff`. */
+export type StatusPolarity = 'buff' | 'debuff';
+const BENEFICIOS: readonly StatusFxKind[] = ['buff', 'cura', 'hot', 'escudo'];
+export function statusPolarity(kind: StatusFxKind): StatusPolarity {
+  return BENEFICIOS.includes(kind) ? 'buff' : 'debuff';
 }
 
 /** Conjurou o especial: põe o efeito em quem carrega (o próprio conjurador, o alvo único ou todos os alvos da área). */
@@ -504,11 +523,14 @@ export function castStatus(
   const turns = statusTurnsFor(c.family, c.power);
   const holders = fam.target === 'self' ? [c.caster] : (c.area && AREA_FAMILIES.includes(c.family) ? c.targets : c.targets.slice(0, 1));
   const next = board.map((l) => l.slice());
+  let since = nextSince(board);
   for (const h of holders) {
     if (!next[h]) continue;
-    // o mesmo efeito do mesmo conjurador renova (não empilha igual)
-    const rest = next[h].filter((e) => !(e.kind === fam.kind && e.variant === fam.variant && e.source === c.caster));
-    next[h] = [...rest, { kind: fam.kind, variant: fam.variant, turns, source: c.caster }];
+    // o mesmo efeito do mesmo conjurador renova (não empilha igual) e mantém o carimbo de início
+    const same = (e: BoardEntry) => e.kind === fam.kind && e.variant === fam.variant && e.source === c.caster;
+    const old = next[h].find(same);
+    const rest = next[h].filter((e) => !same(e));
+    next[h] = [...rest, { kind: fam.kind, variant: fam.variant, turns, source: c.caster, since: old?.since ?? since++ }];
   }
   return next;
 }
@@ -563,6 +585,7 @@ export function withRealFx(
   efeitoOn: (holder: number, origem: 'self' | 'foe') => EfeitoElemento | null = () => null,
 ): StatusBoard {
   if (!fx) return board;
+  let since = nextSince(board);
   return board.map((list, h) => {
     if (down.includes(h)) return [];
     const keep = list.filter((e) => !REAL_KINDS.includes(e.kind));
@@ -586,6 +609,14 @@ export function withRealFx(
     if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', ...(hotVar ? { variant: hotVar } : {}), turns: f.hot ?? 0, source: h });
     if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
     if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });
+    // o carimbo de início: o mesmo contador que já estava aceso herda o `since` (mesma variante primeiro, depois o mesmo tipo); o que acendeu agora ganha um novo
+    const prev = list.filter((e) => REAL_KINDS.includes(e.kind));
+    const claim = (e: BoardEntry): number | undefined => {
+      const i = prev.findIndex((p) => p.kind === e.kind && p.variant === e.variant);
+      const j = i >= 0 ? i : prev.findIndex((p) => p.kind === e.kind);
+      return j >= 0 ? prev.splice(j, 1)[0].since : undefined;
+    };
+    for (const e of real) e.since = claim(e) ?? since++;
     return [...keep, ...real];
   });
 }
@@ -595,9 +626,12 @@ export function clearHolders(board: StatusBoard, down: readonly number[]): Statu
   return board.map((l, h) => (down.includes(h) ? [] : l.filter((e) => !down.includes(e.source) || e.kind === 'escudo')));
 }
 
-/** O que a cena recebe por lutador: sem `source`, na ordem do quadro. */
+/** O que a cena recebe por lutador: sem `source`, na ORDEM EM QUE CADA EFEITO COMEÇOU (o mais antigo primeiro; dono, 13/11/2026). Sem carimbo, vale a ordem do quadro. */
 export function stageStatusOf(entries: readonly BoardEntry[] | undefined): StageStatus[] {
-  return (entries ?? []).map(({ kind, variant, turns }) => ({ kind, variant, turns }));
+  return (entries ?? [])
+    .map((e, i) => ({ e, k: e.since ?? 0, i }))
+    .sort((a, b) => a.k - b.k || a.i - b.i)
+    .map(({ e: { kind, variant, turns } }) => ({ kind, variant, turns }));
 }
 
 /**

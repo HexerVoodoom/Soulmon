@@ -41,8 +41,8 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId,
-  type StageActionKind, type StageStatus, type StrikeForm,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusPolarity,
+  type StageActionKind, type StageStatus, type StatusPolarity, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
@@ -145,12 +145,19 @@ const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
 const STAGE_EL_ICON_W = 44;
 /**
- * §197 (dono, 30/10/2026): o selo de buff/DoT mora de LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — não
- * centrado em cima dele. O pedido de tamanho foi "2× o ícone de elemento"; o literal (2 × 44 = 88 px por selo) cobre o
- * sprite num campo de 360 px com 3 inimigos, então ficou 22 px (2× o selo antigo de 12 px; metade do ícone de elemento)
- * ATÉ O DONO CONFIRMAR — é uma constante só (REGISTRO §197, pergunta em aberto).
+ * Selos de status (dono, 13/11/2026; substitui o §197 de 30/10): o tamanho é o que o dono marcou nos prints (~40 px num
+ * inimigo sozinho de 152 px num campo de 360 px), PROPORCIONAL ao sprite como o resto da cena: 26% do lado do sprite,
+ * entre 28 px (3 inimigos) e 44 px (o seu Soulmon; o mesmo teto do ícone de elemento).
  */
-export const STAGE_STATUS_ICON = 22;
+export const STAGE_STATUS_ICON_MIN = 28;
+export const STAGE_STATUS_ICON_MAX = STAGE_EL_ICON_W;
+const STAGE_STATUS_ICON_FRAC = 0.26;
+const STAGE_STATUS_GAP = 4;
+/** Margem mínima dos selos até a borda do campo (px). */
+const STAGE_STATUS_EDGE = 2;
+export function stageStatusIconSize(spot: Spot): number {
+  return Math.round(Math.max(STAGE_STATUS_ICON_MIN, Math.min(STAGE_STATUS_ICON_MAX, spot.size * STAGE_STATUS_ICON_FRAC)));
+}
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
 /** Modo `boss` (Feira do Chefe): a barra do pool mora no topo do campo e o chefe começa logo abaixo. */
@@ -447,6 +454,12 @@ const Z_CUTSCENE_VEIL = 7;
 const Z_CUTSCENE_AURA = 8;
 const Z_CUTSCENE_ACTOR = 9;
 const Z_CUTSCENE_NAME = 10;
+/**
+ * Os selos de status ficam SEMPRE na frente (dono, 13/11/2026): acima do sprite, do véu e da aura do especial, de quem
+ * conjura e do nome do golpe. Só o diálogo de saída fica por cima. O campo (`data-stage-field`) não cria contexto de
+ * empilhamento (sem z-index/transform), então este número compete direto com o véu e o nome, que moram fora dele.
+ */
+export const Z_STATUS = 11;
 const Z_CONFIRM = 12;
 
 /**
@@ -529,20 +542,55 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
 
 /**
  * A camada de STATUS de um lutador (PR11): (1) UMA camada animada em loop sobre o corpo (a de maior prioridade
- * que tem folha), (2) a peça estática do efeito (cura/escudo) e (3) a fileira de selos acima das barras, cada um
- * com glifo + forma (seta/sinal) + texto curto + turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca
- * depende só da cor nem só da imagem: sem arte, a forma e o texto continuam. Movimento reduzido: sem o loop,
- * o selo fica parado — a mesma informação.
+ * que tem folha), (2) a peça estática do efeito (cura/escudo) e (3) os selos, cada um com glifo + forma (seta/sinal) +
+ * turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca depende só da cor nem só da imagem: sem arte, a
+ * forma e o texto continuam. Movimento reduzido: sem o loop, o selo fica parado — a mesma informação.
+ *
+ * Onde os selos moram (dono, 13/11/2026):
+ *  · DEBUFF (contra quem carrega: debuff, maldição, DoT, controle) no canto de CIMA à ESQUERDA do sprite;
+ *  · BUFF (a favor: reforço, cura, HoT, escudo) no canto de BAIXO à DIREITA;
+ *  · em FILEIRA (nunca coluna), na ordem em que cada efeito começou (`status` já chega assim, `stageStatusOf`):
+ *    inimigo da direita para a esquerda (o mais novo mais à esquerda), o seu Soulmon da esquerda para a direita;
+ *  · SEMPRE na frente (`Z_STATUS`), inclusive durante o especial.
  */
 const LOOP_PRIORITY = ['maldicao', 'debuff', 'lento', 'queimadura', 'veneno', 'dot', 'buff'] as const;
 
-function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStatus[]; spot: Spot; barsH: number; isPt: boolean; reduced: boolean }) {
+export type StatusSide = 'me' | 'foe';
+export interface StatusRowPlace { left: number; top: number; width: number; icon: number; dir: 'row' | 'row-reverse' }
+
+/**
+ * Onde fica a fileira de `n` selos de uma zona (pura; testada em `BattleStage.lado.test.tsx`). `fieldW`/`fieldH` = a
+ * caixa do campo (0 = ainda não medida: sem trava de borda). A fileira nunca sai do campo: encosta na borda e cresce para dentro.
+ */
+export function statusRowPlacement(spot: Spot, side: StatusSide, zone: StatusPolarity, n: number, fieldW: number, fieldH: number): StatusRowPlace {
+  const icon = stageStatusIconSize(spot);
+  const width = Math.max(0, n * icon + (n - 1) * STAGE_STATUS_GAP);
+  const boxL = spot.x - spot.size / 2;
+  const boxR = spot.x + spot.size / 2;
+  const boxTop = spot.y - spot.size * SPRITE_TOP;
+  // inimigo: a fileira cresce para a ESQUERDA a partir da âncora (borda direita); o seu Soulmon: para a DIREITA (borda esquerda)
+  let left = side === 'foe'
+    ? (zone === 'debuff' ? boxL + icon : boxR) - width
+    : zone === 'debuff' ? boxL : boxR - icon;
+  if (fieldW > 0) left = Math.min(left, fieldW - width - STAGE_STATUS_EDGE);
+  left = Math.max(STAGE_STATUS_EDGE, left);
+  let top = zone === 'debuff' ? boxTop + 2 : spot.y - spot.size * 0.06 - icon;
+  // o seu Soulmon pisa ABAIXO do campo (ME_BELOW_FIELD): os buffs dele sobem até caber no campo, sem descer sobre o HUD do pé
+  if (fieldH > 0) top = Math.min(top, fieldH - icon - STAGE_STATUS_EDGE);
+  return { left: Math.round(left), top: Math.round(top), width, icon, dir: side === 'foe' ? 'row-reverse' : 'row' };
+}
+
+function StatusLayer({ status, spot, side, fieldW, fieldH, isPt, reduced }: { status: StageStatus[]; spot: Spot; side: StatusSide; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean }) {
   const loopOf = LOOP_PRIORITY.map((k) => status.find((st) => st.kind === k)).find(Boolean);
   const stills = status.filter((st) => STATUS_FX[st.kind].still).slice(0, 1);
-  const shown = status.slice(0, MAX_STATUS_CHIPS);
-  const extra = status.length - shown.length;
+  const zones = (['debuff', 'buff'] as const).map((zone) => {
+    const all = status.filter((st) => statusPolarity(st.kind) === zone);
+    // os MAIS ANTIGOS ficam (o selo não pula de lugar quando entra um novo); o excedente vira "+k" na ponta dos novos
+    const shown = all.slice(0, MAX_STATUS_CHIPS);
+    return { zone, shown, extra: all.length - shown.length };
+  });
   const ids = [
-    ...shown.map((st) => statusGlyphId(st.kind, st.variant)),
+    ...zones.flatMap((z) => z.shown.map((st) => statusGlyphId(st.kind, st.variant))),
     !reduced && loopOf ? STATUS_FX[loopOf.kind].loop : null,
     ...stills.map((st) => STATUS_FX[st.kind].still),
   ];
@@ -582,55 +630,66 @@ function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStat
           />
         );
       })}
-      <div
-        data-stage-status-row
-        data-stage-status-side="right"
-        style={{
-          // ao LADO da cabeça (canto de cima, à direita do sprite), em coluna — nunca centrado em cima dele
-          position: 'absolute', left: Math.round(spot.x + spot.size * 0.3), top: Math.round(spot.y - spot.size * SPRITE_TOP),
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, zIndex: 3, pointerEvents: 'none',
-        }}
-      >
-        {shown.map((st, i) => {
-          const def = STATUS_FX[st.kind];
-          const glyph = art[statusGlyphId(st.kind, st.variant)];
-          const last = st.turns <= 1;
-          return (
-            <span
-              key={`${st.kind}-${st.variant ?? ''}-${i}`}
-              role="img"
-              aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
-              data-stage-status={st.kind}
-              data-stage-status-variant={st.variant}
-              data-stage-status-turns={st.turns}
-              data-stage-status-last={last ? '1' : '0'}
-              data-stage-status-art={glyph ? 'img' : 'css'}
-              className={reduced ? undefined : 'sm-bs-stpop'}
-              style={{
-                position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON,
-                boxSizing: 'border-box', borderRadius: 4, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
-                border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
-              }}
-            >
-              {glyph
-                ? <img src={glyph} alt="" aria-hidden="true" width={STAGE_STATUS_ICON} height={STAGE_STATUS_ICON} style={{ width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON, maxWidth: 'none', imageRendering: 'pixelated' }} />
-                : null}
-              <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: 13 }}>{def.mark}</span>
-              <span aria-hidden="true" className="sm2-num" style={{ position: 'absolute', right: -6, bottom: -3, fontSize: 9, padding: '0 2px', borderRadius: 3, backgroundColor: SCRIM }}>{st.turns}</span>
-            </span>
-          );
-        })}
-        {extra > 0 && (
-          <span
-            role="img"
-            aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
-            data-stage-status-more={extra}
-            style={{ display: 'inline-flex', alignItems: 'center', height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4, backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, border: '1px solid var(--sm2-line)' }}
+      {zones.map(({ zone, shown, extra }) => {
+        if (!shown.length) return null;
+        const p = statusRowPlacement(spot, side, zone, shown.length + (extra > 0 ? 1 : 0), fieldW, fieldH);
+        const icon = p.icon;
+        const turnsFont = Math.max(11, Math.round(icon * 0.32));
+        return (
+          <div
+            key={zone}
+            data-stage-status-row
+            data-stage-status-zone={zone}
+            data-stage-status-side={side}
+            data-stage-status-order={side === 'foe' ? 'rtl' : 'ltr'}
+            style={{
+              position: 'absolute', left: p.left, top: p.top, width: p.width, height: icon,
+              display: 'flex', flexDirection: p.dir, alignItems: 'center', gap: STAGE_STATUS_GAP, zIndex: Z_STATUS, pointerEvents: 'none',
+            }}
           >
-            <span aria-hidden="true">+{extra}</span>
-          </span>
-        )}
-      </div>
+            {shown.map((st, i) => {
+              const def = STATUS_FX[st.kind];
+              const glyph = art[statusGlyphId(st.kind, st.variant)];
+              const last = st.turns <= 1;
+              return (
+                <span
+                  key={`${st.kind}-${st.variant ?? ''}-${i}`}
+                  role="img"
+                  aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
+                  data-stage-status={st.kind}
+                  data-stage-status-variant={st.variant}
+                  data-stage-status-turns={st.turns}
+                  data-stage-status-last={last ? '1' : '0'}
+                  data-stage-status-art={glyph ? 'img' : 'css'}
+                  className={reduced ? undefined : 'sm-bs-stpop'}
+                  style={{
+                    position: 'relative', flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon,
+                    boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', color: 'var(--sm2-ink)', lineHeight: 1, whiteSpace: 'nowrap',
+                    border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
+                    filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))',
+                  }}
+                >
+                  {glyph
+                    ? <img src={glyph} alt="" aria-hidden="true" width={icon} height={icon} style={{ width: icon, height: icon, maxWidth: 'none', imageRendering: 'pixelated' }} />
+                    : null}
+                  <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: Math.round(icon * 0.55) }}>{def.mark}</span>
+                  <span aria-hidden="true" data-stage-status-count className="sm2-num" style={{ position: 'absolute', right: -3, bottom: -3, minWidth: turnsFont, fontSize: turnsFont, lineHeight: 1.1, textAlign: 'center', padding: '0 3px', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, border: '1px solid var(--sm2-line)' }}>{st.turns}</span>
+                </span>
+              );
+            })}
+            {extra > 0 && (
+              <span
+                role="img"
+                aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
+                data-stage-status-more={extra}
+                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: turnsFont, border: '1px solid var(--sm2-line)' }}
+              >
+                <span aria-hidden="true">+{extra}</span>
+              </span>
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -1004,9 +1063,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s || f.down || !f.status?.length) return null;
-          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} barsH={layout.barsH} isPt={isPt} reduced={reduced} />;
+          return <StatusLayer key={`st${f.key}`} status={f.status} spot={s} side="foe" fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />;
         })}
-        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} barsH={layout.barsH} isPt={isPt} reduced={reduced} />}
+        {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} side="me" fieldW={w} fieldH={h} isPt={isPt} reduced={reduced} />}
 
         {/* ALVO POR TOQUE: o botão invisível sobre cada inimigo vivo + o marcador do escolhido (anel dourado). */}
         {onPickFoe && foes.length > 1 && !boss && foes.map((f, i) => {
