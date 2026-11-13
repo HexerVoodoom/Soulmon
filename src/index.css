@@ -5779,6 +5779,10 @@ select:focus-visible {
 .sm2-area-back:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
 [data-map-area]:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-corner-link:active { transform: scale(.94); }
+/* Seletor de idioma da 1ª abertura (SeletorIdiomaAbertura): o tap-highlight é transparente no app todo, então sem isto o toque
+   não mostrava nada até a tela trocar (bug 13/11/2026). Só cor, sem movimento: vale também em movimento reduzido. */
+.sm2-idioma-opcao { touch-action: manipulation; }
+.sm2-idioma-opcao:active, .sm2-idioma-opcao[data-pressed] { background: #fff3 !important; border-color: #fff !important; }
 .sm2-area-back:active { transform: scale(.94); }
 
 /* ── FOLHAS DE BASE SOBEM (I2, 02/10/2026) ──────────────────────────────
