@@ -75,7 +75,7 @@ export function lotZIndex(top: string | number | undefined): number {
  *  não tá legal" / "muito misturado com o background"). É filtro — nenhuma arte nova. Chave `área:lote`. */
 const LOT_HALO: ReadonlySet<string> = new Set(['forja:caderno']);
 
-export function AreaScene({ areaId, language, lots, background, notice, children }: {
+export function AreaScene({ areaId, language, lots, background, notice, palco, children }: {
   areaId: AreaId;
   language: Language;
   lots: AreaLot[];
@@ -84,6 +84,8 @@ export function AreaScene({ areaId, language, lots, background, notice, children
   background?: string;
   /** Aviso neutro de um prédio trancado (`buildingLockLine`), se houver. */
   notice?: string | null;
+  /** Camada extra NO PALCO da imagem (só com prédios pintados), em % da arte: a chave do Calabouço na Exploração (`DungeonKeyBadge`). */
+  palco?: ReactNode;
   /** O `AreaSheet` aberto, se houver — filho para ficar no mesmo empilhamento da cena. */
   children?: ReactNode;
 }) {
@@ -280,6 +282,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
                 </button>
               );
             })}
+            {palco}
           </div>
         </div>
       )}
