@@ -237,6 +237,17 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Lia agora é seu amigo/);
   });
 
+  it('§351 (decisão do dono): a busca do convite usa o modo do convite e convida quem está com o PvP desligado', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({ players: [{ id: 'pid-reservado', name: 'Reservado', stage: 'rookie' }] });
+    vi.mocked(addFriend).mockResolvedValue({ ok: true, status: 'pending', friends: [] });
+    renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    digitar('Reservado');
+    await waitFor(() => expect(addFriend).toHaveBeenCalledWith('save-1', 'pid-reservado'));
+    expect(listPlayers).toHaveBeenCalledWith('Reservado', { friendOf: 'save-1' });
+    await waitFor(() => expect(document.body.textContent).toMatch(/Convite enviado para Reservado/));
+  });
+
   it('nome que ninguém tem: avisa, sem addFriend', async () => {
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);

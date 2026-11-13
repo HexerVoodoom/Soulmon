@@ -339,6 +339,9 @@ export async function onRequest(context) {
     // por pessoa não vai para cache de URL, que serviria o `me` dela a quem
     // repetisse o endereço e pularia a autorização.
     !(action === 'rank' && url.searchParams.has('id')) &&
+    // §351: a busca do "Convidar amigo" (`players&lookup=friend`) é autorizada por conta e tira a própria conta da resposta —
+    // mesma razão do `rank&id=`: cache de URL serviria a resposta de um a outro e pularia a autorização.
+    !(action === 'players' && url.searchParams.get('lookup') === 'friend') &&
     typeof caches !== 'undefined' &&
     caches.default;
 
@@ -764,7 +767,24 @@ async function handleCommunity(context) {
   if (action === 'players' && method === 'GET') {
     const search = (url.searchParams.get('search') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
     const season = currentSeason();
-    /** @type {Array<{ name?: string }>} */
+    // §351 (13/11/2026, DECISÃO DO DONO em modal: "deixar a busca achar quem está com o PvP desligado"):
+    // `lookup=friend` = a busca por apelido do "Convidar amigo" (`addByName`). As SUGESTÕES (`names`) já listavam quem está
+    // com o PvP desligado, e tocar numa delas terminava em "Não achei ninguém com esse nome". Neste modo:
+    //  · vale qualquer jogador VISÍVEL (não `publicHidden`), com PvP ligado OU desligado — mesma régua de `names`;
+    //  · a própria conta não volta; por isso só o DONO do `id` pergunta (`denyUnlessOwner`) e a resposta não vai ao cache de URL;
+    //  · termo vazio é 400 — este modo nunca vira "lista todo mundo";
+    //  · sai SÓ a vista mínima (pid, apelido, estágio, sprite) — nada que o diretório não já mostrasse;
+    //  · quem está com PvP desligado não ganha pid por efeito colateral (`pidSoLeitura`, sem escrita; L07-04).
+    // O diretório (sem `lookup`, com ou sem `search`), o Torneio (`opponents`/`rank`) e o Treino (`sparOpponents`) seguem
+    // exigindo `pvpEnabled`: o consentimento de APARECER na lista e de ser oponente não muda. Escondido e inexistente seguem
+    // indistinguíveis (os dois simplesmente não voltam).
+    const lookupAmigo = url.searchParams.get('lookup') === 'friend';
+    if (lookupAmigo) {
+      if (!search) return json({ error: 'search required' }, 400);
+      const denied = await denyUnlessOwner(id);
+      if (denied) return denied;
+    }
+    /** @type {Array<{ name?: string, [k: string]: any }>} */
     const players = [];
     // SEM busca: os primeiros 300 perfis (a lista de apresentação, como sempre). COM busca: o índice de apelidos
     // (`nick:<minúsculas>`, todo jogador com apelido entra), lido em PÁGINAS só pelos NOMES das chaves, sem ler valor;
@@ -805,8 +825,24 @@ async function handleCommunity(context) {
       // transformaria a busca por nome em confirmação de existência; e
       // `publicProfile` chama `ensurePid`, que EMITE e indexa identidade
       // social como efeito colateral — não se emite para quem não pediu.
-      if (!p.pvpEnabled || isHidden(p)) continue;
+      // §351: na busca do "Convidar amigo" o gate de PvP não vale (decisão do dono); escondido e a própria conta continuam fora.
+      if (isHidden(p)) continue;
+      if (lookupAmigo ? p.id === id : !p.pvpEnabled) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
+      if (lookupAmigo) {
+        // PvP ligado = já está no diretório e já tem pid emitido por ele; PvP desligado = só lê (não emite identidade).
+        const pid = p.pvpEnabled ? await ensurePid(env, p) : await pidSoLeitura(p);
+        if (!pid) continue;
+        const sUrl = spriteUrlOrNull(p.spriteUrl);
+        players.push({
+          id: pid,
+          name: p.name,
+          stage: /^[A-Za-z0-9_.-]{1,40}$/.test(String(p.stage ?? '')) ? p.stage : 'rookie',
+          ...(sUrl ? { spriteUrl: sUrl } : {}),
+        });
+        if (players.length >= 50) break;
+        continue;
+      }
       players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
     }
