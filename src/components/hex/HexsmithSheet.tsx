@@ -1,7 +1,7 @@
 /**
  * A tela da HEXSMITH (01/11/2026, pedido do dono): um MAPA DE SLOTS de RPG — o Soulmon no centro e os 5 encaixes em volta
  * (coroa na cabeça, amuleto no peito, garra numa mão, luvas na outra, couraça no corpo), ligados por linhas de circuito hex.
- * Tocar um encaixe abre o painel dele: os itens POSSUÍDOS (equipar / esvaziar) e a FORJA (catálogo com custo e o motivo da recusa).
+ * Tocar um encaixe abre o painel dele: os itens POSSUÍDOS (um botão grande por item: Equipar ⇄ Desequipar; 13/11/2026) e a FORJA (catálogo com custo e o motivo da recusa).
  *
  * Revisão minimalista (01/11/2026, dono + Squad Alpha): uma rolagem só (a do `ModalSheet`); filtro por ELEMENTOS BASE = o mesmo
  * `ElementBaseSlots` + `elementsMatchingBases` do Laboratório e do Cambista; elemento não desbloqueado no Drive não aparece;
@@ -13,7 +13,7 @@
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { ActionRow, Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
+import { Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
 import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
@@ -41,7 +41,7 @@ import { HexRenameModal } from './HexRenameModal';
 import { applyServerHexRename, type HexRenameKind } from '../../utils/hexsmithRename';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
-import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
+import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexCrownArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 
 export interface HexsmithSheetProps {
@@ -218,7 +218,8 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 
 /**
  * O rosto da porta — UM ícone só: com elemento, o ícone do ELEMENTO (já vem na cor dele); coroa/luvas com valor, a arte da porta
- * cheia; vazia, a mesma arte apagada (`data-empty`). Sem arte na pasta → glifo SVG (fallback).
+ * cheia; vazia, a mesma arte apagada (`data-empty`). Sem arte na pasta → glifo SVG (fallback). Coroa COM família → a coroa
+ * daquela família (`resolveHexCrownArt`: `coroa-<familia>.png`, e sem ela a coroa única); a porta vazia segue na coroa única.
  */
 function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: number }) {
   if (value && HEX_ELEMENT_SLOTS.includes(slot)) {
@@ -226,8 +227,8 @@ function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: 
     if (chip) return <img src={chip} alt="" aria-hidden="true" width={size} height={size} draggable={false} data-hex-chip={value} />;
     return <ElementIcon id={value} size={size} />;
   }
-  const art = resolveHexSlotArt(slot);
-  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} />;
+  const art = slot === 'coroa' && value ? resolveHexCrownArt(value) : resolveHexSlotArt(slot);
+  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} data-hex-crown={slot === 'coroa' && value ? value : undefined} />;
   return <HexSlotGlyph slot={slot} size={size} color={value ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'} filled={!!value} />;
 }
 
@@ -289,24 +290,29 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
               {mine.map((id) => {
                 const v = parseHexItem(id)!.value;
                 const on = equipped === id;
+                const name = hexValueName(slot, v, isPt);
+                // 13/11/2026 (dono): UM botão grande por HEX possuído, que alterna Equipar ⇄ Desequipar ali mesmo (a linha
+                // "Esvaziar a porta" saiu). Equipar outro com um já equipado TROCA (`equipHexItem`); o anterior segue na posse.
                 return (
                   <li key={id} data-hex-owned={id}>
-                    {on ? (
-                      <>
-                        <div className="sm2-hex-row" data-on="true" data-hex-is-equipped>
-                          <SlotFace slot={slot} value={v} size={ICON_ROW} />
-                          <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
-                          <span className="sm2-hex-row-tag"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>
-                        </div>
-                        <div data-hex-clear><ActionRow label={tx(HEX_UI.clear, isPt)} onClick={onClear} language={language as Language} /></div>
-                      </>
-                    ) : (
-                      <div className="sm2-hex-row">
-                        <SlotFace slot={slot} value={v} size={ICON_ROW} />
-                        <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
-                        <button type="button" data-hex-equip={id} onClick={() => onEquip(id)} style={sm2Button('outline', false, 'sm')}>{tx(HEX_UI.equip, isPt)}</button>
-                      </div>
-                    )}
+                    <div className="sm2-hex-row sm2-hex-owned-row" data-on={on} data-hex-is-equipped={on || undefined}>
+                      <SlotFace slot={slot} value={v} size={ICON_MAP} />
+                      <span className="sm2-hex-row-name">{name}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
+                      {on ? (
+                        <button type="button" data-hex-unequip={id} onClick={onClear}
+                          aria-label={`${tx(HEX_UI.unequip, isPt)}: ${name} (${tx(HEX_UI.equipped, isPt)})`}
+                          className="sm2-kit-btn sm2-hex-equip-btn" data-state="equipped">
+                          <span className="sm2-hex-equip-state"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>
+                          <span className="sm2-hex-equip-action">{tx(HEX_UI.unequip, isPt)}</span>
+                        </button>
+                      ) : (
+                        <button type="button" data-hex-equip={id} onClick={() => onEquip(id)}
+                          aria-label={`${tx(HEX_UI.equip, isPt)}: ${name}`}
+                          className="sm2-kit-btn sm2-kit-btn-primary sm2-hex-equip-btn" data-state="idle">
+                          <span className="sm2-hex-equip-action">{tx(HEX_UI.equip, isPt)}</span>
+                        </button>
+                      )}
+                    </div>
                   </li>
                 );
               })}

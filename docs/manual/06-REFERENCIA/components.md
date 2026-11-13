@@ -2177,6 +2177,7 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ### `src/components/hex/HexsmithSheet.tsx`
 **Dono de:** a tela da Hexsmith no lote `forja:hexsmith` (lazy em `nav/AreaView.tsx`): mapa de 5 encaixes ao redor do Soulmon, código hex e o painel de cada encaixe (itens possuídos, forja com filtro por elementos). Regras em `utils/hexsmith.ts`; textos em `utils/hexsmithCopy.ts`.
+**Itens possuídos (13/11/2026, §323):** cada HEX possuído tem UM botão grande na linha (`.sm2-kit-btn.sm2-hex-equip-btn`, alvo 56 px, `data-state="idle|equipped"`): "Equip"/"Equipar" (`data-hex-equip`, `equipHexItem`, troca se já há outro) ⇄ "✓ Equipped" + "Unequip"/"Desequipar" (`data-hex-unequip`, `unequipHexSlot`). A linha "Empty the Port" (`HEX_UI.clear`, `data-hex-clear`) saiu; o texto novo é `HEX_UI.unequip`. **Coroa por família:** `SlotFace` resolve a coroa com valor por `resolveHexCrownArt(familia)` (`assets/soulmon/hex/index.ts`: `coroa-<familia>.png`, fallback `slot-coroa.png`; `data-hex-crown` no `<img>`). Arte nova entra só soltando o PNG na pasta. **Régua:** `HexsmithSheet.render.test.tsx`.
 
 ### `src/components/hex/HexSlotGlyph.tsx`
 **Dono de:** os glifos SVG de cada tipo de encaixe da Hexsmith, usados enquanto a arte de `src/assets/soulmon/hex/` não existe.

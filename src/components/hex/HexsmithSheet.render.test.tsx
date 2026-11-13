@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A tela da Hexsmith (01/11/2026): 5 Portas no mapa, forjar com saldo debita e equipa, recusa mostra o motivo, trocar não tira a posse,
- * esvaziar mantém o item, e não existe botão de vender/descartar.
+ * desequipar (no botão do próprio HEX, 13/11/2026) mantém o item, e não existe botão de vender/descartar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
@@ -121,18 +121,58 @@ describe('HexsmithSheet', () => {
     expect(estado().bits).toBe(5000);
   });
 
-  it('trocar o item equipado não remove a posse; esvaziar mantém; não há vender/descartar', () => {
+  it('trocar o item equipado não remove a posse; desequipar mantém; não há vender/descartar', () => {
     abrir({ hexsmith: { owned: ['couraca:fogo', 'couraca:agua'], equipped: { couraca: 'couraca:fogo' } } });
     click(q('[data-hex-slot="couraca"]'));
     click(q('[data-hex-equip="couraca:agua"]'));
     expect(estado().hx).toEqual({ owned: ['couraca:fogo', 'couraca:agua'], equipped: { couraca: 'couraca:agua' } });
     expect(document.querySelector('[data-hex-is-equipped]')!.textContent).toMatch(/Água.*Equipado/);
-    click(q('[data-hex-clear] button'));
+    click(q('[data-hex-unequip="couraca:agua"]'));
     expect(estado().hx).toEqual({ owned: ['couraca:fogo', 'couraca:agua'], equipped: {} });
     const txt = document.body.textContent!;
     expect(txt).not.toMatch(/vender|sell|descartar|discard|jogar fora/i);
     // possuídos não aparecem no catálogo de forja
     expect(document.querySelector('[data-hex-item="couraca:fogo"]')).toBeNull();
+  });
+
+  it('HEX possuído (13/11/2026): UM botão grande alterna Equipar ⇄ Desequipar; sem a linha "Esvaziar a porta"; trocar substitui', () => {
+    for (const [lang, equip, unequip, equipped, empty] of [['pt-BR', 'Equipar', 'Desequipar', 'Equipado', /Esvaziar a porta/], ['en', 'Equip', 'Unequip', 'Equipped', /Empty the Port/]] as const) {
+      abrir({ hexsmith: { owned: ['coroa:dot', 'coroa:heal'], equipped: {} } }, lang);
+      click(q('[data-hex-slot="coroa"]'));
+      expect(document.body.textContent).not.toMatch(empty);
+      expect(document.querySelector('[data-hex-clear]')).toBeNull();
+      // não equipado: um botão só por linha, rótulo de AÇÃO, alvo do kit (não o CtaButton do site)
+      const row = q('[data-hex-owned="coroa:dot"]');
+      expect(row.querySelectorAll('button')).toHaveLength(1);
+      const b = q('[data-hex-equip="coroa:dot"]');
+      expect(b.textContent).toBe(equip);
+      expect(b.className).toMatch(/(^| )sm2-kit-btn .*sm2-hex-equip-btn/);
+      expect(b.className).not.toMatch(/cta/i);
+      expect(b.getAttribute('data-state')).toBe('idle');
+      click(b);
+      expect(estado().hx.equipped.coroa).toBe('coroa:dot');
+      // equipado: o MESMO lugar vira ✓ Equipado + Desequipar, com rótulo acessível que diz o estado
+      const u = q('[data-hex-unequip="coroa:dot"]');
+      expect(u.getAttribute('data-state')).toBe('equipped');
+      expect(u.querySelector('.sm2-hex-equip-state')!.textContent).toMatch(new RegExp(`${equipped}$`));
+      expect(u.querySelector('.sm2-hex-equip-state .sm2-icon, .sm2-hex-equip-state svg')).not.toBeNull();
+      expect(u.querySelector('.sm2-hex-equip-action')!.textContent).toBe(unequip);
+      expect(u.getAttribute('aria-label')).toBe(`${unequip}: ${lang === 'en' ? 'Lingering damage' : 'Dano contínuo'} (${equipped})`);
+      // equipar OUTRO com um já equipado: troca direto (a regra de equipHexItem), o anterior segue na posse
+      click(q('[data-hex-equip="coroa:heal"]'));
+      expect(estado().hx).toEqual({ owned: ['coroa:dot', 'coroa:heal'], equipped: { coroa: 'coroa:heal' } });
+      expect(document.querySelector('[data-hex-unequip="coroa:dot"]')).toBeNull();
+      click(q('[data-hex-unequip="coroa:heal"]'));
+      expect(estado().hx.equipped).toEqual({});
+      cleanup(); localStorage.clear();
+    }
+  });
+
+  it('coroa por família: sem coroa-<familia>.png, cai na coroa única (slot-coroa.png)', () => {
+    abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
+    const img = q('[data-hex-slot="coroa"]').querySelector('img')!;
+    expect(img.getAttribute('data-hex-crown')).toBe('dot');
+    expect(img.getAttribute('src')).toMatch(/slot-coroa/);
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {
