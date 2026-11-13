@@ -201,6 +201,8 @@ export const GUILD_COPY = {
   'guild.procurar.vazio': ['Nenhum clã com lugar agora. Você pode criar o seu.', 'No clan has room right now. You can start your own.'],
   'guild.procurar.tamanho': ['{n} de {max}', '{n} of {max}'],
   'guild.procurar.pedir': ['Pedir para entrar', 'Request to join'],
+  'guild.procurar.cheiosTitulo': ['Clãs cheios', 'Full clans'],
+  'guild.procurar.cheia': ['Cheia', 'Full'],
   'guild.procurar.pendente': ['Pedido enviado a {nome}. Quem cuida do clã decide.', 'Request sent to {nome}. The clan host decides.'],
   'guild.procurar.pendente.semNome': ['Pedido enviado. Quem cuida do clã decide.', 'Request sent. The clan host decides.'],
   'guild.procurar.cancelar': ['Cancelar pedido', 'Cancel request'],

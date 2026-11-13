@@ -57,7 +57,7 @@
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
 //   (PROCURAR CLÃ — `_claDiretorio.js`, REGISTRO §203; o código continua valendo igual)
-//   GET  guildDirectory ?id=              → { clans:[{dirId,name,size,max}], pending:{dirId,name}|null }   (com clã: clans=[])
+//   GET  guildDirectory ?id=              → { clans:[{dirId,name,size,max,full?}], pending:{dirId,name}|null }   (com clã: clans=[]; §322: cheios no fim, full:true)
 //   POST guildRequest   {id, dirId}        → { pending }   409 already in a guild · 404 invalid clan · 409 guild full
 //                                            · 409 request pending (+{pending}: um pedido por vez; o MESMO clã = 200 idempotente) · 429
 //   POST guildRequestCancel {id}           → { ok: true } (sempre; idempotente)
@@ -104,7 +104,7 @@ import { FEIRA_LOJA_PCT_BUFF, abrirFeiraLoja, feiraLojaDoDia, validarCompraFeira
 import { lerFeiraHit } from './_coop.js';
 import {
   listarDiretorio, lerEntrada, idOpacoValido, lerPedido, lerPedidoNoCla, gravarPedido, apagarPedido, listarPedidos,
-  tirarDoDiretorio, coopReqInKey, coopDirKey,
+  tirarDoDiretorio, coopReqInKey, apagarEntrada,
 } from './_claDiretorio.js';
 import { CASA_BITS_MIN as CASA_MIN_DOACAO, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
@@ -444,8 +444,8 @@ export async function handleGuild({ request, env }) {
     if (await grupoDe(env, id, semana)) return json({ clans: [], pending: null });
     const pend = await lerPedido(env, id);
     const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
-    const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS))
-      .sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
+    // §322: os com vaga primeiro (até 30), os cheios depois (até 12, `full: true`); ordem e tetos são do módulo.
+    const clans = await listarDiretorio(env, COOP_MAX_MEMBERS);
     return json({ clans, pending });
   }
 
@@ -460,7 +460,7 @@ export async function handleGuild({ request, env }) {
     const entrada = idOpacoValido(dirId) ? await lerEntrada(env, dirId) : null;
     const g = entrada ? await lerGrupo(env, entrada.gid) : null;
     if (!g) {
-      if (entrada) await kvOrThrow(env).delete(coopDirKey(dirId));
+      if (entrada) await apagarEntrada(env, dirId);
       return erro('invalid clan', 404);
     }
     const atual = await lerPedido(env, id);
