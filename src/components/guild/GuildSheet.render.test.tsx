@@ -218,6 +218,8 @@ describe('falha de carga NÃO é "sem roda" (#16)', () => {
     await montar();
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.muitosToques'));
     expect(screen.getByText(PT('guild.erro.tentar'))).toBeTruthy();
+    // sem CTA ao lado, "Tentar de novo" segue o contorno de sempre
+    expect(document.querySelector('[data-guild-tentar]')!.hasAttribute('data-cta-texto')).toBe(false);
   });
 
   it('offline (fetch rejeitou) nos dois idiomas', async () => {
@@ -233,6 +235,8 @@ describe('falha de carga NÃO é "sem roda" (#16)', () => {
     await montar({ onLogin });
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.semLogin'));
     expect(screen.queryByRole('textbox')).toBeNull();
+    // §316c: ao lado do CTA de Entrar, "Tentar de novo" é só texto.
+    expect(document.querySelector('[data-guild-tentar]')!.hasAttribute('data-cta-texto')).toBe(true);
     fireEvent.click(screen.getByText(PT('guild.erro.entrar')));
     expect(onLogin).toHaveBeenCalledTimes(1);
     // "Tentar de novo" serve a quem acabou de entrar: relê e, com sessão, mostra a roda.

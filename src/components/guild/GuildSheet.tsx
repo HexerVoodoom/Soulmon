@@ -73,7 +73,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
-import { CtaButton } from '../ui/CtaButton';
+import { CtaButton, CtaTextButton } from '../ui/CtaButton';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
@@ -493,10 +493,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             {t('guild.erro.entrar')}
           </CtaButton>
         )}
-        <button type="button" onClick={() => void carregar(false)} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
-          <Icon name="refresh" size={20} />
-          {t('guild.erro.tentar')}
-        </button>
+        {/* §316c (13/11/2026, dono): ao lado do CTA de Entrar, "Tentar de novo" é só texto (sem ícone: o sublinhado é a affordance); sozinho, segue o contorno de sempre. */}
+        {semConta && onLogin ? (
+          <CtaTextButton onClick={() => void carregar(false)} data-guild-tentar>{t('guild.erro.tentar')}</CtaTextButton>
+        ) : (
+          <button type="button" onClick={() => void carregar(false)} data-guild-tentar className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
+            <Icon name="refresh" size={20} />
+            {t('guild.erro.tentar')}
+          </button>
+        )}
       </div>
     );
   } else if (!load.guild && room === 'guerra') {
