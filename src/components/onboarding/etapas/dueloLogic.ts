@@ -1,51 +1,42 @@
 /**
- * Lógica pura do duelo do onboarding (PLANO-ONBOARDING-VELADO §3 cena 7, D16).
- * Dupla (jogador + BB) ao lado do ancião Velado contra o Desfeito e o Soulmon-pesadelo.
- * Regras: quem toma dano é SEMPRE o lado do ancião; o jogador e o BB dele nunca perdem HP;
- * a luta corta quando o HP total do inimigo cai a ~1/3. Sem servidor, sem save, sem recompensa.
+ * Lógica pura do duelo 2x1 da intro narrativa (plano docs/PLANO-INTRO-NARRATIVA.md D-08/D-09, N4).
+ * Roteirizado e determinístico: o Soulmon do jogador e o aliado do ancião contra o Soulmon do Desfeito.
+ * O inimigo tem vantagem (muita vida) e SÓ ataca o aliado do ancião; o Soulmon do jogador nunca perde
+ * vida e o jogador nunca falha. A luta corta quando a vida do aliado chega a 1/3 ou menos. Sem save,
+ * sem servidor, sem recompensa.
  */
-export type DueloActor = 'desfeito' | 'pesadelo';
-export type DueloVictim = 'anciao' | 'anciaoSoulmon';
-
 export interface DueloState {
-  /** HP do lado do ancião (único que sofre dano). */
-  anciao: number;
-  anciaoSoulmon: number;
-  /** HP do inimigo. */
-  desfeito: number;
-  pesadelo: number;
-  turn: number;
+  /** Aliado do ancião: o único que sofre dano. */
+  aliado: number;
+  /** Soulmon do jogador: nunca perde vida. */
+  jogador: number;
+  inimigo: number;
+  rodada: number;
 }
 
-export const DUELO_MAX = { anciao: 60, anciaoSoulmon: 60, desfeito: 45, pesadelo: 45 } as const;
-export const DUELO_CUT_FRACTION = 1 / 3;
+export const DUELO_MAX = { aliado: 60, jogador: 40, inimigo: 140 } as const;
+export const DUELO_CORTE = 1 / 3;
+/** Dano do inimigo no aliado, por rodada (cicla). */
+export const DANO_INIMIGO = [8, 9, 7, 9, 8] as const;
 
-export function duelStart(): DueloState {
-  return { ...DUELO_MAX, turn: 0 };
-}
+export const duelStart = (): DueloState => ({ ...DUELO_MAX, rodada: 0 });
 
-export const enemyHp = (s: DueloState) => s.desfeito + s.pesadelo;
-export const enemyMaxHp = () => DUELO_MAX.desfeito + DUELO_MAX.pesadelo;
-/** A luta corta quando o inimigo cai a ~1/3 da vida. */
-export const duelCut = (s: DueloState) => enemyHp(s) <= Math.ceil(enemyMaxHp() * DUELO_CUT_FRACTION);
+/** A luta corta quando o aliado chega a 1/3 da vida ou menos. */
+export const aliadoCortou = (s: DueloState): boolean => s.aliado <= Math.ceil(DUELO_MAX.aliado * DUELO_CORTE);
 
-/** Golpe da dupla no inimigo: alterna entre os dois, determinístico. */
-export function duelPlayerStrike(s: DueloState): DueloState {
-  if (duelCut(s)) return s;
-  const dmg = 9 + (s.turn % 3); // 9,10,11
-  const onDesfeito = s.desfeito > 0 && (s.turn % 2 === 0 || s.pesadelo <= 0);
+export interface Rodada { state: DueloState; danoNoInimigo: number; danoNoAliado: number }
+
+/** Uma rodada: o Soulmon do jogador e o aliado golpeiam; o inimigo revida no aliado. Depois do corte, não muda nada. */
+export function duelRodada(s: DueloState): Rodada {
+  if (aliadoCortou(s)) return { state: s, danoNoInimigo: 0, danoNoAliado: 0 };
+  const golpeJogador = 9 + (s.rodada % 3);
+  const golpeAliado = 7;
+  const inimigo = Math.max(1, s.inimigo - golpeJogador - golpeAliado);
+  const dano = DANO_INIMIGO[s.rodada % DANO_INIMIGO.length];
+  const aliado = Math.max(1, s.aliado - dano);
   return {
-    ...s,
-    desfeito: onDesfeito ? Math.max(0, s.desfeito - dmg) : s.desfeito,
-    pesadelo: onDesfeito ? s.pesadelo : Math.max(0, s.pesadelo - dmg),
-    turn: s.turn + 1,
+    state: { aliado, jogador: s.jogador, inimigo, rodada: s.rodada + 1 },
+    danoNoInimigo: s.inimigo - inimigo,
+    danoNoAliado: s.aliado - aliado,
   };
-}
-
-/** Contra-ataque do inimigo: a vítima é SEMPRE do lado do ancião, e o HP nunca zera (piso 1). */
-export function duelFoeStrike(s: DueloState): { state: DueloState; victim: DueloVictim; by: DueloActor } {
-  const by: DueloActor = s.turn % 2 === 0 ? 'desfeito' : 'pesadelo';
-  const victim: DueloVictim = s.turn % 2 === 0 ? 'anciao' : 'anciaoSoulmon';
-  const dmg = 5;
-  return { state: { ...s, [victim]: Math.max(1, s[victim] - dmg) }, victim, by };
 }

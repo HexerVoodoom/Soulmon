@@ -175,6 +175,19 @@ describe('HexsmithSheet', () => {
     expect(b.getAttribute('aria-describedby')).toBe(r.id);
   });
 
+  it('filtro Posso forjar: só os itens com saldo; Todos volta a lista inteira', () => {
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('luz')]: 3 }, equipment: { owned: [], equipped: {}, fragments: HEX_COSTS.element.fragments } });
+    click(q('[data-hex-slot="amuleto"]'));
+    const todos = document.querySelectorAll('[data-hex-item]').length;
+    click(q('[data-hex-filter="can"]'));
+    const itens = [...document.querySelectorAll('[data-hex-item]')];
+    expect(itens.length).toBeGreaterThan(0);
+    expect(itens.length).toBeLessThan(todos);
+    expect(itens.every((b) => b.getAttribute('data-ok') === 'true')).toBe(true);
+    click(q('[data-hex-filter="all"]'));
+    expect(document.querySelectorAll('[data-hex-item]')).toHaveLength(todos);
+  });
+
   it('EN: rótulos em inglês', () => {
     abrir({}, 'en');
     expect(q('[data-hex-slot="coroa"]').getAttribute('aria-label')).toMatch(/^Crown Port: Empty/);
@@ -190,18 +203,19 @@ describe('HexsmithSheet', () => {
     }
   });
 
-  it('tabela de custo (12/11): colunas Item/Custo; poção como ÍCONE com o estoque embaixo; tocar abre o tooltip de como conseguir; fecha ao tocar fora', () => {
+  it('formato da poção (12/11): cartão por item, cabeça com Forjar e uma linha por ingrediente TEM/PRECISA; tocar o ícone abre o tooltip; fecha ao tocar fora', () => {
     abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 1 }, equipment: { owned: [], equipped: {}, fragments: 5 } });
     click(q('[data-hex-slot="garra"]'));
-    const head = document.querySelector('.sm2-hex-thead')!;
-    expect(head.textContent).toBe('ItemCusto');
+    expect(document.querySelector('.sm2-hex-thead')).toBeNull();
     const cell = q('[data-hex-item="garra:agua"]').closest('li')!;
+    expect(cell.className).toContain('sm2-pocao-item');
+    expect(cell.querySelector('.sm2-pocao-head')).not.toBeNull();
+    expect(cell.querySelectorAll('.sm2-pocao-ing > li')).toHaveLength(3);
     const pot = cell.querySelector('[data-hex-cost-potion="agua"]')!;
     expect(pot.querySelector('img')).not.toBeNull();
     expect(pot.querySelector('[data-hex-potion-qty]')!.textContent).toBe(`1/${HEX_COSTS.element.potions}`);
-    expect(cell.querySelector('[data-hex-cost-fragments]')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
-    expect(cell.querySelectorAll('.sm2-hex-plus')).toHaveLength(2);
-    expect(cell.querySelector('[data-hex-cost-bits]')!.textContent).toMatch(/\d/);
+    expect(cell.querySelector('[data-hex-cost-fragments] .sm2-num')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
+    expect(cell.querySelector('[data-hex-cost-bits]')!.textContent).toMatch(/\d+\/\d+/);
     click(cell.querySelector('[data-hex-cost-bits] button[data-info-tip]')!);
     expect(document.querySelector('[data-hex-bits-tip]')).not.toBeNull();
     act(() => { fireEvent.pointerDown(document.body); });

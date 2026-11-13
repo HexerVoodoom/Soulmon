@@ -7,5 +7,5 @@ export interface EtapaProps {
   language?: Language;
 }
 
-/** O que o `GameTutorialFlow` entrega ao criar uma tarefa. */
+/** O que o tutorial do jogo entrega ao criar uma tarefa. */
 export interface NovaTarefa { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }

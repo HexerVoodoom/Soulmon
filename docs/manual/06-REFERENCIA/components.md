@@ -2122,17 +2122,17 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 ### `src/components/onboarding/etapas/EtapaAlimentar.tsx`
 **Dono de:** a etapa em que o ancião ensina "força = tarefa + alimento": arrastar o alimento até o Soulmon (D24).
 
-### `src/components/onboarding/etapas/EtapaDuelo.tsx`
-**Dono de:** a etapa do duelo do onboarding (cena 7, D16), totalmente local, sem servidor nem recompensa; compõe `dueloLogic`.
+### `src/components/onboarding/etapas/EtapaCorda.tsx`
+**Dono de:** a etapa da corda da intro narrativa (cena 6): a voz de cima num balão no alto da cena e UM botão, "Subir".
 
-### `src/components/onboarding/etapas/EtapaPuzzle.tsx`
-**Dono de:** a etapa do puzzle (cena 4, D13): meta mínima de trocas que formam linha e o passo a passo.
+### `src/components/onboarding/etapas/EtapaDuelo.tsx`
+**Dono de:** a etapa do duelo 2x1 da intro narrativa (cena 5), totalmente local, sem servidor nem recompensa; compõe `dueloLogic` e usa o cenário `combate/bg-neutro`.
 
 ### `src/components/onboarding/etapas/EtapaTarefa.tsx`
-**Dono de:** a etapa em que o jogador cria e conclui a primeira tarefa pelo caminho normal do App (cena 6).
+**Dono de:** a etapa de tarefa da intro narrativa (cena 4): o cartão é o da Home (`RitualRow`), sem o assistente do tutorial antigo; sem tarefa aberta cria uma sugerida pequena; retomar com a tarefa já feita só segue (nunca conclui duas vezes).
 
 ### `src/components/onboarding/etapas/dueloLogic.ts`
-**Dono de:** a lógica pura do duelo do onboarding (dupla jogador + BB contra o Desfeito).
+**Dono de:** a lógica pura do duelo roteirizado: só o aliado do ancião toma dano, o Soulmon do jogador nunca perde vida, o inimigo tem vantagem e a luta corta quando o aliado chega a 1/3 da vida.
 
 ### `src/components/onboarding/etapas/tipos.ts`
 **Dono de:** o contrato dos slots do player: toda etapa recebe `onDone`.
@@ -2149,35 +2149,41 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 ### `src/components/onboarding/intro/copy.ts`
 **Dono de:** as legendas EN/PT da cinemática, 9 planos.
 
-### `src/components/onboarding/sequencia/SequenciaOnboarding.tsx`
-**Dono de:** a sequência do onboarding do Velado (ponto de entrada; "Rever a história" ignora o interruptor).
+### `src/components/onboarding/sequencia/ArteIntro.tsx`
+**Dono de:** a arte da intro narrativa; arte ausente = silhueta nomeada com o arquivo esperado.
 
-### `src/components/onboarding/sequencia/SequenciaReal.tsx`
-**Dono de:** `SequenciaReal`: a sequência do onboarding com as ligações reais (`SLOTS_REAIS`) num módulo só, que o App carrega `lazy` para levar Match3Game/BattleStage para fora da entrada.
+### `src/components/onboarding/sequencia/IntroNarrativa.tsx`
+**Dono de:** `IntroNarrativa` (a intro jogável pós-criação, 9 cenas, falas EN/PT) e `IntroRevisao` ("Rever a história": mesmo fluxo com tarefa e comida locais, sem ler nem gravar nada guardado). O App a carrega `lazy`. Pular pula só falas; retomar nunca repete `onCompleteTask`/`onFeed`.
 
-### `src/components/onboarding/sequencia/SequenciaPlayer.tsx`
-**Dono de:** o player de cenas e quadros; slots das etapas interativas, stub quando ausentes.
+### `src/components/onboarding/sequencia/TunelCanvas.tsx`
+**Dono de:** o canvas 2D do túnel (320x180 escalado, 30 fps, pausa com a aba oculta, quadro estático com movimento reduzido, narração em `aria-label`).
 
 ### `src/components/onboarding/sequencia/assets.ts`
 **Dono de:** o mapa central de arte da sequência (arquivo ausente = silhueta nomeada).
 
-### `src/components/onboarding/sequencia/cenas.ts`
-**Dono de:** a definição das cenas 0–9.
-
 ### `src/components/onboarding/sequencia/copy.ts`
-**Dono de:** o roteiro do ancião Remendado.
+**Dono de:** o roteiro do ancião Remendado (ritual, nascimento) e as falas EN/PT da intro narrativa (rascunho para a squad-narrativa; lugar = a Malha).
 
 ### `src/components/onboarding/sequencia/flag.ts`
 **Dono de:** o interruptor do onboarding do Velado, desligado por padrão.
 
-### `src/components/onboarding/sequencia/logic.ts`
-**Dono de:** a lógica pura de quadros: avançar e pular a fala (D12), nunca a etapa interativa.
+### `src/components/onboarding/sequencia/flagIntro.ts`
+**Dono de:** o interruptor PRÓPRIO `INTRO_NARRATIVA` (build `VITE_INTRO_NARRATIVA` + testers por pessoa), separado do `ONBOARDING_VELADO`, e `posCriacao`: a decisão única de qual tela vem depois da criação (intro, tutorial ou Home).
 
-### `src/components/onboarding/sequencia/slotsReais.tsx`
-**Dono de:** o que o App liga às etapas reais (tarefa, alimentar, puzzle, duelo).
+### `src/components/onboarding/sequencia/introCenas.ts`
+**Dono de:** a definição das 9 cenas da intro narrativa (lista de quadros).
 
-### `src/components/onboarding/sequencia/types.ts`
-**Dono de:** os tipos de props que toda frente encaixa num slot.
+### `src/components/onboarding/sequencia/introMaquina.ts`
+**Dono de:** a máquina de cenas pura: próxima posição, Pular só nas falas e normalização do progresso guardado.
+
+### `src/components/onboarding/sequencia/introProgresso.ts`
+**Dono de:** o progresso local da intro `{cena, quadro, tarefaId, alimentou}` (chave `INTRO_NARRATIVA_PROGRESSO`).
+
+### `src/components/onboarding/sequencia/introTipos.ts`
+**Dono de:** os tipos de quadro e de progresso da intro narrativa.
+
+### `src/components/onboarding/sequencia/tunelRender.ts`
+**Dono de:** o desenho puro do túnel pseudo-3D (paredes em perspectiva por coluna, textura procedural, determinístico).
 
 
 ### `src/components/LibraryNewBadge.tsx`

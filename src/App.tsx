@@ -314,9 +314,11 @@ import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
 const GuildaMapPage = lazy(() => import('./components/nav/GuildaMapPage').then(m => ({ default: m.GuildaMapPage })));
 import type { MercOrdem } from './utils/mercMissionSave';
-// Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
-const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
-const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
+// Intro narrativa jogável (interruptor INTRO_NARRATIVA, separado do ONBOARDING_VELADO): cenas, túnel em canvas e etapas reais só montam no 1º uso (fora da entrada).
+import { isIntroNarrativa, posCriacao } from './components/onboarding/sequencia/flagIntro';
+import { refreshIntroTester } from './utils/introTester';
+const IntroRevisao = lazy(() => import('./components/onboarding/sequencia/IntroNarrativa').then(m => ({ default: m.IntroRevisao })));
+const IntroNarrativa = lazy(() => import('./components/onboarding/sequencia/IntroNarrativa').then(m => ({ default: m.IntroNarrativa })));
 import { deveTocarIntro } from './components/onboarding/intro/introGate';
 const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
@@ -983,7 +985,7 @@ export default function App() {
   const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string; stallKind?: 'frames'; section?: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
-  /* ONBOARDING_VELADO: "Rever a história" das Configurações (desligado por padrão). */
+  /* INTRO_NARRATIVA: "Rever a história" das Configurações (só aparece com o interruptor ligado). */
   const [reverHistoria, setReverHistoria] = useState(false);
   /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Mapa próprio, aberto SÓ segurando o cristal do Mapa por 3 s (dono, 05/11/2026, secreto); cada prédio abre o NPC; escolha e confirmacao rodam em `utils/mercMission.ts`. */
   const [guildaOpen, setGuildaOpen] = useState(false);
@@ -991,8 +993,15 @@ export default function App() {
      Os pontos abaixo leem `veladoOn` (estado) e não a constante de módulo, para ligarem sem recarregar. Desligado = idêntico. */
   const [veladoTesterOn, setVeladoTesterOn] = useState(false);
   const veladoOn = ONBOARDING_VELADO || veladoTesterOn;
+  /* INTRO_NARRATIVA por pessoa: o interruptor de build OU o teste do servidor (`/api/intro-teste`). Independe do ONBOARDING_VELADO. */
+  const [introTesterOn, setIntroTesterOn] = useState(false);
+  const introLigada = introTesterOn || isIntroNarrativa();
   useEffect(() => {
-    const checar = () => { void getIdToken().then(t => refreshVeladoTester(t)).then(() => setVeladoTesterOn(isOnboardingVelado())); };
+    const checar = () => {
+      void getIdToken()
+        .then(t => Promise.all([refreshVeladoTester(t), refreshIntroTester(t)]))
+        .then(() => { setVeladoTesterOn(isOnboardingVelado()); setIntroTesterOn(isIntroNarrativa()); });
+    };
     checar();
     return subscribeAuthState(checar);
   }, []);
@@ -1018,8 +1027,8 @@ export default function App() {
   /* Opening pré-login (1ª abertura de quem é novo, com Pular; independe do ONBOARDING_VELADO) e "Ver abertura" das Configurações. */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
   const [reverIntro, setReverIntro] = useState(false);
-  /* ONBOARDING_VELADO: a sequência narrativa roda uma vez, depois do nascimento. Quem já tinha onboarding ao abrir é jogador estabelecido: nunca interrompe. */
-  const [sequenciaVista, setSequenciaVista] = useState(() => readFlag(STORAGE_KEYS.ONBOARDING_VELADO_VISTO) || readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE));
+  /* INTRO_NARRATIVA: a intro roda uma vez, depois do nascimento. Quem já tinha onboarding ao abrir é jogador estabelecido: nunca interrompe. */
+  const [introVista, setIntroVista] = useState(() => readFlag(STORAGE_KEYS.INTRO_NARRATIVA_VISTA) || readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE));
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
@@ -7352,7 +7361,7 @@ export default function App() {
     criarItemInicial(item);
   };
   /* Criação pelo caminho normal de criar (sem a marca do tutorial): usada pela sequência do ONBOARDING_VELADO. */
-  const criarItemInicial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => {
+  const criarItemInicial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }): string => {
     if (item.kind === 'task') {
       const task: Task = {
         id: `tutorial-${Date.now()}`,
@@ -7365,7 +7374,7 @@ export default function App() {
         createdAt: new Date().toISOString(),
       };
       commitTaskCreate(task, TELEMETRY_CREATE_PATH.tutorial);
-      return;
+      return task.id;
     }
     const habit: Activity = {
       id: `tutorial-${Date.now()}`,
@@ -7376,6 +7385,7 @@ export default function App() {
       weekDays: [0, 1, 2, 3, 4, 5, 6],
     };
     commitHabitCreate([habit], TELEMETRY_CREATE_PATH.tutorial);
+    return habit.id;
   };
 
   // A geração parou por conta NÃO paga (`avisarContaNaoPaga`, spriteGen): a ação do aviso abre o MESMO desbloqueio do "Gerar personagem"
@@ -7727,28 +7737,27 @@ export default function App() {
     );
   }
 
-  // ONBOARDING_VELADO: a sequência narrativa no lugar do tutorial, depois do ritual e do nascimento.
-  if (veladoOn && !sequenciaVista && !gameState.demoCharacterId) {
-    const terminarSequencia = () => {
-      writeFlag(STORAGE_KEYS.ONBOARDING_VELADO_VISTO, true, { silent: true });
+  // INTRO_NARRATIVA: a intro jogável no lugar do tutorial, depois do ritual e do nascimento. Uma fonte só de tutorial:
+  // ligada, o GameTutorialFlow abaixo nunca monta (a intro marca o tutorial como feito ao terminar).
+  const depoisDaCriacao = posCriacao({ introLigada, introVista, tutorialFeito: hasCompletedTutorial, demo: !!gameState.demoCharacterId });
+  if (depoisDaCriacao === 'intro') {
+    const terminarIntro = () => {
+      writeFlag(STORAGE_KEYS.INTRO_NARRATIVA_VISTA, true, { silent: true });
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
-      setSequenciaVista(true);
+      setIntroVista(true);
     };
     return (
       <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
-        <SequenciaReal language={language} onDone={terminarSequencia} ligacoes={{
+        <IntroNarrativa language={language} onDone={terminarIntro} ligacoes={{
           tasks: gameState.tasks,
-          maxActivities: activityCap,
           onCreateTask: criarItemInicial,
           onCompleteTask: handleToggleTask,
           foodInventory: gameState.foodInventory,
           onFeed: handleFeed,
           spriteUrl: displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine)),
           petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
-          evolutionStage: gameState.evolutionStage,
-          demoCharacterId: gameState.demoCharacterId,
         }} />
       </Suspense>
     );
@@ -7756,7 +7765,7 @@ export default function App() {
 
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa —
   // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
-  if (!hasCompletedTutorial) {
+  if (depoisDaCriacao === 'tutorial') {
     return (
       <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
@@ -9434,12 +9443,9 @@ export default function App() {
                 }} />
             </Suspense>
           )}
-          {reverHistoria && <Suspense fallback={null}><SequenciaRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{
-            maxActivities: activityCap,
+          {reverHistoria && <Suspense fallback={null}><IntroRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{
             spriteUrl: displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
             petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
-            evolutionStage: gameState.evolutionStage,
-            demoCharacterId: gameState.demoCharacterId,
           }} /></Suspense>}
           {reverIntro && <Suspense fallback={null}><IntroCinematica language={language} onDone={() => setReverIntro(false)} /></Suspense>}
           {pane === 'settings' && (
@@ -9487,7 +9493,7 @@ export default function App() {
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
-              onReplayStory={() => setReverHistoria(true)}
+              onReplayStory={introLigada ? () => setReverHistoria(true) : undefined}
               onReplayIntro={() => setReverIntro(true)}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
