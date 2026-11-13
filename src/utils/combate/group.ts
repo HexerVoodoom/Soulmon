@@ -21,8 +21,9 @@ import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
+import { aplicarEspecialPessoal } from './alvoAliado';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
+  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -208,15 +209,15 @@ export function* groupFightSteps(
   const gain = (f: G, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
+  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
     if (v.dead < Infinity) return;
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -236,18 +237,20 @@ export function* groupFightSteps(
     const tgt = me === pl ? target() : enemies[0];
     if (!tgt) return;
     const isArea = me.area === 'area' && AREA_FAMILIES.includes(sp.family);
+    // §327 (`alvoAliado.ts`): quem RECEBE o especial pessoal. O núcleo de grupo ainda não tem aliados (o lado do jogador é só ele),
+    // então é sempre o próprio lançador; o efeito já é o de `aplicarEspecialPessoal`, que aceita qualquer receptor.
+    const rx: G = me;
     const spread = isArea ? enemies : [tgt];
     // same total budget: the area divides it (times the area efficiency, 1), the single concentrates it
     const share = isArea ? (Eb * (opts.areaEfficiency ?? AREA_EFFICIENCY)) / spread.length : Eb;
     switch (sp.family) {
       case 'direct':
-        for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack');
+        for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack', 'direct');
         break;
       case 'dot':
         for (let k = 1; k <= 3; k++) {
           const vs = [...spread];
           const single = spread.length === 1 && me === pl;
-          const caps = new Map(all.map((x) => [x, x.shield] as const)); // escudo de TODOS NO CAST (§196: o tick que passa ao próximo inimigo também respeita o escudo que ELE tinha no cast)
           const rec = { owner: me, vs, single };
           dots.push(rec);
           timed.push({
@@ -257,7 +260,7 @@ export function* groupFightSteps(
             fn: () => {
               dots.splice(dots.indexOf(rec), 1);
               const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', caps.get(v) ?? Infinity);
+              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §327: o escudo absorve metade de cada tick
             },
           });
         }
@@ -270,27 +273,22 @@ export function* groupFightSteps(
           else v.nVuln += share;
         }
         break;
-      case 'heal':
-        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
-        break;
       case 'shield':
         if (sp.effect === 'hot') {
-          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
-          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, me)) * me.pts);
-          me.nHot += 3;
+          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem RECEBE.
+          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, rx)) * rx.pts);
+          rx.nHot += 3;
           for (let k = 1; k <= 3; k++) {
-            timed.push({ t: t0 + iv * k, fn: () => { me.nHot--; if (me.dead === Infinity) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + pulse) / me.pts; } });
+            timed.push({ t: t0 + iv * k, fn: () => { rx.nHot--; if (rx.dead === Infinity) rx.hp = Math.min(rx.pts, Math.round(rx.hp * rx.pts) + pulse) / rx.pts; } });
           }
           break;
         }
-        me.shield = (Math.round(me.shield * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
+      case 'heal':
       case 'atkBuff':
-        me.nAtk += Eb;
-        break;
       case 'spdBuff':
-        me.nSpd += Eb;
-        me.next = Math.min(me.next, t0 + iv / 2);
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
     }
   };
@@ -343,7 +341,7 @@ export function* groupFightSteps(
       if (v.nVuln > EPS) { const x = Math.min(1, v.nVuln); mulN += x; v.nVuln -= x; }
       const hs = opts.hitScale ? opts.hitScale(me.who, me.nHit) : 1;
       me.nHit++;
-      hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack');
+      hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;

@@ -177,6 +177,14 @@ export function toAttrBonus(b) {
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
 export const SPECIAL_BUDGET_HITS = 3;
+/** §327: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, tick de DoT 0,5). */
+export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
+export const SHIELD_DOT_TICK_ABSORB = 0.5;
+export const SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB });
+/** @param {number} sh @param {number} d @param {'basic'|'direct'|'tick'} src */
+export function shieldAbsorbPoints(sh, d, src) {
+  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
+}
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
 export const SPECIAL_POWER = { direct: 1, dot: 1.15, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
 /** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
@@ -305,15 +313,15 @@ export function* fightSteps(a, b, opts) {
   const gain = (f, x, per) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src, v, frac, kind, shieldCap = Infinity) => {
+  const hit = (src, v, frac, kind, from) => {
     if (v.dead < Infinity) return;
     // VIDA INTEIRA: o golpe vale pontos inteiros (min 1); o evento leva os pontos que SAIRAM da barra
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -330,12 +338,11 @@ export function* fightSteps(a, b, opts) {
     const iv = interval(me.c.spd);
     switch (sp.family) {
       case 'direct':
-        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
+        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
         break;
       case 'dot': {
-        const cap = foe.shield;
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
+          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', 'tick') });
         }
         break;
       }
@@ -408,7 +415,7 @@ export function* fightSteps(a, b, opts) {
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack');
+      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;

@@ -191,8 +191,9 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
       pt: `Uma onda de ${ePt} que devolve sustentação a você. Drena ${rPt}.`,
     };
     case 'shield': return {
-      en: `${el.en} gathers into a barrier that soaks up the next blows. Drains ${rEn}.`,
-      pt: `${el.pt} se reúne numa barreira que absorve os próximos golpes. Drena ${rPt}.`,
+      // §327: o escudo segura o golpe básico inteiro e só metade de um especial direto e de cada tick de dano contínuo; debuffs passam
+      en: `${el.en} gathers into a barrier that holds back the next blows and half of a special strike or of lingering damage. Drains ${rEn}.`,
+      pt: `${el.pt} se reúne numa barreira que segura os próximos golpes e metade de um golpe especial ou do dano contínuo. Drena ${rPt}.`,
     };
     case 'atkBuff': return {
       en: `${el.en} runs through the body and strengthens the next strikes. Drains ${rEn}.`,

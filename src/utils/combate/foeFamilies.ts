@@ -49,7 +49,8 @@ export function foeSpecialOf(stage: string, key: string, pvp = false): Special {
     case 'buff': return bonus(par ? 'atkBuff' : 'spdBuff');
     case 'dot': return pvp ? specialOf('dot') : { ...specialOf('dot'), power: OVER_TIME_BONUS };
     case 'heal': return specialOf('heal');
-    case 'hot': return pvp ? specialOf('shield') : { ...specialOf('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
+    // §327: o HoT do PvE lê o poder do PvE (`specialOfPve`), para um ajuste do `SPECIAL_POWER.shield` do 1v1 não vazar para cá.
+    case 'hot': return pvp ? specialOf('shield') : { ...specialOfPve('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
     case 'debuff': return bonus('defDebuff');
     default: return specialOf('direct');
   }
