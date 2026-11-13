@@ -70,7 +70,7 @@ const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'TalentTree.tsx': { fontSize: 2 },
   'catalog/CatalogMindNotice.tsx': { checkbox: 1 },
   'form/FormKit.tsx': { rolagem: 1 },
-  'games/BattleStage.tsx': { fontSize: 8 },
+  'games/BattleStage.tsx': { fontSize: 4 },
   'games/GameKit.tsx': { fontSize: 1 },
   'games/ResultScreen.tsx': { fontSize: 2 },
   'guild/ClaProcurar.tsx': { checkbox: 1 },

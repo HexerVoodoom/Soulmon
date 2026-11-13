@@ -41,7 +41,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusPolarity,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusPolarity,
   type StageActionKind, type StageStatus, type StatusPolarity, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
@@ -144,13 +144,6 @@ const BARS_H = 50;
 const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
 const STAGE_EL_ICON_W = 44;
-/**
- * §197 (dono, 30/10/2026): o selo de buff/DoT mora de LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — não
- * centrado em cima dele. O pedido de tamanho foi "2× o ícone de elemento"; o literal (2 × 44 = 88 px por selo) cobre o
- * sprite num campo de 360 px com 3 inimigos, então ficou 22 px (2× o selo antigo de 12 px; metade do ícone de elemento)
- * ATÉ O DONO CONFIRMAR — é uma constante só (REGISTRO §197, pergunta em aberto).
- */
-export const STAGE_STATUS_ICON = 22;
 /**
  * MARCADOR DO EFEITO no sprite (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de
  * veneno, queimadura, debuff, reforço… e a cura) vira um marcador no CANTO do sprite, do tamanho que o dono marcou nos
@@ -563,10 +556,10 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
 }
 
 /**
- * A camada de STATUS de um lutador (PR11): (1) o ESCUDO sobre o corpo (a peça estática `fx-shield`, como sempre foi),
- * (2) os MARCADORES DE EFEITO nos cantos do sprite e (3) a fileira de selos ao lado da cabeça, cada um com glifo + forma
- * (seta/sinal) + texto curto + turnos e `aria-label` completo EN/PT. O selo é a INFORMAÇÃO e nunca depende só da cor nem
- * só da imagem: sem arte, a forma e o texto continuam.
+ * A camada de STATUS de um lutador (PR11): (1) o ESCUDO sobre o corpo (a peça estática `fx-shield`, como sempre foi) e
+ * (2) os MARCADORES DE EFEITO nos cantos do sprite. Desde §326 (dono, 13/11/2026) é a ÚNICA leitura do efeito: o selo
+ * de 22 px com o contador de turnos ao lado da barra de HP/especial saiu (o efeito aparecia duas vezes). Cada marcador
+ * (e o escudo) leva o `aria-label` EN/PT com efeito + turnos (`statusAriaLabel`), para o leitor de tela não perder nada.
  *
  * Os marcadores (dono, 13/11/2026): o efeito que antes cobria o Soulmon inteiro (a folha em loop de veneno, queimadura,
  * debuff, reforço…, a cura) vira UM marcador por efeito, do tamanho que o dono marcou nos prints:
@@ -626,8 +619,6 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
   status: StageStatus[]; spot: Spot; side: StatusSide; crowded: boolean; avoid: readonly StageRect[]; fieldW: number; fieldH: number; isPt: boolean; reduced: boolean;
 }) {
   const shield = status.find((st) => st.kind === 'escudo');
-  const shown = status.slice(0, MAX_STATUS_CHIPS);
-  const extra = status.length - shown.length;
   // um marcador por efeito que tem arte de cena (a folha em loop ou a peça estática) — menos o escudo, que segue sobre o corpo
   const markArt = (st: StageStatus) => STATUS_FX[st.kind].loop ?? STATUS_FX[st.kind].still;
   const zones = (['debuff', 'buff'] as const).map((zone) => {
@@ -636,7 +627,6 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
     return { zone, marks, more: all.length - marks.length };
   });
   const ids = [
-    ...shown.map((st) => statusGlyphId(st.kind, st.variant)),
     ...zones.flatMap((z) => z.marks.map(markArt)),
     shield ? STATUS_FX.escudo.still : null,
   ];
@@ -649,9 +639,9 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
       {shield && shieldSrc && (
         <img
           src={shieldSrc}
-          alt=""
-          aria-hidden="true"
+          alt={statusAriaLabel('escudo', shield.turns, isPt, shield.variant)}
           data-stage-fx-still="escudo"
+          data-stage-fx-turns={shield.turns}
           width={shieldSize}
           height={shieldSize}
           style={{
@@ -669,7 +659,6 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
         return (
           <div
             key={zone}
-            aria-hidden="true"
             data-stage-fx-row
             data-stage-fx-zone={zone}
             data-stage-fx-side={side}
@@ -684,78 +673,34 @@ function StatusLayer({ status, spot, side, crowded, avoid, fieldW, fieldH, isPt,
               const def = STATUS_FX[st.kind];
               const src = art[markArt(st) ?? ''];
               const box: CSSProperties = { flex: 'none', width: icon, height: icon, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' };
+              // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §326): o leitor de tela ouve efeito + turnos
+              const a11y = { 'aria-label': statusAriaLabel(st.kind, st.turns, isPt, st.variant), 'data-stage-fx-mark': st.kind, 'data-stage-fx-variant': st.variant, 'data-stage-fx-turns': st.turns };
               return def.loop ? (
                 <div
                   key={`${st.kind}-${st.variant ?? ''}-${i}`}
-                  data-stage-fx-mark={st.kind}
+                  role="img"
+                  {...a11y}
                   data-stage-fx-loop={reduced ? undefined : st.kind}
                   className={reduced ? undefined : 'sm-bs-sheet'}
                   style={{ ...box, backgroundImage: `url("${src}")`, backgroundSize: '300% 200%', backgroundPosition: '0 0', backgroundRepeat: 'no-repeat', imageRendering: 'pixelated' }}
                 />
               ) : (
-                <img key={`${st.kind}-${st.variant ?? ''}-${i}`} src={src} alt="" data-stage-fx-mark={st.kind} width={icon} height={icon} style={{ ...box, display: 'block', maxWidth: 'none', imageRendering: 'pixelated' }} />
+                <img key={`${st.kind}-${st.variant ?? ''}-${i}`} src={src} alt={a11y['aria-label']} data-stage-fx-mark={st.kind} data-stage-fx-variant={st.variant} data-stage-fx-turns={st.turns} width={icon} height={icon} style={{ ...box, display: 'block', maxWidth: 'none', imageRendering: 'pixelated' }} />
               );
             })}
             {more > 0 && (
               <span
+                role="img"
+                aria-label={isPt ? `mais ${more} ${more === 1 ? 'efeito' : 'efeitos'}` : `${more} more ${more === 1 ? 'effect' : 'effects'}`}
                 data-stage-fx-more={more}
                 style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: icon, height: icon, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: Math.max(11, Math.round(icon * 0.32)), border: '1px solid var(--sm2-line)' }}
               >
-                +{more}
+                <span aria-hidden="true">+{more}</span>
               </span>
             )}
           </div>
         );
       })}
-      <div
-        data-stage-status-row
-        data-stage-status-side="right"
-        style={{
-          // ao LADO da cabeça (canto de cima, à direita do sprite), em coluna — nunca centrado em cima dele
-          position: 'absolute', left: Math.round(spot.x + spot.size * 0.3), top: Math.round(spot.y - spot.size * SPRITE_TOP),
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, zIndex: 3, pointerEvents: 'none',
-        }}
-      >
-        {shown.map((st, i) => {
-          const def = STATUS_FX[st.kind];
-          const glyph = art[statusGlyphId(st.kind, st.variant)];
-          const last = st.turns <= 1;
-          return (
-            <span
-              key={`${st.kind}-${st.variant ?? ''}-${i}`}
-              role="img"
-              aria-label={statusAriaLabel(st.kind, st.turns, isPt, st.variant)}
-              data-stage-status={st.kind}
-              data-stage-status-variant={st.variant}
-              data-stage-status-turns={st.turns}
-              data-stage-status-last={last ? '1' : '0'}
-              data-stage-status-art={glyph ? 'img' : 'css'}
-              className={reduced ? undefined : 'sm-bs-stpop'}
-              style={{
-                position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON,
-                boxSizing: 'border-box', borderRadius: 4, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
-                border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
-              }}
-            >
-              {glyph
-                ? <img src={glyph} alt="" aria-hidden="true" width={STAGE_STATUS_ICON} height={STAGE_STATUS_ICON} style={{ width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON, maxWidth: 'none', imageRendering: 'pixelated' }} />
-                : null}
-              <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: 13 }}>{def.mark}</span>
-              <span aria-hidden="true" className="sm2-num" style={{ position: 'absolute', right: -6, bottom: -3, fontSize: 9, padding: '0 2px', borderRadius: 3, backgroundColor: SCRIM }}>{st.turns}</span>
-            </span>
-          );
-        })}
-        {extra > 0 && (
-          <span
-            role="img"
-            aria-label={isPt ? `mais ${extra} ${extra === 1 ? 'efeito' : 'efeitos'}` : `${extra} more ${extra === 1 ? 'effect' : 'effects'}`}
-            data-stage-status-more={extra}
-            style={{ display: 'inline-flex', alignItems: 'center', height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4, backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, border: '1px solid var(--sm2-line)' }}
-          >
-            <span aria-hidden="true">+{extra}</span>
-          </span>
-        )}
-      </div>
     </>
   );
 }

@@ -5954,7 +5954,7 @@ select:focus-visible {
   .sm-bs-cutname { animation-name: sm-bs-cutdim !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
   /* PR11: o loop de status para; o círculo de cast do especial vira o flash único; o selo de status só aparece. */
-  .sm-bs-sheet, .sm-bs-stpop { animation: none !important; }
+  .sm-bs-sheet { animation: none !important; }
   .sm-bs-circle { animation-name: sm-bs-flash !important; }
   /* Combate maior, energia e torcida (04/10/2026): sem bouncing, sem brilho em movimento, sem pulo do mascote; o balao so pisca. */
   .sm-bs-bounce, .sm-cheer-jump, .sm-bs-dodge-hint, .sm-bs-charge, .sm-bs-energy-full > i { animation: none !important; }
@@ -8788,9 +8788,9 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 
 /* FX DE STATUS E CÍRCULO DE CAST (PR11, `components/games/BattleStage.tsx`). Só tokens e a arte de `combate-v3`.
    `.sm-bs-sheet`: a folha de loop 3×2 (128 px por quadro) corre em 6 passos secos — sem interpolar, é pixel art.
-   `.sm-bs-circle`: o círculo de cast do especial no chão. `.sm-bs-stpop`: o selo de status aparece (e fica).
-   Com `prefers-reduced-motion`: a folha para (e o JS nem a monta), o círculo vira o flash único (`sm-bs-flash`) e o
-   selo só aparece — a informação (glifo, forma, texto, turnos) é a mesma (regras no bloco canônico lá embaixo). */
+   `.sm-bs-circle`: o círculo de cast do especial no chão. (O `.sm-bs-stpop` do selo de status saiu com o selo, §326.)
+   Com `prefers-reduced-motion`: a folha para (e o JS nem a monta) e o círculo vira o flash único (`sm-bs-flash`) —
+   o marcador fica no 1º quadro, com o mesmo `aria-label` (efeito + turnos) (regras no bloco canônico lá embaixo). */
 @keyframes sm-bs-sheet {
   0% { background-position: 0% 0%; }
   16.66% { background-position: 50% 0%; }
@@ -8808,8 +8808,6 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: scale(1.15); }
 }
 .sm-bs-circle { animation: sm-bs-circle var(--bs-dur, 1200ms) ease-out var(--bs-delay, 0ms) 1 both; }
-@keyframes sm-bs-stpop { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
-.sm-bs-stpop { animation: sm-bs-stpop 260ms ease-out 1 both; }
 
 /* CENA DE COMBATE MAIOR, ENERGIA E TORCIDA (04/10/2026 — REGISTRO §20.10).
    Tudo por token (`--sm2-*`), nenhuma cor solta. O bouncing idle, o brilho do lutador com energia cheia,

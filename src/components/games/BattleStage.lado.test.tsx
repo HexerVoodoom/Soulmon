@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 /**
  * §197 e §200 (dono, 30/10/2026):
- *  - o selo de buff/DoT fica DE LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — nunca centrado em cima dele;
+ *  - o selo de buff/DoT fica DE LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — substituído em §326: o selo
+ *    com contador saiu e o marcador no canto do sprite é a única leitura do efeito;
  *  - com 3 inimigos em triângulo, o da ESQUERDA olha para a direita (espelhado em relação aos outros).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, waitFor } from '@testing-library/react';
 
 vi.mock('../../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn() }));
 
-import { BattleStage, foeFacesRight, stageLayout, stageBarsRect, stageFxMarkSize, fxMarkRowPlacement, STAGE_FX_MARK_MAX, STAGE_FX_MARK_MIN, STAGE_STATUS_ICON, type StageFighter } from './BattleStage';
+import { BattleStage, foeFacesRight, stageLayout, stageBarsRect, stageFxMarkSize, fxMarkRowPlacement, STAGE_FX_MARK_MAX, STAGE_FX_MARK_MIN, type StageFighter } from './BattleStage';
 
 afterEach(() => cleanup());
 
@@ -29,19 +30,13 @@ describe('§200 triângulo: o inimigo da esquerda olha para a direita', () => {
   });
 });
 
-describe('§197 selo de status de lado, pequeno', () => {
-  it('a coluna dos selos fica à DIREITA do centro do sprite, na altura da cabeça; cada selo tem o tamanho da constante', () => {
+describe('§326 o efeito aparece UMA vez: só o marcador no canto do sprite, sem o selo com contador ao lado da barra', () => {
+  it('nenhuma coluna de selos nem selo com turnos; o pet e cada inimigo ficam só com o marcador', async () => {
     const { container } = render(<BattleStage scene="#123" me={me} foes={[foe(0)]} title="Arena" closeLabel="Sair" onClose={() => {}} />);
-    const rows = [...container.querySelectorAll<HTMLElement>('[data-stage-status-row]')];
-    expect(rows.length).toBe(2);
-    for (const r of rows) {
-      expect(r.style.transform).toBe(''); // não sobe centrado acima das barras
-      expect(r.style.flexDirection).toBe('column');
-    }
-    for (const chip of container.querySelectorAll<HTMLElement>('[data-stage-status]')) {
-      expect(chip.style.width).toBe(`${STAGE_STATUS_ICON}px`);
-      expect(chip.style.height).toBe(`${STAGE_STATUS_ICON}px`);
-    }
+    await waitFor(() => expect(container.querySelectorAll('[data-stage-fx-mark]').length).toBe(2), { timeout: 10_000 });
+    expect(container.querySelector('[data-stage-status-row]')).toBeNull();
+    expect(container.querySelector('[data-stage-status]')).toBeNull();
+    expect([...container.querySelectorAll('[data-stage-fx-mark]')].map((m) => m.getAttribute('data-stage-fx-mark')).sort()).toEqual(['buff', 'dot']);
   });
 });
 
