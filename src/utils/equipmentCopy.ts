@@ -30,7 +30,7 @@ export function itemName(slot: EquipSlot, tier: 1 | 2 | 3, isPt: boolean): strin
 /** O motivo da recusa, neutro (sem culpa, sem pressa). */
 export function refusalText(r: EquipRefusal, isPt: boolean): string {
   switch (r) {
-    case 'no-funds': return isPt ? 'Ainda faltam Bits. Eles chegam jogando, sem pressa.' : 'Not enough Bits yet. They come from playing, no rush.';
+    case 'no-funds': return isPt ? 'Ainda faltam Bits. Eles chegam jogando.' : 'Not enough Bits yet. They come from playing.';
     case 'not-earned': return isPt
       ? 'Equipamento só se compra com Bits que você ganhou jogando. Os Bits vindos de Créditos servem para outras coisas.'
       : 'Equipment is only bought with Bits you earned by playing. Bits that came from Credits are for other things.';

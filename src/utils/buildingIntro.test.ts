@@ -54,7 +54,8 @@ describe('detector entre dois Vínculos', () => {
 
   it('vários de uma vez saem em fila, do Vínculo mais cedo ao mais tarde, e a ordem é estável', () => {
     const a = buildingsUnlockedBetween(1, 5);
-    expect(a.length).toBeGreaterThan(3);
+    // 12/11/2026 (dono): todos os prédios abrem no Vínculo 1 — a fila de apresentações por Vínculo fica vazia (a infra segue pronta).
+    expect(a).toEqual([]);
     const mins = a.map(id => BUILDING_GATES[id].minBond);
     expect([...mins].sort((x, y) => x - y)).toEqual(mins);
     expect(buildingsUnlockedBetween(1, 5)).toEqual(a);
@@ -73,10 +74,10 @@ describe('o que já foi visto (buildingIntrosSeen)', () => {
     }
   });
 
-  it('jogador novo (Vínculo 1): nenhuma apresentação até o Vínculo crescer', () => {
+  it('jogador novo (Vínculo 1): nenhuma apresentação (todos os prédios abrem no 1)', () => {
     const seen = seedBuildingIntrosSeen(1);
     expect(pendingBuildingIntros(seen, 1)).toEqual([]);
-    expect(pendingBuildingIntros(seen, 2).length).toBeGreaterThan(0);
+    expect(pendingBuildingIntros(seen, 2)).toEqual([]); // sem limite por level: nada novo abre ao subir
   });
 
   it('array válido: só ids conhecidos, sem repetir; lixo dentro some', () => {

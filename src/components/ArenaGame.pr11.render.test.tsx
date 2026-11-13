@@ -4,7 +4,7 @@
  * o pet com especial de família `atkBuff` (escola `combate_fisico`, família gravada) conjura, o núcleo devolve o evento, e a cena
  * mostra o buff dele com turnos e o círculo de cast. O status vem do motor; a tela não inventa.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { readFileSync } from 'node:fs';
@@ -93,6 +93,10 @@ const camada = () => document.querySelector('[data-torcida-layer]') as HTMLEleme
 const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement;
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
 import { RING_LEAD_MS } from './games/useGroupBattle';
+import { COMBAT_V3_ART_IDS, loadCombatV3Art } from '../utils/combatV3Art';
+// §331: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o import frio passa do
+// teto curto de espera sob carga — a arte entra no cache uma vez, antes dos testes.
+beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
 const mascote = () => screen.getByRole('button', { name: 'Torcer pelo seu Soulmon' });
@@ -131,14 +135,14 @@ describe('Arena — FX de status e cast (PR11)', () => {
       await entrar({ escola });
       expect(noAnel()).not.toBeNull();
       expect(document.querySelector('[data-stage-cast]')).toBeNull(); // o cast só abre depois do anel
-      expect(document.querySelector('[data-stage-status]')).toBeNull();
+      expect(document.querySelector('[data-stage-fx-mark]')).toBeNull();
       const alvo = Number(noAnel()?.getAttribute('data-ring-target'));
       await avancar(alvo);
       fireEvent.pointerDown(document.body);
       await avancar(100);
       expect(document.querySelector('[data-stage-cast="special"]')).not.toBeNull();
-      expect(await ate(() => document.querySelector(`[data-stage-status="${kind}"]`) !== null, 3000)).toBe(true);
-      expect(document.querySelector(`[data-stage-status="${kind}"]`)!.getAttribute('aria-label')).toMatch(rotulo);
+      expect(await ate(() => document.querySelector(`[data-stage-fx-mark="${kind}"]`) !== null, 3000)).toBe(true);
+      { const m = document.querySelector(`[data-stage-fx-mark="${kind}"]`)!; expect(m.getAttribute('aria-label') ?? m.getAttribute('alt')).toMatch(rotulo); }
     });
   }
 
@@ -149,7 +153,7 @@ describe('Arena — FX de status e cast (PR11)', () => {
     fireEvent.pointerDown(document.body);
     await avancar(100);
     expect(document.querySelector('[data-stage-cast="special"]')).not.toBeNull();
-    expect(document.querySelector('[data-stage-status]')).toBeNull();
+    expect(document.querySelector('[data-stage-fx-mark]')).toBeNull();
   });
 
   it('PR16: o especial da escola MALDIÇÃO (família defDebuff) mostra o selo de MALDIÇÃO no inimigo — e NÃO o de debuff; turnos reais do núcleo', async () => {
@@ -157,9 +161,9 @@ describe('Arena — FX de status e cast (PR11)', () => {
     await entrar({ escola: 'maldicao' });
     await avancar(Number(noAnel()?.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
-    expect(await ate(() => document.querySelector('[data-stage-status="maldicao"]') !== null, 3000)).toBe(true);
-    expect(document.querySelector('[data-stage-status="debuff"]')).toBeNull();
-    expect(document.querySelector('[data-stage-status="maldicao"]')!.getAttribute('aria-label')).toMatch(/^Maldição, \d+ turnos?$/);
+    expect(await ate(() => document.querySelector('[data-stage-fx-mark="maldicao"]') !== null, 3000)).toBe(true);
+    expect(document.querySelector('[data-stage-fx-mark="debuff"]')).toBeNull();
+    expect(document.querySelector('[data-stage-fx-mark="maldicao"]')!.getAttribute('aria-label')).toMatch(/^Maldição, \d+ turnos?$/);
   });
 
   it('em inglês os selos saem em inglês', async () => {
@@ -167,7 +171,7 @@ describe('Arena — FX de status e cast (PR11)', () => {
     await entrar({ escola: 'atkBuff', language: 'en-US' });
     await avancar(Number(noAnel()?.getAttribute('data-ring-target')));
     fireEvent.pointerDown(document.body);
-    expect(await ate(() => document.querySelector('[data-stage-status="buff"]') !== null, 3000)).toBe(true);
-    expect(document.querySelector('[data-stage-status="buff"]')!.getAttribute('aria-label')).toBe('Magic attack up, 5 turns left');
+    expect(await ate(() => document.querySelector('[data-stage-fx-mark="buff"]') !== null, 3000)).toBe(true);
+    expect(document.querySelector('[data-stage-fx-mark="buff"]')!.getAttribute('aria-label')).toBe('Magic attack up, 5 turns left');
   });
 });

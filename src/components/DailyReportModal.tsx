@@ -57,6 +57,8 @@ interface DailyReportModalProps {
   /** A animação começou: quem chama grava "já vista" para ela não repetir ao reabrir. */
   onHeartsAnimSeen?: () => void;
   onClose: () => void;
+  /** Fim da cena do Passeio ("Voltar para casa"): fecha o resumo e leva à Home. Sem ele, só fecha. */
+  onGoHome?: () => void;
   language: Language;
   /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
    *  momentos-chave — é o que separa "app que mede" de "avatar que acompanha". */
@@ -175,7 +177,7 @@ function pickFor(date: string): number {
  *  · **humor = 5 alvos 44 iguais** com o emoji de `mood.ts` (D-R6);
  *  · **convite** = card irmão com × 44 e `outline` de duas linhas em 260 (D-R9).
  */
-export function DailyReportModal({ report, adventure, adventureIsNew = false, stroll = null, strollScene = null, maxHearts = DEFAULT_HEARTS, heartsAnimSeen, onHeartsAnimSeen, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, adventure, adventureIsNew = false, stroll = null, strollScene = null, maxHearts = DEFAULT_HEARTS, heartsAnimSeen, onHeartsAnimSeen, onClose, onGoHome, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
@@ -446,6 +448,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
         onDiscover={strollScene.onDiscover}
         onFinish={goNext}
         finishLabel={nextLabel}
+        onGoHome={onGoHome ?? onClose}
         language={language}
       />
     );

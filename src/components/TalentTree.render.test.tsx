@@ -118,6 +118,19 @@ describe('TalentTree', () => {
     expect(estadoTxt()).toMatch(/^0\/1 points spent/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/Level|Nível/);
   });
+
+  it('§316c: o modal do nó usa o par PADRÃO do app em linha (Cancelar, Confirmar), sem o CTA do site', () => {
+    abrir({ totalXP: 0 });
+    abrirNo('tal-pvp-01');
+    const conf = confirmBtn();
+    const canc = document.querySelector('[data-talent-cancel]')!;
+    expect(conf.hasAttribute('data-cta-button')).toBe(false);
+    expect(conf.className).toContain('sm2-kit-btn-primary');
+    expect(canc.className).toContain('sm2-kit-btn-quiet');
+    expect(canc.compareDocumentPosition(conf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(conf.parentElement!.hasAttribute('data-cta-stack')).toBe(false);
+    expect((conf.parentElement as HTMLElement).style.display).toBe('flex');
+  });
 });
 
 describe('PR7b: os nós redesenhados na tela', () => {

@@ -51,9 +51,9 @@ function mundo(extraB = {}) {
       [`profile:${CAROL}`]: perfil(CAROL, PID_C, 'Carol'),
       [`pid:${PID_A}`]: ALICE, [`pid:${PID_B}`]: BRUNO, [`pid:${PID_C}`]: CAROL,
       // Combate v3 (PR5): o duelo lê o SAVE de cada lado.
-      [ALICE]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3 }),
-      [BRUNO]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3 }),
-      [CAROL]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3 }),
+      [ALICE]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3, totalXP: 5000 }),
+      [BRUNO]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3, totalXP: 5000 }),
+      [CAROL]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3, totalXP: 5000 }),
       [`rank:${SEASON}:${ALICE}`]: rank(10),
       [`rank:${SEASON}:${BRUNO}`]: rank(99),
       [`rank:${SEASON}:${CAROL}`]: rank(20),

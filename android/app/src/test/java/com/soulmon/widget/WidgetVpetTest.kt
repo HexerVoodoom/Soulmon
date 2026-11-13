@@ -100,4 +100,61 @@ class WidgetVpetTest {
         assertTrue(WidgetVpet.sleepZ.l >= WidgetVpet.sprite.l && WidgetVpet.sleepZ.r <= WidgetVpet.sprite.r)
         assertTrue(WidgetVpet.sleepZ.b <= WidgetVpet.sprite.b)
     }
+
+    // ---- Companheiro (beta12 A3): bitmap quadrado, criatura grande, mesmo LCD da moldura deslocado para baixo. ----
+    private val comp = WidgetVpet.COMPANION
+    private val compScreen = WidgetVpet.screenOf(comp)
+
+    private fun insideCanvas(b: WidgetVpet.Box) = b.l >= 0 && b.t >= 0 && b.r <= comp.w && b.b <= comp.h && b.w > 0 && b.h > 0
+    private fun insideCompScreen(b: WidgetVpet.Box) =
+        b.l >= compScreen.l && b.t >= compScreen.t && b.r <= compScreen.r && b.b <= compScreen.b && b.w > 0 && b.h > 0
+
+    @Test fun cageGeometryIsUntouched() {
+        val cage = WidgetVpet.CAGE
+        assertEquals(576, cage.w)
+        assertEquals(384, cage.h)
+        assertEquals(0, cage.casingY)
+        assertEquals(WidgetVpet.sprite, cage.sprite)
+        assertEquals(WidgetVpet.text, cage.text)
+        assertEquals(WidgetVpet.iconRow, cage.iconRow)
+        assertFalse(cage.spriteOverCasing)
+        assertEquals(screen, WidgetVpet.screenOf(cage))
+    }
+
+    @Test fun companionCanvasIsSquareAndTheCasingFitsAtTheBottom() {
+        assertEquals(comp.w, comp.h)
+        assertEquals(WidgetVpet.COMPANION_SIZE, comp.w)
+        assertEquals(comp.h - WidgetVpet.H, comp.casingY)
+        assertEquals(WidgetVpet.H, comp.h - comp.casingY)
+        assertTrue(comp.spriteOverCasing)
+    }
+
+    @Test fun companionCreatureIsMuchBiggerThanTheCages() {
+        assertTrue(comp.sprite.w >= 2 * WidgetVpet.sprite.w)
+        assertEquals(comp.sprite.w, comp.sprite.h)
+        assertTrue(insideCanvas(comp.sprite))
+        // Centred on the canvas, standing out above the device.
+        assertEquals(comp.w - comp.sprite.r, comp.sprite.l)
+        assertEquals(0, comp.sprite.t)
+        assertTrue(comp.sprite.t < compScreen.t)
+    }
+
+    @Test fun companionTextAndIconsStayInsideTheLcd() {
+        assertTrue(insideCompScreen(comp.text))
+        assertTrue(insideCompScreen(comp.iconRow))
+        assertTrue(insideCanvas(comp.sleepZ))
+    }
+
+    @Test fun companionTextIsBelowTheCreatureAndAboveTheIcons() {
+        assertTrue(comp.text.t >= comp.sprite.b)
+        assertTrue(comp.text.b <= comp.iconRow.t)
+        assertTrue(comp.text.h >= 40)
+    }
+
+    @Test fun companionIconsAndSleepZFit() {
+        assertTrue(WidgetVpet.iconRow.l + 0 >= 0)
+        val step = WidgetVpet.ICON + WidgetVpet.ICON_GAP
+        assertTrue(2 * step + WidgetVpet.ICON <= comp.iconRow.w)
+        assertTrue(comp.sleepZ.l >= comp.sprite.l && comp.sleepZ.r <= comp.sprite.r && comp.sleepZ.t >= comp.sprite.t)
+    }
 }

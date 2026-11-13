@@ -112,3 +112,12 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     }
   });
 });
+
+describe('escudo do bloqueio (13/11/2026): todo elemento resolve `defended` da folha de FX', () => {
+  it('base, derivados, curados, neutro e pesadelo têm `fxFrame(id, "defended")` com a arte do próprio elemento', async () => {
+    const { LIBRARY_ELEMENT_IDS } = await import('./elementDex');
+    for (const id of [...LIBRARY_ELEMENT_IDS, 'neutro', 'pesadelo']) {
+      expect(fxFrame(id, 'defended'), id).toBeTruthy();
+    }
+  });
+});

@@ -1,10 +1,14 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
+import { useWakeGate } from '../WakeToEnter';
+import { lotEntryAsks } from '../../utils/wakeToEnter';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
+import { DungeonKeyBadge } from './DungeonKeyBadge';
+import { requestGoToBuilding } from '../../utils/blockedAction';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
@@ -141,6 +145,8 @@ export interface PlayHandlers {
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
   focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
+  /** beta12 §J: uma sessão de foco concluída com a tarefa escolhida (`habit:<id>` = hábito): marca o hábito de foco adotado que ela usou. */
+  onFocusSessionTask?: (taskId?: string) => void;
   onToggleFocusStep?: (taskId: string, stepId: string) => void;
   /** Prioridades (ICE): grava/limpa as 4 notas na tarefa. */
   onSetFocusIce?: (taskId: string, ice: Ice | null) => void;
@@ -155,6 +161,8 @@ export interface PlayHandlers {
   dungeonKeyActive?: boolean;
   /** §299: a chave existe no save mas passou das 48 h (o portão diz que expirou). */
   dungeonKeyExpired?: boolean;
+  /** 13/11/2026 (dono): quando a chave do Calabouço expira (ms, `dungeonKeyExpiresAt`); o mapa da Exploração mostra a chave e o relógio. `null`/ausente = sem chave, nada no mapa. */
+  dungeonKeyExpiresAt?: number | null;
   onFocusSessionComplete?: () => void;
   /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
   onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
@@ -194,8 +202,6 @@ type TournamentProps = ComponentProps<typeof TournamentPageT>;
 
 export interface AreaViewProps {
   area: AreaId;
-  /** Acordar o Soulmon (REGISTRO §112): `true` = a ação de jogo ficou parada (o `App` já mostrou o aviso curto + o atalho "Acordar"). Só os JOGOS passam por aqui (`WAKE_BLOCKED_GAMES`); abrir a área e navegar nunca param. */
-  wakeGuard?: (action: string) => boolean;
   /** O Soulmon JÁ está na descida (`soulmonNaMasmorra`): tocar a Fenda entra direto na tela da descida, sem a folha com o CTA. */
   naMasmorra?: boolean;
   /** 💎 O Soulmon está no CRISTAL da evolução: Masmorra, Fenda, Feira, Grove e Arena recusam com o aviso curto (`utils/evolutionCrystal.ts`). */
@@ -367,11 +373,20 @@ export function AreaView(props: AreaViewProps) {
   const bbBlocks = (lotId: string | null | undefined) =>
     !!lotId && `${area}.${lotId}` in BB_LOCKED_BUILDINGS && bbRefusal({ evolutionStage: props.evolutionStage }) !== null;
   const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
+  /* 💤 Soulmon dormindo (REGISTRO §329, `utils/wakeToEnter.ts`): só o prédio cuja ENTRADA já é a atividade (`SLEEP_BLOCKED_LOTS`, o
+     Calabouço) pergunta na porta. As folhas com parte de leitura (Arena, Torneio, Guerra, Fenda, Passeio, Oficina, Feira, Grove —
+     `SLEEP_ACTION_LOTS`) entram livres; o botão de lutar/agir lá dentro pergunta na hora do toque. Mapa, lojas e Laboratório, livres. */
+  const wakeGate = useWakeGate();
+  const sleepEntry = (lotId: string | null | undefined): string | null =>
+    lotId && lotEntryAsks(`${area}.${lotId}`) ? `${area}.${lotId}` : null;
   const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
+  /* Atalho da Home/missão para um prédio de atividade com o Soulmon dormindo: a folha não abre na montagem; a pergunta abre (efeito abaixo). */
+  const initialSleepEntry = props.initialSheet && !initialLock && !initialDemoBlocked ? sleepEntry(props.initialSheet) : null;
+  const [initialSleepHeld] = useState(() => !!initialSleepEntry && wakeGate.held(initialSleepEntry));
   /* Plaquinha da Home "Ir à Fenda": com o Soulmon lá, `initialSheet: 'fenda'` abre direto a TELA da descida (como o toque no lote), sem a folha de início. */
   const initialFenda = props.area === 'exploracao' && props.initialSheet === 'fenda' && !!props.naMasmorra && !initialLock && !initialDemoBlocked;
-  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialFenda ? null : props.initialSheet ?? null);
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialFenda || initialSleepHeld ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
     cristalBlocks(props.initialSheet) ? crystalRefusalText(language === 'pt-BR')
       : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
@@ -385,12 +400,18 @@ export function AreaView(props: AreaViewProps) {
   const gsForIndicators = useGameStateOptional()?.gameState;
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
-  const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
+  const gated = (lots: AreaLot[]): AreaLot[] => lots.map(lote => {
+    let l = lote;
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
     if (cristalBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(crystalRefusalText(language === 'pt-BR')) };
     if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
+    const dormindo = sleepEntry(l.id);
+    if (!g && dormindo) {
+      const abrir = l.onOpen;
+      l = { ...l, onOpen: () => { wakeGate.require(dormindo, abrir); } };
+    }
     if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0, indicator: lotFlags[`${area}.${l.id}`] };
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
@@ -439,7 +460,15 @@ export function AreaView(props: AreaViewProps) {
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
-  useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!props.initialSheet) return;
+    const lote = props.initialSheet;
+    if (initialSleepHeld && initialSleepEntry) {
+      // 💤 §329: a pergunta abre; "Acordar" entra no prédio pedido (conta a visita só aí), "Agora não" fica na área.
+      wakeGate.require(initialSleepEntry, () => { onVisitBuilding?.(`${area}.${lote}` as BuildingId); setSheet(lote); });
+    } else if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${lote}` as BuildingId);
+    onInitialSheetConsumed?.();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
@@ -526,7 +555,8 @@ export function AreaView(props: AreaViewProps) {
   /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
      pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
   const funGate = funApi;
-  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
+  /* 💤 Jogo com o Soulmon dormindo (§329; antes, §112, era só o aviso curto do início de dia): pergunta e, ao acordar, o jogo abre. */
+  const start = (g: PlayGame) => { wakeGate.require(g, () => { setSheet(null); setModeChosen(null); setGame(g); }); };
   /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
   const startSalao = (g: PlayGame) => {
     if (funGate && isFunGame(g) && !funGate.status(Date.now()).canPlay) return;
@@ -586,7 +616,8 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 evolutionStage={props.evolutionStage}
                 arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
-                onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
+                // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
+                onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
               />
             )}
             {open?.id === 'guerra' && (
@@ -643,7 +674,8 @@ export function AreaView(props: AreaViewProps) {
     const mt = play.mindTutorials;
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
-      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
+      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}
+        palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
@@ -658,7 +690,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
-            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
@@ -673,7 +705,7 @@ export function AreaView(props: AreaViewProps) {
         </AreaSheet>
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
-        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} /></Suspense>}
+        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} onGoToWorkshop={() => { close(); requestGoToBuilding('forja.oficina'); }} /></Suspense>}
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>

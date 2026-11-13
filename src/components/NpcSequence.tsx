@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { TypewriterText } from './ui/TypewriterText';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useBackLayer } from '../utils/backStack';
@@ -28,12 +28,15 @@ export interface NpcSequenceLine {
  *  · `onFinish` dispara UMA vez, por mais toques que cheguem.
  * Quem usa decide o que "visto" significa (aqui nada é gravado).
  */
-export function NpcSequence({ lines, language, onFinish, label }: {
+export function NpcSequence({ lines, language, onFinish, label, action }: {
   lines: readonly NpcSequenceLine[];
   language: Language;
   onFinish: (how: 'done' | 'skip') => void;
   /** Nome acessível do diálogo (padrão: o nome de quem fala). */
   label?: string;
+  /** Ação opcional na ÚLTIMA fala, dentro da janela de texto (ex.: o `CtaButton` "Ir para a Oficina do Foco" do guarda-chave, 13/11/2026).
+   *  Tocar nela não avança nem fecha a sequência sozinha: quem passa a ação decide. Sem ela, nada muda. */
+  action?: ReactNode;
 }) {
   const isPt = language === 'pt-BR';
   const [i, setI] = useState(0);
@@ -139,6 +142,7 @@ export function NpcSequence({ lines, language, onFinish, label }: {
             {line.speaker}
           </b>
           <TypewriterText key={`${i}|${line.text}`} text={line.text} />
+          {action && i >= last && <div data-npc-action style={{ marginTop: 12, pointerEvents: 'auto' }}>{action}</div>}
           {/* Dicas discretas: onde está na sequência e que o toque continua (não é um botão). */}
           <span aria-hidden="true" style={{ position: 'absolute', right: 14, bottom: 8, fontSize: 11, opacity: 0.7, letterSpacing: '0.1em' }}>
             {lines.length > 1 ? `${Math.min(i + 1, lines.length)}/${lines.length}  ` : ''}{i >= last ? '' : '▾'}

@@ -13,6 +13,25 @@
  */
 export const OVER_TIME_BONUS = 1.15;
 
+/**
+ * §327 (dono, 13/11/2026): o ESCUDO é defesa contra golpe, não imunidade. Fração de cada fonte de dano que o escudo do alvo
+ * pode absorver (o resto passa para a vida):
+ *  · `basic` = 1: o golpe básico segue absorvido por inteiro (a regra de antes, mantida);
+ *  · `direct` = `SHIELD_DIRECT_SPECIAL_ABSORB`: o especial de dano direto passa metade pela barreira;
+ *  · `tick` = `SHIELD_DOT_TICK_ABSORB`: cada tick de dano contínuo (DoT, queimadura, veneno) passa METADE pela barreira, lançado
+ *    antes ou depois do escudo (decisão do dono 13/11/2026: "não imunidade, mas alguma proteção"; revoga o "tick nunca é absorvido").
+ * Debuffs (quebra de defesa, lentidão, silêncio, maldição) nunca passaram pelo escudo e seguem assim.
+ * Espelho: `functions/api/_combate.js`.
+ */
+export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
+export const SHIELD_DOT_TICK_ABSORB = 0.5;
+export const SHIELD_ABSORB = { basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB } as const;
+export type ShieldSource = keyof typeof SHIELD_ABSORB;
+/** Pontos que o escudo `sh` absorve de um golpe de `d` pontos vindo de `src`. A fração arredonda PARA BAIXO: o escudo nunca come mais que ela. */
+export function shieldAbsorbPoints(sh: number, d: number, src: ShieldSource): number {
+  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
+}
+
 /** Budget of every special, in hits. */
 export const SPECIAL_BUDGET_HITS = 3;
 
@@ -26,15 +45,30 @@ export const REFERENCE_FAMILY: SpecialFamily = 'direct';
 /** Families that get the rookie tolerance (−15%) in the ruler. */
 export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 'spdBuff'];
 
-/** Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout). */
+/**
+ * Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout) — o do 1v1 (PvP, simulados, treino).
+ * §325 (dono, 13/11/2026): `dot` 1 → 1,15 e `spdBuff` 1,82 → 2 (o que dura rende mais que o dano direto). Espelho: `_combate.js`.
+ * §334 (dono, 13/11/2026: lançar o especial também é turno do afetado): o DoT termina mais cedo e a régua pareada do 1v1
+ * (gate 5, ±5%) foi a +5,3% com 1,15 (antes: +3,7%). `dot` 1,15 → 1,14 (+4,8%; 1,13 → +4,5%; 1,12 → +4,2%): o maior que passa.
+ * O total segue acima do direto (`efeitosRegraTotal`: pvp|dot 1,14).
+ * O PvE NÃO lê esta tabela: usa `SPECIAL_POWER_PVE` (o vetor `PVE_FAMILY_POWER` foi calibrado sobre ela).
+ */
 export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   direct: 1,
-  dot: 1,
+  dot: 1.14,
   heal: 1,
   shield: 1,
   atkBuff: 1.01,
   defDebuff: 1.01,
-  spdBuff: 1.82,
+  spdBuff: 2,
+};
+
+/**
+ * §325: o poder de família do PvE (Arena, Masmorra, Pesadelo, inimigos) = a tabela do spike de antes do ajuste do 1v1. Separada para a
+ * mudança de `SPECIAL_POWER` (pedida para o PvP) não se multiplicar com `PVE_FAMILY_POWER`, que foi calibrado em cima destes números.
+ */
+export const SPECIAL_POWER_PVE: Readonly<Record<SpecialFamily, number>> = {
+  direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82,
 };
 
 /** §228: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
@@ -57,10 +91,31 @@ export interface Special {
 export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.58, hotScale: 1.05 };
 export type EffectTune = typeof EFFECT_TUNE;
 /** §228 (dono, 05/11): o Pesadelo pode ter balanço próprio para qualquer mecânica. */
-export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.15, slowKeep: 0.4 };
+/**
+ * §325 (dono, 13/11/2026): lentidão do Pesadelo 0,15/0,4 → 0,3/0,58 (a mesma da Arena e da Masmorra). O dono ACEITOU que o Pesadelo fique
+ * ~16,4pp mais fácil para quem tem lentidão (gate pareado em `efeitosPve.medicao.test.ts`). Os outros botões seguem os de `EFFECT_TUNE`.
+ */
+export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.3, slowKeep: 0.58 };
+
+/**
+ * §334 (dono, 13/11/2026: DoT e cura contínua tocam no turno DE QUEM OS CARREGA). Com os pulsos da cura contínua no começo dos
+ * 3 próximos golpes de quem a recebe (antes: 1, 2 e 3 intervalos depois do cast), a cura chega ~meio intervalo mais cedo e a
+ * Masmorra passou a +4,1pp sobre o escudo puro (gate ±3pp de `efeitosPve.medicao.test.ts`). Só a Masmorra (e quem joga no motor
+ * dela: Fenda, Raid) baixa o `hotScale` 1,05 → `HOT_SCALE_MASMORRA`. A Arena não pode baixar: a regra "o que dura rende mais"
+ * (`efeitosRegraTotal.test.ts`) pede `arena|hot` > 1, e ela só passa com `hotScale` ≥ ~1,044. Os outros botões seguem `EFFECT_TUNE`.
+ */
+export const HOT_SCALE_MASMORRA = 1.02;
+/** A tune da cura contínua na Masmorra: a de `EFFECT_TUNE` (lida na hora, os testes de régua a mexem) com `HOT_SCALE_MASMORRA`. */
+export function effectTuneMasmorra(): EffectTune {
+  return { ...EFFECT_TUNE, hotScale: HOT_SCALE_MASMORRA };
+}
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };
+}
+/** §325: o especial com o poder do PvE (`SPECIAL_POWER_PVE`). Quem monta luta de Arena/Masmorra/Pesadelo/inimigo usa este. */
+export function specialOfPve(family: SpecialFamily): Special {
+  return { family, power: SPECIAL_POWER_PVE[family] };
 }
 
 /**
@@ -88,15 +143,34 @@ export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDeb
  */
 export const AREA_EFFICIENCY = 1;
 
-export type PveEngine = 'arena' | 'dungeon';
+/**
+ * §334: eficiência da área SÓ do DoT, e só quando a área pega 2+ inimigos (com 1 só, área = único: os gates N = 1 ≡ 1v1 e
+ * "área no 1v1 = único" exigem). Com o DoT ticando no turno de quem o carrega (3 golpes dele; antes, 0,75 intervalo do
+ * lançador), o que sobra num inimigo que cai antes dos 3 golpes se perde na área (só o alvo único repassa ao próximo vivo), e a
+ * área caiu de −1,2pp para −12,0pp de vitória contra o único (gate AC7/AC4, ±6pp). `areaDelta('dot', 3200)`: 1,20 → −5,0pp;
+ * 1,25 → −3,2pp (tempo +0,5%); 1,30 → −2,6pp. O orçamento do alvo único não muda. Alternativa sem constante (fica com o dono):
+ * o DoT em área também repassar o que sobra ao próximo vivo (−3,0pp), contra a regra "só quem estava no raio".
+ */
+export const AREA_DOT_EFFICIENCY = 1.25;
+
+export type PveEngine = 'arena' | 'dungeon' | 'pesadelo';
 
 /**
  * Per-engine multiplier of SPECIAL_POWER, PvE only (outside the mirror ruler).
  * Values from builder/balanco-motores.md §3 (dungeon) and §6 (arena, groups).
+ * §334 (dono, 13/11/2026: o veneno tem de vencer pelo menos tanto quanto o dano direto em cada modo PvE). O Pesadelo joga no
+ * motor da Masmorra mas tem o vetor próprio (`pesadelo`, lido por `dungeonFight` com `pesadelo: true`), igual ao da Masmorra
+ * menos o `dot`. Vitória dot − direct, pareado N = 1600 (`efeitosPve.medicao`), já com o tick também no especial:
+ *  · Arena `dot` 1,1 → 1,11: +1,9pp → +3,1pp (a área estava −0,1pp; foi a +1,5pp; o único +4,8pp);
+ *  · Masmorra `dot` 1,1 (sem mudança): +0,6pp;
+ *  · Pesadelo `dot` 1,1 → 1,4: −5,4pp → +0,1pp (1,3 → −1,9pp; 1,5 → +1,8pp). Na cena do jogo (`simulateNightmareScenario`) o
+ *    veneno já empatava: com torcida e anel +1,0pp → +6,2pp; sem nada +4,7pp → +20,1pp (10,3% → 30,3% de vitória).
+ * O 1v1 (PvP) não lê esta tabela.
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
-  arena: { direct: 1, dot: 0.95, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
+  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
   dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
+  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
 };
 
 /**

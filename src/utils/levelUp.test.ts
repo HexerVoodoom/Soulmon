@@ -45,9 +45,10 @@ describe('levelUpGains — vem dos donos, não de número escrito aqui', () => {
     expect(g.rewards.map(r => r.level)).toEqual([...g.rewards.map(r => r.level)].sort((a, b) => b - a));
   });
   it('portões que abriram nesta subida (e só nela)', () => {
-    expect(levelUpGains(2, 3).gates.sort()).toEqual(['pvp', 'torneio']);
-    expect(levelUpGains(3, 4).gates).toEqual([]);
-    expect(levelUpGains(7, 12)).toMatchObject({ gates: expect.arrayContaining(['masmorraAlto', 'renascimento']) });
+    // dono 12/11/2026: só a Ranqueada mantém limite (Vínculo 5); o resto abre no 1
+    expect(levelUpGains(2, 3).gates).toEqual([]);
+    expect(levelUpGains(4, 5).gates).toEqual(['ranqueada']);
+    expect(levelUpGains(5, 6).gates).toEqual([]);
   });
 });
 

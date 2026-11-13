@@ -21,10 +21,9 @@ import { curatedComponents } from './elementosCurados';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 import { ELEMENTO_BG_MEAN as ELEMENTO_BG_MEAN_V1 } from './combatArtElementoMedias.data';
 import { ELEMENTO_BG_MEAN_V2 } from './combatArtElementoMedias2.data';
-import { ELEMENTO_BG_MEAN_V3 } from './combatArtElementoMedias3.data';
 
 /** Cor média dos cenários próprios dos fundidos: os 93 antigos (png, 360×640) + os 151 compostos de 11/11/2026 (webp, 450×800). */
-const ELEMENTO_BG_MEAN: Record<string, string> = { ...ELEMENTO_BG_MEAN_V1, ...ELEMENTO_BG_MEAN_V2, ...ELEMENTO_BG_MEAN_V3 };
+const ELEMENTO_BG_MEAN: Record<string, string> = { ...ELEMENTO_BG_MEAN_V1, ...ELEMENTO_BG_MEAN_V2 };
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;

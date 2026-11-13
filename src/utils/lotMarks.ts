@@ -26,7 +26,7 @@ export const DAILY_EVENT_BUILDING: Readonly<Record<DailyEvent, BuildingId | null
   banho: null, carinho: null, comida: null, humor: null, sono: null,
   // Missões dos NPCs (12/11/2026): cada uma marca o prédio de quem a passa (`m.building`); o mapa de evento cobre o tipo.
   essencia: 'laboratorio.evolucao', hex: 'forja.hexsmith', melhoria: 'forja.ferreiro', compra: 'mercado.itens', conquista: 'mercado.conquistas',
-  cambio: 'mercado.itens', prato: 'mercado.itens', feira: 'hall.feira', cla: 'hall.guilda', passeio: 'exploracao.passeio',
+  prato: 'mercado.itens', feira: 'hall.feira', cla: 'hall.guilda', passeio: 'exploracao.passeio',
   salao: 'jogos.salao', mente: 'jogos.mente', cenario: 'mercado.background', journal: 'forja.caderno',
 };
 

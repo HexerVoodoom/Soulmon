@@ -10,6 +10,7 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { talentPointsFree } from '../utils/lotIndicators';
 import { useBackLayer } from '../utils/backStack';
 import { Icon } from './ui/Icon';
+import { CtaButton } from './ui/CtaButton';
 import { LotIndicator } from './nav/LotIndicator';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 
@@ -43,9 +44,9 @@ export default function TalentTreeEntry({ language = 'pt-BR' }: { language?: str
           ? (isPt ? `${free} ${free === 1 ? 'ponto disponível' : 'pontos disponíveis'}` : `${free} ${free === 1 ? 'point' : 'points'} available`)
           : (isPt ? 'Nenhum ponto livre agora.' : 'No free points right now.')}
       </p>
-      <button ref={opener} type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-talent-open aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        {isPt ? 'Abrir árvore de talentos' : 'Open talent tree'}
-      </button>
+      <CtaButton ref={opener} tone="acao" data-talent-open aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        {isPt ? 'Árvore de talentos' : 'Talent tree'}
+      </CtaButton>
       {open && createPortal(
         <div role="dialog" aria-modal="true" aria-label={title} data-talent-fullscreen
           style={{ position: 'fixed', inset: 0, zIndex: 7000, display: 'flex', flexDirection: 'column', background: 'var(--sm2-bg)', color: 'var(--sm2-ink)', overscrollBehavior: 'contain' }}>

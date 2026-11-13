@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import type { Language } from '../utils/i18n';
 import { gaugeView } from '../utils/evolutionGauge';
 import { fragmentBarLabel, fragmentTodayHint } from '../utils/soulFragment';
@@ -39,7 +40,7 @@ export function EvolutionGaugeMini({
   return (
     <section data-evo-gauge-mini style={{ display: 'grid', gap: 4, padding: '0 2px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 'var(--sm2-text-xs, 12px)', color: 'var(--sm2-muted)' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><SoulFragmentIcon size={14} />{rotulo}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><SoulFragmentIcon size={14} />{emphasizeSoulFragment(rotulo)}</span>
         <span data-evo-gauge-mini-count>
           {`${Math.min(v.points, v.goal)}/${v.goal}`}
           {v.today > 0 && !v.full ? ` · +${v.today} ${isPt ? 'hoje' : 'today'}` : ''}

@@ -43,6 +43,9 @@ describe('TalentTreeEntry', () => {
 
   it('o botão abre a árvore em tela cheia (dialog fixo) e o voltar fecha', { timeout: 30000 }, async () => {
     abrir({ totalXP: xpForLevel(6) });
+    // rótulo sem "Abrir" (dono, 13/11/2026); o nome acessível é o próprio rótulo
+    expect(document.querySelector('[data-talent-open]')!.textContent).toBe('Árvore de talentos');
+    expect(document.querySelector('[data-talent-open]')!.getAttribute('aria-label')).toBeNull();
     act(() => { fireEvent.click(document.querySelector('[data-talent-open]')!); });
     const full = document.querySelector<HTMLElement>('[data-talent-fullscreen]')!;
     expect(full.getAttribute('role')).toBe('dialog');
@@ -60,7 +63,8 @@ describe('TalentTreeEntry', () => {
 
   it('inglês e Esc', () => {
     abrir({ totalXP: xpForLevel(6) }, 'en-US');
-    expect(document.querySelector('[data-talent-open]')!.textContent).toBe('Open talent tree');
+    expect(document.querySelector('[data-talent-open]')!.textContent).toBe('Talent tree');
+    expect(document.querySelector('[data-talent-open]')!.getAttribute('data-cta-tone')).toBe('acao');
     act(() => { fireEvent.click(document.querySelector('[data-talent-open]')!); });
     act(() => { fireEvent.keyDown(document, { key: 'Escape' }); });
     expect(document.querySelector('[data-talent-fullscreen]')).toBeNull();

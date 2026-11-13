@@ -247,8 +247,15 @@ export function duelSide(save, opts = {}) {
   const family = hx.specialFamily ?? familyFicha;
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
+  // REGISTRO §332 (13/11/2026): o TIPO do ataque básico (o acabamento corte × splash) do oponente sai de um sorteio estável pela
+  // identidade SEM itens; só as Luvas trocam. `orig` = família e elementos antes de Coroa/Amuleto/Garra (só com algum deles
+  // equipado); `golpe` = o ataque das Luvas (lista fechada `HEX_STRIKES`). Os dois são SÓ visuais: nenhum cálculo do duelo os lê,
+  // e o cliente antigo os ignora (campo ausente = comportamento antigo).
+  const elBasicaOrig = pet.neutro ? null : (pet.el ?? elementoDoBasico(skills));
+  const elEspecialOrig = pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId));
+  const comItemDeIdentidade = Boolean(hx.specialFamily || hx.specialElement || hx.basicElement);
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : (pet.el ?? elementoDoBasico(skills))), elEspecial: hx.specialElement ?? (pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId))), ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}), ...(typeof state.simMagia === 'boolean' ? { magia: state.simMagia } : {}), ...(!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}), ...(typeof state.simMagia === 'boolean' ? { magia: state.simMagia } : {}), ...(!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}), ...(comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}), ...(hx.strike ? { golpe: hx.strike } : {}) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */

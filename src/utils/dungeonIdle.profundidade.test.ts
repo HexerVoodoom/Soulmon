@@ -63,7 +63,8 @@ describe('zona de conforto, andar efetivo e teto', () => {
     expect(dungeonLayerCap(1, BOND_ABERTO)).toBe(DUNGEON_CAP_MARGIN);
     expect(dungeonLayerCap(13, BOND_ABERTO)).toBe(95 + DUNGEON_CAP_MARGIN);
     expect(dungeonLayerCap(TOP, BOND_ABERTO)).toBe(DUNGEON_MAX_LAYER);
-    expect(dungeonLayerCap(TOP, BOND_ABERTO - 1)).toBe(MASMORRA_ALTO_A_PARTIR_DO_ANDAR - 1);
+    // 12/11/2026 (dono): o portão `masmorraAlto` está no Vínculo 1 — não há Vínculo "fechado"; o teto por Lv do Soulmon segue.
+    expect(dungeonLayerCap(TOP, BOND_ABERTO - 1)).toBe(DUNGEON_MAX_LAYER);
     for (let L = 1; L <= TOP; L++) expect(dungeonLayerCap(L, 999)).toBe(Math.min(DUNGEON_MAX_LAYER, comfortLayers(L) + DUNGEON_CAP_MARGIN));
   });
 });

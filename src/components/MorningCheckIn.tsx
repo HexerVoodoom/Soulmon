@@ -281,9 +281,9 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
             e cobrança:
             · NENHUM dígito de falta. Nunca "você falhou 2 dias" — a pessoa
               sabe. O único número na frase é o 5 dos minutos.
-            · aceitar chama o MESMO caminho de conclusão de sempre
-              (`onTinyHabit` → `handleToggleActivityCompletion`), com os
-              mesmos ganhos. "Conta como feito" é literal, não simbólico.
+            · aceitar NÃO conclui mais nada (13/11/2026): `onTinyHabit` marca
+              o hábito como a TAREFA BÔNUS do dia (`utils/bonusTask.ts`), que a
+              pessoa marca como qualquer outra e rende +1 acima do teto.
             · não há botão de recusar. Ignorar é a recusa, e ela não custa
               nada nem aparece em lugar nenhum. */}
         {onTinyHabit && ofertaReduzida.length > 0 && (
@@ -314,7 +314,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
                       }}
                     >
                       <Icon name="check" size={20} fill={1} tone="inherit" />
-                      {isPt ? `${name} · contou` : `${name} · counted`}
+                      {isPt ? `${name} · tarefa bônus` : `${name} · bonus task`}
                     </span>
                   </div>
                 );
@@ -331,7 +331,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
               );
             })}
             <p style={hint}>
-              {isPt ? 'Aceitar já conta como feito.' : 'Saying yes already counts as done.'}
+              {isPt ? 'Aceitar vira a tarefa bônus de hoje: marque quando fizer.' : 'Saying yes makes it today’s bonus task: check it when you do it.'}
             </p>
           </div>
         )}

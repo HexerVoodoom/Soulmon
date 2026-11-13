@@ -25,6 +25,9 @@ describe('ElementPotionSheet: lista completa', () => {
     expect(first.getAttribute('data-potion-item')).toBe('agua');
     expect(first.getAttribute('data-can-craft')).toBe('true');
     fireEvent.click(first.querySelector('[data-potion-create]')!);
+    // §316c: folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site).
+    expect(document.querySelector('[data-potion-confirm]')!.hasAttribute('data-cta-button')).toBe(false);
+    expect(document.querySelector('[data-potion-confirm]')!.className).toContain('sm2-kit-btn-primary');
     fireEvent.click(document.querySelector('[data-potion-confirm]')!);
     expect(onCraft).toHaveBeenCalledWith('agua');
   });

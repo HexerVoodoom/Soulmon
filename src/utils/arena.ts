@@ -27,7 +27,7 @@ import type { FightSide } from './combate/fight';
 import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 import { comEfeitoDoElemento } from './combate/elementEffects';
 import { foeSpecialOf } from './combate/foeFamilies';
-import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
+import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
@@ -270,6 +270,10 @@ export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>
   const k = e.ramoKey ? e.ramoKey : e.paraleloKey ? e.paraleloKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
+
+/** A chave da FORMA para os ajustes do dono (`soulmonOverrides.ts`): a do bestiário; o chefe Ultra (fora do roster) = `<espécie>-ultra`. */
+export const arenaFoeFormKey = (e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form' | 'chefeUltra'> & { ramoKey?: string; paraleloKey?: string }): string | undefined =>
+  (e.chefeUltra ? `${e.chefeUltra}-ultra` : arenaFoeKey(e));
 
 export const ARENA_ROUNDS = 5;
 
@@ -554,7 +558,7 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
   const role = roleOf(p);
   return {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
-    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento),
     area: p.area,
   };
 }

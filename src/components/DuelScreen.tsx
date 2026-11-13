@@ -30,7 +30,7 @@
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
-import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
+import { fighterIdentity, fighterIdentityFromFx, fighterIdentitySemItensFromFx, tipoDoBasicoPvp } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
@@ -41,7 +41,7 @@ import { DUEL_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
-  isSelfOnlySpecial,
+  isSelfOnlySpecial, sceneTimeOf,
 } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
@@ -122,6 +122,9 @@ export function DuelScreen({
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
   const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
+  // REGISTRO §332: o TIPO do básico sai da identidade SEM Coroa/Amuleto/Garra (o `fx.orig` do servidor); só as Luvas trocam.
+  const meSemItens = useMemo(() => (par ? meId : fighterIdentitySemItensFromFx(me.fx, petElement)), [par, meId, me.fx, petElement]);
+  const oppSemItens = useMemo(() => fighterIdentitySemItensFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
   const meEl = fxElementId(meId.basico.elemento);
   const oppEl = fxElementId(oppId.basico.elemento);
   /** O elemento do golpe do lado no papel dado (o básico é o principal; o especial, o dele). */
@@ -204,13 +207,17 @@ export function DuelScreen({
     let portao: Portao | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
-      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, impacto: (!meu && (a.kind === 'special' ? oppId.especial.impacto : oppId.basico.impacto)) || meleeImpactOf({ element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), key: chaveDaIdentidade(meu ? meId : oppId) }), element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
+      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, impacto: a.kind === 'special'
+        ? (!meu && oppId.especial.impacto) || meleeImpactOf({ element: elementoDe(meu ? 0 : 1, 'especial'), key: chaveDaIdentidade(meu ? meId : oppId) })
+        : tipoDoBasicoPvp(meu ? meId : oppId, meu ? meSemItens : oppSemItens, fxElementId), element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
     };
     const start = (e: FightEvent) => {
       const a = actionOf(e);
       if (a) fire(e, a);
     };
 
+    /** §334: os números dos ticks que abriram o turno de um lutador; o golpe dele no mesmo instante não os apaga. */
+    let ticksDoTurno: { t: number; hits: StageHit[] } = { t: -1, hits: [] };
     const apply = (e: FightEvent) => {
       setHpFrac({ me: clamp01(e.hp[0]), opp: clamp01(e.hp[1]) });
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
@@ -223,9 +230,16 @@ export function DuelScreen({
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet
         const value = Math.max(1, Math.round(e.frac * (alvoMe ? maxMe : maxOpp)));
-        setGolpes([{ id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) }]);
+        const golpe: StageHit = { id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) };
+        const junto = ticksDoTurno.t === e.t ? ticksDoTurno.hits : [];
+        if (e.kind === 'tick') ticksDoTurno = { t: e.t, hits: [...junto, golpe] };
+        else ticksDoTurno = { t: -1, hits: [] };
+        setGolpes([...junto, golpe]);
       }
     };
+    /** §334: quando o evento `i` entra em cena — o tick, no começo da ação do golpe que vem logo depois dele. */
+    const leadDe = (g: FightEvent) => { const a = actionOf(g); return a ? leadS(a.kind) : 0; };
+    const naCena = (i: number) => sceneTimeOf(sim.current.events, i, leadDe);
 
     /** Fecha o balde que acabou: a descarga que ele pagou entra na luta, e a luta é simulada de novo. */
     const fecharBalde = () => {
@@ -290,13 +304,13 @@ export function DuelScreen({
           break;
         }
         const lead = a ? leadS(a.kind) : 0;
-        if (e.t - lead > clock.current) break;
+        if ((e.kind === 'tick' ? naCena(started.current) : e.t - lead) > clock.current) break;
         start(e);
         started.current++;
       }
       // Um `cast` que ainda não passou pela barreira (o 2º especial do espelho) não se aplica: a cena dele vem antes.
       while (
-        applied.current < evs.length && evs[applied.current].t <= clock.current && !bloqueiaAplicar(portao, applied.current)
+        applied.current < evs.length && naCena(applied.current) <= clock.current && !bloqueiaAplicar(portao, applied.current)
         && !(evs[applied.current].kind === 'cast' && applied.current >= started.current)
       ) {
         const e = evs[applied.current];

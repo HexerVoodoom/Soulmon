@@ -1,4 +1,5 @@
 import { ModalSheet, sm2Hint } from './form/FormKit';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { Language } from '../utils/i18n';
 import {
@@ -79,8 +80,8 @@ const TERMS: Term[] = [
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
     icon: '🔗', en: 'Bond N / Lv N', pt: 'Vínculo N / Lv N',
-    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each gives a talent point. Lv N is your Soulmon's. The Arena opens at Bond ${GATES.pvp.minBond}.`,
-    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
+    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each gives a talent point. Lv N is your Soulmon's. Ranked opens at Bond ${GATES.ranqueada.minBond}.`,
+    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Ranqueada abre no Vínculo ${GATES.ranqueada.minBond}.`,
   },
   {
     // Vantagem elemental (dono, 27/10/2026): Arena, Combina 3 e Guerra usam o mesmo ±1 golpe exibido; selo "Super eficiente!" / "Pouco eficiente".
@@ -288,8 +289,8 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
       <dl className="sm2-conta-gl">
         {TERMS.map(t => (
           <div key={t.en}>
-            <dt>{isPt ? t.pt : t.en}</dt>
-            <dd>{isPt ? t.descPt : t.descEn}</dd>
+            <dt>{emphasizeSoulFragment(isPt ? t.pt : t.en)}</dt>
+            <dd>{emphasizeSoulFragment(isPt ? t.descPt : t.descEn)}</dd>
           </div>
         ))}
       </dl>

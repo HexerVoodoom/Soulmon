@@ -39,6 +39,7 @@ import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
 import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { useClaBuilding, type ClaSalaProps, type ClaT } from './claUi';
+import { useRequireAwake } from '../WakeToEnter';
 
 /** Os 4 estágios do Visor (rodada 5): semente, broto, planta, planta com o fruto. Mesma caixa, base alinhada. */
 const PLANT_STAGE_SRC = [stage0, stage1, stage2, stage3] as const;
@@ -120,6 +121,9 @@ function ArvoreNaCena({ stage, species, planted, mature }: { stage: number; spec
 
 export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce, unico, mySprite, guild, arvores }: Omit<ClaSalaProps, 'guild' | 'mySprite'> & { unico?: PlantioUnico; mySprite?: string; /** As árvores do Bosque no save: a luta as desenha. */ arvores?: BosqueArvores; guild?: { bosque?: { stage?: string | null } } }) {
   const { view, setView, status, ocupado, erro, agir, recarregar } = useClaBuilding(() => getPlantio(saveId, tz));
+  /* 💤 §329: o Grove entra livre (ver o bosque, colher); CUIDAR (regar ou defender) e LUTAR na defesa levam o Soulmon e perguntam
+     com ele dormindo, no toque. O plantio da estação é sozinho (efeito abaixo) e não pergunta. */
+  const requireAwake = useRequireAwake();
 
   const fazer = async (acao: PlantioAction) => {
     const r = await agir(() => actPlantio(acao, saveId, tz));
@@ -235,7 +239,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                         <NpcSpeech name={language === 'pt-BR' ? 'Lilia' : 'Lilia'} line={tendFalaLilia(language, gate)} speakerKey="hall:grove:tend" />
                       </div>
                     )}
-                    <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void cuidar()} className={btn}>
+                    <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => { requireAwake('hall.grove', () => { void cuidar(); }); }} className={btn}>
                       <Icon name="eco" size={20} />{t(v.task === 'water' ? 'guild.plantio.regar' : v.task === 'protect' ? 'guild.plantio.proteger' : 'guild.plantio.cuidar')}
                     </button>
                     </>
@@ -271,6 +275,7 @@ function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, skills, petE
   const [seed, setSeed] = useState(() => (Math.random() * 2 ** 31) | 0);
   const [perdeu, setPerdeu] = useState(false);
   const [lutando, setLutando] = useState(false);
+  const requireAwake = useRequireAwake(); // 💤 §329: lutar na defesa pergunta com o Soulmon dormindo
   const inimigos = useMemo(() => groveRaidLineup(seed), [seed]);
   const combatant = useMemo(() => soulCombatant(estado), [estado]);
   const fim = (won: boolean) => {
@@ -287,7 +292,7 @@ function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, skills, petE
         ))}
       </ul>
       {perdeu && <p role="status" className="sm2-lib-s" style={{ margin: 0 }} data-plantio-defesa-perdeu>{t('guild.plantio.defesa.perdeu')}</p>}
-      <button type="button" data-plantio-lutar disabled={ocupado || lutando} aria-disabled={ocupado || lutando ? true : undefined} onClick={() => setLutando(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+      <button type="button" data-plantio-lutar disabled={ocupado || lutando} aria-disabled={ocupado || lutando ? true : undefined} onClick={() => { requireAwake('hall.grove', () => setLutando(true)); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
         <Icon name="swords" size={20} />{t('guild.plantio.defesa.lutar')}
       </button>
       {lutando && (

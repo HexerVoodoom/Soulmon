@@ -65,7 +65,7 @@ describe('TaskMeta — o gatilho do adiamento', () => {
   it('o App PASSA o handler — sem isso o chip volta a ser decoração', () => {
     const src = readFileSync(APP_TSX, 'utf-8');
     // O caminho agora passa pela lista: App → `DailyRituals` → `TaskMeta`.
-    expect(src).toMatch(/<DailyRituals[\s\S]{0,900}?onPostponeNudge=\{handlePostponeNudge\}/);
+    expect(src).toMatch(/<DailyRituals[\s\S]{0,3000}?onPostponeNudge=\{handlePostponeNudge\}/);
     const lista = readFileSync(path.join(process.cwd(), 'src', 'components', 'DailyRituals.tsx'), 'utf-8');
     // §45 (PR #334): a linha do Hoje usa `TaskMeta lean` (só prazo + assombrada, SEM o contador
     // de adiamentos), então o handler deixou de descer até o chip nessa lista; o App segue

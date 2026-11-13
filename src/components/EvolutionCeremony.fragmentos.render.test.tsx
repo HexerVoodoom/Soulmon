@@ -4,6 +4,10 @@ import { describe, it, expect, afterEach, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { EvolutionCeremony } from './EvolutionCeremony';
 
+/** 13/11/2026: o termo "fragmento de alma" sai destacado (`SoulFragmentTerm`), então a frase se divide em nós: casa pelo texto inteiro. */
+const textoInteiro = (t: string) => (_: string, el: Element | null) => !!el && el.textContent === t && Array.from(el.children).every(c => c.textContent !== t);
+
+
 beforeEach(() => {
   window.matchMedia = ((q: string) => ({
     matches: q.includes('reduce'), media: q, onchange: null,
@@ -23,7 +27,7 @@ describe('EvolutionCeremony — Fragmentos de Alma', () => {
 
   it('PT: plural e texto', () => {
     render(<EvolutionCeremony {...props} language="pt-BR" fragmentsSpent={45} />);
-    expect(screen.getByText('45 fragmentos de alma deram forma a esta evolução.')).toBeTruthy();
+    expect(screen.getByText(textoInteiro('45 fragmentos de alma deram forma a esta evolução.'))).toBeTruthy();
   });
 
   it('sem custo informado: a linha não existe', () => {

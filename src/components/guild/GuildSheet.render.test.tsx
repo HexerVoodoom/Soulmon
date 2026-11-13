@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent, cleanup, act, within } from '@testing-library/react';
-import { aquecerRender, renderWithCss } from '../../test/renderEnv';
+import { aquecerRender, computed, renderWithCss } from '../../test/renderEnv';
 
 vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
@@ -218,6 +218,8 @@ describe('falha de carga NÃO é "sem roda" (#16)', () => {
     await montar();
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.muitosToques'));
     expect(screen.getByText(PT('guild.erro.tentar'))).toBeTruthy();
+    // sem CTA ao lado, "Tentar de novo" segue o contorno de sempre
+    expect(document.querySelector('[data-guild-tentar]')!.hasAttribute('data-cta-texto')).toBe(false);
   });
 
   it('offline (fetch rejeitou) nos dois idiomas', async () => {
@@ -233,6 +235,8 @@ describe('falha de carga NÃO é "sem roda" (#16)', () => {
     await montar({ onLogin });
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.semLogin'));
     expect(screen.queryByRole('textbox')).toBeNull();
+    // §316c: ao lado do CTA de Entrar, "Tentar de novo" é só texto.
+    expect(document.querySelector('[data-guild-tentar]')!.hasAttribute('data-cta-texto')).toBe(true);
     fireEvent.click(screen.getByText(PT('guild.erro.entrar')));
     expect(onLogin).toHaveBeenCalledTimes(1);
     // "Tentar de novo" serve a quem acabou de entrar: relê e, com sessão, mostra a roda.
@@ -285,7 +289,8 @@ describe('a roda por tamanho', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(4, {}, [0, 2]));
     await montar();
     const itens = within(textoDaRoda()).getAllByRole('listitem');
-    expect(itens.map(li => li.querySelector('.t')!.textContent)).toEqual(['Ana', 'Bia', 'Caio', 'Dani']);
+    // §321: o nome do clã vem EMBAIXO do nome (`[data-player-guild]`); a linha do nome continua só o nome.
+    expect(itens.map(li => li.querySelector('.t [data-player-name-text]')!.textContent)).toEqual(['Ana', 'Bia', 'Caio', 'Dani']);
     expect(itens.map(li => !!li.querySelector('.sm2-guild-pres'))).toEqual([true, false, true, false]);
     // nenhum estado de ausência, nenhum ícone de estado, nenhum número por pessoa
     expect(textoDaRoda().textContent).not.toMatch(/ainda n[aã]o|not yet|ausen|absent|falt/i);
@@ -293,6 +298,34 @@ describe('a roda por tamanho', () => {
     expect(itens.map(li => li.textContent).join(' ').replace('4 na roda', '')).not.toMatch(/\d/);
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.getByText('4 na roda')).toBeTruthy();
+  });
+
+  it('§321 (dono, 13/11): "Convidar" é o botão SIMPLES do kit, na MESMA largura dos outros da ficha (sem a arte do CtaButton)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista(4, { isHost: true }));
+    await montar();
+    const convidar = document.querySelector('[data-guild-convidar]') as HTMLButtonElement;
+    expect(convidar.tagName).toBe('BUTTON');
+    expect(convidar.classList.contains('sm2-cta')).toBe(false);
+    expect(convidar.className).toMatch(/\bsm2-kit-btn\b/);
+    expect(convidar.className).toMatch(/\bsm2-kit-btn-md\b/);
+    // a régua da largura é a mesma dos botões dos Ajustes (`sm2-guild-btn` = 100%)
+    const abrir = screen.getByRole('button', { name: PT('guild.ajustes.aria') });
+    fireEvent.click(abrir);
+    const ajustes = [...document.getElementById(abrir.getAttribute('aria-controls')!)!.querySelectorAll('button')] as HTMLElement[];
+    expect(ajustes.length).toBeGreaterThan(0);
+    for (const b of [convidar, ...ajustes]) {
+      expect(b.classList.contains('sm2-guild-btn')).toBe(true);
+      expect(computed(b, 'width')).toBe('100%');
+      expect(parseFloat(computed(b, 'min-height'))).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  it('§321: clã cheio — "Convidar" fica, apagado, com o porquê', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista(12));
+    await montar();
+    const convidar = document.querySelector('[data-guild-convidar]') as HTMLButtonElement;
+    expect(convidar.disabled).toBe(true);
+    expect(document.getElementById(convidar.getAttribute('aria-describedby')!)!.textContent).toBe(PT('guild.convidar.cheio'));
   });
 
   it('4 membros, ninguém veio: nenhuma marca em ninguém (silêncio, não uma lista de "não")', async () => {
@@ -508,7 +541,7 @@ describe('layout: nome longo e "· você" (#4, #14)', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     await montar();
     const t = document.querySelector('.sm2-coop-mem li .t')!;
-    expect(t.textContent).toBe('Ana');
+    expect(t.querySelector('[data-player-name-text]')!.textContent).toBe('Ana');
     const voce = t.nextElementSibling as HTMLElement;
     // O ponto é enfeite (aria-hidden); o leitor de tela lê só "você" (L3-copy).
     expect(voce.querySelector('[aria-hidden="true"]')!.textContent).toBe(PT('guild.roda.voce'));

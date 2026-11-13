@@ -203,6 +203,8 @@ export const GUILD_COPY = {
   'guild.procurar.vazio': ['Nenhum clã com lugar agora. Você pode criar o seu.', 'No clan has room right now. You can start your own.'],
   'guild.procurar.tamanho': ['{n} de {max}', '{n} of {max}'],
   'guild.procurar.pedir': ['Pedir para entrar', 'Request to join'],
+  'guild.procurar.cheiosTitulo': ['Clãs cheios', 'Full clans'],
+  'guild.procurar.cheia': ['Cheia', 'Full'],
   'guild.procurar.pendente': ['Pedido enviado a {nome}. Quem cuida do clã decide.', 'Request sent to {nome}. The clan host decides.'],
   'guild.procurar.pendente.semNome': ['Pedido enviado. Quem cuida do clã decide.', 'Request sent. The clan host decides.'],
   'guild.procurar.cancelar': ['Cancelar pedido', 'Cancel request'],
@@ -384,6 +386,24 @@ export const GUILD_COPY = {
   'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
   'guild.guide.titulo': ['O Clã', 'The Clan'],
   'guild.guide.corpo': ['Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido.', 'A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale.'],
+  // CONVIDAR (§321, 13/11/2026): o botão do Salão e a folha de convite (busca enquanto digita).
+  'guild.convidar.botao': ['Convidar', 'Invite'],
+  'guild.convidar.titulo': ['Convidar para o clã', 'Invite to the clan'],
+  'guild.convidar.corpo': ['Procure pelo começo do nome. A pessoa recebe uma carta do Papus com o nome do clã e o código.', 'Search by the start of the name. The person gets a letter from Papus with the clan name and code.'],
+  'guild.convidar.campo': ['Nome da pessoa para convidar ao clã', 'Name of the person to invite to the clan'],
+  'guild.convidar.placeholder': ['Começo do nome…', 'Start of the name…'],
+  'guild.convidar.acao': ['Convidar', 'Invite'],
+  'guild.convidar.acao.aria': ['Convidar {nome} para o clã', 'Invite {nome} to the clan'],
+  'guild.convidar.enviando': ['Enviando…', 'Sending…'],
+  'guild.convidar.enviado': ['Convite enviado', 'Invite sent'],
+  'guild.convidar.membro': ['Já está na roda', 'Already in the circle'],
+  'guild.convidar.outroCla': ['Já tem clã', 'Already in a clan'],
+  'guild.convidar.cheio': ['O clã está cheio', 'The clan is full'],
+  'guild.convidar.naoAchou': ['Não deu para convidar', "Couldn't invite"],
+  'guild.convidar.muitos': ['Muitos convites. Espere um pouco.', 'Too many invites. Wait a bit.'],
+  'guild.convidar.semRede': ['Sem conexão', 'No connection'],
+  'guild.convidar.erro': ['Não foi agora. Tente de novo.', "Didn't go through. Try again."],
+  'guild.convidar.fechar': ['Fechar', 'Close'],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type GuildKey = keyof typeof GUILD_COPY;

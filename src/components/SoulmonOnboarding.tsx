@@ -1,4 +1,3 @@
-import { DEMO_BUTTON_ENABLED } from '../utils/demoButton';
 import { useState, useRef, useEffect, useMemo, lazy, Suspense, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { Viewport } from './ui/Viewport';
@@ -336,6 +335,17 @@ export const REVEAL_WAIT_MS = 12_000;
  * cabeçalho já derrubou este login uma vez (a CSP, em 07/09/2026).
  */
 export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
+
+/** Erro do login do Google → código de `gate_login.outcome` (utils/telemetry.ts). Só categoria, nunca texto. */
+export function gateLoginOutcome(erro?: AuthErro): number {
+  switch (erro) {
+    case 'popup-fechado': return 2;
+    case 'sem-resposta': return 3;
+    case 'rede': return 4;
+    case 'dominio-nao-autorizado': case 'provedor-desligado': case 'popup-bloqueado': return 5;
+    default: return 6;
+  }
+}
 
 interface SavedProfile extends OracleInput { seed: number }
 
@@ -1425,6 +1435,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const aoEntrarComGoogle = async () => {
     if (authOcupado) return;
+    track('gate_login', { outcome: 0 });
     setAuthOcupado(true);
     setAuthErro(null);
     // Rede de segurança: ver `GOOGLE_SEM_RESPOSTA_MS`. Ela LIBERA a tela sem
@@ -1434,6 +1445,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     redeGoogleRef.current = window.setTimeout(() => {
       redeGoogleRef.current = null;
       setAuthOcupado(false);
+      track('gate_login', { outcome: 3 });
       setAuthErro('sem-resposta');
     }, GOOGLE_SEM_RESPOSTA_MS);
 
@@ -1444,7 +1456,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       redeGoogleRef.current = null;
     }
     setAuthOcupado(false);
-    if (r.ok) { await aposAutenticar(r.email); return; }
+    if (r.ok) { track('gate_login', { outcome: 1 }); await aposAutenticar(r.email); return; }
+    track('gate_login', { outcome: gateLoginOutcome(r.erro) });
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1821,13 +1834,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               escolha do portão, sem dourado e sem empurrão. Abre a escolha dos 5
               iniciais; o resto da regra (Vínculo 5, só no aparelho, sem XP/compra/PvP)
               é do `utils/demoMode.ts`, e a tela a diz em uma linha antes do toque. */}
-          {DEMO_BUTTON_ENABLED && onStartDemo && (
+          {onStartDemo && (
             <div style={{ marginTop: mostrarAuth ? 12 : 24 }}>
               <button
                 type="button"
                 data-demo-button
                 style={{ ...sm2Button('outline'), width: '100%' }}
-                onClick={() => setStep(DEMO_LOCAL_PICK)}
+                onClick={() => { track('gate_login', { outcome: 7 }); setStep(DEMO_LOCAL_PICK); }}
                 aria-label={isPt ? 'DEMO — experimentar sem conta' : 'DEMO — try it without an account'}
               >
                 DEMO

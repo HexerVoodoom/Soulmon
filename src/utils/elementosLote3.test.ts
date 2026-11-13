@@ -52,7 +52,7 @@ describe('lote 3 dos elementos curados: 16 de 4 componentes', () => {
       expect(fs.existsSync(path.join(art, `${ARQ}/combinados/${num}-${slug}.png`)), slug).toBe(true);
       expect(fs.existsSync(path.join(art, `elementos/el-${slug}.png`)), `ícone ${slug}`).toBe(true);
       for (const s of ['orb', 'slash', 'impact', 'cast', 'aura', 'aura-96', 'defended']) expect(fs.existsSync(path.join(art, `fx-ataque/fx-${slug}-${s}.png`)), `${slug} ${s}`).toBe(true);
-      expect(["png", "webp"].some((e) => fs.existsSync(path.join(art, `combate/elemento/${slug}.${e}`))), `cenário ${slug}`).toBe(true);
+      expect(fs.existsSync(path.join(art, `combate/elemento/${slug}.png`)), `cenário ${slug}`).toBe(true);
       for (const st of ['champion', 'ultimate', 'mega']) expect(fs.existsSync(path.join(art, `${ARQ}/combinados-formas/${num}-${slug}-${st}.png`)), `${slug} ${st}`).toBe(true);
     }
     const keys = ENEMY_ROSTER.map(x => x.key);

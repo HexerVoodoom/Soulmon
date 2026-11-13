@@ -152,6 +152,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/guild/GuildSheet.tsx': 'prédios `hall.feira`/`hall.guilda` — bloqueados na demo',
       'components/guild/GroveFolha.tsx': 'o panorama do Bosque: só abre pelo botão do Salão (`hall.guilda`, bloqueado na demo) e lê só o plantio do clã',
       'components/guild/claUi.tsx': 'só tipo de erro (`GuildError`) da Praça/Plantio/Mistério, montados dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
+      'components/guild/GuildInviteSheet.tsx': 'convidar para o clã (§321): só abre pelo CtaButton "Convidar" do Salão, montado dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
       'components/guild/ClaProcurar.tsx': 'procurar clã e pedidos de entrada (§203), montados só dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
       'components/guild/FeiraEventoSheet.tsx': 'sala da Feira (mistério/chefe): só abre pelo prédio `hall.feira`, bloqueado na demo',
       'components/guild/FeiraTrailPlay.tsx': 'trilha da Feira, montada dentro do FeiraEventoSheet (bloqueado na demo)',

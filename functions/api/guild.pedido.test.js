@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { onRequest } from './guild.js';
 import { COOP_MAX_MEMBERS, coopOfKey, coopKey, lerGrupo } from './_coop.js';
-import { DIR_PREFIX, coopReqKey, coopReqInPrefix } from './_claDiretorio.js';
+import { DIR_PREFIX, DIR_FULL_PREFIX, coopReqKey, coopReqInPrefix } from './_claDiretorio.js';
 
 /**
  * PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga + pedido de entrada aprovado pelo anfitrião.
@@ -44,6 +44,7 @@ const pedir = async (e, id, dirId) => j(await chamar(e, 'guildRequest', { id, di
 const fila = async (e, id) => j(await chamar(e, 'guildRequests', { id }, 'GET'));
 const decidir = async (e, id, requestId, approve) => j(await chamar(e, 'guildRequestDecide', { id, requestId, approve }));
 const dirKeys = e => [...e.DIGIAPP_SAVES.store.keys()].filter(k => k.startsWith(DIR_PREFIX));
+const fullKeys = e => [...e.DIGIAPP_SAVES.store.keys()].filter(k => k.startsWith(DIR_FULL_PREFIX));
 
 describe('diretório: coerente com o clã', () => {
   it('criar lista o clã; renomear atualiza; quem tem clã vê lista vazia; nunca sai gid nem saveId', async () => {
@@ -61,7 +62,7 @@ describe('diretório: coerente com o clã', () => {
     expect((await dir(e, ANA)).clans).toEqual([]);
   });
 
-  it('entrar por código sobe o tamanho; clã cheio sai do diretório; vaga aberta volta', async () => {
+  it('entrar por código sobe o tamanho; clã cheio fica listado como cheio (§322); vaga aberta volta', async () => {
     const e = novoEnv();
     const g = await criar(e, ANA);
     await chamar(e, 'guildJoin', { id: BIA, code: g.code });
@@ -69,10 +70,14 @@ describe('diretório: coerente com o clã', () => {
     const outros = Array.from({ length: COOP_MAX_MEMBERS - 2 }, (_, i) => sid(`m${i}x`));
     for (const m of outros) await chamar(e, 'guildJoin', { id: m, code: g.code });
     expect((await lerGrupo(e, g.id)).members).toHaveLength(COOP_MAX_MEMBERS);
-    expect((await dir(e, CAU)).clans).toEqual([]);
+    // Cheio: continua na lista, marcado, e a entrada MUDA de prefixo (nunca disputa a janela dos com vaga).
+    expect((await dir(e, CAU)).clans).toEqual([{ dirId: expect.stringMatching(/^[0-9a-f]{16}$/), name: 'Roda', size: COOP_MAX_MEMBERS, max: COOP_MAX_MEMBERS, full: true }]);
     expect(dirKeys(e)).toHaveLength(0);
+    expect(fullKeys(e)).toHaveLength(1);
     await chamar(e, 'guildLeave', { id: BIA });
-    expect((await dir(e, CAU)).clans[0].size).toBe(COOP_MAX_MEMBERS - 1);
+    expect((await dir(e, CAU)).clans).toEqual([{ dirId: expect.any(String), name: 'Roda', size: COOP_MAX_MEMBERS - 1, max: COOP_MAX_MEMBERS }]);
+    expect(dirKeys(e)).toHaveLength(1);
+    expect(fullKeys(e)).toHaveLength(0);
   });
 
   it('o último sair apaga o clã E a entrada do diretório', async () => {
@@ -239,8 +244,11 @@ describe('autorização e vaga', () => {
     const g = await criar(e, ANA);
     const dirId = (await dir(e, BIA)).clans[0].dirId;
     for (let i = 0; i < COOP_MAX_MEMBERS - 1; i++) await chamar(e, 'guildJoin', { id: sid(`m${i}x`), code: g.code });
-    // A entrada do diretório já sumiu: o dirId antigo vira 404 (clã não está mais listado).
-    expect([404, 409]).toContain((await pedir(e, BIA, dirId)).status);
+    // §322: a entrada mudou para o prefixo dos cheios; o mesmo dirId acha o clã e o servidor recusa com 409 full.
+    const r = await pedir(e, BIA, dirId);
+    expect(r.status).toBe(409);
+    expect(r.body.error).toBe('guild full');
+    expect(e.DIGIAPP_SAVES.store.has(coopReqKey(BIA))).toBe(false);
   });
 });
 

@@ -77,6 +77,8 @@ const ACOES_COM_ATOR = [
   { action: 'sparMatch', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'sparBuyTicket', method: 'POST', body: { id: VITIMA } },
   { action: 'sparOpponents', method: 'GET', params: { id: VITIMA } },
+  // §321: a busca de jogadores tem teto POR CONTA — só o dono do `id` pergunta (senão o teto seria de quem a pessoa disser ser).
+  { action: 'playerSearch', method: 'GET', params: { id: VITIMA, q: 'jo' } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'friendAccept', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
@@ -396,8 +398,8 @@ describe('community — a FAIXA do Torneio nunca rebaixa (WP4.13 / achado E5)', 
         [`profile:${B}`]: perfil(B, { pvpEnabled: true, stage: 'rookie', pid: PID_B }),
         [`pid:${PID_B}`]: A === B ? '' : B,
         // Combate v3 (PR5): o duelo lê o SAVE de cada lado (e não mais o estágio do perfil público).
-        [A]: JSON.stringify({ evolutionStage: 'mega-power', perfectDays: 3 }),
-        [B]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3 }),
+        [A]: JSON.stringify({ evolutionStage: 'mega-power', perfectDays: 3, totalXP: 5000 }),
+        [B]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3, totalXP: 5000 }),
       }),
       FIREBASE_PROJECT_ID: undefined, // sem auth: `denyUnlessOwner` não bloqueia
     };

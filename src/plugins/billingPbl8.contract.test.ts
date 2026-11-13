@@ -16,6 +16,9 @@ import { readFileSync } from 'node:fs';
 // lançava SecurityException e o JS engolia (`.catch(() => {})`). A permissão é
 // restrita na Play (despertador/calendário) e um lembrete tolera minutos de
 // janela, então ela saiu: alarme inexato, sem permissão e sem convite na UI.
+// BETA12 (item I): o AVISO DO FOCO (fim do Pomodoro) precisa do minuto certo com o app fechado. Só ele usa
+// `scheduleExactAlarm` (timestamp em ms): `setExactAndAllowWhileIdle` quando `canScheduleExactAlarms()`, senão cai no
+// inexato. A permissão volta ao manifesto por isso (declarar na ficha da Play); o lembrete comum segue inexato.
 // ---------------------------------------------------------------------------
 const gradle = readFileSync('android/app/build.gradle', 'utf8');
 const billing = readFileSync(
@@ -60,23 +63,42 @@ describe('PL-8 › Play Billing Library ≥ 8', () => {
   });
 });
 
-describe('PL-9 › lembrete com alarme INEXATO, sem SCHEDULE_EXACT_ALARM', () => {
+describe('PL-9 › lembrete comum com alarme INEXATO; só o aviso do Foco pede o minuto exato (beta12, item I)', () => {
   const codigoAlarm = semComentarios(alarm);
 
-  it('o app não declara SCHEDULE_EXACT_ALARM nem reage à mudança dela', () => {
-    expect(semComentarios(manifest)).not.toMatch(/SCHEDULE_EXACT_ALARM/);
+  it('SCHEDULE_EXACT_ALARM é declarada UMA vez e o BootReceiver continua sem reagir à mudança dela', () => {
+    expect(semComentarios(manifest).match(/android\.permission\.SCHEDULE_EXACT_ALARM/g)?.length).toBe(1);
+    expect(semComentarios(manifest)).not.toMatch(/USE_EXACT_ALARM/);
     expect(semComentarios(boot)).not.toMatch(/EXACT_ALARM/);
   });
 
-  it('agenda só com setAndAllowWhileIdle (inexato, acorda em Doze) e nunca setExact*', () => {
-    expect(codigoAlarm).toMatch(/alarmManager\.setAndAllowWhileIdle\(AlarmManager\.RTC_WAKEUP/);
-    expect(codigoAlarm).not.toMatch(/setExact|setAlarmClock|canScheduleExactAlarms/);
+  it('o lembrete comum (scheduleAlarmInternal) segue só com setAndAllowWhileIdle', () => {
+    const comum = codigoAlarm.slice(codigoAlarm.indexOf('fun scheduleAlarmInternal'), codigoAlarm.indexOf('fun scheduleAtInternal'));
+    expect(comum).toMatch(/alarmManager\.setAndAllowWhileIdle\(AlarmManager\.RTC_WAKEUP/);
+    expect(comum).not.toMatch(/setExact|setAlarmClock|canScheduleExactAlarms|canExact/);
   });
 
-  it('o JS não tem mais convite de "Alarmes e lembretes"; segue o atalho de notificações', () => {
+  it('o aviso do Foco (scheduleAtInternal) usa setExactAndAllowWhileIdle SÓ com canScheduleExactAlarms e cai no inexato sem ela', () => {
+    expect(codigoAlarm).toMatch(/fun canExact\(/);
+    expect(codigoAlarm).toMatch(/am\.canScheduleExactAlarms\(\)/);
+    const foco = codigoAlarm.slice(codigoAlarm.indexOf('fun scheduleAtInternal'), codigoAlarm.indexOf('private fun pendingFor'));
+    expect(foco).toMatch(/if \(canExact\(context\)\)/);
+    expect(foco).toMatch(/setExactAndAllowWhileIdle\(AlarmManager\.RTC_WAKEUP/);
+    expect(foco).toMatch(/catch \(_: SecurityException\)/);
+    expect(foco).toMatch(/if \(!exact\) alarmManager\.setAndAllowWhileIdle\(/);
+  });
+
+  it('o BootReceiver refaz o alarme de instante só se ainda está no futuro (não reaparece aviso velho)', () => {
+    expect(codigoAlarm).toMatch(/alarm\.has\("atMs"\)/);
+    expect(codigoAlarm).toMatch(/if \(at > System\.currentTimeMillis\(\)\)/);
+  });
+
+  it('o JS não tem convite de "Alarmes e lembretes"; segue o atalho de notificações', () => {
     const ts = readFileSync('src/plugins/SoulmonAlarmPlugin.ts', 'utf8');
-    expect(ts).not.toMatch(/Exact/);
+    expect(ts).not.toMatch(/ACTION_REQUEST_SCHEDULE_EXACT_ALARM|openExactAlarmSettings/);
+    expect(ts).toMatch(/scheduleExactAlarm\(options: \{ id: string; title: string; body: string; atMs: number \}\)/);
     expect(ts).toMatch(/openNotificationSettings\(\)/);
     expect(codigoAlarm).toMatch(/fun openNotificationSettings\(/);
+    expect(codigoAlarm).toMatch(/fun scheduleExactAlarm\(/);
   });
 });

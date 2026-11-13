@@ -3,6 +3,7 @@
  *
  * Duas peças pequenas, cada uma dona da própria carga (a folha só as monta):
  *  - `ProcurarCla`: quem NÃO tem clã vê os clãs com vaga (nome e "n de max") e pede para entrar.
+ *    Os cheios (§322) vêm DEPOIS, em seção própria, com o selo "Cheia" e sem botão de pedir.
  *    Um pedido por vez; o pendente mostra para quem foi e "Cancelar pedido" (à ESQUERDA).
  *    Aprovado, a pessoa já está no clã na próxima carga — e a folha relê ao voltar ao app.
  *  - `PedidosDeEntrada`: só o ANFITRIÃO vê; cada pedido tem Recusar (esquerda) e Aceitar (direita).
@@ -20,6 +21,7 @@ import { Icon } from '../ui/Icon';
 
 type T = (k: GuildKey, vars?: Record<string, string | number>) => string;
 const btn = 'sm2-kit-btn sm2-kit-btn-md';
+const lista = { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2)' } as const;
 const kindDe = (e: unknown) => (e instanceof GuildError ? e.kind : 'server' as const);
 
 export function ProcurarCla({ saveId, t, tz, onJoined }: {
@@ -70,6 +72,8 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
   };
 
   const pendente = dir?.pending ?? null;
+  const abertos = dir?.clans.filter(c => !c.full) ?? [];
+  const cheios = dir?.clans.filter(c => c.full) ?? [];
   const alerta = aviso && <p role="alert" className="sm2-lib-alert">{t(aviso)}</p>;
 
   if (pendente) {
@@ -111,11 +115,11 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
         <section aria-label={t('guild.procurar.titulo')} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2)' }}>
           <h3 className="sm2-stats-lab" style={{ margin: 0 }}>{t('guild.procurar.titulo')}</h3>
           {alerta}
-          {dir && dir.clans.length === 0 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.procurar.vazio')}</p>}
+          {dir && abertos.length === 0 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.procurar.vazio')}</p>}
           {dir === null && !aviso && <Icon name="sync" size={20} tone="muted" className="animate-spin" />}
-          {dir && dir.clans.length > 0 && (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2)' }}>
-              {dir.clans.map(c => (
+          {abertos.length > 0 && (
+            <ul style={lista}>
+              {abertos.map(c => (
                 <li key={c.dirId} className="sm2-guild-row" data-guild-cla={c.dirId}>
                   <span className="sm2-lib-s" style={{ margin: 0, overflowWrap: 'anywhere' }}>
                     <strong>{c.name}</strong>{' · '}<span className="sm2-num">{t('guild.procurar.tamanho', { n: c.size, max: c.max })}</span>
@@ -132,6 +136,22 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
                 </li>
               ))}
             </ul>
+          )}
+          {/* §322: os cheios DEPOIS, em seção própria — nome, "n de max" e o selo "Cheia"; sem botão de pedir. */}
+          {cheios.length > 0 && (
+            <>
+              <h3 className="sm2-stats-lab" style={{ margin: 0 }}>{t('guild.procurar.cheiosTitulo')}</h3>
+              <ul style={lista} data-guild-cheios>
+                {cheios.map(c => (
+                  <li key={c.dirId} className="sm2-guild-row" data-guild-cla={c.dirId} data-guild-cla-cheia>
+                    <span className="sm2-lib-s" style={{ margin: 0, overflowWrap: 'anywhere' }}>
+                      <strong>{c.name}</strong>{' · '}<span className="sm2-num">{t('guild.procurar.tamanho', { n: c.size, max: c.max })}</span>
+                    </span>
+                    <span className="sm2-kit-tag" data-guild-cheia>{t('guild.procurar.cheia')}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
       )}

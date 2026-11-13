@@ -824,12 +824,12 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
    * reabrir é um `import btn from '../assets/soulmon/ui/…'` num componente.
    */
   it('ZERO PNG: nenhuma arte de botão (ui/ ou buttons/) é importada por src/', () => {
-    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png' && rel(f) !== 'soulmon/ui/btn-cta.webp');
+    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png' && !/^soulmon\/ui\/btn-cta(-hover|-press|-off)?\.webp$/.test(rel(f)));
     expect(alvos.map(rel), 'arte de botão 9-slice de volta ao bundle — o kit é vetor').toEqual([]);
     // E as pastas não existem mais no repositório (foram para o arquivo de marca).
     // Única exceção (pedido do dono, 01/11/2026): o texto do selo NEW é imagem (`ui/new-tag.png`, `LibraryNewBadge`).
     // Segunda exceção (pedido do dono, 12/11/2026, REGISTRO §316): o botão especial CTA (`ui/btn-cta.webp`, arte do site do beta, `.sm2-cta`).
-    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')).sort() : []).toEqual(['btn-cta.webp', 'new-tag.png']);
+    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')).sort() : []).toEqual(['btn-cta-hover.webp', 'btn-cta-off.webp', 'btn-cta-press.webp', 'btn-cta.webp', 'new-tag.png']);
     expect(fs.existsSync(path.join(ASSETS, 'soulmon/buttons'))).toBe(false);
   });
 });
