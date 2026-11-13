@@ -336,6 +336,17 @@ export const REVEAL_WAIT_MS = 12_000;
  */
 export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
+/** Erro do login do Google → código de `gate_login.outcome` (utils/telemetry.ts). Só categoria, nunca texto. */
+export function gateLoginOutcome(erro?: AuthErro): number {
+  switch (erro) {
+    case 'popup-fechado': return 2;
+    case 'sem-resposta': return 3;
+    case 'rede': return 4;
+    case 'dominio-nao-autorizado': case 'provedor-desligado': case 'popup-bloqueado': return 5;
+    default: return 6;
+  }
+}
+
 interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories, obterBB, obterBBExclusivo }: SoulmonOnboardingProps) {
@@ -1424,6 +1435,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const aoEntrarComGoogle = async () => {
     if (authOcupado) return;
+    track('gate_login', { outcome: 0 });
     setAuthOcupado(true);
     setAuthErro(null);
     // Rede de segurança: ver `GOOGLE_SEM_RESPOSTA_MS`. Ela LIBERA a tela sem
@@ -1433,6 +1445,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     redeGoogleRef.current = window.setTimeout(() => {
       redeGoogleRef.current = null;
       setAuthOcupado(false);
+      track('gate_login', { outcome: 3 });
       setAuthErro('sem-resposta');
     }, GOOGLE_SEM_RESPOSTA_MS);
 
@@ -1443,7 +1456,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       redeGoogleRef.current = null;
     }
     setAuthOcupado(false);
-    if (r.ok) { await aposAutenticar(r.email); return; }
+    if (r.ok) { track('gate_login', { outcome: 1 }); await aposAutenticar(r.email); return; }
+    track('gate_login', { outcome: gateLoginOutcome(r.erro) });
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1826,7 +1840,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 type="button"
                 data-demo-button
                 style={{ ...sm2Button('outline'), width: '100%' }}
-                onClick={() => setStep(DEMO_LOCAL_PICK)}
+                onClick={() => { track('gate_login', { outcome: 7 }); setStep(DEMO_LOCAL_PICK); }}
                 aria-label={isPt ? 'DEMO — experimentar sem conta' : 'DEMO — try it without an account'}
               >
                 DEMO

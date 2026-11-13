@@ -151,6 +151,7 @@ export const EVENT_SCHEMA = {
   task_skipped: { kind: { min: 0, max: 1 } },
   day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
   session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
+  gate_login: { outcome: { min: 0, max: 7 } }, // ESPELHO de src/utils/telemetry.ts
 };
 
 /**
@@ -448,6 +449,9 @@ export function applyAggregate(agg, events) {
       const funnel = FUNNEL_LABEL[p.funnel] ?? 'unknown';
       bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? 'yes' : 'no'}`);
       bump(`reveal_seen.duration.${p.duration}`);
+    }
+    if (record.e === 'gate_login' && p) {
+      bump(`gate_login.outcome_${p.outcome}`);
     }
     if (record.e === 'checkin_commit' && p) {
       bump(`checkin_commit.focus_${p.focus_count}`);
