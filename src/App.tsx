@@ -910,6 +910,7 @@ import type { QuickAddResult } from './utils/quickAdd';
 import { installUsageTime, setActive as setUsageActive } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
 import type { CreateAction } from './utils/chatActions';
+import { WakeToEnterProvider } from './components/WakeToEnter';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
@@ -4721,6 +4722,11 @@ export default function App() {
     // E0: a trilha NÃO é pausada aqui — é no `useEffect([isSleeping])` logo
     // abaixo, que cobre o gesto manual E o sono automático com um caminho só.
   }, [isSleeping, falar, markDayAwake]);
+  /** 💤 O "Acordar" da pergunta das atividades (§329, `components/WakeToEnter.tsx`): o MESMO gesto do deck, só com o Soulmon dormindo
+   *  (sono real ou à espera do "Acordar" do dia) — nunca deita um Soulmon acordado. */
+  const wakeForActivity = useCallback(() => {
+    if (isSleeping || dayWakePendingRef.current) handleSleep();
+  }, [isSleeping, handleSleep]);
 
   /* MÚSICA × SONO (pedido do dono, 10/11/2026 — emenda do E0/S13): ACORDADO, a música toca normal; DORMINDO, toca a música calma do
      Refúgio (a faixa de meditação) em vez de calar. Antes (E0) o sono e a janela de descanso (23h–7h, a padrão vale para TODOS) pausavam o
@@ -8393,6 +8399,7 @@ export default function App() {
 
 
   return (
+    <WakeToEnterProvider isSleeping={isSleeping} dayWakePending={dayWakePending} language={language} onWake={wakeForActivity}>
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
         {demo && <div className="sm-demo-seal" aria-hidden="true">DEMO</div>}
         {/* ── O VISOR SINTONIZOU SOZINHO ───────────────────────────────────
@@ -8738,7 +8745,6 @@ export default function App() {
                 key={currentView}
                 unlockedElements={gameState.defeatedElements}
                 area={area}
-                wakeGuard={guardWake}
                 naMasmorra={naMasmorra}
                 emCristal={!!cristal}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
@@ -10863,5 +10869,6 @@ export default function App() {
       )}
       <Toaster richColors position="top-right" />
     </div>
+    </WakeToEnterProvider>
   );
 }

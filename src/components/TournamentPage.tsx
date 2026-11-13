@@ -79,6 +79,7 @@ import { lineIconForStage } from '../utils/lineIcons';
 import { opponentSprite, opponentIcon } from '../utils/opponentArt';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
+import { useRequireAwake } from './WakeToEnter';
 import { fxDoLutador } from '../utils/fighterIdentity';
 import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { specialOf } from '../utils/combate/specials';
@@ -262,6 +263,9 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
 export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, earnedBits: earnedBitsProp = 0, onChargeTreinoTicket, playerDayTz, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
+  /* 💤 §329: o Torneio entra livre (ranking, histórico, molduras); LUTAR, TREINAR e o desgarrado perguntam com o Soulmon dormindo,
+     na hora do toque (o sono automático pode chegar com a folha aberta). Repetir o envio de uma partida já jogada não pergunta. */
+  const requireAwake = useRequireAwake();
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -971,7 +975,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               </div>
               <button
                 type="button"
-                onClick={() => startTraining(n)}
+                onClick={() => { requireAwake('arena.torneio', () => startTraining(n)); }}
                 aria-label={isPt ? `Desafiar ${n.namePt} (treino, sem prêmio)` : `Fight — challenge ${n.nameEn} (training, no reward)`}
                 style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}
               >
@@ -991,7 +995,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wildFoeLabel(stray.stage, isPt)}</p>
                 <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isPt ? 'Treino' : 'Training'} · {getStageLevel(petStage)}</p>
               </div>
-              <button type="button" onClick={() => startTraining(undefined, stray)} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
+              <button type="button" onClick={() => { requireAwake('arena.torneio', () => startTraining(undefined, stray)); }} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
                 {isPt ? 'Desafiar' : 'Fight'}
               </button>
             </div>
@@ -1047,7 +1051,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <button
                   type="button"
                   disabled={blocked || busy || lockedByOther}
-                  onClick={() => fight(o)}
+                  onClick={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
                   aria-label={blocked
                     ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
                     : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
@@ -1169,7 +1173,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <button
                   type="button"
                   disabled={busy || locked}
-                  onClick={() => { void fightSpar(o); }}
+                  onClick={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
                   aria-label={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
                   style={{ ...sm2Button('primary', busy || locked, 'sm'), flexShrink: 0, minWidth: 88 }}
                 >

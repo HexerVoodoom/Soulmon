@@ -1615,6 +1615,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `BlockedActionModal` · `useBlockedAction(language, onGo?)` → `[modal, explain]`.
 **Régua:** `ui/BlockedActionModal.render.test.tsx`.
 
+### `src/components/WakeToEnter.tsx` (13/11/2026, REGISTRO §329)
+**Dono de:** o portão ÚNICO das atividades com o Soulmon dormindo. `WakeToEnterProvider` (montado na raiz do `App` com `isSleeping`, `dayWakePending`, `language` e `onWake` = o `handleSleep` de sempre, só chamado dormindo) guarda a entrada pedida e mostra `WakeToEnterPrompt`: "Seu Soulmon está dormindo. Quer acordá-lo?", "Acordar" (acorda e SEGUE para a atividade escolhida) e "Agora não" (fecha e fica; o fechar, Esc e toque fora fazem o mesmo). `ModalSheet` centralizado em portal (foco preso, Esc, `aria-label`), botões `sm2-kit-btn` de 48 px, sem `CtaButton`. Sem provedor tudo segue direto.
+**Exports:** `WakeToEnterProvider` · `WakeToEnterPrompt` · `useWakeGate()` → `{ require(entrada, seguir), held(entrada) }` · `useRequireAwake()` (atalho do `require`).
+**Usado por:** `nav/AreaView.tsx` (a porta do Calabouço e a folha inicial do atalho, o "Lutar" da Arena livre, o `start` dos jogos — que inclui o "Descer" da Fenda), `TournamentPage.tsx` (lutar, treino, desgarrado), `guild/GuildSheet.tsx` (Buscar guerra, rodada da Feira, mandar o Soulmon na missão), `guild/PlantioVisor.tsx` (cuidar e lutar no Grove), `play/PasseioSheet.tsx` (escolher a missão), `play/FocusBoard.tsx` (Começar jornada), `LibraryPage.tsx` (Treinar com amigo). Desde a emenda de 13/11 as folhas entram livres e o botão de dentro pergunta no toque.
+**Régua:** `WakeToEnter.render.test.tsx`.
+
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 

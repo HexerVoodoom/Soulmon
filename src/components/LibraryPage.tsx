@@ -52,6 +52,7 @@ import { usePlayerSearch } from '../hooks/usePlayerSearch';
 import { PlayerSearchResults } from './PlayerSearch';
 import { PlayerName } from './ui/PlayerName';
 import type { PlayerSearchHit } from '../utils/playerSearch';
+import { useRequireAwake } from './WakeToEnter';
 
 const FriendTraining = lazy(() => import('./FriendTraining').then(m => ({ default: m.FriendTraining })));
 
@@ -195,6 +196,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [removeMode, setRemoveMode] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<{ p: LibraryEntry; step: 1 | 2 } | null>(null);
   const [trainingWith, setTrainingWith] = useState<LibraryEntry | null>(null);
+  /** 💤 §329: treinar com um amigo leva o Soulmon; dormindo, pergunta antes (ver a lista segue livre). */
+  const requireAwake = useRequireAwake();
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
@@ -840,7 +843,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                   icon="swords"
                   tone="ink"
                   label={isPt ? `Treinar com ${p.name}` : `Train with ${p.name}`}
-                  onClick={() => setTrainingWith(p)}
+                  onClick={() => { requireAwake('treino', () => setTrainingWith(p)); }}
                 />
               )}
               {/* Presente: some pelo resto do dia depois de enviado (o servidor é quem sabe, `sentToday`). */}

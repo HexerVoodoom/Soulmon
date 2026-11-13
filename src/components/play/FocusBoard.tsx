@@ -28,6 +28,7 @@ import { FocusTaskPicker } from './FocusTaskPicker';
 import { loadFocusSession, saveFocusSession, type FocusSessionState } from '../../utils/focusSession';
 import { mergeItems } from '../../utils/journeyItemInfo';
 import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
+import { useRequireAwake } from '../WakeToEnter';
 
 type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> };
 const CARD: Record<JourneyKeyId, { pt: string; en: string; keyPt: string; keyEn: string }> = {
@@ -154,7 +155,10 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   };
 
   /** Começar abre a ESCOLHA DA TAREFA (sempre; sem sessão livre). Confirmada, `begin` liga a tarefa e abre a jornada. */
-  const start = () => { if (!saveId || busy) return; setDoneNote(null); setPickOpen(true); };
+  /* 💤 §329: a Oficina entra livre (cards, chaves, lista, concluir tarefa — G-01); COMEÇAR a jornada leva o Soulmon e pergunta com ele
+     dormindo, no toque. Voltar a uma jornada já em andamento não pergunta. */
+  const requireAwake = useRequireAwake();
+  const start = () => { if (!saveId || busy) return; requireAwake('forja.oficina', () => { setDoneNote(null); setPickOpen(true); }); };
   const begin = (task: { id: string; name: string }) => {
     if (!saveId || busy) return;
     setBusy(true); setDoneNote(null);
