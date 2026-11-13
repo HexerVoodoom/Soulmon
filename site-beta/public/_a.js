@@ -96,6 +96,7 @@
       x = (el.getAttribute('aria-label') || el.getAttribute('data-sa') || el.textContent || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
     }
     push('click', 'c' + rid().slice(0, 8), x, k, 0);
+    if (el.tagName === 'A') flush(); // the page may be about to unload
   }, true);
 
   // Section reach: section[id] crossing the middle band of the viewport.
