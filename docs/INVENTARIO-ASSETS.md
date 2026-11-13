@@ -454,3 +454,28 @@ Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cos
 ## Botão especial CTA (12/11/2026)
 
 `src/assets/soulmon/ui/btn-cta.webp`, `btn-cta-hover.webp`, `btn-cta-press.webp`, `btn-cta-off.webp` (551x180 cada, 10-16 KB): cópia byte a byte de `site-beta/public/dono/botao{,-hover,-press,-off}.webp` (branch `site-beta`, o CTA `.botao.primario` do soulmon.pages.dev/beta; fatia `62 74 fill`), um arquivo por estado; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
+
+## FX de status sem identidade: 13 folhas em loop + 13 glifos (13/11/2026, REGISTRO §336)
+
+**Origem e processo**
+- Gerados no app ChatGPT, uma conversa por imagem, com alfa real (sem chroma).
+- O piloto de veneno, aprovado pelo dono, foi o anexo de estilo das demais.
+- Montagem por `E:/Soulmon-assets/_fx-status/montar_folha.py`: corte por projeção, escala única, âncora embaixo no centro, alfa binário.
+- Fonte, `meta.json` com o prompt e as tags de cada peça, e GIFs de prévia em `E:/Soulmon-assets/_fx-status/novo/`. Linhas no `_banco/registro.jsonl`.
+- Prompts completos em `docs/FX-STATUS-PROMPTS.md`.
+- A arte anterior, com canos, folhas e cristal (lote de 09/11, §264), fica guardada em `E:/Soulmon-assets/_fx-status/atual/`.
+
+| Arquivo | Pasta | Tamanho | Uso |
+|---|---|---|---|
+| `fx-veneno-loop-sheet`, `fx-queimadura-loop-sheet`, `fx-dot-loop-sheet`, `fx-maldicao-loop-sheet`, `fx-silencio-loop-sheet`, `fx-debuff-loop-sheet`, `fx-buff-loop-sheet`, `fx-regen-loop-sheet` | `soulmon/combate-v3/fx/` | 384×256 (3×2 de 128) | substituem as anteriores, mesmo nome; marcador animado do canto (`statusLoopId`) |
+| `fx-lento-loop-sheet`, `fx-debuff-def-loop-sheet`, `fx-buff-atk-loop-sheet`, `fx-buff-spd-loop-sheet`, `fx-cura-loop-sheet` | `soulmon/combate-v3/fx/` | 384×256 | NOVAS: lento, defesa em baixa, ataque em alta (e físico/mágico), velocidade em alta (e aceleração), cura. Antes emprestavam a folha genérica ou não tinham folha |
+| `st-veneno`, `st-queimadura`, `st-dot`, `st-maldicao`, `st-retardo`, `st-silencio`, `st-debuff-def`, `st-seta-desce`, `st-seta-sobe`, `st-buff-atk`, `st-buff-spd`, `st-hot`, `st-cura` | `soulmon/combate-v3/status/` | 64² | substituem as anteriores, mesmo nome (`statusGlyphId`; fora da cena de combate desde §331) |
+| removidos: `fx-buff-loop-1..6`, `fx-debuff-loop-1..6`, `fx-dot-loop-1..6`, `fx-maldicao-loop-1..6` | `soulmon/combate-v3/fx/` | 128² | quadros soltos antigos, sem consumidor; a folha nova os substitui |
+
+**Correções**
+- `fx-debuff-def` e `fx-cura` tiveram o salto do quadro 6 → 1 corrigido por edição de pixel, com `_fx-status/fix/corrigir_saltos.py`.
+- Os originais ficam em `novo/_backup-pre-fix/`.
+
+**Fora do escopo (pendentes com o dono)**
+- Os outros glifos-medalhão do mesmo molde antigo: `st-peso`, `st-ferrugem`, `st-seiva`, `st-selado` e outros.
+- Provavelmente têm o mesmo problema de identidade.

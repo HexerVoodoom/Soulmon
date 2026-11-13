@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
 import { render, cleanup, waitFor } from '@testing-library/react';
 import { BattleStage, STAGE_FX_MARK_MAX, Z_FX_MARK, type StageAction, type StageFighter } from './BattleStage';
-import { STATUS_FX, STATUS_FX_KINDS, STATUS_LOOP_CROP, STATUS_LOOP_FRAME_PX, statusLoopCropSide, MAX_STATUS_CHIPS, statusAriaLabel, statusPolarity, type StageStatus, type StatusFxKind } from '../../utils/combatFx';
+import { STATUS_FX, STATUS_FX_KINDS, STATUS_LOOP_CROP, STATUS_LOOP_FRAME_PX, STATUS_LOOP_IDS, statusLoopCropSide, statusLoopId, MAX_STATUS_CHIPS, statusAriaLabel, statusPolarity, type StageStatus, type StatusFxKind } from '../../utils/combatFx';
 import { COMBAT_V3_ART_IDS, loadCombatV3Art, resetCombatV3ArtCache } from '../../utils/combatV3Art';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); resetCombatV3ArtCache(); });
@@ -101,7 +101,7 @@ describe('§331 o efeito aparece UMA vez: o marcador no canto é a leitura, com 
     semSeloDaBarra();
   });
 
-  it('o ESCUDO segue sobre o corpo (fx-shield, como era); a cura vira marcador no canto dos buffs (fx-heal)', async () => {
+  it('o ESCUDO segue sobre o corpo (fx-shield, como era); a cura vira marcador ANIMADO no canto dos buffs (fx-cura, §336)', async () => {
     render(<BattleStage {...base} me={{ ...me, status: [{ kind: 'escudo', turns: 3 }] }} foes={[foe({ status: [{ kind: 'cura', turns: 1 }] })]} />);
     await quando(() => document.querySelector('[data-stage-fx-still="escudo"]') && mark('cura'));
     const escudo = document.querySelector('[data-stage-fx-still="escudo"]') as HTMLElement;
@@ -110,7 +110,7 @@ describe('§331 o efeito aparece UMA vez: o marcador no canto é a leitura, com 
     expect(document.querySelector('[data-stage-fx-still="cura"]')).toBeNull();
     expect(mark('cura')!.closest('[data-stage-fx-row]')!.getAttribute('data-stage-fx-zone')).toBe('buff');
     expect(rotulo(mark('cura')!)).toBe('Healing, 1 turn left');
-    expect(document.querySelector('[data-stage-fx-loop]')).toBeNull();
+    expect(mark('cura')!.getAttribute('data-stage-fx-sheet')).toBe('fx-cura-loop-sheet');
   });
 });
 
@@ -170,8 +170,9 @@ describe('marcadores de efeito no sprite: canto por tipo, ordem de início, semp
     await quando(() => marks().length === 2);
     const sizes = new Set<number>();
     for (const m of marks()) {
-      const def = STATUS_FX[m.getAttribute('data-stage-fx-mark') as StatusFxKind];
-      const crop = STATUS_LOOP_CROP[def.loop!];
+      const sheetId = statusLoopId(m.getAttribute('data-stage-fx-mark') as StatusFxKind, (m.getAttribute('data-stage-fx-variant') ?? undefined) as StageStatus['variant'])!;
+      expect(m.getAttribute('data-stage-fx-sheet')).toBe(sheetId);
+      const crop = STATUS_LOOP_CROP[sheetId];
       expect(m.getAttribute('data-stage-fx-crop')).toBe(`${crop.x},${crop.y},${crop.w},${crop.h}`);
       expect(m.getAttribute('data-stage-fx-loop')).toBe(m.getAttribute('data-stage-fx-mark'));
       const icon = parseFloat(m.style.width);
@@ -186,14 +187,15 @@ describe('marcadores de efeito no sprite: canto por tipo, ordem de início, semp
     expect(sizes.size).toBe(1);
   });
 
-  it('§328 toda folha em loop usada como marcador tem recorte medido, dentro do quadro de 128 px', () => {
-    for (const k of STATUS_FX_KINDS) {
-      const loop = STATUS_FX[k].loop;
-      if (!loop || k === 'escudo') continue;
+  it('§328/§336 toda folha em loop (todas as variantes) tem recorte medido, dentro do quadro de 128 px', () => {
+    expect(STATUS_LOOP_IDS.length).toBe(13);
+    for (const loop of STATUS_LOOP_IDS) {
       const c = STATUS_LOOP_CROP[loop];
       expect(c, loop).toBeTruthy();
       expect(c.x >= 0 && c.y >= 0 && c.w > 0 && c.h > 0 && c.x + c.w <= STATUS_LOOP_FRAME_PX && c.y + c.h <= STATUS_LOOP_FRAME_PX, loop).toBe(true);
     }
+    // nenhum recorte sobrando de folha que saiu
+    for (const id of Object.keys(STATUS_LOOP_CROP)) expect(STATUS_LOOP_IDS, id).toContain(id);
   });
 
   it('SEMPRE na frente: acima do sprite, do escudo, do véu, da aura e de quem conjura — no especial do pet e no do inimigo', async () => {
@@ -296,22 +298,37 @@ describe('§328 todo efeito com folha em loop toca o loop dele no marcador do ca
   /** Tipos com `loop` que NÃO viram marcador animado no canto, e por quê. Hoje: nenhum (o escudo não tem `loop`). */
   const EXCLUIDOS: Partial<Record<StatusFxKind, string>> = {};
   const comLoop = STATUS_FX_KINDS.filter((k) => STATUS_FX[k].loop);
+  /** Cada (efeito, variante) com folha própria — §336: lento, defesa em baixa, ataque/velocidade em alta e cura incluídos. */
+  const casos: [StatusFxKind, StageStatus['variant']][] = [
+    ...comLoop.map((k): [StatusFxKind, StageStatus['variant']] => [k, undefined]),
+    ['debuff', 'def'], ['buff', 'atk'], ['buff', 'spd'],
+  ];
 
   it('a lista cobre silêncio e HoT, e toda folha tem recorte medido', () => {
-    expect(comLoop).toEqual(expect.arrayContaining(['silencio', 'hot']));
-    for (const k of comLoop) if (!EXCLUIDOS[k]) expect(STATUS_LOOP_CROP[STATUS_FX[k].loop!], k).toBeDefined();
+    expect(comLoop).toEqual(expect.arrayContaining(['silencio', 'hot', 'lento', 'cura']));
+    for (const k of comLoop) if (!EXCLUIDOS[k]) expect(STATUS_LOOP_CROP[statusLoopId(k)!], k).toBeDefined();
     // a exclusão só vale com motivo escrito
     for (const [k, motivo] of Object.entries(EXCLUIDOS)) expect(motivo, k).toMatch(/\S{8,}/);
   });
 
-  for (const kind of comLoop.filter((k) => !EXCLUIDOS[k])) {
-    it(`${kind}: o marcador no canto é a folha ${STATUS_FX[kind].loop} em loop`, async () => {
-      const { container } = render(<BattleStage {...base} me={{ ...me, status: [{ kind, turns: 2 }] }} foes={[foe({ status: [{ kind, turns: 2 }] })]} />);
+  for (const [kind, variant] of casos.filter(([k]) => !EXCLUIDOS[k])) {
+    const sheet = statusLoopId(kind, variant)!;
+    const nome = variant ? `${kind}/${variant}` : kind;
+    it(`${nome}: o marcador no canto é a SUA folha ${sheet} em loop`, async () => {
+      const st: StageStatus[] = [{ kind, variant, turns: 2 }];
+      const { container } = render(<BattleStage {...base} me={{ ...me, status: st }} foes={[foe({ status: st })]} />);
       await quando(() => container.querySelectorAll(`[data-stage-fx-mark="${kind}"]`).length === 2);
       for (const el of container.querySelectorAll(`[data-stage-fx-mark="${kind}"]`)) {
-        expect(el.getAttribute('data-stage-fx-loop'), kind).toBe(kind);
-        expect(el.querySelector('.sm-bs-sheet'), kind).not.toBeNull();
+        expect(el.getAttribute('data-stage-fx-loop'), nome).toBe(kind);
+        expect(el.getAttribute('data-stage-fx-sheet'), nome).toBe(sheet);
+        expect(el.querySelector('.sm-bs-sheet'), nome).not.toBeNull();
       }
     });
   }
+
+  it('§336 as 13 folhas aparecem: (efeito, variante) diferentes nunca dividem folha', () => {
+    const folhas = casos.map(([k, v]) => statusLoopId(k, v));
+    expect(new Set(folhas).size).toBe(folhas.length);
+    expect(new Set(folhas)).toEqual(new Set(STATUS_LOOP_IDS));
+  });
 });

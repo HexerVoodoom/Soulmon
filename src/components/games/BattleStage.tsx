@@ -41,7 +41,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, STATUS_LOOP_CROP, STATUS_LOOP_FRAME_PX, statusLoopCropSide, statusAriaLabel, statusPolarity,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, STATUS_LOOP_CROP, STATUS_LOOP_FRAME_PX, statusLoopCropSide, statusLoopId, statusAriaLabel, statusPolarity,
   type StageActionKind, type StageStatus, type StatusPolarity, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
@@ -565,7 +565,8 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
  * (e o escudo) leva o `aria-label` EN/PT com efeito + turnos (`statusAriaLabel`), para o leitor de tela não perder nada.
  *
  * O desenho dos cantos (§328, dono, 13/11/2026, prints marcados): UM marcador por efeito, o ícone ANIMADO do efeito (a
- * mesma folha em loop que antes cobria o corpo, recortada no conteúdo, `STATUS_LOOP_CROP`; a cura é a peça `fx-heal`):
+ * folha em loop DO EFEITO e da variante, `statusLoopId` — desde §336 cada efeito tem a sua, inclusive lento, defesa em
+ * baixa, ataque/velocidade em alta e cura —, recortada no conteúdo, `STATUS_LOOP_CROP`; sem folha, a peça estática):
  *  · INIMIGO (em cima): DEBUFF no canto de CIMA à ESQUERDA, o 1º encostado na borda esquerda do sprite e os seguintes à
  *    direita dele; BUFF no canto de BAIXO à DIREITA, o 1º encostado na borda direita e os seguintes à esquerda;
  *  · SEU SOULMON (embaixo), espelhado: DEBUFF em CIMA à DIREITA (1º na borda direita, seguintes à esquerda); BUFF em
@@ -666,6 +667,7 @@ function LoopMark({ sheet, src, icon, reduced, loopKind, a11y }: {
       role="img"
       {...a11y}
       data-stage-fx-loop={reduced ? undefined : loopKind}
+      data-stage-fx-sheet={sheet}
       data-stage-fx-crop={`${crop.x},${crop.y},${crop.w},${crop.h}`}
       style={{ position: 'relative', flex: 'none', width: icon, height: icon, overflow: 'hidden', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' }}
     >
@@ -686,7 +688,7 @@ function StatusLayer({ status, spot, side, avoid, fieldW, fieldH, isPt, reduced 
 }) {
   const shield = status.find((st) => st.kind === 'escudo');
   // um marcador por efeito que tem arte de cena (a folha em loop ou a peça estática) — menos o escudo, que segue sobre o corpo
-  const markArt = (st: StageStatus) => STATUS_FX[st.kind].loop ?? STATUS_FX[st.kind].still;
+  const markArt = (st: StageStatus) => statusLoopId(st.kind, st.variant) ?? STATUS_FX[st.kind].still;
   const zones = (['debuff', 'buff'] as const).map((zone) => ({
     zone,
     marks: status.filter((st) => st.kind !== 'escudo' && markArt(st) && statusPolarity(st.kind) === zone).slice(0, MAX_STATUS_CHIPS),
@@ -737,13 +739,13 @@ function StatusLayer({ status, spot, side, avoid, fieldW, fieldH, isPt, reduced 
             }}
           >
             {ready.map((st, i) => {
-              const def = STATUS_FX[st.kind];
+              const sheet = statusLoopId(st.kind, st.variant);
               const src = art[markArt(st) ?? ''] as string;
               // o marcador é a ÚNICA leitura do efeito (o selo com contador saiu, §331): o leitor de tela ouve efeito + turnos
               const a11y = { 'aria-label': statusAriaLabel(st.kind, st.turns, isPt, st.variant), 'data-stage-fx-mark': st.kind, 'data-stage-fx-variant': st.variant, 'data-stage-fx-turns': st.turns };
               const key = `${st.kind}-${st.variant ?? ''}-${i}`;
-              return def.loop ? (
-                <LoopMark key={key} sheet={def.loop} src={src} icon={icon} reduced={reduced} loopKind={st.kind} a11y={a11y} />
+              return sheet ? (
+                <LoopMark key={key} sheet={sheet} src={src} icon={icon} reduced={reduced} loopKind={st.kind} a11y={a11y} />
               ) : (
                 <img key={key} src={src} alt={a11y['aria-label']} data-stage-fx-mark={st.kind} data-stage-fx-variant={st.variant} data-stage-fx-turns={st.turns} width={icon} height={icon} style={{ flex: 'none', width: icon, height: icon, display: 'block', maxWidth: 'none', imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.75))' }} />
               );

@@ -309,8 +309,12 @@ interface Bilingual { readonly en: string; readonly pt: string }
 export interface StatusFxDef {
   /** Id do glifo do HUD (`combate-v3/status/<id>.png`), por variante; `_` é o padrão. */
   readonly glyph: Readonly<Record<string, string>>;
-  /** Folha 3×2 de 128 px do FX em loop sobre o corpo (`combate-v3/fx/<id>.png`); `null` = sem loop. */
-  readonly loop: string | null;
+  /**
+   * Folha 3×2 de 128 px do FX em loop (`combate-v3/fx/<id>.png`), por variante como o `glyph`; `_` é o padrão e
+   * `null` = sem loop. Desde 13/11/2026 (arte nova sem identidade, REGISTRO §336) cada efeito tem a SUA folha: lento,
+   * defesa em baixa, ataque/velocidade em alta e cura deixaram de pegar emprestada a do buff/debuff genérico.
+   */
+  readonly loop: Readonly<Record<string, string>> | null;
   /** Peça ESTÁTICA existente sobre o corpo (`fx/fx-heal`, `fx/fx-shield`); `null` = nenhuma. */
   readonly still: string | null;
   /** A FORMA do selo em texto (seta/sinal): distingue o efeito sem cor e é o fallback quando a arte não carregou. */
@@ -329,62 +333,65 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
     // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
     glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
-    loop: 'fx-buff-loop-sheet', still: null, mark: '▲',
+    // ataque (e físico/mágico, mesma mecânica) e velocidade (e aceleração) têm folha própria; o resto usa o buff genérico
+    loop: { _: 'fx-buff-loop-sheet', atk: 'fx-buff-atk-loop-sheet', fisico: 'fx-buff-atk-loop-sheet', magico: 'fx-buff-atk-loop-sheet', spd: 'fx-buff-spd-loop-sheet', aceleracao: 'fx-buff-spd-loop-sheet' },
+    still: null, mark: '▲',
     label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
     short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
   },
   debuff: {
     glyph: { _: 'st-debuff-def', def: 'st-debuff-def' },
-    loop: 'fx-debuff-loop-sheet', still: null, mark: '▼',
+    loop: { _: 'fx-debuff-loop-sheet', def: 'fx-debuff-def-loop-sheet' }, still: null, mark: '▼',
     label: { _: L('Weakened', 'Enfraquecido'), def: L('Defense down', 'Defesa em baixa') },
     short: { _: L('DOWN', 'BAIXA'), def: L('DEF', 'DEF') },
   },
   maldicao: {
     glyph: { _: 'st-maldicao' },
-    loop: 'fx-maldicao-loop-sheet', still: null, mark: '×',
+    loop: { _: 'fx-maldicao-loop-sheet' }, still: null, mark: '×',
     label: { _: L('Cursed', 'Maldição') },
     short: { _: L('CURSE', 'MALD.') },
   },
   dot: {
     glyph: { _: 'st-dot' },
-    loop: 'fx-dot-loop-sheet', still: null, mark: '◆',
+    loop: { _: 'fx-dot-loop-sheet' }, still: null, mark: '◆',
     label: { _: L('Damage over time', 'Dano contínuo') },
     short: { _: L('DoT', 'DoT') },
   },
   // Glifo e loop próprios instalados em 09/11/2026 (REGISTRO §228); a forma + texto (`mark`) segue como fallback.
   queimadura: {
     glyph: { _: 'st-queimadura' },
-    loop: 'fx-queimadura-loop-sheet', still: null, mark: '♨',
+    loop: { _: 'fx-queimadura-loop-sheet' }, still: null, mark: '♨',
     label: { _: L('Burn', 'Queimadura') },
     short: { _: L('BURN', 'QUEIM.') },
   },
   veneno: {
     glyph: { _: 'st-veneno' },
-    loop: 'fx-veneno-loop-sheet', still: null, mark: '☣',
+    loop: { _: 'fx-veneno-loop-sheet' }, still: null, mark: '☣',
     label: { _: L('Poison', 'Veneno') },
     short: { _: L('PSN', 'VEN.') },
   },
   silencio: {
     glyph: { _: 'st-silencio', ofuscado: 'st-ofuscado', curtoCircuito: 'st-curto-circuito', atordoado: 'st-atordoado', selado: 'st-selado' },
-    loop: 'fx-silencio-loop-sheet', still: null, mark: '∅',
+    loop: { _: 'fx-silencio-loop-sheet' }, still: null, mark: '∅',
     label: { _: L('Silenced', 'Silêncio'), ofuscado: L('Dazzled', 'Ofuscado'), curtoCircuito: L('Short circuit', 'Curto-circuito'), atordoado: L('Stunned', 'Atordoado'), selado: L('Sealed', 'Selado') },
     short: { _: L('MUTE', 'MUDO'), ofuscado: L('DAZE', 'OFUSC.'), curtoCircuito: L('SHORT', 'CURTO'), atordoado: L('STUN', 'ATORD.'), selado: L('SEAL', 'SELO') },
   },
   lento: {
     glyph: { _: 'st-velocidade', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
-    loop: 'fx-debuff-loop-sheet', still: null, mark: '▽',
+    loop: { _: 'fx-lento-loop-sheet' }, still: null, mark: '▽',
     label: { _: L('Speed down', 'Velocidade em baixa'), peso: L('Weighed down', 'Peso'), retardo: L('Time lag', 'Retardo'), ferrugem: L('Rust', 'Ferrugem'), distorcao: L('Warped', 'Distorção') },
     short: { _: L('SLOW', 'LENTO'), peso: L('HEAVY', 'PESO'), retardo: L('LAG', 'RETARD.'), ferrugem: L('RUST', 'FERR.'), distorcao: L('WARP', 'DIST.') },
   },
   cura: {
     glyph: { _: 'st-cura' },
-    loop: null, still: 'fx-heal', mark: '+',
+    // folha própria desde 13/11/2026 (§336); `fx-heal` segue como a peça estática (fallback sem loop)
+    loop: { _: 'fx-cura-loop-sheet' }, still: 'fx-heal', mark: '+',
     label: { _: L('Healing', 'Cura') },
     short: { _: L('HEAL', 'CURA') },
   },
   hot: {
     glyph: { _: 'st-hot', seiva: 'st-seiva', poDeFada: 'st-po-de-fada', folego: 'st-folego' },
-    loop: 'fx-regen-loop-sheet', still: 'fx-heal', mark: '+↑',
+    loop: { _: 'fx-regen-loop-sheet' }, still: 'fx-heal', mark: '+↑',
     label: { _: L('Healing over time', 'Cura contínua'), seiva: L('Sap', 'Seiva'), poDeFada: L('Fairy dust', 'Pó de fada'), folego: L('Second wind', 'Fôlego') },
     short: { _: L('HoT', 'HoT'), seiva: L('SAP', 'SEIVA'), poDeFada: L('DUST', 'PÓ'), folego: L('WIND', 'FÔL.') },
   },
@@ -401,6 +408,14 @@ export function statusGlyphId(kind: StatusFxKind, variant?: StatusVariant): stri
   const g = STATUS_FX[kind].glyph;
   return (variant && g[variant]) || g._;
 }
+/** Id da folha em loop do efeito (com a variante, se houver; sem ela, o padrão); `null` = o efeito não tem loop. */
+export function statusLoopId(kind: StatusFxKind, variant?: StatusVariant): string | null {
+  const l = STATUS_FX[kind].loop;
+  if (!l) return null;
+  return (variant && l[variant]) || l._ || null;
+}
+/** Todas as folhas em loop citadas na tabela (todas as variantes), sem repetição. */
+export const STATUS_LOOP_IDS: readonly string[] = [...new Set(Object.values(STATUS_FX).flatMap((d) => (d.loop ? Object.values(d.loop) : [])))];
 /** Nome completo / curto do efeito na língua pedida. */
 export function statusLabel(kind: StatusFxKind, isPt: boolean, variant?: StatusVariant): string {
   const l = STATUS_FX[kind].label;
@@ -480,15 +495,21 @@ export const MAX_STATUS_CHIPS = 3;
  */
 export const STATUS_LOOP_FRAME_PX = 128;
 export interface LoopCrop { readonly x: number; readonly y: number; readonly w: number; readonly h: number }
+// Remedido em 13/11/2026 nas 13 folhas novas (sem identidade, §336): união dos 6 quadros, alfa > 24.
 export const STATUS_LOOP_CROP: Readonly<Record<string, LoopCrop>> = {
-  'fx-buff-loop-sheet': { x: 34, y: 1, w: 60, h: 126 },
-  'fx-debuff-loop-sheet': { x: 37, y: 1, w: 55, h: 126 },
-  'fx-dot-loop-sheet': { x: 31, y: 1, w: 66, h: 126 },
-  'fx-maldicao-loop-sheet': { x: 4, y: 6, w: 120, h: 115 },
-  'fx-queimadura-loop-sheet': { x: 25, y: 7, w: 77, h: 107 },
-  'fx-regen-loop-sheet': { x: 33, y: 25, w: 61, h: 94 },
-  'fx-silencio-loop-sheet': { x: 13, y: 17, w: 100, h: 100 },
-  'fx-veneno-loop-sheet': { x: 23, y: 9, w: 80, h: 116 },
+  'fx-buff-loop-sheet': { x: 36, y: 8, w: 56, h: 112 },
+  'fx-buff-atk-loop-sheet': { x: 24, y: 8, w: 79, h: 112 },
+  'fx-buff-spd-loop-sheet': { x: 8, y: 18, w: 112, h: 102 },
+  'fx-cura-loop-sheet': { x: 8, y: 13, w: 112, h: 107 },
+  'fx-debuff-loop-sheet': { x: 34, y: 8, w: 59, h: 112 },
+  'fx-debuff-def-loop-sheet': { x: 8, y: 14, w: 112, h: 106 },
+  'fx-dot-loop-sheet': { x: 21, y: 8, w: 85, h: 112 },
+  'fx-lento-loop-sheet': { x: 27, y: 8, w: 73, h: 112 },
+  'fx-maldicao-loop-sheet': { x: 8, y: 16, w: 112, h: 104 },
+  'fx-queimadura-loop-sheet': { x: 25, y: 8, w: 78, h: 112 },
+  'fx-regen-loop-sheet': { x: 28, y: 8, w: 71, h: 112 },
+  'fx-silencio-loop-sheet': { x: 8, y: 35, w: 112, h: 85 },
+  'fx-veneno-loop-sheet': { x: 25, y: 8, w: 78, h: 112 },
 };
 /**
  * O lado do quadrado do recorte que vai ocupar o marcador inteiro. Arte ALTA e fina (buff, debuff, DoT: ~60 × 126 px) só
