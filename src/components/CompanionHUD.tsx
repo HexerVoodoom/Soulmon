@@ -2267,11 +2267,11 @@ function BalaoDouradoTexto({ text }: { text: string }) {
           data-pet-gold-bubble-arrow
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
-            width: 16, height: 16, marginLeft: 4, verticalAlign: '-0.2em',
+            width: 22, height: 22, marginLeft: 4, verticalAlign: '-0.2em',
             border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
           }}
         >
-          <span aria-hidden="true" style={{ fontSize: 11, lineHeight: 1, fontWeight: 700 }}>→</span>
+          <Icon name="arrow_forward" size={20} weight={600} />
         </span>
       </span>
     </>
