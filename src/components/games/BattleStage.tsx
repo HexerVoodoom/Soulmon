@@ -770,9 +770,11 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const total = action.totalMs ?? totalMs(action.kind, reduced);
   const el = action.element;
   const blocked = !!action.shield;
-  // O escudo LEVANTADO do elemento do defensor (`combate/escudo-*`); sem arte (neutro), o flash `defended` do FX.
+  // O escudo do bloqueio é o `defended` da folha de FX do elemento do defensor (pedido do dono, 13/11/2026);
+  // só sem essa arte cai no `combate/escudo-*` (reserva).
+  const defendedArt = blocked ? fxFrame(action.shield, 'defended') : undefined;
   const landing = blocked
-    ? combatShield(action.shield) ?? fxFrame(action.shield, 'defended')
+    ? defendedArt ?? combatShield(action.shield)
     : fxFrame(el, 'impact');
   const big = action.kind === 'special';
   /** PR18: a cena do especial vem ANTES — o golpe (e tudo que viaja até o alvo) só sai depois dela. */
@@ -841,7 +843,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
   // Concussão (05/11/2026): a investida é a mesma, mas o acabamento é o splash do impacto no lugar do corte (`utils/combate/golpeImpacto.ts`).
   if (reduced || blocked || (form !== 'melee' && !cutRanged) || action.impacto === 'concussao') layers.push(
-    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={blocked && !combatShield(action.shield) && fxMirror(action.shield, 'defended', travel)} />,
+    <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={blocked && !!defendedArt && fxMirror(action.shield, 'defended', travel)} />,
   );
   return <>{layers}</>;
 }
