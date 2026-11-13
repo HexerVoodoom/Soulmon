@@ -1,4 +1,3 @@
-import { ELEMENTO_BG_MEAN_V3 } from './combatArtElementoMedias3.data';
 import { describe, it, expect } from 'vitest';
 import { sceneBgDoElemento, combatBaseElement, combatSceneBg, combatShield, combatGlowColor, combatGlowPair, COMBAT_BG_COUNT, COMBAT_SHIELD_COUNT } from './combatArt';
 import { VISUAL_ELEMENTS } from './combatFx';
@@ -65,14 +64,5 @@ describe('combatArt — 151 compostos de 11/11/2026 (webp)', () => {
   });
   it('sem arquivo próprio cai no cenário do elemento base', () => {
     expect(combatSceneBg('cyber')).toMatch(/bg-/);
-  });
-});
-
-describe('combatArt — 93 fundos regerados darker dusk de 12/11/2026 (webp 720x1280)', () => {
-  it('os ids regerados usam webp e a cor média nova (V3), sem png antigo', () => {
-    for (const id of ['sinapse', 'correnteza', 'vulcao', 'veneno']) {
-      expect(combatSceneBg(id), id).toMatch(new RegExp(String.raw`${id}\.webp\) center/cover #[0-9a-f]{6}$`));
-    }
-    expect(ELEMENTO_BG_MEAN_V3.correnteza).toMatch(/^#[0-9a-f]{6}$/);
   });
 });

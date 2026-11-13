@@ -3,6 +3,9 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { IntroCinematica, deveTocarIntro, introVista } from './IntroCinematica';
 import { PLANOS_INTRO } from './copy';
+import { SLOTS_REAIS } from '../sequencia/slotsReais';
+import { SequenciaOnboarding } from '../sequencia/SequenciaOnboarding';
+import { SEQUENCIA_VELADO } from '../sequencia/cenas';
 
 beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); localStorage.clear(); });
@@ -95,5 +98,18 @@ describe('intro pré-login', () => {
     render(<IntroCinematica language="pt-BR" onDone={onDone} />);
     fireEvent.click(screen.getByText('Pular'));
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('sequência do onboarding velado', () => {
+  it('slots reais cobrem os 3 slots da sequência', () => {
+    const usados = SEQUENCIA_VELADO.filter(q => q.tipo === 'slot').map(q => (q as { slot: string }).slot);
+    for (const s of new Set(usados)) expect(SLOTS_REAIS[s as 'puzzle']).toBeTypeOf('function');
+    expect(Object.keys(SLOTS_REAIS).sort()).toEqual(['duelo', 'puzzle', 'tarefa']);
+  });
+
+  it('flag desligado: SequenciaOnboarding não monta nada', () => {
+    const { container } = render(<SequenciaOnboarding language="pt-BR" slots={SLOTS_REAIS} onDone={() => {}} />);
+    expect(container.innerHTML).toBe('');
   });
 });

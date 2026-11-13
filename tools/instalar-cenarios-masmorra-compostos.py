@@ -25,10 +25,9 @@ def main() -> int:
     a = ap.parse_args()
     origem, saida, dados = Path(a.origem), Path(a.saida), Path(a.dados)
     saida.mkdir(parents=True, exist_ok=True)
-    darker = {l.strip() for l in (RAIZ / 'tools/cenarios-darker-ids.txt').read_text(encoding='utf8').splitlines() if l.strip()}
     medias, mudou, total = {}, 0, 0
     for src in sorted(origem.glob('*.png')):
-        if src.stem in BASES or src.stem in darker or src.stem.startswith(('_', 'contato')):
+        if src.stem in BASES or src.stem.startswith(('_', 'contato')):
             continue
         im = ImageOps.fit(Image.open(src).convert('RGB'), (W, H), Image.LANCZOS, centering=(0.5, 0.5))
         im = im.filter(ImageFilter.UnsharpMask(radius=1, percent=60, threshold=2))

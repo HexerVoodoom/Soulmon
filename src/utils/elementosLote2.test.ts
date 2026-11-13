@@ -52,7 +52,7 @@ describe('lote 2 dos elementos curados (17 trios)', () => {
       expect(rosterSpriteOf(e), id).toBe(COMBINADOS_ART[`${num}-${id}`]);
       expect(fs.existsSync(path.join(art, `elementos/el-${id}.png`)), `ícone ${id}`).toBe(true);
       for (const s of ['orb', 'slash', 'impact', 'cast', 'aura', 'aura-96', 'defended']) expect(fs.existsSync(path.join(art, `fx-ataque/fx-${id}-${s}.png`)), `${id} ${s}`).toBe(true);
-      expect(["png", "webp"].some((e) => fs.existsSync(path.join(art, `combate/elemento/${id}.${e}`))), `cenário ${id}`).toBe(true);
+      expect(fs.existsSync(path.join(art, `combate/elemento/${id}.png`)), `cenário ${id}`).toBe(true);
       for (const st of ['champion', 'ultimate', 'mega']) expect(fs.existsSync(path.join(art, `${ARQ}/combinados-formas/${num}-${id}-${st}.png`)), `${id} ${st}`).toBe(true);
     }
   });

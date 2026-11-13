@@ -415,14 +415,6 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `collectionDates.test.ts`
 **Regra de negócio:** Data de coleção de formas/sonhos/achados, para as vitrines de coleção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
-### `src/utils/demoButton.ts`
-**Dono de:** O interruptor ÚNICO do botão DEMO do portão — `DEMO_BUTTON_ENABLED` (12/11/2026). Módulo FOLHA. `false` esconde só a porta; a lógica da demo e quem já está em demo seguem intactos.
-**Exports:**
-- `DEMO_BUTTON_ENABLED` — `false` por ora; trocar para `true` religa o botão.
-**Chamado por:** `src/components/SoulmonOnboarding.tsx`
-**Régua:** `SoulmonOnboarding.demoOff.render.test.tsx` (desligado), `SoulmonOnboarding.demoLocal.render.test.tsx` (fluxo, com o interruptor mockado em `true`).
-**Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
-
 ### `src/utils/demoMode.ts`
 **Dono de:** O PREDICADO da demo local — `isDemoMode(state)` — e só ele (07/10/2026). Módulo FOLHA (sem imports): `bond.ts` e `cloudSave.ts` o importam, e um ciclo derrubaria os dois. Não é `accountTier: 'demo'` (o plano grátis, com conta): a demo local é um save que nunca sai do aparelho, aberto pelo botão DEMO da home.
 **Exports:**
@@ -1122,9 +1114,6 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
 **Cenário próprio do elemento fundido (30/10/2026; +151 compostos `.webp` 450×800 em 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`, cores em `combatArtElementoMedias2.data.ts`):** `combate/elemento/<id>.{png,webp}` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
 **Mudou (30/10/2026):** ⚰️ `combatShadow` e as imagens `combate/sombra-clara.png`/`sombra-escura.png` (a plataforma sob os pés) saíram do módulo; a assinatura de cor do elemento vem de `elementVisual.data.ts` (CIELAB → hex com luminosidade mínima). `bg-` base próprio de `fada`, `industrial` e `planta` (o fallback de domínio só vale para save sem a arte).
-
-### `src/utils/combatArtElementoMedias3.data.ts`
-**Dono de:** a cor média dos 93 fundos regerados "darker dusk" de 12/11/2026 (`ELEMENTO_BG_MEAN_V3`, vence V1/V2). GERADO por `tools/instalar-cenarios-masmorra-darker.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
 
 ### `src/utils/combatArtElementoMedias2.data.ts`
 **Dono de:** a cor média dos 151 cenários compostos de 11/11/2026 (`ELEMENTO_BG_MEAN_V2`). GERADO por `tools/instalar-cenarios-masmorra-compostos.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
@@ -4525,9 +4514,6 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 
 ### `src/utils/elementosLote4.data.ts`
 **Dono de:** o lote 4 dos elementos curados (nº 262-267: Clareira Sagrada, Alto-Forno, Bênção Feérica, Floresta Ancestral, Colosso Blindado, Corte Feérica) e `CURADOS_PROMOVIDOS_DATA` (Pestilência, Maldição, Cyber, nº 205-207). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts`, `enemyRosterArt.ts`, `spriteElement.ts`.
-
-### `src/utils/introTester.ts`
-**Dono de:** `refreshIntroTester`: pergunta ao servidor (`/api/intro-teste`) se o usuário logado está no teste da intro narrativa e aplica o resultado; nunca lança, falha = desligado.
 
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.

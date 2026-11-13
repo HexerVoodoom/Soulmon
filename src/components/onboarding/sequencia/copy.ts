@@ -1,11 +1,9 @@
 import type { Language } from '../../../utils/i18n';
-
-export interface Bilingue { en: string; pt: string }
+import type { Bilingue } from './types';
 
 /**
  * Roteiro do ancião Remendado (resgatador neutro). Tom: calmo, curto, sem prometer saúde
- * nem cura: o Soulmon ajuda a constância, não trata ninguém. Lugar = a Malha (nunca "outro mundo");
- * a ameaça do Desfeito não nasce de nada que a pessoa fez (L3 da bíblia).
+ * nem cura: o Soulmon ajuda a constância, não trata ninguém. Cenas 0–9 do plano §3.
  * Cada fala existe em EN e PT; o idioma entra por `t()`.
  */
 export const t = (b: Bilingue, language: Language): string => (language === 'pt-BR' ? b.pt : b.en);
@@ -21,51 +19,59 @@ export const ROTEIRO: Record<string, Bilingue[]> = {
     { en: 'Your shadow is taking shape. Give it a moment.', pt: 'A sua sombra está tomando forma. Dê um instante a ela.' },
     { en: 'There. Small, but it is yours.', pt: 'Pronto. Pequena, mas é sua.' },
   ],
+  // 2 — Acorde
+  c2: [
+    { en: 'Wake up. Slowly. There is no hurry yet.', pt: 'Acorde. Devagar. Ainda não há pressa.' },
+    { en: 'I am a Remendado. I mend what is coming undone. Take my hand.', pt: 'Sou um Remendado. Remendo o que está se desfazendo. Pegue a minha mão.' },
+    { en: 'You are in the Mesh. We cannot stay here.', pt: 'Você está na Malha. Não podemos ficar aqui.' },
+  ],
+  // 3 — Fuga
+  c3: [
+    { en: 'Do not look back. Keep your shadow close.', pt: 'Não olhe para trás. Mantenha a sua sombra perto.' },
+    { en: 'It is an Undone, one who lost the thread. It follows the noise.', pt: 'É um Desfeito, alguém que perdeu o fio. Ele segue o barulho.' },
+  ],
+  // 4 — A parede
+  c4: [
+    { en: 'A wall of loose pieces. Put them in order and it opens.', pt: 'Uma parede de peças soltas. Coloque-as em ordem e ela se abre.' },
+    { en: 'Take your time. Mistakes only cost a little.', pt: 'Sem pressa. Errar custa pouco.' },
+  ],
+  // 5 — Bifurcação
+  c5: [
+    { en: 'The path splits. I have taken both before.', pt: 'O caminho se divide. Já passei pelos dois.' },
+    { en: 'Which one do you feel like taking?', pt: 'Qual deles você sente vontade de seguir?' },
+  ],
+  // 6 — O Desfeito alcança (tarefa real + alimentar, D11/D24)
+  c6: [
+    { en: 'It caught up. Something real can hold it back: a small task of yours.', pt: 'Ele nos alcançou. Algo real pode segurá-lo: uma tarefa pequena sua.' },
+    { en: 'Pick one you can do now. I will wait.', pt: 'Escolha uma que você consiga fazer agora. Eu espero.' },
+    { en: 'Did you really do it?', pt: 'Você fez de verdade?' },
+    { en: 'Not yet? No trouble. Let us do it together. I will keep you company.', pt: 'Ainda não? Sem problema. Vamos juntos, eu faço companhia.' },
+    { en: 'Good. That gave your shadow strength. Strength is a task plus food. Open the bag and feed it.', pt: 'Bom. Isso deu força à sua sombra. Força é tarefa mais alimento. Abra a bolsa e alimente-a.' },
+  ],
+  // 7 — Duelo em dupla
+  c7: [
+    { en: 'Stay behind me. I will take the hits, not you.', pt: 'Fique atrás de mim. Eu levo os golpes, não você.' },
+    { en: 'That is enough. We only needed to slow it.', pt: 'Basta. Só precisávamos atrasá-lo.' },
+  ],
+  // 8 — Resgate
+  c8: [
+    { en: 'Now!', pt: 'Agora!' },
+    { en: 'One of ours, the Hand of the Veiled, throws the lantern. Close your eyes.', pt: 'Um dos nossos, o Velado da Mão, lança a lanterna. Feche os olhos.' },
+    { en: 'Gone, for now. Come. We are almost home.', pt: 'Foi embora, por ora. Venha. Estamos quase em casa.' },
+  ],
+  // 9 — CORE
+  c9: [
+    { en: 'This is CORE, a city of Soulmon who lost their Veiled and found each other.', pt: 'Esta é a CORE, uma cidade de Soulmon que perderam os seus Velados e se encontraram.' },
+    { en: 'You and your shadow can stay as long as you like. Walk around. I will be near.', pt: 'Você e a sua sombra podem ficar o quanto quiserem. Ande por aí. Estarei por perto.' },
+  ],
 };
 
-/** Quem fala (rótulo curto acima da fala). */
-export const FALANTE = {
-  anciao: { en: 'The Elder', pt: 'O Ancião' } as Bilingue,
-  desfeito: { en: 'The Undone', pt: 'O Desfeito' } as Bilingue,
-  mao: { en: 'Hand of the Veiled', pt: 'Velado da Mão' } as Bilingue,
-};
-
-/**
- * Intro narrativa (plano docs/PLANO-INTRO-NARRATIVA.md §4 e §11.4), 9 cenas.
- * Rascunho para a revisão da squad-narrativa: as falas 3 e 8 foram reescritas (lugar = a Malha).
- */
-export const INTRO = {
-  /** Cena 1 */
-  acorda: { en: 'Wake up… we have to go.', pt: 'Acorda… temos que ir.' } as Bilingue,
-  /** Cena 2 */
-  precisamos: { en: 'We have to move.', pt: 'Precisamos ir.' } as Bilingue,
-  /** Cena 3 (Desfeito) */
-  desfeito: { en: 'I heard you coming. Everything here is coming undone, and I came to finish the job.', pt: 'Ouvi vocês chegando. Tudo aqui está se desfazendo, e eu vim terminar o serviço.' } as Bilingue,
-  /** Cena 4 */
-  tarefa: { en: 'Do a task. Your Soulmon needs strength to fight. Then feed it.', pt: 'Cumpra uma tarefa. Seu Soulmon precisa de força para lutar. Depois, alimente-o.' } as Bilingue,
-  prontos: { en: 'Now we are ready.', pt: 'Agora estamos prontos.' } as Bilingue,
-  /** Cena 5 (corte da luta) */
-  basta: { en: 'Enough. We only had to buy time.', pt: 'Basta. Só precisamos ganhar tempo.' } as Bilingue,
-  /** Cena 6 (voz de cima) */
-  suba: { en: 'Come on, climb up quickly!', pt: 'Vamos, suba depressa!' } as Bilingue,
-  /** Cena 8 (duas falas, com a pausa no meio) */
-  bemVindo1: { en: 'Welcome to CORE. A new place for you…', pt: 'Bem-vindo à CORE. Um lugar novo para você…' } as Bilingue,
-  bemVindo2: { en: '…and a very old one for the Mesh.', pt: '…e muito antigo para a Malha.' } as Bilingue,
-  /** Cena 9 */
-  descanse: { en: 'You have much to find. Take your time, come back when you like. Now, rest.', pt: 'Você tem muito a descobrir. Faça no seu tempo e volte quando quiser. Agora, descanse.' } as Bilingue,
-};
-
-/** Narração por texto das cenas visuais (leitor de tela e movimento reduzido). */
-export const ARIA = {
-  preto: { en: 'Darkness. A voice, close by.', pt: 'Escuridão. Uma voz, bem perto.' } as Bilingue,
-  olho: { en: 'Your eyes open slowly. The Elder stands over you.', pt: 'Seus olhos se abrem devagar. O Ancião está ao seu lado.' } as Bilingue,
-  costas: { en: 'The Elder turns his back to you and starts to walk.', pt: 'O Ancião vira de costas e começa a andar.' } as Bilingue,
-  tunel: { en: 'You run through a dark teal tunnel. Crystals, copper pipes and plants pass by on the walls, with old glowing drawings.', pt: 'Vocês correm por um túnel turquesa escuro. Cristais, canos de cobre e plantas passam pelas paredes, com desenhos antigos que brilham.' } as Bilingue,
-  penhasco: { en: 'A cliff edge. Floating islands drift far below and beyond.', pt: 'A beira de um despenhadeiro. Ilhas flutuantes ao longe.' } as Bilingue,
-  cristal: { en: 'The Elder and the Hand of the Veiled place their hands on a crystal. It begins to glow.', pt: 'O Ancião e o Velado da Mão apoiam as mãos num cristal. Ele começa a brilhar.' } as Bilingue,
-  branco: { en: 'The light grows until everything is white.', pt: 'A luz cresce até tudo ficar branco.' } as Bilingue,
-  cidade: { en: 'A city square. An identical crystal stands nearby. This is CORE.', pt: 'Uma praça de cidade. Um cristal igual ao outro, ali perto. Esta é a CORE.' } as Bilingue,
-  fade: { en: 'The screen fades to black.', pt: 'A tela escurece.' } as Bilingue,
+export const BIFURCACAO = {
+  pergunta: { en: 'Which way?', pt: 'Qual caminho?' } as Bilingue,
+  opcoes: [
+    { id: 'luz', rotulo: { en: 'The lit path', pt: 'O caminho iluminado' } },
+    { id: 'sombra', rotulo: { en: 'The quiet path', pt: 'O caminho quieto' } },
+  ],
 };
 
 /** Cena 1 (D18): o berço revelado, sem esperar a API. */
@@ -74,14 +80,11 @@ export const BERCO = {
   legenda: { en: 'This is the cradle your shadow was born in. It will outgrow it.', pt: 'Este é o berço em que a sua sombra nasceu. Ela vai crescer além dele.' } as Bilingue,
 };
 
-export const ANCIAO = { nome: FALANTE.anciao };
+export const ANCIAO = { nome: { en: 'The Elder', pt: 'O Ancião' } as Bilingue };
 
 export const UI = {
   pular: { en: 'Skip', pt: 'Pular' } as Bilingue,
   continuar: { en: 'Continue', pt: 'Continuar' } as Bilingue,
   reverHistoria: { en: 'Replay the story', pt: 'Rever a história' } as Bilingue,
   semArte: { en: 'art pending', pt: 'arte pendente' } as Bilingue,
-  subir: { en: 'Climb', pt: 'Subir' } as Bilingue,
-  atacar: { en: 'Attack', pt: 'Atacar' } as Bilingue,
-  jaFiz: { en: 'I did it', pt: 'Já fiz' } as Bilingue,
 };
