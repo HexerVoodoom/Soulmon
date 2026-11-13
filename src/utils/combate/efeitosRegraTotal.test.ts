@@ -17,7 +17,7 @@ import { fightSteps, hitUnit, windowSeconds, type FightSide } from './fight';
 import { groupFightSteps } from './group';
 import { combatantAt, REFERENCE_BUILDS } from './level';
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { EFFECT_TUNE_PESADELO, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type Special, type SpecialEffect, type SpecialFamily } from './specials';
+import { EFFECT_TUNE_PESADELO, effectTuneMasmorra, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 import { foeKindOf, foeSpecialOf, type FoeKind } from './foeFamilies';
 
 const LV = 30;
@@ -100,7 +100,9 @@ function medirTudo(): Linha[] {
     for (const f of SPECIAL_FAMILIES) if (BASE[f]) add(`${motor}|${f}`, impacto('pve-player', specialOfPve(f), P[f]), ref.direct);
     for (const e of EFEITOS) {
       const { family, base } = BASE_EFEITO[e];
-      add(`${motor}|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e }, P[family]), ref[base]);
+      // §334: a cura contínua da Masmorra tem `hotScale` próprio (`effectTuneMasmorra`): mede-se o que o jogo usa
+      const tune = motor === 'dungeon' && e === 'hot' ? { tune: effectTuneMasmorra() } : {};
+      add(`${motor}|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e, ...tune }, P[family]), ref[base]);
       if (motor === 'dungeon') add(`pesadelo|${e}`, impacto('pve-player', { ...specialOfPve(family), effect: e, tune: EFFECT_TUNE_PESADELO }, P[family]), ref[base]);
     }
   }

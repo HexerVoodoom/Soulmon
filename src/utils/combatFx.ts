@@ -595,6 +595,24 @@ export function clearHolders(board: StatusBoard, down: readonly number[]): Statu
   return board.map((l, h) => (down.includes(h) ? [] : l.filter((e) => !down.includes(e.source) || e.kind === 'escudo')));
 }
 
+/**
+ * §334 (dono, 13/11/2026): o tick de DoT sai no COMEÇO do turno de quem o carrega, no MESMO instante do golpe dele (o núcleo
+ * emite o tick e logo depois o golpe). Na cena o tick se aplica quando a ação desse golpe COMEÇA (`leadS(golpe)` antes do
+ * instante), não quando o golpe chega; sem golpe logo depois (o tick derrubou quem o carregava), no próprio instante. Os outros
+ * eventos seguem no instante deles. Só encenação: a ordem e o resultado do motor não mudam.
+ */
+export function sceneTimeOf<E extends { readonly kind: string; readonly t: number }>(
+  events: readonly E[], i: number, leadS: (golpe: E) => number,
+): number {
+  const e = events[i];
+  if (!e || e.kind !== 'tick') return e?.t ?? Infinity;
+  for (let j = i + 1; j < events.length && Math.abs(events[j].t - e.t) < 1e-9; j++) {
+    if (events[j].kind === 'tick') continue;
+    return events[j].kind === 'attack' ? e.t - Math.max(0, leadS(events[j])) : e.t;
+  }
+  return e.t;
+}
+
 /** O que a cena recebe por lutador: sem `source`, na ordem do quadro. */
 export function stageStatusOf(entries: readonly BoardEntry[] | undefined): StageStatus[] {
   return (entries ?? []).map(({ kind, variant, turns }) => ({ kind, variant, turns }));

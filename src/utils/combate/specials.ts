@@ -94,6 +94,19 @@ export type EffectTune = typeof EFFECT_TUNE;
  */
 export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.3, slowKeep: 0.58 };
 
+/**
+ * §334 (dono, 13/11/2026: DoT e cura contínua tocam no turno DE QUEM OS CARREGA). Com os pulsos da cura contínua no começo dos
+ * 3 próximos golpes de quem a recebe (antes: 1, 2 e 3 intervalos depois do cast), a cura chega ~meio intervalo mais cedo e a
+ * Masmorra passou a +4,1pp sobre o escudo puro (gate ±3pp de `efeitosPve.medicao.test.ts`). Só a Masmorra (e quem joga no motor
+ * dela: Fenda, Raid) baixa o `hotScale` 1,05 → `HOT_SCALE_MASMORRA`. A Arena não pode baixar: a regra "o que dura rende mais"
+ * (`efeitosRegraTotal.test.ts`) pede `arena|hot` > 1, e ela só passa com `hotScale` ≥ ~1,044. Os outros botões seguem `EFFECT_TUNE`.
+ */
+export const HOT_SCALE_MASMORRA = 1.02;
+/** A tune da cura contínua na Masmorra: a de `EFFECT_TUNE` (lida na hora, os testes de régua a mexem) com `HOT_SCALE_MASMORRA`. */
+export function effectTuneMasmorra(): EffectTune {
+  return { ...EFFECT_TUNE, hotScale: HOT_SCALE_MASMORRA };
+}
+
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };
 }
@@ -126,6 +139,14 @@ export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDeb
  * class-system's EFICIENCIA_AREA = 0.9: with 0.9 the area direct loses 6-17pp.
  */
 export const AREA_EFFICIENCY = 1;
+
+/**
+ * §334: eficiência da área SÓ do DoT. Com o DoT ticando no turno de quem o carrega (3 golpes dele, antes 0,75 intervalo do
+ * lançador), o que sobra num inimigo que cai antes dos 3 golpes se perde na área (só o alvo único repassa ao próximo vivo), e a
+ * área perdeu 12pp de vitória para o único (gate AC7/AC4 ±6pp). 1,12 devolve a diferença medida antes da mudança
+ * (−1,2pp → −1,4pp; tempo +1,9% → −0,7%, `areaDelta('dot', 3200)`). O orçamento do alvo único não muda.
+ */
+export const AREA_DOT_EFFICIENCY = 1.12;
 
 export type PveEngine = 'arena' | 'dungeon';
 

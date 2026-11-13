@@ -59,7 +59,7 @@ const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO
 export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
-    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento, p.pesadelo),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento, p.pesadelo, !p.pesadelo), // §334: fora do Pesadelo, a tune da Masmorra
     area: 'single',
     startShield: opening ? p.startShield : 0,
   };

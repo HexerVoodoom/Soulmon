@@ -43,7 +43,10 @@ function regressionHash(phaseSalt = PHASE_SALT): { hash: number; first: string; 
 // 63614565). The first and last of the 300 fights are unchanged; the hash moves because some fights now end one rounded
 // point earlier/later. It still guards that the u = 1 path is deterministic and that PHASE_SALT matters (the RED below).
 // §325 (13/11/2026, dono): re-pinned when SPECIAL_POWER.dot went 1 → 1.15 and spdBuff 1.82 → 2 (the value was 2572250091).
-const PR1_MAIN_HASH = 1064417926;
+// §334 (13/11/2026, dono): re-pinned when the DoT moved to the AFFECTED fighter's own turn (3 ticks at the start of its next 3
+// basic attacks, instead of 3 ticks 0.25/0.5/0.75 of the caster's interval after the cast). Only the DoT fights move; the first
+// and last of the 300 fights are unchanged (the value was 1064417926).
+const PR1_MAIN_HASH = 3918997837;
 
 describe('AC1. regression: u = 1, no hooks, sigma 0.15 reproduces the PR1 main in the 300 declared fights', () => {
   it('passes', () => {

@@ -351,7 +351,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       const alivePos = (a: readonly number[]) => escolherAlvo(a, pickedRef.current);
 
       /** Aplica um grupo de eventos do mesmo instante: HP, energia, números. */
-      const apply = (batch: GroupEvent[], special: boolean, dodgeG: DodgeGrade | null) => {
+      const apply = (batch: GroupEvent[], special: boolean, dodgeG: DodgeGrade | null, keep: readonly StageHit[] = []): StageHit[] => {
         const last = batch[batch.length - 1];
         const out: StageHit[] = [];
         const dt = Math.max(0, last.t - tEn);
@@ -379,7 +379,9 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         hpNow = last.hp; foesNow = last.foesHp.slice();
         setHp(Math.max(0, hpNow)); setFoesHp(foesNow); setPetEnergy(last.energy); setFoeEnergy(fEn.slice());
         spendStatus(batch, hpNow, foesNow);
-        showHits(out);
+        // §334: `keep` = os números dos ticks que abriram este turno; seguem na tela junto com o do golpe
+        showHits([...keep, ...out]);
+        return out;
       };
       const ringTagRef = { current: 'bom' as RingGrade };
 
@@ -483,8 +485,14 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         while (nx && nx.kind !== 'cast' && Math.abs(nx.t - ev.t) < EPS) { batch.push(nx); nx = pull(); }
         if (nx) queue.unshift(nx);
 
-        const first = batch[0];
+        // §334: DoT/HoT tocam no COMEÇO do turno de quem os carrega, no mesmo instante do golpe dele. Os ticks que abrem o
+        // grupo saem quando a ação desse lutador começa (antes do golpe chegar); a ação desenhada é a do golpe que vem depois.
+        const nTicks = batch.findIndex((e) => e.kind !== 'tick');
+        const ticks = nTicks > 0 ? batch.slice(0, nTicks) : [];
+        const rest = ticks.length ? batch.slice(nTicks) : batch;
+        const first = rest[0];
         const isAttack = first.kind === 'attack';
+        let tickHits: StageHit[] | null = null;
         if (isAttack && first.who >= 0) {
           const foeIdx = first.who - 1;
           const blocked = first.who !== 0 && first.frac <= EPS;
@@ -495,6 +503,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           const start = room >= lead ? first.t - lead : clockS.current;
           const land = room >= lead ? first.t : Math.max(first.t, clockS.current + Math.min(lead, CUT_MIN_S));
           if (!(await waitTo(start))) return;
+          if (ticks.length) tickHits = apply(ticks, false, null);
           setAction({
             id: ++seq.current, actor: first.who === 0 ? 'me' : 'foe',
             foe: first.who === 0 ? hitFoe(first, foesNow) : foeIdx, kind,
@@ -504,7 +513,8 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           });
           if (!(await waitTo(land))) return;
         } else if (!(await waitTo(first.t))) return;
-        apply(batch, false, null);
+        if (tickHits) apply(rest, false, null, tickHits);
+        else apply(batch, false, null);
         ev = pull();
       }
 

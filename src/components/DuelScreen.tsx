@@ -41,7 +41,7 @@ import { DUEL_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
-  isSelfOnlySpecial,
+  isSelfOnlySpecial, sceneTimeOf,
 } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
@@ -211,6 +211,8 @@ export function DuelScreen({
       if (a) fire(e, a);
     };
 
+    /** §334: os números dos ticks que abriram o turno de um lutador; o golpe dele no mesmo instante não os apaga. */
+    let ticksDoTurno: { t: number; hits: StageHit[] } = { t: -1, hits: [] };
     const apply = (e: FightEvent) => {
       setHpFrac({ me: clamp01(e.hp[0]), opp: clamp01(e.hp[1]) });
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
@@ -223,9 +225,16 @@ export function DuelScreen({
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet
         const value = Math.max(1, Math.round(e.frac * (alvoMe ? maxMe : maxOpp)));
-        setGolpes([{ id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) }]);
+        const golpe: StageHit = { id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) };
+        const junto = ticksDoTurno.t === e.t ? ticksDoTurno.hits : [];
+        if (e.kind === 'tick') ticksDoTurno = { t: e.t, hits: [...junto, golpe] };
+        else ticksDoTurno = { t: -1, hits: [] };
+        setGolpes([...junto, golpe]);
       }
     };
+    /** §334: quando o evento `i` entra em cena — o tick, no começo da ação do golpe que vem logo depois dele. */
+    const leadDe = (g: FightEvent) => { const a = actionOf(g); return a ? leadS(a.kind) : 0; };
+    const naCena = (i: number) => sceneTimeOf(sim.current.events, i, leadDe);
 
     /** Fecha o balde que acabou: a descarga que ele pagou entra na luta, e a luta é simulada de novo. */
     const fecharBalde = () => {
@@ -290,13 +299,13 @@ export function DuelScreen({
           break;
         }
         const lead = a ? leadS(a.kind) : 0;
-        if (e.t - lead > clock.current) break;
+        if ((e.kind === 'tick' ? naCena(started.current) : e.t - lead) > clock.current) break;
         start(e);
         started.current++;
       }
       // Um `cast` que ainda não passou pela barreira (o 2º especial do espelho) não se aplica: a cena dele vem antes.
       while (
-        applied.current < evs.length && evs[applied.current].t <= clock.current && !bloqueiaAplicar(portao, applied.current)
+        applied.current < evs.length && naCena(applied.current) <= clock.current && !bloqueiaAplicar(portao, applied.current)
         && !(evs[applied.current].kind === 'cast' && applied.current >= started.current)
       ) {
         const e = evs[applied.current];

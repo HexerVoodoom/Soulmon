@@ -18,12 +18,12 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
+import { damagePoints, DOT_TICKS, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
 import { aplicarEspecialPessoal } from './alvoAliado';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
+  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -129,6 +129,17 @@ interface G {
   nSil: number;
   nSlow: number;
   nHot: number;
+  /** §334: DoTs e curas contínuas que este lutador CARREGA; tudo tica no começo de cada golpe DELE (`tickOwnTurn`). */
+  dots: GDot[];
+  hots: { readonly pulse: number; left: number }[];
+}
+
+/** §334: um DoT em quem o carrega. `single` = o DoT de alvo único do jogador: se o carregador cai, o que falta passa ao próximo vivo. */
+interface GDot {
+  readonly src: G;
+  readonly share: number;
+  readonly single: boolean;
+  left: number;
 }
 
 /** Seed of the stream of foe i (foe 0 is the 1v1 stream, so N = 1 ≡ fight()). */
@@ -163,7 +174,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0,
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0, dots: [], hots: [],
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -185,18 +196,12 @@ export function* groupFightSteps(
     return f && f.dead === Infinity ? f : alive()[0];
   };
   const hitsOn = (a: G, d: G) => hitsToKnockOut(a.c, d.c) / u;
-  /** DoT ticks still to land: who each pending tick lands on (single: the current target, as the tick itself will pick). */
-  const dots: { owner: G; vs: readonly G[]; single: boolean }[] = [];
   const snapFx = (): FighterFx[] => {
-    const left = all.map(() => 0);
-    for (const d of dots) {
-      if (d.single) { const v = target() ?? d.vs[0]; left[all.indexOf(v)]++; } else for (const v of d.vs) left[all.indexOf(v)]++;
-    }
-    return all.map((f, i) => {
+    return all.map((f) => {
       const atk = f === pl ? target() : pl;
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
-        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i],
+        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: f.dots.reduce((n, d) => n + d.left, 0),
         ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
       };
     });
@@ -228,10 +233,28 @@ export function* groupFightSteps(
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src.who, lose / v.pts));
   };
+  /**
+   * §334 (dono, 13/11/2026): o começo do golpe de `me`. Cada DoT que ele carrega tica (o escudo absorve metade, §327) e depois cada
+   * cura contínua pulsa; cada um gasta 1 turno. Devolve `true` quando o tick o derrubou: aí ele NÃO golpeia neste turno.
+   */
+  const tickOwnTurn = (me: G): boolean => {
+    if (me.hp <= EPS || (!me.dots.length && !me.hots.length)) return false;
+    for (const d of me.dots) {
+      d.left--; // antes do golpe: o evento do tick já mostra os ticks que FALTAM (o contador real do selo)
+      if (me.hp > EPS) hit(d.src, me, (d.share / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me), 'tick', 'tick');
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    for (const h of me.hots) {
+      h.left--;
+      me.nHot--;
+      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
+    }
+    me.hots = me.hots.filter((h) => h.left > 0);
+    return me.hp <= EPS;
+  };
   const cast = (me: G, t0: number, scale: number) => {
     const sp = me.sp as Special;
     const Eb = SPECIAL_BUDGET_HITS * sp.power * scale;
-    const iv = interval(me.c.spd);
     const enemies = me === pl ? alive() : [pl];
     // ALVO POR TOQUE: o especial single do jogador vai no inimigo escolhido (antes ignorava: sempre o 1º vivo)
     const tgt = me === pl ? target() : enemies[0];
@@ -242,29 +265,19 @@ export function* groupFightSteps(
     const rx: G = me;
     const spread = isArea ? enemies : [tgt];
     // same total budget: the area divides it (times the area efficiency, 1), the single concentrates it
-    const share = isArea ? (Eb * (opts.areaEfficiency ?? AREA_EFFICIENCY)) / spread.length : Eb;
+    // §334: o DoT em área tem a eficiência própria (`AREA_DOT_EFFICIENCY`); a régua pode trocar as duas por `opts.areaEfficiency`
+    const share = isArea ? (Eb * (opts.areaEfficiency ?? (sp.family === 'dot' ? AREA_DOT_EFFICIENCY : AREA_EFFICIENCY))) / spread.length : Eb;
     switch (sp.family) {
       case 'direct':
         for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack', 'direct');
         break;
-      case 'dot':
-        for (let k = 1; k <= 3; k++) {
-          const vs = [...spread];
-          const single = spread.length === 1 && me === pl;
-          const rec = { owner: me, vs, single };
-          dots.push(rec);
-          timed.push({
-            t: t0 + 0.25 * iv * k,
-            // single: the remaining ticks pass to the next living foe (nothing is lost);
-            // area: only whoever was inside the radius at the cast
-            fn: () => {
-              dots.splice(dots.indexOf(rec), 1);
-              const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', 'tick'); // §327: o escudo absorve metade de cada tick
-            },
-          });
-        }
+      case 'dot': {
+        // §334: o DoT fica em quem o recebe e tica nos PRÓXIMOS golpes dele. Área: em cada um que estava no raio no cast;
+        // alvo único do jogador: se o carregador cair, o que falta passa ao próximo vivo (`markDead`).
+        const single = spread.length === 1 && me === pl;
+        for (const v of spread) v.dots.push({ src: me, share, single, left: DOT_TICKS });
         break;
+      }
       case 'defDebuff':
         const tune = sp.tune ?? EFFECT_TUNE;
         for (const v of spread) {
@@ -277,10 +290,9 @@ export function* groupFightSteps(
         if (sp.effect === 'hot') {
           // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem RECEBE.
           const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, rx)) * rx.pts);
-          rx.nHot += 3;
-          for (let k = 1; k <= 3; k++) {
-            timed.push({ t: t0 + iv * k, fn: () => { rx.nHot--; if (rx.dead === Infinity) rx.hp = Math.min(rx.pts, Math.round(rx.hp * rx.pts) + pulse) / rx.pts; } });
-          }
+          // §334: os pulsos saem no começo dos 3 próximos golpes de quem RECEBE (`tickOwnTurn`), não num relógio
+          rx.nHot += DOT_TICKS;
+          rx.hots.push({ pulse, left: DOT_TICKS });
           break;
         }
         aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
@@ -299,6 +311,13 @@ export function* groupFightSteps(
     for (const f of all) {
       if (f.hp <= EPS && f.dead === Infinity) {
         f.dead = t;
+        // §334: o DoT de alvo único do jogador não se perde: o que falta passa ao próximo vivo (tica nos golpes dele)
+        const rest = f.dots.filter((d) => d.single && d.left > 0);
+        const nx = rest.length ? target() : undefined;
+        if (nx && nx !== f) for (const d of rest) nx.dots.push({ ...d });
+        f.dots = [];
+        f.hots = [];
+        f.nHot = 0;
         yield ev('ko', f.who, 0);
       }
     }
@@ -334,6 +353,8 @@ export function* groupFightSteps(
     for (let i = timed.length - 1; i >= 0; i--) if (timed[i].t - t < EPS) timed.splice(i, 1)[0].fn();
     for (const me of all) {
       if (me.dead < Infinity || me.next - t >= EPS) continue;
+      // §334: DoT e cura contínua tocam no COMEÇO do turno do afetado; quem cai no tick não golpeia
+      if (tickOwnTurn(me)) { me.next = t + interval(me.c.spd); continue; }
       const v = me === pl ? target() : pl;
       if (!v) continue;
       let mulN = 1;
