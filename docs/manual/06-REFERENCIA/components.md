@@ -1140,6 +1140,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/PlayerDetailModal.semMetrica.render.test.tsx`; também tocado por `src/components/spriteUrl.beacon.render.test.tsx`.
 **Avisos do arquivo:** o progresso mostrado vem sempre de `unlockedStages` — nunca vaza forma além da já alcançada; `LEVEL_LABEL` era uma SEGUNDA cópia do mapa de `types/attributes.ts` (idêntica à de `EvolutionPath`) — duas cópias que concordam ainda são duas cópias (footgun 9), e a `StatsPage` não usava nenhuma das duas.
 
+### `src/components/PlayerSearch.tsx` (13/11/2026, busca de jogadores — REGISTRO §319)
+**Dono de:** a BUSCA ENQUANTO DIGITA dos dois convites. `PlayerSearch` = campo (`role="searchbox"`, `inputMode="search"`, rótulo acessível) + `PlayerSearchResults`; `PlayerSearchResults` = o status (`role="status"`, `aria-live="polite"`) e as linhas, para quem já tem o próprio campo (a aba Amigos). Linha = miniatura do Soulmon (`opponentIcon`/`opponentSprite`, `alt=""`) + `ui/PlayerName` (nome com o clã embaixo) + a ação de UM toque que quem chama passa em `renderAction`. Estados: menos de 2 letras (dica, nenhuma chamada), procurando, vazio ("Ninguém com um nome que comece assim."), erro por tipo (sem rede / muitas buscas / sem conta / servidor, com "Tentar de novo" onde faz sentido).
+**Props principais:** `saveId`, `language`, `label`, `placeholder?`, `renderAction(hit)`, `hide?(hit)`, `search?` (injetável em teste/prévia), `autoFocus?`; `PlayerSearchResults` recebe `query`, `state`/`retry` de `usePlayerSearch` e `quiet?` (sem a dica com o campo vazio).
+**Exports:** `PlayerSearch`, `PlayerSearchResults`.
+**Chamado por:** `src/components/guild/GuildInviteSheet.tsx`, `src/components/LibraryPage.tsx` (aba Amigos).
+**Régua:** `src/components/PlayerSearch.render.test.tsx`.
+
 ### `src/components/ProtectProgressModal.tsx`
 **Dono de:** pedido de e-mail DEPOIS do onboarding, quando existe algo que doeria perder (evolução ou sequência) — nunca bloqueia.
 **Props principais:** `ProtectProgressModalProps` — `language`, `reason: 'evolution'|'streak'`, `onDismiss()`, `onConfirm(email): Promise<void>` (quem chama migra o save).
@@ -1668,6 +1675,13 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/App.tsx` (menu da Home → `acoes`), `src/components/nav/CornerLink.tsx` (`mapa`/`home`), `src/components/CompanionHUD.tsx` (cuidados `itens`/`dormir`/`banho`, stats `hp`/`energia`), `src/components/ChatBox.tsx` (`enviar`) — 24/09/2026. A moldura `chip-moeda` do mesmo pacote é usada direto pelo `MapPage` (9-slice).
 **Régua:** `size` entra na varredura de `src/styles/iconScale.contract.test.ts` (mesma escala de §6.1); o `CornerLink` é exercitado em `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/ui/PlayerName.tsx` (13/11/2026, o clã embaixo do nome — REGISTRO §319)
+**Dono de:** o NOME DE OUTRO JOGADOR com o nome do CLÃ embaixo, em toda tela que mostra outra pessoa. O nome mantém o estilo de quem chama (`nameStyle`); o clã vem numa linha própria, menor e calma: `--sm2-text-xs`, peso 400, `--sm2-muted`, `--sm2-font-text`. Sem clã não desenha nada. As duas linhas cortam com reticências; o leitor de tela ouve "Clã <nome>".
+**Props principais:** `name`, `guildName?` (ausente/vazio = nada), `suffix?` (na linha do nome, ex. " (você)"), `nameStyle?`, `guildStyle?`, `align?` (`center` no pódio), `isPt?`.
+**Exports:** `PlayerName`.
+**Chamado por:** `RankingList` (pódio e linhas dos placares dos jogos), `TournamentPage` (oponentes do Torneio, Treino e ranking da temporada), `PlayerDetailModal` (título do perfil), `LibraryPage` (linhas do Drive/Amigos e convites de amizade recebidos), `guild/GuildSheet` (Roda), `PlayerSearch` (sugestões).
+**Régua:** `src/components/PlayerSearch.render.test.tsx` (com e sem clã); `GuildSheet.render.test.tsx` (a linha do nome continua só o nome).
+
 ### `src/components/ui/NavGlyphs.tsx`
 **Dono de:** os glifos SVG próprios do Soulmon (nav + deck do aparelho + lista diária + moedas + utilitários) — mesma métrica da Material Symbols Rounded (caixa 24dp, traço 2.1×wght/500).
 **Props principais:** `GlyphSvgProps` (exportado), `NavGlyphProps` (exportado) — `name`/`GlyphName`, `size`, `weight`, `fill`, `tone`.
@@ -2022,6 +2036,10 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/guild/ClaProcurar.tsx` (30/10/2026, procurar clã — REGISTRO §203)
 **Dono de:** `ProcurarCla` (sem clã: lista de clãs com vaga com nome e "n de max", "Pedir para entrar", pendente com "Cancelar pedido") e `PedidosDeEntrada` (só o anfitrião, na ficha do clã: Recusar à esquerda, Aceitar à direita; sem pedido = silêncio). Cada peça carrega o próprio dado por `utils/community.ts` (`getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`); copy em `utils/guildCopy.ts` (`guild.procurar.*`, `guild.pedidos.*`). **Chamado por:** `GuildSheet.tsx`. **Régua:** `ClaProcurar.render.test.tsx`.
+
+### `src/components/guild/GuildInviteSheet.tsx` (13/11/2026, convidar para o clã — REGISTRO §319)
+**Dono de:** a folha "Convidar para o clã", aberta pelo `CtaButton` "Convidar" do Salão (`GuildSheet`, ficha do clã; com o clã cheio o botão fica apagado com o porquê). É um `RitualDialog` com `PlayerSearch` e UM toque por linha (`inviteToGuild` de `utils/community.ts` → `POST /api/guild?action=guildInvite`): o convidado recebe uma carta do Papus com o nome e o código do clã. Cada linha guarda o próprio desfecho (enviado / já está na roda / já tem clã / clã cheio / muitos convites / sem rede / erro); quem já tem clã nasce sem botão ativo. Copy em `utils/guildCopy.ts` (`guild.convidar.*`). O foco volta ao botão ao fechar.
+**Chamado por:** `GuildSheet.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx` (convite de um toque); servidor: `functions/api/guild.convite.test.js`.
 
 ### `src/components/guild/PracaVisor.tsx`, `PlantioVisor.tsx`, `MisterioVisor.tsx` e `claUi.tsx` (18/10/2026, prédios do clã)
 **Dono de:** os três visores do clã e o encanamento comum. `src/components/guild/PracaVisor.tsx` (`PracaVisor`, `SalaPraca`, `PRACA_VISOR_HEIGHT`): 4 slots de decoração e o presente diário. `src/components/guild/PlantioVisor.tsx` (`PlantioVisor`, `SalaPlantio`, `PLANTIO_VISOR_HEIGHT`): o plantio coletivo. `src/components/guild/MisterioVisor.tsx` (`MisterioVisor`, `SalaMisterio`, `MISTERIO_VISOR_HEIGHT`): o mistério diário. `src/components/guild/claUi.tsx` (`ClaT`, `ClaOnReward`, `ClaSalaProps`, `decorName`, `rewardText`, `useClaBuilding`): tipos e ganchos que as três salas dividem. Onde moram (§141): a Praça no Clan Hall, o Plantio na sala do Grove e o Mistério na sala da Feira (`room="feira"`, cartão `guild.feira.predios.titulo`).

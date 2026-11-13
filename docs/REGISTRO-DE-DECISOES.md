@@ -4956,3 +4956,22 @@ Decisão (revisa o §314): (1) o rodízio deixou de ser 1 NPC por dia em ciclo d
 Decisão: `.sm2-cta` troca a arte antiga (`botao-beta.png`, cristal nas pontas) pela que o site do beta usa de fato hoje (`site-beta/src/content/assets.json` → `public/dono/botao*.webp`, moldura de canos de cobre com cipó): um arquivo por estado como no site (normal, hover, pressed, disabled), fatia `62 74 fill`, borda `19px 23px` (variante de 56 px do site, `.fixo .botao.primario`), foco = arte de hover + brilho turquesa (igual `.botao:focus-visible`). `CtaButton` passa `ref` (forwardRef). Aplicado também em "Abrir árvore de talentos", "Confirmar" do nó de talento e "Entrar na conta" da guilda.
 
 **Alternativa que perdeu:** manter a arte única com filtros CSS por estado (não é o que o site mostra). **Falsifica:** pasta `ui/` diferente dos 5 arquivos (`assets.contract.test.ts`), CTA principal fora do componente. **Rollback:** reverter o PR. **APK:** nada.
+
+## §319 — O clã embaixo do nome do jogador, o "Convidar" do Salão e a busca de jogadores por prefixo (13/11/2026, pedido do dono)
+
+Decisão (três partes, um PR):
+1. **Nome do clã embaixo do nome.** Toda tela que mostra o nome de OUTRA pessoa mostra também o clã dela, numa linha própria EMBAIXO do nome, menor e calma (`--sm2-text-xs`, peso 400, `--sm2-muted`), por um componente só: `src/components/ui/PlayerName.tsx`. Sem clã = nada a mais. O servidor manda `guildName` (aditivo) em `players`, `player`, `opponents`, `sparOpponents`, `rank`/`seasonResult`, `friendsState.incoming`, `playerSearch` e nos placares dos jogos (`_rankings.js`), lendo o estado VIVO do clã (`functions/api/_guildaNome.js`) — nada é copiado para o perfil, então sair do clã apaga o nome na próxima leitura, sem migração.
+2. **"Convidar" no Salão.** `CtaButton` na ficha do clã (`GuildSheet`) abre `guild/GuildInviteSheet.tsx`. O convite (`POST guild?action=guildInvite`) é uma **carta do Papus** com o nome e o código do clã: quem recebe entra pelo "Entrar com código" de sempre. Qualquer membro convida (o código já é visível a todo membro). Uma carta por clã por pessoa por dia; 20 convites/h por conta.
+3. **Busca enquanto digita** no convite do clã E no "Convidar" da aba Amigos (`LibraryPage`): começo do nome, em ordem, sem acento e sem caixa ("JOA" acha "João"), a partir de 2 letras, pausa de 200 ms, até 10 sugestões com o Soulmon, o nome e o clã, e um toque para convidar. Servidor: `GET community?action=playerSearch` sobre o índice NOVO `nickf:<nome dobrado>:<saveId>` (uma `list` por prefixo do KV — o índice é a própria chave), só o dono pergunta, teto POR CONTA de 30/min, `publicHidden` fica de fora, sai só pid/nome/clã/estágio/arte.
+
+**Evidência:** pedido direto do dono (13/11/2026). A guarda de privacidade é a régua que já existia (`publicHidden`, TORC-5: "rota nova que sirva dado de outra pessoa passa por aqui"); não existe preferência de "fora da busca" nem bloqueio entre jogadores no app — nenhuma foi inventada (dúvida levada ao dono).
+
+**Alternativas que perderam:** (a) gravar o nome do clã no perfil a cada save — fica velho quando a pessoa sai ou o anfitrião renomeia; (b) reaproveitar `players?search=` — casa por TRECHO, exige PvP ligado e varre até 10 páginas do índice `nick:` (que guarda o nome com acento, então "joa" não acharia "João"); (c) reaproveitar `names?prefix=` — só devolve o apelido (sem pid, clã nem sprite) e também não dobra acento; (d) convite do clã com estado próprio no servidor (aceitar/recusar) — mais superfície; a carta com o código reaproveita a entrada que já existe.
+
+**Falsifica:** linha de jogador sem `PlayerName` (nome de outra pessoa sem o clã embaixo); `playerSearch` devolvendo campo privado, aceitando termo de 1 letra ou mais de 10 linhas (`community.playerSearch.test.js`); dobra do cliente divergindo da do servidor (`playerSearch.test.ts`).
+
+**Pendência de operação:** quem já tinha apelido entra no índice `nickf:` sozinho no próximo save (marcador `nickfIx`); para a busca achar TODO mundo antes disso, o dono roda o `backfillNicks` (admin, idempotente) — ele chama o mesmo `claimNick`, que agora grava as duas chaves. Nenhuma migração D1.
+
+**Gatilho para rever:** pedido de "esconder da busca" separado do "sair da lista pública"; bloqueio entre jogadores; spam de cartas de convite (o teto é por isolate, como os outros).
+
+**Rollback:** reverter o PR. As chaves `nickf:` ficam órfãs e inofensivas (TTL de 400 dias); `guildName` é aditivo e cliente antigo o ignora. **APK:** nada (só web).

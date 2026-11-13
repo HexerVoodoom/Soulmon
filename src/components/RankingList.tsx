@@ -1,5 +1,6 @@
 import type { Language } from '../utils/i18n';
 import type { RankingRow } from '../utils/rankings';
+import { PlayerName } from './ui/PlayerName';
 
 /** Quantas posições o ranking mostra (igual ao `TOP_MAX` do servidor). */
 export const RANKING_LIST_SIZE = 50;
@@ -40,7 +41,7 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
   // Visualmente 2º · 1º · 3º (CSS `order`); no DOM e para o leitor de tela, 1º · 2º · 3º.
   const visualOrder = (place: number) => (place === 2 ? 0 : place === 1 ? 1 : 2);
 
-  const row = (r: { rank: number | string; name: string; score: number; me: boolean; prizePlace?: number }, pinnedRow = false) => (
+  const row = (r: { rank: number | string; name: string; guildName?: string; score: number; me: boolean; prizePlace?: number }, pinnedRow = false) => (
     <li
       key={String(r.rank)}
       value={typeof r.rank === 'number' ? r.rank : undefined}
@@ -57,8 +58,9 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
       }}
     >
       <span className="sm2-num" style={{ width: 32, flexShrink: 0, textAlign: 'right', color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.rank}</span>
-      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: r.me ? 700 : 400 }}>
-        {r.name}{r.me && r.name !== youLabel ? youTag : ''}
+      {/* §319: o clã embaixo do nome (a própria linha também: é o que os outros veem). */}
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <PlayerName name={r.name} suffix={r.me && r.name !== youLabel ? youTag : ''} guildName={r.guildName} isPt={isPt} nameStyle={{ fontWeight: r.me ? 700 : 400 }} />
       </span>
       <span className="sm2-num" style={{ flexShrink: 0 }}>{format(r.score)}{prize(r as RankingRow)}</span>
     </li>
@@ -82,9 +84,10 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
               aria-current={r.me ? 'true' : undefined}
               style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, listStyle: 'none', order: visualOrder(place) }}
             >
-              <span style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700, color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
-                {r.name}{r.me ? youTag : ''}
-              </span>
+              <PlayerName
+                name={r.name} suffix={r.me ? youTag : ''} guildName={r.guildName} isPt={isPt} align="center"
+                nameStyle={{ fontWeight: 700, color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}
+              />
               <span className="sm2-num" style={{ color: 'var(--sm2-muted)' }}>{format(r.score)}{prize(r)}</span>
               <span
                 role="img" aria-label={posLabel(r.rank)} className="sm2-num"

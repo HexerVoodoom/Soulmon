@@ -66,6 +66,9 @@
 //                                            recusa pedido novo com 409 requests closed; os pendentes seguem decidíveis; o código vale igual)
 //   POST guildRequestDecide {id, requestId, approve} → { guild, result:'approved'|'declined'|'gone' }
 //                                            404 no guild · 403 not host · 409 guild full (o pedido fica para depois)
+//   (CONVIDAR — §319: a carta do Papus com o nome e o código do clã)
+//   POST guildInvite {id, dayKey, to: pid} → { invited: true }   404 no guild · 400 invalid target · 404 player not found
+//                                            · 409 already member · 409 guild full · 409 already in a guild · 429 · 503 try again
 // Não existe expulsão (G7): o código novo é a ferramenta de fechar a porta.
 //
 // `dayKey` é o DIA DO JOGADOR (`playerDayKey`), aceito a ±1 do dia UTC — o
@@ -76,7 +79,8 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
 import { BB_LOCKED_MESSAGE } from './_velado.js';
-import { getProfile, newPid, stagePower } from './_profile.js';
+import { getProfile, newPid, stagePower, saveIdForPublicId } from './_profile.js';
+import { enqueueMail } from './_mensageiro.js';
 import {
   COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -175,7 +179,11 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRequests: 'GET',
   guildRequestDecide: 'POST',
   guildRequestsOpen: 'POST',
+  guildInvite: 'POST',
 });
+
+/** Convidar (§319): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. */
+export const GUILD_INVITE_LIMIT = { limit: 20, windowMs: 3_600_000 };
 
 /** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
 export const GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 3_600_000 };
@@ -509,6 +517,41 @@ export async function handleGuild({ request, env }) {
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
     return json({ result: 'approved', guild: await montar(r.g, id, hoje) });
+  }
+
+  // ── CONVIDAR PARA O CLÃ (13/11/2026, REGISTRO §319): o botão "Convidar" do Salão. ──
+  // Qualquer membro convida (o código do clã já é visível a todo membro; o convite só o entrega a UMA pessoa escolhida).
+  // O convite é uma CARTA do Papus (`_mensageiro.js`) com o nome do clã e o código — quem recebe entra pelo mesmo "Entrar com
+  // código" de sempre, sem estado novo no servidor. Uma carta por clã por pessoa por dia (o `mid` é estável e a fila deduplica).
+  // Não confirma quem existe: alvo escondido, inexistente ou com pid antigo respondem igual (404 'player not found').
+  if (action === 'guildInvite') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const to = String(body.to ?? '');
+    if (!VALID_ID.test(to)) return erro('invalid target', 400);
+    const alvo = await saveIdForPublicId(env, to);
+    const perfil = alvo ? await getProfile(env, alvo).catch(() => null) : null;
+    if (!alvo || !perfil || perfil.publicHidden === true) return erro('player not found', 404);
+    if (alvo === id || g.members.includes(alvo)) return erro('already member', 409);
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
+    if (await grupoDe(env, alvo, semana)) return erro('already in a {g}', 409);
+    const gate = takeToken('guildInvite', id, GUILD_INVITE_LIMIT);
+    if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    const eu = await getProfile(env, id).catch(() => null);
+    // Quem saiu da lista pública convida sem o próprio nome na carta (o mesmo cuidado da carta de amizade).
+    const quem = eu && eu.publicHidden !== true && typeof eu.name === 'string' ? eu.name.slice(0, 40) : '';
+    try {
+      await enqueueMail(env, kvOrThrow(env), alvo, {
+        mid: `ginv:${g.id}:${hoje}`,
+        titlePt: 'Convite para um clã', titleEn: 'Clan invite',
+        bodyPt: `${quem || 'Alguém'} convidou você para o clã ${g.name}. Para entrar, abra o Salão do clã e use o código ${g.code}.`,
+        bodyEn: `${quem || 'Someone'} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
+        at: Date.now(),
+      });
+    } catch {
+      return erro('try again', 503);
+    }
+    return json({ invited: true });
   }
 
   // Forma BB (D5): a Guilda é trancada ao BB, com o motivo. O estágio vem do SAVE do servidor (`_velado.js`).

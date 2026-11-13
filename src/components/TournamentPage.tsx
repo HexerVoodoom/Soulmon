@@ -51,6 +51,7 @@
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
+import { PlayerName } from './ui/PlayerName';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily } from '../utils/hexsmith';
@@ -1025,9 +1026,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                   <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
                 </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.name}
-                  </p>
+                  {/* §319: o clã embaixo do nome do oponente. */}
+                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+                    <PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />
+                  </div>
                   <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
                   </p>
@@ -1156,7 +1158,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                   <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
                 </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</p>
+                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}><PlayerName name={o.name} guildName={o.guildName} isPt={isPt} /></div>
                   <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
                   </p>
@@ -1329,8 +1331,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                         })()}
                       </MiniGlass>
                     </AvatarFrame>
-                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.name}{isMe ? (isPt ? ' (você)' : ' (you)') : ''}
+                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
                     </span>
                     <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
                   </div>

@@ -285,7 +285,8 @@ describe('a roda por tamanho', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(4, {}, [0, 2]));
     await montar();
     const itens = within(textoDaRoda()).getAllByRole('listitem');
-    expect(itens.map(li => li.querySelector('.t')!.textContent)).toEqual(['Ana', 'Bia', 'Caio', 'Dani']);
+    // §319: o nome do clã vem EMBAIXO do nome (`[data-player-guild]`); a linha do nome continua só o nome.
+    expect(itens.map(li => li.querySelector('.t [data-player-name-text]')!.textContent)).toEqual(['Ana', 'Bia', 'Caio', 'Dani']);
     expect(itens.map(li => !!li.querySelector('.sm2-guild-pres'))).toEqual([true, false, true, false]);
     // nenhum estado de ausência, nenhum ícone de estado, nenhum número por pessoa
     expect(textoDaRoda().textContent).not.toMatch(/ainda n[aã]o|not yet|ausen|absent|falt/i);
@@ -508,7 +509,7 @@ describe('layout: nome longo e "· você" (#4, #14)', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     await montar();
     const t = document.querySelector('.sm2-coop-mem li .t')!;
-    expect(t.textContent).toBe('Ana');
+    expect(t.querySelector('[data-player-name-text]')!.textContent).toBe('Ana');
     const voce = t.nextElementSibling as HTMLElement;
     // O ponto é enfeite (aria-hidden); o leitor de tela lê só "você" (L3-copy).
     expect(voce.querySelector('[aria-hidden="true"]')!.textContent).toBe(PT('guild.roda.voce'));

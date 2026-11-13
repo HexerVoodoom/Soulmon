@@ -65,6 +65,10 @@
 **Chamado por:** `src/components/DailyRituals.tsx` (os dois `sort`: tarefas `t:<id>` e hábitos `h:<id>`).
 **Régua:** `src/hooks/useOrdemCongelada.test.ts`.
 
+### `src/hooks/usePlayerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §319)
+**Dono de:** a busca enquanto digita: espera `PLAYER_SEARCH_DEBOUNCE_MS` (200 ms) depois da última tecla, cancela a chamada anterior (`AbortController`), guarda o resultado de cada termo enquanto o componente vive e devolve `{ state, retry }` — `state` é `short` | `loading` | `ready` (`hits`) | `error` (`errorKind`); offline (`navigator.onLine === false`) vira erro `offline` sem chamar.
+**Chamado por:** `src/components/PlayerSearch.tsx`, `src/components/LibraryPage.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx`.
+
 ### `src/hooks/usePresentationQueue.ts`
 **Dono de:** ligar a fila pura de apresentação (`utils/presentationQueue.ts`) ao React (14/10/2026, REGISTRO §42): deriva quem está na tela a cada render (guardando o item atual num `ref`, para não ser expulso por um mais prioritário), chama `onShow(id)` UMA vez por entrada na tela (onde cada dono grava o "visto"), registra a camada de "voltar" (Android/navegador) que fecha o item da tela por `onDismiss(id)`, e expõe `fail(id)` (erro de render, chunk que não carrega, fechamento que lança: pula o item e tenta o fechamento dele).
 **Exports:** `usePresentationQueue({ ready, holdDayStart?, onShow?, onDismiss? })` → `{ current, dismiss, fail, dayStartActive }`. Desde 19/10/2026 (REGISTRO §111) acumula num `ref` o que já foi mostrado NESTA abertura do app (teto de 3 modais) e `holdDayStart` segura o início de dia enquanto o Soulmon dorme à espera de ser acordado.

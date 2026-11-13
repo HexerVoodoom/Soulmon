@@ -24,7 +24,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
+import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
 import type { FriendTrainerProps } from './FriendTraining';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
@@ -47,6 +47,10 @@ import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
 import { useLibraryMemory } from '../hooks/useLibraryMemory';
+import { usePlayerSearch } from '../hooks/usePlayerSearch';
+import { PlayerSearchResults } from './PlayerSearch';
+import { PlayerName } from './ui/PlayerName';
+import type { PlayerSearchHit } from '../utils/playerSearch';
 
 const FriendTraining = lazy(() => import('./FriendTraining').then(m => ({ default: m.FriendTraining })));
 
@@ -204,8 +208,10 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [addName, setAddName] = useState('');
   const [addBusy, setAddBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<string | null>(null);
-  /** Sugestões de nomes (do servidor) que começam com o que a pessoa digitou. */
-  const [sugestoes, setSugestoes] = useState<string[]>([]);
+  /** §319 (13/11/2026): busca enquanto digita no MESMO campo — começo do nome, sem acento e sem caixa, a partir de 2 letras,
+   *  pausa de 200 ms; cada sugestão traz o Soulmon, o nome com o clã embaixo e o "Convidar" de um toque. Fora da aba Amigos o
+   *  termo é vazio (nenhuma chamada). */
+  const busca = usePlayerSearch(saveId, tab === 'friends' ? addName : '');
   /** Pet aberto no painel simples da Biblioteca do Hall. */
   const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
   /** Memória da Biblioteca (10/11/2026): vistos e formas vivem no save (fonte única, vai à nuvem); sem provider cai na chave local. */
@@ -262,17 +268,6 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     return () => { vivo = false; };
   }, [friendsKey, reloadKey, isPt]);
 
-  useEffect(() => {
-    const q = addName.trim();
-    if (tab !== 'friends' || !q) { setSugestoes([]); return; }
-    let vivo = true;
-    const t = setTimeout(() => {
-      suggestNames(q)
-        .then(r => { if (vivo) setSugestoes((r.names ?? []).filter(n => n.toLowerCase().startsWith(q.toLowerCase()) && n.toLowerCase() !== q.toLowerCase()).slice(0, 8)); })
-        .catch(() => { if (vivo) setSugestoes([]); });
-    }, 250);
-    return () => { vivo = false; clearTimeout(t); };
-  }, [addName, tab]);
 
   /**
    * REGISTRO DE FORMAS (31/10/2026): todo Soulmon que a pessoa já viu (aberto aqui, enfrentado no Torneio ou amigo) tem a forma
@@ -424,6 +419,52 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       setAddBusy(false);
     }
   };
+  /** §319: o "Convidar" de UM toque de uma sugestão da busca (o mesmo `addFriend` do botão da linha). */
+  const convidarSugestao = async (h: PlayerSearchHit) => {
+    if (busyId) return;
+    setAddMsg(null);
+    setActionError(null);
+    if (friends.length >= MAX_FRIENDS) { setAddMsg(isPt ? `Limite de ${MAX_FRIENDS} amigos.` : `Limit of ${MAX_FRIENDS} friends.`); return; }
+    setBusyId(h.id);
+    try {
+      const res = await addFriend(saveId, h.id);
+      onFriendsChange(res.friends);
+      if (res.status === 'friends') setAddMsg(isPt ? `${h.name} agora é seu amigo.` : `${h.name} is now your friend.`);
+      else {
+        setSocial(prev => (prev ? { ...prev, outgoing: [...prev.outgoing, h.id] } : prev));
+        setAddMsg(isPt ? `Convite enviado para ${h.name}.` : `Invite sent to ${h.name}.`);
+      }
+    } catch {
+      setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+  const acaoDaSugestao = (h: PlayerSearchHit) => {
+    const amigo = friends.includes(h.id);
+    const pendente = !amigo && !!social?.outgoing.includes(h.id);
+    const enviando = busyId === h.id;
+    const cheio = !amigo && !pendente && friends.length >= MAX_FRIENDS;
+    const ativo = !amigo && !pendente && !enviando && !cheio && busyId === null;
+    return (
+      <button
+        type="button"
+        data-friend-suggestion-invite={h.id}
+        disabled={!ativo}
+        aria-disabled={!ativo ? true : undefined}
+        aria-busy={enviando ? true : undefined}
+        aria-label={ativo ? (isPt ? `Convidar ${h.name} para ser amigo` : `Invite ${h.name} to be a friend`) : undefined}
+        onClick={() => void convidarSugestao(h)}
+        style={sm2Button(ativo ? 'primary' : 'outline', !ativo, 'sm')}
+      >
+        {amigo ? (isPt ? 'Já é amigo' : 'Already a friend')
+          : pendente ? (isPt ? 'Convite enviado' : 'Invite sent')
+            : enviando ? (isPt ? 'Enviando…' : 'Sending…')
+              : cheio ? (isPt ? `Limite de ${MAX_FRIENDS}` : `Limit of ${MAX_FRIENDS}`)
+                : (isPt ? 'Convidar' : 'Invite')}
+      </button>
+    );
+  };
   // A aba do grupo não é uma lista de jogadores — tem fonte, estados e vazio
   // próprios. Por isso ela não entra em `list`: entrar faria o esqueleto e o
   // "nenhum jogador com esse nome" do diretório aparecerem por cima dela.
@@ -485,14 +526,10 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
           </button>
         </form>
       )}
-      {tab === 'friends' && sugestoes.length > 0 && (
-        <ul data-friend-suggestions aria-label={isPt ? 'Sugestões de nomes' : 'Name suggestions'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {sugestoes.map(n => (
-            <li key={n}>
-              <button type="button" onClick={() => { setAddName(n); setAddMsg(null); setSugestoes([]); }} style={sm2Button('outline', false, 'sm')}>{n}</button>
-            </li>
-          ))}
-        </ul>
+      {tab === 'friends' && (
+        <div data-friend-suggestions style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <PlayerSearchResults query={addName} state={busca.state} retry={busca.retry} language={language} renderAction={acaoDaSugestao} quiet />
+        </div>
       )}
       {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
 
@@ -502,7 +539,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
           <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Convites' : 'Invites'}</h3>
           {social.incoming.map(inv => (
             <div key={inv.id} data-friend-invite={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--sm2-ink)' }}>{inv.name}</span>
+              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, color: 'var(--sm2-ink)' }}><PlayerName name={inv.name} guildName={inv.guildName} isPt={isPt} /></span>
               <button type="button" disabled={busyId === inv.id || friends.length >= MAX_FRIENDS} onClick={() => answerInvite(inv, false)} style={sm2Button('primary', busyId === inv.id || friends.length >= MAX_FRIENDS, 'sm')}>
                 {friends.length >= MAX_FRIENDS ? (isPt ? `Limite de ${MAX_FRIENDS}` : `Limit of ${MAX_FRIENDS}`) : (isPt ? 'Aceitar' : 'Accept')}
               </button>
@@ -770,10 +807,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 </MiniGlass>
                 <span className="sm2-lib-nm">
                   <span className="t">
-                    {nomeDe(p)}
-                    {isNpc && (
-                      <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span>
-                    )}
+                    {/* §319: o clã embaixo do nome do JOGADOR (no Hall a linha é o nome da criatura, e o clã fica no perfil). */}
+                    <PlayerName
+                      name={nomeDe(p)}
+                      suffix={isNpc ? <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span> : null}
+                      guildName={!seenOnly && !isNpc && !p.unresolved ? p.guildName : null}
+                      isPt={isPt}
+                    />
                   </span>
                   <span className="s sm2-num">
                     {p.unresolved

@@ -57,6 +57,8 @@ import { GuildBuffs } from './GuildBuffs';
 import { BitsAmount } from '../ui/BitsAmount';
 import { clearClanBuffs, type BuffId } from '../../utils/guildBuffs';
 import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
+import { GuildInviteSheet } from './GuildInviteSheet';
+import { PlayerName } from '../ui/PlayerName';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
 import { feiraDesafioStatus, readFeiraDesafio } from '../../utils/feiraDesafio';
@@ -173,6 +175,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const [codigo, setCodigo] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [ajustes, setAjustes] = useState(false);
+  /** §319: a folha "Convidar" (busca de jogadores) aberta; o foco volta ao botão ao fechar. */
+  const [convidando, setConvidando] = useState(false);
+  const convidarRef = useRef<HTMLButtonElement>(null);
   const [novoNome, setNovoNome] = useState('');
   const [copiado, setCopiado] = useState(false);
   /** Dia (do jogador) em que ESTE aparelho viu cada estágio — só para o Mural. Memória de UI, não do save. */
@@ -757,7 +762,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             </section>
           )}
 
-          <SalaRoda guild={g} t={t} nominal={nominal} />
+          <SalaRoda guild={g} t={t} nominal={nominal} language={language} />
 
           <div className="sm2-coop-code">
             <span className="sm2-lib-s">{t('guild.codigo.label')}</span>
@@ -784,6 +789,18 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             )}
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
+          {/* §319 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores — o CTA principal do Salão. Clã cheio = o botão
+              fica, apagado, com o porquê (nunca some em silêncio). */}
+          <CtaButton
+            ref={convidarRef}
+            data-guild-convidar
+            disabled={g.full}
+            aria-describedby={g.full ? `${ajustesId}-convidar-cheio` : undefined}
+            onClick={() => setConvidando(true)}
+          >
+            {t('guild.convidar.botao')}
+          </CtaButton>
+          {g.full && <p id={`${ajustesId}-convidar-cheio`} className="sm2-lib-s" style={{ margin: 0 }} data-guild-convidar-cheio>{t('guild.convidar.cheio')}</p>}
           {g.size <= 1 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.criar.codigo.corpo', { n: guildInviteRoom() })}</p>}
 
         </div>
@@ -859,6 +876,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           </button>
           <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.sair.nota')}</p>
         </div>
+        {convidando && (
+          <GuildInviteSheet
+            saveId={saveId}
+            language={language}
+            guildName={g.name}
+            tz={tz.current}
+            onClose={() => { setConvidando(false); requestAnimationFrame(() => convidarRef.current?.focus()); }}
+          />
+        )}
         <ConfirmDialog
           isOpen={sairEtapa === 1}
           onClose={() => setSairEtapa(0)}
@@ -1145,8 +1171,8 @@ const GESTO_ICONE: Record<GuildGesture, string> = { aceno: 'pan_tool', luz: 'lig
  * sem quantos, e sem nada quando não veio nenhum. Roda de uma pessoa só não tem
  * para quem gesticular: a fileira não é desenhada.
  */
-function SalaRoda({ guild, t, nominal }: {
-  guild: GuildView; t: T; nominal: boolean;
+function SalaRoda({ guild, t, nominal, language }: {
+  guild: GuildView; t: T; nominal: boolean; language: Language;
 }) {
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.aria.roda')} data-guild-room="roda">
@@ -1157,7 +1183,8 @@ function SalaRoda({ guild, t, nominal }: {
       <ul className="sm2-coop-mem">
         {guild.members.map((m, i) => (
           <li key={m.id ?? `m${i}`}>
-            <span className="t">{m.name ?? t('guild.roda.alguem')}</span>
+            {/* §319: o nome do clã embaixo do nome, como em toda lista de jogadores (aqui é o da própria roda). */}
+            <span className="t"><PlayerName name={m.name ?? t('guild.roda.alguem')} guildName={m.name ? guild.name : null} isPt={language === 'pt-BR'} /></span>
             {m.euMesmo && (
               <span className="sm2-guild-you">
                 {/* O ponto é enfeite: o leitor de tela lê só "você", não "ponto você". */}
