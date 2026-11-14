@@ -21,7 +21,8 @@ import { useEffect } from 'react';
 import { useBackLayer } from '../../utils/backStack';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { Icon } from '../ui/Icon';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Hint, sm2Text } from '../form/FormKit';
+import { CtaButton } from '../ui/CtaButton';
 import { RitualDialog, RitualGlass, ritualTitle } from '../ritual/RitualKit';
 import { PET_BACKGROUNDS, isGuildSceneRetired } from '../../utils/backgrounds';
 import { sceneCss } from '../../utils/backgroundPortrait';
@@ -81,9 +82,9 @@ export function GroveMilestoneCeremony({
       {dateLabel && <p style={sm2Hint}>{dateLabel}</p>}
       {/* D-26/D-27: só um cenário ainda aposentado faria a frase "já está em Background" ser falsa. */}
       {sceneGranted && !isGuildSceneRetired(bgId) && <p style={sm2Hint}>{guildCoreText(language, 'guild.marco.cenario', { estagio: nome })}</p>}
-      <button type="button" onClick={onDone} style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}>
+      <CtaButton width="auto" onClick={onDone} style={{ marginTop: 4 }}>
         {guildCoreText(language, 'guild.marco.botao')}
-      </button>
+      </CtaButton>
     </RitualDialog>
   );
 }

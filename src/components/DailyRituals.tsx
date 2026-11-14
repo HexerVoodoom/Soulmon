@@ -487,27 +487,20 @@ export function DailyRituals({
     const recurso = recursoDaAtividade(activity);
     const predio = predioDoRecurso(recurso);
     const irLa = irLaLabel(recurso, language);
-    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança); journaling/foco: o link ao prédio. */
-    const link = recurso === 'steps' && stepsInfo
+    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança, embaixo); journaling/foco: UMA SETA turquesa no FIM
+       da linha, sem texto (§365, 14/11/2026), com o `irLaLabel` no nome acessível. */
+    const contador = recurso === 'steps' && stepsInfo
       ? <span data-habit-link="steps" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
-      : predio && irLa && onGoToBuilding
-        ? (
-          <button
-            type="button"
-            data-habit-link={recurso}
-            onClick={(e) => { e.stopPropagation(); onGoToBuilding(predio); }}
-            style={{ minHeight: 44, padding: '0 4px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, color: 'var(--sm2-primary-ink)', textDecoration: 'underline' }}
-          >
-            {irLa}
-          </button>
-        )
-        : undefined;
+      : undefined;
+    const acao = recurso !== 'steps' && predio && irLa && onGoToBuilding
+      ? { label: irLa, kind: recurso, onClick: () => onGoToBuilding(predio) }
+      : undefined;
     return (
       <RitualRow
         key={activity.id}
         flipKey={`h:${activity.id}`}
-        below={recurso === 'steps' ? link : undefined}
-        lead={recurso === 'steps' ? undefined : link}
+        below={contador}
+        action={acao}
         kind="habit"
         name={activity.name}
         bonus={bonusActivityId === activity.id}
