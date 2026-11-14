@@ -2,7 +2,7 @@
 """Instala as salas de descanso (oásis) do Pomodoro (REGISTRO §301), uma por cenário do Foco.
 
 Fonte canônica (sempre lida daqui): E:/Soulmon-assets/jornada-oasis/<cenario>.png (ChatGPT, 12/11/2026), cenarios: forest shore cavern garden workshop observatory.
-Saída: src/assets/soulmon/jornada/oasis-<cenario>.webp (1024x2048, 1:2 opaco, cover + LANCZOS, WebP q85); lido por src/components/play/journeyArt.ts.
+Saída: src/assets/soulmon/jornada/oasis-<cenario>.webp (1024x2048, 1:2 opaco, cover + LANCZOS, WebP q85, descendo ate q70 se passar de 400 KB); lido por src/components/play/journeyArt.ts.
 Cenário sem fonte é pulado (vale o fundo gerado em código). Idempotente. Uso: python tools/instalar-oasis-jornada.py [--origem DIR]
 """
 import argparse, io, sys
@@ -24,7 +24,12 @@ def main() -> int:
         if not src.exists():
             continue
         im = ImageOps.fit(Image.open(src).convert('RGB'), (1024, 2048), Image.LANCZOS, centering=(0.5, 0.5))
-        buf = io.BytesIO(); im.save(buf, 'WEBP', quality=85, method=6)
+        q = 85
+        while True:  # teto de 400 KB por arquivo: baixa a qualidade de 5 em 5 so se estourar (min 70)
+            buf = io.BytesIO(); im.save(buf, 'WEBP', quality=q, method=6)
+            if buf.tell() <= 400_000 or q <= 70:
+                break
+            q -= 5
         dst = saida / f'oasis-{env}.webp'
         if not dst.exists() or dst.read_bytes() != buf.getvalue():
             dst.write_bytes(buf.getvalue()); mudou += 1
