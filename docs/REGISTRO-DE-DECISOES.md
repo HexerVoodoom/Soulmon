@@ -5308,3 +5308,11 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Não é a Feira desligada:** `FEIRA_CHEFE_DESDE = '2026-10-29'` (ligada) e `wrangler.jsonc` não define a variável; o servidor sempre devolve um encontro (verificado por teste de servidor com 1 e 3 membros, 14 a 17/11).
 
 **Falsifica:** missão gravada pelo App virar `null` em `normalizeGuildMission`; a sala oferecer "Mandar investigar" no mesmo dia depois de uma volta com o app fechado. **Rollback:** reverter o PR. **APK:** só bundle web.
+
+## §368 — O alarme nativo `feira-missao-volta` passa a ser de uma vez só (`ONE_SHOT_PREFIXES`) (14/11/2026, aprovado pelo dono)
+
+**Causa:** `AlarmReceiver.kt` apaga a entrada `alarm_<hash>` das SharedPreferences depois de disparar só para as tags de `ONE_SHOT_PREFIXES` (§114); o `BootReceiver` re-arma o que sobra. `feira-missao-volta` (`FEIRA_VOLTA_TAG`, `utils/feiraNotificacao.ts`) não estava na lista: se a entrada sobrasse, um reboot ou uma atualização do app podia re-armar "Seu Soulmon voltou da investigação" sem missão nenhuma. Na volta normal `cancelFeiraVolta` já limpa; o buraco era a entrada que sobra depois do disparo.
+
+**Mudança:** `"feira-missao-volta"` entra em `ONE_SHOT_PREFIXES` (`android/app/src/main/java/com/soulmon/notifications/AlarmReceiver.kt`), igual aos outros eventos de uma vez (`poop-event-`, `pet-pantry`, `pet-energy-full`, `pet-progress`). A tag que o plugin passa ao receiver é o próprio `id`, então o `startsWith` casa.
+
+**APK/AAB:** a mudança é em `android/`, então SÓ VALE COM O PRÓXIMO AAB. Funciona com o APK antigo (feature detect): nenhum contrato de bridge muda, o JS não depende disso e o comportamento antigo apenas continua até o app ser atualizado. **Teste:** nenhum teste do repositório lê `AlarmReceiver.kt` como texto, então não há contrato a atualizar; a lista é Kotlin puro, sem teste de unidade. **Falsifica:** após o próximo AAB, um aviso da Feira disparado e o aparelho reiniciado re-armar a notificação. **Rollback:** reverter o PR.
