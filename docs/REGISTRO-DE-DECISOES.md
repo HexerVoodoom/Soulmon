@@ -5297,3 +5297,13 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Alternativa que perdeu:** esperar existir a tela que os usa antes de instalar (adiaria arte pronta e deixaria os medalhões antigos no repo).
 
 **Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
+
+## §364 — A ação vira UMA seta turquesa no fim da linha; o balão dourado usa o mesmo chevron, sem círculo (14/11/2026, decisão do dono)
+
+**Decisão:** (1) Na linha de hábito que leva a um prédio ("Ir ao Caderno" / "Ir à Oficina do Foco"), o link turquesa sublinhado na FRENTE do nome sai (reverte o "link na frente" do #899, §355). Entra APENAS uma seta turquesa `>` (chevron sem haste) no FIM da linha, à direita, alinhada ao centro, sem texto; ela é o alvo de toque (mesma navegação), com `aria-label` = `irLaLabel` (PT/EN), foco e alvo de 44 px sem aumentar a linha. O contador de passos segue embaixo e o checkbox não mudou. (2) No balão dourado (§333, #879) a seta-em-círculo vira o MESMO chevron turquesa sem haste, sem círculo, no mesmo lugar (fim do texto), decorativo (o balão inteiro segue sendo o botão, com o mesmo `aria-label`).
+
+**Dono único:** `src/components/ui/ChevronAcao.tsx` (glifo `chevron_right`, tinta `--sm2-primary-ink`, o token do link que substitui). `RitualRow.lead` virou `RitualRow.action`.
+
+**Alternativa que perdeu:** manter o link com texto na frente (13/11) e a seta no círculo (§333): texto longo disputava com o nome na linha estreita e o círculo era placa ao redor do ícone.
+
+**Falsifica:** o nome do hábito truncar por causa da seta; toque na seta marcar a linha; seta sem nome acessível. **Rollback:** reverter o PR. **APK:** só web/bundle; nada nativo. **Não visto na tela real:** conferido só por testes de render (jsdom), não em dispositivo.

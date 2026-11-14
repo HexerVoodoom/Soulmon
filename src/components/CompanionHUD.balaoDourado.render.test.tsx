@@ -69,18 +69,19 @@ describe('balão dourado do CompanionHUD', () => {
     expect(container.querySelector('[data-pet-gold-bubble]')?.closest('[data-chat-dock], .sm-chatdock')).toBeNull();
   });
 
-  /* §333 (dono, 13/11): todo balão dourado LEVA a algum lugar, e diz isso com a seta no círculo no fim da linha. */
+  /* §333 (dono, 13/11) + §364 (14/11): todo balão dourado LEVA a algum lugar, e diz isso com um chevron turquesa SEM haste e SEM círculo no fim da linha. */
   for (const tipo of ['grove', 'rift', 'achado'] as const) {
-    it(`seta no círculo (${tipo}): no FIM da linha, presa à última palavra, aria-hidden, tinta do balão`, () => {
+    it(`chevron turquesa (${tipo}): no FIM da linha, presa à última palavra, aria-hidden, tinta do balão`, () => {
       const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={dourado(tipo)} onBalaoDourado={() => {}} />);
       const b = container.querySelector(`[data-pet-gold-bubble="${tipo}"]`) as HTMLElement;
       const setas = b.querySelectorAll('[data-pet-gold-bubble-arrow]');
       expect(setas).toHaveLength(1);
       const seta = setas[0] as HTMLElement;
       expect(seta.getAttribute('aria-hidden')).toBe('true');
-      expect(seta.style.borderRadius).toBe('50%');
-      expect(seta.style.color).toBe('var(--sm2-ink)');
-      expect(seta.querySelector('.sm2-icon')?.textContent).toBe('arrow_forward');
+      expect(seta.style.borderRadius).toBe(''); // sem círculo (§364)
+      expect(seta.style.border).toBe('');
+      expect(seta.style.color).toBe('var(--sm2-primary-ink)');
+      expect(seta.querySelector('.sm2-icon')?.textContent).toBe('chevron_right');
       // nunca quebra sozinha: mora num nowrap junto da última palavra ("olhada?")
       const presa = seta.parentElement as HTMLElement;
       expect(presa.style.whiteSpace).toBe('nowrap');
