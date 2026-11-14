@@ -1,5 +1,9 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — fundos da Home refeitos com a identidade (14/11/2026, REGISTRO §377)
+
+Os 33 cenários do palco (32 `bg-{cerejeira,el,jardim,lava,mar-profundo,neve,ruinas}-*` + `bg-lakeside`) foram refeitos no ChatGPT (original como âncora de composição, chão igual, levemente pixelado) e ganharam malha digital discreta por pós-processo determinístico; aprovados pelo dono em 14/11/2026. Fontes e folhas de contato: `E:/Soulmon-assets/_lote-14-11/fundos-home/` (`contato-*.png`, `contato-malha.png`, `_malha-v3.json`). Fica laranja de propósito: chamas de forja/braseiro em `bg-el-industrial` e `bg-el-fogo` (só o cristal da alma é turquesa). Pendente do dono: `bg-cerejeira-bosque-de-cerejeiras` mostra lava/vulcão, não cerejeiras (nada renomeado).
+
 ## PRIORIDADE ALTA — Pódio do ranking (pedido do dono, 13/11/2026: "o pódio do rank está muito feio", REGISTRO §326)
 
 O pódio dos placares dos jogos (`RankingPodium`) já tem a hierarquia nova em CSS e recebe a arte por **slots com troca automática**: basta cair o PNG com o nome exato em `src/assets/soulmon/ranking/` (resolvido por `import.meta.glob` em `index.ts`, `resolvePodiumArt`); sem arquivo, cada peça segue em CSS. Nenhum código a mexer. Gerar no ChatGPT, **uma peça por conversa**, alfa real na 1ª imagem (`gpt_image_2 --background transparent`, nunca chroma; no máximo 3 imagens por conversa). Categoria UI: identidade Soulmon **sutil** (um fio de cobre, circuito turquesa fino, UM cristal turquesa), **sem engrenagem e sem folhas/vinhas**. Pixel art igual aos ícones de item do app. Prompts completos (EN), anexos e passo de redução: `E:\Soulmon-assets\_podio\PROMPTS-CHATGPT.md`; anexos copiados em `E:\Soulmon-assets\_podio\referencias\`. O lugar vazio reaproveita o pedestal apagado em CSS (sem asset próprio).
