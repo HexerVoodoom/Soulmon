@@ -81,17 +81,21 @@ describe('a Casa da guilda no Salão', () => {
     expect(container.querySelector('[data-casa-bits-total] [data-bits-amount]')).not.toBeNull();
   });
 
-  it('só Bits GANHOS doam: saldo alto mas ganho baixo (o resto veio de Crédito) = sem botão', async () => {
+  it('§373: o saldo inteiro doa (o `earned` antigo é ignorado): saldo alto = botões; saldo baixo = sem botão', async () => {
     mockServer(casaVista());
     const { container } = render(<GuildSheet {...base} casa={{ bits: 900, earned: 30, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
-    await waitFor(() => expect(container.querySelector('[data-casa-sem-bits]')).not.toBeNull());
-    expect(container.querySelector('[data-casa-doar]')).toBeNull();
+    await waitFor(() => expect(container.querySelector('[data-casa-doar="100"]')).not.toBeNull());
+    expect((container.querySelector('[data-casa-doar="100"]') as HTMLButtonElement).disabled).toBe(false);
     cleanup();
     mockServer(casaVista());
-    const b = render(<GuildSheet {...base} casa={{ bits: 900, earned: 60, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    const b = render(<GuildSheet {...base} casa={{ bits: 60, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
     await waitFor(() => expect(b.container.querySelector('[data-casa-doar="50"]')).not.toBeNull());
     expect((b.container.querySelector('[data-casa-doar="100"]') as HTMLButtonElement).disabled).toBe(true);
     expect((b.container.querySelector('[data-casa-doar="50"]') as HTMLButtonElement).disabled).toBe(false);
+    cleanup();
+    mockServer(casaVista());
+    const c = render(<GuildSheet {...base} casa={{ bits: 30, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(c.container.querySelector('[data-casa-sem-bits]')).not.toBeNull());
   });
 
   it('Buffs do clã: o anfitrião compra mandando só buffId+opId; sem saldo o botão descansa; a Loja não existe mais', async () => {

@@ -61,8 +61,8 @@ describe('Hexsmith: renomear', () => {
     expect(hexRenameRefusal(gs, 'pet', 'Brasa')).toBe('same');
     expect(hexRenameRefusal(gs, 'especial', 'Brasa')).toBeUndefined();
     expect(hexRenameRefusal({ ...gs, gamePoints: HEX_RENAME_COST - 1 }, 'pet', 'Novo')).toBe('bits');
-    // Bits de Crédito não pagam
-    expect(hexRenameRefusal({ ...gs, gamePoints: 1000, bitsOrigin: { day: 'x', free: 0, fromCredits: 1000, paidLeft: 1000 } }, 'pet', 'Novo')).toBe('bits');
+    // §373: Bits de Crédito também pagam
+    expect(hexRenameRefusal({ ...gs, gamePoints: 1000, bitsOrigin: { day: 'x', free: 0, fromCredits: 1000, paidLeft: 1000 } }, 'pet', 'Novo')).toBeUndefined();
   });
 
   it('o custo aparece no modal e o botão só habilita com texto válido', () => {

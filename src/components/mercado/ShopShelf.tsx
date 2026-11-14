@@ -1,9 +1,8 @@
 import { missionsInQueueOrder } from '../../utils/missionOrder';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
-import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { creditExchangeRoom } from '../../utils/bitsOrigin';
-import { playerDayKey } from '../../utils/playerDay';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { bitsStyle, emblemStyle, BITS_PACKS, BITS_PACK_DAILY_CAP, CREDIT_COLOR, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type BitsPack, type CurrencyId } from '../../utils/currencies';
+import { bitsPackLeftToday, subscribeBitsPackLeft } from '../../utils/entitlements';
+import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName } from '../../utils/bitsPackCopy';
 import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
@@ -572,8 +571,8 @@ export function PurchaseConfirmSheet({ open, language, question, balance, cost, 
  * saldo abre esta folhinha em vez de só avisar "saldo insuficiente". Ela diz,
  * em texto sóbrio (L10 da bíblia: a informação nunca é só ficção), DE ONDE
  * vem a moeda — e os números saem das constantes dos donos, nunca de texto à
- * mão: o teto diário dos minijogos (`MINIGAME_BITS_PER_DAY`), a troca de
- * Créditos (`CREDIT_TO_BITS`) e a Honra por partida (`EMBLEMS_PER_WIN`/`_LOSS`).
+ * mão: o teto diário dos minijogos (`MINIGAME_BITS_PER_DAY`), os pacotes de
+ * Bits do Cambista (`BITS_PACKS`, `BITS_PACK_DAILY_CAP`) e a Honra por partida (`EMBLEMS_PER_WIN`/`_LOSS`).
  * Sem "faltam N", sem contagem regressiva, sem urgência: é mapa, não cobrança.
  */
 export function HowToEarnSheet({ item, currency, language, onClose }: {
@@ -613,8 +612,8 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         {
           key: 'creditos', icon: 'diamond',
           text: isPt
-            ? `Créditos viram Bits na lojinha de Itens, na aba Créditos: ${CREDIT_TO_BITS} Bits por Crédito.`
-            : `Credits turn into Bits in the Items stall, on the Credits tab: ${CREDIT_TO_BITS} Bits per Credit.`,
+            ? `Créditos viram Bits no Cambista: pacotes de ${BITS_PACKS.map(p => p.bits).join(', ')} Bits, até ${BITS_PACK_DAILY_CAP} Bits por dia.`
+            : `Credits turn into Bits at the Exchanger: packs of ${BITS_PACKS.map(p => p.bits).join(', ')} Bits, up to ${BITS_PACK_DAILY_CAP} Bits a day.`,
         },
       ];
   return (
@@ -641,76 +640,86 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
   );
 }
 
-/** A troca Créditos → Bits (a única coisa que Créditos fazem no Mercado).
+/** OS PACOTES DE BITS do Cambista (§373): três pacotes pagos em Créditos, com desconto progressivo, lado a lado.
+ *  O servidor decide o pacote, cobra e conta o teto de `BITS_PACK_DAILY_CAP` Bits/dia; a tela só oferece e confirma.
  *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
 export function CreditExchange({ language, credits, onExchangeCredits, say }: {
   language: Language;
   credits: number;
-  /** Devolve false se o servidor recusar o gasto. */
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  /** Compra o pacote `packId` (id de `BITS_PACKS`). Devolve false se o servidor recusar. */
+  onExchangeCredits: (packId: string) => Promise<boolean>;
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const [exchanging, setExchanging] = useState<number | null>(null);
-  // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. A conta é do save (`bitsOrigin`); sem Provider (demo, testes) não há teto.
-  const ctx = useGameStateOptional();
-  const room = ctx ? creditExchangeRoom(ctx.gameState, playerDayKey(new Date(), ctx.gameState.playerDayTz)) : Infinity;
+  const [exchanging, setExchanging] = useState<string | null>(null);
+  // O que ainda cabe HOJE, como o servidor disse da última vez (`null` = não trocou hoje: o dia inteiro está livre).
+  const leftEcho = useSyncExternalStore(subscribeBitsPackLeft, bitsPackLeftToday, bitsPackLeftToday);
+  const left = leftEcho ?? BITS_PACK_DAILY_CAP;
   /** Pacote tocado — a troca gasta Créditos, então também espera o "Confirmar" (D1). */
-  const [pending, setPending] = useState<(typeof BITS_EXCHANGE)[number] | null>(null);
-  const doExchange = async (pack: (typeof BITS_EXCHANGE)[number]) => {
+  const [pending, setPending] = useState<BitsPack | null>(null);
+  const doExchange = async (pack: BitsPack) => {
     setPending(null);
-    setExchanging(pack.credits);
+    setExchanging(pack.id);
     let ok = false;
-    try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
-    say(`exch-${pack.credits}`, ok, ok
+    try { ok = await onExchangeCredits(pack.id); } finally { setExchanging(null); }
+    say(`exch-${pack.id}`, ok, ok
       ? <><Bits value={pack.bits} sign="+" />.</>
-      : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
+      : (isPt ? 'A troca não foi concluída.' : 'The swap did not go through.'));
   };
   return (
-    <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+    <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
         <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
         <span>
-          {isPt ? 'Trocar Créditos por Bits — você tem ' : 'Swap Credits for Bits — you have '}
+          {isPt ? 'Pacotes de Bits — você tem ' : 'Bits packs — you have '}
           <span className="sm2-num">{credits}</span>
+          {isPt ? ' Créditos' : ' Credits'}
         </span>
       </p>
-      {BITS_EXCHANGE.map(pack => {
-        const busy = exchanging === pack.credits;
-        const fits = pack.bits <= room;
-        const can = credits >= pack.credits && exchanging === null && fits;
-        return (
-          <button
-            key={pack.credits}
-            type="button"
-            disabled={!can}
-            aria-busy={busy || undefined}
-            aria-label={isPt ? `Trocar ${pack.credits} ${pack.credits === 1 ? 'Crédito' : 'Créditos'} por ${pack.bits} Bits` : `Swap ${pack.credits} ${pack.credits === 1 ? 'Credit' : 'Credits'} for ${pack.bits} Bits`}
-            onClick={() => setPending(pack)}
-            style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
-          >
-            {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}
-            <span>
-              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? (pack.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pack.credits === 1 ? ' Credit for ' : ' Credits for ')}
-            </span>
-            <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />
-          </button>
-        );
-      })}
-      {Number.isFinite(room) && (
-        <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
-          {isPt
-            ? `Hoje o câmbio cabe até ${room} Bits (um quarto do que você ganhou jogando). Amanhã a conta abre de novo. Bits de Crédito não compram equipamento.`
-            : `Today the exchange fits up to ${room} Bits (a quarter of what you earned by playing). The count opens again tomorrow. Bits from Credits do not buy equipment.`}
-        </p>
-      )}
+      <div data-bits-packs style={{ display: 'grid', gridTemplateColumns: `repeat(${BITS_PACKS.length}, minmax(0, 1fr))`, gap: 6 }}>
+        {BITS_PACKS.map(pack => {
+          const busy = exchanging === pack.id;
+          const fits = pack.bits <= left;
+          const can = credits >= pack.credits && exchanging === null && fits;
+          const off = bitsPackDiscountLabel(pack);
+          const brl = isPt ? bitsPackBrlEstimate(pack) : null;
+          return (
+            <button
+              key={pack.id}
+              type="button"
+              data-bits-pack={pack.id}
+              disabled={!can}
+              aria-busy={busy || undefined}
+              aria-label={isPt
+                ? `${bitsPackName(pack, true)}: ${pack.bits} Bits por ${pack.credits} Créditos${off ? `, ${off}` : ''}`
+                : `${bitsPackName(pack, false)}: ${pack.bits} Bits for ${pack.credits} Credits${off ? `, ${off}` : ''}`}
+              onClick={() => setPending(pack)}
+              style={{ ...sm2Button('outline', !can), width: '100%', minWidth: 0, height: 'auto', padding: '8px 4px', flexDirection: 'column', gap: 4, whiteSpace: 'normal' }}
+            >
+              <span style={{ ...sm2Hint, margin: 0 }}>{bitsPackName(pack, isPt)}</span>
+              {busy ? <Icon name="sync" size={ICON_INLINE} tone="muted" /> : <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+                <span className="sm2-num">{pack.credits}</span>
+              </span>
+              <span data-bits-pack-off style={{ ...sm2Hint, margin: 0, minHeight: '1.2em' }}>{off ?? ''}</span>
+              {brl && <span data-bits-pack-brl style={{ ...sm2Hint, margin: 0 }}>{brl}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
+        {isPt
+          ? `Até ${BITS_PACK_DAILY_CAP} Bits por dia em pacotes. Hoje ainda cabem ${left} Bits. Os valores em reais são estimados; o preço real é o da Play.`
+          : `Up to ${BITS_PACK_DAILY_CAP} Bits a day in packs. ${left} Bits still fit today.`}
+      </p>
       <PurchaseConfirmSheet
         open={!!pending}
         language={language}
         question={pending
           ? <>
               {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pending.credits}</span>
-              {isPt ? (pending.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pending.credits === 1 ? ' Credit for ' : ' Credits for ')}<span className="sm2-num">{pending.bits}</span> Bits?
+              {isPt ? ' Créditos por ' : ' Credits for '}<span className="sm2-num">{pending.bits}</span> Bits?
             </>
           : null}
         balance={credits}

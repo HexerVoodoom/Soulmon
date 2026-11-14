@@ -35,6 +35,8 @@ export interface Entitlement {
   subUntil?: number;
   /** Molduras do widget V-Pet COMPRADAS (ids de elemento base; só o servidor escreve). Ausente = nenhuma. Cosmético. */
   frames?: string[];
+  /** §373: Bits que ainda cabem na troca de HOJE (dia UTC do servidor). Ausente = a conta não trocou hoje (dia inteiro livre). */
+  bitsPackLeft?: number;
 }
 
 /** Normaliza a resposta do GET: `admin` só é true com o literal `true`. */
@@ -51,6 +53,7 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     ...(typeof r.subActive === 'boolean' ? { subActive: r.subActive } : {}),
     ...(sanitizeOwnedWidgetFrames(r.frames).length ? { frames: sanitizeOwnedWidgetFrames(r.frames) } : {}),
     ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
+    ...(typeof r.bitsPackLeft === 'number' && Number.isFinite(r.bitsPackLeft) && r.bitsPackLeft >= 0 ? { bitsPackLeft: Math.floor(r.bitsPackLeft) } : {}),
   };
 }
 
@@ -67,7 +70,9 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
       headers: await authHeaders(),
     });
     if (!res.ok) return null;
-    return sanitizeEntitlement(await res.json());
+    const ent = sanitizeEntitlement(await res.json());
+    if (ent) noteBitsPackLeft(ent.bitsPackLeft ?? null);
+    return ent;
   } catch {
     return null;
   }
@@ -160,6 +165,64 @@ export async function buyEssence(element: string, qty: number, opId: string = ne
       if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error' };
       return { ok: true, element: data.element, qty: data.qty, price: data.price,
         ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } };
+    } catch { /* rede: uma nova tentativa com o MESMO opId */ }
+  }
+  return { ok: false, reason: 'network' };
+}
+
+// ── PACOTES DE BITS (§373) ───────────────────────────────────────────────────
+
+/**
+ * O que ainda cabe na troca de hoje, como o SERVIDOR disse da última vez (só para a tela; quem decide é o servidor). Guardado
+ * com o dia UTC em que foi lido: virou o dia, volta a "não sei" (`null`), e a tela mostra o teto cheio. Fora do save de propósito:
+ * não é dado do jogador, é um eco da última resposta.
+ */
+let bitsPackLeftEcho: { day: string; left: number } | null = null;
+const bitsPackListeners = new Set<() => void>();
+const utcDay = () => new Date().toISOString().slice(0, 10);
+
+export function noteBitsPackLeft(left: number | null): void {
+  bitsPackLeftEcho = typeof left === 'number' && Number.isFinite(left) ? { day: utcDay(), left: Math.max(0, Math.floor(left)) } : null;
+  bitsPackListeners.forEach(l => l());
+}
+
+/** `null` = o servidor não disse nada hoje (a conta não trocou hoje, até onde este aparelho sabe). */
+export function bitsPackLeftToday(): number | null {
+  return bitsPackLeftEcho && bitsPackLeftEcho.day === utcDay() ? bitsPackLeftEcho.left : null;
+}
+
+export function subscribeBitsPackLeft(listener: () => void): () => void {
+  bitsPackListeners.add(listener);
+  return () => { bitsPackListeners.delete(listener); };
+}
+
+export type BitsPackBuyResult =
+  | { ok: true; ent: Entitlement; pack: string; bits: number; price: number; leftToday: number }
+  | { ok: false; reason: string; leftToday?: number };
+
+/**
+ * Compra um PACOTE DE BITS com Créditos NO SERVIDOR (`POST /api/entitlements?action=buy-bits`). O servidor decide os Bits do
+ * pacote, debita os Créditos e conta o teto de 1.000/dia; o cliente só credita os `bits` desta resposta, e só com `ok`.
+ * Mesmo `opId` num reenvio (a rede caiu sem resposta) = mesmo resultado, sem cobrar de novo. Recusa do servidor não é reenviada.
+ */
+export async function buyBitsPack(packId: string, opId: string = newOpId()): Promise<BitsPackBuyResult> {
+  const id = currentSaveId();
+  if (!id) return { ok: false, reason: 'no-save' };
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    try {
+      const res = await fetch('/api/entitlements?action=buy-bits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ id, pack: packId, opId }),
+      });
+      const data = await res.json().catch(() => null);
+      const left = typeof data?.leftToday === 'number' && Number.isFinite(data.leftToday) ? Math.max(0, Math.floor(data.leftToday)) : undefined;
+      if (left !== undefined) noteBitsPackLeft(left);
+      if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error', ...(left !== undefined ? { leftToday: left } : {}) };
+      const bits = Number(data.bits);
+      if (!Number.isInteger(bits) || bits <= 0) return { ok: false, reason: 'error' };
+      return { ok: true, pack: String(data.pack), bits, price: Number(data.price) || 0, leftToday: left ?? 0,
+        ent: { tier: data.tier === 'paid' ? 'paid' : 'demo', credits: Number(data.credits) || 0, adsLeft: Number(data.adsLeft) || 0, admin: data.admin === true } };
     } catch { /* rede: uma nova tentativa com o MESMO opId */ }
   }
   return { ok: false, reason: 'network' };

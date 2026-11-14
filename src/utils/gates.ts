@@ -153,7 +153,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'mercado.decoracao': { minBond: 1 },
   'mercado.background': { minBond: 1 },
   // O Soulsmith (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
-  // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
+  // da vitrine abre com o uso (o teto de 5% é o mesmo para quem entra mais tarde).
   'forja.ferreiro': { minBond: 1 },
   'forja.hexsmith': { minBond: 1 }, // 01/11/2026: a Hexsmith; mesmo Vínculo do Soulsmith (default — o dono ajusta aqui)
   'jogos.salao': { minBond: 1 },

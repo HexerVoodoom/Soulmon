@@ -31,7 +31,7 @@ import { HEX_COSTS } from '../utils/hexsmith';
 import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
-import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
+import { BITS_PACK_DAILY_CAP } from '../utils/currencies';
 import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
 import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
@@ -514,8 +514,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, 1 de ${ARENA_CHOICES} desafios; sortear ${ARENA_CHOICES} novos custa Bits depois de ${ARENA_REROLL_FREE_PER_DAY} grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits ganhos e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.`,
-              `The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, 1 of ${ARENA_CHOICES} challenges; drawing ${ARENA_CHOICES} new ones costs Bits after ${ARENA_REROLL_FREE_PER_DAY} free a day. The Tournament's Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 earned Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.`,
+              `O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, 1 de ${ARENA_CHOICES} desafios; sortear ${ARENA_CHOICES} novos custa Bits depois de ${ARENA_REROLL_FREE_PER_DAY} grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.`,
+              `The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, 1 of ${ARENA_CHOICES} challenges; drawing ${ARENA_CHOICES} new ones costs Bits after ${ARENA_REROLL_FREE_PER_DAY} free a day. The Tournament's Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.`,
             )}
           </p>
           <p style={para}>
@@ -556,20 +556,20 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Cada aprimoramento custa materiais e Bits ganhos jogando (de ${upgradeBitsCost(1)} no começo, crescendo a cada nível). A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
-              `Each upgrade costs materials and Bits earned by playing (from ${upgradeBitsCost(1)} at the start, growing each level). At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
+              `Cada aprimoramento custa materiais e Bits (de ${upgradeBitsCost(1)} no começo, crescendo a cada nível). A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
+              `Each upgrade costs materials and Bits (from ${upgradeBitsCost(1)} at the start, growing each level). At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (tipo do ataque básico: Magia, Corte à distância, Corte corpo a corpo ou Esmagamento; só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} poções do próprio elemento + ${HEX_COSTS.element.fragments} fragmentos + ${HEX_COSTS.element.bits} Bits ganhos; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits ganhos; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits ganhos. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
-              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack type: Magic, Ranged Slash, Melee Slash or Melee Smash; looks only). Element HEXes take ${HEX_COSTS.element.potions} potions of that element + ${HEX_COSTS.element.fragments} fragments + ${HEX_COSTS.element.bits} earned Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} earned Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} earned Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
+              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (tipo do ataque básico: Magia, Corte à distância, Corte corpo a corpo ou Esmagamento; só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} poções do próprio elemento + ${HEX_COSTS.element.fragments} fragmentos + ${HEX_COSTS.element.bits} Bits; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
+              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack type: Magic, Ranged Slash, Melee Slash or Melee Smash; looks only). Element HEXes take ${HEX_COSTS.element.potions} potions of that element + ${HEX_COSTS.element.fragments} fragments + ${HEX_COSTS.element.bits} Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `As peças são partes da sua alma, aprimoradas: não há como tirar. Sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
-              `The pieces are parts of your soul, refined: nothing to take off. No draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
+              `As peças são partes da sua alma, aprimoradas: não há como tirar. Sem sorteio. Bits comprados com Créditos (até ${BITS_PACK_DAILY_CAP.toLocaleString('pt-BR')} Bits por dia em pacotes, no Cambista) também pagam o Soulsmith e a Hexsmith; o bônus de combate de todas as fontes juntas continua parando em ${Math.round(COMBAT_BONUS_CAP * 100)}%.`,
+              `The pieces are parts of your soul, refined: nothing to take off. No draws. Bits bought with Credits (up to ${BITS_PACK_DAILY_CAP.toLocaleString('en-US')} Bits a day in packs, at the Exchanger) also pay the Soulsmith and the Hexsmith; the combat bonus from all sources together still stops at ${Math.round(COMBAT_BONUS_CAP * 100)}%.`,
             )}
           </p>
           <p style={para}>

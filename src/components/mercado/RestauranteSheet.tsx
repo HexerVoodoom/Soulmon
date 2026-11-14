@@ -101,7 +101,6 @@ export function RestauranteSheet({ language }: { language: Language }) {
                     {extraIcon(d)}
                     {extraName(d)} <span className="sm2-num">{has}/{d.extra.qty}</span>
                   </span>
-                  {isCombatEffect(d.effect) && <span>{isPt ? '· só Bits ganhos' : '· earned Bits only'}</span>}
                 </span>
               </div>
               <button

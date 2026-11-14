@@ -13,8 +13,8 @@
  *    o MESMO teto por peça (1,5%), em passos menores — com custo crescente. Tempo até o máximo, simulado em `forge.tempo.test.ts` e
  *    documentado em `docs/BALANCO-SOULSMITH.md`: passa do Ultra (59 dias perfeitos) com folga, para quem joga todo dia.
  *  · A cada aprimoramento a pessoa ESCOLHE entre 2 opções IGUAIS (o atributo do slot e o vizinho, `ALT_ATTR`; mesmo valor, muda onde a
- *    peça ajuda). A escolha é REFAZÍVEL pagando Bits GANHOS (nunca Créditos, nunca `paidLeft`) ou fragmentos da Masmorra; o material não volta.
- *  · SEM SORTEIO: custos, opções e valores são tabela. NADA de dinheiro real nem Créditos entra aqui.
+ *    peça ajuda). A escolha é REFAZÍVEL pagando Bits (desde §373 também os vindos de Crédito; Créditos nunca direto) ou fragmentos da Masmorra; o material não volta.
+ *  · SEM SORTEIO: custos, opções e valores são tabela. Créditos não entram direto (só como Bits, §373); o teto de 5% segura a vantagem.
  *  · O TETO é um só (`COMBAT_BONUS_CAP`, 5%, `combate/bonus.ts`): este módulo só devolve a parcela da peça POR ATRIBUTO e quem
  *    soma com talento e corta é `combinedAttrBonus`. Uma peça no nível máximo vale no máximo `PIECE_MAX_PCT` (1,5% = 30% do teto);
  *    três peças equipadas, 4,5%: o equipamento sozinho nunca estoura o teto, e somado ao talento o canal único reduz o conjunto.
@@ -71,14 +71,14 @@ export const OLD_LEVEL_TO_NEW: readonly number[] = [3, 5, 8, 11, 15];
 /** Quantos níveis novos cada nível antigo cobre (3, 2, 3, 3, 4 décimos de ponto percentual — os ganhos antigos de 0,3/0,2/0,3/0,3/0,4%). */
 const OLD_LEVEL_SPAN: readonly number[] = [3, 2, 3, 3, 4];
 
-/** Refazer a escolha de UM nível: Bits GANHOS (com o desconto do Comércio) ou fragmentos. Material não volta. */
+/** Refazer a escolha de UM nível: Bits (com o desconto do Comércio) ou fragmentos. Material não volta. */
 export const REDO_BITS = 150;
 
 /**
  * 💠 BITS DO APRIMORAMENTO (dono, 10/11/2026): subir uma peça do Soulsmith custa também Bits, além dos materiais, e o preço CRESCE a cada nível:
  * `upgradeBitsCost(nível) = round(UPGRADE_BITS_BASE × UPGRADE_BITS_FACTOR^(nível − 1))`, em que **nível = o nível ATUAL da peça** (o que ela tem antes de subir):
- * 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364. Só Bits GANHOS (`earnedBits`, regra de `bitsOrigin`, igual ao equipamento e ao refazer),
- * nunca Créditos; sem desconto de Comércio (a fórmula é a do dono). O custo mora SÓ aqui: `forgeActions.ts`, a tela e o manual leem desta função.
+ * 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364. Bits do saldo (desde §373 o Bit vindo de Crédito também paga, igual ao equipamento e ao refazer),
+ * nunca Créditos direto; sem desconto de Comércio (a fórmula é a do dono). O custo mora SÓ aqui: `forgeActions.ts`, a tela e o manual leem desta função.
  */
 export const UPGRADE_BITS_BASE = 20;
 export const UPGRADE_BITS_FACTOR = 1.25;

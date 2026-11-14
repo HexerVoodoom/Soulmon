@@ -1184,16 +1184,24 @@ Loja**, depois das três seções e depois do `UnlockNudge` do demo. No segmento
 
 **O que se vê/faz**: uma linha de cabeçalho com o ícone `diamond` (tom primário)
 + "Trocar Créditos por Bits — você tem N" / "Swap Credits for Bits — you have N",
-e abaixo os **três** degraus de `BITS_EXCHANGE`, lado a lado, cada um `flex: 1`:
+e abaixo os **três** pacotes de `BITS_PACKS`, lado a lado (grade de 3 colunas).
+
+⚠️ **§373 (14/11/2026):** a troca livre por Crédito saiu. Hoje mora no Cambista (`CreditExchange` em
+`src/components/mercado/ShopShelf.tsx`) e são três PACOTES pagos em Créditos, com desconto derivado das constantes:
 
 ```ts
-export const CREDIT_TO_BITS = 10;
-export const BITS_EXCHANGE = [
-  { credits: 10, bits: 10 * CREDIT_TO_BITS },
-  { credits: 25, bits: 25 * CREDIT_TO_BITS },
-  { credits: 60, bits: 60 * CREDIT_TO_BITS },
+export const BITS_PACKS = [
+  { id: 'bits-200', bits: 200, credits: 200 },   // sem desconto
+  { id: 'bits-500', bits: 500, credits: 460 },   // ~8% off
+  { id: 'bits-1000', bits: 1000, credits: 800 }, // ~20% off
 ] as const;
+export const BITS_PACK_DAILY_CAP = 1000; // por dia UTC, contado no servidor
 ```
+
+Cada cartão mostra nome (Bolsinha/Bolsa/Baú · Pouch/Purse/Chest), Bits, preço em Créditos, a etiqueta `~N% off` e,
+em pt-BR, "cerca de R$ X" (estimado pelo Crédito mais barato; o preço real é o da Play). Embaixo: "Até 1.000 Bits por
+dia em pacotes. Hoje ainda cabem N Bits." O pacote que não cabe no que resta do dia (ou nos Créditos) fica desabilitado.
+O texto a seguir descreve a versão ANTIGA (troca livre), mantido como histórico:
 
 Cada botão é `diamond` + `credits` → `arrow_forward` → `bits`, com `aria-label`
 "Trocar N Créditos por M Bits" / "Swap N Credits for M Bits".
@@ -1212,8 +1220,9 @@ Cada botão é `diamond` + `credits` → `arrow_forward` → `bits`, com `aria-l
 Créditos são a moeda que libera gerar o pet próprio e farmá-los em minijogo
 anularia a única coisa que o dinheiro real compra com exclusividade
 (`src/utils/currencies.ts`). **O gasto é do SERVIDOR**:
-`spendCredits(pack.credits, 'exchange-bits')`; os Bits só entram depois que ele
-confirma, e `credits`/`accountTier` são reescritos com o que ele devolveu (`ent`).
+(hoje `buyBitsPack(packId)` → `POST /api/entitlements?action=buy-bits`; ⚰️ antes
+`spendCredits(pack.credits, 'exchange-bits')`, que agora responde 410 `exchange-moved`); os Bits só entram depois que ele
+confirma, e entram os que ELE devolveu, e `credits`/`accountTier` são reescritos com o que ele devolveu (`ent`).
 
 ⚠️ **O achado de 19/08/2026 do [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md)
 §5.11 — o emoji 💎 convivendo com `icon-gem.png` nesta tela — não vale mais.**
@@ -1223,7 +1232,7 @@ que conviviam NESTA tela morreram aqui"). Bits continuam **sem ícone nenhum** �
 a ausência é a distinção.
 
 **Dono**: `src/components/ShopModal.tsx` (`exchange`, `exchanging`, `say`) +
-`src/utils/currencies.ts` (`BITS_EXCHANGE`, `CREDIT_TO_BITS`) +
+`src/utils/currencies.ts` (`BITS_PACKS`, `BITS_PACK_DAILY_CAP`; ⚰️ `BITS_EXCHANGE`/`CREDIT_TO_BITS`) +
 `handleExchangeCredits` (`src/App.tsx`) · **Régua**:
 `src/utils/currencies.test.ts` (os degraus e a fronteira das três moedas).
 ⚠️ **Nenhum teste monta os botões de troca.**

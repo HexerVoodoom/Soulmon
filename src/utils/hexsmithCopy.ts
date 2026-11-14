@@ -51,7 +51,7 @@ export function hexRefusalText(r: HexRefusal, isPt: boolean, el?: string): strin
     case 'owned': return isPt ? 'Já está na sua coleção.' : 'Already in your collection.';
     case 'potions': return isPt ? `Pede 3 poções de ${el ?? 'elemento'} — o Centro de Evolução, no Laboratório, as fabrica.` : `Takes 3 ${el ?? 'element'} potions — the Evolution Center in the Lab makes them.`;
     case 'fragments': return isPt ? 'Pede mais fragmentos — a Masmorra os deixa a cada profundidade nova.' : 'Takes more fragments — the Dungeon leaves them at each new depth and run.';
-    case 'bits': return isPt ? 'Pede mais Bits ganhos jogando (Bits de Crédito não entram aqui).' : 'Takes more Bits earned by playing (Credit Bits do not count here).';
+    case 'bits': return isPt ? 'Ainda faltam Bits.' : 'Not enough Bits yet.';
     default: return isPt ? 'Este HEX não existe.' : 'This HEX does not exist.';
   }
 }
@@ -78,7 +78,7 @@ export const HEX_UI = {
   colCost: p('Cost', 'Custo'),
   potionTipLabel: p('How to get this potion', 'Como conseguir esta poção'),
   fragments: p('fragments', 'fragmentos'),
-  bitsEarned: p('earned Bits', 'Bits ganhos'),
+  bitsEarned: p('Bits', 'Bits'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
   forging: p('Forging…', 'Forjando…'),
   forgeOffline: p('No connection. The HEX is forged on the server; nothing was charged. Try again when you are online.', 'Sem conexão. O HEX é forjado no servidor; nada foi cobrado. Tente de novo quando estiver online.'),
@@ -104,20 +104,20 @@ export const HEX_RENAME_COPY = {
   rules: p('Up to 20 characters: letters, numbers and spaces, no bad words.', 'Até 20 caracteres: letras, números e espaço, sem palavrões.'),
   cost: p('Cost', 'Custo'),
   confirm: p('Change name', 'Trocar nome'),
-  confirmAsk: p('Spend {n} earned Bits to change the name?', 'Gastar {n} Bits ganhos para trocar o nome?'),
+  confirmAsk: p('Spend {n} Bits to change the name?', 'Gastar {n} Bits para trocar o nome?'),
   yes: p('Yes, spend', 'Sim, gastar'),
   no: p('Back', 'Voltar'),
   working: p('Changing…', 'Trocando…'),
   done: p('Name changed.', 'Nome trocado.'),
   offline: p('No connection. The server charges and saves the name; nothing was charged. Try again when you are online.', 'Sem conexão. O servidor cobra e grava o nome; nada foi cobrado. Tente de novo quando estiver online.'),
   failed: p('The server did not answer. Nothing was charged; try again.', 'O servidor não respondeu. Nada foi cobrado; tente de novo.'),
-  noFunds: p('The server did not find enough earned Bits. Nothing was charged.', 'O servidor não encontrou Bits ganhos suficientes. Nada foi cobrado.'),
+  noFunds: p('The server did not find enough Bits. Nothing was charged.', 'O servidor não encontrou Bits suficientes. Nada foi cobrado.'),
   rejected: p('That name was not accepted. Try another.', 'Esse nome não foi aceito. Tente outro.'),
   refusal: {
     empty: p('Type a name.', 'Digite um nome.'),
     invalid: p('Use only letters, numbers and spaces, no bad words.', 'Use só letras, números e espaço, sem palavrões.'),
     same: p('That is already the current name.', 'Esse já é o nome atual.'),
-    bits: p('Takes more Bits earned by playing (Credit Bits do not count here).', 'Pede mais Bits ganhos jogando (Bits de Crédito não entram aqui).'),
+    bits: p('Not enough Bits yet.', 'Ainda faltam Bits.'),
   },
   readonlyHint: p('Change it at the Hexsmith.', 'Troque na Hexsmith.'),
 } as const;
@@ -143,7 +143,7 @@ export function potionHowTo(isPt: boolean, name: string, baseNames: readonly str
 export function hexCostHowTo(kind: 'fragments' | 'bits', isPt: boolean): string {
   return kind === 'fragments'
     ? (isPt ? 'Fragmentos de Alma: a Masmorra os deixa a cada profundidade nova.' : 'Soul Fragments: the Dungeon leaves them at each new depth.')
-    : (isPt ? 'Bits ganhos jogando: concluindo hábitos, dias completos e minijogos. Bits de Crédito não entram.' : 'Bits earned by playing: completing habits, full days and minigames. Credit Bits do not count.');
+    : (isPt ? 'Bits: concluindo hábitos, dias completos e minijogos, ou em pacotes no Cambista.' : 'Bits: completing habits, full days and minigames, or in packs at the Exchanger.');
 }
 export function hexCostTipLabel(kind: 'fragments' | 'bits', isPt: boolean): string {
   return kind === 'fragments' ? (isPt ? 'Como conseguir fragmentos' : 'How to get fragments') : (isPt ? 'Como conseguir Bits' : 'How to get Bits');

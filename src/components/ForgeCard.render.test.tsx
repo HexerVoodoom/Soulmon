@@ -170,12 +170,12 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t1').querySelector('[data-forge-why]')!.textContent).toMatch(/Vínculo 2/);
   });
 
-  it('refazer a escolha com Bits GANHOS: confirma, troca A↔B, debita e os materiais ficam', () => {
+  it('refazer a escolha com Bits: confirma, troca A↔B, debita e os materiais ficam', () => {
     abrir(nivel1({ gamePoints: 1000, buildingQuests: bq({ ore: 1 }), forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     const dlg = document.querySelector('[data-forge-dialog="redo"]')!;
-    expect(dlg.textContent).toMatch(new RegExp(`${REDO_BITS} Bits ganhos`));
+    expect(dlg.textContent).toContain(`${REDO_BITS} Bits (ou`);
     expect(dlg.textContent).toMatch(/Escolha atual/);
     click(q('[data-forge-confirm]'));
     expect(estado().forge.picks['eq-nucleo-t1'] ?? ['a']).not.toContain('b');
@@ -183,13 +183,14 @@ describe('ForgeCard', () => {
     expect(estado().mats.ore).toBe(1);
   });
 
-  it('refazer com Bits que vieram de Crédito: o botão fica desabilitado e o texto explica sem culpa', () => {
+  it('§373: refazer com Bits que vieram de Crédito funciona (antes o botão travava) e o texto não fala mais em "Bits ganhos"', () => {
     abrir(nivel1({ gamePoints: 1000, bitsOrigin: { day: 'Mon Oct 05 2026', free: 0, fromCredits: 900, paidLeft: 900 }, forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
-    expect(q('[data-forge-confirm]').disabled).toBe(true);
-    expect(document.querySelector('[data-forge-redo-note]')!.textContent).toMatch(/servem para outras coisas/);
-    expect(estado().bits).toBe(1000);
+    expect(q('[data-forge-confirm]').disabled).toBe(false);
+    expect(document.querySelector('[data-forge-redo-note]')!.textContent).not.toMatch(/ganhos|outras coisas/);
+    click(q('[data-forge-confirm]'));
+    expect(estado().bits).toBe(1000 - REDO_BITS);
   });
 
   it('peça comprada antes do Soulsmith (sem registro) aparece no nível equivalente, sem perder nada', () => {

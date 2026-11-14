@@ -7,8 +7,8 @@
  *  · ⚰️ 07/10/2026: a AQUISIÇÃO por loja (Bits/fragmentos) saiu da tela — peça por MISSÃO e níveis no Soulsmith (`forge.ts`). As funções
  *    de compra abaixo ficam como regra pura testada (e o legado `pct` por tier é só o piso de quem já comprou); nada na UI as chama.
  *    Sem sorteio, sem caixa, sem "chance".
- *  · Só moeda GANHA jogando: o Bit que veio de Crédito não compra equipamento (`bitsOrigin.ts › earnedBits`). Créditos aceleram
- *    só o que não é combate; nunca equipamento nem % de combate.
+ *  · ⚠️ §373 (dono, 14/11/2026): o Bit que veio de Crédito TAMBÉM compra equipamento (antes só o Bit ganho, §2.26). O que segura a
+ *    vantagem paga é o teto único de 5% (`combate/bonus.ts`). Créditos nunca pagam direto: viram Bits pelo Cambista.
  *  · O bônus é PERCENTUAL (um ponto plano no L1 vale +11,1% e estoura o teto) e entra no canal único de 5% (`combate/bonus.ts`):
  *    PvP por atributo (`equipAttrBonus` → `combinedAttrBonus`), fenda como soma (`equipScalar` → `combinedBonus`). Quem soma
  *    e corta é o canal, nunca este arquivo.
@@ -19,7 +19,7 @@
  * Módulo PURO: sem React, sem relógio, sem localStorage. Os TEXTOS moram em `equipmentCopy.ts` (só a tela os lê).
  */
 
-import { earnedBits, spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
+import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { combinedAttrBonus, type AttrBonus } from './combate/bonus';
 import { ranksOf } from './talents';
 import { ownedPieceBonus } from './forge';
@@ -32,7 +32,7 @@ export const SLOT_ATTR: Readonly<Record<EquipSlot, EquipAttr>> = { nucleo: 'atk'
 
 /** Bônus por tier (fração; 0,005 = 0,5%). Três slots no tier 3 somam 4,5%: o teto de 5% é UM, o equipamento sozinho cabe nele. */
 export const TIER_PCT: readonly [number, number, number] = [0.005, 0.01, 0.015];
-/** Preço em Bits GANHOS e em fragmentos, por tier (DEFAULTS da squad: o dono não fixou preços finais). */
+/** Preço em Bits e em fragmentos, por tier (DEFAULTS da squad: o dono não fixou preços finais). */
 export const TIER_BITS: readonly [number, number, number] = [400, 1200, 3000];
 export const TIER_FRAGMENTS: readonly [number, number, number] = [4, 12, 30];
 /** Fragmentos de uma run COMPLETA da Masmorra (os 5 andares), antes do Comércio (`fragmentGain`). Default da squad. */
@@ -198,7 +198,7 @@ export interface EquipBuyState {
   talentPicks?: string[];
 }
 
-export type EquipRefusal = 'unknown' | 'already-owned' | 'no-funds' | 'not-earned' | 'no-fragments' | 'backpack-full';
+export type EquipRefusal = 'unknown' | 'already-owned' | 'no-funds' | 'no-fragments' | 'backpack-full';
 export type EquipPay = 'bits' | 'fragments';
 
 /** O preço de `id` na forma de pagamento `pay`, já com o Comércio. */
@@ -217,14 +217,12 @@ export function equipBuyRefusal(state: EquipBuyState, id: string, pay: EquipPay)
   const price = equipPrice(item, pay, state.talentPicks);
   if (pay === 'fragments') return eq.fragments < price ? 'no-fragments' : undefined;
   const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
-  if (bal < price) return 'no-funds';
-  // Tem Bits, mas parte deles veio de Crédito: equipamento só com Bit GANHO.
-  return earnedBits(state) < price ? 'not-earned' : undefined;
+  return bal < price ? 'no-funds' : undefined;
 }
 
 /**
  * Compra `id` sobre o `prev` (reconferida aqui: dois toques no mesmo lote não compram duas vezes nem levam o saldo a negativo).
- * Bits: debita do saldo (o Bit pago não conta, `earnedBits`). Fragmentos: debita fragmentos. Equipa na hora se o slot está vazio.
+ * Bits: debita do saldo, o Bit pago primeiro (§373). Fragmentos: debita fragmentos. Equipa na hora se o slot está vazio.
  */
 export function applyEquipBuy<T extends EquipBuyState>(prev: T, id: string, pay: EquipPay): { ok: true; state: T; price: number } | { ok: false; reason: EquipRefusal } {
   const reason = equipBuyRefusal(prev, id, pay);
@@ -238,7 +236,7 @@ export function applyEquipBuy<T extends EquipBuyState>(prev: T, id: string, pay:
     equipped,
     fragments: pay === 'fragments' ? eq.fragments - price : eq.fragments,
   };
-  const state = pay === 'bits' ? { ...prev, gamePoints: (prev.gamePoints ?? 0) - price, equipment: next } : { ...prev, equipment: next };
+  const state = pay === 'bits' ? spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - price, equipment: next }, price) : { ...prev, equipment: next };
   return { ok: true, state: state as T, price };
 }
 
@@ -251,7 +249,7 @@ export function addFragments<T extends { equipment?: EquipmentState }>(prev: T, 
   return fragments === eq.fragments ? prev : { ...prev, equipment: { ...eq, fragments } };
 }
 
-/** O gasto de Bits que NÃO é equipamento (loja, respec): debita e gasta o Bit pago primeiro. */
+/** O gasto de Bits (loja, respec, Hexsmith…): debita e gasta o Bit pago primeiro. */
 export function spendBits<T extends { gamePoints?: number; bitsOrigin?: BitsOrigin }>(prev: T, amount: number): T {
   const bal = prev.gamePoints ?? 0;
   if (!(amount > 0) || bal < amount) return prev;

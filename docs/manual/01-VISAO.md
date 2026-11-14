@@ -136,7 +136,7 @@ De [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §3. **Não afrouxar.
 
 | # | Princípio | Onde mora no código |
 |---|---|---|
-| 1 | **Dinheiro compra conveniência, cosmético e identidade — nunca o comportamento nem o perdão dele** | `src/utils/currencies.ts` (`CREDIT_TO_BITS` só numa direção); teste `currencies.test.ts` |
+| 1 | **Dinheiro compra conveniência, cosmético e identidade — nunca o comportamento nem o perdão dele** | `src/utils/currencies.ts` (`BITS_PACKS` só numa direção, §373); teste `currencies.test.ts` |
 | 2 | **Nada de conteúdo aleatório vendido.** Drops se ganham jogando; a loja vende item determinado | Glitchtama nunca entra em `SHOP_ITEMS` (⚠️ **EXCEÇÃO DE TESTE temporária, 10/11/2026 — hoje DESLIGADA (`GLITCHTAMA_TESTE_ON = false`), princípio valendo**: com `GLITCHTAMA_TESTE_ON` o Desfeito da Guilda o vende por 1 Bit, até 3 por dia — `utils/glitchtamaTeste.ts`; desligar a flag restaura o princípio); `rollDungeonHeartDrop` tem teto diário |
 | 3 | **Modernizar o atrito, nunca a dificuldade** | é o critério que separou `HEART_GOAL_RATIO` (perdão no coração) de afrouxar o dia completo — `src/utils/dailyReset.ts` |
 | 4 | **O jogo continua íntegro com o backend morto** | a regra do `?? padrão` no load (`src/contexts/GameStateContext.tsx`); nenhuma progressão exige rede |
@@ -222,7 +222,7 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 |---|---|---|
 | 1 | **Streak que zera** | `src/utils/habitRhythm.test.ts` (constância é média móvel `CONSTANCY_WINDOW_DAYS`) |
 | 2 | **Humor como pontuação** | `src/hooks/useDailyReset.test.ts` — *"humor NUNCA entra em pontuação: a virada do dia ignora o log"*; o módulo tem `src/utils/mood.test.ts` |
-| 3 | **Bits → Créditos** | `src/utils/currencies.test.ts` (só existe `CREDIT_TO_BITS`) |
+| 3 | **Bits → Créditos** | `src/utils/currencies.test.ts` (só existem os pacotes `BITS_PACKS`, Créditos → Bits) |
 | 4 | **Honra (moeda `emblems`) comprando vantagem** | `src/utils/currencies.test.ts` / `monetization.fronteira.test.ts` (todo `TOURNAMENT_ITEMS` é `bg`/`furniture`) |
 | 5 | **`bondLevel` persistido** | `src/utils/bond.test.ts` (o nível é sempre `bondLevelFor(totalXP)`) |
 | 6 | **Dia da regra diária pelo relógio do aparelho** | `src/utils/playerDay.contract.test.ts` (guard de AST no ponto de uso) |
@@ -384,7 +384,7 @@ Dono: `src/utils/currencies.ts`. Detalhe de regra em
 |---|---|---|---|
 | **Bits** | `gamePoints` | minijogos (Corrida com obstáculos, PPT), masmorra | loja comum: chips, decoração, cenários, `deepStartCost` |
 | **Honra** (EN *Honor*; ⚰️ rótulo "Emblemas" até 30/09/2026) | `emblems` | partidas do Torneio (`EMBLEMS_PER_WIN`/`_LOSS`), missões semanais | **só** `TOURNAMENT_ITEMS`, e **todos são cosméticos** |
-| **Créditos** | servidor, `ent:<saveId>` | **dinheiro real** (`CREDIT_PACKS`) | `REROLL_COST_CREDITS`, câmbio `BITS_EXCHANGE` |
+| **Créditos** | servidor, `ent:<saveId>` | **dinheiro real** (`CREDIT_PACKS`) | `REROLL_COST_CREDITS`, pacotes `BITS_PACKS` (§373) |
 
 ### O que dinheiro NUNCA compra
 

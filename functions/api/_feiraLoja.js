@@ -305,7 +305,7 @@ export async function marcarCompraFeiraLoja(env, save, hoje, itemId) {
 const num = v => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 
 /**
- * O item da Hexsmith da feira, entregue pelo servidor: SO Bits GANHOS (o Bit de Credito nao paga, como a forja), preco = o da
+ * O item da Hexsmith da feira, entregue pelo servidor: Bits do saldo (desde §373 o Bit de Credito tambem paga, como na forja), preco = o da
  * oferta (ja com o desconto), NENHUM ingrediente (sem pocao, sem fragmento). Espelho de `forgeOnServer`, com o custo trocado.
  * @returns {{ ok: true, already: boolean, state: Record<string, any> } | { ok: false, reason: 'invalid' | 'bits' }}
  */
@@ -316,7 +316,7 @@ export function feiraHexOnServer(stored, itemId, preco) {
   if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: 'invalid' };
   const gp = num(stored.gamePoints);
   const paidLeft = num(stored.bitsOrigin?.paidLeft);
-  if (Math.max(0, gp - Math.min(gp, paidLeft)) < preco) return { ok: false, reason: 'bits' };
+  if (gp < preco) return { ok: false, reason: 'bits' };
   const next = { ...stored, gamePoints: gp - preco };
   if (stored.bitsOrigin && typeof stored.bitsOrigin === 'object') {
     const left = Math.min(Math.max(0, paidLeft - preco), next.gamePoints);

@@ -242,8 +242,10 @@ describe('a Hexsmith da feira (feiraHexOnServer): só Bits, sem ingredientes', (
     expect(r.state.foodInventory).toBeUndefined();
     expect(r.state.equipment).toBeUndefined();
   });
-  it('recusa sem Bits ganhos (o Bit de Crédito não paga) e não cobra nada', () => {
-    expect(feiraHexOnServer(salvo({ gamePoints: 800, bitsOrigin: { paidLeft: 800 } }), 'coroa:heal', 700)).toEqual({ ok: false, reason: 'bits' });
+  it('§373: o Bit de Crédito paga (gasto primeiro); sem saldo recusa e não cobra nada', () => {
+    const r = feiraHexOnServer(salvo({ gamePoints: 800, bitsOrigin: { day: 'd', free: 0, fromCredits: 800, paidLeft: 800 } }), 'coroa:heal', 700);
+    expect(r.ok && r.state.gamePoints).toBe(100);
+    expect(r.ok && r.state.bitsOrigin.paidLeft).toBe(100);
     expect(feiraHexOnServer(salvo({ gamePoints: 100 }), 'coroa:heal', 700)).toEqual({ ok: false, reason: 'bits' });
   });
   it('item já possuído = already, sem cobrança; item/preço inválidos = invalid', () => {

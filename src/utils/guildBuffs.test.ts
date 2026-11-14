@@ -1,6 +1,6 @@
 /**
  * Buffs do clã (10/11/2026): paridade com o servidor + os quatro efeitos (gauge ≤ teto, drop, energia; a Feira é do servidor)
- * + a regra "só Bits GANHOS doam".
+ * + a doação (§373: o saldo inteiro doa, inclusive o Bit vindo de Crédito).
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ import {
 import { aplicarBuffClaGauge, dailyGaugeCap } from './evolutionGauge';
 import { heartDropChance, HEART_DROP_CHANCE } from './dungeonBase';
 import { regenPoints, clanRegenBoost, UNIT_POINTS, SLEEP_ENERGY_REGEN_BONUS, energyStatus, settleEnergy, type HungerState } from './hunger';
-import { spendEarnedBits, earnedBits } from './bitsOrigin';
+import { spendBitsIfCovered, spendableBits } from './bitsOrigin';
 import { CASA_DOACOES } from './guildRules';
 
 const srv = fs.readFileSync(path.resolve(__dirname, '../../functions/api/_buffsCla.js'), 'utf8');
@@ -129,17 +129,16 @@ describe('efeito: energia +10% de velocidade, junto do bônus de sono', () => {
   });
 });
 
-describe('doação: só Bits GANHOS (nunca Crédito), uma vez por dia, 50 ou 100', () => {
+describe('doação: §373 o saldo inteiro doa (Bit de Crédito também), uma vez por dia, 50 ou 100', () => {
   it('as doações oferecidas são 50 e 100', () => expect([...CASA_DOACOES]).toEqual([50, 100]));
-  it('spendEarnedBits debita do ganho, não toca paidLeft e recusa se o ganho não cobre', () => {
+  it('spendBitsIfCovered debita do saldo, gasta o pago primeiro e recusa só quando o SALDO não cobre', () => {
     const st = { gamePoints: 500, bitsOrigin: { day: '2026-11-10', free: 0, fromCredits: 450, paidLeft: 450 } };
-    expect(earnedBits(st)).toBe(50);
-    expect(spendEarnedBits(st, 100)).toBe(st); // ganho 50 < 100: nada muda
-    const r = spendEarnedBits(st, 50);
-    expect(r.gamePoints).toBe(450);
-    expect(r.bitsOrigin.paidLeft).toBe(450);
-    expect(earnedBits(r)).toBe(0);
-    expect(spendEarnedBits({ gamePoints: 80 }, 50).gamePoints).toBe(30); // save antigo: tudo é ganho
-    expect(spendEarnedBits(st, 0)).toBe(st);
+    expect(spendableBits(st)).toBe(500);
+    const r = spendBitsIfCovered(st, 100); // antes: recusava (ganho 50 < 100)
+    expect(r.gamePoints).toBe(400);
+    expect(r.bitsOrigin.paidLeft).toBe(350);
+    expect(spendBitsIfCovered({ gamePoints: 80 }, 50).gamePoints).toBe(30); // save antigo
+    expect(spendBitsIfCovered({ gamePoints: 40 }, 50).gamePoints).toBe(40); // saldo não cobre: nada muda
+    expect(spendBitsIfCovered(st, 0)).toBe(st);
   });
 });

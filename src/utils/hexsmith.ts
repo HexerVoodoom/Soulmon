@@ -11,10 +11,10 @@
  *      luvas   → ALCANCE do ataque básico (distância ou corpo a corpo) — SÓ VISUAL, não muda regra.
  *  · Os slots de ELEMENTO aceitam QUALQUER um dos 210 elementos do dex e são pagos com POÇÕES DE ELEMENTO daquele elemento
  *    (`elementPotion.ts` — o "chip" que o Lab de Evolução fabrica com essências). Coroa e luvas pagam com recursos do Soulsmith
- *    (fragmentos da Masmorra) + Bits GANHOS.
+ *    (fragmentos da Masmorra) + Bits (§373: também os vindos de Crédito).
  *  · Itens são CAROS, NUNCA se perdem e NÃO podem ser vendidos: posse só cresce. A pessoa pode ter vários; equipa UM por slot.
  *  · Valem em PvE e PvP. Não dão % de atributo (o teto de 5% de `combate/bonus.ts` não é tocado) — só trocam elemento/efeito/forma.
- *  · Sem sorteio, sem Créditos, sem dinheiro real: o Bit que veio de Crédito não paga (`bitsOrigin.ts › earnedBits`), igual ao Soulsmith.
+ *  · Sem sorteio e sem Créditos direto: paga com Bits do saldo (desde §373 o Bit vindo de Crédito também paga, igual ao Soulsmith).
  *
  * Números (PADRÃO da squad, ajustáveis — o dono decide o preço final; ver `docs/PERGUNTAS-DO-DONO.md`): `HEX_COSTS`.
  *
@@ -23,7 +23,7 @@
  */
 import { ALL_ELEMENT_IDS, isDexElement } from './elementDex';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
-import { earnedBits, type BitsOrigin } from './bitsOrigin';
+import { spendableBits, type BitsOrigin } from './bitsOrigin';
 import { spendBits } from './equipment';
 import { bumpDailyIn } from './dailyMissions';
 import { potionKey } from './elementPotion';
@@ -151,7 +151,7 @@ export function hexForgeRefusal(state: HexForgeState, idRaw: string): HexRefusal
   if (sanitizeHexsmith(state.hexsmith).owned.includes(id)) return 'owned';
   if (cost.potions > 0 && (state.foodInventory[potionKey(cost.potionElement!)] ?? 0) < cost.potions) return 'potions';
   if (cost.fragments > 0 && (state.equipment?.fragments ?? 0) < cost.fragments) return 'fragments';
-  if (cost.bits > 0 && earnedBits(state) < cost.bits) return 'bits';
+  if (cost.bits > 0 && spendableBits(state) < cost.bits) return 'bits';
   return undefined;
 }
 

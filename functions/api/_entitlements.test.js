@@ -44,10 +44,10 @@ describe('entitlements — saldo e gasto', () => {
     expect(ent.credits).toBe(10);
   });
 
-  it('gastar 1 crédito é um gasto VÁLIDO (troca por Bits)', async () => {
+  it('gastar 1 crédito é um gasto VÁLIDO', async () => {
     // O guard é `amount <= 0`. Trocá-lo por `<= 1` recusava exatamente o gasto
-    // de 1 crédito — que é o caminho real do BITS_EXCHANGE (1 Crédito = 10
-    // Bits, CLAUDE.md) — e nenhum teste percebia, porque todos gastavam 50+.
+    // de 1 crédito — que era o caminho do câmbio antigo (⚰️ BITS_EXCHANGE, §373:
+    // hoje a troca é por pacote, `_bitsPacks.js`) — e nenhum teste percebia.
     await applyVerifiedPurchase(env, SAVE, { orderId: 'o1', grantTier: null, grantCredits: 10 });
     const ent = await spendCredits(env, SAVE, 1);
     expect(ent).not.toBeNull();

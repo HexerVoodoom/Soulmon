@@ -134,8 +134,8 @@ interface TournamentPageProps {
   /** B3: saldo de Bits e compra de moldura de loja. */
   bits?: number;
   onBuyFrame?: (id: string) => void;
-  /** Treino: Bits GANHOS (saldo menos Bit de Crédito; `earnedBits`) e a cobrança do ticket extra, chamada só DEPOIS de o servidor confirmar a compra. `false` = nada cobrado. */
-  earnedBits?: number;
+  /** Treino: os Bits que pagam o ticket extra (o saldo inteiro, §373) e a cobrança, chamada só DEPOIS de o servidor confirmar a compra. `false` = nada cobrado. */
+  spendableBits?: number;
   onChargeTreinoTicket?: () => boolean;
   /** Âncora do dia do jogador (`gameState.playerDayTz`): o Treino usa o MESMO dia dos demais tetos. */
   playerDayTz?: { zone?: string; offsetMs?: number };
@@ -260,7 +260,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, earnedBits: earnedBitsProp = 0, onChargeTreinoTicket, playerDayTz, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, spendableBits: spendableBitsProp = 0, onChargeTreinoTicket, playerDayTz, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   /* 💤 §329: o Torneio entra livre (ranking, histórico, molduras); LUTAR, TREINAR e o desgarrado perguntam com o Soulmon dormindo,
@@ -558,16 +558,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       setSparFighting(null);
     }
   };
-  /** Compra o ticket EXTRA: o servidor conta (e limita 3/dia) e SÓ ENTÃO os Bits ganhos são cobrados; falha em qualquer ponto não cobra nada. */
+  /** Compra o ticket EXTRA: o servidor conta (e limita 3/dia) e SÓ ENTÃO os Bits são cobrados; falha em qualquer ponto não cobra nada. */
   const buyTreinoTicket = async () => {
     if (buyingTicket || !onChargeTreinoTicket) return;
     setBuyingTicket(true);
     setSparError(null);
     try {
       // Duas fases: o servidor RESERVA (sem conceder), o app debita e só então CONFIRMA; recusa local = nada concedido, nada cobrado.
-      if (earnedBitsProp < TREINO_EXTRA_TICKET_BITS) { setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.'); return; }
+      if (spendableBitsProp < TREINO_EXTRA_TICKET_BITS) { setSparError(isPt ? 'Bits insuficientes para o ticket.' : 'Not enough Bits for the ticket.'); return; }
       await buySparTicket(saveId, playerDayTz, 'reserve');
-      if (!onChargeTreinoTicket()) { setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.'); return; }
+      if (!onChargeTreinoTicket()) { setSparError(isPt ? 'Bits insuficientes para o ticket.' : 'Not enough Bits for the ticket.'); return; }
       try {
         const r = await confirmSparTicketComRetry(saveId, playerDayTz);
         const tk = sanitizeTreinoTickets(r.tickets);
@@ -1111,15 +1111,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                       <button
                         type="button"
                         data-treino-comprar
-                        disabled={buyingTicket || !onChargeTreinoTicket || earnedBitsProp < TREINO_EXTRA_TICKET_BITS}
+                        disabled={buyingTicket || !onChargeTreinoTicket || spendableBitsProp < TREINO_EXTRA_TICKET_BITS}
                         onClick={() => { void buyTreinoTicket(); }}
-                        style={{ ...sm2Button('outline', buyingTicket || earnedBitsProp < TREINO_EXTRA_TICKET_BITS), width: '100%' }}
+                        style={{ ...sm2Button('outline', buyingTicket || spendableBitsProp < TREINO_EXTRA_TICKET_BITS), width: '100%' }}
                       >
                         {isPt ? `+${TREINO_TICKET_MATCHES} partidas, sem Honra — ${TREINO_EXTRA_TICKET_BITS} Bits` : `+${TREINO_TICKET_MATCHES} matches, no Honor — ${TREINO_EXTRA_TICKET_BITS} Bits`}
                       </button>
-                      {earnedBitsProp < TREINO_EXTRA_TICKET_BITS && (
-                        <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Só Bits ganhos jogando pagam o ticket.' : 'Only Bits earned by playing pay for the ticket.'}</p>
-                      )}
                     </>
                   )}
                 </div>

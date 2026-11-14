@@ -11,9 +11,10 @@
  *
  *  1. PROSA: padrões que ancoram o número a uma constante famosa — o teto único
  *     (`COMBAT_BONUS_CAP`), os portões (`GATES`), os pontos de talento
- *     (`TALENT_POINTS_MAX`) e o câmbio de Créditos (`CREDIT_BITS_CAP_RATIO`).
+ *     (`TALENT_POINTS_MAX`) e o teto diário dos pacotes de Bits (`BITS_PACK_DAILY_CAP`; o câmbio de 25%
+ *     `CREDIT_BITS_CAP_RATIO` saiu em §373).
  *  2. NOMEADA: todo `` `NOME` (N) `` / `` `NOME` = N `` / `` `NOME` (const) — `N` `` de qualquer
- *     constante numérica exportada por `src/utils/combate/*` (mais as quatro acima) e de
+ *     constante numérica exportada por `src/utils/combate/*` (mais os talentos e `bitsOrigin`) e de
  *     cada campo de `CHEER` tem de bater com o valor real.
  *
  * Fora do escopo, de propósito: linhas de cabeçalho (`> **Dono:**`, que narram o histórico
@@ -38,7 +39,7 @@ import * as bitsOrigin from './utils/bitsOrigin';
 import { COMBAT_BONUS_CAP } from './utils/combate/bonus';
 import { GATES, MASMORRA_ALTO_A_PARTIR_DO_ANDAR } from './utils/gates';
 import { TALENT_POINTS_MAX } from './utils/talents';
-import { CREDIT_BITS_CAP_RATIO } from './utils/bitsOrigin';
+import { BITS_PACK_DAILY_CAP } from './utils/currencies';
 
 const ROOT = process.cwd();
 
@@ -70,7 +71,9 @@ const num = (s: string) => Number(s.replace(',', '.'));
 const perto = (a: number, b: number) => Math.abs(a - b) < 1e-9;
 
 // ── 1. PROSA ───────────────────────────────────────────────────────────────────
-interface Regra { nome: string; esperado: number[]; re: RegExp }
+interface Regra { nome: string; esperado: number[]; re: RegExp; parse?: (s: string) => number }
+/** Inteiro com separador de milhar (`1.000` pt-BR, `1,000` en). */
+const inteiro = (s: string) => Number(s.replace(/[.,]/g, ''));
 /** Valores aceitos para um percentual: o inteiro (`5`) e a fração (`0,05`). */
 const pct = (frac: number) => [Math.round(frac * 100 * 1e6) / 1e6, frac];
 
@@ -80,8 +83,7 @@ const PROSA: Regra[] = [
   { nome: 'COMBAT_BONUS_CAP', esperado: pct(COMBAT_BONUS_CAP), re: /\b(?:no máximo|at most) (\d+(?:[.,]\d+)?) ?% (?:de força|strength)/gi },
   { nome: 'TALENT_POINTS_MAX', esperado: [TALENT_POINTS_MAX], re: /(?:Vínculo|Bond) \((?:até|up to) (\d+)\)/g },
   { nome: 'TALENT_POINTS_MAX', esperado: [TALENT_POINTS_MAX], re: /Pontos de talento = Vínculo, até `?\w*`? ?\((\d+)\)/g },
-  { nome: 'CREDIT_BITS_CAP_RATIO', esperado: pct(CREDIT_BITS_CAP_RATIO), re: /\+(\d+) ?% (?:sobre o ritmo|over the free)/g },
-  { nome: 'CREDIT_BITS_CAP_RATIO', esperado: pct(CREDIT_BITS_CAP_RATIO), re: /\bteto de (\d+(?:[.,]\d+)?) ?% do ganho/gi },
+  { nome: 'BITS_PACK_DAILY_CAP', esperado: [BITS_PACK_DAILY_CAP], re: /\b(?:até|up to) (\d{1,3}(?:[.,]\d{3})*|\d+) Bits (?:por dia|a day) (?:em pacotes|in packs)/gi, parse: inteiro },
   { nome: 'GATES.pvp', esperado: [GATES.pvp.minBond], re: /(?:Arena|Duelo|Duel)(?: e (?:o )?Torneio| and the Tournament)? (?:abre|abrem|open|opens) (?:no|at) (?:Vínculo|Bond) (\d+)/gi },
   { nome: 'GATES.torneio', esperado: [GATES.torneio.minBond], re: /Torneio (?:abre|abrem|opens?) (?:no|at) (?:Vínculo|Bond) (\d+)/gi },
   { nome: 'GATES.pvp (Arena/PvP e Torneio no Vínculo N)', esperado: [GATES.pvp.minBond], re: /Arena\/PvP e Torneio no Vínculo (\d+)/g },
@@ -137,7 +139,7 @@ function divergenciasProsa(linhas: Linha[]): { achou: number; erros: string[] } 
     for (const r of PROSA) {
       for (const m of l.texto.matchAll(r.re)) {
         achou++;
-        const dito = num(m[1]);
+        const dito = (r.parse ?? num)(m[1]);
         if (!r.esperado.some(e => perto(dito, e))) {
           erros.push(`${l.arq}:${l.n} — ${r.nome}: o texto diz ${dito}, o código diz ${r.esperado[0]}`);
         }
@@ -165,7 +167,8 @@ describe('texto do combate × constantes do código', () => {
     expect(divergenciasProsa(ruim(`A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond + 1}.`)).erros).not.toHaveLength(0); // pvp e torneio casam a mesma frase
     expect(divergenciasProsa(ruim(`cada Vínculo (até ${TALENT_POINTS_MAX + 1}) rende um ponto`)).erros).toHaveLength(1);
     expect(divergenciasNomeadas(ruim(`o piso \`MIN_SHARE\` = ${level.MIN_SHARE + 0.07}`)).erros).toHaveLength(1);
-    expect(divergenciasNomeadas(ruim(`o câmbio cabe em \`CREDIT_BITS_CAP_RATIO\` (${Math.round(CREDIT_BITS_CAP_RATIO * 100) + 5}%)`)).erros).toHaveLength(1);
+    expect(divergenciasProsa(ruim(`até ${BITS_PACK_DAILY_CAP + 500} Bits por dia em pacotes`)).erros).toHaveLength(1);
+    expect(divergenciasProsa(ruim(`até 1.000 Bits por dia em pacotes`)).erros).toEqual([]);
     // e o número CERTO passa:
     expect(divergenciasProsa(ruim(`tudo passa por UM teto de ${Math.round(COMBAT_BONUS_CAP * 100)}%`)).erros).toEqual([]);
     expect(divergenciasNomeadas(ruim(`\`TALENT_POINTS_MAX\` (${TALENT_POINTS_MAX})`)).erros).toEqual([]);

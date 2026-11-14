@@ -436,7 +436,7 @@ export const CAMBISTA_TABS: readonly CambistaTab[] = ['bits', 'essences', 'other
 export interface CambistaSheetProps {
   language: Language;
   credits: number;
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean>;
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;

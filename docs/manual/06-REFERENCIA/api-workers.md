@@ -880,6 +880,10 @@ Registros de nomes (telas, features, minigames) e faixas de tempo usados por `ap
 **Exports:** `FEIRA_LOJA_PCT` (8), `FEIRA_LOJA_CATALOGO`, `FEIRA_LOJA_VENDEDORES`, `haFeiraDeVerdade`, `sortearFeiraLoja`, `abrirFeiraLoja`, `feiraLojaDoDia`, `validarCompraFeiraLoja`, `marcarCompraFeiraLoja`, `feiraHexOnServer`, `diaDoJogadorValido`, `precoComDesconto`, `descontoDoItem`, `possuidosDoSave`.
 **Chamado por:** `guild.js` (`guildFeiraLoja*`, `guildRaidHit.feiraLoja`), `save.js` (`action=hexFair`).
 
+### `functions/api/_bitsPacks.js` (14/11/2026, §373)
+
+**Dono de:** os PACOTES DE BITS pagos em Créditos (`BITS_PACKS`, `BITS_PACK_DAILY_CAP` = 1.000/dia UTC) e `buyBitsPack(env, saveId, pack, opId, { admin })`, chamado por `POST /api/entitlements?action=buy-bits { id, pack, opId }` (`entitlements.js`). Decide os Bits do pacote (ignora números do cliente), confere o teto (`ent.bitsBuy = { day, bits }`), debita e marca o pedido (`ent.bitsBuyOps`, últimos 20) numa escrita só do `ent:`; idempotente por `opId` (`replay: true`); trava D1 `bitslock:<saveId>` em `order_claims` (30 s) contra trocas simultâneas (`409 busy`). Recusas: `bad-op`/`unknown-pack` 400, `insufficient` 402, `daily-cap` 409 (com `leftToday`). O GET de `entitlements.js` devolve `bitsPackLeft` só quando a conta já trocou hoje. `spend` com `reason:'exchange-bits'` (cliente antigo) responde 410 `exchange-moved` sem debitar. **Régua:** `bitsPacks.test.js`, `bitsPacks.parity.test.js` (paridade com `src/utils/currencies.ts`).
+
 ### `functions/api/_hexRename.js` (11/11/2026, §287)
 
 **Dono de:** `renameOnServer` e `HEX_RENAME_COST` (200). Ação `POST /api/save?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }` (`save.js`): valida o nome (`nomeEspecialValido` + `sanitizarNomeDeGuilda`), debita Bits ganhos e grava `soulmonMeta.petName` ou `especialNome`/`especialNomeAt` numa escrita (revisão +1); 400 nome recusado, 402 saldo, 409 revisão. Régua: `save.hexRename.test.js`, `hexsmithRename.parity.test.js`. `ESPECIAL_NOME_COOLDOWN_MS` = 0 (o limite é o preço).

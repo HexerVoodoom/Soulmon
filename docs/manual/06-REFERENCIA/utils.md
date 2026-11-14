@@ -693,8 +693,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `EMBLEM_COLOR` — Emblemas: dourado, com serifa — cara de medalha, não de dígito.
 - `emblemStyle` — `{ fontFamily: 'var(--sm2-font-serif)', color: EMBLEM_COLOR, fontWeight: 700, letterSpacing: '0.5px', fontVariantNumeric: 'tabular-nums', }`
 - `CREDIT_COLOR` — Créditos: roxo do sistema, sempre acompanhados do ícone Gem.
-- `CREDIT_TO_BITS` — Quantos Bits cada Crédito vira. Só nesta direção. A troca inversa (Bits → Créditos) NÃO existe de propósito: créditos são a moeda que libera gerar o pet próprio, e permitir farmá-los em minijogo anularia a única coisa que o dinheiro real compra com exclusividade.
-- `BITS_EXCHANGE` — Pacotes de troca oferecidos na loja.
+- `BITS_PACKS` — Os três pacotes de Bits do Cambista pagos em Créditos (§373): 200/200, 500/460, 1.000/800. Só nesta direção: a troca inversa (Bits → Créditos) NÃO existe de propósito. Espelho que vale: `functions/api/_bitsPacks.js`.
+- `BITS_PACK_DAILY_CAP` — 1.000 Bits por dia UTC em pacotes, contados no servidor.
+- `bitsPackById`, `bitsPackDiscountPct` — busca por id e desconto derivado contra o pacote de 200.
+- ⚰️ `CREDIT_TO_BITS` (10) e `BITS_EXCHANGE` (1/2/4 Créditos) saíram em §373.
 - `EMBLEMS_PER_WIN` — Recompensa em Emblemas por partida de torneio.
 - `EMBLEMS_PER_LOSS` — tabela/dado de configuração (ver código; 2+ linhas).
 - `MINIGAME_BITS_PER_DAY` (const, **150**) — **novo em `cf6315e1`** (decisão do dono #61/#63, 22/09/2026). Quantos Bits os MINIJOGOS podem render num dia do jogador. A outra metade é `BITS_PER_COMPLETE_DAY` (`dailyReset.ts`, 100).
@@ -4143,7 +4145,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** bloco "PR7" de `src/copy.semFomo.contract.test.ts` e `src/utils/talents.test.ts` (todo nó tem texto).
 
 ### `src/utils/equipment.ts`
-**Dono de:** o EQUIPAMENTO do Soulmon (Combate v3 / PR8, decisões do dono §2.14 M3 e §2.26): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (9 itens), bônus PERCENTUAL, aquisição por Bits GANHOS ou fragmentos, SEM sorteio. O bônus entra pelo canal único de 5% (`combate/bonus.ts`: PvP por atributo em `combinedAttrBonus`, fenda como soma em `combinedBonus`). O Comércio só mexe em preço (`tal-com-01`; o desconto semanal `tal-com-07` saiu em 19/10/2026, REGISTRO §122), em ganho de moeda (fragmentos `tal-com-02`; Bits do dia completo `tal-com-06`, até +25%) e na capacidade da mochila (`tal-com-04`, PR12b). Persistido só `equipment: { owned, equipped, fragments }`; slot forjado é descartado peça a peça. Preços e percentuais são defaults da squad. Espelho no servidor: `functions/api/_equipment.js`.
+**Dono de:** o EQUIPAMENTO do Soulmon (Combate v3 / PR8, decisões do dono §2.14 M3 e §2.26): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (9 itens), bônus PERCENTUAL, aquisição por Bits (desde §373 também os vindos de Crédito) ou fragmentos, SEM sorteio. O bônus entra pelo canal único de 5% (`combate/bonus.ts`: PvP por atributo em `combinedAttrBonus`, fenda como soma em `combinedBonus`). O Comércio só mexe em preço (`tal-com-01`; o desconto semanal `tal-com-07` saiu em 19/10/2026, REGISTRO §122), em ganho de moeda (fragmentos `tal-com-02`; Bits do dia completo `tal-com-06`, até +25%) e na capacidade da mochila (`tal-com-04`, PR12b). Persistido só `equipment: { owned, equipped, fragments }`; slot forjado é descartado peça a peça. Preços e percentuais são defaults da squad. Espelho no servidor: `functions/api/_equipment.js`.
 **Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `dungeonAttrBonus`, `backpackCapacity`, `backpackUsed`, `backpackHasRoom`, `missionBitsGain`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
 **Régua:** `src/utils/equipment.test.ts`, `functions/api/equipment.parity.test.js`.
 
@@ -4153,9 +4155,12 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** `src/components/ui/BlockedActionModal.render.test.tsx`.
 
 ### `src/utils/bitsOrigin.ts`
-**Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio do câmbio Crédito→Bits (`paidLeft`) e o câmbio do dia. Equipamento só enxerga o Bit GANHO (`earnedBits`); o gasto que não é equipamento gasta o Bit pago primeiro; o câmbio do dia cabe em 25% do ganho grátis do dia (piso de referência de 100). Regra de cliente: o servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
-**Exports:** `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `earnedBits`, `noteFreeBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendBitsPaidFirst`.
+**Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio de Crédito (`paidLeft`) e o que entrou no dia. ⚠️ §373 (14/11/2026): não gateia mais nada — `spendableBits` é o saldo inteiro; todo gasto consome o pago primeiro (`spendBitsPaidFirst`); o teto da troca é do servidor (`functions/api/_bitsPacks.js`). O servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
+**Exports:** `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `spendableBits`, `noteFreeBits`, `noteCreditBits`, `spendBitsPaidFirst`, `spendBitsIfCovered` (⚰️ §373: `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `earnedBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendEarnedBits`).
 **Régua:** `src/utils/equipment.test.ts` (blocos 4 e 6).
+
+### `src/utils/bitsPackCopy.ts` (14/11/2026, §373)
+**Dono de:** os textos DERIVADOS dos pacotes de Bits do Cambista: `bitsPackDiscountLabel` ("~8% off", a mesma etiqueta em PT/EN, de `bitsPackDiscountPct`), `bitsPackBrlEstimate` ("cerca de R$ X", só pt-BR, pelo Crédito mais barato de `CREDIT_PACKS`; o preço real é o da Play), `cheapestCreditBrl` e `bitsPackName` (Bolsinha/Bolsa/Baú · Pouch/Purse/Chest). Lido por `CreditExchange` (`components/mercado/ShopShelf.tsx`). **Régua:** `src/utils/currencies.test.ts`, `MercadoSheets.render.test.tsx`, `MercadoConfirmar.render.test.tsx`.
 
 ### `src/utils/equipArt.ts`
 **Dono de:** a arte do equipamento (PR8b), carregada SOB DEMANDA (`import.meta.glob` lazy) dos 13 ícones já instalados em `assets/soulmon/combate-v3/equip` (sem arte nova). Peça ausente = `null` e a tela cai no texto.
@@ -4471,7 +4476,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ## Buffs do clã (10/11/2026) — substituem a Loja do Clã (REGISTRO §281)
 
 - `src/utils/guildBuffs.ts` — espelho do catálogo/preço/duração dos Buffs, estado lembrado (`rememberClanBuffs`, `clanBuffActive`, `CLAN_BUFFS`), copy EN+PT. Paridade com `functions/api/_buffsCla.js` em `guildBuffs.test.ts`.
-- `src/components/guild/GuildBuffs.tsx` — o painel (substitui `GuildLoja`). Efeitos: `evolutionGauge.aplicarBuffClaGauge`, `dungeonBase.heartDropChance`, `hunger.clanRegenBoost`/`regenPoints`; `bitsOrigin.spendEarnedBits` (doação só com Bits ganhos).
+- `src/components/guild/GuildBuffs.tsx` — o painel (substitui `GuildLoja`). Efeitos: `evolutionGauge.aplicarBuffClaGauge`, `dungeonBase.heartDropChance`, `hunger.clanRegenBoost`/`regenPoints`; `bitsOrigin.spendBitsIfCovered` (doação do saldo; §373).
 
 ## Rodada 5 da beta3 (26/10/2026) — Loja do Clã (ABOLIDA em 10/11/2026) e "Gerar de novo"
 
@@ -4625,7 +4630,7 @@ O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no
 
 ### `src/utils/treinoTickets.ts` (10/11/2026 — REGISTRO §280)
 
-Tickets do Treino (aba Sparring do Torneio): 20 partidas COM Honra grátis por dia do jogador (`TREINO_TICKET_MATCHES`) e ticket extra de 30 Bits ganhos (`TREINO_EXTRA_TICKET_BITS`) = +20 sem Honra, máx. 3/dia (`TREINO_EXTRA_TICKETS_MAX`). O contador mora no servidor; aqui ficam as constantes espelhadas, `sanitizeTreinoTickets`, `treinoBuyRefusal` (`max-extras`/`no-bits`) e `chargeTreinoTicket` (cobra só Bits ganhos, reconfere sobre o `prev`). Chamado por `App.tsx` e `TournamentPage`. Régua: `treinoTickets.test.ts` e `community.treino.tickets.test.js`.
+Tickets do Treino (aba Sparring do Torneio): 20 partidas COM Honra grátis por dia do jogador (`TREINO_TICKET_MATCHES`) e ticket extra de 30 Bits (`TREINO_EXTRA_TICKET_BITS`) = +20 sem Honra, máx. 3/dia (`TREINO_EXTRA_TICKETS_MAX`). O contador mora no servidor; aqui ficam as constantes espelhadas, `sanitizeTreinoTickets`, `treinoBuyRefusal` (`max-extras`/`no-bits`) e `chargeTreinoTicket` (cobra do saldo, o pago primeiro, reconfere sobre o `prev`). Chamado por `App.tsx` e `TournamentPage`. Régua: `treinoTickets.test.ts` e `community.treino.tickets.test.js`.
 
 ### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
 
@@ -4675,7 +4680,7 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 
 ### `src/utils/hexsmithRename.ts` (11/11/2026, §287)
 
-**Dono de:** a parte pura de RENOMEAR na Hexsmith. **Exports:** `HEX_RENAME_COST` (200 Bits ganhos), `HEX_RENAME_MAX` (20), `hexRenameClean`, `hexRenameRefusal` (`empty`/`invalid`/`same`/`bits`), `applyServerHexRename` (aplica o que o servidor confirmou; nunca saldo negativo). **Chamado por:** `components/hex/HexsmithSheet.tsx`, `HexRenameModal.tsx`. **Server:** `cloudHexRename` em `cloudSave.ts` → `POST /api/save?action=hexRename`.
+**Dono de:** a parte pura de RENOMEAR na Hexsmith. **Exports:** `HEX_RENAME_COST` (200 Bits), `HEX_RENAME_MAX` (20), `hexRenameClean`, `hexRenameRefusal` (`empty`/`invalid`/`same`/`bits`), `applyServerHexRename` (aplica o que o servidor confirmou; nunca saldo negativo). **Chamado por:** `components/hex/HexsmithSheet.tsx`, `HexRenameModal.tsx`. **Server:** `cloudHexRename` em `cloudSave.ts` → `POST /api/save?action=hexRename`.
 
 ### `src/utils/focusJourneyCamera.ts` · `src/utils/focusSession.ts` · `src/utils/materialIcons.ts` · `src/utils/journeyItemInfo.ts` (12/11/2026 — REGISTRO §300)
 

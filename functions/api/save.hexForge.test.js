@@ -47,7 +47,7 @@ describe('hexForge — a forja do servidor', () => {
     expect(s.hexsmith).toEqual({ owned: ['garra:agua', 'coroa:heal'], equipped: { garra: 'garra:agua', coroa: 'coroa:heal' } });
   });
 
-  it('saldo insuficiente: 402 e nada muda (poções, fragmentos; Bits de Crédito não pagam)', async () => {
+  it('saldo insuficiente: 402 e nada muda (poções, fragmentos, Bits); §373: Bit de Crédito paga', async () => {
     const e = env();
     await post(e, { ...base, foodInventory: { 'potion:agua': E.potions - 1 }, equipment: { ...base.equipment, fragments: C.fragments - 1 } });
     const antes = e.store.get(ID);
@@ -57,8 +57,11 @@ describe('hexForge — a forja do servidor', () => {
     expect(f.body.error).toBe('fragments');
     expect(e.store.get(ID)).toBe(antes);
     const e2 = env();
-    await post(e2, { ...base, gamePoints: E.bits, bitsOrigin: { day: '2026-11-01', free: 0, fromCredits: E.bits, paidLeft: E.bits } });
+    await post(e2, { ...base, gamePoints: E.bits - 1 });
     expect((await forge(e2, 'garra:agua')).body.error).toBe('bits');
+    const e3 = env();
+    await post(e3, { ...base, gamePoints: E.bits, bitsOrigin: { day: '2026-11-01', free: 0, fromCredits: E.bits, paidLeft: E.bits } });
+    expect((await forge(e3, 'garra:agua')).status).toBe(200);
   });
 
   it('repetição não cobra duas vezes (already, sem gravar)', async () => {

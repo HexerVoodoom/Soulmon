@@ -18,11 +18,15 @@ describe('a feira de verdade no cliente: prateleiras novas', () => {
     expect(r.refused).toBe('cap');
     expect(r.state).toBe(cheio);
   });
-  it('prato de combate pago só com Bit de Crédito: recusa e devolve o MESMO estado (a folha não chama o servidor)', () => {
-    const credito = { ...base, gamePoints: 500, bitsOrigin: { paidLeft: 500 } };
+  it('§373: prato de combate pago só com Bit de Crédito passa (antes recusava); sem saldo, recusa e devolve o MESMO estado', () => {
+    const credito = { ...base, gamePoints: 500, bitsOrigin: { day: 'd', free: 0, fromCredits: 500, paidLeft: 500 } };
     const r = applyFeiraLojaBuy(credito as any, offer({ id: 'dish:espetinho-de-vinha', type: 'dish', kind: 'dish', price: 8 }), 1_000_000);
-    expect(r.refused).toBe('not-earned');
-    expect(r.state).toBe(credito);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.gamePoints).toBe(492);
+    const pobre = { ...base, gamePoints: 5 };
+    const n = applyFeiraLojaBuy(pobre as any, offer({ id: 'dish:espetinho-de-vinha', type: 'dish', kind: 'dish', price: 8 }), 1_000_000);
+    expect(n.refused).toBe('no-bits');
+    expect(n.state).toBe(pobre);
   });
   it('poção de elemento: +1 na pastinha (potion:<elemento>)', () => {
     const r = applyFeiraLojaBuy(base as any, offer({ id: 'potion:fogo', type: 'potion', kind: 'potion', price: 40 }));

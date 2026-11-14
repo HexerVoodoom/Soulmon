@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, creditMinigameBits, minigameBitsGranted, minigameBitsToday, MINIGAME_BITS_PER_DAY } from './currencies';
+import { CURRENCIES, BITS_PACKS, BITS_PACK_DAILY_CAP, bitsPackDiscountPct, bitsPackById, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, creditMinigameBits, minigameBitsGranted, minigameBitsToday, MINIGAME_BITS_PER_DAY } from './currencies';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, ALL_SHOP_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
@@ -45,23 +45,37 @@ describe('fronteira entre loja comum e loja do torneio', () => {
   });
 });
 
-describe('câmbio Créditos → Bits', () => {
-  it('todo pacote respeita a taxa declarada', () => {
-    for (const pack of BITS_EXCHANGE) {
-      expect(pack.bits).toBe(pack.credits * CREDIT_TO_BITS);
+describe('pacotes de Bits pagos em Créditos (§373)', () => {
+  it('são os três do dono: 200/200, 500/460, 1.000/800, e o maior cabe inteiro no teto do dia', () => {
+    expect(BITS_PACKS.map(p => [p.bits, p.credits])).toEqual([[200, 200], [500, 460], [1000, 800]]);
+    expect(BITS_PACK_DAILY_CAP).toBe(1000);
+    for (const p of BITS_PACKS) expect(p.bits).toBeLessThanOrEqual(BITS_PACK_DAILY_CAP);
+    expect(new Set(BITS_PACKS.map(p => p.id)).size).toBe(BITS_PACKS.length);
+  });
+
+  it('desconto progressivo DERIVADO das constantes: 0%, ~8%, ~20%; Crédito por Bit cai a cada pacote', () => {
+    expect(BITS_PACKS.map(bitsPackDiscountPct)).toEqual([0, 8, 20]);
+    for (let i = 1; i < BITS_PACKS.length; i++) {
+      expect(BITS_PACKS[i].credits / BITS_PACKS[i].bits).toBeLessThan(BITS_PACKS[i - 1].credits / BITS_PACKS[i - 1].bits);
     }
   });
 
-  it('não existe caminho de volta (Bits → Créditos)', () => {
+  it('bitsPackById só acha id conhecido', () => {
+    expect(bitsPackById('bits-500')?.credits).toBe(460);
+    expect(bitsPackById('bits-10')).toBeUndefined();
+    expect(bitsPackById(500)).toBeUndefined();
+  });
+
+  it('não existe caminho de volta (Bits → Créditos)', async () => {
     // A ausência é a regra: Créditos são a única moeda que libera gerar o pet
     // próprio. Se desse pra convertê-los de volta a partir de Bits, bastava
     // jogar minijogo para chegar ao que só o dinheiro real deveria abrir.
-    const mod = Object.keys({ CREDIT_TO_BITS, BITS_EXCHANGE });
+    const mod = Object.keys(await import('./currencies'));
     expect(mod.some(k => /BITS_TO_CREDIT|bitsToCredit/i.test(k))).toBe(false);
   });
 
   it('não existe pacote que dê Bits de graça', () => {
-    for (const pack of BITS_EXCHANGE) {
+    for (const pack of BITS_PACKS) {
       expect(pack.credits).toBeGreaterThan(0);
     }
   });

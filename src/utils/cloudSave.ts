@@ -843,7 +843,7 @@ export type HexRenameOutcome =
   | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'rejected' | 'server' };
 
 /**
- * RENOMEAR NA HEXSMITH (11/11/2026): o servidor valida o nome, debita `HEX_RENAME_COST` Bits ganhos e grava o nome numa escrita
+ * RENOMEAR NA HEXSMITH (11/11/2026): o servidor valida o nome, debita `HEX_RENAME_COST` Bits e grava o nome numa escrita
  * (`POST /api/save?action=hexRename`). Mesma fila e disciplina de `cloudHexForge`: sobe o estado, age com a revisão resultante,
  * sem rede = não troca (nada é debitado localmente).
  */
