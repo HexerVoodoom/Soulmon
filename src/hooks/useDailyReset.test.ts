@@ -293,6 +293,31 @@ describe('computeDailyReset — totalPerfectDays (contador vitalício das missõ
   });
 });
 
+describe('computeDailyReset — missionPerfectDays (contador da missão mission-perfect-30)', () => {
+  // Antislop P2 item 2: tirar `+ (dayWasPerfect ? 1 : 0)` de `missionPerfectDays`
+  // deixava a suíte verde e travava a missão "30 dias perfeitos" para todos.
+  const bons = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+  const ruins = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: false }));
+
+  it('soma exatamente 1 no dia perfeito e nada no dia ruim', () => {
+    expect(runReset({ ...baseState(), tasks: bons, missionPerfectDays: 7, totalPerfectDays: 7 }).missionPerfectDays).toBe(8);
+    expect(runReset({ ...baseState(), tasks: ruins, missionPerfectDays: 7, totalPerfectDays: 7 }).missionPerfectDays).toBe(7);
+  });
+
+  it('save antigo sem o campo parte de totalPerfectDays (e, sem ele, de zero)', () => {
+    const antigo: any = { ...baseState(), tasks: bons, totalPerfectDays: 5 };
+    delete antigo.missionPerfectDays;
+    expect(runReset(antigo).missionPerfectDays).toBe(6);
+    const antigoRuim: any = { ...baseState(), tasks: ruins, totalPerfectDays: 5 };
+    delete antigoRuim.missionPerfectDays;
+    expect(runReset(antigoRuim).missionPerfectDays).toBe(5);
+    const vazio: any = { ...baseState(), tasks: bons };
+    delete vazio.missionPerfectDays;
+    delete vazio.totalPerfectDays;
+    expect(runReset(vazio).missionPerfectDays).toBe(1);
+  });
+});
+
 describe('getMaxEnergyForStage — energy bars = task requirement × ENERGY_HEADROOM (11/10/2026)', () => {
   it('matches the stage requirement × headroom for each form', () => {
     expect(getMaxEnergyForStage('rookie')).toBe(FORM_REQUIREMENTS.rookie.required * 2);           // 8
