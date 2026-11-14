@@ -282,7 +282,8 @@ export async function removerConvitesDeCla(kv, id) {
   return fora.length;
 }
 
-/** Confirma as cartas já creditadas. Idempotente: `mid` desconhecido não faz nada. */
+/** Confirma as cartas já creditadas (fluxo do app ANTERIOR à caixa §246: crédito no cliente por `mailClaimed`, depois `mailAck`;
+ *  ver o comentário da rota em `community.js`). Idempotente: `mid` desconhecido não faz nada. */
 export async function ackMail(kv, id, mids) {
   const rec = await ler(kv, id);
   const alvo = new Set(mids);

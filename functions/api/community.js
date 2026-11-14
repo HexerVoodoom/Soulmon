@@ -1623,6 +1623,10 @@ async function handleCommunity(context) {
     if (denied) return denied;
     return json({ mail: await readMail(env, kvOrThrow(env), id) });
   }
+  // `mailAck` (Antislop P6, item 11): SEM chamador no app de hoje, mas FICA para o bundle anterior à caixa (§246, #624 de
+  // 08/11/2026; APK com assets locais ou service worker velho), que credita a carta no save (`mailClaimed`) e depois confirma
+  // aqui. Por isso não tem a guarda de prêmio pendente: para esse cliente a carta pendente no servidor É a que ele já creditou.
+  // Só apaga cartas do próprio dono (`denyUnlessOwner`). Remover quando nenhum bundle anterior a 08/11 estiver no ar.
   if (action === 'mailAck' && method === 'POST') {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;

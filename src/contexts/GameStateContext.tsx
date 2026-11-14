@@ -572,9 +572,9 @@ export interface GameState {
   funTickets?: FunTickets;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
-  /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
+  /** 🎲 Rerolls dos `ARENA_CHOICES` cards da Arena livre (4 desde o §370) feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
   arenaReroll?: ArenaReroll;
-  /** 🔁 Runs da Arena TERMINADAS no dia (04/11/2026, `applyArenaRunEnd`): cada fim de run re-sorteia os 3 cards de graça (entra na semente), sem tocar no `arenaReroll`. Sem valor econômico: o servidor só repassa. */
+  /** 🔁 Runs da Arena TERMINADAS no dia (04/11/2026, `applyArenaRunEnd`): cada fim de run re-sorteia os `ARENA_CHOICES` cards de graça (entra na semente), sem tocar no `arenaReroll`. Sem valor econômico: o servidor só repassa. */
   arenaRuns?: ArenaReroll;
   /** 🪜 A escada da Arena (04/11/2026, REGISTRO §222): vitórias de run acumuladas; decide a forma por rodada e a força dos inimigos. Ausente = 0. Servidor: só cresce (`_dayCounters.js`). */
   arenaLadder?: number;
@@ -711,8 +711,8 @@ export interface GameState {
    *  nunca o humor que o disparou (dado sensível). Dono: `utils/refugio/convite.ts`. */
   refugeInvite?: RefugeInviteState;
   /** 🍽️ Ritmo das refeições (`utils/mealRhythm.ts`): horários locais das três
-   *  janelas e os dois interruptores (cartão no app: ligado; push: DESLIGADO,
-   *  opt-in). Mora no save para viajar entre aparelhos. Lixo → padrão. */
+   *  janelas e os dois interruptores (cartão no app: ligado; push: LIGADO por
+   *  padrão, `DEFAULT_MEAL_RHYTHM`). Mora no save para viajar entre aparelhos. Lixo → padrão. */
   mealRhythm?: MealRhythmSettings;
   /** 🍽️ Quais janelas de HOJE já foram atendidas/dispensadas. Do DIA do jogador
    *  e se esvazia na virada — sem histórico, sem sequência, sem contador. */
@@ -1755,7 +1755,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // derruba o load; save sem o campo entra vazio.
         review: sanitizeReview(loadedState.review),
         refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
-        // Ritmo das refeições: lixo vira o padrão (push DESLIGADO), nunca derruba o load.
+        // Ritmo das refeições: lixo vira o padrão (`DEFAULT_MEAL_RHYTHM`: push LIGADO), nunca derruba o load.
         mealRhythm: sanitizeMealRhythm(loadedState.mealRhythm),
         mealRitual: sanitizeMealRitual(loadedState.mealRitual),
         // Pose do sprite: lixo vira o padrão (`sanitizeSpritePose`), nunca derruba o load.

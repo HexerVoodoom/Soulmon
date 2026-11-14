@@ -42,8 +42,5 @@ export function normalizeGuildMission(raw: unknown): GuildMissionState | null {
 /** O Soulmon está FORA da Home agora? (só entre a ida e o horário de volta). */
 export const isMissionAway = (m: GuildMissionState | null | undefined, now: number): boolean => !!m && now < m.returnAt;
 
-/** Já deu a hora de voltar (e a volta ainda não foi registrada)? */
-export const isMissionDue = (m: GuildMissionState | null | undefined, now: number): boolean => !!m && now >= m.returnAt;
-
 /** Milissegundos até a volta (0 se já passou) — para o timer do App. */
 export const msUntilReturn = (m: GuildMissionState | null | undefined, now: number): number => (m ? Math.max(0, m.returnAt - now) : 0);
