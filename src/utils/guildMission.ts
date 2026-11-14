@@ -24,11 +24,17 @@ export function startGuildMission(day: string, now: number): GuildMissionState {
   return { day, returnAt: now + GUILD_MISSION_MINUTES * 60_000 };
 }
 
+/**
+ * O dia aceito no save: o formato de `playerDayKey` ("Sat Nov 14 2026", o que o App grava) ou ISO (saves/testes antigos).
+ * Bug do dono, 14/11/2026: só o ISO passava, e recarregar o app durante os 30 min APAGAVA a missão (sem volta registrada).
+ */
+const DIA_DA_MISSAO = /^(\d{4}-\d{2}-\d{2}|[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4})$/;
+
 /** Lixo no save vira "sem missão". */
 export function normalizeGuildMission(raw: unknown): GuildMissionState | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
-  const day = typeof r.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.day) ? r.day : null;
+  const day = typeof r.day === 'string' && DIA_DA_MISSAO.test(r.day) ? r.day : null;
   const returnAt = typeof r.returnAt === 'number' && Number.isFinite(r.returnAt) && r.returnAt > 0 ? Math.floor(r.returnAt) : null;
   return day && returnAt ? { day, returnAt } : null;
 }
