@@ -5345,6 +5345,20 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** forma com caminho na plaquinha aparecer com o ícone branco; rookie ou inimigo sem ramo aparecer colorido; o nome deixar de truncar ou a plaquinha mudar de altura. **Testes:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/games/BattleStage.estagio.test.tsx`, `src/components/ui/EstagioMarca.test.tsx`. **Rollback:** reverter o PR. **APK:** só bundle web.
 
+## §370 — A Arena livre oferece 4 desafios em vez de 3 (`ARENA_CHOICES`) (14/11/2026, pedido do dono: "Aumente as opções de tipo da arena para 4 ao invés de 3")
+
+**Mudança:** a `DueloSheet` (lote `duelo`, `EscolhaDeAdversarios`) passa a mostrar 4 cards de elementos BASE distintos para o jogador escolher 1. O número tem dono único: `ARENA_CHOICES` em `src/utils/arenaSorteio.ts`, lido pelo sorteio (`arenaCards`, padrão do `n`), pela folha (cards, rótulo do "Sortear de novo", ajuda) e pelo guia (`GuideModal`). `arenaCardSeeds(draw, n)` (`strayFoes.ts`) perdeu o padrão `n = 3` escondido: `n` é obrigatório. Torneio, Treino e Travessias têm os próprios "3" e não mudaram.
+
+**Compatibilidade (há usuários reais):** o sorteio é por PREFIXO. `arenaCardSeeds` tira sementes do mesmo `mulberry32` em ordem e o desempate de elemento de `arenaCards` só olha os cards anteriores, então os 3 primeiros cards de um mesmo (dia, conta, reroll, runs) são exatamente os de antes e o 4º é acrescentado no fim. Quem está no meio do dia vê os mesmos 3 de antes e um card novo embaixo; a seleção continua no 1º. Sem campo novo no save; o contador `arenaReroll` e o custo do reroll não mudaram. Teste: `arenaSorteio.test.ts` (prefixo em 500 contas + sementes congeladas de main `1eccf154`).
+
+**Servidor:** não gera nem valida os cards (só sanitiza e torna monotônico o contador `arenaReroll` em `functions/api/_dayCounters.js`), então não há espelho nem teste de paridade a mudar.
+
+**UI:** coluna única de cards de largura cheia, o padrão que a folha já tinha; em 360 px os 4 cabem sem rolagem lateral (a folha rola na vertical, como antes). A grade 2×2 perdeu: com ~160 px por card o nome do chefe cortaria com reticências.
+
+**Alternativa que perdeu:** re-sortear os 4 a partir de uma semente nova (trocaria os 3 cards de quem está no meio do dia).
+
+**Falsifica:** os 3 primeiros cards de um dia mudarem depois do deploy; dois cards com o mesmo elemento. **Rollback:** reverter o PR (o 4º card some; os 3 primeiros continuam iguais).
+
 ## §365 — A ação vira UMA seta turquesa no fim da linha; o balão dourado usa o mesmo chevron, sem círculo (14/11/2026, decisão do dono)
 
 **Decisão:** (1) Na linha de hábito que leva a um prédio ("Ir ao Caderno" / "Ir à Oficina do Foco"), o link turquesa sublinhado na FRENTE do nome sai (reverte o "link na frente" do #899, §355). Entra APENAS uma seta turquesa `>` (chevron sem haste) no FIM da linha, à direita, alinhada ao centro, sem texto; ela é o alvo de toque (mesma navegação), com `aria-label` = `irLaLabel` (PT/EN), foco e alvo de 44 px sem aumentar a linha. O contador de passos segue embaixo e o checkbox não mudou. (2) No balão dourado (§333, #879) a seta-em-círculo vira o MESMO chevron turquesa sem haste, sem círculo, no mesmo lugar (fim do texto), decorativo (o balão inteiro segue sendo o botão, com o mesmo `aria-label`).

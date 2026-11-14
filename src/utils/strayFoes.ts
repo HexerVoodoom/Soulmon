@@ -1,6 +1,6 @@
 /**
  * DESGARRADOS COMO OPONENTES (27/10/2026, decisão do dono) — onde o Soulmon desgarrado (estágio forte, `wildFoeLabel`) aparece
- * além da Fenda: como UM dos 3 desafios da Arena (às vezes) e como o adversário que preenche o Torneio quando não há par humano.
+ * além da Fenda: como UM dos desafios da Arena (às vezes) e como o adversário que preenche o Torneio quando não há par humano.
  * Tudo determinístico (semente da run / id da conta + dia), nunca `Math.random`.
  */
 import { ENEMY_ROSTER, RAVEN_ENTRY, ramoFromRoll, withRaven, type RosterEntry } from './enemyRoster';
@@ -21,10 +21,11 @@ export const isComboSeed = (seed: number): boolean => !isStraySeed(seed) && mulb
 export const isStraySeed = (seed: number): boolean => mulberry32((seed ^ STRAY_MIX) | 0)() < STRAY_SEED_CHANCE;
 
 /**
- * Três sementes de cards para a Arena com NO MÁXIMO um Desgarrado (re-sorteia os extras). `draw` dá sementes novas.
- * Sem Desgarrado em boa parte das vezes: ele é ocasional por desenho.
+ * `n` sementes de cards para a Arena (`ARENA_CHOICES`, dono em `arenaSorteio.ts`) com NO MÁXIMO um Desgarrado (re-sorteia os
+ * extras). `draw` dá sementes novas, em ordem: o resultado de `n` é PREFIXO do de `n + 1` (§370). Sem Desgarrado em boa parte das
+ * vezes: ele é ocasional por desenho.
  */
-export function arenaCardSeeds(draw: () => number, n = 3): number[] {
+export function arenaCardSeeds(draw: () => number, n: number): number[] {
   const out: number[] = [];
   let strays = 0;
   while (out.length < n) {
