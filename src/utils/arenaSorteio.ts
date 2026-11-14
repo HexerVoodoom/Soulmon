@@ -5,9 +5,10 @@
 //   1. `arenaFoesOfSeed(seed, rodada)` — a ÚNICA função pura que diz quem é o inimigo de uma rodada da run `seed`. O card da `DueloSheet`
 //      e a `ArenaGame.montarRodada` chamam esta mesma, então o card mostra EXATAMENTE o que será lutado. Sem tema: sorteio geral: metade das runs usa o pool BASE
 //      (20 elementos, 1 criatura por elemento) e metade o pool COMBINADO (rookies de 2 elementos; `isComboSeed`).
-//   2. `arenaCards(...)` — os 3 cards do dia, determinísticos por (dia do jogador, conta, nº de rerolls): fechar e reabrir mostra os
-//      mesmos; cada reroll mistura o contador na semente. Elementos DISTINTOS entre os cards quando der (re-sorteio vizinho), no máximo
-//      1 Desgarrado (`arenaCardSeeds`).
+//   2. `arenaCards(...)` — os `ARENA_CHOICES` (4) cards do dia, determinísticos por (dia do jogador, conta, nº de rerolls): fechar e
+//      reabrir mostra os mesmos; cada reroll mistura o contador na semente. Elementos DISTINTOS entre os cards quando der (re-sorteio
+//      vizinho), no máximo 1 Desgarrado (`arenaCardSeeds`). O sorteio é por PREFIXO: os N primeiros cards de um tamanho maior são os
+//      mesmos do tamanho N (§370: o 4º card entrou por último e os 3 de antes de 14/11/2026 não mudaram).
 //   3. A tabela de CUSTO do reroll: 3 grátis por dia do jogador; do 4º em diante só Bits (15, 30, 45 e 45 fixo). Nunca Crédito/Emblema.
 //   4. `arenaSceneOfSeed(seed)` — o cenário da run: sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
 // ---------------------------------------------------------------------------
@@ -17,6 +18,13 @@ import { mulberry32 } from './combate/rng';
 import { arenaCardSeeds, isStraySeed } from './strayFoes';
 import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
 import { ARENA_BG_SCENES, type DungeonScene } from './dungeonScenes';
+
+/**
+ * §370 (dono, 14/11/2026: "Aumente as opções de tipo da arena para 4 ao invés de 3"): quantos desafios a Arena livre oferece para o
+ * jogador escolher 1. Dono ÚNICO do número: o sorteio (`arenaCards`), a folha (`DueloSheet`) e o guia (`GuideModal`) leem daqui.
+ * Era 3 até 14/11/2026. Mudar só ACRESCENTA ou TIRA cards do fim: o sorteio é por prefixo, então os primeiros não mudam.
+ */
+export const ARENA_CHOICES = 4;
 
 export const ARENA_REROLL_FREE_PER_DAY = 3;
 /** Preço em Bits do 4º reroll do dia em diante: 15, 30, 45; depois fica em 45. */
@@ -85,11 +93,11 @@ export const arenaRunIsStray = (seed: number, ladder = 0): boolean => isStraySee
 export const arenaCardElements = (seed: number): string[] => [arenaRunElement(seed)];
 
 /**
- * Os 3 cards. `accountKey` = saveId (ou outro identificador estável da conta). Elementos distintos entre os cards: se um card repete
+ * Os `n` cards (`ARENA_CHOICES` por padrão). `accountKey` = saveId (ou outro identificador estável da conta). Elementos distintos entre os cards: se um card repete
  * elemento de outro, tenta a semente vizinha (até 64 vezes); sem saída, aceita o melhor (nunca trava).
  */
-export function arenaCards(dayIso: string, accountKey: string, rerollCount: number, n = 3, runsDone = 0): number[] {
-  // 04/11/2026 (dono): ao TERMINAR uma run (vitória, derrota ou empate) o trio é sorteado de novo, de graça — o nº de runs
+export function arenaCards(dayIso: string, accountKey: string, rerollCount: number, n = ARENA_CHOICES, runsDone = 0): number[] {
+  // 04/11/2026 (dono): ao TERMINAR uma run (vitória, derrota ou empate) os cards são sorteados de novo, de graça — o nº de runs
   // terminadas no dia (`arenaRuns`) entra na semente. 0 runs = a semente de sempre (mesmos cards de antes da regra).
   const runs = Math.max(0, Math.floor(runsDone) || 0);
   const rng = mulberry32(hash(`${dayIso}|${accountKey}|${Math.max(0, Math.floor(rerollCount) || 0)}${runs > 0 ? `|run${runs}` : ''}`));
@@ -127,7 +135,7 @@ export function applyArenaReroll<T extends BitsOriginState & { arenaReroll?: Are
 
 /**
  * Runs da Arena TERMINADAS no dia (`arenaRuns {day,count}`, mesma forma do `arenaReroll`). Cada fim de run soma 1 e
- * re-sorteia os 3 cards (`arenaCards(..., runsDone)`), SEM tocar no contador do reroll (que é o pago/limitado).
+ * re-sorteia os cards (`arenaCards(..., runsDone)`), SEM tocar no contador do reroll (que é o pago/limitado).
  */
 export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll; arenaLadder?: number }>(prev: T, dayIso: string, outcome: 'win' | 'loss' | 'draw' = 'loss'): T {
   // §222: vitória sobe 1 degrau da escada; derrota e empate seguram. Sem valor gravado = 0 (começa de baixo).

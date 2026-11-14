@@ -3,7 +3,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { soulLevel } from '../../utils/soulXP';
-import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
+import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -38,13 +38,13 @@ const box: CSSProperties = {
 };
 
 /**
- * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). Três desafios de poder PARECIDO com o seu
+ * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). `ARENA_CHOICES` desafios (4 desde 14/11/2026, §370; eram 3) de poder PARECIDO com o seu
  * (os adversários da Arena são sempre relativos ao level — `arenaFoe`), e o jogador seleciona contra quais
  * vai lutar. A semente do card é a da run: a `ArenaGame` luta exatamente o que o card mostrou. O Torneio é
  * o oposto, de propósito: lá o servidor sorteia pela faixa (`functions/api/_rankedPick.js`).
  */
 export interface ArenaRerollProps {
-  /** Dia do jogador (ISO, `playerDayIso` com o fuso do save): a semente dos cards e a virada dos 3 grátis. */
+  /** Dia do jogador (ISO, `playerDayIso` com o fuso do save): a semente dos cards e a virada dos rerolls grátis. */
   dayIso: string;
   /** Id estável da conta (`saveId`): parte da semente dos cards. */
   accountKey: string;
@@ -54,7 +54,7 @@ export interface ArenaRerollProps {
   bits: number;
   /** Pede o reroll (o chamador desconta e grava); `false` = recusado. */
   onReroll: () => boolean;
-  /** Runs terminadas no dia (`arenaRuns`): cada uma re-sorteia o trio de graça. */
+  /** Runs terminadas no dia (`arenaRuns`): cada uma re-sorteia os cards de graça. */
   runs?: ArenaReroll;
   /** §222: o valor da escada (`arenaLadder`): o card mostra o que a luta vai ter. */
   ladder?: number;
@@ -64,9 +64,10 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
   const done = arenaRerollsToday(arena.reroll, arena.dayIso);
   const gs = useGameStateOptional()?.gameState; // o level do jogador: a forma do inimigo acompanha o HP que ele terá (`arenaStageForHp`)
   const playerLevel = gs ? soulLevel({ evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }) : undefined;
-  // 3 desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
+  // `ARENA_CHOICES` desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
+  // §370: uma coluna só (o padrão desta folha): 4 cards de largura cheia cabem em 360 px sem rolagem lateral e o nome do chefe não corta.
   const runsDone = arenaRerollsToday(arena.runs, arena.dayIso);
-  const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done, 3, runsDone), [arena.dayIso, arena.accountKey, done, runsDone]);
+  const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done, ARENA_CHOICES, runsDone), [arena.dayIso, arena.accountKey, done, runsDone]);
   const cost = arenaRerollCost(done);
   const free = arenaRerollsFreeLeft(done);
   const canReroll = arena.bits >= cost;
@@ -117,7 +118,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
       })}
       <button
         type="button" data-arena-reroll disabled={!canReroll} onClick={() => { if (canReroll) arena.onReroll(); }}
-        aria-label={free > 0 ? (isPt ? `Sortear outros três adversários, ${free} grátis` : `Draw three other opponents, ${free} free`) : (isPt ? `Sortear outros três adversários por ${cost} Bits` : `Draw three other opponents for ${cost} Bits`)}
+        aria-label={free > 0 ? (isPt ? `Sortear outros ${ARENA_CHOICES} adversários, ${free} grátis` : `Draw ${ARENA_CHOICES} other opponents, ${free} free`) : (isPt ? `Sortear outros ${ARENA_CHOICES} adversários por ${cost} Bits` : `Draw ${ARENA_CHOICES} other opponents for ${cost} Bits`)}
         style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: canReroll ? 1 : 0.55 }}
       >
         <Icon name="refresh" size={24} tone="inherit" />
@@ -174,8 +175,8 @@ export function DueloSheet({ language, onStart, arena }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: 3 grátis por dia, depois Bits.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power. Wins earn Bits; losses cost nothing. Draw again: 3 free a day, then Bits.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt

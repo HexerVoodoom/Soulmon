@@ -267,12 +267,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/arena/DueloSheet.tsx`
-**Dono de:** a folha do lote **Arena livre** (id `duelo`) da Arena (minimal-ui F5, 24/09/2026) — o poder, a escolha dos três adversários e o botão que abre a `ArenaGame` em tela cheia. **Beta-2 (9.3 + 11.3, 13/10/2026):** a Arena livre ganhou o próprio bloco no mapa (o Torneio fica no outro tablado) e o ELEMENTO e os GOLPES do Soulmon saíram daqui — moram no Perfil (`components/perfil/SoulmonPerfil.tsx`), pela mesma fonte (`fighterIdentity`). Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
+**Dono de:** a folha do lote **Arena livre** (id `duelo`) da Arena (minimal-ui F5, 24/09/2026) — o poder, a escolha entre `ARENA_CHOICES` adversários (4 desde 14/11/2026, §370; eram 3) e o botão que abre a `ArenaGame` em tela cheia. **Beta-2 (9.3 + 11.3, 13/10/2026):** a Arena livre ganhou o próprio bloco no mapa (o Torneio fica no outro tablado) e o ELEMENTO e os GOLPES do Soulmon saíram daqui — moram no Perfil (`components/perfil/SoulmonPerfil.tsx`), pela mesma fonte (`fighterIdentity`). Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
 **Props principais:** `language`, `evolutionStage`, `onStart` (⚰️ `skills?` e `petElement?` saíram em 13/10/2026: a folha não lê mais a ficha).
 **Exports:** `DueloSheet(props)`.
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` da Arena).
 **Régua:** `src/components/arena/arenaSheets.render.test.tsx`.
-**Sync 09/11/2026 (`5229b1be..62f204e1b`):** props `runs?` (`ArenaReroll`: runs do dia — cada run terminada re-sorteia o trio de graça, `arenaCards(..., runsDone)`) e `ladder?` (escada Rookie > Champion > Ultimate, §222): `arenaFoesOfSeed(seed, ARENA_ROUNDS, ladder)` e o selo "Desgarrado" vem de `arenaRunIsStray`.
+**Sync 09/11/2026 (`5229b1be..62f204e1b`):** props `runs?` (`ArenaReroll`: runs do dia — cada run terminada re-sorteia os cards de graça, `arenaCards(..., runsDone)`) e `ladder?` (escada Rookie > Champion > Ultimate, §222): `arenaFoesOfSeed(seed, ARENA_ROUNDS, ladder)` e o selo "Desgarrado" vem de `arenaRunIsStray`.
 
 ### `src/components/arena/GuerraClaSheet.tsx` — ⚰️ apagado
 

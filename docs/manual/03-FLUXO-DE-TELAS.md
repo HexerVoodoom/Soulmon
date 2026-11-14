@@ -2404,7 +2404,7 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 
 ## Delta de 28/10/2026: Arena livre com sorteio geral, reroll e cenário de arena (REGISTRO §180; revoga a "Arena por tema")
 
-- **Cards:** a `DueloSheet` mostra 3 desafios sorteados entre os 20 elementos (distintos entre si), os mesmos ao fechar e reabrir no mesmo dia do jogador. O botão **Sortear de novo** (ícone `refresh` + "N grátis" ou "N Bits") troca os 3 e volta a seleção para o 1º card: 3 grátis por dia, depois 15, 30, 45 e 45 Bits. Sem Bits suficientes o botão fica desabilitado, com o texto de quanto falta. Só Bits, nunca Crédito/Emblema.
+- **Cards:** a `DueloSheet` mostra `ARENA_CHOICES` (**4** desde 14/11/2026, §370; eram 3) desafios sorteados entre os 20 elementos (distintos entre si), numa coluna só de cards de largura cheia (cabe em 360 px sem rolagem lateral), os mesmos ao fechar e reabrir no mesmo dia do jogador. O botão **Sortear de novo** (ícone `refresh` + "N grátis" ou "N Bits") troca todos e volta a seleção para o 1º card: 3 grátis por dia, depois 15, 30, 45 e 45 Bits. Sem Bits suficientes o botão fica desabilitado, com o texto de quanto falta. Só Bits, nunca Crédito/Emblema.
 - **Luta:** o cenário é sempre a Arena Noturna ou o Coliseu Ancião (fixo na run, escolhido pela semente); os visores de intro/vitória/derrota usam o mesmo. O cenário por elemento saiu.
 
 ## Delta de 29/10/2026: RewardPreview, tag de conclusão no rodapé, recap da evolução, mapas e Feira ligada

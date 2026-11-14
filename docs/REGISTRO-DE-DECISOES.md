@@ -5316,3 +5316,17 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Mudança:** `"feira-missao-volta"` entra em `ONE_SHOT_PREFIXES` (`android/app/src/main/java/com/soulmon/notifications/AlarmReceiver.kt`), igual aos outros eventos de uma vez (`poop-event-`, `pet-pantry`, `pet-energy-full`, `pet-progress`). A tag que o plugin passa ao receiver é o próprio `id`, então o `startsWith` casa.
 
 **APK/AAB:** a mudança é em `android/`, então SÓ VALE COM O PRÓXIMO AAB. Funciona com o APK antigo (feature detect): nenhum contrato de bridge muda, o JS não depende disso e o comportamento antigo apenas continua até o app ser atualizado. **Teste:** nenhum teste do repositório lê `AlarmReceiver.kt` como texto, então não há contrato a atualizar; a lista é Kotlin puro, sem teste de unidade. **Falsifica:** após o próximo AAB, um aviso da Feira disparado e o aparelho reiniciado re-armar a notificação. **Rollback:** reverter o PR.
+
+## §370 — A Arena livre oferece 4 desafios em vez de 3 (`ARENA_CHOICES`) (14/11/2026, pedido do dono: "Aumente as opções de tipo da arena para 4 ao invés de 3")
+
+**Mudança:** a `DueloSheet` (lote `duelo`, `EscolhaDeAdversarios`) passa a mostrar 4 cards de elementos BASE distintos para o jogador escolher 1. O número tem dono único: `ARENA_CHOICES` em `src/utils/arenaSorteio.ts`, lido pelo sorteio (`arenaCards`, padrão do `n`), pela folha (cards, rótulo do "Sortear de novo", ajuda) e pelo guia (`GuideModal`). `arenaCardSeeds(draw, n)` (`strayFoes.ts`) perdeu o padrão `n = 3` escondido: `n` é obrigatório. Torneio, Treino e Travessias têm os próprios "3" e não mudaram.
+
+**Compatibilidade (há usuários reais):** o sorteio é por PREFIXO. `arenaCardSeeds` tira sementes do mesmo `mulberry32` em ordem e o desempate de elemento de `arenaCards` só olha os cards anteriores, então os 3 primeiros cards de um mesmo (dia, conta, reroll, runs) são exatamente os de antes e o 4º é acrescentado no fim. Quem está no meio do dia vê os mesmos 3 de antes e um card novo embaixo; a seleção continua no 1º. Sem campo novo no save; o contador `arenaReroll` e o custo do reroll não mudaram. Teste: `arenaSorteio.test.ts` (prefixo em 500 contas + sementes congeladas de main `1eccf154`).
+
+**Servidor:** não gera nem valida os cards (só sanitiza e torna monotônico o contador `arenaReroll` em `functions/api/_dayCounters.js`), então não há espelho nem teste de paridade a mudar.
+
+**UI:** coluna única de cards de largura cheia, o padrão que a folha já tinha; em 360 px os 4 cabem sem rolagem lateral (a folha rola na vertical, como antes). A grade 2×2 perdeu: com ~160 px por card o nome do chefe cortaria com reticências.
+
+**Alternativa que perdeu:** re-sortear os 4 a partir de uma semente nova (trocaria os 3 cards de quem está no meio do dia).
+
+**Falsifica:** os 3 primeiros cards de um dia mudarem depois do deploy; dois cards com o mesmo elemento. **Rollback:** reverter o PR (o 4º card some; os 3 primeiros continuam iguais).
