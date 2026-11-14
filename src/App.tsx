@@ -236,9 +236,9 @@ import {
 } from './utils/weeklyMissions';
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
-import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
+import { bitsPackById, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, spendEarnedBits, earnedBits } from './utils/bitsOrigin';
+import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
@@ -283,7 +283,7 @@ type BBPoolMod = { sortearBB: typeof import('./data/bbPool').sortearBB; BB_POOL_
 const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbPool'), import('./data/bbPoolArt')]).then(([a, b]) => ({ sortearBB: a.sortearBB, BB_POOL_ART: b.BB_POOL_ART }));
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
-import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
   effectiveOwnedFrames, grantFrameOnEvolution, resolveWidgetFrame, setPaidWidgetFramesFromEntitlement, usePaidWidgetFrames,
@@ -5144,35 +5144,33 @@ export default function App() {
   // 🛒 Shop purchase — charges points and applies the item's effect. Items can
   // be locked behind a mission (utils/shop.ts `unlock`).
   /**
-   * Troca Créditos por Bits. O gasto de Crédito é do SERVIDOR (é dinheiro
-   * real); os Bits só entram depois que ele confirma. A troca inversa não
-   * existe — ver utils/currencies.ts.
+   * PACOTES DE BITS do Cambista (§373): o SERVIDOR decide o pacote, debita os Créditos e conta o teto de 1.000 Bits/dia
+   * (`functions/api/_bitsPacks.js`). Os Bits só entram DEPOIS da confirmação, e entram os que a resposta trouxe (nunca o número
+   * local). A troca inversa não existe — ver utils/currencies.ts.
    */
-  const handleExchangeCredits = useCallback(async (creditos: number): Promise<boolean> => {
+  const handleExchangeCredits = useCallback(async (packId: string): Promise<boolean> => {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
-    const pack = BITS_EXCHANGE.find(p => p.credits === creditos);
-    if (!pack) return false;
-    // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. Conferido ANTES de gastar o Crédito (dinheiro real):
-    // o pacote que passa do teto não é cobrado nem partido.
-    if (creditExchangeRoom(gameState, playerDayKey(new Date(), gameState.playerDayTz)) < pack.bits) {
-      toast(language === 'pt-BR'
-        ? 'O câmbio de hoje já chegou no limite. Amanhã a conta abre de novo, sem pressa.'
-        : "Today's exchange has reached its limit. The count opens again tomorrow, no rush.");
+    if (!bitsPackById(packId)) return false;
+    const isPt = language === 'pt-BR';
+    const r = await buyBitsPack(packId);
+    if (!r.ok) {
+      toast(r.reason === 'daily-cap'
+        ? (isPt
+          ? `Limite de troca de hoje atingido. Hoje ainda cabem ${r.leftToday ?? 0} Bits; amanhã a conta abre de novo.`
+          : `Today's exchange limit is reached. ${r.leftToday ?? 0} Bits still fit today; the count opens again tomorrow.`)
+        : r.reason === 'insufficient'
+          ? (isPt ? 'Créditos insuficientes.' : 'Not enough credits.')
+          : r.reason === 'busy'
+            ? (isPt ? 'Uma troca já está em andamento. Tente de novo em instantes.' : 'An exchange is already in progress. Try again in a moment.')
+            : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The exchange did not go through. Try again.'));
       return false;
     }
-    const ent = await spendCredits(pack.credits, 'exchange-bits');
-    if (!ent) {
-      toast(language === 'pt-BR' ? 'Créditos insuficientes.' : 'Not enough credits.');
-      return false;
-    }
-    setGameState(prev => {
-      // Reconferido sobre o `prev` (dois câmbios no mesmo lote leriam o mesmo estado). Sem espaço aqui o Crédito já foi gasto: os
-      // Bits entram do mesmo jeito (o servidor cobrou; o jogador não perde o que pagou), só que contados no dia.
-      const r = applyCreditExchange(prev, pack.bits, playerDayKey(new Date(), prev.playerDayTz));
-      const base = r.ok ? r.state : { ...prev, gamePoints: (prev.gamePoints ?? 0) + pack.bits };
-      return { ...base, credits: ent.credits, accountTier: ent.tier };
-    });
-    toast(<BitsAmount value={pack.bits} sign="+" size={14} />);
+    setGameState(prev => ({
+      ...noteCreditBits(prev, r.bits, playerDayKey(new Date(), prev.playerDayTz)),
+      credits: r.ent.credits,
+      accountTier: r.ent.tier,
+    }));
+    toast(<BitsAmount value={r.bits} sign="+" size={14} />);
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
@@ -5288,9 +5286,9 @@ export default function App() {
     setGameState(prev => grantGuildScenes(prev, ids));
   }, [setGameState]);
 
-  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido), e só de Bits GANHOS (nunca Crédito; 10/11/2026). */
+  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido). Desde §373 o Bit de Crédito também doa (pago primeiro). */
   const handleGuildSpend = useCallback((bits: number) => {
-    setGameState(prev => spendEarnedBits(prev, bits));
+    setGameState(prev => spendBitsIfCovered(prev, bits));
   }, [setGameState]);
 
   /** CASA DA GUILDA: o save segue o slot que o servidor diz (`applyGuildSlot`, idempotente). */
@@ -8690,11 +8688,11 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
-                  /* Ticket extra do Treino: só Bits GANHOS (`earnedBits`); o servidor já confirmou a compra, aqui só se cobra, reconferido sobre o `prev`. */
-                  earnedBits: earnedBits(gameState),
+                  /* Ticket extra do Treino: o saldo inteiro paga (§373); o servidor já confirmou a compra, aqui só se cobra, reconferido sobre o `prev`. */
+                  spendableBits: spendableBits(gameState),
                   onChargeTreinoTicket: () => {
                     if (demo) { refuseDemo(); return false; }
-                    if (earnedBits(gameState) < TREINO_EXTRA_TICKET_BITS) return false;
+                    if (spendableBits(gameState) < TREINO_EXTRA_TICKET_BITS) return false;
                     setGameState(prev => chargeTreinoTicket(prev));
                     return true;
                   },
@@ -8880,7 +8878,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, earned: earnedBits(gameState), ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
               </ResultExtrasContext.Provider>
             </Suspense>

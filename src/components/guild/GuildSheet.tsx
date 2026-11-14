@@ -134,7 +134,7 @@ interface GuildSheetProps {
    */
   casa?: {
     bits: number;
-    /** Bits GANHOS (saldo − o que veio de Crédito): só estes podem ser doados. */
+    /** ⚰️ §373: era "Bits GANHOS"; agora o saldo inteiro doa. Campo opcional e IGNORADO (compat de quem ainda passa). */
     earned?: number;
     ownedFurniture: string[];
     equippedDecor: Record<string, string | undefined>;
@@ -1087,7 +1087,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
   const [lista, setLista] = useState(false);
   const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
   const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
-  const bits = casa?.earned ?? casa?.bits ?? 0; // só Bits GANHOS doam (nunca os que vieram de Crédito)
+  const bits = casa?.bits ?? 0; // §373: o saldo inteiro doa (o Bit vindo de Crédito também)
   const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
   const meu = c.mine.slot;
   return (

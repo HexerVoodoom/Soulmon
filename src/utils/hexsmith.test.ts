@@ -60,9 +60,10 @@ describe('hexsmith — forjar', () => {
     const tem = forgeHexItem(rico(), 'garra:agua');
     expect(hexForgeRefusal(tem, 'garra:agua')).toBe('owned');
   });
-  it('Bit de Crédito não paga (só Bits ganhos)', () => {
-    const s = rico({ gamePoints: 2000, bitsOrigin: { day: 'd', free: 0, fromCredits: 0, paidLeft: 1000 } as never });
-    expect(hexForgeRefusal(s, 'garra:agua')).toBe('bits');
+  it('§373: o Bit de Crédito também paga (antes só Bits ganhos); sem saldo, recusa por bits', () => {
+    const s = rico({ gamePoints: 2000, bitsOrigin: { day: 'd', free: 0, fromCredits: 0, paidLeft: 2000 } as never });
+    expect(hexForgeRefusal(s, 'garra:agua')).toBeUndefined();
+    expect(hexForgeRefusal(rico({ gamePoints: 0 }), 'garra:agua')).toBe('bits');
   });
 });
 

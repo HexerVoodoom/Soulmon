@@ -12,10 +12,9 @@ import {
   type EquipmentState,
 } from './equipment';
 import {
-  CREDIT_BITS_CAP_RATIO, CREDIT_CAP_REFERENCE_FREE, creditExchangeRoom, applyCreditExchange, noteFreeBits, earnedBits, spendBitsPaidFirst,
-  normalizeOrigin, sanitizeBitsOrigin,
+  noteCreditBits, noteFreeBits, spendableBits, spendBitsPaidFirst, normalizeOrigin, sanitizeBitsOrigin,
 } from './bitsOrigin';
-import { BITS_EXCHANGE } from './currencies';
+import * as bitsOriginMod from './bitsOrigin';
 import { combinedAttrBonus, combinedBonus, COMBAT_BONUS_CAP } from './combate/bonus';
 import { combatantAt, REFERENCE_BUILDS, RULER_LEVELS } from './combate/level';
 import { fight } from './combate/fight';
@@ -156,10 +155,10 @@ describe('3. o save: posse e slot saneados, peça a peça', () => {
   });
 });
 
-describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não é combate', () => {
+describe('4. §373: o Bit que veio de Crédito TAMBÉM compra equipamento (o teto de 5% segura)', () => {
   const rico = (extra: Record<string, unknown> = {}) => ({ gamePoints: 5000, equipment: EMPTY_EQUIPMENT, ...extra });
 
-  it('compra com Bits ganhos: debita o preço, posse e equipa na hora', () => {
+  it('compra com Bits: debita o preço, posse e equipa na hora', () => {
     const r = applyEquipBuy(rico(), 'eq-nucleo-t1', 'bits');
     expect(r.ok).toBe(true);
     if (r.ok) {
@@ -169,27 +168,33 @@ describe('4. só moeda GANHA compra equipamento; Crédito acelera só o que não
     }
   });
 
-  it('o Bit que veio de Crédito NÃO compra equipamento, mesmo com saldo (not-earned); o ganho compra', () => {
-    const s = rico({ gamePoints: 1000, bitsOrigin: { day: DAY, free: 0, fromCredits: 700, paidLeft: 700 } });
-    expect(earnedBits(s)).toBe(300);
-    expect(equipBuyRefusal(s, 'eq-nucleo-t1', 'bits')).toBe('not-earned'); // 400 > 300 ganhos, apesar dos 1000 no saldo
-    expect(applyEquipBuy(s, 'eq-nucleo-t1', 'bits')).toEqual({ ok: false, reason: 'not-earned' });
-    expect(equipBuyRefusal({ ...s, gamePoints: 1100 }, 'eq-nucleo-t1', 'bits')).toBeUndefined(); // 400 ganhos cabem (exato)
+  it('o Bit vindo de Crédito paga equipamento (antes recusava com not-earned) e é gasto PRIMEIRO; sem saldo, no-funds', () => {
+    const s: EState = rico({ gamePoints: 1000, bitsOrigin: { day: DAY, free: 0, fromCredits: 700, paidLeft: 700 } });
+    expect(spendableBits(s)).toBe(1000);
+    expect(equipBuyRefusal(s, 'eq-nucleo-t1', 'bits')).toBeUndefined();
+    const r = applyEquipBuy(s, 'eq-nucleo-t1', 'bits');
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.state.gamePoints).toBe(600);
+      expect(r.state.bitsOrigin!.paidLeft).toBe(300); // 700 pagos − 400: o pago sai primeiro
+    }
+    // tudo de Crédito também paga
+    expect(equipBuyRefusal(rico({ gamePoints: 400, bitsOrigin: { day: DAY, free: 0, fromCredits: 400, paidLeft: 400 } }), 'eq-nucleo-t1', 'bits')).toBeUndefined();
     expect(equipBuyRefusal({ ...s, gamePoints: 399 }, 'eq-nucleo-t1', 'bits')).toBe('no-funds');
   });
 
-  it('PROVA DE VERMELHO: sem a procedência (campo ausente) o mesmo saldo compraria — o campo é o que protege', () => {
-    expect(equipBuyRefusal(rico({ gamePoints: 1000 }), 'eq-nucleo-t1', 'bits')).toBeUndefined();
+  it('a guarda de procedência saiu: nenhum export de bitsOrigin gateia por Bit ganho', () => {
+    for (const nome of ['earnedBits', 'spendEarnedBits', 'creditExchangeRoom', 'applyCreditExchange', 'CREDIT_BITS_CAP_RATIO']) {
+      expect(nome in bitsOriginMod, nome).toBe(false);
+    }
   });
 
-  it('o gasto que NÃO é equipamento gasta o Bit pago primeiro: o ganho que sobra compra equipamento', () => {
+  it('todo gasto gasta o Bit pago primeiro, e paidLeft nunca passa do saldo', () => {
     let s: Record<string, unknown> = { gamePoints: 1000, bitsOrigin: { day: DAY, free: 0, fromCredits: 600, paidLeft: 600 } };
     s = spendBits(s as never, 600) as never; // um cosmético de 600
     expect((s.bitsOrigin as { paidLeft: number }).paidLeft).toBe(0);
     expect(s.gamePoints).toBe(400);
-    expect(earnedBits(s as never)).toBe(400);
     expect(equipBuyRefusal(s as never, 'eq-nucleo-t1', 'bits')).toBeUndefined();
-    // paidLeft nunca passa do saldo
     expect(spendBitsPaidFirst({ gamePoints: 50, bitsOrigin: { day: DAY, free: 0, fromCredits: 0, paidLeft: 900 } }, 10).bitsOrigin!.paidLeft).toBe(50);
   });
 
@@ -265,76 +270,37 @@ describe('5. o Comércio: só preço e ganho de moeda, dentro do +25%', () => {
   });
 });
 
-describe('6. o câmbio de Créditos: teto diário de +25% sobre o ganho grátis', () => {
-  it('a constante é a decisão do dono', () => {
-    expect(CREDIT_BITS_CAP_RATIO).toBe(0.25);
-    expect(CREDIT_CAP_REFERENCE_FREE).toBe(100);
+describe('6. §373: Bits de pacote entram SEM teto de cliente (o teto de 1.000/dia é do servidor), e a procedência segue escrita', () => {
+  it('noteCreditBits soma ao saldo e registra fromCredits/paidLeft; não há teto de 25% no cliente', () => {
+    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 100, DAY); // dia só de cuidado: o teto antigo daria 25
+    const r = noteCreditBits(s, 1000, DAY);
+    expect(r.gamePoints).toBe(1000);
+    expect(r.bitsOrigin).toEqual({ day: DAY, free: 100, fromCredits: 1000, paidLeft: 1000 });
+    expect(noteCreditBits(r, 200, DAY).bitsOrigin).toEqual({ day: DAY, free: 100, fromCredits: 1200, paidLeft: 1200 });
   });
 
-  it('borda exata: 25% do grátis cabe; +1 não cabe', () => {
-    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 400, DAY); // 400 grátis → 100 de câmbio no dia
-    expect(creditExchangeRoom(s, DAY)).toBe(100);
-    const ok = applyCreditExchange(s, 100, DAY);
-    expect(ok.ok).toBe(true);
-    if (ok.ok) {
-      expect(ok.state.gamePoints).toBe(100);
-      expect(ok.state.bitsOrigin).toEqual({ day: DAY, free: 400, fromCredits: 100, paidLeft: 100 });
-      expect(creditExchangeRoom(ok.state, DAY)).toBe(0);
-      expect(applyCreditExchange(ok.state, 1, DAY)).toEqual({ ok: false, reason: 'over-cap', room: 0 }); // +1 reprova
-    }
-    expect(applyCreditExchange(s, 101, DAY)).toEqual({ ok: false, reason: 'over-cap', room: 100 });
+  it('quantia inválida não muda nada (devolve o MESMO objeto)', () => {
+    const s: EState = { gamePoints: 10 };
+    expect(noteCreditBits(s, 0, DAY)).toBe(s);
+    expect(noteCreditBits(s, -5, DAY)).toBe(s);
+    expect(noteCreditBits(s, NaN, DAY)).toBe(s);
   });
 
-  it('PROVA DE VERMELHO: sem o teto o pacote de 600 Bits passaria num dia de 400 grátis (com o teto, não)', () => {
-    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 400, DAY);
-    expect(creditExchangeRoom(s, DAY)).toBeLessThan(600);
-    expect(applyCreditExchange(s, 600, DAY).ok).toBe(false);
+  it('virar o dia zera o contador do dia e MANTÉM o Bit pago no saldo (compat: paidLeft não some)', () => {
+    const hoje = noteCreditBits({ gamePoints: 0 } as EState, 200, DAY);
+    expect(normalizeOrigin(hoje.bitsOrigin, 'Tue Oct 06 2026')).toEqual({ day: 'Tue Oct 06 2026', free: 0, fromCredits: 0, paidLeft: 200 });
   });
 
-  it('PR12a (§2.28 A): os 3 pacotes pequenos cabem no dia TÍPICO, e o maior é o que o dia típico comporta (não sobra pacote impossível)', () => {
-    const DIA_COMPLETO = 100, MINIJOGO_TETO = 150; // BITS_PER_COMPLETE_DAY, MINIGAME_BITS_PER_DAY (lidos do código)
-    const tipico = DIA_COMPLETO + MINIJOGO_TETO / 2; // 175 grátis
-    const cheio = DIA_COMPLETO + MINIJOGO_TETO; // 250 grátis
-    const sala = (livre: number) => creditExchangeRoom(noteFreeBits({ gamePoints: 0 } as EState, livre, DAY), DAY);
-    expect(sala(tipico)).toBe(43);
-    expect(sala(cheio)).toBe(62);
-    expect(BITS_EXCHANGE.map((p) => p.bits)).toEqual([10, 20, 40]);
-    for (const p of BITS_EXCHANGE) { expect(p.bits).toBeLessThanOrEqual(sala(tipico)); expect(p.bits).toBe(p.credits * 10); }
-    // o de 20 cabe já no piso (dia só de cuidado), o de 40 só a partir de 160 grátis
-    expect(creditExchangeRoom({}, DAY)).toBeGreaterThanOrEqual(20);
-    expect(sala(159)).toBeLessThan(40);
-    expect(sala(160)).toBeGreaterThanOrEqual(40);
-  });
-
-  it('dia sem ganho grátis ainda tem o piso (25 Bits); virar o dia reabre a conta e mantém o Bit pago no saldo', () => {
-    expect(creditExchangeRoom({}, DAY)).toBe(25);
-    const hoje = applyCreditExchange({ gamePoints: 0 } as EState, 25, DAY);
-    expect(hoje.ok).toBe(true);
-    if (hoje.ok) {
-      expect(creditExchangeRoom(hoje.state, DAY)).toBe(0);
-      expect(creditExchangeRoom(hoje.state, 'Tue Oct 06 2026')).toBe(25);
-      expect(normalizeOrigin(hoje.state.bitsOrigin, 'Tue Oct 06 2026').paidLeft).toBe(25);
-    }
-  });
-
-  it('lixo no registro vale zero e o saneamento descarta o que não tem forma', () => {
-    expect(creditExchangeRoom({ bitsOrigin: { day: DAY, free: NaN, fromCredits: -4, paidLeft: Infinity } as never }, DAY)).toBe(25);
+  it('lixo no registro: o saneamento descarta o que não tem forma', () => {
     expect(sanitizeBitsOrigin({ day: 3 })).toBeUndefined();
     expect(sanitizeBitsOrigin(null)).toBeUndefined();
     expect(sanitizeBitsOrigin({ day: DAY, free: 1e15, fromCredits: -1, paidLeft: 'x' })).toEqual({ day: DAY, free: 1e9, fromCredits: 0, paidLeft: 0 });
   });
 
-  it('os pacotes da loja existem e a conta de hoje diz qual cabe (cabem só os que o ganho grátis permite)', () => {
-    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 100, DAY); // 25 de espaço (dia só de cuidado)
-    const cabem = BITS_EXCHANGE.filter((p) => p.bits <= creditExchangeRoom(s, DAY)).map((p) => p.credits);
-    expect(cabem).toEqual([1, 2]); // PR12a: 10 e 20 Bits cabem em 25; o de 40 pede um dia de 160 grátis
-  });
-
-  it('o ganho grátis soma: Bit de minijogo conta, câmbio não', async () => {
+  it('o ganho grátis soma: Bit de minijogo conta, pacote de Crédito não', async () => {
     const { creditMinigameBits } = await import('./currencies');
     const g = creditMinigameBits({ gamePoints: 0 } as EState, 40, DAY);
     expect(g.bitsOrigin?.free).toBe(40);
-    const c = applyCreditExchange(g, 25, DAY);
-    expect(c.ok && c.state.bitsOrigin!.free).toBe(40);
+    expect(noteCreditBits(g, 200, DAY).bitsOrigin!.free).toBe(40);
   });
 });

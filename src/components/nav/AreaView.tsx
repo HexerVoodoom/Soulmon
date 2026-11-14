@@ -241,7 +241,7 @@ export interface AreaViewProps {
   credits: number;
   /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
   unlockedElements?: readonly string[];
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean>;
   /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
   essences?: Record<string, number>;

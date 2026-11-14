@@ -1,15 +1,15 @@
 /**
  * RENOMEAR NA HEXSMITH (11/11/2026, pedido do dono): o NOME do Soulmon (lápis) e o NOME DO ESPECIAL (chama) só se trocam AQUI, por
- * `HEX_RENAME_COST` Bits GANHOS. A troca é do SERVIDOR (`POST /api/save?action=hexRename`, `functions/api/_hexRename.js`): valida,
+ * `HEX_RENAME_COST` Bits (desde §373 o Bit de Crédito também paga). A troca é do SERVIDOR (`POST /api/save?action=hexRename`, `functions/api/_hexRename.js`): valida,
  * debita e grava numa escrita. Este módulo é a parte pura do cliente: forma do texto (a MESMA régua do especial: letras, números e
  * espaço, até 20, sem palavrão/contato), recusa e o espelho do que o servidor confirmou. Mudar o preço = mudar SÓ esta constante
  * (e a do servidor; `hexsmithRename.parity.test.js` trava as duas).
  */
 import { nomeEspecialValido, ESPECIAL_NOME_MAX } from '../../functions/api/_especialNomeRegra.js';
-import { earnedBits, type BitsOriginState } from './bitsOrigin';
+import { spendableBits, type BitsOriginState } from './bitsOrigin';
 import { spendBits } from './equipment';
 
-/** Preço de UMA troca de nome (Bits ganhos). Fácil de mudar: é só este número (e o espelho no servidor). */
+/** Preço de UMA troca de nome (Bits). Fácil de mudar: é só este número (e o espelho no servidor). */
 export const HEX_RENAME_COST = 200;
 export const HEX_RENAME_MAX = ESPECIAL_NOME_MAX;
 export type HexRenameKind = 'pet' | 'especial';
@@ -35,7 +35,7 @@ export function hexRenameRefusal(state: RenameState, kind: HexRenameKind, raw: s
   if (!nome) return 'invalid';
   const atual = kind === 'pet' ? state.soulmonMeta?.petName ?? '' : state.especialNome ?? '';
   if (nome === atual) return 'same';
-  if (earnedBits(state) < HEX_RENAME_COST) return 'bits';
+  if (spendableBits(state) < HEX_RENAME_COST) return 'bits';
   return undefined;
 }
 

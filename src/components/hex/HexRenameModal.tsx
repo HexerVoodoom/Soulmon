@@ -1,5 +1,5 @@
 /**
- * Modal de RENOMEAR da Hexsmith (11/11/2026): caixa de texto + custo (`HEX_RENAME_COST` Bits ganhos) + confirmação antes de gastar.
+ * Modal de RENOMEAR da Hexsmith (11/11/2026): caixa de texto + custo (`HEX_RENAME_COST` Bits) + confirmação antes de gastar.
  * A troca é do SERVIDOR (`cloudHexRename`): ele valida o nome, debita e grava; o cliente só aplica o que ele confirmou.
  * O `ModalSheet` cuida de modalDepth (a tela de trás esmaece) e do Voltar.
  */
@@ -7,7 +7,7 @@ import { useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Field, FieldWarn, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
 import { BitsAmount } from '../ui/BitsAmount';
-import { earnedBits } from '../../utils/bitsOrigin';
+import { spendableBits } from '../../utils/bitsOrigin';
 import { HEX_RENAME_COST, HEX_RENAME_MAX, hexRenameClean, hexRenameRefusal, type HexRenameKind } from '../../utils/hexsmithRename';
 import { HEX_RENAME_COPY, HEX_UI, tx } from '../../utils/hexsmithCopy';
 
@@ -52,7 +52,7 @@ export function HexRenameModal({ kind, language, gs, atual, aviso, ocupado, onCl
           : <p id="hex-rename-help" style={sm2Hint}>{tx(HEX_RENAME_COPY.rules, isPt)}</p>}
         <p data-hex-rename-cost className="sm2-hex-balance">
           <span>{tx(HEX_RENAME_COPY.cost, isPt)}</span>
-          <BitsAmount value={HEX_RENAME_COST} size={20} dim={earnedBits(gs) < HEX_RENAME_COST} unit={tx(HEX_UI.bitsEarned, isPt)} />
+          <BitsAmount value={HEX_RENAME_COST} size={20} dim={spendableBits(gs) < HEX_RENAME_COST} unit={tx(HEX_UI.bitsEarned, isPt)} />
           <span aria-hidden="true">{tx(HEX_UI.bitsEarned, isPt)}</span>
         </p>
         {mostraRecusa && recusa !== 'invalid' && <p data-hex-rename-refusal={recusa} style={sm2Hint}>{tx(HEX_RENAME_COPY.refusal[recusa], isPt)}</p>}

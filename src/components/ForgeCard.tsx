@@ -1,7 +1,7 @@
 /**
  * O Soulsmith (Vitra): as peças de equipamento, o nível de cada uma e o aprimoramento com MATERIAIS dos prédios (carregado `lazy`,
  * com a arte sob demanda). Decisão do dono (07/10/2026): o nível 1 vem da missão do prédio de origem; os níveis 2–5 se aprimoram aqui,
- * e a cada um a pessoa ESCOLHE entre duas opções (A = atributo do slot, B = o vizinho). A escolha é refazível com Bits GANHOS (ou
+ * e a cada um a pessoa ESCOLHE entre duas opções (A = atributo do slot, B = o vizinho). A escolha é refazível com Bits (ou
  * fragmentos). Todas as regras vêm de `utils/forge.ts` e `utils/forgeActions.ts`; a tela só mostra e chama os puros, e o mesmo
  * motivo que desabilita o botão é o que aparece em texto. Sem sorteio, sem cobrança, sem contagem que apressa.
  *
@@ -15,7 +15,7 @@ import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
 import { EQUIP_SLOTS, sanitizeEquipment } from '../utils/equipment';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
-import { earnedBits } from '../utils/bitsOrigin';
+import { spendableBits } from '../utils/bitsOrigin';
 import { BitsAmount } from './ui/BitsAmount';
 import { loadEquipArt } from '../utils/equipArt';
 import { forgeArtName } from '../utils/forgeVisual';
@@ -327,15 +327,15 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             <>
               <span className="sm2-stats-s" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {custoTexto(piece, alvo).map(({ m, n, have }) => <span key={m.id}><MaterialIcon id={m.id} emoji={m.icon} /> {isPt ? m.namePt : m.nameEn} {have}/{n}</span>)}
-                <span data-forge-bits-cost>{isPt ? 'Bits ganhos' : 'Earned Bits'} {earnedBits(view)}/{upgradeBitsCost(alvo - 1)}</span>
+                <span data-forge-bits-cost>Bits {spendableBits(view)}/{upgradeBitsCost(alvo - 1)}</span>
               </span>
               {refUp && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(refUp, isPt, alvo - 1)}</span>}
             </>
           )}
           {dialog.mode === 'redo' && (
             <p className="sm2-stats-s" style={{ margin: 0 }} data-forge-redo-note>
-              {isPt ? `Refazer custa ${precoBits} Bits ganhos jogando (ou ${REDO_FRAGMENTS} fragmentos). Os materiais gastos não voltam.` : `Redoing costs ${precoBits} Bits earned by playing (or ${REDO_FRAGMENTS} fragments). The spent materials do not come back.`}
-              {' '}{isPt ? `Bits ganhos: ${earnedBits(view)}. Fragmentos: ${eq.fragments}.` : `Earned Bits: ${earnedBits(view)}. Fragments: ${eq.fragments}.`}
+              {isPt ? `Refazer custa ${precoBits} Bits (ou ${REDO_FRAGMENTS} fragmentos). Os materiais gastos não voltam.` : `Redoing costs ${precoBits} Bits (or ${REDO_FRAGMENTS} fragments). The spent materials do not come back.`}
+              {' '}{isPt ? `Bits: ${spendableBits(view)}. Fragmentos: ${eq.fragments}.` : `Bits: ${spendableBits(view)}. Fragments: ${eq.fragments}.`}
               {(refBits && refFrag) ? ` ${forgeRefusalText(refBits, isPt)}` : ''}
             </p>
           )}

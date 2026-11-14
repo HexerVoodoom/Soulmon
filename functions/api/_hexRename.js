@@ -1,5 +1,5 @@
 /**
- * RENOMEAR NA HEXSMITH (11/11/2026): trocar o NOME do Soulmon (lápis) ou o NOME DO ESPECIAL (chama) custa `HEX_RENAME_COST` Bits GANHOS
+ * RENOMEAR NA HEXSMITH (11/11/2026): trocar o NOME do Soulmon (lápis) ou o NOME DO ESPECIAL (chama) custa `HEX_RENAME_COST` Bits (do saldo; desde §373 o Bit de Crédito também paga)
  * e é do SERVIDOR (`POST /api/save?id=&action=hexRename { kind, nome, baseRevision? }`): valida, debita e grava numa escrita só.
  * Espelho do cliente em `src/utils/hexsmithRename.ts` (`hexsmithRename.parity.test.js` trava o preço e a regra de forma).
  * O nome passa pela MESMA régua do apelido/especial (`nomeEspecialValido`: forma, contato, palavrão PT/EN) e pela de contato de `_coop.js`.
@@ -28,7 +28,7 @@ export function renameOnServer(stored, kind, nomeRaw, now = Date.now()) {
   if (atual === nome) return { ok: true, already: true, state: stored };
   const gp = num(stored.gamePoints);
   const paidLeft = num(stored.bitsOrigin?.paidLeft);
-  if (Math.max(0, gp - Math.min(gp, paidLeft)) < HEX_RENAME_COST) return { ok: false, reason: 'bits' };
+  if (gp < HEX_RENAME_COST) return { ok: false, reason: 'bits' };
   /** @type {Record<string, any>} */
   const next = { ...stored, gamePoints: gp - HEX_RENAME_COST };
   if (stored.bitsOrigin && typeof stored.bitsOrigin === 'object') {

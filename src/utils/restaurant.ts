@@ -12,13 +12,13 @@
  * Fronteiras (as regras de sempre, nenhuma nova):
  *  · O buff de COMBATE entra pelo canal único `combinedAttrBonus` (teto de 5% somando TODAS as fontes) e só vale no PvE local
  *    (Masmorra, Arena, Pesadelo): o Duelo/Torneio/Guerra são re-simulados no servidor sobre o save e não o enxergam.
- *  · Nada pago com dinheiro real alcança combate: o prato de combate pede material (não se compra) e só aceita Bits GANHOS
- *    (`earnedBits`); os de energia/regeneração gastam o Bit pago primeiro (`spendBitsPaidFirst`), como a loja.
+ *  · O prato de combate pede material (não se compra); os Bits de todos os pratos saem do saldo, gastando o Bit pago primeiro
+ *    (`spendBitsPaidFirst`), como a loja. Desde §373 o Bit vindo de Crédito também paga o prato de combate; o teto de 5% segura.
  *  · UM buff de 24 h por vez (cozinhar outro substitui) e no máximo `DISHES_PER_DAY` pratos por dia do jogador.
  *  · Recusa SEMPRE antes de debitar; `applyCook` reconfere tudo sobre o `prev` (footgun do updater inline) e é tudo-ou-nada.
  */
 import { eat, HUNGER_MAX, setEnergy, type HungerState } from './hunger';
-import { earnedBits, spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
+import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { spendEssences } from './essences';
 import { MATERIAL_CAP, type MaterialId, type BuildingQuestState } from './buildingQuests';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
@@ -51,7 +51,7 @@ export interface Dish {
 }
 
 /**
- * O CARDÁPIO. Balanço: os de COMBATE (+2%) custam 3 comidas + 1 material + 30–35 Bits GANHOS; os de ENERGIA NA HORA (+2/+3,
+ * O CARDÁPIO. Balanço: os de COMBATE (+2%) custam 3 comidas + 1 material + 30–35 Bits; os de ENERGIA NA HORA (+2/+3,
  * ou seja 2–3 h de regeneração) e de REGENERAÇÃO (+25%/+40% por 24 h) custam 2–3 comidas + 2–3 essências + 15–40 Bits.
  * Cada chef tem 2 de energia/regeneração por essência e 3 de combate (ATK, DEF, SPD) por material. Tabela: `docs/RESTAURANTE.md`.
  */
@@ -114,7 +114,7 @@ export interface CookState extends HungerState {
   playerDayTz?: PlayerDayAnchor;
 }
 
-export type CookRefusal = 'unknown' | 'not-today' | 'daily-cap' | 'no-food' | 'no-extra' | 'no-bits' | 'not-earned';
+export type CookRefusal = 'unknown' | 'not-today' | 'daily-cap' | 'no-food' | 'no-extra' | 'no-bits';
 
 export function extraOwned(s: CookState, extra: DishExtra): number {
   return extra.type === 'essence' ? (s.essences?.[extra.id] ?? 0) : (s.buildingQuests?.materials?.[extra.id] ?? 0);
@@ -128,7 +128,6 @@ export function cookRefusal(s: CookState, dishId: string, now: number): CookRefu
   for (const [emoji, n] of Object.entries(d.foods)) if ((s.foodInventory?.[emoji] ?? 0) < n) return 'no-food';
   if (extraOwned(s, d.extra) < d.extra.qty) return 'no-extra';
   if ((s.gamePoints ?? 0) < d.bits) return 'no-bits';
-  if (isCombatEffect(d.effect) && earnedBits(s) < d.bits) return 'not-earned';
   return undefined;
 }
 
@@ -159,13 +158,8 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
     if (left > 0) materials[d.extra.id] = left; else delete materials[d.extra.id];
     s = { ...s, buildingQuests: { ...bq, materials } };
   }
-  // Bits: combate só com Bit GANHO (o pago fica intacto); o resto gasta o pago primeiro, como a loja.
-  const gamePoints = s.gamePoints - d.bits;
-  if (isCombatEffect(d.effect)) {
-    s = { ...s, gamePoints, ...(s.bitsOrigin ? { bitsOrigin: { ...s.bitsOrigin, paidLeft: Math.min(s.bitsOrigin.paidLeft, gamePoints) } } : {}) };
-  } else {
-    s = spendBitsPaidFirst({ ...s, gamePoints }, d.bits);
-  }
+  // Bits: gasta o pago primeiro, como a loja (§373: o prato de combate também aceita o Bit vindo de Crédito).
+  s = spendBitsPaidFirst({ ...s, gamePoints: s.gamePoints - d.bits }, d.bits);
   // fome cheia
   s = eat(s, now, HUNGER_MAX);
   // efeito
@@ -188,15 +182,11 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
  * Mesmo efeito do prato cozinhado (`applyCook`: fome cheia + energia na hora ou buff), mas NÃO usa o chef do dia nem o teto de pratos
  * por dia (não é o Restaurante) e não toca comidas, essências ou materiais. Efeito de combate só com Bit GANHO, como no Restaurante.
  */
-export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, price: number, now: number): { state: T; refused?: 'unknown' | 'no-bits' | 'not-earned' } {
+export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, price: number, now: number): { state: T; refused?: 'unknown' | 'no-bits' } {
   const d = dishById(dishId);
   if (!d || !Number.isInteger(price) || price < 1) return { state: prev, refused: 'unknown' };
   if ((prev.gamePoints ?? 0) < price) return { state: prev, refused: 'no-bits' };
-  if (isCombatEffect(d.effect) && earnedBits(prev) < price) return { state: prev, refused: 'not-earned' };
-  const gamePoints = prev.gamePoints - price;
-  let s: T = isCombatEffect(d.effect)
-    ? { ...prev, gamePoints, ...(prev.bitsOrigin ? { bitsOrigin: { ...prev.bitsOrigin, paidLeft: Math.min(prev.bitsOrigin.paidLeft, gamePoints) } } : {}) }
-    : spendBitsPaidFirst({ ...prev, gamePoints }, price);
+  let s: T = spendBitsPaidFirst({ ...prev, gamePoints: prev.gamePoints - price }, price);
   s = eat(s, now, HUNGER_MAX);
   const restaurant: RestaurantState = { ...(s.restaurant ?? {}) };
   if (d.effect.kind === 'energy') {

@@ -67,7 +67,7 @@ describe('compra', () => {
     const modal = screen.getByRole('dialog', { name: 'How to get Bits' });
     // As regras REAIS, lidas das constantes: os minijogos (com o teto diário) e a troca de Créditos.
     expect(modal.querySelector('[data-how-to-earn-way="jogos"]')!.textContent).toContain('150');
-    expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('10 Bits per Credit');
+    expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('packs of 200, 500, 1000 Bits, up to 1000 Bits a day');
     expect(modal.textContent).toContain(`${bitsBg.nameEn} costs ${bitsBg.price} Bits.`);
     expect(container.innerHTML).not.toContain('danger');
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Got it' })); });
@@ -193,9 +193,11 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const { container } = abrirC();
     expect(screen.getByRole('tab', { name: 'Bits' }).getAttribute('aria-selected')).toBe('true');
     expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
-    const swap = screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' });
-    expect(swap.hasAttribute('disabled')).toBe(false);
-    expect(screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' }).hasAttribute('disabled')).toBe(true);
+    // §373: três pacotes lado a lado, preço em Créditos e desconto derivado; com 3 Créditos nenhum cabe
+    expect(screen.getByRole('button', { name: 'Pouch: 200 Bits for 200 Credits' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Purse: 500 Bits for 460 Credits, ~8% off' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Chest: 1000 Bits for 800 Credits, ~20% off' }).hasAttribute('disabled')).toBe(true);
+    expect(container.querySelector('[data-exchange-room]')!.textContent).toBe('Up to 1000 Bits a day in packs. 1000 Bits still fit today.');
     expect(container.querySelector('[data-shop-item]')).toBeNull();
   });
 

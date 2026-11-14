@@ -83,16 +83,17 @@ describe('D1 — confirmar a compra', () => {
     expect(screen.getByRole('dialog', { name: 'How to get Bits' })).toBeTruthy();
   });
 
-  it('a troca de Créditos também confirma antes de gastar', () => {
+  it('o pacote de Bits também confirma antes de gastar, e manda só o id do pacote', () => {
     const onExchangeCredits = vi.fn(async () => true);
-    renderWithCss(<CambistaSheet language="en-US" credits={32} onExchangeCredits={onExchangeCredits} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' }));
+    renderWithCss(<CambistaSheet language="en-US" credits={500} onExchangeCredits={onExchangeCredits} />);
+    expect(screen.getByRole('button', { name: 'Chest: 1000 Bits for 800 Credits, ~20% off' }).hasAttribute('disabled')).toBe(true); // 500 < 800
+    fireEvent.click(screen.getByRole('button', { name: 'Purse: 500 Bits for 460 Credits, ~8% off' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
     expect(onExchangeCredits).not.toHaveBeenCalled();
-    expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe('Swap 1 Credit for 10 Bits?');
-    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe('31 Credits');
+    expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe('Swap 460 Credits for 500 Bits?');
+    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe('40 Credits');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Confirm' }));
-    expect(onExchangeCredits).toHaveBeenCalledWith(1);
+    expect(onExchangeCredits).toHaveBeenCalledWith('bits-500');
   });
 });
 

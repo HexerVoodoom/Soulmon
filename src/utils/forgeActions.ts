@@ -3,12 +3,12 @@
  * cada uma reconfere a recusa sobre o `prev` que recebe e devolve a MESMA referência quando não muda nada (idempotente: dois toques
  * no mesmo lote não pagam duas vezes). As tabelas e o bônus moram em `forge.ts`; o canal único de 5% é `combate/bonus.ts`.
  *
- * Sem sorteio. Nada de Créditos nem dinheiro real: o único Bit que paga é o GANHO (`earnedBits`), e o material nunca fica negativo.
+ * Sem sorteio. Créditos não pagam direto; o Bit (ganho OU vindo de Crédito, §373) paga, gastando o pago primeiro, e o material nunca fica negativo.
  */
 
 import { sanitizeEquipment, discounted, equipPriceDiscount, type EquipmentState } from './equipment';
 import { stockOf, MATERIAL_CAP, LISTED_QUEST_BUILDINGS, visitBuilding, claimBuildingQuest, type BuildingQuestState, type MaterialId } from './buildingQuests';
-import { earnedBits, type BitsOrigin } from './bitsOrigin';
+import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
 import type { BuildingId } from './gates';
 import { bumpDailyIn } from './dailyMissions';
@@ -27,7 +27,7 @@ export interface ForgeGameState {
   talentPicks?: string[];
 }
 
-export type ForgeRefusal = 'unknown' | 'not-owned' | 'max-level' | 'bond' | 'no-materials' | 'bad-choice' | 'bad-level' | 'same' | 'no-funds' | 'not-earned' | 'no-fragments';
+export type ForgeRefusal = 'unknown' | 'not-owned' | 'max-level' | 'bond' | 'no-materials' | 'bad-choice' | 'bad-level' | 'same' | 'no-funds' | 'no-fragments';
 export type RedoPay = 'bits' | 'fragments';
 
 /** O custo em materiais do aprimoramento PARA o nível `to` (2..15): lista de [material, quantidade], sem as quantidades zero. */
@@ -53,11 +53,10 @@ export function upgradeRefusal(state: ForgeGameState, id: string): ForgeRefusal 
   const vinculo = bondLevelFor(state.totalXP ?? 0);
   if (vinculo < LEVEL_MIN_BOND[to]) return 'bond';
   for (const c of upgradeCost(piece, to)) if (stockOf(state.buildingQuests, c.material) < c.n) return 'no-materials';
-  // 💠 Bits do aprimoramento (REGISTRO §281): sem saldo, ou com saldo vindo de Crédito, recusa SUAVE (nada é consumido, a recusa vem antes de qualquer débito).
+  // 💠 Bits do aprimoramento (REGISTRO §281): sem saldo, recusa SUAVE (nada é consumido, a recusa vem antes de qualquer débito). §373: o Bit de Crédito paga.
   const price = upgradeBitsCost(level);
   const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
   if (bal < price) return 'no-funds';
-  if (earnedBits(state) < price) return 'not-earned';
   return undefined;
 }
 
@@ -82,7 +81,7 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   const picks = [...pieceChoices(id, level, prev.forge), choice];
   const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
   // Missão da Vitra (12/11/2026, REGISTRO §314): aprimorar 1 peça.
-  return { ok: true, state: bumpDailyIn({ ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge }, 'melhoria') };
+  return { ok: true, state: bumpDailyIn(spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge }, upgradeBitsCost(level)), 'melhoria') };
 }
 
 /** O preço em Bits de refazer uma escolha, com o Comércio (`tal-com-01`). */
@@ -101,12 +100,10 @@ export function redoRefusal(state: ForgeGameState, id: string, level: number, ch
   if (pay === 'fragments') return sanitizeEquipment(state.equipment).fragments < REDO_FRAGMENTS ? 'no-fragments' : undefined;
   const price = redoBitsPrice(id, state.talentPicks);
   const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
-  if (bal < price) return 'no-funds';
-  // Tem Bits, mas parte deles veio de Crédito: refazer só com Bit GANHO.
-  return earnedBits(state) < price ? 'not-earned' : undefined;
+  return bal < price ? 'no-funds' : undefined;
 }
 
-/** Refaz a escolha do `level` para `choice` pagando Bits ganhos ou fragmentos. Idempotente: repetir a mesma escolha é recusado (`same`). */
+/** Refaz a escolha do `level` para `choice` pagando Bits ou fragmentos. Idempotente: repetir a mesma escolha é recusado (`same`). */
 export function applyRedo<T extends ForgeGameState>(prev: T, id: string, level: number, choice: ForgeChoice, pay: RedoPay): { ok: true; state: T; price: number } | { ok: false; reason: ForgeRefusal } {
   const reason = redoRefusal(prev, id, level, choice, pay);
   if (reason) return { ok: false, reason };
@@ -120,7 +117,7 @@ export function applyRedo<T extends ForgeGameState>(prev: T, id: string, level: 
     return { ok: true, price: REDO_FRAGMENTS, state: { ...prev, forge, equipment: { ...eq, fragments: eq.fragments - REDO_FRAGMENTS } } };
   }
   const price = redoBitsPrice(id, prev.talentPicks);
-  return { ok: true, price, state: { ...prev, forge, gamePoints: (prev.gamePoints ?? 0) - price } };
+  return { ok: true, price, state: spendBitsPaidFirst({ ...prev, forge, gamePoints: (prev.gamePoints ?? 0) - price }, price) };
 }
 
 /**

@@ -18,18 +18,18 @@ describe('tickets do Treino (app)', () => {
     expect(sanitizeTreinoTickets({ played: 'x', extra: 1 })).toBeUndefined();
     expect(sanitizeTreinoTickets({ played: -3, extra: 99 })).toMatchObject({ played: 0, extra: 3 });
   });
-  it('recusa suave: sem teto de extras ou sem Bits GANHOS (Bit de Crédito não paga)', () => {
+  it('recusa suave: sem teto de extras ou sem saldo (§373: o Bit de Crédito paga)', () => {
     expect(treinoBuyRefusal(tk(20, 3), { gamePoints: 999 })).toBe('max-extras');
     expect(treinoBuyRefusal(tk(20, 0), { gamePoints: 29 })).toBe('no-bits');
-    expect(treinoBuyRefusal(tk(20, 0), { gamePoints: 100, bitsOrigin: { day: 'd', free: 0, fromCredits: 100, paidLeft: 80 } })).toBe('no-bits');
+    expect(treinoBuyRefusal(tk(20, 0), { gamePoints: 100, bitsOrigin: { day: 'd', free: 0, fromCredits: 100, paidLeft: 80 } })).toBeUndefined();
     expect(treinoBuyRefusal(tk(20, 0), { gamePoints: 30 })).toBeUndefined();
   });
-  it('cobra 30 Bits ganhos; sem saldo ganho devolve o MESMO objeto (nada consumido)', () => {
+  it('cobra 30 Bits (o pago primeiro); sem saldo devolve o MESMO objeto (nada consumido)', () => {
     expect(chargeTreinoTicket({ gamePoints: 100 }).gamePoints).toBe(70);
-    const pobre = { gamePoints: 100, bitsOrigin: { day: 'd', free: 0, fromCredits: 90, paidLeft: 90 } };
+    const pobre = { gamePoints: 29, bitsOrigin: { day: 'd', free: 0, fromCredits: 29, paidLeft: 29 } };
     expect(chargeTreinoTicket(pobre)).toBe(pobre);
     const ok = chargeTreinoTicket({ gamePoints: 130, bitsOrigin: { day: 'd', free: 0, fromCredits: 100, paidLeft: 100 } });
     expect(ok.gamePoints).toBe(100);
-    expect(ok.bitsOrigin!.paidLeft).toBe(100); // o Bit de Crédito segue intacto
+    expect(ok.bitsOrigin!.paidLeft).toBe(70); // §373: o Bit de Crédito paga, e sai primeiro
   });
 });

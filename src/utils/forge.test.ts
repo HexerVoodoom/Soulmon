@@ -230,8 +230,12 @@ describe('refazer a escolha', () => {
     expect(r.state.forge!.v).toBe(FORGE_SCHEMA);
     expect(r.state.buildingQuests!.materials.ore).toBe(3);
   });
-  it('Bit que veio de Crédito não paga (nunca paidLeft); sem Bits, recusa neutra', () => {
-    expect(redoRefusal(nivel3({ gamePoints: 1000, bitsOrigin: { day: 'd', free: 0, fromCredits: 900, paidLeft: 900 } }), 'eq-nucleo-t1', 2, 'a', 'bits')).toBe('not-earned');
+  it('§373: o Bit que veio de Crédito paga o refazer (gasto primeiro); sem Bits, recusa neutra', () => {
+    const credito = nivel3({ gamePoints: 1000, bitsOrigin: { day: 'd', free: 0, fromCredits: 900, paidLeft: 900 } });
+    expect(redoRefusal(credito, 'eq-nucleo-t1', 2, 'a', 'bits')).toBeUndefined();
+    const r = applyRedo(credito, 'eq-nucleo-t1', 2, 'a', 'bits');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.state.bitsOrigin!.paidLeft).toBe(900 - r.price);
     expect(redoRefusal(nivel3({ gamePoints: 10 }), 'eq-nucleo-t1', 2, 'a', 'bits')).toBe('no-funds');
   });
   it('com fragmentos; sem fragmentos recusa; repetir a mesma escolha é recusado (idempotente)', () => {
@@ -312,13 +316,12 @@ describe('💠 Bits do aprimoramento (REGISTRO §281)', () => {
     expect(prev.buildingQuests!.materials.ore).toBe(99);
     expect(prev.gamePoints).toBe(19);
   });
-  it('Bits vindos de Crédito não pagam (not-earned), como no equipamento; os ganhos pagam', () => {
+  it('§373: Bits vindos de Crédito pagam o aprimoramento (antes not-earned), gastos primeiro', () => {
     const credito = peca({ gamePoints: 100, bitsOrigin: { day: 'd', free: 0, fromCredits: 90, paidLeft: 90 } });
-    expect(upgradeRefusal(credito, 'eq-nucleo-t1')).toBe('not-earned');
+    expect(upgradeRefusal(credito, 'eq-nucleo-t1')).toBeUndefined();
     const misto = peca({ gamePoints: 110, bitsOrigin: { day: 'd', free: 0, fromCredits: 90, paidLeft: 90 } });
-    expect(upgradeRefusal(misto, 'eq-nucleo-t1')).toBeUndefined();
     const r = applyUpgrade(misto, 'eq-nucleo-t1', 'a');
-    expect(r.ok && r.state.bitsOrigin!.paidLeft).toBe(90);
+    expect(r.ok && r.state.bitsOrigin!.paidLeft).toBe(90 - upgradeBitsCost(1));
   });
   it('idempotente: o 2º toque no mesmo lote não cobra de novo', () => {
     const r1 = applyUpgrade(peca({ gamePoints: 25, buildingQuests: mats({ ore: UPGRADE_COST[2][0] }) }), 'eq-nucleo-t1', 'a');

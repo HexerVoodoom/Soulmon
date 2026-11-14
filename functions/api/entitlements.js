@@ -7,6 +7,7 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //   POST /api/entitlements?action=buy-essence   { id, element, qty: 1|5, opId }  ← CAMBISTA (§205)
+//   POST /api/entitlements?action=buy-bits      { id, pack, opId }  ← PACOTES DE BITS (§373; teto 1.000/dia UTC, `_bitsPacks.js`)
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
 //   POST /api/entitlements?action=rebirth-reset { id }       ← RENASCIMENTO (#62)
 //
@@ -63,6 +64,7 @@ import { bondLevelFor } from './_bond.js';
 import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
 import { verifiedBetaFull, betaFullPublicView } from './_betaFull.js';
+import { buyBitsPack, bitsBoughtToday, bitsPackLeftToday } from './_bitsPacks.js';
 
 /**
  * Teto por IP na cortesia. Amortecedor contra sonda de chave (ver
@@ -175,7 +177,10 @@ async function onRequestGetBruto({ request, env }) {
   const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
   const base = betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent);
   const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
-  return json({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
+  // §373: o que ainda cabe na troca de hoje. Só aparece quando a conta já trocou HOJE (sem isso o formato fica o de sempre e o
+  // cliente lê "dia inteiro livre").
+  const trocaHoje = bitsBoughtToday(ent) > 0 ? { bitsPackLeft: bitsPackLeftToday(ent) } : {};
+  return json({ ...view, ...trocaHoje, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 
 async function onRequestPostBruto({ request, env }) {
@@ -203,6 +208,10 @@ async function onRequestPostBruto({ request, env }) {
     : { ...(betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent)), admin: false };
 
   if (action === 'spend') {
+    // §373: a troca LIVRE "X Créditos por 10X Bits" acabou; a troca agora é por pacote (`buy-bits`), com câmbio e teto do servidor.
+    // Um cliente em cache que ainda pede a troca antiga recebe recusa clara SEM débito (aceitá-la deixaria o cliente creditar 10 Bits
+    // por Crédito, o câmbio velho, fora do teto). Nenhum outro `reason` muda.
+    if (body?.reason === 'exchange-bits') return json({ ok: false, reason: 'exchange-moved' }, 410);
     const amount = Number(body?.amount);
     if (admin) {
       // Admin NÃO debita: nada é escrito em `ent:` nem em `spend:`.
@@ -250,6 +259,19 @@ async function onRequestPostBruto({ request, env }) {
     if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
     log('essence-buy', saveId, { element, qty, price, admin });
     return json(out);
+  }
+
+  if (action === 'buy-bits') {
+    // PACOTES DE BITS (§373): o pacote, o preço em Créditos, o teto do dia e a idempotência são do servidor (`_bitsPacks.js`).
+    // O cliente só credita os `bits` desta resposta, e só quando `ok`.
+    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin });
+    if (!r.ok) {
+      log('bits-pack.refused', saveId, { reason: r.reason });
+      return json({ ok: false, reason: r.reason, ...(typeof r.leftToday === 'number' ? { leftToday: r.leftToday } : {}) }, r.status);
+    }
+    if (admin) logAdminSession('buy-bits');
+    log('bits-pack', saveId, { pack: r.pack, price: r.price, replay: !!r.replay, admin });
+    return json({ ok: true, pack: r.pack, bits: r.bits, price: r.price, leftToday: r.leftToday, ...(r.replay ? { replay: true } : {}), ...view(r.ent) });
   }
 
   if (action === 'rebirth-reset') {

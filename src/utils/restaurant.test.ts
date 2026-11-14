@@ -62,10 +62,12 @@ describe('Restaurante — cozinhar', () => {
     for (let i = 0; i < DISHES_PER_DAY; i++) s = applyCook(s, 'salada-viva', MON + i).state;
     expect(applyCook(s, 'salada-viva', MON + 9).refused).toBe('daily-cap');
   });
-  it('combate não aceita Bit vindo de Crédito', () => {
+  it('§373: o prato de combate também aceita Bit vindo de Crédito (gasto primeiro)', () => {
     const s = { ...full(), gamePoints: 40, bitsOrigin: { day: 'x', fromCredits: 30, paidLeft: 30 } } as CookState;
-    expect(cookRefusal(s, 'espetinho-de-vinha', MON)).toBe('not-earned');
+    expect(cookRefusal(s, 'espetinho-de-vinha', MON)).toBeUndefined();
     expect(cookRefusal(s, 'salada-viva', MON)).toBeUndefined();
+    const r = applyCook(s, 'espetinho-de-vinha', MON).state;
+    expect(r.bitsOrigin!.paidLeft).toBeLessThan(30);
   });
   it('buff de ATK entra pelo canal único e respeita o teto de 5%', () => {
     const s = applyCook(full(), 'espetinho-de-vinha', MON).state;

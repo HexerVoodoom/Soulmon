@@ -66,7 +66,7 @@ describe('hexRename: o servidor cobra e grava o nome', () => {
     expect(e.store.get(ID)).toBe(antes);
   });
 
-  it('saldo insuficiente (ou só Bits de Crédito): 402 e nada muda', async () => {
+  it('saldo insuficiente: 402 e nada muda; §373: só Bits de Crédito PAGA', async () => {
     const e = env();
     await req(e, '', { state: { ...base, gamePoints: HEX_RENAME_COST - 1 } });
     const antes = e.store.get(ID);
@@ -75,7 +75,7 @@ describe('hexRename: o servidor cobra e grava o nome', () => {
     expect(e.store.get(ID)).toBe(antes);
     const e2 = env();
     await req(e2, '', { state: { ...base, gamePoints: 1000, bitsOrigin: { day: '2026-11-01', free: 0, fromCredits: 1000, paidLeft: 1000 } } });
-    expect((await rename(e2, 'pet', 'Brasa')).status).toBe(402);
+    expect((await rename(e2, 'pet', 'Brasa')).status).toBe(200);
   });
 
   it('revisão velha = 409; sem save = 404', async () => {

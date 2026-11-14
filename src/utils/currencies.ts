@@ -14,8 +14,8 @@ import { noteFreeBits, type BitsOriginState } from './bitsOrigin';
 //                                          ÚNICA que libera gerar o pet próprio
 //
 // Créditos são universais no sentido de que dá para trocá-los por Bits
-// (ver CREDIT_TO_BITS) — mas o caminho contrário não existe, senão jogando
-// minijogo alguém chegaria ao que só o dinheiro real deveria abrir.
+// (pacotes `BITS_PACKS`, no Cambista) — mas o caminho contrário não existe,
+// senão jogando minijogo alguém chegaria ao que só o dinheiro real deveria abrir.
 
 export type CurrencyId = 'bits' | 'emblems' | 'credits';
 
@@ -137,28 +137,39 @@ export const CREDIT_COLOR = 'var(--sm2-credit-ink)';
 // ───────────────────────────────────────────────────────────────── câmbio
 
 /**
- * Quantos Bits cada Crédito vira. Só nesta direção.
+ * PACOTES DE BITS do Cambista, pagos em Créditos (REGISTRO §373, dono 14/11/2026). Fonte única no app; o SERVIDOR tem o espelho
+ * que vale (`functions/api/_bitsPacks.js`, travado por `functions/api/bitsPacks.parity.test.js`): ele decide os Bits de cada
+ * pacote, debita os Créditos e conta o teto do dia. O cliente só manda o `id` e credita os Bits que a resposta trouxer.
  *
- * A troca inversa (Bits → Créditos) NÃO existe de propósito: créditos são a
- * moeda que libera gerar o pet próprio, e permitir farmá-los em minijogo
- * anularia a única coisa que o dinheiro real compra com exclusividade.
- */
-export const CREDIT_TO_BITS = 10;
-
-/**
- * Pacotes de troca oferecidos na loja (PR12a, decisão do dono §2.28 A).
+ * Desconto progressivo (estilo Pokémon Sleep): o pacote de 200 é a referência (1 Crédito por Bit); os maiores saem mais baratos por
+ * Bit. A etiqueta de desconto é DERIVADA destes números (`bitsPackDiscountPct`), nunca escrita à mão.
  *
- * Os pacotes cabem no teto de 25% do ganho GRÁTIS do dia (`bitsOrigin.ts`). Medido no código: o dia completo rende
- * `BITS_PER_COMPLETE_DAY` (100) e o minijogo até `MINIGAME_BITS_PER_DAY` (150). Dia típico (dia completo + metade do minijogo)
- * = 175 grátis → espaço de 43 Bits; dia só de cuidado (100) → 25 (o piso de referência); dia cheio (250) → 62.
- * Pacotes 10/20/40: o de 10 cabe em qualquer dia, o de 20 cabe já no piso, o de 40 cabe no dia típico (≥ 160 grátis).
- * Os antigos 100/250/600 só cabiam em dias de 400/1.000/2.400 Bits grátis, que não existem.
+ * A troca é só nesta direção. A inversa (Bits → Créditos) NÃO existe de propósito: Créditos são a moeda que libera gerar o pet
+ * próprio, e permitir farmá-los em minijogo anularia a única coisa que o dinheiro real compra com exclusividade.
+ *
+ * ⚰️ `CREDIT_TO_BITS = 10` e `BITS_EXCHANGE` (1/2/4 Créditos → 10/20/40 Bits, teto de 25% do ganho grátis do dia) saíram em §373.
  */
-export const BITS_EXCHANGE = [
-  { credits: 1, bits: 1 * CREDIT_TO_BITS },
-  { credits: 2, bits: 2 * CREDIT_TO_BITS },
-  { credits: 4, bits: 4 * CREDIT_TO_BITS },
+export const BITS_PACKS = [
+  { id: 'bits-200', bits: 200, credits: 200 },
+  { id: 'bits-500', bits: 500, credits: 460 },
+  { id: 'bits-1000', bits: 1000, credits: 800 },
 ] as const;
+
+export type BitsPack = (typeof BITS_PACKS)[number];
+export type BitsPackId = BitsPack['id'];
+
+/** Teto de Bits comprados com Créditos por DIA (UTC, contado no servidor). O pacote de 1.000 usa o dia inteiro. */
+export const BITS_PACK_DAILY_CAP = 1000;
+
+export function bitsPackById(id: unknown): BitsPack | undefined {
+  return BITS_PACKS.find(p => p.id === id);
+}
+
+/** Desconto do pacote contra o de referência (o primeiro, sem desconto), em % inteiro arredondado. 0 = sem etiqueta. */
+export function bitsPackDiscountPct(pack: Pick<BitsPack, 'bits' | 'credits'>): number {
+  const base = BITS_PACKS[0].credits / BITS_PACKS[0].bits;
+  return Math.max(0, Math.round((1 - pack.credits / pack.bits / base) * 100));
+}
 
 /** Recompensa em Emblemas por partida de torneio. */
 export const EMBLEMS_PER_WIN = 3;
@@ -291,7 +302,7 @@ export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState
 ): T {
   const ganho = minigameBitsGranted(minigameBitsToday(prev, dayKey), amount);
   if (ganho <= 0) return prev;
-  // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (a base do teto de +25% do câmbio).
+  // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (só contagem desde §373: o teto da troca é do servidor).
   return noteFreeBits({
     ...prev,
     gamePoints: (prev.gamePoints ?? 0) + ganho,

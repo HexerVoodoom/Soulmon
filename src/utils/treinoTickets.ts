@@ -2,11 +2,11 @@
  * 🎫 TICKETS DO TREINO (aba Sparring do Torneio; dono, 10/11/2026). Todo DIA DO JOGADOR dá 1 ticket GRÁTIS = `TREINO_TICKET_MATCHES` (20)
  * partidas COM Honra (1–2 por vitória, teto de Honra do dia em `SPAR_HONOR_DAILY_CAP`). Passou das 20, só jogando com ticket EXTRA:
  * `TREINO_EXTRA_TICKET_BITS` (30) Bits = +20 partidas SEM Honra, no máximo `TREINO_EXTRA_TICKETS_MAX` (3) por dia (documentado: evita farm).
- * Só Bits GANHOS (regra de `bitsOrigin`, igual ao equipamento): nunca Créditos nem Bit de câmbio, e nenhuma vantagem paga.
+ * Paga com Bits do saldo (desde §373 o Bit vindo de Crédito também paga, gasto primeiro); Créditos nunca pagam direto.
  * O CONTADOR mora no SERVIDOR (`functions/api/_treino.js`, KV `sparTicket:<id>:<dia do jogador>`); o app só cobra os Bits depois do ok
  * do servidor. O Treino nunca ranqueia. Constantes espelhadas do servidor (paridade em `treino.parity.test.js`).
  */
-import { earnedBits, type BitsOriginState } from './bitsOrigin';
+import { spendableBits, spendBitsIfCovered, type BitsOriginState } from './bitsOrigin';
 
 export const TREINO_TICKET_MATCHES = 20;
 export const TREINO_EXTRA_TICKET_BITS = 30;
@@ -29,15 +29,14 @@ export function sanitizeTreinoTickets(raw: unknown): TreinoTickets | undefined {
 
 export type TreinoBuyRefusal = 'max-extras' | 'no-bits';
 
-/** Recusa suave da compra do extra (nada é cobrado). Só Bits GANHOS pagam. */
+/** Recusa suave da compra do extra (nada é cobrado). */
 export function treinoBuyRefusal(t: TreinoTickets, state: BitsOriginState): TreinoBuyRefusal | undefined {
   if (!t.canBuy) return 'max-extras';
-  if (earnedBits(state) < TREINO_EXTRA_TICKET_BITS) return 'no-bits';
+  if (spendableBits(state) < TREINO_EXTRA_TICKET_BITS) return 'no-bits';
   return undefined;
 }
 
-/** Cobra os 30 Bits ganhos (reconfere sobre `prev`: dois toques no mesmo lote não compram com o saldo de um). Recusa devolve o MESMO objeto. */
+/** Cobra os 30 Bits (reconfere sobre `prev`: dois toques no mesmo lote não compram com o saldo de um). Recusa devolve o MESMO objeto. */
 export function chargeTreinoTicket<T extends BitsOriginState>(prev: T): T {
-  if (earnedBits(prev) < TREINO_EXTRA_TICKET_BITS) return prev;
-  return { ...prev, gamePoints: (prev.gamePoints ?? 0) - TREINO_EXTRA_TICKET_BITS };
+  return spendBitsIfCovered(prev, TREINO_EXTRA_TICKET_BITS);
 }

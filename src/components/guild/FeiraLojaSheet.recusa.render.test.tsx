@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * FEIRA DE VERDADE, recusa do app ANTES do servidor (QA 2026-11-11, médios 1 e 2): o servidor marca "comprado" na hora; se o app
- * ia recusar (material no teto, prato de combate pago só com Bit de Crédito), a folha NÃO chama o servidor — a oferta continua.
+ * ia recusar (material no teto; prato sem saldo), a folha NÃO chama o servidor — a oferta continua. §373: o Bit de Crédito paga o prato.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
@@ -38,12 +38,11 @@ describe('FeiraLojaSheet: o app recusa antes do servidor', () => {
     expect(document.querySelector('[data-feira-loja-buy="material:ore"]')).toBeTruthy(); // não virou "Yours"
   });
 
-  it('prato de combate com saldo só de Crédito: não chama o servidor', async () => {
+  it('§373: prato de combate com saldo só de Crédito CHAMA o servidor (antes recusava no app)', async () => {
     const state = { gamePoints: 500, foodInventory: {}, bitsOrigin: { day: '', free: 0, fromCredits: 500, paidLeft: 500 } };
     const { buy } = montar(loja('dish:espetinho-de-vinha', 'dish'), state);
     await comprar('dish:espetinho-de-vinha');
-    await waitFor(() => expect(screen.getByText(/Nothing was spent/i)).toBeTruthy());
-    expect(buy).not.toHaveBeenCalled();
+    await waitFor(() => expect(buy).toHaveBeenCalledTimes(1));
   });
 
   it('compra aceita chama o servidor UMA vez mesmo com clique duplo no Confirmar', async () => {

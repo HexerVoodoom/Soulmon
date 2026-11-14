@@ -101,8 +101,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in the Bond Sanctum, equipment at the Soulsmith in the Forge. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought.`,
-    descPt: `Talentos (três caminhos) ficam no Santuário do Vínculo; equipamento, no Soulsmith (na Forja). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteados nem comprados.`,
+    descEn: `Talents (three paths) live in the Bond Sanctum, equipment at the Soulsmith in the Forge. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, whether the Bits were earned or bought; never drawn.`,
+    descPt: `Talentos (três caminhos) ficam no Santuário do Vínculo; equipamento, no Soulsmith (na Forja). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, com Bits ganhos ou comprados; nunca sorteados.`,
   },
   {
     icon: '🍽️', en: 'Meal check-ins', pt: 'Convites das refeições',

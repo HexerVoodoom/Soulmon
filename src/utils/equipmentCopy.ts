@@ -31,9 +31,6 @@ export function itemName(slot: EquipSlot, tier: 1 | 2 | 3, isPt: boolean): strin
 export function refusalText(r: EquipRefusal, isPt: boolean): string {
   switch (r) {
     case 'no-funds': return isPt ? 'Ainda faltam Bits. Eles chegam jogando.' : 'Not enough Bits yet. They come from playing.';
-    case 'not-earned': return isPt
-      ? 'Equipamento só se compra com Bits que você ganhou jogando. Os Bits vindos de Créditos servem para outras coisas.'
-      : 'Equipment is only bought with Bits you earned by playing. Bits that came from Credits are for other things.';
     case 'no-fragments': return isPt ? 'Ainda faltam fragmentos. Eles vêm das descidas completas da Fenda.' : 'Not enough fragments yet. They come from completed Endless Rift runs.';
     case 'backpack-full': return isPt
       ? 'Os Arquivos estão cheios. Equipar uma peça no lugar de outra não ocupa espaço novo; o talento Bolsa com alça abre mais lugar.'

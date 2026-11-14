@@ -276,7 +276,7 @@ export const getSparOpponents = (id: string, tz?: SparTz) =>
   call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(tz); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
 export const startSpar = (id: string, opponentId: string, tz?: SparTz) =>
   call<{ seed: number; me: DuelSide; opp: DuelSide; tickets?: unknown }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador(tz) } });
-/** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits ganhos só se vier `ok`. */
+/** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits só se vier `ok`. */
 export const buySparTicket = (id: string, tz?: SparTz, phase?: 'reserve' | 'confirm') =>
   call<{ tickets: unknown; reserved?: boolean }>('sparBuyTicket', { method: 'POST', body: { id, ...(phase ? { phase } : {}), ...diaDoJogador(tz) } });
 /**

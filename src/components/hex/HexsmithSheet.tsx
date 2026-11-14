@@ -18,7 +18,7 @@ import { Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '.
 import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
-import { earnedBits } from '../../utils/bitsOrigin';
+import { spendableBits } from '../../utils/bitsOrigin';
 import { elementComposition, elementsMatchingBases, isPotionUnlocked, potionKey, POTION_COSTS } from '../../utils/elementPotion';
 import { potionArt } from '../../utils/potionArt';
 import { InfoTip } from '../ui/InfoTip';
@@ -247,7 +247,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const isEl = HEX_ELEMENT_SLOTS.includes(slot);
   const mine = hx.owned.filter((id) => parseHexItem(id)!.slot === slot);
   const equipped = hx.equipped[slot];
-  const bits = earnedBits(gs);
+  const bits = spendableBits(gs);
   const frags = gs.equipment?.fragments ?? 0;
 
   const catalog = useMemo(() => {

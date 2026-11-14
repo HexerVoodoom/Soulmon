@@ -97,7 +97,7 @@ const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0
 
 /**
  * A FORJA no servidor (REGISTRO §216, ação `POST /api/save?id=&action=hexForge`): lê o save GRAVADO, confere o saldo com `HEX_COSTS`
- * (poções do elemento, `equipment.fragments`, Bits GANHOS = `gamePoints` menos o `bitsOrigin.paidLeft`), debita e entrega o item.
+ * (poções do elemento, `equipment.fragments`, Bits do saldo `gamePoints` — desde §373 o Bit de Crédito também paga), debita e entrega o item.
  * Espelho de `forgeHexItem` (`src/utils/hexsmith.ts`; `hexsmith.parity.test.js` compara). Item já possuído = `already`, sem cobrança.
  * @param {Record<string, any>} stored  o state gravado
  * @param {unknown} itemId
@@ -117,7 +117,7 @@ export function forgeOnServer(stored, itemId) {
   if (c.fragments > 0 && frag < c.fragments) return { ok: false, reason: 'fragments' };
   const gp = num(stored.gamePoints);
   const paidLeft = num(stored.bitsOrigin?.paidLeft);
-  if (c.bits > 0 && Math.max(0, gp - Math.min(gp, paidLeft)) < c.bits) return { ok: false, reason: 'bits' };
+  if (c.bits > 0 && gp < c.bits) return { ok: false, reason: 'bits' };
   const next = { ...stored };
   if (c.potions > 0) {
     const foodInventory = { ...food, [k]: num(food[k]) - c.potions };

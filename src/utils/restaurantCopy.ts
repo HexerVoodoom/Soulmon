@@ -44,7 +44,6 @@ export function refusalText(r: CookRefusal, isPt: boolean): string {
     case 'no-food': return isPt ? 'Ainda faltam comidas na pastinha. Elas vêm das atividades concluídas.' : 'A few foods are still missing. They come from finished activities.';
     case 'no-extra': return isPt ? 'Ainda falta o ingrediente especial.' : 'The special ingredient is still missing.';
     case 'no-bits': return isPt ? 'Ainda faltam Bits.' : 'Not enough Bits yet.';
-    case 'not-earned': return isPt ? 'Prato de combate só com Bits ganhos jogando.' : 'Combat dishes take only Bits earned by playing.';
   }
 }
 
