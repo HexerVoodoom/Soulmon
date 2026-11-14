@@ -198,7 +198,7 @@ import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
-import { PRIVACY_VERSION, TERMS_VERSION, buildConsentRecord, isConsentCurrent } from './utils/consent';
+import { PRIVACY_VERSION, TERMS_VERSION, buildConsentRecord } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
 import { useOcioso } from './hooks/useOcioso';
@@ -321,7 +321,7 @@ import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
 const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
 const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
-import { deveTocarIntro } from './components/onboarding/intro/introGate';
+import { mostraVideoDeMarca, tocaCinematicaInicial, exigeTermo } from './utils/embedGates';
 const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
 import { initialStageForNewSave } from './utils/bbStage';
@@ -940,7 +940,7 @@ function paneFor(view: ViewType, labTab: LabTab): Pane {
 export default function App() {
   useEffect(() => watchModalLayer(), []); // modal sempre acima do voltar da página (ver utils/modalLayer.ts)
   const { gameState, setGameState } = useGameState();
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(() => mostraVideoDeMarca()); // /embed: sem vídeo de marca (embedGates.ts)
   const [currentView, setCurrentView] = useState<ViewType>('home');
   // FEIRA DO CHEFE (docs/PLANO-FEIRA-CHEFE.md): o evento que a VOLTA da Missão encontrou. Em memória (a sala da Feira reabre a folha);
   // `null` com a Feira desligada/servidor antigo — e então nada disto acontece.
@@ -1022,7 +1022,7 @@ export default function App() {
   }, [guildaOpen, gameState.mercMission]);
   const confirmarMercenario = useCallback(() => { void import('./utils/mercMission').then(m => setGameState(prev => m.concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz)))); }, []);
   /* Opening pré-login (1ª abertura de quem é novo, com Pular; independe do ONBOARDING_VELADO) e "Ver abertura" das Configurações. */
-  const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
+  const [introCinePendente, setIntroCinePendente] = useState(() => tocaCinematicaInicial(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE))); // /embed: sem cinemática
   const [reverIntro, setReverIntro] = useState(false);
   /* Idioma já escolhido? ESTADO, não leitura do localStorage no render (bug 13/11/2026): o `language` nasce 'en-US', então tocar
      English era `setLanguage('en-US')` sem mudança, o React não re-renderizava e o seletor só saía no próximo render de outra causa. */
@@ -7861,7 +7861,8 @@ export default function App() {
   /* REACEITE (QA-13, REGISTRO §185): quem já passou do onboarding mas não consentiu à versão ATUAL dos
      documentos (save antigo sem registro, ou aceite de versão anterior) fica nesta tela até aceitar. Grava o
      registro da versão atual; o banner informativo (#24) deixa de aparecer porque o consentimento passa a ser vigente. */
-  if (!isConsentCurrent(gameState.consent)) {
+  // /embed (13/11/2026): sem termo e SEM gravar consentimento — no embed nada sai do aparelho (embedGates.ts).
+  if (exigeTermo(gameState.consent)) {
     return (
       <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}

@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
 import { authHeaders } from './auth';
 import { dayKeyToIso } from './playerDay';
+import { isEmbedMode } from './embedMode';
 import type { ServerMeals } from './mealRhythm';
 import type { ServerSleep } from './restWindow';
 import type { ServerSkip, ServerPoop } from './petPushEvents';
@@ -166,6 +167,7 @@ export const subscribeToPush = async (
   /** Agenda de cocô do dia (`serverPoopPayload`): o worker avisa com o app fechado. */
   poop?: ServerPoop | null,
 ): Promise<boolean> => {
+  if (isEmbedMode()) return false; // /embed: nenhuma inscrição de push sai (embedMode.ts)
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (!webNotificationGranted()) return false;
 
@@ -266,6 +268,7 @@ export const registerForPushNotifications = async (
   /** Agenda de cocô do dia — ver `subscribeToPush`. */
   poop?: ServerPoop | null,
 ): Promise<boolean> => {
+  if (isEmbedMode()) return false; // /embed: nenhum token de push sai (embedMode.ts)
   if (Capacitor.getPlatform() !== 'android') return false;
   fcmPoop = poop ?? null;
   fcmSleep = sleep ?? null;

@@ -676,7 +676,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `language`, `onAccept`.
 **Exports:** `ConsentGate({ language, onAccept })`.
 **Estado/efeitos relevantes:** `useState` da caixa de aceite; o botão só liga com a caixa marcada; links de Termos/Privacidade abrem em aba nova. Quem grava `buildConsentRecord()` é o `src/App.tsx`, aqui só se desenha.
-**Chamado por:** `src/App.tsx` quando o save não tem consentimento da versão atual (`isConsentCurrent`).
+**Chamado por:** `src/App.tsx` quando o save não tem consentimento da versão atual (`exigeTermo` de `utils/embedGates.ts` = `!isConsentCurrent`), MENOS no `/embed` (13/11/2026, REGISTRO §360: a demo do portfólio não mostra termo e não envia nada).
 
 ### `src/components/ConfirmDialog.tsx`
 **Dono de:** diálogo de confirmação genérico (ModalSheet), com variante `destructive` para ações que apagam algo de verdade.

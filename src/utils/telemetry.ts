@@ -61,6 +61,8 @@ import { readLocal, writeLocal, removeLocal, readJson, writeJson, readFlagState 
 // A ÚNICA chave do app (e não da telemetria) que este módulo lê. Ela é lida,
 // nunca escrita: quem manda no som é `utils/sounds.ts`; aqui só se mede.
 import { STORAGE_KEYS } from './storageKeys';
+// Módulo folha: o predicado do embed (a demo do portfólio não envia nada).
+import { isEmbedMode } from './embedMode';
 
 // ---------------------------------------------------------------------------
 // Contrato de eventos
@@ -826,6 +828,10 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
  * aceitável é o conjunto: sem conteúdo, sem identidade, e desligável de verdade.
  */
 export function isTelemetryEnabled(): boolean {
+  // EMBED (13/11/2026): a demo do portfólio pula o termo de consentimento, e a condição
+  // do dono foi NADA sair. Guard duro, antes da preferência: `track`, `flush`, crash e
+  // tempo de uso passam todos por aqui. Termo pulado NUNCA conta como consentido.
+  if (isEmbedMode()) return false;
   return readLocal(K_ENABLED) !== 'false';
 }
 

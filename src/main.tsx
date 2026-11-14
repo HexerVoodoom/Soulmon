@@ -18,6 +18,11 @@
   import { iniciarMusica } from './utils/musica';
   import { installGlobalCrashHandlers } from './utils/crashReport';
   import { BetaClosedGate } from './components/BetaClosedGate';
+  import { installEmbedNetworkGuard } from './utils/embedMode';
+
+  // /embed (demo do portfólio): sem termo, então NADA sai — corta `/api/*` e beacon
+  // antes de qualquer provider ou handler de crash (ver `utils/embedMode.ts`). Fora do embed é no-op.
+  installEmbedNetworkGuard();
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois

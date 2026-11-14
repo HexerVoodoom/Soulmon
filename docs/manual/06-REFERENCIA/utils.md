@@ -443,11 +443,22 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** O predicado `isEmbedMode()` — "estou em `/embed`, embutido no portfólio do dono?" (11/10/2026). Módulo FOLHA. O critério é o caminho EXATO `/embed` (não `/embed/`, que não casa a regra de `public/_headers`), o mesmo que `public/sw.js` enxerga.
 **Exports:**
 - `EMBED_PATH` (= `/embed`) / `function isEmbedPath(pathname)` (puro, testável) / `function isEmbedMode()` (lê `window.location`, nunca lança).
-**Chamado por:** `src/App.tsx` (não pede permissão de notificação), `src/components/SoulmonOnboarding.tsx` (abre direto na escolha da DEMO, sem portão de login)
-**Régua:** `embedMode.test.ts`, `src/security/csp.test.ts` (o frame-ancestors só de `/embed`).
+- `function installEmbedNetworkGuard()` (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)) — só no embed, chamado no boot por `src/main.tsx` antes de qualquer provider: troca `window.fetch` para devolver 503 local a TODA chamada `/api/*` e `navigator.sendBeacon` para devolver `false`. Fora do embed devolve `false` e não instala nada. `EMBED_BLOCKED_API` (a regex) e `resetEmbedGuardForTest()`.
+**Chamado por:** `src/main.tsx` (o guard de rede), `src/App.tsx` (não pede permissão de notificação), `src/components/SoulmonOnboarding.tsx` (abre direto na escolha da DEMO, sem portão de login), `src/utils/telemetry.ts` (`isTelemetryEnabled` é `false` no embed), `src/utils/notifications.ts` (`subscribeToPush`/`registerForPushNotifications` não inscrevem no embed), `src/utils/embedGates.ts`.
+**Régua:** `embedMode.test.ts`, `embedPrivacy.test.ts` (no embed nenhuma chamada a métricas/crash/conta/save/push chega à rede; fora dele tudo como antes), `src/security/csp.test.ts` (o frame-ancestors só de `/embed`).
 **Avisos do arquivo:**
+- ⚠️ No embed NÃO há termo de consentimento e NADA é gravado como consentimento: a condição do dono para pular o termo foi que nenhum dado saia (telemetria, crash, conta/login, nuvem, push, dado de visitante). Quem mexer na telemetria não pode tratar "termo pulado" como "consentiu".
 - ⚠️ `/embed` tem cabeçalhos próprios (`! X-Frame-Options`, CSP re-declarada só com `frame-ancestors` do portfólio). O `sw.js` não intercepta essa navegação: um index.html em cache carregaria `DENY`.
 **Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/embedGates.ts`
+**Dono de:** Os três portões de abertura que o embed pula (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): o vídeo de marca (`IntroScreen`), a cinemática da 1ª abertura (`IntroCinematica`) e o termo de consentimento (`ConsentGate`). Funções puras com `embed` por parâmetro (padrão `isEmbedMode()`).
+**Exports:**
+- `mostraVideoDeMarca(embed?)` — `!embed`. / `tocaCinematicaInicial(onboardingCompleto, embed?)` — `!embed && deveTocarIntro(...)`. / `exigeTermo(consent, embed?)` — `!embed && !isConsentCurrent(consent)`.
+**Chamado por:** `src/App.tsx` (estado inicial de `showIntro` e `introCinePendente`, e o `if` do `ConsentGate`).
+**Régua:** `embedPrivacy.test.ts` (os dois modos).
+**Avisos do arquivo:**
+- ⚠️ Pular o termo não grava `consent`; o seletor de idioma da 1ª abertura já era pulado no embed antes (`App.tsx`/`SoulmonOnboarding.tsx`: inglês por `resolveLanguage`) e segue assim.
 
 ### `src/utils/dayKeyLabel.ts`
 **Dono de:** A data CURTA de um `dayKey` do jogador para as coleções — "12/09" em PT, "Sep 12" em EN. Nasceu como `dataCurta` no `AdventureDiary` e virou casa única quando o Dex ganhou "#NN · data" (canvas Pet, P2).
@@ -3725,7 +3736,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `function buildBatch(id: string, events: TelemetryRecord[]): TelemetryBatch` — Monta o corpo do lote. Nada além de `v`, `id` e os registros já saneados.
 - `TelemetryConsentCopy` (interface) — campos: `title`, `sent`, `never`, `toggleLabel`, `footnote`.
 - `function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryConsentCopy` — O texto do opt-out. Regra do repositório: todo texto de UI nasce em inglês e o par PT-BR vem junto. Ele descreve o que o código faz — e o código é a allowlist logo acima.
-- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada.
+- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada. **No `/embed` é SEMPRE `false`** (guard duro antes da preferência, 13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): a demo do portfólio pula o termo, e termo pulado nunca conta como consentido.
 - `function setTelemetryEnabled(on: boolean): void` — Liga/desliga. Desligar APAGA a fila — deixar bytes esperando seria enganação.
 - `function telemetryId(): string` — Pseudônimo local. 32 hex de `crypto.getRandomValues` — NÃO derivado de e-mail, de saveId nem de nada do usuário, e por isso não religável à conta.
 - `function setTelemetryTier(tier: 'demo' | 'paid' | null | undefined): void` — Declara o TIER da conta. Chame uma vez, de um efeito sobre `gameState.accountTier` — e em nenhum outro lugar. Por que ambiente e não prop de call site: o tier é a mesma resposta para TODOS os eventos, vinda de uma fonte única (`gameState.accountTier`).
