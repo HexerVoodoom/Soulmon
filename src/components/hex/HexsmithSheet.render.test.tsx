@@ -168,11 +168,11 @@ describe('HexsmithSheet', () => {
     }
   });
 
-  it('coroa por família: sem coroa-<familia>.png, cai na coroa única (slot-coroa.png)', () => {
+  it('coroa por família: cada família mostra a própria coroa-<familia>.png (a coroa única só é reserva)', () => {
     abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
     const img = q('[data-hex-slot="coroa"]').querySelector('img')!;
     expect(img.getAttribute('data-hex-crown')).toBe('dot');
-    expect(img.getAttribute('src')).toMatch(/slot-coroa/);
+    expect(img.getAttribute('src')).toMatch(/coroa-dot/);
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {
