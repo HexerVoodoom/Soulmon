@@ -214,6 +214,10 @@ export interface Activity {
    *  desmarcadas todo dia, então o contador zera sozinho quando o dia do jogador muda. */
   stepXpPaid?: number;
   stepXpDay?: string;
+  /** ISO de quando a atividade NASCEU (gravado no portão `commitHabitCreate`, §371). Opcional: save antigo não tem e lê como
+   *  "não nasceu hoje". Serve para o hábito criado antes da reafirmação do dia aparecer na hora e para a âncora do
+   *  "a cada N dias" contado do calendário sem histórico (`habitRhythm.ts`). */
+  createdAt?: string;
 }
 
 /**
