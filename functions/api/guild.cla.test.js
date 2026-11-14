@@ -69,7 +69,7 @@ describe('rotas do clã: praça', () => {
 describe('rotas do clã: dia do servidor, não do cliente', () => {
   const d = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
   // D2 (dono, 01/11/2026): a função do dia é ATRIBUÍDA pelo servidor (1 'protect' por clã/dia), sem moeda.
-  it('alternar dayKey D-1/D/D+1 não dá 2º presente, 2ª rega/proteção nem fura o teto do mistério', async () => {
+  it('alternar dayKey D-1/D/D+1 não dá 2º presente nem 2ª rega/proteção', async () => {
     const { e, idB } = await setup();
     const chaves = [d(-1), d(0), d(1)];
     const st = [];
@@ -85,12 +85,6 @@ describe('rotas do clã: dia do servidor, não do cliente', () => {
     const pr = [];
     for (const k of chaves) pr.push((await post(e, kB === 'water' ? 'claRegar' : 'claProteger', { id: B, dayKey: k })).status);
     expect(pr.sort()).toEqual([200, 409, 409]);
-    let contou = 0;
-    for (let i = 0; i < 15; i++) {
-      const r = await post(e, 'claMisterioTarefa', { id: A, taskId: `t${i}`, dayKey: chaves[i % 3] });
-      if (r.json.counted) contou++;
-    }
-    expect(contou).toBe(10);
   });
 
   it('cada membro recebe uma função; exatamente 1 protect, e ninguém fica preso a uma proteção já gasta', async () => {
@@ -142,17 +136,23 @@ describe('rotas do clã: sorteio da ação do dia (L5-D2)', () => {
   });
 });
 
-describe('rotas do clã: mistério', () => {
-  it('envio único, tarefa idempotente, taskId inválido 400, resgate sem barra cheia 404', async () => {
+describe('rotas do clã: mistério ENCERRADO (Antislop P1, D2, REGISTRO §374)', () => {
+  // O Mistério saiu do app em 27/10/2026 (`3b2332f5`); as rotas seguiam vivas e aceitavam `taskId` inventado (até 10/dia).
+  // Agora respondem `404 gone` SEM tocar o KV. NÃO é 410: no app, `guildCall` lê QUALQUER 410 como "conta excluída" e
+  // encerra a sessão (`reagirContaExcluida`), e o bundle de antes de 27/10 chama `claMisterioTarefa` a cada tarefa concluída.
+  const ROTAS = [['claMisterio', 'GET'], ['claMisterioEnviar', 'POST'], ['claMisterioTarefa', 'POST'], ['claMisterioClaim', 'POST']];
+  it('as 4 rotas respondem 404 `gone` e não gravam nada no KV', async () => {
     const { e } = await setup();
-    expect((await post(e, 'claMisterioEnviar', { id: A })).json.misterio.mine.sent).toBe(true);
-    expect((await post(e, 'claMisterioEnviar', { id: A })).status).toBe(409);
-    const t1 = await post(e, 'claMisterioTarefa', { id: B, taskId: 'task-1' });
-    expect(t1.json).toMatchObject({ counted: true });
-    expect(t1.json.misterio.bar).toBe(1);
-    expect((await post(e, 'claMisterioTarefa', { id: B, taskId: 'task-1' })).json).toMatchObject({ counted: false, reason: 'duplicate' });
-    expect((await post(e, 'claMisterioTarefa', { id: B, taskId: 'a b' })).status).toBe(400);
-    expect((await post(e, 'claMisterioClaim', { id: A })).status).toBe(404);
-    expect((await get(e, 'claMisterio', A)).json.misterio.investigating).toBe(1);
+    const antes = [...e.DIGIAPP_SAVES.store.keys()].filter(k => k.startsWith('claMis')).length;
+    for (const [rota, metodo] of ROTAS) {
+      const r = metodo === 'GET' ? await get(e, rota, A) : await post(e, rota, { id: A, taskId: 'task-1' });
+      expect(r.status, rota).toBe(404);
+      expect(r.json.error, rota).toBe('gone');
+    }
+    expect([...e.DIGIAPP_SAVES.store.keys()].filter(k => k.startsWith('claMis')).length).toBe(antes);
+  });
+  it('nunca 410 (o app trataria como conta excluída e deslogaria quem usa bundle antigo)', async () => {
+    const { e } = await setup();
+    for (let i = 0; i < 3; i++) expect((await post(e, 'claMisterioTarefa', { id: B, taskId: `t${i}` })).status).not.toBe(410);
   });
 });
