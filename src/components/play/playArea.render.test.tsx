@@ -181,12 +181,12 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(getByRole('button', { name: 'Como funciona a Fenda' }));
     // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
     expect(folha.textContent).not.toContain('Pode cair');
-    expect(folha.textContent).not.toContain('4→12');
+    expect(folha.textContent).not.toContain('2→6');
     const painel = document.querySelector('[data-info-tip-panel]')!;
     expect(painel.textContent).toMatch(/nunca custa corações/);
     expect(painel.textContent).toContain('Pode cair');
     expect(painel.querySelectorAll('[data-masmorra-drops] li')).toHaveLength(4);
-    expect(painel.textContent).toContain('4→12');
+    expect(painel.textContent).toContain('2→6'); // §372: bônus de camada 2→6 (×0,2; era 4→12)
     // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
     expect(folha.querySelectorAll('ol li')).toHaveLength(0);
   });

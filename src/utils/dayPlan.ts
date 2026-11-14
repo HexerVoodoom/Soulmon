@@ -13,7 +13,8 @@ import { parseDayKeyLocal } from './dayKeyParse';
  *
  * O estado é UM objeto no save (`dayPlan`), por dia do jogador (ISO `YYYY-MM-DD`):
  *  · `offered`   — os ids que o modal ofereceu (o instantâneo). Quem NASCE depois (criado no meio do dia) não está aqui e
- *                  aparece sozinho: criar é um ato do próprio dia.
+ *                  aparece sozinho: criar é um ato do próprio dia. Vale também ANTES da reafirmação (plano de outro dia, §371):
+ *                  o nascido hoje (`bornTodayIds`) escapa do `hideAll` e entra no instantâneo já marcado (`showDayPlan`).
  *  · `picked`    — os ids marcados.
  *  · `confirmed` — `false` = o modal abriu e foi fechado sem confirmar (a lista fica vazia, com um convite discreto).
  *
@@ -53,20 +54,48 @@ export interface DayPlanView {
   /** Plano de outro dia: nada do que é de hoje aparece até a reafirmação. */
   hideAll: boolean;
   hidden: ReadonlySet<string>;
+  /**
+   * Quem NASCEU hoje (dia do jogador). Só vale contra o `hideAll`: criar é um ato do próprio dia (§66), então o hábito/tarefa
+   * criado antes da reafirmação aparece na hora (§371). Não desfaz um "não marcado" explícito (`hidden`) — isso foi escolha.
+   */
+  bornToday?: ReadonlySet<string>;
 }
 const EMPTY: ReadonlySet<string> = new Set();
 export const DAY_PLAN_VIEW_OPEN: DayPlanView = { hideAll: false, hidden: EMPTY };
 
-/** `active` = o jogador já passou do onboarding/tutorial (antes disso nada é escondido). */
-export function dayPlanView(plan: DayPlan | undefined, todayIso: string, active: boolean): DayPlanView {
+/**
+ * `active` = o jogador já passou do onboarding/tutorial (antes disso nada é escondido).
+ * `bornToday` = ids criados no dia `todayIso` (`bornTodayIds`); sem ele, a regra é a de antes.
+ */
+export function dayPlanView(plan: DayPlan | undefined, todayIso: string, active: boolean, bornToday?: ReadonlySet<string>): DayPlanView {
   if (!active || !plan) return DAY_PLAN_VIEW_OPEN;
-  if (plan.day !== todayIso) return { hideAll: true, hidden: EMPTY };
+  if (plan.day !== todayIso) return { hideAll: true, hidden: EMPTY, bornToday: bornToday ?? EMPTY };
   const hidden = new Set(plan.offered.filter(id => !plan.picked.includes(id)));
   return hidden.size === 0 ? DAY_PLAN_VIEW_OPEN : { hideAll: false, hidden };
 }
 
 export function isHiddenByPlan(view: DayPlanView, id: string): boolean {
-  return view.hideAll || view.hidden.has(id);
+  if (view.hideAll) return !(view.bornToday?.has(id) ?? false);
+  return view.hidden.has(id);
+}
+
+/**
+ * Ids dos itens criados no dia do jogador `todayIso` (§371). Lê `createdAt` (ISO): a tarefa sempre o teve; a atividade passa a
+ * tê-lo ao nascer pelo portão (`commitHabitCreate`). Sem `createdAt` (save antigo) ou ilegível = não nasceu hoje (regra de antes).
+ */
+export function bornTodayIds(
+  items: ReadonlyArray<{ id: string | number; createdAt?: unknown }>,
+  todayIso: string,
+  anchor?: PlayerDayAnchor,
+): ReadonlySet<string> {
+  const out = new Set<string>();
+  for (const it of items) {
+    if (typeof it?.createdAt !== 'string') continue;
+    const t = Date.parse(it.createdAt);
+    if (!Number.isFinite(t)) continue;
+    if (playerDayIso(new Date(t), anchor) === todayIso) out.add(String(it.id));
+  }
+  return out.size === 0 ? EMPTY : out;
 }
 
 /** Ids escondidos num dia ISO específico (a virada julga o dia que ACABOU: plano de outro dia não esconde nada ali). */
@@ -144,10 +173,19 @@ export function dayPlanCandidates(
 }
 
 /** O plano de hoje gravado AO MOSTRAR o modal ("visto" ao mostrar, REGISTRO §42): une o que já havia no dia com o que há agora. */
-export function showDayPlan(prev: DayPlan | undefined, todayIso: string, candidates: readonly DayPlanCandidate[]): DayPlan {
+export function showDayPlan(
+  prev: DayPlan | undefined,
+  todayIso: string,
+  candidates: readonly DayPlanCandidate[],
+  bornToday?: ReadonlySet<string>,
+): DayPlan {
   const same = prev && prev.day === todayIso ? prev : undefined;
-  const offered = [...new Set([...(same?.offered ?? []), ...candidates.map(c => c.id)])].slice(0, DAY_PLAN_MAX_IDS);
-  return { day: todayIso, offered, picked: same?.picked ?? [], confirmed: same?.confirmed ?? false };
+  const before = new Set(same?.offered ?? []);
+  const offered = [...new Set([...before, ...candidates.map(c => c.id)])].slice(0, DAY_PLAN_MAX_IDS);
+  // §371: quem nasceu hoje e entra AGORA no instantâneo já vem marcado (a pessoa acabou de criá-lo; desmarcar segue possível).
+  const novos = bornToday ? offered.filter(id => !before.has(id) && bornToday.has(id)) : [];
+  const picked = [...new Set([...(same?.picked ?? []), ...novos])];
+  return { day: todayIso, offered, picked, confirmed: same?.confirmed ?? false };
 }
 
 /** A confirmação: grava o que foi marcado (só entre os oferecidos). */
