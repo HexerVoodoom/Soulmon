@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
 import { readLocal } from './safeStorage';
+import { chaveDeOp, confirmarOpId, opIdPendente, respostaDefinitiva } from './pendingOpId';
 import { sanitizeOwnedWidgetFrames, setPaidWidgetFramesFromEntitlement } from './widgetFrames';
 
 // Entitlements no CLIENTE — espelho somente-leitura do que o servidor decidiu.
@@ -93,16 +94,20 @@ export async function fetchBetaFull(): Promise<boolean> {
 }
 
 /**
- * WP5.3 — um id por GESTO. `crypto.randomUUID` quando existe; senão, uma
- * composição de tempo + aleatório, que basta: o id só precisa ser único
- * dentro da janela de retry de um aparelho, não no universo.
+ * WP5.3 — um id por GESTO. Antislop P6 (§378): o GESTO dura até o servidor dar a resposta definitiva, não só uma chamada.
+ * Sem `opId` explícito, o id vem de `opIdPendente` (conta + operação + item) e é reusado no toque seguinte quando a resposta se
+ * perdeu; `fecharGesto` o libera em sucesso ou recusa definitiva. Quem passa `opId` cuida dele sozinho (nada fica pendente).
  */
-function newOpId(): string {
-  try {
-    const uuid = globalThis.crypto?.randomUUID?.();
-    if (uuid) return uuid.replace(/-/g, '');
-  } catch { /* segue para o fallback */ }
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+function abrirGesto(saveId: string, operacao: string, item: string, opIdExplicito?: string) {
+  const chave = opIdExplicito ? null : chaveDeOp(saveId, operacao, item);
+  const opId = opIdExplicito ?? opIdPendente(chave as string);
+  return {
+    opId,
+    /** Resposta do servidor: sucesso (`ok`) ou recusa definitiva encerram o gesto; rede/5xx/busy mantêm o id para o próximo toque. */
+    fechar(status: number, ok: boolean, reason?: unknown) {
+      if (chave && ((status >= 200 && status < 300 && ok) || respostaDefinitiva(status, reason))) confirmarOpId(chave, opId);
+    },
+  };
 }
 
 /**
@@ -116,11 +121,13 @@ export async function spendCredits(
   /** WP5.3 — id do GESTO. Repetir o mesmo gesto (retry de rede, dois toques,
    *  aba duplicada) devolve o mesmo resultado em vez de cobrar de novo. Quem
    *  não passa continua funcionando como antes: o id é opcional para não
-   *  quebrar o APK já instalado. */
-  opId: string = newOpId(),
+   *  quebrar o APK já instalado. Sem ele, o id pendente do gesto (`abrirGesto`, §378). */
+  opIdExplicito?: string,
 ): Promise<Entitlement | null> {
   const id = currentSaveId();
   if (!id) return null;
+  const gesto = abrirGesto(id, 'spend', `${reason}:${amount}`, opIdExplicito);
+  const opId = gesto.opId;
   // QA1: UMA reenvio, com o MESMO `opId`, quando a requisição LANÇOU (a rede
   // caiu e não sabemos se o servidor já debitou). O servidor devolve o
   // resultado guardado em vez de cobrar de novo; sem o reenvio, a resposta
@@ -133,9 +140,11 @@ export async function spendCredits(
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ id, amount, reason, opId }),
       });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data === null) continue; // 200 ilegível: como antes, conta como falha de rede (reenvia, id mantido)
+      gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok) return null;
-      const data = await res.json();
-      return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
+      return data?.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
     } catch {
       /* rede: tenta de novo uma vez com o mesmo opId */
     }
@@ -151,9 +160,11 @@ export type EssenceBuyResult =
  * CAMBISTA (§205) — compra essência com Créditos NO SERVIDOR. O preço é decidido lá (composição do elemento); o cliente só aplica
  * as essências quando isto devolve `ok`. Mesmo `opId` em um reenvio (rede caiu) = mesma resposta, sem cobrar de novo.
  */
-export async function buyEssence(element: string, qty: number, opId: string = newOpId()): Promise<EssenceBuyResult> {
+export async function buyEssence(element: string, qty: number, opIdExplicito?: string): Promise<EssenceBuyResult> {
   const id = currentSaveId();
   if (!id) return { ok: false, reason: 'no-save' };
+  const gesto = abrirGesto(id, 'essence', `${element}:${qty}`, opIdExplicito);
+  const opId = gesto.opId;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
     try {
       const res = await fetch('/api/entitlements?action=buy-essence', {
@@ -162,6 +173,7 @@ export async function buyEssence(element: string, qty: number, opId: string = ne
         body: JSON.stringify({ id, element, qty, opId }),
       });
       const data = await res.json().catch(() => null);
+      gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error' };
       return { ok: true, element: data.element, qty: data.qty, price: data.price,
         ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } };
@@ -205,9 +217,11 @@ export type BitsPackBuyResult =
  * pacote, debita os Créditos e conta o teto de 1.000/dia; o cliente só credita os `bits` desta resposta, e só com `ok`.
  * Mesmo `opId` num reenvio (a rede caiu sem resposta) = mesmo resultado, sem cobrar de novo. Recusa do servidor não é reenviada.
  */
-export async function buyBitsPack(packId: string, opId: string = newOpId()): Promise<BitsPackBuyResult> {
+export async function buyBitsPack(packId: string, opIdExplicito?: string): Promise<BitsPackBuyResult> {
   const id = currentSaveId();
   if (!id) return { ok: false, reason: 'no-save' };
+  const gesto = abrirGesto(id, 'bits', packId, opIdExplicito);
+  const opId = gesto.opId;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
     try {
       const res = await fetch('/api/entitlements?action=buy-bits', {
@@ -218,6 +232,7 @@ export async function buyBitsPack(packId: string, opId: string = newOpId()): Pro
       const data = await res.json().catch(() => null);
       const left = typeof data?.leftToday === 'number' && Number.isFinite(data.leftToday) ? Math.max(0, Math.floor(data.leftToday)) : undefined;
       if (left !== undefined) noteBitsPackLeft(left);
+      gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error', ...(left !== undefined ? { leftToday: left } : {}) };
       const bits = Number(data.bits);
       if (!Number.isInteger(bits) || bits <= 0) return { ok: false, reason: 'error' };

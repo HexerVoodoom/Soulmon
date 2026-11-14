@@ -247,6 +247,10 @@ export const STORAGE_KEYS = {
   FOCO_JOURNEY_PREFS: 'soulmon-foco-journey-prefs',
   /** A SESSÃO em andamento (§300): tarefa escolhida, o que o Soulmon achou e quantos focos já fecharam. Aparelho, não save. Dono: `utils/focusSession.ts`. */
   FOCO_SESSION: 'soulmon-foco-session',
+  /** Antislop P6 (§378): `opId` dos gestos de Créditos (pacote de Bits, essência, reroll) cuja resposta o servidor ainda não
+   *  CONFIRMOU, por conta + operação + item, com a hora em que nasceu. Reusado no toque seguinte para não debitar duas vezes.
+   *  Fora do save de propósito (não é dado do jogador); some no logout (é da conta). Dono: `utils/pendingOpId.ts`. */
+  PENDING_OP_IDS: 'soulmon-pending-op-ids',
   /** O DESCANSO em curso (§301): quando começou (timestamp), ritmo, cenário e o que o baú deu. Timestamps, não timers: o tempo segue com o app fechado. Aparelho. Dono: `utils/focusRest.ts`. */
   FOCO_REST: 'soulmon-foco-rest',
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,

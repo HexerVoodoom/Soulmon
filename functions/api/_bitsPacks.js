@@ -67,8 +67,13 @@ async function takeLock(env, saveId, nowMs) {
   }
   return {
     ok: true,
+    // Solta só a PRÓPRIA posse (Antislop P6, §378): um worker parado além de `LOCK_TTL_MS` perde a trava para o seguinte e, ao
+    // terminar, não pode apagar a trava dele (a 3ª troca passaria junto com a 2ª). `claimed_at`/`expires_at` identificam a posse.
     release: async () => {
-      try { await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ?').bind(row).run(); } catch { /* vence em LOCK_TTL_MS */ }
+      try {
+        await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND claimed_at = ? AND expires_at = ?')
+          .bind(row, nowMs, nowMs + LOCK_TTL_MS).run();
+      } catch (err) { console.warn('[bitsPacks] trava não foi solta; vence em LOCK_TTL_MS', { saveId, error: err?.message ?? String(err) }); }
     },
   };
 }

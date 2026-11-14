@@ -78,7 +78,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
 import { BB_LOCKED_MESSAGE } from './_velado.js';
 import { getProfile, newPid, stagePower, saveIdForPublicId } from './_profile.js';
-import { enqueueInvite, removerConvitesDeCla } from './_mensageiro.js';
+import { enqueueInvite, falhaDaCarta, removerConvitesDeCla } from './_mensageiro.js';
 import {
   COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -443,7 +443,7 @@ export async function handleGuild({ request, env }) {
     await apagarPedido(env, quem);
     await renovarCartao(env, confirmado.id, quem);
     // §358: as cartas de convite de clã que ainda estavam na caixa perdem o sentido (melhor esforço: a entrada já está gravada).
-    await removerConvitesDeCla(kvOrThrow(env), quem).catch(() => {});
+    await removerConvitesDeCla(kvOrThrow(env), quem).catch(falhaDaCarta('guild.join', quem));
     return { g: rolarSemana(confirmado, semana) };
   }
 
@@ -551,7 +551,9 @@ export async function handleGuild({ request, env }) {
         bodyEn: `${quem || 'Someone'} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
         at: Date.now(),
       }, m => m.mid.startsWith(`ginv:${g.id}:`));
-    } catch {
+    } catch (err) {
+      // Aqui a carta É o convite (não há outro estado): falhou, 503 e o app tenta de novo; nunca 200 sem carta.
+      falhaDaCarta('guildInvite', alvo)(err);
       return erro('try again', 503);
     }
     return json({ invited: true });

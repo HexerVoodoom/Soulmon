@@ -131,7 +131,7 @@ export interface ArenaGameProps {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
   onEnemySeen?: (enemyKey: string) => void;
-  /** A run TERMINOU (vitória, derrota ou empate): o chamador re-sorteia os 3 cards de graça (`applyArenaRunEnd`). Uma vez por run. */
+  /** A run TERMINOU (vitória, derrota ou empate): o chamador re-sorteia os `ARENA_CHOICES` cards de graça (`applyArenaRunEnd`). Uma vez por run. */
   onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
   /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
   ladder?: number;
@@ -227,7 +227,7 @@ export function ArenaGame({
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
   const hpMax = hpPoints(lado.combatant.hp);
 
-  /* Fim de run (04/11/2026, dono): avisa UMA vez por run, para o trio da Arena ser sorteado de novo sem gastar reroll.
+  /* Fim de run (04/11/2026, dono): avisa UMA vez por run, para os cards da Arena (`ARENA_CHOICES`, §370) serem sorteados de novo sem gastar reroll.
      A chave é a semente da luta: a revanche (semente nova) é outra run. */
   const runEndRef = useRef(onRunEnd);
   runEndRef.current = onRunEnd;
