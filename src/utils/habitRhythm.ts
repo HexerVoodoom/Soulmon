@@ -374,7 +374,23 @@ export function habitCountsOn(
   // feito/total no próprio dia da conclusão e um hábito único nunca fechava o dia
   // (QA L02-01/L02-05). É o mesmo ramo do `timesPerWeek`: feito hoje, conta hoje.
   if (r.done.includes(dayKeyOf(date))) return true;
+  // §371: "a cada N dias" do CALENDÁRIO sem histórico ancorava em 01/01/1970 — o hábito recém-criado podia não cair hoje (nem nos
+  // próximos N−1 dias). Com o carimbo de nascimento, a série começa no dia em que ele nasceu. Sem carimbo: a regra de antes.
+  if (s.kind === 'everyNDays' && s.from === 'schedule' && r.done.length === 0) {
+    const nasceu = bornDay((source as { createdAt?: unknown }).createdAt);
+    if (nasceu) {
+      const offset = daysBetween(nasceu, date);
+      return offset >= 0 && offset % s.n === 0;
+    }
+  }
   return isDueOn(s, r, date);
+}
+
+/** O dia LOCAL (meia-noite) de um ISO de nascimento; ilegível = `null`. */
+function bornDay(createdAt: unknown): Date | null {
+  if (typeof createdAt !== 'string') return null;
+  const t = Date.parse(createdAt);
+  return Number.isFinite(t) ? midnight(new Date(t)) : null;
 }
 
 /**

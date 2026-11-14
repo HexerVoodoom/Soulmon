@@ -655,3 +655,10 @@ Decisões que ficaram com a recomendação do lead (responda só se discordar):
 2. Quem compra "sombra" e depois evolui para sombra não recebe reembolso (conforme você decidiu).
 3. Reembolso na Play tira a moldura comprada (a diária de conferência já existente); se o jogador a tinha usada, o widget volta ao casco padrão.
 4. Arte: `moldura_vpet_<elemento>.png` em `android/app/src/main/res/drawable-nodpi/` (576x384, MESMA abertura LCD do `vpet_moldura.png`; aceita também `.webp` com o mesmo nome). Peso: o casco atual tem 280 KB; 20 iguais somam ~5,6 MB no APK. Recomendo PNG de 8 bits com paleta (pngquant) ou WebP sem perdas. Prévia opcional no app: `src/assets/soulmon/widget-molduras/<elemento>.png|webp`.
+
+## 14/11/2026 — Hábito criado no meio do dia: entra na meta de hoje? (REGISTRO §371)
+
+O hábito novo agora aparece na lista "Hoje" na hora (bug corrigido). A meta do dia continua como sempre foi: ele pesa 1 na meta de hoje. Criar um hábito às 23h pode subir a meta (se ela estiver abaixo do requisito do estágio) e custar o "dia completo" ou coração.
+
+1. **(recomendada) A** — hábito criado hoje só conta na meta de hoje se for FEITO hoje; a partir de amanhã, regra normal. Nunca encarece o dia.
+2. **B** — manter como está (entra na meta de hoje desde a criação).

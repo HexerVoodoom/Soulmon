@@ -5316,3 +5316,26 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Mudança:** `"feira-missao-volta"` entra em `ONE_SHOT_PREFIXES` (`android/app/src/main/java/com/soulmon/notifications/AlarmReceiver.kt`), igual aos outros eventos de uma vez (`poop-event-`, `pet-pantry`, `pet-energy-full`, `pet-progress`). A tag que o plugin passa ao receiver é o próprio `id`, então o `startsWith` casa.
 
 **APK/AAB:** a mudança é em `android/`, então SÓ VALE COM O PRÓXIMO AAB. Funciona com o APK antigo (feature detect): nenhum contrato de bridge muda, o JS não depende disso e o comportamento antigo apenas continua até o app ser atualizado. **Teste:** nenhum teste do repositório lê `AlarmReceiver.kt` como texto, então não há contrato a atualizar; a lista é Kotlin puro, sem teste de unidade. **Falsifica:** após o próximo AAB, um aviso da Feira disparado e o aparelho reiniciado re-armar a notificação. **Rollback:** reverter o PR.
+
+## §371 — Hábito criado hoje aparece na lista "Hoje" na hora, mesmo antes da reafirmação do dia (14/11/2026, bug do dono em produção)
+
+**Sintoma (dono):** ao adicionar um hábito novo, ele não entrava em "TODAY MISSION > HABITS" da Home; só aparecia no dia seguinte, no modal "Hoje".
+
+**Causa:** `dayPlanView` (`src/utils/dayPlan.ts`, ramo `plan.day !== todayIso` → `hideAll: true`) esconde TUDO enquanto o plano do save é de OUTRO dia (a reafirmação de hoje ainda não aconteceu: o Soulmon ainda dorme e o "Hoje" está segurado, o resumo do dia não foi visto, não havia nada a oferecer de manhã, ou o modal não abriu). Isso incluía quem acabou de nascer, contrariando o §66 ("quem nasce depois aparece sozinho; criar é um ato do próprio dia"). `DailyRituals.tsx` (`oculto` → `isHiddenByPlan`) e o check-in (`App.tsx`, filtro do `checkInPlan`) aplicavam o `hideAll`. Não é regressão da beta12 (#897) nem dos merges de 13-14/11: a lacuna existe desde o §66. Defeito, não desenho: o §66 e o manual (03-FLUXO-DE-TELAS, "Quem nasce depois aparece sozinho") dizem o contrário.
+
+**Segundo defeito, mesmo sintoma:** "a cada N dias" contado do CALENDÁRIO (`everyNDays from:'schedule'`, criado pelo quickAdd) sem histórico ancorava em 01/01/1970 (`scheduleAnchor`), então o recém-criado podia não cair hoje.
+
+**Mudança:**
+- `Activity.createdAt?` (ISO, opcional) gravado no portão único `commitHabitCreate`; a tarefa já tinha `createdAt`. Save antigo não tem e lê como "não nasceu hoje" (regra de antes). Nenhum campo renomeado ou apagado; nenhuma migração.
+- `bornTodayIds(itens, todayIso, playerDayTz)` (pura): ids criados no dia do jogador. `dayPlanView(..., bornToday)` — o nascido hoje escapa SÓ do `hideAll`; o "não marcado" explícito de hoje (`offered − picked`) continua escondido (foi escolha).
+- `showDayPlan(..., bornToday)`: quando o modal "Hoje" abre depois, o nascido hoje entra no instantâneo JÁ MARCADO (desmarcar segue possível; reabrir não remarca).
+- `habitCountsOn`: `everyNDays from:'schedule'` sem histórico e com `createdAt` ancora no dia do nascimento (hoje, +N, +2N…). Sem `createdAt`: regra de antes.
+- `dayPlan` no save NÃO muda de forma (servidor `_dayPlan.js` intacto).
+
+**Meta do dia:** sem mudança. O nascido hoje pesa como qualquer hábito cadastrado no dia (§66: "a meta do dia e o Missão N/G seguem a regra de sempre") — é o que já acontecia quando o hábito era criado DEPOIS da reafirmação; não duplica (um id, um peso; teste). Ver a pergunta ao dono abaixo.
+
+**[PENDENTE DO DONO] Meta e coração do hábito criado no meio do dia** (em `docs/PERGUNTAS-DO-DONO.md`): (A, recomendada) o hábito criado hoje só entra na meta de hoje se for FEITO hoje (nunca encarece o dia nem cobra coração; a partir de amanhã, regra normal); (B) manter como está (entra na meta de hoje; criar às 23h sobe a meta se ela estiver abaixo do requisito do estágio e pode custar coração/dia completo).
+
+**Alternativa que perdeu:** gravar o nascido hoje dentro do `dayPlan` (campo novo) — mexe no contrato com o servidor (paridade `_dayPlan.js`) e o carimbo se perderia num save antigo do servidor; o `createdAt` na atividade é leitura tolerante e serve também à âncora do "a cada N dias".
+
+**Testes:** `src/utils/dayPlan.habitoNovoHoje.test.ts` (diário, semanal com hoje, 3x/semana, a cada N do calendário e da conclusão; antes e depois da reafirmação; sem carimbo = regra de antes; nascido ontem não escapa; não marcado explícito segue escondido; modal depois vem marcado; meta sem dupla contagem). Falhava antes (17 de 22). **Falsifica:** hábito criado pela Home não aparecer na lista no mesmo dia; aparecer duas vezes; a meta de hoje subir 2 por um hábito. **Rollback:** reverter o PR (o `createdAt` gravado fica inerte). **APK:** só bundle web.

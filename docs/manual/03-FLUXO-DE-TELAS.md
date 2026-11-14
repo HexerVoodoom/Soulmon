@@ -1767,7 +1767,8 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   Atividade de dias específicos que não cai hoje não é oferecida. A meta do dia e o `Missão N/G` seguem a regra de sempre.
 - **"Visto" ao mostrar**: `onShow` grava `dayPlan = { day, offered, picked: [], confirmed: false }`. Fechar sem confirmar (✕/Esc/voltar)
   deixa a lista vazia com o convite e **não reabre no mesmo dia**. Confirmar grava `picked` e `confirmed: true`. Quem nasce depois
-  (criado no meio do dia) não estava em `offered` e aparece sozinho.
+  (criado no meio do dia) não estava em `offered` e aparece sozinho — também ANTES da reafirmação (plano de outro dia, §371): o
+  nascido hoje (`createdAt` no dia do jogador, `bornTodayIds`) escapa do "esconde tudo" e, se o modal abrir depois, já vem marcado.
 - **Save antigo**: sem `dayPlan`, a 1ª abertura grava o de hoje como "já reafirmado" (a lista do dia já estava montada).
   Saneado no cliente (`sanitizeDayPlan`) e no servidor (`functions/api/_dayPlan.js`, paridade testada).
 - **Dono**: `src/components/DayGoalsModal.tsx` + `src/utils/dayPlan.ts` · **Régua**: `DayGoalsModal.render.test.tsx`,
