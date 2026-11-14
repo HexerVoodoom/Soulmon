@@ -60,14 +60,14 @@ for (const tema of ['light', 'dark'] as const) {
     it('hábito sem catálogo, ou de catálogo sem recurso (água, sono), não ganha link (Q6, Q7)', () => {
       aplicar();
       const { container } = mount([mk('a', 'Beber água', 'corpo-beber-agua'), mk('s', 'Dormir', 'sono-horario-fixo'), mk('c', 'Custom')], { onGoToBuilding: noop, stepsInfo: { hoje: 1, meta: 7000 } });
-      expect(container.querySelector('[data-habit-link]')).toBeNull();
+      expect(container.querySelector('[data-habit-link], [data-ritual-action]')).toBeNull();
     });
 
     it('hábito concluído não mostra o link (a linha fica só com o check)', () => {
       aplicar();
       const feito = mk('j', 'Gratidão', 'mente-gratidao', { completedToday: true, lastCompletedDate: new Date('2026-11-15T12:00:00').toDateString() });
       const { container } = mount([feito], { onGoToBuilding: noop });
-      expect(container.querySelector('[data-habit-link]')).toBeNull();
+      expect(container.querySelector('[data-habit-link], [data-ritual-action]')).toBeNull();
     });
   });
 }
