@@ -64,6 +64,18 @@ export const ATTR_COLOR: Record<BranchType, string> = {
 };
 
 /**
+ * Cor do CAMINHO no ÍCONE DE ESTÁGIO (decisão do dono, 14/11/2026, REGISTRO §369): Poder verde, Harmonia azul,
+ * Benevolência amarelo, nos valores que o dono deu para o ícone (mais claros que `ATTR_COLOR`: tingem um pixel art
+ * de 16 px sobre a plaquinha translúcida). Só o `EstagioIcone` lê isto; rookie e ultra não têm caminho e ficam no
+ * neutro. Não é cor de TEXTO (o amarelo sobre fundo claro não passa contraste; por isso o ícone tingido leva contorno escuro).
+ */
+export const CAMINHO_COR: Record<BranchType, string> = {
+  power: '#4cd964',       // Poder, rgb(76, 217, 100)
+  harmony: '#4aa3ff',     // Harmonia, rgb(74, 163, 255)
+  benevolence: '#ffd23f', // Benevolência, rgb(255, 210, 63)
+};
+
+/**
  * NOME que o jogador vê — FONTE ÚNICA DA VERDADE, pelo mesmo motivo da cor.
  *
  * `power`/`harmony`/`benevolence` são identificadores INTERNOS, herdados do fork.
