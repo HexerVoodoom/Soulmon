@@ -36,6 +36,27 @@ export function activitiesFromCatalogChoice(
 }
 
 /**
+ * O AVISO DO TETO no catálogo (§376). Todo item do catálogo nasce hábito de TODO DIA (§295) e, por isso, ocupa uma vaga da
+ * cota de hábitos (`consomeCotaDeHabito`). Com a cota cheia o portão (`commitHabitCreate`) devolvia 0 e o catálogo fechava
+ * como se tivesse adicionado: o hábito sumia sem explicação ("Adicionei a Walk e não apareceu", dono 14/11/2026).
+ * Devolve o texto do aviso quando `count >= cap`, ou `null` quando ainda cabe. NÃO muda o teto (o número é o mesmo de
+ * `activityCapFor`); só deixa de esconder a regra.
+ */
+export function catalogHabitCapNotice(
+  count: number,
+  cap: number | undefined,
+  isPt: boolean,
+  isDemoBoundary = false,
+): string | null {
+  if (typeof cap !== 'number' || !Number.isFinite(cap) || count < cap) return null;
+  const base = isPt
+    ? `Limite atingido: você já tem ${count} de ${cap} hábitos de todo dia. Para adicionar outro, remova um hábito ou crie uma tarefa em dias específicos (tarefas não têm limite).`
+    : `Limit reached: you already have ${count} of ${cap} every-day habits. To add another, remove a habit or create a task on specific days (tasks are unlimited).`;
+  if (!isDemoBoundary) return base;
+  return base + (isPt ? ' Evoluir com seu próprio Soulmon aumenta esse teto.' : ' Evolving your own Soulmon raises this ceiling.');
+}
+
+/**
  * Tira da escolha o que JÁ está na lista (beta-2, 7.3: "sem duplicar"). A chave é o `catalogId` da atividade
  * existente — o mesmo item do catálogo não entra duas vezes, mesmo que a pessoa o tenha renomeado — e,
  * dentro da própria escolha, o mesmo item não se repete. Função pura; a ORDEM da escolha é preservada.
