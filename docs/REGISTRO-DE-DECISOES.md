@@ -5276,3 +5276,13 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Falsifica:** ícone com xadrez assado ou alfa não binário no glifo; `oasis-*` acima de 400 KB (teto do `orcamentoDeBytes`); categoria sem arte própria no chip; material caindo no emoji.
 
 **Rollback:** reverter o PR (volta a arte herdada, o glifo provisório e o fundo gerado em código). **APK:** arte vai no bundle web; nada nativo.
+
+## §362 — Entram as 3 salas de descanso que faltavam: oasis-forest, oasis-garden e oasis-workshop (13/11/2026, mesmo padrão do §361)
+
+**Instalado:** `src/assets/soulmon/jornada/oasis-{forest,garden,workshop}.webp`, 1024×2048 opaco (cover + LANCZOS pelo `tools/instalar-oasis-jornada.py`); forest 368 KB, workshop 287 KB e garden 344 KB. Fontes: `_lote-13-11/oasis-forest` e `oasis-workshop` (887×1774) e `_lote-12-11/oasis/garden-2.png` (escolha do CRUZAMENTO.md). Com isso as 6 salas têm arte própria; `RestRoom` continua caindo no fundo gerado em código se um arquivo sumir (`OASIS_ART`/`OASIS_TONE` intactos; os testes do `FocusBoard.render` já aceitam arte OU fallback). O instalador ganhou um teto: se o WebP passar de 400 KB, baixa a qualidade de 5 em 5 até q70 (garden saiu de 513 KB a q85 para 344 KB a q80).
+
+**Alternativa que perdeu:** reduzir a resolução do garden em vez da qualidade (perde nitidez do cenário inteiro por 1 arquivo) e regerar o garden sem os canos de cobre (ver abaixo; fica como pendência visual, não bloqueia).
+
+**Pendência para o dono:** o garden-2 tem canos de cobre e vários cristais turquesa, fora do prompt de cenário ("sem canos de cobre", 1–2 cristais). Aceito por ora porque o CRUZAMENTO o marcou OK; regerar se o dono quiser a regra estrita.
+
+**Falsifica:** algum `oasis-*` acima de 400 KB; xadrez assado ou moldura no fundo; sala de descanso sem fundo. **Rollback:** reverter o PR (voltam o fundo em código das 3 salas). **APK:** arte vai no bundle web; nada nativo.
