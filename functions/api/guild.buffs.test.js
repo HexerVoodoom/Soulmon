@@ -108,9 +108,12 @@ describe('a ação guildBuffBuy e a lápide da Loja', () => {
     await call(e, 'guildJoin', { body: { id: B, code: c.guild.code } });
     return e;
   }
-  it('a Loja saiu: guildShopBuy devolve 410', async () => {
+  it('a Loja saiu: guildShopBuy devolve 404 gone, NUNCA 410 (o app desloga em 410)', async () => {
     const e = await setup();
-    expect((await call(e, 'guildShopBuy', { body: { id: A, itemId: 'loja-fogueira-roda', opId: 'op-12345678' } })).status).toBe(410);
+    const r = await call(e, 'guildShopBuy', { body: { id: A, itemId: 'loja-fogueira-roda', opId: 'op-12345678' } });
+    expect(r.status).not.toBe(410);
+    expect(r.status).toBe(404);
+    expect(await r.json()).toEqual({ error: 'gone' });
   });
   it('só o anfitrião compra (403); saldo curto = 409; buff inválido = 400', async () => {
     const e = await setup();

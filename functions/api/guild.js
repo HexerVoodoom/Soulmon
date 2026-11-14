@@ -23,7 +23,7 @@
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
 //   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
-//   POST guildShopBuy → 410 (LÁPIDE 10/11/2026: a Loja do clã saiu; ver guildBuffBuy)
+//   POST guildShopBuy → 404 `gone` (LÁPIDE 10/11/2026, 404 desde 14/11 §375: a Loja do clã saiu; ver guildBuffBuy)
 //   POST guildBuffBuy {id, dayKey, buffId, opId} → { guild, repeated }  404 no guild · 403 host only · 400 invalid buff/op · 409 not enough bits / op reuse   (os BUFFS DO CLÃ: `_buffsCla.js`; cliente nunca manda preço)
 //   POST claPracaSlot {id, dayKey, slot:0..3, item|null} → { praca }   404 no guild · 400 invalid slot/item   (a PRAÇA: `_claPraca.js`)
 //   GET  claPraca     ?id=&dayKey=         → { praca: { slots[4], gifts[], mine:{sentToday[]} } }   404 no guild
@@ -692,8 +692,9 @@ export async function handleGuild({ request, env }) {
   }
 
   // LÁPIDE (10/11/2026): a LOJA DO CLÃ (cosméticos da Casa, `guildShopBuy`, `_lojaCla.js`) foi aposentada pelo pedido do dono e
-  // substituída pelos BUFFS DO CLÃ (`guildBuffBuy`, `_buffsCla.js`). Cliente antigo que ainda chame a ação recebe 410 sem cobrar.
-  if (action === 'guildShopBuy') return erro('shop closed', 410);
+  // substituída pelos BUFFS DO CLÃ (`guildBuffBuy`, `_buffsCla.js`). Cliente antigo que ainda chame a ação recebe 404 sem cobrar
+  // (NÃO 410: `guildCall` no app lê qualquer 410 como conta excluída e desloga; §375).
+  if (action === 'guildShopBuy') return erro('gone', 404);
 
   if (action === 'guildBuffBuy') {
     // Compra de BUFF do clã com o tesouro: só o anfitrião decide pelo clã; o cliente manda SÓ `buffId` + `opId` (preço/saldo/duração são do servidor).
