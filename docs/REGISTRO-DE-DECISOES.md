@@ -5287,7 +5287,17 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** algum `oasis-*` acima de 400 KB; xadrez assado ou moldura no fundo; sala de descanso sem fundo. **Rollback:** reverter o PR (voltam o fundo em código das 3 salas). **APK:** arte vai no bundle web; nada nativo.
 
-## §363 — A Missão da Feira sobrevive a fechar o app: o dia gravado pelo App passa na hidratação do save (14/11/2026, bug do dono: "a Feira continua sem funcionar")
+## §363 — Entram os 17 glifos de status restantes do ChatGPT, mesmo sem tela que os use (14/11/2026, decisão do dono)
+
+**Instalado:** `src/assets/soulmon/combate-v3/status/st-{atordoado,ofuscado,distorcao,curto-circuito,po-de-fada,folego,aceleracao,atk-fisico,atk-magico,blindagem,carga,def-agua,def-terra,escudo-peso,furia,postura,velocidade}.png`, substituindo os de mesmo nome. Fonte `E:/Soulmon-assets/_lote-13-11/<id>/<id>.png` (1254 px, alfa real). Processo do §361: recorte pela bounding box do alfa, ilhas <24 px descartadas, alfa binarizado em 128, NEAREST para 64 no maior lado, centralizado em 64², PNG. Tamanhos 3,1 a 8,1 KB (maior: `st-escudo-peso`, 8117 B). Conferidos sobre fundo escuro: sem franja, sem xadrez assado.
+
+**Observação honesta:** hoje nenhuma tela consome `statusGlyphId` (os marcadores de cena usam as folhas `fx-*-loop-sheet`). Os glifos ficam instalados para uso futuro (lista de efeitos ativos / toque no marcador), por decisão do dono. Não há ganho visível nesta entrega.
+
+**Alternativa que perdeu:** esperar existir a tela que os usa antes de instalar (adiaria arte pronta e deixaria os medalhões antigos no repo).
+
+**Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
+
+## §367 — A Missão da Feira sobrevive a fechar o app: o dia gravado pelo App passa na hidratação do save (14/11/2026, bug do dono: "a Feira continua sem funcionar")
 
 **Causa raiz:** `App.tsx` parte a Missão com `startGuildMission(playerDayKey(...))`, e `playerDayKey` escreve o dia como `toDateString` ("Sat Nov 14 2026"). A hidratação do save (`GameStateContext.tsx`, `guildMission: normalizeGuildMission(...)`) só aceitava `AAAA-MM-DD` (`utils/guildMission.ts`). Resultado: fechar, recarregar ou o Android matar a WebView durante os 30 min APAGAVA a missão. O Soulmon reaparecia na Home sem nenhuma volta registrada no servidor (`guildRaidHit` nunca era chamado: sem seiva na Casa, sem encontro Mercador/Desafio/Chefe, sem `hitToday`), e a sala da Feira oferecia "Mandar investigar" de novo. Com o app aberto os 30 min inteiros funcionava, por isso o conserto de 12/11 (`a31f3a7d`, `feiraVolta.ts`) não resolveu: ele cuida do resultado da volta, e aqui a volta nem acontecia.
 
