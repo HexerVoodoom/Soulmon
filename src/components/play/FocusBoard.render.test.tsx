@@ -166,7 +166,7 @@ describe('escolher a tarefa e o baú da sessão (§300)', () => {
     const tip = document.querySelector('[data-journey-bag-tip]')!;
     expect(tip.textContent).toContain('Musgo');
     expect(tip.textContent).toContain('×2');
-    expect(tip.querySelector('[data-journey-bag-item="moss"] [data-item-icon="glyph"]')).not.toBeNull();
+    expect(tip.querySelector('[data-journey-bag-item="moss"] [data-item-icon]')).not.toBeNull();
     fireEvent.pointerDown(document.body);
     expect(document.querySelector('[data-journey-bag-tip]')).toBeNull();
     // não há mais a soma "Baú aberto" embaixo
@@ -215,7 +215,7 @@ describe('sala de descanso e ciclos (§301, §312)', () => {
     await openJourney(container);
     await waitFor(() => expect(document.querySelector('[data-rest-room]')).not.toBeNull());
     expect(document.querySelector('[data-journey]')).toBeNull();
-    expect(document.querySelector('[data-rest-fallback="cavern"]')).not.toBeNull(); // sem arte: fundo gerado em código
+    expect(document.querySelector('[data-rest-art="cavern"], [data-rest-fallback="cavern"]')).not.toBeNull(); // arte instalada (§360) ou, sem ela, o fundo gerado em código
     expect(document.querySelector('[data-rest-key]')!.textContent).toContain('chave do Calabouço');
     expect(document.querySelector('[data-rest-chest]')!.textContent).toContain('Minério');
     expect(document.querySelector('[data-rest-cycles]')!.textContent).toBe('1 foco concluído');
@@ -244,7 +244,7 @@ describe('sala de descanso e ciclos (§301, §312)', () => {
     const room = document.querySelector('[data-rest-room]') as HTMLElement;
     expect(room.style.position).toBe('fixed');
     expect(room.style.inset).toMatch(/^0/);
-    expect(document.querySelector('[data-rest-bg] [data-rest-fallback]')).not.toBeNull();
+    expect(document.querySelector('[data-rest-bg] [data-rest-art], [data-rest-bg] [data-rest-fallback]')).not.toBeNull(); // arte (§360) ou fundo em código
     expect(document.querySelector('[data-journey]')).toBeNull();
     expect(document.querySelector('[data-journey-door], [data-journey-arrival]')).toBeNull();
   });
