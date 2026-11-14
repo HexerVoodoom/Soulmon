@@ -22,7 +22,13 @@ describe('VescaPotionOffer: poção criada', () => {
     expect(tela.querySelector('[data-potion-rays]')).not.toBeNull();
     expect(screen.getByText('Poção de fogo criada')).toBeTruthy();
     expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
-    fireEvent.click(tela.querySelector('[data-vesca-ok]')!);
+    const ok = tela.querySelector('[data-vesca-ok]')!;
+    // §364: o OK da revelação é o CTA do site, tom de ação, com o rótulo de sempre.
+    expect(ok.hasAttribute('data-cta-button')).toBe(true);
+    expect(ok.getAttribute('data-cta-tone')).toBe('acao');
+    expect(ok.textContent).toBe('OK');
+    expect(document.activeElement).toBe(ok);
+    fireEvent.click(ok);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
   it('em inglês: "Fire potion created"; Esc fecha', () => {
