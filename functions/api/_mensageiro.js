@@ -72,15 +72,31 @@ function cortar(q) {
   return out;
 }
 
+/**
+ * Lê a caixa. Falha do `get` PROPAGA (Antislop P6, §378): todo escritor grava o que leu, então "o KV falhou" tratado como
+ * "caixa vazia" apagava as cartas com prêmio pendente e o `done` (a carta da temporada renascia). Só o JSON ilegível é tolerado.
+ */
 async function ler(kv, id) {
+  const raw = await kv.get(`mail:${id}`);
   let r = null;
-  try { r = JSON.parse((await kv.get(`mail:${id}`)) || 'null'); } catch { r = null; }
+  try { r = JSON.parse(raw || 'null'); } catch (err) {
+    console.warn('[mensageiro] mail ilegível no KV; a caixa recomeça vazia', { saveId: id, error: err?.name ?? String(err) });
+    r = null;
+  }
   return {
     q: Array.isArray(r?.q) ? r.q.map(sanitizeMail).filter(Boolean) : [],
     done: Array.isArray(r?.done) ? r.done.filter(x => typeof x === 'string') : [],
     season: typeof r?.season === 'string' ? r.season : '',
   };
 }
+/**
+ * A carta é MELHOR ESFORÇO onde a ação principal já está gravada (convite de amizade, presente, entrada no clã): a falha dela
+ * não derruba a ação, mas também não some calada. `.catch(falhaDaCarta('onde', saveId))`; a caixa existente nunca é
+ * sobrescrita, porque `ler()` propaga a falha antes de qualquer gravação.
+ */
+export const falhaDaCarta = (onde, saveId) => (err) => {
+  console.warn(`[mensageiro] carta não processada (${onde}); a ação principal segue valendo`, { saveId, error: err?.message ?? String(err) });
+};
 const gravar = (kv, id, rec) => kv.put(`mail:${id}`, JSON.stringify(rec), { expirationTtl: TTL_S });
 
 /** Enfileira uma carta. Mesmo `mid` (na fila ou já confirmado) e simulado são no-op.

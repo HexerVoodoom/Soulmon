@@ -62,7 +62,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick, saveIdForPublicId, nickFoldPrefix, foldNome, saveIdDaChaveDobrada,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ackMail, claimMail, deleteMail, enqueueInvite, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
+import { ackMail, claimMail, deleteMail, enqueueInvite, enqueueMail, falhaDaCarta, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
@@ -1719,7 +1719,7 @@ async function handleCommunity(context) {
       // Remover um amigo que se escondeu continua possível; desfaz os dois lados e cancela convite pendente.
       await desfazerAmizade(env, id, friendSave);
       // Convite cancelado: a carta dele some da caixa do outro lado (melhor esforço; o aceite tardio já responde 404).
-      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(() => {});
+      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(falhaDaCarta('friends.remove', friendSave));
       const depois = await getProfile(env, id);
       return json({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
@@ -1740,7 +1740,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: minha.in.filter(x => x.from !== friendSave), out: minha.out.filter(f => f !== friendSave) });
       const dele = await lerConvites(env, friendSave);
       await gravarConvites(env, friendSave, { in: dele.in.filter(x => x.from !== id), out: dele.out.filter(f => f !== id) });
-      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(falhaDaCarta('friendAccept', id));
       return json({ ok: true, status: 'friends', friends: await friendPids((await getProfile(env, id))?.friends || []) });
     }
     if (minha.out.includes(friendSave)) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
@@ -1764,7 +1764,7 @@ async function handleCommunity(context) {
           bodyEn: `${nome || 'Someone'} invited you to be friends. Accept?`,
           at: Date.now(),
         }, m => m.kind === 'friend-invite' && m.fromPid === pid);
-      } catch { /* a carta é cosmética: o convite segue na lista de Amigos */ }
+      } catch (err) { falhaDaCarta('friends.invite', friendSave)(err); /* o convite segue na lista de Amigos */ }
     }
     minha.out.push(friendSave);
     await gravarConvites(env, id, minha);
@@ -1785,7 +1785,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: meus.in.filter(r => r.from !== quem), out: meus.out });
       const dele = await lerConvites(env, quem);
       await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter(f => f !== id) });
-      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(falhaDaCarta('friendAccept', id));
     };
     if (decline === true) { await limpar(); return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) }); }
     const alvo = await getProfile(env, quem);
@@ -1905,7 +1905,7 @@ async function handleCommunity(context) {
               bodyEn: `${quem || 'A friend'} sent you ${credited} Bits.`,
               bits: credited, at: Date.now(),
             }, { recusarSeCheia: true });
-          } catch { viaCarta = false; }
+          } catch (err) { falhaDaCarta('gift', friendSave)(err); viaCarta = false; /* cai na fila antiga `gifts:` logo abaixo */ }
         }
         if (credited > 0 && !viaCarta) {
           const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
