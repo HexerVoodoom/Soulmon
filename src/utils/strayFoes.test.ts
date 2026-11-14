@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { arenaCardSeeds, isStraySeed, strayForTournament, STRAY_ROSTER } from './strayFoes';
+import { ARENA_CHOICES } from './arenaSorteio';
 import { buildArenaRound } from './arena';
 import { mulberry32 } from './combate/rng';
 import { isStrayFoe } from './wildFoeLabel';
@@ -15,14 +16,14 @@ describe('Desgarrados como oponentes', () => {
     expect(n).toBeLessThan(450);
   });
 
-  it('os 3 cards têm no máximo UM desgarrado, mesmo com sementes ruins', () => {
+  it('os ARENA_CHOICES cards têm no máximo UM desgarrado, mesmo com sementes ruins', () => {
     let k = 0;
     const sempreStray = () => { while (!isStraySeed(++k)); return k; };
-    expect(arenaCardSeeds(sempreStray).length).toBe(3);
+    expect(arenaCardSeeds(sempreStray, ARENA_CHOICES).length).toBe(ARENA_CHOICES);
     for (let t = 0; t < 50; t++) {
       let c = t * 1000;
-      const seeds = arenaCardSeeds(() => (c += 7919));
-      expect(seeds.length).toBe(3);
+      const seeds = arenaCardSeeds(() => (c += 7919), ARENA_CHOICES);
+      expect(seeds.length).toBe(ARENA_CHOICES);
       expect(seeds.filter(isStraySeed).length).toBeLessThanOrEqual(1);
     }
   });
