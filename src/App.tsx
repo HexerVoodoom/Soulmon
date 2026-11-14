@@ -362,7 +362,7 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan } from './utils/dayPlan';
+import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan, bornTodayIds } from './utils/dayPlan';
 import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
@@ -2273,13 +2273,15 @@ export default function App() {
       if (tierForRules === 'demo') track('demo_cap_hit', { path: createPath });
       return 0;
     }
+    // §371: o carimbo de nascimento (`createdAt`) — é ele que deixa o hábito criado ANTES da reafirmação do dia aparecer na hora.
+    const nascidoEm = new Date().toISOString();
     setGameState(prev => ({
       ...prev,
       // O teto reconferido sobre o `prev`: a segunda criação do mesmo lote já
       // enxerga o que a primeira escreveu. É esta a linha que fecha X-6 aqui.
       activities: [
         ...prev.activities,
-        ...fitHabitCreates(prev, cabem, tierForRules),
+        ...fitHabitCreates(prev, cabem, tierForRules).map(a => (a.createdAt ? a : { ...a, createdAt: nascidoEm })),
       ],
     }));
     for (let i = 0; i < cabem.length; i++) {
@@ -2551,9 +2553,14 @@ export default function App() {
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
+  /* §371: o que NASCEU hoje escapa do "plano de outro dia" — criar é um ato do próprio dia, aparece na hora. */
+  const dayPlanBornToday = useMemo(
+    () => bornTodayIds((gameState.activities as any[]).concat(gameState.tasks), dayPlanToday, gameState.playerDayTz),
+    [gameState.activities, gameState.tasks, dayPlanToday, gameState.playerDayTz],
+  );
   const dayPlanViewNow = useMemo(
-    () => dayPlanView(gameState.dayPlan, dayPlanToday, dayPlanActive),
-    [gameState.dayPlan, dayPlanToday, dayPlanActive],
+    () => dayPlanView(gameState.dayPlan, dayPlanToday, dayPlanActive, dayPlanBornToday),
+    [gameState.dayPlan, dayPlanToday, dayPlanActive, dayPlanBornToday],
   );
   const dayPlanCandidatesNow = useMemo(
     () => dayPlanCandidates(gameState as any, new Date()),
@@ -2689,7 +2696,8 @@ export default function App() {
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
         setGameState(prev => ({
           ...prev,
-          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date())),
+          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date()),
+            bornTodayIds((prev.activities as any[]).concat(prev.tasks), hoje, prev.playerDayTz)),
           lastCheckInDate: dia,
         }));
         track('checkin_shown');
@@ -6365,7 +6373,9 @@ export default function App() {
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
     // Reafirmar o dia (REGISTRO §66): o compromisso só enxerga o que a pessoa marcou para hoje (sem reafirmação feita, nada).
-    const visaoDoDia = dayPlanView(gameState.dayPlan, playerDayIso(now, gameState.playerDayTz), hasCompletedOnboarding && hasCompletedTutorial);
+    const isoHoje = playerDayIso(now, gameState.playerDayTz);
+    const visaoDoDia = dayPlanView(gameState.dayPlan, isoHoje, hasCompletedOnboarding && hasCompletedTutorial,
+      bornTodayIds((gameState.activities as any[]).concat(gameState.tasks), isoHoje, gameState.playerDayTz));
     const plan = checkInPlan(
       visaoDoDia.hideAll || visaoDoDia.hidden.size > 0
         ? { ...gameState, activities: gameState.activities.filter(a => !isHiddenByPlan(visaoDoDia, String(a.id))), tasks: gameState.tasks.filter(t => !isHiddenByPlan(visaoDoDia, String(t.id))) }

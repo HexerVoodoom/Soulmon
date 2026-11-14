@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   ARENA_REROLL_FREE_PER_DAY, ARENA_REROLL_PRICES, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, nextArenaReroll,
-  sanitizeArenaReroll, ARENA_BASE_ELEMENTS, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
+  sanitizeArenaReroll, ARENA_BASE_ELEMENTS, ARENA_CHOICES, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
 } from './arenaSorteio';
 import { ARENA_BG_SCENES } from './dungeonScenes';
 import { ARENA_FUSED_FOE_CHANCE } from './arena';
@@ -143,8 +143,8 @@ describe('fim de run re-sorteia o trio SEM gastar reroll (04/11/2026)', () => {
   it('cada run terminada muda os 3 cards; 0 runs = semente antiga', async () => {
     const { arenaCards, applyArenaRunEnd, arenaRerollsToday } = await import('./arenaSorteio');
     const d = '2026-11-04';
-    expect(arenaCards(d, 'acc', 0, 3, 0)).toEqual(arenaCards(d, 'acc', 0));
-    const a = arenaCards(d, 'acc', 0, 3, 0), b = arenaCards(d, 'acc', 0, 3, 1), c = arenaCards(d, 'acc', 0, 3, 2);
+    expect(arenaCards(d, 'acc', 0, ARENA_CHOICES, 0)).toEqual(arenaCards(d, 'acc', 0));
+    const a = arenaCards(d, 'acc', 0, ARENA_CHOICES, 0), b = arenaCards(d, 'acc', 0, ARENA_CHOICES, 1), c = arenaCards(d, 'acc', 0, ARENA_CHOICES, 2);
     expect(b).not.toEqual(a); expect(c).not.toEqual(b);
     const s0: { arenaReroll: { day: string; count: number }; gamePoints: number; arenaRuns?: { day: string; count: number } } = { arenaReroll: { day: d, count: 2 }, gamePoints: 100 };
     const s1 = applyArenaRunEnd(s0, d);
@@ -153,3 +153,40 @@ describe('fim de run re-sorteia o trio SEM gastar reroll (04/11/2026)', () => {
     expect(s1.gamePoints).toBe(100);                       // nenhum Bit gasto
   });
 });
+
+describe('§370 (dono, 14/11/2026): a Arena livre oferece ARENA_CHOICES = 4 desafios', () => {
+  it('a constante é 4 e é o padrão do sorteio', () => {
+    expect(ARENA_CHOICES).toBe(4);
+    expect(arenaCards('2026-11-14', 'conta', 0)).toHaveLength(ARENA_CHOICES);
+  });
+
+  it('4 cards com 4 elementos BASE distintos entre si e no máximo 1 Desgarrado (500 contas × rerolls × runs)', () => {
+    for (let i = 0; i < 500; i++) {
+      const seeds = arenaCards('2026-11-14', `q${i}`, i % 7, ARENA_CHOICES, i % 3);
+      const els = seeds.map(s => arenaCardElements(s)[0]);
+      expect(new Set(els).size, `conta q${i}`).toBe(ARENA_CHOICES);
+      for (const e of els) expect(ARENA_BASE_ELEMENTS).toContain(e);
+      expect(seeds.filter(isStraySeed).length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('compatibilidade: os 3 primeiros cards são EXATAMENTE os de antes (o 4º entra por último)', () => {
+    for (let i = 0; i < 500; i++) {
+      const [d, a, r] = ['2026-11-14', `p${i}`, i % 5] as const;
+      expect(arenaCards(d, a, r, 4, i % 4).slice(0, 3)).toEqual(arenaCards(d, a, r, 3, i % 4));
+    }
+  });
+
+  it('compatibilidade: sementes de 3 cards congeladas em main 1eccf154 (antes do §370) seguem nas 3 primeiras posições', () => {
+    for (const [d, a, r, runs, antes] of GOLDEN_3) expect(arenaCards(d, a, r, ARENA_CHOICES, runs).slice(0, 3)).toEqual(antes);
+  });
+});
+
+/** §370: os 3 cards que `arenaCards(d, conta, rerolls, 3, runs)` devolvia em main `1eccf154` (código de antes, rodado à parte). */
+const GOLDEN_3: ReadonlyArray<readonly [string, string, number, number, number[]]> = [
+  ['2026-11-14', 'a'.repeat(32), 0, 0, [551331159, 210540474, 595152756]],
+  ['2026-11-14', 'conta', 2, 1, [1149597240, -1959879947, -1337683325]],
+  ['2026-11-13', 'b9f3c0de', 5, 0, [1952627179, 1743213738, 611416926]],
+  ['2026-10-28', 'conta', 0, 3, [884698767, -750390357, 2103148716]],
+  ['2026-12-01', 'xyz', 9, 2, [1518201882, -1972208185, 1713975038]],
+];
