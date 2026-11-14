@@ -73,7 +73,7 @@ describe('dica dourada no balão dourado', () => {
       expect(b.tagName).toBe('BUTTON');
       expect(b.getAttribute('aria-label')).toBe(dicaAria(tipo, 'pt-BR'));
       expect(b.textContent).toContain(dicaTexto(tipo, 'pt-BR'));
-      // leva a algum lugar → a seta no círculo no fim da linha (aria-hidden: o rótulo já diz o destino)
+      // leva a algum lugar → o chevron turquesa no fim da linha (aria-hidden: o rótulo já diz o destino)
       expect(b.querySelectorAll('[data-pet-gold-bubble-arrow][aria-hidden="true"]')).toHaveLength(1);
       fireEvent.click(b);
       expect(onTap).toHaveBeenCalledWith(tipo);
