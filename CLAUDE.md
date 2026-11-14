@@ -184,6 +184,8 @@ npx vitest run       # testes — todos devem passar
 npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
 ```
 
+**Catraca anti-slop** (§379): `npm run antislop:check` compara o `slop-scan` (skill `squad-antislop`) com `.antislop/baseline.txt` e sai com 1 se algum sinal SUBIU. O baseline só desce (regrave com `npm run antislop:check -- --write` depois de limpar); subir exige decisão do dono em modal. Convenções aceitas em `.antislop/ignorar`. Não está ligada a CI nem a hook.
+
 ## Deploy
 
 Repositório: `HexerVoodoom/Soulmon`.
