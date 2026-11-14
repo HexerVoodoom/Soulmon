@@ -140,6 +140,7 @@ const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
 import { applyLateralSwitch } from './utils/trocaLateral';
+import { demoEvolucaoAtiva } from './utils/demoEvolucao';
 import { getNextEvolution, activitiesForWeekDay, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
@@ -2799,6 +2800,15 @@ export default function App() {
     diaCompletoAntes.current = diaCompletoHoje;
   }, [diaCompletoHoje]);
 
+
+  /* MODO DEMO (só vídeo de divulgação, fora do release — utils/demoEvolucao.ts): dia completo => barra de evolução cheia na hora. */
+  useEffect(() => {
+    if (!demoEvolucaoAtiva() || !diaCompletoHoje) return;
+    setGameState(prev => {
+      const goal = gaugeGoalFor(prev.evolutionStage, prev.unlockedEvolutions);
+      return goal > 0 && (prev.evolutionPoints ?? 0) < goal ? { ...prev, evolutionPoints: goal } : prev;
+    });
+  }, [diaCompletoHoje]);
 
   const t = useTranslation(language);
 
