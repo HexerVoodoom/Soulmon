@@ -1340,7 +1340,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `Entitlement` (interface) — campos: `tier`, `credits`, `adsLeft`, `adsEnabled`, `admin` (29/09/2026 — sempre booleano; só `=== true` conta).
 - `function sanitizeEntitlement(raw: unknown): Entitlement | null` — normaliza a resposta do `GET`; `admin` só é true com o literal `true`.
 - `function fetchEntitlement(): Promise<Entitlement | null>` — Lê o saldo real do servidor. Retorna null se não der (offline, sem saveId).
-- `function spendCredits( amount: number, reason: string, opId: string = newOpId()): Promise<Entitlement | null>` — Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o novo saldo — null significa recusado (sem saldo, offline) e o efeito não pode acontecer.
+- **Antislop P6 (14/11/2026, §378):** `spendCredits`, `buyEssence` e `buyBitsPack` aceitam `opId` OPCIONAL; sem ele o id do gesto vem de `utils/pendingOpId.ts` (conta + operação + item: `spend` `reason:amount`, `essence` `element:qty`, `bits` `packId`) e é REUSADO no toque seguinte até o servidor dar resposta definitiva (ok, ou 4xx fora de 408/425/429/`409 busy`). Resposta perdida + novo toque = um único débito. **Régua:** `src/utils/pendingOpId.antislop.test.ts`.
+- `function spendCredits(amount: number, reason: string, opIdExplicito?: string): Promise<Entitlement | null>` — Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o novo saldo — null significa recusado (sem saldo, offline) e o efeito não pode acontecer.
 - `function claimAdReward(): Promise<Entitlement | null>` — Credita a recompensa do anúncio (o teto diário é aplicado no servidor).
 - `function resetSpriteLifetimeAfterRebirth(): Promise<boolean>` — **novo em `cf6315e1`** (decisão do dono #62, 22/09/2026). Avisa o servidor que o RENASCIMENTO aconteceu, para ele zerar `ent:<saveId>.aiLifetime.sprite` (`POST /api/entitlements?action=rebirth-reset`). O contador mora no servidor porque o cliente é editável; a rota confere sozinha (lê `state.rebirth` do save do titular) e é idempotente (`rebirthSpriteResetAt`), então esta chamada **não carrega autoridade nenhuma — ela só avisa**. ⚠️ Devolve `false` em silêncio e **nunca pode bloquear o renascimento**: ele é uma vez só na vida do save, e perdê-lo por um 500 de rede seria trocar um teto de custo por dano irreversível ao jogador. Chamada com `void` no `handleRebirth` do `App.tsx`.
 - `function verifyPurchase(productId: string, purchaseToken: string): Promise<` — Manda um purchaseToken da Google Play para o servidor verificar. Só o servidor decide se a compra vale — aqui só repassamos e lemos o resultado.
@@ -1516,9 +1517,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/groveLocal.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Avisos do arquivo:** falha de storage tem fallback em memória do módulo (marco e recibo não repetem na mesma execução).
 
+### `src/utils/pendingOpId.ts`
+**Dono de:** o `opId` PENDENTE dos gestos de Créditos (Antislop P6, 14/11/2026, REGISTRO §378). Guarda o id por conta + operação + item em memória e em `STORAGE_KEYS.PENDING_OP_IDS` (nunca no save; some no logout; vence em `PENDENTE_TTL_MS` = 24 h, a janela do `spend:`/`essbuy:` no servidor) até a resposta definitiva.
+**Exports:** `PENDENTE_TTL_MS`, `novoOpId`, `chaveDeOp(saveId, operacao, item)`, `opIdPendente(chave)`, `confirmarOpId(chave, opId)` (só limpa se ainda for o mesmo id), `respostaDefinitiva(status, reason?)`.
+**Chamado por:** `src/utils/entitlements.ts` (`abrirGesto`).
+**Régua:** `src/utils/pendingOpId.antislop.test.ts`.
+
 ### `src/utils/guildMission.ts`
 **Dono de:** a MISSÃO da guilda no aparelho (PR3): a ida do Solmon (`GuildMissionState`, `GUILD_MISSION_MINUTES` = 30), quando ele está fora da Home e quando é hora de voltar. A trava real (1 volta por dia do jogador) e o valor da rodada são do servidor (`guildRaidHit`).
-**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `isMissionDue`, `msUntilReturn`.
+**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `msUntilReturn`. ⚰️ `isMissionDue` (só o teste usava; removida no Antislop P6, 14/11/2026).
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
 
