@@ -5286,3 +5286,14 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Pendência para o dono:** o garden-2 tem canos de cobre e vários cristais turquesa, fora do prompt de cenário ("sem canos de cobre", 1–2 cristais). Aceito por ora porque o CRUZAMENTO o marcou OK; regerar se o dono quiser a regra estrita.
 
 **Falsifica:** algum `oasis-*` acima de 400 KB; xadrez assado ou moldura no fundo; sala de descanso sem fundo. **Rollback:** reverter o PR (voltam o fundo em código das 3 salas). **APK:** arte vai no bundle web; nada nativo.
+
+
+## §363 — Entram os 17 glifos de status restantes do ChatGPT, mesmo sem tela que os use (14/11/2026, decisão do dono)
+
+**Instalado:** `src/assets/soulmon/combate-v3/status/st-{atordoado,ofuscado,distorcao,curto-circuito,po-de-fada,folego,aceleracao,atk-fisico,atk-magico,blindagem,carga,def-agua,def-terra,escudo-peso,furia,postura,velocidade}.png`, substituindo os de mesmo nome. Fonte `E:/Soulmon-assets/_lote-13-11/<id>/<id>.png` (1254 px, alfa real). Processo do §361: recorte pela bounding box do alfa, ilhas <24 px descartadas, alfa binarizado em 128, NEAREST para 64 no maior lado, centralizado em 64², PNG. Tamanhos 3,1 a 8,1 KB (maior: `st-escudo-peso`, 8117 B). Conferidos sobre fundo escuro: sem franja, sem xadrez assado.
+
+**Observação honesta:** hoje nenhuma tela consome `statusGlyphId` (os marcadores de cena usam as folhas `fx-*-loop-sheet`). Os glifos ficam instalados para uso futuro (lista de efeitos ativos / toque no marcador), por decisão do dono. Não há ganho visível nesta entrega.
+
+**Alternativa que perdeu:** esperar existir a tela que os usa antes de instalar (adiaria arte pronta e deixaria os medalhões antigos no repo).
+
+**Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
