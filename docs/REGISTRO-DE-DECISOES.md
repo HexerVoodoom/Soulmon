@@ -5261,3 +5261,13 @@ Arte gerada no ChatGPT e aprovada. Instalada como `src/assets/soulmon/hex/coroa-
 **Falsifica:** família do especial sem coroa própria; coroa fora de 96×96; franja/xadrez no alfa.
 
 **Rollback:** reverter o PR (volta a coroa única). **APK:** a arte vai no bundle web; nada nativo.
+
+## §360 — Entram no jogo os ícones de categoria, os 4 glifos de status refeitos, os 16 materiais e 3 salas de descanso do ChatGPT (13/11/2026, delegado pelo dono: "decidir pela recomendada e instalar")
+
+Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) `icon-cat-casa|proposito|criatividade|sono.png` em `src/assets/soulmon/icons/categories/` (slots de §232/11-11, 128², alfa real, maior lado em 112 como os irmãos; criatividade substitui a herdada e sono entra pela v2 sem folhas); (2) `st-peso|ferrugem|seiva|selado.png` em `combate-v3/status/` (64², recorte pela bounding box, maior lado em 64, NEAREST, alfa binarizado em 128, ilhas <24 px descartadas, sem molde medalhão); (3) 16 materiais em `icons/materiais/<id>.webp` (128², WebP sem perda, alfa real; fonte `_lote-12-11`, cipher = `mat-cipher-b`); (4) `jornada/oasis-shore|cavern|observatory.webp` (1024×2048 opaco, q85, pelo `tools/instalar-oasis-jornada.py`, recuperado do histórico; 271/304/311 KB). **Fora:** `prism-v2` (saiu pintado), `crest` e `gear` do `_lote-13-11` (identidade forçada), materiais do `_lote-13-11` (ficam os do `_lote-12-11`).
+
+**Alternativa que perdeu:** esperar regerar `prism` em pixel antes de instalar os materiais (o `prism` do `_lote-12-11` é um pilar de cristal, não um prisma; entra por ordem do dono e fica na fila para refazer). Também perdeu guardar as fontes 1254 px no repo (bytes sem ganho na tela).
+
+**Falsifica:** ícone com xadrez assado ou alfa não binário no glifo; `oasis-*` acima de 400 KB (teto do `orcamentoDeBytes`); categoria sem arte própria no chip; material caindo no emoji.
+
+**Rollback:** reverter o PR (volta a arte herdada, o glifo provisório e o fundo gerado em código). **APK:** arte vai no bundle web; nada nativo.
