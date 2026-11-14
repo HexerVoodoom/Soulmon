@@ -1,0 +1,8 @@
+# Convenções da casa que o slop-scan não deve contar (decisão do dono, 14/11/2026: D7 + conciliação r1).
+# Formato: <categoria|*> <regex PCRE aplicado à linha "caminho:linha:texto">. Só afrouxar com modal do dono.
+# histórico herdado do DigiApp: não é doc viva
+prosa-inflada ^docs/historico-digiapp/
+# skills de agente vendorizadas
+prosa-inflada ^\.agents/
+# emoji em comentário documenta o ícone da UI: convenção da casa (D7)
+emoji-no-codigo .
