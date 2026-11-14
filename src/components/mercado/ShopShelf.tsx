@@ -703,7 +703,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
                 <span className="sm2-num">{pack.credits}</span>
               </span>
               <span data-bits-pack-off style={{ ...sm2Hint, margin: 0, minHeight: '1.2em' }}>{off ?? ''}</span>
-              {brl && <span data-bits-pack-brl style={{ ...sm2Hint, margin: 0, fontSize: 11 }}>{brl}</span>}
+              {brl && <span data-bits-pack-brl style={{ ...sm2Hint, margin: 0 }}>{brl}</span>}
             </button>
           );
         })}
