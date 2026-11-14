@@ -4,7 +4,8 @@ import { getSpriteForStage } from '../utils/sprites';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { usePrefersReducedMotion } from './ui/Viewport';
 import { ritualLabel } from './ritual/RitualKit';
-import { sm2Button, sm2Hint } from './form/FormKit';
+import { sm2Hint } from './form/FormKit';
+import { CtaButton } from './ui/CtaButton';
 import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
 import { pointsResetLine } from '../utils/betaResetGrant';
 import { entrarNaSuperficie } from '../utils/musica';
@@ -318,10 +319,10 @@ export function EvolutionCeremony({
         )}
         {/* A saída é do jogador — a cerimônia espera o gesto (RIT-20). */}
         {done ? (
-          <button type="button" data-cer-close onClick={onClose} style={{ ...sm2Button('primary'), minWidth: 260, marginTop: 6 }}>
+          <CtaButton width="auto" data-cer-close onClick={onClose} style={{ minWidth: 260, marginTop: 6 }}>
             {/* Copy §3.2: a mesma saída relacional do `MilestoneCeremony`. */}
             {isPt ? 'Seguimos juntos' : 'We keep going together'}
-          </button>
+          </CtaButton>
         ) : (
           <span aria-busy="true" style={{ display: 'block', minHeight: 48, marginTop: 6 }} />
         )}

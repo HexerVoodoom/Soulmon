@@ -12,6 +12,7 @@ import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
 import { Icon } from './ui/Icon';
+import { ChevronAcao } from './ui/ChevronAcao';
 import { UI_ICON_ART, pastaGlifo, pastaAbertaGlifo, displayLuzAcesa, displayLuzApagada } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
@@ -2244,12 +2245,11 @@ export const CompanionHUD = memo(function CompanionHUD({
 });
 
 /**
- * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333): diz "este balão leva
- * a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
- * · A seta é o glifo autoral `arrow_forward` (`ui/NavGlyphs.tsx`); o círculo é só o CONTORNO em CSS (sem fundo): faz parte do
- *   desenho, como o anel do `check_circle`, não é placa em volta do ícone. Nada de arte nova.
- * · Tinta = a do texto do balão (`--sm2-ink` sobre `--sm2-surface`, o mesmo par do texto, bem acima de 3:1).
- * · ~1,15em (16px numa linha de 14px), na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
+ * O texto do balão DOURADO com a SETA no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333; desenho revisto em 14/11/2026, §365):
+ * diz "este balão leva a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
+ * · A seta é o `ChevronAcao` (`ui/ChevronAcao.tsx`, o MESMO da linha de hábito): chevron `>` turquesa SEM haste e SEM círculo.
+ * · Tinta = `--sm2-primary-ink` (turquesa do tema), decorativa: o balão inteiro é o botão.
+ * · 20px na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
  *   sozinha para a linha de baixo.
  * · `aria-hidden`: o nome acessível do botão já diz o destino (`balaoDouradoAria`/`dicaAria`). Estática: sem animação própria.
  */
@@ -2262,17 +2262,7 @@ function BalaoDouradoTexto({ text }: { text: string }) {
       {inicio}
       <span style={{ whiteSpace: 'nowrap' }}>
         {ultima}
-        <span
-          aria-hidden="true"
-          data-pet-gold-bubble-arrow
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
-            width: 22, height: 22, marginLeft: 4, verticalAlign: '-0.2em',
-            border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
-          }}
-        >
-          <Icon name="arrow_forward" size={20} weight={600} />
-        </span>
+        <ChevronAcao data-pet-gold-bubble-arrow="" style={{ marginLeft: 2, verticalAlign: '-0.3em' }} />
       </span>
     </>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ElementIcon, elName } from './ElementBaseSlots';
-import { sm2Button } from './form/FormKit';
+import { CtaButton } from './ui/CtaButton';
 import { potionArt } from '../utils/potionArt';
 import { useBackLayer } from '../utils/backStack';
 import type { Language } from '../utils/i18n';
@@ -9,7 +9,7 @@ import type { Language } from '../utils/i18n';
 /**
  * "Poção criada" (12/11/2026, pedido do dono): o ícone da poção GRANDE no meio da tela, fundo escurecido, uma LUZ girando atrás
  * (raios em CSS, `.sm2-potion-rays`; parada com `prefers-reduced-motion`), o texto "Poção de fogo criada" e o OK centralizado.
- * SEM caixa, SEM card, SEM painel: só o véu escuro, o ícone, a luz, o texto e o botão. Usa o ícone da poção do app (`potionArt`;
+ * SEM caixa, SEM card, SEM painel: só o véu escuro, o ícone, a luz, o texto e o botão (OK = `CtaButton` tom `acao`, §364). Usa o ícone da poção do app (`potionArt`;
  * elemento composto, sem poção própria, cai no ícone do elemento). `aria-modal`: conta como modal (`modalDepth`) e o voltar fecha.
  */
 export function PocaoCriada({ language, elementId, onClose }: { language: Language; elementId: string; onClose: () => void }) {
@@ -30,7 +30,7 @@ export function PocaoCriada({ language, elementId, onClose }: { language: Langua
           : <span className="sm2-potion-icon" data-pocao-art><ElementIcon id={elementId} size={120} /></span>}
       </div>
       <p role="status" data-pocao-texto className="sm2-potion-text">{texto}</p>
-      <button ref={ok} type="button" data-vesca-ok style={sm2Button('primary')} onClick={onClose}>OK</button>
+      <CtaButton ref={ok} tone="acao" width="auto" data-vesca-ok onClick={onClose}>OK</CtaButton>
     </div>
   );
   return typeof document === 'undefined' ? node : createPortal(node, document.body);
