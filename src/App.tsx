@@ -9908,9 +9908,14 @@ export default function App() {
         onClose={() => setCatalogBrowserOpen(false)}
         language={language}
         existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
+        /* §376: o item do catálogo é hábito de todo dia e ocupa a cota; com ela cheia o catálogo AVISA em vez de fechar calado. */
+        habitsCount={contaCotaDeHabitos(gameState.activities)}
+        habitsCap={activityCap}
+        capIsDemoBoundary={gameState.accountTier === 'demo' && !demo}
         onAdd={(item) => {
-          commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
-          setCatalogBrowserOpen(false);
+          // Só fecha se entrou: 0 = não coube no teto, e fechar faria parecer que foi adicionado (§376).
+          const criados = commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
+          if (criados > 0) setCatalogBrowserOpen(false);
         }}
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateInitialKind('habit'); setCreateModalOpen(true); }}
       />
@@ -10556,8 +10561,9 @@ export default function App() {
             suggestions={dayGoalsSuggestions}
             onAcceptSuggestions={items => {
               const novas = activitiesFromCatalogChoice(items, language === 'pt-BR');
-              commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
-              return novas.map(a => a.id);
+              // §376: só os que COUBERAM (prefixo de `fitHabitCreates`) — id do que não entrou seria marcado no plano sem existir.
+              const criados = commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
+              return novas.slice(0, criados).map(a => a.id);
             }}
             language={language}
             initiallyPicked={gameState.dayPlan?.day === dayPlanToday ? gameState.dayPlan.picked : []}
