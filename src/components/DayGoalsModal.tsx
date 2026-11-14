@@ -134,7 +134,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
           ))}
         </section>
       )}
-      {/* A oferta reduzida (nunca falte duas vezes): aceitar conta como FEITO; não há botão de recusar — ignorar é a recusa. */}
+      {/* A oferta reduzida (nunca falte duas vezes): aceitar vira a TAREFA BÔNUS do dia (não conclui, `utils/bonusTask.ts`); não há botão de recusar — ignorar é a recusa. */}
       {fuse?.onTinyHabit && tiny.length > 0 && (
         <section data-day-goals-tiny style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {struggle && <p style={sm2Hint}>{struggle}</p>}
@@ -144,7 +144,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
               return (
                 <span key={h.id} aria-disabled="true" data-day-goals-tiny-accepted style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, color: 'var(--sm2-primary-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500 }}>
                   <Icon name="check" size={20} fill={1} tone="inherit" />
-                  {isPt ? `${name} · contou` : `${name} · counted`}
+                  {isPt ? `${name} · tarefa bônus` : `${name} · bonus task`}
                 </span>
               );
             }
@@ -160,7 +160,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
               </button>
             );
           })}
-          <p style={sm2Hint}>{isPt ? 'Aceitar já conta como feito.' : 'Saying yes already counts as done.'}</p>
+          <p style={sm2Hint}>{isPt ? 'Aceitar vira a tarefa bônus de hoje: marque quando fizer.' : 'Saying yes makes it today’s bonus task: check it when you do it.'}</p>
         </section>
       )}
       <p role="status" aria-live="polite" data-day-goals-count style={sm2Hint}>

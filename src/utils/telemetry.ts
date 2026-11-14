@@ -131,6 +131,8 @@ export type TelemetryEvent =
   | 'dungeon_run'
   /** Subiu de nível de Vínculo (`level` 1..30). */
   | 'bond_level'
+  /** Portão de login: o que a pessoa FEZ ali (`outcome`, ver o schema). Sem e-mail, sem texto. */
+  | 'gate_login'
   // ---- som-01 (SQUAD-SOM) — ver `squad-alpha-runs/som-01/discovery/metrica-de-som.md` ----
   /** Fotografia DIÁRIA do estado de som, no mesmo fechamento do `day_active`.
    *  `muted` = a preferência gravada no aparelho; `music` = a trilha foi
@@ -266,6 +268,10 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   task_skipped: { kind: { min: 0, max: 1 } },
   day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
   session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
+  // Portão de login (relatório de funil 13/11/2026): 42 chegaram ao portão e 16 passaram, e nada dizia por quê.
+  // `outcome` 0 = tocou em "Entrar com Google", 1 = entrou, 2 = fechou a janela, 3 = sem resposta (2 min), 4 = rede,
+  // 5 = configuração (domínio não autorizado, provedor desligado, popup bloqueado), 6 = outro erro. 7 = tocou em "DEMO".
+  gate_login: { outcome: { min: 0, max: 7 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];

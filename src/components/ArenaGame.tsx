@@ -85,6 +85,7 @@ import {
   familyOfSkill,
   loadBestiaryPool,
   arenaFoeKey,
+  arenaFoeFormKey,
   type ArenaEnemy,
   type ArenaPlayerCfg,
   type BestiaryCreature,
@@ -304,8 +305,8 @@ export function ArenaGame({
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
       playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
-      foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; const el = e?.element ?? e?.elements[0]; return meleeImpactOf({ element: el, key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null, forma: foeStrikeForm(el, sp ? 'especial' : 'basica') }); },
-      foeKind: (foe: number, sp: boolean) => foeStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
+      foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; const el = e?.element ?? e?.elements[0]; const fk = e ? arenaFoeFormKey(e) : undefined; return meleeImpactOf({ element: el, key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null, forma: foeStrikeForm(el, sp ? 'especial' : 'basica', fk), ...(sp ? {} : { formKey: fk }) }); },
+      foeKind: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; return foeStrikeForm(e?.element ?? e?.elements[0], sp ? 'especial' : 'basica', e ? arenaFoeFormKey(e) : undefined); },
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,

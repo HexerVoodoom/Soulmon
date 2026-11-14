@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import type { PlayerDayAnchor } from '../utils/playerDay';
 import {
-  applyGrants, deletableRead, hasNewMail, isFriendInvite, markClaimed, sortMail, unclaimedInSave,
+  applyGrants, deletableRead, hasNewMail, isFriendInvite, isGuildInvite, markClaimed, sortMail, unclaimedInSave,
   type MailGrant, type MailItem, type MailState,
 } from '../utils/mensageiro';
 
@@ -10,7 +11,10 @@ const api = () => import('../utils/community');
  * A CAIXA DE CARTAS (§246). A lista e as decisões moram no servidor (`functions/api/_mensageiro.js`); aqui só o espelho local, o crédito no save
  * (idempotente por `mailClaimed`) e a releitura (ao abrir, ao voltar à aba e a cada 5 min). Nada é creditado sem o servidor ter entregue o prêmio.
  */
-export function useMailbox<S extends MailState & { friends?: string[] }>({ saveId, demo, getState, setState }: {
+/** O que "Entrar no clã" (carta de convite, §358) deu. `gone` = código não vale mais; `alreadyIn` = já está num clã; `full` = sem vaga. */
+export type GuildLetterResult = 'joined' | 'alreadyIn' | 'full' | 'gone' | 'locked' | 'error';
+
+export function useMailbox<S extends MailState & { friends?: string[]; playerDayTz?: PlayerDayAnchor }>({ saveId, demo, getState, setState }: {
   saveId: string;
   demo: boolean;
   /** Lido só quando uma ação roda (nunca no render), então pode apontar para um ref declarado mais abaixo. */
@@ -102,6 +106,34 @@ export function useMailbox<S extends MailState & { friends?: string[] }>({ saveI
     }
   }, [saveId, setState]);
 
+  /**
+   * Convite de clã por carta (§358): "Entrar no clã" chama o MESMO `guildJoin` do "Entrar com código" do Salão, com o código da carta.
+   * Entrou: o servidor tira da caixa todo convite de clã pendente. Já tem clã ou código morto: esta carta sai. Clã cheio: a carta fica.
+   * Lança só sem rede (a carta fica).
+   */
+  const joinGuildFromLetter = useCallback(async (m: MailItem): Promise<GuildLetterResult> => {
+    if (!isGuildInvite(m)) return 'gone';
+    const c = await api();
+    const tirar = () => {
+      setMail(l => l.filter(x => x.mid !== m.mid));
+      void c.deleteMail(saveId, [m.mid], true).catch(() => {});
+    };
+    try {
+      const g = await c.joinGuild(saveId, m.guildCode, stateOf.current().playerDayTz);
+      setMail(l => l.filter(x => x.kind !== 'guild-invite' && !x.mid.startsWith('ginv:')));
+      if (g) void import('../utils/telemetry').then(t => t.track('guild_join', { size: Math.min(12, Math.max(2, g.size)) })).catch(() => {});
+      return 'joined';
+    } catch (e) {
+      const kind = e instanceof c.GuildError ? e.kind : 'unavailable';
+      if (kind === 'unavailable') throw e;
+      if (kind === 'alreadyIn') { tirar(); return 'alreadyIn'; }
+      if (kind === 'invalidCode' || kind === 'noGuild') { tirar(); return 'gone'; }
+      if (kind === 'full') return 'full';
+      if (kind === 'login') return 'locked';
+      return 'error';
+    }
+  }, [saveId]);
+
   /** "Excluir todas lidas": só as lidas SEM item pendente. */
   const removeRead = useCallback(async (): Promise<number> => {
     const r = await (await api()).deleteMail(saveId, 'read');
@@ -116,6 +148,6 @@ export function useMailbox<S extends MailState & { friends?: string[] }>({ saveI
     canClaimAll: mail.some(m => (m.bits > 0 || m.emblems > 0) && !m.claimedAt),
     /** Há algo que "Excluir todas lidas" apagaria. */
     canDeleteRead: deletableRead(mail).length > 0,
-    refresh, openLetter, claim, claimAll, remove, removeRead, answerInvite,
+    refresh, openLetter, claim, claimAll, remove, removeRead, answerInvite, joinGuildFromLetter,
   };
 }

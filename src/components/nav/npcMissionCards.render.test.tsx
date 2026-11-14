@@ -5,6 +5,7 @@ import { cleanup, render } from '@testing-library/react';
 import { dailyMissionEntries } from './DailyMissionList';
 import { dailyMissionsFor, npcsOfWeek } from '../../utils/dailyMissions';
 import { NPC_MISSIONS } from '../../utils/npcMissions';
+import { MissionCard } from './MissionCard';
 import { giverOf } from './npcGiver';
 import { LOT_NPC_VOICE } from '../../utils/areaNpcVoice';
 
@@ -23,7 +24,7 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
     expect(li.getAttribute('data-status')).toBe('available');
     expect(li.textContent).toContain(m.namePt!);
     expect(li.querySelector('[data-mission-desc]')!.textContent).toBe(m.descPt);
-    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Recompensa: \+1 \S+/);
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 \S+/);
     const g = giverOf(m.npc, 'pt-BR')!;
     expect(li.querySelector('[data-mission-giver]')!.textContent).toBe(`Com ${g.name}`);
     expect(li.querySelector('[data-mission-giver-art]')!.getAttribute('src')).toBe(g.art);
@@ -36,7 +37,7 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
     render(<ul>{dailyMissionEntries({ language: 'pt-BR', state: { day, counts: {}, claimed: [m.id] }, day, bondLevel: 10, onClaim: () => {} }).map(e => e.node)}</ul>);
     const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
     expect(li.getAttribute('data-status')).toBe('claimed');
-    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Recompensa: \+1 /);
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 /);
   });
 
   it('EN: Reward / From', () => {
@@ -44,7 +45,7 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
     const m = npcsOfWeek(day, 10)[0];
     lista(day, 10, 'en-US');
     const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
-    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/^Reward: \+1 /);
+    expect(li.querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 /);
     expect(li.querySelector('[data-mission-giver]')!.textContent).toMatch(/^From /);
   });
 
@@ -68,5 +69,25 @@ describe('cartões das missões do dia: nome, descrição, recompensa e NPC', ()
       expect(g?.art, `${m.npc} arte`).toBeTruthy();
     }
     expect(Object.keys(LOT_NPC_VOICE).length).toBeGreaterThan(10);
+  });
+
+  it('retrato quadrado do NPC à direita (rosto em foco) e recompensa em ícone com aria-label (12/11/2026)', () => {
+    const day = '2026-12-01';
+    const m = npcsOfWeek(day, 10)[0];
+    lista(day, 10, 'en-US');
+    const li = document.querySelector(`[data-daily-mission="${m.id}"]`)!;
+    const art = li.querySelector('[data-mission-giver-art]') as HTMLImageElement;
+    expect(art.style.objectFit).toBe('cover');
+    expect(art.style.objectPosition).toBe('50% 18%');
+    expect(art.style.width).toBe(art.style.height);
+    const chip = li.querySelector('[data-reward-chip="material"]')!;
+    expect(chip.getAttribute('aria-label')).toMatch(/^Reward: \+1 \S+/);
+    expect(chip.querySelector('img, span')).not.toBeNull();
+  });
+
+  it('sem NPC não há retrato: cartão sem giver não renderiza a imagem', () => {
+    cleanup();
+    render(<ul><MissionCard language="en-US" attrs={{}} status="open" title="x" /></ul>);
+    expect(document.querySelector('[data-mission-giver-art]')).toBeNull();
   });
 });

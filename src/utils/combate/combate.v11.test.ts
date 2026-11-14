@@ -42,7 +42,13 @@ function regressionHash(phaseSalt = PHASE_SALT): { hash: number; first: string; 
 // VIDA INTEIRA (30/10/2026, REGISTRO §192): re-pinned when HP became whole points (the PR1 fractional value was
 // 63614565). The first and last of the 300 fights are unchanged; the hash moves because some fights now end one rounded
 // point earlier/later. It still guards that the u = 1 path is deterministic and that PHASE_SALT matters (the RED below).
-const PR1_MAIN_HASH = 2572250091;
+// §325 (13/11/2026, dono): re-pinned when SPECIAL_POWER.dot went 1 → 1.15 and spdBuff 1.82 → 2 (the value was 2572250091).
+// §334 (13/11/2026, dono): re-pinned when the DoT moved to the AFFECTED fighter's own turn (3 ticks at the start of its next 3
+// basic attacks, instead of 3 ticks 0.25/0.5/0.75 of the caster's interval after the cast). Only the DoT fights move; the first
+// and last of the 300 fights are unchanged (the value was 1064417926).
+// §334 (13/11/2026, dono: "Sim, o especial também"): re-pinned when casting the special also became a turn for the ticks and
+// SPECIAL_POWER.dot went 1.15 → 1.14 (gate 5). First and last fights unchanged (the value was 3918997837).
+const PR1_MAIN_HASH = 375243598;
 
 describe('AC1. regression: u = 1, no hooks, sigma 0.15 reproduces the PR1 main in the 300 declared fights', () => {
   it('passes', () => {
@@ -147,7 +153,7 @@ describe('hooks: startHp, startEnergy, hitScale, cheer, stopAtFirstKo', () => {
     expect(cheerEvents(Array.from({ length: 100 }, (_, i) => i * 0.01), 0)).toHaveLength(0);
   });
   it('PVE_FAMILY_POWER has both engines with the 7 families (arena §6, dungeon §3)', () => {
-    for (const eng of ['arena', 'dungeon'] as const) expect(Object.keys(PVE_FAMILY_POWER[eng]).sort()).toEqual([...SPECIAL_FAMILIES].sort());
+    for (const eng of ['arena', 'dungeon', 'pesadelo'] as const) expect(Object.keys(PVE_FAMILY_POWER[eng]).sort()).toEqual([...SPECIAL_FAMILIES].sort());
     expect(PVE_FAMILY_POWER.arena.defDebuff).toBe(1.55);
     expect(PVE_FAMILY_POWER.dungeon.spdBuff).toBe(1.5);
     expect(AREA_FAMILIES).toEqual(['direct', 'dot', 'defDebuff']);

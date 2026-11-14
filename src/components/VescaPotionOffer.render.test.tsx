@@ -38,4 +38,13 @@ describe('VescaPotionOffer: poção criada', () => {
     fireEvent.click(document.querySelector('[data-vesca-make]')!);
     expect(document.querySelector('[data-pocao-criada]')).toBeNull();
   });
+  it('§316c: popup branco pequeno usa o par PADRÃO do app em linha ("Depois", "Fazer a poção"), sem o CTA do site', () => {
+    render(<VescaPotionOffer language="pt-BR" elementId="fogo" onMake={() => false} onDismiss={() => {}} />);
+    const make = document.querySelector<HTMLElement>('[data-vesca-make]')!;
+    const later = document.querySelector('[data-vesca-later]')!;
+    expect(make.hasAttribute('data-cta-button')).toBe(false);
+    expect(later.compareDocumentPosition(make) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(make.parentElement!.hasAttribute('data-cta-stack')).toBe(false);
+    expect((make.parentElement as HTMLElement).style.display).toBe('flex');
+  });
 });

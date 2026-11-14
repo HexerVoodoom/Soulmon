@@ -83,6 +83,13 @@ export interface CatalogEvidence {
   note?: string;
 }
 
+/**
+ * Recurso do jogo ao qual a atividade se LIGA (beta12 §J): 'steps' = contador de passos (Health Connect/aparelho); 'building:<id>' = um
+ * prédio do Mapa ('forja.caderno'; 'forja.oficina' = Oficina do Foco). Ausente = sem recurso (a maioria; sono e água ficam de fora).
+ */
+export const CATALOG_RESOURCES = ['steps', 'building:forja.caderno', 'building:forja.oficina'] as const;
+export type CatalogResource = (typeof CATALOG_RESOURCES)[number];
+
 export type CatalogLevel = 1 | 2 | 3;
 
 export interface CatalogLevelSpec {
@@ -129,4 +136,6 @@ export interface CatalogItem {
    * `recommendStarterSet` filtra `optInOnly` antes de pontuar.
    */
   optInOnly?: boolean;
+  /** Recurso do jogo ligado a este item (ver CatalogResource); só os itens mapeados em data/catalogResources.ts o declaram. */
+  resource?: CatalogResource;
 }

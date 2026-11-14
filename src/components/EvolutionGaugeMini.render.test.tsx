@@ -7,10 +7,14 @@ import { render, screen, cleanup } from '@testing-library/react';
 afterEach(() => cleanup());
 import { EvolutionGaugeMini } from './EvolutionGaugeMini';
 
+/** 13/11/2026: o termo "fragmento de alma" sai destacado (`SoulFragmentTerm`), então a frase se divide em nós: casa pelo texto inteiro. */
+const textoInteiro = (t: string) => (_: string, el: Element | null) => !!el && el.textContent === t && Array.from(el.children).every(c => c.textContent !== t);
+
+
 describe('EvolutionGaugeMini', () => {
   it('EN: rótulo, contagem, prévia de hoje e progressbar com os números do gauge', () => {
     render(<EvolutionGaugeMini language="en-US" evolutionPoints={12} evolutionStage="rookie" todayWeight={2} />);
-    expect(screen.getByText('Soul Fragments gathered')).toBeTruthy();
+    expect(screen.getByText(textoInteiro('Soul Fragments gathered'))).toBeTruthy();
     const bar = screen.getByRole('progressbar');
     expect(bar.getAttribute('aria-valuemax')).toBe('30');
     expect(bar.getAttribute('aria-valuenow')).toBe('12');

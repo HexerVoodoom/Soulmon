@@ -151,9 +151,22 @@ export interface DirectoryPlayer {
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
   especialNome?: string;
+  /** §321 (13/11/2026): nome do clã da pessoa, mostrado embaixo do nome (`ui/PlayerName`). Ausente = sem clã. */
+  guildName?: string;
 }
-export const listPlayers = (search = '') =>
-  call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+/** Vista mínima que a busca do "Convidar amigo" devolve (§351): só o que o convite precisa. */
+export type FriendLookupPlayer = Pick<DirectoryPlayer, 'id' | 'name' | 'stage'> & { spriteUrl?: string | null };
+/**
+ * Diretório (sem `friendOf`): só quem ligou o PvP, como sempre.
+ * Com `friendOf` (saveId de quem convida, §351, decisão do dono): a busca por apelido do "Convidar amigo" — acha qualquer
+ * jogador VISÍVEL, com PvP ligado ou desligado (a mesma régua das sugestões `names`), sem a própria conta. Exige busca.
+ */
+export function listPlayers(search?: string): Promise<{ players: DirectoryPlayer[] }>;
+export function listPlayers(search: string, opts: { friendOf: string }): Promise<{ players: FriendLookupPlayer[] }>;
+export function listPlayers(search = '', opts?: { friendOf: string }) {
+  if (opts?.friendOf) return call<{ players: FriendLookupPlayer[] }>('players', { params: { search, lookup: 'friend', id: opts.friendOf } });
+  return call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+}
 
 export interface PlayerDetail extends DirectoryPlayer {
   friends: string[]; wins: number; losses: number;
@@ -180,6 +193,8 @@ export interface Opponent {
   duel?: { level: number } | null;
   /** Nome do especial que o jogador escolheu (já filtrado no servidor); ausente = nome padrão. */
   especialNome?: string;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
 }
 /** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
 export const getOpponents = (id: string, reroll = false) =>
@@ -312,6 +327,8 @@ export async function playSparComRetry(id: string, opponentId: string, taps: num
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
    *  `points` acima são da season e caem (derrota, ser sorteado, virada de
@@ -346,7 +363,7 @@ export const answerFriendInvite = (id: string, friendId: string, decline = false
   call<{ ok: true; status?: 'friends'; friends: string[] }>('friendAccept', { method: 'POST', body: { id, friendId, ...(decline ? { decline: true } : {}) } });
 export interface FriendsState {
   friends: string[];
-  incoming: { id: string; name: string; at: number }[];
+  incoming: { id: string; name: string; /** §321: nome do clã de quem convidou (ausente = sem clã). */ guildName?: string; at: number }[];
   outgoing: string[];
   /** Pids de quem já recebeu presente DESTA conta hoje (o servidor é a autoridade). */
   sentToday: string[];
@@ -788,9 +805,12 @@ export const createGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
 export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildJoin', { method: 'POST', body: { id, code, dayKey: dia(tz) } }).then(viewOf);
 
-// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga + pedido aprovado pelo anfitrião ──
-/** Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código. */
-export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number }
+// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga (e os cheios, §322) + pedido aprovado pelo anfitrião ──
+/**
+ * Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código.
+ * `full` (§322): o clã está cheio — aparece com o selo "Cheia" e sem botão de pedir.
+ */
+export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number; full: boolean }
 export interface GuildPending { dirId: string; name: string | null }
 export interface GuildDirectory { clans: GuildDirectoryClan[]; pending: GuildPending | null }
 /** Um pedido visto pelo anfitrião: id opaco por clã + o nome público de quem pediu. */
@@ -810,10 +830,12 @@ export function sanitizeGuildDirectory(raw: unknown): GuildDirectory {
     const x = c as Record<string, unknown>;
     const size = Math.floor(Number(x.size)), max = Math.floor(Number(x.max));
     if (typeof x.dirId !== 'string' || !OPACO.test(x.dirId) || typeof x.name !== 'string' || !x.name) return [];
-    if (!(size > 0) || !(max > 0) || size >= max) return [];
-    return [{ dirId: x.dirId, name: str(x.name, 40), size, max }];
+    if (!(size > 0) || !(max > 0) || size > max) return [];
+    // Cheio = o servidor disse `full` OU o tamanho chegou ao teto (nunca mostra "pedir" num clã sem vaga).
+    return [{ dirId: x.dirId, name: str(x.name, 40), size, max, full: x.full === true || size >= max }];
   }).slice(0, 50);
-  return { clans, pending: sanitizePending(r.pending) };
+  // §322: os com vaga primeiro (ordem estável: a do servidor dentro de cada grupo).
+  return { clans: [...clans.filter(c => !c.full), ...clans.filter(c => c.full)], pending: sanitizePending(r.pending) };
 }
 export function sanitizeJoinRequests(raw: unknown): GuildJoinRequest[] {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
@@ -868,6 +890,30 @@ export const guildGesture = (id: string, kind: GuildGesture, tz?: PlayerDayAncho
 /** Sair. Um toque, sem confirmação de ninguém e sem penalidade nenhuma. */
 export const leaveGuild = (id: string) =>
   guildCall<{ ok: true }>('guildLeave', { method: 'POST', body: { id } });
+
+/**
+ * Convidar alguém para o clã (§321, o "Convidar" do Salão): o servidor manda ao convidado uma carta do Papus com o nome e o
+ * código do clã. `to` é o pid público (da busca de jogadores). O resultado é um ESTADO da linha, não uma exceção:
+ * cada um tem a sua frase na folha de convite.
+ */
+export type GuildInviteResult = 'sent' | 'member' | 'inGuild' | 'full' | 'notFound' | 'rate' | 'offline' | 'login' | 'error';
+export async function inviteToGuild(id: string, to: string, tz?: PlayerDayAnchor): Promise<GuildInviteResult> {
+  try {
+    await guildCall<{ invited: true }>('guildInvite', { method: 'POST', body: { id, to, dayKey: dia(tz) } });
+    return 'sent';
+  } catch (e) {
+    if (!(e instanceof GuildError)) return 'error';
+    const erro = (e.raw && typeof e.raw === 'object' ? (e.raw as { error?: unknown }).error : '') ?? '';
+    if (e.kind === 'unavailable') return 'offline';
+    if (e.kind === 'login' || e.kind === 'deleted') return 'login';
+    if (e.kind === 'rateLimit') return 'rate';
+    if (e.kind === 'full') return 'full';
+    if (e.kind === 'alreadyIn') return 'inGuild';
+    if (erro === 'already member') return 'member';
+    if (erro === 'player not found') return 'notFound';
+    return 'error';
+  }
+}
 
 export const renameGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildRename', { method: 'POST', body: { id, name, dayKey: dia(tz) } }).then(viewOf);

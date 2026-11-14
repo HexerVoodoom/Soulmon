@@ -29,6 +29,7 @@ import { bumpDailyIn } from './dailyMissions';
 import { potionKey } from './elementPotion';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 import type { FighterIdentity } from './fighterIdentity';
+import { chaveDaIdentidade, meleeImpactOf } from './combate/golpeImpacto';
 
 export type HexSlot = 'coroa' | 'amuleto' | 'garra' | 'couraca' | 'luvas';
 export const HEX_SLOTS: readonly HexSlot[] = ['coroa', 'amuleto', 'garra', 'couraca', 'luvas'];
@@ -269,8 +270,12 @@ export function hexArenaElements<T extends { basica: string; especial: string; a
 export function hexIdentity(id: FighterIdentity, hx: HexOverrides): FighterIdentity {
   if (!hx.basicElement && !hx.specialElement && !hx.specialFamily && !hx.strike) return id;
   const st = hx.strike ? strikeParts(hx.strike) : undefined;
+  // BUG 13/11/2026 (dono): a Coroa de DoT virava o básico de Magia em Corte à distância. Sem Luvas, o acabamento do básico é um
+  // sorteio estável pela `chaveDaIdentidade`, e a chave leva família e elementos: trocar Coroa/Amuleto/Garra mudava a chave e,
+  // com ela, o tipo do ataque. Só as Luvas trocam o TIPO; os outros slots trocam elemento/família. O acabamento ORIGINAL fica fixo.
+  const impacto = st?.impacto ?? id.basico.impacto ?? meleeImpactOf({ element: id.basico.elemento, key: chaveDaIdentidade(id) });
   return {
-    basico: { ...id.basico, elemento: hx.basicElement ?? id.basico.elemento, forma: st?.forma ?? id.basico.forma, ...(st ? { impacto: st.impacto } : {}) },
+    basico: { ...id.basico, elemento: hx.basicElement ?? id.basico.elemento, forma: st?.forma ?? id.basico.forma, impacto },
     especial: { ...id.especial, elemento: hx.specialElement ?? id.especial.elemento, familia: hx.specialFamily ?? id.especial.familia },
   };
 }

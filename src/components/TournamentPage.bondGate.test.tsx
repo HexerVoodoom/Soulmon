@@ -3,7 +3,7 @@
  * O requisito de Vínculo do Torneio, no CLIENTE — que é experiência, não trava.
  *
  * H13 (02/10/2026): o interruptor "Participar do PvP" SAIU — o personagem já
- * nasce no PvP. Sobrou o requisito (Vínculo 5, `BOND_PVP_MIN_LEVEL`): abaixo
+ * nasce no PvP. Sobrou o requisito (Vínculo 5, `BOND_RANKED_MIN_LEVEL`): abaixo
  * dele a aba Desafiar EXPLICA por que não abre e o que falta (em vez de parecer
  * quebrada); a trava inforjável continua sendo a do servidor
  * (`functions/api/community.js` + `_bond.js`).
@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render as rtlRender, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 /** R8: o "i" ÚNICO da página (canto superior direito) explica tudo; abre por este botão. */
 const abrirInfo = () => fireEvent.click(screen.getByRole('button', { name: /Sobre o Torneio|About the Tournament/ }));
@@ -51,7 +51,7 @@ afterEach(async () => {
 });
 
 describe('não existe mais interruptor de PvP', () => {
-  it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('com totalXP=%i, nenhum switch na tela', totalXP => {
+  it.each([0, xpForLevel(BOND_RANKED_MIN_LEVEL)])('com totalXP=%i, nenhum switch na tela', totalXP => {
     render(<TournamentPage {...props} totalXP={totalXP} />);
     expect(screen.queryByRole('switch')).toBeNull();
     expect(screen.queryByText(/Participar do PvP|Join PvP/)).toBeNull();
@@ -59,11 +59,11 @@ describe('não existe mais interruptor de PvP', () => {
 });
 
 describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
-  it('diz que o Torneio abre no Vínculo 5, onde a pessoa está e quanto falta', () => {
+  it('diz que a Ranqueada abre no Vínculo 5, onde a pessoa está e quanto falta', () => {
     render(<TournamentPage {...props} totalXP={0} />);
     const card = document.querySelector('[data-torneio-requisito]') as HTMLElement;
     expect(card).not.toBeNull();
-    expect(card.textContent).toMatch(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`));
+    expect(card.textContent).toMatch(new RegExp(`Vínculo ${BOND_RANKED_MIN_LEVEL}`));
     expect(card.textContent).toMatch(/faltam \d+ XP/);
     // R8: o "sem pressa" (progresso, nunca dívida) mora no "i" único da página.
     abrirInfo();
@@ -80,7 +80,7 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
   it('em inglês, tudo em inglês', () => {
     render(<TournamentPage {...props} language="en-US" totalXP={0} />);
     const card = document.querySelector('[data-torneio-requisito]') as HTMLElement;
-    expect(card.textContent).toMatch(new RegExp(`opens at Bond ${BOND_PVP_MIN_LEVEL}`));
+    expect(card.textContent).toMatch(new RegExp(`opens at Bond ${BOND_RANKED_MIN_LEVEL}`));
     expect(card.textContent).toMatch(/XP to go/);
     expect(card.textContent).not.toMatch(/Vínculo|faltam/);
   });
@@ -94,7 +94,7 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
 
 describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () => {
   it('sem card de requisito; procura oponentes; mostra o aviso do apelido público', async () => {
-    render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    render(<TournamentPage {...props} totalXP={xpForLevel(BOND_RANKED_MIN_LEVEL)} />);
     expect(document.querySelector('[data-torneio-requisito]')).toBeNull();
     expect(screen.queryByText(/Ative o PvP|Enable PvP/)).toBeNull();
     abrirInfo();
@@ -103,7 +103,7 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
   });
 
   it('TORC-5: quem saiu da lista pública lê "Você está oculto da lista pública" (e continua com o Desafiar)', async () => {
-    render(<TournamentPage {...props} ocultoDaLista totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    render(<TournamentPage {...props} ocultoDaLista totalXP={xpForLevel(BOND_RANKED_MIN_LEVEL)} />);
     abrirInfo();
     const aviso = document.querySelector('[data-torneio-aviso-publico]')?.textContent ?? '';
     expect(aviso).toMatch(/oculto da lista pública/);
@@ -112,14 +112,14 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
   });
 
   it('o aviso está em inglês quando o idioma é inglês', () => {
-    render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_RANKED_MIN_LEVEL)} />);
     abrirInfo();
     expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/public list/i);
   });
 });
 
 describe('D-58: o botão Train saiu nos dois casos; a legenda da torcida mora no "i" único', () => {
-  it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('totalXP=%i', totalXP => {
+  it.each([0, xpForLevel(BOND_RANKED_MIN_LEVEL)])('totalXP=%i', totalXP => {
     render(<TournamentPage {...props} totalXP={totalXP} />);
     expect(document.querySelector('[data-torneio-treino]')).toBeNull();
     abrirInfo();

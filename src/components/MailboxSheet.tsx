@@ -7,10 +7,11 @@ import { CartaTutorialWidget } from './CartaTutorialWidget';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
 import npcHexsmith from '../assets/soulmon/npcs/npc-forja-hexsmith.png';
 import {
-  hasPendingReward, isFriendInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
+  hasPendingReward, isFriendInvite, isGuildInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
   type MailGrant, type MailItem,
 } from '../utils/mensageiro';
 import type { Language } from '../utils/i18n';
+import type { GuildLetterResult } from '../hooks/useMailbox';
 
 /**
  * A CAIXA DE CARTAS do Papus (§246), aberta pelo ícone de carta da Home. Folha padrão de NPC (`AreaSheet`): o Papus aparece GRANDE, por cima da folha e por fora, com a fala (pedido do dono, 08/11/2026: "o NPC tem que aparecer grande, em cima, por fora"); as confirmações seguem `ModalSheet`.
@@ -23,7 +24,7 @@ import type { Language } from '../utils/i18n';
  */
 const CARTA_NPC_ART = { mensageiro: NPC_MENSAGEIRO_ART, hexsmith: npcHexsmith } as const;
 
-export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead, onAnswerInvite }: {
+export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead, onAnswerInvite, onJoinGuild }: {
   open: boolean;
   language: Language;
   mail: readonly MailItem[];
@@ -35,6 +36,8 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
   onDeleteRead: () => Promise<number>;
   /** Convite de amizade por carta (§288). */
   onAnswerInvite?: (m: MailItem, decline: boolean) => Promise<'accepted' | 'declined' | 'gone'>;
+  /** Convite de clã por carta (§358): "Entrar no clã" = o `guildJoin` do Salão com o código da carta. "Recusar" só apaga a carta. */
+  onJoinGuild?: (m: MailItem) => Promise<GuildLetterResult>;
 }) {
   const isPt = language === 'pt-BR';
   const [aberta, setAberta] = useState<string | null>(null);
@@ -66,6 +69,21 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
     toast(r === 'accepted' ? (isPt ? 'Agora vocês são amigos.' : 'You are now friends.')
       : r === 'declined' ? (isPt ? 'Convite recusado.' : 'Invite declined.')
       : (isPt ? 'Esse convite não existe mais.' : 'That invite is gone.'));
+  });
+  const entrarNoCla = (m: MailItem) => rodar(async () => {
+    const r = await onJoinGuild!(m);
+    if (r !== 'full' && r !== 'error' && r !== 'locked' && aberta === m.mid) setAberta(null);
+    toast(r === 'joined' ? (isPt ? 'Bem-vindo ao clã! Ele está no Salão.' : 'Welcome to the clan! It is in the Clan Hall.')
+      : r === 'alreadyIn' ? (isPt ? 'Você já está num clã.' : 'You are already in a clan.')
+      : r === 'full' ? (isPt ? 'Esse clã está cheio agora.' : 'That clan is full right now.')
+      : r === 'gone' ? (isPt ? 'Esse convite não existe mais.' : 'That invite is gone.')
+      : r === 'locked' ? (isPt ? 'Ainda não dá para entrar num clã por aqui.' : 'You cannot join a clan from here yet.')
+      : (isPt ? 'Não deu certo agora. Tente de novo mais tarde.' : 'That did not work right now. Try again later.'));
+  });
+  const recusarCla = (m: MailItem) => rodar(async () => {
+    await onDelete(m.mid, false);
+    if (aberta === m.mid) setAberta(null);
+    toast(isPt ? 'Convite recusado.' : 'Invite declined.');
   });
   const deletar = (m: MailItem) => rodar(async () => {
     if (hasPendingReward(m)) { setConfirmar(m); return; }
@@ -164,6 +182,14 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                         <button type="button" data-mail-invite-accept disabled={ocupado} onClick={() => void responder(m, false)}
                           style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Aceitar' : 'Accept'}</button>
                         <button type="button" data-mail-invite-decline disabled={ocupado} onClick={() => void responder(m, true)}
+                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
+                      </div>
+                    )}
+                    {isGuildInvite(m) && onJoinGuild && (
+                      <div data-mail-guild-invite style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" data-mail-guild-join disabled={ocupado} onClick={() => void entrarNoCla(m)}
+                          style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Entrar no clã' : 'Join clan'}</button>
+                        <button type="button" data-mail-guild-decline disabled={ocupado} onClick={() => void recusarCla(m)}
                           style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
                       </div>
                     )}

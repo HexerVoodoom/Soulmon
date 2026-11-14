@@ -6,13 +6,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import { TOURNAMENT_NPCS, TOURNAMENT_NPC_ART, tournamentNpcSprite } from '../utils/tournamentNpcs';
 
 const saveId = 'a'.repeat(32);
 const base = {
   saveId, petStage: 'rookie', onMatchPlayed: () => {}, trophies: [], language: 'en-US',
-  emblems: 0, onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_PVP_MIN_LEVEL),
+  emblems: 0, onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_RANKED_MIN_LEVEL),
 };
 
 /** Responde por ação: `opponents` vazio, `rank` com o jogador e (opcional) `myPlace`. */

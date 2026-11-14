@@ -305,6 +305,14 @@
   <tr><td><code>guild_raid</code></td><td>Fair: that you took your round, or saw the phenomenon come apart or retreat (<code>outcome</code>, 0 to 2). Never the damage.</td></tr>
   <tr><td><code>guild_stage</code></td><td>That your device saw a new stage of the Grove (<code>level</code>, 1 to 5), once each.</td></tr>
   <tr><td><code>meal_ritual</code></td><td>That a meal check-in window (after breakfast, lunch or dinner) was answered by any care gesture: which meal (<code>meal</code>: 0 = breakfast, 1 = lunch, 2 = dinner) and which small action closed it (<code>kind</code>: 0 = food, 1 = rinse, 2 = pat, 3 = hello). Only that it happened &mdash; never the time of day, never how many windows you skipped.</td></tr>
+  <tr><td><code>time_spent</code></td><td>How long, in a band (for example &ldquo;1 to 2 minutes&rdquo;), you spent in a screen, a feature or a game in one day (<code>kind</code>, <code>item</code>, <code>band</code>). Added up with everyone else&rsquo;s; never the exact seconds, never the time of day.</td></tr>
+  <tr><td><code>minigame_start</code></td><td>That a game was started (<code>item</code>: which game).</td></tr>
+  <tr><td><code>minigame_end</code></td><td>That a game ended: which one, how it ended (<code>outcome</code>: 0 = win, 1 = loss, 2 = left) and how long it took, in a band. Never the score.</td></tr>
+  <tr><td><code>task_done</code></td><td>That a task or a habit was completed (<code>kind</code>: 0 = task, 1 = habit). Never its name or text.</td></tr>
+  <tr><td><code>task_skipped</code></td><td>That a task or a habit was postponed, set aside or missed (<code>kind</code>). Never its name or text.</td></tr>
+  <tr><td><code>day_close</code></td><td>When a day closes: the effort weight you planned and the weight you completed (<code>planned</code>, <code>done</code>, 0 to 50). Never what the items were.</td></tr>
+  <tr><td><code>session_end</code></td><td>How long a session of the app lasted, in a band, and the app version number (<code>band</code>, <code>build</code>).</td></tr>
+  <tr><td><code>gate_login</code></td><td>What happened at the sign-in screen: tapped Continue with Google, signed in, closed the window, no response, network or setup error, or tapped DEMO (<code>outcome</code>). Never your e-mail.</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>
@@ -324,7 +332,7 @@
 </p>
 <p>
   Sending is <strong>on</strong> by default. To turn it off:
-  <strong>Settings → Your data → “Send usage stats”</strong>. Once off, sending
+  <strong>Settings → Your data → “Share usage”</strong>. Once off, sending
   really stops and whatever is queued on the device is deleted.
 </p>
 
@@ -862,6 +870,14 @@ servers is only what section 2 lists (the daily total inside your save).</p>
   <tr><td><code>guild_raid</code></td><td>Feira: que você deu a sua rodada, ou que viu o fenômeno se desfazer ou recuar (<code>outcome</code>, 0 a 2). Nunca o dano.</td></tr>
   <tr><td><code>guild_stage</code></td><td>Que o seu aparelho viu um estágio novo do Bosque (<code>level</code>, 1 a 5), uma vez cada.</td></tr>
   <tr><td><code>meal_ritual</code></td><td>Que uma janela de refeição (depois do café, do almoço ou do jantar) foi atendida por algum gesto de cuidado: qual refeição (<code>meal</code>: 0 = café, 1 = almoço, 2 = jantar) e qual ação pequena a fechou (<code>kind</code>: 0 = comida, 1 = banho, 2 = carinho, 3 = oi). Só que aconteceu &mdash; nunca a hora do dia, nunca quantas janelas você deixou passar.</td></tr>
+  <tr><td><code>time_spent</code></td><td>Quanto tempo, em uma faixa (por exemplo &ldquo;de 1 a 2 minutos&rdquo;), você passou em uma tela, um recurso ou um jogo em um dia (<code>kind</code>, <code>item</code>, <code>band</code>). Somado ao de todo mundo; nunca os segundos exatos, nunca a hora do dia.</td></tr>
+  <tr><td><code>minigame_start</code></td><td>Que um jogo foi iniciado (<code>item</code>: qual jogo).</td></tr>
+  <tr><td><code>minigame_end</code></td><td>Que um jogo terminou: qual, como terminou (<code>outcome</code>: 0 = vitória, 1 = derrota, 2 = saiu) e quanto durou, em uma faixa. Nunca a pontuação.</td></tr>
+  <tr><td><code>task_done</code></td><td>Que uma tarefa ou um hábito foi concluído (<code>kind</code>: 0 = tarefa, 1 = hábito). Nunca o nome nem o texto.</td></tr>
+  <tr><td><code>task_skipped</code></td><td>Que uma tarefa ou um hábito foi adiado, deixado de lado ou perdido (<code>kind</code>). Nunca o nome nem o texto.</td></tr>
+  <tr><td><code>day_close</code></td><td>Quando um dia fecha: o peso de esforço planejado e o concluído (<code>planned</code>, <code>done</code>, 0 a 50). Nunca quais eram os itens.</td></tr>
+  <tr><td><code>session_end</code></td><td>Quanto durou uma sessão do app, em uma faixa, e o número da versão do app (<code>band</code>, <code>build</code>).</td></tr>
+  <tr><td><code>gate_login</code></td><td>O que aconteceu na tela de entrada: tocou em Entrar com Google, entrou, fechou a janela, sem resposta, erro de rede ou de configuração, ou tocou em DEMO (<code>outcome</code>). Nunca o seu e-mail.</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
@@ -882,7 +898,7 @@ servers is only what section 2 lists (the daily total inside your save).</p>
 </p>
 <p>
   O envio vem <strong>ligado</strong>. Para desligar:
-  <strong>Configurações → Seus dados → “Enviar estatísticas de uso”</strong>.
+  <strong>Configurações → Seus dados → “Compartilhar uso”</strong>.
   Desligado, o envio para de verdade e o que estiver na fila do aparelho é
   apagado.
 </p>

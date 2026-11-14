@@ -222,6 +222,9 @@ export interface RitualRowProps {
   /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
    *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
   below?: ReactNode;
+  /** Link de AÇÃO na frente do nome, na MESMA linha, à esquerda (dono, 13/11/2026: "Ir ao Caderno" vem antes do texto, não embaixo).
+   *  Some quando a linha está feita. */
+  lead?: ReactNode;
   /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */
   value: number;
   max: number;
@@ -234,6 +237,11 @@ export interface RitualRowProps {
    * ("haunted · +relief") saiu da linha (14/10/2026: só nome e checkbox).
    */
   haunted?: boolean;
+  /**
+   * ⭐ TAREFA BÔNUS (13/11/2026, `utils/bonusTask.ts`): a MESMA linha e a mesma caixa; a ÚNICA diferença é o título no
+   * bronze do checkbox (`--sm2-check-fill`). Nenhum texto explicativo na linha (pedido do dono).
+   */
+  bonus?: boolean;
   /**
    * Linha de HISTÓRICO (concluída hoje, já fora de `tasks`): editar é inerte
    * (`aria-disabled`), o checkbox é cheio e inerte. Ela existe para o
@@ -262,9 +270,9 @@ export interface RitualRowProps {
 }
 
 export function RitualRow({
-  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
+  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, bonus = false, inert = false,
   onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
-  children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey, below, lead,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
   const segurar = useLongPress(onLongPress);
@@ -272,6 +280,7 @@ export function RitualRow({
   /* A tinta do título: uma só regra, por estado (D-A3). */
   const tinta = isHaunted
     ? 'var(--sm2-haunted)'
+    : bonus ? 'var(--sm2-check-fill)'
     : (done || dimmed) ? 'var(--sm2-muted)' : 'var(--sm2-ink)';
   /* PAI × FILHOS (beta-2, 2.2): linha com filhos NUNCA conclui direto. O
      checkbox à esquerda só REFLETE (marcado = todos feitos; `mixed` = alguns) e
@@ -304,6 +313,7 @@ export function RitualRow({
       data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
+      data-bonus={bonus ? 'true' : undefined}
       data-kind={kind}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
@@ -349,6 +359,11 @@ export function RitualRow({
             >
               {nomeSpan}
             </button>
+          ) : lead && !done ? (
+            <span data-ritual-lead-row style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span data-ritual-lead style={{ flex: '0 0 auto' }}>{lead}</span>
+              {nomeSpan}
+            </span>
           ) : nomeSpan}
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>

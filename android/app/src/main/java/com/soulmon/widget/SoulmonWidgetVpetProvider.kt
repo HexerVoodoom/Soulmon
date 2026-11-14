@@ -11,5 +11,6 @@ class SoulmonWidgetVpetProvider : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) {
         WidgetRefreshWorker.schedule(context)
+        WidgetFramesSyncWorker.schedule(context)
     }
 }

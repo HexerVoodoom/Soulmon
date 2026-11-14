@@ -45,6 +45,36 @@ object WidgetAdaptive {
     const val COMPACT_MIN_HEIGHT_DP = 70
 
     /**
+     * Widget "Soulmon" sem moldura (clear), beta12 A2: alem do compacto (so a criatura) e do horizontal (fala a direita), ganha o
+     * VERTICAL: 1 celula de largura x 2+ de altura, com a fala ABAIXO do Soulmon. Chaves = tamanho minimo de cada layout (dp);
+     * a API 31+ recebe essa lista como mapa de RemoteViews e usa o maior que cabe, [chooseClearShape] da a mesma resposta abaixo.
+     */
+    enum class ClearShape { COMPACT, VERTICAL, FULL }
+    data class ClearKey(val widthDp: Float, val heightDp: Float, val shape: ClearShape)
+
+    /** Celulas de launcher: n celulas ~ 70n - 30 dp (1 = 40, 2 = 110). */
+    val CLEAR_KEYS = listOf(
+        ClearKey(40f, 40f, ClearShape.COMPACT),
+        ClearKey(40f, 110f, ClearShape.VERTICAL),
+        ClearKey(COMPACT_MIN_WIDTH_DP.toFloat(), COMPACT_MIN_HEIGHT_DP.toFloat(), ClearShape.FULL),
+    )
+
+    /** Teto de altura do widget sem moldura: 4 celulas (70 * 4 - 30). Igual a `android:maxResizeHeight` do XML. */
+    const val CLEAR_MAX_HEIGHT_DP = 250
+
+    /**
+     * Mesma regra do mapa de tamanhos da API 31+: o maior layout que cabe (por area); nenhum cabe = compacto. `0x0` = o launcher
+     * nao informou = posicionamento padrao (3x2) = layout completo horizontal, como sempre foi.
+     */
+    fun chooseClearShape(widthDp: Int, heightDp: Int): ClearShape {
+        if (widthDp <= 0 && heightDp <= 0) return ClearShape.FULL
+        return CLEAR_KEYS
+            .filter { it.widthDp <= widthDp && it.heightDp <= heightDp }
+            .maxByOrNull { it.widthDp * it.heightDp }
+            ?.shape ?: ClearShape.COMPACT
+    }
+
+    /**
      * The owner's priority: care (hunger, then residue), then a missing task, then a kind
      * word. Task data is only trusted inside the day it was written for (`dayEndsAt`):
      * after midnight with the app closed the list is yesterday's, so neither a task nor a

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { STROLL_MIN_MINUTES } from '../types/travessias';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
@@ -81,12 +82,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       body: (
         <>
           <p style={para}>
-            {L(
+            {emphasizeSoulFragment(L(
               // 🧬 11/10/2026 (decisão do dono): o critério de evolução é o
               // GAUGE (`utils/evolutionGauge.ts`), não mais o dia completo.
               'Cada forma tem uma barra de Fragmentos de Alma. Todo hábito ou tarefa concluída rende fragmentos (tarefas maiores, 1 a 3), até a meta diária do estágio.',
               'Each form has a Soul Fragment bar. Every habit or task you finish earns fragments (bigger tasks, 1 to 3), up to your stage’s daily goal.',
-            )}
+            ))}
           </p>
           <p style={para}>
             {L(
@@ -277,8 +278,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar já conta como feito.`,
-              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting counts as done.`,
+              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar a torna a tarefa bônus do dia, que rende um ponto extra para a evolução.`,
+              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting makes it the day’s bonus task, worth one extra point toward evolution.`,
             )}
           </p>
           <p style={para}>
@@ -536,8 +537,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond}. Lv N é o do seu Soulmon.`,
-              `The Arena and the Tournament open at Bond ${GATES.pvp.minBond}. Lv N is your Soulmon's.`,
+              `Só a Ranqueada do Torneio pede Vínculo ${GATES.ranqueada.minBond}; o resto é livre. Lv N é o do seu Soulmon.`,
+              `Only the Tournament's Ranked mode asks for Bond ${GATES.ranqueada.minBond}; everything else is open. Lv N is your Soulmon's.`,
             )}
           </p>
           <p style={para}>

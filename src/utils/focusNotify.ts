@@ -1,7 +1,8 @@
 /**
  * AVISOS DO FOCO (§301): «hora do descanso» quando os 25 min acabam e «descanso acabou» quando os 5 min acabam, mesmo com o app
- * fechado. SEM plugin novo: no APK usa o alarme nativo que já existe (`SoulmonAlarm.scheduleAlarm`, "HH:mm", um disparo, inexato,
- * refeito após o boot); na web usa um timer + `showNotification` só se a permissão já foi dada (nunca pede sozinho). Web/PWA com o
+ * fechado. No APK (beta12, item I) usa `SoulmonAlarm.scheduleExactAlarm` (timestamp em ms, exato quando o aparelho concede
+ * "Alarmes e lembretes", senão inexato); num APK ANTERIOR (sem o método) cai no alarme "HH:mm" de sempre (`scheduleAlarm`, um disparo,
+ * inexato, refeito após o boot); na web usa um timer + `showNotification` só se a permissão já foi dada (nunca pede sozinho). Web/PWA com o
  * app FECHADO depende de push do servidor (não existe para o foco): `docs/BACKLOG-BETA12.md`.
  */
 import { Capacitor } from '@capacitor/core';
@@ -34,7 +35,10 @@ export function scheduleFocusAlarm(kind: FocusAlarmKind, at: number, language: L
   if (at <= now) return;
   const { title, body } = focusAlarmCopy(kind, language);
   if (Capacitor.isNativePlatform()) {
-    SoulmonAlarm.scheduleAlarm({ id: ID[kind], title, body, scheduledTime: alarmClock(at) }).catch(() => {});
+    const legacy = () => SoulmonAlarm.scheduleAlarm({ id: ID[kind], title, body, scheduledTime: alarmClock(at) }).catch(() => {});
+    if (typeof SoulmonAlarm.scheduleExactAlarm === 'function') {
+      try { SoulmonAlarm.scheduleExactAlarm({ id: ID[kind], title, body, atMs: at }).catch(legacy); } catch { void legacy(); }
+    } else void legacy();
     return;
   }
   if (at - now > MAX_TIMER) return;

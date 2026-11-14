@@ -40,12 +40,15 @@ export function sanitizeMail(m) {
     // Cartas especiais (§288): o tipo decide os botões e o corpo na caixa. Só valores conhecidos; o resto é carta comum.
     ...(KINDS.has(m.kind) ? { kind: m.kind } : {}),
     ...(m.kind === 'friend-invite' && PID_RE.test(m.fromPid || '') ? { fromPid: m.fromPid } : {}),
+    // Convite de clã (§358): só o código, que o corpo da carta já mostra; o botão "Entrar no clã" usa o mesmo `guildJoin` do Salão.
+    ...(m.kind === 'guild-invite' && CODE_RE.test(m.guildCode || '') ? { guildCode: m.guildCode } : {}),
     ...(m.kind === 'global' && TUTORIAIS.has(m.tutorial) ? { tutorial: m.tutorial } : {}),
     // NPC remetente (imagem grande na carta). Só o servidor define; jogador remetente = sem NPC.
     ...(m.kind === 'global' && NPCS.has(m.npc) ? { npc: m.npc } : {}),
   };
 }
-const KINDS = new Set(['gift', 'friend-invite', 'global']);
+const KINDS = new Set(['gift', 'friend-invite', 'guild-invite', 'global']);
+const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const TUTORIAIS = new Set(['widget']);
 const NPCS = new Set(['mensageiro', 'hexsmith']);
 const PID_RE = /^[a-zA-Z0-9_-]{8,64}$/;
@@ -223,6 +226,39 @@ export async function deleteMail(kv, id, mids, force = false) {
 export async function removerConvitesDe(kv, id, fromPid) {
   const rec = await ler(kv, id);
   const fora = rec.q.filter(m => m.kind === 'friend-invite' && m.fromPid === fromPid).map(m => m.mid);
+  if (!fora.length) return 0;
+  rec.q = rec.q.filter(m => !fora.includes(m.mid));
+  rec.done = [...rec.done, ...fora].slice(-DONE_MAX);
+  await gravar(kv, id, rec);
+  return fora.length;
+}
+
+// ── CARTAS DE CONVITE (§358): amizade e clã. ──
+/** Teto de cartas de convite (amizade + clã) PENDENTES na caixa de uma pessoa. Passou disso, o convite novo segue valendo (lista de Amigos /
+ *  código do clã), só não vira carta: a caixa não vira mural de spam e as cartas de prêmio nunca são empurradas para fora por convites. */
+export const INVITE_PENDING_MAX = 20;
+/** Carta de convite de clã: a nova (`kind`) e a de antes do §358 (só o `mid` `ginv:<gid>:<dia>`, sem `kind`). */
+const ehConviteDeCla = (m) => m.kind === 'guild-invite' || m.mid.startsWith('ginv:');
+export const isInviteLetter = (m) => m.kind === 'friend-invite' || ehConviteDeCla(m);
+
+/**
+ * Enfileira uma carta de CONVITE. Além das regras de `enqueueMail` (mesmo `mid` e simulado = no-op):
+ *  · no máximo UMA carta pendente por par (`mesmoPar(carta)` decide: mesmo remetente de amizade, ou mesmo clã);
+ *  · no máximo `INVITE_PENDING_MAX` cartas de convite pendentes por pessoa.
+ * Devolve `'sent' | 'dup' | 'full' | 'skip'` (skip = lixo, simulado ou `mid` já visto). Nunca lança por regra; erro de KV sobe.
+ */
+export async function enqueueInvite(env, kv, id, raw, mesmoPar) {
+  if (isSimuladoId(id)) return 'skip';
+  const rec = await ler(kv, id);
+  if (rec.q.some(m => isInviteLetter(m) && mesmoPar(m))) return 'dup';
+  if (rec.q.filter(isInviteLetter).length >= INVITE_PENDING_MAX) return 'full';
+  return (await enqueueMail(env, kv, id, raw)) ? 'sent' : 'skip';
+}
+
+/** Entrou num clã (por código, pela carta ou por aprovação): todo convite de clã pendente perde o sentido e sai da caixa. Idempotente. */
+export async function removerConvitesDeCla(kv, id) {
+  const rec = await ler(kv, id);
+  const fora = rec.q.filter(ehConviteDeCla).map(m => m.mid);
   if (!fora.length) return 0;
   rec.q = rec.q.filter(m => !fora.includes(m.mid));
   rec.done = [...rec.done, ...fora].slice(-DONE_MAX);

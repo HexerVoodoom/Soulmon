@@ -16,7 +16,7 @@
 ## src/hooks
 
 ### `src/hooks/useMailbox.ts`
-**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
+**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`, `answerInvite` (convite de amizade, §288) e `joinGuildFromLetter` (convite de clã, §358: o `joinGuild` do Salão com o `guildCode` da carta; entrou = tira da caixa todo convite de clã; já em clã ou código morto = a carta sai; cheio = fica; sem rede = lança); relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
 
 ### `src/hooks/useLibraryMemory.ts`
 **Dono de:** a porta única da memória da Biblioteca (10/11/2026). `useLibraryMemory()` devolve `{ seen, formsMap, markSeen, record }`: com provider lê/escreve `GameState.librarySeen`/`libraryForms` (nuvem; updaters devolvem o mesmo objeto se nada muda), sem provider cai nas chaves locais.
@@ -64,6 +64,10 @@
 **Exports:** `useOrdemCongelada(doneIds, ms = ORDEM_CONGELADA_MS)` — `ReadonlySet<string>` dos ids congelados; `ORDEM_CONGELADA_MS` (2000). Quem já estava concluído na 1ª pintura nunca congela; cada conclusão tem prazo próprio e os prazos só caem com o componente.
 **Chamado por:** `src/components/DailyRituals.tsx` (os dois `sort`: tarefas `t:<id>` e hábitos `h:<id>`).
 **Régua:** `src/hooks/useOrdemCongelada.test.ts`.
+
+### `src/hooks/usePlayerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §321)
+**Dono de:** a busca enquanto digita: espera `PLAYER_SEARCH_DEBOUNCE_MS` (200 ms) depois da última tecla, cancela a chamada anterior (`AbortController`), guarda o resultado de cada termo enquanto o componente vive e devolve `{ state, retry }` — `state` é `short` | `loading` | `ready` (`hits`) | `error` (`errorKind`); offline (`navigator.onLine === false`) vira erro `offline` sem chamar.
+**Chamado por:** `src/components/PlayerSearch.tsx`, `src/components/LibraryPage.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx`.
 
 ### `src/hooks/usePresentationQueue.ts`
 **Dono de:** ligar a fila pura de apresentação (`utils/presentationQueue.ts`) ao React (14/10/2026, REGISTRO §42): deriva quem está na tela a cada render (guardando o item atual num `ref`, para não ser expulso por um mais prioritário), chama `onShow(id)` UMA vez por entrada na tela (onde cada dono grava o "visto"), registra a camada de "voltar" (Android/navegador) que fecha o item da tela por `onDismiss(id)`, e expõe `fail(id)` (erro de render, chunk que não carrega, fechamento que lança: pula o item e tenta o fechamento dele).
@@ -307,3 +311,13 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 ### `src/hooks/useOcioso.ts` e `src/hooks/useOfertaPendente.ts`
 
 **`useOcioso` e `useOfertaPendente` (12/11/2026, §306):** `useOcioso({ view, naMasmorra, esperando }) → { ocioso, motivo }` lê `utils/atividadeEmCurso.ts` (área de atividade, masmorra, foco em andamento relido a cada 2 s só com `esperando`, `useModalDepth`). `useOfertaPendente(fila, ocioso, onMostrar?) → id | null`: a cabeça da fila só entra com ócio e fica até sair da fila; `onMostrar` roda uma vez. Uso: Vesca em `App.tsx`. `utils/modalDepth` ganhou `useModalDepth()`.
+
+### `src/hooks/useGroveAtaque.ts`
+
+**`useGroveAtaque({ saveId, playerDayTz, enabled, reler }) → boolean` (beta12 §G, 12/11/2026):** lê o `underAttack` de `claPlantio` (`claApi.getPlantio`) só com memória de roda neste aparelho, ao montar, ao voltar ao app e ao voltar à Home, com intervalo mínimo `GROVE_ATAQUE_MIN_MS` (60 s) e sem timer. `bosqueSobAtaque(vista)` é a regra pura (planta de pé, não madura, atacada, ainda sem proteção). Nada vai para o save (`guildNoSave.contract`).
+
+**`useGroveEstado(...) → { atacado, cuidavel }` (§333, 13/11/2026):** a MESMA consulta serve os dois sinais; `useGroveAtaque` virou um invólucro que devolve só `atacado`. `bosqueCuidavel(vista)` = planta de pé, não madura e ação do dia sorteável (`canDraw`) ou sorteada (`task`), a condição do botão "Cuidar" do `PlantioVisor`. **§355 (13/11/2026):** `bosqueDefendivel({ atacado, cuidavel }, metaCumprida)` decide o balão dourado do Bosque: só sob ataque, com a meta do dia cumprida (`fioMetaCumprida`) e cuidado do dia por fazer; sem ação possível não há balão.
+
+### `src/hooks/useBalaoDica.ts`
+
+**§333 (13/11/2026):** `useDicaVistas()` → `[vistas, marcar]` (registro de aparições no aparelho, `STORAGE_KEYS.BALAO_DICAS_VISTAS`, leitura tolerante). `useDicaDourada({ presentes, vistas, bloqueado, onMostrar })` → `{ ativa, encerrar }`: escolhe a dica dourada fora do cooldown quando nada bloqueia (Home na tela e nenhum balão dourado de evento na vez), grava a aparição e a tira do visor em `DICA_DOURADA_VISIVEL_MS`; sai na hora se a condição acabar.

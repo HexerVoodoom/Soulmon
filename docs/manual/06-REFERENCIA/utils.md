@@ -80,6 +80,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/ChatBox.tsx`, `src/components/CompanionHUD.tsx`, `src/utils/spriteGen.ts`, `src/utils/taskSuggestions.ts`
 **Régua:** nenhuma (`ls src/utils/aiClient*.test.ts` vazio).
 
+### `src/utils/amizadeErro.ts`
+**Dono de:** O texto da tela quando convidar um amigo falha (§346): teto, não achado, convites demais, lista cheia, sessão, rede; a genérica só para o desconhecido.
+**Exports:**
+- `function mensagemFalhaConvite(err: unknown, isPt: boolean): string` — Lê o `error` que `call` põe na mensagem do `Error` e devolve o que fazer. "Não existe" e "escondido" chegam iguais do servidor (`friend not found`) e continuam iguais aqui.
+**Chamado por:** `src/components/LibraryPage.tsx`
+**Régua:** `amizadeErro.test.ts`
+
 ### `src/utils/anniversary.ts`
 **Dono de:** Marca o dia em que a relação com a criatura faz um mês ou um ano, a partir de `bornAt` — módulo puro, `now` por parâmetro.
 **Exports:**
@@ -408,14 +415,6 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `collectionDates.test.ts`
 **Regra de negócio:** Data de coleção de formas/sonhos/achados, para as vitrines de coleção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
-### `src/utils/demoButton.ts`
-**Dono de:** O interruptor ÚNICO do botão DEMO do portão — `DEMO_BUTTON_ENABLED` (12/11/2026). Módulo FOLHA. `false` esconde só a porta; a lógica da demo e quem já está em demo seguem intactos.
-**Exports:**
-- `DEMO_BUTTON_ENABLED` — `false` por ora; trocar para `true` religa o botão.
-**Chamado por:** `src/components/SoulmonOnboarding.tsx`
-**Régua:** `SoulmonOnboarding.demoOff.render.test.tsx` (desligado), `SoulmonOnboarding.demoLocal.render.test.tsx` (fluxo, com o interruptor mockado em `true`).
-**Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
-
 ### `src/utils/demoMode.ts`
 **Dono de:** O PREDICADO da demo local — `isDemoMode(state)` — e só ele (07/10/2026). Módulo FOLHA (sem imports): `bond.ts` e `cloudSave.ts` o importam, e um ciclo derrubaria os dois. Não é `accountTier: 'demo'` (o plano grátis, com conta): a demo local é um save que nunca sai do aparelho, aberto pelo botão DEMO da home.
 **Exports:**
@@ -444,7 +443,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** O predicado `isEmbedMode()` — "estou em `/embed`, embutido no portfólio do dono?" (11/10/2026). Módulo FOLHA. O critério é o caminho EXATO `/embed` (não `/embed/`, que não casa a regra de `public/_headers`), o mesmo que `public/sw.js` enxerga.
 **Exports:**
 - `EMBED_PATH` (= `/embed`) / `function isEmbedPath(pathname)` (puro, testável) / `function isEmbedMode()` (lê `window.location`, nunca lança).
-- `function installEmbedNetworkGuard()` (13/11/2026, [REGISTRO §336](../../REGISTRO-DE-DECISOES.md)) — só no embed, chamado no boot por `src/main.tsx` antes de qualquer provider: troca `window.fetch` para devolver 503 local a TODA chamada `/api/*` e `navigator.sendBeacon` para devolver `false`. Fora do embed devolve `false` e não instala nada. `EMBED_BLOCKED_API` (a regex) e `resetEmbedGuardForTest()`.
+- `function installEmbedNetworkGuard()` (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)) — só no embed, chamado no boot por `src/main.tsx` antes de qualquer provider: troca `window.fetch` para devolver 503 local a TODA chamada `/api/*` e `navigator.sendBeacon` para devolver `false`. Fora do embed devolve `false` e não instala nada. `EMBED_BLOCKED_API` (a regex) e `resetEmbedGuardForTest()`.
 **Chamado por:** `src/main.tsx` (o guard de rede), `src/App.tsx` (não pede permissão de notificação), `src/components/SoulmonOnboarding.tsx` (abre direto na escolha da DEMO, sem portão de login), `src/utils/telemetry.ts` (`isTelemetryEnabled` é `false` no embed), `src/utils/notifications.ts` (`subscribeToPush`/`registerForPushNotifications` não inscrevem no embed), `src/utils/embedGates.ts`.
 **Régua:** `embedMode.test.ts`, `embedPrivacy.test.ts` (no embed nenhuma chamada a métricas/crash/conta/save/push chega à rede; fora dele tudo como antes), `src/security/csp.test.ts` (o frame-ancestors só de `/embed`).
 **Avisos do arquivo:**
@@ -453,7 +452,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/embedGates.ts`
-**Dono de:** Os três portões de abertura que o embed pula (13/11/2026, [REGISTRO §336](../../REGISTRO-DE-DECISOES.md)): o vídeo de marca (`IntroScreen`), a cinemática da 1ª abertura (`IntroCinematica`) e o termo de consentimento (`ConsentGate`). Funções puras com `embed` por parâmetro (padrão `isEmbedMode()`).
+**Dono de:** Os três portões de abertura que o embed pula (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): o vídeo de marca (`IntroScreen`), a cinemática da 1ª abertura (`IntroCinematica`) e o termo de consentimento (`ConsentGate`). Funções puras com `embed` por parâmetro (padrão `isEmbedMode()`).
 **Exports:**
 - `mostraVideoDeMarca(embed?)` — `!embed`. / `tocaCinematicaInicial(onboardingCompleto, embed?)` — `!embed && deveTocarIntro(...)`. / `exigeTermo(consent, embed?)` — `!embed && !isConsentCurrent(consent)`.
 **Chamado por:** `src/App.tsx` (estado inicial de `showIntro` e `introCinePendente`, e o `if` do `ConsentGate`).
@@ -477,7 +476,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `ProfilePushResult` (interface) — O que o servidor RESPONDE ao gravar o perfil — e não é só `ok`.
 - `pushProfile` — `(p: PublicProfileInput) => call<ProfilePushResult>('profile', { method: 'POST', body: p })`. **Desde `592e2c14` o `call` genérico trata 410:** `account-deleted` → `reagirContaExcluida({ excluidaEm: deletedAt })` (import de `./cloudSave`) e lança `Error('account-deleted')` — a R1 deixava o `pushProfile` recriar `profile:`/`pid:` 3 s depois da exclusão. E o `GameStateContext` só publica o perfil (`publicarPerfil`) DEPOIS de `cloudSaveComRetry` resolver ok.
 - `DirectoryPlayer` (interface) — O que o diretório devolve de OUTRA pessoa. `rankPoints` e `tasksDone` saíram em 06/09/2026 (WP4.11 / proibição #21): desempenho alheio não trafega, e o corte é no servidor justamente para que uma UI futura não consiga reintroduzi-lo por descuido.
-- `listPlayers` — `(search = '') => call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} })`
+- `listPlayers` — `(search = '', opts?: { friendOf: string })` — sem `opts`: o diretório (`players`, só PvP ligado). Com `{ friendOf: saveId }` (§351, decisão do dono): a busca do "Convidar amigo" (`players&lookup=friend&id=`), que acha qualquer jogador visível com PvP ligado ou desligado, sem a própria conta, e devolve só `FriendLookupPlayer`.
+- `FriendLookupPlayer` (type) — `{ id, name, stage, spriteUrl? }`: a vista mínima da busca do convite (§351).
 - `PlayerDetail` (interface) — campos: `friends`.
 - `getPlayer` — `(id: string) => call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } })`
 - `Opponent` (interface) — campos: `id`, `name`, `petName`, `stage` e `duel?: { level } | null` (duelo fantasma v3 de `functions/api/_duel.js` — só o level que o servidor diz que a pessoa luta; o que vinha aqui como `DuelStats`: `functions/api/_duel.js`; servidor antigo pode não mandar). O módulo passou a importar os tipos `DuelStats`/`DuelEvent` de `functions/api/_duel.js`.
@@ -501,7 +501,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ 200 com corpo que não é JSON é FALHA, não sucesso vazio — até 09/09/2026 `res.json().catch(() => ({}))` devolvia `{}` como se fosse resposta válida.
 **Régua (Guilda):** `src/utils/community.guild.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Regra de negócio:** Diretório de jogadores, oponentes, ranking, amigos, presentes e a Guilda. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §56 e §56-A.
-**Procurar clã (§203) e desgarrados de jogadores (§213):** `GuildDirectoryClan` (`dirId` OPACO de 16 hex, nome, `size`, `max`), `GuildPending`, `GuildDirectory` (`clans` + `pending`), `GuildJoinRequest` (`requestId` opaco, nome público, `at`) · `sanitizeGuildDirectory`, `sanitizeJoinRequests` · rotas `getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`, `setGuildRequestsOpen` (o anfitrião liga/desliga "Aceitar pedidos"; o clã expõe `requestsOpen`, padrão `true`). Falhas novas: `invalidClan` (404), `requestsClosed` (409), `requestPending` (409: um pedido por vez, em OUTRO clã). `getFriendForms(saveId, friendPid)` (formas que o Soulmon de um amigo já teve; 403 se não for amigo), `getStrays()` (pool anônimo de desgarrados — sanear com `sanitizeStrayPool`) e `getStrayStatus(saveId)` (`{ stray, progress, needed }`, só o dono lê).
+**Procurar clã (§203) e desgarrados de jogadores (§213):** `GuildDirectoryClan` (`dirId` OPACO de 16 hex, nome, `size`, `max`, `full` — §322: o servidor manda `full: true` nos cheios; o sanitizador também marca cheio quando `size >= max` e devolve os com vaga primeiro), `GuildPending`, `GuildDirectory` (`clans` + `pending`), `GuildJoinRequest` (`requestId` opaco, nome público, `at`) · `sanitizeGuildDirectory`, `sanitizeJoinRequests` · rotas `getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`, `setGuildRequestsOpen` (o anfitrião liga/desliga "Aceitar pedidos"; o clã expõe `requestsOpen`, padrão `true`). Falhas novas: `invalidClan` (404), `requestsClosed` (409), `requestPending` (409: um pedido por vez, em OUTRO clã). `getFriendForms(saveId, friendPid)` (formas que o Soulmon de um amigo já teve; 403 se não for amigo), `getStrays()` (pool anônimo de desgarrados — sanear com `sanitizeStrayPool`) e `getStrayStatus(saveId)` (`{ stray, progress, needed }`, só o dono lê).
 
 ### `src/utils/minigameDifficulty.ts`
 **Dono de:** o rótulo da dificuldade dos minijogos — Comum/Avançado (PT) e Common/Advanced (EN), dono 30/10/2026; os ids e valores de save (1/2) não mudaram.
@@ -869,6 +869,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `combate/group.ts` (`GroupOptions.target`), `components/games/useGroupBattle.ts` (`picked`/`target`/`pickTarget`, passados ao `BattleStage` por `ArenaGame` e `GroveRaidFight` via `onPickFoe`/`picked`), `match3Combat.ts` (`M3Combat.target`, `mirarInimigo`) e `Match3Game`.
 **Régua:** `src/utils/combate/alvo.test.ts`, `src/utils/match3Combat.alvo.test.ts`, `src/components/games/BattleStage.alvo.test.tsx` e o bloco ALVO POR TOQUE de `src/components/Match3Game.render.test.tsx`.
 
+### `src/utils/combate/alvoAliado.ts`
+**Dono de:** ALVO ALIADO (§327, 13/11/2026, dono): numa luta com aliados, escudo, cura (e cura contínua) e reforços de ataque/velocidade podem ir num ALIADO tocado; sem aliado mirado (ou o mirado caiu), vão em quem soltou, como sempre. As famílias ofensivas seguem no alvo inimigo. Uma mira por vez: tocar aliado apaga a do inimigo e vice-versa. **Nenhuma luta do app tem aliado hoje** (o núcleo de grupo é jogador × N inimigos; a Guerra de guilda são duelos 1v1 resolvidos no servidor): a regra e o efeito estão **prontos e testados, mas desligados: não estão ligados a nenhuma tela** (decisão do dono, 13/11/2026). Ligam quando existir um modo com aliados.
+**Exports:**
+- `ALLY_TARGET_FAMILIES` (`heal`, `shield`, `atkBuff`, `spdBuff`) · `aceitaAliado(family)`.
+- `Mira` (`{ inimigo, aliado }`), `MIRA_VAZIA` · `tocarAliado(mira, aliadosHp, tocado, family)` (liga só para família pessoal e aliado vivo; tocar de novo desliga) · `tocarInimigo(mira, inimigosHp, tocado)` (apaga a mira de aliado; a escolha do inimigo segue `tocarAlvo`) · `inimigoMirado(inimigosHp, mira)`.
+- `receptorPessoal(family, aliadosHp, aliado)` — índice do aliado que recebe ou `null` = o lançador.
+- `ReceptorPessoal` (interface) · `aplicarEspecialPessoal(rx, sp, scale, hitsOnRx, t0, iv)` — o efeito de `heal`/`shield`/`atkBuff`/`spdBuff` em qualquer receptor (o mesmo que o lançador recebia).
+**Chamado por:** `combate/group.ts` (o `cast` aplica as famílias pessoais por ela, com receptor = o próprio lançador; a cura contínua usa o mesmo receptor). UI: `components/games/AlvoAliadoMarca.tsx` (a marca de apoio: losango turquesa contínuo com "+", diferente da mira dourada tracejada do inimigo; ainda sem tela que a monte).
+**Régua:** `src/utils/combate/escudoAliado.test.ts`.
+
 ### `src/utils/combate/bonus.ts`
 **Dono de:** O teto único de bônus de dano do combate v3: `min(talento + equipamento + Comércio + Renascimento, 5%)`, não empilhável, vale no PvP (REGISTRO §24).
 **Exports:**
@@ -918,6 +928,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `windowSeconds(level)`, `hitUnit(level)` (golpes da curva por golpe normalizado).
 - `FightSide` (`combatant`, `special`, `area?`), `FightOptions` (`seed`, `hpScale`, `variance`, `windowLevel`, `phases`, `unitH0` (`null` = golpe cru do PR1), `startHp`, `startEnergy`, `hitScale`, `cheer`, `stopAtFirstKo`), `CheerEvent`, `FightEvent` (`attack | cast | tick | ko`), `FightResult` (com `hpA/hpB/energyA/energyB`), `FightWinner` (`'A' | 'B' | 'draw'`).
 - `fightSteps(a, b, opts)` — o gerador: o `cast` pausa e recebe o multiplicador (anel/esquiva). `fight(a, b, opts)` — o driver que responde 1.
+- §334 (13/11/2026, dono): `DOT_TICKS` (const) = 3. O DoT fica no lutador que o RECEBE e tica no COMEÇO de cada golpe básico dele, antes do golpe (`tickOwnTurn`); a duração são os 3 próximos golpes do afetado (antes: 3 ticks num relógio, 0,25/0,5/0,75 do intervalo de quem lançou). Quem cai no tick não golpeia naquele turno. Lançar o especial também é turno (dono, 13/11/2026: "Sim, o especial também"): `tryCast` roda o `tickOwnTurn` antes do `cast` e quem cai nele não lança. O evento `tick` segue com o `side` de quem lançou, no mesmo instante da ação do afetado e logo antes dela. Espelho em `functions/api/_combate.js`.
 **Chamado por:** `combate/ruler.ts`, `combate/group.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
 **HP INTEIRO (30/10/2026, REGISTRO §192, espelhado em `functions/api/_combate.js`):** o núcleo ainda raciocina em frações 0..1, mas todo lutador tem `hpPoints(hp)` pontos inteiros e TODA mudança de vida é arredondada a eles: `HP_POINTS_PER_HP` (30) · `hpPoints(hp)` (= max(1, round(hp·30)); o máximo que as telas mostram) · `damagePoints(frac, pts)` (golpe que causa dano tira no mínimo 1 ponto; 0 se não causa) · `startPoints(frac, pts)` (início em pontos inteiros, ≥ 1; acima de 1 é permitido — o chefe da Feira). `FightEvent` carrega os pontos que saíram da BARRA; cura e escudo também são pontos inteiros; 0 ponto = nocaute na hora.
@@ -945,7 +956,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/projetilEscala.test.ts` e o bloco «ranged de CORTE» de `src/components/games/BattleStage.golpeTipo.test.tsx`.
 
 ### `src/utils/combate/group.ts`
-**Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo.
+**Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo. §334 (13/11/2026): DoT e cura contínua ficam em quem os carrega (`dots`/`hots` no lutador) e tocam no COMEÇO de cada golpe dele (3 golpes); o repasse do DoT único acontece quando quem o carrega cai (`markDead`); o DoT em área sobre 2+ inimigos usa `AREA_DOT_EFFICIENCY`.
 **Sincronização 09/11/2026:** duas mecânicas novas no núcleo de GRUPO (só PvE): (1) ALVO POR TOQUE (03/11/2026) — a opção `target?: () => number | null` é lida a cada golpe/especial do jogador e escolhe o inimigo (`escolherAlvo`, `combate/alvo.ts`; morto ou inválido cai no 1º vivo; sem a opção nada muda); o especial single do jogador também vai no inimigo escolhido. (2) Efeitos do especial (§228) — `slow`, `silence` e `hot`, lidos de `Special.effect` com os botões `EFFECT_TUNE` (ou `Special.tune`); o estado dos lutadores ganhou `nSil`, `nSlow`, `nHot` (golpes de silêncio e de lentidão que faltam, pulsos de cura contínua; `hot` = 3 pulsos de E/3 em pontos inteiros, que param na morte de quem cura).
 **Exports:**
 - `GroupOptions`, `GroupEvent`, `GroupResult`, `GroupWinner` (`'player' | 'foes' | 'draw'`).
@@ -987,10 +998,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** a tabela `(família, elemento do especial) -> efeito` (REGISTRO §228). `direct` nunca tem efeito; derivado herda do primeiro componente com par na família.
 **Exports:**
 - `efeitoDoEspecial(family, elemento)`, `efeitoVisivel(family, elemento, mecanicaLigada?)`, `EFEITOS_COM_MECANICA` (const), tipo `EfeitoElemento`.
+- `comEfeitoDoElemento(sp, elemento, pesadelo?, masmorra?)` — §334: com `masmorra` a cura contínua leva `effectTuneMasmorra()` (`dungeonPlayerSide` liga fora do Pesadelo).
 **Régua:** `src/utils/combate/elementEffects.test.ts`.
 
 ### `src/utils/combate/foeFamilies.ts`
 **Dono de:** o ESPECIAL DOS INIMIGOS (REGISTRO §290): sorteio determinístico por chave (FNV-1a) do tipo de especial de selvagens da Arena e do Endless Rift/Masmorra e dos simulados. Champion em diante: 50% dano direto e ~10% de cada outro (buff, DoT, cura, HoT, debuff); Rookie: 75% direto e ~5% de cada. O especial que o JOGADOR escolhe não passa aqui; o Pesadelo fica fora. HoT = `shield` + `effect: 'hot'` (só núcleo de grupo; no 1v1 vira `shield`). DoT e HoT dos inimigos levam `OVER_TIME_BONUS` (1,15). **Exports:** `FoeKind`, `FOE_MIX`, `foeHash`, `foeKindOf`, `foeSpecialOf`, `foeFamilyOf`. **Chamado por:** `arena.ts` (`arenaFoe`/`arenaFoeSides` com `mix`), `dungeon.ts` (`buildDungeonWave`). **Espelho:** `functions/api/_foeFamilies.js`. **Régua:** `src/utils/combate/foeFamilies.test.ts`.
+
+**Atualização 13/11/2026 (REGISTRO §325, aprovado pelo dono):** `SPECIAL_POWER` (1v1) com `dot` 1,15 e `spdBuff` 2; o PvE lê `SPECIAL_POWER_PVE`/`specialOfPve` (a tabela anterior, base do `PVE_FAMILY_POWER`); `PVE_FAMILY_POWER.arena.dot` 1,1. No PvE, `atkBuff`/`spdBuff`/`defDebuff` do inimigo também levam `OVER_TIME_BONUS` (×1,15 no `power`); o 1v1 (`pvp = true`) não muda. **Régua da regra do dono** (o que dura rende mais que o imediato, medido no motor real): `src/utils/combate/efeitosRegraTotal.test.ts`.
 
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
@@ -999,6 +1013,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `SPECIAL_BUDGET_HITS` (const) — `3`. `OVER_TIME_BONUS` (const) — `1.15`, usado só pelos inimigos (`foeFamilies.ts`). `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
 - `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
 - `specialOf(family)`.
+- §327 (13/11/2026): `SHIELD_DIRECT_SPECIAL_ABSORB` (const) = 0.5, `SHIELD_DOT_TICK_ABSORB` (const) = 0.5 e `SHIELD_ABSORB` (`basic` 1, `direct` 0,5, `tick` 0,5), `ShieldSource` (type), `shieldAbsorbPoints(sh, d, src)` — quanto o escudo absorve de cada fonte: o golpe básico inteiro, METADE do especial direto e METADE de cada tick de DoT (lançado antes ou depois do escudo); as duas frações arredondam para baixo, o escudo nunca come mais que a metade. Debuffs nunca passaram pelo escudo. Substitui o `shieldCap` do DoT (29/10). Espelho em `functions/api/_combate.js`.
+- §334 (13/11/2026): `AREA_DOT_EFFICIENCY` (const) = 1.25 — eficiência da área só do DoT e só sobre 2+ inimigos (o que sobra num inimigo que cai antes dos 3 golpes dele se perde na área; 1,25 traz a diferença área × único de −12,0pp para −3,2pp). `HOT_SCALE_MASMORRA` (const) = 1.02 e `effectTuneMasmorra()` — a cura contínua da Masmorra (e da Fenda/Raid, que usam o motor dela) com `hotScale` próprio; Arena e Pesadelo seguem 1,05. `PVE_FAMILY_POWER.pesadelo` — o vetor do Pesadelo (= o da Masmorra, `dot` 1,4), lido por `dungeonFight` com `pesadelo: true`; `arena.dot` = 1,11. `SPECIAL_POWER.dot` (1v1) = 1,14 (gate 5 do 1v1 com o tick também no especial).
 - PR3a: `AREA_FAMILIES` (`direct`, `dot`, `defDebuff`: as que miram o inimigo), `AREA_EFFICIENCY` (1: o núcleo NÃO usa a eficiência 0,9 do class-system), `PVE_FAMILY_POWER` (`arena`/`dungeon`), `CHEER`, `cheerEvents(taps, side)`, `RING_MULT_V3`, `DODGE_REDUCE_V3` (tabelas de habilidade do motor v3; o `energia.ts` ao vivo mantém as antigas até o PR3b).
 **Chamado por:** `combate/fight.ts`, `combate/group.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5) e `combate.v11.test.ts`.
@@ -1006,10 +1022,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/combatFx.ts`
 **Dono de:** a ARTE e o RITMO das ações visuais da cena de combate (`games/BattleStage.tsx`, 02/10/2026, rodada 5/I10): qual figura de skill do elemento (`fx-<id>-<estado>`) entra em cada ação e quanto tempo dura. Não decide regra de jogo.
 **Sincronização 09/11/2026:** `GLIFOS_PENDENTES` — lista dos glifos de status citados (`st-queimadura`, `st-veneno`, `st-silencio`, `st-lentidao` e os 11 elementos de §236: `st-peso`, `st-retardo`, `st-ferrugem`, …) que ainda não têm arte (fila em `docs/ASSETS-A-GERAR.md`; gerar no ChatGPT, não no Higgsfield): o selo mostra forma + texto até a arte chegar.
+**§334 (13/11/2026):** `sceneTimeOf(events, i, leadS)` — o instante de CENA de um evento: o `tick` de DoT entra quando a ação do golpe ou do especial (`cast`) que vem logo depois dele (mesmo instante, o turno de quem carrega o DoT) começa; os outros eventos, no próprio instante. Usado por `DuelScreen` e `BossFightScreen`; o `useGroupBattle` aplica os ticks que abrem o grupo no começo da ação e mantém o número deles junto com o do golpe.
 **Exports:** `fxElementId(id)` (qualquer id → um que tem arte; `planta`→`vida`, `industrial`→`aco`, sem arte → `neutro`) · `fxFrame(elemento, estado)` · `visualElementFor(texto)` (elemento VISUAL determinístico do oponente do duelo — o servidor não publica elemento) · `strikeKindForSchool(escola)` (só `combate_fisico` investe) · `VISUAL_ELEMENTS` (os 17 base), `FX_FALLBACK_ELEMENT` · `STAGE_TIMING`, `impactMs`, `totalMs` (o dano chega no impacto; movimento reduzido = flash) · `DUEL_STEP_MS` (1700, o passo do duelo fantasma; era 900 e depois 1500), `PVE_STEP_MS` (1700, o passo de cada lado no PvE — 04/10/2026), `ARENA_STRIKE_MS` (2400; era 1500), `ARENA_DEFEND_MS` (1400; era 800) · `prefersReducedMotion()` · tipo `StageActionKind`.
 **Quem chama:** `games/BattleStage.tsx`, `ArenaGame`, `DuelScreen`, `TournamentPage` (`visualElementFor`).
 **Cena do especial (PR18):** `SPECIAL_INTRO_MS` (1000) e `introMs(kind)` (só `special` tem pausa de apresentação; não é regra, o motor não a vê).
-**FX de status (PR11, `combate-v3-01`):** `STATUS_FX` (efeito → glifo/loop/peça estática/forma em texto/nome EN+PT, 7 kinds: `buff`, `debuff`, `maldicao`, `dot`, `cura`, `hot`, `escudo`) · `FAMILY_STATUS` (`SpecialFamily` do núcleo → efeito e alvo; `direct` = nenhum; tipada em `Record<SpecialFamily, …>`, família nova sem linha não compila) · `UNREACHABLE_STATUS_FX` (`maldicao` e `hot`: prontos, inalcançáveis, Q-FX1/§2.13) · o quadro puro `emptyStatusBoard`/`castStatus`/`tickStatus`/`clearHolders`/`stageStatusOf`, e `duelStatusBoard(events, upTo, specials)` (a dobra pura dos eventos do duelo: replay e ressimulação dão o mesmo selo) (aplicar, gastar turnos, expirar) · `statusAriaLabel`/`statusLabel`/`statusShort`/`statusGlyphId`, `MAX_STATUS_CHIPS`. Só arte que já estava na `main`; sem arte, a forma e o texto do selo seguem.
+**FX de status (PR11, `combate-v3-01`):** `STATUS_FX` (efeito → glifo/loop/peça estática/forma em texto/nome EN+PT, 7 kinds: `buff`, `debuff`, `maldicao`, `dot`, `cura`, `hot`, `escudo`) · `FAMILY_STATUS` (`SpecialFamily` do núcleo → efeito e alvo; `direct` = nenhum; tipada em `Record<SpecialFamily, …>`, família nova sem linha não compila) · `UNREACHABLE_STATUS_FX` (`maldicao` e `hot`: prontos, inalcançáveis, Q-FX1/§2.13) · o quadro puro `emptyStatusBoard`/`castStatus`/`tickStatus`/`clearHolders`/`stageStatusOf`, e `duelStatusBoard(events, upTo, specials)` (a dobra pura dos eventos do duelo: replay e ressimulação dão o mesmo selo) (aplicar, gastar turnos, expirar) · `statusAriaLabel`/`statusLabel`/`statusShort`/`statusGlyphId`, `statusLoopId(kind, variant)` (a folha em loop por variante, como o glifo: `STATUS_FX[kind].loop` é um mapa `{ _: padrão, <variante>: folha }` ou `null`; §336) e `STATUS_LOOP_IDS` (as 13 folhas citadas), `STATUS_LOOP_CROP` (recorte de cada folha no marcador do canto, união dos 6 quadros com alfa > 24, remedido nas folhas novas de 13/11/2026), `MAX_STATUS_CHIPS` (selos por lutador e marcadores por canto do sprite) · `statusPolarity(kind)` (`buff` = cura/HoT/escudo/reforço, `debuff` = o resto; escolhe o canto do marcador do efeito) · `BoardEntry.since` (carimbo da ORDEM DE INÍCIO do efeito; renovar/recontar mantém; `stageStatusOf` entrega o mais antigo primeiro — REGISTRO §330). Só arte que já estava na `main`; sem arte, a forma e o texto do selo seguem.
 **Régua:** `src/utils/combatFx.test.ts` — inventário (17 base × 6 estados, 154 × 6 no glob), fallback no neutro, e o RITMO/calibração do duelo (modelo de tempo, 04/10/2026: ~35–45 s, o especial com 3 toques/s sai antes do que sairia sozinho, 50% → 72% → teto 82%).
 **Especial só em si:** `isSelfOnlySpecial(family)` — `true` quando `FAMILY_STATUS[family].target === 'self'` (a cena não anima golpe contra o inimigo; só o efeito no conjurador).
 
@@ -1063,6 +1080,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Espelho:** `functions/api/_duel.js` (`elementoDoBasico`, `ELEMENTOS_FICHA`, `duelSide().fx.elBasica/elEspecial`), travado por `fighterIdentity.parity.test.ts`.
 **Quem chama:** `ArenaGame`, `DungeonGame`, `NightmareBattle`, `DuelScreen`, `TournamentPage`, `arena/DueloSheet`.
 **Régua:** `src/components/fighterIdentity.contract.test.tsx` (as telas, vermelho→verde), `src/utils/fighterIdentity.parity.test.ts`, `src/utils/fighterIdentity.owner.test.ts`.
+**Atualização 13/11/2026 (REGISTRO §332):** o TIPO do ataque básico (corte × splash) do OPONENTE no PvP não muda com Coroa/Amuleto/Garra; só as Luvas trocam. `FighterFx` ganha `orig` (família/elementos SEM esses itens, publicado pelo servidor só quando algum está equipado) e `golpe` (o ataque das Luvas, lista fechada `HEX_STRIKES`); os dois são só visuais e campo ausente = comportamento antigo. `fighterIdentityFromFx` aplica `golpe` (forma + acabamento do básico, espelho de `strikeParts`); novos exports `fighterIdentitySemItensFromFx(fx, fallback)` (a identidade do `orig`, base do sorteio) e `tipoDoBasicoPvp(id, semItens, elementoVisual)` (o que o `DuelScreen` desenha no básico, dos dois lados). Régua: `src/utils/fighterIdentity.pvpTipo.test.ts` (oponente com Coroa = sem Coroa; Luvas trocam; servidor == cliente; duelo idêntico com/sem os campos).
 
 ### `src/utils/combatV3Art.ts`
 **Dono de:** a carga SOB DEMANDA da arte do Combate v3 usada pelos FX de status e pelo círculo de cast (PR11): `import.meta.glob` sem `eager` sobre `assets/soulmon/combate-v3/status/st-*`, `fx/fx-*-loop-sheet`, `fx/fx-cast-circle` e as peças `fx/fx-heal`/`fx/fx-shield`. Nada entra no chunk de entrada; sem a peça (ou com falha de rede) devolve `undefined` e quem desenha cai no CSS.
@@ -1082,6 +1100,23 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
+### `src/utils/soulmonOverrides.data.ts` (13/11/2026)
+**Dono de:** os DADOS da Tabela de Soulmons editada pelo dono (tipo de ataque por forma, flutua/flip, trocas de linha; REGISTRO §354), gerados da planilha do dono.
+**Exports:** a tabela de overrides consumida por `soulmonOverrides.ts`.
+**Chamado por:** `src/utils/soulmonOverrides.ts`.
+**Régua:** `src/utils/soulmonOverrides.test.ts`.
+
+### `src/utils/soulmonOverrides.ts`
+**Dono de:** os ajustes do dono POR FORMA vindos da Tabela de Soulmons (REGISTRO §333, 13/11/2026). Chave = chave do bestiário (`<id>-<estágio>`; ultra = `<id>-ultra`).
+**Exports:**
+- `AtaqueTipo` — `'ranged_corte' | 'ranged_splash' | 'melee_corte' | 'melee_splash'`; `ATAQUE_TIPO_MOTOR` — cada tipo em forma (`ranged`/`melee`) × acabamento (`corte`/`concussao`; splash = concussão).
+- `ATAQUE_TIPO_OVERRIDE`, `ataqueTipoOverride(formKey)` — o tipo do ataque BÁSICO do inimigo; `foeStrikeForm(el, 'basica', formKey)` (`combatFx.ts`) e `meleeImpactOf({ ..., formKey })` (`combate/golpeImpacto.ts`) leem primeiro e caem na regra derivada sem linha. O especial não muda.
+- `flutuaDe(formKey)`, `flipDe(formKey)`, `FLUTUA_ALTURA` (0,08 da altura) — bandeiras de sprite, padrão desligado (nenhuma ligada no export de 13/11).
+- `ELEMENTO_FORMA_OVERRIDE` — elemento trocado pelo dono; aplicado no `ENEMY_ROSTER` (troca `element` e componentes; golpes, arte e chave ficam). `PERSONALIDADE_OVERRIDE` — só rótulo.
+**Dados:** `soulmonOverrides.data.ts`, GERADO por `node scripts/gerar-soulmon-overrides.mjs <export.csv>` (aceita o formato posicional e o com cabeçalho `id,...,ataque_tipo,...,flutua,flip`).
+**Quem chama:** `combatFx.ts`, `combate/golpeImpacto.ts`, `enemyRoster.ts`; a chave vem de `arenaFoeFormKey` (Arena), `enemy.stage` (Masmorra, Fenda).
+**Régua:** `src/utils/soulmonOverrides.test.ts` (sem id velho, override vence, elementos válidos, linha do Salsolura intacta), `src/utils/soulmonOverrides.flags.test.ts`.
+
 ### `src/utils/spriteFeetTable.ts`
 **Dono de:** a tabela GERADA de onde fica o PÉ de cada sprite de criatura (`node scripts/sprite-feet.mjs` mede o último pixel opaco, alfa > 16, dos PNG de `lines/`, `bosses/`, `dino/` etc.; não editar à mão). Chave = nome do arquivo sem extensão; valor = base visível em milésimos da altura. Existe porque os PNG têm até ~25% de linhas transparentes embaixo e o layout ancorava a sombra pela caixa — o bicho flutuava acima dela.
 **Exports:** `SPRITE_FEET_TABLE`.
@@ -1096,9 +1131,6 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
 **Cenário próprio do elemento fundido (30/10/2026; +151 compostos `.webp` 450×800 em 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`, cores em `combatArtElementoMedias2.data.ts`):** `combate/elemento/<id>.{png,webp}` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
 **Mudou (30/10/2026):** ⚰️ `combatShadow` e as imagens `combate/sombra-clara.png`/`sombra-escura.png` (a plataforma sob os pés) saíram do módulo; a assinatura de cor do elemento vem de `elementVisual.data.ts` (CIELAB → hex com luminosidade mínima). `bg-` base próprio de `fada`, `industrial` e `planta` (o fallback de domínio só vale para save sem a arte).
-
-### `src/utils/combatArtElementoMedias3.data.ts`
-**Dono de:** a cor média dos 93 fundos regerados "darker dusk" de 12/11/2026 (`ELEMENTO_BG_MEAN_V3`, vence V1/V2). GERADO por `tools/instalar-cenarios-masmorra-darker.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
 
 ### `src/utils/combatArtElementoMedias2.data.ts`
 **Dono de:** a cor média dos 151 cenários compostos de 11/11/2026 (`ELEMENTO_BG_MEAN_V2`). GERADO por `tools/instalar-cenarios-masmorra-compostos.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
@@ -1356,6 +1388,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `SOUL_FRAGMENT_SAVE_FIELD`, `soulFragmentName`, `soulFragmentWord`, `soulFragmentCount`, `fragmentBarLabel`, `fragmentTodayHint`, `fragmentHowText`, `fragmentsSpentLine`, `fragmentsGatherLine`, `fragmentsGatheredLine`.
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/soulFragment.test.ts` (vocabulário sem cobrança; save antigo vira fragmentos 1:1, idempotente; por esforço com teto).
+
+### `src/utils/bonusTask.ts`
+**Dono de:** a TAREFA BÔNUS (13/11/2026). Aceitar a oferta reduzida (never miss twice) NÃO conclui mais o hábito: ele vira a tarefa bônus do dia (`GameState.bonusTask = { day, activityId }`). Concluída no próprio dia, rende `BONUS_TASK_GAUGE_WEIGHT` (+1) Fragmento de Alma ACIMA do teto diário, somado na virada (`computeDailyReset`, junto do bônus da missão especial); a virada limpa o campo, então paga uma vez só. O servidor não valida `evolutionPoints`.
+**Exports:** `BonusTaskState` · `BONUS_TASK_GAUGE_WEIGHT` · `sanitizeBonusTask` · `isBonusActivity` · `bonusTaskGaugeBonus`.
+**Chamado por:** `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx` (hidratação), `src/App.tsx` (aceite, linha bronze, prévia de fragmentos do toast, modal de apresentação).
+**Régua:** `src/utils/bonusTask.test.ts`.
 
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
@@ -1698,10 +1736,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
 
 ### `src/utils/modalDepth.ts`
-**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele.
+**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele. "Por cima" (hotfix §341, 13/11/2026) = não contém o botão E vem DEPOIS do modal do próprio botão na ordem do documento; o modal de BAIXO que abriu um portal (ex.: a `AreaSheet` do Salão sob a folha do Bosque, `GroveFolha`) não conta — antes contava e o único voltar da folha ficava `disabled`, prendendo o jogador.
 **Exports:** `modalsAbove(el?)`, `modalDepth()`, `useBackDimmed(ref)` — hook.
 **Chamado por:** `src/components/nav/AreaTopBar.tsx` e `src/components/ui/BackCircleButton.tsx`.
-**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento).
+**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento) e `src/components/guild/GroveFolha.voltar.render.test.tsx` (portal sobre a folha do Salão: voltar habilitado, fecha por toque e pelo voltar do sistema; o de baixo segue esmaecido).
 
 ### `src/utils/playAreaLots.ts`
 
@@ -2290,6 +2328,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ Resíduo do achado X-4 (commit 9e9f679f): o conserto anterior tornou `rubHealRecordFor` ordem-consciente, mas não resolve sozinho o caso de aparelhos em fusos diferentes — daí este módulo.
 **Regra de negócio:** O dia do jogador usa fuso FIXO gravado no save, nunca o do aparelho. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/playerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §321)
+**Dono de:** a BUSCA DE JOGADORES POR PREFIXO do lado do cliente — o convite do clã (`guild/GuildInviteSheet`) e o "Convidar" da aba Amigos (`LibraryPage`). Casa o COMEÇO do nome, em ordem, sem acento e sem caixa ("JOA" acha "João"). A busca de verdade é do servidor (`functions/api/community.js` › `action=playerSearch`, índice `nickf:` de `_profile.js`).
+**Exports:**
+- `PLAYER_SEARCH_MIN` (2), `PLAYER_SEARCH_MAX` (10), `PLAYER_SEARCH_DEBOUNCE_MS` (200) — espelhos das constantes do servidor (o mínimo também evita gastar chamada que o servidor recusaria).
+- `foldPlayerName(raw)` — nome → forma de busca (NFKD sem marcas, NFKC, sem controle, espaço colapsado, minúsculo). ESPELHO de `_profile.js` › `foldNome`, com teste de paridade.
+- `isSearchableQuery(q)` / `nameStartsWith(name, q)` — o mínimo (contado depois de dobrar) e o casamento por prefixo.
+- `PlayerSearchHit` (`id` = pid, `name`, `guildName?`, `stage`, `spriteUrl?`, `artLine?`) e `sanitizePlayerSearch(raw)` — a resposta vira lista segura: campo a mais (e-mail, saveId, aparelho…) não passa, e corta em 10.
+- `searchPlayers(saveId, q, signal?)` — o cliente HTTP (`GET /api/community?action=playerSearch`); termo curto devolve `[]` sem chamar; `PlayerSearchError` com `kind` `offline` | `rate` | `login` | `server`.
+**Chamado por:** `src/hooks/usePlayerSearch.ts`, `src/components/PlayerSearch.tsx`, `src/components/guild/GuildInviteSheet.tsx`, `src/components/LibraryPage.tsx`.
+**Régua:** `src/utils/playerSearch.test.ts` (paridade da dobra com o servidor, mínimo de 2, prefixo sem acento/caixa, saneamento sem campo privado e teto de 10); o servidor: `functions/api/community.playerSearch.test.js`.
 
 ### `src/utils/poopDrain.ts`
 **Dono de:** O dreno de coração por cocô não limpo — teto diário, pausa dormindo, banho zera.
@@ -3247,9 +3296,15 @@ Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolea
 
 ### `src/utils/dayWake.ts` (19/10/2026, REGISTRO §110)
 **Dono de:** ACORDAR O SOULMON (D-66/D-67), a regra PURA: `dayWakePending({ active, today, wokeDay, bornToday })` (1ª abertura de CADA dia, para todos: sem a marca de hoje o pet aparece dormindo na Home), `WAKE_BLOCKED_ACTIONS` (a lista EXATA do que o aviso segura: `WAKE_BLOCKED_PET` = alimentar, banho, carinho, brincar; `WAKE_BLOCKED_GAMES` = Masmorra + minijogos do Salão e do Ateliê da Mente; o Refúgio não), `WAKE_NEVER_BLOCKED` (concluir tarefa/hábito, navegar, criar…), `isBlockedUntilWake(action, pending)`, `didCompleteToday(save, now)` + `wakesByCompletion(pending, concluiuHoje)` (concluir QUALQUER tarefa/hábito acorda sozinho — lido do save, então vale também para widget e overlay de desktop) e `wakeWarning(isPt)` (aviso curto + atalho "Acordar", sem culpa/medo/cobrança). É estado de APRESENTAÇÃO: não toca `isSleeping` (dreno, cocô, janela de descanso), nem o save. A marca mora no aparelho (`STORAGE_KEYS.DAY_WOKE`).
-**Chamado por:** `src/App.tsx` (HUD desenha dormindo, `holdDayStart` da fila, `guardWake` nos 4 handlers de pet, `wakeGuard` do `AreaView`).
+**Chamado por:** `src/App.tsx` (HUD desenha dormindo, `holdDayStart` da fila, `guardWake` nos 4 handlers de pet). Desde §329 (13/11/2026) os JOGOS não usam mais o aviso curto: a pergunta "Quer acordá-lo?" (`utils/wakeToEnter.ts`) cobre o "Acordar" do dia e o sono real, e reusa `WAKE_BLOCKED_GAMES` como lista.
 **Régua:** `src/utils/dayWake.test.ts` (lista exata, os 3 caminhos de conclusão, K-20: dreno/cocô/noite sem registro intocados).
 **Regra de negócio:** `docs/REGISTRO-DE-DECISOES.md` §110. Nada cobra: acordar não custa nem paga; não acordar não pune.
+
+### `src/utils/wakeToEnter.ts` (13/11/2026, REGISTRO §329)
+**Dono de:** SOULMON DORMINDO NÃO VAI A ATIVIDADE, a regra PURA. "Dormindo" = `isAsleep({ isSleeping, dayWakePending })` (o sono real OU o "Acordar" do dia, o que a Home desenha). `SLEEP_BLOCKED_LOTS` (prédios cuja ENTRADA já é a atividade e perguntam na porta: só `exploracao.dungeon`), `SLEEP_ACTION_LOTS` (emenda do dono, 13/11: folhas com parte de leitura que entram livres e perguntam no botão de lutar/agir, checado no toque: `arena.duelo`, `arena.torneio`, `arena.guerra`, `exploracao.fenda`, `exploracao.passeio`, `forja.oficina`, `hall.feira`, `hall.grove`), `SLEEP_BLOCKED_GAMES` (= `WAKE_BLOCKED_GAMES` de `dayWake.ts`, sem cópia: Masmorra + minijogos do Salão e do Ateliê), `SLEEP_BLOCKED_ACTIONS` (`treino` com amigo, `missao` da guilda), `SLEEP_NEVER_BLOCKED` (Home, Mapa, lojas, Laboratório inteiro, Biblioteca, Forja de equipar/Caderno/Refúgio, folhas do Salão/Ateliê/Clã, Refúgio, tarefa/hábito, a Vesca e a Hexsmith; todo prédio de `BUILDING_GATES` está em EXATAMENTE uma das três listas de prédio). `needsWakeToEnter(entry, sinais)`, `entryNeedsSoulmon(entry)` (porta OU ação), `lotEntryAsks(entry)` (só a porta), `sleepBlocksLot(area, lote, sinais)` (tocar o prédio pergunta?) e `wakePromptCopy(isPt, realSleep)` (a pergunta do dono; a linha do efeito só no sono real: energia recarrega mais rápido dormindo e a borra não aparece; acordado, volta ao ritmo de sempre).
+**Chamado por:** `src/components/WakeToEnter.tsx` (provedor + pergunta), `src/components/nav/AreaView.tsx` (`lotEntryAsks` no `gated` e na folha inicial).
+**Régua:** `src/utils/wakeToEnter.test.ts`, `src/components/WakeToEnter.render.test.tsx`.
+**Regra de negócio:** `docs/REGISTRO-DE-DECISOES.md` §329. Não cria custo nem penalidade; só diz o que o sono real já faz.
 
 ### `src/utils/dayPlan.ts` (15/10/2026, REGISTRO §66)
 **Dono de:** a regra PURA de "reafirmar o dia": `DayPlan { day, offered[], picked[], confirmed }` (um objeto no save, `GameState.dayPlan`), `sanitizeDayPlan` (cliente; o servidor espelha em `functions/api/_dayPlan.js`, paridade em `functions/api/dayPlan.parity.test.js`), `dayPlanCandidates` (o que cabe perguntar: hábitos devidos hoje, agendadas que caem hoje e tarefas abertas de hoje, sem duplicar e sem o já feito), `dayPlanView`/`isHiddenByPlan` (esconde `offered − picked`; plano de outro dia esconde tudo de hoje), `hiddenOnDay` (a virada não julga o não marcado), `needsDayPlan`, `dayPlanInvite`, `migrateDayPlan` (save sem plano = hoje já reafirmado), `showDayPlan` ("visto" ao mostrar) e `confirmDayPlan`. Sem React, sem storage, sem `Date` implícito.
@@ -3681,7 +3736,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `function buildBatch(id: string, events: TelemetryRecord[]): TelemetryBatch` — Monta o corpo do lote. Nada além de `v`, `id` e os registros já saneados.
 - `TelemetryConsentCopy` (interface) — campos: `title`, `sent`, `never`, `toggleLabel`, `footnote`.
 - `function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryConsentCopy` — O texto do opt-out. Regra do repositório: todo texto de UI nasce em inglês e o par PT-BR vem junto. Ele descreve o que o código faz — e o código é a allowlist logo acima.
-- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada. **No `/embed` é SEMPRE `false`** (guard duro antes da preferência, 13/11/2026, [REGISTRO §336](../../REGISTRO-DE-DECISOES.md)): a demo do portfólio pula o termo, e termo pulado nunca conta como consentido.
+- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada. **No `/embed` é SEMPRE `false`** (guard duro antes da preferência, 13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): a demo do portfólio pula o termo, e termo pulado nunca conta como consentido.
 - `function setTelemetryEnabled(on: boolean): void` — Liga/desliga. Desligar APAGA a fila — deixar bytes esperando seria enganação.
 - `function telemetryId(): string` — Pseudônimo local. 32 hex de `crypto.getRandomValues` — NÃO derivado de e-mail, de saveId nem de nada do usuário, e por isso não religável à conta.
 - `function setTelemetryTier(tier: 'demo' | 'paid' | null | undefined): void` — Declara o TIER da conta. Chame uma vez, de um efeito sobre `gameState.accountTier` — e em nenhum outro lugar. Por que ambiente e não prop de call site: o tier é a mesma resposta para TODOS os eventos, vinda de uma fonte única (`gameState.accountTier`).
@@ -3829,7 +3884,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 ### `src/utils/dailyMissions.ts`
 **Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
 **Sincronização 09/11/2026:** `DailyEvent` (união dos eventos de missão) ganhou `selo` e `DailyMission` ganhou `retired?: true` (04/11/2026): a missão `d-selo` ("Complete uma rodada do Selo Faltante") substitui `d-patches` (a Colcha) no rodízio do Ateliê (`ROTA_MENTE` = `d-eco`, `d-zip`, `d-selo`); a Colcha fica no catálogo só para save antigo e nunca é sorteada — `dailyMissionPool()` e o resto do sorteio filtram `retired`.
-**Atualização 12/11/2026 (REGISTRO §314):** o catálogo ganhou as MISSÕES DOS NPCs (`utils/npcMissions.ts`, 25 entradas `n-*`, campos novos `npc`/`namePt`/`nameEn` em `DailyMission`); **Revisto no §318 (rodízio semanal):** `npcsOfWeek(day, bond)` devolve os 2 NPCs da semana (semana segunda–domingo, partida em `semana × 2`, só prédios abertos), `trilhoMission(bond)` a fixa do Trilho (evento novo `journal`) e `npcMissionsOfDay` as duas juntas, que `dailyMissionsFor` põe à frente (`DAILY_MISSION_COUNT` = 8); `npcOfDay` saiu. `App` conta `journal` ao salvar registro novo e a semanal `journal-days` no resgate de `n-trilho`. 13 eventos novos (`cenario`, `essencia`, `salao`, `compra`, `melhoria`, `mente`, `cla`, `cambio`, `prato`, `hex`, `feira`, `passeio`, `conquista`); `bumpDaily(s, day, event, qty = 1)` soma quantidade (30 essências) e `salao`/`mente` são AGREGADOS dos minijogos; `bumpDailyIn(prev, event, qty)` é o mesmo sobre o estado inteiro, chamado no ramo de sucesso dos utilitários donos de cada gesto (`applyEssences`, `applyUpgrade`, `forgeHexItem`/`applyServerHexForge`, `applyCook`, `applyFeiraLojaBuy`/`applyServerFeiraHex`) e dos handlers do `App` (compra do Mercado/moldura, Cambista, conquista, missão do Clã, passeio). `visit:laboratorio.evolucao` saiu das primeiras vezes (a Vesca passa `n-vesca`: colete 30 essências). Espelho do servidor: `functions/api/_dailyMissions.js` (paridade travada).
+**Atualização 12/11/2026 (REGISTRO §314):** o catálogo ganhou as MISSÕES DOS NPCs (`utils/npcMissions.ts`, 24 entradas `n-*`, campos novos `npc`/`namePt`/`nameEn` em `DailyMission`); **Revisto no §318 (rodízio semanal):** `npcsOfWeek(day, bond)` devolve os 2 NPCs da semana (semana segunda–domingo, partida em `semana × 2`, só prédios abertos), `trilhoMission(bond)` a fixa do Trilho (evento novo `journal`) e `npcMissionsOfDay` as duas juntas, que `dailyMissionsFor` põe à frente (`DAILY_MISSION_COUNT` = 8); `npcOfDay` saiu. `App` conta `journal` ao salvar registro novo e a semanal `journal-days` no resgate de `n-trilho`. 12 eventos novos (`cenario`, `essencia`, `salao`, `compra`, `melhoria`, `mente`, `cla`, `prato`, `hex`, `feira`, `passeio`, `conquista`); `bumpDaily(s, day, event, qty = 1)` soma quantidade (30 essências) e `salao`/`mente` são AGREGADOS dos minijogos; `bumpDailyIn(prev, event, qty)` é o mesmo sobre o estado inteiro, chamado no ramo de sucesso dos utilitários donos de cada gesto (`applyEssences`, `applyUpgrade`, `forgeHexItem`/`applyServerHexForge`, `applyCook`, `applyFeiraLojaBuy`/`applyServerFeiraHex`) e dos handlers do `App` (compra do Mercado/moldura, conquista, missão do Clã, passeio). `visit:laboratorio.evolucao` saiu das primeiras vezes (a Vesca passa `n-vesca`: colete 30 essências). O Cambista (Farthing) NÃO passa missão (dono, 12/11/2026: `n-farthing` / evento `cambio` excluídos; consta em `NPCS_SEM_MISSAO`). Espelho do servidor: `functions/api/_dailyMissions.js` (paridade travada).
 **Exports:**
 - `DailyEvent` (type) — os 15 eventos reais que contam (`dino`, `ppt`, `match3`, `foco`, `masmorra`, `banho`...).
 - `DailyMission` (interface) — uma missão do catálogo (`id`, `event`, `target`...).
@@ -3972,10 +4027,17 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/personality.ts`
 **Dono de:** a personalidade do chat DERIVADA das forças/dificuldades do onboarding (G7, 01/10/2026).
-**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored)`, `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
+**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored, character?)` (beta12: o 3º argumento é o caráter do teste, que ajusta o tom e segue ao chat; o veto não muda), `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/personality.test.ts`.
 **Regra de negócio:** ansiedade/perfeccionismo/cansaço nunca recebem `challenging`; desafio só com disciplina/persistência; perfil vazio = `casual` + `supportive`. Lê `gameState.onboardingProfile`. Racional em `docs/PERSONALIDADE-DERIVADA.md`.
+
+### `src/utils/soulmonCharacter.ts`
+**Dono de:** o CARÁTER do Soulmon (beta12, B1/B2): Big Five do teste do onboarding → arquétipo de personalidade (complementar por dimensão, ou similar), com o veto de vulnerabilidade de `personality.ts`. Função pura; o jogador nunca vê o tipo, só ouve o jeito.
+**Exports:** `soulmonCharacterFor(input)`, `soulmonValue(dim, score, mode)`, `loadBigFive(answers)` (import dinâmico do `scoreProfile`), `sanitizeVoiceMode`, `isVulnerable`, `SOULMON_ARCHETYPES`, `NPC_ONLY_ARCHETYPES`, `ALL_ARCHETYPES`, `SAFE_ARCHETYPES`, `MIN_ANSWERS_FOR_CHARACTER`, `NEUTRAL_CHARACTER`, `DEFAULT_VOICE_MODE`, tipos `SoulmonVoiceMode`, `SoulmonCharacter`, `Archetype`, `VoiceArchetype`.
+**Chamado por:** `src/App.tsx`, `src/utils/petVoice.ts` (só tipo), `src/data/npcFichas.ts` (só tipo).
+**Régua:** `src/utils/soulmonCharacter.test.ts`, `src/utils/petVoice.carater.test.ts`, `src/utils/voiceModeSettings.contract.test.ts`.
+**Regra de negócio:** sem teste (menos de 10 respostas) = neutro; COMPLEMENTAR (padrão) = espelho por dimensão, exceto neuroticismo (nunca acima do neutro); SIMILAR = a mesma personalidade do jogador; ansiedade/perfeccionismo/cansaço restringem às vozes acolhedor/calmo/curioso/brincalhão nos dois modos. Mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`.
 
 ### `src/utils/notificationDefault.ts`
 **Dono de:** o padrão LIGADO da preferência de notificações (G6, 01/10/2026), condicionado à permissão do sistema.
@@ -4017,6 +4079,8 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Chamado por:** `src/components/nav/AreaScene.tsx`.
 **Régua:** `src/utils/areaLotGeometry.contract.test.ts` (mede o alfa dos PNG e reprova par de lotes cujos alvos se encostem), `src/components/nav/areaLotNpc.contract.test.tsx` (20 aberturas por lote, sempre o mesmo busto).
 **Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.
+
+**Delta 13/11/2026 (REGISTRO §319):** `EXPLORACAO_CHAVE_BOX` — a caixa (% da imagem, medida de `LOT_PINTADO`) da chave do Calabouço no mapa da Exploração.
 
 ### `src/utils/talents.ts`
 **Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor malformado é DESCARTADO inteiro, nunca corrigido; já o que só viola PRÉ-REQUISITO (Tarefa B, `requires`/`requiresAny`, grafo em `talentLayout.ts`) é PODADO por replay (cliente e servidor), devolvendo os pontos. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. PR7b (§2.25): o canal de PvP é POR ATRIBUTO (`attr` ATK/DEF/SPD em `tal-pvp-01/02/03`; `talentAttrBonus`) com o MESMO teto de 5% na SOMA dos três (`combinedAttrBonus`); `tal-pvp-05` (Mão aberta, `cheerBoost`: +5% por grau no rendimento da torcida do Duelo, até `CHEER_SCALE_MAX`) e `tal-com-05` (Balança, `respecOne`: refazer UM ponto por vez, em Bits ganhos) foram REDESENHADOS dentro das linhas vermelhas e entram na árvore.
@@ -4278,6 +4342,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `forja.oficina` (ex-`exploracao.oficina`, #187), N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
 **Sincronização 09/11/2026:** a CHAVE DA DUNGEON (REGISTRO §239, 05/11/2026): `DungeonKeyState`, `hasDungeonKey(state, nowMs)`, `grantDungeonKey(prev, nowMs)` — concluir uma sessão na Oficina abre o Calabouço (`dungeonKeyDay`); **§299 (11/11/2026): vale 48 h (dia da conquista + o seguinte, `DUNGEON_KEY_VALID_HOURS`), 1 uso por dia; `dungeonKeyExpired` e `dungeonKeyLastDay` dizem se/até quando**; não acumula; idempotente (já tendo a de hoje, devolve a MESMA referência); quem já tinha incursão andando hoje (`step > 0`) não é trancado no meio.
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`. **Régua:** `src/utils/focusKey.dungeon.test.ts`, `src/utils/focusKey.legacyStamp.test.ts`, `src/utils/focusKeyDescent.test.ts`, `src/utils/focusDescent.until.test.ts`.
+**Delta 13/11/2026 (REGISTRO §319):** `dungeonKeyExpiresAt(state, nowMs)` — instante em que a chave do Calabouço deixa de valer (meia-noite do jogador depois de `dungeonKeyLastDay`; trava legada = virada de hoje; sem chave = `null`). É o relógio do mapa da Exploração (`DungeonKeyBadge`).
 **Descida do foco (`focusDescent.ts`, 05–09/11/2026):** `FocusDescentRefusal` (`'busy' | 'no-hp' | 'no-energy'`), `focusDescentRefusal(state, nowMs)` (recusa se o Soulmon já está na masmorra ou há missão de clã em curso, se o HP está abaixo do mínimo ou se falta energia), `startFocusDescent(prev, nowMs, seed?, focusEndsAt?)` (paga a 1ª camada e grava `dungeonAway` com `until` = fim do timer; jogador = `soulCombatant` do save SEM bônus de talento, família `direct`; a camada inicial é `startLayerFor(recorde, teto)`, ou seja, de volta ao ponto de retorno de 2 em 2 camadas; recusa devolve a MESMA referência), `isFocusDescent(state)` (a descida em curso tem `until`; a manual nunca tem), `pauseFocusDescent(prev, nowMs)` (congela em `pausedAt`) e `resumeFocusDescent(prev, nowMs, focusEndsAt?)` (o tempo parado não conta: `since` anda junto; novo `until`).
 
 ### `src/utils/rpsLevel2.ts`
@@ -4488,6 +4553,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = tipo do ataque básico, só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `applyServerHexForge` (aplica no estado local a forja que o servidor confirmou, §216: a tela forja por `cloudSave.ts` › `cloudHexForge`, nunca localmente); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
 **Exports:** tipos `HexSlot` (`coroa`/`amuleto`/`garra`/`couraca`/`luvas`), `HexStrike` (`magic`/`ranged-slash`/`melee-slash`/`melee-smash`; legado `ranged`/`melee` migra por `migrateHexId`), `HexCost`, `HexsmithState` (`owned`, `equipped`), `HexForgeState`, `HexRefusal` (`invalid`/`owned`/`potions`/`bits`/`fragments`), `HexOverrides` · constantes `HEX_SLOTS`, `HEX_ELEMENT_SLOTS` (amuleto, garra, couraça), `HEX_STRIKES`, `HEX_COSTS` (elemento: 3 poções + 1500 Bits; coroa: 2000 Bits + 20 fragmentos; luvas: 500 Bits + 5 fragmentos — números PADRÃO, o dono ajusta), `EMPTY_HEXSMITH`, `HEX_MAX_OWNED` (639) · `hexItemId`, `parseHexItem`, `isHexItem`, `hexValuesOf`, `hexCost`, `migrateHexId`, `strikeParts`, `sanitizeHexsmith`, `hexForgeRefusal` (a ordem é a da tela: poções, fragmentos, Bits), `forgeHexItem` (recusa = o MESMO objeto), `applyServerHexForge(prev, id, paid)`, `equipHexItem`, `unequipHexSlot`, `hexOverrides`, `hexFamily`, `hexArenaElements`, `hexIdentity`. Estado persistido: `GameState.hexsmith = { owned, equipped }`. O Bit que veio de Crédito não paga (`bitsOrigin.ts › earnedBits`). Não dá % de atributo (teto de 5% de `combate/bonus.ts` intocado). Módulo puro.
 **Chamado por:** `src/contexts/GameStateContext.tsx`, `src/hooks/useHexOverrides.ts`, `src/components/hex/HexsmithSheet.tsx`, `src/components/hex/HexSlotGlyph.tsx`, `src/components/ArenaGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/RogueFight.tsx`, `src/components/NightmareBattle.tsx`, `src/components/TournamentPage.tsx`, `src/components/guild/GroveRaidFight.tsx`, `src/components/GuideModal.tsx`, `src/utils/hexsmithCopy.ts`, `src/assets/soulmon/hex/index.ts`.
+**Atualização 13/11/2026 (REGISTRO §325):** `hexIdentity` FIXA o acabamento do básico (`impacto`, Magia/corte) que a identidade tinha sem itens: só as Luvas trocam o tipo do ataque; Coroa/Amuleto/Garra trocam família/elemento e mais nada (antes a troca mudava a `chaveDaIdentidade` e, com ela, o sorteio estável). Régua: `src/utils/hexsmith.tipoAtaque.test.ts`.
 **Régua:** `src/utils/hexsmith.test.ts`.
 
 ### `src/utils/hexsmithCopy.ts`
@@ -4525,7 +4591,7 @@ Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Esp
 
 ### `src/utils/mensageiro.ts`
 
-Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), estado da caixa de cartas (nova, item pendente, lidas apagáveis, recuperação do que o servidor já entregou), totais do pop-up e o aviso do Papus. Decisão: REGISTRO §241 e §246. **Régua:** `src/utils/mensageiro.test.ts`.
+Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), estado da caixa de cartas (nova, item pendente, lidas apagáveis, recuperação do que o servidor já entregou), totais do pop-up e o aviso do Papus. `MailKind` inclui `guild-invite` (§358) e `isGuildInvite` (carta com `guildCode`). Decisão: REGISTRO §241, §246, §288 e §358. **Régua:** `src/utils/mensageiro.test.ts`.
 Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), separação entre carta nova e carta só a confirmar, e a fala do Papus. Decisão: REGISTRO §241. **Régua:** `src/utils/mensageiro.test.ts`.
 
 ### `src/utils/focusJourney.ts`
@@ -4602,3 +4668,18 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/atividadeEmCurso.ts`
 
 **`atividadeEmCurso` (12/11/2026, §306):** `atividadeEmCurso(sinais) → 'area' | 'masmorra' | 'foco' | 'modal' | null`, `estaOcioso`, `focoEmAndamento`, `ATIVIDADE_AREAS` (`arena`, `jogos`, `exploracao`). Puro; dono único do que conta como "atividade em curso".
+
+### `src/utils/balaoDourado.ts`
+
+**Balões dourados (beta12 §G, 12/11/2026):** `BALAO_TIPOS` (`grove`, `rift`, `achado`, na ordem de prioridade), `balaoKey(tipo, dia)` (`balaoDourado:<tipo>:<AAAA-MM-DD>`), `foiDispensado`, `dispensar(reg, tipo, dia)` (grava o dia e solta as chaves de outros dias; idempotente devolve o MESMO objeto), `sanitizeBalaoDourado`, `escolherBalao(presentes, reg, dia)` (um por vez), `balaoDouradoText` e `balaoDouradoAria` (PT-BR e EN, sem cobrança). O registro vive no save (`GameState.balaoDourado`). **Régua:** `balaoDourado.test.ts`, `CompanionHUD.balaoDourado.render.test.tsx`, `balaoDouradoETarefaLink.contract.test.ts`.
+
+### `src/utils/balaoDica.ts`
+
+**Balões de dica do Soulmon (§333, 13/11/2026):** falas de contexto que ensinam uma regra verdadeira. `DICA_TIPOS` na ordem de prioridade: `relaxar` (DOURADO, leva a `forja.refugio`), `fome` (comum), `cochilo` (comum), `lilia` (DOURADO, leva a `hall.grove`). `dicasPresentes(entrada)` decide as condições: energia baixa = `ENERGIA_BAIXA_FRACAO` (20 %) do máximo ou menos; `relaxar` = cansado E o Refúgio dá energia agora (prédio aberto + `!refugioEnergyTaken` + energia não cheia, a régua da moeda de `lotMarks.ts`); `cochilo` = cansado, Refúgio sem energia e NÃO faminto (faminto a regeneração é 0, e o bônus de sono multiplica 0); `fome` = abaixo de `HUNGER_FED_MIN`, com ou sem comida na pastinha (dono, 13/11: aparece mesmo de pastinha vazia; a entrada não tem mais `temComida`; a fala é a mesma nos dois casos porque não pede nada, só diz a fome e a regra verdadeira); `lilia` = meta do dia cumprida (`fioMetaCumprida`) + Grove aberto no Vínculo + `bosqueCuidavel` do servidor. `escolherDica(presentes, vistas, now, 'dourada'|'comum')`, `emCooldown` (`DICA_COOLDOWN_MS`: relaxar 6 h, fome 4 h, cochilo 6 h, lilia 8 h; relógio que voltou não prende), `marcarVista`, `sanitizeDicaVistas`, `dicaTexto`/`dicaAria` (PT-BR e EN), `DICA_DESTINO`, `DICA_DOURADA_VISIVEL_MS` (45 s: a dica dourada NÃO é persistente). O registro de aparições mora no aparelho (`STORAGE_KEYS.BALAO_DICAS_VISTAS`), não no save. **Régua:** `balaoDica.test.ts`, `useBalaoDica.test.tsx`, `CompanionHUD.dica.render.test.tsx`, `balaoDouradoETarefaLink.contract.test.ts` (bloco §333).
+
+### `src/utils/tarefaLink.ts`
+
+**Tarefas linkadas a recursos (beta12 §J, 12/11/2026):** `recursoDaAtividade` (via `catalogId` + `data/catalogResources.ts`), `gatilhoDoRecurso` (`steps` / `caderno` / `foco`), `atividadesParaAutoCheck(gatilho, args)` (hábito adotado, devido hoje, não feito, sem chave do dia; passos exigem permissão, registro de hoje e meta batida), `registrarAuto` / `jaFezAuto` / `chaveAuto` (`<AAAA-MM-DD>|<id>`, `GameState.tarefaAuto`), `progressoDePassos`, `passosLinha`, `irLaLabel`, `autoTagText` / `autoTagAria`. Passo nunca pontua sozinho: o check dá o que o toque manual dá. **Régua:** `tarefaLink.test.ts`, `catalogResources.contract.test.ts`, `DailyRituals.recurso.render.test.tsx`, `NoticeToast.taskTag.render.test.tsx`.
+### `src/utils/motivoTempo.ts` (13/11/2026)
+
+Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMotivoDeTempo` troca a outra família no prompt e põe a cláusula negativa `Time motif: …` (idempotente), `motivoTempoPorSemente` (hash estável), `motivosNoTexto`. A variante por elemento mora em `elementoCombinado.ts › motivoTempoDoElemento`. **Chamado por:** `src/utils/oracle/motor.ts`, `src/utils/elementoCombinado.ts`. **Régua:** `motivoTempo.test.ts`.

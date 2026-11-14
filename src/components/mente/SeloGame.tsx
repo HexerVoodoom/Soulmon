@@ -140,7 +140,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
               </div>
             ))}
           </div>
-          <div data-selo-options style={{ display: 'grid', gridTemplateColumns: `repeat(3, ${optSize + 8}px)`, gap: 6, alignSelf: 'center' }}>
+          <div data-selo-options style={{ display: 'grid', gridTemplateColumns: `repeat(3, ${optSize + 8}px)`, gap: 14, alignSelf: 'center', marginTop: 'auto', paddingTop: 20 }}>
             {puzzle.options.map((o, i) => {
               const isAnswer = phase === 'reveal' && i === puzzle.answer;
               const isPicked = picked === i;

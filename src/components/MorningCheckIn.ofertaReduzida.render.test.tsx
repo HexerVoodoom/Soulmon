@@ -12,9 +12,8 @@
  * Três travas de forma, e cada uma separa companhia de cobrança:
  *  · **nenhum dígito de falta.** Nunca "você falhou 2 dias" — a pessoa sabe. O
  *    único número na frase é o 5 dos minutos.
- *  · **aceitar conta como feito, literalmente**: o mesmo caminho de conclusão
- *    de sempre, com os mesmos ganhos. Um caminho paralelo seria uma segunda
- *    regra de conclusão e um "meio-feito" que a tese não tem.
+ *  · **aceitar NÃO conclui** (13/11/2026): o hábito vira a tarefa bônus do dia
+ *    (`utils/bonusTask.ts`) e a pessoa marca pelo caminho de sempre.
  *  · **não existe botão de recusar.** Ignorar é a recusa, e ela não custa nada
  *    nem aparece em lugar nenhum.
  */
@@ -48,7 +47,7 @@ describe('MorningCheckIn — a oferta reduzida (WP2.10)', () => {
     expect(screen.queryByText(/^Ler:/)).toBeNull();
   });
 
-  it('aceitar chama o caminho de conclusão com o id do hábito', () => {
+  it('aceitar entrega o id do hábito (vira a tarefa bônus, NÃO conclui — 13/11/2026)', () => {
     const aceitos: string[] = [];
     renderWithCss(
       <MorningCheckIn open plan={plano({ tinyOffer: ['h1'] })} language="pt-BR"
@@ -63,7 +62,7 @@ describe('MorningCheckIn — a oferta reduzida (WP2.10)', () => {
       <MorningCheckIn open plan={plano({ tinyOffer: ['h1', 'h2'] })} language="pt-BR"
         onConfirm={() => {}} onSkip={() => {}} onTinyHabit={() => {}} />,
     );
-    const bloco = screen.getByText('Aceitar já conta como feito.').parentElement!;
+    const bloco = screen.getByText('Aceitar vira a tarefa bônus de hoje: marque quando fizer.').parentElement!;
     const texto = bloco.textContent ?? '';
     // O único dígito permitido é o 5 dos minutos.
     expect(texto.replace(/5 minutos|5 minutes/g, ''), 'apareceu um número de falta')

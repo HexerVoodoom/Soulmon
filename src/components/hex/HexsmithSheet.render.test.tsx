@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A tela da Hexsmith (01/11/2026): 5 Portas no mapa, forjar com saldo debita e equipa, recusa mostra o motivo, trocar não tira a posse,
- * esvaziar mantém o item, e não existe botão de vender/descartar.
+ * desequipar (no botão do próprio HEX, 13/11/2026) mantém o item, e não existe botão de vender/descartar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
@@ -121,18 +121,58 @@ describe('HexsmithSheet', () => {
     expect(estado().bits).toBe(5000);
   });
 
-  it('trocar o item equipado não remove a posse; esvaziar mantém; não há vender/descartar', () => {
+  it('trocar o item equipado não remove a posse; desequipar mantém; não há vender/descartar', () => {
     abrir({ hexsmith: { owned: ['couraca:fogo', 'couraca:agua'], equipped: { couraca: 'couraca:fogo' } } });
     click(q('[data-hex-slot="couraca"]'));
     click(q('[data-hex-equip="couraca:agua"]'));
     expect(estado().hx).toEqual({ owned: ['couraca:fogo', 'couraca:agua'], equipped: { couraca: 'couraca:agua' } });
     expect(document.querySelector('[data-hex-is-equipped]')!.textContent).toMatch(/Água.*Equipado/);
-    click(q('[data-hex-clear] button'));
+    click(q('[data-hex-unequip="couraca:agua"]'));
     expect(estado().hx).toEqual({ owned: ['couraca:fogo', 'couraca:agua'], equipped: {} });
     const txt = document.body.textContent!;
     expect(txt).not.toMatch(/vender|sell|descartar|discard|jogar fora/i);
     // possuídos não aparecem no catálogo de forja
     expect(document.querySelector('[data-hex-item="couraca:fogo"]')).toBeNull();
+  });
+
+  it('HEX possuído (13/11/2026): UM botão grande alterna Equipar ⇄ Desequipar; sem a linha "Esvaziar a porta"; trocar substitui', () => {
+    for (const [lang, equip, unequip, equipped, empty] of [['pt-BR', 'Equipar', 'Desequipar', 'Equipado', /Esvaziar a porta/], ['en', 'Equip', 'Unequip', 'Equipped', /Empty the Port/]] as const) {
+      abrir({ hexsmith: { owned: ['coroa:dot', 'coroa:heal'], equipped: {} } }, lang);
+      click(q('[data-hex-slot="coroa"]'));
+      expect(document.body.textContent).not.toMatch(empty);
+      expect(document.querySelector('[data-hex-clear]')).toBeNull();
+      // não equipado: um botão só por linha, rótulo de AÇÃO, alvo do kit (não o CtaButton do site)
+      const row = q('[data-hex-owned="coroa:dot"]');
+      expect(row.querySelectorAll('button')).toHaveLength(1);
+      const b = q('[data-hex-equip="coroa:dot"]');
+      expect(b.textContent).toBe(equip);
+      expect(b.className).toMatch(/(^| )sm2-kit-btn .*sm2-hex-equip-btn/);
+      expect(b.className).not.toMatch(/cta/i);
+      expect(b.getAttribute('data-state')).toBe('idle');
+      click(b);
+      expect(estado().hx.equipped.coroa).toBe('coroa:dot');
+      // equipado: o MESMO lugar vira ✓ Equipado + Desequipar, com rótulo acessível que diz o estado
+      const u = q('[data-hex-unequip="coroa:dot"]');
+      expect(u.getAttribute('data-state')).toBe('equipped');
+      expect(u.querySelector('.sm2-hex-equip-state')!.textContent).toMatch(new RegExp(`${equipped}$`));
+      expect(u.querySelector('.sm2-hex-equip-state .sm2-icon, .sm2-hex-equip-state svg')).not.toBeNull();
+      expect(u.querySelector('.sm2-hex-equip-action')!.textContent).toBe(unequip);
+      expect(u.getAttribute('aria-label')).toBe(`${unequip}: ${lang === 'en' ? 'Lingering damage' : 'Dano contínuo'} (${equipped})`);
+      // equipar OUTRO com um já equipado: troca direto (a regra de equipHexItem), o anterior segue na posse
+      click(q('[data-hex-equip="coroa:heal"]'));
+      expect(estado().hx).toEqual({ owned: ['coroa:dot', 'coroa:heal'], equipped: { coroa: 'coroa:heal' } });
+      expect(document.querySelector('[data-hex-unequip="coroa:dot"]')).toBeNull();
+      click(q('[data-hex-unequip="coroa:heal"]'));
+      expect(estado().hx.equipped).toEqual({});
+      cleanup(); localStorage.clear();
+    }
+  });
+
+  it('coroa por família: cada família mostra a própria coroa-<familia>.png (a coroa única só é reserva)', () => {
+    abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
+    const img = q('[data-hex-slot="coroa"]').querySelector('img')!;
+    expect(img.getAttribute('data-hex-crown')).toBe('dot');
+    expect(img.getAttribute('src')).toMatch(/coroa-dot/);
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {
@@ -175,19 +215,6 @@ describe('HexsmithSheet', () => {
     expect(b.getAttribute('aria-describedby')).toBe(r.id);
   });
 
-  it('filtro Posso forjar: só os itens com saldo; Todos volta a lista inteira', () => {
-    abrir({ gamePoints: 2000, foodInventory: { [potionKey('luz')]: 3 }, equipment: { owned: [], equipped: {}, fragments: HEX_COSTS.element.fragments } });
-    click(q('[data-hex-slot="amuleto"]'));
-    const todos = document.querySelectorAll('[data-hex-item]').length;
-    click(q('[data-hex-filter="can"]'));
-    const itens = [...document.querySelectorAll('[data-hex-item]')];
-    expect(itens.length).toBeGreaterThan(0);
-    expect(itens.length).toBeLessThan(todos);
-    expect(itens.every((b) => b.getAttribute('data-ok') === 'true')).toBe(true);
-    click(q('[data-hex-filter="all"]'));
-    expect(document.querySelectorAll('[data-hex-item]')).toHaveLength(todos);
-  });
-
   it('EN: rótulos em inglês', () => {
     abrir({}, 'en');
     expect(q('[data-hex-slot="coroa"]').getAttribute('aria-label')).toMatch(/^Crown Port: Empty/);
@@ -203,19 +230,18 @@ describe('HexsmithSheet', () => {
     }
   });
 
-  it('formato da poção (12/11): cartão por item, cabeça com Forjar e uma linha por ingrediente TEM/PRECISA; tocar o ícone abre o tooltip; fecha ao tocar fora', () => {
+  it('tabela de custo (12/11): colunas Item/Custo; poção como ÍCONE com o estoque embaixo; tocar abre o tooltip de como conseguir; fecha ao tocar fora', () => {
     abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 1 }, equipment: { owned: [], equipped: {}, fragments: 5 } });
     click(q('[data-hex-slot="garra"]'));
-    expect(document.querySelector('.sm2-hex-thead')).toBeNull();
+    const head = document.querySelector('.sm2-hex-thead')!;
+    expect(head.textContent).toBe('ItemCusto');
     const cell = q('[data-hex-item="garra:agua"]').closest('li')!;
-    expect(cell.className).toContain('sm2-pocao-item');
-    expect(cell.querySelector('.sm2-pocao-head')).not.toBeNull();
-    expect(cell.querySelectorAll('.sm2-pocao-ing > li')).toHaveLength(3);
     const pot = cell.querySelector('[data-hex-cost-potion="agua"]')!;
     expect(pot.querySelector('img')).not.toBeNull();
     expect(pot.querySelector('[data-hex-potion-qty]')!.textContent).toBe(`1/${HEX_COSTS.element.potions}`);
-    expect(cell.querySelector('[data-hex-cost-fragments] .sm2-num')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
-    expect(cell.querySelector('[data-hex-cost-bits]')!.textContent).toMatch(/\d+\/\d+/);
+    expect(cell.querySelector('[data-hex-cost-fragments]')!.textContent).toBe(`5/${HEX_COSTS.element.fragments}`);
+    expect(cell.querySelectorAll('.sm2-hex-plus')).toHaveLength(2);
+    expect(cell.querySelector('[data-hex-cost-bits]')!.textContent).toMatch(/\d/);
     click(cell.querySelector('[data-hex-cost-bits] button[data-info-tip]')!);
     expect(document.querySelector('[data-hex-bits-tip]')).not.toBeNull();
     act(() => { fireEvent.pointerDown(document.body); });

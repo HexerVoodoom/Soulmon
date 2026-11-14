@@ -15,6 +15,7 @@ import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
 import { AreaGlyph, RegionPostal } from './TravessiaIcon';
 import { StrollFind, type StrollFindProps } from './StrollFind';
+import { useRequireAwake } from '../WakeToEnter';
 
 /**
  * 🧭 A FOLHA DO PASSEIO (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md`
@@ -322,6 +323,9 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   const isPt = language === 'pt-BR';
   const [aberto, setAberto] = useState<string | null>(null);
   const [justDone, setJustDone] = useState(false);
+  /* 💤 §329: o Passeio entra livre (missões, registro); ESCOLHER a missão manda o Soulmon e pergunta com ele dormindo, no toque.
+     O "Fiz" é da pessoa e nunca para. */
+  const requireAwake = useRequireAwake();
   const [relogio, setRelogio] = useState(() => Date.now());
   const now = nowProp ?? relogio;
   // 1 s só enquanto o "Concluir" espera os 30 min; fora disso, 1 min (nada de ticker à toa).
@@ -408,7 +412,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
             language={language}
             aberto={aberto}
             setAberto={setAberto}
-            onPick={escolher}
+            onPick={(region, challengeId) => { requireAwake('exploracao.passeio', () => escolher(region, challengeId)); }}
           />
         )}
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { grantDungeonKey, hasDungeonKey, dungeonKeyExpired, dungeonKeyLastDay } from './focusKey';
+import { grantDungeonKey, hasDungeonKey, dungeonKeyExpired, dungeonKeyLastDay, dungeonKeyExpiresAt } from './focusKey';
 
 const NOW = new Date(2026, 10, 5, 12).getTime();
 const AMANHA = NOW + 24 * 3_600_000;
@@ -38,5 +38,15 @@ describe('chave do Calabouço (§239)', () => {
     expect(hasDungeonKey({ rogueDungeon: { day: dia, step: 3 } }, NOW)).toBe(true);
     expect(hasDungeonKey({ rogueDungeon: { day: dia, step: 0 } }, NOW)).toBe(false);
     expect(hasDungeonKey({ rogueDungeon: { day: dia, step: 3 } }, AMANHA)).toBe(false);
+  });
+  it('contador do mapa: a chave ganha hoje expira na meia-noite depois de amanhã (aparelho); sem chave, null', () => {
+    const a = grantDungeonKey({}, NOW);
+    const fim = new Date(2026, 10, 7, 0).getTime();
+    expect(dungeonKeyExpiresAt(a, NOW)).toBe(fim);
+    expect(dungeonKeyExpiresAt(a, AMANHA)).toBe(fim);
+    expect(dungeonKeyExpiresAt(a, fim)).toBeNull();
+    expect(dungeonKeyExpiresAt({}, NOW)).toBeNull();
+    // trava legada (incursão andando sem chave no save): vale até a virada de hoje
+    expect(dungeonKeyExpiresAt({ rogueDungeon: { day: '2026-11-05', step: 3 } }, NOW)).toBe(new Date(2026, 10, 6, 0).getTime());
   });
 });

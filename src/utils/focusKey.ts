@@ -3,7 +3,7 @@
  * A chave mora no SAVE (`focusKeyDay`, o dia do jogador em que foi ganha) e vale naquele dia do jogador — sem acumular nem gastar.
  * Puro: sem React, sem storage, `now` por parâmetro. Campo novo = leitura tolerante (`sanitizeFocusKeyDay`).
  */
-import { playerDayIso, type PlayerDayAnchor } from './playerDay';
+import { anchorOffsetMs, deviceOffsetMs, playerDayIso, type PlayerDayAnchor } from './playerDay';
 
 export interface FocusKeyState { focusKeyDay?: string; playerDayTz?: PlayerDayAnchor }
 
@@ -55,6 +55,22 @@ export function dungeonKeyExpired(state: DungeonKeyState, nowMs: number): boolea
   const k = sanitizeFocusKeyDay(state.dungeonKeyDay);
   return !!k && diasEntre(k, playerDayIso(new Date(nowMs), state.playerDayTz)) >= DUNGEON_KEY_VALID_DAYS;
 }
+/**
+ * Instante (ms) em que a chave do Calabouço deixa de valer: a meia-noite do jogador DEPOIS do último dia válido (`dungeonKeyLastDay`).
+ * Sem chave valendo agora → `null`. A trava legada (incursão de hoje andando, sem chave no save) vale até a virada de hoje.
+ * É o contador do mapa da Exploração (13/11/2026, dono): a chave não regenera, ela EXPIRA; o relógio mostra quanto falta.
+ */
+export function dungeonKeyExpiresAt(state: DungeonKeyState, nowMs: number): number | null {
+  if (!hasDungeonKey(state, nowMs)) return null;
+  const now = new Date(nowMs);
+  const hoje = playerDayIso(now, state.playerDayTz);
+  const k = sanitizeFocusKeyDay(state.dungeonKeyDay);
+  const ultimoDaChave = k && diasEntre(k, hoje) >= 0 ? dungeonKeyLastDay(k) : hoje;
+  const ultimo = ultimoDaChave < hoje ? hoje : ultimoDaChave;
+  const off = anchorOffsetMs(state.playerDayTz, now) ?? deviceOffsetMs(now);
+  return Date.UTC(+ultimo.slice(0, 4), +ultimo.slice(5, 7) - 1, +ultimo.slice(8, 10) + 1) - off;
+}
+
 /** Idempotente: já tendo a de hoje, devolve a MESMA referência. */
 export function grantDungeonKey<T extends DungeonKeyState>(prev: T, nowMs: number): T {
   const hoje = playerDayIso(new Date(nowMs), prev.playerDayTz);

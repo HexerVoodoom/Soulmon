@@ -22,8 +22,11 @@
     <!-- Widgets G (transparent) and H (V-Pet) -->
     <string name="widget_clear_label">Soulmon</string>
     <string name="widget_clear_description">Your Soulmon straight on the wallpaper, no background</string>
-    <string name="widget_vpet_label">Soulmon V-Pet</string>
+    <string name="widget_vpet_label">Cage</string>
     <string name="widget_vpet_description">Your Soulmon inside a retro screen; wide, takes more room</string>
+    <string name="widget_companion_label">Companion</string>
+    <string name="widget_companion_description">Your Soulmon BIG on a retro screen; fits 2x2 or 3x3</string>
+    <string name="widget_companion_content">Soulmon Companion</string>
     <string name="widget_vpet_content">Soulmon V-Pet</string>
     <string name="widget_name_count">%1$s · %2$s today</string>
 </resources>

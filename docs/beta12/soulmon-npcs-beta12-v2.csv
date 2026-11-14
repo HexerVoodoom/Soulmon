@@ -1,0 +1,125 @@
+id,tipo_entidade,linha_id,estagio,ramo,nome_pt,nome_en,elemento,ataque_basico,ataque_especial_escola,ataque_especial_familia,origem_ataque,fonte_codigo,usar_no_jogo
+soulmon.corvo.rookie,soulmon,corvo,rookie,,Corvinho,Little Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.champion-power,soulmon,corvo,champion,power,Corvo de Fresta,Rift Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.champion-harmony,soulmon,corvo,champion,harmony,Corvo de Musgo,Moss Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.champion-benevolence,soulmon,corvo,champion,benevolence,Corvo Cobalto,Cobalt Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.ultimate-power,soulmon,corvo,ultimate,power,Corvo Rompe-Véu,Veilbreaker Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.ultimate-harmony,soulmon,corvo,ultimate,harmony,Corvo da Trama,Braid Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.ultimate-benevolence,soulmon,corvo,ultimate,benevolence,Corvo Vigia,Warden Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.mega-power,soulmon,corvo,mega,power,Grão-Corvo da Ruptura,High Raven of the Rupture,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.mega-harmony,soulmon,corvo,mega,harmony,Grão-Corvo da Trama,High Raven of the Braid,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.mega-benevolence,soulmon,corvo,mega,benevolence,Grão-Corvo da Guarda,High Raven of the Ward,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.corvo.ultra,soulmon,corvo,ultra,,Corvo Nanquim,Inkwing Raven,neutro,conjuracao,conjuracao,direct,padrao,src/utils/corvoPet.ts > CORVO_FORM_IDS; nomes: src/utils/corvoAdocao.ts > NOMES; elemento: src/utils/spriteElement.ts > SPRITE_ELEMENT[mascote:corvo],sim
+soulmon.kaelen.rookie,soulmon,kaelen,rookie,,Cinderhorn,Cinderhorn,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.kaelen.champion-power,soulmon,kaelen,champion,power,Cinderhorn,Cinderhorn,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.kaelen.ultimate-power,soulmon,kaelen,ultimate,power,Cinderhorn,Cinderhorn,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.kaelen.mega-power,soulmon,kaelen,mega,power,Cinderhorn,Cinderhorn,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.thalindra.rookie,soulmon,thalindra,rookie,,Corallume,Corallume,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.thalindra.champion,soulmon,thalindra,champion,,Corallume,Corallume,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.thalindra.ultimate,soulmon,thalindra,ultimate,,Corallume,Corallume,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.thalindra.mega,soulmon,thalindra,mega,,Corallume,Corallume,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.igni.rookie,soulmon,igni,rookie,,Obsidarch,Obsidarch,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.igni.champion,soulmon,igni,champion,,Obsidarch,Obsidarch,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.igni.ultimate,soulmon,igni,ultimate,,Obsidarch,Obsidarch,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.igni.mega,soulmon,igni,mega,,Obsidarch,Obsidarch,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.astrase.rookie,soulmon,astrase,rookie,,Glimmerswarm,Glimmerswarm,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.astrase.champion,soulmon,astrase,champion,,Glimmerswarm,Glimmerswarm,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.astrase.ultimate,soulmon,astrase,ultimate,,Glimmerswarm,Glimmerswarm,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.astrase.mega,soulmon,astrase,mega,,Glimmerswarm,Glimmerswarm,luz,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > OWN_LINE_SPRITES, DUNGEON_LINE_NAMES; elemento: src/utils/spriteElement.ts > LINE_ELEMENT",sim
+soulmon.industrial.rookie,soulmon,industrial,rookie,,Crato,Crato,terra,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > STARTER_IDS, STARTER_NAMES, STARTER_SPRITES; elemento: src/utils/starterElements.ts > STARTER_ELEMENT",sim
+soulmon.nascente.rookie,soulmon,nascente,rookie,,Brooka,Brooka,som,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > STARTER_IDS, STARTER_NAMES, STARTER_SPRITES; elemento: src/utils/starterElements.ts > STARTER_ELEMENT",sim
+soulmon.alento.rookie,soulmon,alento,rookie,,Zefi,Zefi,ar,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > STARTER_IDS, STARTER_NAMES, STARTER_SPRITES; elemento: src/utils/starterElements.ts > STARTER_ELEMENT",sim
+soulmon.vida.rookie,soulmon,vida,rookie,,Oaken,Oaken,vida,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > STARTER_IDS, STARTER_NAMES, STARTER_SPRITES; elemento: src/utils/starterElements.ts > STARTER_ELEMENT",sim
+soulmon.meteoro.rookie,soulmon,meteoro,rookie,,Bolid,Bolid,fogo,conjuracao,conjuracao,direct,padrao,"src/utils/sprites.ts > STARTER_IDS, STARTER_NAMES, STARTER_SPRITES; elemento: src/utils/starterElements.ts > STARTER_ELEMENT",sim
+npc.lot.mercado:itens,npc,,,,"Lamela, a mascate","Lamela, the peddler",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: stall:itens,sim
+npc.lot.mercado:decoracao,npc,,,,"Lasca, a marceneira","Lasca, the carpenter",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: stall:decoracao,sim
+npc.lot.mercado:background,npc,,,,"Panora, a sonhadora","Panora, the dreamer",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: stall:background,sim
+npc.lot.mercado:conquistas,npc,,,,"Medra, o guardião dos marcos","Medra, keeper of milestones",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.forja:ferreiro,npc,,,,"Vitra, a Soulsmith","Vitra, the Soulsmith",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: area:forja,sim
+npc.lot.mercado:cambista,npc,,,,"Farthing, o cambista","Farthing, the exchanger",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.mercado:restaurante,npc,,,,"Snapjaw, a chef carnívora","Snapjaw, the carnivorous chef",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.arena:torneio,npc,,,,"Vultrak, mestre da arena","Vultrak, master of the arena",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: area:arena,sim
+npc.lot.arena:duelo,npc,,,,"Tessaria, a gladiadora","Tessaria, the gladiator",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.arena:guerra,npc,,,,"Mirevesper, a quimera do brejo","Mirevesper, the mire chimera",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.hall:feira,npc,,,,Fanfare,Fanfare,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.exploracao:fenda,npc,,,,"Zeph, a guia","Zeph, the guide",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: area:exploracao,sim
+npc.lot.exploracao:passeio,npc,,,,"Lisel, a mariposa do caminho","Lisel, the path moth",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.forja:oficina,npc,,,,"Sépia, a copista","Sépia, the scribe",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.forja:hexsmith,npc,,,,Hexsmith,Hexsmith,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.forja:caderno,npc,,,,"Trilho, o maquinista dos croquis","Trilho, the sketching engineer",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.jogos:salao,npc,,,,"Pipo, o anfitrião","Pipo, the host",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: area:jogos,sim
+npc.lot.jogos:mente,npc,,,,"Tessela, a enigmista","Tessela, the puzzler",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.exploracao:dungeon,npc,,,,"Corva, a vigia do calabouço","Corva, the dungeon watcher",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.forja:refugio,npc,,,,"Yuzu, a guardiã da fonte","Yuzu, the spring warden",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.laboratorio:evolucao,npc,,,,"Vesca, a alquimista","Vesca, the alchemist",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: area:laboratorio,sim
+npc.lot.laboratorio:pet,npc,,,,"Tinta, a escriba do Arquivo","Tinta, scribe of the Archive",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.laboratorio:stats,npc,,,,"Sumi, o guardião do Vínculo","Sumi, keeper of the Bond",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.laboratorio:perfil,npc,,,,Soulmon misterioso,Mysterious Soulmon,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.laboratorio:biblioteca,npc,,,,"Glifa, a arquivista","Glifa, the archivist",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.laboratorio:amigos,npc,,,,"Zumi, o filhote de mel","Zumi, the honey cub",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.lot.hall:grove,npc,,,,"Lilia, a musa do jardim","Lilia, the garden muse",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE; mesma arte tambem em: novo:musa,sim
+npc.lot.hall:guilda,npc,,,,"Aurea, a sacerdotisa do Salão","Aurea, priestess of the Hall",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > LOT_NPC_ART; nome: src/utils/areaNpcVoice.ts > LOT_NPC_VOICE,sim
+npc.area.mercado,npc,,,,"Grom, o mercador","Grom, the merchant",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > AREA_NPC_ART; nome: src/utils/areaNpcVoice.ts > AREA_NPC_VOICE,sim
+npc.area.hall,npc,,,,"Lumi, a anfitriã","Lumi, the host",,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > AREA_NPC_ART; nome: src/utils/areaNpcVoice.ts > AREA_NPC_VOICE,sim
+npc.function.onboarding,npc,,,,Ambra,Ambra,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > FUNCTION_NPC_ART; nome: src/utils/areaNpcVoice.ts > FUNCTION_NPC_VOICE,sim
+npc.function.oraculo,npc,,,,Iris,Iris,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > FUNCTION_NPC_ART; nome: src/utils/areaNpcVoice.ts > FUNCTION_NPC_VOICE,sim
+npc.function.cuidados,npc,,,,Nuri,Nuri,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > FUNCTION_NPC_ART; nome: src/utils/areaNpcVoice.ts > FUNCTION_NPC_VOICE,sim
+npc.extra.forja,npc,,,,Scoria,Scoria,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.treino,npc,,,,Kama,Kama,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.cacadora,npc,,,,Sable,Sable,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.guarda,npc,,,,Bastia,Bastia,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.feras,npc,,,,Zahra,Zahra,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.cura,npc,,,,Salvia,Salvia,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.mercenaria,npc,,,,Gila,Gila,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.navegadora,npc,,,,Vela,Vela,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.barda,npc,,,,Trill,Trill,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.venenos,npc,,,,Datura,Datura,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.arqueira,npc,,,,Rime,Rime,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.sacerdotisa,npc,,,,Oriel,Oriel,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.lua,npc,,,,Selene,Selene,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.ferreiro,npc,,,,Mallo,Mallo,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.ferreira,npc,,,,Kova,Kova,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.extra.arauto,npc,,,,Tilin,Tilin,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > EXTRA_NPC_ART; nome: src/utils/areaNpcVoice.ts > EXTRA_NPC_VOICE,sim
+npc.novo.alquimistaLimo,npc,,,,Lodi,Lodi,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.alquimistaLimoCostas,npc,,,,Lodi,Lodi,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.enfermeira,npc,,,,Rubra,Rubra,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.colheita,npc,,,,Espiga,Tassel,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.tempo,npc,,,,Clepsi,Clepsy,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.ossarioFera,npc,,,,Ossel,Ossel,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.ossarioForma,npc,,,,Ossel,Ossel,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.serpentePlumadaFera,npc,,,,Tzali,Tzali,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.serpentePlumadaForma,npc,,,,Tzali,Tzali,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.broto,npc,,,,Faísca,Spark,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.corvo,npc,,,,Corvino,Corvin,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.cozinheiro,npc,,,,Caldo,Broth,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.besouro,npc,,,,Brio,Sheen,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.luaTronoSentada,npc,,,,Selene,Selene,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.luaTronoDePe,npc,,,,Selene,Selene,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.novo.sereiaPintora,npc,,,,Maré,Tide,,,,,sem_ataque,src/assets/soulmon/npcs/index.ts > NOVO_NPC_ART; nome: src/utils/areaNpcVoice.ts > NOVO_NPC_VOICE,sim
+npc.boss.arauto-do-fim,npc,,,,Arauto do Fim,Herald of the End,juizo_final,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.cinderhorn,npc,,,,Cinderhorn,Cinderhorn,fervor,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.thrummer,npc,,,,Thrummer,Thrummer,tempestade,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.squallstride,npc,,,,Squallstride,Squallstride,trovao,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.orbitant,npc,,,,Orbitant,Orbitant,peso_descomunal,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.mycelar,npc,,,,Mycelar,Mycelar,miasma,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.obsidarch,npc,,,,Obsidarch,Obsidarch,obsidiana,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.bladeveil,npc,,,,Bladeveil,Bladeveil,lamina_viva,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.sabrefin,npc,,,,Sabrefin,Sabrefin,lamina_oculta,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.glimmerswarm,npc,,,,Glimmerswarm,Glimmerswarm,alento,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.corallume,npc,,,,Corallume,Corallume,mare,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.halorune,npc,,,,Halorune,Halorune,runa,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.chorale,npc,,,,Chorale,Chorale,cristal,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.drifela,npc,,,,Drifela,Drifela,nascente,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.hollowmere,npc,,,,Hollowmere,Hollowmere,florescer,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.astrawing,npc,,,,Astrawing,Astrawing,estratosfera,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.nebulara,npc,,,,Nebulara,Nebulara,nebulosa,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.voltbloom,npc,,,,Voltbloom,Voltbloom,sinapse,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.graftfang,npc,,,,Graftfang,Graftfang,mutacao,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.duskveil,npc,,,,Duskveil,Duskveil,crepusculo,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.dawnloom,npc,,,,Dawnloom,Dawnloom,aurora,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.aeonyx,npc,,,,Aeonyx,Aeonyx,eon,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.tallyjack,npc,,,,Tallyjack,Tallyjack,ouro_vivo,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.boss.cuprex,npc,,,,Cuprex,Cuprex,aco,,,,sem_ataque,src/data/bossRoster.ts > BOSS_ROSTER; elemento: src/utils/spriteElement.ts > BOSS_ELEMENT,sim
+npc.torneio.npc-espina,npc,,,,Espina,Thorn,planta,,,,sem_ataque,src/utils/tournamentNpcs.ts > TOURNAMENT_NPCS; elemento: src/utils/spriteElement.ts > DESAFIANTE_ELEMENT,sim
+npc.torneio.npc-quartzo,npc,,,,Quartzo,Quartz,cristal,,,,sem_ataque,src/utils/tournamentNpcs.ts > TOURNAMENT_NPCS; elemento: src/utils/spriteElement.ts > DESAFIANTE_ELEMENT,sim
+npc.torneio.npc-mare,npc,,,,Maré,Tide,agua,,,,sem_ataque,src/utils/tournamentNpcs.ts > TOURNAMENT_NPCS; elemento: src/utils/spriteElement.ts > DESAFIANTE_ELEMENT,sim

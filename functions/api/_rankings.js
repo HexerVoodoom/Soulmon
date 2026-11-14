@@ -34,6 +34,7 @@
 
 import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
+import { nomeDaGuildaDe, campoGuilda } from './_guildaNome.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
 // `dino` (sem nível) fica só para LER/aceitar recorde antigo e cliente antigo; o cliente novo envia `dino-1`/`dino-2` (QA beta3 R4, decisão 6).
@@ -184,7 +185,7 @@ export async function submitScore(env, { game, period, saveId, score, now = new 
 /**
  * Top N + situação do jogador. `rank` do jogador pode ser `null` (fora da janela varrida).
  * @returns {Promise<{ game: string, period: string, periodKey: string,
- *   top: { rank: number, name: string, score: number, me: boolean, prizePlace?: number }[],
+ *   top: { rank: number, name: string, guildName?: string, score: number, me: boolean, prizePlace?: number }[],
  *   me: null | { score: number, tier: string | null, rank: number | null } }>}
  */
 export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = new Date() }) {
@@ -195,12 +196,19 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
 
   const page = await store.list({ prefix, limit: n });
   const simRow = (k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(':') + 1));
-  /** @type {{ rank: number, name: string, score: number, me: boolean, prizePlace?: number }[]} */
-  const rows = page.keys.map((k, i) => ({
-    rank: i + 1,
-    name: k.metadata?.h === true ? 'Anônimo' : cleanName(k.metadata?.n),
-    score: Number(k.metadata?.s) || 0,
-    me: !!saveId && k.name.endsWith(`:${saveId}`),
+  const memoGuilda = new Map();
+  /** @type {{ rank: number, name: string, guildName?: string, score: number, me: boolean, prizePlace?: number }[]} */
+  const rows = await Promise.all(page.keys.map(async (k, i) => {
+    const escondido = k.metadata?.h === true;
+    // §321: o nome do clã embaixo do nome (lido na hora, do estado vivo do clã). Quem se escondeu segue "Anônimo" e sem clã.
+    const guilda = escondido ? null : await nomeDaGuildaDe(env, k.name.slice(k.name.lastIndexOf(':') + 1), memoGuilda);
+    return {
+      rank: i + 1,
+      name: escondido ? 'Anônimo' : cleanName(k.metadata?.n),
+      ...campoGuilda(guilda),
+      score: Number(k.metadata?.s) || 0,
+      me: !!saveId && k.name.endsWith(`:${saveId}`),
+    };
   }));
   // Quem recebe prêmio de verdade (1..N entre os NÃO simulados): o rótulo "#4" com o 1º pago deixa de existir (QA beta3 R10).
   if (pagoPor(game)) {

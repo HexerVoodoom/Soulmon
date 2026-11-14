@@ -41,7 +41,7 @@ export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKe
     : outra
       ? t({ pt: `Hoje você está com ${MERC_NOME[outra.ordem].pt}. Volte amanhã.`, en: `Today you are with ${MERC_NOME[outra.ordem].en}. Come back tomorrow.` })
       : minha?.done
-        ? t({ pt: 'Feito. Volte amanhã, se quiser.', en: 'Done. Come back tomorrow if you like.' })
+        ? t({ pt: 'Feito. Amanhã tem mais.', en: 'Done. There is more tomorrow.' })
         : minha
           ? t({ pt: 'Você fez de verdade?', en: 'Did you really do it?' })
           : t({ pt: 'Tenho uma missão para você.', en: 'I have a mission for you.' });

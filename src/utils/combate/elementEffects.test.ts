@@ -78,7 +78,7 @@ describe('§228: efeito pelo elemento do especial', () => {
       { nAtk: 0, nVuln: 0, nSpd: 0, shield: 0, shieldHits: 0, dot: 3 },
     ];
     const b = withRealFx(emptyStatusBoard(1), fx, [], () => false, (h, o) => (h === 1 && o === 'foe' ? 'queimadura' : h === 0 && o === 'self' ? 'defesaTerra' : null));
-    expect(b[1]).toEqual([{ kind: 'queimadura', turns: 3, source: -1 }]);
+    expect(b[1]).toEqual([{ kind: 'queimadura', turns: 3, source: -1, since: expect.any(Number) }]);
     expect(b[0].find((e) => e.kind === 'escudo')?.variant).toBe('terra');
     expect(STATUS_FX.queimadura.mark).not.toBe(STATUS_FX.dot.mark);
   });

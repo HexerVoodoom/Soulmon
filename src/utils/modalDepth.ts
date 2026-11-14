@@ -29,11 +29,23 @@ function subscribe(l: () => void): () => void {
   };
 }
 
-/** Quantos modais abertos NÃO contêm `el` (sem `el`: todos). */
+/**
+ * Quantos modais abertos estão POR CIMA de `el` (sem `el`: todos).
+ *
+ * "Por cima" = não contém `el` E vem DEPOIS do modal do próprio `el` na ordem do documento (os de dentro dele contam,
+ * os portais abertos depois dele também). Um modal ANTERIOR que não contém `el` é o nível de BAIXO: a folha do Bosque
+ * (`GroveFolha`, portal no `<body>`) abre de dentro da `AreaSheet` do Salão, e contar a `AreaSheet` desabilitava o
+ * ÚNICO voltar da folha — o jogador ficava preso (hotfix 13/11/2026). `el` fora de qualquer modal: todo modal conta.
+ */
 export function modalsAbove(el?: Element | null): number {
   if (typeof document === 'undefined') return 0;
+  const proprio = el?.closest?.(SEL) ?? null;
   let n = 0;
-  document.querySelectorAll(SEL).forEach(m => { if (!el || !m.contains(el)) n++; });
+  document.querySelectorAll(SEL).forEach(m => {
+    if (el && m.contains(el)) return;
+    if (proprio && !(proprio.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+    n++;
+  });
   return n;
 }
 
@@ -43,7 +55,7 @@ export const modalDepth = (): number => modalsAbove(null);
 /**
  * `true` quando há um modal aberto POR CIMA do elemento: o voltar da tela fica
  * desabilitado; o voltar de dentro do próprio modal só esmaece se outro modal
- * abrir sobre ele.
+ * abrir sobre ele — nunca por causa do modal de BAIXO que o abriu (ver `modalsAbove`).
  */
 export function useBackDimmed(ref: RefObject<Element | null>): boolean {
   const [dimmed, setDimmed] = useState(false);

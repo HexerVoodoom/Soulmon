@@ -68,7 +68,7 @@ describe('DailyMissionBoard', () => {
   });
   it('missão pronta ("?") sobe acima das abertas; passeio resgatado vai para o fim', async () => {
     const ev = lista[2].event;
-    const pronta = bumpDaily(undefined, DAY, ev);
+    const pronta = bumpDaily(undefined, DAY, ev, lista[2].target);
     const claimedStroll = { ...CROSSINGS_EMPTY, doneDay: DAY, claimDay: DAY };
     render(mk(undefined, claimedStroll, pronta));
     await waitFor(() => expect(document.querySelector('[data-daily-board]')).not.toBeNull());

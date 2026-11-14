@@ -30,6 +30,8 @@
  * do item não serve ao carinho — por isso dois); `sleep`, `wake` e `residue`
  * eram gestos MUDOS.
  */
+import type { VoiceArchetype } from './soulmonCharacter';
+
 export type PetVoiceKind =
   | 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle'
   | 'full' | 'healCap' | 'steady' | 'sleep' | 'wake' | 'residue'
@@ -226,8 +228,9 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
   },
   /* `careEvent.type === 'food'` — pedido de comida ativo. */
   hungry: {
-    pt: ['Barriga fazendo barulho.', 'Deu fome agora.', 'Tô com fome. Só avisando.'],
-    en: ['Belly is rumbling.', 'Got hungry just now.', "I'm hungry. Just saying."],
+    /* Beta12 (B2): "Só avisando" saiu — o jeito humano é perguntar da comida. */
+    pt: ['Barriga fazendo barulho.', 'Deu fome agora.', 'Tô com fome. Tem comida aí?'],
+    en: ['Belly is rumbling.', 'Got hungry just now.', "I'm hungry. Got any food?"],
   },
   /* energia cheia (`ratio >= 1`). */
   energized: {
@@ -313,6 +316,85 @@ const TRAIT_LINES: Partial<Record<string, Partial<Record<PetVoiceKind, VoiceLine
 };
 
 /**
+ * BETA12 (B1/B2) — O CARÁTER NA VOZ.
+ *
+ * O Soulmon fala de um jeito conforme o arquétipo de personalidade que o teste
+ * do jogador lhe deu (`utils/soulmonCharacter.ts`; mapa em
+ * `docs/design/PERSONALIDADE-BIG-FIVE.md`). O jogador nunca vê o arquétipo: só
+ * ouve o jeito. Sem teste = `neutro` = as falas genéricas acima.
+ *
+ * Mesmas regras de tom do arquivo todo: nenhuma frase cobra, nada de histórico
+ * (o corpo dela só guarda o agora, §5.10) e — regra nova de 12/11/2026 —
+ * nada de "no seu tempo / se quiser / quando estiver pronto": o jeito é humano
+ * e direto ("tô com fome, tem comida aí?"). A régua está em `petVoice.test.ts`.
+ * Cobertura: os cinco gestos mais frequentes; o resto cai na genérica.
+ */
+type VoiceKey = Exclude<VoiceArchetype, 'neutro'>;
+const ARCHETYPE_LINES: Record<VoiceKey, Partial<Record<PetVoiceKind, VoiceLines>>> = {
+  acolhedor: {
+    hungry: { pt: ['Tô com fome. Tem comida aí pra gente?', 'Barriga vazia. Comer junto é melhor.'], en: ["I'm hungry. Got some food for us?", 'Empty belly. Eating together is better.'] },
+    idle: { pt: ['Tô aqui do ladinho.', 'Gosto de ficar perto.'], en: ["I'm right here beside you.", 'I like being close.'] },
+    task: { pt: ['Mais uma pra conta. Fico feliz.', 'Boa! Tô junto.'], en: ['One more done. That makes me happy.', "Nice! I'm with you."] },
+    rub: { pt: ['Que bom isso. Fica.', 'Ahh, assim mesmo.'], en: ['That feels good. Stay.', 'Ahh, right there.'] },
+    fine: { pt: ['Tô bem, juro. E por aí?', 'Tudo no lugar por aqui.'], en: ["I'm good, really. And over there?", 'Everything is in place here.'] },
+  },
+  brincalhao: {
+    hungry: { pt: ['Tô com fome! Cadê a comida?', 'Minha barriga tá fazendo teatro.'], en: ["I'm hungry! Where is the food?", 'My belly is putting on a show.'] },
+    idle: { pt: ['Tava contando as pedrinhas. Empatou.', 'Quer ver um truque? Eu fico parado.'], en: ['I was counting pebbles. It was a tie.', 'Want to see a trick? I stay still.'] },
+    task: { pt: ['Plim! Mais uma pra conta.', 'Uhul. Valeu a dancinha.'], en: ['Ding! One more.', 'Woo. That earns a little dance.'] },
+    rub: { pt: ['Hihi, cosquinha!', 'Mais! Mais!'], en: ['Hehe, tickles!', 'More! More!'] },
+    fine: { pt: ['Tô ótimo. Quer apostar corrida?', 'Bateria cheia de graça.'], en: ["I'm great. Race you?", 'Battery full, for free.'] },
+  },
+  calmo: {
+    hungry: { pt: ['Fome chegando. Tem comida aí?', 'A barriga pediu comida.'], en: ['Hunger is here. Any food around?', 'My belly asked for food.'] },
+    idle: { pt: ['Tô aqui. Tá bom assim.', 'Respirando junto com a luz.'], en: ["I'm here. It's good like this.", 'Breathing with the light.'] },
+    task: { pt: ['Feito. Gostei.', 'Uma a menos. Bom.'], en: ['Done. I like that.', 'One less. Good.'] },
+    rub: { pt: ['Ahh. Calmo aqui.', 'Isso. Devagar.'], en: ['Ahh. Calm in here.', 'That. Slow.'] },
+    fine: { pt: ['Tudo quieto. Tudo bem.', 'Assentado.'], en: ['All quiet. All good.', 'Settled.'] },
+  },
+  animado: {
+    hungry: { pt: ['Tô com uma fome! Tem comida aí?', 'Fome! Bora comer?'], en: ["I'm so hungry! Got any food?", "Hungry! Let's eat?"] },
+    idle: { pt: ['Bora fazer alguma coisa!', 'Tô cheio de energia aqui!'], en: ["Let's do something!", "I'm full of energy over here!"] },
+    task: { pt: ['Eba! Mais uma!', 'Isso! Vai, vai, vai!'], en: ['Yay! One more!', 'Yes! Go, go, go!'] },
+    rub: { pt: ['Aaah, que delícia!', 'Mais um pouquinho!'], en: ['Aaah, so good!', 'A little more!'] },
+    fine: { pt: ['Tô a mil!', 'Tudo ótimo por aqui!'], en: ["I'm buzzing!", 'All great over here!'] },
+  },
+  direto: {
+    hungry: { pt: ['Tô com fome. Tem comida?', 'Fome. Comida, por favor.'], en: ["I'm hungry. Got food?", 'Hungry. Food, please.'] },
+    idle: { pt: ['Tô aqui. Algo em mente?', 'Só olhando. Tem novidade?'], en: ["I'm here. Anything on your mind?", 'Just watching. Anything new?'] },
+    task: { pt: ['Fechou. Boa.', 'Uma a menos na lista.'], en: ['Closed. Nice.', 'One less on the list.'] },
+    rub: { pt: ['Aí. Isso mesmo.', 'Ok, isso é bom.'], en: ["There. That's it.", 'Okay, that is good.'] },
+    fine: { pt: ['Tô bem. E você?', 'Tudo certo aqui.'], en: ["I'm fine. You?", 'All good here.'] },
+  },
+  curioso: {
+    hungry: { pt: ['Tô com fome. O que tem de comida aí?', 'Que cheiro é esse? Tô com fome.'], en: ["I'm hungry. What food do you have?", 'What is that smell? I am hungry.'] },
+    idle: { pt: ['Tô me perguntando por que a luz muda de cor.', 'Será que nuvem tem gosto?'], en: ['I wonder why the light changes color.', 'Do clouds have a taste, I wonder?'] },
+    task: { pt: ['Olha só, mais uma!', 'Hm, que bom. O que vem agora?'], en: ['Look at that, one more!', 'Hm, nice. What comes next?'] },
+    rub: { pt: ['Hm, e isso aqui? Gostei.', 'Interessante. Continua.'], en: ['Hm, what is this? I like it.', 'Interesting. Keep going.'] },
+    fine: { pt: ['Tô bem. E tem tanta coisa pra ver.', 'Tudo bem aqui. Curioso com o resto.'], en: ["I'm fine. And there's so much to see.", 'All good here. Curious about the rest.'] },
+  },
+  mentor: {
+    hungry: { pt: ['Barriga vazia pensa mal. Tem comida aí?', 'Tô com fome. Uma boa refeição é um bom começo.'], en: ['An empty belly thinks poorly. Got any food?', "I'm hungry. A good meal is a good start."] },
+    idle: { pt: ['Tô aqui. Uma coisa de cada vez.', 'Dá pra ver longe daqui.'], en: ["I'm here. One thing at a time.", 'You can see far from here.'] },
+    task: { pt: ['Boa. Passo a passo chega.', 'Mais um passo dado.'], en: ['Good. Step by step gets there.', 'One more step taken.'] },
+    rub: { pt: ['Isso. Assim se firma.', 'Bom. Fica um pouco.'], en: ['That. This is how it steadies.', 'Good. Stay a while.'] },
+    fine: { pt: ['Tudo em ordem.', 'Firme por aqui.'], en: ['All in order.', 'Steady over here.'] },
+  },
+};
+
+/** O arquétipo vigente do Soulmon (o App define a partir do teste e do modo
+ *  das Configurações). Módulo-nível para o `CompanionHUD`, o desktop e o
+ *  widget herdarem a mesma voz sem uma segunda implementação (footgun 9).
+ *  Default `neutro`: sem teste, fala padrão — e os testes antigos não mudam. */
+let currentVoice: VoiceArchetype = 'neutro';
+export function setPetVoiceArchetype(a: VoiceArchetype | null | undefined): void {
+  currentVoice = a && a in ARCHETYPE_LINES ? a : 'neutro';
+}
+export function getPetVoiceArchetype(): VoiceArchetype { return currentVoice; }
+/** Só para o teste varrer o tom de TODAS as variantes. */
+export const ARCHETYPE_VOICE_LINES = ARCHETYPE_LINES;
+
+/**
  * Escolhe a frase. `pick` entra por parâmetro (0..1) para o teste ser
  * determinístico sem precisar mexer no `Math.random` global — o chamador em
  * runtime passa `Math.random()`.
@@ -324,9 +406,13 @@ export function petVoiceLine(
   /** WP3.10 — `petPassive` do estado. Sem traço, ou sem fala para este gesto,
    *  cai na genérica: matriz cheia por obrigação vira enchimento. */
   trait?: string,
+  /** Beta12: o arquétipo. Omitido = o vigente do módulo (`setPetVoiceArchetype`). */
+  voice?: VoiceArchetype,
 ): string {
   const doTraco = trait ? TRAIT_LINES[trait]?.[kind] : undefined;
-  const linhas = (doTraco ?? PET_VOICE_LINES[kind])[isPt ? 'pt' : 'en'];
+  const v = voice ?? currentVoice;
+  const doCaraterOuGenerica = (v !== 'neutro' ? ARCHETYPE_LINES[v]?.[kind] : undefined) ?? PET_VOICE_LINES[kind];
+  const linhas = (doTraco ?? doCaraterOuGenerica)[isPt ? 'pt' : 'en'];
   const i = Math.min(linhas.length - 1, Math.max(0, Math.floor(pick * linhas.length)));
   return linhas[i];
 }

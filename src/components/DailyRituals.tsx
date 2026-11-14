@@ -46,6 +46,7 @@ import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
 import { TaskMeta } from './TaskMeta';
+import { recursoDaAtividade, passosLinha, irLaLabel, predioDoRecurso } from '../utils/tarefaLink';
 import { habitCountsOn } from '../utils/habitRhythm';
 import { isHiddenByPlan, type DayPlanView } from '../utils/dayPlan';
 import { parseDayValue } from '../utils/taskTriage';
@@ -130,6 +131,12 @@ export interface DailyRitualsProps {
   dayPlan?: { view: DayPlanView; invite?: boolean; onInvite?: () => void };
   /** G2 (beta3): na Home o botão do fim da lista vira atalho para as Configurações (a tela `View all` segue pelo gesto). */
   onOpenSettings?: () => void;
+  /** beta12 §J: passos de hoje e a meta (das Configurações) para a linha do hábito de caminhar; `null`/ausente = sem permissão ou sem sensor (a linha não mostra nada). */
+  stepsInfo?: { hoje: number; meta: number } | null;
+  /** beta12 §J: o "Ir lá" do hábito linkado a um prédio (`forja.caderno`, `forja.oficina`). */
+  onGoToBuilding?: (building: string) => void;
+  /** ⭐ Id da atividade que é a tarefa bônus de HOJE (`utils/bonusTask.ts`): título em bronze, nada mais muda. */
+  bonusActivityId?: string;
 }
 
 /** Distância mínima (px) e razão horizontal/vertical do gesto que abre `View all`. */
@@ -140,7 +147,7 @@ export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onHoldDoneTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings,
+  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings, stepsInfo, onGoToBuilding, bonusActivityId,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
@@ -477,12 +484,33 @@ export function DailyRituals({
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
     const aberta = isRitualOpen(expanded, activity.id, activity.isComplete);
+    const recurso = recursoDaAtividade(activity);
+    const predio = predioDoRecurso(recurso);
+    const irLa = irLaLabel(recurso, language);
+    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança); journaling/foco: o link ao prédio. */
+    const link = recurso === 'steps' && stepsInfo
+      ? <span data-habit-link="steps" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
+      : predio && irLa && onGoToBuilding
+        ? (
+          <button
+            type="button"
+            data-habit-link={recurso}
+            onClick={(e) => { e.stopPropagation(); onGoToBuilding(predio); }}
+            style={{ minHeight: 44, padding: '0 4px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, color: 'var(--sm2-primary-ink)', textDecoration: 'underline' }}
+          >
+            {irLa}
+          </button>
+        )
+        : undefined;
     return (
       <RitualRow
         key={activity.id}
         flipKey={`h:${activity.id}`}
+        below={recurso === 'steps' ? link : undefined}
+        lead={recurso === 'steps' ? undefined : link}
         kind="habit"
         name={activity.name}
+        bonus={bonusActivityId === activity.id}
         value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}

@@ -33,6 +33,19 @@ const fmt = (d: number[]) => `arena ${d[0].toFixed(1)} masmorra ${d[1].toFixed(1
 
 const GRADE = process.env.EFEITOS_GRADE === '1';
 
+/**
+ * Limite do gate por modo (0 = Arena, 1 = Masmorra, 2 = Pesadelo): ±3pp em tudo, MENOS a lentidão no Pesadelo.
+ * §325 (DECISÃO DO DONO, 13/11/2026): com `EFFECT_TUNE_PESADELO` de lentidão 0,15/0,4 → 0,3/0,58 a lentidão rende +16,4pp de vitória no
+ * Pesadelo sobre o `defDebuff` puro (N = 1600). O dono aceitou o Pesadelo mais fácil; a faixa 13–20pp trava o valor medido nos dois sentidos.
+ */
+const PESADELO_LENTIDAO_PP = { min: 13, max: 20 };
+function dentro(mecanica: string, modo: number, x: number) {
+  if (mecanica === 'slow' && modo === 2) {
+    expect(x).toBeGreaterThanOrEqual(PESADELO_LENTIDAO_PP.min);
+    expect(x).toBeLessThanOrEqual(PESADELO_LENTIDAO_PP.max);
+  } else expect(Math.abs(x)).toBeLessThanOrEqual(3);
+}
+
 describe('§228: efeitos em PvE', () => {
   it('sem par no elemento, o especial é o mesmo objeto', () => {
     const sp = specialOf('direct');
@@ -64,7 +77,7 @@ describe('§228: efeitos em PvE', () => {
       expect(EFEITOS_PVE_LIGADOS).toContain(nome);
       const d = deltas(fam, el);
       console.log(`[gate] ${nome} | ${fmt(d)}`);
-      for (const x of d) expect(Math.abs(x)).toBeLessThanOrEqual(3);
+      d.forEach((x, i) => dentro(nome === 'lentidao' ? 'slow' : '', i, x));
     }
   });
 
@@ -100,7 +113,7 @@ describe('§228: efeitos em PvE', () => {
       if (!base.has(fam)) base.set(fam, medir(fam));
       const d = medir(fam, el).map((x, i) => (x - base.get(fam)![i]) * 100);
       console.log('[gate11] ' + el + ' | ' + fmt(d));
-      for (const x of d) expect(Math.abs(x)).toBeLessThanOrEqual(3);
+      d.forEach((x, i) => dentro(efeitoDoEspecial(fam, el) && comEfeitoDoElemento(specialOf(fam), el).effect === 'slow' ? 'slow' : '', i, x));
     }
   });
 

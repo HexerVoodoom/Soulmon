@@ -16,7 +16,7 @@ vi.mock('./DuelScreen', () => ({
   ),
 }));
 import { TournamentPage } from './TournamentPage';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 const saveId = 'a'.repeat(32);
 const side = (level: number) => ({
@@ -40,7 +40,7 @@ function stubApi(matchBody: object) {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 const base = {
-  saveId, petStage: 'rookie', trophies: [], language: 'en-US', emblems: 0, totalXP: xpForLevel(BOND_PVP_MIN_LEVEL),
+  saveId, petStage: 'rookie', trophies: [], language: 'en-US', emblems: 0, totalXP: xpForLevel(BOND_RANKED_MIN_LEVEL),
 };
 const lutar = async () => {
   fireEvent.click(await screen.findByRole('button', { name: /Fight — challenge Rival/ }));

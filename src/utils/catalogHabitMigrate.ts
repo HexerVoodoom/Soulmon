@@ -1,4 +1,5 @@
-import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
+import type { CatalogItem } from '../types/activityCatalog';
+import { catalogIfLoaded } from '../data/catalogoCarga';
 import type { Schedule } from '../types/taskModel';
 
 /** Hábito = TODO DIA. */
@@ -15,11 +16,15 @@ function sameSchedule(a: unknown, b: Schedule): boolean {
  * ainda é exatamente a padrão de algum nível do item (nunca editada pela
  * pessoa). id, histórico, stats, Bits e nível ficam intactos. Idempotente.
  */
-export function migrateCatalogHabitDaily<T extends { catalogId?: unknown; schedule?: unknown }>(a: T): T {
+export function migrateCatalogHabitDaily<T extends { catalogId?: unknown; schedule?: unknown }>(
+  a: T,
+  porId: Record<string, CatalogItem> | null = catalogIfLoaded(),
+): T {
+  if (!porId) return a; // catálogo ainda não carregado (fora do chunk de entrada): o provider migra quando ele chega
   const cid = a.catalogId;
   if (typeof cid !== 'string' || !cid || !a.schedule) return a;
   if (sameSchedule(a.schedule, DAILY_SCHEDULE)) return a;
-  const item = ACTIVITY_CATALOG_BY_ID[cid];
+  const item = porId[cid];
   if (!item) return a;
   const intacta = item.levels.some(l => sameSchedule(l.defaultSchedule, a.schedule as Schedule));
   if (!intacta) return a;

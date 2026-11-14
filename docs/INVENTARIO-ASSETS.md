@@ -131,8 +131,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/pesadelo/` | 7 · 128² alfa — `el-pesadelo` + `fx-pesadelo-{cast,aura,slash,impact,defended,orb}`; **GERADO PROCEDURALMENTE** (15/10/2026, `scripts/gerar-pesadelo-arte.py`: Pillow/numpy/scipy, pixel art, paleta de pesadelo; parte das silhuetas de `dino-shadow-*`/`dungeon-spirit`) | `nightmareElement.ts` (glob) via `combatFx.ts` (`fxFrame('pesadelo', estado)`) | Jogos (`NightmareBattle`: o elemento dos golpes do pesadelo; `hasNightmareFx()` agora `true`). `el-pesadelo` ainda sem consumidor de UI |
 | `soulmon/bg/pesadelo-{abismo-glitch,corredor-impossivel,quarto-sem-fim}` | 3 · 608×1080 opacos, **gerados proceduralmente** (mesmo script; grade 152×270 ×4 `nearest`) | `NIGHTMARE_SCENES` / `nightmareScene(dia)` (`dungeonScenes.ts`) | Jogos (`NightmareBattle`: um cenário por dia local, determinístico; fallback = a Forja das Almas, `NIGHTMARE_SCENE`) |
 | `soulmon/combate/` | 17 `bg-<base>` (360×640, ampliados `pixelated`) · 17 `escudo-<base>` (128²) · `sombra-clara`/`sombra-escura` (256×96) — 04/10/2026 | `combatArt.ts` | `BattleStage`: cenário por elemento do INIMIGO (Arena, Duelo), escudo do defensor no bloqueio, plataforma sob os pés |
-| `soulmon/combate/elemento/` | 244 cenários 9:16 dos elementos compostos: 151 `.webp` 450×800 q82 (~7,4 MB, 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`) + 93 `.webp` 720×1280 q85 "darker dusk" regerados em 12/11/2026 (~19 MB, `tools/instalar-cenarios-masmorra-darker.py`, ids em `tools/cenarios-darker-ids.txt`, médias em `combatArtElementoMedias3.data.ts`; substituíram os `.png` 360×640 antigos); fonte `E:/Soulmon-assets/masmorra-cenarios-v2/` | `combatArt.ts` (glob `combate/elemento/*.{png,webp}`) | `BattleStage`/masmorra: o cenário próprio vence o do base; 5 sem arte (floresta_ancestral, corte_feerica, pestilencia, maldicao, cyber) caem no base |
-| `soulmon/jornada/oasis-<cenário>.webp` | Salas de descanso (oásis) do Pomodoro, 1024×2048 q85 (~270 KB cada): só `forest` e `shore` por ora (12/11/2026, `tools/instalar-oasis-jornada.py`, fonte `E:/Soulmon-assets/jornada-oasis/`); cavern, garden, workshop e observatory pendentes (cota do ChatGPT volta às 18:24) | `journeyArt.ts` (glob `oasis-*`) | `RestRoom`; sem arquivo vale o fundo gerado em código |
+| `soulmon/combate/elemento/` | 244 cenários 9:16 dos elementos compostos: 93 `.png` 360×640 (30/10/2026) + 151 `.webp` 450×800 q82 (~7,4 MB, 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`, fonte `E:/Soulmon-assets/masmorra-cenarios-v2/`) | `combatArt.ts` (glob `combate/elemento/*.{png,webp}`) | `BattleStage`/masmorra: o cenário próprio vence o do base; 5 sem arte (floresta_ancestral, corte_feerica, pestilencia, maldicao, cyber) caem no base |
 | `soulmon/perfil-cards/` | 2 · 400×304 WebP (`card-home`, `card-widget`, ~20 KB; 11/11/2026) | `PerfilCardTile.tsx` (glob) | Fundo do palco dos cards Home e Widget do menu do Perfil |
 
 ### 1.4 Marca e PWA (fora do visor — vetor/imagem de marca, não pixel)
@@ -454,4 +453,29 @@ Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cos
 
 ## Botão especial CTA (12/11/2026)
 
-`src/assets/soulmon/ui/btn-cta.webp` (720x121, ~13 KB): origem `E:/Soulmon-marketing/site-assets/botao-beta.png` (botão do site do beta, 2172x724), recortado na caixa visível e reduzido; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
+`src/assets/soulmon/ui/btn-cta.webp`, `btn-cta-hover.webp`, `btn-cta-press.webp`, `btn-cta-off.webp` (551x180 cada, 10-16 KB): cópia byte a byte de `site-beta/public/dono/botao{,-hover,-press,-off}.webp` (branch `site-beta`, o CTA `.botao.primario` do soulmon.pages.dev/beta; fatia `62 74 fill`), um arquivo por estado; usado como `border-image` 9-slice em `.sm2-cta` (`index.css`) pelo componente `components/ui/CtaButton.tsx` (REGISTRO §316).
+
+## FX de status sem identidade: 13 folhas em loop + 13 glifos (13/11/2026, REGISTRO §336)
+
+**Origem e processo**
+- Gerados no app ChatGPT, uma conversa por imagem, com alfa real (sem chroma).
+- O piloto de veneno, aprovado pelo dono, foi o anexo de estilo das demais.
+- Montagem por `E:/Soulmon-assets/_fx-status/montar_folha.py`: corte por projeção, escala única, âncora embaixo no centro, alfa binário.
+- Fonte, `meta.json` com o prompt e as tags de cada peça, e GIFs de prévia em `E:/Soulmon-assets/_fx-status/novo/`. Linhas no `_banco/registro.jsonl`.
+- Prompts completos em `docs/FX-STATUS-PROMPTS.md`.
+- A arte anterior, com canos, folhas e cristal (lote de 09/11, §264), fica guardada em `E:/Soulmon-assets/_fx-status/atual/`.
+
+| Arquivo | Pasta | Tamanho | Uso |
+|---|---|---|---|
+| `fx-veneno-loop-sheet`, `fx-queimadura-loop-sheet`, `fx-dot-loop-sheet`, `fx-maldicao-loop-sheet`, `fx-silencio-loop-sheet`, `fx-debuff-loop-sheet`, `fx-buff-loop-sheet`, `fx-regen-loop-sheet` | `soulmon/combate-v3/fx/` | 384×256 (3×2 de 128) | substituem as anteriores, mesmo nome; marcador animado do canto (`statusLoopId`) |
+| `fx-lento-loop-sheet`, `fx-debuff-def-loop-sheet`, `fx-buff-atk-loop-sheet`, `fx-buff-spd-loop-sheet`, `fx-cura-loop-sheet` | `soulmon/combate-v3/fx/` | 384×256 | NOVAS: lento, defesa em baixa, ataque em alta (e físico/mágico), velocidade em alta (e aceleração), cura. Antes emprestavam a folha genérica ou não tinham folha |
+| `st-veneno`, `st-queimadura`, `st-dot`, `st-maldicao`, `st-retardo`, `st-silencio`, `st-debuff-def`, `st-seta-desce`, `st-seta-sobe`, `st-buff-atk`, `st-buff-spd`, `st-hot`, `st-cura` | `soulmon/combate-v3/status/` | 64² | substituem as anteriores, mesmo nome (`statusGlyphId`; fora da cena de combate desde §331) |
+| removidos: `fx-buff-loop-1..6`, `fx-debuff-loop-1..6`, `fx-dot-loop-1..6`, `fx-maldicao-loop-1..6` | `soulmon/combate-v3/fx/` | 128² | quadros soltos antigos, sem consumidor; a folha nova os substitui |
+
+**Correções**
+- `fx-debuff-def` e `fx-cura` tiveram o salto do quadro 6 → 1 corrigido por edição de pixel, com `_fx-status/fix/corrigir_saltos.py`.
+- Os originais ficam em `novo/_backup-pre-fix/`.
+
+**Fora do escopo (pendentes com o dono)**
+- Os outros glifos-medalhão do mesmo molde antigo: `st-peso`, `st-ferrugem`, `st-seiva`, `st-selado` e outros.
+- Provavelmente têm o mesmo problema de identidade.

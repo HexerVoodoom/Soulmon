@@ -212,6 +212,9 @@ const PARES: Par[] = [
   ['danger sobre bg', '--sm2-danger-ink', '--sm2-bg', AA_TEXTO],
   ['btn-text sobre gold-fill', '--sm2-on-gold', '--sm2-gold-fill', AA_TEXTO],
   ['btn-text sobre danger-fill', '--sm2-on-danger', '--sm2-danger-fill', AA_TEXTO],
+  // Medalhas do pódio do ranking (§326): o número sobre o metal.
+  ['numeral sobre silver-fill', '--sm2-on-silver', '--sm2-silver-fill', AA_TEXTO],
+  ['numeral sobre bronze-fill', '--sm2-on-bronze', '--sm2-bronze-fill', AA_TEXTO],
   ['btn-text sobre primary-deep', '--sm2-on-primary', '--sm2-primary-deep', AA_TEXTO],
   // O visor é escuro nos DOIS temas — a tinta dele não é a da página.
   ['viewport-ink dentro do visor', '--sm2-viewport-ink', '--sm2-viewport-bg', AA_TEXTO],

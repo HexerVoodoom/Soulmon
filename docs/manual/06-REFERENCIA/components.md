@@ -229,6 +229,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/DailyMissionBoard.tsx`.
 **Régua:** `src/components/nav/dailyMissionList.render.test.tsx`.
 
+### `src/components/nav/RewardChip.tsx` (13/11/2026)
+**Dono de:** a recompensa em ÍCONE (+ quantidade) nos cartões de missão: Bits, materiais e fallback para XP/Créditos (§336/missões com retrato do NPC).
+**Props principais:** `kind`, `materialId?`, `amount?`, `name`, `isPt`.
+**Exports:** `rewardIcon(kind, materialId?, size?)`, `RewardChip`.
+**Chamado por:** `src/components/nav/DailyMissionList.tsx`, cartões de missão de NPC.
+**Régua:** `src/components/nav/npcMissionCards.render.test.tsx`.
+
 ### `src/components/nav/DailyMissionBoard.tsx` (20/10/2026)
 **Dono de:** o QUADRO da aba Diárias (seção "Hoje"/"Today", lazy): UM `<ul data-daily-board>` com a especial do dia, o Passeio, as missões de prédio e as diárias, na ordem de `layoutMissionBoard` — rótulo "Special mission"/"Missão especial" + especial aberta no topo, linha fina (`data-mission-divider`), prontas, abertas e, no fim, as resgatadas (REGISTRO §132).
 **Régua:** `src/components/nav/dailyMissionBoard.render.test.tsx`.
@@ -517,6 +524,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - `LOT_WIDTH_DEFAULT` (`'38%'`) — largura padrão de um lote, em % da cena (molde F4).
 **Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
+**Delta 13/11/2026 (REGISTRO §319):** prop `palco?: ReactNode`, desenhada DENTRO do palco da imagem (só com prédios pintados), em % da arte; a Exploração passa a `DungeonKeyBadge`.
+
+### `src/components/nav/DungeonKeyBadge.tsx` (13/11/2026 — REGISTRO §319)
+**Dono de:** a chave do Calabouço no mapa da Exploração: com a chave valendo, o ícone `recompensa-chave.png` (arte do dono, `icones-ui/interacao`) + o relógio até ela expirar (`formatEnergyCountdown`, anda de 1 em 1 s), na caixa `EXPLORACAO_CHAVE_BOX` (ponte entre Passeio e Calabouço). Sem chave ou relógio zerado: não desenha nada. Só visual (sem toque); `role="img"` com o rótulo falado em h/min.
+**Exports:** `DungeonKeyBadge({ expiresAt, language })` (`expiresAt` = `dungeonKeyExpiresAt` do `App`, via `play.dungeonKeyExpiresAt`).
+**Chamado por:** `src/components/nav/AreaView.tsx` (prop `palco` da `AreaScene`). **Régua:** `src/components/nav/DungeonKeyBadge.render.test.tsx`.
 
 ### `src/components/nav/AreaSheet.tsx`
 **Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4). ⚠️ **Proporção redecidida pelo dono em 28/09/2026: a folha ocupa `height: 66.6667dvh` (2/3 da tela), fixo — não é mais um range `min-height`/`max-height`.** A metade de cima da folha é do NPC **do lote** + balão de fala (`data-area-sheet-npc-zone`/`data-area-sheet-npc-line`; a fala continua vindo de `src/utils/areaNpcVoice.ts`, nunca escrita aqui); a metade de baixo é o conteúdo rolável (`children`). Backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. O NPC não é mais um único anfitrião da área espiando por cima — é o de CADA lote, resolvido por `lotNpcArt(areaId, lotId)` (`src/assets/soulmon/npcs/index.ts`): cai no NPC histórico da área se o lote não tiver mapeamento próprio, e em `PLACEHOLDER_NPC_ART` (coruja-cervo/poring) para sub-lojas ainda sem NPC dedicado.
@@ -615,6 +628,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'CareSystem.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** ⚠️ `scheduleCareEvents` é código morto sem consumidor (`grep -rn "scheduleCareEvents" src` só acha a própria definição, 09/09/2026) e usa `new Date().toDateString()` — o dia do APARELHO, não `playerDayKey` — não reative sem migrar para `src/utils/playerDay.ts`; `getCareMessage` foi removida de propósito (era cobrança factualmente errada) e o comentário adverte para não recriá-la sem uma linha de contexto.
 
+### `src/components/ChatPanel.tsx`
+
+**Dono de:** o painel do chat da beta12 (meia tela estilo WhatsApp e tela cheia com o sprite no canto); recebe a barra de digitar do `ChatBox` e a lista de até 20 mensagens da sessão (`role="log"`). Decisões em `docs/beta12/DECISOES-C.md`.
+
+**Chamado por:** `src/components/ChatBox.tsx`.
+
 ### `src/components/ChatBox.tsx`
 **Dono de:** a caixa de chat do pet — texto e transcrição de voz via `/api/transcribe`, com contexto de jogo em inteiros (`chatContext`) e detecção de categoria de mensagem.
 **Props principais:** `ChatBoxProps` — `petName`, `mood`, `evolutionStage`, `dominantBranch?`, `useAI`, `onSendMessage(response)`, `aiSettings?`, ⚰️ `onOpenAISettings?` (saiu em `4a8b8049`, #37 — era destruturada e nunca chamada), `language?`, `chatContext?` (`hp`/`energy`/`bond`/`daysAway`/`moodToday`, sempre inteiros — nunca texto, `soulGoal`/`soulStruggle` não passam por rota de IA), `onCreateActivity?`.
@@ -637,6 +656,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/CompanionHUD.tsx`
 
+**Balões de dica (§333, 13/11/2026):** props `dicaFala` (`{ tipo, text }` da dica COMUM da vez, fome/cochilo) e `onDicaFalada(tipo)`. A dica entra no LUGAR da fala ociosa (o mesmo intervalo de 3 min), nunca num turno a mais e nunca por cima de outra fala; dormindo ou ausente não fala e não grava. `balaoDourado.tipo` aceita também `relaxar`/`lilia` (dica DOURADA, mesmo botão `[data-pet-gold-bubble]`, alvo >= 44 px, sem `sm3-balao` em movimento reduzido). **Seta no círculo (dono, 13/11):** TODO balão dourado (eventos `grove`/`rift`/`achado` e as dicas douradas) termina com `[data-pet-gold-bubble-arrow]` (componente local `BalaoDouradoTexto`): o glifo autoral `arrow_forward` (`Icon`, 11 px) num contorno circular de 1,5 px em CSS, sem fundo, 16 px (~1,15em da linha de 14 px), tinta `--sm2-ink` (o mesmo par do texto sobre `--sm2-surface`), `aria-hidden` (o `aria-label` do botão já diz o destino); a última palavra e a seta moram num `nowrap`, então a seta nunca quebra sozinha; estática, sem animação. O balão COMUM (`[data-pet-bubble]`) não tem seta. Régua: `CompanionHUD.dica.render.test.tsx`, `CompanionHUD.balaoDourado.render.test.tsx`.
+
 **Balão de fala (14/10/2026, REGISTRO §57):** `[data-pet-bubble]` é um balão de verdade (`role="status"`, `aria-live="polite"`): fundo `--sm2-surface` sólido, borda `--sm2-line`, sombra sutil, texto à esquerda, largura máx. 80%, 3 linhas com reticências, cauda (`[data-pet-bubble-tail]`) para baixo no x do pet (`50 + (position-50)*CENA_ZOOM`, o balão acompanha o pet que anda sem sair da janela). Fora do fluxo (`position:absolute` em `[data-pet-bubble-row]`, `BUBBLE_TOP` = `BUBBLE_GAP`+14); fade de entrada `sm3-balao` só fora de `reducedMotion`.
 **Dono de:** a área do pet inteira — sprite, HUD do "aparelho" (visor pixel-art), gesto de esfregar, ações (comer/banho/dormir/item), fala, chat embutido e decoração do palco.
 **Props principais:** `CompanionHUDProps` (arquivo lido, interface em torno da linha 124) — estado do pet (`healthPoints`, `energyLevel`, `evolutionStage`, `dominantBranch`, `currentXP`…), sinais que só crescem (`fullSignal`, `healCapSignal`, `speakSignal`, `daysAway`, `moodToday`, `hauntedWatching`), `walkingTo?` (desde `3532ccf5`: o nome da região de destino do Passeio, ≠ casa; vira 🎒 nas costas do pet, `data-pet-passeando`, `pointerEvents: none`, sem animação nem som, o nome só no `aria-label`; `null` = em casa), decoração (`equippedBackground`, `equippedDecor`, `trophies`), evolução manual (`onEvolve`, `canEvolve`, `onEvolveRequest`), cuidado (`careEvent`, `onFeed`, `onShower`, `onSleep`, `onPet`, `foodInventory`, `hasNewItems?`, `onBackpackSeen?` — ⚰️ era `onOpenItems`, a pastinha que saiu na minimal-ui), chat (`useAI`, `aiSettings`, `onCreateActivity`; ⚰️ `onOpenAISettings` não está mais nas props), `language`.
@@ -655,7 +676,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `language`, `onAccept`.
 **Exports:** `ConsentGate({ language, onAccept })`.
 **Estado/efeitos relevantes:** `useState` da caixa de aceite; o botão só liga com a caixa marcada; links de Termos/Privacidade abrem em aba nova. Quem grava `buildConsentRecord()` é o `src/App.tsx`, aqui só se desenha.
-**Chamado por:** `src/App.tsx` quando o save não tem consentimento da versão atual (`exigeTermo` de `utils/embedGates.ts` = `!isConsentCurrent`), MENOS no `/embed` (13/11/2026, REGISTRO §336: a demo do portfólio não mostra termo e não envia nada).
+**Chamado por:** `src/App.tsx` quando o save não tem consentimento da versão atual (`exigeTermo` de `utils/embedGates.ts` = `!isConsentCurrent`), MENOS no `/embed` (13/11/2026, REGISTRO §360: a demo do portfólio não mostra termo e não envia nada).
 
 ### `src/components/ConfirmDialog.tsx`
 **Dono de:** diálogo de confirmação genérico (ModalSheet), com variante `destructive` para ações que apagam algo de verdade.
@@ -731,6 +752,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `ArenaCuraModal(props)`.
 **Chamado por:** `ArenaGame.tsx`.
 
+### `src/components/games/AlvoAliadoMarca.tsx`
+**Dono de:** a marca de ALVO ALIADO (§327, 13/11/2026): o botão sobre um aliado na luta em grupo; tocar liga a mira de apoio (o próximo escudo/cura/reforço vai nele, `utils/combate/alvoAliado.ts`), tocar de novo desliga. Losango turquesa contínuo (`--sm2-primary-fill`) com "+", aceso enquanto a mira vale — de propósito diferente do anel dourado tracejado do inimigo (`BattleStage`, pisca 1 s). Alvo de toque ≥ 44 px, `aria-pressed`, rótulo "Apoiar X"/"Support X", foco visível (`.sm-alvo-aliado:focus-visible`), pulso desligado com movimento reduzido.
+**Exports:** `AlvoAliadoMarca({ x, y, size, name, on, isPt, reduced, onPick })`, `AlvoAliadoMarcaProps`.
+**Quem chama:** ninguém. **Pronto e testado, mas desligado: não está ligado a nenhuma tela** (decisão do dono, 13/11/2026, §327). Nenhuma luta tem aliado na tela; liga quando existir um modo com aliados. Prévia local com a `BattleStage` real em `E:\Soulmon-assets\_prints-aliado\`.
+
 ### `src/components/games/BattleSpeed.tsx`
 **Dono de:** o botão de velocidade PADRÃO dos combates (03/11/2026, dono): "1x" ↔ "Fast" (o fator interno segue 3×, `DUNGEON_SPEEDS`), com UMA preferência por aparelho (`STORAGE_KEYS.DUNGEON_SPEED`). Só encurta o relógio da cena (`useGroupBattle.speed`); o resultado da luta é o mesmo.
 **Exports:** `useBattleSpeed()` (`{ speed, speedRef, cycle }`) · `BattleSpeedButton({ speed, onCycle, isPt, corner?, attr? })` · `battleSpeedLabel`.
@@ -757,9 +783,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/games/BattleStage.tsx`
 **Dono de:** a CENA de combate em tela cheia (02/10/2026, rodada 5/I10; maior e com energia em 04/10/2026) — o background cobrindo a viewport, o seu Soulmon embaixo à esquerda (BEM maior: até ~64% da largura) e o inimigo em cima à direita (0,66×), plataforma/sombra sob cada um, as barras EM CIMA de cada lutador, coladas nele (nome + HP numérico e, logo abaixo, a barra de ENERGIA, que pulsa quando cheia), o bouncing idle dos lutadores, o X no canto superior direito (com confirmação opcional), a barra de cheer no pé e os golpes com a arte de SKILL do ELEMENTO (investida `melee`, projétil `ranged`/`special`, escudo `shield`). Só DESENHA: o jogo decide e manda a ação (`StageAction`) e o número do dano com um selo curto (`StageHit`, `tag`) no instante do impacto.
 **Cena do especial e som (PR18, 06/10/2026):** antes do golpe do ESPECIAL o NOME do ataque aparece grande no centro com o fundo escurecido, quem conjura e a aura ficam acima do véu e SÓ DEPOIS o golpe sai (pausa `SPECIAL_INTRO_MS` = 1000 ms, `introMs(kind)` em `utils/combatFx.ts`; apresentação pura — o motor não enxerga a pausa e nenhum evento muda de ordem; movimento reduzido reduz o movimento, nunca a pausa). É o ÚNICO chamador de `playAttack` (no impacto do golpe básico) e `playSpecial` (a subida cai no fim da cena, o estouro quando o golpe sai); a vitória (`playVictory`) toca nas telas (Arena por rodada, Duelo só se o pet venceu, Masmorra por andar, Pesadelo).
-**Exports:** `BattleStage(props)` (`scene`, `me`, `foes[]` — cada um com `energy?` 0..1 —, `target`, `action`, `hit` (um ou vários), `badge`, `title`, `closeLabel`, `onClose`, `exitConfirm`, `onPauseChange`, `hud`, `status`, e as mecânicas do PvE: `charging`, `ring`/`onRingGrade`, `dodge`/`onDodge`, `petDodge`, `mechLabels`) · `ME_BELOW_FIELD` (52 px: quanto os pés do seu Soulmon ficam abaixo do fim do campo) · `STAGE_STATUS_ICON` (22 px, ícone de status; valor provisório até o dono confirmar, REGISTRO §197) · `foeFacesRight(layout, i)` (o inimigo à esquerda do jogador olha para a direita, §200) · `BATTLE_LAYER_STYLE` (o estilo da `TorcidaLayer` que a envolve: fixa, tela cheia) · `stageLayout(w, h, nFoes)` (pura: onde cada um pousa) · tipos `StageFighter`, `StageAction`, `StageHit`, `StageLayout`, `Spot`, `BattleStageProps`.
+**Exports:** `BattleStage(props)` (`scene`, `me`, `foes[]` — cada um com `energy?` 0..1 —, `target`, `action`, `hit` (um ou vários), `badge`, `title`, `closeLabel`, `onClose`, `exitConfirm`, `onPauseChange`, `hud`, `status`, e as mecânicas do PvE: `charging`, `ring`/`onRingGrade`, `dodge`/`onDodge`, `petDodge`, `mechLabels`) · `ME_BELOW_FIELD` (52 px: quanto os pés do seu Soulmon ficam abaixo do fim do campo) · `stageFxMarkSize(fieldW)` / `STAGE_FX_MARK_MIN`·`STAGE_FX_MARK_MAX` (o MARCADOR do efeito no sprite: 17% da largura do campo, 24–75 px; ~61 px em 360 px; §328, revisto no PR #877) · `fxMarkIconSize(spot, side, { avoid, fieldW, fieldH })` (pura: o alvo, encolhido de 1 em 1 px só o necessário se os 3 marcadores de um canto não couberem; nas telas medidas só o inimigo do meio com 3 inimigos e o 2º com 2 inimigos em 360×500) · `fxMarkAnchor(side, zone)` (a borda de onde a fileira parte: inimigo debuff ←, buff →; pet espelhado) · `fxMarkRowPlacement(spot, side, zone, n, { icon, avoid, fieldW, fieldH })` (pura: a fileira de um canto — o 1º marcador na borda do sprite, os seguintes para dentro, dentro do campo, desvia das caixas de HP; `anchor`, `dir`, `fits`) · `stageBarsRect(spot, tone, hasElementIcon, barsH, fieldW)` (pura: a caixa de HP/especial, a mesma conta do `FighterBars`) · `Z_FX_MARK` (11: os marcadores ficam na frente do sprite, do véu, da aura e do nome do especial; só o escudo segue sobre o corpo; REGISTRO §330/§328) · `foeFacesRight(layout, i)` (o inimigo à esquerda do jogador olha para a direita, §200) · `BATTLE_LAYER_STYLE` (o estilo da `TorcidaLayer` que a envolve: fixa, tela cheia) · `stageLayout(w, h, nFoes)` (pura: onde cada um pousa) · tipos `StageFighter`, `StageAction`, `StageHit`, `StageLayout`, `Spot`, `BattleStageProps`.
 **Quem chama:** `ArenaGame` (durante a luta, no caminho sem as flags de timing), `DuelScreen`, `DungeonGame` e `NightmareBattle` (desde 04/10/2026).
-**FX de status e cast (PR11):** `StageFighter.status` desenha a camada de status (UMA folha em loop por lutador, peça estática de cura/escudo, selos com glifo + forma + texto curto + turnos e `aria-label` EN/PT; `isPt`), e o especial ganha o círculo `data-stage-cast="special"` nas 4 telas. O Duelo deriva o status dos eventos do núcleo já chegados (`duelStatusBoard`). Movimento reduzido: sem loop e sem animação do selo, a mesma informação. Régua: `BattleStage.status.test.tsx`, `*.pr11.render.test.tsx` (Arena, Masmorra, Pesadelo, Duelo).
+**FX de status e cast (PR11; §328; §330; §331):** `StageFighter.status` desenha a camada de status: o ESCUDO sobre o corpo (`fx-shield`) e um MARCADOR ANIMADO por efeito no canto do sprite (§328: a folha em loop DO EFEITO E DA VARIANTE, `statusLoopId(kind, variant)`, recortada no conteúdo, `STATUS_LOOP_CROP`; sem folha, a peça estática). Desde §336 (13/11/2026, arte nova sem identidade) cada efeito toca a SUA folha: lento `fx-lento`, defesa em baixa `fx-debuff-def`, ataque em alta `fx-buff-atk` (e físico/mágico), velocidade em alta `fx-buff-spd` (e aceleração) e cura `fx-cura` deixaram de emprestar a do buff/debuff genérico; o marcador expõe `data-stage-fx-sheet`. INIMIGO: debuff em cima à esquerda (1º na borda esquerda, seguintes à direita), buff embaixo à direita (1º na borda direita, seguintes à esquerda); SEU SOULMON espelhado: debuff em cima à direita, buff embaixo à esquerda. Ordem = início do efeito; até `MAX_STATUS_CHIPS` (3) por canto, sem "+k"; `data-stage-fx-mark`/`-turns`/`-variant`/`-crop`, fileira com `data-stage-fx-anchor`/`-order`. Desde §331 (dono, 13/11/2026) o efeito aparece UMA vez: o selo de 22 px com contador ao lado da barra de HP/especial (`data-stage-status*`, `STAGE_STATUS_ICON`, `.sm-bs-stpop`) saiu; cada marcador e o escudo levam o `aria-label`/`alt` EN/PT com efeito + turnos (`statusAriaLabel`; `isPt`). O marcador só entra quando a arte (`combatV3Art`, sob demanda) chega. O especial ganha o círculo `data-stage-cast="special"` nas 4 telas. O Duelo deriva o status dos eventos do núcleo já chegados (`duelStatusBoard`). Movimento reduzido: o marcador fica no 1º quadro, a mesma informação. Régua: `BattleStage.status.test.tsx`, `*.pr11.render.test.tsx` (Arena, Masmorra, Pesadelo, Duelo).
 **Régua:** `src/components/games/BattleStage.test.tsx` (layout em números; o que cada ação desenha; escudo no lugar do impacto; movimento reduzido); `ArenaGame.torcida.render.test.tsx`, `DuelScreen.render.test.tsx`. Nasce muda (R-NOVA); keyframes `sm-bs-*` em `src/index.css` (e as regras de movimento reduzido no bloco canônico).
 **Sync 09/11/2026 (`5229b1be..62f204e1b`):** `StageFighter.stageIcon?` (id da forma → `EstagioIcone` antes do nome na placa; cai em `stage` no inimigo; bebê/ausente = sem ícone). `StageAction.impacto?: ImpactoMelee` (corpo a corpo: `concussao` troca o corte pelo splash) e `cut?` — o golpe `ranged` vira CORTE (lâmina que viaja até o alvo) quando `cut` ou `impacto === 'corte'` (decidido por elemento, 08/11): a lâmina/projétil **nasce pequena e cresce** (~0 → 100%) nos dois sentidos pela escala de perspectiva de `projectileScaleRange` (`utils/combate/projetilEscala.ts`, `--s0`/`--s1`, classe `sm-bs-persp`); o loop de status ganhou `lento`, `queimadura`, `veneno` em `LOOP_PRIORITY`; `useMiraFlash` pisca o anel de mira.
 
@@ -1134,6 +1160,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/PlayerDetailModal.semMetrica.render.test.tsx`; também tocado por `src/components/spriteUrl.beacon.render.test.tsx`.
 **Avisos do arquivo:** o progresso mostrado vem sempre de `unlockedStages` — nunca vaza forma além da já alcançada; `LEVEL_LABEL` era uma SEGUNDA cópia do mapa de `types/attributes.ts` (idêntica à de `EvolutionPath`) — duas cópias que concordam ainda são duas cópias (footgun 9), e a `StatsPage` não usava nenhuma das duas.
 
+### `src/components/PlayerSearch.tsx` (13/11/2026, busca de jogadores — REGISTRO §321)
+**Dono de:** a BUSCA ENQUANTO DIGITA dos dois convites. `PlayerSearch` = campo (`role="searchbox"`, `inputMode="search"`, rótulo acessível) + `PlayerSearchResults`; `PlayerSearchResults` = o status (`role="status"`, `aria-live="polite"`) e as linhas, para quem já tem o próprio campo (a aba Amigos). Linha = miniatura do Soulmon (`opponentIcon`/`opponentSprite`, `alt=""`) + `ui/PlayerName` (nome com o clã embaixo) + a ação de UM toque que quem chama passa em `renderAction`. Estados: menos de 2 letras (dica, nenhuma chamada), procurando, vazio ("Ninguém com um nome que comece assim."), erro por tipo (sem rede / muitas buscas / sem conta / servidor, com "Tentar de novo" onde faz sentido).
+**Props principais:** `saveId`, `language`, `label`, `placeholder?`, `renderAction(hit)`, `hide?(hit)`, `search?` (injetável em teste/prévia), `autoFocus?`; `PlayerSearchResults` recebe `query`, `state`/`retry` de `usePlayerSearch` e `quiet?` (sem a dica com o campo vazio).
+**Exports:** `PlayerSearch`, `PlayerSearchResults`.
+**Chamado por:** `src/components/guild/GuildInviteSheet.tsx`, `src/components/LibraryPage.tsx` (aba Amigos).
+**Régua:** `src/components/PlayerSearch.render.test.tsx`.
+
 ### `src/components/ProtectProgressModal.tsx`
 **Dono de:** pedido de e-mail DEPOIS do onboarding, quando existe algo que doeria perder (evolução ou sequência) — nunca bloqueia.
 **Props principais:** `ProtectProgressModalProps` — `language`, `reason: 'evolution'|'streak'`, `onDismiss()`, `onConfirm(email): Promise<void>` (quem chama migra o save).
@@ -1347,6 +1380,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** a sequência de falas de um NPC em TELA CHEIA (14/10/2026, pedido do dono): NPC bem grande (`min(135vw, 82dvh)`), janela de texto embaixo (`TypewriterText`), toque em qualquer lugar avança, a última fala fecha, "Pular/Skip" discreto no canto superior ESQUERDO (≥ 44 px, safe-area). Genérico: o tutorial do mapa pode usá-lo.
 **Props principais:** `lines` (`NpcSequenceLine[]`: `speaker`, `art`, `text`), `language`, `onFinish('done' | 'skip')`, `label?`.
 **Exports:** `NpcSequence(props)`, `NpcSequenceLine` (type).
+**Delta 13/11/2026 (REGISTRO §319):** prop `action?: ReactNode` — ação opcional na ÚLTIMA fala, dentro da janela de texto (`data-npc-action`, recebe toque); não avança nem fecha sozinha. Chamado também por `src/components/play/RogueKeyGate.tsx`.
 **Chamado por:** `src/components/BuildingIntro.tsx`, `src/components/MapTutorial.tsx`.
 **Régua:** `src/components/NpcSequence.render.test.tsx` (toque avança, pular, última fala, teclado, voltar do Android, alvo de 44 px, PT/EN, `onFinish` uma vez).
 **Avisos do arquivo:** o botão de avançar cobre a tela e é o PRIMEIRO focável (Enter/Espaço avançam; Esc e voltar pulam); o texto do "Pular" vem depois no foco; usa `useDialogA11y` e `useBackLayer`; nenhum som, nenhum timer.
@@ -1468,7 +1502,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 **Missão N/G (14/10/2026, REGISTRO §57):** na variante `home` o cabeçalho tem UM indicador, `data-today-count` (`sm3-missao`, tabular-nums): com `goal > 0` mostra `Missão N/G` / `Mission N/G` (`aria-label` `Missão N de G`; N = feitos da lista, pode passar de G; o atributo `data-today-goal` guarda G); sem meta, a contagem simples `N/total`. O bloco separado `Goal`/`sm3-meta` saiu. Só exibição.
 **Dono de:** o painel de rituais da Home — um painel titulado, coluna única, linhas de ~72px, dimensionado para o PT-BR (mais longo que o EN).
-**Props principais:** `RitualRowProps` (exportado), `RitualPanelProps` (exportado) — lista de itens (hábitos/tarefas do dia), progresso segmentado, callback de concluir/editar; `RitualPanelProps.variant?: 'panel' | 'home'` (minimal-ui F2: `home` = a lista da Home B, sem o painel em volta — cabeçalho `<h2>` "Hoje" com o contador `N/M` só com feitos ≥ 1 (piso E5), botão "+" `data-ritual-add` no papel do CTA; vazio SIS-06 `task_alt` 48 ciano, que na Home B ganha o CTA largo) e `dayComplete?` (selo "Dia completo" — quem decide é a regra da virada, nunca o painel).
+**Props principais:** `RitualRowProps` (exportado), `RitualPanelProps` (exportado) — lista de itens (hábitos/tarefas do dia), progresso segmentado, callback de concluir/editar; `RitualPanelProps.variant?: 'panel' | 'home'` (minimal-ui F2: `home` = a lista da Home B, sem o painel em volta — cabeçalho `<h2>` "Hoje" com o contador `N/M` só com feitos ≥ 1 (piso E5), botão "+" `data-ritual-add` no papel do CTA; vazio SIS-06 `task_alt` 48 ciano, que na Home B ganha o CTA largo) e `dayComplete?` (selo "Dia completo" — quem decide é a regra da virada, nunca o painel). **Link de ação na frente (§355, 13/11/2026):** `RitualRowProps.lead` renderiza o link de ação ("Ir ao Caderno") ANTES do nome, na mesma linha (`[data-ritual-lead-row]` > `[data-ritual-lead]`), some com a linha feita; `below` segue para o que não é ação (contador de passos, `TaskMeta`). Régua: `DailyRituals.recurso.render.test.tsx`.
 **Exports:** `RITUAL_TEXT_INSET` (const — recuo do texto até o fim do selo) · `RitualKind` (type: `'task'|'habit'`) · `RITUAL_KIND_ICON` (const, mapa `RitualKind`→nome do ícone: `task_alt`/`event_repeat` — substitui o antigo `RitualIcon`, removido) · `RitualRowProps` (interface) · `RitualRow(props)` · `RitualPanelProps` (interface) · `RitualPanel(props)`.
 - `RITUAL_FLIP_MS` (420, deslize da linha concluída) · `RITUAL_GLOW_MS`.
 **Estado/efeitos relevantes:** nenhum estado próprio — apresentação pura; etapas nascem RECOLHIDAS (barra segmentada mostra `2/4`, expansor abre para marcar). **A11 (`592e2c14`, QA Rodada 2):** o `RitualCheck` inerte usa SÓ `aria-disabled`, nunca `disabled` junto — o `disabled` nativo tira o checkbox da ordem de foco e do leitor de tela, e a pessoa deixava de saber que o item existe e está concluído; inerte = anunciado como inerte, alcançável, clique sem efeito.
@@ -1588,6 +1622,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `BlockedActionModal` · `useBlockedAction(language, onGo?)` → `[modal, explain]`.
 **Régua:** `ui/BlockedActionModal.render.test.tsx`.
 
+### `src/components/WakeToEnter.tsx` (13/11/2026, REGISTRO §329)
+**Dono de:** o portão ÚNICO das atividades com o Soulmon dormindo. `WakeToEnterProvider` (montado na raiz do `App` com `isSleeping`, `dayWakePending`, `language` e `onWake` = o `handleSleep` de sempre, só chamado dormindo) guarda a entrada pedida e mostra `WakeToEnterPrompt`: "Seu Soulmon está dormindo. Quer acordá-lo?", "Acordar" (acorda e SEGUE para a atividade escolhida) e "Agora não" (fecha e fica; o fechar, Esc e toque fora fazem o mesmo). `ModalSheet` centralizado em portal (foco preso, Esc, `aria-label`), botões `sm2-kit-btn` de 48 px, sem `CtaButton`. Sem provedor tudo segue direto.
+**Exports:** `WakeToEnterProvider` · `WakeToEnterPrompt` · `useWakeGate()` → `{ require(entrada, seguir), held(entrada) }` · `useRequireAwake()` (atalho do `require`).
+**Usado por:** `nav/AreaView.tsx` (a porta do Calabouço e a folha inicial do atalho, o "Lutar" da Arena livre, o `start` dos jogos — que inclui o "Descer" da Fenda), `TournamentPage.tsx` (lutar, treino, desgarrado), `guild/GuildSheet.tsx` (Buscar guerra, rodada da Feira, mandar o Soulmon na missão), `guild/PlantioVisor.tsx` (cuidar e lutar no Grove), `play/PasseioSheet.tsx` (escolher a missão), `play/FocusBoard.tsx` (Começar jornada), `LibraryPage.tsx` (Treinar com amigo). Desde a emenda de 13/11 as folhas entram livres e o botão de dentro pergunta no toque.
+**Régua:** `WakeToEnter.render.test.tsx`.
+
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 
@@ -1661,6 +1701,14 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Exports:** `PixelIcon`.
 **Chamado por:** `src/App.tsx` (menu da Home → `acoes`), `src/components/nav/CornerLink.tsx` (`mapa`/`home`), `src/components/CompanionHUD.tsx` (cuidados `itens`/`dormir`/`banho`, stats `hp`/`energia`), `src/components/ChatBox.tsx` (`enviar`) — 24/09/2026. A moldura `chip-moeda` do mesmo pacote é usada direto pelo `MapPage` (9-slice).
 **Régua:** `size` entra na varredura de `src/styles/iconScale.contract.test.ts` (mesma escala de §6.1); o `CornerLink` é exercitado em `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/ui/PlayerName.tsx` (13/11/2026, o clã embaixo do nome — REGISTRO §321)
+**Dono de:** o NOME DE OUTRO JOGADOR com o nome do CLÃ embaixo, em toda tela que mostra outra pessoa. O nome mantém o estilo de quem chama (`nameStyle`); o clã vem numa linha própria, menor e calma: `--sm2-text-xs`, peso 400, `--sm2-muted`, `--sm2-font-text`. Sem clã não desenha nada. As duas linhas cortam com reticências; o leitor de tela ouve "Clã <nome>".
+**Props principais:** `name`, `guildName?` (ausente/vazio = nada), `suffix?` (na linha do nome, ex. " (você)"), `nameStyle?`, `guildStyle?`, `align?` (`center` no pódio), `isPt?`.
+**Exports:** `PlayerName`.
+**Chamado por:** `RankingPodium` (pódio dos placares dos jogos), `RankingList` (linhas dos placares), `TournamentPage` (oponentes do Torneio, Treino e ranking da temporada), `PlayerDetailModal` (título do perfil), `LibraryPage` (linhas do Drive/Amigos e convites de amizade recebidos), `guild/GuildSheet` (Roda), `PlayerSearch` (sugestões).
+**Régua:** `src/components/PlayerSearch.render.test.tsx` (com e sem clã); `GuildSheet.render.test.tsx` (a linha do nome continua só o nome).
+**Régua:** `src/components/RankingPodium.render.test.tsx` (com e sem clã).
 
 ### `src/components/ui/NavGlyphs.tsx`
 **Dono de:** os glifos SVG próprios do Soulmon (nav + deck do aparelho + lista diária + moedas + utilitários) — mesma métrica da Material Symbols Rounded (caixa 24dp, traço 2.1×wght/500).
@@ -1807,7 +1855,22 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/ui/CtaButton.tsx`
-**Dono de:** o botão especial dos CTAs principais (REGISTRO §316): `CtaButton({ width: 'full' | 'auto', ...button })`, visual em `.sm2-cta` (`index.css`, arte `assets/soulmon/ui/btn-cta.webp` em 9-slice). Estados pressed/disabled/foco, alvo >= 48, `prefers-reduced-motion`. **Usado por:** `App.tsx` (Criar poção), `ElementPotionSheet`, `VescaPotionOffer`, `FocusBoard` (Começar jornada), `RestRoom` e `EvoRecapModal` (Seguir).
+**Dono de:** o botão especial dos CTAs principais (REGISTRO §316, §316b, §316c): `CtaButton({ width: 'full' | 'auto', tone: 'padrao' | 'acao', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. E a secundária dele, `CtaTextButton({ width: 'auto' | 'full', surface: 'claro' | 'escuro', ...button })` (`data-cta-texto`), visual em `.sm2-cta-texto`: SÓ TEXTO, sem fundo e sem borda, cor `--sm2-muted` (`--sm2-viewport-ink` em `surface="escuro"`), sublinhado ao tocar/hover/foco, alvo >= 44, anel de foco `primary-ink`. **Usado por:** `App.tsx` (Criar poção), `FocusBoard` (Começar jornada), `RestRoom` (Seguir + `CtaTextButton` Concluir a missão e Sair), `EvoRecapModal` (Seguir), `TalentTreeEntry` ("Árvore de talentos"), `GuildSheet` (Entrar, sem conta + `CtaTextButton` Tentar de novo).
+**Tom (§316b, 13/11/2026):** `tone="acao"` (`data-cta-tone="acao"`) = a ação que a pessoa VEIO buscar, não uma escolha: repousa na arte CHEIA (`btn-cta-hover.webp`), porque no celular não existe hover. Pressionado (`btn-cta-press`) e desabilitado (`btn-cta-off`) mantêm a arte própria; hover e foco usam a mesma arte cheia (o foco ainda ganha o brilho turquesa). `padrao` (omissão) = confirmar, seguir, entrar. Hoje em `acao`: "Criar poção" (Laboratório), "Árvore de talentos", "Começar jornada" (Foco).
+**Regra de par (§316c, 13/11/2026, dono): `CtaButton` só convive com secundária SÓ TEXTO.** Ao lado (ou embaixo) de um `CtaButton`, a outra ação é sempre `CtaTextButton` — nunca botão com fundo (`primary`) nem com contorno (`outline`). Se a ação secundária for importante demais para ser só texto, a tela NÃO usa `CtaButton`: volta ao par padrão `sm2-kit-btn` (`primary` + `quiet`/`outline`), em linha.
+**Onde o CTA do site NÃO entra (§316c):** modais e popups brancos pequenos (nó da árvore de talentos, folhas de poção, `ConfirmDialog`, oferta da Vesca e similares) — ali ele fica pesado; usam o botão padrão do app, Confirmar/Cancelar em linha, como antes do §316. O CTA fica em telas cheias e cards.
+**Layout em coluna (§316b):** quando há CTA + secundária: (1) CTA em cima, largura total; (2) `CtaTextButton` embaixo, centralizado; (3) `display: grid`, alvo >= 44 em todos; (4) ordem do DOM = ordem visual = ordem de tab (CTA primeiro); (5) contêiner marcado com `data-cta-stack`.
+
+| Tela | Botões | Decisão (§316c) |
+|---|---|---|
+| `TalentTreeEntry` | "Árvore de talentos" (sozinho) | CTA do site, tom `acao`; rótulo sem "Abrir" |
+| `RestRoom` | Seguir + Concluir a missão + Sair | CTA do site; Concluir e Sair viram `CtaTextButton surface="escuro"` |
+| `GuildSheet` (erro sem conta) | Entrar na conta + Tentar de novo | CTA do site; Tentar de novo vira `CtaTextButton` (sem conta/CTA ao lado, segue `outline`) |
+| `App.tsx` Laboratório, `FocusBoard`, `EvoRecapModal` | CTA sozinho, largura total | CTA do site, sem secundária |
+| `TalentTree` (modal do nó) | Confirmar + Cancelar | botão padrão do app em linha (`sm2-kit-btn-primary` + `quiet`) |
+| `ElementPotionSheet` (rodapé) | Confirmar | botão padrão do app (`sm2-kit-btn-md sm2-kit-btn-primary`, `minWidth: 220`, centralizado) |
+| `VescaPotionOffer` | Depois + Fazer a poção | botão padrão do app em linha (`sm2Button('quiet')` + `sm2Button('primary')`) |
+| `ConfirmDialog` e demais confirmações pequenas | Sim/Não | nunca usaram `CtaButton`; seguem em linha |
 
 ### `src/components/ui/InfoTip.tsx`
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
@@ -1838,6 +1901,20 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Exports:** `SoulFragmentIcon`.
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/components/EvolutionPath.gauge.render.test.tsx`, `src/components/EvolutionCeremony.fragmentos.render.test.tsx`.
+
+### `src/components/ui/SoulFragmentTerm.tsx`
+**Dono de:** o destaque do termo "Fragmento(s) de Alma" / "Soul Fragment(s)" em texto de UI (13/11/2026): negrito + turquesa (`--sm2-primary-ink`).
+**Props principais:** `children`.
+**Exports:** `SoulFragmentTerm` · `emphasizeSoulFragment(text)` · `SOUL_FRAGMENT_TERM_RE`.
+**Chamado por:** `CompletionTag`, `HelpModal`, `GuideModal`, `EvolveTaskModal`, `EvolutionCeremony`, `EvolutionGaugeMini`, `EvolutionPath`, `hex/HexsmithSheet`, `WelcomeTour`.
+**Régua:** `src/components/BonusTaskIntroModal.render.test.tsx`.
+
+### `src/components/BonusTaskIntroModal.tsx`
+**Dono de:** a apresentação da tarefa bônus (13/11/2026), aberta UMA vez na primeira conclusão de uma tarefa bônus (`GameState.bonusIntroSeen`). Dois exemplos lado a lado com a mesma `RitualRow` ("Item comum" / "Item especial" com título bronze) e a frase do dono, PT + EN.
+**Props principais:** `open`, `language`, `onClose`.
+**Exports:** `BonusTaskIntroModal`.
+**Chamado por:** `src/App.tsx` (lazy).
+**Régua:** `src/components/BonusTaskIntroModal.render.test.tsx`.
 
 ### `src/components/nav/playPrefetch.ts`
 **Dono de:** o prefetch dos chunks de jogar (rodada 7 · J1, 04/10/2026). Causa do "Opening…" demorado: o APK carrega o app de URL remota e cada `lazy()` só baixava no toque (cascata `PlaySheets` → jogo → `GameKit`/`BattleStage` → arte; chunks de 6–30 KB, o custo é a latência de cada ida). Os `load*` são os MESMOS `import()` que o `lazy()` do `AreaView`/`App` usa (o Vite deduplica), chamados em tempo ocioso, um por tick, com falha silenciosa.
@@ -2015,7 +2092,11 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Régua:** `src/components/mercado/MercadoC.render.test.tsx`.
 
 ### `src/components/guild/ClaProcurar.tsx` (30/10/2026, procurar clã — REGISTRO §203)
-**Dono de:** `ProcurarCla` (sem clã: lista de clãs com vaga com nome e "n de max", "Pedir para entrar", pendente com "Cancelar pedido") e `PedidosDeEntrada` (só o anfitrião, na ficha do clã: Recusar à esquerda, Aceitar à direita; sem pedido = silêncio). Cada peça carrega o próprio dado por `utils/community.ts` (`getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`); copy em `utils/guildCopy.ts` (`guild.procurar.*`, `guild.pedidos.*`). **Chamado por:** `GuildSheet.tsx`. **Régua:** `ClaProcurar.render.test.tsx`.
+**Dono de:** `ProcurarCla` (sem clã: lista de clãs com vaga com nome e "n de max", "Pedir para entrar", pendente com "Cancelar pedido") e `PedidosDeEntrada` (só o anfitrião, na ficha do clã: Recusar à esquerda, Aceitar à direita; sem pedido = silêncio). Cada peça carrega o próprio dado por `utils/community.ts` (`getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`); copy em `utils/guildCopy.ts` (`guild.procurar.*`, `guild.pedidos.*`). Desde 13/11/2026 (REGISTRO §322) os clãs CHEIOS aparecem depois dos com vaga, sob "Clãs cheios" (`guild.procurar.cheiosTitulo`), com nome, "12 de 12" e a etiqueta "Cheia"/"Full" (`guild.procurar.cheia`, `sm2-kit-tag`, `data-guild-cheia`), SEM botão de pedir; "Nenhum clã com lugar" passa a olhar só os com vaga. **Chamado por:** `GuildSheet.tsx`. **Régua:** `ClaProcurar.render.test.tsx`.
+
+### `src/components/guild/GuildInviteSheet.tsx` (13/11/2026, convidar para o clã — REGISTRO §321)
+**Dono de:** a folha "Convidar para o clã", aberta pelo botão "Convidar" do Salão (`GuildSheet`, ficha do clã; botão SIMPLES do kit `sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn`, largura total como os outros botões da ficha, sem a arte do `CtaButton` — decisão do dono de 13/11; com o clã cheio o botão fica apagado com o porquê). O botão de cada linha tem largura FIXA (`.sm2-guild-invite-btn`, 11,5rem, no máx. 42vw, alvo >= 44 px): "Convidar", "Já está na roda", "Já tem clã" e "Convite enviado" ocupam a mesma coluna; rótulo longo quebra em 2 linhas. É um `RitualDialog` com `PlayerSearch` e UM toque por linha (`inviteToGuild` de `utils/community.ts` → `POST /api/guild?action=guildInvite`): o convidado recebe uma carta do Papus com o nome e o código do clã. Cada linha guarda o próprio desfecho (enviado / já está na roda / já tem clã / clã cheio / muitos convites / sem rede / erro); quem já tem clã nasce sem botão ativo. Copy em `utils/guildCopy.ts` (`guild.convidar.*`). O foco volta ao botão ao fechar.
+**Chamado por:** `GuildSheet.tsx`. **Régua:** `src/components/PlayerSearch.render.test.tsx` (convite de um toque, largura única dos botões de linha), `GuildSheet.render.test.tsx` (botão simples na largura da ficha, clã cheio); servidor: `functions/api/guild.convite.test.js`.
 
 ### `src/components/guild/PracaVisor.tsx`, `PlantioVisor.tsx`, `MisterioVisor.tsx` e `claUi.tsx` (18/10/2026, prédios do clã)
 **Dono de:** os três visores do clã e o encanamento comum. `src/components/guild/PracaVisor.tsx` (`PracaVisor`, `SalaPraca`, `PRACA_VISOR_HEIGHT`): 4 slots de decoração e o presente diário. `src/components/guild/PlantioVisor.tsx` (`PlantioVisor`, `SalaPlantio`, `PLANTIO_VISOR_HEIGHT`): o plantio coletivo. `src/components/guild/MisterioVisor.tsx` (`MisterioVisor`, `SalaMisterio`, `MISTERIO_VISOR_HEIGHT`): o mistério diário. `src/components/guild/claUi.tsx` (`ClaT`, `ClaOnReward`, `ClaSalaProps`, `decorName`, `rewardText`, `useClaBuilding`): tipos e ganchos que as três salas dividem. Onde moram (§141): a Praça no Clan Hall, o Plantio na sala do Grove e o Mistério na sala da Feira (`room="feira"`, cartão `guild.feira.predios.titulo`).
@@ -2035,7 +2116,15 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** a coleção do Bestiário (M10): uma célula por criatura × estágio do `enemyRoster`; vista = arte e nome, não vista = silhueta sem nome. O número é de coleção ("N de M"), nunca percentual. Chaves antigas fora do roster não contam. **Exports:** `BestiaryCollection({ seen, language })`.
 
 ### `src/components/RankingList.tsx`
-**Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze, top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`.
+**Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze (desenhado pelo `RankingPodium`, §326), top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`, `RankingPodium`.
+
+### `src/components/RankingPodium.tsx` (13/11/2026, o pódio refeito — REGISTRO §326)
+**Dono de:** o PÓDIO dos placares dos jogos (o único pódio do app: o ranking da temporada do Torneio é uma janela de ±3 "sem ouro no top 3" e a Guilda não tem ranking, por regra). Grade 2º · 1º · 3º com o DOM em 1 · 2 · 3; o 1º no centro, coluna 1,25×, pedestal mais alto, coroa, medalha 44, nome 16 e pontos 20 em `gold-ink` com brilho atrás. Cada lugar: [coroa] · medalha · `ui/PlayerName` (clã embaixo) · pontos (`sm2-num`, tabulares) · [prêmio] · pedestal (`role="img"`, rótulo "Nº lugar"; medalha e coroa `aria-hidden`). Lugar sem ninguém (placar com 1 ou 2): pedestal apagado, `aria-hidden`, para o 1º continuar no centro. Estilo em `index.css` (`.sm-rank-podium*`), tokens `--sm2-gold-fill`/`--sm2-silver-fill`/`--sm2-bronze-fill` + `--sm2-on-*`.
+**Arte por slot:** `resolvePodiumArt(place)` de `src/assets/soulmon/ranking/index.ts` (`import.meta.glob`, mesmo padrão de `resolveHexCrownArt`): `podio-1..3.png` (360×240, 288×180, 288×144), `medalha-1..3.png` (128²), `coroa-1.png` (128×96). Sem o PNG, cada peça cai na versão em CSS (pedestal em gradiente do metal com a lasca turquesa; medalha em disco com o número; coroa = glifo `emoji_events`). Soltar o PNG na pasta basta. Fila: `docs/ASSETS-A-GERAR.md` → "Pódio do ranking".
+**Props principais:** `rows: PodiumRow[]` (até 3; `PodiumRow = RankingRow & { guildName? }`), `language`, `format?`, `art?` (só teste).
+**Exports:** `RankingPodium`, `PodiumRow`.
+**Chamado por:** `RankingList`.
+**Régua:** `src/components/RankingPodium.render.test.tsx` (ordem, rótulos, fallback CSS × arte, lugar vazio, clã, tabulares); `RankingList.render.test.tsx`; contraste do numeral em `src/styles/tokens.contrast.test.ts`.
 
 ### `src/components/RankingPanel.tsx`
 **Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period?, inline? })` (`inline` = a lista direto na tela, sem botão nem modal, usada dentro do modal do `MinigameModeGate`). **Usa:** `src/utils/rankings.ts`.
@@ -2171,6 +2260,7 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ### `src/components/hex/HexsmithSheet.tsx`
 **Dono de:** a tela da Hexsmith no lote `forja:hexsmith` (lazy em `nav/AreaView.tsx`): mapa de 5 encaixes ao redor do Soulmon, código hex e o painel de cada encaixe (itens possuídos, forja com filtro por elementos). Regras em `utils/hexsmith.ts`; textos em `utils/hexsmithCopy.ts`.
+**Itens possuídos (13/11/2026, §323):** cada HEX possuído tem UM botão grande na linha (`.sm2-kit-btn.sm2-hex-equip-btn`, alvo 56 px, `data-state="idle|equipped"`): "Equip"/"Equipar" (`data-hex-equip`, `equipHexItem`, troca se já há outro) ⇄ "✓ Equipped" + "Unequip"/"Desequipar" (`data-hex-unequip`, `unequipHexSlot`). A linha "Empty the Port" (`HEX_UI.clear`, `data-hex-clear`) saiu; o texto novo é `HEX_UI.unequip`. **Coroa por família:** `SlotFace` resolve a coroa com valor por `resolveHexCrownArt(familia)` (`assets/soulmon/hex/index.ts`: `coroa-<familia>.png`, fallback `slot-coroa.png`; `data-hex-crown` no `<img>`). Arte nova entra só soltando o PNG na pasta. **Régua:** `HexsmithSheet.render.test.tsx`.
 
 ### `src/components/hex/HexSlotGlyph.tsx`
 **Dono de:** os glifos SVG de cada tipo de encaixe da Hexsmith, usados enquanto a arte de `src/assets/soulmon/hex/` não existe.
@@ -2200,7 +2290,7 @@ A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma c
 
 ### `src/components/CartaTutorialWidget.tsx`
 
-A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
+A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`); nas cartas `guild-invite` (§358), "Entrar no clã" (`onJoinGuild` = `useMailbox.joinGuildFromLetter`, o mesmo `guildJoin` do Salão) e "Recusar" (só apaga a carta). Carta de clã antiga, sem `kind`, segue como carta comum (o corpo traz o código). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
 
 ### `src/components/nav/MailLink.tsx`
 
@@ -2209,6 +2299,7 @@ O ícone de carta da Home, linha 1 da pilha do canto direito (entre o Mapa e as 
 ### `src/components/play/RogueKeyGate.tsx`
 
 Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `NpcSequence` manda à Oficina do Foco. Decisão: REGISTRO §239. **Régua:** `RogueKeyGate.render.test.tsx`.
+**Delta 13/11/2026 (REGISTRO §319):** prop `onGoToWorkshop?` — com ela, a fala ("Você precisa de uma chave…") ganha o `CtaButton` "Ir para a Oficina do Foco" / "Go to the Focus Workshop" (`data-rogue-gate-workshop`); o `AreaView` fecha o portão e pede `requestGoToBuilding('forja.oficina')`.
 
 ### `src/components/play/FocusBoard.tsx` · `src/components/play/JourneyScreen.tsx` · `src/components/play/FocusTaskDock.tsx` · `src/components/play/journeyArt.ts`
 

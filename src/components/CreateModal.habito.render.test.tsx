@@ -5,7 +5,7 @@ import { CreateModal } from './CreateModal';
 import { activitiesFromCatalogChoice } from '../utils/catalogChoice';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
 import { activityBucket } from '../utils/atividadesLista';
-import { ACTIVITY_CATALOG } from '../data/activityCatalog';
+import { ACTIVITY_CATALOG, ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
 
 const mk = (language: 'pt-BR' | 'en-US') => render(
   <CreateModal isOpen initialKind="habit" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language={language} />,
@@ -42,16 +42,16 @@ describe('Catálogo -> linha de Hábitos', () => {
     const item = ACTIVITY_CATALOG.find(i => i.levels[0].defaultSchedule.kind !== 'weekdays')!;
     const velho = { id: 'x', catalogId: item.id, level: 2, schedule: item.levels[0].defaultSchedule, weekDays: [1, 2, 3], completionCount: 9 };
     expect(activityBucket(velho)).toBe('scheduled');
-    const novo = migrateCatalogHabitDaily(velho);
+    const novo = migrateCatalogHabitDaily(velho, ACTIVITY_CATALOG_BY_ID);
     expect(activityBucket(novo)).toBe('habit');
     expect(novo).toMatchObject({ id: 'x', level: 2, completionCount: 9 });
-    expect(migrateCatalogHabitDaily(novo)).toBe(novo); // idempotente
+    expect(migrateCatalogHabitDaily(novo, ACTIVITY_CATALOG_BY_ID)).toBe(novo); // idempotente
   });
   it('migração não toca agenda editada nem atividade custom', () => {
     const item = ACTIVITY_CATALOG[0];
     const editada = { id: 'y', catalogId: item.id, schedule: { kind: 'everyNDays', n: 5, from: 'schedule' } };
-    expect(migrateCatalogHabitDaily(editada)).toBe(editada);
+    expect(migrateCatalogHabitDaily(editada, ACTIVITY_CATALOG_BY_ID)).toBe(editada);
     const custom = { id: 'z', schedule: { kind: 'timesPerWeek', target: 3 } };
-    expect(migrateCatalogHabitDaily(custom)).toBe(custom);
+    expect(migrateCatalogHabitDaily(custom, ACTIVITY_CATALOG_BY_ID)).toBe(custom);
   });
 });

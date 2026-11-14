@@ -42,6 +42,8 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
+import type { BalaoTipo } from '../utils/balaoDourado';
+import type { DicaDouradaTipo, DicaTipo } from '../utils/balaoDica';
 const Mochila = lazy(() => import('./home/Mochila').then(m => ({ default: m.Mochila })));
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
@@ -255,6 +257,14 @@ interface CompanionHUDProps {
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;
+  /** beta12 §G: o BALÃO DOURADO persistente (borda dourada, sem timeout) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala. */
+  balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string } | null;
+  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§333) navega pelo `requestGoToBuilding`. */
+  onBalaoDourado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
+  /** §333: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
+   *  nunca por cima de outra fala; ao falar, o HUD avisa `onDicaFalada` para o App gravar a aparição. `null`/ausente = a escada de sempre. */
+  dicaFala?: { tipo: DicaTipo; text: string } | null;
+  onDicaFalada?: (tipo: DicaTipo) => void;
   /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
   onSinalMasmorra?: () => void;
   /** Ms até o Soulmon voltar da masmorra (`useDungeonReturn`, estado persistido) — a placa de madeira mostra. `null` = sem número. */
@@ -360,6 +370,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   statsSlots,
   missionAway = false,
   naMasmorra = false,
+  balaoDourado = null,
+  onBalaoDourado,
+  dicaFala = null,
+  onDicaFalada,
   onSinalMasmorra,
   masmorraRetornoMs,
   daysAway = 0,
@@ -541,8 +555,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const rubBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada };
 
   /* Fase 3 do Oráculo — a fala do TALENTO. A tabela (65 pares PT+EN,
      `utils/talentoVoice.ts`) entra por import DINÂMICO: no bundle de entrada
@@ -899,6 +913,13 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (document.hidden) return;
       const p = propsRef.current;
       if (p.isSleeping) return;
+      /* §333: a dica da vez (fome/cochilo) ocupa ESTE turno da fala ociosa — nunca um turno a mais, nunca por cima de outra fala.
+         Ausente (masmorra/missão), `speak` já cala; aí não grava a aparição. */
+      if (p.dicaFala && !ausenteRef.current) {
+        speak(p.dicaFala.text, 6000);
+        p.onDicaFalada?.(p.dicaFala.tipo);
+        return;
+      }
       speak(getIdlePhrase(), 5000);
       /* Decisão do dono (19/10/2026): fala ociosa é SÓ frase local. A cota inteira
          da IA fica para o chat aberto; 15 falas ociosas esgotavam a cota em ~45 min. */
@@ -1285,6 +1306,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         getBehavior={getBehavior}
         onUserMessage={onChatSent}
         focusRequest={chatFocusRequest}
+        spriteSrc={sprite || undefined}
         chatContext={chatContext}
         language={language}
       />
@@ -1850,6 +1872,49 @@ export const CompanionHUD = memo(function CompanionHUD({
           );
         })()}
 
+        {/* BALÃO DOURADO (beta12 §G): persistente, borda dourada, leva ao lugar. Mesma faixa do balão comum (fora do fluxo, não muda
+            a altura da Home); só um por vez e cede a vez enquanto o pet fala (`showBubble`). É um BOTÃO nomeado pelo destino, alvo >= 44. */}
+        {balaoDourado && !showBubble && (() => {
+          const x = balaoDourado.tipo === 'rift' ? 84 : Math.min(100, Math.max(0, 50 + (position - 50) * CENA_ZOOM));
+          return (
+            <div data-pet-gold-bubble-row style={{ position: 'absolute', top: BUBBLE_TOP, left: 0, right: 0, zIndex: 25, pointerEvents: 'none' }}>
+              <button
+                type="button"
+                data-pet-gold-bubble={balaoDourado.tipo}
+                aria-label={balaoDourado.ariaLabel}
+                className={reducedMotion ? undefined : 'sm3-balao'}
+                onClick={() => onBalaoDourado?.(balaoDourado.tipo)}
+                style={{
+                  pointerEvents: 'auto', cursor: 'pointer', position: 'relative', display: 'block', width: 'fit-content', maxWidth: '80%', minHeight: 44,
+                  left: `${x}%`, transform: `translateX(-${x}%)`, textAlign: 'left',
+                  background: 'var(--sm2-surface)', border: '2px solid var(--sm2-gold-fill)', borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px',
+                  boxShadow: '0 2px 8px color-mix(in srgb, var(--sm2-ink) 18%, transparent)',
+                }}
+              >
+                <span
+                  className="break-words"
+                  style={{
+                    display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden', overflowWrap: 'anywhere',
+                    fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)',
+                  }}
+                >
+                  <BalaoDouradoTexto text={balaoDourado.text} />
+                </span>
+                <span
+                  aria-hidden="true"
+                  data-pet-gold-bubble-tail
+                  style={{
+                    position: 'absolute', bottom: -7, left: `clamp(16px, ${x}%, calc(100% - 16px))`, marginLeft: -5,
+                    width: 10, height: 10, background: 'var(--sm2-surface)',
+                    borderRight: '2px solid var(--sm2-gold-fill)', borderBottom: '2px solid var(--sm2-gold-fill)',
+                    transform: 'rotate(45deg)',
+                  }}
+                />
+              </button>
+            </div>
+          );
+        })()}
+
         {/* ── O ALVO DO CARINHO — o controle mais importante do jogo ─────────
             BLOQUEADOR corrigido: o gesto de esfregar (a ÚNICA cura de HP)
             morava numa `<div>` sem role, sem tabIndex e sem nome acessível,
@@ -2177,3 +2242,38 @@ export const CompanionHUD = memo(function CompanionHUD({
     </div>
   );
 });
+
+/**
+ * O texto do balão DOURADO com a SETA NO CÍRCULO no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333): diz "este balão leva
+ * a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
+ * · A seta é o glifo autoral `arrow_forward` (`ui/NavGlyphs.tsx`); o círculo é só o CONTORNO em CSS (sem fundo): faz parte do
+ *   desenho, como o anel do `check_circle`, não é placa em volta do ícone. Nada de arte nova.
+ * · Tinta = a do texto do balão (`--sm2-ink` sobre `--sm2-surface`, o mesmo par do texto, bem acima de 3:1).
+ * · ~1,15em (16px numa linha de 14px), na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
+ *   sozinha para a linha de baixo.
+ * · `aria-hidden`: o nome acessível do botão já diz o destino (`balaoDouradoAria`/`dicaAria`). Estática: sem animação própria.
+ */
+function BalaoDouradoTexto({ text }: { text: string }) {
+  const corte = text.trimEnd().lastIndexOf(' ');
+  const inicio = corte >= 0 ? text.slice(0, corte + 1) : '';
+  const ultima = corte >= 0 ? text.trimEnd().slice(corte + 1) : text.trimEnd();
+  return (
+    <>
+      {inicio}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {ultima}
+        <span
+          aria-hidden="true"
+          data-pet-gold-bubble-arrow
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+            width: 22, height: 22, marginLeft: 4, verticalAlign: '-0.2em',
+            border: '1.5px solid currentColor', borderRadius: '50%', color: 'var(--sm2-ink)',
+          }}
+        >
+          <Icon name="arrow_forward" size={20} weight={600} />
+        </span>
+      </span>
+    </>
+  );
+}

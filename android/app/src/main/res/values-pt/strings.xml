@@ -18,8 +18,11 @@
     <!-- Widgets G (transparente) e H (V-Pet) -->
     <string name="widget_clear_label">Soulmon</string>
     <string name="widget_clear_description">Seu Soulmon direto no papel de parede, sem fundo</string>
-    <string name="widget_vpet_label">Soulmon V-Pet</string>
+    <string name="widget_vpet_label">Cage</string>
     <string name="widget_vpet_description">Seu Soulmon numa tela retrô; largo, ocupa mais espaço</string>
+    <string name="widget_companion_label">Companheiro</string>
+    <string name="widget_companion_description">Seu Soulmon GRANDE numa tela retrô; cabe em 2x2 ou 3x3</string>
+    <string name="widget_companion_content">Soulmon Companheiro</string>
     <string name="widget_vpet_content">Soulmon V-Pet</string>
     <string name="widget_name_count">%1$s · %2$s hoje</string>
 </resources>

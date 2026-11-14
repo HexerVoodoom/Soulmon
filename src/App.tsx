@@ -34,7 +34,7 @@ import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungerTierAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -42,8 +42,8 @@ import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensagei
 import { useMailbox } from './hooks/useMailbox';
 import { applyJourneyGrants } from './utils/focusBoard';
 import type { JourneyGrants } from './utils/focusJourney';
-import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired } from './utils/focusKey';
-import { grantRefugioEnergy } from './utils/refugio/energia';
+import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey, dungeonKeyExpired, dungeonKeyExpiresAt } from './utils/focusKey';
+import { grantRefugioEnergy, refugioEnergyTaken } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -58,7 +58,7 @@ import {
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
 import { OPEN_FRAME_SHOP_EVENT } from './utils/frameShopNav';
-import { GO_TO_BUILDING_EVENT } from './utils/blockedAction';
+import { GO_TO_BUILDING_EVENT, requestGoToBuilding } from './utils/blockedAction';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -94,6 +94,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
+import { bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
@@ -191,7 +192,8 @@ import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
 import { soulmonDisplayName, notificationPetName } from './utils/petName';
-import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
+import { rolledRareCheer, setPetVoiceArchetype, type PetVoiceKind } from './utils/petVoice';
+import { soulmonCharacterFor, loadBigFive, type SoulmonCharacter, type TraitPoints } from './utils/soulmonCharacter';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
@@ -204,7 +206,12 @@ import { useOfertaPendente } from './hooks/useOfertaPendente';
 import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightmareWake';
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
-import { NoticeToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
+import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
+import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, type BalaoTipo } from './utils/balaoDourado';
+import { useGroveEstado, bosqueDefendivel } from './hooks/useGroveAtaque';
+import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
+import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
+import { atividadesParaAutoCheck, registrarAuto, progressoDePassos, type AutoRecurso } from './utils/tarefaLink';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX, readGroveLocal,
@@ -215,7 +222,7 @@ import { feiraLojaAbre, feiraLojaShownKey, applyFeiraLojaBuy, applyServerFeiraHe
 import type { FeiraCredit } from './utils/feiraCredit';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
-import { gateLine } from './utils/gates';
+import { gateLine, buildingGateFor } from './utils/gates';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -688,6 +695,7 @@ const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m 
 const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
 const MailboxSheet = lazyOverlay(() => import('./components/MailboxSheet').then(m => ({ default: m.MailboxSheet })));
 const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
+const BonusTaskIntroModal = lazyOverlay(() => import('./components/BonusTaskIntroModal').then(m => ({ default: m.BonusTaskIntroModal })));
 const CompletionTag = lazyOverlay(() => import('./components/CompletionTag').then(m => ({ default: m.CompletionTag })));
 const DemoSoundButton = lazyOverlay(() => import('./components/perfil/DemoSoundButton').then(m => ({ default: m.DemoSoundButton })));
 const SpritePoseRows = lazyOverlay(() => import('./components/SpritePoseRows').then(m => ({ default: m.SpritePoseRows })));
@@ -887,6 +895,7 @@ import type { QuickAddResult } from './utils/quickAdd';
 import { installUsageTime, setActive as setUsageActive } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
 import type { CreateAction } from './utils/chatActions';
+import { WakeToEnterProvider } from './components/WakeToEnter';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
@@ -938,6 +947,8 @@ export default function App() {
   const [feiraEvento, setFeiraEvento] = useState<FeiraEvento | null>(null);
   /** A FEIRA DE VERDADE (rara; `utils/feiraLoja.ts`): usa a MESMA vaga da fila que o `feiraEvento` (um aviso de gesto, nunca os dois). */
   const [feiraLoja, setFeiraLoja] = useState<FeiraLoja | null>(null);
+  /** beta12 §G: o encontro que a volta da missão trouxe e ainda NÃO foi aberto: vive no balão dourado da Home até o toque (`utils/balaoDourado.ts`). */
+  const [achadoPendente, setAchadoPendente] = useState<{ evento?: FeiraEvento; loja?: FeiraLoja } | null>(null);
 
   // O resumo da volta sozinha mora no SAVE (`dungeonReturnPending`): fechar o app antes de ver o aviso não o perde.
   const dungeonReturnSummary: DungeonReturnSummary | null = gameState.dungeonReturnPending ?? null;
@@ -1573,9 +1584,34 @@ export default function App() {
      guardado sobra só o que não é personalidade (instruções livres,
      criatividade). Perfil ausente = fallback seguro. */
   const onboardingProfileRaw = (gameState as { onboardingProfile?: unknown }).onboardingProfile;
+  /* Beta12 (B1/B2): o CARÁTER do Soulmon vem do Big Five do teste do onboarding
+     (`utils/soulmonCharacter.ts`; mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`),
+     COMPLEMENTAR por padrão ou SIMILAR (Configurações). O teste decide o caráter;
+     as forças/dificuldades decidem o veto. O `scoreProfile` entra por `import()`
+     (o banco de perguntas não vai para o chunk de entrada) e o resultado nunca
+     chega à tela: só à fala. Sem teste = neutro. */
+  const soulTestAnswersRaw = (gameState as { soulTestAnswers?: unknown }).soulTestAnswers;
+  const voiceModeRaw = (gameState as { soulmonVoiceMode?: unknown }).soulmonVoiceMode;
+  const [bigFive, setBigFive] = useState<{ traitPoints: TraitPoints; answered: number } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (!soulTestAnswersRaw) { setBigFive(null); return; }
+    void loadBigFive(soulTestAnswersRaw).then(r => { if (vivo) setBigFive(r); });
+    return () => { vivo = false; };
+  }, [soulTestAnswersRaw]);
+  const soulmonCharacter = useMemo<SoulmonCharacter>(
+    () => soulmonCharacterFor({
+      traitPoints: bigFive?.traitPoints,
+      answered: bigFive?.answered,
+      mode: voiceModeRaw === 'similar' ? 'similar' : 'complementar',
+      struggles: personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }).struggles,
+    }),
+    [bigFive, voiceModeRaw, onboardingProfileRaw],
+  );
+  useEffect(() => { setPetVoiceArchetype(soulmonCharacter.archetype); }, [soulmonCharacter.archetype]);
   const chatPersonality = useMemo(
-    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings),
-    [onboardingProfileRaw, aiSettings],
+    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings, soulmonCharacter),
+    [onboardingProfileRaw, aiSettings, soulmonCharacter],
   );
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
@@ -2823,6 +2859,12 @@ export default function App() {
       .catch(() => SoulmonReview.openStore().catch(() => {}));
   };
 
+  // Beta12 (A1): molduras novas do widget chegam pela web. Uma vez por sessão o Android sincroniza o manifesto (no máximo 1x por hora;
+  // APK anterior não tem o método e rejeita: engolido). A posse/preço da moldura NÃO muda: segue sendo do app e do servidor.
+  useEffect(() => {
+    try { void SoulmonWidget.syncWidgetFrames().catch(() => {}); } catch { /* sem plugin */ }
+  }, []);
+
   // Sync game state to Android home screen widget
   const widgetSpriteUrl = widgetOwnSpriteUrl(minhaCriaturaUrl, petIsCorvo);
   useEffect(() => {
@@ -3225,7 +3267,16 @@ export default function App() {
   };
 
   // Handler para atividades sem etapas
-  const handleToggleActivityCompletion = (activityId: string) => {
+  /** `opts.auto` (beta12 §J): o check AUTOMÁTICO por recurso. Faz exatamente o que o toque manual faz (mesmo pagamento, Q2), só sem oferecer o Desfazer (o aviso é a tag do topo). */
+  /** ⭐ Aceitar a oferta reduzida: o hábito vira a tarefa bônus de HOJE. Não conclui nada (13/11/2026). */
+  const handleAcceptBonusTask = useCallback((activityId: string) => {
+    const day = new Date().toDateString();
+    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : { ...prev, bonusTask: { day, activityId } }));
+  }, []);
+  /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
+  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
+
+  const handleToggleActivityCompletion = (activityId: string, opts?: { auto?: boolean }) => {
     const today = new Date().toDateString();
     const activity = gameState.activities.find(a => a.id === activityId);
     // Completed activities cannot be unchecked — only daily reset restores them
@@ -3319,8 +3370,13 @@ export default function App() {
     // ↩️ #57 — a janela de 5 s. `gameState` aqui é o estado ANTES do updater
     // acima (o React só o troca no próximo render), que é exatamente a foto
     // que a reversão precisa.
-    if (activity && !(activity.completedToday && activity.lastCompletedDate === today)) {
+    if (activity && opts?.auto !== true && !(activity.completedToday && activity.lastCompletedDate === today)) {
       ofereceDesfazer(gameState, activity.name);
+    }
+    // ⭐ Primeira conclusão de uma tarefa bônus: a apresentação, uma vez só.
+    if (activity && isBonusActivity(gameState.bonusTask, activityId, today) && !gameState.bonusIntroSeen
+      && !(activity.completedToday && activity.lastCompletedDate === today)) {
+      setBonusIntroOpen(true);
     }
 
     // Marco de maturidade (7/21/66 dias de Lally et al.) — celebra UMA vez, no
@@ -3347,6 +3403,9 @@ export default function App() {
     // Sem limpeza de cocô aqui — ver o comentário no handler de etapas: o dreno
     // só para com o 🚿 BANHO.
   };
+
+  const toggleHabitRef = useRef(handleToggleActivityCompletion);
+  toggleHabitRef.current = handleToggleActivityCompletion;
 
   /** Abre o modal de Créditos (linha do menu da nav). Identidade estável em
    *  vez de lambda inline na prop — mesma disciplina do CompanionHUD. */
@@ -3767,11 +3826,16 @@ export default function App() {
    * `duration` = `UNDO_WINDOW_MS` porque a janela do toast **é** a janela da
    * reversão: o botão nunca some antes de expirar nem fica morto na tela.
    */
-  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion> & { tasks?: unknown; completedTasks?: unknown }; xp0: number; bits0: number; gain: PreviewItem[] | null } | null>(null);
+  /** 💠 Fragmentos de Alma que HOJE já rende (prévia da virada): peso feito até o teto + a tarefa bônus concluída. */
+  const fragmentosHoje = gaugeContribution(dailyDone, gameState.evolutionStage)
+    + bonusTaskGaugeBonus(gameState.bonusTask, gameState.activities, new Date().toDateString());
+  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion> & { tasks?: unknown; completedTasks?: unknown }; xp0: number; bits0: number; frag0: number; gain: PreviewItem[] | null; fragments?: number } | null>(null);
+  const fragmentosHojeRef = useRef(fragmentosHoje);
+  fragmentosHojeRef.current = fragmentosHoje;
   const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string, comTarefas = false) => {
     // Tarefa avulsa: a conclusão também mexe em `tasks`/`completedTasks` (e na próxima ocorrência), então o snapshot os leva.
     const snapshot = comTarefas ? { ...snapshotCompletion(antes), tasks: antes.tasks, completedTasks: antes.completedTasks } : snapshotCompletion(antes);
-    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot, xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, gain: null });
+    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot, xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, frag0: fragmentosHojeRef.current, gain: null });
   }, []);
   // Ganho exato = diferença entre o estado de antes e o primeiro estado depois da conclusão.
   useEffect(() => {
@@ -3781,8 +3845,9 @@ export default function App() {
     const gain: PreviewItem[] = [];
     if (xp > 0) gain.push({ kind: 'xp', amount: xp });
     if (bits > 0) gain.push({ kind: 'bits', amount: bits });
-    setDoneTag(t => (t && t.id === doneTag.id && !t.gain ? { ...t, gain } : t));
-  }, [doneTag, gameState.totalXP, gameState.gamePoints]);
+    const fragments = Math.max(0, fragmentosHoje - doneTag.frag0);
+    setDoneTag(t => (t && t.id === doneTag.id && !t.gain ? { ...t, gain, fragments } : t));
+  }, [doneTag, gameState.totalXP, gameState.gamePoints, fragmentosHoje]);
   useEffect(() => {
     if (!doneTag) return;
     const id = doneTag.id;
@@ -4534,6 +4599,11 @@ export default function App() {
     // E0: a trilha NÃO é pausada aqui — é no `useEffect([isSleeping])` logo
     // abaixo, que cobre o gesto manual E o sono automático com um caminho só.
   }, [isSleeping, falar, markDayAwake]);
+  /** 💤 O "Acordar" da pergunta das atividades (§329, `components/WakeToEnter.tsx`): o MESMO gesto do deck, só com o Soulmon dormindo
+   *  (sono real ou à espera do "Acordar" do dia) — nunca deita um Soulmon acordado. */
+  const wakeForActivity = useCallback(() => {
+    if (isSleeping || dayWakePendingRef.current) handleSleep();
+  }, [isSleeping, handleSleep]);
 
   /* MÚSICA × SONO (pedido do dono, 10/11/2026 — emenda do E0/S13): ACORDADO, a música toca normal; DORMINDO, toca a música calma do
      Refúgio (a faixa de meditação) em vez de calar. Antes (E0) o sono e a janela de descanso (23h–7h, a padrão vale para TODOS) pausavam o
@@ -4661,10 +4731,66 @@ export default function App() {
      Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
   /** Plaquinha da Home → "Ir à Fenda": fecha o aviso e abre a tela da descida (Exploração > Fenda, com o Soulmon lá). */
   const irAFenda = useCallback(() => {
+    dispensarBalaoRef.current('rift');
     setOcupadoAviso(null);
     setPendingSheet({ area: 'exploracao', lot: 'fenda' });
     goTo(areaView('exploracao'));
   }, [goTo]);
+  /* ── BALÕES DOURADOS (beta12 §G, `utils/balaoDourado.ts`) ──────────────────────────────────────────────────────────────────────
+     Condições: Bosque sob ataque (`useGroveAtaque`: o `underAttack` do servidor, sem exigir tarefa feita); Soulmon na Fenda; encontro
+     da volta ainda fechado. UM visível, por prioridade; o dispensado do DIA (gravado no SAVE ao tocar e ser direcionado) libera o próximo. */
+  const { atacado: bosqueAtacado, cuidavel: bosqueCuidavel } = useGroveEstado({ saveId, playerDayTz: gameState.playerDayTz, enabled: !demo, reler: currentView === 'home' });
+  const diaBalao = playerDayIso(new Date(), gameState.playerDayTz);
+  const balaoTipo: BalaoTipo | null = escolherBalao({ grove: bosqueDefendivel({ atacado: bosqueAtacado, cuidavel: bosqueCuidavel }, fioMetaCumprida), rift: naMasmorra, achado: achadoPendente !== null }, gameState.balaoDourado, diaBalao);
+  const dispensarBalao = useCallback((tipo: BalaoTipo) => {
+    setGameState(prev => {
+      const dia = playerDayIso(new Date(), prev.playerDayTz);
+      const reg = dispensar(prev.balaoDourado, tipo, dia);
+      return reg === prev.balaoDourado ? prev : { ...prev, balaoDourado: reg };
+    });
+  }, [setGameState]);
+  const dispensarBalaoRef = useRef(dispensarBalao);
+  dispensarBalaoRef.current = dispensarBalao;
+  /* ── BALÕES DE DICA (§333, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
+     e fora da Home não entra; a comum ocupa o turno da fala ociosa do HUD. Cooldown por tipo, no aparelho (`useDicaVistas`). */
+  const agoraDica = Date.now();
+  const energiaDica = settleEnergy(gameState, agoraDica);
+  const bondDica = bondLevelFor(gameState.totalXP ?? 0);
+  const presentesDica = dicasPresentes({
+    presente: !naMasmorra && !isMissionAway(gameState.guildMission ?? null, agoraDica) && !isSleeping && !dayWakePending,
+    energia: energiaDica.energyPoints ?? 0,
+    energiaMax: maxEnergyOf(gameState),
+    fome: hungerTierAt(gameState.hunger, agoraDica),
+    refugioDaEnergia: buildingGateFor('forja.refugio', bondDica).open && !refugioEnergyTaken(gameState, agoraDica) && (energiaDica.energyPoints ?? 0) < maxEnergyOf(gameState),
+    metaDoDia: fioMetaCumprida,
+    groveAberto: !demo && buildingGateFor('hall.grove', bondDica).open,
+    bosqueCuidavel,
+  });
+  const [dicaVistas, marcarDica] = useDicaVistas();
+  const dicaDourada = useDicaDourada({ presentes: presentesDica, vistas: dicaVistas, bloqueado: currentView !== 'home' || balaoTipo !== null, onMostrar: marcarDica });
+  const dicaComumTipo = escolherDica(presentesDica, dicaVistas, agoraDica, 'comum');
+  const dicaFalaHud = useMemo(() => (dicaComumTipo ? { tipo: dicaComumTipo, text: dicaTexto(dicaComumTipo, language) } : null), [dicaComumTipo, language]);
+  const encerrarDicaDourada = dicaDourada.encerrar;
+  /** O toque: Bosque → abre o Bosque (sem pré-requisito) e dispensa; Fenda → o aviso com "Ir à Fenda" (dispensa ao ESCOLHER ir); achado → abre o encontro.
+   *  Dica dourada (§333) → o evento de navegação do app (`requestGoToBuilding`), o mesmo do "pode ser obtido em". */
+  const handleBalaoDourado = useCallback((tipo: BalaoTipo | DicaDouradaTipo) => {
+    if (ehDicaDourada(tipo)) { encerrarDicaDourada(); requestGoToBuilding(DICA_DESTINO[tipo]); return; }
+    if (tipo === 'rift') { abrirAvisoMasmorra(null); return; }
+    dispensarBalao(tipo);
+    if (tipo === 'grove') {
+      setPendingSheet({ area: 'hall', lot: 'grove' });
+      goTo(areaView('hall'));
+      return;
+    }
+    const a = achadoPendente;
+    setAchadoPendente(null);
+    if (a?.loja) setFeiraLoja(a.loja);
+    else if (a?.evento) setFeiraEvento(a.evento);
+    else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
+  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
+  const balaoDouradoHud = balaoTipo ? { tipo: balaoTipo, text: balaoDouradoText(balaoTipo, language), ariaLabel: balaoDouradoAria(balaoTipo, language) }
+    : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
+
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
     if (!dest) return;
@@ -5050,7 +5176,7 @@ export default function App() {
         : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => bumpDailyIn({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }, 'cambio')); // 12/11/2026: missão do Farthing
+    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
@@ -5235,8 +5361,9 @@ export default function App() {
         if (volta.evento && feiraEventoAbre(volta.evento)) recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
         // FEIRA DE VERDADE (rara, ~8% das voltas): quando existe, ELA é o que a volta mostra; o mistério segue na sala da Feira. Servidor/cliente antigo: sem `feiraLoja`, tudo como antes.
-        if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setFeiraLoja(volta.feiraLoja);
-        else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
+        // beta12 §G: o encontro NÃO abre sozinho; o Soulmon traz o BALÃO DOURADO (persistente) e o toque abre o encontro (`achadoPendente`).
+        if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setAchadoPendente({ loja: volta.feiraLoja });
+        else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setAchadoPendente({ evento: volta.evento });
         // ACHADO (último recurso do encontro da volta, `_encontro.js`): Bits pessoais pequenos, creditados UMA vez por recibo do dia.
         else if (volta.achado) {
           const rec = `achado:${saveId}:${playerDayKey(new Date(), gameState.playerDayTz)}`;
@@ -6118,7 +6245,15 @@ export default function App() {
   }, [setGameState]);
 
   /** O Caderno muda a lista por uma função PURA sobre `prev` (footgun 6). */
+  /* REGISTRO §357: o check automático do hábito linkado NÃO roda no mesmo evento do "Guardar" (antes o toggle do hábito e a gravação
+     da entrada entravam juntos na fila do `setGameState` e o app travava num loop de render ao salvar pela missão). O handler só
+     anota que um registro NOVO foi guardado; o efeito abaixo dispara o check DEPOIS do commit, lendo o estado já gravado. */
+  const [cadernoGuardado, setCadernoGuardado] = useState(0);
   const handleCaderno = useCallback((f: (c: CadernoEntry[]) => CadernoEntry[]) => {
+    // beta12 §J (A5): o MESMO evento (registro NOVO guardado) marca o hábito de journaling adotado, 1×/dia. Fora do updater (footgun 6).
+    const antes = gameStateRef.current.caderno ?? [];
+    const depois = f(antes);
+    if (depois !== antes && depois.some(e => !antes.some(o => o.id === e.id))) setCadernoGuardado(n => n + 1);
     setGameState(prev => {
       const c0 = prev.caderno ?? [];
       const c1 = f(c0);
@@ -6758,6 +6893,40 @@ export default function App() {
       ? `🥾 Verificado pelos seus passos hoje — +1 comida de bônus.`
       : `🥾 Verified by today's steps — +1 bonus food.`);
   }, [stepsToday, language, setGameState]);
+
+  /* ── TAREFAS LINKADAS A RECURSOS (beta12 §J, `utils/tarefaLink.ts`) ───────────────────────────────────────────────────────────────
+     O CHECK AUTOMÁTICO por recurso: só hábito ADOTADO (catálogo com recurso), devido hoje e ainda não feito; passos exigem permissão,
+     registro de HOJE e meta batida. Grava a chave `<dia>|<id>` (`tarefaAuto`) ANTES de marcar (1×/dia, nunca desmarca, recarregar não
+     refaz) e depois marca pelo MESMO handler do toque manual (mesmo pagamento, sem bônus). A tag "Tarefa" do topo entra na fila
+     `autoTags`: uma por vez, depois de qualquer intersticial. */
+  const [autoTags, setAutoTags] = useState<string[]>([]);
+  const autoCheck = useCallback((gatilho: AutoRecurso, somenteIds?: string[]) => {
+    if (demo) return;
+    const gs = gameStateRef.current;
+    const now = new Date();
+    const ids = atividadesParaAutoCheck(gatilho, {
+      activities: gs.activities, habitRhythms: gs.habitRhythms, tarefaAuto: gs.tarefaAuto, now, tz: gs.playerDayTz,
+      passos: { consent: gs.stepsConsent, steps: gs.steps, stepGoal: gs.stepGoal }, somenteIds,
+    });
+    if (ids.length === 0) return;
+    const dia = playerDayIso(now, gs.playerDayTz);
+    const nomes = ids.map(id => gs.activities.find(a => a.id === id)?.name ?? '').filter(Boolean);
+    // a ref anda junto: um segundo disparo no MESMO tick (antes do re-render) já enxerga as chaves e não refaz
+    gameStateRef.current = { ...gs, tarefaAuto: ids.reduce<string[] | undefined>((l, id) => registrarAuto(l, dia, id), gs.tarefaAuto) };
+    setGameState(prev => ({ ...prev, tarefaAuto: ids.reduce<string[] | undefined>((l, id) => registrarAuto(l, dia, id), prev.tarefaAuto) }));
+    for (const id of ids) toggleHabitRef.current(id, { auto: true });
+    setAutoTags(q => [...q, ...nomes]);
+  }, [demo, setGameState]);
+  const autoCheckRef = useRef(autoCheck);
+  autoCheckRef.current = autoCheck;
+  // §357: pós-commit do "Guardar" do Caderno (idempotente: `tarefaAuto` garante 1×/dia por hábito).
+  useEffect(() => {
+    if (cadernoGuardado > 0) autoCheckRef.current('caderno');
+  }, [cadernoGuardado]);
+  // Passos: a cada leitura (polling de 5 min) ou mudança de meta/permissão/lista, o gatilho reavalia. Abaixo da meta não faz nada (A4).
+  useEffect(() => {
+    autoCheckRef.current('steps');
+  }, [gameState.steps?.today, gameState.steps?.date, gameState.stepGoal, gameState.stepsConsent, gameState.activities.length, gameState.lastResetDate]);
 
   // Optional auto-sleep schedule: puts the pet to sleep when entering the
   // configured window and wakes it when leaving. Only acts on window EDGES, so
@@ -7820,7 +7989,7 @@ export default function App() {
 
           {labTab === 'evolution' && (
             <div style={{ padding: '0 4px 10px' }}>
-              <CtaButton data-open-element-potion
+              <CtaButton data-open-element-potion tone="acao"
                 aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
                 <Icon name="auto_awesome" size={20} />
                 {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
@@ -8112,6 +8281,7 @@ export default function App() {
 
 
   return (
+    <WakeToEnterProvider isSleeping={isSleeping} dayWakePending={dayWakePending} language={language} onWake={wakeForActivity}>
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
         {demo && <div className="sm-demo-seal" aria-hidden="true">DEMO</div>}
         {/* ── O VISOR SINTONIZOU SOZINHO ───────────────────────────────────
@@ -8457,7 +8627,6 @@ export default function App() {
                 key={currentView}
                 unlockedElements={gameState.defeatedElements}
                 area={area}
-                wakeGuard={guardWake}
                 naMasmorra={naMasmorra}
                 emCristal={!!cristal}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
@@ -8598,6 +8767,7 @@ export default function App() {
                   }), combatant: soulCombatant(gameState) },
                   dungeonKeyActive: hasDungeonKey(gameState, Date.now()),
                   dungeonKeyExpired: dungeonKeyExpired(gameState, Date.now()),
+                  dungeonKeyExpiresAt: dungeonKeyExpiresAt(gameState, Date.now()),
                   onJourneyGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => setGameState(prev => applyJourneyGrants(prev, day, grants, dungeonKeyDay)),
                   onFocusSessionComplete: () => setGameState(prev => grantDungeonKey(prev, Date.now())),
                   onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
@@ -8637,6 +8807,8 @@ export default function App() {
                     else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
                   onToggleFocusStep: (taskId: string, stepId: string) => handleToggleTaskStep(taskId, stepId),
+                  /* beta12 §J (Q5): a sessão concluída que USOU um hábito de foco adotado o marca (1×/dia); sessão sem hábito escolhido não marca. */
+                  onFocusSessionTask: (taskId?: string) => { if (taskId?.startsWith('habit:')) autoCheck('foco', [taskId.slice('habit:'.length)]); },
                   /* Prioridades (ICE): só grava `ice` na tarefa; a ordem da Home não muda. */
                   onSetFocusIce: (taskId: string, ice: Ice | null) => setGameState(prev => ({ ...prev, tasks: prev.tasks.map(t => { if (t.id !== taskId) return t; const { ice: _old, ...rest } = t; return ice ? { ...rest, ice } : rest; }) })),
                   onCreateFocusTask: (name: string) => handleQuickAdd({ kind: 'task', name, tokens: [] }),
@@ -8840,6 +9012,10 @@ export default function App() {
                 walkingTo={passeandoEm}
                 missionAway={isMissionAway(guildMission, Date.now())}
                 naMasmorra={naMasmorra}
+                balaoDourado={balaoDouradoHud}
+                onBalaoDourado={handleBalaoDourado}
+                dicaFala={dicaFalaHud}
+                onDicaFalada={marcarDica}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
                 masmorraRetornoMs={naMasmorra ? masmorraRetorno.msLeft : null}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
@@ -9278,6 +9454,7 @@ export default function App() {
                     </button>
                   )}
                   <DailyRituals
+                    bonusActivityId={gameState.bonusTask?.day === new Date().toDateString() ? gameState.bonusTask.activityId : undefined}
                     tasks={gameState.tasks}
                     activities={gameState.activities}
                     completedTasks={gameState.completedTasks}
@@ -9296,7 +9473,10 @@ export default function App() {
                     onHoldDoneTask={setHoldDone}
                     onPostponeNudge={handlePostponeNudge}
                     onEditActivity={handleEditActivity}
-                    onToggleActivity={handleToggleActivityCompletion}
+                    onToggleActivity={(id: string) => handleToggleActivityCompletion(id)}
+                    /* beta12 §J: recurso na linha do hábito linkado (passos de hoje / "Ir ao Caderno"). */
+                    stepsInfo={progressoDePassos({ steps: gameState.steps, stepGoal: gameState.stepGoal, consent: gameState.stepsConsent, now: agora })}
+                    onGoToBuilding={(b: string) => handleMaterialGoTo(b as BuildingId)}
                     onUpdateStep={handleUpdateStep}
                     onRestoreTask={handleRestoreTask}
                     onCreate={handleAddNewActivity}
@@ -9357,6 +9537,8 @@ export default function App() {
               onToggleShowRedeemed={() => setGameState(prev => ({ ...prev, showRedeemed: !prev.showRedeemed }))}
               showInPublicList={gameState.hideFromPublicList !== true}
               onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
+              voiceMode={gameState.soulmonVoiceMode ?? 'complementar'}
+              onChangeVoiceMode={(m) => setGameState(prev => ({ ...prev, soulmonVoiceMode: m }))}
               gm={isAdmin ? gmActions : undefined}
               generateCharacter={{ onGenerate: handleGenerateCharacter, until: generateUntil, usesLeft: generateUsesLeft, maxUses: MAX_GENERATE_CHARACTER_USES }}
               profile={{
@@ -9535,6 +9717,7 @@ export default function App() {
           onDelete={mailbox.remove}
           onDeleteRead={mailbox.removeRead}
           onAnswerInvite={mailbox.answerInvite}
+          onJoinGuild={mailbox.joinGuildFromLetter}
         />
       )}
       {currentView === 'home' && (
@@ -10024,6 +10207,10 @@ export default function App() {
           <MapTutorial language={language} onFinish={() => setMapTutorialShown(false)} />
         </PresentationSlot>
       )}
+      {/* beta12 §J (A7): a tag "Tarefa" do check automático — UM aviso por vez no topo (espera qualquer intersticial) */}
+      {autoTags.length > 0 && interstitial === 'welcome' && (
+        <TaskAutoTag key={`${autoTags.length}:${autoTags[0]}`} name={autoTags[0]} language={language} onDone={() => setAutoTags(q => q.slice(1))} />
+      )}
       {interstitial === 'noticeToast' && noticeKey && (
         <NoticeToast noticeKey={noticeKey} language={language} onOpen={handleAbrirAvisos} onDone={() => setNoticeKey(null)} />
       )}
@@ -10054,6 +10241,7 @@ export default function App() {
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}
           onClose={closeDailyReport}
+          onGoHome={() => { setCurrentView('home'); closeDailyReport(); }}
           onRecoverHearts={handleRecoverHearts}
           moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
           onPickMood={handlePickMood}
@@ -10114,12 +10302,9 @@ export default function App() {
              reconhecer o que a pessoa contou não é enfeite: a segunda falta
              seguida, quando o pet oferece a versão de 5 minutos. */
           soulStruggle={gameState.soulStruggle}
-          /* WP2.10 — aceitar a versão reduzida usa o MESMO caminho de conclusão
-             de sempre. "Conta como feito" é literal: mesma constância, mesmos
-             atributos, mesmo XP de Vínculo. Um caminho paralelo aqui seria uma
-             segunda regra de conclusão (footgun 9) e um "meio-feito" que a
-             tese do produto não tem. */
-          onTinyHabit={handleToggleActivityCompletion}
+          /* WP2.10 → 13/11/2026: aceitar a versão reduzida NÃO conclui mais (o "já conta como feito" pré-marcava a
+             tarefa). Vira a TAREFA BÔNUS do dia (`utils/bonusTask.ts`): a pessoa marca pelo caminho de sempre. */
+          onTinyHabit={handleAcceptBonusTask}
           /* D-R5 — a etiqueta do hábito leva o `eco` de maturidade (o mesmo
              glifo da lista), então o check-in precisa do tier de cada um. */
           habitTiers={Object.fromEntries(checkInPlanData.habitsToday.map(h =>
@@ -10354,7 +10539,7 @@ export default function App() {
             fuse={{
               plan: checkInPlan(gameState as any, new Date()),
               taskIds: new Set(gameState.tasks.map(t => String(t.id))),
-              onTinyHabit: handleToggleActivityCompletion,
+              onTinyHabit: handleAcceptBonusTask,
               soulStruggle: gameState.soulStruggle,
             }}
             onConfirm={(ids, focusIds) => {
@@ -10420,6 +10605,7 @@ export default function App() {
             language={language}
             name={doneTag.name}
             items={doneTag.gain ?? []}
+            fragments={doneTag.fragments}
             onUndo={() => {
               const snap = doneTag.snapshot;
               setGameState(prev => {
@@ -10431,7 +10617,17 @@ export default function App() {
           />
         </Suspense>
       )}
+      {bonusIntroOpen && (
+        <Suspense fallback={null}>
+          <BonusTaskIntroModal
+            open
+            language={language}
+            onClose={() => { setBonusIntroOpen(false); setGameState(prev => (prev.bonusIntroSeen ? prev : { ...prev, bonusIntroSeen: true })); }}
+          />
+        </Suspense>
+      )}
       <Toaster richColors position="top-right" />
     </div>
+    </WakeToEnterProvider>
   );
 }

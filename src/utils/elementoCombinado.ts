@@ -18,6 +18,33 @@ import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
+import { umMotivoDeTempo, motivosNoTexto, type MotivoTempo } from './motivoTempo';
+
+/** O elemento é de TEMPO (o próprio `tempo` ou qualquer combinado que o tenha como componente, de 2, 3 ou 4). */
+export const ehElementoDeTempo = (id: string): boolean => (essenceComposition(id) ?? []).includes('tempo');
+
+/** Variantes que pendem para a AMPULHETA (areia, ruína, decadência, crescimento lento) e para o RELÓGIO (mecânico, velocidade, compasso). */
+const COMPONENTES_AMPULHETA: ReadonlySet<string> = new Set(['terra', 'agua', 'fogo', 'vileza', 'morte', 'sombra', 'vida', 'planta']);
+const COMPONENTES_RELOGIO: ReadonlySet<string> = new Set(['industrial', 'eletricidade', 'ar', 'marcial', 'som']);
+
+/**
+ * Regra 1 de `motivoTempo.ts` (dono, 13/11/2026, REGISTRO §324): o motivo que a VARIANTE do elemento de tempo pede, ou `undefined` quando
+ * ela não pende para lado nenhum (aí a criatura decide). Ordem: (a) combinado cujo kit de arte já desenha UM dos dois (o descritor cita só
+ * ampulheta ou só relógio) fica com ele; (b) pelos componentes: só lados de areia/ruína/decadência → ampulheta, só mecânico/velocidade →
+ * relógio; (c) misto, neutro (arcano, luz, espaço, fada, vigor, gravidade) ou o `tempo` puro → `undefined`.
+ */
+export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
+  if (!ehElementoDeTempo(id)) return undefined;
+  const comp = essenceComposition(id) ?? [];
+  if (comp.length > 1) {
+    const doKit = motivosNoTexto(DESCRITORES_ELEMENTO[id]?.forma ?? '');
+    if (doKit.length === 1) return doKit[0];
+  }
+  const outros = comp.filter(c => c !== 'tempo');
+  const amp = outros.some(c => COMPONENTES_AMPULHETA.has(c));
+  const rel = outros.some(c => COMPONENTES_RELOGIO.has(c));
+  return amp && !rel ? 'ampulheta' : rel && !amp ? 'relogio' : undefined;
+}
 
 /**
  * Palavra-chave visual de cada elemento BASE (substring do descritor da própria base em `elementoDescritores.data.ts`; sem duas iguais).
@@ -167,6 +194,8 @@ export function stagesComElemento<T extends { stage: string; branch?: string; im
   formaDaPocao?: Partial<Record<FichaStage, string>>,
 ): T[] | undefined {
   if (!stages || (!jornada && !pocoes && !baseDoSoulmon)) return stages;
+  // Semente estável da CRIATURA para o motivo de tempo (regra 3 de `motivoTempo.ts`): a sorte do save, senão o prompt do Rookie.
+  const sementeTempo = `${jornada?.u ?? ''}|${(stages.find(s => s.stage === 'rookie') ?? stages[0])?.imagePrompt ?? ''}`;
   return stages.map(st => {
     // As etapas do Oráculo chamam o Ultimate de `perfeito` (ver `creatureFormId`); a ficha usa `ultimate`.
     const nivel = (st.stage === 'perfeito' ? 'ultimate' : st.stage) as FichaStage;
@@ -188,8 +217,10 @@ export function stagesComElemento<T extends { stage: string; branch?: string; im
     const frasePistas = pistas ? ` Visual cues of this element: ${pistas}.` : '';
     const extra = `${tema}${frasePistas}`;
     if (!extra) return st;
+    // Tempo: OU ampulheta OU relógio, nunca os dois, e a cláusula negativa (§324). Também limpa o prompt cru que já viesse com os dois.
+    const tempo = { preferido: motivoTempoDoElemento(efetivo), semente: sementeTempo, forcar: ehElementoDeTempo(efetivo) };
     // O fundo segue as CORES (prompt cru + pistas), não o nome do elemento ("Floresta" não é cor).
-    const comExtra = (prompt: string): string => aplicarChroma(prompt + extra, escolherChroma(prompt + frasePistas));
+    const comExtra = (prompt: string): string => aplicarChroma(umMotivoDeTempo(prompt + extra, tempo), escolherChroma(prompt + frasePistas));
     return { ...st, imagePrompt: comExtra(st.imagePrompt), imagePromptFallback: comExtra(st.imagePromptFallback) };
   });
 }

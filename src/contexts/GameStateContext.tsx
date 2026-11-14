@@ -1,7 +1,10 @@
 import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
+import { sanitizeBonusTask, type BonusTaskState } from '../utils/bonusTask';
 import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
+import { sanitizeBalaoDourado, type BalaoDispensados } from '../utils/balaoDourado';
+import { sanitizeTarefaAuto } from '../utils/tarefaLink';
 import { sanitizeFunSession } from '../utils/funSession';
 import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
@@ -125,6 +128,7 @@ import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
+import { loadCatalog } from '../data/catalogoCarga';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
@@ -134,6 +138,7 @@ import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantSta
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
 import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
+import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
 /**
@@ -658,6 +663,10 @@ export interface GameState {
   dungeonKeyDay?: string;
   /** Recibos da jornada do foco já creditados no dia (§247). */
   journeyCredited?: { day: string; ids: string[] };
+  /** beta12 §G: balões dourados já tocados HOJE (`balaoDourado:<tipo>:<AAAA-MM-DD>` → true; só o dia corrente; `utils/balaoDourado.ts`). Opcional: save antigo não tem. */
+  balaoDourado?: BalaoDispensados;
+  /** beta12 §J: check automático por recurso já feito (`<AAAA-MM-DD>|<id da atividade>`; só o dia corrente; `utils/tarefaLink.ts`). Garante 1×/dia e nunca desmarca. Opcional. */
+  tarefaAuto?: string[];
   /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
   refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
@@ -839,6 +848,14 @@ export interface GameState {
    */
   soulTestAnswers?: Answers;
   /**
+   * 12/11/2026 (beta12, B2) — como o Soulmon se relaciona com o jeito do
+   * jogador: `complementar` (padrão; o que equilibra) ou `similar` (o mesmo
+   * jeito). Escolha das Configurações; o rótulo nunca revela o tipo. Opcional:
+   * save anterior não tem = complementar. Em `similar` o veto de
+   * vulnerabilidade prevalece (`utils/soulmonCharacter.ts`).
+   */
+  soulmonVoiceMode?: SoulmonVoiceMode;
+  /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
    * **Opcional de propósito**: save anterior aos Termos não tem o campo, e
@@ -938,6 +955,14 @@ export interface GameState {
    * evolução, como bônus acima do teto; fora do selo, do coração e da meta.
    */
   specialMission?: SpecialMissionState;
+  /**
+   * ⭐ Tarefa bônus do dia (utils/bonusTask.ts, 13/11/2026): o hábito aceito na
+   * oferta reduzida. NÃO vem concluído; concluir rende +1 Fragmento de Alma
+   * acima do teto diário, na virada (que limpa o campo).
+   */
+  bonusTask?: BonusTaskState;
+  /** O modal de apresentação da tarefa bônus já foi visto (mostrado uma vez só). */
+  bonusIntroSeen?: boolean;
   /** Meta de passos escolhida pelo jogador. Ausente = DEFAULT_STEP_GOAL (ler com `??`). */
   stepGoal?: number;
   /**
@@ -1315,7 +1340,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
         activities: arr<unknown>(loadedState.activities)
           .map(hydrateActivity).filter((a): a is Activity => a !== null)
-          .map(migrateCatalogHabitDaily),
+          .map(a => migrateCatalogHabitDaily(a)),
         tasks: arr<unknown>(loadedState.tasks)
           .map(hydrateTask).filter((t): t is Task => t !== null),
         completedTasks: arr<unknown>(loadedState.completedTasks)
@@ -1604,6 +1629,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
         journeyCredited: sanitizeJourneyCredited(loadedState.journeyCredited),
         refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
+        balaoDourado: sanitizeBalaoDourado(loadedState.balaoDourado),
+        tarefaAuto: sanitizeTarefaAuto(loadedState.tarefaAuto),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
@@ -1684,6 +1711,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // As 20 do teste (01/10/2026): só resposta bem formada passa; sem o
         // campo, continua ausente.
         soulTestAnswers: sanitizeSoulTestAnswers(loadedState.soulTestAnswers),
+        // Beta12: só os dois valores conhecidos passam; ausente = padrão (complementar).
+        soulmonVoiceMode: sanitizeVoiceMode(loadedState.soulmonVoiceMode),
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);
@@ -1838,6 +1867,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         playLog: hydratePlayLog(loadedState.playLog),
         steps: hydrateSteps(loadedState.steps),
         specialMission: sanitizeSpecialMission(loadedState.specialMission),
+        bonusTask: sanitizeBonusTask(loadedState.bonusTask),
+        bonusIntroSeen: loadedState.bonusIntroSeen === true ? true : undefined,
         stepGoal: loadedState.stepGoal === undefined ? undefined : sanitizeStepGoal(loadedState.stepGoal),
         // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
         // "ainda não perguntei", que é o estado seguro (perguntar de novo é
@@ -2113,6 +2144,23 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const montado = useRef(true);
   useEffect(() => { montado.current = true; return () => { montado.current = false; }; }, []);
 
+  // Migração "hábito do catálogo = todo dia" (§295): precisa do catálogo, que mora fora do chunk de entrada (`catalogoCarga.ts`).
+  // Roda quando o índice chega (e a cada save carregado que traga hábito do catálogo); idempotente: sem mudança devolve o MESMO estado.
+  const temCatalogId = (gameState.activities ?? []).some((a: { catalogId?: unknown }) => !!a.catalogId);
+  useEffect(() => {
+    if (!temCatalogId) return;
+    let vivo = true;
+    void loadCatalog().then(porId => {
+      if (!vivo) return;
+      setGameState(s => {
+        const acts = s.activities ?? [];
+        const novas = acts.map(a => migrateCatalogHabitDaily(a, porId));
+        return novas.some((a, i) => a !== acts[i]) ? { ...s, activities: novas } : s;
+      });
+    }).catch(() => {});
+    return () => { vivo = false; };
+  }, [temCatalogId, gameState.activities]);
+
   /** 409: a revisão que o servidor informou; a leitura da reconciliação abaixo dela é réplica atrasada. */
   const revisaoDo409 = useRef<number | undefined>(undefined);
   /**
@@ -2295,7 +2343,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       function publicarPerfil() {
       if (!gameState.pvpEnabled) return;
       // H13: sem interruptor, o que segura a publicação é o Vínculo. Abaixo do
-      // nível 5 o servidor recusaria de qualquer jeito — não vale mandar nome e
+      // o nível mínimo do PvP (hoje 1, `GATES.pvp`) o servidor recusaria de qualquer jeito — não vale mandar nome e
       // pet de quem ainda não está no Torneio nem gastar a leitura do save.
       if (!meetsPvpBond(gameState.totalXP ?? 0)) return;
       pushProfile({

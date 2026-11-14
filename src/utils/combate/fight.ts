@@ -22,7 +22,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
-import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
+import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special } from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
 export const MIRROR_SECONDS = 25;
@@ -213,13 +213,26 @@ interface Fighter {
   nSpd: number;
   nHit: number;
   dotResist: number;
+  /** §334: DoTs que este lutador CARREGA; cada um tica no começo de cada golpe dele (`tickOwnTurn`). */
+  dots: OwnTurnDot[];
 }
+
+/**
+ * §334 (dono, 13/11/2026): um DoT é guardado em quem o CARREGA e tica no turno DELE: no começo de cada golpe básico do
+ * afetado, antes de o golpe sair. `left` = golpes do afetado que ainda levam tick (a duração conta os turnos dele).
+ */
+interface OwnTurnDot {
+  readonly src: Fighter;
+  readonly E: number;
+  left: number;
+}
+
+/** §334: ticks de um DoT (a duração, em golpes do afetado). */
+export const DOT_TICKS = 3;
 
 interface Timed {
   readonly t: number;
   readonly fn: () => void;
-  /** A DoT tick: whoever it lands on (for the real counter of ticks left). */
-  readonly dotOn?: Fighter;
 }
 
 export function* fightSteps(
@@ -245,7 +258,7 @@ export function* fightSteps(
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: [],
     };
   };
   const F: [Fighter, Fighter] = [mk(a, 0), mk(b, 1)];
@@ -271,21 +284,21 @@ export function* fightSteps(
   const hitsOn = (me: Fighter, foe: Fighter) => hitsToKnockOut(me.c, foe.c) / u;
   const fxOf = (f: Fighter, foe: Fighter): FighterFx => ({
     nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield, shieldHits: f.shield * hitsOn(foe, f),
-    dot: timed.reduce((n, e) => n + (e.dotOn === f ? 1 : 0), 0),
+    dot: f.dots.reduce((n, d) => n + d.left, 0),
   });
   const snapFx = (): FightFxPair => [fxOf(F[0], F[1]), fxOf(F[1], F[0])];
   const gain = (f: Fighter, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
+  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
     if (v.dead < Infinity) return; // leftover damage expires
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -296,21 +309,31 @@ export function* fightSteps(
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   };
+  /**
+   * §334: o começo do golpe de `me`: cada DoT que ele carrega tica (o escudo dele absorve metade, §327) e gasta 1 turno.
+   * Devolve `true` quando o tick o derrubou: aí ele NÃO golpeia neste turno.
+   */
+  const tickOwnTurn = (me: Fighter): boolean => {
+    if (!me.dots.length || me.dead < Infinity || me.hp <= EPS) return false;
+    for (const d of me.dots) {
+      d.left--; // antes do golpe: o evento do tick já mostra os ticks que FALTAM (o contador real do selo)
+      if (me.hp > EPS) hit(d.src, me, (d.E / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), 'tick', 'tick');
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    return me.hp <= EPS;
+  };
   const cast = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
     const sp = me.sp as Special;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
     switch (sp.family) {
       case 'direct':
-        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
+        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
         break;
-      case 'dot': {
-        const cap = foe.shield; // escudo do alvo no instante do cast
-        for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
-        }
+      case 'dot':
+        // §334: o veneno fica em quem o recebe e tica nos PRÓXIMOS golpes dele (não num relógio, nem no turno de quem lançou)
+        foe.dots.push({ src: me, E, left: DOT_TICKS });
         break;
-      }
       case 'heal':
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
@@ -343,6 +366,11 @@ export function* fightSteps(
   function* tryCast(i: 0 | 1, tt: number): Generator<FightEvent, void, number | undefined> {
     const me = F[i];
     if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026: "Sim, o especial também"): lançar o especial também é turno do afetado. O DoT tica no começo
+      // da ação, antes de o especial sair; quem cai no tick não lança (a energia fica, ele já caiu).
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const e = ev('cast', i, 0, tt);
@@ -378,12 +406,14 @@ export function* fightSteps(
       const me = F[i];
       const foe = F[1 - i];
       if (me.next - t >= EPS) continue;
+      // §334: o DoT tica no COMEÇO do turno do afetado; quem cai no tick não golpeia (o turno passa do mesmo jeito)
+      if (tickOwnTurn(me)) { me.next = t + interval(me.c.spd); continue; }
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack');
+      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;

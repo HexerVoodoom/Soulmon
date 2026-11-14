@@ -19,6 +19,9 @@
  *          (a missão especial diária vive em `utils/specialMissions.ts`).
  *    Nenhuma função deste arquivo devolve HP, energia, `perfectDays` ou peso de
  *    esforço, e nenhuma delas deve passar a devolver.
+ *    REVISTA EM PARTE (dono, 12/11/2026, beta12 §J, Q1–Q9): um terceiro uso é o CHECK AUTOMÁTICO de hábito ADOTADO do catálogo com
+ *    recurso `steps` (`corpo-caminhar`): meta batida (a das Configurações) marca o hábito sozinho, com o MESMO pagamento do toque manual,
+ *    sem bônus e 1×/dia (`utils/tarefaLink.ts`). O passo só CONFIRMA o que a pessoa já declarou ao adotar; sugestão não aceita nunca marca.
  * 2. **Quem não tem sensor não pode ficar em desvantagem ESTRUTURAL.** A maior
  *    parte da base joga na PWA, onde não existe sensor nenhum. Tudo aqui
  *    degrada em silêncio: `isStepsAvailable()` responde `false`,

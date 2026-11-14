@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { getSpriteForStage } from '../utils/sprites';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { usePrefersReducedMotion } from './ui/Viewport';
@@ -306,7 +307,7 @@ export function EvolutionCeremony({
             {temFragmentos && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <SoulFragmentIcon size={16} />
-                <span data-cer-fragments>{done ? fragmentsSpentLine(fragmentsSpent!, language) : fragmentsGatherLine(language)}</span>
+                <span data-cer-fragments>{emphasizeSoulFragment(done ? fragmentsSpentLine(fragmentsSpent!, language) : fragmentsGatherLine(language))}</span>
               </span>
             )}
           </p>

@@ -1,4 +1,4 @@
-import { CtaButton } from '../ui/CtaButton';
+import { CtaButton, CtaTextButton } from '../ui/CtaButton';
 /**
  * A SALA DE DESCANSO (§301/§312, 12/11/2026, pedido do dono): o fim do trajeto troca o fundo do mapa, em tela cheia, por um oásis calmo (sem porta, sem moldura),
  * um por cenário do Foco (caverna → gruta de água cristalina). O descanso dura 5 min (10 no 50/10) e é contado por TIMESTAMP
@@ -8,7 +8,7 @@ import { CtaButton } from '../ui/CtaButton';
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Hint, sm2Text } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
 import { formatClock } from '../../utils/focoTimer';
 import type { Language } from '../../utils/i18n';
@@ -100,11 +100,12 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
           </div>
         </section>
         {error && <p role="status" data-rest-error style={{ ...sm2Hint, margin: 0, color: '#e9f5f2', textAlign: 'center' }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8, width: JOURNEY_CARD_WIDTH }}>
-          <CtaButton data-rest-next onClick={onNext} disabled={!!busy} width="auto" style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
-          <button type="button" data-rest-finish onClick={onFinish} disabled={busy} style={{ ...sm2Button('outline', !!busy), flex: 1, minHeight: 48 }}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</button>
+        {/* CTA em coluna (§316b) + secundárias SÓ TEXTO (§316c, 13/11/2026, dono): Seguir em cima; Concluir a missão e Sair embaixo, sem fundo e sem borda. */}
+        <div data-cta-stack style={{ display: 'grid', gap: 4, width: JOURNEY_CARD_WIDTH }}>
+          <CtaButton data-rest-next onClick={onNext} disabled={!!busy}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
+          <CtaTextButton data-rest-finish surface="escuro" onClick={onFinish} disabled={busy}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</CtaTextButton>
+          <CtaTextButton data-rest-close surface="escuro" onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (o descanso continua)' : 'Leave to the Workshop (the break goes on)'}>{isPt ? 'Sair (o descanso continua)' : 'Leave (the break goes on)'}</CtaTextButton>
         </div>
-        <button type="button" data-rest-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (o descanso continua)' : 'Leave to the Workshop (the break goes on)'} style={{ ...sm2Button('quiet'), minHeight: 44, color: '#e9f5f2' }}>{isPt ? 'Sair (o descanso continua)' : 'Leave (the break goes on)'}</button>
       </div>
     </div>,
     document.body,

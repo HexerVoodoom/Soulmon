@@ -237,6 +237,17 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Lia agora é seu amigo/);
   });
 
+  it('§351 (decisão do dono): a busca do convite usa o modo do convite e convida quem está com o PvP desligado', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({ players: [{ id: 'pid-reservado', name: 'Reservado', stage: 'rookie' }] });
+    vi.mocked(addFriend).mockResolvedValue({ ok: true, status: 'pending', friends: [] });
+    renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    digitar('Reservado');
+    await waitFor(() => expect(addFriend).toHaveBeenCalledWith('save-1', 'pid-reservado'));
+    expect(listPlayers).toHaveBeenCalledWith('Reservado', { friendOf: 'save-1' });
+    await waitFor(() => expect(document.body.textContent).toMatch(/Convite enviado para Reservado/));
+  });
+
   it('nome que ninguém tem: avisa, sem addFriend', async () => {
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
@@ -244,6 +255,26 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     digitar('Fantasma');
     await waitFor(() => expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Não achei ninguém/));
     expect(addFriend).not.toHaveBeenCalled();
+  });
+
+  it('§346: busca barrada pelo teto (429) diz "espere um minuto", não a genérica', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    vi.mocked(listPlayers).mockRejectedValue(new Error('rate limited'));
+    digitar('lia');
+    await waitFor(() => expect(document.body.textContent).toMatch(/Muitas tentativas seguidas\. Espere um minuto/));
+    expect(document.body.textContent).not.toMatch(/Não deu para adicionar agora/);
+    expect(addFriend).not.toHaveBeenCalled();
+  });
+
+  it('§346: alvo que o servidor não acha (404) pede para conferir o apelido', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({ players: [perfil({ id: 'pid-lia', name: 'Lia' }) as DirectoryPlayer] });
+    vi.mocked(addFriend).mockRejectedValue(new Error('friend not found'));
+    renderWithCss(<LibraryPage {...props([])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    digitar('lia');
+    await waitFor(() => expect(document.body.textContent).toMatch(/Não achei esse jogador\. Confira o apelido exato/));
   });
 
   it('M4/QA: o presente vive SÓ no Círculo de Amigos (view=friends); a Biblioteca (view=directory) nunca o oferece, nem para amigo', async () => {

@@ -12,6 +12,8 @@ describe('seletor de idioma antes do opening', () => {
     render(<SeletorIdiomaAbertura onEscolher={onEscolher} />);
     fireEvent.click(screen.getByText('Português'));
     expect(onEscolher).toHaveBeenCalledWith('pt-BR');
+    cleanup(); // uma escolha por montagem (o seletor sai da tela ao escolher)
+    render(<SeletorIdiomaAbertura onEscolher={onEscolher} />);
     fireEvent.click(screen.getByText('English'));
     expect(onEscolher).toHaveBeenCalledWith('en-US');
   });
@@ -43,6 +45,48 @@ describe('seletor de idioma antes do opening', () => {
     const camada = screen.getByTestId('abertura-idioma');
     expect(camada.children).toHaveLength(1);
     expect(camada.firstElementChild?.getAttribute('role')).toBe('dialog');
+  });
+
+  /* 2ª rodada (13/11/2026): o `click` de toque some quando o dedo anda além da folga do tap (medido em produção, 4x CPU:
+     20 px de arrasto = pointercancel, nenhum click, nenhuma escolha). O toque escolhe no `pointerup`, uma vez só. */
+  const caixa = (b: HTMLElement) => vi.spyOn(b, 'getBoundingClientRect').mockReturnValue({ left: 20, right: 370, top: 400, bottom: 450, x: 20, y: 400, width: 350, height: 50, toJSON: () => ({}) } as DOMRect);
+
+  it('toque: escolhe no pointerup dentro do botão, uma vez só (o click sintetizado depois não repete)', () => {
+    const onEscolher = vi.fn();
+    render(<SeletorIdiomaAbertura onEscolher={onEscolher} />);
+    const b = screen.getByRole('button', { name: 'English' });
+    caixa(b);
+    fireEvent.pointerDown(b, { pointerType: 'touch', clientX: 195, clientY: 425 });
+    fireEvent.pointerUp(b, { pointerType: 'touch', clientX: 197, clientY: 444 });
+    expect(onEscolher).toHaveBeenCalledTimes(1);
+    expect(onEscolher).toHaveBeenCalledWith('en-US');
+    fireEvent.click(b);
+    expect(onEscolher).toHaveBeenCalledTimes(1);
+  });
+
+  it('toque solto FORA do botão não escolhe (desistiu)', () => {
+    const onEscolher = vi.fn();
+    render(<SeletorIdiomaAbertura onEscolher={onEscolher} />);
+    const b = screen.getByRole('button', { name: 'English' });
+    caixa(b);
+    fireEvent.pointerUp(b, { pointerType: 'touch', clientX: 195, clientY: 520 });
+    expect(onEscolher).not.toHaveBeenCalled();
+  });
+
+  it('mouse continua pelo click (pointerup de mouse não escolhe sozinho)', () => {
+    const onEscolher = vi.fn();
+    render(<SeletorIdiomaAbertura onEscolher={onEscolher} />);
+    const b = screen.getByRole('button', { name: 'Português' });
+    caixa(b);
+    fireEvent.pointerUp(b, { pointerType: 'mouse', clientX: 195, clientY: 425 });
+    expect(onEscolher).not.toHaveBeenCalled();
+    fireEvent.click(b);
+    expect(onEscolher).toHaveBeenCalledWith('pt-BR');
+  });
+
+  it('o navegador não toma o gesto do botão: touch-action none', () => {
+    const css = readFileSync(resolve(__dirname, '../../../index.css'), 'utf8');
+    expect(css).toMatch(/\.sm2-idioma-opcao \{ touch-action: none; \}/);
   });
 
   it('o CSS do estado pressionado existe (o tap-highlight do app é transparente)', () => {

@@ -94,7 +94,7 @@ describe('seção "Primeiras vezes" na aba Diárias', () => {
     const li = document.querySelector('[data-first-time="first-minigame"]')!;
     expect(li.getAttribute('data-status')).toBe('ready');
     expect(document.querySelector('[data-first-time="visit:mercado.itens"]')!.textContent).toContain('Visit: ');
-    expect(document.querySelector('[data-first-time="visit:hall.feira"]')).toBeNull();
+    expect(document.querySelector('[data-first-time="visit:hall.feira"]')).not.toBeNull(); // sem limite por level (12/11/2026)
     fireEvent.click(li.querySelector('button')!);
     expect(onClaim).toHaveBeenCalledWith('first-minigame');
     const pago = claimFirst({ firstTimes: pronta, buildingQuests: undefined }, DAY, 1, 'first-minigame').state;

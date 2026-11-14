@@ -250,15 +250,16 @@ export async function gravarGrupo(env, g, opcoes = {}) {
   }
   const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1000)) };
   // O DIRETÓRIO (§203) segue o blob: nome/tamanho mudaram ou o prazo renovou → a entrada é
-  // regravada (ou some, se o clã encheu). A assinatura vai NO blob, gravado logo abaixo.
+  // regravada (o clã cheio muda para `coopDirFull:`, §322). A assinatura vai NO blob, gravado logo abaixo.
   const sigDir = assinaturaDoDiretorio(g, COOP_MAX_MEMBERS);
-  const diretorio = conjunta || g.dirSig !== sigDir;
+  const sigAntes = g.dirSig;
+  const diretorio = conjunta || sigAntes !== sigDir;
   g.dirSig = sigDir;
   await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
   try {
     await gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo });
   } finally {
-    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo });
+    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo, antes: sigAntes });
   }
 }
 

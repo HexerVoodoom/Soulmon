@@ -26,6 +26,9 @@ export function resolveGo(nav: MissionNav | undefined, target: GoTarget | undefi
   return { onGo: () => nav.onGo(target) };
 }
 
+/** Enquadramento padrão do retrato: centro na cabeça do busto (o rosto fica no terço de cima). */
+export const MISSION_PORTRAIT_FOCUS = '50% 18%';
+
 export type MissionCardStatus = 'open' | 'ready' | 'claimed';
 
 /** Uma entrada de lista de missões: o `<li>` já pronto + o estado que decide a ordem (`missionOrder.ts`). Os construtores de cada lista devolvem isto. */
@@ -103,8 +106,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
         )}
         {reward && (quiet || rewardAlways || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
         {giver && (
-          <p data-mission-giver style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <img src={giver.art} alt="" aria-hidden="true" width={20} height={20} draggable={false} data-mission-giver-art style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', objectPosition: 'center top', imageRendering: 'pixelated', flex: 'none' }} />
+          <p data-mission-giver style={{ ...sm2Hint, margin: 0 }}>
             <span>{isPt ? 'Com ' : 'From '}{giver.name}</span>
           </p>
         )}
@@ -115,6 +117,13 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
         {status === 'ready' && action}
         {claimed && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{quiet ? (isPt ? 'Feita' : 'Done') : (isPt ? 'Resgatada' : 'Claimed')}</span>}
       </div>
+      {/* Retrato de PERFIL do NPC (12/11/2026, pedido do dono): quadrado, foco no ROSTO (topo do busto), à direita do cartão. Sem NPC, não existe. */}
+      {giver && (
+        <img
+          src={giver.art} alt="" aria-hidden="true" draggable={false} data-mission-giver-art
+          style={{ flex: 'none', width: 64, height: 64, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', objectFit: 'cover', objectPosition: MISSION_PORTRAIT_FOCUS, imageRendering: 'pixelated', backgroundColor: 'var(--sm2-surface-2, transparent)' }}
+        />
+      )}
     </li>
   );
 }

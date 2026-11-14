@@ -459,7 +459,7 @@ export const MOTIVO_ELEMENTO_CLASSE: Record<string, { en: string; pt: string; fa
   vida: { en: 'sprouting leaf buds', pt: 'brotos de folha', familias: ['flower', 'tree', 'deer', 'fungus'] },
   vigor: { en: 'thick muscular build', pt: 'corpo robusto', familias: ['ursine', 'bovine', 'proboscidean', 'giantkin'] },
   marcial: { en: 'battle-worn armor plates', pt: 'placas de armadura', familias: ['beetle', 'crab', 'feline', 'mantis'] },
-  tempo: { en: 'hourglass and clockwork motifs', pt: 'motivos de ampulheta', familias: ['cephalopod', 'reptile', 'tree', 'construct'] },
+  tempo: { en: 'a single small time motif', pt: 'um motivo de tempo (ampulheta OU relógio, §324)', familias: ['cephalopod', 'reptile', 'tree', 'construct'] },
   som: { en: 'sound-wave ripple markings', pt: 'marcas de onda sonora', familias: ['songbird', 'orthopteran', 'cetacean', 'chiroptera'] },
   gravidade: { en: 'orbiting pebble satellites', pt: 'pedrinhas em órbita', familias: ['geological', 'golem', 'proboscidean', 'deepsea'] },
   espaco: { en: 'starfield speckles', pt: 'pintas de céu estrelado', familias: ['extraterrestrial', 'cnidarian', 'celestial', 'seabird'] },

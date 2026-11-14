@@ -51,6 +51,7 @@ describe('cena do Passeio', () => {
     expect(ENEMY_ROSTER.some(e => e.key === onDiscover.mock.calls[0][0] && e.name === nome)).toBe(true);
     act(() => { vi.advanceTimersByTime(1600); });
     expect(q('[data-stroll-scene]').getAttribute('data-phase')).toBe('back');
+    expect(q('[data-scene-next="back"]').textContent).toBe('Voltar para casa');
     fireEvent.click(q('[data-scene-next="back"]'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

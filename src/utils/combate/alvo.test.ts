@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { escolherAlvo, tocarAlvo } from './alvo';
-import { groupFight, groupFightSteps, type GroupOptions } from './group';
+import { groupFight, groupFightSteps, type GroupEvent, type GroupOptions } from './group';
 import type { FightSide } from './fight';
 import { combatantAt, REFERENCE_BUILDS } from './level';
 import { specialOf } from './specials';
@@ -84,10 +84,16 @@ describe('groupFight com alvo escolhido', () => {
     expect(castHits(pl, 1, 'direct')).toEqual([false, true, false]);
   });
   it('ESPECIAL single (dot) cai no inimigo escolhido', () => {
+    // §334: o DoT fica em quem o carrega e tica nos golpes DELE; a prova é quem carrega os ticks logo depois do cast (contador real)
     const pl: FightSide = { combatant: forte, special: specialOf('dot') };
-    const hits = castHits(pl, 2, 'dot');
-    expect(hits[2]).toBe(true);
-    expect(hits[0]).toBe(false);
+    const g = groupFightSteps(pl, foes, { ...base, target: () => 2, withFx: true });
+    let r = g.next();
+    while (!r.done && !(r.value.kind === 'cast' && r.value.who === 0)) r = g.next(undefined);
+    expect(r.done).toBe(false);
+    const castEv = r.value as GroupEvent;
+    g.next(1);
+    const dots = (castEv.fx ?? []).slice(1).map((f) => f.dot);
+    expect(dots).toEqual([0, 0, 3]);
   });
   it('ESPECIAL em área segue acertando todos, com ou sem escolha', () => {
     const pl: FightSide = { combatant: forte, special: specialOf('direct'), area: 'area' };

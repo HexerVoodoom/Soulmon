@@ -120,6 +120,7 @@ import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accoun
 import { rkKeyFor } from './_rankings.js';
 import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados, exportarFeiraDaPessoa } from './_coop.js';
 import { apagarPedido } from './_claDiretorio.js';
+import { nickFoldKeyDaChave } from './_profile.js';
 import { EVO_FEED_KEY, EVO_FEED_BLOB_TTL_S, readFeed, purgeFeedOf } from './_evoFeed.js';
 
 const CORS = {
@@ -323,6 +324,9 @@ async function collectRankingKeys(env, saveId) {
   if (nickKey) {
     if (typeof nickKey === 'string' && nickKey.startsWith('nick:') && (await store.get(nickKey)) === saveId) keys.push(nickKey);
     keys.push(`nickof:${saveId}`);
+    // Busca de jogadores (§321): a chave DOBRADA tem o saveId no nome, então é sempre deste titular.
+    const dobrada = nickFoldKeyDaChave(nickKey, saveId);
+    if (dobrada) keys.push(dobrada);
   }
   return { keys, ranking };
 }

@@ -18,11 +18,12 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
+import { damagePoints, DOT_TICKS, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
+import { aplicarEspecialPessoal } from './alvoAliado';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
+  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -128,6 +129,17 @@ interface G {
   nSil: number;
   nSlow: number;
   nHot: number;
+  /** §334: DoTs e curas contínuas que este lutador CARREGA; tudo tica no começo de cada golpe DELE (`tickOwnTurn`). */
+  dots: GDot[];
+  hots: { readonly pulse: number; left: number }[];
+}
+
+/** §334: um DoT em quem o carrega. `single` = o DoT de alvo único do jogador: se o carregador cai, o que falta passa ao próximo vivo. */
+interface GDot {
+  readonly src: G;
+  readonly share: number;
+  readonly single: boolean;
+  left: number;
 }
 
 /** Seed of the stream of foe i (foe 0 is the 1v1 stream, so N = 1 ≡ fight()). */
@@ -162,7 +174,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0,
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0, dots: [], hots: [],
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -184,18 +196,12 @@ export function* groupFightSteps(
     return f && f.dead === Infinity ? f : alive()[0];
   };
   const hitsOn = (a: G, d: G) => hitsToKnockOut(a.c, d.c) / u;
-  /** DoT ticks still to land: who each pending tick lands on (single: the current target, as the tick itself will pick). */
-  const dots: { owner: G; vs: readonly G[]; single: boolean }[] = [];
   const snapFx = (): FighterFx[] => {
-    const left = all.map(() => 0);
-    for (const d of dots) {
-      if (d.single) { const v = target() ?? d.vs[0]; left[all.indexOf(v)]++; } else for (const v of d.vs) left[all.indexOf(v)]++;
-    }
-    return all.map((f, i) => {
+    return all.map((f) => {
       const atk = f === pl ? target() : pl;
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
-        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i],
+        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: f.dots.reduce((n, d) => n + d.left, 0),
         ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
       };
     });
@@ -208,15 +214,15 @@ export function* groupFightSteps(
   const gain = (f: G, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
+  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
     if (v.dead < Infinity) return;
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -227,41 +233,53 @@ export function* groupFightSteps(
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src.who, lose / v.pts));
   };
+  /**
+   * §334 (dono, 13/11/2026): o começo do golpe de `me`. Cada DoT que ele carrega tica (o escudo absorve metade, §327) e depois cada
+   * cura contínua pulsa; cada um gasta 1 turno. Devolve `true` quando o tick o derrubou: aí ele NÃO golpeia neste turno.
+   */
+  const tickOwnTurn = (me: G): boolean => {
+    if (me.hp <= EPS || (!me.dots.length && !me.hots.length)) return false;
+    for (const d of me.dots) {
+      d.left--; // antes do golpe: o evento do tick já mostra os ticks que FALTAM (o contador real do selo)
+      if (me.hp > EPS) hit(d.src, me, (d.share / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me), 'tick', 'tick');
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    for (const h of me.hots) {
+      h.left--;
+      me.nHot--;
+      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
+    }
+    me.hots = me.hots.filter((h) => h.left > 0);
+    return me.hp <= EPS;
+  };
   const cast = (me: G, t0: number, scale: number) => {
     const sp = me.sp as Special;
     const Eb = SPECIAL_BUDGET_HITS * sp.power * scale;
-    const iv = interval(me.c.spd);
     const enemies = me === pl ? alive() : [pl];
     // ALVO POR TOQUE: o especial single do jogador vai no inimigo escolhido (antes ignorava: sempre o 1º vivo)
     const tgt = me === pl ? target() : enemies[0];
     if (!tgt) return;
     const isArea = me.area === 'area' && AREA_FAMILIES.includes(sp.family);
+    // §327 (`alvoAliado.ts`): quem RECEBE o especial pessoal. O núcleo de grupo ainda não tem aliados (o lado do jogador é só ele),
+    // então é sempre o próprio lançador; o efeito já é o de `aplicarEspecialPessoal`, que aceita qualquer receptor.
+    const rx: G = me;
     const spread = isArea ? enemies : [tgt];
     // same total budget: the area divides it (times the area efficiency, 1), the single concentrates it
-    const share = isArea ? (Eb * (opts.areaEfficiency ?? AREA_EFFICIENCY)) / spread.length : Eb;
+    // §334: o DoT em área sobre 2+ inimigos tem a eficiência própria (`AREA_DOT_EFFICIENCY`; com 1 só, área = único, nada se
+    // perde); a régua pode trocar as duas por `opts.areaEfficiency`
+    const areaEff = sp.family === 'dot' && spread.length > 1 ? AREA_DOT_EFFICIENCY : AREA_EFFICIENCY;
+    const share = isArea ? (Eb * (opts.areaEfficiency ?? areaEff)) / spread.length : Eb;
     switch (sp.family) {
       case 'direct':
-        for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack');
+        for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack', 'direct');
         break;
-      case 'dot':
-        for (let k = 1; k <= 3; k++) {
-          const vs = [...spread];
-          const single = spread.length === 1 && me === pl;
-          const caps = new Map(all.map((x) => [x, x.shield] as const)); // escudo de TODOS NO CAST (§196: o tick que passa ao próximo inimigo também respeita o escudo que ELE tinha no cast)
-          const rec = { owner: me, vs, single };
-          dots.push(rec);
-          timed.push({
-            t: t0 + 0.25 * iv * k,
-            // single: the remaining ticks pass to the next living foe (nothing is lost);
-            // area: only whoever was inside the radius at the cast
-            fn: () => {
-              dots.splice(dots.indexOf(rec), 1);
-              const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', caps.get(v) ?? Infinity);
-            },
-          });
-        }
+      case 'dot': {
+        // §334: o DoT fica em quem o recebe e tica nos PRÓXIMOS golpes dele. Área: em cada um que estava no raio no cast;
+        // alvo único do jogador: se o carregador cair, o que falta passa ao próximo vivo (`markDead`).
+        const single = spread.length === 1 && me === pl;
+        for (const v of spread) v.dots.push({ src: me, share, single, left: DOT_TICKS });
         break;
+      }
       case 'defDebuff':
         const tune = sp.tune ?? EFFECT_TUNE;
         for (const v of spread) {
@@ -270,27 +288,21 @@ export function* groupFightSteps(
           else v.nVuln += share;
         }
         break;
-      case 'heal':
-        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
-        break;
       case 'shield':
         if (sp.effect === 'hot') {
-          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
-          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, me)) * me.pts);
-          me.nHot += 3;
-          for (let k = 1; k <= 3; k++) {
-            timed.push({ t: t0 + iv * k, fn: () => { me.nHot--; if (me.dead === Infinity) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + pulse) / me.pts; } });
-          }
+          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem RECEBE.
+          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, rx)) * rx.pts);
+          // §334: os pulsos saem no começo dos 3 próximos golpes de quem RECEBE (`tickOwnTurn`), não num relógio
+          rx.nHot += DOT_TICKS;
+          rx.hots.push({ pulse, left: DOT_TICKS });
           break;
         }
-        me.shield = (Math.round(me.shield * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
+      case 'heal':
       case 'atkBuff':
-        me.nAtk += Eb;
-        break;
       case 'spdBuff':
-        me.nSpd += Eb;
-        me.next = Math.min(me.next, t0 + iv / 2);
+        aplicarEspecialPessoal(rx, sp, scale, hitsOn(tgt, rx), t0, interval(rx.c.spd));
         break;
     }
   };
@@ -301,12 +313,24 @@ export function* groupFightSteps(
     for (const f of all) {
       if (f.hp <= EPS && f.dead === Infinity) {
         f.dead = t;
+        // §334: o DoT de alvo único do jogador não se perde: o que falta passa ao próximo vivo (tica nos golpes dele)
+        const rest = f.dots.filter((d) => d.single && d.left > 0);
+        const nx = rest.length ? target() : undefined;
+        if (nx && nx !== f) for (const d of rest) nx.dots.push({ ...d });
+        f.dots = [];
+        f.hots = [];
+        f.nHot = 0;
         yield ev('ko', f.who, 0);
       }
     }
   }
   function* tryCast(me: G, tt: number): Generator<GroupEvent, void, number | undefined> {
     if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026: "Sim, o especial também"): lançar o especial também é turno do afetado. DoT primeiro, depois a
+      // cura contínua, no começo da ação e antes de o especial sair; quem cai no tick não lança.
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const e = ev('cast', me.who, 0, me.casts - 1);
@@ -336,6 +360,8 @@ export function* groupFightSteps(
     for (let i = timed.length - 1; i >= 0; i--) if (timed[i].t - t < EPS) timed.splice(i, 1)[0].fn();
     for (const me of all) {
       if (me.dead < Infinity || me.next - t >= EPS) continue;
+      // §334: DoT e cura contínua tocam no COMEÇO do turno do afetado; quem cai no tick não golpeia
+      if (tickOwnTurn(me)) { me.next = t + interval(me.c.spd); continue; }
       const v = me === pl ? target() : pl;
       if (!v) continue;
       let mulN = 1;
@@ -343,7 +369,7 @@ export function* groupFightSteps(
       if (v.nVuln > EPS) { const x = Math.min(1, v.nVuln); mulN += x; v.nVuln -= x; }
       const hs = opts.hitScale ? opts.hitScale(me.who, me.nHit) : 1;
       me.nHit++;
-      hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack');
+      hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;

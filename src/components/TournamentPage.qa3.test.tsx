@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -26,7 +26,7 @@ describe('Desafiar não abre dois duelos ao mesmo tempo', () => {
     }));
     render(<TournamentPage
       saveId={'a'.repeat(32)} petStage="rookie" onMatchPlayed={() => {}} trophies={[]} language="pt-BR"
-      emblems={0} onEarnEmblems={() => {}} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)}
+      emblems={0} onEarnEmblems={() => {}} totalXP={xpForLevel(BOND_RANKED_MIN_LEVEL)}
     />);
     const botoes = await waitFor(() => {
       const b = screen.getAllByRole('button', { name: /^Desafiar Op/ });

@@ -5146,6 +5146,12 @@ select:focus-visible {
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
   --sm2-wood-ink: #f8ecd2;
+  /* METAIS DO PÓDIO (§326): prata e bronze do pódio do ranking. Objeto físico como a madeira — mesmo valor nos dois temas.
+     Antes a prata era `muted` (lia como desabilitado) e o bronze era `wood` (a faixa Madeira). O ouro é o `gold-fill` do tema. */
+  --sm2-silver-fill: #A9B8BC;
+  --sm2-on-silver: #0E2422;
+  --sm2-bronze-fill: #8E4A2B;
+  --sm2-on-bronze: #FFFFFF;
   /* perigo */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
@@ -5209,6 +5215,12 @@ select:focus-visible {
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
   --sm2-wood-ink: #f8ecd2;
+  /* METAIS DO PÓDIO (§326): prata e bronze do pódio do ranking. Objeto físico como a madeira — mesmo valor nos dois temas.
+     Antes a prata era `muted` (lia como desabilitado) e o bronze era `wood` (a faixa Madeira). O ouro é o `gold-fill` do tema. */
+  --sm2-silver-fill: #A9B8BC;
+  --sm2-on-silver: #0E2422;
+  --sm2-bronze-fill: #8E4A2B;
+  --sm2-on-bronze: #FFFFFF;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -5781,7 +5793,7 @@ select:focus-visible {
 .sm2-corner-link:active { transform: scale(.94); }
 /* Seletor de idioma da 1ª abertura (SeletorIdiomaAbertura): o tap-highlight é transparente no app todo, então sem isto o toque
    não mostrava nada até a tela trocar (bug 13/11/2026). Só cor, sem movimento: vale também em movimento reduzido. */
-.sm2-idioma-opcao { touch-action: manipulation; }
+.sm2-idioma-opcao { touch-action: none; }
 .sm2-idioma-opcao:active, .sm2-idioma-opcao[data-pressed] { background: #fff3 !important; border-color: #fff !important; }
 .sm2-area-back:active { transform: scale(.94); }
 
@@ -5904,7 +5916,8 @@ select:focus-visible {
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
   .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
-  .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled) { transform: none; } /* CtaButton */
+  .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled), .sm2-cta[data-cta-state="pressed"]:not(:disabled) { transform: none; } /* CtaButton */
+  .sm2-cta-texto { transition: none; } /* CtaTextButton */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -5914,6 +5927,7 @@ select:focus-visible {
      bloco novo: acrescente a regra AQUI. */
   /* "+N EXP": sem deslize — aparece parado no centro, a pausa de 1 s fica. */
   .sm-xp-gain { animation-name: sm-xp-gain-still !important; transform: translateX(-50%) !important; }
+  .sm-alvo-aliado [data-stage-ally-mark] { animation: none !important; } /* §327: marca de alvo aliado sem pulso */
   .sm-talent-backdrop > [role="dialog"] { animation: none !important; }
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
@@ -5958,7 +5972,7 @@ select:focus-visible {
   .sm-bs-cutname { animation-name: sm-bs-cutdim !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
   /* PR11: o loop de status para; o círculo de cast do especial vira o flash único; o selo de status só aparece. */
-  .sm-bs-sheet, .sm-bs-stpop { animation: none !important; }
+  .sm-bs-sheet { animation: none !important; }
   .sm-bs-circle { animation-name: sm-bs-flash !important; }
   /* Combate maior, energia e torcida (04/10/2026): sem bouncing, sem brilho em movimento, sem pulo do mascote; o balao so pisca. */
   .sm-bs-bounce, .sm-cheer-jump, .sm-bs-dodge-hint, .sm-bs-charge, .sm-bs-energy-full > i { animation: none !important; }
@@ -8405,6 +8419,9 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-guild-btn { width: 100%; font-size: var(--sm2-text-sm); padding: 0 12px; }
 .sm2-guild-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .sm2-guild-btn[disabled] { cursor: default; }
+/* §321 (13/11/2026, pedido do dono): o botão de cada linha do "Convidar para o clã" tem UMA largura para todos os estados
+   (Convidar / Já está na roda / Já tem clã / Convite enviado). Rótulo maior quebra em 2 linhas; alvo segue >= 44 px (sm2Button sm). */
+.sm2-guild-invite-btn { width: 11.5rem; max-width: 42vw; flex: 0 0 auto; white-space: normal; text-align: center; }
 
 /* ── BOSQUE da Guilda (fatia B1, 29/09/2026) ─────────────────────────────────
    O visor é o `.sm2-viewport-screen` de sempre (pixel art só dentro do vidro);
@@ -8792,9 +8809,9 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 
 /* FX DE STATUS E CÍRCULO DE CAST (PR11, `components/games/BattleStage.tsx`). Só tokens e a arte de `combate-v3`.
    `.sm-bs-sheet`: a folha de loop 3×2 (128 px por quadro) corre em 6 passos secos — sem interpolar, é pixel art.
-   `.sm-bs-circle`: o círculo de cast do especial no chão. `.sm-bs-stpop`: o selo de status aparece (e fica).
-   Com `prefers-reduced-motion`: a folha para (e o JS nem a monta), o círculo vira o flash único (`sm-bs-flash`) e o
-   selo só aparece — a informação (glifo, forma, texto, turnos) é a mesma (regras no bloco canônico lá embaixo). */
+   `.sm-bs-circle`: o círculo de cast do especial no chão. (O `.sm-bs-stpop` do selo de status saiu com o selo, §331.)
+   Com `prefers-reduced-motion`: a folha para (e o JS nem a monta) e o círculo vira o flash único (`sm-bs-flash`) —
+   o marcador fica no 1º quadro, com o mesmo `aria-label` (efeito + turnos) (regras no bloco canônico lá embaixo). */
 @keyframes sm-bs-sheet {
   0% { background-position: 0% 0%; }
   16.66% { background-position: 50% 0%; }
@@ -8812,8 +8829,6 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: scale(1.15); }
 }
 .sm-bs-circle { animation: sm-bs-circle var(--bs-dur, 1200ms) ease-out var(--bs-delay, 0ms) 1 both; }
-@keyframes sm-bs-stpop { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
-.sm-bs-stpop { animation: sm-bs-stpop 260ms ease-out 1 both; }
 
 /* CENA DE COMBATE MAIOR, ENERGIA E TORCIDA (04/10/2026 — REGISTRO §20.10).
    Tudo por token (`--sm2-*`), nenhuma cor solta. O bouncing idle, o brilho do lutador com energia cheia,
@@ -9078,6 +9093,138 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* Podio do ranking (RankingList): entrada em subida, so sem reduced-motion. */
 @keyframes sm-rank-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sm-rank-podium li{animation:sm-rank-rise .4s ease-out both}.sm-rank-podium li[data-place="1"]{animation-delay:.12s}.sm-rank-podium li[data-place="3"]{animation-delay:.2s}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PÓDIO DO RANKING (`components/RankingPodium.tsx`, REGISTRO §326, 13/11/2026)
+   Grade 2º · 1º · 3º (o DOM fica 1 · 2 · 3). O 1º: coluna 1,25×, pedestal mais alto, coroa, medalha 44, nome 16 e pontos 20 em
+   `gold-ink`, brilho de fundo. Pedestal com PROPORÇÃO fixa (3:2 · 8:5 · 2:1): a arte `podio-N.png` entra com `contain` ancorada
+   embaixo e a altura não pula quando ela chega. Sem arte: metal em gradiente de tokens + a lasca turquesa (o acento de identidade).
+   Só tokens; `color-mix` faz luz (`viewport-ink`) e sombra (`viewport-bg`) do próprio metal — os dois são fixos nos dois temas,
+   então o metal não inverte no escuro. */
+.sm-rank-podium {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  align-items: end;
+  column-gap: var(--sm2-space-2);
+  margin: 0;
+  padding: var(--sm2-space-2) 0 0;
+  list-style: none;
+  /* a "linha do chão": o pódio pousa numa base, não flutua sobre a lista */
+  border-bottom: 2px solid var(--sm2-line);
+}
+.sm-rank-podium__slot {
+  --pod-fill: var(--sm2-silver-fill);
+  --pod-ink: var(--sm2-on-silver);
+  --pod-ratio: 8 / 5;
+  position: relative;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  list-style: none;
+}
+.sm-rank-podium__slot[data-place="1"] { grid-column: 2; --pod-fill: var(--sm2-gold-fill); --pod-ink: var(--sm2-on-gold); --pod-ratio: 3 / 2; }
+.sm-rank-podium__slot[data-place="2"] { grid-column: 1; }
+.sm-rank-podium__slot[data-place="3"] { grid-column: 3; --pod-fill: var(--sm2-bronze-fill); --pod-ink: var(--sm2-on-bronze); --pod-ratio: 2 / 1; }
+/* o brilho do vencedor: um halo de ouro atrás da coroa e da medalha (decorativo, fica atrás do texto) */
+.sm-rank-podium__slot[data-place="1"]:not([data-podium-empty])::before {
+  content: '';
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: -12px;
+  height: 96px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sm2-gold-fill) 34%, transparent), transparent);
+  pointer-events: none;
+}
+.sm-rank-podium__head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sm2-space-half);
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--sm2-space-half) var(--sm2-space-2);
+  text-align: center;
+}
+.sm-rank-podium__crown { display: block; line-height: 0; margin-bottom: -2px; }
+.sm-rank-podium__crown img { display: block; width: 40px; height: 30px; object-fit: contain; }
+.sm-rank-podium__medal {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: var(--sm2-text-md);
+  font-weight: 700;
+  line-height: 1;
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__medal { width: 44px; height: 44px; font-size: var(--sm2-text-lg); }
+.sm-rank-podium__medal[data-podium-medal="css"] {
+  color: var(--pod-ink);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-ink)) 0%, var(--pod-fill) 55%, color-mix(in srgb, var(--pod-fill) 70%, var(--sm2-viewport-bg)) 100%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-bg)), 0 1px 0 color-mix(in srgb, var(--sm2-viewport-bg) 25%, transparent);
+}
+.sm-rank-podium__medal img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sm-rank-podium__name {
+  width: 100%;
+  min-width: 0;
+  font-size: var(--sm2-text-sm);
+  font-weight: 700;
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-ink);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__name { font-size: var(--sm2-text-md); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__name { color: var(--sm2-primary-ink); }
+.sm-rank-podium__score {
+  font-size: var(--sm2-text-md);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--sm2-ink);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__score { font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-gold-ink); }
+.sm-rank-podium__prize { font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+.sm-rank-podium__pedestal {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--pod-ratio);
+}
+.sm-rank-podium__pedestal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.sm-rank-podium__pedestal[data-podium-pedestal="css"] {
+  border-radius: var(--sm2-radius-sm) var(--sm2-radius-sm) 0 0;
+  /* tampo claro de 6px, face do metal, base escurecida */
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-ink)) 0 6px,
+    var(--pod-fill) 6px,
+    color-mix(in srgb, var(--pod-fill) 72%, var(--sm2-viewport-bg)) 100%);
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg));
+}
+/* a lasca turquesa no meio da face: o único acento de identidade do pódio em CSS */
+.sm-rank-podium__pedestal[data-podium-pedestal="css"]::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -25%) rotate(45deg);
+  background: var(--sm2-primary-ink);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sm2-primary-ink) 70%, transparent);
+}
+.sm-rank-podium__slot[data-place="1"] .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after { width: 10px; height: 10px; }
+/* a posição do jogador: o anel turquesa do idioma de seleção, também no pedestal */
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg)), 0 0 0 2px var(--sm2-primary-ink); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="art"] { box-shadow: none; outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
+/* lugar vazio: o mesmo pedestal, apagado (a arte também), e nada de nome nem pontos */
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__pedestal,
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__medal { opacity: .28; filter: grayscale(1); }
+.sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__name { color: var(--sm2-muted); font-weight: 400; }
 /* o corte em movimento reduzido mora no bloco canonico (nao abrir outro @media prefers-reduced-motion aqui). */
 
 /* Sequencia do onboarding (SequenciaPlayer): keyframes; o corte em movimento reduzido de .seq-anim mora no bloco canonico. */
@@ -9188,6 +9335,22 @@ button.sm2-hex-row {
 .sm2-hex-cost-cell[data-have="true"] .sm2-num { color: var(--sm2-ink); }
 .sm2-hex-plus { align-self: flex-start; line-height: 32px; }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
+/* 13/11/2026 (dono): HEX possuído = linha com UM botão grande que alterna Equipar ⇄ Desequipar (o "Esvaziar a porta" saiu).
+   O botão é do kit (`.sm2-kit-btn`), não o `CtaButton` do site: alvo 56 (maior que a pílula Forjar de 44), largura mínima fixa
+   para o texto não pular ao alternar. Ocioso = primário. Equipado = quieto e distinto: sem fill, contorno e tinta `primary-ink`,
+   duas linhas (✓ Equipado em cima, a ação Desequipar embaixo). */
+.sm2-hex-owned-row { min-height: 72px; padding: var(--sm2-space-2) var(--sm2-space-2) var(--sm2-space-2) var(--sm2-space-3); }
+.sm2-hex-owned-row .sm2-hex-row-name { white-space: normal; overflow-wrap: anywhere; font-size: var(--sm2-text-md); }
+.sm2-hex-equip-btn {
+  flex: none; min-height: 56px; min-width: 132px; padding: 0 var(--sm2-space-4);
+  flex-direction: column; gap: 0; font-weight: 700; line-height: 1.15;
+  &[data-state="equipped"] {
+    background-color: transparent; color: var(--sm2-primary-ink); box-shadow: inset 0 0 0 1px var(--sm2-primary-ink);
+    &:active { background-color: var(--sm2-surface-2); }
+  }
+}
+.sm2-hex-equip-state { display: inline-flex; align-items: center; gap: var(--sm2-space-half); font-size: var(--sm2-text-xs); font-weight: 500; }
+.sm2-hex-equip-action { font-size: var(--sm2-text-md); }
 
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
    Campo de elemento, opção de menu/lista e essência: reset explícito de botão (sem `all: unset`), tudo por token,
@@ -9220,31 +9383,54 @@ button.sm2-hex-row {
   background: none; border: 0; border-radius: var(--sm2-radius-md);
 }
 
-/* ── Botão especial CTA (12/11/2026): arte do site do beta em 9-slice; só tokens sm2 no resto ──────────────────
-   Moldura = `border-image` (pontas com cristal/folhas não esticam; o miolo turquesa estica). Texto claro sobre o miolo escuro nos dois
-   temas (o miolo é sempre escuro). Pressed = desce 1px e escurece; disabled = dessatura; foco = anel `primary-ink` com fresta. */
+/* ── Botão especial CTA (12/11/2026): MESMO botão do site do beta (`site-beta/src/styles/site.css` `.botao.primario`, arte `public/dono/
+   botao*.webp`, 551x180, fatia 62 74 fill) em 9-slice; só tokens sm2 no resto. Um arquivo por estado, como no site: normal, hover
+   (`botao-hover`), pressionado (`botao-press`, desce 2px), desabilitado (`botao-off`, moldura cinza); foco = arte de hover + brilho
+   turquesa (igual ao site). Borda 19px 23px = a variante de 56 px de altura do site (`.fixo .botao.primario`). */
 .sm2-cta {
-  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 44px; margin: 0;
-  padding: 0 var(--sm2-space-2); cursor: pointer; background: transparent;
-  border-style: solid; border-width: 14px 36px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 34 92 fill / 14px 36px stretch;
+  box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 76px; min-width: 44px;
+  /* geometria do CTA fixo do site do beta no celular (site-beta/src/styles/site.css:1181 `.fixo .botao.primario.fixo-cta`, 13/11/2026): 76 px, borda 24/28, texto 20 px */
+  margin: 0; padding: 0 var(--sm2-space-2); cursor: pointer; background: #0F2A29 padding-box;
+  border-style: solid; border-width: 24px 28px; border-image: url('./assets/soulmon/ui/btn-cta.webp') 62 74 fill / 24px 28px stretch;
   border-image-outset: 0; image-rendering: pixelated;
-  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 700; line-height: var(--sm2-leading-body);
+  color: #F4FBF8; font-family: var(--sm2-font-text); font-size: var(--sm2-text-lg); font-weight: 700; line-height: 1;
   text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
-  transition: transform var(--sm2-dur-tap) var(--sm2-ease), filter var(--sm2-dur-tap) var(--sm2-ease);
+  transition: transform var(--sm2-dur-tap) var(--sm2-ease);
   &[data-cta-width="full"] { width: 100%; }
   &[data-cta-width="auto"] { min-width: 200px; }
-  &:active:not(:disabled) { transform: translateY(1px); filter: brightness(.82); }
-  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
-  &:disabled { cursor: not-allowed; filter: grayscale(1) brightness(.7); opacity: .75; transform: none; }
+  /* Tom `acao` (13/11/2026): a ação procurada já repousa na arte cheia (a de hover); pressionado e desabilitado (abaixo, mesma
+     especificidade ou maior) seguem com a arte própria. Fica ANTES de `:disabled` de propósito: a ordem decide o empate. */
+  &[data-cta-tone="acao"] { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); }
+  @media (hover: hover) { &:hover:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); } }
+  &:active:not(:disabled), &[data-cta-state="pressed"]:not(:disabled) { transform: translateY(2px); border-image-source: url('./assets/soulmon/ui/btn-cta-press.webp'); }
+  &:focus-visible { outline: none; border-image-source: url('./assets/soulmon/ui/btn-cta-hover.webp'); filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
+  &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-cta-off.webp'); color: #C9D2D0; transform: none; }
 }
-.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2); text-align: center; }
+.sm2-cta-label { display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
+/* Secundária do CTA (`CtaTextButton`, §316c, 13/11/2026, pedido do dono): ao lado de um `.sm2-cta` a outra ação é SÓ TEXTO —
+   sem fundo, sem borda, cor quieta; o sublinhado aparece ao tocar (e no hover/foco) como affordance; alvo >= 44. Fundo escuro
+   (sala de descanso) usa `--sm2-viewport-ink`. */
+.sm2-cta-texto {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-2);
+  min-height: 44px; min-width: 44px; margin: 0; padding: 0 var(--sm2-space-3); justify-self: center; align-self: center;
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--sm2-muted); font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 600; line-height: var(--sm2-leading-body);
+  text-decoration: underline 1.5px; text-decoration-color: transparent; text-underline-offset: 4px;
+  transition: text-decoration-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-cta-width="full"] { width: 100%; }
+  &[data-cta-surface="escuro"] { color: var(--sm2-viewport-ink); }
+  @media (hover: hover) { &:hover:not(:disabled) { text-decoration-color: currentColor; } }
+  &:active:not(:disabled) { text-decoration-color: currentColor; color: var(--sm2-ink); }
+  &[data-cta-surface="escuro"]:active:not(:disabled) { color: var(--sm2-viewport-ink); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; border-radius: var(--sm2-radius-sm); text-decoration-color: currentColor; }
+  &:disabled { cursor: not-allowed; opacity: .55; }
+}
 
 /* ── Lista de poções da Vesca (12/11/2026): item, ingredientes com TEM/PRECISA, chip de filtro. Só tokens sm2. */
 .sm2-pocao-item {
   display: grid; gap: var(--sm2-space-2); padding: var(--sm2-space-2) var(--sm2-space-3);
   border-radius: var(--sm2-radius-md); background: var(--sm2-surface); border: 1.5px solid var(--sm2-line);
   &[data-can-craft="true"] { border-color: var(--sm2-primary-ink); background: var(--sm2-primary-soft); }
-  &[data-on="true"] { box-shadow: inset 0 0 0 2px var(--sm2-primary-ink); }
 }
 .sm2-pocao-head { display: flex; align-items: center; gap: var(--sm2-space-2); }
 .sm2-pocao-ing {
@@ -9325,3 +9511,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* BlockedActionModal (09/11/2026): o nome do lugar tocavel em "pode ser obtido em <lugar>". */
 .sm2-blocked-link { display: inline; padding: 0; min-height: 0; border: 0; background: none; color: var(--sm2-primary-ink); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 
+
+/* §327 (13/11/2026): a marca de ALVO ALIADO (`games/AlvoAliadoMarca.tsx`) — losango turquesa contínuo com "+", diferente da
+   mira dourada tracejada do inimigo. Foco de teclado visível no mesmo turquesa; o pulso some com movimento reduzido (regra no bloco canônico). */
+.sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
+@keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }

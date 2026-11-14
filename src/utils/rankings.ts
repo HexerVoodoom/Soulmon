@@ -23,7 +23,7 @@ export function formatRankTime(ms: number): string {
 export type RankingPeriod = 'weekly' | 'monthly';
 export type RankingTierId = 'madeira' | 'bronze' | 'prata' | 'ouro' | 'platina' | 'diamante';
 
-export interface RankingRow { rank: number; name: string; score: number; me: boolean; /** Só `endless-rift`: 1..3 = esta linha recebe prêmio (simulados não contam; o rótulo "#4" pode levar o 1º prêmio). */ prizePlace?: number }
+export interface RankingRow { rank: number; name: string; /** §321: nome do clã (ausente = sem clã). */ guildName?: string; score: number; me: boolean; /** Só `endless-rift`: 1..3 = esta linha recebe prêmio (simulados não contam; o rótulo "#4" pode levar o 1º prêmio). */ prizePlace?: number }
 /** `tier` é `null` nos jogos de tempo (sem faixa: o tempo se compara só dentro da mesma grade). */
 export interface RankingMe { score: number; tier: RankingTierId | null; rank: number | null }
 export interface RankingBoard {

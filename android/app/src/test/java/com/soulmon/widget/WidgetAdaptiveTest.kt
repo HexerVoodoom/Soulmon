@@ -76,4 +76,38 @@ class WidgetAdaptiveTest {
         assertEquals(Shape.VERTICAL, WidgetAdaptive.chooseShape(200, 200))
         assertEquals(Shape.HORIZONTAL, WidgetAdaptive.chooseShape(0, 0))
     }
+
+    // ---- Widget sem moldura (clear), beta12 A2: 1 celula de largura x 2+ de altura = vertical, fala abaixo. ----
+    @Test fun clearShapeFollowsTheCellsOfTheLauncher() {
+        val c = WidgetAdaptive.ClearShape.COMPACT
+        val v = WidgetAdaptive.ClearShape.VERTICAL
+        val f = WidgetAdaptive.ClearShape.FULL
+        // Horizontal igual a antes: o padrao 3x2 (180x110) e o 0x0 do launcher que nao informa nada.
+        assertEquals(f, WidgetAdaptive.chooseClearShape(0, 0))
+        assertEquals(f, WidgetAdaptive.chooseClearShape(180, 110))
+        assertEquals(f, WidgetAdaptive.chooseClearShape(250, 130))
+        assertEquals(f, WidgetAdaptive.chooseClearShape(140, 70))
+        // So a criatura: 1x1 e as faixas baixas (ate 2x1, 3x1).
+        assertEquals(c, WidgetAdaptive.chooseClearShape(40, 40))
+        assertEquals(c, WidgetAdaptive.chooseClearShape(110, 40))
+        assertEquals(c, WidgetAdaptive.chooseClearShape(180, 40))
+        assertEquals(c, WidgetAdaptive.chooseClearShape(30, 30))
+        // Vertical: 1 celula de largura e 2, 3 ou 4 de altura; e o quadrado 2x2.
+        assertEquals(v, WidgetAdaptive.chooseClearShape(40, 110))
+        assertEquals(v, WidgetAdaptive.chooseClearShape(60, 180))
+        assertEquals(v, WidgetAdaptive.chooseClearShape(50, WidgetAdaptive.CLEAR_MAX_HEIGHT_DP))
+        assertEquals(v, WidgetAdaptive.chooseClearShape(110, 110))
+        assertEquals(c, WidgetAdaptive.chooseClearShape(40, 109))
+    }
+
+    @Test fun clearHeightCeilingIsFourCells() {
+        assertEquals(70 * 4 - 30, WidgetAdaptive.CLEAR_MAX_HEIGHT_DP)
+    }
+
+    @Test fun everyClearShapeHasAKey() {
+        assertEquals(
+            WidgetAdaptive.ClearShape.values().toSet(),
+            WidgetAdaptive.CLEAR_KEYS.map { it.shape }.toSet(),
+        )
+    }
 }

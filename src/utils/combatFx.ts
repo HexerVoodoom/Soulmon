@@ -18,6 +18,7 @@
  * Este arquivo só decide QUAL arte e QUANTO tempo; não desenha nada.
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
+import { ATAQUE_TIPO_MOTOR, ataqueTipoOverride } from './soulmonOverrides';
 import { lineElementOf } from './spriteElement';
 import { rosterEntryOfKey } from './enemyRoster';
 import { attackFx, type AttackFxState } from './attackFxArt';
@@ -153,7 +154,10 @@ export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 
  * levando o mix {ranged,melee} × {corte,splash} a ~25% cada (REGISTRO §282; `mixAtaques.test.ts`). NÃO vale para o jogador, os 5 iniciais nem o PvP.
  */
 export const FOE_MELEE_BASICA: ReadonlySet<string> = new Set(['agua', 'vida', 'som', 'ar', 'luz', 'tempo']);
-export function foeStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
+/** `formKey` (chave do bestiário do inimigo): o tipo escolhido pelo dono na Tabela de Soulmons (`ATAQUE_TIPO_OVERRIDE`, REGISTRO §333) manda no BÁSICO. */
+export function foeStrikeForm(element: string | undefined | null, role: SkillRole, formKey?: string | null): StrikeForm {
+  const dono = role === 'basica' ? ataqueTipoOverride(formKey) : undefined;
+  if (dono) return ATAQUE_TIPO_MOTOR[dono].forma;
   if (role === 'basica' && element && FOE_MELEE_BASICA.has(element)) return 'melee';
   return elementStrikeForm(element, role);
 }
@@ -309,8 +313,12 @@ interface Bilingual { readonly en: string; readonly pt: string }
 export interface StatusFxDef {
   /** Id do glifo do HUD (`combate-v3/status/<id>.png`), por variante; `_` é o padrão. */
   readonly glyph: Readonly<Record<string, string>>;
-  /** Folha 3×2 de 128 px do FX em loop sobre o corpo (`combate-v3/fx/<id>.png`); `null` = sem loop. */
-  readonly loop: string | null;
+  /**
+   * Folha 3×2 de 128 px do FX em loop (`combate-v3/fx/<id>.png`), por variante como o `glyph`; `_` é o padrão e
+   * `null` = sem loop. Desde 13/11/2026 (arte nova sem identidade, REGISTRO §336) cada efeito tem a SUA folha: lento,
+   * defesa em baixa, ataque/velocidade em alta e cura deixaram de pegar emprestada a do buff/debuff genérico.
+   */
+  readonly loop: Readonly<Record<string, string>> | null;
   /** Peça ESTÁTICA existente sobre o corpo (`fx/fx-heal`, `fx/fx-shield`); `null` = nenhuma. */
   readonly still: string | null;
   /** A FORMA do selo em texto (seta/sinal): distingue o efeito sem cor e é o fallback quando a arte não carregou. */
@@ -329,62 +337,65 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
     // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
     glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
-    loop: 'fx-buff-loop-sheet', still: null, mark: '▲',
+    // ataque (e físico/mágico, mesma mecânica) e velocidade (e aceleração) têm folha própria; o resto usa o buff genérico
+    loop: { _: 'fx-buff-loop-sheet', atk: 'fx-buff-atk-loop-sheet', fisico: 'fx-buff-atk-loop-sheet', magico: 'fx-buff-atk-loop-sheet', spd: 'fx-buff-spd-loop-sheet', aceleracao: 'fx-buff-spd-loop-sheet' },
+    still: null, mark: '▲',
     label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
     short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
   },
   debuff: {
     glyph: { _: 'st-debuff-def', def: 'st-debuff-def' },
-    loop: 'fx-debuff-loop-sheet', still: null, mark: '▼',
+    loop: { _: 'fx-debuff-loop-sheet', def: 'fx-debuff-def-loop-sheet' }, still: null, mark: '▼',
     label: { _: L('Weakened', 'Enfraquecido'), def: L('Defense down', 'Defesa em baixa') },
     short: { _: L('DOWN', 'BAIXA'), def: L('DEF', 'DEF') },
   },
   maldicao: {
     glyph: { _: 'st-maldicao' },
-    loop: 'fx-maldicao-loop-sheet', still: null, mark: '×',
+    loop: { _: 'fx-maldicao-loop-sheet' }, still: null, mark: '×',
     label: { _: L('Cursed', 'Maldição') },
     short: { _: L('CURSE', 'MALD.') },
   },
   dot: {
     glyph: { _: 'st-dot' },
-    loop: 'fx-dot-loop-sheet', still: null, mark: '◆',
+    loop: { _: 'fx-dot-loop-sheet' }, still: null, mark: '◆',
     label: { _: L('Damage over time', 'Dano contínuo') },
     short: { _: L('DoT', 'DoT') },
   },
   // Glifo e loop próprios instalados em 09/11/2026 (REGISTRO §228); a forma + texto (`mark`) segue como fallback.
   queimadura: {
     glyph: { _: 'st-queimadura' },
-    loop: 'fx-queimadura-loop-sheet', still: null, mark: '♨',
+    loop: { _: 'fx-queimadura-loop-sheet' }, still: null, mark: '♨',
     label: { _: L('Burn', 'Queimadura') },
     short: { _: L('BURN', 'QUEIM.') },
   },
   veneno: {
     glyph: { _: 'st-veneno' },
-    loop: 'fx-veneno-loop-sheet', still: null, mark: '☣',
+    loop: { _: 'fx-veneno-loop-sheet' }, still: null, mark: '☣',
     label: { _: L('Poison', 'Veneno') },
     short: { _: L('PSN', 'VEN.') },
   },
   silencio: {
     glyph: { _: 'st-silencio', ofuscado: 'st-ofuscado', curtoCircuito: 'st-curto-circuito', atordoado: 'st-atordoado', selado: 'st-selado' },
-    loop: 'fx-silencio-loop-sheet', still: null, mark: '∅',
+    loop: { _: 'fx-silencio-loop-sheet' }, still: null, mark: '∅',
     label: { _: L('Silenced', 'Silêncio'), ofuscado: L('Dazzled', 'Ofuscado'), curtoCircuito: L('Short circuit', 'Curto-circuito'), atordoado: L('Stunned', 'Atordoado'), selado: L('Sealed', 'Selado') },
     short: { _: L('MUTE', 'MUDO'), ofuscado: L('DAZE', 'OFUSC.'), curtoCircuito: L('SHORT', 'CURTO'), atordoado: L('STUN', 'ATORD.'), selado: L('SEAL', 'SELO') },
   },
   lento: {
     glyph: { _: 'st-velocidade', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
-    loop: 'fx-debuff-loop-sheet', still: null, mark: '▽',
+    loop: { _: 'fx-lento-loop-sheet' }, still: null, mark: '▽',
     label: { _: L('Speed down', 'Velocidade em baixa'), peso: L('Weighed down', 'Peso'), retardo: L('Time lag', 'Retardo'), ferrugem: L('Rust', 'Ferrugem'), distorcao: L('Warped', 'Distorção') },
     short: { _: L('SLOW', 'LENTO'), peso: L('HEAVY', 'PESO'), retardo: L('LAG', 'RETARD.'), ferrugem: L('RUST', 'FERR.'), distorcao: L('WARP', 'DIST.') },
   },
   cura: {
     glyph: { _: 'st-cura' },
-    loop: null, still: 'fx-heal', mark: '+',
+    // folha própria desde 13/11/2026 (§336); `fx-heal` segue como a peça estática (fallback sem loop)
+    loop: { _: 'fx-cura-loop-sheet' }, still: 'fx-heal', mark: '+',
     label: { _: L('Healing', 'Cura') },
     short: { _: L('HEAL', 'CURA') },
   },
   hot: {
     glyph: { _: 'st-hot', seiva: 'st-seiva', poDeFada: 'st-po-de-fada', folego: 'st-folego' },
-    loop: 'fx-regen-loop-sheet', still: 'fx-heal', mark: '+↑',
+    loop: { _: 'fx-regen-loop-sheet' }, still: 'fx-heal', mark: '+↑',
     label: { _: L('Healing over time', 'Cura contínua'), seiva: L('Sap', 'Seiva'), poDeFada: L('Fairy dust', 'Pó de fada'), folego: L('Second wind', 'Fôlego') },
     short: { _: L('HoT', 'HoT'), seiva: L('SAP', 'SEIVA'), poDeFada: L('DUST', 'PÓ'), folego: L('WIND', 'FÔL.') },
   },
@@ -401,6 +412,14 @@ export function statusGlyphId(kind: StatusFxKind, variant?: StatusVariant): stri
   const g = STATUS_FX[kind].glyph;
   return (variant && g[variant]) || g._;
 }
+/** Id da folha em loop do efeito (com a variante, se houver; sem ela, o padrão); `null` = o efeito não tem loop. */
+export function statusLoopId(kind: StatusFxKind, variant?: StatusVariant): string | null {
+  const l = STATUS_FX[kind].loop;
+  if (!l) return null;
+  return (variant && l[variant]) || l._ || null;
+}
+/** Todas as folhas em loop citadas na tabela (todas as variantes), sem repetição. */
+export const STATUS_LOOP_IDS: readonly string[] = [...new Set(Object.values(STATUS_FX).flatMap((d) => (d.loop ? Object.values(d.loop) : [])))];
 /** Nome completo / curto do efeito na língua pedida. */
 export function statusLabel(kind: StatusFxKind, isPt: boolean, variant?: StatusVariant): string {
   const l = STATUS_FX[kind].label;
@@ -468,8 +487,41 @@ export function statusFxOfFamily(family: SpecialFamily | null | undefined, escol
   return family ? FAMILY_STATUS[family] ?? null : null;
 }
 
-/** Quantos efeitos cabem como selo por lutador; o resto vira "+k". */
+/** O teto de marcadores de efeito por canto do sprite: até 3 debuffs e 3 buffs (dono, 13/11/2026, §328 — sem "+k"). */
 export const MAX_STATUS_CHIPS = 3;
+
+/**
+ * O RECORTE de cada folha em loop quando ela vira marcador pequeno no canto do sprite (§328, dono 13/11/2026): a folha
+ * foi desenhada para cobrir o corpo (128 px por quadro, com muita borda vazia); no marcador mostra-se só a caixa que tem
+ * conteúdo em ALGUM dos 6 quadros (a união, alfa > 24), para o ícone ler grande e não "dançar" entre quadros.
+ * Medido nos PNGs de `assets/soulmon/combate-v3/fx/*-loop-sheet.png` (x, y, largura, altura no quadro de 128 px).
+ * Arte nova ou redesenhada: medir de novo (o teste só garante que toda folha usada tem recorte e que ele cabe no quadro).
+ */
+export const STATUS_LOOP_FRAME_PX = 128;
+export interface LoopCrop { readonly x: number; readonly y: number; readonly w: number; readonly h: number }
+// Remedido em 13/11/2026 nas 13 folhas novas (sem identidade, §336): união dos 6 quadros, alfa > 24.
+export const STATUS_LOOP_CROP: Readonly<Record<string, LoopCrop>> = {
+  'fx-buff-loop-sheet': { x: 36, y: 8, w: 56, h: 112 },
+  'fx-buff-atk-loop-sheet': { x: 24, y: 8, w: 79, h: 112 },
+  'fx-buff-spd-loop-sheet': { x: 8, y: 18, w: 112, h: 102 },
+  'fx-cura-loop-sheet': { x: 8, y: 13, w: 112, h: 107 },
+  'fx-debuff-loop-sheet': { x: 34, y: 8, w: 59, h: 112 },
+  'fx-debuff-def-loop-sheet': { x: 8, y: 14, w: 112, h: 106 },
+  'fx-dot-loop-sheet': { x: 21, y: 8, w: 85, h: 112 },
+  'fx-lento-loop-sheet': { x: 27, y: 8, w: 73, h: 112 },
+  'fx-maldicao-loop-sheet': { x: 8, y: 16, w: 112, h: 104 },
+  'fx-queimadura-loop-sheet': { x: 25, y: 8, w: 78, h: 112 },
+  'fx-regen-loop-sheet': { x: 28, y: 8, w: 71, h: 112 },
+  'fx-silencio-loop-sheet': { x: 8, y: 35, w: 112, h: 85 },
+  'fx-veneno-loop-sheet': { x: 25, y: 8, w: 78, h: 112 },
+};
+/**
+ * O lado do quadrado do recorte que vai ocupar o marcador inteiro. Arte ALTA e fina (buff, debuff, DoT: ~60 × 126 px) só
+ * no maior lado ficaria um palito de ~17 px num marcador de 36; então a altura usada é no máximo 1,5× a largura — o
+ * meio da arte enche o marcador e a ponta de cima/baixo (faísca, rastro) sai pela moldura.
+ */
+export const STATUS_LOOP_MAX_TALL = 1.5;
+export const statusLoopCropSide = (c: LoopCrop): number => Math.max(c.w, Math.min(c.h, c.w * STATUS_LOOP_MAX_TALL));
 
 /** Um efeito no lutador, como a cena o desenha. `turns` = o que falta (a contagem do selo). */
 export interface StageStatus {
@@ -485,13 +537,32 @@ export function statusTurnsFor(family: SpecialFamily, power: number): number {
   return Math.max(1, Math.round(SPECIAL_BUDGET_HITS * power));
 }
 
-/** Uma entrada do quadro: o efeito, de quem veio (`source`); quem o carrega é o índice do quadro. */
-export interface BoardEntry extends StageStatus { source: number }
+/**
+ * Uma entrada do quadro: o efeito, de quem veio (`source`); quem o carrega é o índice do quadro.
+ * `since` (dono, 13/11/2026): a ORDEM EM QUE O EFEITO COMEÇOU — carimbo crescente no quadro inteiro (o maior já usado + 1).
+ * Renovar ou recontar o mesmo efeito mantém o carimbo; é ele que ordena os selos na cena (`stageStatusOf`).
+ * É uma dobra pura (sem relógio): replay e ressimulação dão a mesma ordem.
+ */
+export interface BoardEntry extends StageStatus { source: number; since?: number }
 /** O quadro de efeitos de uma luta: índice 0 = o pet, 1+i = inimigo i. */
 export type StatusBoard = readonly (readonly BoardEntry[])[];
 
 export function emptyStatusBoard(nFoes: number): StatusBoard {
   return Array.from({ length: nFoes + 1 }, () => []);
+}
+
+/** O próximo carimbo de início (`since`): o maior do quadro + 1. */
+function nextSince(board: StatusBoard): number {
+  let m = 0;
+  for (const l of board) for (const e of l) if ((e.since ?? 0) > m) m = e.since ?? 0;
+  return m + 1;
+}
+
+/** Polaridade do efeito (dono, 13/11/2026): `buff` = a favor de quem carrega (o marcador do efeito vai ao canto de baixo à direita do sprite); `debuff` = contra (canto de cima à esquerda). DoT e controle são `debuff`; cura, HoT e escudo são `buff`. */
+export type StatusPolarity = 'buff' | 'debuff';
+const BENEFICIOS: readonly StatusFxKind[] = ['buff', 'cura', 'hot', 'escudo'];
+export function statusPolarity(kind: StatusFxKind): StatusPolarity {
+  return BENEFICIOS.includes(kind) ? 'buff' : 'debuff';
 }
 
 /** Conjurou o especial: põe o efeito em quem carrega (o próprio conjurador, o alvo único ou todos os alvos da área). */
@@ -504,11 +575,14 @@ export function castStatus(
   const turns = statusTurnsFor(c.family, c.power);
   const holders = fam.target === 'self' ? [c.caster] : (c.area && AREA_FAMILIES.includes(c.family) ? c.targets : c.targets.slice(0, 1));
   const next = board.map((l) => l.slice());
+  let since = nextSince(board);
   for (const h of holders) {
     if (!next[h]) continue;
-    // o mesmo efeito do mesmo conjurador renova (não empilha igual)
-    const rest = next[h].filter((e) => !(e.kind === fam.kind && e.variant === fam.variant && e.source === c.caster));
-    next[h] = [...rest, { kind: fam.kind, variant: fam.variant, turns, source: c.caster }];
+    // o mesmo efeito do mesmo conjurador renova (não empilha igual) e mantém o carimbo de início
+    const same = (e: BoardEntry) => e.kind === fam.kind && e.variant === fam.variant && e.source === c.caster;
+    const old = next[h].find(same);
+    const rest = next[h].filter((e) => !same(e));
+    next[h] = [...rest, { kind: fam.kind, variant: fam.variant, turns, source: c.caster, since: old?.since ?? since++ }];
   }
   return next;
 }
@@ -563,6 +637,7 @@ export function withRealFx(
   efeitoOn: (holder: number, origem: 'self' | 'foe') => EfeitoElemento | null = () => null,
 ): StatusBoard {
   if (!fx) return board;
+  let since = nextSince(board);
   return board.map((list, h) => {
     if (down.includes(h)) return [];
     const keep = list.filter((e) => !REAL_KINDS.includes(e.kind));
@@ -586,6 +661,14 @@ export function withRealFx(
     if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', ...(hotVar ? { variant: hotVar } : {}), turns: f.hot ?? 0, source: h });
     if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
     if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });
+    // o carimbo de início: o mesmo contador que já estava aceso herda o `since` (mesma variante primeiro, depois o mesmo tipo); o que acendeu agora ganha um novo
+    const prev = list.filter((e) => REAL_KINDS.includes(e.kind));
+    const claim = (e: BoardEntry): number | undefined => {
+      const i = prev.findIndex((p) => p.kind === e.kind && p.variant === e.variant);
+      const j = i >= 0 ? i : prev.findIndex((p) => p.kind === e.kind);
+      return j >= 0 ? prev.splice(j, 1)[0].since : undefined;
+    };
+    for (const e of real) e.since = claim(e) ?? since++;
     return [...keep, ...real];
   });
 }
@@ -595,9 +678,31 @@ export function clearHolders(board: StatusBoard, down: readonly number[]): Statu
   return board.map((l, h) => (down.includes(h) ? [] : l.filter((e) => !down.includes(e.source) || e.kind === 'escudo')));
 }
 
-/** O que a cena recebe por lutador: sem `source`, na ordem do quadro. */
+/**
+ * §334 (dono, 13/11/2026): o tick de DoT sai no COMEÇO do turno de quem o carrega, no MESMO instante do golpe dele (o núcleo
+ * emite o tick e logo depois o golpe). Na cena o tick se aplica quando a ação desse golpe COMEÇA (`leadS(golpe)` antes do
+ * instante), não quando o golpe chega; sem golpe logo depois (o tick derrubou quem o carregava), no próprio instante. Os outros
+ * eventos seguem no instante deles. Só encenação: a ordem e o resultado do motor não mudam. Lançar o especial também é turno
+ * (dono, 13/11/2026: "Sim, o especial também"): o tick logo antes de um `cast` entra quando a ação do especial começa.
+ */
+export function sceneTimeOf<E extends { readonly kind: string; readonly t: number }>(
+  events: readonly E[], i: number, leadS: (golpe: E) => number,
+): number {
+  const e = events[i];
+  if (!e || e.kind !== 'tick') return e?.t ?? Infinity;
+  for (let j = i + 1; j < events.length && Math.abs(events[j].t - e.t) < 1e-9; j++) {
+    if (events[j].kind === 'tick') continue;
+    return events[j].kind === 'attack' || events[j].kind === 'cast' ? e.t - Math.max(0, leadS(events[j])) : e.t;
+  }
+  return e.t;
+}
+
+/** O que a cena recebe por lutador: sem `source`, na ORDEM EM QUE CADA EFEITO COMEÇOU (o mais antigo primeiro; dono, 13/11/2026). Sem carimbo, vale a ordem do quadro. */
 export function stageStatusOf(entries: readonly BoardEntry[] | undefined): StageStatus[] {
-  return (entries ?? []).map(({ kind, variant, turns }) => ({ kind, variant, turns }));
+  return (entries ?? [])
+    .map((e, i) => ({ e, k: e.since ?? 0, i }))
+    .sort((a, b) => a.k - b.k || a.i - b.i)
+    .map(({ e: { kind, variant, turns } }) => ({ kind, variant, turns }));
 }
 
 /**

@@ -7,7 +7,7 @@
  * O núcleo já suporta todos: `direct`, `dot`, `heal`, `shield` (+ `effect: 'hot'` em PvE), `atkBuff`/`spdBuff`, `defDebuff`.
  * Cura ao longo do tempo (HoT) só existe no núcleo de grupo (PvE); no duelo 1v1 (PvP/simulados) a fatia do HoT vira `shield`.
  */
-import { EFFECT_TUNE, OVER_TIME_BONUS, specialOf, type Special, type SpecialFamily } from './specials';
+import { EFFECT_TUNE, OVER_TIME_BONUS, SPECIAL_POWER_PVE, specialOf, specialOfPve, type Special, type SpecialFamily } from './specials';
 
 export type FoeKind = 'direct' | 'buff' | 'dot' | 'heal' | 'hot' | 'debuff';
 
@@ -41,12 +41,17 @@ export function foeKindOf(stage: string, key: string): FoeKind {
 export function foeSpecialOf(stage: string, key: string, pvp = false): Special {
   const kind = foeKindOf(stage, key);
   const par = foeHash(`buff|${key}`) % 2 === 0;
+  // §325 (dono, 13/11/2026): buff e debuff que duram têm de render MAIS que o dano direto. Medido no motor de grupo, o `spdBuff` do inimigo
+  // rendia 0,99× do direto (o "inimigo acelerado" batia menos que o especial direto) e atk/def 1,01×. Recebem o mesmo `OVER_TIME_BONUS`
+  // do DoT/HoT (só PvE; o 1v1 do servidor segue o `SPECIAL_POWER`). Gate: `efeitosRegraTotal.test.ts`.
+  const bonus = (f: SpecialFamily): Special => (pvp ? specialOf(f) : { ...specialOfPve(f), power: SPECIAL_POWER_PVE[f] * OVER_TIME_BONUS });
   switch (kind) {
-    case 'buff': return specialOf(par ? 'atkBuff' : 'spdBuff');
+    case 'buff': return bonus(par ? 'atkBuff' : 'spdBuff');
     case 'dot': return pvp ? specialOf('dot') : { ...specialOf('dot'), power: OVER_TIME_BONUS };
     case 'heal': return specialOf('heal');
-    case 'hot': return pvp ? specialOf('shield') : { ...specialOf('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
-    case 'debuff': return specialOf('defDebuff');
+    // §327: o HoT do PvE lê o poder do PvE (`specialOfPve`), para um ajuste do `SPECIAL_POWER.shield` do 1v1 não vazar para cá.
+    case 'hot': return pvp ? specialOf('shield') : { ...specialOfPve('shield'), effect: 'hot', tune: { ...EFFECT_TUNE, hotScale: OVER_TIME_BONUS } };
+    case 'debuff': return bonus('defDebuff');
     default: return specialOf('direct');
   }
 }

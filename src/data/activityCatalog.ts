@@ -81,6 +81,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   // ---------------------------------------------------------------- corpo
   {
     id: 'corpo-caminhar',
+    resource: 'steps',
     kind: 'especifica',
     area: 'corpo',
     category: 'corpo',
@@ -185,6 +186,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   },
   {
     id: 'mente-gratidao',
+    resource: 'building:forja.caderno',
     kind: 'especifica',
     area: 'mente',
     category: 'mente',
@@ -335,6 +337,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   // ---------------------------------------------------------------- foco
   {
     id: 'foco-bloco-25min',
+    resource: 'building:forja.oficina',
     kind: 'especifica',
     area: 'foco',
     category: 'foco',
@@ -372,6 +375,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   },
   {
     id: 'foco-uma-tarefa-por-vez',
+    resource: 'building:forja.oficina',
     kind: 'abrangente',
     area: 'foco',
     category: 'foco',
@@ -647,6 +651,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   },
   {
     id: 'criatividade-escrita-livre',
+    resource: 'building:forja.caderno',
     kind: 'especifica',
     area: 'criatividade',
     category: 'criatividade',

@@ -1,0 +1,297 @@
+{
+  "schema": 1,
+  "version": 1,
+  "enabled": true,
+  "geometry": {
+    "w": 576,
+    "h": 384,
+    "screen": {
+      "l": 108,
+      "t": 71,
+      "r": 467,
+      "b": 263
+    }
+  },
+  "frames": [
+    {
+      "id": "agua",
+      "name": {
+        "pt-BR": "Água",
+        "en": "Water"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "agua"
+      },
+      "url": "agua.71cf7acd.png",
+      "sha256": "71cf7acde8997bca45bd40c1d1e776c3e41a8b2b0a09c64de6775991ee18c1a4",
+      "bytes": 70089
+    },
+    {
+      "id": "ar",
+      "name": {
+        "pt-BR": "Ar",
+        "en": "Air"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "ar"
+      },
+      "url": "ar.d25d91d4.png",
+      "sha256": "d25d91d46602d9b36d60a9a969cdb30ec3490fc7a5068fa41e4a301f17c93bac",
+      "bytes": 66975
+    },
+    {
+      "id": "arcano",
+      "name": {
+        "pt-BR": "Arcano",
+        "en": "Arcane"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "arcano"
+      },
+      "url": "arcano.520b8712.png",
+      "sha256": "520b8712e41daf0806c809ab8bd1f973d2ca5ab340f39ff61fd0fdb40441604e",
+      "bytes": 73322
+    },
+    {
+      "id": "eletricidade",
+      "name": {
+        "pt-BR": "Eletricidade",
+        "en": "Lightning"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "eletricidade"
+      },
+      "url": "eletricidade.8432ba39.png",
+      "sha256": "8432ba39bed8c4b9f4cfef928ce2ba6ffa5a04125e474c65a419b4e0c3749c1e",
+      "bytes": 75138
+    },
+    {
+      "id": "espaco",
+      "name": {
+        "pt-BR": "Espaço",
+        "en": "Space"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "espaco"
+      },
+      "url": "espaco.1acf65b0.png",
+      "sha256": "1acf65b0032eb1bda6fe58766dd51bf4231e255c641ded2d9f139239a5386687",
+      "bytes": 73771
+    },
+    {
+      "id": "fada",
+      "name": {
+        "pt-BR": "Fada",
+        "en": "Fairy"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "fada"
+      },
+      "url": "fada.9ed865de.png",
+      "sha256": "9ed865de0c57e408b204654bd82d5ff5f0185dc854b95620f3ca4fa7a0c5b017",
+      "bytes": 76119
+    },
+    {
+      "id": "fogo",
+      "name": {
+        "pt-BR": "Fogo",
+        "en": "Fire"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "fogo"
+      },
+      "url": "fogo.a95621fb.png",
+      "sha256": "a95621fbaa9867a1babe7691d4fa50b37c86963cee96fbc85135e1b5af383569",
+      "bytes": 75786
+    },
+    {
+      "id": "gravidade",
+      "name": {
+        "pt-BR": "Gravidade",
+        "en": "Gravity"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "gravidade"
+      },
+      "url": "gravidade.33b121d7.png",
+      "sha256": "33b121d79ab5861d3cb071adcd72d745efb27b53506667be826b7ec3a9aa087e",
+      "bytes": 73453
+    },
+    {
+      "id": "industrial",
+      "name": {
+        "pt-BR": "Industrial",
+        "en": "Industrial"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "industrial"
+      },
+      "url": "industrial.78d5beb3.png",
+      "sha256": "78d5beb3beaa46db21c4f155ce8c022f7a0db18714fa2e02246164e75dca3063",
+      "bytes": 89122
+    },
+    {
+      "id": "luz",
+      "name": {
+        "pt-BR": "Luz",
+        "en": "Light"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "luz"
+      },
+      "url": "luz.2ead1f08.png",
+      "sha256": "2ead1f08d8fb86788bddd2b0f141a99348b921d9f84cee358fbc5bdc1efb69c9",
+      "bytes": 80330
+    },
+    {
+      "id": "marcial",
+      "name": {
+        "pt-BR": "Marcial",
+        "en": "Martial"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "marcial"
+      },
+      "url": "marcial.9aff65d6.png",
+      "sha256": "9aff65d6e55b07d9424908ba6ebe1a43c5798e4252686acfaeda3eeab6e6998e",
+      "bytes": 80999
+    },
+    {
+      "id": "morte",
+      "name": {
+        "pt-BR": "Morte",
+        "en": "Death"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "morte"
+      },
+      "url": "morte.54f560eb.png",
+      "sha256": "54f560eb825ad9dd129c1279983fd701cf5256822e95021971b48d519bb47eb8",
+      "bytes": 84093
+    },
+    {
+      "id": "planta",
+      "name": {
+        "pt-BR": "Planta",
+        "en": "Plant"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "planta"
+      },
+      "url": "planta.8a684365.png",
+      "sha256": "8a684365f8e71056e4b136e5d83c48e49e6e44bc5bda2cddb68bb63a141d96e9",
+      "bytes": 84203
+    },
+    {
+      "id": "som",
+      "name": {
+        "pt-BR": "Som",
+        "en": "Sound"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "som"
+      },
+      "url": "som.35e9c8ca.png",
+      "sha256": "35e9c8ca75416462b3b0ffbabb1a517fcbd4c906bab4b222d157281132903062",
+      "bytes": 77211
+    },
+    {
+      "id": "sombra",
+      "name": {
+        "pt-BR": "Sombra",
+        "en": "Shadow"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "sombra"
+      },
+      "url": "sombra.a22b358d.png",
+      "sha256": "a22b358d8b6994c52349888c88e84f0d1dbd3852983a41b9986880fd745e0484",
+      "bytes": 76895
+    },
+    {
+      "id": "tempo",
+      "name": {
+        "pt-BR": "Tempo",
+        "en": "Time"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "tempo"
+      },
+      "url": "tempo.06861c1b.png",
+      "sha256": "06861c1b7fbd712fe624d5fd70aac335a359552dcaa256a87e23977173990f88",
+      "bytes": 96334
+    },
+    {
+      "id": "terra",
+      "name": {
+        "pt-BR": "Terra",
+        "en": "Earth"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "terra"
+      },
+      "url": "terra.ee448044.png",
+      "sha256": "ee448044c5baf5addc43ff5a57cd0ac26cf73702c259a33915411b7c04a4fe79",
+      "bytes": 84280
+    },
+    {
+      "id": "vida",
+      "name": {
+        "pt-BR": "Vida",
+        "en": "Life"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "vida"
+      },
+      "url": "vida.172e4c50.png",
+      "sha256": "172e4c50b4692241b362984ab05b4ee34705cb4a4f387178ad7dfc97ee35a8e3",
+      "bytes": 74937
+    },
+    {
+      "id": "vigor",
+      "name": {
+        "pt-BR": "Vigor",
+        "en": "Vigor"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "vigor"
+      },
+      "url": "vigor.2bf9b65f.png",
+      "sha256": "2bf9b65f7a1c8a7ae0cf67544aaefddbb8bc9f7e3ddb23b743cb5a094aca0efd",
+      "bytes": 84787
+    },
+    {
+      "id": "vileza",
+      "name": {
+        "pt-BR": "Vileza",
+        "en": "Vileness"
+      },
+      "acquire": {
+        "type": "element",
+        "element": "vileza"
+      },
+      "url": "vileza.5bb1f808.png",
+      "sha256": "5bb1f808e37832e7063ed65848be6566e0ad901fab06970f70ec44dce4ffc8ba",
+      "bytes": 85301
+    }
+  ]
+}

@@ -1,20 +1,22 @@
 /**
  * TELA ACORDADA durante a sessão do Foco (11/11/2026, pedido do dono): enquanto o timer roda, a tela não escurece.
- * Ordem: (1) plugin nativo `KeepAwake` do Capacitor, SE o app o tiver registrado (hoje não tem; entra com a beta12/APK,
- * docs/BACKLOG-BETA12.md item H) · (2) Screen Wake Lock API da web (`navigator.wakeLock`), com reaquisição ao voltar a
+ * Ordem: (1) plugin nativo `KeepAwake` (`FLAG_KEEP_SCREEN_ON`, `KeepAwakePlugin.kt`; entra com o APK da beta12, item H do
+ * docs/BACKLOG-BETA12.md), SE o app o tiver registrado (APK antigo não tem) · (2) Screen Wake Lock API da web (`navigator.wakeLock`), com reaquisição ao voltar a
  * visibilidade (o navegador solta o lock quando a aba/app vai ao fundo) · (3) sem nenhum dos dois: segue sem travar a tela
  * e devolve `supported: false` para a UI poder avisar. Falha (rejeição, bateria baixa, sem permissão) nunca quebra a sessão.
  */
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { KeepAwake } from '../plugins/KeepAwakePlugin';
 
 interface WakeSentinel { release: () => Promise<void>; addEventListener?: (t: 'release', cb: () => void) => void }
 interface NativeKeepAwake { keepAwake?: () => Promise<unknown>; allowSleep?: () => Promise<unknown> }
 
 const nativePlugin = (): NativeKeepAwake | null => {
   try {
-    const cap = (window as unknown as { Capacitor?: { Plugins?: Record<string, NativeKeepAwake | undefined> } }).Capacitor;
-    const p = cap?.Plugins?.KeepAwake;
-    return p && typeof p.keepAwake === 'function' ? p : null;
+    // Plugin nativo nosso: o cabeçalho do plugin existe no APK novo; no antigo (ou na web) isto é falso e segue o resto.
+    if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('KeepAwake')) return KeepAwake;
+    return null;
   } catch { return null; }
 };
 const webWakeLock = (): { request: (t: 'screen') => Promise<WakeSentinel> } | null => {

@@ -2,7 +2,7 @@
 /** Torneio (11/11/2026): "Temporada atual" e "Última temporada" são pílulas SEPARADAS (a atual à esquerda). */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, waitFor } from '@testing-library/react';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 vi.mock('../utils/community', async importOriginal => {
   const orig = await importOriginal<typeof import('../utils/community')>();
@@ -19,7 +19,7 @@ import { TournamentPage } from './TournamentPage';
 
 const props = {
   saveId: 'a'.repeat(32), petStage: 'rookie', onMatchPlayed: () => {}, trophies: [], emblems: 0,
-  onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_PVP_MIN_LEVEL),
+  onEarnEmblems: () => {}, totalXP: xpForLevel(BOND_RANKED_MIN_LEVEL),
 };
 afterEach(cleanup);
 

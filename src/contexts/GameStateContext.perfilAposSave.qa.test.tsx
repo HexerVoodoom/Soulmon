@@ -113,13 +113,13 @@ describe('pushProfile só depois do save confirmado', () => {
     } finally { vi.useRealTimers(); }
   });
 
-  it('abaixo do Vínculo 5, save ok não publica perfil (o gate continua)', async () => {
+  it('sem nível mínimo de PvP (12/11/2026), save ok publica o perfil', async () => {
     vi.useFakeTimers();
     try {
       abrirComSave({ ...COM_PVP_LIGADO, totalXP: 0 });
       await gestoEEspera();
       expect(saves).toHaveLength(1);
-      expect(perfis).toHaveLength(0);
+      expect(perfis).toHaveLength(1);
     } finally { vi.useRealTimers(); }
   });
 });

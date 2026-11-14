@@ -1,7 +1,9 @@
 import { aiFetch } from '../utils/aiClient';
 import { HELPLINE_DIRECTORY_URL, helplineDirectoryLabel, helplineNumbers } from '../utils/supportLine';
 import { chatSafetyDecision } from '../utils/chatSafety';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChatPanel, CHAT_MSGS_VISIVEIS, type ChatModo, type ChatMsg } from './ChatPanel';
 import { CHAT_ERR, MIC_ERR, copiaErro, micErroPorStatus } from '../utils/chatErrorCopy';
 import { audioExtension } from '../utils/audioFile';
 import { fetchServerConfig, peekServerConfig } from '../utils/serverConfig';
@@ -46,6 +48,8 @@ interface ChatBoxProps {
   onUserMessage?: () => void;
   /** Pedido de foco no campo (missão "Conte como você está se sentindo"): `Date.now()` do toque; só vale por 4 s (remontar a Home não refoca). */
   focusRequest?: number;
+  /** Beta12/C2 — sprite equipado, mostrado no canto da tela cheia do chat. */
+  spriteSrc?: string;
 }
 
 /** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
@@ -67,9 +71,50 @@ export function ChatBox({
   chatContext,
   onUserMessage,
   focusRequest,
+  spriteSrc,
   language = 'en-US',
 }: ChatBoxProps) {
   const [inputValue, setInputValue] = useState('');
+  /* Beta12 / C1+C2 — o painel (meia tela / tela cheia) e as mensagens VISÍVEIS.
+     Memória de sessão como o `history` logo abaixo: `useState`, nada no save nem
+     no `localStorage`. Fechar o painel (ou ir para a tela cheia e voltar) NÃO
+     apaga a conversa, porque o `ChatBox` segue montado no dock da Home. A tela
+     guarda até `CHAT_MSGS_VISIVEIS` (20); o servidor continua recebendo só os 3
+     turnos do `history`. */
+  const [modo, setModo] = useState<ChatModo>('barra');
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const msgIdRef = useRef(0);
+  const anotar = (de: ChatMsg['de'], texto: string): number => {
+    const id = ++msgIdRef.current;
+    setMsgs(prev => [...prev, { id, de, texto }].slice(-CHAT_MSGS_VISIVEIS));
+    return id;
+  };
+  /* A barra (campo + microfone + cartão de ação) mora num nó `host` que é MOVIDO
+     entre o dock da Home e o painel: o React mantém o estado e o <input> (o mesmo
+     elemento), então microfone, gravação e texto digitado sobrevivem à troca de
+     modo. Só o foco precisa ser devolvido depois do movimento. */
+  const [host] = useState<HTMLDivElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.className = 'sm3-chat-host';
+    return el;
+  });
+  const dockSlotRef = useRef<HTMLDivElement | null>(null);
+  const painelSlotRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    if (!host) return;
+    const alvo = modo === 'barra' ? dockSlotRef.current : painelSlotRef.current;
+    if (!alvo || host.parentNode === alvo) return;
+    const ativo = document.activeElement as HTMLElement | null;
+    const tinhaFoco = !!ativo && host.contains(ativo);
+    alvo.appendChild(host);
+    if (tinhaFoco && ativo) ativo.focus({ preventScroll: true });
+  }, [host, modo]);
+  const fecharChat = () => {
+    const ativo = document.activeElement as HTMLElement | null;
+    if (ativo && host?.contains(ativo)) ativo.blur(); // some o teclado
+    setModo('barra');
+  };
   /* WP3.1 — MEMÓRIA DE SESSÃO, e só de sessão.
      Sem isto o `getPetResponse` perguntava "E você?" e processava a resposta
      como se fosse a primeira frase da conversa — o pet perguntava e não
@@ -340,7 +385,7 @@ export function ChatBox({
       });
       if (!r.ok) return;
       const d = await r.json();
-      if (typeof d?.response === 'string' && d.response.trim()) onSendMessage(d.response);
+      if (typeof d?.response === 'string' && d.response.trim()) { anotar('pet', d.response); onSendMessage(d.response); }
     } catch { /* silencioso: é um extra */ }
   };
 
@@ -349,6 +394,7 @@ export function ChatBox({
 
     const userMessage = inputValue;
     setInputValue('');
+    const userMsgId = anotar('user', userMessage);
 
     /* WP3.9 (decisão D16) — A PONTE, antes de tudo.
        A checagem vem ANTES do `setIsLoading` e antes de qualquer rede: se a
@@ -357,6 +403,7 @@ export function ChatBox({
        A resposta é local, fixa, na voz do pet, sem alarme e sem push. */
     const safety = chatSafetyDecision(userMessage, language === 'pt-BR' ? 'pt-BR' : 'en-US');
     if (safety.kind === 'local') {
+      anotar('pet', safety.reply);
       onSendMessage(safety.reply);
       return;
     }
@@ -377,18 +424,22 @@ export function ChatBox({
 
       lembrar('user', userMessage);
       lembrar('assistant', response);
+      anotar('pet', response);
       onUserMessage?.();
       onSendMessage(response);
     } catch (error) {
       if (error instanceof SemRede) {
         // Mensagem não saiu: devolve o texto ao campo e avisa por toast.
+        setMsgs(prev => prev.filter(m => m.id !== userMsgId));
         setInputValue(userMessage);
         toast.warning(copiaErro(CHAT_ERR.offline, isPt));
         return;
       }
       if (import.meta.env.DEV) console.error('Error sending message:', error);
       onUserMessage?.();
-      onSendMessage(language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!');
+      const oops = language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!';
+      anotar('pet', oops);
+      onSendMessage(oops);
     } finally {
       setIsLoading(false);
     }
@@ -547,9 +598,11 @@ export function ChatBox({
       if (transcribedText.trim()) {
         setInputValue(transcribedText);
       } else {
-        onSendMessage(isPt
+        const naoEntendi = isPt
           ? 'Não consegui entender o áudio 🤔'
-          : 'Could not understand the audio 🤔');
+          : 'Could not understand the audio 🤔';
+        anotar('pet', naoEntendi);
+        onSendMessage(naoEntendi);
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -579,7 +632,7 @@ export function ChatBox({
         ? (isPt ? 'Parar gravação' : 'Stop recording')
         : (isPt ? 'Gravar mensagem' : 'Record message');
 
-  return (
+  const barra = (
     /* MIGRADO para `--sm2-*` (`.sm2-chatbar` / `.sm2-chat-input` /
        `.sm2-chat-btn`, no fim do `index.css`).
 
@@ -594,7 +647,7 @@ export function ChatBox({
       className="sm2-chatbar sm3-chatbar"
       /* O foco mora na BARRA inteira (campo, botão e o link de apoio): sair do
          campo para tocar no link não pode esconder o link antes do toque. */
-      onFocus={() => setFocado(true)}
+      onFocus={() => { setFocado(true); setModo(m => (m === 'barra' ? 'meia' : m)); }}
       onPointerDown={() => { void garantirConfig(); }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocado(false); }}
     >
@@ -719,6 +772,30 @@ export function ChatBox({
           188 / findahelpline.com quando a mensagem pede ajuda, e o Refúgio
           (`refugio/SupportNote.tsx`) mantém a nota de apoio. */}
     </div>
+  );
+
+  /* Beta12/C1: tocar na barra abre o painel de meia tela. A barra em si vive no
+     `host` (portal): no dock quando fechado, dentro do painel quando aberto. */
+  return (
+    <>
+      <div ref={dockSlotRef} className="sm3-chat-dockslot" />
+      {host && createPortal(barra, host)}
+      {modo !== 'barra' && typeof document !== 'undefined' && createPortal(
+        <ChatPanel
+          modo={modo}
+          msgs={msgs}
+          petName={petName}
+          spriteSrc={spriteSrc}
+          isPt={isPt}
+          carregando={isLoading}
+          onFechar={fecharChat}
+          onMaximizar={() => setModo('cheia')}
+          onRestaurar={() => setModo('meia')}
+          slotRef={painelSlotRef}
+        />,
+        document.body,
+      )}
+    </>
   );
 }
 

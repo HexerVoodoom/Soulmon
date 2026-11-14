@@ -1,4 +1,5 @@
 import { Icon } from './ui/Icon';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { InfoTip } from './ui/InfoTip';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
 import { sm2Button, sm2Text } from './form/FormKit';
@@ -78,9 +79,9 @@ export function EvolveTaskModal({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
         <p style={{ ...sm2Text, margin: 0 }}>{intro}</p>
         {/* K6 (04/10/2026): a regra do dia completo mora atrás do "?". */}
-        <InfoTip language={language} label={isPt ? 'Como garantir os Fragmentos de Alma do dia' : 'How to secure the day’s Soul Fragments'} style={{ minHeight: 28 }}>{goal}</InfoTip>
+        <InfoTip language={language} label={isPt ? 'Como garantir os Fragmentos de Alma do dia' : 'How to secure the day’s Soul Fragments'} style={{ minHeight: 28 }}>{emphasizeSoulFragment(goal)}</InfoTip>
       </div>
-      <p style={{ ...sm2Text, margin: 0 }}>{hasEnough ? statusOk : statusMissing}</p>
+      <p style={{ ...sm2Text, margin: 0 }}>{emphasizeSoulFragment(hasEnough ? statusOk : statusMissing)}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
         {!hasEnough && (
           <button type="button" onClick={onCreateTask} style={{ ...sm2Button('primary'), width: '100%' }}>

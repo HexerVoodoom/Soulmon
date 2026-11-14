@@ -28,6 +28,7 @@ import { FocusTaskPicker } from './FocusTaskPicker';
 import { loadFocusSession, saveFocusSession, type FocusSessionState } from '../../utils/focusSession';
 import { mergeItems } from '../../utils/journeyItemInfo';
 import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
+import { useRequireAwake } from '../WakeToEnter';
 
 type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> };
 const CARD: Record<JourneyKeyId, { pt: string; en: string; keyPt: string; keyEn: string }> = {
@@ -56,8 +57,8 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   /** Cria uma tarefa na hora (o modal de escolha oferece isso quando não há tarefa aberta). `false` = não coube. */
   onCreateTask?: (name: string) => boolean;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
-  /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). */
-  onFocusCycle?: () => void;
+  /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). Leva o id da tarefa ESCOLHIDA na sessão (`habit:<id>` = hábito): o App marca o hábito de foco adotado que a sessão usou (beta12 §J, Q5). */
+  onFocusCycle?: (taskId?: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const [keys, setKeys] = useState<JourneyKeyId[]>(loadBoardKeys);
@@ -139,7 +140,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
           setRestState(restFromFocusEnd(focusEndAt(had), r.now - Date.now(), Date.now(), { mode: had.mode, env: had.env, items: itens, key: dKey }));
           updateSession(s => ({ ...s, cycles: s.cycles + 1, ...(dKey ? { key: true } : {}) }));
           setRestNote(null); setDoneNote(null);
-          onFocusCycle?.();
+          onFocusCycle?.(session?.taskId);
           return;
         }
         setSession(null); saveFocusSession(null);
@@ -154,7 +155,10 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   };
 
   /** Começar abre a ESCOLHA DA TAREFA (sempre; sem sessão livre). Confirmada, `begin` liga a tarefa e abre a jornada. */
-  const start = () => { if (!saveId || busy) return; setDoneNote(null); setPickOpen(true); };
+  /* 💤 §329: a Oficina entra livre (cards, chaves, lista, concluir tarefa — G-01); COMEÇAR a jornada leva o Soulmon e pergunta com ele
+     dormindo, no toque. Voltar a uma jornada já em andamento não pergunta. */
+  const requireAwake = useRequireAwake();
+  const start = () => { if (!saveId || busy) return; requireAwake('forja.oficina', () => { setDoneNote(null); setPickOpen(true); }); };
   const begin = (task: { id: string; name: string }) => {
     if (!saveId || busy) return;
     setBusy(true); setDoneNote(null);
@@ -231,7 +235,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
             {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
           {online === false && <p role="status" data-focus-offline style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Precisa de conexão para começar.' : 'Needs a connection to start.'}</p>}
-          <CtaButton data-focus-start disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
+          <CtaButton data-focus-start tone="acao" disabled={online === false || busy || !saveId} onClick={start}>{isPt ? 'Começar jornada' : 'Start journey'}</CtaButton>
         </>}
         {doneNote && <p role="status" data-focus-done style={{ ...sm2Text, margin: 0 }}>{doneNote}</p>}
       </article>

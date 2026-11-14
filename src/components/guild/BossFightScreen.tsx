@@ -17,7 +17,7 @@ import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageFighter, type StageHit } from '../games/BattleStage';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
 import type { FightEvent } from '../../utils/combate/fight';
-import { impactMs, introMs, prefersReducedMotion, specialLeadMs, specialTailMs, type StageActionKind } from '../../utils/combatFx';
+import { impactMs, introMs, prefersReducedMotion, sceneTimeOf, specialLeadMs, specialTailMs, type StageActionKind } from '../../utils/combatFx';
 import { meleeImpactOf } from '../../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, type ConfigDoPortao, type Portao } from '../../utils/specialGate';
 import { FEIRA_SCENE } from '../../utils/dungeonScenes';
@@ -125,6 +125,9 @@ export function BossFightScreen(p: BossFightScreenProps) {
     let portao: Portao | null = null;
     let clock = 0;
     let last = performance.now();
+    // §334: o tick de DoT entra em cena no COMEÇO da ação do golpe que vem logo depois dele (o turno de quem o carrega)
+    const naCena = (i: number) => sceneTimeOf(events, i, (g) => { const k = kindOf(g); return k ? leadS(k) * speed : 0; });
+    let ticksDoTurno: { t: number; hits: StageHit[] } = { t: -1, hits: [] };
     const fire = (e: FightEvent, k: StageActionKind) => {
       const mineSide = e.side === 0;
       setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, impacto: meleeImpactOf({ element: mineSide ? p.me.element : bossElement, key: mineSide ? `me|${p.me.element}` : `boss|${bossElement}`, ...(mineSide || k !== 'special' ? {} : { forma: 'ranged' as const }) }), element: mineSide ? p.me.element : bossElement });
@@ -153,12 +156,12 @@ export function BossFightScreen(p: BossFightScreenProps) {
           started++;
           break;
         }
-        if (e.t - (k ? leadS(k) * speed : 0) > clock) break;
+        if ((e.kind === 'tick' ? naCena(started) : e.t - (k ? leadS(k) * speed : 0)) > clock) break;
         if (k) fire(e, k);
         started++;
       }
       while (
-        applied < events.length && events[applied].t <= clock && !bloqueiaAplicar(portao, applied)
+        applied < events.length && naCena(applied) <= clock && !bloqueiaAplicar(portao, applied)
         && !(events[applied].kind === 'cast' && applied >= started)
       ) {
         const e = events[applied];
@@ -180,7 +183,11 @@ export function BossFightScreen(p: BossFightScreenProps) {
           const value = toBoss
             ? Math.max(1, myTotal > 0 ? Math.round((p.myDamage * mine) / myTotal) - Math.round((p.myDamage * mineBefore) / myTotal) : 0)
             : Math.max(1, Math.round(meBefore * meMax) - Math.round(meNow * meMax));
-          setHits([{ id: ++seq.current, side: toBoss ? 'foe' : 'me', foe: 0, value, big: specialHit.has(e) }]);
+          // §334: o número do tick que abriu o turno segue na tela junto com o do golpe do mesmo instante
+          const golpe: StageHit = { id: ++seq.current, side: toBoss ? 'foe' : 'me', foe: 0, value, big: specialHit.has(e) };
+          const junto = ticksDoTurno.t === e.t ? ticksDoTurno.hits : [];
+          ticksDoTurno = e.kind === 'tick' ? { t: e.t, hits: [...junto, golpe] } : { t: -1, hits: [] };
+          setHits([...junto, golpe]);
         }
       }
       if (applied >= events.length && !portao) {

@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
 import { curatedComponents } from '../elementosCurados';
+import { ATAQUE_TIPO_MOTOR, ataqueTipoOverride } from '../soulmonOverrides';
 
 export type ImpactoMelee = 'corte' | 'concussao';
 
@@ -70,6 +71,8 @@ export interface EntradaImpacto {
   name?: string | null;
   /** Forma do golpe. Só passa `'ranged'` quem é INIMIGO/selvagem/simulado: aí vale `RANGED_MAGIA_PCT` (magia = à distância + splash). Ausente = comportamento antigo (jogador). */
   forma?: 'melee' | 'ranged';
+  /** Chave do bestiário do INIMIGO, só no golpe BÁSICO: o tipo do dono (`ATAQUE_TIPO_OVERRIDE`, REGISTRO §333) vence o sorteio. */
+  formKey?: string | null;
 }
 
 /**
@@ -83,6 +86,8 @@ export function magiaOuCorte(element: string | null | undefined, key: string): I
 
 /** O acabamento do golpe corpo a corpo deste lutador: palavra-chave do nome, senão sorteio estável com o peso do elemento. */
 export function meleeImpactOf(e: EntradaImpacto): ImpactoMelee {
+  const dono = ataqueTipoOverride(e.formKey);
+  if (dono) return ATAQUE_TIPO_MOTOR[dono].impacto;
   if (e.forma === 'ranged') return magiaOuCorte(e.element, e.key);
   const porNome = impactoPorNome(e.name);
   if (porNome) return porNome;

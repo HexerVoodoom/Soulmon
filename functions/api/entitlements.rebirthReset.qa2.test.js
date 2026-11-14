@@ -144,12 +144,10 @@ describe('PR13 (MEDIO-4): o portão do Renascimento vale no servidor', () => {
     expect((await res.json()).reason).toBe('not-paid');
     expect(lerEnt(e).aiLifetime.sprite).toBe(20);
   });
-  it('conta paga com Vínculo abaixo do 12: 403 low-bond, o contador não muda', async () => {
+  it('conta paga com Vínculo baixo: passa (200) — o portão por Vínculo saiu (dono 12/11/2026); a conta paga segue exigida', async () => {
     const e = env({ save: { rebirth: REBIRTH, totalXP: 100 } });
     const res = await chamar(e);
-    expect(res.status).toBe(403);
-    expect((await res.json()).reason).toBe('low-bond');
-    expect(lerEnt(e).aiLifetime.sprite).toBe(20);
+    expect(res.status).toBe(200);
   });
   it('conta paga com Vínculo 12 e renascimento: passa (200)', async () => {
     const res = await chamar(env());

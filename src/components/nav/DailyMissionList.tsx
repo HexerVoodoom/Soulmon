@@ -3,6 +3,7 @@ import { dailyCount, dailyMissionsFor, dailyStatus, type DailyMissionsState } fr
 import { dailyTarget } from '../../utils/missionTargets';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { ClaimButton, MissionCard, resolveGo, type MissionEntry, type MissionNav } from './MissionCard';
+import { RewardChip } from './RewardChip';
 import { giverOf, npcKeyOfBuilding } from './npcGiver';
 
 export interface DailyMissionsProps {
@@ -30,7 +31,7 @@ export function dailyMissionEntries({ language, state, day, bondLevel, onClaim, 
     // as demais diárias têm o anfitrião do prédio delas e o nome é a própria descrição.
     const nome = isPt ? m.namePt : m.nameEn;
     const mat = MATERIALS.find(x => x.id === m.material);
-    const premio = mat ? `${isPt ? 'Recompensa' : 'Reward'}: +1 ${isPt ? mat.namePt : mat.nameEn}` : '+1 material';
+    const premio = mat ? <RewardChip kind="material" materialId={mat.id} name={isPt ? mat.namePt : mat.nameEn} isPt={isPt} /> : '+1 material';
     return {
       key: `daily:${m.id}`,
       state: status,

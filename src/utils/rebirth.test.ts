@@ -46,7 +46,7 @@ describe('rebirth — quem pode', () => {
   it('cada recusa tem MOTIVO próprio — a tela mostra saídas diferentes', () => {
     expect(rebirthRefusal(noTopo({ evolutionStage: 'mega' }))).toBe('not-ultra');
     expect(rebirthRefusal(noTopo({ accountTier: 'demo' }))).toBe('not-paid');
-    expect(rebirthRefusal(noTopo({ totalXP: 0 }))).toBe('low-bond'); // paga e no ápice, mas o Vínculo nunca é pago
+    expect(rebirthRefusal(noTopo({ totalXP: 0 }))).toBeNull(); // sem portão de Vínculo (12/11/2026): paga + ápice basta
     expect(rebirthRefusal(noTopo({ rebirth: { criatura: 'x', escola: 'benca', elemento: 'fogo', at: '', fromStage: 'ultra' } })))
       .toBe('already-used');
   });

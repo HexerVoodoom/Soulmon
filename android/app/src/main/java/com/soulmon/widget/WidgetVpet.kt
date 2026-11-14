@@ -61,6 +61,48 @@ object WidgetVpet {
     /** Sleep Z box: top-right corner of the sprite column, free space above the creature (never over the speech text). */
     val sleepZ = Box(sprite.r - 30, sprite.t, sprite.r, sprite.t + 34)
 
+    /**
+     * Where everything goes inside ONE bitmap (`w` x `h`). The casing (576x384, same LCD opening in every variant) is
+     * drawn at y = `casingY`; every other box is in BITMAP coordinates. `spriteOverCasing`: the creature is drawn AFTER
+     * the casing (it may stand out of the device); otherwise it sits under it, inside the LCD (the Cage).
+     */
+    data class Layout(
+        val w: Int, val h: Int, val casingY: Int,
+        val sprite: Box, val text: Box, val iconRow: Box, val sleepZ: Box,
+        val spriteOverCasing: Boolean,
+    )
+
+    /** "Cage" (V-Pet com moldura): exactly the original geometry, casing at the top-left of a 576x384 bitmap. */
+    val CAGE = Layout(W, H, 0, sprite, text, iconRow, sleepZ, false)
+
+    /** Companion canvas: square, so a 2x2 / 3x3 placement uses the whole cell block (fitCenter scales it). */
+    const val COMPANION_SIZE = 576
+
+    /** Side of the creature in the Companion (the Cage's is 120): it stands on top of the casing. */
+    const val COMPANION_SPRITE = 320
+
+    /**
+     * "Companheiro": the Cage's content (scene, speech, icons, casing) with a BIG creature. The casing sits at the
+     * bottom of a square bitmap, the creature above and in front of it; the speech text sits in the LCD under the creature,
+     * the icon row at the bottom of the LCD. Same LCD opening as every casing, shifted down by `casingY`.
+     */
+    val COMPANION: Layout = run {
+        val casingY = COMPANION_SIZE - H
+        val lcd = Box(SCREEN_L + PAD, SCREEN_T + casingY + PAD, SCREEN_R - PAD, SCREEN_B + casingY - PAD)
+        val spriteBox = Box((COMPANION_SIZE - COMPANION_SPRITE) / 2, 0, (COMPANION_SIZE + COMPANION_SPRITE) / 2, COMPANION_SPRITE)
+        val row = Box(lcd.l, lcd.b - ROW_H, lcd.r, lcd.b)
+        val textBox = Box(lcd.l, spriteBox.b + 6, lcd.r, row.t - 6)
+        val z = Box(spriteBox.r - 34, spriteBox.t, spriteBox.r, spriteBox.t + 34)
+        Layout(COMPANION_SIZE, COMPANION_SIZE, casingY, spriteBox, textBox, row, z, true)
+    }
+
+    /** The LCD opening of a layout, in bitmap coordinates. */
+    fun screenOf(l: Layout) = Box(SCREEN_L, SCREEN_T + l.casingY, SCREEN_R, SCREEN_B + l.casingY)
+
+    /** A casing id has the SHAPE of an id (data, not a closed list): the renderer decides what art exists. */
+    private val FRAME_ID = Regex("^[a-z][a-z0-9_]{1,31}$")
+    fun isFrameIdShape(id: String?): Boolean = id != null && FRAME_ID.matches(id)
+
     /** The resource id to draw: the variant when it exists in the APK (`variantRes` != 0), else the default. */
     fun pickCasing(variantRes: Int, defaultRes: Int): Int = if (variantRes != 0) variantRes else defaultRes
 

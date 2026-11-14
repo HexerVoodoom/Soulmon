@@ -734,6 +734,23 @@ Regras de escrita das camadas: **nenhuma é assustadora por ser antiga**, nenhum
 é "mais perigosa" em voz de mundo (o risco é do jogo, não do lugar), e nenhuma
 guarda segredo sobre a pessoa. Fundo é **velho**, não maligno.
 
+### 7.4 Quem cuida dos lugares — Lilia, a musa do jardim (Grove)
+
+Adicionada em 13/11/2026 (dono, PR #879, REGISTRO §333: "mantenha o nome Lilia"). Escrita a partir do que o
+código já mostra; onde a bíblia e o código discordarem, vale o código.
+
+| | |
+|---|---|
+| **Nome** | **Lilia, a musa do jardim** (EN *Lilia, the garden muse*). É **Lilia**, nunca "Lila". Fonte: `'hall:grove'` em `src/utils/areaNpcVoice.ts`. |
+| **Onde mora** | No **Grove** (PT na UI: o Bosque, lote `hall.grove` da Cidadela). Ficha `novo:musa` em `src/data/npcFichas.ts`, e o lote `lote:hall:grove` aponta para ela. |
+| **O que ela é** | Uma criatura de forma Ultimate, ofício *verdejante*, elementos *seiva* e *jardim encantado*. Temperamento **acolhedor**. |
+| **O que ela cuida** | A planta do Bosque, que o clã faz crescer junto. Ela não cultiva por você: guarda o lugar e o ritmo dele. Aguar e defender só abrem depois da meta do dia (`src/utils/groveTend.ts`). Ela não pune: avisa quanto falta da SUA tarefa, em tom de convite, nunca de quem não veio. |
+| **A voz** | Curta, calma, no presente, e chama para perto: "O bosque cresce devagar. Vem ver." O tempo dela é o da planta. Sem pressa, sem número de urgência, sem elogio ao esforço. Quando a pessoa toca antes da hora, ela diz só o que falta ("Falta 1 tarefa para você poder cuidar do Bosque"), sem culpa. |
+| **Como o Soulmon fala dela** | Como de uma vizinha que vale visitar: "A gente poderia visitar a Lilia lá no Grove." (`src/utils/balaoDica.ts`). Aparece só quando a visita é verdadeira: meta cumprida e cuidado do dia por fazer. |
+
+Para escrever falas novas dela: o assunto é o jardim e o tempo das coisas que crescem. Nunca a cobrança, nunca a
+comparação com o resto do clã (a linha vermelha da Guilda vale para ela também).
+
 ---
 
 ## 8. Linha do tempo

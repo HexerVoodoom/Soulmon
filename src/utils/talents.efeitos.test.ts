@@ -163,7 +163,7 @@ describe('o motor: zero é idêntico, e o efeito é pequeno e na direção certa
     expect(com).toBeGreaterThanOrEqual(sem); // o escudo só pode sobrar vida
   });
   it('nenhum nó mexe no especial: a tabela de poder é a mesma e a família nunca vem de um talento', () => {
-    expect(SPECIAL_POWER).toEqual({ direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 });
+    expect(SPECIAL_POWER).toEqual({ direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 }); // §325
     const fonte = readFileSync(resolve(__dirname, 'talents.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     expect(fonte).not.toMatch(/SPECIAL_POWER|specialOf|Math\.random/);
   });
