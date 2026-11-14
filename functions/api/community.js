@@ -74,7 +74,7 @@ import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, ganhoPorRank 
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
-import { fixarTzTreino, pickSparOpponents, bondELevelOf, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
+import { fixarTzTreino, pickSparOpponents, bondELevelOf, grantSparHonor, readSparHonorUsed, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S, TREINO_TICKET_MATCHES } from './_treino.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
@@ -236,7 +236,8 @@ async function putRank(env, season, id, rec) {
 /** Reroll dos 3 oponentes (27/10/2026): UM por intervalo entre combates. Chave própria (não toca o `rank:`: não cria linha
  *  no ranking nem corre contra o `putRank` de uma partida). Nasce no reroll, morre em `settleMatch`; TTL de 1 dia por segurança. */
 const rerollKey = (id) => `reroll:${id}`;
-const rerollUsado = async (env, id) => !!(await kvOrThrow(env).get(rerollKey(id)).catch(() => null));
+// Falha do KV PROPAGA (Antislop P1, item 13, §374): tratá-la como "não usado" liberava um 2º reroll entre combates.
+const rerollUsado = async (env, id) => !!(await kvOrThrow(env).get(rerollKey(id)));
 /** Orçamentos de subrequest do índice da season (`_rankIndex.js`): `get`s de preenchimento por leitura e linhas relidas. */
 const RANK_INDEX_BUDGET = 100;
 const RANK_SCAN_MAX = 150;
@@ -469,7 +470,9 @@ async function handleCommunity(context) {
   const settleMatch = async ({ id, oppSave, me, opp, myRank, outcome, sides, pts }) => {
     const season = currentSeason();
     // Um combate terminou (vitória, derrota, empate ou desistência): o reroll dos oponentes volta.
-    await kvOrThrow(env).delete(rerollKey(id)).catch(() => {});
+    // Best-effort de propósito (Antislop P1, §374): propagar aqui daria 5xx ANTES do `putRank` e um retry de partida já liquidada.
+    // Se falhar, a trava fica até o TTL (1 dia) e só o reroll espera; agora com aviso no log.
+    await kvOrThrow(env).delete(rerollKey(id)).catch(err => console.warn('[community] reroll unlock failed', { id, err: String(err) }));
     // Resultado sem ganho: o que o cliente usa para NAO pagar Honra de vitoria (`honorFactor`).
     /** @type {{ gain: number, factor: number, reason: 'repeat' | 'rank-up' | 'rank-down' | null }} */
     const nada = { gain: 0, factor: 1, reason: null };
@@ -1152,7 +1155,21 @@ async function handleCommunity(context) {
     if (!opp?.pvpEnabled || isHidden(opp) || (await adminSaveIds(env)).has(oppSave)) return { res: json({ error: 'opponent unavailable' }, 404) };
     return { opponentId, oppSave, me, opp };
   };
-  const lerSpar = (saveId) => kvOrThrow(env).get(sparPendingKey(saveId)).then(r => (r ? JSON.parse(r) : null)).then(v => (v && v.sides?.me && v.sides?.opp ? v : null)).catch(() => null);
+  /* Duelo de treino aberto (`spar:<id>`). Falha do KV PROPAGA (Antislop P1, item 5, §374): virar `null` respondia 409
+     `no open duel` depois da partida gasta (e, no `sparStart`, abria outro duelo e gastava mais uma). Só o JSON ilegível é
+     tolerado, com aviso. */
+  const lerJsonKv = async (key, saveId) => {
+    const raw = await kvOrThrow(env).get(key);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch {
+      console.warn('[community] spar record unreadable', { key: key.split(':')[0], saveId });
+      return null;
+    }
+  };
+  const lerSpar = async (saveId) => {
+    const v = await lerJsonKv(sparPendingKey(saveId), saveId);
+    return v && v.sides?.me && v.sides?.opp ? v : null;
+  };
 
   /* Abre o duelo fantasma (`_duel.js`): consome a cota do dia, guarda o
      oponente e sorteia a SEMENTE — aqui, DEPOIS do compromisso. Se a semente
@@ -1388,12 +1405,14 @@ async function handleCommunity(context) {
       return ctx.res;
     }
     const { opponentId, opp } = ctx;
+    // ⚠️ ORDEM (Antislop P1, §374): TODA leitura do KV acontece ANTES de apagar o duelo aberto. As leituras propagam a falha
+    // (5xx → `playSparComRetry` repete com a mesma semente); se o `spar:<id>` já tivesse sido apagado, o retry cairia em 409
+    // `no open duel` e o resultado (e a Honra) se perderiam. Depois do `delete` só há gravações.
     // Reenvio do MESMO resultado (a resposta se perdeu na rede): devolve o já liquidado, sem creditar Honra de novo.
-    const feito = await kvOrThrow(env).get(sparDoneKey(id)).then(r => (r ? JSON.parse(r) : null)).catch(() => null);
+    const feito = await lerJsonKv(sparDoneKey(id), id);
     const aberto = await lerSpar(id);
     if (!aberto && feito && feito.opp === opponentId && body.seed !== undefined && feito.seed === body.seed) return json({ ...feito.res, replayed: true });
     if (!aberto || aberto.opp !== opponentId) return json({ error: 'no open duel' }, 409);
-    await kvOrThrow(env).delete(sparPendingKey(id));
     const oppSpriteUrl = (await spriteVivoDoSimulado(env, ctx.oppSave)) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name, petName: petNameDoSimulado(opp), stage: opp.stage,
@@ -1402,16 +1421,22 @@ async function handleCommunity(context) {
     };
     // Desistir ou estourar o prazo = derrota, sem luta e sem nada a perder.
     if (body.forfeit === true || Date.now() - (aberto.at || 0) > DUEL_PENDING_MS) {
+      await kvOrThrow(env).delete(sparPendingKey(id));
       return json({ won: false, draw: false, outcome: 'loss', forfeit: true, myScore: 0, oppScore: 100, honor: 0, opponent });
     }
     const duel = simulateDuel({ me: aberto.sides.me, opp: aberto.sides.opp, seed: aberto.seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
-    let honra = { honor: 0, capped: false };
     // Duelo aberto por esta versão já gastou a partida no `sparStart` (`spent`) e gravou dia/Honra; registro antigo gasta aqui.
     const diaTk = aberto.spent && aberto.day ? aberto.day : diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off)));
-    const gasto = aberto.spent ? { withHonor: aberto.withHonor === true, status: sparTicketStatus(await readSparTicket(env, id, diaTk)) } : await spendSparMatch(env, id, diaTk);
+    const ticket = await readSparTicket(env, id, diaTk);
+    const withHonor = aberto.spent ? aberto.withHonor === true : ticket.played < TREINO_TICKET_MATCHES;
+    const honraUsada = outcome === 'win' && withHonor ? await readSparHonorUsed(env, id, diaTk) : 0;
+    // ── leituras acabaram: daqui em diante só gravações ──
+    await kvOrThrow(env).delete(sparPendingKey(id));
+    const gasto = aberto.spent ? { withHonor, status: sparTicketStatus(ticket) } : await spendSparMatch(env, id, diaTk, ticket);
+    let honra = { honor: 0, capped: false };
     if (outcome === 'win' && gasto.withHonor) {
-      honra = await grantSparHonor(env, id, diaTk, () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; });
+      honra = await grantSparHonor(env, id, diaTk, () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; }, honraUsada);
     }
     const resposta = {
       won: outcome === 'win', draw: outcome === 'draw', outcome,

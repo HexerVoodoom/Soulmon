@@ -4230,7 +4230,7 @@ Detalhe achado a achado em **1.1** (N-3 a N-8) e **1.5**. Resumo:
 | ✅ | Service worker para de cachear resposta de outra origem | `3b45df1b` |
 | ✅ | `customKeywords` delimitado no prompt; `temperature` `clamp`ada | `4997bccb` |
 | ✅ | Keystores: são do **DigiApp**, e com Play App Signing a rotação é formulário | análise |
-| 🔴 | SEC-3 (resgate atômico) e SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`) **seguem abertos** | — |
+| 🔴 | ~~SEC-3 (resgate atômico) e~~ SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`) **segue aberto**. ⚰️ *Reconferido em 14/11/2026 (Antislop P1, REGISTRO §374): o SEC-3 fechou em 22/09 — o D1 `DB` está no `wrangler.jsonc` e a tabela `order_claims` foi aplicada (registro do dono #65; ver a lista do dono abaixo). O SEC-4 é o que segue aberto: decisão do dono D1 (14/11) = ligar a flag só depois que o APK com `setObfuscatedAccountId` estiver no ar.* | — |
 
 ### 📦 Suprimentos — e o achado mais desconfortável do dia
 
@@ -4634,11 +4634,12 @@ novo é gravado), então também aqui não houve migração — mas por outro mo
 > linha sozinho, então com D1 ligado a decisão de 5 anos não se aplica ao
 > recibo"*.
 >
-> **Mas é preparação de um caminho que nunca dispara.** Enquanto não houver
-> binding de D1 no `wrangler.jsonc`, `env.DB` é `undefined`, `claimOrderAtomic`
-> não roda, e a tabela `order_claims` não existe em produção. **Ligar o D1
-> continua sendo o conserto do SEC-3** — e agora ele chega com a retenção já
-> resolvida, em vez de abrir uma ponta nova no dia em que for ligado.
+> ⚰️ **Superado (reconferido em 14/11/2026, Antislop P1 item 12, REGISTRO §374).** O parágrafo
+> original dizia que, sem binding de D1 no `wrangler.jsonc`, `env.DB` era `undefined` e o
+> `claimOrderAtomic` não rodava. Isso deixou de ser verdade em **22/09/2026**: o `wrangler.jsonc`
+> tem `d1_databases` com `DB` → `soulmon-billing`, e a tabela `order_claims` foi aplicada
+> (registro do dono #65; provas na lista do dono, mais abaixo). **O D1 é o conserto do SEC-3 e
+> está ligado.** O que segue aberto é o SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`).
 >
 > ⚠️ Não confunda as duas coisas: *a migração existir* e *o caminho atômico
 > rodar* são afirmações diferentes, e só a primeira é verdade hoje. Este é
@@ -4959,7 +4960,7 @@ decisão sua.
 | 🔴 | Registrar o pacote no Firebase + baixar `google-services.json` |
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
-| 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
+| 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md). **Decisão do dono D1 (14/11/2026, Antislop): ligar, mas só depois que o APK com `setObfuscatedAccountId` estiver no ar — NÃO ligada ainda** (antes disso recusaria toda compra; REGISTRO §374). O SEC-3 (D1 `DB`) já fechou em 22/09 (linha abaixo) |
 | ✅ | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims` — **APLICADO em 22/09/2026** (registro do dono **#65**). É o conserto do **SEC-3**, que a §1.2 chamava de *maior risco de dinheiro que sobrou*. O que aconteceu, para o próximo que perguntar "está aplicado?": `0001_order_claims.sql` rodou **ok**; `0002_order_claims_expires_at.sql` **falhou com `duplicate column name: expires_at`** — a tabela **já existia com a coluna**, vinda do caminho `d1 execute --remote --file` que o `migrations/README.md` antigo mandava usar — e por isso foi **marcada como aplicada**. Provas colhidas: `npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"` → **4 colunas** (com `expires_at`); `npx wrangler d1 migrations list soulmon-billing --remote` → **"No migrations to apply"**. Consequência: **a 1ª compra da Play não dá mais 500** — `claimOrderAtomic` encontra a tabela. ⚰️ Esta linha já carregou duas mentiras mortas ("o `wrangler.jsonc` não tem binding `d1_databases`" e "sem a tabela, a query falha e o resgate cai no caminho antigo" — o `DELETE` inicial estava FORA do `try`, e a 1ª compra dava 500). A lápide do caminho `execute --file` está em [`migrations/README.md`](../migrations/README.md): **não use `execute --file` para migração**, foi ele que produziu a colisão |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
