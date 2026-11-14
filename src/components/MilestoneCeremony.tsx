@@ -45,7 +45,8 @@
  */
 import { useEffect } from 'react';
 import { Icon } from './ui/Icon';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { sm2Hint, sm2Text } from './form/FormKit';
+import { CtaButton } from './ui/CtaButton';
 import { TIER_FILL } from './HabitConstancy';
 import { emblemFor } from '../utils/emblemArt';
 import { RitualDialog, RitualGlass, ritualTitle } from './ritual/RitualKit';
@@ -123,13 +124,9 @@ export function MilestoneCeremony({
       {/* A saída é relacional, e é a metade do desenho que o dossiê achou em
           comum nos onze apps: o marco não é um aviso que se dispensa, é uma
           coisa que os dois fizeram. */}
-      <button
-        type="button"
-        onClick={onDone}
-        style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}
-      >
+      <CtaButton width="auto" onClick={onDone} style={{ marginTop: 4 }}>
         {isPt ? 'Seguimos juntos' : 'We keep going together'}
-      </button>
+      </CtaButton>
     </RitualDialog>
   );
 }

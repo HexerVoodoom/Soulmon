@@ -5297,3 +5297,17 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Alternativa que perdeu:** esperar existir a tela que os usa antes de instalar (adiaria arte pronta e deixaria os medalhões antigos no repo).
 
 **Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
+
+## §364 — Telas de celebração/revelação em tela cheia usam o CTA do site; modais comuns seguem com os botões antigos (14/11/2026, decisão do dono)
+
+**Contexto:** o dono, vendo a tela "Water potion created", pediu: "esse tipo de botão pode usar o asset do CTA do site". O §316c tinha deixado o CTA fora de modais e popups pequenos; esta decisão separa o que é celebração/revelação.
+
+**Decisão:** a confirmação de uma tela de **celebração/revelação em tela cheia** (cerimônia de item criado, evolução, marco, conquista, recompensa) usa `CtaButton`. Modais comuns (confirmação, formulário, lista, cartões pequenos) mantêm os botões antigos (`sm2-kit-btn`/`sm2Button`), como no §316c.
+
+**Convertidas:** `PocaoCriada` (OK, `tone="acao"`, `width="auto"`; é a ação que a pessoa veio buscar), `EvolutionCeremony` ("Seguimos juntos"), `MilestoneCeremony` ("Seguimos juntos") e `GroveMilestoneCeremony` (botão do marco), todas `tone="padrao"`, `width="auto"`, sem secundária. `EvoRecapModal` já usava. Seletores (`data-vesca-ok`, `data-cer-close`), foco inicial, voltar/Esc e fila não mudaram.
+
+**Deixadas de fora:** `LevelUpOverlay` (o gesto é tocar na tela; o botão é só dica "Toque para continuar"), `BossSplash` (aviso antes da luta, não celebração), `DropNotice` (cartão pequeno com "OK" outline, cai na regra de popup), `ResultScreen` (par "Jogar de novo"/"Início": escolha entre duas ações reais, quebraria a regra de par do §316c).
+
+**Alternativa que perdeu:** converter também modais (fica pesado, §316c) ou deixar a poção com `sm2Button` (dono pediu o CTA).
+
+**Falsifica:** dono achar o CTA pesado dentro dos cartões de marco (reverter os 3 cartões e manter só `PocaoCriada`). **Rollback:** reverter o PR. **Não visto na tela:** só testes de render, sem print do app.
