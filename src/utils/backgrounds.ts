@@ -266,7 +266,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   'bg-lakeside': {
     // Margem de lago: céu e água abertos, nada onde pendurar.
     namePt: 'Beira do Lago', nameEn: 'Lakeside',
-    css: `url(${bgLakesideImg})`, baseColor: '#183430',
+    css: `url(${bgLakesideImg})`, baseColor: '#0e2724',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   'bg-crystal-grove': {
