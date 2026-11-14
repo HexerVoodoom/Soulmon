@@ -34,14 +34,17 @@ for (const tema of ['light', 'dark'] as const) {
       expect(container.querySelector('[data-habit-link]')).toBeNull();
     });
 
-    it('journaling adotado mostra "Ir ao Caderno" (alvo de 44 px) e o toque leva ao prédio sem marcar a linha', () => {
+    it('journaling adotado mostra UMA seta turquesa (nome acessível "Ir ao Caderno", alvo de 44 px, sem texto) e o toque leva ao prédio sem marcar a linha', () => {
       aplicar();
       const ir = vi.fn();
       const marcar = vi.fn();
       const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: ir, onToggleActivity: marcar });
-      const btn = container.querySelector('button[data-habit-link]') as HTMLButtonElement;
-      expect(btn.textContent).toBe('Ir ao Caderno');
+      const btn = container.querySelector('button[data-ritual-action]') as HTMLButtonElement;
+      expect(btn.getAttribute('aria-label')).toBe('Ir ao Caderno');
+      expect(btn.textContent).toBe('chevron_right'); // só o glifo, nenhum texto visível
       expect(btn.style.minHeight).toBe('44px');
+      expect(btn.style.minWidth).toBe('44px');
+      expect(btn.style.color).toBe('var(--sm2-primary-ink)');
       fireEvent.click(btn);
       expect(ir).toHaveBeenCalledWith('forja.caderno');
       expect(marcar).not.toHaveBeenCalled();
@@ -50,38 +53,38 @@ for (const tema of ['light', 'dark'] as const) {
     it('EN: "Go to the Journal" e "of" nos passos', () => {
       aplicar();
       const { container } = mount([mk('j', 'Gratitude', 'mente-gratidao'), mk('w', 'Walk', 'corpo-caminhar')], { onGoToBuilding: noop, stepsInfo: { hoje: 100, meta: 7000 } }, 'en-US');
-      expect(container.querySelector('button[data-habit-link]')?.textContent).toBe('Go to the Journal');
+      expect(container.querySelector('button[data-ritual-action]')?.getAttribute('aria-label')).toBe('Go to the Journal');
       expect(container.querySelector('[data-habit-link="steps"]')?.textContent).toBe('100 of 7,000 steps');
     });
 
     it('hábito sem catálogo, ou de catálogo sem recurso (água, sono), não ganha link (Q6, Q7)', () => {
       aplicar();
       const { container } = mount([mk('a', 'Beber água', 'corpo-beber-agua'), mk('s', 'Dormir', 'sono-horario-fixo'), mk('c', 'Custom')], { onGoToBuilding: noop, stepsInfo: { hoje: 1, meta: 7000 } });
-      expect(container.querySelector('[data-habit-link]')).toBeNull();
+      expect(container.querySelector('[data-habit-link], [data-ritual-action]')).toBeNull();
     });
 
     it('hábito concluído não mostra o link (a linha fica só com o check)', () => {
       aplicar();
       const feito = mk('j', 'Gratidão', 'mente-gratidao', { completedToday: true, lastCompletedDate: new Date('2026-11-15T12:00:00').toDateString() });
       const { container } = mount([feito], { onGoToBuilding: noop });
-      expect(container.querySelector('[data-habit-link]')).toBeNull();
+      expect(container.querySelector('[data-habit-link], [data-ritual-action]')).toBeNull();
     });
   });
 }
 
-describe('o link de ação vem NA FRENTE do nome (13/11/2026)', () => {
-  it('"Ir ao Caderno" mora na mesma linha, antes do nome, e não numa segunda linha embaixo', () => {
+describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §365; reverte o "link na frente" de 13/11)', () => {
+  it('a seta mora no fim da linha, depois do nome, sem texto "Ir ao…" e sem link na frente', () => {
     const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: noop });
-    const btn = container.querySelector('button[data-habit-link]') as HTMLButtonElement;
-    const linha = btn.closest('[data-ritual-lead-row]') as HTMLElement;
-    expect(linha).not.toBeNull();
+    const btn = container.querySelector('button[data-ritual-action]') as HTMLButtonElement;
+    const nome = container.querySelector('.sm2-ritual-name') as HTMLElement;
     expect(btn.closest('[data-ritual-below]')).toBeNull();
-    const nome = linha.querySelector('.sm2-ritual-name') as HTMLElement;
-    expect(btn.compareDocumentPosition(nome) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('[data-ritual-lead-row], [data-ritual-lead]')).toBeNull();
+    expect(container.textContent).not.toContain('Ir ao Caderno');
+    expect(nome.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
   it('o contador de passos (não é ação) continua embaixo', () => {
     const { container } = mount([mk('w', 'Caminhar', 'corpo-caminhar')], { stepsInfo: { hoje: 1, meta: 7000 } });
     expect(container.querySelector('[data-ritual-below] [data-habit-link="steps"]')).not.toBeNull();
-    expect(container.querySelector('[data-ritual-lead]')).toBeNull();
+    expect(container.querySelector('[data-ritual-action]')).toBeNull();
   });
 });

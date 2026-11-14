@@ -424,6 +424,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `collectionDates.test.ts`
 **Regra de negócio:** Data de coleção de formas/sonhos/achados, para as vitrines de coleção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/demoEvolucao.ts`
+**Dono de:** O interruptor do MODO DEMO DE EVOLUÇÃO, só para gravar o vídeo de divulgação (13/11/2026, dono): com ele ligado, a barra de evolução enche assim que a última tarefa do dia é marcada, em vez de esperar a virada do dia. Não tem relação com a demo local (`demoMode.ts`).
+**Exports:**
+- `function demoEvolucaoAtiva(): boolean` — `true` só com o modo de build `demo` E `VITE_DEMO_EVOLUCAO=1` (`VITE_DEMO_EVOLUCAO=1 npx vite build --mode demo`). O release usa o modo `production`, então o corpo vira `false` em tempo de build e o resto é removido.
+**Chamado por:** `src/App.tsx`
+**Régua:** `demoEvolucao.test.ts` (desligado por padrão; liga só com a variável E o modo `demo`; desligado no release mesmo se a variável vazar; nada versionado — env, scripts, workflows — define a variável).
+**Avisos do arquivo:**
+- ⚠️ NUNCA chega ao usuário. Não criar `.env`, script ou workflow que defina `VITE_DEMO_EVOLUCAO` (a régua reprova).
+
 ### `src/utils/demoMode.ts`
 **Dono de:** O PREDICADO da demo local — `isDemoMode(state)` — e só ele (07/10/2026). Módulo FOLHA (sem imports): `bond.ts` e `cloudSave.ts` o importam, e um ciclo derrubaria os dois. Não é `accountTier: 'demo'` (o plano grátis, com conta): a demo local é um save que nunca sai do aparelho, aberto pelo botão DEMO da home.
 **Exports:**
