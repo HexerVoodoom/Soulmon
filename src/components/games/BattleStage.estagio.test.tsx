@@ -31,3 +31,48 @@ describe('ícone de estágio no painel do combatente', () => {
     expect(document.querySelectorAll('[data-estagio-icone]')).toHaveLength(0);
   });
 });
+
+describe('ícone de estágio colorido pelo CAMINHO na plaquinha (§369, dono 14/11/2026)', () => {
+  const tinta = (lado: 'me' | 'foe') => document.querySelector(`[data-stage-plate="${lado}"] [data-estagio-icone] [data-estagio-tinta]`) as HTMLElement | null;
+  const caminho = (lado: 'me' | 'foe') => document.querySelector(`[data-stage-plate="${lado}"] [data-estagio-icone]`)!.getAttribute('data-estagio-caminho');
+
+  it.each([
+    ['champion-power', 'power', 'rgb(76, 217, 100)'],
+    ['ultimate-harmony', 'harmony', 'rgb(74, 163, 255)'],
+    ['mega-benevolence', 'benevolence', 'rgb(255, 210, 63)'],
+  ] as const)('jogador e oponente em %s: ícone tingido de %s', (forma, cam, cor) => {
+    render(<BattleStage {...base} me={me(forma)} foes={[foe(forma)]} />);
+    for (const lado of ['me', 'foe'] as const) {
+      expect(caminho(lado)).toBe(cam);
+      expect(tinta(lado)!.style.backgroundColor).toBe(cor);
+    }
+  });
+
+  it('rookie, ultra e tier sem ramo (inimigo do mundo/chefe): ícone neutro, sem caminho inventado', () => {
+    render(<BattleStage {...base} me={me('rookie')} foes={[foe('champion')]} />);
+    expect(caminho('me')).toBeNull();
+    expect(caminho('foe')).toBeNull();
+    expect(tinta('me')).toBeNull();
+    expect(document.querySelector('[data-stage-plate="me"] img[data-estagio-icone="rookie"]')).toBeTruthy();
+    cleanup();
+    render(<BattleStage {...base} me={me('ultra')} foes={[foe('chefe')]} />);
+    expect(caminho('me')).toBeNull();
+    expect(document.querySelector('[data-stage-plate="foe"] [data-estagio-icone]')).toBeNull();
+  });
+
+  it('o ícone tingido tem tamanho fixo e não encolhe; o nome continua truncando com reticências', () => {
+    render(<BattleStage {...base} me={{ ...me('mega-benevolence'), name: 'Um nome comprido demais para caber na plaquinha' }} foes={[foe('rookie')]} />);
+    const icone = document.querySelector('[data-stage-plate="me"] [data-estagio-icone]') as HTMLElement;
+    expect(icone.style.width).toBe('16px');
+    expect(icone.style.height).toBe('16px');
+    expect(icone.style.flex).toMatch(/^0 0 auto$|^none$/);
+    const nome = icone.nextElementSibling as HTMLElement;
+    expect(nome.style.textOverflow).toBe('ellipsis');
+    expect(nome.style.minWidth).toBe('0px');
+    // ícone e nome ficam na linha do nome, ACIMA das barras (não as cobrem)
+    const placa = document.querySelector('[data-stage-plate="me"]')!;
+    const linhaDoNome = placa.firstElementChild!;
+    expect(linhaDoNome.contains(icone)).toBe(true);
+    expect(linhaDoNome.querySelector('[role="progressbar"]')).toBeNull();
+  });
+});

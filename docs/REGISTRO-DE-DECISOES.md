@@ -5317,6 +5317,20 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **APK/AAB:** a mudança é em `android/`, então SÓ VALE COM O PRÓXIMO AAB. Funciona com o APK antigo (feature detect): nenhum contrato de bridge muda, o JS não depende disso e o comportamento antigo apenas continua até o app ser atualizado. **Teste:** nenhum teste do repositório lê `AlarmReceiver.kt` como texto, então não há contrato a atualizar; a lista é Kotlin puro, sem teste de unidade. **Falsifica:** após o próximo AAB, um aviso da Feira disparado e o aparelho reiniciado re-armar a notificação. **Rollback:** reverter o PR.
 
+## §369 — O ícone de estágio ganha a cor do caminho (Poder verde, Harmonia azul, Benevolência amarelo); aparece nas plaquinhas de combate; rookie neutro (14/11/2026, decisão do dono)
+
+**Pedido do dono:** "Esses ícones coloridos devem aparecer nos cards de HP/special de combate". Mock aprovado: o ícone tingido na cor do caminho.
+
+**Mudança:** `EstagioIcone` (`src/components/ui/EstagioIcone.tsx`) ganha a prop opcional `caminho` (`'power' | 'harmony' | 'benevolence'`). As cores têm um único dono, `CAMINHO_COR` em `src/types/attributes.ts`: Poder `#4cd964` (76,217,100), Harmonia `#4aa3ff` (74,163,255), Benevolência `#ffd23f` (255,210,63). `caminhoDaForma(forma)` lê o ramo que o id da forma já tem (`getStageBranch`: `champion-power` → `power`); rookie, ultra e tier de inimigo sem ramo (`champion`, `chefe`, `guardiao`) devolvem `undefined` e ficam no ícone neutro de sempre. Nenhum caminho é inventado.
+
+**Técnica (uma só):** o PNG do set atual (`ESTAGIO_ICONE_SET = 'branco'`) vira `mask-image` (só o alfa) e a cor entra como `background-color`. Nenhum PNG novo. Contraste: o amarelo sobre a plaquinha clara (`SCRIM`, superfície a 78%) some; o invólucro leva um contorno escuro fino (`drop-shadow(0 0 0.6px #04211f)` duas vezes, `ATTR_ON_FILL_INK`), igual nos três caminhos para o ícone não mudar de peso por cor. A sombra fica no invólucro porque, no próprio elemento mascarado, a máscara a recortaria.
+
+**Onde aparece:** plaquinhas de HP/especial do `BattleStage` em todas as telas que o usam (Arena, Masmorra, Fenda/Rogue, Pesadelo, Bosque, Duelo PvP). O jogador sai tingido sempre que a forma tem caminho (`stageIcon`); o oponente, quando o `stage` dele tem (adversário do PvP, NPCs da Biblioteca); inimigos do mundo, chefes e bichos sem ramo ficam neutros ou sem ícone, como já era. Também nos nós da Evolução (pelo galho do nó, o mesmo `ramoAttr` do anel) e no Torneio (`EstagioMarca`). O layout da plaquinha não muda: o ícone continua 16 px fixo, o nome continua truncando com "…" e as barras ficam abaixo da linha do nome.
+
+**Alternativa que perdeu:** reusar `ATTR_COLOR` (`#22A900`/`#009ED8`/`#E69600`). Ficaria sem segunda constante, mas não são as cores que o dono deu para o ícone, e trocá-las mexeria no anel, nas linhas da árvore e nos textos de atributo do app inteiro. `ATTR_COLOR` continua dono de preenchimento/anel/linha; `CAMINHO_COR`, só do ícone. Também perdeu gerar 12 PNGs tingidos (3 caminhos × 4 estágios): a máscara dá a mesma silhueta sem asset novo e acompanha uma troca de set.
+
+**Falsifica:** forma com caminho na plaquinha aparecer com o ícone branco; rookie ou inimigo sem ramo aparecer colorido; o nome deixar de truncar ou a plaquinha mudar de altura. **Testes:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/games/BattleStage.estagio.test.tsx`, `src/components/ui/EstagioMarca.test.tsx`. **Rollback:** reverter o PR. **APK:** só bundle web.
+
 ## §371 — Hábito criado hoje aparece na lista "Hoje" na hora, mesmo antes da reafirmação do dia (14/11/2026, bug do dono em produção)
 
 **Sintoma (dono):** ao adicionar um hábito novo, ele não entrava em "TODAY MISSION > HABITS" da Home; só aparecia no dia seguinte, no modal "Hoje".

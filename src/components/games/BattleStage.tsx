@@ -26,7 +26,7 @@
  * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
 import { elementIcon } from '../../utils/elementIconArt';
-import { EstagioIcone } from '../ui/EstagioIcone';
+import { EstagioIcone, caminhoDaForma } from '../ui/EstagioIcone';
 import { tileElementName } from '../../utils/match3Pvp';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -336,7 +336,7 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
         <span style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} />
+          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} caminho={caminhoDaForma(fighter.stageIcon ?? fighter.stage)} />
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fighter.name}</span>
         </span>
         {numeric && (
