@@ -1021,9 +1021,9 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 | `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | refeito pela regra v2 (10/11/2026), instalado (loop-1..6 + sheet) |
 | `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
 | `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |
-| `st-peso`, `st-retardo`, `st-ferrugem`, `st-distorcao` (.png) | glifos de lentidão de Gravidade, Tempo, Industrial, Espaço | §236 | `st-peso` e `st-ferrugem` refeitos e instalados (13/11, §360); `st-retardo` ok (§331); `st-distorcao` segue no molde medalhão antigo (falta versão nova) |
-| `st-ofuscado`, `st-curto-circuito`, `st-atordoado`, `st-selado` (.png) | glifos de silêncio de Luz, Eletricidade, Marcial, Arcano | §236 | `st-selado` refeito e instalado (13/11, §360); os outros 3 seguem no molde medalhão antigo (falta versão nova) |
-| `st-seiva`, `st-po-de-fada`, `st-folego` (.png) | glifos de cura contínua de Planta, Fada, Vigor | §236 | `st-seiva` refeito e instalado (13/11, §360); `st-po-de-fada` e `st-folego` seguem no molde medalhão antigo (falta versão nova) |
+| `st-peso`, `st-retardo`, `st-ferrugem`, `st-distorcao` (.png) | glifos de lentidão de Gravidade, Tempo, Industrial, Espaço | §236 | `st-peso` e `st-ferrugem` refeitos e instalados (13/11, §361); `st-retardo` ok (§331); `st-distorcao` segue no molde medalhão antigo (falta versão nova) |
+| `st-ofuscado`, `st-curto-circuito`, `st-atordoado`, `st-selado` (.png) | glifos de silêncio de Luz, Eletricidade, Marcial, Arcano | §236 | `st-selado` refeito e instalado (13/11, §361); os outros 3 seguem no molde medalhão antigo (falta versão nova) |
+| `st-seiva`, `st-po-de-fada`, `st-folego` (.png) | glifos de cura contínua de Planta, Fada, Vigor | §236 | `st-seiva` refeito e instalado (13/11, §361); `st-po-de-fada` e `st-folego` seguem no molde medalhão antigo (falta versão nova) |
 | `st-escudo-peso`, `st-blindagem`, `st-furia`, `st-postura`, `st-aceleracao`, `st-carga` (.png) | glifos de buff de família | §236 | falta (provisório: forma + texto) |
 
 ## 23. Pratos do Restaurante — 12 desenhos (pedido do dono, 06/11/2026)
