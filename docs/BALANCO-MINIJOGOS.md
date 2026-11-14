@@ -103,3 +103,33 @@ nada naquele dia**, inclusive os do Ateliê da Mente. A folha do Ateliê anuncia
 4. **Picross: o bônus do dia fica por APARELHO** (quem joga em dois aparelhos
    recebe o bônus duas vezes, limitado pelo teto). Recomendação: manter no
    aparelho; o teto diário (no save) já segura.
+
+## 6. Rebalanço de 14/11/2026 (dono, em modal — REGISTRO §372)
+
+**Pedidos do dono:** "Diminua a quantidade de bits por atividade, o teto de 150 está sendo atingido muito rápido" e
+"Derrotar todos na Arena concede bônus no prêmio". **Opções escolhidas:** "Só Masmorra e nível 2" e "+1 material ou essência"
+(a recomendação do levantamento era +50% de Bits na Arena; o dono preferiu o material).
+
+| O quê | Antes | Agora | Constante |
+|---|---|---|---|
+| Fator de Bits da Masmorra (por inimigo e bônus de camada; a descida idle/offline usa as mesmas funções) | ×0,4 | **×0,2** | `DUNGEON_BITS_FACTOR` (`src/utils/dungeonBase.ts`) |
+| Bônus de camada 1→5 | 4/6/8/10/12 | **2/3/4/5/6** | `clearBonus` |
+| 5 primeiros andares (a "run completa" de 30/09), níveis 1/3/5 | ~130–170 | **70 / 76 / 84** | régua `utils/mente/balanco.test.ts` (30%–60% do teto) |
+| Andares até bater o teto de 150 (nível 1/3/5) | ~5 | **9 / 9 / 8** | idem |
+| Nível 2 (Avançado) da Corrida, PPT e Barragem | ×2 | **×1,5**, `max(1, round(base × 1,5))` | `ADVANCED_BITS_FACTOR`, `bitsForLevel` (`src/utils/minigameDifficulty.ts`) |
+| PPT Avançado, por partida vencida | 10 | **8** | `bitsForLevel(MATCH_POINTS, 2)` |
+| Arena, run completa vencida | 50 Bits | 50 Bits **+1 Presa** (1×/dia, fora do teto) | `src/utils/arenaClearBonus.ts` |
+
+**Não mudou:** os jogos leves no nível 1 (Eco, Bolhas, Troca, PPT, Corrida, Picross, Elemental Fusion…), os 50 Bits da Arena e
+o teto `MINIGAME_BITS_PER_DAY` = 150. O custo da Masmorra hoje é energia por camada (o "começar mais fundo" pago em Bits saiu em
+11/10, REGISTRO §31), então o fator só mexe no que a Masmorra paga.
+
+**O bônus da Arena.** A run já dá essência a cada rodada, então o bônus é **+1 material**: a Presa (`fang`), o material do
+próprio Duelo. Só quando as 5 rodadas terminam vencidas; não é Bit (não entra no funil nem no teto) e não é Honra ("a Arena
+não paga Honra" continua valendo). Anti-farm: a Arena não tem limite de runs e o material é o ritmo do Soulsmith
+(`forge.tempo.test.ts` conta ~1 por dia por prédio), então o bônus vale **uma vez por dia do jogador** — a 1ª run vencida do dia,
+lida no contador que o jogo já grava (`dailyMissions.counts.arena`). Estoque no teto (99) não paga e não mostra a linha.
+Aparece como linha própria no "Ganhou": "Todos derrotados +1 Presa" / "All defeated +1 Fang".
+
+**Honestidade.** Cortar o ganho não muda o total de quem já bate o teto, só o tempo até chegar nele: quem joga a Masmorra
+o dia inteiro continua chegando a 150; o que muda é que leva o dobro de andares, e os outros jogos têm mais espaço no dia.

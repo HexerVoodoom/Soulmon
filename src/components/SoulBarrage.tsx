@@ -27,7 +27,7 @@ import { emitFeat } from '../utils/feats';
 import { BossSplash } from './games/BossSplash';
 import { barrageSpecialMonster } from '../utils/bossSplash';
 import { entrarNaSuperficie } from '../utils/musica';
-import { ADVANCED_BITS_FACTOR, difficultyLabel } from '../utils/minigameDifficulty';
+import { advancedFactorLabel, bitsForLevel, difficultyLabel } from '../utils/minigameDifficulty';
 
 /**
  * Soul Barrage (EN) / Chuva de Almas (PT) — bullet hell vertical do Salão de Jogos (BETA3 M9).
@@ -267,7 +267,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (!s.over && !survived) { raf = requestAnimationFrame(tick); return; }
       if (ch) { ch.onResult(survived); return; }
       const score = s.score;
-      const pts = barrageBits(score) * (level === 2 ? ADVANCED_BITS_FACTOR : 1);
+      const pts = bitsForLevel(barrageBits(score), level === 2 ? 2 : 1);
       setFinalScore(score);
       setPrevBest(bestRef.current);
       setEarned(pts > 0 ? (onEarnRef.current(pts) ?? pts) : 0);
@@ -318,8 +318,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? (level === 2 ? `Arraste o dedo para mover o Soulmon em qualquer direção: ele atira sozinho. Desviar e abater enche o botão Especial (o efeito é o do especial dele). Bits ×${ADVANCED_BITS_FACTOR}. ` : '') + `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
-          : (level === 2 ? `Drag a finger to move the Soulmon in any direction: it fires on its own. Defeating foes fills the Special button (its effect matches the Soulmon's special). Bits ×${ADVANCED_BITS_FACTOR}. ` : '') + `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
+          ? (level === 2 ? `Arraste o dedo para mover o Soulmon em qualquer direção: ele atira sozinho. Desviar e abater enche o botão Especial (o efeito é o do especial dele). Bits ${advancedFactorLabel(true)}. ` : '') + `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
+          : (level === 2 ? `Drag a finger to move the Soulmon in any direction: it fires on its own. Defeating foes fills the Special button (its effect matches the Soulmon's special). Bits ${advancedFactorLabel(false)}. ` : '') + `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}

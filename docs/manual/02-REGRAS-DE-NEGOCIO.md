@@ -4666,7 +4666,7 @@ o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo nú
 (`utils/combate/`), não uma tabela por estágio.
 
 **Recompensas.** Bits por inimigo (`enemy.points`) + bônus de andar
-`clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
+`clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 2/3/4/5/6 desde 14/11/2026 (fator 0,2, REGISTRO §372; ⚰️ 4/6/8/10/12 com 0,4 de 30/09 a 14/11; ⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
 uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício + o talento `healBoost`) — cura DENTRO da descida, mantida de
 propósito: a parede calibrada do combate v3 a pressupõe e o ofício/talento dependem dela; o HP do jogador **carrega** entre
 andares. Todo marco (camada múltipla de 5) sorteia **🌀 Glitchtama** com **1%** de chance, **no máximo 1 por semana** do jogador (`utils/glitchtamaDrop.ts`, registro `glitchtamaDrop {week, dropped}` no save; a tela e a descida fora do app usam a mesma regra; REGISTRO §227); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) segue 1× por descida, no primeiro marco; o limite de 1 uso por dia e o estoque guardado não mudam (`onGlitchtama({ runReward, drop })`). O marco sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
@@ -4679,7 +4679,7 @@ jogador em média no andar 5,35 (máx 6), a descida dura no máximo ~21 min e o 
 gravado como `{week, level}` com `weekKey()` local. O placar é
 `STORAGE_KEYS.DUNGEON_BEST` (`recordDungeonScore` / `getDungeonBest`).
 
-**O Bits por inimigo também é × `DUNGEON_BITS_FACTOR`** (0,4, `src/utils/dungeon.ts`, desde 30/09/2026): `points = max(1, round(base.points × ptsMult × DUNGEON_BITS_FACTOR))` em `buildDungeonWave` (⚰️ o piso era 2 e não havia fator). Uma run completa paga entre 60% e 120% do teto `MINIGAME_BITS_PER_DAY` (régua: `balanco.test.ts`, `masmorraRunCompleta`; a decisão do dono estimou 130–170 Bits; ⚰️ antes do fator: 327 no nível 1 rookie e 417 no nível 5 mega, medidos em `docs/BALANCO-MINIJOGOS.md`, e enchia o teto no 2º/3º andar). É UM número aplicado nos DOIS lugares que pagam e no custo de começar mais fundo. Decisão: `REGISTRO-DE-DECISOES.md` §5.6 ("Masmorra paga ×0,4"); a Arena (50 Bits por run completa) foi medida e ficou como está.
+**O Bits por inimigo também é × `DUNGEON_BITS_FACTOR`** (0,2 desde 14/11/2026, REGISTRO §372 — era 0,4 desde 30/09/2026; `src/utils/dungeonBase.ts`): `points = max(1, round(base.points × ptsMult × DUNGEON_BITS_FACTOR))` em `buildDungeonWave` (⚰️ o piso era 2 e não havia fator). Os 5 primeiros andares pagam entre 30% e 60% do teto `MINIGAME_BITS_PER_DAY` desde 14/11 (eram 60%–120%) (régua: `balanco.test.ts`, `masmorraRunCompleta`; a decisão do dono estimou 130–170 Bits; ⚰️ antes do fator: 327 no nível 1 rookie e 417 no nível 5 mega, medidos em `docs/BALANCO-MINIJOGOS.md`, e enchia o teto no 2º/3º andar). É UM número aplicado nos DOIS lugares que pagam e no custo de começar mais fundo. Decisão: `REGISTRO-DE-DECISOES.md` §5.6 ("Masmorra paga ×0,4"); a Arena (50 Bits por run completa) foi medida e ficou como está.
 
 **O sumidouro recorrente de Bits (WP4.5).** `DEEP_START_BASE_COST` = `round(40 × DUNGEON_BITS_FACTOR)` = 16 (⚰️ era 40),
 `deepStartCost(n) = DEEP_START_BASE_COST × n` (16/nível), teto `DEEP_START_MAX_LEVEL` = 5, decisão em
@@ -5001,6 +5001,10 @@ RING em que cada elemento bate os DOIS seguintes e apanha dos DOIS anteriores �
 `DISADVANTAGE_MULT` = 0,8 com cancelamento mútuo, especial por escola a cada
 `SPECIAL_CHARGE_TURNS` (3), crítico em `PERFECT_ACC` (0,92) com `CRIT_MULT` (1,5)
 e cura de `ROUND_CLEAR_HEAL` (30%) ao limpar a rodada. Paga **Bits**.
+
+**Bônus "Todos derrotados" (14/11/2026, REGISTRO §372).** A run completa vencida paga, além dos 50 Bits, **+1 Presa** (`fang`,
+o material do Duelo) em linha própria no "Ganhou" ("Todos derrotados +1 Presa"), **1× por dia do jogador** (a 1ª run vencida;
+contador `dailyMissions.counts.arena`), até o teto de estoque 99. Não é Bit (fora do teto de 150) nem Honra. Dono: `utils/arenaClearBonus.ts`.
 
 **Desde 04/10/2026 o Duelo da Arena usa a ENERGIA** (REGISTRO §20.10): o especial da ficha dispara com a
 barra de energia do pet cheia (ataque dado + sofrido de cada inimigo vivo + cheer), no lugar da carga de
@@ -6327,7 +6331,7 @@ Tudo abaixo é o que o código de `5229b1be` faz. Decisões: `REGISTRO-DE-DECISO
 
 **🫶 Missão diária e presente (§190 do dia 30).** ⚰️ `d-brincar` saiu do catálogo (`dailyMissions.ts`, espelho `_dailyMissions.js`); fica `d-carinho`, que agora conta mesmo com vida cheia (o gesto chama `onPet` a cada ~2 s). **11/11/2026 (§296):** a diária `d-amigo` («Visite a criatura de um amigo») virou `d-presente` («Envie um presente a um amigo», evento `presente`, contado só quando o servidor confirma o envio); `d-amigo`/`amigo` ficam aposentados no catálogo só para o save. `d-humor` («Conte como você está se sentindo hoje») leva ao campo de conversa com o Soulmon na Home (`GoTarget 'chat'`) e QUALQUER mensagem enviada a ele conta (`ChatBox.onUserMessage` → `contarDiaria('humor')`; a resposta local da ponte e o envio sem rede não contam). Presente a amigo exige a **meta do dia cumprida** (`fioMetaCumprida`), não mais energia cheia — só cliente; o servidor segue limitando 1×/dia por amigo.
 
-**🎮 Pipo pergunta o modo (§191 do dia 30).** Antes de cada minijogo o NPC dos Jogos pergunta "Comum ou Avançado?" (`MinigameModeGate`, rótulos de `utils/minigameDifficulty.ts`); ids e valores salvos (nível 1/2) **não** mudaram. Com dificuldade: Corrida com obstáculos e Pedra·Papel·Tesoura; os demais têm um único "Jogar". Fora: Fenda/Masmorra e Refúgio.
+**🎮 Pipo pergunta o modo (§191 do dia 30).** Antes de cada minijogo o NPC dos Jogos pergunta "Comum ou Avançado?" (`MinigameModeGate`, rótulos de `utils/minigameDifficulty.ts`); ids e valores salvos (nível 1/2) **não** mudaram. Com dificuldade: Corrida com obstáculos e Pedra·Papel·Tesoura; os demais têm um único "Jogar". O Avançado paga **×1,5** Bits desde 14/11/2026 (era ×2; `bitsForLevel` = `max(1, round(base × 1,5))`, REGISTRO §372). Fora: Fenda/Masmorra e Refúgio.
 
 **🏆 Conquistas e Pontos de Conquista (§194).** 15 conquistas (6 novas lendo `defeatedElements`: `dex-base-all`, `dex-fused-25/50/100`, `dex-fused-all`, `dex-all`). **Pontos de Conquista** = prestígio, não gastável, sem ranking, DERIVADO das abertas (`ACHIEVEMENT_POINTS`, 5 a 100; nunca gravado). **Bits por conquista:** `ACHIEVEMENT_BITS` (10 a 150), pagos uma vez; o pago mora em `conquistasPagas` (save, sanitizado; espelho `functions/api/_conquistas.js`). Resgates de missão mostram o ganho exato (`mostrarGanho`).
 

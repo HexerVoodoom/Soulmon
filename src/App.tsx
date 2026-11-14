@@ -238,6 +238,7 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
+import { arenaClearBonusDue, applyArenaClearBonus } from './utils/arenaClearBonus';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, spendEarnedBits, earnedBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -8854,6 +8855,14 @@ export default function App() {
                     ladder: gameState.arenaLadder,
                     // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
                     onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
+                    // §372 (dono, 14/11/2026): run vencida = +1 Presa, 1×/dia do jogador, fora dos Bits e do teto. A tela mostra o que
+                    // a leitura do estado atual diz; a escrita reconfere sobre o `prev` (a 2ª vitória do mesmo dia não paga).
+                    onRunCleared: () => {
+                      if (demo) return 0;
+                      const pago = arenaClearBonusDue(gameState, playerDayKey(new Date(), gameState.playerDayTz));
+                      if (pago > 0) setGameState(prev => applyArenaClearBonus(prev, playerDayKey(new Date(), prev.playerDayTz)).state);
+                      return pago;
+                    },
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
                       const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
