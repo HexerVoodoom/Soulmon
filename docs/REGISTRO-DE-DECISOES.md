@@ -5251,3 +5251,13 @@ Decisão (só no correio que já existe, `mail:<saveId>` no KV; nada de estado n
 **Falsifica:** duas cartas de convite do mesmo par na caixa; mais de 20 cartas de convite pendentes; convite de clã aceito com a carta ainda na caixa; carta de convite depositada num 429 (`functions/api/cartas.convite.test.js`); a caixa sem "Entrar no clã"/"Recusar" na carta `guild-invite` ou com texto pt/en errado (`MailboxSheet.cartas.render.test.tsx`, `useMailbox.cla.test.tsx`).
 
 **Rollback:** reverter o PR. Cartas `guild-invite` já entregues viram carta comum no cliente antigo (o corpo tem o código). **APK:** nada (servidor + web, que o app carrega remoto).
+
+## §359 — As 7 coroas da Hexsmith por família entram no jogo (13/11/2026, aprovadas pelo dono: "gostei das coroas")
+
+Arte gerada no ChatGPT e aprovada. Instalada como `src/assets/soulmon/hex/coroa-<familia>.png` (direct, dot, shield, spdBuff, defDebuff, atkBuff, heal), 96×96 RGBA, o mesmo tamanho da `slot-coroa.png`: recorte pela bounding box do alfa (ilhas <24 px descartadas), alfa binarizado (limiar 128), reescala NEAREST com o maior lado em 88 px e centralizada. O mapa por família com fallback já existia (`resolveHexCrownArt`, glob `coroa-*.png`); nenhuma linha de código mudou, só teste novo (`coroa.test.ts`: toda família resolve arte própria e distinta; família sem arte cai na coroa única). Cosmético puro, sem efeito de regra.
+
+**Alternativa que perdeu:** guardar a arte em 1254 px e reduzir no cliente (bytes e custo sem ganho; a tela mostra a coroa pequena).
+
+**Falsifica:** família do especial sem coroa própria; coroa fora de 96×96; franja/xadrez no alfa.
+
+**Rollback:** reverter o PR (volta a coroa única). **APK:** a arte vai no bundle web; nada nativo.

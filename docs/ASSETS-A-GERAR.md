@@ -1210,7 +1210,7 @@ O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar 
 ## Beta12 (frente A, widgets)
 
 - **Prévia do widget Companheiro** (`android/app/src/main/res/drawable-nodpi/widget_preview_companion.png`, hoje o `soulmon_widget_companion_info.xml` reusa `widget_preview_vpet` como placeholder): captura do widget 2x2 com a criatura grande em pé na frente da moldura. Sem rosto de pessoa; criatura: o que a regra de categoria mandar (sprite do jogador/inicial). Gerar pelo ChatGPT, nunca Higgsfield. Tags: `tipo:ui`, `origem:chatgpt`, `uso:widget-preview`.
-## Coroas da Hexsmith por família (pedido do dono, 13/11/2026, REGISTRO §323) — falta (0 de 7)
+## Coroas da Hexsmith por família (pedido do dono, 13/11/2026, REGISTRO §323) — FEITO (7 de 7, instaladas em 13/11/2026, §359)
 
 **O que é:** um MODELO de coroa por família de especial (silhueta e material diferentes, não troca de cor), e a coroa sugere o efeito do especial. Hoje todas as famílias usam a coroa única `src/assets/soulmon/hex/slot-coroa.png` (96×96, RGBA, ouro com gemas turquesa e lascas flutuando).
 **Slot já ligado:** `resolveHexCrownArt` em `src/assets/soulmon/hex/index.ts` (glob `coroa-*.png`). Basta soltar `src/assets/soulmon/hex/coroa-<familia>.png` (ids de `SPECIAL_FAMILIES`); sem o arquivo, cai na `slot-coroa.png`. Nenhum código muda.
