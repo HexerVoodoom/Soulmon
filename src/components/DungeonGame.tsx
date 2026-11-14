@@ -121,7 +121,8 @@ import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
-// decisão do dono que trouxe a run completa para perto do teto diário.
+// decisão do dono que trouxe a run completa para perto do teto diário; desde
+// 14/11/2026 o fator é 0,2 → 2/3/4/5/6 (REGISTRO §372).
 export { clearBonus };
 
 type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended' | 'away';

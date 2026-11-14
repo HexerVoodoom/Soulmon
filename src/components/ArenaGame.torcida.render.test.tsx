@@ -83,11 +83,11 @@ function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
 
-async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void } = {}) {
+async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void; onRunCleared?: () => number } = {}) {
   renderWithCss(
     <ArenaGame
       evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
-      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd}
+      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd} onRunCleared={opts.onRunCleared}
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -363,6 +363,42 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     // Vitória não diz "Tentar de novo".
     expect(screen.getByRole('button', { name: /Lutar de novo/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
+  });
+
+  describe('§372 — bônus "Todos derrotados" (+1 Presa, fora dos Bits)', () => {
+    // O texto em EN está travado em `utils/arenaClearBonus.test.ts` (o ajudante `proximaRodada` daqui clica o botão em PT).
+    const vencer = async (bonus: number) => {
+      H.foeHp = 0.01;
+      const ordem: string[] = [];
+      const onEarn = vi.fn(() => { ordem.push('bits'); return 50; });
+      const onRunCleared = vi.fn(() => { ordem.push('bonus'); return bonus; });
+      await entrar({ onEarnPoints: onEarn, onRunCleared });
+      for (let r = 1; r <= 4; r++) await proximaRodada();
+      expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+      return { ordem, onRunCleared, onEarn, ledger: document.querySelector('[data-result-ledger]')?.textContent ?? '' };
+    };
+    it('run vencida: linha própria "Todos derrotados +1 Presa", os Bits seguem 50 (o bônus não passa pelo funil)', async () => {
+      const r = await vencer(1);
+      expect(r.onRunCleared).toHaveBeenCalledTimes(1);
+      expect(r.onEarn).toHaveBeenCalledWith(50);
+      expect(r.ordem).toEqual(['bonus', 'bits']); // o bônus lê as vitórias do dia ANTES do evento 'arena' desta run
+      expect(r.ledger).toMatch(/Todos derrotados \+1 Presa/);
+      expect(r.ledger).toMatch(/50/);
+      expect(document.querySelector('[data-result-row="item"]')).not.toBeNull();
+    });
+    it('já pago hoje (ou estoque no teto): sem linha', async () => {
+      const r = await vencer(0);
+      expect(r.onRunCleared).toHaveBeenCalledTimes(1);
+      expect(r.ledger).not.toMatch(/Todos derrotados/);
+    });
+    it('derrota: o bônus nem é pedido', async () => {
+      H.playerHp = 0.0001;
+      const onRunCleared = vi.fn(() => 1);
+      await entrar({ onRunCleared });
+      expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
+      expect(onRunCleared).not.toHaveBeenCalled();
+      expect(document.querySelector('[data-result-ledger]')?.textContent ?? '').not.toMatch(/Todos derrotados/);
+    });
   });
 
   describe('Bits mostrados = Bits creditados (teto diário de 150)', () => {

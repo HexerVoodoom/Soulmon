@@ -144,8 +144,13 @@ export function enemyKey(tier: EnemyTier, line: string): string {
  * lugares que pagam (Bits por inimigo aqui, bônus de andar em `clearBonus` da
  * `DungeonGame`) e no custo de começar mais fundo (o sumidouro), para a proporção
  * entre ganhar e gastar não mudar. Régua: `utils/mente/balanco.test.ts`.
+ *
+ * 14/11/2026 (dono, REGISTRO §372): 0,4 → **0,2**. Desde 30/09 a Masmorra virou idle/offline com andares
+ * infinitos (paga também com o app fechado) e o teto de 150 passou a ser batido cedo demais pelos usuários
+ * reais. Com 0,2 os 5 primeiros andares pagam ~65–85 (bônus 2/3/4/5/6). O teto diário não mudou: cortar o
+ * ganho não muda o total de quem já bate o teto, só o tempo até chegar.
  */
-export const DUNGEON_BITS_FACTOR = 0.4;
+export const DUNGEON_BITS_FACTOR = 0.2;
 
 // ── ⚰️ A base semanal e o "Descer mais fundo" (WP4.5/E2) saíram em 11/10/2026 (REGISTRO §31) ─────────────
 // A descida agora começa no PONTO DE RETORNO (`startLayerFor`, o último marco já limpo — `utils/dungeonIdle.ts`),

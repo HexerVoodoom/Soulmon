@@ -247,17 +247,32 @@ function masmorraRunCompleta(nivel: number, estagio: string): number {
 }
 
 describe('jogos longos × teto diário de minijogo', () => {
-  it('uma run COMPLETA da Masmorra fica perto do teto (60%–120%), nunca 2–3× ele como antes do fator', () => {
-    expect(DUNGEON_BITS_FACTOR).toBe(0.4);
+  // §372 (dono, 14/11/2026): o fator caiu de 0,4 para 0,2 ("o teto de 150 está sendo atingido muito rápido"). Os 5 primeiros
+  // andares (a "run completa" de 30/09) ficam entre 30% e 60% do teto; com a descida idle e infinita, o teto chega mais tarde.
+  it('os 5 primeiros andares da Masmorra pagam 30%–60% do teto (×0,2; eram 60%–120% com ×0,4)', () => {
+    expect(DUNGEON_BITS_FACTOR).toBe(0.2);
     for (const [nivel, estagio] of [[1, 'rookie'], [3, 'champion-power'], [5, 'mega-power']] as const) {
       const run = masmorraRunCompleta(nivel, estagio);
-      expect(run, `nível ${nivel}`).toBeGreaterThanOrEqual(MINIGAME_BITS_PER_DAY * 0.6);
-      expect(run, `nível ${nivel}`).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY * 1.2);
+      expect(run, `nível ${nivel}`).toBeGreaterThanOrEqual(MINIGAME_BITS_PER_DAY * 0.3);
+      expect(run, `nível ${nivel}`).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY * 0.6);
     }
   });
 
-  it('o bônus de andar da Masmorra é 4/6/8/10/12', () => {
-    expect(Array.from({ length: MAX_FLOORS }, (_, i) => clearBonus(i + 1))).toEqual([4, 6, 8, 10, 12]);
+  it('o bônus de andar da Masmorra é 2/3/4/5/6 (era 4/6/8/10/12)', () => {
+    expect(Array.from({ length: MAX_FLOORS }, (_, i) => clearBonus(i + 1))).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it('cortar o ganho não muda o teto: só o tempo até chegar nele (a Masmorra precisa do DOBRO de andares para os mesmos Bits)', () => {
+    const andaresAteTeto = (nivel: number): number => {
+      let total = 0;
+      for (let f = 1; f <= 400; f++) {
+        total += buildDungeonWave(nivel + f - 1, 'rookie').reduce((s, e) => s + e.points, 0) + clearBonus(f);
+        if (total >= MINIGAME_BITS_PER_DAY) return f;
+      }
+      return Infinity;
+    };
+    expect(MINIGAME_BITS_PER_DAY).toBe(150);
+    expect(andaresAteTeto(1)).toBeGreaterThan(MAX_FLOORS);
   });
 
   it('uma run completa da Arena (dificuldade 1, a do jogo) paga no máximo metade do teto', () => {
