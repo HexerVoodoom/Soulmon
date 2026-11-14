@@ -5297,6 +5297,20 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
 
+## §364 — Telas de celebração/revelação em tela cheia usam o CTA do site; modais comuns seguem com os botões antigos (14/11/2026, decisão do dono)
+
+**Contexto:** o dono, vendo a tela "Water potion created", pediu: "esse tipo de botão pode usar o asset do CTA do site". O §316c tinha deixado o CTA fora de modais e popups pequenos; esta decisão separa o que é celebração/revelação.
+
+**Decisão:** a confirmação de uma tela de **celebração/revelação em tela cheia** (cerimônia de item criado, evolução, marco, conquista, recompensa) usa `CtaButton`. Modais comuns (confirmação, formulário, lista, cartões pequenos) mantêm os botões antigos (`sm2-kit-btn`/`sm2Button`), como no §316c.
+
+**Convertidas:** `PocaoCriada` (OK, `tone="acao"`, `width="auto"`; é a ação que a pessoa veio buscar), `EvolutionCeremony` ("Seguimos juntos"), `MilestoneCeremony` ("Seguimos juntos") e `GroveMilestoneCeremony` (botão do marco), todas `tone="padrao"`, `width="auto"`, sem secundária. `EvoRecapModal` já usava. Seletores (`data-vesca-ok`, `data-cer-close`), foco inicial, voltar/Esc e fila não mudaram.
+
+**Deixadas de fora:** `LevelUpOverlay` (o gesto é tocar na tela; o botão é só dica "Toque para continuar"), `BossSplash` (aviso antes da luta, não celebração), `DropNotice` (cartão pequeno com "OK" outline, cai na regra de popup), `ResultScreen` (par "Jogar de novo"/"Início": escolha entre duas ações reais, quebraria a regra de par do §316c).
+
+**Alternativa que perdeu:** converter também modais (fica pesado, §316c) ou deixar a poção com `sm2Button` (dono pediu o CTA).
+
+**Falsifica:** dono achar o CTA pesado dentro dos cartões de marco (reverter os 3 cartões e manter só `PocaoCriada`). **Rollback:** reverter o PR. **Não visto na tela:** só testes de render, sem print do app.
+
 ## §367 — A Missão da Feira sobrevive a fechar o app: o dia gravado pelo App passa na hidratação do save (14/11/2026, bug do dono: "a Feira continua sem funcionar")
 
 **Causa raiz:** `App.tsx` parte a Missão com `startGuildMission(playerDayKey(...))`, e `playerDayKey` escreve o dia como `toDateString` ("Sat Nov 14 2026"). A hidratação do save (`GameStateContext.tsx`, `guildMission: normalizeGuildMission(...)`) só aceitava `AAAA-MM-DD` (`utils/guildMission.ts`). Resultado: fechar, recarregar ou o Android matar a WebView durante os 30 min APAGAVA a missão. O Soulmon reaparecia na Home sem nenhuma volta registrada no servidor (`guildRaidHit` nunca era chamado: sem seiva na Casa, sem encontro Mercador/Desafio/Chefe, sem `hitToday`), e a sala da Feira oferecia "Mandar investigar" de novo. Com o app aberto os 30 min inteiros funcionava, por isso o conserto de 12/11 (`a31f3a7d`, `feiraVolta.ts`) não resolveu: ele cuida do resultado da volta, e aqui a volta nem acontecia.
@@ -5330,6 +5344,16 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Alternativa que perdeu:** reusar `ATTR_COLOR` (`#22A900`/`#009ED8`/`#E69600`). Ficaria sem segunda constante, mas não são as cores que o dono deu para o ícone, e trocá-las mexeria no anel, nas linhas da árvore e nos textos de atributo do app inteiro. `ATTR_COLOR` continua dono de preenchimento/anel/linha; `CAMINHO_COR`, só do ícone. Também perdeu gerar 12 PNGs tingidos (3 caminhos × 4 estágios): a máscara dá a mesma silhueta sem asset novo e acompanha uma troca de set.
 
 **Falsifica:** forma com caminho na plaquinha aparecer com o ícone branco; rookie ou inimigo sem ramo aparecer colorido; o nome deixar de truncar ou a plaquinha mudar de altura. **Testes:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/games/BattleStage.estagio.test.tsx`, `src/components/ui/EstagioMarca.test.tsx`. **Rollback:** reverter o PR. **APK:** só bundle web.
+
+## §365 — A ação vira UMA seta turquesa no fim da linha; o balão dourado usa o mesmo chevron, sem círculo (14/11/2026, decisão do dono)
+
+**Decisão:** (1) Na linha de hábito que leva a um prédio ("Ir ao Caderno" / "Ir à Oficina do Foco"), o link turquesa sublinhado na FRENTE do nome sai (reverte o "link na frente" do #899, §355). Entra APENAS uma seta turquesa `>` (chevron sem haste) no FIM da linha, à direita, alinhada ao centro, sem texto; ela é o alvo de toque (mesma navegação), com `aria-label` = `irLaLabel` (PT/EN), foco e alvo de 44 px sem aumentar a linha. O contador de passos segue embaixo e o checkbox não mudou. (2) No balão dourado (§333, #879) a seta-em-círculo vira o MESMO chevron turquesa sem haste, sem círculo, no mesmo lugar (fim do texto), decorativo (o balão inteiro segue sendo o botão, com o mesmo `aria-label`).
+
+**Dono único:** `src/components/ui/ChevronAcao.tsx` (glifo `chevron_right`, tinta `--sm2-primary-ink`, o token do link que substitui). `RitualRow.lead` virou `RitualRow.action`.
+
+**Alternativa que perdeu:** manter o link com texto na frente (13/11) e a seta no círculo (§333): texto longo disputava com o nome na linha estreita e o círculo era placa ao redor do ícone.
+
+**Falsifica:** o nome do hábito truncar por causa da seta; toque na seta marcar a linha; seta sem nome acessível. **Rollback:** reverter o PR. **APK:** só web/bundle; nada nativo. **Não visto na tela real:** conferido só por testes de render (jsdom), não em dispositivo.
 
 ## §373 — Bit comprado com Créditos paga TUDO; a troca vira 3 pacotes com desconto e teto de 1.000 Bits/dia contado no servidor (14/11/2026, decisão do dono em modal, dinheiro real)
 
