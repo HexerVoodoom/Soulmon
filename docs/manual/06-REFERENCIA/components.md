@@ -89,9 +89,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/catalog/CatalogBrowserModal.tsx`
 **Dono de:** o navegador do catálogo (F4) — busca, abas por área, cartão "por que funciona", "Algo que não está aqui?" (abre o `CreateModal` legado, inalterado). Item `optInOnly` abre `CatalogMindNotice` antes de adicionar.
-**Props principais:** `CatalogBrowserModalProps` — `isOpen`, `onClose()`, `language?`, `onAdd(item)`, `onCreateFromScratch()`.
+**Props principais:** `CatalogBrowserModalProps` — `isOpen`, `onClose()`, `language?`, `onAdd(item)`, `onCreateFromScratch()`, `existingActivities?`, `habitsCount?`/`habitsCap?`/`capIsDemoBoundary?` (§376: cota de hábitos cheia mostra o aviso `catalogHabitCapNotice` e desliga o "Adicionar").
 **Chamado por:** `src/App.tsx` (substitui a abertura direta do `CreateModal` pelo botão "+" — `handleAddNewActivity`).
-**Régua:** `src/components/catalog/CatalogBrowserModal.render.test.tsx`.
+**Régua:** `src/components/catalog/CatalogBrowserModal.render.test.tsx`, `CatalogBrowserModal.teto.render.test.tsx`.
 
 ### `src/components/catalog/CatalogLevelInviteModal.tsx`
 **Dono de:** o convite de subir/descer nível de um item do catálogo (F4, `utils/catalogLevel.ts`). A6 da revisão de psicologia: o convite de descer nunca mostra "descer" nem "Nível 1" (`catalogLevelDownCopy`), botões com peso visual igual.

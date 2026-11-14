@@ -2148,8 +2148,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** a construção das `Activity` a partir dos itens do catálogo escolhidos.
 **Exports:**
 - `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda TODO DIA (§295; antes a do nível 1, que mandava o item para as Tarefas), `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
+- `catalogHabitCapNotice(count, cap, isPt, isDemoBoundary?)` — §376: texto do aviso de cota de hábitos cheia no catálogo (ou `null` se ainda cabe). Não muda o teto.
+- `withoutExisting(items, existing)` — tira da escolha o que já está na lista (por `catalogId`).
 **Chamado por:** `src/App.tsx`, `src/components/catalog/CatalogOnboardingFlow.tsx`.
-**Régua:** `CatalogOnboardingFlow.render.test.tsx`
+**Régua:** `CatalogOnboardingFlow.render.test.tsx`, `CatalogBrowserModal.teto.render.test.tsx`
 **Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/oracle/formas.ts`
