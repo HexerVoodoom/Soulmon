@@ -51,7 +51,8 @@ class AlarmReceiver : BroadcastReceiver() {
         if (tag != null) notificationManager.notify(tag, 0, notification)
         else notificationManager.notify(notificationId, notification)
 
-        // Eventos do bicho (cocô, comida na pastinha, energia cheia, progresso) são de UMA vez:
+        // Eventos do bicho (cocô, comida na pastinha, energia cheia, progresso) e o aviso da volta da
+        // Missão da Feira (`feira-missao-volta`, `utils/feiraNotificacao.ts`) são de UMA vez:
         // a hora deles sai do estado de AGORA e não se repete amanhã. Sem apagar a entrada, o
         // BootReceiver os re-armaria no próximo reinício e o aparelho avisaria de um cocô que
         // não existe (REGISTRO §114). As refeições e o lembrete de deitar SÃO diários: ficam.
@@ -83,6 +84,6 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_NOTIFICATION_ID = "notification_id"
         const val EXTRA_TAG = "notification_tag"
         /** Tags de evento único — ver `onReceive`. Espelha `EVENT_PUSH_TAGS`/`poopPushCopy` de `_pushCopy.js`. */
-        private val ONE_SHOT_PREFIXES = listOf("poop-event-", "pet-pantry", "pet-energy-full", "pet-progress")
+        private val ONE_SHOT_PREFIXES = listOf("poop-event-", "pet-pantry", "pet-energy-full", "pet-progress", "feira-missao-volta")
     }
 }

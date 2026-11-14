@@ -2245,7 +2245,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 });
 
 /**
- * O texto do balão DOURADO com a SETA no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333; desenho revisto em 14/11/2026, §364):
+ * O texto do balão DOURADO com a SETA no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333; desenho revisto em 14/11/2026, §365):
  * diz "este balão leva a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
  * · A seta é o `ChevronAcao` (`ui/ChevronAcao.tsx`, o MESMO da linha de hábito): chevron `>` turquesa SEM haste e SEM círculo.
  * · Tinta = `--sm2-primary-ink` (turquesa do tema), decorativa: o balão inteiro é o botão.

@@ -223,7 +223,7 @@ export interface RitualRowProps {
   /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
    *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
   below?: ReactNode;
-  /** AÇÃO da linha: uma SETA turquesa (`ChevronAcao`) no FIM da linha, à direita, sem texto (dono, 14/11/2026, REGISTRO §364: reverte o
+  /** AÇÃO da linha: uma SETA turquesa (`ChevronAcao`) no FIM da linha, à direita, sem texto (dono, 14/11/2026, REGISTRO §365: reverte o
    *  "link na frente" de 13/11). O `label` vira o nome acessível. Some quando a linha está feita. */
   action?: { label: string; onClick: () => void; kind?: string };
   /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */

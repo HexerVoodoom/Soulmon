@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { Icon } from './Icon';
 
 /**
- * `ChevronAcao` — a SETA de ação do app: um chevron `>` turquesa SEM haste e SEM círculo (dono, 14/11/2026, REGISTRO §364).
+ * `ChevronAcao` — a SETA de ação do app: um chevron `>` turquesa SEM haste e SEM círculo (dono, 14/11/2026, REGISTRO §365).
  * UM dono para dois lugares: o fim da linha de hábito que leva a um prédio (`RitualRow`) e o fim do texto do balão dourado.
  *
  * · Glifo autoral `chevron_right` (`ui/NavGlyphs.tsx`), tinta `--sm2-primary-ink` (o mesmo token do link "Ir ao…" que ela substitui).

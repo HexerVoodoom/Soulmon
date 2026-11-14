@@ -5287,7 +5287,6 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** algum `oasis-*` acima de 400 KB; xadrez assado ou moldura no fundo; sala de descanso sem fundo. **Rollback:** reverter o PR (voltam o fundo em código das 3 salas). **APK:** arte vai no bundle web; nada nativo.
 
-
 ## §363 — Entram os 17 glifos de status restantes do ChatGPT, mesmo sem tela que os use (14/11/2026, decisão do dono)
 
 **Instalado:** `src/assets/soulmon/combate-v3/status/st-{atordoado,ofuscado,distorcao,curto-circuito,po-de-fada,folego,aceleracao,atk-fisico,atk-magico,blindagem,carga,def-agua,def-terra,escudo-peso,furia,postura,velocidade}.png`, substituindo os de mesmo nome. Fonte `E:/Soulmon-assets/_lote-13-11/<id>/<id>.png` (1254 px, alfa real). Processo do §361: recorte pela bounding box do alfa, ilhas <24 px descartadas, alfa binarizado em 128, NEAREST para 64 no maior lado, centralizado em 64², PNG. Tamanhos 3,1 a 8,1 KB (maior: `st-escudo-peso`, 8117 B). Conferidos sobre fundo escuro: sem franja, sem xadrez assado.
@@ -5298,7 +5297,27 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** glifo com franja ou xadrez assado; arquivo acima de 8 KB; id de `STATUS_FX.glyph` sem arquivo (conferido: nenhum falta). **Rollback:** reverter o PR (voltam os medalhões antigos). **APK:** arte vai no bundle web; nada nativo.
 
-## §364 — A ação vira UMA seta turquesa no fim da linha; o balão dourado usa o mesmo chevron, sem círculo (14/11/2026, decisão do dono)
+## §367 — A Missão da Feira sobrevive a fechar o app: o dia gravado pelo App passa na hidratação do save (14/11/2026, bug do dono: "a Feira continua sem funcionar")
+
+**Causa raiz:** `App.tsx` parte a Missão com `startGuildMission(playerDayKey(...))`, e `playerDayKey` escreve o dia como `toDateString` ("Sat Nov 14 2026"). A hidratação do save (`GameStateContext.tsx`, `guildMission: normalizeGuildMission(...)`) só aceitava `AAAA-MM-DD` (`utils/guildMission.ts`). Resultado: fechar, recarregar ou o Android matar a WebView durante os 30 min APAGAVA a missão. O Soulmon reaparecia na Home sem nenhuma volta registrada no servidor (`guildRaidHit` nunca era chamado: sem seiva na Casa, sem encontro Mercador/Desafio/Chefe, sem `hitToday`), e a sala da Feira oferecia "Mandar investigar" de novo. Com o app aberto os 30 min inteiros funcionava, por isso o conserto de 12/11 (`a31f3a7d`, `feiraVolta.ts`) não resolveu: ele cuida do resultado da volta, e aqui a volta nem acontecia.
+
+**Conserto:** `normalizeGuildMission` aceita o formato de `playerDayKey` além do ISO (regex fechada; lixo continua virando "sem missão"). Missões já em voo com o dia em `toDateString` voltam a valer na próxima abertura. Teste: `src/utils/guildMission.persist.test.ts` (falhava antes: a missão do App virava `null` ao recarregar).
+
+**Alternativa que perdeu:** trocar o App para `playerDayIso` — deixaria órfãs as missões já gravadas no formato atual e mexeria no corte de dia; o campo `day` não é lido em nenhum outro lugar.
+
+**Não é a Feira desligada:** `FEIRA_CHEFE_DESDE = '2026-10-29'` (ligada) e `wrangler.jsonc` não define a variável; o servidor sempre devolve um encontro (verificado por teste de servidor com 1 e 3 membros, 14 a 17/11).
+
+**Falsifica:** missão gravada pelo App virar `null` em `normalizeGuildMission`; a sala oferecer "Mandar investigar" no mesmo dia depois de uma volta com o app fechado. **Rollback:** reverter o PR. **APK:** só bundle web.
+
+## §368 — O alarme nativo `feira-missao-volta` passa a ser de uma vez só (`ONE_SHOT_PREFIXES`) (14/11/2026, aprovado pelo dono)
+
+**Causa:** `AlarmReceiver.kt` apaga a entrada `alarm_<hash>` das SharedPreferences depois de disparar só para as tags de `ONE_SHOT_PREFIXES` (§114); o `BootReceiver` re-arma o que sobra. `feira-missao-volta` (`FEIRA_VOLTA_TAG`, `utils/feiraNotificacao.ts`) não estava na lista: se a entrada sobrasse, um reboot ou uma atualização do app podia re-armar "Seu Soulmon voltou da investigação" sem missão nenhuma. Na volta normal `cancelFeiraVolta` já limpa; o buraco era a entrada que sobra depois do disparo.
+
+**Mudança:** `"feira-missao-volta"` entra em `ONE_SHOT_PREFIXES` (`android/app/src/main/java/com/soulmon/notifications/AlarmReceiver.kt`), igual aos outros eventos de uma vez (`poop-event-`, `pet-pantry`, `pet-energy-full`, `pet-progress`). A tag que o plugin passa ao receiver é o próprio `id`, então o `startsWith` casa.
+
+**APK/AAB:** a mudança é em `android/`, então SÓ VALE COM O PRÓXIMO AAB. Funciona com o APK antigo (feature detect): nenhum contrato de bridge muda, o JS não depende disso e o comportamento antigo apenas continua até o app ser atualizado. **Teste:** nenhum teste do repositório lê `AlarmReceiver.kt` como texto, então não há contrato a atualizar; a lista é Kotlin puro, sem teste de unidade. **Falsifica:** após o próximo AAB, um aviso da Feira disparado e o aparelho reiniciado re-armar a notificação. **Rollback:** reverter o PR.
+
+## §365 — A ação vira UMA seta turquesa no fim da linha; o balão dourado usa o mesmo chevron, sem círculo (14/11/2026, decisão do dono)
 
 **Decisão:** (1) Na linha de hábito que leva a um prédio ("Ir ao Caderno" / "Ir à Oficina do Foco"), o link turquesa sublinhado na FRENTE do nome sai (reverte o "link na frente" do #899, §355). Entra APENAS uma seta turquesa `>` (chevron sem haste) no FIM da linha, à direita, alinhada ao centro, sem texto; ela é o alvo de toque (mesma navegação), com `aria-label` = `irLaLabel` (PT/EN), foco e alvo de 44 px sem aumentar a linha. O contador de passos segue embaixo e o checkbox não mudou. (2) No balão dourado (§333, #879) a seta-em-círculo vira o MESMO chevron turquesa sem haste, sem círculo, no mesmo lugar (fim do texto), decorativo (o balão inteiro segue sendo o botão, com o mesmo `aria-label`).
 

@@ -488,7 +488,7 @@ export function DailyRituals({
     const predio = predioDoRecurso(recurso);
     const irLa = irLaLabel(recurso, language);
     /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança, embaixo); journaling/foco: UMA SETA turquesa no FIM
-       da linha, sem texto (§364, 14/11/2026), com o `irLaLabel` no nome acessível. */
+       da linha, sem texto (§365, 14/11/2026), com o `irLaLabel` no nome acessível. */
     const contador = recurso === 'steps' && stepsInfo
       ? <span data-habit-link="steps" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
       : undefined;

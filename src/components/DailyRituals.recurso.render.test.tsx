@@ -72,7 +72,7 @@ for (const tema of ['light', 'dark'] as const) {
   });
 }
 
-describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §364; reverte o "link na frente" de 13/11)', () => {
+describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §365; reverte o "link na frente" de 13/11)', () => {
   it('a seta mora no fim da linha, depois do nome, sem texto "Ir ao…" e sem link na frente', () => {
     const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: noop });
     const btn = container.querySelector('button[data-ritual-action]') as HTMLButtonElement;
