@@ -91,14 +91,23 @@ export const sparPendingKey = id => `spar:${id}`;
 export const sparDoneKey = id => `sparDone:${id}`;
 
 /**
+ * Honra de treino já creditada no dia. Contador ausente/ilegível = 0; FALHA do KV propaga (Antislop P1, §374): tratar a falha
+ * como 0 reabria o teto do dia e o `put` seguinte gravava por cima.
+ */
+export async function readSparHonorUsed(env, id, day) {
+  const raw = await kvOrThrow(env).get(sparHonorKey(id, day));
+  return Math.max(0, Math.min(SPAR_HONOR_DAILY_CAP, Math.floor(Number(raw)) || 0));
+}
+
+/**
  * Credita (no contador do dia, no servidor) a Honra de UMA vitória de treino e devolve o que o app deve somar.
- * `day` = dia do JOGADOR (`playerDayOf` de `_strays.js`; zona/offset que o app informa, sem informação = UTC). Nunca por tick: só quando o resultado foi liquidado. Leitura tolerante: contador ausente/ilegível = 0.
+ * `day` = dia do JOGADOR (`playerDayOf` de `_strays.js`; zona/offset que o app informa, sem informação = UTC). Nunca por tick: só quando o resultado foi liquidado. Leitura tolerante: contador ausente/ilegível = 0; falha do KV propaga.
+ * `usedLido` (opcional): o contador já lido por quem chama (o `sparMatch` lê TUDO antes de apagar o duelo aberto).
  * @returns {Promise<{ honor: number, capped: boolean }>}
  */
-export async function grantSparHonor(env, id, day, rng) {
+export async function grantSparHonor(env, id, day, rng, usedLido) {
   const key = sparHonorKey(id, day);
-  const raw = await kvOrThrow(env).get(key).catch(() => null);
-  const used = Math.max(0, Math.min(SPAR_HONOR_DAILY_CAP, Math.floor(Number(raw)) || 0));
+  const used = Number.isFinite(usedLido) ? usedLido : await readSparHonorUsed(env, id, day);
   const roll = sparHonorRoll(rng);
   const honor = Math.max(0, Math.min(roll, SPAR_HONOR_DAILY_CAP - used));
   if (honor > 0) await kvOrThrow(env).put(key, String(used + honor), { expirationTtl: 172800 });
@@ -139,8 +148,9 @@ export function sparTicketStatus(t) {
   };
 }
 
+/** Ausente/ilegível = zerado (`sanitizeSparTicket`); FALHA do KV propaga (Antislop P1, §374): zerar aqui apagava os extras pagos no `put` seguinte. */
 export async function readSparTicket(env, id, day) {
-  const raw = await kvOrThrow(env).get(sparTicketKey(id, day)).catch(() => null);
+  const raw = await kvOrThrow(env).get(sparTicketKey(id, day));
   return sanitizeSparTicket(raw);
 }
 const writeSparTicket = (env, id, day, t) => kvOrThrow(env).put(sparTicketKey(id, day), JSON.stringify(t), { expirationTtl: 172800 });
@@ -161,7 +171,9 @@ export async function buySparTicket(env, id, day, phase) {
     return { ok: true, reserved: true, status: sparTicketStatus(t) };
   }
   if (phase === 'confirm') {
-    const raw = await kvOrThrow(env).get(sparReserveKey(id, day)).catch(() => null);
+    // Falha do KV PROPAGA (Antislop P1, §374): virar 'no-reserve' respondia 409 com a reserva viva, e o app (que já debitou os
+    // 30 Bits) não retenta 409. Exceção vira 500 da plataforma e `confirmSparTicketComRetry` repete.
+    const raw = await kvOrThrow(env).get(sparReserveKey(id, day));
     const at = Number(raw);
     if (!Number.isFinite(at) || at <= 0 || Date.now() - at > SPAR_RESERVE_TTL_S * 1000) return { ok: false, reason: 'no-reserve', status: sparTicketStatus(t) };
     await kvOrThrow(env).delete(sparReserveKey(id, day)).catch(() => {});
@@ -187,8 +199,11 @@ export async function fixarTzTreino(env, id, tz) {
   // Pedido SEM fuso prende o UTC (QA rodada 2, R2-T1): antes devolvia `{}` sem gravar, e o 1º fuso explícito que chegasse depois
   // virava a âncora, abrindo um 2º "dia" (+20 partidas com Honra) no mesmo instante. O app sempre manda `off`; só cliente editado não manda.
   const novo = tz && (tz.zone || tz.offsetMs !== undefined) ? tz : { offsetMs: 0 };
+  // A leitura PROPAGA a falha do KV (Antislop P1, §374): o `try` antigo cobria o `get` e o parse juntos, e uma falha
+  // transitória trocava a âncora travada pelo fuso do pedido. Só o JSON ilegível é tolerado (vira "sem âncora").
+  const raw = await kv.get(sparTzKey(id));
   let atual = null;
-  try { const raw = await kv.get(sparTzKey(id)); atual = raw ? JSON.parse(raw) : null; } catch { atual = null; }
+  try { atual = raw ? JSON.parse(raw) : null; } catch { atual = null; }
   const valido = atual && typeof atual === 'object' && (atual.zone || Number.isFinite(atual.offsetMs));
   const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S }).catch(() => {}); return v; };
   if (!valido) return grava(novo);
@@ -202,9 +217,10 @@ export async function fixarTzTreino(env, id, tz) {
   return ancora;
 }
 
-/** Gasta 1 partida liquidada. `withHonor` = ainda cabia no ticket grátis (o servidor só paga Honra nesse caso). */
-export async function spendSparMatch(env, id, day) {
-  const t = await readSparTicket(env, id, day);
+/** Gasta 1 partida liquidada. `withHonor` = ainda cabia no ticket grátis (o servidor só paga Honra nesse caso).
+ *  `lido` (opcional): o ticket já lido por quem chama (o `sparMatch` lê antes de apagar o duelo aberto). */
+export async function spendSparMatch(env, id, day, lido) {
+  const t = lido ? sanitizeSparTicket(lido) : await readSparTicket(env, id, day);
   const withHonor = t.played < TREINO_TICKET_MATCHES;
   const next = { ...t, played: t.played + 1 };
   await writeSparTicket(env, id, day, next);
