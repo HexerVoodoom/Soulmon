@@ -216,7 +216,16 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // (31 KB+) da entrada (`catalogHabitMigrate` importava `activityCatalog` estático desde #821; agora usa `catalogoCarga`) e as frentes somam só
   // ~19 KB (petVoice, tarefaLink, balaoDourado, soulmonCharacter; ChatPanel/ChatBox/npcFichas ficam em chunk lazy). Corte real segue = partir o `App.tsx`
   // (169 KB do chunk) e mover `elementoDescritores.data` para `import()` (só `pistasVisuaisDoElemento`, 1 consumidor).
-  'index.js': 1_115_569, // re-medido 13/11/2026 (release beta12-prod): +24 KB pelas frentes da beta12 (widgets, chat painel, baloes, guilda, efeitos de combate); pagar = code-split em release futura
+  // 13/11/2026 (release beta12-prod): 1_091_309 -> 1_115_569 (+24 KB) pelas frentes da beta12 (widgets, chat painel, balões, guilda, efeitos de combate).
+  // 14/11/2026 (REGISTRO §380, fix/orcamento-bytes-js): 1_115_569 -> 1_125_769 (+10,0 KB), `npm run build` limpo de origin/main ec00287d. O `dist/`
+  // commitado ainda é o da release (#897) e por isso o CI passa; quem builda localmente via 1_125_769 > 1_123_761 (dívida + folga). Build limpo da
+  // própria release 8c7b4a80 já media 1_117_441 (+1,9 KB que o dist commitado escondia). O resto (+7,7 KB, `analisar:entrada` base × agora) são os
+  // 48 commits de 14/11, sem nenhum único responsável: §373 câmbio/pacotes (`entitlements` +1,5 KB, `currencies`), #887 /embed (`telemetry` +1,5 KB,
+  // `embedMode`, `embedGates`), #924 §378 (`pendingOpId` +0,9 KB, `entitlements`), `App.tsx` +0,8 KB (#922, #902, §371–§373), #902 cartas (`useMailbox`
+  // +0,7 KB), #911 `ChevronAcao` +0,6 KB, #922 `catalogChoice` +0,5 KB, §372 `arenaClearBonus` +0,4 KB, §371 `dayPlan`/`habitRhythm` +0,6 KB.
+  // GATILHO (§380): ao passar de 1_150_000 B (≈1,1 MB) o próximo PR que crescer a entrada PAGA antes de re-medir — começar por
+  // `elementoDescritores.data` (47 KB, hoje lido no `useMemo` síncrono de `stagesComElemento`) e partir o `App.tsx` (173 KB).
+  'index.js': 1_125_769,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
