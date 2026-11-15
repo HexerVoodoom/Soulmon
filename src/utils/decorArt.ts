@@ -4,6 +4,7 @@
 // redimensiona de forma não-uniforme, só encaixa.
 import { DECOR_ART_ALIASES } from './artAliases';
 import { ARTE_DECOR_NOVOS } from './cosmeticosNovos';
+import { ARTE_DECOR_HONRA } from './honraDecor';
 import furnSofa from '../assets/decor/furn-sofa.png';
 import furnChair from '../assets/decor/furn-chair.png';
 import furnBooks from '../assets/decor/furn-books.png';
@@ -83,6 +84,9 @@ export const DECOR_ART: Record<string, string> = {
 
 // Decorações de tema/elemento (04/11/2026): `assets/decor/<id>.webp`; só existe para quem tem arquivo (`utils/cosmeticosNovos.ts`).
 Object.assign(DECOR_ART, ARTE_DECOR_NOVOS);
+
+// Decoração de Honra (14–15/11/2026): `assets/decor/hon-*.webp`; só existe para quem tem arquivo (`utils/honraDecor.ts`).
+Object.assign(DECOR_ART, ARTE_DECOR_HONRA);
 
 // Decorações novas que usam a arte de outra por ora (`artAliases.ts`): outro id, mesma imagem.
 for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
