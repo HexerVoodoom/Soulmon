@@ -7,7 +7,7 @@ import { CartaTutorialWidget } from './CartaTutorialWidget';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
 import npcHexsmith from '../assets/soulmon/npcs/npc-forja-hexsmith.png';
 import {
-  hasPendingReward, isFriendInvite, isGuildInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
+  deletableRead, hasPendingReward, isFriendInvite, isGuildInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
   type MailGrant, type MailItem,
 } from '../utils/mensageiro';
 import type { Language } from '../utils/i18n';
@@ -107,7 +107,8 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
   });
 
   const temItem = mail.some(hasPendingReward);
-  const temLida = mail.some(m => m.read === true && !hasPendingReward(m));
+  // §389: convite não respondido não entra no lote (é o mesmo critério do servidor).
+  const temLida = deletableRead(mail).length > 0;
   const total = resumo ? sumGrants(resumo) : { bits: 0, emblems: 0 };
 
   return (
@@ -148,6 +149,8 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
             const item = hasPendingReward(m);
             const premio = rewardText(m, isPt);
             const nova = isUnread(m);
+            // §389: enquanto o convite mostra "Recusar", o "Deletar" some (recusar já tira a carta da caixa).
+            const temRecusar = (isFriendInvite(m) && !!onAnswerInvite) || (isGuildInvite(m) && !!onJoinGuild);
             return (
               <section key={m.mid} data-mail-letter={m.mid} data-mail-open={aberto ? 'true' : 'false'}
                 style={{ border: '1px solid var(--sm2-muted)', borderRadius: 'var(--sm2-radius-md)', background: 'var(--sm2-surface)', boxShadow: SM2_SHADOW_CARD }}>
@@ -200,10 +203,12 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                           {isPt ? 'Resgatar' : 'Claim'}
                         </button>
                       )}
-                      <button type="button" data-mail-delete disabled={ocupado} onClick={() => void deletar(m)}
-                        style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1, color: 'var(--sm2-danger-ink)' }}>
-                        {isPt ? 'Deletar' : 'Delete'}
-                      </button>
+                      {!temRecusar && (
+                        <button type="button" data-mail-delete disabled={ocupado} onClick={() => void deletar(m)}
+                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1, color: 'var(--sm2-danger-ink)' }}>
+                          {isPt ? 'Deletar' : 'Delete'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

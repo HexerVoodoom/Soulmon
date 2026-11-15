@@ -254,12 +254,14 @@ export async function claimMail(kv, id, mids, now = Date.now(), db) {
 
 /**
  * Apaga cartas. Carta com prêmio pendente só sai com `force` (a confirmação do dono); sem ele volta em `blocked`.
- * `mids === 'read'`: todas as lidas SEM prêmio pendente (as com prêmio pendente ficam e voltam em `blocked`).
+ * `mids === 'read'`: todas as lidas SEM prêmio pendente (as com prêmio pendente ficam e voltam em `blocked`) e que NÃO são convite
+ * (§389): abrir a carta já a marca como lida, e o convite ainda não respondido não pode sumir no lote. Respondido, ele já saiu da
+ * caixa (`removerConvitesDe`/`removerConvitesDeCla`); apagar UM convite pelo id segue valendo (é o "Recusar" do clã).
  */
 export async function deleteMail(kv, id, mids, force = false) {
   const rec = await ler(kv, id);
   const alvo = mids === 'read' ? null : alvoDe(mids);
-  const candidatas = rec.q.filter(m => (alvo ? alvo.has(m.mid) : m.read));
+  const candidatas = rec.q.filter(m => (alvo ? alvo.has(m.mid) : m.read && !isInviteLetter(m)));
   const blocked = [];
   const removidas = [];
   for (const m of candidatas) (pendingReward(m) && !(force && alvo) ? blocked : removidas).push(m.mid);

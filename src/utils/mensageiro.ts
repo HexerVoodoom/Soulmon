@@ -91,7 +91,10 @@ export const markClaimed = (list: readonly MailItem[], mids: ReadonlySet<string>
   list.map(m => (mids.has(m.mid) ? { ...m, read: true, claimedAt: m.claimedAt || now } : m));
 
 /** Lidas que podem ser apagadas sem confirmação (as com item pendente ficam). */
-export const deletableRead = (list: readonly MailItem[]): MailItem[] => list.filter(m => m.read === true && !hasPendingReward(m));
+/** Carta de convite (amizade, clã, e o clã antigo só com `mid` `ginv:`): espelho de `isInviteLetter` do servidor (§389). */
+export const isInviteLetter = (m: MailItem): boolean => m.kind === 'friend-invite' || m.kind === 'guild-invite' || m.mid.startsWith('ginv:');
+/** O que "Excluir todas lidas" apaga: lidas, sem item pendente e que NÃO são convite (o servidor faz o mesmo, §389). */
+export const deletableRead = (list: readonly MailItem[]): MailItem[] => list.filter(m => m.read === true && !hasPendingReward(m) && !isInviteLetter(m));
 
 // O aviso do Papus (modal da fila) só fala de carta que ainda não anunciou: lista curta de `mid` no aparelho.
 const ANNOUNCED_MAX = 50;
