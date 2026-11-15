@@ -228,7 +228,7 @@ async function reivindicar(db, id, mid, now) {
  * `db` (o D1, `env.DB`): com ele, cada carta é reivindicada por INSERT único (`mailclaim:<id>:<mid>`, §381), e N pedidos paralelos
  * pagam uma vez; carta cuja linha já existe é só marcada como resgatada. Sem D1, a transição depende do KV (janela de corrida de antes).
  */
-export async function claimMail(kv, id, mids, now = Date.now(), db = null) {
+export async function claimMail(kv, id, mids, now = Date.now(), db) {
   const rec = await ler(kv, id);
   const alvo = mids === null ? null : alvoDe(mids);
   const candidatas = rec.q.filter(m => pendingReward(m) && (!alvo || alvo.has(m.mid)));
