@@ -5590,3 +5590,33 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Riscos aceitos:** a arma é arte retrato (5:6) numa caixa paisagem (56 × 40): encaixa por altura e fica estreita no palco. A aba Honra passa de 8 para 65 itens numa lista só (o plano pede seções por espaço, é desenho de tela, fica pendente). Imagem reduzida com NEAREST de ~1250 px para ~170 px: contorno serrilhado em algumas peças; sem build, nada foi visto em tela. O `dist/` não foi regenerado, então o teste de orçamento de bytes mediu o build antigo (as 57 imagens somam 404 KB, a maior 13,8 KB, teto por imagem 400 KB).
 
 **Gatilho de revisão:** o dono ver a arma pequena demais no palco (subir a escala do `wall` ou reabrir o espaço `weapon`), a aba Honra ficar ilegível, ou a chegada do ouro/cristal. **Rollback:** reverter o PR; ids `hon-*` já comprados ficam em `ownedFurniture`/`equippedDecor.wall` etc. e o palco resolve o id por `ALL_SHOP_ITEMS` e não desenha id ausente (`PetStageDecor`), então a posse não quebra o save.
+
+## §392 — Pesadelo: o inimigo causa 25% menos dano (15/11/2026, decisão do dono em modal: "todo mundo está reclamando")
+
+**Decisão:** o golpe do inimigo do Pesadelo sai ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, `utils/dungeonFight.ts`, dono único; entra em `NIGHTMARE_KNOBS.foeDamage` e multiplica o `hitScale` do inimigo em `nightmareFight`, ANTES da guarda da torcida). Só o Pesadelo lê o fator: a Masmorra (`dungeonFight`/`playSequence`), a Arena e o Duelo não passam por `nightmareFight`. Recompensas, HP do inimigo, `NIGHTMARE_POWER`, a regra de vitória e a torcida não mudaram. Não há espelho no servidor: `functions/api/_nightmares.js` só trata noites e prêmio, nunca simula a luta (sem paridade a manter).
+
+**Medição** (`simulateNightmareScenario`, 2 builds × 40 sementes por célula; cada célula = vitória% / HP perdido médio%; mesmo harness do §65):
+
+| cenário, nível | antes (×1,00) t1…t5 | depois (×0,75) t1…t5 |
+|---|---|---|
+| com torcida, L5 | 90/77 · 93/81 · 83/83 · 85/86 · 85/86 | 100/59 · 100/62 · 100/65 · 100/67 · 100/72 |
+| com torcida, L20 | 88/77 · 91/81 · 80/83 · 84/86 · 84/87 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| com torcida, L40 | 89/77 · 90/80 · 83/83 · 78/85 · 79/88 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| sem torcida, L5 | 15/97 · 5/99 · 5/99 · 3/100 · 8/100 | 50/91 · 48/93 · 50/95 · 23/97 · 33/96 |
+| sem torcida, L20 | 24/95 · 11/98 · 13/98 · 9/99 · 8/99 | 63/88 · 55/91 · 58/91 · 35/94 · 44/95 |
+| sem torcida, L40 | 29/95 · 19/97 · 16/98 · 11/99 · 11/99 | 64/87 · 59/90 · 58/91 · 34/94 · 48/94 |
+
+**Leitura honesta:** o efeito na taxa de vitória é bem maior que 25%, porque o Pesadelo é uma corrida de HP (o dano cai ¼, o tempo até o Soulmon cair sobe 1/0,75 ≈ +33% e o Soulmon vence antes). Com torcida a luta virou quase garantida (80–93% → ~99–100%), mas ainda machuca (perde 59–73% do HP, contra 77–88%). Sem torcida deixou de ser derrota quase certa (≥ 85% de derrotas → 36–66%). Os testes de calibragem do §65 foram rebaixados de "perde ≥ 70% sem torcida" para "perde ≥ 35%"; o piso de ≥ 75%/≥ 50% de vitória com torcida segue valendo.
+
+**Alternativa que perdeu: −40% (×0,60).** Com torcida 100% de vitória e só 48–64% de HP perdido; sem torcida 75–91% de vitória: o Pesadelo deixava de ser um desafio, e o dono pediu "~25%". **Gatilho de revisão:** se o Pesadelo virar passeio (vitória com torcida ≥ 99% e queixa de "fácil" nos testadores) subir a força (`NIGHTMARE_POWER`) em vez de voltar o fator; se ainda reclamarem de dureza em 2 semanas, ir a ×0,6.
+
+## §393 — Agulha de bússola (`tal-pve-04`) passa a elevar o TETO diário de Bits em vez de multiplicar o ganho (15/11/2026, decisão do dono em modal: "tem que aumentar o teto, ao invés de dar bônus em quanto ganha")
+
+> ⚰️ **Revoga o efeito `riftBits` da §2.38 / REGISTRO "Os oito nós 'em breve' entraram com efeito" (07/10/2026): "+3% por grau nos Bits da fenda (teto 9%)".** Lápide no código (`utils/talents.ts`, `RIFT_BITS_CAP_STEP`): o multiplicador não volta; o kind `riftBits`, `RIFT_BITS_STEP`/`RIFT_BITS_MAX`, `talentRiftBits` e `riftBitsWith` foram removidos.
+
+**Regra nova:** cada grau soma +10 ao teto diário de Bits de minijogo (`MINIGAME_BITS_PER_DAY` = 150): +10/+20/+30 no grau 3, kind `riftBitsCap` (`perRank: 10`, `RIFT_BITS_CAP_MAX` = 30). Vale SÓ para o crédito de quem joga a Fenda/Masmorra e a Arena (os chamadores que já liam o talento): o teto continua UM só (a soma de todos os jogos, `minigameBitsToday`), e o extra é um parâmetro opcional de `creditMinigameBits`/`minigameBitsGranted`/`remainingMinigameBits` (`utils/currencies.ts`, `minigameBitsCap(extra)`), que só a Fenda/Arena passam. Dino, PPT, Salão e Ateliê seguem parando em 150 e não gastam o que passou de 150. O ganho por luta não muda: o bônus percentual sumiu, a base nunca diminui. Descida fora da tela (`dungeonAway`): o campo do jogador no save passa de `rb` (fração) para `rc` (Bits de teto, 0–30); `rb` antigo é ignorado.
+**UI:** descrição PT/EN na árvore (números saem de `RIFT_BITS_CAP_STEP`), linha "teto de Bits +N" no resumo da árvore, "Bits de minijogo hoje: N de 150+N" na folha da Masmorra, `bitsCap` efetivo na tela de resultado da Fenda/Arena (`RiftResultExtras`) e o "Bits do dia" da pré-visualização.
+**Servidor:** o espelho `functions/api/_talents.js` (`talentRiftBitsCap`, `RIFT_BITS_CAP_MAX`) tem paridade travada em `talents.parity.test.js` (o servidor valida `talentPicks` no save e é quem decide o grau; o cliente só soma). ⚠️ HOJE o teto de 150 NÃO é imposto pelo servidor: ele mora no save do aparelho e o servidor só OBSERVA o crescimento de Bits (§387, modo observação; revisão 28/11). Quando o corte ligar, o teto efetivo da conta é `MINIGAME_BITS_PER_DAY + talentRiftBitsCap(talentPicks)`; a folga de 1.500/dia do orçamento já cobre o +30.
+**Compatibilidade:** quem já gastou pontos em `tal-pve-04` mantém o grau e o id (nada de migração de save); o efeito passa a ser o novo. Nada pago alcança talento (guard existente, `isPickable`).
+**Alternativa que perdeu:** manter +3%/grau (o dono achou pouco útil: o ganho é pequeno perto do teto). **Gatilho de revisão:** se mais de ~30% dos jogadores que escolhem o nó baterem o teto efetivo todo dia, ou o orçamento de Bits do servidor (§387) registrar excedente ligado a este nó.
+

@@ -16,7 +16,7 @@ import { bondLevelFor } from '../utils/bond';
 import {
   TALENT_TREE, TALENT_BY_ID, ranksOf, talentPointsFor, pointsLeft, canPick, pickTalent, isPickable, respecCost, applyRespec,
   sanitizeTalentPicks, canRespecOne, respecOneCost, applyRespecOne, prereqsMet, missingPrereqs, canTakeBack, type TalentNode, type TalentPath, type TalentReq,
-  talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentCheerScale, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield,
+  talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentCheerScale, talentDotResist, talentHealBoost, talentRiftBitsCap, talentStartShield,
 } from '../utils/talents';
 import { combinedAttrBonus, combinedBonus } from '../utils/combate/bonus';
 import { LAYOUT_NODES, LAYOUT_EDGES, BOARD, NODE_SIZE, HUB, HUB_POINT, ARM_ANGLE, pointOf, neighborIn } from '../utils/talentLayout';
@@ -186,7 +186,7 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
     (isPt ? `dano +${pctTxt(b.atk)} · defesa +${pctTxt(b.def)} · ritmo +${pctTxt(b.spd)}` : `damage +${pctTxt(b.atk)} · defense +${pctTxt(b.def)} · rhythm +${pctTxt(b.spd)}`);
   const extras = (xs: Array<string | null>) => xs.filter((x): x is string => !!x).join(' · ');
   const largada = talentStartEnergy(picks, bond), torcida = talentCheerScale(picks, bond) - 1, brasa = talentDotResist(picks, bond);
-  const cura = talentHealBoost(picks, bond), bitsFenda = talentRiftBits(picks, bond), escudo = talentStartShield(picks, bond);
+  const cura = talentHealBoost(picks, bond), bitsFenda = talentRiftBitsCap(picks, bond), escudo = talentStartShield(picks, bond);
   const AGORA: Array<{ id: TalentPath; label: string; linhas: string[] }> = [
     { id: 'pvp', label: isPt ? 'Duelo e Torneio' : 'Duel & Tournament', linhas: [
       canais(duelo),
@@ -201,7 +201,7 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
       (isPt ? `Arena +${pctTxt(arena)} · Pesadelo +${pctTxt(pesadelo)} (um bônus só)` : `Arena +${pctTxt(arena)} · Nightmare +${pctTxt(pesadelo)} (one bonus)`),
       extras([
         cura > 0 ? (isPt ? `cura +${pctTxt(cura)} do HP` : `heal +${pctTxt(cura)} of HP`) : null,
-        bitsFenda > 0 ? (isPt ? `Bits +${pctTxt(bitsFenda)}` : `Bits +${pctTxt(bitsFenda)}`) : null,
+        bitsFenda > 0 ? (isPt ? `teto de Bits +${bitsFenda}` : `Bits cap +${bitsFenda}`) : null,
         escudo > 0 ? (isPt ? `escudo ${pctTxt(escudo)} do HP` : `shield ${pctTxt(escudo)} of HP`) : null,
       ]),
     ] },

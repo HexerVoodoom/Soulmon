@@ -12,6 +12,7 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { ResultScreen } from './games/ResultScreen';
+import { RiftResultExtras } from './games/RiftResultExtras';
 import { EnergyCost } from './ui/EnergyCost';
 import { essenceLedgerRows } from '../utils/resultEssences';
 import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
@@ -42,7 +43,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
 import { settleEnergy } from '../utils/hunger';
 import { addFragments } from '../utils/equipment';
-import { MINIGAME_BITS_PER_DAY, minigameBitsToday, remainingMinigameBits } from '../utils/currencies';
+import { minigameBitsCap, minigameBitsToday, remainingMinigameBits } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
@@ -72,7 +73,7 @@ import { combatSceneBgDaCamada } from '../utils/combatArt';
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { useDungeonBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
+import { useDungeonBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { gateLine, masmorraFloorOpen } from '../utils/gates';
 import { bondLevelFor, XP_DUNGEON_FLOOR, XP_DUNGEON_RUN } from '../utils/bond';
 import { RewardPreview } from './ui/RewardPreview';
@@ -186,7 +187,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** Bestiário (31/10/2026): o inimigo ENCONTRADO entra na Biblioteca mesmo que o jogador perca (antes só o abate registrava). */
   onEnemySeen?: (enemyKey: string) => void;
   /** Grants Bits. */
-  onEarnPoints: (pts: number) => number | void;
+  onEarnPoints: (pts: number, extraCap?: number) => number | void;
   /** WP4.5 — Bits em caixa, para a compra de profundidade. */
   bits?: number;
   /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
@@ -311,8 +312,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;
 
   const addPoints = (pts: number) => {
-    const ganhos = riftBitsWith(pts, rift.riftBits);
-    const creditado = onEarnPoints(ganhos) ?? ganhos; // Bits ganhos: o talento soma por cima; o placar da run fica na base (o funil aplica o teto diário)
+    // Bits ganhos: a Agulha de bússola (`tal-pve-04`) eleva o TETO diário (§393), não o ganho; o funil aplica o teto
+    const creditado = onEarnPoints(pts, rift.riftBitsCap) ?? pts;
     runScoreRef.current += pts;
     resumoRef.current.bits += creditado; // o que entrou (teto diário), não o pedido
   };
@@ -427,7 +428,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const c = j.combatant;
     return {
       level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus,
-      fam: j.family, prof: profissao ?? undefined, sh: rift.startShield ?? 0, hb: rift.healBoost ?? 0, rb: rift.riftBits ?? 0, stage: evolutionStage,
+      fam: j.family, prof: profissao ?? undefined, sh: rift.startShield ?? 0, hb: rift.healBoost ?? 0, rc: rift.riftBitsCap ?? 0, stage: evolutionStage,
     };
   };
   /** 🏠 GRAVA onde a descida está (camada, lugar na escada, HP, energia): é isso que faz sair da tela NÃO cancelar nada — e que
@@ -759,7 +760,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   useEffect(() => entrarNaSuperficie(emDescida ? 'masmorra' : 'masmorra-mapa'), [emDescida]);
 
   const inStage = enemies.length > 0 && phase !== 'intro';
-  const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;
+  const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= minigameBitsCap(rift.riftBitsCap);
   /** Quanto falta para o HP chegar ao piso de entrada (0 = já pode descer). */
   const espera = msAteDescer(hpState, agora);
   const exitLabel = isPt ? 'Sair' : 'Exit';
@@ -910,6 +911,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             /* Fim de descida SEM vereditos: não é derrota nem cobrança, é o HP que acabou — e ele volta com o tempo.
                Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
                vocabulário da criatura que acaba) — o verbo é RECUPERAR. Tela padrão: `ResultScreen` (Proposta D). */
+            <RiftResultExtras extraCap={rift.riftBitsCap}>
             <ResultScreen
               playAgainIcon={lotIconName('exploracao', 'dungeon')} playAgainArt={lotIconArt('exploracao', 'dungeon')} dailyEvent="masmorra"
               language={language}
@@ -981,6 +983,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               homeLabel={exitLabel}
               onHome={onExit}
             />
+            </RiftResultExtras>
           )}
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
@@ -1084,7 +1087,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         )}
         {gs && (
           <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[
-            { kind: 'bits', max: remainingMinigameBits(gs, playerDayKey(new Date(), gs.playerDayTz)) },
+            { kind: 'bits', max: remainingMinigameBits(gs, playerDayKey(new Date(), gs.playerDayTz), rift.riftBitsCap) },
             { kind: 'xp', max: XP_DUNGEON_FLOOR * 5 + XP_DUNGEON_RUN },
             { kind: 'item', item: 'heart' },
           ]} />
