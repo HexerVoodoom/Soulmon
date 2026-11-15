@@ -5,6 +5,8 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY } from '../utils/arenaSorteio';
+import { ARENA_ROUNDS } from '../utils/arena';
+import { ARENA_ULTIMO_DROP_MULT } from '../utils/arenaUltimoAdversario';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
@@ -514,8 +516,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, 1 de ${ARENA_CHOICES} desafios; sortear ${ARENA_CHOICES} novos custa Bits depois de ${ARENA_REROLL_FREE_PER_DAY} grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.`,
-              `The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, 1 of ${ARENA_CHOICES} challenges; drawing ${ARENA_CHOICES} new ones costs Bits after ${ARENA_REROLL_FREE_PER_DAY} free a day. The Tournament's Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.`,
+              `O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, 1 de ${ARENA_CHOICES} desafios, em ${ARENA_ROUNDS} rodadas, e o último adversário deixa ${ARENA_ULTIMO_DROP_MULT}× a essência dele; sortear ${ARENA_CHOICES} novos custa Bits depois de ${ARENA_REROLL_FREE_PER_DAY} grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.`,
+              `The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, 1 of ${ARENA_CHOICES} challenges, over ${ARENA_ROUNDS} rounds, and the last opponent drops ${ARENA_ULTIMO_DROP_MULT}× its essence; drawing ${ARENA_CHOICES} new ones costs Bits after ${ARENA_REROLL_FREE_PER_DAY} free a day. The Tournament's Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.`,
             )}
           </p>
           <p style={para}>

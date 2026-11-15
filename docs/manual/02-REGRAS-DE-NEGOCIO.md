@@ -5003,7 +5003,7 @@ RING em que cada elemento bate os DOIS seguintes e apanha dos DOIS anteriores �
 `SPECIAL_CHARGE_TURNS` (3), crítico em `PERFECT_ACC` (0,92) com `CRIT_MULT` (1,5)
 e cura de `ROUND_CLEAR_HEAL` (30%) ao limpar a rodada. Paga **Bits**.
 
-**Bônus "Todos derrotados" (14/11/2026, REGISTRO §372).** A run completa vencida paga, além dos 50 Bits, **+1 Presa** (`fang`,
+⚰️ **Revogado por §384 (14/11/2026): o último adversário da run dropa 2× a essência dele, em toda run vencida, sem teto diário próprio (`utils/arenaUltimoAdversario.ts`); a linha "Último adversário: drop em dobro ×2" / "Last opponent: double drop ×2" substitui a da Presa. Saves com a Presa ficam como estão. Histórico:** **Bônus "Todos derrotados" (14/11/2026, REGISTRO §372).** A run completa vencida paga, além dos 50 Bits, **+1 Presa** (`fang`,
 o material do Duelo) em linha própria no "Ganhou" ("Todos derrotados +1 Presa"), **1× por dia do jogador** (a 1ª run vencida;
 contador `dailyMissions.counts.arena`), até o teto de estoque 99. Não é Bit (fora do teto de 150) nem Honra. Dono: `utils/arenaClearBonus.ts`.
 

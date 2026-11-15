@@ -15,6 +15,8 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
+import { ARENA_ROUNDS } from '../utils/arena';
+import { ARENA_ULTIMO_DROP_MULT } from '../utils/arenaUltimoAdversario';
 import { DUNGEON_ENERGY_PER_LAYER } from '../utils/dungeonIdle';
 import { ENERGY_REGEN_MINUTES, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { TALENT_POINTS_MAX } from '../utils/talents';
@@ -88,6 +90,12 @@ const TERMS: Term[] = [
     icon: '⚔️', en: 'Element advantage', pt: 'Vantagem elemental',
     descEn: `Arena, Combine 3 and Guild War (half effect there; not Tournament Duels): a countering element lands one hit sooner ("Super effective!"); the reverse, one later. No element, no change.`,
     descPt: `Arena, Combina 3 e Guerra de Guildas (metade do efeito; não nos Duelos do Torneio): elemento que contra-ataca vale um golpe a menos ("Super eficiente!"); o inverso, um a mais. Sem elemento, nada muda.`,
+  },
+  {
+    // §384 (dono, 14/11/2026): o último adversário da Arena dropa em dobro (⚰️ §372 "+1 Presa"). Números das CONSTANTES.
+    icon: '🏟️', en: 'Arena essence', pt: 'Essência da Arena',
+    descEn: `Every opponent you defeat in the Arena leaves its element's essence; the last of the ${ARENA_ROUNDS} rounds drops ${ARENA_ULTIMO_DROP_MULT}×.`,
+    descPt: `Cada adversário derrotado na Arena deixa a essência do elemento dele; o último das ${ARENA_ROUNDS} rodadas deixa ${ARENA_ULTIMO_DROP_MULT}×.`,
   },
   {
     icon: '❗', en: 'Missions', pt: 'Missões',

@@ -123,14 +123,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
 **Run de elemento base (30/10/2026, §199):** `ARENA_FUSED_FOE_CHANCE` (0,5; era 0,12 — a 2ª emenda do dono: "variados do elemento escolhido, não só o base") · `arenaFusedOf(el)` (os rookies combinados cuja composição inclui o elemento base) · `arenaFoeKey(e)` (a chave do bestiário `<id>-<estágio>` de um inimigo da Arena, ou `undefined` fora do roster; 31/10: a Arena não registrava). `BASE_ELEMENT_LABELS_EN`/`elementLabel` agora são re-exports de `./elementLabels`.
 
-### `src/utils/arenaClearBonus.ts`
-**Dono de:** o bônus "Todos derrotados" da Arena (dono, 14/11/2026, REGISTRO §372): run completa vencida = **+1 Presa** (`fang`, o material do Duelo), **1× por dia do jogador** (só a 1ª run vencida do dia, lida em `dailyMissions.counts.arena`, o contador que o jogo já grava), até `MATERIAL_CAP`. Não é Bit (fora do funil e do teto de 150) nem Honra. Sem campo novo no save: escreve em `buildingQuests.materials`.
-**Exports:** `ARENA_CLEAR_BONUS_MATERIAL` (`fang`), `ARENA_CLEAR_BONUS_QTY` (1), `ARENA_CLEAR_BONUS_PER_DAY` (1), `arenaClearBonusDue(state, day)` (0 ou 1, lido ANTES do evento `arena` desta run), `applyArenaClearBonus(prev, day)` (pura; nada a pagar = o MESMO `prev`).
-**Chamado por:** `App.tsx` (`play.arena.onRunCleared`), via `ArenaGame` › `onRunCleared` (chamado antes de `onEarnPoints`). **Régua:** `arenaClearBonus.test.ts`, `ArenaGame.torcida.render.test.tsx` (§372).
-
-### `src/utils/arenaClearBonusCopy.ts`
-**Dono de:** a linha do bônus no livro "Ganhou" da Arena: `arenaClearBonusRows(qty, isPt)` → "Todos derrotados +1 Presa" / "All defeated +1 Fang" (linha `item` com o ícone `materialIconSrc`); `qty` ≤ 0 = nenhuma linha. Separado da regra porque lê os nomes de `buildingQuestsCopy` (só telas lazy).
-**Chamado por:** `ArenaGame.tsx`. **Régua:** `arenaClearBonus.test.ts`.
+### `src/utils/arenaUltimoAdversario.ts`
+**Dono de:** o bônus da Arena (dono, 14/11/2026, REGISTRO §384): na rodada final (`ARENA_ROUNDS`), o ÚLTIMO adversário dropa `ARENA_ULTIMO_DROP_MULT` (2)× a essência dele, em toda run vencida, sem teto diário próprio (o teto por elemento de `applyEssences` segue). ⚰️ Substitui `arenaClearBonus.ts`/`arenaClearBonusCopy.ts` (§372, +1 Presa 1×/dia), apagados.
+**Exports:** `ARENA_ULTIMO_DROP_MULT`, `arenaRoundDrops(porInimigo, ultimaRodada)` → `{ drops, dobrados }` (pura; `drops` é o vetor que vai para o updater e para o "Ganhou").
+**Chamado por:** `ArenaGame.tsx` (`aoFimDaRodada`), `DueloSheet.tsx`, `GuideModal.tsx`, `HelpModal.tsx`. **Régua:** `arenaUltimoAdversario.test.ts`, `ArenaGame.torcida.render.test.tsx` (§384), `arena/DueloSheet.estados.render.test.tsx`.
 
 ### `src/utils/arenaSorteio.ts`
 **Dono de:** o sorteio da Arena livre (28/10/2026, REGISTRO §180): `arenaFoesOfSeed(seed, rodada)` (os inimigos de uma rodada; chamada pelo card da `DueloSheet` e por `ArenaGame.montarRodada`, então card e luta nunca discordam), `arenaCards(diaIso, conta, rerolls)` (`ARENA_CHOICES` = 4 sementes determinísticas desde 14/11/2026, §370; eram 3; por PREFIXO: as 3 primeiras são as de antes; elementos distintos entre os cards, no máximo 1 Desgarrado), a tabela do reroll e o cenário da run.
