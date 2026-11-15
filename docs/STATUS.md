@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Ícone de estágio colorido em todo o app (`feat/icone-estagio-cor-todos`, REGISTRO §391) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `CAMINHO_SEM_COR` (creme `#fff1d6`) ao lado de `CAMINHO_COR`; `EstagioIcone` sempre tinge e deriva o caminho do id (sem `<img>` cru); guard de fonte garante um único renderizador. Ícone de tipo já era colorido, não mudou.
+> - **Não visto em tela:** sem build; só jsdom e prancha de contato em `E:\Soulmon-assets\_prints-estagio-cor	odos.png`. Conferir no aparelho plaquinha de combate (claro/escuro), nós da Evolução e Torneio.
+
 > ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `functions/api/_bitsOrcamento.js` mede no POST de `/api/save` o crescimento de `gamePoints` contra um token bucket na metadata do save (1.500/dia, até 15 dias, + créditos do servidor; admin isento) e grava `bitsobs:<dia>:<prefixo>` no KV (TTL 45 d, 1 por conta por dia). **Nunca corta**: o save sai intacto.

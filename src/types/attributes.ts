@@ -76,6 +76,15 @@ export const CAMINHO_COR: Record<BranchType, string> = {
 };
 
 /**
+ * Cor do ícone de estágio de uma forma SEM caminho (rookie, ultra, tier de inimigo sem ramo, formas legadas) — branco quente/creme
+ * (REGISTRO §391, dono 15/11/2026). Dono único, ao lado de `CAMINHO_COR`: nenhum componente repete o hex.
+ */
+export const CAMINHO_SEM_COR = '#fff1d6'; // rgb(255, 241, 214)
+
+/** A cor do ícone de estágio para um caminho; `undefined`/`null` = forma sem caminho = creme. */
+export const corDoCaminho = (caminho: BranchType | null | undefined): string => (caminho ? CAMINHO_COR[caminho] : CAMINHO_SEM_COR);
+
+/**
  * NOME que o jogador vê — FONTE ÚNICA DA VERDADE, pelo mesmo motivo da cor.
  *
  * `power`/`harmony`/`benevolence` são identificadores INTERNOS, herdados do fork.
