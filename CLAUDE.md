@@ -596,11 +596,13 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 - **Desbloqueio no meio do jogo** (`src/components/UnlockAccountModal.tsx`): a
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` nunca abre sozinho e mora em
-  **seis** pontos — `grep -rn "<UnlockNudge" src | wc -l` é a medida, não este
-  parágrafo: `App.tsx` (×2, página de Evolução: demo com personagem de
-  demonstração e conta grátis diante do Renascimento), `CreateModal` (limite de
-  criação do modo grátis), `DailyReportModal`, `GuildSheet` e `MercadoSheets`
-  (as duas últimas, motivo `'shop'`). O `EditModal` só edita. Largura do
+  **oito** pontos (14/11/2026) — `grep -rn "<UnlockNudge" src | grep -v '\.test\.' | wc -l`
+  é a medida, não este parágrafo: `App.tsx` (×3, página de Evolução: demo com
+  personagem de demonstração, conta grátis `'evolve-free'` e conta grátis diante do
+  Renascimento),
+  `CreateModal` e `CatalogBrowserModal` (limite de criação do modo grátis, motivo
+  `'task-limit'`; o do catálogo desde §385), `DailyReportModal`, `GuildSheet` e
+  `MercadoSheets` (as duas últimas, motivo `'shop'`). O `EditModal` só edita. Largura do
   convite: **280** (`maxWidth` no `UnlockNudge.tsx`).
   Depois da compra confirmada pelo
   servidor, `SoulmonOnboarding mode='upgrade'` roda o MESMO ritual do oráculo

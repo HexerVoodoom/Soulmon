@@ -90,3 +90,36 @@ describe('§376 — hábito pré-pronto (Walk) e o teto', () => {
     expect(app).toMatch(/return novas\.slice\(0, criados\)\.map\(a => a\.id\)/);
   });
 });
+
+describe('§385 — limites visíveis no catálogo', () => {
+  it('o aviso do teto fica FIXO no topo ao rolar (sticky no corpo rolável)', () => {
+    renderWithCss(
+      <CatalogBrowserModal isOpen language="en-US" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={vi.fn()} habitsCount={CAP} habitsCap={CAP} />,
+    );
+    const fixo = document.querySelector('[data-catalog-cap-sticky]') as HTMLElement;
+    expect(fixo.style.position).toBe('sticky');
+    expect(fixo.style.top).toBe('0px');
+    expect(fixo.querySelector('[data-catalog-cap]')?.textContent).toMatch(/Limit reached/);
+  });
+  it('conta grátis no limite: o MESMO UnlockNudge do CreateModal (motivo task-limit); fora disso, não', () => {
+    const onUnlock = vi.fn();
+    const { unmount } = renderWithCss(
+      <CatalogBrowserModal isOpen language="en-US" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={vi.fn()} habitsCount={CAP} habitsCap={CAP} capIsDemoBoundary onUnlock={onUnlock} />,
+    );
+    const nudge = document.querySelector('[data-catalog-cap-sticky] button') as HTMLElement | null;
+    expect(nudge).not.toBeNull();
+    expect(onUnlock).not.toHaveBeenCalled(); // nunca abre sozinho
+    fireEvent.click(nudge!);
+    expect(onUnlock).toHaveBeenCalledTimes(1);
+    unmount();
+    renderWithCss(
+      <CatalogBrowserModal isOpen language="en-US" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={vi.fn()} habitsCount={CAP} habitsCap={CAP} onUnlock={onUnlock} />,
+    );
+    expect(document.querySelector('[data-catalog-cap-sticky] button')).toBeNull();
+  });
+  it('App: o catálogo recebe o convite pelo mesmo motivo do CreateModal', () => {
+    const app = readFileSync(resolve(__dirname, '../../App.tsx'), 'utf8');
+    const bloco = app.slice(app.indexOf('<CatalogBrowserModal'), app.indexOf('onCreateFromScratch=', app.indexOf('<CatalogBrowserModal')));
+    expect(bloco).toMatch(/onUnlock=\{\(\) => \{ setCatalogBrowserOpen\(false\); setUnlockReason\('task-limit'\); \}\}/);
+  });
+});

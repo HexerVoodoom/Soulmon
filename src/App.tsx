@@ -186,7 +186,7 @@ import {
   REROLL_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
-import { fitHabitCreates } from './utils/habitCreate';
+import { fitHabitCreates, habitCapPartialText } from './utils/habitCreate';
 import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
 import type { Ice } from './utils/iceScore';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
@@ -9917,6 +9917,8 @@ export default function App() {
         habitsCount={contaCotaDeHabitos(gameState.activities)}
         habitsCap={activityCap}
         capIsDemoBoundary={gameState.accountTier === 'demo' && !demo}
+        /* §385: conta grátis no limite = o MESMO convite do CreateModal. */
+        onUnlock={() => { setCatalogBrowserOpen(false); setUnlockReason('task-limit'); }}
         onAdd={(item) => {
           // Só fecha se entrou: 0 = não coube no teto, e fechar faria parecer que foi adicionado (§376).
           const criados = commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
@@ -10549,10 +10551,11 @@ export default function App() {
             // (D-12): escrever em `activities` por fora furava o teto do demo e
             // o do estágio (o tutorial já pode ter enchido a lista), sem contar
             // `activity_create`. Mesmo caminho do catálogo avulso (`create_modal`).
-            commitHabitCreate(
-              activitiesFromCatalogChoice(chosen, language === 'pt-BR'),
-              TELEMETRY_CREATE_PATH.create_modal,
-            );
+            const pedidas = activitiesFromCatalogChoice(chosen, language === 'pt-BR');
+            const entraram = commitHabitCreate(pedidas, TELEMETRY_CREATE_PATH.create_modal);
+            // §385: o teto cortou a seleção → aviso com quantos entraram (nunca corte calado).
+            const avisoTeto = habitCapPartialText(entraram, pedidas.length, language === 'pt-BR');
+            if (avisoTeto) toast(avisoTeto, { id: 'habit-cap-partial' });
             setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
           }}
         />
@@ -10568,6 +10571,9 @@ export default function App() {
               const novas = activitiesFromCatalogChoice(items, language === 'pt-BR');
               // §376: só os que COUBERAM (prefixo de `fitHabitCreates`) — id do que não entrou seria marcado no plano sem existir.
               const criados = commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
+              // §385: o teto cortou a seleção → aviso com quantos entraram.
+              const avisoTeto = habitCapPartialText(criados, novas.length, language === 'pt-BR');
+              if (avisoTeto) toast(avisoTeto, { id: 'habit-cap-partial' });
               return novas.slice(0, criados).map(a => a.id);
             }}
             language={language}
