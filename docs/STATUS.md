@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
+>
+> - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
+> - **Fora:** ouro (arte sendo refeita), cristal (em geração) e a Serpente da Feira (P6 em aberto; o teste de paridade do servidor ignora `hon-*`).
+> - **Não visto em tela:** sem build; a aba Honra ficou com 65 itens numa lista só (seções/filtro por espaço seguem pendentes, é desenho de tela). Folha de contato dos PNGs finais em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato.png`.
+
 > ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `functions/api/_bitsOrcamento.js` mede no POST de `/api/save` o crescimento de `gamePoints` contra um token bucket na metadata do save (1.500/dia, até 15 dias, + créditos do servidor; admin isento) e grava `bitsobs:<dia>:<prefixo>` no KV (TTL 45 d, 1 por conta por dia). **Nunca corta**: o save sai intacto.
