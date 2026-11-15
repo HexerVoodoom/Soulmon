@@ -5659,3 +5659,13 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Compatibilidade:** quem já gastou pontos em `tal-pve-04` mantém o grau e o id (nada de migração de save); o efeito passa a ser o novo. Nada pago alcança talento (guard existente, `isPickable`).
 **Alternativa que perdeu:** manter +3%/grau (o dono achou pouco útil: o ganho é pequeno perto do teto). **Gatilho de revisão:** se mais de ~30% dos jogadores que escolhem o nó baterem o teto efetivo todo dia, ou o orçamento de Bits do servidor (§387) registrar excedente ligado a este nó.
 
+
+## §397 — Honra: ouro envelhecido e cristal (turquesa/irisdescente) instalados (15/11/2026, dono aprovou as peças; preços do cristal escolhidos por recomendação)
+
+**Decisão:** (A) as 18 peças de ouro refeitas (tom envelhecido escuro; as amarelas antigas foram rejeitadas) entram na aba Honra a 180, pela porta da arte: bastou instalar `hon-*-ouro.webp`, sem código novo. (B) Dois materiais novos "acima do mithril", por decisão do dono ("dois novos níveis acima do mithril"): `cristal-turquesa` a **700** Honra e `cristal-irisdescente` a **1100** (`HONRA_PRECO_CRISTAL_TURQUESA`/`_IRISDESCENTE` em `src/utils/honraDecor.ts`, um dono só). Entram 8 armas de parede (espada, lança, escudo, cajado × 2), espaço `wall`, id `hon-arma-<peça>-cristal-<variante>`, nome "Crystal Sword · Turquoise" / "Espada de cristal · turquesa", cosmético puro. O catálogo planejado vai de 75 para **83** e todas têm arte. As outras peças de cristal (estátuas, bigorna, pedestal) NÃO foram cadastradas: o gerador as recebe com uma linha em `CRISTAL_PECAS` mais o PNG.
+
+**Alternativa que perdeu:** cadastrar já as 16 peças de cristal planejadas sem arte (a loja só vende o que tem arquivo, então não mudaria nada para o jogador e deixaria ids sem promessa cumprida); e preço de cristal na mesma escala do mithril (450), que não distinguiria os níveis.
+
+**Compatibilidade:** ids novos, nenhum renomeado; nenhum campo novo no save (`equippedDecor.wall` grava o id). Orçamento de bytes: 26 webp novos somam ~166 KB (570,4 KB as 83), a maior 13,8 KB, bem abaixo do teto de 400 KB por imagem; sem build, o `dist/` do teste de orçamento é antigo (medido à mão).
+
+**Riscos aceitos:** a aba Honra passa de 65 para 83 itens numa lista só (seções por espaço seguem pendentes, é desenho de tela); 700 e 1100 podem estar fora do alcance da Honra que o jogador ganha em semanas (o preço é recomendação, não medido); nada foi visto em tela (sem build), só prancha dos webp. **Gatilho de revisão:** ninguém comprar cristal em 30 dias, ou a aba Honra ficar ilegível. **Rollback:** reverter o PR; ids `hon-*` já comprados ficam no save e o palco não desenha id ausente (`PetStageDecor`).

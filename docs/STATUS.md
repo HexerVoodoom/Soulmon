@@ -12,6 +12,12 @@
 > - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
 > - **Não visto em tela:** sem build; só testes de render em jsdom.
 
+> ## 15/11/2026 — Honra: ouro envelhecido e cristal instalados (`feat/honra-ouro-cristal`, REGISTRO §397) — PR aberto, NÃO mergeado
+>
+> - **Feito:** as 18 peças de ouro (180) e 8 armas de cristal (`cristal-turquesa` 700, `cristal-irisdescente` 1100, acima do mithril) entram na aba Honra: 83 peças. Catálogo gerado em `utils/honraDecor.ts` (`CRISTAL_PECAS` recebe as outras de cristal quando houver PNG).
+> - **Fora:** estátuas, bigorna e pedestal de cristal (sem arte ainda); Serpente da Feira (P6).
+> - **Não visto em tela:** sem build; aba Honra com 83 itens numa lista só. Prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-2.png`. Preços 700/1100 por recomendação, para o dono rever.
+
 > ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
 > - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
