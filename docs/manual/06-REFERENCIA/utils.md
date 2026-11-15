@@ -1274,7 +1274,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/elementVisual.data.ts`
 
-**Dono de:** a assinatura visual de cada ícone de elemento (`[L, a, b, opaco]`: cor dominante em CIELAB, média ponderada pelo alfa, sem contorno quase-preto nem quase-branco). É GERADO por `scripts/element-visual.py`; rode o script de novo quando entrar ícone novo (há teste que falha se faltar assinatura). Quem lê: `match3Pvp.ts › pickDistinctPvpElements`, que só aceita no PVP do Elemental Fusion ícones com ΔE (CIE76) ≥ `M3_PVP_MIN_DELTA_E` entre si. Régua: `utils/match3PvpDistintos.test.ts`.
+**Dono de:** a assinatura visual de cada ícone de elemento (`[L, a, b, opaco]`: cor dominante em CIELAB, média ponderada pelo alfa, sem contorno quase-preto nem quase-branco). É GERADO por `scripts/element-visual.py`; rode o script de novo quando entrar ícone novo (há teste que falha se faltar assinatura). Quem lê: `match3Cores.ts › m3DeltaE` (a leitura pela cor média; a pela dominante vem de `elementDominante.data.ts`). Régua: `utils/match3PvpDistintos.test.ts`.
+
+### `src/utils/elementDominante.data.ts`
+
+**Dono de:** a cor DOMINANTE `[L, a, b]` (CIELAB) de cada ícone de elemento (maior de 3 grupos k-means com croma ≥ 12; complementa a cor MÉDIA de `elementVisual.data.ts`). É GERADO por `scripts/element-dominante.py`; rode junto com `scripts/element-visual.py` quando entrar ícone novo (há teste que falha se as duas tabelas divergirem). Quem lê: `match3Cores.ts › m3DeltaE`. Régua: `utils/match3Cores.test.ts`.
+
+### `src/utils/match3Cores.ts`
+
+**Dono de:** quais ícones de elemento podem dividir o MESMO tabuleiro do Elemental Fusion PVP (REGISTRO §400, pedido do dono de 15/11/2026). **Exports:** `M3_MIN_DELTA_E` (24), `M3_DELTA_E_STEP` (2), `M3_PARES_PROIBIDOS`/`m3ParProibido(a, b)` (lista curada, simétrica, nunca relaxa), `m3DeltaE(a, b)` (o maior entre o CIEDE2000 da cor média e o da dominante; sem assinatura = `Infinity`), `ciede2000`, `pickM3Distinct(order, n, minDeltaE)` (guloso sobre uma ordem já embaralhada; só o limiar relaxa; devolve `{ elements, limiar, relaxado }`). Quem chama: `match3Pvp.ts › pickDistinctPvpElements`. O Normal (6 fixos) não usa. Régua: `utils/match3Cores.test.ts`, `utils/match3PvpDistintos.test.ts`.
 
 ### `src/utils/match3Pvp.ts`
 

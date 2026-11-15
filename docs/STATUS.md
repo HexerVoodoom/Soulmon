@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Match-3 PVP: ícones de cor parecida nunca dividem tabuleiro (`fix/match3-cores-distintas`, REGISTRO §400) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `utils/match3Cores.ts` (lista curada de 120 pares proibidos que nunca relaxa + ΔE CIEDE2000 mínimo 24 entre quaisquer dois ícones) e tabela `elementDominante.data.ts`. Tabuleiros do PVP com par parecido (ΔE < 12): 16,3% antes, 0% depois (20 000 sementes). O Normal (6 fixos) já era distante e não muda.
+> - **Fora:** nada no servidor (não há espelho do sorteio). **Não visto em tela:** sem build; prancha dos pares em `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png`.
+
 > ## 15/11/2026 — 33 decorações no estilo novo instaladas no mesmo id (`feat/decor-estilo-novo`, REGISTRO §398) — PR aberto, NÃO mergeado
 >
 > - **Feito:** a arte das 33 peças de mobília troca no mesmo id (PNG, caixa × 3, alfa real) por `tools/instalar-decor-refeitas.py`; sem id novo, sem save, sem código. Os 34 PNG de decoração foram de 488 KB para 829 KB (maior 38,8 KB).
