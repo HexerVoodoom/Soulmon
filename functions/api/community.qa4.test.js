@@ -208,3 +208,41 @@ describe('achado 4 · `_treino.js` propaga a falha do KV', () => {
     expect((await buySparTicket(env, ME, DIA, 'confirm')).ok).toBe(false);
   });
 });
+
+describe('achado 5 · busca de jogador', () => {
+  const buscar = env => call(env, 'playerSearch', undefined, '&q=bbb');
+  it('`get` do perfil falha → rejeita (antes: 200 com lista vazia, "ninguém encontrado")', async () => {
+    const { env, kv } = mkEnv();
+    kv.store.set(nickFoldKey('bbb', OPP), '1');
+    kv.falhaGet = { prefixo: `profile:${OPP}` };
+    await expect(buscar(env)).rejects.toThrow('kv get failed');
+  });
+
+  it('`get` do índice antigo `nick:` falha → rejeita (antes: o candidato sumia calado)', async () => {
+    const { env, kv } = mkEnv();
+    kv.store.set(nickKey('bbb'), OPP);
+    kv.falhaGet = { prefixo: 'nick:' };
+    await expect(buscar(env)).rejects.toThrow('kv get failed');
+  });
+
+  it('perfil com JSON ilegível segue pulado, com console.warn; o resto da busca responde', async () => {
+    const { env, kv } = mkEnv();
+    kv.store.set(nickFoldKey('bbb', OPP), '1');
+    kv.store.set(`profile:${OPP}`, '{lixo');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const r = await buscar(env);
+      expect(r.status).toBe(200);
+      expect(r.json.players).toEqual([]);
+      expect(warn.mock.calls.some(c => JSON.stringify(c).includes('perfil'))).toBe(true);
+    } finally { warn.mockRestore(); }
+  });
+
+  it('caminho feliz: acha o jogador pelo índice dobrado', async () => {
+    const { env, kv } = mkEnv();
+    kv.store.set(nickFoldKey('bbb', OPP), '1');
+    const r = await buscar(env);
+    expect(r.status).toBe(200);
+    expect(r.json.players.map(p => p.id)).toEqual([PID]);
+  });
+});

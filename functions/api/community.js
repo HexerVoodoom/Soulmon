@@ -812,7 +812,8 @@ async function handleCommunity(context) {
     if (candidatos.length < PLAYER_SEARCH_SCAN) {
       const legado = await buscarNicksPorInicioDobrado(env, termo, PLAYER_SEARCH_SCAN);
       for (const chave of legado) {
-        const dono = await kvOrThrow(env).get(chave).catch(() => null);
+        // Queda do KV PROPAGA (§381): engolida, a busca respondia "ninguém encontrado" com o jogador existindo.
+        const dono = await kvOrThrow(env).get(chave);
         if (typeof dono === 'string' && dono) candidatos.push(dono);
       }
     }
@@ -821,7 +822,12 @@ async function handleCommunity(context) {
       if (!VALID_ID.test(dono) || dono === id || vistos.has(dono)) continue;
       vistos.add(dono);
       let p = null;
-      try { p = await getProfile(env, dono); } catch { continue; }
+      try { p = await getProfile(env, dono); } catch (err) {
+        // Só o JSON ilegível de UM perfil é pulado; falha do KV sobe (§381).
+        if (!(err instanceof SyntaxError)) throw err;
+        console.warn('[community] perfil ilegível na busca de jogador; pulado', { saveIdPrefix: dono.slice(0, 8) });
+        continue;
+      }
       if (!p || isHidden(p) || typeof p.name !== 'string') continue;
       // O índice pode ter ficado para trás (renomeou e a chave velha não saiu por falha do KV): vale o nome ATUAL do perfil.
       if (!foldNome(p.name).startsWith(termo)) continue;
