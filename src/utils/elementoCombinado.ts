@@ -51,9 +51,9 @@ export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
  * Todo componente de um combinado precisa dela nas pistas do prompt (dono, 10/11/2026: cada elemento, inclusive de 3 e 4 componentes).
  */
 export const PALAVRA_CHAVE_BASE: Readonly<Record<string, string>> = {
-  fogo: 'flames', agua: 'water', terra: 'clay', ar: 'wind', eletricidade: 'arcs', arcano: 'glyphs', sombra: 'smoke', luz: 'rays',
-  vileza: 'thorns', morte: 'branches', vida: 'budding', vigor: 'amber beads', marcial: 'blades', tempo: 'sand', som: 'sound',
-  gravidade: 'tiny stones', espaco: 'stars', fada: 'wings', industrial: 'plates', planta: 'vines',
+  fogo: 'flames', agua: 'water', terra: 'boulder shoulder', ar: 'wind', eletricidade: 'arcs', arcano: 'rune circle', sombra: 'smoke', luz: 'rays',
+  vileza: 'thorns', morte: 'antler crown', vida: 'budding', vigor: 'amber collar', marcial: 'sword', tempo: 'sand', som: 'concentric rings',
+  gravidade: 'large orbiting stone', espaco: 'band of stars', fada: 'wings', industrial: 'plates', planta: 'vines',
 };
 
 /** Teto (caracteres) das pistas de forma + paleta de um elemento no prompt de sprite. */
@@ -61,10 +61,10 @@ export const TETO_PISTAS = 260;
 
 /** Forma curta de cada base, usada só para completar o componente que o descritor gerado não citou (contém a palavra-chave). */
 const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
-  fogo: 'licking flames', agua: 'flowing water', terra: 'rough clay and stone', ar: 'swirling wind', eletricidade: 'yellow arcs',
-  arcano: 'violet glyphs', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'bleached branches',
-  vida: 'budding leaves', vigor: 'amber beads', marcial: 'crossed blades', tempo: 'drifting sand', som: 'sound waves',
-  gravidade: 'orbiting tiny stones', espaco: 'stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
+  fogo: 'licking flames', agua: 'flowing water', terra: 'a boulder shoulder', ar: 'swirling wind', eletricidade: 'yellow arcs',
+  arcano: 'a large violet rune circle', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'a pale antler crown',
+  vida: 'budding leaves', vigor: 'a thick amber collar', marcial: 'one large sword', tempo: 'drifting sand', som: 'concentric rings',
+  gravidade: 'a large orbiting stone', espaco: 'a band of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
 };
 
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
