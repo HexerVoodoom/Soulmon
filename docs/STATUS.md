@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Arena: Ultimate sorteia o nº de elementos por tabela de pesos (`feat/arena-elemento-combinado`, REGISTRO §403) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `utils/arenaComponentes.ts` (tabela `ARENA_COMPONENT_WEIGHTS`: Ultimate 25/55/15/5, Mega 10/20/50/20). Ultimate combinado da Arena foi de 2,6% para 68,2% (75,5% nas runs comuns; Desgarrada fora); Rookie/Champion idênticos à main (hash). Vitória da Arena 17,07→16,70% e 14,82→14,15% (dentro do erro).
+> - **Pendência de arte:** só 6 dos 20 elementos têm sprite Ultimate de 2 componentes, então o "2 componentes" realizado é ~20% (3 comp. ~51%); faltam sprites. Mega não existe na Arena. **Não visto em tela:** sem build.
+>
 > ## 15/11/2026 — Match-3 PVP: Flora e Titã proibidos juntos (`fix/match3-flora-tita`, REGISTRO §402) — PR aberto, NÃO mergeado
 > - **Feito:** par `flora`/`tita` na lista curada (124 pares); folha completa em `E:\Soulmon-assets\_lote-15-11\match3\folha-completa-*.png` + `pares-proibidos.csv`. Sem build, não visto no tabuleiro.
 >
