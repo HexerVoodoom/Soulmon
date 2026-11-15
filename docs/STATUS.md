@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Match-3 PVP: ícones de cor parecida nunca dividem tabuleiro (`fix/match3-cores-distintas`, REGISTRO §400) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `utils/match3Cores.ts` (lista curada de 120 pares proibidos que nunca relaxa + ΔE CIEDE2000 mínimo 24 entre quaisquer dois ícones) e tabela `elementDominante.data.ts`. Tabuleiros do PVP com par parecido (ΔE < 12): 16,3% antes, 0% depois (20 000 sementes). O Normal (6 fixos) já era distante e não muda.
+> - **Fora:** nada no servidor (não há espelho do sorteio). **Não visto em tela:** sem build; prancha dos pares em `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png`.
 > ## 15/11/2026 — "Elemento novo" vira CARTA grande (`feat/carta-elemento-novo`, REGISTRO §401) — PR aberto, NÃO mergeado
 >
 > - **Feito:** carta preta (arte `ui/carta-elemento.webp`) com ícone, nome e, nos compostos, os componentes; só abre no fim da atividade (gate `emAtividade`); carrossel com setas e deslize, OK desativado até ver todas, X no topo. Frase de poção/Laboratório REMOVIDA; na evolução a carta é o último item da sequência.

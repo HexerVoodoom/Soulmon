@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ELEMENT_VISUAL } from './elementVisual.data';
-import { M3_PVP_MIN_DELTA_E, PVP_ELEMENT_COUNT, iconDeltaE, pvpElementPool, pvpElementsForSeed } from './match3Pvp';
+import { M3_MIN_DELTA_E, m3DeltaE, m3ParProibido } from './match3Cores';
+import { PVP_ELEMENT_COUNT, pvpElementPool, pvpElementsForSeed } from './match3Pvp';
 
 describe('PVP do Elemental Fusion: ícones distintos', () => {
   it('a tabela de assinaturas cobre todo el-*.png', () => {
@@ -23,10 +24,16 @@ describe('PVP do Elemental Fusion: ícones distintos', () => {
     for (let sd = 1; sd <= 2000; sd++) {
       const els = pvpElementsForSeed(sd);
       let min = Infinity;
-      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) min = Math.min(min, iconDeltaE(els[i], els[j]));
-      if (min < M3_PVP_MIN_DELTA_E) relaxadas++;
+      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) min = Math.min(min, m3DeltaE(els[i], els[j]));
+      if (min < M3_MIN_DELTA_E) relaxadas++;
     }
-    expect(relaxadas).toBe(0); // medido: 0 de 2000 relaxam com o limiar 15
+    expect(relaxadas).toBe(0); // medido: 0 de 20000 relaxam com o limiar 24
+  });
+  it('em 2000 sementes nenhum par da lista curada divide tabuleiro', () => {
+    for (let sd = 1; sd <= 2000; sd++) {
+      const els = pvpElementsForSeed(sd);
+      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) expect(m3ParProibido(els[i], els[j])).toBe(false);
+    }
   });
   it('o pool inclui mistos e as sementes os sorteiam', () => {
     const base = new Set(['fogo', 'agua', 'terra', 'ar', 'luz', 'sombra']);

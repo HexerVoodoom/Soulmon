@@ -5682,6 +5682,30 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Riscos aceitos:** nada foi visto em tela (sem build): só prancha ANTES/DEPOIS dos PNG finais; faixas muito baixas (grass e sand ficam com ~22 px de altura a 312 px) podem ler finas no palco; a NEAREST de 1254 px para 168 px dá aliasing em detalhe fino (aceito, é a regra da Honra). **Gatilho de revisão:** o dono achar uma peça ilegível no palco (reinstalar só aquela, rodar o script de novo). **Rollback:** reverter o PR; ids e saves não foram tocados.
 
+## §400 — Match-3 (PVP): nunca dois ícones de cor parecida no mesmo tabuleiro (15/11/2026, pedido do dono por voz)
+
+**Pedido:** "uma leitura mais rígida no Match-3 para impedir que elementos de cores parecidas apareçam no mesmo jogo [...] se tal elemento aparece, outro elemento específico não aparece". Nota de numeração: o primeiro § livre na main era §399, mas o PR da beta12 já o usa; este é o primeiro livre depois dele.
+
+**Onde o problema existe:** só no PVP. O Normal usa 6 ícones fixos (`fogo`, `agua`, `terra`, `vida`, `ar`, `luz`), que já são distantes (menor ΔE entre eles: 25,6). O PVP sorteia 6 dos 285 ícones do pool, e a regra anterior (§ do PVP: guloso com CIE76 da cor MÉDIA ≥ 15) deixava passar muito par parecido: a cor média engana ícone multicolorido e a CIE76 subestima o azul/violeta escuro, que é a maior parte do pool.
+
+**Medição (20 000 sementes, sorteio real; ΔE = o maior entre CIEDE2000 da cor média e da dominante):**
+
+| Sorteio | tabuleiros com par < 12 | < 18 | < 24 | par da lista curada |
+|---|---|---|---|---|
+| sem regra (acaso) | 32,4% | 67,8% | 90,9% | 4,4% |
+| ANTES (CIE76 ≥ 15, média) | 16,3% | 56,6% | 87,1% | 0,3% |
+| DEPOIS (§400) | 0% | 0% | 0% | 0% |
+
+No pool: 40 470 pares; 116 abaixo de 6, 1 112 abaixo de 12, 5 735 (14,2%) abaixo de 24. O bloco "cósmico" (azul/violeta escuro: nebulosa, espectro, magnetar, silêncio cósmico, alma, encantamento, singularidade...) responde por 90 dos 116 pares mais próximos. Menor ΔE entre dois ícones do mesmo tabuleiro: antes 5,6; depois 24,0 (média 26,9). Prancha dos pares mais parecidos: `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png`.
+
+**Decisão (dono único `src/utils/match3Cores.ts`; tabelas geradas `elementVisual.data.ts` + novo `elementDominante.data.ts`, por `scripts/element-dominante.py`):**
+- **a) Lista curada, simétrica, que nunca relaxa** (`M3_PARES_PROIBIDOS`): os 116 pares com ΔE < 6 (conferidos a olho na prancha; 90 do bloco cósmico, 26 de dourado, terra, laranja, verde, branco-azulado) mais 4 pares que a olho se confundem acima de 6: `agua`/`tempestade_perfeita`, `chama_azul`/`tempestade_perfeita`, `leveza`/`nevasca`, `brisa_cintilante`/`leveza`. Entre os de base que o dono vê toda hora: `luz`/`chama_solar`, `fogo`/`brado`, `terra`/`vigor`.
+- **b) Distância mínima** `M3_MIN_DELTA_E = 24` (CIEDE2000, o maior entre cor média e dominante) entre QUAISQUER dois ícones do tabuleiro: rede para ícone novo ainda fora da lista. Só esta camada relaxa, de 2 em 2, quando o pool não fecha 6; com o pool atual relaxa em 0 de 20 000 sorteios (só começa perto de 35). Pool minúsculo nunca trava (devolve o que couber, sem quebrar a lista curada).
+- Sorteio: a mesma ordem embaralhada pela semente (`mulberry32(seed ^ 0x3e1e)`), então segue determinístico; o número de cores (6) não muda. Servidor: não há espelho do sorteio (o servidor só escolhe o oponente), então não há paridade a manter.
+
+**Alternativa que perdeu:** só o limiar de distância (sem lista): não pega par confundível que passe do limiar (cor diferente, brilho/forma iguais) e não dá ao dono uma lista para vetar à mão. E só lista curada: não cobre ícone novo. Também perdeu a cor média sozinha (erra multicolorido) e o IoU de silhueta (quase todos os ícones enchem o mesmo volume, não discrimina).
+
+**Riscos aceitos:** variedade menor por tabuleiro (no máximo 1 ícone "cósmico" por jogo); a prancha foi conferida a olho em ~120 de 150 pares próximos, não na tela do jogo (sem build). **Gatilho de revisão:** entrar ícone novo no pool (rodar `scripts/element-visual.py` e `scripts/element-dominante.py`, olhar os pares novos com ΔE < 24), o dono ver par parecido na tela, ou o Normal deixar de usar os 6 fixos.
 ## §401 — "Elemento novo" vira uma CARTA grande, no fim da atividade, em carrossel (15/11/2026, dono, por voz)
 
 **Pedido do dono.** "Gera uma carta no estilo do Soulmon, mas de conteúdo vazio. Ela é preta. Quando liberar um elemento novo, apareça essa carta igual para todos, com o elemento no meio, ocupando um espaço grande da tela. Embaixo vêm os elementos que precisam para fazer aquele elemento" (base: só ícone e nome; composto: ícone e nome do composto e, embaixo, os componentes pequenos). "No FINAL DA ATIVIDADE: ele fez a Arena e encontrou um elemento; quando SAIR da arena aparece a carta." Com 2+ elementos: carrossel (seta ou deslizar), OK DESATIVADO até ver todas, X no topo fecha antes e esses elementos não aparecem mais. Complemento urgente: a frase "agora você pode criar a poção desse elemento no Laboratório" NÃO foi pedida; a carta mostra só ícone, nome e componentes, e a evolução usa a MESMA carta, depois de toda a sequência da evolução.
