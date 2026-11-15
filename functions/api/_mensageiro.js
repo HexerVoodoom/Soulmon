@@ -192,6 +192,15 @@ export async function readMail(env, kv, id, now = Date.now()) {
 
 const alvoDe = (mids) => new Set(Array.isArray(mids) ? mids : []);
 
+/**
+ * Soma dos Bits das cartas RESGATADAS a partir de `desdeMs` (só leitura, sem varredura nem carta da temporada). Leitor do orçamento
+ * de Bits do save (`_bitsOrcamento.js`, §387). Falha do `get` propaga, como em toda leitura da caixa.
+ */
+export async function bitsResgatadosDesde(kv, id, desdeMs) {
+  const rec = await ler(kv, id);
+  return rec.q.reduce((s, m) => (m.claimedAt > 0 && m.claimedAt >= desdeMs ? s + m.bits : s), 0);
+}
+
 /** Marca como lidas. Idempotente. */
 export async function markRead(kv, id, mids) {
   const rec = await ler(kv, id);
