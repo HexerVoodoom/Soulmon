@@ -2371,4 +2371,4 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/ElementosNovosModal.tsx`
 
-**`ElementosNovosModal` (15/11/2026, §396):** `{ language, elementIds, onClose }` — o modal transparente de "Elemento novo", igual ao da `PocaoCriada` (mesmas classes `sm2-potion-*`) mas SEM brilho (`data-brilho="false"`, sem raios, sem halo). Um id = simples; vários = carrossel num modal só (`.sm2-elem-new-arrow` 44 px, pontinhos, deslizar, aria "1 de N"; toque avança e fecha no último; OK/Esc/voltar fecham). Chamado só pelo `App.tsx` (item `elementoNovo` da fila). Régua: `ElementosNovosModal.render.test.tsx`.
+**`ElementosNovosModal` (15/11/2026, §396 e §399):** `{ language, elementIds, onClose }` — a CARTA de "Elemento novo": carta preta 5:7 (`ui/carta-elemento.webp`, igual para todos), ícone grande, nome na fonte de título e, nos compostos, fileira de componentes (`componentesDoElemento`). Vários ids = carrossel (setas 44 px, deslize, pontinhos, "1 de N"); o OK fica `disabled` até todas as cartas serem a página atual; o X no topo (`BackArrow close`), Esc e o voltar fecham. Sem frase de poção. O App grava o "visto" do lote AO MOSTRAR.
