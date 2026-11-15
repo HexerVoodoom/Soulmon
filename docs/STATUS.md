@@ -7,6 +7,12 @@
 > - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cerejeira-bosque-em-flor\instalado.png`.
 >
 
+> ## 15/11/2026 — Descritores 3ª ronda (`fix/descritores-ronda3`, REGISTRO §411)
+>
+> - **Feito:** bug "a band of a band of stars" (30 descritores, texto colado duas vezes à mão) corrigido, com teste de repetição nos 269 e nos prompts finais; ar, arcano, som, morte, vigor e gravidade ganharam forma grande com cor própria; a terra alterna 3 formas pelo hash do id. 180 de 269 mudaram.
+> - **Não visto em imagem:** amostras R1 11/6/7 e R2 16/6/2 (sim/parcial/não); a 3ª rodada no Higgsfield é quem prova.
+> - **Rollback:** `git revert`; só criaturas novas.
+>
 > ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §409)
 >
 > - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.

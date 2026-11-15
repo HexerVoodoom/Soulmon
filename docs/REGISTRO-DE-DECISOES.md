@@ -5881,3 +5881,33 @@ Com 4 componentes e ~260 caracteres o modelo prioriza os 2–3 motivos maiores e
 **Widget Android:** a miniatura `vpet_bg_bg_cerejeira_bosque_de_cerejeiras.webp` é recurso do APK; só atualiza com AAB novo. Retrocompatível (mesmo arquivo, só muda a imagem): o app antigo mostra o vulcão no widget até lá.
 
 **Alternativa que perdeu:** id novo para o bosque e manter o antigo (deixaria dois itens e quem comprou a coleção não ganharia a arte certa). **Gatilho de revisão:** o dono achar a pixelização forte ou fraca (um parâmetro, `--fator`). **Rollback:** `git revert` do PR; os 4 arquivos voltam ao vulcão.
+
+## §411 — Descritores, 3ª ronda: bug "a band of a band of stars" e formas grandes novas para as bases que a 2ª amostra não mostrou (15/11/2026, seguimento do §408)
+
+**Bug:** o texto "a band of a band of stars" estava escrito 30 vezes em `elementoDescritores.data.ts` (base `espaco` e todo combinado de espaço). Causa: o arquivo é editado à mão (sem gerador) e na troca do §407/§408 a pista do espaço virou `a band of stars` com o artigo colado de novo na frente de um trecho que já o tinha; `PALAVRA_CHAVE_BASE`/`PISTA_CURTA_BASE` em `elementoCombinado.ts` estavam corretas (a palavra-chave é `band of stars`, sem artigo). Teste novo varre os 269 descritores (forma, paleta, pistas finais) e o prompt final dos combinados por repetição imediata de 1 a 4 palavras ("a band of a band of", "a a", "of of").
+
+**Medição das duas rodadas de amostras** (`E:\Soulmon-assets\_lote-15-11auditoria-prompts\`; 6 criaturas de 4 componentes = 24 componentes cada):
+
+| Rodada | Prompts | Sim | Parcial | Não |
+|---|---|---|---|---|
+| R1 (`amostras\`) | §407 | 11 | 6 | 7 |
+| R2 (`amostras2\`) | §408 | 16 | 6 | 2 |
+
+Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MORTE (parcial), VIGOR (parcial), GRAVIDADE no Leviatã (parcial: lia como bolha); a terra repetia `a boulder shoulder` em 5 criaturas.
+
+**Decisão (a palavra-chave de `PALAVRA_CHAVE_BASE` acompanhou; agora é uma lista por base, `nomeiaBase` aceita qualquer uma):**
+
+| Base | Pista da R2 | Pista nova (palavra-chave) |
+|---|---|---|
+| ar | `swirling wind ribbons` | `a large detached ring of wind with a tail` (`ring of wind`); cor `silver-grey` no lugar de `pale sky blue` nas paletas dos 29 elementos com ar |
+| arcano | `a large violet rune circle` | `a large floating violet rune disc` (`rune disc`); teste exige violeta na paleta |
+| som | `concentric rings` | `a big bronze bell` (`bronze bell`), objeto e não padrão |
+| morte | `a pale antler crown` | `a pale bone-white antler crown` (`antler crown`); teste exige `bone white` na paleta |
+| vigor | `a thick amber collar` | `a large amber gem` (`amber gem`) |
+| gravidade | `a large orbiting stone` | `a large dark stone orbiting a ring` (`stone orbiting a ring`) |
+| terra | `a boulder shoulder` em todos | 3 formas pelo hash do id: `a boulder shoulder`, `stone slabs along the back`, `a rocky horn crest` (`pistaTerraDe`; sem a palavra `plates`, que é a chave da industrial) |
+
+**Alcance:** 180 dos 269 descritores mudaram (66 autorais + 114 dos 183 restantes; 89 ficam byte a byte iguais). O hash do guard dos 183 foi atualizado de propósito. Em 13 trios/quartetos as pistas foram reordenadas para a forma grande (agora inclui o anel de vento) vir primeiro. Teto de 260 caracteres, regra do tempo, sem franquia, sem engrenagem, uma pista por componente: testes do §407/§408 seguem verdes. Tamanho: `elementoDescritores.data.ts` 51 812 para 52 960 bytes; `elementoCombinado.ts` 16 815 para 18 051 (as duas já viviam no chunk que o §380 acompanha).
+
+**Custo aceito:** as pistas novas ainda são texto de prompt; só uma 3ª rodada de amostras prova que aparecem. **Gatilho de revisão:** nova amostra com componentes ainda ausentes. **Rollback:** `git revert` do PR; só criaturas novas usam estes descritores (nada gerado muda).
+

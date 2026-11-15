@@ -3,14 +3,14 @@
  * e o trecho de elemento tem teto de tamanho (dono, 10/11/2026). Só texto de prompt; nenhum save muda.
  */
 import { describe, it, expect } from 'vitest';
-import { pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS } from './elementoCombinado';
+import { pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, nomeiaBase } from './elementoCombinado';
 import { essenceComposition, ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS } from './elementDex';
 import { ELEMENTOS_CURADOS } from './elementosCurados';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
 
 const faltas = (id: string): string[] => {
   const t = (pistasVisuaisDoElemento(id) ?? '').toLowerCase();
-  return (essenceComposition(id) ?? []).filter(c => !t.includes(PALAVRA_CHAVE_BASE[c]));
+  return (essenceComposition(id) ?? []).filter(c => !nomeiaBase(t, c));
 };
 
 describe('uma pista por componente', () => {
@@ -18,7 +18,7 @@ describe('uma pista por componente', () => {
     for (const b of BASE_ELEMENT_IDS) {
       const d = DESCRITORES_ELEMENTO[b];
       expect(PALAVRA_CHAVE_BASE[b], b).toBeTruthy();
-      expect(`${d.forma} ${d.paleta}`.toLowerCase(), b).toContain(PALAVRA_CHAVE_BASE[b]);
+      expect(nomeiaBase(`${d.forma} ${d.paleta}`.toLowerCase(), b), b).toBe(true);
     }
   });
   it('os 59 curados (3 e 4 componentes): cada componente aparece nas pistas', () => {
