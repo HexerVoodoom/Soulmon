@@ -232,10 +232,10 @@ NEAREST, webp com alfa real; o tapete 3:2 vira a faixa 13:2 pela linha de maior 
 | Pedestal de troféus | `trophy` (exibe as medalhas reais) | 4 |
 | Chão de arena (círculo de duelo, lajes, passadeira) | `rug` (sem nível, 40) | 3 |
 
-83 de 83 planejadas (75 de bronze a mithril + 8 armas de cristal). O **ouro** (envelhecido escuro, refeito) entrou nas 18 peças a 180.
-O **cristal** são dois níveis acima do mithril, `cristal-turquesa` (700) e `cristal-irisdescente` (1100), hoje só em espada, lança,
-escudo e cajado de parede (`hon-arma-<peça>-cristal-<variante>`; nome "Crystal Sword · Turquoise" / "Espada de cristal · turquesa").
-Estátuas, bigorna e pedestal de cristal ainda não existem: ao chegar o PNG, uma linha em `CRISTAL_PECAS` (`honraDecor.ts`) as cadastra.
+91 de 91 planejadas (75 de bronze a mithril + 16 de cristal). O **ouro** (envelhecido escuro, refeito) entrou nas 18 peças a 180.
+O **cristal** são dois níveis acima do mithril, `cristal-turquesa` (700) e `cristal-irisdescente` (1100), em espada, lança,
+escudo e cajado de parede, estátuas do guerreiro e do mago, bigorna e pedestal (`hon-arma-<peça>-cristal-<variante>`; nome "Crystal Sword · Turquoise" / "Espada de cristal · turquesa").
+As outras de cristal (guardião, arqueira, manequim, estandarte, chão): ao chegar o PNG, uma linha em `CRISTAL_PECAS` (`honraDecor.ts`) as cadastra.
 Preço pela escada 25 / 70 / 180 / 450 (`HONRA_PRECO`). Tudo cosmético
 puro, só Honra, `fits: 'any'`. A arma é retrato (5:6) dentro da caixa paisagem do `wall` (56 × 40): fica estreita
 (~2,5× de render ≈ 100 px de altura); se o dono quiser maior, é decisão de arte ou de escala do `wall`, não de código.

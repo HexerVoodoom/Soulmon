@@ -18,6 +18,12 @@
 > - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
 > - **Não visto em tela:** sem build; só testes de render em jsdom.
 
+> ## 15/11/2026 — Honra: 8 peças de cristal restantes (`feat/honra-cristal-restante`, REGISTRO §399) — PR aberto, NÃO mergeado
+>
+> - **Feito:** estátua de guerreiro, estátua de mago, bigorna e pedestal, em `cristal-turquesa` (700) e `cristal-irisdescente` (1100): catálogo de Honra de combate 83 para 91. Quatro linhas em `CRISTAL_PECAS` mais 8 webp.
+> - **Bytes:** os 8 novos somam 83.744 B (total 667.860 B); maior arquivo 13,8 KB (teto 400 KB).
+> - **Não visto em tela:** sem build. Prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. O cabo do martelo da bigorna turquesa saiu laranja-avermelhado; o dono aprovou assim.
+
 > ## 15/11/2026 — Honra: ouro envelhecido e cristal instalados (`feat/honra-ouro-cristal`, REGISTRO §397) — PR aberto, NÃO mergeado
 >
 > - **Feito:** as 18 peças de ouro (180) e 8 armas de cristal (`cristal-turquesa` 700, `cristal-irisdescente` 1100, acima do mithril) entram na aba Honra: 83 peças. Catálogo gerado em `utils/honraDecor.ts` (`CRISTAL_PECAS` recebe as outras de cristal quando houver PNG).

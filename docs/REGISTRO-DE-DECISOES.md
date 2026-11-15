@@ -5679,3 +5679,14 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Compatibilidade:** nenhum id novo ou renomeado, nenhum campo de save. Cache: os PNG são importados pelo Vite e saem com hash no nome, então URL nova invalida sozinha; `CACHE_VERSION` do `public/sw.js` NÃO subiu. Orçamento de bytes (medido nos arquivos, sem build): os 34 PNG de decoração foram de 487,8 KB para 828,6 KB (+340,8 KB; maior arquivo 38,8 KB, teto 400 KB); guard `src/assets/decorEstiloNovo.test.ts` (33 existem, caixa × 3 exata, alfa real, teto por arquivo e 1 MB no conjunto).
 
 **Riscos aceitos:** nada foi visto em tela (sem build): só prancha ANTES/DEPOIS dos PNG finais; faixas muito baixas (grass e sand ficam com ~22 px de altura a 312 px) podem ler finas no palco; a NEAREST de 1254 px para 168 px dá aliasing em detalhe fino (aceito, é a regra da Honra). **Gatilho de revisão:** o dono achar uma peça ilegível no palco (reinstalar só aquela, rodar o script de novo). **Rollback:** reverter o PR; ids e saves não foram tocados.
+
+## §399 — Honra: estátuas (guerreiro, mago), bigorna e pedestal de cristal instalados (15/11/2026, dono aprovou as 8 peças)
+
+**Decisão:** entram na aba Honra as 8 peças de cristal que faltavam: `hon-estatua-guerreiro-cristal-*`, `hon-estatua-mago-cristal-*`, `hon-bigorna-cristal-*` e `hon-pedestal-cristal-*`, nas duas variantes (turquesa 700, irisdescente 1100). O catálogo de Honra de combate passa de 83 para 91 peças. Mecanismo do §397: quatro linhas em `CRISTAL_PECAS` mais os PNG. Mesmos espaços e caixas do metal da categoria (estátua `floor-left`, bigorna `floor-right`, pedestal `trophy`).
+
+**Alternativa que perdeu:** esperar nova rodada de arte para trocar o cabo do martelo da bigorna turquesa, que saiu laranja-avermelhado; o dono viu e mandou instalar assim mesmo.
+
+**Compatibilidade:** só ids novos, nenhum renomeado, nenhum campo de save. Orçamento de bytes: os 8 webp somam 83.744 B (total dos 91 `hon-*.webp`: 667.860 B, era 584.116 B); maior arquivo 13,8 KB, bem abaixo do teto de 400 KB por imagem.
+
+**Riscos aceitos:** não visto em tela (sem build); prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. Nome PT da estátua segue o padrão do metal ("Estátua de cristal do Guerreiro · turquesa").
+
