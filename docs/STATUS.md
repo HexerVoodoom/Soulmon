@@ -5,6 +5,13 @@
 > - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
 > - **Depende do dono:** aprovar em modal (PR); trocar ou não a arte antiga de fogo/água/terra/ar (PNG novos prontos); `prism` sem contorno escuro. Sem build, não visto em tela.
 
+
+> ## 15/11/2026 — Descritores de elemento autorais (`feat/descritores-autorais`, REGISTRO §407) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a `forma` dos 86 combinados (53 pares, 14 trios, 19 quartetos) foi reescrita em `elementoDescritores.data.ts` para nomear cada componente com a palavra-chave de `PALAVRA_CHAVE_BASE`, em vez de depender do completamento genérico do código; os outros 183 ficam byte a byte iguais (hash no teste).
+> - **Só criaturas novas:** prompts gerados depois do deploy mudam; sprites e saves existentes não. Prancha de texto com 12 antes/depois: `E:Soulmon-assets_lote-15-11auditoria-promptsantes-depois.md`.
+> - **Não visto em imagem:** nenhuma geração de teste; as pistas novas só foram provadas como texto (teto 260, regra do tempo, sem franquia).
+>
 > ## 15/11/2026 — Evolução gerava DUAS imagens (`fix/evolucao-uma-imagem`, REGISTRO §404) — PR aberto, NÃO mergeado
 >
 > - **Causa:** a chave de acervo da forma-destino do cristal (`altSpriteKey`) dependia do acervo vivo; a própria imagem recém-chegada (`champion-power`) a trocava para `champion-power@elemento` e o lote partia de novo. Valia para toda ida a champion/ultimate/mega/ultra.
