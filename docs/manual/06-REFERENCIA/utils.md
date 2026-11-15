@@ -690,7 +690,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `emblemStyle` — `{ fontFamily: 'var(--sm2-font-serif)', color: EMBLEM_COLOR, fontWeight: 700, letterSpacing: '0.5px', fontVariantNumeric: 'tabular-nums', }`
 - `CREDIT_COLOR` — Créditos: roxo do sistema, sempre acompanhados do ícone Gem.
 - `BITS_PACKS` — Os três pacotes de Bits do Cambista pagos em Créditos (§373): 200/200, 500/460, 1.000/800. Só nesta direção: a troca inversa (Bits → Créditos) NÃO existe de propósito. Espelho que vale: `functions/api/_bitsPacks.js`.
-- `BITS_PACK_DAILY_CAP` — 1.000 Bits por dia UTC em pacotes, contados no servidor.
+- `BITS_PACK_DAILY_CAP` — 1.000 Bits por dia do jogador (§386) em pacotes, contados no servidor.
 - `bitsPackById`, `bitsPackDiscountPct` — busca por id e desconto derivado contra o pacote de 200.
 - ⚰️ `CREDIT_TO_BITS` (10) e `BITS_EXCHANGE` (1/2/4 Créditos) saíram em §373.
 - `EMBLEMS_PER_WIN` — Recompensa em Emblemas por partida de torneio.
