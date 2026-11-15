@@ -52,6 +52,14 @@ export function isBuildingId(x: unknown): x is BuildingId {
   return typeof x === 'string' && ID_SET.has(x);
 }
 
+/**
+ * Apresentações de NPC que não são de prédio e moram na MESMA lista do save (§390): o NPC se apresenta UMA vez na vida da conta e
+ * o "visto" viaja entre aparelhos. `npc.mensageiro` = o pop-up do Papus na 1ª carta (depois, só a bolinha do ícone).
+ */
+export const NPC_INTRO_IDS = ['npc.mensageiro'] as const;
+export type NpcIntroId = typeof NPC_INTRO_IDS[number];
+const NPC_INTRO_SET: ReadonlySet<string> = new Set(NPC_INTRO_IDS);
+
 function levelOf(n: unknown): number {
   return typeof n === 'number' && Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1;
 }
@@ -76,11 +84,15 @@ export function seedBuildingIntrosSeen(bondLevel: unknown): BuildingId[] {
  * carga. Array → só ids de prédio conhecidos, sem repetir, na ordem em que vieram (id velho de prédio que
  * deixou de existir some, sem erro).
  */
-export function sanitizeBuildingIntrosSeen(raw: unknown, bondLevel: unknown): BuildingId[] {
+export function sanitizeBuildingIntrosSeen(raw: unknown, bondLevel: unknown): (BuildingId | NpcIntroId)[] {
   if (!Array.isArray(raw)) return seedBuildingIntrosSeen(bondLevel);
-  const out: BuildingId[] = [];
+  const out: (BuildingId | NpcIntroId)[] = [];
   // `arena.feira` → `hall.feira` (11/10/2026) e `hall.biblioteca`/`hall.amigos` → `laboratorio.*` (D-50): quem já viu a apresentação não a vê de novo.
-  for (const raw0 of raw) { const x = currentBuildingId(raw0); if (isBuildingId(x) && !out.includes(x)) out.push(x); }
+  for (const raw0 of raw) {
+    // §390: a apresentação de NPC sem prédio (lista fechada `NPC_INTRO_IDS`) também fica.
+    if (typeof raw0 === 'string' && NPC_INTRO_SET.has(raw0)) { if (!out.includes(raw0 as NpcIntroId)) out.push(raw0 as NpcIntroId); continue; }
+    const x = currentBuildingId(raw0); if (isBuildingId(x) && !out.includes(x)) out.push(x);
+  }
   return out;
 }
 

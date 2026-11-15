@@ -38,7 +38,7 @@ import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, h
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
-import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensageiro';
+import { parseAnnounced, serializeAnnounced, mailPopupToShow, markMessengerIntroSeen } from './utils/mensageiro';
 import { useMailbox } from './hooks/useMailbox';
 import { applyJourneyGrants } from './utils/focusBoard';
 import type { JourneyGrants } from './utils/focusJourney';
@@ -1736,7 +1736,8 @@ export default function App() {
   const mostraCarta = !isDemoMode(gameState) && mailbox.mail.length > 0;
   const [mailOpen, setMailOpen] = useState(false);
   const [mailAnnounced, setMailAnnounced] = useState<string[]>(() => parseAnnounced(readLocal(STORAGE_KEYS.MAIL_ANNOUNCED)));
-  const mailToAnnounce = useMemo(() => toAnnounce(mailbox.mail, mailAnnounced), [mailbox.mail, mailAnnounced]);
+  // §390: o pop-up do Papus só na 1ª carta da conta; depois só a bolinha do ícone (`mailPopupToShow`).
+  const mailToAnnounce = useMemo(() => mailPopupToShow({ mail: mailbox.mail, announced: mailAnnounced, introsSeen: gameState.buildingIntrosSeen }), [mailbox.mail, mailAnnounced, gameState.buildingIntrosSeen]);
   const rememberAnnounced = useCallback((mids: string[]) => {
     if (!mids.length) return;
     const next = parseAnnounced(serializeAnnounced([...mailAnnounced, ...mids]));
@@ -2675,6 +2676,12 @@ export default function App() {
         const gravar = recordNoticeShown(readLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN), readLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE), dia, noticeKey);
         writeLocal(STORAGE_KEYS.NOTICE_TOAST_SEEN, gravar.dia, { silent: true });
         writeLocal(STORAGE_KEYS.NOTICE_TOAST_ONCE, gravar.sempre, { silent: true });
+      } else if (id === 'messenger') {
+        // §390: o pop-up do Papus é UMA vez na vida da conta; "visto" ao MOSTRAR, no save (vale em qualquer aparelho)
+        setGameState(prev => {
+          const seen = markMessengerIntroSeen(prev.buildingIntrosSeen);
+          return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
+        });
       } else if (id === 'mapTutorial') {
         setMapTutorialShown(true);
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
