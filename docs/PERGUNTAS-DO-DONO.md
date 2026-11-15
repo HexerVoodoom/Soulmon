@@ -662,3 +662,11 @@ O hábito novo agora aparece na lista "Hoje" na hora (bug corrigido). A meta do 
 
 1. **(recomendada) A** — hábito criado hoje só conta na meta de hoje se for FEITO hoje; a partir de amanhã, regra normal. Nunca encarece o dia.
 2. **B** — manter como está (entra na meta de hoje desde a criação).
+
+## 15/11/2026 — 28/11: ligar o corte do orçamento de Bits? (REGISTRO §387, emenda de 15/11)
+
+O orçamento de crescimento de Bits do save está em MODO OBSERVAÇÃO desde 15/11 (só registra, nunca corta). Em 28/11/2026 leia os registros com `npx wrangler kv key list --binding SOULMON_SAVES --remote --prefix "bitsobs:"` (cada chave traz no metadata `excedente`, `saldo_antes`, `saldo_depois`, `creditos`).
+
+1. **(recomendada se a lista vier vazia ou só com contas explicadas, como GM e compensação) A**: ligar o corte (`BITS_ORCAMENTO_MODO = 'cortar'` + o código de corte, num PR próprio).
+2. **B**: seguir observando mais 2 semanas (contas honestas apareceram: subir R/teto ou somar a fonte que faltou antes de cortar).
+3. **C**: desligar a observação (reverter o PR).

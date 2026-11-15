@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `functions/api/_bitsOrcamento.js` mede no POST de `/api/save` o crescimento de `gamePoints` contra um token bucket na metadata do save (1.500/dia, até 15 dias, + créditos do servidor; admin isento) e grava `bitsobs:<dia>:<prefixo>` no KV (TTL 45 d, 1 por conta por dia). **Nunca corta**: o save sai intacto.
+> - **Revisão: 28/11/2026** (pergunta no `PERGUNTAS-DO-DONO.md`). Ler: `npx wrangler kv key list --binding SOULMON_SAVES --remote --prefix "bitsobs:"`.
+> - **Não verificado:** KV de produção e tráfego real (só fakes em teste); `dist/` não regenerado.
+
 > ## 14/11/2026 — QA r4, pacote C2 (`feat/qa-r4-cambista-servidor`, REGISTRO §386–§390) — PR aberto, NÃO mergeado
 >
 > - **Cambista (§386):** opId de pacote pendente é reenviado com `replayOnly` ao reabrir/abrir o Cambista (Créditos pagos sem Bits deixam de ficar presos); o opId só fecha depois de os Bits entrarem no estado; teto de 1.000/dia vira à meia-noite do JOGADOR (âncora presa 24 h); célula diz o motivo; uma mensagem por resultado; atalho "Get Credits".
