@@ -50,13 +50,14 @@ describe('ícone de estágio colorido pelo CAMINHO na plaquinha (§369, dono 14/
 
   it('rookie, ultra e tier sem ramo (inimigo do mundo/chefe): ícone neutro, sem caminho inventado', () => {
     render(<BattleStage {...base} me={me('rookie')} foes={[foe('champion')]} />);
-    expect(caminho('me')).toBeNull();
-    expect(caminho('foe')).toBeNull();
-    expect(tinta('me')).toBeNull();
-    expect(document.querySelector('[data-stage-plate="me"] img[data-estagio-icone="rookie"]')).toBeTruthy();
+    expect(caminho('me')).toBe('nenhum');
+    expect(caminho('foe')).toBe('nenhum');
+    expect(tinta('me')!.style.backgroundColor).toBe('rgb(255, 241, 214)'); // §394: sem caminho = creme
+    expect(tinta('foe')!.style.backgroundColor).toBe('rgb(255, 241, 214)');
+    expect(document.querySelector('img[data-estagio-icone]')).toBeNull(); // nenhum PNG cru
     cleanup();
     render(<BattleStage {...base} me={me('ultra')} foes={[foe('chefe')]} />);
-    expect(caminho('me')).toBeNull();
+    expect(caminho('me')).toBe('nenhum');
     expect(document.querySelector('[data-stage-plate="foe"] [data-estagio-icone]')).toBeNull();
   });
 
@@ -84,13 +85,14 @@ describe('QA r4: o ícone de estágio da plaquinha tem nome acessível (estágio
     expect(ic.getAttribute('role')).toBe('img');
     expect(ic.getAttribute('aria-label')).toBe('Apoteose · Poder');
     expect(ic.getAttribute('aria-hidden')).toBeNull();
-    const neutro = document.querySelector('[data-stage-plate="foe"] img[data-estagio-icone]') as HTMLImageElement;
-    expect(neutro.getAttribute('alt')).toBe('Ascendente');
+    const neutro = document.querySelector('[data-stage-plate="foe"] [data-estagio-icone]') as HTMLElement;
+    expect(neutro.getAttribute('role')).toBe('img');
+    expect(neutro.getAttribute('aria-label')).toBe('Ascendente');
     expect(neutro.getAttribute('aria-hidden')).toBeNull();
   });
   it('EN: "Apotheosis · Power"', () => {
     render(<BattleStage {...base} isPt={false} me={me('mega-power')} foes={[foe('rookie')]} />);
     expect(document.querySelector('[data-stage-plate="me"] [data-estagio-icone]')!.getAttribute('aria-label')).toBe('Apotheosis · Power');
-    expect(document.querySelector('[data-stage-plate="foe"] img[data-estagio-icone]')!.getAttribute('alt')).toBe('Awakened');
+    expect(document.querySelector('[data-stage-plate="foe"] [data-estagio-icone]')!.getAttribute('aria-label')).toBe('Awakened');
   });
 });

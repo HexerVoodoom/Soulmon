@@ -1,4 +1,4 @@
-import { EstagioIcone, caminhoDaForma } from './EstagioIcone';
+import { EstagioIcone } from './EstagioIcone';
 import { STAGE_NAMES } from '../../utils/oracle/base';
 import type { StageId } from '../../utils/oracle';
 
@@ -17,7 +17,7 @@ export function EstagioMarca({ forma, isPt, size = 16 }: { forma: string | null 
   if (!nome) return null;
   return (
     <span role="img" aria-label={nome} title={nome} data-estagio-marca={forma} style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}>
-      <EstagioIcone forma={forma} size={size} caminho={caminhoDaForma(forma)} />
+      <EstagioIcone forma={forma} size={size} />
     </span>
   );
 }
