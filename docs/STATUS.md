@@ -1,6 +1,12 @@
 # Status do Soulmon — registro vivo
 
-> ## 15/11/2026 — Ícone de estágio colorido em todo o app (`feat/icone-estagio-cor-todos`, REGISTRO §391) — PR aberto, NÃO mergeado
+> ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
+>
+> - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
+> - **Fora:** ouro (arte sendo refeita), cristal (em geração) e a Serpente da Feira (P6 em aberto; o teste de paridade do servidor ignora `hon-*`).
+> - **Não visto em tela:** sem build; a aba Honra ficou com 65 itens numa lista só (seções/filtro por espaço seguem pendentes, é desenho de tela). Folha de contato dos PNGs finais em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato.png`.
+
+> ## 15/11/2026 — Ícone de estágio colorido em todo o app (`feat/icone-estagio-cor-todos`, REGISTRO §394) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `CAMINHO_SEM_COR` (creme `#fff1d6`) ao lado de `CAMINHO_COR`; `EstagioIcone` sempre tinge e deriva o caminho do id (sem `<img>` cru); guard de fonte garante um único renderizador. Ícone de tipo já era colorido, não mudou.
 > - **Não visto em tela:** sem build; só jsdom e prancha de contato em `E:\Soulmon-assets\_prints-estagio-cor	odos.png`. Conferir no aparelho plaquinha de combate (claro/escuro), nós da Evolução e Torneio.

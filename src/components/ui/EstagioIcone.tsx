@@ -19,7 +19,7 @@ export function caminhoDaForma(forma: string | null | undefined): EstagioCaminho
 const CONTORNO = `drop-shadow(0 0 0.6px ${ATTR_ON_FILL_INK}) drop-shadow(0 0 0.6px ${ATTR_ON_FILL_INK})`;
 
 /**
- * O ícone do estágio (rookie→ultra) em pixel art, SEMPRE colorido (§369 + §391): a cor é a do caminho da forma (`CAMINHO_COR`) ou,
+ * O ícone do estágio (rookie→ultra) em pixel art, SEMPRE colorido (§369 + §394): a cor é a do caminho da forma (`CAMINHO_COR`) ou,
  * sem caminho, o creme `CAMINHO_SEM_COR`. É o ÚNICO ponto do app que renderiza o PNG do set de estágio (guard em
  * `EstagioIcone.guard.test.ts`). Bebê/ovo e ids desconhecidos: não renderiza nada (não há PNG).
  *

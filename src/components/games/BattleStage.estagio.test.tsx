@@ -52,7 +52,7 @@ describe('ícone de estágio colorido pelo CAMINHO na plaquinha (§369, dono 14/
     render(<BattleStage {...base} me={me('rookie')} foes={[foe('champion')]} />);
     expect(caminho('me')).toBe('nenhum');
     expect(caminho('foe')).toBe('nenhum');
-    expect(tinta('me')!.style.backgroundColor).toBe('rgb(255, 241, 214)'); // §391: sem caminho = creme
+    expect(tinta('me')!.style.backgroundColor).toBe('rgb(255, 241, 214)'); // §394: sem caminho = creme
     expect(tinta('foe')!.style.backgroundColor).toBe('rgb(255, 241, 214)');
     expect(document.querySelector('img[data-estagio-icone]')).toBeNull(); // nenhum PNG cru
     cleanup();

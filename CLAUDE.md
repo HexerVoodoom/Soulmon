@@ -693,7 +693,7 @@ ficam valendo:
 
 ## UI: regras visuais do dono (não regredir)
 
-- **Ícone de estágio SEMPRE colorido** (15/11/2026, REGISTRO §391): cor do caminho (`CAMINHO_COR`) ou, sem caminho, o creme `CAMINHO_SEM_COR`, dono único em `types/attributes.ts`; só `EstagioIcone` renderiza o PNG de estágio (guard `EstagioIcone.guard.test.ts`). O ícone de tipo (elemento) tem cor própria e NUNCA recebe a de caminho.
+- **Ícone de estágio SEMPRE colorido** (15/11/2026, REGISTRO §394): cor do caminho (`CAMINHO_COR`) ou, sem caminho, o creme `CAMINHO_SEM_COR`, dono único em `types/attributes.ts`; só `EstagioIcone` renderiza o PNG de estágio (guard `EstagioIcone.guard.test.ts`). O ícone de tipo (elemento) tem cor própria e NUNCA recebe a de caminho.
 - **Ícone NUNCA dentro de box** — vale no app inteiro (18/ago/2026). Nada de
   moldura, placa, chanfro ou fundo em volta de um ícone: o ícone aparece
   GRANDE e pelado (nav inferior **32px**, ações do pet 24px, chat 32px —

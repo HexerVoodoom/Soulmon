@@ -1,4 +1,4 @@
-/** GUARD (§391): nenhum PNG do set de estágio é renderizado fora de `EstagioIcone`; todo consumidor passa pelo componente central. */
+/** GUARD (§394): nenhum PNG do set de estágio é renderizado fora de `EstagioIcone`; todo consumidor passa pelo componente central. */
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
