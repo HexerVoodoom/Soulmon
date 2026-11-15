@@ -213,7 +213,7 @@ Duas coisas aprendidas ao fechar isso, e que valem para a próxima leva:
 
 ---
 
-## A decoração de Honra de combate (instalada em 15/11/2026)
+## A decoração de Honra de combate (instalada em 15/11/2026; ouro e cristal em 15/11/2026, REGISTRO §397)
 
 Catálogo gerado em `src/utils/honraDecor.ts` (molde de `cosmeticosNovos.ts`; plano e escada em
 [`PLANO-HONRA-DECORACAO.md`](PLANO-HONRA-DECORACAO.md)). **A arte é a porta**: a peça só entra em
@@ -221,19 +221,22 @@ Catálogo gerado em `src/utils/honraDecor.ts` (molde de `cosmeticosNovos.ts`; pl
 `python tools/instalar-honra-decor.py` (recorta na bounding box do alfa, encaixa sem deformar em caixa × 3, ×2 no `rug`,
 NEAREST, webp com alfa real; o tapete 3:2 vira a faixa 13:2 pela linha de maior massa de alfa).
 
-| Categoria | Espaço | Instaladas hoje (bronze / prata / mithril) |
+| Categoria | Espaço | Instaladas hoje (bronze / prata / ouro / mithril; armas também em 2 cristais) |
 |---|---|---|
-| Armas de parede (lança, espada, escudo, machado, arco, cajado) | `wall` — **dentro do espaço de hoje, sem espaço novo** | 18 |
-| Estandarte da Ordem | `wall` | 3 |
-| Estátuas (guerreiro, mago, guardião, arqueira) | `floor-left` | 12 |
-| Manequim de armadura | `floor-left` | 3 |
-| Bigornas | `floor-right` | 3 |
-| Armas de chão (espada na pedra, cajado, escudo de guarda, feixe de lanças) | `floor-right` | 12 |
-| Pedestal de troféus | `trophy` (exibe as medalhas reais) | 3 |
+| Armas de parede (lança, espada, escudo, machado, arco, cajado) | `wall` — **dentro do espaço de hoje, sem espaço novo** | 32 (24 de metal + 8 de cristal) |
+| Estandarte da Ordem | `wall` | 4 |
+| Estátuas (guerreiro, mago, guardião, arqueira) | `floor-left` | 16 |
+| Manequim de armadura | `floor-left` | 4 |
+| Bigornas | `floor-right` | 4 |
+| Armas de chão (espada na pedra, cajado, escudo de guarda, feixe de lanças) | `floor-right` | 16 |
+| Pedestal de troféus | `trophy` (exibe as medalhas reais) | 4 |
 | Chão de arena (círculo de duelo, lajes, passadeira) | `rug` (sem nível, 40) | 3 |
 
-57 de 75 planejadas. O **ouro** (as 18 peças a 180: 6 armas, 4 estátuas, 4 armas de chão, manequim, bigorna, estandarte e pedestal) fica de fora até a arte refeita
-chegar, e o material "cristal" ainda não existe. Preço pela escada 25 / 70 / 180 / 450 (`HONRA_PRECO`). Tudo cosmético
+83 de 83 planejadas (75 de bronze a mithril + 8 armas de cristal). O **ouro** (envelhecido escuro, refeito) entrou nas 18 peças a 180.
+O **cristal** são dois níveis acima do mithril, `cristal-turquesa` (700) e `cristal-irisdescente` (1100), hoje só em espada, lança,
+escudo e cajado de parede (`hon-arma-<peça>-cristal-<variante>`; nome "Crystal Sword · Turquoise" / "Espada de cristal · turquesa").
+Estátuas, bigorna e pedestal de cristal ainda não existem: ao chegar o PNG, uma linha em `CRISTAL_PECAS` (`honraDecor.ts`) as cadastra.
+Preço pela escada 25 / 70 / 180 / 450 (`HONRA_PRECO`). Tudo cosmético
 puro, só Honra, `fits: 'any'`. A arma é retrato (5:6) dentro da caixa paisagem do `wall` (56 × 40): fica estreita
 (~2,5× de render ≈ 100 px de altura); se o dono quiser maior, é decisão de arte ou de escala do `wall`, não de código.
 A Serpente da Feira **não** vende estas peças (P6 em aberto; o espelho do servidor não as lista).

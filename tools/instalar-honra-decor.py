@@ -10,8 +10,9 @@ Regras (docs/PLANO-HONRA-DECORACAO.md §4.2, utils/cosmeticosNovos.ts › DECOR_
     centralizada (parede, vitrine alta, tapete);
   · o tapete (3:2) é RECORTADO para a faixa 13:2 por projeção de linhas (a janela de altura w·2/13
     com mais alfa), nunca por grade fixa;
-  · fora desta rodada: `*ouro*` (tom rejeitado, sendo refeito), `_v1*`, `_piloto*`, `*.SEM-ALFA.png`
-    e os materiais "cristal".
+  · entram bronze, prata, ouro (envelhecido escuro, refeito em 15/11/2026), mithril e os cristais
+    (`cristal-turquesa`, `cristal-irisdescente`); ficam fora `_v1*`, `_piloto*`, `_tmp*` (são subpastas,
+    o glob não desce nelas) e `*.SEM-ALFA.png`.
 Idempotente: a fonte é SEMPRE o PNG canônico da origem, nunca o webp já instalado.
 """
 import sys, os, glob
@@ -82,7 +83,7 @@ def main():
     for cat, (slot, bw, bh, k) in CAT.items():
         for f in sorted(glob.glob(os.path.join(origem, cat, 'hon-*.png'))):
             nome = os.path.basename(f)
-            if 'ouro' in nome or 'cristal' in nome or 'SEM-ALFA' in nome:
+            if 'SEM-ALFA' in nome:
                 continue
             id_ = nome[:-4]
             out = os.path.join(destino, id_ + '.webp')
