@@ -3,7 +3,7 @@
 > ## 15/11/2026 — "Elemento novo" vira CARTA grande (`feat/carta-elemento-novo`, REGISTRO §399) — PR aberto, NÃO mergeado
 >
 > - **Feito:** carta preta (arte `ui/carta-elemento.webp`) com ícone, nome e, nos compostos, os componentes; só abre no fim da atividade (gate `emAtividade`); carrossel com setas e deslize, OK desativado até ver todas, X no topo. Frase de poção/Laboratório REMOVIDA; na evolução a carta é o último item da sequência.
-> - **Não visto em tela:** sem build; layout 360x640/412x915 só em jsdom e na prancha `E:\Soulmon-assets\_lote-15-11\carta-elemento\mock-carta.png`. Arte usada = v2 do lote (trocar por `carta-elemento.png` rodando `tools/instalar-carta-elemento.py`).
+> - **Não visto em tela:** sem build; layout 360x640/412x915 só em jsdom e na prancha `E:\Soulmon-assets\_lote-15-11\carta-elemento\mock-carta.png`. Arte final = V3 escolhida pelo dono, instalada por `tools/instalar-carta-elemento.py`.
 
 > ## 15/11/2026 — 33 decorações no estilo novo instaladas no mesmo id (`feat/decor-estilo-novo`, REGISTRO §398) — PR aberto, NÃO mergeado
 >
