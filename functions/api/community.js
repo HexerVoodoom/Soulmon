@@ -1405,13 +1405,16 @@ async function handleCommunity(context) {
       return ctx.res;
     }
     const { opponentId, opp } = ctx;
-    // ⚠️ ORDEM (Antislop P1, §374): TODA leitura do KV acontece ANTES de apagar o duelo aberto. As leituras propagam a falha
-    // (5xx → `playSparComRetry` repete com a mesma semente); se o `spar:<id>` já tivesse sido apagado, o retry cairia em 409
-    // `no open duel` e o resultado (e a Honra) se perderiam. Depois do `delete` só há gravações.
-    // Reenvio do MESMO resultado (a resposta se perdeu na rede): devolve o já liquidado, sem creditar Honra de novo.
+    // ⚠️ ORDEM (Antislop P1, §374; QA r4, §381): o duelo aberto só é apagado DEPOIS de `sparDone` gravado, como ÚLTIMA escrita.
+    // Leitura ou gravação que falha antes disso propaga (5xx → `playSparComRetry` repete com a mesma semente) e o retry ainda acha o
+    // duelo aberto; apagá-lo antes fazia o retry cair em 409 `no open duel` e a vitória (e a Honra) se perdiam.
+    // Reenvio do MESMO resultado (a resposta se perdeu na rede, ou o `delete` final falhou): devolve o já liquidado, sem Honra nova.
     const feito = await lerJsonKv(sparDoneKey(id), id);
     const aberto = await lerSpar(id);
-    if (!aberto && feito && feito.opp === opponentId && body.seed !== undefined && feito.seed === body.seed) return json({ ...feito.res, replayed: true });
+    if (feito && feito.opp === opponentId && body.seed !== undefined && feito.seed === body.seed && (!aberto || aberto.seed === feito.seed)) {
+      if (aberto) await kvOrThrow(env).delete(sparPendingKey(id));
+      return json({ ...feito.res, replayed: true });
+    }
     if (!aberto || aberto.opp !== opponentId) return json({ error: 'no open duel' }, 409);
     const oppSpriteUrl = (await spriteVivoDoSimulado(env, ctx.oppSave)) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
@@ -1431,8 +1434,7 @@ async function handleCommunity(context) {
     const ticket = await readSparTicket(env, id, diaTk);
     const withHonor = aberto.spent ? aberto.withHonor === true : ticket.played < TREINO_TICKET_MATCHES;
     const honraUsada = outcome === 'win' && withHonor ? await readSparHonorUsed(env, id, diaTk) : 0;
-    // ── leituras acabaram: daqui em diante só gravações ──
-    await kvOrThrow(env).delete(sparPendingKey(id));
+    // ── leituras acabaram: daqui em diante só gravações, e o `delete` do duelo aberto é a última ──
     const gasto = aberto.spent ? { withHonor, status: sparTicketStatus(ticket) } : await spendSparMatch(env, id, diaTk, ticket);
     let honra = { honor: 0, capped: false };
     if (outcome === 'win' && gasto.withHonor) {
@@ -1445,6 +1447,7 @@ async function handleCommunity(context) {
       opponent,
     };
     await kvOrThrow(env).put(sparDoneKey(id), JSON.stringify({ opp: opponentId, seed: aberto.seed, res: resposta }), { expirationTtl: SPAR_PENDING_TTL_S });
+    await kvOrThrow(env).delete(sparPendingKey(id));
     return json({ ...resposta, duel: { events: duel.events, me: aberto.sides.me, opp: aberto.sides.opp } });
   });
 

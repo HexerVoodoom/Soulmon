@@ -154,3 +154,36 @@ describe('achado 2 · presente de Bits reivindica o dia do par', () => {
     expect((await call(env, 'gift', { friendId: PID, ...TZ })).status).toBe(200);
   });
 });
+
+describe('achado 3 · sparMatch apaga o duelo aberto só depois de gravar sparDone', () => {
+  const taps = [9, 9, 9, 9, 9, 9, 9, 9, 9, 9];
+  it('`put` de sparDone falha → rejeita, o duelo continua aberto e o retry (mesma semente) liquida a vitória com Honra', async () => {
+    const { env, kv } = mkEnv();
+    const s = await call(env, 'sparStart', { opponentId: PID, ...TZ });
+    expect(s.status).toBe(200);
+    kv.falhaPut = { prefixo: 'sparDone:', vezes: 1 };
+    const corpo = { opponentId: PID, taps, seed: s.json.seed, ...TZ };
+    await expect(call(env, 'sparMatch', corpo)).rejects.toThrow('kv put failed');
+    expect(kv.store.has(sparPendingKey(ME))).toBe(true);
+    const retry = await call(env, 'sparMatch', corpo);
+    expect(retry.status).toBe(200);
+    expect(retry.json.outcome).toBe('win');
+    expect(retry.json.honor).toBeGreaterThan(0);
+    expect(kv.store.has(sparPendingKey(ME))).toBe(false);
+  });
+
+  it('`delete` do duelo aberto falha depois de sparDone → o retry devolve o resultado já liquidado, sem Honra nova', async () => {
+    const { env, kv } = mkEnv();
+    const s = await call(env, 'sparStart', { opponentId: PID, ...TZ });
+    kv.falhaDelete = { prefixo: 'spar:', vezes: 1 };
+    const corpo = { opponentId: PID, taps, seed: s.json.seed, ...TZ };
+    await expect(call(env, 'sparMatch', corpo)).rejects.toThrow('kv delete failed');
+    expect(kv.store.has(sparDoneKey(ME))).toBe(true);
+    const honraAntes = kv.store.get(sparHonorKey(ME, DIA));
+    const retry = await call(env, 'sparMatch', corpo);
+    expect(retry.status).toBe(200);
+    expect(retry.json.replayed).toBe(true);
+    expect(kv.store.get(sparHonorKey(ME, DIA))).toBe(honraAntes);
+    expect(kv.store.has(sparPendingKey(ME))).toBe(false);
+  });
+});
