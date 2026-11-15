@@ -5815,3 +5815,34 @@ Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,
 **Regras mantidas:** teto de 260 caracteres de forma + paleta; tempo com no máximo UM motivo (ampulheta OU relógio, §324; areia solta é a palavra-chave e não conta); sem nome de franquia, sem engrenagem, sem palavra que induza texto na imagem; criatura sem bloco de identidade Soulmon. Só prompts de criaturas NOVAS geradas depois do deploy mudam; sprites já gerados e saves não mudam.
 
 **Alternativa que perdeu:** só trocar o texto genérico do código por um dicionário mais rico de formas curtas por componente (uma pista fixa por base, igual em todo combinado). Perdeu porque a mesma pista repetida em 50 elementos apaga a diferença entre eles; a pista por elemento deixa "lava" (barro rachado sob a chama) diferente de "areia" (barro seco sob o vento). **Custo aceito:** as pistas novas são texto de prompt sem prova de imagem: não houve geração de teste. **Gatilho de revisão:** criaturas novas saindo sem o componente visível, ou o dono apontando um elemento cujo traço não aparece (ver `E:\Soulmon-assets\_lote-15-11\auditoria-prompts\antes-depois.md`). **Rollback:** reverter o commit (só `elementoDescritores.data.ts` e o teste); nada de save, sprite ou servidor depende dele.
+
+## §408 — Descritores: pista de TEXTURA ou OBJETO PEQUENO não aparece na imagem; trocadas por forma grande, silhueta ou cor (15/11/2026, seguimento do §407)
+
+**Medição:** 6 criaturas de 4 componentes foram geradas no Higgsfield com os prompts do §407 (`E:\Soulmon-assets\_lote-15-11\auditoria-prompts\amostras\`: `folha-amostras.png`, `<elemento>.meta.json`, `amostras-prompts-final.json`). Dos 24 componentes: **11 aparecem, 6 aparecem em parte, 7 não aparecem**.
+
+| Resultado | Pistas | O que têm em comum |
+|---|---|---|
+| Aparecem (11) | chamas, água, raios, rocha grande, fumaça, vegetação | forma grande ou cor forte |
+| Em parte (6) | `licking flames` pequenas, `bleached branches`, `orbiting stones`, `violet glyphs` | motivo médio, some quando há 4 componentes |
+| Não aparecem (7) | `cracked clay` (0 de 3), `amber beads on red cord`, `crossed blades`, `falling stars`, `rolling sound waves` | textura ou objeto pequeno |
+
+Com 4 componentes e ~260 caracteres o modelo prioriza os 2–3 motivos maiores e mais cedo no texto.
+
+**Decisão:** em todos os descritores (não só nos 6 da amostra) cada pista fraca virou uma forma grande, e a palavra-chave de `PALAVRA_CHAVE_BASE` acompanhou (o teste do §407 exige a palavra-chave em cada componente). Trocas:
+
+| Base | Pista antiga (palavra-chave) | Pista nova (palavra-chave) |
+|---|---|---|
+| terra | `cracked clay` / `clay and stone` (`clay`) | `a boulder shoulder` (`boulder shoulder`); base: `a boulder shoulder and stone plates` |
+| marcial | `crossed blades` (`blades`) | `one large sword` (`sword`) |
+| vigor | `amber beads` em cordão vermelho (`amber beads`) | `a thick amber collar` (`amber collar`) |
+| som | `sound waves`, `rolling sound waves` (`sound`) | `concentric rings` (`concentric rings`); base: `thick concentric rings around the creature` |
+| espaço | `stars`, `falling stars`, `stars and thin orbit lines` (`stars`) | `a band of stars` (`band of stars`) |
+| morte | `bleached branches and pale moths` (`branches`) | `a pale antler crown` (`antler crown`) |
+| arcano | `orbiting violet glyphs` (`glyphs`) | `a large violet rune circle` (`rune circle`) |
+| gravidade | `orbiting tiny stones` (`tiny stones`) | `a large orbiting stone` (`large orbiting stone`) |
+
+**Reordenação:** em pares, trios e quartetos as pistas dessas oito bases passam à frente das demais depois de "with hints of" (o modelo prioriza o que vem primeiro e o maior). A `paleta` não foi mexida (a ordem das cores alimenta a escolha do fundo chroma). Quando o kit do próprio elemento já nomeia a forma (ex.: `sword`, `a band of stars`), a pista repetida foi removida do "hints of". Sem mudança nas regras: teto de 260 caracteres (agora testado nos 269, não só nos 86), no máximo um motivo de tempo, sem franquia, sem engrenagem, sem palavra que induza texto, UMA pista por componente.
+
+**Alcance:** 186 dos 269 descritores mudaram (8 bases, 74 dos 86 combinados do §407 e 104 dos outros 183, que usavam as mesmas palavras). Os 83 restantes ficam byte a byte iguais; o hash do guard dos 183 foi atualizado de propósito (112 deles mudaram). Só prompts de criaturas NOVAS mudam; sprites e saves existentes não. Bytes de entrada (fonte, sem build): `elementoDescritores.data.ts` 51 667 → 51 812 B, `elementoCombinado.ts` 16 726 → 16 815 B (+234 B no total).
+
+**Custo aceito:** as pistas novas ainda são texto de prompt; só uma nova rodada de amostras prova que aparecem. A textura/pontilhado, quando for desejada, precisa de cor própria na `paleta` para se ler. **Gatilho de revisão:** nova rodada de amostras com componente ainda ausente. **Rollback:** reverter o commit (`elementoDescritores.data.ts`, `elementoCombinado.ts`, teste); nada de save, sprite ou servidor depende dele.

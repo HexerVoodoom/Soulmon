@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Pistas fortes nos descritores (`fix/descritores-pistas-fortes`, REGISTRO §408)
+>
+> - **Feito:** amostras do Higgsfield (11 aparecem, 6 em parte, 7 não) mostraram que textura e objeto pequeno somem; 186 de 269 descritores trocaram `cracked clay`, `amber beads`, `crossed blades`, `sound waves`, `stars` etc. por formas grandes (boulder shoulder, sword, amber collar, concentric rings, band of stars, antler crown, rune circle, large orbiting stone).
+> - **Ordem:** nos pares, trios e quartetos a forma grande vem primeiro; teto 260 agora testado nos 269; hash do guard dos 183 atualizado de propósito.
+> - **Só criaturas novas.** Não visto em imagem: falta nova rodada de amostras para provar que aparecem.
+
 > ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
 >
 > - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
