@@ -422,15 +422,15 @@ export function buildArenaRound(
     const picked = (runElement ? pickNovo(prefer, used, rngU, runElement) ?? pickNovo(['champion', 'rookie'], used, rngU, runElement) : null) ?? pickNovo(prefer, used, rngU)!;
     // 15/11/2026 (dono): o Ultimate quase só vinha de elemento único (97,4% medido). Em run de elemento comum, o nº de componentes do
     // elemento do Ultimate sai da tabela `ARENA_COMPONENT_WEIGHTS` (`arenaComponentes.ts`). UM `rng()` a mais, só neste caso (Rookie e Champion
-    // idênticos; o Desgarrado entra, só arte/nome); base (1) continua no fluxo de baixo, 2–4 trocam o inimigo por um combinado com arte que contém o elemento da run.
-    if (runElement && stage === 'ultimate') {
+    // idênticos; o Desgarrado fica de fora, como no paralelo); base (1) continua no fluxo de baixo, 2–4 trocam o inimigo por um combinado com arte que contém o elemento da run.
+    if (runElement && !stray && stage === 'ultimate') {
       const plan = planArenaComponents('ultimate', runElement, rng(), used);
       if (plan?.entry) {
         const c = plan.entry;
         used.add(c.id);
         return {
           namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
-          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }), ...(strayHere ? { stray: true as const } : {}),
+          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }),
         };
       }
     }

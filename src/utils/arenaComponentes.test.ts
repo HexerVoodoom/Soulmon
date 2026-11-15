@@ -10,6 +10,7 @@ import { arenaElementsFor, arenaFoeSides, simulateArenaRunV3, type ArenaEnemy, t
 import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import { elementHits } from './combate/curve';
 import { mulberry32 } from './combate/rng';
+import { isStraySeed } from './strayFoes';
 import { ENEMY_ROSTER } from './enemyRoster';
 import { rosterSpriteOf } from './novosSoulmon';
 import { elementIcon } from './elementIconArt';
@@ -22,6 +23,8 @@ const N = 20_000;
 const PP = 1.5;
 const pct = (c: number, n: number) => (100 * c) / n;
 const randomSeeds = (n: number, s = 20261115): number[] => { const r = mulberry32(s); return Array.from({ length: n }, () => (r() * 0x100000000) | 0); };
+/** Runs comuns: a Desgarrada fica de fora da regra (como da forma paralela). */
+const comuns = (n: number, s?: number): number[] => randomSeeds(n * 2, s).filter(x => !isStraySeed(x)).slice(0, n);
 const entryOf = (e: ArenaEnemy) => { const key = e.formaKey ?? e.paraleloKey; return key ? ENEMY_ROSTER.find(r => r.key === key) : undefined; };
 const sizeOf = (e: ArenaEnemy): ArenaComponentCount => { const en = entryOf(e); return (en ? entryComponents(en).length : 1) as ArenaComponentCount; };
 
@@ -106,7 +109,7 @@ describe('a Arena: distribuição real do Ultimate', () => {
   it(`${N} sementes: a taxa por nº de componentes bate com a tabela relaxada (±${PP}pp)`, () => {
     const c: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
     let n = 0;
-    for (const s of randomSeeds(N)) for (const e of arenaFoesOfSeed(s, 5, 31, 18)) { // escada 31: nenhum chefe Ultra; nível 18: HP de Ultimate
+    for (const s of comuns(N)) for (const e of arenaFoesOfSeed(s, 5, 31, 18)) { // escada 31: nenhum chefe Ultra; nível 18: HP de Ultimate
       expect(e.tier).toBe('ultimate');
       c[sizeOf(e)]++; n++;
     }
@@ -115,7 +118,7 @@ describe('a Arena: distribuição real do Ultimate', () => {
   });
   it('o Ultimate de 2+ componentes deixou de ser raro (era 2,6%)', () => {
     let multi = 0, n = 0;
-    for (const s of randomSeeds(5000, 3)) for (const e of arenaFoesOfSeed(s, 5, 31, 18)) { n++; if (sizeOf(e) >= 2) multi++; }
+    for (const s of comuns(5000, 3)) for (const e of arenaFoesOfSeed(s, 5, 31, 18)) { n++; if (sizeOf(e) >= 2) multi++; }
     expect(pct(multi, n)).toBeGreaterThan(55);
   });
   it('determinística pela semente (card = luta) e sem Math.random', () => {
@@ -174,7 +177,7 @@ describe('o elemento do inimigo não muda o poder', () => {
     }
   });
   it('a taxa de vitória da Arena (escadas 20 e 31) não mudou: ±3pp da medida antes da mudança, mesmas condições', () => {
-    // Antes (main e21f70663), jogador balanceado nível 18 sem equipamento, 4000 runs: escada 20 = 17,07% · escada 31 = 14,82%. Depois: 16,70% e 14,30%.
+    // Antes (main e21f70663), jogador balanceado nível 18 sem equipamento, 4000 runs: escada 20 = 17,07% · escada 31 = 14,82%. Depois: 16,70% e 14,15%.
     const seeds = randomSeeds(4000, 123);
     for (const [ladder, antes] of [[20, 17.07], [31, 14.82]] as const) {
       let w = 0;

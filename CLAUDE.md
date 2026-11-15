@@ -860,7 +860,10 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
      (`CHEER.energyPerDischarge` = 9) e no Duelo (`pvpEnergyPerDischarge` = 2,5);
      Masmorra e Pesadelo NÃO têm; a Masmorra lê o equipamento por atributo (`useDungeonBonus`, DEF e SPD valem), Arena e Pesadelo só pela soma; (f) o sorteio do inimigo da Arena é
      estratificado por elemento (`pickEnemyCreature`): não volte ao uniforme sobre
-     o pool, que desequilibra o anel com o corpus de 7.386 criaturas; (g) o bônus de
+     o pool, que desequilibra o anel com o corpus de 7.386 criaturas; hoje a Arena
+     sorteia as 20 criaturas novas por elemento da run (`buildArenaRound`) e o nº de
+     elementos do Ultimate sai da tabela `ARENA_COMPONENT_WEIGHTS`
+     (`utils/arenaComponentes.ts`, §403): ajuste os pesos lá, não no `buildArenaRound`; (g) o bônus de
      vencer a Arena é o ÚLTIMO adversário dropar 2× a essência (§384,
      `utils/arenaUltimoAdversario.ts`, o MESMO vetor vai ao updater e ao "Ganhou");
      ⚰️ "+1 Presa 1×/dia" (§372) saiu — não reintroduza contador diário próprio.

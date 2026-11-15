@@ -1244,3 +1244,7 @@ O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar 
 - **dot (C3, 1ª):** `A menacing dark wrought-iron crown covered in many crooked thorns, barbs and jagged spikes of uneven heights, like the crown of a sinister wraith king, rusted black iron with faint dull-red embers in the cracks, thin wisps of violet-green poison slowly dripping from the barbs. No turquoise, no copper pipes, no circuit lines, no leaves, no skulls.`
 
 **Instalação:** salvar em `E:/Soulmon-assets/hexsmith-coroas/` (original 1024²), conferir alfa real (`getextrema` do canal A com 0) e hash diferente entre as 3 da conversa, recortar e reduzir para 96×96 *nearest*, copiar para `src/assets/soulmon/hex/coroa-<familia>.png` e rodar `npx vitest run src/components/hex`.
+
+## Arena: Ultimate de 2 componentes (REGISTRO §403, 15/11/2026)
+
+Para o Ultimate da Arena chegar perto de 55% em elemento de 2 componentes falta sprite Ultimate de 2 componentes para os elementos de run: agua, ar, arcano, eletricidade, espaco, gravidade, luz, marcial, som, sombra, tempo, vida, vigor, vileza (14 de 20; fogo, morte, fada, industrial, planta e terra já têm 1). Mínimo: 1 por elemento, como `kind: 'forma'`/`'paralelo'` no roster; o sorteio já os usa sozinho quando entrarem.
