@@ -62,6 +62,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick, saveIdForPublicId, nickFoldPrefix, foldNome, saveIdDaChaveDobrada,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
+import { FRIEND_INVITE_HOURLY, contarConviteDoDia, marcarRecusa, parBloqueado, segundosAteAmanhaUtc } from './_conviteLimite.js';
 import { ackMail, claimMail, deleteMail, enqueueInvite, enqueueMail, falhaDaCarta, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
@@ -1664,7 +1665,10 @@ async function handleCommunity(context) {
     if (denied) return denied;
     if (body.scope === 'read') return json({ ok: true, ...(await deleteMail(kvOrThrow(env), id, 'read')) });
     if (!midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
-    return json({ ok: true, ...(await deleteMail(kvOrThrow(env), id, body.mids, body.force === true)) });
+    const { convitesDeClaRecusados = [], ...apagadas } = await deleteMail(kvOrThrow(env), id, body.mids, body.force === true);
+    // §388: recusar o convite de clã (apagar a carta dele) bloqueia o MESMO clã por 7 dias. Melhor esforço: a carta já saiu.
+    for (const gid of convitesDeClaRecusados) await marcarRecusa(kvOrThrow(env), 'g', gid, id).catch(falhaDaCarta('mailDelete.recusa', id));
+    return json({ ok: true, ...apagadas });
   }
   // Notícia ou compensação: POST { adminKey, ids[], mail: { mid, bodyPt, bodyEn, titlePt?, titleEn?, bits?, emblems? } }. Mesmo `mid` repetido não paga duas vezes.
   if (action === 'mailSend' && method === 'POST') {
@@ -1742,8 +1746,10 @@ async function handleCommunity(context) {
     me.friends = me.friends || [];
     if (me.friends.includes(friendSave)) return json({ ok: true, status: 'friends', friends: await friendPids(me.friends) });
     if (me.friends.length >= MAX_FRIENDS) return json({ error: `friend limit (${MAX_FRIENDS})` }, 400);
-    const gate = takeToken('friend-invite', id, { limit: 30, windowMs: 3_600_000 });
+    const gate = takeToken('friend-invite', id, FRIEND_INVITE_HOURLY);
     if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    // §388: teto DIÁRIO por remetente no KV (vale entre isolates), além do teto por hora acima.
+    if (!(await contarConviteDoDia(kvOrThrow(env), 'f', id))) return tooManyRequests(segundosAteAmanhaUtc(), CORS);
     const minha = await lerConvites(env, id);
     // Ele já tinha me convidado: os dois querem, vira amizade na hora.
     if (minha.in.some(r => r.from === friendSave)) {
@@ -1760,6 +1766,8 @@ async function handleCommunity(context) {
     if (minha.out.length >= MAX_OUT) return json({ error: 'too many pending invites' }, 429);
     // Simulado nunca recebe convite: resposta igual à de um convite real, nada gravado.
     if (alvo.simulated === true) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
+    // §388: o outro RECUSOU um convite meu há menos de 7 dias: a mesma resposta do sucesso, nada gravado (não revela a recusa).
+    if (await parBloqueado(kvOrThrow(env), 'f', id, friendSave)) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
     const dele = await lerConvites(env, friendSave);
     const novo = !dele.in.some(r => r.from === id) && dele.in.length < MAX_IN;
     if (novo) dele.in.push({ from: id, at: Date.now() });
@@ -1800,7 +1808,12 @@ async function handleCommunity(context) {
       await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter(f => f !== id) });
       await removerConvitesDe(kvOrThrow(env), id, friendId).catch(falhaDaCarta('friendAccept', id));
     };
-    if (decline === true) { await limpar(); return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) }); }
+    if (decline === true) {
+      await limpar();
+      // §388: recusou: quem convidou só chega a esta conta de novo depois de 7 dias.
+      await marcarRecusa(kvOrThrow(env), 'f', quem, id);
+      return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) });
+    }
     const alvo = await getProfile(env, quem);
     if (!alvo || isHidden(alvo)) { await limpar(); return json({ error: 'no invite' }, 404); }
     const r = await ligarAmizade(env, id, quem);

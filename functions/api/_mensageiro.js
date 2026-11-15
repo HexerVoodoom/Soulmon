@@ -263,13 +263,24 @@ export async function deleteMail(kv, id, mids, force = false) {
   const blocked = [];
   const removidas = [];
   for (const m of candidatas) (pendingReward(m) && !(force && alvo) ? blocked : removidas).push(m.mid);
+  // §388: apagar UMA carta de convite de clã pelo id é a recusa (o "Recusar" da caixa); quem chama bloqueia o par por 7 dias.
+  const convitesDeClaRecusados = alvo
+    ? candidatas.filter(m => removidas.includes(m.mid) && ehConviteDeCla(m)).map(m => gidDoConvite(m.mid)).filter(Boolean)
+    : [];
   if (removidas.length) {
     const fora = new Set(removidas);
     rec.q = rec.q.filter(m => !fora.has(m.mid));
     rec.done = [...rec.done, ...removidas].slice(-DONE_MAX);
     await gravar(kv, id, rec);
   }
-  return { removed: removidas.length, blocked };
+  return { removed: removidas.length, blocked, ...(convitesDeClaRecusados.length ? { convitesDeClaRecusados } : {}) };
+}
+
+/** O id do clã de uma carta `ginv:<gid>:<dia>` (ou null). */
+function gidDoConvite(mid) {
+  if (typeof mid !== 'string' || !mid.startsWith('ginv:')) return null;
+  const fim = mid.lastIndexOf(':');
+  return fim > 5 ? mid.slice(5, fim) : null;
 }
 
 /** Retira as cartas de convite de `fromPid` (o convite foi aceito, recusado ou cancelado). Idempotente. */
