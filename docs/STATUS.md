@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
+>
+> - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
+> - **Depende do dono:** aprovar em modal (PR); trocar ou não a arte antiga de fogo/água/terra/ar (PNG novos prontos); `prism` sem contorno escuro. Sem build, não visto em tela.
+
 > ## 15/11/2026 — Evolução gerava DUAS imagens (`fix/evolucao-uma-imagem`, REGISTRO §404) — PR aberto, NÃO mergeado
 >
 > - **Causa:** a chave de acervo da forma-destino do cristal (`altSpriteKey`) dependia do acervo vivo; a própria imagem recém-chegada (`champion-power`) a trocava para `champion-power@elemento` e o lote partia de novo. Valia para toda ida a champion/ultimate/mega/ultra.
