@@ -5,7 +5,9 @@ import {
   ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, RAMO_CHANCE, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
 } from './enemyRoster';
 import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
-import { RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { RAMOS_INIMIGOS_DATA, PARALELOS_DATA } from './enemyRosterData';
+import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
+import { entryComponents } from './arenaComponentes';
 import { newBossCombat } from './match3Boss';
 import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
 import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
@@ -25,8 +27,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) = 659 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) = 673 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -284,12 +286,35 @@ describe('ramos na Arena e no Desgarrado do Torneio (§221)', () => {
   });
 });
 
+describe('Ultimates só-Ultimate de 2 componentes (15/11/2026, §405)', () => {
+  const novos = ENEMY_ROSTER.filter(e => ULTIMATES_2COMP_DATA.some(d => d[0] === e.id));
+  it('14 entradas, só Ultimate (nenhum Champion), no fim do roster, kind paralelo, com arte, 2 componentes e nome único sem -mon', () => {
+    expect(ULTIMATES_2COMP_DATA).toHaveLength(14);
+    expect(novos).toHaveLength(14);
+    expect(ENEMY_ROSTER.slice(-14)).toEqual(novos);
+    for (const e of novos) {
+      expect(e.stage).toBe('ultimate');
+      expect(e.kind).toBe('paralelo');
+      expect(ENEMY_ROSTER.some(x => x.id === e.id && x.stage === 'champion'), e.id).toBe(false);
+      expect(rosterSpriteOf(e), e.key).toBe(PARALELOS_ART[e.artFile!]);
+      expect(SPRITE_ELEMENT[`par:${e.id}`], e.key).toBe(e.element);
+      expect(entryComponents(e)).toHaveLength(2);
+      expect(e.name).not.toMatch(/mon$/i);
+    }
+    expect(new Set(novos.map(e => e.name)).size).toBe(14);
+    expect(new Set(novos.map(e => e.element)).size).toBe(14);
+  });
+  it('fora do sorteio comum: nunca saem sem elemento pedido', () => {
+    for (let seed = 1; seed <= 2000; seed++) expect(pickEnemy(30, mulberry32(seed), { stage: 'ultimate' }).kind).not.toBe('paralelo');
+  });
+});
+
 describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
-  const par = ENEMY_ROSTER.filter(e => e.kind === 'paralelo');
+  const par = ENEMY_ROSTER.filter(e => e.kind === 'paralelo' && e.stage !== 'ultimate' || PARALELOS_DATA.some(d => d[0] === e.id));
   const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
   it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
     expect(par).toHaveLength(10);
-    expect(ENEMY_ROSTER.slice(-186, -176)).toEqual(par);
+    expect(ENEMY_ROSTER.slice(-200, -190)).toEqual(par);
     expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
     for (const e of par) {
       expect(['champion', 'ultimate']).toContain(e.stage);
@@ -333,7 +358,7 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
         achou.set(entry.element, (achou.get(entry.element) ?? 0) + 1);
       }
     }
-    expect([...achou.keys()].sort()).toEqual([...ELS].sort());
+    expect([...achou.keys()].sort()).toEqual([...ELS, ...ULTIMATES_2COMP_DATA.map(d => d[1])].sort());
   });
   it('Arena Desgarrada e Desgarrado do Torneio não recebem forma paralela', () => {
     for (let seed = 1; seed <= 1500; seed++) for (let r = 1; r <= 5; r++) for (const e of buildArenaRound(r, 1, mulberry32(seed * 13 + r), undefined, true, false, ARENA_BASE_ELEMENTS[seed % ARENA_BASE_ELEMENTS.length], 32)) expect(e.paraleloKey).toBeUndefined();
@@ -355,7 +380,7 @@ describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', ()
   const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma');
   it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
     expect(formas).toHaveLength(150);
-    expect(ENEMY_ROSTER.slice(-176, -26)).toEqual(formas);
+    expect(ENEMY_ROSTER.slice(-190, -40)).toEqual(formas);
     expect(new Set(formas.map(e => e.element)).size).toBe(50);
     expect(new Set(formas.map(e => e.name)).size).toBe(150);
     expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);

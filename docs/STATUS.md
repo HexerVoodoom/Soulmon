@@ -5,6 +5,11 @@
 > - **Feito:** amostras do Higgsfield (11 aparecem, 6 em parte, 7 não) mostraram que textura e objeto pequeno somem; 186 de 269 descritores trocaram `cracked clay`, `amber beads`, `crossed blades`, `sound waves`, `stars` etc. por formas grandes (boulder shoulder, sword, amber collar, concentric rings, band of stars, antler crown, rune circle, large orbiting stone).
 > - **Ordem:** nos pares, trios e quartetos a forma grande vem primeiro; teto 260 agora testado nos 269; hash do guard dos 183 atualizado de propósito.
 > - **Só criaturas novas.** Não visto em imagem: falta nova rodada de amostras para provar que aparecem.
+> ## 15/11/2026 — 14 Ultimates de 2 componentes instalados, só Ultimate (`feat/ultimates-2comp`, REGISTRO §405) — branch pushada, SEM PR
+>
+> - **Feito:** tabela `utils/enemyRosterUltimates.ts` + `buildUltimates2Comp` (14 linhas `paralelo`, sem Champion, no fim do roster) e 14 PNG em `novos-arquivo/paralelos/`. Ultimate da Arena (base/2/3/4): 24,9/19,6/51,6/3,9 antes, 24,9/58,5/12,7/3,9 agora (tabela 25/55/15/5); os 20 elementos têm pool de 2 componentes.
+> - **Pendente do dono:** aprovar os 14 nomes (`E:/Soulmon-assets/_lote-15-11/ultimate-2comp/nomes-propostos.md`); hoje o nome é o do par. Sem build, não visto em tela.
+
 
 > ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
 >
