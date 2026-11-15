@@ -14,13 +14,13 @@ import { DECOR_ART_SCALE } from './cosmeticosNovos';
 const DECOR_DIR = path.resolve(__dirname, '../assets/decor');
 
 describe('catálogo de Honra: decoração de combate (14–15/11/2026)', () => {
-  it('o plano tem 83 peças: 75 de bronze a mithril + 8 armas de cristal (as outras de cristal entram quando o PNG existir)', () => {
+  it('o plano tem 91 peças: 75 de bronze a mithril + 16 de cristal (4 armas, 2 estátuas, bigorna e pedestal; as outras de cristal entram quando o PNG existir)', () => {
     const por = (c: string) => HONRA_DECOR_PLANEJADA.filter(i => i.categoria === c).length;
-    // 24 armas de metal + 8 de cristal = 32; o resto é a conta de sempre
+    // 24 armas de metal + 8 de cristal = 32; estátuas 16 de metal + 4 de cristal = 20; bigorna e pedestal 4 + 2 = 6
     expect([por('arma'), por('estatua'), por('chao'), por('manequim'), por('bigorna'), por('estandarte'), por('pedestal'), por('tapete')])
-      .toEqual([32, 16, 16, 4, 4, 4, 4, 3]);
-    expect(HONRA_DECOR_PLANEJADA.length).toBe(83); // a contagem É a regra: 75 + 8
-    expect(HONRA_DECOR_PLANEJADA.filter(i => /-cristal-/.test(i.id)).length).toBe(8);
+      .toEqual([32, 20, 16, 4, 6, 4, 6, 3]);
+    expect(HONRA_DECOR_PLANEJADA.length).toBe(91); // a contagem É a regra: 75 + 16
+    expect(HONRA_DECOR_PLANEJADA.filter(i => /-cristal-/.test(i.id)).length).toBe(16);
   });
 
   it('a escada de preço é 25 / 70 / 180 / 450 e acima do mithril o cristal custa 700 (turquesa) e 1100 (irisdescente); chão de arena 40', () => {
@@ -38,7 +38,7 @@ describe('catálogo de Honra: decoração de combate (14–15/11/2026)', () => {
   });
 
   it('as 8 armas de cristal: parede, cosmético puro, ids e nomes EN primeiro + PT-BR', () => {
-    const cristal = HONRA_DECOR_PLANEJADA.filter(i => /-cristal-/.test(i.id));
+    const cristal = HONRA_DECOR_PLANEJADA.filter(i => /^hon-arma-.*-cristal-/.test(i.id));
     expect(cristal.map(i => i.id).sort()).toEqual(
       ['espada', 'lanca', 'escudo', 'cajado'].flatMap(p => ['turquesa', 'irisdescente'].map(v => `hon-arma-${p}-cristal-${v}`)).sort());
     for (const i of cristal) { expect(i.slot, i.id).toBe('wall'); expect(i.categoria, i.id).toBe('arma'); }
@@ -49,6 +49,21 @@ describe('catálogo de Honra: decoração de combate (14–15/11/2026)', () => {
     expect(por['hon-arma-cajado-cristal-irisdescente'].namePt).toBe('Cajado de cristal · irisdescente');
     expect(por['hon-arma-escudo-cristal-turquesa'].price).toBe(700);
     expect(por['hon-arma-lanca-cristal-irisdescente'].price).toBe(1100);
+  });
+
+  it('as 8 peças de cristal novas (estátuas, bigorna, pedestal): espaço do metal da categoria, nomes EN primeiro + PT-BR, preço da escada', () => {
+    const novas = HONRA_DECOR_PLANEJADA.filter(i => /^hon-(estatua-.*|bigorna|pedestal)-cristal-/.test(i.id));
+    expect(novas.map(i => i.id).sort()).toEqual(
+      ['estatua-guerreiro', 'estatua-mago', 'bigorna', 'pedestal'].flatMap(p => ['turquesa', 'irisdescente'].map(v => `hon-${p}-cristal-${v}`)).sort());
+    const slot = { estatua: 'floor-left', bigorna: 'floor-right', pedestal: 'trophy' } as const;
+    for (const i of novas) { expect(i.slot, i.id).toBe(slot[i.categoria as keyof typeof slot]); expect(i.price, i.id).toBe(/turquesa$/.test(i.id) ? 700 : 1100); }
+    const por = Object.fromEntries(novas.map(i => [i.id, i]));
+    expect([por['hon-estatua-guerreiro-cristal-turquesa'].nameEn, por['hon-estatua-guerreiro-cristal-turquesa'].namePt])
+      .toEqual(['Crystal Warrior Statue · Turquoise', 'Estátua de cristal do Guerreiro · turquesa']);
+    expect(por['hon-estatua-mago-cristal-irisdescente'].nameEn).toBe('Crystal Mage Statue · Iridescent');
+    expect([por['hon-bigorna-cristal-turquesa'].nameEn, por['hon-bigorna-cristal-turquesa'].namePt]).toEqual(['Crystal Anvil · Turquoise', 'Bigorna de Cristal · turquesa']);
+    expect([por['hon-pedestal-cristal-irisdescente'].nameEn, por['hon-pedestal-cristal-irisdescente'].namePt]).toEqual(['Crystal Plinth · Iridescent', 'Pedestal de cristal · irisdescente']);
+    for (const i of novas) expect(ARTE_DECOR_HONRA[i.id], `sem arte: ${i.id}`).toBeTruthy();
   });
 
   it('id estável hon-<categoria>-<peça>-<material> e sem repetição', () => {
@@ -95,10 +110,10 @@ describe('catálogo de Honra: decoração de combate (14–15/11/2026)', () => {
     expect([...SLOT_ORDER].sort()).toEqual(['floor-left', 'floor-right', 'rug', 'trophy', 'wall']);
   });
 
-  it('ouro e cristal entram sozinhos: as 83 peças planejadas têm arte e estão à venda', () => {
-    expect(HONRA_DECOR.length).toBe(83);
+  it('ouro e cristal entram sozinhos: as 91 peças planejadas têm arte e estão à venda', () => {
+    expect(HONRA_DECOR.length).toBe(91);
     expect(HONRA_DECOR.filter(i => /-ouro$/.test(i.id)).length).toBe(18);
-    expect(HONRA_DECOR.filter(i => /-cristal-/.test(i.id)).length).toBe(8);
+    expect(HONRA_DECOR.filter(i => /-cristal-/.test(i.id)).length).toBe(16);
     expect(HONRA_DECOR_PLANEJADA.filter(i => !ARTE_DECOR_HONRA[i.id]).map(i => i.id)).toEqual([]);
   });
 
