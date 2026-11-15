@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './combate/rng';
 import { ELEMENT_DOMINANTE } from './elementDominante.data';
 import { ELEMENT_VISUAL } from './elementVisual.data';
-import { M3_DELTA_E_STEP, M3_MIN_DELTA_E, M3_PARES_PROIBIDOS, ciede2000, m3DeltaE, m3ParProibido, pickM3Distinct } from './match3Cores';
+import { ELEMENT_PALETA } from './elementPaleta.data';
+import {
+  M3_DELTA_E_STEP, M3_MIN_DELTA_E, M3_MIN_DELTA_E_DALTONICO, M3_MIN_DELTA_E_PALETA, M3_PARES_PROIBIDOS, ciede2000, m3Conflito, m3DeltaE,
+  m3DeltaEDaltonico, m3DeltaEPaleta, m3ParProibido, pickM3Distinct, simulaDaltonismo,
+} from './match3Cores';
 import { pickPvpElements, pvpElementPool, pvpElementsForSeed } from './match3Pvp';
 
 describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
@@ -72,5 +76,58 @@ describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
   });
   it('id sem assinatura conta como distante (não trava ícone novo ainda não medido)', () => {
     expect(m3DeltaE('fogo', 'icone-novo-sem-assinatura')).toBe(Infinity);
+  });
+});
+
+describe('Match-3 rodada 1: paleta e daltonismo (REGISTRO §402)', () => {
+  it('a tabela de paleta cobre os mesmos ícones, com pesos que somam ~100 e no máximo 4 cores', () => {
+    expect(Object.keys(ELEMENT_PALETA).sort()).toEqual(Object.keys(ELEMENT_VISUAL).sort());
+    for (const p of Object.values(ELEMENT_PALETA)) {
+      expect(p.length).toBeGreaterThanOrEqual(1);
+      expect(p.length).toBeLessThanOrEqual(4);
+      expect(p.reduce((s, c) => s + c[3], 0)).toBeGreaterThan(90);
+    }
+  });
+  it('distância de paleta: zero para o mesmo ícone, simétrica, Infinity sem dado', () => {
+    expect(m3DeltaEPaleta('fogo', 'fogo')).toBeCloseTo(0, 6);
+    expect(m3DeltaEPaleta('fogo', 'agua')).toBeCloseTo(m3DeltaEPaleta('agua', 'fogo'), 6);
+    expect(m3DeltaEPaleta('fogo', 'icone-novo-sem-assinatura')).toBe(Infinity);
+    expect(m3DeltaEDaltonico('fogo', 'icone-novo-sem-assinatura')).toBe(Infinity);
+  });
+  it('a simulação de daltonismo preserva cinza e funde vermelho com verde na deuteranopia', () => {
+    for (const s of simulaDaltonismo([60, 0, 0])) { expect(Math.abs(s[1])).toBeLessThan(2); expect(Math.abs(s[2])).toBeLessThan(2); }
+    const vermelho: [number, number, number] = [50, 70, 50], verde: [number, number, number] = [50, -70, 50];
+    expect(ciede2000(vermelho, verde)).toBeGreaterThan(60);
+    expect(ciede2000(simulaDaltonismo(vermelho)[0], simulaDaltonismo(verde)[0])).toBeLessThan(25);
+  });
+  it('pares vistos pelo mapa: carvalho/pira_eterna só se confundem sob daltonismo, ocultismo/singularidade pela paleta', () => {
+    expect(m3DeltaE('carvalho', 'pira_eterna')).toBeGreaterThanOrEqual(M3_MIN_DELTA_E);
+    expect(m3DeltaEDaltonico('carvalho', 'pira_eterna')).toBeLessThan(M3_MIN_DELTA_E_DALTONICO);
+    expect(m3Conflito('carvalho', 'pira_eterna')).toBe(true);
+    expect(m3DeltaE('ocultismo', 'singularidade')).toBeGreaterThanOrEqual(M3_MIN_DELTA_E);
+    expect(m3DeltaEPaleta('ocultismo', 'singularidade')).toBeLessThan(M3_MIN_DELTA_E_PALETA);
+    expect(m3Conflito('ocultismo', 'singularidade')).toBe(true);
+  });
+  it('em 3000 sementes: nenhum par abaixo do limiar de paleta nem de daltonismo, sempre 6, sem relaxar', () => {
+    for (let sd = 1; sd <= 3000; sd++) {
+      const rng = mulberry32((sd * 104729 ^ 0x3e1e) | 0);
+      const r = pickM3Distinct(pickPvpElements(rng, pvpElementPool(), 400), 6);
+      expect(r.relaxado).toBe(false);
+      expect(r.elements).toHaveLength(6);
+      for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
+        expect(m3DeltaEPaleta(r.elements[i], r.elements[j])).toBeGreaterThanOrEqual(M3_MIN_DELTA_E_PALETA);
+        expect(m3DeltaEDaltonico(r.elements[i], r.elements[j])).toBeGreaterThanOrEqual(M3_MIN_DELTA_E_DALTONICO);
+      }
+    }
+  });
+  it('pool pequeno de paleta/daltonismo: relaxa só os limiares medidos, nunca a lista curada, e nunca trava', () => {
+    const gemeos = ['carvalho', 'pira_eterna', 'ocultismo', 'singularidade'];
+    const r = pickM3Distinct(gemeos, 4);
+    expect(r.relaxado).toBe(true);
+    for (let i = 0; i < r.elements.length; i++) for (let j = i + 1; j < r.elements.length; j++) expect(m3ParProibido(r.elements[i], r.elements[j])).toBe(false);
+    expect(pickM3Distinct(['nebulosa', 'espectro'], 2).elements).toEqual(['nebulosa']);
+  });
+  it('determinístico mesmo com as camadas novas', () => {
+    expect(pvpElementsForSeed(31337)).toEqual(pvpElementsForSeed(31337));
   });
 });
