@@ -2294,7 +2294,9 @@ export default function App() {
     }
     setMessageTrigger(prev => prev + 1);
     return cabem.length;
-  }, [tierForRules, gameState.activities.length, gameState.maxActivityCap]);
+    // QA r4: a dependência é a LISTA, não o tamanho. Trocar um hábito de "todo dia" para dias específicos muda a cota sem mudar o
+    // `length`; com `.length` o catálogo seguia com o closure velho e recusava calado (ou ficava aberto sem aviso).
+  }, [tierForRules, gameState.activities, gameState.maxActivityCap]);
 
   /**
    * O PORTÃO DE CRIAÇÃO DE TAREFA — ponto ÚNICO de escrita em `tasks`.
