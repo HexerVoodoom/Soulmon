@@ -76,3 +76,21 @@ describe('ícone de estágio colorido pelo CAMINHO na plaquinha (§369, dono 14/
     expect(linhaDoNome.querySelector('[role="progressbar"]')).toBeNull();
   });
 });
+
+describe('QA r4: o ícone de estágio da plaquinha tem nome acessível (estágio · caminho), sem mudança visual', () => {
+  it('PT: "Apoteose · Poder" (os nomes do JOGO, `formStageLabel`) no ícone tingido; não é mais aria-hidden', () => {
+    render(<BattleStage {...base} me={me('mega-power')} foes={[foe('champion')]} />);
+    const ic = document.querySelector('[data-stage-plate="me"] [data-estagio-icone]') as HTMLElement;
+    expect(ic.getAttribute('role')).toBe('img');
+    expect(ic.getAttribute('aria-label')).toBe('Apoteose · Poder');
+    expect(ic.getAttribute('aria-hidden')).toBeNull();
+    const neutro = document.querySelector('[data-stage-plate="foe"] img[data-estagio-icone]') as HTMLImageElement;
+    expect(neutro.getAttribute('alt')).toBe('Ascendente');
+    expect(neutro.getAttribute('aria-hidden')).toBeNull();
+  });
+  it('EN: "Apotheosis · Power"', () => {
+    render(<BattleStage {...base} isPt={false} me={me('mega-power')} foes={[foe('rookie')]} />);
+    expect(document.querySelector('[data-stage-plate="me"] [data-estagio-icone]')!.getAttribute('aria-label')).toBe('Apotheosis · Power');
+    expect(document.querySelector('[data-stage-plate="foe"] img[data-estagio-icone]')!.getAttribute('alt')).toBe('Awakened');
+  });
+});

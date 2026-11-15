@@ -83,11 +83,11 @@ function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
 
-async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void; onRunCleared?: () => number } = {}) {
+async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void } = {}) {
   renderWithCss(
     <ArenaGame
       evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
-      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd} onRunCleared={opts.onRunCleared}
+      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd}
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -365,39 +365,42 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
   });
 
-  describe('§372 — bônus "Todos derrotados" (+1 Presa, fora dos Bits)', () => {
-    // O texto em EN está travado em `utils/arenaClearBonus.test.ts` (o ajudante `proximaRodada` daqui clica o botão em PT).
-    const vencer = async (bonus: number) => {
+  describe('§384 — o último adversário dropa em dobro (⚰️ §372 "+1 Presa" revogado)', () => {
+    // O texto em EN e a conta estão travados em `utils/arenaUltimoAdversario.test.ts` (o ajudante `proximaRodada` daqui clica em PT).
+    const vencer = async () => {
       H.foeHp = 0.01;
-      const ordem: string[] = [];
-      const onEarn = vi.fn(() => { ordem.push('bits'); return 50; });
-      const onRunCleared = vi.fn(() => { ordem.push('bonus'); return bonus; });
-      await entrar({ onEarnPoints: onEarn, onRunCleared });
+      const onEarn = vi.fn(() => 50);
+      const onDefeated = vi.fn();
+      renderWithCss(
+        <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
+      );
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena/i }));
+      await avancar(10);
+      if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS);
       for (let r = 1; r <= 4; r++) await proximaRodada();
       expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
-      return { ordem, onRunCleared, onEarn, ledger: document.querySelector('[data-result-ledger]')?.textContent ?? '' };
+      return { onEarn, onDefeated, ledger: document.querySelector('[data-result-ledger]')?.textContent ?? '' };
     };
-    it('run vencida: linha própria "Todos derrotados +1 Presa", os Bits seguem 50 (o bônus não passa pelo funil)', async () => {
-      const r = await vencer(1);
-      expect(r.onRunCleared).toHaveBeenCalledTimes(1);
-      expect(r.onEarn).toHaveBeenCalledWith(50);
-      expect(r.ordem).toEqual(['bonus', 'bits']); // o bônus lê as vitórias do dia ANTES do evento 'arena' desta run
-      expect(r.ledger).toMatch(/Todos derrotados \+1 Presa/);
-      expect(r.ledger).toMatch(/50/);
-      expect(document.querySelector('[data-result-row="item"]')).not.toBeNull();
+    it('run vencida: a rodada final entrega o drop do chefe em dobro, e o "Ganhou" mostra ×2 e o mesmo total que foi aplicado', async () => {
+      const r = await vencer();
+      expect(r.onEarn).toHaveBeenCalledWith(50); // os Bits não mudam
+      expect(r.onDefeated).toHaveBeenCalledTimes(5);
+      const final = r.onDefeated.mock.calls[4][1] as Array<{ id: string; qty: number }>;
+      expect(final.length).toBeGreaterThan(0);
+      for (const d of final) expect(d.qty % 2).toBe(0); // a rodada 5 é só o chefe: tudo dele veio ×2
+      expect(r.ledger).toMatch(/Último adversário: drop em dobro ×2/);
+      expect(r.ledger).not.toMatch(/Todos derrotados|Presa/);
+      // mostrado = aplicado: a soma das linhas de essência é a soma do que foi para o updater
+      const aplicado = r.onDefeated.mock.calls.flatMap(c => (c[1] ?? []) as Array<{ qty: number }>).reduce((s, d) => s + d.qty, 0);
+      const mostrado = [...document.querySelectorAll('[data-result-essence]')].reduce((s, el) => s + Number(el.textContent?.replace('×', '')), 0);
+      expect(mostrado).toBe(aplicado);
     });
-    it('já pago hoje (ou estoque no teto): sem linha', async () => {
-      const r = await vencer(0);
-      expect(r.onRunCleared).toHaveBeenCalledTimes(1);
-      expect(r.ledger).not.toMatch(/Todos derrotados/);
-    });
-    it('derrota: o bônus nem é pedido', async () => {
+    it('derrota: nenhuma linha ×2', async () => {
       H.playerHp = 0.0001;
-      const onRunCleared = vi.fn(() => 1);
-      await entrar({ onRunCleared });
+      await entrar();
       expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
-      expect(onRunCleared).not.toHaveBeenCalled();
-      expect(document.querySelector('[data-result-ledger]')?.textContent ?? '').not.toMatch(/Todos derrotados/);
+      expect(document.querySelector('[data-result-ledger]')?.textContent ?? '').not.toMatch(/×2|em dobro/);
     });
   });
 

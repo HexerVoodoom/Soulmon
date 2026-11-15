@@ -271,6 +271,10 @@ export const STORAGE_KEYS = {
   /** §333 (13/11/2026) — quando cada BALÃO DE DICA do Soulmon apareceu neste aparelho (`{relaxar?:ms,fome?:ms,cochilo?:ms,lilia?:ms}`),
    *  para o cooldown por tipo. Conveniência de UI, fora do save; o logout apaga. Dono: `hooks/useBalaoDica.ts`. */
   BALAO_DICAS_VISTAS: 'soulmon-balao-dicas-vistas',
+  /** §383 (14/11/2026) — quantas vezes cada BALÃO DOURADO de evento sumiu sem toque HOJE neste aparelho
+   *  (`{'balaoDourado:<tipo>:<dia>': n}`); no 2º, o App grava o `dispensar` do save. Fora do save; o logout apaga.
+   *  Congelada: nunca renomear. Dono: `utils/balaoDourado.ts` (`registrarIgnorado`). */
+  BALAO_DOURADO_IGNORADOS: 'soulmon-balao-dourado-ignorados',
   /** L08-01 (20/10/2026) — QUARENTENA do save local que NÃO virou estado (JSON truncado, array/string, `hydrateSave`
    *  lançou, ou o local ficou atrás por cota cheia). Guarda `{formato, salvoEm, saveId, motivo, cru, cortado?}`
    *  ANTES de qualquer sobrescrita. SOBREVIVE ao logout (rastro forense, como `CONFLICT_BACKUP`). Dono: `saveQuarantine.ts`. */

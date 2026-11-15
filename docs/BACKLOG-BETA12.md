@@ -284,7 +284,7 @@ Execução: beta12, **domingo 15/11/2026 às 03:00** (nenhuma implementação an
 2. **Plaquinha do Rift:** a plaquinha de que ele está no Rift ganha o balão dourado; **[JÁ FEITO em 12/11, REGISTRO §307: a plaquinha já oferece "Ir à Fenda" e "Trazer de volta"; falta só o balão dourado]** tocar oferece a opção de ir ao Rift (aviso "Ele está na masmorra", com "Retirar da masmorra" e o novo "Ir ao Rift").
 3. **Grove sob ataque:** o Soulmon avisa que o Grove está sendo ATACADO; o balão leva até lá **mesmo que o jogador ainda não tenha condição de defender** (não fez as tarefas): o balão só encaminha, nunca bloqueia nem cobra.
 
-**Regra comum:** depois de tocar e ser direcionado, o balão fecha e **NÃO aparece mais naquele dia** (por conta).
+**Regra comum:** depois de tocar e ser direcionado, o balão fecha e **NÃO aparece mais naquele dia** (por conta). ⚰️ **Emendada em 14/11/2026 (REGISTRO §383, dono: "Se ignorar 2x ou 5s dispensa"):** o balão deixou de ser persistente — fica 5 s na tela e some sozinho; o 2º sumiço sem toque no mesmo dia dispensa até o dia seguinte (o mesmo registro do toque).
 
 ### Critérios de aceite (testáveis)
 

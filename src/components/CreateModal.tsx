@@ -568,6 +568,10 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
       : `Free mode: up to ${activitiesCap} active habits. Tasks (one-off or on specific days) stay unlimited; `
         + 'evolving your own Soulmon is what raises this ceiling.',
+    /* §385: o limite fora da conta grátis (teto do estágio), em texto VISÍVEL — antes só no `title`. */
+    stageCapHint: isPt
+      ? `Neste estágio, até ${activitiesCap} hábitos diários ativos. Tarefas (pontuais ou em dias específicos) continuam sem limite.`
+      : `At this stage, up to ${activitiesCap} active daily habits. Tasks (one-off or on specific days) stay unlimited.`,
     projectSteps: isPt
       ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'
       : 'A project is too big for a single line. How about breaking it into steps?',
@@ -591,11 +595,16 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           onClick={handleSave}
           disabled={!name.trim() || (taskOnDays && !sched.isValid) || isBlocked}
           style={{ ...sm2Button('primary', !name.trim() || (taskOnDays && !sched.isValid) || isBlocked), flex: 1.4 }}
-          title={isAtCap ? (capIsDemoBoundary ? txt.demoCapHint : `${txt.limitReached} (${activitiesCap})`) : ''}
+          aria-describedby={isAtCap ? 'sm-create-cap-hint' : undefined}
         >
           {isAtCap ? txt.limitReached : txt.save}
         </button>
       </div>
+      {isAtCap && (
+        <p id="sm-create-cap-hint" data-create-cap-hint style={{ ...sm2Hint, margin: '8px 0 0' }}>
+          {capIsDemoBoundary ? txt.demoCapHint : txt.stageCapHint}
+        </p>
+      )}
     </>
   );
 

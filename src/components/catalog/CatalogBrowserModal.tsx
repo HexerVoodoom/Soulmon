@@ -10,6 +10,7 @@ import { CatalogMindNotice } from './CatalogMindNotice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import { LIFE_AREA_LABEL, LIFE_AREAS, type CatalogItem, type LifeArea } from '../../types/activityCatalog';
 import { catalogHabitCapNotice } from '../../utils/catalogChoice';
+import { UnlockNudge } from '../UnlockNudge';
 
 /**
  * F4 do `docs/PLANO-CATALOGO-ATIVIDADES.md` — o `CreateModal` "vira
@@ -41,6 +42,8 @@ interface CatalogBrowserModalProps {
   habitsCap?: number;
   /** O teto que morde é o do modo grátis (mesma regra do `CreateModal`). */
   capIsDemoBoundary?: boolean;
+  /** §385: conta grátis no limite — o mesmo `UnlockNudge` (motivo `task-limit`) do `CreateModal`. Nunca abre sozinho. */
+  onUnlock?: () => void;
 }
 
 /** A lupa (e o X que a fecha): ícone pelado num alvo de 44. */
@@ -62,7 +65,7 @@ export function dominantCategoryOfArea(area: LifeArea): ActivityCategory | null 
   return best;
 }
 
-export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities, habitsCount = 0, habitsCap, capIsDemoBoundary = false }: CatalogBrowserModalProps) {
+export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities, habitsCount = 0, habitsCap, capIsDemoBoundary = false, onUnlock }: CatalogBrowserModalProps) {
   const isPt = language === 'pt-BR';
   const jaTem = new Set((existingActivities ?? []).map(a => a?.catalogId).filter((x): x is string => typeof x === 'string' && !!x));
   const avisoTeto = catalogHabitCapNotice(habitsCount, habitsCap, isPt, capIsDemoBoundary);
@@ -169,8 +172,12 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
             );
           })()}
 
+          {/* §385: o aviso do teto fica FIXO no topo ao rolar a lista (sticky no corpo rolável da folha). */}
           {avisoTeto && (
-            <p role="status" data-catalog-cap style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{avisoTeto}</p>
+            <div data-catalog-cap-sticky style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--sm2-surface)', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p role="status" data-catalog-cap style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{avisoTeto}</p>
+              {capIsDemoBoundary && onUnlock && <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />}
+            </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

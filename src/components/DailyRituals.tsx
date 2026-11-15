@@ -38,6 +38,7 @@ import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext
 import { normalizeSchedule } from '../types/taskModel';
 import { isActive, isHaunted } from '../utils/taskTriage';
 import type { HabitRhythm } from '../utils/habitRhythm';
+import type { PlayerDayAnchor } from '../utils/playerDay';
 import { Icon } from './ui/Icon';
 import { BackArrow } from './ui/BackArrow';
 import { useBackLayer } from '../utils/backStack';
@@ -98,6 +99,8 @@ export interface DailyRitualsProps {
   /** ⚰️ D3 (01/10/2026): a linha não desenha mais a constância. Ficam
    *  opcionais para não quebrar quem ainda passa. */
   habitRhythms?: Record<string, HabitRhythm>;
+  /** QA r4: a âncora do dia do jogador (`playerDayTz`), a mesma do plano do dia, para o nascimento do "a cada N dias". */
+  playerDayTz?: PlayerDayAnchor;
   hideMetrics?: boolean;
   language: Language;
   now: Date;
@@ -144,7 +147,7 @@ const SWIPE_MIN_PX = 64;
 const SWIPE_RATIO = 2;
 
 export function DailyRituals({
-  tasks, activities, completedTasks, habitRhythms, language, now,
+  tasks, activities, completedTasks, habitRhythms, playerDayTz, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onHoldDoneTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
   variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings, stepsInfo, onGoToBuilding, bonusActivityId,
@@ -210,7 +213,7 @@ export function DailyRituals({
 
   const atividades = activities.map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean } => ({
     ...activity,
-    disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now),
+    disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now, playerDayTz),
     isComplete: activity.steps.length > 0
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),

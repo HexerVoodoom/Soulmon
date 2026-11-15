@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { ts, fonteDe, type No } from '../test/tsAst';
+import { fitHabitCreates } from './habitCreate';
 
 /**
  * O GUARD DE ELO DA CRIAÇÃO — no AST, porque o defeito é de FIAÇÃO.
@@ -257,6 +259,34 @@ describe('todo caminho de criação passa pelo mesmo portão (guard de elo, no A
         + 'é a família X-6 renascendo: dois toques no mesmo lote furam activityCapFor',
       ).toMatch(/fitHabitCreates\s*\(/);
     }
+  });
+
+  /**
+   * QA r4 (14/11/2026): o `useCallback` do portão dependia de `gameState.activities.length`. Trocar um hábito de "todo dia" para
+   * dias específicos tira ele da cota SEM mudar o tamanho da lista: o closure velho seguia contando a cota antiga, e o catálogo
+   * recusava calado (ou ficava aberto sem aviso). A dependência tem de ser a LISTA.
+   */
+  it('o portão de hábito depende da LISTA de atividades, não do tamanho dela (closure velho)', () => {
+    const src = readFileSync(path.join(SRC, APP), 'utf8').replace(/\r\n/g, '\n');
+    const ini = src.indexOf('const commitHabitCreate = useCallback(');
+    expect(ini).toBeGreaterThan(0);
+    const deps = /\n {2}\}, \[([^\]]*)\]\);/.exec(src.slice(ini));
+    expect(deps).not.toBeNull();
+    const lista = deps![1].split(',').map(s => s.trim());
+    expect(lista).toContain('gameState.activities');
+    expect(lista).not.toContain('gameState.activities.length');
+  });
+
+  it('a cota muda sem o tamanho mudar: é por isso que o `.length` não basta', () => {
+    const diario = { id: 'a', schedule: { kind: 'daily' } };
+    const agendado = { id: 'a', schedule: { kind: 'weekdays', days: [1, 3] }, weekDays: [1, 3] };
+    const novo = [{ id: 'n', schedule: { kind: 'daily' } }];
+    const cheio = Array.from({ length: 2 }, (_, i) => ({ ...diario, id: `d${i}` }));
+    const antes = fitHabitCreates({ activities: cheio, maxActivityCap: 2 }, novo, 'paid');
+    const depois = fitHabitCreates({ activities: [cheio[0], { ...agendado, id: 'd1' }], maxActivityCap: 2 }, novo, 'paid');
+    expect(cheio.length).toBe(2);
+    expect(antes).toHaveLength(0);
+    expect(depois).toHaveLength(1);
   });
 
   it('o portão CONTA: `activity_create` ao criar, `demo_cap_hit` ao recusar', () => {

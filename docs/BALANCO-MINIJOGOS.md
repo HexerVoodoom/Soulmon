@@ -118,13 +118,13 @@ nada naquele dia**, inclusive os do Ateliê da Mente. A folha do Ateliê anuncia
 | Andares até bater o teto de 150 (nível 1/3/5) | ~5 | **9 / 9 / 8** | idem |
 | Nível 2 (Avançado) da Corrida, PPT e Barragem | ×2 | **×1,5**, `max(1, round(base × 1,5))` | `ADVANCED_BITS_FACTOR`, `bitsForLevel` (`src/utils/minigameDifficulty.ts`) |
 | PPT Avançado, por partida vencida | 10 | **8** | `bitsForLevel(MATCH_POINTS, 2)` |
-| Arena, run completa vencida | 50 Bits | 50 Bits **+1 Presa** (1×/dia, fora do teto) | `src/utils/arenaClearBonus.ts` |
+| Arena, run completa vencida | 50 Bits | 50 Bits; ⚰️ ~~+1 Presa (1×/dia)~~ → **o último adversário dropa 2× a essência** (toda run vencida, sem teto próprio; REGISTRO §384) | `src/utils/arenaUltimoAdversario.ts` |
 
 **Não mudou:** os jogos leves no nível 1 (Eco, Bolhas, Troca, PPT, Corrida, Picross, Elemental Fusion…), os 50 Bits da Arena e
 o teto `MINIGAME_BITS_PER_DAY` = 150. O custo da Masmorra hoje é energia por camada (o "começar mais fundo" pago em Bits saiu em
 11/10, REGISTRO §31), então o fator só mexe no que a Masmorra paga.
 
-**O bônus da Arena.** A run já dá essência a cada rodada, então o bônus é **+1 material**: a Presa (`fang`), o material do
+**O bônus da Arena.** ⚰️ **Revogado no mesmo dia (14/11/2026, REGISTRO §384):** o dono trocou a Presa por "o último adversário dropa o dobro" — o chefe da rodada 5 deixa 2× a essência dele, em toda run vencida, sem teto diário próprio (o teto por elemento segue). O texto abaixo é o histórico do §372. A run já dá essência a cada rodada, então o bônus é **+1 material**: a Presa (`fang`), o material do
 próprio Duelo. Só quando as 5 rodadas terminam vencidas; não é Bit (não entra no funil nem no teto) e não é Honra ("a Arena
 não paga Honra" continua valendo). Anti-farm: a Arena não tem limite de runs e o material é o ritmo do Soulsmith
 (`forge.tempo.test.ts` conta ~1 por dia por prédio), então o bônus vale **uma vez por dia do jogador** — a 1ª run vencida do dia,

@@ -292,10 +292,13 @@ export function RitualRow({
     ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
     : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'));
   const abrir = pai && !done && !expanded ? onExpand : undefined;
-  /* A1: o que o toque na linha faz. Pai: abre/fecha as etapas. Folha: marca (se puder). */
+  /* §382 (dono, 14/11/2026): linha com AÇÃO (hábito ligado a prédio) — tocar no NOME faz o mesmo que a seta (abre o prédio);
+     só o checkbox marca. Sem ação, a linha segue como antes. */
+  const irAoPredio = action && !done && !editOnly ? action.onClick : undefined;
+  /* A1: o que o toque na linha faz. Pai: abre/fecha as etapas. Folha: marca (se puder). Com ação: abre o prédio. */
   const acionar: (() => void) | undefined = editOnly
     ? onEdit
-    : pai ? onExpand : (done || dimmed || inert ? undefined : onToggle);
+    : irAoPredio ?? (pai ? onExpand : (done || dimmed || inert ? undefined : onToggle));
   const nomeSpan = (
     <span
       className="sm2-ritual-name"
@@ -356,6 +359,17 @@ export function RitualRow({
               data-ritual-edit
               onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
               aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
+              style={{ cursor: 'pointer' }}
+            >
+              {nomeSpan}
+            </button>
+          ) : irAoPredio && action ? (
+            <button
+              type="button"
+              className="sm2-ritual-edit"
+              data-ritual-name-action={action.kind}
+              onClick={(e) => { e.stopPropagation(); irAoPredio(); }}
+              aria-label={`${name}: ${action.label}`}
               style={{ cursor: 'pointer' }}
             >
               {nomeSpan}

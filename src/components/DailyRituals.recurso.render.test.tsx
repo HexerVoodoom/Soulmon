@@ -72,6 +72,44 @@ for (const tema of ['light', 'dark'] as const) {
   });
 }
 
+describe('§382: tocar no NOME da linha ligada a prédio abre o prédio; só o checkbox marca', () => {
+  it('o nome é um botão com o destino no nome acessível; tocar nele (ou no texto) abre o prédio e não marca', () => {
+    const ir = vi.fn();
+    const marcar = vi.fn();
+    const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: ir, onToggleActivity: marcar });
+    const nome = container.querySelector('button[data-ritual-name-action]') as HTMLButtonElement;
+    expect(nome.getAttribute('aria-label')).toBe('Gratidão: Ir ao Caderno');
+    expect(nome.textContent).toBe('Gratidão');
+    fireEvent.click(nome);
+    expect(ir).toHaveBeenCalledWith('forja.caderno');
+    fireEvent.click(container.querySelector('[data-ritual-tap]') as HTMLElement);
+    expect(ir).toHaveBeenCalledTimes(2);
+    expect(marcar).not.toHaveBeenCalled();
+  });
+  it('o checkbox (alvo de 44 px) continua marcando e não abre o prédio', () => {
+    const ir = vi.fn();
+    const marcar = vi.fn();
+    const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: ir, onToggleActivity: marcar });
+    const check = container.querySelector('button[data-ritual-check]') as HTMLButtonElement;
+    expect(check.style.width).toBe('44px');
+    expect(check.style.height).toBe('44px');
+    fireEvent.click(check);
+    expect(marcar).toHaveBeenCalledTimes(1);
+    expect(ir).not.toHaveBeenCalled();
+  });
+  it('EN: o nome acessível diz o destino em inglês', () => {
+    const { container } = mount([mk('j', 'Gratitude', 'mente-gratidao')], { onGoToBuilding: noop }, 'en-US');
+    expect(container.querySelector('button[data-ritual-name-action]')?.getAttribute('aria-label')).toBe('Gratitude: Go to the Journal');
+  });
+  it('linha sem ação segue como antes: o nome não é botão e tocar no texto marca', () => {
+    const marcar = vi.fn();
+    const { container } = mount([mk('c', 'Custom')], { onGoToBuilding: noop, onToggleActivity: marcar });
+    expect(container.querySelector('[data-ritual-name-action]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-ritual-tap]') as HTMLElement);
+    expect(marcar).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §365; reverte o "link na frente" de 13/11)', () => {
   it('a seta mora no fim da linha, depois do nome, sem texto "Ir ao…" e sem link na frente', () => {
     const { container } = mount([mk('j', 'Gratidão', 'mente-gratidao')], { onGoToBuilding: noop });

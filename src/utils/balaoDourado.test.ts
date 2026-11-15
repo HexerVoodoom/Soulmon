@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   BALAO_PRIORIDADE, balaoKey, dispensar, escolherBalao, foiDispensado, sanitizeBalaoDourado, balaoDouradoText, balaoDouradoAria,
+  BALAO_DOURADO_VISIVEL_MS, BALAO_IGNORADOS_PARA_DISPENSAR, registrarIgnorado, sanitizeBalaoIgnorados,
 } from './balaoDourado';
 
 const D1 = '2026-11-15';
@@ -77,5 +78,39 @@ describe('falas e rótulos (G7, G8)', () => {
   it('o balão do Bosque anuncia o destino', () => {
     expect(balaoDouradoAria('grove', 'pt-BR')).toBe('Abrir o Bosque');
     expect(balaoDouradoAria('grove', 'en-US')).toBe('Open the Grove');
+  });
+});
+
+describe('§383: "Se ignorar 2x ou 5s dispensa"', () => {
+  it('constantes: 5 s na tela, 2 ignorados', () => {
+    expect(BALAO_DOURADO_VISIVEL_MS).toBe(5000);
+    expect(BALAO_IGNORADOS_PARA_DISPENSAR).toBe(2);
+  });
+  it('o 1º ignorado só conta; o 2º do mesmo dia dispensa', () => {
+    const a = registrarIgnorado(undefined, 'rift', D1);
+    expect(a).toEqual({ reg: { [balaoKey('rift', D1)]: 1 }, dispensa: false });
+    const b = registrarIgnorado(a.reg, 'rift', D1);
+    expect(b.dispensa).toBe(true);
+    expect(b.reg[balaoKey('rift', D1)]).toBe(2);
+  });
+  it('a contagem é por tipo e por dia: o dia seguinte recomeça (e solta o anterior)', () => {
+    const a = registrarIgnorado(undefined, 'rift', D1);
+    expect(registrarIgnorado(a.reg, 'grove', D1).dispensa).toBe(false);
+    const b = registrarIgnorado(a.reg, 'rift', D2);
+    expect(b).toEqual({ reg: { [balaoKey('rift', D2)]: 1 }, dispensa: false });
+  });
+  it('dia inválido não conta nem dispensa', () => {
+    expect(registrarIgnorado(undefined, 'rift', 'ontem')).toEqual({ reg: {}, dispensa: false });
+  });
+  it('leitura tolerante do aparelho', () => {
+    expect(sanitizeBalaoIgnorados(null)).toEqual({});
+    expect(sanitizeBalaoIgnorados([1])).toEqual({});
+    expect(sanitizeBalaoIgnorados({ [balaoKey('rift', D1)]: 1, 'balaoDourado:xyz:2026-11-15': 1, [balaoKey('grove', D1)]: 'x', [balaoKey('achado', D1)]: 1.5 }))
+      .toEqual({ [balaoKey('rift', D1)]: 1 });
+  });
+  it('o 2º ignorado grava o MESMO registro do toque: o balão não volta no dia', () => {
+    const reg = dispensar(undefined, 'grove', D1);
+    expect(escolherBalao({ grove: true }, reg, D1)).toBeNull();
+    expect(escolherBalao({ grove: true }, reg, D2)).toBe('grove');
   });
 });
