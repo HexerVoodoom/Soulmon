@@ -52,6 +52,7 @@ export const BITS_TZ_LOCK_MS = 24 * 3600 * 1000;
 const DAY_MS = 86_400_000;
 const MAX_OFFSET_MS = 14 * 3600 * 1000;
 /** @typedef {{ zone?: string, offsetMs?: number }} AncoraDoDia */
+/** @typedef {{ bitsBuy?: { day?: string, bits?: unknown, at?: unknown }, bitsTz?: unknown }} EntDosBits  o pedaço de `ent:` que o teto lê */
 /** @type {AncoraDoDia} */
 const UTC = Object.freeze({ offsetMs: 0 });
 
@@ -122,7 +123,7 @@ export function bitsDayResetAt(nowMs, anchor = UTC) {
  * Bits já comprados no dia do jogador de `nowMs`. O registro novo leva o instante (`at`) e é julgado no dia da âncora atual; o de
  * antes do §386 (só `day`, gravado em UTC) é comparado pelo texto (diferença de horas, uma vez, no dia do deploy).
  */
-/** @param {any} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
+/** @param {EntDosBits} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
 export function bitsBoughtToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
   const r = ent?.bitsBuy;
   if (!r || typeof r !== 'object') return 0;
@@ -133,7 +134,7 @@ export function bitsBoughtToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitur
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
-/** @param {any} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
+/** @param {EntDosBits} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
 export function bitsPackLeftToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
   return Math.max(0, BITS_PACK_DAILY_CAP - bitsBoughtToday(ent, nowMs, anchor));
 }

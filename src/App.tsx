@@ -5196,7 +5196,8 @@ export default function App() {
       toast(<>{language === 'pt-BR' ? 'Compra recuperada: ' : 'Purchase recovered: '}<BitsAmount value={total} sign="+" size={14} /></>);
     });
   }, [saveId, creditarBitsDePacote, language]);
-  useEffect(() => { recuperarBitsPendentes(); }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Muda com a conta (e com o idioma do aviso): repetir é seguro, `recoverPendingBitsBuys` só reenvia o que segue pendente.
+  useEffect(() => { recuperarBitsPendentes(); }, [recuperarBitsPendentes]);
 
   /**
    * PACOTES DE BITS do Cambista (§373): o SERVIDOR decide o pacote, debita os Créditos e conta o teto de 1.000 Bits/dia

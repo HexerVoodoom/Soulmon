@@ -41,7 +41,7 @@ it('§386 A1: o boot e o Cambista reenviam os pendentes; a recuperação credita
   const corpo = app.slice(app.indexOf('const recuperarBitsPendentes'), app.indexOf('const handleExchangeCredits'));
   expect(corpo).toMatch(/recoverPendingBitsBuys\(/);
   expect(corpo).toMatch(/creditarBitsDePacote\(a\.bits, a\.ent, a\.confirmar\)/);
-  expect(corpo).toMatch(/useEffect\(\(\) => \{ recuperarBitsPendentes\(\); \}, \[saveId\]\)/);
+  expect(corpo).toMatch(/useEffect\(\(\) => \{ recuperarBitsPendentes\(\); \}, \[recuperarBitsPendentes\]\)/);
   expect(app).toMatch(/onRecoverPendingBits=\{recuperarBitsPendentes\}/);
 });
 

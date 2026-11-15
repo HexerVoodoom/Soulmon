@@ -655,7 +655,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
-  useEffect(() => { onRecoverPending?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { onRecoverPending?.(); }, [onRecoverPending]);
   const [exchanging, setExchanging] = useState<string | null>(null);
   // O que ainda cabe HOJE, como o servidor disse da última vez (`null` = não trocou hoje: o dia inteiro está livre).
   const leftEcho = useSyncExternalStore(subscribeBitsPackLeft, bitsPackLeftToday, bitsPackLeftToday);
