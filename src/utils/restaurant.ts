@@ -23,6 +23,8 @@ import { spendEssences } from './essences';
 import { MATERIAL_CAP, type MaterialId, type BuildingQuestState } from './buildingQuests';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { bumpDailyIn } from './dailyMissions';
+import { countWeeklyMission } from './dungeonRewards';
+import type { WeeklyMissionProgress } from './weeklyMissions';
 import { MEAL_BUFF_MS, type MealBuffKind, type RestaurantState } from './restaurantState';
 
 export { MEAL_BUFF_HOURS, MEAL_BUFF_VALUE_CAP, activeMealBuff, mealAttrBonus, sanitizeRestaurant, type MealBuff, type MealBuffKind, type RestaurantState } from './restaurantState';
@@ -112,6 +114,8 @@ export interface CookState extends HungerState {
   buildingQuests?: BuildingQuestState;
   restaurant?: RestaurantState;
   playerDayTz?: PlayerDayAnchor;
+  /** Missão semanal "cook-dish" (15/11/2026): conta 1 por prato COZINHADO (não a Feira). */
+  weeklyMissions?: WeeklyMissionProgress;
 }
 
 export type CookRefusal = 'unknown' | 'not-today' | 'daily-cap' | 'no-food' | 'no-extra' | 'no-bits';
@@ -174,7 +178,8 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
     restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
   }
   // Missão da Snapjaw (12/11/2026, REGISTRO §314): pedir 1 prato no Restaurante (a Feira de verdade, `applyFeiraDish`, é outro gesto).
-  return { state: bumpDailyIn({ ...s, restaurant }, 'prato', 1, new Date(now)) };
+  // Missão SEMANAL "fazer um prato, qualquer prato" (15/11/2026, dono): 1 por prato cozinhado, no mesmo ponto da diária (a Feira de verdade não conta: o prato já vem pronto).
+  return { state: countWeeklyMission(bumpDailyIn({ ...s, restaurant }, 'prato', 1, new Date(now)), 'cook-dish', new Date(now)) };
 }
 
 /**

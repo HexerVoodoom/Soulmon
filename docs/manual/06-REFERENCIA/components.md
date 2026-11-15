@@ -2368,3 +2368,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/PocaoCriada.tsx`
 
 **`PocaoCriada` (12/11/2026, §306):** `{ language, elementId, onClose }` — tela cheia (portal, `aria-modal`, voltar/Esc fecham) com `.sm2-potion-made`, `.sm2-potion-rays` (luz girando), `.sm2-potion-icon`, texto `data-pocao-texto` e `data-vesca-ok`. `VescaPotionOffer.onMake` agora pode devolver `false` (sem saldo: não mostra "criada").
+
+### `src/components/ElementosNovosModal.tsx`
+
+**`ElementosNovosModal` (15/11/2026, §396):** `{ language, elementIds, onClose }` — o modal transparente de "Elemento novo", igual ao da `PocaoCriada` (mesmas classes `sm2-potion-*`) mas SEM brilho (`data-brilho="false"`, sem raios, sem halo). Um id = simples; vários = carrossel num modal só (`.sm2-elem-new-arrow` 44 px, pontinhos, deslizar, aria "1 de N"; toque avança e fecha no último; OK/Esc/voltar fecham). Chamado só pelo `App.tsx` (item `elementoNovo` da fila). Régua: `ElementosNovosModal.render.test.tsx`.

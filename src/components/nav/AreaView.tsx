@@ -11,6 +11,9 @@ import { AreaScene, type AreaLot } from './AreaScene';
 import { DungeonKeyBadge } from './DungeonKeyBadge';
 import { requestGoToBuilding } from '../../utils/blockedAction';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
+import { chefsOn, playerWeekday } from '../../utils/restaurant';
+import { restaurantNpcVoice } from '../../utils/restaurantCopy';
 import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
@@ -507,6 +510,11 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'mercado') {
     const lots = mercadoLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
+    // Restaurante: o busto e a fala são os do chef DO DIA (do jogador), e no domingo os dois lado a lado (`chefsOn`); o resto do Mercado segue o NPC do lote.
+    const chefsHoje = chefsOn(playerWeekday(new Date(), gsForIndicators?.playerDayTz));
+    const restNpc = open?.id === 'restaurante'
+      ? { npcArt: RESTAURANT_CHEF_ART[chefsHoje[0]], npcArt2: chefsHoje[1] ? RESTAURANT_CHEF_ART[chefsHoje[1]] : undefined, npcVoice: restaurantNpcVoice(chefsHoje, language === 'pt-BR') }
+      : {};
     const stall = open && open.id !== 'conquistas' && open.id !== 'restaurante' && open.id !== 'cambista' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'restaurante' | 'cambista'> : null;
     return (
       <AreaScene
@@ -527,6 +535,7 @@ export function AreaView(props: AreaViewProps) {
           closeLabel={closeLabel}
           open={!!open}
           onClose={close}
+          {...restNpc}
         >
           <Suspense fallback={<SheetLoading language={language} />}>
             {stall && (

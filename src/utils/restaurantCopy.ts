@@ -25,6 +25,18 @@ export const SUNDAY_LINE = {
   pt: 'Domingo: as duas cozinhas abertas, o cardápio inteiro na mesa.',
 };
 
+/**
+ * Quem atende no balcão HOJE e o que diz (15/11/2026, dono: "no restaurante tem que aparecer o NPC certo no dia certo; no domingo os dois,
+ * um do lado do outro"). A regra do dia é `chefsOn` (`restaurant.ts`); aqui só o texto. Um chef: a fala dele. Domingo: os dois nomes e a
+ * fala do domingo. A arte vem de `RESTAURANT_CHEF_ART` (um busto por chef, na ordem de `chefs`).
+ */
+export function restaurantNpcVoice(chefs: readonly ChefId[], isPt: boolean): { name: string; line: string } {
+  const curto = (id: ChefId) => (isPt ? CHEF_VOICE[id].namePt : CHEF_VOICE[id].nameEn).split(',')[0];
+  if (chefs.length > 1) return { name: chefs.map(curto).join(isPt ? ' e ' : ' & '), line: isPt ? SUNDAY_LINE.pt : SUNDAY_LINE.en };
+  const id = chefs[0] ?? 'snapjaw';
+  return { name: isPt ? CHEF_VOICE[id].namePt : CHEF_VOICE[id].nameEn, line: isPt ? CHEF_VOICE[id].linePt : CHEF_VOICE[id].lineEn };
+}
+
 export function effectText(e: DishEffect, isPt: boolean): string {
   const h = MEAL_BUFF_HOURS;
   switch (e.kind) {

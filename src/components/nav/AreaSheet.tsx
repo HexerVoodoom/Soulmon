@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -37,6 +37,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Override explícito do NPC (raro — testes/casos sem lote). Sem ele, usa
    *  `lotNpcArt(areaId, lotId)`. */
   npcArt?: string;
+  /** Um SEGUNDO busto, ao lado do primeiro (Restaurante no domingo: os dois chefs, 15/11/2026). Os dois encolhem para dividir a zona do NPC. */
+  npcArt2?: string;
   /** Nome + fala do NPC quando ele NÃO é de lote (NPC de função, `functionNpcVoice`). Sem ele, `lotNpcVoice`. */
   npcVoice?: { name: string; line: string };
   title: string;
@@ -134,22 +136,25 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           }}
         >
           {/* Sem zoom, como antes de 07/10/2026: o <img> direto (a caixa vem da altura da zona); a base entra sob a folha só `NPC_BASE_UNDER_SHEET`. */}
-          <img
-            src={npcSrc}
-            alt=""
-            aria-hidden="true"
-            data-area-sheet-npc
-            style={{
-              height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
-              flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
-              transform: frame
-                ? `translateY(${100 * (NPC_BASE_UNDER_SHEET + frame.underSheet)}%) scale(${frame.zoom})`
-                : `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
-              ...(frame ? { transformOrigin: 'left bottom', ...(frame.flushLeft ? { marginLeft: -12 } : {}) } : {}),
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
-            }}
-          />
+          {[npcSrc, ...(npcArt2 ? [npcArt2] : [])].map((src, i, all) => (
+            <img
+              key={`${i}:${src}`}
+              src={src}
+              alt=""
+              aria-hidden="true"
+              data-area-sheet-npc
+              style={{
+                height: '100%', width: 'auto', maxWidth: `${all.length > 1 ? NPC_MAX_WIDTH_PCT * 0.45 : NPC_MAX_WIDTH_PCT}%`,
+                flex: all.length > 1 ? '0 1 auto' : 'none', minWidth: 0, objectFit: 'contain', objectPosition: 'bottom',
+                transform: frame
+                  ? `translateY(${100 * (NPC_BASE_UNDER_SHEET + frame.underSheet)}%) scale(${frame.zoom})`
+                  : `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
+                ...(frame ? { transformOrigin: 'left bottom', ...(frame.flushLeft ? { marginLeft: -12 } : {}) } : {}),
+                pointerEvents: 'none',
+                filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
+              }}
+            />
+          ))}
           {npcOverlay}
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}

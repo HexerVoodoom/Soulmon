@@ -20,6 +20,8 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
     case 'gift-sent': return 'laboratorio.amigos';
     case 'journal-days': return 'forja.caderno';
     case 'focus-days': return 'forja.oficina';
+    // O Restaurante não é BuildingId (sem portão de Vínculo); a missão do prato leva ao Mercado, onde a diária da Snapjaw também aponta (`n-snapjaw`).
+    case 'cook-dish': return 'mercado.itens';
     case 'rest-nights': case 'checkins': case 'haunted-done': case 'rub-days': case 'shower': case 'play-days': case 'mood-checkins':
       return 'home';
     case 'dream-new': return 'home';
