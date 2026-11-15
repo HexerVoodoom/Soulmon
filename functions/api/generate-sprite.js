@@ -115,6 +115,15 @@ const LOCK_RETRY_AFTER = 20;
 const MAX_BLOB_BYTES = 8 * 1024 * 1024;
 
 const cacheKey = (saveId, formId) => `${CACHE_PREFIX}${saveId}:${formId}`;
+/** Janela em que `forma@elemento` pedida logo depois de `forma` é a MESMA evolução (cliente anterior ao REGISTRO §404), não uma alternativa nova. */
+export const JANELA_FORMA_BASE_MS = 20 * 60 * 1000;
+function formaBaseRecente(bruto) {
+  if (!bruto) return null;
+  try {
+    const g = JSON.parse(bruto);
+    return g?.image && Number.isFinite(g.at) && Date.now() - g.at >= 0 && Date.now() - g.at < JANELA_FORMA_BASE_MS ? bruto : null;
+  } catch { return null; }
+}
 const lockKey = (saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`;
 
 /** Apagar o lock nunca pode derrubar a resposta: no pior caso ele expira em
@@ -705,6 +714,9 @@ async function onRequestPostBruto({ request, env }) {
         // Cache gravado com o id de forma ANTIGO (antes de 29/09/2026): só leitura.
         const antigo = legacyFormIdOf(formId);
         if (!pronta && antigo && !regenerar) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
+        // Cliente antigo em cache (REGISTRO §404): depois de gerar `forma`, pedia `forma@elemento` na sequência — a 2ª imagem do dono. Se a forma-base
+        // acabou de ser desenhada, devolve ELA (zero IA, zero cota); o pedido legítimo de uma alternativa vem horas depois, de outra evolução.
+        if (!pronta && !regenerar && formId.includes('@')) pronta = formaBaseRecente(await kvOrThrow(env).get(cacheKey(id, formId.split('@')[0])));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.
