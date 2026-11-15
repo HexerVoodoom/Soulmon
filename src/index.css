@@ -4996,17 +4996,41 @@ select:focus-visible {
 .sm2-potion-icon { position: relative; width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(255, 236, 170, .55)); display: grid; place-items: center; }
 .sm2-potion-text { margin: 0; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: var(--sm2-text-lg, 20px); font-weight: 600; color: #fff; }
 @keyframes sm2-potion-spin { to { transform: rotate(360deg); } }
-/* "Elemento novo" (15/11/2026): o mesmo modal da poção SEM o brilho (sem raios, sem halo). Vários elementos = carrossel. */
-.sm2-elem-new .sm2-potion-stage { width: 160px; height: 160px; }
-.sm2-elem-new .sm2-potion-icon { filter: none; }
-.sm2-elem-new-row { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; max-width: 360px; }
-.sm2-elem-new-page { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.sm2-elem-new-arrow { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .12); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+/* "Elemento novo" como CARTA (15/11/2026, REGISTRO §401): véu escuro do modal da poção, sem brilho; carta preta 5:7 igual para todos os elementos.
+   Largura = 85% da tela até um teto, e nunca mais alta do que cabe entre o X, os pontinhos e o OK (CTA de 76 px): 360x640 e 412x915. */
+.sm2-elem-new {
+  position: fixed; inset: 0; z-index: 120; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sm2-space-3);
+  padding: calc(56px + env(safe-area-inset-top, 0px)) 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(4, 18, 20, .82);
+}
+.sm2-elem-new-close { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); left: 16px; z-index: 2; }
+.sm2-elem-new-close .sm2-ora-back { color: #fff; }
+.sm2-elem-new-row { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+.sm2-elem-new-page { display: flex; flex-direction: column; align-items: center; touch-action: pan-y; }
+.sm2-elem-carta {
+  --carta-w: min(85vw, 380px, calc((100dvh - 250px) * 5 / 7));
+  box-sizing: border-box; position: relative; width: var(--carta-w); aspect-ratio: 5 / 7; container-type: inline-size;
+  background: url('./assets/soulmon/ui/carta-elemento.webp') center / 100% 100% no-repeat; image-rendering: pixelated;
+}
+/* V3 (arte final do dono): área escura livre medida em x 11-91%, y 17-84% (o cristal desce até ~16% e a placa começa em ~86%). */
+.sm2-elem-carta-miolo { position: absolute; inset: 19% 14% 18%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4cqw; text-align: center; }
+.sm2-elem-carta-icone { display: grid; place-items: center; width: 42cqw; height: 42cqw; }
+.sm2-elem-carta-icone img { width: 100% !important; height: 100% !important; }
+.sm2-elem-carta-nome { margin: 0; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: clamp(18px, 8cqw, 28px); font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: .04em; }
+.sm2-elem-carta-comps { list-style: none; margin: 2cqw 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 4px; }
+.sm2-elem-carta-comp { display: inline-flex; align-items: center; gap: 4px; }
+.sm2-elem-carta-comp-in { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 44px; }
+.sm2-elem-carta-comp-in img { width: 8cqw !important; height: 8cqw !important; min-width: 24px; min-height: 24px; }
+.sm2-elem-carta-comp-nome { font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: clamp(10px, 3.4cqw, 13px); color: rgba(255, 255, 255, .88); letter-spacing: .03em; }
+.sm2-elem-carta-mais { font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: 16px; color: rgba(255, 255, 255, .6); }
+.sm2-elem-new-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(4, 18, 20, .72); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.sm2-elem-new-arrow[data-elemento-prev] { left: 4px; }
+.sm2-elem-new-arrow[data-elemento-next] { right: 4px; }
 .sm2-elem-new-arrow:disabled { visibility: hidden; }
 .sm2-elem-new-dots { display: flex; gap: 8px; justify-content: center; }
 .sm2-elem-new-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
 .sm2-elem-new-dot[data-on="true"] { background: #fff; }
-.sm2-elem-new-hint { margin: 0; text-align: center; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md, 15px); color: rgba(255, 255, 255, .85); }
 @media (prefers-reduced-motion: no-preference) {
   .sm2-elem-new-page[data-anim] { animation: sm2-elem-new-in .18s ease-out; }
   @keyframes sm2-elem-new-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
