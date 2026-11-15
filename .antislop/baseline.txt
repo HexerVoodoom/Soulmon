@@ -2,8 +2,8 @@ comentario-narrador 5
 emoji-no-codigo 0
 implementacao-falsa 107
 todo-pendente 3
-erro-engolido 77
-fallback-silencioso 140
+erro-engolido 76
+fallback-silencioso 139
 escape-de-tipo 449
 log-de-depuracao 100
 segredo-literal 3

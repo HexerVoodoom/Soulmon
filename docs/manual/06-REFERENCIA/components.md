@@ -2290,11 +2290,11 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ### `src/components/MessengerSequence.tsx`
 
-O AVISO do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fila de apresentação: só diz que chegou carta, uma vez por carta; fechar não credita nada (o resgate é da caixa). Decisão: REGISTRO §241 e §246.
+O AVISO do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fila de apresentação: só diz que chegou carta, e só na 1ª carta da conta (§390; depois só a bolinha vermelha); fechar não credita nada (o resgate é da caixa). Decisão: REGISTRO §241 e §246.
 
 ### `src/components/MailboxSheet.tsx`
 
-A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma carta aberta por vez, "Resgatar" (só com item), "Deletar" (confirmação se houver item não resgatado), rodapé "Excluir todas lidas" e "Resgatar tudo" (pop-up com a lista e o total). Recebe a lista e as ações de `hooks/useMailbox.ts`. Decisão: REGISTRO §246.
+A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma carta aberta por vez, "Resgatar" (só com item), "Deletar" (confirmação se houver item não resgatado), rodapé "Excluir todas lidas" (não apaga convite, §389; o cartão de convite com "Recusar" não tem "Deletar") e "Resgatar tudo" (pop-up com a lista e o total). Recebe a lista e as ações de `hooks/useMailbox.ts`. Decisão: REGISTRO §246.
 
 ### `src/components/CartaTutorialWidget.tsx`
 

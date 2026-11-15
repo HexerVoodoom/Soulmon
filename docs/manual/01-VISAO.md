@@ -621,7 +621,7 @@ O que está aberto e **depende do dono** está na seção 3 de
   convite ao Refúgio com humor baixo ([`02` §12](02-REGRAS-DE-NEGOCIO.md#humor))
   respeita a linha de que humor nunca vira pontuação. O gatilho de revisão da
   Camada 3 continua o mesmo; a exceção não abre precedente para som, arte ou Steam.
-- **Balanço dos minijogos**: a Masmorra passou a pagar ×`DUNGEON_BITS_FACTOR` (0,4 em 30/09; 0,2 desde 14/11/2026, REGISTRO §372, com o Avançado dos minijogos ×1,5 e +1 Presa na run vencida da Arena)
+- **Balanço dos minijogos**: a Masmorra passou a pagar ×`DUNGEON_BITS_FACTOR` (0,4 em 30/09; 0,2 desde 14/11/2026, REGISTRO §372, com o Avançado dos minijogos ×1,5; o +1 Presa da Arena foi revogado em §384, que dá drop em dobro ao último adversário)
   (`src/utils/dungeon.ts`) para que uma run completa fique perto do teto diário
   (`MINIGAME_BITS_PER_DAY`) — a moeda continua sem comprar progresso
   ([`02` §51](02-REGRAS-DE-NEGOCIO.md#masmorra)).

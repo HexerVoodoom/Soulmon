@@ -1195,7 +1195,7 @@ export const BITS_PACKS = [
   { id: 'bits-500', bits: 500, credits: 460 },   // ~8% off
   { id: 'bits-1000', bits: 1000, credits: 800 }, // ~20% off
 ] as const;
-export const BITS_PACK_DAILY_CAP = 1000; // por dia UTC, contado no servidor
+export const BITS_PACK_DAILY_CAP = 1000; // por dia do jogador (§386), contado no servidor
 ```
 
 Cada cartão mostra nome (Bolsinha/Bolsa/Baú · Pouch/Purse/Chest), Bits, preço em Créditos, a etiqueta `~N% off` e,
