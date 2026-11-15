@@ -225,6 +225,7 @@ const PARES_POR_OLHO: ReadonlyArray<readonly [string, string]> = [
   ['circulo_feerico', 'fungo'], // os dois são um cogumelo luminoso sobre fundo roxo
   ['semente_estelar', 'tempo'], // cristal turquesa com anel/folhas
   ['florescer', 'frenesi'], // ampulheta turquesa entre folhas
+  ['flora', 'tita'], // dono 15/11/2026: "muito parecido" (cristal verde-musgo com vegetação, os dois lidos como a mesma pedra verde)
 ];
 
 /** A lista curada inteira, simétrica (cada par aparece nos dois sentidos). */

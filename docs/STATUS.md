@@ -1,5 +1,8 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Match-3 PVP: Flora e Titã proibidos juntos (`fix/match3-flora-tita`, REGISTRO §402) — PR aberto, NÃO mergeado
+> - **Feito:** par `flora`/`tita` na lista curada (124 pares); folha completa em `E:\Soulmon-assets\_lote-15-11\match3\folha-completa-*.png` + `pares-proibidos.csv`. Sem build, não visto no tabuleiro.
+>
 > ## 15/11/2026 — Match-3 PVP: 3 rodadas contra ícones parecidos (`fix/match3-cores-rodadas`, REGISTRO §402) — PR aberto, NÃO mergeado
 >
 > - **Feito:** em `match3Cores.ts`, camada de paleta + daltonismo (rodada 1), silhueta/brilho (rodada 2) e calibragem a olho com 3 pares novos na lista curada (rodada 3). Dados por `scripts/element-paleta.py` e `element-silhueta.py`. 0 de 20 000 sorteios relaxam; 285 de 285 elementos ainda aparecem; pool efetivo: 46 a 197 candidatos ao sexto ícone.
