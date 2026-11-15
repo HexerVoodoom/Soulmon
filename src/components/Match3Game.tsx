@@ -93,6 +93,14 @@ const COMPACT_BELOW_H = 800;
 const PLAYER_SPRITE_COMPACT = 56;
 const ENEMY_SPRITE_COMPACT = 44;
 
+/**
+ * EXPERIMENTO VISUAL (15/11/2026, pedido do dono): ícones maiores no tabuleiro. `?m3v=A` = ícone maior na mesma célula
+ * (sem moldura em repouso, sem padding interno); `?m3v=B` = A + tabuleiro mais largo (margens, gap e padding menores).
+ * Sem o parâmetro, nada muda. Só para comparar prints; sai do código se o dono escolher uma variante.
+ */
+const M3_VARIANT: 'A' | 'B' | null = (() => {
+  try { const v = new URLSearchParams(window.location.search).get('m3v'); return v === 'A' || v === 'B' ? v : null; } catch { return null; }
+})();
 const key = (p: Pos) => p.r * M3_COLS + p.c;
 const same = (a: Pos | null, b: Pos | null) => !!a && !!b && a.r === b.r && a.c === b.c;
 const adjacent = (a: Pos, b: Pos) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
@@ -691,8 +699,8 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
 
   // O tabuleiro escala pela LARGURA da tela (alvo ≥ 44 px em 390 de largura: (366 − 12 − 24) / 7 ≈ 47).
   const boardStyle: CSSProperties = {
-    display: 'grid', gridTemplateColumns: `repeat(${M3_COLS}, minmax(0, 1fr))`, gap: 4, padding: 6, boxSizing: 'border-box',
-    width: '100%', maxWidth: 420, alignSelf: 'center', flex: 'none', touchAction: 'none', userSelect: 'none',
+    display: 'grid', gridTemplateColumns: `repeat(${M3_COLS}, minmax(0, 1fr))`, gap: M3_VARIANT === 'B' ? 2 : 4, padding: M3_VARIANT === 'B' ? 2 : 6, boxSizing: 'border-box',
+    width: M3_VARIANT === 'B' ? 'calc(100% + 12px)' : '100%', maxWidth: M3_VARIANT === 'B' ? 432 : 420, alignSelf: 'center', flex: 'none', touchAction: 'none', userSelect: 'none',
     backgroundColor: 'var(--sm2-surface-2)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
   };
 
@@ -1209,11 +1217,11 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
   if (!tile) return <span aria-hidden="true" style={{ aspectRatio: '1 / 1' }} />;
   const art = elementIcon(element);
   const st: CSSProperties = {
-    ...sm2Text, position: 'relative', aspectRatio: '1 / 1', minWidth: 0, minHeight: 0, padding: 2, boxSizing: 'border-box', cursor: 'pointer',
+    ...sm2Text, position: 'relative', aspectRatio: '1 / 1', minWidth: 0, minHeight: 0, padding: M3_VARIANT ? 0 : 2, boxSizing: 'border-box', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: selected ? 'var(--sm2-primary-fill)' : enemyPick ? 'color-mix(in srgb, var(--sm2-danger-fill) 18%, var(--sm2-surface))' : tile.stone ? 'var(--sm2-surface-2)' : tile.wild ? 'color-mix(in srgb, var(--sm2-primary-fill) 30%, var(--sm2-surface))' : 'var(--sm2-surface)',
+    backgroundColor: selected ? 'var(--sm2-primary-fill)' : enemyPick ? 'color-mix(in srgb, var(--sm2-danger-fill) 18%, var(--sm2-surface))' : tile.stone ? 'var(--sm2-surface-2)' : tile.wild ? 'color-mix(in srgb, var(--sm2-primary-fill) 30%, var(--sm2-surface))' : M3_VARIANT ? 'transparent' : 'var(--sm2-surface)',
     filter: tile.stone ? 'grayscale(1) brightness(0.7)' : undefined,
-    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : enemyPick ? 'var(--sm2-danger-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : tile.wild ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)'}`,
+    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : enemyPick ? 'var(--sm2-danger-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : tile.wild ? 'var(--sm2-primary-ink)' : M3_VARIANT ? 'transparent' : 'var(--sm2-line)'}`,
     borderRadius: 8,
     boxShadow: enemyPick ? '0 0 0 3px var(--sm2-danger-ink)' : hint ? '0 0 0 3px var(--sm2-gold-fill)' : undefined,
     opacity: clearing ? 0 : 1,
@@ -1242,7 +1250,7 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
       onPointerUp={onPointerUp}
       style={st}
     >
-      {art && <img src={art} alt="" aria-hidden="true" draggable={false} style={{ width: '82%', height: '82%', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none' }} />}
+      {art && <img src={art} alt="" aria-hidden="true" draggable={false} style={{ width: M3_VARIANT ? '100%' : '82%', height: M3_VARIANT ? '100%' : '82%', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none' }} />}
       {tile.sp && (
         // a especial: setas na direção que limpa (a forma, não só a cor, diz o que ela faz)
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="55%" height="55%" style={{ position: 'absolute', pointerEvents: 'none', color: 'var(--sm2-gold-ink)', opacity: 0.95 }}>
