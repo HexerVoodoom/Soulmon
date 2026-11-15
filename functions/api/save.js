@@ -48,6 +48,7 @@ import { sanitizeRegenUsed } from './_spriteRegen.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { medirOrcamentoDeBits, registrarObservacao, metaDoOrcamentoGravada, metaDoSaldo } from './_bitsOrcamento.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -287,7 +288,7 @@ async function onRequestBruto({ request, env }) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
             // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
-            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata) },
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata), ...metaDoOrcamentoGravada(metadata), ...metaDoSaldo(/** @type {any} */ (metadata)?.g) },
           });
         } else {
           console.info('save: renovação de TTL pulada, conteúdo mudou entre leitura e renovação', { saveIdPrefix: saveId.slice(0, 8) });
@@ -334,7 +335,7 @@ async function onRequestBruto({ request, env }) {
     const serialized = JSON.stringify(r.state);
     const h = await sha256Hex(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
   }
 
@@ -360,7 +361,7 @@ async function onRequestBruto({ request, env }) {
     const serialized = JSON.stringify(r.state);
     const h = await sha256Hex(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
   }
 
@@ -392,7 +393,7 @@ async function onRequestBruto({ request, env }) {
     const serialized = JSON.stringify(r.state);
     const h = await sha256Hex(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
     await marcarCompraFeiraLoja(env, saveId, body.dayKey, v.item.id);
     return Response.json({ ok: true, already: false, price: v.item.price, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
   }
@@ -709,10 +710,29 @@ async function onRequestBruto({ request, env }) {
       return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
     }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
+    // Orçamento de Bits (REGISTRO §387, `_bitsOrcamento.js`), MODO OBSERVAÇÃO: só mede e registra; `state`/`serialized` não são
+    // tocados aqui. Engolir a falha é o correto: é instrumentação, e um erro dela (KV, `ent:` ilegível) não pode custar o save do
+    // jogador. Sem medida, o metadata sai sem `g`/`ob`/`ot` e a conta recomeça cheia na próxima gravação.
+    let orcamento = null;
+    try {
+      orcamento = await medirOrcamentoDeBits({
+        env, saveId, prev, gamePoints: state.gamePoints, agora: Date.now(), playerDayTz: state.playerDayTz,
+        ehAdmin: async () => (await verifiedAdmin(env, request, saveId)).admin,
+      });
+    } catch (err) {
+      console.warn('save: orçamento de Bits não medido, save segue', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+    }
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now(), f, r: cur + 1, h },
+      metadata: { t: Date.now(), f, r: cur + 1, h, ...(orcamento?.meta ?? {}) },
     });
+    if (orcamento?.observacao) {
+      console.warn('save: crescimento de Bits acima do orçamento (só observação)', { saveIdPrefix: saveId.slice(0, 8), excedente: orcamento.observacao.excedente });
+      // Mesmo motivo do `try` acima: o save já está gravado, e o registro é só para a decisão de 28/11/2026.
+      await registrarObservacao(env, saveId, orcamento.observacao).catch((err) => {
+        console.warn('save: registro do orçamento de Bits falhou, save segue', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+      });
+    }
     // Camadas do Endless Rift no MES (so cresce; lastro do score aceito em /api/rankings). Falha aqui nunca derruba o save.
     await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {});
     // §213 emenda: desgarrado recupera com 2 dias completos seguidos, recalculados AQUI a partir do save gravado.
