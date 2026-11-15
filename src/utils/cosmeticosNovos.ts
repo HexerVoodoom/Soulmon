@@ -122,6 +122,15 @@ const SLOT_FURN: Record<string, { slot: SlotId; w: number; h: number; tier: 2 | 
 };
 const ORDEM_EL = Object.keys(ELEMENTOS);
 
+/**
+ * Elementos DERIVADOS com cenário próprio na loja (15/11/2026, REGISTRO §409): mesmo padrão dos `bg-el-*` dos 20 base
+ * (exclusivo do elemento, 720 moedas), mas o id é o do par. `petHasElement` casa o id exato, então só Soulmon de
+ * Queimada (planta+fogo) vê este cenário à venda.
+ */
+const BG_EL_DERIVADOS: Record<string, readonly [string, string, string, string, string]> = {
+  queimada: ['Queimada', 'Wildfire', '🔥', 'Vulcão em brasa, flores de lava e uma árvore em chamas', 'A glowing volcano, lava blossoms and a burning tree'],
+};
+
 export interface CosmeticoNovo {
   id: string;
   kind: CosmeticoKind;
@@ -158,6 +167,9 @@ function build(): CosmeticoNovo[] {
     const [dPt, dEn] = BG_EL_DESC[el];
     out.push({ id: `bg-el-${el}`, kind: 'bg', icon, namePt: `Domínio de ${pt}`, nameEn: `${en} Realm`, descPt: dPt, descEn: dEn, price: 720, element: el });
     out.push({ id: `frame-el-${el}`, kind: 'frame', icon, namePt: `Anel de ${pt}`, nameEn: `${en} Ring`, descPt: `Moldura exclusiva de ${pt}`, descEn: `${en}-exclusive frame`, price: 1200, element: el });
+  }
+  for (const [el, [pt, en, icon, dPt, dEn]] of Object.entries(BG_EL_DERIVADOS)) {
+    out.push({ id: `bg-el-${el}`, kind: 'bg', icon, namePt: `Domínio de ${pt}`, nameEn: `${en} Realm`, descPt: dPt, descEn: dEn, price: 720, element: el });
   }
   const furn = (id: string, slotKey: string, icon: string, el?: string): CosmeticoNovo => {
     const s = SLOT_FURN[slotKey];

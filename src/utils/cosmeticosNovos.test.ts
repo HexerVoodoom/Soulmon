@@ -8,16 +8,30 @@ import { FRAMES } from './frames';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { DECOR_ART } from './decorArt';
 import { DECOR_SLOTS } from './petStage';
+import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { petHasElement } from './elementExclusive';
 // @ts-expect-error módulo JS do servidor
 import { FRAME_IDS } from '../../functions/api/_frames.js';
 
 const A = path.join(process.cwd(), 'src/assets');
 
 describe('cosméticos novos (temas e elementos, 04/11/2026)', () => {
-  it('planejadas: 32 cenários, 32 molduras, 44 decorações, ids únicos', () => {
+  it('planejadas: 33 cenários (32 + o `bg-el-queimada` do §409), 32 molduras, 44 decorações, ids únicos', () => {
     const n = (k: string) => COSMETICOS_PLANEJADOS.filter(c => c.kind === k).length;
-    expect([n('bg'), n('frame'), n('furn')]).toEqual([32, 32, 44]);
-    expect(new Set(COSMETICOS_PLANEJADOS.map(c => c.id)).size).toBe(108);
+    expect([n('bg'), n('frame'), n('furn')]).toEqual([33, 32, 44]);
+    expect(new Set(COSMETICOS_PLANEJADOS.map(c => c.id)).size).toBe(109);
+  });
+  it('§409: fogo+planta (`queimada`) tem cenário próprio exclusivo, preço dos `bg-el-*`, arte instalada e id único', () => {
+    const c = COSMETICOS_NOVOS.find(x => x.id === 'bg-el-queimada');
+    expect(c, 'arte instalada').toBeDefined();
+    expect([c!.kind, c!.element, c!.price]).toEqual(['bg', 'queimada', 720]);
+    expect(c!.price).toBe(COSMETICOS_PLANEJADOS.find(x => x.id === 'bg-el-fogo')!.price);
+    expect(COSMETICOS_PLANEJADOS.filter(x => x.id === 'bg-el-queimada')).toHaveLength(1);
+    expect(DERIVED_ELEMENT_PAIRS.find(d => d.id === 'queimada')!.componentes).toEqual(['planta', 'fogo']);
+    expect(petHasElement('queimada', 'queimada')).toBe(true);
+    expect(petHasElement('queimada', 'fogo')).toBe(false);
+    // o id antigo do vulcão segue intacto (saves de quem comprou); o bosque real troca só a arte dele
+    expect(COSMETICOS_NOVOS.some(x => x.id === 'bg-cerejeira-bosque-de-cerejeiras')).toBe(true);
   });
   it('só as peças com arte entram no jogo, e todas as instaladas têm nome PT/EN, descrição e preço', () => {
     expect(COSMETICOS_NOVOS.length).toBeGreaterThan(0);

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §409)
+>
+> - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.
+> - **Intacto:** `bg-cerejeira-bosque-de-cerejeiras` segue com a arte do vulcão até o bosque real trocar a arte desse id.
+> - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cenario-fogo-planta\instalado.png`.
+>
 > ## 15/11/2026 — Pistas fortes nos descritores (`fix/descritores-pistas-fortes`, REGISTRO §408)
 >
 > - **Feito:** amostras do Higgsfield (11 aparecem, 6 em parte, 7 não) mostraram que textura e objeto pequeno somem; 186 de 269 descritores trocaram `cracked clay`, `amber beads`, `crossed blades`, `sound waves`, `stars` etc. por formas grandes (boulder shoulder, sword, amber collar, concentric rings, band of stars, antler crown, rune circle, large orbiting stone).

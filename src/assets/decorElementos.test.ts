@@ -74,8 +74,8 @@ describe('20 decorações novas, lanterna refeita e prism', () => {
     expect(orfas).toEqual([]);
   });
 
-  it('o catálogo planejado segue com os mesmos 108 ids (nenhum preço, slot ou id inventado)', () => {
-    expect(COSMETICOS_PLANEJADOS).toHaveLength(108);
+  it('o catálogo planejado segue com os mesmos 109 ids (108 + o bg-el-queimada do §409) (nenhum preço, slot ou id inventado)', () => {
+    expect(COSMETICOS_PLANEJADOS).toHaveLength(109);
     expect(COSMETICOS_PLANEJADOS.filter(c => c.kind === 'furn')).toHaveLength(44);
     expect(COSMETICOS_PLANEJADOS.find(c => c.id === 'furn-el-luz')!.price).toBe(500);
   });
