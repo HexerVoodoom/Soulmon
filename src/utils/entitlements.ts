@@ -111,6 +111,17 @@ function abrirGesto(saveId: string, operacao: string, item: string, opIdExplicit
 }
 
 /**
+ * O saldo que uma operação (`spend`/`buy-essence`/`buy-bits`) devolveu. `undefined` quando `tier` ou `credits` faltam ou vêm
+ * inválidos: quem chama NÃO grava saldo nesse caso (inventar `credits: 0`/`'demo'` zeraria a tela de quem tem saldo, §381).
+ */
+function entDaResposta(data: unknown): Entitlement | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const r = data as Record<string, unknown>;
+  if ((r.tier !== 'paid' && r.tier !== 'demo') || typeof r.credits !== 'number' || !Number.isFinite(r.credits)) return undefined;
+  return { tier: r.tier, credits: r.credits, adsLeft: typeof r.adsLeft === 'number' && Number.isFinite(r.adsLeft) ? r.adsLeft : 0, admin: r.admin === true };
+}
+
+/**
  * Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o
  * novo saldo — null significa recusado (sem saldo, offline) e o efeito não
  * pode acontecer.
@@ -141,10 +152,12 @@ export async function spendCredits(
         body: JSON.stringify({ id, amount, reason, opId }),
       });
       const data = await res.json().catch(() => null);
-      if (res.ok && data === null) continue; // 200 ilegível: como antes, conta como falha de rede (reenvia, id mantido)
+      // 200 ilegível (inclusive `ok` sem saldo legível): conta como falha de rede (reenvia, id mantido). O efeito só sai com o saldo.
+      const ent = entDaResposta(data);
+      if (res.ok && (data === null || (data.ok === true && !ent))) continue;
       gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok) return null;
-      return data?.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
+      return data?.ok ? ent ?? null : null;
     } catch {
       /* rede: tenta de novo uma vez com o mesmo opId */
     }
@@ -153,7 +166,8 @@ export async function spendCredits(
 }
 
 export type EssenceBuyResult =
-  | { ok: true; ent: Entitlement; element: string; qty: number; price: number }
+  /** `ent` ausente: o servidor confirmou sem um saldo legível; o estado local de Créditos fica como estava. */
+  | { ok: true; ent?: Entitlement; element: string; qty: number; price: number }
   | { ok: false; reason: string };
 
 /**
@@ -173,10 +187,11 @@ export async function buyEssence(element: string, qty: number, opIdExplicito?: s
         body: JSON.stringify({ id, element, qty, opId }),
       });
       const data = await res.json().catch(() => null);
+      if (res.ok && data === null) continue; // 200 ilegível: o servidor pode ter cobrado; reenvia com o MESMO opId (replay sem cobrar de novo)
       gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error' };
-      return { ok: true, element: data.element, qty: data.qty, price: data.price,
-        ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } };
+      const ent = entDaResposta(data);
+      return { ok: true, element: data.element, qty: data.qty, price: data.price, ...(ent ? { ent } : {}) };
     } catch { /* rede: uma nova tentativa com o MESMO opId */ }
   }
   return { ok: false, reason: 'network' };
@@ -209,7 +224,8 @@ export function subscribeBitsPackLeft(listener: () => void): () => void {
 }
 
 export type BitsPackBuyResult =
-  | { ok: true; ent: Entitlement; pack: string; bits: number; price: number; leftToday: number }
+  /** `ent` ausente: o servidor confirmou sem um saldo legível; o estado local de Créditos fica como estava. */
+  | { ok: true; ent?: Entitlement; pack: string; bits: number; price: number; leftToday: number }
   | { ok: false; reason: string; leftToday?: number };
 
 /**
@@ -230,14 +246,15 @@ export async function buyBitsPack(packId: string, opIdExplicito?: string): Promi
         body: JSON.stringify({ id, pack: packId, opId }),
       });
       const data = await res.json().catch(() => null);
+      if (res.ok && data === null) continue; // 200 ilegível: o servidor pode ter cobrado; reenvia com o MESMO opId (replay sem cobrar de novo)
       const left = typeof data?.leftToday === 'number' && Number.isFinite(data.leftToday) ? Math.max(0, Math.floor(data.leftToday)) : undefined;
       if (left !== undefined) noteBitsPackLeft(left);
       gesto.fechar(res.status, data?.ok === true, data?.reason);
       if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error', ...(left !== undefined ? { leftToday: left } : {}) };
       const bits = Number(data.bits);
       if (!Number.isInteger(bits) || bits <= 0) return { ok: false, reason: 'error' };
-      return { ok: true, pack: String(data.pack), bits, price: Number(data.price) || 0, leftToday: left ?? 0,
-        ent: { tier: data.tier === 'paid' ? 'paid' : 'demo', credits: Number(data.credits) || 0, adsLeft: Number(data.adsLeft) || 0, admin: data.admin === true } };
+      const ent = entDaResposta(data);
+      return { ok: true, pack: String(data.pack), bits, price: Number(data.price) || 0, leftToday: left ?? 0, ...(ent ? { ent } : {}) };
     } catch { /* rede: uma nova tentativa com o MESMO opId */ }
   }
   return { ok: false, reason: 'network' };

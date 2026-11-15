@@ -5176,8 +5176,7 @@ export default function App() {
     }
     setGameState(prev => ({
       ...noteCreditBits(prev, r.bits, playerDayKey(new Date(), prev.playerDayTz)),
-      credits: r.ent.credits,
-      accountTier: r.ent.tier,
+      ...(r.ent ? { credits: r.ent.credits, accountTier: r.ent.tier } : {}),
     }));
     toast(<BitsAmount value={r.bits} sign="+" size={14} />);
     return true;
@@ -5193,7 +5192,7 @@ export default function App() {
         : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
+    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), ...(r.ent ? { credits: r.ent.credits, accountTier: r.ent.tier } : {}) }));
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
