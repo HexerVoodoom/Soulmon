@@ -5869,3 +5869,15 @@ Com 4 componentes e ~260 caracteres o modelo prioriza os 2–3 motivos maiores e
 **Alcance:** 186 dos 269 descritores mudaram (8 bases, 74 dos 86 combinados do §407 e 104 dos outros 183, que usavam as mesmas palavras). Os 83 restantes ficam byte a byte iguais; o hash do guard dos 183 foi atualizado de propósito (112 deles mudaram). Só prompts de criaturas NOVAS mudam; sprites e saves existentes não. Bytes de entrada (fonte, sem build): `elementoDescritores.data.ts` 51 667 → 51 812 B, `elementoCombinado.ts` 16 726 → 16 815 B (+234 B no total).
 
 **Custo aceito:** as pistas novas ainda são texto de prompt; só uma nova rodada de amostras prova que aparecem. A textura/pontilhado, quando for desejada, precisa de cor própria na `paleta` para se ler. **Gatilho de revisão:** nova rodada de amostras com componente ainda ausente. **Rollback:** reverter o commit (`elementoDescritores.data.ts`, `elementoCombinado.ts`, teste); nada de save, sprite ou servidor depende dele.
+
+## §410 — Cerejeira: o bosque de verdade substitui o vulcão no id original; pixelização leve (15/11/2026, dono, modal)
+
+**Contexto:** o §409 moveu o vulcão para `bg-el-queimada` e deixou `bg-cerejeira-bosque-de-cerejeiras` com a arte antiga até o bosque real ficar pronto. O dono escolheu a variação v1 ("com pixelização leve") de `E:\Soulmon-assets\_lote-15-11\cerejeira-bosque-em-flor\`.
+
+**Decisão:** a arte do id `bg-cerejeira-bosque-de-cerejeiras` troca pelo bosque real. Id, preço, coleção, `setting`, slots, `horizonY` e unlock não mudam (quem comprou vê o bosque certo). O vulcão não se perde: é o `bg-el-queimada`. O par `bg-cerejeira-templo-das-petalas` não foi tocado.
+
+**Como:** `tools/pixelizar-fundo.py` recorta o CENTRO de 1672×941 para 1200:648 (sem esticar; árvore grande e chão inteiros), reduz a metade (600 px, LANCZOS), nitidez leve (UnsharpMask 40), quantiza 128 cores sem dithering e amplia com NEAREST (blocos de 2 px). A energia de gradiente fica perto do Templo das Pétalas (6,2 contra 7,0; o bosque cru era 8,3, o fator 2,5/3 sem nitidez desceu para 4,8/4,1 e ficou borrado). Depois `scripts/instalar-cosmeticos.mjs` (mesmo caminho dos 33 fundos): WebP q78 1200×648 de 158 KB (antes 101 KB; teto 400 KB), miniatura 96×52, miniatura V-Pet 360×194 e `baseColor` `#bb8c92` (antes `#221d20`). O instalador passou a MESCLAR o `cosmeticosNovosCores.ts` em vez de reescrevê-lo só com os ids instalados.
+
+**Widget Android:** a miniatura `vpet_bg_bg_cerejeira_bosque_de_cerejeiras.webp` é recurso do APK; só atualiza com AAB novo. Retrocompatível (mesmo arquivo, só muda a imagem): o app antigo mostra o vulcão no widget até lá.
+
+**Alternativa que perdeu:** id novo para o bosque e manter o antigo (deixaria dois itens e quem comprou a coleção não ganharia a arte certa). **Gatilho de revisão:** o dono achar a pixelização forte ou fraca (um parâmetro, `--fator`). **Rollback:** `git revert` do PR; os 4 arquivos voltam ao vulcão.

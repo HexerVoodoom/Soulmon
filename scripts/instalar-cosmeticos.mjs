@@ -12,7 +12,7 @@
 //   decoração → src/assets/decor/<id>.webp (caixa do slot × 3; tapete × 2, como as 33 peças anteriores)
 //   + android/app/src/main/res/drawable-nodpi/vpet_bg_<id>.webp (360×194, miniatura do widget V-Pet)
 // Também regrava src/utils/cosmeticosNovosCores.ts (baseColor de cada cenário).
-import { readdir, mkdir, writeFile, stat } from 'node:fs/promises';
+import { readdir, readFile, mkdir, writeFile, stat } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -31,6 +31,12 @@ let total = 0;
 // ── cenários ────────────────────────────────────────────────────────────────
 await mkdir(join(A, 'backgrounds/thumbs'), { recursive: true });
 const cores = {};
+// instalar só alguns cenários (ex.: troca de arte de um id) não pode apagar o baseColor dos demais: parte do arquivo atual
+try {
+  const atual = await readFile(join(RAIZ, 'src/utils/cosmeticosNovosCores.ts'), 'utf8');
+  for (const m of atual.matchAll(/'(bg-[^']+)': '(#[0-9a-f]{6})'/g)) cores[m[1]] = m[2];
+} catch { /* primeira execução */ }
+const instalados = [];
 for (const f of await pngs('cenarios', 'bg-')) {
   const id = f.replace(/\.png$/, '');
   const src = join(ORIGEM, 'cenarios', f);
@@ -46,6 +52,7 @@ for (const f of await pngs('cenarios', 'bg-')) {
   const s = [0, 0, 0]; const n = info.width * info.height;
   for (let i = 0; i < data.length; i += 3) { s[0] += data[i]; s[1] += data[i + 1]; s[2] += data[i + 2]; }
   cores[id] = '#' + s.map(v => Math.round(v / n).toString(16).padStart(2, '0')).join('');
+  instalados.push(id);
   total += await kb(out);
 }
 const linhas = Object.keys(cores).sort().map(id => `  '${id}': '${cores[id]}',`).join('\n');
@@ -84,4 +91,4 @@ for (const f of await pngs('decoracoes', 'furn-')) {
   await sharp(src).ensureAlpha().resize(d[0], d[1], { kernel: 'lanczos3' }).webp({ quality: 90, alphaQuality: 100, effort: 6 }).toFile(out);
   total += await kb(out);
 }
-console.log(`instalado: ${Object.keys(cores).length} cenários, ${(await pngs('molduras', 'frame-')).length} molduras, ${(await pngs('decoracoes', 'furn-')).length} decorações — ${total} KB (sem as miniaturas)`);
+console.log(`instalado: ${instalados.length} cenários, ${(await pngs('molduras', 'frame-')).length} molduras, ${(await pngs('decoracoes', 'furn-')).length} decorações — ${total} KB (sem as miniaturas)`);

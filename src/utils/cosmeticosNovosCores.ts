@@ -1,6 +1,6 @@
 // GERADO por `node scripts/instalar-cosmeticos.mjs` — não editar. baseColor (média dos 32 px de baixo) de cada cenário novo.
 export const COSMETICOS_NOVOS_CORES: Readonly<Record<string, string>> = {
-  'bg-cerejeira-bosque-de-cerejeiras': '#221d20',
+  'bg-cerejeira-bosque-de-cerejeiras': '#bb8c92',
   'bg-cerejeira-templo-das-petalas': '#633542',
   'bg-el-agua': '#004255',
   'bg-el-ar': '#326ea3',
