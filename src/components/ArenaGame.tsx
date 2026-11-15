@@ -255,7 +255,7 @@ export function ArenaGame({
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey)!)!) : undefined) ?? (e.chefeUltra ? INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey || e.formaKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey || e.formaKey)!)!) : undefined) ?? (e.chefeUltra ? INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);

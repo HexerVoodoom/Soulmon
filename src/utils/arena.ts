@@ -14,6 +14,7 @@
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
 import { ELENCO_ORACULO_DATA } from './enemyRosterData';
+import { entryComponents, planArenaComponents } from './arenaComponentes';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
@@ -252,6 +253,8 @@ export interface ArenaEnemy {
   ramoKey?: string;
   /** 09/11/2026: o inimigo é uma FORMA PARALELA (`kind: 'paralelo'`, champion/ultimate de run de elemento); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
   paraleloKey?: string;
+  /** 15/11/2026 (dono): o inimigo é a forma Ultimate de um elemento COMBINADO (`kind: 'forma'`, 3–4 componentes); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
+  formaKey?: string;
   /** 10/11/2026 (dono): o inimigo é o CHEFE ULTRA da Arena (Mareoror/Salsolura): = o id da espécie; a arte é `<id>-ultra` (`INIMIGOS_API_ART`). A força vem de `arenaFoe(..., ultraChefe)`. */
   chefeUltra?: string;
 }
@@ -266,13 +269,13 @@ export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "varia
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
 /** A chave do BESTIÁRIO (`<id>-<estágio>`) de um inimigo da Arena, ou `undefined` (forma fora do roster, ex.: ultra). 31/10/2026: a Arena não registrava. */
-export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string; paraleloKey?: string }): string | undefined {
-  const k = e.ramoKey ? e.ramoKey : e.paraleloKey ? e.paraleloKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
+export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string; paraleloKey?: string; formaKey?: string }): string | undefined {
+  const k = e.ramoKey ? e.ramoKey : e.paraleloKey ? e.paraleloKey : e.formaKey ? e.formaKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
 
 /** A chave da FORMA para os ajustes do dono (`soulmonOverrides.ts`): a do bestiário; o chefe Ultra (fora do roster) = `<espécie>-ultra`. */
-export const arenaFoeFormKey = (e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form' | 'chefeUltra'> & { ramoKey?: string; paraleloKey?: string }): string | undefined =>
+export const arenaFoeFormKey = (e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form' | 'chefeUltra'> & { ramoKey?: string; paraleloKey?: string; formaKey?: string }): string | undefined =>
   (e.chefeUltra ? `${e.chefeUltra}-ultra` : arenaFoeKey(e));
 
 export const ARENA_ROUNDS = 5;
@@ -417,6 +420,20 @@ export function buildArenaRound(
     let u0: number | undefined;
     const rngU = () => { const v = rng(); u0 ??= v; return v; };
     const picked = (runElement ? pickNovo(prefer, used, rngU, runElement) ?? pickNovo(['champion', 'rookie'], used, rngU, runElement) : null) ?? pickNovo(prefer, used, rngU)!;
+    // 15/11/2026 (dono): o Ultimate quase só vinha de elemento único (97,4% medido). Em run de elemento comum, o nº de componentes do
+    // elemento do Ultimate sai da tabela `ARENA_COMPONENT_WEIGHTS` (`arenaComponentes.ts`). UM `rng()` a mais, só neste caso (Rookie e Champion
+    // idênticos; o Desgarrado entra, só arte/nome); base (1) continua no fluxo de baixo, 2–4 trocam o inimigo por um combinado com arte que contém o elemento da run.
+    if (runElement && stage === 'ultimate') {
+      const plan = planArenaComponents('ultimate', runElement, rng(), used);
+      if (plan?.entry) {
+        const c = plan.entry;
+        used.add(c.id);
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }), ...(strayHere ? { stray: true as const } : {}),
+        };
+      }
+    }
     const ramoStage = stage === 'ultimate' ? 'ultimate' : undefined;
     if (ramoStage && u0 !== undefined) {
       const ramos = ENEMY_ROSTER.filter(e => e.kind === 'ramo' && e.stage === ramoStage && (!runElement || e.element === runElement) && !used.has(e.id));
@@ -434,7 +451,8 @@ export function buildArenaRound(
     // componentes dela (agua → Aquarisk/Marevorn; fogo ou morte → Cyanolisk/Azurvorn…), na forma da escada, 1 em `ARENA_PARALELO_CHANCE`.
     // Zero `rng` a mais (bits do MESMO `u0`, janela diferente da do ramo) e fora do Desgarrado: card = luta e o resto do sorteio não muda.
     if (runElement && !stray && u0 !== undefined && (stage === 'champion' || stage === 'ultimate')) {
-      const paralelos = ENEMY_ROSTER.filter(e => e.kind === 'paralelo' && e.stage === stage && e.elements.includes(runElement) && !used.has(e.id));
+      // No Ultimate os paralelos de 2+ componentes já saem pela tabela de componentes (acima); aqui ficam os de elemento único.
+      const paralelos = ENEMY_ROSTER.filter(e => e.kind === 'paralelo' && e.stage === stage && e.elements.includes(runElement) && !used.has(e.id) && (stage !== 'ultimate' || entryComponents(e).length === 1));
       if (paralelos.length > 0 && (u0 * 65536) % 1 < ARENA_PARALELO_CHANCE) {
         const p = paralelos[ramoFromRoll(u0, paralelos.length).pick];
         used.add(p.id);
@@ -681,6 +699,8 @@ export interface ArenaRunConfig {
   efeitoElemento?: string;
   /** Especiais variados dos inimigos (11/11/2026). Ausente/false = tudo `direct` (régua antiga). */
   foeMix?: boolean;
+  /** Só da régua: os elementos EXATOS dos inimigos de cada rodada (0..4), no lugar do sorteio de `foeElement`/`pool`. É como a medição entrega o que `arenaFoesOfSeed` sorteou. */
+  foeElementsOfRound?: (r: number) => readonly (readonly string[])[];
 }
 
 export interface ArenaRunResult {
@@ -716,7 +736,7 @@ export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: Are
   const rounds: number[] = [];
   for (let r = 0; r < ARENA_ROUNDS; r++) {
     const rng = mulberry32((seed * 7919 + r) | 0);
-    const foeEls = cfg.foeElement ? ARENA_ROUND_COMP[r].map(() => [cfg.foeElement!]) : cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
+    const foeEls = cfg.foeElementsOfRound ? cfg.foeElementsOfRound(r) : cfg.foeElement ? ARENA_ROUND_COMP[r].map(() => [cfg.foeElement!]) : cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
     const foeHp = cfg.knobs?.foeHp ?? 1;
     const foes = arenaFoeSides(p, r, foeEls, cfg.ladder, false, cfg.foeMix ? seed : undefined).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
     const g = groupFightSteps(player, foes, {
