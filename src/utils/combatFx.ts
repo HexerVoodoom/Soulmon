@@ -330,12 +330,9 @@ export interface StatusFxDef {
 
 const L = (en: string, pt: string): Bilingual => ({ en, pt });
 
-/** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. Vazio desde 09/11/2026 (REGISTRO §228/§236 instalados). */
-export const GLIFOS_PENDENTES: readonly string[] = [];
-
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
-    // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
+    // `fisico`/`magico`: mesma mecânica de `atk`, com glifo próprio (`st-atk-fisico`/`st-atk-magico`).
     glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
     // ataque (e físico/mágico, mesma mecânica) e velocidade (e aceleração) têm folha própria; o resto usa o buff genérico
     loop: { _: 'fx-buff-loop-sheet', atk: 'fx-buff-atk-loop-sheet', fisico: 'fx-buff-atk-loop-sheet', magico: 'fx-buff-atk-loop-sheet', spd: 'fx-buff-spd-loop-sheet', aceleracao: 'fx-buff-spd-loop-sheet' },

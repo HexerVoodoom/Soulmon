@@ -360,7 +360,7 @@
 
 > ## 11/10/2026 — Guilda de lançamento, PR1: Torneio ranqueado × Arena livre (`claude/guilda-lancamento`)
 >
-> - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
+> - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido (⚰️ 14/11/2026, §370: hoje são `ARENA_CHOICES` = 4); a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
 > - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
 > - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §28.
 > ## 11/10/2026 — Música: auditoria, volume, rotas por superfície; golpe físico × à distância; FX maior e especiais em série

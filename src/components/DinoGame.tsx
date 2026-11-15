@@ -592,7 +592,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       // Game over
       const score = Math.floor(s.score);
-      const pts = bitsForLevel(Math.floor(score / 100), s.level === 2 ? 2 : 1);
+      const pts = bitsForLevel(Math.floor(score / 100), s.level);
       setFinalScore(score);
       setPrevBest(readNumber(STORAGE_KEYS.DINO_BEST, 0));
       setPlayedLevel(s.level === 2 ? 2 : 1);

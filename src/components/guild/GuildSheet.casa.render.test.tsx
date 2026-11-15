@@ -71,7 +71,7 @@ describe('a Casa da guilda no Salão', () => {
 
   it('a doação usa o ÍCONE de Bits (BitsAmount) e só oferece 50 e 100', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} casa={{ bits: 500, earned: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
     await waitFor(() => expect(container.querySelector('[data-casa-doar="50"]')).not.toBeNull());
     expect([...container.querySelectorAll('[data-casa-doar]')].map(b => b.getAttribute('data-casa-doar'))).toEqual(['50', '100']);
     for (const b of container.querySelectorAll('[data-casa-doar]')) {
@@ -81,9 +81,9 @@ describe('a Casa da guilda no Salão', () => {
     expect(container.querySelector('[data-casa-bits-total] [data-bits-amount]')).not.toBeNull();
   });
 
-  it('§373: o saldo inteiro doa (o `earned` antigo é ignorado): saldo alto = botões; saldo baixo = sem botão', async () => {
+  it('§373: o saldo inteiro doa: saldo alto = botões; saldo baixo = sem botão', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} casa={{ bits: 900, earned: 30, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 900, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
     await waitFor(() => expect(container.querySelector('[data-casa-doar="100"]')).not.toBeNull());
     expect((container.querySelector('[data-casa-doar="100"]') as HTMLButtonElement).disabled).toBe(false);
     cleanup();

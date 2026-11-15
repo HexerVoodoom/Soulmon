@@ -13,20 +13,17 @@
  */
 import { readJson, writeJson } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
+import { newUuid } from './uuid';
 
-export const PENDENTE_TTL_MS = 24 * 60 * 60 * 1000;
+const PENDENTE_TTL_MS = 24 * 60 * 60 * 1000;
 
 interface Pendente { op: string; at: number }
 
 const memoria = new Map<string, Pendente>();
 
-/** Um id novo. `crypto.randomUUID` quando existe; senão tempo + aleatório (basta ser único na janela de retry de um aparelho). */
+/** Um id novo: o UUID sem hífens (32 hex, dentro de `OP_RE`). Os fallbacks para WebView antigo moram em `newUuid`. */
 export function novoOpId(): string {
-  try {
-    const uuid = globalThis.crypto?.randomUUID?.();
-    if (uuid) return uuid.replace(/-/g, '');
-  } catch { /* segue para o fallback */ }
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return newUuid().replace(/-/g, '');
 }
 
 const OP_RE = /^[A-Za-z0-9_-]{8,64}$/;

@@ -134,8 +134,6 @@ interface GuildSheetProps {
    */
   casa?: {
     bits: number;
-    /** ⚰️ §373: era "Bits GANHOS"; agora o saldo inteiro doa. Campo opcional e IGNORADO (compat de quem ainda passa). */
-    earned?: number;
     ownedFurniture: string[];
     equippedDecor: Record<string, string | undefined>;
     donatedItem: string | null;

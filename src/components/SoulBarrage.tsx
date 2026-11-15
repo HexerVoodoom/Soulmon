@@ -267,7 +267,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (!s.over && !survived) { raf = requestAnimationFrame(tick); return; }
       if (ch) { ch.onResult(survived); return; }
       const score = s.score;
-      const pts = bitsForLevel(barrageBits(score), level === 2 ? 2 : 1);
+      const pts = bitsForLevel(barrageBits(score), level);
       setFinalScore(score);
       setPrevBest(bestRef.current);
       setEarned(pts > 0 ? (onEarnRef.current(pts) ?? pts) : 0);

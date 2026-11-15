@@ -19,9 +19,9 @@ export const ADVANCED_BITS_FACTOR = 1.5;
 /**
  * Os Bits de uma rodada no nível jogado. Dono único da conta do Avançado: `max(1, round(base × fator))`, para um prêmio
  * pequeno não zerar com o fator fracionário. Rodada sem Bits (base ≤ 0) continua 0: o mínimo de 1 não inventa prêmio.
- * Nível 1 devolve a base intacta.
+ * Nível 1 devolve a base intacta. Aceita o nível cru do estado do jogo: qualquer valor diferente de 2 é o Comum.
  */
-export function bitsForLevel(base: number, level: MinigameLevel): number {
+export function bitsForLevel(base: number, level: number): number {
   if (level !== 2 || !(base > 0)) return base;
   return Math.max(1, Math.round(base * ADVANCED_BITS_FACTOR));
 }

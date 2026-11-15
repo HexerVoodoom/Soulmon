@@ -5311,6 +5311,8 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Falsifica:** dono achar o CTA pesado dentro dos cartões de marco (reverter os 3 cartões e manter só `PocaoCriada`). **Rollback:** reverter o PR. **Não visto na tela:** só testes de render, sem print do app.
 
+> **Nota de numeração (14/11/2026):** §366 não existe como seção. Está reservado para a janela de 1 h dos sorteios grátis da Arena (decidido pelo dono em 14/11/2026: 3 grátis por hora, o pago continua); ainda NÃO implementado. Nada foi renumerado.
+
 ## §367 — A Missão da Feira sobrevive a fechar o app: o dia gravado pelo App passa na hidratação do save (14/11/2026, bug do dono: "a Feira continua sem funcionar")
 
 **Causa raiz:** `App.tsx` parte a Missão com `startGuildMission(playerDayKey(...))`, e `playerDayKey` escreve o dia como `toDateString` ("Sat Nov 14 2026"). A hidratação do save (`GameStateContext.tsx`, `guildMission: normalizeGuildMission(...)`) só aceitava `AAAA-MM-DD` (`utils/guildMission.ts`). Resultado: fechar, recarregar ou o Android matar a WebView durante os 30 min APAGAVA a missão. O Soulmon reaparecia na Home sem nenhuma volta registrada no servidor (`guildRaidHit` nunca era chamado: sem seiva na Casa, sem encontro Mercador/Desafio/Chefe, sem `hitToday`), e a sala da Feira oferecia "Mandar investigar" de novo. Com o app aberto os 30 min inteiros funcionava, por isso o conserto de 12/11 (`a31f3a7d`, `feiraVolta.ts`) não resolveu: ele cuida do resultado da volta, e aqui a volta nem acontecia.
