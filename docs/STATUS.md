@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/11/2026 — QA r4, pacote A do servidor (`fix/qa-r4-servidor`, REGISTRO §381) — PR aberto, NÃO mergeado
+>
+> - **Feito:** trava única `entlock:<saveId>` (D1) para todo escritor de `ent:`; resgate de carta e presente do dia por INSERT único; `sparMatch` apaga o duelo aberto por último; treino e busca de jogador propagam queda do KV; troca livre antiga `404 gone`; cliente reenvia 200 ilegível de `buy-bits`/`buy-essence` com o mesmo opId.
+> - **Sem D1** (dev/teste local) nada disso trava: comportamento de antes.
+> - **Não verificado:** produção/D1 real e corrida entre colos (só fakes em teste); `dist/` não regenerado (nenhum build nesta rodada).
+
 > ## 10/11/2026 — Passos pelo Health Connect (`feat/passos-health-connect`, REGISTRO §283) — PR aberto, NÃO mergeado
 >
 > - **Feito:** plugin nativo `SoulmonSteps` (só `READ_STEPS`), convite curto `stepsInvite` depois do onboarding (fila central), Health Connect como fonte preferida com o contador do aparelho de reserva, feature detect para o APK antigo. Revoga em parte a linha vermelha do Google Fit no `CLAUDE.md`. `PRIVACY_VERSION` NÃO subiu (já era `2026-11-09`, §253).
