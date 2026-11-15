@@ -249,7 +249,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     namePt: 'Chip Redutor de Benevolência', nameEn: 'Benevolence Reducer Chip',
     descPt: `−${REDUCE_CHIP_BOOST} Benevolência`, descEn: `−${REDUCE_CHIP_BOOST} Benevolence`, price: REDUCE_CHIP_PRICE },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
-  // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
+  // Bits, e Créditos compram Bits (pacotes `BITS_PACKS`; na época era a troca livre 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
   // punição tira, só que por um caminho indireto. Indireto não é melhor: é o
   // mesmo, escondido.

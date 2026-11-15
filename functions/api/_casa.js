@@ -11,7 +11,7 @@
 //    em número — só o estágio e um binário `perto`. Doar não vira placar;
 //  · só sobe: sair NÃO diminui (os pontos do membro viram `casaLegado`);
 //  · o slot mostra o ITEM (decoração que a pessoa quis pôr), nunca quanto doou;
-//  · dinheiro real não entra aqui: Bits GANHOS, e só cosmético muda.
+//  · dinheiro real não compra poder aqui: a doação é em Bits (ganhos ou vindos de Crédito, §373; sem gate por origem), e só cosmético muda.
 //
 // Chave pessoal (escrita só pelo dono, sem corrida entre membros — I3):
 //   coopCasa:<gid>:<save> = { v:1, day, bitsToday, pts:{doacao,missao,guerra}, slot }
