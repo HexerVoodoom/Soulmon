@@ -284,6 +284,7 @@ type BBPoolMod = { sortearBB: typeof import('./data/bbPool').sortearBB; BB_POOL_
 const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbPool'), import('./data/bbPoolArt')]).then(([a, b]) => ({ sortearBB: a.sortearBB, BB_POOL_ART: b.BB_POOL_ART }));
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
+import type { BitsExchangeOutcome } from './utils/bitsPackCopy';
 import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
@@ -5202,27 +5203,15 @@ export default function App() {
    * (`functions/api/_bitsPacks.js`). Os Bits só entram DEPOIS da confirmação, e entram os que a resposta trouxe (nunca o número
    * local). A troca inversa não existe — ver utils/currencies.ts.
    */
-  const handleExchangeCredits = useCallback(async (packId: string): Promise<boolean> => {
+  const handleExchangeCredits = useCallback(async (packId: string): Promise<BitsExchangeOutcome | false> => {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
-    if (!bitsPackById(packId)) return false;
-    const isPt = language === 'pt-BR';
+    if (!bitsPackById(packId)) return { ok: false, reason: 'unknown-pack' };
     const r = await buyBitsPack(packId, undefined, gameState.playerDayTz);
-    if (!r.ok) {
-      toast(r.reason === 'daily-cap'
-        ? (isPt
-          ? `Limite de troca de hoje atingido. Hoje ainda cabem ${r.leftToday ?? 0} Bits; amanhã a conta abre de novo.`
-          : `Today's exchange limit is reached. ${r.leftToday ?? 0} Bits still fit today; the count opens again tomorrow.`)
-        : r.reason === 'insufficient'
-          ? (isPt ? 'Créditos insuficientes.' : 'Not enough credits.')
-          : r.reason === 'busy'
-            ? (isPt ? 'Uma troca já está em andamento. Tente de novo em instantes.' : 'An exchange is already in progress. Try again in a moment.')
-            : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The exchange did not go through. Try again.'));
-      return false;
-    }
+    // §386 (A4b): UMA mensagem por resultado, e quem a diz é a tela do Cambista (`CreditExchange`); aqui não há toast.
+    if (!r.ok) return { ok: false, reason: r.reason, ...(r.leftToday !== undefined ? { leftToday: r.leftToday } : {}) };
     creditarBitsDePacote(r.bits, r.ent, r.confirmar);
-    toast(<BitsAmount value={r.bits} sign="+" size={14} />);
-    return true;
-  }, [language, gameState, refuseDemo, creditarBitsDePacote]);
+    return { ok: true, bits: r.bits };
+  }, [gameState, refuseDemo, creditarBitsDePacote]);
 
   /** CAMBISTA (§205): essência por Créditos. O servidor confere elemento, trancado, teto e saldo e cobra; só então a essência entra. */
   const handleBuyEssence = useCallback(async (element: string, qty: number): Promise<boolean> => {
@@ -8728,6 +8717,7 @@ export default function App() {
                 credits={gameState.credits ?? 0}
                 onExchangeCredits={handleExchangeCredits}
                 onRecoverPendingBits={recuperarBitsPendentes}
+                onGetCredits={demo ? undefined : openCredits}
                 onBuyEssence={handleBuyEssence}
                 essences={gameState.essences}
                 accountTier={gameState.accountTier}

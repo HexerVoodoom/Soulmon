@@ -1,4 +1,5 @@
 import { elementShopVisible } from '../../utils/elementExclusive';
+import type { BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
@@ -436,7 +437,9 @@ export const CAMBISTA_TABS: readonly CambistaTab[] = ['bits', 'essences', 'other
 export interface CambistaSheetProps {
   language: Language;
   credits: number;
-  onExchangeCredits: (packId: string) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
+  /** §386 (A4c): abre a compra de Créditos que já existe (atalho quando falta saldo). */
+  onGetCredits?: () => void;
   /** §386: reenvia os pacotes de Bits pendentes ao abrir (o servidor só devolve o que já tinha entregue). */
   onRecoverPendingBits?: () => void;
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
@@ -450,7 +453,7 @@ export interface CambistaSheetProps {
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, onGetCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
@@ -486,7 +489,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
 
       {tab === 'bits' && (
         <>
-          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} onRecoverPending={onRecoverPendingBits} say={say} />
+          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} onRecoverPending={onRecoverPendingBits} onGetCredits={onGetCredits} say={say} />
           {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ───────────────
               A pessoa ENCONTRA: fora do cap semanal, não some com `offerDismissed`, sem ×.
               Mora na aba do dinheiro real, DEPOIS do que a pessoa veio ver. */}

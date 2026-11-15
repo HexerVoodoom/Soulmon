@@ -44,3 +44,9 @@ it('§386 A1: o boot e o Cambista reenviam os pendentes; a recuperação credita
   expect(corpo).toMatch(/useEffect\(\(\) => \{ recuperarBitsPendentes\(\); \}, \[saveId\]\)/);
   expect(app).toMatch(/onRecoverPendingBits=\{recuperarBitsPendentes\}/);
 });
+
+it('§386 A4b: a troca não toasta no App (a ÚNICA mensagem é a da tela do Cambista); o atalho de Créditos usa o openCredits existente', () => {
+  const corpo = app.slice(app.indexOf('const handleExchangeCredits'), app.indexOf('const handleBuyEssence'));
+  expect(corpo).not.toMatch(/toast\(/);
+  expect(app).toMatch(/onGetCredits=\{demo \? undefined : openCredits\}/);
+});

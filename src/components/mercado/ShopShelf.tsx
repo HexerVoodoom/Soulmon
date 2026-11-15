@@ -2,7 +2,7 @@ import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_PACKS, BITS_PACK_DAILY_CAP, CREDIT_COLOR, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type BitsPack, type CurrencyId } from '../../utils/currencies';
 import { bitsPackLeftToday, subscribeBitsPackLeft } from '../../utils/entitlements';
-import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName } from '../../utils/bitsPackCopy';
+import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName, bitsPackBlockedLabel, bitsExchangeFailText, type BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
@@ -643,13 +643,15 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
 /** OS PACOTES DE BITS do Cambista (§373): três pacotes pagos em Créditos, com desconto progressivo, lado a lado.
  *  O servidor decide o pacote, cobra e conta o teto de `BITS_PACK_DAILY_CAP` Bits/dia; a tela só oferece e confirma.
  *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
-export function CreditExchange({ language, credits, onExchangeCredits, onRecoverPending, say }: {
+export function CreditExchange({ language, credits, onExchangeCredits, onRecoverPending, onGetCredits, say }: {
   language: Language;
   credits: number;
-  /** Compra o pacote `packId` (id de `BITS_PACKS`). Devolve false se o servidor recusar. */
-  onExchangeCredits: (packId: string) => Promise<boolean>;
+  /** Compra o pacote `packId` (id de `BITS_PACKS`). O resultado traz o motivo da recusa (§386); `false` = recusa já mostrada por quem chamou. */
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
   /** §386 (A1): ao abrir, reenvia os pacotes pendentes (a rede caiu depois do débito e o botão pode nem estar ao alcance). */
   onRecoverPending?: () => void;
+  /** §386 (A4c): abre a compra de Créditos que já existe no app (`CreditsModal`). Sem a prop, o atalho não aparece. */
+  onGetCredits?: () => void;
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -663,12 +665,15 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
   const doExchange = async (pack: BitsPack) => {
     setPending(null);
     setExchanging(pack.id);
-    let ok = false;
-    try { ok = await onExchangeCredits(pack.id); } finally { setExchanging(null); }
-    say(`exch-${pack.id}`, ok, ok
-      ? <><Bits value={pack.bits} sign="+" />.</>
-      : (isPt ? 'A troca não foi concluída.' : 'The swap did not go through.'));
+    let r: boolean | BitsExchangeOutcome = { ok: false, reason: 'network' };
+    try { r = await onExchangeCredits(pack.id); } finally { setExchanging(null); }
+    // UMA mensagem por resultado (§386 A4b): quem chama não toasta; `false` = a recusa já foi mostrada por ele (ex.: demo).
+    if (r === false) return;
+    if (r === true || r.ok) { say(`exch-${pack.id}`, true, <><Bits value={r === true ? pack.bits : r.bits} sign="+" />.</>); return; }
+    say(`exch-${pack.id}`, false, bitsExchangeFailText(r.reason, isPt));
   };
+  /** Algum pacote que cabe no dia está fora do saldo: o atalho para a compra de Créditos aparece (convite, sem pressa). */
+  const faltaSaldo = BITS_PACKS.some(p => p.bits <= left && credits < p.credits);
   return (
     <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -682,8 +687,8 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
       <div data-bits-packs style={{ display: 'grid', gridTemplateColumns: `repeat(${BITS_PACKS.length}, minmax(0, 1fr))`, gap: 6 }}>
         {BITS_PACKS.map(pack => {
           const busy = exchanging === pack.id;
-          const fits = pack.bits <= left;
-          const can = credits >= pack.credits && exchanging === null && fits;
+          const why = bitsPackBlockedLabel(pack, credits, left, isPt);
+          const can = why === null && exchanging === null;
           const off = bitsPackDiscountLabel(pack);
           const brl = isPt ? bitsPackBrlEstimate(pack) : null;
           return (
@@ -693,6 +698,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
               data-bits-pack={pack.id}
               disabled={!can}
               aria-busy={busy || undefined}
+              aria-describedby={why ? `bits-pack-why-${pack.id}` : undefined}
               aria-label={isPt
                 ? `${bitsPackName(pack, true)}: ${pack.bits} Bits por ${pack.credits} Créditos${off ? `, ${off}` : ''}`
                 : `${bitsPackName(pack, false)}: ${pack.bits} Bits for ${pack.credits} Credits${off ? `, ${off}` : ''}`}
@@ -707,10 +713,17 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
               </span>
               <span data-bits-pack-off style={{ ...sm2Hint, margin: 0, minHeight: '1.2em' }}>{off ?? ''}</span>
               {brl && <span data-bits-pack-brl style={{ ...sm2Hint, margin: 0 }}>{brl}</span>}
+              {why && <span id={`bits-pack-why-${pack.id}`} data-bits-pack-why style={{ ...sm2Hint, margin: 0 }}>{why}</span>}
             </button>
           );
         })}
       </div>
+      {faltaSaldo && onGetCredits && (
+        <button type="button" data-get-credits onClick={onGetCredits} style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', gap: 6 }}>
+          <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+          {isPt ? 'Comprar Créditos' : 'Get Credits'}
+        </button>
+      )}
       <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
         {isPt
           ? `Até ${BITS_PACK_DAILY_CAP} Bits por dia em pacotes. Hoje ainda cabem ${left} Bits. Os valores em reais são estimados; o preço real é o da Play.`

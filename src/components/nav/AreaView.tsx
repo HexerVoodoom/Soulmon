@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import type { BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { useWakeGate } from '../WakeToEnter';
 import { lotEntryAsks } from '../../utils/wakeToEnter';
@@ -241,7 +242,9 @@ export interface AreaViewProps {
   credits: number;
   /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
   unlockedElements?: readonly string[];
-  onExchangeCredits: (packId: string) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
+  /** §386 (A4c): o atalho "Get Credits" do Cambista abre a compra de Créditos que já existe. */
+  onGetCredits?: () => void;
   /** §386: o Cambista aberto reenvia os pacotes de Bits pendentes (rede caiu depois do débito). */
   onRecoverPendingBits?: () => void;
   /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
@@ -543,7 +546,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {open?.id === 'restaurante' && <RestauranteSheet language={language} />}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} onGetCredits={props.onGetCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: id => actions.onBuy(id) === true }} />
