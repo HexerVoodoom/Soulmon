@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Evolução gerava DUAS imagens (`fix/evolucao-uma-imagem`, REGISTRO §404) — PR aberto, NÃO mergeado
+>
+> - **Causa:** a chave de acervo da forma-destino do cristal (`altSpriteKey`) dependia do acervo vivo; a própria imagem recém-chegada (`champion-power`) a trocava para `champion-power@elemento` e o lote partia de novo. Valia para toda ida a champion/ultimate/mega/ultra.
+> - **Feito:** chave congelada no toque (`EvolutionCrystal.key`, `startCrystalFrozen`); servidor devolve a forma-base recém-desenhada (janela de 20 min) a cliente antigo que pede `forma@elemento` na sequência, sem IA nem cota.
+> - **Não visto em tela:** sem build; provado por teste que conta os pedidos. Contas reais que já gastaram a 2ª imagem: ver o PR (dado de produção não foi alterado).
+
 > ## 15/11/2026 — Arena: Ultimate sorteia o nº de elementos por tabela de pesos (`feat/arena-elemento-combinado`, REGISTRO §403) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `utils/arenaComponentes.ts` (tabela `ARENA_COMPONENT_WEIGHTS`: Ultimate 25/55/15/5, Mega 10/20/50/20). Ultimate combinado da Arena foi de 2,6% para 68,2% (75,5% nas runs comuns; Desgarrada fora); Rookie/Champion idênticos à main (hash). Vitória da Arena 17,07→16,70% e 14,82→14,15% (dentro do erro).

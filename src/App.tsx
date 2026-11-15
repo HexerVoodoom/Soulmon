@@ -68,8 +68,8 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
-import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
-import { altSpriteKey, baseFormOfKey, chaveDaFormaEquipada, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { activeCrystal, crystalPhase, crystalSpriteKey, startCrystalFrozen, type CrystalPhase } from './utils/evolutionCrystal';
+import { baseFormOfKey, chaveDaFormaEquipada, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
 import { equiparFormaAltEstado, trocarFormaEstado } from './utils/formaEquip';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
@@ -1376,7 +1376,7 @@ export default function App() {
   /** A chave da forma-destino do cristal: com outro elemento num estágio já visitado, é a forma alternativa (arte NOVA). */
   const cristalAlvo = activeCrystal(gameState);
   // 10/11/2026: a poção pendente (`evolutionPotion`) é o elemento da forma que vai nascer — a MESMA chave que `registrarFormaAoEvoluir` grava ao evoluir (senão a arte nasce numa chave e, ao evoluir, o app pede outra: 2ª imagem).
-  const cristalKey = cristalAlvo ? altSpriteKey(cristalAlvo.to, gameState.evolutionPotion || elementoDaForma(gameState.elementoJornada, cristalAlvo.to), gameState.formasAlt, spriteAcervo) : null;
+  const cristalKey = crystalSpriteKey(gameState, spriteAcervo);
   const updateSpriteLibrary = useCallback(
     (fn: (prev: SpriteLibrary) => SpriteLibrary) =>
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
@@ -4218,8 +4218,13 @@ export default function App() {
       if (cristalFaseRef.current === 'pronto') setEvolutionCeremony({ from: noCristal.from, to: noCristal.to, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
       return;
     }
-    setGameState(prev => (activeCrystal(prev) || prev.evolutionStage !== evolutionStage ? prev
-      : { ...prev, elementoJornada: elementoAoEvoluir(prev, next), evolutionCrystal: startCrystal(prev.evolutionStage, next, nextBranch, new Date()) }));
+    setGameState(prev => {
+      if (activeCrystal(prev) || prev.evolutionStage !== evolutionStage) return prev;
+      const jornada = elementoAoEvoluir(prev, next);
+      // A chave da arte nasce AQUI e fica congelada no cristal (REGISTRO §404): recalculada com o acervo vivo, a imagem que acabou de chegar a mudava e pedia uma 2ª.
+      const cristalNovo = startCrystalFrozen({ ...prev, elementoJornada: jornada }, libraryOf(prev), next, nextBranch, new Date());
+      return { ...prev, elementoJornada: jornada, evolutionCrystal: cristalNovo };
+    });
     // ONBOARDING_VELADO (D6/D20): ao abrir a cerimônia BB→rookie, pede o rookie grátis sem bloquear a UI.
     // Fallback/falha = segue com o inicial pronto (o acervo/`getSpriteForStage` de sempre).
     if (veladoOn && next === 'rookie' && sanitizeStageId(String(evolutionStage)) === 'bb' && freeRookie === 'idle') {
