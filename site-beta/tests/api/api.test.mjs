@@ -158,6 +158,10 @@ describe('POST /api/inscrever', () => {
       const l = db.sqlite.prepare('SELECT utm_source s, utm_medium m, utm_campaign c FROM inscritos').get();
       return { ...l };
     };
+    for (const [i, f] of ['youtube', 'tiktok', 'reddit', 'instagram'].entries()) {
+      expect((await utm({ source: f }, '4.4.5.' + i)).s).toBe(f);
+    }
+    expect((await utm({ source: 'twitter' }, '4.4.5.9')).s).toBe('outro');
     expect(await utm({ source: 'instagram', medium: '<script>', campaign: 'xp@to' }, '4.4.4.1')).toEqual({ s: 'instagram', m: 'outro', c: 'outro' });
     for (const m of ['cpc', 'paid', 'social', 'comunidade', 'grupo', 'video', 'outro']) {
       expect((await utm({ medium: m }, '4.4.4.2')).m).toBe(m);
