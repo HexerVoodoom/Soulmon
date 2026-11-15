@@ -86,8 +86,11 @@ export function planArenaComponents(stage: EnemyStage, runElement: string, v: nu
   const want = drawComponentCount(stage, v);
   if (!want) return undefined;
   const pool = combinedPoolOf(stage, runElement);
-  const got = relaxComponentCount(want, new Set(pool.keys()));
-  if (got === 1) return { want, got };
+  const got0 = relaxComponentCount(want, new Set(pool.keys()));
+  if (got0 === 1) return { want, got: 1 };
+  // Sem repetir combinado na rodada enquanto sobrar algum: se o tamanho já esgotou, o vizinho mais próximo que ainda tenha um novo.
+  const ordem = [...pool.keys()].sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || b - a);
+  const got = ordem.find(n => pool.get(n)!.some(e => !used.has(e.id))) ?? got0;
   const all = pool.get(got)!;
   const fresh = all.filter(e => !used.has(e.id));
   const list = fresh.length > 0 ? fresh : all;
