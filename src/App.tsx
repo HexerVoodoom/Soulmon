@@ -252,7 +252,7 @@ import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyElementsDefeated, BASE_ELEMENT_IDS } from './utils/elementDex';
 import { applyElementUnlockOnEvolve } from './utils/elementUnlockOnEvolve';
-import { elementosNovos, ELEMENTO_NOVO_MAX_LOTE } from './utils/elementoNovoModal';
+import { elementosNovos, elementoRetroativo, elementoNovoPodeAbrir, ELEMENTO_NOVO_MAX_LOTE } from './utils/elementoNovoModal';
 import { ackLibrary, libraryNewCount } from './utils/libraryNew';
 import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
 import { setStrayPlayerSeenHandler } from './utils/strayPlayerEncounter';
@@ -1101,9 +1101,17 @@ export default function App() {
   const elemVistosRef = useRef<Set<string> | null>(null);
   const [elemPendentes, setElemPendentes] = useState<string[]>([]);
   const [elemMostrados, setElemMostrados] = useState<string[] | null>(null);
+  /* Luta que desbloqueia (dono, 15/11): o modal ESPERA a Home, não abre sobre a tela de resultado. Ligado por `handleElementsDefeated`, desligado ao mostrar. */
+  const [elemEsperaHome, setElemEsperaHome] = useState(false);
   useEffect(() => {
     const lista = gameState.defeatedElements ?? [];
-    if (elemVistosRef.current === null) { elemVistosRef.current = new Set(lista); return; }
+    if (elemVistosRef.current === null) {
+      elemVistosRef.current = new Set(lista);
+      /* Retroativo (dono, 15/11): o Soulmon já evoluído cujo elemento ainda não está no dex ganha o desbloqueio E o modal nesta abertura, uma vez só.
+         O baseline acima NÃO o inclui (é o dex da abertura), então o desbloqueio vira 'novo' na passada seguinte; no máximo 1 elemento, nunca cai no lote absorvido. */
+      if (hasCompletedOnboarding && elementoRetroativo(gameState)) setGameState(prev => applyElementUnlockOnEvolve(prev));
+      return;
+    }
     const novos = elementosNovos(lista, elemVistosRef.current);
     // um lote enorme é save da nuvem adotado (não é descoberta de agora): entra no dex em silêncio
     if (novos.length > ELEMENTO_NOVO_MAX_LOTE) { novos.forEach(x => elemVistosRef.current?.add(x)); return; }
@@ -2668,7 +2676,7 @@ export default function App() {
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
-      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null,
+      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && elementoNovoPodeAbrir(elemEsperaHome, currentView),
       groveMilestone: Boolean(grovePendente),
       messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
@@ -2773,6 +2781,7 @@ export default function App() {
     elemPendentes.forEach(x => elemVistosRef.current?.add(x));
     setElemMostrados(elemPendentes);
     setElemPendentes([]);
+    setElemEsperaHome(false);
   }, [interstitial, elemMostrados, elemPendentes]);
   /* Escolhe o próximo aviso acionável ainda não visto hoje (só na Home, só um por vez). */
   useEffect(() => {
@@ -4991,6 +5000,8 @@ export default function App() {
   const handleElementsDefeated = useCallback((ids: readonly string[], drops?: readonly EssenceDrop[]) => {
     // + Essências (28/10/2026, REGISTRO §183): o drop do PRÓPRIO elemento, pelo estágio; sem teto na luta ativa.
     setGameState(prev => applyEssences(applyElementsDefeated(prev, ids), drops ?? []));
+    // só liga o portão se a luta trouxe elemento que o dex ainda não tinha (senão a bandeira ficaria presa e seguraria um aviso de outra origem)
+    if (elementosNovos(ids, elemVistosRef.current ?? new Set<string>()).length > 0) setElemEsperaHome(true);
   }, []);
 
   // M10 — inimigo VISTO fora da masmorra (Elemental Fusion): só o bestiário, sem abate (missão "kills" é da masmorra).

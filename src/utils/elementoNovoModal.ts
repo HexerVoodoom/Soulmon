@@ -3,6 +3,7 @@
  * que cresça `defeatedElements`) e o texto dele. Sem React, sem storage. EN primeiro, PT-BR é localização; tom de convite, nunca cobrança.
  */
 import { isLibraryElement } from './elementDex';
+import { petElementOf } from './starterElements';
 
 /** Os ids de `lista` que ainda não foram avisados (`vistos`), na ordem em que entraram no dex, só do catálogo, sem repetir. */
 export function elementosNovos(lista: readonly string[] | undefined, vistos: ReadonlySet<string>): string[] {
@@ -25,3 +26,18 @@ export const ELEMENTO_NOVO_COPY = {
 
 /** "1 de 3" / "1 of 3": o nome acessível de cada página do carrossel. */
 export const paginaDeTotal = (i: number, n: number, isPt: boolean): string => (isPt ? `${i + 1} de ${n}` : `${i + 1} of ${n}`);
+
+/**
+ * Retroativo (15/11/2026, dono): quem já tem o Soulmon evoluído com um elemento ainda não desbloqueado ganha o desbloqueio E o modal na
+ * próxima abertura, uma vez só. Devolve o id do elemento do Soulmon ATUAL que falta no dex (no máximo 1, por isso nunca passa do lote
+ * que o App absorve em silêncio). Idempotente por construção: depois do desbloqueio o id está no dex e a função devolve `undefined`.
+ */
+export function elementoRetroativo<T extends Parameters<typeof petElementOf>[0] & { defeatedElements?: string[] }>(s: T): string | undefined {
+  const id = petElementOf(s);
+  return id && isLibraryElement(id) && !(s.defeatedElements ?? []).includes(id) ? id : undefined;
+}
+
+/** O modal de elemento que veio de LUTA espera a Home (não abre sobre a tela de resultado); as outras origens abrem onde o jogador está. */
+export function elementoNovoPodeAbrir(esperaHome: boolean, view: string): boolean {
+  return !esperaHome || view === 'home';
+}

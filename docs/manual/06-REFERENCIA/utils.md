@@ -4724,4 +4724,4 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 **Dono de:** `applyElementUnlockOnEvolve` (15/11/2026, §396): na evolução, o elemento efetivo da forma nova (`petElementOf`) passa por `applyElementsDefeated`. Idempotente; composto libera só o composto. **Chamado por:** `App.tsx › handleEvolve`. **Régua:** `elementUnlockOnEvolve.test.ts`.
 
 ### `src/utils/elementoNovoModal.ts`
-**Dono de:** `elementosNovos` (o que ainda não foi avisado), `ELEMENTO_NOVO_MAX_LOTE`, o texto EN/PT do modal e `paginaDeTotal` ("1 de 3"). **Chamado por:** `App.tsx`, `ElementosNovosModal.tsx`. **Régua:** `elementUnlockOnEvolve.test.ts`.
+**Dono de:** `elementosNovos` (o que ainda não foi avisado), `elementoRetroativo` (Soulmon atual com elemento fora do dex; no máximo 1) e `elementoNovoPodeAbrir` (luta espera a Home), `ELEMENTO_NOVO_MAX_LOTE`, o texto EN/PT do modal e `paginaDeTotal` ("1 de 3"). **Chamado por:** `App.tsx`, `ElementosNovosModal.tsx`. **Régua:** `elementUnlockOnEvolve.test.ts`, `elementoNovoModal.regras.test.ts`.

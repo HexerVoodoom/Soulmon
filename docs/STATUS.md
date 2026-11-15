@@ -3,8 +3,9 @@
 > ## 15/11/2026 — Restaurante com o chef certo, missão do prato, elemento da evolução e modal "Elemento novo" (`feat/restaurante-npc-missao-elemento`, REGISTRO §396) — PR aberto, NÃO mergeado
 >
 > - **Feito:** a folha do Restaurante mostra o chef do dia (antes era sempre a Snapjaw) e os dois lado a lado no domingo; semanal `cook-dish`; evoluir desbloqueia o elemento da forma; modal transparente sem brilho (carrossel se vários) na fila central.
-> - **Sorteio:** o prato NÃO é garantido toda semana (3/13 de chance); a lista da semana corrente pode mudar uma vez. Missão fixa fica como pergunta ao dono.
-> - **Não visto em tela:** sem build; layout 360 px e carrossel só em jsdom. Sem retroativo para quem já evoluiu.
+> - **Dono respondeu (15/11, modal):** prato semanal ENTRA no sorteio (como está; 3/13, lista da semana pode mudar uma vez); composto libera só o composto; 3 Emblemas só do prato do Restaurante; convite ok.
+> - **Ajustes pós-resposta:** retroativo (Soulmon já evoluído com elemento fora do dex ganha desbloqueio + modal na próxima abertura, uma vez, no máximo 1 elemento) e luta que desbloqueia espera a Home para abrir o modal.
+> - **Não visto em tela:** sem build; layout 360 px e carrossel só em jsdom.
 
 > ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
