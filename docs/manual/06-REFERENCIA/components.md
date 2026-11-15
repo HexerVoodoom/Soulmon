@@ -2329,6 +2329,10 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 
 `TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.
 
+### `src/components/play/TicketBuyModal.tsx` (15/11/2026 — REGISTRO §395)
+
+`TicketBuyModal` (o modal "sem ticket, quer comprar?": `ModalSheet` centralizado, a arte do ticket metade dentro/metade fora da borda de cima por portal, "Cada partida gasta x1", Comprar 3 tickets / Agora não) e `TICKET_BUY_ART_W`. **Chamado por:** `PlaySheets.tsx` (`SalaoSheet`).
+
 ### `src/components/AppUpdateGate.tsx`
 
 Modal de atualizacao do app NATIVO (11/11/2026; so web, sem APK novo). Le `App.getInfo().build` + `/api/app-config` e usa `decideUpdate`: 'block' (sem fechar, so "Atualizar") ou 'suggest' ("Depois", 1x por abertura). Web/desktop nunca mostram; erro/sem rede = nada. "Atualizar" = `SoulmonReview.openStore()` (market://, fallback https). Montado em `App.tsx`.

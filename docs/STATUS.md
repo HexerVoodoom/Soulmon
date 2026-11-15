@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Sem ticket de minijogo abre o modal de compra (`feat/minigame-sem-ticket-modal`, REGISTRO §395) — PR aberto, NÃO mergeado
+>
+> - **Feito:** jogar sem ticket (ou ficar sem no "jogar de novo") abre o `TicketBuyModal` com o ticket metade dentro, metade fora da borda; Comprar (1 energia = 3 tickets) ou Agora não; mostra "Cada partida gasta x1" (`FUN_TICKET_PER_ROUND`). Aviso vermelho do painel retirado.
+> - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
+> - **Não visto em tela:** sem build; só testes de render em jsdom.
+
 > ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
 > - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
