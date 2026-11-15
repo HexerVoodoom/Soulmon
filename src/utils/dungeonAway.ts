@@ -207,7 +207,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     return w;
   };
   const credit = (pts: number) => {
-    s = creditMinigameBits(s, pts, dayKey, p.rc); // §392: a Agulha de bússola eleva o teto diário, não o ganho
+    s = creditMinigameBits(s, pts, dayKey, p.rc); // §393: a Agulha de bússola eleva o teto diário, não o ganho
   };
   let ended: AwayEnd = null;
   let stock: PotionStock | undefined = prev.dungeonPotions;

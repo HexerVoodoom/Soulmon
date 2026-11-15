@@ -96,7 +96,7 @@ describe('os helpers: valor, teto, inválido = 0', () => {
     expect(cleanDotResist(5)).toBe(DOT_RESIST_MAX); expect(cleanDotResist('x')).toBe(0);
     expect(cleanStartShield(1)).toBe(START_SHIELD_MAX); expect(cleanStartShield(-1)).toBe(0);
   });
-  it('Agulha de bússola (§392): o extra eleva o TETO só de quem pede; o ganho por luta não muda e a base nunca diminui', () => {
+  it('Agulha de bússola (§393): o extra eleva o TETO só de quem pede; o ganho por luta não muda e a base nunca diminui', () => {
     expect(minigameBitsCap(0)).toBe(150); expect(minigameBitsCap(30)).toBe(180); expect(minigameBitsCap(-5)).toBe(150); expect(minigameBitsCap(NaN)).toBe(150);
     expect(minigameBitsGranted(140, 25)).toBe(10); // sem o talento: para em 150
     expect(minigameBitsGranted(140, 25, 10)).toBe(20); // grau 1: 160

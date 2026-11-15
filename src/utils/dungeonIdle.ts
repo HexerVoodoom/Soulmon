@@ -328,7 +328,7 @@ export interface DungeonAwayPlayer {
   fam: string;
   /** Id do ofício da ficha (ausente = jeito padrão). */
   prof?: string;
-  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `rc`: Bits a mais no TETO diário da fenda (`tal-pve-04`, §392; antes `rb`, a fração por ganho, revogada). */
+  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `rc`: Bits a mais no TETO diário da fenda (`tal-pve-04`, §393; antes `rb`, a fração por ganho, revogada). */
   sh: number; hb: number; rc: number;
   /** Estágio de evolução (decide os sprites/chaves do bestiário dos inimigos). */
   stage: string;

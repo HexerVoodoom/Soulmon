@@ -176,7 +176,7 @@ export const talentStartEnergy = (picks, bondLevel) => sumKind(picks, bondLevel,
 export const talentDotResist = (picks, bondLevel) => sumKind(picks, bondLevel, 'dotResist', DOT_RESIST_MAX);
 /** `tal-pve-03`. @param {unknown} picks @param {unknown} bondLevel */
 export const talentHealBoost = (picks, bondLevel) => sumKind(picks, bondLevel, 'healBoost', HEAL_BOOST_MAX);
-/** `tal-pve-04` (§392): Bits a mais no TETO diário de Bits da fenda (0/10/20/30). O servidor é quem decide o teto efetivo. @param {unknown} picks @param {unknown} bondLevel */
+/** `tal-pve-04` (§393): Bits a mais no TETO diário de Bits da fenda (0/10/20/30). O servidor é quem decide o teto efetivo. @param {unknown} picks @param {unknown} bondLevel */
 export const talentRiftBitsCap = (picks, bondLevel) => sumKind(picks, bondLevel, 'riftBitsCap', RIFT_BITS_CAP_MAX);
 /** `tal-pve-07`. @param {unknown} picks @param {unknown} bondLevel */
 export const talentStartShield = (picks, bondLevel) => sumKind(picks, bondLevel, 'startShield', START_SHIELD_MAX);

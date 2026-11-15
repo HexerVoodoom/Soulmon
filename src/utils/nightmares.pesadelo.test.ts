@@ -48,7 +48,7 @@ describe('REGRESSÃO — o pesadelo CAUSA dano', () => {
   it('GREEN: o pesadelo derruba o Soulmon de verdade (HP chega a zero) quando o jogador não ajuda; e com ajuda ele machuca sem matar', () => {
     for (const top of [1, 2, 3, 4, 5]) {
       const sem = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_NONE));
-      expect(sem.filter((x) => !x.won).length / sem.length, `top ${top}`).toBeGreaterThanOrEqual(0.35); // sem torcida o Soulmon ainda cai com frequência (§391: era >= 0,7 antes do -25% de dano)
+      expect(sem.filter((x) => !x.won).length / sem.length, `top ${top}`).toBeGreaterThanOrEqual(0.35); // sem torcida o Soulmon ainda cai com frequência (§392: era >= 0,7 antes do -25% de dano)
       const com = Array.from({ length: 40 }, (_, s) => simulateNightmareScenario(cfg, top, s + 1, SCENARIO_FULL));
       expect(com.some((x) => x.won && x.hpLeft < 0.95), `top ${top}`).toBe(true); // há dano real mesmo vencendo
     }
@@ -65,7 +65,7 @@ describe('REGRESSÃO — o pesadelo CAUSA dano', () => {
   });
 });
 
-describe('§391 — o golpe do inimigo do Pesadelo sai 25% menor; a Masmorra não muda', () => {
+describe('§392 — o golpe do inimigo do Pesadelo sai 25% menor; a Masmorra não muda', () => {
   const p = { combatant: combatantAt(20, REFERENCE_BUILDS.balanced), family: 'direct' as const, jeito: undefined };
   const foe = nightmareFoe(20, 3);
   it('o fator é uma constante de dono único: 0,75', () => {
@@ -129,13 +129,13 @@ describe('CALIBRAGEM — a vitória é o HP; a dificuldade é o pesadelo derruba
     expect(NIGHTMARE_POWER).toBe(1.2);
     expect(NIGHTMARE_MEGA_EASE).toBe(0.8);
   });
-  it('A: sem torcida (o anel não importa mais: basta soltar o especial) o Soulmon perde em >= 35% das sementes (§391; era 70% antes do -25% de dano)', () => {
+  it('A: sem torcida (o anel não importa mais: basta soltar o especial) o Soulmon perde em >= 35% das sementes (§392; era 70% antes do -25% de dano)', () => {
     for (const m of medido) expect(1 - m.A, `tier ${m.top}`).toBeGreaterThanOrEqual(0.35);
   });
   it('B: com torcida e especiais ao menos parciais o jogador vence em >= 75% (tiers 1-3) e >= 50% (tiers 4-5)', () => {
     for (const m of medido) expect(m.B, `tier ${m.top}`).toBeGreaterThanOrEqual(m.top <= 3 ? 0.75 : 0.5);
   });
-  it('C: errar o anel não pesa (C1 = B); e especiais sem torcida: derrota em >= 35% (§391; era 70%)', () => {
+  it('C: errar o anel não pesa (C1 = B); e especiais sem torcida: derrota em >= 35% (§392; era 70%)', () => {
     for (const m of medido) {
       expect(m.C1, `C1 tier ${m.top}`).toBeCloseTo(m.B, 5);
       expect(1 - m.C2, `C2 tier ${m.top}`).toBeGreaterThanOrEqual(0.35);

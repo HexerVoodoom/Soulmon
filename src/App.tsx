@@ -5106,7 +5106,7 @@ export default function App() {
          vezes por run no mesmo lote do React, e um teto lido de fora passaria
          duas vezes (família de bug do X-6). Bater o teto não tira nada e não
          interrompe minijogo nenhum — os Bits só param de somar. */
-      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §392)
+      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
     });
     const dia = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
     const pend = bitsPendentesRef.current;

@@ -773,7 +773,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/games/RiftResultExtras.tsx`
 
-Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fenda/Masmorra/Arena (150 + o extra da Agulha de bússola, `tal-pve-04`, REGISTRO §392). Só envolve a `ResultScreen` dessas três telas; os outros jogos seguem no teto base.
+Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fenda/Masmorra/Arena (150 + o extra da Agulha de bússola, `tal-pve-04`, REGISTRO §393). Só envolve a `ResultScreen` dessas três telas; os outros jogos seguem no teto base.
 
 **Exports:** `RiftResultExtras({ extraCap, children })`.
 **Quem chama:** `App.tsx` (Provider) e `ResultScreen`.

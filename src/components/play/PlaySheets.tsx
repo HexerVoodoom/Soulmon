@@ -88,7 +88,7 @@ const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
  * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
  * teto não tira nada nem fecha jogo nenhum, só para de somar.
  */
-export function BitsHoje({ language, earned, extraCap = 0 }: { language: Language; earned?: number; /** Agulha de bússola (§392): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number }) {
+export function BitsHoje({ language, earned, extraCap = 0 }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number }) {
   if (earned === undefined) return null;
   const isPt = language === 'pt-BR';
   const cap = minigameBitsCap(extraCap);

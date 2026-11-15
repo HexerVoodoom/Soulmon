@@ -312,7 +312,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;
 
   const addPoints = (pts: number) => {
-    // Bits ganhos: a Agulha de bússola (`tal-pve-04`) eleva o TETO diário (§392), não o ganho; o funil aplica o teto
+    // Bits ganhos: a Agulha de bússola (`tal-pve-04`) eleva o TETO diário (§393), não o ganho; o funil aplica o teto
     const creditado = onEarnPoints(pts, rift.riftBitsCap) ?? pts;
     runScoreRef.current += pts;
     resumoRef.current.bits += creditado; // o que entrou (teto diário), não o pedido

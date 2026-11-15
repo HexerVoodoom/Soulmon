@@ -3,7 +3,7 @@ import { ResultExtrasContext, useResultExtras } from './ResultExtrasContext';
 import { minigameBitsCap } from '../../utils/currencies';
 
 /**
- * §392: na Fenda/Masmorra/Arena o teto diário de Bits é o base + o extra da Agulha de bússola (`tal-pve-04`). A tela de resultado
+ * §393: na Fenda/Masmorra/Arena o teto diário de Bits é o base + o extra da Agulha de bússola (`tal-pve-04`). A tela de resultado
  * dos outros jogos segue com o teto base, por isso o extra entra só aqui, sobre o contexto que o `App` já fornece.
  */
 export function RiftResultExtras({ extraCap, children }: { extraCap: number; children: ReactNode }) {

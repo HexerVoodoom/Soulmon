@@ -1,9 +1,15 @@
 # Status do Soulmon — registro vivo
 
-> ## 15/11/2026 — Balanço: Pesadelo −25% de dano e Agulha de bússola (`fix/balanco-pesadelo-agulha`, REGISTRO §391–§392) — PR aberto, NÃO mergeado
+> ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
-> - **Pesadelo (§391):** o inimigo causa ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, só `nightmareFight`; Masmorra/Arena intactas). Medido: com torcida a vitória foi de ~78–93% para ~98–100% e o HP perdido de 77–88% para 59–73%; sem torcida de ~3–29% para 23–64%. Testes de calibragem do §65 rebaixados (sem torcida perde ≥ 35%, antes 70%).
-> - **Agulha de bússola (§392):** `tal-pve-04` soma +10/grau ao teto diário de Bits (150 → até 180) só para Fenda/Masmorra/Arena; o +3% no ganho foi revogado. `rb` do `dungeonAway` virou `rc`. O teto de 150 ainda não é imposto no servidor (só observação, §387).
+> - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
+> - **Fora:** ouro (arte sendo refeita), cristal (em geração) e a Serpente da Feira (P6 em aberto; o teste de paridade do servidor ignora `hon-*`).
+> - **Não visto em tela:** sem build; a aba Honra ficou com 65 itens numa lista só (seções/filtro por espaço seguem pendentes, é desenho de tela). Folha de contato dos PNGs finais em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato.png`.
+
+> ## 15/11/2026 — Balanço: Pesadelo −25% de dano e Agulha de bússola (`fix/balanco-pesadelo-agulha`, REGISTRO §392–§393) — PR aberto, NÃO mergeado
+>
+> - **Pesadelo (§392):** o inimigo causa ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, só `nightmareFight`; Masmorra/Arena intactas). Medido: com torcida a vitória foi de ~78–93% para ~98–100% e o HP perdido de 77–88% para 59–73%; sem torcida de ~3–29% para 23–64%. Testes de calibragem do §65 rebaixados (sem torcida perde ≥ 35%, antes 70%).
+> - **Agulha de bússola (§393):** `tal-pve-04` soma +10/grau ao teto diário de Bits (150 → até 180) só para Fenda/Masmorra/Arena; o +3% no ganho foi revogado. `rb` do `dungeonAway` virou `rc`. O teto de 150 ainda não é imposto no servidor (só observação, §387).
 > - **Não verificado:** tela/aparelho; Pesadelo com testadores reais.
 
 > ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado

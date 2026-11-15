@@ -275,7 +275,7 @@ export interface NightmareKnobs {
 }
 
 /**
- * §391 (dono, 15/11/2026: "todo mundo está reclamando"): o inimigo do Pesadelo causa 25% menos dano. Dono único do número;
+ * §392 (dono, 15/11/2026: "todo mundo está reclamando"): o inimigo do Pesadelo causa 25% menos dano. Dono único do número;
  * só o Pesadelo passa por `nightmareFight` — a Masmorra (`dungeonFight`/`playSequence`) e a Arena não leem esta constante.
  */
 export const NIGHTMARE_FOE_DAMAGE_FACTOR = 0.75;

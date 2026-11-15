@@ -54,7 +54,8 @@ describe('as prateleiras novas espelham o cliente', () => {
     expect(FEIRA_LOJA_PRATOS.map(r => [...r])).toEqual(DISHES.map(d => [d.id, d.bits, ['atk', 'def', 'spd'].includes(d.effect.kind)]));
   });
   it('Honra = itens de TOURNAMENT_ITEMS pagos em Honra, sem trava nem elemento', () => {
-    const fonte = TOURNAMENT_ITEMS.filter(i => i.currency === 'emblems' && i.price > 0 && !i.unlock && !i.element && ['furniture', 'bg'].includes(i.kind)).map(i => [i.id, i.kind, i.price, i.fits ?? '']);
+    // A decoração de Honra de combate (`hon-*`, utils/honraDecor.ts) fica FORA da Feira até o dono decidir a P6 (docs/PLANO-HONRA-DECORACAO.md).
+    const fonte = TOURNAMENT_ITEMS.filter(i => !i.id.startsWith('hon-') && i.currency === 'emblems' && i.price > 0 && !i.unlock && !i.element && ['furniture', 'bg'].includes(i.kind)).map(i => [i.id, i.kind, i.price, i.fits ?? '']);
     expect(FEIRA_LOJA_HONRA.map(r => [...r])).toEqual(fonte);
   });
   it('toda poção vendida existe no catálogo de uso do cliente', () => {

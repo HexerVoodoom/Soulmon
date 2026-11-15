@@ -365,7 +365,7 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      setBitsGanhos(onEarnPoints?.(pontos, rift.riftBitsCap) ?? pontos); // o creditado (teto diário, com o extra da Agulha de bússola §392), não o pedido
+      setBitsGanhos(onEarnPoints?.(pontos, rift.riftBitsCap) ?? pontos); // o creditado (teto diário, com o extra da Agulha de bússola §393), não o pedido
       setFase('venceu');
       return;
     }

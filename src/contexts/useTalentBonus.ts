@@ -64,7 +64,7 @@ export { NO_ATTR_BONUS };
 export interface RiftTalents {
   /** `tal-pve-03`: fração do HP máximo a mais na cura entre andares da Masmorra. */
   readonly healBoost: number;
-  /** `tal-pve-04` (§392): Bits a mais no teto diário de Bits da fenda (0/10/20/30). O ganho por luta não muda. */
+  /** `tal-pve-04` (§393): Bits a mais no teto diário de Bits da fenda (0/10/20/30). O ganho por luta não muda. */
   readonly riftBitsCap: number;
   /** `tal-pve-07`: fração do HP máximo em escudo no começo da luta. */
   readonly startShield: number;

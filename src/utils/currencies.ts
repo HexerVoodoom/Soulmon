@@ -267,7 +267,7 @@ export function remainingMinigameBits(state: MinigameBitsState, dayKey: string, 
 }
 
 /**
- * Teto diário EFETIVO de quem joga a Fenda/Masmorra/Arena (§392): `MINIGAME_BITS_PER_DAY` + o `extraCap` do talento
+ * Teto diário EFETIVO de quem joga a Fenda/Masmorra/Arena (§393): `MINIGAME_BITS_PER_DAY` + o `extraCap` do talento
  * `tal-pve-04` (Agulha de bússola, +10 por grau). O teto continua UM só (a soma de todos os jogos); o extra só vale para
  * o crédito que a Fenda pede: Dino, PPT, Salão e Ateliê seguem parando em 150 e não gastam o extra.
  * Sempre finito e nunca abaixo da base (`extraCap` inválido ou negativo = 0).
