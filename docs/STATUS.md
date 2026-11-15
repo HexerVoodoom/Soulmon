@@ -4,6 +4,10 @@
 >
 > - **Feito:** `utils/match3Cores.ts` (lista curada de 120 pares proibidos que nunca relaxa + ΔE CIEDE2000 mínimo 24 entre quaisquer dois ícones) e tabela `elementDominante.data.ts`. Tabuleiros do PVP com par parecido (ΔE < 12): 16,3% antes, 0% depois (20 000 sementes). O Normal (6 fixos) já era distante e não muda.
 > - **Fora:** nada no servidor (não há espelho do sorteio). **Não visto em tela:** sem build; prancha dos pares em `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png`.
+> ## 15/11/2026 — "Elemento novo" vira CARTA grande (`feat/carta-elemento-novo`, REGISTRO §401) — PR aberto, NÃO mergeado
+>
+> - **Feito:** carta preta (arte `ui/carta-elemento.webp`) com ícone, nome e, nos compostos, os componentes; só abre no fim da atividade (gate `emAtividade`); carrossel com setas e deslize, OK desativado até ver todas, X no topo. Frase de poção/Laboratório REMOVIDA; na evolução a carta é o último item da sequência.
+> - **Não visto em tela:** sem build; layout 360x640/412x915 só em jsdom e na prancha `E:\Soulmon-assets\_lote-15-11\carta-elemento\mock-carta.png`. Arte final = V3 escolhida pelo dono, instalada por `tools/instalar-carta-elemento.py`.
 
 > ## 15/11/2026 — 33 decorações no estilo novo instaladas no mesmo id (`feat/decor-estilo-novo`, REGISTRO §398) — PR aberto, NÃO mergeado
 >
@@ -22,6 +26,12 @@
 > - **Feito:** jogar sem ticket (ou ficar sem no "jogar de novo") abre o `TicketBuyModal` com o ticket metade dentro, metade fora da borda; Comprar (1 energia = 3 tickets) ou Agora não; mostra "Cada partida gasta x1" (`FUN_TICKET_PER_ROUND`). Aviso vermelho do painel retirado.
 > - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
 > - **Não visto em tela:** sem build; só testes de render em jsdom.
+
+> ## 15/11/2026 — Honra: 8 peças de cristal restantes (`feat/honra-cristal-restante`, REGISTRO §399) — PR aberto, NÃO mergeado
+>
+> - **Feito:** estátua de guerreiro, estátua de mago, bigorna e pedestal, em `cristal-turquesa` (700) e `cristal-irisdescente` (1100): catálogo de Honra de combate 83 para 91. Quatro linhas em `CRISTAL_PECAS` mais 8 webp.
+> - **Bytes:** os 8 novos somam 83.744 B (total 667.860 B); maior arquivo 13,8 KB (teto 400 KB).
+> - **Não visto em tela:** sem build. Prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. O cabo do martelo da bigorna turquesa saiu laranja-avermelhado; o dono aprovou assim.
 
 > ## 15/11/2026 — Honra: ouro envelhecido e cristal instalados (`feat/honra-ouro-cristal`, REGISTRO §397) — PR aberto, NÃO mergeado
 >

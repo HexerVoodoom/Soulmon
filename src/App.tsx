@@ -1101,8 +1101,8 @@ export default function App() {
   const elemVistosRef = useRef<Set<string> | null>(null);
   const [elemPendentes, setElemPendentes] = useState<string[]>([]);
   const [elemMostrados, setElemMostrados] = useState<string[] | null>(null);
-  /* Luta que desbloqueia (dono, 15/11): o modal ESPERA a Home, não abre sobre a tela de resultado. Ligado por `handleElementsDefeated`, desligado ao mostrar. */
-  const [elemEsperaHome, setElemEsperaHome] = useState(false);
+  /* Descoberto dentro de uma atividade (luta etc., dono 15/11, §401): a carta ESPERA a navegação principal (Home/Mapa), só abre no fim da atividade. Ligado por `handleElementsDefeated`, desligado ao mostrar. */
+  const [elemEsperaSaida, setElemEsperaSaida] = useState(false);
   useEffect(() => {
     const lista = gameState.defeatedElements ?? [];
     if (elemVistosRef.current === null) {
@@ -2676,7 +2676,7 @@ export default function App() {
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
-      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && elementoNovoPodeAbrir(elemEsperaHome, currentView),
+      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView),
       groveMilestone: Boolean(grovePendente),
       messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
@@ -2781,7 +2781,7 @@ export default function App() {
     elemPendentes.forEach(x => elemVistosRef.current?.add(x));
     setElemMostrados(elemPendentes);
     setElemPendentes([]);
-    setElemEsperaHome(false);
+    setElemEsperaSaida(false);
   }, [interstitial, elemMostrados, elemPendentes]);
   /* Escolhe o próximo aviso acionável ainda não visto hoje (só na Home, só um por vez). */
   useEffect(() => {
@@ -5001,7 +5001,7 @@ export default function App() {
     // + Essências (28/10/2026, REGISTRO §183): o drop do PRÓPRIO elemento, pelo estágio; sem teto na luta ativa.
     setGameState(prev => applyEssences(applyElementsDefeated(prev, ids), drops ?? []));
     // só liga o portão se a luta trouxe elemento que o dex ainda não tinha (senão a bandeira ficaria presa e seguraria um aviso de outra origem)
-    if (elementosNovos(ids, elemVistosRef.current ?? new Set<string>()).length > 0) setElemEsperaHome(true);
+    if (elementosNovos(ids, elemVistosRef.current ?? new Set<string>()).length > 0) setElemEsperaSaida(true);
   }, []);
 
   // M10 — inimigo VISTO fora da masmorra (Elemental Fusion): só o bestiário, sem abate (missão "kills" é da masmorra).

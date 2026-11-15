@@ -38,6 +38,7 @@ const TABELA: Record<string, Classe> = {
   'components/home/Mochila.tsx': 'base-esquerda',
   'components/TalentTreeEntry.tsx': 'base-esquerda', // árvore de talentos em tela cheia: só a árvore, o ✕ no topo ESQUERDO e o Refazer embaixo
   'components/mercado/ShopItemSheet.tsx': 'base-esquerda', // lightbox: ✕ no topo ESQUERDO
+  'components/ElementosNovosModal.tsx': 'base-esquerda', // a carta: ✕ no topo ESQUERDO (BackArrow close)
   'components/SoulmonOnboarding.tsx': 'dispensar-inline', // card da oferta 13.1 + ferramenta de dev (BackArrow close)
   'components/games/GameKit.tsx': 'atividade-direita', // `GameHeader`: esquerda quando ocioso, direita em `activity`
   'components/games/BattleStage.tsx': 'atividade-direita',
