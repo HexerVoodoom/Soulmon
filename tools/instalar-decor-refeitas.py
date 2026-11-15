@@ -137,4 +137,5 @@ def main():
         contato(feitos, opt.get('--antes'), opt['--contato'])
 
 
-main()
+if __name__ == '__main__':
+    main()
