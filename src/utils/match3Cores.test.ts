@@ -194,3 +194,19 @@ describe('Match-3 rodada 3: curadoria a olho e pool efetivo (REGISTRO §402)', (
     expect(vistos.size).toBeGreaterThan(pool.length * 0.95);
   });
 });
+
+describe('Match-3: Flora e Titã (REGISTRO §402, dono 15/11/2026)', () => {
+  it('flora e tita nunca dividem tabuleiro, nos dois sentidos', () => {
+    expect(m3ParProibido('flora', 'tita')).toBe(true);
+    expect(m3ParProibido('tita', 'flora')).toBe(true);
+    expect(m3Conflito('flora', 'tita')).toBe(true);
+  });
+  it('em 3000 sementes: flora e tita nunca aparecem juntos e o pool de cada um continua grande', () => {
+    for (let sd = 1; sd <= 3000; sd++) {
+      const els = pvpElementsForSeed(sd * 104729);
+      expect(els.includes('flora') && els.includes('tita')).toBe(false);
+    }
+    const pool = pvpElementPool();
+    for (const a of ['flora', 'tita']) expect(pool.filter(b => b !== a && !m3Conflito(a, b)).length).toBeGreaterThan(40);
+  });
+});
