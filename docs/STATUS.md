@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Match-3 PVP: 3 rodadas contra ícones parecidos (`fix/match3-cores-rodadas`, REGISTRO §402) — PR aberto, NÃO mergeado
+>
+> - **Feito:** em `match3Cores.ts`, camada de paleta + daltonismo (rodada 1), silhueta/brilho (rodada 2) e calibragem a olho com 3 pares novos na lista curada (rodada 3). Dados por `scripts/element-paleta.py` e `element-silhueta.py`. 0 de 20 000 sorteios relaxam; 285 de 285 elementos ainda aparecem; pool efetivo: 46 a 197 candidatos ao sexto ícone.
+> - **Não visto em tela:** sem build. Pranchas `rodada-1/2/3.png` em `E:\Soulmon-assets\_lote-15-11\match3\`.
+
 > ## 15/11/2026 — Match-3 PVP: ícones de cor parecida nunca dividem tabuleiro (`fix/match3-cores-distintas`, REGISTRO §400) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `utils/match3Cores.ts` (lista curada de 120 pares proibidos que nunca relaxa + ΔE CIEDE2000 mínimo 24 entre quaisquer dois ícones) e tabela `elementDominante.data.ts`. Tabuleiros do PVP com par parecido (ΔE < 12): 16,3% antes, 0% depois (20 000 sementes). O Normal (6 fixos) já era distante e não muda.

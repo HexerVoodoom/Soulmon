@@ -5725,3 +5725,30 @@ No pool: 40 470 pares; 116 abaixo de 6, 1 112 abaixo de 12, 5 735 (14,2%) abaixo
 
 **Riscos aceitos:** não visto em tela (sem build); prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. Nome PT da estátua segue o padrão do metal ("Estátua de cristal do Guerreiro · turquesa").
 
+
+## §402 — Match-3 (PVP): três rodadas a mais contra ícones parecidos (15/11/2026, dono: "mais 3 loops de restrição")
+
+**Pedido:** o dono ainda via elementos parecidos depois do §400. Cada rodada atacou uma fonte de confusão que a cor média/dominante não pega, no ciclo medir, olhar, endurecer, remedir. Tudo no dono único `match3Cores.ts`; dados gerados por script em `scripts/` e arquivo `.data.ts` (como o `elementDominante`). O sorteio é o mesmo (semente `mulberry32`, 6 cores, guloso sobre a ordem embaralhada); a lista curada nunca relaxa; só os limiares medidos relaxam, todos juntos, a cada `M3_DELTA_E_STEP`. O Normal (6 fixos) não foi tocado e não usa o sorteio. Os dados novos entram só por `match3Cores`, que só `match3Pvp` importa (BattleStage e Match3Game, chunks preguiçosos): nada vai para o chunk de entrada. Sem espelho no servidor.
+
+**Medição (20 000 sementes, sorteio real; régua única = limiares finais ΔE 24, paleta 10, daltonismo 8, silhueta; "tab. com par" = % de tabuleiros com algum par abaixo):**
+
+| Estado | par ΔE<24 | par paleta<10 | par daltonismo<8 | par de silhueta confundível | relaxa | elementos distintos / menos frequente (esperado 421) |
+|---|---|---|---|---|---|---|
+| ANTES (§400) | 0% | 15,0% | 14,0% | 8,7% | 0% | 285 / 222 |
+| Rodada 1 (paleta 16, daltonismo 12) | 0% | 0% | 0% | 7,3% | 0% | 285 / 161 |
+| Rodada 2 (+ silhueta) | 0% | 0% | 0% | 0% | 0% | 285 / 161 |
+| Rodada 3 (calibragem a olho: paleta 10, daltonismo 8, +3 curados) | 0% | 0% | 0% | 0% | 0% | 285 / 220 |
+
+Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,2 e 14,0; daltonismo 12,7 e 13,7. Par da lista curada num tabuleiro: 0 em todas as linhas. Nenhum elemento some: 285 de 285 aparecem; o menos frequente subiu de 161 para 220 depois que a rodada 3 afrouxou os limiares.
+
+**Rodada 1, cor em outros espaços** (`M3_MIN_DELTA_E_PALETA`, `M3_MIN_DELTA_E_DALTONICO`; dado novo `elementPaleta.data.ts` por `scripts/element-paleta.py`: até 4 cores dominantes com peso). Paleta = chamfer ponderado de CIEDE2000 entre as paletas (aproxima o Earth Mover's). Daltonismo = deuteranopia, protanopia e tritanopia (Machado 2009, severidade 1,0) aplicadas à média e à dominante, vale o maior das duas leituras e o PIOR tipo. Prancha: `E:\Soulmon-assets\_lote-15-11\match3\rodada-1.png` (pares que o §400 deixava passar: carvalho/pira_eterna e flora/industrial só se confundem sob daltonismo; ocultismo/singularidade pela paleta).
+
+**Rodada 2, silhueta e brilho** (`M3_MAX_SILHUETA` 0,80, `M3_COR_PROXIMA_SILHUETA` 32, atalho `M3_MAX_DELTA_BRILHO` 3 com piso 0,70; dado `elementSilhueta.data.ts` por `scripts/element-silhueta.py`: máscara 16x16). O IoU sozinho não discrimina (a maioria dos ícones enche o mesmo volume; SSIM e correlação em cinza também foram medidos e descartados: dão alto para todo ícone escuro), então a camada só vale com cor próxima, como rede de segurança. Prancha: `rodada-2.png`.
+
+**Rodada 3, conferência a olho.** Olhei as pranchas da fronteira permitida (60 pares mais próximos pela métrica combinada), 30 pares bloqueados só pelas camadas novas na borda, amostras por faixa de paleta e de daltonismo, e duas famílias de motivo (ampulheta, lâminas). Resultado: (1) FALSOS POSITIVOS: quase toda a faixa de paleta 10 a 16 e de daltonismo 8 a 12 era fácil de distinguir a 40 px, então os limiares caíram para paleta 10 e daltonismo 8 (bloqueava 4 716 pares só pelas camadas novas, na borda 2 886 eram fáceis). (2) FALSOS NEGATIVOS: 3 pares que passavam em todas as métricas e são o mesmo desenho, entraram na lista curada: `circulo_feerico`/`fungo` (cogumelo luminoso), `semente_estelar`/`tempo` (cristal turquesa com anel), `florescer`/`frenesi` (ampulheta turquesa entre folhas). Prancha final: `rodada-3.png` (os 3 achados e os 27 mais próximos que ainda passam, todos fáceis de distinguir).
+
+**Pool efetivo (final):** 6 581 de 40 470 pares bloqueados (16,3%; antes 14,2%), 123 deles pela lista curada. Cada ícone é compatível com 191 a 278 dos outros 284 (mediana 240). Com 5 já sorteados sobram de 46 a 197 candidatos ao sexto (mediana 101, p5 72): o pool não está pequeno, 0 de 20 000 sorteios relaxam. O Normal não usa o sorteio; seus 6 fixos passam em ΔE e silhueta, mas `terra`/`luz`, `fogo`/`luz` e `fogo`/`terra` ficariam abaixo de paleta 16 (na calibragem final já não ficam abaixo de 10).
+
+**Alternativa que perdeu:** deixar paleta 16 e daltonismo 12 (mais duro): 2 886 falsos positivos na borda, elementos que quase não aparecem (menos frequente 161 de 421). Também perdeu SSIM/correlação de cinza como métrica de forma.
+
+**Riscos aceitos:** conferência a olho em pranchas, não no tabuleiro (sem build); a silhueta 16x16 é grosseira; o daltonismo usa severidade total (pior caso). **Gatilho de revisão:** ícone novo (rodar os 4 scripts `element-visual/dominante/paleta/silhueta`), o dono ver par parecido na tela, ou o pool efetivo cair abaixo de ~40 candidatos ao sexto.

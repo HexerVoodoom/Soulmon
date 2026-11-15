@@ -17,7 +17,7 @@ import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derive
 import { CURATED_ELEMENT_NAMES } from './elementosCurados';
 import { essenceEn } from './soulProfile/essenceLabels';
 import { M3_KINDS, type Rng } from './match3';
-import { M3_MIN_DELTA_E, pickM3Distinct } from './match3Cores';
+import { M3_MIN_DELTA_E, pickM3Distinct, type M3Limiares } from './match3Cores';
 import { pickEnemy, type RosterEntry } from './enemyRoster';
 import { rosterEntryElement } from './spriteElement';
 
@@ -47,7 +47,7 @@ export function pickPvpElements(rng: Rng, pool: readonly string[] = pvpElementPo
  * e fica a ΔE ≥ limiar de todos (regras e constantes em `match3Cores.ts`, REGISTRO §400). Se não fechar `n`, o limiar relaxa aos
  * poucos sobre a MESMA ordem embaralhada; a lista curada não relaxa. Determinístico pelo `rng`.
  */
-export function pickDistinctPvpElements(rng: Rng, pool: readonly string[] = pvpElementPool(), n: number = PVP_ELEMENT_COUNT, minDeltaE: number = M3_MIN_DELTA_E): string[] {
+export function pickDistinctPvpElements(rng: Rng, pool: readonly string[] = pvpElementPool(), n: number = PVP_ELEMENT_COUNT, minDeltaE: number | Partial<M3Limiares> = M3_MIN_DELTA_E): string[] {
   return pickM3Distinct(pickPvpElements(rng, pool, pool.length), n, minDeltaE).elements;
 }
 

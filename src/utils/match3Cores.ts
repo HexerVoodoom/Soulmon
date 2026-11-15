@@ -14,6 +14,8 @@
  * Tabelas geradas por `scripts/element-visual.py` e `scripts/element-dominante.py`: rode os dois quando entrar ícone novo.
  */
 import { ELEMENT_DOMINANTE } from './elementDominante.data';
+import { ELEMENT_PALETA } from './elementPaleta.data';
+import { ELEMENT_SILHUETA } from './elementSilhueta.data';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 
 /** ΔE (CIEDE2000, maior entre média e dominante) mínimo entre dois ícones do mesmo tabuleiro. Pool de 285: 14,2% dos pares (5735 de 40470) ficam abaixo, e ainda assim 0 de 20000 sorteios precisam relaxar (só relaxa perto de 35). */
@@ -55,6 +57,113 @@ export function m3DeltaE(a: string, b: string): number {
   const ma = ELEMENT_VISUAL[a], mb = ELEMENT_VISUAL[b], da = ELEMENT_DOMINANTE[a], db = ELEMENT_DOMINANTE[b];
   if (!ma || !mb || !da || !db) return Infinity;
   return Math.max(ciede2000([ma[0], ma[1], ma[2]], [mb[0], mb[1], mb[2]]), ciede2000(da, db));
+}
+
+/** RODADA 1 (REGISTRO §402): distância mínima entre as PALETAS (até 4 cores dominantes) de dois ícones do mesmo tabuleiro. */
+export const M3_MIN_DELTA_E_PALETA = 10;
+/** RODADA 1: distância mínima entre dois ícones vistos por quem tem daltonismo (deuteranopia, protanopia ou tritanopia: vale a pior). */
+export const M3_MIN_DELTA_E_DALTONICO = 8;
+
+/** Matrizes de simulação de daltonismo (Machado, Oliveira, Fernandes 2009, severidade 1,0), em RGB linear. */
+const SIM_DALTONISMO: ReadonlyArray<readonly number[]> = [
+  [0.367322, 0.860646, -0.227968, 0.280085, 0.672501, 0.047413, -0.01182, 0.04294, 0.968881], // deuteranopia
+  [0.152286, 1.052583, -0.204868, 0.114503, 0.786281, 0.099216, -0.003882, -0.048116, 1.051998], // protanopia
+  [1.255528, -0.076749, -0.178779, -0.078411, 0.930809, 0.147602, 0.004733, 0.691367, 0.3039], // tritanopia
+];
+
+const labParaLinear = (lab: Lab): [number, number, number] => {
+  const fy = (lab[0] + 16) / 116, fx = fy + lab[1] / 500, fz = fy - lab[2] / 200;
+  const inv = (f: number) => (f ** 3 > 216 / 24389 ? f ** 3 : (116 * f - 16) / (24389 / 27));
+  const X = 0.95047 * inv(fx), Y = inv(fy), Z = 1.08883 * inv(fz);
+  return [3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z, -0.969266 * X + 1.8760108 * Y + 0.041556 * Z, 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z];
+};
+const linearParaLab = (rgb: readonly number[]): Lab => {
+  const c = rgb.map(v => Math.min(1, Math.max(0, v)));
+  const X = (0.4124564 * c[0] + 0.3575761 * c[1] + 0.1804375 * c[2]) / 0.95047, Y = 0.2126729 * c[0] + 0.7151522 * c[1] + 0.072175 * c[2], Z = (0.0193339 * c[0] + 0.119192 * c[1] + 0.9503041 * c[2]) / 1.08883;
+  const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
+};
+/** Uma cor CIELAB como a veria cada tipo de daltonismo (mesma ordem de `SIM_DALTONISMO`). */
+export function simulaDaltonismo(lab: Lab): Lab[] {
+  const [r, g, b] = labParaLinear(lab);
+  return SIM_DALTONISMO.map(m => linearParaLab([m[0] * r + m[1] * g + m[2] * b, m[3] * r + m[4] * g + m[5] * b, m[6] * r + m[7] * g + m[8] * b]));
+}
+
+const cacheDalt = new Map<string, readonly [Lab[], Lab[]] | null>();
+/** Média e dominante do ícone nas 3 simulações de daltonismo (cache por id; sem assinatura = `null`). */
+function daltonicoDe(id: string): readonly [Lab[], Lab[]] | null {
+  let v = cacheDalt.get(id);
+  if (v === undefined) {
+    const m = ELEMENT_VISUAL[id], d = ELEMENT_DOMINANTE[id];
+    v = m && d ? [simulaDaltonismo([m[0], m[1], m[2]]), simulaDaltonismo(d)] : null;
+    cacheDalt.set(id, v);
+  }
+  return v;
+}
+
+/** Distância entre dois ícones sob daltonismo: em cada tipo vale o maior entre média e dominante (as duas leituras têm de concordar), e vale o PIOR tipo. Sem assinatura = `Infinity`. */
+export function m3DeltaEDaltonico(a: string, b: string): number {
+  const da = daltonicoDe(a), db = daltonicoDe(b);
+  if (!da || !db) return Infinity;
+  let pior = Infinity;
+  for (let s = 0; s < SIM_DALTONISMO.length; s++) pior = Math.min(pior, Math.max(ciede2000(da[0][s], db[0][s]), ciede2000(da[1][s], db[1][s])));
+  return pior;
+}
+
+/** Distância entre as paletas de dois ícones: chamfer ponderado (cada cor procura a mais próxima na outra paleta, nos dois sentidos, pelo peso). Sem paleta = `Infinity`. */
+export function m3DeltaEPaleta(a: string, b: string): number {
+  const pa = ELEMENT_PALETA[a], pb = ELEMENT_PALETA[b];
+  if (!pa || !pb) return Infinity;
+  const lado = (x: typeof pa, y: typeof pa) => {
+    let soma = 0, peso = 0;
+    for (const c of x) { soma += c[3] * Math.min(...y.map(d => ciede2000([c[0], c[1], c[2]], [d[0], d[1], d[2]]))); peso += c[3]; }
+    return soma / peso;
+  };
+  return (lado(pa, pb) + lado(pb, pa)) / 2;
+}
+
+/** RODADA 2 (REGISTRO §402): IoU mínimo de silhueta (máscara 16x16) a partir do qual dois ícones têm "forma quase igual". */
+export const M3_MAX_SILHUETA = 0.8;
+/** RODADA 2: forma quase igual só conflita se a cor também for próxima (ΔE abaixo disto): forma igual com cor bem diferente se lê fácil. */
+export const M3_COR_PROXIMA_SILHUETA = 32;
+/** RODADA 2: com luminosidade média quase igual (|ΔL| abaixo disto) o piso de silhueta cai `M3_FOLGA_SILHUETA_BRILHO`. */
+export const M3_MAX_DELTA_BRILHO = 3;
+export const M3_FOLGA_SILHUETA_BRILHO = 0.1;
+/** Quanto o piso de silhueta SOBE a cada rodada de relaxamento (acima de 1 a camada deixa de conflitar). */
+export const M3_SILHUETA_STEP = 0.02;
+
+const popcount16 = (v: number): number => { let n = 0; for (let x = v; x; x &= x - 1) n++; return n; };
+const cacheSil = new Map<string, number[] | null>();
+/** As 16 linhas (16 bits cada) da máscara do ícone, em cache; sem assinatura = `null`. */
+function mascaraDe(id: string): number[] | null {
+  let v = cacheSil.get(id);
+  if (v === undefined) {
+    const h = ELEMENT_SILHUETA[id];
+    v = h && h.length === 64 ? Array.from({ length: 16 }, (_, r) => parseInt(h.slice(r * 4, r * 4 + 4), 16)) : null;
+    cacheSil.set(id, v);
+  }
+  return v;
+}
+/** Semelhança de silhueta entre dois ícones: IoU (0 a 1) das máscaras 16x16. Sem assinatura = 0 (não trava ícone novo). */
+export function m3Silhueta(a: string, b: string): number {
+  const ma = mascaraDe(a), mb = mascaraDe(b);
+  if (!ma || !mb) return 0;
+  let inter = 0, uniao = 0;
+  for (let r = 0; r < 16; r++) { inter += popcount16(ma[r] & mb[r]); uniao += popcount16(ma[r] | mb[r]); }
+  return uniao === 0 ? 0 : inter / uniao;
+}
+/** Diferença de luminosidade média (L do CIELAB) entre dois ícones. Sem assinatura = `Infinity`. */
+export function m3DeltaBrilho(a: string, b: string): number {
+  const ma = ELEMENT_VISUAL[a], mb = ELEMENT_VISUAL[b];
+  return ma && mb ? Math.abs(ma[0] - mb[0]) : Infinity;
+}
+/** `true` se a forma é quase igual E a cor é próxima (ou, com brilho quase igual, a forma é só parecida). */
+export function m3SilhuetaConfunde(a: string, b: string, maxSilhueta: number = M3_MAX_SILHUETA): boolean {
+  if (maxSilhueta > 1) return false;
+  const de = m3DeltaE(a, b);
+  if (de >= M3_COR_PROXIMA_SILHUETA) return false;
+  const sil = m3Silhueta(a, b);
+  return sil >= maxSilhueta || (sil >= maxSilhueta - M3_FOLGA_SILHUETA_BRILHO && m3DeltaBrilho(a, b) < M3_MAX_DELTA_BRILHO);
 }
 
 /**
@@ -112,6 +221,10 @@ const PARES_POR_OLHO: ReadonlyArray<readonly [string, string]> = [
   ['chama_azul', 'tempestade_perfeita'], // chama azul e redemoinho azul com raio
   ['leveza', 'nevasca'], // pluma branca-azulada vs floco branco-azulado
   ['brisa_cintilante', 'leveza'], // duas peças claras, branco-azuladas e cintilantes
+  // Rodada 3 (REGISTRO §402), fronteira conferida a olho: mesmo motivo desenhado, passam em todas as métricas.
+  ['circulo_feerico', 'fungo'], // os dois são um cogumelo luminoso sobre fundo roxo
+  ['semente_estelar', 'tempo'], // cristal turquesa com anel/folhas
+  ['florescer', 'frenesi'], // ampulheta turquesa entre folhas
 ];
 
 /** A lista curada inteira, simétrica (cada par aparece nos dois sentidos). */
@@ -122,23 +235,36 @@ export const M3_PARES_PROIBIDOS: ReadonlySet<string> = new Set(
 /** `true` se o par está na lista curada. */
 export const m3ParProibido = (a: string, b: string): boolean => M3_PARES_PROIBIDOS.has(`${a}|${b}`);
 
-/** Resultado do sorteio: os ícones, o limiar com que fechou e se precisou relaxá-lo abaixo do `M3_MIN_DELTA_E`. */
+/** Os limiares de cada camada medida (a lista curada não tem limiar: não relaxa). */
+export interface M3Limiares { deltaE: number; paleta: number; daltonico: number; silhueta: number }
+/** Os limiares de produção. */
+export const M3_LIMIARES: Readonly<M3Limiares> = { deltaE: M3_MIN_DELTA_E, paleta: M3_MIN_DELTA_E_PALETA, daltonico: M3_MIN_DELTA_E_DALTONICO, silhueta: M3_MAX_SILHUETA };
+
+/** `true` se os dois ícones NÃO podem dividir o tabuleiro com estes limiares: par da lista curada ou abaixo de algum limiar. */
+export function m3Conflito(a: string, b: string, lim: Readonly<M3Limiares> = M3_LIMIARES): boolean {
+  return m3ParProibido(a, b) || m3DeltaE(a, b) < lim.deltaE || m3DeltaEPaleta(a, b) < lim.paleta || m3DeltaEDaltonico(a, b) < lim.daltonico || m3SilhuetaConfunde(a, b, lim.silhueta);
+}
+
+/** Resultado do sorteio: os ícones, o limiar de ΔE com que fechou e se precisou relaxar algum limiar abaixo do de produção. */
 export interface M3Sorteio { elements: string[]; limiar: number; relaxado: boolean }
 
 /**
- * Sorteio guloso com semente: percorre o `order` (já embaralhado pelo chamador, então determinístico) e aceita um ícone só se ele
- * não forma par proibido com NENHUM aceito e fica a `m3DeltaE` ≥ limiar de todos. Se não fecha `n`, baixa o limiar em
- * `M3_DELTA_E_STEP` e refaz sobre a MESMA ordem; a lista curada não relaxa. No pior caso devolve menos de `n` (pool minúsculo),
- * nunca laço infinito.
+ * Sorteio guloso com semente: percorre o `order` (já embaralhado pelo chamador, então determinístico) e aceita um ícone só se
+ * `m3Conflito` for falso com TODOS os aceitos. Se não fecha `n`, baixa TODOS os limiares medidos em `M3_DELTA_E_STEP` por rodada e
+ * refaz sobre a MESMA ordem; a lista curada não relaxa. No pior caso devolve menos de `n` (pool minúsculo), nunca laço infinito.
+ * `base` aceita só o ΔE (número, como na §400) ou um conjunto parcial de limiares.
  */
-export function pickM3Distinct(order: readonly string[], n: number, minDeltaE: number = M3_MIN_DELTA_E): M3Sorteio {
-  if (n <= 0) return { elements: [], limiar: minDeltaE, relaxado: false };
-  for (let lim = minDeltaE; ; lim = Math.max(0, lim - M3_DELTA_E_STEP)) {
+export function pickM3Distinct(order: readonly string[], n: number, base: number | Partial<M3Limiares> = M3_LIMIARES): M3Sorteio {
+  const b: M3Limiares = typeof base === 'number' ? { ...M3_LIMIARES, deltaE: base } : { ...M3_LIMIARES, ...base };
+  if (n <= 0) return { elements: [], limiar: b.deltaE, relaxado: false };
+  for (let k = 0; ; k++) {
+    const folga = k * M3_DELTA_E_STEP;
+    const lim: M3Limiares = { deltaE: Math.max(0, b.deltaE - folga), paleta: Math.max(0, b.paleta - folga), daltonico: Math.max(0, b.daltonico - folga), silhueta: b.silhueta + k * M3_SILHUETA_STEP };
     const out: string[] = [];
     for (const id of order) {
-      if (out.every(o => !m3ParProibido(o, id) && m3DeltaE(o, id) >= lim)) out.push(id);
-      if (out.length >= n) return { elements: out, limiar: lim, relaxado: lim < minDeltaE };
+      if (out.every(o => !m3Conflito(o, id, lim))) out.push(id);
+      if (out.length >= n) return { elements: out, limiar: lim.deltaE, relaxado: k > 0 };
     }
-    if (lim <= 0) return { elements: out, limiar: 0, relaxado: lim < minDeltaE };
+    if (lim.deltaE <= 0 && lim.paleta <= 0 && lim.daltonico <= 0 && lim.silhueta > 1) return { elements: out, limiar: 0, relaxado: k > 0 };
   }
 }
