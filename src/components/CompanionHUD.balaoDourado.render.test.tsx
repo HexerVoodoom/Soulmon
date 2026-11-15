@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** beta12 §G (G1, G2, G7): o balão dourado é persistente (sem timeout), é um botão nomeado pelo destino, borda dourada, alvo >= 44 px. */
+/** beta12 §G (G1, G2, G7): o balão dourado é um botão (nome = fala + destino, §383); sem `tempoMs` não some sozinho; com ele (§383) avisa o ignorado, borda dourada, alvo >= 44 px. */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
@@ -26,7 +26,7 @@ describe('balão dourado do CompanionHUD', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={dourado()} onBalaoDourado={() => {}} />);
     const b = container.querySelector('[data-pet-gold-bubble="grove"]') as HTMLButtonElement;
     expect(b.tagName).toBe('BUTTON');
-    expect(b.getAttribute('aria-label')).toBe('Abrir o Bosque');
+    expect(b.getAttribute('aria-label')).toBe('O Bosque está sendo atacado. Quer dar uma olhada? Abrir o Bosque'); // §383: fala + destino
     expect(b.style.border).toBe('2px solid var(--sm2-gold-fill)');
     expect(parseInt(b.style.minHeight, 10)).toBeGreaterThanOrEqual(44);
     expect(b.textContent).toContain('Bosque');
@@ -51,7 +51,7 @@ describe('balão dourado do CompanionHUD', () => {
   it('G3: com o Soulmon na Fenda (plaquinha), o balão aparece junto dela', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} naMasmorra balaoDourado={{ tipo: 'rift', text: 'Estou na Fenda. Quer ir até lá?', ariaLabel: 'Ir à Fenda' }} onBalaoDourado={() => {}} onSinalMasmorra={() => {}} />);
     expect(container.querySelector('[data-pet-masmorra-slot]')).not.toBeNull();
-    expect(container.querySelector('[data-pet-gold-bubble="rift"]')?.getAttribute('aria-label')).toBe('Ir à Fenda');
+    expect(container.querySelector('[data-pet-gold-bubble="rift"]')?.getAttribute('aria-label')).toBe('Estou na Fenda. Quer ir até lá? Ir à Fenda');
   });
 
   it('não cobre os botões de cuidado: a faixa é do topo do palco, fora do fluxo, e só o botão pega toque', () => {
@@ -88,9 +88,55 @@ describe('balão dourado do CompanionHUD', () => {
       expect(presa.firstChild?.textContent).toBe('olhada?');
       // é o último elemento do texto e o nome acessível segue sendo o destino
       expect(b.textContent?.startsWith('O Bosque está sendo atacado. Quer dar uma olhada?')).toBe(true);
-      expect(b.getAttribute('aria-label')).toBe('Abrir o Bosque');
+      expect(b.getAttribute('aria-label')).toBe('O Bosque está sendo atacado. Quer dar uma olhada? Abrir o Bosque'); // §383: fala + destino
     });
   }
+  describe('§383: com `tempoMs`, o balão avisa que foi ignorado depois desse tempo NA TELA', () => {
+    const comTempo = (tipo: 'grove' | 'rift' | 'achado' = 'grove') => ({ ...dourado(tipo), tempoMs: 5000 });
+    /** Monta sem `tempoMs` e espera a saudação de abertura do pet passar (ela esconde o dourado); depois liga o relógio. */
+    async function montar(tipo: 'grove' | 'rift' | 'achado', props: { onBalaoDourado?: (t: string) => void; onBalaoIgnorado: (t: string) => void }) {
+      const r = renderWithCss(<CompanionHUD {...base} balaoDourado={dourado(tipo)} onBalaoDourado={props.onBalaoDourado ?? (() => {})} onBalaoIgnorado={props.onBalaoIgnorado} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
+      expect(r.container.querySelector('[data-pet-bubble]')).toBeNull();
+      const ligar = () => r.rerender(<CompanionHUD {...base} balaoDourado={comTempo(tipo)} onBalaoDourado={props.onBalaoDourado ?? (() => {})} onBalaoIgnorado={props.onBalaoIgnorado} />);
+      ligar();
+      return { ...r, ligar };
+    }
+    it('5 s na tela sem toque → `onBalaoIgnorado(tipo)` uma vez', async () => {
+      const ign = vi.fn();
+      await montar('rift', { onBalaoIgnorado: ign });
+      await act(async () => { await vi.advanceTimersByTimeAsync(4900); });
+      expect(ign).not.toHaveBeenCalled();
+      await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+      expect(ign).toHaveBeenCalledTimes(1);
+      expect(ign).toHaveBeenCalledWith('rift');
+    });
+    it('o toque desarma o relógio: tocou = não foi ignorado', async () => {
+      const ign = vi.fn();
+      const tap = vi.fn();
+      const { container } = await montar('grove', { onBalaoDourado: tap, onBalaoIgnorado: ign });
+      await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+      fireEvent.click(container.querySelector('[data-pet-gold-bubble]') as HTMLElement);
+      await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+      expect(tap).toHaveBeenCalledWith('grove');
+      expect(ign).not.toHaveBeenCalled();
+    });
+    it('re-render com o mesmo balão não reinicia o relógio', async () => {
+      const ign = vi.fn();
+      const { ligar } = await montar('grove', { onBalaoIgnorado: ign });
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      ligar();
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      expect(ign).toHaveBeenCalledTimes(1);
+    });
+    it('sem `tempoMs` (dica dourada, que tem relógio próprio) o HUD nunca avisa ignorado', async () => {
+      const ign = vi.fn();
+      renderWithCss(<CompanionHUD {...base} balaoDourado={dourado()} onBalaoDourado={() => {}} onBalaoIgnorado={ign} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(ign).not.toHaveBeenCalled();
+    });
+  });
+
   it('o balão COMUM (fala) não tem seta', async () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(1500); });

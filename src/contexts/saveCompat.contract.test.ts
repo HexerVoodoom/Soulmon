@@ -80,6 +80,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-evo-recap-v1',
   'soulmon-barrage-best',   // nasceu depois de 20/10 (QA beta3 R2): estava na lista congelada por engano
   'soulmon-balao-dicas-vistas', // §333 (13/11/2026): cooldown dos balões de dica do Soulmon, no aparelho
+  'soulmon-balao-dourado-ignorados', // §383 (14/11/2026): sumiços sem toque do balão dourado, no aparelho
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */

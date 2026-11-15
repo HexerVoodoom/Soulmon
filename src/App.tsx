@@ -208,7 +208,8 @@ import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightm
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
-import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, type BalaoTipo } from './utils/balaoDourado';
+import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, BALAO_DOURADO_VISIVEL_MS, type BalaoTipo } from './utils/balaoDourado';
+import { useBalaoDouradoIgnorado } from './hooks/useBalaoDouradoIgnorado';
 import { useGroveEstado, bosqueDefendivel } from './hooks/useGroveAtaque';
 import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
 import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
@@ -4770,6 +4771,16 @@ export default function App() {
   }, [setGameState]);
   const dispensarBalaoRef = useRef(dispensarBalao);
   dispensarBalaoRef.current = dispensarBalao;
+  /* §383: o balão de evento some sozinho em 5 s; sumiu sem toque = 1 ignorado; no 2º do dia vira `dispensar`. Entre os dois, só
+     volta na próxima abertura da Home (ou retorno do app). */
+  const balaoIgnorado = useBalaoDouradoIgnorado({ naHome: currentView === 'home', onDispensar: dispensarBalao });
+  const ignorarBalaoDourado = balaoIgnorado.ignorar;
+  const playerDayTzBalao = gameState.playerDayTz;
+  const handleBalaoIgnorado = useCallback((tipo: BalaoTipo | DicaDouradaTipo) => {
+    if (ehDicaDourada(tipo)) return;
+    ignorarBalaoDourado(tipo, playerDayIso(new Date(), playerDayTzBalao));
+  }, [ignorarBalaoDourado, playerDayTzBalao]);
+  const balaoTipoVisivel = balaoTipo && !balaoIgnorado.oculto(balaoTipo) ? balaoTipo : null;
   /* ── BALÕES DE DICA (§333, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
      e fora da Home não entra; a comum ocupa o turno da fala ociosa do HUD. Cooldown por tipo, no aparelho (`useDicaVistas`). */
   const agoraDica = Date.now();
@@ -4807,7 +4818,7 @@ export default function App() {
     else if (a?.evento) setFeiraEvento(a.evento);
     else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
   }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
-  const balaoDouradoHud = balaoTipo ? { tipo: balaoTipo, text: balaoDouradoText(balaoTipo, language), ariaLabel: balaoDouradoAria(balaoTipo, language) }
+  const balaoDouradoHud = balaoTipoVisivel ? { tipo: balaoTipoVisivel, text: balaoDouradoText(balaoTipoVisivel, language), ariaLabel: balaoDouradoAria(balaoTipoVisivel, language), tempoMs: BALAO_DOURADO_VISIVEL_MS }
     : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
@@ -9040,6 +9051,7 @@ export default function App() {
                 naMasmorra={naMasmorra}
                 balaoDourado={balaoDouradoHud}
                 onBalaoDourado={handleBalaoDourado}
+                onBalaoIgnorado={handleBalaoIgnorado}
                 dicaFala={dicaFalaHud}
                 onDicaFalada={marcarDica}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
