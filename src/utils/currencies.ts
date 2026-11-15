@@ -262,8 +262,18 @@ export function minigameBitsToday(state: MinigameBitsState, dayKey: string): num
 }
 
 /** Quanto o minijogo ainda PODE render hoje (0 = teto do dia gasto). */
-export function remainingMinigameBits(state: MinigameBitsState, dayKey: string): number {
-  return Math.max(0, MINIGAME_BITS_PER_DAY - minigameBitsToday(state, dayKey));
+export function remainingMinigameBits(state: MinigameBitsState, dayKey: string, extraCap = 0): number {
+  return Math.max(0, minigameBitsCap(extraCap) - minigameBitsToday(state, dayKey));
+}
+
+/**
+ * Teto diário EFETIVO de quem joga a Fenda/Masmorra/Arena (§392): `MINIGAME_BITS_PER_DAY` + o `extraCap` do talento
+ * `tal-pve-04` (Agulha de bússola, +10 por grau). O teto continua UM só (a soma de todos os jogos); o extra só vale para
+ * o crédito que a Fenda pede: Dino, PPT, Salão e Ateliê seguem parando em 150 e não gastam o extra.
+ * Sempre finito e nunca abaixo da base (`extraCap` inválido ou negativo = 0).
+ */
+export function minigameBitsCap(extraCap = 0): number {
+  return MINIGAME_BITS_PER_DAY + (Number.isFinite(extraCap) && extraCap > 0 ? Math.floor(extraCap) : 0);
 }
 
 /**
@@ -272,13 +282,13 @@ export function remainingMinigameBits(state: MinigameBitsState, dayKey: string):
  * a usa para creditar e o funil do `App` a usa para dizer à tela de resultado o
  * valor creditado (o que a tela mostra = o que entrou).
  */
-export function minigameBitsGranted(already: number, amount: number): number {
+export function minigameBitsGranted(already: number, amount: number, extraCap = 0): number {
   // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
   // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
   // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
   if (typeof amount !== 'number' || Number.isNaN(amount)) return 0;
   const pedido = Math.max(0, Math.floor(amount));
-  return Math.max(0, Math.min(pedido, MINIGAME_BITS_PER_DAY - Math.max(0, already)));
+  return Math.max(0, Math.min(pedido, minigameBitsCap(extraCap) - Math.max(0, already)));
 }
 
 /**
@@ -299,8 +309,9 @@ export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState
   prev: T,
   amount: number,
   dayKey: string,
+  extraCap = 0,
 ): T {
-  const ganho = minigameBitsGranted(minigameBitsToday(prev, dayKey), amount);
+  const ganho = minigameBitsGranted(minigameBitsToday(prev, dayKey), amount, extraCap);
   if (ganho <= 0) return prev;
   // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (só contagem desde §373: o teto da troca é do servidor).
   return noteFreeBits({

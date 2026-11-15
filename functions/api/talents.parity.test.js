@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as srv from './_talents.js';
-import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, talentPveAttrBonus, isPickable, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../../src/utils/talents';
+import { TALENT_TREE, TALENT_POINTS_MAX, talentPointsFor, isValidPicks, sanitizeTalentPicks, talentBonus, talentPveAttrBonus, isPickable, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBitsCap, talentStartShield } from '../../src/utils/talents';
 import { simulatePvp } from '../../src/utils/combate/duel';
 import { bondLevelFor, xpForLevel } from '../../src/utils/bond';
 import { onRequest } from './save.js';
@@ -77,7 +77,7 @@ describe('vetores VALIDOS pelo grafo (compra em ordem) e vetores embaralhados da
       for (const sc of ['pvp', 'pve', 'nightmare']) expect(srv.talentBonus(picks, lvl, sc)).toBeCloseTo(talentBonus(picks, lvl, sc), 12);
       const sa = srv.talentAttrBonus(picks, lvl), aa = talentAttrBonus(picks, lvl);
       for (const k of ['atk', 'def', 'spd']) expect(sa[k], k).toBeCloseTo(aa[k], 12);
-      for (const [a, b] of [[srv.talentStartEnergy, talentStartEnergy], [srv.talentDotResist, talentDotResist], [srv.talentHealBoost, talentHealBoost], [srv.talentRiftBits, talentRiftBits], [srv.talentStartShield, talentStartShield]]) {
+      for (const [a, b] of [[srv.talentStartEnergy, talentStartEnergy], [srv.talentDotResist, talentDotResist], [srv.talentHealBoost, talentHealBoost], [srv.talentRiftBitsCap, talentRiftBitsCap], [srv.talentStartShield, talentStartShield]]) {
         expect(a(picks, lvl)).toBeCloseTo(b(picks, lvl), 12);
       }
     }

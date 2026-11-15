@@ -328,8 +328,8 @@ export interface DungeonAwayPlayer {
   fam: string;
   /** Id do ofício da ficha (ausente = jeito padrão). */
   prof?: string;
-  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `riftBits`: Bits a mais por ganho. */
-  sh: number; hb: number; rb: number;
+  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `rc`: Bits a mais no TETO diário da fenda (`tal-pve-04`, §392; antes `rb`, a fração por ganho, revogada). */
+  sh: number; hb: number; rc: number;
   /** Estágio de evolução (decide os sprites/chaves do bestiário dos inimigos). */
   stage: string;
 }
@@ -379,7 +379,7 @@ export function sanitizeDungeonAway(raw: unknown): DungeonAway | undefined {
     player: {
       level: Math.trunc(numIn(p.level, 1, 1, TOP_LEVEL)),
       atk: numIn(p.atk, 1, 0, 1e6), def: numIn(p.def, 1, 0, 1e6), spd: numIn(p.spd, 1, 0, 1e6), hp: numIn(p.hp, 1, 1, 1e7), bonus: numIn(p.bonus, 0, 0, 10),
-      fam: p.fam, prof, sh: numIn(p.sh, 0, 0, 1), hb: numIn(p.hb, 0, 0, 1), rb: numIn(p.rb, 0, 0, 10), stage: p.stage,
+      fam: p.fam, prof, sh: numIn(p.sh, 0, 0, 1), hb: numIn(p.hb, 0, 0, 1), rc: Math.trunc(numIn(p.rc, 0, 0, 30)), stage: p.stage,
     },
   };
 }

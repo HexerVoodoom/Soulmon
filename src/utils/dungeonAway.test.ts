@@ -24,7 +24,7 @@ function away(over: Partial<DungeonAway> = {}, stage = 'ultimate'): DungeonAway 
   const c = soulCombatant({ evolutionStage: stage });
   return {
     since: T0, seed: SEED, layer: 1, slot: 0, hp: 1, en: 0, ms: false,
-    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage },
+    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage },
     ...over,
   };
 }

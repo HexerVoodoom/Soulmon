@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Balanço: Pesadelo −25% de dano e Agulha de bússola (`fix/balanco-pesadelo-agulha`, REGISTRO §391–§392) — PR aberto, NÃO mergeado
+>
+> - **Pesadelo (§391):** o inimigo causa ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, só `nightmareFight`; Masmorra/Arena intactas). Medido: com torcida a vitória foi de ~78–93% para ~98–100% e o HP perdido de 77–88% para 59–73%; sem torcida de ~3–29% para 23–64%. Testes de calibragem do §65 rebaixados (sem torcida perde ≥ 35%, antes 70%).
+> - **Agulha de bússola (§392):** `tal-pve-04` soma +10/grau ao teto diário de Bits (150 → até 180) só para Fenda/Masmorra/Arena; o +3% no ganho foi revogado. `rb` do `dungeonAway` virou `rc`. O teto de 150 ainda não é imposto no servidor (só observação, §387).
+> - **Não verificado:** tela/aparelho; Pesadelo com testadores reais.
+
 > ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
 >
 > - **Feito:** `functions/api/_bitsOrcamento.js` mede no POST de `/api/save` o crescimento de `gamePoints` contra um token bucket na metadata do save (1.500/dia, até 15 dias, + créditos do servidor; admin isento) e grava `bitsobs:<dia>:<prefixo>` no KV (TTL 45 d, 1 por conta por dia). **Nunca corta**: o save sai intacto.
