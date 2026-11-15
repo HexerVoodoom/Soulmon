@@ -49,7 +49,7 @@ describe('buy-bits com replayOnly', () => {
     const normal = await buyBitsPack(e, ID, 'bits-500', 'op-pendente-0001', { nowMs: DIA + 1000 });
     const so = await buyBitsPack(e, ID, 'bits-500', 'op-pendente-0001', { nowMs: DIA + 2000, replayOnly: true });
     expect(so).toMatchObject({ ok: true, replay: true, bits: 500, price: 460, pack: 'bits-500' });
-    expect({ ...so, ent: undefined }).toEqual({ ...normal, ent: undefined });
+    expect({ ...so, ent: undefined }).toEqual({ ...normal, ent: undefined, resetAt: so.resetAt });
     expect((await readEntitlement(e, ID)).credits).toBe(5000 - 460);
   });
 

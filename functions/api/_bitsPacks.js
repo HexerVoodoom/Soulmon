@@ -4,7 +4,10 @@
  * Créditos são dinheiro real. Por isso o servidor é a fonte de tudo o que a troca envolve:
  *  · QUAIS pacotes existem e quantos Bits/Créditos cada um vale (`BITS_PACKS`, espelho de `src/utils/currencies.ts`,
  *    travado por `bitsPacks.parity.test.js`). O cliente manda só o `pack` (id); qualquer número que ele mande é ignorado.
- *  · O TETO de `BITS_PACK_DAILY_CAP` (1.000) Bits por DIA UTC. O dia é o do SERVIDOR (o relógio do aparelho não abre o dia).
+ *  · O TETO de `BITS_PACK_DAILY_CAP` (1.000) Bits por DIA DO JOGADOR (§386, decisão do dono 14/11/2026; era o dia UTC). O cliente
+ *    manda a âncora `playerDayTz` (`zone`/`off`); o servidor a valida (o dia dela tem de estar a ±1 do dia UTC dele) e a PRENDE na
+ *    conta (`ent.bitsTz`) por `BITS_TZ_LOCK_MS`, o mesmo padrão de `fixarTzTreino` (`_treino.js`): alternar fuso não abre dois
+ *    "dias". Quem nunca mandou fuso (cliente em cache) fica no UTC, como antes. O relógio do aparelho nunca abre o dia.
  *    O pacote só passa se couber INTEIRO no que resta (200 + 500 passam; depois disso o de 1.000 não). Recusa não debita nada.
  *  · O contador do dia mora no PRÓPRIO `ent:<saveId>` (`ent.bitsBuy = { day, bits }`) e é gravado na MESMA escrita que debita os
  *    Créditos: débito e contagem nunca se separam (um sem o outro seria cobrar sem contar, ou contar sem cobrar).
@@ -20,6 +23,7 @@
  * instante podem passar as duas, e a perda é do DONO (a última escrita debita uma vez só), nunca do jogador.
  */
 import { readEntitlement, writeEntitlement, tomarTravaDoEnt } from './_entitlements.js';
+import { playerDayOf } from './_strays.js';
 
 export const BITS_PACKS = [
   { id: 'bits-200', bits: 200, credits: 200 },
@@ -43,26 +47,106 @@ export function bitsPackById(id) {
   return BITS_PACKS.find(p => p.id === id);
 }
 
-/** Bits já comprados no dia UTC de `nowMs` (registro de outro dia = 0). */
-export function bitsBoughtToday(ent, nowMs = Date.now()) {
+/** Prazo em que a âncora de fuso da conta não troca (viagem real). O mesmo `SPAR_TZ_LOCK_MS` do Treino (travado no teste). */
+export const BITS_TZ_LOCK_MS = 24 * 3600 * 1000;
+const DAY_MS = 86_400_000;
+const MAX_OFFSET_MS = 14 * 3600 * 1000;
+/** @typedef {{ zone?: string, offsetMs?: number }} AncoraDoDia */
+/** @type {AncoraDoDia} */
+const UTC = Object.freeze({ offsetMs: 0 });
+
+/** A âncora do PEDIDO, validada: zona IANA que o runtime conhece e/ou offset de até 14 h, com o dia a ±1 do dia UTC. Inválida = null. */
+function tzValido(tz, nowMs) {
+  if (!tz || typeof tz !== 'object') return null;
+  /** @type {AncoraDoDia} */
+  const out = {};
+  if (typeof tz.zone === 'string' && tz.zone.length > 0 && tz.zone.length <= 64) {
+    try { new Intl.DateTimeFormat('en-CA', { timeZone: tz.zone }).format(new Date(nowMs)); out.zone = tz.zone; } catch { /* zona desconhecida: fica de fora */ }
+  }
+  if (typeof tz.offsetMs === 'number' && Number.isFinite(tz.offsetMs) && Math.abs(tz.offsetMs) <= MAX_OFFSET_MS) out.offsetMs = tz.offsetMs;
+  if (!out.zone && out.offsetMs === undefined) return null;
+  const dia = playerDayOf(nowMs, out);
+  if (dia !== isoDayUtc(nowMs) && dia !== isoDayUtc(nowMs - DAY_MS) && dia !== isoDayUtc(nowMs + DAY_MS)) return null;
+  return out;
+}
+
+/** A âncora GRAVADA na conta (`ent.bitsTz = { zone?, offsetMs?, at }`), ou null. */
+function ancoraGravada(ent) {
+  const a = ent?.bitsTz;
+  if (!a || typeof a !== 'object') return null;
+  /** @type {AncoraDoDia} */
+  const out = {};
+  if (typeof a.zone === 'string' && a.zone.length > 0) out.zone = a.zone;
+  if (typeof a.offsetMs === 'number' && Number.isFinite(a.offsetMs)) out.offsetMs = a.offsetMs;
+  if (!out.zone && out.offsetMs === undefined) return null;
+  return { ...out, at: Number(a.at) || 0 };
+}
+
+const semAt = (a) => ({ ...(a.zone ? { zone: a.zone } : {}), ...(a.offsetMs !== undefined ? { offsetMs: a.offsetMs } : {}) });
+
+/**
+ * A âncora que vale para uma COMPRA (e se ela precisa ser gravada). Regras de `fixarTzTreino`:
+ *  · conta sem âncora: a do pedido; pedido sem fuso PRENDE o UTC (senão o 1º fuso que chegasse depois abriria um 2º dia);
+ *  · conta ancorada: pedido sem fuso (cliente em cache) usa a gravada; fuso diferente só troca depois de `BITS_TZ_LOCK_MS`.
+ */
+export function ancoraDaCompra(ent, tzPedido, nowMs = Date.now()) {
+  const pedido = tzValido(tzPedido, nowMs);
+  const atual = ancoraGravada(ent);
+  if (!atual) return { anchor: pedido ?? UTC, gravar: true };
+  if (!pedido) return { anchor: semAt(atual), gravar: false };
+  const igual = pedido.zone === atual.zone && pedido.offsetMs === atual.offsetMs;
+  if (!igual && nowMs - atual.at >= BITS_TZ_LOCK_MS) return { anchor: pedido, gravar: true };
+  return { anchor: semAt(atual), gravar: false };
+}
+
+/** A âncora para LER (GET do entitlement, sem gravar): a gravada, senão a do pedido validada, senão UTC. */
+export function ancoraDeLeitura(ent, tzPedido, nowMs = Date.now()) {
+  const atual = ancoraGravada(ent);
+  return atual ? semAt(atual) : (tzValido(tzPedido, nowMs) ?? UTC);
+}
+
+/** O primeiro instante (ms exato) do dia SEGUINTE do jogador: quando o teto volta a abrir. */
+/** @param {number} nowMs @param {AncoraDoDia} [anchor] */
+export function bitsDayResetAt(nowMs, anchor = UTC) {
+  const hoje = playerDayOf(nowMs, anchor);
+  let lo = nowMs;
+  let hi = nowMs + 27 * 3600 * 1000; // horário de verão faz dias de 23/25 h; 27 h sempre cruza a virada
+  while (hi - lo > 1) {
+    const meio = Math.floor((lo + hi) / 2);
+    if (playerDayOf(meio, anchor) === hoje) lo = meio; else hi = meio;
+  }
+  return hi;
+}
+
+/**
+ * Bits já comprados no dia do jogador de `nowMs`. O registro novo leva o instante (`at`) e é julgado no dia da âncora atual; o de
+ * antes do §386 (só `day`, gravado em UTC) é comparado pelo texto (diferença de horas, uma vez, no dia do deploy).
+ */
+/** @param {any} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
+export function bitsBoughtToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
   const r = ent?.bitsBuy;
-  if (!r || typeof r !== 'object' || r.day !== isoDayUtc(nowMs)) return 0;
+  if (!r || typeof r !== 'object') return 0;
+  const hoje = playerDayOf(nowMs, anchor);
+  const diaDoRegistro = typeof r.at === 'number' && Number.isFinite(r.at) ? playerDayOf(r.at, anchor) : r.day;
+  if (diaDoRegistro !== hoje) return 0;
   const n = Number(r.bits);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
-export function bitsPackLeftToday(ent, nowMs = Date.now()) {
-  return Math.max(0, BITS_PACK_DAILY_CAP - bitsBoughtToday(ent, nowMs));
+/** @param {any} ent @param {number} [nowMs] @param {AncoraDoDia} [anchor] */
+export function bitsPackLeftToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
+  return Math.max(0, BITS_PACK_DAILY_CAP - bitsBoughtToday(ent, nowMs, anchor));
 }
 
 /**
  * Compra um pacote de Bits com Créditos.
- * @param {{ admin?: boolean, nowMs?: number, replayOnly?: boolean }} [opts] admin não debita nem conta (padrão de `spend`/`buy-essence`).
+ * @param {{ admin?: boolean, nowMs?: number, replayOnly?: boolean, tz?: { zone?: string, offsetMs?: number } }} [opts] admin não debita nem conta (padrão de `spend`/`buy-essence`).
  *   `replayOnly` (§386, aditivo): só devolve o replay de um pedido JÁ atendido; pedido desconhecido responde `409 no-op` sem comprar.
  *   É o que o app usa ao reabrir com um opId pendente: a rede caiu depois do débito e o botão do pacote já não está ao alcance.
  * @returns {Promise<
- *   | { ok: true, status: 200, pack: string, bits: number, price: number, leftToday: number, ent: any, replay?: boolean }
- *   | { ok: false, status: number, reason: 'bad-op'|'unknown-pack'|'daily-cap'|'insufficient'|'busy'|'no-op', leftToday?: number }>}
+ *   | { ok: true, status: 200, pack: string, bits: number, price: number, leftToday: number, resetAt: number, ent: any, replay?: boolean }
+ *   | { ok: false, status: number, reason: 'bad-op'|'unknown-pack'|'daily-cap'|'insufficient'|'busy'|'no-op', leftToday?: number, resetAt?: number }>}
+ *   `tz` (§386): a âncora do dia do jogador vinda do pedido (`zone`/`off`); `resetAt` = quando o teto volta a abrir.
  */
 export async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
   const admin = opts.admin === true;
@@ -76,25 +160,28 @@ export async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
   if (!lock.ok) return { ok: false, status: 409, reason: 'busy' };
   try {
     const ent = await readEntitlement(env, saveId);
+    const { anchor, gravar } = ancoraDaCompra(ent, opts.tz, nowMs);
+    const resetAt = bitsDayResetAt(nowMs, anchor);
     const ops = Array.isArray(ent.bitsBuyOps) ? ent.bitsBuyOps.filter(o => o && typeof o === 'object') : [];
     const feito = ops.find(o => o.op === opId);
     if (feito) {
       // Repetição do MESMO pedido: o pacote que ele comprou, sem cobrar e sem reconferir (saldo e teto já mudaram por causa dele).
       const p = bitsPackById(feito.pack) ?? pack;
-      if (p) return { ok: true, status: 200, pack: p.id, bits: p.bits, price: p.credits, leftToday: bitsPackLeftToday(ent, nowMs), ent, replay: true };
+      if (p) return { ok: true, status: 200, pack: p.id, bits: p.bits, price: p.credits, leftToday: bitsPackLeftToday(ent, nowMs, anchor), resetAt, ent, replay: true };
     }
+    const left = bitsPackLeftToday(ent, nowMs, anchor);
     // Pedido que o servidor nunca atendeu: com `replayOnly` nada é comprado (o pendente do app fecha sem cobrança).
-    if (replayOnly || !pack) return { ok: false, status: 409, reason: 'no-op', leftToday: bitsPackLeftToday(ent, nowMs) };
-    const left = bitsPackLeftToday(ent, nowMs);
-    if (!admin && pack.bits > left) return { ok: false, status: 409, reason: 'daily-cap', leftToday: left };
+    if (replayOnly || !pack) return { ok: false, status: 409, reason: 'no-op', leftToday: left, resetAt };
+    if (!admin && pack.bits > left) return { ok: false, status: 409, reason: 'daily-cap', leftToday: left, resetAt };
     if (!admin) {
-      if (!(Number(ent.credits) >= pack.credits)) return { ok: false, status: 402, reason: 'insufficient', leftToday: left };
+      if (!(Number(ent.credits) >= pack.credits)) return { ok: false, status: 402, reason: 'insufficient', leftToday: left, resetAt };
       ent.credits -= pack.credits;
-      ent.bitsBuy = { day: isoDayUtc(nowMs), bits: bitsBoughtToday(ent, nowMs) + pack.bits };
+      ent.bitsBuy = { day: playerDayOf(nowMs, anchor), bits: bitsBoughtToday(ent, nowMs, anchor) + pack.bits, at: nowMs };
+      if (gravar) ent.bitsTz = { ...anchor, at: nowMs };
       ent.bitsBuyOps = [...ops, { op: opId, pack: pack.id }].slice(-OPS_MAX);
       await writeEntitlement(env, saveId, ent);
     }
-    return { ok: true, status: 200, pack: pack.id, bits: pack.bits, price: admin ? 0 : pack.credits, leftToday: admin ? left : left - pack.bits, ent };
+    return { ok: true, status: 200, pack: pack.id, bits: pack.bits, price: admin ? 0 : pack.credits, leftToday: admin ? left : left - pack.bits, resetAt, ent };
   } finally {
     await lock.release();
   }

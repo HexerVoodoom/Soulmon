@@ -173,7 +173,7 @@ describe('rota /api/entitlements — buy-bits e o cliente antigo', () => {
     await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-1000', opId: 'op-rota-0002' }), env: e });
     const cap = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-200', opId: 'op-rota-0003' }), env: e });
     expect(cap.status).toBe(409);
-    expect(await cap.json()).toEqual({ ok: false, reason: 'daily-cap', leftToday: 0 });
+    expect(await cap.json()).toEqual({ ok: false, reason: 'daily-cap', leftToday: 0, bitsLeftToday: 0, bitsResetAt: expect.any(Number) }); // §386: campos aditivos
     const pobre = fakeEnv({ credits: 10 });
     const r = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-200', opId: 'op-rota-0004' }), env: pobre });
     expect(r.status).toBe(402);
