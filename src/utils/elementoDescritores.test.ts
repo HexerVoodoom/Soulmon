@@ -31,16 +31,16 @@ describe('elemento efetivo em TODO prompt', () => {
   it('poção simples COM prompt-fonte (Marcial, Morte): tema + pistas de forma e paleta', () => {
     const m = gen('marcial', 'sombra').imagePrompt;
     expect(m).toContain('Elemental theme of this form: Martial.');
-    expect(m).toContain('Visual cues of this element: crossed blades and cord, steel grey and deep red palette.');
+    expect(m).toContain('Visual cues of this element: one large sword, steel grey and deep red palette.');
     const d = gen('morte', 'sombra').imagePrompt;
     expect(d).toContain('Elemental theme of this form: Death.');
-    expect(d).toContain('bleached branches and pale moths');
+    expect(d).toContain('a pale antler crown');
   });
   it('combinado: esquema do PRÓPRIO elemento (kit) + um traço dos componentes (70/30); Sabá = arcano+sombra+vileza', () => {
     expect(gen('armaria', 'sombra').imagePrompt).toContain('forged blades and anvil sparks');
     const s = gen('sabbat', 'sombra').imagePrompt;
     expect(s).toContain('Elemental theme of this form: Sabbath, with arcano as its main element.');
-    expect(s).toContain('ring of candles around rune, with hints of orbiting violet glyphs, curling black smoke, barbed thorns');
+    expect(s).toContain('ring of candles around rune, with hints of a large violet rune circle, curling black smoke, barbed thorns');
     expect(s).toContain('royal violet, ink black, sickly green accents');
     expect(chromaDoPrompt(s)).not.toBe('magenta'); // violeta fica entre azul e magenta: fundo magenta/azul comeria o corpo (#749)
   });
@@ -194,9 +194,36 @@ describe('descritores autorais (REGISTRO §407)', () => {
   it('determinismo: o mesmo elemento gera o mesmo prompt duas vezes', () => {
     for (const id of REESCRITOS) expect(gen(id, 'sombra').imagePrompt, id).toBe(gen(id, 'sombra').imagePrompt);
   });
-  it('os outros 183 elementos ficam byte a byte iguais ao estado anterior (hash do conteúdo)', () => {
+  it('os outros 183 elementos: hash do conteúdo (REGISTRO §408 trocou as pistas fracas em 112 deles; antes de §408 o hash era 909d77b1…)', () => {
     const resto = Object.keys(DESCRITORES_ELEMENTO).filter(i => !REESCRITOS.includes(i)).sort();
     const h = createHash('sha256').update(JSON.stringify(resto.map(i => [i, DESCRITORES_ELEMENTO[i]]))).digest('hex');
-    expect([resto.length, h]).toEqual([183, '909d77b1f1e8360d185a7b88870144558bd1dc36ca108ecc01081c37224c39c7']);
+    expect([resto.length, h]).toEqual([183, '0c25ed7dcfce2843fad24d4c697fd4c1c6894de329e183782c95a6ed4f7565a3']);
+  });
+});
+
+/**
+ * REGISTRO §408 (15/11/2026): 6 amostras de criaturas no Higgsfield mostraram que pista de TEXTURA ou OBJETO PEQUENO não aparece (barro rachado, contas
+ * em cordão, lâminas cruzadas, estrelas caindo, ondas sonoras); o que aparece é FORMA GRANDE ou COR FORTE. As pistas fracas foram trocadas por formas grandes.
+ */
+describe('pistas fortes (REGISTRO §408)', () => {
+  const FRACAS = /cracked clay|amber beads|crossed blades|falling stars|sound waves|sound-waves|tiny stones|bleached branches|orbiting violet glyphs|thin orbit lines|rolling sound/;
+  it('nenhuma forma de nenhum dos 269 descritores contém uma pista fraca medida', () => {
+    for (const [id, d] of Object.entries(DESCRITORES_ELEMENTO)) expect(d.forma ?? '', id).not.toMatch(FRACAS);
+  });
+  it('as palavras-chave de PALAVRA_CHAVE_BASE são formas grandes (e nenhuma é a pista fraca)', () => {
+    for (const k of Object.values(PALAVRA_CHAVE_BASE)) expect(k, k).not.toMatch(FRACAS);
+    expect(PALAVRA_CHAVE_BASE).toMatchObject({ terra: 'boulder shoulder', marcial: 'sword', vigor: 'amber collar', som: 'concentric rings', espaco: 'band of stars', morte: 'antler crown', arcano: 'rune circle', gravidade: 'large orbiting stone' });
+  });
+  it('teto de 260 caracteres vale para os 269 (não só os 86), e toda pista tem no máximo UM motivo de tempo', () => {
+    for (const id of Object.keys(DESCRITORES_ELEMENTO)) expect((pistasVisuaisDoElemento(id) ?? '').length, id).toBeLessThanOrEqual(TETO_PISTAS);
+  });
+  it('trios e quartetos: a pista de forma grande das bases fracas vem ANTES das demais na lista de "hints of"', () => {
+    const GRANDES = ['boulder shoulder', 'sword', 'amber collar', 'concentric rings', 'band of stars', 'antler crown', 'rune circle', 'large orbiting stone'];
+    for (const id of ESSENCE_ELEMENT_IDS) {
+      if ((essenceComposition(id)?.length ?? 0) < 3) continue;
+      const hints = (DESCRITORES_ELEMENTO[id].forma ?? '').split(', with hints of ')[1]?.split(', ') ?? [];
+      const ehGrande = hints.map(h => GRANDES.some(g => h.includes(g)));
+      expect(ehGrande.join(), id).not.toMatch(/false,true/);
+    }
   });
 });
