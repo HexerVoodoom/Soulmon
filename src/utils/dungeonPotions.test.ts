@@ -15,9 +15,9 @@ import type { DungeonAway } from './dungeonIdle';
 const H = HEART_ITEM_EMOJI;
 const T0 = Date.UTC(2026, 9, 11, 15, 0, 0);
 const HORA = 3_600_000;
-const fraca = { since: T0, seed: 1, layer: 1, slot: 0, hp: 1, en: 0, ms: false, player: { level: 1, atk: 1, def: 1, spd: 1, hp: 1, bonus: 0, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: 'rookie' } } as DungeonAway;
+const fraca = { since: T0, seed: 1, layer: 1, slot: 0, hp: 1, en: 0, ms: false, player: { level: 1, atk: 1, def: 1, spd: 1, hp: 1, bonus: 0, fam: 'direct', sh: 0, hb: 0, rc: 0, stage: 'rookie' } } as DungeonAway;
 const c = soulCombatant({ evolutionStage: 'ultimate' });
-const forte: DungeonAway = { ...fraca, player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: 'ultimate' } };
+const forte: DungeonAway = { ...fraca, player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage: 'ultimate' } };
 const st = (over: Record<string, unknown> = {}) => ({ foodInventory: { [H]: 20 }, dungeonAway: fraca, gamePoints: 0, energyPoints: 6, totalXP: 5_000_000, ...over }) as unknown as GameState;
 const total = (s: GameState) => (s.foodInventory[H] ?? 0) + (s.dungeonPotions?.[H] ?? 0);
 

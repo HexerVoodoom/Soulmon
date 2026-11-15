@@ -12,8 +12,8 @@ vi.setConfig({ testTimeout: 300_000 });
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  TALENT_BY_ID, isPickable, isValidPicks, talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield,
-  START_ENERGY_MAX, DOT_RESIST_MAX, HEAL_BOOST_MAX, RIFT_BITS_MAX, START_SHIELD_MAX,
+  TALENT_BY_ID, isPickable, isValidPicks, talentAttrBonus, talentPveAttrBonus, talentBonus, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBitsCap, talentStartShield,
+  START_ENERGY_MAX, DOT_RESIST_MAX, HEAL_BOOST_MAX, RIFT_BITS_CAP_MAX, START_SHIELD_MAX,
 } from './talents';
 import { combinedAttrBonus, combinedBonus, COMBAT_BONUS_CAP } from './combate/bonus';
 import { fight } from './combate/fight';
@@ -23,7 +23,7 @@ import { combatantAt, REFERENCE_BUILDS, RULER_LEVELS } from './combate/level';
 import { specialOf, cleanStartEnergy, cleanDotResist, cleanStartShield, SPECIAL_POWER } from './combate/specials';
 import { simulateDungeonRunV3 } from './dungeonFight';
 import { REFERENCE_BUILD_NAMES } from './combate/level';
-import { riftBitsWith } from '../contexts/useTalentBonus';
+import { minigameBitsCap, minigameBitsGranted, remainingMinigameBits, creditMinigameBits, type MinigameBitsState } from './currencies';
 import { dungeonAttrBonus } from './equipment';
 
 const rep = (id: string, n: number) => Array<string>(n).fill(id);
@@ -84,9 +84,10 @@ describe('os helpers: valor, teto, inválido = 0', () => {
   });
   it('a Fenda: cura, Bits e escudo', () => {
     expect(talentHealBoost([...PVE, ...rep('tal-pve-03', 2)], 20)).toBeCloseTo(HEAL_BOOST_MAX, 12);
-    expect(talentRiftBits([...PVE, 'tal-pve-04', 'tal-pve-04', 'tal-pve-04'], 20)).toBeCloseTo(RIFT_BITS_MAX, 12);
+    expect(talentRiftBitsCap([...PVE, 'tal-pve-04', 'tal-pve-04', 'tal-pve-04'], 20)).toBe(RIFT_BITS_CAP_MAX);
+    expect(talentRiftBitsCap([...PVE, 'tal-pve-04'], 20)).toBe(10); expect(talentRiftBitsCap([...PVE, 'tal-pve-04', 'tal-pve-04'], 20)).toBe(20);
     expect(talentStartShield([...PVE, 'tal-pve-05', 'tal-pve-06', 'tal-pve-07'], 20)).toBeCloseTo(START_SHIELD_MAX, 12);
-    for (const f of [talentHealBoost, talentRiftBits, talentStartShield, talentStartEnergy, talentDotResist]) {
+    for (const f of [talentHealBoost, talentRiftBitsCap, talentStartShield, talentStartEnergy, talentDotResist]) {
       expect(f(null, 20)).toBe(0); expect(f('x', 20)).toBe(0); expect(f(['lixo'], 20)).toBe(0);
     }
   });
@@ -95,9 +96,17 @@ describe('os helpers: valor, teto, inválido = 0', () => {
     expect(cleanDotResist(5)).toBe(DOT_RESIST_MAX); expect(cleanDotResist('x')).toBe(0);
     expect(cleanStartShield(1)).toBe(START_SHIELD_MAX); expect(cleanStartShield(-1)).toBe(0);
   });
-  it('Bits da fenda: nunca menos que a base, extra arredondado para baixo', () => {
-    expect(riftBitsWith(100, 0)).toBe(100); expect(riftBitsWith(100, 0.09)).toBe(109); expect(riftBitsWith(7, 0.09)).toBe(7);
-    expect(riftBitsWith(0, 0.09)).toBe(0); expect(riftBitsWith(50, -1)).toBe(50);
+  it('Agulha de bússola (§393): o extra eleva o TETO só de quem pede; o ganho por luta não muda e a base nunca diminui', () => {
+    expect(minigameBitsCap(0)).toBe(150); expect(minigameBitsCap(30)).toBe(180); expect(minigameBitsCap(-5)).toBe(150); expect(minigameBitsCap(NaN)).toBe(150);
+    expect(minigameBitsGranted(140, 25)).toBe(10); // sem o talento: para em 150
+    expect(minigameBitsGranted(140, 25, 10)).toBe(20); // grau 1: 160
+    expect(minigameBitsGranted(150, 25, 30)).toBe(25); // grau 3: ainda cabem 30
+    expect(minigameBitsGranted(170, 25, 30)).toBe(10); // e para em 180
+    expect(minigameBitsGranted(20, 25, 30)).toBe(25); // longe do teto o ganho é o mesmo (sem multiplicador)
+    expect(remainingMinigameBits({}, 'd', 30)).toBe(180);
+    const a = creditMinigameBits({ gamePoints: 0 }, 400, 'd'); expect(a.gamePoints).toBe(150); // outros jogos: teto base
+    const b = creditMinigameBits<MinigameBitsState & { gamePoints: number }>({ gamePoints: 0 }, 400, 'd', 20); expect(b.gamePoints).toBe(170); expect(b.minigameBits?.earned).toBe(170);
+    const c = creditMinigameBits(b, 50, 'd'); expect(c).toBe(b); // um jogo sem o extra não gasta o que passou de 150
   });
 });
 

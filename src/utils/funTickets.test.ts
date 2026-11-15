@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  FUN_TICKET_BATCH, FUN_TICKET_MAX, FUN_TICKET_TTL_MS, sanitizeFunTickets, ticketCount, nextExpiryMs,
+  FUN_TICKET_BATCH, FUN_TICKET_MAX, FUN_TICKET_PER_ROUND, FUN_TICKET_TTL_MS, sanitizeFunTickets, ticketCount, nextExpiryMs,
   funTicketStatus, buyFunTickets, startFunRound, type FunTicketState,
 } from './funTickets';
 
@@ -81,5 +81,11 @@ describe('tickets dos minijogos', () => {
     for (const x of [null, 3, 'x', [], {}, { batches: 'a' }]) expect(sanitizeFunTickets(x)).toBeUndefined();
     expect(sanitizeFunTickets({ batches: [{ at: 5, left: 99 }, { at: 'x', left: 1 }, { at: 3, left: 0 }, null, { at: 1, left: 2.9 }] }))
       .toEqual({ batches: [{ at: 1, left: 2 }, { at: 3, left: 0 }, { at: 5, left: 3 }] });
+  });
+
+  it('uma partida gasta exatamente FUN_TICKET_PER_ROUND (o número do "x1" do modal de compra)', () => {
+    const s = com({ at: NOW - 1000, left: 3 });
+    expect(ticketCount(s, NOW) - ticketCount(startFunRound(s, NOW), NOW)).toBe(FUN_TICKET_PER_ROUND);
+    expect(FUN_TICKET_PER_ROUND).toBe(1);
   });
 });

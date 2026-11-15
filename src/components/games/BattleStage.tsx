@@ -26,7 +26,7 @@
  * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
 import { elementIcon } from '../../utils/elementIconArt';
-import { EstagioIcone, caminhoDaForma } from '../ui/EstagioIcone';
+import { EstagioIcone } from '../ui/EstagioIcone';
 import { formStageLabel } from '../../utils/libraryForms';
 
 /** O rótulo do ícone de estágio da plaquinha; sem forma (ovo, tier de bicho selvagem) não há ícone nem rótulo. */
@@ -342,7 +342,7 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
         <span style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           {/* QA r4: nome acessível = estágio + caminho ("Apotheosis · Power"), pelo dono único `formStageLabel`; antes era aria-hidden e o
               vizinho só dizia o nome do lutador. Sem mudança visual. */}
-          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} caminho={caminhoDaForma(fighter.stageIcon ?? fighter.stage)} label={estagioRotulo(fighter.stageIcon ?? fighter.stage, isPt)} />
+          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} label={estagioRotulo(fighter.stageIcon ?? fighter.stage, isPt)} />
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fighter.name}</span>
         </span>
         {numeric && (

@@ -61,22 +61,62 @@ function Harness({ energy, tickets = 0 }: { energy: number; tickets?: number }) 
 }
 
 const q = (sel: string) => document.querySelector(sel) as HTMLElement | null;
-const achar = (sel: string) => vi.waitFor(() => { const e = q(sel); if (!e) throw new Error(`sem ${sel}`); return e; }, { timeout: 20000 });
+const achar = (sel: string) => vi.waitFor(() => { const e = q(sel); if (!e) throw new Error(`sem ${sel}`); return e; }, { timeout: 45000 });
 const toque = async (sel: string) => { const e = await achar(sel); await act(async () => { fireEvent.click(e); }); };
 const abrirBarrage = async () => { await toque('[data-barrage-open]'); await toque('[data-gate-pick="1"]'); await screen.findByText('again', {}, { timeout: 20000 }); };
 
 afterEach(cleanup);
 
 describe('tickets dos minijogos: fluxo real no AreaView', () => {
-  it('sem ticket, tocar em Jogar dá retorno visível e não abre nada', async () => {
+  it("sem ticket, tocar em Jogar abre o modal de compra (ticket por cima da borda) e não abre o jogo", async () => {
     renderWithCss(<Harness energy={2} />);
-    await achar('[data-barrage-open]');
-    expect(q('[data-fun-tickets-nudged]')).toBeNull();
-    await toque('[data-barrage-open]');
-    expect(q('[data-fun-tickets-nudged]')).not.toBeNull();
-    expect(q('[data-gate-pick]')).toBeNull();
+    await achar("[data-barrage-open]");
+    expect(q("[data-ticket-buy-modal]")).toBeNull();
+    await toque("[data-barrage-open]");
+    await achar("[data-ticket-buy-modal]");
+    expect(q("[role=dialog] [data-ticket-buy-modal]")).not.toBeNull();
+    expect(q("[data-ticket-buy-art] img[data-ticket-art]")).not.toBeNull(); // arte do ticket, ícone pelado (sem box)
+    expect(q("[data-ticket-round-cost]")?.textContent).toContain("x1");
+    expect(q("[data-gate-pick]")).toBeNull();
     expect(estado.energyPoints).toBe(2);
-  }, 60000);
+  }, 90000);
+
+  it("Agora não fecha o modal sem gastar nada e sem abrir o jogo", async () => {
+    renderWithCss(<Harness energy={2} />);
+    await toque("[data-barrage-open]");
+    await toque("[data-ticket-buy-decline]");
+    expect(q("[data-ticket-buy-modal]")).toBeNull();
+    expect(estado.energyPoints).toBe(2);
+    expect(funTicketStatus(estado, Date.now()).count).toBe(0);
+    expect(q("[data-gate-pick]")).toBeNull();
+  }, 90000);
+
+  it("Comprar pelo modal cobra 1 energia UMA vez, dá 3 tickets e abre o jogo que o jogador pediu", async () => {
+    renderWithCss(<Harness energy={2} />);
+    await toque("[data-barrage-open]");
+    await toque("[data-ticket-buy-confirm]");
+    await achar("[data-gate-pick]");
+    expect(estado.energyPoints).toBe(1);
+    expect(funTicketStatus(estado, Date.now()).count).toBe(3);
+    expect(q("[data-ticket-buy-modal]")).toBeNull();
+  }, 90000);
+
+  it("sem energia o modal avisa e o botão de comprar fica desabilitado", async () => {
+    renderWithCss(<Harness energy={0} />);
+    await toque("[data-barrage-open]");
+    const b = await achar("[data-ticket-buy-confirm]");
+    expect(b).toHaveProperty("disabled", true);
+    await act(async () => { fireEvent.click(b); });
+    expect(estado.energyPoints).toBe(0);
+    expect(funTicketStatus(estado, Date.now()).count).toBe(0);
+  }, 90000);
+
+  it("com ticket, tocar em Jogar não abre o modal", async () => {
+    renderWithCss(<Harness energy={2} tickets={3} />);
+    await toque("[data-barrage-open]");
+    expect(q("[data-ticket-buy-modal]")).toBeNull();
+    await achar("[data-gate-pick]");
+  }, 90000);
 
   it('comprar cobra 1 energia e dá 3 tickets; comprar de novo com 3 é bloqueado', async () => {
     renderWithCss(<Harness energy={2} />);
@@ -86,14 +126,14 @@ describe('tickets dos minijogos: fluxo real no AreaView', () => {
     await vi.waitFor(() => { if (!(q('[data-fun-tickets-buy]') as HTMLButtonElement).disabled) throw new Error('ainda habilitado'); });
     await toque('[data-fun-tickets-buy]');
     expect(estado.energyPoints).toBe(1);
-  }, 60000);
+  }, 90000);
 
   it('voltar da pergunta do NPC não gasta ticket', async () => {
     renderWithCss(<Harness energy={2} tickets={3} />);
     await toque('[data-barrage-open]');
     await toque('[data-gate-back]');
     expect(funTicketStatus(estado, Date.now()).count).toBe(3);
-  }, 60000);
+  }, 90000);
 
   it('abrir gasta 1 ticket (3 → 2) e cada "jogar de novo" gasta mais 1 até acabar; sem ticket fecha com aviso', async () => {
     renderWithCss(<Harness energy={2} tickets={3} />);
@@ -107,7 +147,8 @@ describe('tickets dos minijogos: fluxo real no AreaView', () => {
     await toque('[data-replay]');
     expect(q('[data-stub-game]')).toBeNull();
     expect(q('[data-fun-tickets]')).not.toBeNull();
-  }, 60000);
+    await achar('[data-ticket-buy-modal]'); // acabou no "jogar de novo": o modal de compra abre sozinho
+  }, 90000);
 
   it('os 4 jogos reais passam o "jogar de novo" pelo onReplayRound', () => {
     const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8');

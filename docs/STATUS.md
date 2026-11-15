@@ -6,12 +6,27 @@
 > - **Dono respondeu (15/11, modal):** prato semanal ENTRA no sorteio (como está; 3/13, lista da semana pode mudar uma vez); composto libera só o composto; 3 Emblemas só do prato do Restaurante; convite ok.
 > - **Ajustes pós-resposta:** retroativo (Soulmon já evoluído com elemento fora do dex ganha desbloqueio + modal na próxima abertura, uma vez, no máximo 1 elemento) e luta que desbloqueia espera a Home para abrir o modal.
 > - **Não visto em tela:** sem build; layout 360 px e carrossel só em jsdom.
+> ## 15/11/2026 — Sem ticket de minijogo abre o modal de compra (`feat/minigame-sem-ticket-modal`, REGISTRO §395) — PR aberto, NÃO mergeado
+>
+> - **Feito:** jogar sem ticket (ou ficar sem no "jogar de novo") abre o `TicketBuyModal` com o ticket metade dentro, metade fora da borda; Comprar (1 energia = 3 tickets) ou Agora não; mostra "Cada partida gasta x1" (`FUN_TICKET_PER_ROUND`). Aviso vermelho do painel retirado.
+> - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
+> - **Não visto em tela:** sem build; só testes de render em jsdom.
 
 > ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
 > - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
 > - **Fora:** ouro (arte sendo refeita), cristal (em geração) e a Serpente da Feira (P6 em aberto; o teste de paridade do servidor ignora `hon-*`).
 > - **Não visto em tela:** sem build; a aba Honra ficou com 65 itens numa lista só (seções/filtro por espaço seguem pendentes, é desenho de tela). Folha de contato dos PNGs finais em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato.png`.
+
+> ## 15/11/2026 — Ícone de estágio colorido em todo o app (`feat/icone-estagio-cor-todos`, REGISTRO §394) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `CAMINHO_SEM_COR` (creme `#fff1d6`) ao lado de `CAMINHO_COR`; `EstagioIcone` sempre tinge e deriva o caminho do id (sem `<img>` cru); guard de fonte garante um único renderizador. Ícone de tipo já era colorido, não mudou.
+> - **Não visto em tela:** sem build; só jsdom e prancha de contato em `E:\Soulmon-assets\_prints-estagio-cor	odos.png`. Conferir no aparelho plaquinha de combate (claro/escuro), nós da Evolução e Torneio.
+> ## 15/11/2026 — Balanço: Pesadelo −25% de dano e Agulha de bússola (`fix/balanco-pesadelo-agulha`, REGISTRO §392–§393) — PR aberto, NÃO mergeado
+>
+> - **Pesadelo (§392):** o inimigo causa ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, só `nightmareFight`; Masmorra/Arena intactas). Medido: com torcida a vitória foi de ~78–93% para ~98–100% e o HP perdido de 77–88% para 59–73%; sem torcida de ~3–29% para 23–64%. Testes de calibragem do §65 rebaixados (sem torcida perde ≥ 35%, antes 70%).
+> - **Agulha de bússola (§393):** `tal-pve-04` soma +10/grau ao teto diário de Bits (150 → até 180) só para Fenda/Masmorra/Arena; o +3% no ganho foi revogado. `rb` do `dungeonAway` virou `rc`. O teto de 150 ainda não é imposto no servidor (só observação, §387).
+> - **Não verificado:** tela/aparelho; Pesadelo com testadores reais.
 
 > ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
 >

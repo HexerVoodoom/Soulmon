@@ -770,6 +770,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/games/ResultExtrasContext.ts`
 **Dono de:** o contexto que leva os extras do resultado (`utils/resultExtras.ts`) do `App` até o `ResultScreen` sem prop-drilling. Sem Provider = sem extras.
 **Exports:** `ResultExtrasContext` · `useResultExtras()`.
+
+### `src/components/games/RiftResultExtras.tsx`
+
+Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fenda/Masmorra/Arena (150 + o extra da Agulha de bússola, `tal-pve-04`, REGISTRO §393). Só envolve a `ResultScreen` dessas três telas; os outros jogos seguem no teto base.
+
+**Exports:** `RiftResultExtras({ extraCap, children })`.
 **Quem chama:** `App.tsx` (Provider) e `ResultScreen`.
 ### `src/components/games/TorcidaKit.tsx`
 **Dono de:** as peças de TELA da torcida (02/10/2026, decisão do dono; mascote em 04/10/2026): tocar em qualquer lugar da luta (ou no mascote) enche a BARRA DE CHEER, que despeja energia no pet. Só desenha e repassa o toque; a regra mora em `src/utils/energia.ts` (PvE) e em `functions/api/_duel.js` (duelo).
@@ -1596,11 +1602,11 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** `src/components/ui/EstagioMarca.test.tsx`.
 
 ### `src/components/ui/EstagioIcone.tsx`
-**Dono de:** o ícone de ESTÁGIO (rookie, champion, ultimate, mega, ultra) antes do nome — placa de HP/especial do `BattleStage` e nós do Centro de Evolução (09/11/2026, REGISTRO §259). Bebê/ovo e id desconhecido não renderizam nada. **Cor do caminho (14/11/2026, REGISTRO §369):** com `caminho`, o ícone é tingido em `CAMINHO_COR` (`types/attributes.ts`: Poder `#4cd964` verde, Harmonia `#4aa3ff` azul, Benevolência `#ffd23f` amarelo) por UMA técnica: o PNG do set atual vira `mask-image` e a cor entra como `background-color` (`span[data-estagio-tinta]` dentro de `span[data-estagio-icone][data-estagio-caminho]`), com contorno escuro fino (`drop-shadow` 0,6 px em `ATTR_ON_FILL_INK` no invólucro) para o amarelo não sumir na plaquinha clara. Sem `caminho` (rookie, ultra, tier de inimigo sem ramo): o `<img>` neutro de sempre. `caminhoDaForma(forma)` só lê o ramo que o id já tem (`getStageBranch`), nunca inventa. Aparece tingido nas plaquinhas de TODAS as telas de combate (Arena, Masmorra, Fenda/Rogue, Pesadelo, Bosque, Duelo PvP: jogador sempre que a forma tem caminho; oponente quando o `stage` dele tem), nos nós da Evolução (pelo galho do nó) e no Torneio (`EstagioMarca`).
-**Props principais:** `forma` (id da forma ou nível), `size?`, `label?`, `style?`, `caminho?` (`'power' | 'harmony' | 'benevolence'`).
+**Dono de:** o ícone de ESTÁGIO (rookie, champion, ultimate, mega, ultra) antes do nome — placa de HP/especial do `BattleStage` e nós do Centro de Evolução (09/11/2026, REGISTRO §259). Bebê/ovo e id desconhecido não renderizam nada. **Cor do caminho (14/11/2026, REGISTRO §369):** com `caminho`, o ícone é tingido em `CAMINHO_COR` (`types/attributes.ts`: Poder `#4cd964` verde, Harmonia `#4aa3ff` azul, Benevolência `#ffd23f` amarelo) por UMA técnica: o PNG do set atual vira `mask-image` e a cor entra como `background-color` (`span[data-estagio-tinta]` dentro de `span[data-estagio-icone][data-estagio-caminho]`), com contorno escuro fino (`drop-shadow` 0,6 px em `ATTR_ON_FILL_INK` no invólucro) para o amarelo não sumir na plaquinha clara. Sem caminho (rookie, ultra, tier de inimigo sem ramo, formas legadas): creme `CAMINHO_SEM_COR` (`#fff1d6`, §394, 15/11/2026), pela mesma máscara; não existe mais o `<img>` neutro, e o componente deriva o caminho do id da forma sozinho. `caminhoDaForma(forma)` só lê o ramo que o id já tem (`getStageBranch`), nunca inventa. Aparece tingido nas plaquinhas de TODAS as telas de combate (Arena, Masmorra, Fenda/Rogue, Pesadelo, Bosque, Duelo PvP: jogador sempre que a forma tem caminho; oponente quando o `stage` dele tem), nos nós da Evolução (pelo galho do nó) e no Torneio (`EstagioMarca`).
+**Props principais:** `forma` (id da forma ou nível), `size?`, `label?`, `style?`, `caminho?` (`'power' | 'harmony' | 'benevolence' | null`; omitido = derivado do id; `null` = creme).
 **Exports:** `EstagioIcone`, `caminhoDaForma`, tipo `EstagioCaminho`.
 **Chamado por:** `src/components/games/BattleStage.tsx`, `src/components/EvolutionPath.tsx`, `src/components/ui/EstagioMarca.tsx`.
-**Régua:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/games/BattleStage.estagio.test.tsx`, `EvolutionPath.arvore.render.test.tsx`; a arte e o set (`creme`/`branco`) vivem em `assets/soulmon/icones-ui/estagio.ts`.
+**Régua:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/ui/EstagioIcone.guard.test.ts` (só este componente renderiza o PNG de estágio), `src/components/games/BattleStage.estagio.test.tsx`, `EvolutionPath.arvore.render.test.tsx`; a arte e o set (`creme`/`branco`) vivem em `assets/soulmon/icones-ui/estagio.ts`.
 
 ### `src/components/ui/Icon.tsx`
 **Dono de:** o único ponto de ícone do app — dois motores (glifo SVG próprio ou ligature Material Symbols), mesma API.
@@ -2328,6 +2334,10 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 ### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
 
 `TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.
+
+### `src/components/play/TicketBuyModal.tsx` (15/11/2026 — REGISTRO §395)
+
+`TicketBuyModal` (o modal "sem ticket, quer comprar?": `ModalSheet` centralizado, a arte do ticket metade dentro/metade fora da borda de cima por portal, "Cada partida gasta x1", Comprar 3 tickets / Agora não) e `TICKET_BUY_ART_W`. **Chamado por:** `PlaySheets.tsx` (`SalaoSheet`).
 
 ### `src/components/AppUpdateGate.tsx`
 

@@ -9,7 +9,7 @@ import { cleanCheerScale, COMBAT_BONUS_CAP, START_ENERGY_MAX, DOT_RESIST_MAX } f
 
 /** Tarefa B (§2.38): tetos dos nos que entraram "em breve" (espelham `src/utils/talents.ts`). */
 export const HEAL_BOOST_MAX = 0.015;
-export const RIFT_BITS_MAX = 0.09;
+export const RIFT_BITS_CAP_MAX = 30;
 export const START_SHIELD_MAX = 0.01;
 
 export const TALENT_POINTS_MAX = 20;
@@ -19,7 +19,7 @@ const req = (id, rank) => ({ id, rank });
 
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'startEnergy' | 'dotResist' | 'allAttr' | 'healBoost' | 'riftBits' | 'startShield', scope?: 'pvp' | 'pve' | 'nightmare', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'startEnergy' | 'dotResist' | 'allAttr' | 'healBoost' | 'riftBitsCap' | 'startShield', scope?: 'pvp' | 'pve' | 'nightmare', attr?: 'atk' | 'def' | 'spd', perRank?: number, requires?: readonly { id: string, rank: number }[], requiresAny?: readonly { id: string, rank: number }[] }>>}
  */
 export const PICKABLE = {
   'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
@@ -32,7 +32,7 @@ export const PICKABLE = {
   'tal-pve-01': { maxRank: 4, kind: 'combatBonus', scope: 'pve', perRank: 0.006 },
   'tal-pve-02': { maxRank: 4, kind: 'combatBonus', scope: 'pve', attr: 'def', perRank: 0.006, requires: [req('tal-pve-01', 2)] },
   'tal-pve-03': { maxRank: 3, kind: 'healBoost', perRank: 0.005, requires: [req('tal-pve-01', 2)] },
-  'tal-pve-04': { maxRank: 3, kind: 'riftBits', perRank: 0.03, requires: [req('tal-pve-03', 1)] },
+  'tal-pve-04': { maxRank: 3, kind: 'riftBitsCap', perRank: 10, requires: [req('tal-pve-03', 1)] },
   'tal-pve-05': { maxRank: 3, kind: 'combatBonus', scope: 'nightmare', perRank: 0.004, requires: [req('tal-pve-03', 1)] },
   'tal-pve-06': { maxRank: 3, kind: 'combatBonus', scope: 'pve', attr: 'spd', perRank: 0.004, requires: [req('tal-pve-02', 2)] },
   'tal-pve-07': { maxRank: 1, kind: 'startShield', perRank: 0.01, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
@@ -176,8 +176,8 @@ export const talentStartEnergy = (picks, bondLevel) => sumKind(picks, bondLevel,
 export const talentDotResist = (picks, bondLevel) => sumKind(picks, bondLevel, 'dotResist', DOT_RESIST_MAX);
 /** `tal-pve-03`. @param {unknown} picks @param {unknown} bondLevel */
 export const talentHealBoost = (picks, bondLevel) => sumKind(picks, bondLevel, 'healBoost', HEAL_BOOST_MAX);
-/** `tal-pve-04`. @param {unknown} picks @param {unknown} bondLevel */
-export const talentRiftBits = (picks, bondLevel) => sumKind(picks, bondLevel, 'riftBits', RIFT_BITS_MAX);
+/** `tal-pve-04` (§393): Bits a mais no TETO diário de Bits da fenda (0/10/20/30). O servidor é quem decide o teto efetivo. @param {unknown} picks @param {unknown} bondLevel */
+export const talentRiftBitsCap = (picks, bondLevel) => sumKind(picks, bondLevel, 'riftBitsCap', RIFT_BITS_CAP_MAX);
 /** `tal-pve-07`. @param {unknown} picks @param {unknown} bondLevel */
 export const talentStartShield = (picks, bondLevel) => sumKind(picks, bondLevel, 'startShield', START_SHIELD_MAX);
 

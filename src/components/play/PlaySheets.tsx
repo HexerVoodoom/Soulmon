@@ -3,16 +3,18 @@ import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
+import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { useRiftTalents } from '../../contexts/useTalentBonus';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
-import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
+import { bitsStyle, minigameBitsCap } from '../../utils/currencies';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
 import { RewardPreview } from '../ui/RewardPreview';
@@ -87,15 +89,16 @@ const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
  * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
  * teto não tira nada nem fecha jogo nenhum, só para de somar.
  */
-export function BitsHoje({ language, earned }: { language: Language; earned?: number }) {
+export function BitsHoje({ language, earned, extraCap = 0 }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number }) {
   if (earned === undefined) return null;
   const isPt = language === 'pt-BR';
-  const n = Math.min(MINIGAME_BITS_PER_DAY, Math.max(0, Math.floor(earned)));
-  const cheio = n >= MINIGAME_BITS_PER_DAY;
+  const cap = minigameBitsCap(extraCap);
+  const n = Math.min(cap, Math.max(0, Math.floor(earned)));
+  const cheio = n >= cap;
   return (
     <p data-bits-hoje style={{ ...note, margin: 0 }}>
       <span className="sm2-num">
-        {isPt ? `Bits de minijogo hoje: ${n} de ${MINIGAME_BITS_PER_DAY}` : `Minigame Bits today: ${n} of ${MINIGAME_BITS_PER_DAY}`}
+        {isPt ? `Bits de minijogo hoje: ${n} de ${cap}` : `Minigame Bits today: ${n} of ${cap}`}
       </span>
       {cheio && (isPt
         ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
@@ -122,6 +125,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
+  const rift = useRiftTalents();
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
 
@@ -174,7 +178,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
-      <BitsHoje language={language} earned={bitsToday} />
+      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );
 }
@@ -260,16 +264,23 @@ export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
 /** Salão de Jogos — jogos livres, em LISTA de cards (o dono pediu a lista de volta em 04/11/2026; as cartas ilustradas ficaram só no Refúgio). */
-export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => void; refused?: boolean }) {
-  /* Tocar em Jogar sem energia: o toque responde (o aviso ganha destaque e é anunciado), em vez de não fazer nada. */
-  const [nudge, setNudge] = useState(refused ? 1 : 0);
-  const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
+export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => boolean | void; refused?: boolean }) {
+  /* Tocar em Jogar sem ticket (ou ficar sem ticket no "jogar de novo", `refused`) abre o modal "quer comprar?" (15/11/2026): comprando, o jogo
+     pedido abre assim que o ticket aparece no estado (`pendente`). Recusar não gasta nada. */
+  const [buyOpen, setBuyOpen] = useState(!!refused);
+  const [pendente, setPendente] = useState<SalaoGame | null>(null);
+  const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setPendente(g); setBuyOpen(true); return; } abrir(g); };
+  const canPlayNow = !!funStatus && funStatus(Date.now()).canPlay;
+  useEffect(() => { if (pendente && canPlayNow) { const g = pendente; setPendente(null); abrir(g); } }, [pendente, canPlayNow, abrir]);
+  const recusarCompra = () => { setBuyOpen(false); setPendente(null); };
+  const comprar = (): boolean => !!onBuyTickets && onBuyTickets() !== false;
   const isPt = language === 'pt-BR';
   /* Cada partida gasta 1 ticket (09/11/2026): sem `funStatus` (testes antigos) = sem custo. */
   const paga = !!funStatus;
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
-      {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} nudge={nudge} />}
+      {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} />}
+      {funStatus && <TicketBuyModal open={buyOpen} language={language} status={funStatus} onBuy={comprar} onClose={recusarCompra} onBought={() => setBuyOpen(false)} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">

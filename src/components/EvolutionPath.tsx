@@ -846,7 +846,7 @@ export function EvolutionPath({
           {hidden ? '???' : evolution.name}
         </p>
         <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-          <EstagioIcone forma={stageId} size={16} caminho={ramoAttr ?? undefined} />
+          <EstagioIcone forma={stageId} size={16} />
           {!hidden && <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>}
         </p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>

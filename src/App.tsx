@@ -5127,7 +5127,7 @@ export default function App() {
   const bitsPendentesRef = useRef<{ day: string; earned: number }>({ day: '', earned: 0 });
   /** Devolve os Bits REALMENTE creditados (pelo mesmo `minigameBitsGranted` do `creditMinigameBits`), para a tela de resultado
    *  mostrar o que entrou, e não o que o jogo pediu: teto gasto = 0, teto atingido no meio = parcial. */
-  const handleEarnGamePoints = useCallback((pts: number): number => {
+  const handleEarnGamePoints = useCallback((pts: number, extraCap = 0): number => {
     if (pts <= 0) return 0;
     const mult = playBuffSpentRef.current ? 1 : minigameMultiplier(gameState, new Date());
     const total = mult > 1 ? Math.round(pts * mult) : pts;
@@ -5145,12 +5145,12 @@ export default function App() {
          vezes por run no mesmo lote do React, e um teto lido de fora passaria
          duas vezes (família de bug do X-6). Bater o teto não tira nada e não
          interrompe minijogo nenhum — os Bits só param de somar. */
-      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz));
+      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
     });
     const dia = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
     const pend = bitsPendentesRef.current;
     const ja = Math.max(minigameBitsToday(gameStateRef.current, dia), pend.day === dia ? pend.earned : 0);
-    const creditado = minigameBitsGranted(ja, total);
+    const creditado = minigameBitsGranted(ja, total, extraCap);
     bitsPendentesRef.current = { day: dia, earned: ja + creditado };
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
