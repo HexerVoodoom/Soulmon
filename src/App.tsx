@@ -2681,7 +2681,7 @@ export default function App() {
         // §390: o pop-up do Papus é UMA vez na vida da conta; "visto" ao MOSTRAR, no save (vale em qualquer aparelho)
         setGameState(prev => {
           const seen = markMessengerIntroSeen(prev.buildingIntrosSeen);
-          return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen as string[] };
+          return seen === prev.buildingIntrosSeen ? prev : { ...prev, buildingIntrosSeen: seen };
         });
       } else if (id === 'mapTutorial') {
         setMapTutorialShown(true);

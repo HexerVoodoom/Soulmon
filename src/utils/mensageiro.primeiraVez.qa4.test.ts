@@ -7,11 +7,11 @@ import { sanitizeBuildingIntrosSeen } from './buildingIntro';
 // Item E do QA r4 C2 (REGISTRO §390, dono 14/11/2026): "Pop up da mensagem com npc só na primeira vez. Depois, quando receber
 // cartas novas, só fica a marca de bolinha vermelha no ícone."
 
-const carta = (mid: string, read = false): MailItem => ({ mid, titlePt: 't', titleEn: 't', bodyPt: 'b', bodyEn: 'b', bits: 0, emblems: 0, at: 1, read, claimedAt: 0 } as unknown as MailItem);
+const carta = (mid: string, read = false): MailItem => ({ mid, titlePt: 't', titleEn: 't', bodyPt: 'b', bodyEn: 'b', bits: 0, emblems: 0, at: 1, read, claimedAt: 0 });
 
 describe('o pop-up do Papus aparece UMA vez na vida da conta', () => {
   it('1ª carta: pop-up; depois de visto, a 2ª carta em diante não abre pop-up nenhum', () => {
-    let intros: readonly string[] = [];
+    let intros: string[] = [];
     const announced: string[] = [];
     expect(mailPopupToShow({ mail: [carta('a')], announced, introsSeen: intros }).map(m => m.mid)).toEqual(['a']);
     intros = markMessengerIntroSeen(intros); // o App grava ao MOSTRAR

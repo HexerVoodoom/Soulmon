@@ -824,6 +824,10 @@ Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simul
 
 Amizade por convite (§243): convites `freq:`, presentes do dia `gsent:`, histórico `gnote:`, lista mútua até 20, migração idempotente (`gmir:`). Ações `friends`, `friendAccept`, `friendsState`, `friendsSeen`, `friendsMigrate`, `gift` em `community.js`. **Régua:** `functions/api/community.amigos.test.js`.
 
+### `functions/api/_conviteLimite.js` (14/11/2026, §388)
+
+Dono único dos limites de convite (amizade e clã): recusa bloqueia o par por `INVITE_DECLINE_BLOCK_MS` = 7 dias (`invblk:f:<de>:<para>` na amizade, `invblk:g:<clã>:<para>` no clã; a resposta ao bloqueado é a do sucesso), teto diário por remetente no KV (`invday:<tipo>:<id>:<dia UTC>`: `FRIEND_INVITE_DAILY_CAP` = 60, `GUILD_INVITE_DAILY_CAP` = 40) e os tetos por hora `FRIEND_INVITE_HOURLY` (30/h) e `GUILD_INVITE_HOURLY` (20/h, reexportado como `GUILD_INVITE_LIMIT` em `guild.js`). Chamado por `friends`/`friendAccept`/`mailDelete` (`community.js`) e `guildInvite` (`guild.js`). **Régua:** `functions/api/convites.limitePorPar.qa4.test.js`.
+
 ### `functions/api/gm-carta-teste.js`
 
 Carta de teste do Papus para a própria conta do GM; destino vem do token. Decisão: REGISTRO §244. **Régua:** `functions/api/gm-carta-teste.test.js`.

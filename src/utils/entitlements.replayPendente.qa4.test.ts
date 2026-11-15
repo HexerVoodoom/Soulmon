@@ -24,7 +24,7 @@ const ent = { tier: 'paid', credits: 40, adsLeft: 0 };
 /** Servidor idempotente por opId que conhece `replayOnly` (como `_bitsPacks.js`). `perder` = respostas perdidas após o débito. */
 function servidor() {
   const feitos = new Map<string, string>();
-  const s = { debitos: 0, perder: 0, offline: false, corpos: [] as any[] };
+  const s = { debitos: 0, perder: 0, offline: false, corpos: [] as Record<string, unknown>[] };
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
     const b = JSON.parse(String(init.body));
     s.corpos.push(b);

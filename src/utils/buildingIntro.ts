@@ -59,6 +59,7 @@ export function isBuildingId(x: unknown): x is BuildingId {
 export const NPC_INTRO_IDS = ['npc.mensageiro'] as const;
 export type NpcIntroId = typeof NPC_INTRO_IDS[number];
 const NPC_INTRO_SET: ReadonlySet<string> = new Set(NPC_INTRO_IDS);
+const isNpcIntroId = (x: unknown): x is NpcIntroId => typeof x === 'string' && NPC_INTRO_SET.has(x);
 
 function levelOf(n: unknown): number {
   return typeof n === 'number' && Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1;
@@ -90,7 +91,7 @@ export function sanitizeBuildingIntrosSeen(raw: unknown, bondLevel: unknown): (B
   // `arena.feira` → `hall.feira` (11/10/2026) e `hall.biblioteca`/`hall.amigos` → `laboratorio.*` (D-50): quem já viu a apresentação não a vê de novo.
   for (const raw0 of raw) {
     // §390: a apresentação de NPC sem prédio (lista fechada `NPC_INTRO_IDS`) também fica.
-    if (typeof raw0 === 'string' && NPC_INTRO_SET.has(raw0)) { if (!out.includes(raw0 as NpcIntroId)) out.push(raw0 as NpcIntroId); continue; }
+    if (isNpcIntroId(raw0)) { if (!out.includes(raw0)) out.push(raw0); continue; }
     const x = currentBuildingId(raw0); if (isBuildingId(x) && !out.includes(x)) out.push(x);
   }
   return out;

@@ -117,7 +117,7 @@ export function messengerIntroSeen(p: { introsSeen: readonly string[] | undefine
 }
 
 /** Grava o "visto" do pop-up. Idempotente: já visto devolve a MESMA referência (updater do `setGameState`). */
-export function markMessengerIntroSeen(seen: readonly string[] | undefined): readonly string[] {
+export function markMessengerIntroSeen(seen: string[] | undefined): string[] {
   const atual = Array.isArray(seen) ? seen : [];
   return atual.includes(MESSENGER_INTRO_ID) ? atual : [...atual, MESSENGER_INTRO_ID];
 }

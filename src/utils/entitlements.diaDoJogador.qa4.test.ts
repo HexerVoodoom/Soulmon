@@ -21,7 +21,7 @@ const resp = (status: number, body: unknown) => new Response(JSON.stringify(body
 
 describe('A3 · dia do jogador no cliente', () => {
   it('buyBitsPack manda zone/off da âncora playerDayTz', async () => {
-    const corpos: any[] = [];
+    const corpos: Record<string, unknown>[] = [];
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { corpos.push(JSON.parse(String(init.body))); return resp(409, { ok: false, reason: 'daily-cap', leftToday: 0 }); }));
     const m = await import('./entitlements');
     await m.buyBitsPack('bits-200', undefined, { zone: 'America/Sao_Paulo', offsetMs: -3 * 3_600_000 });
