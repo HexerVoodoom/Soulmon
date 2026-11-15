@@ -3,6 +3,7 @@ import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
+import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
@@ -263,16 +264,23 @@ export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
 /** Salão de Jogos — jogos livres, em LISTA de cards (o dono pediu a lista de volta em 04/11/2026; as cartas ilustradas ficaram só no Refúgio). */
-export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => void; refused?: boolean }) {
-  /* Tocar em Jogar sem energia: o toque responde (o aviso ganha destaque e é anunciado), em vez de não fazer nada. */
-  const [nudge, setNudge] = useState(refused ? 1 : 0);
-  const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
+export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => boolean | void; refused?: boolean }) {
+  /* Tocar em Jogar sem ticket (ou ficar sem ticket no "jogar de novo", `refused`) abre o modal "quer comprar?" (15/11/2026): comprando, o jogo
+     pedido abre assim que o ticket aparece no estado (`pendente`). Recusar não gasta nada. */
+  const [buyOpen, setBuyOpen] = useState(!!refused);
+  const [pendente, setPendente] = useState<SalaoGame | null>(null);
+  const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setPendente(g); setBuyOpen(true); return; } abrir(g); };
+  const canPlayNow = !!funStatus && funStatus(Date.now()).canPlay;
+  useEffect(() => { if (pendente && canPlayNow) { const g = pendente; setPendente(null); abrir(g); } }, [pendente, canPlayNow, abrir]);
+  const recusarCompra = () => { setBuyOpen(false); setPendente(null); };
+  const comprar = (): boolean => !!onBuyTickets && onBuyTickets() !== false;
   const isPt = language === 'pt-BR';
   /* Cada partida gasta 1 ticket (09/11/2026): sem `funStatus` (testes antigos) = sem custo. */
   const paga = !!funStatus;
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
-      {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} nudge={nudge} />}
+      {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} />}
+      {funStatus && <TicketBuyModal open={buyOpen} language={language} status={funStatus} onBuy={comprar} onClose={recusarCompra} onBought={() => setBuyOpen(false)} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">

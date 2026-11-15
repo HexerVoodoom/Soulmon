@@ -14,6 +14,8 @@ import { setEnergy, settleEnergy, type HungerState } from './hunger';
 
 export const FUN_TICKET_COST = 1;
 export const FUN_TICKET_BATCH = 3;
+/** Quanto UMA partida gasta (`startFunRound`): 1 ticket, em todo jogo e dificuldade. É o número do "x1" no botão e no modal de compra. */
+export const FUN_TICKET_PER_ROUND = 1;
 export const FUN_TICKET_MAX = 5;
 export const FUN_TICKET_BUY_AT_MOST = FUN_TICKET_MAX - FUN_TICKET_BATCH; // 2
 export const FUN_TICKET_TTL_MS = 24 * 60 * 60 * 1000;
@@ -97,10 +99,10 @@ export function buyFunTickets<T extends FunTicketState>(prev: T, nowMs: number):
 /** Começa UMA rodada: gasta 1 ticket do lote que vence primeiro. Sem ticket = mesma referência. */
 export function startFunRound<T extends FunTicketState>(prev: T, nowMs: number): T {
   const vivos = liveBatches(prev, nowMs);
-  const i = vivos.findIndex(x => x.left > 0);
+  const i = vivos.findIndex(x => x.left >= FUN_TICKET_PER_ROUND);
   if (i < 0) return prev;
   // Lote zerado fica com `left: 0` (tombstone): a nuvem só aceita o gasto do último ticket se o zero for gravado.
-  const batches = vivos.map((x, j) => (j === i ? { at: x.at, left: x.left - 1 } : x));
+  const batches = vivos.map((x, j) => (j === i ? { at: x.at, left: x.left - FUN_TICKET_PER_ROUND } : x));
   return { ...prev, funTickets: { batches } };
 }
 

@@ -5593,6 +5593,15 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Gatilho de revisão:** o dono ver a arma pequena demais no palco (subir a escala do `wall` ou reabrir o espaço `weapon`), a aba Honra ficar ilegível, ou a chegada do ouro/cristal. **Rollback:** reverter o PR; ids `hon-*` já comprados ficam em `ownedFurniture`/`equippedDecor.wall` etc. e o palco resolve o id por `ALL_SHOP_ITEMS` e não desenha id ausente (`PetStageDecor`), então a posse não quebra o save.
 
+## §395 — Sem ticket de minijogo: modal "quer comprar?" com o ticket por cima da borda; o contador é o gasto da partida (15/11/2026, dono: "Quando o usuário tentar jogar minigame e não tiver ticket, tem que abrir o modal perguntando se ele quer comprar o ticket")
+
+**Decisão.** Tocar em jogar um minijogo do Salão (ou ficar sem ticket no "jogar de novo") sem ticket abre o `TicketBuyModal` (`components/play/TicketBuyModal.tsx`): o modal padrão (`ModalSheet`, centralizado), com a arte `hud/ticket-minigame.png` METADE dentro, METADE fora, centrada na borda de cima (portal medindo o topo do diálogo, o mesmo recurso da prévia da loja; ícone pelado, sem box). Botões **Comprar 3 tickets (1 energia)** e **Agora não** (alvos ≥44 px). Comprando, o jogo que o jogador pediu abre quando o ticket aparece no estado; recusar não gasta nada. Sem energia o botão fica desabilitado e o texto explica (o mesmo aviso calmo de antes). A faixa vermelha "Sem tickets" do painel foi retirada: o modal a substitui.
+
+**O contador.** O dono esclareceu que "x/3" e "x/5" eram exemplos de FORMATO: o número mostrado é QUANTO A PARTIDA VAI GASTAR, não o saldo. Hoje toda partida gasta 1 ticket (`FUN_TICKET_PER_ROUND`, nova constante, usada por `startFunRound`), então o modal mostra "Cada partida gasta x1" e o botão de jogar/jogar de novo continua com o "x1". Se um dia a regra diferenciar custo por jogo ou dificuldade, é nessa constante (ou numa função por jogo) que muda; o modal já lê dela.
+
+**Economia: nada novo.** O preço e o lote vêm de `utils/funTickets.ts` (1 energia = 3 tickets, teto 5, 24 h por lote). Não existe compra de ticket de minijogo com Bits/Créditos; o modal não inventou uma. Fora da fila de modais: é gesto do jogador (`docs/FILA-DE-MODAIS.md` §4). Servidor sem mudança (a regra de compra e de gasto é a mesma; paridade em `funTickets.parity.test.js` intacta).
+
+**Gatilho de revisão:** o dono querer pagar o ticket com Bits (hoje só energia), ou custo diferente por jogo/dificuldade. **Rollback:** reverter o PR; nenhum dado de save muda.
 ## §394 — Ícone de estágio colorido em todo o app; sem caminho = creme (15/11/2026, decisão do dono: "Os ícones de estágio+tipo devem ter cor para todos os Soulmon do jogo")
 
 **Decisão do dono (modal):** forma SEM caminho (rookie, ultra, tier de inimigo sem ramo, formas legadas) recebe branco quente/creme; o escopo é todo ponto do app que mostra o ícone de estágio e/ou de tipo.

@@ -89,9 +89,9 @@ export function TicketFan({ count, language }: { count: number; language: Langua
 
 /**
  * O painel do Salão (DENTRO do modal; o leque mora fora, na cena): a contagem, a contagem regressiva do lote que vence primeiro e o botão de comprar
- * (1 energia → 3 tickets). `nudge` > 0 = o jogador tentou jogar sem ticket: o aviso ganha destaque.
+ * (1 energia → 3 tickets). Tentar jogar sem ticket abre o `TicketBuyModal` (15/11/2026), não um aviso aqui.
  */
-export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: Language; status: (nowMs: number) => FunTicketStatus; onBuy?: () => void; nudge?: number }) {
+export function TicketPanel({ language, status, onBuy }: { language: Language; status: (nowMs: number) => FunTicketStatus; onBuy?: () => void }) {
   const isPt = language === 'pt-BR';
   const [, setTick] = useState(0);
   useEffect(() => { const id = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(id); }, []);
@@ -107,11 +107,6 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
         {isPt ? `Tickets: ${st.count}/${FUN_TICKET_MAX}` : `Tickets: ${st.count}/${FUN_TICKET_MAX}`}
         {st.count > 0 && <span data-fun-tickets-expiry style={{ fontWeight: 400, marginInlineStart: 8 }}>{isPt ? `vence em ${formatHms(st.msLeft)}` : `expires in ${formatHms(st.msLeft)}`}</span>}
       </p>
-      {st.count === 0 && nudge > 0 && (
-        <p key={nudge} role="alert" data-fun-tickets-nudged style={{ margin: 0, padding: 8, borderRadius: 8, outline: '2px solid currentColor', textAlign: 'center' }}>
-          {isPt ? 'Sem tickets. Compre um lote para jogar.' : 'No tickets. Buy a batch to play.'}
-        </p>
-      )}
       {onBuy && (
         <button type="button" data-fun-tickets-buy disabled={!st.canBuy} aria-disabled={!st.canBuy} onClick={onBuy} style={{ ...sm2Button('primary', !st.canBuy), minHeight: 44 }}>
           {isPt ? `Comprar ${FUN_TICKET_BATCH} tickets` : `Buy ${FUN_TICKET_BATCH} tickets`}
