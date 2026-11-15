@@ -67,7 +67,7 @@ import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
   MAX_FRIENDS, MAX_IN, MAX_OUT, GIFT_BITS, lerConvites, gravarConvites, ligarAmizade, desfazerAmizade, espelharAmizades,
-  presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
+  presentesDeHoje, marcarPresenteDeHoje, reivindicarPresenteDoDia, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, ganhoPorRank } from './_honra.js';
@@ -1647,7 +1647,7 @@ async function handleCommunity(context) {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     if (body.all !== true && !midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
-    return json({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids) });
+    return json({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids, Date.now(), env.DB ?? null) });
   }
   // { id, mids[], force? } ou { id, scope: 'read' }. Carta com prêmio pendente só sai com `force: true`.
   if (action === 'mailDelete' && method === 'POST') {
@@ -1883,7 +1883,14 @@ async function handleCommunity(context) {
       // O registro do dia mora em `gsent:` (o `giftLog` do perfil se perdia a cada regravação do perfil); o legado ainda vale.
       const hoje = await presentesDeHoje(env, id, diaMeu);
       if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === diaMeu)) return json({ error: 'already gifted today' }, 429);
-      await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      const reivindicacao = await reivindicarPresenteDoDia(env, id, friendSave, diaMeu);
+      if (!reivindicacao.ok) return json({ error: 'already gifted today' }, 429);
+      try {
+        await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      } catch (err) {
+        await reivindicacao.soltar();
+        throw err;
+      }
       // Missoes de presente (REGISTRO §309): o presente ACEITO aqui e o evento confirmado da semanal gift-sent e da diaria d-presente. Melhor esforco.
       try { await recordMissionEvent(kvOrThrow(env), id, 'g', diaMeu); } catch { /* o razao das missoes nao pode derrubar o presente */ }
 
