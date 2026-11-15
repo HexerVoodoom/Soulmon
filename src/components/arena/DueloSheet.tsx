@@ -7,6 +7,7 @@ import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
+import { ARENA_ULTIMO_DROP_MULT } from '../../utils/arenaUltimoAdversario';
 import type { Language } from '../../utils/i18n';
 
 /**
@@ -72,19 +73,47 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
   const free = arenaRerollsFreeLeft(done);
   const canReroll = arena.bits >= cost;
   const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
+  /** QA r4: a carga do bestiário falhou (rede, cache frio). Antes, `.catch` vazio + `return null` sumiam com os cards sem aviso. */
+  const [falhou, setFalhou] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [chosen, setChosen] = useState(0);
   useEffect(() => {
     let alive = true;
-    loadBestiaryPool().then(p => { if (alive) setPool(p); }).catch(() => { /* sem pool: o botão ainda abre uma luta sorteada */ });
+    setFalhou(false);
+    loadBestiaryPool().then(p => { if (alive) setPool(p); }).catch(() => { if (alive) setFalhou(true); });
     return () => { alive = false; };
-  }, []);
+  }, [tentativa]);
   useEffect(() => { setChosen(0); }, [seeds]); // novo sorteio: volta ao 1º card
   useEffect(() => { onPick(seeds[Math.min(chosen, seeds.length - 1)]); }, [chosen, seeds, onPick]);
-  if (!pool) return null;
+  if (!pool && falhou) {
+    return (
+      <div data-arena-escolha-erro role="alert" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Não deu para carregar os adversários agora.' : "Couldn't load the opponents right now."}
+        </p>
+        <button type="button" data-arena-escolha-retry onClick={() => setTentativa(t => t + 1)} style={{ ...sm2Button('outline'), width: '100%' }}>
+          {isPt ? 'Tentar de novo' : 'Try again'}
+        </button>
+      </div>
+    );
+  }
+  if (!pool) {
+    return (
+      <div data-arena-escolha-carregando aria-busy="true" aria-label={isPt ? 'Carregando os adversários' : 'Loading the opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {Array.from({ length: ARENA_CHOICES }, (_, i) => (
+          <span key={i} aria-hidden="true" data-arena-card-placeholder style={{ ...box, flex: 'none', width: '100%', opacity: 0.5 }} />
+        ))}
+      </div>
+    );
+  }
   return (
     <div data-arena-escolha role="radiogroup" aria-label={isPt ? 'Escolha seus adversários' : 'Choose your opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ ...sm2Hint, margin: 0 }}>
         {isPt ? 'Você escolhe contra quem lutar — elementos variados, todos de poder parecido com o seu.' : 'You choose who to fight — mixed elements, all of power similar to yours.'}
+      </p>
+      {/* §384: uma linha, antes da luta. O multiplicador sai da constante. */}
+      <p data-arena-ultimo-dobro style={{ ...sm2Hint, margin: 0 }}>
+        {isPt ? `O último adversário deixa ${ARENA_ULTIMO_DROP_MULT}× a essência dele.` : `The last opponent drops ${ARENA_ULTIMO_DROP_MULT}× its essence.`}
       </p>
       {seeds.map((seed, i) => {
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
@@ -177,6 +206,11 @@ export function DueloSheet({ language, onStart, arena }: {
               {isPt
                 ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
                 : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
+            </span>
+            <span data-duelo-ajuda-stray style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'Desgarrado: um desafio em que os adversários aparecem nas formas mais altas (Ultimate em diante).'
+                : 'Stray: a challenge whose opponents show up in their highest forms (Ultimate and beyond).'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
