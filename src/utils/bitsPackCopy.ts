@@ -15,7 +15,7 @@ function brl(label: string): number {
 }
 
 /** O menor preço por Crédito entre os pacotes da loja (R$ por Crédito). */
-export function cheapestCreditBrl(): number {
+function cheapestCreditBrl(): number {
   const per = CREDIT_PACKS.map(p => brl(p.priceLabel) / p.credits).filter(n => Number.isFinite(n) && n > 0);
   return per.length ? Math.min(...per) : NaN;
 }

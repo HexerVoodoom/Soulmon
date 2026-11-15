@@ -6,6 +6,7 @@
  * para decidir o que mostrar e para falar a verdade sobre o que aconteceu. Nada aqui gasta dinheiro nem decide cota.
  */
 import type { SpriteLibrary } from './spriteLibrary';
+import { newUuid } from './uuid';
 
 /** Créditos por regeração. Espelho de `SPRITE_REGEN.costCredits` (`_spriteRegen.js`), travado por `functions/api/spriteRegen.parity.test.js`. */
 export const SPRITE_REGEN_COST_CREDITS = 50;
@@ -104,9 +105,5 @@ export function regenFailureWhy(status: number, code: string): Extract<RegenOutc
 
 /** Um id por GESTO (o servidor guarda `regenOps[opId]`: repetir o gesto nunca cobra de novo). 8–64 de `[A-Za-z0-9_-]`. */
 export function newRegenOpId(): string {
-  try {
-    const uuid = globalThis.crypto?.randomUUID?.();
-    if (uuid) return `rg${uuid.replace(/-/g, '')}`;
-  } catch { /* fallback abaixo */ }
-  return `rg${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  return `rg${newUuid().replace(/-/g, '')}`;
 }

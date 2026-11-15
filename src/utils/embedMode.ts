@@ -49,7 +49,7 @@ export function isEmbedMode(): boolean {
  * o guard da demo em `demoMode.ts`) e TODO `navigator.sendBeacon` (devolve `false`: "não
  * enviado"). Fora do embed não instala nada — o app normal não muda.
  */
-export const EMBED_BLOCKED_API = /^(https?:\/\/[^/]+)?\/api\//;
+const EMBED_BLOCKED_API = /^(https?:\/\/[^/]+)?\/api\//;
 let embedGuardInstalled = false;
 export function installEmbedNetworkGuard(): boolean {
   if (embedGuardInstalled || !isEmbedMode()) return false;

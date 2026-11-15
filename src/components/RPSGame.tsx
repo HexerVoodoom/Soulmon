@@ -129,7 +129,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         challenge.onResult(pw >= need);
       } else if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
         // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
-        const pedido = bitsForLevel(MATCH_POINTS, level === 2 ? 2 : 1);
+        const pedido = bitsForLevel(MATCH_POINTS, level);
         setEarned(onEarnPoints(pedido) ?? pedido);
         if (level === 2) emitFeat('pptNormalWins');
         onMatchEnd?.();
@@ -243,7 +243,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
           {/* O resultado da rodada / da partida — `role=status`. */}
           <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
             {matchOver === 'won'
-              ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={bitsForLevel(MATCH_POINTS, level === 2 ? 2 : 1)} sign="+" /></>
+              ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={bitsForLevel(MATCH_POINTS, level)} sign="+" /></>
               : matchOver === 'lost'
                 ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
                 : matchOver === 'draw'
