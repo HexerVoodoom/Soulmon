@@ -14,12 +14,12 @@
  *
  * CONCORRÊNCIA — o limite honesto. O KV não é transacional (ver o cabeçalho de `_entitlements.js`, ADR-005): duas trocas
  * simultâneas da MESMA conta leriam o mesmo `ent` e uma escrita apagaria a outra. Com o D1 ligado (`env.DB`, produção), cada troca
- * pega uma TRAVA por conta antes de ler: a linha `bitslock:<saveId>` em `order_claims` (PRIMARY KEY, sem schema novo — o mesmo
- * truque do `grant:` de `applyVerifiedPurchase`). Quem não pega a trava recebe `409 busy` e nada muda; a trava vence sozinha em
- * `LOCK_TTL_MS` se um worker morrer no meio. Sem D1 (dev/teste local) sobra a janela de corrida do KV: duas trocas no mesmo
+ * pega a TRAVA da conta antes de ler: a mesma de todo escritor de `ent:` (`tomarTravaDoEnt`, linha `entlock:<saveId>` em
+ * `order_claims`, §381; era `bitslock:` até lá). Quem não pega a trava recebe `409 busy` e nada muda; a trava vence sozinha em
+ * `ENT_LOCK_TTL_MS` se um worker morrer no meio. Sem D1 (dev/teste local) sobra a janela de corrida do KV: duas trocas no mesmo
  * instante podem passar as duas, e a perda é do DONO (a última escrita debita uma vez só), nunca do jogador.
  */
-import { readEntitlement, writeEntitlement, ehViolacaoDeChave } from './_entitlements.js';
+import { readEntitlement, writeEntitlement, tomarTravaDoEnt } from './_entitlements.js';
 
 export const BITS_PACKS = [
   { id: 'bits-200', bits: 200, credits: 200 },
@@ -29,8 +29,6 @@ export const BITS_PACKS = [
 
 export const BITS_PACK_DAILY_CAP = 1000;
 
-/** Quanto a trava por conta vale antes de vencer sozinha (worker que morreu no meio não prende a conta). */
-export const LOCK_TTL_MS = 30_000;
 /** Quantos pedidos atendidos ficam guardados para a idempotência (a janela de retry de um cliente é de segundos). */
 export const OPS_MAX = 20;
 const OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
@@ -53,31 +51,6 @@ export function bitsPackLeftToday(ent, nowMs = Date.now()) {
   return Math.max(0, BITS_PACK_DAILY_CAP - bitsBoughtToday(ent, nowMs));
 }
 
-async function takeLock(env, saveId, nowMs) {
-  if (!env.DB) return { ok: true, release: async () => {} };
-  const row = `bitslock:${saveId}`;
-  // Trava vencida (worker morto) sai ANTES da disputa, como em `claimOrderAtomic`.
-  await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?').bind(row, nowMs).run();
-  try {
-    await env.DB.prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
-      .bind(row, saveId, nowMs, nowMs + LOCK_TTL_MS).run();
-  } catch (err) {
-    if (!ehViolacaoDeChave(err)) throw err;
-    return { ok: false, release: async () => {} };
-  }
-  return {
-    ok: true,
-    // Solta só a PRÓPRIA posse (Antislop P6, §378): um worker parado além de `LOCK_TTL_MS` perde a trava para o seguinte e, ao
-    // terminar, não pode apagar a trava dele (a 3ª troca passaria junto com a 2ª). `claimed_at`/`expires_at` identificam a posse.
-    release: async () => {
-      try {
-        await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND claimed_at = ? AND expires_at = ?')
-          .bind(row, nowMs, nowMs + LOCK_TTL_MS).run();
-      } catch (err) { console.warn('[bitsPacks] trava não foi solta; vence em LOCK_TTL_MS', { saveId, error: err?.message ?? String(err) }); }
-    },
-  };
-}
-
 /**
  * Compra um pacote de Bits com Créditos.
  * @param {{ admin?: boolean, nowMs?: number }} [opts] admin não debita nem conta (padrão de `spend`/`buy-essence`).
@@ -91,7 +64,8 @@ export async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
   if (typeof opId !== 'string' || !OP_ID.test(opId)) return { ok: false, status: 400, reason: 'bad-op' };
   const pack = bitsPackById(packId);
   if (!pack) return { ok: false, status: 400, reason: 'unknown-pack' };
-  const lock = await takeLock(env, saveId, nowMs);
+  // Sem espera (§373): dois pedidos de troca juntos são um duplo toque, e o cliente reenvia o `busy` com o mesmo opId.
+  const lock = await tomarTravaDoEnt(env, saveId, { nowMs, esperaMs: 0 });
   if (!lock.ok) return { ok: false, status: 409, reason: 'busy' };
   try {
     const ent = await readEntitlement(env, saveId);

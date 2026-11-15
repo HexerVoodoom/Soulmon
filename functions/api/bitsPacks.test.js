@@ -4,8 +4,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { onRequestPost, onRequestGet } from './entitlements.js';
-import { ENT_PREFIX, readEntitlement } from './_entitlements.js';
-import { BITS_PACKS, BITS_PACK_DAILY_CAP, buyBitsPack, bitsPackLeftToday, LOCK_TTL_MS, OPS_MAX } from './_bitsPacks.js';
+import { ENT_PREFIX, ENT_LOCK_PREFIX, ENT_LOCK_TTL_MS as LOCK_TTL_MS, readEntitlement } from './_entitlements.js';
+import { BITS_PACKS, BITS_PACK_DAILY_CAP, buyBitsPack, bitsPackLeftToday, OPS_MAX } from './_bitsPacks.js';
 
 const ID = 'b'.repeat(32);
 const DIA = Date.UTC(2026, 10, 14, 12, 0, 0);
@@ -144,7 +144,7 @@ describe('buyBitsPack — câmbio por pacote, decidido no servidor', () => {
 
   it('trava vencida (worker morto) não prende a conta: depois de LOCK_TTL_MS a troca volta a passar', async () => {
     const e = fakeEnv({ credits: 1000, d1: true });
-    e.DB.rows.set(`bitslock:${ID}`, { save: ID, expires: DIA + LOCK_TTL_MS });
+    e.DB.rows.set(ENT_LOCK_PREFIX + ID, { save: ID, expires: DIA + LOCK_TTL_MS });
     expect((await buyBitsPack(e, ID, 'bits-200', 'op-trava-001', { nowMs: DIA })).reason).toBe('busy');
     expect((await buyBitsPack(e, ID, 'bits-200', 'op-trava-002', { nowMs: DIA + LOCK_TTL_MS })).ok).toBe(true);
   });

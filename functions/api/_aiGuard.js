@@ -65,7 +65,7 @@
 // queima dinheiro real, a dúvida nega.
 
 import { legacyFormIdOf } from './_branchLegacy.js';
-import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
+import { VALID_ID, readEntitlement, writeEntitlement, comTravaDoEnt } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER, ADMIN_SPRITE_MONTHLY_CAP } from './_admin.js';
@@ -436,10 +436,21 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     if (hasLifetime || hasFormCap) {
       // Os dois contadores vitalícios vivem no MESMO registro e vão numa
       // escrita só: dois `put` aqui abririam uma janela em que a conta debitou
-      // e a forma não (ou o contrário).
-      if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: usedLifetime + units };
-      if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: usedForm + units };
-      await writeEntitlement(env, saveId, ent);
+      // e a forma não (ou o contrário). Sob a trava da conta (§381) o registro é
+      // RELIDO e os dois tetos reconferidos: entre a primeira leitura e aqui outro
+      // escritor (gasto, compra, outra geração) pode ter gravado.
+      const recusa = await comTravaDoEnt(env, saveId, async () => {
+        const atual = await readEntitlement(env, saveId);
+        const vida = hasLifetime ? lifetimeUsed(atual, bucket) : 0;
+        const forma = hasFormCap ? formUsed(atual, formId) : 0;
+        if (hasLifetime && vida + units > capLifetime) return refuse(402, 'sprite-lifetime-cap');
+        if (hasFormCap && forma + units > capForm) return refuse(409, 'sprite-form-cap');
+        if (hasLifetime) atual.aiLifetime = { ...(atual.aiLifetime || {}), [bucket]: vida + units };
+        if (hasFormCap) atual.aiForms = { ...foldLegacyForm(atual.aiForms, formId), [formId]: forma + units };
+        await writeEntitlement(env, saveId, atual);
+        return null;
+      });
+      if (recusa) return recusa;
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
@@ -500,10 +511,12 @@ function makeRelease(env, ctx) {
       if (hasLifetime || hasFormCap) {
         // Mesma escrita única da reserva, pelo mesmo motivo: dois `put` abririam
         // a janela em que a conta devolveu e a forma não.
-        const ent = await readEntitlement(env, saveId);
-        if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
-        if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
-        await writeEntitlement(env, saveId, ent);
+        await comTravaDoEnt(env, saveId, async () => {
+          const ent = await readEntitlement(env, saveId);
+          if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
+          if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
+          await writeEntitlement(env, saveId, ent);
+        });
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });

@@ -112,7 +112,7 @@
 
 import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
-  anonimizarClaims, comEntitlementLegivel, EntitlementIlegivelError } from './_entitlements.js';
+  anonimizarClaims, comEntitlementLegivel, EntitlementIlegivelError, comTravaDoEnt, ENT_LOCK_ESPERA_LONGA_MS } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
@@ -791,7 +791,8 @@ async function handleDeleteConfirm(env, saveId, body) {
     const COURTESY_PREFIX = 'courtesy:';
     const ehCortesia = (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).some(o => typeof o === 'string' && o.startsWith(COURTESY_PREFIX))
       && (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).some(o => o?.orderId?.startsWith?.(COURTESY_PREFIX) && !o.voided);
-    await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
+    // Sob a trava da conta (§381): um gasto/compra em voo não regrava o registro inteiro por cima do resíduo minimizado.
+    await tentar(`${ENT_PREFIX}${saveId}`, () => comTravaDoEnt(env, saveId, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       // REGISTRO §49 (dono, 14/10/2026): excluiu a conta, paga de novo. O direito
       // pago e o saldo NÃO sobrevivem (nem para quem volta com o mesmo e-mail);
       // o vínculo comprovante→conta sobrevive ANONIMIZADO em `order_claims`/`ord:`.
@@ -815,7 +816,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now(),
-    }), { expirationTtl: RETENTION_TTL_SECONDS }));
+    }), { expirationTtl: RETENTION_TTL_SECONDS }), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS }));
     // ↑ O resíduo mínimo também tem prazo, e este é o único caso em que o prazo
     // corre até o fim de verdade: depois da exclusão nada mais escreve neste
     // registro, então nada mais o renova. Sem o TTL, o único artefato que
