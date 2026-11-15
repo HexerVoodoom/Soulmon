@@ -15,6 +15,7 @@
  */
 import { ELEMENT_DOMINANTE } from './elementDominante.data';
 import { ELEMENT_PALETA } from './elementPaleta.data';
+import { ELEMENT_SILHUETA } from './elementSilhueta.data';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 
 /** ΔE (CIEDE2000, maior entre média e dominante) mínimo entre dois ícones do mesmo tabuleiro. Pool de 285: 14,2% dos pares (5735 de 40470) ficam abaixo, e ainda assim 0 de 20000 sorteios precisam relaxar (só relaxa perto de 35). */
@@ -121,6 +122,50 @@ export function m3DeltaEPaleta(a: string, b: string): number {
   return (lado(pa, pb) + lado(pb, pa)) / 2;
 }
 
+/** RODADA 2 (REGISTRO §402): IoU mínimo de silhueta (máscara 16x16) a partir do qual dois ícones têm "forma quase igual". */
+export const M3_MAX_SILHUETA = 0.8;
+/** RODADA 2: forma quase igual só conflita se a cor também for próxima (ΔE abaixo disto): forma igual com cor bem diferente se lê fácil. */
+export const M3_COR_PROXIMA_SILHUETA = 32;
+/** RODADA 2: com luminosidade média quase igual (|ΔL| abaixo disto) o piso de silhueta cai `M3_FOLGA_SILHUETA_BRILHO`. */
+export const M3_MAX_DELTA_BRILHO = 3;
+export const M3_FOLGA_SILHUETA_BRILHO = 0.1;
+/** Quanto o piso de silhueta SOBE a cada rodada de relaxamento (acima de 1 a camada deixa de conflitar). */
+export const M3_SILHUETA_STEP = 0.02;
+
+const popcount16 = (v: number): number => { let n = 0; for (let x = v; x; x &= x - 1) n++; return n; };
+const cacheSil = new Map<string, number[] | null>();
+/** As 16 linhas (16 bits cada) da máscara do ícone, em cache; sem assinatura = `null`. */
+function mascaraDe(id: string): number[] | null {
+  let v = cacheSil.get(id);
+  if (v === undefined) {
+    const h = ELEMENT_SILHUETA[id];
+    v = h && h.length === 64 ? Array.from({ length: 16 }, (_, r) => parseInt(h.slice(r * 4, r * 4 + 4), 16)) : null;
+    cacheSil.set(id, v);
+  }
+  return v;
+}
+/** Semelhança de silhueta entre dois ícones: IoU (0 a 1) das máscaras 16x16. Sem assinatura = 0 (não trava ícone novo). */
+export function m3Silhueta(a: string, b: string): number {
+  const ma = mascaraDe(a), mb = mascaraDe(b);
+  if (!ma || !mb) return 0;
+  let inter = 0, uniao = 0;
+  for (let r = 0; r < 16; r++) { inter += popcount16(ma[r] & mb[r]); uniao += popcount16(ma[r] | mb[r]); }
+  return uniao === 0 ? 0 : inter / uniao;
+}
+/** Diferença de luminosidade média (L do CIELAB) entre dois ícones. Sem assinatura = `Infinity`. */
+export function m3DeltaBrilho(a: string, b: string): number {
+  const ma = ELEMENT_VISUAL[a], mb = ELEMENT_VISUAL[b];
+  return ma && mb ? Math.abs(ma[0] - mb[0]) : Infinity;
+}
+/** `true` se a forma é quase igual E a cor é próxima (ou, com brilho quase igual, a forma é só parecida). */
+export function m3SilhuetaConfunde(a: string, b: string, maxSilhueta: number = M3_MAX_SILHUETA): boolean {
+  if (maxSilhueta > 1) return false;
+  const de = m3DeltaE(a, b);
+  if (de >= M3_COR_PROXIMA_SILHUETA) return false;
+  const sil = m3Silhueta(a, b);
+  return sil >= maxSilhueta || (sil >= maxSilhueta - M3_FOLGA_SILHUETA_BRILHO && m3DeltaBrilho(a, b) < M3_MAX_DELTA_BRILHO);
+}
+
 /**
  * Pares que NUNCA dividem tabuleiro, qualquer que seja o limiar. Origem: pares com `m3DeltaE` < 6 na medição de 15/11/2026 (116),
  * conferidos a olho na prancha `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png` (a esmagadora maioria é o bloco azul/violeta
@@ -187,13 +232,13 @@ export const M3_PARES_PROIBIDOS: ReadonlySet<string> = new Set(
 export const m3ParProibido = (a: string, b: string): boolean => M3_PARES_PROIBIDOS.has(`${a}|${b}`);
 
 /** Os limiares de cada camada medida (a lista curada não tem limiar: não relaxa). */
-export interface M3Limiares { deltaE: number; paleta: number; daltonico: number }
+export interface M3Limiares { deltaE: number; paleta: number; daltonico: number; silhueta: number }
 /** Os limiares de produção. */
-export const M3_LIMIARES: Readonly<M3Limiares> = { deltaE: M3_MIN_DELTA_E, paleta: M3_MIN_DELTA_E_PALETA, daltonico: M3_MIN_DELTA_E_DALTONICO };
+export const M3_LIMIARES: Readonly<M3Limiares> = { deltaE: M3_MIN_DELTA_E, paleta: M3_MIN_DELTA_E_PALETA, daltonico: M3_MIN_DELTA_E_DALTONICO, silhueta: M3_MAX_SILHUETA };
 
 /** `true` se os dois ícones NÃO podem dividir o tabuleiro com estes limiares: par da lista curada ou abaixo de algum limiar. */
 export function m3Conflito(a: string, b: string, lim: Readonly<M3Limiares> = M3_LIMIARES): boolean {
-  return m3ParProibido(a, b) || m3DeltaE(a, b) < lim.deltaE || m3DeltaEPaleta(a, b) < lim.paleta || m3DeltaEDaltonico(a, b) < lim.daltonico;
+  return m3ParProibido(a, b) || m3DeltaE(a, b) < lim.deltaE || m3DeltaEPaleta(a, b) < lim.paleta || m3DeltaEDaltonico(a, b) < lim.daltonico || m3SilhuetaConfunde(a, b, lim.silhueta);
 }
 
 /** Resultado do sorteio: os ícones, o limiar de ΔE com que fechou e se precisou relaxar algum limiar abaixo do de produção. */
@@ -210,12 +255,12 @@ export function pickM3Distinct(order: readonly string[], n: number, base: number
   if (n <= 0) return { elements: [], limiar: b.deltaE, relaxado: false };
   for (let k = 0; ; k++) {
     const folga = k * M3_DELTA_E_STEP;
-    const lim: M3Limiares = { deltaE: Math.max(0, b.deltaE - folga), paleta: Math.max(0, b.paleta - folga), daltonico: Math.max(0, b.daltonico - folga) };
+    const lim: M3Limiares = { deltaE: Math.max(0, b.deltaE - folga), paleta: Math.max(0, b.paleta - folga), daltonico: Math.max(0, b.daltonico - folga), silhueta: b.silhueta + k * M3_SILHUETA_STEP };
     const out: string[] = [];
     for (const id of order) {
       if (out.every(o => !m3Conflito(o, id, lim))) out.push(id);
       if (out.length >= n) return { elements: out, limiar: lim.deltaE, relaxado: k > 0 };
     }
-    if (lim.deltaE <= 0 && lim.paleta <= 0 && lim.daltonico <= 0) return { elements: out, limiar: 0, relaxado: k > 0 };
+    if (lim.deltaE <= 0 && lim.paleta <= 0 && lim.daltonico <= 0 && lim.silhueta > 1) return { elements: out, limiar: 0, relaxado: k > 0 };
   }
 }

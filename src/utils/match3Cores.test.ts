@@ -3,9 +3,11 @@ import { mulberry32 } from './combate/rng';
 import { ELEMENT_DOMINANTE } from './elementDominante.data';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 import { ELEMENT_PALETA } from './elementPaleta.data';
+import { ELEMENT_SILHUETA } from './elementSilhueta.data';
 import {
   M3_DELTA_E_STEP, M3_MIN_DELTA_E, M3_MIN_DELTA_E_DALTONICO, M3_MIN_DELTA_E_PALETA, M3_PARES_PROIBIDOS, ciede2000, m3Conflito, m3DeltaE,
-  m3DeltaEDaltonico, m3DeltaEPaleta, m3ParProibido, pickM3Distinct, simulaDaltonismo,
+  M3_COR_PROXIMA_SILHUETA, M3_MAX_SILHUETA, m3DeltaBrilho, m3DeltaEDaltonico, m3DeltaEPaleta, m3ParProibido, m3Silhueta, m3SilhuetaConfunde,
+  pickM3Distinct, simulaDaltonismo,
 } from './match3Cores';
 import { pickPvpElements, pvpElementPool, pvpElementsForSeed } from './match3Pvp';
 
@@ -129,5 +131,46 @@ describe('Match-3 rodada 1: paleta e daltonismo (REGISTRO §402)', () => {
   });
   it('determinístico mesmo com as camadas novas', () => {
     expect(pvpElementsForSeed(31337)).toEqual(pvpElementsForSeed(31337));
+  });
+});
+
+describe('Match-3 rodada 2: silhueta e brilho (REGISTRO §402)', () => {
+  it('a tabela de silhueta cobre os mesmos ícones, com 64 dígitos hex e alguma área', () => {
+    expect(Object.keys(ELEMENT_SILHUETA).sort()).toEqual(Object.keys(ELEMENT_VISUAL).sort());
+    for (const h of Object.values(ELEMENT_SILHUETA)) { expect(h).toMatch(/^[0-9a-f]{64}$/); expect(h).not.toBe('0'.repeat(64)); }
+  });
+  it('IoU: 1 para o mesmo ícone, simétrico, entre 0 e 1, 0 sem assinatura', () => {
+    expect(m3Silhueta('fogo', 'fogo')).toBe(1);
+    expect(m3Silhueta('fogo', 'agua')).toBeCloseTo(m3Silhueta('agua', 'fogo'), 9);
+    expect(m3Silhueta('fogo', 'agua')).toBeLessThan(1);
+    expect(m3Silhueta('fogo', 'icone-novo-sem-assinatura')).toBe(0);
+    expect(m3DeltaBrilho('fogo', 'icone-novo-sem-assinatura')).toBe(Infinity);
+  });
+  it('forma quase igual com cor próxima conflita; forma igual com cor distante não', () => {
+    expect(m3Silhueta('ossario_vivo', 'permafrost')).toBeGreaterThanOrEqual(M3_MAX_SILHUETA);
+    expect(m3DeltaE('ossario_vivo', 'permafrost')).toBeLessThan(M3_COR_PROXIMA_SILHUETA);
+    expect(m3SilhuetaConfunde('ossario_vivo', 'permafrost')).toBe(true);
+    expect(m3Silhueta('horizonte_de_eventos', 'supernova')).toBeGreaterThanOrEqual(M3_MAX_SILHUETA);
+    expect(m3DeltaE('horizonte_de_eventos', 'supernova')).toBeGreaterThanOrEqual(M3_COR_PROXIMA_SILHUETA);
+    expect(m3SilhuetaConfunde('horizonte_de_eventos', 'supernova')).toBe(false);
+    expect(m3SilhuetaConfunde('ossario_vivo', 'permafrost', 2)).toBe(false); // camada desligada pelo relaxamento
+  });
+  it('os 6 fixos do Normal não se confundem por silhueta', () => {
+    const base = ['fogo', 'agua', 'terra', 'vida', 'ar', 'luz'];
+    for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(m3SilhuetaConfunde(base[i], base[j])).toBe(false);
+  });
+  it('em 3000 sementes: nenhum par de forma confundível, sempre 6, sem relaxar', () => {
+    for (let sd = 1; sd <= 3000; sd++) {
+      const rng = mulberry32((sd * 104729 ^ 0x3e1e) | 0);
+      const r = pickM3Distinct(pickPvpElements(rng, pvpElementPool(), 400), 6);
+      expect(r.relaxado).toBe(false);
+      expect(r.elements).toHaveLength(6);
+      for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(m3SilhuetaConfunde(r.elements[i], r.elements[j])).toBe(false);
+    }
+  });
+  it('pool de gêmeos de forma: relaxa a silhueta, devolve o que couber e nunca trava', () => {
+    const r = pickM3Distinct(['ossario_vivo', 'permafrost'], 2);
+    expect(r.elements).toEqual(['ossario_vivo', 'permafrost']);
+    expect(r.relaxado).toBe(true);
   });
 });
