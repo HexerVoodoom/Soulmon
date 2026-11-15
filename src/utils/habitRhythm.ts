@@ -10,6 +10,7 @@ import {
 } from '../types/taskModel';
 import type { Schedule, HabitTier } from '../types/taskModel';
 import { parseDayKeyLocal } from './dayKeyParse';
+import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 
 // O MOTOR DE CONSTÂNCIA DOS HÁBITOS
 // =================================
@@ -346,9 +347,10 @@ export function habitCountsForHeartsOn(
   source: { schedule?: Schedule; weekDays?: number[] },
   rhythm: HabitRhythm | undefined,
   date: Date,
+  anchor?: PlayerDayAnchor,
 ): boolean {
   const s = normalizeSchedule(source);
-  if (s.kind !== 'timesPerWeek') return habitCountsOn(source, rhythm, date);
+  if (s.kind !== 'timesPerWeek') return habitCountsOn(source, rhythm, date, anchor);
   const r = rhythm ?? emptyRhythm();
   // Feito HOJE: entra na meta para que o feito e a meta usem o mesmo
   // denominador (era esta simetria que o bug da elegibilidade quebrava).
@@ -361,6 +363,9 @@ export function habitCountsOn(
   source: { schedule?: Schedule; weekDays?: number[] },
   rhythm: HabitRhythm | undefined,
   date: Date,
+  /** QA r4: a âncora do DIA DO JOGADOR (`playerDayTz`), a mesma de `bornTodayIds`. Só a série "a cada N dias" do nascimento a
+   *  usa; ausente = o dia do aparelho, como antes (chamadores do desktop e do widget seguem iguais). */
+  anchor?: PlayerDayAnchor,
 ): boolean {
   const s = normalizeSchedule(source);
   const r = rhythm ?? emptyRhythm();
@@ -377,20 +382,30 @@ export function habitCountsOn(
   // §371: "a cada N dias" do CALENDÁRIO sem histórico ancorava em 01/01/1970 — o hábito recém-criado podia não cair hoje (nem nos
   // próximos N−1 dias). Com o carimbo de nascimento, a série começa no dia em que ele nasceu. Sem carimbo: a regra de antes.
   if (s.kind === 'everyNDays' && s.from === 'schedule' && r.done.length === 0) {
-    const nasceu = bornDay((source as { createdAt?: unknown }).createdAt);
+    const nasceu = bornDay((source as { createdAt?: unknown }).createdAt, anchor);
     if (nasceu) {
-      const offset = daysBetween(nasceu, date);
+      const offset = daysBetween(nasceu, isoLocalMidnight(playerDayIso(date, anchor)));
       return offset >= 0 && offset % s.n === 0;
     }
   }
   return isDueOn(s, r, date);
 }
 
-/** O dia LOCAL (meia-noite) de um ISO de nascimento; ilegível = `null`. */
-function bornDay(createdAt: unknown): Date | null {
+/**
+ * O DIA DO JOGADOR em que o hábito nasceu, como meia-noite local (só para contar dias). QA r4: era a meia-noite do APARELHO,
+ * enquanto `bornTodayIds` (`dayPlan.ts`) usa o dia do jogador — em fuso divergente os dois discordavam de QUAL dia ele nasceu.
+ * Agora é a MESMA âncora (`playerDayIso`); sem âncora, `playerDayIso` cai no dia do aparelho (o comportamento de antes). Ilegível = `null`.
+ */
+function bornDay(createdAt: unknown, anchor?: PlayerDayAnchor): Date | null {
   if (typeof createdAt !== 'string') return null;
   const t = Date.parse(createdAt);
-  return Number.isFinite(t) ? midnight(new Date(t)) : null;
+  return Number.isFinite(t) ? isoLocalMidnight(playerDayIso(new Date(t), anchor)) : null;
+}
+
+/** `AAAA-MM-DD` → a meia-noite local desse dia civil (contagem de dias sem fuso no meio). */
+function isoLocalMidnight(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 /**

@@ -2565,7 +2565,7 @@ export default function App() {
     [gameState.dayPlan, dayPlanToday, dayPlanActive, dayPlanBornToday],
   );
   const dayPlanCandidatesNow = useMemo(
-    () => dayPlanCandidates(gameState as any, new Date()),
+    () => dayPlanCandidates(gameState as any, new Date(), gameState.playerDayTz),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [gameState.activities, gameState.tasks, gameState.habitRhythms, dayPlanToday],
   );
@@ -2698,7 +2698,7 @@ export default function App() {
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
         setGameState(prev => ({
           ...prev,
-          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date()),
+          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date(), prev.playerDayTz),
             bornTodayIds((prev.activities as any[]).concat(prev.tasks), hoje, prev.playerDayTz)),
           lastCheckInDate: dia,
         }));
@@ -9491,6 +9491,7 @@ export default function App() {
                     activities={gameState.activities}
                     completedTasks={gameState.completedTasks}
                     habitRhythms={gameState.habitRhythms}
+                    playerDayTz={gameState.playerDayTz}
                     /* WP2.8 — a MESMA chave da Janela de Descanso. */
                     hideMetrics={gameState.rest?.hideMetrics === true}
                     language={language}

@@ -152,6 +152,8 @@ interface CandTask { id: string | number; name?: string; completed?: boolean; st
 export function dayPlanCandidates(
   state: { activities: readonly CandActivity[]; tasks: readonly CandTask[]; habitRhythms?: Record<string, never> | Record<string, unknown> },
   now: Date,
+  /** QA r4: a âncora do dia do jogador (a mesma de `bornTodayIds`), para o nascimento do "a cada N dias" (`habitCountsOn`). */
+  anchor?: PlayerDayAnchor,
 ): DayPlanCandidate[] {
   const today = now.toDateString();
   const rhythms = (state.habitRhythms ?? {}) as Record<string, Parameters<typeof habitCountsOn>[1]>;
@@ -162,7 +164,7 @@ export function dayPlanCandidates(
     const id = String(a.id);
     const done = (a.steps?.length ?? 0) > 0 ? a.steps!.every(s => s.completed) : !!a.completedToday && a.lastCompletedDate === today;
     if (done) continue;
-    if (!habitCountsOn(a as Parameters<typeof habitCountsOn>[0], rhythms[id], now)) continue;
+    if (!habitCountsOn(a as Parameters<typeof habitCountsOn>[0], rhythms[id], now, anchor)) continue;
     push({ id, name: a.name ?? '', kind: activityBucket(a as { schedule?: unknown; weekDays?: number[] }) === 'habit' ? 'habit' : 'task' });
   }
   for (const t of state.tasks) {
