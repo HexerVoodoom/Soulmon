@@ -6,6 +6,11 @@
 > - **Convites (§388) e cartas (§389, §390):** recusa bloqueia o par por 7 dias (resposta igual à do sucesso), teto diário de convites no KV; "Excluir todas lidas" não apaga convite; pop-up do Papus só na 1ª carta da conta.
 > - **Não implementado (§387):** teto de crescimento de `gamePoints` no save. Levantamento e proposta (orçamento por token bucket na metadata do save) no registro; risco de cortar jogador honesto sem razão de servidor para cartas de compensação e conquistas.
 > - **Não verificado:** aparelho real (replay pós-queda de rede, fuso), D1/KV reais; `dist/` não regenerado.
+> ## 14/11/2026 — QA r4, pacote C1 de UX do cliente (`feat/qa-r4-ux`, REGISTRO §382–§385) — PR aberto, NÃO mergeado
+>
+> - **Feito:** nome da linha ligada a prédio abre o prédio (§382); balão dourado some em 5 s e o 2º ignorado do dia dispensa (§383, chave nova `soulmon-balao-dourado-ignorados`); Arena: o último adversário dropa 2× a essência, ⚰️ +1 Presa (§384); estados da escolha de adversários (carregando/erro) e ajuda do Desgarrado; limites visíveis (§385); closure velho do `commitHabitCreate`; nome acessível do ícone de estágio; "Bits ganhos" fora dos textos (§373); `bornDay` na âncora do dia do jogador.
+> - **Não visto em tela:** sem build nesta rodada (`dist/` não regenerado); só testes de render em jsdom.
+> - **Servidor:** nenhuma mudança necessária (`enforceEssences` não limita ganho de essência).
 
 > ## 14/11/2026 — QA r4, pacote A do servidor (`fix/qa-r4-servidor`, REGISTRO §381) — PR aberto, NÃO mergeado
 >

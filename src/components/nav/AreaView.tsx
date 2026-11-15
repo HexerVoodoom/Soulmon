@@ -139,7 +139,7 @@ export interface PlayHandlers {
   funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
-  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; /** §372: run vencida → +1 Presa (1×/dia); devolve quanto entrou. */ onRunCleared?: () => number };
+  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
@@ -644,7 +644,6 @@ export function AreaView(props: AreaViewProps) {
               onEnemySeen={props.play.onBestiarySeen}
               onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('arena'); return creditado; }}
               onRunEnd={props.play.arena?.onRunEnd}
-              onRunCleared={props.play.arena?.onRunCleared}
               ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
             />

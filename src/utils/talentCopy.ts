@@ -63,8 +63,8 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
     descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },
   'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: `+${BACKPACK_STEP} espaço por grau nos Arquivos (peças guardadas fora dos slots; os Arquivos começam com ${BACKPACK_BASE}). É capacidade, não combate.`, descEn: `+${BACKPACK_STEP} Files slot per rank (pieces kept outside the slots; Files starts with ${BACKPACK_BASE}). Capacity, not combat.` },
   'tal-com-05': { namePt: 'Balança', nameEn: 'Scales',
-    descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto (Bits que você ganhou jogando). É conveniência, não combate.',
-    descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point (Bits you earned by playing). Convenience, not combat.' },
+    descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto, em Bits. É conveniência, não combate.',
+    descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point, in Bits. Convenience, not combat.' },
   'tal-com-06': { namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: `${pct(MISSION_BITS_STEP, true)} mais Bits por grau no dia completo, até +25%. Não cria Bits novos: só rende mais do que o dia já dava. É moeda, não combate.`, descEn: `${pct(MISSION_BITS_STEP, false)} more Bits per rank on a complete day, up to +25%. No new source of Bits: it only adds to what the day already gave. Currency, not combat.` },
 };
 

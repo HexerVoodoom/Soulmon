@@ -89,7 +89,7 @@ describe('TalentTree', () => {
     expect(estadoTxt()).toMatch(/0\/1 pontos/);
   });
 
-  it('respec é SEMPRE pago: pede confirmação, cobra Bits ganhos e devolve os pontos', () => {
+  it('respec é SEMPRE pago: pede confirmação, cobra Bits (o saldo inteiro, §373) e devolve os pontos', () => {
     abrir({ totalXP: xpForLevel(3), gamePoints: 500, talentPicks: ['tal-pvp-01', 'tal-pve-01'] });
     const botao = screen.getByRole('button', { name: /Refazer a árvore\s*\d+\s*Bits/ });
     expect(botao.textContent).toContain(String(2 * RESPEC_COST_PER_POINT));

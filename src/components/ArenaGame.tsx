@@ -57,7 +57,7 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
 import { essenceLedgerRows } from '../utils/resultEssences';
-import { arenaClearBonusRows } from '../utils/arenaClearBonusCopy';
+import { arenaRoundDrops } from '../utils/arenaUltimoAdversario';
 import { ArenaCuraModal } from './games/ArenaCuraModal';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
@@ -135,17 +135,11 @@ export interface ArenaGameProps {
   onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
   /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
   ladder?: number;
-  /**
-   * §372 (dono, 14/11/2026): a run terminou VENCIDA, todos os inimigos derrotados. O chamador paga o bônus (+1 Presa,
-   * `utils/arenaClearBonus.ts`) e devolve QUANTO entrou (0 = já pago hoje ou estoque no teto). Chamado ANTES de `onEarnPoints`:
-   * o bônus lê a contagem de vitórias do dia antes de o evento 'arena' desta run subir. Não é Bit nem Honra.
-   */
-  onRunCleared?: () => number;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onRunCleared, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -162,8 +156,8 @@ export function ArenaGame({
   const [bitsGanhos, setBitsGanhos] = useState(0);
   /** Essências que a run rendeu (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
   const [essenciasRun, setEssenciasRun] = useState<EssenceDrop[]>([]);
-  /** §372: quanto do material do bônus "Todos derrotados" entrou nesta run (0 = nada; linha própria no "Ganhou"). */
-  const [bonusMaterial, setBonusMaterial] = useState(0);
+  /** §384: o que o ÚLTIMO adversário entregou, já em dobro (vazio = run não vencida ou sem drop): a linha "×2" do "Ganhou". */
+  const [dobradoRun, setDobradoRun] = useState<EssenceDrop[]>([]);
   const [rodada, setRodada] = useState(1);
   const [inimigos, setInimigos] = useState<ArenaEnemy[]>([]);
   const [pontos, setPontos] = useState(0);
@@ -277,7 +271,7 @@ export function ArenaGame({
     setPontos(0);
     setRodada(1);
     setBitsGanhos(0);
-    setBonusMaterial(0);
+    setDobradoRun([]);
     montarRodada(1, pool);
   }, [pool, montarRodada]);
 
@@ -342,9 +336,11 @@ export function ArenaGame({
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
       if (ids.length > 0) {
-        const drops = inimigosRef.current.flatMap(e => essenceDropsOfFoe(e, e.dropTier));
+        // §384: na última rodada, o último adversário dropa em dobro. O MESMO vetor vai para o updater e para o "Ganhou".
+        const { drops, dobrados } = arenaRoundDrops(inimigosRef.current.map(e => essenceDropsOfFoe(e, e.dropTier)), rodadaRef.current >= ARENA_ROUNDS);
         elementsDefeatedRef.current?.(ids, drops);
         if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
+        if (elementsDefeatedRef.current && dobrados.length > 0) setDobradoRun(dobrados);
       }
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
@@ -368,8 +364,6 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      // §372: o bônus de "Todos derrotados" ANTES dos Bits (lê as vitórias do dia sem esta). Fora do funil de Bits e do teto.
-      setBonusMaterial(Math.max(0, onRunCleared?.() ?? 0));
       const pedido = riftBitsWith(pontos, rift.riftBits);
       setBitsGanhos(onEarnPoints?.(pedido) ?? pedido); // o creditado (teto diário), não o pedido
       setFase('venceu');
@@ -378,7 +372,7 @@ export function ArenaGame({
     const n = rodada + 1;
     setRodada(n);
     montarRodada(n, pool);
-  }, [pool, rodada, pontos, onEarnPoints, onRunCleared, montarRodada, rift.riftBits]);
+  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
 
   // Última rodada vencida: sem modal nem tela intermediária, fecha a run direto.
   useEffect(() => {
@@ -602,7 +596,7 @@ export function ArenaGame({
               ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
               : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
           hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
-          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? bitsGanhos : 0 }, ...arenaClearBonusRows(fase === 'venceu' ? bonusMaterial : 0, isPt), ...essenceLedgerRows(essenciasRun)]}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? bitsGanhos : 0 }, ...essenceLedgerRows(essenciasRun), ...(fase === 'venceu' && dobradoRun.length > 0 ? [{ key: 'arena-last-double', kind: 'text' as const, label: isPt ? 'Último adversário: drop em dobro ×2' : 'Last opponent: double drop ×2' }] : [])]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           opponentSrc={sprites[sprites.length - 1]}

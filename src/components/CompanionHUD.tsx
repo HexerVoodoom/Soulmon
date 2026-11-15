@@ -258,10 +258,14 @@ interface CompanionHUDProps {
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;
-  /** beta12 §G: o BALÃO DOURADO persistente (borda dourada, sem timeout) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala. */
-  balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string } | null;
+  /** beta12 §G: o BALÃO DOURADO (borda dourada) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala.
+   *  `ariaLabel` = o DESTINO; o nome acessível do botão é a fala visível + o destino (§383). `tempoMs` (§383, só os de evento): quanto
+   *  tempo ele fica NA TELA antes de sumir sozinho (⚰️ "persistente, sem timeout"); ao vencer, `onBalaoIgnorado`. */
+  balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string; tempoMs?: number } | null;
   /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§333) navega pelo `requestGoToBuilding`. */
   onBalaoDourado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
+  /** §383: o balão com `tempoMs` ficou esse tempo na tela sem toque e sumiu. */
+  onBalaoIgnorado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
   /** §333: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
    *  nunca por cima de outra fala; ao falar, o HUD avisa `onDicaFalada` para o App gravar a aparição. `null`/ausente = a escada de sempre. */
   dicaFala?: { tipo: DicaTipo; text: string } | null;
@@ -373,6 +377,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   naMasmorra = false,
   balaoDourado = null,
   onBalaoDourado,
+  onBalaoIgnorado,
   dicaFala = null,
   onDicaFalada,
   onSinalMasmorra,
@@ -487,6 +492,18 @@ export const CompanionHUD = memo(function CompanionHUD({
   const telaW = tela.w * VIEW_SCALE;
   const position = 50 + (walkPx * 100) / telaW;
   const [showBubble, setShowBubble] = useState(false);
+  /* §383: o relógio do balão dourado de evento conta só com ele NA TELA (cede a vez à fala do pet = recomeça); o toque o desarma. */
+  const goldNaTela = !!balaoDourado && !showBubble;
+  const goldTipo = balaoDourado?.tipo;
+  const goldTempoMs = balaoDourado?.tempoMs;
+  const goldIgnoradoRef = useRef(onBalaoIgnorado);
+  goldIgnoradoRef.current = onBalaoIgnorado;
+  const goldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!goldNaTela || !goldTipo || !goldTempoMs) return;
+    goldTimerRef.current = setTimeout(() => { goldTimerRef.current = null; goldIgnoradoRef.current?.(goldTipo); }, goldTempoMs);
+    return () => { if (goldTimerRef.current) clearTimeout(goldTimerRef.current); goldTimerRef.current = null; };
+  }, [goldNaTela, goldTipo, goldTempoMs]);
   const [squashFrame, setSquashFrame] = useState(0);
   const [bubbleText, setBubbleText] = useState('');
   const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1873,7 +1890,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           );
         })()}
 
-        {/* BALÃO DOURADO (beta12 §G): persistente, borda dourada, leva ao lugar. Mesma faixa do balão comum (fora do fluxo, não muda
+        {/* BALÃO DOURADO (beta12 §G): borda dourada, leva ao lugar; o de evento some sozinho em `tempoMs` (§383). Mesma faixa do balão comum (fora do fluxo, não muda
             a altura da Home); só um por vez e cede a vez enquanto o pet fala (`showBubble`). É um BOTÃO nomeado pelo destino, alvo >= 44. */}
         {balaoDourado && !showBubble && (() => {
           const x = balaoDourado.tipo === 'rift' ? 84 : Math.min(100, Math.max(0, 50 + (position - 50) * CENA_ZOOM));
@@ -1882,9 +1899,12 @@ export const CompanionHUD = memo(function CompanionHUD({
               <button
                 type="button"
                 data-pet-gold-bubble={balaoDourado.tipo}
-                aria-label={balaoDourado.ariaLabel}
+                aria-label={`${balaoDourado.text} ${balaoDourado.ariaLabel}`}
                 className={reducedMotion ? undefined : 'sm3-balao'}
-                onClick={() => onBalaoDourado?.(balaoDourado.tipo)}
+                onClick={() => {
+                  if (goldTimerRef.current) { clearTimeout(goldTimerRef.current); goldTimerRef.current = null; }
+                  onBalaoDourado?.(balaoDourado.tipo);
+                }}
                 style={{
                   pointerEvents: 'auto', cursor: 'pointer', position: 'relative', display: 'block', width: 'fit-content', maxWidth: '80%', minHeight: 44,
                   left: `${x}%`, transform: `translateX(-${x}%)`, textAlign: 'left',

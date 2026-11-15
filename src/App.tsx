@@ -186,7 +186,7 @@ import {
   REROLL_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
-import { fitHabitCreates } from './utils/habitCreate';
+import { fitHabitCreates, habitCapPartialText } from './utils/habitCreate';
 import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
 import type { Ice } from './utils/iceScore';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
@@ -208,7 +208,8 @@ import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightm
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
 import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
-import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, type BalaoTipo } from './utils/balaoDourado';
+import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, BALAO_DOURADO_VISIVEL_MS, type BalaoTipo } from './utils/balaoDourado';
+import { useBalaoDouradoIgnorado } from './hooks/useBalaoDouradoIgnorado';
 import { useGroveEstado, bosqueDefendivel } from './hooks/useGroveAtaque';
 import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
 import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
@@ -238,7 +239,6 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { bitsPackById, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { arenaClearBonusDue, applyArenaClearBonus } from './utils/arenaClearBonus';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -2296,7 +2296,9 @@ export default function App() {
     }
     setMessageTrigger(prev => prev + 1);
     return cabem.length;
-  }, [tierForRules, gameState.activities.length, gameState.maxActivityCap]);
+    // QA r4: a dependência é a LISTA, não o tamanho. Trocar um hábito de "todo dia" para dias específicos muda a cota sem mudar o
+    // `length`; com `.length` o catálogo seguia com o closure velho e recusava calado (ou ficava aberto sem aviso).
+  }, [tierForRules, gameState.activities, gameState.maxActivityCap]);
 
   /**
    * O PORTÃO DE CRIAÇÃO DE TAREFA — ponto ÚNICO de escrita em `tasks`.
@@ -2565,7 +2567,7 @@ export default function App() {
     [gameState.dayPlan, dayPlanToday, dayPlanActive, dayPlanBornToday],
   );
   const dayPlanCandidatesNow = useMemo(
-    () => dayPlanCandidates(gameState as any, new Date()),
+    () => dayPlanCandidates(gameState as any, new Date(), gameState.playerDayTz),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [gameState.activities, gameState.tasks, gameState.habitRhythms, dayPlanToday],
   );
@@ -2704,7 +2706,7 @@ export default function App() {
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
         setGameState(prev => ({
           ...prev,
-          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date()),
+          dayPlan: showDayPlan(prev.dayPlan, hoje, dayPlanCandidates(prev as any, new Date(), prev.playerDayTz),
             bornTodayIds((prev.activities as any[]).concat(prev.tasks), hoje, prev.playerDayTz)),
           lastCheckInDate: dia,
         }));
@@ -4778,6 +4780,16 @@ export default function App() {
   }, [setGameState]);
   const dispensarBalaoRef = useRef(dispensarBalao);
   dispensarBalaoRef.current = dispensarBalao;
+  /* §383: o balão de evento some sozinho em 5 s; sumiu sem toque = 1 ignorado; no 2º do dia vira `dispensar`. Entre os dois, só
+     volta na próxima abertura da Home (ou retorno do app). */
+  const balaoIgnorado = useBalaoDouradoIgnorado({ naHome: currentView === 'home', onDispensar: dispensarBalao });
+  const ignorarBalaoDourado = balaoIgnorado.ignorar;
+  const playerDayTzBalao = gameState.playerDayTz;
+  const handleBalaoIgnorado = useCallback((tipo: BalaoTipo | DicaDouradaTipo) => {
+    if (ehDicaDourada(tipo)) return;
+    ignorarBalaoDourado(tipo, playerDayIso(new Date(), playerDayTzBalao));
+  }, [ignorarBalaoDourado, playerDayTzBalao]);
+  const balaoTipoVisivel = balaoTipo && !balaoIgnorado.oculto(balaoTipo) ? balaoTipo : null;
   /* ── BALÕES DE DICA (§333, `utils/balaoDica.ts`) ── abaixo dos dourados de evento: a dica dourada só entra sem nenhum deles na vez
      e fora da Home não entra; a comum ocupa o turno da fala ociosa do HUD. Cooldown por tipo, no aparelho (`useDicaVistas`). */
   const agoraDica = Date.now();
@@ -4815,7 +4827,7 @@ export default function App() {
     else if (a?.evento) setFeiraEvento(a.evento);
     else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
   }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
-  const balaoDouradoHud = balaoTipo ? { tipo: balaoTipo, text: balaoDouradoText(balaoTipo, language), ariaLabel: balaoDouradoAria(balaoTipo, language) }
+  const balaoDouradoHud = balaoTipoVisivel ? { tipo: balaoTipoVisivel, text: balaoDouradoText(balaoTipoVisivel, language), ariaLabel: balaoDouradoAria(balaoTipoVisivel, language), tempoMs: BALAO_DOURADO_VISIVEL_MS }
     : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
@@ -8896,14 +8908,7 @@ export default function App() {
                     ladder: gameState.arenaLadder,
                     // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
                     onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
-                    // §372 (dono, 14/11/2026): run vencida = +1 Presa, 1×/dia do jogador, fora dos Bits e do teto. A tela mostra o que
-                    // a leitura do estado atual diz; a escrita reconfere sobre o `prev` (a 2ª vitória do mesmo dia não paga).
-                    onRunCleared: () => {
-                      if (demo) return 0;
-                      const pago = arenaClearBonusDue(gameState, playerDayKey(new Date(), gameState.playerDayTz));
-                      if (pago > 0) setGameState(prev => applyArenaClearBonus(prev, playerDayKey(new Date(), prev.playerDayTz)).state);
-                      return pago;
-                    },
+                    // ⚰️ §372 `onRunCleared` (+1 Presa 1×/dia) revogado por §384: o último adversário dropa em dobro (`utils/arenaUltimoAdversario.ts`).
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
                       const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
@@ -9074,6 +9079,7 @@ export default function App() {
                 naMasmorra={naMasmorra}
                 balaoDourado={balaoDouradoHud}
                 onBalaoDourado={handleBalaoDourado}
+                onBalaoIgnorado={handleBalaoIgnorado}
                 dicaFala={dicaFalaHud}
                 onDicaFalada={marcarDica}
                 onSinalMasmorra={() => abrirAvisoMasmorra(null)}
@@ -9519,6 +9525,7 @@ export default function App() {
                     activities={gameState.activities}
                     completedTasks={gameState.completedTasks}
                     habitRhythms={gameState.habitRhythms}
+                    playerDayTz={gameState.playerDayTz}
                     /* WP2.8 — a MESMA chave da Janela de Descanso. */
                     hideMetrics={gameState.rest?.hideMetrics === true}
                     language={language}
@@ -9945,6 +9952,8 @@ export default function App() {
         habitsCount={contaCotaDeHabitos(gameState.activities)}
         habitsCap={activityCap}
         capIsDemoBoundary={gameState.accountTier === 'demo' && !demo}
+        /* §385: conta grátis no limite = o MESMO convite do CreateModal. */
+        onUnlock={() => { setCatalogBrowserOpen(false); setUnlockReason('task-limit'); }}
         onAdd={(item) => {
           // Só fecha se entrou: 0 = não coube no teto, e fechar faria parecer que foi adicionado (§376).
           const criados = commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
@@ -10577,10 +10586,11 @@ export default function App() {
             // (D-12): escrever em `activities` por fora furava o teto do demo e
             // o do estágio (o tutorial já pode ter enchido a lista), sem contar
             // `activity_create`. Mesmo caminho do catálogo avulso (`create_modal`).
-            commitHabitCreate(
-              activitiesFromCatalogChoice(chosen, language === 'pt-BR'),
-              TELEMETRY_CREATE_PATH.create_modal,
-            );
+            const pedidas = activitiesFromCatalogChoice(chosen, language === 'pt-BR');
+            const entraram = commitHabitCreate(pedidas, TELEMETRY_CREATE_PATH.create_modal);
+            // §385: o teto cortou a seleção → aviso com quantos entraram (nunca corte calado).
+            const avisoTeto = habitCapPartialText(entraram, pedidas.length, language === 'pt-BR');
+            if (avisoTeto) toast(avisoTeto, { id: 'habit-cap-partial' });
             setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
           }}
         />
@@ -10596,6 +10606,9 @@ export default function App() {
               const novas = activitiesFromCatalogChoice(items, language === 'pt-BR');
               // §376: só os que COUBERAM (prefixo de `fitHabitCreates`) — id do que não entrou seria marcado no plano sem existir.
               const criados = commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
+              // §385: o teto cortou a seleção → aviso com quantos entraram.
+              const avisoTeto = habitCapPartialText(criados, novas.length, language === 'pt-BR');
+              if (avisoTeto) toast(avisoTeto, { id: 'habit-cap-partial' });
               return novas.slice(0, criados).map(a => a.id);
             }}
             language={language}

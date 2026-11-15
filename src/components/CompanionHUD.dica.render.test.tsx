@@ -71,7 +71,7 @@ describe('dica dourada no balão dourado', () => {
       const { container } = renderWithCss(<CompanionHUD {...base} balaoDourado={{ tipo, text: dicaTexto(tipo, 'pt-BR'), ariaLabel: dicaAria(tipo, 'pt-BR') }} onBalaoDourado={onTap} />);
       const b = container.querySelector(`[data-pet-gold-bubble="${tipo}"]`) as HTMLButtonElement;
       expect(b.tagName).toBe('BUTTON');
-      expect(b.getAttribute('aria-label')).toBe(dicaAria(tipo, 'pt-BR'));
+      expect(b.getAttribute('aria-label')).toBe(`${dicaTexto(tipo, 'pt-BR')} ${dicaAria(tipo, 'pt-BR')}`); // §383: fala + destino
       expect(b.textContent).toContain(dicaTexto(tipo, 'pt-BR'));
       // leva a algum lugar → o chevron turquesa no fim da linha (aria-hidden: o rótulo já diz o destino)
       expect(b.querySelectorAll('[data-pet-gold-bubble-arrow][aria-hidden="true"]')).toHaveLength(1);

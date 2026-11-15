@@ -408,7 +408,7 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
         ) : (
           <div role="group" aria-label={isPt ? 'Confirmar' : 'Confirm'} style={{ display: 'grid', gap: 8 }}>
             <p className="sm2-stats-s" style={{ margin: 0 }}>
-              {isPt ? `Refazer custa ${custo} Bits (moeda que você ganhou jogando) e devolve todos os pontos.` : `Rebuilding costs ${custo} Bits (coin you earned by playing) and gives every point back.`}
+              {isPt ? `Refazer custa ${custo} Bits e devolve todos os pontos.` : `Rebuilding costs ${custo} Bits and gives every point back.`}
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" onClick={() => setConfirmando(false)}>{isPt ? 'Agora não' : 'Not now'}</button>

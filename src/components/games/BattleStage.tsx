@@ -27,6 +27,10 @@
  */
 import { elementIcon } from '../../utils/elementIconArt';
 import { EstagioIcone, caminhoDaForma } from '../ui/EstagioIcone';
+import { formStageLabel } from '../../utils/libraryForms';
+
+/** O rótulo do ícone de estágio da plaquinha; sem forma (ovo, tier de bicho selvagem) não há ícone nem rótulo. */
+const estagioRotulo = (forma: string | null | undefined, isPt: boolean): string | undefined => (typeof forma === 'string' && forma ? formStageLabel(forma, isPt) : undefined);
 import { tileElementName } from '../../utils/match3Pvp';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -336,7 +340,9 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
         <span style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} caminho={caminhoDaForma(fighter.stageIcon ?? fighter.stage)} />
+          {/* QA r4: nome acessível = estágio + caminho ("Apotheosis · Power"), pelo dono único `formStageLabel`; antes era aria-hidden e o
+              vizinho só dizia o nome do lutador. Sem mudança visual. */}
+          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} caminho={caminhoDaForma(fighter.stageIcon ?? fighter.stage)} label={estagioRotulo(fighter.stageIcon ?? fighter.stage, isPt)} />
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fighter.name}</span>
         </span>
         {numeric && (

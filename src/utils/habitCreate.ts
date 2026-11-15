@@ -67,3 +67,14 @@ export function fitHabitCreates<A>(
   }
   return cabem;
 }
+
+/**
+ * §385 (dono, 14/11/2026, "limites visíveis"): seleção múltipla cortada pelo teto (`fitHabitCreates` aceitou menos do que o pedido)
+ * vira aviso, nunca corte calado. `null` = entrou tudo (ou nada foi pedido). Dono único do texto: o "Hoje" e o catálogo do
+ * onboarding chamam ESTA.
+ */
+export function habitCapPartialText(added: number, asked: number, isPt: boolean): string | null {
+  if (!(asked > 0) || added >= asked) return null;
+  const x = Math.max(0, added);
+  return isPt ? `Limite atingido: entraram ${x} de ${asked} hábitos` : `Limit reached: ${x} of ${asked} habits were added`;
+}

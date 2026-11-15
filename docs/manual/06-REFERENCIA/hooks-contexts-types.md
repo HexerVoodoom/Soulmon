@@ -318,6 +318,10 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 
 **`useGroveEstado(...) → { atacado, cuidavel }` (§333, 13/11/2026):** a MESMA consulta serve os dois sinais; `useGroveAtaque` virou um invólucro que devolve só `atacado`. `bosqueCuidavel(vista)` = planta de pé, não madura e ação do dia sorteável (`canDraw`) ou sorteada (`task`), a condição do botão "Cuidar" do `PlantioVisor`. **§355 (13/11/2026):** `bosqueDefendivel({ atacado, cuidavel }, metaCumprida)` decide o balão dourado do Bosque: só sob ataque, com a meta do dia cumprida (`fioMetaCumprida`) e cuidado do dia por fazer; sem ação possível não há balão.
 
+### `src/hooks/useBalaoDouradoIgnorado.ts`
+
+**§383 (14/11/2026):** `useBalaoDouradoIgnorado({ naHome, onDispensar })` → `{ oculto(tipo), ignorar(tipo, dia) }`. O HUD chama `ignorar` quando o balão dourado de evento passa `BALAO_DOURADO_VISIVEL_MS` (5 s) na tela sem toque: soma 1 em `STORAGE_KEYS.BALAO_DOURADO_IGNORADOS` (`registrarIgnorado`, `utils/balaoDourado.ts`) e esconde o balão até a próxima abertura (Home de novo, ou o app de volta ao primeiro plano); no 2º do dia chama `onDispensar` (o `dispensar` do save). **Régua:** `useBalaoDouradoIgnorado.test.tsx`.
+
 ### `src/hooks/useBalaoDica.ts`
 
 **§333 (13/11/2026):** `useDicaVistas()` → `[vistas, marcar]` (registro de aparições no aparelho, `STORAGE_KEYS.BALAO_DICAS_VISTAS`, leitura tolerante). `useDicaDourada({ presentes, vistas, bloqueado, onMostrar })` → `{ ativa, encerrar }`: escolhe a dica dourada fora do cooldown quando nada bloqueia (Home na tela e nenhum balão dourado de evento na vez), grava a aparição e a tira do visor em `DICA_DOURADA_VISIVEL_MS`; sai na hora se a condição acabar.
