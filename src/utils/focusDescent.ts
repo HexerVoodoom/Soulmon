@@ -40,7 +40,7 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
   const reg: DungeonAway = {
     since: nowMs, seed, layer, slot: 0, hp: hpAgora({ dungeonHp: prev.dungeonHp }, nowMs), en: 0, ms: false,
     ...(focusEndsAt !== undefined && focusEndsAt > nowMs ? { until: focusEndsAt } : {}),
-    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: prev.evolutionStage },
+    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage: prev.evolutionStage },
   };
   return { ...paid, dungeonAway: reg };
 }

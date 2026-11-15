@@ -770,6 +770,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/games/ResultExtrasContext.ts`
 **Dono de:** o contexto que leva os extras do resultado (`utils/resultExtras.ts`) do `App` até o `ResultScreen` sem prop-drilling. Sem Provider = sem extras.
 **Exports:** `ResultExtrasContext` · `useResultExtras()`.
+
+### `src/components/games/RiftResultExtras.tsx`
+
+Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fenda/Masmorra/Arena (150 + o extra da Agulha de bússola, `tal-pve-04`, REGISTRO §393). Só envolve a `ResultScreen` dessas três telas; os outros jogos seguem no teto base.
+
+**Exports:** `RiftResultExtras({ extraCap, children })`.
 **Quem chama:** `App.tsx` (Provider) e `ResultScreen`.
 ### `src/components/games/TorcidaKit.tsx`
 **Dono de:** as peças de TELA da torcida (02/10/2026, decisão do dono; mascote em 04/10/2026): tocar em qualquer lugar da luta (ou no mascote) enche a BARRA DE CHEER, que despeja energia no pet. Só desenha e repassa o toque; a regra mora em `src/utils/energia.ts` (PvE) e em `functions/api/_duel.js` (duelo).

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useGameStateOptional } from './GameStateContext';
 import { bondLevelFor } from '../utils/bond';
-import { talentBonus, talentPveAttrBonus, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../utils/talents';
+import { talentBonus, talentPveAttrBonus, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBitsCap, talentStartShield } from '../utils/talents';
 import { dungeonAttrBonus, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { combinedBonus, combinedAttrBonus, NO_ATTR_BONUS, type AttrBonus } from '../utils/combate/bonus';
 import { mealAttrBonus } from '../utils/restaurantState';
@@ -64,8 +64,8 @@ export { NO_ATTR_BONUS };
 export interface RiftTalents {
   /** `tal-pve-03`: fração do HP máximo a mais na cura entre andares da Masmorra. */
   readonly healBoost: number;
-  /** `tal-pve-04`: fração a mais nos Bits ganhos na fenda (a base nunca diminui). */
-  readonly riftBits: number;
+  /** `tal-pve-04` (§393): Bits a mais no teto diário de Bits da fenda (0/10/20/30). O ganho por luta não muda. */
+  readonly riftBitsCap: number;
   /** `tal-pve-07`: fração do HP máximo em escudo no começo da luta. */
   readonly startShield: number;
 }
@@ -77,11 +77,8 @@ export function useRiftTalents(): RiftTalents {
   const picks = ctx?.gameState.talentPicks;
   return useMemo(() => {
     const bond = bondLevelFor(xp ?? 0);
-    return { healBoost: talentHealBoost(picks, bond), riftBits: talentRiftBits(picks, bond), startShield: talentStartShield(picks, bond) };
+    return { healBoost: talentHealBoost(picks, bond), riftBitsCap: talentRiftBitsCap(picks, bond), startShield: talentStartShield(picks, bond) };
   }, [picks, xp]);
 }
 
-/** Bits ganhos na fenda com o talento: nunca menos que a base, arredondado para baixo no extra. */
-export function riftBitsWith(points: number, extra: number): number {
-  return points + Math.floor(Math.max(0, points) * Math.max(0, extra));
-}
+
