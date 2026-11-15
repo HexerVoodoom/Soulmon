@@ -4428,6 +4428,10 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`), `INIMIGOS_API_ART`, `RAMOS_ART` (chave `<elemento>/<ramo>-<estágio>`, §220).
 **Sincronização 09/11/2026:** `FORMAS_ART` (150 formas champion/ultimate/mega dos combinados 212-261, chave `NNN-slug-<estágio>`) e `PARALELOS_ART` (10 formas paralelas, chave `<id>-<estágio>`), de 09/11/2026, junto de `RAMOS_ART` (chave = `RosterEntry.artFile`).
 
+### `src/utils/enemyRosterUltimates.ts`
+**Dono de:** os 14 Ultimates de 2 componentes que existem só como Ultimate, sem Champion (dono, 15/11/2026, REGISTRO §405): a tabela única `ULTIMATES_2COMP_DATA` (`[id, par, componentes, elemento dos golpes, nome]`; trocar um nome é editar a última coluna).
+**Chamado por:** `enemyRoster.ts` (`buildUltimates2Comp`, `kind: 'paralelo'`, no fim do roster) e `spriteElement.ts` (`par:<id>`). **Régua:** `enemyRoster.test.ts` (14 só-Ultimate, arte, 2 componentes, nome único) e `arenaComponentes.test.ts` (20 elementos com pool de 2 componentes).
+
 ### `src/utils/enemyRosterData.ts`
 **Dono de:** os 138 rookies de elemento combinado como dados puros (gerado de `assets/soulmon/novos-arquivo/manifest.json`): `[número, slug, nome, elemento 1, elemento 2]`; o elemento de combate é o 1º. **Exports:** `COMBINADOS_DATA`.
 **Sincronização 09/11/2026:** `PARALELOS_DATA` (09/11/2026: a versão alternativa do Champion e do Ultimate da linha de fogo em 5 elementos; tupla `[id, elemento do sprite, componentes, elemento DOS GOLPES, champion, ultimate]`; só entram no sorteio quando o elemento é pedido) e `RAMOS_INIMIGOS_DATA` (os 40 ramos evoluídos como inimigos, §220).
