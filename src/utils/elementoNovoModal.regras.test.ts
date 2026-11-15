@@ -33,7 +33,7 @@ describe('retroativo: Soulmon já evoluído com elemento ainda não desbloqueado
   });
 });
 
-describe('gate de atividade: a carta só abre no FIM da atividade (REGISTRO §399)', () => {
+describe('gate de atividade: a carta só abre no FIM da atividade (REGISTRO §401)', () => {
   it('emAtividade: Arena, Exploração e Jogos sim; Home, Mapa, Mercado e menu não', () => {
     expect(emAtividade('area:arena')).toBe(true);
     expect(emAtividade('area:exploracao')).toBe(true);

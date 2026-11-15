@@ -5608,7 +5608,7 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Alternativa que perdeu.** Reutilizar `PocaoCriada` com uma prop `brilho`: o carrossel e o ícone de elemento pedem outro miolo; o componente novo reaproveita as classes e o shell visual em vez de duplicar CSS. Também perdeu um campo novo no save (`elementosAvisados`) para guardar o "visto": o aviso é efêmero e a Biblioteca já tem o "NEW" persistente.
 
 **Riscos aceitos.** Sem build, nada foi visto em tela (dois bustos no 1/3 superior em 360 px e o carrossel só testados em jsdom). **Gatilho de revisão:** a lista da semana de testers mudar no meio da semana e alguém reclamar; o dono pedir garantia do prato semanal. **Rollback:** reverter o PR; `weeklyMissions.counts['cook-dish']` fica ignorado no save (o sanitizador só lê ids do pool).
-**Emenda (15/11/2026, §399):** o modal "Elemento novo" deste § virou a CARTA do §399 (carta preta, ícone, nome e componentes). A frase de convite da poção do Laboratório que este § descreve foi REMOVIDA, em todo caminho de desbloqueio: o dono não pediu aquilo ("faz esse mesmo modal, só isso").
+**Emenda (15/11/2026, §401):** o modal "Elemento novo" deste § virou a CARTA do §401 (carta preta, ícone, nome e componentes). A frase de convite da poção do Laboratório que este § descreve foi REMOVIDA, em todo caminho de desbloqueio: o dono não pediu aquilo ("faz esse mesmo modal, só isso").
 
 ## §395 — Sem ticket de minijogo: modal "quer comprar?" com o ticket por cima da borda; o contador é o gasto da partida (15/11/2026, dono: "Quando o usuário tentar jogar minigame e não tiver ticket, tem que abrir o modal perguntando se ele quer comprar o ticket")
 
@@ -5682,7 +5682,7 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Riscos aceitos:** nada foi visto em tela (sem build): só prancha ANTES/DEPOIS dos PNG finais; faixas muito baixas (grass e sand ficam com ~22 px de altura a 312 px) podem ler finas no palco; a NEAREST de 1254 px para 168 px dá aliasing em detalhe fino (aceito, é a regra da Honra). **Gatilho de revisão:** o dono achar uma peça ilegível no palco (reinstalar só aquela, rodar o script de novo). **Rollback:** reverter o PR; ids e saves não foram tocados.
 
-## §399 — "Elemento novo" vira uma CARTA grande, no fim da atividade, em carrossel (15/11/2026, dono, por voz)
+## §401 — "Elemento novo" vira uma CARTA grande, no fim da atividade, em carrossel (15/11/2026, dono, por voz)
 
 **Pedido do dono.** "Gera uma carta no estilo do Soulmon, mas de conteúdo vazio. Ela é preta. Quando liberar um elemento novo, apareça essa carta igual para todos, com o elemento no meio, ocupando um espaço grande da tela. Embaixo vêm os elementos que precisam para fazer aquele elemento" (base: só ícone e nome; composto: ícone e nome do composto e, embaixo, os componentes pequenos). "No FINAL DA ATIVIDADE: ele fez a Arena e encontrou um elemento; quando SAIR da arena aparece a carta." Com 2+ elementos: carrossel (seta ou deslizar), OK DESATIVADO até ver todas, X no topo fecha antes e esses elementos não aparecem mais. Complemento urgente: a frase "agora você pode criar a poção desse elemento no Laboratório" NÃO foi pedida; a carta mostra só ícone, nome e componentes, e a evolução usa a MESMA carta, depois de toda a sequência da evolução.
 
@@ -5691,3 +5691,13 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Alternativa que perdeu.** Gate por flag só de luta (como no §396): não cobria Feira e evolução dentro de uma atividade. Perdeu também dar um campo no save para "carta já vista" (o aviso segue efêmero).
 
 **Riscos aceitos.** Sem build: nada visto em tela (carta em 360x640 e 412x915, fileira de 4 componentes e o encaixe do texto na arte só em jsdom e na prancha `E:\Soulmon-assets\_lote-15-11\carta-elemento\mock-carta.png`). A arte FINAL é a V3 escolhida pelo dono (`carta-elemento-v3.png`; miolo opaco: tudo que não está ligado ao exterior transparente foi forçado a alfa 255, RGB intacto), canônico em `carta-elemento.png`; o miolo do CSS foi medido na V3 (x 11-91%, y 17-84%). A lista de áreas de atividade é opinião de implementação (arena, exploracao, jogos). **Gatilho de revisão:** o dono ver a carta e querer outro layout. **Rollback:** reverter o PR (sem campo de save, sem id novo).
+## §399 — Honra: estátuas (guerreiro, mago), bigorna e pedestal de cristal instalados (15/11/2026, dono aprovou as 8 peças)
+
+**Decisão:** entram na aba Honra as 8 peças de cristal que faltavam: `hon-estatua-guerreiro-cristal-*`, `hon-estatua-mago-cristal-*`, `hon-bigorna-cristal-*` e `hon-pedestal-cristal-*`, nas duas variantes (turquesa 700, irisdescente 1100). O catálogo de Honra de combate passa de 83 para 91 peças. Mecanismo do §397: quatro linhas em `CRISTAL_PECAS` mais os PNG. Mesmos espaços e caixas do metal da categoria (estátua `floor-left`, bigorna `floor-right`, pedestal `trophy`).
+
+**Alternativa que perdeu:** esperar nova rodada de arte para trocar o cabo do martelo da bigorna turquesa, que saiu laranja-avermelhado; o dono viu e mandou instalar assim mesmo.
+
+**Compatibilidade:** só ids novos, nenhum renomeado, nenhum campo de save. Orçamento de bytes: os 8 webp somam 83.744 B (total dos 91 `hon-*.webp`: 667.860 B, era 584.116 B); maior arquivo 13,8 KB, bem abaixo do teto de 400 KB por imagem.
+
+**Riscos aceitos:** não visto em tela (sem build); prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. Nome PT da estátua segue o padrão do metal ("Estátua de cristal do Guerreiro · turquesa").
+

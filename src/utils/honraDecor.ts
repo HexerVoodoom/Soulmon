@@ -6,7 +6,7 @@
 // de preço. A ARTE É A PORTA — a peça só entra na loja de Honra quando existe
 // `assets/decor/<id>.webp` (instalador: `tools/instalar-honra-decor.py`). Hoje: bronze, prata, ouro
 // (envelhecido escuro, refeito em 15/11/2026), mithril e, acima dele, o CRISTAL (turquesa e irisdescente),
-// hoje só nas 4 armas. Peça nova de cristal = uma linha em `CRISTAL_PECAS` + o PNG (`hon-…-cristal-*`).
+// nas 4 armas, nas 2 estátuas (guerreiro, mago), na bigorna e no pedestal. Peça nova de cristal = uma linha em `CRISTAL_PECAS` + o PNG (`hon-…-cristal-*`).
 //
 // REGRAS QUE NÃO PODEM CAIR (há teste travando cada uma):
 //  · cosmético puro: `kind: 'furniture'`, moeda Honra (`emblems`), sem `attr`, sem `unlock`;
@@ -48,8 +48,11 @@ const MAT: Record<MaterialHonra, { pt: string; en: string; var?: Nome }> = {
   'cristal-irisdescente': { pt: 'cristal', en: 'Crystal', var: ['irisdescente', 'Iridescent'] },
 };
 
-/** Peças que existem em cristal (`<categoria>:<peça>`; sem peça, só a categoria). Hoje só as 4 armas. */
-const CRISTAL_PECAS: ReadonlySet<string> = new Set(['arma:espada', 'arma:lanca', 'arma:escudo', 'arma:cajado']);
+/** Peças que existem em cristal (`<categoria>:<peça>`; sem peça, só a categoria). As 4 armas, as estátuas do guerreiro e do mago, a bigorna e o pedestal. */
+const CRISTAL_PECAS: ReadonlySet<string> = new Set([
+  'arma:espada', 'arma:lanca', 'arma:escudo', 'arma:cajado',
+  'estatua:guerreiro', 'estatua:mago', 'bigorna:', 'pedestal:',
+]);
 
 export interface HonraDecor extends ShopItem {
   kind: 'furniture';

@@ -15,7 +15,7 @@ const listar = (nomes: string[], isPt: boolean): string => {
 };
 
 /**
- * "Elemento novo" como CARTA (15/11/2026, pedido do dono, REGISTRO §399): uma carta preta grande, IGUAL para todos os elementos, com o ícone
+ * "Elemento novo" como CARTA (15/11/2026, pedido do dono, REGISTRO §401): uma carta preta grande, IGUAL para todos os elementos, com o ícone
  * do elemento no meio (pelado, sem box), o NOME embaixo na fonte de título e, só nos compostos, uma fileira pequena com os elementos que o
  * formam (ícone + nome, "+" entre eles). Vários liberados de uma vez = UM modal em carrossel: uma carta por elemento, setas (44 px) e
  * deslize de dedo, pontinhos, "1 de N". O OK fica DESATIVADO até todas as cartas terem sido a página atual. O X do topo fecha sempre (Esc e o

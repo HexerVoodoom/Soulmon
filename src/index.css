@@ -4996,7 +4996,7 @@ select:focus-visible {
 .sm2-potion-icon { position: relative; width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(255, 236, 170, .55)); display: grid; place-items: center; }
 .sm2-potion-text { margin: 0; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: var(--sm2-text-lg, 20px); font-weight: 600; color: #fff; }
 @keyframes sm2-potion-spin { to { transform: rotate(360deg); } }
-/* "Elemento novo" como CARTA (15/11/2026, REGISTRO §399): véu escuro do modal da poção, sem brilho; carta preta 5:7 igual para todos os elementos.
+/* "Elemento novo" como CARTA (15/11/2026, REGISTRO §401): véu escuro do modal da poção, sem brilho; carta preta 5:7 igual para todos os elementos.
    Largura = 85% da tela até um teto, e nunca mais alta do que cabe entre o X, os pontinhos e o OK (CTA de 76 px): 360x640 e 412x915. */
 .sm2-elem-new {
   position: fixed; inset: 0; z-index: 120; box-sizing: border-box;

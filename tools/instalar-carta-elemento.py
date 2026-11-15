@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Instala a carta preta vazia do modal "Elemento novo" (REGISTRO §399, 15/11/2026) em src/assets/soulmon/ui/carta-elemento.webp.
+"""Instala a carta preta vazia do modal "Elemento novo" (REGISTRO §401, 15/11/2026) em src/assets/soulmon/ui/carta-elemento.webp.
 Fonte: SEMPRE o PNG canônico de E:/Soulmon-assets/_lote-15-11/carta-elemento/ (carta-elemento.png; se ainda não existir, a versão
 carta-elemento-vN.png mais nova). Nunca lê o webp já instalado. A carta é IGUAL para todos os elementos (5:7, alfa real).
 Tamanho exibido = 380 px de largura máxima x 3 = 1140; a fonte tem 1060, então NÃO amplia (nearest só reduz). Paleta reduzida até caber

@@ -1101,7 +1101,7 @@ export default function App() {
   const elemVistosRef = useRef<Set<string> | null>(null);
   const [elemPendentes, setElemPendentes] = useState<string[]>([]);
   const [elemMostrados, setElemMostrados] = useState<string[] | null>(null);
-  /* Descoberto dentro de uma atividade (luta etc., dono 15/11, §399): a carta ESPERA a navegação principal (Home/Mapa), só abre no fim da atividade. Ligado por `handleElementsDefeated`, desligado ao mostrar. */
+  /* Descoberto dentro de uma atividade (luta etc., dono 15/11, §401): a carta ESPERA a navegação principal (Home/Mapa), só abre no fim da atividade. Ligado por `handleElementsDefeated`, desligado ao mostrar. */
   const [elemEsperaSaida, setElemEsperaSaida] = useState(false);
   useEffect(() => {
     const lista = gameState.defeatedElements ?? [];
