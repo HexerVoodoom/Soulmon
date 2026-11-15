@@ -60,9 +60,9 @@ export function m3DeltaE(a: string, b: string): number {
 }
 
 /** RODADA 1 (REGISTRO §402): distância mínima entre as PALETAS (até 4 cores dominantes) de dois ícones do mesmo tabuleiro. */
-export const M3_MIN_DELTA_E_PALETA = 16;
+export const M3_MIN_DELTA_E_PALETA = 10;
 /** RODADA 1: distância mínima entre dois ícones vistos por quem tem daltonismo (deuteranopia, protanopia ou tritanopia: vale a pior). */
-export const M3_MIN_DELTA_E_DALTONICO = 12;
+export const M3_MIN_DELTA_E_DALTONICO = 8;
 
 /** Matrizes de simulação de daltonismo (Machado, Oliveira, Fernandes 2009, severidade 1,0), em RGB linear. */
 const SIM_DALTONISMO: ReadonlyArray<readonly number[]> = [
@@ -221,6 +221,10 @@ const PARES_POR_OLHO: ReadonlyArray<readonly [string, string]> = [
   ['chama_azul', 'tempestade_perfeita'], // chama azul e redemoinho azul com raio
   ['leveza', 'nevasca'], // pluma branca-azulada vs floco branco-azulado
   ['brisa_cintilante', 'leveza'], // duas peças claras, branco-azuladas e cintilantes
+  // Rodada 3 (REGISTRO §402), fronteira conferida a olho: mesmo motivo desenhado, passam em todas as métricas.
+  ['circulo_feerico', 'fungo'], // os dois são um cogumelo luminoso sobre fundo roxo
+  ['semente_estelar', 'tempo'], // cristal turquesa com anel/folhas
+  ['florescer', 'frenesi'], // ampulheta turquesa entre folhas
 ];
 
 /** A lista curada inteira, simétrica (cada par aparece nos dois sentidos). */

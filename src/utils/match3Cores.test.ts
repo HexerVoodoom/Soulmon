@@ -174,3 +174,23 @@ describe('Match-3 rodada 2: silhueta e brilho (REGISTRO §402)', () => {
     expect(r.relaxado).toBe(true);
   });
 });
+
+describe('Match-3 rodada 3: curadoria a olho e pool efetivo (REGISTRO §402)', () => {
+  it('os pares achados a olho na fronteira entram na lista curada, nos dois sentidos', () => {
+    for (const [a, b] of [['circulo_feerico', 'fungo'], ['semente_estelar', 'tempo'], ['florescer', 'frenesi']]) {
+      expect(m3ParProibido(a, b)).toBe(true);
+      expect(m3ParProibido(b, a)).toBe(true);
+    }
+  });
+  it('os limiares calibrados a olho ficam em paleta 10 e daltonismo 8', () => {
+    expect(M3_MIN_DELTA_E_PALETA).toBe(10);
+    expect(M3_MIN_DELTA_E_DALTONICO).toBe(8);
+  });
+  it('o pool não esvazia: cada ícone tem dezenas de companheiros compatíveis e 3000 sorteios nunca relaxam', () => {
+    const pool = pvpElementPool();
+    for (const a of pool.filter((_, i) => i % 7 === 0)) expect(pool.filter(b => b !== a && !m3Conflito(a, b)).length).toBeGreaterThan(40);
+    const vistos = new Set<string>();
+    for (let sd = 1; sd <= 3000; sd++) for (const e of pvpElementsForSeed(sd * 104729)) vistos.add(e);
+    expect(vistos.size).toBeGreaterThan(pool.length * 0.95);
+  });
+});

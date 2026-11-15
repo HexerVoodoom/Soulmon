@@ -1280,9 +1280,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Dono de:** a cor DOMINANTE `[L, a, b]` (CIELAB) de cada ícone de elemento (maior de 3 grupos k-means com croma ≥ 12; complementa a cor MÉDIA de `elementVisual.data.ts`). É GERADO por `scripts/element-dominante.py`; rode junto com `scripts/element-visual.py` quando entrar ícone novo (há teste que falha se as duas tabelas divergirem). Quem lê: `match3Cores.ts › m3DeltaE`. Régua: `utils/match3Cores.test.ts`.
 
+### `src/utils/elementPaleta.data.ts`
+
+**Dono de:** a PALETA de cada ícone de elemento: até 4 cores dominantes `[L, a, b, peso%]` (CIELAB, k-means de semente fixa). É GERADO por `scripts/element-paleta.py` (rode junto com os outros scripts de `element-*` quando entrar ícone novo). Quem lê: `match3Cores.ts › m3DeltaEPaleta`. Só entra pelo Match-3 (chunk preguiçoso). Régua: `utils/match3Cores.test.ts`.
+
+### `src/utils/elementSilhueta.data.ts`
+
+**Dono de:** a SILHUETA de cada ícone de elemento: máscara 16x16 (alfa >= 50%) em 64 dígitos hex. É GERADO por `scripts/element-silhueta.py`. Quem lê: `match3Cores.ts › m3Silhueta` (IoU). Só entra pelo Match-3. Régua: `utils/match3Cores.test.ts`.
+
 ### `src/utils/match3Cores.ts`
 
-**Dono de:** quais ícones de elemento podem dividir o MESMO tabuleiro do Elemental Fusion PVP (REGISTRO §400, pedido do dono de 15/11/2026). **Exports:** `M3_MIN_DELTA_E` (24), `M3_DELTA_E_STEP` (2), `M3_PARES_PROIBIDOS`/`m3ParProibido(a, b)` (lista curada, simétrica, nunca relaxa), `m3DeltaE(a, b)` (o maior entre o CIEDE2000 da cor média e o da dominante; sem assinatura = `Infinity`), `ciede2000`, `pickM3Distinct(order, n, minDeltaE)` (guloso sobre uma ordem já embaralhada; só o limiar relaxa; devolve `{ elements, limiar, relaxado }`). Quem chama: `match3Pvp.ts › pickDistinctPvpElements`. O Normal (6 fixos) não usa. Régua: `utils/match3Cores.test.ts`, `utils/match3PvpDistintos.test.ts`.
+**Dono de:** quais ícones de elemento podem dividir o MESMO tabuleiro do Elemental Fusion PVP (REGISTRO §400, pedido do dono de 15/11/2026). **Exports:** `M3_MIN_DELTA_E` (24), `M3_DELTA_E_STEP` (2), `M3_PARES_PROIBIDOS`/`m3ParProibido(a, b)` (lista curada, simétrica, nunca relaxa), `m3DeltaE(a, b)` (o maior entre o CIEDE2000 da cor média e o da dominante; sem assinatura = `Infinity`), `ciede2000`, `pickM3Distinct(order, n, base)` (guloso sobre uma ordem já embaralhada; `base` = ΔE ou `Partial<M3Limiares>`; só os limiares medidos relaxam; devolve `{ elements, limiar, relaxado }`). REGISTRO §402 (3 rodadas a mais): `M3_MIN_DELTA_E_PALETA` (10) e `m3DeltaEPaleta`, `M3_MIN_DELTA_E_DALTONICO` (8) e `m3DeltaEDaltonico`/`simulaDaltonismo`, `M3_MAX_SILHUETA` (0,80) com `m3Silhueta`/`m3DeltaBrilho`/`m3SilhuetaConfunde`, `m3Conflito(a, b, limiares)` e `M3_LIMIARES`. Quem chama: `match3Pvp.ts › pickDistinctPvpElements`. O Normal (6 fixos) não usa. Régua: `utils/match3Cores.test.ts`, `utils/match3PvpDistintos.test.ts`.
 
 ### `src/utils/match3Pvp.ts`
 
