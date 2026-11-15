@@ -114,7 +114,7 @@ via `language === 'pt-BR'`).
 > Soulmon dorme na 1ª abertura de cada dia e é acordado com 1 toque (`utils/dayWake.ts`: só pet e jogos param; tarefa/hábito nunca; o sono
 > real, o dreno e o cocô não mudam) → pesadelo OU sonho → resumo com humor → "Hoje" (metas + check-in fundidos), TETO de 3 modais por abertura;
 > celebrações só se sobrar vaga, convites/config/priming de push ficam para outra abertura. **Pesadelo (20/10/2026, REGISTRO §149):** é a primeira
-> coisa do dia a QUALQUER hora (só com noite registrada; espera Masmorra/missão; depois da celebração se acordou por conclusão; `utils/nightmareWake.ts`); o modal do sonho segue só 4h–12h.
+> coisa do dia a QUALQUER hora (só com noite registrada; espera Masmorra/missão; depois da celebração se acordou por conclusão; `utils/nightmareWake.ts`); o modal do sonho segue só 4h–12h. **Dano do Pesadelo −25% (15/11/2026, REGISTRO §391):** `NIGHTMARE_FOE_DAMAGE_FACTOR` = 0,75 em `utils/dungeonFight.ts` (só `nightmareFight`; Masmorra/Arena não mudam).
 
 > **`docs/manual/00-MAPA.md`** é a porta de entrada do **manual completo** do
 > Soulmon (18 documentos em `docs/manual/` — `find docs/manual -name '*.md' | wc -l`, 21/09/2026; escritos em 09–10/09/2026): visão e

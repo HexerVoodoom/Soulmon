@@ -5580,3 +5580,23 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 ## §390 — O pop-up do Papus só na 1ª carta da conta; depois só a bolinha vermelha (14/11/2026, dono: "Pop up da mensagem com npc só na primeira vez. Depois, quando receber cartas novas, só fica a marca de bolinha vermelha no ícone.")
 
 **Decisão:** o item `messenger` da fila (`MessengerSequence`) passa por `mailPopupToShow` (`src/utils/mensageiro.ts`): abre só enquanto a conta nunca viu o pop-up. O "visto" reusa `buildingIntrosSeen` (save, viaja entre aparelhos) com o id `npc.mensageiro` (lista fechada `NPC_INTRO_IDS` em `buildingIntro.ts`, aceita pelo sanitizador), gravado ao MOSTRAR. Quem viu antes desta versão conta como visto: anúncio gravado no aparelho (`MAIL_ANNOUNCED`) ou carta já lida/resgatada na caixa. A bolinha do ícone (`hasNewMail`) não mudou. Nenhum campo de save novo. **Trecho do App tocado:** o `useMemo` de `mailToAnnounce` e um ramo `messenger` no `onShow` da fila. **Alternativa que perdeu:** campo de save novo (`messengerIntroSeen`), que pediria a régua inteira de compatibilidade para um booleano. **Gatilho:** o dono querer o pop-up em cartas de prêmio grande. **Rollback:** reverter o PR (o id extra em `buildingIntrosSeen` é descartado pelo sanitizador antigo, sem efeito).
+
+## §391 — Pesadelo: o inimigo causa 25% menos dano (15/11/2026, decisão do dono em modal: "todo mundo está reclamando")
+
+**Decisão:** o golpe do inimigo do Pesadelo sai ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, `utils/dungeonFight.ts`, dono único; entra em `NIGHTMARE_KNOBS.foeDamage` e multiplica o `hitScale` do inimigo em `nightmareFight`, ANTES da guarda da torcida). Só o Pesadelo lê o fator: a Masmorra (`dungeonFight`/`playSequence`), a Arena e o Duelo não passam por `nightmareFight`. Recompensas, HP do inimigo, `NIGHTMARE_POWER`, a regra de vitória e a torcida não mudaram. Não há espelho no servidor: `functions/api/_nightmares.js` só trata noites e prêmio, nunca simula a luta (sem paridade a manter).
+
+**Medição** (`simulateNightmareScenario`, 2 builds × 40 sementes por célula; cada célula = vitória% / HP perdido médio%; mesmo harness do §65):
+
+| cenário, nível | antes (×1,00) t1…t5 | depois (×0,75) t1…t5 |
+|---|---|---|
+| com torcida, L5 | 90/77 · 93/81 · 83/83 · 85/86 · 85/86 | 100/59 · 100/62 · 100/65 · 100/67 · 100/72 |
+| com torcida, L20 | 88/77 · 91/81 · 80/83 · 84/86 · 84/87 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| com torcida, L40 | 89/77 · 90/80 · 83/83 · 78/85 · 79/88 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| sem torcida, L5 | 15/97 · 5/99 · 5/99 · 3/100 · 8/100 | 50/91 · 48/93 · 50/95 · 23/97 · 33/96 |
+| sem torcida, L20 | 24/95 · 11/98 · 13/98 · 9/99 · 8/99 | 63/88 · 55/91 · 58/91 · 35/94 · 44/95 |
+| sem torcida, L40 | 29/95 · 19/97 · 16/98 · 11/99 · 11/99 | 64/87 · 59/90 · 58/91 · 34/94 · 48/94 |
+
+**Leitura honesta:** o efeito na taxa de vitória é bem maior que 25%, porque o Pesadelo é uma corrida de HP (o dano cai ¼, o tempo até o Soulmon cair sobe 1/0,75 ≈ +33% e o Soulmon vence antes). Com torcida a luta virou quase garantida (80–93% → ~99–100%), mas ainda machuca (perde 59–73% do HP, contra 77–88%). Sem torcida deixou de ser derrota quase certa (≥ 85% de derrotas → 36–66%). Os testes de calibragem do §65 foram rebaixados de "perde ≥ 70% sem torcida" para "perde ≥ 35%"; o piso de ≥ 75%/≥ 50% de vitória com torcida segue valendo.
+
+**Alternativa que perdeu: −40% (×0,60).** Com torcida 100% de vitória e só 48–64% de HP perdido; sem torcida 75–91% de vitória: o Pesadelo deixava de ser um desafio, e o dono pediu "~25%". **Gatilho de revisão:** se o Pesadelo virar passeio (vitória com torcida ≥ 99% e queixa de "fácil" nos testadores) subir a força (`NIGHTMARE_POWER`) em vez de voltar o fator; se ainda reclamarem de dureza em 2 semanas, ir a ×0,6.
+
