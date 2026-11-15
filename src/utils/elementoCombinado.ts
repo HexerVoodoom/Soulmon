@@ -47,24 +47,33 @@ export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
 }
 
 /**
- * Palavra-chave visual de cada elemento BASE (substring do descritor da própria base em `elementoDescritores.data.ts`; sem duas iguais).
- * Todo componente de um combinado precisa dela nas pistas do prompt (dono, 10/11/2026: cada elemento, inclusive de 3 e 4 componentes).
+ * Palavras-chave visuais de cada elemento BASE (substring do descritor da própria base em `elementoDescritores.data.ts`; sem duas iguais entre bases).
+ * Todo componente de um combinado precisa de UMA delas nas pistas do prompt (dono, 10/11/2026: cada elemento, inclusive de 3 e 4 componentes).
+ * Só a terra tem 3 formas (REGISTRO §411): a de cada elemento sai do hash do id (`pistaTerraDe`), para os 5+ combinados de terra não repetirem o mesmo ombro de pedra.
  */
-export const PALAVRA_CHAVE_BASE: Readonly<Record<string, string>> = {
-  fogo: 'flames', agua: 'water', terra: 'boulder shoulder', ar: 'wind', eletricidade: 'arcs', arcano: 'rune circle', sombra: 'smoke', luz: 'rays',
-  vileza: 'thorns', morte: 'antler crown', vida: 'budding', vigor: 'amber collar', marcial: 'sword', tempo: 'sand', som: 'concentric rings',
-  gravidade: 'large orbiting stone', espaco: 'band of stars', fada: 'wings', industrial: 'plates', planta: 'vines',
+export const PALAVRA_CHAVE_BASE: Readonly<Record<string, readonly string[]>> = {
+  fogo: ['flames'], agua: ['water'], terra: ['boulder shoulder', 'stone slabs', 'rocky horn crest'], ar: ['ring of wind'], eletricidade: ['arcs'], arcano: ['rune disc'], sombra: ['smoke'], luz: ['rays'],
+  vileza: ['thorns'], morte: ['antler crown'], vida: ['budding'], vigor: ['amber gem'], marcial: ['sword'], tempo: ['sand'], som: ['bronze bell'],
+  gravidade: ['stone orbiting a ring'], espaco: ['band of stars'], fada: ['wings'], industrial: ['plates'], planta: ['vines'],
 };
+
+/** As 3 formas grandes da terra, na ordem de `PALAVRA_CHAVE_BASE.terra`. */
+const PISTA_TERRA = ['a boulder shoulder', 'stone slabs along the back', 'a rocky horn crest'] as const;
+/** Qual das 3 formas da terra o elemento `id` usa: determinístico pelo hash do id. */
+export const pistaTerraDe = (id: string): string => PISTA_TERRA[hashString(id) % PISTA_TERRA.length];
+
+/** O descritor (texto em minúsculas) nomeia o componente `base` por alguma das palavras-chave dele. */
+export const nomeiaBase = (texto: string, base: string): boolean => (PALAVRA_CHAVE_BASE[base] ?? []).some(k => texto.includes(k));
 
 /** Teto (caracteres) das pistas de forma + paleta de um elemento no prompt de sprite. */
 export const TETO_PISTAS = 260;
 
 /** Forma curta de cada base, usada só para completar o componente que o descritor gerado não citou (contém a palavra-chave). */
 const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
-  fogo: 'licking flames', agua: 'flowing water', terra: 'a boulder shoulder', ar: 'swirling wind', eletricidade: 'yellow arcs',
-  arcano: 'a large violet rune circle', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'a pale antler crown',
-  vida: 'budding leaves', vigor: 'a thick amber collar', marcial: 'one large sword', tempo: 'drifting sand', som: 'concentric rings',
-  gravidade: 'a large orbiting stone', espaco: 'a band of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
+  fogo: 'licking flames', agua: 'flowing water', terra: 'a boulder shoulder', ar: 'a large detached ring of wind with a tail', eletricidade: 'yellow arcs',
+  arcano: 'a large floating violet rune disc', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'a pale bone-white antler crown',
+  vida: 'budding leaves', vigor: 'a large amber gem', marcial: 'one large sword', tempo: 'drifting sand', som: 'a big bronze bell',
+  gravidade: 'a large dark stone orbiting a ring', espaco: 'a band of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
 };
 
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
@@ -72,9 +81,9 @@ export function pistasVisuaisDoElemento(id: string): string | undefined {
   const d = DESCRITORES_ELEMENTO[id];
   if (!d || (!d.forma && !d.paleta)) return undefined;
   let forma = d.forma ?? '';
-  const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !`${forma} ${d.paleta ?? ''}`.toLowerCase().includes(PALAVRA_CHAVE_BASE[c]));
+  const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !nomeiaBase(`${forma} ${d.paleta ?? ''}`.toLowerCase(), c));
   if (faltam.length) {
-    const extra = faltam.map(c => PISTA_CURTA_BASE[c]).join(', ');
+    const extra = faltam.map(c => (c === 'terra' ? pistaTerraDe(id) : PISTA_CURTA_BASE[c])).join(', ');
     forma = forma ? (/ with hints of /.test(forma) ? `${forma}, ${extra}` : `${forma}, with hints of ${extra}`) : extra;
   }
   return `${[forma, d.paleta ? `${d.paleta} palette` : ''].filter(Boolean).join(', ')}`;
