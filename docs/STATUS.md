@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — 14 Ultimates de 2 componentes instalados, só Ultimate (`feat/ultimates-2comp`, REGISTRO §405) — branch pushada, SEM PR
+>
+> - **Feito:** tabela `utils/enemyRosterUltimates.ts` + `buildUltimates2Comp` (14 linhas `paralelo`, sem Champion, no fim do roster) e 14 PNG em `novos-arquivo/paralelos/`. Ultimate da Arena (base/2/3/4): 24,9/19,6/51,6/3,9 antes, 24,9/58,5/12,7/3,9 agora (tabela 25/55/15/5); os 20 elementos têm pool de 2 componentes.
+> - **Pendente do dono:** aprovar os 14 nomes (`E:/Soulmon-assets/_lote-15-11/ultimate-2comp/nomes-propostos.md`); hoje o nome é o do par. Sem build, não visto em tela.
+
+
 > ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
 >
 > - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
