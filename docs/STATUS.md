@@ -5,6 +5,19 @@
 > - **Feito:** tabela `utils/enemyRosterUltimates.ts` + `buildUltimates2Comp` (14 linhas `paralelo`, sem Champion, no fim do roster) e 14 PNG em `novos-arquivo/paralelos/`. Ultimate da Arena (base/2/3/4): 24,9/19,6/51,6/3,9 antes, 24,9/58,5/12,7/3,9 agora (tabela 25/55/15/5); os 20 elementos têm pool de 2 componentes.
 > - **Pendente do dono:** aprovar os 14 nomes (`E:/Soulmon-assets/_lote-15-11/ultimate-2comp/nomes-propostos.md`); hoje o nome é o do par. Sem build, não visto em tela.
 
+
+> ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
+>
+> - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
+> - **Depende do dono:** aprovar em modal (PR); trocar ou não a arte antiga de fogo/água/terra/ar (PNG novos prontos); `prism` sem contorno escuro. Sem build, não visto em tela.
+
+
+> ## 15/11/2026 — Descritores de elemento autorais (`feat/descritores-autorais`, REGISTRO §407) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a `forma` dos 86 combinados (53 pares, 14 trios, 19 quartetos) foi reescrita em `elementoDescritores.data.ts` para nomear cada componente com a palavra-chave de `PALAVRA_CHAVE_BASE`, em vez de depender do completamento genérico do código; os outros 183 ficam byte a byte iguais (hash no teste).
+> - **Só criaturas novas:** prompts gerados depois do deploy mudam; sprites e saves existentes não. Prancha de texto com 12 antes/depois: `E:Soulmon-assets_lote-15-11auditoria-promptsantes-depois.md`.
+> - **Não visto em imagem:** nenhuma geração de teste; as pistas novas só foram provadas como texto (teto 260, regra do tempo, sem franquia).
+>
 > ## 15/11/2026 — Evolução gerava DUAS imagens (`fix/evolucao-uma-imagem`, REGISTRO §404) — PR aberto, NÃO mergeado
 >
 > - **Causa:** a chave de acervo da forma-destino do cristal (`altSpriteKey`) dependia do acervo vivo; a própria imagem recém-chegada (`champion-power`) a trocava para `champion-power@elemento` e o lote partia de novo. Valia para toda ida a champion/ultimate/mega/ultra.

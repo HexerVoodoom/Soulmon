@@ -5,9 +5,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import { escolherChaveDeMatiz, hueDist, KEY_HUE } from '../../functions/api/_chromaHue.js';
-import { stagesComElemento, pistasVisuaisDoElemento, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
+import { createHash } from 'node:crypto';
+import { stagesComElemento, pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
-import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS } from './elementDex';
+import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition } from './elementDex';
 
 const FUNDO_VERDE = 'Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: macaw, Blood Reaver. Flat dark violet and ash-gray colors.';
 const RAW = `Generate this RPG creature. ${FUNDO_VERDE}`;
@@ -148,5 +149,54 @@ describe('tabela de descritores', () => {
   });
   it('sem identidade Soulmon (cristal da alma) nos descritores; engrenagem só onde o elemento pede (tempo/relojoaria)', () => {
     for (const [id, d] of Object.entries(DESCRITORES_ELEMENTO)) expect(`${d.forma ?? ''} ${d.paleta ?? ''}`, id).not.toMatch(/soul-?crystal|steampunk/i);
+  });
+});
+
+/**
+ * REGISTRO §407 (15/11/2026): descritores AUTORAIS. Antes, o descritor escrito não nomeava todos os componentes (53 pares, 14 trios, 19 quartetos) e o
+ * código completava com uma forma genérica. Agora o PRÓPRIO descritor traz uma pista forte por componente; o completamento do código fica só de rede.
+ */
+const REESCRITOS: readonly string[] = ['lava', 'fervor', 'pantano', 'correnteza', 'areia', 'magnetismo', 'cristal', 'obsidiana', 'ouro_vivo', 'solo_profano', 'ossuario', 'flora', 'tita', 'impeto', 'reflexo', 'encantamento', 'assassinio', 'bravura', 'carnificina', 'ceifa', 'vitalidade', 'aco', 'maestria', 'fossil', 'frenesi', 'terremoto', 'brado', 'colapso', 'peso_descomunal', 'asteroide', 'gigante_estelar', 'circulo_feerico', 'graca', 'mineracao', 'exoesqueleto', 'queimada', 'mangue', 'raiz_profunda', 'polen', 'fotossintese', 'druidismo', 'fungo', 'girassol', 'espinheiro', 'murcha', 'seiva', 'carvalho', 'bambu', 'estacoes', 'farfalhar', 'arvore_mundo', 'jardim_encantado', 'estufa', 'pestilencia', 'geiser', 'vulcao', 'deserto', 'nevasca', 'permafrost', 'ossario_vivo', 'jardim_eterno', 'bencao_marcial', 'carniceiro', 'gladiador', 'punho_gravitico', 'avatar_elemental', 'titano_forjado', 'cataclismo', 'sopro_do_dragao', 'ragnarok', 'genesis', 'tempestade_perfeita', 'leviata', 'senhor_da_praga', 'sinfonia_do_caos', 'vontade_absoluta', 'arquiteto_da_realidade', 'ceifador_estelar', 'renascimento', 'juizo_final', 'cavaleiro_absoluto', 'clareira', 'alto_forno', 'floresta_ancestral', 'colosso_blindado', 'corte_feerica'];
+const textoDoDescritor = (id: string): string => `${DESCRITORES_ELEMENTO[id].forma ?? ''} ${DESCRITORES_ELEMENTO[id].paleta ?? ''}`.toLowerCase();
+const REGEX_FRANQUIA = /digimon|pok[eé]mon|monster rancher|yu-?gi-?oh|warhammer|palworld|final fantasy|hello kitty|tamagotchi|ragnarok online|warcraft|mana\b/i;
+
+describe('descritores autorais (REGISTRO §407)', () => {
+  it('são 86: 53 pares, 14 trios, 19 quartetos', () => {
+    const n = (k: number) => REESCRITOS.filter(id => essenceComposition(id)?.length === k).length;
+    expect([REESCRITOS.length, n(2), n(3), n(4)]).toEqual([86, 53, 14, 19]);
+  });
+  it('o DESCRITOR escrito (sem o completamento do código) nomeia a palavra-chave de CADA componente', () => {
+    const ruins = REESCRITOS.map(id => [id, (essenceComposition(id) ?? []).filter(c => !textoDoDescritor(id).includes(PALAVRA_CHAVE_BASE[c]))] as const).filter(([, f]) => f.length);
+    expect(ruins).toEqual([]);
+  });
+  it('em TODO combinado do catálogo o descritor escrito já cobre os componentes (o código não precisa completar)', () => {
+    const ruins = ESSENCE_ELEMENT_IDS.filter(id => (essenceComposition(id) ?? []).some(c => !textoDoDescritor(id).includes(PALAVRA_CHAVE_BASE[c])));
+    expect(ruins).toEqual([]);
+    for (const id of REESCRITOS) expect(pistasVisuaisDoElemento(id), id).toBe([DESCRITORES_ELEMENTO[id].forma, `${DESCRITORES_ELEMENTO[id].paleta} palette`].join(', '));
+  });
+  it(`pistas finais <= ${TETO_PISTAS} caracteres`, () => {
+    for (const id of REESCRITOS) expect((pistasVisuaisDoElemento(id) ?? '').length, id).toBeLessThanOrEqual(TETO_PISTAS);
+  });
+  it('regra do tempo (§324): no máximo UM motivo, nunca ampulheta e relógio juntos', () => {
+    for (const id of REESCRITOS) {
+      const t = textoDoDescritor(id);
+      expect(/hourglass/.test(t) && /\bclock|\bwatch\b|sundial|pendulum/.test(t), id).toBe(false);
+      expect((t.match(/hourglass/g) ?? []).length, id).toBeLessThanOrEqual(1);
+    }
+  });
+  it('sem nome de franquia, sem engrenagem e sem palavra que induza texto na imagem', () => {
+    for (const id of REESCRITOS) {
+      expect(textoDoDescritor(id), id).not.toMatch(REGEX_FRANQUIA);
+      expect(textoDoDescritor(id), id).not.toMatch(/\bgears?\b|\bcogs?\b|steampunk|soul-?crystal/);
+      expect(textoDoDescritor(id), id).not.toMatch(/\b(text|letters?|words?|caption|label|writing|inscription|logo|number|numerals?)\b/);
+    }
+  });
+  it('determinismo: o mesmo elemento gera o mesmo prompt duas vezes', () => {
+    for (const id of REESCRITOS) expect(gen(id, 'sombra').imagePrompt, id).toBe(gen(id, 'sombra').imagePrompt);
+  });
+  it('os outros 183 elementos ficam byte a byte iguais ao estado anterior (hash do conteúdo)', () => {
+    const resto = Object.keys(DESCRITORES_ELEMENTO).filter(i => !REESCRITOS.includes(i)).sort();
+    const h = createHash('sha256').update(JSON.stringify(resto.map(i => [i, DESCRITORES_ELEMENTO[i]]))).digest('hex');
+    expect([resto.length, h]).toEqual([183, '909d77b1f1e8360d185a7b88870144558bd1dc36ca108ecc01081c37224c39c7']);
   });
 });
