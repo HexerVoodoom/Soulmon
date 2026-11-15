@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** QA r4 (item 4) e §384: a escolha de adversários mostra placeholder enquanto o bestiário carrega, erro com "Try again" quando a
+/** QA r4 (item 4) e §384: a escolha de adversários mostra cards vazios de espera enquanto o bestiário carrega, erro com "Try again" quando a
  *  carga falha (antes os cards sumiam calados), a linha "o último adversário dropa em dobro" e a ajuda do "Stray / Desgarrado". */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, fireEvent, cleanup, act, waitFor } from '@testing-library/react';

@@ -14,7 +14,7 @@ describe('CreateModal: limite visível', () => {
     mk('en-US');
     const btn = screen.getByRole('button', { name: 'Limit reached' });
     const hint = document.querySelector('[data-create-cap-hint]') as HTMLElement;
-    expect(hint.textContent).toBe('For now, up to 6 active daily habits. Tasks (one-off or on specific days) stay unlimited.');
+    expect(hint.textContent).toBe('At this stage, up to 6 active daily habits. Tasks (one-off or on specific days) stay unlimited.');
     expect(btn.getAttribute('aria-describedby')).toBe(hint.id);
     expect(btn.getAttribute('title')).toBeNull();
   });

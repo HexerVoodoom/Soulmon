@@ -570,8 +570,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         + 'evolving your own Soulmon is what raises this ceiling.',
     /* §385: o limite fora da conta grátis (teto do estágio), em texto VISÍVEL — antes só no `title`. */
     stageCapHint: isPt
-      ? `Por enquanto, até ${activitiesCap} hábitos diários ativos. Tarefas (pontuais ou em dias específicos) continuam sem limite.`
-      : `For now, up to ${activitiesCap} active daily habits. Tasks (one-off or on specific days) stay unlimited.`,
+      ? `Neste estágio, até ${activitiesCap} hábitos diários ativos. Tarefas (pontuais ou em dias específicos) continuam sem limite.`
+      : `At this stage, up to ${activitiesCap} active daily habits. Tasks (one-off or on specific days) stay unlimited.`,
     projectSteps: isPt
       ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'
       : 'A project is too big for a single line. How about breaking it into steps?',
