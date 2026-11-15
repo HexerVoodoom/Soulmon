@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §408)
+>
+> - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.
+> - **Intacto:** `bg-cerejeira-bosque-de-cerejeiras` segue com a arte do vulcão até o bosque real trocar a arte desse id.
+> - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cenario-fogo-planta\instalado.png`.
+>
 > ## 15/11/2026 — Descritores de elemento autorais (`feat/descritores-autorais`, REGISTRO §407) — PR aberto, NÃO mergeado
 >
 > - **Feito:** a `forma` dos 86 combinados (53 pares, 14 trios, 19 quartetos) foi reescrita em `elementoDescritores.data.ts` para nomear cada componente com a palavra-chave de `PALAVRA_CHAVE_BASE`, em vez de depender do completamento genérico do código; os outros 183 ficam byte a byte iguais (hash no teste).

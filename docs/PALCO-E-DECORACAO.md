@@ -313,3 +313,8 @@ A caixa de `DECOR_SLOTS` segue sendo o contrato da arte. O palco desenha maior v
 ## Decoração no estilo novo (15/11/2026, REGISTRO §398)
 
 As 33 peças do acervo foram refeitas e entram no MESMO id (`src/assets/decor/<id>.png`, caixa do espaço × 3, alfa real). Instalador: `tools/instalar-decor-refeitas.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-14-11/decoracao/`; rodar duas vezes grava os mesmos bytes). Para trocar uma peça de novo, substitua o PNG de origem e rode o script. O tapete (13:2) recebe a janela de maior alfa; grass e sand ancoram embaixo. A lanterna (`furn-lantern`) segue com a arte antiga até o PNG do piloto aparecer na pasta do lote. Guard: `src/assets/decorEstiloNovo.test.ts`.
+
+## Cenário de elemento derivado (15/11/2026, REGISTRO §408)
+
+Os `bg-el-*` agora também existem para um elemento DERIVADO: `bg-el-queimada` (fogo+planta, vulcão com flores de brasa), exclusivo do id `queimada`, 720 moedas, 1200×648, chão em 74%. Declarado em `BG_EL_DERIVADOS` de `src/utils/cosmeticosNovos.ts`.
+

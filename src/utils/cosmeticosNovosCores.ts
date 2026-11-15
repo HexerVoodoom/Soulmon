@@ -15,6 +15,7 @@ export const COSMETICOS_NOVOS_CORES: Readonly<Record<string, string>> = {
   'bg-el-marcial': '#2e333e',
   'bg-el-morte': '#487b77',
   'bg-el-planta': '#073622',
+  'bg-el-queimada': '#221d20',
   'bg-el-som': '#01434e',
   'bg-el-sombra': '#071016',
   'bg-el-tempo': '#151f4d',

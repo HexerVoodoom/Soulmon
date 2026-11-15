@@ -5803,3 +5803,15 @@ Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,
 **Regras mantidas:** teto de 260 caracteres de forma + paleta; tempo com no máximo UM motivo (ampulheta OU relógio, §324; areia solta é a palavra-chave e não conta); sem nome de franquia, sem engrenagem, sem palavra que induza texto na imagem; criatura sem bloco de identidade Soulmon. Só prompts de criaturas NOVAS geradas depois do deploy mudam; sprites já gerados e saves não mudam.
 
 **Alternativa que perdeu:** só trocar o texto genérico do código por um dicionário mais rico de formas curtas por componente (uma pista fixa por base, igual em todo combinado). Perdeu porque a mesma pista repetida em 50 elementos apaga a diferença entre eles; a pista por elemento deixa "lava" (barro rachado sob a chama) diferente de "areia" (barro seco sob o vento). **Custo aceito:** as pistas novas são texto de prompt sem prova de imagem: não houve geração de teste. **Gatilho de revisão:** criaturas novas saindo sem o componente visível, ou o dono apontando um elemento cujo traço não aparece (ver `E:\Soulmon-assets\_lote-15-11\auditoria-prompts\antes-depois.md`). **Rollback:** reverter o commit (só `elementoDescritores.data.ts` e o teste); nada de save, sprite ou servidor depende dele.
+
+## §408 — Cenário próprio do elemento fogo+planta (`queimada`) na loja de Background (15/11/2026, dono: "Faz ser cenário do elemento fogo+planta e cria o da cerejeira que faltou")
+
+**Contexto:** o fundo `bg-cerejeira-bosque-de-cerejeiras` (PR #923) saiu como vulcão com lava e árvore de flores de brasa. O dono pediu que essa arte vire o cenário do elemento combinado fogo+planta. O id do par é `queimada` (`componentes: ["planta","fogo"]`, o único par exato fogo+planta em `DERIVED_ELEMENT_PAIRS`).
+
+**Estado antes:** combate JÁ tinha cenário próprio `combate/elemento/queimada.webp` (360×640); a loja só tinha `bg-el-*` para os 20 elementos base, nenhum para derivados.
+
+**Decisão:** novo item `bg-el-queimada` ("Domínio de Queimada" / "Wildfire Realm"), cópia otimizada do vulcão (1200×648 WebP q78, miniatura 96×52, miniatura do widget V-Pet, `baseColor` medida), exclusivo do elemento `queimada` e 720 moedas, a mesma faixa dos 20 `bg-el-*`. `setting`/`slots`/`horizonY` herdam o padrão dos cenários novos (chão em 74%). `petHasElement` casa o id exato: só Soulmon de Queimada vê à venda; posse é permanente. Os cristais turquesa da arte seguem a ressalva do dono. Combate não muda: o enquadramento largo do vulcão não serve em 360×640 e o cenário próprio já existe.
+
+**Nota:** `bg-cerejeira-bosque-de-cerejeiras` fica INTACTO (id e arte atuais, saves de quem comprou). Outro agente gera o bosque de cerejeiras de verdade e vai TROCAR a arte desse mesmo id depois; esta cópia fogo+planta não muda quando isso acontecer.
+
+**Alternativa que perdeu:** renomear o id antigo para o do elemento. Perdeu porque quebraria a posse salva. **Gatilho de revisão:** o dono pedir cenário de combate vertical de fogo+planta. **Rollback:** apagar o item em `cosmeticosNovos.ts` e os 3 arquivos de arte; quem já comprou perde a vitrine, não o save.
