@@ -5343,6 +5343,8 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 
 **Onde aparece:** plaquinhas de HP/especial do `BattleStage` em todas as telas que o usam (Arena, Masmorra, Fenda/Rogue, Pesadelo, Bosque, Duelo PvP). O jogador sai tingido sempre que a forma tem caminho (`stageIcon`); o oponente, quando o `stage` dele tem (adversário do PvP, NPCs da Biblioteca); inimigos do mundo, chefes e bichos sem ramo ficam neutros ou sem ícone, como já era. Também nos nós da Evolução (pelo galho do nó, o mesmo `ramoAttr` do anel) e no Torneio (`EstagioMarca`). O layout da plaquinha não muda: o ícone continua 16 px fixo, o nome continua truncando com "…" e as barras ficam abaixo da linha do nome.
 
+**EMENDA (15/11/2026, §394):** a regra "sem caminho = ícone neutro (`<img>` branco)" foi revogada: forma sem caminho agora leva o creme `CAMINHO_SEM_COR`, e o componente tinge sozinho pelo id da forma, sem o chamador passar `caminho`.
+
 **Alternativa que perdeu:** reusar `ATTR_COLOR` (`#22A900`/`#009ED8`/`#E69600`). Ficaria sem segunda constante, mas não são as cores que o dono deu para o ícone, e trocá-las mexeria no anel, nas linhas da árvore e nos textos de atributo do app inteiro. `ATTR_COLOR` continua dono de preenchimento/anel/linha; `CAMINHO_COR`, só do ícone. Também perdeu gerar 12 PNGs tingidos (3 caminhos × 4 estágios): a máscara dá a mesma silhueta sem asset novo e acompanha uma troca de set.
 
 **Falsifica:** forma com caminho na plaquinha aparecer com o ícone branco; rookie ou inimigo sem ramo aparecer colorido; o nome deixar de truncar ou a plaquinha mudar de altura. **Testes:** `src/components/ui/EstagioIcone.test.tsx`, `src/components/games/BattleStage.estagio.test.tsx`, `src/components/ui/EstagioMarca.test.tsx`. **Rollback:** reverter o PR. **APK:** só bundle web.
@@ -5600,3 +5602,45 @@ Cruzamento em `E:/Soulmon-assets/_lote-13-11/CRUZAMENTO.md`. **Instalado:** (1) 
 **Economia: nada novo.** O preço e o lote vêm de `utils/funTickets.ts` (1 energia = 3 tickets, teto 5, 24 h por lote). Não existe compra de ticket de minijogo com Bits/Créditos; o modal não inventou uma. Fora da fila de modais: é gesto do jogador (`docs/FILA-DE-MODAIS.md` §4). Servidor sem mudança (a regra de compra e de gasto é a mesma; paridade em `funTickets.parity.test.js` intacta).
 
 **Gatilho de revisão:** o dono querer pagar o ticket com Bits (hoje só energia), ou custo diferente por jogo/dificuldade. **Rollback:** reverter o PR; nenhum dado de save muda.
+## §394 — Ícone de estágio colorido em todo o app; sem caminho = creme (15/11/2026, decisão do dono: "Os ícones de estágio+tipo devem ter cor para todos os Soulmon do jogo")
+
+**Decisão do dono (modal):** forma SEM caminho (rookie, ultra, tier de inimigo sem ramo, formas legadas) recebe branco quente/creme; o escopo é todo ponto do app que mostra o ícone de estágio e/ou de tipo.
+
+**Mudança:** `CAMINHO_SEM_COR = '#fff1d6'` mora ao lado de `CAMINHO_COR` em `src/types/attributes.ts` (dono único; `corDoCaminho(caminho)` devolve a cor do caminho ou o creme). `EstagioIcone` deixou de ter o ramo `<img>` neutro: SEMPRE tinge (mesma máscara + contorno escuro do §369) e deriva o caminho do id da forma (`caminhoDaForma`), então o chamador não passa `caminho`; a prop continua e sobrescreve (`null` força o creme). Plaquinhas de combate (todas as telas), nós da Evolução e Torneio perdem o `caminho=` explícito. O nome acessível não muda (`formStageLabel`, "Estágio · Caminho", nomes do jogo; sem `label` o ícone segue decorativo porque o nome está no texto vizinho). Bebê/ovo e id desconhecido continuam sem ícone: não existe PNG para tingir.
+
+**Varredura:** só quatro pontos renderizam o PNG de estágio (BattleStage e, por ele, Arena, Masmorra, Fenda, Pesadelo, Bosque e Duelo; EvolutionPath; Torneio via `EstagioMarca`); Home, Perfil, Bestiário, cartas e widgets não mostram o ícone de estágio (só texto), então nada a tingir ali. O ícone de TIPO (elemento) já é arte colorida própria em todos os 11 pontos que o desenham (`elementIcon`), sem filtro de cor, salvo a silhueta preta do Bestiário para o não visto (intencional): nada a unificar, e ele NÃO recebe a cor de caminho (dois sinais distintos).
+
+**Guard:** `src/components/ui/EstagioIcone.guard.test.ts` reprova importar o módulo do set ou nomear `estagio-*.png` fora do componente, reprova consumidor novo sem passar por `EstagioIcone`/`EstagioMarca`, reprova elemento com cor de caminho e hex repetido de creme/verde/azul. Contraste (>= 3:1) do creme e das três cores contra o contorno escuro e o fundo escuro, e do contorno contra o fundo claro, em `EstagioIcone.test.tsx`.
+
+**Alternativa que perdeu:** manter o `<img>` branco para forma sem caminho (o §369): o dono quer cor em todos. Também perdeu um segundo PNG creme: a máscara dá a mesma silhueta sem asset.
+
+**Falsifica:** algum ícone de estágio aparecer branco puro ou sem contorno; elemento aparecer com cor de caminho. **Rollback:** reverter o PR (volta ao §369). **APK:** só bundle web. **Não visto em tela** nesta rodada (sem build): só jsdom e prancha de contato por script.
+## §392 — Pesadelo: o inimigo causa 25% menos dano (15/11/2026, decisão do dono em modal: "todo mundo está reclamando")
+
+**Decisão:** o golpe do inimigo do Pesadelo sai ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, `utils/dungeonFight.ts`, dono único; entra em `NIGHTMARE_KNOBS.foeDamage` e multiplica o `hitScale` do inimigo em `nightmareFight`, ANTES da guarda da torcida). Só o Pesadelo lê o fator: a Masmorra (`dungeonFight`/`playSequence`), a Arena e o Duelo não passam por `nightmareFight`. Recompensas, HP do inimigo, `NIGHTMARE_POWER`, a regra de vitória e a torcida não mudaram. Não há espelho no servidor: `functions/api/_nightmares.js` só trata noites e prêmio, nunca simula a luta (sem paridade a manter).
+
+**Medição** (`simulateNightmareScenario`, 2 builds × 40 sementes por célula; cada célula = vitória% / HP perdido médio%; mesmo harness do §65):
+
+| cenário, nível | antes (×1,00) t1…t5 | depois (×0,75) t1…t5 |
+|---|---|---|
+| com torcida, L5 | 90/77 · 93/81 · 83/83 · 85/86 · 85/86 | 100/59 · 100/62 · 100/65 · 100/67 · 100/72 |
+| com torcida, L20 | 88/77 · 91/81 · 80/83 · 84/86 · 84/87 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| com torcida, L40 | 89/77 · 90/80 · 83/83 · 78/85 · 79/88 | 99/59 · 100/62 · 100/64 · 100/67 · 98/73 |
+| sem torcida, L5 | 15/97 · 5/99 · 5/99 · 3/100 · 8/100 | 50/91 · 48/93 · 50/95 · 23/97 · 33/96 |
+| sem torcida, L20 | 24/95 · 11/98 · 13/98 · 9/99 · 8/99 | 63/88 · 55/91 · 58/91 · 35/94 · 44/95 |
+| sem torcida, L40 | 29/95 · 19/97 · 16/98 · 11/99 · 11/99 | 64/87 · 59/90 · 58/91 · 34/94 · 48/94 |
+
+**Leitura honesta:** o efeito na taxa de vitória é bem maior que 25%, porque o Pesadelo é uma corrida de HP (o dano cai ¼, o tempo até o Soulmon cair sobe 1/0,75 ≈ +33% e o Soulmon vence antes). Com torcida a luta virou quase garantida (80–93% → ~99–100%), mas ainda machuca (perde 59–73% do HP, contra 77–88%). Sem torcida deixou de ser derrota quase certa (≥ 85% de derrotas → 36–66%). Os testes de calibragem do §65 foram rebaixados de "perde ≥ 70% sem torcida" para "perde ≥ 35%"; o piso de ≥ 75%/≥ 50% de vitória com torcida segue valendo.
+
+**Alternativa que perdeu: −40% (×0,60).** Com torcida 100% de vitória e só 48–64% de HP perdido; sem torcida 75–91% de vitória: o Pesadelo deixava de ser um desafio, e o dono pediu "~25%". **Gatilho de revisão:** se o Pesadelo virar passeio (vitória com torcida ≥ 99% e queixa de "fácil" nos testadores) subir a força (`NIGHTMARE_POWER`) em vez de voltar o fator; se ainda reclamarem de dureza em 2 semanas, ir a ×0,6.
+
+## §393 — Agulha de bússola (`tal-pve-04`) passa a elevar o TETO diário de Bits em vez de multiplicar o ganho (15/11/2026, decisão do dono em modal: "tem que aumentar o teto, ao invés de dar bônus em quanto ganha")
+
+> ⚰️ **Revoga o efeito `riftBits` da §2.38 / REGISTRO "Os oito nós 'em breve' entraram com efeito" (07/10/2026): "+3% por grau nos Bits da fenda (teto 9%)".** Lápide no código (`utils/talents.ts`, `RIFT_BITS_CAP_STEP`): o multiplicador não volta; o kind `riftBits`, `RIFT_BITS_STEP`/`RIFT_BITS_MAX`, `talentRiftBits` e `riftBitsWith` foram removidos.
+
+**Regra nova:** cada grau soma +10 ao teto diário de Bits de minijogo (`MINIGAME_BITS_PER_DAY` = 150): +10/+20/+30 no grau 3, kind `riftBitsCap` (`perRank: 10`, `RIFT_BITS_CAP_MAX` = 30). Vale SÓ para o crédito de quem joga a Fenda/Masmorra e a Arena (os chamadores que já liam o talento): o teto continua UM só (a soma de todos os jogos, `minigameBitsToday`), e o extra é um parâmetro opcional de `creditMinigameBits`/`minigameBitsGranted`/`remainingMinigameBits` (`utils/currencies.ts`, `minigameBitsCap(extra)`), que só a Fenda/Arena passam. Dino, PPT, Salão e Ateliê seguem parando em 150 e não gastam o que passou de 150. O ganho por luta não muda: o bônus percentual sumiu, a base nunca diminui. Descida fora da tela (`dungeonAway`): o campo do jogador no save passa de `rb` (fração) para `rc` (Bits de teto, 0–30); `rb` antigo é ignorado.
+**UI:** descrição PT/EN na árvore (números saem de `RIFT_BITS_CAP_STEP`), linha "teto de Bits +N" no resumo da árvore, "Bits de minijogo hoje: N de 150+N" na folha da Masmorra, `bitsCap` efetivo na tela de resultado da Fenda/Arena (`RiftResultExtras`) e o "Bits do dia" da pré-visualização.
+**Servidor:** o espelho `functions/api/_talents.js` (`talentRiftBitsCap`, `RIFT_BITS_CAP_MAX`) tem paridade travada em `talents.parity.test.js` (o servidor valida `talentPicks` no save e é quem decide o grau; o cliente só soma). ⚠️ HOJE o teto de 150 NÃO é imposto pelo servidor: ele mora no save do aparelho e o servidor só OBSERVA o crescimento de Bits (§387, modo observação; revisão 28/11). Quando o corte ligar, o teto efetivo da conta é `MINIGAME_BITS_PER_DAY + talentRiftBitsCap(talentPicks)`; a folga de 1.500/dia do orçamento já cobre o +30.
+**Compatibilidade:** quem já gastou pontos em `tal-pve-04` mantém o grau e o id (nada de migração de save); o efeito passa a ser o novo. Nada pago alcança talento (guard existente, `isPickable`).
+**Alternativa que perdeu:** manter +3%/grau (o dono achou pouco útil: o ganho é pequeno perto do teto). **Gatilho de revisão:** se mais de ~30% dos jogadores que escolhem o nó baterem o teto efetivo todo dia, ou o orçamento de Bits do servidor (§387) registrar excedente ligado a este nó.
+

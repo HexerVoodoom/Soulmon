@@ -359,7 +359,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
     expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
     expect(document.querySelector('[data-result-title]')!.textContent).toBe('Arena vencida');
-    expect(onEarn).toHaveBeenCalledWith(50);
+    expect(onEarn).toHaveBeenCalledWith(50, 0);
     // Vitória não diz "Tentar de novo".
     expect(screen.getByRole('button', { name: /Lutar de novo/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
@@ -384,7 +384,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     };
     it('run vencida: a rodada final entrega o drop do chefe em dobro, e o "Ganhou" mostra ×2 e o mesmo total que foi aplicado', async () => {
       const r = await vencer();
-      expect(r.onEarn).toHaveBeenCalledWith(50); // os Bits não mudam
+      expect(r.onEarn).toHaveBeenCalledWith(50, 0); // os Bits não mudam
       expect(r.onDefeated).toHaveBeenCalledTimes(5);
       const final = r.onDefeated.mock.calls[4][1] as Array<{ id: string; qty: number }>;
       expect(final.length).toBeGreaterThan(0);
@@ -412,7 +412,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
       await entrar({ onEarnPoints: onEarn });
       for (let r = 1; r <= 4; r++) await proximaRodada();
       expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
-      expect(onEarn).toHaveBeenCalledWith(50);
+      expect(onEarn).toHaveBeenCalledWith(50, 0);
       return document.querySelector('[data-result-ledger]')?.textContent ?? '';
     };
     it('teto gasto: pediu 50, creditou 0 -> nenhum Bit na tela', async () => {

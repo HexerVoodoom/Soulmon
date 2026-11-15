@@ -270,7 +270,15 @@ export interface NightmareKnobs {
   /** Fraction of the nightmare's damage warded off per collected cheer discharge, and the cap. */
   guardPerCheer: number;
   guardMax: number;
+  /** Multiplier of the nightmare's own damage (applied before the cheer ward). 1 = no change. */
+  foeDamage: number;
 }
+
+/**
+ * §392 (dono, 15/11/2026: "todo mundo está reclamando"): o inimigo do Pesadelo causa 25% menos dano. Dono único do número;
+ * só o Pesadelo passa por `nightmareFight` — a Masmorra (`dungeonFight`/`playSequence`) e a Arena não leem esta constante.
+ */
+export const NIGHTMARE_FOE_DAMAGE_FACTOR = 0.75;
 
 export const NIGHTMARE_KNOBS: NightmareKnobs = {
   basic: 0.4,
@@ -278,6 +286,7 @@ export const NIGHTMARE_KNOBS: NightmareKnobs = {
   ring: { ruim: 1.6, bom: 1.6, otimo: 2 },
   guardPerCheer: 0.24,
   guardMax: 0.72,
+  foeDamage: NIGHTMARE_FOE_DAMAGE_FACTOR,
 };
 
 /** One fight of the Nightmare: `dungeonFight` + the shadow rules above. `cheers()` = discharges collected so far. */
@@ -287,7 +296,7 @@ export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number
     ...f,
     hitScale(who, n) {
       const s = f.hitScale(who, n);
-      return who === 0 ? s * k.basic : s * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
+      return who === 0 ? s * k.basic : s * k.foeDamage * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
     },
   };
 }

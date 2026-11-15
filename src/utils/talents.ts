@@ -61,8 +61,8 @@ export type TalentEffect =
   | { readonly kind: 'allAttr'; readonly perRank: number }
   /** PvE (Tarefa B): a cura entre andares da Masmorra sobe `perRank × grau` do HP máximo (até `HEAL_BOOST_MAX`). */
   | { readonly kind: 'healBoost'; readonly perRank: number }
-  /** PvE (Tarefa B): `perRank × grau` a mais nos Bits GANHOS na fenda (Masmorra/Arena/Pesadelo), até `RIFT_BITS_MAX`. Sem fonte nova. */
-  | { readonly kind: 'riftBits'; readonly perRank: number }
+  /** PvE (§393): `perRank × grau` Bits a mais no TETO diário de Bits da fenda (Masmorra/Arena), até `RIFT_BITS_CAP_MAX`. Não muda o ganho por luta. */
+  | { readonly kind: 'riftBitsCap'; readonly perRank: number }
   /** PvE (Tarefa B): a luta da fenda começa com um escudo leve de `perRank × grau` do HP (até `START_SHIELD_MAX`). */
   | { readonly kind: 'startShield'; readonly perRank: number }
   /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. Hoje nenhum nó usa. */
@@ -106,8 +106,13 @@ export const DOT_RESIST_STEP = 0.06;
 export const CROWN_STEP = 0.002;
 export const HEAL_BOOST_STEP = 0.005;
 export const HEAL_BOOST_MAX = 0.015;
-export const RIFT_BITS_STEP = 0.03;
-export const RIFT_BITS_MAX = 0.09;
+/**
+ * `tal-pve-04` (Agulha de bússola), §393: cada grau soma +10 ao TETO DIÁRIO de Bits (`MINIGAME_BITS_PER_DAY`) só para os Bits
+ * ganhos na Fenda/Masmorra/Arena; o ganho por luta não muda. ⚰️ Lápide: antes era `riftBits` (+3% por grau no ganho, `RIFT_BITS_STEP`
+ * = 0,03, teto 9%; §2.38/07-10-2026), REVOGADO por §393 — não ressuscitar o multiplicador. Mesmos ids e graus, sem migração de save.
+ */
+export const RIFT_BITS_CAP_STEP = 10;
+export const RIFT_BITS_CAP_MAX = 30;
 export const START_SHIELD_STEP = 0.01;
 export const START_SHIELD_MAX = 0.01;
 export const NIGHTMARE_STEP = 0.004;
@@ -139,7 +144,7 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
   { id: 'tal-pve-02', path: 'pve', tier: 2, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP, attr: 'def' }, requires: [req('tal-pve-01', 2)] },
   { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'healBoost', perRank: HEAL_BOOST_STEP }, requires: [req('tal-pve-01', 2)] },
-  { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'riftBits', perRank: RIFT_BITS_STEP }, requires: [req('tal-pve-03', 1)] },
+  { id: 'tal-pve-04', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'riftBitsCap', perRank: RIFT_BITS_CAP_STEP }, requires: [req('tal-pve-03', 1)] },
   { id: 'tal-pve-05', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'nightmare', perRank: NIGHTMARE_STEP }, requires: [req('tal-pve-03', 1)] },
   { id: 'tal-pve-06', path: 'pve', tier: 3, maxRank: 3, effect: { kind: 'combatBonus', scope: 'pve', perRank: ARC_STEP, attr: 'spd' }, requires: [req('tal-pve-02', 2)] },
   { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'startShield', perRank: START_SHIELD_STEP }, requires: [req('tal-pve-05', 1), req('tal-pve-06', 1)] },
@@ -323,7 +328,7 @@ export function talentPveAttrBonus(picks: unknown, bondLevel: unknown): AttrBonu
 }
 
 /** Soma `perRank × grau` dos nós de um `kind` (inválido para o Vínculo = 0), com teto. */
-function sumKind(picks: unknown, bondLevel: unknown, kind: 'startEnergy' | 'dotResist' | 'healBoost' | 'riftBits' | 'startShield', max: number): number {
+function sumKind(picks: unknown, bondLevel: unknown, kind: 'startEnergy' | 'dotResist' | 'healBoost' | 'riftBitsCap' | 'startShield', max: number): number {
   if (!isValidPicks(picks, bondLevel)) return 0;
   let sum = 0;
   for (const [id, rank] of ranksOf(picks)) {
@@ -338,8 +343,8 @@ export const talentStartEnergy = (picks: unknown, bondLevel: unknown): number =>
 export const talentDotResist = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'dotResist', DOT_RESIST_MAX);
 /** `tal-pve-03`: fração do HP máximo a mais na cura entre andares. */
 export const talentHealBoost = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'healBoost', HEAL_BOOST_MAX);
-/** `tal-pve-04`: fração a mais nos Bits ganhos na fenda. */
-export const talentRiftBits = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'riftBits', RIFT_BITS_MAX);
+/** `tal-pve-04` (§393): Bits a mais no TETO diário de Bits da fenda (0, 10, 20 ou 30). */
+export const talentRiftBitsCap = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'riftBitsCap', RIFT_BITS_CAP_MAX);
 /** `tal-pve-07`: fração do HP máximo em escudo no começo da luta da fenda. */
 export const talentStartShield = (picks: unknown, bondLevel: unknown): number => sumKind(picks, bondLevel, 'startShield', START_SHIELD_MAX);
 

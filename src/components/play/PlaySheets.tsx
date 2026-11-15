@@ -9,11 +9,12 @@ import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { useRiftTalents } from '../../contexts/useTalentBonus';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
-import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
+import { bitsStyle, minigameBitsCap } from '../../utils/currencies';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
 import { RewardPreview } from '../ui/RewardPreview';
@@ -88,15 +89,16 @@ const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
  * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
  * teto não tira nada nem fecha jogo nenhum, só para de somar.
  */
-export function BitsHoje({ language, earned }: { language: Language; earned?: number }) {
+export function BitsHoje({ language, earned, extraCap = 0 }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number }) {
   if (earned === undefined) return null;
   const isPt = language === 'pt-BR';
-  const n = Math.min(MINIGAME_BITS_PER_DAY, Math.max(0, Math.floor(earned)));
-  const cheio = n >= MINIGAME_BITS_PER_DAY;
+  const cap = minigameBitsCap(extraCap);
+  const n = Math.min(cap, Math.max(0, Math.floor(earned)));
+  const cheio = n >= cap;
   return (
     <p data-bits-hoje style={{ ...note, margin: 0 }}>
       <span className="sm2-num">
-        {isPt ? `Bits de minijogo hoje: ${n} de ${MINIGAME_BITS_PER_DAY}` : `Minigame Bits today: ${n} of ${MINIGAME_BITS_PER_DAY}`}
+        {isPt ? `Bits de minijogo hoje: ${n} de ${cap}` : `Minigame Bits today: ${n} of ${cap}`}
       </span>
       {cheio && (isPt
         ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
@@ -123,6 +125,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
+  const rift = useRiftTalents();
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
 
@@ -175,7 +178,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
-      <BitsHoje language={language} earned={bitsToday} />
+      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );
 }

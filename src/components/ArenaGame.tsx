@@ -56,6 +56,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { RiftResultExtras } from './games/RiftResultExtras';
 import { essenceLedgerRows } from '../utils/resultEssences';
 import { arenaRoundDrops } from '../utils/arenaUltimoAdversario';
 import { ArenaCuraModal } from './games/ArenaCuraModal';
@@ -98,7 +99,7 @@ import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { RewardPreview } from './ui/RewardPreview';
-import { useTalentBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
+import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
@@ -126,7 +127,7 @@ export interface ArenaGameProps {
   /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
    *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
   seed?: number;
-  onEarnPoints?: (points: number) => number | void;
+  onEarnPoints?: (points: number, extraCap?: number) => number | void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
@@ -364,15 +365,14 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      const pedido = riftBitsWith(pontos, rift.riftBits);
-      setBitsGanhos(onEarnPoints?.(pedido) ?? pedido); // o creditado (teto diário), não o pedido
+      setBitsGanhos(onEarnPoints?.(pontos, rift.riftBitsCap) ?? pontos); // o creditado (teto diário, com o extra da Agulha de bússola §393), não o pedido
       setFase('venceu');
       return;
     }
     const n = rodada + 1;
     setRodada(n);
     montarRodada(n, pool);
-  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
+  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBitsCap]);
 
   // Última rodada vencida: sem modal nem tela intermediária, fecha a run direto.
   useEffect(() => {
@@ -580,6 +580,7 @@ export function ArenaGame({
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
       {(fase === 'venceu' || fase === 'perdeu' || fase === 'empatou') && (
+        <RiftResultExtras extraCap={rift.riftBitsCap}>
         <ResultScreen
           playAgainIcon={lotIconName('arena', 'duelo')} playAgainArt={lotIconArt('arena', 'duelo')} dailyEvent="arena"
           language={language}
@@ -607,6 +608,7 @@ export function ArenaGame({
           homeLabel={sair}
           onHome={onExit}
         />
+        </RiftResultExtras>
       )}
       </TorcidaLayer>
     </GameRoot>
