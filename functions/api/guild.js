@@ -73,6 +73,7 @@
 // override de G6 registrado em `PLANO-GUILDA.md` §0.1.
 
 import { authorizeSaveAccess, authStatus } from './_auth.js';
+import { GUILD_INVITE_HOURLY, contarConviteDoDia, parBloqueado, segundosAteAmanhaUtc } from './_conviteLimite.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
@@ -180,8 +181,8 @@ export const GUILD_ACTIONS = Object.freeze({
   guildInvite: 'POST',
 });
 
-/** Convidar (§321): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. */
-export const GUILD_INVITE_LIMIT = { limit: 20, windowMs: 3_600_000 };
+/** Convidar (§321): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. Dono: `_conviteLimite.js` (§388). */
+export const GUILD_INVITE_LIMIT = GUILD_INVITE_HOURLY;
 
 /** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
 export const GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 3_600_000 };
@@ -537,6 +538,9 @@ export async function handleGuild({ request, env }) {
     if (await grupoDe(env, alvo, semana)) return erro('already in a {g}', 409);
     const gate = takeToken('guildInvite', id, GUILD_INVITE_LIMIT);
     if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    // §388: teto DIÁRIO por remetente no KV; e o clã que a pessoa recusou há menos de 7 dias recebe a resposta do sucesso, sem carta.
+    if (!(await contarConviteDoDia(kvOrThrow(env), 'g', id))) return tooManyRequests(segundosAteAmanhaUtc(), CORS);
+    if (await parBloqueado(kvOrThrow(env), 'g', g.id, alvo)) return json({ invited: true });
     const eu = await getProfile(env, id).catch(() => null);
     // Quem saiu da lista pública convida sem o próprio nome na carta (o mesmo cuidado da carta de amizade).
     const quem = eu && eu.publicHidden !== true && typeof eu.name === 'string' ? eu.name.slice(0, 40) : '';

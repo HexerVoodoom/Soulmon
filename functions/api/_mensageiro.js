@@ -254,22 +254,35 @@ export async function claimMail(kv, id, mids, now = Date.now(), db) {
 
 /**
  * Apaga cartas. Carta com prêmio pendente só sai com `force` (a confirmação do dono); sem ele volta em `blocked`.
- * `mids === 'read'`: todas as lidas SEM prêmio pendente (as com prêmio pendente ficam e voltam em `blocked`).
+ * `mids === 'read'`: todas as lidas SEM prêmio pendente (as com prêmio pendente ficam e voltam em `blocked`) e que NÃO são convite
+ * (§389): abrir a carta já a marca como lida, e o convite ainda não respondido não pode sumir no lote. Respondido, ele já saiu da
+ * caixa (`removerConvitesDe`/`removerConvitesDeCla`); apagar UM convite pelo id segue valendo (é o "Recusar" do clã).
  */
 export async function deleteMail(kv, id, mids, force = false) {
   const rec = await ler(kv, id);
   const alvo = mids === 'read' ? null : alvoDe(mids);
-  const candidatas = rec.q.filter(m => (alvo ? alvo.has(m.mid) : m.read));
+  const candidatas = rec.q.filter(m => (alvo ? alvo.has(m.mid) : m.read && !isInviteLetter(m)));
   const blocked = [];
   const removidas = [];
   for (const m of candidatas) (pendingReward(m) && !(force && alvo) ? blocked : removidas).push(m.mid);
+  // §388: apagar UMA carta de convite de clã pelo id é a recusa (o "Recusar" da caixa); quem chama bloqueia o par por 7 dias.
+  const convitesDeClaRecusados = alvo
+    ? candidatas.filter(m => removidas.includes(m.mid) && ehConviteDeCla(m)).map(m => gidDoConvite(m.mid)).filter(Boolean)
+    : [];
   if (removidas.length) {
     const fora = new Set(removidas);
     rec.q = rec.q.filter(m => !fora.has(m.mid));
     rec.done = [...rec.done, ...removidas].slice(-DONE_MAX);
     await gravar(kv, id, rec);
   }
-  return { removed: removidas.length, blocked };
+  return { removed: removidas.length, blocked, ...(convitesDeClaRecusados.length ? { convitesDeClaRecusados } : {}) };
+}
+
+/** O id do clã de uma carta `ginv:<gid>:<dia>` (ou null). */
+function gidDoConvite(mid) {
+  if (typeof mid !== 'string' || !mid.startsWith('ginv:')) return null;
+  const fim = mid.lastIndexOf(':');
+  return fim > 5 ? mid.slice(5, fim) : null;
 }
 
 /** Retira as cartas de convite de `fromPid` (o convite foi aceito, recusado ou cancelado). Idempotente. */

@@ -7,7 +7,8 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //   POST /api/entitlements?action=buy-essence   { id, element, qty: 1|5, opId }  ← CAMBISTA (§205)
-//   POST /api/entitlements?action=buy-bits      { id, pack, opId }  ← PACOTES DE BITS (§373; teto 1.000/dia UTC, `_bitsPacks.js`)
+//   POST /api/entitlements?action=buy-bits      { id, pack, opId, replayOnly?, zone?, off? }  ← PACOTES DE BITS (§373; `_bitsPacks.js`)
+//        `replayOnly: true` (§386): só o replay de um pedido já atendido; desconhecido = 409 `no-op`, nada comprado
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
 //   POST /api/entitlements?action=rebirth-reset { id }       ← RENASCIMENTO (#62)
 //
@@ -64,7 +65,8 @@ import { bondLevelFor } from './_bond.js';
 import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
 import { verifiedBetaFull, betaFullPublicView } from './_betaFull.js';
-import { buyBitsPack, bitsBoughtToday, bitsPackLeftToday } from './_bitsPacks.js';
+import { buyBitsPack, bitsBoughtToday, bitsPackLeftToday, ancoraDeLeitura, bitsDayResetAt } from './_bitsPacks.js';
+import { tzDe } from './_amigos.js';
 
 /**
  * Teto por IP na cortesia. Amortecedor contra sonda de chave (ver
@@ -177,10 +179,16 @@ async function onRequestGetBruto({ request, env }) {
   const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
   const base = betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent);
   const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
-  // §373: o que ainda cabe na troca de hoje. Só aparece quando a conta já trocou HOJE (sem isso o formato fica o de sempre e o
-  // cliente lê "dia inteiro livre").
-  const trocaHoje = bitsBoughtToday(ent) > 0 ? { bitsPackLeft: bitsPackLeftToday(ent) } : {};
-  return json({ ...view, ...trocaHoje, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
+  // §373: o que ainda cabe na troca de hoje. `bitsPackLeft` (campo antigo) só aparece quando a conta já trocou HOJE; `bitsLeftToday`
+  // e `bitsResetAt` (§386) vêm sempre, no dia do JOGADOR (a âncora gravada na conta; sem ela, a do pedido; sem nada, UTC).
+  const agora = Date.now();
+  const ancora = ancoraDeLeitura(ent, tzDe(url.searchParams.get('zone'), url.searchParams.get('off')), agora);
+  const trocaHoje = bitsBoughtToday(ent, agora, ancora) > 0 ? { bitsPackLeft: bitsPackLeftToday(ent, agora, ancora) } : {};
+  return json({
+    ...view, ...trocaHoje,
+    bitsLeftToday: bitsPackLeftToday(ent, agora, ancora), bitsResetAt: bitsDayResetAt(agora, ancora),
+    adsEnabled: env.ADMOB_SSV_ENABLED === 'true',
+  });
 }
 
 async function onRequestPostBruto({ request, env }) {
@@ -265,14 +273,19 @@ async function onRequestPostBruto({ request, env }) {
   if (action === 'buy-bits') {
     // PACOTES DE BITS (§373): o pacote, o preço em Créditos, o teto do dia e a idempotência são do servidor (`_bitsPacks.js`).
     // O cliente só credita os `bits` desta resposta, e só quando `ok`.
-    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin });
+    // §386: `zone`/`off` = a âncora do dia do jogador (o teto vira à meia-noite dela); `bitsLeftToday`/`bitsResetAt` são aditivos.
+    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin, replayOnly: body?.replayOnly === true, tz: tzDe(body?.zone, body?.off) });
+    const doDia = {
+      ...(typeof r.leftToday === 'number' ? { leftToday: r.leftToday, bitsLeftToday: r.leftToday } : {}),
+      ...(typeof r.resetAt === 'number' ? { bitsResetAt: r.resetAt } : {}),
+    };
     if (!r.ok) {
       log('bits-pack.refused', saveId, { reason: r.reason });
-      return json({ ok: false, reason: r.reason, ...(typeof r.leftToday === 'number' ? { leftToday: r.leftToday } : {}) }, r.status);
+      return json({ ok: false, reason: r.reason, ...doDia }, r.status);
     }
     if (admin) logAdminSession('buy-bits');
     log('bits-pack', saveId, { pack: r.pack, price: r.price, replay: !!r.replay, admin });
-    return json({ ok: true, pack: r.pack, bits: r.bits, price: r.price, leftToday: r.leftToday, ...(r.replay ? { replay: true } : {}), ...view(r.ent) });
+    return json({ ok: true, pack: r.pack, bits: r.bits, price: r.price, ...doDia, ...(r.replay ? { replay: true } : {}), ...view(r.ent) });
   }
 
   if (action === 'rebirth-reset') {

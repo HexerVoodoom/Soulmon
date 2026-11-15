@@ -1,3 +1,4 @@
+import type { NpcIntroId } from './buildingIntro';
 /**
  * O MENSAGEIRO (NPC 440, Papus; §241): o crédito das cartas no save. Puro. A fila mora no servidor (`functions/api/_mensageiro.js`);
  * `mailClaimed` guarda o que já foi creditado, então a mesma carta entregue de novo não paga duas vezes.
@@ -90,7 +91,10 @@ export const markClaimed = (list: readonly MailItem[], mids: ReadonlySet<string>
   list.map(m => (mids.has(m.mid) ? { ...m, read: true, claimedAt: m.claimedAt || now } : m));
 
 /** Lidas que podem ser apagadas sem confirmação (as com item pendente ficam). */
-export const deletableRead = (list: readonly MailItem[]): MailItem[] => list.filter(m => m.read === true && !hasPendingReward(m));
+/** Carta de convite (amizade, clã, e o clã antigo só com `mid` `ginv:`): espelho de `isInviteLetter` do servidor (§389). */
+export const isInviteLetter = (m: MailItem): boolean => m.kind === 'friend-invite' || m.kind === 'guild-invite' || m.mid.startsWith('ginv:');
+/** O que "Excluir todas lidas" apaga: lidas, sem item pendente e que NÃO são convite (o servidor faz o mesmo, §389). */
+export const deletableRead = (list: readonly MailItem[]): MailItem[] => list.filter(m => m.read === true && !hasPendingReward(m) && !isInviteLetter(m));
 
 // O aviso do Papus (modal da fila) só fala de carta que ainda não anunciou: lista curta de `mid` no aparelho.
 const ANNOUNCED_MAX = 50;
@@ -99,6 +103,29 @@ export const serializeAnnounced = (mids: readonly string[]): string => [...new S
 /** Cartas novas que o Papus ainda não anunciou neste aparelho. */
 export const toAnnounce = (list: readonly MailItem[], announced: readonly string[]): MailItem[] =>
   list.filter(m => isUnread(m) && !announced.includes(m.mid));
+
+/** O "visto" do pop-up do Papus no save (`buildingIntrosSeen`, §390). */
+export const MESSENGER_INTRO_ID: NpcIntroId = 'npc.mensageiro';
+
+/**
+ * O pop-up do Papus JÁ foi visto nesta conta? (§390) A marca do save vale em qualquer aparelho. Quem viu antes desta versão conta
+ * como visto: anúncio gravado neste aparelho (`MAIL_ANNOUNCED`) ou carta já lida/resgatada na caixa (o servidor guarda, vale em
+ * qualquer aparelho). O erro seguro é NÃO abrir o pop-up: a bolinha do ícone continua avisando.
+ */
+export function messengerIntroSeen(p: { introsSeen: readonly string[] | undefined; announced: readonly string[]; mail: readonly MailItem[] }): boolean {
+  return (p.introsSeen ?? []).includes(MESSENGER_INTRO_ID) || p.announced.length > 0 || p.mail.some(m => !isUnread(m));
+}
+
+/** Grava o "visto" do pop-up. Idempotente: já visto devolve a MESMA referência (updater do `setGameState`). */
+export function markMessengerIntroSeen(seen: string[] | undefined): string[] {
+  const atual = Array.isArray(seen) ? seen : [];
+  return atual.includes(MESSENGER_INTRO_ID) ? atual : [...atual, MESSENGER_INTRO_ID];
+}
+
+/** As cartas que o pop-up anuncia AGORA: só na 1ª vez da conta (§390, dono 14/11/2026); depois, nenhuma (só a bolinha). */
+export function mailPopupToShow(p: { mail: readonly MailItem[]; announced: readonly string[]; introsSeen: readonly string[] | undefined }): MailItem[] {
+  return messengerIntroSeen(p) ? [] : toAnnounce(p.mail, p.announced);
+}
 
 /** A fala curta do aviso: a caixa é que mostra o conteúdo. */
 export const announceLine = (count: number, isPt: boolean): string => (isPt
