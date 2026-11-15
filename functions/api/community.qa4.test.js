@@ -187,3 +187,24 @@ describe('achado 3 · sparMatch apaga o duelo aberto só depois de gravar sparDo
     expect(kv.store.has(sparPendingKey(ME))).toBe(false);
   });
 });
+
+describe('achado 4 · `_treino.js` propaga a falha do KV', () => {
+  it('fixarTzTreino: `put` da âncora falha → rejeita (antes: seguia sem âncora e o próximo fuso virava outro dia)', async () => {
+    const { env, kv } = mkEnv();
+    kv.falhaPut = { prefixo: 'sparTz:' };
+    await expect(fixarTzTreino(env, ME, { offsetMs: 0 })).rejects.toThrow('kv put failed');
+    expect(kv.store.has(sparTzKey(ME))).toBe(false);
+  });
+
+  it('confirm do ticket extra: `delete` da reserva falha → rejeita SEM conceder; o retry concede uma vez', async () => {
+    const { env, kv } = mkEnv();
+    kv.store.set(sparTicketKey(ME, DIA), JSON.stringify({ played: 20, extra: 0 }));
+    expect((await buySparTicket(env, ME, DIA, 'reserve')).ok).toBe(true);
+    kv.falhaDelete = { prefixo: 'sparReserve:', vezes: 1 };
+    await expect(buySparTicket(env, ME, DIA, 'confirm')).rejects.toThrow('kv delete failed');
+    expect(JSON.parse(kv.store.get(sparTicketKey(ME, DIA))).extra).toBe(0);
+    expect(kv.store.has(sparReserveKey(ME, DIA))).toBe(true);
+    expect((await buySparTicket(env, ME, DIA, 'confirm')).status.extra).toBe(1);
+    expect((await buySparTicket(env, ME, DIA, 'confirm')).ok).toBe(false);
+  });
+});
