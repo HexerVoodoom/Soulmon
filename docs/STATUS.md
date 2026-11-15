@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — 33 decorações no estilo novo instaladas no mesmo id (`feat/decor-estilo-novo`, REGISTRO §398) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a arte das 33 peças de mobília troca no mesmo id (PNG, caixa × 3, alfa real) por `tools/instalar-decor-refeitas.py`; sem id novo, sem save, sem código. Os 34 PNG de decoração foram de 488 KB para 829 KB (maior 38,8 KB).
+> - **Fora:** `furn-lantern` (o PNG do piloto não está na pasta do lote; segue a arte antiga).
+> - **Não visto em tela:** sem build; prancha ANTES/DEPOIS em `E:\Soulmon-assets\_lote-14-11\decoracao\instalado-contato.png`. Faixas de grama e areia ficam finas (~22 px de altura).
+
 > ## 15/11/2026 — Restaurante com o chef certo, missão do prato, elemento da evolução e modal "Elemento novo" (`feat/restaurante-npc-missao-elemento`, REGISTRO §396) — PR aberto, NÃO mergeado
 >
 > - **Feito:** a folha do Restaurante mostra o chef do dia (antes era sempre a Snapjaw) e os dois lado a lado no domingo; semanal `cook-dish`; evoluir desbloqueia o elemento da forma; modal transparente sem brilho (carrossel se vários) na fila central.

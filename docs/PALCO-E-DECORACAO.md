@@ -309,3 +309,7 @@ janela existir). É troca de um defeito por outro e a escolha é do dono. Mexer 
 ## Escala no palco (04/11/2026)
 
 A caixa de `DECOR_SLOTS` segue sendo o contrato da arte. O palco desenha maior via `DECOR_RENDER_SCALE` (`utils/petStage.ts`): cantos, chão e parede 2,5×, vitrine 1,75× (alvo medido pelo dono em print de 720 px). O canto esquerdo foi de x=16 para x=18 para não sair do palco a 390 px. Na prateleira da loja a peça foi de 0,5× para 0,85×.
+
+## Decoração no estilo novo (15/11/2026, REGISTRO §398)
+
+As 33 peças do acervo foram refeitas e entram no MESMO id (`src/assets/decor/<id>.png`, caixa do espaço × 3, alfa real). Instalador: `tools/instalar-decor-refeitas.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-14-11/decoracao/`; rodar duas vezes grava os mesmos bytes). Para trocar uma peça de novo, substitua o PNG de origem e rode o script. O tapete (13:2) recebe a janela de maior alfa; grass e sand ancoram embaixo. A lanterna (`furn-lantern`) segue com a arte antiga até o PNG do piloto aparecer na pasta do lote. Guard: `src/assets/decorEstiloNovo.test.ts`.
