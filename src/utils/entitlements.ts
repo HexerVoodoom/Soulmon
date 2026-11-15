@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
 import { readLocal } from './safeStorage';
-import { chaveDeOp, confirmarOpId, opIdPendente, respostaDefinitiva } from './pendingOpId';
+import { chaveDeOp, confirmarOpId, opIdPendente, pendentesComPrefixo, respostaDefinitiva } from './pendingOpId';
 import { sanitizeOwnedWidgetFrames, setPaidWidgetFramesFromEntitlement } from './widgetFrames';
 
 // Entitlements no CLIENTE — espelho somente-leitura do que o servidor decidiu.
@@ -36,8 +36,11 @@ export interface Entitlement {
   subUntil?: number;
   /** Molduras do widget V-Pet COMPRADAS (ids de elemento base; só o servidor escreve). Ausente = nenhuma. Cosmético. */
   frames?: string[];
-  /** §373: Bits que ainda cabem na troca de HOJE (dia UTC do servidor). Ausente = a conta não trocou hoje (dia inteiro livre). */
+  /** §373: Bits que ainda cabem na troca de HOJE. Ausente = a conta não trocou hoje (dia inteiro livre). Campo antigo, segue lido. */
   bitsPackLeft?: number;
+  /** §386: o que cabe hoje no dia do JOGADOR (o servidor manda sempre) e o instante em que esse dia vira (ms). */
+  bitsLeftToday?: number;
+  bitsResetAt?: number;
 }
 
 /** Normaliza a resposta do GET: `admin` só é true com o literal `true`. */
@@ -55,6 +58,8 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     ...(sanitizeOwnedWidgetFrames(r.frames).length ? { frames: sanitizeOwnedWidgetFrames(r.frames) } : {}),
     ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
     ...(typeof r.bitsPackLeft === 'number' && Number.isFinite(r.bitsPackLeft) && r.bitsPackLeft >= 0 ? { bitsPackLeft: Math.floor(r.bitsPackLeft) } : {}),
+    ...(typeof r.bitsLeftToday === 'number' && Number.isFinite(r.bitsLeftToday) && r.bitsLeftToday >= 0 ? { bitsLeftToday: Math.floor(r.bitsLeftToday) } : {}),
+    ...(typeof r.bitsResetAt === 'number' && Number.isFinite(r.bitsResetAt) && r.bitsResetAt > 0 ? { bitsResetAt: r.bitsResetAt } : {}),
   };
 }
 
@@ -72,7 +77,7 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
     });
     if (!res.ok) return null;
     const ent = sanitizeEntitlement(await res.json());
-    if (ent) noteBitsPackLeft(ent.bitsPackLeft ?? null);
+    if (ent) noteBitsPackLeft(ent.bitsLeftToday ?? ent.bitsPackLeft ?? null, ent.bitsResetAt);
     return ent;
   } catch {
     return null;
@@ -200,22 +205,25 @@ export async function buyEssence(element: string, qty: number, opIdExplicito?: s
 // ── PACOTES DE BITS (§373) ───────────────────────────────────────────────────
 
 /**
- * O que ainda cabe na troca de hoje, como o SERVIDOR disse da última vez (só para a tela; quem decide é o servidor). Guardado
- * com o dia UTC em que foi lido: virou o dia, volta a "não sei" (`null`), e a tela mostra o teto cheio. Fora do save de propósito:
- * não é dado do jogador, é um eco da última resposta.
+ * O que ainda cabe na troca de hoje, como o SERVIDOR disse da última vez (só para a tela; quem decide é o servidor). Vale até
+ * `bitsResetAt`, a meia-noite do JOGADOR que o servidor calculou (§386, A3); sem ela (servidor antigo) vale até a virada do dia
+ * UTC, como antes. Passou do prazo, volta a "não sei" (`null`) e a tela mostra o teto cheio. Fora do save de propósito: não é dado
+ * do jogador, é um eco da última resposta.
  */
-let bitsPackLeftEcho: { day: string; left: number } | null = null;
+let bitsPackLeftEcho: { until: number; left: number } | null = null;
 const bitsPackListeners = new Set<() => void>();
-const utcDay = () => new Date().toISOString().slice(0, 10);
+const fimDoDiaUtc = (agora: number) => (Math.floor(agora / 86_400_000) + 1) * 86_400_000;
 
-export function noteBitsPackLeft(left: number | null): void {
-  bitsPackLeftEcho = typeof left === 'number' && Number.isFinite(left) ? { day: utcDay(), left: Math.max(0, Math.floor(left)) } : null;
+export function noteBitsPackLeft(left: number | null, resetAt?: number): void {
+  const agora = Date.now();
+  const until = typeof resetAt === 'number' && Number.isFinite(resetAt) && resetAt > agora ? resetAt : fimDoDiaUtc(agora);
+  bitsPackLeftEcho = typeof left === 'number' && Number.isFinite(left) ? { until, left: Math.max(0, Math.floor(left)) } : null;
   bitsPackListeners.forEach(l => l());
 }
 
-/** `null` = o servidor não disse nada hoje (a conta não trocou hoje, até onde este aparelho sabe). */
+/** `null` = o servidor não disse nada para o dia de hoje (até onde este aparelho sabe, o dia inteiro está livre). */
 export function bitsPackLeftToday(): number | null {
-  return bitsPackLeftEcho && bitsPackLeftEcho.day === utcDay() ? bitsPackLeftEcho.left : null;
+  return bitsPackLeftEcho && Date.now() < bitsPackLeftEcho.until ? bitsPackLeftEcho.left : null;
 }
 
 export function subscribeBitsPackLeft(listener: () => void): () => void {
@@ -224,18 +232,44 @@ export function subscribeBitsPackLeft(listener: () => void): () => void {
 }
 
 export type BitsPackBuyResult =
-  /** `ent` ausente: o servidor confirmou sem um saldo legível; o estado local de Créditos fica como estava. */
-  | { ok: true; ent?: Entitlement; pack: string; bits: number; price: number; leftToday: number }
+  /**
+   * `ent` ausente: o servidor confirmou sem um saldo legível; o estado local de Créditos fica como estava.
+   * `confirmar` (§386, A2): o gesto só fecha DEPOIS de os Bits entrarem no estado. Quem credita chama `confirmar()` num efeito
+   * pós-commit; até lá o opId segue pendente (o app morto no meio ainda tem replay) e o mesmo pacote não abre outro pedido.
+   */
+  | { ok: true; ent?: Entitlement; pack: string; bits: number; price: number; leftToday: number; confirmar: () => void }
   | { ok: false; reason: string; leftToday?: number };
+
+/** Âncora do dia do jogador (`gameState.playerDayTz`): o teto de 1.000/dia vira à meia-noite DELE (§386, A3). */
+export interface BitsDayTz { zone?: string; offsetMs?: number }
+
+/** `zone`/`off` do corpo do pedido (a mesma forma do Treino, `community.ts`). Sem âncora, nada vai: o servidor usa a dele (ou UTC). */
+function tzDoPedido(tz?: BitsDayTz): { zone?: string; off?: number } {
+  if (!tz) return {};
+  const off = typeof tz.offsetMs === 'number' && Number.isFinite(tz.offsetMs) ? tz.offsetMs : undefined;
+  const zone = typeof tz.zone === 'string' && tz.zone.length > 0 ? tz.zone : undefined;
+  if (!zone && off === undefined) return {};
+  return { ...(zone ? { zone } : {}), off: off ?? -new Date().getTimezoneOffset() * 60_000 };
+}
+
+/**
+ * Pacotes cujo pedido está NO AR ou cujos Bits ainda não foram confirmados no estado (§386). Fecha a corrida "o boot reenvia o
+ * pendente com `replayOnly` enquanto o jogador toca o MESMO pacote": os dois receberiam o replay e os Bits entrariam duas vezes.
+ */
+const bitsEmAndamento = new Set<string>();
 
 /**
  * Compra um PACOTE DE BITS com Créditos NO SERVIDOR (`POST /api/entitlements?action=buy-bits`). O servidor decide os Bits do
  * pacote, debita os Créditos e conta o teto de 1.000/dia; o cliente só credita os `bits` desta resposta, e só com `ok`.
  * Mesmo `opId` num reenvio (a rede caiu sem resposta) = mesmo resultado, sem cobrar de novo. Recusa do servidor não é reenviada.
  */
-export async function buyBitsPack(packId: string, opIdExplicito?: string): Promise<BitsPackBuyResult> {
+export async function buyBitsPack(packId: string, opIdExplicito?: string, tz?: BitsDayTz): Promise<BitsPackBuyResult> {
   const id = currentSaveId();
   if (!id) return { ok: false, reason: 'no-save' };
+  const trava = opIdExplicito ? null : chaveDeOp(id, 'bits', packId);
+  if (trava && bitsEmAndamento.has(trava)) return { ok: false, reason: 'busy' };
+  if (trava) bitsEmAndamento.add(trava);
+  const soltar = () => { if (trava) bitsEmAndamento.delete(trava); };
   const gesto = abrirGesto(id, 'bits', packId, opIdExplicito);
   const opId = gesto.opId;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
@@ -243,21 +277,82 @@ export async function buyBitsPack(packId: string, opIdExplicito?: string): Promi
       const res = await fetch('/api/entitlements?action=buy-bits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({ id, pack: packId, opId }),
+        body: JSON.stringify({ id, pack: packId, opId, ...tzDoPedido(tz) }),
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data === null) continue; // 200 ilegível: o servidor pode ter cobrado; reenvia com o MESMO opId (replay sem cobrar de novo)
-      const left = typeof data?.leftToday === 'number' && Number.isFinite(data.leftToday) ? Math.max(0, Math.floor(data.leftToday)) : undefined;
-      if (left !== undefined) noteBitsPackLeft(left);
-      gesto.fechar(res.status, data?.ok === true, data?.reason);
-      if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error', ...(left !== undefined ? { leftToday: left } : {}) };
-      const bits = Number(data.bits);
-      if (!Number.isInteger(bits) || bits <= 0) return { ok: false, reason: 'error' };
-      const ent = entDaResposta(data);
-      return { ok: true, pack: String(data.pack), bits, price: Number(data.price) || 0, leftToday: left ?? 0, ...(ent ? { ent } : {}) };
+      const left = notarRestanteDaResposta(data);
+      if (res.ok && data?.ok) {
+        const bits = Number(data.bits);
+        // `ok` sem Bits legíveis: o servidor PODE ter debitado; o id fica pendente (o próximo toque ou a reabertura pegam o replay).
+        if (!Number.isInteger(bits) || bits <= 0) { soltar(); return { ok: false, reason: 'error' }; }
+        const ent = entDaResposta(data);
+        let feito = false;
+        const confirmar = () => { if (feito) return; feito = true; gesto.fechar(200, true); soltar(); };
+        return { ok: true, pack: String(data.pack), bits, price: Number(data.price) || 0, leftToday: left ?? 0, confirmar, ...(ent ? { ent } : {}) };
+      }
+      gesto.fechar(res.status, false, data?.reason);
+      soltar();
+      return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error', ...(left !== undefined ? { leftToday: left } : {}) };
     } catch { /* rede: uma nova tentativa com o MESMO opId */ }
   }
+  soltar();
   return { ok: false, reason: 'network' };
+}
+
+/** Lê `bitsLeftToday`/`leftToday` (+ `bitsResetAt`) de uma resposta do buy-bits e atualiza o eco da tela. */
+function notarRestanteDaResposta(data: unknown): number | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const r = data as Record<string, unknown>;
+  const bruto = typeof r.bitsLeftToday === 'number' ? r.bitsLeftToday : r.leftToday;
+  if (typeof bruto !== 'number' || !Number.isFinite(bruto)) return undefined;
+  const left = Math.max(0, Math.floor(bruto));
+  noteBitsPackLeft(left, typeof r.bitsResetAt === 'number' ? r.bitsResetAt : undefined);
+  return left;
+}
+
+/** Um pacote de Bits que o servidor JÁ tinha entregue e a rede escondeu (§386): credite `bits` e chame `confirmar()` depois do commit. */
+export interface BitsPackReplay { pack: string; bits: number; ent?: Entitlement; confirmar: () => void }
+
+/**
+ * REENVIA os pacotes de Bits PENDENTES desta conta com `replayOnly` (§386, A1). Cenário: a rede caiu depois do débito, o app foi
+ * reaberto, os Créditos já caíram e o botão do pacote pode nem estar ao alcance; sem isto o opId vencia em 24 h sem nunca entregar
+ * os Bits. Pedido atendido = o replay (Bits uma vez, `confirmar` fecha o pendente); `no-op` (o servidor nunca atendeu: nada foi
+ * cobrado) e recusa definitiva fecham na hora; rede/5xx/`busy` mantêm para a próxima tentativa.
+ */
+export async function recoverPendingBitsBuys(tz?: BitsDayTz): Promise<BitsPackReplay[]> {
+  const id = currentSaveId();
+  if (!id) return [];
+  const prefixo = chaveDeOp(id, 'bits', '');
+  const achados: BitsPackReplay[] = [];
+  for (const p of pendentesComPrefixo(prefixo)) {
+    if (bitsEmAndamento.has(p.chave)) continue;
+    bitsEmAndamento.add(p.chave);
+    let segura = false;
+    try {
+      const res = await fetch('/api/entitlements?action=buy-bits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ id, pack: p.item, opId: p.op, replayOnly: true, ...tzDoPedido(tz) }),
+      });
+      const data = await res.json().catch(() => null);
+      notarRestanteDaResposta(data);
+      const bits = Number(data?.bits);
+      if (res.ok && data?.ok === true && Number.isInteger(bits) && bits > 0) {
+        const ent = entDaResposta(data);
+        let feito = false;
+        segura = true;
+        achados.push({
+          pack: String(data.pack), bits, ...(ent ? { ent } : {}),
+          confirmar: () => { if (feito) return; feito = true; confirmarOpId(p.chave, p.op); bitsEmAndamento.delete(p.chave); },
+        });
+      } else if (!res.ok && respostaDefinitiva(res.status, data?.reason)) {
+        confirmarOpId(p.chave, p.op);
+      }
+    } catch { /* rede: o pendente fica para a próxima abertura */ }
+    if (!segura) bitsEmAndamento.delete(p.chave);
+  }
+  return achados;
 }
 
 /** Credita a recompensa do anúncio (o teto diário é aplicado no servidor). */

@@ -437,6 +437,8 @@ export interface CambistaSheetProps {
   language: Language;
   credits: number;
   onExchangeCredits: (packId: string) => Promise<boolean>;
+  /** §386: reenvia os pacotes de Bits pendentes ao abrir (o servidor só devolve o que já tinha entregue). */
+  onRecoverPendingBits?: () => void;
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
@@ -448,7 +450,7 @@ export interface CambistaSheetProps {
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
@@ -484,7 +486,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
 
       {tab === 'bits' && (
         <>
-          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} say={say} />
+          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} onRecoverPending={onRecoverPendingBits} say={say} />
           {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ───────────────
               A pessoa ENCONTRA: fora do cap semanal, não some com `offerDismissed`, sem ×.
               Mora na aba do dinheiro real, DEPOIS do que a pessoa veio ver. */}

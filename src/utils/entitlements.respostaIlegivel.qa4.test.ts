@@ -38,6 +38,7 @@ describe('200 ilegível reenvia com o mesmo opId', () => {
     const ops = servidor({ ok: true, pack: 'bits-200', bits: 200, price: 200, leftToday: 800, replay: true, tier: 'paid', credits: 10, adsLeft: 0 });
     const r = await buyBitsPack('bits-200');
     expect(r).toMatchObject({ ok: true, bits: 200, ent: { credits: 10, tier: 'paid' } });
+    if (r.ok) r.confirmar();
     expect(ops).toHaveLength(2);
     expect(ops[1]).toBe(ops[0]);
   });

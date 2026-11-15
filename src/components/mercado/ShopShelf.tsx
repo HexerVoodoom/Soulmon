@@ -643,14 +643,17 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
 /** OS PACOTES DE BITS do Cambista (§373): três pacotes pagos em Créditos, com desconto progressivo, lado a lado.
  *  O servidor decide o pacote, cobra e conta o teto de `BITS_PACK_DAILY_CAP` Bits/dia; a tela só oferece e confirma.
  *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
-export function CreditExchange({ language, credits, onExchangeCredits, say }: {
+export function CreditExchange({ language, credits, onExchangeCredits, onRecoverPending, say }: {
   language: Language;
   credits: number;
   /** Compra o pacote `packId` (id de `BITS_PACKS`). Devolve false se o servidor recusar. */
   onExchangeCredits: (packId: string) => Promise<boolean>;
+  /** §386 (A1): ao abrir, reenvia os pacotes pendentes (a rede caiu depois do débito e o botão pode nem estar ao alcance). */
+  onRecoverPending?: () => void;
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
+  useEffect(() => { onRecoverPending?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [exchanging, setExchanging] = useState<string | null>(null);
   // O que ainda cabe HOJE, como o servidor disse da última vez (`null` = não trocou hoje: o dia inteiro está livre).
   const leftEcho = useSyncExternalStore(subscribeBitsPackLeft, bitsPackLeftToday, bitsPackLeftToday);

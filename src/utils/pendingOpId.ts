@@ -75,3 +75,13 @@ export function respostaDefinitiva(status: number, reason?: unknown): boolean {
   if (status === 409) return reason !== 'busy';
   return status !== 408 && status !== 425 && status !== 429;
 }
+
+/**
+ * Os gestos PENDENTES cuja chave começa com `prefixo` (ex.: `${saveId}|bits|`), para o app reenviar ao reabrir (§386: o pacote de
+ * Bits que a rede derrubou depois do débito). `item` é o que vem depois do prefixo. Vencidos (24 h) não aparecem.
+ */
+export function pendentesComPrefixo(prefixo: string, agora = Date.now()): { chave: string; item: string; op: string }[] {
+  const todos = new Map<string, Pendente>(Object.entries(lerGuardados(agora)));
+  for (const [k, v] of memoria) if (agora - v.at < PENDENTE_TTL_MS) todos.set(k, v);
+  return [...todos].filter(([k]) => k.startsWith(prefixo)).map(([chave, p]) => ({ chave, item: chave.slice(prefixo.length), op: p.op }));
+}

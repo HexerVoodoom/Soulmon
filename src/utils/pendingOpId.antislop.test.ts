@@ -54,8 +54,10 @@ describe('itens 2 e 3 · o opId do gesto sobrevive à resposta perdida (um únic
     expect(r.ok && r.bits).toBe(200);
     expect(new Set(s.opIds).size).toBe(1);
     expect(s.debitos).toBe(1);
-    // o servidor confirmou: a PRÓXIMA compra é um gesto novo
-    await buyBitsPack('bits-200');
+    // o servidor confirmou e os Bits entraram no estado (`confirmar`, §386 A2): a PRÓXIMA compra é um gesto novo
+    if (r.ok) r.confirmar();
+    const r2 = await buyBitsPack('bits-200');
+    if (r2.ok) r2.confirmar();
     expect(new Set(s.opIds).size).toBe(2);
     expect(s.debitos).toBe(2);
   });
@@ -128,7 +130,8 @@ describe('itens 2 e 3 · o opId do gesto sobrevive à resposta perdida (um únic
     expect(store.get(STORAGE_KEYS.PENDING_OP_IDS)).toContain(s.opIds[0]);
     vi.resetModules();
     const m2 = await import('./entitlements');
-    await m2.buyBitsPack('bits-200');
+    const r = await m2.buyBitsPack('bits-200');
+    if (r.ok) r.confirmar();
     expect(s.opIds[2]).toBe(s.opIds[0]);
     expect(s.debitos).toBe(1);
     expect(store.get(STORAGE_KEYS.PENDING_OP_IDS) ?? '').not.toContain(s.opIds[0]);

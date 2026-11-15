@@ -242,6 +242,8 @@ export interface AreaViewProps {
   /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
   unlockedElements?: readonly string[];
   onExchangeCredits: (packId: string) => Promise<boolean>;
+  /** §386: o Cambista aberto reenvia os pacotes de Bits pendentes (rede caiu depois do débito). */
+  onRecoverPendingBits?: () => void;
   /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
   essences?: Record<string, number>;
@@ -541,7 +543,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {open?.id === 'restaurante' && <RestauranteSheet language={language} />}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: id => actions.onBuy(id) === true }} />

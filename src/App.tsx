@@ -284,7 +284,7 @@ type BBPoolMod = { sortearBB: typeof import('./data/bbPool').sortearBB; BB_POOL_
 const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbPool'), import('./data/bbPoolArt')]).then(([a, b]) => ({ sortearBB: a.sortearBB, BB_POOL_ART: b.BB_POOL_ART }));
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
-import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
   effectiveOwnedFrames, grantFrameOnEvolution, resolveWidgetFrame, setPaidWidgetFramesFromEntitlement, usePaidWidgetFrames,
@@ -5153,6 +5153,44 @@ export default function App() {
   // 🛒 Shop purchase — charges points and applies the item's effect. Items can
   // be locked behind a mission (utils/shop.ts `unlock`).
   /**
+   * §386 (A2): o opId de um pacote de Bits só fecha DEPOIS de os Bits estarem no estado e no save local. O crédito entra pelo
+   * `setGameState`; o `confirmar` vai para esta fila e roda num efeito pós-commit, adiado com `setTimeout(0)` para depois também
+   * do efeito do `GameStateProvider` que grava o save (o pai roda os efeitos depois do filho). App morto antes disso = o pendente
+   * fica e a próxima abertura recupera pelo replay. Nada de efeito colateral dentro do updater (footgun 6).
+   */
+  const bitsParaConfirmar = useRef<(() => void)[]>([]);
+  const [bitsConfirmTick, setBitsConfirmTick] = useState(0);
+  useEffect(() => {
+    if (!bitsParaConfirmar.current.length) return;
+    const fila = bitsParaConfirmar.current.splice(0);
+    setTimeout(() => { for (const confirmar of fila) confirmar(); }, 0);
+  }, [bitsConfirmTick]);
+  const creditarBitsDePacote = useCallback((bits: number, ent: Entitlement | undefined, confirmar: () => void) => {
+    setGameState(prev => ({
+      ...noteCreditBits(prev, bits, playerDayKey(new Date(), prev.playerDayTz)),
+      ...(ent ? { credits: ent.credits, accountTier: ent.tier } : {}),
+    }));
+    bitsParaConfirmar.current.push(confirmar);
+    setBitsConfirmTick(t => t + 1);
+  }, [setGameState]);
+
+  /**
+   * §386 (A1): reenvia com `replayOnly` os pacotes de Bits PENDENTES desta conta (a rede caiu depois do débito). Roda uma vez no
+   * boot com conta e ao abrir o Cambista; `recoverPendingBitsBuys` não deixa o mesmo pendente render duas vezes.
+   */
+  const recuperarBitsPendentes = useCallback(() => {
+    const cur = gameStateRef.current;
+    if (!saveId || isDemoMode(cur)) return;
+    void recoverPendingBitsBuys(cur.playerDayTz).then(achados => {
+      if (!achados.length) return;
+      for (const a of achados) creditarBitsDePacote(a.bits, a.ent, a.confirmar);
+      const total = achados.reduce((n, a) => n + a.bits, 0);
+      toast(<>{language === 'pt-BR' ? 'Compra recuperada: ' : 'Purchase recovered: '}<BitsAmount value={total} sign="+" size={14} /></>);
+    });
+  }, [saveId, creditarBitsDePacote, language]);
+  useEffect(() => { recuperarBitsPendentes(); }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
    * PACOTES DE BITS do Cambista (§373): o SERVIDOR decide o pacote, debita os Créditos e conta o teto de 1.000 Bits/dia
    * (`functions/api/_bitsPacks.js`). Os Bits só entram DEPOIS da confirmação, e entram os que a resposta trouxe (nunca o número
    * local). A troca inversa não existe — ver utils/currencies.ts.
@@ -5161,7 +5199,7 @@ export default function App() {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
     if (!bitsPackById(packId)) return false;
     const isPt = language === 'pt-BR';
-    const r = await buyBitsPack(packId);
+    const r = await buyBitsPack(packId, undefined, gameState.playerDayTz);
     if (!r.ok) {
       toast(r.reason === 'daily-cap'
         ? (isPt
@@ -5174,13 +5212,10 @@ export default function App() {
             : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The exchange did not go through. Try again.'));
       return false;
     }
-    setGameState(prev => ({
-      ...noteCreditBits(prev, r.bits, playerDayKey(new Date(), prev.playerDayTz)),
-      ...(r.ent ? { credits: r.ent.credits, accountTier: r.ent.tier } : {}),
-    }));
+    creditarBitsDePacote(r.bits, r.ent, r.confirmar);
     toast(<BitsAmount value={r.bits} sign="+" size={14} />);
     return true;
-  }, [language, setGameState, gameState, refuseDemo]);
+  }, [language, gameState, refuseDemo, creditarBitsDePacote]);
 
   /** CAMBISTA (§205): essência por Créditos. O servidor confere elemento, trancado, teto e saldo e cobra; só então a essência entra. */
   const handleBuyEssence = useCallback(async (element: string, qty: number): Promise<boolean> => {
@@ -8685,6 +8720,7 @@ export default function App() {
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}
                 onExchangeCredits={handleExchangeCredits}
+                onRecoverPendingBits={recuperarBitsPendentes}
                 onBuyEssence={handleBuyEssence}
                 essences={gameState.essences}
                 accountTier={gameState.accountTier}
