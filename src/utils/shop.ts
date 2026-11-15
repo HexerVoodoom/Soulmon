@@ -6,6 +6,7 @@ import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
 import { COSMETICOS_NOVOS } from './cosmeticosNovos';
+import { HONRA_DECOR } from './honraDecor';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -619,6 +620,9 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
     namePt: 'Arena sob Holofotes', nameEn: 'Spotlight Arena',
     descPt: 'A luta principal da noite — e o pet é a atração', descEn: 'The main event of the night — and the pet is the draw',
     price: 70 },
+  // Decoração de Honra (armeiro na parede, estátuas, manequins, bigornas, chãos de arena…): catálogo gerado em
+  // `utils/honraDecor.ts`, só as peças com arte instalada. Cosmético puro, preço pela escada 25/70/180/450.
+  ...HONRA_DECOR,
 ];
 
 /**
