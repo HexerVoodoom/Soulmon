@@ -213,11 +213,13 @@ describe('rota /api/entitlements — buy-bits e o cliente antigo', () => {
     expect((await ent(e)).credits).toBe(540);
   });
 
-  it('CLIENTE EM CACHE: a troca livre antiga (spend reason=exchange-bits, 1 Crédito → 10 Bits) é recusada com erro claro e NÃO debita', async () => {
+  it('CLIENTE EM CACHE: a troca livre antiga (spend reason=exchange-bits, 1 Crédito → 10 Bits) é recusada com 404 gone (nunca 410) e NÃO debita', async () => {
     const e = fakeEnv({ credits: 50 });
     const res = await onRequestPost({ request: post('spend', { id: ID, amount: 4, reason: 'exchange-bits', opId: 'op-velho-0001' }), env: e });
-    expect(res.status).toBe(410);
-    expect(await res.json()).toEqual({ ok: false, reason: 'exchange-moved' });
+    // §381 (mesma decisão de §375): wrappers antigos do app leem 410 como conta excluída e deslogam.
+    expect(res.status).not.toBe(410);
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ ok: false, reason: 'exchange-moved', error: 'gone' });
     expect((await ent(e)).credits).toBe(50);
   });
 
