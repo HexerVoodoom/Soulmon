@@ -12,6 +12,7 @@ import { adminSaveIds } from './_rankAdmin.js';
 import { lerIndice, ordenar } from './_rankIndex.js';
 import { getProfile } from './_profile.js';
 import { cartasGlobaisAtivas } from './_cartasGlobais.js';
+import { ehViolacaoDeChave } from './_entitlements.js';
 
 const QUEUE_MAX = 30;
 export const MAIL_TTL_MS = 3 * 86400_000;
@@ -201,20 +202,53 @@ export async function markRead(kv, id, mids) {
   return n;
 }
 
+/** Linha de `order_claims` que prova o resgate de UMA carta (§381); vive o mesmo prazo da caixa. */
+const claimRow = (id, mid) => `mailclaim:${id}:${mid}`;
+
+/**
+ * Reivindica a carta no D1: só quem ganha o INSERT (PRIMARY KEY) paga. `false` = outro pedido já pagou esta carta.
+ * Outro erro do D1 sobe (vira 5xx e retry), nunca "já resgatada".
+ */
+async function reivindicar(db, id, mid, now) {
+  const row = claimRow(id, mid);
+  await db.prepare('DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?').bind(row, now).run();
+  try {
+    await db.prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(row, id, now, now + TTL_S * 1000).run();
+    return true;
+  } catch (err) {
+    if (!ehViolacaoDeChave(err)) throw err;
+    return false;
+  }
+}
+
 /**
  * Resgata o prêmio das cartas pedidas (`mids`) ou de todas (`mids === null`). A transição acontece UMA vez por carta: a 2ª chamada devolve
  * lista vazia. O prêmio vem do registro do servidor. Marca a carta como lida e resgatada; ela continua na caixa até ser apagada ou expirar.
+ * `db` (o D1, `env.DB`): com ele, cada carta é reivindicada por INSERT único (`mailclaim:<id>:<mid>`, §381), e N pedidos paralelos
+ * pagam uma vez; carta cuja linha já existe é só marcada como resgatada. Sem D1, a transição depende do KV (janela de corrida de antes).
  */
-export async function claimMail(kv, id, mids, now = Date.now()) {
+export async function claimMail(kv, id, mids, now = Date.now(), db) {
   const rec = await ler(kv, id);
   const alvo = mids === null ? null : alvoDe(mids);
+  const candidatas = rec.q.filter(m => pendingReward(m) && (!alvo || alvo.has(m.mid)));
+  if (!candidatas.length) return [];
+  const ganhas = new Set();
+  for (const m of candidatas) if (!db || await reivindicar(db, id, m.mid, now)) ganhas.add(m.mid);
   const granted = [];
+  const resgatadas = new Set(candidatas.map(m => m.mid));
   rec.q = rec.q.map(m => {
-    if (!pendingReward(m) || (alvo && !alvo.has(m.mid))) return m;
-    granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems });
+    if (!resgatadas.has(m.mid)) return m;
+    if (ganhas.has(m.mid)) granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems });
     return { ...m, read: true, claimedAt: now };
   });
-  if (granted.length) await gravar(kv, id, rec);
+  try {
+    await gravar(kv, id, rec);
+  } catch (err) {
+    // A caixa não gravou: solta as reivindicações desta chamada, senão o retry acharia a linha e o prêmio nunca seria pago.
+    if (db) for (const mid of ganhas) await db.prepare('DELETE FROM order_claims WHERE order_id = ?').bind(claimRow(id, mid)).run();
+    throw err;
+  }
   return granted;
 }
 

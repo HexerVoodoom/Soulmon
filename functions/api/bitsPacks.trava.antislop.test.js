@@ -1,5 +1,5 @@
 /**
- * Antislop P6 (14/11/2026, item 14 do relatório r3; REGISTRO §378): a trava `bitslock:<saveId>` (D1, `order_claims`, §373/#919)
+ * Antislop P6 (14/11/2026, item 14 do relatório r3; REGISTRO §378): a trava da conta (`entlock:<saveId>`, era `bitslock:` até §381; D1, `order_claims`, §373/#919)
  * só pode ser solta por QUEM a pegou.
  *
  * Antes, o `release` fazia `DELETE FROM order_claims WHERE order_id = ?`. Um worker que parasse mais de `LOCK_TTL_MS` no meio da
@@ -8,8 +8,8 @@
  * `claimed_at`/`expires_at` desta posse.
  */
 import { describe, it, expect } from 'vitest';
-import { ENT_PREFIX } from './_entitlements.js';
-import { buyBitsPack, LOCK_TTL_MS } from './_bitsPacks.js';
+import { ENT_PREFIX, ENT_LOCK_PREFIX, ENT_LOCK_TTL_MS as LOCK_TTL_MS } from './_entitlements.js';
+import { buyBitsPack } from './_bitsPacks.js';
 
 const ID = 'b'.repeat(32);
 const DIA = Date.UTC(2026, 10, 14, 12, 0, 0);
@@ -60,16 +60,16 @@ describe('item 14 · `_bitsPacks.js`: a trava só sai pela mão de quem a pegou'
     const soltarA = segurar();
     const a = buyBitsPack(env, ID, 'bits-200', 'op-lento-0001', { nowMs: DIA });
     await tick();
-    expect(rows.get(`bitslock:${ID}`)).toMatchObject({ claimed: DIA });
+    expect(rows.get(ENT_LOCK_PREFIX + ID)).toMatchObject({ claimed: DIA });
     // A ficou parado além do LOCK_TTL_MS: B pega a trava vencida e também fica no meio da troca.
     const soltarB = segurar();
     const b = buyBitsPack(env, ID, 'bits-200', 'op-depois-001', { nowMs: DIA + LOCK_TTL_MS });
     await tick();
-    expect(rows.get(`bitslock:${ID}`)).toMatchObject({ claimed: DIA + LOCK_TTL_MS });
+    expect(rows.get(ENT_LOCK_PREFIX + ID)).toMatchObject({ claimed: DIA + LOCK_TTL_MS });
     soltarA();
     await a;
     // A terminou: a trava de B tem de continuar lá (antes: apagada, e uma 3ª troca passava junto com B).
-    expect(rows.get(`bitslock:${ID}`)).toMatchObject({ claimed: DIA + LOCK_TTL_MS });
+    expect(rows.get(ENT_LOCK_PREFIX + ID)).toMatchObject({ claimed: DIA + LOCK_TTL_MS });
     expect((await buyBitsPack(env, ID, 'bits-200', 'op-terceira1', { nowMs: DIA + LOCK_TTL_MS + 1 })).reason).toBe('busy');
     soltarB();
     expect((await b).ok).toBe(true);

@@ -13,7 +13,7 @@
 
 import { kv, kvOrThrow } from './_kv.js';
 import { METRICS_KEY_HEADER, secretEquals } from './metrics.js';
-import { VALID_ID, readEntitlement, writeEntitlement, comEntitlementLegivel } from './_entitlements.js';
+import { VALID_ID, readEntitlement, writeEntitlement, comEntitlementLegivel, comTravaDoEnt } from './_entitlements.js';
 import { VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -38,13 +38,16 @@ async function onRequestPostBruto({ request, env }) {
   await store.delete(`sprite:img:${id}:${formId}`);
   if (antigo) await store.delete(`sprite:img:${id}:${antigo}`);
 
-  const ent = await readEntitlement(env, id);
-  const forms = { ...(ent.aiForms || {}) };
-  const antes = (Number(forms[formId]) || 0) + (antigo ? Number(forms[antigo]) || 0 : 0);
-  if (antigo) delete forms[antigo];
-  forms[formId] = Math.max(0, antes - 1);
-  ent.aiForms = forms;
-  await writeEntitlement(env, id, ent);
+  const { forms, antes } = await comTravaDoEnt(env, id, async () => {
+    const ent = await readEntitlement(env, id);
+    const forms = { ...(ent.aiForms || {}) };
+    const antes = (Number(forms[formId]) || 0) + (antigo ? Number(forms[antigo]) || 0 : 0);
+    if (antigo) delete forms[antigo];
+    forms[formId] = Math.max(0, antes - 1);
+    ent.aiForms = forms;
+    await writeEntitlement(env, id, ent);
+    return { forms, antes };
+  });
   console.log(JSON.stringify({ event: 'sprite.admin.release-form', saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
   return json({ ok: true, formId, antes, depois: forms[formId] });
 }

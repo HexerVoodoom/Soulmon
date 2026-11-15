@@ -67,7 +67,7 @@ import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
   MAX_FRIENDS, MAX_IN, MAX_OUT, GIFT_BITS, lerConvites, gravarConvites, ligarAmizade, desfazerAmizade, espelharAmizades,
-  presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
+  presentesDeHoje, marcarPresenteDeHoje, reivindicarPresenteDoDia, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, ganhoPorRank } from './_honra.js';
@@ -812,7 +812,8 @@ async function handleCommunity(context) {
     if (candidatos.length < PLAYER_SEARCH_SCAN) {
       const legado = await buscarNicksPorInicioDobrado(env, termo, PLAYER_SEARCH_SCAN);
       for (const chave of legado) {
-        const dono = await kvOrThrow(env).get(chave).catch(() => null);
+        // Queda do KV PROPAGA (§381): engolida, a busca respondia "ninguém encontrado" com o jogador existindo.
+        const dono = await kvOrThrow(env).get(chave);
         if (typeof dono === 'string' && dono) candidatos.push(dono);
       }
     }
@@ -821,7 +822,12 @@ async function handleCommunity(context) {
       if (!VALID_ID.test(dono) || dono === id || vistos.has(dono)) continue;
       vistos.add(dono);
       let p = null;
-      try { p = await getProfile(env, dono); } catch { continue; }
+      try { p = await getProfile(env, dono); } catch (err) {
+        // Só o JSON ilegível de UM perfil é pulado; falha do KV sobe (§381).
+        if (!(err instanceof SyntaxError)) throw err;
+        console.warn('[community] perfil ilegível na busca de jogador; pulado', { saveIdPrefix: dono.slice(0, 8) });
+        continue;
+      }
       if (!p || isHidden(p) || typeof p.name !== 'string') continue;
       // O índice pode ter ficado para trás (renomeou e a chave velha não saiu por falha do KV): vale o nome ATUAL do perfil.
       if (!foldNome(p.name).startsWith(termo)) continue;
@@ -1405,13 +1411,16 @@ async function handleCommunity(context) {
       return ctx.res;
     }
     const { opponentId, opp } = ctx;
-    // ⚠️ ORDEM (Antislop P1, §374): TODA leitura do KV acontece ANTES de apagar o duelo aberto. As leituras propagam a falha
-    // (5xx → `playSparComRetry` repete com a mesma semente); se o `spar:<id>` já tivesse sido apagado, o retry cairia em 409
-    // `no open duel` e o resultado (e a Honra) se perderiam. Depois do `delete` só há gravações.
-    // Reenvio do MESMO resultado (a resposta se perdeu na rede): devolve o já liquidado, sem creditar Honra de novo.
+    // ⚠️ ORDEM (Antislop P1, §374; QA r4, §381): o duelo aberto só é apagado DEPOIS de `sparDone` gravado, como ÚLTIMA escrita.
+    // Leitura ou gravação que falha antes disso propaga (5xx → `playSparComRetry` repete com a mesma semente) e o retry ainda acha o
+    // duelo aberto; apagá-lo antes fazia o retry cair em 409 `no open duel` e a vitória (e a Honra) se perdiam.
+    // Reenvio do MESMO resultado (a resposta se perdeu na rede, ou o `delete` final falhou): devolve o já liquidado, sem Honra nova.
     const feito = await lerJsonKv(sparDoneKey(id), id);
     const aberto = await lerSpar(id);
-    if (!aberto && feito && feito.opp === opponentId && body.seed !== undefined && feito.seed === body.seed) return json({ ...feito.res, replayed: true });
+    if (feito && feito.opp === opponentId && body.seed !== undefined && feito.seed === body.seed && (!aberto || aberto.seed === feito.seed)) {
+      if (aberto) await kvOrThrow(env).delete(sparPendingKey(id));
+      return json({ ...feito.res, replayed: true });
+    }
     if (!aberto || aberto.opp !== opponentId) return json({ error: 'no open duel' }, 409);
     const oppSpriteUrl = (await spriteVivoDoSimulado(env, ctx.oppSave)) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
@@ -1431,8 +1440,7 @@ async function handleCommunity(context) {
     const ticket = await readSparTicket(env, id, diaTk);
     const withHonor = aberto.spent ? aberto.withHonor === true : ticket.played < TREINO_TICKET_MATCHES;
     const honraUsada = outcome === 'win' && withHonor ? await readSparHonorUsed(env, id, diaTk) : 0;
-    // ── leituras acabaram: daqui em diante só gravações ──
-    await kvOrThrow(env).delete(sparPendingKey(id));
+    // ── leituras acabaram: daqui em diante só gravações, e o `delete` do duelo aberto é a última ──
     const gasto = aberto.spent ? { withHonor, status: sparTicketStatus(ticket) } : await spendSparMatch(env, id, diaTk, ticket);
     let honra = { honor: 0, capped: false };
     if (outcome === 'win' && gasto.withHonor) {
@@ -1445,6 +1453,7 @@ async function handleCommunity(context) {
       opponent,
     };
     await kvOrThrow(env).put(sparDoneKey(id), JSON.stringify({ opp: opponentId, seed: aberto.seed, res: resposta }), { expirationTtl: SPAR_PENDING_TTL_S });
+    await kvOrThrow(env).delete(sparPendingKey(id));
     return json({ ...resposta, duel: { events: duel.events, me: aberto.sides.me, opp: aberto.sides.opp } });
   });
 
@@ -1647,7 +1656,7 @@ async function handleCommunity(context) {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     if (body.all !== true && !midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
-    return json({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids) });
+    return json({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids, Date.now(), env.DB ?? null) });
   }
   // { id, mids[], force? } ou { id, scope: 'read' }. Carta com prêmio pendente só sai com `force: true`.
   if (action === 'mailDelete' && method === 'POST') {
@@ -1883,7 +1892,14 @@ async function handleCommunity(context) {
       // O registro do dia mora em `gsent:` (o `giftLog` do perfil se perdia a cada regravação do perfil); o legado ainda vale.
       const hoje = await presentesDeHoje(env, id, diaMeu);
       if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === diaMeu)) return json({ error: 'already gifted today' }, 429);
-      await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      const reivindicacao = await reivindicarPresenteDoDia(env, id, friendSave, diaMeu);
+      if (!reivindicacao.ok) return json({ error: 'already gifted today' }, 429);
+      try {
+        await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      } catch (err) {
+        await reivindicacao.soltar();
+        throw err;
+      }
       // Missoes de presente (REGISTRO §309): o presente ACEITO aqui e o evento confirmado da semanal gift-sent e da diaria d-presente. Melhor esforco.
       try { await recordMissionEvent(kvOrThrow(env), id, 'g', diaMeu); } catch { /* o razao das missoes nao pode derrubar o presente */ }
 

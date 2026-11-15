@@ -9,6 +9,7 @@
 import { kvOrThrow } from './_kv.js';
 import { getProfile, putProfile } from './_profile.js';
 import { playerDayOf } from './_strays.js';
+import { ehViolacaoDeChave } from './_entitlements.js';
 
 export const MAX_FRIENDS = 20;
 /** Convites pendentes: enviados por uma conta e guardados para uma conta (spam e custo). */
@@ -61,6 +62,29 @@ export async function marcarPresenteDeHoje(env, id, friendSave, dia) {
   const to = await presentesDeHoje(env, id, dia);
   if (!to.includes(friendSave)) to.push(friendSave);
   await gravar(env, sentKey(id), { day: dia, to });
+}
+
+/** Prazo da linha `gift:` no D1: o dia do jogador cabe com folga em 2 dias UTC. */
+const GIFT_CLAIM_TTL_MS = 2 * 86400_000;
+/**
+ * O "1 por dia por amigo" ATÔMICO (§381): com D1, quem ganha o INSERT de `gift:<id>:<amigo>:<dia>` (PRIMARY KEY de `order_claims`)
+ * é o único presente do dia daquele par, inclusive entre isolates (a fila `withDuelLock` só serializa um isolate).
+ * `ok: false` = outro pedido já mandou hoje. `soltar()` desfaz a reivindicação quando a marca do dia não chegou a gravar.
+ * Sem D1, sempre `ok` (vale só a marca `gsent:` do KV, como antes).
+ */
+export async function reivindicarPresenteDoDia(env, id, friendSave, dia) {
+  if (!env.DB) return { ok: true, soltar: async () => {} };
+  const row = `gift:${id}:${friendSave}:${dia}`;
+  const agora = Date.now();
+  await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?').bind(row, agora).run();
+  try {
+    await env.DB.prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(row, id, agora, agora + GIFT_CLAIM_TTL_MS).run();
+  } catch (err) {
+    if (!ehViolacaoDeChave(err)) throw err;
+    return { ok: false, soltar: async () => {} };
+  }
+  return { ok: true, soltar: async () => { await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ?').bind(row).run(); } };
 }
 
 /** Guarda a âncora de dia de uma conta (o teto de recebimento é medido no dia de QUEM recebe). */

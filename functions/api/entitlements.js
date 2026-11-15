@@ -211,7 +211,8 @@ async function onRequestPostBruto({ request, env }) {
     // §373: a troca LIVRE "X Créditos por 10X Bits" acabou; a troca agora é por pacote (`buy-bits`), com câmbio e teto do servidor.
     // Um cliente em cache que ainda pede a troca antiga recebe recusa clara SEM débito (aceitá-la deixaria o cliente creditar 10 Bits
     // por Crédito, o câmbio velho, fora do teto). Nenhum outro `reason` muda.
-    if (body?.reason === 'exchange-bits') return json({ ok: false, reason: 'exchange-moved' }, 410);
+    // 404 `gone`, NÃO 410 (§381, mesma decisão de §375): wrappers do app leem 410 como conta excluída e deslogam o cliente antigo.
+    if (body?.reason === 'exchange-bits') return json({ ok: false, reason: 'exchange-moved', error: 'gone' }, 404);
     const amount = Number(body?.amount);
     if (admin) {
       // Admin NÃO debita: nada é escrito em `ent:` nem em `spend:`.

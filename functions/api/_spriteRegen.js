@@ -14,7 +14,7 @@
 //   · `aiRegen  { [formId]: 'AAAA-MM' }`            — o mês em que a forma já usou a regeração paga (sobrevive à exclusão da conta);
 //   · `regenOps { [opId]: { s, f, m, at } }`        — marcas de idempotência dos últimos gestos (s: 'debited'|'done'|'refunded').
 
-import { readEntitlement, writeEntitlement } from './_entitlements.js';
+import { readEntitlement, writeEntitlement, comTravaDoEnt, ENT_LOCK_ESPERA_LONGA_MS } from './_entitlements.js';
 import { VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 
@@ -75,6 +75,10 @@ function temPrimeiraGeracao(ent, formId) {
  * | { ok: false, status: number, reason: string, op?: { s: string, f: string, m: string, at: number } }>}
  */
 export async function reserveRegen(env, saveId, formId, opId, now = Date.now()) {
+  return comTravaDoEnt(env, saveId, () => reservar(env, saveId, formId, opId, now));
+}
+
+async function reservar(env, saveId, formId, opId, now) {
   if (typeof opId !== 'string' || !REGEN_OP_RE.test(opId)) return { ok: false, status: 400, reason: 'regen-op-id-required' };
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
@@ -95,6 +99,10 @@ export async function reserveRegen(env, saveId, formId, opId, now = Date.now()) 
 
 /** A imagem chegou ao jogador: o gesto fica `done` (uma repetição do `opId` devolve a imagem guardada, não gera nem cobra de novo). */
 export async function completeRegen(env, saveId, opId) {
+  return comTravaDoEnt(env, saveId, () => concluir(env, saveId, opId));
+}
+
+async function concluir(env, saveId, opId) {
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
   if (!ops[opId] || ops[opId].s !== 'debited') return;
@@ -109,6 +117,11 @@ export async function completeRegen(env, saveId, opId) {
  * @returns {Promise<{ refunded: boolean, credits?: number }>}
  */
 export async function refundRegen(env, saveId, opId) {
+  // Devolução de Créditos não recusa por `busy`: espera a trava (§381).
+  return comTravaDoEnt(env, saveId, () => devolver(env, saveId, opId), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+}
+
+async function devolver(env, saveId, opId) {
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
   const op = ops[opId];

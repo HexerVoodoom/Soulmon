@@ -176,7 +176,8 @@ export async function buySparTicket(env, id, day, phase) {
     const raw = await kvOrThrow(env).get(sparReserveKey(id, day));
     const at = Number(raw);
     if (!Number.isFinite(at) || at <= 0 || Date.now() - at > SPAR_RESERVE_TTL_S * 1000) return { ok: false, reason: 'no-reserve', status: sparTicketStatus(t) };
-    await kvOrThrow(env).delete(sparReserveKey(id, day)).catch(() => {});
+    // A baixa da reserva PROPAGA (§381): engolida, a reserva continuava viva e um 2º confirm concedia outro extra sem cobrança.
+    await kvOrThrow(env).delete(sparReserveKey(id, day));
   }
   if (t.extra >= TREINO_EXTRA_TICKETS_MAX) return { ok: false, status: sparTicketStatus(t) };
   const next = { ...t, extra: t.extra + 1 };
@@ -205,7 +206,8 @@ export async function fixarTzTreino(env, id, tz) {
   let atual = null;
   try { atual = raw ? JSON.parse(raw) : null; } catch { atual = null; }
   const valido = atual && typeof atual === 'object' && (atual.zone || Number.isFinite(atual.offsetMs));
-  const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S }).catch(() => {}); return v; };
+  // A gravação PROPAGA (§381): engolida, a conta seguia sem âncora e o fuso do pedido seguinte abria outro "dia".
+  const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S }); return v; };
   if (!valido) return grava(novo);
   const ancora = { ...(atual.zone ? { zone: atual.zone } : {}), ...(Number.isFinite(atual.offsetMs) ? { offsetMs: atual.offsetMs } : {}) };
   const igual = novo.zone === ancora.zone && novo.offsetMs === ancora.offsetMs;
