@@ -1,9 +1,16 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Bosque de cerejeiras de verdade (`feat/cerejeira-bosque-real`, REGISTRO §410)
+>
+> - **Feito:** `bg-cerejeira-bosque-de-cerejeiras` troca a arte do vulcão pelo bosque em flor (v1, pixelização leve); mesmo id, preço e slots. Pós-processo `tools/pixelizar-fundo.py`, instalação pelo caminho dos 33 fundos.
+> - **Android:** a miniatura do widget V-Pet só atualiza com AAB novo; o app antigo mostra o vulcão ali até lá.
+> - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cerejeira-bosque-em-flor\instalado.png`.
+>
+
 > ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §409)
 >
 > - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.
-> - **Intacto:** `bg-cerejeira-bosque-de-cerejeiras` segue com a arte do vulcão até o bosque real trocar a arte desse id.
+> - **Seguimento:** o id `bg-cerejeira-bosque-de-cerejeiras` recebeu o bosque real no §410.
 > - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cenario-fogo-planta\instalado.png`.
 >
 > ## 15/11/2026 — Pistas fortes nos descritores (`fix/descritores-pistas-fortes`, REGISTRO §408)

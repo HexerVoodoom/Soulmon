@@ -321,3 +321,7 @@ Os `bg-el-*` agora também existem para um elemento DERIVADO: `bg-el-queimada` (
 ## As 20 decorações novas e a lanterna (15/11/2026, REGISTRO §406)
 
 Ruínas (4) e elemento (16) deixaram de ser só id: `src/assets/decor/<id>.webp` (sem perda, caixa × 3; tapete × 2 = 208×32, como os demais `.webp`). Instalador `tools/instalar-decor-elementos.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-15-11/chatgpt-fila/`; idempotente; não toca quem já tem `.webp`). Ancoragem: chão embaixo, parede e tapete no centro; o asfalto 3:1 é recortado para 13:2. A lanterna (`furn-lantern`) troca a arte no mesmo id (PNG 144×156). Guard: `src/assets/decorElementos.test.ts`.
+
+## Bosque de cerejeiras de verdade (15/11/2026, REGISTRO §410)
+
+`bg-cerejeira-bosque-de-cerejeiras` agora tem o bosque em flor (a árvore grande à esquerda, chão claro e liso no terço de baixo, cristais turquesa discretos); o vulcão antigo vive em `bg-el-queimada`. Pós-processo `tools/pixelizar-fundo.py` (fator 2, 128 cores) e instalação por `scripts/instalar-cosmeticos.mjs`; 1200×648 WebP 158 KB, `baseColor` `#bb8c92`. A miniatura do widget V-Pet só atualiza com AAB novo.
