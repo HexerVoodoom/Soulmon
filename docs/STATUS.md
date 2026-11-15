@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 14/11/2026 — QA r4, pacote C2 (`feat/qa-r4-cambista-servidor`, REGISTRO §386–§390) — PR aberto, NÃO mergeado
+>
+> - **Cambista (§386):** opId de pacote pendente é reenviado com `replayOnly` ao reabrir/abrir o Cambista (Créditos pagos sem Bits deixam de ficar presos); o opId só fecha depois de os Bits entrarem no estado; teto de 1.000/dia vira à meia-noite do JOGADOR (âncora presa 24 h); célula diz o motivo; uma mensagem por resultado; atalho "Get Credits".
+> - **Convites (§388) e cartas (§389, §390):** recusa bloqueia o par por 7 dias (resposta igual à do sucesso), teto diário de convites no KV; "Excluir todas lidas" não apaga convite; pop-up do Papus só na 1ª carta da conta.
+> - **Não implementado (§387):** teto de crescimento de `gamePoints` no save. Levantamento e proposta (orçamento por token bucket na metadata do save) no registro; risco de cortar jogador honesto sem razão de servidor para cartas de compensação e conquistas.
+> - **Não verificado:** aparelho real (replay pós-queda de rede, fuso), D1/KV reais; `dist/` não regenerado.
+
 > ## 14/11/2026 — QA r4, pacote A do servidor (`fix/qa-r4-servidor`, REGISTRO §381) — PR aberto, NÃO mergeado
 >
 > - **Feito:** trava única `entlock:<saveId>` (D1) para todo escritor de `ent:`; resgate de carta e presente do dia por INSERT único; `sparMatch` apaga o duelo aberto por último; treino e busca de jogador propagam queda do KV; troca livre antiga `404 gone`; cliente reenvia 200 ilegível de `buy-bits`/`buy-essence` com o mesmo opId.
