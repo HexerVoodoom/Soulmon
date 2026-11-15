@@ -179,6 +179,40 @@ describe('rota /api/entitlements — buy-bits e o cliente antigo', () => {
     expect(r.status).toBe(402);
   });
 
+  it('buy-bits com pacote desconhecido: 400 unknown-pack e nada é debitado', async () => {
+    const e = fakeEnv({ credits: 1000 });
+    const res = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-9999', opId: 'op-rota-0101' }), env: e });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, reason: 'unknown-pack' });
+    expect((await ent(e)).credits).toBe(1000);
+  });
+
+  it('buy-bits com opId curto: 400 bad-op e nada é debitado', async () => {
+    const e = fakeEnv({ credits: 1000 });
+    const res = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-200', opId: 'curto' }), env: e });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, reason: 'bad-op' });
+    expect((await ent(e)).credits).toBe(1000);
+  });
+
+  it('buy-bits com a trava da conta ocupada: 409 busy e nada é debitado', async () => {
+    const e = fakeEnv({ credits: 1000, d1: true });
+    e.DB.rows.set(ENT_LOCK_PREFIX + ID, { save: ID, expires: Date.now() + LOCK_TTL_MS });
+    const res = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-200', opId: 'op-rota-0102' }), env: e });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ ok: false, reason: 'busy' });
+    expect((await ent(e)).credits).toBe(1000);
+  });
+
+  it('buy-bits com o mesmo opId repetido: 200 nas duas e um débito só', async () => {
+    const e = fakeEnv({ credits: 1000, d1: true });
+    const a = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-500', opId: 'op-rota-0103' }), env: e });
+    const b = await onRequestPost({ request: post('buy-bits', { id: ID, pack: 'bits-500', opId: 'op-rota-0103' }), env: e });
+    expect([a.status, b.status]).toEqual([200, 200]);
+    expect(await b.json()).toMatchObject({ ok: true, bits: 500, replay: true, credits: 540 });
+    expect((await ent(e)).credits).toBe(540);
+  });
+
   it('CLIENTE EM CACHE: a troca livre antiga (spend reason=exchange-bits, 1 Crédito → 10 Bits) é recusada com erro claro e NÃO debita', async () => {
     const e = fakeEnv({ credits: 50 });
     const res = await onRequestPost({ request: post('spend', { id: ID, amount: 4, reason: 'exchange-bits', opId: 'op-velho-0001' }), env: e });
