@@ -24,7 +24,7 @@ export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
   | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'
-  | 'journal-days' | 'focus-days';
+  | 'journal-days' | 'focus-days' | 'cook-dish';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -55,6 +55,8 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'journal-days', target: 3, emblems: 3, descPt: 'Faça o journal em 3 dias', descEn: 'Write in your journal on 3 days' },
   { id: 'focus-days', target: 3, emblems: 3, descPt: 'Complete a Focus Workshop em 3 dias', descEn: 'Complete the Focus Workshop on 3 days' },
   { id: 'gift-sent', target: 1, emblems: 2, descPt: 'Envie um presente a alguém', descEn: 'Send someone a gift' },
+  // 15/11/2026 (dono): "fazer um prato, qualquer prato" no Restaurante. Cuidado (alimentar o Soulmon), não contagem de tarefas. NO FIM do pool de propósito.
+  { id: 'cook-dish', target: 1, emblems: 3, descPt: 'Cozinhe um prato no Restaurante', descEn: 'Cook a dish at the Restaurant' },
 ];
 
 /**

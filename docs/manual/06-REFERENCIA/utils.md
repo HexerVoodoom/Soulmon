@@ -4719,3 +4719,9 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/motivoTempo.ts` (13/11/2026)
 
 Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMotivoDeTempo` troca a outra família no prompt e põe a cláusula negativa `Time motif: …` (idempotente), `motivoTempoPorSemente` (hash estável), `motivosNoTexto`. A variante por elemento mora em `elementoCombinado.ts › motivoTempoDoElemento`. **Chamado por:** `src/utils/oracle/motor.ts`, `src/utils/elementoCombinado.ts`. **Régua:** `motivoTempo.test.ts`.
+
+### `src/utils/elementUnlockOnEvolve.ts`
+**Dono de:** `applyElementUnlockOnEvolve` (15/11/2026, §396): na evolução, o elemento efetivo da forma nova (`petElementOf`) passa por `applyElementsDefeated`. Idempotente; composto libera só o composto. **Chamado por:** `App.tsx › handleEvolve`. **Régua:** `elementUnlockOnEvolve.test.ts`.
+
+### `src/utils/elementoNovoModal.ts`
+**Dono de:** `elementosNovos` (o que ainda não foi avisado), `ELEMENTO_NOVO_MAX_LOTE`, o texto EN/PT do modal e `paginaDeTotal` ("1 de 3"). **Chamado por:** `App.tsx`, `ElementosNovosModal.tsx`. **Régua:** `elementUnlockOnEvolve.test.ts`.

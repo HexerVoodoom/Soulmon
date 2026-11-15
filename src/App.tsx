@@ -251,6 +251,8 @@ import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyElementsDefeated, BASE_ELEMENT_IDS } from './utils/elementDex';
+import { applyElementUnlockOnEvolve } from './utils/elementUnlockOnEvolve';
+import { elementosNovos, ELEMENTO_NOVO_MAX_LOTE } from './utils/elementoNovoModal';
 import { ackLibrary, libraryNewCount } from './utils/libraryNew';
 import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
 import { setStrayPlayerSeenHandler } from './utils/strayPlayerEncounter';
@@ -863,6 +865,7 @@ const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({
 const NightmareBattleHost = lazy(() => import('./components/NightmareBattleHost').then(m => ({ default: m.NightmareBattleHost })));
 const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ default: m.GoodDream })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
+const ElementosNovosModal = lazy(() => import('./components/ElementosNovosModal').then(m => ({ default: m.ElementosNovosModal })));
 const EvolutionStatsModal = lazy(() => import('./components/EvolutionStatsModal').then(m => ({ default: m.EvolutionStatsModal })));
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
@@ -1092,6 +1095,20 @@ export default function App() {
      o converte em `evoStatsShown` (a cerimônia já fechou ou fecha antes dele entrar na fila). Efêmero: não vai para o save. */
   const pendingEvoStatsRef = useRef<{ delta: EvoStatsDelta; stage: string } | null>(null);
   const [evoStatsShown, setEvoStatsShown] = useState<{ delta: EvoStatsDelta; stage: string } | null>(null);
+  /* "Elemento novo" (15/11/2026, dono): QUALQUER via que cresça `defeatedElements` (evolução, Feira, luta). `elemVistosRef` = o que já está no dex ou já foi
+     mostrado (a base é o dex da abertura, então ninguém vê modal do que já tinha); `elemPendentes` espera na fila; `elemMostrados` é o retrato do que está na tela
+     (um modal só, carrossel se forem vários). Efêmero: sem campo novo no save; o "visto" é gravado AO MOSTRAR. */
+  const elemVistosRef = useRef<Set<string> | null>(null);
+  const [elemPendentes, setElemPendentes] = useState<string[]>([]);
+  const [elemMostrados, setElemMostrados] = useState<string[] | null>(null);
+  useEffect(() => {
+    const lista = gameState.defeatedElements ?? [];
+    if (elemVistosRef.current === null) { elemVistosRef.current = new Set(lista); return; }
+    const novos = elementosNovos(lista, elemVistosRef.current);
+    // um lote enorme é save da nuvem adotado (não é descoberta de agora): entra no dex em silêncio
+    if (novos.length > ELEMENTO_NOVO_MAX_LOTE) { novos.forEach(x => elemVistosRef.current?.add(x)); return; }
+    setElemPendentes(p => (p.length === novos.length && p.every((x, i) => x === novos[i]) ? p : novos));
+  }, [gameState.defeatedElements]);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string; spent?: number } | null>(null);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
@@ -2651,6 +2668,7 @@ export default function App() {
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
+      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null,
       groveMilestone: Boolean(grovePendente),
       messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
@@ -2735,6 +2753,7 @@ export default function App() {
         case 'checkIn': handleCheckInSkip(); break;
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'evoStats': setEvoStatsShown(null); break;
+        case 'elementoNovo': setElemMostrados(null); break;
         case 'groveMilestone': acknowledgeGroveMilestone(); break;
         case 'messenger': closeMessenger(); break;
         case 'dream': setMorningDream(null); break;
@@ -2748,6 +2767,13 @@ export default function App() {
   });
   /** Quem está na tela agora (`'welcome'` = nenhum intersticial). */
   const interstitial = presentation.current;
+  /* "Elemento novo": entrou na tela (ou sobrou gente nova depois de fechar) → tira o retrato dos pendentes e grava o "visto" de TODOS AO MOSTRAR. */
+  useEffect(() => {
+    if (interstitial !== 'elementoNovo' || elemMostrados !== null || elemPendentes.length === 0) return;
+    elemPendentes.forEach(x => elemVistosRef.current?.add(x));
+    setElemMostrados(elemPendentes);
+    setElemPendentes([]);
+  }, [interstitial, elemMostrados, elemPendentes]);
   /* Escolhe o próximo aviso acionável ainda não visto hoje (só na Home, só um por vez). */
   useEffect(() => {
     if (currentView !== 'home' || noticeKey !== null) return;
@@ -4253,7 +4279,7 @@ export default function App() {
       // Poção de Elemento: o elemento pendente vira o do Soulmon e o campo é limpo (`utils/elementPotion.ts`).
       // 09/11/2026: a forma que fica para trás é fotografada antes (`utils/formaSnapshot.ts`), para a queda poder voltar a ela.
       const base = applyPotionOnEvolve(applyRedemption(capturarForma(prev), newEvolutionStage !== prev.evolutionStage));
-      const evolved = {
+      const evolved0 = {
         ...base,
         evolutionCrystal: undefined,
         // REGISTRO §229 "Evoluir nunca reduz": o maior de cada atributo de antes vira o piso do estágio novo (`utils/soulXP.ts › nextStatFloor`).
@@ -4287,6 +4313,8 @@ export default function App() {
           playerDayKey(new Date(), prev.playerDayTz),
         ),
       };
+      // 15/11/2026 (dono): o elemento da forma nova (base, composto ou qualquer outro) é desbloqueado SOZINHO, pela porta única do dex (`applyElementsDefeated`, via `utils/elementUnlockOnEvolve.ts`).
+      const evolved = applyElementUnlockOnEvolve(evolved0);
       // Antes → depois dos atributos de combate, da mesma derivação da luta (`utils/evolutionStatsDelta.ts`). Escrita idempotente.
       pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved), stage: newEvolutionStage };
       // FORMAS ALTERNATIVAS (05/11/2026): voltar a este estágio com outro elemento desbloqueia (e equipa) uma forma nova dele.
@@ -10208,6 +10236,12 @@ export default function App() {
             language={language}
             onClose={() => setEvoStatsShown(null)}
           />
+        </Suspense>
+      )}
+
+      {interstitial === 'elementoNovo' && elemMostrados && (
+        <Suspense fallback={null}>
+          <ElementosNovosModal language={language} elementIds={elemMostrados} onClose={() => setElemMostrados(null)} />
         </Suspense>
       )}
 

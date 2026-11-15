@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 15/11/2026 — Restaurante com o chef certo, missão do prato, elemento da evolução e modal "Elemento novo" (`feat/restaurante-npc-missao-elemento`, REGISTRO §396) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a folha do Restaurante mostra o chef do dia (antes era sempre a Snapjaw) e os dois lado a lado no domingo; semanal `cook-dish`; evoluir desbloqueia o elemento da forma; modal transparente sem brilho (carrossel se vários) na fila central.
+> - **Sorteio:** o prato NÃO é garantido toda semana (3/13 de chance); a lista da semana corrente pode mudar uma vez. Missão fixa fica como pergunta ao dono.
+> - **Não visto em tela:** sem build; layout 360 px e carrossel só em jsdom. Sem retroativo para quem já evoluiu.
+
 > ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
 >
 > - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.

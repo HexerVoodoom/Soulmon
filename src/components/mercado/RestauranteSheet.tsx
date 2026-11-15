@@ -14,10 +14,11 @@ import { dishArt } from '../../utils/dishArt';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
 import {
-  applyCook, cookRefusal, dishesToday, extraOwned, menuOn, playerWeekday, DISHES_PER_DAY, activeMealBuff, dishById, isCombatEffect,
-  type Dish,
+  applyCook, chefsOn, cookRefusal, dishesToday, extraOwned, menuOn, playerWeekday, DISHES_PER_DAY, activeMealBuff, dishById, isCombatEffect,
+  type ChefId, type Dish,
 } from '../../utils/restaurant';
-import { COMBAT_NOTE, effectText, refusalText } from '../../utils/restaurantCopy';
+import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
+import { CHEF_VOICE, COMBAT_NOTE, effectText, refusalText } from '../../utils/restaurantCopy';
 import type { Language } from '../../utils/i18n';
 
 /** Lado do ícone de ingrediente (px) e do desenho do prato. */
@@ -29,11 +30,14 @@ export function RestauranteSheet({ language }: { language: Language }) {
   const ctx = useGameStateOptional();
   const { flash, say } = useShopFlash();
   const [pending, setPending] = useState<Dish | null>(null);
+  /** Domingo: os dois chefs; tocar um filtra o cardápio dele e mostra a fala dele (tocar de novo volta ao cardápio inteiro). */
+  const [chefSel, setChefSel] = useState<ChefId | null>(null);
   if (!ctx) return null;
   const { gameState, setGameState } = ctx;
   const now = Date.now();
   const weekday = playerWeekday(new Date(now), gameState.playerDayTz);
-  const menu = menuOn(weekday);
+  const chefs = chefsOn(weekday);
+  const menu = menuOn(weekday).filter(d => !chefSel || d.chef === chefSel);
   const used = dishesToday(gameState, now);
   const buff = activeMealBuff(gameState, now);
   const buffDish = buff ? dishById(buff.dish) : undefined;
@@ -64,6 +68,30 @@ export function RestauranteSheet({ language }: { language: Language }) {
           ? `Todo prato enche a fome inteira e dá um reforço. Um reforço por vez; até ${DISHES_PER_DAY} pratos por dia. ${COMBAT_NOTE.pt}`
           : `Every dish fills hunger all the way and gives a boost. One boost at a time; up to ${DISHES_PER_DAY} dishes a day. ${COMBAT_NOTE.en}`}
       />
+      {chefs.length > 1 && (
+        <div data-restaurante-chefs role="group" aria-label={isPt ? 'Chefs de domingo' : 'Sunday chefs'} style={{ display: 'flex', gap: 8 }}>
+          {chefs.map(c => {
+            const v = CHEF_VOICE[c];
+            const on = chefSel === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                data-restaurante-chef={c}
+                aria-pressed={on}
+                onClick={() => setChefSel(on ? null : c)}
+                style={{ ...sm2Button('outline', false), flex: 1, minWidth: 0, minHeight: 44, padding: '4px 8px', gap: 6, justifyContent: 'center', opacity: chefSel && !on ? 0.6 : 1 }}
+              >
+                <img src={RESTAURANT_CHEF_ART[c]} alt="" aria-hidden="true" width={32} height={32} draggable={false} style={{ width: 32, height: 32, objectFit: 'contain', objectPosition: 'bottom', flexShrink: 0 }} />
+                <span style={{ minWidth: 0, overflowWrap: 'anywhere', textAlign: 'left' }}>{(isPt ? v.namePt : v.nameEn).split(',')[0]}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {chefSel && (
+        <p data-restaurante-chef-line style={{ ...sm2Hint, margin: 0 }}>{isPt ? CHEF_VOICE[chefSel].linePt : CHEF_VOICE[chefSel].lineEn}</p>
+      )}
       <p data-restaurante-status style={{ ...sm2Hint, margin: 0 }}>
         <span className="sm2-num">{used}/{DISHES_PER_DAY}</span> {isPt ? 'pratos hoje' : 'dishes today'}
         {buff && buffDish ? (isPt

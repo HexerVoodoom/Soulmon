@@ -4996,6 +4996,21 @@ select:focus-visible {
 .sm2-potion-icon { position: relative; width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(255, 236, 170, .55)); display: grid; place-items: center; }
 .sm2-potion-text { margin: 0; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: var(--sm2-text-lg, 20px); font-weight: 600; color: #fff; }
 @keyframes sm2-potion-spin { to { transform: rotate(360deg); } }
+/* "Elemento novo" (15/11/2026): o mesmo modal da poção SEM o brilho (sem raios, sem halo). Vários elementos = carrossel. */
+.sm2-elem-new .sm2-potion-stage { width: 160px; height: 160px; }
+.sm2-elem-new .sm2-potion-icon { filter: none; }
+.sm2-elem-new-row { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; max-width: 360px; }
+.sm2-elem-new-page { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sm2-elem-new-arrow { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .12); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.sm2-elem-new-arrow:disabled { visibility: hidden; }
+.sm2-elem-new-dots { display: flex; gap: 8px; justify-content: center; }
+.sm2-elem-new-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+.sm2-elem-new-dot[data-on="true"] { background: #fff; }
+.sm2-elem-new-hint { margin: 0; text-align: center; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md, 15px); color: rgba(255, 255, 255, .85); }
+@media (prefers-reduced-motion: no-preference) {
+  .sm2-elem-new-page[data-anim] { animation: sm2-elem-new-in .18s ease-out; }
+  @keyframes sm2-elem-new-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
