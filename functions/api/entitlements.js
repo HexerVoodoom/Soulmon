@@ -7,7 +7,8 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //   POST /api/entitlements?action=buy-essence   { id, element, qty: 1|5, opId }  ← CAMBISTA (§205)
-//   POST /api/entitlements?action=buy-bits      { id, pack, opId }  ← PACOTES DE BITS (§373; teto 1.000/dia UTC, `_bitsPacks.js`)
+//   POST /api/entitlements?action=buy-bits      { id, pack, opId, replayOnly? }  ← PACOTES DE BITS (§373; `_bitsPacks.js`)
+//        `replayOnly: true` (§386): só o replay de um pedido já atendido; desconhecido = 409 `no-op`, nada comprado
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
 //   POST /api/entitlements?action=rebirth-reset { id }       ← RENASCIMENTO (#62)
 //
@@ -265,7 +266,7 @@ async function onRequestPostBruto({ request, env }) {
   if (action === 'buy-bits') {
     // PACOTES DE BITS (§373): o pacote, o preço em Créditos, o teto do dia e a idempotência são do servidor (`_bitsPacks.js`).
     // O cliente só credita os `bits` desta resposta, e só quando `ok`.
-    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin });
+    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin, replayOnly: body?.replayOnly === true });
     if (!r.ok) {
       log('bits-pack.refused', saveId, { reason: r.reason });
       return json({ ok: false, reason: r.reason, ...(typeof r.leftToday === 'number' ? { leftToday: r.leftToday } : {}) }, r.status);

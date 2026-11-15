@@ -29,7 +29,11 @@ export const BITS_PACKS = [
 
 export const BITS_PACK_DAILY_CAP = 1000;
 
-/** Quantos pedidos atendidos ficam guardados para a idempotência (a janela de retry de um cliente é de segundos). */
+/**
+ * Quantos pedidos atendidos ficam guardados para a idempotência. O cliente guarda o opId PENDENTE por até 24 h (`pendingOpId.ts`) e
+ * o reenvia com `replayOnly` (§386): em 24 h cabem no máximo 5 compras por rótulo de dia (teto 1.000 ÷ menor pacote 200) e 24 h
+ * cruzam no máximo 3 rótulos (troca de âncora de fuso no meio), ou seja 15 < 20 (travado em `bitsPacks.replayOnly.qa4.test.js`).
+ */
 export const OPS_MAX = 20;
 const OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
 
@@ -53,17 +57,20 @@ export function bitsPackLeftToday(ent, nowMs = Date.now()) {
 
 /**
  * Compra um pacote de Bits com Créditos.
- * @param {{ admin?: boolean, nowMs?: number }} [opts] admin não debita nem conta (padrão de `spend`/`buy-essence`).
+ * @param {{ admin?: boolean, nowMs?: number, replayOnly?: boolean }} [opts] admin não debita nem conta (padrão de `spend`/`buy-essence`).
+ *   `replayOnly` (§386, aditivo): só devolve o replay de um pedido JÁ atendido; pedido desconhecido responde `409 no-op` sem comprar.
+ *   É o que o app usa ao reabrir com um opId pendente: a rede caiu depois do débito e o botão do pacote já não está ao alcance.
  * @returns {Promise<
  *   | { ok: true, status: 200, pack: string, bits: number, price: number, leftToday: number, ent: any, replay?: boolean }
- *   | { ok: false, status: number, reason: 'bad-op'|'unknown-pack'|'daily-cap'|'insufficient'|'busy', leftToday?: number }>}
+ *   | { ok: false, status: number, reason: 'bad-op'|'unknown-pack'|'daily-cap'|'insufficient'|'busy'|'no-op', leftToday?: number }>}
  */
 export async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
   const admin = opts.admin === true;
   const nowMs = typeof opts.nowMs === 'number' ? opts.nowMs : Date.now();
+  const replayOnly = opts.replayOnly === true;
   if (typeof opId !== 'string' || !OP_ID.test(opId)) return { ok: false, status: 400, reason: 'bad-op' };
   const pack = bitsPackById(packId);
-  if (!pack) return { ok: false, status: 400, reason: 'unknown-pack' };
+  if (!pack && !replayOnly) return { ok: false, status: 400, reason: 'unknown-pack' };
   // Sem espera (§373): dois pedidos de troca juntos são um duplo toque, e o cliente reenvia o `busy` com o mesmo opId.
   const lock = await tomarTravaDoEnt(env, saveId, { nowMs, esperaMs: 0 });
   if (!lock.ok) return { ok: false, status: 409, reason: 'busy' };
@@ -74,8 +81,10 @@ export async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
     if (feito) {
       // Repetição do MESMO pedido: o pacote que ele comprou, sem cobrar e sem reconferir (saldo e teto já mudaram por causa dele).
       const p = bitsPackById(feito.pack) ?? pack;
-      return { ok: true, status: 200, pack: p.id, bits: p.bits, price: p.credits, leftToday: bitsPackLeftToday(ent, nowMs), ent, replay: true };
+      if (p) return { ok: true, status: 200, pack: p.id, bits: p.bits, price: p.credits, leftToday: bitsPackLeftToday(ent, nowMs), ent, replay: true };
     }
+    // Pedido que o servidor nunca atendeu: com `replayOnly` nada é comprado (o pendente do app fecha sem cobrança).
+    if (replayOnly || !pack) return { ok: false, status: 409, reason: 'no-op', leftToday: bitsPackLeftToday(ent, nowMs) };
     const left = bitsPackLeftToday(ent, nowMs);
     if (!admin && pack.bits > left) return { ok: false, status: 409, reason: 'daily-cap', leftToday: left };
     if (!admin) {
