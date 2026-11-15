@@ -5794,6 +5794,30 @@ Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,
 
 **Alternativa que perdeu:** ignorar no cliente o sprite criado depois de `crystal.since` (sem campo novo): depende de relógio entre aparelhos e pode pular a arte nova. **Custo aceito:** cristal em voo no deploy (sem `key`) ainda recalcula e pode gerar a 2ª uma vez; e, com cliente antigo, a alternativa sai como cópia da base (sem cobrança). **Gatilho de revisão:** nova ocasião de geração, ou mudança em `altSpriteKey`/`registrarFormaAoEvoluir`: o teste `useSpriteGeneration.cristalUmaImagem.test.tsx` deve seguir contando 1 pedido por evolução.
 
+## §405 — 14 Ultimates de 2 componentes instalados, só Ultimate (15/11/2026, dono, modal)
+
+**Pedido:** completar a arte que o §403 deixou faltando: os 14 elementos de run sem Ultimate de 2 componentes (agua, ar, arcano, eletricidade, espaco, gravidade, luz, marcial, som, sombra, tempo, vida, vigor, vileza). O dono aprovou a arte (14 sprites do Higgsfield, `E:/Soulmon-assets/_lote-15-11/ultimate-2comp/`), mandou que existam **só como Ultimate, sem Champion**, e que os nomes sejam aprovados por ele antes de valerem.
+
+**Decisão:** tabela nova `ULTIMATES_2COMP_DATA` em `src/utils/enemyRosterUltimates.ts` (`[id, par, componentes, elemento dos golpes, nome]`); `buildUltimates2Comp` em `enemyRoster.ts` a lê e gera UMA linha `kind: 'paralelo'` por id, só `ultimate`, `artFile = <id>-ultimate`. Aditivo: `PARALELOS_DATA` e `buildParalelos` (5 linhas com Champion e Ultimate) não mudam. As 14 entram no FIM do roster (o `#N` do Bestiário não muda), ficam fora do sorteio comum e a Arena as pega pela tabela de componentes (`combinedPoolOf` já aceitava `paralelo`; os componentes vêm de `DERIVED_ELEMENT_PAIRS` pelo id do par). Arte em `novos-arquivo/paralelos/<id>-ultimate.png` (glob existente), 14 PNG 256² alfa, 1,01 MB no total. Os nomes entram PROVISÓRIOS (o nome do par: Gelo, Tempestade...); a troca é editar a última coluna da tabela. Propostas em `nomes-propostos.md` e `folha-nomes.png` na pasta do lote. Recorte de 5 peças (cristal, aurora, maestria, heresia, magnetar) refeito do `raw.png` (script `E:/tmp/recorte_ult.py`): resíduo de cor-chave 0 nas quatro de chave verde.
+
+**Medido (20 000 sementes comuns, escada 31, nível 18, Ultimate):** base/2/3/4 componentes **24,9 / 19,6 / 51,6 / 3,9** antes (pool de 2 componentes só em 7 dos 20 elementos, o resto relaxava para 3) e **24,9 / 58,5 / 12,7 / 3,9** depois (tabela: 25 / 55 / 15 / 5). Relaxamento de "2 componentes" caiu de ~45% para menos de 10%; os 20 elementos têm pool de 2 componentes.
+
+**Alternativa que perdeu:** gerar um Champion para cada um e usar `PARALELOS_DATA` como está: dobraria a arte sem o dono pedir, e o Champion da Arena não usa a tabela de componentes. **Custo aceito:** quem já tinha 5 paralelos (Aquarisk...) convive com 14 criaturas só-Ultimate no mesmo `kind`; testes que contavam "paralelos = 10" passaram a separar os dois grupos. **Gatilho de revisão:** o dono aprovar os nomes (editar a tabela e o `name` único no teste), ou pedir Champion para alguma delas.
+
+**Nomes aprovados (15/11/2026, dono: "Aprovo tudo"):** a tabela única passou a levar os 14 nomes EN: pargelo=Rimeveil, partempestade=Galemantle, parplasma=Ionwyrm, parcristal=Prismoth, parconstelacao=Astracoil, parmagnetar=Orbitrix, paraurora=Auraveil, parforja=Anvilhorn, partrovao=Resonyx, parcrepusculo=Vesperwing, parcronomancia=Chronomane, parfenix=Emberbloom, parmaestria=Acornarch, parheresia=Heretorn. A tabela só tem UM campo de nome (sem par de idiomas), então entra o EN; os PT propostos (Véugeada, Mantovento, Auravéu, Bigorneiro, Cronojuba, Floresbrasa, Bolotarca, Heretor, Prismariposa, Astrospira...) ficam só em `nomes-propostos.md`.
+
+## §406 — As 20 decorações sem arte, a lanterna refeita e o ícone `prism` entram (15/11/2026, P9 opção (a) do dono de 14/11)
+
+**Decisão:** instalar a arte do ChatGPT das decorações que existiam no catálogo (`src/utils/cosmeticosNovos.ts`) só como id, sem imagem: as 4 de Ruínas (carro engolido, placa torta, asfalto rachado, fiação com musgo) e 16 de elemento (arcano, eletricidade, espaço, fada, gravidade, industrial, luz, marcial, morte, planta, som, sombra, tempo, vida, vigor, vileza). Ids, nomes, espaços e preços são os que já estavam no código; nada foi inventado. Instalador `tools/instalar-decor-elementos.py`, que reusa `instalar()` do instalador do §398 (caixa do espaço × `DECOR_ART_SCALE`: 3, e 2 no tapete; NEAREST; alfa real; âncora embaixo no chão, centro na parede e no tapete). O asfalto veio 3:1 e virou 13:2 pela janela de maior alfa. Saída `src/assets/decor/<id>.webp` sem perda (o glob de `cosmeticosNovos.ts` lê `.webp`; por isso `decorArt.ts` não mudou). A **lanterna** (`furn-lantern`, canto direito, 330 Bits) troca a arte no mesmo id e formato PNG (144×156). O ícone de material **`prism`** (reprovado em 13/11, caía no emoji) entra em `src/assets/soulmon/icons/materiais/prism.webp` (128×128); `materialIcons.ts` já o resolve.
+
+**Contagem:** o plano diz "4 ruínas + 16 de elemento"; as 4 de elemento que já tinham arte antiga (`fogo`, `agua`, `terra`, `ar`) NÃO foram tocadas (o instalador pula quem já tem `.webp`). Existem PNG novos delas na fila; trocá-las é decisão do dono (rodar o script apagando o `.webp` antigo).
+
+**Alternativa que perdeu:** PNG como as 33 do §398 (o glob exige `.webp`; mudar o glob mexe em código e nos 16 temas já instalados).
+
+**Compatibilidade e bytes (medidos nos arquivos, sem build):** nenhum id novo, renomeado ou preço mudado; nenhum campo de save; as 20 peças passam a aparecer na loja (a arte é a porta). `src/assets/decor`: 1.735.231 B antes, 2.191.315 B depois (+445 KB); 20 webp somam 444,6 KB (maior 28,6 KB), lanterna 17,1 → 17,5 KB, `prism.webp` 6,6 KB (`materiais/`: 241.014 → 247.774 B). Guard `src/assets/decorElementos.test.ts` (existência, caixa, alfa real, tetos de 60 KB por arquivo e 700 KB do conjunto, ids do catálogo, órfã, prism resolvido, instalador idempotente).
+
+**Riscos aceitos / depende do dono:** nada visto em tela (sem build), só a prancha `E:/Soulmon-assets/_lote-15-11/chatgpt-fila/instalado-contato.png`. O `prism` não tem o contorno escuro dos outros ícones de material (ore tem), a olho destoa levemente. Preço das 16 de elemento é o do código (500 Bits, exclusivas de elemento por `elementExclusive.ts`). **Gatilho de revisão:** peça ilegível no palco, reinstalar só aquela com o script.
+
 ## §407 — Descritores de elemento AUTORAIS: cada componente nomeado no próprio texto, não completado pelo código (15/11/2026, pedido do dono)
 
 **Pedido:** "Ajeitar os prompts da criação de Soulmon, com palavras-chave para cada elemento, inclusive os combinados de 2, 3 ou 4." A auditoria (`E:\Soulmon-assets\_lote-15-11\auditoria-prompts\`) mostrou que todo prompt final já citava uma pista de cada componente, mas por acaso do código: `pistasVisuaisDoElemento` completava o que o descritor não nomeava com uma forma curta genérica ("with hints of aged plates"). O descritor escrito, sozinho, deixava de nomear algum componente em 53 de 190 pares, 14 de 40 trios e 19 de 19 quartetos (86 elementos).
@@ -5804,7 +5828,7 @@ Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,
 
 **Alternativa que perdeu:** só trocar o texto genérico do código por um dicionário mais rico de formas curtas por componente (uma pista fixa por base, igual em todo combinado). Perdeu porque a mesma pista repetida em 50 elementos apaga a diferença entre eles; a pista por elemento deixa "lava" (barro rachado sob a chama) diferente de "areia" (barro seco sob o vento). **Custo aceito:** as pistas novas são texto de prompt sem prova de imagem: não houve geração de teste. **Gatilho de revisão:** criaturas novas saindo sem o componente visível, ou o dono apontando um elemento cujo traço não aparece (ver `E:\Soulmon-assets\_lote-15-11\auditoria-prompts\antes-depois.md`). **Rollback:** reverter o commit (só `elementoDescritores.data.ts` e o teste); nada de save, sprite ou servidor depende dele.
 
-## §408 — Cenário próprio do elemento fogo+planta (`queimada`) na loja de Background (15/11/2026, dono: "Faz ser cenário do elemento fogo+planta e cria o da cerejeira que faltou")
+## §409 — Cenário próprio do elemento fogo+planta (`queimada`) na loja de Background (15/11/2026, dono: "Faz ser cenário do elemento fogo+planta e cria o da cerejeira que faltou")
 
 **Contexto:** o fundo `bg-cerejeira-bosque-de-cerejeiras` (PR #923) saiu como vulcão com lava e árvore de flores de brasa. O dono pediu que essa arte vire o cenário do elemento combinado fogo+planta. O id do par é `queimada` (`componentes: ["planta","fogo"]`, o único par exato fogo+planta em `DERIVED_ELEMENT_PAIRS`).
 
@@ -5815,3 +5839,33 @@ Menor distância média no tabuleiro (ANTES, final): ΔE 26,9 e 27,0; paleta 13,
 **Nota:** `bg-cerejeira-bosque-de-cerejeiras` fica INTACTO (id e arte atuais, saves de quem comprou). Outro agente gera o bosque de cerejeiras de verdade e vai TROCAR a arte desse mesmo id depois; esta cópia fogo+planta não muda quando isso acontecer.
 
 **Alternativa que perdeu:** renomear o id antigo para o do elemento. Perdeu porque quebraria a posse salva. **Gatilho de revisão:** o dono pedir cenário de combate vertical de fogo+planta. **Rollback:** apagar o item em `cosmeticosNovos.ts` e os 3 arquivos de arte; quem já comprou perde a vitrine, não o save.
+## §408 — Descritores: pista de TEXTURA ou OBJETO PEQUENO não aparece na imagem; trocadas por forma grande, silhueta ou cor (15/11/2026, seguimento do §407)
+
+**Medição:** 6 criaturas de 4 componentes foram geradas no Higgsfield com os prompts do §407 (`E:\Soulmon-assets\_lote-15-11\auditoria-prompts\amostras\`: `folha-amostras.png`, `<elemento>.meta.json`, `amostras-prompts-final.json`). Dos 24 componentes: **11 aparecem, 6 aparecem em parte, 7 não aparecem**.
+
+| Resultado | Pistas | O que têm em comum |
+|---|---|---|
+| Aparecem (11) | chamas, água, raios, rocha grande, fumaça, vegetação | forma grande ou cor forte |
+| Em parte (6) | `licking flames` pequenas, `bleached branches`, `orbiting stones`, `violet glyphs` | motivo médio, some quando há 4 componentes |
+| Não aparecem (7) | `cracked clay` (0 de 3), `amber beads on red cord`, `crossed blades`, `falling stars`, `rolling sound waves` | textura ou objeto pequeno |
+
+Com 4 componentes e ~260 caracteres o modelo prioriza os 2–3 motivos maiores e mais cedo no texto.
+
+**Decisão:** em todos os descritores (não só nos 6 da amostra) cada pista fraca virou uma forma grande, e a palavra-chave de `PALAVRA_CHAVE_BASE` acompanhou (o teste do §407 exige a palavra-chave em cada componente). Trocas:
+
+| Base | Pista antiga (palavra-chave) | Pista nova (palavra-chave) |
+|---|---|---|
+| terra | `cracked clay` / `clay and stone` (`clay`) | `a boulder shoulder` (`boulder shoulder`); base: `a boulder shoulder and stone plates` |
+| marcial | `crossed blades` (`blades`) | `one large sword` (`sword`) |
+| vigor | `amber beads` em cordão vermelho (`amber beads`) | `a thick amber collar` (`amber collar`) |
+| som | `sound waves`, `rolling sound waves` (`sound`) | `concentric rings` (`concentric rings`); base: `thick concentric rings around the creature` |
+| espaço | `stars`, `falling stars`, `stars and thin orbit lines` (`stars`) | `a band of stars` (`band of stars`) |
+| morte | `bleached branches and pale moths` (`branches`) | `a pale antler crown` (`antler crown`) |
+| arcano | `orbiting violet glyphs` (`glyphs`) | `a large violet rune circle` (`rune circle`) |
+| gravidade | `orbiting tiny stones` (`tiny stones`) | `a large orbiting stone` (`large orbiting stone`) |
+
+**Reordenação:** em pares, trios e quartetos as pistas dessas oito bases passam à frente das demais depois de "with hints of" (o modelo prioriza o que vem primeiro e o maior). A `paleta` não foi mexida (a ordem das cores alimenta a escolha do fundo chroma). Quando o kit do próprio elemento já nomeia a forma (ex.: `sword`, `a band of stars`), a pista repetida foi removida do "hints of". Sem mudança nas regras: teto de 260 caracteres (agora testado nos 269, não só nos 86), no máximo um motivo de tempo, sem franquia, sem engrenagem, sem palavra que induza texto, UMA pista por componente.
+
+**Alcance:** 186 dos 269 descritores mudaram (8 bases, 74 dos 86 combinados do §407 e 104 dos outros 183, que usavam as mesmas palavras). Os 83 restantes ficam byte a byte iguais; o hash do guard dos 183 foi atualizado de propósito (112 deles mudaram). Só prompts de criaturas NOVAS mudam; sprites e saves existentes não. Bytes de entrada (fonte, sem build): `elementoDescritores.data.ts` 51 667 → 51 812 B, `elementoCombinado.ts` 16 726 → 16 815 B (+234 B no total).
+
+**Custo aceito:** as pistas novas ainda são texto de prompt; só uma nova rodada de amostras prova que aparecem. A textura/pontilhado, quando for desejada, precisa de cor própria na `paleta` para se ler. **Gatilho de revisão:** nova rodada de amostras com componente ainda ausente. **Rollback:** reverter o commit (`elementoDescritores.data.ts`, `elementoCombinado.ts`, teste); nada de save, sprite ou servidor depende dele.

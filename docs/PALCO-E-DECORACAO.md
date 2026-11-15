@@ -314,7 +314,10 @@ A caixa de `DECOR_SLOTS` segue sendo o contrato da arte. O palco desenha maior v
 
 As 33 peças do acervo foram refeitas e entram no MESMO id (`src/assets/decor/<id>.png`, caixa do espaço × 3, alfa real). Instalador: `tools/instalar-decor-refeitas.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-14-11/decoracao/`; rodar duas vezes grava os mesmos bytes). Para trocar uma peça de novo, substitua o PNG de origem e rode o script. O tapete (13:2) recebe a janela de maior alfa; grass e sand ancoram embaixo. A lanterna (`furn-lantern`) segue com a arte antiga até o PNG do piloto aparecer na pasta do lote. Guard: `src/assets/decorEstiloNovo.test.ts`.
 
-## Cenário de elemento derivado (15/11/2026, REGISTRO §408)
+## Cenário de elemento derivado (15/11/2026, REGISTRO §409)
 
 Os `bg-el-*` agora também existem para um elemento DERIVADO: `bg-el-queimada` (fogo+planta, vulcão com flores de brasa), exclusivo do id `queimada`, 720 moedas, 1200×648, chão em 74%. Declarado em `BG_EL_DERIVADOS` de `src/utils/cosmeticosNovos.ts`.
 
+## As 20 decorações novas e a lanterna (15/11/2026, REGISTRO §406)
+
+Ruínas (4) e elemento (16) deixaram de ser só id: `src/assets/decor/<id>.webp` (sem perda, caixa × 3; tapete × 2 = 208×32, como os demais `.webp`). Instalador `tools/instalar-decor-elementos.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-15-11/chatgpt-fila/`; idempotente; não toca quem já tem `.webp`). Ancoragem: chão embaixo, parede e tapete no centro; o asfalto 3:1 é recortado para 13:2. A lanterna (`furn-lantern`) troca a arte no mesmo id (PNG 144×156). Guard: `src/assets/decorElementos.test.ts`.

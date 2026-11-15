@@ -75,7 +75,8 @@ describe('Chama Azul nunca mais mostra o urso marrom (09/11/2026)', () => {
   });
   it('as 10 formas paralelas têm arte própria e cada uma é única (nenhum PNG repetido)', () => {
     expect(PARALELOS_DATA).toHaveLength(5);
-    const hashes = Object.keys(PARALELOS_ART).map(k => sha(path.join(ART, 'paralelos', k + '.png')));
+    const so10 = Object.keys(PARALELOS_ART).filter(k => PARALELOS_DATA.some(d => k.startsWith(d[0] + '-')));
+    const hashes = so10.map(k => sha(path.join(ART, 'paralelos', k + '.png')));
     expect(hashes).toHaveLength(10);
     expect(new Set(hashes).size).toBe(10);
   });

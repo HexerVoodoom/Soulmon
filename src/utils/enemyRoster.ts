@@ -20,6 +20,7 @@ import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { curatedComponents } from './elementosCurados';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -201,6 +202,20 @@ function buildParalelos(): RosterEntry[] {
 }
 
 /**
+ * ULTIMATES SÓ-ULTIMATE de 2 componentes (15/11/2026, REGISTRO §405): kind `paralelo`, sem Champion. Entram no FIM de tudo (o `#N` não muda). Como
+ * os paralelos de antes, ficam fora do sorteio comum; a Arena os pega pela tabela de componentes (`combinedPoolOf`).
+ */
+function buildUltimates2Comp(): RosterEntry[] {
+  return ULTIMATES_2COMP_DATA.map(([id, par, comps, golpesDe, name]) => {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    return {
+      key: chaveBestiario(id, 'ultimate'), id, stage: 'ultimate' as const, kind: 'paralelo' as const, element: par, elements: [...comps],
+      name, basico: base.basico, especial: base.especial, artFile: `${id}-ultimate`,
+    };
+  });
+}
+
+/**
  * AS FORMAS DOS COMBINADOS 212-261 (dono, 09/11/2026: "usar as formas Champion/Ultimate/Mega já instaladas"): os 50 elementos curados
  * (lotes 1-3) tinham só o rookie; os 150 PNG de `novos-arquivo/combinados-formas/` agora são a forma champion/ultimate/mega DO MESMO elemento.
  * Só saem quando o ELEMENTO é pedido (`pickEnemy({element})`, Fenda): ficam FORA do sorteio comum de estágio, como as paralelas. Mesmas
@@ -266,7 +281,7 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
   const comps = DERIVED_ELEMENT_PAIRS.find(d => d.id === el)?.componentes ?? curatedComponents(el);
   return comps ? { ...e, element: el, elements: [...comps] } : e;
 }
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo()].map(comElementoDoDono);
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

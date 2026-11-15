@@ -16,12 +16,12 @@ import { FRAME_IDS } from '../../functions/api/_frames.js';
 const A = path.join(process.cwd(), 'src/assets');
 
 describe('cosméticos novos (temas e elementos, 04/11/2026)', () => {
-  it('planejadas: 33 cenários (32 + o `bg-el-queimada` do §408), 32 molduras, 44 decorações, ids únicos', () => {
+  it('planejadas: 33 cenários (32 + o `bg-el-queimada` do §409), 32 molduras, 44 decorações, ids únicos', () => {
     const n = (k: string) => COSMETICOS_PLANEJADOS.filter(c => c.kind === k).length;
     expect([n('bg'), n('frame'), n('furn')]).toEqual([33, 32, 44]);
     expect(new Set(COSMETICOS_PLANEJADOS.map(c => c.id)).size).toBe(109);
   });
-  it('§408: fogo+planta (`queimada`) tem cenário próprio exclusivo, preço dos `bg-el-*`, arte instalada e id único', () => {
+  it('§409: fogo+planta (`queimada`) tem cenário próprio exclusivo, preço dos `bg-el-*`, arte instalada e id único', () => {
     const c = COSMETICOS_NOVOS.find(x => x.id === 'bg-el-queimada');
     expect(c, 'arte instalada').toBeDefined();
     expect([c!.kind, c!.element, c!.price]).toEqual(['bg', 'queimada', 720]);

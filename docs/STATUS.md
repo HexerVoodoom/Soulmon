@@ -1,11 +1,28 @@
 # Status do Soulmon — registro vivo
 
-> ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §408)
+> ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §409)
 >
 > - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.
 > - **Intacto:** `bg-cerejeira-bosque-de-cerejeiras` segue com a arte do vulcão até o bosque real trocar a arte desse id.
 > - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cenario-fogo-planta\instalado.png`.
 >
+> ## 15/11/2026 — Pistas fortes nos descritores (`fix/descritores-pistas-fortes`, REGISTRO §408)
+>
+> - **Feito:** amostras do Higgsfield (11 aparecem, 6 em parte, 7 não) mostraram que textura e objeto pequeno somem; 186 de 269 descritores trocaram `cracked clay`, `amber beads`, `crossed blades`, `sound waves`, `stars` etc. por formas grandes (boulder shoulder, sword, amber collar, concentric rings, band of stars, antler crown, rune circle, large orbiting stone).
+> - **Ordem:** nos pares, trios e quartetos a forma grande vem primeiro; teto 260 agora testado nos 269; hash do guard dos 183 atualizado de propósito.
+> - **Só criaturas novas.** Não visto em imagem: falta nova rodada de amostras para provar que aparecem.
+> ## 15/11/2026 — 14 Ultimates de 2 componentes instalados, só Ultimate (`feat/ultimates-2comp`, REGISTRO §405) — branch pushada, SEM PR
+>
+> - **Feito:** tabela `utils/enemyRosterUltimates.ts` + `buildUltimates2Comp` (14 linhas `paralelo`, sem Champion, no fim do roster) e 14 PNG em `novos-arquivo/paralelos/`. Ultimate da Arena (base/2/3/4): 24,9/19,6/51,6/3,9 antes, 24,9/58,5/12,7/3,9 agora (tabela 25/55/15/5); os 20 elementos têm pool de 2 componentes.
+> - **Pendente do dono:** aprovar os 14 nomes (`E:/Soulmon-assets/_lote-15-11/ultimate-2comp/nomes-propostos.md`); hoje o nome é o do par. Sem build, não visto em tela.
+
+
+> ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
+>
+> - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
+> - **Depende do dono:** aprovar em modal (PR); trocar ou não a arte antiga de fogo/água/terra/ar (PNG novos prontos); `prism` sem contorno escuro. Sem build, não visto em tela.
+
+
 > ## 15/11/2026 — Descritores de elemento autorais (`feat/descritores-autorais`, REGISTRO §407) — PR aberto, NÃO mergeado
 >
 > - **Feito:** a `forma` dos 86 combinados (53 pares, 14 trios, 19 quartetos) foi reescrita em `elementoDescritores.data.ts` para nomear cada componente com a palavra-chave de `PALAVRA_CHAVE_BASE`, em vez de depender do completamento genérico do código; os outros 183 ficam byte a byte iguais (hash no teste).

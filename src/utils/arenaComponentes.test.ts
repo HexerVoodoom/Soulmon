@@ -82,15 +82,15 @@ describe('pool escasso relaxa sem travar', () => {
     expect(p.got).toBe(3);
     expect(p.entry).toBeDefined();
   });
-  it('relaxamento medido no Ultimate: boa parte dos "2 componentes" vira 3 (a arte de 2 componentes só existe para 7 dos 20 elementos)', () => {
+  it('com os 14 Ultimates de 2 componentes (15/11, §405) os 20 elementos têm pool de 2 componentes no Ultimate e o relaxamento some (era ~45%)', () => {
+    for (const el of ARENA_BASE_ELEMENTS) expect(combinedPoolOf('ultimate', el).get(2)?.length ?? 0, el).toBeGreaterThan(0);
     let relaxados = 0;
     const r = mulberry32(5);
     for (let i = 0; i < N; i++) {
       const p = planArenaComponents('ultimate', ARENA_BASE_ELEMENTS[i % ARENA_BASE_ELEMENTS.length], r())!;
       if (p.want !== p.got) relaxados++;
     }
-    expect(pct(relaxados, N)).toBeGreaterThan(30);
-    expect(pct(relaxados, N)).toBeLessThan(60);
+    expect(pct(relaxados, N)).toBeLessThan(10);
   });
 });
 

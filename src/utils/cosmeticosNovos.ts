@@ -123,7 +123,7 @@ const SLOT_FURN: Record<string, { slot: SlotId; w: number; h: number; tier: 2 | 
 const ORDEM_EL = Object.keys(ELEMENTOS);
 
 /**
- * Elementos DERIVADOS com cenário próprio na loja (15/11/2026, REGISTRO §408): mesmo padrão dos `bg-el-*` dos 20 base
+ * Elementos DERIVADOS com cenário próprio na loja (15/11/2026, REGISTRO §409): mesmo padrão dos `bg-el-*` dos 20 base
  * (exclusivo do elemento, 720 moedas), mas o id é o do par. `petHasElement` casa o id exato, então só Soulmon de
  * Queimada (planta+fogo) vê este cenário à venda.
  */
