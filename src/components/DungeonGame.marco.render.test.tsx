@@ -15,7 +15,7 @@ vi.mock('../utils/combate/group', async importOriginal => {
   return {
     ...real,
     groupFightSteps: function* (player: never, foes: never, opts: never) {
-      // sem especial: o mini-boss do conjunto (REGISTRO §445) pode sortear cura, que com o HP encolhido do teste nunca deixa a luta acabar
+      // sem especial do inimigo: com o HP encolhido a 5% o foe fica abaixo do piso de `DUNGEON_MIN_HITS` (3 golpes) que a produção garante, e um mini-boss que sorteia CURA (REGISTRO §445) trava o motor nesse regime artificial (o render do worker morre). Em jogo o piso de 3 golpes torna o estado impossível; não é bug de render.
       const fracos = (foes as unknown as Array<{ combatant: { hp: number } }>).map(f => ({ ...f, special: null, combatant: { ...f.combatant, hp: f.combatant.hp * 0.05 } }));
       const g = real.groupFightSteps(player, fracos as never, opts);
       let r = g.next();
