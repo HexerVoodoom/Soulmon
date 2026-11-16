@@ -98,7 +98,7 @@ export function areaDaEscola(escola: EscolaSkillId): AreaConfig {
 export { elementoNomeDe };
 
 /** Substantivos da BÁSICA por escola, sorteio determinístico. O ESPECIAL tem léxico, família e nome próprios em `nomeEspecial.ts` (PR9). */
-const NOMES: Record<EscolaSkillId, {
+export const NOMES_BASICA: Record<EscolaSkillId, {
   basica: Array<{ pt: string; en: string }>;
 }> = {
   // SEIS por (escola, tipo), não dois: a jornada tem 5 estágios e o
@@ -118,12 +118,13 @@ const NOMES: Record<EscolaSkillId, {
       { pt: 'Fagulha de', en: 'Ember' }, { pt: 'Trama de', en: 'Weave' }, { pt: 'Pulso de', en: 'Pulse' }],
   },
   benca: {
-    basica: [{ pt: 'Toque de', en: 'Touch' }, { pt: 'Sopro de', en: 'Breath' }, { pt: 'Bênção de', en: 'Blessing' },
-      { pt: 'Carícia de', en: 'Caress' }, { pt: 'Orvalho de', en: 'Dew' }, { pt: 'Abrigo de', en: 'Shelter' }],
+    // a básica de TODA escola é dano direto: nada de nome de bênção/abrigo/orvalho aqui (soaria cura ou escudo; auditoria de coerência 16/11/2026)
+    basica: [{ pt: 'Toque de', en: 'Touch' }, { pt: 'Sopro de', en: 'Breath' }, { pt: 'Raio de', en: 'Ray' },
+      { pt: 'Clarão de', en: 'Glare' }, { pt: 'Brilho de', en: 'Gleam' }, { pt: 'Castigo de', en: 'Smite' }],
   },
   maldicao: {
     basica: [{ pt: 'Marca de', en: 'Mark' }, { pt: 'Aflição de', en: 'Bane' }, { pt: 'Praga de', en: 'Blight' },
-      { pt: 'Sussurro de', en: 'Whisper' }, { pt: 'Mordida de', en: 'Bite' }, { pt: 'Grilhão de', en: 'Shackle' }],
+      { pt: 'Sussurro de', en: 'Whisper' }, { pt: 'Mordida de', en: 'Bite' }, { pt: 'Ferroada de', en: 'Sting' }],
   },
 };
 
@@ -224,7 +225,7 @@ export function buildStageSkills(
     const b = base('basica', elBasica);
     const el = elementoNomeDe(topGeral); // o nome segue o elemento dominante (par incluso)
     // evita repetir o mesmo substantivo em estágios diferentes: a ficha escala mantendo a identidade.
-    const banco = NOMES[escola].basica;
+    const banco = NOMES_BASICA[escola].basica;
     const livres = usados ? banco.filter(n => !usados.has(n.pt)) : banco;
     const substantivo = pick(rng, livres.length > 0 ? livres : banco);
     usados?.add(substantivo.pt);

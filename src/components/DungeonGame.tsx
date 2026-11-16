@@ -791,7 +791,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt, par?.especial)}
+          specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
           foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
           isPt={isPt}
           scene={scene.bg}

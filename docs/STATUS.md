@@ -4,6 +4,10 @@
 >
 > - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
 > - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
+> ## 16/11/2026 — Nome do especial coerente com o efeito (`fix/nomes-especiais-coerentes`, REGISTRO §443)
+>
+> - **Feito:** selo do especial de inimigo (Arena, Masmorra/Rift, Pesadelo) e da Coroa da Hexsmith segue a família que vale; léxico: Rapture→Renewal, Flurry→Haste; básicas e 3 nomes de criatura sem cara de cura; guarda em `nomeEspecialCoerente.test.ts`.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
 >
 > ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §440)
 >
