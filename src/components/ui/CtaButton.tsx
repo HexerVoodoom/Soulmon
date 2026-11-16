@@ -1,4 +1,5 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
+import { usePrefersReducedMotion } from './Viewport';
 
 /**
  * Botão principal do jogo (CTA, 12/11/2026, pedido do dono): miolo turquesa escuro em moldura de canos de cobre com cipó nas pontas
@@ -18,12 +19,59 @@ export interface CtaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
    * Pressionado e desabilitado mantêm a arte própria nos dois tons.
    */
   tone?: 'padrao' | 'acao';
+  /**
+   * PREENCHER AO TOCAR (16/11/2026, retrospectiva semanal): um toque normal (clique, toque, Enter ou Espaço) dispara um preenchimento
+   * turquesa com brilho que corre da esquerda para a direita em `fillMs`; ao completar chama `onFillComplete`. Toques repetidos durante o
+   * preenchimento são ignorados (a ação dispara uma vez só). Com `prefers-reduced-motion` não há animação: chama `onFillComplete` direto.
+   * `onClick` (se vier) roda no primeiro toque. Visual em `.sm2-cta-fill` (`index.css`).
+   */
+  fillMs?: number;
+  onFillComplete?: () => void;
+}
+
+/** Pausa no estado cheio antes de `onFillComplete`. */
+export const FILL_REST_MS = 180;
+
+/** Preenchimento ao toque (uso que FECHA/navega: depois de completar o botão fica cheio e travado de propósito): estado "preenchendo" + temporizador; trava toques repetidos. */
+function useFill(ms: number | undefined, onComplete: (() => void) | undefined) {
+  const reduced = usePrefersReducedMotion();
+  const [filling, setFilling] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  const active = useRef(false);
+  const cb = useRef(onComplete);
+  cb.current = onComplete;
+  const start = useCallback(() => {
+    if (!ms || active.current) return false;
+    active.current = true;
+    if (reduced) { cb.current?.(); return true; }
+    setFilling(true);
+    // segura um respiro no estado cheio antes de agir, para o fechamento não ser seco
+    timer.current = window.setTimeout(() => { cb.current?.(); }, ms + FILL_REST_MS);
+    return true;
+  }, [ms, reduced]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return { filling, start };
 }
 
 /** `ref` chega no `<button>` (devolver o foco ao fechar um diálogo aberto por ele). */
-export const CtaButton = forwardRef<HTMLButtonElement, CtaButtonProps>(function CtaButton({ width = 'full', tone = 'padrao', className, type = 'button', children, ...rest }, ref) {
+export const CtaButton = forwardRef<HTMLButtonElement, CtaButtonProps>(function CtaButton({ width = 'full', tone = 'padrao', fillMs, onFillComplete, className, type = 'button', children, onClick, style, ...rest }, ref) {
+  const fill = useFill(fillMs, onFillComplete);
+  if (!fillMs) {
+    return (
+      <button ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} className={`sm2-cta${className ? ` ${className}` : ''}`} style={style} onClick={onClick} {...rest}>
+        <span className="sm2-cta-label">{children}</span>
+      </button>
+    );
+  }
   return (
-    <button ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} className={`sm2-cta${className ? ` ${className}` : ''}`} {...rest}>
+    <button
+      ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} data-cta-fill data-cta-filling={fill.filling ? 'true' : undefined}
+      className={`sm2-cta${className ? ` ${className}` : ''}`} style={{ ...style, ['--sm2-fill-ms' as string]: `${fillMs}ms` }}
+      aria-busy={fill.filling || undefined}
+      onClick={e => { if (fill.start()) onClick?.(e); }}
+      {...rest}
+    >
+      <span className="sm2-cta-fill" aria-hidden="true" />
       <span className="sm2-cta-label">{children}</span>
     </button>
   );
