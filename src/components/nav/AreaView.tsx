@@ -171,7 +171,7 @@ export interface PlayHandlers {
   /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
   onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
-  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy' | 'daily-limit';
+  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
   onFocusPause?: () => void;
   onFocusResume?: (focusEndsAt?: number) => void;
