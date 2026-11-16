@@ -1017,15 +1017,14 @@ maioria dos donos de Vital Bracelet parar nos estágios médios.
 · `'ultra'`. `getStageLevel` lê o nível do prefixo; `getStageBranch` extrai o
 galho. Não existe tabela por espécie.
 
-**Os dois caminhos para o Ultra.** `canReachUltra({ unlockedEvolutions,
-perfectDays })` devolve `true` por **coleção** (as três `mega-*` desbloqueadas)
-**ou** por **permanência** (`ULTRA_PATIENCE_DAYS` = 45 dias completos acumulados
-como mega). `getNextEvolution` faz a pergunta a ela e não decide critério
-nenhum. Nenhum dos dois é melhor: a coleção exige **duas quedas deliberadas**
-além dos dias completos de cada subida (a conta está no docblock de
-`ULTRA_PATIENCE_DAYS`); a permanência é mais longa em tempo e mais barata em
-dor. Foi para tirar a queda obrigatória do caminho do topo que a permanência
-existe — o topo do jogo pedia que o jogador machucasse a criatura de propósito.
+**A regra do Ultra (16/11/2026, REGISTRO §461) — um caminho só.** `canReachUltra({
+unlockedEvolutions })` devolve `true` só com as três `mega-*` liberadas
+(`megasLiberadas` = 3). A barra do mega é a do Ultra (`ULTRA_PATIENCE_POINTS` =
+`ULTRA_PATIENCE_DAYS` 45 × 6 = 270) e **só acumula depois das três megas**
+(`gaugeTravadaPelasMegas`); antes, os pontos ficam guardados e a UI diz quantas
+megas já vieram. `getNextEvolution` faz a pergunta a `canReachUltra` e não decide
+critério. ⚠️ Revoga o "segundo caminho por permanência" (WP4.2/D6, 06/09/2026),
+em que 45 dias só com uma mega abriam o Ultra.
 
 **Dono.** `src/types/progression.ts` — `FORM_REQUIREMENTS`, `MAX_HP_BY_FORM`,
 `MAX_STAGE_REQUIREMENT`, `ULTRA_PATIENCE_DAYS`, `canReachUltra`,

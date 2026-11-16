@@ -69,10 +69,10 @@ describe('degenerar de galho diferente', () => {
   it('queda não mexe em unlockedEvolutions: canReachUltra igual', async () => {
     const { canReachUltra, getStageLevel } = await import('../types/progression');
     const u = ['mega-power', 'mega-harmony', 'mega-benevolence', 'champion-harmony'];
-    const antes = canReachUltra({ unlockedEvolutions: u, evolutionPoints: 0 });
+    const antes = canReachUltra({ unlockedEvolutions: u, });
     // a queda manual só troca estágio/HP/pontos; a lista de desbloqueios não entra
     expect(getStageLevel('champion-harmony')).toBe('champion');
-    expect(canReachUltra({ unlockedEvolutions: u, evolutionPoints: 0 })).toBe(antes);
+    expect(canReachUltra({ unlockedEvolutions: u, })).toBe(antes);
     expect(antes).toBe(true);
   });
 });

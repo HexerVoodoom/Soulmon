@@ -70,7 +70,7 @@ describe('o lote é contra `required`, e dispara na ELEGIBILIDADE (`faltam <= 0`
     expect(spriteBatch(input({ evolutionStage: 'ultimate-power', evolutionPoints: 60 }))?.occasion).toBe('C');
     const megaReady = input({
       evolutionStage: 'mega-power',
-      evolutionPoints: 60,
+      evolutionPoints: ULTRA_PATIENCE_POINTS,
       unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     });
     expect(spriteBatch(megaReady)).toEqual({ occasion: 'C', formIds: ['ultra'] });
@@ -103,21 +103,21 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
    * `evolutionPoints: 999` abaixo esperava `null` justamente porque a permanência
    * não valia nada — hoje ela vale, e a forma passa a ser gerável.
    */
-  it('mega sem as 3 megas E sem permanência não tem destino (estado DISTANTE)', () => {
-    const i = input({ evolutionStage: 'mega-power', evolutionPoints: 60, unlockedEvolutions: ['mega-power'] });
+  it('mega sem as 3 megas não tem destino, nem com a barra cheia (16/11/2026: o atalho de 1 mega acabou)', () => {
+    const i = input({ evolutionStage: 'mega-power', evolutionPoints: ULTRA_PATIENCE_POINTS, unlockedEvolutions: ['mega-power'] });
     expect(targetFormId(i)).toBeNull();
     expect(spriteBatch(i)).toBeNull();
-    // Logo abaixo do corte também não: o caminho abre no número, não perto dele.
-    expect(targetFormId({ ...i, evolutionPoints: ULTRA_PATIENCE_POINTS - 1 })).toBeNull();
+    expect(targetFormId({ ...i, evolutionPoints: 999 })).toBeNull();
   });
 
-  it('mega com PERMANÊNCIA alcança o ultra sem nunca ter degenerado', () => {
+  it('mega com as 3 megas e a barra cheia alcança o ultra', () => {
     const i = input({
       evolutionStage: 'mega-power',
       evolutionPoints: ULTRA_PATIENCE_POINTS,
-      unlockedEvolutions: ['mega-power'],
+      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     });
-    expect(targetFormId(i), 'o segundo caminho para o Ultra sumiu').toBe('ultra');
+    expect(targetFormId(i)).toBe('ultra');
+    expect(targetFormId({ ...i, evolutionPoints: ULTRA_PATIENCE_POINTS - 1 })).toBe('ultra');
   });
 
   it('ultra é topo da árvore: nunca gera nada', () => {
@@ -176,7 +176,7 @@ describe('o lote cobre TODOS os líderes empatados (§4)', () => {
   it('empate triplo a caminho do ultra vira UM pedido, não três iguais', () => {
     const b = spriteBatch(input({
       evolutionStage: 'mega-power',
-      evolutionPoints: 60,
+      evolutionPoints: ULTRA_PATIENCE_POINTS,
       points: { power: 3, harmony: 3, benevolence: 3 },
       unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     }));

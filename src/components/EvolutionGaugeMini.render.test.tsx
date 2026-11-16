@@ -37,4 +37,17 @@ describe('EvolutionGaugeMini', () => {
     const t = container.textContent ?? '';
     expect(t).not.toMatch(/\bonly\b|\bleft\b|faltam|\bsó\b/i);
   });
+
+  it('16/11/2026: mega com menos de 3 megas não mostra barra, diz quantas megas já vieram (PT/EN, sem cobrança)', () => {
+    const pt = render(<EvolutionGaugeMini language="pt-BR" evolutionPoints={200} evolutionStage="mega-power" unlockedEvolutions={['mega-power', 'mega-harmony']} todayWeight={6} />);
+    expect(pt.container.textContent).toBe('Libere as 3 Megas para abrir o Ultra · 2/3');
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(pt.container.textContent).not.toMatch(/faltam|só|perde/i);
+    cleanup();
+    const en = render(<EvolutionGaugeMini language="en-US" evolutionPoints={0} evolutionStage="mega-power" todayWeight={0} />);
+    expect(en.container.textContent).toBe('Unlock all 3 Megas to open the Ultra · 0/3');
+    cleanup();
+    render(<EvolutionGaugeMini language="en-US" evolutionPoints={10} evolutionStage="mega-power" unlockedEvolutions={['mega-power', 'mega-harmony', 'mega-benevolence']} todayWeight={0} />);
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuemax')).toBe('270');
+  });
 });
