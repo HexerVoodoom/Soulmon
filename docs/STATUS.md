@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §446)
+>
+> - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
+> - **Não visto em aparelho:** só testes e tipos; nomes provisórios.
+> - **Pendente do dono:** os 3 hospedeiros ajustados (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes.
+> - **Rollback:** `git revert`; só cliente.
+>
 > ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
 >
 > - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.

@@ -53,10 +53,13 @@ export const INIMIGOS_API_ART: Readonly<Record<string, string>> = Object.fromEnt
 
 const RAMOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/ramos/*/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
-/** ARTE dos 120 sprites de ramo evoluído (REGISTRO §220). Chave = `<elemento>/<ramo>-<estágio>` (`RosterEntry.artFile`). Só URL, e este módulo fica fora do chunk de entrada (chega por `novosSoulmon.ts`). */
-export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
-  Object.entries(RAMOS_FILES).map(([path, url]) => [path.slice(path.indexOf('/ramos/') + 7).replace(/\.png$/, ''), url]),
-);
+const LEGADO_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/legado/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE dos 120 sprites de ramo evoluído (REGISTRO §220; chave `<elemento>/<ramo>-<estágio>`) e dos 15 ramos legados (§445; chave `legado/<id>-<estágio>`), no mesmo mapa (`RosterEntry.artFile`). Só URL, e este módulo fica fora do chunk de entrada (chega por `novosSoulmon.ts`). */
+export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries([
+  ...Object.entries(RAMOS_FILES).map(([path, url]) => [path.slice(path.indexOf('/ramos/') + 7).replace(/\.png$/, ''), url] as const),
+  ...Object.entries(LEGADO_FILES).map(([path, url]) => [`legado/${path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, '')}`, url] as const),
+]);
 
 const PARALELOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/paralelos/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
