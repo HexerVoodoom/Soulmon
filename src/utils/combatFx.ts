@@ -340,18 +340,18 @@ const L = (en: string, pt: string): Bilingual => ({ en, pt });
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
     // `fisico`/`magico`: mesma mecânica de `atk`, com glifo próprio (`st-atk-fisico`/`st-atk-magico`).
-    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
+    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', def: 'st-buff-def', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
     // ataque (e físico/mágico, mesma mecânica) e velocidade (e aceleração) têm folha própria; o resto usa o buff genérico
     loop: { _: 'fx-buff-loop-sheet', atk: 'fx-buff-atk-loop-sheet', fisico: 'fx-buff-atk-loop-sheet', magico: 'fx-buff-atk-loop-sheet', spd: 'fx-buff-spd-loop-sheet', aceleracao: 'fx-buff-spd-loop-sheet' },
     still: null, mark: '▲',
-    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
-    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
+    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), def: L('Defense up', 'Defesa em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
+    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), def: L('DEF', 'DEF'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
   },
   debuff: {
-    glyph: { _: 'st-debuff-def', def: 'st-debuff-def' },
+    glyph: { _: 'st-debuff-def', def: 'st-debuff-def', atk: 'st-debuff-atk' },
     loop: { _: 'fx-debuff-loop-sheet', def: 'fx-debuff-def-loop-sheet' }, still: null, mark: '▼',
-    label: { _: L('Weakened', 'Enfraquecido'), def: L('Defense down', 'Defesa em baixa') },
-    short: { _: L('DOWN', 'BAIXA'), def: L('DEF', 'DEF') },
+    label: { _: L('Weakened', 'Enfraquecido'), def: L('Defense down', 'Defesa em baixa'), atk: L('Attack down', 'Ataque em baixa') },
+    short: { _: L('DOWN', 'BAIXA'), def: L('DEF', 'DEF'), atk: L('ATK', 'ATQ') },
   },
   maldicao: {
     glyph: { _: 'st-maldicao' },
@@ -385,7 +385,7 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     short: { _: L('MUTE', 'MUDO'), ofuscado: L('DAZE', 'OFUSC.'), curtoCircuito: L('SHORT', 'CURTO'), atordoado: L('STUN', 'ATORD.'), selado: L('SEAL', 'SELO') },
   },
   lento: {
-    glyph: { _: 'st-velocidade', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
+    glyph: { _: 'st-velocidade', spd: 'st-debuff-spd', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
     loop: { _: 'fx-lento-loop-sheet' }, still: null, mark: '▽',
     label: { _: L('Speed down', 'Velocidade em baixa'), peso: L('Weighed down', 'Peso'), retardo: L('Time lag', 'Retardo'), ferrugem: L('Rust', 'Ferrugem'), distorcao: L('Warped', 'Distorção') },
     short: { _: L('SLOW', 'LENTO'), peso: L('HEAVY', 'PESO'), retardo: L('LAG', 'RETARD.'), ferrugem: L('RUST', 'FERR.'), distorcao: L('WARP', 'DIST.') },
@@ -459,10 +459,10 @@ export const FAMILY_STATUS: Readonly<Record<SpecialFamily, FamilyStatus | null>>
   atkBuff: { kind: 'buff', variant: 'atk', target: 'self' },
   defDebuff: { kind: 'debuff', variant: 'def', target: 'foe' },
   spdBuff: { kind: 'buff', variant: 'spd', target: 'self' },
-  // Hexsmith H2: selos provisórios (existentes) até o PR de arte trazer `st-buff-def`, `st-debuff-atk` e `st-debuff-spd`
-  defBuff: { kind: 'escudo', target: 'self' },
-  atkDebuff: { kind: 'debuff', target: 'foe' },
-  spdDebuff: { kind: 'lento', target: 'foe' },
+  // Hexsmith H2: famílias só de Coroa, com os selos novos (`st-buff-def`, `st-debuff-atk`, `st-debuff-spd`, REGISTRO §451)
+  defBuff: { kind: 'buff', variant: 'def', target: 'self' },
+  atkDebuff: { kind: 'debuff', variant: 'atk', target: 'foe' },
+  spdDebuff: { kind: 'lento', variant: 'spd', target: 'foe' },
 };
 /**
  * PR16 (decisão do dono): o debuff de DEFESA da escola `maldicao` mostra o selo/glifo/rótulo de MALDIÇÃO. É só APRESENTAÇÃO:
