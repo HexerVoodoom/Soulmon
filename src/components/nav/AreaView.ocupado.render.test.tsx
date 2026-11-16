@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
-import { fireEvent, act } from '@testing-library/react';
+import { fireEvent, act, screen, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaView } from './AreaView';
 
@@ -37,12 +37,25 @@ describe('AreaView sem trava de Soulmon ocupado', () => {
   }
 });
 
-describe('Fenda (na Exploração desde #186): entrada direta com descida em curso', () => {
-  it('com descida: abre a DungeonGame direto, sem a folha "Descer à Fenda"', async () => {
+describe('Fenda (na Exploração desde #186): duas portas — Entrar no Rift / Ver o mapa (§462)', () => {
+  it('com descida: o toque abre a folha com as duas portas; "Descer" entra direto na DungeonGame (sem 2º passo)', async () => {
     const { container } = renderWithCss(<AreaView {...{ ...base('exploracao'), naMasmorra: true }} />);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="fenda"]') as HTMLElement); });
-    expect(container.textContent).not.toMatch(/Descend|Descer/);
-    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    await waitFor(() => expect(container.querySelector('[data-masmorra-map]')).not.toBeNull());
+    await act(async () => { fireEvent.click(container.querySelector('[data-masmorra-start]') as HTMLElement); });
+    expect(container.querySelector('[data-masmorra-start]')).toBeNull();
+  });
+  it('"Ver o mapa" abre o mapa de andares em tela cheia e o voltar dele devolve à folha', async () => {
+    const { container } = renderWithCss(<AreaView {...base('exploracao')} />);
+    await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="fenda"]') as HTMLElement); });
+    expect(container.querySelector('[data-rift-map]')).toBeNull();
+    await waitFor(() => expect(container.querySelector('[data-masmorra-map]')).not.toBeNull());
+    await act(async () => { fireEvent.click(container.querySelector('[data-masmorra-map]') as HTMLElement); });
+    expect(await screen.findByText(/Rift map|Mapa da Fenda/)).toBeTruthy();
+    expect(container.querySelector('[data-rift-map]')).not.toBeNull();
+    await act(async () => { fireEvent.click(container.querySelector('[data-rift-map-close]') as HTMLElement); });
+    expect(container.querySelector('[data-rift-map]')).toBeNull();
+    await waitFor(() => expect(container.querySelector('[data-masmorra-map]')).not.toBeNull());
   });
   it('sem descida: abre a folha da Fenda', async () => {
     const { container } = renderWithCss(<AreaView {...base('exploracao')} />);

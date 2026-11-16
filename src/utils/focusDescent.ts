@@ -10,8 +10,9 @@
 import type { GameState } from '../contexts/GameStateContext';
 import { newDefenseSeed } from './autoDefesa';
 import {
-  hpAgora, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, startLayerFor, type DungeonAway,
+  hpAgora, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, type DungeonAway,
 } from './dungeonIdle';
+import { consumeResume, riftStartLayer } from './riftMap';
 import { soulCombatant } from './soulXP';
 
 export type FocusDescentRefusal = 'busy' | 'no-hp' | 'no-energy';
@@ -34,13 +35,13 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
     evolutionStage: prev.evolutionStage, perfectDays: prev.perfectDays, powerPoints: prev.powerPoints, harmonyPoints: prev.harmonyPoints,
     benevolencePoints: prev.benevolencePoints, degeneratedByHP: prev.degeneratedByHP, evoStatFloor: prev.evoStatFloor,
   });
-  const layer = startLayerFor(sanitizeDepthRecord(prev.dungeonDepthRecord));
+  const layer = riftStartLayer(prev);
   const reg: DungeonAway = {
     since: nowMs, seed, layer, slot: 0, hp: hpAgora({ dungeonHp: prev.dungeonHp }, nowMs), en: 0, ms: false,
     ...(focusEndsAt !== undefined && focusEndsAt > nowMs ? { until: focusEndsAt } : {}),
     player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage: prev.evolutionStage },
   };
-  return { ...paid, dungeonAway: reg };
+  return { ...consumeResume(paid), dungeonAway: reg };
 }
 
 /** A descida em andamento é a do FOCO (tem `until`)? A descida manual da masmorra nunca tem — cancelar/pausar o foco não mexe nela. */

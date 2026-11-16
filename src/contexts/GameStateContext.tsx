@@ -552,6 +552,9 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
+  /** O ponto de largada escolhido no MAPA DE ANDARES do Rift (1º andar, ímpar, de um conjunto já visitado; REGISTRO §462). Só vale uma descida: quem larga
+   *  dele o consome. O recorde NÃO desce com ele. Dono: `utils/riftMap.ts` (`rewindToSet`, `consumeResume`). */
+  dungeonResumeLayer?: number;
   /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
    *  recompensa já paga no mês }`. Ausente/velho = score 0 no mês atual. Dono: `utils/endlessRift.ts`. Só do cliente; os Créditos do
    *  top 3 são pagos pelo servidor (`functions/api/_riftPayout.js`), nunca lidos daqui. */
@@ -1533,6 +1536,10 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
         dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
           ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
+        // Ponto de largada do mapa do Rift: inteiro ímpar em [1, 999] (mesma regra de `sanitizeResumeLayer`, `utils/riftMap.ts`; inline pelo mesmo motivo).
+        dungeonResumeLayer: typeof loadedState.dungeonResumeLayer === 'number' && Number.isFinite(loadedState.dungeonResumeLayer)
+          && loadedState.dungeonResumeLayer >= 1 && loadedState.dungeonResumeLayer <= 999 && Math.floor(loadedState.dungeonResumeLayer) % 2 === 1
+          ? Math.floor(loadedState.dungeonResumeLayer) : undefined,
         // Endless Rift (M6): score mensal. Registro bom ou nada (mesma regra de `sanitizeRiftMonth`, `utils/endlessRift.ts`; inline
         // para não puxar a masmorra para o chunk de entrada). Save antigo sem o campo = score 0 do mês atual.
         riftMonth: (() => {

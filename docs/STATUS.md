@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §462)
+>
+> - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11
+ift-mapa\previas\`.
+> - **Pendente:** tile de fundo (`src/assets/soulmon/rift/mapa-tile.webp`); não visto em aparelho. **Rollback:** `git revert`.
+
 > ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §461)
 >
 > - **Feito:** `StrollScene` sem o "Pular"; bug da Feira (dois botões depois de enfrentar: "Enfrentar" dava erro, "Ver o que ele achou" entrava no combate e cancelava) corrigido na raiz (desafio feito deixava de contar como aberto, volta dada por vista, 429/409 fecham o desafio, balão/"Ver" não reabrem o combate); o mercador conta o dia (o que achou, o clã em agregado, amanhã). Linha "Stroll" turquesa da Home e o "feito" já eram do §413, agora com teste.
