@@ -35,6 +35,7 @@ import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
 import { bonusTaskGaugeBonus } from './bonusTask';
+import { weeklyBonusGaugeBonus } from './weeklyRetro';
 import { isBBStage, BB_MAX_HP } from './bbStage';
 
 /**
@@ -986,7 +987,9 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
   const specialMissionBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
   // ⭐ Tarefa bônus (13/11/2026, `utils/bonusTask.ts`): +1 ACIMA do teto diário se a tarefa bônus do dia julgado foi concluída.
   // Somada ao `specialBonus` — mesma natureza (fora do selo, do coração e de `dailyDone`) e mesmos buffs.
-  const bonusTaskGain = bonusTaskGaugeBonus((prev as any).bonusTask, prev.activities as any, yesterdayString);
+  // 🔥 + bônus de retorno da semana (`utils/weeklyRetro.ts`): mesma via, mesma natureza; expira sozinho pela janela.
+  const bonusTaskGain = bonusTaskGaugeBonus((prev as any).bonusTask, prev.activities as any, yesterdayString)
+    + weeklyBonusGaugeBonus(prev.weeklyBonus, prev.activities, yesterdayString);
   const specialBonus = specialMissionBonus + bonusTaskGain;
   const gaugeGainBase = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
   /* 🌀 Buff do Glitchtama (10/11/2026): +10% sobre o GANHO deste crédito (tarefas + missão especial), só com o buff ativo na virada.

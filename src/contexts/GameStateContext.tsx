@@ -1,5 +1,6 @@
 import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
 import { sanitizeBonusTask, type BonusTaskState } from '../utils/bonusTask';
+import { sanitizeWeeklyBonus, sanitizeStageByWeek, type WeeklyBonusState, type StageWeekEntry } from '../utils/weeklyRetro';
 import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
@@ -965,6 +966,12 @@ export interface GameState {
    * acima do teto diário, na virada (que limpa o campo).
    */
   bonusTask?: BonusTaskState;
+  /** 🔥 Bônus de retorno da semana (utils/weeklyRetro.ts, 16/11/2026): o hábito mais difícil da semana passada rende +1 Fragmento por dia concluído, de segunda a domingo. */
+  weeklyBonus?: WeeklyBonusState;
+  /** dayKey da segunda cuja retrospectiva já foi mostrada. */
+  lastWeeklyRetroDate?: string;
+  /** A forma do Soulmon no início de cada semana (últimas 3): é daqui que sai "evoluiu na semana". */
+  stageByWeek?: StageWeekEntry[];
   /** O modal de apresentação da tarefa bônus já foi visto (mostrado uma vez só). */
   bonusIntroSeen?: boolean;
   /** Meta de passos escolhida pelo jogador. Ausente = DEFAULT_STEP_GOAL (ler com `??`). */
@@ -1872,6 +1879,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         steps: hydrateSteps(loadedState.steps),
         specialMission: sanitizeSpecialMission(loadedState.specialMission),
         bonusTask: sanitizeBonusTask(loadedState.bonusTask),
+        weeklyBonus: sanitizeWeeklyBonus(loadedState.weeklyBonus),
+        lastWeeklyRetroDate: str(loadedState.lastWeeklyRetroDate),
+        stageByWeek: sanitizeStageByWeek(loadedState.stageByWeek),
         bonusIntroSeen: loadedState.bonusIntroSeen === true ? true : undefined,
         stepGoal: loadedState.stepGoal === undefined ? undefined : sanitizeStepGoal(loadedState.stepGoal),
         // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
