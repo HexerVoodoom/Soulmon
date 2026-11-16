@@ -25,6 +25,7 @@ import { Icon } from './ui/Icon';
 import { SoulFlameAnim } from './ui/SoulFlameAnim';
 import selo from '../assets/soulmon/chama-alma/selo-bonus.webp';
 import { usePrefersReducedMotion } from './ui/Viewport';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export interface WeeklyRetroModalProps {
   language: Language;
@@ -81,9 +82,11 @@ const CSS = `
 .rt-row{display:flex;align-items:center;gap:10px;min-height:32px;font-size:15px;line-height:1.3}
 .rt-row b{color:${TEAL};font-variant-numeric:tabular-nums}
 .rt-acc{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;cursor:pointer;font-size:15px;font-weight:600}
+.rt-ghost{all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;color:${TEAL};font-weight:700;font-size:15px}
 .rt-acc:focus-visible,.rt-ghost:focus-visible{outline:3px solid ${TEAL};outline-offset:2px}
 .rt-chev{transition:transform .25s}
 .rt-chev[data-open="true"]{transform:rotate(180deg)}
+.rt-list[hidden]{display:none}
 .rt-list{margin:0;padding:0 0 4px 0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:rgba(233,251,248,.9)}
 .rt-bonus{position:relative;border-radius:18px;padding:16px 16px 16px 18px;background:linear-gradient(135deg,rgba(77,240,220,.22),rgba(11,111,104,.32));
   border:1px solid ${TEAL};box-shadow:0 0 28px rgba(77,240,220,.25);display:flex;flex-direction:column;gap:8px}
@@ -142,13 +145,10 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
   const [open, setOpen] = useState(false); // accordion: fechado por padrão
   const ctaRef = useRef<HTMLButtonElement>(null);
   const timer = useRef<number | undefined>(undefined);
+  const timer2 = useRef<number | undefined>(undefined);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEffect(() => () => { window.clearTimeout(timer.current); window.clearTimeout(timer2.current); }, []);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   useEffect(() => { if (step === 'main') ctaRef.current?.focus({ preventScroll: true }); }, [step]);
 
   const tapEvo = () => {
@@ -157,7 +157,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
     setFlash(true);
     // A troca acontece no pico do brilho.
     timer.current = window.setTimeout(() => setEvoPhase('after'), 280);
-    window.setTimeout(() => setFlash(false), 700);
+    timer2.current = window.setTimeout(() => setFlash(false), 700);
   };
 
   const times = (n: number) => (isPt ? (n === 1 ? '1 vez' : `${n} vezes`) : (n === 1 ? '1 time' : `${n} times`));
@@ -175,8 +175,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
         </div>
       </div>
       {evoPhase === 'before' ? (
-        <button type="button" className="rt-ghost" onClick={tapEvo}
-          style={{ all: 'unset', cursor: 'pointer', minHeight: 44, color: TEAL, fontWeight: 700, fontSize: 15 }}>
+        <button type="button" className="rt-ghost" onClick={tapEvo}>
           {isPt ? 'Toque para ver' : 'Tap to see'}
         </button>
       ) : (
@@ -188,7 +187,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
   );
 
   const body = (
-    <div className="rt-root" role="dialog" aria-modal="true" aria-label={isPt ? 'Retrospectiva da semana' : 'Week in review'}>
+    <div ref={dialogRef} className="rt-root" role="dialog" aria-modal="true" aria-label={isPt ? 'Retrospectiva da semana' : 'Week in review'}>
       <style>{CSS}</style>
       {evo}
       {step === 'main' && (
@@ -213,7 +212,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           <div className="rt-stats rt-in" style={d(0.55)}>
             <div className="rt-stat">
               <span className="rt-num"><CountUp to={retro.totalHabitDone} reduced={reduced} delay={650} /></span>
-              <span className="rt-lab">{isPt ? 'vezes em hábitos' : 'habit check-ins'}</span>
+              <span className="rt-lab">{isPt ? (retro.totalHabitDone === 1 ? 'vez em hábitos' : 'vezes em hábitos') : (retro.totalHabitDone === 1 ? 'habit check-in' : 'habit check-ins')}</span>
             </div>
             <div className="rt-stat">
               <span className="rt-num"><CountUp to={retro.tasksDone} reduced={reduced} delay={800} /></span>
@@ -243,8 +242,8 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
                 </span>
                 <span className="rt-chev" data-open={open}><Icon name="expand_more" size={24} tone="inherit" /></span>
               </button>
-              {open && (
-                <ul id="rt-tasks" className="rt-list">
+              {(
+                <ul id="rt-tasks" className="rt-list" hidden={!open}>
                   {retro.tasks.map(t => (
                     <li key={t.id} className="rt-row" style={{ minHeight: 28 }}>
                       <Icon name="task_alt" size={18} tone="inherit" />
@@ -274,9 +273,11 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
             {isPt ? 'Nova semana, a chama já está acesa.' : 'New week, the flame is already lit.'}
           </p>
         </div>
-        <CtaButton ref={ctaRef} tone="acao" className="rt-in" style={{ ...d(1.3), marginTop: 20 }} onClick={onClose}>
-          {isPt ? 'Bora para a semana' : "Let's go, new week"}
-        </CtaButton>
+        <div className="rt-dock">
+          <CtaButton ref={ctaRef} tone="acao" className="rt-in" style={d(1.3)} onClick={onClose}>
+            {isPt ? 'Bora para a semana' : "Let's go, new week"}
+          </CtaButton>
+        </div>
         </div>
       )}
     </div>
