@@ -6,6 +6,7 @@ import { lotEntryAsks } from '../../utils/wakeToEnter';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
+import type { BitsCategory } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { DungeonKeyBadge } from './DungeonKeyBadge';
@@ -280,7 +281,7 @@ export interface AreaViewProps {
   /** §232: a base nº 1 do Soulmon combinado. */
   petBase?: string;
   /** Devolve os Bits REALMENTE creditados (teto diario aplicado); as telas de resultado mostram esse valor. */
-  onEarnPoints: (points: number) => number | void;
+  onEarnPoints: (points: number, extraCap?: number, category?: BitsCategory) => number | void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
   onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
@@ -606,7 +607,7 @@ export function AreaView(props: AreaViewProps) {
               onRunEnd={play.onRunEnd}
               onEnemyDefeated={play.onDungeonEnemyDefeated}
               onEnemySeen={play.onBestiarySeen}
-              onEarnPoints={props.onEarnPoints}
+              onEarnPoints={(pts, extra) => props.onEarnPoints(pts, extra, 'explorar')}
               rankSaveId={props.guild.saveId}
               /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
               bits={props.points}
@@ -659,7 +660,7 @@ export function AreaView(props: AreaViewProps) {
               petElement={props.petElement}
               onElementsDefeated={props.play.onElementsDefeated}
               onEnemySeen={props.play.onBestiarySeen}
-              onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('arena'); return creditado; }}
+              onEarnPoints={(pts, extra) => { const creditado = props.onEarnPoints(pts, extra, 'arena'); props.onDailyEvent?.('arena'); return creditado; }}
               onRunEnd={props.play.arena?.onRunEnd}
               ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
@@ -733,7 +734,7 @@ export function AreaView(props: AreaViewProps) {
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
+              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={(pts) => props.onEarnPoints(pts, 0, 'explorar')} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}

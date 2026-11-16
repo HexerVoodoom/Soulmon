@@ -6229,3 +6229,15 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 **Alternativa que perdeu.** Manter servir na hora e só acrescentar o modal: o dono quer o prato guardável (decidir o momento de usar o buff de 24 h). **Gatilho para rever:** jogador acumular pratos e não usar, ou pedido de teto da pastinha.
 
 **Rollback.** `git revert` do PR (só cliente). Saves: pratos já guardados como `dish:<id>` viram chave desconhecida e ficam inertes após o revert (a pastinha só os mostraria sem nome); nenhum estado intermediário foi criado antes.
+
+## §456 — Teto de Bits de atividade: 75 por categoria, além dos 150 gerais (16/11/2026, dono)
+
+**Decisão:** o teto geral diário (`MINIGAME_BITS_PER_DAY` = 150) CONTINUA; acrescenta-se **75 por categoria por dia do jogador** (`BITS_PER_CATEGORY_PER_DAY`, `utils/currencies.ts`). Categorias e fontes (funil único `handleEarnGamePoints`, `App.tsx`):
+
+| Categoria | Fontes que pagam Bits |
+|---|---|
+| `minigames` | Dino, Soul Barrage, Pedra·Papel·Tesoura, Elemental Fusion (Match-3), Eco, Zip, Selo, Picross, Troca, Patches, Revisão, Bolhas, Chama (padrão do funil: fonte sem categoria cai aqui) |
+| `explorar` | Fenda Sem Fim (DungeonGame; extra da Agulha de bússola soma ao teto da categoria), Passeio/Rogue |
+| `arena` | Duelo (ArenaGame; extra da Agulha idem) |
+
+Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; os Bits do dia completo, check-in, casa, pesadelo e pacotes seguem fora destes tetos. **Recusa suave:** o menor dos dois tetos corta só o excedente de Bits (`minigameBitsGrantedIn`); a atividade e o resto da recompensa seguem intactos, sem cobrança. **Save:** `minigameBits.cat` (aditivo, mesmo registro do dia; save antigo lê zero e a leitura tolerante `sanitizeBitsCat` é idempotente). **Servidor:** não decide Bits de atividade (só observa, §387); nada a espelhar e `_dayCounters.js` não toca Bits. **UI:** "hoje: x de 75 neste tipo de atividade" (folhas da Fenda, Salão, Mente e Duelo). **Arte:** troca das 3 artes v2 da Hexsmith (st-debuff-atk 64×64, coroa-silence e coroa-hot 96×96). **Fichas/convites:** a premissa "hoje 1 energia = 5 fichas" não bate com o código (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11); o convite de Duelo e o VIP ficaram em consulta ao dono.

@@ -9,6 +9,8 @@ import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import { ARENA_ULTIMO_DROP_MULT } from '../../utils/arenaUltimoAdversario';
 import type { Language } from '../../utils/i18n';
+import { bitsCategoryCap, minigameBitsCategoryToday } from '../../utils/currencies';
+import { playerDayKey } from '../../utils/playerDay';
 
 /**
  * DUELO (minimal-ui F5, Arena) — a porta de entrada da `ArenaGame`, a luta de
@@ -177,6 +179,10 @@ export function DueloSheet({ language, onStart, arena }: {
 }) {
   const isPt = language === 'pt-BR';
   const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
+  // §456: teto de Bits por categoria. Linha calma, sem cor de alerta; bater o teto não fecha a Arena, só para de somar Bits.
+  const gs = useGameStateOptional()?.gameState;
+  const catCap = bitsCategoryCap(0);
+  const catN = gs ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), 'arena')) : undefined;
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -224,6 +230,11 @@ export function DueloSheet({ language, onStart, arena }: {
       <button type="button" data-duelo-start onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Lutar' : 'Fight'}
       </button>
+      {catN !== undefined && (
+        <p data-bits-categoria style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
+          <span className="sm2-num">{isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}</span>
+        </p>
+      )}
     </div>
   );
 }
