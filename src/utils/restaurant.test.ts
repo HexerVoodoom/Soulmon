@@ -7,13 +7,15 @@ import { HUNGER_MAX, hungerAt, regenPoints, settleEnergy, UNIT_POINTS, energySta
 import { combinedAttrBonus, COMBAT_BONUS_CAP } from './combate/bonus';
 import { dishKey, isDishKey, serveDish } from './dishItems';
 import { dishById } from './restaurantMenu';
-import { applySpecialItem, specialRefusal } from './specialItemUse';
+import { applySpecialItem, specialRefusal, type SpecialItemState } from './specialItemUse';
 import { SPECIAL_ITEMS } from './shop';
 
 // 2026-11-02 é segunda; sem âncora o dia do jogador é o do aparelho, então usamos meio-dia local.
 const at = (iso: string) => new Date(`${iso}T12:00:00`).getTime();
 const MON = at('2026-11-02'), TUE = at('2026-11-03'), SUN = at('2026-11-08');
 
+/** CookState + a fatia de uso de item especial (o prato feito é usado por `applySpecialItem`). */
+const fullU = (): CookState & SpecialItemState => ({ ...full(), healthPoints: 5, maxHealthPoints: 5, perfectDays: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0, attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 } });
 const full = (): CookState => ({
   energyPoints: 0, evolutionStage: 'rookie',
   foodInventory: { '🥗': 9, '🧃': 9, '☕': 9, '🍚': 9, '🍎': 9, '🥩': 9, '🍭': 9, '🍕': 9 },
@@ -87,7 +89,7 @@ describe('Restaurante — cozinhar', () => {
     expect(r.bitsOrigin!.paidLeft).toBeLessThan(30);
   });
   it('buff de ATK entra pelo canal único e respeita o teto de 5%', () => {
-    const cooked = applyCook(full(), 'espetinho-de-vinha', MON).state;
+    const cooked = applyCook(fullU(), 'espetinho-de-vinha', MON).state;
     expect(cooked.buildingQuests!.materials.fang).toBe(2);
     const s = applySpecialItem(cooked, dishKey('espetinho-de-vinha'), new Date(MON)).state;
     expect(mealAttrBonus(s, MON + 1)).toEqual({ atk: 0.02 });
@@ -96,7 +98,7 @@ describe('Restaurante — cozinhar', () => {
     expect(total.atk + total.def + total.spd).toBeCloseTo(COMBAT_BONUS_CAP);
   });
   it('buff de regeneração acelera a energia só dentro da janela', () => {
-    const cooked = applyCook({ ...full(), energyPoints: 0 }, 'tigela-do-bosque', MON).state;
+    const cooked = applyCook({ ...fullU(), energyPoints: 0 }, 'tigela-do-bosque', MON).state;
     const s = applySpecialItem(cooked, dishKey('tigela-do-bosque'), new Date(MON)).state;
     const hour = 3_600_000;
     expect(regenPoints(s.hunger, MON, MON + hour, { from: MON, until: MON + 24 * hour, pct: 40 })).toBe(hour * 100 * 14 / 10);
@@ -127,32 +129,32 @@ describe('Prato como item da pastinha (16/11/2026)', () => {
     expect(new Set(ALL).size).toBe(DISHES.length);
   });
   it('usar da pastinha: consome 1, enche a fome e dá a energia (porta única `applySpecialItem`)', () => {
-    const cooked = applyCook(full(), 'ensopado-do-caldeirao', SUN).state;
+    const cooked = applyCook(fullU(), 'ensopado-do-caldeirao', SUN).state;
     const used = applySpecialItem(cooked, dishKey('ensopado-do-caldeirao'), new Date(SUN)).state;
     expect(used.foodInventory[dishKey('ensopado-do-caldeirao')]).toBeUndefined();
     expect(hungerAt(used.hunger, SUN)).toBe(HUNGER_MAX);
     expect(used.energyPoints).toBe(3);
   });
   it('a energia respeita o teto do estágio ao usar (rookie)', () => {
-    const cooked = applyCook({ ...full(), energyPoints: 0 }, 'pao-de-faisca', TUE).state;
+    const cooked = applyCook({ ...fullU(), energyPoints: 0 }, 'pao-de-faisca', TUE).state;
     const used = applySpecialItem(cooked, dishKey('pao-de-faisca'), new Date(TUE)).state;
     const max = settleEnergy(used, TUE).energyPoints;
     expect(max).toBeLessThanOrEqual(2);
   });
   it('sem o item na pastinha, usar recusa e nada muda', () => {
-    const s0 = full();
+    const s0 = fullU();
     expect(specialRefusal(s0, dishKey('salada-viva'), new Date(MON))).toBe('no-stock');
     expect(applySpecialItem(s0, dishKey('salada-viva'), new Date(MON)).state).toBe(s0);
   });
   it('dois toques no mesmo lote com 1 prato: só o primeiro serve', () => {
-    const cooked = applyCook(full(), 'salada-viva', MON).state;
+    const cooked = applyCook(fullU(), 'salada-viva', MON).state;
     const a = applySpecialItem(cooked, dishKey('salada-viva'), new Date(MON)).state;
     const b = applySpecialItem(a, dishKey('salada-viva'), new Date(MON));
     expect(b.refused).toBe('no-stock');
     expect(b.state).toBe(a);
   });
   it('buff novo substitui o anterior ao usar outro prato', () => {
-    let s = applyCook(full(), 'espetinho-de-vinha', MON).state;
+    let s = applyCook(fullU(), 'espetinho-de-vinha', MON).state;
     s = applyCook(s, 'salada-viva', MON + 1).state;
     s = applySpecialItem(s, dishKey('espetinho-de-vinha'), new Date(MON)).state;
     s = applySpecialItem(s, dishKey('salada-viva'), new Date(MON + 2)).state;

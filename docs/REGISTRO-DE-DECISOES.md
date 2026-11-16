@@ -6202,3 +6202,15 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 ## §451 — Hexsmith: arte das 6 Coroas novas e 3 selos de status (16/11/2026, dono)
 
 O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
+
+## §454 — Restaurante: o prato feito vai para a pastinha, não é servido na hora (16/11/2026, dono)
+
+**Pedido do dono.** "No Restaurante, quando faz um item, aparece um modal igual ao de quando faz poção para ter certeza que foi feito. E o item NÃO é usado instantaneamente: vai para a pasta (`foodInventory`) junto com os comidos."
+
+**Antes → depois.** Antes, `applyCook` (`restaurant.ts`) debitava os ingredientes e SERVIA o prato na hora (fome cheia + energia ou buff). Agora debita e põe `dish:<id>` em `foodInventory` (kind `dish` em `SPECIAL_ITEMS`, `utils/dishItems.ts`); fome e efeito só vêm ao USAR o item, pela porta única `specialItemUse.ts › applySpecialItem` → `serveDish` (a mesma função serve a Feira de verdade). O teto de 2 pratos por dia e as missões diária/semanal contam ao COZINHAR, como antes. Modal `PratoFeito` ("Feito!/Done!", ícone, nome, "Guardado na pastinha · você tem N", efeito, OK) no molde de `PocaoCriada`; é gesto do jogador (fora da `presentationQueue`, como a poção); vários pratos seguidos agrupam em um modal (×N).
+
+**Não mudou.** A pastinha NÃO tem teto de itens no código, então não há recusa por "cheia" (nada a inventar). A Feira (`applyFeiraDish`, prato pronto comprado) segue servindo na hora: o pedido foi só do Restaurante. Servidor: `_feiraLoja.js` só valida a compra da Feira; nada do Restaurante é validado lá, sem paridade a mudar.
+
+**Alternativa que perdeu.** Manter servir na hora e só acrescentar o modal: o dono quer o prato guardável (decidir o momento de usar o buff de 24 h). **Gatilho para rever:** jogador acumular pratos e não usar, ou pedido de teto da pastinha.
+
+**Rollback.** `git revert` do PR (só cliente). Saves: pratos já guardados como `dish:<id>` viram chave desconhecida e ficam inertes após o revert (a pastinha só os mostraria sem nome); nenhum estado intermediário foi criado antes.

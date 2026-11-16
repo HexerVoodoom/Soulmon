@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §454)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
+
 > ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
 >
 > - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.

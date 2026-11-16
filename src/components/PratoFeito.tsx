@@ -36,7 +36,7 @@ export function PratoFeito({ language, dishId, made, inFolder, onClose }: { lang
       </div>
       <p role="status" data-prato-texto className="sm2-potion-text">{texto}</p>
       <p data-prato-guardado className="sm2-potion-text" style={{ fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 400, opacity: 0.9 }}>{guardado}</p>
-      <p data-prato-efeito className="sm2-potion-text" style={{ fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 400, opacity: 0.75 }}>{effectText(d.effect, isPt)}</p>
+      <p data-prato-efeito className="sm2-potion-text" style={{ fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 400, opacity: 0.75 }}>{isPt ? 'Ao usar: ' : 'When used: '}{effectText(d.effect, isPt)}</p>
       <CtaButton ref={ok} tone="acao" width="auto" data-prato-ok onClick={onClose}>OK</CtaButton>
     </div>
   );
