@@ -33,8 +33,7 @@ import {
   HEX_ELEMENT_SLOTS, HEX_SLOTS, equipHexItem, applyServerHexForge, hexCost, hexForgeRefusal, hexItemId, hexOverrides, hexValuesOf, parseHexItem,
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
-import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
+import { HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexCrownValueCopy, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge, cloudHexRename } from '../../utils/cloudSave';
 import { HexRenameButton } from './HexRenameButton';
@@ -80,7 +79,7 @@ const ICON_COST = 28;
 /** Nome legível do VALOR de um item (elemento, família ou alcance). */
 export function hexValueName(slot: HexSlot, value: string, isPt: boolean): string {
   if (HEX_ELEMENT_SLOTS.includes(slot)) return elName(value, isPt);
-  if (slot === 'coroa') return tx(HEX_FAMILY_COPY[value as SpecialFamily], isPt);
+  if (slot === 'coroa') { const c = hexCrownValueCopy(value); return c ? tx(c, isPt) : value; }
   return tx(HEX_STRIKE_COPY[value as HexStrike], isPt);
 }
 
@@ -113,7 +112,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   const origName = (slot: HexSlot) => {
     const v = orig[slot];
     if (slot === 'luvas') return tx(HEX_UI.original, isPt);
-    if (slot === 'coroa') return HEX_FAMILY_COPY[v as SpecialFamily] ? hexValueName(slot, v, isPt) : tx(HEX_UI.original, isPt);
+    if (slot === 'coroa') return hexCrownValueCopy(v) ? hexValueName(slot, v, isPt) : tx(HEX_UI.original, isPt);
     return v ? elName(v, isPt) : tx(HEX_UI.original, isPt);
   };
 
