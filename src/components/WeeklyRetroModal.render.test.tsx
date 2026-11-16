@@ -3,7 +3,9 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { WeeklyRetroModal } from './WeeklyRetroModal';
+import { StrictMode } from 'react';
+import { WeeklyRetroModal, RETRO_FILL_MS } from './WeeklyRetroModal';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import type { WeeklyRetro } from '../utils/weeklyRetro';
 
 afterEach(cleanup);
@@ -107,69 +109,103 @@ describe('WeeklyRetroModal', () => {
     expect(screen.getByText('one-off tasks')).toBeTruthy();
   });
 
-  describe('CTA pressionar e segurar', () => {
-    const cta = () => document.querySelector('[data-cta-button][data-cta-hold]') as HTMLButtonElement;
+  describe('CTA: toque único preenche e fecha', () => {
+    const cta = () => document.querySelector('[data-cta-button][data-cta-fill]') as HTMLButtonElement;
     const setup = () => { vi.useFakeTimers(); const onClose = vi.fn(); render(<WeeklyRetroModal {...base} onClose={onClose} />); return onClose; };
     afterEach(() => { vi.useRealTimers(); });
 
-    it('texto novo, descrição por aria e clique simples não fecha', () => {
+    it('texto novo; o toque inicia o preenchimento e só fecha ao fim', () => {
       const onClose = setup();
       expect(screen.getByText('Vamos começar a semana')).toBeTruthy();
-      const desc = document.getElementById(cta().getAttribute('aria-describedby') as string);
-      expect(desc?.textContent).toMatch(/Pressione e segure/);
+      expect(cta().getAttribute('data-cta-filling')).toBeNull();
       fireEvent.click(cta());
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('soltar antes de 1,5 s cancela e volta', () => {
-      const onClose = setup();
-      fireEvent.pointerDown(cta());
-      expect(cta().getAttribute('data-cta-holding')).toBe('true');
-      act(() => { vi.advanceTimersByTime(1200); });
-      fireEvent.pointerUp(cta());
-      expect(cta().getAttribute('data-cta-holding')).toBeNull();
-      act(() => { vi.advanceTimersByTime(2000); });
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('sair do botão segurando também cancela', () => {
-      const onClose = setup();
-      fireEvent.pointerDown(cta());
-      fireEvent.pointerLeave(cta());
-      act(() => { vi.advanceTimersByTime(2000); });
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('completar o tempo dispara a ação uma vez', () => {
-      const onClose = setup();
-      fireEvent.pointerDown(cta());
-      act(() => { vi.advanceTimersByTime(1499); });
+      expect(cta().getAttribute('data-cta-filling')).toBe('true');
+      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS - 1); });
       expect(onClose).not.toHaveBeenCalled();
       act(() => { vi.advanceTimersByTime(2); });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('movimento reduzido: o CSS tira a animação do preenchimento e o JS segue exigindo segurar', () => {
-      const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8');
-      expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.sm2-cta-fill \{ transition: none; \}/);
+    it('toque duplo (ou repetido) durante o preenchimento não dispara duas vezes', () => {
       const onClose = setup();
-      fireEvent.pointerDown(cta());
-      act(() => { vi.advanceTimersByTime(500); });
-      expect(onClose).not.toHaveBeenCalled();
+      fireEvent.click(cta());
+      act(() => { vi.advanceTimersByTime(300); });
+      fireEvent.click(cta());
+      fireEvent.click(cta());
+      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS * 3); });
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('teclado: segurar Enter ou Espaço completa; soltar antes cancela; repetição do SO não reinicia', () => {
+    it('teclado: Enter e Espaço são o clique nativo do botão (mesmo comportamento)', () => {
       const onClose = setup();
+      cta().focus();
+      // o navegador transforma Enter/Espaço em `click` num <button>; o jsdom não, então simulamos esse clique
       fireEvent.keyDown(cta(), { key: 'Enter' });
-      act(() => { vi.advanceTimersByTime(800); });
-      fireEvent.keyDown(cta(), { key: 'Enter', repeat: true });
-      act(() => { vi.advanceTimersByTime(800); });
+      fireEvent.click(cta());
+      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS + 5); });
       expect(onClose).toHaveBeenCalledTimes(1);
-      fireEvent.keyDown(cta(), { key: ' ' });
-      act(() => { vi.advanceTimersByTime(700); });
-      fireEvent.keyUp(cta(), { key: ' ' });
-      act(() => { vi.advanceTimersByTime(2000); });
-      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('movimento reduzido: sem animação de preenchimento, fecha direto', () => {
+      const orig = window.matchMedia;
+      window.matchMedia = ((q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+      try {
+        const onClose = setup();
+        fireEvent.click(cta());
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(cta().getAttribute('data-cta-filling')).toBeNull();
+        const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8');
+        expect(css).toMatch(/prefers-reduced-motion: reduce\) \{ \.sm2-cta-fill \{ display: none; \} \}/);
+      } finally { window.matchMedia = orig; }
+    });
+  });
+
+  describe('instância única e fundo', () => {
+    it('duas montagens ao mesmo tempo desenham UM só diálogo, mesmo com re-render', () => {
+      const { rerender } = render(<><WeeklyRetroModal {...base} /><WeeklyRetroModal {...base} /></>);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      rerender(<><WeeklyRetroModal {...base} /><WeeklyRetroModal {...base} /></>);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
+
+    it('StrictMode (efeito duplo) também fica com um só', () => {
+      render(<StrictMode><WeeklyRetroModal {...base} /></StrictMode>);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
+
+    it('fechar e reabrir libera a vaga', () => {
+      const { unmount } = render(<WeeklyRetroModal {...base} />);
+      unmount();
+      render(<WeeklyRetroModal {...base} />);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
+
+    it('um diálogo que monta DEPOIS não torna a retrospectiva inerte (senão ela trava sem scroll e sem CTA)', () => {
+      function Outro() {
+        const ref = useDialogA11y<HTMLDivElement>(true, () => {});
+        return <div ref={ref} role="dialog" aria-modal="true" aria-label="outro">x</div>;
+      }
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      render(<WeeklyRetroModal {...base} />);
+      const { unmount } = render(<Outro />, { container: host });
+      const retroRoot = document.querySelector('[data-retro-dialog]') as HTMLElement;
+      expect((retroRoot as HTMLElement & { inert?: boolean }).inert).not.toBe(true);
+      expect(retroRoot.hasAttribute('data-sm2-inert')).toBe(false);
+      unmount();
+      host.remove();
+    });
+
+    it('o conteúdo rola dentro do modal e o CTA fica fora da área rolável (nada atrás dele)', () => {
+      render(<WeeklyRetroModal {...base} />);
+      const scroll = document.querySelector('[data-retro-scroll]') as HTMLElement;
+      const dock = document.querySelector('[data-retro-dock]') as HTMLElement;
+      expect(scroll.contains(document.querySelector('[data-retro-card]'))).toBe(true);
+      expect(scroll.contains(dock)).toBe(false);
+      expect(dock.querySelector('[data-cta-button]')).toBeTruthy();
+      const css = document.querySelector('style')?.textContent ?? '';
+      expect(css).toMatch(/\.rt-scroll\{[^}]*overflow-y:auto/);
+      expect(css).toMatch(/\.rt-root\{position:fixed;top:0;right:0;bottom:0;left:0;height:100vh;height:100dvh/);
     });
   });
 });

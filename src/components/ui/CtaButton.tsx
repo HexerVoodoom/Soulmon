@@ -1,4 +1,5 @@
-import { forwardRef, useCallback, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type PointerEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
+import { usePrefersReducedMotion } from './Viewport';
 
 /**
  * Botão principal do jogo (CTA, 12/11/2026, pedido do dono): miolo turquesa escuro em moldura de canos de cobre com cipó nas pontas
@@ -19,75 +20,55 @@ export interface CtaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
    */
   tone?: 'padrao' | 'acao';
   /**
-   * PRESSIONAR E SEGURAR (16/11/2026, retrospectiva semanal): o botão só dispara `onHoldComplete` depois de `holdMs` com o dedo/mouse/Enter/Espaço
-   * pressionados; um preenchimento turquesa com brilho corre da esquerda para a direita (`.sm2-cta-fill`). Soltar antes cancela e volta.
-   * O clique simples NÃO faz nada neste modo (de propósito: é a confirmação). Com `prefers-reduced-motion` não há animação de preenchimento
-   * (só um estado fixo enquanto segura), mas continua exigindo segurar. `holdHint` é a instrução lida por leitor de tela (aria-describedby).
+   * PREENCHER AO TOCAR (16/11/2026, retrospectiva semanal): um toque normal (clique, toque, Enter ou Espaço) dispara um preenchimento
+   * turquesa com brilho que corre da esquerda para a direita em `fillMs`; ao completar chama `onFillComplete`. Toques repetidos durante o
+   * preenchimento são ignorados (a ação dispara uma vez só). Com `prefers-reduced-motion` não há animação: chama `onFillComplete` direto.
+   * `onClick` (se vier) roda no primeiro toque. Visual em `.sm2-cta-fill` (`index.css`).
    */
-  holdMs?: number;
-  onHoldComplete?: () => void;
-  holdHint?: string;
+  fillMs?: number;
+  onFillComplete?: () => void;
 }
 
-/** Pressionar-e-segurar: estado de "segurando" + temporizador, para ponteiro e teclado. */
-function useHold(ms: number | undefined, onComplete: (() => void) | undefined) {
-  const [holding, setHolding] = useState(false);
+/** Preenchimento ao toque: estado "preenchendo" + temporizador; trava toques repetidos. */
+function useFill(ms: number | undefined, onComplete: (() => void) | undefined) {
+  const reduced = usePrefersReducedMotion();
+  const [filling, setFilling] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const active = useRef(false);
   const cb = useRef(onComplete);
   cb.current = onComplete;
-  const cancel = useCallback(() => {
-    window.clearTimeout(timer.current);
-    active.current = false;
-    setHolding(false);
-  }, []);
   const start = useCallback(() => {
-    if (!ms || active.current) return;
+    if (!ms || active.current) return false;
     active.current = true;
-    setHolding(true);
-    timer.current = window.setTimeout(() => {
-      active.current = false;
-      setHolding(false);
-      cb.current?.();
-    }, ms);
-  }, [ms]);
+    if (reduced) { cb.current?.(); return true; }
+    setFilling(true);
+    timer.current = window.setTimeout(() => { cb.current?.(); }, ms);
+    return true;
+  }, [ms, reduced]);
   useEffect(() => () => window.clearTimeout(timer.current), []);
-  return { holding, start, cancel };
+  return { filling, start };
 }
 
 /** `ref` chega no `<button>` (devolver o foco ao fechar um diálogo aberto por ele). */
-export const CtaButton = forwardRef<HTMLButtonElement, CtaButtonProps>(function CtaButton({ width = 'full', tone = 'padrao', holdMs, onHoldComplete, holdHint, className, type = 'button', children, onClick, onPointerDown, onPointerUp, onPointerLeave, onPointerCancel, onKeyDown, onKeyUp, onBlur, onContextMenu, style, ...rest }, ref) {
-  const hint = useId();
-  const hold = useHold(holdMs, onHoldComplete);
-  if (!holdMs) {
+export const CtaButton = forwardRef<HTMLButtonElement, CtaButtonProps>(function CtaButton({ width = 'full', tone = 'padrao', fillMs, onFillComplete, className, type = 'button', children, onClick, style, ...rest }, ref) {
+  const fill = useFill(fillMs, onFillComplete);
+  if (!fillMs) {
     return (
-      <button ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} className={`sm2-cta${className ? ` ${className}` : ''}`} style={style} onClick={onClick}
-        onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerLeave={onPointerLeave} onPointerCancel={onPointerCancel} onKeyDown={onKeyDown} onKeyUp={onKeyUp} onBlur={onBlur} onContextMenu={onContextMenu} {...rest}>
+      <button ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} className={`sm2-cta${className ? ` ${className}` : ''}`} style={style} onClick={onClick} {...rest}>
         <span className="sm2-cta-label">{children}</span>
       </button>
     );
   }
-  const isHoldKey = (e: KeyboardEvent) => e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar';
   return (
     <button
-      ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} data-cta-hold data-cta-holding={hold.holding ? 'true' : undefined}
-      className={`sm2-cta${className ? ` ${className}` : ''}`} style={{ ...style, ['--sm2-hold-ms' as string]: `${holdMs}ms` }}
-      aria-describedby={holdHint ? hint : undefined}
-      // o clique simples não confirma: a confirmação é segurar (o clique que o navegador sintetiza no soltar é ignorado)
-      onClick={e => e.preventDefault()}
-      onPointerDown={(e: PointerEvent<HTMLButtonElement>) => { onPointerDown?.(e); if (((e as { button?: number }).button ?? 0) === 0) hold.start(); }}
-      onPointerUp={e => { onPointerUp?.(e); hold.cancel(); }}
-      onPointerLeave={e => { onPointerLeave?.(e); hold.cancel(); }}
-      onPointerCancel={e => { onPointerCancel?.(e); hold.cancel(); }}
-      onContextMenu={e => { onContextMenu?.(e); e.preventDefault(); }}
-      onKeyDown={e => { onKeyDown?.(e); if (isHoldKey(e)) { e.preventDefault(); if (!e.repeat) hold.start(); } }}
-      onKeyUp={e => { onKeyUp?.(e); if (isHoldKey(e)) { e.preventDefault(); hold.cancel(); } }}
-      onBlur={e => { onBlur?.(e); hold.cancel(); }}
+      ref={ref} type={type} data-cta-button data-cta-width={width} data-cta-tone={tone} data-cta-fill data-cta-filling={fill.filling ? 'true' : undefined}
+      className={`sm2-cta${className ? ` ${className}` : ''}`} style={{ ...style, ['--sm2-fill-ms' as string]: `${fillMs}ms` }}
+      aria-busy={fill.filling || undefined}
+      onClick={e => { if (fill.start()) onClick?.(e); }}
       {...rest}
     >
       <span className="sm2-cta-fill" aria-hidden="true" />
       <span className="sm2-cta-label">{children}</span>
-      {holdHint && <span id={hint} className="sm2-cta-hint-sr">{holdHint}</span>}
     </button>
   );
 });
