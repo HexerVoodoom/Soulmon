@@ -45,7 +45,7 @@ describe('Restaurante — cozinhar', () => {
     const s = applyCook(full(), 'cha-de-orvalho', MON).state;
     expect(s.foodInventory['☕']).toBe(8);
     expect(s.essences!.agua).toBe(7);
-    expect(s.gamePoints).toBe(485);
+    expect(s.gamePoints).toBe(500 - 23); // Chá de Orvalho: 15 × 1,5 = 23 Bits (§451)
     expect(hungerAt(s.hunger, MON)).toBe(HUNGER_MAX);
     expect(s.energyPoints).toBe(2);
   });
@@ -80,7 +80,7 @@ describe('Restaurante — cozinhar', () => {
   it('buff de regeneração acelera a energia só dentro da janela', () => {
     const s = applyCook({ ...full(), energyPoints: 0 }, 'tigela-do-bosque', MON).state;
     const hour = 3_600_000;
-    expect(regenPoints(s.hunger, MON, MON + hour, { from: MON, until: MON + 24 * hour, pct: 40 })).toBe(UNIT_POINTS * 14 / 10);
+    expect(regenPoints(s.hunger, MON, MON + hour, { from: MON, until: MON + 24 * hour, pct: 40 })).toBe(hour * 100 * 14 / 10);
     const after = settleEnergy(s, MON + hour);
     expect(after.energyPoints).toBe(1);
     expect(energyStatus(after, MON + hour).msToNext).toBeLessThan(hour);

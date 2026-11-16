@@ -6185,6 +6185,19 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 **Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.
 
+## §453 — Rift é o sumidouro de energia: sem limite diário, regeneração mais lenta, Faísca e pratos de energia mais raros/caros (16/11/2026, dono)
+
+**Pedido do dono.** Ele lembrou que a descida idle do Rift TEM A FUNÇÃO DE GASTAR ENERGIA. Decisões em modal: (1) REMOVER o limite diário de 30 lutas = 5 andares; (2) regeneração de energia mais lenta; (3) poções de energia mais raras e mais caras.
+
+**Revoga (parte) o §441.** A parte "limite diário de 30 lutas = 5 andares" do §441 sai: `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday`, a recusa `'daily-limit'` (`layerRefusal`/`spendLayer`, `focusDescentRefusal`), o fim `'daily'` do `dungeonAway`, "O Rift descansa até amanhã" e o "hoje: x de 5 andares" do lobby. FICA do §441: sem teto de profundidade por Lv/Vínculo. O Rift é INFINITO (só o fim da escada, camada 999); quem freia é a ENERGIA (`DUNGEON_ENERGY_PER_LAYER` = 1 por andar). **Por quê:** com teto por dia a energia sobrava e o jogo perdia o sumidouro; com a energia como freio ela volta a ter valor, e o texto de energia esgotada segue calmo (nunca custa coração). O contador `dungeonDaily {day, layers}` fica no save como ESTATÍSTICA, sem teto (leitura tolerante, sem migração; um contador com 5 ou mais de hoje não bloqueia mais nada; o lobby mostra "hoje: N andares").
+
+**Regeneração.** `ENERGY_REGEN_MINUTES` de 60 para **80 min** por unidade a 100% de fome (uma constante só, `hunger.ts`; faixas de fome 100/50/0% e o ×1,5 dormindo seguem). Efeito: 1 unidade a cada 80 min bem alimentado (160 mal alimentado; 53 min dormindo). `UNIT_POINTS` deriva da constante. O servidor NÃO espelha o ritmo (o push "energia cheia" usa o tempo que o cliente calcula), então não há paridade a ajustar. Save: o `carry` gravado numa unidade menor é convertido em unidades inteiras na primeira leitura (já era idempotente).
+
+**Poções e itens que enchem energia (antes → depois).** Só existem DUAS fontes de item: a Faísca de Alma (único item de energia; cai da Masmorra, sem loja) e os 3 pratos de energia do Restaurante (comprados com Bits, espelhados na Feira). Drop da Faísca: 4% → **2%** por inimigo (`SPARK_DROP_CHANCE`); pratos ×1,5 arredondado (`ENERGY_DISH_PRICE_MULT`): Chá de Orvalho e Pão de Faísca 15 → **23** Bits, Ensopado do Caldeirão 40 → **60** (a escada +2 < +3 se mantém), espelho em `functions/api/_feiraLoja.js`. Sem sorteio novo. Não são "poção" e ficaram como estão: energia do Pesadelo vencido (por raridade), do Refúgio (1×/dia), do Bom Sonho e o enchimento ao subir de nível.
+
+**Alternativa que perdeu.** Manter o limite diário e só encarecer a energia: o dono prefere o Rift sem teto, porque o limite escondia o custo real. **Gatilho para rever:** retenção da Fenda cair, ou jogador de foco ficar sem energia na maior parte do dia (80 min foi o número do dono; 60 era o anterior). **Falsifica a aposta:** energia ainda sobrando no fim do dia para a maioria dos jogadores.
+
+**Rollback.** `git revert` do PR: só cliente e `_feiraLoja.js`; saves compatíveis nos dois sentidos.
 
 ## §451 — Hexsmith: arte das 6 Coroas novas e 3 selos de status (16/11/2026, dono)
 
