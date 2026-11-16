@@ -57,6 +57,7 @@ import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/or
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
+import { sanitizeEvocacao, type EvocacaoPorEstagio } from '../utils/companheiroInvocado';
 import { sanitizeManifestacao, type Manifestacao } from '../utils/soulProfile/ficha/manifestacaoSave';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
@@ -459,6 +460,10 @@ export interface GameState {
    *  `soulmonSkills`: determinístico pela identidade, recomputável só de um
    *  perfil que não vai à nuvem. Decisão 2 do PLANO-ORACULO.md §9. */
   soulmonCompanheiro?: CompanheiroVisivel;
+  /** Companheiro invocado (16/11/2026, PR 1, atrás da flag `COMPANHEIRO_INVOCADO`): por estágio, se a forma é de um evocador
+   *  (arquétipo da lista OU escola dominante = Evocação) e o id do arquétipo de origem. Cache ADITIVO, primeiro valor vence
+   *  (`migrarEvocacao`); ausente = nada decidido ainda. Dono: `utils/companheiroInvocado.ts`. Rollback: ignorar o campo. */
+  soulmonEvocacao?: EvocacaoPorEstagio;
   /** Nome do especial escolhido pelo jogador (público; `''` = padrão). O servidor filtra e limita a troca a 1/semana
    *  (`functions/api/_especialNomeRegra.js`); este campo reflete a resposta dele. `especialNomeAt` = quando o servidor aceitou. */
   especialNome?: string;
@@ -1685,6 +1690,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           if (typeof v.id !== 'string' || typeof v.nome?.pt !== 'string' || typeof v.nome?.en !== 'string') return undefined;
           return { id: v.id, nome: { pt: v.nome.pt, en: v.nome.en } };
         })(),
+        soulmonEvocacao: sanitizeEvocacao(loadedState.soulmonEvocacao),
         soulmonManifestacao: sanitizeManifestacao(loadedState.soulmonManifestacao),
         especialNome: typeof loadedState.especialNome === 'string' ? loadedState.especialNome.slice(0, 20) : undefined,
         especialNomeAt: typeof loadedState.especialNomeAt === 'number' && Number.isFinite(loadedState.especialNomeAt) ? loadedState.especialNomeAt : undefined,
