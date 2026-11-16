@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — O Passeio paga na hora (`feat/stroll-imediato`, REGISTRO §413)
+>
+> - **Feito:** timer de 30 min removido; escolher o passeio fecha o modal e sobe "Tarefa criada"; a linha da Home vira "Stroll" (turquesa) + o nome, com "Done"; NPC e Home concluem pelo mesmo `applyStrollNow` (cena + região + achado + avistado + Vínculo na hora, 1×; `crossings.sceneDay` evita repetir na virada). Contador de passos na mesma linha do hábito, em turquesa; adotar o hábito abre o modal 3/5/7/10 mil.
+> - **Migração:** passeio feito antes (sem `sceneDay`) segue com a cena na virada; Resgatar só para esse caso.
+> - **Não visto em tela:** sem build/emulador; coberto por testes de unidade e render. Linha R-32 ("Fiz não abre nada na hora") revista pelo dono.
 > ## 16/11/2026 — Janela de abertura de 1,2 s no Pesadelo (`feat/pesadelo-janela`, REGISTRO §430)
 >
 > - **Feito:** no começo de cada luta do Pesadelo o inimigo só golpeia a partir de 1,2 s (`NIGHTMARE_OPENING_WINDOW_S`, `src/utils/dungeonFight.ts`; opção `foeOpeningDelay` do núcleo `groupFightSteps`). Cliente e simulação leem o mesmo valor via `nightmareFight().options`. Chip "Torça já!/Cheer now!" na tela durante a janela.

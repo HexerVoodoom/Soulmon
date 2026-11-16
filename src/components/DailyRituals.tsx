@@ -490,10 +490,11 @@ export function DailyRituals({
     const recurso = recursoDaAtividade(activity);
     const predio = predioDoRecurso(recurso);
     const irLa = irLaLabel(recurso, language);
-    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança, embaixo); journaling/foco: UMA SETA turquesa no FIM
-       da linha, sem texto (§365, 14/11/2026), com o `irLaLabel` no nome acessível. */
+    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança), NA MESMA LINHA do nome, logo na frente e em turquesa
+       (REGISTRO §413, 16/11/2026; antes ia embaixo, em cinza); journaling/foco: UMA SETA turquesa no FIM da linha, sem texto (§365,
+       14/11/2026), com o `irLaLabel` no nome acessível. */
     const contador = recurso === 'steps' && stepsInfo
-      ? <span data-habit-link="steps" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
+      ? <span data-habit-link="steps">{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
       : undefined;
     const acao = recurso !== 'steps' && predio && irLa && onGoToBuilding
       ? { label: irLa, kind: recurso, onClick: () => onGoToBuilding(predio) }
@@ -502,7 +503,7 @@ export function DailyRituals({
       <RitualRow
         key={activity.id}
         flipKey={`h:${activity.id}`}
-        below={contador}
+        inline={contador}
         action={acao}
         kind="habit"
         name={activity.name}

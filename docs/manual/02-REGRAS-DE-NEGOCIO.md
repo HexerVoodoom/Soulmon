@@ -3833,6 +3833,11 @@ stepsGoalProgress(steps, goal = DEFAULT_STEP_GOAL) → 0..1 (meta inválida → 
 readStepsToday(now, previous) → StepsRecord | null   ← null NUNCA é 0
 ```
 
+**Hábito de caminhar na Home (REGISTRO §413, 16/11/2026):** o contador ("N de M passos", `passosLinha`) fica NA MESMA LINHA do nome, logo na
+frente e em turquesa (`--sm2-primary-ink`; `RitualRow` › `inline`; antes ia embaixo, em cinza); e **adotar o hábito de caminhar**
+(qualquer item do catálogo com recurso `steps`, por `commitHabitCreate`) abre o modalzinho `StepGoalModal` com **3.000 / 5.000 / 7.000 /
+10.000** (`STEP_GOAL_OPTIONS`); escolher grava `stepGoal` (a mesma meta das Configurações), fechar não muda nada.
+
 `DEFAULT_STEP_GOAL` = 7000 (`src/utils/steps.ts`), referência de caminhada
 regular e não meta médica. O único formato persistido é o AGREGADO
 (`steps?: StepsRecord { date, baseline, today }`) — nunca a série bruta, nunca
@@ -4570,20 +4575,25 @@ Cada ícone **some** quando não há nada a fazer nem a entregar ("?" vence "!",
 **EXCEÇÃO: o Passeio fica com o NPC (decisão do dono, 08/10/2026, "Stroll fica com o NPC").**
 A experiência inteira do Passeio — as três propostas, a escolha de região/destino, o card da
 missão, o Registro/Logbook, "abre amanhã" — vive na folha do lote `exploracao:passeio`
-(`PasseioSheet`, NPC Lisel), exatamente como era. A Home só lista a LINHA **"Take a stroll" /
-"Faça um passeio"** (`strollEntries`, seção Hoje): aponta ("!"), fica pronta ("?" + **Claim /
-Resgatar**, única ação) quando o passeio foi concluído no NPC hoje, e resgatada. **O Claim é só
-RECIBO**: o pagamento (Marcos, região guardada, viagem da noite) sai no `markDone` do NPC; o
-Claim grava `crossings.claimDay` (`claimStroll`, idempotente por dia do jogador — a 2ª chamada
-devolve o mesmo objeto) e não paga nada de novo. As OUTRAS missões (semanais, Primeiro
-dia) continuam só no menu.
+(`PasseioSheet`, NPC Lisel). A Home lista a LINHA do Passeio (`strollEntries`, seção Hoje): sem passeio escolhido
+ela só aponta **"Take a stroll" / "Faça um passeio"** ("!"); **escolhido**, vira **"Stroll" / "Passeio" em turquesa
+(`--sm2-primary-ink`) + o nome do passeio** (`travessiaTitle`) e ganha um **"Done / Feito"** no próprio cartão.
 
-**Passeio leva um tempo.** Depois de pegar a missão do Passeio, o botão do card no NPC
-(**"Done · mm:ss" / "Concluir · mm:ss"**, desabilitado) só abre após `STROLL_MIN_MINUTES` (30,
-`types/travessias.ts`, dono único); a linha da Home só aponta até o "Concluir" acontecer. O instante de partida é o `pickAt` que já mora no save
-(`crossings`, sincroniza com a nuvem; `null` = save antigo, sem espera). `markDone`
-reconfere a espera sobre o `prev` (`strollWaitMs`). O servidor não valida conclusão de
-Travessia, então não há espelho. Sem cobrança no texto.
+**Concluir paga NA HORA (REGISTRO §413, 16/11/2026; antes a cena e o resto esperavam a virada do dia).** O "Concluir" do
+NPC e o "Done" da linha da Home chamam o MESMO `concluirPasseio` do `App` → `applyStrollNow`
+(`src/utils/strollNow.ts`, pura): `markDone` + `settleNight` (a região guardada abre agora, no máximo uma por dia) +
+achado no diário + Soulmon avistado no Drive (`bestiary`) + `claimDay`/`sceneDay` = o dia + Vínculo/missão
+(`bumpDailyIn 'passeio'`) + `first-stroll`; em seguida abre a `StrollScene` (a cena do resumo, `StrollNowScene`).
+**Idempotente:** `markDone` devolve o mesmo estado no mesmo dia, então marcar pelas duas portas, ou duas vezes, paga e
+mostra a cena UMA vez; `sceneDay` faz o resumo da noite NÃO repetir a cena nem sortear outro avistado (o achado é o mesmo que
+a noite acharia, pois a viagem da missão não depende de como o dia rendeu). **Migração:** save com passeio feito antes
+desta regra tem `sceneDay` ausente → a cena segue na virada do dia, como sempre foi; o **Resgatar** da linha só sobrevive
+para esse caso (`ready`: feito sem recibo, `claimStroll`, só recibo). **Escolher** a missão fecha a folha do NPC e sobe
+o aviso **"Tarefa criada" / "Task created"** no topo (`TaskCreatedToast`, molde da tag "Tarefa").
+
+**O timer de 30 min SAIU** (`STROLL_MIN_MINUTES`/`strollWaitMs` removidos): o "Concluir" abre assim que a missão é escolhida.
+A trava de abuso que existe é a de sempre: **1 "Fiz" por dia** (`doneDay`), 1 região aberta por dia, Marcos +1/dia. O
+servidor não valida conclusão de Travessia, então não há espelho nem `pendingOpId`.
 
 **Dono.** `src/utils/buildingQuests.ts` (tabela prédio→material, estado, regra, marcas,
 higienização) · fiação em `src/App.tsx` (`visitarPredio`/`resgatarPredio`) · UI em

@@ -1,15 +1,16 @@
 import type { Language } from '../../utils/i18n';
 import type { CrossingsState } from '../../types/travessias';
-import { strollLineState } from '../../utils/travessiasSave';
+import { missionLive, strollLineState } from '../../utils/travessiasSave';
+import { travessiaTitle } from '../../utils/travessiaTitles';
+import { sm2Button } from '../form/FormKit';
 import { ClaimButton, MissionCard, type MissionEntry } from './MissionCard';
 
 /**
- * A LINHA "Take a stroll" do menu de Missões da Home (07/10/2026, pedido do dono: "Stroll fica com o NPC!").
- * O Passeio inteiro — propostas, card, relógio de 30 min, "Concluir" — mora no lote do Passeio (NPC Lisel);
- * aqui o cartão só APONTA ("!"), fica PRONTO ("?" + Resgatar) quando o passeio foi concluído lá hoje, e depois
- * mostra "Resgatada". Não abre o `PasseioSheet`, não tem timer. O Resgatar é só o recibo do dia
- * (`claimStroll`): o pagamento já saiu no "Concluir" do NPC e não se paga duas vezes.
- * Desde 14/10/2026 é um CARTÃO (`MissionCard`, REGISTRO §62), como todas as missões da folha.
+ * A LINHA "Stroll" do menu de Missões da Home (07/10/2026, "Stroll fica com o NPC"; REGISTRO §413, 16/11/2026).
+ * A ESCOLHA do passeio mora no lote do Passeio (NPC Lisel). Escolhido, a linha vira "Stroll" em turquesa (token `primary-ink`)
+ * e, na frente, qual é o passeio; um "Done" aqui conclui pelo MESMO caminho do "Concluir" do NPC (`onDone`): a cena e as
+ * recompensas saem na hora, uma vez só. Sem passeio escolhido, a linha só APONTA ao NPC. O Resgatar sobrevive só para o
+ * passeio feito ANTES desta regra e ainda sem recibo (`ready`): é o recibo do dia (`claimStroll`), não paga nada.
  */
 export interface StrollLineProps {
   language: Language;
@@ -17,15 +18,29 @@ export interface StrollLineProps {
   /** Dia do JOGADOR (`AAAA-MM-DD`). */
   todayKey: string;
   onClaim: () => void;
-  /** Pedido do dono (11/10/2026): tocar em "Faça um passeio" leva ao PRÉDIO do Passeio. */
+  /** Concluir o passeio escolhido, direto da linha. */
+  onDone?: () => void;
+  /** Pedido do dono (11/10/2026): tocar na linha leva ao PRÉDIO do Passeio. */
   onGo?: () => void;
 }
 
 /** A entrada do Passeio para a lista unificada da aba Diárias (`DailyMissionBoard`). */
-export function strollEntries({ language, crossings, todayKey, onClaim, onGo }: StrollLineProps): MissionEntry[] {
+export function strollEntries({ language, crossings, todayKey, onClaim, onDone, onGo }: StrollLineProps): MissionEntry[] {
   const isPt = language === 'pt-BR';
   const st = strollLineState(crossings, todayKey);
   const state = st === 'claimed' ? 'claimed' : st === 'ready' ? 'ready' : 'open';
+  const escolhido = crossings.active && (st !== 'point' || missionLive(crossings, todayKey, Date.now()))
+    ? travessiaTitle(crossings.active.challenge, isPt)
+    : null;
+  // Sem passeio escolhido a linha só aponta, como sempre; escolhido, vira "Stroll" em turquesa + qual é o passeio.
+  const title = escolhido
+    ? (
+      <>
+        <span data-stroll-word style={{ color: 'var(--sm2-primary-ink)' }}>{isPt ? 'Passeio' : 'Stroll'}</span>
+        {` · ${escolhido}`}
+      </>
+    )
+    : (isPt ? 'Faça um passeio' : 'Take a stroll');
   return [{
     key: 'stroll',
     state,
@@ -35,11 +50,14 @@ export function strollEntries({ language, crossings, todayKey, onClaim, onGo }: 
         language={language}
         attrs={{ 'data-stroll-line': '', 'data-status': st }}
         status={state}
-        title={isPt ? 'Faça um passeio' : 'Take a stroll'}
-        desc={isPt ? 'A aventura acontece no lote do Passeio.' : 'The adventure happens at the Stroll lot.'}
+        title={title}
+        desc={escolhido ? undefined : (isPt ? 'A aventura acontece no lote do Passeio.' : 'The adventure happens at the Stroll lot.')}
         onGo={onGo}
         goAttr="data-stroll-go"
         action={<ClaimButton language={language} attrs={{ 'data-claim': 'stroll' }} onClick={onClaim} />}
+        openAction={escolhido && onDone
+          ? <button type="button" data-stroll-done style={sm2Button('primary', false, 'sm')} onClick={onDone}>{isPt ? 'Feito' : 'Done'}</button>
+          : undefined}
       />
     ),
   }];

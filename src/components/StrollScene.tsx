@@ -39,6 +39,12 @@ export interface StrollSceneProps {
   language: Language;
 }
 
+/** O rodapé dos botões: UMA posição para todas as fases (REGISTRO §413). */
+const dock: CSSProperties = {
+  position: 'absolute', left: 16, right: 16, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', zIndex: 4,
+  maxWidth: 420, margin: '0 auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 8,
+};
+
 type Phase = 'intro' | 'notice' | 'pan-out' | 'found' | 'pan-back' | 'back';
 
 const PAN_MS = 1400;
@@ -125,29 +131,18 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
         {discovery && <ScenePet src={discovery.sprite} xPct={SCENE_FOUND_X} size={petSize} trackH={trackH} label={discovery.name} data-scene-pet="found" />}
       </div>
 
-      {discovery && phase !== 'back' && (
-        <button type="button" data-scene-skip onClick={skip}
-          style={{ ...sm2Button('outline', false, 'sm'), backgroundColor: 'var(--sm2-surface)', position: 'absolute', zIndex: 4, right: 16, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
-          {isPt ? 'Pular' : 'Skip'}
-        </button>
-      )}
-
+      {/* Texto no topo, BOTÕES SEMPRE EMBAIXO (REGISTRO §413): em toda fase o botão principal ocupa o mesmo lugar, no rodapé, e o
+          "Pular" fica logo abaixo dele — nada de botão no topo nem solto no canto. */}
       {phase === 'intro' && (
         <div data-scene-card="intro" style={topCard}>
           <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{title}</p>
           <StrollFind adventure={adventure} isNew={adventureIsNew} stroll={stroll} language={language} />
-          <button type="button" data-scene-next="intro" autoFocus onClick={goOnFromIntro} style={{ ...sm2Button('primary'), width: '100%' }}>
-            {discovery ? (isPt ? 'Continuar' : 'Continue') : finishLabel}
-          </button>
         </div>
       )}
 
       {phase === 'notice' && (
         <div data-scene-card="notice" role="status" style={topCard}>
           <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{isPt ? 'Espera… tem alguma coisa ali.' : 'Wait… there is something over there.'}</p>
-          <button type="button" data-scene-next="notice" autoFocus onClick={() => setPhase('pan-out')} style={{ ...sm2Button('primary'), width: '100%' }}>
-            {isPt ? 'Olhar' : 'Look'}
-          </button>
         </div>
       )}
 
@@ -158,13 +153,32 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
           <p style={{ ...sm2Hint, margin: 0 }}>
             {dexElementName(discovery.element, isPt) ?? discovery.element}{' · '}{isPt ? 'Entrou no Drive.' : 'Added to the Drive.'}
           </p>
-          <button type="button" data-scene-next="found" autoFocus onClick={confirmDiscovery} style={{ ...sm2Button('primary'), width: '100%' }}>OK</button>
         </div>
       )}
 
-      {phase === 'back' && (
-        <div data-scene-card="back" style={{ ...topCard, top: 'auto', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
-          <button type="button" data-scene-next="back" autoFocus onClick={onGoHome ?? onFinish} style={{ ...sm2Button('primary'), width: '100%' }}>{isPt ? 'Voltar para casa' : 'Back home'}</button>
+      {(phase === 'intro' || phase === 'notice' || phase === 'found' || phase === 'back') && (
+        <div data-scene-dock style={dock}>
+          {phase === 'intro' && (
+            <button type="button" data-scene-next="intro" autoFocus onClick={goOnFromIntro} style={{ ...sm2Button('primary'), width: '100%' }}>
+              {discovery ? (isPt ? 'Continuar' : 'Continue') : finishLabel}
+            </button>
+          )}
+          {phase === 'notice' && (
+            <button type="button" data-scene-next="notice" autoFocus onClick={() => setPhase('pan-out')} style={{ ...sm2Button('primary'), width: '100%' }}>
+              {isPt ? 'Olhar' : 'Look'}
+            </button>
+          )}
+          {phase === 'found' && discovery && (
+            <button type="button" data-scene-next="found" autoFocus onClick={confirmDiscovery} style={{ ...sm2Button('primary'), width: '100%' }}>OK</button>
+          )}
+          {phase === 'back' && (
+            <button type="button" data-scene-next="back" autoFocus onClick={onGoHome ?? onFinish} style={{ ...sm2Button('primary'), width: '100%' }}>{isPt ? 'Voltar para casa' : 'Back home'}</button>
+          )}
+          {discovery && phase !== 'back' && (
+            <button type="button" data-scene-skip onClick={skip} style={{ ...sm2Button('outline'), backgroundColor: 'var(--sm2-surface)', width: '100%' }}>
+              {isPt ? 'Pular' : 'Skip'}
+            </button>
+          )}
         </div>
       )}
     </div>

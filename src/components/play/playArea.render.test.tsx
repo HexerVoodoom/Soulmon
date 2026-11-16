@@ -260,9 +260,10 @@ describe('Exploração — Zeph e a Masmorra', () => {
 
 describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica com o NPC")', () => {
   const DIA = '2026-10-07';
+  const onPicked = vi.fn();
   function Viva({ language = 'en-US' as 'en-US' | 'pt-BR' }) {
     const [c, set] = useState<CrossingsState>(CROSSINGS_EMPTY);
-    return <PlayAreaView {...props({ language, todayKey: DIA } as Partial<PlayProps>)} passeio={{ crossings: c, onChange: f => set(f), seed: 'seed' }} />;
+    return <PlayAreaView {...props({ language, todayKey: DIA } as Partial<PlayProps>)} passeio={{ crossings: c, onChange: f => set(f), seed: 'seed', onPicked }} />;
   }
   it('a folha do lote traz o Passeio INTEIRO (três propostas, escolha) com Lisel falando; sem texto que aponta para a Home', async () => {
     const { container, getByRole } = renderWithCss(<Viva />);
@@ -273,14 +274,16 @@ describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica co
     expect(folha.querySelector('[data-passeio-pointer]')).toBeNull();
     expect(folha.textContent).not.toMatch(/Missions menu|menu de Missões/);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Lisel');
-    // escolher uma proposta mostra o card da missão com o botão de concluir travado pelo relógio
+    // REGISTRO §413: escolher fecha a folha e avisa o App ("Tarefa criada"); reabrindo o NPC, a missão está lá e o "Concluir" já abre (sem timer)
     fireEvent.click(folha.querySelector('[data-travessia-card] [data-travessia-abrir]')!);
     fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
+    expect(onPicked).toHaveBeenCalledTimes(1);
+    fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
     const ativa = await achar(container, '[data-travessia-ativa]');
     expect(ativa).toBeTruthy();
-    const btn = folha.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    expect(btn.textContent).toMatch(/^Done · \d\d:\d\d$/);
+    const btn = container.querySelector('[data-travessia-fiz]') as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.textContent).toBe('Done');
   });
 });
 

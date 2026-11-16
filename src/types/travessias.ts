@@ -143,6 +143,12 @@ export interface CrossingsState {
    * ele volta no relatório daquele dia com uma historinha. Só dia + região.
    */
   trip: { day: string; region: RegionId } | null;
+  /**
+   * O dia (`AAAA-MM-DD`) cujo passeio JÁ rodou a cena e pagou tudo NA HORA do "Concluir" (REGISTRO §413): região guardada abre,
+   * achado vai ao diário, Soulmon avistado entra no Drive. O resumo da noite lê isto para não repetir a cena nem sortear
+   * outro avistado. Ausente (save antigo) = passeio feito antes desta regra: a cena segue na virada do dia, como sempre foi.
+   */
+  sceneDay: string | null;
 }
 
 /** Marcos de Aventura: quantas missões feitas abrem um postal cosmético (04/10/2026). */
@@ -154,19 +160,10 @@ export const MISSIONS_OFFERED_PER_DAY = 3;
 /** Quanto tempo vale a missão escolhida: 24 h, sem troca (rodada 7, M4). */
 export const MISSION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-/**
- * O passeio leva um tempo (pedido do dono, 07/10/2026): depois de PEGAR a missão,
- * o "Concluir" só abre passados `STROLL_MIN_MINUTES`. O instante de partida é o
- * `pickAt` que já mora no save (sincroniza com a nuvem; `null` = save antigo, sem
- * espera). Dono único do número: ninguém mais escreve 30 nem 1800000.
- */
-export const STROLL_MIN_MINUTES = 30;
-export const STROLL_MIN_MS = STROLL_MIN_MINUTES * 60 * 1000;
-
 /** Quantas entradas o registro guarda (as mais recentes). */
 export const LOG_MAX = 60;
 
 export const CROSSINGS_EMPTY: CrossingsState = {
   opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null, claimDay: null,
-  pickDay: null, pickAt: null, log: [], score: 0, trip: null,
+  pickDay: null, pickAt: null, log: [], score: 0, trip: null, sceneDay: null,
 };

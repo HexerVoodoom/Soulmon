@@ -44,3 +44,21 @@ describe('TaskAutoTag', () => {
     expect(tag.className).toBe('');
   });
 });
+
+describe('TaskCreatedToast (REGISTRO §413)', () => {
+  it('"Tarefa criada" / "Task created", no topo, sem bloquear toque, some em 8 s', async () => {
+    const { TaskCreatedToast } = await import('./NoticeToast');
+    vi.useFakeTimers();
+    const done = vi.fn();
+    const pt = render(<TaskCreatedToast language="pt-BR" onDone={done} />);
+    const el = pt.container.querySelector('[data-task-created-toast]') as HTMLElement;
+    expect(el.textContent).toBe('Tarefa criada');
+    expect(el.style.pointerEvents).toBe('none');
+    expect(el.style.top).toContain('safe-area-inset-top');
+    act(() => { vi.advanceTimersByTime(NOTICE_TOAST_MS); });
+    expect(done).toHaveBeenCalledTimes(1);
+    cleanup();
+    const en = render(<TaskCreatedToast language="en-US" onDone={() => {}} />);
+    expect(en.container.querySelector('[data-task-created-toast]')?.textContent).toBe('Task created');
+  });
+});

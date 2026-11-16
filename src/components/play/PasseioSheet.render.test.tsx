@@ -167,7 +167,7 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
     const hoje = container.querySelector('[data-travessia-hoje]')!;
     expect(hoje.getAttribute('role')).toBe('status');
     expect(hoje.textContent).toMatch(/Feita\./);
-    expect(hoje.textContent).toContain(`viaja para ${R1.namePt}`);
+    expect(hoje.textContent).toContain(`já foi a ${R1.namePt}`);
     expect(container.querySelector('[data-travessia-ativa]')!.getAttribute('data-travessia-feito')).toBe('sim');
     expect(container.querySelector<HTMLButtonElement>('[data-travessia-fiz]')!.disabled).toBe(true);
     expect(container.querySelector('[data-mission-mark]')).toBeNull();
@@ -191,7 +191,7 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
   it('EN: o mesmo caminho em inglês, sem "challenge"', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA, language: 'en-US' }));
     fireEvent.click(container.querySelector('[data-travessia-fiz]')!);
-    expect(container.querySelector('[data-travessia-hoje]')!.textContent).toMatch(/Done\. Tonight/);
+    expect(container.querySelector('[data-travessia-hoje]')!.textContent).toMatch(/Done\. The Soulmon already went/);
     expect(container.querySelector('[data-marcos]')!.textContent).toMatch(/Adventure Milestones/);
     expect(container.textContent).not.toMatch(/challenge/i);
   });

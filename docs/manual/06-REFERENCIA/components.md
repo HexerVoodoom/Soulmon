@@ -1442,9 +1442,10 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 
 ### `src/components/StrollScene.tsx`
 **Dono de:** a CENA do Passeio em tela cheia (05/11/2026): cenário da região, cartão de texto no topo, "Espera… tem alguma coisa ali." → deslize → descoberta de um Soulmon novo (OK grava no Drive) → deslize de volta → fecha. Nasce muda; movimento reduzido corta o deslize.
+**Botões (REGISTRO §413):** todos no MESMO rodapé (`data-scene-dock`): o principal em cima, "Pular" logo abaixo, em toda fase; o texto fica no topo.
 **Props principais:** `StrollSceneProps` — `regionId`, `bgId`, `playerSprite?`, `adventure`, `stroll`, `discovery` (`null` = Drive completo), `onDiscover(key)`, `onFinish`, `finishLabel`, `language`.
 **Exports:** `StrollSceneProps` · `StrollScene(props)`.
-**Chamado por:** `src/components/DailyReportModal.tsx` (passo "aventura", quando há Passeio).
+**Chamado por:** `src/components/DailyReportModal.tsx` (passo "aventura", quando há Passeio e a cena ainda não rodou na hora) · `src/components/StrollNowScene.tsx`.
 **Régua:** `src/components/StrollScene.render.test.tsx`.
 
 ### `src/components/evolution/nodeArt.tsx`
@@ -1847,6 +1848,18 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `src/components/SettingsPage.tsx` (prop `gm`, que o `App.tsx` só passa para o admin).
 **Régua:** `src/components/GmPanel.render.test.tsx`.
 
+
+### `src/components/StepGoalModal.tsx`
+**Dono de:** o modalzinho da meta de passos ao ADOTAR o hábito de caminhar (REGISTRO §413): 3.000 / 5.000 / 7.000 / 10.000 (`STEP_GOAL_OPTIONS`); escolher grava `stepGoal`, fechar não muda nada.
+**Exports:** `StepGoalModal`.
+**Chamado por:** `src/App.tsx` (lazy, aberto por `commitHabitCreate` quando o item tem recurso `steps`).
+**Régua:** `src/components/StepGoalModal.render.test.tsx`.
+
+### `src/components/StrollNowScene.tsx`
+**Dono de:** a cena do Passeio que roda NA HORA do "Concluir" (REGISTRO §413): a `StrollScene` alimentada por `applyStrollNow`; o avistado já entrou no Drive, então OK/Pular não gravam nada; fechar leva à Home.
+**Exports:** `StrollNowScene`.
+**Chamado por:** `src/App.tsx` (lazy, estado `strollNow`).
+**Régua:** a conta é testada em `src/utils/strollNow.test.ts`; a cena em `src/components/StrollScene.render.test.tsx`.
 
 ### `src/components/StepsInviteModal.tsx`
 **Dono de:** o convite curto da contagem de passos (REGISTRO §283), intersticial `stepsInvite` da fila central: pergunta sim/não do MESMO peso, meta escolhível, sem X.

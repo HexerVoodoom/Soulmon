@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react';
 import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
-import { STROLL_MIN_MINUTES } from '../types/travessias';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
@@ -415,19 +414,19 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O passeio fica com o NPC da Exploração: é lá que você escolhe e conclui. Depois de pegar a missão, o Concluir abre em ' + STROLL_MIN_MINUTES + ' minutos.',
-              'The stroll stays with the NPC in Exploration: that is where you pick and finish it. Once you pick a mission, Done opens after ' + STROLL_MIN_MINUTES + ' minutes.',
+              'O passeio fica com o NPC da Exploração: é lá que você escolhe. Escolhida, a tarefa "Passeio" aparece na Home; faça o passeio e marque (na Home ou de volta no NPC) para ver a cena na hora.',
+              'The stroll stays with the NPC in Exploration: that is where you pick. Once picked, the "Stroll" task shows on Home; do the stroll and mark it (on Home or back at the NPC) to see the scene right away.',
             )}
           </p>
           <p style={para}>
             {L(
-              'No menu de Missões fica só a linha "Faça um passeio". Missões só apontam o que fazer: feita a ação, a linha fica pronta e você toca em Resgatar.',
-              'The Missions menu only keeps a "Take a stroll" line. Missions only point at what to do: once done, the line turns ready and you tap Claim.',
+              'No menu de Missões fica a linha "Passeio" com o nome do passeio que você escolheu. Marcar ali ou no NPC dá no mesmo: a cena e as recompensas vêm na hora, uma vez só.',
+              'The Missions menu keeps a "Stroll" line with the stroll you picked. Marking it there or at the NPC is the same: the scene and rewards come right away, once.',
             )}
           </p>
           <p style={para}>
             {L(
-              'Há dois acessos na Home: missões diárias e semanais. Quando você resgata, a névoa de uma região se abre no passeio da noite seguinte.',
+              'Há dois acessos na Home: missões diárias e semanais. Quando você conclui o passeio, a névoa de uma região se abre na hora.',
               'Home has two doors: daily and weekly missions. Once you claim, the mist over a region clears on the next night\'s stroll.',
             )}
           </p>

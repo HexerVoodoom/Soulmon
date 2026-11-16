@@ -33,7 +33,7 @@ const ORDER: readonly MissionsTab[] = ['daily', 'weekly', 'achievements'];
  * O Passeio é a EXCEÇÃO (07/10/2026, "Stroll fica com o NPC"): a experiência inteira vive no lote dele; aqui só há a linha
  * "Take a stroll" (`strollEntries`, dentro do `DailyMissionBoard`) — aponta, fica pronta quando o NPC concluiu, resgata.
  */
-export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay, special }: {
+export function MissionsSheet({ initialTab = 'daily', open, onClose, language, crossings, onClaimStroll, onDoneStroll, onGoStroll, todayKey, weekly, onClaimWeekly, missionProgress, marks, buildings, dailies, firsts, missionsClaimed, onClaimMission, bondLevel = 1, onGoBuilding, firstDay, special }: {
   /** Missão especial do dia (REGISTRO §106): cartão mudo, sem Resgatar. */
   special?: Omit<SpecialMissionProps, 'language'>;
   /** A aba que abre primeiro (o "Ir lá" de uma missão de prédio abre `daily`). */
@@ -44,6 +44,8 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   crossings: CrossingsState;
   /** O Resgatar da linha do passeio (só o recibo do dia; o pagamento é do "Concluir" no NPC). */
   onClaimStroll: () => void;
+  /** Marcar o passeio escolhido como feito, direto da linha "Stroll" (REGISTRO §413): o mesmo caminho do "Concluir" no NPC. */
+  onDoneStroll?: () => void;
   /** Leva ao prédio do Passeio (a folha do lote aberta). */
   onGoStroll?: () => void;
   todayKey: string;
@@ -137,7 +139,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                 <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
                   <DailyMissionBoard
                     language={language} special={special} crossings={crossings} todayKey={todayKey}
-                    onClaimStroll={onClaimStroll} onGoStroll={onGoStroll} buildings={buildings} dailies={dailies} nav={nav}
+                    onClaimStroll={onClaimStroll} onDoneStroll={onDoneStroll} onGoStroll={onGoStroll} buildings={buildings} dailies={dailies} nav={nav}
                   />
                 </Section>
                 {firsts && !allFirstTimesClaimed(firsts.state, firsts.bondLevel) && (
