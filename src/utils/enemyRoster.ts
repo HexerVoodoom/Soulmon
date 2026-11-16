@@ -372,6 +372,52 @@ function pickEnemyDoElemento(
   return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
 }
 
+/**
+ * O sorteio de um CONJUNTO do Rift (REGISTRO §445, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
+ * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) criaturas DESTE estágio
+ * cujos componentes dividem os do conjunto (primeiro as que só têm componentes do conjunto, ex.: as bases de um par; depois mais componentes em
+ * comum; depois o nº de componentes mais próximo: o vizinho "do elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o
+ * elemento não tem criatura nenhuma (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
+ */
+export function pickEnemyDoConjunto(
+  level: number, rng: () => number, opts: { stage: EnemyStage; element: string; used?: ReadonlySet<string> },
+): RosterEntry | undefined {
+  const comRamos = Number.isFinite(level);
+  const vivos = ENEMY_ROSTER.filter(e => e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  const compsDe = (e: Pick<RosterEntry, 'element' | 'elements'>): readonly string[] => curatedComponents(e.element) ?? DERIVED_ELEMENT_PAIRS.find(d => d.id === e.element)?.componentes ?? e.elements;
+  const sorteia = (have: readonly RosterEntry[]): RosterEntry => {
+    const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
+    const pool = fresh.length > 0 ? fresh : have;
+    return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
+  };
+  const doElemento = vivos.filter(e => e.element === opts.element);
+  const exato = doElemento.filter(e => e.stage === opts.stage);
+  if (exato.length > 0) return sorteia(exato);
+  const alvo = compsDe({ element: opts.element, elements: [opts.element] });
+  // Placar de cada candidato: [só tem componentes do conjunto (1/0), componentes em comum, -distância no nº de componentes]; vence o maior, empate sorteia.
+  let melhor: readonly number[] | undefined;
+  let achados: RosterEntry[] = [];
+  for (const e of vivos) {
+    if (e.stage !== opts.stage) continue;
+    const c = compsDe(e);
+    const sobra = c.filter(x => alvo.includes(x)).length;
+    if (sobra === 0) continue;
+    const placar = [c.every(x => alvo.includes(x)) ? 1 : 0, sobra, -Math.abs(c.length - alvo.length)];
+    const cmp = melhor ? placar.reduce((r, v, i) => r || v - melhor![i], 0) : 1;
+    if (cmp > 0) { melhor = placar; achados = [e]; } else if (cmp === 0) achados.push(e);
+  }
+  if (achados.length > 0) return sorteia(achados);
+  if (doElemento.length === 0) return undefined;
+  const i0 = ENEMY_STAGES.indexOf(opts.stage);
+  for (let d = 1; d < ENEMY_STAGES.length; d++) {
+    for (const i of [i0 - d, i0 + d]) {
+      const lista = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
+      if (lista.length > 0) return sorteia(lista);
+    }
+  }
+  return undefined;
+}
+
 function pickEnemyComum(
   level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; tabela?: boolean },
 ): RosterEntry {
