@@ -6203,7 +6203,14 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
 
-## §454 — Restaurante: o prato feito vai para a pastinha, não é servido na hora (16/11/2026, dono)
+## §454 — Prédio bloqueado e portão do Bastion só fecham por X ou CTA (16/11/2026, dono)
+
+- **Pedido:** o aviso do prédio trancado sumia sozinho e o Bastion (portão do Calabouço sem chave) fechava ao tocar em qualquer lugar.
+- **Causa raiz:** (1) `AreaView`/`MapPage` limpavam `lockNote` com `setTimeout` de 5 s e o `LockNotice` não tinha X; (2) `NpcSequence` tem um botão de tela cheia que, na última fala, chama `onFinish`, então `RogueKeyGate` fechava com qualquer toque.
+- **Regra:** só X, CTA ("Ir para a Oficina do Foco") ou Esc/voltar fecham. Sem timer, sem fechar ao tocar fora. `LockNotice` ganhou `onClose` (X 44 px); `NpcSequence` ganhou `closeOnTap` (padrão `true`, o Bastion usa `false` e o "Pular" vira "×").
+- **Teste-guarda:** `RogueKeyGate.render.test.tsx` reprova `onClick={onClose}` em `RogueKeyGate`/`LockBadge`. **Rollback:** `git revert`; só cliente.
+
+## §455 — Restaurante: o prato feito vai para a pastinha, não é servido na hora (16/11/2026, dono)
 
 **Pedido do dono.** "No Restaurante, quando faz um item, aparece um modal igual ao de quando faz poção para ter certeza que foi feito. E o item NÃO é usado instantaneamente: vai para a pasta (`foodInventory`) junto com os comidos."
 
