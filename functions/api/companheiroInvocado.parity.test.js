@@ -9,9 +9,9 @@ import * as app from '../../src/utils/companheiroInvocado';
 import { escolaDoSimulado, PAPEL_POR_ELEMENTO } from '../../src/utils/companheiroInvocadoLinhas';
 
 describe('flag e listas', () => {
-  it('a flag do servidor e a do app sao a mesma (e estao desligadas)', () => {
+  it('a flag do servidor e a do app sao a mesma (e estao LIGADAS, decisao do dono de 16/11)', () => {
     expect(srv.COMPANHEIRO_INVOCADO).toBe(app.COMPANHEIRO_INVOCADO);
-    expect(srv.COMPANHEIRO_INVOCADO).toBe(false);
+    expect(srv.COMPANHEIRO_INVOCADO).toBe(true);
   });
   it('as 32 criaturas sao as mesmas', () => {
     expect([...srv.CRIATURAS_COMPANHEIRO]).toEqual([...app.CRIATURAS_COMPANHEIRO]);
@@ -32,8 +32,12 @@ describe('simulados: elemento x linha', () => {
 describe('companheiroDoLado (servidor)', () => {
   const save = (extra = {}) => ({ evolutionStage: 'champion', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: { champion: { evocador: true } }, ...extra });
   it('flag desligada = null sempre (a ficha de luta nao ganha campo nenhum)', () => {
-    expect(srv.companheiroDoLado(save(), 'a'.repeat(64))).toBeNull();
-    expect(srv.companheiroDoLado(save(), SIMULADOS[0].id)).toBeNull();
+    expect(srv.companheiroDoLado(save(), 'a'.repeat(64), false)).toBeNull();
+    for (const sim of SIMULADOS) expect(srv.companheiroDoLado(save(), sim.id, false)).toBeNull();
+  });
+  it('flag do pacote (ligada) e o padrao: sem o 3o argumento o evocador invoca', () => {
+    expect(srv.companheiroDoLado(save(), 'a'.repeat(64))).toEqual({ invoca: true, companheiro: 'lobo' });
+    expect(srv.companheiroDoLado(save({ soulmonEvocacao: undefined }), 'a'.repeat(64))).toBeNull();
   });
   it('ligada: evocador do estagio com criatura valida invoca; o resto nao (nunca adivinha)', () => {
     const id = 'a'.repeat(64);

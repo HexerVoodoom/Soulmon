@@ -71,7 +71,7 @@ import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
 import { essenceIconSrc, essenceName } from '../utils/resultEssences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { companheiroDoEstado } from '../utils/companheiroInvocado';
-import { companheiroDoNpc } from '../utils/companheiroInvocadoLinhas';
+import { comCriaturaDoOponente, companheiroDoNpc } from '../utils/companheiroCriatura';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
 import { EstagioMarca } from './ui/EstagioMarca';
@@ -477,7 +477,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     try {
       const r = await startDuel(saveId, opp.id);
       setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
-      setDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
+      setDuel({ opp, seed: r.seed, me: r.me, oppSide: comCriaturaDoOponente(r.opp, opp.id, opp.element) });
     } catch (err) {
       setFightError(err instanceof Error && err.message === 'duel open'
         ? (isPt ? 'Há um duelo aberto. Termine esse ou espere ele fechar sozinho, em alguns minutos.' : 'A duel is still open. Finish it or wait a few minutes for it to close by itself.')
@@ -555,7 +555,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     try {
       if (tickets && tickets.left <= 0) { setSparError(isPt ? 'As partidas de hoje acabaram. Amanhã tem um ticket novo.' : "Today's matches are used up. A new ticket comes tomorrow."); return; }
       const r = await startSpar(saveId, opp.id, playerDayTz);
-      setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
+      setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: comCriaturaDoOponente(r.opp, opp.id, opp.element) });
     } catch (err) {
       setSparError(err instanceof Error && err.message
         ? err.message

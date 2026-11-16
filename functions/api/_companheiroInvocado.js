@@ -11,7 +11,7 @@ import { fichaStageOf } from './_duel.js';
 import { SIMULADOS } from './_simulados.data.js';
 
 /** INTERRUPTOR ÚNICO do servidor; igual à flag do app (o teste de paridade trava os dois). Religar: `true` aqui e em `companheiroInvocado.ts`. */
-export const COMPANHEIRO_INVOCADO = false;
+export const COMPANHEIRO_INVOCADO = true;
 
 /** As 32 criaturas do class-system (espelho de `CRIATURAS_COMPANHEIRO`). */
 export const CRIATURAS_COMPANHEIRO = [
