@@ -23,6 +23,8 @@ import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { dishById } from '../../utils/restaurant';
 import { POTION_SPECIAL_ITEMS, potionKey } from '../../utils/elementPotion';
 import { feiraText, type FeiraKey } from '../../utils/feiraCopy';
+import { PratoFeito } from '../PratoFeito';
+import { dishKey } from '../../utils/dishItems';
 import { FEIRA_LOJA_VENDOR_NAMES, applyFeiraLojaBuy, feiraLojaRef, shopItemOnOffer, type FeiraLoja, type FeiraLojaItem } from '../../utils/feiraLoja';
 import { buyGuildFeiraLoja, dia, GuildError } from '../../utils/community';
 import { cloudHexFair, type HexFairOutcome } from '../../utils/cloudSave';
@@ -67,6 +69,7 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   const { flash, say } = useShopFlash();
   const [confirmHex, setConfirmHex] = useState<FeiraLojaItem | null>(null);
   const [busyHex, setBusyHex] = useState(false);
+  const [boughtDish, setBoughtDish] = useState<{ dishId: string; made: number } | null>(null);
   /** Trava de clique duplo da compra em Bits (Mercado/material/poção/prato): a 2ª chamada voltaria 409 logo depois do sucesso. */
   const busyBuy = useRef(false);
   /**
@@ -159,6 +162,8 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
       if (!onBuyShop({ ...offer, price: r.price })) { say(offer.id, false, t('loja.noFunds')); return; }
       markBought(offer.id);
       say(offer.id, true, t('loja.ok', { name: hexLabel(offer) }));
+      // Prato pronto da Feira vai para Files (16/11/2026): o mesmo modal "Prato feito", variante "Comprado!".
+      if (offer.type === 'dish') setBoughtDish({ dishId: feiraLojaRef(offer.id), made: 1 });
     } catch (e) {
       say(offer.id, false, t(errorKey(e)));
     } finally {
@@ -169,6 +174,7 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   const footer = <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }} data-feira-loja-fechar>{isPt ? 'Fechar' : 'Close'}</button>;
 
   return (
+    <>
     <ModalSheet open placement="center" onClose={onClose} language={language} title={t('loja.title')} maxWidth={420} footer={footer}>
       <div data-feira-loja={loja.vendor} data-feira-loja-dia={loja.day} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -252,6 +258,10 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
         onConfirm={() => { if (confirmHex) void (confirmHex.type === 'hex' ? buyHex(confirmHex) : buyOther(confirmHex)); }}
       />
     </ModalSheet>
+    {boughtDish && (
+      <PratoFeito variant="bought" language={language} dishId={boughtDish.dishId} made={boughtDish.made} inFolder={Math.max(1, (getState() as { foodInventory?: Record<string, number> }).foodInventory?.[dishKey(boughtDish.dishId)] ?? 0)} onClose={() => setBoughtDish(null)} />
+    )}
+    </>
   );
 }
 

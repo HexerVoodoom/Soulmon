@@ -53,7 +53,7 @@ export function refusalText(r: CookRefusal, isPt: boolean): string {
     case 'unknown': return isPt ? 'Essa receita não está no cardápio.' : "That recipe isn't on the menu.";
     case 'not-today': return isPt ? 'Esse prato é de outro dia da semana.' : 'That dish is on another day of the week.';
     case 'daily-cap': return isPt ? 'Por hoje já deu: a cozinha reabre amanhã.' : "That's it for today: the kitchen reopens tomorrow.";
-    case 'no-food': return isPt ? 'Ainda faltam comidas na pastinha. Elas vêm das atividades concluídas.' : 'A few foods are still missing. They come from finished activities.';
+    case 'no-food': return isPt ? 'Ainda faltam comidas em Arquivos. Elas vêm das atividades concluídas.' : 'A few foods are still missing. They come from finished activities.';
     case 'no-extra': return isPt ? 'Ainda falta o ingrediente especial.' : 'The special ingredient is still missing.';
     case 'no-bits': return isPt ? 'Ainda faltam Bits.' : 'Not enough Bits yet.';
   }

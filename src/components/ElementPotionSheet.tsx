@@ -58,12 +58,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     more: isPt ? 'Mostrar mais' : 'Show more',
     confirmQ: isPt ? 'Gastar estas essências?' : 'Spend these essences?',
     confirmBtn: isPt ? 'Confirmar' : 'Confirm',
-    made: isPt ? 'Poção criada! Está na pasta de itens.' : 'Potion created! It is in your item folder.',
+    made: isPt ? 'Poção criada! Está em Arquivos.' : 'Potion created! It is in Files.',
     pending: isPt ? 'Poção na espera para a próxima evolução:' : 'Potion waiting for the next evolution:',
     once: isPt ? 'Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele.' : 'Only affects the next evolution; after that your Soulmon returns to its score-based element.',
     locked: isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive',
     lockedHint: isPt ? 'Desbloqueie no Drive' : 'Unlock in the Drive',
-    note: isPt ? 'Base: 100 essências da própria. Composta: 1 poção de cada base + 50 essências dela. Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando.' : 'Base: 100 of its own essence. Compound: 1 potion of each base + 50 of its essence. Giving a potion to your Soulmon (item folder) replaces the one already waiting.',
+    note: isPt ? 'Base: 100 essências da própria. Composta: 1 poção de cada base + 50 essências dela. Dar uma poção ao Soulmon (Arquivos) troca a que já estava esperando.' : 'Base: 100 of its own essence. Compound: 1 potion of each base + 50 of its essence. Giving a potion to your Soulmon (Files) replaces the one already waiting.',
     potionOf: (id: string) => (isPt ? 'Poção de ' : '') + elName(id, isPt) + (isPt ? '' : ' potion'),
   };
   const art = (id: string, big: boolean) => (potionArt(id)
