@@ -1,4 +1,4 @@
-// §456: incursão 3×8 → 3×5 com o MESMO prêmio esperado; migração de saves 3×8 em andamento; Rift intacto.
+// §457: incursão 3×8 → 3×5 com o MESMO prêmio esperado; migração de saves 3×8 em andamento; Rift intacto.
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './combate/rng';
 import {

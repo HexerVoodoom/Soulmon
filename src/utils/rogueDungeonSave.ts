@@ -2,7 +2,7 @@
 // (`GameStateContext`, chunk de entrada) só precisa de `sanitizeRogueRun` — o motor (combate/arena) fica no chunk da tela.
 
 /**
- * ESTRUTURA DA INCURSÃO (dono único). REGISTRO §456 (16/11/2026): 3 andares × 8 desafios (24) → 3 andares × 5 desafios (15), ~1/3 mais curta
+ * ESTRUTURA DA INCURSÃO (dono único). REGISTRO §457 (16/11/2026): 3 andares × 8 desafios (24) → 3 andares × 5 desafios (15), ~1/3 mais curta
  * (-37,5%). Os 3 andares ficam (nós do mapa, feito `rogueFloors`, missões, bônus de andar); encurta o andar. O prêmio por incursão NÃO muda:
  * cada desafio vencido vale `ROGUE_LEGACY_STEPS / ROGUE_MAX_STEPS` (= 1,6) do que valia (`rogueWinValue`, em `rogueDungeon.ts`).
  */
@@ -31,9 +31,9 @@ export const BONUS_KINDS: readonly BonusKind[] = ['power', 'vigor', 'heal'];
  * o inimigo ganha +1 "andar de golpes" (`dungeonFoe`) a cada `stepsPerFloor` passos da incursão (0 = sem escala, o desenho anterior) e
  * `flat` andares fixos. Dono único; medido por `winrateModos.sim.test.ts` (meta: ~60-70% de incursões completas).
  */
-export const ROGUE_FOE_RAMP = { stepsPerFloor: 1.75, flat: 2 } as const; // §456: recalibrada p/ 3×5 (completas 66,5%; eram 70,5% em 3×8; faixa do dono 60-75%)
+export const ROGUE_FOE_RAMP = { stepsPerFloor: 1.75, flat: 2 } as const; // §457: recalibrada p/ 3×5 (completas 66,5%; eram 70,5% em 3×8; faixa do dono 60-75%)
 
-/** §456: cada escolha vale 1,6× (24/15) o que valia, para o poder acumulado no ÚLTIMO passo ficar igual (menos escolhas, mesma força). */
+/** §457: cada escolha vale 1,6× (24/15) o que valia, para o poder acumulado no ÚLTIMO passo ficar igual (menos escolhas, mesma força). */
 export const POWER_STEP = 0.096; // era 0,06
 export const VIGOR_STEP = 0.16; // era 0,10
 export const HEAL_SHIELD = 0.15; // por escudo; não escala (o escudo é gasto 1 por combate e há menos combates)

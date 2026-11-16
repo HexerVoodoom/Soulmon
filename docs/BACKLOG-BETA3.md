@@ -65,7 +65,7 @@ Decisões do dono (modal): jogo LinkedIn = **Patches** (+ Zip); masmorra NOVA ro
 - Score mensal que reinicia todo mês. Três faixas de recompensa por profundidade: 1) material; 2) mais Bits; 3) recompensa ligada ao score (competitivo). Ranking mensal; as 3 faixas do topo ganham Créditos (50/25/10) pagos pelo servidor no fechamento do mês.
 
 ## M7 — Dungeon (nova, roguelike, MVP)
-- A cada passo, 3 caminhos aleatórios: combate, quebra-cabeça, minigame, ferramenta de Exploração (só recursos de Games e Exploração). De tempo em tempo combate obrigatório, cada vez mais difícil; após cada desafio vencido, escolhe 1 bônus que dura a incursão. 5 desafios por andar (eram 8, §456), 3 andares por dia. Perdeu o combate = fim da incursão do dia. Reset diário sem os bônus. Ranking.
+- A cada passo, 3 caminhos aleatórios: combate, quebra-cabeça, minigame, ferramenta de Exploração (só recursos de Games e Exploração). De tempo em tempo combate obrigatório, cada vez mais difícil; após cada desafio vencido, escolhe 1 bônus que dura a incursão. 5 desafios por andar (eram 8, §457), 3 andares por dia. Perdeu o combate = fim da incursão do dia. Reset diário sem os bônus. Ranking.
 
 ## M8 — Ranking dos minigames
 - Ranking em todos os minigames (servidor decide, por jogo).

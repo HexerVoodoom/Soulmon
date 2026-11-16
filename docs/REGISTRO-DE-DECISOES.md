@@ -6203,6 +6203,14 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
 
+## §452 — Carta de elemento novo abre ao sair de QUALQUER atividade, carrossel estilo stories, Neutro e Pesadelo com essência, poção do Neutro (16/11/2026, dono, por voz)
+
+**Pedido do dono.** Descobriu um elemento na Arena e a carta não abriu ao sair; o corvo (Neutro) não mostrou de quais elementos nasce; vários elementos de uma vez em "reels"; conferir se Pesadelo e Neutro deixam essência; poção do Neutro = 100 de cada base + 50 de cada outro composto; Pesadelo só coletar.
+
+**Causa raiz (modal).** `elementoNovoPodeAbrir` tratava a ÁREA inteira (`area:arena|exploracao|jogos`) como "atividade". Ao sair da luta o jogador cai no HUB da área (mesma view), que continuava "em atividade": a carta ficava presa até ele ir ao Mapa/Home. Vale para Arena, Torneio, Duelo, Masmorra/Fenda e Combina 3. **Correção:** a `AreaView` informa `onActivityChange` (jogo OU duelo OU luta do Torneio) e o gate usa isso; `undefined` (AreaView carregando) mantém o palpite conservador antigo.
+
+**Decisão.** (1) Carrossel: barra de progresso segmentada no topo, toque (metade direita avança, esquerda volta), deslize, setas, X; SEM avanço automático (o jogador lê no ritmo dele, nada a pausar); OK `CtaButton` segue desativado até ver todas. (2) Neutro: a carta não tem fileira de componentes e diz "Born of no other element. The Raven's own." (REGISTRO §211: não é mistura de nada). (3) Essência: Pesadelo já era creditada na vitória do Pesadelo (sem mudança); o Corvo NÃO deixava essência neutra (`isEssenceElement` excluía `neutro`) e agora deixa (`ehEssenciaColetavel`), sem entrar no catálogo do Cambista/preço. (4) Poção do Neutro (`utils/neutroPotion.ts`; CORRIGIDA pelo dono no mesmo dia, os "50 de cada composto" eram mal-entendido e saíram): por elemento BASE (os 20), 100 essências dele OU 1 poção-base dele (mistura por elemento vale; paga com essência quando basta), MAIS 50 essências do Neutro (as que o Corvo deixa). Exige o Neutro já conhecido, tudo-ou-nada, painel "x de 20 bases completas" + "Neutro x/50". (4b) Regra geral: ao atingir 50 essências de um composto (2-4 bases) ou do Neutro (100 para base), a Vesca abre o pop-up "Fazer a poção"/"Depois"; vários de uma vez = UM pop-up em lista; "visto" gravado ao mostrar; limiar único em `potionCosts.ts` (`POTION_COSTS`, `limiarDaPocao`). (4c) Cambista: `neutro` e `pesadelo` sem preço de compra nem venda, com teste-guarda no cliente e no servidor. Pesadelo: sem receita; a dica na Mochila diz "ainda sem uso". Servidor: nada novo (saldo só baixa por `essenceSpent`; chaves `neutro`/`pesadelo` cabem nas 271).
+**Efeito (confirmado pelo dono):** a poção do Neutro torna o Soulmon elemento `neutro` na evolução (sem anel de vantagem), como o Corvo.
 ## §454 — Prédio bloqueado e portão do Bastion só fecham por X ou CTA (16/11/2026, dono)
 
 - **Pedido:** o aviso do prédio trancado sumia sozinho e o Bastion (portão do Calabouço sem chave) fechava ao tocar em qualquer lugar.
@@ -6222,7 +6230,7 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 
 **Rollback.** `git revert` do PR (só cliente). Saves: pratos já guardados como `dish:<id>` viram chave desconhecida e ficam inertes após o revert (a pastinha só os mostraria sem nome); nenhum estado intermediário foi criado antes.
 
-## §456 — Calabouço roguelike mais curto, mesmo prêmio (16/11/2026, dono)
+## §457 — Calabouço roguelike mais curto, mesmo prêmio (16/11/2026, dono)
 
 **Pedido.** A incursão do Calabouço (a que pede a chave do Prepare to Focus) está longa; encurtar ~1/3 sem mudar o prêmio total. NÃO é o Rift nem a Masmorra idle.
 **Antes → depois.** 3 andares × 8 desafios = 24 passos → 3 andares × 5 = 15 (-37,5%; 3×5 porque 16/3 não fecha e os 3 andares são nós do mapa, feito `rogueFloors` e missões). Combate obrigatório no 3º e 5º (era 3º, 6º, 8º): 6 combates (eram 9), 9 passos livres com 3 opções (eram 15). Constantes em `rogueDungeonSave.ts` (dono único).
@@ -6230,3 +6238,14 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 **Saves.** `RogueRun.v` = 2. Save sem `v` é 3×8: `sanitizeRogueRun` converte uma vez, proporcional (passo, vitórias, poder/vigor/escudos, `paidWon`); andares concluídos preservados (testado para os 25 passos), passo > 15 vira incursão finalizada com o prêmio proporcional (±1 Bit), idempotente. Servidor não muda (teto de score 33 mantido).
 **Alternativa que perdeu.** 2 andares × 8 (16 passos, exatamente 1/3): corta nós/andares do mapa e o feito de andares por incursão (3→2).
 **Rollback.** `git revert` do PR (cliente). Um save já convertido (`v: 2`, 15 passos) lido pelo código antigo é limitado ao teto antigo sem erro: o passo fica ≤ 15 de 24, a incursão segue.
+## §456 — Teto de Bits de atividade: 75 por categoria, além dos 150 gerais (16/11/2026, dono)
+
+**Decisão:** o teto geral diário (`MINIGAME_BITS_PER_DAY` = 150) CONTINUA; acrescenta-se **75 por categoria por dia do jogador** (`BITS_PER_CATEGORY_PER_DAY`, `utils/currencies.ts`). Categorias e fontes (funil único `handleEarnGamePoints`, `App.tsx`):
+
+| Categoria | Fontes que pagam Bits |
+|---|---|
+| `minigames` | Dino, Soul Barrage, Pedra·Papel·Tesoura, Elemental Fusion (Match-3), Eco, Zip, Selo, Picross, Troca, Patches, Revisão, Bolhas, Chama (padrão do funil: fonte sem categoria cai aqui) |
+| `explorar` | Fenda Sem Fim (DungeonGame; extra da Agulha de bússola soma ao teto da categoria), Passeio/Rogue |
+| `arena` | Duelo (ArenaGame; extra da Agulha idem) |
+
+Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; os Bits do dia completo, check-in, casa, pesadelo e pacotes seguem fora destes tetos. **Recusa suave:** o menor dos dois tetos corta só o excedente de Bits (`minigameBitsGrantedIn`); a atividade e o resto da recompensa seguem intactos, sem cobrança. **Save:** `minigameBits.cat` (aditivo, mesmo registro do dia; save antigo lê zero e a leitura tolerante `sanitizeBitsCat` é idempotente). **Servidor:** não decide Bits de atividade (só observa, §387); nada a espelhar e `_dayCounters.js` não toca Bits. **UI:** "hoje: x de 75 neste tipo de atividade" (folhas da Fenda, Salão, Mente e Duelo). **Arte:** troca das 3 artes v2 da Hexsmith (st-debuff-atk 64×64, coroa-silence e coroa-hot 96×96). **Fichas/convites:** a premissa "hoje 1 energia = 5 fichas" não bate com o código (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11); o convite de Duelo e o VIP ficaram em consulta ao dono.

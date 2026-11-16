@@ -60,7 +60,7 @@ interface PlayProps extends PlayHandlers {
   evolutionStage: string;
   demoCharacterId?: string;
   totalPoints: number;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number, extra?: number, category?: string) => void;
 }
 
 function props(over: Partial<PlayProps> = {}): PlayProps {
@@ -213,7 +213,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(d.onGlitchtama).toBe(p.onGlitchtama);
     expect(d.onFloorCleared).toBe(p.onFloorCleared);
     expect(d.onEnemyDefeated).toBe(p.onDungeonEnemyDefeated);
-    expect(d.onEarnPoints).toBe(p.onEarnPoints);
+    // §456: a Fenda entra pelo funil do App com a categoria `explorar`; o extra da Agulha segue passando.
+    (d.onEarnPoints as (pts: number, extra?: number) => void)(7, 3);
+    expect(p.onEarnPoints).toHaveBeenCalledWith(7, 3, 'explorar');
     expect(d.onSpendBits).toBe(p.onSpendBits);
     expect(d.bits).toBe(77);
   });

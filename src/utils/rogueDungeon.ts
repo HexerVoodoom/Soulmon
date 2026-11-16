@@ -1,7 +1,7 @@
 /**
  * CALABOUÇO ROGUELIKE (beta3 M7, 25/10/2026) — lógica PURA (sem React/storage; `day` por parâmetro).
  *
- * Incursão do dia: 3 andares × 5 desafios = 15 tentativas (§456; eram 3×8 = 24). A cada passo o jogador escolhe 1 de 3 caminhos sorteados
+ * Incursão do dia: 3 andares × 5 desafios = 15 tentativas (§457; eram 3×8 = 24). A cada passo o jogador escolhe 1 de 3 caminhos sorteados
  * (semente = dia + passo, então recarregar não rerrola) entre combate / quebra-cabeça / minigame / ferramenta de
  * Exploração; combate é OBRIGATÓRIO no 3º passo e no último do andar. Vencido o desafio, escolhe 1 de 3 bônus
  * (valem só na incursão). Perder um combate encerra o dia; errar um desafio que não é combate gasta o passo e segue.
@@ -31,7 +31,7 @@ export const isForcedCombat = (step: number): boolean => { const k = stepInFloor
 
 /** Andares concluídos = andares inteiros já passados (o passo conta, ganhando ou errando). */
 export const floorsCleared = (r: RogueRun): number => Math.floor(r.step / ROGUE_PER_FLOOR);
-/** Valor de N desafios vencidos na escala do prêmio antigo (24 desafios): 15 vitórias = 24, a mesma incursão completa de antes (§456). */
+/** Valor de N desafios vencidos na escala do prêmio antigo (24 desafios): 15 vitórias = 24, a mesma incursão completa de antes (§457). */
 export const rogueWinValue = (won: number): number => Math.round((won * ROGUE_LEGACY_STEPS) / ROGUE_MAX_STEPS);
 export const rogueScore = (r: RogueRun): number => Math.min(ROGUE_MAX_SCORE, rogueWinValue(r.won) + floorsCleared(r) * ROGUE_FLOOR_BONUS);
 /** Bits do fim do dia: `rogueWinValue` por incursão (o teto diário de minigames do app é quem limita de verdade; funil único `handleEarnGamePoints`). */
