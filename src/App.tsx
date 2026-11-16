@@ -129,6 +129,7 @@ import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageS
 import type { FichaStage } from './utils/soulProfile/ficha/types';
 import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
+import { migrarEvocacao } from './utils/companheiroInvocado';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -5992,6 +5993,7 @@ export default function App() {
         soulmonClassTitles: r.classTitles as GameState['soulmonClassTitles'],
         soulmonManifestacao: r.manifestacao,
         ...(r.companheiro ? { soulmonCompanheiro: r.companheiro } : {}),
+        ...(r.evocacao ? { soulmonEvocacao: migrarEvocacao(prev.soulmonEvocacao, r.evocacao) } : {}),
       }));
     }).catch(() => { /* perfil corrompido: a ficha segue no cache que já está no save */ });
     return () => { vivo = false; };

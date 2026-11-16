@@ -90,7 +90,7 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
     expect(els).toHaveLength(50);
     for (const el of els) {
       const layer = ELEMENTOS_DA_MASMORRA.indexOf(el) * 2 + 1;
-      // Conjuntos do Rift (REGISTRO §442): o estágio é o do CONJUNTO (comuns e mini-boss), sempre com arte e só do elemento; o level e o HP não o mudam.
+      // Conjuntos do Rift (REGISTRO §445): o estágio é o do CONJUNTO (comuns e mini-boss), sempre com arte e só do elemento; o level e o HP não o mudam.
       const plano = riftWavePlan(layer);
       for (const lv of [1, 7, 14, 40]) {
         const onda = dungeonWaveOf(7, layer, lv, 'mega');

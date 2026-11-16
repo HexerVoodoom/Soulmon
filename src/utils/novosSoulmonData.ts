@@ -36,7 +36,7 @@ export const NOVOS_DATA: readonly NovoData[] = [
   { id: 'kenjo', line: 'poder', element: 'marcial', rookie: 'Kenvar', champion: 'Shihanor',
     basico: { pt: "Soco Duplo", en: "Twin Strike" }, especial: { pt: "Mil Palmas", en: "Thousand Palms" } },
   { id: 'runix', line: 'harmonia', element: 'arcano', rookie: 'Runeko', champion: 'Arcanowl',
-    basico: { pt: "Dardo Rúnico", en: "Rune Bolt" }, especial: { pt: "Selo Arcano", en: "Arcane Seal" } },
+    basico: { pt: "Dardo Rúnico", en: "Rune Bolt" }, especial: { pt: "Rajada Rúnica", en: "Rune Blast" } },
   { id: 'chronib', line: 'harmonia', element: 'tempo', rookie: 'Chronib', champion: 'Tempora',
     basico: { pt: "Pulso Temporal", en: "Time Pulse" }, especial: { pt: "Reversão", en: "Rewind Burst" } },
   { id: 'voidlet', line: 'harmonia', element: 'espaco', rookie: 'Voidlet', champion: 'Rifthound',
@@ -48,7 +48,7 @@ export const NOVOS_DATA: readonly NovoData[] = [
   { id: 'voltrix', line: 'harmonia', element: 'eletricidade', rookie: 'Voltrix', champion: 'Fulgurion',
     basico: { pt: "Faísca", en: "Spark Zap" }, especial: { pt: "Raio em Cadeia", en: "Chain Lightning" } },
   { id: 'sprouti', line: 'benevolencia', element: 'vida', rookie: 'Sprouti', champion: 'Florestag',
-    basico: { pt: "Chicote de Cipó", en: "Vine Lash" }, especial: { pt: "Florescer", en: "Bloom Burst" } },
+    basico: { pt: "Chicote de Cipó", en: "Vine Lash" }, especial: { pt: "Explosão de Espinhos", en: "Thorn Burst" } },
   { id: 'solion', line: 'benevolencia', element: 'luz', rookie: 'Solion', champion: 'Aurolion',
     basico: { pt: "Raio de Luz", en: "Light Beam" }, especial: { pt: "Nova Radiante", en: "Radiant Nova" } },
   { id: 'bubbo', line: 'benevolencia', element: 'agua', rookie: 'Bubbo', champion: 'Tidotter',
@@ -63,7 +63,7 @@ export const NOVOS_DATA: readonly NovoData[] = [
   { id: 'smeltu', line: 'poder', element: 'industrial', rookie: 'Smeltu', champion: 'Cruciblor',
     basico: { pt: "Jato Fundido", en: "Molten Splash" }, especial: { pt: "Fundição Pesada", en: "Heavy Pour" } },
   { id: 'brotto', line: 'harmonia', element: 'planta', rookie: 'Brotto', champion: 'Thornhog',
-    basico: { pt: "Espinho de Folha", en: "Leaf Quill" }, especial: { pt: "Brotar", en: "Overgrowth" } },
+    basico: { pt: "Espinho de Folha", en: "Leaf Quill" }, especial: { pt: "Salva de Espinhos", en: "Thorn Volley" } },
 ];
 
 /** Nome das formas altas que JÁ têm arte instalada, por criatura. Leva de 15/10/2026 aprovada pelo dono (REGISTRO §78); nomes curtos propostos no tom do jogo (PT = EN, como os das criaturas). */

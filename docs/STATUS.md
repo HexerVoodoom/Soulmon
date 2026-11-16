@@ -1,11 +1,26 @@
 # Status do Soulmon — registro vivo
 
-> ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §442)
+> ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
 >
 > - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
 > - **Não visto em aparelho:** só testes e tipos. Mini-boss de 4 elementos é Mega (gancho do Ultra documentado).
 > - **Pendente do dono:** volta da lista depois do andar 538; força do mini-boss.
 > - **Rollback:** `git revert`; só cliente.
+>
+> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §444)
+>
+> - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
+> - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
+> ## 16/11/2026 — Nome do especial coerente com o efeito (`fix/nomes-especiais-coerentes`, REGISTRO §443)
+>
+> - **Feito:** selo do especial de inimigo (Arena, Masmorra/Rift, Pesadelo) e da Coroa da Hexsmith segue a família que vale; léxico: Rapture→Renewal, Flurry→Haste; básicas e 3 nomes de criatura sem cara de cura; guarda em `nomeEspecialCoerente.test.ts`.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
+> ## 16/11/2026 — Companheiro invocado PR 1: fundação (`feat/companheiro-invocado-fundacao`, REGISTRO §444)
+>
+> - **Feito:** módulo `utils/companheiroInvocado.ts` (gatilho arquétipo OU escola Evocação, 32 criaturas), cache aditivo `soulmonEvocacao` + `ClassTitle.id?`, mapa de sprites tolerante, tabela provisória de simulados/NPCs, teste de medição. Flag `COMPANHEIRO_INVOCADO` DESLIGADA.
+> - **Sprites:** PNG fora (dono escolhe 1ª geração x refeita): PR 1b. 5 com elemento solto a refinar: fada, arauto_elfico, wyvern, falcao, coruja.
+> - **Não feito:** combate, cena, espelho no servidor: PR 2+.
+> - **Rollback:** `git revert`; campo aditivo, flag desligada.
 >
 > ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §440)
 >
@@ -13,6 +28,12 @@
 > - **Visto em tela:** folhas de QA (rookie ao lado da forma) em `E:/Soulmon-assets/_lote-16-11/combinados/`; não visto no app.
 > - **Pendente:** sorteio dos inimigos usar as formas (outro pacote); veto de nomes pelo dono.
 > - **Rollback:** `git revert`; só dados e PNG.
+>
+> ## 16/11/2026 — Rift: limite diário de 30 lutas, sem teto por level (`feat/rift-limite-diario`, REGISTRO §441)
+>
+> - **Feito:** `dungeonLayerCap` saiu; limite diário `DUNGEON_DAILY_FIGHTS` (30 lutas = 5 andares por dia do jogador) na porta única `layerRefusal`, valendo na tela, fora da tela e no foco; lobby mostra "hoje: x de 5 andares", no limite "o Rift descansa até amanhã".
+> - **Pendente do dono:** confirmar 30 lutas (5 andares) vs 30 andares; para 30 andares trocar só a constante.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
 >
 > ## 16/11/2026 — Amizade que some e chat que fecha fora (`fix/amizade-chat-fecha`, REGISTRO §439)
 >

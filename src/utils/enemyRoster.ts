@@ -373,7 +373,7 @@ function pickEnemyDoElemento(
 }
 
 /**
- * O sorteio de um CONJUNTO do Rift (REGISTRO §442, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
+ * O sorteio de um CONJUNTO do Rift (REGISTRO §445, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
  * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) criaturas DESTE estágio
  * cujos componentes dividem os do conjunto (primeiro as que só têm componentes do conjunto, ex.: as bases de um par; depois mais componentes em
  * comum; depois o nº de componentes mais próximo: o vizinho "do elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o

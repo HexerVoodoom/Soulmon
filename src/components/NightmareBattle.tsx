@@ -68,7 +68,7 @@ import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, pesadeloGolpe, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, pesadeloGolpe, specialLabel, foeSpecialLabel, familiaDoNomeInimigo } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { playDefeat, playVictory } from '../utils/sounds';
 import {
@@ -360,8 +360,8 @@ export function NightmareBattle({
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt, par?.especial)}
-          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(enemy?.foe.special))}
           isPt={isPt}
           scene={sceneBg}
           me={{

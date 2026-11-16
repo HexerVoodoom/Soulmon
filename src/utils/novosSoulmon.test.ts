@@ -6,7 +6,7 @@ import { NOVOS_DATA, FORMAS_ALTAS, pickNovo } from './novosSoulmonData';
 import { buildArenaRound, ARENA_ROUNDS } from './arena';
 import { buildDungeonWave, LADDER_TIERS } from './dungeon';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES } from './sprites';
-import { VISUAL_ELEMENTS, fxElementId, elementStrikeForm, dungeonEnemyElement, dungeonFoeSpecialLabel } from './combatFx';
+import { VISUAL_ELEMENTS, fxElementId, elementStrikeForm, dungeonEnemyElement, dungeonFoeSpecialLabel, familiaDoNomeInimigo } from './combatFx';
 import { mulberry32 } from './combate/rng';
 import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 
@@ -86,8 +86,14 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
         expect(e.name).toBe(n.name(forma[i]));
         expect(e.sprite).toBe(n.sprite(forma[i]));
         expect(dungeonEnemyElement(e)).toBe(n.element);
-        expect(dungeonFoeSpecialLabel(true, e, e.element, e.name)).toBe(n.especial.pt);
-        expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).toBe(n.especial.en);
+        // 16/11/2026 (REGISTRO §443): o nome da tabela da criatura vale só no dano direto; cura/escudo/buff/DoT/debuff levam o nome da FAMÍLIA
+        const familia = familiaDoNomeInimigo(e.foe.special);
+        if (!familia || familia === 'direct') {
+          expect(dungeonFoeSpecialLabel(true, e, e.element, e.name)).toBe(n.especial.pt);
+          expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).toBe(n.especial.en);
+        } else {
+          expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).not.toBe(n.especial.en);
+        }
       });
     }
   });

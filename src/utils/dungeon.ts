@@ -26,7 +26,7 @@ export function buildDungeonWave(
   playerLevel: number = soulLevel({ evolutionStage: petStage }),
   /** Masmorra temática (08/11/2026): só criaturas deste elemento. Ausente = sorteio comum. */
   element?: string,
-  /** Conjunto do Rift (REGISTRO §442, `riftSets.ts`): estágio dos comuns, estágio e força do mini-boss. Ausente = a regra de antes (Pesadelo, RogueFight, testes). */
+  /** Conjunto do Rift (REGISTRO §445, `riftSets.ts`): estágio dos comuns, estágio e força do mini-boss. Ausente = a regra de antes (Pesadelo, RogueFight, testes). */
   conjunto?: RiftWavePlan,
 ): DungeonEnemy[] {
   const floor = Math.max(1, Math.floor(level));

@@ -1,4 +1,4 @@
-// 🌀 OS CONJUNTOS DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §442).
+// 🌀 OS CONJUNTOS DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §445).
 //
 // DONO ÚNICO do mapeamento PROFUNDIDADE → CONJUNTO → (elemento, nº de elementos base, estágio dos comuns, estágio do mini-boss, é mini-boss?).
 // PURO: sem arte, sem roster, sem relógio, sem `Math.random`. A tela (`DungeonGame`), a conta de quem ficou fora (`dungeonAway.ts`) e os

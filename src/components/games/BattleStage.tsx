@@ -916,7 +916,7 @@ export interface BattleStageProps {
   /** O texto do selo do especial (`specialLabel(isPt)` de `utils/combatFx.ts`); sem ele, o EN. */
   specialLabel?: string;
   /** PR9: o selo do especial de um INIMIGO (nome por regra do elemento dele). Sem ele, cai em `specialLabel`. */
-  foeSpecialLabel?: (foe: { name: string; element?: string }) => string;
+  foeSpecialLabel?: (foe: { name: string; element?: string }, index?: number) => string;
   /** Língua dos selos de status (aria-label e legenda): `true` = PT-BR, padrão EN. */
   isPt?: boolean;
   /**
@@ -960,7 +960,7 @@ function bannerLabel(
 ): string {
   if (action.actor === 'foe' && foeLabel) {
     const f = foes[Math.min(action.foe, foes.length - 1)];
-    if (f) return foeLabel(f);
+    if (f) return foeLabel(f, Math.max(0, Math.min(action.foe, foes.length - 1)));
   }
   return specialLabel ?? SPECIAL_LABEL.en;
 }

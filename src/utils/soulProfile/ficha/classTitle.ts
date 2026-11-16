@@ -41,6 +41,12 @@ export interface ClassTitle {
    * (nunca inventa um), até a próxima recomputação preencher o cache.
    */
   sigilo?: string;
+  /**
+   * Id estável do arquétipo do class-system (`ArquetipoDef.id`), só em `origem` 'arquetipo' | 'diluido'. Opcional: o cache
+   * `soulmonClassTitles` anterior a 16/11/2026 guardava só o NOME; use `arquetipoIdDoTitulo` (lê o id e, sem ele, recupera pelo
+   * nome EN). Dono do uso: `utils/companheiroInvocado.ts`.
+   */
+  id?: string;
 }
 
 /**
@@ -128,6 +134,44 @@ export const CLASS_TITLE_EN: Record<string, string> = {
   luthier_de_guerra: 'War Luthier',
   cartografo_dimensional: 'Dimensional Cartographer',
 };
+
+const norm = (t: string): string => t.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+/** Nome (normalizado, sem acento) → id. EN de todos os arquétipos (`CLASS_TITLE_EN`) + PT dos 9 de evocação (o save guarda só o
+ *  NOME; o PT dos demais vem só do motor assíncrono e não importa para o gatilho do companheiro invocado). */
+const PT_EVOCACAO: Readonly<Record<string, string>> = {
+  invocador: 'Invocador', senhor_das_feras: 'Senhor das Feras', xama_totemico: 'Xamã Totêmico', necromante: 'Necromante',
+  demonologista: 'Demonologista', verdejante: 'Verdejante', senhor_dos_mortos_vis: 'Senhor dos Mortos Vis', bokor: 'Bokor',
+  escriba_do_pacto: 'Escriba do Pacto',
+};
+const ID_POR_NOME: ReadonlyMap<string, string> = new Map([
+  ...Object.entries(CLASS_TITLE_EN).map(([id, en]) => [norm(en), id] as const),
+  ...Object.entries(PT_EVOCACAO).map(([id, pt]) => [norm(pt), id] as const),
+]);
+
+const SUFIXO_EN = / aspirant$/i;
+const PREFIXO_PT = /^aspirante a /i;
+
+/**
+ * Id do arquétipo de um `ClassTitle` do cache, tolerante a cache antigo: usa `id` quando existe; sem ele, casa o NOME (PT ou EN,
+ * sem acento, com ou sem "Aspirante a"/"Aspirant" — o diluído CONTA, decisão do dono 16/11/2026). Genérico ("Adepto de X") ou
+ * desconhecido = `undefined`.
+ */
+export function arquetipoIdDoTitulo(t: unknown): string | undefined {
+  if (!t || typeof t !== 'object' || Array.isArray(t)) return undefined;
+  const { id, origem, nome } = t as { id?: unknown; origem?: unknown; nome?: { pt?: unknown; en?: unknown } };
+  if (origem === 'generico') return undefined;
+  if (typeof id === 'string' && id.length > 0) return id;
+  const candidatos = [
+    typeof nome?.en === 'string' ? nome.en.replace(SUFIXO_EN, '') : '',
+    typeof nome?.pt === 'string' ? nome.pt.replace(PREFIXO_PT, '') : '',
+  ];
+  for (const c of candidatos) {
+    const achado = c ? ID_POR_NOME.get(norm(c)) : undefined;
+    if (achado) return achado;
+  }
+  return undefined;
+}
 
 interface CondicaoLike {
   elementos?: Record<string, number>;
@@ -256,6 +300,7 @@ export async function computeClassTitle(ficha: Ficha, dominantElement?: string):
     return {
       nome: { pt: pleno.nome, en: CLASS_TITLE_EN[pleno.id] ?? pleno.nome },
       origem: 'arquetipo',
+      id: String(pleno.id),
       sigilo: sigiloDaClasse(pleno.condicao, ficha, dominantElement),
     };
   }
@@ -266,6 +311,7 @@ export async function computeClassTitle(ficha: Ficha, dominantElement?: string):
     return {
       nome: { pt: `Aspirante a ${diluido.nome}`, en: `${en} Aspirant` },
       origem: 'diluido',
+      id: String(diluido.id),
       sigilo: sigiloDaClasse(diluido.condicao, ficha, dominantElement),
     };
   }

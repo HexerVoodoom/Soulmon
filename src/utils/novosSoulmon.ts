@@ -227,7 +227,7 @@ export function getDungeonEncounter(
   /** Andar efetivo e level REAL do jogador (REGISTRO §437): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
   floor?: number,
   playerLevel?: number,
-  /** Conjunto do Rift (REGISTRO §442): estágio FIXO, vale por cima dos degraus de profundidade e da regra do HP. Exige `element`. */
+  /** Conjunto do Rift (REGISTRO §445): estágio FIXO, vale por cima dos degraus de profundidade e da regra do HP. Exige `element`. */
   estagioDoConjunto?: EnemyStage,
 ): DungeonEncounter {
   const conj = estagioDoConjunto && element ? pickEnemyDoConjunto(level, rng, { stage: estagioDoConjunto, element, used }) : undefined;

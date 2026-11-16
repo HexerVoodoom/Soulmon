@@ -24,7 +24,8 @@ import { rosterEntryOfKey } from './enemyRoster';
 import { attackFx, type AttackFxState } from './attackFxArt';
 import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
-import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
+import { nomeEspecialInimigo, nomeDeLexico, nomeParaFamilia, familiaDoNomeInimigo, type LexNome } from './soulProfile/ficha/nomeEspecial';
+export { familiaDoNomeInimigo };
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
 import type { FighterFx } from './combate/fight';
@@ -100,10 +101,13 @@ export function dungeonEnemyElement(e: { stage?: string; element?: string } | un
 }
 /** O selo do ESPECIAL do inimigo: o nome da tabela das criaturas novas; sem ele, o nome por regra (`foeSpecialLabel`). */
 export function dungeonFoeSpecialLabel(
-  isPt: boolean, e: { especial?: { pt: string; en: string } } | undefined | null, element: string | undefined, name: string,
+  isPt: boolean, e: { especial?: { pt: string; en: string }; foe?: { special?: { family: SpecialFamily; effect?: string } | null } } | undefined | null,
+  element: string | undefined, name: string,
 ): string {
+  const familia = familiaDoNomeInimigo(e?.foe?.special);
   const n = e?.especial;
-  return n ? (isPt ? n.pt : n.en) : foeSpecialLabel(isPt, element, name);
+  // o nome da tabela da criatura só vale para o dano direto; cura, escudo, buff, DoT e debuff levam o nome da FAMÍLIA (coerente com o efeito)
+  return n && (!familia || familia === 'direct') ? (isPt ? n.pt : n.en) : foeSpecialLabel(isPt, element, name, familia);
 }
 
 import { SCHOOL_STRIKE_FORM, type StrikeForm, type SkillRole } from './soulProfile/ficha/strikeForm';
@@ -214,8 +218,11 @@ export function strikeKindForSchool(escola: string | undefined): StrikeForm {
  */
 export const SPECIAL_LABEL = { en: 'SPECIAL!', pt: 'ESPECIAL!' } as const;
 /** N1 (PR1b): o selo do cast mostra o nome próprio da `StageSkill` especial; sem ficha, `SPECIAL_LABEL`. */
-export function specialLabel(isPt: boolean, skill?: { nome: { pt: string; en: string } } | null): string {
-  const nome = skill?.nome?.[isPt ? 'pt' : 'en']?.trim();
+export function specialLabel(
+  isPt: boolean, skill?: { nome: { pt: string; en: string }; familia?: SpecialFamily; lex?: LexNome } | null, familiaEfetiva?: SpecialFamily,
+): string {
+  // o nome segue a família que VALE na luta (a Coroa da Hexsmith troca a família sem trocar o texto)
+  const nome = (skill ? nomeParaFamilia(skill, familiaEfetiva).nome : undefined)?.[isPt ? 'pt' : 'en']?.trim();
   return nome || (isPt ? SPECIAL_LABEL.pt : SPECIAL_LABEL.en);
 }
 

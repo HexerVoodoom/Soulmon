@@ -6055,7 +6055,52 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo/gatilho:** ~US$ 4,6 de API (205 + 70 refeitas + 12 do piloto); +4,6 MB de PNG (paleta de 256 cores). Reabre se o dono reprovar alguma forma (regerar só ela, `prompt_v1` e `--v1.png` guardados em `E:/Soulmon-assets/_lote-16-11/combinados/`).
 
-## §442 — Rift infinito em CONJUNTOS de andares: estágio por nº de elementos e mini-boss (16/11/2026, dono)
+## §441 — Rift infinito: sem teto de profundidade, limite diário de 30 lutas (16/11/2026, dono)
+
+**Pedido do dono.** Tirar o teto de profundidade por level e Vínculo (`dungeonLayerCap`: `comfortLayers(Lv)` + margem, mais o portão `masmorraAlto`) e pôr UM LIMITE DIÁRIO. Palavras dele: "no máximo 30 andares... cada andar tem 6 lutas, então são 5 andares/dia".
+
+**Interpretação adotada (a dúvida está aberta para o dono).** O limite vale **30 LUTAS = 5 ANDARES por dia do jogador**, não 30 andares (180 lutas). Constante única `DUNGEON_DAILY_FIGHTS = DUNGEON_FIGHTS_PER_FLOOR * 5` em `src/utils/dungeonIdle.ts`; `DUNGEON_DAILY_LAYERS` deriva dela. **Se ele quis 30 andares por dia, troque só essa constante para `DUNGEON_FIGHTS_PER_FLOOR * 30` (180); testes e textos leem a constante.**
+
+**Como ficou.** (1) `dungeonLayerCap` e `DUNGEON_CAP_MARGIN` saíram; `startLayerFor(record)` não pede mais teto; o portão do Vínculo sai da descida (`masmorraFloorOpen` segue em `gates.ts` para outros usos). A profundidade continua escalando HP/dano (`effectiveFloor`, `comfortLayers`, degraus 60/200/500 do §437); recorde `dungeonDepthRecord` intacto; só o fim da escada (999) fecha por profundidade (`'deep'`). (2) O limite reutiliza o contador `dungeonDaily {day, layers}` que já existia no save e no servidor (monotônico, `_dayCounters.js`, sem mudança nem teste de paridade novo: o servidor lembra o contador, não decide o limite). Conta camadas COMEÇADAS no `playerDayIso`, a 1ª inclusive; 5 camadas começadas = no máximo 30 lutas. A porta única `layerRefusal` ganhou `'daily-limit'` (checado antes de `'no-energy'`), e todas as formas de descida passam por ela: tela (`DungeonGame`), fora da tela (`dungeonAway`, `ended: 'daily'`) e foco (`focusDescentRefusal`). (3) A luta e o andar em curso terminam; o limite só barra a PRÓXIMA camada. (4) UI calma, sem custo: lobby mostra "hoje: x de 5 andares"; no limite o botão "Descer" não acende e a frase é "O Rift descansa até amanhã"; o resumo e a volta do app usam a mesma frase. Energia continua 1 por camada, intocada. Guia (PT/EN), CLAUDE.md e manual atualizados.
+
+**Save real.** Leitura tolerante e sem migração: um `dungeonDaily` de hoje com mais de 5 camadas (era sem limite) só bloqueia até a virada do dia do jogador; lixo vira "nenhuma camada hoje". O servidor mantém o clamp 0..999.
+
+**Alternativa que perdeu.** Limite em andares totais por dia sem relação com as 6 lutas (30 andares): vira 180 lutas por dia, praticamente sem freio para quem tem energia. **Gatilho para rever:** o dono confirmar "30 andares"; ou o limite parecer curto demais para quem usa foco (a descida de foco de 25 min já bate 5 andares).
+
+**Falsifica a aposta:** se a retenção/uso da Fenda cair depois do limite (menos sessões de foco abertas) em vez de subir o valor de cada descida.
+
+## §442 — Elemento Vileza: nome em inglês passa a "Fel" (16/11/2026, dono)
+
+**Decisão.** O nome EN do elemento `vileza` passa de "Vileness" (e "Malice" na tabela de essências) para **Fel**. O PT segue "Vileza". O id `vileza` não muda (saves, KV, servidor, sprites). Só mudam as tabelas de rótulo EN: `elementLabels.ts`, `soulProfile/essenceLabels.ts` (`BASE_EN`), `cosmeticosNovos.ts` (`ELEMENTOS`, gera "Fel Realm" e "Fel Ring"), `public/widget-frames/manifest.json` e `scripts/widget-frames-publish.mjs`. Nomes de combinados EN têm nome próprio por id (Hellfire, Acid, Terror) e não embutem o do elemento: nada a mudar. Não mudaram de propósito: "Vile Eye" (criatura Olho Vil) e "Lord of the Vile Dead" (título de classe), adjetivos e não o elemento. Guarda: `utils/felRename.test.ts`.
+
+**Alternativa que perdeu.** Manter "Vileness" ou "Malice". **Gatilho para rever:** o dono preferir outro termo, ou "Fel" confundir jogadores EN. **Falsifica a aposta:** feedback EN pedindo glossário do elemento.
+
+## §443 — Nome do especial coerente com o efeito (16/11/2026, pedido do dono)
+
+- **Pedido:** "os nomes dos poderes especiais precisam ser coerentes com o efeito: 'Onslaught' não faz sentido para cura".
+- **Causa:** o gerador do JOGADOR já nomeava pela família (léxico por família, `nomeEspecial.ts`). Os desvios eram nos caminhos que escolhem o selo sem a família: (1) inimigos de Arena, Masmorra/Rift e Pesadelo têm família sorteada (cura, escudo, buff, DoT, debuff; `foeFamilies.ts`) e o selo caía sempre em dano direto ("Onslaught" curando); (2) a Coroa da Hexsmith troca a família do especial do jogador sem trocar o texto; (3) o nome de criatura da tabela (`novosSoulmonData`) aparecia em qualquer família.
+- **Decisão:** o selo segue a família que VALE na luta. Inimigo: `familiaDoNomeInimigo` (cura ao longo do tempo, `shield`+`hot`, leva nome de cura); nome da tabela da criatura só no dano direto; Coroa: `nomeParaFamilia` troca só o substantivo pelo MESMO índice do léxico da família efetiva (nome escolhido pelo jogador passa intacto). Léxico: 2 substantivos trocados (cura "Rapture/Êxtase" → "Renewal/Renovo"; velocidade "Flurry/Torvelinho" → "Haste/Celeridade"); básicas de bênção/abrigo/orvalho/carícia/grilhão (que são dano) viraram "Ray/Glare/Gleam/Smite" e "Sting"; 3 nomes de criatura de dano com cara de cura/controle trocados.
+- **Ids estáveis:** `lex` (índice), família, chaves de save e servidor intocados; o servidor só valida o índice (8 por família, igual). Save com o texto velho é lido pela tabela atual (`nomeAtualDoEspecial` em `comNomeDoEspecial`), sem migração.
+- **Guarda:** `nomeEspecialCoerente.test.ts` (léxico por família sem palavra de outra família, selo de inimigo por família em EN/PT, Coroa, save antigo, básicas).
+- **Alternativa que perdeu:** reescrever o nome gravado no save (migração): rejeitada, a leitura pela tabela basta.
+- **Rollback:** `git revert`; só texto exibido.
+## §444 — Companheiro invocado, PR 1: fundação atrás de flag, sem combate nem cena (16/11/2026, dono)
+
+**Decisão do dono (16/11):** o companheiro do Oráculo vira invocação em combate para TODO Soulmon (jogador, simulado, NPC) cujo ARQUÉTIPO do estágio esteja na lista de evocação (invocador, senhor das feras, xamã totêmico, necromante, demonologista, verdejante, senhor dos mortos vis, bokor, escriba do pacto) OU cuja escola dominante da ficha seja Evocação; 32 sprites fixos por criatura; função mista (turno 1 o especial do jogador, turnos 2-3 ataque).
+
+**Este PR (só fundação, flag `COMPANHEIRO_INVOCADO` DESLIGADA):** `utils/companheiroInvocado.ts` (dono único: lista de arquétipos, 32 criaturas, `eEvocador`, `companheiroDoEstagio`, `companheiroAtivo`, cache e migração); `ClassTitle.id?` (+ `arquetipoIdDoTitulo`, que recupera o id de cache antigo pelo nome EN); campo aditivo `GameState.soulmonEvocacao` por estágio (primeiro valor vence, sanitizador em `hydrateSave`, preenchido por `recalcularCaches` só com a flag ligada); `assets/soulmon/companheiros/index.ts` (glob tolerante); `utils/companheiroInvocadoLinhas.ts` (simulados/NPCs, tabela PROVISÓRIA por elemento base); teste de medição por estágio.
+
+**Escola dominante inclui Evocação:** `skills.ts › escolaDominante` ignora evocação (não é escola de skill); a regra nova é `escolaDominanteComEvocacao` (argmax sobre todas as `EscolaId`, empate pela ordem canônica).
+
+**Decisões finais (16/11):** forma "Aspirante a X" (diluída) CONTA como arquétipo; casamento pelo NOME da classe com tolerância PT/EN/acento e `ClassTitle.id` daqui em diante; simulados por ESCOLA derivada de elemento+linha (tabela papel→escola do Oráculo, `ROLE_SCHOOL_BY_ALIGNMENT` exportada de `buildSheet`; papel por elemento em `PAPEL_POR_ELEMENTO`, `companheiroInvocadoLinhas.ts`, ~45 de 170); NPC inimigo só chefe/mini-boss NOMEADO por lista explícita (`CHEFES_NOMEADOS_INVOCAM`: os 3 do Torneio hoje); Arena em grupo = 1 companheiro POR COMBATENTE (`COMPANHEIROS_POR_COMBATENTE`).
+
+**Sprites:** NÃO entram neste PR: o dono escolhe entre 1ª geração e refeita de alguns; os 32 PNG 256² RGBA (fonte `E:/Soulmon-assets/_lote-16-11/companheiros/`) vêm no PR 1b. O mapa e o teste já existem, com os 32 como PENDENTES. Dos aprovados, 5 têm elemento solto (fada, arauto_elfico, wyvern, falcao, coruja: disco de runas, selo, anel de vento) a refinar depois.
+
+**Servidor:** `save.js` não sanitiza `soulmonClassTitles`/`soulmonCompanheiro` (campos de cache passam como o resto do save), então este PR não tem espelho no servidor; o espelho (e o teste de paridade) é do PR 2, quando o combate ler isto.
+
+**Pendente do dono:** nada bloqueante; novos chefes nomeados entram à mão em `CHEFES_NOMEADOS_INVOCAM`. **Rollback:** `git revert`; campo ignorado por versões antigas (aditivo), flag desligada = zero efeito.
+
+## §445 — Rift infinito em CONJUNTOS de andares: estágio por nº de elementos e mini-boss (16/11/2026, dono)
 
 **Pedido.** No Rift infinito (descida idle) a dificuldade aumenta com a profundidade e o soft lock às vezes é ACEITO e DESEJADO (senso de desafio e conquista). Cada elemento (ou combinação) ocupa 2 andares seguidos = 1 CONJUNTO; o último combate do conjunto é o MINI-BOSS.
 

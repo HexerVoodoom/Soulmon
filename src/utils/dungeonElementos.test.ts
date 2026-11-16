@@ -64,7 +64,7 @@ describe('só aparecem summons do elemento da camada', () => {
         const el = elementoDaCamada(layer);
         const wave = dungeonWaveOf(seed, layer, 30, 'ultimate');
         expect(wave.length).toBeGreaterThan(0);
-        // REGISTRO §442: o mini-boss de um par/trio pode vir de um COMPONENTE do conjunto quando o elemento não tem a forma do estágio pedido.
+        // REGISTRO §445: o mini-boss de um par/trio pode vir de um COMPONENTE do conjunto quando o elemento não tem a forma do estágio pedido.
         const comps = (id: string): readonly string[] => curatedComponents(id) ?? elementComponents(id) ?? [id];
         const doConjunto = new Set(comps(el));
         for (const e of wave) expect(e.element === el || comps(e.element ?? '').every(c => doConjunto.has(c)), `camada ${layer} (${el}): ${e.element}`).toBe(true);

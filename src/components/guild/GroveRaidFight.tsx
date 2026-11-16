@@ -106,7 +106,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-grove-raid style={{ display: 'contents' }} />
       <BattleStage
-        specialLabel={specialLabel(isPt, par?.especial)}
+        specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}
         scene={GROVE_RAID_SCENE}

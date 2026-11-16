@@ -1,4 +1,4 @@
-// Conjuntos de andares do Rift (REGISTRO §442): ordem, 2 andares por conjunto, mini-boss, estágios por nº de elementos, determinismo.
+// Conjuntos de andares do Rift (REGISTRO §445): ordem, 2 andares por conjunto, mini-boss, estágios por nº de elementos, determinismo.
 import { describe, expect, it } from 'vitest';
 import {
   RIFT_MINIBOSS_EXTRA_FLOORS, RIFT_MINIBOSS_SLOT, RIFT_SET_COUNT, RIFT_STAGE_BY_COUNT, isMiniBossFight, isMiniBossLayer, riftSetOfLayer, riftWavePlan,
