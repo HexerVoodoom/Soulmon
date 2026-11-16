@@ -72,12 +72,12 @@ describe('descida de foco acompanha pausar/continuar/cancelar', () => {
 
 describe('missão dungeon-runs: 1 camada vale a run; 0 camadas não', () => {
   it('descida de foco que acaba pelo timer, com ao menos 1 camada, conta UMA run', () => {
-    // energia farta: o que encerra a descida é SÓ o timer (o caso da ordem focusOver/contagem)
-    const open = startFocusDescent(estado({ energyPoints: 500 }), T0, 7, T0 + 25 * MIN);
-    const r = applyDungeonAway(open, T0 + 25 * MIN);
+    // energia farta e foco curto (o limite diário de 5 andares fecharia um foco longo antes): o que encerra a descida é SÓ o timer
+    const open = startFocusDescent(estado({ energyPoints: 500 }), T0, 7, T0 + 3 * MIN);
+    const r = applyDungeonAway(open, T0 + 3 * MIN);
     expect(r.report!.ended).toBe('retired');
     expect(r.report!.layers).toBeGreaterThan(0);
-    expect(runsDaSemana(r.next, T0 + 25 * MIN)).toBe(1);
+    expect(runsDaSemana(r.next, T0 + 3 * MIN)).toBe(1);
   });
   it('acertos parciais com 0 camadas não contam', () => {
     const open = startFocusDescent(estado(), T0, 7, T0 + 25 * MIN);
@@ -115,14 +115,13 @@ describe('resumo da volta persistido e motivo correto', () => {
     expect(sanitizeDungeonReturnSummary({ layers: -4, bits: NaN })?.layers).toBe(0);
   });
   it('cada fim tem a sua frase, EN e PT, e "retired" não diz que a energia acabou', () => {
-    for (const e of ['hp', 'energy', 'daily', 'sealed', 'deep', 'retired', null]) {
+    for (const e of ['hp', 'energy', 'daily', 'deep', 'retired', null]) {
       expect(dungeonReturnReason(e, true).length).toBeGreaterThan(5);
       expect(dungeonReturnReason(e, false).length).toBeGreaterThan(5);
     }
     expect(dungeonReturnReason('retired', false)).not.toMatch(/energy/i);
     expect(dungeonReturnReason('retired', true)).not.toMatch(/energia/i);
     expect(dungeonReturnReason('deep', false)).not.toBe(dungeonReturnReason('energy', false));
-    expect(dungeonReturnReason('sealed', true)).not.toBe(dungeonReturnReason('hp', true));
   });
 });
 

@@ -7,6 +7,12 @@
 > - **Pendente:** sorteio dos inimigos usar as formas (outro pacote); veto de nomes pelo dono.
 > - **Rollback:** `git revert`; só dados e PNG.
 >
+> ## 16/11/2026 — Rift: limite diário de 30 lutas, sem teto por level (`feat/rift-limite-diario`, REGISTRO §441)
+>
+> - **Feito:** `dungeonLayerCap` saiu; limite diário `DUNGEON_DAILY_FIGHTS` (30 lutas = 5 andares por dia do jogador) na porta única `layerRefusal`, valendo na tela, fora da tela e no foco; lobby mostra "hoje: x de 5 andares", no limite "o Rift descansa até amanhã".
+> - **Pendente do dono:** confirmar 30 lutas (5 andares) vs 30 andares; para 30 andares trocar só a constante.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
+>
 > ## 16/11/2026 — Amizade que some e chat que fecha fora (`fix/amizade-chat-fecha`, REGISTRO §439)
 >
 > - **Feito:** upsert do perfil relê `friends` ao gravar (corrida com aceite de convite); Amigos adota a lista do servidor ao ler o estado social; chat fecha ao tocar fora, foco fora, diálogo novo ou Esc.

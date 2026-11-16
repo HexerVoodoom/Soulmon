@@ -33,7 +33,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { BITS_PACK_DAILY_CAP } from '../utils/currencies';
-import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
+import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, DUNGEON_DAILY_FIGHTS, DUNGEON_DAILY_LAYERS } from '../utils/dungeonIdle';
 import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
@@ -497,8 +497,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A descida para quando a energia ou o HP acabam. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h, até com o app fechado); descer de novo pede ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
-              `The descent stops when energy or HP runs out. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h, even app closed); descending again needs ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
+              `A descida para quando a energia ou o HP acabam, ou quando o dia chega a ${DUNGEON_DAILY_FIGHTS} lutas (${DUNGEON_DAILY_LAYERS} andares): o Rift descansa até amanhã, sem custo nenhum. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h, até com o app fechado); descer de novo pede ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
+              `The descent stops when energy or HP runs out, or when the day reaches ${DUNGEON_DAILY_FIGHTS} fights (${DUNGEON_DAILY_LAYERS} floors): the Rift rests until tomorrow, at no cost. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h, even app closed); descending again needs ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
             )}
           </p>
           <p style={para}>

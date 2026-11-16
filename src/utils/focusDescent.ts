@@ -8,14 +8,13 @@
  * Pura e conferida sobre o `prev` (updater do `setGameState`): recusa devolve a MESMA referência.
  */
 import type { GameState } from '../contexts/GameStateContext';
-import { bondLevelFor } from './bond';
 import { newDefenseSeed } from './autoDefesa';
 import {
-  dungeonLayerCap, hpAgora, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, startLayerFor, type DungeonAway,
+  hpAgora, layerRefusal, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, startLayerFor, type DungeonAway,
 } from './dungeonIdle';
 import { soulCombatant } from './soulXP';
 
-export type FocusDescentRefusal = 'busy' | 'no-hp' | 'no-energy';
+export type FocusDescentRefusal = 'busy' | 'no-hp' | 'no-energy' | 'daily-limit';
 
 /** Por que a descida de foco NÃO pode abrir agora (`undefined` = pode). */
 export function focusDescentRefusal(state: GameState, nowMs: number): FocusDescentRefusal | undefined {
@@ -23,7 +22,7 @@ export function focusDescentRefusal(state: GameState, nowMs: number): FocusDesce
   if (state.guildMission) return 'busy';
   if (!podeDescer({ dungeonHp: state.dungeonHp }, nowMs)) return 'no-hp';
   const paid = spendLayer(state, nowMs);
-  if (paid === state) return 'no-energy';
+  if (paid === state) return layerRefusal(state, nowMs) === 'daily-limit' ? 'daily-limit' : 'no-energy';
   return undefined;
 }
 
@@ -35,8 +34,7 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
     evolutionStage: prev.evolutionStage, perfectDays: prev.perfectDays, powerPoints: prev.powerPoints, harmonyPoints: prev.harmonyPoints,
     benevolencePoints: prev.benevolencePoints, degeneratedByHP: prev.degeneratedByHP, evoStatFloor: prev.evoStatFloor,
   });
-  const cap = dungeonLayerCap(c.level, bondLevelFor(prev.totalXP ?? 0));
-  const layer = startLayerFor(sanitizeDepthRecord(prev.dungeonDepthRecord), cap);
+  const layer = startLayerFor(sanitizeDepthRecord(prev.dungeonDepthRecord));
   const reg: DungeonAway = {
     since: nowMs, seed, layer, slot: 0, hp: hpAgora({ dungeonHp: prev.dungeonHp }, nowMs), en: 0, ms: false,
     ...(focusEndsAt !== undefined && focusEndsAt > nowMs ? { until: focusEndsAt } : {}),

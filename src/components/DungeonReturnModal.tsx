@@ -12,8 +12,7 @@ export function dungeonReturnReason(ended: string | null, isPt: boolean): string
     case 'hp': return isPt ? 'O fôlego dele acabou.' : 'He ran out of breath.';
     case 'retired': return isPt ? 'O foco terminou e ele voltou para casa.' : 'Your focus ended and he came home.';
     case 'deep': return isPt ? 'Ele chegou ao fundo da Fenda.' : 'He reached the bottom of the Rift.';
-    case 'sealed': return isPt ? 'O próximo andar ainda está selado para ele.' : 'The next floor is still sealed for him.';
-    case 'daily': return isPt ? 'O limite de camadas de hoje foi atingido.' : "Today's layer limit was reached.";
+    case 'daily': return isPt ? 'O Rift descansa até amanhã: os andares de hoje acabaram.' : "The Rift rests until tomorrow: today's floors are done.";
     default: return isPt ? 'A energia da descida acabou.' : 'The descent ran out of energy.';
   }
 }

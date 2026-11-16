@@ -16,7 +16,6 @@
 // (`DUNGEON_FIGHTS_PER_FLOOR` = `LADDER_TIERS.length`: a igualdade é travada em `dungeonIdle.test.ts`.)
 
 import { STAGE_LEVEL_CAPS } from '../types/progression';
-import { MASMORRA_ALTO_A_PARTIR_DO_ANDAR, masmorraFloorOpen } from './gates';
 import { setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 
@@ -110,7 +109,8 @@ export function formatarEspera(ms: number, pt: boolean): string {
 //     CONFORTO (`comfortLayers`) — as camadas até ela lutam na dificuldade do andar 1; daí para baixo a
 //     dificuldade sobe como sempre subiu, e a parede medida (andar efetivo ~5–6) cai `comfortLayers(L)` camadas
 //     mais fundo. Quem fez tarefas e hábitos com constância tem Lv mais alto (dias completos + estágio), e por
-//     isso desce mais. O TETO declarado é `dungeonLayerCap` (zona + margem, e o portão do Vínculo de `gates.ts`).
+//     isso desce mais. NÃO há teto de profundidade por Lv nem por Vínculo (16/11/2026): quem limita a descida é a energia e o
+//     LIMITE DIÁRIO (`DUNGEON_DAILY_FIGHTS`, abaixo); a profundidade só escala a dificuldade.
 //  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último múltiplo de
 //     `DUNGEON_RETURN_EVERY` (2) camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
 //     (`DUNGEON_DEPTH_MARKS`) rende fragmentos do Soulsmith — material, nunca Bits e nunca equipamento sorteado.
@@ -121,9 +121,6 @@ export const DUNGEON_ENERGY_PER_LAYER = 1;
 
 /** A camada mais funda que existe. */
 export const DUNGEON_MAX_LAYER = 999;
-
-/** Camadas além da zona de conforto que o teto do Lv deixa tentar: a parede medida cai em +3 a +4 (média 3,8, desde 28/10/2026; era +4 a +6); sobra 1 camada de folga. */
-export const DUNGEON_CAP_MARGIN = 5;
 
 /** O Lv mais alto do combate (ultra no topo): é nele que a zona de conforto chega à camada 999. */
 const TOP_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
@@ -144,24 +141,13 @@ export function effectiveFloor(layer: number, level: number): number {
   return 1 + Math.max(0, Math.max(1, int(layer, 1)) - 1 - comfortLayers(level));
 }
 
-/**
- * O TETO de camadas do Lv (e do Vínculo): `min(999, zona + margem)`, e enquanto o portão `masmorraAlto` estiver
- * fechado, a última camada antes dele. É o que a tela promete: "com mais Lv, mais fundo".
- */
-export function dungeonLayerCap(level: number, bondLevel: number): number {
-  const byLevel = Math.min(DUNGEON_MAX_LAYER, comfortLayers(level) + DUNGEON_CAP_MARGIN);
-  return masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, bondLevel)
-    ? byLevel
-    : Math.min(byLevel, MASMORRA_ALTO_A_PARTIR_DO_ANDAR - 1);
-}
-
 /** Higieniza o recorde vindo do save/nuvem: inteiro em [0, 999]. */
 export function sanitizeDepthRecord(raw: unknown): number {
   return Math.min(DUNGEON_MAX_LAYER, Math.max(0, int(raw, 0)));
 }
 
-/** Onde a descida começa: logo depois do último múltiplo de `DUNGEON_RETURN_EVERY` já limpo, sem passar do teto. */
-export function startLayerFor(record: number, cap: number): number {
+/** Onde a descida começa: logo depois do último múltiplo de `DUNGEON_RETURN_EVERY` já limpo (sem teto por Lv; `cap` opcional só limita). */
+export function startLayerFor(record: number, cap: number = DUNGEON_MAX_LAYER): number {
   const lim = Math.min(sanitizeDepthRecord(record), Math.max(1, int(cap, 1)) - 1);
   return 1 + DUNGEON_RETURN_EVERY * Math.floor(Math.max(0, lim) / DUNGEON_RETURN_EVERY);
 }
@@ -197,8 +183,16 @@ export function layersAffordable(energy: unknown): number {
 //  · Bater o limite NUNCA custa coração nem Bits: o botão não acende e a frase é calma. O que já foi limpo fica.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// beta3 F2: o LIMITE diário de camadas SAIU (pedido do dono, 25/10/2026) — só a energia limita. O contador `dungeonDaily` segue no save
-// (estatística e compatibilidade), mas nada o compara a um teto.
+// beta3 F2 tirou o limite de 10 camadas (25/10/2026). 16/11/2026 (REGISTRO §441): o dono trocou o TETO DE PROFUNDIDADE por um LIMITE
+// DIÁRIO — o contador `dungeonDaily` (já no save, monotônico no servidor) volta a ser comparado a um teto, agora de 30 LUTAS por dia
+// do jogador. Interpretação: "cada andar tem 6 lutas, então são 5 andares/dia". Para virar "30 andares/dia", troque só `DUNGEON_DAILY_FIGHTS`
+// (30 → 180). O contador conta camadas COMEÇADAS (a 1ª inclusive), então 5 camadas começadas = no máximo 30 lutas.
+
+/** O LIMITE diário, em LUTAS (a constante que o dono ajusta). 30 lutas = 5 andares de `DUNGEON_FIGHTS_PER_FLOOR` lutas. */
+export const DUNGEON_DAILY_FIGHTS = DUNGEON_FIGHTS_PER_FLOOR * 5;
+
+/** O mesmo limite em CAMADAS começadas por dia do jogador (derivado de `DUNGEON_DAILY_FIGHTS`, nunca escrito à mão). */
+export const DUNGEON_DAILY_LAYERS = Math.max(1, Math.ceil(DUNGEON_DAILY_FIGHTS / DUNGEON_FIGHTS_PER_FLOOR));
 
 /** O contador do dia, no SAVE (`dungeonDaily`). `day` é `playerDayIso` (AAAA-MM-DD, ordenável). */
 export interface DungeonDaily { day: string; layers: number }
@@ -228,12 +222,12 @@ export function layersToday(state: DungeonDailyState, nowMs: number): number {
   return rec && rec.day === dungeonDayOf(state, nowMs) ? rec.layers : 0;
 }
 
-/** Sem teto diário (beta3 F2): sempre infinito. Mantido só para quem ainda pergunta. */
-export function layersLeftToday(_state: DungeonDailyState, _nowMs: number): number {
-  return Number.POSITIVE_INFINITY;
+/** Quantas camadas ainda podem COMEÇAR hoje (0 = o Rift descansa até amanhã). */
+export function layersLeftToday(state: DungeonDailyState, nowMs: number): number {
+  return Math.max(0, DUNGEON_DAILY_LAYERS - layersToday(state, nowMs));
 }
 
-export type LayerRefusal = 'no-energy';
+export type LayerRefusal = 'no-energy' | 'daily-limit';
 
 export interface LayerState extends DungeonDailyState {
   energyPoints: number;
@@ -242,8 +236,9 @@ export interface LayerState extends DungeonDailyState {
   energyClock?: EnergyClock;
 }
 
-/** Por que a próxima camada NÃO pode começar agora (energia de AGORA, com a regeneração acertada). `undefined` = pode. */
+/** Por que a próxima camada NÃO pode começar agora (limite do dia; energia de AGORA, com a regeneração acertada). `undefined` = pode. */
 export function layerRefusal(state: LayerState, nowMs: number): LayerRefusal | undefined {
+  if (layersLeftToday(state, nowMs) <= 0) return 'daily-limit';
   if (!canPayLayer(settleEnergy(state, nowMs).energyPoints)) return 'no-energy';
   return undefined;
 }
