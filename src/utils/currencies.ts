@@ -243,6 +243,26 @@ export interface MinigameBitsCharge {
   day: string;
   /** Bits de minijogo já creditados neste dia. */
   earned: number;
+  /** §456: quanto desse total veio de cada CATEGORIA hoje. Campo aditivo: save antigo não o tem e lê como zero em todas
+   *  (a migração é a própria leitura tolerante, idempotente). */
+  cat?: Partial<Record<BitsCategory, number>>;
+}
+
+/** As três categorias de atividade que pagam Bits (§456). Cada uma tem o seu teto diário, ALÉM do teto geral. */
+export type BitsCategory = 'minigames' | 'explorar' | 'arena';
+export const BITS_CATEGORIES: readonly BitsCategory[] = ['minigames', 'explorar', 'arena'];
+/** Teto diário POR CATEGORIA (§456, pedido do dono 16/11/2026). O teto geral (`MINIGAME_BITS_PER_DAY`) continua valendo. */
+export const BITS_PER_CATEGORY_PER_DAY = 75;
+
+/** Normaliza o `cat` vindo do save (dado não confiável): só chaves conhecidas, só números finitos ≥ 0. Ausente/lixo = `undefined`. */
+export function sanitizeBitsCat(raw: unknown): Partial<Record<BitsCategory, number>> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Partial<Record<BitsCategory, number>> = {};
+  for (const c of BITS_CATEGORIES) {
+    const v = (raw as Record<string, unknown>)[c];
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) out[c] = Math.floor(v);
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** Fatia do GameState que o crédito de Bits de minijogo lê e escreve. */
@@ -259,6 +279,28 @@ export function minigameBitsToday(state: MinigameBitsState, dayKey: string): num
   // `earned` vem do save (dado não confiável): não finito conta como zero.
   // `Math.max(0, undefined)` é NaN, e NaN no ledger envenena o saldo inteiro.
   return reg && reg.day === dayKey && Number.isFinite(reg.earned) ? Math.max(0, reg.earned) : 0;
+}
+
+/** Quantos Bits de UMA categoria já foram creditados HOJE (dia diferente ou save antigo = zero). */
+export function minigameBitsCategoryToday(state: MinigameBitsState, dayKey: string, category: BitsCategory): number {
+  const reg = state.minigameBits;
+  if (!reg || reg.day !== dayKey) return 0;
+  const v = reg.cat?.[category];
+  return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, v) : 0;
+}
+
+/** Teto da categoria: a base de 75 + o `extraCap` (Agulha de bússola, §393) que a Fenda/Arena já passam. */
+export function bitsCategoryCap(extraCap = 0): number {
+  return BITS_PER_CATEGORY_PER_DAY + (Number.isFinite(extraCap) && extraCap > 0 ? Math.floor(extraCap) : 0);
+}
+
+/**
+ * Como `minigameBitsGranted`, mais o teto da categoria: o menor dos dois limites decide. Recusa SUAVE: só o excedente de Bits
+ * é cortado; quem chama segue com o resto da recompensa e o progresso da atividade intacto.
+ */
+export function minigameBitsGrantedIn(already: number, categoryAlready: number, amount: number, extraCap = 0): number {
+  const geral = minigameBitsGranted(already, amount, extraCap);
+  return Math.max(0, Math.min(geral, bitsCategoryCap(extraCap) - Math.max(0, categoryAlready)));
 }
 
 /** Quanto o minijogo ainda PODE render hoje (0 = teto do dia gasto). */
@@ -310,13 +352,18 @@ export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState
   amount: number,
   dayKey: string,
   extraCap = 0,
+  category?: BitsCategory,
 ): T {
-  const ganho = minigameBitsGranted(minigameBitsToday(prev, dayKey), amount, extraCap);
+  const ganho = category
+    ? minigameBitsGrantedIn(minigameBitsToday(prev, dayKey), minigameBitsCategoryToday(prev, dayKey, category), amount, extraCap)
+    : minigameBitsGranted(minigameBitsToday(prev, dayKey), amount, extraCap);
   if (ganho <= 0) return prev;
+  const catAtual = prev.minigameBits?.day === dayKey ? prev.minigameBits.cat : undefined;
+  const cat = category ? { ...catAtual, [category]: minigameBitsCategoryToday(prev, dayKey, category) + ganho } : catAtual;
   // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (só contagem desde §373: o teto da troca é do servidor).
   return noteFreeBits({
     ...prev,
     gamePoints: (prev.gamePoints ?? 0) + ganho,
-    minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho },
+    minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho, ...(cat ? { cat } : {}) },
   }, ganho, dayKey);
 }

@@ -232,12 +232,12 @@ export function specialLabel(
  * inimigos do PvE o especial é sempre dano direto. Fica no lazy `nomeEspecial`: sem
  * rede, sem IA.
  */
-export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string, familia?: string | null, lex?: unknown): string {
+export function foeSpecialLabel(isPt: boolean, element: string | undefined | null, seed: string, familia?: string | null, lex?: unknown, efeito?: string | null): string {
   // PvP: o servidor publica o ID do nome (família + índice + formato + elementos); recomposto aqui é o MESMO nome que o dono vê.
-  const exato = lex ? nomeDeLexico({ familia, lex }) : null;
+  const exato = lex ? nomeDeLexico({ familia, lex, efeito }) : null;
   if (exato) return isPt ? exato.pt : exato.en;
   const id = fxElementId(element) === FX_FALLBACK_ELEMENT ? 'vigor' : fxElementId(element);
-  const nome = nomeEspecialInimigo({ pt: baseElementLabel(id, true), en: baseElementLabel(id, false) }, seed, familia);
+  const nome = nomeEspecialInimigo({ pt: baseElementLabel(id, true), en: baseElementLabel(id, false) }, seed, familia, efeito);
   return isPt ? nome.pt : nome.en;
 }
 
@@ -665,7 +665,14 @@ export function withRealFx(
     if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: spdVar, turns: left(f.nSpd), source: h });
     if (f.nVuln > FX_EPS) real.push(curseOn(h) || recebido === 'maldicao' ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
     if ((f.nSil ?? 0) > FX_EPS) real.push({ kind: 'silencio', ...(silVar ? { variant: silVar } : {}), turns: left(f.nSil ?? 0), source: -1 });
-    if ((f.nSlow ?? 0) > FX_EPS) real.push({ kind: 'lento', ...(lentoVar ? { variant: lentoVar } : {}), turns: left(f.nSlow ?? 0), source: -1 });
+    // `nSlow` do núcleo soma a lentidão de efeito (`slow`) e o arrasto da família `spdDebuff` (Coroa): quando o selo do arrasto já está no quadro
+    // (o `cast` o deixou), o contador real herda a variante dele; sem ele, vale a do elemento (ou nenhuma).
+    const lentoHerdado = list.find((e) => e.kind === 'lento' && e.variant === 'spd')?.variant;
+    const lentoVariante = lentoVar ?? lentoHerdado;
+    if ((f.nSlow ?? 0) > FX_EPS) real.push({ kind: 'lento', ...(lentoVariante ? { variant: lentoVariante } : {}), turns: left(f.nSlow ?? 0), source: -1 });
+    // Coroas novas (Hexsmith H2): o reforço de defesa (`nGuard`, em quem o conjurou) e o enfraquecimento (`nWeak`, em quem o recebe) duram enquanto o contador durar
+    if ((f.nGuard ?? 0) > FX_EPS) real.push({ kind: 'buff', variant: 'def', turns: left(f.nGuard ?? 0), source: h });
+    if ((f.nWeak ?? 0) > FX_EPS) real.push({ kind: 'debuff', variant: 'atk', turns: left(f.nWeak ?? 0), source: -1 });
     if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', ...(hotVar ? { variant: hotVar } : {}), turns: f.hot ?? 0, source: h });
     if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
     if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });

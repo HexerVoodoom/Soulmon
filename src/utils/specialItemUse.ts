@@ -1,5 +1,8 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
+import { dishIdOfKey, serveDish } from './dishItems';
+import { dishById } from './restaurantMenu';
+import type { RestaurantState } from './restaurantState';
 import { getNextEvolution } from './dailyReset';
 import { resetAlignmentPoints } from './betaResetGrant';
 import { glitchtamaBuffAtivo } from './glitchtamaBuff';
@@ -126,6 +129,8 @@ export interface SpecialItemState {
   /** 🧪 Elemento da poção dada ao Soulmon, pendente para a próxima evolução (`utils/elementPotion.ts`). */
   evolutionPotion?: string;
   playerDayTz?: PlayerDayAnchor;
+  /** 🍽️ Buff de prato (`restaurantState`): `serveDish` grava aqui ao usar um prato de combate/regeneração. */
+  restaurant?: RestaurantState;
 }
 
 function pointsOf(state: SpecialItemState, a: Attr): number {
@@ -229,6 +234,14 @@ export function applySpecialItem<T extends SpecialItemState>(
         },
       },
     };
+  }
+
+  if (special.kind === 'dish') {
+    // 🍽️ Prato do Restaurante (16/11/2026): fome cheia + o efeito do prato, pela regra única `serveDish`. Prato desconhecido (id fora do
+    // cardápio) não chega aqui: `specialRefusal` já o trata como sem catálogo (`SPECIAL_ITEMS` só tem os do cardápio).
+    const d = dishById(dishIdOfKey(emoji) ?? '');
+    if (!d) return { state: prev };
+    return { state: { ...serveDish({ ...prev, energyPoints: prev.energyPoints ?? 0 }, d, now.getTime()), foodInventory } };
   }
 
   if (special.kind === 'spark') {

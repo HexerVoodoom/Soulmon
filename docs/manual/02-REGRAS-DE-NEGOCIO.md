@@ -1017,7 +1017,7 @@ maioria dos donos de Vital Bracelet parar nos estágios médios.
 · `'ultra'`. `getStageLevel` lê o nível do prefixo; `getStageBranch` extrai o
 galho. Não existe tabela por espécie.
 
-**A regra do Ultra (16/11/2026, REGISTRO §455) — um caminho só.** `canReachUltra({
+**A regra do Ultra (16/11/2026, REGISTRO §461) — um caminho só.** `canReachUltra({
 unlockedEvolutions })` devolve `true` só com as três `mega-*` liberadas
 (`megasLiberadas` = 3). A barra do mega é a do Ultra (`ULTRA_PATIENCE_POINTS` =
 `ULTRA_PATIENCE_DAYS` 45 × 6 = 270) e **só acumula depois das três megas**
@@ -5069,7 +5069,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
 - **Torcida forjada** rende o mesmo que o teto (`DUEL_TAPS_CAP` = 16 toques por balde de 3 s × 20 baldes; a barra de cheer de 24 despeja no máximo 13 vezes na luta toda) — toque ilimitado, ou baldes a mais, não rendem mais (`_duel.v3.test.js`, `community.duel.v3.test.js`); aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
-- **Nada do cliente decide o resultado (PR5).** Level, stats, família do especial, semente e resultado são do servidor; o teto S1 (1 level por dia de servidor desde a 1ª gravação, `metadata.f`, só no duelo) LIMITA um save forjado (level 40 no dia 3 luta com level 4) sem rejeitá-lo. Limite honesto: a família do especial e a forma do golpe vêm do save (escrito pelo cliente), dentro de uma lista fechada de 7 famílias calibradas em ±5% na régua.
+- **Nada do cliente decide o resultado (PR5).** Level, stats, família do especial, semente e resultado são do servidor; o teto S1 (1 level por dia de servidor desde a 1ª gravação, `metadata.f`, só no duelo) LIMITA um save forjado (level 40 no dia 3 luta com level 4) sem rejeitá-lo. Limite honesto: a família do especial e a forma do golpe vêm do save (escrito pelo cliente), dentro de uma lista fechada de 7 famílias sorteáveis calibradas em ±5% na régua (mais as 3 só de Coroa da Hexsmith, `defBuff`/`atkDebuff`/`spdDebuff`, que o servidor lê do campo `hexsmith` saneado do save e nunca de sorteio; Coroa equipada também faz o companheiro invocado descansar, REGISTRO §460).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil
@@ -6454,3 +6454,5 @@ Cada NPC passa UMA missão simples ligada ao papel dele (`utils/npcMissions.ts`:
 - **Sem limite diário.** O limite de 30 lutas = 5 andares do §441 foi revogado: o Rift é infinito (camada 999 é o fim da escada) e só a energia (1 por andar) freia a descida. `dungeonDaily` segue no save como estatística sem teto; o lobby mostra "hoje: N andares". Saíram `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday`, a recusa `'daily-limit'` e o fim `'daily'` do `dungeonAway`.
 - **Regeneração.** `ENERGY_REGEN_MINUTES` = 80 (era 60).
 - **Itens de energia.** Faísca de Alma cai com 2% por inimigo (era 4%); pratos de energia do Restaurante custam ×1,5 (Chá de Orvalho e Pão de Faísca 23 Bits, Ensopado do Caldeirão 60), com espelho na Feira.
+
+**🕯️ Calabouço roguelike mais curto (REGISTRO §457, 16/11/2026).** A incursão do dia passou de 3×8 (24 passos) para 3×5 (15): combate obrigatório no 3º e 5º desafio do andar, 3 caminhos nos outros. Prêmio total igual: cada vitória vale 24/15 (`rogueWinValue`), 15 vitórias = 24 Bits e score 33; bônus de escolha ×1,6 (`POWER_STEP` 0,096, `VIGOR_STEP` 0,16); `ROGUE_FOE_RAMP` {1,75; 2}. Save antigo (sem `v`) é convertido proporcionalmente na leitura. O Rift e a Masmorra idle não mudam.

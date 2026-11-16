@@ -62,7 +62,7 @@ export function strikeParts(s: HexStrike): { forma: 'melee' | 'ranged'; impacto:
 /**
  * Coroas de EFEITO (16/11/2026, decisão do dono: criar todas): o valor `coroa:<efeito>` fixa o EFEITO do especial (cura contínua,
  * lentidão, silêncio) sobre uma família-base, sem depender do elemento do Amuleto. NÃO é "invocação": a Hexsmith nunca toca
- * `eEvocador` nem o companheiro (`hexsmith.invocacao.test.ts` trava por grep). Espelho: `functions/api/_hexsmith.js`.
+ * `eEvocador` (o gatilho) nem importa o companheiro; quem lê a Hexsmith é `companheiroAtivo` (Coroa equipada ⇒ sem invocação, `hexsmith.coroasEfeito.test.ts`). Espelho: `functions/api/_hexsmith.js`.
  */
 export const HEX_CROWN_EFFECTS = ['hot', 'slow', 'silence'] as const;
 export type HexCrownEffect = (typeof HEX_CROWN_EFFECTS)[number];
@@ -251,6 +251,11 @@ export interface HexOverrides {
   readonly basicElement?: string;
   readonly defenseElement?: string;
   readonly strike?: HexStrike;
+}
+
+/** Há uma Coroa (qualquer uma) equipada e válida no save? Só a regra "Coroa equipada ⇒ o companheiro descansa" lê isto. */
+export function hexCrownEquipped(raw: unknown): boolean {
+  return sanitizeHexsmith(raw).equipped.coroa !== undefined;
 }
 
 export function hexOverrides(raw: unknown): HexOverrides {

@@ -65,6 +65,12 @@ export function sanitizeHexsmith(raw) {
   return { owned, equipped };
 }
 
+/** Há uma Coroa (qualquer uma) equipada e válida no save? (espelho de `hexCrownEquipped`; a regra "Coroa ⇒ sem companheiro" lê isto.)
+ * @param {unknown} raw */
+export function hexCrownEquipped(raw) {
+  return sanitizeHexsmith(raw).equipped.coroa !== undefined;
+}
+
 /**
  * O que o equipado reescreve. Campo ausente = o codigo original vale.
  * @param {unknown} raw

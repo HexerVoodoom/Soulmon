@@ -233,7 +233,7 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 **Avisos do arquivo:** nenhum comentário de aviso formal além das notas de tolerância a dado sujo já citadas nos exports.
 
 ### `src/types/progression.ts`
-**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, a regra do Ultra (três megas + barra de 45 dias, REGISTRO §455), e se a evolução é manual.
+**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, a regra do Ultra (três megas + barra de 45 dias, REGISTRO §461), e se a evolução é manual.
 **Sincronização 01/11/2026:** novos exports `BB_STAGE` (`'bb'`) e `BB_MAX_HP` (6) — a FORMA BB, estágio ANTES do rookie (Onboarding Velado D3, 30/10/2026). ⚠️ Revoga PARCIALMENTE o "não existe estágio antes do rookie" do `REGISTRO-DE-DECISOES` e do `CLAUDE.md`: vale SÓ para `bb`. Fica FORA de `FORM_REQUIREMENTS` de propósito (sem requisito diário, gauge nem teto de level; não entra em `STAGE_LEVEL_CAPS`/`MAX_STAGE_REQUIREMENT`); para nível/sprite cai em `rookie` (`getStageLevel`). As regras vivem em `utils/bbStage.ts` (`isBBStage`, `sanitizeStageId`, `bbEvolveReady`, `bbRefusal`).
 **Exports:**
 - `FORM_REQUIREMENTS` — requisito diário (tarefas/hábitos) por estágio.

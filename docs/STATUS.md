@@ -1,9 +1,31 @@
 # Status do Soulmon — registro vivo
 
-> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §454)
+> ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §460)
+>
+> - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).
+> - **Falta:** ligar a flag do companheiro (outra frente); regerar 3 selos de arte. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+> ## 16/11/2026 — Companheiro invocado LIGADO no pacote (`feat/companheiro-liga-chave`, REGISTRO §459)
+>
+> - **Feito:** chave ligada no app e no servidor (paridade travada); simulados no duelo (criatura por `hash(id)`), Rogue Dungeon e Treino com amigo ligados; criatura de simulado/NPC em módulo leve; cache `soulmonEvocacao` idempotente (sem regravar à toa); cena do companheiro AO LADO do invocador (antes subia ao peito e, no inimigo, caía sobre a barra de HP). Servidor alinhado ao app em `cenario`/`n-lasca`/`n-panora` e 4 decorações `furn-ruinas-*` (regressões da pacote).
+> - **Não visto em aparelho real.** Prévias no navegador embutido (360×640 e 412×915; luta real só na Arena; Masmorra pela mesma cena com o fundo dela; `prefers-reduced-motion` só por teste).
+> - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
+
+
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §457)
+>
+> - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
+> - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §455)
 >
 > - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
 > - **Não visto em aparelho.**
+
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §455)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
 
 > ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
 >
@@ -5795,3 +5817,10 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 - doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
 - Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
 - ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
+
+## §456 — Teto de Bits por categoria (16/11/2026)
+- Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §457).
+
+## §458 — Convite de Duelo (16/11/2026)
+- Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.

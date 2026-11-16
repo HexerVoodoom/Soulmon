@@ -346,8 +346,8 @@ export function DuelScreen({
       <BattleStage
         scene={scene ?? DUEL_SCENE.bg}
         sceneElement={scene ? null : oppEl}
-        specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
-        foeSpecialLabel={(f) => oppEspecialNome?.trim() || foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
+        specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex, me.fx.efeito) : specialLabel(isPt))}
+        foeSpecialLabel={(f) => oppEspecialNome?.trim() || foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex, opp.fx?.efeito)}
         isPt={isPt}
         me={{ key: 'me', sprite: petSprite, scale: petScale, stageIcon: petStage, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}

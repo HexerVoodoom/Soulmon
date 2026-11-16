@@ -6,6 +6,7 @@ import { lotEntryAsks } from '../../utils/wakeToEnter';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
+import type { BitsCategory } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { DungeonKeyBadge } from './DungeonKeyBadge';
@@ -142,7 +143,7 @@ export interface PlayHandlers {
   funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
-  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
+  arena?: { invites?: { count: number; max: number; perEnergy: number; canExchange: boolean; onExchange: () => boolean; onBegin: () => boolean }; dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
@@ -233,6 +234,8 @@ export interface AreaViewProps {
   buildingCoins?: Partial<Record<BuildingId, readonly string[]>>;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
+  /** Há uma ATIVIDADE rodando agora (jogo aberto, duelo, luta do Torneio)? Diferente de `onLayerChange`: uma folha aberta não é atividade. Alimenta o portão da carta "Elemento novo". */
+  onActivityChange?: (ativa: boolean | undefined) => void;
   /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
   onGoToMap?: () => void;
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
@@ -278,7 +281,7 @@ export interface AreaViewProps {
   /** §232: a base nº 1 do Soulmon combinado. */
   petBase?: string;
   /** Devolve os Bits REALMENTE creditados (teto diario aplicado); as telas de resultado mostram esse valor. */
-  onEarnPoints: (points: number) => number | void;
+  onEarnPoints: (points: number, extraCap?: number, category?: BitsCategory) => number | void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
   onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
@@ -502,6 +505,12 @@ export function AreaView(props: AreaViewProps) {
     onLayerChange?.(layerOpen);
     return () => onLayerChange?.(false);
   }, [layerOpen, onLayerChange]);
+  const emAtividadeAgora = game !== null || duelOpen || tournamentDuelOpen;
+  const { onActivityChange } = props;
+  useEffect(() => {
+    onActivityChange?.(emAtividadeAgora);
+    return () => onActivityChange?.(undefined);
+  }, [emAtividadeAgora, onActivityChange]);
   // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
   useBackLayer(duelOpen, () => setDuelOpen(false));
   // A masmorra registra o PRÓPRIO voltar (vai direto ao mapa, igual ao ícone do mapa); os outros jogos voltam à área.
@@ -598,7 +607,7 @@ export function AreaView(props: AreaViewProps) {
               onRunEnd={play.onRunEnd}
               onEnemyDefeated={play.onDungeonEnemyDefeated}
               onEnemySeen={play.onBestiarySeen}
-              onEarnPoints={props.onEarnPoints}
+              onEarnPoints={(pts, extra) => props.onEarnPoints(pts, extra, 'explorar')}
               rankSaveId={props.guild.saveId}
               /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
               bits={props.points}
@@ -629,7 +638,7 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
+                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, invites: props.play.arena?.invites, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
                 onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
               />
@@ -651,8 +660,9 @@ export function AreaView(props: AreaViewProps) {
               petElement={props.petElement}
               onElementsDefeated={props.play.onElementsDefeated}
               onEnemySeen={props.play.onBestiarySeen}
-              onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('arena'); return creditado; }}
+              onEarnPoints={(pts, extra) => { const creditado = props.onEarnPoints(pts, extra, 'arena'); props.onDailyEvent?.('arena'); return creditado; }}
               onRunEnd={props.play.arena?.onRunEnd}
+              onBeginRun={props.play.arena?.invites?.onBegin}
               ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
             />
@@ -725,7 +735,7 @@ export function AreaView(props: AreaViewProps) {
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
+              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={(pts) => props.onEarnPoints(pts, 0, 'explorar')} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}

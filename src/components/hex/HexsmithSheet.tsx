@@ -13,6 +13,7 @@
 import { emphasizeSoulFragment } from '../ui/SoulFragmentTerm';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
+import { companheiroDoEstado } from '../../utils/companheiroInvocado';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
 import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
@@ -33,7 +34,7 @@ import {
   HEX_ELEMENT_SLOTS, HEX_SLOTS, equipHexItem, applyServerHexForge, hexCost, hexForgeRefusal, hexItemId, hexOverrides, hexValuesOf, parseHexItem,
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
-import { HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexCrownValueCopy, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
+import { HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexCrownValueCopy, hexCrownValueDesc, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge, cloudHexRename } from '../../utils/cloudSave';
 import { HexRenameButton } from './HexRenameButton';
@@ -83,8 +84,9 @@ export function hexValueName(slot: HexSlot, value: string, isPt: boolean): strin
   return tx(HEX_STRIKE_COPY[value as HexStrike], isPt);
 }
 
-/** Legenda curta do ataque das Luvas (só nas Luvas; os outros slots não têm). */
+/** Legenda curta: o que a Coroa de efeito/família nova faz, ou o alcance + acabamento do ataque das Luvas (os outros slots não têm). */
 function hexLegend(slot: HexSlot, value: string, isPt: boolean): string | null {
+  if (slot === 'coroa') { const d = hexCrownValueDesc(value); return d ? tx(d, isPt) : null; }
   return slot === 'luvas' && HEX_STRIKE_LEGEND[value as HexStrike] ? tx(HEX_STRIKE_LEGEND[value as HexStrike], isPt) : null;
 }
 
@@ -102,6 +104,8 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
     const id = fighterIdentity(evolutionStage ? skills?.[fichaStageOf(evolutionStage)] : undefined, petElement);
     return { coroa: id.especial.familia as string, amuleto: id.especial.elemento, garra: id.basico.elemento, couraca: petElement ?? id.basico.elemento, luvas: '' };
   }, [evolutionStage, skills, petElement]);
+  // Quem evoca (companheiro valeria sem a Coroa) ganha o aviso calmo quando a Coroa está equipada; para os demais ele não aparece.
+  const companheiroDescansa = useMemo(() => !!gs && hx.equipped.coroa !== undefined && companheiroDoEstado({ ...gs, hexsmith: undefined }) !== null, [gs, hx]);
   const sprite = spriteProp ?? (evolutionStage ? getSpriteForStage(evolutionStage, demoCharacterId) : null);
   if (!ctx || !gs) return null;
   const { setGameState } = ctx;
@@ -156,6 +160,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   return (
     <section data-hexsmith aria-label={tx(HEX_UI.title, isPt)} className="sm2-hex">
       <p style={sm2Hint}>{tx(HEX_UI.intro, isPt)}</p>
+      {companheiroDescansa && <p role="note" data-hex-companion-rests style={sm2Hint}>{tx(HEX_UI.companionRests, isPt)}</p>}
 
       {/* O MAPA DE SLOTS */}
       <div data-hex-map className="sm2-hex-map">
@@ -281,6 +286,9 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
       <div data-hex-panel={slot} className="sm2-hex-panel">
         {/* 09/11/2026 (dono): embaixo do título, o que a Porta FAZ — mesma fonte, branco, bold, menor. */}
         <p data-hex-desc={slot} className="sm2-hex-desc">{tx(HEX_SLOT_COPY[slot].desc, isPt)}</p>
+        {slot === 'coroa' && equipped && companheiroDoEstado({ ...gs, hexsmith: undefined }) !== null && (
+          <p role="note" data-hex-companion-rests style={sm2Hint}>{tx(HEX_UI.companionRests, isPt)}</p>
+        )}
         {aviso && <p role="status" data-hex-aviso style={sm2Text}>{aviso}</p>}
 
         <section aria-label={tx(HEX_UI.owned, isPt)} className="sm2-hex-group">

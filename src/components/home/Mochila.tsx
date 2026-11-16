@@ -23,10 +23,12 @@ import { useCallback, useEffect, useRef, useState, type RefObject, type PointerE
 import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
+import { dishIdOfKey } from '../../utils/dishItems';
+import { dishById } from '../../utils/restaurantMenu';
 import { isReduceChipKey } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MaterialIcon } from '../MaterialIcon';
-import { getFoodDesc, getFoodName } from '../ItemsWindow';
+import { EXE_SUFFIX, getFileName, getFoodDesc } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -56,11 +58,11 @@ export function mochilaTabs(inv: Record<string, number>): Record<MochilaAba, Arr
   for (const [emoji, n] of Object.entries(inv)) {
     if (!(n > 0)) continue;
     const esp = SPECIAL_ITEMS[emoji];
-    if (esp && esp.kind !== 'chip' && esp.kind !== 'premium') especiais.push([emoji, n]);
+    if (esp && esp.kind !== 'chip' && esp.kind !== 'premium' && esp.kind !== 'dish') especiais.push([emoji, n]);
     else comida.push([emoji, n]);
   }
   // Comida comum antes dos chips; dentro de cada grupo, o maior estoque antes.
-  const peso = (e: string) => (SPECIAL_ITEMS[e]?.kind === 'chip' ? 2 : SPECIAL_ITEMS[e]?.kind === 'premium' ? 1 : 0);
+  const peso = (e: string) => (SPECIAL_ITEMS[e]?.kind === 'chip' ? 3 : SPECIAL_ITEMS[e]?.kind === 'dish' ? 2 : SPECIAL_ITEMS[e]?.kind === 'premium' ? 1 : 0);
   comida.sort((a, b) => peso(a[0]) - peso(b[0]) || b[1] - a[1]);
   especiais.sort((a, b) => b[1] - a[1]);
   return { comida, especiais };
@@ -323,7 +325,7 @@ export function Mochila({
           ) : (
             lista.length > 0 && <div className="sm3-mochila-grade">
               {lista.map(([emoji, n]) => {
-                const nome = getFoodName(emoji, language);
+                const nome = getFileName(emoji, language);
                 return (
                   <button
                     key={emoji}
@@ -342,9 +344,9 @@ export function Mochila({
                     }}
                   >
                     <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined} data-reduce={isReduceChipKey(emoji) || undefined}>
-                      {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} />}
+                      {ITEM_ART[emoji] ? <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} /> : dishIdOfKey(emoji) ? dishById(dishIdOfKey(emoji) ?? '')?.icon : null}
                     </span>
-                    <span className="sm3-item-nome">{nome}</span>
+                    <span className="sm3-item-nome">{nome.endsWith(EXE_SUFFIX) ? <>{nome.slice(0, -EXE_SUFFIX.length)}<wbr /><span className="sm3-item-ext">{EXE_SUFFIX}</span></> : nome}</span>
                     <small className="sm2-num">×{n}</small>
                   </button>
                 );
@@ -445,7 +447,7 @@ export function Mochila({
           {selecionadoVisivel && (
             <div className="sm3-mochila-usar" data-mochila-usar>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="sm3-mochila-usar-nome">{getFoodName(selecionadoVisivel, language)}</p>
+                <p className="sm3-mochila-usar-nome">{getFileName(selecionadoVisivel, language)}</p>
                 <p className="sm3-mochila-usar-desc">
                   {getFoodDesc(selecionadoVisivel, language)
                     || (isPt ? '+1 de energia e pontos de atributo.' : '+1 energy and attribute points.')}
@@ -455,8 +457,8 @@ export function Mochila({
                 type="button"
                 className="sm3-mochila-usar-btn"
                 aria-label={isPt
-                  ? `Usar ${getFoodName(selecionadoVisivel, language)}`
-                  : `Use ${getFoodName(selecionadoVisivel, language)}`}
+                  ? `Usar ${getFileName(selecionadoVisivel, language)}`
+                  : `Use ${getFileName(selecionadoVisivel, language)}`}
                 onClick={() => usarComTrava(selecionadoVisivel)}
               >
                 {isPt ? 'Usar' : 'Use'}

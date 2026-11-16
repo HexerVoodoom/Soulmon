@@ -6124,6 +6124,18 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 - **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
 - **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
 
+## §460 — Hexsmith H4: Coroa equipada faz o companheiro descansar; nomes e selos das 6 Coroas (16/11/2026, dono)
+
+Decisões do dono (16/11): (1) **Regra da invocação:** uma Coroa da Hexsmith EQUIPADA troca o especial do jogador pelo efeito da Coroa e a INVOCAÇÃO DO COMPANHEIRO SOME enquanto ela estiver equipada; desequipar devolve o especial original e a invocação volta (para quem é evocador). A Hexsmith NUNCA liga/desliga o gatilho `eEvocador` nem tem item de "evocação": a regra é só "Coroa equipada ⇒ sem invocação". (2) UI com descrição das 6 Coroas novas e um aviso calmo para evocadores. (3) Pendências do H2.
+
+- **A porta única** (`companheiroAtivo`/`companheiroDoEstado` em `src/utils/companheiroInvocado.ts`; espelho `companheiroDoLado` em `functions/api/_companheiroInvocado.js`): Coroa equipada (`hexsmith.ts › hexCrownEquipped`, `_hexsmith.js` no servidor, sobre o save SANEADO) ⇒ `null`. Vale em Arena, Masmorra, Pesadelo, Raid, Torneio, duelo e treino (todos passam por essa porta); simulados não têm Hexsmith. Direção da dependência: `companheiroInvocado` lê a Hexsmith; a Hexsmith nunca importa o companheiro (o teste de contrato do H1 foi invertido para isso). Sem a Coroa, nada muda: a flag `COMPANHEIRO_INVOCADO` segue desligada e a regra só pesa quando outra frente a ligar.
+- **Rastro igual:** com Coroa equipada o lado sai SEM `invoca`, então o log de eventos é igual ao de um jogador sem companheiro com a mesma Coroa (`duel.companheiro.test.ts`, cliente e servidor).
+- **UI** (`HexsmithSheet`, `hexsmithCopy.ts`): nome e descrição PT/EN das 6 Coroas (`hot` Cura contínua, `slow` Lentidão, `silence` Silêncio, `defBuff` Reforço de defesa, `atkDebuff` Enfraquecer, `spdDebuff` Entrave; o arrasto deixou de se chamar "Lentidão" para não repetir o nome da `slow`); aviso calmo "While the Crown is equipped, your companion rests." / "Com a Coroa equipada, o companheiro descansa." só para quem seria evocador e só com Coroa equipada.
+- **Selos reais** (`combatFx.ts › withRealFx`): `nGuard` acende `buff/def` em quem conjurou, `nWeak` acende `debuff/atk` em quem recebeu e `nSlow` herda a variante `spd` do arrasto, enquanto o contador durar (antes o selo caía assim que o rastro real entrava).
+- **`fx.efeito`** (`_duel.js › duelSide`, `DuelSide.fx.efeito`): o servidor publica o efeito da Coroa (`hot`/`slow`/`silence`, lista fechada; ausente sem Coroa de efeito) e o cliente usa o léxico do efeito no nome do especial do oponente (`nomeEspecial.ts › efeitoDoNome`, `comporNome`/`nomeEspecialInimigo` com `efeito`). Cliente antigo ignora o campo.
+- **Docs:** manual sincronizado (a "lista fechada de 7 famílias" agora diz 7 sorteáveis + 3 só de Coroa; 8 entradas de referência novas em `06-REFERENCIA/`).
+- **Não visto em aparelho.** **Rollback:** `git revert`; sem campo novo no save.
+
 ## §452 — Hexsmith H2: o motor lê `specialEffect` e ganha as 3 famílias só de Coroa (16/11/2026, dono)
 
 Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO PvP; ajustar potência e duração em vez de recusar; perguntar só se for impossível caber nas réguas (não foi). A regra "Coroa equipada troca o especial e a invocação some" é o H4 (NÃO está aqui).
@@ -6185,6 +6197,20 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 **Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.
 
+## §459 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
+
+**Decisão do dono (16/11):** o companheiro invocado entra LIGADO no pacote de 16/11 (`COMPANHEIRO_INVOCADO = true` em `src/utils/companheiroInvocado.ts` e em `functions/api/_companheiroInvocado.js`; o teste de paridade trava os dois juntos). A pergunta (1) do §449 está RESPONDIDA: o anti-fraude do cache `soulmonEvocacao` fica como está (ganho máximo medido ≤ ~6pp), sem reconstruir o gatilho no servidor.
+
+**Chave nos dois estados.** As consultas ganharam o parâmetro `ligado` (padrão = a chave; só o teste o passa): `companheiroAtivo`, `companheiroDoEstado`, `eEvocadorPorLinha`, `companheiroDoSimulado`, `eNpcInvocador`, `companheiroDoNpc`. Os testes que assumiam a flag desligada agora cobrem DESLIGADA e LIGADA (nenhum foi afrouxado); o padrão é afirmado como ligado.
+
+**Pontas fechadas.** (a) Simulados no duelo: o servidor manda `invoca: true` sem criatura; `comCriaturaDoOponente` (Torneio ranqueado e Treino) completa com `hash(id)` entre as criaturas de afinidade com o elemento, a mesma regra de `companheiroDoSimulado`; sem id/elemento cai nas 32, nunca quebra. O Treino com amigo também leva o SEU companheiro. (b) Rogue Dungeon (`RogueFight`): liga `companheiroDoEstado` em `dungeonFight` e a cena `summon`, como Masmorra/Pesadelo. (c) Peso do Torneio: a criatura de simulado/NPC e os chefes nomeados moram em `utils/companheiroCriatura.ts` (tabela de 32 afinidades, travada por teste contra o `CLASS_DATA`), e o Torneio importa dali em vez de `companheiroInvocadoLinhas.ts` (que traz `buildSheet`/`CLASS_DATA`); medido com `vite build`: chunk do Torneio 46.001 B (flag desligada) → 47.384 B (ligada, +1,4 kB), `buildSheet` continua um chunk lazy separado (17.911 B) que o Torneio não importa; a comparação "base com a flag ligada" não foi medida. (d) `App.tsx` preenche o cache por `aplicarEvocacao`: devolve a MESMA referência quando nada muda, então não regrava o save nem dispara cloud save à toa; idempotente, tolerante a save antigo (sem o campo) e a perfil local corrompido.
+
+**Cena (prévia 360×640 e 412×915).** O companheiro saía do peito do invocador e, no inimigo, descia até a barra de HP do jogador. `summonPlace` agora o põe AO LADO do invocador (avanço horizontal 0,8 do tamanho, lado do oponente), sempre um pouco acima da linha do chão (`SUMMON_LIFT`), nunca sobre o corpo nem sobre a barra. Capturas em `E:/Soulmon-assets/_lote-16-11/companheiro-previas/`.
+
+**Regressões da pacote achadas no caminho (servidor atrás do app).** `dailyMissions.parity`: o app tirou o evento `cenario` e as missões `n-lasca`/`n-panora` do rodízio diário (#963) e o servidor ainda os aceitava; `feiraLoja.paridade`: o app ganhou 4 decorações `furn-ruinas-*` (#950) que o catálogo do servidor não tinha (a Feira de verdade as recusaria). Servidor alinhado ao app (`_dailyMissions.js`, `_feiraLoja.js`).
+
+**Rollback:** `git revert`; ou só desligar a chave nos DOIS arquivos (o teste de paridade exige igualdade). Aditivo, sem migração de save.
+
 ## §453 — Rift é o sumidouro de energia: sem limite diário, regeneração mais lenta, Faísca e pratos de energia mais raros/caros (16/11/2026, dono)
 
 **Pedido do dono.** Ele lembrou que a descida idle do Rift TEM A FUNÇÃO DE GASTAR ENERGIA. Decisões em modal: (1) REMOVER o limite diário de 30 lutas = 5 andares; (2) regeneração de energia mais lenta; (3) poções de energia mais raras e mais caras.
@@ -6203,6 +6229,14 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
 
+## §452 — Carta de elemento novo abre ao sair de QUALQUER atividade, carrossel estilo stories, Neutro e Pesadelo com essência, poção do Neutro (16/11/2026, dono, por voz)
+
+**Pedido do dono.** Descobriu um elemento na Arena e a carta não abriu ao sair; o corvo (Neutro) não mostrou de quais elementos nasce; vários elementos de uma vez em "reels"; conferir se Pesadelo e Neutro deixam essência; poção do Neutro = 100 de cada base + 50 de cada outro composto; Pesadelo só coletar.
+
+**Causa raiz (modal).** `elementoNovoPodeAbrir` tratava a ÁREA inteira (`area:arena|exploracao|jogos`) como "atividade". Ao sair da luta o jogador cai no HUB da área (mesma view), que continuava "em atividade": a carta ficava presa até ele ir ao Mapa/Home. Vale para Arena, Torneio, Duelo, Masmorra/Fenda e Combina 3. **Correção:** a `AreaView` informa `onActivityChange` (jogo OU duelo OU luta do Torneio) e o gate usa isso; `undefined` (AreaView carregando) mantém o palpite conservador antigo.
+
+**Decisão.** (1) Carrossel: barra de progresso segmentada no topo, toque (metade direita avança, esquerda volta), deslize, setas, X; SEM avanço automático (o jogador lê no ritmo dele, nada a pausar); OK `CtaButton` segue desativado até ver todas. (2) Neutro: a carta não tem fileira de componentes e diz "Born of no other element. The Raven's own." (REGISTRO §211: não é mistura de nada). (3) Essência: Pesadelo já era creditada na vitória do Pesadelo (sem mudança); o Corvo NÃO deixava essência neutra (`isEssenceElement` excluía `neutro`) e agora deixa (`ehEssenciaColetavel`), sem entrar no catálogo do Cambista/preço. (4) Poção do Neutro (`utils/neutroPotion.ts`; CORRIGIDA pelo dono no mesmo dia, os "50 de cada composto" eram mal-entendido e saíram): por elemento BASE (os 20), 100 essências dele OU 1 poção-base dele (mistura por elemento vale; paga com essência quando basta), MAIS 50 essências do Neutro (as que o Corvo deixa). Exige o Neutro já conhecido, tudo-ou-nada, painel "x de 20 bases completas" + "Neutro x/50". (4b) Regra geral: ao atingir 50 essências de um composto (2-4 bases) ou do Neutro (100 para base), a Vesca abre o pop-up "Fazer a poção"/"Depois"; vários de uma vez = UM pop-up em lista; "visto" gravado ao mostrar; limiar único em `potionCosts.ts` (`POTION_COSTS`, `limiarDaPocao`). (4c) Cambista: `neutro` e `pesadelo` sem preço de compra nem venda, com teste-guarda no cliente e no servidor. Pesadelo: sem receita; a dica na Mochila diz "ainda sem uso". Servidor: nada novo (saldo só baixa por `essenceSpent`; chaves `neutro`/`pesadelo` cabem nas 271).
+**Efeito (confirmado pelo dono):** a poção do Neutro torna o Soulmon elemento `neutro` na evolução (sem anel de vantagem), como o Corvo.
 ## §454 — Prédio bloqueado e portão do Bastion só fecham por X ou CTA (16/11/2026, dono)
 
 - **Pedido:** o aviso do prédio trancado sumia sozinho e o Bastion (portão do Calabouço sem chave) fechava ao tocar em qualquer lugar.
@@ -6210,7 +6244,7 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 - **Regra:** só X, CTA ("Ir para a Oficina do Foco") ou Esc/voltar fecham. Sem timer, sem fechar ao tocar fora. `LockNotice` ganhou `onClose` (X 44 px); `NpcSequence` ganhou `closeOnTap` (padrão `true`, o Bastion usa `false` e o "Pular" vira "×").
 - **Teste-guarda:** `RogueKeyGate.render.test.tsx` reprova `onClick={onClose}` em `RogueKeyGate`/`LockBadge`. **Rollback:** `git revert`; só cliente.
 
-## §455 — O Ultra só abre com as três Megas liberadas; a barra dele só acumula depois (16/11/2026, dono)
+## §461 — O Ultra só abre com as três Megas liberadas; a barra dele só acumula depois (16/11/2026, dono)
 
 - **Pedido do dono:** "Vamos TIRAR a opção de ficar vários dias só com 1 Mega. TEM QUE LIBERAR OS 3 MEGAS para ir para o Ultra… a BARRA DE PROGRESSO só vai acontecer DEPOIS que ele já tiver liberado os 3 Megas." A meta continua os 45 dias de pontos (conteúdo late game).
 - **Regra ANTIGA (WP4.2/D6, 06/09/2026; pontos desde 11/10/2026):** dois caminhos. `canReachUltra` = três megas OU `evolutionPoints >= ULTRA_PATIENCE_POINTS` (`src/types/progression.ts:93-99`); `gaugeGoalFor` no mega = `gauge` 60 com as três megas, 270 sem elas (`src/utils/evolutionGauge.ts:48-52`); `getNextEvolution(…, evolutionPoints)` (`src/utils/dailyReset.ts:119-139`); `gaugeFull` na virada/`handleEvolve`/`canEvolve` (`dailyReset.ts:1132`, `App.tsx:4255`, `App.tsx:9140`); cartão do Ultra (`EvolutionPath.tsx:288,869`) e Guia (`GuideModal.tsx:126`) diziam "dois caminhos".
@@ -6218,3 +6252,57 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 - **Saves reais (leitura tolerante, sem campo novo, sem migração a rodar):** `unlockedEvolutions` ausente/lixo conta 0 megas. Quem está no mega com gauge parcial ou **cheio com 1 mega**: o acumulado FICA (nunca se tira ponto), fica congelado, e vale por inteiro no instante em que a terceira mega abre (barra já cheia ⇒ pode evoluir na hora). Quem já é Ultra não é tocado (`gaugeGoalFor('ultra')` = 0, nada regride). Idempotente: a regra é função pura do estado; carregar duas vezes dá o mesmo resultado. Efeito conhecido (aceito): quem tem as três megas e entre 60 e 269 pontos no mega deixa de estar "cheio" (antes bastavam 60); os pontos ficam. Descer para liberar outra mega zera a barra ao re-evoluir, como sempre.
 - **Servidor:** não valida estágio/gauge no `save.js`; a única cópia é `GAUGE_SIM.mega.meta` = 270 em `_simulados.js` (já era 270 — paridade garantida por `_simulados.test.js`, que importa a constante do cliente).
 - **Teste-guarda:** `src/types/ultra.tresMegas.test.ts`, bloco "16/11/2026" de `evolutionGauge.test.ts`, `EvolutionGaugeMini.render.test.tsx`, `spriteTrigger.test.ts`. **Rollback:** `git revert` do PR; sem dado novo no save, nada a desfazer no jogador.
+## §455 — Restaurante: o prato feito vai para a pastinha, não é servido na hora (16/11/2026, dono)
+
+**Pedido do dono.** "No Restaurante, quando faz um item, aparece um modal igual ao de quando faz poção para ter certeza que foi feito. E o item NÃO é usado instantaneamente: vai para a pasta (`foodInventory`) junto com os comidos."
+
+**Antes → depois.** Antes, `applyCook` (`restaurant.ts`) debitava os ingredientes e SERVIA o prato na hora (fome cheia + energia ou buff). Agora debita e põe `dish:<id>` em `foodInventory` (kind `dish` em `SPECIAL_ITEMS`, `utils/dishItems.ts`); fome e efeito só vêm ao USAR o item, pela porta única `specialItemUse.ts › applySpecialItem` → `serveDish` (a mesma função serve a Feira de verdade). O teto de 2 pratos por dia e as missões diária/semanal contam ao COZINHAR, como antes. Modal `PratoFeito` ("Feito!/Done!", ícone, nome, "Guardado na pastinha · você tem N", efeito, OK) no molde de `PocaoCriada`; é gesto do jogador (fora da `presentationQueue`, como a poção); vários pratos seguidos agrupam em um modal (×N).
+
+**Não mudou.** A pastinha NÃO tem teto de itens no código, então não há recusa por "cheia" (nada a inventar). A Feira (`applyFeiraDish`, prato pronto comprado) segue servindo na hora: o pedido foi só do Restaurante. Servidor: `_feiraLoja.js` só valida a compra da Feira; nada do Restaurante é validado lá, sem paridade a mudar.
+
+**Alternativa que perdeu.** Manter servir na hora e só acrescentar o modal: o dono quer o prato guardável (decidir o momento de usar o buff de 24 h). **Gatilho para rever:** jogador acumular pratos e não usar, ou pedido de teto da pastinha.
+
+**Rollback.** `git revert` do PR (só cliente). Saves: pratos já guardados como `dish:<id>` viram chave desconhecida e ficam inertes após o revert (a pastinha só os mostraria sem nome); nenhum estado intermediário foi criado antes.
+
+## §457 — Calabouço roguelike mais curto, mesmo prêmio (16/11/2026, dono)
+
+**Pedido.** A incursão do Calabouço (a que pede a chave do Prepare to Focus) está longa; encurtar ~1/3 sem mudar o prêmio total. NÃO é o Rift nem a Masmorra idle.
+**Antes → depois.** 3 andares × 8 desafios = 24 passos → 3 andares × 5 = 15 (-37,5%; 3×5 porque 16/3 não fecha e os 3 andares são nós do mapa, feito `rogueFloors` e missões). Combate obrigatório no 3º e 5º (era 3º, 6º, 8º): 6 combates (eram 9), 9 passos livres com 3 opções (eram 15). Constantes em `rogueDungeonSave.ts` (dono único).
+**Prêmio (única fonte: Bits por vitória + score de ranking; a incursão não paga XP, fragmentos, essências, drops nem `focusLoot`).** `rogueWinValue(won) = round(won × 24/15)`: 15 vitórias = 24 Bits e score 33, igual a 24 antes. Simulação de 2.000 sementes: ±2% (`rogueDungeon.encurtada.test.ts`). Bits seguem pelo funil único `handleEarnGamePoints` (teto diário de minigames; nada mudou ali). Bônus de escolha ×1,6 (`POWER_STEP` 0,06→0,096, `VIGOR_STEP` 0,10→0,16) para o poder no último passo ficar igual; `HEAL_SHIELD` fica. `ROGUE_FOE_RAMP` {3,1; 0} → {1,75; 2}: só encurtar deixava a incursão completa em 98,8%; recalibrada a 66,5% (era 70,5%, faixa do dono 60-75%, `winrateModos.sim.test.ts`). O último inimigo fica um pouco mais forte no nominal (efeito do atrito, medido).
+**Saves.** `RogueRun.v` = 2. Save sem `v` é 3×8: `sanitizeRogueRun` converte uma vez, proporcional (passo, vitórias, poder/vigor/escudos, `paidWon`); andares concluídos preservados (testado para os 25 passos), passo > 15 vira incursão finalizada com o prêmio proporcional (±1 Bit), idempotente. Servidor não muda (teto de score 33 mantido).
+**Alternativa que perdeu.** 2 andares × 8 (16 passos, exatamente 1/3): corta nós/andares do mapa e o feito de andares por incursão (3→2).
+**Rollback.** `git revert` do PR (cliente). Um save já convertido (`v: 2`, 15 passos) lido pelo código antigo é limitado ao teto antigo sem erro: o passo fica ≤ 15 de 24, a incursão segue.
+## §456 — Teto de Bits de atividade: 75 por categoria, além dos 150 gerais (16/11/2026, dono)
+
+**Decisão:** o teto geral diário (`MINIGAME_BITS_PER_DAY` = 150) CONTINUA; acrescenta-se **75 por categoria por dia do jogador** (`BITS_PER_CATEGORY_PER_DAY`, `utils/currencies.ts`). Categorias e fontes (funil único `handleEarnGamePoints`, `App.tsx`):
+
+| Categoria | Fontes que pagam Bits |
+|---|---|
+| `minigames` | Dino, Soul Barrage, Pedra·Papel·Tesoura, Elemental Fusion (Match-3), Eco, Zip, Selo, Picross, Troca, Patches, Revisão, Bolhas, Chama (padrão do funil: fonte sem categoria cai aqui) |
+| `explorar` | Fenda Sem Fim (DungeonGame; extra da Agulha de bússola soma ao teto da categoria), Passeio/Rogue |
+| `arena` | Duelo (ArenaGame; extra da Agulha idem) |
+
+Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; os Bits do dia completo, check-in, casa, pesadelo e pacotes seguem fora destes tetos. **Recusa suave:** o menor dos dois tetos corta só o excedente de Bits (`minigameBitsGrantedIn`); a atividade e o resto da recompensa seguem intactos, sem cobrança. **Save:** `minigameBits.cat` (aditivo, mesmo registro do dia; save antigo lê zero e a leitura tolerante `sanitizeBitsCat` é idempotente). **Servidor:** não decide Bits de atividade (só observa, §387); nada a espelhar e `_dayCounters.js` não toca Bits. **UI:** "hoje: x de 75 neste tipo de atividade" (folhas da Fenda, Salão, Mente e Duelo). **Arte:** troca das 3 artes v2 da Hexsmith (st-debuff-atk 64×64, coroa-silence e coroa-hot 96×96). **Fichas/convites:** a premissa "hoje 1 energia = 5 fichas" não bate com o código (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11); o convite de Duelo e o VIP ficaram em consulta ao dono.
+
+## §457 — Feira guarda o prato; a pasta de itens vira "Files/Arquivos" e comida/prato/chip viram `<nome>.exe` (16/11/2026, dono)
+
+**Decisão (modal do dono, 16/11).** (1) Pastinha SEM teto de itens (já era: nada a mudar). (2) O prato pronto comprado na Feira (`applyFeiraDish`) deixa de servir na hora: debita o preço da oferta, soma `dish:<id>` e abre o MESMO modal `PratoFeito` (variante "Comprado!/Bought!", "Guardado em Arquivos"/"Saved in Files"); o efeito vem ao USAR (`applySpecialItem` → `serveDish`). Sem chef do dia nem teto diário de pratos; a missão/contagem da Feira (`applyFeiraLojaBuy`) ficou como estava. Servidor: `_feiraLoja.js` só confere a oferta/1 por item, não serve prato, então não há espelho de efeito a mudar. (3) Nome visível: a pasta é "Files"/"Arquivos" (já era o título de `Mochila.tsx`; agora também em Restaurante, Guia, Ajuda, tour e poção) e, **correção do dono no mesmo dia**, a convenção `<nome>.exe` vale SÓ para COMIDAS (comum e premium), PRATOS (`dish:*`) e CHIPS (somar, maiores, redutores) = a aba "Comida e chips". ESPECIAIS (coraçãozinho, Glitchtama, Faísca, poções, reset) e Materiais NÃO levam `.exe`. É só apresentação (`ItemsWindow.tsx › getFileName/isExeItem`): ids e chaves de save intactos; o arquivo/componente `Mochila` não foi renomeado.
+
+**Narrativa.** Termo de interface sem tom de cobrança. Adaptação: "arquivo" nunca nomeia a criatura (ela é o "padrão", §5.1) e `.exe` não entra em voz de mundo nem na fala da criatura; linha nova na §12 da bíblia e régua em `narrativa.contract.test.ts`.
+
+**Tipos com `.exe`:** comida comum, comida premium, pratos, chips que somam, chips maiores, chips redutores. **Sem `.exe`:** coraçãozinho, Glitchtama, Faísca, poções, reset (especiais) e materiais. **Decisão pendente do dono:** nenhuma de tipo; só confirmar se quer `.exe` também no título do modal/toast de itens especiais futuros (hoje não).
+
+**Alternativa que perdeu.** Aplicar `.exe` a tudo da pasta: o dono corrigiu para comida/prato/chip. **Gatilho para rever:** jogador confuso com o sufixo ou pedido de estendê-lo.
+
+**Rollback.** `git revert` do PR (só cliente). Pratos comprados e guardados como `dish:<id>` ficam inertes (chave sem nome) após o revert; nada irreversível.
+
+## §458 — Convite de Duelo: a ficha da Arena, com 7 convites por energia para a conta paga (16/11/2026, dono)
+
+**Decisão:** cada run de Duelo (Arena livre) gasta **1 convite**; "Lutar de novo" gasta outro. Estoque de **0 a 7**. O jogador troca **1 energia por convites**: **5** na conta comum e **7** na conta paga (`accountTier:'paid'`; não existe um "VIP" separado no código, a conta paga é o conceito). Estoque inicial dos jogadores atuais: **7** (campo ausente lê 7). Fichas dos minijogos: **sem mudança** (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11).
+
+**⚠️ Decisão tomada com a linha vermelha à vista.** O CLAUDE.md diz que nada pago dá vantagem de combate. O dono decidiu, ciente disso, que a diferença 7 contra 5 fica: a vantagem do pagante é **só volume de lutas por energia gasta**, não poder, atributo, drop nem chance. O teto de Bits por categoria (§456) vale igual para todos, e o estoque máximo é 7 para todos (a conta paga só reabastece mais por energia).
+
+**Nunca tranca:** com 0 convites a folha mostra a troca por energia; sem energia, a frase calma diz que a energia volta com o tempo (nenhum custo de coração). Recusa de troca devolve a mesma referência, sem gastar.
+
+**Código:** `src/utils/duelInvites.ts` (regra pura), `GameState.duelInvites {n, at}` (aditivo, leitura tolerante `sanitizeDuelInvites`, idempotente), gate em `ArenaGame` (`onBeginRun`; sem convite volta à folha), UI em `DueloSheet` (contador + "Trocar 1 energia por N convites", arte `hud/convite-duelo-{96-}{pt,en}.png`, sem arquivo a folha só não mostra o papiro). **Servidor:** `functions/api/_duelInvites.js` em `save.js`: gasto só desce; aumento só com carimbo `at` novo (> gravado + 60 s, ≤ 1 dia à frente), teto 7; paridade em `duelInvites.parity.test.js`. **Limite honesto:** o servidor não conhece a energia nem o tier na gravação; quem forja JSON válido reenche o estoque no máximo a cada 60 s, e o 5 contra 7 não é verificado lá (mesmo limite dos tickets, §ticket).
+
