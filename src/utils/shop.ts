@@ -4,6 +4,7 @@ import type { SlotId, DecorFit } from './petStage';
 import { GUILD_COPY_CORE } from './guildCopyCore';
 import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
+import { DISH_SPECIAL_ITEMS } from './dishItems';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
 import { COSMETICOS_NOVOS } from './cosmeticosNovos';
 import { HONRA_DECOR } from './honraDecor';
@@ -101,7 +102,7 @@ export const SPARK_HOME_ENERGY = 5;
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset' | 'dish';
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
@@ -207,6 +208,8 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   ...PREMIUM_SPECIAL_ITEMS,
   // Poção de Elemento (30/10/2026) — dono: `utils/elementPotion.ts`.
   ...POTION_SPECIAL_ITEMS,
+  // Prato do Restaurante (16/11/2026) — dono: `utils/dishItems.ts` (cozinhar guarda aqui; usar serve).
+  ...DISH_SPECIAL_ITEMS,
 };
 
 export function isSpecialItem(emoji: string): boolean {
