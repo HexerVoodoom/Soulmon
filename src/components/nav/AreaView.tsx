@@ -410,7 +410,8 @@ export function AreaView(props: AreaViewProps) {
       : initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
   /* O aviso de prédio trancado NÃO some sozinho (dono, 16/11/2026): só pelo X da faixa. */
-  const gsForIndicators = useGameStateOptional()?.gameState;
+  const gsCtx = useGameStateOptional();
+  const gsForIndicators = gsCtx?.gameState;
   /** O mapa de andares do Rift em tela cheia (REGISTRO §462). */
   const [riftMapOpen, setRiftMapOpen] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
