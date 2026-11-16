@@ -143,7 +143,7 @@ export interface PlayHandlers {
   funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
-  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
+  arena?: { invites?: { count: number; max: number; perEnergy: number; canExchange: boolean; onExchange: () => boolean; onBegin: () => boolean }; dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
@@ -638,7 +638,7 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
+                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, invites: props.play.arena?.invites, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
                 onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
               />
@@ -662,6 +662,7 @@ export function AreaView(props: AreaViewProps) {
               onEnemySeen={props.play.onBestiarySeen}
               onEarnPoints={(pts, extra) => { const creditado = props.onEarnPoints(pts, extra, 'arena'); props.onDailyEvent?.('arena'); return creditado; }}
               onRunEnd={props.play.arena?.onRunEnd}
+              onBeginRun={props.play.arena?.invites?.onBegin}
               ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
             />

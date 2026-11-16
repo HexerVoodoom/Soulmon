@@ -143,6 +143,7 @@ import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
 import { sanitizeBitsCat } from '../utils/currencies';
+import { sanitizeDuelInvites, type DuelInvites } from '../utils/duelInvites';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -577,6 +578,8 @@ export interface GameState {
   funSession?: { startedAt: number; rounds: number };
   /** 🎫 Tickets dos minijogos do Salão (09/11/2026, `utils/funTickets.ts`): 1 energia = 3 tickets, teto 5, 24 h por lote. Ausente = nenhum ticket. Substitui a `funSession`. */
   funTickets?: FunTickets;
+  /** ⚔️ Convites de Duelo (REGISTRO §458, `utils/duelInvites.ts`): estoque 0..7 + carimbo da última troca. Ausente = estoque inicial 7. */
+  duelInvites?: DuelInvites;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos `ARENA_CHOICES` cards da Arena livre (4 desde o §370) feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
@@ -1551,6 +1554,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         funSession: sanitizeFunSession(loadedState.funSession),
         funTickets: sanitizeFunTickets(loadedState.funTickets),
+        duelInvites: sanitizeDuelInvites(loadedState.duelInvites),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),

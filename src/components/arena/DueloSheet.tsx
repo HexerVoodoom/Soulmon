@@ -9,6 +9,7 @@ import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import { ARENA_ULTIMO_DROP_MULT } from '../../utils/arenaUltimoAdversario';
 import type { Language } from '../../utils/i18n';
+import { conviteDueloArt } from './conviteDueloArt';
 import { bitsCategoryCap, minigameBitsCategoryToday } from '../../utils/currencies';
 import { playerDayKey } from '../../utils/playerDay';
 
@@ -61,6 +62,8 @@ export interface ArenaRerollProps {
   runs?: ArenaReroll;
   /** §222: o valor da escada (`arenaLadder`): o card mostra o que a luta vai ter. */
   ladder?: number;
+  /** ⚔️ §458: o estoque de convites de Duelo e a troca por energia. Ausente = sem gate (testes antigos). */
+  invites?: { count: number; max: number; perEnergy: number; canExchange: boolean; onExchange: () => boolean; onBegin: () => boolean };
 }
 
 function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
@@ -168,6 +171,31 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
   );
 }
 
+/** ⚔️ §458: contador de convites + "trocar 1 energia por N convites". Calmo: sem convite, o texto diz o caminho (trocar ou esperar a energia). */
+function ConvitesDuelo({ isPt, language, inv }: { isPt: boolean; language: Language; inv: NonNullable<ArenaRerollProps['invites']> }) {
+  const [recusou, setRecusou] = useState(false);
+  const art = conviteDueloArt(language);
+  const cheio = inv.count >= inv.max;
+  return (
+    <div data-duelo-convites style={{ ...box, flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {art && <img src={art} alt="" aria-hidden="true" width={32} height={48} draggable={false} style={{ width: 32, height: 48, flex: 'none' }} />}
+        <span className="sm2-num" data-duelo-convites-count style={{ ...sm2Text, fontWeight: 700 }}>
+          {isPt ? `Convites de duelo: ${inv.count} de ${inv.max}` : `Duel invites: ${inv.count} of ${inv.max}`}
+        </span>
+      </div>
+      <button type="button" data-duelo-convites-trocar disabled={cheio} onClick={() => setRecusou(!inv.onExchange())} style={{ ...sm2Button('outline'), width: '100%', ...(cheio ? { opacity: 0.5 } : {}) }}>
+        {isPt ? `Trocar 1 energia por ${inv.perEnergy} convites` : `Trade 1 energy for ${inv.perEnergy} invites`}
+      </button>
+      {(recusou || inv.count < 1) && !inv.canExchange && !cheio && (
+        <p style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Sem energia agora. Ela volta com o tempo; cada luta pede 1 convite.' : 'No energy right now. It comes back with time; each fight takes 1 invite.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function DueloSheet({ language, onStart, arena }: {
   language: Language;
   /** Sorteio dos cards e reroll (`utils/arenaSorteio.ts`): os cards mostram os MESMOS inimigos que a `ArenaGame` luta (`arenaFoesOfSeed`). */
@@ -227,7 +255,8 @@ export function DueloSheet({ language, onStart, arena }: {
         </ModalInfo>
       </div>
       <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} arena={arena} />
-      <button type="button" data-duelo-start onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%' }}>
+      {arena.invites && <ConvitesDuelo isPt={isPt} language={language} inv={arena.invites} />}
+      <button type="button" data-duelo-start disabled={!!arena.invites && arena.invites.count < 1} onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%', ...(arena.invites && arena.invites.count < 1 ? { opacity: 0.5 } : {}) }}>
         {isPt ? 'Lutar' : 'Fight'}
       </button>
       {catN !== undefined && (
