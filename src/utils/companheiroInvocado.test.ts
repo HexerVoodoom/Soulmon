@@ -1,7 +1,7 @@
 // Companheiro invocado, PR 1 (fundação): regra do gatilho, cache por estágio e tabela provisória de simulados/NPCs.
 import { describe, expect, it } from 'vitest';
 import {
-  ARQUETIPOS_EVOCACAO, COMPANHEIRO_INVOCADO, CRIATURAS_COMPANHEIRO, companheiroAtivo, companheiroDoEstagio, criaturaConhecida,
+  ARQUETIPOS_EVOCACAO, COMPANHEIRO_INVOCADO, CRIATURAS_COMPANHEIRO, companheiroAtivo, companheiroDoEstado, companheiroDoEstagio, criaturaConhecida,
   eEvocador, migrarEvocacao, sanitizeEvocacao, type EvocacaoPorEstagio,
 } from './companheiroInvocado';
 import {
@@ -110,15 +110,15 @@ describe('a chave (flag) nos dois estados', () => {
     expect(COMPANHEIRO_INVOCADO).toBe(true);
   });
   it('DESLIGADA: todas as consultas devolvem null / false', () => {
-    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, false)).toBeNull();
+    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, undefined, false)).toBeNull();
     expect(eEvocadorPorLinha('terra', 'benevolencia', false)).toBe(false);
     expect(companheiroDoSimulado('sim_0001', 'terra', 'benevolencia', false)).toBeNull();
     expect(eNpcInvocador('npc-espina', false)).toBe(false);
     expect(companheiroDoNpc('npc-espina', 'vida', false)).toBeNull();
   });
   it('LIGADA: o evocador ganha a criatura; quem não é, não', () => {
-    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, true)).toBe('lobo');
-    expect(companheiroAtivo('rookie', 'lobo', { rookie: { evocador: false } }, true)).toBeNull();
+    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, undefined, true)).toBe('lobo');
+    expect(companheiroAtivo('rookie', 'lobo', { rookie: { evocador: false } }, undefined, true)).toBeNull();
     expect(eEvocadorPorLinha('terra', 'benevolencia', true)).toBe(true);
     expect(eEvocadorPorLinha('terra', 'poder', true)).toBe(false);
     expect(companheiroDoSimulado('sim_0001', 'terra', 'benevolencia', true)).toBe(criaturaPorId('sim_0001', 'terra'));
@@ -186,5 +186,33 @@ describe('companheiroDoEstado (PR 2): a unica porta das telas de luta', () => {
       expect(companheiroDoEstado(null, ligado)).toBeNull();
       expect(companheiroDoEstado({}, ligado)).toBeNull();
     }
+  });
+});
+
+describe('Coroa da Hexsmith equipada: o companheiro descansa (H4, decisão do dono 16/11/2026)', () => {
+  const cache = { rookie: { evocador: true } } as const;
+  const estado = (hexsmith?: unknown) => ({ evolutionStage: 'rookie', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: cache, hexsmith });
+  const comCoroa = { owned: ['coroa:direct'], equipped: { coroa: 'coroa:direct' } };
+  const comCoroaEfeito = { owned: ['coroa:hot'], equipped: { coroa: 'coroa:hot' } };
+  const semEquipar = { owned: ['coroa:direct'], equipped: {} };
+
+  it('evocador sem Coroa invoca; com Coroa equipada = null; desequipar volta', () => {
+    expect(companheiroDoEstado(estado(), true)).toBe('lobo');
+    expect(companheiroDoEstado(estado(semEquipar), true)).toBe('lobo');
+    expect(companheiroDoEstado(estado(comCoroa), true)).toBeNull();
+    expect(companheiroDoEstado(estado(comCoroaEfeito), true)).toBeNull();
+    expect(companheiroDoEstado(estado({ ...comCoroa, equipped: {} }), true)).toBe('lobo');
+  });
+  it('Coroa equipada que não está na posse é lixo saneado: não tira o companheiro', () => {
+    expect(companheiroDoEstado(estado({ owned: [], equipped: { coroa: 'coroa:direct' } }), true)).toBe('lobo');
+  });
+  it('não evocador não muda: continua sem companheiro, com ou sem Coroa', () => {
+    const naoEvoc = { evolutionStage: 'rookie', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: { rookie: { evocador: false } } } as const;
+    expect(companheiroDoEstado({ ...naoEvoc }, true)).toBeNull();
+    expect(companheiroDoEstado({ ...naoEvoc, hexsmith: comCoroa }, true)).toBeNull();
+  });
+  it('flag desligada: sempre null (a Coroa nada muda)', () => {
+    expect(companheiroDoEstado(estado(), false)).toBeNull();
+    expect(companheiroDoEstado(estado(comCoroa), false)).toBeNull();
   });
 });

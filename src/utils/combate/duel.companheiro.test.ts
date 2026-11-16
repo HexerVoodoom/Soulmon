@@ -4,6 +4,8 @@ import { simulatePvp, type DuelSide } from './duel';
 import { combatantAt, REFERENCE_BUILDS } from './level';
 import { specialOf, SPECIAL_FAMILIES } from './specials';
 import * as srv from '../../../functions/api/_duel.js';
+import { companheiroDoEstado } from '../companheiroInvocado';
+import { hexOverrides } from '../hexsmith';
 
 const side = (L: number, fam: (typeof SPECIAL_FAMILIES)[number], invoca?: boolean): DuelSide => (
   { combatant: combatantAt(L, REFERENCE_BUILDS.balanced), special: specialOf(fam), ...(invoca ? { invoca, companheiro: 'lobo' } : {}) }
@@ -32,4 +34,29 @@ describe('simulatePvp x simulateDuel com invoca', () => {
     const r = simulatePvp({ me: side(15, 'atkBuff', true), opp: side(15, 'direct'), seed: 9, taps: [] });
     expect(r.fx.some((p) => (p[0].comp ?? 0) > 0)).toBe(true);
   });
+});
+
+describe('Coroa da Hexsmith equipada: o rastro e o de um jogador sem companheiro com a mesma Coroa', () => {
+  const evoc = { evolutionStage: 'champion', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: { champion: { evocador: true } } } as const;
+  for (const coroa of ['dot', 'hot', 'slow', 'silence', 'defBuff']) {
+    it(`coroa:${coroa}`, () => {
+      const hexsmith = { owned: [`coroa:${coroa}`], equipped: { coroa: `coroa:${coroa}` } };
+      const hx = hexOverrides(hexsmith);
+      const fam = hx.specialFamily ?? 'direct';
+      const mk = (invoca: boolean): DuelSide => ({
+        combatant: combatantAt(20, REFERENCE_BUILDS.balanced), special: specialOf(fam, hx.specialEffect), ...(invoca ? { invoca, companheiro: 'lobo' } : {}),
+      });
+      // com a Coroa equipada, a porta devolve null: o lado do evocador sai SEM invoca
+      const invoca = companheiroDoEstado({ ...evoc, hexsmith }, true) !== null;
+      expect(invoca).toBe(false);
+      // sem a Coroa a mesma ficha invocaria
+      expect(companheiroDoEstado(evoc, true)).toBe('lobo');
+      for (const seed of [5, 91]) {
+        const a = simulatePvp({ me: mk(invoca), opp: side(20, 'direct'), seed, taps: [] });
+        const ref = simulatePvp({ me: mk(false), opp: side(20, 'direct'), seed, taps: [] });
+        expect(a.events).toEqual(ref.events);
+        expect(srv.simulateDuel({ me: mk(invoca), opp: side(20, 'direct'), seed, taps: [] }).events).toEqual(ref.events);
+      }
+    });
+  }
 });

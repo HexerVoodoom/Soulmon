@@ -6124,6 +6124,18 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 - **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
 - **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
 
+## §460 — Hexsmith H4: Coroa equipada faz o companheiro descansar; nomes e selos das 6 Coroas (16/11/2026, dono)
+
+Decisões do dono (16/11): (1) **Regra da invocação:** uma Coroa da Hexsmith EQUIPADA troca o especial do jogador pelo efeito da Coroa e a INVOCAÇÃO DO COMPANHEIRO SOME enquanto ela estiver equipada; desequipar devolve o especial original e a invocação volta (para quem é evocador). A Hexsmith NUNCA liga/desliga o gatilho `eEvocador` nem tem item de "evocação": a regra é só "Coroa equipada ⇒ sem invocação". (2) UI com descrição das 6 Coroas novas e um aviso calmo para evocadores. (3) Pendências do H2.
+
+- **A porta única** (`companheiroAtivo`/`companheiroDoEstado` em `src/utils/companheiroInvocado.ts`; espelho `companheiroDoLado` em `functions/api/_companheiroInvocado.js`): Coroa equipada (`hexsmith.ts › hexCrownEquipped`, `_hexsmith.js` no servidor, sobre o save SANEADO) ⇒ `null`. Vale em Arena, Masmorra, Pesadelo, Raid, Torneio, duelo e treino (todos passam por essa porta); simulados não têm Hexsmith. Direção da dependência: `companheiroInvocado` lê a Hexsmith; a Hexsmith nunca importa o companheiro (o teste de contrato do H1 foi invertido para isso). Sem a Coroa, nada muda: a flag `COMPANHEIRO_INVOCADO` segue desligada e a regra só pesa quando outra frente a ligar.
+- **Rastro igual:** com Coroa equipada o lado sai SEM `invoca`, então o log de eventos é igual ao de um jogador sem companheiro com a mesma Coroa (`duel.companheiro.test.ts`, cliente e servidor).
+- **UI** (`HexsmithSheet`, `hexsmithCopy.ts`): nome e descrição PT/EN das 6 Coroas (`hot` Cura contínua, `slow` Lentidão, `silence` Silêncio, `defBuff` Reforço de defesa, `atkDebuff` Enfraquecer, `spdDebuff` Entrave; o arrasto deixou de se chamar "Lentidão" para não repetir o nome da `slow`); aviso calmo "While the Crown is equipped, your companion rests." / "Com a Coroa equipada, o companheiro descansa." só para quem seria evocador e só com Coroa equipada.
+- **Selos reais** (`combatFx.ts › withRealFx`): `nGuard` acende `buff/def` em quem conjurou, `nWeak` acende `debuff/atk` em quem recebeu e `nSlow` herda a variante `spd` do arrasto, enquanto o contador durar (antes o selo caía assim que o rastro real entrava).
+- **`fx.efeito`** (`_duel.js › duelSide`, `DuelSide.fx.efeito`): o servidor publica o efeito da Coroa (`hot`/`slow`/`silence`, lista fechada; ausente sem Coroa de efeito) e o cliente usa o léxico do efeito no nome do especial do oponente (`nomeEspecial.ts › efeitoDoNome`, `comporNome`/`nomeEspecialInimigo` com `efeito`). Cliente antigo ignora o campo.
+- **Docs:** manual sincronizado (a "lista fechada de 7 famílias" agora diz 7 sorteáveis + 3 só de Coroa; 8 entradas de referência novas em `06-REFERENCIA/`).
+- **Não visto em aparelho.** **Rollback:** `git revert`; sem campo novo no save.
+
 ## §452 — Hexsmith H2: o motor lê `specialEffect` e ganha as 3 famílias só de Coroa (16/11/2026, dono)
 
 Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO PvP; ajustar potência e duração em vez de recusar; perguntar só se for impossível caber nas réguas (não foi). A regra "Coroa equipada troca o especial e a invocação some" é o H4 (NÃO está aqui).
