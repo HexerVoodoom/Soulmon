@@ -33,7 +33,7 @@ describe('cena do Passeio', () => {
     expect(q('[data-scene-pet="player"]')).toBeTruthy();
     expect(q('[data-scene-pet="found"]')).toBeTruthy();
   });
-  it('TODOS os botões moram no mesmo rodapé (REGISTRO §413): principal em cima, "Pular" logo abaixo, em toda fase', () => {
+  it('TODOS os botões moram no mesmo rodapé (REGISTRO §413): só o botão principal, em toda fase', () => {
     vi.useFakeTimers();
     abrir();
     const noRodape = () => {
@@ -47,7 +47,7 @@ describe('cena do Passeio', () => {
     fireEvent.click(q('[data-scene-next="intro"]')); noRodape();
     fireEvent.click(q('[data-scene-next="notice"]'));
     act(() => { vi.advanceTimersByTime(1600); }); noRodape();
-    expect(q('[data-scene-dock]').lastElementChild).toBe(q('[data-scene-skip]'));
+    expect(document.querySelector('[data-scene-skip]')).toBeNull();
     fireEvent.click(q('[data-scene-next="found"]'));
     act(() => { vi.advanceTimersByTime(1600); }); noRodape();
   });
@@ -81,12 +81,20 @@ describe('cena do Passeio', () => {
     expect(onDiscover).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
-  it('Pular encerra a cena e ainda grava a descoberta garantida, uma vez', () => {
-    const { onDiscover, onClose } = abrir();
-    fireEvent.click(q('[data-scene-next="intro"]'));
-    fireEvent.click(q('[data-scene-skip]'));
+  it('sem botão Pular em nenhuma fase (dono, 16/11/2026): só o botão principal da fase, e a descoberta só grava no OK', () => {
+    vi.useFakeTimers();
+    const { onDiscover } = abrir();
+    const semPular = () => {
+      expect(document.querySelector('[data-scene-skip]')).toBeNull();
+      expect(/Pular|Skip/.test(document.querySelector('[data-stroll-scene]')!.textContent ?? '')).toBe(false);
+    };
+    semPular();
+    fireEvent.click(q('[data-scene-next="intro"]')); semPular();
+    fireEvent.click(q('[data-scene-next="notice"]'));
+    act(() => { vi.advanceTimersByTime(1600); }); semPular();
+    expect(onDiscover).not.toHaveBeenCalled();
+    fireEvent.click(q('[data-scene-next="found"]'));
     expect(onDiscover).toHaveBeenCalledTimes(1);
-    expect(onClose).toHaveBeenCalledTimes(1);
   });
   it('movimento reduzido: corte sem transição, e o aviso segue esperando o gesto', () => {
     vi.useFakeTimers();

@@ -108,11 +108,6 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
     if (discovery && !discovered.current) { discovered.current = true; onDiscover(discovery.key); }
     setPhase('pan-back');
   };
-  /** "Pular" (padrão do `BuildingIntro`): encerra a cena inteira. O Soulmon do dia é garantido, então pular também grava a descoberta. */
-  const skip = () => {
-    if (discovery && !discovered.current) { discovered.current = true; onDiscover(discovery.key); }
-    onFinish();
-  };
   const title = isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure";
 
   return (
@@ -131,8 +126,8 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
         {discovery && <ScenePet src={discovery.sprite} xPct={SCENE_FOUND_X} size={petSize} trackH={trackH} label={discovery.name} data-scene-pet="found" />}
       </div>
 
-      {/* Texto no topo, BOTÕES SEMPRE EMBAIXO (REGISTRO §413): em toda fase o botão principal ocupa o mesmo lugar, no rodapé, e o
-          "Pular" fica logo abaixo dele — nada de botão no topo nem solto no canto. */}
+      {/* Texto no topo, BOTÕES SEMPRE EMBAIXO (REGISTRO §413): em toda fase o botão principal ocupa o mesmo lugar, no rodapé. Sem "Pular"
+          (dono, 16/11/2026): a cena é curta e é onde o Soulmon avistado é registrado — nada de botão no topo nem solto no canto. */}
       {phase === 'intro' && (
         <div data-scene-card="intro" style={topCard}>
           <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{title}</p>
@@ -173,11 +168,6 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
           )}
           {phase === 'back' && (
             <button type="button" data-scene-next="back" autoFocus onClick={onGoHome ?? onFinish} style={{ ...sm2Button('primary'), width: '100%' }}>{isPt ? 'Voltar para casa' : 'Back home'}</button>
-          )}
-          {discovery && phase !== 'back' && (
-            <button type="button" data-scene-skip onClick={skip} style={{ ...sm2Button('outline'), backgroundColor: 'var(--sm2-surface)', width: '100%' }}>
-              {isPt ? 'Pular' : 'Skip'}
-            </button>
           )}
         </div>
       )}

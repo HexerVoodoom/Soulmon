@@ -84,6 +84,23 @@ const COPY = {
   'room.challenge': ['Take the challenge', 'Aceitar o desafio'],
   'room.boss.go': ['Face the boss', 'Enfrentar o chefe'],
 
+  // A FALA DO MERCADOR DEPOIS DO DESAFIO (dono, 16/11/2026): o que o jogador achou hoje, o que o clã achou (SÓ o agregado da sala,
+  // nunca por pessoa) e o convite a investigar de novo amanhã. Nada de cobrança: o dia está fechado, o resto é convite.
+  'npc.hoje.boss': ['Today your Soulmon brought {name} back from the path, and you faced it.', 'Hoje o seu Soulmon trouxe {name} do caminho, e você o enfrentou.'],
+  'npc.hoje.trail': ['Today your Soulmon found a challenge on the path, and you took it on.', 'Hoje o seu Soulmon achou um desafio no caminho, e você o cumpriu.'],
+  'npc.hoje.rest': ['Today the path was quiet, and your Soulmon came back without a scare.', 'Hoje o caminho estava tranquilo, e o seu Soulmon voltou sem susto.'],
+  'npc.hoje.loja': ['Today your Soulmon met a merchant on the path.', 'Hoje o seu Soulmon encontrou um mercador no caminho.'],
+  'npc.hoje.achado': ['Today your Soulmon picked up a few Bits along the path.', 'Hoje o seu Soulmon recolheu uns Bits pelo caminho.'],
+  'npc.hoje.nada': ['Today your Soulmon found nothing new on the path.', 'Hoje o seu Soulmon não achou nada de novo no caminho.'],
+  'npc.hoje.geral': ['Today your Soulmon came back from investigating.', 'Hoje o seu Soulmon voltou da investigação.'],
+  'npc.cla.boss': ['Your clan walked that path too: {name} still stands at {pct}%.', 'O seu clã também passou por esse caminho: {name} ainda está de pé, com {pct}%.'],
+  'npc.cla.boss.caiu': ['Your clan walked that path too: {name} has fallen.', 'O seu clã também passou por esse caminho: {name} já caiu.'],
+  'npc.cla.trail': ['Your clan walked that path too and left {n} marks on the challenge.', 'O seu clã também passou por esse caminho e deixou {n} marcas no desafio.'],
+  'npc.cla.trail.zero': ['Your clan walked that path too: the challenge is still waiting for its first mark.', 'O seu clã também passou por esse caminho: o desafio ainda espera pela primeira marca.'],
+  'npc.cla.rest': ['Your clan walked that path too: it was quiet for everyone.', 'O seu clã também passou por esse caminho: estava tranquilo para todos.'],
+  'npc.cla.geral': ['Your clan walked that path too, and what it found went into the circle.', 'O seu clã também passou por esse caminho, e o que achou foi para a roda.'],
+  'npc.amanha': ['Tomorrow, from {hora}, the path will have more. Send your Soulmon to investigate again.', 'Amanhã, a partir das {hora}, o caminho terá mais. Mande o seu Soulmon investigar de novo.'],
+
   // A FEIRA DE VERDADE (10/11/2026): rara, calma, sem urgência ("só hoje" é vetado); só Bits, sem ingredientes.
   'loja.title': ['A merchant on the way', 'Um mercador no caminho'],
   'loja.line': ['Your Soulmon met a merchant while it was out.', 'O seu Soulmon encontrou um mercador enquanto estava fora.'],
