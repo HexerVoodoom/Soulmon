@@ -3,7 +3,7 @@
  *
  * Peso especial: não é uma folha comum. CELEBRA o que a pessoa fez e ENGAJA para a semana que
  * começa. Peça central: a CHAMA DA ALMA em turquesa (nunca laranja ou vermelha), com o Soulmon
- * do próprio usuário ao lado. Tudo em CSS/SVG, sem asset novo; com `prefers-reduced-motion` as
+ * do próprio usuário ao lado. A chama é a folha animada `ui/SoulFlameAnim`; moldura e selo são PNG com alfa real; com `prefers-reduced-motion` as
  * entradas, partículas, brilho e contadores viram o estado final direto.
  *
  * A regra (quem ganha o bônus, contagens, semana) mora em `utils/weeklyRetro.ts`; aqui é só a
@@ -17,6 +17,9 @@ import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { WeeklyRetro } from '../utils/weeklyRetro';
 import { Icon } from './ui/Icon';
+import { SoulFlameAnim } from './ui/SoulFlameAnim';
+import moldura from '../assets/soulmon/chama-alma/moldura-retro.webp';
+import selo from '../assets/soulmon/chama-alma/selo-bonus.webp';
 import { usePrefersReducedMotion } from './ui/Viewport';
 
 export interface WeeklyRetroModalProps {
@@ -38,12 +41,15 @@ const CSS = `
   background:radial-gradient(120% 80% at 50% 0%,#0E5A53 0%,#073A36 45%,#04211F 100%);color:${INK};
   padding:max(20px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
 .rt-col{width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px;align-items:stretch}
+.rt-frame{box-sizing:border-box;border:40px solid transparent;border-image-slice:72 fill;border-image-repeat:stretch;image-rendering:pixelated;padding:22px 2px 2px}
+.rt-frame>.rt-col{margin:0 auto}
+.rt-seal{width:44px;height:44px;flex:none;image-rendering:pixelated;filter:drop-shadow(0 0 8px rgba(77,240,220,.55))}
+.rt-bonus-head{display:flex;align-items:center;gap:10px}
 .rt-in{animation:rt-up .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
 @keyframes rt-up{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-.rt-hero{position:relative;height:210px;display:flex;align-items:flex-end;justify-content:center}
-.rt-flame{position:absolute;left:50%;top:0;width:132px;height:168px;margin-left:-66px;transform-origin:50% 92%;
-  filter:drop-shadow(0 0 18px rgba(77,240,220,.75)) drop-shadow(0 0 44px rgba(77,240,220,.4));animation:rt-flick 2.4s ease-in-out infinite}
-@keyframes rt-flick{0%,100%{transform:scale(1,1) skewX(0)}30%{transform:scale(1.04,1.07) skewX(1.5deg)}60%{transform:scale(.98,1.02) skewX(-1.5deg)}}
+.rt-hero{position:relative;height:250px;display:flex;align-items:flex-end;justify-content:center}
+.rt-flame{position:absolute;left:50%;top:0;margin-left:-84px;
+  filter:drop-shadow(0 0 18px rgba(77,240,220,.75)) drop-shadow(0 0 44px rgba(77,240,220,.4))}
 .rt-halo{position:absolute;left:50%;top:6px;width:240px;height:240px;margin-left:-120px;border-radius:50%;
   background:radial-gradient(circle,rgba(77,240,220,.32),rgba(77,240,220,0) 68%);animation:rt-pulse 3s ease-in-out infinite}
 @keyframes rt-pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
@@ -86,7 +92,7 @@ const CSS = `
 @keyframes rt-flashA{0%{opacity:0;transform:scale(.5)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
 .rt-hint{margin:0;font-size:14px;color:rgba(233,251,248,.75);text-align:center}
 @media (prefers-reduced-motion: reduce){
- .rt-in,.rt-flame,.rt-halo,.rt-pet,.rt-cta{animation:none!important}
+ .rt-in,.rt-halo,.rt-pet,.rt-cta{animation:none!important}
  .rt-spark{display:none}
  .rt-flash[data-on="true"]{animation:none!important;opacity:0}
  .rt-chev{transition:none}
@@ -112,27 +118,6 @@ function CountUp({ to, reduced, delay = 0 }: { to: number; reduced: boolean; del
     return () => { window.clearTimeout(t0); cancelAnimationFrame(raf); };
   }, [to, reduced, delay]);
   return <>{v}</>;
-}
-
-/** A chama da alma: sempre turquesa. */
-function SoulFlame() {
-  return (
-    <svg className="rt-flame" viewBox="0 0 100 126" aria-hidden="true">
-      <defs>
-        <linearGradient id="rtF1" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#0B6F68" />
-          <stop offset=".55" stopColor="#19C9B8" />
-          <stop offset="1" stopColor="#9DFFF0" />
-        </linearGradient>
-        <linearGradient id="rtF2" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#4DF0DC" />
-          <stop offset="1" stopColor="#F1FFFC" />
-        </linearGradient>
-      </defs>
-      <path d="M50 4C54 26 82 42 82 78c0 26-15 44-32 44S18 104 18 78c0-18 9-28 17-38 2 10 7 15 12 17-4-18-2-38 3-53z" fill="url(#rtF1)" />
-      <path d="M50 48c3 14 20 24 20 46 0 15-9 25-20 25s-20-10-20-25c0-12 6-18 11-25 1 6 4 9 8 10-2-11-1-22 1-31z" fill="url(#rtF2)" opacity=".92" />
-    </svg>
-  );
 }
 
 const SPARKS = [
@@ -199,11 +184,12 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
       <style>{CSS}</style>
       {evo}
       {step === 'main' && (
+        <div className="rt-frame" data-retro-frame style={{ borderImageSource: `url(${moldura})` }}>
         <div className="rt-col">
           <p className="rt-kicker rt-in" style={d(0)}>{isPt ? 'Retrospectiva da semana' : 'Week in review'}</p>
           <div className="rt-hero rt-in" style={d(0.1)}>
             <div className="rt-halo" aria-hidden="true" />
-            <SoulFlame />
+            <SoulFlameAnim className="rt-flame" height={168} cycleSeconds={1} />
             {SPARKS.map((s, i) => (
               <span key={i} className="rt-spark" aria-hidden="true" style={{ left: s.l, '--sx': s.sx, '--sd': s.sd } as React.CSSProperties} />
             ))}
@@ -262,7 +248,10 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
 
           {hardest && (
             <div className="rt-bonus rt-in" style={d(1.05)} data-weekly-bonus>
-              <span className="rt-badge"><Icon name="bolt" size={16} fill={1} tone="inherit" />{isPt ? 'Bônus da semana' : 'Week bonus'}</span>
+              <div className="rt-bonus-head">
+                <span className="rt-seal" data-bonus-seal aria-hidden="true" style={{ backgroundImage: `url(${selo})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }} />
+                <span className="rt-badge"><Icon name="bolt" size={16} fill={1} tone="inherit" />{isPt ? 'Bônus da semana' : 'Week bonus'}</span>
+              </div>
               <p>
                 {isPt
                   ? `Você teve mais dificuldade em ${hardest.name}. Vamos dar um bônus nela para te incentivar esta semana.`
@@ -277,6 +266,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           <button ref={ctaRef} type="button" className="rt-cta rt-in" style={d(1.3)} onClick={onClose}>
             {isPt ? 'Bora para a semana' : "Let's go, new week"}
           </button>
+        </div>
         </div>
       )}
     </div>

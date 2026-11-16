@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Chama da alma animada + moldura e selo da retrospectiva (`feat/chama-alma-anim`, REGISTRO §433)
+>
+> - **Feito:** folha de 8 quadros da chama turquesa (ChatGPT, alfa real) + componente `ui/SoulFlameAnim` (CSS `steps`, movimento reduzido = parado); `WeeklyRetroModal` usa a chama animada, moldura 9-slice e selo no cartão do bônus. Prompts e tags no `registro.jsonl`.
+> - **Visto em tela:** prévia local (Chrome headless, 500 px, movimento reduzido = quadro 1). Loop animado visto só na folha estática; não visto no app completo.
+> - **Pendente do dono:** usar a chama animada também na meditação `ChamaGame` (hoje âmbar)?
+> - **Rollback:** `git revert`; só front, sem save.
+
 > ## 16/11/2026 — Cartão semanal de domingo removido (`chore/remove-weekly-report-card`, REGISTRO §432)
 >
 > - **Feito:** `WeeklyReportCard` e seu slot na fila de avisos saem; `weeklyReport`/`needsWeeklyReport`/`stackingSuggestion` e testes saem de `rituals`. A retrospectiva é o modal de segunda (§431), intocado.
