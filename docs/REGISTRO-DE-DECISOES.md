@@ -6115,7 +6115,29 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
 
-## §446 — Companheiro invocado, PR 2: combate, servidor e cena, atrás da flag desligada (16/11/2026, dono)
+## §446 — Linhas v1, PR 2: formas antigas viram ramos legados em outro elemento; os 5 Ultra novos viram chefe de Arena (16/11/2026, dono)
+
+**Decisão (modal do dono, 16/11).** (1) As formas ANTIGAS (champion/ultimate/mega) das 5 linhas do §438 não somem: viram um **ramo legado** de uma criatura base de OUTRO elemento, com nome novo derivado da raiz do hospedeiro (nenhuma espécie aparece com o nome de outra linha). 15 entradas no FIM de `ENEMY_ROSTER` (kind `ramo`, ids `lg…` sem hífen; o `#N` do Bestiário das que já existiam não muda). Arte em `src/assets/soulmon/novos-arquivo/legado/<id>-<estágio>.png` (as de `E:/Soulmon-assets/_lote-16-11/legado-v0/`, 256² RGBA, 760 KB no total, maior 72,7 KB), lida só por `enemyRosterArt.ts` no mesmo mapa `RAMOS_ART` (chave `legado/<id>-<estágio>`). Dados em `utils/enemyRosterLegado.data.ts`. (2) Nomes e ids das 5 linhas atuais ficam. (3) Os 5 Ultra novos (`novos/<elemento>-ultra.png`) passam a ser CHEFE ULTRA de Arena, ao lado de Mareoror e Salsolura. (4) Rookies antigos: só arquivo (já em `legado-v0/`).
+
+**Mapeamento (conferido nos sprites; 3 ajustes sobre a sugestão da proposta).** som → ar (asas de mariposa, espirais de vento: casa); eletricidade → **espaço** (era indústria; lagarto dourado com antenas, serpente e coelho com anel/halo são celestes); tempo → **indústria** (era espaço; tartaruga com bússola, orbe de relógio e leão alado de engrenagens são mecânicos); arcano → luz (dourado e branco: casa); marcial → **água** (era vigor; guerreiro e hidra azul-branco: o vigor é marrom). Elemento e golpes = os do hospedeiro.
+
+| Antigo (linha) | Hospedeiro (elemento) | id | Champion / Ultimate / Mega (PT = EN, como os outros ramos) |
+|---|---|---|---|
+| som | Zephir (ar) | `lgvibri` | Zephrill / Zephwing / Zephmoth |
+| eletricidade | Voidlet (espaço) | `lgvoltrix` | Voidspark / Voidserp / Voidhalo |
+| tempo | Smeltu (indústria) | `lgchronib` | Smeltoise / Smeltick / Smeltgryph |
+| arcano | Solion (luz) | `lgrunix` | Solimur / Solowl / Solsphinx |
+| marcial | Bubbo (água) | `lgkenjo` | Bubbonin / Bubbotrident / Bubbohydra |
+
+**Chefe Ultra de Arena (`arena.ts`).** `ARENA_CHEFES_ULTRA` passa de 2 para 7 (`ARENA_CHEFES_ULTRA_NOVOS` = vibri, voltrix, chronib, runix, kenjo; elemento da criatura; nome = `FORMAS_ALTAS[id].ultra`: Cacophonarch, Voltarch, Chronarch, Arcanarch, Kenzarch; arte `FORMAS_ALTAS_ART[id].ultra`, resolvida em `ArenaGame`). Nada mais mudou: escada, limiar 32, chance 1 em 4 (`ARENA_CHEFE_ULTRA_CHANCE`), multiplicadores ×1,5 HP / ×1,25 força, recompensas e número de `rng()` são os mesmos. A espécie sai uniforme entre as 7 (era 50/50), pela mesma conta `floor(roll/0,25 × n)`: para a mesma semente a espécie do chefe Ultra pode ser outra que antes (só em run com escada >= 32); card = luta continua valendo (mesma função). O hash golden de `arenaComponentes.test.ts` NÃO mudou (escadas 0 e 10 não têm chefe Ultra).
+
+**Efeito na regra de dificuldade (#965, §437) e no Rift (§445).** Os 15 são k = 1 (1 componente) e kind `ramo`: entram na fatia dos ramos (`RAMO_CHANCE` = 1/3 da célula k = 1) em champion/ultimate/mega, que passa de 40 para 45 ramos por estágio, então cada ramo individual aparece um pouco menos; a chance de cada CÉLULA (nº de elementos) não muda. `combinedPoolOf` só junta `forma`/`paralelo` de 2+ componentes: os legados NÃO entram nos pools de combinados da Arena de run do elemento nem na tabela de componentes. No Rift por conjuntos (`pickEnemyDoConjunto`, filtra por elemento) os conjuntos de ar, espaço, indústria, luz e água ganham 1 ramo a mais por estágio. Na Arena, o ramo em rodada Ultimate (`ramoFromRoll`, zero `rng` a mais) passa a sortear entre 45: a mesma semente pode dar outro ramo que antes (sem mudar a contagem de sorteios).
+
+**Compatibilidade.** Bestiário: +15 chaves `lg…-<estágio>`, começam "não vistas" para todos (chave desconhecida de cliente antigo é ignorada); nenhuma chave antiga muda de sentido; sem migração, sem campo de save, sem servidor. Peso: +760.440 B de PNG em `novos-arquivo/legado/` (emitidos pelo Vite como asset), +15 strings no JS.
+
+**Para o dono rever.** (1) Os 3 ajustes de hospedeiro acima (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes provisórios (EN = PT; o dono troca na última coluna de `enemyRosterLegado.data.ts`). (2) Os legados contam como `ramo` e aparecem no sorteio comum (a opção "fora do sorteio comum", como `forma`/`paralelo`, é uma linha: trocar o kind).
+
+## §447 — Companheiro invocado, PR 2: combate, servidor e cena, atrás da flag desligada (16/11/2026, dono)
 
 **Regra do dono (16/11):** o especial de um evocador INVOCA o companheiro por 3 turnos, função mista. Especial de ATAQUE (`direct`, `dot`): o companheiro ataca nos 3 turnos, como um DoT normal e sem outro efeito. Especial de EFEITO (`atkBuff`, `spdBuff`, `defDebuff`, `shield`): no turno da invocação executa o efeito (um pouco menor) e nos 2 turnos seguintes ataca. CURA (`heal`, `shield` com cura contínua) NÃO invoca ("tira função de cura de evocação em tudo"): o especial roda normal, sem companheiro e sem cena. 1 companheiro por combatente (`COMPANHEIROS_POR_COMBATENTE`): invocar de novo troca o que estava em cena.
 
