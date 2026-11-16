@@ -60,7 +60,7 @@ export function FriendTraining({ friend, trainer, isPt, onClose }: { friend: Tra
       cheerScale: talentos.cheerScale,
       startEnergy: talentos.startEnergy,
       dotResist: talentos.dotResist,
-      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
+      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx), hx.specialEffect),
       fx: fxDoLutador(par, trainer.petElement),
       ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}),
     };

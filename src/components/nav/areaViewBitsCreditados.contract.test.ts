@@ -11,14 +11,14 @@ const fonte = readFileSync(resolve(__dirname, 'AreaView.tsx'), 'utf8');
 
 describe('AreaView: onEarnPoints repassa o creditado', () => {
   it('o tipo da prop devolve number', () => {
-    expect(fonte).toMatch(/onEarnPoints: \(points: number\) => number \| void;/);
+    expect(fonte).toMatch(/onEarnPoints: \(points: number, extraCap\?: number, category\?: BitsCategory\) => number \| void;/);
   });
   it('nenhum wrapper chama props.onEarnPoints descartando o retorno', () => {
     const descartado = fonte.match(/(?<![=:?(\w] )(?<!const creditado = )(?<!\? )props\.onEarnPoints\(pts\);/g);
     expect(descartado).toBeNull();
   });
   it('arena, dino, barrage, match3, eco, zip e selo devolvem o creditado', () => {
-    expect((fonte.match(/const creditado = (pts > 0 \? )?props\.onEarnPoints\(pts\)/g) ?? []).length).toBe(7);
+    expect((fonte.match(/const creditado = (pts > 0 \? )?props\.onEarnPoints\(pts(, extra, 'arena')?\)/g) ?? []).length).toBe(7);
     expect((fonte.match(/return creditado;/g) ?? []).length).toBe(7);
   });
 });

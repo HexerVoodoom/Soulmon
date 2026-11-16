@@ -81,6 +81,7 @@ void _todosOsEfeitos;
 /** Família imediata de referência de cada família/efeito que dura. `null` = fora da regra (a própria cura/escudo imediatos). */
 const BASE: Readonly<Record<SpecialFamily, 'direct' | null>> = {
   direct: null, heal: null, shield: null, dot: 'direct', atkBuff: 'direct', defDebuff: 'direct', spdBuff: 'direct',
+  defBuff: null, atkDebuff: null, spdDebuff: null, // Hexsmith H2: só de Coroa, medidas na régua do 1v1 (`hexsmith.motor.test.ts`)
 };
 const BASE_EFEITO: Readonly<Record<(typeof EFEITOS)[number], { family: SpecialFamily; base: 'direct' | 'heal' }>> = {
   hot: { family: 'shield', base: 'heal' }, slow: { family: 'defDebuff', base: 'direct' }, silence: { family: 'defDebuff', base: 'direct' },

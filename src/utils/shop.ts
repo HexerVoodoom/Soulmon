@@ -4,6 +4,7 @@ import type { SlotId, DecorFit } from './petStage';
 import { GUILD_COPY_CORE } from './guildCopyCore';
 import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
+import { DISH_SPECIAL_ITEMS } from './dishItems';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
 import { COSMETICOS_NOVOS } from './cosmeticosNovos';
 import { HONRA_DECOR } from './honraDecor';
@@ -81,7 +82,7 @@ export const REDUCE_CHIP_PRICE = 360;
 export const BIG_CHIP_PRICE = 840;
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
-// Inventory emojis for the consumable items that live in the Items folder.
+// Inventory emojis for the consumable items that live in Files (the Items folder, shown to the player as "Files").
 export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
 export const REDUCE_CHIP_EMOJI: Record<Attr, string> = {
@@ -95,13 +96,13 @@ export const SPARK_ITEM_EMOJI = '✨';
 /** Energia da Home restaurada por 1 Faísca (como a comida premium antiga, +5; teto = máximo do estágio). */
 export const SPARK_HOME_ENERGY = 5;
 
-// Consumables that live in the Items folder alongside food, but behave
+// Consumables that live in Files (the Items folder, shown to the player as "Files") alongside food, but behave
 // differently when USED: chips only add attribute points (no energy), the
 // heart item only heals HP, and the Glitchtama grants a perfect day.
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset' | 'dish';
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
@@ -207,6 +208,8 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   ...PREMIUM_SPECIAL_ITEMS,
   // Poção de Elemento (30/10/2026) — dono: `utils/elementPotion.ts`.
   ...POTION_SPECIAL_ITEMS,
+  // Prato do Restaurante (16/11/2026) — dono: `utils/dishItems.ts` (cozinhar guarda aqui; usar serve).
+  ...DISH_SPECIAL_ITEMS,
 };
 
 export function isSpecialItem(emoji: string): boolean {
@@ -214,7 +217,7 @@ export function isSpecialItem(emoji: string): boolean {
 }
 
 export const SHOP_ITEMS: ShopItem[] = [
-  // Attribute chips — bought here, then USED from the Items folder (they only
+  // Attribute chips — bought here, then USED from Files (they only
   // raise the attribute, no energy). They steer the evolution branch. Nomes
   // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.

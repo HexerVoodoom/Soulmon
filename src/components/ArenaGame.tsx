@@ -138,11 +138,13 @@ export interface ArenaGameProps {
   onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
   /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
   ladder?: number;
+  /** ⚔️ §458: pede 1 convite de Duelo ao começar a run (inclusive "Lutar de novo"). `false` = sem convite: a Arena volta para a folha, onde está a troca por energia. Ausente = sem convite (testes, Torneio). */
+  onBeginRun?: () => boolean;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onBeginRun, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -213,7 +215,7 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
-    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento, hx),
     companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
@@ -263,8 +265,13 @@ export function ArenaGame({
     setFase('luta');
   }, []);
 
+  const beginRunRef = useRef(onBeginRun);
+  beginRunRef.current = onBeginRun;
+  const exitRef = useRef(onExit);
+  exitRef.current = onExit;
   const comecar = useCallback(() => {
     if (!pool) return;
+    if (beginRunRef.current && !beginRunRef.current()) { exitRef.current(); return; } // sem convite: volta à folha (troca por energia)
     runSeedRef.current = chosenSeedRef.current ?? newDefenseSeed();
     chosenSeedRef.current = undefined;
     runLadderRef.current = ladderPropRef.current;

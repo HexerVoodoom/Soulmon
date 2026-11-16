@@ -82,14 +82,14 @@ function arrastar(item: HTMLElement, x: number, y: number) {
 describe('Mochila — usar arrastando até o pet', () => {
   it('SOLTAR SOBRE O PET usa o item, uma vez, pelo `onUse` (a regra é do App)', () => {
     const { onUse } = montar();
-    arrastar(screen.getByRole('button', { name: 'Maçã × 3' }), 150, 150);
+    arrastar(screen.getByRole('button', { name: 'Maçã.exe × 3' }), 150, 150);
     expect(onUse).toHaveBeenCalledTimes(1);
     expect(onUse).toHaveBeenCalledWith('🍎');
   });
 
   it('SOLTAR FORA do pet não usa nada', () => {
     const { onUse } = montar();
-    arrastar(screen.getByRole('button', { name: 'Maçã × 3' }), 320, 40);
+    arrastar(screen.getByRole('button', { name: 'Maçã.exe × 3' }), 320, 40);
     expect(onUse).not.toHaveBeenCalled();
   });
 
@@ -101,7 +101,7 @@ describe('Mochila — usar arrastando até o pet', () => {
 
   it('TOCAR sem arrastar não usa — só seleciona e mostra "Usar"', () => {
     const { onUse } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     // tremida de dedo abaixo do limiar ainda é toque
     fireEvent.pointerMove(document, { clientX: 10 + DRAG_THRESHOLD_PX - 2, clientY: 400 });
@@ -109,12 +109,12 @@ describe('Mochila — usar arrastando até o pet', () => {
     fireEvent.click(item);
     expect(onUse).not.toHaveBeenCalled();
     expect(item.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'Usar Maçã' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Usar Maçã.exe' })).toBeTruthy();
   });
 
   it('durante o arrasto a folha desce, o fantasma aparece e o pet acende quando o item está sobre ele', () => {
     const { container, onTargetChange } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     expect(container.ownerDocument.querySelector('.sm3-arrastando')).not.toBeNull();
@@ -128,7 +128,7 @@ describe('Mochila — usar arrastando até o pet', () => {
 
   it('pointercancel (o sistema tomou o gesto) nunca usa o item, mesmo sobre o pet', () => {
     const { onUse } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     act(() => { fireEvent.pointerCancel(document); });
@@ -139,8 +139,8 @@ describe('Mochila — usar arrastando até o pet', () => {
 describe('Mochila — a alternativa acessível', () => {
   it('FOCO no item (teclado) mostra "Usar", e "Usar" chama o mesmo `onUse`', () => {
     const { onUse } = montar();
-    act(() => { screen.getByRole('button', { name: 'Chip de Poder × 1' }).focus(); });
-    fireEvent.click(screen.getByRole('button', { name: 'Usar Chip de Poder' }));
+    act(() => { screen.getByRole('button', { name: 'Chip de Poder.exe × 1' }).focus(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Usar Chip de Poder.exe' }));
     expect(onUse).toHaveBeenCalledWith('👊');
   });
 
@@ -149,8 +149,8 @@ describe('Mochila — a alternativa acessível', () => {
     expect(screen.queryByText('Drag onto Bito to use')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'How to use an item' }));
     expect(screen.getByText('Drag onto Bito to use')).toBeTruthy();
-    act(() => { screen.getByRole('button', { name: 'Apple × 3' }).focus(); });
-    fireEvent.click(screen.getByRole('button', { name: 'Use Apple' }));
+    act(() => { screen.getByRole('button', { name: 'Apple.exe × 3' }).focus(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Use Apple.exe' }));
     expect(onUse).toHaveBeenCalledWith('🍎');
   });
 

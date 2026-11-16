@@ -62,11 +62,6 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
   const segurando = useRef<ReturnType<typeof setTimeout> | null>(null);
   const soltar = () => { if (segurando.current) clearTimeout(segurando.current); segurando.current = null; };
   useEffect(() => soltar, []);
-  useEffect(() => {
-    if (!lockNote) return;
-    const t = setTimeout(() => setLockNote(null), 5000);
-    return () => clearTimeout(t);
-  }, [lockNote]);
   return (
     <section
       aria-labelledby="sm-map-title"
@@ -196,7 +191,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           })}
         </div>
       </div>
-      {lockNote && <LockNotice text={lockNote} />}
+      {lockNote && <LockNotice text={lockNote} onClose={() => setLockNote(null)} closeLabel={isPt ? 'Fechar aviso' : 'Close notice'} />}
     </section>
   );
 }

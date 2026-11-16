@@ -39,7 +39,7 @@ import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/gr
 import { mulberry32 } from './combate/rng';
 import { glitchtamaDraw, glitchtamaDropFor, aplicarDropDoMarco } from './glitchtamaDrop';
 import { applyRiftLayer, riftTierTotals, type RiftMonthState } from './endlessRift';
-import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { isSpecialFamily, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
 import { creditMinigameBits } from './currencies';
 import { addFragments } from './equipment';
@@ -56,7 +56,7 @@ export const AWAY_CAST_PAUSE_MS = 2200;
 const MAX_FIGHTS_PER_CALL = 4000;
 
 /** Por que a descida terminou (o Soulmon voltou para casa). `null` = segue lá. */
-export type AwayEnd = 'hp' | 'energy' | 'daily' | 'deep' | 'retired' | null;
+export type AwayEnd = 'hp' | 'energy' | 'deep' | 'retired' | null;
 
 /** O que a ausência rendeu — o relatório que a tela mostra. */
 export interface AwayReport {
@@ -97,7 +97,7 @@ export function dungeonWaveOf(seed: number, layer: number, level: number, stage:
 
 /** O jogador do instantâneo como o motor o lê. */
 export function awayPlayerCfg(p: DungeonAwayPlayer): DungeonPlayerCfg {
-  const fam = (SPECIAL_FAMILIES as readonly string[]).includes(p.fam) ? p.fam as SpecialFamily : 'direct';
+  const fam: SpecialFamily = isSpecialFamily(p.fam) ? p.fam : 'direct';
   return {
     combatant: { level: p.level, atk: p.atk, def: p.def, spd: p.spd, hp: p.hp, bonus: p.bonus },
     family: fam,
@@ -215,11 +215,10 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
       if (t + DUNGEON_AUTO_FIGHT_MS > limit) break;
       const next = layer + 1;
       if (next > DUNGEON_MAX_LAYER) { ended = 'deep'; break; } // sem teto por Lv/Vínculo (16/11/2026): só o fim da escada (999)
-      // A MESMA porta da tela (`spendLayer`): energia com a regeneração acertada até o instante DA LINHA DO TEMPO da descida (`t`) e o
-      // limite diário de camadas do dia daquele instante. Sem isto a conta fora do app furaria o limite que a tela respeita.
+      // A MESMA porta da tela (`spendLayer`): energia com a regeneração acertada até o instante DA LINHA DO TEMPO da descida (`t`). Sem limite por dia (§451): só a energia freia.
       t += DUNGEON_AUTO_FIGHT_MS;
       const refusal = layerRefusal(s, t);
-      if (refusal) { ended = refusal === 'daily-limit' ? 'daily' : 'energy'; t -= DUNGEON_AUTO_FIGHT_MS; break; }
+      if (refusal) { ended = 'energy'; t -= DUNGEON_AUTO_FIGHT_MS; break; }
       s = spendLayer(s, t);
       report.energy += DUNGEON_ENERGY_PER_LAYER;
       layer = next; slot = 0;

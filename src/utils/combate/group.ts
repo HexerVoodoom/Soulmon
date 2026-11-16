@@ -24,7 +24,7 @@ import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type Varianc
 import { escolherAlvo } from './alvo';
 import { aplicarEspecialPessoal } from './alvoAliado';
 import {
-  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
+  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, FAMILY_TUNE, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -135,7 +135,12 @@ interface G {
   /** §228: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
   nSil: number;
   nSlow: number;
+  /** `spdDebuff` (família só de Coroa): golpes de arrasto que faltam (à parte do `nSlow` do efeito de lentidão). */
+  nDrag: number;
   nHot: number;
+  /** Hexsmith H2: golpes que ainda doem menos neste lutador (`defBuff`) e golpes dele que ainda saem mais fracos (`atkDebuff`). */
+  nGuard: number;
+  nWeak: number;
   /** §334: DoTs e curas contínuas que este lutador CARREGA; tudo tica no começo de cada golpe DELE (`tickOwnTurn`). */
   dots: GDot[];
   hots: { readonly pulse: number; left: number }[];
@@ -185,7 +190,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0, dots: [], hots: [], invoca: s.invoca === true,
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nHot: 0, nGuard: 0, nWeak: 0, dots: [], hots: [], invoca: s.invoca === true,
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -214,7 +219,8 @@ export function* groupFightSteps(
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
         shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: f.dots.reduce((n, d) => n + d.left, 0),
-        ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
+        ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow + f.nDrag > EPS ? { nSlow: f.nSlow + f.nDrag } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
+        ...(f.nGuard > EPS ? { nGuard: f.nGuard } : {}), ...(f.nWeak > EPS ? { nWeak: f.nWeak } : {}),
         ...(f.invoca ? compFx(all.reduce((n, x) => n + x.dots.reduce((m, d) => (d.src === f && d.comp ? m + d.left : m), 0), 0)) : {}),
       };
     });
@@ -312,6 +318,15 @@ export function* groupFightSteps(
           else v.nVuln += share;
         }
         break;
+      case 'atkDebuff':
+        for (const v of spread) v.nWeak += share / FAMILY_TUNE.weakCut;
+        break;
+      case 'spdDebuff':
+        for (const v of spread) v.nDrag += share * FAMILY_TUNE.spdDebuffScale;
+        break;
+      case 'defBuff':
+        rx.nGuard += Eb / FAMILY_TUNE.guardCut; // pessoal (como o escudo): vai em quem solta
+        break;
       case 'shield':
         if (sp.effect === 'hot') {
           // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem RECEBE.
@@ -391,6 +406,8 @@ export function* groupFightSteps(
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (v.nVuln > EPS) { const x = Math.min(1, v.nVuln); mulN += x; v.nVuln -= x; }
+      if (v.nGuard > EPS) { const x = Math.min(1, v.nGuard); mulN *= 1 - FAMILY_TUNE.guardCut * x; v.nGuard -= x; }
+      if (me.nWeak > EPS) { const x = Math.min(1, me.nWeak); mulN *= 1 - FAMILY_TUNE.weakCut * x; me.nWeak -= x; }
       const hs = opts.hitScale ? opts.hitScale(me.who, me.nHit) : 1;
       me.nHit++;
       hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack', 'basic');
@@ -402,6 +419,7 @@ export function* groupFightSteps(
         me.next = t + interval(me.c.spd);
       }
       if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nDrag > EPS) { const x = Math.min(1, me.nDrag); me.nDrag -= x; me.next += interval(me.c.spd) * x * FAMILY_TUNE.dragStretch; }
       if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();

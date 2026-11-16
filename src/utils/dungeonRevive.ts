@@ -13,8 +13,8 @@ import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from './shop';
 
 export const REVIVE_HP_FRAC = 0.5;
 export { SPARK_ITEM_EMOJI };
-/** Chance de a Faísca cair por inimigo derrotado (sem teto diário). */
-export const SPARK_DROP_CHANCE = 0.04;
+/** Chance de a Faísca cair por inimigo derrotado (sem teto diário). 4% → 2% em 16/11/2026 (REGISTRO §451): o Rift é o sumidouro de energia e a Faísca a devolve. */
+export const SPARK_DROP_CHANCE = 0.02;
 
 type Inv = Readonly<Record<string, number>>;
 

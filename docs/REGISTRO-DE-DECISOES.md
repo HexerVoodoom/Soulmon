@@ -6124,6 +6124,18 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 - **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
 - **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
 
+## §452 — Hexsmith H2: o motor lê `specialEffect` e ganha as 3 famílias só de Coroa (16/11/2026, dono)
+
+Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO PvP; ajustar potência e duração em vez de recusar; perguntar só se for impossível caber nas réguas (não foi). A regra "Coroa equipada troca o especial e a invocação some" é o H4 (NÃO está aqui).
+
+- **Motor 1v1 (`fight.ts`, espelho `_combate.js`)**: `hot` (3 pulsos de cura no começo dos 3 próximos golpes de quem recebe), `slow` (lentidão do alvo + parte do orçamento como quebra de defesa) e `silence` (o alvo com especial não solta o especial por `silenceHits` golpes; sem especial, quebra de defesa inteira) como efeitos reais do especial equipado. Botões próprios do PvP em `EFFECT_TUNE_PVP` (silêncio de 1 golpe, `slowScale` 0,3, `slowKeep` 0,8, `hotScale` 1,05); `EFFECT_TUNE` (PvE) não mudou. `specialOf(família, efeito)` só aceita o efeito sobre a família-base dele (`EFFECT_FAMILY`). `_duel.js` passa `hexOverrides.specialEffect`; cliente: Torneio e treino com amigo também.
+- **PvE (`group.ts`)**: já tinha as 3 mecânicas pelo elemento; a Coroa de efeito entra no canal `efeitoElemento` como o "elemento" `coroa:<efeito>` (`elementoDaCoroa`, `efeitoElementoPve(família, elemento, hx)`), vira o MESMO especial do efeito do elemento já medido e PREVALECE sobre o Amuleto. Arena, Masmorra, Pesadelo, Raid e Rogue passam `hx`.
+- **Trilha B**: famílias `defBuff` (os próximos golpes que o conjurador recebe doem menos), `atkDebuff` (os próximos golpes do alvo batem mais fracos) e `spdDebuff` (lentidão real: cada golpe do alvo atrasa o seguinte), em `CROWN_ONLY_FAMILIES`. `SPECIAL_FAMILIES` segue com as 7 SORTEÁVEIS: as novas NÃO entram em sorteio de ficha, de inimigo nem de jogador novo (peso 0 em `PESO_FAMILIA_ESCOLA`, `foeFamilies` não as escolhe, teste de 6000 sementes). Contadores novos (`nGuard`, `nWeak`, `nDrag`; o selo de lentidão lê `nSlow` somado), `SPECIAL_POWER`/`SPECIAL_POWER_PVE`/`PVE_FAMILY_POWER` (3 motores), `FAMILY_STATUS` (selos novos da arte do §451 ligados em `STATUS_FX`), `HEX_FAMILY_COPY`, `PERFIL_EFEITO`, 3 léxicos de 8 substantivos (`SUBSTANTIVOS_ESPECIAL`, teste de coerência estendido). Preço = `HEX_COSTS.coroa`; `HEX_MAX_OWNED` +3 (só cresce).
+- **Calibração** (`FAMILY_TUNE`: `guardCut` 0,5, `weakCut` 0,57, `dragStretch` 1,75): PvP `SPECIAL_POWER` defBuff 1,1 · atkDebuff 1,1 · spdDebuff 0,64 (régua do 1v1 ±5%); PvE (família espelhada: `defBuff`↔`defDebuff`, `atkDebuff`↔`atkBuff`, `spdDebuff`↔`spdBuff`, ±3pp) `PVE_FAMILY_POWER` arena 1,35/2/1,4, masmorra 2/1,4/0,9, pesadelo 0,7/0,65/0,5. `atkDebuff` e `spdDebuff` NÃO respondem à área (`AREA_FAMILIES` segue direct/dot/defDebuff): em área o `atkDebuff` rendia +14,6pp sobre o alvo único (gate AC4/AC7 ±6pp). Provas em `hexsmith.motor.test.ts` (régua 1v1) e `hexsmith.motorPve.medicao.test.ts` (gates PvE).
+- **Contrato**: sem `Math.random`, determinístico por semente, retrocompatível com saves (campo ausente = igual a hoje, rastro sem contador novo), `eEvocador` e o gatilho do companheiro NÃO foram tocados (teste de contrato do H1 segue passando). Paridade do log inteiro: `functions/api/hexsmith.motor.parity.test.js`.
+- **Pendente**: H4 (troca do especial/invocação); `fx.efeito` do oponente no PvP (o nome do especial do oponente com Coroa de lentidão/silêncio usa o léxico da família-base até a cena ler o efeito).
+- **Rollback**: `git revert`. Cliente antigo descarta `coroa:defBuff|atkDebuff|spdDebuff` (id desconhecido) item a item; sem campo novo no save; sem APK.
+
 ## §448 — Mini-boss do Rift usa a forma do PRÓPRIO conjunto (16/11/2026, dono)
 
 **Decisão (emenda ao §445).** Quando o conjunto não tem forma no estágio pedido (169 dos 190 pares sem Ultimate; 6 trios sem Mega), o mini-boss e os comuns usam a MELHOR forma que o próprio elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate, Champion, Rookie), só então o de cima. Não troca de arte e não cai na base do componente; continua mais forte pelo andar de crescimento a mais (`RIFT_MINIBOSS_EXTRA_FLOORS`). Componentes do estágio só entram se o elemento não tiver criatura nenhuma (hoje nunca). Confirmados: volta ao Rookie dos 20 base depois do andar 538; mini-boss com +1 andar.
@@ -6173,7 +6185,7 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 
 **Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.
 
-## §452 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
+## §459 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
 
 **Decisão do dono (16/11):** o companheiro invocado entra LIGADO no pacote de 16/11 (`COMPANHEIRO_INVOCADO = true` em `src/utils/companheiroInvocado.ts` e em `functions/api/_companheiroInvocado.js`; o teste de paridade trava os dois juntos). A pergunta (1) do §449 está RESPONDIDA: o anti-fraude do cache `soulmonEvocacao` fica como está (ganho máximo medido ≤ ~6pp), sem reconstruir o gatilho no servidor.
 
@@ -6187,7 +6199,90 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 
 **Rollback:** `git revert`; ou só desligar a chave nos DOIS arquivos (o teste de paridade exige igualdade). Aditivo, sem migração de save.
 
+## §453 — Rift é o sumidouro de energia: sem limite diário, regeneração mais lenta, Faísca e pratos de energia mais raros/caros (16/11/2026, dono)
+
+**Pedido do dono.** Ele lembrou que a descida idle do Rift TEM A FUNÇÃO DE GASTAR ENERGIA. Decisões em modal: (1) REMOVER o limite diário de 30 lutas = 5 andares; (2) regeneração de energia mais lenta; (3) poções de energia mais raras e mais caras.
+
+**Revoga (parte) o §441.** A parte "limite diário de 30 lutas = 5 andares" do §441 sai: `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday`, a recusa `'daily-limit'` (`layerRefusal`/`spendLayer`, `focusDescentRefusal`), o fim `'daily'` do `dungeonAway`, "O Rift descansa até amanhã" e o "hoje: x de 5 andares" do lobby. FICA do §441: sem teto de profundidade por Lv/Vínculo. O Rift é INFINITO (só o fim da escada, camada 999); quem freia é a ENERGIA (`DUNGEON_ENERGY_PER_LAYER` = 1 por andar). **Por quê:** com teto por dia a energia sobrava e o jogo perdia o sumidouro; com a energia como freio ela volta a ter valor, e o texto de energia esgotada segue calmo (nunca custa coração). O contador `dungeonDaily {day, layers}` fica no save como ESTATÍSTICA, sem teto (leitura tolerante, sem migração; um contador com 5 ou mais de hoje não bloqueia mais nada; o lobby mostra "hoje: N andares").
+
+**Regeneração.** `ENERGY_REGEN_MINUTES` de 60 para **80 min** por unidade a 100% de fome (uma constante só, `hunger.ts`; faixas de fome 100/50/0% e o ×1,5 dormindo seguem). Efeito: 1 unidade a cada 80 min bem alimentado (160 mal alimentado; 53 min dormindo). `UNIT_POINTS` deriva da constante. O servidor NÃO espelha o ritmo (o push "energia cheia" usa o tempo que o cliente calcula), então não há paridade a ajustar. Save: o `carry` gravado numa unidade menor é convertido em unidades inteiras na primeira leitura (já era idempotente).
+
+**Poções e itens que enchem energia (antes → depois).** Só existem DUAS fontes de item: a Faísca de Alma (único item de energia; cai da Masmorra, sem loja) e os 3 pratos de energia do Restaurante (comprados com Bits, espelhados na Feira). Drop da Faísca: 4% → **2%** por inimigo (`SPARK_DROP_CHANCE`); pratos ×1,5 arredondado (`ENERGY_DISH_PRICE_MULT`): Chá de Orvalho e Pão de Faísca 15 → **23** Bits, Ensopado do Caldeirão 40 → **60** (a escada +2 < +3 se mantém), espelho em `functions/api/_feiraLoja.js`. Sem sorteio novo. Não são "poção" e ficaram como estão: energia do Pesadelo vencido (por raridade), do Refúgio (1×/dia), do Bom Sonho e o enchimento ao subir de nível.
+
+**Alternativa que perdeu.** Manter o limite diário e só encarecer a energia: o dono prefere o Rift sem teto, porque o limite escondia o custo real. **Gatilho para rever:** retenção da Fenda cair, ou jogador de foco ficar sem energia na maior parte do dia (80 min foi o número do dono; 60 era o anterior). **Falsifica a aposta:** energia ainda sobrando no fim do dia para a maioria dos jogadores.
+
+**Rollback.** `git revert` do PR: só cliente e `_feiraLoja.js`; saves compatíveis nos dois sentidos.
 
 ## §451 — Hexsmith: arte das 6 Coroas novas e 3 selos de status (16/11/2026, dono)
 
 O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
+
+## §452 — Carta de elemento novo abre ao sair de QUALQUER atividade, carrossel estilo stories, Neutro e Pesadelo com essência, poção do Neutro (16/11/2026, dono, por voz)
+
+**Pedido do dono.** Descobriu um elemento na Arena e a carta não abriu ao sair; o corvo (Neutro) não mostrou de quais elementos nasce; vários elementos de uma vez em "reels"; conferir se Pesadelo e Neutro deixam essência; poção do Neutro = 100 de cada base + 50 de cada outro composto; Pesadelo só coletar.
+
+**Causa raiz (modal).** `elementoNovoPodeAbrir` tratava a ÁREA inteira (`area:arena|exploracao|jogos`) como "atividade". Ao sair da luta o jogador cai no HUB da área (mesma view), que continuava "em atividade": a carta ficava presa até ele ir ao Mapa/Home. Vale para Arena, Torneio, Duelo, Masmorra/Fenda e Combina 3. **Correção:** a `AreaView` informa `onActivityChange` (jogo OU duelo OU luta do Torneio) e o gate usa isso; `undefined` (AreaView carregando) mantém o palpite conservador antigo.
+
+**Decisão.** (1) Carrossel: barra de progresso segmentada no topo, toque (metade direita avança, esquerda volta), deslize, setas, X; SEM avanço automático (o jogador lê no ritmo dele, nada a pausar); OK `CtaButton` segue desativado até ver todas. (2) Neutro: a carta não tem fileira de componentes e diz "Born of no other element. The Raven's own." (REGISTRO §211: não é mistura de nada). (3) Essência: Pesadelo já era creditada na vitória do Pesadelo (sem mudança); o Corvo NÃO deixava essência neutra (`isEssenceElement` excluía `neutro`) e agora deixa (`ehEssenciaColetavel`), sem entrar no catálogo do Cambista/preço. (4) Poção do Neutro (`utils/neutroPotion.ts`; CORRIGIDA pelo dono no mesmo dia, os "50 de cada composto" eram mal-entendido e saíram): por elemento BASE (os 20), 100 essências dele OU 1 poção-base dele (mistura por elemento vale; paga com essência quando basta), MAIS 50 essências do Neutro (as que o Corvo deixa). Exige o Neutro já conhecido, tudo-ou-nada, painel "x de 20 bases completas" + "Neutro x/50". (4b) Regra geral: ao atingir 50 essências de um composto (2-4 bases) ou do Neutro (100 para base), a Vesca abre o pop-up "Fazer a poção"/"Depois"; vários de uma vez = UM pop-up em lista; "visto" gravado ao mostrar; limiar único em `potionCosts.ts` (`POTION_COSTS`, `limiarDaPocao`). (4c) Cambista: `neutro` e `pesadelo` sem preço de compra nem venda, com teste-guarda no cliente e no servidor. Pesadelo: sem receita; a dica na Mochila diz "ainda sem uso". Servidor: nada novo (saldo só baixa por `essenceSpent`; chaves `neutro`/`pesadelo` cabem nas 271).
+**Efeito (confirmado pelo dono):** a poção do Neutro torna o Soulmon elemento `neutro` na evolução (sem anel de vantagem), como o Corvo.
+## §454 — Prédio bloqueado e portão do Bastion só fecham por X ou CTA (16/11/2026, dono)
+
+- **Pedido:** o aviso do prédio trancado sumia sozinho e o Bastion (portão do Calabouço sem chave) fechava ao tocar em qualquer lugar.
+- **Causa raiz:** (1) `AreaView`/`MapPage` limpavam `lockNote` com `setTimeout` de 5 s e o `LockNotice` não tinha X; (2) `NpcSequence` tem um botão de tela cheia que, na última fala, chama `onFinish`, então `RogueKeyGate` fechava com qualquer toque.
+- **Regra:** só X, CTA ("Ir para a Oficina do Foco") ou Esc/voltar fecham. Sem timer, sem fechar ao tocar fora. `LockNotice` ganhou `onClose` (X 44 px); `NpcSequence` ganhou `closeOnTap` (padrão `true`, o Bastion usa `false` e o "Pular" vira "×").
+- **Teste-guarda:** `RogueKeyGate.render.test.tsx` reprova `onClick={onClose}` em `RogueKeyGate`/`LockBadge`. **Rollback:** `git revert`; só cliente.
+
+## §455 — Restaurante: o prato feito vai para a pastinha, não é servido na hora (16/11/2026, dono)
+
+**Pedido do dono.** "No Restaurante, quando faz um item, aparece um modal igual ao de quando faz poção para ter certeza que foi feito. E o item NÃO é usado instantaneamente: vai para a pasta (`foodInventory`) junto com os comidos."
+
+**Antes → depois.** Antes, `applyCook` (`restaurant.ts`) debitava os ingredientes e SERVIA o prato na hora (fome cheia + energia ou buff). Agora debita e põe `dish:<id>` em `foodInventory` (kind `dish` em `SPECIAL_ITEMS`, `utils/dishItems.ts`); fome e efeito só vêm ao USAR o item, pela porta única `specialItemUse.ts › applySpecialItem` → `serveDish` (a mesma função serve a Feira de verdade). O teto de 2 pratos por dia e as missões diária/semanal contam ao COZINHAR, como antes. Modal `PratoFeito` ("Feito!/Done!", ícone, nome, "Guardado na pastinha · você tem N", efeito, OK) no molde de `PocaoCriada`; é gesto do jogador (fora da `presentationQueue`, como a poção); vários pratos seguidos agrupam em um modal (×N).
+
+**Não mudou.** A pastinha NÃO tem teto de itens no código, então não há recusa por "cheia" (nada a inventar). A Feira (`applyFeiraDish`, prato pronto comprado) segue servindo na hora: o pedido foi só do Restaurante. Servidor: `_feiraLoja.js` só valida a compra da Feira; nada do Restaurante é validado lá, sem paridade a mudar.
+
+**Alternativa que perdeu.** Manter servir na hora e só acrescentar o modal: o dono quer o prato guardável (decidir o momento de usar o buff de 24 h). **Gatilho para rever:** jogador acumular pratos e não usar, ou pedido de teto da pastinha.
+
+**Rollback.** `git revert` do PR (só cliente). Saves: pratos já guardados como `dish:<id>` viram chave desconhecida e ficam inertes após o revert (a pastinha só os mostraria sem nome); nenhum estado intermediário foi criado antes.
+
+## §457 — Calabouço roguelike mais curto, mesmo prêmio (16/11/2026, dono)
+
+**Pedido.** A incursão do Calabouço (a que pede a chave do Prepare to Focus) está longa; encurtar ~1/3 sem mudar o prêmio total. NÃO é o Rift nem a Masmorra idle.
+**Antes → depois.** 3 andares × 8 desafios = 24 passos → 3 andares × 5 = 15 (-37,5%; 3×5 porque 16/3 não fecha e os 3 andares são nós do mapa, feito `rogueFloors` e missões). Combate obrigatório no 3º e 5º (era 3º, 6º, 8º): 6 combates (eram 9), 9 passos livres com 3 opções (eram 15). Constantes em `rogueDungeonSave.ts` (dono único).
+**Prêmio (única fonte: Bits por vitória + score de ranking; a incursão não paga XP, fragmentos, essências, drops nem `focusLoot`).** `rogueWinValue(won) = round(won × 24/15)`: 15 vitórias = 24 Bits e score 33, igual a 24 antes. Simulação de 2.000 sementes: ±2% (`rogueDungeon.encurtada.test.ts`). Bits seguem pelo funil único `handleEarnGamePoints` (teto diário de minigames; nada mudou ali). Bônus de escolha ×1,6 (`POWER_STEP` 0,06→0,096, `VIGOR_STEP` 0,10→0,16) para o poder no último passo ficar igual; `HEAL_SHIELD` fica. `ROGUE_FOE_RAMP` {3,1; 0} → {1,75; 2}: só encurtar deixava a incursão completa em 98,8%; recalibrada a 66,5% (era 70,5%, faixa do dono 60-75%, `winrateModos.sim.test.ts`). O último inimigo fica um pouco mais forte no nominal (efeito do atrito, medido).
+**Saves.** `RogueRun.v` = 2. Save sem `v` é 3×8: `sanitizeRogueRun` converte uma vez, proporcional (passo, vitórias, poder/vigor/escudos, `paidWon`); andares concluídos preservados (testado para os 25 passos), passo > 15 vira incursão finalizada com o prêmio proporcional (±1 Bit), idempotente. Servidor não muda (teto de score 33 mantido).
+**Alternativa que perdeu.** 2 andares × 8 (16 passos, exatamente 1/3): corta nós/andares do mapa e o feito de andares por incursão (3→2).
+**Rollback.** `git revert` do PR (cliente). Um save já convertido (`v: 2`, 15 passos) lido pelo código antigo é limitado ao teto antigo sem erro: o passo fica ≤ 15 de 24, a incursão segue.
+## §456 — Teto de Bits de atividade: 75 por categoria, além dos 150 gerais (16/11/2026, dono)
+
+**Decisão:** o teto geral diário (`MINIGAME_BITS_PER_DAY` = 150) CONTINUA; acrescenta-se **75 por categoria por dia do jogador** (`BITS_PER_CATEGORY_PER_DAY`, `utils/currencies.ts`). Categorias e fontes (funil único `handleEarnGamePoints`, `App.tsx`):
+
+| Categoria | Fontes que pagam Bits |
+|---|---|
+| `minigames` | Dino, Soul Barrage, Pedra·Papel·Tesoura, Elemental Fusion (Match-3), Eco, Zip, Selo, Picross, Troca, Patches, Revisão, Bolhas, Chama (padrão do funil: fonte sem categoria cai aqui) |
+| `explorar` | Fenda Sem Fim (DungeonGame; extra da Agulha de bússola soma ao teto da categoria), Passeio/Rogue |
+| `arena` | Duelo (ArenaGame; extra da Agulha idem) |
+
+Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; os Bits do dia completo, check-in, casa, pesadelo e pacotes seguem fora destes tetos. **Recusa suave:** o menor dos dois tetos corta só o excedente de Bits (`minigameBitsGrantedIn`); a atividade e o resto da recompensa seguem intactos, sem cobrança. **Save:** `minigameBits.cat` (aditivo, mesmo registro do dia; save antigo lê zero e a leitura tolerante `sanitizeBitsCat` é idempotente). **Servidor:** não decide Bits de atividade (só observa, §387); nada a espelhar e `_dayCounters.js` não toca Bits. **UI:** "hoje: x de 75 neste tipo de atividade" (folhas da Fenda, Salão, Mente e Duelo). **Arte:** troca das 3 artes v2 da Hexsmith (st-debuff-atk 64×64, coroa-silence e coroa-hot 96×96). **Fichas/convites:** a premissa "hoje 1 energia = 5 fichas" não bate com o código (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11); o convite de Duelo e o VIP ficaram em consulta ao dono.
+
+## §457 — Feira guarda o prato; a pasta de itens vira "Files/Arquivos" e comida/prato/chip viram `<nome>.exe` (16/11/2026, dono)
+
+**Decisão (modal do dono, 16/11).** (1) Pastinha SEM teto de itens (já era: nada a mudar). (2) O prato pronto comprado na Feira (`applyFeiraDish`) deixa de servir na hora: debita o preço da oferta, soma `dish:<id>` e abre o MESMO modal `PratoFeito` (variante "Comprado!/Bought!", "Guardado em Arquivos"/"Saved in Files"); o efeito vem ao USAR (`applySpecialItem` → `serveDish`). Sem chef do dia nem teto diário de pratos; a missão/contagem da Feira (`applyFeiraLojaBuy`) ficou como estava. Servidor: `_feiraLoja.js` só confere a oferta/1 por item, não serve prato, então não há espelho de efeito a mudar. (3) Nome visível: a pasta é "Files"/"Arquivos" (já era o título de `Mochila.tsx`; agora também em Restaurante, Guia, Ajuda, tour e poção) e, **correção do dono no mesmo dia**, a convenção `<nome>.exe` vale SÓ para COMIDAS (comum e premium), PRATOS (`dish:*`) e CHIPS (somar, maiores, redutores) = a aba "Comida e chips". ESPECIAIS (coraçãozinho, Glitchtama, Faísca, poções, reset) e Materiais NÃO levam `.exe`. É só apresentação (`ItemsWindow.tsx › getFileName/isExeItem`): ids e chaves de save intactos; o arquivo/componente `Mochila` não foi renomeado.
+
+**Narrativa.** Termo de interface sem tom de cobrança. Adaptação: "arquivo" nunca nomeia a criatura (ela é o "padrão", §5.1) e `.exe` não entra em voz de mundo nem na fala da criatura; linha nova na §12 da bíblia e régua em `narrativa.contract.test.ts`.
+
+**Tipos com `.exe`:** comida comum, comida premium, pratos, chips que somam, chips maiores, chips redutores. **Sem `.exe`:** coraçãozinho, Glitchtama, Faísca, poções, reset (especiais) e materiais. **Decisão pendente do dono:** nenhuma de tipo; só confirmar se quer `.exe` também no título do modal/toast de itens especiais futuros (hoje não).
+
+**Alternativa que perdeu.** Aplicar `.exe` a tudo da pasta: o dono corrigiu para comida/prato/chip. **Gatilho para rever:** jogador confuso com o sufixo ou pedido de estendê-lo.
+
+**Rollback.** `git revert` do PR (só cliente). Pratos comprados e guardados como `dish:<id>` ficam inertes (chave sem nome) após o revert; nada irreversível.
+
+## §458 — Convite de Duelo: a ficha da Arena, com 7 convites por energia para a conta paga (16/11/2026, dono)
+
+**Decisão:** cada run de Duelo (Arena livre) gasta **1 convite**; "Lutar de novo" gasta outro. Estoque de **0 a 7**. O jogador troca **1 energia por convites**: **5** na conta comum e **7** na conta paga (`accountTier:'paid'`; não existe um "VIP" separado no código, a conta paga é o conceito). Estoque inicial dos jogadores atuais: **7** (campo ausente lê 7). Fichas dos minijogos: **sem mudança** (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11).
+
+**⚠️ Decisão tomada com a linha vermelha à vista.** O CLAUDE.md diz que nada pago dá vantagem de combate. O dono decidiu, ciente disso, que a diferença 7 contra 5 fica: a vantagem do pagante é **só volume de lutas por energia gasta**, não poder, atributo, drop nem chance. O teto de Bits por categoria (§456) vale igual para todos, e o estoque máximo é 7 para todos (a conta paga só reabastece mais por energia).
+
+**Nunca tranca:** com 0 convites a folha mostra a troca por energia; sem energia, a frase calma diz que a energia volta com o tempo (nenhum custo de coração). Recusa de troca devolve a mesma referência, sem gastar.
+
+**Código:** `src/utils/duelInvites.ts` (regra pura), `GameState.duelInvites {n, at}` (aditivo, leitura tolerante `sanitizeDuelInvites`, idempotente), gate em `ArenaGame` (`onBeginRun`; sem convite volta à folha), UI em `DueloSheet` (contador + "Trocar 1 energia por N convites", arte `hud/convite-duelo-{96-}{pt,en}.png`, sem arquivo a folha só não mostra o papiro). **Servidor:** `functions/api/_duelInvites.js` em `save.js`: gasto só desce; aumento só com carimbo `at` novo (> gravado + 60 s, ≤ 1 dia à frente), teto 7; paridade em `duelInvites.parity.test.js`. **Limite honesto:** o servidor não conhece a energia nem o tier na gravação; quem forja JSON válido reenche o estoque no máximo a cada 60 s, e o 5 contra 7 não é verificado lá (mesmo limite dos tickets, §ticket).
+

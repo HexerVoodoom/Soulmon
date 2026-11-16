@@ -143,9 +143,9 @@ describe('o timer é o motor projetado, não uma contagem visual', () => {
     expect(energyStatus(base, T0).mode).toBe('paused');
     const comeu = eat(base, T0, HUNGER_PER_FOOD);
     expect(energyStatus(comeu, T0).mode).toBe('slow');
-    // uma comida só (fome 40, faixa mediana 50%): com a unidade de 60 min ela fecha ANTES de ele voltar a ficar faminto (2 h a 50% = 1 unidade).
+    // uma comida só (fome 40, faixa mediana 50%): com a unidade de 80 min ela fecha ANTES de ele voltar a ficar faminto (160 min a 50% = 1 unidade, 2 h 40).
     // (A 120 min não fechava e o timer dizia `null`; a projeção continua dizendo a verdade nos dois casos.)
-    expect(energyStatus(comeu, T0).msToNext).toBe(2 * HOUR);
+    expect(energyStatus(comeu, T0).msToNext).toBe(ENERGY_REGEN_MINUTES * 2 * 60_000);
     const comeuMais = eat(comeu, T0, HUNGER_PER_FOOD);
     expect(energyStatus(comeuMais, T0).msToNext).not.toBeNull();
   });
@@ -238,9 +238,9 @@ describe('exploits', () => {
   it('adiantar o relógio: só rende o que a fome permitiria naquele tempo (não é energia grátis)', () => {
     const base = novo({ hunger: fome(100) });
     const salto = settleEnergy(base, T0 + 100 * HOUR);
-    // teto físico: 100 → 0 em 14 h rende ~8,4 h efetivas / 1 h = ~8 unidades (era ~4 a 120 min) — nunca as 50 de "100 h a 100%"
-    expect(salto.energyPoints).toBeLessThanOrEqual(9);
-    expect(salto.energyPoints).toBeGreaterThanOrEqual(7);
+    // teto físico: 100 → 0 em 14 h rende ~8,4 h efetivas / 80 min = ~6 unidades (eram ~8 a 60 min e ~4 a 120) — nunca as 75 de "100 h a 100%"
+    expect(salto.energyPoints).toBeLessThanOrEqual(7);
+    expect(salto.energyPoints).toBeGreaterThanOrEqual(5);
   });
   it('abrir e fechar o app 200 vezes no mesmo minuto não regenera nada a mais', () => {
     let s = novo({ hunger: fome(100) });
@@ -314,13 +314,13 @@ describe('carry gravado com a unidade antiga (120 min) — 26/10/2026, ENERGY_RE
   const T = Date.UTC(2026, 9, 26, 12, 0, 0);
   const base = (carry: number): HungerState => ({ energyPoints: 3, evolutionStage: 'rookie', hunger: { v: 100, at: T }, energyClock: { at: T, carry } });
   it('o sanitize NÃO corta um carry antigo válido (cortar = perder progresso)', () => {
-    const c = UNIT_POINTS * 2 - 1;
+    const c = 119 * 60_000 * 100; // um carry antigo válido (a unidade antiga era de 120 min)
     expect(sanitizeEnergyClock({ at: T, carry: c })!.carry).toBe(c);
   });
-  it('carry de 100 min vira 1 unidade + 40 min de progresso: não perde, não duplica além de 1 unidade, nunca decresce o total', () => {
+  it('carry de 100 min vira 1 unidade (80 min desde 16/11/2026) + 20 min de progresso: não perde, não duplica além de 1 unidade, nunca decresce o total', () => {
     const r = settleEnergy(base(100 * 60_000 * 100), T + 1);
     expect(r.energyPoints).toBe(4);
-    expect(r.energyClock!.carry).toBeGreaterThanOrEqual(40 * 60_000 * 100);
+    expect(r.energyClock!.carry).toBeGreaterThanOrEqual(20 * 60_000 * 100);
     expect(r.energyClock!.carry).toBeLessThan(UNIT_POINTS);
   });
   it('é idempotente: reler depois do acerto não ganha de novo', () => {
