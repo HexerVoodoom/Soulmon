@@ -213,7 +213,7 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
-    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento, hx),
     companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',

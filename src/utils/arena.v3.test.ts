@@ -79,7 +79,7 @@ describe('foes and rules of the group Arena (declared constants)', () => {
     expect(ROUND_CLEAR_HEAL).toBe(0.3);
     expect(ARENA_ROUNDS).toBe(5);
     expect(ARENA_ROUND_COMP.map((r) => [...r])).toEqual([['medium'], ['weak', 'weak'], ['medium'], ['weak', 'weak', 'weak'], ['boss']]);
-    expect(PVE_FAMILY_POWER.arena).toEqual({ direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 });
+    expect(PVE_FAMILY_POWER.arena).toEqual({ direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25, defBuff: 1.35, atkDebuff: 2, spdDebuff: 1.4 }); // as 3 últimas: Hexsmith H2, calibradas em `hexsmith.motorPve.medicao.test.ts`
   });
   it('arenaFoe(L, cls, r) = balanced mirror with hp × cls.hp × (1 + 0.04 r) and bonus cls.power × (1 + 0.142 r) − 1', () => {
     for (const L of RULER_LEVELS) {
