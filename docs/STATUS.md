@@ -7,6 +7,12 @@
 > - **Pendente do dono:** volta da lista depois do andar 538; força do mini-boss.
 > - **Rollback:** `git revert`; só cliente.
 >
+
+> ## 16/11/2026 — Botão DEMO do portão escondido de novo (`fix/oculta-botao-demo`, REGISTRO §446)
+>
+> - **Causa:** o release #897 apagou `demoButton.ts`, o teste demoOff e a condição do §320. **Feito:** restaurados + guarda de fonte; sw v262. Demo salva intacta.
+> - **Rollback:** `git revert`.
+
 > ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §444)
 >
 > - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.

@@ -6114,3 +6114,11 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 - **Saves:** `dungeonDepthRecord` e `dungeonAway` não mudam (a camada já era a chave; a onda de uma camada de uma descida em andamento passa a vir do conjunto, determinística pela mesma semente). Quem já passou de andares antigos não é rebaixado. Sem servidor a espelhar: `functions/` não monta onda.
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
+
+## §446 — Botão DEMO do portão volta a ficar escondido; reapareceu por regressão do release #897 (16/11/2026, pedido do dono)
+
+Decisão: o botão "DEMO — experimentar sem conta" da tela de abertura (`SoulmonOnboarding`, `data-demo-button`) fica OCULTO para todos, de novo, pelo interruptor `DEMO_BUTTON_ENABLED = false` (`src/utils/demoButton.ts`, §320). O portão ainda não tem sessão, então a única porta para o demo é depois do login Google: o "Me empreste um Soulmon guia" da tela do ovo (§81), que só existe após a conta. Regra mais restritiva escolhida: sem Google, nenhum botão e nenhuma rota para a demo local (não há deep link por URL; só `/embed` do portfólio, §360, que não depende do interruptor).
+
+Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `SoulmonOnboarding.demoOff.render.test.tsx` e a condição `DEMO_BUTTON_ENABLED && onStartDemo`; o squash do "Release beta12" (#897, 8c7b4a804) apagou os três e devolveu `{onStartDemo && (`, ressuscitando o botão sem aviso. Restaurados os três arquivos/condição; saves `accountTier:'demo'` e demo local já salva seguem abrindo (`demoMode.ts`/`demoStart.ts` intactos).
+
+Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.

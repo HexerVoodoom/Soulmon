@@ -1,3 +1,4 @@
+import { DEMO_BUTTON_ENABLED } from '../utils/demoButton';
 import { useState, useRef, useEffect, useMemo, lazy, Suspense, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { Viewport } from './ui/Viewport';
@@ -1834,7 +1835,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               escolha do portão, sem dourado e sem empurrão. Abre a escolha dos 5
               iniciais; o resto da regra (Vínculo 5, só no aparelho, sem XP/compra/PvP)
               é do `utils/demoMode.ts`, e a tela a diz em uma linha antes do toque. */}
-          {onStartDemo && (
+          {DEMO_BUTTON_ENABLED && onStartDemo && (
             <div style={{ marginTop: mostrarAuth ? 12 : 24 }}>
               <button
                 type="button"
