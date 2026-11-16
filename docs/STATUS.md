@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
+>
+> - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
+> - **Não visto em aparelho:** só testes e tipos. Mini-boss de 4 elementos é Mega (gancho do Ultra documentado).
+> - **Pendente do dono:** volta da lista depois do andar 538; força do mini-boss.
+> - **Rollback:** `git revert`; só cliente.
+>
 > ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §444)
 >
 > - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.

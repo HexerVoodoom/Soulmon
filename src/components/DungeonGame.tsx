@@ -67,6 +67,8 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import { elementoDaCamada } from '../utils/dungeonElementos';
+import { isMiniBossFight, riftSetOfLayer } from '../utils/riftSets';
+import { tileElementName } from '../utils/match3Pvp';
 import { DungeonPotionsModal } from './DungeonPotionsModal';
 import { deixarPocoes, devolverPocoes, pocoesDoJogador, potionsTotal, recolherPocoes, type PotionStock } from '../utils/dungeonPotions';
 import { combatSceneBgDaCamada } from '../utils/combatArt';
@@ -764,8 +766,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const espera = msAteDescer(hpState, agora);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
-  /** O indicador único do HUD: "Camada 3 · luta 2 de 6" / "Layer 3 · fight 2 of 6". */
-  const hudLabel = isPt ? `Camada ${floor} · luta ${enemyIdx + 1} de ${ladderLen}` : `Layer ${floor} · fight ${enemyIdx + 1} of ${ladderLen}`;
+  /** O indicador único do HUD: "Camada 3 · luta 2 de 6 · Fogo" / "Layer 3 · fight 2 of 6 · Fire". Na última luta do conjunto (REGISTRO §445) acrescenta o rótulo calmo "mini-boss". */
+  const conjuntoNome = tileElementName(riftSetOfLayer(floor).element, isPt);
+  const miniBossTag = isMiniBossFight(floor, enemyIdx) ? ' · mini-boss' : '';
+  const hudLabel = isPt ? `Camada ${floor} · luta ${enemyIdx + 1} de ${ladderLen} · ${conjuntoNome}${miniBossTag}` : `Layer ${floor} · fight ${enemyIdx + 1} of ${ladderLen} · ${conjuntoNome}${miniBossTag}`;
 
   /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a energia
      segue visível entre os inimigos (a masmorra é contínua). */
