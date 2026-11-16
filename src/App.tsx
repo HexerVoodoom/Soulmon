@@ -245,7 +245,7 @@ import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, s
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
-import { recordFeiraDesafio } from './utils/feiraDesafio';
+import { recordFeiraDesafio, feiraDesafioStatus, readFeiraDesafio } from './utils/feiraDesafio';
 import { recordFeiraVolta, markFeiraVoltaSeen, readFeiraVolta, feiraVoltaPendente } from './utils/feiraVolta';
 import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 // Prédios do clã: só TIPO aqui. O código entra por import() dinâmico (fora do chunk de entrada; `/api/guild` não pode
@@ -4880,10 +4880,12 @@ export default function App() {
     }
     const a = achadoPendente;
     setAchadoPendente(null);
+    // Desafio de hoje já cumprido na sala: o balão leva à sala (que conta o dia), nunca a reabrir o combate com a cópia velha.
+    const feitoHoje = feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), gameState.playerDayTz)) === 'done';
     if (a?.loja) setFeiraLoja(a.loja);
-    else if (a?.evento) setFeiraEvento(a.evento);
+    else if (a?.evento && !feitoHoje) setFeiraEvento(a.evento);
     else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
-  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
+  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada, gameState.playerDayTz]);
   const balaoDouradoHud = balaoTipoVisivel ? { tipo: balaoTipoVisivel, text: balaoDouradoText(balaoTipoVisivel, language), ariaLabel: balaoDouradoAria(balaoTipoVisivel, language), tempoMs: BALAO_DOURADO_VISIVEL_MS }
     : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
@@ -5455,8 +5457,11 @@ export default function App() {
   // Qualquer outra resposta (limite do dia, fenômeno dissipado, sem guilda, sem login) encerra a missão em silêncio.
   /** "Ver o que ele achou": reabre o resultado guardado da volta (mistério ou Feira de verdade). Só marca como visto ao FECHAR. */
   const handleFeiraVoltaVer = useCallback(() => {
-    const p = feiraVoltaPendente(readFeiraVolta(), playerDayKey(new Date(), gameState.playerDayTz));
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    const p = feiraVoltaPendente(readFeiraVolta(), hoje);
     if (!p) return;
+    // O desafio de hoje já foi cumprido: reabrir o resultado guardado reentraria no combate (a cópia guardada ainda diz `canAttack`).
+    if (feiraDesafioStatus(readFeiraDesafio(), hoje) === 'done') { markFeiraVoltaSeen(); return; }
     if (p.kind === 'loja') setFeiraLoja(p.loja);
     else if (p.kind === 'evento') setFeiraEvento(p.evento);
     else markFeiraVoltaSeen();

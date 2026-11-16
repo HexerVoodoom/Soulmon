@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §461)
+>
+> - **Feito:** `StrollScene` sem o "Pular"; bug da Feira (dois botões depois de enfrentar: "Enfrentar" dava erro, "Ver o que ele achou" entrava no combate e cancelava) corrigido na raiz (desafio feito deixava de contar como aberto, volta dada por vista, 429/409 fecham o desafio, balão/"Ver" não reabrem o combate); o mercador conta o dia (o que achou, o clã em agregado, amanhã). Linha "Stroll" turquesa da Home e o "feito" já eram do §413, agora com teste.
+> - **Não feito/limite:** o servidor não manda o que cada aliado achou (só agregado do chefe/marcas); sem fala por aliado. Não visto em aparelho (capturas 360x640 de harness em `E:\Soulmon-assets\_lote-16-11\stroll-feira\previas\`). Falhas herdadas fora do escopo: `ds.regua` (NpcSequence/PratoFeito/LockBadge) e `guildSemCobranca` (`guild.help.buffs.def`).
+
 > ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §460)
 >
 > - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).

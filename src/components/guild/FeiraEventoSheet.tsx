@@ -115,6 +115,8 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     } catch (e) {
       if (!alive.current) return;
       setPhase('home');
+      // O servidor diz que o golpe de hoje já saiu (ou que o chefe caiu): o desafio do dia está resolvido, e a sala não oferece atacar de novo.
+      if (e instanceof GuildError && (e.kind === 'dailyLimit' || e.status === 409)) markFeiraDesafioDone();
       if (e instanceof GuildError && e.kind === 'dailyLimit') setEvento({ ...evento, canAttack: false });
       setNote(bossNote(e));
     } finally { if (alive.current) setBusy(false); }
