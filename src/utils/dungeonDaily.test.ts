@@ -62,7 +62,7 @@ describe('spendLayer — a porta única da camada, com o LIMITE DIÁRIO (30 luta
     expect(layerRefusal(antigo, T0)).toBe('daily-limit');
     expect(layersLeftToday(antigo, T0)).toBe(0);
     expect(layerRefusal(antigo, T0 + DIA)).toBeUndefined();
-    expect(layerRefusal(estado({ dungeonDaily: { day: 'lixo', layers: 3 } as never }), T0)).toBeUndefined(); // lixo = nenhuma camada hoje
+    expect(layerRefusal(estado({ dungeonDaily: sanitizeDungeonDaily({ day: 'lixo', layers: 3 }) }), T0)).toBeUndefined(); // lixo = nenhuma camada hoje
   });
   it('dia novo do jogador zera o contador', () => {
     let s = estado();
