@@ -11,6 +11,7 @@ import { AreaScene, type AreaLot } from './AreaScene';
 import { DungeonKeyBadge } from './DungeonKeyBadge';
 import { requestGoToBuilding } from '../../utils/blockedAction';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { rewindToSet } from '../../utils/riftMap';
 import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
 import { chefsOn, playerWeekday } from '../../utils/restaurant';
 import { restaurantNpcVoice } from '../../utils/restaurantCopy';
@@ -90,6 +91,7 @@ const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
+const RiftMap = lazy(() => import('../rift/RiftMap').then(m => ({ default: m.RiftMap })));
 const MasmorraSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MasmorraSheet })));
 // Os três prédios de Jogos (30/09/2026): Salão (livres), Ateliê da Mente e Refúgio.
 const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoSheet })));
@@ -409,7 +411,10 @@ export function AreaView(props: AreaViewProps) {
     const t = setTimeout(() => setLockNote(null), 5000);
     return () => clearTimeout(t);
   }, [lockNote]);
-  const gsForIndicators = useGameStateOptional()?.gameState;
+  const gsCtx = useGameStateOptional();
+  const gsForIndicators = gsCtx?.gameState;
+  /** O mapa de andares do Rift em tela cheia (REGISTRO §452). */
+  const [riftMapOpen, setRiftMapOpen] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(lote => {
@@ -670,8 +675,8 @@ export function AreaView(props: AreaViewProps) {
     const exitGame = () => { setModeChosen(null); setGame(null); };
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
-        // A Fenda Sem Fim com o Soulmon JÁ na descida entra direto na tela da descida, sem a folha com o CTA (`naMasmorra`).
-        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('exploracao.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); },
+        // A Fenda Sem Fim abre a folha com as DUAS portas (Descer / Ver o mapa, §452); com o Soulmon JÁ na descida, "Descer" entra direto na tela dela (`naMasmorra`).
+        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => enter(l.id),
       }))
       : area === 'forja'
         ? forjaLots(language).map(l => ({ ...l, art: FORJA_LOT_ART[l.id], onOpen: () => enter(l.id) }))
@@ -712,7 +717,7 @@ export function AreaView(props: AreaViewProps) {
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => { if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
             {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
@@ -723,6 +728,12 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
           </Suspense>
         </AreaSheet>
+        {riftMapOpen && (
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
+            <RiftMap language={language} save={gsCtx?.gameState ?? {}} sprite={props.guild.mySprite} onClose={() => { setRiftMapOpen(false); setSheet('fenda'); }}
+              onRewind={(i) => gsCtx?.setGameState(prev => rewindToSet(prev, i))} />
+          </Suspense>
+        )}
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
         {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} onGoToWorkshop={() => { close(); requestGoToBuilding('forja.oficina'); }} /></Suspense>}

@@ -6124,6 +6124,16 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 - **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
 - **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
 
+## §452 — Mapa de andares do Rift infinito (16/11/2026, dono)
+
+**Pedido (voz).** Um MAPA DE ANDARES: fundo = imagem inspirada no prédio do Endless Rift repetida (a descida); um NÓ por DUPLA de andares (o conjunto de `riftSets.ts`: 269 nós, nunca um por andar), círculo com o ícone do elemento e o número dos andares ao lado ("1-2"); linha tracejada sinuosa entre os nós; scroll até o último antes de repetir. Não visitado: mapa CINZA e nó PRETO com "?". Toque num nó visitado: "Voltar para este nó?" → "Essa ação não tem volta: você terá que descer novamente." → volta. O Soulmon do jogador aparece ao lado do nó atual. Na folha do prédio: "Descer à Fenda" (como era) e "Ver o mapa".
+
+**Regras (dono único `utils/riftMap.ts`, puro).** Visitado = 1º andar do conjunto ≤ `dungeonDepthRecord` (recorde no 2º andar da dupla conta). Voltar a QUALQUER nó visitado larga SEMPRE do 1º andar da dupla (`rewindToSet` grava `dungeonResumeLayer`; idempotente). O recorde NÃO desce, a energia gasta não volta. O campo vale UMA descida: `DungeonGame.startRun` e `startFocusDescent` o consomem (`consumeResume`); a largada vem de `riftStartLayer` (resume, nunca acima do ponto de retorno). **Decisões minhas (revisáveis):** (a) voltar vale também para nó visitado POSTERIOR ao atual (reposiciona); (b) com descida em andamento (`dungeonAway`) voltar fica bloqueado com aviso calmo (retirar da Fenda antes); (c) depois do andar 538 o mapa mostra o ciclo uma vez e o nó atual cai de novo no ciclo; (d) toque no prédio da Fenda agora SEMPRE abre a folha (antes, com descida em curso ia direto à tela): "Descer" entra direto nela; (e) os modais do mapa nascem de gesto, fora da fila (`FILA-DE-MODAIS.md` §1), e usam o par padrão `sm2Button` (modais pequenos não usam `CtaButton`, §316c); "Ver o mapa" é `CtaTextButton`.
+
+**Tela.** `components/rift/RiftMap.tsx`, lista VIRTUALIZADA (só a janela de nós no DOM). Fundo: `assets/soulmon/rift/mapa-tile.{webp,png}` (1080 × ~1920, emenda vertical) quando existir; sem ele, gradiente CSS. **Pendente: o tile (outro agente, ChatGPT).** Textos: `utils/riftMapCopy.ts`. Testes: `riftMap.test.ts`, `riftMap.foco.test.ts`, `RiftMap.render.test.tsx`, `AreaView.ocupado.render.test.tsx`.
+
+**Rollback.** `git revert` do PR; o campo `dungeonResumeLayer` fica órfão e inofensivo no save.
+
 ## §448 — Mini-boss do Rift usa a forma do PRÓPRIO conjunto (16/11/2026, dono)
 
 **Decisão (emenda ao §445).** Quando o conjunto não tem forma no estágio pedido (169 dos 190 pares sem Ultimate; 6 trios sem Mega), o mini-boss e os comuns usam a MELHOR forma que o próprio elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate, Champion, Rookie), só então o de cima. Não troca de arte e não cai na base do componente; continua mais forte pelo andar de crescimento a mais (`RIFT_MINIBOSS_EXTRA_FLOORS`). Componentes do estágio só entram se o elemento não tiver criatura nenhuma (hoje nunca). Confirmados: volta ao Rookie dos 20 base depois do andar 538; mini-boss com +1 andar.

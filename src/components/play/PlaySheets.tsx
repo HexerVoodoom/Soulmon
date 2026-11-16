@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
+import { CtaTextButton } from '../ui/CtaButton';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
@@ -121,7 +122,7 @@ function DropItem({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-export function MasmorraSheet({ language, onStart, bitsToday }: { language: Language; onStart: () => void; bitsToday?: number }) {
+export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§452): abre o mapa de andares. Sem ele, a folha fica só com a descida. */ onMap?: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
@@ -178,6 +179,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
+      {onMap && <CtaTextButton data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</CtaTextButton>}
       <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );

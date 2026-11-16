@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §452)
+>
+> - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11ift-mapa\previas\`.
+> - **Pendente:** tile de fundo (`src/assets/soulmon/rift/mapa-tile.webp`); não visto em aparelho. **Rollback:** `git revert`.
+
 > ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
 >
 > - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).

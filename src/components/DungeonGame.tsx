@@ -28,11 +28,12 @@ import { clearBonus } from '../utils/dungeon';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
-  DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, DUNGEON_DAILY_LAYERS, layersLeftToday, startLayerFor, isMilestoneLayer,
+  DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, DUNGEON_DAILY_LAYERS, layersLeftToday, isMilestoneLayer,
   layersAffordable, spendLayer, layerRefusal, recordLayerCleared, sanitizeDepthRecord,
   DUNGEON_AWAY_MAX_HOURS, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
 import { glitchtamaDraw, glitchtamaDropFor } from '../utils/glitchtamaDrop';
+import { consumeResume, riftStartLayer } from '../utils/riftMap';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
@@ -372,7 +373,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O LIMITE DIÁRIO (30 lutas = 5 andares, `DUNGEON_DAILY_FIGHTS`): a descida do dia acabou. Calmo: o Rift fica para amanhã, nunca custa coração. */
   const limiteDia = !!gs && recusaCamada === 'daily-limit';
   const camadasHoje = gs ? DUNGEON_DAILY_LAYERS - layersLeftToday(gs, agora) : 0;
-  const inicio = gs ? startLayerFor(recorde) : 1;
+  const inicio = gs ? riftStartLayer(gs) : 1;
   /** O ESPELHO do save no instante do gasto: a tela decide por ele, mas quem manda é o updater (`spendLayer` reconfere energia e limite
       diário sobre o `prev`). Cada camada paga atualiza o espelho na hora, para dois toques no mesmo lote não passarem os dois. */
   const gsRef = useRef(gs);
@@ -459,6 +460,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     riftPagoRef.current.clear();
     recordeRef.current = recorde;
     if (!pagarCamada()) return; // a 1ª camada também custa energia; sem ela o botão nem acende
+    if (gs?.dungeonResumeLayer !== undefined) ctx?.setGameState(prev => consumeResume(prev)); // a volta do mapa vale UMA descida
     const res = onEnter();
     runSeedRef.current = newDefenseSeed();
     setSeedLuta(runSeedRef.current);
