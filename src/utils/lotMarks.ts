@@ -27,7 +27,7 @@ export const DAILY_EVENT_BUILDING: Readonly<Record<DailyEvent, BuildingId | null
   // Missões dos NPCs (12/11/2026): cada uma marca o prédio de quem a passa (`m.building`); o mapa de evento cobre o tipo.
   essencia: 'laboratorio.evolucao', hex: 'forja.hexsmith', melhoria: 'forja.ferreiro', compra: 'mercado.itens', conquista: 'mercado.conquistas',
   prato: 'mercado.itens', feira: 'hall.feira', cla: 'hall.guilda', passeio: 'exploracao.passeio',
-  salao: 'jogos.salao', mente: 'jogos.mente', cenario: 'mercado.background', journal: 'forja.caderno',
+  salao: 'jogos.salao', mente: 'jogos.mente', journal: 'forja.caderno',
 };
 
 export interface LotMarkInput {

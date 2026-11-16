@@ -100,7 +100,7 @@ export function planArenaComponents(stage: EnemyStage, runElement: string, v: nu
 }
 
 /**
- * CHAMPION da Arena pela tabela §232 (REGISTRO §435; só em run de elemento): `v` sorteia o nº de componentes pela linha `champion`
+ * CHAMPION da Arena pela tabela §232 (REGISTRO §437; só em run de elemento): `v` sorteia o nº de componentes pela linha `champion`
  * (35/60/5/0) e o vizinho mais próximo COM arte cobre célula vazia (empate: menos elementos). `undefined` = célula de elemento
  * único (base): quem chama segue o fluxo de sempre. Sem `rng` próprio (o `v` é um número do `mulberry32` da run; card = luta).
  */

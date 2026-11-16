@@ -5992,8 +5992,31 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo/gatilho:** -1 webp. Reabre se a chama gigante cortar em telas muito baixas ou se o dono quiser o CTA no fluxo, não fixo.
 
+## §435 — Missões da Lasca e da Panora viram SEMANAIS e nomeiam a lojinha (16/11/2026, dono)
 
-## §435 — Dificuldade = estágio e mistura de elementos: a tabela §232 vira peso do sorteio de inimigos (16/11/2026, dono)
+**Pedido (literal, resumo):** as missões "Compre 1 backdrop no Market" (Panora, "Novos Horizontes") e "Compre 2 itens no Market" (Lasca) falavam só em "market" e eram diárias; devem ir para as semanais, a da Lasca dizendo "compre 2 itens de decoração" e a da Panora "compre 1 background/pintura de fundo", citando a lojinha certa. (Nomes vieram de voz: "Alaska" lido como Lasca; confirmado por `n-lasca` = `mercado:decoracao`, 2 compras, e `n-panora` = `mercado:background`, 1 cenário.)
+
+**Decisão:** (1) `n-lasca` e `n-panora` saem do rodízio diário de NPCs (`npcMissions.ts`, agora em `NPCS_SEM_MISSAO` com o motivo; o evento diário `cenario` sai). (2) Entram no pool semanal (`weeklyMissions.ts`) como `buy-decor` (alvo 2, 3 Emblemas) e `buy-backdrop` (alvo 1, 3 Emblemas), no FIM do pool, mesma regra de `cook-dish` (sorteadas entre as 3 variáveis da semana, não fixas). (3) Textos: PT "Compre 2 itens de decoração na lojinha de Decoração" / "Compre 1 cenário na lojinha de Background"; EN "Buy 2 decor pieces at the Decor stall" / "Buy 1 backdrop at the Background stall" (nomes de lote do mapa, `areaSheetCopy.ts`). (4) A contagem é por TIPO do item no `handleShopBuy`: `furniture` conta `buy-decor`, `bg` conta `buy-backdrop`; antes a da Lasca contava qualquer compra (inclusive cenário). "Ir" leva a `mercado.decoracao` / `mercado.background`. (5) Saves antigos: progresso semanal sem as chaves novas vale 0; `n-lasca`/`n-panora` resgatadas e a contagem `cenario` são descartadas pelo saneamento diário.
+
+**Suposições:** (1) recompensa em Emblemas na escada das semanais de alvo 1-2 (3), não em material do prédio; (2) pool e não fixa: quem quiser garantir presença vira `WEEKLY_FIXED` (lista passa de 5 para 7); (3) acrescentar ao pool muda o sorteio da semana corrente, quem já tinha progresso em outra missão mantém a contagem mas a linha pode sair da lista.
+
+**Custo/gatilho:** reabre se o dono quiser as duas sempre presentes (fixas) ou o material do prédio como prêmio.
+
+## §436 — Retrospectiva v3: chama em cristal, título por qualidade, CTA que preenche, instância única (16/11/2026, dono)
+
+**Pedido (resumo):** (1) chama nova, NÃO pixelada, dentro de um cristal; (2) o fundo atrás do card vira scrim semitransparente (rgba escuro ~70% com blur leve), não gradiente opaco; (3) o título "Que semana!" varia pela qualidade da semana; (4) Soulmon à esquerda das frases, o bloco centralizado no card; (5) contadores "X hábitos cumpridos" e "X tarefas pontuais"; (6) CTA menos informal ("Vamos começar a semana") com preenchimento turquesa com glow da esquerda para a direita. Depois, do aparelho: modal sem scroll, CTA cobrindo o conteúdo, e o diagnóstico do dono de que eram DOIS modais abertos ao mesmo tempo.
+
+**Decisões:**
+- **Critério de qualidade** (`retroQuality` em `utils/weeklyRetro.ts`): taxa geral = soma de dias feitos / soma de dias devidos de todos os hábitos da semana (não a média das taxas, para o hábito de 1 dia devido não pesar igual ao de 7). Boa >= 70%, média 40% a 69%, ruim < 40%. Sem hábito com dia devido (semana só de tarefas pontuais) = média. Tarefas pontuais não entram na taxa (não têm "dia devido"). Três pares título + subtítulo PT/EN: boa celebra a semana passada ("A gente arrebentou!"), média reconhece e chama para mais, ruim olha para a PRÓXIMA ("Essa semana a gente vai conseguir.").
+- **CTA:** `CtaButton` ganhou `fillMs`/`onFillComplete` (extensão do padrão, não botão novo). O dono trocou "pressionar e segurar" por TOQUE ÚNICO: o toque dispara o preenchimento (1,2 s) e, ao completar, fecha; toques repetidos durante o preenchimento são ignorados; Enter/Espaço são o clique nativo do botão; com `prefers-reduced-motion` fecha direto, sem animação.
+- **Layout:** `.rt-root` é um scrim `position: fixed` que cobre a viewport inteira (100dvh), com a área rolável (`.rt-scroll`) e o dock do CTA como IRMÃOS: o dock nunca cobre conteúdo porque a rolagem termina acima dele.
+- **Instância única e o bug do "modal travado":** o modal é portal no `body`, e `useDialogA11y` inertiza (`inert`) os irmãos de quem abre; qualquer diálogo que montasse DEPOIS (aviso, intro do bônus) tornava a retrospectiva inerte (sem scroll, CTA mudo). Mesma classe do bug da fala do NPC já tratado em `hideOthers`: agora `data-dialog-top` também é poupado. Além disso, `WeeklyRetroModal` só desenha uma instância por vez (guarda de módulo com posse por símbolo, segura com StrictMode e remontagem). Testes de regressão cobrem os dois.
+
+**Suposições:** (1) 70% e 40% são palpite de produto, ajustáveis nas duas constantes; (2) 1,2 s de preenchimento (o dono aceitou "um pouco mais rápido que 1,5 s"); (3) causa exata da dupla montagem no aparelho NÃO reproduzida em App.tsx (há um único ponto de render e `retroFechada` só é local); a hipótese que o teste reproduz é a do `inert`.
+
+**Custo/gatilho:** +1 folha de frames do cristal (ver STATUS). Reabre se o dono achar os limiares de qualidade injustos ou se aparecer 2ª montagem real em App.tsx.
+
+## §437 — Dificuldade = estágio e mistura de elementos: a tabela §232 vira peso do sorteio de inimigos (16/11/2026, dono)
 
 **Pedido.** Quanto mais difícil/avançado o modo (Arena, Masmorra, Rift, Match-3), mais estágio alto, e nos estágios altos predomina elemento combinado, pela tabela §232 (`CHANCES_POR_ESTAGIO`). Antes, o roster era o inverso da regra (92% do Rookie combinado, Champion+ quase só elemento único).
 

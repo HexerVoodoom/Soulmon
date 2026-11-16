@@ -13,6 +13,8 @@ describe('SoulFlameAnim', () => {
     expect(el.style.height).toBe('96px');
     expect(el.style.backgroundImage).toContain('chama-alma-folha');
     expect(document.querySelector('style')?.textContent).toContain('@keyframes sm-chama-alma');
+    // v3: ilustração lisa, nunca pixelada
+    expect(document.querySelector('style')?.textContent).not.toMatch(/pixelated/);
   });
 
   it('o ciclo passa por todos os quadros da folha', () => {

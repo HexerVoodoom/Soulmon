@@ -80,7 +80,7 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
       const forma = wave.map((e, i) => { const m = maxFoeStage(slotForma[i], stageForFoeHp(e.foe.combatant.hp)); return (m === 'ultra' ? 'mega' : m) as 'rookie' | 'champion' | 'ultimate' | 'mega'; });
       wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage);
-        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-(rookie|champion|ultimate|mega)|[a-z]+-(rookie|champion|ultimate|mega))$/); return; } // combinado (M10; REGISTRO §435: formas de arte alta entram pela tabela)
+        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-(rookie|champion|ultimate|mega)|[a-z]+-(rookie|champion|ultimate|mega))$/); return; } // combinado (M10; REGISTRO §437: formas de arte alta entram pela tabela)
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
         expect(e.name).toBe(n.name(forma[i]));

@@ -302,7 +302,7 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
 }
 
 /**
- * Sorteia UM inimigo respeitando a progressão. `opts.tabela` (REGISTRO §435, `dificuldadeEstagio.ts`): o nº de elementos sai da tabela §232
+ * Sorteia UM inimigo respeitando a progressão. `opts.tabela` (REGISTRO §437, `dificuldadeEstagio.ts`): o nº de elementos sai da tabela §232
  * do ESTÁGIO (Champion 60% de 2, Ultimate 50% de 3…), com as formas de arte alta (`forma`/`paralelo`) no pool; célula vazia cai no vizinho
  * mais próximo; continua UMA chamada de `rng`. `opts.stage` = o estágio que o slot pede (rebaixado ao teto do level); sem ele,
  * sorteia entre os estágios liberados (1 chamada de `rng` a mais). `opts.used` = ids já na onda: saem do sorteio enquanto
@@ -368,7 +368,7 @@ function pickEnemyComum(
 }
 
 /**
- * O sorteio pela TABELA §232 (REGISTRO §435): o pool do estágio inclui as formas de arte alta (`forma`/`paralelo`: são elas que dão
+ * O sorteio pela TABELA §232 (REGISTRO §437): o pool do estágio inclui as formas de arte alta (`forma`/`paralelo`: são elas que dão
  * combinados em Champion+). Um só `rng()`: ele escolhe a célula (nº de elementos) pela linha do estágio e, dentro da faixa, a criatura.
  * Célula 1 (elemento único) mantém a fatia dos ramos (`RAMO_CHANCE`). Sem repetir (`used`) enquanto sobrar alguém na célula.
  */

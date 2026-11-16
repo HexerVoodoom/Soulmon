@@ -3,8 +3,9 @@ import folha from '../../assets/soulmon/chama-alma/chama-alma-folha.webp';
 import { usePrefersReducedMotion } from './Viewport';
 
 /**
- * A chama da alma ANIMADA (turquesa, nunca laranja). Folha de 8 quadros em grade 4x2
- * (`chama-alma-folha.webp`), tocada só por CSS (`steps`), sem JS por quadro.
+ * A chama da alma ANIMADA DENTRO DE UM CRISTAL (turquesa, nunca laranja; ilustração lisa e pintada, NÃO pixel art — v3, 16/11/2026).
+ * Folha de 8 quadros em grade 4x2 (`chama-alma-folha.webp`, quadro 320 px, cristal parado e só a chama varia), tocada só por CSS
+ * (`steps`), sem JS por quadro. O cristal ocupa ~75% da altura do quadro (de 12,5% a 87,5%), centrado.
  * Com `prefers-reduced-motion` fica parada no quadro 1.
  *
  * `height` é a altura em px; a largura segue a proporção do quadro (`FRAME_ASPECT`).
@@ -29,7 +30,7 @@ const KEYFRAMES = (() => {
 
 const CSS = `${KEYFRAMES}
 .sm-chama-alma{display:block;flex:none;background-repeat:no-repeat;background-size:${FLAME_SHEET_COLS * 100}% ${FLAME_SHEET_ROWS * 100}%;
-  image-rendering:pixelated;animation:sm-chama-alma var(--sm-chama-dur,.9s) step-end infinite}
+  animation:sm-chama-alma var(--sm-chama-dur,.9s) step-end infinite}
 .sm-chama-alma[data-parada="true"]{animation:none;background-position:0% 0%}
 @media (prefers-reduced-motion: reduce){.sm-chama-alma{animation:none;background-position:0% 0%}}`;
 

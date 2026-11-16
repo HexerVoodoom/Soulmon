@@ -10,6 +10,11 @@
  *  · o bônus é real (+1 Fragmento de Alma acima do teto diário por dia em que o
  *    hábito é concluído, pela mesma via da tarefa bônus) e expira no domingo;
  *  · ver o cartão NÃO conclui nada: o bônus só paga na conclusão de verdade;
+ *  · QUALIDADE da semana (`retroQuality`, 16/11/2026, define o título e o tom do modal): taxa geral de conclusão
+ *    de hábitos = soma dos dias feitos / soma dos dias devidos de TODOS os hábitos da semana. boa >= 70%,
+ *    média de 40% a 69%, ruim < 40% (limites em `RETRO_QUALITY_GOOD`/`RETRO_QUALITY_MEDIUM`). Sem nenhum hábito
+ *    com dia devido (semana só de tarefas pontuais) não há taxa para julgar: conta como média (reconhece sem
+ *    celebrar nem cobrar). Tarefas pontuais NÃO entram na taxa (não têm "dia devido");
  *  · "evoluiu na semana": o save guarda a forma do início de cada semana
  *    (`stageByWeek`); não há data de evolução em outro lugar.
  */
@@ -148,6 +153,28 @@ export function weeklyRetro(state: RetroState, now: Date): WeeklyRetro {
     tasksDone: tasks.length,
     hardest: pickHardest(habits),
   };
+}
+
+export type RetroQuality = 'good' | 'medium' | 'bad';
+/** Taxa geral mínima (inclusive) para a semana ser "boa". */
+export const RETRO_QUALITY_GOOD = 0.7;
+/** Taxa geral mínima (inclusive) para a semana ser "média"; abaixo disso é "ruim". */
+export const RETRO_QUALITY_MEDIUM = 0.4;
+
+/** Taxa geral de conclusão de hábitos da semana (0 a 1), ou `null` se nenhum hábito teve dia devido. */
+export function overallHabitRate(habits: readonly Pick<RetroHabitLine, 'done' | 'due'>[]): number | null {
+  const due = habits.reduce((s, h) => s + h.due, 0);
+  if (due <= 0) return null;
+  return habits.reduce((s, h) => s + h.done, 0) / due;
+}
+
+/** Qualidade da semana contada (ver o cabeçalho do arquivo). Arredonda a taxa a 1e-9 para o 70% exato não cair por ponto flutuante. */
+export function retroQuality(retro: Pick<WeeklyRetro, 'habits'>): RetroQuality {
+  const rate = overallHabitRate(retro.habits);
+  if (rate === null) return 'medium';
+  const r = Math.round(rate * 1e9) / 1e9;
+  if (r >= RETRO_QUALITY_GOOD) return 'good';
+  return r >= RETRO_QUALITY_MEDIUM ? 'medium' : 'bad';
 }
 
 /** Segunda-feira, semana ainda não mostrada e com algo a contar. */

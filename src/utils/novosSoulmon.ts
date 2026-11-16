@@ -224,7 +224,7 @@ export function getDungeonEncounter(
   element?: string,
   /** Coerência estágio × HP: forma MÍNIMA (só sobe a da escada, nunca desce). Ausente = a do slot. */
   minStage?: EnemyStage,
-  /** Andar efetivo e level REAL do jogador (REGISTRO §435): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
+  /** Andar efetivo e level REAL do jogador (REGISTRO §437): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
   floor?: number,
   playerLevel?: number,
 ): DungeonEncounter {

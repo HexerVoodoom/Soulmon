@@ -434,7 +434,7 @@ export function buildArenaRound(
         };
       }
     }
-    // REGISTRO §435: o Champion de run de elemento também segue a tabela §232 (60% de 2 componentes). UM `rng()` a mais, só aqui; base (1) segue abaixo.
+    // REGISTRO §437: o Champion de run de elemento também segue a tabela §232 (60% de 2 componentes). UM `rng()` a mais, só aqui; base (1) segue abaixo.
     if (runElement && !stray && stage === 'champion') {
       const plan = planArenaChampion(runElement, rng(), used);
       if (plan?.entry) {
