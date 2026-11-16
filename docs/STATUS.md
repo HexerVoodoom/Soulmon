@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Hexsmith: arte das 6 Coroas e 3 selos (`feat/hexsmith-arte`, REGISTRO §451)
+>
+> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias.
+> - **Pendente:** regerar `st-debuff-atk`, `coroa-silence`, `coroa-hot` (só trocar arquivo). **Rollback:** `git revert`.
+>
 > ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
 >
 > - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).
