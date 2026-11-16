@@ -7,7 +7,7 @@ import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY } from '../utils/arenaSorteio'
 import { ARENA_ROUNDS } from '../utils/arena';
 import { ARENA_ULTIMO_DROP_MULT } from '../utils/arenaUltimoAdversario';
 import type { Language } from '../utils/i18n';
-import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
+import { FORM_REQUIREMENTS, ULTRA_MEGA_IDS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 import {
   HABIT_MILESTONES,
@@ -123,8 +123,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               ditos — com a permanência primeiro, que é a que não pede descer. */}
           <p style={para}>
             {L(
-              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos (aí bastam ${R.mega.gauge}). Nenhum é melhor, e nenhum pede que você degenere.`,
-              `The Ultra has two paths: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches (then ${R.mega.gauge} is enough). Neither is better, and neither asks you to degenerate.`,
+              `Para chegar ao Ultra, primeiro libere as ${ULTRA_MEGA_IDS.length} Megas (poder, harmonia e benevolência). Só depois disso a barra do Ultra começa a encher, e ela pede ${ULTRA_PATIENCE_POINTS} passos como mega.`,
+              `To reach the Ultra, first unlock all ${ULTRA_MEGA_IDS.length} Megas (power, harmony and benevolence). Only after that does the Ultra bar start filling, and it asks for ${ULTRA_PATIENCE_POINTS} steps as a mega.`,
             )}
           </p>
           {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra

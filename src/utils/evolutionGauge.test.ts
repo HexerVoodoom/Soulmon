@@ -17,7 +17,7 @@ const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 describe('a regra', () => {
   it('meta por estágio e teto diário = meta diária do estágio (sem número novo)', () => {
     expect([gaugeGoalFor('rookie'), gaugeGoalFor('champion-power'), gaugeGoalFor('ultimate-harmony')]).toEqual([30, 45, 60]);
-    expect(gaugeGoalFor('mega-power', TRES_MEGAS)).toBe(60);
+    expect(gaugeGoalFor('mega-power', TRES_MEGAS)).toBe(ULTRA_PATIENCE_POINTS);
     expect(gaugeGoalFor('mega-power', ['mega-power'])).toBe(ULTRA_PATIENCE_POINTS);
     expect(ULTRA_PATIENCE_POINTS).toBe(ULTRA_PATIENCE_DAYS * FORM_REQUIREMENTS.mega.required);
     expect(gaugeGoalFor('ultra')).toBe(0);
@@ -74,14 +74,16 @@ describe('migração de save (perfectDays → gauge)', () => {
         const p = migrateEvolutionPoints(d, stage);
         const g = FORM_REQUIREMENTS[stage.split('-')[0] as 'rookie'].gauge;
         expect(p / g).toBeGreaterThanOrEqual(d / req - 1e-9);
-        // quem podia evoluir antes continua podendo (coleção das megas no mega)
-        if (d >= req) expect(gaugeFull(p, stage, TRES_MEGAS)).toBe(true);
+        // quem podia evoluir antes continua podendo (no mega a meta é a do Ultra, 16/11/2026: só vale abaixo dele)
+        if (d >= req && !stage.startsWith('mega')) expect(gaugeFull(p, stage, TRES_MEGAS)).toBe(true);
       }
     }
   });
 
-  it('o banco do mega para o Ultra vem junto: 45 dias completos ainda abrem a permanência', () => {
-    expect(gaugeFull(migrateEvolutionPoints(ULTRA_PATIENCE_DAYS, 'mega-power'), 'mega-power', ['mega-power'])).toBe(true);
+  it('o banco do mega para o Ultra vem junto: 45 dias completos enchem a barra, mas ela só abre com as 3 megas', () => {
+    const banco = migrateEvolutionPoints(ULTRA_PATIENCE_DAYS, 'mega-power');
+    expect(gaugeFull(banco, 'mega-power', ['mega-power'])).toBe(false);
+    expect(gaugeFull(banco, 'mega-power', TRES_MEGAS)).toBe(true);
   });
 
   it('hidratação é IDEMPOTENTE: campo presente vence, ausente/corrompido migra', () => {
@@ -131,6 +133,40 @@ describe('a virada credita o gauge', () => {
   it('dia sem nada não tira nada', () => {
     const r: any = computeDailyReset(st(0, 4) as any, { now: NOW });
     expect(r.evolutionPoints).toBe(7);
+  });
+
+  describe('16/11/2026: a barra do Ultra só acumula com as 3 megas liberadas', () => {
+    const MEGA = { evolutionStage: 'mega-power', currentBranch: 'power', evolutionPoints: 100 };
+    it('1 mega: nada entra, nada sai (pontos guardados) e o relatório não promete ganho', () => {
+      const r: any = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: ['mega-power'] }) as any, { now: NOW });
+      expect(r.evolutionPoints).toBe(100);
+      expect(r.lastDayReport.gaugeGain).toBe(0);
+    });
+    it('1 mega com a barra ANTIGA já cheia: não evolui ao Ultra e não perde o acumulado', () => {
+      const r: any = computeDailyReset(st(6, 6, { ...MEGA, evolutionPoints: ULTRA_PATIENCE_POINTS + 30, unlockedEvolutions: ['mega-power'] }) as any, { now: NOW });
+      expect(r.evolutionStage).toBe('mega-power');
+      expect(r.evolutionPoints).toBe(ULTRA_PATIENCE_POINTS + 30);
+    });
+    it('3 megas: o ganho do dia entra normalmente (teto do mega)', () => {
+      const r: any = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: TRES_MEGAS }) as any, { now: NOW });
+      expect(r.evolutionPoints).toBe(106);
+      expect(r.lastDayReport.gaugeGain).toBe(6);
+    });
+    it('3 megas: a barra enche exatamente nos 45 dias de teto', () => {
+      expect(gaugeFull(ULTRA_PATIENCE_POINTS, 'mega-power', TRES_MEGAS)).toBe(true);
+      expect(gaugeFull(ULTRA_PATIENCE_POINTS - 1, 'mega-power', TRES_MEGAS)).toBe(false);
+    });
+    it('a view diz travada + quantas megas, e o acumulado sobrevive (idempotente)', () => {
+      const v = gaugeView({ evolutionPoints: 400, evolutionStage: 'mega-power', unlockedEvolutions: ['mega-power', 'mega-harmony'] });
+      expect(v).toMatchObject({ locked: true, full: false, megasLiberadas: 2, megasTotal: 3, goal: ULTRA_PATIENCE_POINTS });
+      expect(gaugePointsLeft(400, 'mega-power', ['mega-power'])).toBe(0);
+      const livre = gaugeView({ evolutionPoints: 400, evolutionStage: 'mega-power', unlockedEvolutions: TRES_MEGAS });
+      expect(livre).toMatchObject({ locked: false, full: true, megasLiberadas: 3 });
+      // save sem o campo / lixo: leitura tolerante, nunca quebra
+      expect(gaugeView({ evolutionStage: 'mega-power' }).locked).toBe(true);
+      expect(gaugeView({ evolutionStage: 'mega-power', unlockedEvolutions: 'x' as any }).megasLiberadas).toBe(0);
+      expect(gaugeView({ evolutionStage: 'ultra' }).locked).toBe(false);
+    });
   });
 
   describe('🌀 buff do Glitchtama (+10% nos ganhos, 7 dias)', () => {
@@ -184,7 +220,7 @@ function diasAte(meta: 'mega' | 'ultra', semana: number[]): number[] {
   while (dia < 2000) {
     pontos = creditGauge(pontos, semana[dia % 7], escada[estagio]);
     dia++;
-    if (gaugeFull(pontos, escada[estagio], [])) {
+    if (gaugeFull(pontos, escada[estagio], TRES_MEGAS)) {
       marcos.push(dia); pontos = 0; estagio++;
       if (meta === 'mega' && estagio === 3) break;
       if (estagio === 4) break;
@@ -205,7 +241,7 @@ describe('SIMULAÇÃO: rookie→mega leva SEMANAS, não dias', () => {
     expect(diasAte('mega', INTENSO)).toEqual([8, 17, 29]);
     expect(diasAte('mega', MEDIO)).toEqual([12, 31, 57]);
     expect(diasAte('mega', LEVE)).toEqual([19, 52, 94]);
-    // Ultra pelo caminho da permanência (sem a coleção): +45 dias de teto do mega no intenso.
+    // Ultra (com as 3 megas já liberadas): +45 dias de teto do mega no intenso.
     expect(diasAte('ultra', INTENSO)[3]).toBe(29 + 45);
   });
 

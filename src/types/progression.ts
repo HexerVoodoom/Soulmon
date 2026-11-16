@@ -39,63 +39,40 @@ export const FORM_REQUIREMENTS = {
 } as const;
 
 /**
- * O SEGUNDO CAMINHO PARA O ULTRA (WP4.2 — decisão D6, 06/09/2026).
+ * A REGRA DO ULTRA (16/11/2026, decisão do dono): UM caminho só.
  *
- * ─── O que havia antes ────────────────────────────────────────────────────
- * O Ultra abria com as TRÊS megas desbloqueadas. Como a árvore sobe por um
- * galho de cada vez, ter as três exigia **descer e subir de novo, duas vezes** —
- * ou seja, o topo do jogo pedia que o jogador machucasse a criatura de
- * propósito. A tela da degeneração manual diz "você vai perder o progresso" e
- * "NÃO pode ser desfeita": um enquadramento de PERDA num passo que era
- * obrigatório.
+ *  1. **Liberar as três megas** (poder, harmonia, benevolência) — porta: sem elas o
+ *     Ultra não abre e a barra do Ultra nem acumula.
+ *  2. **Juntar `ULTRA_PATIENCE_POINTS` pontos** (45 dias de teto diário do mega) — só
+ *     DEPOIS das três megas liberadas.
  *
- * Isso contradizia a tese em dois lugares ao mesmo tempo. A criatura é
- * declaradamente "o que dói perder" (guia I.1.2), e a indústria abandonou perda
- * de nível como mecânica há tempos (GDC, loss aversion). Um jogo de cuidado que
- * exige um ato de descuido para progredir está pedindo a coisa errada.
- *
- * ─── O que existe agora ───────────────────────────────────────────────────
- * DOIS caminhos, e nenhum deles é melhor:
- *  · **coleção** — as três megas, para quem quiser conhecer os três galhos.
- *    Continua valendo, e continua sendo escolha.
- *  · **permanência** — `ULTRA_PATIENCE_DAYS` dias perfeitos acumulados como
- *    mega. É consistência ao longo de semanas, que é o recurso que a pesquisa
- *    de v-pet aponta como o único que não cresce indefinidamente.
- *
- * ─── Por que 45, e por que UM número ──────────────────────────────────────
- * O caminho da coleção custa ~26 dias perfeitos mais duas quedas. 45 dias
- * perfeitos como mega é mais longo em tempo e mais barato em dor — que é
- * exatamente a troca que se quer oferecer. É um número só, tunável, e ele NÃO
- * é uma segunda tabela ao lado de `required`: `required` continua sendo o gate
- * de toda evolução, inclusive esta. Aqui só se responde "existe destino?".
- * (Ver a lápide de `daysToEvolve` acima: a lição foi não pôr um segundo número
- * ao lado do vivo. Este mora sozinho, tem um leitor só, e está testado.)
+ * Antes (WP4.2/D6, 06/09/2026) eram dois caminhos alternativos: as três megas
+ * (e aí bastava o gauge do mega) OU 45 dias só com uma mega. O segundo foi
+ * retirado: o Ultra é conteúdo late game e conhecer os três galhos é o que o abre.
+ * A meta (45 dias) NÃO mudou; é um número só, aqui.
  */
 export const ULTRA_PATIENCE_DAYS = 45;
 
-/**
- * 🧬 O caminho da permanência em PONTOS DO GAUGE (11/10/2026): os mesmos 45
- * dias, agora como 45 dias de teto diário do mega. Derivado — não escreva 270.
- */
+/** A meta da barra do Ultra em PONTOS DO GAUGE: 45 dias de teto diário do mega. Derivado — não escreva 270. */
 export const ULTRA_PATIENCE_POINTS: number = ULTRA_PATIENCE_DAYS * FORM_REQUIREMENTS.mega.required;
 
-/** As três megas já foram conhecidas? (o caminho da coleção) */
-export function hasMegaCollection(unlockedEvolutions?: readonly string[]): boolean {
-  const desbloqueadas = unlockedEvolutions ?? [];
-  return (['power', 'harmony', 'benevolence'] as const)
-    .every(a => desbloqueadas.includes(`mega-${a}`));
+/** Os três galhos mega que abrem o Ultra, na ordem da árvore. */
+export const ULTRA_MEGA_IDS = ['mega-power', 'mega-harmony', 'mega-benevolence'] as const;
+
+/** Quantas das três megas já foram liberadas (0..3). Leitura tolerante: ausente/lixo = 0. */
+export function megasLiberadas(unlockedEvolutions?: readonly string[]): number {
+  const desbloqueadas = Array.isArray(unlockedEvolutions) ? unlockedEvolutions : [];
+  return ULTRA_MEGA_IDS.filter(id => desbloqueadas.includes(id)).length;
 }
 
-/**
- * Existe caminho para o Ultra a partir do mega? `evolutionPoints` são os
- * pontos do gauge acumulados DESDE a última evolução (zeram ao evoluir).
- */
-export function canReachUltra(input: {
-  unlockedEvolutions?: readonly string[];
-  evolutionPoints?: number;
-}): boolean {
-  return hasMegaCollection(input.unlockedEvolutions)
-    || (input.evolutionPoints ?? 0) >= ULTRA_PATIENCE_POINTS;
+/** As três megas já foram liberadas? (a porta do Ultra e da barra dele) */
+export function hasMegaCollection(unlockedEvolutions?: readonly string[]): boolean {
+  return megasLiberadas(unlockedEvolutions) === ULTRA_MEGA_IDS.length;
+}
+
+/** Existe destino Ultra a partir do mega? Só com as três megas liberadas (os pontos são do gauge, `gaugeFull`). */
+export function canReachUltra(input: { unlockedEvolutions?: readonly string[] }): boolean {
+  return hasMegaCollection(input.unlockedEvolutions);
 }
 
 // HP máximo por nível (corações)
