@@ -1,4 +1,4 @@
-// Textos do MAPA DE ANDARES do Rift (REGISTRO §452). Inglês primeiro; tom calmo, nunca cobrança.
+// Textos do MAPA DE ANDARES do Rift (REGISTRO §462). Inglês primeiro; tom calmo, nunca cobrança.
 export interface RiftMapCopy {
   title: string;
   back: string;

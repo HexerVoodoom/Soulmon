@@ -28,6 +28,9 @@ export const HEX_FAMILY_COPY: Readonly<Record<SpecialFamily, Par>> = {
   atkBuff: p('Attack boost', 'Reforço de ataque'),
   defDebuff: p('Armor break', 'Quebra de defesa'),
   spdBuff: p('Speed boost', 'Reforço de velocidade'),
+  defBuff: p('Guard boost', 'Reforço de defesa'),
+  atkDebuff: p('Weaken', 'Enfraquecer'),
+  spdDebuff: p('Hobble', 'Entrave'),
 };
 
 /** Coroas de EFEITO (`HEX_CROWN_EFFECTS`): nome do valor. Descrição honesta: o que o efeito faz e onde. */
@@ -36,6 +39,18 @@ export const HEX_CROWN_EFFECT_COPY: Readonly<Record<HexCrownEffect, { name: Par;
   slow: { name: p('Slowing', 'Lentidão'), desc: p('Breaks the foe’s guard and slows its strikes.', 'Quebra a guarda do alvo e atrasa os golpes dele.') },
   silence: { name: p('Silencing', 'Silêncio'), desc: p('Breaks the foe’s guard and keeps its special quiet for a few strikes.', 'Quebra a guarda do alvo e cala o especial dele por alguns golpes.') },
 };
+
+/** Descrição das 3 Coroas que são FAMÍLIA nova (`CROWN_ONLY_FAMILIES`): o que fazem, em linguagem de convite. */
+export const HEX_CROWN_FAMILY_DESC: Readonly<Record<'defBuff' | 'atkDebuff' | 'spdDebuff', Par>> = {
+  defBuff: p('Your guard rises: the next blows you take hurt less.', 'Sua guarda sobe: os próximos golpes que você recebe doem menos.'),
+  atkDebuff: p('The foe’s next blows land weaker.', 'Os próximos golpes do alvo batem mais fraco.'),
+  spdDebuff: p('The foe strikes later, blow after blow.', 'O alvo ataca mais devagar, golpe após golpe.'),
+};
+
+/** O que a Coroa FAZ (efeito ou família nova); `undefined` para as famílias de sempre (o nome já basta). */
+export function hexCrownValueDesc(value: string): Par | undefined {
+  return (HEX_CROWN_EFFECT_COPY as Record<string, { desc: Par } | undefined>)[value]?.desc ?? (HEX_CROWN_FAMILY_DESC as Record<string, Par | undefined>)[value];
+}
 
 /** Nome legível do valor de uma Coroa (família ou efeito). `undefined` = valor desconhecido (ex.: o original da ficha). */
 export function hexCrownValueCopy(value: string): Par | undefined {
@@ -91,6 +106,8 @@ export const HEX_UI = {
   potionTipLabel: p('How to get this potion', 'Como conseguir esta poção'),
   fragments: p('fragments', 'fragmentos'),
   bitsEarned: p('Bits', 'Bits'),
+  /** Aviso calmo na Coroa equipada, só para quem evoca: a invocação descansa enquanto a Coroa troca o especial. */
+  companionRests: p('While the Crown is equipped, your companion rests.', 'Com a Coroa equipada, o companheiro descansa.'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
   forging: p('Forging…', 'Forjando…'),
   forgeOffline: p('No connection. The HEX is forged on the server; nothing was charged. Try again when you are online.', 'Sem conexão. O HEX é forjado no servidor; nada foi cobrado. Tente de novo quando estiver online.'),

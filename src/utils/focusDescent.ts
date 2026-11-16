@@ -10,12 +10,12 @@
 import type { GameState } from '../contexts/GameStateContext';
 import { newDefenseSeed } from './autoDefesa';
 import {
-  hpAgora, layerRefusal, podeDescer, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, type DungeonAway,
+  hpAgora, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, type DungeonAway,
 } from './dungeonIdle';
 import { consumeResume, riftStartLayer } from './riftMap';
 import { soulCombatant } from './soulXP';
 
-export type FocusDescentRefusal = 'busy' | 'no-hp' | 'no-energy' | 'daily-limit';
+export type FocusDescentRefusal = 'busy' | 'no-hp' | 'no-energy';
 
 /** Por que a descida de foco NÃO pode abrir agora (`undefined` = pode). */
 export function focusDescentRefusal(state: GameState, nowMs: number): FocusDescentRefusal | undefined {
@@ -23,7 +23,7 @@ export function focusDescentRefusal(state: GameState, nowMs: number): FocusDesce
   if (state.guildMission) return 'busy';
   if (!podeDescer({ dungeonHp: state.dungeonHp }, nowMs)) return 'no-hp';
   const paid = spendLayer(state, nowMs);
-  if (paid === state) return layerRefusal(state, nowMs) === 'daily-limit' ? 'daily-limit' : 'no-energy';
+  if (paid === state) return 'no-energy';
   return undefined;
 }
 

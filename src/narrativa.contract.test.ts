@@ -308,3 +308,16 @@ describe('régua da narrativa — a bíblia não apodrece', () => {
     ).toEqual([]);
   });
 });
+
+describe('régua da narrativa — Files/Arquivos e `.exe` (16/11/2026)', () => {
+  it('a bíblia declara o termo canônico e a fronteira (só itens listados; nunca a criatura)', () => {
+    const texto = readFileSync(BIBLIA, 'utf8');
+    expect(texto).toContain('**Arquivos / Files**');
+    expect(texto).toContain('`<nome>.exe`');
+    expect(texto).toMatch(/nunca\*\* nomeia a criatura/);
+  });
+  it('a pasta de itens se chama Arquivos/Files na UI (Mochila.tsx), sem renomear o componente', () => {
+    const fonte = readFileSync(join(SRC, 'components', 'home', 'Mochila.tsx'), 'utf8');
+    expect(fonte).toContain("isPt ? 'Arquivos' : 'Files'");
+  });
+});

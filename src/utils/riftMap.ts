@@ -1,4 +1,4 @@
-// O MAPA DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §452).
+// O MAPA DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §462).
 //
 // DONO ÚNICO e PURO do que o mapa mostra: um NÓ por CONJUNTO (`riftSets.ts`: 2 andares por elemento, 269 conjuntos = 538 andares, depois a
 // lista dá a volta), o estado de cada nó (visitado/atual/bloqueado), o CAMINHO sinuoso entre eles (determinístico) e a regra de "voltar ao nó".

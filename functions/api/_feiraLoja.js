@@ -133,6 +133,10 @@ export const FEIRA_LOJA_CATALOGO = Object.freeze([
   ['furn-jardim-regador-encantado', 'furniture', 300, 'any'],
   ['furn-jardim-canteiro-redondo', 'furniture', 200, 'any'],
   ['furn-jardim-vaso-suspenso', 'furniture', 300, 'any'],
+  ['furn-ruinas-carro-engolido', 'furniture', 300, 'any'],
+  ['furn-ruinas-placa-torta', 'furniture', 300, 'any'],
+  ['furn-ruinas-asfalto-rachado', 'furniture', 200, 'any'],
+  ['furn-ruinas-fiacao-com-musgo', 'furniture', 300, 'any'],
 ]);
 
 /**
@@ -164,10 +168,10 @@ export const HONRA_EM_BITS = 10;
 /** Materiais do jogo (espelho de `MATERIAL_IDS`, `src/utils/buildingQuests.ts`). */
 export const FEIRA_LOJA_MATERIAIS = Object.freeze(['spark', 'moss', 'prism', 'pebble', 'ore', 'ink', 'gear', 'fang', 'laurel', 'ribbon', 'essence', 'down', 'cipher', 'page', 'keepsake', 'crest']);
 
-/** Pratos (espelho de `DISHES`, `src/utils/restaurant.ts`): [id, Bits do Restaurante, efeito de combate?]. Vendidos PRONTOS, sem ingrediente. */
+/** Pratos (espelho de `DISHES`, `src/utils/restaurant.ts`): [id, Bits do Restaurante, efeito de combate?]. Vendidos PRONTOS, sem ingrediente. Os de ENERGIA (chá, pão, ensopado) custam ×1,5 desde 16/11/2026 (§451). */
 export const FEIRA_LOJA_PRATOS = Object.freeze([
-  ['salada-viva', 20, false], ['cha-de-orvalho', 15, false], ['tigela-do-bosque', 30, false], ['espetinho-de-vinha', 30, true],
-  ['sopa-de-raiz', 30, true], ['mordida-da-flor', 35, true], ['pao-de-faisca', 15, false], ['ensopado-do-caldeirao', 40, false],
+  ['salada-viva', 20, false], ['cha-de-orvalho', 23, false], ['tigela-do-bosque', 30, false], ['espetinho-de-vinha', 30, true],
+  ['sopa-de-raiz', 30, true], ['mordida-da-flor', 35, true], ['pao-de-faisca', 23, false], ['ensopado-do-caldeirao', 60, false],
   ['torta-de-mel-lunar', 20, false], ['caldo-de-brasa', 30, true], ['pizza-de-ferro', 30, true], ['pudim-de-nevoa', 35, true],
 ]);
 

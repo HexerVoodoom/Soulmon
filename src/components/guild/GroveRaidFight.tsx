@@ -63,7 +63,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
   const companheiro = companheiroDoEstado(useGameStateOptional()?.gameState); // PR 2: sempre `null` com a flag desligada
-  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento), companheiro }), [combatant, family, ident.especial.elemento, companheiro]);
+  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento, hx), companheiro }), [combatant, family, ident.especial.elemento, hx, companheiro]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
   const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);

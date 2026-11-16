@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §452)
+> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §462)
 >
 > - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11
 ift-mapa\previas\`.
@@ -5782,9 +5782,48 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §460)
+>
+> - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).
+> - **Falta:** ligar a flag do companheiro (outra frente); regerar 3 selos de arte. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+> ## 16/11/2026 — Companheiro invocado LIGADO no pacote (`feat/companheiro-liga-chave`, REGISTRO §459)
+>
+> - **Feito:** chave ligada no app e no servidor (paridade travada); simulados no duelo (criatura por `hash(id)`), Rogue Dungeon e Treino com amigo ligados; criatura de simulado/NPC em módulo leve; cache `soulmonEvocacao` idempotente (sem regravar à toa); cena do companheiro AO LADO do invocador (antes subia ao peito e, no inimigo, caía sobre a barra de HP). Servidor alinhado ao app em `cenario`/`n-lasca`/`n-panora` e 4 decorações `furn-ruinas-*` (regressões da pacote).
+> - **Não visto em aparelho real.** Prévias no navegador embutido (360×640 e 412×915; luta real só na Arena; Masmorra pela mesma cena com o fundo dela; `prefers-reduced-motion` só por teste).
+> - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
+
+
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §457)
+>
+> - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
+> - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §455)
+>
+> - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
+> - **Não visto em aparelho.**
+
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §455)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
+>
+> - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §452)
+>
+> - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
+> - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
+> - **Falta:** H4 (Coroa troca o especial e a invocação some), `fx.efeito` do oponente no PvP. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+
+>
 > ## 16/11/2026 — Hexsmith: arte das 6 Coroas e 3 selos (`feat/hexsmith-arte`, REGISTRO §451)
 >
-> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias.
+> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias (ligados na H2, REGISTRO §452).
 > - **Pendente:** regerar `st-debuff-atk`, `coroa-silence`, `coroa-hot` (só trocar arquivo). **Rollback:** `git revert`.
 >
 > ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
@@ -11560,3 +11599,10 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 - doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
 - Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
 - ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
+
+## §456 — Teto de Bits por categoria (16/11/2026)
+- Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §457).
+
+## §458 — Convite de Duelo (16/11/2026)
+- Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.

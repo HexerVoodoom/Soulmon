@@ -1,7 +1,9 @@
 /** Tipos do espelho do núcleo de combate v3 no servidor (`_combate.js`; travado por `combate.parity.test.js`). */
 export interface Combatant { level: number; atk: number; def: number; spd: number; hp: number; bonus: number }
-export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff';
-export interface Special { family: SpecialFamily; power: number }
+export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff' | 'defBuff' | 'atkDebuff' | 'spdDebuff';
+export type SpecialEffect = 'hot' | 'slow' | 'silence';
+export interface EffectTune { silenceHits: number; silenceKeep: number; slowScale: number; slowKeep: number; hotScale: number }
+export interface Special { family: SpecialFamily; power: number; effect?: SpecialEffect; tune?: EffectTune }
 export interface StatWeights { atk: number; def: number; spd: number }
 export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number; invoca?: boolean }
 export interface CheerEvent { t: number; side: 0 | 1; scale?: number }
@@ -73,7 +75,12 @@ export declare const SHIELD_ABSORB: Readonly<{ basic: number; direct: number; ti
 export declare function shieldAbsorbPoints(sh: number, d: number, src: 'basic' | 'direct' | 'tick'): number;
 export declare const SPECIAL_FAMILIES: SpecialFamily[];
 export declare const SPECIAL_POWER: Record<SpecialFamily, number>;
-export declare function specialOf(family: unknown): Special;
+export declare const CROWN_ONLY_FAMILIES: SpecialFamily[];
+export declare const ALL_SPECIAL_FAMILIES: SpecialFamily[];
+export declare const EFFECT_TUNE_PVP: EffectTune;
+export declare const FAMILY_TUNE: { guardCut: number; weakCut: number; spdDebuffScale: number; dragStretch: number };
+export declare const EFFECT_FAMILY: Record<SpecialEffect, SpecialFamily>;
+export declare function specialOf(family: unknown, effect?: unknown): Special;
 export declare const ENERGY: { perDealt: number; perReceived: number; perSecond: number };
 export declare const ENERGY_TRIGGER: number;
 export declare const CHEER: { tapsFull: number; tapsCapPerBucket: number; bucketSeconds: number; energyPerDischarge: number; pvpEnergyPerDischarge: number };

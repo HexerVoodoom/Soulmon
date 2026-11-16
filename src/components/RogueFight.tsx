@@ -33,6 +33,8 @@ import type { Language } from '../utils/i18n';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { rogueFightSetup, type RogueRun } from '../utils/rogueDungeon';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 
 export interface RogueFightProps {
   language: Language;
@@ -87,6 +89,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const reduced = useRef(prefersReducedMotion());
   const ctx = useGameStateOptional();
   const inv = ctx?.gameState.foodInventory;
+  const companheiro = companheiroDoEstado(ctx?.gameState); // string estável: não refaz a rodada a cada mudança do save
   /** 💗 Continuação após o Coraçãozinho (REGISTRO §191): n-ésima retomada + HP do inimigo na queda; `key` reinicia o relógio da cena. */
   const [cont, setCont] = useState<{ n: number; foeFrac: number; key: number } | null>(null);
   const fightKey = cont?.key ?? 1;
@@ -101,7 +104,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   }, [onResult, enemy.stage, isPt]);
 
   const round = useCallback((): GroupRound => {
-    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento) }, setup.foe, setup.seed, true);
+    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento, hx), companheiro }, setup.foe, setup.seed, true);
     return {
       player: f.player, foes: f.foes, seed: contRef.current ? reviveSeed(f.seed, contRef.current.n) : f.seed,
       startHp: contRef.current ? reviveStart(contRef.current.foeFrac).hp : setup.startHp, startEnergy: 0,
@@ -109,7 +112,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
       hitScale: f.hitScale,
       castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
     };
-  }, [setup, family]);
+  }, [setup, family, companheiro]);
 
   const scene = useCallback((): GroupScene => ({
     playerMaxHp: hpMax,
@@ -148,6 +151,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-rogue-fight style={{ display: 'contents' }} />
       <BattleStage
+        summon={summonsDoGrupo(battle.summon, companheiro)}
         specialLabel={specialLabel(isPt, par?.especial, family)}
         foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
         isPt={isPt}

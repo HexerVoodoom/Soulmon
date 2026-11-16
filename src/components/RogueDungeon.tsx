@@ -173,7 +173,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
     /* §239: a derrota também paga o que a incursão rendeu até ali (a pessoa pode não voltar hoje); `paidWon` evita pagar de novo. */
     const resting = run.hpAt !== undefined;
     if ((!finished && !resting) || run.paid || paidRef.current === run.won) return;
-    const owed = rogueBits(run) - (run.paidWon ?? 0);
+    const owed = rogueBits(run) - rogueBits({ won: run.paidWon ?? 0 });
     if (!finished && owed <= 0) return;
     paidRef.current = run.won;
     if (owed > 0) setBitsPagos(earnRef.current?.(owed) ?? owed);

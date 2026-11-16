@@ -37,7 +37,7 @@ describe('AreaView sem trava de Soulmon ocupado', () => {
   }
 });
 
-describe('Fenda (na Exploração desde #186): duas portas — Entrar no Rift / Ver o mapa (§452)', () => {
+describe('Fenda (na Exploração desde #186): duas portas — Entrar no Rift / Ver o mapa (§462)', () => {
   it('com descida: o toque abre a folha com as duas portas; "Descer" entra direto na DungeonGame (sem 2º passo)', async () => {
     const { container } = renderWithCss(<AreaView {...{ ...base('exploracao'), naMasmorra: true }} />);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="fenda"]') as HTMLElement); });

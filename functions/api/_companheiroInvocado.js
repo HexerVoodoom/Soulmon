@@ -9,9 +9,10 @@
 // ---------------------------------------------------------------------------
 import { fichaStageOf } from './_duel.js';
 import { SIMULADOS } from './_simulados.data.js';
+import { hexCrownEquipped } from './_hexsmith.js';
 
 /** INTERRUPTOR ÚNICO do servidor; igual à flag do app (o teste de paridade trava os dois). Religar: `true` aqui e em `companheiroInvocado.ts`. */
-export const COMPANHEIRO_INVOCADO = false;
+export const COMPANHEIRO_INVOCADO = true;
 
 /** As 32 criaturas do class-system (espelho de `CRIATURAS_COMPANHEIRO`). */
 export const CRIATURAS_COMPANHEIRO = [
@@ -50,6 +51,8 @@ export function companheiroDoLado(state, saveId, ligado = COMPANHEIRO_INVOCADO) 
   if (!ligado) return null;
   const sim = typeof saveId === 'string' ? SIM_POR_ID.get(saveId) : undefined;
   if (sim) return simuladoEvocador(sim.element, sim.line) ? { invoca: true } : null;
+  // Coroa da Hexsmith equipada (save já saneado por `_hexsmith.js`) = o especial vira o da Coroa e o companheiro descansa (paridade com o cliente).
+  if (hexCrownEquipped(state?.hexsmith)) return null;
   const estagio = fichaStageOf(state?.evolutionStage);
   const evoc = state?.soulmonEvocacao;
   const e = evoc && typeof evoc === 'object' && !Array.isArray(evoc) && Object.hasOwn(evoc, estagio) ? evoc[estagio] : null;

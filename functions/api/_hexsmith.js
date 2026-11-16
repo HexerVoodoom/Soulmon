@@ -4,7 +4,7 @@
  * As Pages Functions nao importam de `src/`; `hexsmith.parity.test.js` trava as duas copias.
  */
 import { COUNTER_RING, BASE_DO_PAR } from './_elementoBase.js';
-import { SPECIAL_FAMILIES } from './_combate.js';
+import { SPECIAL_FAMILIES, CROWN_ONLY_FAMILIES } from './_combate.js';
 
 export const HEX_SLOTS = ['coroa', 'amuleto', 'garra', 'couraca', 'luvas'];
 export const HEX_ELEMENT_SLOTS = ['amuleto', 'garra', 'couraca'];
@@ -24,7 +24,7 @@ export const HEX_CROWN_VARIANTS = {
   slow: { family: 'defDebuff', effect: 'slow' },
   silence: { family: 'defDebuff', effect: 'silence' },
 };
-export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + 2;
+export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + CROWN_ONLY_FAMILIES.length + 2;
 
 const ELEMENT_IDS = new Set([...COUNTER_RING, ...Object.keys(BASE_DO_PAR)]);
 
@@ -38,7 +38,7 @@ export function parseHexItem(idRaw) {
   const value = id.slice(i + 1);
   if (!HEX_SLOTS.includes(slot)) return undefined;
   if (HEX_ELEMENT_SLOTS.includes(slot)) return ELEMENT_IDS.has(value) ? { slot, value } : undefined;
-  if (slot === 'coroa') return /** @type {readonly string[]} */ (SPECIAL_FAMILIES).includes(value) || HEX_CROWN_EFFECTS.includes(value) ? { slot, value } : undefined;
+  if (slot === 'coroa') return /** @type {readonly string[]} */ (SPECIAL_FAMILIES).includes(value) || /** @type {readonly string[]} */ (CROWN_ONLY_FAMILIES).includes(value) || HEX_CROWN_EFFECTS.includes(value) ? { slot, value } : undefined;
   return HEX_STRIKES.includes(value) ? { slot, value } : undefined;
 }
 
@@ -63,6 +63,12 @@ export function sanitizeHexsmith(raw) {
     if (typeof id === 'string' && owned.includes(id) && parseHexItem(id)?.slot === slot) equipped[slot] = id;
   }
   return { owned, equipped };
+}
+
+/** Há uma Coroa (qualquer uma) equipada e válida no save? (espelho de `hexCrownEquipped`; a regra "Coroa ⇒ sem companheiro" lê isto.)
+ * @param {unknown} raw */
+export function hexCrownEquipped(raw) {
+  return sanitizeHexsmith(raw).equipped.coroa !== undefined;
 }
 
 /**

@@ -142,6 +142,8 @@ import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
+import { sanitizeBitsCat } from '../utils/currencies';
+import { sanitizeDuelInvites, type DuelInvites } from '../utils/duelInvites';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -542,7 +544,7 @@ export interface GameState {
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
-  minigameBits?: { day: string; earned: number };
+  minigameBits?: { day: string; earned: number; /** §456: Bits do dia por categoria (aditivo; ausente = zero). */ cat?: Partial<Record<'minigames' | 'explorar' | 'arena', number>> };
   /** O HP do jogador na Masmorra (descida idle, 08/10/2026): fração do máximo + instante da medida.
    *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
    *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
@@ -550,7 +552,7 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
-  /** O ponto de largada escolhido no MAPA DE ANDARES do Rift (1º andar, ímpar, de um conjunto já visitado; REGISTRO §452). Só vale uma descida: quem larga
+  /** O ponto de largada escolhido no MAPA DE ANDARES do Rift (1º andar, ímpar, de um conjunto já visitado; REGISTRO §462). Só vale uma descida: quem larga
    *  dele o consome. O recorde NÃO desce com ele. Dono: `utils/riftMap.ts` (`rewindToSet`, `consumeResume`). */
   dungeonResumeLayer?: number;
   /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
@@ -579,6 +581,8 @@ export interface GameState {
   funSession?: { startedAt: number; rounds: number };
   /** 🎫 Tickets dos minijogos do Salão (09/11/2026, `utils/funTickets.ts`): 1 energia = 3 tickets, teto 5, 24 h por lote. Ausente = nenhum ticket. Substitui a `funSession`. */
   funTickets?: FunTickets;
+  /** ⚔️ Convites de Duelo (REGISTRO §458, `utils/duelInvites.ts`): estoque 0..7 + carimbo da última troca. Ausente = estoque inicial 7. */
+  duelInvites?: DuelInvites;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos `ARENA_CHOICES` cards da Arena livre (4 desde o §370) feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
@@ -1518,7 +1522,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
         minigameBits: (() => {
           const m = obj<unknown>(loadedState.minigameBits);
-          return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+          const cat = sanitizeBitsCat(m.cat);
+          return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0), ...(cat ? { cat } : {}) } : undefined;
         })(),
         // HP da descida idle: lixo/ausente → `undefined` (cheio). Mesma regra de `sanitizeDungeonHp`
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
@@ -1556,6 +1561,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         funSession: sanitizeFunSession(loadedState.funSession),
         funTickets: sanitizeFunTickets(loadedState.funTickets),
+        duelInvites: sanitizeDuelInvites(loadedState.duelInvites),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),

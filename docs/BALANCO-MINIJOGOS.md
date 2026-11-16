@@ -133,3 +133,7 @@ Aparece como linha própria no "Ganhou": "Todos derrotados +1 Presa" / "All defe
 
 **Honestidade.** Cortar o ganho não muda o total de quem já bate o teto, só o tempo até chegar nele: quem joga a Masmorra
 o dia inteiro continua chegando a 150; o que muda é que leva o dobro de andares, e os outros jogos têm mais espaço no dia.
+
+## §456 — Teto por categoria (16/11/2026)
+
+O teto geral de 150 Bits/dia segue; cada categoria (minijogos, explorar, arena) paga no máximo 75/dia. Três categorias cheias somariam 225, então o teto geral continua sendo quem manda no total. Tabela fonte→categoria no REGISTRO §456.

@@ -55,7 +55,7 @@ export const REGEN_STARVING_PCT = 0;
  */
 export const SLEEP_ENERGY_REGEN_BONUS = 1.5;
 /** Minutos para regenerar UMA unidade de energia a 100%. */
-export const ENERGY_REGEN_MINUTES = 60;
+export const ENERGY_REGEN_MINUTES = 80;
 /** Unidade ANTIGA (120 min, até 26/10/2026): só o teto de sanidade do `carry` gravado — um save velho pode trazer até 2× a unidade nova. */
 const LEGACY_ENERGY_REGEN_MINUTES = 120;
 

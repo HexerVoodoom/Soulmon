@@ -1,4 +1,4 @@
-/** A descida do foco larga do ponto escolhido no mapa do Rift e o consome (REGISTRO §452). */
+/** A descida do foco larga do ponto escolhido no mapa do Rift e o consome (REGISTRO §462). */
 import { describe, it, expect } from 'vitest';
 import type { GameState } from '../contexts/GameStateContext';
 import { startFocusDescent } from './focusDescent';

@@ -10,7 +10,7 @@ import { riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
 /**
- * O MAPA DE ANDARES DO RIFT (REGISTRO §452): um nó por conjunto (2 andares), caminho tracejado sinuoso, scroll vertical VIRTUALIZADO
+ * O MAPA DE ANDARES DO RIFT (REGISTRO §462): um nó por conjunto (2 andares), caminho tracejado sinuoso, scroll vertical VIRTUALIZADO
  * (só os nós da janela existem no DOM; 269 no total). Os dados e a regra de "voltar" são de `utils/riftMap.ts`; aqui só a tela.
  * Fundo: o tile do prédio do Endless Rift repetido (`assets/soulmon/rift/mapa-tile.*`); sem o arquivo, um gradiente em CSS (tolerante).
  * Modais (toque do jogador, fora da fila de avisos — `docs/FILA-DE-MODAIS.md` §1: o que nasce de gesto passa): "Voltar para este nó?" e "Sem volta".
