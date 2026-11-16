@@ -5927,3 +5927,12 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Alcance:** 58 dos 269 descritores mudaram (as bases `espaco` e `vigor` mais 56 combinados); o hash do guard dos 183 não autorais foi atualizado de propósito. Teto de 260 caracteres, regra do tempo, UMA pista por componente e o teste de repetição de palavras do §411 seguem valendo.
 
 **Custo aceito:** continua sendo texto de prompt; só uma 4ª amostra prova. **Gatilho de revisão:** componente ainda parcial. **Rollback:** `git revert` do PR; só criaturas novas usam estes descritores (nada gerado muda).
+
+## §430 — Pesadelo: janela de abertura de 1,2 s antes de ele atacar (16/11/2026, dono)
+
+**Pedido (literal):** "inclua uma janela de 1.2s no Pesadelo antes dele começar a atacar, para o jogador ter a percepção de que dá tempo de o jogador torcer desde o início."
+
+**Decisão:** em cada luta do Pesadelo o inimigo não golpeia antes de 1,2 s do relógio da luta; o jogador (e a torcida) agem desde o 0. Constante única `NIGHTMARE_OPENING_WINDOW_S` (`src/utils/dungeonFight.ts`), entregue ao núcleo como `foeOpeningDelay` (`combate/group.ts`: só atrasa o 1º golpe, `max(fase sorteada, 1,2)`; opt-in). Cliente (`NightmareBattle`) e simulação (`simulateNightmareScenario`) usam o mesmo `options` de `nightmareFight`, então não divergem. Sinal de UI: chip "Torça já!/Cheer now!" na faixa de objetivos durante a janela (÷ velocidade). Só o Pesadelo: Masmorra e Arena não ligam a opção. Convive com o §392 (-25% de dano).
+
+**Custo/gatilho:** a luta fica até 1,2 s mais favorável ao jogador; reabre se a taxa de vitória do Pesadelo subir além da meta da régua.
+

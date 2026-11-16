@@ -70,6 +70,12 @@ export interface GroupOptions {
    */
   readonly fairStart?: boolean;
   /**
+   * JANELA DE ABERTURA (dono, 16/11/2026, REGISTRO §413): segundos de luta em que NENHUM inimigo golpeia ainda — o 1º golpe de cada um
+   * sai no máximo no instante `foeOpeningDelay` (se a fase sorteada já o põe depois, nada muda). Só atrasa; o jogador (e a torcida) agem
+   * desde o 0. Opt-in (só o Pesadelo liga); sem ele nada muda.
+   */
+  readonly foeOpeningDelay?: number;
+  /**
    * ALVO POR TOQUE (03/11/2026, dono): lido a cada golpe/especial do jogador; devolve o índice do inimigo que ele escolheu
    * (`null` = sem escolha). Escolhido morto ou inválido cai no 1º vivo (`combate/alvo.ts`). Sem a opção, nada muda.
    */
@@ -179,6 +185,7 @@ export function* groupFightSteps(
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
   const E = foes.map((f, i) => mk(f, i + 1, foeSeed(seed, i), Math.min(1, Math.max(1e-6, opts.startFoesHp?.[i] ?? 1)), 0));
+  if (opts.foeOpeningDelay) for (const f of E) f.next = Math.max(f.next, opts.foeOpeningDelay);
   const all = [pl, ...E];
   const timed: { t: number; fn: () => void }[] = [];
   for (const ch of opts.cheer ?? []) {
