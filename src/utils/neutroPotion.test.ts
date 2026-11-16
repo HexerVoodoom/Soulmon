@@ -1,65 +1,78 @@
 import { describe, it, expect } from 'vitest';
-import { BASE_ELEMENT_IDS, ESSENCE_ELEMENT_IDS } from './elementDex';
-import { NEUTRO_POTION_COST, NEUTRO_TOTAL, NEUTRO_IDS_POR_GRUPO, neutroProgresso, canAffordNeutroPotion } from './neutroPotion';
-import { craftPotion, canAffordPotion, potionKey, isPotionKey, sanitizeElementId, POTION_SPECIAL_ITEMS } from './elementPotion';
+import { BASE_ELEMENT_IDS } from './elementDex';
+import { neutroProgresso, neutroPlano, canAffordNeutroPotion } from './neutroPotion';
+import { craftPotion, canAffordPotion, potionKey, isPotionKey, sanitizeElementId, POTION_SPECIAL_ITEMS, essenceThresholdCrossings, limiarDaPocao, POTION_COSTS } from './elementPotion';
 import { essenceDropsOfFoe, sanitizeEssences, ehEssenciaColetavel } from './essences';
+import { essenceUnitPrice, essencePackPrice } from './essenceShop';
 import { RAVEN_ENTRY } from './enemyRoster';
 
-const cheio = () => Object.fromEntries(NEUTRO_POTION_COST.map(c => [c.id, c.qty]));
-const base = (over: Record<string, unknown> = {}) => ({ defeatedElements: ['neutro'], essences: cheio(), essenceSpent: {}, foodInventory: {}, ...over });
+const bases = (q: number) => Object.fromEntries(BASE_ELEMENT_IDS.map(b => [b, q]));
+const cheio = () => ({ ...bases(100), neutro: 50 });
+const st = (over: Record<string, unknown> = {}) => ({ defeatedElements: ['neutro'], essences: cheio() as Record<string, number>, essenceSpent: {} as Record<string, number>, foodInventory: {} as Record<string, number>, ...over });
 
-describe('receita do Neutro (REGISTRO §452)', () => {
-  it('20 base x100 + 249 compostos x50 = 269 itens; grupos 20/190/40/19; neutro e pesadelo fora', () => {
-    expect(NEUTRO_TOTAL).toBe(269);
-    expect(ESSENCE_ELEMENT_IDS).toHaveLength(269);
-    expect(NEUTRO_IDS_POR_GRUPO.base).toHaveLength(20);
-    expect(NEUTRO_IDS_POR_GRUPO.par).toHaveLength(190);
-    expect(NEUTRO_IDS_POR_GRUPO.trio.length + NEUTRO_IDS_POR_GRUPO.quad.length).toBe(59);
-    for (const c of NEUTRO_POTION_COST) expect(c.qty).toBe(BASE_ELEMENT_IDS.includes(c.id) ? 100 : 50);
-    expect(NEUTRO_POTION_COST.some(c => c.id === 'neutro' || c.id === 'pesadelo')).toBe(false);
-  });
-  it('progresso agrupado', () => {
-    const p = neutroProgresso({ [BASE_ELEMENT_IDS[0]]: 100, [BASE_ELEMENT_IDS[1]]: 99 });
-    expect(p.feitos).toBe(1);
-    expect(p.grupos[0].faltam).toHaveLength(19);
+describe('poção do Neutro (REGISTRO §452)', () => {
+  it('progresso: x de 20 bases e neutro x/50; poção-base vale no lugar das 100 essências', () => {
+    const p = neutroProgresso({ ...bases(100), [BASE_ELEMENT_IDS[0]]: 10, neutro: 20 }, { [potionKey(BASE_ELEMENT_IDS[0])]: 1 });
+    expect(p.basesFeitas).toBe(20);
+    expect(p.bases[0].via).toBe('pocao');
+    expect(p.neutro).toBe(20);
     expect(p.completo).toBe(false);
+    expect(neutroProgresso(bases(100)).completo).toBe(false);
     expect(neutroProgresso(cheio()).completo).toBe(true);
   });
-  it('recusa sem consumir quando falta 1', () => {
-    const e = cheio(); e[NEUTRO_POTION_COST[5].id] -= 1;
-    const prev = base({ essences: e });
-    expect(canAffordNeutroPotion(e)).toBe(false);
-    expect(craftPotion(prev, 'neutro')).toBe(prev);
+  it('recusa sem consumir: falta 1 essência base, ou neutro 49, ou Neutro desconhecido', () => {
+    for (const prev of [st({ essences: { ...cheio(), [BASE_ELEMENT_IDS[3]]: 99 } }), st({ essences: { ...cheio(), neutro: 49 } }), st({ defeatedElements: [] })]) {
+      expect(craftPotion(prev, 'neutro')).toBe(prev);
+    }
   });
-  it('recusa se o Neutro ainda não foi conhecido', () => {
-    const prev = base({ defeatedElements: [] });
-    expect(craftPotion(prev, 'neutro')).toBe(prev);
-  });
-  it('aceita e consome exatamente o custo, soma essenceSpent, entrega potion:neutro', () => {
-    const prev = base({ essences: { ...cheio(), [BASE_ELEMENT_IDS[0]]: 130 } });
+  it('mistura por elemento: consome essência onde basta e a poção onde não', () => {
+    const [a, ...resto] = BASE_ELEMENT_IDS;
+    const prev = st({ essences: { ...cheio(), [a]: 0 }, foodInventory: { [potionKey(a)]: 2 } });
     expect(canAffordPotion(prev.essences, 'neutro', prev.foodInventory)).toBe(true);
     const n = craftPotion(prev, 'neutro');
     expect(n.foodInventory[potionKey('neutro')]).toBe(1);
-    expect(n.essences[BASE_ELEMENT_IDS[0]]).toBe(30);
-    expect(Object.values(n.essences).filter(v => v > 0)).toEqual([30]);
-    expect(Object.keys(n.essenceSpent)).toHaveLength(269);
+    expect(n.foodInventory[potionKey(a)]).toBe(1);
+    expect(n.essences.neutro ?? 0).toBe(0);
+    expect(resto.every(b => (n.essences[b] ?? 0) === 0)).toBe(true);
+    expect(n.essenceSpent.neutro).toBe(50);
   });
-  it('save antigo: chave potion:neutro e id neutro valem; pesadelo não tem poção', () => {
+  it('NÃO exige nada dos compostos e com saldo sobrando só desconta o custo', () => {
+    const prev = st({ essences: { ...cheio(), neutro: 80, [BASE_ELEMENT_IDS[0]]: 130 } });
+    const n = craftPotion(prev, 'neutro');
+    expect(n.essences.neutro).toBe(30);
+    expect(n.essences[BASE_ELEMENT_IDS[0]]).toBe(30);
+    expect(neutroPlano(cheio())!.essences).toHaveLength(21);
+  });
+  it('save antigo: potion:neutro vale, potion:pesadelo não', () => {
     expect(isPotionKey('potion:neutro')).toBe(true);
     expect(isPotionKey('potion:pesadelo')).toBe(false);
     expect(sanitizeElementId('neutro')).toBe('neutro');
     expect(sanitizeElementId('pesadelo')).toBeUndefined();
     expect(POTION_SPECIAL_ITEMS['potion:neutro']).toBeTruthy();
+    expect(canAffordNeutroPotion(undefined)).toBe(false);
+  });
+});
+
+describe('pop-up da Vesca aos 50 (mesma constante do custo)', () => {
+  it('composto e Neutro aos 50, base aos 100, Pesadelo nunca', () => {
+    expect(limiarDaPocao('vapor')).toBe(POTION_COSTS.compositeFinal);
+    expect(limiarDaPocao('neutro')).toBe(50);
+    expect(limiarDaPocao('fogo')).toBe(100);
+    expect(limiarDaPocao('pesadelo')).toBeUndefined();
+    expect(essenceThresholdCrossings({ vapor: 49, neutro: 49, fogo: 99 }, { vapor: 50, neutro: 50, fogo: 100 }).sort()).toEqual(['fogo', 'neutro', 'vapor']);
+    expect(essenceThresholdCrossings({}, { pesadelo: 999 })).toEqual([]);
   });
 });
 
 describe('essências do Neutro e do Pesadelo', () => {
-  it('o Corvo (neutro) deixa essência neutra', () => {
+  it('o Corvo deixa essência neutra', () => {
     expect(ehEssenciaColetavel('neutro')).toBe(true);
     expect(essenceDropsOfFoe(RAVEN_ENTRY, RAVEN_ENTRY.stage).some(d => d.id === 'neutro')).toBe(true);
   });
-  it('saldo com neutro e pesadelo sobrevive à leitura do save (limite 271 chaves)', () => {
-    const s = sanitizeEssences({ neutro: 3, pesadelo: 2 });
-    expect(s).toEqual({ neutro: 3, pesadelo: 2 });
+  it('saldo com neutro e pesadelo sobrevive à leitura do save', () => {
+    expect(sanitizeEssences({ neutro: 3, pesadelo: 2 })).toEqual({ neutro: 3, pesadelo: 2 });
+  });
+  it('Cambista (cliente): neutro e pesadelo sem preço de compra', () => {
+    for (const id of ['neutro', 'pesadelo']) { expect(essenceUnitPrice(id)).toBe(0); expect(essencePackPrice(id, 1)).toBe(0); expect(essencePackPrice(id, 5)).toBe(0); }
   });
 });

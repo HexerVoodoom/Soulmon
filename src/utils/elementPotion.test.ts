@@ -50,7 +50,10 @@ describe('poção de elemento', () => {
     expect(essenceThresholdCrossings({ fogo: 99 }, { fogo: 100 })).toEqual(['fogo']);
     expect(essenceThresholdCrossings({ fogo: 100 }, { fogo: 101 })).toEqual([]); // já estava acima: não repete
     expect(essenceThresholdCrossings({}, { fogo: 5 })).toEqual([]);
-    expect(essenceThresholdCrossings(undefined, { agua: 100, vapor: 100 })).toEqual(['agua']); // composto não dispara
+    expect(essenceThresholdCrossings(undefined, { agua: 100, vapor: 49 })).toEqual(['agua']); // composto só aos 50 (16/11/2026)
+    expect(essenceThresholdCrossings({ vapor: 49 }, { vapor: 50 })).toEqual(['vapor']);
+    expect(essenceThresholdCrossings({ neutro: 49 }, { neutro: 50 })).toEqual(['neutro']);
+    expect(essenceThresholdCrossings({ pesadelo: 0 }, { pesadelo: 500 })).toEqual([]);
     expect(essenceThresholdCrossings({ fogo: 100 }, { fogo: 0 })).toEqual([]);
     expect(essenceThresholdCrossings({ fogo: 0 }, { fogo: 100 })).toEqual(['fogo']); // gastou e atingiu de novo: oferece de novo
   });

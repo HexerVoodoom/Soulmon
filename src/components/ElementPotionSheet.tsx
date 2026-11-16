@@ -8,7 +8,7 @@ import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
 import { NeutroPotionPanel } from './NeutroPotionPanel';
 import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
-import { NEUTRO_POTION_COSTS, NEUTRO_IDS_POR_GRUPO, NEUTRO_TOTAL } from '../utils/neutroPotion';
+import { NEUTRO_POTION_COSTS } from '../utils/neutroPotion';
 
 /**
  * POÇÃO DE ELEMENTO (Laboratório > Vesca, 30/10/2026; lista completa 12/11/2026). Mostra TODAS as poções, cada uma com o ícone e, por
@@ -125,7 +125,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         {!sel && (
           <>
             <p style={sm2Hint}>{t.hint}</p>
-            <NeutroPotionPanel essences={essences} isPt={isPt} unlocked={isPotionUnlocked(ELEMENTO_NEUTRO_ID, unlocked)} onCreate={() => { setSel(ELEMENTO_NEUTRO_ID); setDone(null); }} />
+            <NeutroPotionPanel essences={essences} inventory={inventory} isPt={isPt} unlocked={isPotionUnlocked(ELEMENTO_NEUTRO_ID, unlocked)} onCreate={() => { setSel(ELEMENTO_NEUTRO_ID); setDone(null); }} />
             <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
             <div role="group" aria-label={t.filters} data-potion-filters style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {POTION_FILTERS.map(f => (
@@ -150,8 +150,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
             <p style={sm2Hint}>{t.confirmQ}</p>
             {ehNeutro && (
               <ul data-neutro-resumo style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6, ...sm2Text }}>
-                <li>{isPt ? `${NEUTRO_IDS_POR_GRUPO.base.length} essências base × ${NEUTRO_POTION_COSTS.eachBase}` : `${NEUTRO_IDS_POR_GRUPO.base.length} base essences × ${NEUTRO_POTION_COSTS.eachBase}`}</li>
-                <li>{isPt ? `${NEUTRO_TOTAL - NEUTRO_IDS_POR_GRUPO.base.length} essências compostas × ${NEUTRO_POTION_COSTS.eachComposite}` : `${NEUTRO_TOTAL - NEUTRO_IDS_POR_GRUPO.base.length} compound essences × ${NEUTRO_POTION_COSTS.eachComposite}`}</li>
+                <li>{isPt ? `Cada elemento base: ${NEUTRO_POTION_COSTS.eachBase} essências ou 1 poção` : `Each base element: ${NEUTRO_POTION_COSTS.eachBase} essence or 1 potion`}</li>
+                <li>{isPt ? `${NEUTRO_POTION_COSTS.neutroEssence} essências do Neutro` : `${NEUTRO_POTION_COSTS.neutroEssence} Neutral essence`}</li>
               </ul>
             )}
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
