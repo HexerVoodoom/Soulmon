@@ -41,10 +41,10 @@ describe('aba Files', () => {
   inv[chip] = 1; inv[heart] = 1;
   it('título Files/Arquivos; comida, prato e chip com .exe na grade; id (data-item) intacto', () => {
     for (const [lang, titulo] of [['en-US', 'Files'], ['pt-BR', 'Arquivos']] as const) {
-      renderWithCss(<Mochila open onClose={() => {}} foodInventory={inv} language={lang} onUse={() => {}} />);
+      renderWithCss(<Mochila open onClose={() => {}} foodInventory={inv} language={lang} onUse={() => {}} petTargetRef={{ current: null }} />);
       expect(document.querySelector('.sm3-mochila-titulo')!.textContent).toBe(titulo);
       const nomes = [...document.querySelectorAll('.sm3-item')].map(e => e.querySelector('.sm3-item-nome')!.textContent);
-      expect(nomes.length).toBe(Object.keys(mochilaTabs(inv).comida).length);
+      expect(nomes.length).toBe(mochilaTabs(inv).comida.length);
       for (const n of nomes) expect(n!.endsWith('.exe'), n!).toBe(true);
       expect(document.querySelector(`[data-item="${dishKey('cha-de-orvalho')}"]`)).toBeTruthy();
       cleanup();
