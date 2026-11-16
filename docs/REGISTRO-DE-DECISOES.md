@@ -6115,6 +6115,15 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
 
+## §450 — Hexsmith: Coroas de EFEITO (hot, slow, silence), H1 dados + nomes (16/11/2026, dono)
+
+Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura contínua, lentidão, silêncio; Trilha B: reforço de defesa, debuff de ataque, lentidão real), com os efeitos TAMBÉM no PvP; Coroa equipada TROCA o especial e a invocação do companheiro SOME enquanto ela estiver equipada; a Hexsmith nunca equipa/altera evocação nem toca `eEvocador`; chips como hoje; preço = Coroa atual (2.000 Bits + 70 fragmentos), ids `coroa:<valor>` sem campo novo de save.
+
+- **H1 (este PR, só dados):** `coroa:hot|slow|silence` aceitos no cliente (`hexsmith.ts`) e no servidor (`_hexsmith.js`, paridade travada), `HEX_CROWN_VARIANTS` (hot = escudo + hot; slow/silence = quebra de defesa + efeito), `hexOverrides.specialEffect`, `HEX_MAX_OWNED` +3 (só cresce), nomes PT/EN, léxico próprio de 8 substantivos para lentidão e silêncio (`SUBSTANTIVOS_EFEITO`, `nomeParaFamilia(esp, família, efeito)`; `hot` usa o léxico de cura), teste de contrato anti-invocação (grep de importação cruzada).
+- **O que H1 NÃO faz:** nenhum combate lê `specialEffect` ainda. Em PvP e PvE a Coroa de efeito se comporta como a família-base (`shield`/`defDebuff`), idêntico ao que o jogador já tinha. Ligar o efeito no motor, recalibrar o 1v1 (±5%) e os gates PvE (±3pp) e o espelho de `_combate.js` é o H2.
+- **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
+- **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
+
 ## §448 — Mini-boss do Rift usa a forma do PRÓPRIO conjunto (16/11/2026, dono)
 
 **Decisão (emenda ao §445).** Quando o conjunto não tem forma no estágio pedido (169 dos 190 pares sem Ultimate; 6 trios sem Mega), o mini-boss e os comuns usam a MELHOR forma que o próprio elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate, Champion, Rookie), só então o de cima. Não troca de arte e não cai na base do componente; continua mais forte pelo andar de crescimento a mais (`RIFT_MINIBOSS_EXTRA_FLOORS`). Componentes do estágio só entram se o elemento não tiver criatura nenhuma (hoje nunca). Confirmados: volta ao Rookie dos 20 base depois do andar 538; mini-boss com +1 andar.

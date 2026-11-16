@@ -3,7 +3,7 @@
  * Leis de escrita (`docs/NARRATIVA-E-UNIVERSO.md`): o texto descreve o ATO e o efeito na Malha; recusa é convite, nunca cobrança.
  */
 import type { SpecialFamily } from './combate/specials';
-import type { HexRefusal, HexSlot, HexStrike } from './hexsmith';
+import type { HexCrownEffect, HexRefusal, HexSlot, HexStrike } from './hexsmith';
 
 type Par = { en: string; pt: string };
 const p = (en: string, pt: string): Par => ({ en, pt });
@@ -29,6 +29,18 @@ export const HEX_FAMILY_COPY: Readonly<Record<SpecialFamily, Par>> = {
   defDebuff: p('Armor break', 'Quebra de defesa'),
   spdBuff: p('Speed boost', 'Reforço de velocidade'),
 };
+
+/** Coroas de EFEITO (`HEX_CROWN_EFFECTS`): nome do valor. Descrição honesta: o que o efeito faz e onde. */
+export const HEX_CROWN_EFFECT_COPY: Readonly<Record<HexCrownEffect, { name: Par; desc: Par }>> = {
+  hot: { name: p('Mending', 'Cura contínua'), desc: p('A shield that heals you in three pulses.', 'Um escudo que cura você em três pulsos.') },
+  slow: { name: p('Slowing', 'Lentidão'), desc: p('Breaks the foe’s guard and slows its strikes.', 'Quebra a guarda do alvo e atrasa os golpes dele.') },
+  silence: { name: p('Silencing', 'Silêncio'), desc: p('Breaks the foe’s guard and keeps its special quiet for a few strikes.', 'Quebra a guarda do alvo e cala o especial dele por alguns golpes.') },
+};
+
+/** Nome legível do valor de uma Coroa (família ou efeito). `undefined` = valor desconhecido (ex.: o original da ficha). */
+export function hexCrownValueCopy(value: string): Par | undefined {
+  return (HEX_FAMILY_COPY as Record<string, Par | undefined>)[value] ?? (HEX_CROWN_EFFECT_COPY as Record<string, { name: Par } | undefined>)[value]?.name;
+}
 
 export const HEX_STRIKE_COPY: Readonly<Record<HexStrike, Par>> = {
   magic: p('Magic', 'Magia'),
