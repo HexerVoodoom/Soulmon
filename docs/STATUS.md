@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §454)
+>
+> - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).
+> - **Falta:** ligar a flag do companheiro (outra frente); regerar 3 selos de arte. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
 > ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
 >
 > - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
