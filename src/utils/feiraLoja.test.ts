@@ -44,11 +44,11 @@ describe('a feira de verdade no cliente: prateleiras novas', () => {
     expect(r.refused).toBeUndefined();
     expect(r.state.gamePoints).toBe(492);
     expect(r.state.foodInventory).toEqual({ 'dish:cha-de-orvalho': 1 });
-    expect((r.state as any).restaurant?.buff).toBeUndefined();
-    expect((r.state as any).restaurant?.count).toBeUndefined();
+    expect(r.state.restaurant?.buff).toBeUndefined();
+    expect(r.state.restaurant?.count).toBeUndefined();
   });
   it('prato da Feira soma ao que já havia na pastinha (save antigo sem a chave também funciona)', () => {
-    const r = applyFeiraLojaBuy({ ...base, foodInventory: { 'dish:cha-de-orvalho': 2, '🥗': 1 } } as any, offer({ id: 'dish:cha-de-orvalho', type: 'dish', kind: 'dish', price: 8 }), 1_000_000);
+    const r = applyFeiraLojaBuy({ ...base, foodInventory: { 'dish:cha-de-orvalho': 2, '🥗': 1 } }, offer({ id: 'dish:cha-de-orvalho', type: 'dish', kind: 'dish', price: 8 }), 1_000_000);
     expect(r.state.foodInventory).toEqual({ 'dish:cha-de-orvalho': 3, '🥗': 1 });
   });
   it('equipamento de Honra vira item em Bits ao preço da oferta (sem moeda de Honra)', () => {

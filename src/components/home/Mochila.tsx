@@ -28,7 +28,7 @@ import { dishById } from '../../utils/restaurantMenu';
 import { isReduceChipKey } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MaterialIcon } from '../MaterialIcon';
-import { getFileName, getFoodDesc } from '../ItemsWindow';
+import { EXE_SUFFIX, getFileName, getFoodDesc } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -346,7 +346,7 @@ export function Mochila({
                     <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined} data-reduce={isReduceChipKey(emoji) || undefined}>
                       {ITEM_ART[emoji] ? <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} /> : dishIdOfKey(emoji) ? dishById(dishIdOfKey(emoji) ?? '')?.icon : null}
                     </span>
-                    <span className="sm3-item-nome">{nome}</span>
+                    <span className="sm3-item-nome">{nome.endsWith(EXE_SUFFIX) ? <>{nome.slice(0, -EXE_SUFFIX.length)}<wbr /><span className="sm3-item-ext">{EXE_SUFFIX}</span></> : nome}</span>
                     <small className="sm2-num">×{n}</small>
                   </button>
                 );

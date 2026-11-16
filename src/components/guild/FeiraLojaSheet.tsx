@@ -61,6 +61,13 @@ export interface FeiraLojaSheetProps {
   api?: Partial<FeiraLojaApi>;
 }
 
+/** Quantas unidades da chave há em `foodInventory` do estado (sem cast: o estado chega como `unknown`). */
+function inFolderOf(state: unknown, key: string): number {
+  const inv = typeof state === 'object' && state !== null ? Reflect.get(state, 'foodInventory') : undefined;
+  const n = typeof inv === 'object' && inv !== null ? Reflect.get(inv, key) : undefined;
+  return typeof n === 'number' ? n : 0;
+}
+
 export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, ownership, getState, onBuyShop, onHexBought, onClose, api: apiIn }: FeiraLojaSheetProps) {
   const api = { ...DEFAULT_API, ...apiIn };
   const isPt = language === 'pt-BR';
@@ -259,7 +266,7 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
       />
     </ModalSheet>
     {boughtDish && (
-      <PratoFeito variant="bought" language={language} dishId={boughtDish.dishId} made={boughtDish.made} inFolder={Math.max(1, (getState() as { foodInventory?: Record<string, number> }).foodInventory?.[dishKey(boughtDish.dishId)] ?? 0)} onClose={() => setBoughtDish(null)} />
+      <PratoFeito variant="bought" language={language} dishId={boughtDish.dishId} made={boughtDish.made} inFolder={Math.max(1, inFolderOf(getState(), dishKey(boughtDish.dishId)))} onClose={() => setBoughtDish(null)} />
     )}
     </>
   );
