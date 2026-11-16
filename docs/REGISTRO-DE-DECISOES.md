@@ -6154,7 +6154,7 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Os 3 ajustes de hospedeiro acima (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes provisórios (EN = PT; o dono troca na última coluna de `enemyRosterLegado.data.ts`). (2) Os legados contam como `ramo` e aparecem no sorteio comum (a opção "fora do sorteio comum", como `forma`/`paralelo`, é uma linha: trocar o kind).
 
-## §447 — Companheiro invocado, PR 2: combate, servidor e cena, atrás da flag desligada (16/11/2026, dono)
+## §449 — Companheiro invocado, PR 2: combate, servidor e cena, atrás da flag desligada (16/11/2026, dono)
 
 **Regra do dono (16/11):** o especial de um evocador INVOCA o companheiro por 3 turnos, função mista. Especial de ATAQUE (`direct`, `dot`): o companheiro ataca nos 3 turnos, como um DoT normal e sem outro efeito. Especial de EFEITO (`atkBuff`, `spdBuff`, `defDebuff`, `shield`): no turno da invocação executa o efeito (um pouco menor) e nos 2 turnos seguintes ataca. CURA (`heal`, `shield` com cura contínua) NÃO invoca ("tira função de cura de evocação em tudo"): o especial roda normal, sem companheiro e sem cena. 1 companheiro por combatente (`COMPANHEIROS_POR_COMBATENTE`): invocar de novo troca o que estava em cena.
 

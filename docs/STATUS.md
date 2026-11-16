@@ -6,7 +6,7 @@
 > - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente.
 
 >
-> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §447)
+> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §449)
 >
 > - **Feito:** regra pura `combate/companheiro.ts` (3 turnos, função mista, cura não invoca, 1 por combatente), `FightSide.invoca` em `fight.ts`/`group.ts`, espelho em `_combate.js` + `_companheiroInvocado.js` (paridade), cena `SummonLayer`, ligação em Arena/Masmorra/Pesadelo/Grove/Duelo/Torneio. TUDO atrás da flag `COMPANHEIRO_INVOCADO = false` (cliente e servidor): comportamento idêntico ao de hoje (testado).
 > - **Calibração:** vitória invocada − normal de −7 a +6pp (1v1, simulação); valor nominal ~0,97 do especial normal.
