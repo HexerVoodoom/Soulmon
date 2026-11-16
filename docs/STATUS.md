@@ -7,6 +7,11 @@
 > - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cerejeira-bosque-em-flor\instalado.png`.
 >
 
+> ## 15/11/2026 — Descritores 4ª ronda (`fix/descritores-espaco-vigor`, REGISTRO §412)
+>
+> - **Feito:** R3 mediu 22/2/0; os 2 parciais (espaço no Cataclismo, vigor no Titã Forjado) ganharam forma grande: `a large floating ring of stars` e `a big amber gem glowing on its chest` em 58 descritores. Guard de hash atualizado.
+> - **Não visto em imagem:** só uma 4ª amostra no Higgsfield prova. **Rollback:** `git revert`; só criaturas novas.
+>
 > ## 15/11/2026 — Descritores 3ª ronda (`fix/descritores-ronda3`, REGISTRO §411)
 >
 > - **Feito:** bug "a band of a band of stars" (30 descritores, texto colado duas vezes à mão) corrigido, com teste de repetição nos 269 e nos prompts finais; ar, arcano, som, morte, vigor e gravidade ganharam forma grande com cor própria; a terra alterna 3 formas pelo hash do id. 180 de 269 mudaram.

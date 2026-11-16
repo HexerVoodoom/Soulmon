@@ -5911,3 +5911,19 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo aceito:** as pistas novas ainda são texto de prompt; só uma 3ª rodada de amostras prova que aparecem. **Gatilho de revisão:** nova amostra com componentes ainda ausentes. **Rollback:** `git revert` do PR; só criaturas novas usam estes descritores (nada gerado muda).
 
+
+## §412 — Descritores, 4ª ronda: anel de estrelas e gema âmbar no peito (15/11/2026, seguimento do §411)
+
+**Medição da 3ª rodada** (`amostras3\`, 24 componentes): 22 claros, 2 parciais. As estrelas do ESPAÇO no Cataclismo viraram pontinhos na capa (`a band of stars`) e a gema do VIGOR no Titã Forjado saiu pequena no peito (`a large amber gem`).
+
+| Rodada | Prompts | Sim | Parcial | Não |
+|---|---|---|---|---|
+| R1 | §407 | 11 | 6 | 7 |
+| R2 | §408 | 16 | 6 | 2 |
+| R3 | §411 | 22 | 2 | 0 |
+
+**Decisão:** o anel de vento (`a large detached ring of wind`) funcionou por ser um objeto grande separado do corpo, então o mesmo tratamento: espaço vira `a large floating ring of stars` e vigor vira `a big amber gem glowing on its chest` (cor âmbar e paleta mantidas). `PALAVRA_CHAVE_BASE`: espaço aceita `ring of stars` e a antiga `band of stars`; vigor aceita `amber gem glowing on its chest` e a antiga `amber gem`.
+
+**Alcance:** 58 dos 269 descritores mudaram (as bases `espaco` e `vigor` mais 56 combinados); o hash do guard dos 183 não autorais foi atualizado de propósito. Teto de 260 caracteres, regra do tempo, UMA pista por componente e o teste de repetição de palavras do §411 seguem valendo.
+
+**Custo aceito:** continua sendo texto de prompt; só uma 4ª amostra prova. **Gatilho de revisão:** componente ainda parcial. **Rollback:** `git revert` do PR; só criaturas novas usam estes descritores (nada gerado muda).

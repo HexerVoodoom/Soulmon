@@ -194,10 +194,10 @@ describe('descritores autorais (REGISTRO §407)', () => {
   it('determinismo: o mesmo elemento gera o mesmo prompt duas vezes', () => {
     for (const id of REESCRITOS) expect(gen(id, 'sombra').imagePrompt, id).toBe(gen(id, 'sombra').imagePrompt);
   });
-  it('os outros 183 elementos: hash do conteúdo (REGISTRO §408 trocou as pistas fracas em 112 deles; antes de §408 o hash era 909d77b1…; §411 trocou mais 114 deles (180 dos 269 no total: 66 autorais + 114 daqui), hash 0c25ed7d… anterior)', () => {
+  it('os outros 183 elementos: hash do conteúdo (REGISTRO §408 trocou as pistas fracas em 112 deles; antes de §408 o hash era 909d77b1…; §411 trocou mais 114 deles (180 dos 269 no total: 66 autorais + 114 daqui), hash 0c25ed7d… anterior; §412 trocou as pistas de espaço e vigor em 58 descritores no total, hash aae74725… anterior)', () => {
     const resto = Object.keys(DESCRITORES_ELEMENTO).filter(i => !REESCRITOS.includes(i)).sort();
     const h = createHash('sha256').update(JSON.stringify(resto.map(i => [i, DESCRITORES_ELEMENTO[i]]))).digest('hex');
-    expect([resto.length, h]).toEqual([183, 'aae74725efa0026e74ad5cc1dd5c4fce3d884915c19b6ef857e2c172cdab791f']);
+    expect([resto.length, h]).toEqual([183, 'fa8c9f70b156ccff3e0a4be1b3d478392ad8a8111e0b7cc1bf70d496ea5c8442']);
   });
 });
 
@@ -210,15 +210,23 @@ describe('pistas fortes (REGISTRO §408)', () => {
   it('nenhuma forma de nenhum dos 269 descritores contém uma pista fraca medida', () => {
     for (const [id, d] of Object.entries(DESCRITORES_ELEMENTO)) expect(d.forma ?? '', id).not.toMatch(FRACAS);
   });
+  it('REGISTRO §412: nenhuma forma usa mais "a band of stars" nem "a large amber gem" (a R3 mediu os dois como parciais); as formas novas existem', () => {
+    const todas = Object.values(DESCRITORES_ELEMENTO).map(d => d.forma ?? '');
+    for (const f of todas) { expect(f).not.toContain('a band of stars'); expect(f).not.toContain('a large amber gem'); }
+    expect(todas.some(f => f.includes('a large floating ring of stars'))).toBe(true);
+    expect(todas.some(f => f.includes('a big amber gem glowing on its chest'))).toBe(true);
+    expect(DESCRITORES_ELEMENTO.espaco.forma).toContain('ring of stars');
+    expect(DESCRITORES_ELEMENTO.vigor.forma).toContain('amber gem glowing on its chest');
+  });
   it('as palavras-chave de PALAVRA_CHAVE_BASE são formas grandes (e nenhuma é a pista fraca)', () => {
     for (const k of Object.values(PALAVRA_CHAVE_BASE).flat()) expect(k, k).not.toMatch(FRACAS);
-    expect(PALAVRA_CHAVE_BASE).toMatchObject({ terra: ['boulder shoulder', 'stone slabs', 'rocky horn crest'], marcial: ['sword'], vigor: ['amber gem'], som: ['bronze bell'], espaco: ['band of stars'], morte: ['antler crown'], arcano: ['rune disc'], gravidade: ['stone orbiting a ring'], ar: ['ring of wind'] });
+    expect(PALAVRA_CHAVE_BASE).toMatchObject({ terra: ['boulder shoulder', 'stone slabs', 'rocky horn crest'], marcial: ['sword'], vigor: ['amber gem glowing on its chest', 'amber gem'], som: ['bronze bell'], espaco: ['ring of stars', 'band of stars'], morte: ['antler crown'], arcano: ['rune disc'], gravidade: ['stone orbiting a ring'], ar: ['ring of wind'] });
   });
   it('teto de 260 caracteres vale para os 269 (não só os 86), e toda pista tem no máximo UM motivo de tempo', () => {
     for (const id of Object.keys(DESCRITORES_ELEMENTO)) expect((pistasVisuaisDoElemento(id) ?? '').length, id).toBeLessThanOrEqual(TETO_PISTAS);
   });
   it('trios e quartetos: a pista de forma grande das bases fracas vem ANTES das demais na lista de "hints of"', () => {
-    const GRANDES = ['boulder shoulder', 'stone slabs', 'rocky horn crest', 'sword', 'amber gem', 'bronze bell', 'band of stars', 'antler crown', 'rune disc', 'stone orbiting a ring', 'ring of wind'];
+    const GRANDES = ['boulder shoulder', 'stone slabs', 'rocky horn crest', 'sword', 'amber gem', 'bronze bell', 'ring of stars', 'band of stars', 'antler crown', 'rune disc', 'stone orbiting a ring', 'ring of wind'];
     for (const id of ESSENCE_ELEMENT_IDS) {
       if ((essenceComposition(id)?.length ?? 0) < 3) continue;
       const hints = (DESCRITORES_ELEMENTO[id].forma ?? '').split(', with hints of ')[1]?.split(', ') ?? [];
@@ -257,7 +265,7 @@ describe('sem repetição de texto e formas grandes novas (REGISTRO §411)', () 
     for (const id of ESSENCE_ELEMENT_IDS) {
       const t = textoDoDescritor(id); const comp = essenceComposition(id) ?? [];
       if (comp.includes('som')) expect(t, id).toContain('big bronze bell');
-      if (comp.includes('vigor')) expect(t, id).toContain('large amber gem');
+      if (comp.includes('vigor')) expect(t, id).toContain('big amber gem glowing on its chest');
       if (comp.includes('gravidade')) expect(t, id).toContain('large dark stone orbiting a ring');
     }
   });

@@ -53,8 +53,8 @@ export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
  */
 export const PALAVRA_CHAVE_BASE: Readonly<Record<string, readonly string[]>> = {
   fogo: ['flames'], agua: ['water'], terra: ['boulder shoulder', 'stone slabs', 'rocky horn crest'], ar: ['ring of wind'], eletricidade: ['arcs'], arcano: ['rune disc'], sombra: ['smoke'], luz: ['rays'],
-  vileza: ['thorns'], morte: ['antler crown'], vida: ['budding'], vigor: ['amber gem'], marcial: ['sword'], tempo: ['sand'], som: ['bronze bell'],
-  gravidade: ['stone orbiting a ring'], espaco: ['band of stars'], fada: ['wings'], industrial: ['plates'], planta: ['vines'],
+  vileza: ['thorns'], morte: ['antler crown'], vida: ['budding'], vigor: ['amber gem glowing on its chest', 'amber gem'], marcial: ['sword'], tempo: ['sand'], som: ['bronze bell'],
+  gravidade: ['stone orbiting a ring'], espaco: ['ring of stars', 'band of stars'], fada: ['wings'], industrial: ['plates'], planta: ['vines'],
 };
 
 /** As 3 formas grandes da terra, na ordem de `PALAVRA_CHAVE_BASE.terra`. */
@@ -72,8 +72,8 @@ export const TETO_PISTAS = 260;
 const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
   fogo: 'licking flames', agua: 'flowing water', terra: 'a boulder shoulder', ar: 'a large detached ring of wind with a tail', eletricidade: 'yellow arcs',
   arcano: 'a large floating violet rune disc', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'a pale bone-white antler crown',
-  vida: 'budding leaves', vigor: 'a large amber gem', marcial: 'one large sword', tempo: 'drifting sand', som: 'a big bronze bell',
-  gravidade: 'a large dark stone orbiting a ring', espaco: 'a band of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
+  vida: 'budding leaves', vigor: 'a big amber gem glowing on its chest', marcial: 'one large sword', tempo: 'drifting sand', som: 'a big bronze bell',
+  gravidade: 'a large dark stone orbiting a ring', espaco: 'a large floating ring of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
 };
 
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
