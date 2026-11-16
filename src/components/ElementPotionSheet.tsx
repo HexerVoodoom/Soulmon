@@ -6,6 +6,9 @@ import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './Ele
 import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, POTION_FILTERS, type PotionFilter, type PotionRecipe } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
+import { NeutroPotionPanel } from './NeutroPotionPanel';
+import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
+import { NEUTRO_POTION_COSTS } from '../utils/neutroPotion';
 
 /**
  * POÇÃO DE ELEMENTO (Laboratório > Vesca, 30/10/2026; lista completa 12/11/2026). Mostra TODAS as poções, cada uma com o ícone e, por
@@ -42,7 +45,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   const pickFilter = (f: PotionFilter) => { setFilter(f); setShown(PAGE); };
   const back = () => { if (sel) setSel(null); else onBack(); };
 
-  const costRows = sel ? potionCost(sel) : [];
+  const ehNeutro = sel === ELEMENTO_NEUTRO_ID;
+  const costRows = sel && !ehNeutro ? potionCost(sel) : [];
   const potionRows = sel ? potionIngredients(sel) : [];
   const t = {
     title: isPt ? 'Criar poção' : 'Create potion',
@@ -121,6 +125,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         {!sel && (
           <>
             <p style={sm2Hint}>{t.hint}</p>
+            <NeutroPotionPanel essences={essences} inventory={inventory} isPt={isPt} unlocked={isPotionUnlocked(ELEMENTO_NEUTRO_ID, unlocked)} onCreate={() => { setSel(ELEMENTO_NEUTRO_ID); setDone(null); }} />
             <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
             <div role="group" aria-label={t.filters} data-potion-filters style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {POTION_FILTERS.map(f => (
@@ -143,6 +148,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
           <div data-potion-cost>
             <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}>{art(sel, true)}<strong>{elName(sel, isPt)}</strong></p>
             <p style={sm2Hint}>{t.confirmQ}</p>
+            {ehNeutro && (
+              <ul data-neutro-resumo style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6, ...sm2Text }}>
+                <li>{isPt ? `Cada elemento base: ${NEUTRO_POTION_COSTS.eachBase} essências ou 1 poção` : `Each base element: ${NEUTRO_POTION_COSTS.eachBase} essence or 1 potion`}</li>
+                <li>{isPt ? `${NEUTRO_POTION_COSTS.neutroEssence} essências do Neutro` : `${NEUTRO_POTION_COSTS.neutroEssence} Neutral essence`}</li>
+              </ul>
+            )}
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
               {costRows.map(c => (
                 <li key={c.id} data-cost={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
