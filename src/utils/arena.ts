@@ -14,7 +14,7 @@
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
 import { ELENCO_ORACULO_DATA } from './enemyRosterData';
-import { entryComponents, planArenaComponents } from './arenaComponentes';
+import { entryComponents, planArenaChampion, planArenaComponents } from './arenaComponentes';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
@@ -431,6 +431,18 @@ export function buildArenaRound(
         return {
           namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
           cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }),
+        };
+      }
+    }
+    // REGISTRO §437: o Champion de run de elemento também segue a tabela §232 (60% de 2 componentes). UM `rng()` a mais, só aqui; base (1) segue abaixo.
+    if (runElement && !stray && stage === 'champion') {
+      const plan = planArenaChampion(runElement, rng(), used);
+      if (plan?.entry) {
+        const c = plan.entry;
+        used.add(c.id);
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'champion', dropTier: shape.tier, form: 'champion', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }),
         };
       }
     }

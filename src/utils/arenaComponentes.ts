@@ -15,6 +15,7 @@
 import { ENEMY_ROSTER, type EnemyStage, type RosterEntry } from './enemyRoster';
 import { curatedComponents } from './elementosCurados';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { celulaMaisProxima, sortearContagem } from './dificuldadeEstagio';
 
 export type ArenaComponentCount = 1 | 2 | 3 | 4;
 export const ARENA_COMPONENT_COUNTS: readonly ArenaComponentCount[] = [1, 2, 3, 4];
@@ -96,4 +97,22 @@ export function planArenaComponents(stage: EnemyStage, runElement: string, v: nu
   const list = fresh.length > 0 ? fresh : all;
   const frac = (x: number) => x - Math.floor(x);
   return { want, got, entry: list[Math.min(list.length - 1, Math.floor(frac(v * 1048576) * list.length))] };
+}
+
+/**
+ * CHAMPION da Arena pela tabela §232 (REGISTRO §437; só em run de elemento): `v` sorteia o nº de componentes pela linha `champion`
+ * (35/60/5/0) e o vizinho mais próximo COM arte cobre célula vazia (empate: menos elementos). `undefined` = célula de elemento
+ * único (base): quem chama segue o fluxo de sempre. Sem `rng` próprio (o `v` é um número do `mulberry32` da run; card = luta).
+ */
+export function planArenaChampion(runElement: string, v: number, used: ReadonlySet<string> = new Set()): ArenaComponentPlan | undefined {
+  const { k: want, frac } = sortearContagem('champion', v);
+  const pool = combinedPoolOf('champion', runElement);
+  const novos = (n: ArenaComponentCount) => (pool.get(n) ?? []).some(e => !used.has(e.id));
+  const avail = new Set<ArenaComponentCount>([1, ...[...pool.keys()].filter(novos)]);
+  const got = celulaMaisProxima(want, avail) as ArenaComponentCount;
+  if (got === 1) return undefined;
+  const all = pool.get(got)!;
+  const fresh = all.filter(e => !used.has(e.id));
+  const list = fresh.length > 0 ? fresh : all;
+  return { want, got, entry: list[Math.min(list.length - 1, Math.floor(frac * list.length))] };
 }

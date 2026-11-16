@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Regra de dificuldade: estágio e mistura de elementos pela tabela §232 (`feat/regra-dificuldade-estagio`, REGISTRO §437)
+>
+> - **Feito:** `utils/dificuldadeEstagio.ts` (peso §232, vizinho mais próximo se a célula está vazia, curva de profundidade 60/200/500); `pickEnemy({ tabela: true })` na Masmorra/Rift, Match-3 (vagas, chefe, PVP) e Champion da Arena de elemento.
+> - **Efeito real:** limitado pela arte: com o roster atual, 2 elementos em Ultimate/Mega e 3-4 em Champion caem no vizinho mais simples até a arte nova entrar.
+> - **Pendente do dono:** Arena Ultimate (25/55/15/5 de 15/11 vs. §232); curva 60/200/500.
+> - **Rollback:** `git revert`; só cliente.
+>
 > ## 16/11/2026 — Retrospectiva v3: cristal com chama, título por qualidade, CTA que preenche, instância única (`feat/retro-v3`, REGISTRO §436)
 >
 > - **Feito:** chama da alma dentro de cristal (ilustração lisa, folha 4x2 gerada no ChatGPT desktop, alfa real; cristal estabilizado e só a chama varia); scrim `rgba(2,16,15,.7)` + blur; título/subtítulo por qualidade da semana (`retroQuality`: boa >= 70%, média 40-69%, ruim < 40% da taxa geral de hábitos; sem hábito = média); Soulmon à esquerda das frases; contadores "hábitos cumpridos"/"tarefas pontuais"; CTA "Vamos começar a semana" com preenchimento turquesa ao toque (`CtaButton fillMs`, 1,2 s, toques repetidos ignorados, movimento reduzido fecha direto). Do aparelho: scroll interno, CTA fora da área rolável, instância única e `data-dialog-top` em `useDialogA11y` (um diálogo posterior inertizava a retrospectiva portalizada: causa do "modal travado").

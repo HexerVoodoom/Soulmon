@@ -6015,3 +6015,18 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Suposições:** (1) 70% e 40% são palpite de produto, ajustáveis nas duas constantes; (2) 1,2 s de preenchimento (o dono aceitou "um pouco mais rápido que 1,5 s"); (3) causa exata da dupla montagem no aparelho NÃO reproduzida em App.tsx (há um único ponto de render e `retroFechada` só é local); a hipótese que o teste reproduz é a do `inert`.
 
 **Custo/gatilho:** +1 folha de frames do cristal (ver STATUS). Reabre se o dono achar os limiares de qualidade injustos ou se aparecer 2ª montagem real em App.tsx.
+
+## §437 — Dificuldade = estágio e mistura de elementos: a tabela §232 vira peso do sorteio de inimigos (16/11/2026, dono)
+
+**Pedido.** Quanto mais difícil/avançado o modo (Arena, Masmorra, Rift, Match-3), mais estágio alto, e nos estágios altos predomina elemento combinado, pela tabela §232 (`CHANCES_POR_ESTAGIO`). Antes, o roster era o inverso da regra (92% do Rookie combinado, Champion+ quase só elemento único).
+
+**Decisão (código em `utils/dificuldadeEstagio.ts`, dono único; sorteio em `enemyRoster.ts`).**
+- **Peso:** o inimigo sorteia o nº de elementos (célula = estágio × 1/2/3/4) pela linha do estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30). Um só `rng()` escolhe célula e criatura (faixa sorteada reaproveitada); determinístico, card = luta. Célula 1 mantém a fatia de ramos (`RAMO_CHANCE`).
+- **Fallback:** célula sem criatura no estágio cai no vizinho mais próximo; empate = o de MENOS elementos. Nunca falha. Hoje o roster é pobre em 2 elementos em Ultimate/Mega e em 3-4 em Champion, então o resultado real fica mais simples que a tabela até a arte nova entrar (os dados do roster não foram tocados).
+- **Pool:** com `tabela: true` entram também as formas `forma`/`paralelo` (antes só saíam em masmorra temática).
+- **Masmorra/Rift (`buildDungeonWave`):** `pickEnemy({ tabela: true })` em todos os slots; o ANDAR desloca o estágio do slot em degraus (andar efetivo 60/200/500 = +1/+2/+3), preso ao teto do LEVEL real (champion 7, ultimate 14, mega 22) e ao Mega. A regra do HP (`minStage`, 11/11) segue valendo por cima. Masmorra temática de elemento inalterada.
+- **Arena:** o Champion de run de elemento sorteia 1/2/3 componentes pela linha Champion (`planArenaChampion`; 1 `rng()` a mais só ali; o hash golden da escada 10 em `arenaComponentes.test.ts` foi regravado). Rookie, escada de vitórias, chefe Ultra, Desgarrado e combinada seguem iguais. O Ultimate segue a tabela própria da Arena de 15/11 (25/55/15/5), mais específica que a §232; não foi alterada.
+- **Match-3:** as 3 vagas, o chefe (Ultimate) e o NPC do PVP usam a tabela. Torneio: oponentes são simulados de 1 elemento (sem roster); o Desgarrado do Torneio não mudou.
+- Ultra fica fora (`ENEMY_STAGES` sem Ultra). Não revoga §232 nem decisões de Arena/Rift.
+
+**Para o dono rever.** (1) Arena Ultimate: manter 25/55/15/5 (15/11) ou alinhar à §232 (15/30/50/5)? (2) Curva de profundidade 60/200/500: ajustar? Rollback: `git revert` (só cliente; sem save).

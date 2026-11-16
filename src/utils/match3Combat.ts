@@ -133,7 +133,7 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
     const used = new Set<string>();
     const pedido = ['rookie', 'champion', 'ultimate'] as const;
-    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
+    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used, tabela: true }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
   }
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }

@@ -34,7 +34,7 @@ export function buildDungeonWave(
     // Coerência estágio × HP (dono, 11/11/2026): a forma sobe até a faixa do HP real do inimigo; o roster não tem arte de Ultra, então o teto é Mega.
     const hpStage = stageForFoeHp(foe.combatant.hp);
     const minStage: EnemyStage = FOE_STAGES.indexOf(hpStage) >= FOE_STAGES.indexOf('mega') ? 'mega' : (hpStage as EnemyStage);
-    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, Math.max(playerLevel, ENEMY_STAGE_UNLOCK_LEVEL[minStage]), element, minStage); // o HP manda: o teto de ARTE por level não segura a forma coerente com ele
+    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, Math.max(playerLevel, ENEMY_STAGE_UNLOCK_LEVEL[minStage]), element, minStage, floor, playerLevel); // o HP manda: o teto de ARTE por level não segura a forma coerente com ele
     // Especiais variados (dono, 11/11/2026): o tipo do especial do inimigo (Rift/Masmorra) vem do sorteio fixo por (andar, posição, criatura). O Pesadelo substitui o foe depois.
     const foeFinal = foe.special ? { ...foe, special: foeSpecialOf(minStage, `rift|${floor}|${slot}|${picked.name}`) } : foe;
     return {
