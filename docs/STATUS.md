@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §446)
+>
+> - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
+> - **Não visto em aparelho:** só testes e tipos; nomes provisórios.
+> - **Pendente do dono:** os 3 hospedeiros ajustados (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes.
+> - **Rollback:** `git revert`; só cliente.
+>
 > ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
 >
 > - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
@@ -15,7 +22,7 @@
 >
 > - **Feito:** selo do especial de inimigo (Arena, Masmorra/Rift, Pesadelo) e da Coroa da Hexsmith segue a família que vale; léxico: Rapture→Renewal, Flurry→Haste; básicas e 3 nomes de criatura sem cara de cura; guarda em `nomeEspecialCoerente.test.ts`.
 > - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
-> ## 16/11/2026 — Companheiro invocado PR 1b: 32 sprites (`feat/companheiro-sprites`, REGISTRO §446)
+> ## 16/11/2026 — Companheiro invocado PR 1b: 32 sprites (`feat/companheiro-sprites`, REGISTRO §447)
 >
 > - **Feito:** 32 PNG 256² RGBA (~2,4 MB) em `assets/soulmon/companheiros/`, gosma = a verdinha, 1ª geração de salamandra/coruja/espectro; QA de franja (coruja, cavaleiro_morto, gosma limpos). Flag segue DESLIGADA.
 > - **A refinar:** fada, arauto_elfico, wyvern, falcao, coruja (elemento solto). **Rollback:** `git revert`.
