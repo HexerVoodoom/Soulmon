@@ -2,7 +2,7 @@
  * RETROSPECTIVA DA SEMANA (segunda-feira) — o modal que celebra e convida (pedido do dono, 16/11/2026).
  *
  * Peso especial: não é uma folha comum. CELEBRA o que a pessoa fez e ENGAJA para a semana que
- * começa. Peça central: a CHAMA DA ALMA em turquesa (nunca laranja ou vermelha), com o Soulmon
+ * começa. Peça central: a CHAMA DA ALMA em turquesa (nunca laranja ou vermelha) dentro de um CRISTAL (v3, ilustração lisa), com o Soulmon
  * do próprio usuário ao lado. A chama é a folha animada `ui/SoulFlameAnim`; o selo é webp com alfa real; com `prefers-reduced-motion` as
  * entradas, partículas, brilho e contadores viram o estado final direto.
  *
@@ -41,12 +41,12 @@ export interface WeeklyRetroModalProps {
 const TEAL = '#4DF0DC';
 const INK = '#E9FBF8';
 
-/** Altura da caixa da chama (o quadro da folha tem margem vazia em cima: a chama visível ocupa ~33% a 95% da altura). */
-const FLAME_H = 280;
-/** Onde está o centro da chama VISÍVEL dentro da caixa: é ele que fica na borda do card (metade dentro, metade fora). */
-const FLAME_CENTER = Math.round(FLAME_H * 0.64);
-/** Quanto da chama visível fica DENTRO do card (a metade de baixo). */
-const FLAME_INSIDE = Math.round(FLAME_H * 0.31);
+/** Altura da caixa do cristal (o quadro da folha: o cristal visível ocupa de 12,5% a 87,5% da altura, centrado). */
+const FLAME_H = 260;
+/** Onde está o centro do cristal VISÍVEL dentro da caixa: é ele que fica na borda do card (metade dentro, metade fora). */
+const FLAME_CENTER = Math.round(FLAME_H * 0.5);
+/** Quanto do cristal visível fica DENTRO do card (a metade de baixo). */
+const FLAME_INSIDE = Math.round(FLAME_H * 0.375);
 
 const CSS = `
 .rt-root{position:fixed;top:0;right:0;bottom:0;left:0;height:100vh;height:100dvh;z-index:240;display:flex;flex-direction:column;overflow:hidden;
@@ -68,13 +68,10 @@ const CSS = `
 .rt-hero-text{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;flex:0 1 auto;text-align:left}
 .rt-hero .rt-pet{height:112px;flex:none}
 @media (min-width:400px){.rt-hero .rt-pet{height:128px}}
-.rt-flame{position:absolute;left:0;top:0;filter:drop-shadow(0 0 16px rgba(77,240,220,.8)) drop-shadow(0 0 40px rgba(77,240,220,.45))}
+.rt-flame{position:absolute;left:0;top:0;filter:drop-shadow(0 0 14px rgba(77,240,220,.55)) drop-shadow(0 0 34px rgba(77,240,220,.35))}
 .rt-halo{position:absolute;left:50%;top:50%;width:${FLAME_H * 1.5}px;height:${FLAME_H * 1.5}px;margin:-${FLAME_H * 0.75}px 0 0 -${FLAME_H * 0.75}px;border-radius:50%;
   background:radial-gradient(circle,rgba(77,240,220,.34),rgba(77,240,220,0) 66%);animation:rt-pulse 3s ease-in-out infinite}
 @keyframes rt-pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
-.rt-spark{position:absolute;bottom:${FLAME_H * 0.42}px;width:5px;height:5px;border-radius:50%;background:${TEAL};box-shadow:0 0 8px ${TEAL};
-  opacity:0;animation:rt-rise 3.4s ease-out infinite;animation-delay:var(--sd,0s)}
-@keyframes rt-rise{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--sx,0),-${FLAME_H * 0.7}px) scale(1.1)}}
 .rt-pet{position:relative;height:128px;width:auto;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:rt-bob 3s ease-in-out infinite}
 @keyframes rt-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .rt-title{margin:0;text-align:left;font-size:24px;line-height:1.15;font-weight:800;letter-spacing:.01em}
@@ -111,7 +108,6 @@ const CSS = `
 .rt-hint{margin:0;font-size:14px;color:rgba(233,251,248,.75);text-align:center}
 @media (prefers-reduced-motion: reduce){
  .rt-in,.rt-halo,.rt-pet{animation:none!important}
- .rt-spark{display:none}
  .rt-flash[data-on="true"]{animation:none!important;opacity:0}
  .rt-chev{transition:none}
 }
@@ -156,10 +152,6 @@ const HEAD: Record<RetroQuality, { pt: [string, string]; en: [string, string] }>
 /** Duração do preenchimento do botão (toque único) até fechar o modal. */
 export const RETRO_FILL_MS = 1200;
 
-const SPARKS = [
-  { l: '38%', sx: '-18px', sd: '0s' }, { l: '46%', sx: '10px', sd: '.5s' }, { l: '54%', sx: '-8px', sd: '1.1s' },
-  { l: '62%', sx: '20px', sd: '1.6s' }, { l: '42%', sx: '14px', sd: '2.1s' }, { l: '58%', sx: '-20px', sd: '2.6s' },
-];
 
 /**
  * INSTÂNCIA ÚNICA: dois modais da retrospectiva abertos ao mesmo tempo travavam o de cima (sem scroll, CTA mudo; relato do dono, 16/11/2026).
@@ -243,10 +235,7 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
         <div className="rt-card" data-retro-card>
           <div className="rt-art rt-in" aria-hidden="true" data-retro-flame-art style={d(0.1)}>
             <div className="rt-halo" />
-            <SoulFlameAnim className="rt-flame" height={FLAME_H} cycleSeconds={1} />
-            {SPARKS.map((s, i) => (
-              <span key={i} className="rt-spark" style={{ left: s.l, '--sx': s.sx, '--sd': s.sd } as React.CSSProperties} />
-            ))}
+            <SoulFlameAnim className="rt-flame" height={FLAME_H} cycleSeconds={1.6} />
           </div>
           <div className="rt-hero rt-in" style={d(0.2)} data-retro-hero data-retro-quality={quality}>
             <img className="rt-pet" src={spriteNow} alt={petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')} />

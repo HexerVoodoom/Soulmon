@@ -5992,3 +5992,17 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo/gatilho:** -1 webp. Reabre se a chama gigante cortar em telas muito baixas ou se o dono quiser o CTA no fluxo, não fixo.
 
+
+## §435 — Retrospectiva v3: chama em cristal, título por qualidade, CTA que preenche, instância única (16/11/2026, dono)
+
+**Pedido (resumo):** (1) chama nova, NÃO pixelada, dentro de um cristal; (2) o fundo atrás do card vira scrim semitransparente (rgba escuro ~70% com blur leve), não gradiente opaco; (3) o título "Que semana!" varia pela qualidade da semana; (4) Soulmon à esquerda das frases, o bloco centralizado no card; (5) contadores "X hábitos cumpridos" e "X tarefas pontuais"; (6) CTA menos informal ("Vamos começar a semana") com preenchimento turquesa com glow da esquerda para a direita. Depois, do aparelho: modal sem scroll, CTA cobrindo o conteúdo, e o diagnóstico do dono de que eram DOIS modais abertos ao mesmo tempo.
+
+**Decisões:**
+- **Critério de qualidade** (`retroQuality` em `utils/weeklyRetro.ts`): taxa geral = soma de dias feitos / soma de dias devidos de todos os hábitos da semana (não a média das taxas, para o hábito de 1 dia devido não pesar igual ao de 7). Boa >= 70%, média 40% a 69%, ruim < 40%. Sem hábito com dia devido (semana só de tarefas pontuais) = média. Tarefas pontuais não entram na taxa (não têm "dia devido"). Três pares título + subtítulo PT/EN: boa celebra a semana passada ("A gente arrebentou!"), média reconhece e chama para mais, ruim olha para a PRÓXIMA ("Essa semana a gente vai conseguir.").
+- **CTA:** `CtaButton` ganhou `fillMs`/`onFillComplete` (extensão do padrão, não botão novo). O dono trocou "pressionar e segurar" por TOQUE ÚNICO: o toque dispara o preenchimento (1,2 s) e, ao completar, fecha; toques repetidos durante o preenchimento são ignorados; Enter/Espaço são o clique nativo do botão; com `prefers-reduced-motion` fecha direto, sem animação.
+- **Layout:** `.rt-root` é um scrim `position: fixed` que cobre a viewport inteira (100dvh), com a área rolável (`.rt-scroll`) e o dock do CTA como IRMÃOS: o dock nunca cobre conteúdo porque a rolagem termina acima dele.
+- **Instância única e o bug do "modal travado":** o modal é portal no `body`, e `useDialogA11y` inertiza (`inert`) os irmãos de quem abre; qualquer diálogo que montasse DEPOIS (aviso, intro do bônus) tornava a retrospectiva inerte (sem scroll, CTA mudo). Mesma classe do bug da fala do NPC já tratado em `hideOthers`: agora `data-dialog-top` também é poupado. Além disso, `WeeklyRetroModal` só desenha uma instância por vez (guarda de módulo com posse por símbolo, segura com StrictMode e remontagem). Testes de regressão cobrem os dois.
+
+**Suposições:** (1) 70% e 40% são palpite de produto, ajustáveis nas duas constantes; (2) 1,2 s de preenchimento (o dono aceitou "um pouco mais rápido que 1,5 s"); (3) causa exata da dupla montagem no aparelho NÃO reproduzida em App.tsx (há um único ponto de render e `retroFechada` só é local); a hipótese que o teste reproduz é a do `inert`.
+
+**Custo/gatilho:** +1 folha de frames do cristal (ver STATUS). Reabre se o dono achar os limiares de qualidade injustos ou se aparecer 2ª montagem real em App.tsx.
