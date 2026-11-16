@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOVOS_SOULMON, FORMAS_ALTAS_ART, novoSoulmonOfStage, novoPreferenceOfTier } from './novosSoulmon';
 import { NOVOS_DATA, FORMAS_ALTAS, pickNovo } from './novosSoulmonData';
+import { LEGADO_DATA } from './enemyRosterLegado.data';
 import { buildArenaRound, ARENA_ROUNDS } from './arena';
 import { buildDungeonWave, LADDER_TIERS } from './dungeon';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES } from './sprites';
@@ -153,6 +154,18 @@ describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterAr
     for (const f of reais) {
       const b = readFileSync(join(ARQ, f));
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
+    }
+  });
+  it('legado (§445, 16/11): 15 PNGs 256² RGBA < 150 KB, um por (id, estágio) de LEGADO_DATA, sem órfão', () => {
+    const d = join(ARQ, 'legado');
+    const fs = readdirSync(d);
+    const esperados = LEGADO_DATA.flatMap(([id]) => ['champion', 'ultimate', 'mega'].map(st => `${id}-${st}.png`));
+    expect(fs.sort()).toEqual(esperados.sort());
+    expect(fs).toHaveLength(15);
+    for (const f of fs) {
+      const b = readFileSync(join(d, f));
+      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
+      expect(b.length, f).toBeLessThan(150_000);
     }
   });
   it('formas champion/ultimate/mega dos 50 curados (212-261) + 205 do pacote A (16/11): 355 PNGs 256² com alfa (RGBA, ou paleta com tRNS nos do pacote A)', () => {

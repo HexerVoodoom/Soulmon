@@ -70,6 +70,8 @@ import { dexIdsOfFoe, elementIdOfFoe } from '../utils/elementDex';
 import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
 import { essenceIconSrc, essenceName } from '../utils/resultEssences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { companheiroDoNpc } from '../utils/companheiroInvocadoLinhas';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
 import { EstagioMarca } from './ui/EstagioMarca';
@@ -378,6 +380,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       : { evolutionStage: petStage };
     const combatant = soulCombatant(estado, talentosPvp.bonus);
     const par = stageSkillsFor(skills, petStage);
+    const minhaCriatura = companheiroDoEstado(gs);
+    // chefe NOMEADO do Torneio (`CHEFES_NOMEADOS_INVOCAM`): só ele invoca entre os NPCs; flag desligada = `null`
+    const criaturaNpc = npc ? companheiroDoNpc(npc.id, DESAFIANTE_ELEMENT[npc.id]) : null;
     const me: DuelSide = {
       combatant,
       cheerScale: talentosPvp.cheerScale,
@@ -385,10 +390,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       dotResist: talentosPvp.dotResist,
       special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
       fx: fxDoLutador(par, petElement),
+      ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}), // PR 2: sempre ausente com a flag desligada
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
     if (stray) onEnemySeen?.(stray.key);
-    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray });
+    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: criaturaNpc ? { ...npcSide(combatant.level), invoca: true, companheiro: criaturaNpc } : npcSide(combatant.level), npc, stray });
   };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já

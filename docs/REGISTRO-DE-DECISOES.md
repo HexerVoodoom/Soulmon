@@ -6115,7 +6115,7 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
 
-## §446 — Hexsmith: Coroas de EFEITO (hot, slow, silence), H1 dados + nomes (16/11/2026, dono)
+## §450 — Hexsmith: Coroas de EFEITO (hot, slow, silence), H1 dados + nomes (16/11/2026, dono)
 
 Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura contínua, lentidão, silêncio; Trilha B: reforço de defesa, debuff de ataque, lentidão real), com os efeitos TAMBÉM no PvP; Coroa equipada TROCA o especial e a invocação do companheiro SOME enquanto ela estiver equipada; a Hexsmith nunca equipa/altera evocação nem toca `eEvocador`; chips como hoje; preço = Coroa atual (2.000 Bits + 70 fragmentos), ids `coroa:<valor>` sem campo novo de save.
 
@@ -6123,3 +6123,52 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 - **O que H1 NÃO faz:** nenhum combate lê `specialEffect` ainda. Em PvP e PvE a Coroa de efeito se comporta como a família-base (`shield`/`defDebuff`), idêntico ao que o jogador já tinha. Ligar o efeito no motor, recalibrar o 1v1 (±5%) e os gates PvE (±3pp) e o espelho de `_combate.js` é o H2.
 - **Rollback:** `git revert`. Cliente antigo descarta o id desconhecido item a item (`sanitizeHexsmith`); a posse é do servidor. Sem campo novo no save; sem APK.
 - **Arte:** `coroa-hot|slow|silence.png` ausentes: `resolveHexCrownArt` cai em `slot-coroa.png`.
+
+## §448 — Mini-boss do Rift usa a forma do PRÓPRIO conjunto (16/11/2026, dono)
+
+**Decisão (emenda ao §445).** Quando o conjunto não tem forma no estágio pedido (169 dos 190 pares sem Ultimate; 6 trios sem Mega), o mini-boss e os comuns usam a MELHOR forma que o próprio elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate, Champion, Rookie), só então o de cima. Não troca de arte e não cai na base do componente; continua mais forte pelo andar de crescimento a mais (`RIFT_MINIBOSS_EXTRA_FLOORS`). Componentes do estágio só entram se o elemento não tiver criatura nenhuma (hoje nunca). Confirmados: volta ao Rookie dos 20 base depois do andar 538; mini-boss com +1 andar.
+
+**Código/testes.** `pickEnemyDoConjunto` (`enemyRoster.ts`); `riftSets.test.ts` cobre os 190 pares e os 40 trios; `dungeonElementos.test.ts` volta a exigir só criaturas do elemento da camada.
+
+**Render `DungeonGame.marco`.** O travamento era do teste: o mock encolhe o inimigo a 5% do HP, abaixo do piso de `DUNGEON_MIN_HITS` (3 golpes) que a produção garante; nesse regime um mini-boss com cura trava o motor. Sem bug de render conhecido; o teste desliga o especial do inimigo e diz por quê. Rollback: `git revert`; só cliente.
+
+## §447 — Companheiro invocado, PR 1b: os 32 sprites entram (16/11/2026, dono)
+
+**Decisão do dono (16/11):** aprovados os 32; nos três com duas gerações valeu a 1ª (salamandra, coruja, espectro), e a gosma ácida é a "verdinha" (request Higgsfield `01a1e56e-63c4`, slime verde com faixa e lanterna); `slime_cristalino` foi REFEITO (variação C: gosma fofa translúcida/iridescente, sem sino nem pedras).
+
+**Entregue:** `assets/soulmon/companheiros/<id>.png`, 32 arquivos 256² RGBA com alfa real, ~2,4 MB no total (maior: `ent` 114 KB); `PENDENTES` saiu do teste, que agora exige os 32, 256² RGBA e < 150 KB cada. QA de franja (fundo claro/escuro, procura de pixel de chave com alfa>0): limpos coruja e cavaleiro_morto (verde de chave solto na borda) e a gosma (franja rosada; re-chave magenta + despill). Originais em `E:/Soulmon-assets/_lote-16-11/companheiros/pre-despill/`.
+
+**A refinar depois:** fada, arauto_elfico, wyvern, falcao e coruja têm elemento solto (disco de runas, selo, anel de vento) fora do corpo.
+
+**Flag `COMPANHEIRO_INVOCADO` continua DESLIGADA** (combate é o PR 2). **Rollback:** `git revert`; sem save nem servidor.
+## §446 — Linhas v1, PR 2: formas antigas viram ramos legados em outro elemento; os 5 Ultra novos viram chefe de Arena (16/11/2026, dono)
+
+**Decisão (modal do dono, 16/11).** (1) As formas ANTIGAS (champion/ultimate/mega) das 5 linhas do §438 não somem: viram um **ramo legado** de uma criatura base de OUTRO elemento, com nome novo derivado da raiz do hospedeiro (nenhuma espécie aparece com o nome de outra linha). 15 entradas no FIM de `ENEMY_ROSTER` (kind `ramo`, ids `lg…` sem hífen; o `#N` do Bestiário das que já existiam não muda). Arte em `src/assets/soulmon/novos-arquivo/legado/<id>-<estágio>.png` (as de `E:/Soulmon-assets/_lote-16-11/legado-v0/`, 256² RGBA, 760 KB no total, maior 72,7 KB), lida só por `enemyRosterArt.ts` no mesmo mapa `RAMOS_ART` (chave `legado/<id>-<estágio>`). Dados em `utils/enemyRosterLegado.data.ts`. (2) Nomes e ids das 5 linhas atuais ficam. (3) Os 5 Ultra novos (`novos/<elemento>-ultra.png`) passam a ser CHEFE ULTRA de Arena, ao lado de Mareoror e Salsolura. (4) Rookies antigos: só arquivo (já em `legado-v0/`).
+
+**Mapeamento (conferido nos sprites; 3 ajustes sobre a sugestão da proposta).** som → ar (asas de mariposa, espirais de vento: casa); eletricidade → **espaço** (era indústria; lagarto dourado com antenas, serpente e coelho com anel/halo são celestes); tempo → **indústria** (era espaço; tartaruga com bússola, orbe de relógio e leão alado de engrenagens são mecânicos); arcano → luz (dourado e branco: casa); marcial → **água** (era vigor; guerreiro e hidra azul-branco: o vigor é marrom). Elemento e golpes = os do hospedeiro.
+
+| Antigo (linha) | Hospedeiro (elemento) | id | Champion / Ultimate / Mega (PT = EN, como os outros ramos) |
+|---|---|---|---|
+| som | Zephir (ar) | `lgvibri` | Zephrill / Zephwing / Zephmoth |
+| eletricidade | Voidlet (espaço) | `lgvoltrix` | Voidspark / Voidserp / Voidhalo |
+| tempo | Smeltu (indústria) | `lgchronib` | Smeltoise / Smeltick / Smeltgryph |
+| arcano | Solion (luz) | `lgrunix` | Solimur / Solowl / Solsphinx |
+| marcial | Bubbo (água) | `lgkenjo` | Bubbonin / Bubbotrident / Bubbohydra |
+
+**Chefe Ultra de Arena (`arena.ts`).** `ARENA_CHEFES_ULTRA` passa de 2 para 7 (`ARENA_CHEFES_ULTRA_NOVOS` = vibri, voltrix, chronib, runix, kenjo; elemento da criatura; nome = `FORMAS_ALTAS[id].ultra`: Cacophonarch, Voltarch, Chronarch, Arcanarch, Kenzarch; arte `FORMAS_ALTAS_ART[id].ultra`, resolvida em `ArenaGame`). Nada mais mudou: escada, limiar 32, chance 1 em 4 (`ARENA_CHEFE_ULTRA_CHANCE`), multiplicadores ×1,5 HP / ×1,25 força, recompensas e número de `rng()` são os mesmos. A espécie sai uniforme entre as 7 (era 50/50), pela mesma conta `floor(roll/0,25 × n)`: para a mesma semente a espécie do chefe Ultra pode ser outra que antes (só em run com escada >= 32); card = luta continua valendo (mesma função). O hash golden de `arenaComponentes.test.ts` NÃO mudou (escadas 0 e 10 não têm chefe Ultra).
+
+**Efeito na regra de dificuldade (#965, §437) e no Rift (§445).** Os 15 são k = 1 (1 componente) e kind `ramo`: entram na fatia dos ramos (`RAMO_CHANCE` = 1/3 da célula k = 1) em champion/ultimate/mega, que passa de 40 para 45 ramos por estágio, então cada ramo individual aparece um pouco menos; a chance de cada CÉLULA (nº de elementos) não muda. `combinedPoolOf` só junta `forma`/`paralelo` de 2+ componentes: os legados NÃO entram nos pools de combinados da Arena de run do elemento nem na tabela de componentes. No Rift por conjuntos (`pickEnemyDoConjunto`, filtra por elemento) os conjuntos de ar, espaço, indústria, luz e água ganham 1 ramo a mais por estágio. Na Arena, o ramo em rodada Ultimate (`ramoFromRoll`, zero `rng` a mais) passa a sortear entre 45: a mesma semente pode dar outro ramo que antes (sem mudar a contagem de sorteios).
+
+**Compatibilidade.** Bestiário: +15 chaves `lg…-<estágio>`, começam "não vistas" para todos (chave desconhecida de cliente antigo é ignorada); nenhuma chave antiga muda de sentido; sem migração, sem campo de save, sem servidor. Peso: +760.440 B de PNG em `novos-arquivo/legado/` (emitidos pelo Vite como asset), +15 strings no JS.
+
+**Para o dono rever.** (1) Os 3 ajustes de hospedeiro acima (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes provisórios (EN = PT; o dono troca na última coluna de `enemyRosterLegado.data.ts`). (2) Os legados contam como `ramo` e aparecem no sorteio comum (a opção "fora do sorteio comum", como `forma`/`paralelo`, é uma linha: trocar o kind).
+
+## §449 — Companheiro invocado, PR 2: combate, servidor e cena, atrás da flag desligada (16/11/2026, dono)
+
+**Regra do dono (16/11):** o especial de um evocador INVOCA o companheiro por 3 turnos, função mista. Especial de ATAQUE (`direct`, `dot`): o companheiro ataca nos 3 turnos, como um DoT normal e sem outro efeito. Especial de EFEITO (`atkBuff`, `spdBuff`, `defDebuff`, `shield`): no turno da invocação executa o efeito (um pouco menor) e nos 2 turnos seguintes ataca. CURA (`heal`, `shield` com cura contínua) NÃO invoca ("tira função de cura de evocação em tudo"): o especial roda normal, sem companheiro e sem cena. 1 companheiro por combatente (`COMPANHEIROS_POR_COMBATENTE`): invocar de novo troca o que estava em cena.
+
+**Calibração (`combate/companheiro.ts`, espelho em `_combate.js`):** o ataque do companheiro É um DoT marcado (`comp`), então herda ticks no turno de quem apanha, escudo (metade) e `dotResist`. `COMPANHEIRO_EFEITO_FATOR` 0,80 (efeito do turno 1) e `COMPANHEIRO_ATAQUE_FATOR` 0,25 de um tick de DoT do orçamento BASE (sem o `power`: o de `spdBuff` é 2 e inflava +20pp). Valor nominal sobre o especial normal = 0,80 + 0,17/power ≈ 0,97 (0,88 no `spdBuff`); ataque puro = 1,00. Teto do dono ~110% (`COMPANHEIRO_VALOR_MAXIMO`). Medido por simulação (`companheiro.test.ts`, 1v1, 7 famílias × 3 níveis × 3 builds × 100 sementes): vitória invocada − normal entre −7pp e +6pp, tempo para vencer ≥ 93% do normal. Primeira tentativa (ataque 30% com `power`) deu +20pp em `spdBuff` e +7pp em `shield`: revisada.
+
+**Motor:** `FightSide.invoca` (opt-in; ausente = byte a byte o de hoje, testado em `fight` e `groupFight`); contador real `FighterFx.comp` (só a cena lê). **Servidor:** `_combate.js` espelha a regra (teste de paridade com o log inteiro de eventos); `_companheiroInvocado.js` decide `invoca` pelo SAVE (cache `soulmonEvocacao` do estágio + criatura válida das 32) ou pela TABELA dos simulados (elemento × linha; paridade com a escola do app); flag do servidor separada e travada por teste. Save sem o cache = sem companheiro (nunca adivinha). Flag desligada: nenhum campo novo sai na ficha de luta. **Cena:** prop aditiva `summon` em `BattleStage` + `SummonLayer` (sprite à frente do invocador, lazy, 1 PNG por companheiro visível, sem sprite = nada, `prefers-reduced-motion` sem transição, presença só pelo contador). **Ligações:** `companheiroDoEstado` é a única porta; Arena, Masmorra, Pesadelo, Raid do Grove, Duelo/Torneio (inclui treino e NPC nomeado) e `recalcularCaches` + preenchimento único do cache em `App.tsx` (só com a flag).
+
+**Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.

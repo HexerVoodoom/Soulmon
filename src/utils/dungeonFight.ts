@@ -48,6 +48,8 @@ export interface DungeonPlayerCfg {
   efeitoElemento?: string;
   /** §228: usa os botões próprios do Pesadelo. */
   pesadelo?: boolean;
+  /** COMPANHEIRO INVOCADO (PR 2): a criatura do evocador (`companheiroDoEstado`); ausente/`null` = o especial roda como sempre. */
+  companheiro?: string | null;
 }
 
 /** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
@@ -62,6 +64,7 @@ export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSid
     special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento, p.pesadelo, !p.pesadelo), // §334: fora do Pesadelo, a tune da Masmorra
     area: 'single',
     startShield: opening ? p.startShield : 0,
+    ...(p.companheiro ? { invoca: true } : {}),
   };
 }
 

@@ -74,6 +74,8 @@ import { deixarPocoes, devolverPocoes, pocoesDoJogador, potionsTotal, recolherPo
 import { combatSceneBgDaCamada } from '../utils/combatArt';
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useDungeonBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { XP_DUNGEON_FLOOR, XP_DUNGEON_RUN } from '../utils/bond';
@@ -227,10 +229,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
     efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
+    companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     jeito,
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
+  }), [hx, estado, gs, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -795,6 +798,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         onSwipe={battle.swipe}
       >
         <BattleStage
+          summon={summonsDoGrupo(battle.summon, jogador.companheiro)}
           specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
           foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
           isPt={isPt}

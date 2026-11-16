@@ -12,7 +12,7 @@
 // module's foes): the constants below were measured by `_sim/cv3-medir/grupo.ts`
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
-import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
+import { FORMAS_ALTAS, NOVOS_DATA, novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
 import { ELENCO_ORACULO_DATA } from './enemyRosterData';
 import { entryComponents, planArenaChampion, planArenaComponents } from './arenaComponentes';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
@@ -284,13 +284,20 @@ export const ARENA_ROUNDS = 5;
 
 /** Só com a escada NO TOPO (32 vitórias = todas as 5 rodadas em Ultimate = `ARENA_LADDER_STRENGTH_CAP`, o mesmo ponto em que a força dos inimigos para de subir) o chefe da rodada 5 pode ser um Ultra. Antes disso, NUNCA. */
 export const ARENA_CHEFE_ULTRA_MIN_LADDER = 32;
-/** Chance de a rodada 5 de uma run (já liberada) ser o chefe Ultra: 1 em 4 ("muito raro e muito difícil"; a espécie sai 50/50). */
+/** Chance de a rodada 5 de uma run (já liberada) ser o chefe Ultra: 1 em 4 ("muito raro e muito difícil"; a espécie sai uniforme entre as 7 de `ARENA_CHEFES_ULTRA`). */
 export const ARENA_CHEFE_ULTRA_CHANCE = 0.25;
 /** "Muito difícil": multiplicadores SOBRE o chefe comum (hp × e dano ×). O chefe comum já tem o especial. */
 export const ARENA_CHEFE_ULTRA_MULT = { hp: 1.5, power: 1.25 } as const;
-/** As espécies que podem ser o chefe Ultra: as 2 do elenco do Oráculo (id, elementos, nome do Ultra). Ultra fica fora do roster comum. */
-export const ARENA_CHEFES_ULTRA: ReadonlyArray<{ id: string; element: string; elements: readonly string[]; name: string }> =
-  ELENCO_ORACULO_DATA.map(([id, element, elements, , , , ultra]) => ({ id, element, elements, name: ultra }));
+/** As 5 linhas que ganharam Ultra novo (REGISTRO §445, dono 16/11/2026): o Ultra vira chefe de Arena, ao lado dos 2 do Oráculo. Id = o da criatura base; arte = `FORMAS_ALTAS_ART[id].ultra`. */
+export const ARENA_CHEFES_ULTRA_NOVOS: readonly string[] = ['vibri', 'voltrix', 'chronib', 'runix', 'kenjo'];
+/** As espécies que podem ser o chefe Ultra: as 2 do elenco do Oráculo (id, elementos, nome do Ultra) e os 5 Ultra novos das linhas v1 (elemento da criatura, nome de `FORMAS_ALTAS`), nesta ordem. Ultra fica fora do roster comum. */
+export const ARENA_CHEFES_ULTRA: ReadonlyArray<{ id: string; element: string; elements: readonly string[]; name: string }> = [
+  ...ELENCO_ORACULO_DATA.map(([id, element, elements, , , , ultra]) => ({ id, element, elements, name: ultra })),
+  ...ARENA_CHEFES_ULTRA_NOVOS.map(id => {
+    const n = NOVOS_DATA.find(d => d.id === id)!;
+    return { id, element: n.element, elements: [n.element], name: FORMAS_ALTAS[id]?.ultra ?? n.champion };
+  }),
+];
 /** A escada libera o chefe Ultra? */
 export const arenaChefeUltraLiberado = (ladder: unknown): boolean => sanitizeArenaLadder(ladder) >= ARENA_CHEFE_ULTRA_MIN_LADDER;
 
@@ -579,6 +586,8 @@ export interface ArenaPlayerCfg {
   elements?: ArenaElements;
   /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
   efeitoElemento?: string;
+  /** COMPANHEIRO INVOCADO (PR 2): a criatura do evocador (`companheiroDoEstado`); ausente/`null` = o especial roda como sempre. */
+  companheiro?: string | null;
 }
 
 const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[escolaSkillSegura(p.escolaBasica)] : null);
@@ -590,6 +599,7 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
     special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento),
     area: p.area,
+    ...(p.companheiro ? { invoca: true } : {}),
   };
 }
 

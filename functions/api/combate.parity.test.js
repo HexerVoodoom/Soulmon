@@ -291,3 +291,39 @@ describe('o espelho NÃO vai para o bundle do app (AC11: orçamento de bytes)', 
     expect(achados).toEqual([]);
   });
 });
+
+describe('COMPANHEIRO INVOCADO: o espelho do servidor e igual ao nucleo do app', () => {
+  const sp = (fam, power) => ({ family: fam, power });
+  it('constantes e plano de invocacao', async () => {
+    const comp = await import('../../src/utils/combate/companheiro');
+    expect([srv.COMPANHEIRO_TURNOS, srv.COMPANHEIRO_EFEITO_FATOR, srv.COMPANHEIRO_ATAQUE_FATOR])
+      .toEqual([comp.COMPANHEIRO_TURNOS, comp.COMPANHEIRO_EFEITO_FATOR, comp.COMPANHEIRO_ATAQUE_FATOR]);
+    for (const f of FAMILIES) {
+      for (const scale of [0.92, 1, 1.08]) {
+        const s = specialsApp.specialOf(f);
+        expect(srv.planoInvocacao(srv.specialOf(f), scale)).toEqual(comp.planoInvocacao(s, scale));
+      }
+    }
+    expect(srv.especialInvoca({ family: 'shield', effect: 'hot' })).toBe(comp.especialInvoca({ family: 'shield', effect: 'hot' }));
+    expect(srv.planoInvocacao(sp('heal', 1), 1)).toBeNull();
+  });
+  it('fightSteps com invoca: o log inteiro e o vencedor sao iguais; sem invoca = o de hoje', () => {
+    for (const L of [5, 20, 40]) {
+      for (const family of FAMILIES) {
+        for (const seed of SEEDS.slice(0, 5)) {
+          for (const invoca of [true, undefined]) {
+            const a = { ...sideApp(L, 'balanced', family), ...(invoca ? { invoca } : {}) };
+            const b = { ...sideSrv(L, 'balanced', family), ...(invoca ? { invoca } : {}) };
+            const foeA = sideApp(L, 'atk', 'direct');
+            const foeB = sideSrv(L, 'atk', 'direct');
+            const o = { seed, hpScale: srv.PVP_HP_SCALE };
+            const ra = play(fightApp, a, foeA, o);
+            const rb = play(srv, b, foeB, o);
+            expect(rb.events).toEqual(ra.events);
+            expect(rb.result).toEqual(ra.result);
+          }
+        }
+      }
+    }
+  });
+});

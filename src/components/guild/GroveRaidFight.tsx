@@ -29,6 +29,9 @@ import { groveRaidLineup, groveRaidRound } from '../../utils/groveRaid';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
 import { PANORAMA_SRC, ARVORE_SRC } from '../../assets/bosque';
 import { ESTACOES_BOSQUE, type EstacaoBosque } from '../../utils/bosqueArvores';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { companheiroDoEstado } from '../../utils/companheiroInvocado';
+import { summonsDoGrupo } from '../games/SummonLayer';
 
 /**
  * O fundo da luta: o PANORAMA do Plantio (dono, 01/11/2026), o mesmo cenário do `PlantioVisor`/`GroveVisor`/`GroveCena` onde
@@ -59,7 +62,8 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
-  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento) }), [combatant, family, ident.especial.elemento]);
+  const companheiro = companheiroDoEstado(useGameStateOptional()?.gameState); // PR 2: sempre `null` com a flag desligada
+  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento), companheiro }), [combatant, family, ident.especial.elemento, companheiro]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
   const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
@@ -106,6 +110,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-grove-raid style={{ display: 'contents' }} />
       <BattleStage
+        summon={summonsDoGrupo(battle.summon, companheiro)}
         specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}

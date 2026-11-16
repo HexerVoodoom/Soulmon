@@ -36,6 +36,7 @@ import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMiraFlash } from './useMiraFlash';
+import { SummonLayer, type StageSummon } from './SummonLayer';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
@@ -924,6 +925,11 @@ export interface BattleStageProps {
    * (`poolPct` 0..100); nenhuma contribuição individual passa por aqui.
    */
   boss?: { poolPct: number; name: string; levelLabel: string };
+  /**
+   * COMPANHEIRO INVOCADO (PR 2): quem tem companheiro em cena e quantos turnos de ataque faltam (o contador REAL do núcleo, `FighterFx.comp`).
+   * Ausente/vazio = nada muda. Sem sprite para a criatura = não desenha nada. Aditivo: os outros chamadores não passam.
+   */
+  summon?: readonly StageSummon[];
   children?: ReactNode;
 }
 
@@ -968,7 +974,7 @@ function bannerLabel(
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, sceneDomain, sceneVariant = 0, me, foes, target = 0, onPickFoe, picked = null, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, boss, children,
+  charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, boss, summon, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
@@ -1125,6 +1131,8 @@ export function BattleStage({
           );
         })}
         <Fighter f={me} spot={layout.me} flip={false} zIndex={cutActor === 'me' ? Z_CUTSCENE_ACTOR : 3} lunge={meLunge} hitKey={hitOn('me').key} hitDelay={hitOn('me').delay} charged={charging || (me.energy ?? 0) >= 0.999} />
+
+        {!!summon?.length && <SummonLayer summons={summon} me={layout.me} foes={layout.foes} reduced={reduced} />}
 
         {/* As barras EM CIMA de cada lutador: HP e, logo abaixo, energia. */}
         {foes.map((f, i) => {
