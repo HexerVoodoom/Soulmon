@@ -83,7 +83,9 @@ describe('Chama Azul nunca mais mostra o urso marrom (09/11/2026)', () => {
 });
 
 describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
-  const els = [...new Set(ENEMY_ROSTER.filter(e => e.kind === 'forma').map(e => e.element))];
+  // as 150 de 09/11 (as do pacote A, 16/11, vêm depois e não têm camada própria na Fenda)
+  const formasFenda = ENEMY_ROSTER.filter(e => e.kind === 'forma').slice(0, 150);
+  const els = [...new Set(formasFenda.map(e => e.element))];
   it('50 elementos; a camada de cada um, com Lv alto, mostra rookie, champion, ultimate e mega só dele, com arte', () => {
     expect(els).toHaveLength(50);
     for (const el of els) {
@@ -103,7 +105,7 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
   });
   it('as 150 formas têm PNG distinto do rookie e entre si', () => {
     const hashes = new Set<string>();
-    for (const e of ENEMY_ROSTER.filter(x => x.kind === 'forma')) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
+    for (const e of formasFenda) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
     expect(hashes.size).toBe(150);
   });
 });

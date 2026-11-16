@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import {
   ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, RAMO_CHANCE, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
@@ -7,6 +8,7 @@ import {
 import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
 import { RAMOS_INIMIGOS_DATA, PARALELOS_DATA } from './enemyRosterData';
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
+import { essenceComposition } from './elementDex';
 import { entryComponents } from './arenaComponentes';
 import { newBossCombat } from './match3Boss';
 import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
@@ -27,8 +29,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) = 673 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) = 878 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -291,7 +293,7 @@ describe('Ultimates só-Ultimate de 2 componentes (15/11/2026, §405)', () => {
   it('14 entradas, só Ultimate (nenhum Champion), no fim do roster, kind paralelo, com arte, 2 componentes e nome único sem -mon', () => {
     expect(ULTIMATES_2COMP_DATA).toHaveLength(14);
     expect(novos).toHaveLength(14);
-    expect(ENEMY_ROSTER.slice(-14)).toEqual(novos);
+    expect(ENEMY_ROSTER.slice(-14 - 205, -205)).toEqual(novos);
     for (const e of novos) {
       expect(e.stage).toBe('ultimate');
       expect(e.kind).toBe('paralelo');
@@ -314,7 +316,7 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
   const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
   it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
     expect(par).toHaveLength(10);
-    expect(ENEMY_ROSTER.slice(-200, -190)).toEqual(par);
+    expect(ENEMY_ROSTER.slice(-200 - 205, -190 - 205)).toEqual(par);
     expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
     for (const e of par) {
       expect(['champion', 'ultimate']).toContain(e.stage);
@@ -377,10 +379,11 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
 });
 
 describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', () => {
-  const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma');
+  // as 150 de 09/11; as do pacote A (16/11) vêm depois, no fim de tudo, e têm o próprio describe abaixo
+  const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma').slice(0, 150);
   it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
     expect(formas).toHaveLength(150);
-    expect(ENEMY_ROSTER.slice(-190, -40)).toEqual(formas);
+    expect(ENEMY_ROSTER.slice(-190 - 205, -40 - 205)).toEqual(formas);
     expect(new Set(formas.map(e => e.element)).size).toBe(50);
     expect(new Set(formas.map(e => e.name)).size).toBe(150);
     expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);
@@ -465,3 +468,40 @@ describe('elenco do Oráculo como selvagens (Mareoror e Salsolura, 10/11/2026)',
   });
 });
 
+
+describe('formas do pacote A: 1 por combinação no estágio dela (dono, 16/11/2026)', () => {
+  const pacote = ENEMY_ROSTER.slice(-205);
+  const alvo: Record<number, string> = { 2: 'champion', 3: 'ultimate', 4: 'mega' };
+  it('205 entradas no fim de tudo (o #N do Bestiário não muda), kind forma, com arte própria e nome único', () => {
+    expect(pacote).toHaveLength(205);
+    expect(pacote.every(e => e.kind === 'forma')).toBe(true);
+    expect(new Set(pacote.map(e => e.name)).size).toBe(205);
+    expect(new Set(pacote.map(e => rosterSpriteOf(e))).size).toBe(205);
+    const nomes = ENEMY_ROSTER.map(e => e.name);
+    for (const e of pacote) {
+      expect(rosterSpriteOf(e), e.key).toBe(FORMAS_ART[e.artFile!]);
+      expect(nomes.filter(n => n === e.name), e.name).toHaveLength(1);
+    }
+  });
+  it('toda combinação de 2, 3 e 4 elementos tem ao menos uma forma no estágio-alvo (champion, ultimate, mega)', () => {
+    for (const k of [2, 3, 4]) {
+      const elementos = new Set(ENEMY_ROSTER.filter(e => e.kind === 'combinado' && essenceComposition(e.element)?.length === k).map(e => e.element));
+      for (const el of elementos) {
+        expect(ENEMY_ROSTER.some(e => e.element === el && e.stage === alvo[k] && e.kind !== 'mascote'), `${el} (${k}) sem ${alvo[k]}`).toBe(true);
+      }
+    }
+  });
+  it('205 PNG distintos entre si e do rookie', () => {
+    const sha = (f: string) => createHash('sha256').update(readFileSync(f)).digest('hex');
+    const dir = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
+    const hashes = new Set(pacote.map(e => sha(join(dir, 'combinados-formas', `${e.artFile}.png`))));
+    expect(hashes.size).toBe(205);
+    for (const e of pacote) expect(hashes.has(sha(join(dir, 'combinados', `${e.artFile!.replace(/-(champion|ultimate|mega)$/, '')}.png`))), e.key).toBe(false);
+  });
+  it('fora do sorteio comum: só saem com o elemento pedido', () => {
+    const chaves = new Set(pacote.map(e => e.key));
+    for (let seed = 1; seed <= 1500; seed++) for (const st of ['champion', 'ultimate', 'mega'] as const) {
+      expect(chaves.has(pickEnemy(40, mulberry32(seed), { stage: st }).key)).toBe(false);
+    }
+  });
+});
