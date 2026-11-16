@@ -24,6 +24,14 @@ describe('posicao e lista', () => {
     expect(p.y).toBeLessThan(me.y);
     expect(summonPlace(foes[0], me).flip).toBe(true);
   });
+  it('fica AO LADO, na linha do chao (nao sobre o corpo) e nunca desce: o do inimigo nao cai sobre a barra do jogador', () => {
+    const meu = summonPlace(me, foes[0]);
+    expect(meu.x - me.x).toBeGreaterThan(me.size * 0.6); // fora do corpo do invocador
+    expect(me.y - meu.y).toBeLessThan(me.size * 0.2); // quase no mesmo chao
+    const dele = summonPlace(foes[0], me);
+    expect(dele.x).toBeLessThan(foes[0].x);
+    expect(dele.y).toBeLessThan(foes[0].y); // sobe, nunca desce rumo ao jogador
+  });
   it('summonsDoGrupo: so quem tem turnos; vazio sem companheiro', () => {
     expect(summonsDoGrupo([], 'lobo')).toEqual([]);
     expect(summonsDoGrupo([0, 0], 'lobo', ['lobo'])).toEqual([]);

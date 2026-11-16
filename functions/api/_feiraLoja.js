@@ -133,6 +133,10 @@ export const FEIRA_LOJA_CATALOGO = Object.freeze([
   ['furn-jardim-regador-encantado', 'furniture', 300, 'any'],
   ['furn-jardim-canteiro-redondo', 'furniture', 200, 'any'],
   ['furn-jardim-vaso-suspenso', 'furniture', 300, 'any'],
+  ['furn-ruinas-carro-engolido', 'furniture', 300, 'any'],
+  ['furn-ruinas-placa-torta', 'furniture', 300, 'any'],
+  ['furn-ruinas-asfalto-rachado', 'furniture', 200, 'any'],
+  ['furn-ruinas-fiacao-com-musgo', 'furniture', 300, 'any'],
 ]);
 
 /**

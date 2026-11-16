@@ -104,15 +104,28 @@ describe('cache soulmonEvocacao', () => {
   });
 });
 
-describe('flag desligada', () => {
-  it('a flag nasce desligada e as consultas devolvem null', () => {
-    expect(COMPANHEIRO_INVOCADO).toBe(false);
-    const cache: EvocacaoPorEstagio = Object.fromEntries(FICHA_STAGE_ORDER.map(s => [s, { evocador: true }]));
-    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache)).toBeNull();
-    expect(eEvocadorPorLinha('terra', 'benevolencia')).toBe(false);
-    expect(companheiroDoSimulado('sim_0001', 'terra', 'benevolencia')).toBeNull();
-    expect(eNpcInvocador('npc-espina')).toBe(false);
-    expect(companheiroDoNpc('npc-espina', 'vida')).toBeNull();
+describe('a chave (flag) nos dois estados', () => {
+  const cache: EvocacaoPorEstagio = Object.fromEntries(FICHA_STAGE_ORDER.map(s => [s, { evocador: true }]));
+  it('a chave nasce LIGADA no pacote (decisão do dono, 16/11)', () => {
+    expect(COMPANHEIRO_INVOCADO).toBe(true);
+  });
+  it('DESLIGADA: todas as consultas devolvem null / false', () => {
+    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, false)).toBeNull();
+    expect(eEvocadorPorLinha('terra', 'benevolencia', false)).toBe(false);
+    expect(companheiroDoSimulado('sim_0001', 'terra', 'benevolencia', false)).toBeNull();
+    expect(eNpcInvocador('npc-espina', false)).toBe(false);
+    expect(companheiroDoNpc('npc-espina', 'vida', false)).toBeNull();
+  });
+  it('LIGADA: o evocador ganha a criatura; quem não é, não', () => {
+    for (const s of FICHA_STAGE_ORDER) expect(companheiroAtivo(s, 'lobo', cache, true)).toBe('lobo');
+    expect(companheiroAtivo('rookie', 'lobo', { rookie: { evocador: false } }, true)).toBeNull();
+    expect(eEvocadorPorLinha('terra', 'benevolencia', true)).toBe(true);
+    expect(eEvocadorPorLinha('terra', 'poder', true)).toBe(false);
+    expect(companheiroDoSimulado('sim_0001', 'terra', 'benevolencia', true)).toBe(criaturaPorId('sim_0001', 'terra'));
+    expect(companheiroDoSimulado('sim_0001', 'terra', 'poder', true)).toBeNull();
+    expect(eNpcInvocador('npc-espina', true)).toBe(true);
+    expect(eNpcInvocador('npc-qualquer', true)).toBe(false);
+    expect(companheiroDoNpc('npc-espina', 'vida', true)).toBe(criaturaPorId('npc-espina', 'vida'));
   });
 });
 
@@ -163,11 +176,15 @@ describe('NPCs: só chefes nomeados, por lista explícita', () => {
 });
 
 describe('companheiroDoEstado (PR 2): a unica porta das telas de luta', () => {
-  it('com a flag desligada devolve null mesmo para um save evocador', async () => {
+  it('desligada devolve null mesmo para um save evocador; ligada devolve a criatura', async () => {
     const { companheiroDoEstado } = await import('./companheiroInvocado');
     const save = { evolutionStage: 'champion', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: { champion: { evocador: true } } };
-    expect(companheiroDoEstado(save)).toBeNull();
-    expect(companheiroDoEstado(null)).toBeNull();
-    expect(companheiroDoEstado({})).toBeNull();
+    expect(companheiroDoEstado(save, false)).toBeNull();
+    expect(companheiroDoEstado(save, true)).toBe('lobo');
+    expect(companheiroDoEstado(save)).toBe('lobo'); // padrão = a chave do pacote (ligada)
+    for (const ligado of [false, true]) {
+      expect(companheiroDoEstado(null, ligado)).toBeNull();
+      expect(companheiroDoEstado({}, ligado)).toBeNull();
+    }
   });
 });

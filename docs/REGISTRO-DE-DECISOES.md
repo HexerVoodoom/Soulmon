@@ -6185,6 +6185,20 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 
 **Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.
 
+## §459 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
+
+**Decisão do dono (16/11):** o companheiro invocado entra LIGADO no pacote de 16/11 (`COMPANHEIRO_INVOCADO = true` em `src/utils/companheiroInvocado.ts` e em `functions/api/_companheiroInvocado.js`; o teste de paridade trava os dois juntos). A pergunta (1) do §449 está RESPONDIDA: o anti-fraude do cache `soulmonEvocacao` fica como está (ganho máximo medido ≤ ~6pp), sem reconstruir o gatilho no servidor.
+
+**Chave nos dois estados.** As consultas ganharam o parâmetro `ligado` (padrão = a chave; só o teste o passa): `companheiroAtivo`, `companheiroDoEstado`, `eEvocadorPorLinha`, `companheiroDoSimulado`, `eNpcInvocador`, `companheiroDoNpc`. Os testes que assumiam a flag desligada agora cobrem DESLIGADA e LIGADA (nenhum foi afrouxado); o padrão é afirmado como ligado.
+
+**Pontas fechadas.** (a) Simulados no duelo: o servidor manda `invoca: true` sem criatura; `comCriaturaDoOponente` (Torneio ranqueado e Treino) completa com `hash(id)` entre as criaturas de afinidade com o elemento, a mesma regra de `companheiroDoSimulado`; sem id/elemento cai nas 32, nunca quebra. O Treino com amigo também leva o SEU companheiro. (b) Rogue Dungeon (`RogueFight`): liga `companheiroDoEstado` em `dungeonFight` e a cena `summon`, como Masmorra/Pesadelo. (c) Peso do Torneio: a criatura de simulado/NPC e os chefes nomeados moram em `utils/companheiroCriatura.ts` (tabela de 32 afinidades, travada por teste contra o `CLASS_DATA`), e o Torneio importa dali em vez de `companheiroInvocadoLinhas.ts` (que traz `buildSheet`/`CLASS_DATA`); medido com `vite build`: chunk do Torneio 46.001 B (flag desligada) → 47.384 B (ligada, +1,4 kB), `buildSheet` continua um chunk lazy separado (17.911 B) que o Torneio não importa; a comparação "base com a flag ligada" não foi medida. (d) `App.tsx` preenche o cache por `aplicarEvocacao`: devolve a MESMA referência quando nada muda, então não regrava o save nem dispara cloud save à toa; idempotente, tolerante a save antigo (sem o campo) e a perfil local corrompido.
+
+**Cena (prévia 360×640 e 412×915).** O companheiro saía do peito do invocador e, no inimigo, descia até a barra de HP do jogador. `summonPlace` agora o põe AO LADO do invocador (avanço horizontal 0,8 do tamanho, lado do oponente), sempre um pouco acima da linha do chão (`SUMMON_LIFT`), nunca sobre o corpo nem sobre a barra. Capturas em `E:/Soulmon-assets/_lote-16-11/companheiro-previas/`.
+
+**Regressões da pacote achadas no caminho (servidor atrás do app).** `dailyMissions.parity`: o app tirou o evento `cenario` e as missões `n-lasca`/`n-panora` do rodízio diário (#963) e o servidor ainda os aceitava; `feiraLoja.paridade`: o app ganhou 4 decorações `furn-ruinas-*` (#950) que o catálogo do servidor não tinha (a Feira de verdade as recusaria). Servidor alinhado ao app (`_dailyMissions.js`, `_feiraLoja.js`).
+
+**Rollback:** `git revert`; ou só desligar a chave nos DOIS arquivos (o teste de paridade exige igualdade). Aditivo, sem migração de save.
+
 ## §453 — Rift é o sumidouro de energia: sem limite diário, regeneração mais lenta, Faísca e pratos de energia mais raros/caros (16/11/2026, dono)
 
 **Pedido do dono.** Ele lembrou que a descida idle do Rift TEM A FUNÇÃO DE GASTAR ENERGIA. Decisões em modal: (1) REMOVER o limite diário de 30 lutas = 5 andares; (2) regeneração de energia mais lenta; (3) poções de energia mais raras e mais caras.

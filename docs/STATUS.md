@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Companheiro invocado LIGADO no pacote (`feat/companheiro-liga-chave`, REGISTRO §459)
+>
+> - **Feito:** chave ligada no app e no servidor (paridade travada); simulados no duelo (criatura por `hash(id)`), Rogue Dungeon e Treino com amigo ligados; criatura de simulado/NPC em módulo leve; cache `soulmonEvocacao` idempotente (sem regravar à toa); cena do companheiro AO LADO do invocador (antes subia ao peito e, no inimigo, caía sobre a barra de HP). Servidor alinhado ao app em `cenario`/`n-lasca`/`n-panora` e 4 decorações `furn-ruinas-*` (regressões da pacote).
+> - **Não visto em aparelho real.** Prévias no navegador embutido (360×640 e 412×915; luta real só na Arena; Masmorra pela mesma cena com o fundo dela; `prefers-reduced-motion` só por teste).
+> - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
+
+
 > ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §457)
 >
 > - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
