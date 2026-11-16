@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §454)
+>
+> - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
+> - **Não visto em aparelho.**
+
 > ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
 >
 > - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
