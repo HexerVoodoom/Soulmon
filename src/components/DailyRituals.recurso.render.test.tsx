@@ -120,9 +120,11 @@ describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §365; reve
     expect(container.textContent).not.toContain('Ir ao Caderno');
     expect(nome.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
-  it('o contador de passos (não é ação) continua embaixo', () => {
+  it('o contador de passos (não é ação) fica NA MESMA LINHA, na frente, em turquesa', () => {
     const { container } = mount([mk('w', 'Caminhar', 'corpo-caminhar')], { stepsInfo: { hoje: 1, meta: 7000 } });
-    expect(container.querySelector('[data-ritual-below] [data-habit-link="steps"]')).not.toBeNull();
+    expect(container.querySelector('[data-ritual-inline] [data-habit-link="steps"]')).not.toBeNull();
+    expect((container.querySelector('[data-ritual-inline]') as HTMLElement).style.color).toBe('var(--sm2-primary-ink)');
+    expect(container.querySelector('[data-ritual-below]')).toBeNull();
     expect(container.querySelector('[data-ritual-action]')).toBeNull();
   });
 });

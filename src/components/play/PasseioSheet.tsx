@@ -4,7 +4,7 @@ import type { Language } from '../../utils/i18n';
 import { MISSION_WINDOW_MS, type CrossingChallenge, type CrossingsState, type Region, type RegionId } from '../../types/travessias';
 import {
   activeChallenge, dailyOffer, doneToday, markDone,
-  pickMission, regionById, strollWaitMs,
+  pickMission, regionById,
   type DailyMission,
 } from '../../utils/travessias';
 import { travessiaTitle } from '../../utils/travessiaTitles';
@@ -177,8 +177,6 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
   const { region, challenge } = ativa;
   const nome = isPt ? region.namePt : region.nameEn;
   const feito = doneToday(crossings, todayKey);
-  /* O passeio leva um tempo: o "Concluir" só abre depois de `STROLL_MIN_MINUTES`. */
-  const espera = feito ? 0 : strollWaitMs(crossings, now);
   /* O relógio de 24 h (M4): horas que restam, sem contagem regressiva ao vivo. */
   const horas = !feito && crossings.pickAt !== null
     ? Math.max(1, Math.ceil((crossings.pickAt + MISSION_WINDOW_MS - now) / 3_600_000))
@@ -217,42 +215,31 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
             <Icon name="check_circle" size={20} fill={1} tone="primary" />
             <span>
               {isPt
-                ? `Feita. Esta noite o Soulmon viaja para ${nome}.`
-                : `Done. Tonight the Soulmon travels to ${nome}.`}
+                ? `Feita. O Soulmon já foi a ${nome} e voltou com a novidade.`
+                : `Done. The Soulmon already went to ${nome} and is back with news.`}
             </span>
           </>
         ) : (
           <span data-travessia-tempo style={{ color: 'var(--sm2-muted)' }}>
-            {espera > 0
-              ? (isPt ? 'Um passeio leva um tempo. Vá com calma; o botão abre quando der.' : 'A stroll takes a little while. Take it easy; the button opens when it is time.')
-              : horas === null
-                ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
-                : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
+            {horas === null
+              ? (isPt ? 'Ainda não marcada.' : 'Not marked yet.')
+              : (isPt ? `Vale por mais ${horas} h.` : `${horas} h to go.`)}
           </span>
         )}
       </p>
 
-      {/* O "Concluir" é feito AQUI, no NPC (a Home só lista a linha "Take a stroll"); abre depois dos 30 min, com a contagem no botão. */}
+      {/* O "Concluir" é feito AQUI, no NPC, ou na linha "Stroll" da Home: o mesmo caminho (REGISTRO §413), sem espera. */}
       <button
         type="button"
         data-travessia-fiz
-        disabled={feito || espera > 0}
+        disabled={feito}
         onClick={onFiz}
-        style={{ ...sm2Button('primary', feito || espera > 0), width: '100%' }}
+        style={{ ...sm2Button('primary', feito), width: '100%' }}
       >
-        {feito
-          ? (isPt ? 'Feito hoje' : 'Done today')
-          : `${isPt ? 'Concluir' : 'Done'}${espera > 0 ? ` · ${formatEspera(espera)}` : ''}`}
+        {feito ? (isPt ? 'Feito hoje' : 'Done today') : (isPt ? 'Concluir' : 'Done')}
       </button>
     </div>
   );
-}
-
-/** Contagem do botão: `MM:SS` (arredonda para cima, nunca mostra 00:00 enquanto falta). */
-export function formatEspera(ms: number): string {
-  const total = Math.ceil(ms / 1000);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${p(Math.floor(total / 60))}:${p(total % 60)}`;
 }
 
 /** `AAAA-MM-DD` → "3 out" / "Oct 3" (o dia do jogador, sem fuso). */
@@ -307,7 +294,7 @@ function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) 
 /** O achado de ontem dentro da folha do Passeio (REGISTRO §66): o mesmo `StrollFind` do resumo do dia. */
 export type PasseioAchado = Pick<StrollFindProps, 'adventure' | 'isNew' | 'stroll'>;
 
-export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp, achado }: {
+export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '', now: nowProp, achado, onDone, onPicked }: {
   language: Language;
   crossings: CrossingsState;
   onChange: Update;
@@ -319,6 +306,10 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   now?: number;
   /** O que o Soulmon encontrou no passeio de ontem (ligado à missão que a pessoa escolheu): um fluxo só com o resumo do dia. */
   achado?: PasseioAchado | null;
+  /** Concluir o passeio: a cena e as recompensas saem na hora (`App.concluirPasseio`, REGISTRO §413). Sem ele, só grava o "Fiz". */
+  onDone?: () => void;
+  /** A missão foi escolhida: quem abriu fecha a folha e mostra "Tarefa criada" (REGISTRO §413). */
+  onPicked?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const [aberto, setAberto] = useState<string | null>(null);
@@ -328,14 +319,12 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
   const requireAwake = useRequireAwake();
   const [relogio, setRelogio] = useState(() => Date.now());
   const now = nowProp ?? relogio;
-  // 1 s só enquanto o "Concluir" espera os 30 min; fora disso, 1 min (nada de ticker à toa).
-  const esperando = !doneToday(crossings, todayKey ?? fallbackDayKey()) && crossings.active !== null && strollWaitMs(crossings, now) > 0;
   useEffect(() => {
     if (nowProp !== undefined) return;
     setRelogio(Date.now());
-    const t = window.setInterval(() => setRelogio(Date.now()), esperando ? 1000 : 60_000);
+    const t = window.setInterval(() => setRelogio(Date.now()), 60_000);
     return () => window.clearInterval(t);
-  }, [nowProp, esperando]);
+  }, [nowProp]);
 
   const dia = todayKey ?? fallbackDayKey();
   const ativa = activeChallenge(crossings, dia, now);
@@ -349,6 +338,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
     onChange(c => pickMission(c, dia, seed, region, challengeId, t));
     setAberto(null);
     setJustDone(false);
+    onPicked?.();
   };
 
   return (
@@ -393,8 +383,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
             now={now}
             justDone={justDone}
             onFiz={() => {
+              if (onDone) { onDone(); return; }
               const t = Date.now();
-              if (strollWaitMs(crossings, t) > 0) return;
               onChange(c => markDone(c, dia, t));
               setJustDone(true);
             }}

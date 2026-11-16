@@ -293,6 +293,10 @@ export interface AreaViewProps {
     seed?: string;
     /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §66): o MESMO achado do resumo do dia, agora também aqui. */
     achado?: PasseioAchado | null;
+    /** Concluir o passeio (cena + recompensas na hora, REGISTRO §413). */
+    onDone?: () => void;
+    /** A missão foi escolhida (o `App` mostra "Tarefa criada"). */
+    onPicked?: () => void;
   };
   /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */
   caderno?: {
@@ -700,6 +704,8 @@ export function AreaView(props: AreaViewProps) {
                 todayKey={play.todayKey}
                 seed={props.passeio?.seed}
                 achado={props.passeio?.achado}
+                onDone={props.passeio?.onDone ? () => { close(); props.passeio?.onDone?.(); } : undefined}
+                onPicked={() => { close(); props.passeio?.onPicked?.(); }}
               />
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}

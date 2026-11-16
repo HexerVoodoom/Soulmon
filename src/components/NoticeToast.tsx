@@ -115,3 +115,33 @@ export function TaskAutoTag({ name, language, onDone }: { name: string; language
     </div>
   );
 }
+
+/**
+ * AVISO "TAREFA CRIADA" (REGISTRO §413): sobe no topo quando a pessoa escolhe o passeio no NPC — a escolha virou uma tarefa na Home.
+ * Mesmo molde da tag "Tarefa" (`TaskAutoTag`: topo, `NOTICE_TOAST_MS`, não bloqueia toque, sem animação própria).
+ */
+export function TaskCreatedToast({ language, onDone }: { language: Language; onDone: () => void }) {
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
+  useEffect(() => {
+    const t = setTimeout(() => doneRef.current(), NOTICE_TOAST_MS);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div
+      role="status"
+      data-task-created-toast
+      style={{
+        position: 'fixed', zIndex: 150, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none',
+        top: 'calc(env(safe-area-inset-top, 0px) + 12px)', maxWidth: 'min(92vw, 420px)', minHeight: 44,
+        padding: '6px 16px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(15,42,41,.96)', color: '#E9F5F2',
+        border: '2px solid var(--sm2-gold-fill)', borderRadius: 999,
+        boxShadow: '0 6px 18px rgba(0,0,0,.45)',
+        font: '500 14px/1.35 var(--sm2-font-text)',
+      }}
+    >
+      {language === 'pt-BR' ? 'Tarefa criada' : 'Task created'}
+    </div>
+  );
+}

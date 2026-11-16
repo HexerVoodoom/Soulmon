@@ -223,6 +223,9 @@ export interface RitualRowProps {
   /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
    *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
   below?: ReactNode;
+  /** NA MESMA LINHA do nome, logo na frente (REGISTRO §413: o contador de passos do hábito de caminhar, em turquesa — antes ia embaixo).
+   *  Some com a linha feita, como o `below`. */
+  inline?: ReactNode;
   /** AÇÃO da linha: uma SETA turquesa (`ChevronAcao`) no FIM da linha, à direita, sem texto (dono, 14/11/2026, REGISTRO §365: reverte o
    *  "link na frente" de 13/11). O `label` vira o nome acessível. Some quando a linha está feita. */
   action?: { label: string; onClick: () => void; kind?: string };
@@ -273,7 +276,7 @@ export interface RitualRowProps {
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, bonus = false, inert = false,
   onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
-  children, language, toggleLabelPt, toggleLabelEn, flipKey, below, action,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey, below, inline, action,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
   const segurar = useLongPress(onLongPress);
@@ -312,6 +315,13 @@ export function RitualRow({
       {name}
     </span>
   );
+  /* O contador vem NA FRENTE do nome, na mesma linha, em turquesa (`primary-ink`); o nome é quem encolhe. */
+  const linhaDoNome = (corpo: ReactNode) => (inline && !done ? (
+    <span data-ritual-inline-row style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+      <span style={{ flex: '0 1 auto', minWidth: 0, display: 'flex' }}>{corpo}</span>
+      <span data-ritual-inline style={{ flex: 'none', whiteSpace: 'nowrap', fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-primary-ink)' }}>{inline}</span>
+    </span>
+  ) : corpo);
   return (
     <li
       data-flip-key={flipKey}
@@ -374,7 +384,7 @@ export function RitualRow({
             >
               {nomeSpan}
             </button>
-          ) : nomeSpan}
+          ) : linhaDoNome(nomeSpan)}
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>
               {subtitle}

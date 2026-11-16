@@ -29,7 +29,7 @@ import { REGIONS } from '../data/travessiasCatalog';
 import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { adventureOfDay, findById, type AdventureEntry, type AdventureFind } from './adventure';
 import { hashString, mulberry32 } from './oracle/base';
-import { missionLive, strollWaitMs } from './travessiasSave';
+import { missionLive } from './travessiasSave';
 import { travessiaTitle } from './travessiaTitles';
 
 export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap, missionMark, missionLive, type MissionMark } from './travessiasSave';
@@ -138,8 +138,6 @@ export const marcosAbertos = (s: CrossingsState): number => MARCO_THRESHOLDS.fil
 export const dropCrossing = (s: CrossingsState): CrossingsState =>
   s.active === null ? s : { ...s, active: null, pickDay: null, pickAt: null };
 
-export { strollWaitMs } from './travessiasSave';
-
 /** O "Fiz" de hoje já foi dado (`dayKey` é o dia do jogador)? */
 export const doneToday = (s: CrossingsState, dayKey: string): boolean => s.doneDay === dayKey;
 
@@ -166,8 +164,6 @@ export function crossingYield(s: CrossingsState, region: RegionId): 'abre' | 'gu
  */
 export function markDone(s: CrossingsState, dayKey: string, now?: number): CrossingsState {
   if (!s.active || s.doneDay === dayKey) return s;
-  // O passeio leva um tempo: antes de `STROLL_MIN_MS` desde a escolha, nada muda (a recusa é reconferida aqui, sobre o `prev`).
-  if (strollWaitMs(s, now) > 0) return s;
   // A escolhida que já se foi não conta (save antigo, sem dia, passa). Com `now`,
   // a de ontem ainda vale se está dentro das 24 h (rodada 7, M4).
   if (s.pickDay !== null && !missionLive(s, dayKey, now)) return s;

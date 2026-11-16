@@ -40,12 +40,12 @@ export interface MissionEntry { key: string; state: MissionCardStatus; node: Rea
  * fazer; concluída vira o check. Título (vira botão "Ir" quando a missão tem lugar), descrição curta, progresso, recompensa e
  * estado. Estável em layout: altura mínima fixa e a ação sempre à direita.
  */
-export function MissionCard({ language, attrs, status, title, desc, progress, reward, rewardAlways = false, giver, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, quiet = false }: {
+export function MissionCard({ language, attrs, status, title, desc, progress, reward, rewardAlways = false, giver, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, openAction, quiet = false }: {
   language: Language;
   /** Atributos `data-*` do cartão (os ids que os testes e o manual citam). */
   attrs: Record<string, string>;
   status: MissionCardStatus;
-  title: string;
+  title: ReactNode;
   desc?: string;
   progress?: { cur: number; target: number } | null;
   /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
@@ -61,6 +61,8 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   lockNote?: string;
   /** O botão de Resgatar (já pronto por quem chama) — só aparece com `status="ready"`. */
   action?: ReactNode;
+  /** Botão do estado ABERTO (REGISTRO §413: o "Done" do passeio escolhido, direto no cartão). */
+  openAction?: ReactNode;
   /** Cartão calmo (missão especial): sem marca "!"/"?", "Done/Feita" no lugar de Resgatada e recompensa em todo status. */
   quiet?: boolean;
 }) {
@@ -115,6 +117,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
         {status === 'ready' && !quiet && <MissionMark kind="ready" tone="gold" size={24} isPt={isPt} />}
         {status === 'ready' && action}
+        {status === 'open' && openAction}
         {claimed && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{quiet ? (isPt ? 'Feita' : 'Done') : (isPt ? 'Resgatada' : 'Claimed')}</span>}
       </div>
       {/* Retrato de PERFIL do NPC (12/11/2026, pedido do dono): quadrado, foco no ROSTO (topo do busto), à direita do cartão. Sem NPC, não existe. */}

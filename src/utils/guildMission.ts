@@ -4,7 +4,7 @@
  * como o Passeio) e volta. Ao voltar, o servidor soma a rodada ao fenômeno da roda e rega a casa
  * (`guildRaidHit`: o servidor sorteia o valor — o cliente nunca manda pontos).
  *
- * Este módulo é a parte PURA e do aparelho: o relógio da ida (como o `STROLL_MIN_MINUTES`, é cerimônia
+ * Este módulo é a parte PURA e do aparelho: o relógio da ida (como era o do passeio, é cerimônia
  * do cliente — a trava de verdade é 1 volta por dia do jogador no servidor, que dá 429), e quando o
  * pet fica fora da Home. Nunca cobra: se a volta não puder ser registrada (sem rede), o pet VOLTA PARA
  * CASA na Home do mesmo jeito — o registro é que espera.

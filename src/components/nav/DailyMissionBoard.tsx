@@ -13,12 +13,13 @@ import { specialMissionEntries, type SpecialMissionProps } from './SpecialMissio
  * especial ainda aberta no topo, com o rótulo "Missão especial", depois uma LINHA FINA, depois as normais — prontas ("?"),
  * abertas e, no fim, as resgatadas/entregues (a especial concluída desce junto, sem rótulo nem linha). Superfície muda (sem som).
  */
-export function DailyMissionBoard({ language, special, crossings, todayKey, onClaimStroll, onGoStroll, buildings, dailies, nav }: {
+export function DailyMissionBoard({ language, special, crossings, todayKey, onClaimStroll, onDoneStroll, onGoStroll, buildings, dailies, nav }: {
   language: Language;
   special?: Omit<SpecialMissionProps, 'language'>;
   crossings: CrossingsState;
   todayKey: string;
   onClaimStroll: () => void;
+  onDoneStroll?: () => void;
   onGoStroll?: () => void;
   buildings?: BuildingQuestsProps;
   dailies?: DailyMissionsProps;
@@ -27,7 +28,7 @@ export function DailyMissionBoard({ language, special, crossings, todayKey, onCl
   const isPt = language === 'pt-BR';
   const items: (MissionEntry & { special: boolean })[] = [
     ...(special ? specialMissionEntries({ language, ...special }) : []).map(e => ({ ...e, special: true })),
-    ...strollEntries({ language, crossings, todayKey, onClaim: onClaimStroll, onGo: onGoStroll }).map(e => ({ ...e, special: false })),
+    ...strollEntries({ language, crossings, todayKey, onClaim: onClaimStroll, onDone: onDoneStroll, onGo: onGoStroll }).map(e => ({ ...e, special: false })),
     ...(buildings ? buildingQuestEntries({ language, ...buildings }) : []).map(e => ({ ...e, special: false })),
     ...(dailies ? dailyMissionEntries({ language, ...dailies, nav }) : []).map(e => ({ ...e, special: false })),
   ];

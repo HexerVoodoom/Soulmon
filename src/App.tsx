@@ -207,13 +207,13 @@ import { useOfertaPendente } from './hooks/useOfertaPendente';
 import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightmareWake';
 import { dayWakePending as dayWakePendingFor, didCompleteToday, isBlockedUntilWake, wakeWarning, wakesByCompletion } from './utils/dayWake';
 import { PresentationSlot } from './components/PresentationSlot';
-import { NoticeToast, TaskAutoTag, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
+import { NoticeToast, TaskAutoTag, TaskCreatedToast, parseNoticeSeen, pickNoticeKey, recordNoticeShown, type NoticeToastKey } from './components/NoticeToast';
 import { escolherBalao, dispensar, balaoDouradoText, balaoDouradoAria, BALAO_DOURADO_VISIVEL_MS, type BalaoTipo } from './utils/balaoDourado';
 import { useBalaoDouradoIgnorado } from './hooks/useBalaoDouradoIgnorado';
 import { useGroveEstado, bosqueDefendivel } from './hooks/useGroveAtaque';
 import { useDicaDourada, useDicaVistas } from './hooks/useBalaoDica';
 import { dicasPresentes, escolherDica, dicaTexto, dicaAria, ehDicaDourada, DICA_DESTINO, type DicaDouradaTipo } from './utils/balaoDica';
-import { atividadesParaAutoCheck, registrarAuto, progressoDePassos, type AutoRecurso } from './utils/tarefaLink';
+import { atividadesParaAutoCheck, registrarAuto, progressoDePassos, recursoDaAtividade, type AutoRecurso } from './utils/tarefaLink';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX, readGroveLocal,
@@ -321,6 +321,8 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
+const StepGoalModal = lazy(() => import('./components/StepGoalModal').then(m => ({ default: m.StepGoalModal })));
+const StrollNowScene = lazy(() => import('./components/StrollNowScene').then(m => ({ default: m.StrollNowScene })));
 const GuildaMapPage = lazy(() => import('./components/nav/GuildaMapPage').then(m => ({ default: m.GuildaMapPage })));
 import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
@@ -2285,6 +2287,7 @@ export default function App() {
    * `activityCapFor` — furando a fronteira de monetização do demo e o teto de
    * estágio do pagante. Nada disso quebrava o TypeScript.
    */
+  const [stepGoalAsk, setStepGoalAsk] = useState(false);
   const commitHabitCreate = useCallback((novos: Activity[], createPath: number): number => {
     const cabem = fitHabitCreates(
       { activities: gameState.activities, maxActivityCap: gameState.maxActivityCap },
@@ -2320,6 +2323,8 @@ export default function App() {
       });
     }
     setMessageTrigger(prev => prev + 1);
+    // REGISTRO §413: adotar o hábito de caminhar (recurso `steps`) abre o modalzinho da meta (3/5/7/10 mil).
+    if (cabem.some(a => recursoDaAtividade(a) === 'steps')) setStepGoalAsk(true);
     return cabem.length;
     // QA r4: a dependência é a LISTA, não o tamanho. Trocar um hábito de "todo dia" para dias específicos muda a cota sem mudar o
     // `length`; com `.length` o catálogo seguia com o closure velho e recusava calado (ou ficava aberto sem aviso).
@@ -6348,6 +6353,34 @@ export default function App() {
     });
   }, [setGameState]);
 
+  /**
+   * O "CONCLUIR" DO PASSEIO (REGISTRO §413): UM caminho para o NPC e para a linha "Stroll" da Home. Roda a cena e paga tudo na hora
+   * (`utils/strollNow.ts`): região guardada abre, achado vai ao diário, avistado entra no Drive, Vínculo/missão contam. Idempotente
+   * por construção (o `markDone` devolve o mesmo estado no mesmo dia); a trava `strollBusy` só segura o toque duplo antes do commit.
+   * O módulo é carregado sob demanda (catálogo das regiões fora do chunk de entrada). A cena sai do updater: ele pode rodar 2× (footgun 6).
+   */
+  const [strollNow, setStrollNow] = useState<import('./utils/strollNow').StrollNowScene | null>(null);
+  const strollBusy = useRef(false);
+  const concluirPasseio = useCallback(() => {
+    if (strollBusy.current) return;
+    strollBusy.current = true;
+    const t = Date.now();
+    const isPt = language === 'pt-BR';
+    void import('./utils/strollNow').then(({ applyStrollNow }) => {
+      const feito = applyStrollNow(gameStateRef.current, t, isPt);
+      if (!feito) return;
+      setGameState(prev => {
+        const r = applyStrollNow(prev, t, isPt);
+        if (!r) return prev;
+        return bumpDailyIn({ ...r.state, firstTimes: markFirst(prev.firstTimes, 'first-stroll') }, 'passeio');
+      });
+      gameStateRef.current = { ...gameStateRef.current, ...feito.state };
+      setStrollNow(feito.scene);
+    }).catch(() => { /* offline: o toque some sem custo; tenta de novo */ }).finally(() => { strollBusy.current = false; });
+  }, [language, setGameState]);
+  /** Escolher a missão do Passeio: o aviso "Tarefa criada" sobe no topo e a Home passa a listar o "Stroll". */
+  const [tarefaCriada, setTarefaCriada] = useState(0);
+
   /** O Caderno muda a lista por uma função PURA sobre `prev` (footgun 6). */
   /* REGISTRO §357: o check automático do hábito linkado NÃO roda no mesmo evento do "Guardar" (antes o toggle do hábito e a gravação
      da entrada entravam juntos na fila do `setGameState` e o app travava num loop de render ao salvar pela missão). O handler só
@@ -8973,7 +9006,7 @@ export default function App() {
                    `hallContent`, montados antes do `return`). */
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
-                passeio={{ crossings, onChange: handleCrossings, seed: saveId, achado: passeioAchado }}
+                passeio={{ crossings, onChange: handleCrossings, seed: saveId, achado: passeioAchado, onDone: concluirPasseio, onPicked: () => setTarefaCriada(n => n + 1) }}
                 caderno={{ entries: gameState.caderno ?? [], onChange: handleCaderno }}
                 labTab={labTab}
                 onLabTab={setLabTab}
@@ -9862,6 +9895,7 @@ export default function App() {
         language={language}
         crossings={crossings}
         onClaimStroll={resgatarPasseio}
+        onDoneStroll={concluirPasseio}
         onGoStroll={irAoPasseio}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         weekly={missoesDaSemana}
@@ -10331,6 +10365,19 @@ export default function App() {
           <MapTutorial language={language} onFinish={() => setMapTutorialShown(false)} />
         </PresentationSlot>
       )}
+      {stepGoalAsk && (
+        <Suspense fallback={null}>
+          <StepGoalModal language={language} currentGoal={sanitizeStepGoal(gameState.stepGoal)} onClose={() => setStepGoalAsk(false)} onPick={(g) => { handleChangeStepGoal(g); setStepGoalAsk(false); }} />
+        </Suspense>
+      )}
+      {/* REGISTRO §413: a escolha do passeio virou tarefa — o aviso sobe no topo (mesmo molde da tag "Tarefa"). */}
+      {tarefaCriada > 0 && <TaskCreatedToast key={tarefaCriada} language={language} onDone={() => setTarefaCriada(0)} />}
+      {/* REGISTRO §413: a cena do Passeio roda NA HORA do "Concluir" (NPC ou linha da Home); o pagamento já saiu em `applyStrollNow`. */}
+      {strollNow && (
+        <Suspense fallback={null}>
+          <StrollNowScene scene={strollNow} playerSprite={minhaCriaturaUrl} language={language} onClose={() => { setStrollNow(null); setCurrentView('home'); }} />
+        </Suspense>
+      )}
       {/* beta12 §J (A7): a tag "Tarefa" do check automático — UM aviso por vez no topo (espera qualquer intersticial) */}
       {autoTags.length > 0 && interstitial === 'welcome' && (
         <TaskAutoTag key={`${autoTags.length}:${autoTags[0]}`} name={autoTags[0]} language={language} onDone={() => setAutoTags(q => q.slice(1))} />
@@ -10355,7 +10402,8 @@ export default function App() {
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
           stroll={strollDaNoite}
-          strollScene={strollDaNoite && trv ? {
+          /* REGISTRO §413: com a cena já rodada na hora do "Concluir" (`sceneDay`), a noite não a repete nem sorteia outro avistado. */
+          strollScene={strollDaNoite && trv && crossings.sceneDay !== dayKeyToIso(gameState.lastDayReport.date) ? {
             regionId: strollDaNoite.regionId,
             bgId: trv.regionById(strollDaNoite.regionId)?.bgId ?? null,
             bestiary: gameState.bestiary,

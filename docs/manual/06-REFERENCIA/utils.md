@@ -1409,6 +1409,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/DailyReportModal.tsx`.
 **Régua:** `src/utils/strollDiscovery.test.ts`.
 
+### `src/utils/strollNow.ts`
+**Dono de:** a conta do "Concluir" do Passeio que PAGA NA HORA (REGISTRO §413): `applyStrollNow(prev, nowMs, isPt)` = `markDone` + `settleNight` (região guardada abre) + achado no diário + Soulmon avistado no Drive + `claimDay`/`sceneDay`; devolve `{ state, scene }` ou `null` (nada a fazer / já feito hoje). Pura e idempotente.
+**Exports:** `StrollNowScene` (tipo) · `StrollNowResult` · `applyStrollNow`.
+**Chamado por:** `src/App.tsx` (`concluirPasseio`, carregado sob demanda).
+**Régua:** `src/utils/strollNow.test.ts`.
+
 ### `src/utils/strollScene.ts`
 **Dono de:** a arte e a geometria da CENA do Passeio (05/11/2026) — panorama horizontal 2:1 por região (`passeio-cenas/cena-<região>.(webp|png)`, glob), linha de chão em 80%, jogador em 25% e descoberto em 75%; sem a arte, o postal da região espelhado. `panOffsetPx` calcula o deslize preso às bordas. Fila de arte: `docs/ASSETS-A-GERAR.md` §25.
 **Exports:** `SCENE_RATIO` · `SCENE_GROUND_Y` · `SCENE_PLAYER_X` · `SCENE_FOUND_X` · `sceneArtOf` · `sceneFallbackCss` · `panOffsetPx`.

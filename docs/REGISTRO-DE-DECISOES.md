@@ -5927,3 +5927,17 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Alcance:** 58 dos 269 descritores mudaram (as bases `espaco` e `vigor` mais 56 combinados); o hash do guard dos 183 não autorais foi atualizado de propósito. Teto de 260 caracteres, regra do tempo, UMA pista por componente e o teste de repetição de palavras do §411 seguem valendo.
 
 **Custo aceito:** continua sendo texto de prompt; só uma 4ª amostra prova. **Gatilho de revisão:** componente ainda parcial. **Rollback:** `git revert` do PR; só criaturas novas usam estes descritores (nada gerado muda).
+
+## §413 — O Passeio paga na hora: sem timer, "Tarefa criada", linha "Stroll" na Home e meta de passos (16/11/2026, dono)
+
+**Pedido (palavras do dono):** ao escolher o Stroll, "só tira o timer e fecha"; o aviso "tarefa criada" sobe no topo; na Home vem "Stroll" em turquesa e, na frente, qual é; dá para marcar no modal ou de volta no NPC, "marca do mesmo jeito"; ao fazer, "já entra a cutscene do Stroll, ao invés de acontecer de noite, na virada do dia. As recompensas e tudo já acontecem ali imediatamente". No contador de passos do hábito de caminhar, o número fica na mesma linha, na frente, em turquesa; escolher o hábito pergunta 3, 5, 7 ou 10 mil passos; e os botões do Stroll no rodapé ficam padronizados.
+
+**Decisão:** (1) o relógio de 30 min saiu (`STROLL_MIN_MINUTES`/`strollWaitMs`); (2) escolher a missão fecha a folha e mostra `TaskCreatedToast`; (3) a linha da Home vira "Stroll" (`primary-ink`) + o nome do passeio, com "Done"; (4) NPC e Home chamam o MESMO `applyStrollNow` (`utils/strollNow.ts`): `markDone` + região guardada abre na hora + achado no diário + avistado no Drive + `claimDay`/`sceneDay` + Vínculo/missão, e a `StrollScene` roda ali; (5) o contador de passos vai para a mesma linha (`RitualRow.inline`) e adotar o hábito de caminhar abre `StepGoalModal`; (6) os botões do rodapé do Stroll seguem uma só posição (a regra mora no pacote desta decisão, ver STATUS).
+
+**Anti-abuso e idempotência preservados:** continua 1 "Fiz" por dia (`doneDay`), 1 região aberta por dia (`settleNight`), Marcos +1/dia; `markDone` devolve o mesmo estado no mesmo dia, então as duas portas (NPC e Home) ou o toque duplo pagam e mostram a cena uma vez só; `sceneDay` impede o resumo da noite de repetir a cena ou sortear outro avistado (o achado é o mesmo, pois a viagem da missão não depende de como o dia rendeu). O servidor não valida conclusão de Travessia: não há `pendingOpId` nem espelho.
+
+**Migração:** save com passeio já feito e sem `sceneDay` mantém o comportamento antigo (cena na virada do dia); o Resgatar da linha só sobrevive para esse caso. Passeio ainda NÃO concluído passa a valer na hora, sem espera.
+
+**Linha vermelha tocada:** a R-32 ("o Fiz não abre nada na hora") agora abre a região na hora, por decisão explícita do dono; o teto de 1 região por dia e a ausência de prazo/contagem/culpa seguem.
+
+**Custo aceito:** quem faz o passeio de manhã vê a cena de manhã e não à noite; o resumo da noite fica sem a cena naquele dia (mostra só o achado). **Gatilho de revisão:** o dono sentir falta do ritual da virada. **Rollback:** `git revert` do PR (o campo `sceneDay` é ignorado por saves antigos).

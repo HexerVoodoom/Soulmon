@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — O Passeio paga na hora (`feat/stroll-imediato`, REGISTRO §413)
+>
+> - **Feito:** timer de 30 min removido; escolher o passeio fecha o modal e sobe "Tarefa criada"; a linha da Home vira "Stroll" (turquesa) + o nome, com "Done"; NPC e Home concluem pelo mesmo `applyStrollNow` (cena + região + achado + avistado + Vínculo na hora, 1×; `crossings.sceneDay` evita repetir na virada). Contador de passos na mesma linha do hábito, em turquesa; adotar o hábito abre o modal 3/5/7/10 mil.
+> - **Migração:** passeio feito antes (sem `sceneDay`) segue com a cena na virada; Resgatar só para esse caso.
+> - **Não visto em tela:** sem build/emulador; coberto por testes de unidade e render. Linha R-32 ("Fiz não abre nada na hora") revista pelo dono.
+>
+
 > ## 15/11/2026 — Bosque de cerejeiras de verdade (`feat/cerejeira-bosque-real`, REGISTRO §410)
 >
 > - **Feito:** `bg-cerejeira-bosque-de-cerejeiras` troca a arte do vulcão pelo bosque em flor (v1, pixelização leve); mesmo id, preço e slots. Pós-processo `tools/pixelizar-fundo.py`, instalação pelo caminho dos 33 fundos.

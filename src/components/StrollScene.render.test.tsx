@@ -33,6 +33,24 @@ describe('cena do Passeio', () => {
     expect(q('[data-scene-pet="player"]')).toBeTruthy();
     expect(q('[data-scene-pet="found"]')).toBeTruthy();
   });
+  it('TODOS os botões moram no mesmo rodapé (REGISTRO §413): principal em cima, "Pular" logo abaixo, em toda fase', () => {
+    vi.useFakeTimers();
+    abrir();
+    const noRodape = () => {
+      const dock = q('[data-scene-dock]');
+      const todos = Array.from(document.querySelectorAll('[data-stroll-scene] button'));
+      expect(todos.length).toBeGreaterThan(0);
+      for (const b of todos) expect(dock.contains(b)).toBe(true);
+      expect(dock.style.bottom).toContain('safe-area-inset-bottom');
+    };
+    noRodape();
+    fireEvent.click(q('[data-scene-next="intro"]')); noRodape();
+    fireEvent.click(q('[data-scene-next="notice"]'));
+    act(() => { vi.advanceTimersByTime(1600); }); noRodape();
+    expect(q('[data-scene-dock]').lastElementChild).toBe(q('[data-scene-skip]'));
+    fireEvent.click(q('[data-scene-next="found"]'));
+    act(() => { vi.advanceTimersByTime(1600); }); noRodape();
+  });
   it('o fluxo todo: espera → desliza → descoberta → OK grava UMA vez → volta → fecha', () => {
     vi.useFakeTimers();
     const { onDiscover, onClose } = abrir();
