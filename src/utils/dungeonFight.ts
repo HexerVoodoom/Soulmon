@@ -280,6 +280,13 @@ export interface NightmareKnobs {
  */
 export const NIGHTMARE_FOE_DAMAGE_FACTOR = 0.75;
 
+/**
+ * §413 (dono, 16/11/2026): janela de 1,2 s no começo de cada luta do Pesadelo em que ele ainda não ataca; o jogador já pode torcer
+ * (a percepção de que dá tempo de torcer desde o início). Dono único do número; cliente (`NightmareBattle`) e simulação
+ * (`simulateNightmareScenario`) leem o mesmo valor pelo `options` do `nightmareFight`.
+ */
+export const NIGHTMARE_OPENING_WINDOW_S = 1.2;
+
 export const NIGHTMARE_KNOBS: NightmareKnobs = {
   basic: 0.4,
   // 20/10/2026 (dono): "basta soltar o especial" — errar o anel (`ruim`) já vale como o acerto parcial.
@@ -290,10 +297,11 @@ export const NIGHTMARE_KNOBS: NightmareKnobs = {
 };
 
 /** One fight of the Nightmare: `dungeonFight` + the shadow rules above. `cheers()` = discharges collected so far. */
-export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight {
+export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight & { options: { foeOpeningDelay: number } } {
   const f = dungeonFight({ ...p, ring: k.ring }, foe, seed, true);
   return {
     ...f,
+    options: { foeOpeningDelay: NIGHTMARE_OPENING_WINDOW_S },
     hitScale(who, n) {
       const s = f.hitScale(who, n);
       return who === 0 ? s * k.basic : s * k.foeDamage * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
@@ -321,7 +329,7 @@ export function simulateNightmareScenario(cfg: SequenceConfig, top: number, seed
   let lastT = 0;
   const f = nightmareFight(p, nightmareFoe(cfg.level, top, cfg.knobs?.foe), dungeonFightSeed(seed, 1, top), () => drained, k);
   const g = groupFightSteps(f.player, f.foes, {
-    seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale,
+    seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale, ...f.options,
     cheerDrain: () => {
       if (sc.cheerEvery === null) return 0;
       const due = Math.floor(lastT / sc.cheerEvery);

@@ -62,7 +62,7 @@ import { newDefenseSeed } from '../utils/autoDefesa';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { hpPoints } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
-import { dungeonFamily, nightmareFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
+import { dungeonFamily, nightmareFight, NIGHTMARE_OPENING_WINDOW_S, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
@@ -242,6 +242,7 @@ export function NightmareBattle({
       player: f.player, foes: f.foes, seed: f.seed,
       startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
       hitScale: f.hitScale,
+      options: f.options, // §413: a janela de abertura (o Pesadelo ainda não ataca)
       castScale: ({ who, ring, dodge }) => {
         // a regra de vitória: cada especial do Soulmon lançado e se o anel acertou ao menos parcialmente
         if (who === 0) tallyRef.current = { ...tallyRef.current, casts: tallyRef.current.casts + 1, landed: tallyRef.current.landed + (specialLanded(ring as RingGrade | null) ? 1 : 0) };
@@ -292,6 +293,14 @@ export function NightmareBattle({
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true, speed,
   });
+  // §413: o aviso "dá tempo de torcer" dura a janela de abertura (relógio da cena: ÷ velocidade); só UI, o núcleo já atrasa o inimigo.
+  const [abertura, setAbertura] = useState(true);
+  useEffect(() => {
+    setAbertura(true);
+    if (!(open && phase === 'fight') || pausado) return undefined;
+    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed));
+    return () => clearTimeout(id);
+  }, [fightKey, open, phase, pausado, speed]);
   const batteryRef = useRef<typeof battle | null>(null);
   batteryRef.current = battle;
 
@@ -334,6 +343,7 @@ export function NightmareBattle({
     );
     const objectives = (
       <span style={{ display: 'inline-flex', gap: 10 }} role="status">
+        {abertura && chip(true, isPt ? 'Torça já!' : 'Cheer now!', 'opening')}
         {chip(cond.cheer, isPt ? 'Torcida' : 'Cheer', 'cheer')}
         {chip(cond.special, isPt ? `Especial ${t.landed}/${t.casts}` : `Special ${t.landed}/${t.casts}`, 'special')}
       </span>

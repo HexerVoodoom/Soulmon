@@ -5941,3 +5941,11 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Linha vermelha tocada:** a R-32 ("o Fiz não abre nada na hora") agora abre a região na hora, por decisão explícita do dono; o teto de 1 região por dia e a ausência de prazo/contagem/culpa seguem.
 
 **Custo aceito:** quem faz o passeio de manhã vê a cena de manhã e não à noite; o resumo da noite fica sem a cena naquele dia (mostra só o achado). **Gatilho de revisão:** o dono sentir falta do ritual da virada. **Rollback:** `git revert` do PR (o campo `sceneDay` é ignorado por saves antigos).
+## §430 — Pesadelo: janela de abertura de 1,2 s antes de ele atacar (16/11/2026, dono)
+
+**Pedido (literal):** "inclua uma janela de 1.2s no Pesadelo antes dele começar a atacar, para o jogador ter a percepção de que dá tempo de o jogador torcer desde o início."
+
+**Decisão:** em cada luta do Pesadelo o inimigo não golpeia antes de 1,2 s do relógio da luta; o jogador (e a torcida) agem desde o 0. Constante única `NIGHTMARE_OPENING_WINDOW_S` (`src/utils/dungeonFight.ts`), entregue ao núcleo como `foeOpeningDelay` (`combate/group.ts`: só atrasa o 1º golpe, `max(fase sorteada, 1,2)`; opt-in). Cliente (`NightmareBattle`) e simulação (`simulateNightmareScenario`) usam o mesmo `options` de `nightmareFight`, então não divergem. Sinal de UI: chip "Torça já!/Cheer now!" na faixa de objetivos durante a janela (÷ velocidade). Só o Pesadelo: Masmorra e Arena não ligam a opção. Convive com o §392 (-25% de dano).
+
+**Custo/gatilho:** a luta fica até 1,2 s mais favorável ao jogador; reabre se a taxa de vitória do Pesadelo subir além da meta da régua.
+
