@@ -83,7 +83,9 @@ describe('Chama Azul nunca mais mostra o urso marrom (09/11/2026)', () => {
 });
 
 describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
-  const els = [...new Set(ENEMY_ROSTER.filter(e => e.kind === 'forma').map(e => e.element))];
+  // as 150 de 09/11 (as do pacote A, 16/11, vêm depois e não têm camada própria na Fenda)
+  const formasFenda = ENEMY_ROSTER.filter(e => e.kind === 'forma').slice(0, 150);
+  const els = [...new Set(formasFenda.map(e => e.element))];
   it('50 elementos; a camada de cada um, com Lv alto, mostra rookie, champion, ultimate e mega só dele, com arte', () => {
     expect(els).toHaveLength(50);
     for (const el of els) {
@@ -103,7 +105,7 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
   });
   it('as 150 formas têm PNG distinto do rookie e entre si', () => {
     const hashes = new Set<string>();
-    for (const e of ENEMY_ROSTER.filter(x => x.kind === 'forma')) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
+    for (const e of formasFenda) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
     expect(hashes.size).toBe(150);
   });
 });
@@ -111,5 +113,14 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
 describe('rookie de Chama Azul é o de verdade, não o champion (09/11/2026)', () => {
   it('009-chama_azul não tem os bytes do champion paralelo', () => {
     expect(sha(path.join(ART, 'combinados/009-chama_azul.png'))).not.toBe(sha(path.join(ART, 'paralelos/parchamaazul-champion.png')));
+  });
+});
+
+describe('formas do pacote A (16/11/2026): PNG próprio', () => {
+  it('205 PNG distintos entre si e do rookie', () => {
+    const pacote = ENEMY_ROSTER.slice(-205);
+    const hashes = new Set(pacote.map(e => sha(path.join(ART, 'combinados-formas', e.artFile + '.png'))));
+    expect(hashes.size).toBe(205);
+    for (const e of pacote) expect(hashes.has(sha(path.join(ART, 'combinados', e.artFile!.replace(/-(champion|ultimate|mega)$/, '') + '.png'))), e.key).toBe(false);
   });
 });

@@ -24,6 +24,7 @@ import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { escolherCelula } from './dificuldadeEstagio';
+import { FORMAS_PACOTE_A_DATA } from './formasPacoteA.data';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -242,6 +243,32 @@ function buildFormasCombinados(): RosterEntry[] {
   return out;
 }
 
+/** Sufixos de reserva por estágio, usados só quando `nomeDaForma` bate num nome já tomado (rookies com a mesma raiz). */
+const SUFIXOS_RESERVA: Readonly<Record<'champion' | 'ultimate' | 'mega', readonly string[]>> = { champion: ['oris', 'uris'], ultimate: ['oxion', 'uxion'], mega: ['olune', 'ulune'] };
+
+/**
+ * AS FORMAS DO PACOTE A (dono, 16/11/2026): pelo menos 1 forma por combinação no estágio dela (2 → champion, 3 → ultimate, 4 → mega; 205 PNG
+ * em `combinados-formas/`, API alpha). Mesmo molde das formas 212-261: kind `forma`, FORA do sorteio comum, só saem com o elemento pedido; golpes e
+ * componentes do rookie. Entram no FIM de tudo (o `#N` do Bestiário não muda). Nome único: `nomeDaForma` e, se já tomado, um sufixo de reserva.
+ */
+function buildFormasPacoteA(rookies: readonly RosterEntry[], jaTomados: ReadonlySet<string>): RosterEntry[] {
+  const porArte = new Map(rookies.filter(r => r.kind === 'combinado').map(r => [r.artFile, r] as const));
+  const usados = new Set(jaTomados);
+  const out: RosterEntry[] = [];
+  for (const [artFile, estagios] of FORMAS_PACOTE_A_DATA) {
+    const r = porArte.get(artFile);
+    if (!r) throw new Error(`pacote A: rookie ${artFile} não existe`);
+    for (const stage of estagios) {
+      const raiz = r.name.replace(/[aeiouy]+$/i, '');
+      const name = [nomeDaForma(r.name, stage), ...SUFIXOS_RESERVA[stage].map(s => raiz + s)].find(n => !usados.has(n));
+      if (!name) throw new Error(`pacote A: sem nome livre para ${artFile}-${stage}`);
+      usados.add(name);
+      out.push({ key: chaveBestiario(r.id, stage), id: r.id, stage, kind: 'forma', element: r.element, elements: r.elements, name, basico: r.basico, especial: r.especial, artFile: `${artFile}-${stage}` });
+    }
+  }
+  return out;
+}
+
 /** As 2 cadeias da API (09/11/2026): kind `api`, entram no sorteio comum e no do elemento; no FIM do roster (o `#N` não muda). */
 function buildDuo(): RosterEntry[] {
   const out: RosterEntry[] = [];
@@ -282,7 +309,9 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
   const comps = DERIVED_ELEMENT_PAIRS.find(d => d.id === el)?.componentes ?? curatedComponents(el);
   return comps ? { ...e, element: el, elements: [...comps] } : e;
 }
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()].map(comElementoDoDono);
+const ROOKIES_COMBINADOS = build();
+const ANTES_DO_PACOTE_A = [...ROOKIES_COMBINADOS, RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()];
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name)))].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

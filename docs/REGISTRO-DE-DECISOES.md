@@ -6035,7 +6035,6 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Decisão.** 20 PNGs (champion, ultimate, mega, ultra dos 5 elementos) + rookie de tempo trocados no lugar em `src/assets/soulmon/novos/`, sem lógica nova. Rookies de som/eletricidade/arcano/marcial ficam. Backup dos 25 PNGs antigos em `E:/Soulmon-assets/_lote-16-11/legado-v0/` (o PR 2 os usa para ramos legados em outro elemento; Ultras novos viram chefe de Arena). Todos 256² RGBA, 53–81 KB (teto 150 KB), sem reduzir paleta.
 
-
 ## §439 — Amizade que "some" e chat que fecha ao sair de cena (16/11/2026, pedido do dono)
 
 **Pedido do dono.** (1) "Amizade não está funcionando. Adiciona mas logo depois some." (2) O chat com o Soulmon deve fechar ao clicar fora ou abrir qualquer outra coisa.
@@ -6045,3 +6044,13 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Alternativa que perdeu.** Mover `friends` para uma chave própria no KV (elimina a corrida de vez): exige migração dos perfis em produção; fica como opção se a corrida residual aparecer. **Gatilho para rever:** amizade ainda sumindo depois desta correção.
 
 **Chat.** O painel (meia tela e tela cheia) fecha ao tocar fora (pointerdown no documento, captura), quando o foco vai para fora (outro painel/aba) e quando qualquer `role=dialog`/`alertdialog`/`aria-modal` novo entra no documento (MutationObserver). Esc continua fechando. Sem backdrop e sem inertizar irmãos (o toque que fecha também chega ao destino, p.ex. a navegação): evita a classe de bug do modal inerte. Réguas: `community.amigoPerfilCorrida.test.js`, `LibraryPage.amigoPersiste.render.test.tsx`, `ChatBox.fechaFora.render.test.tsx`.
+
+## §440 — Pacote A: 1 forma por combinação de elementos no estágio dela (16/11/2026, dono)
+
+**Pedido (literal, resumo):** gerar pelo menos 1 Soulmon por combinação de elementos no estágio dela (2 elementos → Champion, 3 → Ultimate, 4 → Mega), sem Ultra, pelo mesmo processo do summon real (API Higgsfield alpha, 1 chamada por forma, forma anterior como referência).
+
+**Decisão:** 205 PNG novos em `novos-arquivo/combinados-formas/` (184 de 2 elementos em champion, 6 trios em champion+ultimate, 3 quádruplos em champion+ultimate+mega), kind `forma` no FIM do `ENEMY_ROSTER` (o `#N` do Bestiário não muda; `formasPacoteA.data.ts`). Ficam fora do sorteio comum como as 150 de 09/11: só saem com o elemento pedido. A lógica de sorteio não foi tocada (é de outro pacote). Prompt = Oráculo real (`generateOracleWithFamilies`) + tema e pistas do elemento (`stagesComElemento`) + chroma coerente; o rookie do repo ou a forma anterior vai como `image_urls`. 70 imagens foram refeitas com a frase de ancoragem ("mesma espécie, corpo, rosto e cores da referência") porque o conceito sorteado pelo Oráculo trocava o bicho (piloto: aprovado como está; o lote foi regerado só onde a espécie ou a paleta mudaram demais). `170-britadeira-champion` usa a versão escolhida pelo dono (request 01a1e510-c80d), não a 01a1e509-849c.
+
+**Suposições:** (1) o Oráculo só aceita 8 elementos como base; para pares sem nenhum deles a base é o mais próximo (mapa fixo em `combinados-fila.mjs`); (2) nomes por `nomeDaForma`, com sufixo de reserva quando colide; o dono pode vetar; (3) o verde/azul/magenta enclausurado (fundo visto por dentro de halos) sai por `limparChave`, porque a criatura não tem a cor da chave; (4) alguns Ultimates/Megas dos 3-4 elementos ainda derivam da referência (263, 267): aceito pelo orçamento.
+
+**Custo/gatilho:** ~US$ 4,6 de API (205 + 70 refeitas + 12 do piloto); +4,6 MB de PNG (paleta de 256 cores). Reabre se o dono reprovar alguma forma (regerar só ela, `prompt_v1` e `--v1.png` guardados em `E:/Soulmon-assets/_lote-16-11/combinados/`).

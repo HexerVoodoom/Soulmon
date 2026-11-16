@@ -35,7 +35,7 @@ describe('lote 4 dos elementos curados: 6 de planta, industrial e fada (nº 262-
       expect(e!.name).toBe(name);
       expect(e!.element).toBe(slug);
       expect([...e!.elements]).toEqual([e1, e2]);
-      expect(ENEMY_ROSTER.filter(x => x.id === `cmb${num}`)).toHaveLength(1);
+      expect(ENEMY_ROSTER.filter(x => x.id === `cmb${num}` && x.stage === 'rookie')).toHaveLength(1);
       expect(SPRITE_ELEMENT[`cmb:${num}`]).toBe(slug);
       expect(rosterEntryElement(e!)).toBe(slug);
       expect(COMBINADOS_ART[`${num}-${slug}`], slug).toBeTruthy();

@@ -149,13 +149,15 @@ describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterAr
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
     }
   });
-  it('formas champion/ultimate/mega dos 50 curados (212-261): 150 PNGs 256² RGBA, 3 por id', () => {
+  it('formas champion/ultimate/mega dos 50 curados (212-261) + 205 do pacote A (16/11): 355 PNGs 256² com alfa (RGBA, ou paleta com tRNS nos do pacote A)', () => {
     const d = join(ARQ, 'combinados-formas');
     const fs = readdirSync(d);
-    expect(fs).toHaveLength(150);
+    expect(fs).toHaveLength(150 + 205);
     for (const f of fs) {
       const b = readFileSync(join(d, f));
-      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
+      // 6 = RGBA; 3 = paleta de 256 cores (pacote A, 16/11/2026) e só vale com o bloco tRNS, que carrega o alfa
+      expect([b.readUInt32BE(16), b.readUInt32BE(20)], f).toEqual([256, 256]);
+      expect(b[25] === 6 || (b[25] === 3 && b.includes(Buffer.from('tRNS'))), f).toBe(true);
     }
   });
   it('nenhum arquivo de src fora do enemyRosterArt importa o arquivo', () => {

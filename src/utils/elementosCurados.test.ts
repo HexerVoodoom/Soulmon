@@ -64,7 +64,7 @@ describe('Biblioteca: os 59 elementos curados (205–207 promovidos, 212–267) 
     expect(curatedElementName('maldicao', true)).toBe('Maldição');
     expect(curatedElementName('cyber', false)).toBe('Cyber');
     for (const [num, id] of [['205', 'pestilencia'], ['206', 'maldicao'], ['207', 'cyber']]) {
-      expect(ENEMY_ROSTER.filter(e => e.id === `cmb${num}`)).toHaveLength(1);
+      expect(ENEMY_ROSTER.filter(e => e.id === `cmb${num}` && e.stage === 'rookie')).toHaveLength(1);
       expect(elementIcon(id), id).toBeTruthy();
     }
   });
