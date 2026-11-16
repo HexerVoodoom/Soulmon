@@ -425,7 +425,7 @@ está bem alimentado, parada quando está faminto —, zera todo dia, e o númer
 barras é o dobro do requisito de tarefas do estágio.
 
 **A regra (beta-2, 13/10/2026, REGISTRO §40).** A energia regenera 1 unidade a
-cada `ENERGY_REGEN_MINUTES` (80 min desde 16/11/2026, REGISTRO §451; era 60 desde 26/10/2026 e 120 antes) a 100% de velocidade; a velocidade é
+cada `ENERGY_REGEN_MINUTES` (80 min desde 16/11/2026, REGISTRO §453; era 60 desde 26/10/2026 e 120 antes) a 100% de velocidade; a velocidade é
 decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
@@ -439,7 +439,7 @@ o estado antigo (por timestamp). Com o app fechado vale o sono registrado por ú
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
 relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada; sem limite por dia desde 16/11/2026: o
-limite diário do §441 foi revogado no §451 e a energia é o freio do Rift) e para brincar.
+limite diário do §441 foi revogado no §453 e a energia é o freio do Rift) e para brincar.
 
 **Condição do dia completo**: `energyPoints >= dailyGoalFor`, e **não** o
 requisito cru do estágio. Comida vem de concluir tarefa, então num dia de meta 2
@@ -6450,7 +6450,7 @@ Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estági
 
 Cada NPC passa UMA missão simples ligada ao papel dele (`utils/npcMissions.ts`: Vesca "Colete 30 essências elementais", Hexsmith "Forje 1 HEX", Vitra "Aprimore 1 peça", Lamela "Compre 1 item", Papus "Envie 1 presente"...). **Rodízio SEMANAL (§318):** a cada semana (segunda a domingo, dia do jogador) `npcsOfWeek` põe na lista do dia 2 NPCs (`NPCS_POR_SEMANA`), em todos os dias da semana, só com o prédio já aberto pelo Vínculo (pula os fechados); ciclo de 25 semanas. **Trilho** tem a missão fixa `n-trilho` ("Faça 1 registro no Caderno", evento `journal`, paga tinta), todo dia, fora do rodízio; o Caderno não conta mais direto na semanal de journal: ela anda no RESGATE do Trilho (no máx. 1 por dia). A lista do dia sobe de 6 para 8 itens (`DAILY_MISSION_COUNT`) para as de NPC não comerem o sorteio comum. Mesmo estado e mesmo resgate das diárias (`dailyMissions`, `claimDaily`, idempotente; sanitização espelhada no servidor), recompensa = 1 material do prédio (o padrão), SEMPRE visível no cartão. A contagem é por evento real emitido pelo gesto do jogo; "colete essências" soma tudo que entra (`applyEssences`). Sem missão: Glifa (Biblioteca), Mirevesper (Guerra), Ramo (Grove) e o Corvo do Perfil (sem ação que contar). O Centro de Evolução deixou de ter "visitar" como primeira vez.
 
-## 🆕 Delta de 16/11/2026 (§451): o Rift é o sumidouro de energia
+## 🆕 Delta de 16/11/2026 (§453): o Rift é o sumidouro de energia
 
 - **Sem limite diário.** O limite de 30 lutas = 5 andares do §441 foi revogado: o Rift é infinito (camada 999 é o fim da escada) e só a energia (1 por andar) freia a descida. `dungeonDaily` segue no save como estatística sem teto; o lobby mostra "hoje: N andares". Saíram `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday`, a recusa `'daily-limit'` e o fim `'daily'` do `dungeonAway`.
 - **Regeneração.** `ENERGY_REGEN_MINUTES` = 80 (era 60).

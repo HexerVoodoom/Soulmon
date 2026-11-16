@@ -186,11 +186,19 @@ export function shieldAbsorbPoints(sh, d, src) {
   return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
 }
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
-export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
-/** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
-export function specialOf(family) {
+/** Hexsmith H2: familias que so existem via Coroa (espelho de `CROWN_ONLY_FAMILIES`); nunca sorteadas. */
+export const CROWN_ONLY_FAMILIES = ['defBuff', 'atkDebuff', 'spdDebuff'];
+export const ALL_SPECIAL_FAMILIES = [...SPECIAL_FAMILIES, ...CROWN_ONLY_FAMILIES];
+export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2, defBuff: 1.1, atkDebuff: 1.1, spdDebuff: 0.64 };
+/** Hexsmith H2 (espelho de `EFFECT_TUNE_PVP`, `FAMILY_TUNE`, `EFFECT_FAMILY`). */
+export const EFFECT_TUNE_PVP = { silenceHits: 1, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.8, hotScale: 1.05 };
+export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
+export const EFFECT_FAMILY = { hot: 'shield', slow: 'defDebuff', silence: 'defDebuff' };
+/** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. O efeito so vale sobre a familia-base dele. */
+export function specialOf(family, effect) {
   const f = typeof family === 'string' && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : 'direct';
-  return { family: f, power: SPECIAL_POWER[f] };
+  const base = { family: f, power: SPECIAL_POWER[f] };
+  return typeof effect === 'string' && Object.prototype.hasOwnProperty.call(EFFECT_FAMILY, effect) && EFFECT_FAMILY[effect] === f ? { ...base, effect } : base;
 }
 export const ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
 export const ENERGY_TRIGGER = 100;
@@ -309,7 +317,7 @@ export function* fightSteps(a, b, opts) {
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: any, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nGuard: 0, nWeak: 0, nHot: 0, hots: /** @type {{ pulse: number, left: number }[]} */ ([]), dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: any, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
     };
   };
   const F = [mk(a, 0), mk(b, 1)];
@@ -355,12 +363,19 @@ export function* fightSteps(a, b, opts) {
   };
   /** §334: o comeco do golpe de `me` (espelho de `tickOwnTurn` de `fight.ts`); `true` = o tick o derrubou e ele nao golpeia. */
   const tickOwnTurn = (me) => {
-    if (!me.dots.length || me.dead < Infinity || me.hp <= EPS) return false;
+    if ((!me.dots.length && !me.hots.length) || me.dead < Infinity || me.hp <= EPS) return false;
     for (const d of me.dots) {
       d.left--;
       if (me.hp > EPS) hit(d.src, me, (d.E / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), 'tick', 'tick');
     }
     me.dots = me.dots.filter((d) => d.left > 0);
+    // Hexsmith H2: a cura continua pulsa depois dos ticks, no comeco do golpe de quem a recebe (espelho de `fight.ts`)
+    for (const h of me.hots) {
+      h.left--;
+      me.nHot--;
+      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
+    }
+    me.hots = me.hots.filter((h) => h.left > 0);
     return me.hp <= EPS;
   };
   const cast = (me, foe, t0, scale) => {
@@ -375,6 +390,7 @@ export function* fightSteps(a, b, opts) {
     const sp = me.sp;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
+    const tune = sp.tune ?? EFFECT_TUNE_PVP;
     switch (sp.family) {
       case 'direct':
         hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
@@ -387,13 +403,30 @@ export function* fightSteps(a, b, opts) {
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
+        if (sp.effect === 'hot') {
+          const pulse = Math.round(((E * tune.hotScale) / DOT_TICKS / hitsOn(foe, me)) * me.pts);
+          me.nHot += DOT_TICKS;
+          me.hots.push({ pulse, left: DOT_TICKS });
+          break;
+        }
         me.shield = (Math.round(me.shield * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += E;
         break;
       case 'defDebuff':
-        foe.nVuln += E;
+        if (sp.effect === 'slow') { foe.nSlow += E * tune.slowScale; foe.nVuln += E * tune.slowKeep; }
+        else if (sp.effect === 'silence' && foe.sp) { foe.nSil = Math.max(foe.nSil, tune.silenceHits); foe.nVuln += E * tune.silenceKeep; }
+        else foe.nVuln += E;
+        break;
+      case 'defBuff':
+        me.nGuard += E / FAMILY_TUNE.guardCut;
+        break;
+      case 'atkDebuff':
+        foe.nWeak += E / FAMILY_TUNE.weakCut;
+        break;
+      case 'spdDebuff':
+        foe.nDrag += E * FAMILY_TUNE.spdDebuffScale;
         break;
       case 'spdBuff':
         me.nSpd += E;
@@ -414,7 +447,7 @@ export function* fightSteps(a, b, opts) {
   }
   function* tryCast(i, tt) {
     const me = F[i];
-    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+    if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
       // §334 (dono, 13/11/2026): lancar o especial tambem e turno do afetado (espelho de `fight.ts`): o DoT tica antes; quem cai nao lanca
       const caiu = tickOwnTurn(me);
       yield* flush();
@@ -439,7 +472,7 @@ export function* fightSteps(a, b, opts) {
     for (const e of timed) if (e.t < tt) tt = e.t;
     let tEn = Infinity;
     for (const f of F) {
-      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+      if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     t = Math.min(F[0].next, F[1].next, tt, tEn);
     for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
@@ -456,6 +489,8 @@ export function* fightSteps(a, b, opts) {
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
+      if (foe.nGuard > EPS) { const x = Math.min(1, foe.nGuard); mulN *= 1 - FAMILY_TUNE.guardCut * x; foe.nGuard -= x; }
+      if (me.nWeak > EPS) { const x = Math.min(1, me.nWeak); mulN *= 1 - FAMILY_TUNE.weakCut * x; me.nWeak -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
       hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
@@ -466,6 +501,9 @@ export function* fightSteps(a, b, opts) {
       } else {
         me.next = t + interval(me.c.spd);
       }
+      if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nDrag > EPS) { const x = Math.min(1, me.nDrag); me.nDrag -= x; me.next += interval(me.c.spd) * x * FAMILY_TUNE.dragStretch; }
+      if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();
     yield* markDead();

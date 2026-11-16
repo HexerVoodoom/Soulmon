@@ -39,7 +39,7 @@ import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/gr
 import { mulberry32 } from './combate/rng';
 import { glitchtamaDraw, glitchtamaDropFor, aplicarDropDoMarco } from './glitchtamaDrop';
 import { applyRiftLayer, riftTierTotals, type RiftMonthState } from './endlessRift';
-import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { isSpecialFamily, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
 import { creditMinigameBits } from './currencies';
 import { addFragments } from './equipment';
@@ -97,7 +97,7 @@ export function dungeonWaveOf(seed: number, layer: number, level: number, stage:
 
 /** O jogador do instantâneo como o motor o lê. */
 export function awayPlayerCfg(p: DungeonAwayPlayer): DungeonPlayerCfg {
-  const fam = (SPECIAL_FAMILIES as readonly string[]).includes(p.fam) ? p.fam as SpecialFamily : 'direct';
+  const fam: SpecialFamily = isSpecialFamily(p.fam) ? p.fam : 'direct';
   return {
     combatant: { level: p.level, atk: p.atk, def: p.def, spd: p.spd, hp: p.hp, bonus: p.bonus },
     family: fam,

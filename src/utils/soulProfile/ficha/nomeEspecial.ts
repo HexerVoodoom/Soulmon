@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 
 import { hashString, mulberry32, pick } from '../../oracle';
-import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
+import { isSpecialFamily, SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import type { EscolaSkillId } from './types';
 
 import { elementoConhecido, elementoNomeDe, type TextoPar } from './elementoNome';
@@ -55,6 +55,22 @@ export const SUBSTANTIVOS_ESPECIAL: Record<SpecialFamily, TextoPar[]> = {
     { en: 'Slipstream', pt: 'Esteira' }, { en: 'Zephyr', pt: 'Zéfiro' }, { en: 'Quickening', pt: 'Aceleração' },
     { en: 'Dash', pt: 'Disparada' }, { en: 'Momentum', pt: 'Embalo' }, { en: 'Swiftness', pt: 'Presteza' },
     { en: 'Rapids', pt: 'Corredeira' }, { en: 'Haste', pt: 'Celeridade' },
+  ],
+  // Hexsmith H2 (famílias só de Coroa): 8 por família, coerentes com o efeito e disjuntos dos das outras (o teste varre)
+  defBuff: [
+    { en: 'Temper', pt: 'Têmpera' }, { en: 'Fortitude', pt: 'Fortitude' }, { en: 'Resolve', pt: 'Resolução' },
+    { en: 'Steadfast', pt: 'Firmeza' }, { en: 'Hardening', pt: 'Endurecimento' }, { en: 'Ironclad', pt: 'Couraça de Ferro' },
+    { en: 'Stoneskin', pt: 'Pele de Pedra' }, { en: 'Unyielding', pt: 'Inflexível' },
+  ],
+  atkDebuff: [
+    { en: 'Wither', pt: 'Definhar' }, { en: 'Languor', pt: 'Langor' }, { en: 'Malaise', pt: 'Mal-estar' },
+    { en: 'Sapping', pt: 'Esgotamento' }, { en: 'Fatigue', pt: 'Fadiga' }, { en: 'Dulling', pt: 'Embotamento' },
+    { en: 'Dread', pt: 'Pavor' }, { en: 'Slump', pt: 'Abatimento' },
+  ],
+  spdDebuff: [
+    { en: 'Creep', pt: 'Rastejo' }, { en: 'Lag', pt: 'Atraso' }, { en: 'Plod', pt: 'Passo Pesado' },
+    { en: 'Mudflat', pt: 'Lodaçal' }, { en: 'Drift', pt: 'Deriva' }, { en: 'Dawdle', pt: 'Demora' },
+    { en: 'Snare', pt: 'Armadilha' }, { en: 'Tether', pt: 'Amarra' },
   ],
 };
 
@@ -142,13 +158,17 @@ export function familiaDoNomeInimigo(special: { family: SpecialFamily; effect?: 
   return special.effect === 'hot' ? 'heal' : special.family;
 }
 
-/** Peso de cada família por escola. Toda família tem peso > 0 em toda escola: nenhuma é inalcançável. */
+/**
+ * Peso de cada família por escola. As 7 sorteáveis têm peso > 0 em toda escola: nenhuma é inalcançável. As 3 famílias só de Coroa
+ * (Hexsmith H2, `CROWN_ONLY_FAMILIES`) têm peso 0 em TODA escola: entram só pela Coroa, nunca num sorteio de ficha.
+ */
+const SO_COROA = { defBuff: 0, atkDebuff: 0, spdDebuff: 0 } as const;
 export const PESO_FAMILIA_ESCOLA: Record<EscolaSkillId, Record<SpecialFamily, number>> = {
-  combate_fisico: { direct: 4, dot: 2, heal: 1, shield: 2, atkBuff: 3, defDebuff: 1, spdBuff: 1 },
-  longo_alcance: { direct: 3, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 2, spdBuff: 2 },
-  conjuracao: { direct: 4, dot: 2, heal: 2, shield: 2, atkBuff: 1, defDebuff: 2, spdBuff: 1 },
-  benca: { direct: 1, dot: 1, heal: 4, shield: 3, atkBuff: 2, defDebuff: 1, spdBuff: 2 },
-  maldicao: { direct: 1, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 4, spdBuff: 1 },
+  combate_fisico: { direct: 4, dot: 2, heal: 1, shield: 2, atkBuff: 3, defDebuff: 1, spdBuff: 1, ...SO_COROA },
+  longo_alcance: { direct: 3, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 2, spdBuff: 2, ...SO_COROA },
+  conjuracao: { direct: 4, dot: 2, heal: 2, shield: 2, atkBuff: 1, defDebuff: 2, spdBuff: 1, ...SO_COROA },
+  benca: { direct: 1, dot: 1, heal: 4, shield: 3, atkBuff: 2, defDebuff: 1, spdBuff: 2, ...SO_COROA },
+  maldicao: { direct: 1, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 4, spdBuff: 1, ...SO_COROA },
 };
 
 /** Elementos que puxam cada família (afinidade ×3). Elemento fora da tabela (par derivado) é neutro. */
@@ -160,6 +180,9 @@ export const AFINIDADE_ELEMENTO: Record<SpecialFamily, readonly string[]> = {
   atkBuff: ['fogo', 'marcial', 'vigor'],
   defDebuff: ['sombra', 'morte', 'vileza'],
   spdBuff: ['ar', 'eletricidade', 'tempo'],
+  defBuff: [],
+  atkDebuff: [],
+  spdDebuff: [],
 };
 
 const AFINIDADE = 3;
@@ -248,7 +271,7 @@ export function nomeDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): 
 export function nomeDeLexico(fx: unknown): TextoPar | null {
   if (!fx || typeof fx !== 'object') return null;
   const { familia, lex } = fx as { familia?: unknown; lex?: unknown };
-  if (typeof familia !== 'string' || !(SPECIAL_FAMILIES as readonly string[]).includes(familia)) return null;
+  if (!isSpecialFamily(familia)) return null;
   if (!lex || typeof lex !== 'object') return null;
   const { n, f, el, elB } = lex as { n?: unknown; f?: unknown; el?: unknown; elB?: unknown };
   if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n >= SUBSTANTIVOS_POR_FAMILIA) return null;
@@ -291,6 +314,18 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
       en: `${el.en} lightens every step and quickens the next strikes. Drains ${rEn}.`,
       pt: `${el.pt} alivia cada passo e acelera os próximos golpes. Drena ${rPt}.`,
     };
+    case 'defBuff': return {
+      en: `${el.en} hardens the body, so the next blows you take land softer. Drains ${rEn}.`,
+      pt: `${el.pt} endurece o corpo, e os próximos golpes que você recebe doem menos. Drena ${rPt}.`,
+    };
+    case 'atkDebuff': return {
+      en: `${el.en} saps the opponent, so their next strikes land weaker. Drains ${rEn}.`,
+      pt: `${el.pt} esgota o oponente, e os próximos golpes dele batem mais fracos. Drena ${rPt}.`,
+    };
+    case 'spdDebuff': return {
+      en: `${el.en} weighs on the opponent, so they strike slower for a few turns. Drains ${rEn}.`,
+      pt: `${el.pt} pesa sobre o oponente, que ataca mais devagar por alguns turnos. Drena ${rPt}.`,
+    };
   }
 }
 
@@ -300,6 +335,6 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
  * identidade dele (`seed`: o nome gerado). Não depende de nada do jogador.
  */
 export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null): TextoPar {
-  const f = (SPECIAL_FAMILIES as readonly string[]).includes(familia ?? '') ? (familia as SpecialFamily) : 'direct';
+  const f = isSpecialFamily(familia) ? familia : 'direct';
   return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe' });
 }

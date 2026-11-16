@@ -9,7 +9,7 @@
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
 import { curatedComponents } from '../elementosCurados';
-import { EFFECT_TUNE_PESADELO, effectTuneMasmorra, type Special, type SpecialEffect, type SpecialFamily } from './specials';
+import { EFFECT_FAMILY, EFFECT_TUNE_PESADELO, effectTuneMasmorra, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 
 export type EfeitoElemento =
   | 'queimadura' | 'veneno' | 'maldicao' | 'silencio' | 'lentidao' | 'curaContinua'
@@ -29,6 +29,10 @@ const TABELA: Readonly<Record<SpecialFamily, Readonly<Record<string, EfeitoEleme
   atkBuff: { terra: 'ataqueFisico', agua: 'ataqueMagico' },
   spdBuff: { ar: 'velocidade' },
   heal: { vida: 'curaGrande' },
+  // Hexsmith H2: famílias que só vêm da Coroa não têm sabor de elemento (a mecânica é a própria família)
+  defBuff: {},
+  atkDebuff: {},
+  spdDebuff: {},
 };
 
 /**
@@ -53,9 +57,22 @@ const EXCECAO_DERIVADO: Readonly<Record<string, Partial<Record<SpecialFamily, Ef
 
 const COMPONENTES = new Map<string, readonly string[]>(DERIVED_ELEMENT_PAIRS.map((d) => [d.id, d.componentes as readonly string[]]));
 
+/**
+ * HEXSMITH H2 (16/11/2026): a Coroa de EFEITO equipada (`coroa:hot|slow|silence`) vale como o "elemento" `coroa:<efeito>` no canal que a
+ * tela já passa ao simulador (`efeitoElemento`): o efeito genérico (cura contínua, lentidão, silêncio), que PREVALECE sobre o do
+ * Amuleto. Só vale sobre a família-base dela (`EFFECT_FAMILY`); fora dela devolve `null` (a família segue pura).
+ */
+const PREFIXO_COROA = 'coroa:';
+const EFEITO_DA_COROA: Readonly<Record<SpecialEffect, EfeitoElemento>> = { hot: 'curaContinua', slow: 'lentidao', silence: 'silencio' };
+export const elementoDaCoroa = (efeito: SpecialEffect): string => `${PREFIXO_COROA}${efeito}`;
+
 /** O efeito de um especial; `null` = só o que a família já faz. Derivado herda do primeiro componente que tem efeito na família. */
 export function efeitoDoEspecial(family: SpecialFamily | null | undefined, elemento: string | null | undefined): EfeitoElemento | null {
   if (!family || !elemento) return null;
+  if (elemento.startsWith(PREFIXO_COROA)) {
+    const ef = elemento.slice(PREFIXO_COROA.length);
+    return Object.prototype.hasOwnProperty.call(EFFECT_FAMILY, ef) && EFFECT_FAMILY[ef as SpecialEffect] === family ? EFEITO_DA_COROA[ef as SpecialEffect] : null;
+  }
   const direto = EXCECAO_DERIVADO[elemento]?.[family] ?? TABELA[family][elemento] ?? TABELA_11[family]?.[elemento];
   if (direto) return direto;
   const componentes = COMPONENTES.get(elemento) ?? curatedComponents(elemento) ?? []; // §232: curado herda como o par
@@ -89,9 +106,12 @@ export function efeitoVisivel(
 export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = EFEITOS_COM_MECANICA;
 
 /** O elemento que a tela passa ao simulador: só quando a regra daquele par está ligada. PvP nunca chama. */
-export function efeitoElementoPve(family: SpecialFamily, elemento: string | null | undefined): string | undefined {
-  const e = efeitoDoEspecial(family, elemento);
-  return e && EFEITOS_PVE_LIGADOS.includes(e) ? (elemento as string) : undefined;
+export function efeitoElementoPve(
+  family: SpecialFamily, elemento: string | null | undefined, hx?: { readonly specialEffect?: SpecialEffect },
+): string | undefined {
+  const el = hx?.specialEffect ? elementoDaCoroa(hx.specialEffect) : elemento; // a Coroa de efeito prevalece sobre o Amuleto
+  const e = efeitoDoEspecial(family, el);
+  return e && EFEITOS_PVE_LIGADOS.includes(e) ? (el as string) : undefined;
 }
 
 /**

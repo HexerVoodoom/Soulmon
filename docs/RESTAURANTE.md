@@ -6,7 +6,7 @@ tela: `src/components/mercado/RestauranteSheet.tsx`). Régua: `src/utils/restaur
 ## Regra
 - Lote `mercado:restaurante` (fora dos portões, sem Vínculo mínimo, como o Cambista).
 - **Chefs por dia do jogador**: seg/qua/sex **Snapjaw** (planta carnívora) · ter/qui/sáb **Caldo** (o cozinheirinho) · domingo os dois, cardápio inteiro. **Na tela (15/11/2026, §396):** o busto e a fala são os do chef do dia; no domingo os dois lado a lado e dois botões de chef na folha. Missão semanal `cook-dish` conta cada prato cozinhado.
-- Todo prato custa **2–3 comidas da pastinha + 1 extra (essência OU material de prédio) + 15–60 Bits** (energia ×1,5 desde 16/11/2026, REGISTRO §451) e **enche a fome até o máximo** (`hunger.ts › eat`).
+- Todo prato custa **2–3 comidas da pastinha + 1 extra (essência OU material de prédio) + 15–60 Bits** (energia ×1,5 desde 16/11/2026, REGISTRO §453) e **enche a fome até o máximo** (`hunger.ts › eat`).
 - Benefício: energia na hora **ou** buff de 24 h (um buff por vez; o novo substitui). Máx. **2 pratos por dia** (`DISHES_PER_DAY`).
 - Buff de **combate** (+2% ATK/DEF/SPD): entra pelo canal único `combinedAttrBonus` (teto 5% somando tudo), vale só no **PvE local**
   (Fenda, Arena, Pesadelo) — Duelo/Torneio/Guerra são do servidor e não o veem. Pede **material** (não se compra) e **Bits ganhos** (`earnedBits`).

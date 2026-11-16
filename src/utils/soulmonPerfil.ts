@@ -125,6 +125,9 @@ export const PERFIL_EFEITO: Readonly<Record<SpecialFamily, { pt: string; en: str
   atkBuff: { pt: 'Apoio: mais ataque', en: 'Support: more attack' },
   defDebuff: { pt: 'Enfraquece a defesa', en: 'Weakens defense' },
   spdBuff: { pt: 'Apoio: mais ritmo', en: 'Support: more speed' },
+  defBuff: { pt: 'Apoio: mais defesa', en: 'Support: more defense' },
+  atkDebuff: { pt: 'Enfraquece o ataque', en: 'Weakens attack' },
+  spdDebuff: { pt: 'Deixa o alvo lento', en: 'Slows the target' },
 };
 
 /** O IMPACTO de cada campo no jogo (curto; só o que a regra do código faz — combate `utils/combate/`, `bonus.ts`, anel de elementos). */

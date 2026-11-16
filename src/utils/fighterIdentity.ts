@@ -18,7 +18,7 @@ import { SCHOOL_STRIKE_FORM, type StrikeForm, type SkillRole } from './soulProfi
 import { elementStrikeForm, FX_FALLBACK_ELEMENT } from './combatFx';
 import { familyOfSkill } from './arena';
 import { elementoConhecido } from './soulProfile/ficha/elementoNome';
-import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { isSpecialFamily, type SpecialFamily } from './combate/specials';
 import { chaveDaIdentidade, meleeImpactOf, type ImpactoMelee } from './combate/golpeImpacto';
 
 /** Um golpe do lutador: o elemento (id da ficha, usado também no jogo), a escola (`null` = sem ficha) e a forma. */
@@ -61,7 +61,7 @@ const golpeDasLuvas = (g: unknown) => (typeof g === 'string' && Object.prototype
 
 const ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
 const elementoValido = (id: unknown): id is string => typeof id === 'string' && ELEMENTO_ID.test(id);
-const famValida = (f: unknown): SpecialFamily | null => (typeof f === 'string' && (SPECIAL_FAMILIES as readonly string[]).includes(f) ? (f as SpecialFamily) : null);
+const famValida = (f: unknown): SpecialFamily | null => (isSpecialFamily(f) ? f : null);
 
 function golpe(escola: unknown, elemento: string, role: SkillRole, formaDoElemento = false): FighterStrike {
   if (formaDoElemento && typeof escola === 'string') {
