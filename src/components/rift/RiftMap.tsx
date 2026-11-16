@@ -103,6 +103,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
         <button type="button" data-rift-map-close onClick={onClose} aria-label={t.back} style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 44, padding: '0 12px' }}>←</button>
         <h2 style={{ margin: 0, fontSize: 'var(--sm2-text-lg, 18px)', fontWeight: 700 }}>{t.title}</h2>
       </header>
+      <style>{`[data-rift-node] button:focus-visible{outline:3px solid #fff;outline-offset:4px}@keyframes rift-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}@media (prefers-reduced-motion:no-preference){[data-rift-node][data-state="current"] button{animation:rift-pulse 2.4s ease-in-out infinite}}`}</style>
       <div ref={scroller} data-rift-map-scroll style={{ position: 'relative', flex: 1, overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
         <div data-rift-map-canvas style={{
           position: 'relative', height: RIFT_MAP_HEIGHT, width: '100%',
@@ -135,9 +136,9 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
                 }}>
                   {locked ? <span aria-hidden="true">?</span> : <ElementIcon id={n.element} size={32} />}
                 </button>
-                <span data-rift-node-label className="sm2-num" style={{
+                <span data-rift-node-label className="sm2-num" aria-hidden="true" onClick={() => tap(n)} style={{
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
-                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', pointerEvents: 'none', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
+                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
                 }}>{n.label}</span>
                 {current && sprite && (
                   <img data-rift-sprite src={sprite} alt={t.you} width={52} height={52} draggable={false} style={{

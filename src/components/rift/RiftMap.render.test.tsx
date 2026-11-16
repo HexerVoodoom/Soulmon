@@ -56,7 +56,7 @@ describe('RiftMap', () => {
     const { container, onRewind } = mount();
     fireEvent.click(node(container, 1).querySelector('button') as HTMLElement);
     const doc = container.ownerDocument;
-    expect(doc.body.textContent).toContain('Go back to this node?');
+    expect(doc.body.textContent).toContain('Go back to these floors?');
     fireEvent.click(doc.querySelector('[data-rift-ask-no]') as HTMLElement);
     expect(onRewind).not.toHaveBeenCalled();
     fireEvent.click(node(container, 1).querySelector('button') as HTMLElement);
