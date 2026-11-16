@@ -6084,3 +6084,18 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 - **Guarda:** `nomeEspecialCoerente.test.ts` (léxico por família sem palavra de outra família, selo de inimigo por família em EN/PT, Coroa, save antigo, básicas).
 - **Alternativa que perdeu:** reescrever o nome gravado no save (migração): rejeitada, a leitura pela tabela basta.
 - **Rollback:** `git revert`; só texto exibido.
+## §444 — Companheiro invocado, PR 1: fundação atrás de flag, sem combate nem cena (16/11/2026, dono)
+
+**Decisão do dono (16/11):** o companheiro do Oráculo vira invocação em combate para TODO Soulmon (jogador, simulado, NPC) cujo ARQUÉTIPO do estágio esteja na lista de evocação (invocador, senhor das feras, xamã totêmico, necromante, demonologista, verdejante, senhor dos mortos vis, bokor, escriba do pacto) OU cuja escola dominante da ficha seja Evocação; 32 sprites fixos por criatura; função mista (turno 1 o especial do jogador, turnos 2-3 ataque).
+
+**Este PR (só fundação, flag `COMPANHEIRO_INVOCADO` DESLIGADA):** `utils/companheiroInvocado.ts` (dono único: lista de arquétipos, 32 criaturas, `eEvocador`, `companheiroDoEstagio`, `companheiroAtivo`, cache e migração); `ClassTitle.id?` (+ `arquetipoIdDoTitulo`, que recupera o id de cache antigo pelo nome EN); campo aditivo `GameState.soulmonEvocacao` por estágio (primeiro valor vence, sanitizador em `hydrateSave`, preenchido por `recalcularCaches` só com a flag ligada); `assets/soulmon/companheiros/index.ts` (glob tolerante); `utils/companheiroInvocadoLinhas.ts` (simulados/NPCs, tabela PROVISÓRIA por elemento base); teste de medição por estágio.
+
+**Escola dominante inclui Evocação:** `skills.ts › escolaDominante` ignora evocação (não é escola de skill); a regra nova é `escolaDominanteComEvocacao` (argmax sobre todas as `EscolaId`, empate pela ordem canônica).
+
+**Decisões finais (16/11):** forma "Aspirante a X" (diluída) CONTA como arquétipo; casamento pelo NOME da classe com tolerância PT/EN/acento e `ClassTitle.id` daqui em diante; simulados por ESCOLA derivada de elemento+linha (tabela papel→escola do Oráculo, `ROLE_SCHOOL_BY_ALIGNMENT` exportada de `buildSheet`; papel por elemento em `PAPEL_POR_ELEMENTO`, `companheiroInvocadoLinhas.ts`, ~45 de 170); NPC inimigo só chefe/mini-boss NOMEADO por lista explícita (`CHEFES_NOMEADOS_INVOCAM`: os 3 do Torneio hoje); Arena em grupo = 1 companheiro POR COMBATENTE (`COMPANHEIROS_POR_COMBATENTE`).
+
+**Sprites:** NÃO entram neste PR: o dono escolhe entre 1ª geração e refeita de alguns; os 32 PNG 256² RGBA (fonte `E:/Soulmon-assets/_lote-16-11/companheiros/`) vêm no PR 1b. O mapa e o teste já existem, com os 32 como PENDENTES. Dos aprovados, 5 têm elemento solto (fada, arauto_elfico, wyvern, falcao, coruja: disco de runas, selo, anel de vento) a refinar depois.
+
+**Servidor:** `save.js` não sanitiza `soulmonClassTitles`/`soulmonCompanheiro` (campos de cache passam como o resto do save), então este PR não tem espelho no servidor; o espelho (e o teste de paridade) é do PR 2, quando o combate ler isto.
+
+**Pendente do dono:** nada bloqueante; novos chefes nomeados entram à mão em `CHEFES_NOMEADOS_INVOCAM`. **Rollback:** `git revert`; campo ignorado por versões antigas (aditivo), flag desligada = zero efeito.

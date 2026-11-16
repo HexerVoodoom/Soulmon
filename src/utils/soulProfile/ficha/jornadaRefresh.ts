@@ -17,6 +17,8 @@ import { manifestacaoDaFicha } from './manifestacao';
 import { selectCompanion } from './capture';
 import { companheiroVisivel } from './companheiro';
 import type { FichaStage } from './types';
+import { COMPANHEIRO_INVOCADO } from '../../companheiroInvocado';
+import { derivarEvocacao } from './evocacaoPorEstagio';
 
 export async function recalcularCaches(saved: OracleInput & { seed?: number }, jornada: FichaJornada) {
   const { fichaByStage, stageSkills, dominantElement, planoByStage } = buildFichaESkills(saved, identityKey(saved), jornada);
@@ -33,5 +35,7 @@ export async function recalcularCaches(saved: OracleInput & { seed?: number }, j
     manifestacao: manifestacaoDaFicha(fichaByStage),
     companheiro: companheiroVisivel(selectCompanion(fichaByStage.mega, identityKey(saved))),
     derivado,
+    /** Companheiro invocado (PR 1): só calcula com a flag ligada; senão `undefined` e o save não ganha o campo. */
+    evocacao: COMPANHEIRO_INVOCADO ? derivarEvocacao(fichaByStage, classTitles) : undefined,
   };
 }

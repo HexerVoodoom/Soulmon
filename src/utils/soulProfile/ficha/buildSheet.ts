@@ -190,7 +190,7 @@ const ESCOLAS_TODAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'evocacao'
  * poder → maldição (arqueiro de pragas/venenos). Medido nas seeds de
  * validação (N=800): 1,44× (13,5%–19,4%), piso de ruído 1,25×.
  */
-const ROLE_SCHOOL_BY_ALIGNMENT: Record<RoleId, Record<AlignmentId, EscolaId>> = {
+export const ROLE_SCHOOL_BY_ALIGNMENT: Record<RoleId, Record<AlignmentId, EscolaId>> = {
   fisico: { poder: 'combate_fisico', harmonia: 'longo_alcance', benevolencia: 'combate_fisico' },
   tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'evocacao' },
   alcance: { poder: 'maldicao', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
