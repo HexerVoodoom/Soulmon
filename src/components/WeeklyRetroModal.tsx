@@ -48,7 +48,7 @@ const FLAME_CENTER = Math.round(FLAME_H * 0.64);
 const FLAME_INSIDE = Math.round(FLAME_H * 0.31);
 
 const CSS = `
-.rt-root{position:fixed;inset:0;z-index:240;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;
+.rt-root{position:fixed;inset:0;z-index:240;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;overflow-x:hidden;
   background:radial-gradient(120% 80% at 50% 0%,#0E5A53 0%,#073A36 45%,#04211F 100%);color:${INK};
   padding:max(20px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
 .rt-wrap{width:100%;max-width:440px;margin:0 auto;padding-top:${Math.round(FLAME_H * 0.4)}px}
