@@ -5809,3 +5809,6 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 ## §456 — Teto de Bits por categoria (16/11/2026)
 - Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
 - Pendente do dono: convite de Duelo e VIP (ver REGISTRO §457).
+
+## §458 — Convite de Duelo (16/11/2026)
+- Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.

@@ -238,8 +238,8 @@ export function DueloSheet({ language, onStart, arena }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits. Cada luta pede 1 convite de duelo; troque 1 energia por convites quando precisar.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits. Each fight takes 1 duel invite; trade 1 energy for invites when you need them.`}
             </span>
             <span data-duelo-ajuda-stray style={{ display: 'block', marginTop: 6 }}>
               {isPt
