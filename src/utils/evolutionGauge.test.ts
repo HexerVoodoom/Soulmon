@@ -136,19 +136,20 @@ describe('a virada credita o gauge', () => {
   });
 
   describe('16/11/2026: a barra do Ultra só acumula com as 3 megas liberadas', () => {
+    type ResetUltra = { evolutionStage: string; evolutionPoints: number; lastDayReport: { gaugeGain: number } };
     const MEGA = { evolutionStage: 'mega-power', currentBranch: 'power', evolutionPoints: 100 };
     it('1 mega: nada entra, nada sai (pontos guardados) e o relatório não promete ganho', () => {
-      const r: any = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: ['mega-power'] }) as any, { now: NOW });
+      const r: ResetUltra = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: ['mega-power'] }) as never, { now: NOW });
       expect(r.evolutionPoints).toBe(100);
       expect(r.lastDayReport.gaugeGain).toBe(0);
     });
     it('1 mega com a barra ANTIGA já cheia: não evolui ao Ultra e não perde o acumulado', () => {
-      const r: any = computeDailyReset(st(6, 6, { ...MEGA, evolutionPoints: ULTRA_PATIENCE_POINTS + 30, unlockedEvolutions: ['mega-power'] }) as any, { now: NOW });
+      const r: ResetUltra = computeDailyReset(st(6, 6, { ...MEGA, evolutionPoints: ULTRA_PATIENCE_POINTS + 30, unlockedEvolutions: ['mega-power'] }) as never, { now: NOW });
       expect(r.evolutionStage).toBe('mega-power');
       expect(r.evolutionPoints).toBe(ULTRA_PATIENCE_POINTS + 30);
     });
     it('3 megas: o ganho do dia entra normalmente (teto do mega)', () => {
-      const r: any = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: TRES_MEGAS }) as any, { now: NOW });
+      const r: ResetUltra = computeDailyReset(st(6, 6, { ...MEGA, unlockedEvolutions: TRES_MEGAS }) as never, { now: NOW });
       expect(r.evolutionPoints).toBe(106);
       expect(r.lastDayReport.gaugeGain).toBe(6);
     });
@@ -164,7 +165,7 @@ describe('a virada credita o gauge', () => {
       expect(livre).toMatchObject({ locked: false, full: true, megasLiberadas: 3 });
       // save sem o campo / lixo: leitura tolerante, nunca quebra
       expect(gaugeView({ evolutionStage: 'mega-power' }).locked).toBe(true);
-      expect(gaugeView({ evolutionStage: 'mega-power', unlockedEvolutions: 'x' as any }).megasLiberadas).toBe(0);
+      expect(gaugeView({ evolutionStage: 'mega-power', unlockedEvolutions: "x" as never }).megasLiberadas).toBe(0);
       expect(gaugeView({ evolutionStage: 'ultra' }).locked).toBe(false);
     });
   });
