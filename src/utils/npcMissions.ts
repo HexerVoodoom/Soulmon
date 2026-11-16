@@ -61,10 +61,6 @@ export const NPC_MISSIONS: readonly NpcMissionDef[] = [
     namePt: 'Como você está', nameEn: 'How you are', descPt: 'Conte ao seu Soulmon como você está', descEn: 'Tell your Soulmon how you are' },
   { id: 'n-vultrak', npc: 'arena:torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel',
     namePt: 'Partida de Torneio', nameEn: 'Tournament match', descPt: 'Dispute 1 partida do Torneio', descEn: 'Play 1 Tournament match' },
-  { id: 'n-lasca', npc: 'mercado:decoracao', event: 'compra', target: 2, building: 'mercado.decoracao', material: 'ribbon',
-    namePt: 'Duas compras', nameEn: 'Two buys', descPt: 'Compre 2 itens no Mercado', descEn: 'Buy 2 items at the Market' },
-  { id: 'n-panora', npc: 'mercado:background', event: 'cenario', target: 1, building: 'mercado.background', material: 'ribbon',
-    namePt: 'Horizonte novo', nameEn: 'New horizon', descPt: 'Compre 1 cenário no Mercado', descEn: 'Buy 1 backdrop at the Market' },
   { id: 'n-corva', npc: 'exploracao:dungeon', event: 'calabouco', target: 2, building: 'exploracao.dungeon', material: 'ore',
     namePt: 'Andares do Calabouço', nameEn: 'Dungeon floors', descPt: 'Conclua 2 andares do Calabouço', descEn: 'Finish 2 Dungeon floors' },
   { id: 'n-tinta', npc: 'laboratorio:pet', event: 'carinho', target: 1, building: 'laboratorio.pet', material: 'down',
@@ -103,5 +99,7 @@ export const NPCS_SEM_MISSAO: Readonly<Record<string, string>> = {
   'arena:guerra': 'Mirevesper: a Guerra de Clãs rende na casa do clã, sem evento diário',
   'hall:grove': 'Ramo: o Grove é do clã, sem evento diário',
   'laboratorio:perfil': 'Corvo do Perfil: leitura da ficha, sem ação',
+  'mercado:decoracao': 'Lasca (16/11/2026, dono): a missão dela é SEMANAL (`buy-decor`, utils/weeklyMissions.ts), não do rodízio diário',
+  'mercado:background': 'Panora (16/11/2026, dono): a missão dela é SEMANAL (`buy-backdrop`, utils/weeklyMissions.ts), não do rodízio diário',
   'mercado:cambista': 'Farthing: o Cambista não passa missão (dono, 12/11/2026: a troca no bazar foi excluída)',
 };

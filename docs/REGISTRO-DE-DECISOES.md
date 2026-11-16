@@ -5992,8 +5992,17 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo/gatilho:** -1 webp. Reabre se a chama gigante cortar em telas muito baixas ou se o dono quiser o CTA no fluxo, não fixo.
 
+## §435 — Missões da Lasca e da Panora viram SEMANAIS e nomeiam a lojinha (16/11/2026, dono)
 
-## §435 — Retrospectiva v3: chama em cristal, título por qualidade, CTA que preenche, instância única (16/11/2026, dono)
+**Pedido (literal, resumo):** as missões "Compre 1 backdrop no Market" (Panora, "Novos Horizontes") e "Compre 2 itens no Market" (Lasca) falavam só em "market" e eram diárias; devem ir para as semanais, a da Lasca dizendo "compre 2 itens de decoração" e a da Panora "compre 1 background/pintura de fundo", citando a lojinha certa. (Nomes vieram de voz: "Alaska" lido como Lasca; confirmado por `n-lasca` = `mercado:decoracao`, 2 compras, e `n-panora` = `mercado:background`, 1 cenário.)
+
+**Decisão:** (1) `n-lasca` e `n-panora` saem do rodízio diário de NPCs (`npcMissions.ts`, agora em `NPCS_SEM_MISSAO` com o motivo; o evento diário `cenario` sai). (2) Entram no pool semanal (`weeklyMissions.ts`) como `buy-decor` (alvo 2, 3 Emblemas) e `buy-backdrop` (alvo 1, 3 Emblemas), no FIM do pool, mesma regra de `cook-dish` (sorteadas entre as 3 variáveis da semana, não fixas). (3) Textos: PT "Compre 2 itens de decoração na lojinha de Decoração" / "Compre 1 cenário na lojinha de Background"; EN "Buy 2 decor pieces at the Decor stall" / "Buy 1 backdrop at the Background stall" (nomes de lote do mapa, `areaSheetCopy.ts`). (4) A contagem é por TIPO do item no `handleShopBuy`: `furniture` conta `buy-decor`, `bg` conta `buy-backdrop`; antes a da Lasca contava qualquer compra (inclusive cenário). "Ir" leva a `mercado.decoracao` / `mercado.background`. (5) Saves antigos: progresso semanal sem as chaves novas vale 0; `n-lasca`/`n-panora` resgatadas e a contagem `cenario` são descartadas pelo saneamento diário.
+
+**Suposições:** (1) recompensa em Emblemas na escada das semanais de alvo 1-2 (3), não em material do prédio; (2) pool e não fixa: quem quiser garantir presença vira `WEEKLY_FIXED` (lista passa de 5 para 7); (3) acrescentar ao pool muda o sorteio da semana corrente, quem já tinha progresso em outra missão mantém a contagem mas a linha pode sair da lista.
+
+**Custo/gatilho:** reabre se o dono quiser as duas sempre presentes (fixas) ou o material do prédio como prêmio.
+
+## §436 — Retrospectiva v3: chama em cristal, título por qualidade, CTA que preenche, instância única (16/11/2026, dono)
 
 **Pedido (resumo):** (1) chama nova, NÃO pixelada, dentro de um cristal; (2) o fundo atrás do card vira scrim semitransparente (rgba escuro ~70% com blur leve), não gradiente opaco; (3) o título "Que semana!" varia pela qualidade da semana; (4) Soulmon à esquerda das frases, o bloco centralizado no card; (5) contadores "X hábitos cumpridos" e "X tarefas pontuais"; (6) CTA menos informal ("Vamos começar a semana") com preenchimento turquesa com glow da esquerda para a direita. Depois, do aparelho: modal sem scroll, CTA cobrindo o conteúdo, e o diagnóstico do dono de que eram DOIS modais abertos ao mesmo tempo.
 
