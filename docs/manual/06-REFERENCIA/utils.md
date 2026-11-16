@@ -4770,3 +4770,22 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 
 ### `src/utils/weeklyRetro.ts`
 **Dono de:** a regra da retrospectiva de segunda (16/11/2026, REGISTRO §431): semana anterior segunda a domingo, hábito mais difícil (`pickHardest`), bônus de retorno (`makeWeeklyBonus`, `isWeeklyBonusOn`, `weeklyBonusGaugeBonus`), qualidade da semana (`retroQuality`, `overallHabitRate`), forma por semana (`recordWeekStage`, `evolvedLastWeek`) e `needsWeeklyRetro`. Funções puras, todo tempo entra por parâmetro. **Régua:** `weeklyRetro*.test.ts`.
+
+### `src/utils/companheiroInvocado.ts`
+**Dono de:** a regra "quem tem companheiro em combate" e o cache por estágio `soulmonEvocacao` (16/11/2026, REGISTRO §442/§454). `eEvocador(estagio, { arquetipoId, escolaDominante })` (arquétipo em `ARQUETIPOS_EVOCACAO` OU escola dominante = Evocação), `companheiroDoEstagio`, `criaturaConhecida` (uma das 32 de `CRIATURAS_COMPANHEIRO`), `sanitizeEvocacao`/`migrarEvocacao` (o primeiro valor de cada estágio vence), e a ÚNICA porta das telas de luta: `companheiroAtivo(estagio, criaturaId, cache, hexsmith?, ligado?)` e `companheiroDoEstado(estado, ligado?)`.
+**Exports:** `COMPANHEIRO_INVOCADO` (flag única) · `ARQUETIPOS_EVOCACAO` · `ESCOLA_EVOCACAO` · `CRIATURAS_COMPANHEIRO` · tipos `EvocacaoDoEstagio`, `EvocacaoEstagio`, `EvocacaoPorEstagio`, `EstadoComCompanheiro`. **REGRA DA COROA (decisão do dono, 16/11/2026):** Coroa da Hexsmith equipada troca o especial pelo da Coroa e a invocação descansa (`companheiroAtivo` devolve `null`); desequipar devolve a invocação. A Hexsmith nunca liga/desliga o gatilho `eEvocador`; este módulo lê `hexsmith.ts › hexCrownEquipped` e a Hexsmith nunca importa este módulo (sem ciclo). Espelho: `functions/api/_companheiroInvocado.js`. **Régua:** `companheiroInvocado.test.ts`, `hexsmith.coroasEfeito.test.ts`, `functions/api/companheiroInvocado.parity.test.js`.
+
+### `src/utils/companheiroInvocadoLinhas.ts`
+**Dono de:** o gatilho do companheiro para quem não tem ficha (16/11/2026): simulados por escola derivada do elemento + linha (`PAPEL_POR_ELEMENTO`, `escolaDoSimulado`, `eEvocadorPorLinha`), NPCs chefes nomeados por lista explícita (`CHEFES_NOMEADOS_INVOCAM`, `eNpcInvocador`), a criatura fixa por `hash(id)` (`criaturaPorId`, `companheiroDoSimulado`, `companheiroDoNpc`) e `COMPANHEIROS_POR_COMBATENTE` (1 por combatente na Arena em grupo). Tudo atrás da flag de `companheiroInvocado.ts`. Simulado não tem Hexsmith: a regra da Coroa não o toca. **Régua:** `companheiroInvocado.test.ts`.
+
+### `src/utils/combate/companheiro.ts`
+**Dono de:** a regra pura do companheiro no `cast` de quem invoca (16/11/2026, REGISTRO §449): `COMPANHEIRO_TURNOS` (3), `COMPANHEIRO_EFEITO_FATOR` (0,8), `COMPANHEIRO_ATAQUE_FATOR` (0,25), `COMPANHEIRO_VALOR_MAXIMO` (1,1), `especialInvoca(sp)` (cura, `heal` ou `shield` com `effect: 'hot'`, não invoca), `planoInvocacao(sp, scale)` (papel `ataque` para `direct`/`dot`, `misto` para as de efeito) e `valorNominalInvocacao`. Tipos `PapelInvocacao`, `PlanoInvocacao`. Quem decide SE o lado invoca é `companheiroDoEstado` (Coroa equipada = não); esta regra só diz o que a invocação faz. Espelho: `functions/api/_combate.js › planoInvocacao` (`combate.parity.test.js`).
+
+### `src/utils/enemyRosterLegado.data.ts`
+**Dono de:** `LEGADO_DATA` (16/11/2026, REGISTRO §445): os 5 ramos legados (som, eletricidade, tempo, arcano, marcial) como linhas `[id, linha de origem, criatura hospedeira, elemento do hospedeiro, nome champion, nome ultimate, nome mega]`; dados puros, lidos por `enemyRoster.ts` (`buildRamos`) e `enemyRosterArt.ts` (arte em `legado/`).
+
+### `src/utils/riftSets.ts`
+**Dono de:** o mapa profundidade → conjunto do Rift infinito (16/11/2026, REGISTRO §445): `riftSetOfLayer`, `riftWavePlan`, `isMiniBossLayer`, `isMiniBossFight`, `RIFT_STAGE_BY_COUNT` (estágio dos comuns e do mini-boss por nº de elementos base), `RIFT_ULTRA_COUNT`, `RIFT_MINIBOSS_EXTRA_FLOORS`, `RIFT_MINIBOSS_SLOT`, `RIFT_SET_COUNT`; tipos `RiftCount`, `RiftSet`, `RiftWavePlan`. Puro; o servidor não monta onda, não há espelho.
+
+### `src/utils/soulProfile/ficha/evocacaoPorEstagio.ts`
+**Dono de:** a ponte ficha → cache `soulmonEvocacao` (16/11/2026): `escolaDominanteComEvocacao(ficha)` (argmax sobre todas as escolas, Evocação incluída; empate = ordem canônica) e `derivarEvocacao(fichaByStage, classTitles?)` (veredito `evocador` + arquétipo por estágio, via `eEvocador`). Pura. **Régua:** `evocacaoPorEstagio*.test.ts`.

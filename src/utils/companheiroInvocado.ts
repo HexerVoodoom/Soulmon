@@ -18,6 +18,7 @@
 
 import { FICHA_STAGE_ORDER, type FichaStage } from './soulProfile/ficha/types';
 import { fichaStageOf } from './soulProfile/ficha/stageSkillsFor';
+import { hexCrownEquipped } from './hexsmith';
 
 /** INTERRUPTOR ÚNICO do companheiro invocado. Desligado: nada preenche o cache `soulmonEvocacao` e `companheiroAtivo` /
  *  `companheiroPorLinha` devolvem `null`. O código e o campo do save ficam inertes. Para religar: `true` aqui, e só aqui. */
@@ -134,8 +135,13 @@ export function companheiroAtivo(
   estagio: string,
   criaturaId: unknown,
   cache: EvocacaoPorEstagio | undefined,
+  hexsmith?: unknown,
+  ligado: boolean = COMPANHEIRO_INVOCADO,
 ): string | null {
-  if (!COMPANHEIRO_INVOCADO || !ESTAGIOS_SET.has(estagio)) return null;
+  if (!ligado || !ESTAGIOS_SET.has(estagio)) return null;
+  // REGRA DA COROA (16/11/2026, decisão do dono): Coroa da Hexsmith equipada troca o especial e a invocação descansa; desequipar volta.
+  // A dependência é só nesta direção (aqui lê a Hexsmith; a Hexsmith nunca importa este módulo nem toca `eEvocador`).
+  if (hexCrownEquipped(hexsmith)) return null;
   if (!cache?.[estagio as FichaStage]?.evocador) return null;
   return criaturaConhecida(criaturaId) ? criaturaId : null;
 }
@@ -145,6 +151,8 @@ export interface EstadoComCompanheiro {
   readonly evolutionStage?: string;
   readonly soulmonCompanheiro?: { readonly id?: unknown } | null;
   readonly soulmonEvocacao?: EvocacaoPorEstagio;
+  /** `GameState.hexsmith` cru: só interessa se há Coroa equipada (a invocação descansa). */
+  readonly hexsmith?: unknown;
 }
 
 /**
@@ -152,7 +160,7 @@ export interface EstadoComCompanheiro {
  * Flag desligada, estágio sem cache, forma não evocadora ou criatura desconhecida = `null` (nunca adivinha). É a única porta
  * das telas de luta para o gatilho; quem monta `ArenaPlayerCfg`/`DungeonPlayerCfg`/`DuelSide` chama isto.
  */
-export function companheiroDoEstado(estado: EstadoComCompanheiro | null | undefined): string | null {
-  if (!COMPANHEIRO_INVOCADO || !estado) return null;
-  return companheiroAtivo(fichaStageOf(estado.evolutionStage ?? ''), estado.soulmonCompanheiro?.id, estado.soulmonEvocacao);
+export function companheiroDoEstado(estado: EstadoComCompanheiro | null | undefined, ligado: boolean = COMPANHEIRO_INVOCADO): string | null {
+  if (!ligado || !estado) return null;
+  return companheiroAtivo(fichaStageOf(estado.evolutionStage ?? ''), estado.soulmonCompanheiro?.id, estado.soulmonEvocacao, estado.hexsmith, ligado);
 }

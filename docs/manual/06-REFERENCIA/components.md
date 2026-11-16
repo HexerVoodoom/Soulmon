@@ -2391,3 +2391,6 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/ui/SoulFlameAnim.tsx`
 **`SoulFlameAnim` (16/11/2026):** `{ height?, cycleSeconds?, className?, style? }` — a chama da alma turquesa dentro de um cristal, folha de 8 quadros em grade 4x2 (`FLAME_SHEET_COLS`, `FLAME_SHEET_ROWS`, `FLAME_SHEET_FRAMES`, `FRAME_ASPECT`) tocada por CSS `steps`; parada no quadro 1 com `prefers-reduced-motion`.
+
+### `src/components/games/SummonLayer.tsx`
+**Dono de:** o sprite do companheiro invocado na cena (16/11/2026, REGISTRO §449): `SummonLayer({ summons, me, foes, reduced })` desenha a criatura um pouco à frente de quem invocou enquanto o contador real `FighterFx.comp` for maior que zero (nenhum timer decide a presença; só a saída suave de 200 ms). Exports: `StageSummon` (`side`, `creature`, `turns`), `SUMMON_SIZE`, `SUMMON_ADVANCE`, `summonPlace`, `summonsDoGrupo`. Sem sprite para a criatura = não desenha. Usado por `BattleStage`.

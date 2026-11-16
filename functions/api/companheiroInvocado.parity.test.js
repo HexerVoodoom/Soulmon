@@ -58,3 +58,41 @@ describe('companheiroDoLado (servidor)', () => {
     }
   });
 });
+
+describe('Coroa da Hexsmith equipada: o companheiro descansa (cliente e servidor iguais)', () => {
+  const id = 'c'.repeat(64);
+  const base = () => ({
+    evolutionStage: 'champion',
+    soulmonCompanheiro: { id: 'lobo' },
+    soulmonEvocacao: { champion: { evocador: true } },
+  });
+  const hexes = {
+    sem: undefined,
+    naoEquipada: { owned: ['coroa:direct'], equipped: {} },
+    familia: { owned: ['coroa:direct'], equipped: { coroa: 'coroa:direct' } },
+    efeito: { owned: ['coroa:hot'], equipped: { coroa: 'coroa:hot' } },
+    lixo: { owned: [], equipped: { coroa: 'coroa:direct' } },
+    outroSlot: { owned: ['amuleto:fogo'], equipped: { amuleto: 'amuleto:fogo' } },
+  };
+  it('servidor e app decidem igual para cada save', () => {
+    for (const [nome, hexsmith] of Object.entries(hexes)) {
+      const s = { ...base(), hexsmith };
+      const noServidor = srv.companheiroDoLado(s, id, true);
+      const noApp = app.companheiroDoEstado(s, true);
+      expect(!!noServidor, nome).toBe(noApp !== null);
+      if (noServidor) expect(noServidor.companheiro, nome).toBe(noApp);
+    }
+  });
+  it('com Coroa equipada nao invoca; desequipar volta; sem Coroa invoca', () => {
+    expect(srv.companheiroDoLado({ ...base(), hexsmith: hexes.familia }, id, true)).toBeNull();
+    expect(srv.companheiroDoLado({ ...base(), hexsmith: hexes.efeito }, id, true)).toBeNull();
+    expect(srv.companheiroDoLado({ ...base(), hexsmith: hexes.naoEquipada }, id, true)).toEqual({ invoca: true, companheiro: 'lobo' });
+    expect(srv.companheiroDoLado({ ...base(), hexsmith: hexes.outroSlot }, id, true)).toEqual({ invoca: true, companheiro: 'lobo' });
+    expect(srv.companheiroDoLado(base(), id, true)).toEqual({ invoca: true, companheiro: 'lobo' });
+  });
+  it('nao evocador nao muda, com ou sem Coroa', () => {
+    const n = { ...base(), soulmonEvocacao: { champion: { evocador: false } } };
+    expect(srv.companheiroDoLado(n, id, true)).toBeNull();
+    expect(srv.companheiroDoLado({ ...n, hexsmith: hexes.familia }, id, true)).toBeNull();
+  });
+});
