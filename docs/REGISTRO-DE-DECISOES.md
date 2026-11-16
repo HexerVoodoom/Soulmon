@@ -6145,7 +6145,7 @@ Decisões do dono (16/11): (1) **Regra da invocação:** uma Coroa da Hexsmith E
 - **Docs:** manual sincronizado (a "lista fechada de 7 famílias" agora diz 7 sorteáveis + 3 só de Coroa; 8 entradas de referência novas em `06-REFERENCIA/`).
 - **Não visto em aparelho.** **Rollback:** `git revert`; sem campo novo no save.
 
-## §452 — Hexsmith H2: o motor lê `specialEffect` e ganha as 3 famílias só de Coroa (16/11/2026, dono)
+## §464 — Hexsmith H2: o motor lê `specialEffect` e ganha as 3 famílias só de Coroa (16/11/2026, dono)
 
 Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO PvP; ajustar potência e duração em vez de recusar; perguntar só se for impossível caber nas réguas (não foi). A regra "Coroa equipada troca o especial e a invocação some" é o H4 (NÃO está aqui).
 
@@ -6174,7 +6174,7 @@ Decisões do dono (16/11): Trilhas A e B JUNTAS e os efeitos LIGADOS TAMBÉM NO 
 **A refinar depois:** fada, arauto_elfico, wyvern, falcao e coruja têm elemento solto (disco de runas, selo, anel de vento) fora do corpo.
 
 **Flag `COMPANHEIRO_INVOCADO` continua DESLIGADA** (combate é o PR 2). **Rollback:** `git revert`; sem save nem servidor.
-## §446 — Linhas v1, PR 2: formas antigas viram ramos legados em outro elemento; os 5 Ultra novos viram chefe de Arena (16/11/2026, dono)
+## §463 — Linhas v1, PR 2: formas antigas viram ramos legados em outro elemento; os 5 Ultra novos viram chefe de Arena (16/11/2026, dono)
 
 **Decisão (modal do dono, 16/11).** (1) As formas ANTIGAS (champion/ultimate/mega) das 5 linhas do §438 não somem: viram um **ramo legado** de uma criatura base de OUTRO elemento, com nome novo derivado da raiz do hospedeiro (nenhuma espécie aparece com o nome de outra linha). 15 entradas no FIM de `ENEMY_ROSTER` (kind `ramo`, ids `lg…` sem hífen; o `#N` do Bestiário das que já existiam não muda). Arte em `src/assets/soulmon/novos-arquivo/legado/<id>-<estágio>.png` (as de `E:/Soulmon-assets/_lote-16-11/legado-v0/`, 256² RGBA, 760 KB no total, maior 72,7 KB), lida só por `enemyRosterArt.ts` no mesmo mapa `RAMOS_ART` (chave `legado/<id>-<estágio>`). Dados em `utils/enemyRosterLegado.data.ts`. (2) Nomes e ids das 5 linhas atuais ficam. (3) Os 5 Ultra novos (`novos/<elemento>-ultra.png`) passam a ser CHEFE ULTRA de Arena, ao lado de Mareoror e Salsolura. (4) Rookies antigos: só arquivo (já em `legado-v0/`).
 
@@ -6293,7 +6293,7 @@ O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{
 
 Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; os Bits do dia completo, check-in, casa, pesadelo e pacotes seguem fora destes tetos. **Recusa suave:** o menor dos dois tetos corta só o excedente de Bits (`minigameBitsGrantedIn`); a atividade e o resto da recompensa seguem intactos, sem cobrança. **Save:** `minigameBits.cat` (aditivo, mesmo registro do dia; save antigo lê zero e a leitura tolerante `sanitizeBitsCat` é idempotente). **Servidor:** não decide Bits de atividade (só observa, §387); nada a espelhar e `_dayCounters.js` não toca Bits. **UI:** "hoje: x de 75 neste tipo de atividade" (folhas da Fenda, Salão, Mente e Duelo). **Arte:** troca das 3 artes v2 da Hexsmith (st-debuff-atk 64×64, coroa-silence e coroa-hot 96×96). **Fichas/convites:** a premissa "hoje 1 energia = 5 fichas" não bate com o código (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11); o convite de Duelo e o VIP ficaram em consulta ao dono.
 
-## §457 — Feira guarda o prato; a pasta de itens vira "Files/Arquivos" e comida/prato/chip viram `<nome>.exe` (16/11/2026, dono)
+## §465 — Feira guarda o prato; a pasta de itens vira "Files/Arquivos" e comida/prato/chip viram `<nome>.exe` (16/11/2026, dono)
 
 **Decisão (modal do dono, 16/11).** (1) Pastinha SEM teto de itens (já era: nada a mudar). (2) O prato pronto comprado na Feira (`applyFeiraDish`) deixa de servir na hora: debita o preço da oferta, soma `dish:<id>` e abre o MESMO modal `PratoFeito` (variante "Comprado!/Bought!", "Guardado em Arquivos"/"Saved in Files"); o efeito vem ao USAR (`applySpecialItem` → `serveDish`). Sem chef do dia nem teto diário de pratos; a missão/contagem da Feira (`applyFeiraLojaBuy`) ficou como estava. Servidor: `_feiraLoja.js` só confere a oferta/1 por item, não serve prato, então não há espelho de efeito a mudar. (3) Nome visível: a pasta é "Files"/"Arquivos" (já era o título de `Mochila.tsx`; agora também em Restaurante, Guia, Ajuda, tour e poção) e, **correção do dono no mesmo dia**, a convenção `<nome>.exe` vale SÓ para COMIDAS (comum e premium), PRATOS (`dish:*`) e CHIPS (somar, maiores, redutores) = a aba "Comida e chips". ESPECIAIS (coraçãozinho, Glitchtama, Faísca, poções, reset) e Materiais NÃO levam `.exe`. É só apresentação (`ItemsWindow.tsx › getFileName/isExeItem`): ids e chaves de save intactos; o arquivo/componente `Mochila` não foi renomeado.
 
@@ -6317,7 +6317,7 @@ Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; 
 
 
 
-## §461 — Passeio sem "Pular"; Feira: o dia fechado não tem botão e o mercador conta o dia (16/11/2026, dono)
+## §466 — Passeio sem "Pular"; Feira: o dia fechado não tem botão e o mercador conta o dia (16/11/2026, dono)
 
 **Pedido (palavras do dono):** a tarefa do Stroll vai para a Home como qualquer outra, com "Stroll" em turquesa antes do nome, e fica marcada como feita ao completar (pela Home ou pelo NPC); "tira o botão de skip na cutscene que tem depois que completa o stroll"; "lá na feira tá com um bug depois que enfrenta o inimigo pela primeira vez": dois botões, "atacar o inimigo" (dá erro) e "ver o que foi encontrado" (entra no combate e cancela); depois de cumprido, o NPC fala o que o jogador achou naquele dia, o que os aliados do clã encontraram, "só isso", e manda voltar amanhã para investigar mais.
 
@@ -6328,3 +6328,11 @@ Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; 
 **Limite honesto (aliados do clã):** o servidor NÃO manda o que cada aliado encontrou (LV-G1, nada por pessoa, nem a sala nem o save têm isso). A fala do clã usa só o agregado que a sala já recebe (força que resta do chefe, marcas do desafio, "tranquilo"). Fala por aliado exigiria campo novo no servidor e vai contra a linha vermelha de privacidade: não foi feita. "Voltar amanhã" é convite, sem cobrança nem trava nova (o 1 por dia continua do servidor).
 
 **Custo/gatilho:** o desafio fica "feito" só no aparelho (registro local, como antes); em aparelho novo a sala relê o servidor ao abrir a folha. Reabre se o dono quiser a fala por aliado (campo novo + parecer de privacidade). **Rollback:** `git revert`; só cliente.
+
+## §446 — Botão DEMO do portão volta a ficar escondido; reapareceu por regressão do release #897 (16/11/2026, pedido do dono)
+
+Decisão: o botão "DEMO — experimentar sem conta" da tela de abertura (`SoulmonOnboarding`, `data-demo-button`) fica OCULTO para todos, de novo, pelo interruptor `DEMO_BUTTON_ENABLED = false` (`src/utils/demoButton.ts`, §320). O portão ainda não tem sessão, então a única porta para o demo é depois do login Google: o "Me empreste um Soulmon guia" da tela do ovo (§81), que só existe após a conta. Regra mais restritiva escolhida: sem Google, nenhum botão e nenhuma rota para a demo local (não há deep link por URL; só `/embed` do portfólio, §360, que não depende do interruptor).
+
+Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `SoulmonOnboarding.demoOff.render.test.tsx` e a condição `DEMO_BUTTON_ENABLED && onStartDemo`; o squash do "Release beta12" (#897, 8c7b4a804) apagou os três e devolveu `{onStartDemo && (`, ressuscitando o botão sem aviso. Restaurados os três arquivos/condição; saves `accountTier:'demo'` e demo local já salva seguem abrindo (`demoMode.ts`/`demoStart.ts` intactos).
+
+Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.

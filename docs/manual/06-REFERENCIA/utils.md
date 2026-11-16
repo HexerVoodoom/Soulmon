@@ -949,7 +949,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma específica (a cerimônia é coberta pelos testes de `EvolutionCeremony`).
 
 ### `src/utils/combate/fightTypes.ts`
-**Dono de:** os tipos públicos do simulador 1v1 (`FightSide`, `FightOptions`, `FightEvent`, `FightResult`, `FighterFx`, `FightFxPair`, `CheerEvent`, `FightWinner`), tirados de `fight.ts` na Hexsmith H2 (REGISTRO §452) para o arquivo do motor ficar abaixo de 500 linhas (catraca anti-slop). `fight.ts` os reexporta: quem importa de `./fight` não muda nada. `FighterFx` ganhou os contadores `nGuard`, `nWeak` (famílias só de Coroa), `nSil`, `nSlow` e `hot` (efeitos de Coroa), todos opcionais e só presentes quando o contador está ligado.
+**Dono de:** os tipos públicos do simulador 1v1 (`FightSide`, `FightOptions`, `FightEvent`, `FightResult`, `FighterFx`, `FightFxPair`, `CheerEvent`, `FightWinner`), tirados de `fight.ts` na Hexsmith H2 (REGISTRO §464) para o arquivo do motor ficar abaixo de 500 linhas (catraca anti-slop). `fight.ts` os reexporta: quem importa de `./fight` não muda nada. `FighterFx` ganhou os contadores `nGuard`, `nWeak` (famílias só de Coroa), `nSil`, `nSlow` e `hot` (efeitos de Coroa), todos opcionais e só presentes quando o contador está ligado.
 **Chamado por:** `combate/fight.ts` (reexporta), `combate/group.ts` (via `fight.ts`).
 **Régua:** `src/utils/combate/hexsmith.motor.test.ts`.
 

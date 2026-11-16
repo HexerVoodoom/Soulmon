@@ -6,7 +6,7 @@
 ift-mapa\previas\`.
 > - **Pendente:** tile de fundo (`src/assets/soulmon/rift/mapa-tile.webp`); não visto em aparelho. **Rollback:** `git revert`.
 
-> ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §461)
+> ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §466)
 >
 > - **Feito:** `StrollScene` sem o "Pular"; bug da Feira (dois botões depois de enfrentar: "Enfrentar" dava erro, "Ver o que ele achou" entrava no combate e cancelava) corrigido na raiz (desafio feito deixava de contar como aberto, volta dada por vista, 429/409 fecham o desafio, balão/"Ver" não reabrem o combate); o mercador conta o dia (o que achou, o clã em agregado, amanhã). Linha "Stroll" turquesa da Home e o "feito" já eram do §413, agora com teste.
 > - **Não feito/limite:** o servidor não manda o que cada aliado achou (só agregado do chefe/marcas); sem fala por aliado. Não visto em aparelho (capturas 360x640 de harness em `E:\Soulmon-assets\_lote-16-11\stroll-feira\previas\`). Falhas herdadas fora do escopo: `ds.regua` (NpcSequence/PratoFeito/LockBadge) e `guildSemCobranca` (`guild.help.buffs.def`).
@@ -23,12 +23,12 @@ ift-mapa\previas\`.
 > - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
 
 
-> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §457)
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §465)
 >
 > - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
 > - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
 
-> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §455)
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §454)
 >
 > - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
 > - **Não visto em aparelho.**
@@ -42,7 +42,7 @@ ift-mapa\previas\`.
 >
 > - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
 > - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
-> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §452)
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §464)
 >
 > - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
 > - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
@@ -68,7 +68,7 @@ ift-mapa\previas\`.
 > - **Falta:** PNGs dos 32 (PR 1b), ligar a flag, Rogue Dungeon, decisão do dono sobre o cache no save do cliente. Não visto em aparelho.
 > - **Rollback:** `git revert`; flag desligada = sem efeito.
 >
-> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §446)
+> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §463)
 >
 > - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
 > - **Não visto em aparelho:** só testes e tipos; nomes provisórios.
@@ -82,7 +82,13 @@ ift-mapa\previas\`.
 > - **Pendente do dono:** volta da lista depois do andar 538; força do mini-boss.
 > - **Rollback:** `git revert`; só cliente.
 >
-> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §444)
+
+> ## 16/11/2026 — Botão DEMO do portão escondido de novo (`fix/oculta-botao-demo`, REGISTRO §446)
+>
+> - **Causa:** o release #897 apagou `demoButton.ts`, o teste demoOff e a condição do §320. **Feito:** restaurados + guarda de fonte; sw v262. Demo salva intacta.
+> - **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §442)
 >
 > - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
 > - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
@@ -5831,7 +5837,7 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 
 ## §456 — Teto de Bits por categoria (16/11/2026)
 - Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
-- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §457).
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §458).
 
 ## §458 — Convite de Duelo (16/11/2026)
 - Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.
