@@ -24,7 +24,7 @@ export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
   | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'
-  | 'journal-days' | 'focus-days' | 'cook-dish';
+  | 'journal-days' | 'focus-days' | 'cook-dish' | 'buy-decor' | 'buy-backdrop';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -57,6 +57,9 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'gift-sent', target: 1, emblems: 2, descPt: 'Envie um presente a alguém', descEn: 'Send someone a gift' },
   // 15/11/2026 (dono): "fazer um prato, qualquer prato" no Restaurante. Cuidado (alimentar o Soulmon), não contagem de tarefas. NO FIM do pool de propósito.
   { id: 'cook-dish', target: 1, emblems: 3, descPt: 'Cozinhe um prato no Restaurante', descEn: 'Cook a dish at the Restaurant' },
+  // 16/11/2026 (dono): as missões da Lasca (Decoração) e da Panora (Background) saíram do rodízio diário e vieram para cá. NO FIM do pool.
+  { id: 'buy-decor', target: 2, emblems: 3, descPt: 'Compre 2 itens de decoração na lojinha de Decoração', descEn: 'Buy 2 decor pieces at the Decor stall' },
+  { id: 'buy-backdrop', target: 1, emblems: 3, descPt: 'Compre 1 cenário na lojinha de Background', descEn: 'Buy 1 backdrop at the Background stall' },
 ];
 
 /**
