@@ -27,6 +27,8 @@ import { ARENA_BASE_ELEMENTS } from './arenaSorteio';
 import { isStrayFoe } from './wildFoeLabel';
 
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
+/** O roster sem os 15 ramos legados (§445), que vão no FIM de tudo: os testes de "no fim do roster" das levas anteriores contam a partir daqui. */
+const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -15);
 
 describe('roster de inimigos (M10): cobertura', () => {
   it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) = 878 entradas, chaves únicas', () => {
@@ -353,7 +355,7 @@ describe('Ultimates só-Ultimate de 2 componentes (15/11/2026, §405)', () => {
   it('14 entradas, só Ultimate (nenhum Champion), no fim do roster, kind paralelo, com arte, 2 componentes e nome único sem -mon', () => {
     expect(ULTIMATES_2COMP_DATA).toHaveLength(14);
     expect(novos).toHaveLength(14);
-    expect(ENEMY_ROSTER.slice(-14 - 205, -205)).toEqual(novos);
+    expect(ROSTER_SEM_LEGADO.slice(-14 - 205, -205)).toEqual(novos);
     for (const e of novos) {
       expect(e.stage).toBe('ultimate');
       expect(e.kind).toBe('paralelo');
@@ -376,7 +378,7 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
   const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
   it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
     expect(par).toHaveLength(10);
-    expect(ENEMY_ROSTER.slice(-200 - 205, -190 - 205)).toEqual(par);
+    expect(ROSTER_SEM_LEGADO.slice(-200 - 205, -190 - 205)).toEqual(par);
     expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
     for (const e of par) {
       expect(['champion', 'ultimate']).toContain(e.stage);
@@ -443,7 +445,7 @@ describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', ()
   const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma').slice(0, 150);
   it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
     expect(formas).toHaveLength(150);
-    expect(ENEMY_ROSTER.slice(-190 - 205, -40 - 205)).toEqual(formas);
+    expect(ROSTER_SEM_LEGADO.slice(-190 - 205, -40 - 205)).toEqual(formas);
     expect(new Set(formas.map(e => e.element)).size).toBe(50);
     expect(new Set(formas.map(e => e.name)).size).toBe(150);
     expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);
@@ -530,7 +532,7 @@ describe('elenco do Oráculo como selvagens (Mareoror e Salsolura, 10/11/2026)',
 
 
 describe('formas do pacote A: 1 por combinação no estágio dela (dono, 16/11/2026)', () => {
-  const pacote = ENEMY_ROSTER.slice(-205);
+  const pacote = ROSTER_SEM_LEGADO.slice(-205);
   const alvo: Record<number, string> = { 2: 'champion', 3: 'ultimate', 4: 'mega' };
   it('205 entradas no fim de tudo (o #N do Bestiário não muda), kind forma, com arte própria e nome único', () => {
     expect(pacote).toHaveLength(205);

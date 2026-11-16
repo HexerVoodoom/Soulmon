@@ -293,7 +293,10 @@ export const ARENA_CHEFES_ULTRA_NOVOS: readonly string[] = ['vibri', 'voltrix', 
 /** As espécies que podem ser o chefe Ultra: as 2 do elenco do Oráculo (id, elementos, nome do Ultra) e os 5 Ultra novos das linhas v1 (elemento da criatura, nome de `FORMAS_ALTAS`), nesta ordem. Ultra fica fora do roster comum. */
 export const ARENA_CHEFES_ULTRA: ReadonlyArray<{ id: string; element: string; elements: readonly string[]; name: string }> = [
   ...ELENCO_ORACULO_DATA.map(([id, element, elements, , , , ultra]) => ({ id, element, elements, name: ultra })),
-  ...NOVOS_DATA.filter(n => ARENA_CHEFES_ULTRA_NOVOS.includes(n.id)).map(n => ({ id: n.id, element: n.element, elements: [n.element], name: FORMAS_ALTAS[n.id]?.ultra ?? n.champion })),
+  ...ARENA_CHEFES_ULTRA_NOVOS.map(id => {
+    const n = NOVOS_DATA.find(d => d.id === id)!;
+    return { id, element: n.element, elements: [n.element], name: FORMAS_ALTAS[id]?.ultra ?? n.champion };
+  }),
 ];
 /** A escada libera o chefe Ultra? */
 export const arenaChefeUltraLiberado = (ladder: unknown): boolean => sanitizeArenaLadder(ladder) >= ARENA_CHEFE_ULTRA_MIN_LADDER;
