@@ -374,10 +374,7 @@ function pickEnemyDoElemento(
 
 /**
  * O sorteio de um CONJUNTO do Rift (REGISTRO §445, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
- * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) criaturas DESTE estágio
- * cujos componentes dividem os do conjunto (primeiro as que só têm componentes do conjunto, ex.: as bases de um par; depois mais componentes em
- * comum; depois o nº de componentes mais próximo: o vizinho "do elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o
- * elemento não tem criatura nenhuma (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
+ * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) a melhor forma que o PRÓPRIO elemento tem (estágio de baixo mais próximo primeiro: Ultimate, senão Champion, senão Rookie; só então o de cima), sem trocar de arte nem cair na base do componente (dono, 16/11/2026); (3) só se o elemento não tem criatura nenhuma, criaturas do estágio com componentes do conjunto. `undefined` se nem isso (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
  */
 export function pickEnemyDoConjunto(
   level: number, rng: () => number, opts: { stage: EnemyStage; element: string; used?: ReadonlySet<string> },
@@ -393,6 +390,13 @@ export function pickEnemyDoConjunto(
   const doElemento = vivos.filter(e => e.element === opts.element);
   const exato = doElemento.filter(e => e.stage === opts.stage);
   if (exato.length > 0) return sorteia(exato);
+  // (2) a melhor forma que o PRÓPRIO elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate → Champion → Rookie), só então o de cima.
+  const i0 = ENEMY_STAGES.indexOf(opts.stage);
+  for (const i of [...Array.from({ length: i0 }, (_, k) => i0 - 1 - k), ...Array.from({ length: ENEMY_STAGES.length - 1 - i0 }, (_, k) => i0 + 1 + k)]) {
+    const lista = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
+    if (lista.length > 0) return sorteia(lista);
+  }
+  // (3) o elemento não tem criatura nenhuma: componentes do conjunto no estágio.
   const alvo = compsDe({ element: opts.element, elements: [opts.element] });
   // Placar de cada candidato: [só tem componentes do conjunto (1/0), componentes em comum, -distância no nº de componentes]; vence o maior, empate sorteia.
   let melhor: readonly number[] | undefined;
@@ -406,16 +410,7 @@ export function pickEnemyDoConjunto(
     const cmp = melhor ? placar.reduce((r, v, i) => r || v - melhor![i], 0) : 1;
     if (cmp > 0) { melhor = placar; achados = [e]; } else if (cmp === 0) achados.push(e);
   }
-  if (achados.length > 0) return sorteia(achados);
-  if (doElemento.length === 0) return undefined;
-  const i0 = ENEMY_STAGES.indexOf(opts.stage);
-  for (let d = 1; d < ENEMY_STAGES.length; d++) {
-    for (const i of [i0 - d, i0 + d]) {
-      const lista = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
-      if (lista.length > 0) return sorteia(lista);
-    }
-  }
-  return undefined;
+  return achados.length > 0 ? sorteia(achados) : undefined;
 }
 
 function pickEnemyComum(
