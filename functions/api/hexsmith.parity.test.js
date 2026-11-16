@@ -20,7 +20,7 @@ describe('hexsmith: servidor = app', () => {
   });
   it('custos: HEX_COSTS e hexCost iguais (o servidor cobra o que o app cobra, §216)', () => {
     expect(srv.HEX_COSTS).toEqual(app.HEX_COSTS);
-    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'luvas:melee-slash', 'luvas:magic', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
+    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'coroa:hot', 'coroa:slow', 'coroa:silence', 'luvas:melee-slash', 'luvas:magic', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
   });
   it('forja do servidor = forgeHexItem do app (debito, Bit de Credito, recusa, ja possuido)', () => {
     const estados = [
@@ -50,6 +50,7 @@ describe('hexsmith: servidor = app', () => {
       undefined, null, 3, 'x', { owned: 'x' },
       { owned: ['garra:agua', 'garra:agua', 'coroa:heal', 'lixo'], equipped: { garra: 'garra:agua', coroa: 'garra:agua', luvas: 'luvas:melee-slash' } },
       { owned: ['amuleto:fogo', 'couraca:terra', 'luvas:magic', 'coroa:dot'], equipped: { amuleto: 'amuleto:fogo', couraca: 'couraca:terra', luvas: 'luvas:magic', coroa: 'coroa:dot' } },
+      { owned: ['coroa:hot', 'coroa:slow', 'coroa:silence'], equipped: { coroa: 'coroa:silence' } },
     ];
     for (const c of casos) {
       expect(srv.sanitizeHexsmith(c)).toEqual(app.sanitizeHexsmith(c));

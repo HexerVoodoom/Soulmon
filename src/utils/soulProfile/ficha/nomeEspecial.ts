@@ -59,6 +59,32 @@ export const SUBSTANTIVOS_ESPECIAL: Record<SpecialFamily, TextoPar[]> = {
 };
 
 /**
+ * Léxico dos EFEITOS das Coroas de efeito (16/11/2026, decisão do dono: nome coerente com o efeito). `hot` (cura contínua) usa o
+ * léxico de `heal`; lentidão e silêncio têm 8 substantivos PRÓPRIOS (EN primeiro), disjuntos dos das 7 famílias e da básica
+ * (`nomeEspecialCoerente.test.ts` varre). O índice `lex.n` é o mesmo da ficha (o servidor só valida 0..7).
+ */
+export type EfeitoDeNome = 'hot' | 'slow' | 'silence';
+export const SUBSTANTIVOS_EFEITO: Record<'slow' | 'silence', TextoPar[]> = {
+  slow: [
+    { en: 'Mire', pt: 'Lamaçal' }, { en: 'Drag', pt: 'Arrasto' }, { en: 'Tar', pt: 'Piche' },
+    { en: 'Quagmire', pt: 'Atoleiro' }, { en: 'Sludge', pt: 'Lodo' }, { en: 'Stupor', pt: 'Torpor' },
+    { en: 'Ebb', pt: 'Vazante' }, { en: 'Shackles', pt: 'Grilhões' },
+  ],
+  silence: [
+    { en: 'Hush', pt: 'Sossego' }, { en: 'Muzzle', pt: 'Mordaça' }, { en: 'Mutism', pt: 'Mutismo' },
+    { en: 'Stifle', pt: 'Abafo' }, { en: 'Gag', pt: 'Rolha' }, { en: 'Muffle', pt: 'Surdina' },
+    { en: 'Seal', pt: 'Lacre' }, { en: 'Quiet', pt: 'Quietude' },
+  ],
+};
+
+/** O léxico que vale para (família efetiva, efeito): `hot` → cura; `slow`/`silence` → o próprio; sem efeito → o da família. */
+export function lexicoDoEfeito(familia: SpecialFamily, efeito?: string): TextoPar[] {
+  if (efeito === 'hot') return SUBSTANTIVOS_ESPECIAL.heal;
+  if (efeito === 'slow' || efeito === 'silence') return SUBSTANTIVOS_EFEITO[efeito];
+  return SUBSTANTIVOS_ESPECIAL[familia];
+}
+
+/**
  * Substantivos que MUDARAM de texto na auditoria de coerência (16/11/2026): o índice (e o `lex` gravado no save e no servidor)
  * segue o mesmo; só o texto exibido foi trocado. Quem lê um nome já gravado com o texto velho o troca pelo atual
  * (`comNomeAtualDoEspecial`), sem migrar dado: "Rapture" (êxtase, não cura) e "Flurry" (saraivada de golpes, não velocidade).
@@ -98,12 +124,13 @@ export function nomeAtualDoEspecial<T extends SkillComNome>(esp: T): T {
  * ("Fogo Investida Total" curando): aqui o substantivo é o MESMO índice, só que no léxico da família efetiva. Nome do jogador
  * (que não traz o substantivo gerado) e família igual passam intactos.
  */
-export function nomeParaFamilia<T extends SkillComNome>(esp: T, familiaEfetiva: SpecialFamily | undefined): T {
+export function nomeParaFamilia<T extends SkillComNome>(esp: T, familiaEfetiva: SpecialFamily | undefined, efeito?: string): T {
   const lido = nomeAtualDoEspecial(esp);
   const { familia, lex } = lido;
-  if (!familiaEfetiva || !familia || !lex || familiaEfetiva === familia) return lido;
+  const lexicoFinal = familiaEfetiva ? lexicoDoEfeito(familiaEfetiva, efeito) : undefined;
+  if (!familiaEfetiva || !familia || !lex || (familiaEfetiva === familia && lexicoFinal === SUBSTANTIVOS_ESPECIAL[familia])) return lido;
   const de = SUBSTANTIVOS_ESPECIAL[familia]?.[lex.n];
-  const para = SUBSTANTIVOS_ESPECIAL[familiaEfetiva]?.[lex.n];
+  const para = lexicoFinal?.[lex.n];
   if (!de || !para) return lido;
   const nome = trocaSubstantivo(lido.nome, de, para);
   return nome.en === lido.nome.en && nome.pt === lido.nome.pt ? lido : { ...lido, nome };
