@@ -8396,6 +8396,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-item-arte { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
 .sm3-item-arte img { image-rendering: pixelated; }
 .sm3-item-nome { text-align: center; line-height: 1.2; overflow-wrap: anywhere; }
+/* ".exe" nunca se parte: a quebra só acontece ANTES do ponto (<wbr>). */
+.sm3-item-ext { white-space: nowrap; }
 .sm3-item small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
 .sm3-mochila-vazia { margin: 18px 0; text-align: center; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
 .sm3-mochila-usar {

@@ -47,7 +47,7 @@ describe('Restaurante: fazer um prato', () => {
     const modais = document.querySelectorAll('[data-prato-feito]');
     expect(modais).toHaveLength(1);
     expect(modais[0].getAttribute('aria-modal')).toBe('true');
-    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Done! Living Salad');
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Done! Living Salad.exe');
     expect(document.querySelector('[data-prato-guardado]')!.textContent).toContain('you have 1');
   });
   it('fazer o mesmo prato de novo com o modal aberto NÃO empilha: agrupa (×2) e conta a pastinha', async () => {
@@ -57,7 +57,7 @@ describe('Restaurante: fazer um prato', () => {
     await cook('salada-viva');
     rerender(<RestauranteSheet language="en-US" />);
     expect(document.querySelectorAll('[data-prato-feito]')).toHaveLength(1);
-    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Done! Living Salad ×2');
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Done! Living Salad.exe ×2');
     expect(document.querySelector('[data-prato-guardado]')!.textContent).toContain('you have 2');
   });
   it('recusa (falta ingrediente): nada gasto e nenhum modal', async () => {
@@ -73,16 +73,23 @@ describe('Restaurante: fazer um prato', () => {
 });
 
 describe('PratoFeito (molde da poção criada)', () => {
-  it('PT: "Feito!" + "Guardado na pastinha"; OK fecha e recebe o foco', () => {
+  it('PT: "Feito!" + "Guardado em Arquivos"; OK fecha e recebe o foco', () => {
     const onClose = vi.fn();
     render(<PratoFeito language="pt-BR" dishId="pao-de-faisca" made={1} inFolder={3} onClose={onClose} />);
-    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Feito! Pão de Faísca');
-    expect(document.querySelector('[data-prato-guardado]')!.textContent).toBe('Guardado na pastinha · você tem 3');
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Feito! Pão de Faísca.exe');
+    expect(document.querySelector('[data-prato-guardado]')!.textContent).toBe('Guardado em Arquivos · você tem 3');
     const ok = document.querySelector('[data-prato-ok]') as HTMLButtonElement;
     expect(document.activeElement).toBe(ok);
     fireEvent.click(ok);
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe('Feito! Pão de Faísca');
+    expect(screen.getByRole('dialog').getAttribute('aria-label')).toBe('Feito! Pão de Faísca.exe');
+  });
+  it('variante "bought" (Feira): "Comprado!"/"Bought!" e "Saved in Files"', () => {
+    const { rerender } = render(<PratoFeito language="en-US" dishId="cha-de-orvalho" made={1} inFolder={1} variant="bought" onClose={() => {}} />);
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Bought! Dew Tea.exe');
+    expect(document.querySelector('[data-prato-guardado]')!.textContent).toBe('Saved in Files · you have 1');
+    rerender(<PratoFeito language="pt-BR" dishId="cha-de-orvalho" made={1} inFolder={1} variant="bought" onClose={() => {}} />);
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Comprado! Chá de Orvalho.exe');
   });
   it('prato desconhecido não renderiza nada', () => {
     render(<PratoFeito language="en-US" dishId="nao-existe" made={1} inFolder={0} onClose={() => {}} />);

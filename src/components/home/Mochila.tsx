@@ -28,7 +28,7 @@ import { dishById } from '../../utils/restaurantMenu';
 import { isReduceChipKey } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MaterialIcon } from '../MaterialIcon';
-import { getFoodDesc, getFoodName } from '../ItemsWindow';
+import { EXE_SUFFIX, getFileName, getFoodDesc } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
 import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -325,7 +325,7 @@ export function Mochila({
           ) : (
             lista.length > 0 && <div className="sm3-mochila-grade">
               {lista.map(([emoji, n]) => {
-                const nome = getFoodName(emoji, language);
+                const nome = getFileName(emoji, language);
                 return (
                   <button
                     key={emoji}
@@ -346,7 +346,7 @@ export function Mochila({
                     <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined} data-reduce={isReduceChipKey(emoji) || undefined}>
                       {ITEM_ART[emoji] ? <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} /> : dishIdOfKey(emoji) ? dishById(dishIdOfKey(emoji) ?? '')?.icon : null}
                     </span>
-                    <span className="sm3-item-nome">{nome}</span>
+                    <span className="sm3-item-nome">{nome.endsWith(EXE_SUFFIX) ? <>{nome.slice(0, -EXE_SUFFIX.length)}<wbr /><span className="sm3-item-ext">{EXE_SUFFIX}</span></> : nome}</span>
                     <small className="sm2-num">×{n}</small>
                   </button>
                 );
@@ -447,7 +447,7 @@ export function Mochila({
           {selecionadoVisivel && (
             <div className="sm3-mochila-usar" data-mochila-usar>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="sm3-mochila-usar-nome">{getFoodName(selecionadoVisivel, language)}</p>
+                <p className="sm3-mochila-usar-nome">{getFileName(selecionadoVisivel, language)}</p>
                 <p className="sm3-mochila-usar-desc">
                   {getFoodDesc(selecionadoVisivel, language)
                     || (isPt ? '+1 de energia e pontos de atributo.' : '+1 energy and attribute points.')}
@@ -457,8 +457,8 @@ export function Mochila({
                 type="button"
                 className="sm3-mochila-usar-btn"
                 aria-label={isPt
-                  ? `Usar ${getFoodName(selecionadoVisivel, language)}`
-                  : `Use ${getFoodName(selecionadoVisivel, language)}`}
+                  ? `Usar ${getFileName(selecionadoVisivel, language)}`
+                  : `Use ${getFileName(selecionadoVisivel, language)}`}
                 onClick={() => usarComTrava(selecionadoVisivel)}
               >
                 {isPt ? 'Usar' : 'Use'}

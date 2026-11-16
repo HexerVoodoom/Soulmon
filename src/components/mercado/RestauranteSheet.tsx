@@ -52,7 +52,7 @@ export function RestauranteSheet({ language }: { language: Language }) {
     if (refused) { say(d.id, false, refusalText(refused, isPt)); return; }
     setGameState(prev => applyCook(prev, d.id, t).state);
     setDone(p => (p && p.dishId === d.id ? { dishId: d.id, made: p.made + 1 } : { dishId: d.id, made: 1 }));
-    say(d.id, true, isPt ? `${d.namePt} feito e guardado na pastinha.` : `${d.nameEn} made and stored in the Items folder.`);
+    say(d.id, true, isPt ? `${d.namePt} feito e guardado em Arquivos.` : `${d.nameEn} made and stored in Files.`);
   };
 
   const extraName = (d: Dish) => d.extra.type === 'essence'
@@ -70,8 +70,8 @@ export function RestauranteSheet({ language }: { language: Language }) {
         flash={flash}
         language={language}
         idle={isPt
-          ? `Todo prato vai para a pastinha; ao usar, enche a fome inteira e dá um reforço. Um reforço por vez; até ${DISHES_PER_DAY} pratos por dia. ${COMBAT_NOTE.pt}`
-          : `Every dish goes to the Items folder; when used it fills hunger all the way and gives a boost. One boost at a time; up to ${DISHES_PER_DAY} dishes a day. ${COMBAT_NOTE.en}`}
+          ? `Todo prato vai para Arquivos; ao usar, enche a fome inteira e dá um reforço. Um reforço por vez; até ${DISHES_PER_DAY} pratos por dia. ${COMBAT_NOTE.pt}`
+          : `Every dish goes to Files; when used it fills hunger all the way and gives a boost. One boost at a time; up to ${DISHES_PER_DAY} dishes a day. ${COMBAT_NOTE.en}`}
       />
       {chefs.length > 1 && (
         <div data-restaurante-chefs role="group" aria-label={isPt ? 'Chefs de domingo' : 'Sunday chefs'} style={{ display: 'flex', gap: 8 }}>
@@ -156,7 +156,7 @@ export function RestauranteSheet({ language }: { language: Language }) {
       <PurchaseConfirmSheet
         open={!!pending}
         language={language}
-        question={pending ? (isPt ? `Cozinhar ${pending.namePt}? Vai para a pastinha. Ao usar: ${effectText(pending.effect, true)}.` : `Cook ${pending.nameEn}? It goes to the Items folder. When used: ${effectText(pending.effect, false)}.`) : ''}
+        question={pending ? (isPt ? `Cozinhar ${pending.namePt}? Vai para Arquivos. Ao usar: ${effectText(pending.effect, true)}.` : `Cook ${pending.nameEn}? It goes to Files. When used: ${effectText(pending.effect, false)}.`) : ''}
         balance={gameState.gamePoints ?? 0}
         cost={pending?.bits ?? 0}
         currency="bits"

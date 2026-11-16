@@ -29,7 +29,7 @@ import type { WeeklyMissionProgress } from './weeklyMissions';
 import type { RestaurantState } from './restaurantState';
 
 import { DISHES, dishById, type ChefId, type Dish, type DishExtra } from './restaurantMenu';
-import { dishKey, serveDish } from './dishItems';
+import { dishKey } from './dishItems';
 export { DISHES, dishById, isCombatEffect, ENERGY_DISH_PRICE_MULT, type ChefId, type Dish, type DishEffect, type DishExtra } from './restaurantMenu';
 export { MEAL_BUFF_HOURS, MEAL_BUFF_VALUE_CAP, activeMealBuff, mealAttrBonus, sanitizeRestaurant, type MealBuff, type MealBuffKind, type RestaurantState } from './restaurantState';
 
@@ -138,12 +138,16 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
 
 /**
  * A FEIRA DE VERDADE (10/11/2026): o prato PRONTO, sem ingrediente, ao preço da oferta (Bits do Restaurante com o desconto da feira).
- * Mesmo efeito do prato cozinhado (`applyCook`: fome cheia + energia na hora ou buff), mas NÃO usa o chef do dia nem o teto de pratos
- * por dia (não é o Restaurante) e não toca comidas, essências ou materiais. Efeito de combate só com Bit GANHO, como no Restaurante.
+ * 16/11/2026 (dono): como o prato cozinhado, NÃO é servido na hora: vai para Files (a pastinha) como `dish:<id>` e o efeito (fome cheia +
+ * energia ou buff) só vem ao USAR (`specialItemUse.ts › applySpecialItem` → `serveDish`). NÃO usa o chef do dia nem o teto de pratos por
+ * dia (não é o Restaurante) e não toca comidas, essências ou materiais. Efeito de combate só com Bit GANHO, como no Restaurante.
+ * O servidor só confere a oferta e o limite de 1 (não serve prato): sem espelho de efeito em `functions/api/_feiraLoja.js`.
  */
-export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, price: number, now: number): { state: T; refused?: 'unknown' | 'no-bits' } {
+export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, price: number, _now: number): { state: T; refused?: 'unknown' | 'no-bits' } {
   const d = dishById(dishId);
   if (!d || !Number.isInteger(price) || price < 1) return { state: prev, refused: 'unknown' };
   if ((prev.gamePoints ?? 0) < price) return { state: prev, refused: 'no-bits' };
-  return { state: serveDish(spendBitsPaidFirst({ ...prev, gamePoints: prev.gamePoints - price }, price), d, now) };
+  const paid = spendBitsPaidFirst({ ...prev, gamePoints: prev.gamePoints - price }, price);
+  const key = dishKey(d.id);
+  return { state: { ...paid, foodInventory: { ...paid.foodInventory, [key]: (paid.foodInventory[key] ?? 0) + 1 } } };
 }

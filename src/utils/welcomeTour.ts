@@ -143,7 +143,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('mercado.decoracao', 'Furniture for its den.', 'Móveis para o abrigo dele.'),
     bRow('mercado.background', 'Backdrops for its stage.', 'Cenários para o palco dele.'),
     // 05/11/2026: o Restaurante abriu (sem BuildingId: fora dos portões, como o Cambista).
-    { name: { en: 'Restaurant', pt: 'Restaurante' }, line: { en: 'Cook dishes, keep them in the folder, then boost your Soulmon', pt: 'Cozinhe pratos, guarde na pastinha e dê um reforço ao Soulmon' } },
+    { name: { en: 'Restaurant', pt: 'Restaurante' }, line: { en: 'Cook dishes, keep them in Files, then boost your Soulmon', pt: 'Cozinhe pratos, guarde em Arquivos e dê um reforço ao Soulmon' } },
   ]),
   mapStep('arena', { en: 'Meeting other Soulmons.', pt: 'Encontros com outros Soulmons.' }, [
     bRow('arena.duelo', 'One duel at a time, against another Soulmon.', 'Um duelo de cada vez, contra outro Soulmon.'),
