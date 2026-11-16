@@ -6115,6 +6115,15 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
 
+## §447 — Companheiro invocado, PR 1b: os 32 sprites entram (16/11/2026, dono)
+
+**Decisão do dono (16/11):** aprovados os 32; nos três com duas gerações valeu a 1ª (salamandra, coruja, espectro), e a gosma ácida é a "verdinha" (request Higgsfield `01a1e56e-63c4`, slime verde com faixa e lanterna); `slime_cristalino` foi REFEITO (variação C: gosma fofa translúcida/iridescente, sem sino nem pedras).
+
+**Entregue:** `assets/soulmon/companheiros/<id>.png`, 32 arquivos 256² RGBA com alfa real, ~2,4 MB no total (maior: `ent` 114 KB); `PENDENTES` saiu do teste, que agora exige os 32, 256² RGBA e < 150 KB cada. QA de franja (fundo claro/escuro, procura de pixel de chave com alfa>0): limpos coruja e cavaleiro_morto (verde de chave solto na borda) e a gosma (franja rosada; re-chave magenta + despill). Originais em `E:/Soulmon-assets/_lote-16-11/companheiros/pre-despill/`.
+
+**A refinar depois:** fada, arauto_elfico, wyvern, falcao e coruja têm elemento solto (disco de runas, selo, anel de vento) fora do corpo.
+
+**Flag `COMPANHEIRO_INVOCADO` continua DESLIGADA** (combate é o PR 2). **Rollback:** `git revert`; sem save nem servidor.
 ## §446 — Linhas v1, PR 2: formas antigas viram ramos legados em outro elemento; os 5 Ultra novos viram chefe de Arena (16/11/2026, dono)
 
 **Decisão (modal do dono, 16/11).** (1) As formas ANTIGAS (champion/ultimate/mega) das 5 linhas do §438 não somem: viram um **ramo legado** de uma criatura base de OUTRO elemento, com nome novo derivado da raiz do hospedeiro (nenhuma espécie aparece com o nome de outra linha). 15 entradas no FIM de `ENEMY_ROSTER` (kind `ramo`, ids `lg…` sem hífen; o `#N` do Bestiário das que já existiam não muda). Arte em `src/assets/soulmon/novos-arquivo/legado/<id>-<estágio>.png` (as de `E:/Soulmon-assets/_lote-16-11/legado-v0/`, 256² RGBA, 760 KB no total, maior 72,7 KB), lida só por `enemyRosterArt.ts` no mesmo mapa `RAMOS_ART` (chave `legado/<id>-<estágio>`). Dados em `utils/enemyRosterLegado.data.ts`. (2) Nomes e ids das 5 linhas atuais ficam. (3) Os 5 Ultra novos (`novos/<elemento>-ultra.png`) passam a ser CHEFE ULTRA de Arena, ao lado de Mareoror e Salsolura. (4) Rookies antigos: só arquivo (já em `legado-v0/`).
