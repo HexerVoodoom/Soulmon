@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { AFINIDADES_CRIATURA, comCriaturaDoOponente, criaturaPorId } from './companheiroCriatura';
 import { CRIATURAS_COMPANHEIRO, aplicarEvocacao } from './companheiroInvocado';
 import { CLASS_DATA } from './soulProfile/ficha/buildSheet';
+import type { DuelSide } from './combate/duel';
+import { specialOf } from './combate/specials';
+import { soulCombatant } from './soulXP';
 
 describe('companheiroCriatura: recorte do class-system', () => {
   it('tem exatamente as 32 criaturas e as afinidades do snapshot', () => {
@@ -40,7 +43,7 @@ describe('aplicarEvocacao: sem regravar à toa', () => {
 });
 
 describe('comCriaturaDoOponente: o lado do servidor sem criatura (simulado)', () => {
-  const base = { combatant: { hp: 1, atk: 1, def: 1, spd: 1, level: 1 }, special: { kind: 'direct' } } as unknown as import('./combate/duel').DuelSide;
+  const base: DuelSide = { combatant: soulCombatant({ evolutionStage: 'rookie' }), special: specialOf('direct') };
   it('preenche a criatura de quem invoca e veio sem ela; o resto passa intacto', () => {
     const sim = { ...base, invoca: true };
     const r = comCriaturaDoOponente(sim, 'sim_0007', 'fogo');
