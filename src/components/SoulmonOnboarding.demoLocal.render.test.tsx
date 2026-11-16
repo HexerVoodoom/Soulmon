@@ -12,6 +12,9 @@ import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
+// O interruptor (utils/demoButton.ts) está desligado em produção; aqui se prova o fluxo LIGADO.
+vi.mock('../utils/demoButton', () => ({ DEMO_BUTTON_ENABLED: true }));
+
 vi.mock('../utils/auth', async () => {
   const real = await vi.importActual<typeof import('../utils/auth')>('../utils/auth');
   return { ...real, isAuthConfigured: () => true, getCurrentEmail: async () => null };
