@@ -709,6 +709,9 @@ async function handleCommunity(context) {
         }
       }
     } catch { evoEvento = null; /* save ilegível: sem aviso */ }
+    // §439: `friends` é do servidor (aceite/convite cruzado gravam no perfil), não do corpo. O `prev` foi lido lá em cima, antes de vários awaits:
+    // reler a lista aqui, colada na escrita, para não apagar uma amizade ligada nesse intervalo.
+    profile.friends = (await getProfile(env, id))?.friends ?? profile.friends;
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
     // Saiu da lista (escondeu-se ou desligou o PvP): limpa o blob. Se esta escrita falhar, o filtro de `evoFeed` na leitura já não mostra a pessoa.

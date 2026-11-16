@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Amizade que some e chat que fecha fora (`fix/amizade-chat-fecha`, REGISTRO §439)
+>
+> - **Feito:** upsert do perfil relê `friends` ao gravar (corrida com aceite de convite); Amigos adota a lista do servidor ao ler o estado social; chat fecha ao tocar fora, foco fora, diálogo novo ou Esc.
+> - **Não visto em aparelho:** só testes (servidor, render). A corrida residual do KV (sem CAS) segue possível, menor.
+> - **Rollback:** `git revert`; sem save nem migração.
+>
 > ## 16/11/2026 — Troca de arte das linhas v1 (`feat/linhas-v1-arte`, REGISTRO §438)
 > 21 PNGs trocados no lugar (som, eletricidade, tempo, arcano, marcial); backup em `E:/Soulmon-assets/_lote-16-11/legado-v0/`. PR 2 (ramos legados, Ultras chefe de Arena) pendente.
 >
