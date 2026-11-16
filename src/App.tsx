@@ -5323,10 +5323,13 @@ export default function App() {
     // dois — saldo negativo, e o cenário entrando duas vezes na lista de posse.
     if (shopBuyRefusal(gameState, item)) return false;
 
-    // Missão da Lamela/Lasca (12/11/2026, REGISTRO §314): comprar no Mercado (recusa devolve o MESMO `prev`).
+    // Missão da Lamela (diária, 12/11/2026, REGISTRO §314): comprar no Mercado (recusa devolve o MESMO `prev`).
+    // Lasca e Panora (16/11/2026) são SEMANAIS e contam por tipo: decoração (`furniture`) e cenário (`bg`).
     setGameState(prev => { const r = applyShopBuy(prev, item); if (r.refused) return prev;
       const comprou = bumpDailyIn(r.state, 'compra');
-      return item.kind === 'bg' ? bumpDailyIn(comprou, 'cenario') : comprou; // cenário também conta para a Panora
+      if (item.kind === 'furniture') return countWeeklyMission(comprou, 'buy-decor', new Date());
+      if (item.kind === 'bg') return countWeeklyMission(comprou, 'buy-backdrop', new Date());
+      return comprou;
     });
     // C-3 (run `som-01`): comprar deixa de soar como COMER. Era o mesmo som
     // para o unico evento do app que gasta moeda, e o gasto e irreversivel —

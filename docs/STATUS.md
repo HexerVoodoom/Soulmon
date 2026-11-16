@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Missões da Lasca e da Panora viram semanais (`fix/missoes-loja-semanal`, REGISTRO §435)
+>
+> - **Feito:** `buy-decor` (2 itens de decoração, lojinha de Decoração) e `buy-backdrop` (1 cenário, lojinha de Background) no pool semanal; saem do rodízio diário de NPCs. Contagem por tipo de item no `handleShopBuy`; "Ir" leva à lojinha certa. Teste novo `missoes.lojaSemanal.test.ts`.
+> - **Save:** tolerante (chaves novas = 0; resgates e contagem diária antigos saneados). **Não visto em tela:** só portões e testes.
+> - **Rollback:** `git revert`.
+
 > ## 16/11/2026 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (`feat/retro-redesign`, REGISTRO §434)
 >
 > - **Feito:** sem `border-image`; card liso com a chama grande metade dentro/metade fora, Soulmon inteiro abaixo; `CtaButton tone="acao"` fixo no rodapé; a11y (`useDialogA11y`) e plural corrigidos; `moldura-retro.webp` removida.
