@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import {
   ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, RAMO_CHANCE, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
@@ -490,13 +489,6 @@ describe('formas do pacote A: 1 por combinação no estágio dela (dono, 16/11/2
         expect(ENEMY_ROSTER.some(e => e.element === el && e.stage === alvo[k] && e.kind !== 'mascote'), `${el} (${k}) sem ${alvo[k]}`).toBe(true);
       }
     }
-  });
-  it('205 PNG distintos entre si e do rookie', () => {
-    const sha = (f: string) => createHash('sha256').update(readFileSync(f)).digest('hex');
-    const dir = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-    const hashes = new Set(pacote.map(e => sha(join(dir, 'combinados-formas', `${e.artFile}.png`))));
-    expect(hashes.size).toBe(205);
-    for (const e of pacote) expect(hashes.has(sha(join(dir, 'combinados', `${e.artFile!.replace(/-(champion|ultimate|mega)$/, '')}.png`))), e.key).toBe(false);
   });
   it('fora do sorteio comum: só saem com o elemento pedido', () => {
     const chaves = new Set(pacote.map(e => e.key));

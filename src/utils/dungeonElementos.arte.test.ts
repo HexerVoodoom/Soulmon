@@ -115,3 +115,12 @@ describe('rookie de Chama Azul é o de verdade, não o champion (09/11/2026)', (
     expect(sha(path.join(ART, 'combinados/009-chama_azul.png'))).not.toBe(sha(path.join(ART, 'paralelos/parchamaazul-champion.png')));
   });
 });
+
+describe('formas do pacote A (16/11/2026): PNG próprio', () => {
+  it('205 PNG distintos entre si e do rookie', () => {
+    const pacote = ENEMY_ROSTER.slice(-205);
+    const hashes = new Set(pacote.map(e => sha(path.join(ART, 'combinados-formas', e.artFile + '.png'))));
+    expect(hashes.size).toBe(205);
+    for (const e of pacote) expect(hashes.has(sha(path.join(ART, 'combinados', e.artFile!.replace(/-(champion|ultimate|mega)$/, '') + '.png'))), e.key).toBe(false);
+  });
+});
