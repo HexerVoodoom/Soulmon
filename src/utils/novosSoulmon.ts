@@ -11,7 +11,7 @@ import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
-import { pickEnemy, maxEnemyStageForLevel, type EnemyStage, type RosterEntry } from './enemyRoster';
+import { pickEnemy, pickEnemyDoConjunto, maxEnemyStageForLevel, type EnemyStage, type RosterEntry } from './enemyRoster';
 import { estagioPorProfundidade } from './dificuldadeEstagio';
 import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
@@ -227,13 +227,23 @@ export function getDungeonEncounter(
   /** Andar efetivo e level REAL do jogador (REGISTRO §437): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
   floor?: number,
   playerLevel?: number,
+  /** Conjunto do Rift (REGISTRO §441): estágio FIXO, vale por cima dos degraus de profundidade e da regra do HP. Exige `element`. */
+  estagioDoConjunto?: EnemyStage,
 ): DungeonEncounter {
+  const conj = estagioDoConjunto && element ? pickEnemyDoConjunto(level, rng, { stage: estagioDoConjunto, element, used }) : undefined;
+  if (conj) return encontroDe(conj, tier, used, rng, legacy);
   const slotStage = novoPreferenceOfTier(tier)[0] as EnemyStage;
   const ordem: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
   const fundo = floor !== undefined && playerLevel !== undefined ? estagioPorProfundidade(slotStage, floor, maxEnemyStageForLevel(playerLevel)) : slotStage;
   const base = ordem.indexOf(fundo) > ordem.indexOf(slotStage) ? fundo : slotStage;
   const pref = minStage && ordem.indexOf(minStage) > ordem.indexOf(base) ? minStage : base;
-  const e = pickEnemy(level, rng, { stage: pref, used, tabela: true, ...(element ? { element } : {}) });
+  return encontroDe(pickEnemy(level, rng, { stage: pref, used, tabela: true, ...(element ? { element } : {}) }), tier, used, rng, legacy);
+}
+
+function encontroDe(
+  e: RosterEntry, tier: string, used: Set<string>, rng: () => number,
+  legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
+): DungeonEncounter {
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);

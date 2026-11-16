@@ -9,6 +9,7 @@ import { soulLevel } from './soulXP';
 import { stageForFoeHp, FOE_STAGES } from './estagioPorHp';
 import { ENEMY_STAGE_UNLOCK_LEVEL, type EnemyStage } from './enemyRoster';
 import { mulberry32 } from './combate/rng';
+import { RIFT_MINIBOSS_EXTRA_FLOORS, RIFT_MINIBOSS_SLOT, type RiftWavePlan } from './riftSets';
 import { LADDER_TIERS, DUNGEON_BITS_FACTOR, TIER_POINTS, dungeonFoe, enemyKey, type DungeonEnemy } from './dungeonBase';
 export * from './dungeonBase';
 
@@ -25,16 +26,21 @@ export function buildDungeonWave(
   playerLevel: number = soulLevel({ evolutionStage: petStage }),
   /** Masmorra temática (08/11/2026): só criaturas deste elemento. Ausente = sorteio comum. */
   element?: string,
+  /** Conjunto do Rift (REGISTRO §441, `riftSets.ts`): estágio dos comuns, estágio e força do mini-boss. Ausente = a regra de antes (Pesadelo, RogueFight, testes). */
+  conjunto?: RiftWavePlan,
 ): DungeonEnemy[] {
   const floor = Math.max(1, Math.floor(level));
   const ptsMult = 1 + 0.12 * (floor - 1);
   const used = new Set<string>(); // sem criatura repetida dentro da onda (REGISTRO §68)
   return LADDER_TIERS.map((tier, slot) => {
-    const foe = dungeonFoe(playerLevel, slot, floor);
+    // Mini-boss (conjunto do Rift): a última luta do último andar do conjunto, com RIFT_MINIBOSS_EXTRA_FLOORS andares de crescimento a mais.
+    const boss = !!conjunto?.miniBoss && slot === RIFT_MINIBOSS_SLOT;
+    const foe = dungeonFoe(playerLevel, slot, boss ? floor + RIFT_MINIBOSS_EXTRA_FLOORS : floor);
+    const estagioConjunto: EnemyStage | undefined = conjunto && element ? (boss ? conjunto.miniBoss : conjunto.comum) : undefined;
     // Coerência estágio × HP (dono, 11/11/2026): a forma sobe até a faixa do HP real do inimigo; o roster não tem arte de Ultra, então o teto é Mega.
     const hpStage = stageForFoeHp(foe.combatant.hp);
-    const minStage: EnemyStage = FOE_STAGES.indexOf(hpStage) >= FOE_STAGES.indexOf('mega') ? 'mega' : (hpStage as EnemyStage);
-    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, Math.max(playerLevel, ENEMY_STAGE_UNLOCK_LEVEL[minStage]), element, minStage, floor, playerLevel); // o HP manda: o teto de ARTE por level não segura a forma coerente com ele
+    const minStage: EnemyStage = estagioConjunto ?? (FOE_STAGES.indexOf(hpStage) >= FOE_STAGES.indexOf('mega') ? 'mega' : (hpStage as EnemyStage));
+    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, Math.max(playerLevel, ENEMY_STAGE_UNLOCK_LEVEL[minStage]), element, minStage, floor, playerLevel, estagioConjunto); // o HP manda: o teto de ARTE por level não segura a forma coerente com ele
     // Especiais variados (dono, 11/11/2026): o tipo do especial do inimigo (Rift/Masmorra) vem do sorteio fixo por (andar, posição, criatura). O Pesadelo substitui o foe depois.
     const foeFinal = foe.special ? { ...foe, special: foeSpecialOf(minStage, `rift|${floor}|${slot}|${picked.name}`) } : foe;
     return {

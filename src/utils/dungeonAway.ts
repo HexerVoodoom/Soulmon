@@ -29,6 +29,7 @@ import {
   type DungeonAway, type DungeonAwayPlayer,
 } from './dungeonIdle';
 import { elementoDaCamada } from './dungeonElementos';
+import { riftWavePlan } from './riftSets';
 import { devolverPocoes, gastarUmaDoEstoque, type PotionStock } from './dungeonPotions';
 import { reviveStart, reviveSeed } from './dungeonRevive';
 import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartDrops, type DungeonEnemy } from './dungeon';
@@ -92,7 +93,7 @@ export const emptyAwayReport = (fromLayer: number, record: number): AwayReport =
 /** A onda de uma CAMADA — a MESMA da tela (`DungeonGame`): força do andar efetivo, sabor da semente da descida. */
 export function dungeonWaveOf(seed: number, layer: number, level: number, stage: string, tematica = true): DungeonEnemy[] {
   // 08/11/2026: cada camada é de UM elemento (`dungeonElementos.ts`) e só tem criaturas dele. `tematica = false` = o sorteio comum (RogueFight).
-  return buildDungeonWave(effectiveFloor(layer, level), stage, mulberry32((seed ^ Math.imul(layer, 0x9e3779b1)) | 0), level, tematica ? elementoDaCamada(layer) : undefined)
+  return buildDungeonWave(effectiveFloor(layer, level), stage, mulberry32((seed ^ Math.imul(layer, 0x9e3779b1)) | 0), level, tematica ? elementoDaCamada(layer) : undefined, tematica ? riftWavePlan(layer) : undefined)
     .map(e => ({ ...e, floor: layer }));
 }
 
