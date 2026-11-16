@@ -1,8 +1,9 @@
 import { rogueRestMs, settleRest } from './rogueDungeon';
+import { POWER_STEP, VIGOR_STEP } from './rogueDungeonSave';
 import { describe, expect, it } from 'vitest';
 import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, CHALLENGE_POOL, challengeFor, emptyRun, floorsCleared, hpOf, isFinished,
+  ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, CHALLENGE_POOL, challengeFor, emptyRun, floorsCleared, hpOf, isFinished,
   isForcedCombat, pathsFor, resolveStep, rogueScore, runForDay, rogueFightSetup, sanitizeRogueRun, simulateRogueCombat,
 } from './rogueDungeon';
 
@@ -16,9 +17,9 @@ describe('rogueDungeon', () => {
     expect(srv.isRankedGame('rogue-dungeon')).toBe(true);
     expect(srv.scoreIsPlausible('rogue-dungeon', ROGUE_MAX_SCORE + 1)).toBe(false);
   });
-  it('combate obrigatório no 3º, 6º e 8º desafio de cada andar', () => {
-    const forced = Array.from({ length: 8 }, (_, i) => isForcedCombat(i));
-    expect(forced).toEqual([false, false, true, false, false, true, false, true]);
+  it('combate obrigatório no 3º e 5º (último) desafio de cada andar', () => {
+    const forced = Array.from({ length: ROGUE_PER_FLOOR }, (_, i) => isForcedCombat(i));
+    expect(forced).toEqual([false, false, true, false, true]);
     expect(pathsFor(D, 2)).toEqual(['combat']);
   });
   it('3 caminhos distintos e determinísticos nos passos livres', () => {
@@ -47,7 +48,7 @@ describe('rogueDungeon', () => {
     const r = resolveStep(emptyRun(D), 'puzzle', false);
     expect(r).toMatchObject({ step: 1, won: 0, over: false });
   });
-  it('24 passos fecham a incursão; score tem teto e bônus de andar', () => {
+  it('15 passos fecham a incursão; score tem teto e bônus de andar', () => {
     let r = emptyRun(D);
     for (let i = 0; i < ROGUE_MAX_STEPS; i++) { r = resolveStep(r, 'puzzle', true); r = applyBonus(r, 'vigor'); }
     expect(isFinished(r)).toBe(true);
@@ -70,7 +71,7 @@ describe('rogueDungeon', () => {
   });
   it('desafios são jogos reais do pool do caminho, com meta positiva e determinísticos', () => {
     const seen = new Set<string>();
-    for (let s = 0; s < 24; s++) {
+    for (let s = 0; s < 48; s++) {
       for (const k of ['puzzle', 'minigame', 'explore'] as const) {
         const c = challengeFor(D, s, k);
         expect(CHALLENGE_POOL[k]).toContain(c.game);
@@ -87,7 +88,7 @@ describe('rogueDungeon', () => {
     expect(simulateRogueCombat(run, 2, strong)).toEqual(simulateRogueCombat(run, 2, strong));
     expect(simulateRogueCombat(run, 2, strong).won).toBe(true);
     const weak = { ...combatantAt(1, REFERENCE_BUILDS.balanced), atk: 1, hp: 1 };
-    expect(simulateRogueCombat(run, 23, weak).won).toBe(false);
+    expect(simulateRogueCombat(run, ROGUE_MAX_STEPS - 1, weak).won).toBe(false);
   });
 });
 
@@ -100,8 +101,8 @@ describe('rogueFightSetup (N7: a luta visível)', () => {
     const a = rogueFightSetup(run, 2, c);
     const b = rogueFightSetup(run, 2, c);
     expect(a).toEqual(b);
-    expect(a.combatant.atk).toBeCloseTo(c.atk * 1.12);
-    expect(a.combatant.hp).toBeCloseTo(c.hp * 1.1);
+    expect(a.combatant.atk).toBeCloseTo(c.atk * (1 + 2 * POWER_STEP));
+    expect(a.combatant.hp).toBeCloseTo(c.hp * (1 + VIGOR_STEP));
     expect(a.startShield).toBeGreaterThan(0);
     expect(rogueFightSetup({ ...run, shield: 0 }, 2, c).startShield).toBe(0);
     expect(rogueFightSetup(run, 3, c).seed).not.toBe(a.seed);
@@ -111,7 +112,7 @@ describe('rogueFightSetup (N7: a luta visível)', () => {
     r = resolveStep(r, 'combat', true, 0.4);
     expect(r.hp).toBe(0.4);
     r = applyBonus(r, 'heal');
-    r = resolveStep({ ...r, step: 7 }, 'combat', true, 0.25); // cruza para o andar 2
+    r = resolveStep({ ...r, step: ROGUE_PER_FLOOR - 1 }, 'combat', true, 0.25); // cruza para o andar 2
     expect(r.hp).toBe(0.25);
     expect(floorsCleared(r)).toBe(1);
     expect(resolveStep({ ...r, bonusPending: false }, 'puzzle', true).hp).toBe(0.25); // não-combate não mexe
