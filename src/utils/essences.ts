@@ -7,6 +7,7 @@
  * A forma é espelhada no servidor (`functions/api/_essences.js`, `_dayCounters.js`; paridade em `essences.parity.test.js`).
  */
 import { BASE_ELEMENT_IDS, elementIdOfFoe, isEssenceElement } from './elementDex';
+import { ELEMENTO_NEUTRO_ID } from './elementoNeutro';
 import { NIGHTMARE_ELEMENT } from './nightmareElement';
 import { elementLabel } from './elementLabels';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
@@ -14,7 +15,7 @@ import { bumpDailyIn } from './dailyMissions';
 
 /** Teto por elemento no save (sanidade, não regra de jogo). */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
-/** 210 do dex + `pesadelo`. */
+/** 269 do catálogo (210 + 59 curados) + `pesadelo` + `neutro`. */
 export const ESSENCE_MAX_KEYS = 271;
 /** Teto diário da descida AUTOMÁTICA (jogador fora / relatório de volta). Constante ÚNICA (o servidor limita o contador a 999). */
 export const ESSENCE_AWAY_DAILY_CAP = 30;
@@ -26,6 +27,9 @@ export const essenceQtyOfStage = (stage: string | undefined | null): number => E
 export const essenceQtyOfBoss = (level: number): number => 5 + Math.floor(Math.max(1, Math.min(20, Math.floor(level) || 1)) / 5);
 
 export interface EssenceDrop { id: string; qty: number }
+
+/** Quem deixa essência ao cair: os 269 do catálogo e o `neutro` do Corvo (o Pesadelo vem do próprio caminho dele). */
+export const ehEssenciaColetavel = (id: unknown): id is string => isEssenceElement(id) || id === ELEMENTO_NEUTRO_ID;
 
 /** Só a FORMA (a mesma do servidor): os chefes da Feira têm elemento próprio, fora dos 210 do dex, e dropam a essência dele. */
 const isEssenceId = (id: unknown): id is string => typeof id === 'string' && /^[a-z_]{2,24}$/.test(id);
@@ -46,7 +50,8 @@ export function essenceDropsOfFoe(foe: { elements?: readonly (string | undefined
   const ids = new Set<string>();
   const a = elementIdOfFoe(foe.elements);
   if (a) ids.add(a);
-  if (isEssenceElement(foe.element)) ids.add(foe.element);
+  // 16/11/2026 (dono): o Neutro (o Corvo) também deixa essência, por isso `ehEssenciaColetavel` (ele continua FORA de `ESSENCE_ELEMENT_IDS`: sem preço no Cambista).
+  if (ehEssenciaColetavel(foe.element)) ids.add(foe.element);
   return [...ids].map(id => ({ id, qty }));
 }
 

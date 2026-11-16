@@ -133,7 +133,8 @@ describe('curados (3–4 bases) funcionam como os pares', () => {
     expect(potionCost('geiser')).toEqual([{ id: 'geiser', qty: 50 }]);
     expect(potionIngredients('geiser').map(i => i.id)).toEqual(['fogo', 'agua', 'terra']);
     expect(isPotionKey(potionKey('geiser'))).toBe(true);
-    expect(isPotionKey(potionKey('neutro'))).toBe(false);
+    expect(isPotionKey(potionKey('neutro'))).toBe(true); // §452: o Neutro tem poção própria
+    expect(isPotionKey(potionKey('pesadelo'))).toBe(false);
   });
   it('fabrica com 50 essências + 1 poção de cada base', () => {
     const st = { ...base({ geiser: 50 }, ['geiser']), foodInventory: { 'potion:fogo': 1, 'potion:agua': 1, 'potion:terra': 1 } as Record<string, number> };

@@ -233,6 +233,8 @@ export interface AreaViewProps {
   buildingCoins?: Partial<Record<BuildingId, readonly string[]>>;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
+  /** Há uma ATIVIDADE rodando agora (jogo aberto, duelo, luta do Torneio)? Diferente de `onLayerChange`: uma folha aberta não é atividade. Alimenta o portão da carta "Elemento novo". */
+  onActivityChange?: (ativa: boolean | undefined) => void;
   /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
   onGoToMap?: () => void;
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
@@ -506,6 +508,12 @@ export function AreaView(props: AreaViewProps) {
     onLayerChange?.(layerOpen);
     return () => onLayerChange?.(false);
   }, [layerOpen, onLayerChange]);
+  const emAtividadeAgora = game !== null || duelOpen || tournamentDuelOpen;
+  const { onActivityChange } = props;
+  useEffect(() => {
+    onActivityChange?.(emAtividadeAgora);
+    return () => onActivityChange?.(undefined);
+  }, [emAtividadeAgora, onActivityChange]);
   // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
   useBackLayer(duelOpen, () => setDuelOpen(false));
   // A masmorra registra o PRÓPRIO voltar (vai direto ao mapa, igual ao ícone do mapa); os outros jogos voltam à área.

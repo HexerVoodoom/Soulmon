@@ -8,7 +8,7 @@ import { elementMatchesBases } from '../utils/elementPotion';
 /**
  * ESSÊNCIAS (Laboratório > Arquivo, logo abaixo da coleção de Sonhos; 28/10/2026, REGISTRO §183). Só as com quantidade > 0.
  * Cada uma é o ÍCONE DO PRÓPRIO ELEMENTO (sem arte nova, nunca dentro de caixa) + a quantidade; tocar mostra o nome (EN/PT).
- * Só coleta: não há uso ainda. Sem nenhuma, a seção nem aparece.
+ * Pesadelo: só coleta (a dica diz "ainda sem uso", sem prometer nada). Sem nenhuma, a seção nem aparece.
  */
 export function EssencesSection({ essences, language = 'en-US' }: { essences: Record<string, number> | undefined; language?: string }) {
   const isPt = language === 'pt-BR';
@@ -43,7 +43,12 @@ export function EssencesSection({ essences, language = 'en-US' }: { essences: Re
           );
         })}
       </ul>
-      {openId && <p role="status" data-essence-tip className="sm2-lib-s" style={{ margin: '8px 0 0', color: 'var(--sm2-ink)' }}>{essenceName(openId, isPt)}</p>}
+      {openId && (
+        <p role="status" data-essence-tip className="sm2-lib-s" style={{ margin: '8px 0 0', color: 'var(--sm2-ink)' }}>
+          {essenceName(openId, isPt)}
+          {openId === 'pesadelo' && <span data-essence-sem-uso>{isPt ? ' · ainda sem uso, só guardar.' : ' · no use yet, just keep it.'}</span>}
+        </p>
+      )}
     </section>
   );
 }

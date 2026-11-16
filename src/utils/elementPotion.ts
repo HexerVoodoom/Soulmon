@@ -16,6 +16,8 @@ import { ALL_ELEMENT_IDS, ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposit
 import { essenceName, spendEssences, type EssenceDrop } from './essences';
 import type { SpecialItem } from './shop';
 import { readLocal, writeLocal } from './safeStorage';
+import { ELEMENTO_NEUTRO_ID } from './elementoNeutro';
+import { NEUTRO_POTION_COST } from './neutroPotion';
 
 export const POTION_COSTS = {
   /** Elemento base: quantidade da PRÓPRIA essência. Ao atingir isto a Vesca oferece a poção (`essenceThresholdCrossings`). */
@@ -30,9 +32,11 @@ export const POTION_MAX_BASES = 3;
 export const POTION_MAX_COMPONENTS = 4;
 
 export const POTION_PREFIX = 'potion:';
+/** Elementos que têm poção: os 269 do catálogo de essências E o Neutro (16/11/2026, receita própria em `neutroPotion.ts`). O Pesadelo NÃO tem (só coleta). */
+export const isPotionElement = (id: unknown): id is string => isEssenceElement(id) || id === ELEMENTO_NEUTRO_ID;
 export const potionKey = (elementId: string): string => POTION_PREFIX + elementId;
 export const isPotionKey = (key: unknown): key is string =>
-  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isEssenceElement(key.slice(POTION_PREFIX.length));
+  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isPotionElement(key.slice(POTION_PREFIX.length));
 export const potionElementOfKey = (key: string): string | undefined => (isPotionKey(key) ? key.slice(POTION_PREFIX.length) : undefined);
 
 /** Composição (ids dos elementos base) de um elemento do catálogo: base = ele mesmo; par = os 2 componentes. `undefined` se desconhecido. */
@@ -47,6 +51,7 @@ export function potionCostFor(finalId: string, bases: readonly string[]): Essenc
 }
 
 export function potionCost(elementId: string): EssenceDrop[] {
+  if (elementId === ELEMENTO_NEUTRO_ID) return NEUTRO_POTION_COST.map(c => ({ ...c }));
   const comp = elementComposition(elementId);
   return comp ? potionCostFor(elementId, comp) : [];
 }
@@ -193,7 +198,7 @@ export function givePotion<T extends PotionState>(prev: T, key: string): T {
 }
 
 /** Leitura tolerante do save: só ids do catálogo. */
-export const sanitizeElementId = (raw: unknown): string | undefined => (isEssenceElement(raw) ? raw : undefined);
+export const sanitizeElementId = (raw: unknown): string | undefined => (isPotionElement(raw) ? raw : undefined);
 
 /**
  * Na evolução: o elemento pendente vira o elemento do Soulmon (`potionElement`) e `evolutionPotion` é limpo. REGRA DO DONO (30/10/2026):
@@ -224,7 +229,7 @@ export function curarPocaoOrfa(potion: string | undefined, evolutionStage: strin
 
 /** Entradas de `SPECIAL_ITEMS`, uma por elemento do catálogo. */
 export const POTION_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEntries(
-  ESSENCE_ELEMENT_IDS.map(id => {
+  [...ESSENCE_ELEMENT_IDS, ELEMENTO_NEUTRO_ID].map(id => {
     const key = potionKey(id);
     const item: SpecialItem = {
       emoji: key, kind: 'potion',

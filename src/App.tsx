@@ -1998,6 +1998,8 @@ export default function App() {
   }, [demo, refuseDemo]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
+  /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
+  const [areaAtividade, setAreaAtividade] = useState<boolean | undefined>(undefined);
   // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
   useAreaViewPrefetch();
   const [upgradeRitual, setUpgradeRitual] = useState(false);
@@ -2682,7 +2684,7 @@ export default function App() {
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
-      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView),
+      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
       groveMilestone: Boolean(grovePendente),
       messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
@@ -8831,6 +8833,7 @@ export default function App() {
                 })}
                 buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
+                onActivityChange={setAreaAtividade}
                 onGoToMap={() => goTo('map')}
                 language={language}
                 ownership={{
