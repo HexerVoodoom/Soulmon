@@ -113,11 +113,11 @@ export function ChatBox({
     alvo.appendChild(host);
     if (tinhaFoco && ativo) ativo.focus({ preventScroll: true });
   }, [host, modo]);
-  const fecharChat = () => {
+  const fecharChat = useCallback(() => {
     const ativo = document.activeElement as HTMLElement | null;
     if (ativo && host?.contains(ativo)) ativo.blur(); // some o teclado
     setModo('barra');
-  };
+  }, [host]);
   /* O painel é transitório: fecha ao tocar FORA dele, quando o foco vai para fora (outra aba, outro painel) e quando qualquer
      diálogo/modal novo entra no documento. Escuta no documento (captura) e não cobre a tela com um backdrop: o painel de meia
      tela deixa o resto visível, e um backdrop engoliria o toque da navegação (o toque que fecha também chega ao destino).
@@ -142,9 +142,7 @@ export function ChatBox({
       document.removeEventListener('pointerdown', fora, true);
       document.removeEventListener('focusin', fora, true);
     };
-    // `fecharChat` só lê refs/estado estável (host, setModo); reinscrever a cada render perderia eventos.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modo, host]);
+  }, [modo, host, fecharChat]);
   /* WP3.1 — MEMÓRIA DE SESSÃO, e só de sessão.
      Sem isto o `getPetResponse` perguntava "E você?" e processava a resposta
      como se fosse a primeira frase da conversa — o pet perguntava e não
