@@ -7,6 +7,7 @@ import {
 import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
 import { RAMOS_INIMIGOS_DATA, PARALELOS_DATA } from './enemyRosterData';
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
+import { LEGADO_DATA } from './enemyRosterLegado.data';
 import { essenceComposition } from './elementDex';
 import { entryComponents } from './arenaComponentes';
 import { newBossCombat } from './match3Boss';
@@ -29,7 +30,7 @@ const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
   it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) = 878 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205);
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205 + 15);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -167,13 +168,16 @@ describe('contrato: elemento x criatura base (selvagem/desgarrado)', () => {
 });
 
 describe('ramos evoluídos como inimigos (§220)', () => {
-  const ramos = ENEMY_ROSTER.filter(e => e.kind === 'ramo');
+  const todosRamos = ENEMY_ROSTER.filter(e => e.kind === 'ramo');
+  const ramos = todosRamos.filter(e => !e.artFile!.startsWith('legado/')); // os 15 legados (§445) têm teste próprio abaixo
+  const legados = todosRamos.filter(e => e.artFile!.startsWith('legado/'));
   const ramoDe = (k: string) => rosterEntryOfKey(k)?.kind === 'ramo';
   it('os 120 PNGs viram 120 entradas: arte própria, 1 elemento = o da criatura, golpes da criatura', () => {
     expect(ramos).toHaveLength(120);
     expect(RAMOS_INIMIGOS_DATA).toHaveLength(40);
-    expect(Object.keys(RAMOS_ART)).toHaveLength(120);
-    expect(new Set(ramos.map(e => e.artFile))).toEqual(new Set(Object.keys(RAMOS_ART)));
+    expect(Object.keys(RAMOS_ART).filter(k => !k.startsWith('legado/'))).toHaveLength(120);
+    expect(new Set(todosRamos.map(e => e.artFile))).toEqual(new Set(Object.keys(RAMOS_ART)));
+    expect(legados).toHaveLength(15);
     for (const e of ramos) {
       expect(rosterSpriteOf(e), e.key).toBe(RAMOS_ART[e.artFile!]);
       const n = NOVOS_DATA.find(x => x.element === e.element)!;
@@ -194,7 +198,8 @@ describe('ramos evoluídos como inimigos (§220)', () => {
       expect(e.name, e.key).not.toMatch(/mon$/i);
       expect(outros, e.key).not.toContain(e.name);
     }
-    expect(new Set(ramos.map(e => e.name)).size).toBe(120);
+    expect(new Set(todosRamos.map(e => e.name)).size).toBe(135); // 120 + 15 legados
+    for (const e of legados) { expect(e.name, e.key).toMatch(/^[A-Z][a-z]{4,14}$/); expect(outros, e.key).not.toContain(e.name); }
   });
   it('nenhum ramo abaixo do level: rookie não existe e o teto vale em toda faixa', () => {
     expect(ramos.some(e => (e.stage as string) === 'rookie')).toBe(false);
@@ -206,7 +211,7 @@ describe('ramos evoluídos como inimigos (§220)', () => {
       if (lv < 7) expect(e.kind).not.toBe('ramo');
     }
   });
-  it('a fatia dos ramos é RAMO_CHANCE em cada estágio, e os 120 aparecem', () => {
+  it('a fatia dos ramos é RAMO_CHANCE em cada estágio, e os 135 (120 + 15 legados) aparecem', () => {
     const vistos = new Set<string>();
     for (const stage of ['champion', 'ultimate', 'mega'] as const) {
       const N = 30000;
@@ -214,7 +219,7 @@ describe('ramos evoluídos como inimigos (§220)', () => {
       for (let i = 0; i < N; i++) { const e = pickEnemy(30, () => (i + 0.5) / N, { stage }); if (e.kind === 'ramo') { r++; vistos.add(e.key); } }
       expect(r / N).toBeCloseTo(RAMO_CHANCE - 0.001, 1); // o 1º número < 1/1000 vira corvo
     }
-    expect(vistos.size).toBe(120);
+    expect(vistos.size).toBe(135);
   });
   it('quem não olha o level do jogador nunca recebe ramo: level desconhecido, chefe do Elemental Fusion (o Torneio e a Arena têm regra própria, §221)', () => {
     for (let seed = 1; seed <= 500; seed++) {
@@ -230,6 +235,62 @@ describe('ramos evoluídos como inimigos (§220)', () => {
       if (ramoDe(e.stage)) { achou++; expect(e.sprite).toBeTruthy(); expect(e.element).toBe(rosterEntryOfKey(e.stage)!.element); }
     }
     expect(achou).toBeGreaterThan(0);
+  });
+});
+
+describe('ramos LEGADOS (REGISTRO §445, 16/11/2026): as formas antigas de 5 linhas em outro elemento', () => {
+  const esperado = [
+    ['lgvibri', 'som', 'ar', ['Zephrill', 'Zephwing', 'Zephmoth']],
+    ['lgvoltrix', 'eletricidade', 'espaco', ['Voidspark', 'Voidserp', 'Voidhalo']],
+    ['lgchronib', 'tempo', 'industrial', ['Smeltoise', 'Smeltick', 'Smeltgryph']],
+    ['lgrunix', 'arcano', 'luz', ['Solimur', 'Solowl', 'Solsphinx']],
+    ['lgkenjo', 'marcial', 'agua', ['Bubbonin', 'Bubbotrident', 'Bubbohydra']],
+  ] as const;
+  const legados = ENEMY_ROSTER.filter(e => e.artFile?.startsWith('legado/'));
+  it('15 entradas (5 × champion/ultimate/mega): id, hospedeiro, nome e arquivo exatos; PT = EN (um nome só, como os outros ramos)', () => {
+    expect(LEGADO_DATA).toHaveLength(5);
+    expect(legados).toHaveLength(15);
+    for (const [id, origem, host, nomes] of esperado) {
+      (['champion', 'ultimate', 'mega'] as const).forEach((stage, i) => {
+        const e = rosterEntryOfKey(`${id}-${stage}`)!;
+        expect(e, `${id}-${stage}`).toBeDefined();
+        expect([e.id, e.stage, e.kind, e.element, e.name, e.artFile]).toEqual([id, stage, 'ramo', host, nomes[i], `legado/${id}-${stage}`]);
+        expect(e.elements).toEqual([host]);
+        expect(e.basico).toBe(NOVOS_DATA.find(n => n.element === host)!.basico);
+        expect(rosterSpriteOf(e), e.key).toBe(RAMOS_ART[`legado/${id}-${stage}`]);
+        expect(rosterSpriteOf(e), e.key).toBeTruthy();
+      });
+      expect(LEGADO_DATA.find(d => d[0] === id)![1]).toBe(origem);
+    }
+  });
+  it('id novo sem hífen, fora do elemento de origem, e nenhum nome repete o de outra espécie (nem as formas altas das linhas)', () => {
+    const outrosNomes = ENEMY_ROSTER.filter(e => !legados.includes(e)).map(e => e.name.toLowerCase());
+    const altos = Object.values(FORMAS_ALTAS).flatMap(o => Object.values(o)).map(n => n.toLowerCase());
+    for (const [id, origem, host] of LEGADO_DATA) {
+      expect(id).toMatch(/^lg[a-z]+$/);
+      expect(host).not.toBe(origem);
+      expect(ENEMY_ROSTER.filter(e => e.id === id)).toHaveLength(3);
+    }
+    for (const e of legados) {
+      expect(outrosNomes).not.toContain(e.name.toLowerCase());
+      expect(altos).not.toContain(e.name.toLowerCase());
+    }
+  });
+  it('ficam NO FIM do roster (o #N do Bestiário das entradas antigas não muda)', () => {
+    expect(ENEMY_ROSTER.slice(-15)).toEqual(legados);
+  });
+  it('entram nos pools que já recebem ramos: sorteio comum (champion/ultimate/mega) e o do elemento do hospedeiro; nunca em rookie', () => {
+    for (const stage of ['champion', 'ultimate', 'mega'] as const) {
+      const vistos = new Set<string>();
+      for (let i = 0; i < 30000; i++) { const e = pickEnemy(30, () => (i + 0.5) / 30000, { stage }); if (e.artFile?.startsWith('legado/')) vistos.add(e.key); }
+      expect(vistos.size, stage).toBe(5);
+      for (const [id, , host] of esperado) {
+        const deHost = new Set<string>();
+        for (let i = 0; i < 4000; i++) deHost.add(pickEnemy(30, () => (i + 0.5) / 4000, { stage, element: host }).key);
+        expect(deHost.has(`${id}-${stage}`), `${id}-${stage} no pool de ${host}`).toBe(true);
+      }
+    }
+    expect(legados.some(e => (e.stage as string) === 'rookie')).toBe(false);
   });
 });
 
