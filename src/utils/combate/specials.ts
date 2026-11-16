@@ -74,7 +74,7 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   spdBuff: 2,
   defBuff: 1.1,
   atkDebuff: 1.1,
-  spdDebuff: 0.75,
+  spdDebuff: 0.64,
 };
 
 /**
@@ -135,7 +135,7 @@ export const EFFECT_TUNE_PVP: EffectTune = { silenceHits: 1, silenceKeep: 1, slo
  * HEXSMITH H2: corte por golpe das famílias novas. `defBuff` (golpe recebido: `guardCut`) e `atkDebuff` (golpe dado pelo alvo: `weakCut`) tiram essa
  * fração do dano de CADA golpe afetado; a contagem é `E / corte`, então o total evitado é E golpes, como um escudo de mesmo orçamento.
  */
-export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.55, spdDebuffScale: 1, dragStretch: 1.5 };
+export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
 /**
  * `spdDebuff` (lentidão real): `spdDebuffScale` = golpes de arrasto do alvo por unidade de orçamento `E`; cada golpe afetado atrasa o próximo
  * do alvo em `dragStretch` intervalos (a lentidão de efeito, `nSlow`, atrasa 1). O poder da família é o botão de calibração.
@@ -169,7 +169,9 @@ export const ENERGY_TRIGGER = 100;
  * Families that aim at the ENEMY (PR3a, §2.15 P2): only these respond to the
  * area. Heal, shield and the self buffs are personal; area does not touch them.
  */
-export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDebuff', 'atkDebuff', 'spdDebuff'];
+export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDebuff'];
+// Hexsmith H2: `atkDebuff` e `spdDebuff` miram o inimigo mas NÃO respondem à área: em área o `atkDebuff` rendia +14,6pp de vitória sobre o alvo
+// único (régua AC4/AC7, ±6pp), porque enfraquecer todos de uma vez vale mais que concentrar. Ficam sempre em alvo único (como os buffs).
 
 /**
  * Efficiency of the area (PR3a). 1 = same TOTAL budget as the single target
@@ -203,9 +205,9 @@ export type PveEngine = 'arena' | 'dungeon' | 'pesadelo';
  * O 1v1 (PvP) não lê esta tabela.
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
-  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25, defBuff: 1.35, atkDebuff: 1.45, spdDebuff: 1.4 },
-  dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 2, atkDebuff: 1.5, spdDebuff: 1.1 },
-  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 0.7, atkDebuff: 0.65, spdDebuff: 0.6 },
+  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25, defBuff: 1.35, atkDebuff: 2, spdDebuff: 1.4 },
+  dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 2, atkDebuff: 1.4, spdDebuff: 0.9 },
+  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 0.7, atkDebuff: 0.65, spdDebuff: 0.5 },
 };
 
 /**

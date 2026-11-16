@@ -12,7 +12,7 @@ import {
   STATUS_LOOP_CROP, STATUS_LOOP_IDS, statusLoopId, statusShort, statusTurnsFor, tickStatus,
 } from './combatFx';
 import { COMBAT_V3_ART_IDS } from './combatV3Art';
-import { AREA_FAMILIES, SPECIAL_FAMILIES } from './combate/specials';
+import { AREA_FAMILIES, ALL_SPECIAL_FAMILIES, SPECIAL_FAMILIES } from './combate/specials';
 
 describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
   it('uma linha por kind, e cada linha traz glifo, forma, nome e texto curto EN + PT', () => {
@@ -102,13 +102,13 @@ describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
 
 describe('FAMILY_STATUS — toda família do núcleo (PR1) mapeia, lida do módulo', () => {
   it('cada `SpecialFamily` tem linha (família nova sem mapeamento REPROVA aqui, e não compila)', () => {
-    for (const f of SPECIAL_FAMILIES) expect(f in FAMILY_STATUS, `família ${f} sem mapeamento`).toBe(true);
-    expect(Object.keys(FAMILY_STATUS).sort()).toEqual([...SPECIAL_FAMILIES].sort());
+    for (const f of ALL_SPECIAL_FAMILIES) expect(f in FAMILY_STATUS, `família ${f} sem mapeamento`).toBe(true);
+    expect(Object.keys(FAMILY_STATUS).sort()).toEqual([...ALL_SPECIAL_FAMILIES].sort());
   });
 
   it('o dano direto não deixa estado; todas as outras deixam um kind da tabela', () => {
     expect(FAMILY_STATUS.direct).toBeNull();
-    for (const f of SPECIAL_FAMILIES.filter(x => x !== 'direct')) {
+    for (const f of ALL_SPECIAL_FAMILIES.filter(x => x !== 'direct')) {
       const m = statusFxOfFamily(f);
       expect(m, f).not.toBeNull();
       expect(STATUS_FX_KINDS).toContain(m!.kind);
@@ -123,6 +123,10 @@ describe('FAMILY_STATUS — toda família do núcleo (PR1) mapeia, lida do módu
     expect(FAMILY_STATUS.shield).toMatchObject({ kind: 'escudo', target: 'self' });
     expect(FAMILY_STATUS.defDebuff).toMatchObject({ kind: 'debuff', variant: 'def', target: 'foe' });
     expect(FAMILY_STATUS.dot).toMatchObject({ kind: 'dot', target: 'foe' });
+    // Hexsmith H2: as 3 famílias só de Coroa, com os selos novos
+    expect(FAMILY_STATUS.defBuff).toMatchObject({ kind: 'buff', variant: 'def', target: 'self' });
+    expect(FAMILY_STATUS.atkDebuff).toMatchObject({ kind: 'debuff', variant: 'atk', target: 'foe' });
+    expect(FAMILY_STATUS.spdDebuff).toMatchObject({ kind: 'lento', variant: 'spd', target: 'foe' });
   });
 
   it('Q-FX1 (decisão §2.13, PR16): HoT segue PRONTO e INALCANÇÁVEL; a maldição só chega pela ESCOLA (nenhuma família sozinha)', () => {

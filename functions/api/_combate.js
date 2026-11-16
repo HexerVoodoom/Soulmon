@@ -189,10 +189,10 @@ export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', '
 /** Hexsmith H2: familias que so existem via Coroa (espelho de `CROWN_ONLY_FAMILIES`); nunca sorteadas. */
 export const CROWN_ONLY_FAMILIES = ['defBuff', 'atkDebuff', 'spdDebuff'];
 export const ALL_SPECIAL_FAMILIES = [...SPECIAL_FAMILIES, ...CROWN_ONLY_FAMILIES];
-export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2, defBuff: 1.1, atkDebuff: 1.1, spdDebuff: 0.75 };
+export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2, defBuff: 1.1, atkDebuff: 1.1, spdDebuff: 0.64 };
 /** Hexsmith H2 (espelho de `EFFECT_TUNE_PVP`, `FAMILY_TUNE`, `EFFECT_FAMILY`). */
 export const EFFECT_TUNE_PVP = { silenceHits: 1, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.8, hotScale: 1.05 };
-export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.55, spdDebuffScale: 1, dragStretch: 1.5 };
+export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
 export const EFFECT_FAMILY = { hot: 'shield', slow: 'defDebuff', silence: 'defDebuff' };
 /** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. O efeito so vale sobre a familia-base dele. */
 export function specialOf(family, effect) {

@@ -948,6 +948,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/EvolutionCeremony.tsx`, `src/components/OnboardingOvo.tsx`, `src/components/SoulmonOnboarding.tsx`.
 **Régua:** nenhuma específica (a cerimônia é coberta pelos testes de `EvolutionCeremony`).
 
+### `src/utils/combate/fightTypes.ts`
+**Dono de:** os tipos públicos do simulador 1v1 (`FightSide`, `FightOptions`, `FightEvent`, `FightResult`, `FighterFx`, `FightFxPair`, `CheerEvent`, `FightWinner`), tirados de `fight.ts` na Hexsmith H2 (REGISTRO §452) para o arquivo do motor ficar abaixo de 500 linhas (catraca anti-slop). `fight.ts` os reexporta: quem importa de `./fight` não muda nada. `FighterFx` ganhou os contadores `nGuard`, `nWeak` (famílias só de Coroa), `nSil`, `nSlow` e `hot` (efeitos de Coroa), todos opcionais e só presentes quando o contador está ligado.
+**Chamado por:** `combate/fight.ts` (reexporta), `combate/group.ts` (via `fight.ts`).
+**Régua:** `src/utils/combate/hexsmith.motor.test.ts`.
+
 ### `src/utils/combate/fight.ts`
 **Dono de:** O simulador puro e determinístico de uma luta v3 (seed → resultado): janela normalizada por level (espelho equilibrado = 25 s), energia e especiais, sorte AR(1) por golpe, tempo "fantasma" dos dois lados e empate como resultado válido.
 **Sincronização 09/11/2026:** `STAT_DISPLAY_SCALE` (10) e `statExibido(v)` (= `Math.round(v · STAT_DISPLAY_SCALE)`): ataque, defesa e velocidade como a TELA mostra (atributos ×10; HP não multiplica) — só apresentação, a mecânica não muda (decisão do dono 09/11/2026, REGISTRO §252). `hpExibidoPvp(combatantHp)` (= `hpPoints(combatantHp)`): o HP EXIBIDO no duelo/PvP é o HP BASE, o mesmo número da Arena, e não o inflado por `PVP_HP_SCALE`; o motor segue lutando com `hp × PVP_HP_SCALE` (a luta dura o mesmo). Chamado por `ArenaGame.tsx`, `DuelScreen.tsx`, `evolutionStatsDelta.ts`.
