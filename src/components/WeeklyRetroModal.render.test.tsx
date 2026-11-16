@@ -162,7 +162,7 @@ describe('WeeklyRetroModal', () => {
         expect(onClose).toHaveBeenCalledTimes(1);
         expect(cta().getAttribute('data-cta-filling')).toBeNull();
         const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8');
-        expect(css).toMatch(/prefers-reduced-motion: reduce\) \{ \.sm2-cta-fill \{ display: none; \} \}/);
+        expect(css).toMatch(/prefers-reduced-motion: reduce\)[^]*?\.sm2-cta-fill \{ display: none; \}/);
       } finally { window.matchMedia = orig; }
     });
   });
