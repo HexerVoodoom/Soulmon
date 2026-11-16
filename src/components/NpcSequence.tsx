@@ -28,7 +28,7 @@ export interface NpcSequenceLine {
  *  · `onFinish` dispara UMA vez, por mais toques que cheguem.
  * Quem usa decide o que "visto" significa (aqui nada é gravado).
  */
-export function NpcSequence({ lines, language, onFinish, label, action }: {
+export function NpcSequence({ lines, language, onFinish, label, action, closeOnTap = true }: {
   lines: readonly NpcSequenceLine[];
   language: Language;
   onFinish: (how: 'done' | 'skip') => void;
@@ -37,6 +37,8 @@ export function NpcSequence({ lines, language, onFinish, label, action }: {
   /** Ação opcional na ÚLTIMA fala, dentro da janela de texto (ex.: o `CtaButton` "Ir para a Oficina do Foco" do guarda-chave, 13/11/2026).
    *  Tocar nela não avança nem fecha a sequência sozinha: quem passa a ação decide. Sem ela, nada muda. */
   action?: ReactNode;
+  /** `false` (guarda-chave, 16/11/2026): na última fala o toque no fundo NÃO fecha; só o X, o CTA, Esc ou o voltar. */
+  closeOnTap?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const [i, setI] = useState(0);
@@ -51,9 +53,9 @@ export function NpcSequence({ lines, language, onFinish, label, action }: {
   }, [onFinish]);
   const skip = useCallback(() => finish('skip'), [finish]);
   const advance = useCallback(() => {
-    if (i >= last) finish('done');
+    if (i >= last) { if (closeOnTap) finish('done'); }
     else setI(n => Math.min(n + 1, last));
-  }, [i, last, finish]);
+  }, [i, last, finish, closeOnTap]);
 
   useBackLayer(true, skip);
   const dialogRef = useDialogA11y<HTMLDivElement>(true, skip);
@@ -90,7 +92,7 @@ export function NpcSequence({ lines, language, onFinish, label, action }: {
         type="button"
         data-npc-advance
         onClick={advance}
-        aria-label={i >= last ? (isPt ? 'Fechar' : 'Close') : (isPt ? 'Avançar' : 'Next')}
+        aria-label={i >= last ? (closeOnTap ? (isPt ? 'Fechar' : 'Close') : (isPt ? 'Fim da fala' : 'End of line')) : (isPt ? 'Avançar' : 'Next')}
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%', padding: 0, margin: 0,
           background: 'none', border: 'none', cursor: 'pointer',
@@ -155,6 +157,7 @@ export function NpcSequence({ lines, language, onFinish, label, action }: {
         type="button"
         data-npc-skip
         onClick={skip}
+        aria-label={closeOnTap ? undefined : (isPt ? 'Fechar' : 'Close')}
         style={{
           position: 'absolute', zIndex: 2,
           top: 'calc(env(safe-area-inset-top, 0px) + 6px)', left: 'calc(env(safe-area-inset-left, 0px) + 6px)',
@@ -164,7 +167,7 @@ export function NpcSequence({ lines, language, onFinish, label, action }: {
           color: 'rgba(233,245,242,.72)', font: '500 13px/1 var(--sm2-font-text)', letterSpacing: '0.04em',
         }}
       >
-        {isPt ? 'Pular' : 'Skip'}
+        {closeOnTap ? (isPt ? 'Pular' : 'Skip') : <span aria-hidden="true" style={{ fontSize: 20 }}>×</span>}
       </button>
     </div>
   );
