@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Retrospectiva de segunda com bônus de retorno (`feat/retro-semanal`, REGISTRO §431)
+>
+> - **Feito:** `WeeklyRetroModal` (chama turquesa, Soulmon do usuário, contadores, accordion de tarefas fechado, cartão do bônus, etapa "Essa semana eu evoluí!"); regra em `src/utils/weeklyRetro.ts`; save novo: `weeklyBonus`, `lastWeeklyRetroDate`, `stageByWeek`; bônus paga na virada (`dailyReset`), selo bronze na Home.
+> - **Visto em tela:** prévia local do modal (celular 400 px). Não visto no app completo numa segunda real.
+> - **Rollback:** `git revert`; campos novos são opcionais.
+
 > ## 16/11/2026 — O Passeio paga na hora (`feat/stroll-imediato`, REGISTRO §413)
 >
 > - **Feito:** timer de 30 min removido; escolher o passeio fecha o modal e sobe "Tarefa criada"; a linha da Home vira "Stroll" (turquesa) + o nome, com "Done"; NPC e Home concluem pelo mesmo `applyStrollNow` (cena + região + achado + avistado + Vínculo na hora, 1×; `crossings.sceneDay` evita repetir na virada). Contador de passos na mesma linha do hábito, em turquesa; adotar o hábito abre o modal 3/5/7/10 mil.

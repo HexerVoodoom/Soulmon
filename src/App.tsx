@@ -95,6 +95,7 @@ import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
+import { weeklyBonusActivityToday, weeklyRetro, needsWeeklyRetro, makeWeeklyBonus, recordWeekStage, evolvedLastWeek, mondayOf } from './utils/weeklyRetro';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
@@ -913,6 +914,7 @@ const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({
 // do Dino são lotes da Exploração, o Pedra, papel e tesoura é lote de Jogos —
 // todos dentro do `AreaView` (ex-PR #118).
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
+const WeeklyRetroModal = lazy(() => import('./components/WeeklyRetroModal').then(m => ({ default: m.WeeklyRetroModal })));
 const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then(m => ({ default: m.BalanceWeekModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
@@ -6888,6 +6890,30 @@ export default function App() {
       : 'Fresh start taken. None of your progress was touched.');
   }, [language, setGameState]);
 
+  /* 🔥 Retrospectiva de segunda (utils/weeklyRetro.ts): guarda a forma do início de cada semana. */
+  useEffect(() => {
+    if (!hasCompletedOnboarding) return;
+    setGameState(prev => {
+      if (isDemoMode(prev)) return prev;
+      const lista = recordWeekStage(prev.stageByWeek, new Date(), prev.evolutionStage);
+      return lista === prev.stageByWeek ? prev : { ...prev, stageByWeek: lista };
+    });
+  }, [hasCompletedOnboarding, gameState.evolutionStage, setGameState]);
+  const [retroFechada, setRetroFechada] = useState(false);
+  /** Fecha a retrospectiva: marca a segunda como vista e ativa o bônus de retorno da semana (se houver hábito mais difícil). */
+  const handleCloseWeeklyRetro = useCallback(() => {
+    const agora = new Date();
+    setRetroFechada(true);
+    setGameState(prev => {
+      const hardest = weeklyRetro(prev, agora).hardest;
+      return {
+        ...prev,
+        lastWeeklyRetroDate: mondayOf(agora).toDateString(),
+        ...(hardest ? { weeklyBonus: makeWeeklyBonus(hardest.id, agora) } : {}),
+      };
+    });
+  }, [setGameState]);
+
   const handleDismissWeeklyReport = useCallback(() => {
     setGameState(prev => ({ ...prev, lastWeeklyReportDate: dayKeyOf(new Date()) }));
   }, [setGameState]);
@@ -9598,6 +9624,7 @@ export default function App() {
                   )}
                   <DailyRituals
                     bonusActivityId={gameState.bonusTask?.day === new Date().toDateString() ? gameState.bonusTask.activityId : undefined}
+                    weeklyBonusActivityId={weeklyBonusActivityToday(gameState.weeklyBonus, new Date().toDateString())}
                     tasks={gameState.tasks}
                     activities={gameState.activities}
                     completedTasks={gameState.completedTasks}
@@ -10794,6 +10821,23 @@ export default function App() {
           />
         </Suspense>
       )}
+      {!retroFechada && hasCompletedOnboarding && !showIntro && !isDemoMode(gameState) && currentView === 'home' && needsWeeklyRetro(gameState, new Date()) && (() => {
+        const agora = new Date();
+        const prevStage = evolvedLastWeek(gameState.stageByWeek, agora, gameState.evolutionStage);
+        const spriteDe = (stage: string) => displaySprite(spriteVisor, stage)?.url ?? getSpriteForStage(stage, petLine);
+        return (
+          <Suspense fallback={null}>
+            <WeeklyRetroModal
+              language={language}
+              retro={weeklyRetro(gameState, agora)}
+              spriteNow={spriteDe(gameState.evolutionStage)}
+              spritePrev={prevStage ? spriteDe(prevStage) : null}
+              petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+              onClose={handleCloseWeeklyRetro}
+            />
+          </Suspense>
+        );
+      })()}
       {bonusIntroOpen && (
         <Suspense fallback={null}>
           <BonusTaskIntroModal

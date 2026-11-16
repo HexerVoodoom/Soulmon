@@ -5949,3 +5949,12 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Custo/gatilho:** a luta fica até 1,2 s mais favorável ao jogador; reabre se a taxa de vitória do Pesadelo subir além da meta da régua.
 
+## §431 — Retrospectiva de segunda: celebrar a semana e dar bônus ao hábito mais difícil (16/11/2026, dono)
+
+**Pedido (literal):** "no começo da semana, na segunda-feira, tem a retrospectiva da semana. Fala o que o usuário fez na semana [...] uma lista com as tarefas pontuais com um accordion para recolher. [...] Tem que tirar esse texto dali e colocar: 'você teve mais dificuldade nesta tarefa, vamos dar um bônus nela para te incentivar esta semana'." Acréscimos: modal celebrativo (chama da alma turquesa, Soulmon do usuário, efeitos, fecho de arrancada) e etapa de evolução ("Essa semana eu evoluí!").
+
+**Decisão:** `WeeklyRetroModal` abre na segunda, 1× por semana (`lastWeeklyRetroDate`), só com algo a contar. Conteúdo da semana ANTERIOR (seg–dom): "Você fez X N vezes" por hábito, total de tarefas pontuais com accordion fechado. O bloco "você disse que X atrapalha" não existe mais em nenhuma superfície semanal. Hábito mais difícil = menor taxa (feitos ÷ dias devidos, escudo conta como feito) entre os que tinham dias devidos; empate: mais dias perdidos, depois o primeiro da lista; todos em 100% = sem bônus. **Bônus de retorno** (`weeklyBonus`): +1 Fragmento de Alma acima do teto diário por dia em que o hábito é concluído, de segunda a domingo (mesma via e mesmo valor da tarefa bônus, § de 13/11; soma com ela se coincidirem), expira no domingo; selo na Home = o mesmo título em bronze. Ver ou fechar o cartão NÃO conclui nada. Evolução: o save guarda a forma do início de cada semana (`stageByWeek`, últimas 3); subida de forma entre a semana passada e hoje mostra a etapa extra (queda por HP não conta; save sem registro não mostra). Dono da regra: `src/utils/weeklyRetro.ts`.
+
+**Suposições:** (1) o bônus é +1 fragmento/dia e não "+50%" (a recompensa-base de hábito é peso inteiro com teto diário, então 50% não fecha em inteiro); (2) só hábitos têm "taxa" (tarefa pontual não tem meta); (3) o cartão de domingo (`WeeklyReportCard`) continua como está; (4) o bônus liga ao fechar a retrospectiva por qualquer via.
+
+**Custo/gatilho:** até +7 fragmentos/semana em um hábito; reabre se o bônus virar motivo de marcar sem fazer ou se a retrospectiva for fechada sem ler (medir pelo tempo aberto).

@@ -58,3 +58,18 @@ describe('tarefa bônus na virada: +1 ACIMA do teto diário', () => {
     expect(r.lastDayReport.bonusTaskBonus).toBe(0);
   });
 });
+
+describe('bônus de retorno semanal na virada', () => {
+  const janela = { activityId: 'h1', from: new Date(2026, 9, 12).toDateString(), until: new Date(2026, 9, 18).toDateString() };
+  const pontos = (over: Record<string, unknown>) =>
+    (computeDailyReset(st(9, 9, over) as never, { now: NOW }) as unknown as { evolutionPoints: number }).evolutionPoints;
+  it('rende +1 acima do teto quando o hábito foi concluído dentro da janela', () => {
+    expect(pontos({ activities: [habito(true)], weeklyBonus: janela }) - pontos({ activities: [habito(true)] })).toBe(1);
+  });
+  it('janela vencida ou hábito não concluído não rende', () => {
+    const vencida = { ...janela, from: new Date(2026, 9, 1).toDateString(), until: new Date(2026, 9, 7).toDateString() };
+    const sem = pontos({ activities: [habito(true)] });
+    expect(pontos({ activities: [habito(true)], weeklyBonus: vencida })).toBe(sem);
+    expect(pontos({ activities: [habito(false)], weeklyBonus: janela })).toBe(7 + 4);
+  });
+});
