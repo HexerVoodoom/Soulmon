@@ -902,6 +902,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 import type { QuickAddResult } from './utils/quickAdd';
 import { installUsageTime, setActive as setUsageActive } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
+import { duelInviteCount, duelInviteExchangeRefusal, duelInvitesPerEnergy, exchangeDuelInvites, spendDuelInvite, DUEL_INVITE_MAX } from './utils/duelInvites';
 import type { CreateAction } from './utils/chatActions';
 import { WakeToEnterProvider } from './components/WakeToEnter';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
@@ -9042,6 +9043,24 @@ export default function App() {
                     reroll: gameState.arenaReroll,
                     runs: gameState.arenaRuns,
                     ladder: gameState.arenaLadder,
+                    /* ⚔️ Convite de Duelo (§458): 1 por run. O gasto reconfere sobre o `prev` (porta única `spendDuelInvite`). */
+                    invites: {
+                      count: duelInviteCount(gameState),
+                      max: DUEL_INVITE_MAX,
+                      perEnergy: duelInvitesPerEnergy(gameState),
+                      canExchange: !duelInviteExchangeRefusal(gameState, Date.now()),
+                      onExchange: () => {
+                        const now = Date.now();
+                        if (duelInviteExchangeRefusal(gameStateRef.current, now)) return false;
+                        setGameState(prev => exchangeDuelInvites(prev, now));
+                        return true;
+                      },
+                      onBegin: () => {
+                        if (duelInviteCount(gameStateRef.current) < 1) return false;
+                        setGameState(prev => spendDuelInvite(prev));
+                        return true;
+                      },
+                    },
                     // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
                     onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
                     // ⚰️ §372 `onRunCleared` (+1 Presa 1×/dia) revogado por §384: o último adversário dropa em dobro (`utils/arenaUltimoAdversario.ts`).

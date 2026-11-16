@@ -6261,3 +6261,14 @@ Torneio, Treino e Guilda não passam pelo funil e não pagam Bits de atividade; 
 **Alternativa que perdeu.** Aplicar `.exe` a tudo da pasta: o dono corrigiu para comida/prato/chip. **Gatilho para rever:** jogador confuso com o sufixo ou pedido de estendê-lo.
 
 **Rollback.** `git revert` do PR (só cliente). Pratos comprados e guardados como `dish:<id>` ficam inertes (chave sem nome) após o revert; nada irreversível.
+
+## §458 — Convite de Duelo: a ficha da Arena, com 7 convites por energia para a conta paga (16/11/2026, dono)
+
+**Decisão:** cada run de Duelo (Arena livre) gasta **1 convite**; "Lutar de novo" gasta outro. Estoque de **0 a 7**. O jogador troca **1 energia por convites**: **5** na conta comum e **7** na conta paga (`accountTier:'paid'`; não existe um "VIP" separado no código, a conta paga é o conceito). Estoque inicial dos jogadores atuais: **7** (campo ausente lê 7). Fichas dos minijogos: **sem mudança** (já é 1 energia = 3 tickets, teto 5, §ticket de 09/11).
+
+**⚠️ Decisão tomada com a linha vermelha à vista.** O CLAUDE.md diz que nada pago dá vantagem de combate. O dono decidiu, ciente disso, que a diferença 7 contra 5 fica: a vantagem do pagante é **só volume de lutas por energia gasta**, não poder, atributo, drop nem chance. O teto de Bits por categoria (§456) vale igual para todos, e o estoque máximo é 7 para todos (a conta paga só reabastece mais por energia).
+
+**Nunca tranca:** com 0 convites a folha mostra a troca por energia; sem energia, a frase calma diz que a energia volta com o tempo (nenhum custo de coração). Recusa de troca devolve a mesma referência, sem gastar.
+
+**Código:** `src/utils/duelInvites.ts` (regra pura), `GameState.duelInvites {n, at}` (aditivo, leitura tolerante `sanitizeDuelInvites`, idempotente), gate em `ArenaGame` (`onBeginRun`; sem convite volta à folha), UI em `DueloSheet` (contador + "Trocar 1 energia por N convites", arte `hud/convite-duelo-{96-}{pt,en}.png`, sem arquivo a folha só não mostra o papiro). **Servidor:** `functions/api/_duelInvites.js` em `save.js`: gasto só desce; aumento só com carimbo `at` novo (> gravado + 60 s, ≤ 1 dia à frente), teto 7; paridade em `duelInvites.parity.test.js`. **Limite honesto:** o servidor não conhece a energia nem o tier na gravação; quem forja JSON válido reenche o estoque no máximo a cada 60 s, e o 5 contra 7 não é verificado lá (mesmo limite dos tickets, §ticket).
+
