@@ -133,10 +133,7 @@ export function MaturityGlyph({ tier, aura = false, label }: { tier: string; aur
 }
 
 /**
- * A JANELA DE 7 sozinha — exportada porque o cartão da semana
- * (`WeeklyReportCard`, canvas Rituais RIT-18) desenha a mesma janela por
- * hábito com o mesmo léxico (A2). Uma segunda cópia das formas e do
- * `aria-label` divergiria em silêncio (footgun 9).
+ * A JANELA DE 7 sozinha (léxico A2), separada do cartão de hábito.
  */
 export function ConstancyWindow({ rhythm, now, language, hideMetrics = false }: {
   rhythm: HabitRhythm;

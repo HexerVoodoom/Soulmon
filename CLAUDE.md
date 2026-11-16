@@ -518,7 +518,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
     `dexProgress`, `sleepReminderAt`. **Não lê sensor nenhum** (ver a regra na
     tabela) — a única entrada é o gesto de pôr o pet para dormir que já existe.
   - `src/utils/rituals.ts` — **rituais**: `checkInPlan`/`completeCheckIn`,
-    `weeklyReport`, `stackingSuggestion`, `isFreshStartDay`/`freshStartOffer`/
+    `isFreshStartDay`/`freshStartOffer`/
     `applyFreshStart`. **Não reimplementa** foco nem triagem: chama `setFocus`,
     `triageQueue`, `constancy`.
   - A **meta ponderada** continua sendo de `src/utils/dailyReset.ts`

@@ -5958,3 +5958,13 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Suposições:** (1) o bônus é +1 fragmento/dia e não "+50%" (a recompensa-base de hábito é peso inteiro com teto diário, então 50% não fecha em inteiro); (2) só hábitos têm "taxa" (tarefa pontual não tem meta); (3) o cartão de domingo (`WeeklyReportCard`) continua como está; (4) o bônus liga ao fechar a retrospectiva por qualquer via.
 
 **Custo/gatilho:** até +7 fragmentos/semana em um hábito; reabre se o bônus virar motivo de marcar sem fazer ou se a retrospectiva for fechada sem ler (medir pelo tempo aberto).
+
+## §432 — Cartão semanal de domingo removido (16/11/2026, dono)
+
+**Contexto:** o `WeeklyReportCard` ("SUA SEMANA", domingo, 1×/semana, com sugestão de habit stacking) fazia a leitura reflexiva da semana. Desde o §431 a retrospectiva é o `WeeklyRetroModal` de segunda; as duas superfícies falariam da mesma semana em dias seguidos.
+
+**Decisão:** o cartão sai. Removidos: `WeeklyReportCard.tsx`, o uso na fila de avisos da Home (posição "SEMANAL"), `handleDismissWeeklyReport` e, em `utils/rituals.ts`, o que só ele consumia (`needsWeeklyReport`, `weeklyReportHasSubstance`, `weeklyReport`, `stackingSuggestion` e tipos/constantes ligados), com os testes correspondentes. `weekStart` e `constancy` ficam (outros usam). O campo de save `lastWeeklyReportDate` continua em `GameState` e na hidratação (tolerante, ninguém lê): save antigo abre igual, e o campo ainda é exercitado pelo fuzz de hidratação. `WeeklyRetroModal` intocado.
+
+**Suposições:** (1) a sugestão de habit stacking morre junto, porque só aparecia no cartão; (2) manter o campo morto no save custa alguns bytes e evita migração.
+
+**Custo/gatilho:** perde-se a leitura de constância por hábito no domingo; reabre se o dono sentir falta da sugestão "depois de X, faça Y" (recuperar do histórico do git, §431 é o contexto).
