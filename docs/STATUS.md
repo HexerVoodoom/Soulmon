@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §446)
+>
+> - **Feito:** regra pura `combate/companheiro.ts` (3 turnos, função mista, cura não invoca, 1 por combatente), `FightSide.invoca` em `fight.ts`/`group.ts`, espelho em `_combate.js` + `_companheiroInvocado.js` (paridade), cena `SummonLayer`, ligação em Arena/Masmorra/Pesadelo/Grove/Duelo/Torneio. TUDO atrás da flag `COMPANHEIRO_INVOCADO = false` (cliente e servidor): comportamento idêntico ao de hoje (testado).
+> - **Calibração:** vitória invocada − normal de −7 a +6pp (1v1, simulação); valor nominal ~0,97 do especial normal.
+> - **Falta:** PNGs dos 32 (PR 1b), ligar a flag, Rogue Dungeon, decisão do dono sobre o cache no save do cliente. Não visto em aparelho.
+> - **Rollback:** `git revert`; flag desligada = sem efeito.
+>
 > ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
 >
 > - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
