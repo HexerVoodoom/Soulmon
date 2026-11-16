@@ -239,7 +239,7 @@ import {
 } from './utils/weeklyMissions';
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
-import { bitsPackById, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
+import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
@@ -5139,9 +5139,11 @@ export default function App() {
   // sempre ≥ 1 por construção — este caminho não tem como reduzir ganho.
   /** Bits de minijogo já creditados hoje que o `gameState` ainda não mostra (créditos do mesmo lote de render). */
   const bitsPendentesRef = useRef<{ day: string; earned: number }>({ day: '', earned: 0 });
+  /** O mesmo, por categoria (§456). */
+  const catPendentesRef = useRef<{ day: string; earned: Partial<Record<BitsCategory, number>> }>({ day: '', earned: {} });
   /** Devolve os Bits REALMENTE creditados (pelo mesmo `minigameBitsGranted` do `creditMinigameBits`), para a tela de resultado
    *  mostrar o que entrou, e não o que o jogo pediu: teto gasto = 0, teto atingido no meio = parcial. */
-  const handleEarnGamePoints = useCallback((pts: number, extraCap = 0): number => {
+  const handleEarnGamePoints = useCallback((pts: number, extraCap = 0, category: BitsCategory = 'minigames'): number => {
     if (pts <= 0) return 0;
     const mult = playBuffSpentRef.current ? 1 : minigameMultiplier(gameState, new Date());
     const total = mult > 1 ? Math.round(pts * mult) : pts;
@@ -5159,13 +5161,17 @@ export default function App() {
          vezes por run no mesmo lote do React, e um teto lido de fora passaria
          duas vezes (família de bug do X-6). Bater o teto não tira nada e não
          interrompe minijogo nenhum — os Bits só param de somar. */
-      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
+      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap, category); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
     });
     const dia = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
     const pend = bitsPendentesRef.current;
     const ja = Math.max(minigameBitsToday(gameStateRef.current, dia), pend.day === dia ? pend.earned : 0);
-    const creditado = minigameBitsGranted(ja, total, extraCap);
+    // §456: além do teto geral, o teto da CATEGORIA (75). `catJa` lê do save e do que o mesmo lote de render já creditou.
+    const catPend = catPendentesRef.current;
+    const catJa = Math.max(minigameBitsCategoryToday(gameStateRef.current, dia, category), catPend.day === dia ? catPend.earned[category] ?? 0 : 0);
+    const creditado = minigameBitsGrantedIn(ja, catJa, total, extraCap);
     bitsPendentesRef.current = { day: dia, earned: ja + creditado };
+    catPendentesRef.current = { day: dia, earned: { ...(catPend.day === dia ? catPend.earned : {}), [category]: catJa + creditado } };
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
       playBuffSpentRef.current = true;
