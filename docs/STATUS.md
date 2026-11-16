@@ -1,5 +1,8 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Troca de arte das linhas v1 (`feat/linhas-v1-arte`, REGISTRO §438)
+> 21 PNGs trocados no lugar (som, eletricidade, tempo, arcano, marcial); backup em `E:/Soulmon-assets/_lote-16-11/legado-v0/`. PR 2 (ramos legados, Ultras chefe de Arena) pendente.
+>
 > ## 16/11/2026 — Regra de dificuldade: estágio e mistura de elementos pela tabela §232 (`feat/regra-dificuldade-estagio`, REGISTRO §437)
 >
 > - **Feito:** `utils/dificuldadeEstagio.ts` (peso §232, vizinho mais próximo se a célula está vazia, curva de profundidade 60/200/500); `pickEnemy({ tabela: true })` na Masmorra/Rift, Match-3 (vagas, chefe, PVP) e Champion da Arena de elemento.

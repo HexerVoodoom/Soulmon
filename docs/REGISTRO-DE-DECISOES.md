@@ -6030,3 +6030,7 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 - Ultra fica fora (`ENEMY_STAGES` sem Ultra). Não revoga §232 nem decisões de Arena/Rift.
 
 **Para o dono rever.** (1) Arena Ultimate: manter 25/55/15/5 (15/11) ou alinhar à §232 (15/30/50/5)? (2) Curva de profundidade 60/200/500: ajustar? Rollback: `git revert` (só cliente; sem save).
+
+## §438 — Troca de arte das 5 linhas v1 (som, eletricidade, tempo, arcano, marcial), ids e nomes mantidos (16/11/2026, dono)
+
+**Decisão.** 20 PNGs (champion, ultimate, mega, ultra dos 5 elementos) + rookie de tempo trocados no lugar em `src/assets/soulmon/novos/`, sem lógica nova. Rookies de som/eletricidade/arcano/marcial ficam. Backup dos 25 PNGs antigos em `E:/Soulmon-assets/_lote-16-11/legado-v0/` (o PR 2 os usa para ramos legados em outro elemento; Ultras novos viram chefe de Arena). Todos 256² RGBA, 53–81 KB (teto 150 KB), sem reduzir paleta.
