@@ -23,8 +23,9 @@ describe('WeeklyRetroModal', () => {
     expect(screen.getByText('4 vezes')).toBeTruthy();
     const acc = screen.getByRole('button', { name: /1 tarefa pontual/ });
     expect(acc.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('Pagar conta')).toBeNull();
+    expect((document.getElementById('rt-tasks') as HTMLElement).hidden).toBe(true);
     fireEvent.click(acc);
+    expect((document.getElementById('rt-tasks') as HTMLElement).hidden).toBe(false);
     expect(screen.getByText('Pagar conta')).toBeTruthy();
     expect(screen.getByText(/Você teve mais dificuldade em Correr\. Vamos dar um bônus nela para te incentivar esta semana\./)).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/atrapalha/i);
@@ -52,6 +53,14 @@ describe('WeeklyRetroModal', () => {
     await waitFor(() => expect(document.querySelector('img')?.getAttribute('src')).toBe('now.png'));
     fireEvent.click(screen.getByText('Continuar'));
     expect(screen.getByText('Que semana!')).toBeTruthy();
+  });
+
+  it('usa o CtaButton padrão e o card liso, sem border-image', () => {
+    render(<WeeklyRetroModal {...base} />);
+    expect(document.querySelector('[data-cta-button][data-cta-tone="acao"]')).toBeTruthy();
+    expect(document.querySelector('[data-retro-card]')).toBeTruthy();
+    expect(document.querySelector('[data-retro-flame-art] [data-soul-flame-anim]')).toBeTruthy();
+    expect(document.querySelector('[data-retro-frame]')).toBeNull();
   });
 
   it('o CTA fecha', () => {

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (`feat/retro-redesign`, REGISTRO §434)
+>
+> - **Feito:** sem `border-image`; card liso com a chama grande metade dentro/metade fora, Soulmon inteiro abaixo; `CtaButton tone="acao"` fixo no rodapé; a11y (`useDialogA11y`) e plural corrigidos; `moldura-retro.webp` removida.
+> - **Visto em tela:** prévia local em 360 e 412 px com ícones Material carregando (prints em `E:/Soulmon-assets/_lote-16-11/retro-chama/previas/v2-*.png`); design-critic: APROVA (8 achados, os fixáveis aplicados). Não visto no app completo numa segunda real.
+> - **Rollback:** `git revert`; só front.
+
 > ## 16/11/2026 — Chama da alma animada + moldura e selo da retrospectiva (`feat/chama-alma-anim`, REGISTRO §433)
 >
 > - **Feito:** folha de 8 quadros da chama turquesa (ChatGPT, alfa real) + componente `ui/SoulFlameAnim` (CSS `steps`, movimento reduzido = parado); `WeeklyRetroModal` usa a chama animada, moldura 9-slice e selo no cartão do bônus. Prompts e tags no `registro.jsonl`.

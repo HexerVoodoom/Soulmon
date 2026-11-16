@@ -5981,3 +5981,14 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Suposições:** (1) o `ChamaGame` é uma chama de vela, não a "chama da alma"; (2) a moldura envolve a coluna toda (9-slice, 40 px de borda) em vez de ser um card de proporção fixa; (3) o selo é decorativo (`aria-hidden`).
 
 **Custo/gatilho:** +3 webp (~75 KB). Reabre se a moldura apertar o conteúdo em telas de 360 px ou se o dono quiser a chama animada também na meditação.
+
+## §434 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (16/11/2026, dono)
+
+**Pedido (literal, resumo):** a moldura 9-slice ficou esticada; o elemento do card fica no topo, centrado, metade dentro e metade fora; a chama estava pequena e tampava o Soulmon; o botão estava fora do padrão (usar o do app, o mesmo do site e de "Criar poção elemental").
+
+**Decisão:** (1) o `border-image` sai e o modal vira UM card liso (raio `--sm2-radius-lg`, borda turquesa de 1 px); `moldura-retro.webp` removida (sem uso, sem asset novo). (2) A chama (`SoulFlameAnim`, 280 px de caixa) é arte pelada no topo, centrada, com o centro da chama visível na borda de cima: o mesmo recurso do `TicketBuyModal`/`ShopItemSheet`. (3) O Soulmon (128 px) fica inteiro logo abaixo, sem sobreposição. (4) O botão é `CtaButton tone="acao"`, num dock fixo no rodapé (visível sem rolar); "Continuar" da etapa de evolução também. (5) Acessibilidade: `useDialogA11y` (foco preso, Esc, devolução de foco), foco visível no "Toque para ver", `aria-controls` com alvo sempre no DOM (`hidden`), plural "1 vez em hábitos", timers limpos. Mantidos: chama turquesa, contadores, accordion fechado, selo do bônus, flash da evolução, movimento reduzido.
+
+**Suposições:** (1) o centro visível da chama fica a ~64% da caixa do quadro (medido na folha); (2) o dock fixo é aceitável num modal de celebração.
+
+**Custo/gatilho:** -1 webp. Reabre se a chama gigante cortar em telas muito baixas ou se o dono quiser o CTA no fluxo, não fixo.
+
