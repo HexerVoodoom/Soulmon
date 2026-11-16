@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { FICHA_STAGE_ORDER, type FichaStage } from './soulProfile/ficha/types';
+import { fichaStageOf } from './soulProfile/ficha/stageSkillsFor';
 
 /** INTERRUPTOR ÚNICO do companheiro invocado. Desligado: nada preenche o cache `soulmonEvocacao` e `companheiroAtivo` /
  *  `companheiroPorLinha` devolvem `null`. O código e o campo do save ficam inertes. Para religar: `true` aqui, e só aqui. */
@@ -137,4 +138,21 @@ export function companheiroAtivo(
   if (!COMPANHEIRO_INVOCADO || !ESTAGIOS_SET.has(estagio)) return null;
   if (!cache?.[estagio as FichaStage]?.evocador) return null;
   return criaturaConhecida(criaturaId) ? criaturaId : null;
+}
+
+/** O pedaço do save que decide o companheiro do jogador: o estágio, o sorteio do Oráculo e o cache por estágio. */
+export interface EstadoComCompanheiro {
+  readonly evolutionStage?: string;
+  readonly soulmonCompanheiro?: { readonly id?: unknown } | null;
+  readonly soulmonEvocacao?: EvocacaoPorEstagio;
+}
+
+/**
+ * O companheiro do JOGADOR neste momento, do SAVE: a criatura que a cena desenha e que liga `FightSide.invoca` (PR 2), ou `null`.
+ * Flag desligada, estágio sem cache, forma não evocadora ou criatura desconhecida = `null` (nunca adivinha). É a única porta
+ * das telas de luta para o gatilho; quem monta `ArenaPlayerCfg`/`DungeonPlayerCfg`/`DuelSide` chama isto.
+ */
+export function companheiroDoEstado(estado: EstadoComCompanheiro | null | undefined): string | null {
+  if (!COMPANHEIRO_INVOCADO || !estado) return null;
+  return companheiroAtivo(fichaStageOf(estado.evolutionStage ?? ''), estado.soulmonCompanheiro?.id, estado.soulmonEvocacao);
 }

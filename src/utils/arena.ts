@@ -579,6 +579,8 @@ export interface ArenaPlayerCfg {
   elements?: ArenaElements;
   /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
   efeitoElemento?: string;
+  /** COMPANHEIRO INVOCADO (PR 2): a criatura do evocador (`companheiroDoEstado`); ausente/`null` = o especial roda como sempre. */
+  companheiro?: string | null;
 }
 
 const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[escolaSkillSegura(p.escolaBasica)] : null);
@@ -590,6 +592,7 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
     special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento),
     area: p.area,
+    ...(p.companheiro ? { invoca: true } : {}),
   };
 }
 

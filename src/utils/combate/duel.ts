@@ -51,6 +51,10 @@ export interface DuelSide {
   readonly startEnergy?: number;
   /** Tarefa B (`tal-pvp-06`): fraction of the DoT damage this side receives that never lands. */
   readonly dotResist?: number;
+  /** COMPANHEIRO INVOCADO (PR 2): o SERVIDOR decidiu (pelo save/tabela) que o especial deste lado invoca; ausente = não. O cliente só repassa ao núcleo. */
+  readonly invoca?: boolean;
+  /** A criatura (das 32) que aparece em cena; só cosmético. Ausente = a cena não desenha nada. */
+  readonly companheiro?: string;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
   readonly fx?: { readonly elVantagem?: string | null; readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null; /** PR9b: o ID do nome exato do especial (índice do substantivo, formato, elementos) — recomposto no aparelho, nunca texto do save. */ readonly lex?: { readonly n: number; readonly f: number; readonly el: string; readonly elB: string } | null; /** Identidade de combate: o elemento do golpe BÁSICO (o principal do Soulmon) e o do ESPECIAL, derivados do save no servidor. */ readonly elBasica?: string | null; readonly elEspecial?: string | null; /** Hexsmith (01/11/2026): o elemento que DEFENDE (Couraça); ausente = o do básico. */ readonly elDefesa?: string | null; /** Só simulados (11/11/2026): o golpe à distância é Magic (true) ou corte (false). */ readonly magia?: boolean; /** REGISTRO §332: família/elementos SEM Coroa/Amuleto/Garra (só com algum equipado). Só visual: o tipo do básico sai daqui; nenhum cálculo lê. */ readonly orig?: { readonly familia?: string | null; readonly elBasica?: string | null; readonly elEspecial?: string | null } | null; /** REGISTRO §332: o ataque das Luvas (`HEX_STRIKES`). Só visual. */ readonly golpe?: string | null };
 }
@@ -83,13 +87,13 @@ export function duelElementAdvantage(atk: string | null | undefined, def: string
 const withElement = (c: Combatant, adv: number, scale: number): Combatant => (adv === 0 || scale === 0 ? c : { ...c, bonus: (1 + c.bonus) / elementHits(adv * scale) - 1 });
 
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
-export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist' | 'fx'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist' | 'fx'>; seed: number; taps?: unknown; /** 0 = Torneio/Duelo ranqueado (sem elemento, padrão); 0.5 = Guerra de Guildas (±0,5 golpe). */ elementScale?: 0 | 0.5 }): DuelResult {
+export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist' | 'fx' | 'invoca'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist' | 'fx' | 'invoca'>; seed: number; taps?: unknown; /** 0 = Torneio/Duelo ranqueado (sem elemento, padrão); 0.5 = Guerra de Guildas (±0,5 golpe). */ elementScale?: 0 | 0.5 }): DuelResult {
   // Hexsmith (01/11/2026): a Couraça troca o elemento que DEFENDE (`elDefesa`); sem ela vale o do básico. Espelho de `aplicarElementosDuelo`.
   // §232: `elVantagem` = a base nº 1 do Soulmon combinado; o id cheio em `elBasica` é só visual.
   const advMe = duelElementAdvantage(args.me.fx?.elVantagem ?? args.me.fx?.elBasica, args.opp.fx?.elDefesa ?? args.opp.fx?.elVantagem ?? args.opp.fx?.elBasica);
   const advOpp = duelElementAdvantage(args.opp.fx?.elVantagem ?? args.opp.fx?.elBasica, args.me.fx?.elDefesa ?? args.me.fx?.elVantagem ?? args.me.fx?.elBasica);
-  const a: FightSide = { combatant: withElement(args.me.combatant, advMe, args.elementScale ?? 0), special: args.me.special, dotResist: args.me.dotResist };
-  const b: FightSide = { combatant: withElement(args.opp.combatant, advOpp, args.elementScale ?? 0), special: args.opp.special, dotResist: args.opp.dotResist };
+  const a: FightSide = { combatant: withElement(args.me.combatant, advMe, args.elementScale ?? 0), special: args.me.special, dotResist: args.me.dotResist, invoca: args.me.invoca };
+  const b: FightSide = { combatant: withElement(args.opp.combatant, advOpp, args.elementScale ?? 0), special: args.opp.special, dotResist: args.opp.dotResist, invoca: args.opp.invoca };
   const fx: FightFxPair[] = [];
   const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(args.me.startEnergy), cleanStartEnergy(args.opp.startEnergy)], cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale), fxTrace: fx });
   const events: FightEvent[] = [];

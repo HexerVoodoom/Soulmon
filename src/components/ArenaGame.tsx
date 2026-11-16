@@ -97,6 +97,8 @@ import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { hpPoints, statExibido } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { RewardPreview } from './ui/RewardPreview';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
@@ -212,11 +214,12 @@ export function ArenaGame({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
     efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
+    companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
     elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? (petBase ? { basica: petBase, especial: petBase } : {}) : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
-  }), [hx, petElement, petBase, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+  }), [hx, petElement, petBase, estado, gs, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
@@ -410,6 +413,7 @@ export function ArenaGame({
         onSwipe={batalha.swipe}
       >
         <BattleStage
+          summon={summonsDoGrupo(batalha.summon, jogador.companheiro)}
           scene={cenaDaRun.bg}
           specialLabel={specialLabel(isPt, especial, hexFamily(familyOfSkill(especial), hx))}
           foeSpecialLabel={(f, i) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(foesLado[i ?? 0]?.special))}

@@ -253,6 +253,25 @@ const MAX_EVENTS = 200_000;
 /** §334: ticks de um DoT, em golpes do AFETADO (espelho de `DOT_TICKS`). */
 export const DOT_TICKS = 3;
 
+// ── companheiro.ts (COMPANHEIRO INVOCADO, PR 2): espelho da regra pura; travado por `combate.parity.test.js` ──
+export const COMPANHEIRO_TURNOS = 3;
+export const COMPANHEIRO_EFEITO_FATOR = 0.8;
+export const COMPANHEIRO_ATAQUE_FATOR = 0.25;
+/** Cura (`heal`, ou `shield` com `effect: 'hot'`) nunca invoca. */
+export function especialInvoca(sp) {
+  if (!sp) return false;
+  if (sp.family === 'heal') return false;
+  if (sp.family === 'shield' && sp.effect === 'hot') return false;
+  return true;
+}
+/** O plano de uma invocacao (ou null): ver `planoInvocacao` de `src/utils/combate/companheiro.ts`. */
+export function planoInvocacao(sp, scale) {
+  if (!sp || !especialInvoca(sp)) return null;
+  const E = SPECIAL_BUDGET_HITS * sp.power * scale;
+  if (sp.family === 'direct' || sp.family === 'dot') return { papel: 'ataque', escalaEfeito: 0, ataqueE: E, turnosAtaque: COMPANHEIRO_TURNOS };
+  return { papel: 'misto', escalaEfeito: scale * COMPANHEIRO_EFEITO_FATOR, ataqueE: SPECIAL_BUDGET_HITS * scale * COMPANHEIRO_ATAQUE_FATOR, turnosAtaque: COMPANHEIRO_TURNOS - 1 };
+}
+
 export function windowSeconds(level) {
   const d = combatantAt(level, REFERENCE_BUILDS.balanced);
   return (MIRROR_SECONDS * attacksPerWindow(d.spd)) / hitsToKnockOut(d, d);
@@ -264,8 +283,8 @@ export function hitUnit(level, h0 = HIT_UNIT_H0) {
 
 /**
  * Gerador da luta. `cast` PAUSA e recebe o multiplicador (no PvP sempre 1: nao ha anel nem esquiva).
- * @param {{ combatant: any, special: any, dotResist?: number }} a
- * @param {{ combatant: any, special: any, dotResist?: number }} b
+ * @param {{ combatant: any, special: any, dotResist?: number, invoca?: boolean }} a
+ * @param {{ combatant: any, special: any, dotResist?: number, invoca?: boolean }} b
  * @param {{ seed: number, hpScale?: number, variance?: any, windowLevel?: number, phases?: number[], unitH0?: number | null,
  *   startHp?: number[], startEnergy?: number[], hitScale?: (who: 0 | 1, n: number) => number,
  *   cheer?: { t: number, side: 0 | 1, scale?: number }[], stopAtFirstKo?: boolean }} opts
@@ -290,7 +309,7 @@ export function* fightSteps(a, b, opts) {
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: [],
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: any, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
     };
   };
   const F = [mk(a, 0), mk(b, 1)];
@@ -345,6 +364,14 @@ export function* fightSteps(a, b, opts) {
     return me.hp <= EPS;
   };
   const cast = (me, foe, t0, scale) => {
+    const plano = me.invoca ? planoInvocacao(me.sp, scale) : null;
+    if (!plano) { castFamilia(me, foe, t0, scale); return; }
+    // 1 companheiro por combatente: invocar de novo troca o que estava em cena
+    for (const f of F) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
+    if (plano.escalaEfeito > 0) castFamilia(me, foe, t0, plano.escalaEfeito);
+    foe.dots.push({ src: me, E: plano.ataqueE, left: plano.turnosAtaque, comp: true });
+  };
+  const castFamilia = (me, foe, t0, scale) => {
     const sp = me.sp;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
