@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   mondayOf, lastWeekRange, weeklyRetro, pickHardest, needsWeeklyRetro, makeWeeklyBonus, isWeeklyBonusOn,
   weeklyBonusGaugeBonus, weeklyBonusActivityToday, recordWeekStage, evolvedLastWeek, sanitizeWeeklyBonus,
+  retroQuality, overallHabitRate,
   type RetroState, type RetroHabitLine,
 } from './weeklyRetro';
 import type { HabitRhythm } from './habitRhythm';
@@ -120,5 +121,28 @@ describe('evoluiu nesta semana', () => {
     expect(evolvedLastWeek(undefined, MON, 'champion-a')).toBeNull();
     expect(evolvedLastWeek([{ week: k(2), stage: 'rookie' }], MON, 'champion-a')).toBeNull();
     expect(evolvedLastWeek([{ week: k(9), stage: 'champion-a' }], MON, 'rookie')).toBeNull();
+  });
+});
+
+describe('qualidade da semana', () => {
+  const h = (done: number, due: number) => ({ done, due });
+  const q = (...hs: { done: number; due: number }[]) => retroQuality({ habits: hs.map((x, i) => ({ id: String(i), name: '', emoji: '', ...x, rate: x.done / x.due })) });
+  it('taxa geral = soma de feitos / soma de devidos (não a média das taxas)', () => {
+    expect(overallHabitRate([h(1, 1), h(1, 9)])).toBeCloseTo(0.2);
+    expect(overallHabitRate([])).toBeNull();
+  });
+  it('boa >= 70%, média 40% a 69%, ruim < 40%', () => {
+    expect(q(h(7, 10))).toBe('good');
+    expect(q(h(10, 10))).toBe('good');
+    expect(q(h(69, 100))).toBe('medium');
+    expect(q(h(4, 10))).toBe('medium');
+    expect(q(h(39, 100))).toBe('bad');
+    expect(q(h(0, 5))).toBe('bad');
+  });
+  it('sem hábito com dia devido (só tarefas): média', () => {
+    expect(retroQuality({ habits: [] })).toBe('medium');
+  });
+  it('o state() padrão (5/10 no total) é média', () => {
+    expect(retroQuality(weeklyRetro(state(), MON))).toBe('medium');
   });
 });
