@@ -11,7 +11,8 @@ import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
-import { pickEnemy, type EnemyStage, type RosterEntry } from './enemyRoster';
+import { pickEnemy, maxEnemyStageForLevel, type EnemyStage, type RosterEntry } from './enemyRoster';
+import { estagioPorProfundidade } from './dificuldadeEstagio';
 import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
 export { FORMAS_ALTAS, novoDataOfStage, novoHasForm };
@@ -223,11 +224,16 @@ export function getDungeonEncounter(
   element?: string,
   /** Coerência estágio × HP: forma MÍNIMA (só sobe a da escada, nunca desce). Ausente = a do slot. */
   minStage?: EnemyStage,
+  /** Andar efetivo e level REAL do jogador (REGISTRO §435): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
+  floor?: number,
+  playerLevel?: number,
 ): DungeonEncounter {
   const slotStage = novoPreferenceOfTier(tier)[0] as EnemyStage;
   const ordem: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
-  const pref = minStage && ordem.indexOf(minStage) > ordem.indexOf(slotStage) ? minStage : slotStage;
-  const e = pickEnemy(level, rng, { stage: pref, used, ...(element ? { element } : {}) });
+  const fundo = floor !== undefined && playerLevel !== undefined ? estagioPorProfundidade(slotStage, floor, maxEnemyStageForLevel(playerLevel)) : slotStage;
+  const base = ordem.indexOf(fundo) > ordem.indexOf(slotStage) ? fundo : slotStage;
+  const pref = minStage && ordem.indexOf(minStage) > ordem.indexOf(base) ? minStage : base;
+  const e = pickEnemy(level, rng, { stage: pref, used, tabela: true, ...(element ? { element } : {}) });
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);

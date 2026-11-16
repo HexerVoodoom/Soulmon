@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Regra de dificuldade: estágio e mistura de elementos pela tabela §232 (`feat/regra-dificuldade-estagio`, REGISTRO §435)
+>
+> - **Feito:** `utils/dificuldadeEstagio.ts` (peso §232, vizinho mais próximo se a célula está vazia, curva de profundidade 60/200/500); `pickEnemy({ tabela: true })` na Masmorra/Rift, Match-3 (vagas, chefe, PVP) e Champion da Arena de elemento.
+> - **Efeito real:** limitado pela arte: com o roster atual, 2 elementos em Ultimate/Mega e 3-4 em Champion caem no vizinho mais simples até a arte nova entrar.
+> - **Pendente do dono:** Arena Ultimate (25/55/15/5 de 15/11 vs. §232); curva 60/200/500.
+> - **Rollback:** `git revert`; só cliente.
+
 > ## 16/11/2026 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (`feat/retro-redesign`, REGISTRO §434)
 >
 > - **Feito:** sem `border-image`; card liso com a chama grande metade dentro/metade fora, Soulmon inteiro abaixo; `CtaButton tone="acao"` fixo no rodapé; a11y (`useDialogA11y`) e plural corrigidos; `moldura-retro.webp` removida.

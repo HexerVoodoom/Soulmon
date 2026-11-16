@@ -23,6 +23,7 @@ import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_D
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
+import { escolherCelula } from './dificuldadeEstagio';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -301,13 +302,15 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
 }
 
 /**
- * Sorteia UM inimigo respeitando a progressão. `opts.stage` = o estágio que o slot pede (rebaixado ao teto do level); sem ele,
+ * Sorteia UM inimigo respeitando a progressão. `opts.tabela` (REGISTRO §435, `dificuldadeEstagio.ts`): o nº de elementos sai da tabela §232
+ * do ESTÁGIO (Champion 60% de 2, Ultimate 50% de 3…), com as formas de arte alta (`forma`/`paralelo`) no pool; célula vazia cai no vizinho
+ * mais próximo; continua UMA chamada de `rng`. `opts.stage` = o estágio que o slot pede (rebaixado ao teto do level); sem ele,
  * sorteia entre os estágios liberados (1 chamada de `rng` a mais). `opts.used` = ids já na onda: saem do sorteio enquanto
  * sobrar alguém. `opts.semRamos` = fora os ramos (quem pede arte alta sem olhar o level do jogador, ex.: chefe do Elemental Fusion); level
  * desconhecido (infinito) também não sorteia ramo. Determinístico dado `rng`; continua 1 só chamada de `rng` para escolher a entrada.
  */
 export function pickEnemy(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element?: string } = {},
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element?: string; tabela?: boolean } = {},
 ): RosterEntry {
   // Masmorra temática (08/11/2026): com `element`, só criaturas DAQUELE elemento — o corvo (neutro) não entra, é um elemento de fora.
   if (opts.element) {
@@ -341,7 +344,7 @@ function pickEnemyDoElemento(
 }
 
 function pickEnemyComum(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean },
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; tabela?: boolean },
 ): RosterEntry {
   const max = maxEnemyStageForLevel(level);
   let stage: EnemyStage;
@@ -351,6 +354,7 @@ function pickEnemyComum(
     stage = open[Math.floor(rng() * open.length)];
   }
   const comRamos = Number.isFinite(level) && !opts.semRamos;
+  if (opts.tabela) return pickEnemyPorTabela(stage, rng, comRamos, opts.used);
   const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && e.kind !== 'paralelo' && e.kind !== 'forma' && (comRamos || e.kind !== 'ramo'));
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
@@ -361,4 +365,25 @@ function pickEnemyComum(
   return u < RAMO_CHANCE
     ? ramos[Math.floor((u / RAMO_CHANCE) * ramos.length)]
     : outros[Math.min(outros.length - 1, Math.floor(((u - RAMO_CHANCE) / (1 - RAMO_CHANCE)) * outros.length))];
+}
+
+/**
+ * O sorteio pela TABELA §232 (REGISTRO §435): o pool do estágio inclui as formas de arte alta (`forma`/`paralelo`: são elas que dão
+ * combinados em Champion+). Um só `rng()`: ele escolhe a célula (nº de elementos) pela linha do estágio e, dentro da faixa, a criatura.
+ * Célula 1 (elemento único) mantém a fatia dos ramos (`RAMO_CHANCE`). Sem repetir (`used`) enquanto sobrar alguém na célula.
+ */
+function pickEnemyPorTabela(stage: EnemyStage, rng: () => number, comRamos: boolean, used?: ReadonlySet<string>): RosterEntry {
+  const todos = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  const semUsados = used ? todos.filter(e => !used.has(e.id)) : todos;
+  const base = semUsados.length > 0 ? semUsados : todos;
+  // Células esgotadas pelo `used` ficam de fora enquanto outra tiver alguém novo; só então repete.
+  const c = escolherCelula(base, stage, rng())!;
+  const lista = c.lista;
+  const ramos = lista.filter(e => e.kind === 'ramo');
+  const outros = lista.filter(e => e.kind !== 'ramo');
+  const f = c.frac;
+  if (ramos.length === 0 || outros.length === 0) return lista[Math.min(lista.length - 1, Math.floor(f * lista.length))];
+  return f < RAMO_CHANCE
+    ? ramos[Math.min(ramos.length - 1, Math.floor((f / RAMO_CHANCE) * ramos.length))]
+    : outros[Math.min(outros.length - 1, Math.floor(((f - RAMO_CHANCE) / (1 - RAMO_CHANCE)) * outros.length))];
 }

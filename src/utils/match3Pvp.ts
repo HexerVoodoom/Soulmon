@@ -85,6 +85,6 @@ export interface PvpFoe { kind: 'player' | 'npc'; level: number; sprite?: string
 
 /** NPC de reserva (sem rede, pool vazio): do roster, no level do jogador, pelo `rng`. */
 export function npcFoe(level: number, rng: Rng): { foe: PvpFoe; entry: RosterEntry } {
-  const entry = pickEnemy(level, rng);
+  const entry = pickEnemy(level, rng, { tabela: true });
   return { foe: { kind: 'npc', level, roster: entry.key, element: rosterEntryElement(entry) }, entry };
 }
