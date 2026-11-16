@@ -509,6 +509,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
+              'A Masmorra desce em conjuntos de 2 camadas, cada um de um elemento: do elemento puro aos combinados, e quanto mais elementos, mais evoluídos os inimigos. A última luta do conjunto é um mini-boss. Quanto mais fundo, mais difícil; às vezes o Soulmon não passa, e faz parte do desafio.',
+              'The Dungeon goes down in sets of 2 layers, each of one element: from single elements to combined ones, and the more elements, the more evolved the foes. The last fight of a set is a mini-boss. The deeper, the harder; sometimes your Soulmon cannot get past, and that is part of the challenge.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
               `Quanto mais Lv, mais fundo ele chega; uma profundidade nova (5, 10, 25, 50…) rende fragmentos do Soulsmith. Subir de nível enche energia e HP.`,
               `The higher your Soulmon's Lv, the deeper it reaches; a new depth (5, 10, 25, 50…) earns Soulsmith fragments. Leveling up refills energy and HP.`,
             )}

@@ -373,10 +373,10 @@ function pickEnemyDoElemento(
 }
 
 /**
- * O sorteio de um CONJUNTO do Rift (REGISTRO §441, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
+ * O sorteio de um CONJUNTO do Rift (REGISTRO §442, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
  * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) criaturas DESTE estágio
- * cujos componentes dividem os do conjunto (mais componentes em comum primeiro, depois o nº de componentes mais próximo: o vizinho "do
- * elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o
+ * cujos componentes dividem os do conjunto (primeiro as que só têm componentes do conjunto, ex.: as bases de um par; depois mais componentes em
+ * comum; depois o nº de componentes mais próximo: o vizinho "do elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o
  * elemento não tem criatura nenhuma (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
  */
 export function pickEnemyDoConjunto(
@@ -394,16 +394,17 @@ export function pickEnemyDoConjunto(
   const exato = doElemento.filter(e => e.stage === opts.stage);
   if (exato.length > 0) return sorteia(exato);
   const alvo = compsDe({ element: opts.element, elements: [opts.element] });
-  let melhor: { sobra: number; dist: number } | undefined;
+  // Placar de cada candidato: [só tem componentes do conjunto (1/0), componentes em comum, -distância no nº de componentes]; vence o maior, empate sorteia.
+  let melhor: readonly number[] | undefined;
   let achados: RosterEntry[] = [];
   for (const e of vivos) {
     if (e.stage !== opts.stage) continue;
     const c = compsDe(e);
     const sobra = c.filter(x => alvo.includes(x)).length;
     if (sobra === 0) continue;
-    const dist = Math.abs(c.length - alvo.length);
-    if (!melhor || sobra > melhor.sobra || (sobra === melhor.sobra && dist < melhor.dist)) { melhor = { sobra, dist }; achados = [e]; }
-    else if (sobra === melhor.sobra && dist === melhor.dist) achados.push(e);
+    const placar = [c.every(x => alvo.includes(x)) ? 1 : 0, sobra, -Math.abs(c.length - alvo.length)];
+    const cmp = melhor ? placar.reduce((r, v, i) => r || v - melhor![i], 0) : 1;
+    if (cmp > 0) { melhor = placar; achados = [e]; } else if (cmp === 0) achados.push(e);
   }
   if (achados.length > 0) return sorteia(achados);
   if (doElemento.length === 0) return undefined;

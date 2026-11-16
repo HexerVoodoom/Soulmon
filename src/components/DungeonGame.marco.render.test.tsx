@@ -15,7 +15,8 @@ vi.mock('../utils/combate/group', async importOriginal => {
   return {
     ...real,
     groupFightSteps: function* (player: never, foes: never, opts: never) {
-      const fracos = (foes as unknown as Array<{ combatant: { hp: number } }>).map(f => ({ ...f, combatant: { ...f.combatant, hp: f.combatant.hp * 0.05 } }));
+      // sem especial: o mini-boss do conjunto (REGISTRO §442) pode sortear cura, que com o HP encolhido do teste nunca deixa a luta acabar
+      const fracos = (foes as unknown as Array<{ combatant: { hp: number } }>).map(f => ({ ...f, special: null, combatant: { ...f.combatant, hp: f.combatant.hp * 0.05 } }));
       const g = real.groupFightSteps(player, fracos as never, opts);
       let r = g.next();
       while (!r.done) { const ans: number | undefined = yield r.value; r = g.next(ans); }

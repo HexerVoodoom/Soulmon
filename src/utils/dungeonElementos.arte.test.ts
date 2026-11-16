@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { ELEMENTOS_DA_MASMORRA } from './dungeonElementos';
 import { dungeonWaveOf } from './dungeonAway';
-import { stageForFoeHp } from './estagioPorHp';
+import { riftWavePlan } from './riftSets';
 import { ENEMY_ROSTER, pickEnemy } from './enemyRoster';
 import { rosterSpriteOf } from './novosSoulmon';
 import { COMBINADOS_ART, PARALELOS_ART } from './enemyRosterArt';
@@ -90,17 +90,18 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
     expect(els).toHaveLength(50);
     for (const el of els) {
       const layer = ELEMENTOS_DA_MASMORRA.indexOf(el) * 2 + 1;
-      // Coerência estágio × HP (11/11/2026): a forma de cada inimigo é a do HP que ele tem (teto Mega), sempre com arte e só do elemento.
+      // Conjuntos do Rift (REGISTRO §442): o estágio é o do CONJUNTO (comuns e mini-boss), sempre com arte e só do elemento; o level e o HP não o mudam.
+      const plano = riftWavePlan(layer);
       for (const lv of [1, 7, 14, 40]) {
-        for (const f of dungeonWaveOf(7, layer, lv, 'mega')) {
-          const hp = stageForFoeHp(f.foe.combatant.hp);
+        const onda = dungeonWaveOf(7, layer, lv, 'mega');
+        for (const f of onda) {
           expect(f.element, `${el} camada ${layer} lv ${lv}`).toBe(el);
           expect(f.sprite).toBeTruthy();
-          expect(f.stage.split('-').pop(), `${el} lv ${lv}`).toBe(hp === 'ultra' ? 'mega' : hp);
+          expect(f.stage.split('-').pop(), `${el} lv ${lv}`).toBe(plano.comum);
         }
+        const fim = dungeonWaveOf(7, layer + 1, lv, 'mega');
+        expect(fim.map(f => f.stage.split('-').pop()), `${el} mini-boss lv ${lv}`).toEqual([...Array(5).fill(plano.comum), plano.miniBoss ?? riftWavePlan(layer + 1).miniBoss]);
       }
-      // Lv alto: tudo Mega.
-      for (const f of dungeonWaveOf(7, layer, 40, 'mega')) expect(f.stage.endsWith('-mega'), el).toBe(true);
     }
   });
   it('as 150 formas têm PNG distinto do rookie e entre si', () => {
