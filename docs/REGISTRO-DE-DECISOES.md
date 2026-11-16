@@ -6115,6 +6115,14 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Para o dono rever.** (1) Depois do andar 538 a lista dá a volta (Rookie de novo, com a força de profundidade): manter, ou o último conjunto de 4 elementos se repete? (2) Mini-boss = +1 andar de crescimento sobre o slot 5: forte o bastante? (3) O Rift de baixo level já enfrenta o Mega nos conjuntos de 4 elementos (o level não segura mais a arte). Rollback: `git revert`; só cliente.
 
+## §448 — Mini-boss do Rift usa a forma do PRÓPRIO conjunto (16/11/2026, dono)
+
+**Decisão (emenda ao §445).** Quando o conjunto não tem forma no estágio pedido (169 dos 190 pares sem Ultimate; 6 trios sem Mega), o mini-boss e os comuns usam a MELHOR forma que o próprio elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate, Champion, Rookie), só então o de cima. Não troca de arte e não cai na base do componente; continua mais forte pelo andar de crescimento a mais (`RIFT_MINIBOSS_EXTRA_FLOORS`). Componentes do estágio só entram se o elemento não tiver criatura nenhuma (hoje nunca). Confirmados: volta ao Rookie dos 20 base depois do andar 538; mini-boss com +1 andar.
+
+**Código/testes.** `pickEnemyDoConjunto` (`enemyRoster.ts`); `riftSets.test.ts` cobre os 190 pares e os 40 trios; `dungeonElementos.test.ts` volta a exigir só criaturas do elemento da camada.
+
+**Render `DungeonGame.marco`.** O travamento era do teste: o mock encolhe o inimigo a 5% do HP, abaixo do piso de `DUNGEON_MIN_HITS` (3 golpes) que a produção garante; nesse regime um mini-boss com cura trava o motor. Sem bug de render conhecido; o teste desliga o especial do inimigo e diz por quê. Rollback: `git revert`; só cliente.
+
 ## §447 — Companheiro invocado, PR 1b: os 32 sprites entram (16/11/2026, dono)
 
 **Decisão do dono (16/11):** aprovados os 32; nos três com duas gerações valeu a 1ª (salamandra, coruja, espectro), e a gosma ácida é a "verdinha" (request Higgsfield `01a1e56e-63c4`, slime verde com faixa e lanterna); `slime_cristalino` foi REFEITO (variação C: gosma fofa translúcida/iridescente, sem sino nem pedras).

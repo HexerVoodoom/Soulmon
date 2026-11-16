@@ -12,6 +12,13 @@ import { ELEMENTOS_DA_MASMORRA } from './dungeonElementos';
 import { ENEMY_ROSTER, pickEnemyDoConjunto } from './enemyRoster';
 import { mulberry32 } from './combate/rng';
 
+const ORDEM = ['rookie', 'champion', 'ultimate', 'mega'] as const;
+/** A melhor forma que o PRÓPRIO elemento tem no estágio pedido ou abaixo (Ultimate → Champion → Rookie); só então acima. */
+const melhorForma = (el: string, pedido: (typeof ORDEM)[number]): string => {
+  const tem = new Set(ENEMY_ROSTER.filter(e => e.element === el && e.kind !== 'mascote').map(e => e.stage));
+  const i0 = ORDEM.indexOf(pedido);
+  return [...ORDEM.slice(0, i0 + 1).reverse(), ...ORDEM.slice(i0 + 1)].find(st => tem.has(st))!;
+};
 const stageDe = (key: string): string => key.slice(key.lastIndexOf('-') + 1);
 /** A primeira camada (1-based) de cada contagem de elementos. */
 const primeiraCamada = (n: RiftCount): number => {
@@ -91,16 +98,18 @@ describe('riftSets: a onda do Rift', () => {
     expect(wave(2).map(e => stageDe(e.stage))).toEqual([...Array(5).fill('rookie'), 'champion']);
   });
 
-  it('conjunto de 2 elementos: comuns Champion e mini-boss Ultimate (com vizinho quando falta a forma)', () => {
+  it('conjunto de 2 elementos: comuns Champion e mini-boss Ultimate (ou a melhor forma que o próprio par tem)', () => {
     const l = primeiraCamada(2);
+    const el = riftSetOfLayer(l).element;
+    const boss = melhorForma(el, 'ultimate');
     expect(wave(l).map(e => stageDe(e.stage))).toEqual(Array(6).fill('champion'));
-    expect(wave(l + 1).map(e => stageDe(e.stage))).toEqual([...Array(5).fill('champion'), 'ultimate']);
+    expect(wave(l + 1).map(e => stageDe(e.stage))).toEqual([...Array(5).fill('champion'), boss]);
   });
 
   it('conjunto de 3 elementos: comuns Ultimate e mini-boss Mega', () => {
     const l = primeiraCamada(3);
     expect(wave(l).map(e => stageDe(e.stage))).toEqual(Array(6).fill('ultimate'));
-    expect(wave(l + 1).map(e => stageDe(e.stage))).toEqual([...Array(5).fill('ultimate'), 'mega']);
+    expect(wave(l + 1).map(e => stageDe(e.stage))).toEqual([...Array(5).fill('ultimate'), melhorForma(riftSetOfLayer(l).element, 'mega')]);
   });
 
   it('conjunto de 4 elementos: comuns Mega e mini-boss Mega (gancho do Ultra)', () => {
@@ -115,6 +124,23 @@ describe('riftSets: a onda do Rift', () => {
         expect(pickEnemyDoConjunto(30, mulberry32(7), { stage, element: el }), `${el}/${stage}`).toBeDefined();
       }
     }
+  });
+
+  it('mini-boss dos 190 pares e dos 40 trios: sempre forma do PRÓPRIO conjunto, no melhor estágio que ele tem', () => {
+    let pares = 0;
+    let trios = 0;
+    for (const el of ELEMENTOS_DA_MASMORRA) {
+      const n = riftSetOfLayer(2 * ELEMENTOS_DA_MASMORRA.indexOf(el) + 1).count;
+      if (n !== 2 && n !== 3) continue;
+      n === 2 ? pares++ : trios++;
+      const pedido = RIFT_STAGE_BY_COUNT[n].boss;
+      for (const seed of [1, 2, 3]) {
+        const e = pickEnemyDoConjunto(30, mulberry32(seed), { stage: pedido, element: el })!;
+        expect(e.element, `${el} seed ${seed}`).toBe(el);
+        expect(e.stage, `${el} seed ${seed}`).toBe(melhorForma(el, pedido));
+      }
+    }
+    expect([pares, trios]).toEqual([190, 40]);
   });
 
   it('o inimigo é do elemento do conjunto quando existe forma dele no estágio', () => {

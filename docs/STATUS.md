@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
+>
+> - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente.
+
 > ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §446)
 >
 > - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
