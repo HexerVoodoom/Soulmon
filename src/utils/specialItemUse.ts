@@ -117,7 +117,7 @@ export interface SpecialItemState {
   /** Comida premium: fome/relógio da energia (`utils/hunger.ts`) + registro de tetos. A comida NÃO dá energia direto (REGISTRO §40). */
   energyPoints?: number;
   evolutionStage?: string;
-  /** Evoluções destravadas: o mega só mira o Ultra com a coleção (`gaugeGoalFor`). */
+  /** Evoluções destravadas: o mega só mira o Ultra com as três megas (`canReachUltra`). */
   unlockedEvolutions?: readonly string[];
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
@@ -170,7 +170,7 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   // O galho não muda se existe destino, então 'harmony' serve de neutro; a regra mora em `getNextEvolution`/`canReachUltra`.
   if (special.kind === 'potion') {
     const stage = state.evolutionStage ?? 'rookie';
-    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])], state.evolutionPoints ?? 0) === stage) return 'no-next-evolution';
+    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])]) === stage) return 'no-next-evolution';
   }
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
