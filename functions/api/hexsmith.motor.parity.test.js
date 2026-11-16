@@ -120,3 +120,14 @@ describe('fightSteps(): o MESMO log de eventos e o MESMO resultado, com os efeit
     }
   });
 });
+
+describe('H4: o servidor publica fx.efeito e o nome do especial segue o léxico do efeito (cliente = servidor)', () => {
+  const save = (coroa) => ({ evolutionStage: 'rookie', perfectDays: 30, hexsmith: { owned: [`coroa:${coroa}`], equipped: { coroa: `coroa:${coroa}` } } });
+  it('Coroa de efeito publica efeito; Coroa de família e sem Coroa não publicam', () => {
+    expect(duelSrv.duelSide(save('slow')).fx.efeito).toBe('slow');
+    expect(duelSrv.duelSide(save('silence')).fx.efeito).toBe('silence');
+    expect(duelSrv.duelSide(save('hot')).fx.efeito).toBe('hot');
+    expect('efeito' in duelSrv.duelSide(save('dot')).fx).toBe(false);
+    expect('efeito' in duelSrv.duelSide({ evolutionStage: 'rookie', perfectDays: 30 }).fx).toBe(false);
+  });
+});

@@ -23,16 +23,24 @@ interface SpotLike { readonly x: number; readonly y: number; readonly size: numb
 
 /** Tamanho do companheiro em relação ao invocador, e o quanto ele se adianta (frações do tamanho do invocador). */
 export const SUMMON_SIZE = 0.55;
-export const SUMMON_ADVANCE = 0.62;
+/** Avanço HORIZONTAL (lado do oponente): o companheiro fica no chão ao lado do invocador, não em cima do corpo dele. */
+export const SUMMON_ADVANCE = 0.8;
+/** Subida leve (profundidade), SEMPRE para cima: o companheiro do inimigo não desce sobre a barra de HP do jogador. */
+export const SUMMON_LIFT = 0.12;
 const OUT_MS = 200;
 
-/** Onde o companheiro fica: à frente do invocador, na direção do alvo (não sobre ele). Puro, para teste. */
+/**
+ * Onde o companheiro fica: AO LADO do invocador, do lado do oponente e quase na mesma linha do chão (prévia de 16/11: com o vetor
+ * reto até o oponente ele subia para o peito do invocador e, no inimigo, caía sobre a barra de HP do jogador). Puro, para teste.
+ */
 export function summonPlace(from: SpotLike, to: SpotLike): { x: number; y: number; size: number; flip: boolean } {
   const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const reach = from.size * SUMMON_ADVANCE;
-  return { x: from.x + (dx / len) * reach, y: from.y + (dy / len) * reach * 0.5, size: Math.round(from.size * SUMMON_SIZE), flip: dx < 0 };
+  return {
+    x: from.x + (dx < 0 ? -1 : 1) * from.size * SUMMON_ADVANCE,
+    y: from.y - from.size * SUMMON_LIFT,
+    size: Math.round(from.size * SUMMON_SIZE),
+    flip: dx < 0,
+  };
 }
 
 function SummonSprite({ summon, from, to, reduced, z }: { summon: StageSummon; from: SpotLike; to: SpotLike; reduced: boolean; z: number }) {

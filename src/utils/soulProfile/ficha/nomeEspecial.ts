@@ -226,6 +226,8 @@ export interface EntradaNome {
   elementoBasica?: TextoPar;
   seedKey: string;
   stage: string;
+  /** Coroa de efeito (hot/slow/silence): o substantivo sai do léxico do efeito, não do da família-base. */
+  efeito?: string;
 }
 
 /** O ID do nome (PR9b): índice do substantivo no léxico da família + formato (0 = "Substantivo de X", 1 = "X Substantivo" em EN, 2 = dois elementos). */
@@ -234,9 +236,16 @@ export interface LexNome { n: number; f: 0 | 1 | 2 }
 /** Quantos substantivos cada família tem (o servidor valida o índice contra este número; o teste o trava). */
 export const SUBSTANTIVOS_POR_FAMILIA = 8;
 
-/** Compõe o nome a partir do ID — a ÚNICA função que escreve o nome (gerador e oponente do PvP). */
-export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: TextoPar, elementoBasica?: TextoPar): TextoPar {
-  const n = SUBSTANTIVOS_ESPECIAL[familia][lex.n];
+/** O efeito de Coroa só vale sobre a família-base dele (hot→shield; slow/silence→defDebuff); fora disso o nome segue a família. */
+export function efeitoDoNome(familia: SpecialFamily, efeito: unknown): EfeitoDeNome | undefined {
+  if (efeito === 'hot') return familia === 'shield' ? 'hot' : undefined;
+  if (efeito === 'slow' || efeito === 'silence') return familia === 'defDebuff' ? efeito : undefined;
+  return undefined;
+}
+
+/** Compõe o nome a partir do ID — a ÚNICA função que escreve o nome (gerador e oponente do PvP). `efeito` = a Coroa de efeito (léxico dela). */
+export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: TextoPar, elementoBasica?: TextoPar, efeito?: string): TextoPar {
+  const n = lexicoDoEfeito(familia, efeitoDoNome(familia, efeito))[lex.n];
   const dois = !!elementoBasica && elementoBasica.en !== elemento.en;
   if (lex.f === 2 && dois && elementoBasica) {
     return { en: `${n.en} of ${elemento.en} and ${elementoBasica.en}`, pt: `${n.pt} de ${elemento.pt} e ${elementoBasica.pt}` };
@@ -249,13 +258,13 @@ export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: Texto
 /** O nome próprio (substantivo da família + elemento(s), em um de 3 formatos que a seed decide) e o ID dele. */
 export function nomeEscolhidoDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): { nome: TextoPar; lex: LexNome } {
   const rng = mulberry32(hashString(`${e.seedKey}|nome|${e.stage}`));
-  const banco = SUBSTANTIVOS_ESPECIAL[e.familia];
+  const banco = lexicoDoEfeito(e.familia, efeitoDoNome(e.familia, e.efeito));
   const livres = evitarEn ? banco.filter(n => !evitarEn.has(n.en)) : banco;
   const n = pick(rng, livres.length > 0 ? livres : banco);
   const dois = !!e.elementoBasica && e.elementoBasica.en !== e.elemento.en;
   const f = Math.floor(rng() * (dois ? 3 : 2)) as 0 | 1 | 2;
   const lex: LexNome = { n: banco.indexOf(n), f };
-  return { nome: comporNome(e.familia, lex, e.elemento, e.elementoBasica), lex };
+  return { nome: comporNome(e.familia, lex, e.elemento, e.elementoBasica, e.efeito), lex };
 }
 
 export function nomeDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): TextoPar {
@@ -270,14 +279,14 @@ export function nomeDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): 
  */
 export function nomeDeLexico(fx: unknown): TextoPar | null {
   if (!fx || typeof fx !== 'object') return null;
-  const { familia, lex } = fx as { familia?: unknown; lex?: unknown };
+  const { familia, lex, efeito } = fx as { familia?: unknown; lex?: unknown; efeito?: unknown };
   if (!isSpecialFamily(familia)) return null;
   if (!lex || typeof lex !== 'object') return null;
   const { n, f, el, elB } = lex as { n?: unknown; f?: unknown; el?: unknown; elB?: unknown };
   if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n >= SUBSTANTIVOS_POR_FAMILIA) return null;
   if (f !== 0 && f !== 1 && f !== 2) return null;
   if (!elementoConhecido(el) || !elementoConhecido(elB)) return null;
-  return comporNome(familia as SpecialFamily, { n, f }, elementoNomeDe(el), elementoNomeDe(elB));
+  return comporNome(familia as SpecialFamily, { n, f }, elementoNomeDe(el), elementoNomeDe(elB), efeitoDoNome(familia as SpecialFamily, efeito));
 }
 
 /** A descrição por família: o EFEITO, sem cobrança e sem nível. */
@@ -334,7 +343,7 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
  * `direct` no PvE (`arena.ts`) e a família publicada pelo servidor no PvP (só da lista fechada; outra coisa vira `direct`), então o nome sai do banco da família + o elemento dele, determinístico pela
  * identidade dele (`seed`: o nome gerado). Não depende de nada do jogador.
  */
-export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null): TextoPar {
+export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null, efeito?: string | null): TextoPar {
   const f = isSpecialFamily(familia) ? familia : 'direct';
-  return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe' });
+  return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe', ...(efeito ? { efeito } : {}) });
 }

@@ -129,7 +129,7 @@ import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageS
 import type { FichaStage } from './utils/soulProfile/ficha/types';
 import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
-import { COMPANHEIRO_INVOCADO, migrarEvocacao } from './utils/companheiroInvocado';
+import { COMPANHEIRO_INVOCADO, aplicarEvocacao, migrarEvocacao } from './utils/companheiroInvocado';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -6029,11 +6029,7 @@ export default function App() {
     let vivo = true;
     import('./utils/soulProfile/ficha/jornadaRefresh').then(({ recalcularCaches }) => recalcularCaches(saved, jornadaAtual)).then(r => {
       if (!vivo || !r.evocacao) return;
-      setGameState(prev => ({
-        ...prev,
-        soulmonEvocacao: migrarEvocacao(prev.soulmonEvocacao, r.evocacao),
-        ...(r.companheiro && !prev.soulmonCompanheiro ? { soulmonCompanheiro: r.companheiro } : {}),
-      }));
+      setGameState(prev => aplicarEvocacao(prev, r.evocacao, r.companheiro)); // mesma referência quando nada muda: sem spam de cloud save
     }).catch(() => { /* perfil corrompido: segue sem o cache e o estágio fica sem companheiro (nunca adivinha) */ });
     return () => { vivo = false; };
   }, [faltaEvocacao, jornadaAtual, setGameState]);
