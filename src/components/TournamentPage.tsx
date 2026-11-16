@@ -388,7 +388,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       cheerScale: talentosPvp.cheerScale,
       startEnergy: talentosPvp.startEnergy,
       dotResist: talentosPvp.dotResist,
-      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
+      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx), hx.specialEffect),
       fx: fxDoLutador(par, petElement),
       ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}), // PR 2: sempre ausente com a flag desligada
     };

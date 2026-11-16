@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §451)
+>
+> - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
+> - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
+> - **Falta:** arte das 6 coroas e 3 selos (fallback tolerante), H4 (Coroa troca o especial e a invocação some), `fx.efeito` do oponente no PvP. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+
 > ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
 >
 > - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).

@@ -459,6 +459,10 @@ export const FAMILY_STATUS: Readonly<Record<SpecialFamily, FamilyStatus | null>>
   atkBuff: { kind: 'buff', variant: 'atk', target: 'self' },
   defDebuff: { kind: 'debuff', variant: 'def', target: 'foe' },
   spdBuff: { kind: 'buff', variant: 'spd', target: 'self' },
+  // Hexsmith H2: selos provisórios (existentes) até o PR de arte trazer `st-buff-def`, `st-debuff-atk` e `st-debuff-spd`
+  defBuff: { kind: 'escudo', target: 'self' },
+  atkDebuff: { kind: 'debuff', target: 'foe' },
+  spdDebuff: { kind: 'lento', target: 'foe' },
 };
 /**
  * PR16 (decisão do dono): o debuff de DEFESA da escola `maldicao` mostra o selo/glifo/rótulo de MALDIÇÃO. É só APRESENTAÇÃO:

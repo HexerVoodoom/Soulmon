@@ -228,7 +228,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
-    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento, hx),
     companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     jeito,
     startShield: rift.startShield,

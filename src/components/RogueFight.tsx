@@ -101,7 +101,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   }, [onResult, enemy.stage, isPt]);
 
   const round = useCallback((): GroupRound => {
-    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento) }, setup.foe, setup.seed, true);
+    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento, hx) }, setup.foe, setup.seed, true);
     return {
       player: f.player, foes: f.foes, seed: contRef.current ? reviveSeed(f.seed, contRef.current.n) : f.seed,
       startHp: contRef.current ? reviveStart(contRef.current.foeFrac).hp : setup.startHp, startEnergy: 0,
