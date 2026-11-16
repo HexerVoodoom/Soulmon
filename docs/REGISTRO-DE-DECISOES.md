@@ -5968,3 +5968,16 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Suposições:** (1) a sugestão de habit stacking morre junto, porque só aparecia no cartão; (2) manter o campo morto no save custa alguns bytes e evita migração.
 
 **Custo/gatilho:** perde-se a leitura de constância por hábito no domingo; reabre se o dono sentir falta da sugestão "depois de X, faça Y" (recuperar do histórico do git, §431 é o contexto).
+
+
+## §433 — Chama da alma animada (folha de frames), moldura e selo da retrospectiva (16/11/2026, dono)
+
+**Pedido (literal):** gerar no ChatGPT assets para o modal da retrospectiva semanal (hoje em SVG/CSS) e uma folha de frames da chama da alma turquesa em loop, e usar a animação nos outros lugares onde a chama da alma aparece.
+
+**Decisão:** três peças geradas no app ChatGPT (alfa real, 1ª imagem de cada conversa; prompts e tags em `E:/Soulmon-assets/_banco/registro.jsonl`, arquivos em `E:/Soulmon-assets/_lote-16-11/retro-chama/`): (1) folha 4x2 de 8 quadros da chama turquesa, fatiada por projeção de pixels e normalizada (128 px/quadro, mesma base), `src/assets/soulmon/chama-alma/chama-alma-folha.webp`; (2) moldura de card (cobre, vinhas, cristais, miolo transparente) usada como `border-image` 9-slice em volta do conteúdo da retrospectiva; (3) selo "Bônus da semana" ao lado do rótulo no cartão do bônus. Componente reutilizável `ui/SoulFlameAnim` (folha tocada só por CSS `steps`, `prefers-reduced-motion` = quadro 1 parado). Trocada a chama SVG do `WeeklyRetroModal`. Identidade: moldura e selo são UI (entram em USAR); a chama é turquesa, sem cristal/cano/folha na folha.
+
+**Fora desta troca (decisão pendente do dono):** `ChamaGame` (meditação "Chama", `ChamaViva`) tem chama procedural com núcleo âmbar; a lanterna da evolução já é animada (`evo/lanterna-anim.webp`); `BrandFlame`/splash é a marca (cristal), não é esta chama.
+
+**Suposições:** (1) o `ChamaGame` é uma chama de vela, não a "chama da alma"; (2) a moldura envolve a coluna toda (9-slice, 40 px de borda) em vez de ser um card de proporção fixa; (3) o selo é decorativo (`aria-hidden`).
+
+**Custo/gatilho:** +3 webp (~75 KB). Reabre se a moldura apertar o conteúdo em telas de 360 px ou se o dono quiser a chama animada também na meditação.
