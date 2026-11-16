@@ -1,7 +1,7 @@
 /**
  * FORMAS DO PACOTE A (16/11/2026, dono): pelo menos 1 forma por combinação de elementos no estágio dela (2 → champion, 3 → ultimate, 4 → mega),
  * geradas pela API (Higgsfield alpha, prompt do Oráculo + tema do elemento, forma anterior como referência). DADOS PUROS.
- * [artFile do rookie (`NNN-slug`), estágios novos]. A arte é `assets/soulmon/novos-arquivo/combinados-formas/<artFile>-<estágio>.png`.
+ * [artFile do rookie (`NNN-slug`), estágios novos]. A arte fica na pasta `combinados-formas/` do arquivo de novos Soulmon (lida por `FORMAS_ART`), como `<artFile>-<estágio>.png`.
  */
 export const FORMAS_PACOTE_A_DATA: ReadonlyArray<readonly [string, ReadonlyArray<'champion' | 'ultimate' | 'mega'>]> = [
   ['002-lava', ['champion']],

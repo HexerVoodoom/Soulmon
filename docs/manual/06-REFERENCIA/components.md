@@ -2385,3 +2385,9 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/ElementosNovosModal.tsx`
 
 **`ElementosNovosModal` (15/11/2026, §396 e §401):** `{ language, elementIds, onClose }` — a CARTA de "Elemento novo": carta preta 5:7 (`ui/carta-elemento.webp`, igual para todos), ícone grande, nome na fonte de título e, nos compostos, fileira de componentes (`componentesDoElemento`). Vários ids = carrossel (setas 44 px, deslize, pontinhos, "1 de N"); o OK fica `disabled` até todas as cartas serem a página atual; o X no topo (`BackArrow close`), Esc e o voltar fecham. Sem frase de poção. O App grava o "visto" do lote AO MOSTRAR.
+
+### `src/components/WeeklyRetroModal.tsx`
+**`WeeklyRetroModal` (16/11/2026, §433):** `WeeklyRetroModalProps` — o modal da retrospectiva de segunda: um card liso com a chama da alma em cristal (`ui/SoulFlameAnim`) metade fora da borda, o Soulmon do usuário por baixo e o `CtaButton` tom `acao`; `RETRO_FILL_MS` é o tempo do preenchimento. Com `prefers-reduced-motion` mostra o estado final. Regra em `utils/weeklyRetro.ts`. **Régua:** `WeeklyRetroModal*.test.tsx`.
+
+### `src/components/ui/SoulFlameAnim.tsx`
+**`SoulFlameAnim` (16/11/2026):** `{ height?, cycleSeconds?, className?, style? }` — a chama da alma turquesa dentro de um cristal, folha de 8 quadros em grade 4x2 (`FLAME_SHEET_COLS`, `FLAME_SHEET_ROWS`, `FLAME_SHEET_FRAMES`, `FRAME_ASPECT`) tocada por CSS `steps`; parada no quadro 1 com `prefers-reduced-motion`.
