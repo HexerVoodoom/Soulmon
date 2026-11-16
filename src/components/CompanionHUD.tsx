@@ -16,6 +16,8 @@ import { ChevronAcao } from './ui/ChevronAcao';
 import { UI_ICON_ART, pastaGlifo, pastaAbertaGlifo, displayLuzAcesa, displayLuzApagada } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
+import { dishIdOfKey } from '../utils/dishItems';
+import { dishById } from '../utils/restaurantMenu';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
@@ -1562,7 +1564,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               >
                 {ITEM_ART[eatingEmoji]
                   ? <img src={ITEM_ART[eatingEmoji]} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  : eatingEmoji}
+                  : (dishById(dishIdOfKey(eatingEmoji) ?? '')?.icon ?? eatingEmoji)}
               </span>
             )}
             {/* Migalhas (entrega 4): a comida sobe, as migalhas caem — uma vez por mordida. */}

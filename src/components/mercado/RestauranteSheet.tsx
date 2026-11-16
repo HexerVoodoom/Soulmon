@@ -19,6 +19,8 @@ import {
 } from '../../utils/restaurant';
 import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
 import { CHEF_VOICE, COMBAT_NOTE, effectText, refusalText } from '../../utils/restaurantCopy';
+import { PratoFeito } from '../PratoFeito';
+import { dishKey } from '../../utils/dishItems';
 import type { Language } from '../../utils/i18n';
 
 /** Lado do ícone de ingrediente (px) e do desenho do prato. */
@@ -30,6 +32,8 @@ export function RestauranteSheet({ language }: { language: Language }) {
   const ctx = useGameStateOptional();
   const { flash, say } = useShopFlash();
   const [pending, setPending] = useState<Dish | null>(null);
+  /** O modal "prato feito": um por vez; fazer outro igual enquanto aberto só soma (`made`), outro prato troca o modal. */
+  const [done, setDone] = useState<{ dishId: string; made: number } | null>(null);
   /** Domingo: os dois chefs; tocar um filtra o cardápio dele e mostra a fala dele (tocar de novo volta ao cardápio inteiro). */
   const [chefSel, setChefSel] = useState<ChefId | null>(null);
   if (!ctx) return null;
@@ -47,7 +51,8 @@ export function RestauranteSheet({ language }: { language: Language }) {
     const refused = cookRefusal(gameState, d.id, t);
     if (refused) { say(d.id, false, refusalText(refused, isPt)); return; }
     setGameState(prev => applyCook(prev, d.id, t).state);
-    say(d.id, true, isPt ? `${d.namePt} servido! Fome cheia.` : `${d.nameEn} served! Fully fed.`);
+    setDone(p => (p && p.dishId === d.id ? { dishId: d.id, made: p.made + 1 } : { dishId: d.id, made: 1 }));
+    say(d.id, true, isPt ? `${d.namePt} feito e guardado na pastinha.` : `${d.nameEn} made and stored in the Items folder.`);
   };
 
   const extraName = (d: Dish) => d.extra.type === 'essence'
@@ -65,8 +70,8 @@ export function RestauranteSheet({ language }: { language: Language }) {
         flash={flash}
         language={language}
         idle={isPt
-          ? `Todo prato enche a fome inteira e dá um reforço. Um reforço por vez; até ${DISHES_PER_DAY} pratos por dia. ${COMBAT_NOTE.pt}`
-          : `Every dish fills hunger all the way and gives a boost. One boost at a time; up to ${DISHES_PER_DAY} dishes a day. ${COMBAT_NOTE.en}`}
+          ? `Todo prato vai para a pastinha; ao usar, enche a fome inteira e dá um reforço. Um reforço por vez; até ${DISHES_PER_DAY} pratos por dia. ${COMBAT_NOTE.pt}`
+          : `Every dish goes to the Items folder; when used it fills hunger all the way and gives a boost. One boost at a time; up to ${DISHES_PER_DAY} dishes a day. ${COMBAT_NOTE.en}`}
       />
       {chefs.length > 1 && (
         <div data-restaurante-chefs role="group" aria-label={isPt ? 'Chefs de domingo' : 'Sunday chefs'} style={{ display: 'flex', gap: 8 }}>
@@ -151,13 +156,16 @@ export function RestauranteSheet({ language }: { language: Language }) {
       <PurchaseConfirmSheet
         open={!!pending}
         language={language}
-        question={pending ? (isPt ? `Cozinhar ${pending.namePt}? ${effectText(pending.effect, true)}.` : `Cook ${pending.nameEn}? ${effectText(pending.effect, false)}.`) : ''}
+        question={pending ? (isPt ? `Cozinhar ${pending.namePt}? Vai para a pastinha. Ao usar: ${effectText(pending.effect, true)}.` : `Cook ${pending.nameEn}? It goes to the Items folder. When used: ${effectText(pending.effect, false)}.`) : ''}
         balance={gameState.gamePoints ?? 0}
         cost={pending?.bits ?? 0}
         currency="bits"
         onCancel={() => setPending(null)}
         onConfirm={() => { const d = pending; setPending(null); if (d) cook(d); }}
       />
+      {done && (
+        <PratoFeito language={language} dishId={done.dishId} made={done.made} inFolder={gameState.foodInventory?.[dishKey(done.dishId)] ?? 0} onClose={() => setDone(null)} />
+      )}
     </div>
   );
 }
