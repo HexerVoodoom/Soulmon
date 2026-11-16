@@ -25,6 +25,7 @@ import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { escolherCelula } from './dificuldadeEstagio';
 import { FORMAS_PACOTE_A_DATA } from './formasPacoteA.data';
+import { LEGADO_DATA } from './enemyRosterLegado.data';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -269,6 +270,22 @@ function buildFormasPacoteA(rookies: readonly RosterEntry[], jaTomados: Readonly
   return out;
 }
 
+/**
+ * OS 5 RAMOS LEGADOS (dono, 16/11/2026, REGISTRO §445): as formas antigas de som/eletricidade/tempo/arcano/marcial como ramo extra de outro elemento
+ * (`LEGADO_DATA`). Mesmo molde dos ramos (kind `ramo`, golpes e elemento do hospedeiro), então entram no sorteio comum e no do elemento do hospedeiro
+ * como qualquer ramo. Arte: `legado/<id>-<estágio>`. Entram no FIM de tudo (o `#N` do Bestiário não muda).
+ */
+function buildLegado(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, , , el, champion, ultimate, mega] of LEGADO_DATA) {
+    const base = BASE_BY_ELEMENT[el];
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate], ['mega', mega]] as const) {
+      out.push({ key: chaveBestiario(id, stage), id, stage, kind: 'ramo', element: el, elements: [el], name, basico: base.basico, especial: base.especial, artFile: `legado/${id}-${stage}` });
+    }
+  }
+  return out;
+}
+
 /** As 2 cadeias da API (09/11/2026): kind `api`, entram no sorteio comum e no do elemento; no FIM do roster (o `#N` não muda). */
 function buildDuo(): RosterEntry[] {
   const out: RosterEntry[] = [];
@@ -311,7 +328,7 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
 }
 const ROOKIES_COMBINADOS = build();
 const ANTES_DO_PACOTE_A = [...ROOKIES_COMBINADOS, RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()];
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name)))].map(comElementoDoDono);
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado()].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
