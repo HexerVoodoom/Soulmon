@@ -4756,3 +4756,12 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 
 ### `src/utils/elementoNovoModal.ts`
 **Dono de:** `elementosNovos` (o que ainda não foi avisado), `elementoRetroativo` (Soulmon atual com elemento fora do dex; no máximo 1), o gate de atividade `emAtividade` + `elementoNovoPodeAbrir(descobertoEmAtividade, view)` (a carta só abre no fim da atividade; §401), `componentesDoElemento` (receita do elemento para a fileira da carta), `todasVistas` (libera o OK), `ELEMENTO_NOVO_MAX_LOTE`, o texto EN/PT da carta (sem frase de poção) e `paginaDeTotal` ("1 de N").
+
+### `src/utils/dificuldadeEstagio.ts`
+**Dono de:** a regra de dificuldade por estágio (16/11/2026, REGISTRO §232 como peso do sorteio de inimigos): peças puras `sortearContagem`, `celulaMaisProxima`, `agruparPorContagem`, `escolherCelula`, `chancesDoEstagio`, `contagemDaEntrada` e a curva de profundidade (`PROFUNDIDADE_DEGRAUS`, `degrausDeProfundidade`, `estagioPorProfundidade`). O sorteio que junta tudo mora em `enemyRoster.ts` (`pickEnemy({ tabela: true })`). Tabela de chances: `CHANCES_POR_ESTAGIO` de `elementoCombinado.ts`. **Régua:** `dificuldadeEstagio*.test.ts`.
+
+### `src/utils/formasPacoteA.data.ts`
+**Dono de:** `FORMAS_PACOTE_A_DATA` (16/11/2026, REGISTRO §439): dados puros `[artFile do rookie, estágios novos]` das formas do pacote A (combinação de 2 elementos → champion, 3 → ultimate, 4 → mega). Arte em `assets/soulmon/novos-arquivo/combinados-formas/`. **Régua:** `novosSoulmon.test.ts`.
+
+### `src/utils/weeklyRetro.ts`
+**Dono de:** a regra da retrospectiva de segunda (16/11/2026, REGISTRO §431): semana anterior segunda a domingo, hábito mais difícil (`pickHardest`), bônus de retorno (`makeWeeklyBonus`, `isWeeklyBonusOn`, `weeklyBonusGaugeBonus`), qualidade da semana (`retroQuality`, `overallHabitRate`), forma por semana (`recordWeekStage`, `evolvedLastWeek`) e `needsWeeklyRetro`. Funções puras, todo tempo entra por parâmetro. **Régua:** `weeklyRetro*.test.ts`.
