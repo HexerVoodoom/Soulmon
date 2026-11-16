@@ -3,6 +3,7 @@
  * que cresça `defeatedElements`) e o texto dele. Sem React, sem storage. EN primeiro, PT-BR é localização; tom de convite, nunca cobrança.
  */
 import { isLibraryElement } from './elementDex';
+import { ELEMENTO_NEUTRO_ID } from './elementoNeutro';
 import { petElementOf } from './starterElements';
 import { curatedComponents } from './elementosCurados';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
@@ -25,7 +26,18 @@ export const ELEMENTO_NOVO_COPY = {
   prev: { en: 'Previous element', pt: 'Elemento anterior' },
   next: { en: 'Next element', pt: 'Próximo elemento' },
   ok: { en: 'OK', pt: 'OK' },
+  neutralNote: { en: "Born of no other element. The Raven's own.", pt: 'Não nasce de nenhum outro elemento. É o do Corvo.' },
+  progress: { en: 'Progress', pt: 'Progresso' },
 } as const;
+
+/** O elemento Neutro (o do Corvo) não tem componentes: a carta diz isso em vez de deixar a fileira vazia (REGISTRO §211: a única criatura neutra; não é mistura de nada). */
+export { ELEMENTO_NEUTRO_ID };
+
+/** Passo do toque no carrossel (estilo stories): 1 = próximo, -1 = anterior, 0 = não foi um toque (arrasto). Metade direita avança, esquerda volta. */
+export function passoDoToque(x: number, largura: number, deslocamento: number): -1 | 0 | 1 {
+  if (Math.abs(deslocamento) > 10 || largura <= 0) return 0;
+  return x < largura * 0.4 ? -1 : 1;
+}
 
 /** "1 de 3" / "1 of 3": o nome acessível de cada página do carrossel. */
 export const paginaDeTotal = (i: number, n: number, isPt: boolean): string => (isPt ? `${i + 1} de ${n}` : `${i + 1} of ${n}`);
@@ -40,20 +52,26 @@ export function elementoRetroativo<T extends Parameters<typeof petElementOf>[0] 
   return id && isLibraryElement(id) && !(s.defeatedElements ?? []).includes(id) ? id : undefined;
 }
 
-/** Áreas do Mapa que são ATIVIDADE (luta, run, minijogo): o aviso nunca abre dentro delas (dono, 15/11/2026: a carta só abre no FIM da atividade). */
+/** Áreas do Mapa que HOSPEDAM atividades (luta, run, minijogo): o aviso nunca abre com uma delas em andamento (dono, 15/11/2026: a carta só abre no FIM da atividade). */
 const AREAS_DE_ATIVIDADE: readonly string[] = ['arena', 'exploracao', 'jogos'];
-/** A tela atual é uma atividade em andamento (Arena, Masmorra/Pesadelo/Fenda, Torneio, minijogos)? Mapa, Home e páginas do menu nunca são. */
-export const emAtividade = (view: string): boolean => view.startsWith('area:') && AREAS_DE_ATIVIDADE.includes(view.slice(5));
-/** A navegação principal (onde o jogador "saiu" de qualquer atividade): Home, Mapa e as páginas do menu. */
-const naNavegacaoPrincipal = (view: string): boolean => view === 'home' || view === 'map' || view.startsWith('page:');
+const naAreaDeAtividade = (view: string): boolean => view.startsWith('area:') && AREAS_DE_ATIVIDADE.includes(view.slice(5));
+/**
+ * Há uma atividade EM ANDAMENTO? `ativa` = o que a `AreaView` informa (jogo aberto, duelo, luta do Torneio). Sem a informação (`undefined`)
+ * vale o palpite antigo, a área inteira. Causa-raiz do "saí da Arena e a carta não abriu" (16/11/2026): ao sair da luta o jogador cai no
+ * HUB da área (`area:arena`), que o palpite antigo ainda tratava como atividade; a carta ficava presa até ele ir ao Mapa ou à Home.
+ */
+export const emAtividade = (view: string, ativa?: boolean): boolean => naAreaDeAtividade(view) && ativa !== false;
+/** A navegação principal (onde o jogador "saiu" de qualquer atividade): Home, Mapa, as páginas do menu e o hub de uma área sem atividade rodando. */
+const naNavegacaoPrincipal = (view: string, ativa?: boolean): boolean =>
+  view === 'home' || view === 'map' || view.startsWith('page:') || (naAreaDeAtividade(view) && ativa === false);
 
 /**
  * Gate único "estou numa atividade" (15/11/2026, dono). `descobertoEmAtividade` = o elemento veio de dentro de uma atividade (luta etc.):
  * a carta espera a navegação principal (sair da atividade, não só trocar de sala dentro dela). Evolução e Feira abrem onde o jogador está,
- * desde que ele NÃO esteja dentro de uma atividade.
+ * desde que ele NÃO esteja dentro de uma atividade. `ativa` (16/11/2026): ver `emAtividade`; `false` libera o hub da área.
  */
-export function elementoNovoPodeAbrir(descobertoEmAtividade: boolean, view: string): boolean {
-  return descobertoEmAtividade ? naNavegacaoPrincipal(view) : !emAtividade(view);
+export function elementoNovoPodeAbrir(descobertoEmAtividade: boolean, view: string, ativa?: boolean): boolean {
+  return descobertoEmAtividade ? naNavegacaoPrincipal(view, ativa) : !emAtividade(view, ativa);
 }
 
 /** Os elementos que FORMAM o id (nome e ícone de cada um na fileira da carta). Base = `[]`. Curados (2–4) e derivados (par). */

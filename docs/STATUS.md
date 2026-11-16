@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §456)
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §457)
 >
 > - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
 > - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
@@ -5805,3 +5805,7 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 - doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
 - Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
 - ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
+
+## §456 — Teto de Bits por categoria (16/11/2026)
+- Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §457).
