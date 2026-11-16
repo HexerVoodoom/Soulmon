@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Janela de abertura de 1,2 s no Pesadelo (`feat/pesadelo-janela`, REGISTRO §430)
+>
+> - **Feito:** no começo de cada luta do Pesadelo o inimigo só golpeia a partir de 1,2 s (`NIGHTMARE_OPENING_WINDOW_S`, `src/utils/dungeonFight.ts`; opção `foeOpeningDelay` do núcleo `groupFightSteps`). Cliente e simulação leem o mesmo valor via `nightmareFight().options`. Chip "Torça já!/Cheer now!" na tela durante a janela.
+> - **Não visto em tela:** só testes; o §392 (-25% de dano) segue valendo.
+>
+
 > ## 15/11/2026 — Bosque de cerejeiras de verdade (`feat/cerejeira-bosque-real`, REGISTRO §410)
 >
 > - **Feito:** `bg-cerejeira-bosque-de-cerejeiras` troca a arte do vulcão pelo bosque em flor (v1, pixelização leve); mesmo id, preço e slots. Pós-processo `tools/pixelizar-fundo.py`, instalação pelo caminho dos 33 fundos.
