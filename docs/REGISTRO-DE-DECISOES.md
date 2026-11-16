@@ -6173,7 +6173,7 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 
 **Para o dono rever.** (1) O cache `soulmonEvocacao` mora no save que o cliente envia: um jogador mal-intencionado poderia marcá-lo. O ganho máximo medido é ~+6pp (o efeito menor mais o ataque), dentro do teto de bônus; a alternativa é o servidor reconstruir o gatilho da `fichaJornada` já saneada (mais trabalho). Manter assim ou reconstruir? (2) Rogue Dungeon e Match-3 não foram ligados (Match-3 não usa o especial do núcleo; Rogue fica para quando ligarmos a flag). Rollback: `git revert`; flag desligada = sem efeito em nada.
 
-## §451 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
+## §452 — Companheiro invocado: chave LIGADA no pacote e pontas fechadas (16/11/2026, dono)
 
 **Decisão do dono (16/11):** o companheiro invocado entra LIGADO no pacote de 16/11 (`COMPANHEIRO_INVOCADO = true` em `src/utils/companheiroInvocado.ts` e em `functions/api/_companheiroInvocado.js`; o teste de paridade trava os dois juntos). A pergunta (1) do §449 está RESPONDIDA: o anti-fraude do cache `soulmonEvocacao` fica como está (ganho máximo medido ≤ ~6pp), sem reconstruir o gatilho no servidor.
 
@@ -6186,3 +6186,8 @@ Decisões do dono (16/11, modal): criar TODAS as Coroas novas (Trilha A: cura co
 **Regressões da pacote achadas no caminho (servidor atrás do app).** `dailyMissions.parity`: o app tirou o evento `cenario` e as missões `n-lasca`/`n-panora` do rodízio diário (#963) e o servidor ainda os aceitava; `feiraLoja.paridade`: o app ganhou 4 decorações `furn-ruinas-*` (#950) que o catálogo do servidor não tinha (a Feira de verdade as recusaria). Servidor alinhado ao app (`_dailyMissions.js`, `_feiraLoja.js`).
 
 **Rollback:** `git revert`; ou só desligar a chave nos DOIS arquivos (o teste de paridade exige igualdade). Aditivo, sem migração de save.
+
+
+## §451 — Hexsmith: arte das 6 Coroas novas e 3 selos de status (16/11/2026, dono)
+
+O dono aprovou as peças do ChatGPT. Instaladas: `src/assets/soulmon/hex/coroa-{hot,slow,silence,defBuff,atkDebuff,spdDebuff}.png` (96×96, alfa real) e `src/assets/soulmon/combate-v3/status/st-{buff-def,debuff-atk,debuff-spd}.png` (64×64). `resolveHexCrownArt` já as acha pelo glob `coroa-*` sem mudar código (`coroa-<id>`, camelCase igual às famílias existentes). `coroa-hot`, `coroa-slow` e `coroa-silence` resolvem hoje pelos ids de efeito da H1; `defBuff`, `atkDebuff` e `spdDebuff` ficam prontas para as famílias que a H2 criar. Selos: arquivos instalados, mas NÃO ligados ao `STATUS_FX` (as famílias `def`/`atk`/`spd` de buff/debuff não existem no código ainda): a ligação vem com a H2. Três peças serão regeradas (`st-debuff-atk`, `coroa-silence`, `coroa-hot`): a troca é só substituir o arquivo. Rollback: `git revert`.
