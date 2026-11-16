@@ -55,13 +55,32 @@ describe('carta: um elemento', () => {
   });
 });
 
+describe('carta: Neutro (o do Corvo)', () => {
+  it('não tem fileira de componentes e explica que não nasce de nenhum outro elemento', () => {
+    render(<ElementosNovosModal language="en-US" elementIds={['neutro']} onClose={() => {}} />);
+    expect(q('[data-elemento-componentes]')).toBeNull();
+    expect(q('[data-elemento-nota]')!.textContent).toBe("Born of no other element. The Raven's own.");
+    expect(q('[data-elemento-novo]')!.getAttribute('aria-label')).toContain('Born of no other element');
+  });
+  it('PT-BR', () => {
+    render(<ElementosNovosModal language="pt-BR" elementIds={['neutro']} onClose={() => {}} />);
+    expect(q('[data-elemento-nota]')!.textContent).toBe('Não nasce de nenhum outro elemento. É o do Corvo.');
+  });
+  it('elemento comum não tem a nota', () => {
+    render(<ElementosNovosModal language="en-US" elementIds={[composto2]} onClose={() => {}} />);
+    expect(q('[data-elemento-nota]')).toBeNull();
+  });
+});
+
 describe('carta: carrossel de 3', () => {
   it('OK desabilitado até ver a 3ª; setas, contador, pontinhos e setas >=44px', () => {
     const onClose = vi.fn();
     render(<ElementosNovosModal language="pt-BR" elementIds={[a, b, c]} onClose={onClose} />);
     expect(document.querySelectorAll('[data-elemento-novo]')).toHaveLength(1);
     expect(q('[data-elemento-pagina]')!.getAttribute('aria-label')).toBe('1 de 3');
-    expect(document.querySelectorAll('.sm2-elem-new-dot')).toHaveLength(3);
+    expect(document.querySelectorAll('.sm2-elem-new-seg')).toHaveLength(3);
+    expect(q('[data-elemento-dots]')!.getAttribute('role')).toBe('progressbar');
+    expect(document.querySelectorAll('.sm2-elem-new-seg[data-on="true"]')).toHaveLength(1);
     expect(okBtn().disabled).toBe(true);
     fireEvent.click(okBtn());
     expect(onClose).not.toHaveBeenCalled();
@@ -89,6 +108,13 @@ describe('carta: carrossel de 3', () => {
     fireEvent.keyDown(root, { key: 'ArrowRight' });
     expect(pg()).toBe(b);
   });
+  it('barra segmentada enche conforme avança; o toque (stories) usa a metade da carta', () => {
+    render(<ElementosNovosModal language="en-US" elementIds={[a, b, c]} onClose={() => {}} />);
+    fireEvent.click(q('[data-elemento-next]')!);
+    expect(document.querySelectorAll('.sm2-elem-new-seg[data-on="true"]')).toHaveLength(2);
+    expect(q('[data-elemento-dots]')!.getAttribute('aria-valuenow')).toBe('2');
+    expect(q('[data-elemento-dots]')!.getAttribute('aria-valuetext')).toBe('2 of 3');
+  });
   it('fechar pelo X antes de ver tudo e permitido (o App marca o lote inteiro como visto ao mostrar)', () => {
     const onClose = vi.fn();
     render(<ElementosNovosModal language="en-US" elementIds={[a, b, c]} onClose={onClose} />);
@@ -99,7 +125,7 @@ describe('carta: carrossel de 3', () => {
   it('movimento reduzido: a animacao de troca so existe sob no-preference', () => {
     const css = readFileSync('src/index.css', 'utf8');
     const i = css.indexOf('.sm2-elem-new-page[data-anim]');
-    expect(css.lastIndexOf('@media (prefers-reduced-motion: no-preference)', i)).toBeGreaterThan(css.indexOf('.sm2-elem-new-dot[data-on'));
+    expect(css.lastIndexOf('@media (prefers-reduced-motion: no-preference)', i)).toBeGreaterThan(css.indexOf('.sm2-elem-new-seg[data-on'));
   });
 });
 

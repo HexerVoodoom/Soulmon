@@ -28,6 +28,9 @@ import itemSpark from '../assets/soulmon/icones-ui/item-faisca.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
+import { DISHES } from './restaurantMenu';
+import { dishKey } from './dishItems';
+import { dishArt } from './dishArt';
 import { premiumKey } from './premiumFood';
 import { potionKey } from './elementPotion';
 import { REDUCE_CHIP_SUFFIX } from './shop';
@@ -76,4 +79,10 @@ for (const f of Object.values(FOOD_BY_CATEGORY)) {
 for (const id of ALL_ELEMENT_IDS) {
   const icon = potionArt(id) ?? elementIcon(id);
   if (icon) ITEM_ART[potionKey(id)] = icon;
+}
+
+// Prato do Restaurante (16/11/2026): a arte pixel do prato (`dishArt`); prato sem PNG ainda fica sem arte (a Mochila mostra só o nome).
+for (const d of DISHES) {
+  const art = dishArt(d.id);
+  if (art) ITEM_ART[dishKey(d.id)] = art;
 }

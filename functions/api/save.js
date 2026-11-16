@@ -41,6 +41,7 @@ import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceImmutableElementoJornada } from './_elementoJornada.js';
 import { enforceFunTickets } from './_funTickets.js';
+import { enforceDuelInvites } from './_duelInvites.js';
 import { enforceGlitchtamaUsadoEm } from './_glitchtama.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaLadder, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
@@ -656,6 +657,16 @@ async function onRequestBruto({ request, env }) {
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const ft = enforceFunTickets(state.funTickets, gravado.funTickets);
         if (ft) state.funTickets = ft; else delete state.funTickets;
+      }
+    }
+    // Convite de Duelo (REGISTRO §458, `_duelInvites.js`): gasto só desce; aumento só com carimbo novo, teto 7.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"duelInvites"');
+      if (temGravado || 'duelInvites' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const di = enforceDuelInvites(state.duelInvites, gravado.duelInvites);
+        if (di) state.duelInvites = di; else delete state.duelInvites;
       }
     }
     // Cooldown/buff do 🌀 Glitchtama (10/11/2026, `_glitchtama.js`): o instante do último uso só anda para a frente — apagar o save local ou

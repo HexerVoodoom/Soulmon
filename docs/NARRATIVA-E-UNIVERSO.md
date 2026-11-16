@@ -918,6 +918,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **linha** | line | as 9 linhagens | "espécie" é tolerável; "família" já tem sentido técnico |
 | **ofício** | craft | as 6 escolas | "classe" (já é termo técnico interno, não mostrado) |
 | **Glitchtama** | Glitchtama | o item | nome mantido por decisão do dono (21/09/2026, P5 fechada) |
+| **Arquivos / Files** · `<nome>.exe` | Files · `<name>.exe` | a pasta onde ficam os itens guardados (a antiga Mochila; só UI) e a forma de LISTAR comidas, pratos e chips dentro dela (decisão do dono, 16/11/2026) | "arquivo" **nunca** nomeia a criatura (ela é o **padrão**, §5.1 — ⚠️ acima); `.exe` só em nome de item **listado** (comida, prato, chip), nunca em voz de mundo, na fala da criatura ou nos itens especiais (coraçãozinho, Glitchtama, Faísca, poções); id e chave de save não mudam. Termo de **interface**, sem tom de cobrança (L2, L6) |
 | *(proposta P3)* **a Borda · o Enquadre · a Insônia ⚠️ · o Primeiro Chão · o Cobre Frio** | the Edge · the Frame · the Sleepless · the First Ground · the Cold Copper | as cinco camadas da fenda (§7.3) | nada decidido; não use em string enquanto P3 estiver aberta |
 
 Regra transversal: **nenhum nome de criatura leva sufixo fixo** (`-mon` e

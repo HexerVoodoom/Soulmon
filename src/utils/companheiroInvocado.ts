@@ -22,7 +22,7 @@ import { hexCrownEquipped } from './hexsmith';
 
 /** INTERRUPTOR ÚNICO do companheiro invocado. Desligado: nada preenche o cache `soulmonEvocacao` e `companheiroAtivo` /
  *  `companheiroPorLinha` devolvem `null`. O código e o campo do save ficam inertes. Para religar: `true` aqui, e só aqui. */
-export const COMPANHEIRO_INVOCADO = false as boolean;
+export const COMPANHEIRO_INVOCADO = true as boolean;
 
 /** Ids dos arquétipos de evocação (lista do dono, 16/11/2026). Ids estáveis do class-system, nunca o nome PT. */
 export const ARQUETIPOS_EVOCACAO: readonly string[] = [
@@ -128,6 +128,26 @@ export function migrarEvocacao(atual: EvocacaoPorEstagio | undefined, derivado: 
 }
 
 /**
+ * Aplica o cache derivado ao estado SEM regravar à toa: devolve a MESMA referência de `prev` quando nada muda (o save em nuvem é
+ * por debounce de referência; objeto novo a cada chamada viraria spam). Idempotente e tolerante a `prev` antigo (sem o campo) e a
+ * derivado/companheiro ausentes. `soulmonCompanheiro` só entra se o save ainda não tem (primeiro valor vence).
+ */
+export function aplicarEvocacao<T extends { soulmonEvocacao?: EvocacaoPorEstagio }>(
+  prev: T & { soulmonCompanheiro?: unknown },
+  derivado: EvocacaoPorEstagio | undefined,
+  companheiro: unknown,
+): T {
+  const evocacao = migrarEvocacao(prev.soulmonEvocacao, derivado);
+  const trazCompanheiro = !!companheiro && !prev.soulmonCompanheiro;
+  if (evocacao === prev.soulmonEvocacao && !trazCompanheiro) return prev;
+  return {
+    ...prev,
+    ...(evocacao !== prev.soulmonEvocacao ? { soulmonEvocacao: evocacao } : {}),
+    ...(trazCompanheiro ? { soulmonCompanheiro: companheiro } : {}),
+  };
+}
+
+/**
  * Consulta de quem usará o cache (PR 2): o companheiro do estágio a partir do que o SAVE guarda. Flag desligada = `null`.
  * Estágio sem entrada no cache = `null` (nunca adivinha).
  */
@@ -158,7 +178,8 @@ export interface EstadoComCompanheiro {
 /**
  * O companheiro do JOGADOR neste momento, do SAVE: a criatura que a cena desenha e que liga `FightSide.invoca` (PR 2), ou `null`.
  * Flag desligada, estágio sem cache, forma não evocadora ou criatura desconhecida = `null` (nunca adivinha). É a única porta
- * das telas de luta para o gatilho; quem monta `ArenaPlayerCfg`/`DungeonPlayerCfg`/`DuelSide` chama isto.
+ * das telas de luta para o gatilho; quem monta `ArenaPlayerCfg`/`DungeonPlayerCfg`/`DuelSide` chama isto. `ligado` existe só para o
+ * teste exercitar os dois estados da flag; produção usa a flag.
  */
 export function companheiroDoEstado(estado: EstadoComCompanheiro | null | undefined, ligado: boolean = COMPANHEIRO_INVOCADO): string | null {
   if (!ligado || !estado) return null;

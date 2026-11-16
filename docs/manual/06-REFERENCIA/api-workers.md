@@ -896,6 +896,6 @@ Registros de nomes (telas, features, minigames) e faixas de tempo usados por `ap
 
 **Dono de:** `renameOnServer` e `HEX_RENAME_COST` (200). Ação `POST /api/save?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }` (`save.js`): valida o nome (`nomeEspecialValido` + `sanitizarNomeDeGuilda`), debita Bits ganhos e grava `soulmonMeta.petName` ou `especialNome`/`especialNomeAt` numa escrita (revisão +1); 400 nome recusado, 402 saldo, 409 revisão. Régua: `save.hexRename.test.js`, `hexsmithRename.parity.test.js`. `ESPECIAL_NOME_COOLDOWN_MS` = 0 (o limite é o preço).
 
-### `functions/api/_companheiroInvocado.js` (16/11/2026, REGISTRO §449/§454)
+### `functions/api/_companheiroInvocado.js` (16/11/2026, REGISTRO §449/§460)
 
 **Dono de:** o ESPELHO no servidor de `src/utils/companheiroInvocado.ts`: quem invoca é decidido pelo SAVE que o servidor lê (cache `soulmonEvocacao` + sorteio `soulmonCompanheiro`) ou pela tabela dos simulados, nunca pelo cliente. **Exports:** `COMPANHEIRO_INVOCADO` (flag igual à do app), `CRIATURAS_COMPANHEIRO` (as 32), `simuladoEvocador(elemento, linha)`, `companheiroDoLado(state, saveId?, ligado?)` → `{ invoca: true, companheiro? }` ou `null` (flag desligada = `null` e nenhum campo novo na ficha). **Regra da Coroa:** `_hexsmith.js › hexCrownEquipped(state.hexsmith)` (save já saneado) ⇒ `null`: Coroa equipada, o companheiro descansa; desequipar volta. Chamado por `_duelLoad.js` (duelo, treino, torneio). **Régua:** `companheiroInvocado.parity.test.js`.

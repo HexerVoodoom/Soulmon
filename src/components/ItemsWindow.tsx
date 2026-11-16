@@ -59,6 +59,22 @@ export function getFoodName(emoji: string, lang: Language): string {
   return lang === 'pt-BR' ? entry.pt : entry.en;
 }
 
+/**
+ * CONVENÇÃO `.exe` (16/11/2026, dono): a aba "Files"/"Arquivos" mostra COMIDAS, PRATOS e CHIPS como `<nome>.exe`. Os ESPECIAIS (coraçãozinho,
+ * Faísca, poções, reset) NÃO levam o sufixo. É só APRESENTAÇÃO: id e chave de save continuam as mesmas. Mesma divisão de
+ * `Mochila.tsx › mochilaTabs` (aba "Comida e chips" = `.exe`; aba "Especiais" = nome normal).
+ */
+export const EXE_SUFFIX = '.exe';
+export function isExeItem(key: string): boolean {
+  const k = SPECIAL_ITEMS[key]?.kind;
+  return k === undefined || k === 'chip' || k === 'premium' || k === 'dish';
+}
+/** Nome do item como a aba Files o mostra (`Dew Tea.exe`); especiais e materiais ficam com o nome de `getFoodName`. */
+export function getFileName(key: string, lang: Language): string {
+  const nome = getFoodName(key, lang);
+  return isExeItem(key) && nome !== key ? nome + EXE_SUFFIX : nome;
+}
+
 export function getFoodDesc(emoji: string, lang: Language): string {
   const special = SPECIAL_ITEMS[emoji];
   if (special) return lang === 'pt-BR' ? special.descPt : special.descEn;

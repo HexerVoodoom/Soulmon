@@ -4,7 +4,7 @@ import { ElementIcon, elName } from './ElementBaseSlots';
 import { BackArrow } from './ui/BackArrow';
 import { CtaButton } from './ui/CtaButton';
 import { useBackLayer } from '../utils/backStack';
-import { ELEMENTO_NOVO_COPY as C, componentesDoElemento, paginaDeTotal, todasVistas } from '../utils/elementoNovoModal';
+import { ELEMENTO_NOVO_COPY as C, ELEMENTO_NEUTRO_ID, componentesDoElemento, paginaDeTotal, passoDoToque, todasVistas } from '../utils/elementoNovoModal';
 import type { Language } from '../utils/i18n';
 
 /** "Água", "Água e Terra", "Água, Terra e Fogo": a lista dita em voz alta pelo nome acessível da carta. */
@@ -18,7 +18,7 @@ const listar = (nomes: string[], isPt: boolean): string => {
  * "Elemento novo" como CARTA (15/11/2026, pedido do dono, REGISTRO §401): uma carta preta grande, IGUAL para todos os elementos, com o ícone
  * do elemento no meio (pelado, sem box), o NOME embaixo na fonte de título e, só nos compostos, uma fileira pequena com os elementos que o
  * formam (ícone + nome, "+" entre eles). Vários liberados de uma vez = UM modal em carrossel: uma carta por elemento, setas (44 px) e
- * deslize de dedo, pontinhos, "1 de N". O OK fica DESATIVADO até todas as cartas terem sido a página atual. O X do topo fecha sempre (Esc e o
+ * deslize de dedo, toque (metade direita avança, esquerda volta, estilo stories), barra de progresso segmentada no topo, "1 de N". Sem avanço automático de propósito: o jogador lê no ritmo dele (nada para pausar). O OK fica DESATIVADO até todas as cartas terem sido a página atual. O X do topo fecha sempre (Esc e o
  * voltar do Android também) e conta como visto para o lote inteiro: o "visto" é gravado pelo App AO MOSTRAR. Movimento reduzido: troca sem animação (CSS).
  */
 export function ElementosNovosModal({ language, elementIds, onClose }: { language: Language; elementIds: readonly string[]; onClose: () => void }) {
@@ -47,7 +47,7 @@ export function ElementosNovosModal({ language, elementIds, onClose }: { languag
   const titulo = isPt ? C.newElement.pt : C.newElement.en;
   const descr = comps.length > 0
     ? `${titulo}: ${nome}, ${isPt ? C.madeOf.pt : C.madeOf.en} ${listar(nomesComps, isPt)}`
-    : `${titulo}: ${nome}`;
+    : id === ELEMENTO_NEUTRO_ID ? `${titulo}: ${nome}. ${isPt ? C.neutralNote.pt : C.neutralNote.en}` : `${titulo}: ${nome}`;
   const pagina = n > 1 ? paginaDeTotal(i, n, isPt) : undefined;
   const node = (
     <div
@@ -63,9 +63,21 @@ export function ElementosNovosModal({ language, elementIds, onClose }: { languag
       onPointerDown={(e) => { downX.current = e.clientX; }}
       onPointerUp={(e) => {
         const x0 = downX.current; downX.current = null;
-        if (n > 1 && x0 !== null && Math.abs(e.clientX - x0) > 40) go(e.clientX < x0 ? 1 : -1);
+        if (n <= 1 || x0 === null) return;
+        if (Math.abs(e.clientX - x0) > 40) { go(e.clientX < x0 ? 1 : -1); return; }
+        // toque (estilo stories): metade direita avança, esquerda volta; botões e o X cuidam de si
+        if ((e.target as HTMLElement).closest('button')) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        const passo = passoDoToque(e.clientX - r.left, r.width, e.clientX - x0);
+        if (passo !== 0) go(passo);
       }}
     >
+      {n > 1 && (
+        <div className="sm2-elem-new-segs" data-elemento-dots role="progressbar" aria-label={isPt ? C.progress.pt : C.progress.en}
+          aria-valuemin={1} aria-valuemax={n} aria-valuenow={i + 1} aria-valuetext={paginaDeTotal(i, n, isPt)}>
+          {elementIds.map((e, k) => <span key={e} className="sm2-elem-new-seg" data-on={k <= i} />)}
+        </div>
+      )}
       <div className="sm2-elem-new-close" data-elemento-fechar>
         <BackArrow icon="close" language={language} label={isPt ? C.close.pt : C.close.en} onClick={onClose} />
       </div>
@@ -82,6 +94,9 @@ export function ElementosNovosModal({ language, elementIds, onClose }: { languag
             <div className="sm2-elem-carta-miolo">
               <span className="sm2-elem-carta-icone" data-elemento-art aria-hidden="true"><ElementIcon id={id} size={128} /></span>
               <p role="status" data-elemento-nome className="sm2-elem-carta-nome">{nome}</p>
+              {id === ELEMENTO_NEUTRO_ID && (
+                <p className="sm2-elem-carta-nota" data-elemento-nota>{isPt ? C.neutralNote.pt : C.neutralNote.en}</p>
+              )}
               {comps.length > 0 && (
                 <ul className="sm2-elem-carta-comps" data-elemento-componentes aria-label={`${isPt ? C.madeOf.pt : C.madeOf.en} ${listar(nomesComps, isPt)}`}>
                   {comps.map((c, k) => (
@@ -103,11 +118,6 @@ export function ElementosNovosModal({ language, elementIds, onClose }: { languag
             onClick={() => go(1)}>{'›'}</button>
         )}
       </div>
-      {n > 1 && (
-        <div className="sm2-elem-new-dots" aria-hidden="true" data-elemento-dots>
-          {elementIds.map((e, k) => <span key={e} className="sm2-elem-new-dot" data-on={k === i} />)}
-        </div>
-      )}
       <CtaButton ref={ok} tone="acao" width="auto" data-elemento-ok disabled={!libera}
         aria-describedby={libera ? undefined : 'sm2-elem-new-dica'} onClick={onClose}>{isPt ? C.ok.pt : C.ok.en}</CtaButton>
       {!libera && <span id="sm2-elem-new-dica" className="sm2-sr-only">{isPt ? C.seeAllFirst.pt : C.seeAllFirst.en}</span>}
