@@ -3,8 +3,12 @@
  *
  * Peso especial: não é uma folha comum. CELEBRA o que a pessoa fez e ENGAJA para a semana que
  * começa. Peça central: a CHAMA DA ALMA em turquesa (nunca laranja ou vermelha), com o Soulmon
- * do próprio usuário ao lado. A chama é a folha animada `ui/SoulFlameAnim`; moldura e selo são PNG com alfa real; com `prefers-reduced-motion` as
+ * do próprio usuário ao lado. A chama é a folha animada `ui/SoulFlameAnim`; o selo é webp com alfa real; com `prefers-reduced-motion` as
  * entradas, partículas, brilho e contadores viram o estado final direto.
+ *
+ * Layout (redo de 16/11, críticas do dono): UM card liso (sem `border-image`, nada esticado) e a chama como ARTE PELADA no topo,
+ * centrada, METADE DENTRO e METADE FORA da borda de cima (o mesmo recurso do `TicketBuyModal`/`ShopItemSheet`); o Soulmon fica
+ * por baixo da chama, inteiro, sem ninguém por cima. O botão é o `CtaButton` tom `acao` (o mesmo do site e de "Criar poção elemental").
  *
  * A regra (quem ganha o bônus, contagens, semana) mora em `utils/weeklyRetro.ts`; aqui é só a
  * apresentação. Ver o cartão do bônus NÃO conclui nada: o bônus paga na conclusão real.
@@ -16,9 +20,9 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { WeeklyRetro } from '../utils/weeklyRetro';
+import { CtaButton } from './ui/CtaButton';
 import { Icon } from './ui/Icon';
 import { SoulFlameAnim } from './ui/SoulFlameAnim';
-import moldura from '../assets/soulmon/chama-alma/moldura-retro.webp';
 import selo from '../assets/soulmon/chama-alma/selo-bonus.webp';
 import { usePrefersReducedMotion } from './ui/Viewport';
 
@@ -36,27 +40,35 @@ export interface WeeklyRetroModalProps {
 const TEAL = '#4DF0DC';
 const INK = '#E9FBF8';
 
+/** Altura da caixa da chama (o quadro da folha tem margem vazia em cima: a chama visível ocupa ~33% a 95% da altura). */
+const FLAME_H = 280;
+/** Onde está o centro da chama VISÍVEL dentro da caixa: é ele que fica na borda do card (metade dentro, metade fora). */
+const FLAME_CENTER = Math.round(FLAME_H * 0.64);
+/** Quanto da chama visível fica DENTRO do card (a metade de baixo). */
+const FLAME_INSIDE = Math.round(FLAME_H * 0.31);
+
 const CSS = `
 .rt-root{position:fixed;inset:0;z-index:240;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;
   background:radial-gradient(120% 80% at 50% 0%,#0E5A53 0%,#073A36 45%,#04211F 100%);color:${INK};
   padding:max(20px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));box-sizing:border-box}
-.rt-col{width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px;align-items:stretch}
-.rt-frame{box-sizing:border-box;border:40px solid transparent;border-image-slice:72 fill;border-image-repeat:stretch;image-rendering:pixelated;padding:22px 2px 2px}
-.rt-frame>.rt-col{margin:0 auto}
+.rt-wrap{width:100%;max-width:440px;margin:0 auto;padding-top:${Math.round(FLAME_H * 0.4)}px}
+.rt-card{position:relative;box-sizing:border-box;border-radius:var(--sm2-radius-lg,20px);background:linear-gradient(180deg,rgba(15,42,41,.94),rgba(9,31,30,.96));
+  border:1px solid rgba(77,240,220,.4);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 0 36px rgba(77,240,220,.18),0 14px 30px rgba(0,0,0,.4);
+  padding:${FLAME_INSIDE + 10}px 16px 20px;display:flex;flex-direction:column;gap:16px}
+.rt-art{position:absolute;left:50%;top:0;width:${FLAME_H}px;height:${FLAME_H}px;margin-left:-${FLAME_H / 2}px;margin-top:-${FLAME_CENTER}px;pointer-events:none}
 .rt-seal{width:44px;height:44px;flex:none;image-rendering:pixelated;filter:drop-shadow(0 0 8px rgba(77,240,220,.55))}
 .rt-bonus-head{display:flex;align-items:center;gap:10px}
 .rt-in{animation:rt-up .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
 @keyframes rt-up{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-.rt-hero{position:relative;height:250px;display:flex;align-items:flex-end;justify-content:center}
-.rt-flame{position:absolute;left:50%;top:0;margin-left:-84px;
-  filter:drop-shadow(0 0 18px rgba(77,240,220,.75)) drop-shadow(0 0 44px rgba(77,240,220,.4))}
-.rt-halo{position:absolute;left:50%;top:6px;width:240px;height:240px;margin-left:-120px;border-radius:50%;
-  background:radial-gradient(circle,rgba(77,240,220,.32),rgba(77,240,220,0) 68%);animation:rt-pulse 3s ease-in-out infinite}
+.rt-hero{display:flex;align-items:flex-end;justify-content:center;padding-top:2px}
+.rt-flame{position:absolute;left:0;top:0;filter:drop-shadow(0 0 16px rgba(77,240,220,.8)) drop-shadow(0 0 40px rgba(77,240,220,.45))}
+.rt-halo{position:absolute;left:50%;top:50%;width:${FLAME_H * 1.5}px;height:${FLAME_H * 1.5}px;margin:-${FLAME_H * 0.75}px 0 0 -${FLAME_H * 0.75}px;border-radius:50%;
+  background:radial-gradient(circle,rgba(77,240,220,.34),rgba(77,240,220,0) 66%);animation:rt-pulse 3s ease-in-out infinite}
 @keyframes rt-pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
-.rt-spark{position:absolute;bottom:60px;width:5px;height:5px;border-radius:50%;background:${TEAL};box-shadow:0 0 8px ${TEAL};
+.rt-spark{position:absolute;bottom:${FLAME_H * 0.42}px;width:5px;height:5px;border-radius:50%;background:${TEAL};box-shadow:0 0 8px ${TEAL};
   opacity:0;animation:rt-rise 3.4s ease-out infinite;animation-delay:var(--sd,0s)}
-@keyframes rt-rise{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--sx,0),-170px) scale(1.1)}}
-.rt-pet{position:relative;height:104px;width:auto;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:rt-bob 3s ease-in-out infinite}
+@keyframes rt-rise{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--sx,0),-${FLAME_H * 0.7}px) scale(1.1)}}
+.rt-pet{position:relative;height:128px;width:auto;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:rt-bob 3s ease-in-out infinite}
 @keyframes rt-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .rt-title{margin:0;text-align:center;font-size:26px;line-height:1.15;font-weight:800;letter-spacing:.01em}
 .rt-kicker{margin:0;text-align:center;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:${TEAL}}
@@ -65,11 +77,11 @@ const CSS = `
 .rt-stat{flex:1;min-width:0;text-align:center;padding:14px 8px;border-radius:16px;background:rgba(77,240,220,.09);border:1px solid rgba(77,240,220,.28)}
 .rt-num{display:block;font-size:38px;line-height:1;font-weight:800;color:${TEAL};font-variant-numeric:tabular-nums;text-shadow:0 0 16px rgba(77,240,220,.5)}
 .rt-lab{display:block;margin-top:6px;font-size:13px;line-height:1.25;color:rgba(233,251,248,.85)}
-.rt-card{border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(233,251,248,.14);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rt-box{border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(233,251,248,.14);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .rt-row{display:flex;align-items:center;gap:10px;min-height:32px;font-size:15px;line-height:1.3}
 .rt-row b{color:${TEAL};font-variant-numeric:tabular-nums}
 .rt-acc{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;cursor:pointer;font-size:15px;font-weight:600}
-.rt-acc:focus-visible,.rt-cta:focus-visible,.rt-ghost:focus-visible{outline:3px solid ${TEAL};outline-offset:2px}
+.rt-acc:focus-visible,.rt-ghost:focus-visible{outline:3px solid ${TEAL};outline-offset:2px}
 .rt-chev{transition:transform .25s}
 .rt-chev[data-open="true"]{transform:rotate(180deg)}
 .rt-list{margin:0;padding:0 0 4px 0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:rgba(233,251,248,.9)}
@@ -78,10 +90,6 @@ const CSS = `
 .rt-badge{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:${TEAL};color:#03211F;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
 .rt-bonus p{margin:0;font-size:16px;line-height:1.4;font-weight:600}
 .rt-close{margin:0;text-align:center;font-size:18px;font-weight:800;line-height:1.3}
-.rt-cta{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;cursor:pointer;border-radius:16px;
-  background:linear-gradient(180deg,#7DF7E8,#2FD9C4);color:#03211F;font-size:18px;font-weight:800;box-shadow:0 0 24px rgba(77,240,220,.5),0 4px 0 #0B6F68;animation:rt-glow 2.2s ease-in-out infinite}
-@keyframes rt-glow{0%,100%{box-shadow:0 0 18px rgba(77,240,220,.4),0 4px 0 #0B6F68}50%{box-shadow:0 0 34px rgba(77,240,220,.75),0 4px 0 #0B6F68}}
-.rt-cta:active{transform:translateY(2px)}
 .rt-evo{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;cursor:pointer}
 .rt-evo-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px}
 .rt-bubble{position:relative;max-width:300px;padding:12px 16px;border-radius:18px;background:#F1FFFC;color:#04211F;font-size:18px;font-weight:800;text-align:center;line-height:1.25}
@@ -92,7 +100,7 @@ const CSS = `
 @keyframes rt-flashA{0%{opacity:0;transform:scale(.5)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
 .rt-hint{margin:0;font-size:14px;color:rgba(233,251,248,.75);text-align:center}
 @media (prefers-reduced-motion: reduce){
- .rt-in,.rt-halo,.rt-pet,.rt-cta{animation:none!important}
+ .rt-in,.rt-halo,.rt-pet{animation:none!important}
  .rt-spark{display:none}
  .rt-flash[data-on="true"]{animation:none!important;opacity:0}
  .rt-chev{transition:none}
@@ -172,9 +180,9 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           {isPt ? 'Toque para ver' : 'Tap to see'}
         </button>
       ) : (
-        <button type="button" className="rt-cta" style={{ maxWidth: 320 }} onClick={() => setStep('main')} autoFocus>
+        <CtaButton tone="acao" width="auto" onClick={() => setStep('main')} autoFocus>
           {isPt ? 'Continuar' : 'Continue'}
-        </button>
+        </CtaButton>
       )}
     </div>
   );
@@ -184,17 +192,19 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
       <style>{CSS}</style>
       {evo}
       {step === 'main' && (
-        <div className="rt-frame" data-retro-frame style={{ borderImageSource: `url(${moldura})` }}>
-        <div className="rt-col">
-          <p className="rt-kicker rt-in" style={d(0)}>{isPt ? 'Retrospectiva da semana' : 'Week in review'}</p>
-          <div className="rt-hero rt-in" style={d(0.1)}>
-            <div className="rt-halo" aria-hidden="true" />
-            <SoulFlameAnim className="rt-flame" height={168} cycleSeconds={1} />
+        <div className="rt-wrap" data-retro-card-wrap>
+        <div className="rt-card" data-retro-card>
+          <div className="rt-art rt-in" aria-hidden="true" data-retro-flame-art style={d(0.1)}>
+            <div className="rt-halo" />
+            <SoulFlameAnim className="rt-flame" height={FLAME_H} cycleSeconds={1} />
             {SPARKS.map((s, i) => (
-              <span key={i} className="rt-spark" aria-hidden="true" style={{ left: s.l, '--sx': s.sx, '--sd': s.sd } as React.CSSProperties} />
+              <span key={i} className="rt-spark" style={{ left: s.l, '--sx': s.sx, '--sd': s.sd } as React.CSSProperties} />
             ))}
+          </div>
+          <div className="rt-hero rt-in" style={d(0.2)}>
             <img className="rt-pet" src={spriteNow} alt={petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')} />
           </div>
+          <p className="rt-kicker rt-in" style={d(0.25)}>{isPt ? 'Retrospectiva da semana' : 'Week in review'}</p>
           <h2 className="rt-title rt-in" style={d(0.3)}>{isPt ? 'Que semana!' : 'What a week!'}</h2>
           <p className="rt-sub rt-in" style={d(0.4)}>
             {isPt ? 'Olha o que a sua chama fez.' : 'Look at what your flame did.'}
@@ -212,7 +222,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           </div>
 
           {retro.habits.length > 0 && (
-            <ul className="rt-card rt-in" style={{ ...d(0.75), listStyle: 'none', margin: 0 }}>
+            <ul className="rt-box rt-in" style={{ ...d(0.75), listStyle: 'none', margin: 0 }}>
               {retro.habits.map(h => (
                 <li key={h.id} className="rt-row">
                   <Icon name="event_repeat" size={20} tone="inherit" />
@@ -225,7 +235,7 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           )}
 
           {retro.tasksDone > 0 && (
-            <div className="rt-card rt-in" style={d(0.9)}>
+            <div className="rt-box rt-in" style={d(0.9)}>
               <button type="button" className="rt-acc" aria-expanded={open} aria-controls="rt-tasks" onClick={() => setOpen(o => !o)}>
                 <span>
                   {isPt ? `Você concluiu ${retro.tasksDone} ${retro.tasksDone === 1 ? 'tarefa pontual' : 'tarefas pontuais'}`
@@ -263,10 +273,10 @@ export function WeeklyRetroModal({ language, retro, spriteNow, spritePrev, petNa
           <p className="rt-close rt-in" style={d(1.2)}>
             {isPt ? 'Nova semana, a chama já está acesa.' : 'New week, the flame is already lit.'}
           </p>
-          <button ref={ctaRef} type="button" className="rt-cta rt-in" style={d(1.3)} onClick={onClose}>
-            {isPt ? 'Bora para a semana' : "Let's go, new week"}
-          </button>
         </div>
+        <CtaButton ref={ctaRef} tone="acao" className="rt-in" style={{ ...d(1.3), marginTop: 20 }} onClick={onClose}>
+          {isPt ? 'Bora para a semana' : "Let's go, new week"}
+        </CtaButton>
         </div>
       )}
     </div>
