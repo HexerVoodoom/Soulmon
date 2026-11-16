@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
+>
+> - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
 > ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §452)
 >
 > - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
