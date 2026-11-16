@@ -215,7 +215,7 @@ describe('applyDungeonAway — o avanço de quem ficou fora', () => {
     const baixo = estado({ totalXP: 0, energyPoints: 5000 });
     expect(bondLevelFor(0)).toBeLessThan(5);
     const { report } = applyDungeonAway(baixo, T0 + 8 * HORA);
-    expect(['sealed', 'deep', null, 'hp', 'energy']).toContain(report!.ended);
+    expect(['daily', 'deep', null, 'hp', 'energy']).toContain(report!.ended);
     expect(report!.toLayer).toBeGreaterThan(5);
   });
 });
