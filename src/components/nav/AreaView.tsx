@@ -171,7 +171,7 @@ export interface PlayHandlers {
   /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
   onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
-  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy' | 'daily-limit';
+  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
   onFocusPause?: () => void;
   onFocusResume?: (focusEndsAt?: number) => void;
@@ -406,11 +406,7 @@ export function AreaView(props: AreaViewProps) {
       : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
       : initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
-  useEffect(() => {
-    if (!lockNote) return;
-    const t = setTimeout(() => setLockNote(null), 5000);
-    return () => clearTimeout(t);
-  }, [lockNote]);
+  /* O aviso de prédio trancado NÃO some sozinho (dono, 16/11/2026): só pelo X da faixa. */
   const gsForIndicators = useGameStateOptional()?.gameState;
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
@@ -537,7 +533,7 @@ export function AreaView(props: AreaViewProps) {
         lots={lots.map(l => l.id === 'restaurante' || l.id === 'cambista'
           ? ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)
           : gated([{ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot])[0])}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet
           areaId={area}
@@ -630,7 +626,7 @@ export function AreaView(props: AreaViewProps) {
         language={language}
         background={AREA_BG.arena}
         lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
           <Suspense fallback={<SheetLoading language={language} />}>
@@ -700,7 +696,7 @@ export function AreaView(props: AreaViewProps) {
     const mt = play.mindTutorials;
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
-      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}
+      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
         palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
@@ -838,7 +834,7 @@ export function AreaView(props: AreaViewProps) {
         language={language}
         background={LABORATORIO_BG}
         lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); enter(l.id); } } satisfies AreaLot)))}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           {open?.id === 'biblioteca' ? (
@@ -872,7 +868,7 @@ export function AreaView(props: AreaViewProps) {
       language={language}
       background={HALL_BG}
       lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
-      notice={lockNote}
+      notice={lockNote} onNoticeClose={() => setLockNote(null)}
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
         <Suspense fallback={<SheetLoading language={language} />}>

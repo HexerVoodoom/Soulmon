@@ -10,7 +10,7 @@ import { renderWithCss } from '../test/renderEnv';
 import { DungeonGame } from './DungeonGame';
 import { GameStateProvider } from '../contexts/GameStateContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { dungeonDayOf, DUNGEON_DAILY_LAYERS } from '../utils/dungeonIdle';
+import { dungeonDayOf } from '../utils/dungeonIdle';
 
 vi.mock('../utils/combate/group', async importOriginal => {
   const real = await importOriginal<typeof import('../utils/combate/group')>();
@@ -87,26 +87,31 @@ describe('Masmorra — energia por camada', () => {
   }, 60_000);
 });
 
-describe('Masmorra — limite diário de 30 lutas = 5 andares (REGISTRO §441)', () => {
+describe('Masmorra — SEM limite diário (REGISTRO §451): só a energia freia', () => {
   const hoje = () => dungeonDayOf({}, Date.now());
 
-  it('com 5 andares já começados hoje o botão não acende e a frase é calma (o Rift descansa)', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS } }, 'en-US');
-    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(document.querySelector('[data-dungeon-daily-limit]')!.textContent).toMatch(/rests until tomorrow/);
-    expect(document.querySelector('[data-dungeon-no-energy]')).toBeNull(); // não é falta de energia
-  });
-
-  it('com menos que o limite o botão acende, e o lobby mostra a contagem do dia (sem cobrança)', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: 2 } }, 'en-US');
+  it('com o antigo teto de 5 andares já batido hoje o botão ACENDE (há energia) e não há frase de "descansa até amanhã"', () => {
+    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: 5 } }, 'en-US');
     expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
     expect(document.querySelector('[data-dungeon-daily-limit]')).toBeNull();
-    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 8 now/);
-    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/today: 2 of 5 floors/);
+    expect(document.querySelector('[data-dungeon-no-energy]')).toBeNull();
   });
 
-  it('a contagem de ONTEM não vale: o dia virou, o botão acende', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: '2020-01-01', layers: DUNGEON_DAILY_LAYERS } }, 'en-US');
+  it('o lobby mostra a contagem do dia como estatística, sem "de N"', () => {
+    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: 2 } }, 'en-US');
+    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 8 now/);
+    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/today: 2 floors/);
+    expect(document.querySelector('[data-dungeon-plan]')!.textContent).not.toMatch(/ of 5/);
+  });
+
+  it('sem energia o botão apaga e a frase é calma (energia volta com o tempo)', () => {
+    montar({ energyPoints: 0, dungeonDaily: { day: hoje(), layers: 2 } }, 'en-US');
+    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(document.querySelector('[data-dungeon-no-energy]')!.textContent).toMatch(/returns with time/);
+  });
+
+  it('a contagem de ONTEM não importa: o dia virou, o botão acende', () => {
+    montar({ energyPoints: 8, dungeonDaily: { day: '2020-01-01', layers: 99 } }, 'en-US');
     expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
   });
 });

@@ -13,15 +13,16 @@ const dorme = (): HungerState => novo({ energyClock: { at: T0, carry: 0, sleep: 
 describe('bônus de sono da energia', () => {
   it('a constante é 1,5', () => expect(SLEEP_ENERGY_REGEN_BONUS).toBe(1.5));
 
-  it('dormindo, bem alimentado regenera ×1,5 (1 unidade a cada 40 min em vez de 60)', () => {
-    expect(settleEnergy(dorme(), T0 + 40 * MIN).energyPoints).toBe(1);
-    expect(settleEnergy(novo(), T0 + 40 * MIN).energyPoints).toBe(0);
-    expect(settleEnergy(dorme(), T0 + 6 * ENERGY_REGEN_MINUTES * MIN).energyPoints).toBe(8); // 6 h × 1,5 = 9 unidades, teto 8
+  it('dormindo, bem alimentado regenera ×1,5 (1 unidade a cada 80/1,5 ≈ 53 min em vez de 80)', () => {
+    const sono = Math.ceil((ENERGY_REGEN_MINUTES * MIN) / SLEEP_ENERGY_REGEN_BONUS);
+    expect(settleEnergy(dorme(), T0 + sono).energyPoints).toBe(1);
+    expect(settleEnergy(novo(), T0 + sono).energyPoints).toBe(0);
+    expect(settleEnergy(dorme(), T0 + 6 * ENERGY_REGEN_MINUTES * MIN).energyPoints).toBe(8); // 6 unidades acordado × 1,5 = 9, teto 8
   });
 
   it('mediano dormindo = 75%; faminto continua 0%', () => {
     const fair = { v: 40, at: T0 }; // mediano pelas próximas horas
-    expect(settleEnergy({ ...dorme(), hunger: fair }, T0 + 80 * MIN).energyPoints).toBe(1); // 80 × 0,75 = 60
+    expect(settleEnergy({ ...dorme(), hunger: fair }, T0 + 107 * MIN).energyPoints).toBe(1); // 107 × 0,75 ≈ 80
     const fome = { ...dorme(), hunger: { v: 0, at: T0 } };
     expect(settleEnergy(fome, T0 + 10 * 60 * MIN).energyPoints).toBe(0);
     expect(energyStatus(fome, T0 + MIN).mode).toBe('paused');
@@ -33,23 +34,23 @@ describe('bônus de sono da energia', () => {
     expect(acordado.speed).toBe(100);
     expect(dormindo.speed).toBe(150);
     expect(dormindo.sleeping).toBe(true);
-    expect(acordado.msToNext).toBe(60 * MIN);
-    expect(dormindo.msToNext).toBe(40 * MIN);
+    expect(acordado.msToNext).toBe(ENERGY_REGEN_MINUTES * MIN);
+    expect(dormindo.msToNext).toBe((ENERGY_REGEN_MINUTES * MIN) / SLEEP_ENERGY_REGEN_BONUS);
   });
 
-  it('troca de estado no meio da unidade: contada por trechos (30 min acordado + 20 min dormindo = 1 unidade)', () => {
+  it('troca de estado no meio da unidade: contada por trechos (50 min acordado + 20 min dormindo = 1 unidade de 80)', () => {
     let s = novo();
-    s = setSleeping(s, T0 + 30 * MIN, true); // acerta os 30 min com o estado antigo (acordado)
+    s = setSleeping(s, T0 + 50 * MIN, true); // acerta os 50 min com o estado antigo (acordado)
     expect(s.energyPoints).toBe(0);
     expect(s.energyClock?.sleep).toBe(true);
-    expect(s.energyClock?.carry).toBe(30 * MIN * 100);
-    expect(settleEnergy(s, T0 + 50 * MIN).energyPoints).toBe(1); // 30 + 20 × 1,5 = 60
-    expect(settleEnergy(s, T0 + 49 * MIN).energyPoints).toBe(0);
+    expect(s.energyClock?.carry).toBe(50 * MIN * 100);
+    expect(settleEnergy(s, T0 + 70 * MIN).energyPoints).toBe(1); // 50 + 20 × 1,5 = 80
+    expect(settleEnergy(s, T0 + 69 * MIN).energyPoints).toBe(0);
     // volta a acordar: o trecho dormido conta ×1,5 e o resto ×1
-    const acordou = setSleeping(s, T0 + 40 * MIN, false); // 30 + 10 × 1,5 = 45 min-equivalentes
+    const acordou = setSleeping(s, T0 + 60 * MIN, false); // 50 + 10 × 1,5 = 65 min-equivalentes
     expect(acordou.energyClock?.sleep).toBeUndefined();
-    expect(acordou.energyClock?.carry).toBe(45 * MIN * 100);
-    expect(settleEnergy(acordou, T0 + 55 * MIN).energyPoints).toBe(1);
+    expect(acordou.energyClock?.carry).toBe(65 * MIN * 100);
+    expect(settleEnergy(acordou, T0 + 75 * MIN).energyPoints).toBe(1);
   });
 
   it('fatiar o tempo não muda o total dormindo (leitura a cada 20 s = uma vez só)', () => {

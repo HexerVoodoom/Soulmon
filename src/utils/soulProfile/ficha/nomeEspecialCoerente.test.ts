@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
+import { ALL_SPECIAL_FAMILIES, SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import {
   SUBSTANTIVOS_ESPECIAL, SUBSTANTIVOS_EFEITO, SUBSTANTIVOS_POR_FAMILIA, SUBSTANTIVOS_LEGADO, comporNome, nomeParaFamilia, nomeAtualDoEspecial, familiaDoNomeInimigo, nomeEspecialInimigo, type LexNome,
 } from './nomeEspecial';
@@ -31,11 +31,14 @@ const DENY: Record<SpecialFamily, string[]> = {
   atkBuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, 'onslaught', 'barrage', 'assault'],
   defDebuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, 'onslaught', 'barrage', 'assault'],
   spdBuff: [...OFENSIVAS, ...CURATIVAS, ...PROTETORAS],
+  defBuff: [...OFENSIVAS, ...CURATIVAS, ...VELOZES, 'ward', 'aegis', 'bulwark'],
+  atkDebuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, ...OFENSIVAS],
+  spdDebuff: [...OFENSIVAS, ...CURATIVAS, ...PROTETORAS, ...VELOZES],
 };
 const palavras = (en: string) => en.toLowerCase().split(/\s+/);
 
 describe('lexico por familia: nenhuma palavra de outra familia', () => {
-  for (const f of SPECIAL_FAMILIES) {
+  for (const f of ALL_SPECIAL_FAMILIES) {
     it(`${f}`, () => {
       for (const n of SUBSTANTIVOS_ESPECIAL[f]) {
         const ws = palavras(n.en);
@@ -45,8 +48,8 @@ describe('lexico por familia: nenhuma palavra de outra familia', () => {
   }
   it('o nome composto de cada familia nunca leva substantivo de outra familia', () => {
     const lex: LexNome[] = [0, 1].flatMap(f => Array.from({ length: 8 }, (_, n) => ({ n, f: f as 0 | 1 })));
-    for (const f of SPECIAL_FAMILIES) {
-      const outros = SPECIAL_FAMILIES.filter(o => o !== f).flatMap(o => SUBSTANTIVOS_ESPECIAL[o].map(x => x.en));
+    for (const f of ALL_SPECIAL_FAMILIES) {
+      const outros = ALL_SPECIAL_FAMILIES.filter(o => o !== f).flatMap(o => SUBSTANTIVOS_ESPECIAL[o].map(x => x.en));
       for (const l of lex) {
         const nome = comporNome(f, l, { en: 'Fire', pt: 'Fogo' });
         for (const w of outros) {

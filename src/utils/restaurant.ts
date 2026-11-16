@@ -1,8 +1,9 @@
 /**
  * 🍲 RESTAURANTE DO MERCADO (05/11/2026, pedido do dono) — DONO ÚNICO da regra dos pratos. Funções PURAS (`now` por parâmetro).
  *
+ * 16/11/2026 (dono): COZINHAR NÃO serve na hora — o prato vira ITEM da pastinha (`dish:<id>`, `dishItems.ts`) e o jogador o USA depois.
  * O jogador COZINHA um prato com o que já tem: 2–3 comidas da pastinha (`foodInventory`) + UM ingrediente extra (essência de
- * elemento OU material de prédio — os mesmos do Soulsmith) + poucos Bits. Todo prato:
+ * elemento OU material de prédio — os mesmos do Soulsmith) + poucos Bits. Todo prato, ao ser USADO da pastinha:
  *  · enche a FOME até o máximo (as 3 barras: "satisfação cheia") — passa por `hunger.ts › eat`, nunca por aritmética própria;
  *  · e dá UM benefício: energia NA HORA, regeneração de energia mais rápida por 24 h, ou +% de ATK/DEF/SPD por 24 h no PvE.
  *
@@ -17,66 +18,25 @@
  *  · UM buff de 24 h por vez (cozinhar outro substitui) e no máximo `DISHES_PER_DAY` pratos por dia do jogador.
  *  · Recusa SEMPRE antes de debitar; `applyCook` reconfere tudo sobre o `prev` (footgun do updater inline) e é tudo-ou-nada.
  */
-import { eat, HUNGER_MAX, setEnergy, type HungerState } from './hunger';
+import type { HungerState } from './hunger';
 import { spendBitsPaidFirst, type BitsOrigin } from './bitsOrigin';
 import { spendEssences } from './essences';
-import { MATERIAL_CAP, type MaterialId, type BuildingQuestState } from './buildingQuests';
+import { MATERIAL_CAP, type BuildingQuestState } from './buildingQuests';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { bumpDailyIn } from './dailyMissions';
 import { countWeeklyMission } from './dungeonRewards';
 import type { WeeklyMissionProgress } from './weeklyMissions';
-import { MEAL_BUFF_MS, type MealBuffKind, type RestaurantState } from './restaurantState';
+import type { RestaurantState } from './restaurantState';
 
+import { DISHES, dishById, type ChefId, type Dish, type DishExtra } from './restaurantMenu';
+import { dishKey, serveDish } from './dishItems';
+export { DISHES, dishById, isCombatEffect, ENERGY_DISH_PRICE_MULT, type ChefId, type Dish, type DishEffect, type DishExtra } from './restaurantMenu';
 export { MEAL_BUFF_HOURS, MEAL_BUFF_VALUE_CAP, activeMealBuff, mealAttrBonus, sanitizeRestaurant, type MealBuff, type MealBuffKind, type RestaurantState } from './restaurantState';
 
 // ── constantes (defaults propostos; o dono decide) ──────────────────────────────────────────────────────────────────────
 
 /** Pratos por dia do jogador (segura o prato de energia na hora). */
 export const DISHES_PER_DAY = 2;
-
-export type ChefId = 'snapjaw' | 'caldo';
-/** `energy` = unidades de energia NA HORA; os outros duram `MEAL_BUFF_HOURS` (atk/def/spd em %, regen em % a mais de velocidade). */
-export type DishEffect = { kind: 'energy'; value: number } | { kind: MealBuffKind; value: number };
-export type DishExtra = { type: 'essence'; id: string; qty: number } | { type: 'material'; id: MaterialId; qty: number };
-
-export interface Dish {
-  id: string;
-  chef: ChefId;
-  icon: string;
-  nameEn: string;
-  namePt: string;
-  /** Comidas da pastinha (emoji → quantidade). Sempre 2+ no total. */
-  foods: Readonly<Record<string, number>>;
-  extra: DishExtra;
-  bits: number;
-  effect: DishEffect;
-}
-
-/**
- * O CARDÁPIO. Balanço: os de COMBATE (+2%) custam 3 comidas + 1 material + 30–35 Bits; os de ENERGIA NA HORA (+2/+3,
- * ou seja 2–3 h de regeneração) e de REGENERAÇÃO (+25%/+40% por 24 h) custam 2–3 comidas + 2–3 essências + 15–40 Bits.
- * Cada chef tem 2 de energia/regeneração por essência e 3 de combate (ATK, DEF, SPD) por material. Tabela: `docs/RESTAURANTE.md`.
- */
-export const DISHES: readonly Dish[] = [
-  // 🌿 Snapjaw — seg/qua/sex
-  { id: 'salada-viva', chef: 'snapjaw', icon: '🥗', nameEn: 'Living Salad', namePt: 'Salada Viva', foods: { '🥗': 2, '🧃': 1 }, extra: { type: 'essence', id: 'planta', qty: 2 }, bits: 20, effect: { kind: 'regen', value: 25 } },
-  { id: 'cha-de-orvalho', chef: 'snapjaw', icon: '🍵', nameEn: 'Dew Tea', namePt: 'Chá de Orvalho', foods: { '☕': 1, '🧃': 1 }, extra: { type: 'essence', id: 'agua', qty: 2 }, bits: 15, effect: { kind: 'energy', value: 2 } },
-  { id: 'tigela-do-bosque', chef: 'snapjaw', icon: '🥣', nameEn: 'Grove Bowl', namePt: 'Tigela do Bosque', foods: { '🍚': 2, '🍎': 1 }, extra: { type: 'essence', id: 'vida', qty: 3 }, bits: 30, effect: { kind: 'regen', value: 40 } },
-  { id: 'espetinho-de-vinha', chef: 'snapjaw', icon: '🍢', nameEn: 'Vine Skewer', namePt: 'Espetinho de Vinha', foods: { '🥩': 2, '🥗': 1 }, extra: { type: 'material', id: 'fang', qty: 1 }, bits: 30, effect: { kind: 'atk', value: 2 } },
-  { id: 'sopa-de-raiz', chef: 'snapjaw', icon: '🍲', nameEn: 'Root Stew', namePt: 'Sopa de Raiz', foods: { '🥗': 1, '🍚': 1, '🥩': 1 }, extra: { type: 'material', id: 'moss', qty: 1 }, bits: 30, effect: { kind: 'def', value: 2 } },
-  { id: 'mordida-da-flor', chef: 'snapjaw', icon: '🌸', nameEn: 'Bloom Bite', namePt: 'Mordida da Flor', foods: { '🍭': 1, '🍎': 1, '🥗': 1 }, extra: { type: 'material', id: 'laurel', qty: 1 }, bits: 35, effect: { kind: 'spd', value: 2 } },
-  // 🍲 Caldo — ter/qui/sáb
-  { id: 'pao-de-faisca', chef: 'caldo', icon: '🍞', nameEn: 'Spark Bread', namePt: 'Pão de Faísca', foods: { '🍚': 1, '☕': 1 }, extra: { type: 'essence', id: 'eletricidade', qty: 2 }, bits: 15, effect: { kind: 'energy', value: 2 } },
-  { id: 'ensopado-do-caldeirao', chef: 'caldo', icon: '🥘', nameEn: 'Cauldron Stew', namePt: 'Ensopado do Caldeirão', foods: { '🥩': 1, '🥗': 1, '🍚': 1 }, extra: { type: 'essence', id: 'arcano', qty: 3 }, bits: 40, effect: { kind: 'energy', value: 3 } },
-  { id: 'torta-de-mel-lunar', chef: 'caldo', icon: '🥧', nameEn: 'Moon Honey Pie', namePt: 'Torta de Mel Lunar', foods: { '🍭': 2, '🍎': 1 }, extra: { type: 'essence', id: 'luz', qty: 2 }, bits: 20, effect: { kind: 'regen', value: 25 } },
-  { id: 'caldo-de-brasa', chef: 'caldo', icon: '🍜', nameEn: 'Ember Broth', namePt: 'Caldo de Brasa', foods: { '🥩': 2, '🍚': 1 }, extra: { type: 'material', id: 'spark', qty: 1 }, bits: 30, effect: { kind: 'atk', value: 2 } },
-  { id: 'pizza-de-ferro', chef: 'caldo', icon: '🍕', nameEn: 'Ironcrust Pizza', namePt: 'Pizza Casca de Ferro', foods: { '🍕': 2, '🥩': 1 }, extra: { type: 'material', id: 'ore', qty: 1 }, bits: 30, effect: { kind: 'def', value: 2 } },
-  { id: 'pudim-de-nevoa', chef: 'caldo', icon: '🍮', nameEn: 'Mist Pudding', namePt: 'Pudim de Névoa', foods: { '🍭': 1, '🧃': 1, '🍎': 1 }, extra: { type: 'material', id: 'down', qty: 1 }, bits: 35, effect: { kind: 'spd', value: 2 } },
-];
-
-const BY_ID = new Map(DISHES.map(d => [d.id, d] as const));
-export const dishById = (id: string): Dish | undefined => BY_ID.get(id);
-export const isCombatEffect = (e: DishEffect): boolean => e.kind === 'atk' || e.kind === 'def' || e.kind === 'spd';
 
 // ── o cardápio do dia ────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -136,8 +96,8 @@ export function cookRefusal(s: CookState, dishId: string, now: number): CookRefu
 }
 
 /**
- * Cozinha e serve. Reconfere a recusa sobre `prev`; recusado → devolve a MESMA referência. Debita comidas, extra e Bits, enche a
- * fome (`eat`) e aplica o efeito (energia por `setEnergy`, buff substitui o anterior).
+ * Cozinha e GUARDA na pastinha. Reconfere a recusa sobre `prev`; recusado → devolve a MESMA referência. Debita comidas, extra e Bits e põe o prato (`dish:<id>`) na
+ * pastinha: fome e efeito só vêm ao USAR o item (`serveDish`).
  */
 export function applyCook<T extends CookState>(prev: T, dishId: string, now: number): { state: T; refused?: CookRefusal } {
   const refused = cookRefusal(prev, dishId, now);
@@ -164,19 +124,13 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
   }
   // Bits: gasta o pago primeiro, como a loja (§373: o prato de combate também aceita o Bit vindo de Crédito).
   s = spendBitsPaidFirst({ ...s, gamePoints: s.gamePoints - d.bits }, d.bits);
-  // fome cheia
-  s = eat(s, now, HUNGER_MAX);
-  // efeito
+  // O prato NÃO é servido na hora (16/11/2026, dono): vai para a pastinha, junto com as comidas. Fome e efeito só quando o jogador
+  // USA o item (`specialItemUse.ts › applySpecialItem` → `dishItems.ts › serveDish`); aqui só o teto de pratos do dia.
   const day = playerDayIso(new Date(now), prev.playerDayTz);
   const count = dishesToday(prev, now) + 1;
   const restaurant: RestaurantState = { ...(s.restaurant ?? {}), day, count };
-  if (d.effect.kind === 'energy') {
-    const value = d.effect.value;
-    s = setEnergy(s, now, cur => cur + value);
-  } else {
-    // regeneração: acerta o relógio ANTES de o buff começar (a velocidade nova vale só daqui para frente)
-    restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
-  }
+  const key = dishKey(d.id);
+  s = { ...s, foodInventory: { ...s.foodInventory, [key]: (s.foodInventory[key] ?? 0) + 1 } };
   // Missão da Snapjaw (12/11/2026, REGISTRO §314): pedir 1 prato no Restaurante (a Feira de verdade, `applyFeiraDish`, é outro gesto).
   // Missão SEMANAL "fazer um prato, qualquer prato" (15/11/2026, dono): 1 por prato cozinhado, no mesmo ponto da diária (a Feira de verdade não conta: o prato já vem pronto).
   return { state: countWeeklyMission(bumpDailyIn({ ...s, restaurant }, 'prato', 1, new Date(now)), 'cook-dish', new Date(now)) };
@@ -191,14 +145,5 @@ export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, pri
   const d = dishById(dishId);
   if (!d || !Number.isInteger(price) || price < 1) return { state: prev, refused: 'unknown' };
   if ((prev.gamePoints ?? 0) < price) return { state: prev, refused: 'no-bits' };
-  let s: T = spendBitsPaidFirst({ ...prev, gamePoints: prev.gamePoints - price }, price);
-  s = eat(s, now, HUNGER_MAX);
-  const restaurant: RestaurantState = { ...(s.restaurant ?? {}) };
-  if (d.effect.kind === 'energy') {
-    const value = d.effect.value;
-    s = setEnergy(s, now, cur => cur + value);
-  } else {
-    restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
-  }
-  return { state: { ...s, restaurant } };
+  return { state: serveDish(spendBitsPaidFirst({ ...prev, gamePoints: prev.gamePoints - price }, price), d, now) };
 }

@@ -28,6 +28,9 @@ export const HEX_FAMILY_COPY: Readonly<Record<SpecialFamily, Par>> = {
   atkBuff: p('Attack boost', 'Reforço de ataque'),
   defDebuff: p('Armor break', 'Quebra de defesa'),
   spdBuff: p('Speed boost', 'Reforço de velocidade'),
+  defBuff: p('Guard boost', 'Reforço de defesa'),
+  atkDebuff: p('Weaken', 'Enfraquecer'),
+  spdDebuff: p('Slowdown', 'Lentidão'),
 };
 
 /** Coroas de EFEITO (`HEX_CROWN_EFFECTS`): nome do valor. Descrição honesta: o que o efeito faz e onde. */

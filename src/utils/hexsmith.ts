@@ -22,7 +22,7 @@
  * Módulo PURO: sem React, sem relógio, sem localStorage.
  */
 import { ALL_ELEMENT_IDS, isDexElement } from './elementDex';
-import { SPECIAL_FAMILIES, type SpecialEffect, type SpecialFamily } from './combate/specials';
+import { CROWN_ONLY_FAMILIES, SPECIAL_FAMILIES, type SpecialEffect, type SpecialFamily } from './combate/specials';
 import { spendableBits, type BitsOrigin } from './bitsOrigin';
 import { spendBits } from './equipment';
 import { bumpDailyIn } from './dailyMissions';
@@ -99,14 +99,14 @@ export function parseHexItem(idRaw: unknown): { slot: HexSlot; value: string } |
   const value = id.slice(i + 1);
   if (!HEX_SLOTS.includes(slot)) return undefined;
   if (HEX_ELEMENT_SLOTS.includes(slot)) return isDexElement(value) ? { slot, value } : undefined;
-  if (slot === 'coroa') return (SPECIAL_FAMILIES as readonly string[]).includes(value) || isCrownEffect(value) ? { slot, value } : undefined;
+  if (slot === 'coroa') return (SPECIAL_FAMILIES as readonly string[]).includes(value) || (CROWN_ONLY_FAMILIES as readonly string[]).includes(value) || isCrownEffect(value) ? { slot, value } : undefined;
   return (HEX_STRIKES as readonly string[]).includes(value) ? { slot, value } : undefined;
 }
 
 export const isHexItem = (id: unknown): id is string => parseHexItem(id) !== undefined;
 
-/** As 7 famílias + os 3 efeitos, em ordem estável. */
-export const HEX_CROWN_VALUES: readonly string[] = [...SPECIAL_FAMILIES, ...HEX_CROWN_EFFECTS];
+/** As 7 famílias + os 3 efeitos + as 3 famílias só de Coroa (H2, trilha B), em ordem estável. */
+export const HEX_CROWN_VALUES: readonly string[] = [...SPECIAL_FAMILIES, ...HEX_CROWN_EFFECTS, ...CROWN_ONLY_FAMILIES];
 
 /** Tudo que se pode forjar num slot (os valores, em ordem estável). */
 export function hexValuesOf(slot: HexSlot): readonly string[] {
@@ -126,8 +126,8 @@ export interface HexsmithState {
   readonly equipped: Readonly<Partial<Record<HexSlot, string>>>;
 }
 export const EMPTY_HEXSMITH: HexsmithState = { owned: [], equipped: {} };
-/** Teto de itens no save (sanidade: 3×210 + 7 + 3 + 2 = 642 itens possíveis; só cresce). */
-export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + 2;
+/** Teto de itens no save (sanidade: 3×210 + 7 + 3 + 3 + 2 = 645 itens possíveis; só cresce). */
+export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + CROWN_ONLY_FAMILIES.length + 2;
 
 /** Leitura tolerante: posse só de itens válidos (sem repetir), equipado só se possuído E do slot certo. Nunca lança. */
 export function sanitizeHexsmith(raw: unknown): HexsmithState {

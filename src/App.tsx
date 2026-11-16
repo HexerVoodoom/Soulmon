@@ -4490,6 +4490,9 @@ export default function App() {
       if (special.kind === 'potion') {
         toast(language === 'pt-BR' ? '🧪 Poção dada. Na próxima evolução o Soulmon carrega este elemento.' : '🧪 Potion given. At the next evolution your Soulmon carries this element.');
       }
+      if (special.kind === 'dish') {
+        toast(language === 'pt-BR' ? `🍽️ ${special.namePt}! Fome cheia e o reforço do prato.` : `🍽️ ${special.nameEn}! Fully fed, with the dish boost.`);
+      }
       if (special.kind === 'premium') {
         toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
       }

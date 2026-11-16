@@ -1,8 +1,30 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §455)
+>
+> - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
+> - **Não visto em aparelho.**
+
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §455)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
+>
+> - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §452)
+>
+> - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
+> - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
+> - **Falta:** H4 (Coroa troca o especial e a invocação some), `fx.efeito` do oponente no PvP. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+
+>
 > ## 16/11/2026 — Hexsmith: arte das 6 Coroas e 3 selos (`feat/hexsmith-arte`, REGISTRO §451)
 >
-> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias.
+> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias (ligados na H2, REGISTRO §452).
 > - **Pendente:** regerar `st-debuff-atk`, `coroa-silence`, `coroa-hot` (só trocar arquivo). **Rollback:** `git revert`.
 >
 > ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)

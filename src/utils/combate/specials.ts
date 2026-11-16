@@ -37,13 +37,24 @@ export const SPECIAL_BUDGET_HITS = 3;
 
 /** Lasting buff/debuff families act on the next E·p own attacks (not on a timer). */
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'] as const;
-export type SpecialFamily = (typeof SPECIAL_FAMILIES)[number];
+/**
+ * HEXSMITH H2 (16/11/2026, trilha B): famílias que só existem via COROA. NUNCA entram no sorteio de ficha, de inimigo nem de
+ * jogador novo (`SPECIAL_FAMILIES` segue sendo a lista sorteável): o peso delas em `PESO_FAMILIA_ESCOLA` é 0 e `foeFamilies` não as
+ * escolhe. `defBuff` = reforço de defesa (os próximos golpes que o conjurador RECEBE doem menos); `atkDebuff` = os próximos golpes do
+ * ALVO batem mais fraco; `spdDebuff` = lentidão real (o alvo ataca mais devagar). Espelho: `functions/api/_combate.js`.
+ */
+export const CROWN_ONLY_FAMILIES = ['defBuff', 'atkDebuff', 'spdDebuff'] as const;
+export const ALL_SPECIAL_FAMILIES = [...SPECIAL_FAMILIES, ...CROWN_ONLY_FAMILIES] as const;
+export type SpecialFamily = (typeof ALL_SPECIAL_FAMILIES)[number];
+/** As 7 famílias sorteáveis (as que o jogo sorteia para fichas e inimigos). */
+export type DrawnFamily = (typeof SPECIAL_FAMILIES)[number];
+export const isSpecialFamily = (f: unknown): f is SpecialFamily => typeof f === 'string' && (ALL_SPECIAL_FAMILIES as readonly string[]).includes(f);
 
 /** The family every other one is measured against. */
 export const REFERENCE_FAMILY: SpecialFamily = 'direct';
 
 /** Families that get the rookie tolerance (−15%) in the ruler. */
-export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 'spdBuff'];
+export const BUFF_FAMILIES: readonly SpecialFamily[] = ['atkBuff', 'defDebuff', 'spdBuff', ...CROWN_ONLY_FAMILIES];
 
 /**
  * Calibrated power per family (spike-sistema.md, held in the Pass 1 holdout) — o do 1v1 (PvP, simulados, treino).
@@ -61,6 +72,9 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   atkBuff: 1.01,
   defDebuff: 1.01,
   spdBuff: 2,
+  defBuff: 1.1,
+  atkDebuff: 1.1,
+  spdDebuff: 0.64,
 };
 
 /**
@@ -68,7 +82,7 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
  * mudança de `SPECIAL_POWER` (pedida para o PvP) não se multiplicar com `PVE_FAMILY_POWER`, que foi calibrado em cima destes números.
  */
 export const SPECIAL_POWER_PVE: Readonly<Record<SpecialFamily, number>> = {
-  direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82,
+  direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82, defBuff: 1, atkDebuff: 1, spdDebuff: 1,
 };
 
 /** §228: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
@@ -110,8 +124,29 @@ export function effectTuneMasmorra(): EffectTune {
   return { ...EFFECT_TUNE, hotScale: HOT_SCALE_MASMORRA };
 }
 
-export function specialOf(family: SpecialFamily): Special {
-  return { family, power: SPECIAL_POWER[family] };
+/**
+ * HEXSMITH H2 (16/11/2026, dono: "os efeitos LIGADOS TAMBÉM NO PvP"): os botões das mecânicas `hot`/`slow`/`silence` no 1v1 (`fight.ts`,
+ * espelho `_combate.js`). Separados de `EFFECT_TUNE` (PvE, calibrado pelos gates ±3pp) para a régua do 1v1 (±5%) ter botão próprio.
+ * Os valores saem da simulação de `hexsmith.efeitosPvp.test.ts`.
+ */
+export const EFFECT_TUNE_PVP: EffectTune = { silenceHits: 1, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.8, hotScale: 1.05 };
+
+/**
+ * HEXSMITH H2: corte por golpe das famílias novas. `defBuff` (golpe recebido: `guardCut`) e `atkDebuff` (golpe dado pelo alvo: `weakCut`) tiram essa
+ * fração do dano de CADA golpe afetado; a contagem é `E / corte`, então o total evitado é E golpes, como um escudo de mesmo orçamento.
+ */
+export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
+/**
+ * `spdDebuff` (lentidão real): `spdDebuffScale` = golpes de arrasto do alvo por unidade de orçamento `E`; cada golpe afetado atrasa o próximo
+ * do alvo em `dragStretch` intervalos (a lentidão de efeito, `nSlow`, atrasa 1). O poder da família é o botão de calibração.
+ */
+
+/** Efeito válido por família (a Coroa de efeito só vale sobre a família-base dela). */
+export const EFFECT_FAMILY: Readonly<Record<SpecialEffect, SpecialFamily>> = { hot: 'shield', slow: 'defDebuff', silence: 'defDebuff' };
+
+export function specialOf(family: SpecialFamily, effect?: SpecialEffect | null): Special {
+  const base: Special = { family, power: SPECIAL_POWER[family] };
+  return effect && EFFECT_FAMILY[effect] === family ? { ...base, effect } : base;
 }
 /** §325: o especial com o poder do PvE (`SPECIAL_POWER_PVE`). Quem monta luta de Arena/Masmorra/Pesadelo/inimigo usa este. */
 export function specialOfPve(family: SpecialFamily): Special {
@@ -135,6 +170,8 @@ export const ENERGY_TRIGGER = 100;
  * area. Heal, shield and the self buffs are personal; area does not touch them.
  */
 export const AREA_FAMILIES: readonly SpecialFamily[] = ['direct', 'dot', 'defDebuff'];
+// Hexsmith H2: `atkDebuff` e `spdDebuff` miram o inimigo mas NÃO respondem à área: em área o `atkDebuff` rendia +14,6pp de vitória sobre o alvo
+// único (régua AC4/AC7, ±6pp), porque enfraquecer todos de uma vez vale mais que concentrar. Ficam sempre em alvo único (como os buffs).
 
 /**
  * Efficiency of the area (PR3a). 1 = same TOTAL budget as the single target
@@ -168,9 +205,9 @@ export type PveEngine = 'arena' | 'dungeon' | 'pesadelo';
  * O 1v1 (PvP) não lê esta tabela.
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
-  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
-  dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
-  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
+  arena: { direct: 1, dot: 1.11, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25, defBuff: 1.35, atkDebuff: 2, spdDebuff: 1.4 },
+  dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 2, atkDebuff: 1.4, spdDebuff: 0.9 },
+  pesadelo: { direct: 1, dot: 1.4, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5, defBuff: 0.7, atkDebuff: 0.65, spdDebuff: 0.5 },
 };
 
 /**
