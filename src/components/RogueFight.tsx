@@ -148,7 +148,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-rogue-fight style={{ display: 'contents' }} />
       <BattleStage
-        specialLabel={specialLabel(isPt, par?.especial)}
+        specialLabel={specialLabel(isPt, par?.especial, family)}
         foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
         isPt={isPt}
         scene={bg}

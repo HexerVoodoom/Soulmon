@@ -33,7 +33,7 @@ export const SUBSTANTIVOS_ESPECIAL: Record<SpecialFamily, TextoPar[]> = {
   ],
   heal: [
     { en: 'Solace', pt: 'Alento' }, { en: 'Sanctuary', pt: 'Santuário' }, { en: 'Choir', pt: 'Coral' },
-    { en: 'Halo', pt: 'Aurora' }, { en: 'Rapture', pt: 'Êxtase' }, { en: 'Bloom', pt: 'Floração' },
+    { en: 'Halo', pt: 'Aurora' }, { en: 'Renewal', pt: 'Renovo' }, { en: 'Bloom', pt: 'Floração' },
     { en: 'Lullaby', pt: 'Cantiga' }, { en: 'Respite', pt: 'Trégua' },
   ],
   shield: [
@@ -54,9 +54,66 @@ export const SUBSTANTIVOS_ESPECIAL: Record<SpecialFamily, TextoPar[]> = {
   spdBuff: [
     { en: 'Slipstream', pt: 'Esteira' }, { en: 'Zephyr', pt: 'Zéfiro' }, { en: 'Quickening', pt: 'Aceleração' },
     { en: 'Dash', pt: 'Disparada' }, { en: 'Momentum', pt: 'Embalo' }, { en: 'Swiftness', pt: 'Presteza' },
-    { en: 'Rapids', pt: 'Corredeira' }, { en: 'Flurry', pt: 'Torvelinho' },
+    { en: 'Rapids', pt: 'Corredeira' }, { en: 'Haste', pt: 'Celeridade' },
   ],
 };
+
+/**
+ * Substantivos que MUDARAM de texto na auditoria de coerência (16/11/2026): o índice (e o `lex` gravado no save e no servidor)
+ * segue o mesmo; só o texto exibido foi trocado. Quem lê um nome já gravado com o texto velho o troca pelo atual
+ * (`comNomeAtualDoEspecial`), sem migrar dado: "Rapture" (êxtase, não cura) e "Flurry" (saraivada de golpes, não velocidade).
+ */
+export const SUBSTANTIVOS_LEGADO: Partial<Record<SpecialFamily, Record<number, TextoPar>>> = {
+  heal: { 4: { en: 'Rapture', pt: 'Êxtase' } },
+  spdBuff: { 7: { en: 'Flurry', pt: 'Torvelinho' } },
+};
+
+interface SkillComNome { nome: TextoPar; familia?: SpecialFamily; lex?: LexNome }
+
+/** Troca, no nome do especial, o substantivo de `de` pelo de `para` (PT e EN). Se o nome não o traz (nome do jogador, nome já novo), devolve igual. */
+function trocaSubstantivo(nome: TextoPar, de: TextoPar, para: TextoPar): TextoPar {
+  if (de.en === para.en) return nome;
+  const re = (w: string) => new RegExp(`(^|\\s)${w}(\\s|$)`);
+  const okEn = re(de.en).test(nome.en);
+  const okPt = nome.pt.startsWith(`${de.pt} de `);
+  return {
+    en: okEn ? nome.en.replace(re(de.en), (_m, a: string, b: string) => `${a}${para.en}${b}`) : nome.en,
+    pt: okPt ? `${para.pt}${nome.pt.slice(de.pt.length)}` : nome.pt,
+  };
+}
+
+/** O nome do especial lido TOLERANTE: se o save guarda o texto antigo de um substantivo renomeado, mostra o atual (pela tabela, por id). */
+export function nomeAtualDoEspecial<T extends SkillComNome>(esp: T): T {
+  const { familia, lex } = esp;
+  if (!familia || !lex) return esp;
+  const velho = SUBSTANTIVOS_LEGADO[familia]?.[lex.n];
+  const atual = SUBSTANTIVOS_ESPECIAL[familia]?.[lex.n];
+  if (!velho || !atual) return esp;
+  const nome = trocaSubstantivo(esp.nome, velho, atual);
+  return nome === esp.nome || (nome.en === esp.nome.en && nome.pt === esp.nome.pt) ? esp : { ...esp, nome };
+}
+
+/**
+ * O nome do especial COERENTE com a família que vale na luta. A Coroa da Hexsmith troca a família do especial sem trocar o texto
+ * ("Fogo Investida Total" curando): aqui o substantivo é o MESMO índice, só que no léxico da família efetiva. Nome do jogador
+ * (que não traz o substantivo gerado) e família igual passam intactos.
+ */
+export function nomeParaFamilia<T extends SkillComNome>(esp: T, familiaEfetiva: SpecialFamily | undefined): T {
+  const lido = nomeAtualDoEspecial(esp);
+  const { familia, lex } = lido;
+  if (!familiaEfetiva || !familia || !lex || familiaEfetiva === familia) return lido;
+  const de = SUBSTANTIVOS_ESPECIAL[familia]?.[lex.n];
+  const para = SUBSTANTIVOS_ESPECIAL[familiaEfetiva]?.[lex.n];
+  if (!de || !para) return lido;
+  const nome = trocaSubstantivo(lido.nome, de, para);
+  return nome.en === lido.nome.en && nome.pt === lido.nome.pt ? lido : { ...lido, nome };
+}
+
+/** A família do NOME de um especial de inimigo: a cura ao longo do tempo (`shield` + `effect: 'hot'`) é cura, e o nome é de cura. */
+export function familiaDoNomeInimigo(special: { family: SpecialFamily; effect?: string } | null | undefined): SpecialFamily | undefined {
+  if (!special) return undefined;
+  return special.effect === 'hot' ? 'heal' : special.family;
+}
 
 /** Peso de cada família por escola. Toda família tem peso > 0 em toda escola: nenhuma é inalcançável. */
 export const PESO_FAMILIA_ESCOLA: Record<EscolaSkillId, Record<SpecialFamily, number>> = {

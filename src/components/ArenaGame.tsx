@@ -47,7 +47,7 @@ import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './game
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel, foeSpecialLabel, familiaDoNomeInimigo } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
@@ -411,8 +411,8 @@ export function ArenaGame({
       >
         <BattleStage
           scene={cenaDaRun.bg}
-          specialLabel={specialLabel(isPt, especial)}
-          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          specialLabel={specialLabel(isPt, especial, hexFamily(familyOfSkill(especial), hx))}
+          foeSpecialLabel={(f, i) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(foesLado[i ?? 0]?.special))}
           isPt={isPt}
           me={{
             key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
