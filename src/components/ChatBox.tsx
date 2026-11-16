@@ -58,6 +58,9 @@ const FEEDBACK_DAY_KEY = 'soulmon-chat-feedback-day';
 /** Sem conexão: o chat não grava a troca nem apaga o texto digitado. */
 class SemRede extends Error {}
 
+/** Qualquer superfície que se declara diálogo: ao entrar no documento, o painel do chat sai de cena. */
+const DIALOGO = '[role="dialog"],[role="alertdialog"],[aria-modal="true"]';
+
 export function ChatBox({
   petName,
   mood,
@@ -115,6 +118,33 @@ export function ChatBox({
     if (ativo && host?.contains(ativo)) ativo.blur(); // some o teclado
     setModo('barra');
   };
+  /* O painel é transitório: fecha ao tocar FORA dele, quando o foco vai para fora (outra aba, outro painel) e quando qualquer
+     diálogo/modal novo entra no documento. Escuta no documento (captura) e não cobre a tela com um backdrop: o painel de meia
+     tela deixa o resto visível, e um backdrop engoliria o toque da navegação (o toque que fecha também chega ao destino).
+     Nada aqui inertiza irmãos nem prende foco: só fecha, e o `useBackLayer` do painel segue cuidando do botão voltar. */
+  useEffect(() => {
+    if (modo === 'barra') return;
+    const dentro = (n: EventTarget | null) => n instanceof Element && (!!n.closest('.sm3-chatpanel') || !!host?.contains(n));
+    const fora = (e: Event) => { if (!dentro(e.target)) fecharChat(); };
+    const obs = typeof MutationObserver !== 'undefined' ? new MutationObserver(muts => {
+      for (const m of muts) {
+        for (const n of Array.from(m.addedNodes)) {
+          if (!(n instanceof Element) || n.closest('.sm3-chatpanel') || n.querySelector('.sm3-chatpanel')) continue;
+          if (n.matches(DIALOGO) || n.querySelector(DIALOGO)) { fecharChat(); return; }
+        }
+      }
+    }) : null;
+    obs?.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('pointerdown', fora, true);
+    document.addEventListener('focusin', fora, true);
+    return () => {
+      obs?.disconnect();
+      document.removeEventListener('pointerdown', fora, true);
+      document.removeEventListener('focusin', fora, true);
+    };
+    // `fecharChat` só lê refs/estado estável (host, setModo); reinscrever a cada render perderia eventos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modo, host]);
   /* WP3.1 — MEMÓRIA DE SESSÃO, e só de sessão.
      Sem isto o `getPetResponse` perguntava "E você?" e processava a resposta
      como se fosse a primeira frase da conversa — o pet perguntava e não

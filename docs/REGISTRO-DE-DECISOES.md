@@ -6035,7 +6035,17 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 
 **Decisão.** 20 PNGs (champion, ultimate, mega, ultra dos 5 elementos) + rookie de tempo trocados no lugar em `src/assets/soulmon/novos/`, sem lógica nova. Rookies de som/eletricidade/arcano/marcial ficam. Backup dos 25 PNGs antigos em `E:/Soulmon-assets/_lote-16-11/legado-v0/` (o PR 2 os usa para ramos legados em outro elemento; Ultras novos viram chefe de Arena). Todos 256² RGBA, 53–81 KB (teto 150 KB), sem reduzir paleta.
 
-## §439 — Pacote A: 1 forma por combinação de elementos no estágio dela (16/11/2026, dono)
+## §439 — Amizade que "some" e chat que fecha ao sair de cena (16/11/2026, pedido do dono)
+
+**Pedido do dono.** (1) "Amizade não está funcionando. Adiciona mas logo depois some." (2) O chat com o Soulmon deve fechar ao clicar fora ou abrir qualquer outra coisa.
+
+**Causa da amizade (duas, as duas reproduzidas em teste).** (a) Servidor: o upsert do perfil (`action=profile`, gravado o tempo todo pelo cloud save) lia o perfil no início e regravava `friends: prev.friends` no fim, depois de vários awaits. Uma amizade ligada nesse intervalo (aceite do convite, convite cruzado) era sobrescrita pela lista velha: o vínculo existia e sumia. Agora o upsert relê `friends` colado na escrita (a janela cai de dezenas de ms para uma leitura de KV). Não há compare-and-swap no KV: a janela residual existe, e é menor, não zero. (b) Cliente: `gameState.friends` só mudava com a resposta de uma AÇÃO (convidar, aceitar, remover). Amizade ligada do outro lado nunca chegava, e a lista antiga ficava de fantasma. Agora, ao ler `friendsState`, a tela adota a lista do servidor (fonte da verdade) e só chama `onFriendsChange` se diferir (sem laço). Sem migração de dados e sem mexer em produção.
+
+**Alternativa que perdeu.** Mover `friends` para uma chave própria no KV (elimina a corrida de vez): exige migração dos perfis em produção; fica como opção se a corrida residual aparecer. **Gatilho para rever:** amizade ainda sumindo depois desta correção.
+
+**Chat.** O painel (meia tela e tela cheia) fecha ao tocar fora (pointerdown no documento, captura), quando o foco vai para fora (outro painel/aba) e quando qualquer `role=dialog`/`alertdialog`/`aria-modal` novo entra no documento (MutationObserver). Esc continua fechando. Sem backdrop e sem inertizar irmãos (o toque que fecha também chega ao destino, p.ex. a navegação): evita a classe de bug do modal inerte. Réguas: `community.amigoPerfilCorrida.test.js`, `LibraryPage.amigoPersiste.render.test.tsx`, `ChatBox.fechaFora.render.test.tsx`.
+
+## §440 — Pacote A: 1 forma por combinação de elementos no estágio dela (16/11/2026, dono)
 
 **Pedido (literal, resumo):** gerar pelo menos 1 Soulmon por combinação de elementos no estágio dela (2 elementos → Champion, 3 → Ultimate, 4 → Mega), sem Ultra, pelo mesmo processo do summon real (API Higgsfield alpha, 1 chamada por forma, forma anterior como referência).
 

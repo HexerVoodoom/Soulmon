@@ -299,7 +299,14 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   useEffect(() => {
     let vivo = true;
     getFriendsState(saveId, playerDayTz)
-      .then(r => { if (vivo) { setSocial(r); onSocialAlert?.(r.incoming.length > 0 || r.unseen > 0); } })
+      .then(r => {
+        if (!vivo) return;
+        setSocial(r);
+        onSocialAlert?.(r.incoming.length > 0 || r.unseen > 0);
+        // §439: o servidor é a fonte da lista (aceite do outro lado, remoção do outro lado, perfil regravado). A lista local só
+        // mudava com a resposta de uma AÇÃO, então amizade ligada fora desta tela nunca chegava e uma antiga ficava de fantasma.
+        if (Array.isArray(r.friends) && (r.friends.length !== friends.length || r.friends.some(f => !friends.includes(f)))) onFriendsChange(r.friends);
+      })
       .catch(() => { /* sem rede: segue sem convites */ });
     return () => { vivo = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

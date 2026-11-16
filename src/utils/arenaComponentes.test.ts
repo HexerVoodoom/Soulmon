@@ -136,7 +136,7 @@ describe('a Arena: distribuição real do Ultimate', () => {
 
 describe('Rookie e Champion ficam como estavam', () => {
   const fnv = (s: string) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0).toString(16); };
-  // REGISTRO §439 (16/11/2026): as 205 formas do pacote A entram nos pools de componentes da Arena de run do elemento, então o hash da escada 10 (Champion) foi regravado (era 'ae60d46a').
+  // REGISTRO §440 (16/11/2026): as 205 formas do pacote A entram nos pools de componentes da Arena de run do elemento, então o hash da escada 10 (Champion) foi regravado (era 'ae60d46a').
   // REGISTRO §437 (16/11/2026): o Champion de run de elemento passou a seguir a tabela §232 (1 `rng()` a mais), então o hash da escada 10 (que tem Champion) foi
   // regravado por decisão do dono; a escada 0 (só Rookie) segue idêntica. Os hashes originais foram tirados de `origin/main` (antes desta mudança) e conferidos com o código novo: mesmo resultado. Se um dia o roster mudar
   // de forma legítima, regrave com o dono; o que não pode é este teste passar porque o sorteio de Rookie/Champion mudou sem querer.

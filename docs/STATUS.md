@@ -1,12 +1,18 @@
 # Status do Soulmon — registro vivo
 
-> ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §439)
+> ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §440)
 >
 > - **Feito:** 1 forma por combinação no estágio dela (2 elementos champion, 3 ultimate, 4 mega), 205 PNG 256² via API alpha, no fim do `ENEMY_ROSTER` (kind `forma`, fora do sorteio comum); scripts `combinados-alvos/fila.mjs`; prompt+tags em `_banco/registro.jsonl`.
 > - **Visto em tela:** folhas de QA (rookie ao lado da forma) em `E:/Soulmon-assets/_lote-16-11/combinados/`; não visto no app.
 > - **Pendente:** sorteio dos inimigos usar as formas (outro pacote); veto de nomes pelo dono.
 > - **Rollback:** `git revert`; só dados e PNG.
-
+>
+> ## 16/11/2026 — Amizade que some e chat que fecha fora (`fix/amizade-chat-fecha`, REGISTRO §439)
+>
+> - **Feito:** upsert do perfil relê `friends` ao gravar (corrida com aceite de convite); Amigos adota a lista do servidor ao ler o estado social; chat fecha ao tocar fora, foco fora, diálogo novo ou Esc.
+> - **Não visto em aparelho:** só testes (servidor, render). A corrida residual do KV (sem CAS) segue possível, menor.
+> - **Rollback:** `git revert`; sem save nem migração.
+>
 > ## 16/11/2026 — Troca de arte das linhas v1 (`feat/linhas-v1-arte`, REGISTRO §438)
 > 21 PNGs trocados no lugar (som, eletricidade, tempo, arcano, marcial); backup em `E:/Soulmon-assets/_lote-16-11/legado-v0/`. PR 2 (ramos legados, Ultras chefe de Arena) pendente.
 >
