@@ -161,3 +161,13 @@ describe('NPCs: só chefes nomeados, por lista explícita', () => {
     expect(COMPANHEIROS_POR_COMBATENTE).toBe(1);
   });
 });
+
+describe('companheiroDoEstado (PR 2): a unica porta das telas de luta', () => {
+  it('com a flag desligada devolve null mesmo para um save evocador', async () => {
+    const { companheiroDoEstado } = await import('./companheiroInvocado');
+    const save = { evolutionStage: 'champion', soulmonCompanheiro: { id: 'lobo' }, soulmonEvocacao: { champion: { evocador: true } } };
+    expect(companheiroDoEstado(save)).toBeNull();
+    expect(companheiroDoEstado(null)).toBeNull();
+    expect(companheiroDoEstado({})).toBeNull();
+  });
+});

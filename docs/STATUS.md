@@ -5,6 +5,14 @@
 > - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).
 > - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente.
 
+>
+> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §447)
+>
+> - **Feito:** regra pura `combate/companheiro.ts` (3 turnos, função mista, cura não invoca, 1 por combatente), `FightSide.invoca` em `fight.ts`/`group.ts`, espelho em `_combate.js` + `_companheiroInvocado.js` (paridade), cena `SummonLayer`, ligação em Arena/Masmorra/Pesadelo/Grove/Duelo/Torneio. TUDO atrás da flag `COMPANHEIRO_INVOCADO = false` (cliente e servidor): comportamento idêntico ao de hoje (testado).
+> - **Calibração:** vitória invocada − normal de −7 a +6pp (1v1, simulação); valor nominal ~0,97 do especial normal.
+> - **Falta:** PNGs dos 32 (PR 1b), ligar a flag, Rogue Dungeon, decisão do dono sobre o cache no save do cliente. Não visto em aparelho.
+> - **Rollback:** `git revert`; flag desligada = sem efeito.
+>
 > ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §446)
 >
 > - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.

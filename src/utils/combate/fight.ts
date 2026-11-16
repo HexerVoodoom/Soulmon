@@ -22,6 +22,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
+import { planoInvocacao } from './companheiro';
 import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special } from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
@@ -105,6 +106,12 @@ export interface FightSide {
   readonly dotResist?: number;
   /** Tarefa B (`tal-pve-07`): opening shield of this side, as a fraction of its HP (capped by `cleanStartShield`). Read by `groupFight`. */
   readonly startShield?: number;
+  /**
+   * COMPANHEIRO INVOCADO (PR 2, 16/11/2026): `true` = este lado é evocador COM companheiro neste estágio; o especial dele invoca
+   * (regra em `companheiro.ts`; cura nunca invoca). Ausente/false = nada muda, byte a byte. Quem decide é o chamador a partir de
+   * `companheiroAtivo` (flag desligada = nunca `true`); o núcleo não lê a flag, para os testes exercitarem a regra.
+   */
+  readonly invoca?: boolean;
 }
 
 export interface CheerEvent {
@@ -162,6 +169,8 @@ export interface FighterFx {
   readonly nSil?: number;
   readonly nSlow?: number;
   readonly hot?: number;
+  /** Companheiro invocado: turnos de ATAQUE que o companheiro deste lutador ainda tem (ausente = sem companheiro em cena). Só a cena lê. */
+  readonly comp?: number;
 }
 export type FightFxPair = readonly [FighterFx, FighterFx];
 
@@ -215,6 +224,7 @@ interface Fighter {
   dotResist: number;
   /** §334: DoTs que este lutador CARREGA; cada um tica no começo de cada golpe dele (`tickOwnTurn`). */
   dots: OwnTurnDot[];
+  readonly invoca: boolean;
 }
 
 /**
@@ -225,10 +235,15 @@ interface OwnTurnDot {
   readonly src: Fighter;
   readonly E: number;
   left: number;
+  /** Ataque do companheiro invocado (PR 2): é um DoT como outro qualquer, só marcado para a cena e para a regra de 1 por combatente. */
+  readonly comp?: true;
 }
 
 /** §334: ticks de um DoT (a duração, em golpes do afetado). */
 export const DOT_TICKS = 3;
+
+/** `comp` só entra no contador quando há companheiro em cena (os eventos de quem não invoca ficam byte a byte iguais). */
+export const compFx = (n: number): { comp?: number } => (n > 0 ? { comp: n } : {});
 
 interface Timed {
   readonly t: number;
@@ -258,7 +273,7 @@ export function* fightSteps(
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: [],
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist), dots: [], invoca: s.invoca === true,
     };
   };
   const F: [Fighter, Fighter] = [mk(a, 0), mk(b, 1)];
@@ -285,6 +300,7 @@ export function* fightSteps(
   const fxOf = (f: Fighter, foe: Fighter): FighterFx => ({
     nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield, shieldHits: f.shield * hitsOn(foe, f),
     dot: f.dots.reduce((n, d) => n + d.left, 0),
+    ...(f.invoca ? compFx(foe.dots.reduce((n, d) => (d.src === f && d.comp ? n + d.left : n), 0)) : {}),
   });
   const snapFx = (): FightFxPair => [fxOf(F[0], F[1]), fxOf(F[1], F[0])];
   const gain = (f: Fighter, x: number, per: number) => {
@@ -323,6 +339,14 @@ export function* fightSteps(
     return me.hp <= EPS;
   };
   const cast = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
+    const plano = me.invoca ? planoInvocacao(me.sp, scale) : null;
+    if (!plano) { castFamilia(me, foe, t0, scale); return; }
+    // 1 companheiro por combatente: invocar de novo troca o que estava em cena
+    for (const f of F) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
+    if (plano.escalaEfeito > 0) castFamilia(me, foe, t0, plano.escalaEfeito);
+    foe.dots.push({ src: me, E: plano.ataqueE, left: plano.turnosAtaque, comp: true });
+  };
+  const castFamilia = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
     const sp = me.sp as Special;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);

@@ -129,7 +129,7 @@ import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageS
 import type { FichaStage } from './utils/soulProfile/ficha/types';
 import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
-import { migrarEvocacao } from './utils/companheiroInvocado';
+import { COMPANHEIRO_INVOCADO, migrarEvocacao } from './utils/companheiroInvocado';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -5998,6 +5998,25 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: a ficha segue no cache que já está no save */ });
     return () => { vivo = false; };
   }, [jornadaPendente, jornadaAtual, setGameState]);
+
+  // COMPANHEIRO INVOCADO (PR 2): save que já passou da jornada não volta ao efeito acima, então o cache `soulmonEvocacao` do estágio atual
+  // é preenchido aqui, UMA vez, a partir do perfil local. Só com a flag LIGADA; desligada, `faltaEvocacao` é sempre `false` (nada roda).
+  const faltaEvocacao = COMPANHEIRO_INVOCADO && !!gameState.fichaJornada && !gameState.soulmonEvocacao?.[fichaStageOf(gameState.evolutionStage)];
+  useEffect(() => {
+    if (!faltaEvocacao || !jornadaAtual) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    import('./utils/soulProfile/ficha/jornadaRefresh').then(({ recalcularCaches }) => recalcularCaches(saved, jornadaAtual)).then(r => {
+      if (!vivo || !r.evocacao) return;
+      setGameState(prev => ({
+        ...prev,
+        soulmonEvocacao: migrarEvocacao(prev.soulmonEvocacao, r.evocacao),
+        ...(r.companheiro && !prev.soulmonCompanheiro ? { soulmonCompanheiro: r.companheiro } : {}),
+      }));
+    }).catch(() => { /* perfil corrompido: segue sem o cache e o estágio fica sem companheiro (nunca adivinha) */ });
+    return () => { vivo = false; };
+  }, [faltaEvocacao, jornadaAtual, setGameState]);
 
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));

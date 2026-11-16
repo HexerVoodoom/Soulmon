@@ -36,6 +36,7 @@ import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { ResultBanner } from './ui/SpriteFx';
 import { DUEL_SCENE } from '../utils/dungeonScenes';
 import {
@@ -101,6 +102,9 @@ export interface DuelScreenProps {
   onClose: () => void;
 }
 
+/** Sem companheiro em cena no duelo: a MESMA referência vazia sempre. */
+const SEM_COMPANHEIRO_DUELO: readonly number[] = [];
+
 /** Especiais soltos no MESMO instante (o espelho) saem um de cada vez na exibição: ver `serializarEspeciais`. Só apresentação. */
 const emSerie = (r: DuelResult): DuelResult => {
   const v = serializarEspeciais(r.events, r.fx);
@@ -140,6 +144,8 @@ export function DuelScreen({
   const [golpes, setGolpes] = useState<StageHit[]>([]);
   /** Os efeitos de status de cada lado (PR11): dobra dos eventos já chegados, então o replay e a luta ressimulada dão o mesmo selo. */
   const [status, setStatus] = useState<{ me: StageStatus[]; opp: StageStatus[] }>({ me: [], opp: [] });
+  /** COMPANHEIRO INVOCADO (PR 2): turnos de ataque que o companheiro de cada lado ainda tem (o contador REAL do núcleo, `FighterFx.comp`); [0, 0] sem companheiro. */
+  const [companheiroTurnos, setCompanheiroTurnos] = useState<readonly number[]>(SEM_COMPANHEIRO_DUELO);
   /** A barra de cheer mostrada: os toques aceitos até agora, módulo `CHEER.tapsFull`. */
   const [barra, setBarra] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -227,6 +233,9 @@ export function DuelScreen({
         sim.current.fx,
       );
       setStatus({ me: stageStatusOf(quadro[0]), opp: stageStatusOf(quadro[1]) });
+      const fxAgora = sim.current.fx[Math.min(applied.current, sim.current.fx.length) - 1];
+      const turnos = fxAgora && ((fxAgora[0].comp ?? 0) > 0 || (fxAgora[1].comp ?? 0) > 0) ? [fxAgora[0].comp ?? 0, fxAgora[1].comp ?? 0] : SEM_COMPANHEIRO_DUELO;
+      setCompanheiroTurnos((prev) => (prev.length === turnos.length && prev.every((v, i) => v === turnos[i]) ? prev : turnos));
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet
         const value = Math.max(1, Math.round(e.frac * (alvoMe ? maxMe : maxOpp)));
@@ -344,6 +353,7 @@ export function DuelScreen({
         foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}
+        summon={summonsDoGrupo(companheiroTurnos, me.companheiro, [opp.companheiro])}
         title={isPt ? 'Duelo' : 'Duel'}
         closeLabel={isPt ? 'Sair do duelo' : 'Leave the duel'}
         onClose={() => { if (phase !== 'done') onClose(); }}

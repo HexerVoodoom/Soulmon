@@ -3,7 +3,7 @@ export interface Combatant { level: number; atk: number; def: number; spd: numbe
 export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff';
 export interface Special { family: SpecialFamily; power: number }
 export interface StatWeights { atk: number; def: number; spd: number }
-export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number }
+export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number; invoca?: boolean }
 export interface CheerEvent { t: number; side: 0 | 1; scale?: number }
 export interface VarianceConfig { rho: number; sigma: number; floor: number }
 export interface FightOptions {
@@ -99,3 +99,8 @@ export declare function fightSteps(a: FightSide, b: FightSide, opts: FightOption
 export declare function fight(a: FightSide, b: FightSide, opts: FightOptions): FightResult;
 export declare function soulWeights(state: unknown): StatWeights;
 export declare function soulCombatant(state: unknown, opts?: { maxLevel?: number; bonus?: number | Partial<AttrBonus> }): Combatant;
+export declare const COMPANHEIRO_TURNOS: number;
+export declare const COMPANHEIRO_EFEITO_FATOR: number;
+export declare const COMPANHEIRO_ATAQUE_FATOR: number;
+export declare function especialInvoca(sp: { family: SpecialFamily; effect?: string } | null | undefined): boolean;
+export declare function planoInvocacao(sp: { family: SpecialFamily; effect?: string; power: number } | null | undefined, scale: number): { papel: 'ataque' | 'misto'; escalaEfeito: number; ataqueE: number; turnosAtaque: number } | null;

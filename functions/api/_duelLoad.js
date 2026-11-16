@@ -6,6 +6,7 @@ import { kvOrThrow } from './_kv.js';
 import { duelSide, maxLevelFor, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { spriteFromSaveState } from './_artLine.js';
 import { bbRefusal } from './_velado.js';
+import { companheiroDoLado } from './_companheiroInvocado.js';
 
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
@@ -24,7 +25,10 @@ export async function loadDuelSideWithSprite(env, saveId) {
     // Forma BB (D5): não luta no Duelo PvP. `bbLocked` deixa o chamador dar o MOTIVO em vez de "indisponível".
     if (bbRefusal(env, state.evolutionStage)) return { side: null, spriteUrl: null, artLine: null, bbLocked: true };
     const { spriteUrl, artLine } = spriteFromSaveState(state);
-    return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
+    const side = duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
+    // COMPANHEIRO INVOCADO (PR 2): o servidor decide pelo SAVE (ou pela tabela dos simulados); flag desligada = `null` e a ficha fica como era
+    const companheiro = companheiroDoLado(state, saveId);
+    return { side: companheiro ? { ...side, ...companheiro } : side, spriteUrl, artLine };
   } catch (err) {
     console.warn('duel: ficha indisponível', { saveIdPrefix: String(saveId).slice(0, 8), err: String(err) });
     return { side: null, spriteUrl: null, artLine: null };
