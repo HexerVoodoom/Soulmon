@@ -78,7 +78,7 @@ describe('o slot de avisos não tem cartão solto', () => {
     // que aparece todo dia. A condição aparece UMA vez — duas seriam duas
     // superfícies falando da mesma coisa, que é como se empilha aviso.
     expect(app.indexOf("key: 'hp',")).toBeLessThan(app.indexOf("key: 'incubacao',"));
-    expect(app.indexOf("key: 'incubacao',")).toBeLessThan(app.indexOf("key: 'semanal',"));
+    expect(app.indexOf("key: 'incubacao',")).toBeLessThan(app.indexOf("key: 'triagem',"));
     expect(app.match(/if \(incubandoAgora\) avisos\.push\(/g) ?? []).toHaveLength(1);
   });
 
@@ -89,11 +89,9 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect(falas).not.toMatch(/incuba/i);
   });
 
-  it('o relatório semanal vem ANTES da triagem', () => {
-    // `triageQueue` quase nunca está vazia para quem tem histórico, e o slot
-    // renderiza só o primeiro — com a ordem antiga, num domingo típico a única
-    // superfície reflexiva da semana já nascia colapsada atrás do "+N".
-    expect(app.indexOf("key: 'semanal',")).toBeLessThan(app.indexOf("key: 'triagem',"));
+  it('o cartão semanal de domingo saiu da fila (REGISTRO §432): a retrospectiva é o modal de segunda', () => {
+    expect(app).not.toContain("key: 'semanal',");
+    expect(app).not.toContain('WeeklyReportCard');
   });
 
   it("'termos' é o ÚLTIMO da fila (decisão #24: é o único aviso que não fala do dia da pessoa)", () => {

@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Cartão semanal de domingo removido (`chore/remove-weekly-report-card`, REGISTRO §432)
+>
+> - **Feito:** `WeeklyReportCard` e seu slot na fila de avisos saem; `weeklyReport`/`needsWeeklyReport`/`stackingSuggestion` e testes saem de `rituals`. A retrospectiva é o modal de segunda (§431), intocado.
+> - **Save:** `lastWeeklyReportDate` segue na hidratação (tolerante), sem leitor.
+> - **Não visto em tela:** só portões e testes.
+
 > ## 16/11/2026 — Retrospectiva de segunda com bônus de retorno (`feat/retro-semanal`, REGISTRO §431)
 >
 > - **Feito:** `WeeklyRetroModal` (chama turquesa, Soulmon do usuário, contadores, accordion de tarefas fechado, cartão do bônus, etapa "Essa semana eu evoluí!"); regra em `src/utils/weeklyRetro.ts`; save novo: `weeklyBonus`, `lastWeeklyRetroDate`, `stageByWeek`; bônus paga na virada (`dailyReset`), selo bronze na Home.

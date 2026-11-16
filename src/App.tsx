@@ -351,7 +351,6 @@ import { shouldShowStepsInvite } from './utils/stepsInvite';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
-  needsWeeklyReport, weeklyReport, stackingSuggestion,
   freshStartOffer, applyFreshStart,
 } from './utils/rituals';
 import {
@@ -692,7 +691,6 @@ const DungeonReturnModal = lazy(() => import('./components/DungeonReturnModal').
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
 const MessengerSequence = lazy(() => import('./components/MessengerSequence').then(m => ({ default: m.MessengerSequence })));
 const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
-const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
 const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
 const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
 const ConsentGate = lazyOverlay(() => import('./components/ConsentGate').then(m => ({ default: m.ConsentGate })));
@@ -6914,10 +6912,6 @@ export default function App() {
     });
   }, [setGameState]);
 
-  const handleDismissWeeklyReport = useCallback(() => {
-    setGameState(prev => ({ ...prev, lastWeeklyReportDate: dayKeyOf(new Date()) }));
-  }, [setGameState]);
-
   /** D-24: grava as horas e confirma — a ÚNICA saída do intersticial `restSetup`. */
   const handleConfirmRestWindow = useCallback((window: RestWindow) => {
     setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), window, windowConfirmed: true } }));
@@ -9227,7 +9221,7 @@ export default function App() {
                   SLOT DO DIA — UM cartão contextual por vez, e essa é a REGRA
                   ═══════════════════════════════════════════════════════════
 
-                  PRIORIDADE FIXA:  HP  >  TRIAGEM  >  SEMANAL  >  RECOMEÇO
+                  PRIORIDADE FIXA:  HP  >  TRIAGEM  >  RECOMEÇO
 
                   **Só o primeiro da fila renderiza.** Os demais viram uma
                   linha discreta ("+2 avisos") que expande sob toque.
@@ -9246,9 +9240,8 @@ export default function App() {
                    1. HP — é a única com dano de jogo em curso hoje;
                    0. PRIMEIRO DIA — o mais perecível: morre na virada;
                    1. HP;
-                   2. SEMANAL — raro (1×/semana) e é a única superfície
-                      reflexiva da constância; por isso vem ANTES da triagem,
-                      que aparece todo dia;
+                   2. (SEMANAL saiu em 16/11/2026, REGISTRO §432: a
+                      retrospectiva é o modal de segunda, `WeeklyRetroModal`);
                    3. TRIAGEM — a única acionável em um toque, e planejar é o
                       que alivia (Masicampo & Baumeister);
                    4. PRIMING DE PUSH — pedido do app, e pedido cede a vez;
@@ -9263,7 +9256,6 @@ export default function App() {
                 const agoraA = new Date();
                 const pilhaA = triageQueue(gameState.tasks, agoraA).length;
                 const recomecoA = freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language);
-                const semanaA = needsWeeklyReport(gameState, agoraA);
                 const hpA = gameState.healthPoints <= 1 && gameState.healthPoints > 0
                   && dailyDone < hpSafeToday && !hpBannerDismissed;
 
@@ -9357,30 +9349,6 @@ export default function App() {
                         </p>
                       </div>
                     </div>
-                  ),
-                });
-
-                /* ── 2. SEMANAL (domingo) ─────────────────────────────────
-                   ⚠️ Ele vinha DEPOIS da triagem, e a auditoria de 06/09/2026
-                   mostrou o efeito: `triageQueue` quase nunca está vazia para
-                   quem tem histórico, e o slot renderiza só o PRIMEIRO — então
-                   num domingo típico a única superfície reflexiva da semana já
-                   nascia colapsada atrás do "+N". O adiável estava ganhando do
-                   raro. A triagem volta amanhã; o relatório da semana, não. */
-                if (semanaA) avisos.push({
-                  key: 'semanal',
-                  node: (
-                    <Suspense fallback={null}>
-                    <WeeklyReportCard
-                      report={weeklyReport(gameState, agoraA)}
-                      suggestion={stackingSuggestion(gameState, agoraA, language)}
-                      /* A janela de 7 de cada hábito — a mesma da lista. */
-                      rhythms={gameState.habitRhythms}
-                      now={agoraA}
-                      language={language}
-                      onDismiss={handleDismissWeeklyReport}
-                    />
-                    </Suspense>
                   ),
                 });
 
@@ -9581,7 +9549,7 @@ export default function App() {
                    componente foi apagado no canvas Evolução (§24), quando o nó
                    virou SVG por token e a trilha ficou sem consumidor. */
                 const agora = new Date();
-                /* Recomeço, relatório semanal e "arrumar a pilha" NÃO moram
+                /* Recomeço e "arrumar a pilha" NÃO moram
                    mais aqui: os três entraram no SLOT DO DIA lá em cima, com
                    posição declarada na fila de prioridade. Eram três `&&`
                    independentes que, no domingo dia 1 com pilha atrasada,
