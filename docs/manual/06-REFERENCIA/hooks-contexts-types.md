@@ -233,12 +233,12 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 **Avisos do arquivo:** nenhum comentário de aviso formal além das notas de tolerância a dado sujo já citadas nos exports.
 
 ### `src/types/progression.ts`
-**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, os dois caminhos para o Ultra, e se a evolução é manual.
+**Dono de:** a escada de evolução inteira — os 11 ids de forma, requisito diário por estágio, HP máximo por estágio, energia máxima, a regra do Ultra (três megas + barra de 45 dias, REGISTRO §455), e se a evolução é manual.
 **Sincronização 01/11/2026:** novos exports `BB_STAGE` (`'bb'`) e `BB_MAX_HP` (6) — a FORMA BB, estágio ANTES do rookie (Onboarding Velado D3, 30/10/2026). ⚠️ Revoga PARCIALMENTE o "não existe estágio antes do rookie" do `REGISTRO-DE-DECISOES` e do `CLAUDE.md`: vale SÓ para `bb`. Fica FORA de `FORM_REQUIREMENTS` de propósito (sem requisito diário, gauge nem teto de level; não entra em `STAGE_LEVEL_CAPS`/`MAX_STAGE_REQUIREMENT`); para nível/sprite cai em `rookie` (`getStageLevel`). As regras vivem em `utils/bbStage.ts` (`isBBStage`, `sanitizeStageId`, `bbEvolveReady`, `bbRefusal`).
 **Exports:**
 - `FORM_REQUIREMENTS` — requisito diário (tarefas/hábitos) por estágio.
-- `ULTRA_PATIENCE_DAYS` — o segundo caminho para o Ultra (decisão D6, WP4.2): dias de paciência em vez de só perfectDays acumulados.
-- `canReachUltra(...)` — existe caminho para o Ultra a partir do mega? `perfectDays` contados desde a última evolução.
+- `ULTRA_PATIENCE_DAYS` / `ULTRA_PATIENCE_POINTS` — a meta da barra do Ultra (45 dias de teto do mega; 270 pontos). Só conta depois das três megas.
+- `ULTRA_MEGA_IDS`, `megasLiberadas(unlocked)`, `hasMegaCollection`, `canReachUltra({ unlockedEvolutions })` — o Ultra só abre com as três megas liberadas (16/11/2026).
 - `MAX_HP_BY_FORM` — HP máximo por NÍVEL de estágio (rookie/champion/ultimate=3 · mega=4 · ultra=5).
 - `EvolutionStage` — tipo do id de forma.
 - `MAX_STAGE_REQUIREMENT` — o maior requisito diário da escada (hoje 6, mega/ultra); todo outro teto do jogo deriva deste, nunca de um literal.
