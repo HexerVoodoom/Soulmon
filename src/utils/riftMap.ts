@@ -1,4 +1,4 @@
-// 🗺️ O MAPA DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §452).
+// O MAPA DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §452).
 //
 // DONO ÚNICO e PURO do que o mapa mostra: um NÓ por CONJUNTO (`riftSets.ts`: 2 andares por elemento, 269 conjuntos = 538 andares, depois a
 // lista dá a volta), o estado de cada nó (visitado/atual/bloqueado), o CAMINHO sinuoso entre eles (determinístico) e a regra de "voltar ao nó".
@@ -127,14 +127,35 @@ export function riftVisibleRange(top: number, height: number, over = 3): { from:
 /** O scrollTop que centra o nó `index` numa janela de `viewH` px. */
 export const riftScrollTopFor = (index: number, viewH: number): number => Math.max(0, Math.round(riftNodeY(index) - viewH / 2));
 
-/** O trecho tracejado do nó `index` ao seguinte, como `d` de SVG numa largura `w`: curva suave (não precisa ser reta). `undefined` no último. */
-export function riftSegmentPath(index: number, w: number): string | undefined {
+export interface RiftPt { x: number; y: number }
+export interface RiftBezier { p0: RiftPt; c1: RiftPt; c2: RiftPt; p1: RiftPt }
+
+const nodePt = (i: number, w: number): RiftPt => {
+  const k = Math.min(RIFT_SET_COUNT - 1, Math.max(0, i));
+  return { x: riftNodeX(k) * w, y: riftNodeY(k) };
+};
+
+/** A tangente da curva no nó `i` (Catmull-Rom + uma ondulação determinística no x): a MESMA para o trecho que chega e o que sai, então não há quina na junção, mesmo na borda da janela virtualizada (só depende do índice absoluto). */
+export function riftTangent(i: number, w: number): RiftPt {
+  const a = nodePt(i - 1, w), b = nodePt(i + 1, w);
+  const ripple = Math.sin(i * 2.3 + 0.7) * w * 0.2;
+  return { x: (b.x - a.x) / 2 + ripple, y: (b.y - a.y) / 2 };
+}
+
+/** O trecho `index → index+1` como Bézier cúbica passando pelos dois nós, com as tangentes suaves acima. `undefined` no último nó. */
+export function riftSegmentBezier(index: number, w: number): RiftBezier | undefined {
   const i = Math.floor(index);
   if (i < 0 || i >= RIFT_SET_COUNT - 1) return undefined;
-  const x0 = riftNodeX(i) * w, y0 = riftNodeY(i), x1 = riftNodeX(i + 1) * w, y1 = riftNodeY(i + 1);
-  const ym = (y0 + y1) / 2;
+  const p0 = nodePt(i, w), p1 = nodePt(i + 1, w), m0 = riftTangent(i, w), m1 = riftTangent(i + 1, w);
+  return { p0, p1, c1: { x: p0.x + m0.x / 3, y: p0.y + m0.y / 3 }, c2: { x: p1.x - m1.x / 3, y: p1.y - m1.y / 3 } };
+}
+
+/** O trecho tracejado do nó `index` ao seguinte, como `d` de SVG numa largura `w`: curva fluida, não reta. `undefined` no último. */
+export function riftSegmentPath(index: number, w: number): string | undefined {
+  const s = riftSegmentBezier(index, w);
+  if (!s) return undefined;
   const r = (n: number) => Math.round(n * 10) / 10;
-  return `M ${r(x0)} ${r(y0)} C ${r(x0)} ${r(ym)}, ${r(x1)} ${r(ym)}, ${r(x1)} ${r(y1)}`;
+  return `M ${r(s.p0.x)} ${r(s.p0.y)} C ${r(s.c1.x)} ${r(s.c1.y)}, ${r(s.c2.x)} ${r(s.c2.y)}, ${r(s.p1.x)} ${r(s.p1.y)}`;
 }
 
 /** O trecho `index → index+1` já foi percorrido (o nó de chegada é visitado/atual)? Pinta de turquesa; senão, cinza. */

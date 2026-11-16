@@ -75,7 +75,7 @@ describe('RiftMap', () => {
     const { container } = mount({ dungeonDepthRecord: 9, dungeonAway: { layer: 9 } });
     fireEvent.click(node(container, 1).querySelector('button') as HTMLElement);
     expect(container.ownerDocument.querySelector('[data-rift-ask-yes]')).toBeNull();
-    expect(container.querySelector('[data-rift-map-note]')?.textContent).toContain('Take him out');
+    expect(container.querySelector('[data-rift-map-note]')?.textContent).toContain('out of the Rift');
   });
 
   it('depois de voltar, o sprite muda para o nó escolhido e o recorde segue', () => {

@@ -10,7 +10,7 @@ import { riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
 /**
- * 🗺️ O MAPA DE ANDARES DO RIFT (REGISTRO §452): um nó por conjunto (2 andares), caminho tracejado sinuoso, scroll vertical VIRTUALIZADO
+ * O MAPA DE ANDARES DO RIFT (REGISTRO §452): um nó por conjunto (2 andares), caminho tracejado sinuoso, scroll vertical VIRTUALIZADO
  * (só os nós da janela existem no DOM; 269 no total). Os dados e a regra de "voltar" são de `utils/riftMap.ts`; aqui só a tela.
  * Fundo: o tile do prédio do Endless Rift repetido (`assets/soulmon/rift/mapa-tile.*`); sem o arquivo, um gradiente em CSS (tolerante).
  * Modais (toque do jogador, fora da fila de avisos — `docs/FILA-DE-MODAIS.md` §1: o que nasce de gesto passa): "Voltar para este nó?" e "Sem volta".
@@ -109,14 +109,14 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
           background: TILE_URL ? `url(${TILE_URL}) 0 0 / 100% ${tileH}px repeat-y, ${FALLBACK_BG}` : FALLBACK_BG,
         }}>
           {/* o mapa que ainda não foi percorrido fica CINZA (véu abaixo do último nó alcançado) */}
-          <div aria-hidden="true" data-rift-map-gray style={{ position: 'absolute', left: 0, right: 0, top: grayTop, bottom: 0, background: 'rgba(72,76,82,.82)', pointerEvents: 'none' }} />
+          <div aria-hidden="true" data-rift-map-gray style={{ position: 'absolute', left: 0, right: 0, top: grayTop, bottom: 0, background: 'rgba(96,100,106,.6)', pointerEvents: 'none' }} />
           <svg aria-hidden="true" width={view.w} height={RIFT_MAP_HEIGHT} style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
             {nodes.map(n => {
               const d = riftSegmentPath(n.index, view.w);
               if (!d) return null;
               const reached = riftSegmentReached(n.index, save);
-              return <path key={n.index} d={d} data-rift-seg={reached ? 'on' : 'off'} fill="none" strokeWidth={4} strokeLinecap="round" strokeDasharray="2 12"
-                stroke={reached ? '#4fd8c8' : '#8c9298'} opacity={reached ? 0.95 : 0.7} />;
+              return <g key={n.index}><path d={d} fill="none" strokeWidth={8} strokeLinecap="round" strokeDasharray="2 12" stroke="rgba(4,10,12,.55)" /><path d={d} data-rift-seg={reached ? 'on' : 'off'} fill="none" strokeWidth={4} strokeLinecap="round" strokeDasharray="2 12"
+                stroke={reached ? '#4fd8c8' : '#8c9298'} opacity={reached ? 0.95 : 0.7} /></g>;
             })}
           </svg>
           {nodes.map(n => {
@@ -126,22 +126,22 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
             const current = n.state === 'current';
             return (
               <div key={n.index} data-rift-node={n.index} data-state={n.state} style={{ position: 'absolute', left: n.x * view.w - NODE / 2, top: n.y - NODE / 2, width: NODE, height: NODE }}>
-                <button type="button" onClick={() => tap(n)} aria-label={t.nodeAria(n.label, el, n.state)} style={{
+                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, el, n.state)} style={{
                   width: NODE, height: NODE, borderRadius: '50%', padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
                   background: locked ? '#050607' : 'radial-gradient(circle at 35% 30%, #1d5a5c, #0b2a2d)',
                   border: `3px solid ${locked ? '#3a3f44' : current ? '#ffd27a' : '#4fd8c8'}`,
-                  boxShadow: current ? '0 0 0 4px rgba(255,210,122,.28), 0 0 18px rgba(79,216,200,.6)' : locked ? 'none' : '0 0 10px rgba(79,216,200,.35)',
+                  boxShadow: `0 0 0 8px rgba(6,14,16,.5), 0 0 22px 10px rgba(6,14,16,.45), ${current ? '0 0 0 4px rgba(255,210,122,.28), 0 0 18px rgba(79,216,200,.6)' : locked ? '0 0 0 0 transparent' : '0 0 10px rgba(79,216,200,.35)'}`,
                   color: '#9aa1a8', fontSize: 'var(--sm2-text-lg, 22px)', fontWeight: 800,
                 }}>
                   {locked ? <span aria-hidden="true">?</span> : <ElementIcon id={n.element} size={32} />}
                 </button>
                 <span data-rift-node-label className="sm2-num" style={{
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
-                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', pointerEvents: 'none',
+                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', pointerEvents: 'none', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
                 }}>{n.label}</span>
                 {current && sprite && (
-                  <img data-rift-sprite src={sprite} alt={t.you} width={44} height={44} draggable={false} style={{
-                    position: 'absolute', top: '50%', transform: 'translateY(-60%)', [labelLeft ? 'left' : 'right']: NODE + 4, width: 44, height: 44, objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none',
+                  <img data-rift-sprite src={sprite} alt={t.you} width={52} height={52} draggable={false} style={{
+                    position: 'absolute', top: '50%', transform: 'translateY(-60%)', [labelLeft ? 'left' : 'right']: NODE + 2, width: 52, height: 52, filter: 'drop-shadow(0 0 4px rgba(6,14,16,.95)) drop-shadow(0 2px 3px rgba(6,14,16,.9))', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none',
                   }} />
                 )}
               </div>

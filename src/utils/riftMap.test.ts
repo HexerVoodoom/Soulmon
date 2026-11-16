@@ -138,3 +138,37 @@ describe('riftMap — dupla de andares (reforço do dono, 16/11/2026)', () => {
     expect(r.dungeonDepthRecord).toBe(10);
   });
 });
+
+describe('riftMap — caminho curvo e fluido', () => {
+  const W = 360;
+  it('a curva passa pelos pontos dos nós', async () => {
+    const { riftSegmentBezier, riftNodeY } = await import('./riftMap');
+    for (let i = 0; i < 268; i++) {
+      const b = riftSegmentBezier(i, W)!;
+      expect(b.p0.x).toBeCloseTo(riftNodeX(i) * W, 6);
+      expect(b.p0.y).toBe(riftNodeY(i));
+      expect(b.p1.x).toBeCloseTo(riftNodeX(i + 1) * W, 6);
+      expect(b.p1.y).toBe(riftNodeY(i + 1));
+    }
+  });
+  it('é contínua e SEM quina: a tangente que chega é a que sai, em todo nó', async () => {
+    const { riftSegmentBezier } = await import('./riftMap');
+    for (let i = 1; i < 268; i++) {
+      const prev = riftSegmentBezier(i - 1, W)!, next = riftSegmentBezier(i, W)!;
+      expect(next.p0).toEqual(prev.p1); // sem salto
+      expect(next.c1.x - next.p0.x).toBeCloseTo(prev.p1.x - prev.c2.x, 6); // mesma tangente dos dois lados
+      expect(next.c1.y - next.p0.y).toBeCloseTo(prev.p1.y - prev.c2.y, 6);
+    }
+  });
+  it('não é reta (as alças saem do segmento entre os nós) e é determinística', async () => {
+    const { riftSegmentBezier, riftSegmentPath } = await import('./riftMap');
+    let curvos = 0;
+    for (let i = 0; i < 268; i++) {
+      const b = riftSegmentBezier(i, W)!;
+      const cross = (b.p1.x - b.p0.x) * (b.c1.y - b.p0.y) - (b.p1.y - b.p0.y) * (b.c1.x - b.p0.x);
+      if (Math.abs(cross) > 50) curvos++;
+      expect(riftSegmentPath(i, W)).toBe(riftSegmentPath(i, W));
+    }
+    expect(curvos).toBeGreaterThan(200);
+  });
+});
