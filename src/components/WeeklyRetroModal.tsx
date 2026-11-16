@@ -58,6 +58,7 @@ const CSS = `
   padding:${FLAME_INSIDE + 10}px 16px 20px;display:flex;flex-direction:column;gap:16px}
 .rt-art{position:absolute;left:50%;top:0;width:${FLAME_H}px;height:${FLAME_H}px;margin-left:-${FLAME_H / 2}px;margin-top:-${FLAME_CENTER}px;pointer-events:none}
 .rt-seal{width:44px;height:44px;flex:none;image-rendering:pixelated;filter:drop-shadow(0 0 8px rgba(77,240,220,.55))}
+.rt-dock{position:sticky;bottom:0;z-index:2;margin:0 -16px;padding:14px 16px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,33,31,0),#04211F 38%)}
 .rt-bonus-head{display:flex;align-items:center;gap:10px}
 .rt-in{animation:rt-up .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
 @keyframes rt-up{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
