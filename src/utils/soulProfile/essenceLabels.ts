@@ -13,7 +13,7 @@ import { BASE_ELEMENT_LABELS } from './derivedElements';
 
 const BASE_EN: Record<string, string> = {
   fogo: 'Fire', agua: 'Water', terra: 'Earth', ar: 'Air', eletricidade: 'Lightning',
-  arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Malice', morte: 'Death',
+  arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Fel', morte: 'Death',
   vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound',
   gravidade: 'Gravity', espaco: 'Space', fada: 'Fairy', industrial: 'Industrial', planta: 'Plant',
 };

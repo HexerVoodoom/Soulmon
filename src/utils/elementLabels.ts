@@ -4,7 +4,7 @@ import { BASE_ELEMENT_LABELS } from './soulProfile/derivedElements';
 
 export const BASE_ELEMENT_LABELS_EN: Record<string, string> = {
   fogo: 'Fire', agua: 'Water', terra: 'Earth', ar: 'Air', eletricidade: 'Lightning',
-  arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Vileness', morte: 'Death',
+  arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Fel', morte: 'Death',
   vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound',
   gravidade: 'Gravity', espaco: 'Space', fada: 'Fairy', industrial: 'Industrial', planta: 'Plant',
 };

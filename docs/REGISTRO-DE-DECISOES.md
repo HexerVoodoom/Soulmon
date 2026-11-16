@@ -6068,3 +6068,9 @@ Ainda falhavam na R2: ARCANO e SOM (ausentes), AR (parcial: lia como água), MOR
 **Alternativa que perdeu.** Limite em andares totais por dia sem relação com as 6 lutas (30 andares): vira 180 lutas por dia, praticamente sem freio para quem tem energia. **Gatilho para rever:** o dono confirmar "30 andares"; ou o limite parecer curto demais para quem usa foco (a descida de foco de 25 min já bate 5 andares).
 
 **Falsifica a aposta:** se a retenção/uso da Fenda cair depois do limite (menos sessões de foco abertas) em vez de subir o valor de cada descida.
+
+## §442 — Elemento Vileza: nome em inglês passa a "Fel" (16/11/2026, dono)
+
+**Decisão.** O nome EN do elemento `vileza` passa de "Vileness" (e "Malice" na tabela de essências) para **Fel**. O PT segue "Vileza". O id `vileza` não muda (saves, KV, servidor, sprites). Só mudam as tabelas de rótulo EN: `elementLabels.ts`, `soulProfile/essenceLabels.ts` (`BASE_EN`), `cosmeticosNovos.ts` (`ELEMENTOS`, gera "Fel Realm" e "Fel Ring"), `public/widget-frames/manifest.json` e `scripts/widget-frames-publish.mjs`. Nomes de combinados EN têm nome próprio por id (Hellfire, Acid, Terror) e não embutem o do elemento: nada a mudar. Não mudaram de propósito: "Vile Eye" (criatura Olho Vil) e "Lord of the Vile Dead" (título de classe), adjetivos e não o elemento. Guarda: `utils/felRename.test.ts`.
+
+**Alternativa que perdeu.** Manter "Vileness" ou "Malice". **Gatilho para rever:** o dono preferir outro termo, ou "Fel" confundir jogadores EN. **Falsifica a aposta:** feedback EN pedindo glossário do elemento.

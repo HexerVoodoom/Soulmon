@@ -40,7 +40,7 @@ const PT = {
 };
 const EN = {
   fogo: 'Fire', agua: 'Water', terra: 'Earth', ar: 'Air', eletricidade: 'Lightning', arcano: 'Arcane', sombra: 'Shadow', luz: 'Light',
-  vileza: 'Vileness', morte: 'Death', vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound', gravidade: 'Gravity',
+  vileza: 'Fel', morte: 'Death', vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound', gravidade: 'Gravity',
   espaco: 'Space', fada: 'Fairy', industrial: 'Industrial', planta: 'Plant',
 };
 

@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §442)
+>
+> - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
+> - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
+>
 > ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §440)
 >
 > - **Feito:** 1 forma por combinação no estágio dela (2 elementos champion, 3 ultimate, 4 mega), 205 PNG 256² via API alpha, no fim do `ENEMY_ROSTER` (kind `forma`, fora do sorteio comum); scripts `combinados-alvos/fila.mjs`; prompt+tags em `_banco/registro.jsonl`.

@@ -99,7 +99,7 @@ A frase de proporção vai SEMPRE por último: `Vertical 9:16 full-bleed composi
 > [BLOCO-BASE] Theme to keep: vigor: sunlit rocky arena with banners. Vertical 9:16 full-bleed composition.
 
 **Elemento vileza** · anexar `src/assets/soulmon/combate/bg-vileza.png` · uso: DuelScreen
-> [BLOCO-BASE] Theme to keep: vileness: murky swamp edge. Vertical 9:16 full-bleed composition.
+> [BLOCO-BASE] Theme to keep: fel: murky swamp edge. Vertical 9:16 full-bleed composition.
 
 ### Grupos B a F: cenas de bg/ (dungeonScenes.ts)
 
