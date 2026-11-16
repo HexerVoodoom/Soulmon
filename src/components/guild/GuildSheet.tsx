@@ -61,8 +61,9 @@ import { GuildInviteSheet } from './GuildInviteSheet';
 import { PlayerName } from '../ui/PlayerName';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
-import { feiraDesafioStatus, readFeiraDesafio } from '../../utils/feiraDesafio';
+import { feiraDesafioStatus, readFeiraDesafio, markFeiraDesafioDone } from '../../utils/feiraDesafio';
 import { readFeiraVolta, feiraVoltaDoDia, feiraVoltaPendente, markFeiraVoltaSeen } from '../../utils/feiraVolta';
+import { feiraNpcDia } from '../../utils/feiraNpcDia';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -684,7 +685,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             onAbrir: () => {
               if (feiraLendo) return;
               setFeiraLendo(true);
-              getGuildFeira(saveId, tz.current).then(e => { if (vivo.current && e) setFeiraAberto(e); }).catch(() => { /* silêncio */ }).finally(() => { if (vivo.current) setFeiraLendo(false); });
+              getGuildFeira(saveId, tz.current).then(e => { if (!vivo.current || !e) return; if ((e.kind === 'boss' && !e.canAttack) || (e.kind === 'trail' && !e.trail.pending)) markFeiraDesafioDone(); setFeiraAberto(e); }).catch(() => { /* silêncio */ }).finally(() => { if (vivo.current) setFeiraLendo(false); });
             },
           } : undefined}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
@@ -1282,7 +1283,11 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   const hojeJogador = playerDayKey(new Date(), tz);
   const [, relerVolta] = useState(0);
   const voltaGuardada = missao ? feiraVoltaDoDia(readFeiraVolta(), hojeJogador) : null;
-  const voltaPendente = missao ? feiraVoltaPendente(voltaGuardada, hojeJogador) : null;
+  // Desafio de hoje JÁ cumprido (luta, desafio ou "já bateu hoje" do servidor): a sala não oferece enfrentar de novo nem reabrir o
+  // resultado (bug do dono, 16/11/2026: dois botões, "enfrentar" dava erro e "ver o que achou" entrava no combate e cancelava).
+  const desafioFeito = !!missao && desafioSt === 'done';
+  const voltaPendente = missao && !desafioFeito ? feiraVoltaPendente(voltaGuardada, hojeJogador) : null;
+  useEffect(() => { if (desafioFeito) markFeiraVoltaSeen(); }, [desafioFeito]);
   const voltouHoje = !!raid?.hitToday || !!voltaGuardada;
   const desafioAtivo = !!feira && feira.resumo.state !== 'rest' && (desafioSt === 'open' || desafioSt === 'done' || voltouHoje);
   // Relógio da volta ("volta em X min"): só roda enquanto o Soulmon está fora.
@@ -1359,7 +1364,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
-      {feira && (feira.resumo.state === 'rest' || desafioAtivo) && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} />}
+      {feira && (feira.resumo.state === 'rest' || desafioAtivo) && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} feito={desafioFeito} />}
       {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
         const fora = isMissionAway(missao.state, agora);
@@ -1369,12 +1374,28 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora, min })}</p>;
         }
         // Voltou hoje: SÓ o que a vista já pode mostrar (sem número por pessoa). O ganho é o direito ao resgate da semana.
-        if (voltouHoje) return (
+        if (voltouHoje) {
+          // O dia fechado (dono, 16/11/2026): desafio cumprido, ou o que a volta trouxe (mercador, Bits, nada) já visto. O mercador conta o
+          // que o jogador achou, o que o clã achou (só o agregado) e que amanhã tem mais — só isso.
+          const desafioAberto = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
+          const encerrado = !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAberto));
+          const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
+          return (
           <>
           <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
+            {fala ? (
+              <>
+                <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-npc-hoje>{fala.hoje}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-cla>{fala.cla}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-amanha>{fala.amanha}</p>
+              </>
+            ) : (
+              <>
+                <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
+              </>
+            )}
           </div>
           {voltaPendente && missao.onVerAchado && (
             <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
@@ -1382,9 +1403,10 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
               {t('guild.missao.verAchado')}
             </button>
           )}
-          {!desafioAtivo && !voltaPendente && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {!desafioAtivo && !voltaPendente && !fala && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           </>
-        );
+          );
+        }
         // Passou da hora de voltar mas a volta ainda não foi registrada (app em segundo plano, sem rede, servidor ocupado):
         // NUNCA oferecer "Mandar investigar" agora (era o bug) — ele já voltou, o registro é que espera.
         if (missao.state) return <p className="sm2-stats-t" style={{ margin: 0 }} role="status" data-missao-registrando>{t('guild.missao.registrando')}</p>;

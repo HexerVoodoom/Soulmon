@@ -8,9 +8,9 @@ import { feiraText } from '../../utils/feiraCopy';
 import type { FeiraResumo } from '../../utils/feira';
 import type { Language } from '../../utils/i18n';
 
-export function FeiraMisterio({ language, resumo, ocupado, onAbrir }: { language: Language; resumo: FeiraResumo; ocupado: boolean; onAbrir: () => void }) {
+export function FeiraMisterio({ language, resumo, ocupado, onAbrir, feito = false }: { language: Language; resumo: FeiraResumo; ocupado: boolean; onAbrir: () => void; /** O desafio de hoje já foi cumprido: a sala conta o agregado, mas não oferece enfrentar de novo. */ feito?: boolean }) {
   /** UM botão só (dono, 30/10/2026): o desafio (chefe ou trilha) quando há; no descanso não há ação aqui. */
-  const desafio = resumo.state !== 'rest';
+  const desafio = resumo.state !== 'rest' && !feito;
   const isPt = language === 'pt-BR';
   const entrada = resumo.state === 'boss' ? BOSS_ROSTER.find(b => b.id === resumo.bossId) : undefined;
   const nomeChefe = entrada ? bossText(entrada, isPt).name : resumo.state === 'boss' ? resumo.bossId : '';

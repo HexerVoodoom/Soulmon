@@ -11,6 +11,7 @@ import { FEIRA_TRAIL_MIN_MS, type FeiraAttack, type FeiraClaim, type FeiraEvento
 import { resetClaimMemoryForTests } from '../../utils/guildClaimLocal';
 import { seededRng, startSequence } from '../../utils/mente/eco';
 import { feiraText, FEIRA_COPY } from '../../utils/feiraCopy';
+import { recordFeiraDesafio, readFeiraDesafio } from '../../utils/feiraDesafio';
 
 const mem = new Map<string, string>();
 const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); }, clear: () => mem.clear(), key: () => null, length: 0 };
@@ -58,6 +59,14 @@ describe('Chefe', () => {
     fireEvent.click(q('[data-feira-atacar]')!);
     await waitFor(() => expect(q('[data-feira-nota]')!.textContent).toBe(feiraText('en-US', 'boss.today')));
     expect(q('[data-feira-atacar]')).toBeNull();
+  });
+
+  it('o "já bateu hoje" do servidor FECHA o desafio do dia no aparelho (a sala não oferece atacar de novo)', async () => {
+    recordFeiraDesafio('2026-11-16', 0);
+    expect(readFeiraDesafio()?.done).toBe(false);
+    open(boss, mk({ attack: vi.fn(async () => { throw new GuildError('dailyLimit', 429); }) }));
+    fireEvent.click(q('[data-feira-atacar]')!);
+    await waitFor(() => expect(readFeiraDesafio()?.done).toBe(true));
   });
 
   it('chefe já caiu (409) e sem rede (unavailable): cada um com a sua frase, e dá para tentar de novo', async () => {
