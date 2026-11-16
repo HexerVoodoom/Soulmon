@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { StrictMode } from 'react';
 import { WeeklyRetroModal, RETRO_FILL_MS } from './WeeklyRetroModal';
+import { FILL_REST_MS } from './ui/CtaButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import type { WeeklyRetro } from '../utils/weeklyRetro';
 
@@ -56,7 +57,7 @@ describe('WeeklyRetroModal', () => {
     fireEvent.click(screen.getByText('Toque para ver'));
     await waitFor(() => expect(document.querySelector('img')?.getAttribute('src')).toBe('now.png'));
     fireEvent.click(screen.getByText('Continuar'));
-    expect(screen.getByText('Boa semana, e dá para mais')).toBeTruthy();
+    expect(screen.getByText('Boa semana, a chama segue acesa')).toBeTruthy();
   });
 
   it('usa o CtaButton padrão e o card liso, sem border-image', () => {
@@ -95,6 +96,12 @@ describe('WeeklyRetroModal', () => {
     expect(hero.querySelector('.rt-hero-text h2')).toBeTruthy();
   });
 
+  it('semana ruim não lista hábito com 0 vezes (tom encorajador)', () => {
+    render(<WeeklyRetroModal {...base} retro={withHabits(line('Correr', 0, 5), line('Ler', 1, 5))} />);
+    expect(screen.queryByText(/Você fez Correr/)).toBeNull();
+    expect(screen.getByText(/Você fez Ler/)).toBeTruthy();
+  });
+
   it('contadores com rótulo claro e plural certo', () => {
     const { unmount } = render(<WeeklyRetroModal {...base} />);
     expect(screen.getByText('hábitos cumpridos')).toBeTruthy();
@@ -120,7 +127,7 @@ describe('WeeklyRetroModal', () => {
       expect(cta().getAttribute('data-cta-filling')).toBeNull();
       fireEvent.click(cta());
       expect(cta().getAttribute('data-cta-filling')).toBe('true');
-      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS - 1); });
+      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS + FILL_REST_MS - 1); });
       expect(onClose).not.toHaveBeenCalled();
       act(() => { vi.advanceTimersByTime(2); });
       expect(onClose).toHaveBeenCalledTimes(1);
@@ -132,7 +139,7 @@ describe('WeeklyRetroModal', () => {
       act(() => { vi.advanceTimersByTime(300); });
       fireEvent.click(cta());
       fireEvent.click(cta());
-      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS * 3); });
+      act(() => { vi.advanceTimersByTime((RETRO_FILL_MS + FILL_REST_MS) * 3); });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -142,7 +149,7 @@ describe('WeeklyRetroModal', () => {
       // o navegador transforma Enter/Espaço em `click` num <button>; o jsdom não, então simulamos esse clique
       fireEvent.keyDown(cta(), { key: 'Enter' });
       fireEvent.click(cta());
-      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS + 5); });
+      act(() => { vi.advanceTimersByTime(RETRO_FILL_MS + FILL_REST_MS + 5); });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 

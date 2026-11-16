@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Retrospectiva v3: cristal com chama, título por qualidade, CTA que preenche, instância única (`feat/retro-v3`, REGISTRO §435)
+>
+> - **Feito:** chama da alma dentro de cristal (ilustração lisa, folha 4x2 gerada no ChatGPT desktop, alfa real; cristal estabilizado e só a chama varia); scrim `rgba(2,16,15,.7)` + blur; título/subtítulo por qualidade da semana (`retroQuality`: boa >= 70%, média 40-69%, ruim < 40% da taxa geral de hábitos; sem hábito = média); Soulmon à esquerda das frases; contadores "hábitos cumpridos"/"tarefas pontuais"; CTA "Vamos começar a semana" com preenchimento turquesa ao toque (`CtaButton fillMs`, 1,2 s, toques repetidos ignorados, movimento reduzido fecha direto). Do aparelho: scroll interno, CTA fora da área rolável, instância única e `data-dialog-top` em `useDialogA11y` (um diálogo posterior inertizava a retrospectiva portalizada: causa do "modal travado").
+> - **Visto em tela:** Chrome headless 360x640 e 412x915, 3 qualidades + fim da rolagem + CTA preenchendo (`E:/Soulmon-assets/_lote-16-11/retro-chama/previas/v3-*.png`). Não visto no app completo nem no aparelho; a dupla montagem real em App.tsx NÃO foi reproduzida (só um ponto de render), o teste reproduz a hipótese do `inert`.
+> - **Pendente do dono:** limiares 70%/40% e textos dos três tons; 1,2 s do preenchimento.
+> - **Rollback:** `git revert`; só front, sem save. Asset: `chama-alma-folha.webp` trocado (v1 pixelada fica em `E:/Soulmon-assets/_lote-16-11/retro-chama/`).
+
 > ## 16/11/2026 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (`feat/retro-redesign`, REGISTRO §434)
 >
 > - **Feito:** sem `border-image`; card liso com a chama grande metade dentro/metade fora, Soulmon inteiro abaixo; `CtaButton tone="acao"` fixo no rodapé; a11y (`useDialogA11y`) e plural corrigidos; `moldura-retro.webp` removida.

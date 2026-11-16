@@ -29,7 +29,10 @@ export interface CtaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
   onFillComplete?: () => void;
 }
 
-/** Preenchimento ao toque: estado "preenchendo" + temporizador; trava toques repetidos. */
+/** Pausa no estado cheio antes de `onFillComplete`. */
+export const FILL_REST_MS = 180;
+
+/** Preenchimento ao toque (uso que FECHA/navega: depois de completar o botão fica cheio e travado de propósito): estado "preenchendo" + temporizador; trava toques repetidos. */
 function useFill(ms: number | undefined, onComplete: (() => void) | undefined) {
   const reduced = usePrefersReducedMotion();
   const [filling, setFilling] = useState(false);
@@ -42,7 +45,8 @@ function useFill(ms: number | undefined, onComplete: (() => void) | undefined) {
     active.current = true;
     if (reduced) { cb.current?.(); return true; }
     setFilling(true);
-    timer.current = window.setTimeout(() => { cb.current?.(); }, ms);
+    // segura um respiro no estado cheio antes de agir, para o fechamento não ser seco
+    timer.current = window.setTimeout(() => { cb.current?.(); }, ms + FILL_REST_MS);
     return true;
   }, [ms, reduced]);
   useEffect(() => () => window.clearTimeout(timer.current), []);

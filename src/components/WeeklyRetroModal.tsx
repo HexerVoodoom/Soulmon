@@ -58,7 +58,7 @@ const CSS = `
   border:1px solid rgba(77,240,220,.4);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 0 36px rgba(77,240,220,.18),0 14px 30px rgba(0,0,0,.4);
   padding:${FLAME_INSIDE + 10}px 16px 20px;display:flex;flex-direction:column;gap:16px}
 .rt-art{position:absolute;left:50%;top:0;width:${FLAME_H}px;height:${FLAME_H}px;margin-left:-${FLAME_H / 2}px;margin-top:-${FLAME_CENTER}px;pointer-events:none}
-.rt-seal{width:44px;height:44px;flex:none;image-rendering:pixelated;filter:drop-shadow(0 0 8px rgba(77,240,220,.55))}
+.rt-seal{width:44px;height:44px;flex:none;filter:drop-shadow(0 0 8px rgba(77,240,220,.55))}
 .rt-dock{flex:none;padding:10px 16px max(12px,env(safe-area-inset-bottom));background:rgba(2,16,15,.55);border-top:1px solid rgba(77,240,220,.18)}
 .rt-dock-in{max-width:440px;margin:0 auto}
 .rt-bonus-head{display:flex;align-items:center;gap:10px}
@@ -137,12 +137,12 @@ function CountUp({ to, reduced, delay = 0 }: { to: number; reduced: boolean; del
 /** Título e subtítulo por qualidade da semana (critério em `retroQuality`). Sem travessão longo. */
 const HEAD: Record<RetroQuality, { pt: [string, string]; en: [string, string] }> = {
   good: {
-    pt: ['A gente arrebentou!', 'Que semana, parabéns. Olha o que a sua chama fez.'],
+    pt: ['A gente arrebentou!', 'Que semana! Parabéns. Olha o que a sua chama fez.'],
     en: ['We crushed it!', 'What a week, congrats. Look at what your flame did.'],
   },
   medium: {
-    pt: ['Boa semana, e dá para mais', 'Você manteve a chama acesa. Nesta semana dá para ir um pouco além.'],
-    en: ['A solid week, with room for more', 'You kept the flame lit. This week we can go a little further.'],
+    pt: ['Boa semana, a chama segue acesa', 'Nesta semana dá para ir um pouco além.'],
+    en: ['A solid week, the flame stays lit', 'This week we can go a little further.'],
   },
   bad: {
     pt: ['Essa semana a gente vai conseguir.', 'Uma semana nova começa agora. Escolha um hábito e comece por ele.'],
@@ -184,7 +184,13 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
 
   useEffect(() => () => { window.clearTimeout(timer.current); window.clearTimeout(timer2.current); }, []);
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
-  useEffect(() => { if (step === 'main') ctaRef.current?.focus({ preventScroll: true }); }, [step]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // O foco inicial do diálogo (1º focável, mais abaixo) pode ter rolado a área; o modal SEMPRE abre no topo.
+  useEffect(() => {
+    if (step !== 'main') return;
+    ctaRef.current?.focus({ preventScroll: true });
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [step]);
 
   const tapEvo = () => {
     if (evoPhase !== 'before' || flash) return;
@@ -230,7 +236,7 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
       {evo}
       {step === 'main' && (
         <>
-        <div className="rt-scroll" data-retro-scroll>
+        <div ref={scrollRef} className="rt-scroll" data-retro-scroll>
         <div className="rt-wrap" data-retro-card-wrap>
         <div className="rt-card" data-retro-card>
           <div className="rt-art rt-in" aria-hidden="true" data-retro-flame-art style={d(0.1)}>
@@ -257,9 +263,9 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
             </div>
           </div>
 
-          {retro.habits.length > 0 && (
+          {retro.habits.some(h => h.done > 0) && (
             <ul className="rt-box rt-in" style={{ ...d(0.75), listStyle: 'none', margin: 0 }}>
-              {retro.habits.map(h => (
+              {retro.habits.filter(h => h.done > 0).map(h => (
                 <li key={h.id} className="rt-row">
                   <Icon name="event_repeat" size={20} tone="inherit" />
                   <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
@@ -314,7 +320,7 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
         </div>
         <div className="rt-dock" data-retro-dock>
           <div className="rt-dock-in">
-            <CtaButton ref={ctaRef} tone="acao" className="rt-in" style={d(1.3)} fillMs={RETRO_FILL_MS} onFillComplete={onClose}>
+            <CtaButton ref={ctaRef} tone="acao" fillMs={RETRO_FILL_MS} onFillComplete={onClose}>
               {isPt ? 'Vamos começar a semana' : "Let's start the week"}
             </CtaButton>
           </div>

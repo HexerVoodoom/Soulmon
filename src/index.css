@@ -9448,8 +9448,9 @@ button.sm2-hex-row {
 /* Variante PREENCHER AO TOQUE (16/11/2026): o toque dispara o preenchimento, que corre da esquerda para a direita em `--sm2-fill-ms`. Texto por cima. */
 .sm2-cta[data-cta-fill] { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .sm2-cta[data-cta-fill] .sm2-cta-label { position: relative; z-index: 1; }
+.sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;
-  background: linear-gradient(90deg, #0A5E58, #17A89B); box-shadow: 0 0 14px 2px rgba(77, 240, 220, .75); }
+  background: linear-gradient(90deg, #12877D, #2FD6C4); box-shadow: 0 0 14px 2px rgba(77, 240, 220, .75); }
 .sm2-cta-fill::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 3px; background: #9FFFF2; box-shadow: 0 0 10px 3px rgba(159, 255, 242, .9); }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-fill { transform: scaleX(1); transition: transform var(--sm2-fill-ms, 1200ms) linear; }
 @media (prefers-reduced-motion: reduce) { .sm2-cta-fill { display: none; } }
