@@ -1666,6 +1666,23 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** exercitado pelos testes de render dos chamadores (`MilestoneCeremony.render.test.tsx`, `MorningCheckIn.*.render.test.tsx`, `DailyReportModal.aventura.render.test.tsx`).
 **Avisos do arquivo:** tudo por `style` inline (footgun 1); o vidro reusa `.sm2-viewport-screen`/`.sm2-viewport-glass` do `index.css` — nenhum CSS novo; o × vive em `position:absolute` e a ORDEM no DOM (`closeLast`) é o que decide a ordem de foco.
 
+### `src/components/ui/ModalFrame.tsx`
+**Dono de:** a MOLDURA de modal (17/11/2026, `docs/PLANO-MOLDURAS-MODAIS.md`): fatiamento vertical de largura fixa (topo e base de proporção fixa + laterais repetidas em Y), base escura e fundo do lote (`fundo`) a 15% de opacidade; sem `fundo`, pedra com runas. Visual em `.sm2-moldura-modal` (`index.css`); arte em `src/assets/soulmon/ui/moldura/` (WebP).
+**Props principais:** `title` (texto da placa), `fundo`, `fillOpacity`, `children`; repassa `data-*`/`aria-*`/`className`/`style`/`ref`.
+**Exports:** `ModalFrame`, `ModalFrameProps`.
+**Chamado por:** `src/components/nav/AreaSheet.tsx`.
+
+### `src/components/ui/CardFrame.tsx`
+**Dono de:** a MOLDURA de card (arte, nome, descrição e recompensa sobre topo/base fixos); visual em `.sm2-moldura-card` (`index.css`).
+**Exports:** `CardFrame`.
+
+### `src/components/ui/TelaMoldura.tsx`
+**Dono de:** a moldura de TELA CHEIA como decoração solta (fundo por baixo do conteúdo, moldura por cima, nada intercepta toque); reusa as classes `.sm2-moldura-tela` + `.sm2-moldura-modal__*`.
+**Exports:** `TelaMoldura`, `MOLDURA_TELAS`.
+
+### `src/assets/soulmon/ui/moldura/fundos.ts`
+**Dono de:** o mapa prédio → fundo do lote (WebP em `moldura/fundos/`) usado pela moldura; régua em `fundos.test.ts`.
+
 ### `src/components/ui/EstagioMarca.tsx`
 **Dono de:** o estágio do OPONENTE como ÍCONE nas listas do Torneio (Ranqueada/Treino), no lugar do texto (10/11/2026, REGISTRO §282): `role="img"` com `aria-label` e `title` = nome do jogo (Desperto/Ascendente/Transcendente/Apoteose/Zênite). Bebê/desconhecido não renderiza. Desde 14/11/2026 (§369) o ícone vem tingido pelo caminho da forma (`caminhoDaForma`).
 **Props principais:** `forma`, `isPt`, `size?`.
