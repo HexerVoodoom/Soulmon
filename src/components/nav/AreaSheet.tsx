@@ -197,7 +197,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           }}
         >
           {closeInSheet && !hideClose && (
-            <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+            <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}

@@ -186,7 +186,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(rank.style.fontWeight).toBe('700');
     expect(rank.style.textDecoration).toBe('underline');
     expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
-    expect(rank.compareDocumentPosition(head.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título vai na placa da moldura; o Ranking pousa à esquerda dela
   });
 
   it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {

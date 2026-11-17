@@ -9312,9 +9312,9 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
 /* 17/11/2026 (dono): Coroa ENCAIXADA ganha placa atrás da arte (a do dano contínuo é quase preta e sumia no fundo escuro do slot, ≈1,2:1).
-   18/11/2026 (dono): a placa clara deixou de ser branca: TURQUESA CLARO (#B4F4EA) com OUTER GLOW turquesa (`primary-ink`), o mesmo brilho externo do hexágono do lápis. Duas placas fixas, iguais nos temas claro e escuro: clara (#B4F4EA) para as artes escuras, escura (#08191A) para as três claras
-   (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa. */
-.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: #B4F4EA; box-shadow: 0 0 0 1px var(--sm2-primary-ink), 0 0 8px 2px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent), 0 0 16px 4px color-mix(in srgb, var(--sm2-primary-ink) 25%, transparent); }
+   18/11/2026 (dono, rodada 2): SEM placa clara atrás da Coroa (era a mancha branca): só o OUTER GLOW turquesa; as artes escuras (heal, hot, spdBuff) seguem com a placa escura. (Antes: a placa clara deixou de ser branca: TURQUESA CLARO (#B4F4EA) com OUTER GLOW turquesa (`primary-ink`), o mesmo brilho externo do hexágono do lápis. Duas placas fixas, iguais nos temas claro e escuro: clara (#B4F4EA) para as artes escuras, escura (#08191A) para as três claras
+   (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa.) */
+.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: transparent; box-shadow: 0 0 0 1px var(--sm2-primary-ink), 0 0 8px 2px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent), 0 0 16px 4px color-mix(in srgb, var(--sm2-primary-ink) 25%, transparent); }
 .sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: #08191A; }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
@@ -9579,7 +9579,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    Topo e base são imagens de proporção fixa (cantos nunca deformam), laterais = faixa reta repetida em Y, miolo transparente. `--u` = 1% da largura
    (a arte escala com a largura; app é retrato). Arte em `assets/soulmon/ui/moldura/` (~2x do exibido); trocar a arte = trocar os .webp
    e as proporções abaixo (altura de topo/base em `u` = px do arquivo / largura do arquivo * 100). */
-.sm2-moldura-modal, .sm2-moldura-card { container-type: inline-size; --u: 1cqw; }
+.sm2-moldura-card { container-type: inline-size; --u: 1cqw; }
+/* Modal: `--u` é medido em JS (`ModalFrame`) — sem `container-type`, que prenderia as sub-folhas `position: fixed` dentro do modal. `1vw` é só o 1º quadro. */
+.sm2-moldura-modal { --u: 1vw; }
 .sm2-moldura-modal {
   position: relative; box-sizing: border-box; display: flex; flex-direction: column; isolation: isolate;
   /* MODAL = base turquesa escura SÓLIDA (token do DS) + fundo do lote a ~15% por cima, cobrindo TODA a área. A MOLDURA fica POR CIMA do conteúdo

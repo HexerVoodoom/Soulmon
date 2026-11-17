@@ -245,7 +245,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
   return (
     <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, isolation: 'isolate', overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
-      <TelaMoldura tela="calabouco" />
+      <TelaMoldura tela="calabouco" title={isPt ? 'Calabouço' : 'Dungeon'} />
       {/* véu para o texto e a trilha lerem sobre qualquer cenário */}
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,18,22,.62), rgba(6,18,22,.38) 40%, rgba(6,18,22,.72))' }} />
 
