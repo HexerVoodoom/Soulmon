@@ -284,8 +284,10 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     const head = document.querySelector('.sm3-mochila-head') as HTMLElement;
     const fechar = within(head).getByRole('button', { name: 'Fechar' });
     expect(fechar.className).toContain('sm2-ora-back'); // alvo 44×44 (index.css)
-    expect(head.querySelector('.sm3-mochila-titulo')!.textContent).toBe('Arquivos');
-    expect(within(head).getByLabelText('Como usar um item')).toBeTruthy();
+    // Moldura da etapa 3: o título é a placa do topo e o "i" o disco do canto (as duas peças do quadro, fora do `head`).
+    const dialog = head.closest('[role="dialog"]') as HTMLElement;
+    expect(dialog.querySelector('[data-moldura-placa] h2')!.textContent).toBe('Arquivos');
+    expect(within(dialog.querySelector('[data-moldura-info]') as HTMLElement).getByLabelText('Como usar um item')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /voltar/i })).toBeNull();
     fireEvent.click(fechar);
     expect(onClose).toHaveBeenCalledTimes(1);

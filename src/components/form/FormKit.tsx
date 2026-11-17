@@ -1,8 +1,10 @@
 import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
-import { useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
+import { ModalFrame } from '../ui/ModalFrame';
+import { SheetFrame, MOLDURA_HOME_DIALOGOS, MOLDURA_HOME_FOLHAS } from '../ui/SheetFrame';
 import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -433,6 +435,8 @@ export function ModalSheet({
      da folha para fora solta o clique no ancestral comum (o véu) e fecharia sem querer. */
   const comecouNoVeu = useRef(false);
   const { slot, slotRef } = useModalInfoSlot();
+  const framed = centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS;
+  const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
   useBackLayer(open && sobreTelas && closeSide !== 'none', onClose);
   if (!open) return null;
   const folha = (
@@ -453,18 +457,21 @@ export function ModalSheet({
         ...(centered ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
-      <div
+      <Casca
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         data-placement={placement}
         className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
+        {...(framed ? { 'data-theme': 'dark', title, infoSlotRef: slotRef, info: info ? <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo> : undefined } : null)}
         style={{
           width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: centered ? 20 : '20px 20px 0 0',
+          ...(framed ? null : {
+            backgroundColor: 'var(--sm2-surface)',
+            borderRadius: centered ? 20 : '20px 20px 0 0',
+          }),
           boxShadow: SM2_SHADOW_SHEET,
         }}
       >
@@ -474,7 +481,7 @@ export function ModalSheet({
             existe aqui (fechar é o X e o Escape, os dois já acessíveis), então
             ele é `aria-hidden` — anunciar uma alça que não arrasta seria pior
             que não ter alça nenhuma. */}
-        {centered ? null : (
+        {centered || framed ? null : (
         <div
           aria-hidden="true"
           style={{
@@ -489,15 +496,16 @@ export function ModalSheet({
         {closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
-          <div style={{ padding: '2px 18px 0 18px', flexShrink: 0 }}>
+          <div style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
             <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
           </div>
         ) : null}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
-          <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
-          {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título. */}
-          <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />
-          {info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
+        {framed && closeSide !== 'end' ? null : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: framed ? 'flex-end' : undefined, padding: framed ? '0 4px' : closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
+          {framed ? null : <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>}
+          {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título (com a moldura, o encaixe é o disco do canto). */}
+          {framed ? null : <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />}
+          {!framed && info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
           {closeSide === 'end' && (
             <button
               type="button"
@@ -512,6 +520,7 @@ export function ModalSheet({
             </button>
           )}
         </div>
+        )}
 
         {/* SAFE AREA. O sheet encosta no fundo da tela por definição, e o fundo
             da tela é justamente onde moram a barra de gestos do Android e a
@@ -522,7 +531,7 @@ export function ModalSheet({
             ela vai para o fim do conteúdo rolável. */}
         <div
           style={{
-            overflowY: 'auto',
+            overflowY: 'auto', ...(framed ? { flex: 1, minHeight: 0 } : null),
             padding: footer
               ? '4px 18px 18px'
               : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
@@ -542,7 +551,7 @@ export function ModalSheet({
             {footer}
           </div>
         )}
-      </div>
+      </Casca>
     </div>
     </ModalInfoSlotProvider>
   );
