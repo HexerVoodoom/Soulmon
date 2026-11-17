@@ -7,10 +7,9 @@ import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
-import { ARENA_ULTIMO_DROP_MULT } from '../../utils/arenaUltimoAdversario';
 import type { Language } from '../../utils/i18n';
 import { EnergyCost } from '../ui/EnergyCost';
-import { DUEL_INVITE_ENERGY_COST } from '../../utils/duelInvites';
+import { DUEL_INVITE_ENERGY_COST, podeComprarConvites } from '../../utils/duelInvites';
 import { bitsCategoryCap, minigameBitsCategoryToday } from '../../utils/currencies';
 import { playerDayKey } from '../../utils/playerDay';
 
@@ -114,13 +113,6 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
   }
   return (
     <div data-arena-escolha role="radiogroup" aria-label={isPt ? 'Escolha seus adversários' : 'Choose your opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ ...sm2Hint, margin: 0 }}>
-        {isPt ? 'Você escolhe contra quem lutar — elementos variados, todos de poder parecido com o seu.' : 'You choose who to fight — mixed elements, all of power similar to yours.'}
-      </p>
-      {/* §384: uma linha, antes da luta. O multiplicador sai da constante. */}
-      <p data-arena-ultimo-dobro style={{ ...sm2Hint, margin: 0 }}>
-        {isPt ? `O último adversário deixa ${ARENA_ULTIMO_DROP_MULT}× a essência dele.` : `The last opponent drops ${ARENA_ULTIMO_DROP_MULT}× its essence.`}
-      </p>
       {seeds.map((seed, i) => {
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
         const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS, arena.ladder, playerLevel)[Math.max(0, bossIdx)];
@@ -175,22 +167,21 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
 /** ⚔️ §458: "Comprar convites" (1ª opção, no topo; pedido do dono, 16/11/2026): o custo à vista no botão (N convites por 1 energia); os convites aparecem em LEQUE no topo (`TicketFan`, montado pelo `AreaView`). Sem energia, o texto diz o caminho. */
 function ComprarConvites({ isPt, inv }: { isPt: boolean; inv: NonNullable<ArenaRerollProps['invites']> }) {
   const [recusou, setRecusou] = useState(false);
-  const cheio = inv.count >= inv.max;
   return (
     <div data-duelo-convites style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <button type="button" data-duelo-comprar disabled={cheio} aria-disabled={cheio} onClick={() => setRecusou(!inv.onExchange())}
-        style={{ ...sm2Button('outline', cheio), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <button type="button" data-duelo-comprar onClick={() => setRecusou(!inv.onExchange())}
+        style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isPt ? 'Comprar convites' : 'Buy invites'}
         <EnergyCost amount={DUEL_INVITE_ENERGY_COST} />
       </button>
       <p data-duelo-convites-count className="sm2-num" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
         {isPt
-          ? `${DUEL_INVITE_ENERGY_COST} energia = ${inv.perEnergy} convites · você tem ${inv.count} de ${inv.max}`
-          : `${DUEL_INVITE_ENERGY_COST} energy = ${inv.perEnergy} invites · you have ${inv.count} of ${inv.max}`}
+          ? `${DUEL_INVITE_ENERGY_COST} energia = ${inv.perEnergy} convites`
+          : `${DUEL_INVITE_ENERGY_COST} energy = ${inv.perEnergy} invites`}
       </p>
-      {(recusou || inv.count < 1) && !inv.canExchange && !cheio && (
+      {(recusou || inv.count < 1) && !inv.canExchange && (
         <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-          {isPt ? 'Sem energia agora. Ela volta com o tempo; cada luta pede 1 convite.' : 'No energy right now. It comes back with time; each fight takes 1 invite.'}
+          {isPt ? 'Sem energia agora. Ela volta com o tempo.' : 'No energy right now. It comes back with time.'}
         </p>
       )}
     </div>
@@ -215,7 +206,7 @@ export function DueloSheet({ language, onStart, arena }: {
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {arena.invites && <ComprarConvites isPt={isPt} inv={arena.invites} />}
+      {arena.invites && podeComprarConvites(arena.invites.count) && <ComprarConvites isPt={isPt} inv={arena.invites} />}
       {/* 11.3 (beta-2): elemento e golpes saíram da Arena livre e moram no PERFIL do Soulmon (Laboratório) — fonte única em `utils/soulmonPerfil.ts`. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ flex: 1 }} />
@@ -240,8 +231,8 @@ export function DueloSheet({ language, onStart, arena }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits. Cada luta pede 1 convite de duelo; troque 1 energia por convites quando precisar.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits. Each fight takes 1 duel invite; trade 1 energy for invites when you need them.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
             </span>
             <span data-duelo-ajuda-stray style={{ display: 'block', marginTop: 6 }}>
               {isPt

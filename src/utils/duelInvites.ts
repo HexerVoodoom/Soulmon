@@ -22,6 +22,11 @@ export const DUEL_INVITE_INITIAL = 7;
 export const DUEL_INVITE_PER_ENERGY = 5;
 export const DUEL_INVITE_PER_ENERGY_PAID = 7;
 export const DUEL_INVITE_ENERGY_COST = 1;
+/** Só a UI: "Comprar convites" aparece com 2 ou menos convites (pedido do dono, 17/11/2026). Com 0 continua possível (nunca tranca). O servidor segue aceitando a troca até o teto de 7. */
+export const DUEL_INVITE_BUY_MAX_COUNT = 2;
+export function podeComprarConvites(count: number): boolean {
+  return count <= DUEL_INVITE_BUY_MAX_COUNT;
+}
 /** Folga mínima entre duas trocas aceitas pelo servidor (ms). A troca legítima só acontece com estoque < 7, ou seja, depois de lutar. */
 export const DUEL_INVITE_MIN_GAP_MS = 60_000;
 

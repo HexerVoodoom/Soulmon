@@ -42,13 +42,15 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     expect(await screen.findByRole('button', { name: 'Tentar de novo' })).toBeTruthy();
   });
 
-  it('§384: com os cards, uma linha diz que o último adversário dropa em dobro (EN e PT)', async () => {
+  it('folha limpa: sem a linha do último adversário nem texto explicativo acima dos cards (EN e PT)', async () => {
     H.load = () => Promise.resolve([]);
-    const en = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" onStart={() => {}} />);
-    await waitFor(() => expect(en.container.querySelector('[data-arena-ultimo-dobro]')?.textContent).toBe('The last opponent drops 2× its essence.'));
-    cleanup();
-    const pt = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" onStart={() => {}} />);
-    await waitFor(() => expect(pt.container.querySelector('[data-arena-ultimo-dobro]')?.textContent).toBe('O último adversário deixa 2× a essência dele.'));
+    for (const lang of ['en-US', 'pt-BR'] as const) {
+      const r = renderWithCss(<DueloSheet arena={ARENA_PROPS} language={lang} onStart={() => {}} />);
+      await waitFor(() => expect(r.container.querySelector('[data-arena-escolha]')).not.toBeNull());
+      expect(r.container.querySelector('[data-arena-ultimo-dobro]')).toBeNull();
+      expect(r.container.querySelector('[data-arena-escolha]')!.querySelector('p:not([data-arena-reroll-faltam])')).toBeNull();
+      cleanup();
+    }
   });
 
   it('a ajuda explica o "Stray / Desgarrado"', () => {
@@ -68,16 +70,32 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     expect(raiz.firstElementChild!.contains(btn)).toBe(true);
     expect(btn.textContent).toContain('Comprar convites');
     expect(btn.querySelector('[data-energy-cost="1"]')).toBeTruthy();
-    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toContain('1 energia = 5 convites');
+    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toBe('1 energia = 5 convites');
     fireEvent.click(btn);
     expect(onExchange).toHaveBeenCalledTimes(1);
   });
 
-  it('conta paga: o custo mostra 7 convites por energia; estoque cheio desabilita a compra', () => {
+  it('conta paga com 1 convite: o custo mostra 7 convites por energia (EN)', () => {
     H.load = () => new Promise(() => {});
-    const inv = { count: 7, max: 7, perEnergy: 7, canExchange: false, onExchange: () => false, onBegin: () => true };
+    const inv = { count: 1, max: 7, perEnergy: 7, canExchange: true, onExchange: () => true, onBegin: () => true };
     const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="en-US" onStart={() => {}} />);
-    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toContain('1 energy = 7 invites');
-    expect((container.querySelector('[data-duelo-comprar]') as HTMLButtonElement).disabled).toBe(true);
+    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toBe('1 energy = 7 invites');
+  });
+
+  it.each([0, 1, 2])('com %i convites o botão de comprar APARECE (0 nunca tranca a Arena)', (count) => {
+    H.load = () => new Promise(() => {});
+    const inv = { count, max: 7, perEnergy: 5, canExchange: true, onExchange: () => true, onBegin: () => true };
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="pt-BR" onStart={() => {}} />);
+    expect(container.querySelector('[data-duelo-comprar]')).not.toBeNull();
+    expect(container.querySelector('[data-duelo-convites-count]')).not.toBeNull();
+  });
+
+  it.each([3, 5, 7])('com %i convites o botão e o texto de custo NÃO são renderizados; Lutar segue', (count) => {
+    H.load = () => new Promise(() => {});
+    const inv = { count, max: 7, perEnergy: 5, canExchange: true, onExchange: () => true, onBegin: () => true };
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="en-US" onStart={() => {}} />);
+    expect(container.querySelector('[data-duelo-comprar]')).toBeNull();
+    expect(container.querySelector('[data-duelo-convites]')).toBeNull();
+    expect((container.querySelector('[data-duelo-start]') as HTMLButtonElement).disabled).toBe(false);
   });
 });

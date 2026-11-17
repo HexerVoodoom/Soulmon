@@ -2,11 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import {
   DUEL_INVITE_INITIAL, DUEL_INVITE_MAX, duelInviteCount, duelInviteExchangeRefusal, exchangeDuelInvites, sanitizeDuelInvites,
-  spendDuelInvite, type DuelInviteState,
+  podeComprarConvites, spendDuelInvite, type DuelInviteState,
 } from './duelInvites';
 
 const NOW = Date.UTC(2026, 10, 16, 12);
 const base = (extra: Partial<DuelInviteState> = {}): DuelInviteState => ({ energyPoints: 5, ...extra });
+
+describe('podeComprarConvites (UI: só com 2 ou menos)', () => {
+  it('0,1,2 sim; 3..7 não; o servidor/regra pura seguem aceitando a troca até o teto', () => {
+    for (const n of [0, 1, 2]) expect(podeComprarConvites(n)).toBe(true);
+    for (const n of [3, 4, 5, 6, 7]) expect(podeComprarConvites(n)).toBe(false);
+    expect(duelInviteExchangeRefusal({ duelInvites: { n: 3, at: 0 }, energyPoints: 5 } as never, 0)).toBeUndefined();
+    expect(duelInviteExchangeRefusal({ duelInvites: { n: 7, at: 0 }, energyPoints: 5 } as never, 0)).toBe('full');
+  });
+});
 
 describe('convite de duelo (§458)', () => {
   it('save antigo, sem o campo, tem o estoque inicial de 7', () => {
