@@ -127,7 +127,7 @@ function EscolhaDeAdversarios({ isPt, semFicha, onPick, onStart, startBlocked, a
             <button
               type="button" role="radio" aria-checked={on} data-arena-card={i}
               onClick={() => setChosen(i)}
-              style={{ all: 'unset', display: 'block', cursor: 'pointer', boxSizing: 'border-box', width: '100%' }}
+              style={{ display: 'block', margin: 0, padding: 0, border: 0, background: 'none', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', boxSizing: 'border-box', width: '100%' }}
             >
               <span data-arena-card-banner style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontWeight: 500, backgroundColor: 'var(--sm2-surface-2)', borderBottom: '1px solid var(--sm2-line)' }}>
                 <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
