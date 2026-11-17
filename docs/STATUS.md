@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — Sincronização do manual (`docs/manter-docs-2026-11-16`)
+> - **Feito:** manual sincronizado `b0c1e59c..6b7773143` (363 commits, PRs #977–#998): 01–05, 07–10 e 06-REFERENCIA (components, utils, api-workers, hooks, plugins) atualizados e verificados por amostra (5 correções do verificador: 404 em exchange-bits, CROWN_ONLY_FAMILIES, MAX_OUT, utils/steps.ts, SLEEP_ENERGY_REGEN_BONUS). Guard docsManual/docsSemMentira verde. `.sincronizado.json` = 6b7773143. Fila de arte: 2 linhas Honra (machado/cajado) em `ASSETS-A-GERAR.md`.
+> - **Pendente:** divergências para o dono/código: Glitchtama no CLAUDE.md e §7/§48 do doc 02 (buff 10%/7 dias, 1 por semana no código); `SCHEDULE_EXACT_ALARM` voltou ao manifesto mas PLAY-DATA-SAFETY/PLAY-LANCAMENTO dizem removida. Docs 00-MAPA/12 não precisaram de mudança (sem módulo novo). Branch sem PR, não mergeada.
+
 > ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
 > - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.
 > - **Pendente do dono:** abrir o PR pacote→main no GitHub (CI).
