@@ -3,7 +3,7 @@
 > ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §469)
 > - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
 
-> ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §468)
+> ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §467)
 > - **Feito:** placa atrás da Coroa encaixada (CSS, todas, claro e escuro; contraste 5,0 a 16,9:1) e descrição PT/EN nas 10 famílias; teste de cobertura.
 > - **Pendente:** capturas 360x640 não geradas; não visto em aparelho. **Rollback:** `git revert`.
 

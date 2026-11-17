@@ -630,7 +630,7 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'arena') {
     const lots = arenaLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
-    const conviteArt = props.play.arena?.invites ? conviteDueloFan(language, props.play.arena.invites.max) : undefined;
+    const conviteArt = props.play?.arena?.invites ? conviteDueloFan(language, props.play.arena.invites.max) : undefined;
     return (
       <AreaScene
         areaId={area}
@@ -640,7 +640,7 @@ export function AreaView(props: AreaViewProps) {
         notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}
-          npcOverlay={open?.id === 'duelo' && props.play.arena?.invites && conviteArt ? <TicketFan count={props.play.arena.invites.count} language={language} art={conviteArt} /> : undefined}>
+          npcOverlay={open?.id === 'duelo' && props.play?.arena?.invites && conviteArt ? <TicketFan count={props.play.arena.invites.count} language={language} art={conviteArt} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} onEnemySeen={props.play.onBestiarySeen} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />

@@ -293,7 +293,7 @@ Na mesma tela, uma por uma:
 | **Apps governamentais** | Não | — |
 | **Recursos financeiros** | Nenhum (compras digitais não contam aqui) | — |
 | **Recursos de IA generativa** | Sim — responder com `PLAY-FICHA.md` §5 | decisão #22 |
-| **Permissões sensíveis** (se pedir) | `RECORD_AUDIO` = recado falado, opcional; `ACTIVITY_RECOGNITION` = passos. `SCHEDULE_EXACT_ALARM` foi REMOVIDA no beta-play-01 (lembrete usa alarme inexato) | `PLAY-DATA-SAFETY.md` §2.4 tabela de permissões |
+| **Permissões sensíveis** (se pedir) | `RECORD_AUDIO` = recado falado, opcional; `ACTIVITY_RECOGNITION` = passos. `SCHEDULE_EXACT_ALARM` está declarada no manifesto (beta12, item I: só o fim do Pomodoro do Foco; sem a permissão cai no alarme inexato) e exige a declaração de uso na Play Console | `PLAY-DATA-SAFETY.md` §2.4 tabela de permissões |
 
 **Feito quando:** o painel "Conteúdo do app" não tem nenhuma linha "Ação necessária".
 

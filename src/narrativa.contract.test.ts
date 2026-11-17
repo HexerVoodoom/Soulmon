@@ -190,7 +190,6 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/utils/glitchtamaTeste.ts',
       'src/App.tsx',
       'src/components/nav/AreaView.tsx',
-      'src/components/play/PlaySheets.tsx',
       'src/components/CompanionHUD.tsx',
       'src/components/DungeonGame.tsx',
       'src/components/HelpModal.tsx',
