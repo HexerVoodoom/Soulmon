@@ -33,6 +33,8 @@ import { InfoTip } from '../ui/InfoTip';
 import { FX_ART } from '../../utils/fxArt';
 import { gameStory, type GameStoryId } from '../../utils/gameStories';
 import type { Language } from '../../utils/i18n';
+import { TelaMoldura, MOLDURA_TELAS } from '../ui/TelaMoldura';
+import type { TelaMoldura as TelaMolduraId } from '../../assets/soulmon/ui/moldura/fundos';
 
 /** Largura LÓGICA do visor de jogo (×2 = 348, o vidro do canvas). */
 export const GAME_VISOR_W = 174;
@@ -44,7 +46,7 @@ export const DIALOG_VISOR_W = 144;
  * nav inferior (B2 — a nav continua visível e utilizável; sair pelo Início é
  * caminho legítimo) e rola por dentro quando não cabe.
  */
-export function GameRoot({ children, style, full = false }: { children: ReactNode; style?: CSSProperties; full?: boolean }) {
+export function GameRoot({ children, style, full = false, moldura }: { children: ReactNode; style?: CSSProperties; full?: boolean; /** Fundo + moldura da tela cheia (`TelaMoldura`). */ moldura?: { tela: TelaMolduraId; title?: string } }) {
   return (
     <div
       data-game-root
@@ -55,7 +57,7 @@ export function GameRoot({ children, style, full = false }: { children: ReactNod
         boxSizing: 'border-box',
         padding: full ? '8px 12px 0' : '10px 16px 16px',
         // A barra de status foi removida (tela de ponta a ponta): o voltar e o título descem a área segura de cima.
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px)`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px${moldura && MOLDURA_TELAS ? ' + min(1vw, 4.8px) * 15' : ''})`,
         // `full` (D-02, 18/10/2026): rodada de tela quase cheia. O GameRoot (z 100) já cobre o link de canto (z 45), então a faixa da
         // nav (`--sm-corner-h`) que a página reserva embaixo é só vazio: aqui ela some, ficando a área segura do aparelho + uma folga.
         paddingBottom: full
@@ -68,6 +70,7 @@ export function GameRoot({ children, style, full = false }: { children: ReactNod
         ...style,
       }}
     >
+      {moldura && <TelaMoldura tela={moldura.tela} title={moldura.title} />}
       {children}
     </div>
   );

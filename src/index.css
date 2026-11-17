@@ -9575,58 +9575,77 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
 @keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }
 
-/* §MOLDURA (17/11/2026, PROVISÓRIA): moldura 9-slice de modal e de card (`components/ui/ModalFrame.tsx`, `CardFrame.tsx`). Arte em
-   `assets/soulmon/ui/moldura/` (2x do exibido); trocar o PNG = trocar o .webp e, se o slice mudar, as variáveis abaixo. Cantos não deformam. */
-:root {
-  --sm2-moldura-modal-slice: 66;
-  --sm2-moldura-modal-borda: 44px;
-  --sm2-moldura-card-slice: 52;
-  --sm2-moldura-card-borda: 34px;
-  --sm2-moldura-ouro: #e3c06a;
-  --sm2-moldura-serifa: Georgia, 'Times New Roman', serif;
-}
+/* §MOLDURA (17/11/2026): moldura de modal e de card por FATIAMENTO VERTICAL de largura fixa (`components/ui/ModalFrame.tsx`, `CardFrame.tsx`).
+   Topo e base são imagens de proporção fixa (cantos nunca deformam), laterais = faixa reta repetida em Y, miolo transparente. `--u` = 1% da largura
+   (limitado, para telas largas não incharem a arte). Arte em `assets/soulmon/ui/moldura/` (~2x do exibido); trocar a arte = trocar os .webp
+   e as proporções abaixo (altura de topo/base em `u` = px do arquivo / largura do arquivo * 100). */
+.sm2-moldura-modal, .sm2-moldura-card { container-type: inline-size; --u: min(1cqw, 4.8px); }
 .sm2-moldura-modal {
-  position: relative; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0; isolation: isolate;
-  border-style: solid; border-color: transparent; border-width: var(--sm2-moldura-modal-borda);
-  border-image: url('./assets/soulmon/ui/moldura/modal-frame-9slice.webp') var(--sm2-moldura-modal-slice) / var(--sm2-moldura-modal-borda) round;
-  background: none;
+  position: relative; box-sizing: border-box; display: flex; flex-direction: column; isolation: isolate;
+  background: #0d1a1a; min-height: calc(var(--u) * 52);
 }
-.sm2-moldura-modal::before {
-  content: ''; position: absolute; z-index: -1; inset: calc(var(--sm2-moldura-modal-borda) * -.45);
-  background: #1b2423 url('./assets/soulmon/ui/moldura/modal-fill-stone.webp') repeat; background-size: 105px 70px;
-  opacity: var(--sm2-moldura-fill-op, 1); pointer-events: none;
+.sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
+.sm2-moldura-modal__fundo {
+  inset: 0; z-index: -2; background: var(--sm2-moldura-fundo, none) center / cover no-repeat; opacity: var(--sm2-moldura-fill-op, .15);
 }
+/* Pedra com runas (genérico/sem prédio): ladrilho, no máximo 2x2 repetições. */
+.sm2-moldura-modal--pedra .sm2-moldura-modal__fundo { background-size: 50% auto; background-repeat: repeat; background-position: top left; }
+.sm2-moldura-modal__lado { top: 0; bottom: 0; width: calc(var(--u) * 2.1); z-index: -1; background-repeat: repeat-y; background-size: 100% auto; }
+.sm2-moldura-modal__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-e.webp'); }
+.sm2-moldura-modal__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-d.webp'); }
+.sm2-moldura-modal__topo, .sm2-moldura-modal__base { left: 0; right: 0; z-index: 1; background-repeat: no-repeat; background-size: 100% 100%; }
+.sm2-moldura-modal__topo { top: 0; height: calc(var(--u) * 16.9); background-image: url('./assets/soulmon/ui/moldura/painel-topo.webp'); }
+.sm2-moldura-modal__base { bottom: 0; height: calc(var(--u) * 34.4); background-image: url('./assets/soulmon/ui/moldura/painel-base.webp'); }
 .sm2-moldura-modal__placa {
-  position: relative; align-self: center; flex: none; width: min(100%, 300px); aspect-ratio: 600 / 116; margin: calc(var(--sm2-moldura-modal-borda) * -1.1) 0 4px;
-  background: url('./assets/soulmon/ui/moldura/modal-title-plaque.webp') center / 100% 100% no-repeat;
-  display: flex; align-items: center; justify-content: center; padding: 0 14%;
+  position: absolute; z-index: 2; left: calc(var(--u) * 24); width: calc(var(--u) * 57); top: calc(var(--u) * 4.3); height: calc(var(--u) * 6.5);
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
 }
 .sm2-moldura-modal__titulo {
-  margin: 0; font-family: var(--sm2-moldura-serifa); font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-moldura-ouro);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .8); text-align: center; line-height: 1.1;
+  margin: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; line-height: 1.1;
+  font-family: Georgia, 'Times New Roman', serif; font-size: var(--sm2-text-md, 1rem); font-weight: 700; color: #e3c06a; text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
 }
-.sm2-moldura-modal__info { position: absolute; right: 4%; top: 50%; transform: translateY(-50%); display: flex; align-items: center; }
-.sm2-moldura-modal__conteudo { display: contents; }
-.sm2-moldura-card {
-  position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; gap: 6px; isolation: isolate;
-  border-style: solid; border-color: transparent; border-width: var(--sm2-moldura-card-borda);
-  border-image: url('./assets/soulmon/ui/moldura/card-frame-9slice.webp') var(--sm2-moldura-card-slice) / var(--sm2-moldura-card-borda) round;
+.sm2-moldura-modal__info {
+  position: absolute; z-index: 3; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8);
+  display: flex; align-items: center; justify-content: center;
 }
-.sm2-moldura-card::before { content: ''; position: absolute; z-index: -1; inset: 0; background: #1b2423; }
-.sm2-moldura-card__arte { flex: 1; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+.sm2-moldura-modal__conteudo {
+  position: relative; z-index: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: calc(var(--u) * 15) calc(var(--u) * 2.4) calc(var(--u) * 6);
+}
+/* CARD: topo 231/600 e base 369/600 (do arquivo); vão da arte entre os dois. */
+.sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; min-height: calc(var(--u) * 126); }
+.sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }
+.sm2-moldura-card__lado { top: 0; bottom: 0; width: calc(var(--u) * 6.7); z-index: 1; background-repeat: repeat-y; background-size: 100% auto; }
+.sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
+.sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
+.sm2-moldura-card__topo, .sm2-moldura-card__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
+.sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
+.sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
+.sm2-moldura-card__arte {
+  position: absolute; z-index: 0; left: calc(var(--u) * 6); right: calc(var(--u) * 6); top: calc(var(--u) * 5); bottom: calc(var(--u) * 38.9);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a2e2c;
+}
 .sm2-moldura-card__arte > img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .sm2-moldura-card__nome, .sm2-moldura-card__desc, .sm2-moldura-card__recompensa {
-  display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; background-repeat: no-repeat; background-size: 100% 100%;
+  position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; overflow: hidden;
 }
 .sm2-moldura-card__nome {
-  align-self: center; width: 92%; aspect-ratio: 284 / 55; padding: 0 10%; background-image: url('./assets/soulmon/ui/moldura/card-placa-nome.webp');
-  font-family: var(--sm2-moldura-serifa); font-weight: 700; font-size: var(--sm2-text-md, 1rem); color: #3a2a0c;
+  left: calc(var(--u) * 22); right: calc(var(--u) * 20); bottom: calc(var(--u) * 25.5); height: calc(var(--u) * 10.3);
+  font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: var(--sm2-text-md, 1rem); color: #f0d98c; text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
 }
 .sm2-moldura-card__desc {
-  width: 100%; min-height: 56px; padding: 12px 14px; background-image: url('./assets/soulmon/ui/moldura/card-placa-pergaminho.webp');
-  font-size: var(--sm2-text-sm, .875rem); color: #3a2a0c;
+  left: calc(var(--u) * 11); right: calc(var(--u) * 11); bottom: calc(var(--u) * 5); height: calc(var(--u) * 17);
+  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; color: #3a2a0c;
 }
 .sm2-moldura-card__recompensa {
-  align-self: center; width: 76%; aspect-ratio: 215 / 44; gap: 6px; background-image: url('./assets/soulmon/ui/moldura/card-pilula-recompensa.webp');
-  font-size: var(--sm2-text-sm, .875rem); font-weight: 700; color: var(--sm2-moldura-ouro);
+  z-index: 1; left: 50%; transform: translateX(-50%); bottom: calc(var(--u) * 41); gap: 6px; padding: 2px 12px; border-radius: 999px;
+  background: rgba(10, 22, 22, .82); border: 1px solid #b98f3e; font-size: var(--sm2-text-sm, .875rem); font-weight: 700; color: #e3c06a;
 }
+/* Telas cheias: decoração solta (`components/ui/TelaMoldura.tsx`): fundo por baixo do conteúdo (z -1), moldura por cima, nada intercepta toque. */
+.sm2-moldura-tela.sm2-moldura-modal { display: contents; container-type: normal; --u: min(1vw, 4.8px); background: none; min-height: 0; }
+.sm2-moldura-tela .sm2-moldura-modal__fundo, .sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo,
+.sm2-moldura-tela .sm2-moldura-modal__base, .sm2-moldura-tela .sm2-moldura-modal__placa { position: fixed; pointer-events: none; }
+.sm2-moldura-tela::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #0d1a1a; pointer-events: none; }
+.sm2-moldura-tela .sm2-moldura-modal__fundo { z-index: -1; inset: 0; }
+.sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo, .sm2-moldura-tela .sm2-moldura-modal__base { z-index: 60; }
+.sm2-moldura-tela .sm2-moldura-modal__placa { z-index: 61; }

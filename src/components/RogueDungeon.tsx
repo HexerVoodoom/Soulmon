@@ -26,6 +26,7 @@ import { ResultScreen } from './games/ResultScreen';
 import { RankingPanel } from './RankingPanel';
 import floorDoor from '../assets/soulmon/icones-ui/masmorra-porta.png';
 import floorStairs from '../assets/soulmon/icones-ui/masmorra-escada.png';
+import { TelaMoldura } from './ui/TelaMoldura';
 import floorChest from '../assets/soulmon/icones-ui/masmorra-bau-fechado.png';
 import {
   ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, rogueRestMs, settleRest, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
@@ -243,7 +244,8 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const walked = Math.min(1, run.step / ROGUE_MAX_STEPS);
 
   return (
-    <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
+    <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, isolation: 'isolate', overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
+      <TelaMoldura tela="calabouco" title={isPt ? 'Calabouço' : 'Dungeon'} />
       {/* véu para o texto e a trilha lerem sobre qualquer cenário */}
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,18,22,.62), rgba(6,18,22,.38) 40%, rgba(6,18,22,.72))' }} />
 

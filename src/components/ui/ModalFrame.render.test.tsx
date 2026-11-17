@@ -21,7 +21,7 @@ describe('ModalFrame', () => {
     expect(el.className).toContain('sm2-moldura-modal');
     expect(el.className).toContain('x');
     expect(el.hasAttribute('data-area-sheet')).toBe(true);
-    expect(el.querySelector('[data-moldura-placa]')).toBeNull();
+    expect(el.querySelector('h2')).toBeNull();
     expect(el.style.getPropertyValue('--sm2-moldura-fill-op')).toBe('1');
   });
 });

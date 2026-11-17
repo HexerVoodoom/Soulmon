@@ -1052,7 +1052,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   }
 
   return (
-    <GameRoot>
+    <GameRoot moldura={{ tela: 'fenda', title: isPt ? 'Fenda Sem Fim' : 'Endless Rift' }}>
       {portalToast && (
         <div role="status" data-rift-portal-toast onClick={() => setPortalToast(false)} style={{
           position: 'fixed', zIndex: 150, left: '50%', transform: 'translateX(-50%)', top: 'calc(env(safe-area-inset-top, 0px) + 12px)', maxWidth: 'min(92vw, 420px)', minHeight: 44,

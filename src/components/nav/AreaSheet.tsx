@@ -11,8 +11,9 @@ import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 import { ModalFrame } from '../ui/ModalFrame';
+import { fundoDoLote } from '../../assets/soulmon/ui/moldura/fundos';
 
-/** Moldura 9-slice PROVISÓRIA da folha (PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
+/** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
 export const MOLDURA_MODAL = true;
 
 /**
@@ -169,6 +170,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 
         <SheetShell
           data-area-sheet
+          title={title}
+          infoSlotRef={slotRef}
+          fundo={fundoDoLote(areaId, lotId)}
           className="sm2-sheet-rise"
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
@@ -198,14 +202,16 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
-          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
+          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: MOLDURA_MODAL ? 0 : 52, padding: MOLDURA_MODAL ? 0 : '8px 16px 0', boxSizing: 'border-box', backgroundColor: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
             {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
-              {title}
-            </h2>
+            {MOLDURA_MODAL ? <span style={{ flex: 1 }} /> : (
+              <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
+                {title}
+              </h2>
+            )}
             {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título. */}
-            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />
+            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui (canto direito, na linha do título) ou, com a moldura, sobre o disco do canto da placa (`ModalFrame infoSlotRef`). */}
+            {!MOLDURA_MODAL && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />}
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
@@ -228,6 +234,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 }
 
 /** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
-function SheetShell(props: HTMLAttributes<HTMLDivElement> & { 'data-area-sheet'?: boolean | string }) {
-  return MOLDURA_MODAL ? <ModalFrame {...props} /> : <div {...props} />;
+function SheetShell({ title: _t, infoSlotRef: _i, fundo, ...props }: HTMLAttributes<HTMLDivElement> & { 'data-area-sheet'?: boolean | string; infoSlotRef?: (el: HTMLElement | null) => void; fundo?: string }) {
+  return MOLDURA_MODAL ? <ModalFrame title={_t} infoSlotRef={_i} fundo={fundo} {...props} /> : <div {...props} />;
 }

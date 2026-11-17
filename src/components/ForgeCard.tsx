@@ -7,6 +7,7 @@
  *
  * O bônus mostrado é HONESTO: o que as peças dão por atributo e o que vale em luta depois do teto único de 5% somado ao talento.
  */
+import { TelaMoldura } from './ui/TelaMoldura';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useGameStateOptional } from '../contexts/GameStateContext';
@@ -457,7 +458,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
       };
     });
     return (
-      <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
+      <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map" style={{ isolation: 'isolate' }}>
+        <TelaMoldura tela="soulsmith-mapa" title="Soulsmith" />
         <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
           <div className="sm2-vit-bar" data-vitra-bar>
             {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
