@@ -2,8 +2,8 @@
 // Sem JS os CTAs seguem como link para #entrar. Cliques medidos pelo tracker (data-sa nos botões, host nos links)
 // e pelo data-clique do passo 1 (/api/clique), sem dado pessoal.
 const d = document.querySelector<HTMLDialogElement>('[data-entrar-modal]');
-// Com o formulário da lista de espera na página, o CTA continua levando a ele.
-if (d && !document.querySelector('[data-form]')) {
+// O CTA principal sempre abre o modal (a lista de espera, se voltar, fica dentro do modal ou em outro botão).
+if (d) {
   const q = <T extends Element = HTMLElement>(s: string) => d.querySelector<T>(s)!;
   const passos = [...d.querySelectorAll<HTMLElement>('[data-em-passo]')];
   const h = q('[data-em-h]'); const tx = q('[data-em-tx]'); const cont = q('[data-em-contagem]'); const voltar = q<HTMLButtonElement>('[data-em-voltar]');
