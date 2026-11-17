@@ -109,9 +109,10 @@ describe('fiação do cristal (contrato no fonte)', () => {
   const APP = readFileSync(resolve(__dirname, '../App.tsx'), 'utf8');
   const AREA = readFileSync(resolve(__dirname, './nav/AreaView.tsx'), 'utf8');
   it('o toque põe no cristal; o lote só parte no cristal; a Home recebe a fase', () => {
-    expect(APP).toMatch(/evolutionCrystal: startCrystal\(/);
+    expect(APP).toMatch(/const cristalNovo = startCrystalFrozen\(/); // o toque põe no cristal (ao descer de forma, congelando a anterior)
+    expect(APP).toMatch(/evolutionCrystal: cristalNovo/);
     expect(APP).toMatch(/crystalFormId: cristalKey,/); // a chave da forma-destino (forma alternativa = forma@elemento, 05/11/2026)
-    expect(APP).toMatch(/const cristalKey = cristalAlvo \? altSpriteKey\(cristalAlvo\.to,/);
+    expect(APP).toMatch(/const cristalKey = crystalSpriteKey\(gameState, spriteAcervo\);/);
     expect(APP).toMatch(/emCristal=\{cristalFase\}/);
     expect(APP).toMatch(/evolutionCrystal: undefined,/);
   });

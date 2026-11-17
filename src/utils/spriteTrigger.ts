@@ -35,7 +35,7 @@
 import { branchLeaders, type AttrPoints, type CareReading } from './carePattern';
 import { getNextEvolution } from './dailyReset';
 import { evolutionTarget, type Branch } from './evolutionTarget';
-import { gaugeGoalFor } from './evolutionGauge';
+import { gaugeGoalFor, gaugeTravadaPelasMegas } from './evolutionGauge';
 import { hasSprite, isAccountCapped, isFormCapped, type SpriteLibrary } from './spriteLibrary';
 
 /** `'B'` fica no tipo como LÁPIDE: nenhum caminho o produz desde o D-G8c. Ele
@@ -76,7 +76,9 @@ export function pointsToEvolve(evolutionStage: string, evolutionPoints: number, 
   // 🧬 11/10/2026: pontos do GAUGE, não mais dias completos. A meta é de
   // `gaugeGoalFor` (dona). No topo (ultra) a meta é 0 e nada é gerado: o
   // `targetFormId` devolve null de qualquer jeito.
-  return gaugeGoalFor(evolutionStage, unlockedEvolutions) - (evolutionPoints ?? 0);
+  // 16/11/2026: mega com menos de 3 megas liberadas não tem próxima forma — nunca "pronto", mesmo com pontos guardados.
+  const faltam = gaugeGoalFor(evolutionStage, unlockedEvolutions) - (evolutionPoints ?? 0);
+  return gaugeTravadaPelasMegas(evolutionStage, unlockedEvolutions) ? Math.max(1, faltam) : faltam;
 }
 
 /** A forma-destino, pela fonte única. `null` quando não há para onde ir. */
@@ -152,7 +154,7 @@ export function currentFormRecovery(input: SpriteTriggerInput): SpriteBatch | nu
 function vesperForms(input: SpriteTriggerInput, target: string): string[] {
   const leaders = branchLeaders(input.points);
   if (leaders.length < 2) return [target];
-  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.evolutionPoints ?? 0));
+  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions));
   // `ultra` não tem galho: os três líderes resolvem para a MESMA forma. Dedup
   // aqui evita três pedidos idênticos ao servidor pela mesma imagem.
   const unique = Array.from(new Set(forms.filter(f => f !== input.evolutionStage)));

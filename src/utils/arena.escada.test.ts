@@ -5,13 +5,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ARENA_LADDER_MAX, ARENA_ROUNDS, arenaFoe, arenaFoeSides, arenaLadderStage, arenaLadderStep, arenaLadderStrength, buildArenaRound,
-  ARENA_CHEFE_ULTRA_MIN_LADDER, ARENA_CHEFE_ULTRA_MULT, arenaChefeUltraLiberado, nextArenaLadder, sanitizeArenaLadder, simulateArenaRunV3, type ArenaLadderStage, type ArenaSkill,
+  ARENA_CHEFES_ULTRA, ARENA_CHEFE_ULTRA_MIN_LADDER, ARENA_CHEFE_ULTRA_MULT, arenaChefeUltraLiberado, nextArenaLadder, sanitizeArenaLadder, simulateArenaRunV3, type ArenaLadderStage, type ArenaSkill,
 } from './arena';
 import { applyArenaRunEnd, arenaFoesOfSeed, arenaRunIsStray } from './arenaSorteio';
 import { combatantAt, REFERENCE_BUILDS, REFERENCE_BUILD_NAMES, RULER_LEVELS } from './combate/level';
 import { SPECIAL_FAMILIES } from './combate/specials';
 import { mulberry32 } from './combate/rng';
 import { isStraySeed } from './strayFoes';
+import { FORMAS_ALTAS_ART, novoSoulmonById } from './novosSoulmon';
 
 vi.setConfig({ testTimeout: 300_000 });
 
@@ -138,7 +139,7 @@ describe('calibração medida', () => {
   });
 });
 
-describe('o chefe ULTRA (Mareoror/Salsolura, 10/11/2026)', () => {
+describe('o chefe ULTRA (Mareoror/Salsolura, 10/11/2026; + os 5 Ultra das linhas v1, 16/11/2026)', () => {
   const ult = (ladder: number, n = 400) => Array.from({ length: n }, (_, s) => buildArenaRound(5, 1, mulberry32(s * 7919 + 13), undefined, false, false, undefined, ladder)[0]);
   it('abaixo do limiar NUNCA aparece (e o sorteio é o de sempre)', () => {
     for (const l of [0, 5, 20, 31]) expect(ult(l).some(e => e.chefeUltra)).toBe(false);
@@ -146,14 +147,26 @@ describe('o chefe ULTRA (Mareoror/Salsolura, 10/11/2026)', () => {
     expect(arenaChefeUltraLiberado(31)).toBe(false);
     expect(arenaChefeUltraLiberado('x')).toBe(false);
   });
-  it('a partir do limiar sorteia, com chance razoável (não 100%), as duas espécies, só na rodada-chefe', () => {
-    const foes = ult(32);
+  it('a partir do limiar sorteia, com chance razoável (não 100%), as 7 espécies (2 do Oráculo + 5 Ultra novos), só na rodada-chefe', () => {
+    const foes = ult(32, 1600);
     const n = foes.filter(e => e.chefeUltra).length;
-    expect(n).toBeGreaterThan(50); expect(n).toBeLessThan(180);
-    expect(new Set(foes.filter(e => e.chefeUltra).map(e => e.chefeUltra))).toEqual(new Set(['mareoror', 'salsolura']));
-    const u = foes.find(e => e.chefeUltra)!;
+    expect(n).toBeGreaterThan(300); expect(n).toBeLessThan(500); // 1 em 4
+    expect(new Set(foes.filter(e => e.chefeUltra).map(e => e.chefeUltra))).toEqual(new Set(['mareoror', 'salsolura', 'vibri', 'voltrix', 'chronib', 'runix', 'kenjo']));
+    const u = foes.find(e => e.chefeUltra === 'mareoror')!;
     expect(u.cls).toBe('boss'); expect(u.element).toBe('vapor'); expect(u.elements).toEqual(['fogo', 'agua']); expect(u.namePt).toMatch(/^Triune/);
     for (let r = 1; r <= 4; r++) for (let s = 0; s < 200; s++) expect(buildArenaRound(r, 1, mulberry32(s), undefined, false, false, undefined, 40).some(e => e.chefeUltra)).toBe(false);
+  });
+  it('os 5 Ultra novos: id da criatura, elemento dela, nome de FORMAS_ALTAS (ultra) e arte própria', () => {
+    expect(ARENA_CHEFES_ULTRA.map(c => c.id)).toEqual(['mareoror', 'salsolura', 'vibri', 'voltrix', 'chronib', 'runix', 'kenjo']);
+    const esperado: ReadonlyArray<readonly [string, string, string]> = [['vibri', 'som', 'Cacophonarch'], ['voltrix', 'eletricidade', 'Voltarch'], ['chronib', 'tempo', 'Chronarch'], ['runix', 'arcano', 'Arcanarch'], ['kenjo', 'marcial', 'Kenzarch']];
+    const foes = ult(40, 1600);
+    for (const [id, el, nome] of esperado) {
+      const c = ARENA_CHEFES_ULTRA.find(x => x.id === id)!;
+      expect([c.element, c.elements, c.name]).toEqual([el, [el], nome]);
+      expect(novoSoulmonById(id)!.sprite('ultra')).toBe(FORMAS_ALTAS_ART[id]!.ultra);
+      const e = foes.find(f => f.chefeUltra === id)!;
+      expect([e.cls, e.element, e.namePt, e.form]).toEqual(['boss', el, nome, 'ultimate']);
+    }
   });
   it('determinístico (card = luta) e fora do Desgarrado/combinada', () => {
     expect(ult(40, 50)).toEqual(ult(40, 50));

@@ -6,8 +6,7 @@ import { describe, it, expect } from 'vitest';
 import {
   CAMADAS_DO_CICLO, CAMADAS_POR_ELEMENTO, ELEMENTOS_DA_MASMORRA, componentesDoElemento, elementoDaCamada,
 } from './dungeonElementos';
-import { BASE_ELEMENT_IDS, elementComponents } from './elementDex';
-import { curatedComponents } from './elementosCurados';
+import { BASE_ELEMENT_IDS } from './elementDex';
 import { dungeonWaveOf } from './dungeonAway';
 import { ENEMY_ROSTER } from './enemyRoster';
 import { combatSceneBg } from './combatArt';
@@ -64,10 +63,7 @@ describe('só aparecem summons do elemento da camada', () => {
         const el = elementoDaCamada(layer);
         const wave = dungeonWaveOf(seed, layer, 30, 'ultimate');
         expect(wave.length).toBeGreaterThan(0);
-        // REGISTRO §445: o mini-boss de um par/trio pode vir de um COMPONENTE do conjunto quando o elemento não tem a forma do estágio pedido.
-        const comps = (id: string): readonly string[] => curatedComponents(id) ?? elementComponents(id) ?? [id];
-        const doConjunto = new Set(comps(el));
-        for (const e of wave) expect(e.element === el || comps(e.element ?? '').every(c => doConjunto.has(c)), `camada ${layer} (${el}): ${e.element}`).toBe(true);
+        for (const e of wave) expect(e.element, `camada ${layer} (${el})`).toBe(el);
       }
     }
   });

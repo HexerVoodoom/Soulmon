@@ -25,6 +25,7 @@ import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { escolherCelula } from './dificuldadeEstagio';
 import { FORMAS_PACOTE_A_DATA } from './formasPacoteA.data';
+import { LEGADO_DATA } from './enemyRosterLegado.data';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -269,6 +270,22 @@ function buildFormasPacoteA(rookies: readonly RosterEntry[], jaTomados: Readonly
   return out;
 }
 
+/**
+ * OS 5 RAMOS LEGADOS (dono, 16/11/2026, REGISTRO §445): as formas antigas de som/eletricidade/tempo/arcano/marcial como ramo extra de outro elemento
+ * (`LEGADO_DATA`). Mesmo molde dos ramos (kind `ramo`, golpes e elemento do hospedeiro), então entram no sorteio comum e no do elemento do hospedeiro
+ * como qualquer ramo. Arte: `legado/<id>-<estágio>`. Entram no FIM de tudo (o `#N` do Bestiário não muda).
+ */
+function buildLegado(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, , , el, champion, ultimate, mega] of LEGADO_DATA) {
+    const base = BASE_BY_ELEMENT[el];
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate], ['mega', mega]] as const) {
+      out.push({ key: chaveBestiario(id, stage), id, stage, kind: 'ramo', element: el, elements: [el], name, basico: base.basico, especial: base.especial, artFile: `legado/${id}-${stage}` });
+    }
+  }
+  return out;
+}
+
 /** As 2 cadeias da API (09/11/2026): kind `api`, entram no sorteio comum e no do elemento; no FIM do roster (o `#N` não muda). */
 function buildDuo(): RosterEntry[] {
   const out: RosterEntry[] = [];
@@ -311,7 +328,7 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
 }
 const ROOKIES_COMBINADOS = build();
 const ANTES_DO_PACOTE_A = [...ROOKIES_COMBINADOS, RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()];
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name)))].map(comElementoDoDono);
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado()].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -374,10 +391,7 @@ function pickEnemyDoElemento(
 
 /**
  * O sorteio de um CONJUNTO do Rift (REGISTRO §445, `riftSets.ts`): o ESTÁGIO é fixo e manda (não sobe pelo HP nem pelo level), o elemento é o do
- * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) criaturas DESTE estágio
- * cujos componentes dividem os do conjunto (primeiro as que só têm componentes do conjunto, ex.: as bases de um par; depois mais componentes em
- * comum; depois o nº de componentes mais próximo: o vizinho "do elemento/componentes naquele estágio"); (3) criaturas do elemento no estágio mais próximo (empate: o mais baixo). `undefined` só se o
- * elemento não tem criatura nenhuma (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
+ * conjunto. Ordem de busca, sem nunca falhar enquanto o elemento existir: (1) criaturas DO elemento neste estágio; (2) a melhor forma que o PRÓPRIO elemento tem (estágio de baixo mais próximo primeiro: Ultimate, senão Champion, senão Rookie; só então o de cima), sem trocar de arte nem cair na base do componente (dono, 16/11/2026); (3) só se o elemento não tem criatura nenhuma, criaturas do estágio com componentes do conjunto. `undefined` se nem isso (quem chama cai no sorteio comum). Uma só chamada de `rng`, como os outros sorteios.
  */
 export function pickEnemyDoConjunto(
   level: number, rng: () => number, opts: { stage: EnemyStage; element: string; used?: ReadonlySet<string> },
@@ -393,6 +407,13 @@ export function pickEnemyDoConjunto(
   const doElemento = vivos.filter(e => e.element === opts.element);
   const exato = doElemento.filter(e => e.stage === opts.stage);
   if (exato.length > 0) return sorteia(exato);
+  // (2) a melhor forma que o PRÓPRIO elemento tem: o estágio pedido, senão o de baixo mais próximo (Ultimate → Champion → Rookie), só então o de cima.
+  const i0 = ENEMY_STAGES.indexOf(opts.stage);
+  for (const i of [...Array.from({ length: i0 }, (_, k) => i0 - 1 - k), ...Array.from({ length: ENEMY_STAGES.length - 1 - i0 }, (_, k) => i0 + 1 + k)]) {
+    const lista = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
+    if (lista.length > 0) return sorteia(lista);
+  }
+  // (3) o elemento não tem criatura nenhuma: componentes do conjunto no estágio.
   const alvo = compsDe({ element: opts.element, elements: [opts.element] });
   // Placar de cada candidato: [só tem componentes do conjunto (1/0), componentes em comum, -distância no nº de componentes]; vence o maior, empate sorteia.
   let melhor: readonly number[] | undefined;
@@ -406,16 +427,7 @@ export function pickEnemyDoConjunto(
     const cmp = melhor ? placar.reduce((r, v, i) => r || v - melhor![i], 0) : 1;
     if (cmp > 0) { melhor = placar; achados = [e]; } else if (cmp === 0) achados.push(e);
   }
-  if (achados.length > 0) return sorteia(achados);
-  if (doElemento.length === 0) return undefined;
-  const i0 = ENEMY_STAGES.indexOf(opts.stage);
-  for (let d = 1; d < ENEMY_STAGES.length; d++) {
-    for (const i of [i0 - d, i0 + d]) {
-      const lista = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
-      if (lista.length > 0) return sorteia(lista);
-    }
-  }
-  return undefined;
+  return achados.length > 0 ? sorteia(achados) : undefined;
 }
 
 function pickEnemyComum(

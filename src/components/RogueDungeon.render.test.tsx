@@ -5,7 +5,7 @@ import { afterEach } from 'vitest';
 import { RogueDungeon } from './RogueDungeon';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame } from './nav/playPrefetch';
 import { combatantAt, REFERENCE_BUILDS } from '../utils/combate/level';
-import { challengeFor, emptyRun, pathsFor, type RogueRun } from '../utils/rogueDungeon';
+import { challengeFor, emptyRun, pathsFor, rogueBits, type RogueRun } from '../utils/rogueDungeon';
 
 // Só o Zip é trocado por um stub (clicar = resolver o puzzle); os demais jogos são os reais.
 vi.mock('./mente/ZipGame', () => ({
@@ -50,7 +50,7 @@ describe('RogueDungeon', () => {
   it('vitória do jogo volta ao mapa com o passo vencido e bônus pendente', async () => {
     const onChange = vi.fn();
     let step = 0;
-    while (step < 24 && !(pathsFor(D, step).includes('puzzle') && challengeFor(D, step, 'puzzle').game === 'zip')) step++;
+    while (step < 15 && !(pathsFor(D, step).includes('puzzle') && challengeFor(D, step, 'puzzle').game === 'zip')) step++;
     const saved: RogueRun = { ...emptyRun(D), step };
     const { container } = render(<RogueDungeon language="en-US" todayKey={D} saved={saved} onChange={onChange} combatant={combatant} />);
     fireEvent.click(container.querySelector('[data-rogue-path="puzzle"]') as HTMLElement);
@@ -104,7 +104,7 @@ describe('RogueDungeon', () => {
     const onChange = vi.fn();
     const saved: RogueRun = { ...emptyRun(D), step: 5, won: 4, over: true };
     render(<RogueDungeon language="en-US" todayKey={D} saved={saved} onChange={onChange} combatant={combatant} onEarnPoints={onEarn} />);
-    expect(onEarn).toHaveBeenCalledWith(4);
+    expect(onEarn).toHaveBeenCalledWith(rogueBits({ won: 4 }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ paid: true }));
   });
   it('cards: uma ação por opção, centralizados sobre o mapa, e tocar chama o mesmo handler', () => {

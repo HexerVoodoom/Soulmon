@@ -30,6 +30,16 @@ export function EvolutionGaugeMini({
   const isPt = language === 'pt-BR';
   const v = gaugeView({ evolutionPoints, evolutionStage, unlockedEvolutions, todayWeight });
   if (v.top) return null;
+  if (v.locked) {
+    // 16/11/2026: a barra do Ultra só abre com as três megas liberadas — antes disso a Home só diz quantas já vieram.
+    return (
+      <section data-evo-gauge-mini data-evo-gauge-mini-locked style={{ padding: '0 2px', fontSize: 'var(--sm2-text-xs, 12px)', color: 'var(--sm2-muted)' }}>
+        {isPt
+          ? `Libere as ${v.megasTotal} Megas para abrir o Ultra · ${v.megasLiberadas}/${v.megasTotal}`
+          : `Unlock all ${v.megasTotal} Megas to open the Ultra · ${v.megasLiberadas}/${v.megasTotal}`}
+      </section>
+    );
+  }
   const pct = Math.round(v.pct * 100);
   const pctHoje = Math.round(v.pctWithToday * 100);
   const trilho: CSSProperties = {

@@ -26,7 +26,7 @@ describe('hexsmith — catálogo', () => {
   it('slots de elemento aceitam os 210 do dex', () => {
     expect(hexValuesOf('amuleto')).toBe(ALL_ELEMENT_IDS);
     expect(ALL_ELEMENT_IDS.length).toBe(210);
-    expect(hexValuesOf('coroa').length).toBe(7);
+    expect(hexValuesOf('coroa').length).toBe(13); // 7 famílias + 3 efeitos + 3 famílias só de Coroa (H2) efeitos (hot, slow, silence)
     expect(hexValuesOf('luvas')).toEqual(['magic', 'ranged-slash', 'melee-slash', 'melee-smash']);
   });
   it('custos: elemento paga poções do próprio elemento; coroa e luvas pagam fragmentos + Bits', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
+import { ALL_SPECIAL_FAMILIES, SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import {
-  SUBSTANTIVOS_ESPECIAL, SUBSTANTIVOS_LEGADO, comporNome, nomeParaFamilia, nomeAtualDoEspecial, familiaDoNomeInimigo, nomeEspecialInimigo, type LexNome,
+  SUBSTANTIVOS_ESPECIAL, SUBSTANTIVOS_EFEITO, SUBSTANTIVOS_POR_FAMILIA, SUBSTANTIVOS_LEGADO, comporNome, nomeParaFamilia, nomeAtualDoEspecial, familiaDoNomeInimigo, nomeEspecialInimigo, type LexNome,
 } from './nomeEspecial';
 import { foeSpecialLabel, dungeonFoeSpecialLabel, specialLabel } from '../../combatFx';
 import { foeSpecialOf } from '../../combate/foeFamilies';
@@ -31,11 +31,14 @@ const DENY: Record<SpecialFamily, string[]> = {
   atkBuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, 'onslaught', 'barrage', 'assault'],
   defDebuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, 'onslaught', 'barrage', 'assault'],
   spdBuff: [...OFENSIVAS, ...CURATIVAS, ...PROTETORAS],
+  defBuff: [...OFENSIVAS, ...CURATIVAS, ...VELOZES, 'ward', 'aegis', 'bulwark'],
+  atkDebuff: [...CURATIVAS, ...PROTETORAS, ...VELOZES, ...OFENSIVAS],
+  spdDebuff: [...OFENSIVAS, ...CURATIVAS, ...PROTETORAS, ...VELOZES],
 };
 const palavras = (en: string) => en.toLowerCase().split(/\s+/);
 
 describe('lexico por familia: nenhuma palavra de outra familia', () => {
-  for (const f of SPECIAL_FAMILIES) {
+  for (const f of ALL_SPECIAL_FAMILIES) {
     it(`${f}`, () => {
       for (const n of SUBSTANTIVOS_ESPECIAL[f]) {
         const ws = palavras(n.en);
@@ -45,8 +48,8 @@ describe('lexico por familia: nenhuma palavra de outra familia', () => {
   }
   it('o nome composto de cada familia nunca leva substantivo de outra familia', () => {
     const lex: LexNome[] = [0, 1].flatMap(f => Array.from({ length: 8 }, (_, n) => ({ n, f: f as 0 | 1 })));
-    for (const f of SPECIAL_FAMILIES) {
-      const outros = SPECIAL_FAMILIES.filter(o => o !== f).flatMap(o => SUBSTANTIVOS_ESPECIAL[o].map(x => x.en));
+    for (const f of ALL_SPECIAL_FAMILIES) {
+      const outros = ALL_SPECIAL_FAMILIES.filter(o => o !== f).flatMap(o => SUBSTANTIVOS_ESPECIAL[o].map(x => x.en));
       for (const l of lex) {
         const nome = comporNome(f, l, { en: 'Fire', pt: 'Fogo' });
         for (const w of outros) {
@@ -154,5 +157,27 @@ describe('a BASICA (dano direto) de toda escola nao tem nome de cura, escudo ou 
     for (const [escola, { basica }] of Object.entries(NOMES_BASICA)) {
       for (const n of basica) expect(proibidas.includes(n.en.toLowerCase()), `${escola}: "${n.en}"`).toBe(false);
     }
+  });
+});
+
+describe('lexico dos EFEITOS das Coroas (slow, silence): 8 por efeito, disjunto das familias, e o nome segue o efeito', () => {
+  const todos = SPECIAL_FAMILIES.flatMap(f => SUBSTANTIVOS_ESPECIAL[f].map(x => x.en.toLowerCase()));
+  for (const e of ['slow', 'silence'] as const) {
+    it(`${e}`, () => {
+      expect(SUBSTANTIVOS_EFEITO[e].length).toBe(SUBSTANTIVOS_POR_FAMILIA);
+      for (const n of SUBSTANTIVOS_EFEITO[e]) {
+        expect(todos.includes(n.en.toLowerCase()), `"${n.en}" ja e de uma familia`).toBe(false);
+        expect(n.pt.length).toBeGreaterThan(0);
+      }
+      const outro = SUBSTANTIVOS_EFEITO[e === 'slow' ? 'silence' : 'slow'].map(x => x.en.toLowerCase());
+      for (const n of SUBSTANTIVOS_EFEITO[e]) expect(outro.includes(n.en.toLowerCase())).toBe(false);
+    });
+  }
+  it('nomeParaFamilia com efeito troca o substantivo pelo MESMO indice do lexico do efeito; hot usa o de cura', () => {
+    const esp = { nome: comporNome('direct', { n: 3, f: 0 }, { en: 'Fire', pt: 'Fogo' }), familia: 'direct' as const, lex: { n: 3, f: 0 as const } };
+    expect(nomeParaFamilia(esp, 'defDebuff', 'slow').nome.en).toBe('Fire Quagmire');
+    expect(nomeParaFamilia(esp, 'defDebuff', 'silence').nome.pt).toBe('Abafo de Fogo');
+    expect(nomeParaFamilia(esp, 'shield', 'hot').nome.en).toBe(`Fire ${SUBSTANTIVOS_ESPECIAL.heal[3].en}`);
+    expect(nomeParaFamilia(esp, 'defDebuff').nome.en).toBe(`Fire ${SUBSTANTIVOS_ESPECIAL.defDebuff[3].en}`);
   });
 });

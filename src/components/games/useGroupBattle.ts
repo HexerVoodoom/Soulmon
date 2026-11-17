@@ -115,6 +115,9 @@ export interface GroupBattleOptions {
   autoSpecial?: { ring(n: number): RingGrade; dodge(n: number): DodgeGrade };
 }
 
+/** Sem companheiro em cena: a MESMA referência vazia sempre (não re-renderiza a cena à toa). */
+const SEM_COMPANHEIRO: readonly number[] = [];
+
 const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export interface GroupBattle {
@@ -135,6 +138,8 @@ export interface GroupBattle {
   charging: boolean;
   /** Efeitos de status do pet e de cada inimigo (PR11): derivados dos eventos do núcleo, só para a cena desenhar. */
   status: { me: StageStatus[]; foes: StageStatus[][] };
+  /** COMPANHEIRO INVOCADO (PR 2): turnos de ataque que o companheiro de cada lutador ainda tem (índice = `who`: 0 pet, 1+i inimigo); o contador REAL do núcleo (`FighterFx.comp`). Vazio sem companheiro. */
+  summon: readonly number[];
   cheer(): void;
   swipe(dir: -1 | 1): void;
   resolveRing(grade: RingGrade): void;
@@ -171,6 +176,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const [petDodge, setPetDodge] = useState<GroupBattle['petDodge']>(null);
   const [charging, setCharging] = useState(false);
   const [status, setStatus] = useState<GroupBattle['status']>({ me: [], foes: [[]] });
+  const [summon, setSummon] = useState<readonly number[]>(SEM_COMPANHEIRO);
   const [stateKey, setStateKey] = useState(-1);
   const [picked, setPicked] = useState<number | null>(null);
   const pickedRef = useRef<number | null>(null);
@@ -297,7 +303,11 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       setPhaseBoth('idle');
       // PR11: o quadro de efeitos (0 = pet, 1+i = inimigo i). Vem SÓ dos eventos do núcleo; a tela não inventa status.
       let board: StatusBoard = emptyStatusBoard(nFoes);
-      const publish = () => setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
+      let summonNow: readonly number[] = SEM_COMPANHEIRO;
+      const publish = () => {
+        setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
+        setSummon((prev) => (prev.length === summonNow.length && prev.every((v, i) => v === summonNow[i]) ? prev : summonNow));
+      };
       publish();
       /** Gasta os efeitos que os golpes/ticks deste grupo de eventos gastam; quem caiu leva os seus embora. */
       // PR16: o debuff de DEFESA que o pet deixa nos inimigos mostra o selo de MALDIÇÃO quando o especial dele é da escola maldicao
@@ -309,6 +319,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       const realFx = (fx: GroupEvent['fx']) => {
         const down = [...(hpNow <= EPS ? [0] : []), ...foesNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
         board = withRealFx(board, fx, down, curseOn, efeitoOn);
+        if (fx) summonNow = fx.some((f) => (f.comp ?? 0) > 0) ? fx.map((f) => f.comp ?? 0) : SEM_COMPANHEIRO;
       };
       const spendStatus = (batch: GroupEvent[], hpPet: number, foesHpNow: readonly number[]) => {
         for (const e of batch) if (e.kind === 'attack' || e.kind === 'tick') board = tickStatus(board, { kind: e.kind, who: e.who });
@@ -537,7 +548,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   }, [running, seed, opts.runKey]);
 
   return {
-    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
+    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status, summon,
     picked, target: escolherAlvo(foesHp, picked), pickTarget,
     cheer, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
   };

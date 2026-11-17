@@ -129,7 +129,7 @@ import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageS
 import type { FichaStage } from './utils/soulProfile/ficha/types';
 import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
-import { migrarEvocacao } from './utils/companheiroInvocado';
+import { COMPANHEIRO_INVOCADO, aplicarEvocacao, migrarEvocacao } from './utils/companheiroInvocado';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -239,13 +239,13 @@ import {
 } from './utils/weeklyMissions';
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
-import { bitsPackById, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
+import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
-import { recordFeiraDesafio } from './utils/feiraDesafio';
+import { recordFeiraDesafio, feiraDesafioStatus, readFeiraDesafio } from './utils/feiraDesafio';
 import { recordFeiraVolta, markFeiraVoltaSeen, readFeiraVolta, feiraVoltaPendente } from './utils/feiraVolta';
 import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 // Prédios do clã: só TIPO aqui. O código entra por import() dinâmico (fora do chunk de entrada; `/api/guild` não pode
@@ -713,7 +713,7 @@ const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => 
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 import { CtaButton } from './components/ui/CtaButton';
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
-import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, limiarDaPocao, POTION_ELEMENT_IDS, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
 // Oferta da Vesca: só monta com 100 essências; a copy dos prédios (→ areaNpcVoice → guildCopy) fica fora da entrada.
 const VescaPotionOffer = lazy(() => import('./components/VescaPotionOffer').then(m => ({ default: m.VescaPotionOffer })));
 const EssencesSection = lazy(() => import('./components/EssencesSection').then(m => ({ default: m.EssencesSection })));
@@ -902,6 +902,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 import type { QuickAddResult } from './utils/quickAdd';
 import { installUsageTime, setActive as setUsageActive } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
+import { duelInviteCount, duelInviteExchangeRefusal, duelInvitesPerEnergy, exchangeDuelInvites, spendDuelInvite, DUEL_INVITE_MAX } from './utils/duelInvites';
 import type { CreateAction } from './utils/chatActions';
 import { WakeToEnterProvider } from './components/WakeToEnter';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
@@ -976,7 +977,7 @@ export default function App() {
     const offered = readVescaOffered();
     // Cruzamento novo (sempre oferece) + veterano que já passa de 100 e nunca foi oferecido (1x por elemento, dono 08/11/2026).
     const crossed = prev === null ? [] : essenceThresholdCrossings(prev, gameState.essences);
-    const veterans = BASE_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= POTION_COSTS.baseOwn && !offered.has(id));
+    const veterans = POTION_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= (limiarDaPocao(id) ?? Infinity) && !offered.has(id));
     const hit = [...new Set([...crossed, ...veterans])].filter(id => isPotionUnlocked(id, gameState.defeatedElements));
     if (!hit.length) return;
     // 12/11/2026: o "já ofereci" só é gravado quando a Vesca de fato APARECE (`useOfertaPendente`); fechar o app no meio de uma
@@ -985,7 +986,10 @@ export default function App() {
   }, [gameState.essences, gameState.defeatedElements]);
   // A Vesca só fala quando o jogador está ocioso: masmorra, arena, minigame, foco, combate e qualquer modal seguram a pergunta até acabar.
   const { ocioso: jogadorOcioso } = useOcioso({ view: currentView, naMasmorra: soulmonNaMasmorra(gameState), esperando: vescaQueue.length > 0 });
-  const vescaAtual = useOfertaPendente(vescaQueue, jogadorOcioso, (id) => writeVescaOffered(new Set([...readVescaOffered(), id])));
+  // Vários elementos que atingiram o limiar de uma vez = UM pop-up em lista; o "já ofereci" de todos é gravado AO MOSTRAR (e de novo ao fechar, p/ quem entrou depois).
+  const vescaQueueRef = useRef<string[]>([]);
+  vescaQueueRef.current = vescaQueue;
+  const vescaAtual = useOfertaPendente(vescaQueue, jogadorOcioso, () => writeVescaOffered(new Set([...readVescaOffered(), ...vescaQueueRef.current])));
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
@@ -1998,6 +2002,8 @@ export default function App() {
   }, [demo, refuseDemo]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
+  /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
+  const [areaAtividade, setAreaAtividade] = useState<boolean | undefined>(undefined);
   // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
   useAreaViewPrefetch();
   const [upgradeRitual, setUpgradeRitual] = useState(false);
@@ -2682,7 +2688,7 @@ export default function App() {
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
-      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView),
+      elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
       groveMilestone: Boolean(grovePendente),
       messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
@@ -4488,6 +4494,9 @@ export default function App() {
       if (special.kind === 'potion') {
         toast(language === 'pt-BR' ? '🧪 Poção dada. Na próxima evolução o Soulmon carrega este elemento.' : '🧪 Potion given. At the next evolution your Soulmon carries this element.');
       }
+      if (special.kind === 'dish') {
+        toast(language === 'pt-BR' ? `🍽️ ${special.namePt}! Fome cheia e o reforço do prato.` : `🍽️ ${special.nameEn}! Fully fed, with the dish boost.`);
+      }
       if (special.kind === 'premium') {
         toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
       }
@@ -4871,10 +4880,12 @@ export default function App() {
     }
     const a = achadoPendente;
     setAchadoPendente(null);
+    // Desafio de hoje já cumprido na sala: o balão leva à sala (que conta o dia), nunca a reabrir o combate com a cópia velha.
+    const feitoHoje = feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), gameState.playerDayTz)) === 'done';
     if (a?.loja) setFeiraLoja(a.loja);
-    else if (a?.evento) setFeiraEvento(a.evento);
+    else if (a?.evento && !feitoHoje) setFeiraEvento(a.evento);
     else { setPendingSheet({ area: 'hall', lot: 'feira' }); goTo(areaView('hall')); }
-  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada]);
+  }, [achadoPendente, dispensarBalao, abrirAvisoMasmorra, goTo, encerrarDicaDourada, gameState.playerDayTz]);
   const balaoDouradoHud = balaoTipoVisivel ? { tipo: balaoTipoVisivel, text: balaoDouradoText(balaoTipoVisivel, language), ariaLabel: balaoDouradoAria(balaoTipoVisivel, language), tempoMs: BALAO_DOURADO_VISIVEL_MS }
     : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
@@ -5136,9 +5147,11 @@ export default function App() {
   // sempre ≥ 1 por construção — este caminho não tem como reduzir ganho.
   /** Bits de minijogo já creditados hoje que o `gameState` ainda não mostra (créditos do mesmo lote de render). */
   const bitsPendentesRef = useRef<{ day: string; earned: number }>({ day: '', earned: 0 });
+  /** O mesmo, por categoria (§456). */
+  const catPendentesRef = useRef<{ day: string; earned: Partial<Record<BitsCategory, number>> }>({ day: '', earned: {} });
   /** Devolve os Bits REALMENTE creditados (pelo mesmo `minigameBitsGranted` do `creditMinigameBits`), para a tela de resultado
    *  mostrar o que entrou, e não o que o jogo pediu: teto gasto = 0, teto atingido no meio = parcial. */
-  const handleEarnGamePoints = useCallback((pts: number, extraCap = 0): number => {
+  const handleEarnGamePoints = useCallback((pts: number, extraCap = 0, category: BitsCategory = 'minigames'): number => {
     if (pts <= 0) return 0;
     const mult = playBuffSpentRef.current ? 1 : minigameMultiplier(gameState, new Date());
     const total = mult > 1 ? Math.round(pts * mult) : pts;
@@ -5156,13 +5169,17 @@ export default function App() {
          vezes por run no mesmo lote do React, e um teto lido de fora passaria
          duas vezes (família de bug do X-6). Bater o teto não tira nada e não
          interrompe minijogo nenhum — os Bits só param de somar. */
-      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
+      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz), extraCap, category); // `extraCap`: só a Fenda/Arena passam (Agulha de bússola, §393)
     });
     const dia = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
     const pend = bitsPendentesRef.current;
     const ja = Math.max(minigameBitsToday(gameStateRef.current, dia), pend.day === dia ? pend.earned : 0);
-    const creditado = minigameBitsGranted(ja, total, extraCap);
+    // §456: além do teto geral, o teto da CATEGORIA (75). `catJa` lê do save e do que o mesmo lote de render já creditou.
+    const catPend = catPendentesRef.current;
+    const catJa = Math.max(minigameBitsCategoryToday(gameStateRef.current, dia, category), catPend.day === dia ? catPend.earned[category] ?? 0 : 0);
+    const creditado = minigameBitsGrantedIn(ja, catJa, total, extraCap);
     bitsPendentesRef.current = { day: dia, earned: ja + creditado };
+    catPendentesRef.current = { day: dia, earned: { ...(catPend.day === dia ? catPend.earned : {}), [category]: catJa + creditado } };
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
       playBuffSpentRef.current = true;
@@ -5440,8 +5457,11 @@ export default function App() {
   // Qualquer outra resposta (limite do dia, fenômeno dissipado, sem guilda, sem login) encerra a missão em silêncio.
   /** "Ver o que ele achou": reabre o resultado guardado da volta (mistério ou Feira de verdade). Só marca como visto ao FECHAR. */
   const handleFeiraVoltaVer = useCallback(() => {
-    const p = feiraVoltaPendente(readFeiraVolta(), playerDayKey(new Date(), gameState.playerDayTz));
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    const p = feiraVoltaPendente(readFeiraVolta(), hoje);
     if (!p) return;
+    // O desafio de hoje já foi cumprido: reabrir o resultado guardado reentraria no combate (a cópia guardada ainda diz `canAttack`).
+    if (feiraDesafioStatus(readFeiraDesafio(), hoje) === 'done') { markFeiraVoltaSeen(); return; }
     if (p.kind === 'loja') setFeiraLoja(p.loja);
     else if (p.kind === 'evento') setFeiraEvento(p.evento);
     else markFeiraVoltaSeen();
@@ -5998,6 +6018,21 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: a ficha segue no cache que já está no save */ });
     return () => { vivo = false; };
   }, [jornadaPendente, jornadaAtual, setGameState]);
+
+  // COMPANHEIRO INVOCADO (PR 2): save que já passou da jornada não volta ao efeito acima, então o cache `soulmonEvocacao` do estágio atual
+  // é preenchido aqui, UMA vez, a partir do perfil local. Só com a flag LIGADA; desligada, `faltaEvocacao` é sempre `false` (nada roda).
+  const faltaEvocacao = COMPANHEIRO_INVOCADO && !!gameState.fichaJornada && !gameState.soulmonEvocacao?.[fichaStageOf(gameState.evolutionStage)];
+  useEffect(() => {
+    if (!faltaEvocacao || !jornadaAtual) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    import('./utils/soulProfile/ficha/jornadaRefresh').then(({ recalcularCaches }) => recalcularCaches(saved, jornadaAtual)).then(r => {
+      if (!vivo || !r.evocacao) return;
+      setGameState(prev => aplicarEvocacao(prev, r.evocacao, r.companheiro)); // mesma referência quando nada muda: sem spam de cloud save
+    }).catch(() => { /* perfil corrompido: segue sem o cache e o estágio fica sem companheiro (nunca adivinha) */ });
+    return () => { vivo = false; };
+  }, [faltaEvocacao, jornadaAtual, setGameState]);
 
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
@@ -8812,6 +8847,7 @@ export default function App() {
                 })}
                 buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
+                onActivityChange={setAreaAtividade}
                 onGoToMap={() => goTo('map')}
                 language={language}
                 ownership={{
@@ -9008,6 +9044,24 @@ export default function App() {
                     reroll: gameState.arenaReroll,
                     runs: gameState.arenaRuns,
                     ladder: gameState.arenaLadder,
+                    /* ⚔️ Convite de Duelo (§458): 1 por run. O gasto reconfere sobre o `prev` (porta única `spendDuelInvite`). */
+                    invites: {
+                      count: duelInviteCount(gameState),
+                      max: DUEL_INVITE_MAX,
+                      perEnergy: duelInvitesPerEnergy(gameState),
+                      canExchange: !duelInviteExchangeRefusal(gameState, Date.now()),
+                      onExchange: () => {
+                        const now = Date.now();
+                        if (duelInviteExchangeRefusal(gameStateRef.current, now)) return false;
+                        setGameState(prev => exchangeDuelInvites(prev, now));
+                        return true;
+                      },
+                      onBegin: () => {
+                        if (duelInviteCount(gameStateRef.current) < 1) return false;
+                        setGameState(prev => spendDuelInvite(prev));
+                        return true;
+                      },
+                    },
                     // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
                     onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
                     // ⚰️ §372 `onRunCleared` (+1 Presa 1×/dia) revogado por §384: o último adversário dropa em dobro (`utils/arenaUltimoAdversario.ts`).
@@ -9952,9 +10006,9 @@ export default function App() {
       {/* Vesca: oferta da poção ao juntar 100 essências de um elemento base (08/11/2026). */}
       {vescaAtual && (
         <Suspense fallback={null}>
-          <VescaPotionOffer language={language} elementId={vescaAtual} key={vescaAtual}
+          <VescaPotionOffer language={language} elementId={vescaAtual} elementIds={vescaQueue} key={vescaAtual}
             onMake={(id) => { if (!canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false; setGameState(prev => craftPotion(prev, id)); return true; }}
-            onDismiss={() => setVescaQueue(q => q.slice(1))} />
+            onDismiss={() => { writeVescaOffered(new Set([...readVescaOffered(), ...vescaQueueRef.current])); setVescaQueue([]); }} />
         </Suspense>
       )}
       {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no

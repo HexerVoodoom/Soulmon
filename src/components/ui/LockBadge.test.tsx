@@ -36,3 +36,21 @@ describe('cadeado dos prédios', () => {
     expect(c.container.querySelector('[data-map-locked]')).toBeNull();
   });
 });
+
+describe('LockNotice com X (16/11/2026)', () => {
+  it('não some em 10 s, tocar fora não fecha, o X fecha', async () => {
+    const { vi } = await import('vitest');
+    const { fireEvent, act } = await import('@testing-library/react');
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      const { container } = render(<LockNotice text="Opens at Bond 5." onClose={onClose} />);
+      act(() => { vi.advanceTimersByTime(10_000); });
+      fireEvent.click(document.body);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-lock-notice]')).not.toBeNull();
+      fireEvent.click(container.querySelector('[data-lock-notice-close]')!);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
+  });
+});

@@ -14,7 +14,7 @@ import { fight, fightSteps, hitUnit, HIT_UNIT_H0, type FightEvent, type FightOpt
 import { combatantAt, firstLevelOfStage, REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS, STAGE_LEVEL_CAPS } from './level';
 import { mulberry32, PHASE_SALT, VARIANCE } from './rng';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf,
+  ALL_SPECIAL_FAMILIES, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf,
 } from './specials';
 
 const bal = (L: number) => combatantAt(L, REFERENCE_BUILDS.balanced);
@@ -152,8 +152,8 @@ describe('hooks: startHp, startEnergy, hitScale, cheer, stopAtFirstKo', () => {
     expect(Math.floor(100 / CHEER.tapsFull)).toBeGreaterThan(0);
     expect(cheerEvents(Array.from({ length: 100 }, (_, i) => i * 0.01), 0)).toHaveLength(0);
   });
-  it('PVE_FAMILY_POWER has both engines with the 7 families (arena §6, dungeon §3)', () => {
-    for (const eng of ['arena', 'dungeon', 'pesadelo'] as const) expect(Object.keys(PVE_FAMILY_POWER[eng]).sort()).toEqual([...SPECIAL_FAMILIES].sort());
+  it('PVE_FAMILY_POWER has the three engines with the 7 drawn families + the 3 Crown-only ones (arena §6, dungeon §3, Hexsmith H2)', () => {
+    for (const eng of ['arena', 'dungeon', 'pesadelo'] as const) expect(Object.keys(PVE_FAMILY_POWER[eng]).sort()).toEqual([...ALL_SPECIAL_FAMILIES].sort());
     expect(PVE_FAMILY_POWER.arena.defDebuff).toBe(1.55);
     expect(PVE_FAMILY_POWER.dungeon.spdBuff).toBe(1.5);
     expect(AREA_FAMILIES).toEqual(['direct', 'dot', 'defDebuff']);

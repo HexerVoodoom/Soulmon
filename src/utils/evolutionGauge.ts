@@ -28,6 +28,8 @@ import {
   getStageLevel,
   hasMegaCollection,
   ULTRA_PATIENCE_POINTS,
+  ULTRA_MEGA_IDS,
+  megasLiberadas,
 } from '../types/progression';
 
 /** Número finito ≥ 0 ou 0. O save vem do cliente e da nuvem. */
@@ -41,14 +43,24 @@ export function dailyGaugeCap(stage: string): number {
 }
 
 /**
- * Pontos para encher o gauge do estágio. No mega depende do caminho para o
- * Ultra: com a coleção das três megas basta `gauge`; sem ela, o caminho da
- * permanência (`ULTRA_PATIENCE_POINTS`). No ultra não há próxima forma: 0.
+ * Pontos para encher o gauge do estágio. No mega a meta é SEMPRE a do Ultra
+ * (`ULTRA_PATIENCE_POINTS`, 45 dias de teto) — o `unlockedEvolutions` ficou na
+ * assinatura só para os chamadores não mudarem. No ultra não há próxima forma: 0.
  */
-export function gaugeGoalFor(stage: string, unlockedEvolutions?: readonly string[]): number {
+export function gaugeGoalFor(stage: string, _unlockedEvolutions?: readonly string[]): number {
   const level = getStageLevel(stage);
-  if (level === 'mega' && !hasMegaCollection(unlockedEvolutions)) return ULTRA_PATIENCE_POINTS;
+  if (level === 'mega') return ULTRA_PATIENCE_POINTS;
   return FORM_REQUIREMENTS[level].gauge;
+}
+
+/**
+ * A barra do Ultra está TRAVADA? No mega, enquanto faltam megas para liberar
+ * (16/11/2026): ela não acumula, não enche e a UI pede as três megas. Os
+ * pontos que já existiam ficam guardados (nunca se tira progresso) e passam a
+ * valer quando a terceira mega abre.
+ */
+export function gaugeTravadaPelasMegas(stage: string, unlockedEvolutions?: readonly string[]): boolean {
+  return getStageLevel(stage) === 'mega' && !hasMegaCollection(unlockedEvolutions);
 }
 
 /** Quanto o peso feito num dia rende ao gauge: 0..teto diário. */
@@ -76,6 +88,7 @@ export function creditGauge(points: number, doneWeight: number, stage: string): 
 export function gaugeFull(points: number | undefined, stage: string, unlockedEvolutions?: readonly string[], totalXP?: number): boolean {
   // Forma BB (D4): não há gauge — a porta da cerimônia abre pelo Vínculo ≥ 2 (utils/bbStage.ts).
   if (isBBStage(stage)) return bbEvolveReady(totalXP);
+  if (gaugeTravadaPelasMegas(stage, unlockedEvolutions)) return false;
   const goal = gaugeGoalFor(stage, unlockedEvolutions);
   return goal > 0 && safe(points) >= goal;
 }
@@ -123,6 +136,11 @@ export interface GaugeView {
   /** Quanto falta (creditado). Nunca negativo. */
   left: number;
   full: boolean;
+  /** Mega com menos de 3 megas liberadas: a barra do Ultra não acumula nem enche. */
+  locked: boolean;
+  /** Megas liberadas (0..3) e o total exigido — só faz sentido com `locked`. */
+  megasLiberadas: number;
+  megasTotal: number;
   /** Estágio final: não há barra. */
   top: boolean;
 }
@@ -138,6 +156,7 @@ export function gaugeView(input: {
   const dailyCap = dailyGaugeCap(input.evolutionStage);
   const today = gaugeContribution(input.todayWeight ?? 0, input.evolutionStage);
   const top = goal <= 0;
+  const locked = gaugeTravadaPelasMegas(input.evolutionStage, input.unlockedEvolutions);
   return {
     points,
     today,
@@ -146,7 +165,10 @@ export function gaugeView(input: {
     pct: top ? 1 : Math.min(1, points / goal),
     pctWithToday: top ? 1 : Math.min(1, (points + today) / goal),
     left: top ? 0 : Math.max(0, goal - points),
-    full: !top && points >= goal,
+    full: !top && !locked && points >= goal,
+    locked,
+    megasLiberadas: megasLiberadas(input.unlockedEvolutions),
+    megasTotal: ULTRA_MEGA_IDS.length,
     top,
   };
 }

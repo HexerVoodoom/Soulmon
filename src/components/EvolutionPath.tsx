@@ -41,7 +41,8 @@ import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type Spri
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
-import { AVAILABLE_BRANCHES, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
+import { AVAILABLE_BRANCHES, canReachUltra, megasLiberadas, ULTRA_MEGA_IDS, ULTRA_PATIENCE_POINTS } from '../types/progression';
+import { gaugeTravadaPelasMegas } from '../utils/evolutionGauge';
 import { canSwitchLaterally } from '../utils/trocaLateral';
 import { forecastNodeId, stageLevelIndex } from '../utils/evolutionForecast';
 import { dailyGaugeCap } from '../utils/evolutionGauge';
@@ -282,10 +283,10 @@ export function EvolutionPath({
   const areAllMegasUnlocked = megaIds.every(id => unlockedSet.has(id));
   /* WP4.2 (decisão D6) — o Ultra deixou de exigir que o jogador machucasse a
      criatura de propósito. São DOIS caminhos agora, e o cartão tem de mostrar
-     os dois: coleção (as três megas) ou permanência (`ULTRA_PATIENCE_DAYS` dias
-     perfeitos como mega). A regra é de `canReachUltra`, dona da árvore — aqui
+     a regra única (16/11/2026): as três megas liberadas e depois a barra do Ultra
+     (`ULTRA_PATIENCE_DAYS` dias de teto). A regra é de `canReachUltra`, dona da árvore — aqui
      não se decide critério nenhum. */
-  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, evolutionPoints });
+  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions });
 
   const caminhos = ATTR_ORDER.map(a => ({ attr: a, path: getBranchPath(a) }));
   const arvoreVazia = caminhos.every(c => c.path.length === 0);
@@ -478,7 +479,10 @@ export function EvolutionPath({
   //    passar do requisito enquanto a evolução está travada — e "faltam -2"
   //    seria um jeito criativo de dizer "pronto". ──
   const faltam = Math.max(0, gaugeGoal - evolutionPoints);
-  const prontoParaEvoluir = !naoEvolui && faltam === 0;
+  /* 16/11/2026: no mega, a barra do Ultra só existe com as três megas liberadas — antes disso a página mostra quantas faltam. */
+  const ultraTravado = gaugeTravadaPelasMegas(currentStageId, unlockedEvolutions);
+  const megasFeitas = megasLiberadas(unlockedEvolutions);
+  const prontoParaEvoluir = !naoEvolui && !ultraTravado && faltam === 0;
   const ratio = gaugeGoal > 0
     ? Math.min(1, evolutionPoints / gaugeGoal)
     : 1;
@@ -866,8 +870,8 @@ export function EvolutionPath({
         {isUltraMode && (
           <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
             {isPt
-              ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-              : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better, and neither asks you to go back down.`}
+              ? `Conheça os três galhos (as ${ULTRA_MEGA_IDS.length} Megas) e depois junte ${ULTRA_PATIENCE_POINTS} passos como mega.`
+              : `Know all three branches (the ${ULTRA_MEGA_IDS.length} Megas), then gather ${ULTRA_PATIENCE_POINTS} steps as a mega.`}
           </InfoTip>
         )}
       </div>
@@ -1125,7 +1129,21 @@ export function EvolutionPath({
         {/* A barra de progresso é APARELHO (D-E2): `.meter` SIS-07 em vetor
             (12px, trilho `surface-2` + fronteira `muted`, fill
             `primary-fill`), `aria-valuemax = gateDays`; a frase 14 centrada. */}
-        {!naoEvolui && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+        {!naoEvolui && ultraTravado && (
+          <div data-evo-megas-lock style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4, textAlign: 'center' }}>
+            <p style={{ ...sm2Text, margin: 0 }}>
+              {isPt
+                ? `Para abrir o Ultra, libere as ${ULTRA_MEGA_IDS.length} Megas. ${megasFeitas} de ${ULTRA_MEGA_IDS.length} liberadas.`
+                : `To open the Ultra, unlock all ${ULTRA_MEGA_IDS.length} Megas. ${megasFeitas} of ${ULTRA_MEGA_IDS.length} unlocked.`}
+            </p>
+            <p style={{ ...sm2Hint, margin: 0 }}>
+              {isPt
+                ? 'Depois disso, a barra do Ultra começa a encher com o seu ritmo.'
+                : 'After that, the Ultra bar starts filling at your own pace.'}
+            </p>
+          </div>
+        )}
+        {!naoEvolui && !ultraTravado && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
           <div
             className="sm2-kit-meter"
             data-evo-meter

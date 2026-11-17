@@ -4,7 +4,7 @@
  * As Pages Functions nao importam de `src/`; `hexsmith.parity.test.js` trava as duas copias.
  */
 import { COUNTER_RING, BASE_DO_PAR } from './_elementoBase.js';
-import { SPECIAL_FAMILIES } from './_combate.js';
+import { SPECIAL_FAMILIES, CROWN_ONLY_FAMILIES } from './_combate.js';
 
 export const HEX_SLOTS = ['coroa', 'amuleto', 'garra', 'couraca', 'luvas'];
 export const HEX_ELEMENT_SLOTS = ['amuleto', 'garra', 'couraca'];
@@ -17,7 +17,14 @@ export function migrateHexId(id) {
   const to = /** @type {Record<string, string>} */ (LEGACY_STRIKE)[id.slice(6)];
   return to ? `luvas:${to}` : id;
 }
-export const HEX_MAX_OWNED = 3 * 210 + 7 + 2;
+/** Coroas de EFEITO (espelho de `HEX_CROWN_EFFECTS`/`HEX_CROWN_VARIANTS` em `src/utils/hexsmith.ts`). */
+export const HEX_CROWN_EFFECTS = ['hot', 'slow', 'silence'];
+export const HEX_CROWN_VARIANTS = {
+  hot: { family: 'shield', effect: 'hot' },
+  slow: { family: 'defDebuff', effect: 'slow' },
+  silence: { family: 'defDebuff', effect: 'silence' },
+};
+export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + CROWN_ONLY_FAMILIES.length + 2;
 
 const ELEMENT_IDS = new Set([...COUNTER_RING, ...Object.keys(BASE_DO_PAR)]);
 
@@ -31,7 +38,7 @@ export function parseHexItem(idRaw) {
   const value = id.slice(i + 1);
   if (!HEX_SLOTS.includes(slot)) return undefined;
   if (HEX_ELEMENT_SLOTS.includes(slot)) return ELEMENT_IDS.has(value) ? { slot, value } : undefined;
-  if (slot === 'coroa') return /** @type {readonly string[]} */ (SPECIAL_FAMILIES).includes(value) ? { slot, value } : undefined;
+  if (slot === 'coroa') return /** @type {readonly string[]} */ (SPECIAL_FAMILIES).includes(value) || /** @type {readonly string[]} */ (CROWN_ONLY_FAMILIES).includes(value) || HEX_CROWN_EFFECTS.includes(value) ? { slot, value } : undefined;
   return HEX_STRIKES.includes(value) ? { slot, value } : undefined;
 }
 
@@ -58,10 +65,16 @@ export function sanitizeHexsmith(raw) {
   return { owned, equipped };
 }
 
+/** Há uma Coroa (qualquer uma) equipada e válida no save? (espelho de `hexCrownEquipped`; a regra "Coroa ⇒ sem companheiro" lê isto.)
+ * @param {unknown} raw */
+export function hexCrownEquipped(raw) {
+  return sanitizeHexsmith(raw).equipped.coroa !== undefined;
+}
+
 /**
  * O que o equipado reescreve. Campo ausente = o codigo original vale.
  * @param {unknown} raw
- * @returns {{ specialFamily?: string, specialElement?: string, basicElement?: string, defenseElement?: string, strike?: string }}
+ * @returns {{ specialFamily?: string, specialEffect?: string, specialElement?: string, basicElement?: string, defenseElement?: string, strike?: string }}
  */
 export function hexOverrides(raw) {
   const { equipped } = sanitizeHexsmith(raw);
@@ -71,6 +84,12 @@ export function hexOverrides(raw) {
   const out = {};
   const pairs = [['coroa', 'specialFamily'], ['amuleto', 'specialElement'], ['garra', 'basicElement'], ['couraca', 'defenseElement'], ['luvas', 'strike']];
   for (const [slot, key] of pairs) { const x = v(slot); if (x) out[key] = x; }
+  const crown = v('coroa');
+  if (crown && HEX_CROWN_EFFECTS.includes(crown)) {
+    const variant = /** @type {Record<string, { family: string, effect: string }>} */ (HEX_CROWN_VARIANTS)[crown];
+    out.specialFamily = variant.family;
+    out.specialEffect = variant.effect;
+  }
   return out;
 }
 

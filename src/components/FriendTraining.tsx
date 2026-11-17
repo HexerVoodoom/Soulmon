@@ -7,6 +7,7 @@
  */
 import { useState } from 'react';
 import { DuelScreen } from './DuelScreen';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
 import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button } from './form/FormKit';
 import { simulatePvp, type DuelSide } from '../utils/combate/duel';
@@ -53,13 +54,15 @@ export function FriendTraining({ friend, trainer, isPt, onClose }: { friend: Tra
       ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage: trainer.petStage };
     const par = stageSkillsFor(trainer.skills, trainer.petStage);
+    const minhaCriatura = companheiroDoEstado(gs);
     const me: DuelSide = {
       combatant: soulCombatant(estado, talentos.bonus),
       cheerScale: talentos.cheerScale,
       startEnergy: talentos.startEnergy,
       dotResist: talentos.dotResist,
-      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
+      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx), hx.specialEffect),
       fx: fxDoLutador(par, trainer.petElement),
+      ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}),
     };
     return { seed: Math.floor(Math.random() * 0xffffffff), me, opp: friendTrainingSide(friend) };
   });

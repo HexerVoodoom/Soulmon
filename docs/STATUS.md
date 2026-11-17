@@ -1,5 +1,84 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
+> - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.
+> - **Pendente do dono:** abrir o PR pacote→main no GitHub (CI).
+
+> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §462)
+>
+> - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11
+ift-mapa\previas\`.
+> - **Pendente:** tile de fundo (`src/assets/soulmon/rift/mapa-tile.webp`); não visto em aparelho. **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §466)
+>
+> - **Feito:** `StrollScene` sem o "Pular"; bug da Feira (dois botões depois de enfrentar: "Enfrentar" dava erro, "Ver o que ele achou" entrava no combate e cancelava) corrigido na raiz (desafio feito deixava de contar como aberto, volta dada por vista, 429/409 fecham o desafio, balão/"Ver" não reabrem o combate); o mercador conta o dia (o que achou, o clã em agregado, amanhã). Linha "Stroll" turquesa da Home e o "feito" já eram do §413, agora com teste.
+> - **Não feito/limite:** o servidor não manda o que cada aliado achou (só agregado do chefe/marcas); sem fala por aliado. Não visto em aparelho (capturas 360x640 de harness em `E:\Soulmon-assets\_lote-16-11\stroll-feira\previas\`). Falhas herdadas fora do escopo: `ds.regua` (NpcSequence/PratoFeito/LockBadge) e `guildSemCobranca` (`guild.help.buffs.def`).
+
+> ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §460)
+>
+> - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).
+> - **Falta:** ligar a flag do companheiro (outra frente); regerar 3 selos de arte. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+> ## 16/11/2026 — Companheiro invocado LIGADO no pacote (`feat/companheiro-liga-chave`, REGISTRO §459)
+>
+> - **Feito:** chave ligada no app e no servidor (paridade travada); simulados no duelo (criatura por `hash(id)`), Rogue Dungeon e Treino com amigo ligados; criatura de simulado/NPC em módulo leve; cache `soulmonEvocacao` idempotente (sem regravar à toa); cena do companheiro AO LADO do invocador (antes subia ao peito e, no inimigo, caía sobre a barra de HP). Servidor alinhado ao app em `cenario`/`n-lasca`/`n-panora` e 4 decorações `furn-ruinas-*` (regressões da pacote).
+> - **Não visto em aparelho real.** Prévias no navegador embutido (360×640 e 412×915; luta real só na Arena; Masmorra pela mesma cena com o fundo dela; `prefers-reduced-motion` só por teste).
+> - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
+
+
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §465)
+>
+> - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
+> - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §454)
+>
+> - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
+> - **Não visto em aparelho.**
+
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §455)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
+>
+> - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §464)
+>
+> - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
+> - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
+> - **Falta:** H4 (Coroa troca o especial e a invocação some), `fx.efeito` do oponente no PvP. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+
+>
+> ## 16/11/2026 — Hexsmith: arte das 6 Coroas e 3 selos (`feat/hexsmith-arte`, REGISTRO §451)
+>
+> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias (ligados na H2, REGISTRO §452).
+> - **Pendente:** regerar `st-debuff-atk`, `coroa-silence`, `coroa-hot` (só trocar arquivo). **Rollback:** `git revert`.
+>
+> ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
+>
+> - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente.
+
+>
+> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §449)
+>
+> - **Feito:** regra pura `combate/companheiro.ts` (3 turnos, função mista, cura não invoca, 1 por combatente), `FightSide.invoca` em `fight.ts`/`group.ts`, espelho em `_combate.js` + `_companheiroInvocado.js` (paridade), cena `SummonLayer`, ligação em Arena/Masmorra/Pesadelo/Grove/Duelo/Torneio. TUDO atrás da flag `COMPANHEIRO_INVOCADO = false` (cliente e servidor): comportamento idêntico ao de hoje (testado).
+> - **Calibração:** vitória invocada − normal de −7 a +6pp (1v1, simulação); valor nominal ~0,97 do especial normal.
+> - **Falta:** PNGs dos 32 (PR 1b), ligar a flag, Rogue Dungeon, decisão do dono sobre o cache no save do cliente. Não visto em aparelho.
+> - **Rollback:** `git revert`; flag desligada = sem efeito.
+>
+> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §463)
+>
+> - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
+> - **Não visto em aparelho:** só testes e tipos; nomes provisórios.
+> - **Pendente do dono:** os 3 hospedeiros ajustados (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes.
+> - **Rollback:** `git revert`; só cliente.
+>
 > ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
 >
 > - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
@@ -13,7 +92,7 @@
 > - **Causa:** o release #897 apagou `demoButton.ts`, o teste demoOff e a condição do §320. **Feito:** restaurados + guarda de fonte; sw v262. Demo salva intacta.
 > - **Rollback:** `git revert`.
 
-> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §444)
+> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §442)
 >
 > - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
 > - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
@@ -21,6 +100,11 @@
 >
 > - **Feito:** selo do especial de inimigo (Arena, Masmorra/Rift, Pesadelo) e da Coroa da Hexsmith segue a família que vale; léxico: Rapture→Renewal, Flurry→Haste; básicas e 3 nomes de criatura sem cara de cura; guarda em `nomeEspecialCoerente.test.ts`.
 > - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
+> ## 16/11/2026 — Companheiro invocado PR 1b: 32 sprites (`feat/companheiro-sprites`, REGISTRO §447)
+>
+> - **Feito:** 32 PNG 256² RGBA (~2,4 MB) em `assets/soulmon/companheiros/`, gosma = a verdinha, 1ª geração de salamandra/coruja/espectro; QA de franja (coruja, cavaleiro_morto, gosma limpos). Flag segue DESLIGADA.
+> - **A refinar:** fada, arauto_elfico, wyvern, falcao, coruja (elemento solto). **Rollback:** `git revert`.
+>
 > ## 16/11/2026 — Companheiro invocado PR 1: fundação (`feat/companheiro-invocado-fundacao`, REGISTRO §444)
 >
 > - **Feito:** módulo `utils/companheiroInvocado.ts` (gatilho arquétipo OU escola Evocação, 32 criaturas), cache aditivo `soulmonEvocacao` + `ClassTitle.id?`, mapa de sprites tolerante, tabela provisória de simulados/NPCs, teste de medição. Flag `COMPANHEIRO_INVOCADO` DESLIGADA.
@@ -5754,3 +5838,10 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 - doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
 - Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
 - ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
+
+## §456 — Teto de Bits por categoria (16/11/2026)
+- Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §458).
+
+## §458 — Convite de Duelo (16/11/2026)
+- Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.

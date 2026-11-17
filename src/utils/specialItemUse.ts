@@ -1,5 +1,8 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
+import { dishIdOfKey, serveDish } from './dishItems';
+import { dishById } from './restaurantMenu';
+import type { RestaurantState } from './restaurantState';
 import { getNextEvolution } from './dailyReset';
 import { resetAlignmentPoints } from './betaResetGrant';
 import { glitchtamaBuffAtivo } from './glitchtamaBuff';
@@ -114,7 +117,7 @@ export interface SpecialItemState {
   /** Comida premium: fome/relógio da energia (`utils/hunger.ts`) + registro de tetos. A comida NÃO dá energia direto (REGISTRO §40). */
   energyPoints?: number;
   evolutionStage?: string;
-  /** Evoluções destravadas: o mega só mira o Ultra com a coleção (`gaugeGoalFor`). */
+  /** Evoluções destravadas: o mega só mira o Ultra com as três megas (`canReachUltra`). */
   unlockedEvolutions?: readonly string[];
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
@@ -126,6 +129,8 @@ export interface SpecialItemState {
   /** 🧪 Elemento da poção dada ao Soulmon, pendente para a próxima evolução (`utils/elementPotion.ts`). */
   evolutionPotion?: string;
   playerDayTz?: PlayerDayAnchor;
+  /** 🍽️ Buff de prato (`restaurantState`): `serveDish` grava aqui ao usar um prato de combate/regeneração. */
+  restaurant?: RestaurantState;
 }
 
 function pointsOf(state: SpecialItemState, a: Attr): number {
@@ -165,7 +170,7 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   // O galho não muda se existe destino, então 'harmony' serve de neutro; a regra mora em `getNextEvolution`/`canReachUltra`.
   if (special.kind === 'potion') {
     const stage = state.evolutionStage ?? 'rookie';
-    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])], state.evolutionPoints ?? 0) === stage) return 'no-next-evolution';
+    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])]) === stage) return 'no-next-evolution';
   }
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
@@ -229,6 +234,14 @@ export function applySpecialItem<T extends SpecialItemState>(
         },
       },
     };
+  }
+
+  if (special.kind === 'dish') {
+    // 🍽️ Prato do Restaurante (16/11/2026): fome cheia + o efeito do prato, pela regra única `serveDish`. Prato desconhecido (id fora do
+    // cardápio) não chega aqui: `specialRefusal` já o trata como sem catálogo (`SPECIAL_ITEMS` só tem os do cardápio).
+    const d = dishById(dishIdOfKey(emoji) ?? '');
+    if (!d) return { state: prev };
+    return { state: { ...serveDish({ ...prev, energyPoints: prev.energyPoints ?? 0 }, d, now.getTime()), foodInventory } };
   }
 
   if (special.kind === 'spark') {

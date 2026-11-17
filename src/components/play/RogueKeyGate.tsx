@@ -4,7 +4,7 @@ import { NPC_GUARDA_CHAVE_ART } from '../../assets/soulmon/npcs';
 import type { Language } from '../../utils/i18n';
 
 /**
- * O portão do Calabouço sem a chave do dia: Bastion (NPC 412, §239), no modal padrão de NPC, manda à Oficina. Tocar ou pular só fecha.
+ * O portão do Calabouço sem a chave do dia: Bastion (NPC 412, §239), no modal padrão de NPC, manda à Oficina. Só fecha pelo X, pelo CTA, Esc ou voltar: tocar no fundo NÃO fecha (dono, 16/11/2026).
  * 13/11/2026 (dono): com `onGoToWorkshop`, a fala ganha o CTA "Ir para a Oficina do Foco" (fecha o portão e leva à Forja › Oficina).
  */
 export function RogueKeyGate({ language, onClose, expired, onGoToWorkshop }: { language: Language; onClose: () => void; expired?: boolean; onGoToWorkshop?: () => void }) {
@@ -18,5 +18,5 @@ export function RogueKeyGate({ language, onClose, expired, onGoToWorkshop }: { l
   const action = onGoToWorkshop
     ? <CtaButton data-rogue-gate-workshop onClick={onGoToWorkshop}>{isPt ? 'Ir para a Oficina do Foco' : 'Go to the Focus Workshop'}</CtaButton>
     : undefined;
-  return <NpcSequence lines={[{ speaker, art: NPC_GUARDA_CHAVE_ART, text }]} language={language} label={speaker} onFinish={onClose} action={action} />;
+  return <NpcSequence lines={[{ speaker, art: NPC_GUARDA_CHAVE_ART, text }]} language={language} label={speaker} onFinish={onClose} action={action} closeOnTap={false} />;
 }

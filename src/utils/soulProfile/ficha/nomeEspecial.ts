@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 
 import { hashString, mulberry32, pick } from '../../oracle';
-import { SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
+import { isSpecialFamily, SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import type { EscolaSkillId } from './types';
 
 import { elementoConhecido, elementoNomeDe, type TextoPar } from './elementoNome';
@@ -56,7 +56,49 @@ export const SUBSTANTIVOS_ESPECIAL: Record<SpecialFamily, TextoPar[]> = {
     { en: 'Dash', pt: 'Disparada' }, { en: 'Momentum', pt: 'Embalo' }, { en: 'Swiftness', pt: 'Presteza' },
     { en: 'Rapids', pt: 'Corredeira' }, { en: 'Haste', pt: 'Celeridade' },
   ],
+  // Hexsmith H2 (famílias só de Coroa): 8 por família, coerentes com o efeito e disjuntos dos das outras (o teste varre)
+  defBuff: [
+    { en: 'Temper', pt: 'Têmpera' }, { en: 'Fortitude', pt: 'Fortitude' }, { en: 'Resolve', pt: 'Resolução' },
+    { en: 'Steadfast', pt: 'Firmeza' }, { en: 'Hardening', pt: 'Endurecimento' }, { en: 'Ironclad', pt: 'Couraça de Ferro' },
+    { en: 'Stoneskin', pt: 'Pele de Pedra' }, { en: 'Unyielding', pt: 'Inflexível' },
+  ],
+  atkDebuff: [
+    { en: 'Wither', pt: 'Definhar' }, { en: 'Languor', pt: 'Langor' }, { en: 'Malaise', pt: 'Mal-estar' },
+    { en: 'Sapping', pt: 'Esgotamento' }, { en: 'Fatigue', pt: 'Fadiga' }, { en: 'Dulling', pt: 'Embotamento' },
+    { en: 'Dread', pt: 'Pavor' }, { en: 'Slump', pt: 'Abatimento' },
+  ],
+  spdDebuff: [
+    { en: 'Creep', pt: 'Rastejo' }, { en: 'Lag', pt: 'Atraso' }, { en: 'Plod', pt: 'Passo Pesado' },
+    { en: 'Mudflat', pt: 'Lodaçal' }, { en: 'Drift', pt: 'Deriva' }, { en: 'Dawdle', pt: 'Demora' },
+    { en: 'Snare', pt: 'Armadilha' }, { en: 'Tether', pt: 'Amarra' },
+  ],
 };
+
+/**
+ * Léxico dos EFEITOS das Coroas de efeito (16/11/2026, decisão do dono: nome coerente com o efeito). `hot` (cura contínua) usa o
+ * léxico de `heal`; lentidão e silêncio têm 8 substantivos PRÓPRIOS (EN primeiro), disjuntos dos das 7 famílias e da básica
+ * (`nomeEspecialCoerente.test.ts` varre). O índice `lex.n` é o mesmo da ficha (o servidor só valida 0..7).
+ */
+export type EfeitoDeNome = 'hot' | 'slow' | 'silence';
+export const SUBSTANTIVOS_EFEITO: Record<'slow' | 'silence', TextoPar[]> = {
+  slow: [
+    { en: 'Mire', pt: 'Lamaçal' }, { en: 'Drag', pt: 'Arrasto' }, { en: 'Tar', pt: 'Piche' },
+    { en: 'Quagmire', pt: 'Atoleiro' }, { en: 'Sludge', pt: 'Lodo' }, { en: 'Stupor', pt: 'Torpor' },
+    { en: 'Ebb', pt: 'Vazante' }, { en: 'Shackles', pt: 'Grilhões' },
+  ],
+  silence: [
+    { en: 'Hush', pt: 'Sossego' }, { en: 'Muzzle', pt: 'Mordaça' }, { en: 'Mutism', pt: 'Mutismo' },
+    { en: 'Stifle', pt: 'Abafo' }, { en: 'Gag', pt: 'Rolha' }, { en: 'Muffle', pt: 'Surdina' },
+    { en: 'Seal', pt: 'Lacre' }, { en: 'Quiet', pt: 'Quietude' },
+  ],
+};
+
+/** O léxico que vale para (família efetiva, efeito): `hot` → cura; `slow`/`silence` → o próprio; sem efeito → o da família. */
+export function lexicoDoEfeito(familia: SpecialFamily, efeito?: string): TextoPar[] {
+  if (efeito === 'hot') return SUBSTANTIVOS_ESPECIAL.heal;
+  if (efeito === 'slow' || efeito === 'silence') return SUBSTANTIVOS_EFEITO[efeito];
+  return SUBSTANTIVOS_ESPECIAL[familia];
+}
 
 /**
  * Substantivos que MUDARAM de texto na auditoria de coerência (16/11/2026): o índice (e o `lex` gravado no save e no servidor)
@@ -98,12 +140,13 @@ export function nomeAtualDoEspecial<T extends SkillComNome>(esp: T): T {
  * ("Fogo Investida Total" curando): aqui o substantivo é o MESMO índice, só que no léxico da família efetiva. Nome do jogador
  * (que não traz o substantivo gerado) e família igual passam intactos.
  */
-export function nomeParaFamilia<T extends SkillComNome>(esp: T, familiaEfetiva: SpecialFamily | undefined): T {
+export function nomeParaFamilia<T extends SkillComNome>(esp: T, familiaEfetiva: SpecialFamily | undefined, efeito?: string): T {
   const lido = nomeAtualDoEspecial(esp);
   const { familia, lex } = lido;
-  if (!familiaEfetiva || !familia || !lex || familiaEfetiva === familia) return lido;
+  const lexicoFinal = familiaEfetiva ? lexicoDoEfeito(familiaEfetiva, efeito) : undefined;
+  if (!familiaEfetiva || !familia || !lex || (familiaEfetiva === familia && lexicoFinal === SUBSTANTIVOS_ESPECIAL[familia])) return lido;
   const de = SUBSTANTIVOS_ESPECIAL[familia]?.[lex.n];
-  const para = SUBSTANTIVOS_ESPECIAL[familiaEfetiva]?.[lex.n];
+  const para = lexicoFinal?.[lex.n];
   if (!de || !para) return lido;
   const nome = trocaSubstantivo(lido.nome, de, para);
   return nome.en === lido.nome.en && nome.pt === lido.nome.pt ? lido : { ...lido, nome };
@@ -115,13 +158,17 @@ export function familiaDoNomeInimigo(special: { family: SpecialFamily; effect?: 
   return special.effect === 'hot' ? 'heal' : special.family;
 }
 
-/** Peso de cada família por escola. Toda família tem peso > 0 em toda escola: nenhuma é inalcançável. */
+/**
+ * Peso de cada família por escola. As 7 sorteáveis têm peso > 0 em toda escola: nenhuma é inalcançável. As 3 famílias só de Coroa
+ * (Hexsmith H2, `CROWN_ONLY_FAMILIES`) têm peso 0 em TODA escola: entram só pela Coroa, nunca num sorteio de ficha.
+ */
+const SO_COROA = { defBuff: 0, atkDebuff: 0, spdDebuff: 0 } as const;
 export const PESO_FAMILIA_ESCOLA: Record<EscolaSkillId, Record<SpecialFamily, number>> = {
-  combate_fisico: { direct: 4, dot: 2, heal: 1, shield: 2, atkBuff: 3, defDebuff: 1, spdBuff: 1 },
-  longo_alcance: { direct: 3, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 2, spdBuff: 2 },
-  conjuracao: { direct: 4, dot: 2, heal: 2, shield: 2, atkBuff: 1, defDebuff: 2, spdBuff: 1 },
-  benca: { direct: 1, dot: 1, heal: 4, shield: 3, atkBuff: 2, defDebuff: 1, spdBuff: 2 },
-  maldicao: { direct: 1, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 4, spdBuff: 1 },
+  combate_fisico: { direct: 4, dot: 2, heal: 1, shield: 2, atkBuff: 3, defDebuff: 1, spdBuff: 1, ...SO_COROA },
+  longo_alcance: { direct: 3, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 2, spdBuff: 2, ...SO_COROA },
+  conjuracao: { direct: 4, dot: 2, heal: 2, shield: 2, atkBuff: 1, defDebuff: 2, spdBuff: 1, ...SO_COROA },
+  benca: { direct: 1, dot: 1, heal: 4, shield: 3, atkBuff: 2, defDebuff: 1, spdBuff: 2, ...SO_COROA },
+  maldicao: { direct: 1, dot: 3, heal: 1, shield: 1, atkBuff: 1, defDebuff: 4, spdBuff: 1, ...SO_COROA },
 };
 
 /** Elementos que puxam cada família (afinidade ×3). Elemento fora da tabela (par derivado) é neutro. */
@@ -133,6 +180,9 @@ export const AFINIDADE_ELEMENTO: Record<SpecialFamily, readonly string[]> = {
   atkBuff: ['fogo', 'marcial', 'vigor'],
   defDebuff: ['sombra', 'morte', 'vileza'],
   spdBuff: ['ar', 'eletricidade', 'tempo'],
+  defBuff: [],
+  atkDebuff: [],
+  spdDebuff: [],
 };
 
 const AFINIDADE = 3;
@@ -176,6 +226,8 @@ export interface EntradaNome {
   elementoBasica?: TextoPar;
   seedKey: string;
   stage: string;
+  /** Coroa de efeito (hot/slow/silence): o substantivo sai do léxico do efeito, não do da família-base. */
+  efeito?: string;
 }
 
 /** O ID do nome (PR9b): índice do substantivo no léxico da família + formato (0 = "Substantivo de X", 1 = "X Substantivo" em EN, 2 = dois elementos). */
@@ -184,9 +236,16 @@ export interface LexNome { n: number; f: 0 | 1 | 2 }
 /** Quantos substantivos cada família tem (o servidor valida o índice contra este número; o teste o trava). */
 export const SUBSTANTIVOS_POR_FAMILIA = 8;
 
-/** Compõe o nome a partir do ID — a ÚNICA função que escreve o nome (gerador e oponente do PvP). */
-export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: TextoPar, elementoBasica?: TextoPar): TextoPar {
-  const n = SUBSTANTIVOS_ESPECIAL[familia][lex.n];
+/** O efeito de Coroa só vale sobre a família-base dele (hot→shield; slow/silence→defDebuff); fora disso o nome segue a família. */
+export function efeitoDoNome(familia: SpecialFamily, efeito: unknown): EfeitoDeNome | undefined {
+  if (efeito === 'hot') return familia === 'shield' ? 'hot' : undefined;
+  if (efeito === 'slow' || efeito === 'silence') return familia === 'defDebuff' ? efeito : undefined;
+  return undefined;
+}
+
+/** Compõe o nome a partir do ID — a ÚNICA função que escreve o nome (gerador e oponente do PvP). `efeito` = a Coroa de efeito (léxico dela). */
+export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: TextoPar, elementoBasica?: TextoPar, efeito?: string): TextoPar {
+  const n = lexicoDoEfeito(familia, efeitoDoNome(familia, efeito))[lex.n];
   const dois = !!elementoBasica && elementoBasica.en !== elemento.en;
   if (lex.f === 2 && dois && elementoBasica) {
     return { en: `${n.en} of ${elemento.en} and ${elementoBasica.en}`, pt: `${n.pt} de ${elemento.pt} e ${elementoBasica.pt}` };
@@ -199,13 +258,13 @@ export function comporNome(familia: SpecialFamily, lex: LexNome, elemento: Texto
 /** O nome próprio (substantivo da família + elemento(s), em um de 3 formatos que a seed decide) e o ID dele. */
 export function nomeEscolhidoDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): { nome: TextoPar; lex: LexNome } {
   const rng = mulberry32(hashString(`${e.seedKey}|nome|${e.stage}`));
-  const banco = SUBSTANTIVOS_ESPECIAL[e.familia];
+  const banco = lexicoDoEfeito(e.familia, efeitoDoNome(e.familia, e.efeito));
   const livres = evitarEn ? banco.filter(n => !evitarEn.has(n.en)) : banco;
   const n = pick(rng, livres.length > 0 ? livres : banco);
   const dois = !!e.elementoBasica && e.elementoBasica.en !== e.elemento.en;
   const f = Math.floor(rng() * (dois ? 3 : 2)) as 0 | 1 | 2;
   const lex: LexNome = { n: banco.indexOf(n), f };
-  return { nome: comporNome(e.familia, lex, e.elemento, e.elementoBasica), lex };
+  return { nome: comporNome(e.familia, lex, e.elemento, e.elementoBasica, e.efeito), lex };
 }
 
 export function nomeDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): TextoPar {
@@ -220,14 +279,14 @@ export function nomeDoEspecial(e: EntradaNome, evitarEn?: ReadonlySet<string>): 
  */
 export function nomeDeLexico(fx: unknown): TextoPar | null {
   if (!fx || typeof fx !== 'object') return null;
-  const { familia, lex } = fx as { familia?: unknown; lex?: unknown };
-  if (typeof familia !== 'string' || !(SPECIAL_FAMILIES as readonly string[]).includes(familia)) return null;
+  const { familia, lex, efeito } = fx as { familia?: unknown; lex?: unknown; efeito?: unknown };
+  if (!isSpecialFamily(familia)) return null;
   if (!lex || typeof lex !== 'object') return null;
   const { n, f, el, elB } = lex as { n?: unknown; f?: unknown; el?: unknown; elB?: unknown };
   if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n >= SUBSTANTIVOS_POR_FAMILIA) return null;
   if (f !== 0 && f !== 1 && f !== 2) return null;
   if (!elementoConhecido(el) || !elementoConhecido(elB)) return null;
-  return comporNome(familia as SpecialFamily, { n, f }, elementoNomeDe(el), elementoNomeDe(elB));
+  return comporNome(familia as SpecialFamily, { n, f }, elementoNomeDe(el), elementoNomeDe(elB), efeitoDoNome(familia as SpecialFamily, efeito));
 }
 
 /** A descrição por família: o EFEITO, sem cobrança e sem nível. */
@@ -264,6 +323,18 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
       en: `${el.en} lightens every step and quickens the next strikes. Drains ${rEn}.`,
       pt: `${el.pt} alivia cada passo e acelera os próximos golpes. Drena ${rPt}.`,
     };
+    case 'defBuff': return {
+      en: `${el.en} hardens the body, so the next blows you take land softer. Drains ${rEn}.`,
+      pt: `${el.pt} endurece o corpo, e os próximos golpes que você recebe doem menos. Drena ${rPt}.`,
+    };
+    case 'atkDebuff': return {
+      en: `${el.en} saps the opponent, so their next strikes land weaker. Drains ${rEn}.`,
+      pt: `${el.pt} esgota o oponente, e os próximos golpes dele batem mais fracos. Drena ${rPt}.`,
+    };
+    case 'spdDebuff': return {
+      en: `${el.en} weighs on the opponent, so they strike slower for a few turns. Drains ${rEn}.`,
+      pt: `${el.pt} pesa sobre o oponente, que ataca mais devagar por alguns turnos. Drena ${rPt}.`,
+    };
   }
 }
 
@@ -272,7 +343,7 @@ export function descricaoDoEspecial(familia: SpecialFamily, el: TextoPar, recurs
  * `direct` no PvE (`arena.ts`) e a família publicada pelo servidor no PvP (só da lista fechada; outra coisa vira `direct`), então o nome sai do banco da família + o elemento dele, determinístico pela
  * identidade dele (`seed`: o nome gerado). Não depende de nada do jogador.
  */
-export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null): TextoPar {
-  const f = (SPECIAL_FAMILIES as readonly string[]).includes(familia ?? '') ? (familia as SpecialFamily) : 'direct';
-  return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe' });
+export function nomeEspecialInimigo(elemento: TextoPar, seed: string, familia?: string | null, efeito?: string | null): TextoPar {
+  const f = isSpecialFamily(familia) ? familia : 'direct';
+  return nomeDoEspecial({ familia: f, elemento, seedKey: seed, stage: 'foe', ...(efeito ? { efeito } : {}) });
 }

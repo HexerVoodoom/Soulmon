@@ -29,7 +29,7 @@ import { playerDayKey } from './playerDay';
 import { hiddenForDayKey, type DayPlan } from './dayPlan';
 import type { PlayerDayAnchor } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
-import { creditGauge, gaugeContribution, gaugeFull, aplicarBuffClaGauge } from './evolutionGauge';
+import { creditGauge, gaugeContribution, gaugeFull, aplicarBuffClaGauge, gaugeTravadaPelasMegas } from './evolutionGauge';
 import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
@@ -120,10 +120,6 @@ export function getNextEvolution(
   currentStage: string,
   branch: Attr,
   unlockedEvolutions: string[],
-  /** Pontos do gauge desde a última evolução — abrem o caminho da PERMANÊNCIA
-   *  para o Ultra (`canReachUltra`, WP4.2/D6; em pontos desde 11/10/2026).
-   *  Zero por omissão: só a coleção das três megas. */
-  evolutionPoints = 0,
 ): string {
   branch = clampBranch(branch) as Attr;
   if (isBBStage(currentStage)) return 'rookie'; // Forma BB: o próximo passo é o rookie (D4)
@@ -135,7 +131,7 @@ export function getNextEvolution(
     // A pergunta "existe destino?" é de `canReachUltra` (dono da árvore).
     // Aqui não se decide critério — se decidisse, seria a segunda cópia de uma
     // regra de evolução, que é como este projeto já se machucou antes.
-    if (canReachUltra({ unlockedEvolutions, evolutionPoints })) return 'ultra';
+    if (canReachUltra({ unlockedEvolutions })) return 'ultra';
     return currentStage;
   }
   return currentStage; // ultra — já no topo
@@ -1031,7 +1027,11 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
-  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus + (gaugeGain - gaugeGainBase);
+  // 16/11/2026: no mega, a barra do Ultra só acumula com as três megas liberadas; antes, os pontos ficam como estão (guardados).
+  const ultraTravado = gaugeTravadaPelasMegas(prev.evolutionStage, prev.unlockedEvolutions);
+  let newEvolutionPoints = ultraTravado
+    ? (prev.evolutionPoints ?? 0)
+    : creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus + (gaugeGain - gaugeGainBase);
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
@@ -1148,7 +1148,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     newCurrentBranch = branch;
     newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
 
-    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.evolutionPoints ?? 0);
+    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions);
     const naturalNext = newEvolutionStage;
 
     const newStageLevel = getStageLevel(newEvolutionStage);
@@ -1402,7 +1402,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
       hungerHeartsLost: Math.max(0, Number((prev as any).hungerPenalty?.unreported) || 0),
       perfectDays: newPerfectDays,
       /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
-      gaugeGain,
+      gaugeGain: ultraTravado ? 0 : gaugeGain,
       /** Parte de `gaugeGain` que veio da missão especial (0 ou 1). */
       specialBonus: specialMissionBonus,
       /** Parte de `gaugeGain` que veio da tarefa bônus (0 ou 1, `utils/bonusTask.ts`). */

@@ -289,7 +289,7 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
                 <ul id="rt-tasks" className="rt-list" hidden={!open}>
                   {retro.tasks.map(t => (
                     <li key={t.id} className="rt-row" style={{ minHeight: 28 }}>
-                      <Icon name="task_alt" size={18} tone="inherit" />
+                      <Icon name="task_alt" size={20} tone="inherit" />
                       <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{t.name}</span>
                     </li>
                   ))}
@@ -302,7 +302,7 @@ function WeeklyRetroDialog({ language, retro, spriteNow, spritePrev, petName, on
             <div className="rt-bonus rt-in" style={d(1.05)} data-weekly-bonus>
               <div className="rt-bonus-head">
                 <span className="rt-seal" data-bonus-seal aria-hidden="true" style={{ backgroundImage: `url(${selo})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }} />
-                <span className="rt-badge"><Icon name="bolt" size={16} fill={1} tone="inherit" />{isPt ? 'Bônus da semana' : 'Week bonus'}</span>
+                <span className="rt-badge"><Icon name="bolt" size={20} fill={1} tone="inherit" />{isPt ? 'Bônus da semana' : 'Week bonus'}</span>
               </div>
               <p>
                 {isPt

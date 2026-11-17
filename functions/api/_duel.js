@@ -255,7 +255,7 @@ export function duelSide(save, opts = {}) {
   const elEspecialOrig = pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId));
   const comItemDeIdentidade = Boolean(hx.specialFamily || hx.specialElement || hx.basicElement);
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}), ...(typeof state.simMagia === 'boolean' ? { magia: state.simMagia } : {}), ...(!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}), ...(comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}), ...(hx.strike ? { golpe: hx.strike } : {}) } };
+  return { combatant, special: specialOf(family, hx.specialEffect), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, ...(hx.specialEffect ? { efeito: hx.specialEffect } : {}), lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}), ...(typeof state.simMagia === 'boolean' ? { magia: state.simMagia } : {}), ...(!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}), ...(comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}), ...(hx.strike ? { golpe: hx.strike } : {}) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */
@@ -284,8 +284,8 @@ export function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
   // Vantagem elemental (dono, 27/10/2026): o golpe basico de cada lado contra o elemento do outro move +-1 golpe exibido. So a Guerra de Guildas passa `elementScale` 0,5; Torneio/Duelo ranqueado passa 0 (padrao) e luta sem elemento (REGISTRO 177).
   const { meCombatant, oppCombatant } = elementScale > 0 ? aplicarElementosDuelo(me, opp, elementScale) : { meCombatant: me.combatant, oppCombatant: opp.combatant };
   const g = fightSteps(
-    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
-    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
+    { combatant: meCombatant, special: me.special, dotResist: me.dotResist, invoca: me.invoca },
+    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist, invoca: opp.invoca },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];

@@ -46,21 +46,32 @@ export function LockBadge({ minBond, language, style }: { minBond: number; langu
   );
 }
 
-/** O aviso neutro de um prédio trancado: `role="status"`, fica na tela até outro toque ou o fim do tempo. */
-export function LockNotice({ text }: { text: string }) {
+/** O aviso neutro de um prédio trancado: `role="status"`. Com `onClose` ele NÃO some sozinho nem por toque fora: só pelo X (16/11/2026, dono). */
+export function LockNotice({ text, onClose, closeLabel = 'Fechar' }: { text: string; onClose?: () => void; closeLabel?: string }) {
   return (
-    <p
+    <div
       role="status"
       data-lock-notice
       style={{
         position: 'absolute', left: '50%', bottom: 'calc(var(--sm2-space-6, 24px) + env(safe-area-inset-bottom, 0px))',
         transform: 'translateX(-50%)', zIndex: 5, margin: 0, width: 'min(88%, 360px)', boxSizing: 'border-box',
-        padding: '10px 14px', borderRadius: 'var(--sm2-radius-md)', textAlign: 'center',
+        padding: onClose ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 'var(--sm2-radius-md)', textAlign: 'center',
         background: 'rgba(8,25,26,.94)', border: '1px solid rgba(95,243,224,.4)', color: '#E9F5F2',
-        fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', pointerEvents: 'none',
+        fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', pointerEvents: onClose ? 'auto' : 'none',
       }}
     >
       {text}
-    </p>
+      {onClose && (
+        <button
+          type="button"
+          data-lock-notice-close
+          aria-label={closeLabel}
+          onClick={onClose}
+          style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'var(--sm2-text-lg)' }}
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      )}
+    </div>
   );
 }

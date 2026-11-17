@@ -22,7 +22,7 @@
  * Módulo PURO: sem React, sem relógio, sem localStorage.
  */
 import { ALL_ELEMENT_IDS, isDexElement } from './elementDex';
-import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { CROWN_ONLY_FAMILIES, SPECIAL_FAMILIES, type SpecialEffect, type SpecialFamily } from './combate/specials';
 import { spendableBits, type BitsOrigin } from './bitsOrigin';
 import { spendBits } from './equipment';
 import { bumpDailyIn } from './dailyMissions';
@@ -59,6 +59,20 @@ export function strikeParts(s: HexStrike): { forma: 'melee' | 'ranged'; impacto:
   }
 }
 
+/**
+ * Coroas de EFEITO (16/11/2026, decisão do dono: criar todas): o valor `coroa:<efeito>` fixa o EFEITO do especial (cura contínua,
+ * lentidão, silêncio) sobre uma família-base, sem depender do elemento do Amuleto. NÃO é "invocação": a Hexsmith nunca toca
+ * `eEvocador` (o gatilho) nem importa o companheiro; quem lê a Hexsmith é `companheiroAtivo` (Coroa equipada ⇒ sem invocação, `hexsmith.coroasEfeito.test.ts`). Espelho: `functions/api/_hexsmith.js`.
+ */
+export const HEX_CROWN_EFFECTS = ['hot', 'slow', 'silence'] as const;
+export type HexCrownEffect = (typeof HEX_CROWN_EFFECTS)[number];
+export const HEX_CROWN_VARIANTS: Readonly<Record<HexCrownEffect, { family: SpecialFamily; effect: SpecialEffect }>> = {
+  hot: { family: 'shield', effect: 'hot' },
+  slow: { family: 'defDebuff', effect: 'slow' },
+  silence: { family: 'defDebuff', effect: 'silence' },
+};
+export const isCrownEffect = (v: unknown): v is HexCrownEffect => typeof v === 'string' && (HEX_CROWN_EFFECTS as readonly string[]).includes(v);
+
 /** Custos padrão (ajustáveis). `potions` = poções do PRÓPRIO elemento do item. */
 export const HEX_COSTS = {
   element: { potions: 3, bits: 1500, fragments: 12 },
@@ -85,16 +99,19 @@ export function parseHexItem(idRaw: unknown): { slot: HexSlot; value: string } |
   const value = id.slice(i + 1);
   if (!HEX_SLOTS.includes(slot)) return undefined;
   if (HEX_ELEMENT_SLOTS.includes(slot)) return isDexElement(value) ? { slot, value } : undefined;
-  if (slot === 'coroa') return (SPECIAL_FAMILIES as readonly string[]).includes(value) ? { slot, value } : undefined;
+  if (slot === 'coroa') return (SPECIAL_FAMILIES as readonly string[]).includes(value) || (CROWN_ONLY_FAMILIES as readonly string[]).includes(value) || isCrownEffect(value) ? { slot, value } : undefined;
   return (HEX_STRIKES as readonly string[]).includes(value) ? { slot, value } : undefined;
 }
 
 export const isHexItem = (id: unknown): id is string => parseHexItem(id) !== undefined;
 
+/** As 7 famílias + os 3 efeitos + as 3 famílias só de Coroa (H2, trilha B), em ordem estável. */
+export const HEX_CROWN_VALUES: readonly string[] = [...SPECIAL_FAMILIES, ...HEX_CROWN_EFFECTS, ...CROWN_ONLY_FAMILIES];
+
 /** Tudo que se pode forjar num slot (os valores, em ordem estável). */
 export function hexValuesOf(slot: HexSlot): readonly string[] {
   if (HEX_ELEMENT_SLOTS.includes(slot)) return ALL_ELEMENT_IDS;
-  return slot === 'coroa' ? SPECIAL_FAMILIES : HEX_STRIKES;
+  return slot === 'coroa' ? HEX_CROWN_VALUES : HEX_STRIKES;
 }
 
 export function hexCost(idRaw: string): HexCost | undefined {
@@ -109,8 +126,8 @@ export interface HexsmithState {
   readonly equipped: Readonly<Partial<Record<HexSlot, string>>>;
 }
 export const EMPTY_HEXSMITH: HexsmithState = { owned: [], equipped: {} };
-/** Teto de itens no save (sanidade: 3×210 + 7 + 2 = 639 itens possíveis). */
-export const HEX_MAX_OWNED = 3 * 210 + 7 + 2;
+/** Teto de itens no save (sanidade: 3×210 + 7 + 3 + 3 + 2 = 645 itens possíveis; só cresce). */
+export const HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + CROWN_ONLY_FAMILIES.length + 2;
 
 /** Leitura tolerante: posse só de itens válidos (sem repetir), equipado só se possuído E do slot certo. Nunca lança. */
 export function sanitizeHexsmith(raw: unknown): HexsmithState {
@@ -228,17 +245,26 @@ export function unequipHexSlot<T extends { hexsmith?: HexsmithState }>(prev: T, 
 /** O que o equipado REESCREVE no Soulmon. Campo ausente = o código original vale. É o que o combate lê. */
 export interface HexOverrides {
   readonly specialFamily?: SpecialFamily;
+  /** Coroa de EFEITO equipada: o efeito de PvE/PvP que a Coroa fixa (a família-base vai em `specialFamily`). */
+  readonly specialEffect?: SpecialEffect;
   readonly specialElement?: string;
   readonly basicElement?: string;
   readonly defenseElement?: string;
   readonly strike?: HexStrike;
 }
 
+/** Há uma Coroa (qualquer uma) equipada e válida no save? Só a regra "Coroa equipada ⇒ o companheiro descansa" lê isto. */
+export function hexCrownEquipped(raw: unknown): boolean {
+  return sanitizeHexsmith(raw).equipped.coroa !== undefined;
+}
+
 export function hexOverrides(raw: unknown): HexOverrides {
   const { equipped } = sanitizeHexsmith(raw);
   const v = (slot: HexSlot) => (equipped[slot] ? parseHexItem(equipped[slot])!.value : undefined);
   const out: { -readonly [K in keyof HexOverrides]: HexOverrides[K] } = {};
-  const fam = v('coroa'); if (fam) out.specialFamily = fam as SpecialFamily;
+  const fam = v('coroa');
+  if (fam && isCrownEffect(fam)) { out.specialFamily = HEX_CROWN_VARIANTS[fam].family; out.specialEffect = HEX_CROWN_VARIANTS[fam].effect; }
+  else if (fam) out.specialFamily = fam as SpecialFamily;
   const sp = v('amuleto'); if (sp) out.specialElement = sp;
   const ba = v('garra'); if (ba) out.basicElement = ba;
   const de = v('couraca'); if (de) out.defenseElement = de;

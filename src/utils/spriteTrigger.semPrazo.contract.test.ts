@@ -96,7 +96,7 @@ describe('R-I — a incubação nunca vira contagem na tela', () => {
   /** O bloco do aviso, do marcador até o fechamento do push. */
   const aviso = app.slice(
     app.indexOf("if (incubandoAgora) avisos.push({"),
-    app.indexOf("/* ── 2. SEMANAL"),
+    app.indexOf("// ── 3. TRIAGEM"), // o bloco seguinte (o "2. SEMANAL", cartão de domingo, saiu no §432)
   );
 
   it('a varredura tem chão embaixo — o aviso existe', () => {

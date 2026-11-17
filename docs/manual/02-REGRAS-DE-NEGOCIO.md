@@ -425,7 +425,7 @@ está bem alimentado, parada quando está faminto —, zera todo dia, e o númer
 barras é o dobro do requisito de tarefas do estágio.
 
 **A regra (beta-2, 13/10/2026, REGISTRO §40).** A energia regenera 1 unidade a
-cada `ENERGY_REGEN_MINUTES` (60 min desde 26/10/2026, era 120) a 100% de velocidade; a velocidade é
+cada `ENERGY_REGEN_MINUTES` (80 min desde 16/11/2026, REGISTRO §453; era 60 desde 26/10/2026 e 120 antes) a 100% de velocidade; a velocidade é
 decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
@@ -438,8 +438,8 @@ o estado antigo (por timestamp). Com o app fechado vale o sono registrado por ú
 "dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
-relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada; desde 16/11/2026 também há o
-limite diário de 30 lutas = 5 andares, REGISTRO §441) e para brincar.
+relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada; sem limite por dia desde 16/11/2026: o
+limite diário do §441 foi revogado no §453 e a energia é o freio do Rift) e para brincar.
 
 **Condição do dia completo**: `energyPoints >= dailyGoalFor`, e **não** o
 requisito cru do estágio. Comida vem de concluir tarefa, então num dia de meta 2
@@ -1017,15 +1017,14 @@ maioria dos donos de Vital Bracelet parar nos estágios médios.
 · `'ultra'`. `getStageLevel` lê o nível do prefixo; `getStageBranch` extrai o
 galho. Não existe tabela por espécie.
 
-**Os dois caminhos para o Ultra.** `canReachUltra({ unlockedEvolutions,
-perfectDays })` devolve `true` por **coleção** (as três `mega-*` desbloqueadas)
-**ou** por **permanência** (`ULTRA_PATIENCE_DAYS` = 45 dias completos acumulados
-como mega). `getNextEvolution` faz a pergunta a ela e não decide critério
-nenhum. Nenhum dos dois é melhor: a coleção exige **duas quedas deliberadas**
-além dos dias completos de cada subida (a conta está no docblock de
-`ULTRA_PATIENCE_DAYS`); a permanência é mais longa em tempo e mais barata em
-dor. Foi para tirar a queda obrigatória do caminho do topo que a permanência
-existe — o topo do jogo pedia que o jogador machucasse a criatura de propósito.
+**A regra do Ultra (16/11/2026, REGISTRO §461) — um caminho só.** `canReachUltra({
+unlockedEvolutions })` devolve `true` só com as três `mega-*` liberadas
+(`megasLiberadas` = 3). A barra do mega é a do Ultra (`ULTRA_PATIENCE_POINTS` =
+`ULTRA_PATIENCE_DAYS` 45 × 6 = 270) e **só acumula depois das três megas**
+(`gaugeTravadaPelasMegas`); antes, os pontos ficam guardados e a UI diz quantas
+megas já vieram. `getNextEvolution` faz a pergunta a `canReachUltra` e não decide
+critério. ⚠️ Revoga o "segundo caminho por permanência" (WP4.2/D6, 06/09/2026),
+em que 45 dias só com uma mega abriam o Ultra.
 
 **Dono.** `src/types/progression.ts` — `FORM_REQUIREMENTS`, `MAX_HP_BY_FORM`,
 `MAX_STAGE_REQUIREMENT`, `ULTRA_PATIENCE_DAYS`, `canReachUltra`,
@@ -5070,7 +5069,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
 - **Torcida forjada** rende o mesmo que o teto (`DUEL_TAPS_CAP` = 16 toques por balde de 3 s × 20 baldes; a barra de cheer de 24 despeja no máximo 13 vezes na luta toda) — toque ilimitado, ou baldes a mais, não rendem mais (`_duel.v3.test.js`, `community.duel.v3.test.js`); aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
-- **Nada do cliente decide o resultado (PR5).** Level, stats, família do especial, semente e resultado são do servidor; o teto S1 (1 level por dia de servidor desde a 1ª gravação, `metadata.f`, só no duelo) LIMITA um save forjado (level 40 no dia 3 luta com level 4) sem rejeitá-lo. Limite honesto: a família do especial e a forma do golpe vêm do save (escrito pelo cliente), dentro de uma lista fechada de 7 famílias calibradas em ±5% na régua.
+- **Nada do cliente decide o resultado (PR5).** Level, stats, família do especial, semente e resultado são do servidor; o teto S1 (1 level por dia de servidor desde a 1ª gravação, `metadata.f`, só no duelo) LIMITA um save forjado (level 40 no dia 3 luta com level 4) sem rejeitá-lo. Limite honesto: a família do especial e a forma do golpe vêm do save (escrito pelo cliente), dentro de uma lista fechada de 7 famílias sorteáveis calibradas em ±5% na régua (mais as 3 só de Coroa da Hexsmith, `defBuff`/`atkDebuff`/`spdDebuff`, que o servidor lê do campo `hexsmith` saneado do save e nunca de sorteio; Coroa equipada também faz o companheiro invocado descansar, REGISTRO §460).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil
@@ -6449,3 +6448,11 @@ Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estági
 ### Missões dos NPCs (12/11/2026, REGISTRO §314, revisto no §318)
 
 Cada NPC passa UMA missão simples ligada ao papel dele (`utils/npcMissions.ts`: Vesca "Colete 30 essências elementais", Hexsmith "Forje 1 HEX", Vitra "Aprimore 1 peça", Lamela "Compre 1 item", Papus "Envie 1 presente"...). **Rodízio SEMANAL (§318):** a cada semana (segunda a domingo, dia do jogador) `npcsOfWeek` põe na lista do dia 2 NPCs (`NPCS_POR_SEMANA`), em todos os dias da semana, só com o prédio já aberto pelo Vínculo (pula os fechados); ciclo de 25 semanas. **Trilho** tem a missão fixa `n-trilho` ("Faça 1 registro no Caderno", evento `journal`, paga tinta), todo dia, fora do rodízio; o Caderno não conta mais direto na semanal de journal: ela anda no RESGATE do Trilho (no máx. 1 por dia). A lista do dia sobe de 6 para 8 itens (`DAILY_MISSION_COUNT`) para as de NPC não comerem o sorteio comum. Mesmo estado e mesmo resgate das diárias (`dailyMissions`, `claimDaily`, idempotente; sanitização espelhada no servidor), recompensa = 1 material do prédio (o padrão), SEMPRE visível no cartão. A contagem é por evento real emitido pelo gesto do jogo; "colete essências" soma tudo que entra (`applyEssences`). Sem missão: Glifa (Biblioteca), Mirevesper (Guerra), Ramo (Grove) e o Corvo do Perfil (sem ação que contar). O Centro de Evolução deixou de ter "visitar" como primeira vez.
+
+## 🆕 Delta de 16/11/2026 (§453): o Rift é o sumidouro de energia
+
+- **Sem limite diário.** O limite de 30 lutas = 5 andares do §441 foi revogado: o Rift é infinito (camada 999 é o fim da escada) e só a energia (1 por andar) freia a descida. `dungeonDaily` segue no save como estatística sem teto; o lobby mostra "hoje: N andares". Saíram `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday`, a recusa `'daily-limit'` e o fim `'daily'` do `dungeonAway`.
+- **Regeneração.** `ENERGY_REGEN_MINUTES` = 80 (era 60).
+- **Itens de energia.** Faísca de Alma cai com 2% por inimigo (era 4%); pratos de energia do Restaurante custam ×1,5 (Chá de Orvalho e Pão de Faísca 23 Bits, Ensopado do Caldeirão 60), com espelho na Feira.
+
+**🕯️ Calabouço roguelike mais curto (REGISTRO §457, 16/11/2026).** A incursão do dia passou de 3×8 (24 passos) para 3×5 (15): combate obrigatório no 3º e 5º desafio do andar, 3 caminhos nos outros. Prêmio total igual: cada vitória vale 24/15 (`rogueWinValue`), 15 vitórias = 24 Bits e score 33; bônus de escolha ×1,6 (`POWER_STEP` 0,096, `VIGOR_STEP` 0,16); `ROGUE_FOE_RAMP` {1,75; 2}. Save antigo (sem `v`) é convertido proporcionalmente na leitura. O Rift e a Masmorra idle não mudam.

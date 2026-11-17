@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
+import { CtaTextButton } from '../ui/CtaButton';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
@@ -14,7 +15,8 @@ import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
-import { bitsStyle, minigameBitsCap } from '../../utils/currencies';
+import { bitsStyle, minigameBitsCap, bitsCategoryCap, minigameBitsCategoryToday, type BitsCategory } from '../../utils/currencies';
+import { playerDayKey } from '../../utils/playerDay';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
 import { RewardPreview } from '../ui/RewardPreview';
@@ -89,9 +91,12 @@ const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
  * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
  * teto não tira nada nem fecha jogo nenhum, só para de somar.
  */
-export function BitsHoje({ language, earned, extraCap = 0 }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number }) {
+export function BitsHoje({ language, earned, extraCap = 0, category }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number; /** §456: a categoria da folha; mostra também "hoje: x de 75 neste tipo de atividade". */ category?: BitsCategory }) {
+  const gs = useGameStateOptional()?.gameState;
   if (earned === undefined) return null;
   const isPt = language === 'pt-BR';
+  const catCap = bitsCategoryCap(extraCap);
+  const catN = gs && category ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), category)) : undefined;
   const cap = minigameBitsCap(extraCap);
   const n = Math.min(cap, Math.max(0, Math.floor(earned)));
   const cheio = n >= cap;
@@ -100,6 +105,11 @@ export function BitsHoje({ language, earned, extraCap = 0 }: { language: Languag
       <span className="sm2-num">
         {isPt ? `Bits de minijogo hoje: ${n} de ${cap}` : `Minigame Bits today: ${n} of ${cap}`}
       </span>
+      {catN !== undefined && (
+        <span data-bits-categoria className="sm2-num" style={{ display: 'block' }}>
+          {isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}
+        </span>
+      )}
       {cheio && (isPt
         ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
         : ' · the games stay open; Bits come back tomorrow.')}
@@ -121,7 +131,7 @@ function DropItem({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-export function MasmorraSheet({ language, onStart, bitsToday }: { language: Language; onStart: () => void; bitsToday?: number }) {
+export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a descida. */ onMap?: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
@@ -178,7 +188,8 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
-      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
+      {onMap && <CtaTextButton data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</CtaTextButton>}
+      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
     </div>
   );
 }
@@ -282,7 +293,7 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
       {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} />}
       {funStatus && <TicketBuyModal open={buyOpen} language={language} status={funStatus} onBuy={comprar} onClose={recusarCompra} onBought={() => setBuyOpen(false)} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <BitsHoje language={language} earned={bitsToday} />
+        <BitsHoje language={language} earned={bitsToday} category="minigames" />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
           <InfoTipSection title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}>
             {isPt
@@ -405,7 +416,7 @@ export function MenteSheet({ language, onStart, bitsToday }: {
   return (
     <div data-mente style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <BitsHoje language={language} earned={bitsToday} />
+        <BitsHoje language={language} earned={bitsToday} category="minigames" />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Ateliê' : 'How the Atelier works'} align="right">
           <InfoTipSection title={isPt ? 'O Ateliê' : 'The Atelier'}>
             {isPt

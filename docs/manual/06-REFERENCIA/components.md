@@ -1561,13 +1561,13 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** `src/components/refugio/refugeInvite.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
 
 ### `src/components/refugio/CenaSubaquatica.tsx`
-**Dono de:** a cena subaquática em tela cheia da Respiração (degradê, raios, bolhas, algas e coral) e o guia água-viva. Arte opcional em `src/assets/soulmon/respiracao/{fundo,meio,frente}.webp`, com camada procedural quando falta. Movimento reduzido: cena parada.
-**Exports:** `CenaSubaquatica`, `AguaViva`.
+**Dono de:** a cena subaquática em tela cheia da Respiração (degradê, raios, bolhas, algas e coral) e o guia bolha (em volta do pet). Arte opcional em `src/assets/soulmon/respiracao/{fundo,meio,frente}.webp`, com camada procedural quando falta. Movimento reduzido: cena parada.
+**Exports:** `CenaSubaquatica`, `BolhaGuia`.
 **Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
 **Régua:** `src/components/refugio/chama.render.test.tsx`.
 
 ### `src/components/refugio/ChamaGame.tsx`
-**Dono de:** o exercício Chama (trataka, 04/11/2026): aviso da 1ª vez, escolha de duração e modo olhos fechados, sessão em tela cheia com chama lenta (WCAG 2.3.1), sino + vibração, wake lock, toque duplo privado e Bits fixos 1×/dia. Arte opcional em `src/assets/soulmon/chama/fundo.webp`. É a exceção do Refúgio: soa nas trocas e paga Bits.
+**Dono de:** o exercício Chama (trataka, 04/11/2026): aviso da 1ª vez, escolha de duração e modo olhos fechados, sessão em tela cheia com chama lenta (WCAG 2.3.1), sino + vibração, wake lock, toque duplo privado e Bits fixos 1×/dia. Arte opcional em `src/assets/soulmon/chama/fundo.webp`; a chama é a folha 6x6 de 36 quadros `chama-alma/chama-v4-folha.webp` (CSS `step-end`, 2,4 s, parada em movimento reduzido). É a exceção do Refúgio: soa nas trocas e paga Bits.
 **Exports:** `ChamaGame`, `ChamaViva`.
 **Depende de:** `src/utils/refugio/chama.ts`, `src/utils/refugio/sinoChama.ts`.
 **Chamado por:** `src/components/nav/AreaView.tsx`.
@@ -2391,3 +2391,17 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/ui/SoulFlameAnim.tsx`
 **`SoulFlameAnim` (16/11/2026):** `{ height?, cycleSeconds?, className?, style? }` — a chama da alma turquesa dentro de um cristal, folha de 8 quadros em grade 4x2 (`FLAME_SHEET_COLS`, `FLAME_SHEET_ROWS`, `FLAME_SHEET_FRAMES`, `FRAME_ASPECT`) tocada por CSS `steps`; parada no quadro 1 com `prefers-reduced-motion`.
+
+### `src/components/games/SummonLayer.tsx`
+**Dono de:** o sprite do companheiro invocado na cena (16/11/2026, REGISTRO §449): `SummonLayer({ summons, me, foes, reduced })` desenha a criatura um pouco à frente de quem invocou enquanto o contador real `FighterFx.comp` for maior que zero (nenhum timer decide a presença; só a saída suave de 200 ms). Exports: `StageSummon` (`side`, `creature`, `turns`), `SUMMON_SIZE`, `SUMMON_ADVANCE`, `summonPlace`, `summonsDoGrupo`. Sem sprite para a criatura = não desenha. Usado por `BattleStage`.
+### `src/components/NeutroPotionPanel.tsx`
+**Dono de:** o painel da poção do Neutro no Centro de Evolução (16/11/2026, REGISTRO §452): `NeutroPotionPanel` mostra o progresso por elemento base (`neutroProgresso`, `NEUTRO_POTION_COSTS`) e o botão de forjar; textos em `NEUTRO_PANEL_COPY`. A regra mora em `utils/neutroPotion.ts`.
+
+### `src/components/PratoFeito.tsx`
+**Dono de:** o modal "Prato feito" (16/11/2026, REGISTRO §455/§465): `PratoFeito` abre ao cozinhar no Restaurante e ao comprar na Feira (variante "Comprado"), mostra a arte do prato (`dishArt`) ou o ícone, e fecha por X ou CTA (`useBackLayer`). O prato já está na pastinha (`dish:<id>`).
+
+### `src/components/arena/conviteDueloArt.ts`
+**Dono de:** a arte do convite de Duelo (REGISTRO §458): `conviteDueloArt(language)` devolve o papiro `convite-duelo-96-*` por idioma, ou `undefined` se o arquivo faltar (a folha só não mostra o papiro, nunca quebra).
+
+### `src/components/rift/RiftMap.tsx`
+**Dono de:** a tela do mapa de andares do Rift infinito (16/11/2026, REGISTRO §462): `RiftMap` (`RiftMapProps`) desenha os nós e o caminho do `utils/riftMap.ts`, rola até o andar atual e deixa voltar a um conjunto já visitado (`riftRewindRefusal` explica a recusa). Só leitura do plano; o estado vive no save do Rift.

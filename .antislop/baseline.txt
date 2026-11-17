@@ -12,5 +12,5 @@ seguranca-desligada 14
 teste-pulado 6
 teste-tautologico 0
 prosa-inflada 79
-arquivo-gigante 91
+arquivo-gigante 90
 implementacao-paralela 0

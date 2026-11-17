@@ -18,12 +18,13 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { damagePoints, DOT_TICKS, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
+import { planoInvocacao } from './companheiro';
+import { compFx, damagePoints, DOT_TICKS, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
 import { aplicarEspecialPessoal } from './alvoAliado';
 import {
-  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
+  AREA_DOT_EFFICIENCY, AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, FAMILY_TUNE, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -134,10 +135,17 @@ interface G {
   /** §228: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
   nSil: number;
   nSlow: number;
+  /** `spdDebuff` (família só de Coroa): golpes de arrasto que faltam (à parte do `nSlow` do efeito de lentidão). */
+  nDrag: number;
   nHot: number;
+  /** Hexsmith H2: golpes que ainda doem menos neste lutador (`defBuff`) e golpes dele que ainda saem mais fracos (`atkDebuff`). */
+  nGuard: number;
+  nWeak: number;
   /** §334: DoTs e curas contínuas que este lutador CARREGA; tudo tica no começo de cada golpe DELE (`tickOwnTurn`). */
   dots: GDot[];
   hots: { readonly pulse: number; left: number }[];
+  /** Companheiro invocado (PR 2): o especial deste lutador invoca (`FightSide.invoca`). */
+  readonly invoca: boolean;
 }
 
 /** §334: um DoT em quem o carrega. `single` = o DoT de alvo único do jogador: se o carregador cai, o que falta passa ao próximo vivo. */
@@ -146,6 +154,8 @@ interface GDot {
   readonly share: number;
   readonly single: boolean;
   left: number;
+  /** Ataque do companheiro invocado (PR 2): DoT comum marcado para a cena e para a regra de 1 por combatente. */
+  readonly comp?: true;
 }
 
 /** Seed of the stream of foe i (foe 0 is the 1v1 stream, so N = 1 ≡ fight()). */
@@ -180,7 +190,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0, dots: [], hots: [],
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nHot: 0, nGuard: 0, nWeak: 0, dots: [], hots: [], invoca: s.invoca === true,
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -209,7 +219,9 @@ export function* groupFightSteps(
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
         shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: f.dots.reduce((n, d) => n + d.left, 0),
-        ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
+        ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow + f.nDrag > EPS ? { nSlow: f.nSlow + f.nDrag } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
+        ...(f.nGuard > EPS ? { nGuard: f.nGuard } : {}), ...(f.nWeak > EPS ? { nWeak: f.nWeak } : {}),
+        ...(f.invoca ? compFx(all.reduce((n, x) => n + x.dots.reduce((m, d) => (d.src === f && d.comp ? m + d.left : m), 0), 0)) : {}),
       };
     });
   };
@@ -259,8 +271,9 @@ export function* groupFightSteps(
     me.hots = me.hots.filter((h) => h.left > 0);
     return me.hp <= EPS;
   };
-  const cast = (me: G, t0: number, scale: number) => {
+  const cast = (me: G, t0: number, scale: number, invocado = false) => {
     const sp = me.sp as Special;
+    const plano = me.invoca && !invocado ? planoInvocacao(sp, scale) : null;
     const Eb = SPECIAL_BUDGET_HITS * sp.power * scale;
     const enemies = me === pl ? alive() : [pl];
     // ALVO POR TOQUE: o especial single do jogador vai no inimigo escolhido (antes ignorava: sempre o 1º vivo)
@@ -276,6 +289,16 @@ export function* groupFightSteps(
     // perde); a régua pode trocar as duas por `opts.areaEfficiency`
     const areaEff = sp.family === 'dot' && spread.length > 1 ? AREA_DOT_EFFICIENCY : AREA_EFFICIENCY;
     const share = isArea ? (Eb * (opts.areaEfficiency ?? areaEff)) / spread.length : Eb;
+    if (plano) {
+      // COMPANHEIRO INVOCADO (PR 2, `companheiro.ts`): 1 por combatente (invocar de novo troca o que estava em cena); o efeito
+      // (função mista) é o do especial normal em escala menor, e o ataque do companheiro é um DoT marcado `comp`
+      for (const f of all) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
+      if (plano.escalaEfeito > 0) cast(me, t0, plano.escalaEfeito, true);
+      const shareAtaque = isArea ? (plano.ataqueE * (opts.areaEfficiency ?? areaEff)) / spread.length : plano.ataqueE;
+      const single = spread.length === 1 && me === pl;
+      for (const v of spread) v.dots.push({ src: me, share: shareAtaque, single, left: plano.turnosAtaque, comp: true });
+      return;
+    }
     switch (sp.family) {
       case 'direct':
         for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack', 'direct');
@@ -294,6 +317,15 @@ export function* groupFightSteps(
           else if (sp.effect === 'silence' && v.sp) { v.nSil = Math.max(v.nSil, tune.silenceHits); v.nVuln += share * tune.silenceKeep; } // alvo sem especial: `defDebuff` inteiro
           else v.nVuln += share;
         }
+        break;
+      case 'atkDebuff':
+        for (const v of spread) v.nWeak += share / FAMILY_TUNE.weakCut;
+        break;
+      case 'spdDebuff':
+        for (const v of spread) v.nDrag += share * FAMILY_TUNE.spdDebuffScale;
+        break;
+      case 'defBuff':
+        rx.nGuard += Eb / FAMILY_TUNE.guardCut; // pessoal (como o escudo): vai em quem solta
         break;
       case 'shield':
         if (sp.effect === 'hot') {
@@ -374,6 +406,8 @@ export function* groupFightSteps(
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (v.nVuln > EPS) { const x = Math.min(1, v.nVuln); mulN += x; v.nVuln -= x; }
+      if (v.nGuard > EPS) { const x = Math.min(1, v.nGuard); mulN *= 1 - FAMILY_TUNE.guardCut * x; v.nGuard -= x; }
+      if (me.nWeak > EPS) { const x = Math.min(1, me.nWeak); mulN *= 1 - FAMILY_TUNE.weakCut * x; me.nWeak -= x; }
       const hs = opts.hitScale ? opts.hitScale(me.who, me.nHit) : 1;
       me.nHit++;
       hit(me, v, (mulN * me.mult() * hs) / hitsOn(me, v), 'attack', 'basic');
@@ -385,6 +419,7 @@ export function* groupFightSteps(
         me.next = t + interval(me.c.spd);
       }
       if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nDrag > EPS) { const x = Math.min(1, me.nDrag); me.nDrag -= x; me.next += interval(me.c.spd) * x * FAMILY_TUNE.dragStretch; }
       if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();

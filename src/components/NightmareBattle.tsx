@@ -62,6 +62,9 @@ import { newDefenseSeed } from '../utils/autoDefesa';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { hpPoints } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
+import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { dungeonFamily, nightmareFight, NIGHTMARE_OPENING_WINDOW_S, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -145,6 +148,7 @@ export function NightmareBattle({
      Masmorra (`jeitoParaPve`). Antes o Pesadelo usava o `base.dmg` cru e ignorava o jeito: era uma divergência
      entre as duas telas, resolvida aqui — o Pesadelo aplica o jeito. Sem estado (testes), cai no estágio. */
   const estado = useMemo<SoulXPState>(() => soul ?? { evolutionStage: petStage }, [soul, petStage]);
+  const ctxGs = useGameStateOptional()?.gameState; // só o companheiro invocado (PR 2) lê daqui
   const bonusTalento = useTalentBonus('nightmare'); // canal único de bônus (teto 5%), PR7; `tal-pve-05` soma só aqui (Tarefa B)
   const rift = useRiftTalents();
   const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
@@ -152,12 +156,13 @@ export function NightmareBattle({
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
-    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento, hx),
     pesadelo: true,
+    companheiro: companheiroDoEstado(ctxGs), // PR 2: sempre `null` com a flag desligada
     jeito: jeitoDaProfissao(profissao),
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
+  }), [hx, estado, ctxGs, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
@@ -293,13 +298,10 @@ export function NightmareBattle({
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true, speed,
   });
-  // §413: o aviso "dá tempo de torcer" dura a janela de abertura (relógio da cena: ÷ velocidade); só UI, o núcleo já atrasa o inimigo.
-  const [abertura, setAbertura] = useState(true);
+  const [abertura, setAbertura] = useState(true); // §413: "dá tempo de torcer" dura a janela de abertura (relógio da cena ÷ velocidade); só UI, o núcleo já atrasa o inimigo
   useEffect(() => {
-    setAbertura(true);
-    if (!(open && phase === 'fight') || pausado) return undefined;
-    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed));
-    return () => clearTimeout(id);
+    setAbertura(true); if (!(open && phase === 'fight') || pausado) return undefined;
+    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed)); return () => clearTimeout(id);
   }, [fightKey, open, phase, pausado, speed]);
   const batteryRef = useRef<typeof battle | null>(null);
   batteryRef.current = battle;
@@ -360,6 +362,7 @@ export function NightmareBattle({
         onSwipe={battle.swipe}
       >
         <BattleStage
+          summon={summonsDoGrupo(battle.summon, jogador.companheiro)}
           specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(enemy?.foe.special))}
           isPt={isPt}

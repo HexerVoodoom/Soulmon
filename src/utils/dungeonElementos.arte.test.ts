@@ -119,7 +119,7 @@ describe('rookie de Chama Azul é o de verdade, não o champion (09/11/2026)', (
 
 describe('formas do pacote A (16/11/2026): PNG próprio', () => {
   it('205 PNG distintos entre si e do rookie', () => {
-    const pacote = ENEMY_ROSTER.slice(-205);
+    const pacote = ENEMY_ROSTER.slice(-205 - 15, -15); // os 15 ramos legados (§445) vão depois do pacote A
     const hashes = new Set(pacote.map(e => sha(path.join(ART, 'combinados-formas', e.artFile + '.png'))));
     expect(hashes.size).toBe(205);
     for (const e of pacote) expect(hashes.has(sha(path.join(ART, 'combinados', e.artFile!.replace(/-(champion|ultimate|mega)$/, '') + '.png'))), e.key).toBe(false);

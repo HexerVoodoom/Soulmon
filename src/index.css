@@ -4994,6 +4994,7 @@ select:focus-visible {
   animation: sm2-potion-spin 14s linear infinite;
 }
 .sm2-potion-icon { position: relative; width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(255, 236, 170, .55)); display: grid; place-items: center; }
+span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem arte própria: tamanho de ARTE (não é texto), fora do inline para a régua do DS */
 .sm2-potion-text { margin: 0; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: var(--sm2-text-lg, 20px); font-weight: 600; color: #fff; }
 @keyframes sm2-potion-spin { to { transform: rotate(360deg); } }
 /* "Elemento novo" como CARTA (15/11/2026, REGISTRO §401): véu escuro do modal da poção, sem brilho; carta preta 5:7 igual para todos os elementos.
@@ -5004,7 +5005,7 @@ select:focus-visible {
   padding: calc(56px + env(safe-area-inset-top, 0px)) 0 calc(12px + env(safe-area-inset-bottom, 0px));
   background: rgba(4, 18, 20, .82);
 }
-.sm2-elem-new-close { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); left: 16px; z-index: 2; }
+.sm2-elem-new-close { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 16px; z-index: 2; }
 .sm2-elem-new-close .sm2-ora-back { color: #fff; }
 .sm2-elem-new-row { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
 .sm2-elem-new-page { display: flex; flex-direction: column; align-items: center; touch-action: pan-y; }
@@ -5028,9 +5029,10 @@ select:focus-visible {
 .sm2-elem-new-arrow[data-elemento-prev] { left: 4px; }
 .sm2-elem-new-arrow[data-elemento-next] { right: 4px; }
 .sm2-elem-new-arrow:disabled { visibility: hidden; }
-.sm2-elem-new-dots { display: flex; gap: 8px; justify-content: center; }
-.sm2-elem-new-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
-.sm2-elem-new-dot[data-on="true"] { background: #fff; }
+.sm2-elem-new-segs { position: absolute; top: calc(4px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; z-index: 2; display: flex; gap: 4px; }
+.sm2-elem-new-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .3); }
+.sm2-elem-new-seg[data-on="true"] { background: #fff; }
+.sm2-elem-carta-nota { margin: 2cqw 0 0; max-width: 90%; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: clamp(11px, 3.8cqw, 14px); line-height: 1.35; color: rgba(255, 255, 255, .78); }
 @media (prefers-reduced-motion: no-preference) {
   .sm2-elem-new-page[data-anim] { animation: sm2-elem-new-in .18s ease-out; }
   @keyframes sm2-elem-new-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
@@ -8395,6 +8397,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-item-arte { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
 .sm3-item-arte img { image-rendering: pixelated; }
 .sm3-item-nome { text-align: center; line-height: 1.2; overflow-wrap: anywhere; }
+/* ".exe" nunca se parte: a quebra só acontece ANTES do ponto (<wbr>). */
+.sm3-item-ext { white-space: nowrap; }
 .sm3-item small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
 .sm3-mochila-vazia { margin: 18px 0; text-align: center; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
 .sm3-mochila-usar {

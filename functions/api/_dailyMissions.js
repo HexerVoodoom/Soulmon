@@ -14,7 +14,7 @@ export const DAILY_EVENTS = [
   'comida', 'humor', 'sono', 'mercado', 'presente', 'arena', 'torneio',
   'barrage', 'eco', 'zip', 'patches', 'calabouco', 'selo', 'amigo',
   // Missoes dos NPCs (12/11/2026, REGISTRO secao 309): eventos novos; 'salao' e 'mente' sao agregados dos jogos do Salao e do Atelie.
-  'essencia', 'salao', 'compra', 'melhoria', 'mente', 'cla', 'cenario', 'prato', 'hex', 'feira', 'passeio', 'conquista',
+  'essencia', 'salao', 'compra', 'melhoria', 'mente', 'cla', 'prato', 'hex', 'feira', 'passeio', 'conquista',
   // Trilho (REGISTRO secao 318): registro novo no Caderno.
   'journal',
 ];
@@ -22,7 +22,7 @@ export const DAILY_MISSION_IDS = [
   'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho',
   'd-comida', 'd-humor', 'd-sono', 'd-mercado', 'd-presente', 'd-arena', 'd-torneio',
   'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco', 'd-selo', 'd-amigo',
-  'n-vesca', 'n-pipo', 'n-lamela', 'n-tessaria', 'n-yuzu', 'n-vitra', 'n-tessela', 'n-zeph', 'n-aurea', 'n-lume', 'n-sumi', 'n-vultrak', 'n-lasca', 'n-panora', 'n-corva', 'n-tinta', 'n-snapjaw', 'n-zumi', 'n-hexsmith', 'n-fanfare', 'n-lisel', 'n-medra', 'n-trilho', 'n-papus', 'n-nuri',
+  'n-vesca', 'n-pipo', 'n-lamela', 'n-tessaria', 'n-yuzu', 'n-vitra', 'n-tessela', 'n-zeph', 'n-aurea', 'n-lume', 'n-sumi', 'n-vultrak', 'n-corva', 'n-tinta', 'n-snapjaw', 'n-zumi', 'n-hexsmith', 'n-fanfare', 'n-lisel', 'n-medra', 'n-trilho', 'n-papus', 'n-nuri',
 ];
 export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',

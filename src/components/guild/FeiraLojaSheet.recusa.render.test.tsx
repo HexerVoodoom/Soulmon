@@ -58,4 +58,16 @@ describe('FeiraLojaSheet: o app recusa antes do servidor', () => {
     await waitFor(() => expect(onBuyShop).toHaveBeenCalledTimes(1));
     expect(buy).toHaveBeenCalledTimes(1);
   });
+
+  it('prato comprado (16/11/2026): abre o modal "Bought!" do mesmo componente, com .exe e "Saved in Files"', async () => {
+    const state = { gamePoints: 500, foodInventory: { 'dish:cha-de-orvalho': 1 } };
+    const { buy } = montar(loja('dish:cha-de-orvalho', 'dish'), state);
+    await comprar('dish:cha-de-orvalho');
+    await waitFor(() => expect(buy).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(document.querySelector('[data-prato-feito]')).toBeTruthy());
+    expect(document.querySelector('[data-prato-texto]')!.textContent).toBe('Bought! Dew Tea.exe');
+    expect(document.querySelector('[data-prato-guardado]')!.textContent).toBe('Saved in Files · you have 1');
+    fireEvent.click(document.querySelector('[data-prato-ok]') as HTMLElement);
+    expect(document.querySelector('[data-prato-feito]')).toBeNull();
+  });
 });

@@ -97,6 +97,8 @@ import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { hpPoints, statExibido } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { RewardPreview } from './ui/RewardPreview';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
@@ -136,11 +138,13 @@ export interface ArenaGameProps {
   onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
   /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
   ladder?: number;
+  /** ⚔️ §458: pede 1 convite de Duelo ao começar a run (inclusive "Lutar de novo"). `false` = sem convite: a Arena volta para a folha, onde está a troca por energia. Ausente = sem convite (testes, Torneio). */
+  onBeginRun?: () => boolean;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onBeginRun, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -211,12 +215,13 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
-    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento, hx),
+    companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
     elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? (petBase ? { basica: petBase, especial: petBase } : {}) : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
-  }), [hx, petElement, petBase, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+  }), [hx, petElement, petBase, estado, gs, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
@@ -255,13 +260,18 @@ export function ArenaGame({
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey || e.formaKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey || e.formaKey)!)!) : undefined) ?? (e.chefeUltra ? INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey || e.formaKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey || e.formaKey)!)!) : undefined) ?? (e.chefeUltra ? (INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] ?? novoSoulmonById(e.chefeUltra)?.sprite('ultra')) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);
 
+  const beginRunRef = useRef(onBeginRun);
+  beginRunRef.current = onBeginRun;
+  const exitRef = useRef(onExit);
+  exitRef.current = onExit;
   const comecar = useCallback(() => {
     if (!pool) return;
+    if (beginRunRef.current && !beginRunRef.current()) { exitRef.current(); return; } // sem convite: volta à folha (troca por energia)
     runSeedRef.current = chosenSeedRef.current ?? newDefenseSeed();
     chosenSeedRef.current = undefined;
     runLadderRef.current = ladderPropRef.current;
@@ -410,6 +420,7 @@ export function ArenaGame({
         onSwipe={batalha.swipe}
       >
         <BattleStage
+          summon={summonsDoGrupo(batalha.summon, jogador.companheiro)}
           scene={cenaDaRun.bg}
           specialLabel={specialLabel(isPt, especial, hexFamily(familyOfSkill(especial), hx))}
           foeSpecialLabel={(f, i) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(foesLado[i ?? 0]?.special))}
