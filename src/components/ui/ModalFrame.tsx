@@ -5,7 +5,8 @@ import { PEDRA_RUNAS_URL } from '../../assets/soulmon/ui/moldura/fundos';
  * MOLDURA DE MODAL (arte aprovada pelo dono, 17/11/2026; `docs/PLANO-MOLDURAS-MODAIS.md`). NÃO é `border-image` nem uma imagem esticada:
  * é FATIAMENTO VERTICAL com largura fixa. O topo (cantos + cipós + placa de título + (i)) e a base (cantos + cipós) são imagens de
  * proporção fixa e as laterais são uma faixa reta de madeira repetida em Y; assim a altura varia à vontade sem deformar os cantos.
- * Por baixo de tudo: base escura + o fundo do lote (`fundo`, URL) na opacidade `fillOpacity` (padrão 15%); sem `fundo`, pedra com runas.
+ * Por baixo de tudo: base turquesa escura SÓLIDA (`--sm2-viewport-bg`) + o fundo do lote (`fundo`, URL) na opacidade `fillOpacity` (padrão 15%) cobrindo toda a área; sem `fundo`, pedra com runas.
+ * A MOLDURA (topo, base, laterais, centro vazado, sem toque) fica POR CIMA e o conteúdo rola por baixo; `--sm2-moldura-pad-t/b/x` é o respiro de quem rola.
  * Dono único do visual: `.sm2-moldura-modal` em `index.css`. O conteúdo vai em `children`; `title` é o texto da placa (serifa dourada).
  * Repassa `data-*`/`aria-*`/`className`/`style`/`ref` ao contêiner, para servir de casca de folhas existentes.
  */

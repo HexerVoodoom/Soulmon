@@ -9582,7 +9582,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal, .sm2-moldura-card { container-type: inline-size; --u: 1cqw; }
 .sm2-moldura-modal {
   position: relative; box-sizing: border-box; display: flex; flex-direction: column; isolation: isolate;
-  background: #0d1a1a; min-height: calc(var(--u) * 52);
+  /* MODAL = base turquesa escura SÓLIDA (token do DS) + fundo do lote a ~15% por cima, cobrindo TODA a área. A MOLDURA fica POR CIMA do conteúdo
+     (topo, base, laterais: z 2, centro vazado, sem toque) e o conteúdo rola por baixo dela; `--sm2-moldura-pad-*` é o respiro que quem rola usa
+     para não ficar escondido sob as peças. */
+  background: var(--sm2-viewport-bg, #0E2422); min-height: calc(var(--u) * 52);
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3);
 }
 .sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
 .sm2-moldura-modal__fundo {
@@ -9590,14 +9594,14 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 /* Pedra com runas (genérico/sem prédio): ladrilho, no máximo 2x2 repetições. */
 .sm2-moldura-modal--pedra .sm2-moldura-modal__fundo { background-size: 50% auto; background-repeat: repeat; background-position: top left; }
-.sm2-moldura-modal__lado { top: 0; bottom: 0; width: calc(var(--u) * 2.1); z-index: -1; background-repeat: repeat-y; background-size: 100% auto; }
+.sm2-moldura-modal__lado { top: 0; bottom: 0; width: calc(var(--u) * 2.1); z-index: 2; background-repeat: repeat-y; background-size: 100% auto; }
 .sm2-moldura-modal__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-e.webp'); }
 .sm2-moldura-modal__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-d.webp'); }
-.sm2-moldura-modal__topo, .sm2-moldura-modal__base { left: 0; right: 0; z-index: 1; background-repeat: no-repeat; background-size: 100% 100%; }
+.sm2-moldura-modal__topo, .sm2-moldura-modal__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
 .sm2-moldura-modal__topo { top: 0; height: calc(var(--u) * 16.9); background-image: url('./assets/soulmon/ui/moldura/painel-topo.webp'); }
 .sm2-moldura-modal__base { bottom: 0; height: calc(var(--u) * 34.4); background-image: url('./assets/soulmon/ui/moldura/painel-base.webp'); }
 .sm2-moldura-modal__placa {
-  position: absolute; z-index: 2; left: calc(var(--u) * 24); width: calc(var(--u) * 57); top: calc(var(--u) * 4.3); height: calc(var(--u) * 6.5);
+  position: absolute; z-index: 3; left: calc(var(--u) * 24); width: calc(var(--u) * 57); top: calc(var(--u) * 4.3); height: calc(var(--u) * 8.2);
   display: flex; align-items: center; justify-content: center; pointer-events: none;
 }
 .sm2-moldura-modal__titulo {
@@ -9605,12 +9609,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-family: Georgia, 'Times New Roman', serif; font-size: var(--sm2-text-md, 1rem); font-weight: 700; color: #e3c06a; text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
 }
 .sm2-moldura-modal__info {
-  position: absolute; z-index: 3; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8);
+  position: absolute; z-index: 4; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8);
   display: flex; align-items: center; justify-content: center;
 }
 .sm2-moldura-modal__conteudo {
-  position: relative; z-index: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
-  padding: calc(var(--u) * 15) calc(var(--u) * 2.4) calc(var(--u) * 6);
+  /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
+  position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
 }
 /* CARD: topo 231/600 e base 369/600 (do arquivo); vão da arte entre os dois. */
 .sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; min-height: calc(var(--u) * 126); }
