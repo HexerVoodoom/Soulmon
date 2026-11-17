@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  HEX_CROWN_EFFECTS, HEX_CROWN_VARIANTS, HEX_COSTS, HEX_SLOTS, HEX_MAX_OWNED, hexCost, hexOverrides, hexFamily, hexValuesOf, parseHexItem, sanitizeHexsmith,
+  HEX_CROWN_EFFECTS, HEX_CROWN_VALUES, HEX_CROWN_VARIANTS, HEX_COSTS, HEX_SLOTS, HEX_MAX_OWNED, hexCost, hexOverrides, hexFamily, hexValuesOf, parseHexItem, sanitizeHexsmith,
 } from './hexsmith';
 import { CROWN_ONLY_FAMILIES, SPECIAL_FAMILIES } from './combate/specials';
 import { eEvocador, companheiroAtivo } from './companheiroInvocado';
@@ -105,6 +105,13 @@ describe('texto das 6 Coroas novas e o aviso calmo', () => {
     }
     expect(new Set(seis.map((v) => hexCrownValueCopy(v)!.pt)).size).toBe(6);
     expect(new Set(seis.map((v) => hexCrownValueCopy(v)!.en)).size).toBe(6);
+  });
+  it('TODA Coroa do catálogo (HEX_CROWN_VALUES) tem descrição PT/EN não vazia, sem "arquivo"/".exe"', () => {
+    for (const v of HEX_CROWN_VALUES) {
+      const d = hexCrownValueDesc(v);
+      expect(d?.en.trim() && d.pt.trim(), v).toBeTruthy();
+      expect(`${d!.en} ${d!.pt}`, v).not.toMatch(/arquivo|\.exe|file/i);
+    }
   });
   it('o aviso do evocador é calmo: descansa, sem cobrança', () => {
     expect(HEX_UI.companionRests.en).toBe('While the Crown is equipped, your companion rests.');

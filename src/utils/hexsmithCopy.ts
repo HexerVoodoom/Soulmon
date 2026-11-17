@@ -40,14 +40,21 @@ export const HEX_CROWN_EFFECT_COPY: Readonly<Record<HexCrownEffect, { name: Par;
   silence: { name: p('Silencing', 'Silêncio'), desc: p('Breaks the foe’s guard and keeps its special quiet for a few strikes.', 'Quebra a guarda do alvo e cala o especial dele por alguns golpes.') },
 };
 
-/** Descrição das 3 Coroas que são FAMÍLIA nova (`CROWN_ONLY_FAMILIES`): o que fazem, em linguagem de convite. */
-export const HEX_CROWN_FAMILY_DESC: Readonly<Record<'defBuff' | 'atkDebuff' | 'spdDebuff', Par>> = {
+/** Descrição das Coroas de FAMÍLIA (as 7 de sempre + as 3 novas, `ALL_SPECIAL_FAMILIES`): o que fazem, em linguagem de convite. Sem número nem vantagem prometida. */
+export const HEX_CROWN_FAMILY_DESC: Readonly<Record<SpecialFamily, Par>> = {
+  direct: p('A single clean blow of damage.', 'Um golpe limpo de dano, de uma vez.'),
+  dot: p('Damage that keeps working over your next strikes.', 'Dano que segue agindo nos seus próximos golpes.'),
+  heal: p('Mends you right away.', 'Cura você na hora.'),
+  shield: p('A barrier that takes the blows for you.', 'Uma barreira que recebe os golpes por você.'),
+  atkBuff: p('Your strikes land stronger for a while.', 'Seus golpes batem mais forte por um tempo.'),
+  defDebuff: p('Breaks the foe’s guard so it takes more damage.', 'Quebra a guarda do alvo, e ele recebe mais dano.'),
+  spdBuff: p('Your strikes come faster for a while.', 'Seus golpes vêm mais rápido por um tempo.'),
   defBuff: p('Your guard rises: the next blows you take hurt less.', 'Sua guarda sobe: os próximos golpes que você recebe doem menos.'),
   atkDebuff: p('The foe’s next blows land weaker.', 'Os próximos golpes do alvo batem mais fraco.'),
   spdDebuff: p('The foe strikes later, blow after blow.', 'O alvo ataca mais devagar, golpe após golpe.'),
 };
 
-/** O que a Coroa FAZ (efeito ou família nova); `undefined` para as famílias de sempre (o nome já basta). */
+/** O que a Coroa FAZ (efeito ou família); `undefined` só para valor desconhecido (ex.: o original da ficha). */
 export function hexCrownValueDesc(value: string): Par | undefined {
   return (HEX_CROWN_EFFECT_COPY as Record<string, { desc: Par } | undefined>)[value]?.desc ?? (HEX_CROWN_FAMILY_DESC as Record<string, Par | undefined>)[value];
 }
