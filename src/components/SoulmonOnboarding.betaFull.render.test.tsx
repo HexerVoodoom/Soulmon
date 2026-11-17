@@ -30,8 +30,11 @@ describe('BETA-FULL na tela do ovo', () => {
   beforeEach(() => {
     vi.useFakeTimers(); installFakeStorage(); resetTelemetryForTest(); ctl.chamadas = 0;
     Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), configurable: true, writable: true });
+    // A montagem com sessao aberta le a nuvem antes dos termos: aqui a conta nao tem save.
+    try { sessionStorage.clear(); } catch { /* ok */ }
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ found: false }), { status: 200 })));
   });
-  afterEach(() => { vi.useRealTimers(); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   async function ateOOvo() {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
