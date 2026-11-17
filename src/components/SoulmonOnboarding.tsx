@@ -1344,6 +1344,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       const rest = await restaurarContaNoLogin(mail);
       if (rest === 'restaurada') { window.location.reload(); return; }
       setAuthOcupado(false);
+      // Dúvida não vira conta nova (17/11/2026, bug do dono): se NÃO deu para ler a nuvem (5xx, 401 logo após o login, rede) ou
+      // o storage recusou a adoção, a pessoa fica no portão com "tente de novo". Seguir para termos+onboarding tratava "não consegui
+      // ler" como "não existe save" e abria o caminho de criar conta nova por cima de uma conta existente.
+      if (rest === 'indeterminado' || rest === 'storage') {
+        setAuthErro('rede');
+        setAuthEmail('');
+        setStep(IDENTITY_STEP);
+        return;
+      }
     }
     // A3: com a conta pronta, falta o aceite dos termos — a menos que esta
     // instalação já tenha provado o aceite da versão ATUAL. Autenticado e
