@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
@@ -10,6 +10,10 @@ import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor, t
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
+import { ModalFrame } from '../ui/ModalFrame';
+
+/** Moldura 9-slice PROVISÓRIA da folha (PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
+export const MOLDURA_MODAL = true;
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -163,7 +167,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={npcVoice ? `fn:${npcVoice.name}` : lotId ? `${areaId}:${lotId}` : undefined} />
         </div>
 
-        <div
+        <SheetShell
           data-area-sheet
           className="sm2-sheet-rise"
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
@@ -177,12 +181,16 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             // range min/max: o 1/3 de cima da TELA, acima da folha, é do NPC.
             height: '66.6667dvh',
             flex: 'none',
-            background: 'var(--sm2-surface)',
-            borderRadius: '20px 20px 0 0',
-            display: 'flex', flexDirection: 'column',
-            boxSizing: 'border-box',
-            boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
-            overflow: 'hidden',
+            ...(MOLDURA_MODAL
+              ? { overflow: 'hidden' }
+              : {
+                background: 'var(--sm2-surface)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex', flexDirection: 'column',
+                boxSizing: 'border-box',
+                boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
+                overflow: 'hidden',
+              }),
           }}
         >
           {closeInSheet && !hideClose && (
@@ -190,7 +198,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
-          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
+          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
             {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
             <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
               {title}
@@ -209,12 +217,17 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
           </div>
           {footer && (
-            <div data-area-sheet-footer style={{ flexShrink: 0, padding: '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: 'var(--sm2-surface)' }}>
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
               {footer}
             </div>
           )}
-        </div>
+        </SheetShell>
       </div>
     </div>
   );
+}
+
+/** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
+function SheetShell(props: HTMLAttributes<HTMLDivElement> & { 'data-area-sheet'?: boolean | string }) {
+  return MOLDURA_MODAL ? <ModalFrame {...props} /> : <div {...props} />;
 }

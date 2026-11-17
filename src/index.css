@@ -9574,3 +9574,59 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    mira dourada tracejada do inimigo. Foco de teclado visível no mesmo turquesa; o pulso some com movimento reduzido (regra no bloco canônico). */
 .sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
 @keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }
+
+/* §MOLDURA (17/11/2026, PROVISÓRIA): moldura 9-slice de modal e de card (`components/ui/ModalFrame.tsx`, `CardFrame.tsx`). Arte em
+   `assets/soulmon/ui/moldura/` (2x do exibido); trocar o PNG = trocar o .webp e, se o slice mudar, as variáveis abaixo. Cantos não deformam. */
+:root {
+  --sm2-moldura-modal-slice: 66;
+  --sm2-moldura-modal-borda: 44px;
+  --sm2-moldura-card-slice: 52;
+  --sm2-moldura-card-borda: 34px;
+  --sm2-moldura-ouro: #e3c06a;
+  --sm2-moldura-serifa: Georgia, 'Times New Roman', serif;
+}
+.sm2-moldura-modal {
+  position: relative; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0; isolation: isolate;
+  border-style: solid; border-color: transparent; border-width: var(--sm2-moldura-modal-borda);
+  border-image: url('./assets/soulmon/ui/moldura/modal-frame-9slice.webp') var(--sm2-moldura-modal-slice) / var(--sm2-moldura-modal-borda) round;
+  background: none;
+}
+.sm2-moldura-modal::before {
+  content: ''; position: absolute; z-index: -1; inset: calc(var(--sm2-moldura-modal-borda) * -.45);
+  background: #1b2423 url('./assets/soulmon/ui/moldura/modal-fill-stone.webp') repeat; background-size: 105px 70px;
+  opacity: var(--sm2-moldura-fill-op, 1); pointer-events: none;
+}
+.sm2-moldura-modal__placa {
+  position: relative; align-self: center; flex: none; width: min(100%, 300px); aspect-ratio: 600 / 116; margin: calc(var(--sm2-moldura-modal-borda) * -1.1) 0 4px;
+  background: url('./assets/soulmon/ui/moldura/modal-title-plaque.webp') center / 100% 100% no-repeat;
+  display: flex; align-items: center; justify-content: center; padding: 0 14%;
+}
+.sm2-moldura-modal__titulo {
+  margin: 0; font-family: var(--sm2-moldura-serifa); font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-moldura-ouro);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8); text-align: center; line-height: 1.1;
+}
+.sm2-moldura-modal__info { position: absolute; right: 4%; top: 50%; transform: translateY(-50%); display: flex; align-items: center; }
+.sm2-moldura-modal__conteudo { display: contents; }
+.sm2-moldura-card {
+  position: relative; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; gap: 6px; isolation: isolate;
+  border-style: solid; border-color: transparent; border-width: var(--sm2-moldura-card-borda);
+  border-image: url('./assets/soulmon/ui/moldura/card-frame-9slice.webp') var(--sm2-moldura-card-slice) / var(--sm2-moldura-card-borda) round;
+}
+.sm2-moldura-card::before { content: ''; position: absolute; z-index: -1; inset: 0; background: #1b2423; }
+.sm2-moldura-card__arte { flex: 1; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+.sm2-moldura-card__arte > img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.sm2-moldura-card__nome, .sm2-moldura-card__desc, .sm2-moldura-card__recompensa {
+  display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; background-repeat: no-repeat; background-size: 100% 100%;
+}
+.sm2-moldura-card__nome {
+  align-self: center; width: 92%; aspect-ratio: 284 / 55; padding: 0 10%; background-image: url('./assets/soulmon/ui/moldura/card-placa-nome.webp');
+  font-family: var(--sm2-moldura-serifa); font-weight: 700; font-size: var(--sm2-text-md, 1rem); color: #3a2a0c;
+}
+.sm2-moldura-card__desc {
+  width: 100%; min-height: 56px; padding: 12px 14px; background-image: url('./assets/soulmon/ui/moldura/card-placa-pergaminho.webp');
+  font-size: var(--sm2-text-sm, .875rem); color: #3a2a0c;
+}
+.sm2-moldura-card__recompensa {
+  align-self: center; width: 76%; aspect-ratio: 215 / 44; gap: 6px; background-image: url('./assets/soulmon/ui/moldura/card-pilula-recompensa.webp');
+  font-size: var(--sm2-text-sm, .875rem); font-weight: 700; color: var(--sm2-moldura-ouro);
+}
