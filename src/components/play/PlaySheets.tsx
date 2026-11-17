@@ -6,7 +6,7 @@ import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
-import { clearBonus } from '../DungeonGame';
+import { clearBonus } from '../../utils/dungeonBase';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { useRiftTalents } from '../../contexts/useTalentBonus';
@@ -130,11 +130,44 @@ function DropItem({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-/** A Fenda Sem Fim: SÓ duas portas (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). */
-export function MasmorraSheet({ language, onStart, onMap }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void }) {
+/** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Acima deles, a nota "Pode cair" e o recorde (17/11/2026, o dono quis de volta; sem o "?" nem CTA novo). */
+export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
+  // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
+  const gs = useGameStateOptional()?.gameState;
+  const rift = useRiftTalents();
+  const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
+  const [best] = useState(() => getDungeonBest());
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>
+        <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
+          <DropItem
+            label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
+            value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
+          />
+          <DropItem
+            label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
+            value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
+          />
+          <DropItem
+            label={isPt ? `Glitchtama (raro: a cada marco de ${DUNGEON_MILESTONE_FLOOR} camadas, no máximo 1 por semana)` : `Glitchtama (rare: at each ${DUNGEON_MILESTONE_FLOOR}-layer milestone, at most 1 a week)`}
+            value="1%"
+          />
+          <DropItem
+            label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
+            value="5→100"
+          />
+        </ul>
+      </div>
+      {(deepest > 0 || best > 0) && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
+          {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
+        </div>
+      )}
+      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />

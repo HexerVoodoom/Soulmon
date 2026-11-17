@@ -6347,6 +6347,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 5. **Arena (Duelo):** "Comprar convites" é o 1º item da folha, com o custo à vista ("1 energia = 5 convites", 7 na conta paga, §458) e o ícone de energia no botão; a regra (`exchangeDuelInvites`, estoque máx 7, espelho no servidor) NÃO mudou. Os convites aparecem em LEQUE no topo (na zona do NPC), pelo MESMO `TicketFan` dos tickets do Salão (parametrizado por `art`: arte do convite em pé, teto 7), sem componente novo.
 
 **Alternativa que perdeu:** manter o "?" e os recordes na folha da Fenda (o dono pediu só os dois CTAs); desenhar um leque próprio para convites (duplicaria o `TicketFan`). **Falsifica:** a folha da Fenda ter um 3º botão; a película do mapa voltar a ser clara ou ter borda reta; o leque de convites divergir do contador do estoque.
+**Revisão 17/11/2026 (dono, modal):** a nota "Pode cair" (com o Glitchtama) e o recorde/Bits do dia VOLTAM, visíveis acima dos botões (sem o "?" e sem CTA novo): os CTAs seguem só "Entrar no Rift" e "Ver o mapa". `PlaySheets.tsx` volta à lista EXCECOES do Glitchtama em `narrativa.contract.test.ts`.
 ## §469 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
 
 - **Decisão:** "Gostei dos cards do Refúgio; queria pros prédios dos minigames também, um pra cada." `SalaoSheet` (dino, ppt, match3, barrage) e `MenteSheet` (eco, zip, selo) passam a `GameCardGrid` + `GameCard`, como o Refúgio.
