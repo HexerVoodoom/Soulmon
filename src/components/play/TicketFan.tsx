@@ -46,9 +46,27 @@ export const TICKET_FAN_LONG_DVH = 11; // lado maior do bilhete (a zona do NPC t
 export const TICKET_FAN_PIVOT_DVH = 7; // altura da mão, medida do pé da zona
 export const TICKET_FAN_STEP_DEG = 10;
 
-export function TicketFan({ count, language }: { count: number; language: Language }) {
-  const n = Math.max(0, Math.min(FUN_TICKET_MAX, Math.floor(count)));
-  const isPt = language === 'pt-BR';
+/** O que o leque desenha. Padrão = o ticket dos minijogos; o CONVITE de Duelo (16/11/2026, §458) reaproveita o mesmo leque com a arte em pé (`portrait`). */
+export interface FanArt {
+  src: string;
+  /** A arte é vertical (o convite, 96×144): gira 90° dentro da caixa horizontal do leque para ficar em pé como o bilhete. */
+  portrait?: boolean;
+  /** lado curto ÷ lado longo da caixa horizontal (bilhete 308/512; convite 96/144). */
+  ratio: number;
+  /** Teto de peças no leque (bilhete 6; convite 7). */
+  max: number;
+  /** Como o leitor de tela nomeia a peça: [singular, plural]. */
+  unit: readonly [string, string];
+  /** `data-*` do leque (gancho de testes). */
+  attr: string;
+}
+
+export function TicketFan({ count, language, art }: { count: number; language: Language; art?: FanArt }) {
+  const max = art?.max ?? FUN_TICKET_MAX;
+  const ratio = art?.ratio ?? TICKET_RATIO;
+  const src = art?.src ?? TICKET_IMG;
+  const [um, varios] = art?.unit ?? ['ticket', 'tickets'];
+  const n = Math.max(0, Math.min(max, Math.floor(count)));
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (n < 1) { setOpen(false); return; }
@@ -57,12 +75,12 @@ export function TicketFan({ count, language }: { count: number; language: Langua
   }, [n > 0]); // eslint-disable-line react-hooks/exhaustive-deps
   if (n < 1) return null;
   const long = TICKET_FAN_LONG_DVH;
-  const short = long * TICKET_RATIO;
+  const short = long * ratio;
   const mid = (n - 1) / 2;
   return (
     <div
-      data-ticket-fan={n} role="img"
-      aria-label={isPt ? `${n} ${n === 1 ? 'ticket' : 'tickets'}` : `${n} ${n === 1 ? 'ticket' : 'tickets'}`}
+      {...{ [art?.attr ?? 'data-ticket-fan']: n }} role="img"
+      aria-label={`${n} ${n === 1 ? um : varios}`}
       style={{ position: 'relative', flex: 'none', width: 0, height: 0, alignSelf: 'flex-end', zIndex: 0, pointerEvents: 'none' }}
     >
       {Array.from({ length: n }, (_, i) => {
@@ -79,7 +97,9 @@ export function TicketFan({ count, language }: { count: number; language: Langua
               filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.55))',
             }}
           >
-            <img src={TICKET_IMG} alt="" aria-hidden="true" data-ticket-art draggable={false} style={{ width: '100%', height: '100%', display: 'block' }} />
+            {art?.portrait
+              ? <img src={src} alt="" aria-hidden="true" data-ticket-art draggable={false} style={{ position: 'absolute', left: '50%', top: '50%', width: `${short}dvh`, height: `${long}dvh`, transform: 'translate(-50%, -50%) rotate(90deg)', display: 'block' }} />
+              : <img src={src} alt="" aria-hidden="true" data-ticket-art draggable={false} style={{ width: '100%', height: '100%', display: 'block' }} />}
           </span>
         );
       })}
