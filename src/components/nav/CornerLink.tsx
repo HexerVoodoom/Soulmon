@@ -1,5 +1,5 @@
 import { PixelIcon } from '../ui/PixelIcon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_ICON_SCALE, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -49,7 +49,7 @@ export function CornerLink({ icon, label, side, onClick }: {
       {icon === 'home' ? (
         <span data-corner-ring style={CORNER_RING_STYLE}><PixelIcon name={icon} size={32} /></span>
       ) : (
-        <span data-corner-map-icon style={{ display: 'inline-flex', transform: 'scale(1.375)', transformOrigin: 'right center' }}><PixelIcon name={icon} size={32} /></span>
+        <span data-corner-map-icon style={{ display: 'inline-flex', transform: `scale(${CORNER_ICON_SCALE})`, transformOrigin: 'right center' }}><PixelIcon name={icon} size={32} /></span>
       )}
     </button>
   );
