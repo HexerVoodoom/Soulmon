@@ -92,14 +92,14 @@ describe('o tabuleiro', () => {
     const celulas = document.querySelectorAll('[data-m3-cell]');
     expect(celulas.length).toBe(M3_ROWS * M3_COLS);
     const primeira = cell({ r: 0, c: 0 });
-    expect(primeira.getAttribute('aria-label')).toMatch(/^(Fire|Water|Earth|Life|Air|Light), row 1, column 1$/);
+    expect(primeira.getAttribute('aria-label')).toMatch(/^[^,]+, row 1, column 1$/);
     expect(primeira.querySelector('img')!.getAttribute('src')).toBeTruthy(); // ícone de elemento do repo
     expect(document.querySelectorAll('[role="gridcell"]').length).toBe(49);
   });
 
   it('em PT-BR os nomes e a ajuda estão em português', () => {
     montar({ language: 'pt-BR' });
-    expect(cell({ r: 2, c: 3 }).getAttribute('aria-label')).toMatch(/^(Fogo|Água|Terra|Vida|Ar|Luz), linha 3, coluna 4$/);
+    expect(cell({ r: 2, c: 3 }).getAttribute('aria-label')).toMatch(/^[^,]+, linha 3, coluna 4$/);
     expect(screen.getByRole('button', { name: /Dica, 3 restantes/ })).toBeTruthy();
     expect(document.body.textContent).toContain('Turno');
   });
@@ -290,7 +290,7 @@ describe('D-04: a arena', () => {
     const player = arena.querySelectorAll('[data-m3-player]');
     const inimigos = [...arena.querySelectorAll('[data-m3-enemy]')];
     expect(player.length).toBe(1);
-    expect(inimigos.map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3']);
+    expect(inimigos.map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3', '4']);
     // o jogador vem antes de todos os inimigos no documento (e em cima na tela: coluna)
     for (const e of inimigos) expect(player[0].compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(arena.style.flexDirection).toBe('column');
@@ -313,7 +313,7 @@ describe('D-04: a arena', () => {
     expect(i).toBeGreaterThan(0);
     for (let k = 0; k < i; k++) await jogarEscolhido(p.moves[k]);
     const inimigos = [...document.querySelectorAll('[data-m3-enemy]')];
-    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['0', '1', '0']);
+    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['0', '1', '0', '0']);
     expect(Number(inimigos[0].getAttribute('data-m3-hp'))).toBe(0);
   });
 
@@ -347,7 +347,7 @@ describe('D-76/D-77: layout da arena e o topo enxuto', () => {
     expect(time.hasAttribute('data-m3-enemies')).toBe(true);
     expect(time.style.flexDirection).toBe('row-reverse'); // o 1º inimigo na ponta DIREITA
     expect(time.style.justifyContent).toBe('flex-start');
-    expect([...time.querySelectorAll('[data-m3-enemy]')].map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3']);
+    expect([...time.querySelectorAll('[data-m3-enemy]')].map(e => e.getAttribute('data-m3-enemy'))).toEqual(['1', '2', '3', '4']);
   });
 
   it('no topo só o contador de turnos (e o "i" do cabeçalho): sem história, sem placar/Bits visíveis, sem "próximo Bit"', () => {
@@ -654,7 +654,7 @@ describe('ALVO POR TOQUE (03/11/2026): tocar num inimigo muda o alvo a partir da
     montar();
     const p = previsao(1);
     const alvos = [...document.querySelectorAll<HTMLButtonElement>('[data-m3-target]')];
-    expect(alvos.length).toBe(3);
+    expect(alvos.length).toBe(4);
     expect(alvos[2].getAttribute('aria-label')).toMatch(/^Target /);
     fireEvent.click(alvos[2]);
     expect(document.querySelector('[data-m3-target="2"]')!.getAttribute('aria-pressed')).toBe('true');

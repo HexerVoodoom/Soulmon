@@ -2,7 +2,7 @@
  * ELEMENTAL FUSION — quais ícones de elemento podem dividir o MESMO tabuleiro (REGISTRO §400).
  *
  * Pedido do dono (15/11/2026): no PVP o sorteio ainda juntava ícones de cor parecida (a maioria do pool é azul/violeta escuro
- * "cósmico") e ficava difícil distinguir uma peça da outra. Dono único das regras de distinção; `match3Pvp.pickDistinctPvpElements`
+ * "cósmico") e ficava difícil distinguir uma peça da outra. Dono único das regras de distinção; `match3Pvp.pickDistinctMixedElements`
  * só chama daqui. Duas camadas, as duas valem sempre:
  *  a) `M3_PARES_PROIBIDOS`: lista CURADA, simétrica ("se X aparece, Y não"), montada da medição + conferência a olho. NUNCA é relaxada.
  *  b) `M3_MIN_DELTA_E`: distância mínima entre QUAISQUER dois ícones, rede de segurança para ícone novo que ainda não está na lista.
