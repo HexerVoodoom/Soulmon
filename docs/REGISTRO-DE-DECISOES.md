@@ -6337,6 +6337,16 @@ Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `S
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
 
+## §471 — Rift: portais a cada 50 andares e o nome do elemento no indicador do mapa (17/11/2026, dono)
+
+- **Pedido.** No mapa, o indicador da descida mostra "Camada N · Elemento parte" (ex.: "Camada 9 · Fogo 2"). Um portal em cada camada múltipla de 50 (50, 100 … 500: 10 portais nos 538 andares). Quem já passou por um portal pode teletransportar entre portais.
+- **Onde mora.** Cada nó vale 2 andares (49-50, 99-100…): a camada 50k é sempre o 2º andar do nó 25k-1, e o portal fica nesse nó. Dono: `utils/riftMap.ts` (seção PORTAIS); tela em `components/rift/RiftMap.tsx`; parada da descida em `DungeonGame.tsx` (`avancar`).
+- **Desbloqueio.** Ao COMPLETAR o andar do portal (leitura conservadora): é derivado do recorde (`dungeonDepthRecord`, que só sobe), logo idempotente e vale também para a descida fora do app. O save só guarda quantos portais o jogador já foi AVISADO (`riftPortalsSeen`, 0..10, campo aditivo, leitura tolerante); o aviso de topo "Portal desbloqueado" / "Portal unlocked" sai 1× por portal. Jogador que já passou de 50 antes desta versão recebe o aviso uma vez.
+- **Teleporte.** Só de portal para portal e só para portal liberado; sem descida em andamento. Estando no nó de um portal, todo portal liberado brilha (sem animação com reduced-motion) e tocar em um teletransporta: grava `dungeonResumeLayer` = 1º andar do nó do portal. Sem custo de energia, HP ou recorde.
+- **Volta ao portal.** Ao limpar o andar de um portal que tem outro mais fundo liberado, a descida PARA (como "sair") e o jogador vai à tela do mapa, parado no nó do portal, em vez de seguir ao próximo andar.
+- **Seguir sem o portal.** Tocar no nó logo abaixo do portal atual e escolher "Descer" (sem o aviso "Sem volta", que é de quem recua).
+- **Servidor.** Nada: o servidor não valida o ponto de largada nem portais (§387); `riftPortalsSeen` é só do cliente.
+
 ## §470 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
 
 Decisão (cinco pedidos literais do dono, um commit por item):
@@ -6349,6 +6359,8 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** manter o "?" e os recordes na folha da Fenda (o dono pediu só os dois CTAs); desenhar um leque próprio para convites (duplicaria o `TicketFan`). **Falsifica:** a folha da Fenda ter um 3º botão; a película do mapa voltar a ser clara ou ter borda reta; o leque de convites divergir do contador do estoque.
 **Revisão 17/11/2026 (dono, modal):** a nota "Pode cair" (com o Glitchtama) e o recorde/Bits do dia VOLTAM, visíveis acima dos botões (sem o "?" e sem CTA novo): os CTAs seguem só "Entrar no Rift" e "Ver o mapa". `PlaySheets.tsx` volta à lista EXCECOES do Glitchtama em `narrativa.contract.test.ts`.
 **Revisão 17/11/2026 (dono, 2º pedido; PT/EN):** a nota "Pode cair" SAI de novo do corpo da folha e vira o "i" (`ModalInfo`, tooltip ancorado no "i", fecha pelo "i", fora ou Esc; ≤300 px, preso às bordas de 360) na frente do título, com a legenda "Drop rate" e os mesmos itens/chances (`clearBonus`, `HEART_DROP_CHANCE`, 1%, 5→100). Nasce o botão secundário "Ranking" (`sm2Button('outline')`, negrito e sublinhado) à esquerda do título (`AreaSheet.headStartRef`), que abre o ranking mensal JÁ existente do Rift (`endless-rift`, `RankingPanel`); sem conta (`saveId`) o botão some. Recorde e Bits do dia ficam; os CTAs seguem "Entrar no Rift" e "Ver o mapa". `PlaySheets.tsx` segue na lista EXCECOES do Glitchtama. **Falsifica:** o "Drop rate" reaparecer escrito no pé da folha, ou o tooltip virar modal.
+**Revisão 17/11/2026 (dono, Arena limpa; PT/EN):** a folha do Duelo fica só com "Comprar convites" (condicional), os cards de quem enfrentar, "Sortear de novo" e "Lutar". Saíram a linha de dica dos cards, a linha "O último adversário deixa 2×", o "você tem N de M" e o "cada luta pede 1 convite". "Comprar convites" (e o custo "1 energia = 5 convites") só é renderizado com **2 ou menos convites** (`podeComprarConvites`, `utils/duelInvites.ts`); com 3 ou mais some (o leque segue). Com 0 continua possível comprar (nunca tranca). Só a UI: a regra e o servidor (`_duelInvites.js`, teto 7, folga de 60 s) não mudaram.
+
 ## §469 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
 
 - **Decisão:** "Gostei dos cards do Refúgio; queria pros prédios dos minigames também, um pra cada." `SalaoSheet` (dino, ppt, match3, barrage) e `MenteSheet` (eco, zip, selo) passam a `GameCardGrid` + `GameCard`, como o Refúgio.

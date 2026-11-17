@@ -50,6 +50,8 @@ export interface RiftMapSave {
   dungeonAway?: Pick<DungeonAway, 'layer'> | null;
   /** O ponto de largada escolhido no mapa (1º andar de um conjunto). Opcional: ausente = `startLayerFor(recorde)`. */
   dungeonResumeLayer?: number;
+  /** Quantos portais o jogador já foi AVISADO que desbloqueou (0..10; REGISTRO §471). O desbloqueio em si sai do recorde; isto só guarda o aviso, 1× por portal. */
+  riftPortalsSeen?: number;
 }
 
 /** Sanea o ponto de largada vindo do save/nuvem: inteiro ÍMPAR em [1, 999] (1º andar de um conjunto); o resto é "sem volta". */
@@ -186,4 +188,78 @@ export function rewindToSet<T extends RiftMapSave>(prev: T, index: number): T {
 export function consumeResume<T extends RiftMapSave>(prev: T): T {
   if (prev.dungeonResumeLayer === undefined) return prev;
   return { ...prev, dungeonResumeLayer: undefined };
+}
+
+// ── PORTAIS (pedido do dono, 17/11/2026 — REGISTRO §471) ─────────────────────────────────────────────────────────────────────────────────
+// Um portal em cada camada MÚLTIPLA DE 50 (50, 100, … 500: 10 portais nos 538 andares). Como um nó vale 2 andares (49-50, 99-100…), a camada
+// 50k é SEMPRE o 2º andar do nó, e o portal vive nesse nó (índice 25k-1). [decisão] Desbloqueia ao COMPLETAR o andar do portal (o recorde chega
+// a 50k): o recorde só sobe, então o desbloqueio é DERIVADO dele (idempotente, e a descida fora do app também conta); o save só guarda o
+// quanto o jogador já foi avisado. Os portais liberados são sempre um prefixo (1..n).
+/** De quantas em quantas camadas há um portal. */
+export const RIFT_PORTAL_EVERY = 50;
+/** Quantos portais existem nos 538 andares da lista. */
+export const RIFT_PORTAL_COUNT = Math.floor((RIFT_SET_COUNT * CAMADAS_POR_ELEMENTO) / RIFT_PORTAL_EVERY);
+
+/** A camada do portal `ordinal` (1-based). */
+export const riftPortalLayer = (ordinal: number): number => RIFT_PORTAL_EVERY * Math.floor(ordinal);
+/** O nó (índice 0-based) que contém o portal `ordinal` (1-based). */
+export const riftPortalNodeIndex = (ordinal: number): number => riftSetOfLayer(riftPortalLayer(ordinal)).index;
+/** O ordinal (1-based) do portal que mora na camada `layer`, ou `undefined` se a camada não é de portal. */
+export function riftPortalOfLayer(layer: number): number | undefined {
+  const l = Math.floor(layer);
+  if (!Number.isFinite(l) || l < RIFT_PORTAL_EVERY || l % RIFT_PORTAL_EVERY !== 0) return undefined;
+  const k = l / RIFT_PORTAL_EVERY;
+  return k <= RIFT_PORTAL_COUNT ? k : undefined;
+}
+/** O ordinal do portal que mora no nó `index`, ou `undefined`. */
+export function riftPortalOfNode(index: number): number | undefined {
+  const i = Math.floor(index);
+  if (!Number.isInteger(i) || i < 0 || i >= RIFT_SET_COUNT) return undefined;
+  return riftPortalOfLayer(firstFloorOfSet(i) + CAMADAS_POR_ELEMENTO - 1);
+}
+/** Sanea o contador de portais avisados vindo do save/nuvem: inteiro em [0, 10]; o resto é "nenhum". */
+export function sanitizePortalsSeen(raw: unknown): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return 0;
+  return Math.min(RIFT_PORTAL_COUNT, Math.max(0, Math.floor(raw)));
+}
+/** Quantos portais estão liberados (1..n): o que o recorde alcança. Nunca menos que o já avisado. */
+export function riftPortalsUnlocked(state: RiftMapSave | null | undefined): number {
+  const byRecord = Math.min(RIFT_PORTAL_COUNT, Math.floor(sanitizeDepthRecord(state?.dungeonDepthRecord) / RIFT_PORTAL_EVERY));
+  return Math.max(byRecord, sanitizePortalsSeen(state?.riftPortalsSeen));
+}
+/** Marca como avisados todos os portais liberados. Sem novidade, a MESMA referência (idempotente). */
+export function markPortalsSeen<T extends RiftMapSave>(prev: T): T {
+  const n = riftPortalsUnlocked(prev);
+  return sanitizePortalsSeen(prev.riftPortalsSeen) >= n ? prev : { ...prev, riftPortalsSeen: n };
+}
+/** O portal `ordinal` está liberado? */
+export const riftPortalIsUnlocked = (state: RiftMapSave | null | undefined, ordinal: number): boolean => ordinal >= 1 && ordinal <= riftPortalsUnlocked(state);
+/** O jogador está num nó com portal? Devolve o ordinal do portal do nó atual (ou `undefined`). */
+export const riftPortalHere = (state: RiftMapSave | null | undefined): number | undefined => riftPortalOfNode(riftSetOfLayer(riftCurrentLayer(state)).index);
+/** O portal onde a descida PARA e manda o jogador ao mapa: o `layer` limpo é de portal E há outro portal mais fundo já liberado. */
+export function riftPortalRedirect(state: RiftMapSave | null | undefined, layer: number): number | undefined {
+  const o = riftPortalOfLayer(layer);
+  return o !== undefined && riftPortalsUnlocked(state) > o ? o : undefined;
+}
+
+export type RiftTeleportRefusal = 'busy' | 'not-at-portal' | 'locked' | 'same' | 'invalid';
+/** Por que NÃO dá para teleportar ao portal `ordinal` agora (`undefined` = dá): só de portal para portal, só para portal liberado, sem descida em andamento. */
+export function riftTeleportRefusal(state: RiftMapSave | null | undefined, ordinal: number): RiftTeleportRefusal | undefined {
+  if (!Number.isInteger(ordinal) || ordinal < 1 || ordinal > RIFT_PORTAL_COUNT) return 'invalid';
+  if (state?.dungeonAway) return 'busy';
+  const here = riftPortalHere(state);
+  if (here === undefined) return 'not-at-portal';
+  if (!riftPortalIsUnlocked(state, ordinal)) return 'locked';
+  if (here === ordinal) return 'same';
+  return undefined;
+}
+/** TELEPORTE: a próxima descida larga do 1º andar do nó do portal `ordinal` (o mesmo campo do "voltar ao nó"; recorde, energia e HP intactos). Recusa devolve a MESMA referência. */
+export function teleportToPortal<T extends RiftMapSave>(prev: T, ordinal: number): T {
+  if (riftTeleportRefusal(prev, ordinal)) return prev;
+  return { ...prev, dungeonResumeLayer: firstFloorOfSet(riftPortalNodeIndex(ordinal)) };
+}
+/** A descida parou no portal `ordinal` (camada limpa com portal mais fundo liberado): o jogador fica NO nó do portal (largada = 1º andar do nó), para o mapa. */
+export function parkAtPortal<T extends RiftMapSave>(prev: T, ordinal: number): T {
+  const a = firstFloorOfSet(riftPortalNodeIndex(ordinal));
+  return prev.dungeonResumeLayer === a ? prev : { ...prev, dungeonResumeLayer: a };
 }

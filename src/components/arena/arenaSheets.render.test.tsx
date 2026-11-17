@@ -143,7 +143,7 @@ describe('Duelo', () => {
     const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
     expect(ARENA_CHOICES).toBe(4);
-    expect(container.querySelector('[data-arena-escolha]')!.textContent).toMatch(/Você escolhe contra quem lutar/);
+    expect(container.querySelector('[data-arena-escolha]')!.textContent).not.toMatch(/Você escolhe contra quem lutar/); // folha limpa: só cards, sortear e Lutar
     expect(screen.getAllByRole('radio')).toHaveLength(ARENA_CHOICES);
     const last = ARENA_CHOICES - 1;
     fireEvent.click(container.querySelector(`[data-arena-card="${last}"]`)!);
