@@ -9574,3 +9574,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    mira dourada tracejada do inimigo. Foco de teclado visível no mesmo turquesa; o pulso some com movimento reduzido (regra no bloco canônico). */
 .sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
 @keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }
+
+@keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){[data-stage-summon-flash]{display:none}}
