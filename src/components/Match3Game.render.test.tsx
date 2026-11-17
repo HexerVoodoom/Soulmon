@@ -284,7 +284,7 @@ describe('D-06: turnos alternados na tela', () => {
 });
 
 describe('D-04: a arena', () => {
-  it('1 Soulmon do jogador (em cima) e 3 inimigos (embaixo) em ordem 1→3, com HP e o ativo marcado', () => {
+  it('1 Soulmon do jogador (em cima) e 4 inimigos (embaixo) em ordem 1→4, com HP e o ativo marcado', () => {
     montar();
     const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
     const player = arena.querySelectorAll('[data-m3-player]');
@@ -297,7 +297,7 @@ describe('D-04: a arena', () => {
     // sprites e barras de HP (GameKit): 1 + 3 barras
     expect(player[0].querySelector('img')!.getAttribute('src')).toBeTruthy();
     for (const e of inimigos) expect(e.querySelector('img[src]')).not.toBeNull();
-    expect(arena.querySelectorAll('[role="progressbar"]').length).toBe(4);
+    expect(arena.querySelectorAll('[role="progressbar"]').length).toBe(5);
     // o primeiro é o ativo; os outros não
     expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['1', '0', '0']);
     expect(inimigos[0].getAttribute('aria-current')).toBe('true');
