@@ -121,8 +121,8 @@ describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
     expect(sanitizeMapTutorialSeen('lixo', {})).toBe(false);
     expect(sanitizeMapTutorialSeen(undefined, null)).toBe(false);
   });
-  it('needsMapTutorial: só no mapa, nunca visto e sem o tour básico na frente', () => {
-    expect(needsMapTutorial({ seen: false, onMap: true, welcomeTourOpen: false })).toBe(true);
+  it('needsMapTutorial: DESLIGADO pelo dono em 17/11/2026 — nunca abre sozinho', () => {
+    expect(needsMapTutorial({ seen: false, onMap: true, welcomeTourOpen: false })).toBe(false);
     expect(needsMapTutorial({ seen: false, onMap: false, welcomeTourOpen: false })).toBe(false);
     expect(needsMapTutorial({ seen: true, onMap: true, welcomeTourOpen: false })).toBe(false);
     expect(needsMapTutorial({ seen: undefined, onMap: true, welcomeTourOpen: false })).toBe(false);
@@ -201,8 +201,8 @@ describe('fiação do tutorial do mapa no App (guard de fonte)', () => {
 });
 
 describe('needsWelcomeTour', () => {
-  it('só quando nunca visto E sem conclusão no save', () => {
-    expect(needsWelcomeTour({ shown: false, jaConcluiuAlgo: false })).toBe(true);
+  it('DESLIGADO pelo dono em 17/11/2026: nunca abre sozinho (replay manual segue em Configurações)', () => {
+    expect(needsWelcomeTour({ shown: false, jaConcluiuAlgo: false })).toBe(false);
     expect(needsWelcomeTour({ shown: true, jaConcluiuAlgo: false })).toBe(false);
     expect(needsWelcomeTour({ shown: false, jaConcluiuAlgo: true })).toBe(false);
   });
