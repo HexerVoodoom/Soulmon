@@ -5904,7 +5904,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm2-vit-backdrop { position: absolute; inset: 0; }
 .sm2-vit-spot { position: absolute; width: 0; height: 0; --r: max(22px, 9cqw); }
 /* Título e voltar por cima da arte, com véu escuro para ler em qualquer trecho; respeitam a área segura. */
-.sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
+.sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px + 1vw * 15) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
 .sm2-vit-back { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 var(--sm2-space-3); cursor: pointer; border-radius: 22px; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 82%, transparent); color: var(--sm2-ink); font: inherit; font-size: var(--sm2-text-sm); &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 .sm2-vit-title { margin: 0; color: var(--sm2-ink); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-stats-lab.sm2-vit-title { color: var(--sm2-ink); }
@@ -9577,9 +9577,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 
 /* §MOLDURA (17/11/2026): moldura de modal e de card por FATIAMENTO VERTICAL de largura fixa (`components/ui/ModalFrame.tsx`, `CardFrame.tsx`).
    Topo e base são imagens de proporção fixa (cantos nunca deformam), laterais = faixa reta repetida em Y, miolo transparente. `--u` = 1% da largura
-   (limitado, para telas largas não incharem a arte). Arte em `assets/soulmon/ui/moldura/` (~2x do exibido); trocar a arte = trocar os .webp
+   (a arte escala com a largura; app é retrato). Arte em `assets/soulmon/ui/moldura/` (~2x do exibido); trocar a arte = trocar os .webp
    e as proporções abaixo (altura de topo/base em `u` = px do arquivo / largura do arquivo * 100). */
-.sm2-moldura-modal, .sm2-moldura-card { container-type: inline-size; --u: min(1cqw, 4.8px); }
+.sm2-moldura-modal, .sm2-moldura-card { container-type: inline-size; --u: 1cqw; }
 .sm2-moldura-modal {
   position: relative; box-sizing: border-box; display: flex; flex-direction: column; isolation: isolate;
   background: #0d1a1a; min-height: calc(var(--u) * 52);
@@ -9642,10 +9642,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   background: rgba(10, 22, 22, .82); border: 1px solid #b98f3e; font-size: var(--sm2-text-sm, .875rem); font-weight: 700; color: #e3c06a;
 }
 /* Telas cheias: decoração solta (`components/ui/TelaMoldura.tsx`): fundo por baixo do conteúdo (z -1), moldura por cima, nada intercepta toque. */
-.sm2-moldura-tela.sm2-moldura-modal { display: contents; container-type: normal; --u: min(1vw, 4.8px); background: none; min-height: 0; }
+.sm2-moldura-tela.sm2-moldura-modal { display: contents; container-type: normal; --u: 1vw; background: none; min-height: 0; }
 .sm2-moldura-tela .sm2-moldura-modal__fundo, .sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo,
 .sm2-moldura-tela .sm2-moldura-modal__base, .sm2-moldura-tela .sm2-moldura-modal__placa { position: fixed; pointer-events: none; }
 .sm2-moldura-tela::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #0d1a1a; pointer-events: none; }
 .sm2-moldura-tela .sm2-moldura-modal__fundo { z-index: -1; inset: 0; }
 .sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo, .sm2-moldura-tela .sm2-moldura-modal__base { z-index: 60; }
 .sm2-moldura-tela .sm2-moldura-modal__placa { z-index: 61; }
+/* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
+[data-forge-view="map"] .sm2-vit-title { opacity: 0; }

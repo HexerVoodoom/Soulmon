@@ -57,7 +57,7 @@ export function GameRoot({ children, style, full = false, moldura }: { children:
         boxSizing: 'border-box',
         padding: full ? '8px 12px 0' : '10px 16px 16px',
         // A barra de status foi removida (tela de ponta a ponta): o voltar e o título descem a área segura de cima.
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px${moldura && MOLDURA_TELAS ? ' + min(1vw, 4.8px) * 15' : ''})`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px${moldura && MOLDURA_TELAS ? ' + 1vw * 15' : ''})`,
         // `full` (D-02, 18/10/2026): rodada de tela quase cheia. O GameRoot (z 100) já cobre o link de canto (z 45), então a faixa da
         // nav (`--sm-corner-h`) que a página reserva embaixo é só vazio: aqui ela some, ficando a área segura do aparelho + uma folga.
         paddingBottom: full

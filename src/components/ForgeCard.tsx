@@ -458,9 +458,9 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
       };
     });
     return (
-      <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map" style={{ isolation: 'isolate' }}>
-        <TelaMoldura tela="soulsmith-mapa" title="Soulsmith" />
+      <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
         <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
+          <TelaMoldura tela="soulsmith-mapa" title="Soulsmith" />
           <div className="sm2-vit-bar" data-vitra-bar>
             {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
             <p id="sm2-equip-title" className="sm2-stats-lab sm2-vit-title">Soulsmith</p>

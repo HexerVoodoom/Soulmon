@@ -170,8 +170,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 
         <SheetShell
           data-area-sheet
-          title={title}
-          infoSlotRef={slotRef}
           fundo={fundoDoLote(areaId, lotId)}
           className="sm2-sheet-rise"
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
@@ -202,16 +200,20 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
-          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: MOLDURA_MODAL ? 0 : 52, padding: MOLDURA_MODAL ? 0 : '8px 16px 0', boxSizing: 'border-box', backgroundColor: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
-            {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            {MOLDURA_MODAL ? <span style={{ flex: 1 }} /> : (
-              <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
-                {title}
-              </h2>
-            )}
-            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui (canto direito, na linha do título) ou, com a moldura, sobre o disco do canto da placa (`ModalFrame infoSlotRef`). */}
-            {!MOLDURA_MODAL && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />}
+          {/* Com a moldura (`MOLDURA_MODAL`) o cabeçalho é a MESMA linha de sempre (start-slot, h2, head-slot, "i"), só pousada sobre a placa do topo da
+              moldura: título dourado centrado na placa e o "i" no disco do canto. Mesmo DOM de antes (testes e foco inalterados). */}
+          <div data-area-sheet-head style={MOLDURA_MODAL
+            ? { position: 'absolute', top: 0, left: 0, right: 0, height: 'calc(var(--u) * 16.9)', zIndex: 3, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
+            : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
+            {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
+            <h2 style={MOLDURA_MODAL
+              ? { flex: 1, margin: 0, textAlign: 'center', padding: '0 calc(var(--u) * 14) 0 calc(var(--u) * 14)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 'var(--sm2-text-md, 1rem)', fontWeight: 700, color: '#e3c06a', textShadow: '0 1px 2px rgba(0,0,0,.85)' }
+              : { flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
+              {title}
+            </h2>
+            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
+            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título (com a moldura, sobre o disco do canto). */}
+            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: MOLDURA_MODAL ? 0 : -10, pointerEvents: 'auto' }} />
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
@@ -234,6 +236,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 }
 
 /** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
-function SheetShell({ title: _t, infoSlotRef: _i, fundo, ...props }: HTMLAttributes<HTMLDivElement> & { 'data-area-sheet'?: boolean | string; infoSlotRef?: (el: HTMLElement | null) => void; fundo?: string }) {
-  return MOLDURA_MODAL ? <ModalFrame title={_t} infoSlotRef={_i} fundo={fundo} {...props} /> : <div {...props} />;
+function SheetShell({ fundo, ...props }: HTMLAttributes<HTMLDivElement> & { 'data-area-sheet'?: boolean | string; fundo?: string }) {
+  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} {...props} /> : <div {...props} />;
 }
