@@ -167,28 +167,18 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(r.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
-  it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {
-    localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, '321');
+  it('Masmorra: a folha tem SÓ dois CTAs — "Entrar no Rift" e "Ver o mapa" (pedido do dono, 16/11/2026)', async () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    expect(folha.textContent).toContain('321');
-    expect(folha.textContent).not.toContain('Camada 0'); // P10 (beta-2): chip zerado não aparece (REGISTRO §31: o recorde de profundidade vem do save; vazio = 0 = sem chip)
-    // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
-    // atrás do "?" — fica fora da tela até o jogador tocar.
-    expect(folha.textContent).not.toMatch(/nunca custa corações/);
-    fireEvent.click(getByRole('button', { name: 'Como funciona a Fenda' }));
-    // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
-    expect(folha.textContent).not.toContain('Pode cair');
-    expect(folha.textContent).not.toContain('2→6');
-    const painel = document.querySelector('[data-info-tip-panel]')!;
-    expect(painel.textContent).toMatch(/nunca custa corações/);
-    expect(painel.textContent).toContain('Pode cair');
-    expect(painel.querySelectorAll('[data-masmorra-drops] li')).toHaveLength(4);
-    expect(painel.textContent).toContain('2→6'); // §372: bônus de camada 2→6 (×0,2; era 4→12)
-    // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
-    expect(folha.querySelectorAll('ol li')).toHaveLength(0);
+    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
+    expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
+    expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
+    // nada além dos dois botões: sem recordes, "?", bits do dia nem lista de drops
+    expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
+    expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
+    expect(folha.querySelector('[data-bits-hoje]')).toBeNull();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -251,12 +241,12 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 
   it('EN: rótulos e folha em inglês', async () => {
-    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao', language: 'en-US' })} />);
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao', language: 'en-US' })} />);
     expect(container.querySelector('[data-area-lot="fenda"]')!.textContent).toContain('Endless Rift');
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
-    fireEvent.click(getByRole('button', { name: 'How the Rift works' }));
-    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/never costs hearts/);
+    expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
+    expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
   });
 });
 

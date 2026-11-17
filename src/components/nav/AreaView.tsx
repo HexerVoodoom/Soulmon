@@ -414,6 +414,8 @@ export function AreaView(props: AreaViewProps) {
   const gsForIndicators = gsCtx?.gameState;
   /** O mapa de andares do Rift em tela cheia (REGISTRO §462). */
   const [riftMapOpen, setRiftMapOpen] = useState(false);
+  /** "Entrar no Rift" na folha: a descida larga SOZINHA do ponto onde parou, sem o lobby nem 2º toque (pedido do dono, 16/11/2026). */
+  const [riftAuto, setRiftAuto] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(lote => {
@@ -594,9 +596,10 @@ export function AreaView(props: AreaViewProps) {
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
-    const exitGame = () => setGame(null);
+    const exitGame = () => { setRiftAuto(false); setGame(null); };
     return (
             <DungeonGame
+              autoStart={riftAuto}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
               profissao={props.profissao}
@@ -618,7 +621,7 @@ export function AreaView(props: AreaViewProps) {
               bits={props.points}
               onSpendBits={play.onSpendBits}
               onExit={exitGame}
-              onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
+              onExitToMap={() => { setRiftAuto(false); setGame(null); props.onGoToMap?.(); }}
             />
     );
   };
@@ -723,7 +726,7 @@ export function AreaView(props: AreaViewProps) {
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => { if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
             {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
