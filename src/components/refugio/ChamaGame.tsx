@@ -7,6 +7,7 @@ import { usePrefersReducedMotion } from '../ui/Viewport';
 import { BitsAmount } from '../ui/BitsAmount';
 import { getSpriteForStage } from '../../utils/sprites';
 import { entrarNaSuperficie } from '../../utils/musica';
+import FOLHA_CHAMA from '../../assets/soulmon/chama-alma/chama-v4-folha.webp';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { tocarSinoChama } from '../../utils/refugio/sinoChama';
@@ -30,42 +31,47 @@ const FUNDO = Object.entries(ARTE).find(([k]) => k.endsWith('/fundo.webp'))?.[1]
 type Tela = 'aviso' | 'setup' | 'run' | 'done';
 const TICK_MS = 250;
 
-const CSS = `
-@keyframes sm-chama-osc { 0%,100% { transform: scale(1,1) skewX(0deg) } 30% { transform: scale(.97,1.04) skewX(1.5deg) } 65% { transform: scale(1.02,.97) skewX(-1.5deg) } }
+const CSS_BASE = `
 @keyframes sm-chama-halo { 0%,100% { opacity: .55 } 50% { opacity: .7 } }
 `;
 
-/** A chama procedural: núcleo âmbar, coroa turquesa-cristal; sem branco puro, ~10% da tela. */
+/**
+ * A chama (16/11/2026, pedido do dono: maior, centralizada e fluida): folha de 36 quadros em grade 6x6
+ * (`chama-v4-folha.webp`, quadro 208 px, procedural, loop perfeito), tocada só por CSS (`step-end`), sem JS por quadro.
+ * Turquesa da identidade Soulmon (nada de laranja), cristal-pavio na base. Ciclo de 2,4 s (~15 quadros/s, sem
+ * piscar: WCAG 2.3.1). Movimento reduzido: quadro 1, parado.
+ */
+const FOLHA_COLS = 6;
+const FOLHA_QUADROS = 36;
+const CHAMA_KEYFRAMES = (() => {
+  const passos: string[] = [];
+  for (let i = 0; i < FOLHA_QUADROS; i++) {
+    const x = ((i % FOLHA_COLS) / (FOLHA_COLS - 1)) * 100;
+    const y = (Math.floor(i / FOLHA_COLS) / (FOLHA_COLS - 1)) * 100;
+    passos.push(`${((i / FOLHA_QUADROS) * 100).toFixed(3)}%{background-position:${x}% ${y}%}`);
+  }
+  return `@keyframes sm-chama-folha{${passos.join('')}100%{background-position:0% 0%}}`;
+})();
+const CHAMA_CSS = `${CHAMA_KEYFRAMES}
+.sm-chama-folha{background-repeat:no-repeat;background-size:${FOLHA_COLS * 100}% ${FOLHA_COLS * 100}%;animation:sm-chama-folha 2.4s step-end infinite}
+.sm-chama-folha[data-parada="true"]{animation:none;background-position:0% 0%}
+@media (prefers-reduced-motion: reduce){.sm-chama-folha{animation:none;background-position:0% 0%}}`;
+
+/** Estilo único das telas (halo + folha da chama). */
+const CSS = CSS_BASE + CHAMA_CSS;
+
 export function ChamaViva({ reduced, visivel }: { reduced: boolean; visivel: boolean }) {
   return (
     <div data-chama-viva data-reduced={reduced ? '' : undefined} aria-hidden="true" style={{
-      position: 'relative', width: 72, height: 120, opacity: visivel ? 1 : 0, transition: 'opacity 2.5s ease',
+      position: 'relative', width: 'min(320px, 86vw)', aspectRatio: '1 / 1', flex: 'none', opacity: visivel ? 1 : 0, transition: 'opacity 2.5s ease',
     }}>
       <div style={{
-        position: 'absolute', left: '50%', top: '55%', width: 220, height: 220, marginLeft: -110, marginTop: -110, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,170,80,0.22) 0%, rgba(80,220,210,0.08) 45%, rgba(0,0,0,0) 70%)',
+        position: 'absolute', left: '50%', top: '50%', width: '130%', height: '130%', marginLeft: '-65%', marginTop: '-65%', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(63,216,200,0.20) 0%, rgba(20,110,120,0.08) 42%, rgba(0,0,0,0) 68%)',
         animation: reduced ? undefined : 'sm-chama-halo 5s ease-in-out infinite',
       }} />
-      <svg viewBox="0 0 60 100" width="100%" height="100%" style={{
-        position: 'relative', transformOrigin: '50% 95%',
-        animation: reduced ? undefined : 'sm-chama-osc 2.6s ease-in-out infinite',
-      }}>
-        <defs>
-          <radialGradient id="sm-chama-fora" cx="50%" cy="70%" r="60%">
-            <stop offset="0" stopColor="#ffd38a" />
-            <stop offset="0.55" stopColor="#ff9a3c" stopOpacity="0.9" />
-            <stop offset="1" stopColor="#3fd8c8" stopOpacity="0.35" />
-          </radialGradient>
-          <radialGradient id="sm-chama-dentro" cx="50%" cy="75%" r="50%">
-            <stop offset="0" stopColor="#fff1cf" />
-            <stop offset="1" stopColor="#ffc46b" stopOpacity="0.8" />
-          </radialGradient>
-        </defs>
-        <path d="M30 4 C40 26 54 40 54 62 C54 82 43 96 30 96 C17 96 6 82 6 62 C6 40 20 26 30 4 Z" fill="url(#sm-chama-fora)" />
-        <path d="M30 40 C35 52 42 60 42 72 C42 84 36 92 30 92 C24 92 18 84 18 72 C18 60 25 52 30 40 Z" fill="url(#sm-chama-dentro)" />
-      </svg>
-      {/* pavio-cristal turquesa */}
-      <div style={{ position: 'absolute', left: '50%', bottom: -14, width: 14, height: 18, marginLeft: -7, background: 'linear-gradient(180deg,#7ff3e6,#1b8f8a)', clipPath: 'polygon(50% 0, 100% 40%, 75% 100%, 25% 100%, 0 40%)', opacity: 0.85 }} />
+      <span data-chama-folha data-parada={reduced ? 'true' : undefined} className="sm-chama-folha"
+        style={{ position: 'absolute', inset: 0, display: 'block', backgroundImage: `url(${FOLHA_CHAMA})` }} />
     </div>
   );
 }

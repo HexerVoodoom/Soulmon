@@ -1561,13 +1561,13 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** `src/components/refugio/refugeInvite.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
 
 ### `src/components/refugio/CenaSubaquatica.tsx`
-**Dono de:** a cena subaquática em tela cheia da Respiração (degradê, raios, bolhas, algas e coral) e o guia água-viva. Arte opcional em `src/assets/soulmon/respiracao/{fundo,meio,frente}.webp`, com camada procedural quando falta. Movimento reduzido: cena parada.
-**Exports:** `CenaSubaquatica`, `AguaViva`.
+**Dono de:** a cena subaquática em tela cheia da Respiração (degradê, raios, bolhas, algas e coral) e o guia bolha (em volta do pet). Arte opcional em `src/assets/soulmon/respiracao/{fundo,meio,frente}.webp`, com camada procedural quando falta. Movimento reduzido: cena parada.
+**Exports:** `CenaSubaquatica`, `BolhaGuia`.
 **Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
 **Régua:** `src/components/refugio/chama.render.test.tsx`.
 
 ### `src/components/refugio/ChamaGame.tsx`
-**Dono de:** o exercício Chama (trataka, 04/11/2026): aviso da 1ª vez, escolha de duração e modo olhos fechados, sessão em tela cheia com chama lenta (WCAG 2.3.1), sino + vibração, wake lock, toque duplo privado e Bits fixos 1×/dia. Arte opcional em `src/assets/soulmon/chama/fundo.webp`. É a exceção do Refúgio: soa nas trocas e paga Bits.
+**Dono de:** o exercício Chama (trataka, 04/11/2026): aviso da 1ª vez, escolha de duração e modo olhos fechados, sessão em tela cheia com chama lenta (WCAG 2.3.1), sino + vibração, wake lock, toque duplo privado e Bits fixos 1×/dia. Arte opcional em `src/assets/soulmon/chama/fundo.webp`; a chama é a folha 6x6 de 36 quadros `chama-alma/chama-v4-folha.webp` (CSS `step-end`, 2,4 s, parada em movimento reduzido). É a exceção do Refúgio: soa nas trocas e paga Bits.
 **Exports:** `ChamaGame`, `ChamaViva`.
 **Depende de:** `src/utils/refugio/chama.ts`, `src/utils/refugio/sinoChama.ts`.
 **Chamado por:** `src/components/nav/AreaView.tsx`.
