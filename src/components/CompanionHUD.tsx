@@ -1641,14 +1641,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                 }}
               />
               {emCristal && (
-                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {emCristal === 'falhou'
                     ? (language === 'pt-BR' ? 'A forma nova não veio desta vez' : "The new form didn't come this time")
                     : (language === 'pt-BR' ? 'Seu Soulmon está no cristal, evoluindo…' : 'Your Soulmon is in the crystal, evolving…')}
                 </span>
               )}
               {chocando && !emCristal && (
-                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {language === 'pt-BR' ? 'Seu Soulmon está chocando…' : 'Your Soulmon is hatching…'}
                 </span>
               )}

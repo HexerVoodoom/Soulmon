@@ -56,6 +56,7 @@ import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { fetchBetaFull, fetchEntitlement } from '../utils/entitlements';
 import { isEmbedMode } from '../utils/embedMode';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
+import { assinarDiagnostico, textoDiagnosticoLogin } from '../utils/loginDiag';
 import {
   isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
 } from '../utils/auth';
@@ -347,6 +348,20 @@ export function gateLoginOutcome(erro?: AuthErro): number {
     case 'dominio-nao-autorizado': case 'provedor-desligado': case 'popup-bloqueado': return 5;
     default: return 6;
   }
+}
+
+/** Linha técnica discreta (dono lê na tela do APK, sem logs): versão, plataforma, restauração, HTTP do GET /api/save, saveId[0..6]. */
+function LoginDiag() {
+  const [texto, setTexto] = useState(textoDiagnosticoLogin);
+  useEffect(() => {
+    setTexto(textoDiagnosticoLogin());
+    return assinarDiagnostico(() => setTexto(textoDiagnosticoLogin()));
+  }, []);
+  return (
+    <p data-login-diag style={{ margin: '12px 0 0', fontSize: 'var(--sm2-text-xs, 11px)', opacity: 0.6, color: 'var(--sm2-muted)', textAlign: 'center', wordBreak: 'break-all' }}>
+      {texto}
+    </p>
+  );
 }
 
 interface SavedProfile extends OracleInput { seed: number }
@@ -1370,7 +1385,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
    *  save. Aqui só registramos o e-mail e seguimos para a escolha — se o
    *  reload vier antes, melhor ainda. */
-  const aposAutenticar = async (mail?: string) => {
+  const aposAutenticar = async (mailRecebido?: string) => {
+    // APK: `signInWithCredential` pode devolver `user.email` vazio; sem e-mail a restauração era PULADA em silêncio
+    // e a pessoa caía nos termos como conta nova. Cai para o e-mail da sessão do Firebase antes de desistir.
+    const mail = mailRecebido || (await getCurrentEmail().catch(() => null)) || undefined;
     // F1 (QA rodada 2, FATAL): e-mail com lápide (410) NÃO entra no
     // onboarding. `checarContaExcluidaNoLogin` já deslogou e gravou o aviso;
     // aqui a pessoa fica no portão, com a mensagem e o caminho de volta
@@ -1840,6 +1858,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             sem checagem de idade por um lado da bifurcação. */}
         {step === IDENTITY_STEP && (
           <>
+          <LoginDiag />
           {/* A1 (checklist do dono, 01/10/2026): A MARCA é o LOGO do app
               (`src/assets/brand/final/logo-wordmark.png`, o wordmark SOUL/MON
               — DEFINITIVO desde 04/10/2026: gerado pelo dono com alfa real,
@@ -1936,6 +1955,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               ? 'Sua conta está pronta. Confirme os dois documentos e sua idade para continuar.'
               : 'Your account is ready. Confirm the two documents and your age to continue.'}>
             {blocoLegal}
+            <LoginDiag />
             <button
               type="button"
               style={{ ...sm2Button('primary', !podeAutenticar), width: '100%', marginTop: 20 }}

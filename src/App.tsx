@@ -2648,6 +2648,10 @@ export default function App() {
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
+  /* 17/11/2026 (dono): no PRIMEIRO dia (o cartão `firstDay` ainda de pé, nascido ao fim do onboarding) nenhum modal re-pergunta
+     tarefa/hábito — `dayGoals`, `checkIn` e `catalogOnboarding` ficam fora da fila. Derivado de dado existente (sem campo novo);
+     save antigo não tem `firstDay` de hoje, então o dia a dia de quem já joga não muda. */
+  const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
   /* §371: o que NASCEU hoje escapa do "plano de outro dia" — criar é um ato do próprio dia, aparece na hora. */
   const dayPlanBornToday = useMemo(
@@ -2689,14 +2693,14 @@ export default function App() {
   // Dia novo: pede a reafirmação UMA vez (o "visto" é gravado ao MOSTRAR, então não volta em laço no mesmo dia), depois do resumo do dia.
   const dayGoalsPromptedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!dayPlanActive || rolloverPending || showDailyReport) return;
+    if (!dayPlanActive || rolloverPending || showDailyReport || primeiroDiaAtivo) return;
     const rep = gameState.lastDayReport;
     if (rep && readLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN) !== rep.date) return; // o resumo ainda vai aparecer: ele vem antes
     if (dayGoalsPromptedRef.current === dayPlanToday) return;
     if (!needsDayPlan(gameState.dayPlan, dayPlanToday) || dayPlanCandidatesNow.length === 0) return;
     dayGoalsPromptedRef.current = dayPlanToday;
     setDayGoalsOpen(true);
-  }, [dayPlanActive, rolloverPending, showDailyReport, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
+  }, [dayPlanActive, rolloverPending, showDailyReport, primeiroDiaAtivo, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
   /* ACORDAR O SOULMON (19/10/2026, dono — REGISTRO §110; `utils/dayWake.ts`). Na 1ª abertura de cada dia o pet aparece dormindo e
      um toque no "Acordar" do deck o acorda. É APRESENTAÇÃO: o sono real (`isSleeping`: dreno, cocô, janela de descanso) não muda. Até
      acordar, só as ações do pet e dos jogos param (aviso curto + atalho); concluir tarefa/hábito sempre funciona e acorda sozinho. */
@@ -2738,9 +2742,9 @@ export default function App() {
       mapTutorial: mapTutorialOpen,
       unlockToast: unlockToastIds.length > 0,
       noticeToast: noticeKey !== null,
-      catalogOnboarding: needsCatalogOnboarding(gameState as any),
-      dayGoals: dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
-      checkIn: Boolean(checkInPlanData),
+      catalogOnboarding: !primeiroDiaAtivo && needsCatalogOnboarding(gameState as any),
+      dayGoals: !primeiroDiaAtivo && dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
+      checkIn: !primeiroDiaAtivo && Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
@@ -7857,13 +7861,12 @@ export default function App() {
 
   /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
   /** O cartão do primeiro dia ainda está de pé? (uma missão: menu de Missões, nunca a lista de tarefas) */
-  const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
   /* A linha "Take a stroll" do menu: "!" até o Passeio ser concluído NO NPC, "?" (Resgatar) depois, nada quando resgatada. */
   const diaDoPasseio = playerDayIso(new Date(), gameState.playerDayTz);
   const marcasDeMissao = useMemo(() => questMarks({
     firstDay: primeiroDiaAtivo,
-    passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
-    passeioReady: strollLineState(crossings, diaDoPasseio) === 'ready',
+    passeio: primeiroDiaAtivo ? null : missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()), // 17/11/2026 (dono): sem Stroll puxado no 1º dia
+    passeioReady: !primeiroDiaAtivo && strollLineState(crossings, diaDoPasseio) === 'ready',
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
@@ -7909,7 +7912,9 @@ export default function App() {
     /* 14/10/2026: a PRIMEIRA entrada no prédio abre a apresentação do NPC (uma vez só). Marca ao MOSTRAR; save sem o campo
        não apresenta nada (migração por construção — `sanitizeBuildingIntrosSeen` semeia os já abertos). */
     const vistos = gameStateRef.current.buildingIntrosSeen;
-    if (vistos !== undefined && isBuildingId(id) && !vistos.includes(id)) {
+    // DESLIGADO pelo dono em 17/11/2026: a apresentação do NPC não abre mais sozinha na 1ª visita (chave `buildingIntrosSeen` segue no save).
+    const BUILDING_INTRO_AUTO = false as boolean;
+    if (BUILDING_INTRO_AUTO && vistos !== undefined && isBuildingId(id) && !vistos.includes(id)) {
       setIntroShown([id]);
       setGameState(prev => {
         const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
