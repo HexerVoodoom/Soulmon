@@ -2505,8 +2505,8 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/games/SummonLayer.tsx`
 **Dono de:** o sprite do companheiro invocado na cena (16/11/2026, REGISTRO §449): `SummonLayer({ summons, me, foes, reduced })` desenha a criatura um pouco à frente de quem invocou enquanto o contador real `FighterFx.comp` for maior que zero (nenhum timer decide a presença; só a saída suave de 200 ms). Exports: `StageSummon` (`side`, `creature`, `turns`), `SUMMON_SIZE`, `SUMMON_ADVANCE`, `summonPlace`, `summonsDoGrupo`. Sem sprite para a criatura = não desenha. Usado por `BattleStage`.
-### `src/components/NeutroPotionPanel.tsx`
-**Dono de:** o painel da poção do Neutro no Centro de Evolução (16/11/2026, REGISTRO §452): `NeutroPotionPanel` mostra o progresso por elemento base (`neutroProgresso`, `NEUTRO_POTION_COSTS`) e o botão de forjar; textos em `NEUTRO_PANEL_COPY`. A regra mora em `utils/neutroPotion.ts`.
+### `src/components/NeutroPotionPanel.tsx` ⚰️ apagado em 17/11/2026 (§468)
+**Dono de (histórico):** o painel da poção do Neutro no Centro de Evolução (16/11/2026, REGISTRO §452): `NeutroPotionPanel` mostra o progresso por elemento base (`neutroProgresso`, `NEUTRO_POTION_COSTS`) e o botão de forjar; textos em `NEUTRO_PANEL_COPY`. A regra mora em `utils/neutroPotion.ts`.
 
 ### `src/components/PratoFeito.tsx`
 **Dono de:** o modal "Prato feito" (16/11/2026, REGISTRO §455/§465): `PratoFeito` abre ao cozinhar no Restaurante e ao comprar na Feira (variante "Comprado"), mostra a arte do prato (`dishArt`) ou o ícone, e fecha por X ou CTA (`useBackLayer`). O prato já está na pastinha (`dish:<id>`).
@@ -2533,3 +2533,12 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/perfil/EspecialNomeEditor.tsx` — ⚰️ apagado
 ⚰️ **Apagado em `4168e6d70` (11/11/2026, §287).** Era o campo de renomear o especial no Editar perfil; o Perfil só lê os nomes (`EspecialNomeLeitura`) e a troca é na Hexsmith (`HexRenameButton`/`HexRenameModal`).
+
+## Sync 17/11/2026 (`6b7773143..65ba36dc7`, REGISTRO §467–§470)
+
+- `play/PlaySheets.tsx`: `SalaoSheet`/`MenteSheet` em `GameCardGrid` + `GameCard` com `Badge`, `DinoBadges`, `Match3Badges`, `PptBadges` (selos sob a carta; §469); `MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, headSlot })` com só "Entrar no Rift" e "Ver o mapa", "Drop rate" em `ModalInfo`, botão "Ranking" em portal no `headSlot` abrindo `RankingPanel` (`RIFT_GAME_ID`, mensal) (§470).
+- `nav/AreaSheet.tsx`: prop nova `headStartRef` (encaixe à esquerda do título, `data-area-sheet-head-start`). `nav/AreaView.tsx`: estados `riftAuto` e `riftHeadStart`, `conviteDueloFan` + `TicketFan` no `npcOverlay` do Duelo, `autoStart={riftAuto}` na `DungeonGame`.
+- `DungeonGame.tsx`: prop `autoStart?: boolean` (larga a descida uma vez de `riftStartLayer`, com energia e piso de HP; senão lobby); HUD com `riftFloorName`.
+- `rift/RiftMap.tsx`: película preta `data-rift-map-veil` (`RIFT_VEIL_START` 24, `RIFT_VEIL_FADE` 110, `RIFT_VEIL_ALPHA` 0,96), nó com `riftSetName`.
+- `arena/DueloSheet.tsx`: `ComprarConvites` (1º item; `EnergyCost`, `DUEL_INVITE_ENERGY_COST`), "Duelar" desabilitado sem convite. `arena/conviteDueloArt.ts`: novo `conviteDueloFan(language, max): FanArt | undefined`. `play/TicketFan.tsx`: `TicketFan({ count, language, art? })` e a interface `FanArt` (`src`, `portrait`, `ratio`, `max`, `unit`, `attr`); sem `art` é o ticket dos minijogos (teto 6).
+- `ElementPotionSheet.tsx`: sem filtros de status nem `NeutroPotionPanel`; Neutro = última linha comum (`neutroProgresso`). `VescaPotionOffer.tsx`: só elemento base (texto único "Gasta N essências"). `App.tsx`: fila da Vesca por `VESCA_OFFER_ELEMENT_IDS`.

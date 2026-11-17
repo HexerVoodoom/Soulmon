@@ -442,3 +442,7 @@ Passe de medição: `npm run orcamento`.
 **Ciclo de vida.** `main.tsx` chama `installEmbedNetworkGuard()` (`utils/embedMode.ts`) ANTES de qualquer provider ou handler de crash: no `/embed` (demo do portfólio, sem termo) corta `/api/*` e beacon; fora do embed é no-op. `App.tsx` passa a montar `AppUpdateGate` (modal de atualização do app nativo, alimentado por `/api/app-config`), `PlayReviewModal`, `ReviewResultModal`, `StepGoalModal`/`StrollNowScene` (lazy; passos) e `watchModalLayer` (`utils/modalLayer`).
 
 **Não coberto neste delta:** o resto do `App.tsx` (o diff é só de imports e ligações; o fluxo está no `03`); a árvore de pastas de §2 não foi recontada; `src/plugins/*.contract.test.ts` novos (`widgetBeta12`, `passosHealthConnect`...) estão listados só pelo nome.
+
+## Delta de 17/11/2026 (`6b7773143..65ba36dc7`)
+
+Sem módulo, rota nem dependência nova. `src/App.tsx` passa a importar `VESCA_OFFER_ELEMENT_IDS` (fila da Vesca só com elemento base, §468); `components/NeutroPotionPanel.tsx` foi apagado; `components/arena/conviteDueloArt.ts` ganha `conviteDueloFan` (reusa `play/TicketFan`, §470); `DungeonGame` recebe a prop `autoStart` (§470). O índice do chat (`functions/api/_chatKnowledge.data.js`) é gerado de `02`/`11` (`npm run gen:chat-kb`).

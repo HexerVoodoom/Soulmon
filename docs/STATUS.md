@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
+> - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
+> - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.
+
 > ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §469)
 > - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
 

@@ -4833,3 +4833,10 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 - `checkReviews(onApplyFix, fetch, now)` — UMA checagem: empurra o que está parado há > 60 s, aplica o conserto (`consertado` com `afterUrl`) via `onApplyFix`, confirma com `ack` e devolve `{reports, finished}`.
 **Chamado por:** `App.tsx`, `components/ReviewSoulmonRow.tsx`, `hooks/useReviewWatcher.ts`
 **Régua:** `reviewSoulmon.test.ts`
+
+## Sync 17/11/2026 (`6b7773143..65ba36dc7`, REGISTRO §467–§470)
+
+- `elementPotion.ts`: novo `VESCA_OFFER_ELEMENT_IDS` (só bases); `essenceThresholdCrossings` usa-o; saem `PotionFilter` e `POTION_FILTERS`; `potionListFor(essences, inventory, selected, unlocked?)` sem o parâmetro de filtro.
+- `companheiroInvocado.ts`: novos `NOMES_ARQUETIPO_EVOCACAO` e `tituloEEvocador(t)`; `GameState.soulmonClassTitles` lido quando falta o cache do estágio (só o positivo).
+- `hexsmithCopy.ts`: `HEX_CROWN_FAMILY_DESC: Record<SpecialFamily, Par>` cobre as 10 famílias.
+- `riftSets.ts`: novos `riftFloorName(elementName, part)` ("Fogo 1"/"Fogo 2") e `riftSetName(elementName, isPt)` ("Fogo 1 e 2"/"Fire 1 & 2"). `riftMapCopy.ts`: `askBody(label, setName)`; `nodeAria` com o nome do conjunto primeiro.

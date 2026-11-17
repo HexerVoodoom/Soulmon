@@ -603,3 +603,15 @@ Comandos de referência, todos usados para escrever este documento:
 O clone deste repositório é completo (verificado nesta sessão: primeiro commit
 25/12/2025, `git log --oneline \| wc -l` → 827) — não é raso, e
 `git fetch --unshallow` não é necessário nem deve ser repetido.
+
+**17/11/2026 — pacote de 17/11 (PRs #1001–#1008, REGISTRO §467–§470)**
+
+`pacote/2026-11-17` entra na `main` por #1007 (`34c8a1b02`); `qa(pacote-17)` (`a26c4d010`) acerta `AreaView` sem `play`, o buff de 10%/7 dias do Glitchtama nos docs, `SCHEDULE_EXACT_ALARM` nos docs da Play e regenera o índice do chat. Comando: `git log --format='%ad %h %s' --date=short --since=2026-11-17`.
+
+| PR | O que entrou | REGISTRO |
+|---|---|---|
+| #1001 | Hexsmith: placa atrás da Coroa encaixada e descrição em todas as Coroas | §467 |
+| #1002 | Vesca só oferece base; Centro de Evolução sem filtros de status; Maslin volta a evocar | §468 |
+| #1003 | Salão e Ateliê em cartas ilustradas (`GameCard`) | §469 |
+| #1004 #1005 #1006 | Rift: andares 1 e 2, folha com duas portas, película preta, "Comprar convites" com leque, "Drop rate" no "i" e botão Ranking | §470 |
+| #1008 | CI: Drop rate usa token da régua do DS; modal Ranking com título nos dois idiomas | §470 |

@@ -1854,3 +1854,8 @@ Escopo: `src/index.css`, `utils/petStage.ts`, `utils/backgrounds.ts`, `utils/dun
 - **Sprites** (`utils/sprites.ts`): forma sem arte própria usa antes a arte de OUTRA forma do MESMO nível (`getStageLevel`, exceto `rookie`) e só depois a primeira do acervo; equipar/trocar nunca devolve a Rookie num nível maior que tem arte.
 
 **Não coberto neste delta:** os valores de cada `.sm2-hex-*`/`.sm-rank-podium__slot` além dos citados; o som (nenhum arquivo de som mudou); o `04 §11` ("No ar x plano") não foi refeito.
+
+## Delta de 17/11/2026 (`6b7773143..65ba36dc7`, REGISTRO §467, §470)
+
+- **Placa atrás da Coroa encaixada (§467).** `.sm2-hex-art[data-hex-crown]` ganha `border-radius: var(--sm2-radius-md)`, fundo claro `#EAF6F3` e anel `0 0 0 1px var(--sm2-primary-ink)`; as artes claras (`heal`, `hot`, `spdBuff`) usam placa escura `#08191A`. Iguais nos temas claro e escuro; porta vazia segue sem placa. Contraste medido da mediana da arte contra a placa: 5,0 a 16,9:1 (antes: dot 1,2:1 no escuro, heal 1,9:1 no claro).
+- **Mapa do Rift (§470).** Película PRETA (`rgba(0,0,0,0.96)`) com gradiente de 110 px na fronteira, estática; nós bloqueados com borda `#7a828b` e rótulo `#d5dade` sobre o preto, alcançados com `#4fd8c8`.
