@@ -33,7 +33,7 @@ describe('RiftMap', () => {
     expect(node(container, 5).querySelector('[data-rift-node-label]')?.textContent).toBe('11-12');
     expect(node(container, 1).dataset.state).toBe('visited');
     expect(node(container, 1).querySelector('button')?.textContent).not.toBe('?');
-    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('3-4');
+    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('Fire 1 & 2');
     expect(container.querySelector('[data-rift-map-gray]')).toBeTruthy();
   });
 

@@ -5,7 +5,7 @@ import {
   RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
   riftSegmentReached, riftVisibleRange, type RiftMapNode, type RiftMapSave,
 } from '../../utils/riftMap';
-import { RIFT_SET_COUNT, riftSetOfLayer } from '../../utils/riftSets';
+import { RIFT_SET_COUNT, riftSetName, riftSetOfLayer } from '../../utils/riftSets';
 import { riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
@@ -123,11 +123,12 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
           {nodes.map(n => {
             const labelLeft = n.x > 0.5;
             const el = elName(n.element, isPt);
+            const setName = riftSetName(el, isPt);
             const locked = n.state === 'locked';
             const current = n.state === 'current';
             return (
               <div key={n.index} data-rift-node={n.index} data-state={n.state} style={{ position: 'absolute', left: n.x * view.w - NODE / 2, top: n.y - NODE / 2, width: NODE, height: NODE }}>
-                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, el, n.state)} style={{
+                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, setName, n.state)} style={{
                   width: NODE, height: NODE, borderRadius: '50%', padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
                   background: locked ? '#050607' : 'radial-gradient(circle at 35% 30%, #1d5a5c, #0b2a2d)',
                   border: `3px solid ${locked ? '#3a3f44' : current ? '#ffd27a' : '#4fd8c8'}`,
@@ -139,7 +140,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
                 <span data-rift-node-label className="sm2-num" aria-hidden="true" onClick={() => tap(n)} style={{
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
                   fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
-                }}>{n.label}</span>
+                }}>{locked ? n.label : setName}</span>
                 {current && sprite && (
                   <img data-rift-sprite src={sprite} alt={t.you} width={52} height={52} draggable={false} style={{
                     position: 'absolute', top: '50%', transform: 'translateY(-60%)', [labelLeft ? 'left' : 'right']: NODE + 2, width: 52, height: 52, filter: 'drop-shadow(0 0 4px rgba(6,14,16,.95)) drop-shadow(0 2px 3px rgba(6,14,16,.9))', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none',
@@ -158,7 +159,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
             <button type="button" data-rift-ask-no onClick={() => setAsk(null)} style={{ ...sm2Button('outline'), width: '100%' }}>{t.askNo}</button>
           </div>
         )}>
-        {askNode && <p style={{ ...sm2Text, margin: 0 }}>{t.askBody(askNode.label, elName(askNode.element, isPt))}</p>}
+        {askNode && <p style={{ ...sm2Text, margin: 0 }}>{t.askBody(askNode.label, riftSetName(elName(askNode.element, isPt), isPt))}</p>}
       </ModalSheet>
       <ModalSheet open={sureNode !== null} onClose={() => setSure(null)} language={language} title={t.sureTitle} maxWidth={380}
         footer={sureNode && (
