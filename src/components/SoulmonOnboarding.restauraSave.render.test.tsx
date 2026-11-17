@@ -82,12 +82,15 @@ describe('login Google em conta existente', () => {
     expect(screen.getByText('Before we start')).toBeTruthy();
   });
 
-  it('nuvem fora do ar (5xx): não adota nada e segue como conta nova', async () => {
+  it('nuvem fora do ar (5xx): NAO vira conta nova — fica no portao com "tente de novo" e nao adota nada', async () => {
     nuvem.status = 503;
-    await entrarComGoogle();
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    await act(async () => {});
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' })); });
+    await waitFor(() => { expect(screen.queryByText(/No connection right now/)).not.toBeNull(); });
     expect(recarregar).not.toHaveBeenCalled();
     expect(localStorage.getItem(STORAGE_KEYS.GAME_STATE)).toBeNull();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(screen.queryByText('Before we start')).toBeNull();
   });
 
   it('save vazio na nuvem (nasceu antes do fim do onboarding): adota mas NÃO pula o ritual', async () => {
