@@ -6336,3 +6336,9 @@ Decisão: o botão "DEMO — experimentar sem conta" da tela de abertura (`Soulm
 Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `SoulmonOnboarding.demoOff.render.test.tsx` e a condição `DEMO_BUTTON_ENABLED && onStartDemo`; o squash do "Release beta12" (#897, 8c7b4a804) apagou os três e devolveu `{onStartDemo && (`, ressuscitando o botão sem aviso. Restaurados os três arquivos/condição; saves `accountTier:'demo'` e demo local já salva seguem abrindo (`demoMode.ts`/`demoStart.ts` intactos).
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
+
+## §467 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
+
+- **Decisão:** "Gostei dos cards do Refúgio; queria pros prédios dos minigames também, um pra cada." `SalaoSheet` (dino, ppt, match3, barrage) e `MenteSheet` (eco, zip, selo) passam a `GameCardGrid` + `GameCard`, como o Refúgio.
+- **Alternativa que perdeu:** a LISTA de cards de texto com botão "Jogar" (pedida em 04/11/2026, quando as cartas ficaram só no Refúgio). O que mudou: o dono viu as cartas funcionando no Refúgio e preferiu-as.
+- **Preservado:** `data-dino-start`/`data-ppt-start`/`data-match3-start`/`data-barrage-open`/`data-mente-start=<id>` (agora no botão da carta), Bits e recorde e ticket "x1" como selos sob a carta, painel de tickets/compra/recusa do Salão, `funStatus`. Sem regra nem cobrança nova. Rollback: `git revert` (UI pura).
