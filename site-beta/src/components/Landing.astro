@@ -20,7 +20,7 @@ interface Props { lang: Lang; variante?: 'b' }
 const { lang, variante } = Astro.props;
 const VB = variante === 'b'; // Versão B (dono, 09/11): sem sorteio e sem demo de scroll; companheiro que evolui rolando.
 const t = TEXTOS[lang];
-const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const j = t.jogo; const r = t.recursos;
+const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const j = t.jogo; const r = t.recursos; const mo = t.modal;
 type Video = { src: string; poster: string; posterAvif?: string; posterP?: string; posterPAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
 type Print = { id: string; src: string; gameplay: boolean };
 // Gameplay: só captura real (gameplay: true). O trailer é edição (rótulo Trailer); a cinemática de abertura ficou fora da v3.
@@ -461,6 +461,19 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
     <!-- 10 · Entre no beta: a Guilda inteira, praça do cristal -->
   </main>
 
+  <dialog class="entrar-modal" data-entrar-modal aria-labelledby="em-h" aria-modal="true">
+    <button type="button" class="em-x" data-em-fechar aria-label={mo.fechar} data-sa="modal-fechar"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
+    <p class="em-passo" data-em-contagem data-fmt={mo.passoDe}></p>
+    <h2 id="em-h" data-em-h tabindex="-1"></h2>
+    <p class="em-tx" data-em-tx></p>
+    {[mo.p1, mo.p2, mo.p3].map((p, i) => (
+      <div class="em-acoes" data-em-passo={i} hidden={i !== 0} data-h={p.h} data-tx={p.tx}>
+        <a class="botao primario" href={PASSO_HREF[i]} target="_blank" rel="noopener noreferrer" data-em-abrir data-clique={i === 0 ? '' : undefined} data-sa={`modal-passo${i + 1}-abrir`}>{p.abrir}</a>
+        {'ok' in p && <button type="button" class="botao contorno" data-em-ok data-sa={`modal-passo${i + 1}-ok`}>{p.ok}</button>}
+      </div>
+    ))}
+    <button type="button" class="link em-voltar" data-em-voltar hidden data-sa="modal-voltar">{mo.voltar}</button>
+  </dialog>
   <dialog class="popup" data-popup aria-labelledby="popup-h" aria-describedby="popup-p">
     <img class="popup-cristal" src={b(assets.cristalAceso.src)} width="48" height="96" alt="" loading="lazy" />
     <h2 id="popup-h" data-popup-h>{f.okH}</h2>
@@ -496,4 +509,5 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   </dialog>
   <script src="../scripts/app.ts"></script>
   <script src="../scripts/ramos.ts"></script>
+  <script src="../scripts/modal-entrar.ts"></script>
 </Base>

@@ -1227,3 +1227,23 @@ body:has(.ciclo.foco) .topo { visibility: hidden; }
 .passo .passo-mao svg { width: 54px; height: 37px; }
 @media (max-width: 1023px) { .passo .passo-mao { left: -22px; } .passo .passo-mao svg { width: 44px; height: 30px; } }
 @media (prefers-reduced-motion: reduce) { .passos .passo { transition: none; } }
+
+/* ---------- Modal guiado "Entrar no beta" ---------- */
+.entrar-modal { margin: auto; width: min(calc(100vw - 32px), 460px); min-height: 50vh; max-height: calc(100dvh - 32px); padding: 48px 24px 24px; background: var(--sb-sup); color: var(--sb-tx); text-align: center; border: 2px solid var(--sb-anel); box-shadow: var(--sb-sombra-2); overflow: auto; }
+.entrar-modal[open] { display: grid; align-content: center; justify-items: center; gap: var(--sb-e-3, 16px); animation: abre var(--sb-dur-entrada, .2s) var(--sb-ease, ease-out); }
+.entrar-modal::backdrop { background: var(--sb-veu-dialogo, rgba(3, 10, 10, .8)); }
+.entrar-modal h2 { font-size: 1.5rem; color: var(--sb-pri); }
+.em-passo { color: var(--sb-tx-2); font-size: .875rem; }
+.em-tx { color: var(--sb-tx); max-width: 36ch; }
+.em-acoes { display: grid; gap: 12px; justify-items: center; width: 100%; }
+.em-acoes[hidden], .em-voltar[hidden] { display: none; }
+.em-acoes .botao { min-width: 240px; max-width: 100%; }
+.em-x { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; display: grid; place-items: center; background: none; border: 0; color: var(--sb-tx); cursor: pointer; }
+.em-x:focus-visible, .entrar-modal h2:focus-visible { outline: 2px solid var(--sb-pri); outline-offset: 2px; }
+/* Celular: bottom sheet colado embaixo, ~metade da tela */
+@media (max-width: 640px) {
+  .entrar-modal { inset: auto 0 0 0; margin: 0; width: 100vw; max-width: 100vw; min-height: 50dvh; border-width: 2px 0 0; border-radius: 16px 16px 0 0; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .entrar-modal[open] { animation-name: sobe; }
+}
+@keyframes sobe { from { translate: 0 40px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .entrar-modal[open] { animation: none; } }
