@@ -3,6 +3,8 @@ import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { SM2_SHADOW_CARD, sm2Hint } from '../form/FormKit';
+import { ModalFrame } from '../ui/ModalFrame';
+import { MOLDURA_HOME_DIALOGOS } from '../ui/SheetFrame';
 
 /**
  * RITUAIS — o kit do diálogo centrado (canvas `docs/design/wireframes/
@@ -80,6 +82,7 @@ export function RitualDialog({
   focusContainer = false, veilRole, children, style, className, theme, closeOnBackdrop = false,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
+  const moldura = MOLDURA_HOME_DIALOGOS && theme !== 'light';
   const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} side={closeSide} inOrder={closeLast} /> : null;
 
   useLayoutEffect(() => {
@@ -102,6 +105,25 @@ export function RitualDialog({
         padding: 16,
       }}
     >
+      {moldura ? (
+        /* Etapa 3 das molduras: o cartão vira `ModalFrame` (pedra com runas; placa sem título, a manchete mora no miolo). Mesmos
+           role/aria/ref/foco; o padding e o gap passam para o miolo (`.sm2-moldura-ritual`). O tema claro (prêmio da manhã) fica liso. */
+        <ModalFrame
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
+          aria-labelledby={labelledBy}
+          tabIndex={-1}
+          data-theme="dark"
+          className={['sm2-moldura-ritual', className].filter(Boolean).join(' ')}
+          style={{ outline: 'none', width: '100%', maxWidth, maxHeight: '90vh', ...style }}
+        >
+          {closeLabel && !closeLast && closeButton}
+          {children}
+          {closeLabel && closeLast && closeButton}
+        </ModalFrame>
+      ) : (
       <div
         ref={dialogRef}
         role="dialog"
@@ -131,6 +153,7 @@ export function RitualDialog({
         {children}
         {closeLabel && closeLast && closeButton}
       </div>
+      )}
     </div>
   );
 }

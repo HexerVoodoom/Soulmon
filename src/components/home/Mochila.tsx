@@ -19,8 +19,9 @@
  * arrastar): o item selecionado — por toque OU por foco — mostra um botão
  * "Usar"/"Use" logo abaixo da grade, com o nome do item no rótulo.
  */
-import { useCallback, useEffect, useRef, useState, type RefObject, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ElementType, type RefObject, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Language } from '../../utils/i18n';
+import { SheetFrame, MOLDURA_HOME_FOLHAS } from '../ui/SheetFrame';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
 import { dishIdOfKey } from '../../utils/dishItems';
@@ -255,6 +256,12 @@ export function Mochila({
 
   const arrastando = fantasma !== null;
   const nomePet = petName || 'Soulmon';
+  const Casca: ElementType = MOLDURA_HOME_FOLHAS ? SheetFrame : 'div';
+  const infoDica = (
+    <InfoTip language={language} label={isPt ? 'Como usar um item' : 'How to use an item'} align="right">
+      {isPt ? `Arraste até o ${nomePet} pra usar` : `Drag onto ${nomePet} to use`}
+    </InfoTip>
+  );
 
   return (
     <div
@@ -262,14 +269,15 @@ export function Mochila({
       data-mochila
       onClick={(e) => { if (e.target === e.currentTarget && !arrastando) onClose(); }}
     >
-      <div
+      <Casca
         ref={dialogRef}
         className="sm3-mochila sm2-sheet-rise"
         role="dialog"
         aria-modal="true"
         aria-label={isPt ? 'Arquivos' : 'Files'}
+        {...(MOLDURA_HOME_FOLHAS ? { title: isPt ? 'Arquivos' : 'Files', info: infoDica } : null)}
       >
-        <div className="sm3-mochila-alca" aria-hidden="true" />
+        {!MOLDURA_HOME_FOLHAS && <div className="sm3-mochila-alca" aria-hidden="true" />}
         {/* Fechar (X, alvo 44) + título + "i" na MESMA linha (pedido do dono, 09/11/2026: ganhar
             altura). O fechar segue no canto ESQUERDO, o lugar do voltar (I3). */}
         <div className="sm3-mochila-head" style={{ alignItems: 'center' }}>
@@ -281,12 +289,10 @@ export function Mochila({
             style={{ margin: '0 0 0 -10px', flexShrink: 0 }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 className="sm3-mochila-titulo">{isPt ? 'Arquivos' : 'Files'}</h2>
+            {!MOLDURA_HOME_FOLHAS && <h2 className="sm3-mochila-titulo">{isPt ? 'Arquivos' : 'Files'}</h2>}
           </div>
-          {/* I13 (02/10/2026): a dica de arrastar mora atrás do "?". */}
-          <InfoTip language={language} label={isPt ? 'Como usar um item' : 'How to use an item'} align="right">
-            {isPt ? `Arraste até o ${nomePet} pra usar` : `Drag onto ${nomePet} to use`}
-          </InfoTip>
+          {/* I13 (02/10/2026): a dica de arrastar mora atrás do "?" (com a moldura, no disco do canto, via `info` do quadro). */}
+          {!MOLDURA_HOME_FOLHAS && infoDica}
         </div>
 
         <div className="sm3-mochila-abas" role="tablist" aria-label={isPt ? 'Tipos de item' : 'Item types'}>
@@ -466,7 +472,7 @@ export function Mochila({
             </div>
           )}
         </div>
-      </div>
+      </Casca>
 
       {/* O FANTASMA: a arte do item seguindo o dedo. Decorativo. */}
       {fantasma && (

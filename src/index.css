@@ -9612,6 +9612,20 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   position: relative; z-index: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
   padding: calc(var(--u) * 15) calc(var(--u) * 2.4) calc(var(--u) * 6);
 }
+/* FOLHA DE BAIXO (`components/ui/SheetFrame.tsx`): o mesmo quadro sem base (encosta no fundo da tela); alça desenhada por CSS (provisório). */
+.sm2-moldura-sheet { min-height: 0; }
+.sm2-moldura-sheet .sm2-moldura-modal__base { display: none; }
+.sm2-moldura-sheet::before {
+  content: ''; position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * 1.1); width: calc(var(--u) * 9); height: 3px; margin-left: calc(var(--u) * -4.5);
+  border-radius: 2px; background: rgba(227, 192, 106, .55); pointer-events: none;
+}
+.sm2-moldura-sheet .sm2-moldura-modal__conteudo { padding-bottom: 0; }
+/* Mochila/"Files" com a moldura: o quadro vira a casca; o miolo rola e leva o respiro lateral que o painel liso tinha. */
+.sm3-mochila.sm2-moldura-sheet { padding: 0; border: 0; border-radius: 0; overflow: hidden; display: flex; flex-direction: column; background-color: #0d1a1a; }
+.sm3-mochila.sm2-moldura-sheet .sm2-moldura-modal__conteudo { overflow-y: auto; padding-left: 16px; padding-right: 16px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+/* Diálogo centrado (`RitualDialog`): o miolo rola e carrega o respiro/gap que o cartão liso tinha. */
+.sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
 /* CARD: topo 231/600 e base 369/600 (do arquivo); vão da arte entre os dois. */
 .sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; min-height: calc(var(--u) * 126); }
 .sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }

@@ -100,8 +100,10 @@ describe('CatalogOnboardingFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sono' }));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     const voltar = container.querySelector('[data-back-arrow] button')!;
-    const titulo = container.querySelector('.sm2-title')!;
-    expect(voltar.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Com a moldura (etapa 3) o título mora na PLACA do topo e a seta, logo abaixo, no miolo (`data-moldura-conteudo`).
+    const titulo = container.querySelector('[data-moldura-placa] h2')!;
+    expect(titulo).toBeTruthy();
+    expect(voltar.closest('[data-moldura-conteudo]')).toBeTruthy();
     fireEvent.click(voltar);
     expect(screen.getByText(/definir metas/i)).toBeTruthy();
   });

@@ -43,7 +43,7 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
         {title != null && <h2 className="sm2-moldura-modal__titulo">{title}</h2>}
       </div>
       {(info != null || infoSlotRef) && (
-        <span className="sm2-moldura-modal__info" data-moldura-info="" ref={infoSlotRef}>{info}</span>
+        <span className="sm2-moldura-modal__info" data-moldura-info="" {...(infoSlotRef ? { 'data-modal-info-slot': '' } : null)} ref={infoSlotRef}>{info}</span>
       )}
       <div className="sm2-moldura-modal__conteudo" data-moldura-conteudo="">{children}</div>
     </div>

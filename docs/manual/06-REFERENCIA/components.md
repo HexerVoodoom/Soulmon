@@ -1672,6 +1672,11 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `ModalFrame`, `ModalFrameProps`.
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 
+### `src/components/ui/SheetFrame.tsx`
+**Dono de:** a MOLDURA da FOLHA DE BAIXO da Home (etapa 3, 17/11/2026): o `ModalFrame` sem base (haste de cima com cantos, placa e (i); laterais até a borda da tela; alça por CSS, provisório), sempre em tema escuro. Também guarda os kill-switches `MOLDURA_HOME_FOLHAS` e `MOLDURA_HOME_DIALOGOS`. Visual em `.sm2-moldura-sheet` (`index.css`).
+**Exports:** `SheetFrame`, `MOLDURA_HOME_FOLHAS`, `MOLDURA_HOME_DIALOGOS`.
+**Chamado por:** `src/components/form/FormKit.tsx` (`ModalSheet`), `src/components/home/Mochila.tsx`.
+
 ### `src/components/ui/CardFrame.tsx`
 **Dono de:** a MOLDURA de card (arte, nome, descrição e recompensa sobre topo/base fixos); visual em `.sm2-moldura-card` (`index.css`).
 **Exports:** `CardFrame`.
