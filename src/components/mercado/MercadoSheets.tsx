@@ -47,12 +47,11 @@ import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions'
  * compra de `onBuy` (→ `handleShopBuy`), a troca de `onExchangeCredits`.
  */
 
-/** Cabeçalho fixo da folha (abas + saldo) — não rola junto da prateleira. */
+/** Cabeçalho da folha (abas + saldo): no FLUXO normal, rola junto e sem fundo próprio. Com a moldura, um bloco sólido sticky virava uma barra turquesa
+ *  desalinhada com o resto rolando por baixo dela (feedback do dono, 18/11/2026). */
 const stickyHead: CSSProperties = {
-  position: 'sticky', top: 0, zIndex: 1,
   display: 'flex', flexDirection: 'column', gap: 8,
   paddingBottom: 8,
-  backgroundColor: 'var(--sm2-surface)',
 };
 
 function currencyLabel(c: CurrencyId, isPt: boolean): string {

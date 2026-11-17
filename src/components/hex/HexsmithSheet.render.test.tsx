@@ -177,7 +177,7 @@ describe('HexsmithSheet', () => {
     expect(img.getAttribute('src')).toMatch(/coroa-dot/);
   });
 
-  it('Coroa equipada: placa turquesa clara com outer glow turquesa (não branca), ícone segue aria-hidden e o botão do slot rotulado', () => {
+  it('Coroa equipada: sem placa clara (sem mancha branca), só outer glow turquesa, ícone segue aria-hidden e o botão do slot rotulado', () => {
     abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
     const btn = q('[data-hex-slot="coroa"]');
     expect(btn.getAttribute('aria-label')).toMatch(/Coroa|Porta/);
@@ -186,7 +186,7 @@ describe('HexsmithSheet', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
     const regra = css.match(/\.sm2-hex-art\[data-hex-crown\] \{[^}]*\}/)![0];
     expect(regra).not.toMatch(/#EAF6F3|#fff\b/i);
-    expect(regra).toMatch(/background-color: #B4F4EA/);
+    expect(regra).toMatch(/background-color: transparent/);
     expect(regra).toMatch(/0 0 8px 2px color-mix\(in srgb, var\(--sm2-primary-ink\)/);
   });
 
