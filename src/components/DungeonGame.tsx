@@ -771,13 +771,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const espera = msAteDescer(hpState, agora);
   // "Entrar no Rift" da folha: o lobby não é parada, é a descida que já começa. Uma vez só; quem já tem descida em andamento é restaurado pelo efeito de volta.
   const autoStartedRef = useRef(false);
+  const startRunRef = useRef(startRun);
+  startRunRef.current = startRun;
+  const temDescidaAndando = !!ctx?.gameState.dungeonAway;
   useEffect(() => {
-    if (!autoStart || autoStartedRef.current || phase !== 'intro' || ctx?.gameState.dungeonAway) return;
+    if (!autoStart || autoStartedRef.current || phase !== 'intro' || temDescidaAndando) return;
     if (espera > 0 || !temEnergia) return;
     autoStartedRef.current = true;
-    startRun();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, phase, espera, temEnergia]);
+    startRunRef.current();
+  }, [autoStart, phase, espera, temEnergia, temDescidaAndando]);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
   /** O indicador único do HUD: "Camada 3 · luta 2 de 6 · Fogo 2" / "Layer 3 · fight 2 of 6 · Fire 2" (o andar do conjunto leva o sufixo 1 ou 2, pedido do dono 16/11/2026). Na última luta do conjunto (REGISTRO §445) acrescenta o rótulo calmo "mini-boss". */
