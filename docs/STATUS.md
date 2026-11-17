@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §468)
+> ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §469)
 > - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
 
 > ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §468)
