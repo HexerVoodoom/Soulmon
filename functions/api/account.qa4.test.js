@@ -81,10 +81,12 @@ describe('exclusão apaga ranking, lastro, apelido e prêmios do Rift', () => {
     expect(e.DIGIAPP_SAVES.store.has(`nickof:${ID}`)).toBe(false);
   });
 
-  it('o inventário (delete-request) já lista ranking, lastro, apelido e prêmio', async () => {
+  it('o inventário leve (delete-request) lista lastro e apelido; ranking e prêmio vêm no delete-confirm', async () => {
     const e = env(seed());
     const j = await (await onRequest({ request: post(`action=delete-request&id=${ID}`), env: e })).json();
-    for (const k of [`rkme:dino-1:2026-W43:${ID}`, `riftlayers:${mes}:${ID}`, `rift-pending:2026-09:${ID}`, 'nick:ana', `nickof:${ID}`]) expect(j.plano.apaga, k).toContain(k);
+    for (const k of [`riftlayers:${mes}:${ID}`, 'nick:ana', `nickof:${ID}`]) expect(j.plano.apaga, k).toContain(k);
+    const c = await (await onRequest({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken: (j.confirmToken) }), env: e })).json();
+    for (const k of [`rkme:dino-1:2026-W43:${ID}`, `rift-pending:2026-09:${ID}`]) expect(c.executado.apaga, k).toContain(k);
   });
 
   it('prêmio pendente de conta apagada NÃO ressuscita o ent', async () => {

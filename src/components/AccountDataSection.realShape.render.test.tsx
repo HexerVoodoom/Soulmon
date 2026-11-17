@@ -35,7 +35,7 @@ describe('AccountDataSection com a resposta real do servidor', () => {
     const { onRequest } = await import('../../functions/api/account.js');
     const env = { DIGIAPP_SAVES: fakeKV({ [ID]: JSON.stringify({ totalXP: 5 }), [`profile:${ID}`]: JSON.stringify({ friends: [] }) }), FIREBASE_PROJECT_ID: 't' };
     vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => onRequest({ request: new Request(`https://x${url}`, init), env })));
-    renderWithCss(<AccountDataSection language="en" saveId={ID} authAvailable />);
+    renderWithCss(<AccountDataSection language="en-US" saveId={ID} authAvailable />);
     fireEvent.click(screen.getByRole('button', { name: /Delete my account/i }));
     await waitFor(() => expect(screen.getByRole('button', { name: /Erase now/i })).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /Erase now/i }));
