@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { STORAGE_KEYS } from './storageKeys';
 import { readLocal } from './safeStorage';
-import { lerNuvem, reagirContaExcluida } from './cloudSave';
+import { lerNuvem, reagirContaExcluida, cloudSaveComRetry } from './cloudSave';
 import { lerRevisao, gravarRevisao, esquecerRevisao } from './saveRevision';
 import { decidirReconciliacao, type MotivoReconciliacao } from './saveReconcile';
 import { empurrarNoAnel, saveTemProgresso } from './backupRing';
@@ -57,6 +57,20 @@ export async function reconciliarComNuvem<T>(c: ContextoReconciliacao<T>): Promi
   if (decisao === 'liberar') { esquecerRevisao(); c.reconciliando.current = false; return true; }
   if (decisao === 'ignorar') return true;
   if (decisao === 'esperar' || leitura.estado !== 'encontrado') return false;
+
+  // GUARDA DE REGRESSÃO (incidente 17/11/2026): nuvem "mais nova" SEM progresso e local COM progresso = o LOCAL vence.
+  // Adotar o vazio apagava o save real (o F5 viu "revisão da nuvem mais nova" e trouxe um estado vazio). Sobe o local com a
+  // revisão da nuvem como base; o motivo fica no anel (cópia do local, para auditoria).
+  {
+    const localAgora = c.estadoAtual();
+    if (!saveTemProgresso(leitura.state) && saveTemProgresso(localAgora)) {
+      empurrarNoAnel({ saveId, salvoEm: new Date().toISOString(), motivo: 'nuvem-vazia-local-vence', state: localAgora });
+      gravarRevisao(saveId, leitura.revision ?? 0);
+      c.reconciliando.current = false;
+      void cloudSaveComRetry(saveId, localAgora).catch(() => {});
+      return true;
+    }
+  }
 
   // adotar — a nuvem vence, o local recusado vai ANTES para o anel (ou quarentena).
   let hidratado: T;
