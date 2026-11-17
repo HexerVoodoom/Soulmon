@@ -16,6 +16,7 @@ import { takeIpQuota } from './_ipHash.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { verifiedBetaFull } from './_betaFull.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { detectarRegressao, intencaoDeRegressao, guardarBackupAntesDeRegressao } from './_saveGuard.js';
 import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
@@ -719,6 +720,23 @@ async function onRequestBruto({ request, env }) {
       }
       console.warn('save: 409 conflito de revisão', { saveIdPrefix: saveId.slice(0, 8), base, cur });
       return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    // GUARDA DE REGRESSAO (incidente 17/11/2026, `_saveGuard.js`): save COM progresso nao e trocado por um SEM progresso (ou com
+    // totalXP < 50% do gravado) sem gesto explicito (`?allowRegression=restore|rebirth|reset`). Antes de qualquer regressao o raw
+    // anterior vai para `savebak:`. Sem gravado parseavel = sem guarda (conta nova / save ilegivel).
+    if (typeof prev?.value === 'string') {
+      let gravadoParaGuarda;
+      try { gravadoParaGuarda = JSON.parse(prev.value); } catch { gravadoParaGuarda = undefined; }
+      const regressao = detectarRegressao(gravadoParaGuarda, state);
+      if (regressao) {
+        const intencao = intencaoDeRegressao(url);
+        await guardarBackupAntesDeRegressao(kvOrThrow(env), saveId, prev.value);
+        if (!intencao) {
+          console.warn('save: 409 regressao recusada', { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo });
+          return Response.json({ error: 'regression', revision: cur }, { status: 409, headers: CORS });
+        }
+        console.warn('save: regressao PERMITIDA por intencao explicita', { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo, intencao });
+      }
     }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     // Orçamento de Bits (REGISTRO §387, `_bitsOrcamento.js`), MODO OBSERVAÇÃO: só mede e registra; `state`/`serialized` não são
