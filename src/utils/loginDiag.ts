@@ -3,6 +3,9 @@
 // NUNCA guarda e-mail, token nem conteúdo do save: só versão, plataforma, resultado, status HTTP e 6 chars do saveId.
 import { Capacitor } from '@capacitor/core';
 
+// Local de propósito: o tsconfig do desktop importa src/utils sem o vite-env.d.ts.
+declare const __APP_VERSION__: string | undefined;
+
 export type ResultadoRestauracao = 'restaurada' | 'sem-save' | 'indeterminado' | 'storage' | 'nao-chamada';
 
 const estado: { restauracao: ResultadoRestauracao; status: number | null; saveId6: string } = {
@@ -28,6 +31,6 @@ export function assinarDiagnostico(f: () => void): () => void {
 export function textoDiagnosticoLogin(): string {
   let plataforma = 'web';
   try { plataforma = Capacitor.isNativePlatform() ? 'apk' : 'web'; } catch { /* sem Capacitor: web */ }
-  const versao = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '?';
+  const versao = typeof __APP_VERSION__ !== 'undefined' ? String(__APP_VERSION__) : '?';
   return `v${versao} | ${plataforma} | rest=${estado.restauracao} | http=${estado.status ?? '-'} | id=${estado.saveId6}`;
 }
