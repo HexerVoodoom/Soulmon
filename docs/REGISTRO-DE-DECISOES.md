@@ -6337,8 +6337,16 @@ Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `S
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
 
-## §467 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
+## §468 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
 
 - **Decisão:** "Gostei dos cards do Refúgio; queria pros prédios dos minigames também, um pra cada." `SalaoSheet` (dino, ppt, match3, barrage) e `MenteSheet` (eco, zip, selo) passam a `GameCardGrid` + `GameCard`, como o Refúgio.
 - **Alternativa que perdeu:** a LISTA de cards de texto com botão "Jogar" (pedida em 04/11/2026, quando as cartas ficaram só no Refúgio). O que mudou: o dono viu as cartas funcionando no Refúgio e preferiu-as.
 - **Preservado:** `data-dino-start`/`data-ppt-start`/`data-match3-start`/`data-barrage-open`/`data-mente-start=<id>` (agora no botão da carta), Bits e recorde e ticket "x1" como selos sob a carta, painel de tickets/compra/recusa do Salão, `funStatus`. Sem regra nem cobrança nova. Rollback: `git revert` (UI pura).
+
+## §467 — Hexsmith: placa atrás da Coroa encaixada e descrição em TODAS as Coroas (17/11/2026, dono)
+
+**Pedido:** a Coroa do dano contínuo (`coroa-dot`, quase preta, L≈0,006) sumia no fundo escuro do slot (≈1,2:1); só as Coroas novas tinham descrição do efeito.
+**Decisão do dono:** sem arte nova; resolver por CSS mudando o fundo do slot ocupado, para todas as Coroas. Porta vazia fica como está.
+**Feito:** `.sm2-hex-art[data-hex-crown]` ganha placa (clara `#EAF6F3`; escura `#08191A` só para heal/hot/spdBuff, as artes claras) e anel `primary-ink`; igual nos dois temas. Contraste da mediana da arte contra a placa 5,0 a 16,9:1 (antes: dot 1,2:1 no escuro; heal 1,9:1 no claro). `HEX_CROWN_FAMILY_DESC` cobre as 10 famílias (as 7 de sempre ganharam texto PT/EN, sem número nem vantagem); teste varre `HEX_CROWN_VALUES`.
+**Alternativa que perdeu:** halo luminoso só no dot (contorno em `primary-ink`, ~11:1 contra o fundo) — resolvia uma Coroa; a placa resolve todas.
+

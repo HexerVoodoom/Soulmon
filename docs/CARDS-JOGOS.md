@@ -1,7 +1,7 @@
 # Cartas dos jogos (GameCard)
 
 Cada jogo dos menus do **Ateliê da Mente**, do **Salão de Jogos** e do **Refúgio**
-(os três usam `GameCardGrid`; Salão e Ateliê desde 17/11/2026, REGISTRO §467; Bits, recorde e ticket vão em `badges`)
+(os três usam `GameCardGrid`; Salão e Ateliê desde 17/11/2026, REGISTRO §468; Bits, recorde e ticket vão em `badges`)
 aparece como carta colecionável em retrato (`src/components/play/GameCard.tsx`).
 A arte de cada carta é `src/assets/soulmon/cards/<id>.webp`, **600×800 (3:4)**,
 ilustração sangrando até a borda (o nome entra por cima numa faixa, na parte de

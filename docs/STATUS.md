@@ -1,7 +1,11 @@
 # Status do Soulmon — registro vivo
 
-> ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §467)
+> ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §468)
 > - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
+
+> ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §468)
+> - **Feito:** placa atrás da Coroa encaixada (CSS, todas, claro e escuro; contraste 5,0 a 16,9:1) e descrição PT/EN nas 10 famílias; teste de cobertura.
+> - **Pendente:** capturas 360x640 não geradas; não visto em aparelho. **Rollback:** `git revert`.
 
 > ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
 > - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.
