@@ -8,7 +8,7 @@ export interface RiftMapCopy {
   lockedNote: string;
   busyNote: string;
   askTitle: string;
-  askBody: (label: string, element: string) => string;
+  askBody: (label: string, setName: string) => string;
   askYes: string;
   askNo: string;
   sureTitle: string;
@@ -24,12 +24,12 @@ export function riftMapCopy(isPt: boolean): RiftMapCopy {
     title: 'Mapa da Fenda',
     back: 'Voltar',
     floors: l => `Andares ${l}`,
-    nodeAria: (l, el, st) => `Andares ${l}, ${el}, ${st === 'current' ? 'você está aqui' : st === 'visited' ? 'já visitado' : 'ainda não visitado'}`,
+    nodeAria: (l, el, st) => `${el}, andares ${l}, ${st === 'current' ? 'você está aqui' : st === 'visited' ? 'já visitado' : 'ainda não visitado'}`,
     hereNote: 'Você está aqui.',
     lockedNote: 'Você ainda não chegou aqui.',
     busyNote: 'Seu Soulmon está na Fenda agora. Retire-o de lá para escolher outro ponto.',
     askTitle: 'Voltar para estes andares?',
-    askBody: (l, el) => `Andares ${l} · ${el}. A próxima descida começa aqui.`,
+    askBody: (l, nome) => `${nome} (andares ${l}). A próxima descida começa aqui.`,
     askYes: 'Voltar para cá',
     askNo: 'Agora não',
     sureTitle: 'Sem volta',
@@ -42,12 +42,12 @@ export function riftMapCopy(isPt: boolean): RiftMapCopy {
     title: 'Rift map',
     back: 'Back',
     floors: l => `Floors ${l}`,
-    nodeAria: (l, el, st) => `Floors ${l}, ${el}, ${st === 'current' ? 'you are here' : st === 'visited' ? 'visited' : 'not reached yet'}`,
+    nodeAria: (l, el, st) => `${el}, floors ${l}, ${st === 'current' ? 'you are here' : st === 'visited' ? 'visited' : 'not reached yet'}`,
     hereNote: 'You are here.',
     lockedNote: "You haven't reached this one yet.",
     busyNote: 'Your Soulmon is in the Rift right now. Take your Soulmon out of the Rift to pick another spot.',
     askTitle: 'Go back to these floors?',
-    askBody: (l, el) => `Floors ${l} · ${el}. Your next descent starts here.`,
+    askBody: (l, nome) => `${nome} (floors ${l}). Your next descent starts here.`,
     askYes: 'Go back here',
     askNo: 'Not now',
     sureTitle: 'No way back',

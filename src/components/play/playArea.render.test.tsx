@@ -19,7 +19,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderWithCss } from '../../test/renderEnv';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
-import { DinoSheet, Match3Sheet } from './PlaySheets';
+import { SalaoSheet } from './PlaySheets';
 
 const recebidas: Record<string, Record<string, unknown>> = {};
 vi.mock('../DungeonGame', async (orig) => {
@@ -167,28 +167,58 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(r.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
-  it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {
-    localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, '321');
+  it('Masmorra: a folha tem 2 botões + Bits do dia, SEM a nota "Pode cair"; "Ranking" no cabeçalho e o "i" do Drop rate (dono, 17/11/2026)', async () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    expect(folha.textContent).toContain('321');
-    expect(folha.textContent).not.toContain('Camada 0'); // P10 (beta-2): chip zerado não aparece (REGISTRO §31: o recorde de profundidade vem do save; vazio = 0 = sem chip)
-    // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
-    // atrás do "?" — fica fora da tela até o jogador tocar.
-    expect(folha.textContent).not.toMatch(/nunca custa corações/);
-    fireEvent.click(getByRole('button', { name: 'Como funciona a Fenda' }));
-    // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
+    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
+    expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
+    expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
+    // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
-    expect(folha.textContent).not.toContain('2→6');
+    expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
+    expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
+    // "Ranking": no cabeçalho, à esquerda do título, outline, negrito + sublinhado
+    const head = folha.querySelector('[data-area-sheet-head]')!;
+    const rank = head.querySelector('[data-masmorra-ranking]') as HTMLButtonElement;
+    expect(rank.textContent).toBe('Ranking');
+    expect(rank.style.fontWeight).toBe('700');
+    expect(rank.style.textDecoration).toBe('underline');
+    expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
+    expect(rank.compareDocumentPosition(head.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
+    await achar(container, '[data-masmorra]');
+    const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
+    const info = folha.querySelector('[data-area-sheet-head] [data-info-tip]') as HTMLButtonElement;
+    expect(info.getAttribute('aria-label')).toBe('Drop rate');
+    fireEvent.click(info);
     const painel = document.querySelector('[data-info-tip-panel]')!;
-    expect(painel.textContent).toMatch(/nunca custa corações/);
-    expect(painel.textContent).toContain('Pode cair');
-    expect(painel.querySelectorAll('[data-masmorra-drops] li')).toHaveLength(4);
-    expect(painel.textContent).toContain('2→6'); // §372: bônus de camada 2→6 (×0,2; era 4→12)
-    // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
-    expect(folha.querySelectorAll('ol li')).toHaveLength(0);
+    expect(painel.textContent).toContain('Drop rate');
+    expect(painel.querySelector('[data-masmorra-drops]')!.textContent).toMatch(/Coraçãozinho.*5%[\s\S]*Glitchtama.*1%[\s\S]*Soulsmith.*5→100/);
+    expect(painel.querySelector('[data-masmorra-drops]')!.textContent).toMatch(/Bits.*→/);
+    fireEvent.click(info);
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    fireEvent.click(info);
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    fireEvent.click(info);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    expect(getByRole('dialog', { name: 'Fenda Sem Fim' })).toBeTruthy();
+  });
+
+  it('Masmorra: "Ranking" abre o ranking mensal do Rift (endless-rift)', async () => {
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
+    await achar(container, '[data-masmorra]');
+    fireEvent.click(getByRole('dialog', { name: 'Fenda Sem Fim' }).querySelector('[data-masmorra-ranking]')!);
+    await waitFor(() => expect(document.querySelector('[data-masmorra-ranking-panel]')).toBeTruthy());
+    expect(getByRole('dialog', { name: 'Ranking' })).toBeTruthy();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -251,12 +281,16 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 
   it('EN: rótulos e folha em inglês', async () => {
-    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao', language: 'en-US' })} />);
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao', language: 'en-US' })} />);
     expect(container.querySelector('[data-area-lot="fenda"]')!.textContent).toContain('Endless Rift');
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
-    fireEvent.click(getByRole('button', { name: 'How the Rift works' }));
-    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/never costs hearts/);
+    expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
+    expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
+    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
+    expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
+    fireEvent.click(container.querySelector('[data-area-sheet-head] [data-info-tip]')!);
+    expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
   });
 });
 
@@ -418,11 +452,11 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
-    const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
+    const cards = [...container.querySelectorAll('[data-salao] > ul.sm-game-card-grid > li')];
     expect(cards.length).toBe(4); // + Soul Barrage (M9); + Elemental Fusion (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       // Com a ilustração da carta no lugar, o ícone sai; sem ela, é o ícone pelado no placeholder.
-      const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
+      const img = (c.querySelector('img[data-pixel-icon]') ?? c.querySelector('img[data-game-card-art]')) as HTMLImageElement;
       expect(img).toBeTruthy();
       expect(img.getAttribute('alt')).toBe('');
       expect(img.parentElement!.style.background).toBe('');
@@ -431,21 +465,23 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
   });
 });
 
-describe('P10 (beta-2) — chips zerados do Salão não aparecem', () => {
-  it('Corrida sem recorde: nenhum chip "0"/"0 Bits"; com recorde, os dois entram', () => {
-    const { container, unmount } = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
-    expect(container.textContent).not.toMatch(/seu recorde|no recorde/);
+describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
+  it('Corrida sem recorde: nenhum selo "0"/"0 Bits"; com recorde, os dois entram', () => {
+    const { container, unmount } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const dino = () => container.querySelector('[data-game-card="dino"]')!.textContent!;
+    expect(dino()).not.toMatch(/seu recorde/);
     unmount();
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '250');
-    const r = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
-    expect(r.container.textContent).toContain('seu recorde');
-    expect(r.container.textContent).toContain('2 Bits');
+    const r = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const t = r.container.querySelector('[data-game-card="dino"]')!.textContent!;
+    expect(t).toContain('seu recorde');
+    expect(t).toContain('2 Bits');
     localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
   });
-  it('Elemental Fusion sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
-    const { container } = renderWithCss(<Match3Sheet language="pt-BR" onStart={() => {}} />);
-    expect(container.textContent).not.toContain('seu recorde');
-    // 29/10/2026: a prévia de recompensa (RewardPreview) escreve "até" + valor com o glifo de Bits (sem a palavra "Bits").
-    expect(container.textContent).toMatch(/até\s*\d+/);
+  it('Elemental Fusion sem recorde: só o "até N Bits"', () => {
+    const { container } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const t = container.querySelector('[data-game-card="match3"]')!.textContent!;
+    expect(t).not.toContain('seu recorde');
+    expect(t).toMatch(/até\s*\d+/);
   });
 });

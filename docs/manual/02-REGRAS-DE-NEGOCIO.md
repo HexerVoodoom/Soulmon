@@ -4309,7 +4309,7 @@ no Torneio da área Arena. ⚰️ Antes: `ShopModal` com dois segmentos
 
 **Em uma frase.** Cinco itens que moram na mesma pastinha da comida e se
 comportam de forma completamente diferente dela: chip dá atributo, coraçãozinho
-cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
+cura, Glitchtama liga um buff de +10% por 7 dias (1 por semana) — e nenhum conta no teto de comida.
 
 **A regra.** Catálogo em `src/utils/shop.ts` → `SPECIAL_ITEMS`, chaveado pelo
 **emoji** (que é a mesma chave do `foodInventory`). Cinco chaves, três `kind`:
@@ -4660,7 +4660,7 @@ volta com o tempo. Sem limite diário, sem porta de entrada além do piso de HP,
 > agora é checado ao limpar um andar: fechado, a descida termina em `ended`/"lacrado por ora" com o `gateLine`.
 >
 > **O MARCO** (era "concluir os 5 andares"): ao limpar o andar 5 — **uma vez por descida** (`milestoneRef`) — pagam
-> `onGlitchtama` (🌀, 1 uso/dia, `specialItemUse.ts` intocado, **nenhuma fonte nova de `perfectDays`**),
+> `onGlitchtama` (🌀, 1 uso/semana, `specialItemUse.ts` intocado, **nenhuma fonte nova de `perfectDays`**),
 > `setDungeonDifficultyAtLeast(base + 1)`, `recordDungeonReached` e `dungeonRunsCompleted` (missões "runs"). Os andares 6, 7… NÃO pagam de novo.
 
 `buildDungeonWave(level, petStage, rng, playerLevel)` (`src/utils/dungeon.ts`) monta a onda. A

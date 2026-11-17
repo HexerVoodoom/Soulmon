@@ -31,13 +31,24 @@ describe('ElementPotionSheet: lista completa', () => {
     fireEvent.click(document.querySelector('[data-potion-confirm]')!);
     expect(onCraft).toHaveBeenCalledWith('agua');
   });
-  it('filtro "Posso criar" esconde o resto', () => {
+  it('17/11: sem a linha de filtros de status nem painel do Neutro; só os três espaços de elemento', () => {
     render(<ElementPotionSheet {...base} essences={{ agua: 100 }} unlocked={['agua']} onCraft={() => {}} />);
-    fireEvent.click(document.querySelector('[data-filter="can"]')!);
-    expect(document.querySelectorAll('[data-potion-item]')).toHaveLength(1);
+    expect(document.querySelector('[data-potion-filters]')).toBeNull();
+    expect(document.querySelector('[data-filter]')).toBeNull();
+    expect(document.querySelector('[data-neutro-potion]')).toBeNull();
+  });
+  it('17/11: a poção do Neutro é uma linha comum, a ÚLTIMA da lista, igual às outras', () => {
+    render(<ElementPotionSheet {...base} essences={{ agua: 100 }} unlocked={['agua', 'neutro']} onCraft={() => {}} />);
+    for (let i = 0; i < 20 && document.querySelector('[data-potion-more]'); i++) fireEvent.click(document.querySelector('[data-potion-more]')!);
+    const itens = [...document.querySelectorAll('[data-potion-options] > li')];
+    expect(itens.length).toBeGreaterThan(2);
+    const ultimo = itens[itens.length - 1];
+    expect(ultimo.getAttribute('data-potion-item')).toBe('neutro');
+    expect(ultimo.className).toBe(itens[0].className);
+    expect(itens.filter(i => i.querySelector('[data-ing-neutro-essence]'))).toEqual([ultimo]);
   });
   it('composta: lista a poção de cada base e as essências dela', () => {
-    const l = potionListFor({ terra: 100, agua: 100, pantano: 50 }, { 'potion:terra': 1, 'potion:agua': 1 }, [], 'composite', ['pantano']);
+    const l = potionListFor({ terra: 100, agua: 100, pantano: 50 }, { 'potion:terra': 1, 'potion:agua': 1 }, [], ['pantano']).filter(r => r.potions.length > 0);
     expect(l.length).toBeGreaterThan(0);
     expect(l.every(r => r.potions.length >= 2)).toBe(true);
     const p = l.find(r => r.id === 'pantano');

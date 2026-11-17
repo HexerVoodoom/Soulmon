@@ -34,8 +34,8 @@ describe('Salão: o painel de tickets', () => {
   });
   it('cada Jogar mostra o ticketzinho com x1 quando há painel de tickets', () => {
     const c = painel(st({ count: 2, canPlay: true }));
-    for (const k of ['data-dino-start', 'data-ppt-start', 'data-match3-start', 'data-barrage-open']) {
-      expect(c.querySelector(`[${k}] [data-ticket-cost="1"]`)?.textContent, k).toContain('x1');
+    for (const k of ['dino', 'ppt', 'match3', 'barrage']) {
+      expect(c.querySelector(`[data-game-card="${k}"] [data-ticket-cost="1"]`)?.textContent, k).toContain('x1');
     }
   });
 });

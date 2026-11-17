@@ -3,12 +3,11 @@ import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
-import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, POTION_FILTERS, type PotionFilter, type PotionRecipe } from '../utils/elementPotion';
+import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, selectedBases, type PotionRecipe } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
-import { NeutroPotionPanel } from './NeutroPotionPanel';
 import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
-import { NEUTRO_POTION_COSTS } from '../utils/neutroPotion';
+import { NEUTRO_POTION_COSTS, neutroProgresso } from '../utils/neutroPotion';
 
 /**
  * POÇÃO DE ELEMENTO (Laboratório > Vesca, 30/10/2026; lista completa 12/11/2026). Mostra TODAS as poções, cada uma com o ícone e, por
@@ -35,14 +34,18 @@ const PAGE = 30;
 export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
-  const [filter, setFilter] = useState<PotionFilter>('all');
   const [shown, setShown] = useState(PAGE);
   const [sel, setSel] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
-  const list = useMemo(() => potionListFor(essences, inventory, slots, filter, unlocked), [essences, inventory, slots, filter, unlocked]);
+  // O Neutro é uma poção como as outras: entra por último (e some quando há base escolhida no filtro, pois não contém nenhuma).
+  const list = useMemo(() => {
+    const l = potionListFor(essences, inventory, slots, unlocked);
+    if (selectedBases(slots).length > 0) return l;
+    const n = neutroProgresso(essences, inventory);
+    return [...l, { id: ELEMENTO_NEUTRO_ID, essences: [], potions: [], enoughEssences: n.completo, canCraft: n.completo }];
+  }, [essences, inventory, slots, unlocked]);
   const setSlot = (i: number, id: string | null) => { setSlots(s => s.map((v, j) => (j === i ? id : v))); setShown(PAGE); setDone(null); };
-  const pickFilter = (f: PotionFilter) => { setFilter(f); setShown(PAGE); };
   const back = () => { if (sel) setSel(null); else onBack(); };
 
   const ehNeutro = sel === ELEMENTO_NEUTRO_ID;
@@ -52,11 +55,6 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     title: isPt ? 'Criar poção' : 'Create potion',
     back: isPt ? 'Voltar' : 'Back',
     hint: isPt ? 'Todas as poções. Filtre por elementos base: só entram as que contêm todos eles.' : 'Every potion. Filter by base elements: only potions that contain all of them are listed.',
-    filters: isPt ? 'Filtrar' : 'Filter',
-    f: {
-      all: isPt ? 'Todas' : 'All', can: isPt ? 'Posso criar' : 'Can create', enough: isPt ? 'Essências ok' : 'Enough essences',
-      base: isPt ? 'Base' : 'Base', composite: isPt ? 'Composta' : 'Compound',
-    } as Record<PotionFilter, string>,
     none: isPt ? 'Nenhuma poção com esse filtro.' : 'No potion matches this filter.',
     create: isPt ? 'Criar' : 'Create',
     more: isPt ? 'Mostrar mais' : 'Show more',
@@ -92,6 +90,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
           <button type="button" data-potion-create={r.id} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
         </div>
         <ul className="sm2-pocao-ing">
+          {r.id === ELEMENTO_NEUTRO_ID && (() => { const n = neutroProgresso(essences, inventory); return (
+            <>
+              <li data-ing-neutro-bases data-ok={n.basesFeitas === n.basesTotal ? 'true' : 'false'}><span style={{ flex: 1 }}>{isPt ? `Bases completas (${NEUTRO_POTION_COSTS.eachBase} essências ou 1 poção cada)` : `Bases complete (${NEUTRO_POTION_COSTS.eachBase} essence or 1 potion each)`}</span><span className="sm2-num">{n.basesFeitas}/{n.basesTotal}</span></li>
+              <li data-ing-neutro-essence data-ok={n.neutro >= n.neutroNeed ? 'true' : 'false'}><Icon id={ELEMENTO_NEUTRO_ID} size={24} /><span style={{ flex: 1 }}>{essenceName(ELEMENTO_NEUTRO_ID, isPt)}</span><span className="sm2-num">{Math.min(n.neutro, n.neutroNeed)}/{n.neutroNeed}</span></li>
+            </>
+          ); })()}
           {r.potions.map(p => (
             <li key={`p-${p.id}`} data-ing-potion={p.id} data-ok={p.have >= p.need ? 'true' : 'false'}>
               {art(p.id, false)}<span style={{ flex: 1 }}>{t.potionOf(p.id)}</span><span className="sm2-num">{p.have}/{p.need}</span>
@@ -125,13 +129,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         {!sel && (
           <>
             <p style={sm2Hint}>{t.hint}</p>
-            <NeutroPotionPanel essences={essences} inventory={inventory} isPt={isPt} unlocked={isPotionUnlocked(ELEMENTO_NEUTRO_ID, unlocked)} onCreate={() => { setSel(ELEMENTO_NEUTRO_ID); setDone(null); }} />
             <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
-            <div role="group" aria-label={t.filters} data-potion-filters style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {POTION_FILTERS.map(f => (
-                <button key={f} type="button" data-filter={f} aria-pressed={filter === f} onClick={() => pickFilter(f)} className="sm2-kit-btn sm2-kit-btn-sm sm2-pocao-chip">{t.f[f]}</button>
-              ))}
-            </div>
             {list.length === 0 ? (
               <p style={sm2Text} data-potion-none>{t.none}</p>
             ) : (

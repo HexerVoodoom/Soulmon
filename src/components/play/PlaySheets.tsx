@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
-import { CtaTextButton } from '../ui/CtaButton';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, ModalSheet } from '../form/FormKit';
+import { createPortal } from 'react-dom';
+import { RankingPanel } from '../RankingPanel';
+import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
-import { clearBonus } from '../DungeonGame';
+import { clearBonus } from '../../utils/dungeonBase';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { useRiftTalents } from '../../contexts/useTalentBonus';
@@ -131,65 +133,61 @@ function DropItem({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a descida. */ onMap?: () => void; bitsToday?: number }) {
+/** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Pedido de 17/11/2026: "Ranking" (outline, negrito sublinhado) à esquerda da linha do título (`headSlot`, o encaixe da moldura; sem ele, entra no topo da folha) e o "i" com o "Drop rate" (os itens e as chances, num tooltip) na frente do título; a nota "Pode cair" saiu do corpo. */
+export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, headSlot }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number; /** Conta do jogador: sem ela não há ranking (o botão some). */ saveId?: string; /** Encaixe à esquerda do título da moldura (`AreaSheet`); `undefined` = sem moldura, o botão fica no corpo. */ headSlot?: HTMLElement | null }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
   const rift = useRiftTalents();
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
-
+  const [rankOpen, setRankOpen] = useState(false);
+  const rankBtn = saveId ? (
+    <button type="button" data-masmorra-ranking onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false, 'sm'), fontWeight: 700, textDecoration: 'underline' }}>
+      Ranking
+    </button>
+  ) : null;
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* H11 (01/10/2026): a fileira de andares numerados saiu — repetia o
-          número da linha de cima e não dizia nada que ela não dissesse. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
-        {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
-        <ModalInfo language={language} label={isPt ? 'Como funciona a Fenda' : 'How the Rift works'} align="right">
-          <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
-          {isPt
-            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia da Home, até a camada ${DUNGEON_MAX_LAYER}. Perder nunca custa corações.`
-            : `Fights run on their own and HP returns over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} Home energy, down to layer ${DUNGEON_MAX_LAYER}. Losing never costs hearts.`}
-          </InfoTipSection>
-          {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
-              vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
-          <InfoTipSection title={isPt ? 'Pode cair' : 'Possible drops'} last>
-            <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
-              <DropItem
-                label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
-                value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
-              />
-              <DropItem
-                label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
-                value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
-              />
-              <DropItem
-                label={isPt ? `Glitchtama (raro: a cada marco de ${DUNGEON_MILESTONE_FLOOR} camadas, no máximo 1 por semana)` : `Glitchtama (rare: at each ${DUNGEON_MILESTONE_FLOOR}-layer milestone, at most 1 a week)`}
-                value="1%"
-              />
-              <DropItem
-                label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
-                value="5→100"
-              />
-            </ul>
-          </InfoTipSection>
-        </ModalInfo>
-      </div>
-      {/* P10 (beta-2): chip ZERADO não aparece (recorde 0 não diz nada) — a fileira inteira some se nenhum tiver o que dizer. */}
+      {rankBtn && (headSlot ? createPortal(rankBtn, headSlot) : headSlot === undefined ? <div style={{ display: 'flex' }}>{rankBtn}</div> : null)}
+      <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
+        <div data-masmorra-ranking-panel>
+          <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />
+        </div>
+      </ModalSheet>
+      <ModalInfo language={language} label="Drop rate">
+        <b data-masmorra-drops-title style={{ display: 'block', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, marginBottom: 4 }}>Drop rate</b>
+        <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
+          <DropItem
+            label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
+            value={`${clearBonus(1)}→${clearBonus(DUNGEON_MILESTONE_FLOOR)}`}
+          />
+          <DropItem
+            label={isPt ? 'Coraçãozinho (raro)' : 'Little heart (rare)'}
+            value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
+          />
+          <DropItem
+            label={isPt ? `Glitchtama (raro: a cada marco de ${DUNGEON_MILESTONE_FLOOR} camadas, no máximo 1 por semana)` : `Glitchtama (rare: at each ${DUNGEON_MILESTONE_FLOOR}-layer milestone, at most 1 a week)`}
+            value="1%"
+          />
+          <DropItem
+            label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}
+            value="5→100"
+          />
+        </ul>
+      </ModalInfo>
       {(deepest > 0 || best > 0) && (
         <div style={{ display: 'flex', gap: 8 }}>
           {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
           {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
         </div>
       )}
-      {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
+      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
-        {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
+        {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
-      {onMap && <CtaTextButton data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</CtaTextButton>}
-      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
+      {onMap && <button type="button" data-masmorra-map onClick={onMap} style={{ ...sm2Button('outline'), width: '100%' }}>{isPt ? 'Ver o mapa' : 'See the map'}</button>}
     </div>
   );
 }
@@ -199,64 +197,45 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { languag
 const DINO_POINTS_PER_BIT = 100;
 import { BARRAGE_POINTS_PER_BIT } from '../../utils/soulBarrage';
 
-export function DinoSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
+/** Um selo pequeno sob a carta (recorde, Bits, ticket): texto neutro, sem cor de alerta. */
+function Badge({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return <span className="sm2-num" style={{ whiteSpace: 'nowrap', ...style }}>{children}</span>;
+}
+
+/** Selos da Corrida: recorde e os Bits que ele rendeu (somem sem recorde: não há "0 Bits" a mostrar, P10) + o ticket da partida. */
+function DinoBadges({ language, paga }: { language: Language; paga: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
-    <div data-dino style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* P10 (beta-2): sem recorde (0) os dois chips somem — não há "0 Bits no recorde" para mostrar. */}
-      {best > 0 && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />
-          <StatBox
-            value={<BitsAmount value={Math.floor(best / DINO_POINTS_PER_BIT)} />}
-            label={isPt ? 'no recorde' : 'at your best'}
-            valueStyle={bitsStyle}
-          />
-        </div>
-      )}
-      {/* H13 (01/10/2026): "Jogar"/"Play" nos dois jogos do Salão — "Correr"
-          lia como descrição do jogo, não como a ação de abri-lo. */}
-      <button type="button" data-dino-start onClick={onStart} style={cta}>
-        {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <TicketCost />}
-      </button>
-    </div>
+    <>
+      {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
+      {best > 0 && <Badge style={bitsStyle}><BitsAmount value={Math.floor(best / DINO_POINTS_PER_BIT)} /></Badge>}
+      {paga && <TicketCost />}
+    </>
   );
 }
 
-// ── Elemental Fusion ───────────────────────────────────────────────────────────────
-export function Match3Sheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
+/** Selos do Elemental Fusion: recorde (só se houver) + "até N Bits por rodada" + o ticket. */
+function Match3Badges({ language, paga }: { language: Language; paga: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   return (
-    <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
-        <StatBox value={<RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} />} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
-      </div>
-      <button type="button" data-match3-start onClick={onStart} style={cta}>
-        {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <TicketCost />}
-      </button>
-    </div>
+    <>
+      {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
+      <Badge style={bitsStyle}><RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} /> {isPt ? 'por rodada' : 'per round'}</Badge>
+      {paga && <TicketCost />}
+    </>
   );
 }
 
-// ── Pedra, papel e tesoura ──────────────────────────────────────────────────
-export function PptSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
+/** Selos do Pedra-papel-tesoura: Bits por vitória + o ticket. */
+function PptBadges({ language, paga }: { language: Language; paga: boolean }) {
   const isPt = language === 'pt-BR';
   return (
-    <div data-ppt style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <StatBox value={<BitsAmount value={MATCH_POINTS} />} label={isPt ? 'por vitória' : 'per win'} valueStyle={bitsStyle} />
-        <StatBox value={WINS_NEEDED} label={isPt ? 'rodadas para vencer' : 'rounds to win'} />
-      </div>
-      <button type="button" data-ppt-start onClick={onStart} style={cta}>
-        {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <TicketCost />}
-      </button>
-    </div>
+    <>
+      <Badge style={bitsStyle}><BitsAmount value={MATCH_POINTS} /> {isPt ? 'por vitória' : 'per win'}</Badge>
+      {paga && <TicketCost />}
+    </>
   );
 }
 
@@ -274,7 +253,7 @@ export type SalaoGame = 'dino' | 'ppt' | 'match3' | 'barrage';
 export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
-/** Salão de Jogos — jogos livres, em LISTA de cards (o dono pediu a lista de volta em 04/11/2026; as cartas ilustradas ficaram só no Refúgio). */
+/** Salão de Jogos — jogos livres, em CARTAS ilustradas (`GameCard`, como o Refúgio; pedido do dono, 17/11/2026 — em 04/11 ele tinha pedido a lista de volta). */
 export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => boolean | void; refused?: boolean }) {
   /* Tocar em Jogar sem ticket (ou ficar sem ticket no "jogar de novo", `refused`) abre o modal "quer comprar?" (15/11/2026): comprando, o jogo
      pedido abre assim que o ticket aparece no estado (`pendente`). Recusar não gasta nada. */
@@ -317,70 +296,41 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <ul style={{ ...sheetCardList, gap: 'var(--sm2-space-4, 16px)' }}>
-        <li style={sheetCard}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
-          </div>
-          <DinoSheet language={language} onStart={() => onStart('dino')} energyCost={paga} />
-        </li>
-        <li style={sheetCard}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <PixelIcon src={iconPpt} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
-          </div>
-          <PptSheet language={language} onStart={() => onStart('ppt')} energyCost={paga} />
-        </li>
-        <li style={sheetCard}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>Elemental Fusion</p>
-          </div>
-          <Match3Sheet language={language} onStart={() => onStart('match3')} energyCost={paga} />
-        </li>
-        <li style={sheetCard}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>{isPt ? 'Chuva de Almas' : 'Soul Barrage'}</p>
-          </div>
-          <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
-              {isPt ? 'Jogar' : 'Play'}
-              {paga && <TicketCost />}
-            </button>
-          </div>
-        </li>
-      </ul>
+      <GameCardGrid>
+        <GameCard
+          id="dino" icon={iconCorrida} dataAttrs={{ 'data-dino-start': 'true' }}
+          title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
+          description={isPt ? 'Pule os obstáculos' : 'Jump the obstacles'}
+          onPress={() => onStart('dino')}
+          badges={<DinoBadges language={language} paga={paga} />}
+        />
+        <GameCard
+          id="ppt" icon={iconPpt} dataAttrs={{ 'data-ppt-start': 'true' }}
+          title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
+          description={isPt ? `Primeiro a ${WINS_NEEDED} rodadas` : `First to ${WINS_NEEDED} rounds`}
+          onPress={() => onStart('ppt')}
+          badges={<PptBadges language={language} paga={paga} />}
+        />
+        <GameCard
+          id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
+          title="Elemental Fusion"
+          description={isPt ? 'Alinhe 3 ou mais peças' : 'Line up 3 or more tiles'}
+          onPress={() => onStart('match3')}
+          badges={<Match3Badges language={language} paga={paga} />}
+        />
+        <GameCard
+          id="barrage" icon={iconCorrida} dataAttrs={{ 'data-barrage-open': 'true' }}
+          title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
+          description={isPt ? 'Desvie dos tiros' : 'Dodge the shots'}
+          onPress={() => onStart('barrage')}
+          badges={paga ? <TicketCost /> : undefined}
+        />
+      </GameCardGrid>
     </div>
   );
 }
 
-/** Um jogo do Ateliê: CARD próprio (I2) com o CTA PRIMÁRIO (H14). */
-function GameRow({ id, title, asks, meta, cta, onStart, dataKey }: {
-  id: string; title: string; asks: string; meta?: ReactNode; cta: string;
-  onStart: () => void; dataKey: 'mente' | 'refugio';
-}) {
-  return (
-    <li style={sheetCard}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ ...sheetCardTitle, flex: 1, minWidth: 0 }}>{title}</span>
-        {meta !== undefined && <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{meta}</span>}
-      </div>
-      <p style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>{asks}</p>
-      <button
-        type="button"
-        {...{ [`data-${dataKey}-start`]: id }}
-        onClick={onStart}
-        style={{ ...sm2Button('primary'), width: '100%' }}
-      >
-        {cta}
-      </button>
-    </li>
-  );
-}
-
-/** Ateliê da Mente — o Eco do Pet e os dois jogos de grade (Trilha e Selo Faltante). */
+/** Ateliê da Mente — o Eco do Pet e os dois jogos de grade (Trilha e Selo Faltante), em cartas ilustradas (`GameCard`; 17/11/2026). */
 export function MenteSheet({ language, onStart, bitsToday }: {
   language: Language;
   /** Bits de minijogo já creditados hoje (o teto é compartilhado). */
@@ -389,7 +339,6 @@ export function MenteSheet({ language, onStart, bitsToday }: {
 }) {
   const isPt = language === 'pt-BR';
   const upTo = (n: number) => <RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: n }]} />;
-  const cta = isPt ? 'Jogar' : 'Play';
   const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode }[] = [
     {
       id: 'eco',
@@ -428,11 +377,16 @@ export function MenteSheet({ language, onStart, bitsToday }: {
           ))}
         </ModalInfo>
       </div>
-      <ul style={sheetCardList}>
+      <GameCardGrid>
         {rows.map(r => (
-          <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} meta={r.meta} cta={cta} onStart={() => onStart(r.id)} />
+          <GameCard
+            key={r.id} id={r.id} dataAttrs={{ 'data-mente-start': r.id }}
+            title={r.title} description={r.asks}
+            onPress={() => onStart(r.id)}
+            badges={r.meta}
+          />
         ))}
-      </ul>
+      </GameCardGrid>
     </div>
   );
 }

@@ -33,8 +33,17 @@ describe('RiftMap', () => {
     expect(node(container, 5).querySelector('[data-rift-node-label]')?.textContent).toBe('11-12');
     expect(node(container, 1).dataset.state).toBe('visited');
     expect(node(container, 1).querySelector('button')?.textContent).not.toBe('?');
-    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('3-4');
-    expect(container.querySelector('[data-rift-map-gray]')).toBeTruthy();
+    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('Water 1 & 2');
+    expect(container.querySelector('[data-rift-map-veil]')).toBeTruthy();
+  });
+
+  it('o que ainda não foi alcançado é PRETO (não cinza/branco) e a fronteira tem gradiente, sem corte seco', () => {
+    const { container } = mount();
+    const bg = (container.querySelector('[data-rift-map-veil]') as HTMLElement).style.background;
+    expect(bg).toContain('linear-gradient');
+    expect(bg).toMatch(/rgba\(0,\s*0,\s*0,\s*0\)/); // nasce transparente
+    expect(bg).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.96\)/); // chega ao preto quase opaco
+    expect(bg).not.toMatch(/96,\s*100,\s*106/);
   });
 
   it('o sprite do Soulmon fica AO LADO do nó atual, e só nele', () => {

@@ -121,8 +121,11 @@ retenção ("não guardamos o áudio") e como revogar.
 > reconferido na `release/beta-1`). O manifesto-fonte (`android/app/src/main/AndroidManifest.xml`)
 > declara só as do app; o **manifesto mesclado** — o que a Play enxerga no AAB — inclui as das
 > bibliotecas (Play Billing, Firebase/FCM, Capacitor, plugins). A ficha tem de bater com o mesclado.
-> `SCHEDULE_EXACT_ALARM` foi **removida** em `fix/beta-prontidao` (#311): o lembrete usa alarme
-> inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita.
+> `SCHEDULE_EXACT_ALARM` foi removida em `fix/beta-prontidao` (#311) mas **voltou a ser declarada** no beta12
+> (item I): só o aviso de fim do Pomodoro (Foco) pede o minuto exato com o app fechado
+> (`SoulmonAlarmPlugin.scheduleExactAlarm`). Sem a permissão concedida pelo usuário ("Alarmes e lembretes") o app cai no
+> alarme inexato (`setAndAllowWhileIdle`); os demais lembretes seguem inexatos. **A ficha de permissões de alarme da
+> Play Console precisa declarar o uso (timer/Pomodoro).**
 >
 > Reconferir a cada AAB: `Select-String -Path android\app\build\intermediates\merged_manifests\release\AndroidManifest.xml -Pattern "uses-permission"`
 
@@ -131,7 +134,7 @@ retenção ("não guardamos o áudio") e como revogar.
 | `INTERNET` | app | Save na nuvem, login, chat (o app carrega do Worker) | Não (normal) | Não |
 | `ACCESS_NETWORK_STATE` | Firebase / Capacitor | Saber se há rede (tela de erro de rede) | Não (normal) | Não |
 | `POST_NOTIFICATIONS` | app | Lembretes | Sim — diálogo do sistema (Android 13+) | Não coleta por si; o token vai em "IDs" (§2.7) |
-| ~~`SCHEDULE_EXACT_ALARM`~~ | — | **Removida** (#311): lembrete por alarme inexato. Não declarar uso de alarme exato na Play Console | — | — |
+| `SCHEDULE_EXACT_ALARM` | app (`AndroidManifest.xml`) | Aviso de fim do Pomodoro do Foco no minuto certo; sem a permissão cai no alarme inexato | Sim — permissão restrita: declarar o uso (timer/Pomodoro) na ficha de alarmes da Play Console | Não |
 | `RECEIVE_BOOT_COMPLETED` | app | Reagendar lembretes após reiniciar | Não (normal) | Não |
 | `WAKE_LOCK` | Firebase Messaging / WorkManager | Manter o aparelho acordado o tempo de entregar uma notificação | Não (normal) | Não |
 | `FOREGROUND_SERVICE` | Capacitor / plugins | Serviço de curta duração de plugin (notificações / passos) | Não perigosa; Android 14 exige tipo de serviço declarado se for usado **[confirmar no merged qual serviço usa]** | Não |

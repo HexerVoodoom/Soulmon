@@ -57,4 +57,27 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     fireEvent.click(screen.getByRole('button', { name: 'How the Arena works' }));
     expect(document.querySelector('[data-duelo-ajuda-stray]')?.textContent).toMatch(/^Stray: /);
   });
+
+  it('"Comprar convites" é o PRIMEIRO item da folha, mostra o custo (1 energia = N convites) e chama a troca', () => {
+    H.load = () => new Promise(() => {});
+    const onExchange = vi.fn(() => true);
+    const inv = { count: 2, max: 7, perEnergy: 5, canExchange: true, onExchange, onBegin: () => true };
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="pt-BR" onStart={() => {}} />);
+    const raiz = container.querySelector('[data-duelo]') as HTMLElement;
+    const btn = container.querySelector('[data-duelo-comprar]') as HTMLButtonElement;
+    expect(raiz.firstElementChild!.contains(btn)).toBe(true);
+    expect(btn.textContent).toContain('Comprar convites');
+    expect(btn.querySelector('[data-energy-cost="1"]')).toBeTruthy();
+    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toContain('1 energia = 5 convites');
+    fireEvent.click(btn);
+    expect(onExchange).toHaveBeenCalledTimes(1);
+  });
+
+  it('conta paga: o custo mostra 7 convites por energia; estoque cheio desabilita a compra', () => {
+    H.load = () => new Promise(() => {});
+    const inv = { count: 7, max: 7, perEnergy: 7, canExchange: false, onExchange: () => false, onBegin: () => true };
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="en-US" onStart={() => {}} />);
+    expect(container.querySelector('[data-duelo-convites-count]')!.textContent).toContain('1 energy = 7 invites');
+    expect((container.querySelector('[data-duelo-comprar]') as HTMLButtonElement).disabled).toBe(true);
+  });
 });
