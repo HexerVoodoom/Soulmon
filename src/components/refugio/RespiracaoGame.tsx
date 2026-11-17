@@ -9,7 +9,7 @@ import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { entrarNaSuperficie } from '../../utils/musica';
-import { CenaSubaquatica, AguaViva } from './CenaSubaquatica';
+import { CenaSubaquatica, BolhaGuia } from './CenaSubaquatica';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
 } from '../../utils/refugio/respiracao';
@@ -181,10 +181,9 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   }
 
   // ---- respirando ----
-  // TELA CHEIA SUBAQUÁTICA (04/11/2026): a cena (`CenaSubaquatica`) cobre o fundo e o guia é a água-viva
-  // luminosa — cresce na inspiração, encolhe na expiração. Movimento reduzido: cena parada, a água-viva só
+  // TELA CHEIA SUBAQUÁTICA (04/11/2026): a cena (`CenaSubaquatica`) cobre o fundo e o guia é a bolha
+  // em volta do pet — cresce na inspiração, encolhe na expiração. Movimento reduzido: cena parada, a bolha só
   // muda de opacidade e a barra abaixo mostra o enchimento.
-  const petScale = reduced ? 1 : 0.94 + 0.08 * level;
   const ease = `${TICK_MS}ms linear`;
   // A raiz usa `backgroundColor`, não `background`: ao sair da rodada o React limparia o atalho e levaria junto a cor do GameRoot (tela final transparente sobre o Mapa).
   const tinta: CSSProperties = { color: '#e8fbff', textShadow: '0 1px 6px rgba(0,20,35,0.8)' };
@@ -194,14 +193,15 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, ...tinta }}>
       <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
       <div style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-        <AguaViva level={level} reduced={reduced} size={180} />
-        <VisorSprite
-          src={sprite}
-          size={64}
-          idle={false}
-          data-visor-pet
-          style={{ position: 'relative', left: 'auto', top: 'auto', ...petScaleStyle(petBodyScale, 'center'), transform: `scale(${petScale})`, transition: reduced ? undefined : `transform ${ease}` }}
-        />
+        <BolhaGuia level={level} reduced={reduced} size={240}>
+          <VisorSprite
+            src={sprite}
+            size={128}
+            idle={false}
+            data-visor-pet
+            style={{ position: 'relative', left: 'auto', top: 'auto', ...petScaleStyle(petBodyScale, 'center') }}
+          />
+        </BolhaGuia>
       </div>
       <p aria-live="polite" data-respiracao-phase style={{ ...phaseTitle, fontSize: 'var(--sm2-text-lg)', ...tinta }}>
         {phaseWord(phase, isPt)}
@@ -246,7 +246,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           {isPt ? 'Segure enquanto respira (opcional)' : 'Hold while you breathe (optional)'}
         </span>
       </button>
-      <p style={{ ...phaseLine, ...tinta }}>{isPt ? 'Se preferir, só olhe a água-viva.' : 'Or just watch the jellyfish.'}</p>
+      <p style={{ ...phaseLine, ...tinta }}>{isPt ? 'Se preferir, só olhe a bolha.' : 'Or just watch the bubble.'}</p>
       <button type="button" data-respiracao-stop onClick={finish} style={{ ...sm2Button('quiet'), ...tinta }}>
         {isPt ? 'Terminar' : 'Finish'}
       </button>

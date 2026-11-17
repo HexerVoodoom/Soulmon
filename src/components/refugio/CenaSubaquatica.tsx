@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
  * CENA SUBAQUÁTICA da Respiração (pedido do dono, 04/11/2026) — tela cheia,
  * calma, em camadas: degradê azul-petróleo, raios de luz balançando devagar,
  * bolhas subindo com a respiração, silhuetas de alga/coral com parallax e o
- * GUIA: uma água-viva luminosa que cresce na inspiração e encolhe na expiração.
+ * GUIA: uma bolha de sabão em volta do pet, que cresce na inspiração e encolhe na expiração.
  *
  * Arte pintada OPCIONAL em `src/assets/soulmon/respiracao/`:
  *   fundo.webp (fundo opaco) · meio.webp (meio, com alfa) · frente.webp (frente, com alfa).
@@ -101,28 +101,29 @@ export function CenaSubaquatica({ level, reduced, children }: { level: number; r
   );
 }
 
-/** O guia: água-viva luminosa. `level` 0..1 (vazio..cheio). */
-export function AguaViva({ level, reduced, size = 200 }: { level: number; reduced: boolean; size?: number }) {
-  const s = reduced ? 1 : 0.55 + 0.45 * level;
-  const brilho = 0.35 + 0.6 * level;
+/**
+ * O guia: uma BOLHA de sabão em volta do pet (16/11/2026, pedido do dono; antes era uma água-viva ao lado dele).
+ * `level` 0..1 (vazio..cheio): a bolha, com o pet dentro, cresce na inspiração e encolhe na expiração.
+ * Movimento reduzido: tamanho fixo; só a opacidade acompanha o nível.
+ */
+export function BolhaGuia({ level, reduced, size = 240, children }: { level: number; reduced: boolean; size?: number; children?: React.ReactNode }) {
+  const s = reduced ? 1 : 0.62 + 0.38 * level;
+  const brilho = 0.3 + 0.6 * level;
   return (
-    <div data-respiracao-bubble data-agua-viva aria-hidden="true" style={{
-      position: 'relative', width: size, height: size * 1.25, transform: `scale(${s})`, transformOrigin: '50% 35%',
-      transition: reduced ? 'opacity 100ms linear' : 'transform 100ms linear', opacity: reduced ? 0.35 + 0.65 * level : 1,
+    <div data-respiracao-bubble data-bolha-guia aria-hidden="true" style={{
+      position: 'relative', width: size, height: size, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transform: `scale(${s})`, transformOrigin: '50% 50%', borderRadius: '50%',
+      transition: reduced ? 'opacity 100ms linear' : 'transform 100ms linear', opacity: reduced ? 0.45 + 0.55 * level : 1,
+      background: 'radial-gradient(circle at 50% 50%, rgba(210,250,255,0.04) 0%, rgba(160,235,250,0.10) 62%, rgba(150,235,250,0.30) 88%, rgba(235,253,255,0.55) 97%, rgba(235,253,255,0.25) 100%)',
+      boxShadow: `inset 0 0 ${14 + 14 * level}px rgba(190,245,255,0.45), 0 0 ${10 + 22 * level}px rgba(150,240,255,${brilho})`,
+      border: '1px solid rgba(230,252,255,0.6)',
     }}>
-      <svg viewBox="0 0 100 125" width="100%" height="100%" style={{ overflow: 'visible', filter: `drop-shadow(0 0 ${8 + 18 * level}px rgba(150,240,255,${brilho}))` }}>
-        <defs>
-          <radialGradient id="sm-av-sino" cx="45%" cy="35%" r="65%">
-            <stop offset="0" stopColor="#f2fdff" stopOpacity="0.95" />
-            <stop offset="0.45" stopColor="#9fe8f5" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#4fb8d0" stopOpacity="0.18" />
-          </radialGradient>
-        </defs>
-        <path d="M10 48 C10 18 30 6 50 6 C70 6 90 18 90 48 C80 44 72 50 62 46 C56 50 44 50 38 46 C28 50 20 44 10 48 Z" fill="url(#sm-av-sino)" stroke="rgba(230,252,255,0.8)" strokeWidth="1" />
-        {[22, 36, 50, 64, 78].map((x, i) => (
-          <path key={x} d={`M${x} 47 C${x - 5} 70 ${x + 5} 88 ${x - 2 + (i % 2) * 4} ${110 - (i % 3) * 6}`} fill="none" stroke="rgba(190,245,255,0.55)" strokeWidth="1.2" strokeLinecap="round" />
-        ))}
-      </svg>
+      {/* reflexos da luz: arco no alto à esquerda e pontinho embaixo à direita */}
+      <span style={{ position: 'absolute', left: '14%', top: '10%', width: '38%', height: '20%', borderRadius: '50%', transform: 'rotate(-32deg)', background: 'radial-gradient(ellipse at 40% 50%, rgba(255,255,255,0.75), rgba(255,255,255,0) 70%)' }} />
+      <span style={{ position: 'absolute', right: '17%', bottom: '14%', width: '9%', height: '6%', borderRadius: '50%', transform: 'rotate(-32deg)', background: 'rgba(255,255,255,0.55)', filter: 'blur(1px)' }} />
+      {/* película irisada fina, só nas bordas */}
+      <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(from 200deg, rgba(255,160,220,0.14), rgba(120,220,255,0.18), rgba(170,255,200,0.14), rgba(255,200,140,0.10), rgba(255,160,220,0.14))', WebkitMask: 'radial-gradient(circle, transparent 74%, #000 92%)', mask: 'radial-gradient(circle, transparent 74%, #000 92%)' }} />
+      {children}
     </div>
   );
 }
