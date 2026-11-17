@@ -64,11 +64,7 @@ export function VescaPotionOffer({ language, elementId, elementIds, onMake, onDi
         )}
         {!grupo && (potionArt(elementId) ? <img src={potionArt(elementId)} alt="" aria-hidden="true" width={64} height={64} draggable={false} data-vesca-potion-art /> : <Icon id={elementId} size={32} />)}
         {!grupo && <p style={sm2Text}>{isPt ? `Você já juntou ${limiar} essências de ${el}. Quer que eu faça a poção agora?` : `You have gathered ${limiar} ${el} essences. Shall I brew the potion now?`}</p>}
-        {!grupo && <p style={sm2Hint}>{elementId === 'neutro'
-          ? (isPt ? 'Pede 50 essências do Neutro e, de cada elemento base, 100 essências ou uma poção. Se preferir, faça depois no Laboratório.' : 'Needs 50 Neutral essence and, for each base element, 100 essence or one potion. You can also do it later in the Laboratory.')
-          : limiar === 100
-          ? (isPt ? 'Gasta 100 essências. Se preferir, faça depois no Laboratório.' : 'Costs 100 essences. You can also do it later in the Laboratory.')
-          : (isPt ? `Gasta ${limiar} essências dele e uma poção de cada elemento base dele. Se preferir, faça depois no Laboratório.` : `Costs ${limiar} of its essence and one potion of each of its base elements. You can also do it later in the Laboratory.`)}</p>}
+        {!grupo && <p style={sm2Hint}>{isPt ? `Gasta ${limiar} essências. Se preferir, faça depois no Laboratório.` : `Costs ${limiar} essences. You can also do it later in the Laboratory.`}</p>}
       </div>
     </ModalSheet>
   );

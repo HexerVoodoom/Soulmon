@@ -722,7 +722,7 @@ desde `a6c1cd8a`).
 repositório). Régua: `src/deploy/versaoUnica.contract.test.ts`. Bump de versão =
 `package.json` **e** `versionName`/`versionCode` no Gradle, no mesmo commit.
 
-**Alarme (PL-9, revisto em beta-play-01):** o app NÃO declara mais `SCHEDULE_EXACT_ALARM`
+**Alarme (PL-9, revisto em beta-play-01 e de novo no beta12):** ⚠️ o manifesto voltou a declarar `SCHEDULE_EXACT_ALARM` (beta12, item I: só o aviso de fim do Pomodoro do Foco pede o minuto exato, via `scheduleExactAlarm`; sem a permissão cai no inexato; a Play exige declarar o uso). O texto abaixo descreve o estado do beta-play-01 e vale para os lembretes comuns, que seguem inexatos: o app NÃO declarava `SCHEDULE_EXACT_ALARM`
 (permissão restrita da Play; lembrete tolera minutos de janela). `SoulmonAlarmPlugin.kt`
 agenda só com `setAndAllowWhileIdle` (inexato, acorda em Doze); saíram o gate
 `canScheduleExactAlarms()`, o reagendamento por `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`

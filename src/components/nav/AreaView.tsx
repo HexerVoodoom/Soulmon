@@ -54,6 +54,7 @@ import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import { isFunGame } from '../../utils/funSession';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { FunTicketCostContext, TicketFan } from '../play/TicketFan';
+import { conviteDueloFan } from '../arena/conviteDueloArt';
 import { setActive, trackMinigame } from '../../utils/usageTime';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
@@ -414,6 +415,8 @@ export function AreaView(props: AreaViewProps) {
   const gsForIndicators = gsCtx?.gameState;
   /** O mapa de andares do Rift em tela cheia (REGISTRO §462). */
   const [riftMapOpen, setRiftMapOpen] = useState(false);
+  /** "Entrar no Rift" na folha: a descida larga SOZINHA do ponto onde parou, sem o lobby nem 2º toque (pedido do dono, 16/11/2026). */
+  const [riftAuto, setRiftAuto] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(lote => {
@@ -436,6 +439,7 @@ export function AreaView(props: AreaViewProps) {
   const [duelSeed, setDuelSeed] = useState<number | undefined>(undefined);
   /** O encaixe do canto do título da folha do Torneio (o indicador da faixa entra por portal). */
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
+  const [riftHeadStart, setRiftHeadStart] = useState<HTMLElement | null>(null);
   /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
@@ -594,9 +598,10 @@ export function AreaView(props: AreaViewProps) {
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
-    const exitGame = () => setGame(null);
+    const exitGame = () => { setRiftAuto(false); setGame(null); };
     return (
             <DungeonGame
+              autoStart={riftAuto}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
               profissao={props.profissao}
@@ -618,7 +623,7 @@ export function AreaView(props: AreaViewProps) {
               bits={props.points}
               onSpendBits={play.onSpendBits}
               onExit={exitGame}
-              onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
+              onExitToMap={() => { setRiftAuto(false); setGame(null); props.onGoToMap?.(); }}
             />
     );
   };
@@ -626,6 +631,7 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'arena') {
     const lots = arenaLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
+    const conviteArt = props.play?.arena?.invites ? conviteDueloFan(language, props.play.arena.invites.max) : undefined;
     return (
       <AreaScene
         areaId={area}
@@ -634,7 +640,8 @@ export function AreaView(props: AreaViewProps) {
         lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
         notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}
+          npcOverlay={open?.id === 'duelo' && props.play?.arena?.invites && conviteArt ? <TicketFan count={props.play.arena.invites.count} language={language} art={conviteArt} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} onEnemySeen={props.play.onBestiarySeen} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />
@@ -705,7 +712,7 @@ export function AreaView(props: AreaViewProps) {
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
         palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} headStartRef={open?.id === 'fenda' ? setRiftHeadStart : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -723,7 +730,7 @@ export function AreaView(props: AreaViewProps) {
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => { if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} headSlot={riftHeadStart} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
             {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}

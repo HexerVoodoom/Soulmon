@@ -94,3 +94,9 @@ export function riftWavePlan(layer: number): RiftWavePlan {
   const fim = set.part === CAMADAS_POR_ELEMENTO;
   return { set, comum: st.common, ...(fim ? { miniBoss: st.boss } : {}), miniBossUltra: fim && set.count === RIFT_ULTRA_COUNT };
 }
+
+/** O NOME do andar dentro do conjunto: "Fogo 1" (1º andar) e "Fogo 2" (2º); vencidas as 6 lutas do 1, desce-se ao 2 (pedido do dono, 16/11/2026). */
+export const riftFloorName = (elementName: string, part: number): string => `${elementName} ${Math.min(CAMADAS_POR_ELEMENTO, int(part))}`;
+
+/** O nome do CONJUNTO inteiro no mapa, onde um nó vale os dois andares: "Fogo 1 e 2" / "Fire 1 & 2". */
+export const riftSetName = (elementName: string, isPt: boolean): string => `${elementName} 1 ${isPt ? 'e' : '&'} ${CAMADAS_POR_ELEMENTO}`;

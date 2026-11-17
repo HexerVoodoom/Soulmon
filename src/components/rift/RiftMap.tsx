@@ -5,7 +5,7 @@ import {
   RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
   riftSegmentReached, riftVisibleRange, type RiftMapNode, type RiftMapSave,
 } from '../../utils/riftMap';
-import { RIFT_SET_COUNT, riftSetOfLayer } from '../../utils/riftSets';
+import { RIFT_SET_COUNT, riftSetName, riftSetOfLayer } from '../../utils/riftSets';
 import { riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
@@ -21,6 +21,10 @@ const TILE_URL: string | undefined = Object.values(tiles)[0];
 /** Fundo de reserva (sem o tile): pedra escura com veios turquesa, repetível na vertical. */
 const FALLBACK_BG = 'repeating-linear-gradient(180deg, rgba(20,60,66,.5) 0 2px, transparent 2px 160px), linear-gradient(180deg, #14282c 0%, #0e1c20 100%)';
 const NODE = 56;
+/** A fronteira visto/não visto: a película PRETA nasce transparente `RIFT_VEIL_START` px abaixo do último nó alcançado e chega ao opaco em `RIFT_VEIL_FADE` px (gradiente, sem corte seco). */
+const RIFT_VEIL_START = 24;
+const RIFT_VEIL_FADE = 110;
+const RIFT_VEIL_ALPHA = 0.96;
 
 export interface RiftMapProps {
   language: Language;
@@ -85,7 +89,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
     for (let i = RIFT_SET_COUNT - 1; i > last; i--) if (riftNodeState(i, save) !== 'locked') { last = i; break; }
     return last;
   }, [save, currentIdx]);
-  const grayTop = riftMapNode(lastReached, save).y + 70;
+  const veilTop = riftMapNode(lastReached, save).y + RIFT_VEIL_START;
 
   const tap = (n: RiftMapNode) => {
     if (n.state === 'locked') { setNote(t.lockedNote); return; }
@@ -109,28 +113,29 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
           position: 'relative', height: RIFT_MAP_HEIGHT, width: '100%',
           background: TILE_URL ? `url(${TILE_URL}) 0 0 / 100% ${tileH}px repeat-y, ${FALLBACK_BG}` : FALLBACK_BG,
         }}>
-          {/* o mapa que ainda não foi percorrido fica CINZA (véu abaixo do último nó alcançado) */}
-          <div aria-hidden="true" data-rift-map-gray style={{ position: 'absolute', left: 0, right: 0, top: grayTop, bottom: 0, background: 'rgba(96,100,106,.6)', pointerEvents: 'none' }} />
+          {/* o mapa que ainda não foi percorrido fica PRETO, com um gradiente de transição na fronteira (pedido do dono, 16/11/2026). Fica atrás dos nós e do caminho; estático (sem movimento). */}
+          <div aria-hidden="true" data-rift-map-veil style={{ position: 'absolute', left: 0, right: 0, top: veilTop, bottom: 0, pointerEvents: 'none', background: `linear-gradient(180deg, rgba(0,0,0,0) 0, rgba(0,0,0,${RIFT_VEIL_ALPHA}) ${RIFT_VEIL_FADE}px, rgba(0,0,0,${RIFT_VEIL_ALPHA}) 100%)` }} />
           <svg aria-hidden="true" width={view.w} height={RIFT_MAP_HEIGHT} style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
             {nodes.map(n => {
               const d = riftSegmentPath(n.index, view.w);
               if (!d) return null;
               const reached = riftSegmentReached(n.index, save);
               return <g key={n.index}><path d={d} fill="none" strokeWidth={8} strokeLinecap="round" strokeDasharray="2 12" stroke="rgba(4,10,12,.55)" /><path d={d} data-rift-seg={reached ? 'on' : 'off'} fill="none" strokeWidth={4} strokeLinecap="round" strokeDasharray="2 12"
-                stroke={reached ? '#4fd8c8' : '#8c9298'} opacity={reached ? 0.95 : 0.7} /></g>;
+                stroke={reached ? '#4fd8c8' : '#9aa1a8'} opacity={reached ? 0.95 : 0.8} /></g>;
             })}
           </svg>
           {nodes.map(n => {
             const labelLeft = n.x > 0.5;
             const el = elName(n.element, isPt);
+            const setName = riftSetName(el, isPt);
             const locked = n.state === 'locked';
             const current = n.state === 'current';
             return (
               <div key={n.index} data-rift-node={n.index} data-state={n.state} style={{ position: 'absolute', left: n.x * view.w - NODE / 2, top: n.y - NODE / 2, width: NODE, height: NODE }}>
-                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, el, n.state)} style={{
+                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, setName, n.state)} style={{
                   width: NODE, height: NODE, borderRadius: '50%', padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
                   background: locked ? '#050607' : 'radial-gradient(circle at 35% 30%, #1d5a5c, #0b2a2d)',
-                  border: `3px solid ${locked ? '#3a3f44' : current ? '#ffd27a' : '#4fd8c8'}`,
+                  border: `3px solid ${locked ? '#7a828b' : current ? '#ffd27a' : '#4fd8c8'}`,
                   boxShadow: `0 0 0 8px rgba(6,14,16,.5), 0 0 22px 10px rgba(6,14,16,.45), ${current ? '0 0 0 4px rgba(255,210,122,.28), 0 0 18px rgba(79,216,200,.6)' : locked ? '0 0 0 0 transparent' : '0 0 10px rgba(79,216,200,.35)'}`,
                   color: '#9aa1a8', fontSize: 'var(--sm2-text-lg, 22px)', fontWeight: 800,
                 }}>
@@ -138,8 +143,8 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
                 </button>
                 <span data-rift-node-label className="sm2-num" aria-hidden="true" onClick={() => tap(n)} style={{
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
-                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#c3c8cd' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
-                }}>{n.label}</span>
+                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#d5dade' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
+                }}>{locked ? n.label : setName}</span>
                 {current && sprite && (
                   <img data-rift-sprite src={sprite} alt={t.you} width={52} height={52} draggable={false} style={{
                     position: 'absolute', top: '50%', transform: 'translateY(-60%)', [labelLeft ? 'left' : 'right']: NODE + 2, width: 52, height: 52, filter: 'drop-shadow(0 0 4px rgba(6,14,16,.95)) drop-shadow(0 2px 3px rgba(6,14,16,.9))', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none',
@@ -158,7 +163,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
             <button type="button" data-rift-ask-no onClick={() => setAsk(null)} style={{ ...sm2Button('outline'), width: '100%' }}>{t.askNo}</button>
           </div>
         )}>
-        {askNode && <p style={{ ...sm2Text, margin: 0 }}>{t.askBody(askNode.label, elName(askNode.element, isPt))}</p>}
+        {askNode && <p style={{ ...sm2Text, margin: 0 }}>{t.askBody(askNode.label, riftSetName(elName(askNode.element, isPt), isPt))}</p>}
       </ModalSheet>
       <ModalSheet open={sureNode !== null} onClose={() => setSure(null)} language={language} title={t.sureTitle} maxWidth={380}
         footer={sureNode && (

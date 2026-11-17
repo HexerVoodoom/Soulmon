@@ -38,6 +38,24 @@ export function simuladoEvocador(elemento, linha) {
   return typeof linha === 'string' && (EVOCACAO_POR_PAPEL[papel] ?? []).includes(linha);
 }
 
+/** Espelho de `NOMES_ARQUETIPO_EVOCACAO` / `tituloEEvocador` do cliente (o teste de paridade trava). */
+export const ARQUETIPOS_EVOCACAO = ['invocador', 'senhor_das_feras', 'xama_totemico', 'necromante', 'demonologista', 'verdejante', 'senhor_dos_mortos_vis', 'bokor', 'escriba_do_pacto'];
+export const NOMES_ARQUETIPO_EVOCACAO = {
+  invocador: 'invocador', summoner: 'invocador', 'senhor das feras': 'senhor_das_feras', beastlord: 'senhor_das_feras',
+  'xama totemico': 'xama_totemico', 'totem shaman': 'xama_totemico', necromante: 'necromante', necromancer: 'necromante',
+  demonologista: 'demonologista', demonologist: 'demonologista', verdejante: 'verdejante', 'verdant warden': 'verdejante',
+  'senhor dos mortos vis': 'senhor_dos_mortos_vis', 'lord of the vile dead': 'senhor_dos_mortos_vis', bokor: 'bokor',
+  'escriba do pacto': 'escriba_do_pacto', 'scribe of the pact': 'escriba_do_pacto',
+};
+/** O título de classe do estágio no save é de um arquétipo de evocação (pleno ou diluído)? */
+export function tituloEEvocador(t) {
+  if (!t || typeof t !== 'object' || Array.isArray(t)) return false;
+  if (t.origem === 'generico') return false;
+  if (typeof t.id === 'string' && t.id.length > 0) return ARQUETIPOS_EVOCACAO.includes(t.id);
+  const norm = (x, tira) => (typeof x === 'string' ? x.replace(tira, '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase() : '');
+  return [norm(t.nome?.en, / aspirant$/i), norm(t.nome?.pt, /^aspirante a /i)].some((n) => !!n && Object.hasOwn(NOMES_ARQUETIPO_EVOCACAO, n));
+}
+
 const SIM_POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
 
 /**
@@ -56,7 +74,10 @@ export function companheiroDoLado(state, saveId, ligado = COMPANHEIRO_INVOCADO) 
   const estagio = fichaStageOf(state?.evolutionStage);
   const evoc = state?.soulmonEvocacao;
   const e = evoc && typeof evoc === 'object' && !Array.isArray(evoc) && Object.hasOwn(evoc, estagio) ? evoc[estagio] : null;
-  if (!e || typeof e !== 'object' || e.evocador !== true) return null;
+  // Save sem o cache do estágio: vale o título de classe que o próprio save guarda (só o positivo; paridade com o cliente).
+  const titulos = state?.soulmonClassTitles;
+  const porTitulo = !e && titulos && typeof titulos === 'object' && Object.hasOwn(titulos, estagio) && tituloEEvocador(titulos[estagio]);
+  if (!porTitulo && (!e || typeof e !== 'object' || e.evocador !== true)) return null;
   const id = state?.soulmonCompanheiro?.id;
   return typeof id === 'string' && CRIATURAS_COMPANHEIRO.includes(id) ? { invoca: true, companheiro: id } : null;
 }

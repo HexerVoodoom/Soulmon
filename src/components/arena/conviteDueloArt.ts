@@ -1,4 +1,5 @@
 import type { Language } from '../../utils/i18n';
+import type { FanArt } from '../play/TicketFan';
 
 /**
  * Arte do convite de Duelo (REGISTRO §458): papiro vertical com selo de cera, "DUELO"/"DUEL". Aprovada pelo dono em 16/11/2026.
@@ -12,4 +13,11 @@ export function conviteDueloArt(language: Language, grande = false): string | un
   const nome = grande ? `convite-duelo-${sufixo}.png` : `convite-duelo-96-${sufixo}.png`;
   const achado = Object.entries(ARTES).find(([k]) => k.endsWith(`/${nome}`));
   return achado?.[1];
+}
+
+/** O leque de convites no topo da Arena (16/11/2026): o MESMO `TicketFan` dos minijogos, com a arte do convite em pé e o teto de 7. Sem a arte, `undefined` (sem leque). */
+export function conviteDueloFan(language: Language, max: number): FanArt | undefined {
+  const src = conviteDueloArt(language);
+  if (!src) return undefined;
+  return { src, portrait: true, ratio: 96 / 144, max, unit: language === 'pt-BR' ? ['convite', 'convites'] : ['invite', 'invites'], attr: 'data-convite-fan' };
 }
