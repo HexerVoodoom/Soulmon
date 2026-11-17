@@ -555,6 +555,8 @@ export interface GameState {
   /** O ponto de largada escolhido no MAPA DE ANDARES do Rift (1º andar, ímpar, de um conjunto já visitado; REGISTRO §462). Só vale uma descida: quem larga
    *  dele o consome. O recorde NÃO desce com ele. Dono: `utils/riftMap.ts` (`rewindToSet`, `consumeResume`). */
   dungeonResumeLayer?: number;
+  /** Quantos PORTAIS do mapa do Rift (um a cada 50 andares) o jogador já foi avisado que desbloqueou (0..10; REGISTRO §471). O desbloqueio sai do recorde; isto guarda só o aviso "Portal desbloqueado", 1× por portal. Dono: `utils/riftMap.ts` (`markPortalsSeen`). */
+  riftPortalsSeen?: number;
   /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
    *  recompensa já paga no mês }`. Ausente/velho = score 0 no mês atual. Dono: `utils/endlessRift.ts`. Só do cliente; os Créditos do
    *  top 3 são pagos pelo servidor (`functions/api/_riftPayout.js`), nunca lidos daqui. */
@@ -1540,6 +1542,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonResumeLayer: typeof loadedState.dungeonResumeLayer === 'number' && Number.isFinite(loadedState.dungeonResumeLayer)
           && loadedState.dungeonResumeLayer >= 1 && loadedState.dungeonResumeLayer <= 999 && Math.floor(loadedState.dungeonResumeLayer) % 2 === 1
           ? Math.floor(loadedState.dungeonResumeLayer) : undefined,
+        // Portais avisados do mapa do Rift: inteiro em [1, 10] (mesma regra de `sanitizePortalsSeen`, `utils/riftMap.ts`); ausente/0/lixo = nenhum.
+        riftPortalsSeen: typeof loadedState.riftPortalsSeen === 'number' && Number.isFinite(loadedState.riftPortalsSeen) && loadedState.riftPortalsSeen >= 1
+          ? Math.min(10, Math.floor(loadedState.riftPortalsSeen)) : undefined,
         // Endless Rift (M6): score mensal. Registro bom ou nada (mesma regra de `sanitizeRiftMonth`, `utils/endlessRift.ts`; inline
         // para não puxar a masmorra para o chunk de entrada). Save antigo sem o campo = score 0 do mês atual.
         riftMonth: (() => {

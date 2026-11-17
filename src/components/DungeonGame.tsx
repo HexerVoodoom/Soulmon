@@ -33,7 +33,8 @@ import {
   DUNGEON_AWAY_MAX_HOURS, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
 import { glitchtamaDraw, glitchtamaDropFor } from '../utils/glitchtamaDrop';
-import { consumeResume, riftStartLayer } from '../utils/riftMap';
+import { consumeResume, markPortalsSeen, parkAtPortal, riftPortalRedirect, riftPortalsUnlocked, riftStartLayer } from '../utils/riftMap';
+import { riftMapCopy } from '../utils/riftMapCopy';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
@@ -148,7 +149,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEnemySeen, onEarnPoints, onExit, onExitToMap, autoStart = false, bits = 0, onSpendBits, rankSaveId }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEnemySeen, onEarnPoints, onExit, onExitToMap, onOpenRiftMap, autoStart = false, bits = 0, onSpendBits, rankSaveId }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -201,6 +202,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onExit: () => void;
   /** Sair DIRETO para o mapa (o ícone do mapa no lugar do X, 14/10/2026). Ausente (demo/testes) → `onExit`. */
   onExitToMap?: () => void;
+  /** PORTAIS (REGISTRO §471): a descida parou num portal que tem outro mais fundo liberado e manda o jogador para a tela do mapa. Ausente (demo/testes) → segue para o próximo andar. */
+  onOpenRiftMap?: () => void;
   /** "Entrar no Rift" (pedido do dono, 16/11/2026): larga a descida sozinha, do ponto onde parou (`riftStartLayer`), sem o lobby nem 2º toque. Só com o piso de HP e a energia em dia; senão fica no lobby, que diz o porquê. */
   autoStart?: boolean;
 }) {
@@ -289,7 +292,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /* Sem botão de Pausar (dono, 15/10/2026, REGISTRO §71): só a pausa de sistema (confirmação de sair aberta) segura a luta. */
   const pausado = pausadoConfirm;
   /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
-  const [endReason, setEndReason] = useState<'hp' | 'energy' | 'deep'>('hp');
+  const [endReason, setEndReason] = useState<'hp' | 'energy' | 'deep' | 'portal'>('hp');
   /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
   const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0, essences: [] as EssenceDrop[] });
   const [resumo, setResumo] = useState(resumoRef.current);
@@ -379,6 +382,20 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       diário sobre o `prev`). Cada camada paga atualiza o espelho na hora, para dois toques no mesmo lote não passarem os dois. */
   const gsRef = useRef(gs);
   gsRef.current = gs;
+  /** O aviso de topo "Portal desbloqueado" (REGISTRO §471): nasce quando o recorde libera um portal que o save ainda não registrou como avisado (1× por portal). */
+  const [portalToast, setPortalToast] = useState(false);
+  const portaisLiberados = riftPortalsUnlocked(gs);
+  const portaisAvisados = gs?.riftPortalsSeen ?? 0;
+  useEffect(() => {
+    if (!ctx || portaisLiberados <= portaisAvisados) return;
+    ctx.setGameState(prev => markPortalsSeen(prev));
+    setPortalToast(true);
+  }, [ctx, portaisLiberados, portaisAvisados]);
+  useEffect(() => {
+    if (!portalToast) return;
+    const id = window.setTimeout(() => setPortalToast(false), 4500);
+    return () => window.clearTimeout(id);
+  }, [portalToast]);
   // a tela é a dona da conta da descida enquanto está montada: o retorno automático da Home espera (sem crédito duplicado)
   useEffect(() => marcarTelaMasmorra(), []);
   /** Começa UMA camada (energia + limite diário, pela porta única). Devolve se deu (sem provider, sempre). */
@@ -549,7 +566,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   };
 
 
-  const endDescent = (why: 'hp' | 'energy' | 'deep') => {
+  const endDescent = (why: 'hp' | 'energy' | 'deep' | 'portal') => {
     // as faixas do mês foram pagas no estado (updater): entram no resumo aqui, uma vez
     for (const v of riftPagoRef.current.values()) { resumoRef.current.bits += v.bits; resumoRef.current.fragments += v.fragments; }
     riftPagoRef.current.clear();
@@ -668,6 +685,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       setRewardMsg('');
       setPhase('fight');
     } else if (phase === 'floor-clear') {
+      // PORTAL (REGISTRO §471): o andar limpo é de um portal (decidido ao AVANÇAR, não ao limpar: serve também ao andar que voltou limpo da conta de fora) e há outro mais fundo já liberado → em vez do próximo andar, o jogador vai ao MAPA, parado no nó do portal.
+      const portal = ctx && onOpenRiftMap ? riftPortalRedirect({ dungeonDepthRecord: recordeRef.current, riftPortalsSeen: gsRef.current?.riftPortalsSeen }, floor) : undefined;
+      if (portal !== undefined) {
+        endDescent('portal');
+        ctx?.setGameState(prev => parkAtPortal(prev, portal));
+        onOpenRiftMap?.();
+        return;
+      }
       const f = floor + 1;
       if (!pagarCamada()) { endDescent('energy'); return; } // a energia pode ter mudado entre o fim do andar e agora
       const list = waveOf(f);
@@ -1028,6 +1053,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   return (
     <GameRoot>
+      {portalToast && (
+        <div role="status" data-rift-portal-toast onClick={() => setPortalToast(false)} style={{
+          position: 'fixed', zIndex: 150, left: '50%', transform: 'translateX(-50%)', top: 'calc(env(safe-area-inset-top, 0px) + 12px)', maxWidth: 'min(92vw, 420px)', minHeight: 44,
+          padding: '10px 16px', boxSizing: 'border-box', cursor: 'pointer', background: 'rgba(15,42,41,.96)', color: '#E9F5F2', border: '2px solid var(--sm2-gold-fill)', borderRadius: 16,
+          boxShadow: '0 6px 18px rgba(0,0,0,.45)', font: '500 14px/1.35 var(--sm2-font-text)', textAlign: 'center', display: 'flex', alignItems: 'center',
+        }}>{riftMapCopy(isPt).portalUnlockedToast}</div>
+      )}
       <GameHeader
         run={false}
         title={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
