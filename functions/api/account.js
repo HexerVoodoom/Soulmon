@@ -835,6 +835,12 @@ async function handleDeleteConfirm(env, saveId, body) {
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
 
+  // 7c) Backups da guarda de regressao (`savebak:<saveId>:<ts>`, `_saveGuard.js`, 17/11/2026): copia INTEGRAL do save, TTL 30 dias.
+  //    Sem isto o conteudo da conta apagada sobrevivia 30 dias fora do inventario. Varre so o prefixo do titular.
+  await tentar(`savebak:${saveId}`, async () => {
+    for (const k of await listPrefix(env, `savebak:${saveId}:`)) await store.delete(k);
+  });
+
   // 8) O SAVE, por último. É o que a pessoa mais quer ver sumir — e é o que,
   //    apagado cedo, deixava o retry encontrar 404 com o token ainda válido.
   if (c.state) await tentar(`${saveId} (save)`, () => store.delete(saveId));
