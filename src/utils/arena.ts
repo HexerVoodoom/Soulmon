@@ -396,8 +396,11 @@ export function buildArenaRound(
     // Chefe ULTRA: só a rodada-chefe e só com a escada no topo; abaixo disso NENHUM `rng` a mais (os sorteios de antes não mudam). Fora do Desgarrado/combinada.
     if (cls === 'boss' && !stray && !combo && arenaChefeUltraLiberado(ladder)) {
       const roll = rng();
-      if (roll < ARENA_CHEFE_ULTRA_CHANCE) {
-        const c = ARENA_CHEFES_ULTRA[Math.floor((roll / ARENA_CHEFE_ULTRA_CHANCE) * ARENA_CHEFES_ULTRA.length)];
+      // 17/11/2026 (dono): em run de elemento, o chefe Ultra só vem se for DAQUELE elemento (run de vileza não sorteia marcial/som). O `roll` continua
+      // sendo consumido igual (card = luta); sem espécie do elemento, cai no chefe comum. Sem `runElement` (chamadas antigas), todas as espécies.
+      const ultras = runElement ? ARENA_CHEFES_ULTRA.filter(u => u.elements.includes(runElement)) : ARENA_CHEFES_ULTRA;
+      if (ultras.length > 0 && roll < ARENA_CHEFE_ULTRA_CHANCE) {
+        const c = ultras[Math.floor((roll / ARENA_CHEFE_ULTRA_CHANCE) * ultras.length)];
         return {
           namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
           cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', chefeUltra: c.id,
