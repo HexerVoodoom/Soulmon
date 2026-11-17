@@ -12,7 +12,11 @@
  *  · `onboarding_step` carrega o funil, e demo × pago NUNCA colidem;
  *  · nenhum campo sensível (nome, objetivo, luta, e-mail) entra no payload.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, afterAll, beforeAll, it, expect, beforeEach, vi } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// O funil do onboarding LEGADO (ovo/guia): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';

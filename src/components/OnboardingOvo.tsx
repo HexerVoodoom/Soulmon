@@ -36,7 +36,7 @@ export const LUZ_REDUZIDA_MS = 400;
 /** A cor da luz de Chocar: turquesa claro (a mesma linguagem da evolução), não mais o branco puro (03/11/2026). */
 export const LUZ_COR = '#C9FFF6';
 
-const OVO_CSS = `
+export const OVO_CSS = `
 @keyframes sm-ovo-balanco{0%{transform:rotate(0) scale(1)}18%{transform:rotate(-7deg) scale(1.03)}38%{transform:rotate(6deg) scale(1.02)}58%{transform:rotate(-4deg)}78%{transform:rotate(2deg)}100%{transform:rotate(0) scale(1)}}
 @keyframes sm-ovo-fade{from{opacity:.55}to{opacity:1}}
 @keyframes sm-ovo-convite{0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(64,224,208,0))}50%{transform:scale(1.035);filter:drop-shadow(0 0 14px rgba(64,224,208,.75))}}

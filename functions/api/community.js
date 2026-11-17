@@ -547,7 +547,7 @@ async function handleCommunity(context) {
      oponente some), devolvida ANTES de qualquer partida ser gasta. */
   const loadDuelSides = async (mySave, oppSave) => {
     const [meLoad, oppLoad] = await Promise.all([loadDuelSideWithSprite(env, mySave), loadDuelSideWithSprite(env, oppSave)]);
-    // Forma BB (D5): recusa MOTIVADA (`velado.parity.test.js`). Desligado o interruptor, `bbLocked` nunca vem.
+    // Forma BB (D5): recusa MOTIVADA (`velado.parity.test.js`). Desde o Início BB (17/11/2026) vale sem o interruptor: o estágio do save decide.
     if (meLoad.bbLocked) return { res: json({ error: 'bb-locked', reason: 'bb-locked', ...BB_LOCKED_MESSAGE }, 403) };
     if (oppLoad.bbLocked) return { res: json({ error: 'opponent unavailable' }, 404) };
     const meSide = meLoad.side;

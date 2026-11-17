@@ -22,7 +22,8 @@ import {
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { CRIACAO_ART } from '../utils/criacaoEvolucaoArt';
 import { ONBOARDING_VELADO as VELADO_BUILD } from './onboarding/sequencia/flag';
-import { isOnboardingVelado } from '../utils/bbStage';
+import { isInicioBB, isOnboardingVelado } from '../utils/bbStage';
+import { inicialDoBB } from '../utils/inicioBB';
 /* Build OU testador (o teste por pessoa só chega depois do login; lido a cada render/uso, não no load). */
 const veladoLigado = () => VELADO_BUILD || isOnboardingVelado();
 import { ROTEIRO, BERCO, ANCIAO, t as tVelado } from './onboarding/sequencia/copy';
@@ -52,7 +53,7 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite } from '../utils/monetization';
 import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
-import { fetchBetaFull } from '../utils/entitlements';
+import { fetchBetaFull, fetchEntitlement } from '../utils/entitlements';
 import { isEmbedMode } from '../utils/embedMode';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
 import { assinarDiagnostico, textoDiagnosticoLogin } from '../utils/loginDiag';
@@ -483,6 +484,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // mandava a compra ao Play sem `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado ela seria
   // RECUSADA: a pessoa pagaria e não receberia. O rascunho do portão que parou no -7 retoma no ovo.
   const CHOICE_STEP = -7;
+  // INÍCIO BB (dono, 17/11/2026; `utils/inicioBB.ts`): com ele ligado, o CHOICE_STEP deixa de ser o ovo e vira a
+  // PERGUNTA DE ACESSO (pago segue direto; quem não tem acesso é convidado a assinar ou segue com um BB do pool), e o
+  // onboarding termina em PRONTO_STEP ("pronto em breve") → o jogo abre com o Soulmon no cristal. O chocar é na Home.
+  // Id -8 (livre, nunca usado; telemetria 42), sem renumerar nada.
+  const PRONTO_STEP = -8;
   // A tela dos TERMOS (A3, 02/10/2026). Vem DEPOIS do login: o portão tem um
   // botão só ("Continue with Google") e, com a conta já autenticada, esta tela
   // pede o aceite dos Termos/Privacidade e a declaração de 18+. Sem aceitar
@@ -748,6 +754,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const petNameFinal = petNameValue.trim() || registerDisplayName;
   // O traço dito na apresentação é o MESMO que vai para o save (finish -> petPassive). No upgrade vem do save.
   const [introPassive] = useState(() => getPassive(introPetPassive)?.id ?? rollPetPassive());
+  /** Início BB ligado (e não é o ritual de upgrade, que segue o fluxo dele). */
+  const inicioBBLigado = () => isInicioBB() && !isUpgrade;
+  const geracaoPagaRef = useRef(false);
   const introNome = isUpgrade ? (result?.creature.baseName ?? petNameFinal) : petNameFinal;
   const introLinhas = useMemo<NpcSequenceLine[]>(() => {
     if (!result) return [];
@@ -930,6 +939,30 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setCompraAberta(false);
   }, [betaFull, step, comprado]);
 
+  // Início BB: a conta JÁ paga (compra antiga, outro aparelho) também conta como acesso. O servidor decide; falha = pergunta.
+  useEffect(() => {
+    if (!inicioBBLigado() || step !== CHOICE_STEP || comprado || !authEmail) return;
+    let cancelado = false;
+    void fetchEntitlement().then(ent => {
+      if (cancelado || ent?.tier !== 'paid') return;
+      setFlow('oracle');
+      setComprado(true);
+      setCompraAberta(false);
+    }).catch(() => { /* sem resposta: a pergunta fica */ });
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, authEmail]);
+
+  // Início BB: quem TEM acesso (compra confirmada pelo servidor ou BETA_EMAILS) não vê pergunta nenhuma: a leitura do
+  // oráculo é feita (local, sem custo de imagem) e o onboarding vai ao "pronto em breve".
+  useEffect(() => {
+    if (!inicioBBLigado() || step !== CHOICE_STEP || !comprado || geracaoPagaRef.current) return;
+    geracaoPagaRef.current = true;
+    setStep(GENERATING);
+    runGenerate(testAnswers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, comprado]);
+
   // Rascunho do portão: gravado em todo o trecho do onboarding que não é o
   // ritual PAGO (este tem o rascunho dele, `oracleDraft`). Some assim que o
   // onboarding termina (ver `finish`). Guarda TUDO que já foi respondido —
@@ -1040,6 +1073,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
     // jogador o reroll pelo qual ele pode ter pagado. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, profile);
+    // Início BB: nada de desenho aqui; o BB exclusivo é pedido pelo App depois de entrar no jogo.
+    if (inicioBBLigado()) { setStep(PRONTO_STEP); return; }
     // D-150: primeiro a Iris diz o elemento; o desenho (e o custo dele) só começam no "Gostei".
     setStep(ELEMENT_DECIDE);
   };
@@ -1611,6 +1646,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     runGenerate(testAnswers);
   });
 
+  /** Início BB: recusou assinar → BB do pool (o App sorteia) e, no rookie, um inicial pronto escolhido pela conta. */
+  const escolherGratis = () => {
+    track('demo_pick');
+    setCompraAberta(false);
+    setFlow('demo');
+    setDemoCharacterId(inicialDoBB((authEmail ?? nickname).trim().toLowerCase()));
+    setStep(PRONTO_STEP);
+  };
+
   /** A demo CONFIRMADA ("Sim"): a Ambra fala de novo e, ao fim dela, o app entra na demo (`finish`). */
   const confirmarDemo = () => {
     setConfirmaDemo(false);
@@ -1952,7 +1996,61 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* O OVO-CRISTAL (§81) — o fim das perguntas, no lugar da escolha grátis/completo e do reveal demo. Tocar balança;
             com 5 toques aparecem "Conhecer o seu Soulmon" (abre o modal de compra existente) e "Me empreste um Soulmon
             guia" (a escolha dos 5 iniciais, que pede confirmação). Comprado: só o "Chocar". */}
-        {step === CHOICE_STEP && (
+        {step === CHOICE_STEP && inicioBBLigado() && (
+          comprado ? (
+            <div role="status" aria-live="polite" style={{ paddingTop: 40, textAlign: 'center' }}><Spinner /></div>
+          ) : (
+            <StepShell
+              title={isPt ? 'Quer gerar o seu próprio Soulmon?' : 'Want to generate your own Soulmon?'}
+              hint={isPt
+                ? 'Assinando, ele nasce das suas respostas: uma criatura só sua, desenhada para você. Sem assinar, você recebe um Soulmon do berçário e pode jogar do mesmo jeito.'
+                : 'Subscribe and it is born from your answers: a creature that is yours alone, drawn for you. Without subscribing, you get a Soulmon from the nursery and can play just the same.'}>
+              {/* Adendo do dono (17/11/2026): dito com calma, sem pressa — é um fato do nascimento, não uma oferta que acaba. */}
+              <p data-inicio-bb-aviso style={{ ...sm2Hint, margin: '0 0 16px' }}>
+                {isPt
+                  ? 'A primeira forma, o bebê, só é desenhada para você agora, no nascimento: depois ela não é gerada de novo. As outras formas podem ser suas mais tarde, se você assinar.'
+                  : 'The first form, the baby, is only drawn for you now, at birth: it is not generated again later. The other forms can become yours later on, if you subscribe.'}
+              </p>
+              <div data-inicio-acesso style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button type="button" data-inicio-assinar style={{ ...sm2Button('primary'), width: '100%' }} onClick={abrirCompra}>
+                  {isPt ? 'Assinar e gerar o meu' : 'Subscribe and generate mine'}
+                </button>
+                <button type="button" data-inicio-gratis style={{ ...sm2Button('outline'), width: '100%' }} onClick={escolherGratis}>
+                  {isPt ? 'Agora não' : 'Not now'}
+                </button>
+              </div>
+              {avisoCompra && <p role="alert" style={{ ...alertStyle, marginTop: 16 }}>{avisoCompra}</p>}
+              {compraAberta && (
+                <UnlockAccountModal
+                  language={lang}
+                  reason="ovo"
+                  onUnlocked={aoComprar}
+                  onClose={() => setCompraAberta(false)}
+                />
+              )}
+            </StepShell>
+          )
+        )}
+
+        {/* PRONTO_STEP (Início BB): o fim do onboarding. O jogo abre na hora, com o Soulmon no cristal; o chocar é na Home. */}
+        {step === PRONTO_STEP && (
+          <StepShell
+            title={isPt ? 'Seu Soulmon estará pronto em breve' : 'Your Soulmon will be ready soon'}
+            hint={isPt
+              ? 'Ele está tomando forma dentro do cristal. Quando ficar pronto, você o ajuda a chocar.'
+              : "It's taking shape inside the crystal. When it's ready, you help it hatch."}>
+            <div data-inicio-pronto style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 20px' }}>
+              <img src={PLACEHOLDER_ART.forming} alt="" aria-hidden="true" width={128} height={128}
+                style={{ width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated' }} />
+            </div>
+            <button type="button" data-inicio-entrar style={{ ...sm2Button('primary', submitting), width: '100%' }}
+              onClick={() => { void finish(); }} disabled={submitting} aria-busy={submitting || undefined}>
+              {submitting ? <Spinner /> : (isPt ? 'Entrar' : 'Enter')}
+            </button>
+          </StepShell>
+        )}
+
+        {step === CHOICE_STEP && !inicioBBLigado() && (
           <>
             <OvoCristal
               language={lang}
@@ -2302,7 +2400,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             bifurcação. */}
         {step === REFINE_OFFER && (
           <StepShell
-            title={isPt ? 'Tudo pronto' : 'All set'}
+            title={isPt ? 'Quase lá' : 'Almost there'}
             hint={isPt ? 'Suas respostas estão guardadas.' : 'Your answers are saved.'}>
             {/* ONB-29 (D-Q12): o erro de geração é âmbar — a falha não é da
                 pessoa; o botão tenta outra vez. */}

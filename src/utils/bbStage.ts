@@ -35,9 +35,25 @@ export function isOnboardingVelado(): boolean { return onboardingVelado || velad
 export function setVeladoTester(on: unknown): void { veladoTester = on === true; }
 export function setOnboardingVelado(on: unknown): void { onboardingVelado = on === true; }
 
-/** O estágio inicial de um save NOVO: `'bb'` só com o interruptor ligado. */
+/**
+ * INÍCIO BB (dono, 17/11/2026; REGISTRO §472): TODO save NOVO nasce BB, com ou sem o interruptor `ONBOARDING_VELADO`.
+ * Quem já tem save não passa pelo onboarding e não muda. O resto do Velado (sequência narrativa, Guilda, preço D9)
+ * continua atrás do interruptor. Desligar no build: `VITE_INICIO_BB=false` (plano de rollback do PR).
+ */
+function inicioBBDoBuild(): boolean {
+  try { return import.meta.env?.VITE_INICIO_BB !== 'false'; } catch { return true; }
+}
+let inicioBB = inicioBBDoBuild();
+export function isInicioBB(): boolean { return inicioBB; }
+/** Só para testes: liga/desliga o Início BB. */
+export function setInicioBB(on: boolean): void { inicioBB = on === true; }
+
+/** O nascimento entrega um BB? (Início BB OU o interruptor do Velado.) */
+export function bbNoNascimento(): boolean { return inicioBB || isOnboardingVelado(); }
+
+/** O estágio inicial de um save NOVO: `'bb'` com o Início BB (padrão) ou com o interruptor ligado. */
 export function initialStageForNewSave(): 'bb' | 'rookie' {
-  return isOnboardingVelado() ? BB_STAGE : 'rookie';
+  return bbNoNascimento() ? BB_STAGE : 'rookie';
 }
 
 export function isBBStage(stage: unknown): boolean {
