@@ -6337,7 +6337,7 @@ Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `S
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
 
-## §467 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
+## §469 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
 
 Decisão (cinco pedidos literais do dono, um commit por item):
 1. **Nome do andar com sufixo.** Cada elemento ocupa 2 andares (§445, 6 lutas cada); o HUD passa a dizer "Camada 3 · luta 2 de 6 · Fogo 1" e, vencidas as 6 lutas, "… · Fogo 2". No mapa o nó (que vale os dois andares) diz "Fogo 1 e 2" / "Fire 1 & 2" (bloqueado segue só com os números "11-12"); o aria e o "Voltar para estes andares?" usam o mesmo nome. Fonte única: `riftFloorName`/`riftSetName` em `utils/riftSets.ts`.
@@ -6347,3 +6347,16 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 5. **Arena (Duelo):** "Comprar convites" é o 1º item da folha, com o custo à vista ("1 energia = 5 convites", 7 na conta paga, §458) e o ícone de energia no botão; a regra (`exchangeDuelInvites`, estoque máx 7, espelho no servidor) NÃO mudou. Os convites aparecem em LEQUE no topo (na zona do NPC), pelo MESMO `TicketFan` dos tickets do Salão (parametrizado por `art`: arte do convite em pé, teto 7), sem componente novo.
 
 **Alternativa que perdeu:** manter o "?" e os recordes na folha da Fenda (o dono pediu só os dois CTAs); desenhar um leque próprio para convites (duplicaria o `TicketFan`). **Falsifica:** a folha da Fenda ter um 3º botão; a película do mapa voltar a ser clara ou ter borda reta; o leque de convites divergir do contador do estoque.
+## §467 — Hexsmith: placa atrás da Coroa encaixada e descrição em TODAS as Coroas (17/11/2026, dono)
+
+**Pedido:** a Coroa do dano contínuo (`coroa-dot`, quase preta, L≈0,006) sumia no fundo escuro do slot (≈1,2:1); só as Coroas novas tinham descrição do efeito.
+**Decisão do dono:** sem arte nova; resolver por CSS mudando o fundo do slot ocupado, para todas as Coroas. Porta vazia fica como está.
+**Feito:** `.sm2-hex-art[data-hex-crown]` ganha placa (clara `#EAF6F3`; escura `#08191A` só para heal/hot/spdBuff, as artes claras) e anel `primary-ink`; igual nos dois temas. Contraste da mediana da arte contra a placa 5,0 a 16,9:1 (antes: dot 1,2:1 no escuro; heal 1,9:1 no claro). `HEX_CROWN_FAMILY_DESC` cobre as 10 famílias (as 7 de sempre ganharam texto PT/EN, sem número nem vantagem); teste varre `HEX_CROWN_VALUES`.
+**Alternativa que perdeu:** halo luminoso só no dot (contorno em `primary-ink`, ~11:1 contra o fundo) — resolvia uma Coroa; a placa resolve todas.
+
+## §468 — Vesca só oferece poção de elemento base; Centro de Evolução sem filtros de status; Maslin sem evocação (17/11/2026, dono)
+
+- **Vesca**: o pop-up que propõe fazer poção só aparece para elemento BASE (100 essências). Composto e Neutro saem da oferta (era o pop-up da §461/#987 aos 50); quem quiser faz pelo fluxo normal do Centro de Evolução. Sem campo de save órfão: o "já ofereci" é local (`soulmon:vescaOffered`) e a leitura continua tolerante.
+- **Centro de Evolução**: some a linha de filtros de status (Todas / Posso criar / Essências ok / Base / Composta); ficam só os três espaços de elemento base. O painel do Neutro some; a poção do Neutro é uma linha comum, a ÚLTIMA da lista, sem destaque (some só quando há elemento base escolhido no filtro, pois não contém nenhum).
+- **Bug da Maslin** (usou o especial e a evocação não saiu): o gatilho só lia o cache `soulmonEvocacao`, que só nasce quando o perfil local roda a ficha. Save sem o cache do estágio = sem companheiro, mesmo com o título de classe (Verdejante) no próprio save. Agora, sem cache do estágio, vale o título guardado em `soulmonClassTitles` (só o positivo; o cache, quando existe, manda). Espelho no servidor (`tituloEEvocador`) e paridade travada.
+
