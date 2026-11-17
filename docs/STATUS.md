@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
+> - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.
+> - **Pendente do dono:** abrir o PR pacote→main no GitHub (CI).
+
 > ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §462)
 >
 > - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11
