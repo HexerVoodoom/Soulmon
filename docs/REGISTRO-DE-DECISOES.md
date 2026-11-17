@@ -6344,3 +6344,9 @@ Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" apar
 **Feito:** `.sm2-hex-art[data-hex-crown]` ganha placa (clara `#EAF6F3`; escura `#08191A` só para heal/hot/spdBuff, as artes claras) e anel `primary-ink`; igual nos dois temas. Contraste da mediana da arte contra a placa 5,0 a 16,9:1 (antes: dot 1,2:1 no escuro; heal 1,9:1 no claro). `HEX_CROWN_FAMILY_DESC` cobre as 10 famílias (as 7 de sempre ganharam texto PT/EN, sem número nem vantagem); teste varre `HEX_CROWN_VALUES`.
 **Alternativa que perdeu:** halo luminoso só no dot (contorno em `primary-ink`, ~11:1 contra o fundo) — resolvia uma Coroa; a placa resolve todas.
 
+## §468 — Vesca só oferece poção de elemento base; Centro de Evolução sem filtros de status; Maslin sem evocação (17/11/2026, dono)
+
+- **Vesca**: o pop-up que propõe fazer poção só aparece para elemento BASE (100 essências). Composto e Neutro saem da oferta (era o pop-up da §461/#987 aos 50); quem quiser faz pelo fluxo normal do Centro de Evolução. Sem campo de save órfão: o "já ofereci" é local (`soulmon:vescaOffered`) e a leitura continua tolerante.
+- **Centro de Evolução**: some a linha de filtros de status (Todas / Posso criar / Essências ok / Base / Composta); ficam só os três espaços de elemento base. O painel do Neutro some; a poção do Neutro é uma linha comum, a ÚLTIMA da lista, sem destaque (some só quando há elemento base escolhido no filtro, pois não contém nenhum).
+- **Bug da Maslin** (usou o especial e a evocação não saiu): o gatilho só lia o cache `soulmonEvocacao`, que só nasce quando o perfil local roda a ficha. Save sem o cache do estágio = sem companheiro, mesmo com o título de classe (Verdejante) no próprio save. Agora, sem cache do estágio, vale o título guardado em `soulmonClassTitles` (só o positivo; o cache, quando existe, manda). Espelho no servidor (`tituloEEvocador`) e paridade travada.
+

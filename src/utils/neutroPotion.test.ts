@@ -59,7 +59,7 @@ describe('pop-up da Vesca aos 50 (mesma constante do custo)', () => {
     expect(limiarDaPocao('neutro')).toBe(50);
     expect(limiarDaPocao('fogo')).toBe(100);
     expect(limiarDaPocao('pesadelo')).toBeUndefined();
-    expect(essenceThresholdCrossings({ vapor: 49, neutro: 49, fogo: 99 }, { vapor: 50, neutro: 50, fogo: 100 }).sort()).toEqual(['fogo', 'neutro', 'vapor']);
+    expect(essenceThresholdCrossings({ vapor: 49, neutro: 49, fogo: 99 }, { vapor: 50, neutro: 50, fogo: 100 }).sort()).toEqual(['fogo']) // 17/11: a Vesca só oferece base;
     expect(essenceThresholdCrossings({}, { pesadelo: 999 })).toEqual([]);
   });
 });

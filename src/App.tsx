@@ -713,7 +713,7 @@ const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => 
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 import { CtaButton } from './components/ui/CtaButton';
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
-import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, limiarDaPocao, POTION_ELEMENT_IDS, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, limiarDaPocao, POTION_ELEMENT_IDS, VESCA_OFFER_ELEMENT_IDS, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
 // Oferta da Vesca: só monta com 100 essências; a copy dos prédios (→ areaNpcVoice → guildCopy) fica fora da entrada.
 const VescaPotionOffer = lazy(() => import('./components/VescaPotionOffer').then(m => ({ default: m.VescaPotionOffer })));
 const EssencesSection = lazy(() => import('./components/EssencesSection').then(m => ({ default: m.EssencesSection })));
@@ -977,7 +977,7 @@ export default function App() {
     const offered = readVescaOffered();
     // Cruzamento novo (sempre oferece) + veterano que já passa de 100 e nunca foi oferecido (1x por elemento, dono 08/11/2026).
     const crossed = prev === null ? [] : essenceThresholdCrossings(prev, gameState.essences);
-    const veterans = POTION_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= (limiarDaPocao(id) ?? Infinity) && !offered.has(id));
+    const veterans = VESCA_OFFER_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= (limiarDaPocao(id) ?? Infinity) && !offered.has(id));
     const hit = [...new Set([...crossed, ...veterans])].filter(id => isPotionUnlocked(id, gameState.defeatedElements));
     if (!hit.length) return;
     // 12/11/2026: o "já ofereci" só é gravado quando a Vesca de fato APARECE (`useOfertaPendente`); fechar o app no meio de uma

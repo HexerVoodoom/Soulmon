@@ -100,3 +100,26 @@ describe('Coroa da Hexsmith equipada: o companheiro descansa (cliente e servidor
     expect(srv.companheiroDoLado({ ...n, hexsmith: hexes.familia }, id, true)).toBeNull();
   });
 });
+
+describe('titulo de classe do save como fallback do cache (Maslin, 17/11/2026): servidor e app concordam', () => {
+  const titulos = [
+    { nome: { en: 'Verdant Warden', pt: 'Verdejante' }, origem: 'arquetipo' },
+    { nome: { en: 'Beastlord Aspirant', pt: 'Aspirante a Senhor das Feras' }, origem: 'diluido' },
+    { id: 'bokor', origem: 'arquetipo' },
+    { nome: { en: 'Arcane Arsenal', pt: 'Arsenal Arcano' }, origem: 'arquetipo' },
+    { nome: { en: 'Industrial Adept', pt: 'Adepto Industrial' }, origem: 'generico' },
+    null, 'x', [],
+  ];
+  it('mesma tabela de nomes e mesmo veredito', () => {
+    expect(srv.NOMES_ARQUETIPO_EVOCACAO).toEqual(app.NOMES_ARQUETIPO_EVOCACAO);
+    expect(srv.ARQUETIPOS_EVOCACAO).toEqual([...app.ARQUETIPOS_EVOCACAO]);
+    for (const t of titulos) expect(srv.tituloEEvocador(t)).toBe(app.tituloEEvocador(t));
+  });
+  it('save sem cache do estagio, com titulo evocador: o servidor invoca; cache dizendo nao manda', () => {
+    const base = { evolutionStage: 'ultimate', soulmonCompanheiro: { id: 'slime_cristalino' }, soulmonClassTitles: { ultimate: titulos[0], mega: titulos[3] } };
+    expect(srv.companheiroDoLado(base, 'a'.repeat(64), true)).toEqual({ invoca: true, companheiro: 'slime_cristalino' });
+    expect(srv.companheiroDoLado({ ...base, evolutionStage: 'mega' }, 'a'.repeat(64), true)).toBeNull();
+    expect(srv.companheiroDoLado({ ...base, soulmonEvocacao: { ultimate: { evocador: false } } }, 'a'.repeat(64), true)).toBeNull();
+    expect(app.companheiroDoEstado(base, true)).toBe('slime_cristalino');
+  });
+});
