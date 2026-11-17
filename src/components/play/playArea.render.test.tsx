@@ -167,7 +167,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(r.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
-  it('Masmorra: a folha tem SÓ dois CTAs — "Entrar no Rift" e "Ver o mapa" (pedido do dono, 16/11/2026)', async () => {
+  it('Masmorra: a folha tem 2 botões ("Entrar no Rift", "Ver o mapa") + nota "Pode cair" e Bits do dia acima, sem "?" (dono, 16-17/11/2026)', async () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
@@ -175,10 +175,13 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
-    // nada além dos dois botões: sem recordes, "?", bits do dia nem lista de drops
-    expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
+    // a nota "Pode cair" (com o Glitchtama) e o Bits do dia ficam ACIMA dos botões; o "?" não volta
+    const drops = folha.querySelector('[data-masmorra-drops]')!;
+    expect(drops.textContent).toContain('Glitchtama');
+    expect(folha.textContent).toContain('Pode cair');
+    const start = folha.querySelector('[data-masmorra-start]')!;
+    expect(drops.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
-    expect(folha.querySelector('[data-bits-hoje]')).toBeNull();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -247,6 +250,8 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
+    expect(container.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
+    expect(container.querySelector('[data-masmorra]')!.textContent).toContain('Possible drops');
   });
 });
 
