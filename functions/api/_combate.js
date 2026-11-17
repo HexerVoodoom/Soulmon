@@ -15,6 +15,8 @@
  * Os tetos de estagio vem de `_soulXP.js` (nao se copia duas vezes).
  */
 import { STAGE_LEVEL_CAPS, MAX_LEVEL, soulLevel } from './_soulXP.js';
+import { SPECIAL_BUDGET_HITS, SHIELD_DIRECT_SPECIAL_ABSORB, SHIELD_DOT_TICK_ABSORB, SHIELD_ABSORB, shieldAbsorbPoints, CHEER, CHEER_SCALE_MAX, START_ENERGY_MAX, DOT_RESIST_MAX, cleanStartEnergy, cleanDotResist, cleanCheerScale, cheerEvents, COMPANHEIRO_TURNOS, COMPANHEIRO_EFEITO_FATOR, COMPANHEIRO_ATAQUE_FATOR, especialInvoca, planoInvocacao } from './_combateAux.js';
+export { SPECIAL_BUDGET_HITS, SHIELD_DIRECT_SPECIAL_ABSORB, SHIELD_DOT_TICK_ABSORB, SHIELD_ABSORB, shieldAbsorbPoints, CHEER, CHEER_SCALE_MAX, START_ENERGY_MAX, DOT_RESIST_MAX, cleanStartEnergy, cleanDotResist, cleanCheerScale, cheerEvents, COMPANHEIRO_TURNOS, COMPANHEIRO_EFEITO_FATOR, COMPANHEIRO_ATAQUE_FATOR, especialInvoca, planoInvocacao };
 
 // ── rng.ts ───────────────────────────────────────────────────────────────────
 /** mulberry32: 32 bits, uniforme em [0, 1). */
@@ -176,15 +178,6 @@ export function toAttrBonus(b) {
 }
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
-export const SPECIAL_BUDGET_HITS = 3;
-/** §327: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` (básico 1, especial direto 0,5, tick de DoT 0,5). */
-export const SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
-export const SHIELD_DOT_TICK_ABSORB = 0.5;
-export const SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB });
-/** @param {number} sh @param {number} d @param {'basic'|'direct'|'tick'} src */
-export function shieldAbsorbPoints(sh, d, src) {
-  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
-}
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
 /** Hexsmith H2: familias que so existem via Coroa (espelho de `CROWN_ONLY_FAMILIES`); nunca sorteadas. */
 export const CROWN_ONLY_FAMILIES = ['defBuff', 'atkDebuff', 'spdDebuff'];
@@ -202,43 +195,6 @@ export function specialOf(family, effect) {
 }
 export const ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
 export const ENERGY_TRIGGER = 100;
-/** Torcida: 24 toques = 1 descarga; no maximo 16 toques por balde de 3 s. `pvpEnergyPerDischarge` e o rendimento do PvP. */
-export const CHEER = {
-  tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 9, pvpEnergyPerDischarge: 2.5,
-};
-/** Marcas de toque (s) -> descargas. Toque alem do teto do balde e descartado; a cada `tapsFull` aceitos, 1 descarga. */
-export const CHEER_SCALE_MAX = 1.15;
-
-/** Tarefa B (§2.38): espelho de `START_ENERGY_MAX`/`DOT_RESIST_MAX` e dos limpadores de `combate/specials.ts`. */
-export const START_ENERGY_MAX = 9;
-export const DOT_RESIST_MAX = 0.18;
-/** @param {unknown} x */
-export function cleanStartEnergy(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
-}
-/** @param {unknown} x */
-export function cleanDotResist(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
-}
-export function cleanCheerScale(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
-}
-export function cheerEvents(taps, side, scale = 1) {
-  const out = [];
-  const k = cleanCheerScale(scale);
-  const perBucket = new Map();
-  let acc = 0;
-  for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
-    const b = Math.floor(tap / CHEER.bucketSeconds);
-    const n = perBucket.get(b) ?? 0;
-    if (n >= CHEER.tapsCapPerBucket) continue;
-    perBucket.set(b, n + 1);
-    acc++;
-    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
-  }
-  return out;
-}
-
 // ── fight.ts ─────────────────────────────────────────────────────────────────
 export const MIRROR_SECONDS = 25;
 export const HIT_UNIT_H0 = 10;
@@ -260,25 +216,6 @@ export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;
 /** §334: ticks de um DoT, em golpes do AFETADO (espelho de `DOT_TICKS`). */
 export const DOT_TICKS = 3;
-
-// ── companheiro.ts (COMPANHEIRO INVOCADO, PR 2): espelho da regra pura; travado por `combate.parity.test.js` ──
-export const COMPANHEIRO_TURNOS = 3;
-export const COMPANHEIRO_EFEITO_FATOR = 0.8;
-export const COMPANHEIRO_ATAQUE_FATOR = 0.25;
-/** Cura (`heal`, ou `shield` com `effect: 'hot'`) nunca invoca. */
-export function especialInvoca(sp) {
-  if (!sp) return false;
-  if (sp.family === 'heal') return false;
-  if (sp.family === 'shield' && sp.effect === 'hot') return false;
-  return true;
-}
-/** O plano de uma invocacao (ou null): ver `planoInvocacao` de `src/utils/combate/companheiro.ts`. */
-export function planoInvocacao(sp, scale) {
-  if (!sp || !especialInvoca(sp)) return null;
-  const E = SPECIAL_BUDGET_HITS * sp.power * scale;
-  if (sp.family === 'direct' || sp.family === 'dot') return { papel: 'ataque', escalaEfeito: 0, ataqueE: E, turnosAtaque: COMPANHEIRO_TURNOS };
-  return { papel: 'misto', escalaEfeito: scale * COMPANHEIRO_EFEITO_FATOR, ataqueE: SPECIAL_BUDGET_HITS * scale * COMPANHEIRO_ATAQUE_FATOR, turnosAtaque: COMPANHEIRO_TURNOS - 1 };
-}
 
 export function windowSeconds(level) {
   const d = combatantAt(level, REFERENCE_BUILDS.balanced);
@@ -317,7 +254,7 @@ export function* fightSteps(a, b, opts) {
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nGuard: 0, nWeak: 0, nHot: 0, hots: /** @type {{ pulse: number, left: number }[]} */ ([]), dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: any, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nGuard: 0, nWeak: 0, nHot: 0, hots: /** @type {{ pulse: number, left: number }[]} */ ([]), dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: object, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
     };
   };
   const F = [mk(a, 0), mk(b, 1)];

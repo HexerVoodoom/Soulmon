@@ -167,7 +167,7 @@ export function NpcSequence({ lines, language, onFinish, label, action, closeOnT
           color: 'rgba(233,245,242,.72)', font: '500 13px/1 var(--sm2-font-text)', letterSpacing: '0.04em',
         }}
       >
-        {closeOnTap ? (isPt ? 'Pular' : 'Skip') : <span aria-hidden="true" style={{ fontSize: 20 }}>×</span>}
+        {closeOnTap ? (isPt ? 'Pular' : 'Skip') : <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-lg)' }}>×</span>}
       </button>
     </div>
   );

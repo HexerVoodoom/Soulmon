@@ -2394,3 +2394,14 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 
 ### `src/components/games/SummonLayer.tsx`
 **Dono de:** o sprite do companheiro invocado na cena (16/11/2026, REGISTRO §449): `SummonLayer({ summons, me, foes, reduced })` desenha a criatura um pouco à frente de quem invocou enquanto o contador real `FighterFx.comp` for maior que zero (nenhum timer decide a presença; só a saída suave de 200 ms). Exports: `StageSummon` (`side`, `creature`, `turns`), `SUMMON_SIZE`, `SUMMON_ADVANCE`, `summonPlace`, `summonsDoGrupo`. Sem sprite para a criatura = não desenha. Usado por `BattleStage`.
+### `src/components/NeutroPotionPanel.tsx`
+**Dono de:** o painel da poção do Neutro no Centro de Evolução (16/11/2026, REGISTRO §452): `NeutroPotionPanel` mostra o progresso por elemento base (`neutroProgresso`, `NEUTRO_POTION_COSTS`) e o botão de forjar; textos em `NEUTRO_PANEL_COPY`. A regra mora em `utils/neutroPotion.ts`.
+
+### `src/components/PratoFeito.tsx`
+**Dono de:** o modal "Prato feito" (16/11/2026, REGISTRO §455/§465): `PratoFeito` abre ao cozinhar no Restaurante e ao comprar na Feira (variante "Comprado"), mostra a arte do prato (`dishArt`) ou o ícone, e fecha por X ou CTA (`useBackLayer`). O prato já está na pastinha (`dish:<id>`).
+
+### `src/components/arena/conviteDueloArt.ts`
+**Dono de:** a arte do convite de Duelo (REGISTRO §458): `conviteDueloArt(language)` devolve o papiro `convite-duelo-96-*` por idioma, ou `undefined` se o arquivo faltar (a folha só não mostra o papiro, nunca quebra).
+
+### `src/components/rift/RiftMap.tsx`
+**Dono de:** a tela do mapa de andares do Rift infinito (16/11/2026, REGISTRO §462): `RiftMap` (`RiftMapProps`) desenha os nós e o caminho do `utils/riftMap.ts`, rola até o andar atual e deixa voltar a um conjunto já visitado (`riftRewindRefusal` explica a recusa). Só leitura do plano; o estado vive no save do Rift.

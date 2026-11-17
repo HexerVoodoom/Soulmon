@@ -34,7 +34,7 @@ export function PratoFeito({ language, dishId, made, inFolder, onClose, variant 
         <div className="sm2-potion-rays" data-potion-rays />
         {art
           ? <img src={art} alt="" width={160} height={160} draggable={false} data-prato-art className="sm2-potion-icon" style={{ imageRendering: 'pixelated' }} />
-          : <span className="sm2-potion-icon" data-prato-art style={{ fontSize: 120, lineHeight: 1 }}>{d.icon}</span>}
+          : <span className="sm2-potion-icon" data-prato-art style={{ lineHeight: 1 }}>{d.icon}</span>}
       </div>
       <p role="status" data-prato-texto className="sm2-potion-text">{texto}</p>
       <p data-prato-guardado className="sm2-potion-text" style={{ fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 400, opacity: 0.9 }}>{guardado}</p>

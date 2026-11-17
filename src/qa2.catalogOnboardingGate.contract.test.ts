@@ -23,7 +23,9 @@ describe('onboarding do catálogo passa pelo portão de criação', () => {
   it('o onComplete do fluxo chama commitHabitCreate', () => {
     const i = app.indexOf('<CatalogOnboardingFlow');
     const bloco = app.slice(i, i + 1200);
-    expect(bloco).toMatch(/commitHabitCreate\(\s*activitiesFromCatalogChoice/);
+    // §385: a seleção vira `pedidas` (para o aviso de teto contar quantas entraram), e `pedidas` é o que passa pelo portão.
+    expect(bloco).toMatch(/pedidas\s*=\s*activitiesFromCatalogChoice\(/);
+    expect(bloco).toMatch(/commitHabitCreate\(\s*pedidas/);
   });
 
   it('o portão corta o lote no teto (demo = teto do rookie)', () => {

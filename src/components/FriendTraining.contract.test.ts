@@ -16,8 +16,13 @@ describe('treino com amigo (§242): não vale nada', () => {
 });
 
 describe('marcador "!" do prédio Amigos', () => {
-  const base = { passeio: null, weekly: null, conquistas: null, dailyMissions: undefined, day: '2026-11-05', bondLevel: 1 } as const;
+  const sem = { passeio: null, weekly: null, conquistas: null, dailyMissions: undefined, bondLevel: 1 } as const;
+  // O rodízio diário pode sortear uma missão de amigo/presente (que também marca o prédio): o teste mede um dia SEM ela, para isolar o alerta.
+  const day = Array.from({ length: 28 }, (_, i) => `2026-11-${String(i + 1).padStart(2, '0')}`)
+    .find(d => lotMissionMarks({ ...sem, day: d, friendsAlert: false })['laboratorio.amigos'] === undefined);
+  const base = { ...sem, day: day ?? '2026-11-05' } as const;
   it('acende com convite/presente novo e apaga sem', () => {
+    expect(day, 'algum dia de novembro sem missão de amigo').toBeDefined();
     expect(lotMissionMarks({ ...base, friendsAlert: true })['laboratorio.amigos']).toBe('available');
     expect(lotMissionMarks({ ...base, friendsAlert: false })['laboratorio.amigos']).toBeUndefined();
   });

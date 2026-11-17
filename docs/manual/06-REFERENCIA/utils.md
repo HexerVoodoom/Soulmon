@@ -4789,3 +4789,35 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 
 ### `src/utils/soulProfile/ficha/evocacaoPorEstagio.ts`
 **Dono de:** a ponte ficha → cache `soulmonEvocacao` (16/11/2026): `escolaDominanteComEvocacao(ficha)` (argmax sobre todas as escolas, Evocação incluída; empate = ordem canônica) e `derivarEvocacao(fichaByStage, classTitles?)` (veredito `evocador` + arquétipo por estágio, via `eEvocador`). Pura. **Régua:** `evocacaoPorEstagio*.test.ts`.
+### `src/utils/companheiroCriatura.ts`
+**Dono de:** a criatura do companheiro de quem não tem save próprio (simulados e NPCs nomeados), sem arrastar o `CLASS_DATA` (16/11/2026, REGISTRO §444/§449): `AFINIDADES_CRIATURA` (recorte das 32 listas de afinidade; o teste `companheiroCriatura.test.ts` o confronta com `CLASS_DATA.criaturas`), `criaturaPorId` (`hash(id)` entre as de afinidade com o elemento; as 32 se nenhuma tem), `CHEFES_NOMEADOS_INVOCAM`, `eNpcInvocador`, `companheiroDoNpc`, `comCriaturaDoOponente`. As telas de luta (Torneio, Duelo) importam daqui em vez de `companheiroInvocadoLinhas.ts`.
+
+### `src/utils/demoButton.ts`
+**Dono de:** `DEMO_BUTTON_ENABLED`, o interruptor único do botão "DEMO — experimentar sem conta" do portão (`SoulmonOnboarding`, `data-demo-button`). `false` = botão oculto para todos; a lógica da demo (`demoMode.ts`, `demoStart.ts`, `handleStartDemo`) fica intacta. REGISTRO §446 (16/11/2026); o teste `SoulmonOnboarding.demoOff.render.test.tsx` trava o portão amarrado ao interruptor.
+
+### `src/utils/dishItems.ts`
+**Dono de:** o prato como item da pastinha (16/11/2026, REGISTRO §455): `DISH_PREFIX` (`dish:`), `dishKey`, `isDishKey`, `dishIdOfKey`, `DISH_SPECIAL_ITEMS` (uma entrada de `SPECIAL_ITEMS` por prato, kind `dish`; a arte vem de `itemArt.ts`) e `serveDish` (enche a fome e aplica o efeito do prato; chamada por `applySpecialItem`). Cozinhar só põe o prato aqui (`restaurant.ts › applyCook`); a Feira também guarda aqui (§465).
+
+### `src/utils/duelInvites.ts`
+**Dono de:** o convite de Duelo, a "ficha" da Arena livre (16/11/2026, REGISTRO §458): `DUEL_INVITE_MAX` (7), `DUEL_INVITE_INITIAL`, `DUEL_INVITE_PER_ENERGY` (5; `..._PAID` = 7 na conta paga), `DUEL_INVITE_ENERGY_COST`, `DUEL_INVITE_MIN_GAP_MS`, `sanitizeDuelInvites`, `duelInviteCount`, `duelInvitesPerEnergy`, `duelInviteExchangeRefusal`, `exchangeDuelInvites` (1 energia por convites), `spendDuelInvite` (ao começar a run). Espelho no servidor: `functions/api/_duelInvites.js`. **Régua:** `duelInvites*.test.ts` e `duelInvites.parity.test.js`.
+
+### `src/utils/elementoNeutro.ts`
+**Dono de:** `ELEMENTO_NEUTRO_ID` (`'neutro'`), o id do elemento Neutro (o do Corvo; REGISTRO §211). Folha sem imports: o dex, as essências e a poção leem daqui.
+
+### `src/utils/feiraNpcDia.ts`
+**Dono de:** a fala do mercador depois do desafio da Feira (16/11/2026, REGISTRO §466): `feiraNpcDia` (pura) conta o que o jogador achou hoje, o agregado do clã (`FeiraResumo`) e que amanhã tem mais; sem fala por aliado (o servidor não manda quem encontrou o quê, LV-G1). Tipo `FeiraNpcDia`.
+
+### `src/utils/neutroPotion.ts`
+**Dono de:** a receita e o progresso da poção do Neutro, a poção rara (16/11/2026, REGISTRO §452): `NEUTRO_POTION_COSTS` (para CADA um dos 20 elementos base, 100 essências ou 1 poção-base dele, mais 50 essências do Neutro; tudo-ou-nada; exige o Neutro conhecido), `neutroProgresso`, `neutroPlano`, `canAffordNeutroPotion`; tipos `NeutroBaseRow`, `NeutroProgresso`. Funções puras; o gasto real roda em `craftPotion` (`elementPotion.ts`) via `spendEssences`. **Régua:** `neutroPotion.test.ts`.
+
+### `src/utils/potionCosts.ts`
+**Dono de:** `POTION_COSTS` (elemento base 100 da própria essência; composto e Neutro 50) e `POTION_PREFIX`; folha sem imports lida por `elementPotion.ts`, `neutroPotion.ts`, a oferta da Vesca e o `App`.
+
+### `src/utils/restaurantMenu.ts`
+**Dono de:** o catálogo dos pratos do Restaurante (16/11/2026; folha-raiz sem import de runtime): tipos `ChefId`, `DishEffect`, `DishExtra`, `Dish`, `DISHES`, `dishById`, `isCombatEffect`, `ENERGY_DISH_PRICE_MULT`. Saiu de `restaurant.ts` (que reexporta tudo) para `dishItems.ts`/`shop.ts` não puxarem a cadeia dele.
+
+### `src/utils/riftMap.ts`
+**Dono de:** o plano do mapa de andares do Rift infinito (16/11/2026, REGISTRO §462): um nó por conjunto (`riftSets.ts`), o estado de cada nó (`riftNodeState`: visitado/atual/bloqueado), o caminho sinuoso determinístico (`riftSegmentBezier`, `riftSegmentPath`, `riftSegmentReached`), a janela visível (`riftMapWindow`, `riftVisibleRange`, `riftScrollTopFor`) e a regra de voltar ao nó (`riftRewindRefusal`, `rewindToSet`, `consumeResume`; `sanitizeResumeLayer`, `riftStartLayer`, `riftCurrentLayer`, `firstFloorOfSet`). Sem arte, relógio nem `Math.random`: a tela e os testes leem o mesmo plano.
+
+### `src/utils/riftMapCopy.ts`
+**Dono de:** os textos do mapa de andares do Rift (REGISTRO §462; tom calmo, nunca cobrança): `riftMapCopy(language)` e o tipo `RiftMapCopy` (título, voltar, rótulos de andar e aria dos nós).

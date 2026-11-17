@@ -67,7 +67,7 @@ export function LockNotice({ text, onClose, closeLabel = 'Fechar' }: { text: str
           data-lock-notice-close
           aria-label={closeLabel}
           onClick={onClose}
-          style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 18 }}
+          style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'var(--sm2-text-lg)' }}
         >
           <span aria-hidden="true">×</span>
         </button>

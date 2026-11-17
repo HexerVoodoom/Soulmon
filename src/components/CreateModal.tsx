@@ -457,7 +457,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   // Tarefa avulsa (`isSingleExecution`) NUNCA bate no teto — D-12: ela é o uso
   // espontâneo, e no desenho antigo custava a mesma cota de um hábito.
   // Só o HÁBITO (todo dia) gasta cota; a tarefa em dias específicos também não (dono, 14/10/2026).
-  const isAtCap = kind === 'habit' && activitiesCount >= activitiesCap;
+  const isAtCap = kind === 'habit' && Number.isFinite(activitiesCap) && activitiesCount >= activitiesCap; // teto infinito = sem teto (nunca imprime "até Infinity")
   const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
 

@@ -78,7 +78,7 @@ const men = (m: MaterialHonra) => MAT[m].en;
 
 const ARMAS: Array<[string, string, string, string]> = [
   ['lanca', 'Lança', 'Spear', '🔱'], ['espada', 'Espada', 'Sword', '🗡️'], ['escudo', 'Escudo', 'Shield', '🛡️'],
-  ['machado', 'Machado', 'Axe', '🪓'], ['arco', 'Arco', 'Bow', '🏹'], ['cajado', 'Cajado', 'Staff', '🪄'],
+  ['machado', 'Machado', 'Axe', '⚒️'], ['arco', 'Arco', 'Bow', '🏹'], ['cajado', 'Cajado', 'Staff', '🔮'],
 ];
 const ESTATUAS: Array<[string, string, string]> = [
   ['guerreiro', 'do Guerreiro', 'Warrior'], ['mago', 'do Mago', 'Mage'],
@@ -86,7 +86,7 @@ const ESTATUAS: Array<[string, string, string]> = [
 ];
 const CHAO: Array<[string, string, string, string]> = [
   ['espada-pedra', 'Espada na Pedra', 'Sword in the Stone', '🗡️'],
-  ['cajado', 'Cajado no Pedestal', 'Staff on a Pedestal', '🪄'],
+  ['cajado', 'Cajado no Pedestal', 'Staff on a Pedestal', '🔮'],
   ['escudo', 'Escudo de Guarda', 'Guard Shield', '🛡️'],
   ['lancas', 'Feixe de Lanças', 'Spear Rack', '🔱'],
 ];

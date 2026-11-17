@@ -298,13 +298,10 @@ export function NightmareBattle({
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true, speed,
   });
-  // §413: o aviso "dá tempo de torcer" dura a janela de abertura (relógio da cena: ÷ velocidade); só UI, o núcleo já atrasa o inimigo.
-  const [abertura, setAbertura] = useState(true);
+  const [abertura, setAbertura] = useState(true); // §413: "dá tempo de torcer" dura a janela de abertura (relógio da cena ÷ velocidade); só UI, o núcleo já atrasa o inimigo
   useEffect(() => {
-    setAbertura(true);
-    if (!(open && phase === 'fight') || pausado) return undefined;
-    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed));
-    return () => clearTimeout(id);
+    setAbertura(true); if (!(open && phase === 'fight') || pausado) return undefined;
+    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed)); return () => clearTimeout(id);
   }, [fightKey, open, phase, pausado, speed]);
   const batteryRef = useRef<typeof battle | null>(null);
   batteryRef.current = battle;
