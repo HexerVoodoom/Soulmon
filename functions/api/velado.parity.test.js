@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import * as srv from './_velado.js';
 import { BB_STAGE, bbRefusal, bbRefusalText } from '../../src/utils/bbStage';
+import { recusaGeracaoBB } from '../../src/utils/inicioBB';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
 
 const LIGADO = { ONBOARDING_VELADO: '1' };
@@ -51,5 +52,29 @@ describe('Duelo/Guilda: o save em BB não luta e não entra, com motivo (com ou 
     const r = await loadDuelSideWithSprite(env('rookie', false), 'aaaaaaaa');
     expect(r.bbLocked).toBeUndefined();
     expect(r.side).not.toBeNull();
+  });
+});
+
+describe('BB personalizado só no nascimento: a MESMA decisão nos dois lados (REGISTRO §472)', () => {
+  const casos = [
+    null, undefined, 'lixo', [], {},
+    { evolutionStage: 'bb', unlockedEvolutions: ['bb'], soulmonStages: [{}] },
+    { evolutionStage: 'bb', unlockedEvolutions: ['bb'], spriteLibrary: { sprites: { bb: { url: 'u' } } } },
+    { evolutionStage: 'bb', unlockedEvolutions: ['bb'], spriteLibrary: { sprites: { bb: { url: '' } } } },
+    { evolutionStage: 'rookie', unlockedEvolutions: ['bb', 'rookie'] },
+    { evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], soulmonStages: [{}] },
+    { evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], demoCharacterId: 'meteoro' },
+    { evolutionStage: 'rookie', unlockedEvolutions: ['rookie'] },
+  ];
+  it('cliente e servidor batem em todo caso, com e sem pedido de desenho novo', () => {
+    for (const c of casos) for (const regenerar of [false, true]) {
+      expect(srv.recusaGeracaoBB(c, { regenerar }), JSON.stringify(c)).toBe(recusaGeracaoBB(c, { regenerar }));
+    }
+  });
+  it('nascimento (sem save, ou em bb sem arte) passa; arte de BB, já evoluído, save antigo ou reroll recusam', () => {
+    expect(srv.recusaGeracaoBB(null)).toBeNull();
+    expect(srv.recusaGeracaoBB(casos[5])).toBeNull();
+    expect(srv.recusaGeracaoBB({}, { regenerar: true })).toBe('bb-birth-only');
+    for (const i of [6, 8, 9, 10]) expect(srv.recusaGeracaoBB(casos[i]), String(i)).toBe('bb-birth-only');
   });
 });

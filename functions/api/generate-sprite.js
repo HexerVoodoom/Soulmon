@@ -67,6 +67,10 @@ import { verifiedBetaFull } from './_betaFull.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
+import { recusaGeracaoBB, BB_BIRTH_ONLY_MESSAGE } from './_velado.js';
+
+/** Save maior que isto não é de quem está nascendo (o nascimento tem save pequeno): o BB é recusado sem parsear (CPU do worker). */
+const BB_SAVE_MAX_CHARS = 2_000_000;
 import { takeIpQuota } from './_ipHash.js';
 import { AI_REFUSAL_MESSAGES } from './_aiGuard.js';
 
@@ -700,6 +704,24 @@ async function onRequestPostBruto({ request, env }) {
       if (typeof formId !== 'string' || !VALID_FORM_ID.test(formId)) {
         return Response.json({ error: 'invalid-form-id' }, { status: 400, headers: CORS });
       }
+    }
+
+    // BB PERSONALIZADO SÓ NO NASCIMENTO (REGISTRO §472, `_velado.js`): reroll do BB nunca; geração nova do BB só enquanto o save
+    // da nuvem não prova que o nascimento passou. Antes do dedupe de propósito: o cache do BB (já gerado) continua voltando abaixo.
+    if (formId === 'bb') {
+      let estado = null;
+      try {
+        const bruto = await kvOrThrow(env).get(id);
+        if (typeof bruto === 'string' && bruto.length > BB_SAVE_MAX_CHARS) {
+          return Response.json({ error: 'bb-birth-only', reason: 'bb-birth-only', ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS });
+        }
+        estado = typeof bruto === 'string' ? JSON.parse(bruto) : null;
+      } catch (err) {
+        console.error('generate-sprite: save ilegível para o BB, recusando', err?.message);
+        return Response.json({ error: 'ai-quota-unavailable' }, { status: 503, headers: CORS });
+      }
+      const recusa = recusaGeracaoBB(estado, { regenerar: corpo.regenerate === true || regenPago });
+      if (recusa) return Response.json({ error: recusa, reason: recusa, ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS });
     }
 
     if (typeof formId === 'string' && formId.length > 0) {

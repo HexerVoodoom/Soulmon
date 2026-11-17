@@ -333,7 +333,7 @@ import { mostraVideoDeMarca, tocaCinematicaInicial, exigeTermo } from './utils/e
 const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
 import { initialStageForNewSave, isBBStage } from './utils/bbStage';
-import { aguardandoChocar, elementoDoInicial, evolucaoPaga, gravarBBNascimento, inicialNaoEvolui, lerBBNascimento, limparBBNascimento, prontoParaChocar, type BBNascimento } from './utils/inicioBB';
+import { aguardandoChocar, elementoDoInicial, evolucaoPaga, gravarBBNascimento, inicialNaoEvolui, lerBBNascimento, limparBBNascimento, prontoParaChocar, recusaGeracaoBB, type BBNascimento } from './utils/inicioBB';
 import { soulmonIntroLines } from './utils/soulmonIntro';
 const ChocarBB = lazy(() => import('./components/ChocarBB').then(m => ({ default: m.ChocarBB })));
 import { addBossShards } from './utils/bossShards';
@@ -2019,7 +2019,8 @@ export default function App() {
     const elemento = isStarterId(gameState.demoCharacterId) ? elementoDoInicial(gameState.demoCharacterId) : gameState.soulmonMeta?.dominantElement;
     void (async () => {
       let url: string | null = null;
-      if (pedido.pago && pedido.prompts) url = (await obterBBExclusivo(pedido.prompts).catch(() => null))?.url ?? null;
+      // Só no nascimento (`recusaGeracaoBB`, o mesmo critério do servidor): fora dele, o pool.
+      if (pedido.pago && pedido.prompts && !recusaGeracaoBB(gameState)) url = (await obterBBExclusivo(pedido.prompts).catch(() => null))?.url ?? null;
       if (!url) {
         if (!bbPoolRef.current) bbPoolRef.current = await carregarBBPool().catch(() => null);
         url = obterBBDoSorteio({ elemento })?.url ?? null;

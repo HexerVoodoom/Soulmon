@@ -88,3 +88,23 @@ export function aguardandoChocar(marcador: BBNascimento | null, stage: unknown):
 export function prontoParaChocar(marcador: BBNascimento | null, stage: unknown, spriteBB: string | undefined | null): boolean {
   return aguardandoChocar(marcador, stage) && !!spriteBB;
 }
+
+/**
+ * BB PERSONALIZADO SÓ NO NASCIMENTO (dono, 17/11/2026): espelho de `functions/api/_velado.js` (`recusaGeracaoBB`,
+ * paridade em `velado.parity.test.js`). Recusa com PROVA de que o nascimento passou: reroll do BB, arte de BB já no
+ * acervo, já saiu do BB, ou save nascido antes do BB. Save em `bb` sem arte = nascimento (1ª tentativa e retry de falha).
+ */
+export function recusaGeracaoBB(state: unknown, opts: { regenerar?: boolean } = {}): 'bb-birth-only' | null {
+  if (opts.regenerar) return 'bb-birth-only';
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
+  const s = state as Record<string, unknown>;
+  const unlocked = Array.isArray(s.unlockedEvolutions) ? (s.unlockedEvolutions as unknown[]) : [];
+  const lib = s.spriteLibrary as { sprites?: Record<string, { url?: unknown } | undefined> } | undefined;
+  const bb = lib && typeof lib === 'object' ? lib.sprites?.[BB_STAGE] : undefined;
+  if (bb && typeof bb.url === 'string' && bb.url) return 'bb-birth-only';
+  if (unlocked.includes(BB_STAGE) && s.evolutionStage !== BB_STAGE) return 'bb-birth-only';
+  const temCriatura = (Array.isArray(s.soulmonStages) && s.soulmonStages.length > 0)
+    || (typeof s.demoCharacterId === 'string' && s.demoCharacterId.length > 0);
+  if (temCriatura && !unlocked.includes(BB_STAGE) && s.evolutionStage !== BB_STAGE) return 'bb-birth-only';
+  return null;
+}
