@@ -13,6 +13,7 @@
 // cycles, one rule.
 import { detectBetaClosed } from './betaClosed';
 import { authHeaders } from './auth';
+import { registrarRestauracao, registrarStatusDaNuvem } from './loginDiag';
 import { isDemoMode, type DemoCarrier } from './demoMode';
 import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
@@ -516,6 +517,7 @@ export async function lerDeletedAt(res: Response): Promise<number | undefined> {
 export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
+    registrarStatusDaNuvem(res.status);
     if (res.status === 410) return { estado: 'excluida', excluidaEm: await lerDeletedAt(res) };
     if (!res.ok) { await detectBetaClosed(res); return { estado: 'indeterminado' }; }
     const data = await res.json();
@@ -523,6 +525,7 @@ export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
     const revision = revisaoDoCorpo(data);
     return { estado: 'encontrado', state: data.state, ...(revision !== undefined ? { revision } : {}) };
   } catch {
+    registrarStatusDaNuvem(0);
     return { estado: 'indeterminado' };
   }
 }
@@ -711,16 +714,20 @@ export type RestauracaoNoLogin = 'restaurada' | 'sem-save' | 'indeterminado' | '
  */
 export async function restaurarContaNoLogin(email: string): Promise<RestauracaoNoLogin> {
   const norm = email.trim().toLowerCase();
-  if (!norm) return 'sem-save';
+  if (!norm) { registrarRestauracao('sem-save'); return 'sem-save'; }
+  let resultado: RestauracaoNoLogin;
   try {
     const id = await emailToSaveId(norm);
+    registrarRestauracao('nao-chamada', id);
     const r = await lerNuvem(id);
-    if (r.estado === 'indeterminado' || r.estado === 'excluida') return 'indeterminado';
-    if (r.estado === 'vazio') return 'sem-save';
-    return adoptCloudSave(id, r.state, norm, { revision: r.revision }) === 'ok' ? 'restaurada' : 'storage';
+    if (r.estado === 'indeterminado' || r.estado === 'excluida') resultado = 'indeterminado';
+    else if (r.estado === 'vazio') resultado = 'sem-save';
+    else resultado = adoptCloudSave(id, r.state, norm, { revision: r.revision }) === 'ok' ? 'restaurada' : 'storage';
   } catch {
-    return 'indeterminado';
+    resultado = 'indeterminado';
   }
+  registrarRestauracao(resultado);
+  return resultado;
 }
 
 // ---------------------------------------------------------------------------
