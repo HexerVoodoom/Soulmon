@@ -167,7 +167,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(r.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
-  it('Masmorra: a folha tem 2 botões ("Entrar no Rift", "Ver o mapa") + nota "Pode cair" e Bits do dia acima, sem "?" (dono, 16-17/11/2026)', async () => {
+  it('Masmorra: a folha tem 2 botões + Bits do dia, SEM a nota "Pode cair"; "Ranking" no cabeçalho e o "i" do Drop rate (dono, 17/11/2026)', async () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
@@ -175,13 +175,50 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
-    // a nota "Pode cair" (com o Glitchtama) e o Bits do dia ficam ACIMA dos botões; o "?" não volta
-    const drops = folha.querySelector('[data-masmorra-drops]')!;
-    expect(drops.textContent).toContain('Glitchtama');
-    expect(folha.textContent).toContain('Pode cair');
-    const start = folha.querySelector('[data-masmorra-start]')!;
-    expect(drops.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
+    expect(folha.textContent).not.toContain('Pode cair');
+    expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
+    // "Ranking": no cabeçalho, à esquerda do título, outline, negrito + sublinhado
+    const head = folha.querySelector('[data-area-sheet-head]')!;
+    const rank = head.querySelector('[data-masmorra-ranking]') as HTMLButtonElement;
+    expect(rank.textContent).toBe('Ranking');
+    expect(rank.style.fontWeight).toBe('700');
+    expect(rank.style.textDecoration).toBe('underline');
+    expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
+    expect(rank.compareDocumentPosition(head.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
+    await achar(container, '[data-masmorra]');
+    const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
+    const info = folha.querySelector('[data-area-sheet-head] [data-info-tip]') as HTMLButtonElement;
+    expect(info.getAttribute('aria-label')).toBe('Drop rate');
+    fireEvent.click(info);
+    const painel = document.querySelector('[data-info-tip-panel]')!;
+    expect(painel.textContent).toContain('Drop rate');
+    expect(painel.querySelector('[data-masmorra-drops]')!.textContent).toMatch(/Coraçãozinho.*5%[\s\S]*Glitchtama.*1%[\s\S]*Soulsmith.*5→100/);
+    expect(painel.querySelector('[data-masmorra-drops]')!.textContent).toMatch(/Bits.*→/);
+    fireEvent.click(info);
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    fireEvent.click(info);
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    fireEvent.click(info);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(document.querySelector('[data-info-tip-panel]')).toBeNull();
+    expect(getByRole('dialog', { name: 'Fenda Sem Fim' })).toBeTruthy();
+  });
+
+  it('Masmorra: "Ranking" abre o ranking mensal do Rift (endless-rift)', async () => {
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
+    await achar(container, '[data-masmorra]');
+    fireEvent.click(getByRole('dialog', { name: 'Fenda Sem Fim' }).querySelector('[data-masmorra-ranking]')!);
+    await waitFor(() => expect(document.querySelector('[data-masmorra-ranking-panel]')).toBeTruthy());
+    expect(getByRole('dialog', { name: 'Ranking' })).toBeTruthy();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -250,8 +287,10 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
-    expect(container.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
-    expect(container.querySelector('[data-masmorra]')!.textContent).toContain('Possible drops');
+    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
+    expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
+    fireEvent.click(container.querySelector('[data-area-sheet-head] [data-info-tip]')!);
+    expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
   });
 });
 
