@@ -76,6 +76,12 @@ const pt = {
     ] as [string, string, string, string][],
   },
   video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Trailer', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
+  modal: {
+    rotulo: 'Entrar no beta fechado', fechar: 'Fechar', passoDe: 'Passo {n} de 3', voltar: 'Voltar',
+    p1: { h: 'Entre no grupo', tx: 'Entre com o mesmo Gmail que você usa na Play Store. A página abre em outra aba.', abrir: 'Abrir o grupo', ok: 'Já entrei' },
+    p2: { h: 'Vire testador', tx: 'Toque em Tornar-se testador na página de teste da Play.', abrir: 'Tornar-se testador', ok: 'Já sou testador' },
+    p3: { h: 'Instale e jogue', tx: 'Pronto. Baixe o Soulmon pela Play Store.', abrir: 'Baixar na Play Store' },
+  },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
@@ -200,6 +206,12 @@ const en: typeof pt = {
     ],
   },
   video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'Trailer', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 59 seconds, with music and no narration.' },
+  modal: {
+    rotulo: 'Join the closed beta', fechar: 'Close', passoDe: 'Step {n} of 3', voltar: 'Back',
+    p1: { h: 'Join the group', tx: 'Use the same Gmail you use on Google Play. The page opens in a new tab.', abrir: 'Open the group', ok: 'I joined' },
+    p2: { h: 'Become a tester', tx: 'Tap Become a tester on the Google Play test page.', abrir: 'Become a tester', ok: "I'm a tester" },
+    p3: { h: 'Install and play', tx: 'All set. Download Soulmon from the Play Store.', abrir: 'Get it on Google Play' },
+  },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [
