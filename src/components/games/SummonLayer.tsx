@@ -22,12 +22,14 @@ export interface StageSummon {
 interface SpotLike { readonly x: number; readonly y: number; readonly size: number }
 
 /** Tamanho do companheiro em relação ao invocador, e o quanto ele se adianta (frações do tamanho do invocador). */
-export const SUMMON_SIZE = 0.7;
+export const SUMMON_SIZE = 0.35;
 /** Avanço HORIZONTAL (lado do oponente): o companheiro fica no chão ao lado do invocador, não em cima do corpo dele. */
 export const SUMMON_ADVANCE = 0.65;
 /** Subida leve (profundidade), SEMPRE para cima: o companheiro do inimigo não desce sobre a barra de HP do jogador. */
 export const SUMMON_LIFT = 0.02;
 const OUT_MS = 200;
+/** O sprite sai em OUT_MS, mas o clarao de saida dura o dobro: so desmonta depois dele. */
+const UNMOUNT_MS = OUT_MS * 2;
 
 /**
  * Onde o companheiro fica: AO LADO do invocador, do lado do oponente e quase na mesma linha do chão (prévia de 16/11: com o vetor
@@ -48,16 +50,18 @@ function SummonSprite({ summon, from, to, reduced, z }: { summon: StageSummon; f
   const present = summon.turns > 0 && !!src;
   const [mounted, setMounted] = useState(present);
   const [shown, setShown] = useState(false);
+  const [flashKind, setFlashKind] = useState<'in' | 'out' | null>(null);
   useEffect(() => {
     if (present) {
       setMounted(true);
       if (reduced) { setShown(true); return undefined; }
-      const id = requestAnimationFrame(() => setShown(true));
+      const id = requestAnimationFrame(() => { setShown(true); setFlashKind('in'); });
       return () => cancelAnimationFrame(id);
     }
     setShown(false);
     if (reduced) { setMounted(false); return undefined; }
-    const tm = setTimeout(() => setMounted(false), OUT_MS);
+    setFlashKind((k) => (k ? 'out' : k));
+    const tm = setTimeout(() => { setMounted(false); setFlashKind(null); }, UNMOUNT_MS);
     return () => clearTimeout(tm);
   }, [present, reduced]);
   if (!mounted || !src) return null;
@@ -83,7 +87,7 @@ function SummonSprite({ summon, from, to, reduced, z }: { summon: StageSummon; f
         <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} className="sm-bs-bounce"
           style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', ['--sm-idle-dur' as string]: summon.side === 'me' ? '1.05s' : '1.25s' } as CSSProperties} />
       </div>
-      {!reduced && <div key={shown ? 'in' : 'out'} aria-hidden="true" data-stage-summon-flash={shown ? 'in' : 'out'} style={flash} />}
+      {!reduced && flashKind && <div key={flashKind} aria-hidden="true" data-stage-summon-flash={flashKind} style={flash} />}
     </>
   );
 }
