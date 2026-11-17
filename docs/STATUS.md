@@ -5845,3 +5845,7 @@ O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `r
 
 ## §458 — Convite de Duelo (16/11/2026)
 - Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.
+
+## §467 — Rift e Arena: ajustes do dono (16/11/2026)
+- Feito: andares "Fogo 1/Fogo 2" (HUD e mapa); folha da Fenda só com "Entrar no Rift" (retoma direto) e "Ver o mapa" (outline); película preta com gradiente no mapa; "Comprar convites" no topo da Arena com leque de convites (reuso do `TicketFan`).
+- Pendente do dono: ver as capturas em `E:\Soulmon-assets\_lote-17-11\rift-arena\previas\`.
