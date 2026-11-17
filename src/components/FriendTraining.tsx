@@ -1,7 +1,8 @@
 /**
  * TREINO COM AMIGO (§243). Luta de treino contra a criatura de um amigo, 100% LOCAL e unilateral: sem rede, sem aprovação dele,
  * e SEM VALOR. Não paga Bits, Honra, pontos, XP de Vínculo, missão nem ranking, não gasta a partida do dia e não grava nada no
- * save. O oponente nasce só de dado PÚBLICO do amigo (estágio, elemento, arte): nunca da ficha nem do save dele.
+ * save. O oponente usa a FICHA REAL do amigo (especial da escola e, se evocador, o companheiro) quando `friendSide` vem do servidor
+ * (`action=friendSide`, só entre amigos, o mesmo `DuelSide` do duelo); sem ela, cai no lado comum por estágio.
  *
  * É a mesma `DuelScreen` e a mesma simulação do treino do Torneio; o aviso de fim diz "treino, sem prêmio".
  */
@@ -44,7 +45,12 @@ export function friendTrainingSide(friend: Pick<TrainingFriend, 'stage'>): DuelS
   return { combatant: soulCombatant({ evolutionStage: friend.stage }), special: specialOf('direct') };
 }
 
-export function FriendTraining({ friend, trainer, isPt, onClose }: { friend: TrainingFriend; trainer: FriendTrainerProps; isPt: boolean; onClose: () => void }) {
+/** A ficha REAL do amigo (decisão do dono, 17/11/2026) quando o servidor a entregou; senão o lado comum. Só o formato é conferido: os números são os do duelo. */
+export function friendTrainingOpp(friend: Pick<TrainingFriend, 'stage'>, real?: DuelSide | null): DuelSide {
+  return real && real.combatant && real.special ? real : friendTrainingSide(friend);
+}
+
+export function FriendTraining({ friend, friendSide, trainer, isPt, onClose }: { friend: TrainingFriend; friendSide?: DuelSide | null; trainer: FriendTrainerProps; isPt: boolean; onClose: () => void }) {
   const ctx = useGameStateOptional();
   const hx = useHexOverrides();
   const talentos = usePvpTalents();
@@ -64,7 +70,7 @@ export function FriendTraining({ friend, trainer, isPt, onClose }: { friend: Tra
       fx: fxDoLutador(par, trainer.petElement),
       ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}),
     };
-    return { seed: Math.floor(Math.random() * 0xffffffff), me, opp: friendTrainingSide(friend) };
+    return { seed: Math.floor(Math.random() * 0xffffffff), me, opp: friendTrainingOpp(friend, friendSide) };
   });
   const [outcome, setOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
   const nome = friend.petName || friend.name;

@@ -4,6 +4,8 @@
  * desequipar (no botão do próprio HEX, 13/11/2026) mantém o item, e não existe botão de vender/descartar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { installDomGlobals } from '../../test/renderEnv';
 import { GameStateProvider, useGameState } from '../../contexts/GameStateContext';
@@ -173,6 +175,19 @@ describe('HexsmithSheet', () => {
     const img = q('[data-hex-slot="coroa"]').querySelector('img')!;
     expect(img.getAttribute('data-hex-crown')).toBe('dot');
     expect(img.getAttribute('src')).toMatch(/coroa-dot/);
+  });
+
+  it('Coroa equipada: placa turquesa clara com outer glow turquesa (não branca), ícone segue aria-hidden e o botão do slot rotulado', () => {
+    abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
+    const btn = q('[data-hex-slot="coroa"]');
+    expect(btn.getAttribute('aria-label')).toMatch(/Coroa|Porta/);
+    expect(btn.querySelector('img')!.getAttribute('aria-hidden')).toBe('true');
+    // jsdom não carrega o CSS: confere a regra na fonte
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    const regra = css.match(/\.sm2-hex-art\[data-hex-crown\] \{[^}]*\}/)![0];
+    expect(regra).not.toMatch(/#EAF6F3|#fff\b/i);
+    expect(regra).toMatch(/background-color: #B4F4EA/);
+    expect(regra).toMatch(/0 0 8px 2px color-mix\(in srgb, var\(--sm2-primary-ink\)/);
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {

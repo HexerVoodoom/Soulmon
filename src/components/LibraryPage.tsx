@@ -25,8 +25,9 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { mensagemFalhaConvite } from '../utils/amizadeErro';
-import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
+import { listPlayers, getPlayer, getFriendForms, getFriendSide, addFriend, removeFriend, sendGift, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
 import type { FriendTrainerProps } from './FriendTraining';
+import type { DuelSide } from '../utils/combate/duel';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
@@ -196,6 +197,19 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [removeMode, setRemoveMode] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<{ p: LibraryEntry; step: 1 | 2 } | null>(null);
   const [trainingWith, setTrainingWith] = useState<LibraryEntry | null>(null);
+  // Ficha real do amigo (especial/evocação) para o treino; `null` = não veio (sem rede, amigo bb, save grande): o treino usa o lado comum.
+  const [trainingSide, setTrainingSide] = useState<DuelSide | null>(null);
+  const startTraining = async (p: LibraryEntry) => {
+    let side: DuelSide | null = null;
+    try {
+      side = await Promise.race([
+        getFriendSide(saveId, p.id).then(r => r.side ?? null),
+        new Promise<null>(res => setTimeout(() => res(null), 2500)),
+      ]);
+    } catch { side = null; }
+    setTrainingSide(side);
+    setTrainingWith(p);
+  };
   /** 💤 §329: treinar com um amigo leva o Soulmon; dormindo, pergunta antes (ver a lista segue livre). */
   const requireAwake = useRequireAwake();
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
@@ -853,7 +867,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                   icon="swords"
                   tone="ink"
                   label={isPt ? `Treinar com ${p.name}` : `Train with ${p.name}`}
-                  onClick={() => { requireAwake('treino', () => setTrainingWith(p)); }}
+                  onClick={() => { requireAwake('treino', () => { void startTraining(p); }); }}
                 />
               )}
               {/* Presente: some pelo resto do dia depois de enviado (o servidor é quem sabe, `sentToday`). */}
@@ -948,7 +962,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
 
       {trainingWith && trainer && (
         <Suspense fallback={null}>
-          <FriendTraining friend={trainingWith} trainer={trainer} isPt={isPt} onClose={() => setTrainingWith(null)} />
+          <FriendTraining friend={trainingWith} friendSide={trainingSide} trainer={trainer} isPt={isPt} onClose={() => { setTrainingWith(null); setTrainingSide(null); }} />
         </Suspense>
       )}
 

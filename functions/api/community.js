@@ -1717,6 +1717,23 @@ async function handleCommunity(context) {
     return json({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
 
+  // ── Ficha de luta de um AMIGO para o Treino com amigo (17/11/2026, decisão do dono) ─────────────────────────
+  // Só entre amigos (mesma régua de `forms`). Devolve APENAS o lado do amigo, o mesmo `DuelSide` que o duelo ranqueado já
+  // entrega ao oponente (especial da escola, fx cosmético e, se evocador, `invoca`/`companheiro`): nada de pontos, limiares,
+  // save nem pid/saveId. Sem custo, sem ticket, sem cota e sem gravar nada. Falha = 404 e o cliente cai no lado comum.
+  if (action === 'friendSide' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const friendPid = url.searchParams.get('friend') || '';
+    const friendSave = VALID_ID.test(friendPid) ? await saveIdForPublicId(env, friendPid) : null;
+    const me = await getProfile(env, id);
+    const p = friendSave ? await getProfile(env, friendSave) : null;
+    if (!friendSave || !me || !(me.friends || []).includes(friendSave) || !p || isHidden(p)) return json({ error: 'not friends' }, 403);
+    const { side, bbLocked } = await loadDuelSideWithSprite(env, friendSave);
+    if (!side || bbLocked) return json({ error: 'side unavailable' }, 404);
+    return json({ side });
+  }
+
   // ── Amizade por CONVITE (§243) ────────────────────────────────────────────
   // `friends` {add} agora ENVIA convite (a pessoa aceita em `friendAccept`); `friends` {remove} desfaz nos dois lados.
   // Resposta de convite é a mesma para alvo simulado (nada gravado), cheio ou com a caixa lotada: não confirma estado alheio.
