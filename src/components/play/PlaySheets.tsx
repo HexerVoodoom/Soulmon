@@ -188,7 +188,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { languag
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
-      {onMap && <CtaTextButton data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</CtaTextButton>}
+      {onMap && <button type="button" data-masmorra-map onClick={onMap} style={{ ...sm2Button('outline'), width: '100%' }}>{isPt ? 'Ver o mapa' : 'See the map'}</button>}
       <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
     </div>
   );
