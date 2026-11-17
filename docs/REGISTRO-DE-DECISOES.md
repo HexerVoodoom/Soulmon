@@ -6336,3 +6336,11 @@ Decisão: o botão "DEMO — experimentar sem conta" da tela de abertura (`Soulm
 Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `SoulmonOnboarding.demoOff.render.test.tsx` e a condição `DEMO_BUTTON_ENABLED && onStartDemo`; o squash do "Release beta12" (#897, 8c7b4a804) apagou os três e devolveu `{onStartDemo && (`, ressuscitando o botão sem aviso. Restaurados os três arquivos/condição; saves `accountTier:'demo'` e demo local já salva seguem abrindo (`demoMode.ts`/`demoStart.ts` intactos).
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
+
+## §467 — Hexsmith: placa atrás da Coroa encaixada e descrição em TODAS as Coroas (17/11/2026, dono)
+
+**Pedido:** a Coroa do dano contínuo (`coroa-dot`, quase preta, L≈0,006) sumia no fundo escuro do slot (≈1,2:1); só as Coroas novas tinham descrição do efeito.
+**Decisão do dono:** sem arte nova; resolver por CSS mudando o fundo do slot ocupado, para todas as Coroas. Porta vazia fica como está.
+**Feito:** `.sm2-hex-art[data-hex-crown]` ganha placa (clara `#EAF6F3`; escura `#08191A` só para heal/hot/spdBuff, as artes claras) e anel `primary-ink`; igual nos dois temas. Contraste da mediana da arte contra a placa 5,0 a 16,9:1 (antes: dot 1,2:1 no escuro; heal 1,9:1 no claro). `HEX_CROWN_FAMILY_DESC` cobre as 10 famílias (as 7 de sempre ganharam texto PT/EN, sem número nem vantagem); teste varre `HEX_CROWN_VALUES`.
+**Alternativa que perdeu:** halo luminoso só no dot (contorno em `primary-ink`, ~11:1 contra o fundo) — resolvia uma Coroa; a placa resolve todas.
+
