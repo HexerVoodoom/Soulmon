@@ -78,9 +78,12 @@ export function limiarDaPocao(id: string): number | undefined {
 /** Os elementos que têm poção, na ordem do catálogo (o Neutro por último). */
 export const POTION_ELEMENT_IDS: readonly string[] = [...ESSENCE_ELEMENT_IDS, ELEMENTO_NEUTRO_ID];
 
-/** Elementos cuja essência CRUZOU o limiar da poção (`limiarDaPocao`) de `prev` para `next` (estava abaixo, agora tem). Dispara 1x por cruzamento. */
+/** A Vesca só oferece poção de elemento BASE (dono 17/11/2026); composto e Neutro seguem pelo Centro de Evolução. */
+export const VESCA_OFFER_ELEMENT_IDS: readonly string[] = POTION_ELEMENT_IDS.filter(id => BASE_ELEMENT_IDS.includes(id));
+
+/** Elementos BASE cuja essência CRUZOU o limiar da poção (`limiarDaPocao`) de `prev` para `next` (estava abaixo, agora tem). Dispara 1x por cruzamento. */
 export function essenceThresholdCrossings(prev: Record<string, number> | undefined, next: Record<string, number> | undefined): string[] {
-  return POTION_ELEMENT_IDS.filter(id => { const t = limiarDaPocao(id) ?? Infinity; return (prev?.[id] ?? 0) < t && (next?.[id] ?? 0) >= t; });
+  return VESCA_OFFER_ELEMENT_IDS.filter(id => { const t = limiarDaPocao(id) ?? Infinity; return (prev?.[id] ?? 0) < t && (next?.[id] ?? 0) >= t; });
 }
 
 const VESCA_OFFERED_KEY = 'soulmon:vescaOffered';
