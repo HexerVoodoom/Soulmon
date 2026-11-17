@@ -25,9 +25,9 @@ describe('TicketFan com a arte do convite', () => {
     rerender(<TicketFan count={0} language="en-US" art={art} />);
     expect(container.querySelector('[data-convite-fan]')).toBeNull();
   });
-  it('sem `art`, segue o leque de tickets (teto 6)', () => {
+  it('sem `art`, segue o leque de tickets (teto FUN_TICKET_MAX)', () => {
     const { container } = render(<TicketFan count={9} language="en-US" />);
-    expect(container.querySelector('[data-ticket-fan="6"]')).toBeTruthy();
-    expect(container.querySelectorAll('[data-ticket-in-fan]')).toHaveLength(6);
+    expect(container.querySelector('[data-ticket-fan="5"]')).toBeTruthy();
+    expect(container.querySelectorAll('[data-ticket-in-fan]')).toHaveLength(5);
   });
 });
