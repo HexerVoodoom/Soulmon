@@ -4,7 +4,11 @@
  * `fetchBetaFull`, decidido pelo token) já diz que há plano: o ovo nasce "comprado" (só o "Chocar"), sem modal de
  * compra e sem demo. Quem não está na lista (ou a consulta falha) vê a escolha de sempre.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';

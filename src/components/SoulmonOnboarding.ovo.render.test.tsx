@@ -11,7 +11,11 @@
  * Cada `it` é uma frase do pedido; a régua é o DOM (jsdom não anima nem faz layout: movimento reduzido é checado pelo
  * NOME da animação escolhida, não por quadros).
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';

@@ -4,8 +4,9 @@
  * e o servidor também precisa recusar (Duelo PvP e Guilda validam o estágio aqui) é
  * copiado e travado por `velado.parity.test.js`.
  *
- * Interruptor `ONBOARDING_VELADO` (var/secret, `1`/`true`/…): DESLIGADO por padrão. Desligado,
- * `bbRefusal` devolve sempre `null` e nada do que existia muda.
+ * Interruptor `ONBOARDING_VELADO` (var/secret, `1`/`true`/…): DESLIGADO por padrão.
+ * INÍCIO BB (17/11/2026, REGISTRO §472): todo save novo nasce BB, com ou sem o interruptor. A recusa segue o ID do
+ * estágio (como no app): save que não é BB (todos os de antes) nunca é recusado; save BB é recusado sempre.
  */
 import { flagOn } from './_killSwitch.js';
 
@@ -14,13 +15,13 @@ export const BB_STAGE = 'bb';
 export const isOnboardingVelado = env => flagOn(env?.ONBOARDING_VELADO);
 
 /**
- * Recusa MOTIVADA (padrão de `rebirthRefusal`): `'bb-locked'` quando o estágio do jogador é BB e o
- * interruptor está ligado; `null` caso contrário.
- * @param {unknown} env @param {unknown} evolutionStage
+ * Recusa MOTIVADA (padrão de `rebirthRefusal`): `'bb-locked'` quando o estágio do jogador é BB; `null` caso contrário.
+ * `env` fica na assinatura (contrato dos chamadores); desde o Início BB a decisão não depende do interruptor.
+ * @param {unknown} _env @param {unknown} evolutionStage
  * @returns {'bb-locked' | null}
  */
-export function bbRefusal(env, evolutionStage) {
-  return isOnboardingVelado(env) && evolutionStage === BB_STAGE ? 'bb-locked' : null;
+export function bbRefusal(_env, evolutionStage) {
+  return evolutionStage === BB_STAGE ? 'bb-locked' : null;
 }
 
 /** Corpo de erro padrão (voz do Soulmon: sem culpa). */

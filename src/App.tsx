@@ -80,7 +80,7 @@ import { isReviewableSpriteUrl, type ReviewReport, type ReviewSnapshot } from '.
 import { ReviewResultModal, reviewResultMessage, type ReviewRowState } from './components/ReviewSoulmonRow';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, canManualRetry, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
-import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
+import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS, STARTER_NAMES } from './utils/sprites';
 import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
@@ -178,7 +178,6 @@ import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
-import { evolutionPaywalled } from './utils/evolutionPaywall';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
@@ -333,7 +332,10 @@ const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/Seque
 import { mostraVideoDeMarca, tocaCinematicaInicial, exigeTermo } from './utils/embedGates';
 const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
-import { initialStageForNewSave } from './utils/bbStage';
+import { initialStageForNewSave, isBBStage } from './utils/bbStage';
+import { aguardandoChocar, elementoDoInicial, evolucaoPaga, gravarBBNascimento, inicialNaoEvolui, lerBBNascimento, limparBBNascimento, prontoParaChocar, type BBNascimento } from './utils/inicioBB';
+import { soulmonIntroLines } from './utils/soulmonIntro';
+const ChocarBB = lazy(() => import('./components/ChocarBB').then(m => ({ default: m.ChocarBB })));
 import { addBossShards } from './utils/bossShards';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import type { UnlockReason } from './components/unlockReason';
@@ -1429,7 +1431,8 @@ export default function App() {
     // por que isto NAO depende do `GET /api/whoami` (que nao existe e nao tem
     // dono). `birthBatch` ja filtra o que existe, entao ligar isto nao pode
     // gerar duas vezes.
-    newborn: isNewbornLibrary(spriteAcervo),
+    // Início BB: no BB a forma de nascimento é o BB (pedido abaixo); o rookie só é desenhado no cristal da 1ª evolução (D17).
+    newborn: isNewbornLibrary(spriteAcervo) && !isBBStage(gameState.evolutionStage),
   });
   /* 💎 O CRISTAL (31/10/2026, dono): a fase vem de `utils/evolutionCrystal.ts` — gerando · falhou · pronto. */
   const cristal = activeCrystal(gameState);
@@ -1463,8 +1466,12 @@ export default function App() {
   /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
      o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
      troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
-  const petChocando = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
-    && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
+  /* INÍCIO BB (`utils/inicioBB.ts`): o Soulmon fica NO CRISTAL até a pessoa chocá-lo; a arte do BB não aparece antes do chocar. */
+  const [bbNasc, setBbNasc] = useState<BBNascimento | null>(() => lerBBNascimento());
+  const bbNoCristal = aguardandoChocar(bbNasc, gameState.evolutionStage);
+  const spriteBB = spriteAcervo.sprites.bb?.url;
+  const petChocando = bbNoCristal || ((!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
+    && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage));
   // Criatura do oráculo (nunca o inicial de fogo de reserva, mesmo se a geração falhar/estiver no teto).
   const petOraculo = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
@@ -1472,9 +1479,9 @@ export default function App() {
   setPetSizeSeed(sizeSeedOf(gameState));
   // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
   useMemo(() => {
-    const map = mapaDeSpritesProprios(spriteVisor);
+    const map = bbNoCristal ? {} : mapaDeSpritesProprios(spriteVisor);
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
-  }, [spriteVisor, petChocando, petOraculo]);
+  }, [spriteVisor, petChocando, petOraculo, bbNoCristal]);
   /**
    * A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`) e o relatório do dia guarda a chave NA MESMA
    * escrita: fechar o app antes de sair do resumo e reabrir não pode sortear um segundo Soulmon no mesmo dia. Idempotente.
@@ -2000,6 +2007,53 @@ export default function App() {
     if (reason && demo) { refuseDemo(); return; }
     setUnlockReasonRaw(reason);
   }, [demo, refuseDemo]);
+
+  /* INÍCIO BB (dono, 17/11/2026; `utils/inicioBB.ts`) — o BB de nascimento chega DEPOIS de o jogo abrir: pago pede o BB
+     exclusivo (D31, com o pool de reserva); free recebe o do pool (D30), filtrado pelo elemento do inicial que ele vai virar.
+     Uma vez por abertura; se nada vier, o marcador sai e o Soulmon não fica preso no cristal. */
+  const bbPedidoRef = useRef(false);
+  useEffect(() => {
+    if (!hasCompletedOnboarding || !bbNasc || !bbNoCristal || spriteBB || bbPedidoRef.current) return;
+    bbPedidoRef.current = true;
+    const pedido = bbNasc;
+    const elemento = isStarterId(gameState.demoCharacterId) ? elementoDoInicial(gameState.demoCharacterId) : gameState.soulmonMeta?.dominantElement;
+    void (async () => {
+      let url: string | null = null;
+      if (pedido.pago && pedido.prompts) url = (await obterBBExclusivo(pedido.prompts).catch(() => null))?.url ?? null;
+      if (!url) {
+        if (!bbPoolRef.current) bbPoolRef.current = await carregarBBPool().catch(() => null);
+        url = obterBBDoSorteio({ elemento })?.url ?? null;
+      }
+      if (url) {
+        const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
+        updateSpriteLibrary(prev => recordSprite(prev, { url: url as string, formId: 'bb', at: Date.now() }, { adopt: 'now', dayKey }));
+      } else {
+        limparBBNascimento();
+        setBbNasc(null);
+      }
+    })();
+  }, [hasCompletedOnboarding, bbNasc, bbNoCristal, spriteBB, gameState.demoCharacterId, gameState.soulmonMeta?.dominantElement, obterBBExclusivo, obterBBDoSorteio, updateSpriteLibrary]);
+  const chocarAberto = hasCompletedOnboarding && prontoParaChocar(bbNasc, gameState.evolutionStage, spriteBB);
+  const terminarChocar = useCallback(() => { limparBBNascimento(); setBbNasc(null); }, []);
+  const nomeDoBB = soulmonDisplayName(gameState.soulmonMeta)
+    || (isStarterId(gameState.demoCharacterId) ? STARTER_NAMES[gameState.demoCharacterId] : '') || 'Soulmon';
+  const falasDoBB = useMemo(() => (chocarAberto ? soulmonIntroLines({
+    name: nomeDoBB,
+    element: (isStarterId(gameState.demoCharacterId) ? elementoDoInicial(gameState.demoCharacterId) : gameState.soulmonMeta?.dominantElement) ?? '',
+    alignment: gameState.soulmonMeta?.dominantAlignment ?? 'harmonia',
+    petPassive: gameState.petPassive,
+    categories: [...gameState.activities.map(a => a.category), ...(gameState.tasks ?? []).map(t => t.category)],
+  }, language === 'pt-BR' ? 'pt' : 'en') : []), [chocarAberto, nomeDoBB, language]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* D8 no Início BB: quando o rookie grátis PODE ir a champion, o convite de assinar abre SOZINHO uma vez (por aparelho);
+     depois disso o botão Evoluir (que aparece com a barra cheia) é que o abre. */
+  const prontoMasPago = hasCompletedOnboarding && evolucaoPaga(veladoOn, gameState) && !gameState.evolutionLocked
+    && gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)
+    && podeEvoluirDepoisDaQueda(gameState);
+  useEffect(() => {
+    if (!prontoMasPago || currentView !== 'home' || readFlag(STORAGE_KEYS.PAYWALL_CHAMPION_VISTO)) return;
+    writeFlag(STORAGE_KEYS.PAYWALL_CHAMPION_VISTO, true, { silent: true });
+    setUnlockReason('evolve-free');
+  }, [prontoMasPago, currentView, setUnlockReason]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
   /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
@@ -2836,7 +2890,7 @@ export default function App() {
   })();
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
   const minhaCriaturaUrl = (!petIsCorvo
-    ? (displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
+    ? (displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? Object.entries(spriteAcervo.sprites).find(([k]) => k !== 'bb')?.[1]?.url)
     : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /** FEIRA DO CHEFE: o SEU bicho na luta (elemento = o do Soulmon (`petElementOf`, a mesma fonte do resto do combate)). */
@@ -4207,9 +4261,9 @@ export default function App() {
   }, [setGameState, language]);
 
   const handleEvolveRequest = useCallback(() => {
-    if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
-    // D8 (ONBOARDING_VELADO): grátis depois do rookie pede conta paga — abre o convite.
-    if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
+    // D8 (ONBOARDING_VELADO / Início BB): grátis depois do rookie pede conta paga — abre o convite (também no inicial que nasceu BB).
+    if (evolucaoPaga(veladoOn, { accountTier: gameState.accountTier, evolutionStage, unlockedEvolutions })) { setUnlockReason('evolve-free'); return; }
+    if (inicialNaoEvolui(gameState.demoCharacterId, evolutionStage)) return; // os iniciais não evoluem (o BB que vai virar um, sim)
     const { stage: next, branch: nextBranch } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -4260,9 +4314,9 @@ export default function App() {
       // a regra é de `utils/evolutionGauge.ts`, aqui só se delega).
       if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions, prev.totalXP)) return prev;
       // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
-      if (isStarterId(prev.demoCharacterId)) return prev;
-      // D8 (ONBOARDING_VELADO): reconferida sobre o `prev`, é o updater que commita.
-      if (evolutionPaywalled({ velado: veladoOn, accountTier: prev.accountTier, evolutionStage: prev.evolutionStage })) return prev;
+      if (inicialNaoEvolui(prev.demoCharacterId, prev.evolutionStage)) return prev;
+      // D8 (ONBOARDING_VELADO / Início BB): reconferida sobre o `prev`, é o updater que commita.
+      if (evolucaoPaga(veladoOn, prev)) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -7424,15 +7478,14 @@ export default function App() {
     writeLocal(STORAGE_KEYS.USER_NAME, data.userName);
     writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
     setUserName(data.userName);
-    setHasCompletedOnboarding(true);
+    // Início BB (17/11/2026): o jogo só abre DEPOIS de o save do nascimento existir (fim desta função). Antes, a Home
+    // aparecia durante as idas à nuvem com o save vazio. O "visto" persistente segue gravado aqui (retomada/recarga).
 
     // E-mail é OPCIONAL no caminho grátis (ver SoulmonOnboarding). Sem ele o
     // jogo roda local, com o saveId aleatório que já existe — e o app pede o
     // e-mail depois, quando houver progresso a perder (ProtectProgressModal).
     const normalizedEmail = data.email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setHasCompletedOnboarding(true);
-    } else {
+    if (normalizedEmail) {
       // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
       // Configurações (saveId = hash do e-mail).
       const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave } = await import('./utils/cloudSave');
@@ -7511,6 +7564,8 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
+      const estagioGratis = initialStageForNewSave();
+      if (estagioGratis === 'bb') { const m: BBNascimento = { pago: false }; gravarBBNascimento(m); setBbNasc(m); }
       const demoEgg = migrateEggType(data.demoCharacterId);
       writeLocal(STORAGE_KEYS.EGG_TYPE, demoEgg);
       setGameState(prev => ({
@@ -7518,10 +7573,11 @@ export default function App() {
         activities: newActivities,
         tasks: firstTasks,
         eggType: demoEgg,
-        evolutionStage: 'rookie',
-        unlockedEvolutions: ['rookie'],
-        healthPoints: getMaxHPForStage('rookie'),
-        maxHealthPoints: getMaxHPForStage('rookie'),
+        // Início BB: o grátis nasce BB (do pool, pedido depois de o jogo abrir) e vira este inicial no rookie.
+        evolutionStage: estagioGratis,
+        unlockedEvolutions: [estagioGratis],
+        healthPoints: getMaxHPForStage(estagioGratis),
+        maxHealthPoints: getMaxHPForStage(estagioGratis),
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
         soulmonStages: premade ? getDemoCreatureStages(premade) : [],
         // `petName` só entra quando a pessoa trocou o sugerido — assim o save
@@ -7558,6 +7614,7 @@ export default function App() {
         // WP1.3 — o cartão dos três gestos nasce aqui e morre no fim do dia.
         firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
       }));
+      setHasCompletedOnboarding(true);
       return;
     }
 
@@ -7567,6 +7624,13 @@ export default function App() {
     const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
+    // Início BB: o pagante nasce BB e o BB EXCLUSIVO (D31) é pedido depois de o jogo abrir. Já revelado no onboarding
+    // (fluxo antigo do Velado, `revealSprite` bb) = nada a chocar.
+    if (initialStageForNewSave() === 'bb' && data.revealSprite?.formId !== 'bb') {
+      const m: BBNascimento = { pago: true, ...(data.oracleResult.creature.bbPrompts ? { prompts: data.oracleResult.creature.bbPrompts } : {}) };
+      gravarBBNascimento(m);
+      setBbNasc(m);
+    }
 
     // O onboarding É o ritual de nascimento — o pet já nasce Rookie na SUA
     // forma única (sem ovo/baby).
@@ -7619,6 +7683,7 @@ export default function App() {
       lastCheckInDate: playerDayKey(new Date(), prev.playerDayTz),
       firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
     }));
+    setHasCompletedOnboarding(true);
   };
 
   // Segundo onboarding (GameTutorialFlow): uma atividade de entrada, com
@@ -8004,6 +8069,16 @@ export default function App() {
     );
   }
 
+  // INÍCIO BB: o BB ficou pronto — o chocar em TELA CHEIA (tocar até rachar; a apresentação só com a arte carregada).
+  if (chocarAberto && spriteBB) {
+    return (
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {selo}
+        <ChocarBB language={language} spriteUrl={spriteBB} nome={nomeDoBB} falas={falasDoBB} onDone={terminarChocar} />
+      </Suspense>
+    );
+  }
+
   // ONBOARDING_VELADO: a sequência narrativa no lugar do tutorial, depois do ritual e do nascimento.
   if (veladoOn && !sequenciaVista && !gameState.demoCharacterId) {
     const terminarSequencia = () => {
@@ -8180,7 +8255,7 @@ export default function App() {
             </div>
           )}
 
-          {labTab === 'evolution' && evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage }) && (
+          {labTab === 'evolution' && evolucaoPaga(veladoOn, gameState) && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge language={language} reason="evolve-free" onOpen={() => setUnlockReason('evolve-free')} />
             </div>
@@ -8212,6 +8287,7 @@ export default function App() {
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
+              evolucaoPaga={evolucaoPaga(veladoOn, gameState)}
               currentBranch={getDominantBranch() === 'balanced' ? 'harmony' : getDominantBranch() as 'power' | 'harmony' | 'benevolence'}
               powerPoints={gameState.powerPoints}
               harmonyPoints={gameState.harmonyPoints}
@@ -9149,7 +9225,7 @@ export default function App() {
                 spritePose={gameState.spritePose}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
-                ownSpriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url}
+                ownSpriteUrl={bbNoCristal ? undefined : displaySprite(spriteVisor, gameState.evolutionStage)?.url}
                 chocando={petChocando}
                 emCristal={cristalFase}
                 onCristalRetry={cristal && canManualRetry(spriteAcervo, cristal.to) ? handleCristalRetry : undefined}
@@ -9170,8 +9246,9 @@ export default function App() {
                 perfectDays={gameState.perfectDays}
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
-                  if (isStarterId(gameState.demoCharacterId)) return false;
-                  if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage })) return false;
+                  // Início BB (17/11/2026): travado pelo pagamento, o botão APARECE quando a barra enche — o toque abre o convite.
+                  const paga = evolucaoPaga(veladoOn, gameState);
+                  if (!paga && inicialNaoEvolui(gameState.demoCharacterId, gameState.evolutionStage)) return false;
                   if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.

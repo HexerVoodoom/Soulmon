@@ -4579,6 +4579,11 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/bbStage.ts`
 **Dono de:** a forma BB, estágio ANTES do rookie (Onboarding Velado, REGISTRO §207): HP máx 6, sem requisito diário, evolui quando `bondLevelFor(totalXP) >= 2`, `bbRefusal` para torneio/duelo/guilda, `sanitizeStageId` e o interruptor `isOnboardingVelado`.
 
+**Delta 17/11/2026 (REGISTRO §472, Início BB):** `isInicioBB`/`setInicioBB` (ligado por padrão; `VITE_INICIO_BB=false` desliga no build) e `bbNoNascimento()` (Início BB OU o interruptor): `initialStageForNewSave` devolve `bb` para TODO save novo; o motor do oráculo monta `creature.bbPrompts` com `bbNoNascimento()`.
+
+### `src/utils/inicioBB.ts`
+**Dono de:** o começo novo (Início BB, REGISTRO §472, 17/11/2026): `nasceuBB` (o save tem `bb` em `unlockedEvolutions`, sem campo novo), `evolucaoPaga` (D8 para quem nasceu BB: BB → rookie grátis, rookie → champion pede conta paga; delega a `evolutionPaywalled`), `inicialNaoEvolui` (os 5 iniciais não evoluem, exceto o BB que vira um), `inicialDoBB` (o inicial do grátis, determinístico pela conta) e `elementoDoInicial` (filtra o sorteio do BB do pool), e o marcador POR APARELHO "ainda vai chocar" (`STORAGE_KEYS.BB_NASCIMENTO`: `sanitizeBBNascimento`, `lerBBNascimento`, `gravarBBNascimento`, `limparBBNascimento`, `aguardandoChocar`, `prontoParaChocar`). **Chamado por:** `App.tsx` (nascimento, pedido do BB depois de o jogo abrir, chocar em tela cheia, botão/convite de evoluir), `components/EvolutionPath.tsx`, `components/SoulmonOnboarding.tsx` (`inicialDoBB`). **Régua:** `inicioBB.test.ts`, `components/ChocarBB.render.test.tsx`, `components/SoulmonOnboarding.inicioBB.render.test.tsx`.
+
 ### `src/utils/bbNascimento.ts`
 **Dono de:** quem é o BB no NASCIMENTO (Onboarding Velado D30-D32): `deveGerarBBExclusivo` e `gerarBBExclusivo` — o pagante que JÁ ENTRA pagando gera o BB exclusivo pelo pipeline de sprite (formId `bb`, prompt do estágio bb em `creature.bbPrompts`), com espera `BB_EXCLUSIVO_ESPERA_MS` (12 s) e `null` em falha (cai no BB do pool, `data/bbPool.ts`). Free nunca gera; quem paga depois (`jaTemBB`) não gera BB. **Chamado por:** `App.tsx` (`obterBBExclusivo`) → `SoulmonOnboarding`. **Régua:** `bbNascimento.test.ts`, `bbNascimento.ligacao.test.ts`.
 

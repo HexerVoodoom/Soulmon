@@ -8,7 +8,7 @@ import { getStageLevel } from '../types/progression';
 import { xpForLevel as totalXPForBondLevel } from './bond';
 import {
   BB_STAGE, BB_MAX_HP, bbRefusal, bbEvolveReady, isBBStage, isOnboardingVelado, setOnboardingVelado,
-  initialStageForNewSave, sanitizeStageId, BB_LOCKED_BUILDINGS,
+  initialStageForNewSave, isInicioBB, setInicioBB, sanitizeStageId, BB_LOCKED_BUILDINGS,
 } from './bbStage';
 
 const WEDNESDAY = new Date('2026-08-05T12:00:00');
@@ -32,10 +32,16 @@ const base = (stage: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-afterEach(() => setOnboardingVelado(false));
+afterEach(() => { setOnboardingVelado(false); setInicioBB(true); });
 
 describe('forma BB — o interruptor', () => {
-  it('nasce DESLIGADO e só `true` liga', () => {
+  it('Início BB (17/11/2026): ligado por padrão, todo save novo nasce BB', () => {
+    expect(isInicioBB()).toBe(true);
+    expect(isOnboardingVelado()).toBe(false);
+    expect(initialStageForNewSave()).toBe(BB_STAGE);
+  });
+  it('nasce DESLIGADO e só `true` liga (com o Início BB desligado)', () => {
+    setInicioBB(false);
     expect(isOnboardingVelado()).toBe(false);
     expect(initialStageForNewSave()).toBe('rookie');
     setOnboardingVelado('1');
