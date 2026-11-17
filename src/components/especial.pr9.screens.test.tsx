@@ -4,7 +4,7 @@
  * (por regra do elemento dele) — e nunca o genérico "SPECIAL!/ESPECIAL!" quando há nome.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup, fireEvent, screen } from '@testing-library/react';
+import { render, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { ArenaGame } from './ArenaGame';
@@ -53,7 +53,7 @@ const GENERICOS = [SPECIAL_LABEL.pt, SPECIAL_LABEL.en];
 const TELAS: Record<string, () => void | Promise<void>> = {
   Arena: async () => {
     render(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={ficha()} onExit={() => {}} />);
-    fireEvent.click(await screen.findByRole('button', { name: /Entrar na Arena/i }));
+    await waitFor(() => expect(document.querySelector('[data-battle-stage]')).toBeTruthy());
   },
   Masmorra: () => {
     render(<DungeonGame evolutionStage="rookie" language="pt-BR" petElement="fogo" skills={ficha()} onEnter={() => ({ ok: true, level: 1, best: 0 })}

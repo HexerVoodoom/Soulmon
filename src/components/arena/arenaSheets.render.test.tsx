@@ -156,6 +156,20 @@ describe('Duelo', () => {
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain(`1 de ${ARENA_CHOICES} desafios`);
   });
 
+  it('card no estilo do Torneio: faixa, imagem, elemento à esquerda e "Fight" à direita inicia a run daquele card; aviso de ficha só quando aplicável', async () => {
+    const onStart = vi.fn();
+    const { container, rerender } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={onStart} />);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
+    expect(container.querySelectorAll('[data-arena-card-banner]')).toHaveLength(ARENA_CHOICES);
+    expect(container.querySelectorAll('[data-arena-card-img]')).toHaveLength(ARENA_CHOICES);
+    expect(container.querySelector('[data-arena-sem-ficha]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-arena-card-fight="2"]')!);
+    expect(onStart).toHaveBeenCalledOnce();
+    expect(typeof onStart.mock.calls[0][0]).toBe('number');
+    rerender(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" semFicha onStart={onStart} />);
+    expect(container.querySelector('[data-arena-sem-ficha]')!.textContent).toMatch(/sheet is not on this device/);
+  });
+
   it('em inglês, também: 4 cards, o rótulo do sorteio e a ajuda saem da constante', async () => {
     const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={() => {}} />);
     expect(screen.getByRole('button', { name: 'Fight' })).toBeTruthy();
