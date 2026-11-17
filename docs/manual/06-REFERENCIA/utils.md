@@ -570,6 +570,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (fila de avisos da Home, `key: 'refugio'`), `src/contexts/GameStateContext.tsx` (load).
 **Régua:** `src/utils/refugio/convite.test.ts`, `src/components/filaDeAvisos.contract.test.ts`.
 
+### `src/utils/loginDiag.ts`
+**Dono de:** Diagnóstico visível do login (linha `data-login-diag` no portão e nos termos): versão, plataforma, resultado da restauração, HTTP do GET /api/save e 6 chars do saveId. Sem e-mail, token nem conteúdo do save.
+**Exports:**
+- `ResultadoRestauracao` (type) — `restaurada | sem-save | indeterminado | storage | nao-chamada`.
+- `function registrarStatusDaNuvem(status: number): void` — guarda o status do último `lerNuvem` (0 = falha de rede).
+- `function registrarRestauracao(r: ResultadoRestauracao, saveId?: string): void` — guarda o resultado e os 6 primeiros chars do saveId.
+- `function assinarDiagnostico(f: () => void): () => void` — ouvinte de mudança; devolve o cancelamento.
+- `function textoDiagnosticoLogin(): string` — texto único da linha.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/utils/cloudSave.ts`
+
 ### `src/utils/lotIcons.ts`
 **Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
 **Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
