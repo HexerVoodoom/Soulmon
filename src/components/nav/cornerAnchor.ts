@@ -14,6 +14,9 @@ import type { CSSProperties } from 'react';
  */
 export const CORNER_BOX = 56;
 export const CORNER_RING = 44;
+
+/** Escala do ícone pelado da Home (Mapa e Caixa de cartas): 32 × 1,375 = 44 px visíveis. Dono único — Mapa e carta lêem DAQUI (dono, 17/11/2026: carta do mesmo tamanho do mapa). */
+export const CORNER_ICON_SCALE = 1.375;
 const CORNER_RING_INSET = (CORNER_BOX - CORNER_RING) / 2;
 
 /** `top` da caixa de toque de 56. */
