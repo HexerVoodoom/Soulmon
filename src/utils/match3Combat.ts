@@ -29,7 +29,7 @@ export type M3Element = string;
 export const M3C_PLAYER_HP = 520;
 /** HP de cada um dos três inimigos (1→3) do modo desafio do Calabouço (que segue com o time de 3). O último é o mais duro. */
 export const M3C_ENEMY_HP: readonly [number, number, number] = [290, 350, 410];
-/** AVENTURA (REGISTRO §471): o time ganha um 4º inimigo (o mais duro); os três primeiros são os de sempre. */
+/** AVENTURA (REGISTRO §472): o time ganha um 4º inimigo (o mais duro); os três primeiros são os de sempre. */
 export const M3C_ADVENTURE_ENEMY_HP: readonly number[] = [...M3C_ENEMY_HP, 470];
 /** Dano por peça limpa (× o multiplicador da cascata). */
 export const M3C_DMG_PER_TILE = 10;
@@ -141,7 +141,7 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(adventure ? { elements: [...adventure.elements] } : {}), ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
 
-/** PVP (REGISTRO §471, dono 17/11/2026): o HP do único inimigo é o MESMO do jogador (duelo simétrico; era a soma do time do Normal). */
+/** PVP (REGISTRO §472, dono 17/11/2026): o HP do único inimigo é o MESMO do jogador (duelo simétrico; era a soma do time do Normal). */
 export const M3C_PVP_ENEMY_HP: number = M3C_PLAYER_HP;
 
 /**

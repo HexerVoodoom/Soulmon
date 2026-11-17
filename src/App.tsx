@@ -8951,7 +8951,7 @@ export default function App() {
                   },
                   onElementsDefeated: handleElementsDefeated,
                   onBossShard: () => setGameState(prev => ({ ...prev, bossShards: addBossShards(prev.bossShards) })),
-                  // §471: Honra do PVP do Elemental Fusion, pelo MESMO caminho da Honra do Torneio (`earnEmblems`); a demo não entra em PvP.
+                  // §472: Honra do PVP do Elemental Fusion, pelo MESMO caminho da Honra do Torneio (`earnEmblems`); a demo não entra em PvP.
                   onEarnHonor: amount => { if (!demo) earnEmblems(amount); },
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,

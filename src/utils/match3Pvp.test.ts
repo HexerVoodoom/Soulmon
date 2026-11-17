@@ -1,5 +1,5 @@
 /**
- * ELEMENTAL FUSION — PVP e Aventura (REGISTRO §471, 17/11/2026): os 6 elementos MISTURADOS (semente, sem repetir) agora são da Aventura; o PVP
+ * ELEMENTAL FUSION — PVP e Aventura (REGISTRO §472, 17/11/2026): os 6 elementos MISTURADOS (semente, sem repetir) agora são da Aventura; o PVP
  * usa os 6 básicos FIXOS, tem 1 inimigo com o MESMO HP do jogador, o adversário é sempre um jogador (real ou simulado) e paga o que a Arena/Torneio pagam.
  */
 import { describe, it, expect } from 'vitest';
@@ -132,7 +132,7 @@ describe('PVP — o combate 1 contra 1', () => {
   });
 });
 
-describe('PVP — a recompensa é a da Arena e do Torneio (§471)', () => {
+describe('PVP — a recompensa é a da Arena e do Torneio (§472)', () => {
   it('vitória = Bits do combate médio da Arena + Honra de vitória do Torneio', () => {
     expect(pvpRewards(true)).toEqual({ bits: ARENA_FIGHT_BITS, honor: EMBLEMS_PER_WIN });
     expect(ARENA_FIGHT_BITS).toBeGreaterThan(0);

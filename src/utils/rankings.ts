@@ -3,7 +3,7 @@
 import { authHeaders } from './auth';
 import { emitFeat, RANK_TIER_ORDER } from './feats';
 
-// `match3` = ranking da AVENTURA do Elemental Fusion (o id antigo ficou); `match3-pvp` = o do PVP (REGISTRO §471). `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
+// `match3` = ranking da AVENTURA do Elemental Fusion (o id antigo ficou); `match3-pvp` = o do PVP (REGISTRO §472). `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
 export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'soul-barrage-2' | 'zip' | 'patches' | 'match3-pvp';
 
 /** Jogos de tempo (menor é melhor): o score é o tempo de resolução em ms. */

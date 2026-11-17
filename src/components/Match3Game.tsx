@@ -106,7 +106,7 @@ const EL_ICON_ENEMY = 26;
 const LINES = Object.keys(OWN_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
-  /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): 'pve' = AVENTURA (o nome interno ficou; REGISTRO §471) ou 'pvp'; pula o seletor de dentro. */
+  /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): 'pve' = AVENTURA (o nome interno ficou; REGISTRO §472) ou 'pvp'; pula o seletor de dentro. */
   /** Sessão de diversão: 'De novo' conta uma rodada (também no PvP). `false` = sem energia. */
   onReplayRound?: () => boolean;
   initialMode?: 'pve' | 'pvp';
@@ -131,7 +131,7 @@ export interface Match3Props extends EarningGameProps {
   onMove?: (info: { scored: boolean; score: number }) => void;
   /** BOSS (03/11/2026): venceu um boss → +1 Fragmento de Boss no save (`utils/bossShards.ts`). */
   onBossShard?: () => void;
-  /** PVP (§471): a Honra da partida (3 na vitória, 1 na derrota; `pvpRewards`), pelo mesmo caminho da Honra do Torneio. Boss e Aventura nunca chamam. */
+  /** PVP (§472): a Honra da partida (3 na vitória, 1 na derrota; `pvpRewards`), pelo mesmo caminho da Honra do Torneio. Boss e Aventura nunca chamam. */
   onEarnHonor?: (amount: number) => void;
   /** BOSS só nasce quando o jogador tocou em jogar e ESCOLHEU Aventura ou PVP (a entrada decide); sem isso (tutorial, Masmorra) nunca. */
   bossAllowed?: boolean;
@@ -147,11 +147,11 @@ function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string, boss?: BossRound | null, challenge?: unknown): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
   // BOSS: UM inimigo com o HP do jogador, os 6 elementos fixos (vale na Aventura e no PvP).
   if (boss) return { combat: newBossCombat(mulberry32(sd + 99), undefined, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
-  // PVP (§471): os 6 elementos básicos FIXOS e UM inimigo com o HP do jogador.
+  // PVP (§472): os 6 elementos básicos FIXOS e UM inimigo com o HP do jogador.
   if (pvp) return { combat: newPvpCombat(mulberry32(sd + 99), M3_TILE_ELEMENTS, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
   // Modo desafio do Calabouço: INTACTO (6 fixos, time de 3).
   if (challenge) return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
-  // AVENTURA (§471): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4.
+  // AVENTURA (§472): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4.
   const elements = mixedElementsForSeed(sd);
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement, { elements }), rng: mulberry32(sd ^ 0x5eed), elements };
 }
@@ -303,7 +303,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
       return;
     }
     const final = combatScore(combatRef.current);
-    // PVP (§471): Bits e Honra da Arena/Torneio (`pvpRewards`), não mais o placar; os Bits seguem pelo funil único (tetos do dia). Sem recorde pessoal.
+    // PVP (§472): Bits e Honra da Arena/Torneio (`pvpRewards`), não mais o placar; os Bits seguem pelo funil único (tetos do dia). Sem recorde pessoal.
     if (pvpRef.current) {
       const r = pvpRewards(combatRef.current.outcome === 'win');
       setEarned(r.bits > 0 ? (onEarnPoints(r.bits) ?? r.bits) : 0);
@@ -663,7 +663,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
   };
 
   const restart = () => {
-    // PVP: 'De novo' sorteia OUTRO oponente (decisão do dono, 26/10/2026) — volta à entrada do PVP em vez de repetir o adversário; lá o boss é decidido de novo (§471).
+    // PVP: 'De novo' sorteia OUTRO oponente (decisão do dono, 26/10/2026) — volta à entrada do PVP em vez de repetir o adversário; lá o boss é decidido de novo (§472).
     if (onNewOpponent) { onNewOpponent(); return; }
     timers.current.forEach(clearTimeout);
     timers.current.clear();
@@ -1270,7 +1270,7 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
   );
 });
 
-// ── as DUAS opções ao entrar: Aventura ou PVP (pedido do dono, 26/10/2026; renomeado e invertido em 17/11/2026, REGISTRO §471) ───────────────
+// ── as DUAS opções ao entrar: Aventura ou PVP (pedido do dono, 26/10/2026; renomeado e invertido em 17/11/2026, REGISTRO §472) ───────────────
 
 /** Quanto esperar a rota `opponents` antes de cair no jogador simulado de reserva (a tela nunca fica presa esperando a rede). */
 const PVP_SEARCH_TIMEOUT_MS = 6000;
@@ -1309,7 +1309,7 @@ export function Match3Game(props: Match3Props) {
 
 /**
  * Entrada do PVP: decide o BOSS primeiro (pela semente da partida, `bossFor`) e só então procura o adversário. Boss no PVP = partida SÓ contra o
- * boss: não busca oponente, não mostra jogador, e segue a regra do boss (Fragmento na vitória; sem Bits, Honra nem ranking; §471).
+ * boss: não busca oponente, não mostra jogador, e segue a regra do boss (Fragmento na vitória; sem Bits, Honra nem ranking; §472).
  * Falha, timeout ou lista vazia = jogador simulado de reserva (nunca trava, nunca cobra).
  */
 function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {

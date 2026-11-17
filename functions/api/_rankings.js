@@ -38,7 +38,7 @@ import { nomeDaGuildaDe, campoGuilda } from './_guildaNome.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
 // `dino` (sem nível) fica só para LER/aceitar recorde antigo e cliente antigo; o cliente novo envia `dino-1`/`dino-2` (QA beta3 R4, decisão 6).
-// `match3` = ranking da AVENTURA do Elemental Fusion (o id antigo continua; o placar antigo É o da Aventura, REGISTRO §471) e `match3-pvp` = o do PVP, os dois lidos no período `monthly`.
+// `match3` = ranking da AVENTURA do Elemental Fusion (o id antigo continua; o placar antigo É o da Aventura, REGISTRO §472) e `match3-pvp` = o do PVP, os dois lidos no período `monthly`.
 // `zip`/`patches`: ranking SEMANAL por TEMPO de resolução (decisão 5; MENOR é melhor — ver `LOWER_IS_BETTER`).
 export const RANKED_GAMES = Object.freeze(['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon', 'soul-barrage', 'soul-barrage-2', 'zip', 'patches', 'match3-pvp']);
 
