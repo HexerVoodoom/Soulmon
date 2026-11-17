@@ -51,6 +51,28 @@ export const CRIATURAS_COMPANHEIRO: readonly string[] = [
   'wyvern', 'dragao_jovem', 'troll_montanhes', 'ciclope_forjador', 'gosma_acida', 'slime_cristalino', 'batedor_orc', 'arauto_elfico',
 ];
 
+/**
+ * Nomes (PT e EN, sem acento, minúsculos) dos 9 arquétipos de evocação, para ler o título guardado no save (`soulmonClassTitles`)
+ * SEM puxar o motor da ficha para o bundle das telas de luta. O teste confronta com `CLASS_TITLE_EN`/`arquetipoIdDoTitulo`.
+ */
+export const NOMES_ARQUETIPO_EVOCACAO: Readonly<Record<string, string>> = {
+  invocador: 'invocador', summoner: 'invocador', 'senhor das feras': 'senhor_das_feras', beastlord: 'senhor_das_feras',
+  'xama totemico': 'xama_totemico', 'totem shaman': 'xama_totemico', necromante: 'necromante', necromancer: 'necromante',
+  demonologista: 'demonologista', demonologist: 'demonologista', verdejante: 'verdejante', 'verdant warden': 'verdejante',
+  'senhor dos mortos vis': 'senhor_dos_mortos_vis', 'lord of the vile dead': 'senhor_dos_mortos_vis', bokor: 'bokor',
+  'escriba do pacto': 'escriba_do_pacto', 'scribe of the pact': 'escriba_do_pacto',
+};
+
+/** O título de classe do estágio no SAVE (`soulmonClassTitles[estagio]`) é de um arquétipo de evocação (pleno ou diluído)? */
+export function tituloEEvocador(t: unknown): boolean {
+  if (!t || typeof t !== 'object' || Array.isArray(t)) return false;
+  const { id, origem, nome } = t as { id?: unknown; origem?: unknown; nome?: { pt?: unknown; en?: unknown } };
+  if (origem === 'generico') return false;
+  if (typeof id === 'string' && id.length > 0) return ARQUETIPOS_SET.has(id);
+  const norm = (x: unknown, tira: RegExp) => (typeof x === 'string' ? x.replace(tira, '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase() : '');
+  return [norm(nome?.en, / aspirant$/i), norm(nome?.pt, /^aspirante a /i)].some(n => !!n && Object.hasOwn(NOMES_ARQUETIPO_EVOCACAO, n));
+}
+
 const CRIATURAS_SET: ReadonlySet<string> = new Set(CRIATURAS_COMPANHEIRO);
 const ARQUETIPOS_SET: ReadonlySet<string> = new Set(ARQUETIPOS_EVOCACAO);
 const ESTAGIOS_SET: ReadonlySet<string> = new Set(FICHA_STAGE_ORDER);
@@ -171,6 +193,8 @@ export interface EstadoComCompanheiro {
   readonly evolutionStage?: string;
   readonly soulmonCompanheiro?: { readonly id?: unknown } | null;
   readonly soulmonEvocacao?: EvocacaoPorEstagio;
+  /** `GameState.soulmonClassTitles`: o que já vem no save mesmo sem o cache `soulmonEvocacao` (só a leitura por arquétipo). */
+  readonly soulmonClassTitles?: Partial<Record<string, unknown>> | null;
   /** `GameState.hexsmith` cru: só interessa se há Coroa equipada (a invocação descansa). */
   readonly hexsmith?: unknown;
 }
@@ -183,5 +207,11 @@ export interface EstadoComCompanheiro {
  */
 export function companheiroDoEstado(estado: EstadoComCompanheiro | null | undefined, ligado: boolean = COMPANHEIRO_INVOCADO): string | null {
   if (!ligado || !estado) return null;
-  return companheiroAtivo(fichaStageOf(estado.evolutionStage ?? ''), estado.soulmonCompanheiro?.id, estado.soulmonEvocacao, estado.hexsmith, ligado);
+  const estagio = fichaStageOf(estado.evolutionStage ?? '');
+  // Save sem o cache do estágio (ele só é gravado quando o perfil local roda a ficha): vale o título de classe que o próprio save guarda.
+  // Só o positivo entra; o negativo fica por conta do cache (a escola dominante precisa da ficha e não está no save).
+  const cache = estado.soulmonEvocacao?.[estagio] || !tituloEEvocador(estado.soulmonClassTitles?.[estagio])
+    ? estado.soulmonEvocacao
+    : { ...estado.soulmonEvocacao, [estagio]: { evocador: true } };
+  return companheiroAtivo(estagio, estado.soulmonCompanheiro?.id, cache, estado.hexsmith, ligado);
 }

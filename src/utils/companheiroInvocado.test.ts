@@ -1,7 +1,7 @@
 // Companheiro invocado, PR 1 (fundação): regra do gatilho, cache por estágio e tabela provisória de simulados/NPCs.
 import { describe, expect, it } from 'vitest';
 import {
-  ARQUETIPOS_EVOCACAO, COMPANHEIRO_INVOCADO, CRIATURAS_COMPANHEIRO, companheiroAtivo, companheiroDoEstado, companheiroDoEstagio, criaturaConhecida,
+  ARQUETIPOS_EVOCACAO, COMPANHEIRO_INVOCADO, CRIATURAS_COMPANHEIRO, NOMES_ARQUETIPO_EVOCACAO, tituloEEvocador, companheiroAtivo, companheiroDoEstado, companheiroDoEstagio, criaturaConhecida,
   eEvocador, migrarEvocacao, sanitizeEvocacao, type EvocacaoPorEstagio,
 } from './companheiroInvocado';
 import {
@@ -214,5 +214,43 @@ describe('Coroa da Hexsmith equipada: o companheiro descansa (H4, decisão do do
   it('flag desligada: sempre null (a Coroa nada muda)', () => {
     expect(companheiroDoEstado(estado(), false)).toBeNull();
     expect(companheiroDoEstado(estado(comCoroa), false)).toBeNull();
+  });
+});
+
+describe('Maslin 17/11: usou o especial e a evocação não saiu (save sem o cache `soulmonEvocacao`)', () => {
+  // O save da Maslin (Ultimate = Verdejante, Slime Cristalino) tinha o título de classe em todos os estágios, mas o cache da
+  // evocação só nasce quando o perfil local roda a ficha. Sem ele, `companheiroDoEstado` devolvia null.
+  const titulo = (en: string, pt: string, origem: 'arquetipo' | 'diluido' | 'generico' = 'arquetipo') => ({ nome: { en, pt }, origem });
+  const maslin = {
+    evolutionStage: 'ultimate',
+    soulmonCompanheiro: { id: 'slime_cristalino' },
+    soulmonClassTitles: {
+      rookie: titulo('Industrial Adept', 'Adepto Industrial', 'generico'), champion: titulo('Industrial Adept', 'Adepto Industrial', 'generico'),
+      ultimate: titulo('Verdant Warden', 'Verdejante'), mega: titulo('Arcane Arsenal', 'Arsenal Arcano'), ultra: titulo('Scribe of the Pact', 'Escriba do Pacto'),
+    },
+  };
+  it('sem cache: o título do estágio (nome do save, sem id) basta; Mega perde, Ultra volta', () => {
+    expect(companheiroDoEstado(maslin, true)).toBe('slime_cristalino');
+    expect(companheiroDoEstado({ ...maslin, evolutionStage: 'mega' }, true)).toBeNull();
+    expect(companheiroDoEstado({ ...maslin, evolutionStage: 'ultra' }, true)).toBe('slime_cristalino');
+    expect(companheiroDoEstado({ ...maslin, evolutionStage: 'champion' }, true)).toBeNull();
+  });
+  it('o cache, quando existe, manda (inclusive o não)', () => {
+    expect(companheiroDoEstado({ ...maslin, soulmonEvocacao: { ultimate: { evocador: false } } }, true)).toBeNull();
+  });
+  it('coroa equipada, flag desligada e criatura desconhecida continuam sem companheiro', () => {
+    expect(companheiroDoEstado(maslin, false)).toBeNull();
+    expect(companheiroDoEstado({ ...maslin, soulmonCompanheiro: { id: 'xx' } }, true)).toBeNull();
+  });
+  it('os nomes do mapa leve batem com `arquetipoIdDoTitulo` e com os 9 arquétipos', () => {
+    for (const id of ARQUETIPOS_EVOCACAO) {
+      expect(tituloEEvocador({ id, origem: 'arquetipo' })).toBe(true);
+      expect(tituloEEvocador({ nome: { en: CLASS_TITLE_EN[id], pt: '' }, origem: 'arquetipo' })).toBe(true);
+      expect(tituloEEvocador({ nome: { en: `${CLASS_TITLE_EN[id]} Aspirant`, pt: '' }, origem: 'diluido' })).toBe(true);
+    }
+    expect(Object.values(NOMES_ARQUETIPO_EVOCACAO).every(id => ARQUETIPOS_EVOCACAO.includes(id))).toBe(true);
+    const fora = Object.keys(CLASS_TITLE_EN).filter(id => !ARQUETIPOS_EVOCACAO.includes(id));
+    for (const id of fora) expect(tituloEEvocador({ nome: { en: CLASS_TITLE_EN[id], pt: '' }, origem: 'arquetipo' }), id).toBe(false);
+    expect(arquetipoIdDoTitulo(maslin.soulmonClassTitles.ultimate)).toBe('verdejante');
   });
 });
