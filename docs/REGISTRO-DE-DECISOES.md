@@ -6337,7 +6337,7 @@ Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `S
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
 
-## §469 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
+## §470 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
 
 Decisão (cinco pedidos literais do dono, um commit por item):
 1. **Nome do andar com sufixo.** Cada elemento ocupa 2 andares (§445, 6 lutas cada); o HUD passa a dizer "Camada 3 · luta 2 de 6 · Fogo 1" e, vencidas as 6 lutas, "… · Fogo 2". No mapa o nó (que vale os dois andares) diz "Fogo 1 e 2" / "Fire 1 & 2" (bloqueado segue só com os números "11-12"); o aria e o "Voltar para estes andares?" usam o mesmo nome. Fonte única: `riftFloorName`/`riftSetName` em `utils/riftSets.ts`.
@@ -6347,6 +6347,12 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 5. **Arena (Duelo):** "Comprar convites" é o 1º item da folha, com o custo à vista ("1 energia = 5 convites", 7 na conta paga, §458) e o ícone de energia no botão; a regra (`exchangeDuelInvites`, estoque máx 7, espelho no servidor) NÃO mudou. Os convites aparecem em LEQUE no topo (na zona do NPC), pelo MESMO `TicketFan` dos tickets do Salão (parametrizado por `art`: arte do convite em pé, teto 7), sem componente novo.
 
 **Alternativa que perdeu:** manter o "?" e os recordes na folha da Fenda (o dono pediu só os dois CTAs); desenhar um leque próprio para convites (duplicaria o `TicketFan`). **Falsifica:** a folha da Fenda ter um 3º botão; a película do mapa voltar a ser clara ou ter borda reta; o leque de convites divergir do contador do estoque.
+## §469 — Salão e Ateliê em cartas ilustradas (GameCard), uma por jogo (17/11/2026, pedido do dono)
+
+- **Decisão:** "Gostei dos cards do Refúgio; queria pros prédios dos minigames também, um pra cada." `SalaoSheet` (dino, ppt, match3, barrage) e `MenteSheet` (eco, zip, selo) passam a `GameCardGrid` + `GameCard`, como o Refúgio.
+- **Alternativa que perdeu:** a LISTA de cards de texto com botão "Jogar" (pedida em 04/11/2026, quando as cartas ficaram só no Refúgio). O que mudou: o dono viu as cartas funcionando no Refúgio e preferiu-as.
+- **Preservado:** `data-dino-start`/`data-ppt-start`/`data-match3-start`/`data-barrage-open`/`data-mente-start=<id>` (agora no botão da carta), Bits e recorde e ticket "x1" como selos sob a carta, painel de tickets/compra/recusa do Salão, `funStatus`. Sem regra nem cobrança nova. Rollback: `git revert` (UI pura).
+
 ## §467 — Hexsmith: placa atrás da Coroa encaixada e descrição em TODAS as Coroas (17/11/2026, dono)
 
 **Pedido:** a Coroa do dano contínuo (`coroa-dot`, quase preta, L≈0,006) sumia no fundo escuro do slot (≈1,2:1); só as Coroas novas tinham descrição do efeito.

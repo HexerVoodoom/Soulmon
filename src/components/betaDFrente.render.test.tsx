@@ -23,13 +23,12 @@ import type { CreatureStage } from '../utils/oracle';
 afterEach(() => cleanup());
 
 describe('9.1 — Salão de Jogos', () => {
-  it('quatro cards (Soul Barrage é o 4º), em lista de cards (volta pedida pelo dono em 04/11/2026) e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
+  it('quatro cards (Soul Barrage é o 4º), em cartas ilustradas (GameCard; pedido do dono em 17/11/2026, que revoga a lista de 04/11) e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
     const { container } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const cards = container.querySelectorAll('li');
     expect(cards).toHaveLength(4);
-    const lista = container.querySelector('ul') as HTMLElement;
-    expect(lista.style.gap).toContain('--sm2-space-4');
-    for (const li of cards) expect(li.querySelector('img[data-pixel-icon]')).not.toBeNull();
+    expect(container.querySelector('ul.sm-game-card-grid')).not.toBeNull();
+    for (const li of cards) expect(li.querySelector('img[data-pixel-icon], img[data-game-card-art]')).not.toBeNull();
   });
   it('o fonte não importa mais icon-game-dino nem icon-game-rps (e o Elemental Fusion mantém a gema)', () => {
     const src = readFileSync(join(__dirname, 'play/PlaySheets.tsx'), 'utf-8');

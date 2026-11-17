@@ -19,7 +19,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderWithCss } from '../../test/renderEnv';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
-import { DinoSheet, Match3Sheet } from './PlaySheets';
+import { SalaoSheet } from './PlaySheets';
 
 const recebidas: Record<string, Record<string, unknown>> = {};
 vi.mock('../DungeonGame', async (orig) => {
@@ -408,11 +408,11 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
-    const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
+    const cards = [...container.querySelectorAll('[data-salao] > ul.sm-game-card-grid > li')];
     expect(cards.length).toBe(4); // + Soul Barrage (M9); + Elemental Fusion (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       // Com a ilustração da carta no lugar, o ícone sai; sem ela, é o ícone pelado no placeholder.
-      const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
+      const img = (c.querySelector('img[data-pixel-icon]') ?? c.querySelector('img[data-game-card-art]')) as HTMLImageElement;
       expect(img).toBeTruthy();
       expect(img.getAttribute('alt')).toBe('');
       expect(img.parentElement!.style.background).toBe('');
@@ -421,21 +421,23 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
   });
 });
 
-describe('P10 (beta-2) — chips zerados do Salão não aparecem', () => {
-  it('Corrida sem recorde: nenhum chip "0"/"0 Bits"; com recorde, os dois entram', () => {
-    const { container, unmount } = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
-    expect(container.textContent).not.toMatch(/seu recorde|no recorde/);
+describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
+  it('Corrida sem recorde: nenhum selo "0"/"0 Bits"; com recorde, os dois entram', () => {
+    const { container, unmount } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const dino = () => container.querySelector('[data-game-card="dino"]')!.textContent!;
+    expect(dino()).not.toMatch(/seu recorde/);
     unmount();
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '250');
-    const r = renderWithCss(<DinoSheet language="pt-BR" onStart={() => {}} />);
-    expect(r.container.textContent).toContain('seu recorde');
-    expect(r.container.textContent).toContain('2 Bits');
+    const r = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const t = r.container.querySelector('[data-game-card="dino"]')!.textContent!;
+    expect(t).toContain('seu recorde');
+    expect(t).toContain('2 Bits');
     localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
   });
-  it('Elemental Fusion sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
-    const { container } = renderWithCss(<Match3Sheet language="pt-BR" onStart={() => {}} />);
-    expect(container.textContent).not.toContain('seu recorde');
-    // 29/10/2026: a prévia de recompensa (RewardPreview) escreve "até" + valor com o glifo de Bits (sem a palavra "Bits").
-    expect(container.textContent).toMatch(/até\s*\d+/);
+  it('Elemental Fusion sem recorde: só o "até N Bits"', () => {
+    const { container } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
+    const t = container.querySelector('[data-game-card="match3"]')!.textContent!;
+    expect(t).not.toContain('seu recorde');
+    expect(t).toMatch(/até\s*\d+/);
   });
 });
