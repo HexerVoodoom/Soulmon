@@ -857,6 +857,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       const atual = usavel ? await getCurrentEmail() : null;
       if (cancelado) return;
       setAuthUsavel(usavel);
+      // SESSÃO JÁ ABERTA NA MONTAGEM (17/11/2026, incidente do dono): quem chega aqui já autenticado (app reaberto, sessão do
+      // Firebase persistida) NÃO passava por `aposAutenticar`, então a nuvem nunca era lida: iam os termos e o jogo abria com o
+      // estado inicial por cima de uma conta que tinha save. Agora a montagem faz a MESMA restauração do login, uma vez por
+      // sessão (o carimbo evita laço de reload quando o save adotado ainda não concluiu o onboarding).
+      if (atual) {
+        let jaTentou = false;
+        try { jaTentou = sessionStorage.getItem('soulmon-restore-na-montagem') === '1'; sessionStorage.setItem('soulmon-restore-na-montagem', '1'); } catch { /* sem sessionStorage: tenta mesmo assim */ }
+        if (!jaTentou) {
+          const rest = await restaurarContaNoLogin(atual);
+          if (cancelado) return;
+          if (rest === 'restaurada') { window.location.reload(); return; }
+          if (rest === 'indeterminado' || rest === 'storage') {
+            try { sessionStorage.removeItem('soulmon-restore-na-montagem'); } catch { /* idem */ }
+            setAuthErro('rede');
+            setAuthEmail('');
+            return;
+          }
+        }
+      }
       setAuthEmail(atual ?? '');
       // Retomada: autenticado e com aceite já provado nesta instalação, o
       // portão não tem mais o que perguntar. Desde 01/10/2026 a retomada vai
