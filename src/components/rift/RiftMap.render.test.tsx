@@ -42,7 +42,7 @@ describe('RiftMap', () => {
     const bg = (container.querySelector('[data-rift-map-veil]') as HTMLElement).style.background;
     expect(bg).toContain('linear-gradient');
     expect(bg).toMatch(/rgba\(0,\s*0,\s*0,\s*0\)/); // nasce transparente
-    expect(bg).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.9\)/); // chega ao preto quase opaco
+    expect(bg).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.96\)/); // chega ao preto quase opaco
     expect(bg).not.toMatch(/96,\s*100,\s*106/);
   });
 

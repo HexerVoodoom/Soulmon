@@ -24,7 +24,7 @@ const NODE = 56;
 /** A fronteira visto/não visto: a película PRETA nasce transparente `RIFT_VEIL_START` px abaixo do último nó alcançado e chega ao opaco em `RIFT_VEIL_FADE` px (gradiente, sem corte seco). */
 const RIFT_VEIL_START = 24;
 const RIFT_VEIL_FADE = 110;
-const RIFT_VEIL_ALPHA = 0.9;
+const RIFT_VEIL_ALPHA = 0.96;
 
 export interface RiftMapProps {
   language: Language;
