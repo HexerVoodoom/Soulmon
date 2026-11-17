@@ -4,7 +4,10 @@ import { EnergyCost } from '../ui/EnergyCost';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, ModalSheet } from '../form/FormKit';
+import { createPortal } from 'react-dom';
+import { RankingPanel } from '../RankingPanel';
+import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../../utils/dungeonBase';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
@@ -130,18 +133,30 @@ function DropItem({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-/** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Acima deles, a nota "Pode cair" e o recorde (17/11/2026, o dono quis de volta; sem o "?" nem CTA novo). */
-export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number }) {
+/** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Pedido de 17/11/2026: "Ranking" (outline, negrito sublinhado) à esquerda da linha do título (`headSlot`, o encaixe da moldura; sem ele, entra no topo da folha) e o "i" com o "Drop rate" (os itens e as chances, num tooltip) na frente do título; a nota "Pode cair" saiu do corpo. */
+export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, headSlot }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number; /** Conta do jogador: sem ela não há ranking (o botão some). */ saveId?: string; /** Encaixe à esquerda do título da moldura (`AreaSheet`); `undefined` = sem moldura, o botão fica no corpo. */ headSlot?: HTMLElement | null }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
   const rift = useRiftTalents();
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
+  const [rankOpen, setRankOpen] = useState(false);
+  const rankBtn = saveId ? (
+    <button type="button" data-masmorra-ranking onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false, 'sm'), fontWeight: 700, textDecoration: 'underline' }}>
+      Ranking
+    </button>
+  ) : null;
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        <p style={sectionHead}>{isPt ? 'Pode cair' : 'Possible drops'}</p>
+      {rankBtn && (headSlot ? createPortal(rankBtn, headSlot) : headSlot === undefined ? <div style={{ display: 'flex' }}>{rankBtn}</div> : null)}
+      <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title="Ranking">
+        <div data-masmorra-ranking-panel>
+          <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />
+        </div>
+      </ModalSheet>
+      <ModalInfo language={language} label="Drop rate">
+        <b data-masmorra-drops-title style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Drop rate</b>
         <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
           <DropItem
             label={isPt ? 'Bits por inimigo + bônus de andar' : 'Bits per enemy + floor bonus'}
@@ -160,7 +175,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { languag
             value="5→100"
           />
         </ul>
-      </div>
+      </ModalInfo>
       {(deepest > 0 || best > 0) && (
         <div style={{ display: 'flex', gap: 8 }}>
           {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
