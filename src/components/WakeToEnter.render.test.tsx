@@ -299,7 +299,7 @@ describe('§329 — o gancho fora do AreaView (treino com amigo, missão da guil
   });
 
   it('as duas entradas fora do AreaView passam pelo gancho (fonte)', () => {
-    expect(readFileSync('src/components/LibraryPage.tsx', 'utf8')).toContain("requireAwake('treino', () => setTrainingWith(p))");
+    expect(readFileSync('src/components/LibraryPage.tsx', 'utf8')).toContain("requireAwake('treino', () => { void startTraining(p); })");
     expect(readFileSync('src/components/guild/GuildSheet.tsx', 'utf8')).toContain("requireAwake('missao', missao.onSend)");
   });
 });

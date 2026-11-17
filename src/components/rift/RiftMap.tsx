@@ -6,7 +6,7 @@ import {
   riftSegmentReached, riftVisibleRange, type RiftMapNode, type RiftMapSave,
 } from '../../utils/riftMap';
 import { RIFT_SET_COUNT, riftFloorName, riftSetName, riftSetOfLayer } from '../../utils/riftSets';
-import { riftMapCopy } from '../../utils/riftMapCopy';
+import { nodeLabel, riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
 /**
@@ -161,8 +161,8 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
                 </button>
                 <span data-rift-node-label className="sm2-num" aria-hidden="true" onClick={() => tap(n)} style={{
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
-                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#d5dade' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
-                }}>{locked ? n.label : setName}</span>
+                  fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 400, color: locked ? '#d5dade' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
+                }}><strong style={{ fontWeight: 700 }}>{nodeLabel(n.label, el, isPt).floors}</strong> {el}</span>
                 {portalOrd !== undefined && (
                   <>
                     <span aria-hidden="true" data-rift-portal={portalOrd} data-portal-state={portalState} {...(glow ? { 'data-rift-portal-glow': '' } : {})} style={{

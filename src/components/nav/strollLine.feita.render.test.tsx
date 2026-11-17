@@ -3,13 +3,15 @@
  * O Passeio na Home (dono, 16/11/2026): vira linha como qualquer tarefa, "Stroll"/"Passeio" em turquesa antes do nome; concluído
  * (pela Home OU pelo NPC, o mesmo `applyStrollNow`) FICA marcado como feito na lista, e no dia seguinte a marca some.
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { dailyOffer } from '../../utils/travessias';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 
-afterEach(cleanup);
+// Relógio preso em AGORA (só `Date`): a janela do Passeio escolhido (pickAt + MISSION_WINDOW_MS) é medida com Date.now().
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-16T15:00:00Z')); });
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const HOJE = '2026-11-16';
 const AGORA = new Date('2026-11-16T15:00:00Z').getTime();
