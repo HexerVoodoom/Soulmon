@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useRef, useLayoutEffect, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import { createContext, forwardRef, useCallback, useContext, useRef, useState, useLayoutEffect, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { PEDRA_RUNAS_URL } from '../../assets/soulmon/ui/moldura/fundos';
 
 /**
@@ -24,12 +24,29 @@ export interface ModalFrameProps extends Omit<HTMLAttributes<HTMLDivElement>, 't
   children?: ReactNode;
 }
 
+/**
+ * MIOLO DA MOLDURA (17/11/2026): as sub-folhas (`ModalSheet`: Criar poção, detalhe de item, confirmações...) que abrem de dentro de um modal com
+ * moldura NÃO sobem à tela cheia por cima dela — entram neste encaixe, que ocupa só a área útil (entre as peças da moldura, com o mesmo respiro de
+ * `--sm2-moldura-pad-*`), abaixo das peças (z 1 × 2) e com rolagem interna. Sem moldura pai o contexto é `null` e o comportamento é o de antes.
+ */
+const ModalAreaContext = createContext<HTMLElement | null>(null);
+export function useModalArea(): HTMLElement | null { return useContext(ModalAreaContext); }
+
 export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function ModalFrame(
   { title, info, infoSlotRef, fundo, fillOpacity, className, style, children, ...rest }, ref,
 ) {
   // `--u` (1% da largura) é medido aqui, e NÃO por `container-type`: um contêiner de layout vira o bloco de contenção dos filhos `position: fixed`,
   // e as sub-folhas (ModalSheet, Hexsmith, Criar poção) ficavam presas e cortadas dentro do modal. Sem contenção, elas sobem à tela inteira.
   const own = useRef<HTMLDivElement | null>(null);
+  // O encaixe nasce junto com o 1º render (nunca `null` → elemento): uma folha que abre no MESMO quadro que a moldura já entra nele, sem remontar
+  // (remontar deixaria o `useDialogA11y` com o nó antigo e o encaixe inertizado). É anexado ao modal em layout effect, antes dos efeitos passivos.
+  const [area] = useState<HTMLElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.className = 'sm2-moldura-modal__subfolha';
+    el.setAttribute('data-moldura-subfolha', '');
+    return el;
+  });
   const setRef = useCallback((el: HTMLDivElement | null) => {
     own.current = el;
     if (typeof ref === 'function') ref(el); else if (ref) ref.current = el;
@@ -37,13 +54,14 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
   useLayoutEffect(() => {
     const el = own.current;
     if (!el) return;
+    if (area) el.appendChild(area);
     const medir = () => { const w = el.getBoundingClientRect().width; if (w > 0) el.style.setProperty('--u', `${w / 100}px`); };
     medir();
-    if (typeof ResizeObserver === 'undefined') return;
+    if (typeof ResizeObserver === 'undefined') return () => { area?.remove(); };
     const ro = new ResizeObserver(medir);
     ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    return () => { ro.disconnect(); area?.remove(); };
+  }, [area]);
   const op = Math.min(1, Math.max(0, fillOpacity ?? (fundo ? 0.15 : 0.6)));
   const st = {
     ...style,
@@ -63,7 +81,9 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
       {(info != null || infoSlotRef) && (
         <span className="sm2-moldura-modal__info" data-moldura-info="" ref={infoSlotRef}>{info}</span>
       )}
-      <div className="sm2-moldura-modal__conteudo" data-moldura-conteudo="">{children}</div>
+      <ModalAreaContext.Provider value={area}>
+        <div className="sm2-moldura-modal__conteudo" data-moldura-conteudo="">{children}</div>
+      </ModalAreaContext.Provider>
     </div>
   );
 });

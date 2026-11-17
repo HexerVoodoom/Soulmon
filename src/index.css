@@ -9618,6 +9618,26 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
   position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
 }
+/* SUB-FOLHA (17/11/2026): encaixe do miolo para as folhas que abrem de dentro do modal. Entre o conteúdo (z auto) e as peças da moldura (z 2); o mesmo respiro
+   do conteúdo; vazio = não existe (`:empty`). Turquesa escuro SÓLIDO + o fundo do lote em baixa opacidade (as mesmas variáveis do modal pai). */
+.sm2-moldura-modal__subfolha {
+  position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; pointer-events: none;
+  /* cobre o modal todo (o conteúdo do pai some por baixo das peças); o respiro de dentro é o miolo útil */
+  padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b);
+  background: var(--sm2-viewport-bg, #0E2422); color: var(--sm2-viewport-ink, #E9F5F2);
+}
+.sm2-moldura-modal__subfolha:empty { display: none; }
+.sm2-moldura-modal__subfolha::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--sm2-moldura-fill-op, .15);
+  background: var(--sm2-moldura-fundo, none) center / cover no-repeat;
+}
+.sm2-moldura-modal--pedra .sm2-moldura-modal__subfolha::before { background-size: 50% auto; background-repeat: repeat; background-position: top left; }
+.sm2-moldura-modal__subfolha > [data-modal-backdrop] { pointer-events: auto; }
+.sm2-moldura-modal__subfolha .sm2-title { color: var(--sm2-viewport-ink, #E9F5F2); }
+/* a seta/✕ do cabeçalho da folha também fica clara sobre o turquesa. */
+.sm2-moldura-modal__subfolha .sm2-ora-back { color: var(--sm2-viewport-ink, #E9F5F2); }
+/* texto solto sobre o turquesa (fora dos cards brancos): tinta clara; o que está dentro de cards segue a tinta escura. */
+.sm2-moldura-modal__subfolha [role='dialog'] > div > p { color: var(--sm2-viewport-ink, #E9F5F2) !important; }
 /* CARD: topo 231/600 e base 369/600 (do arquivo); vão da arte entre os dois. */
 .sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; min-height: calc(var(--u) * 126); }
 .sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }

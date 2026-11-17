@@ -6,6 +6,7 @@ import { BackArrow } from '../ui/BackArrow';
 import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { useModalArea } from '../ui/ModalFrame';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 
@@ -434,6 +435,9 @@ export function ModalSheet({
   const comecouNoVeu = useRef(false);
   const { slot, slotRef } = useModalInfoSlot();
   useBackLayer(open && sobreTelas && closeSide !== 'none', onClose);
+  // Dentro de um modal com moldura: a folha ocupa o MIOLO dela (encaixe do `ModalFrame`), e não a tela inteira. `sobreTelas` segue indo ao <body>.
+  const area = useModalArea();
+  const noMiolo = !!area && !sobreTelas;
   if (!open) return null;
   const folha = (
     <ModalInfoSlotProvider slot={slot}>
@@ -441,16 +445,17 @@ export function ModalSheet({
       className="sm2-sheet-fade"
       data-modal-backdrop
       data-dismiss-on-backdrop={fechaNoVeu ? 'true' : 'false'}
+      data-no-miolo={noMiolo ? '' : undefined}
       onPointerDown={(e) => { comecouNoVeu.current = e.target === e.currentTarget; }}
       onClick={(e) => {
         if (fechaNoVeu && comecouNoVeu.current && e.target === e.currentTarget) onClose();
         comecouNoVeu.current = false;
       }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 120,
-        background: 'rgba(4, 18, 20, .55)',
-        display: 'flex', alignItems: centered ? 'center' : 'flex-end', justifyContent: 'center',
-        ...(centered ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
+        ...(noMiolo ? { position: 'relative' as const, flex: 1, minHeight: 0 } : { position: 'fixed' as const, inset: 0 }), zIndex: 120,
+        background: noMiolo ? 'transparent' : 'rgba(4, 18, 20, .55)',
+        display: 'flex', alignItems: noMiolo ? 'stretch' : centered ? 'center' : 'flex-end', justifyContent: 'center',
+        ...(centered && !noMiolo ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
       <div
@@ -461,11 +466,10 @@ export function ModalSheet({
         data-placement={placement}
         className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
         style={{
-          width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh',
+          ...(noMiolo
+            ? { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', backgroundColor: 'transparent', borderRadius: 0, boxShadow: 'none' }
+            : { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', backgroundColor: 'var(--sm2-surface)', borderRadius: centered ? 20 : '20px 20px 0 0', boxShadow: SM2_SHADOW_SHEET }),
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: centered ? 20 : '20px 20px 0 0',
-          boxShadow: SM2_SHADOW_SHEET,
         }}
       >
         {/* O GRABBER — a alcinha. É a convenção que diz "isto vem de baixo e
@@ -474,7 +478,7 @@ export function ModalSheet({
             existe aqui (fechar é o X e o Escape, os dois já acessíveis), então
             ele é `aria-hidden` — anunciar uma alça que não arrasta seria pior
             que não ter alça nenhuma. */}
-        {centered ? null : (
+        {centered || noMiolo ? null : (
         <div
           aria-hidden="true"
           style={{
@@ -546,6 +550,7 @@ export function ModalSheet({
     </div>
     </ModalInfoSlotProvider>
   );
+  if (noMiolo && area) return createPortal(folha, area);
   return sobreTelas && typeof document !== 'undefined' ? createPortal(folha, document.body) : folha;
 }
 
