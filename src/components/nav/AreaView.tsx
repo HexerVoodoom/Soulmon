@@ -12,7 +12,7 @@ import { AreaScene, type AreaLot } from './AreaScene';
 import { DungeonKeyBadge } from './DungeonKeyBadge';
 import { requestGoToBuilding } from '../../utils/blockedAction';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { rewindToSet } from '../../utils/riftMap';
+import { rewindToSet, teleportToPortal } from '../../utils/riftMap';
 import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
 import { chefsOn, playerWeekday } from '../../utils/restaurant';
 import { restaurantNpcVoice } from '../../utils/restaurantCopy';
@@ -626,6 +626,7 @@ export function AreaView(props: AreaViewProps) {
               onSpendBits={play.onSpendBits}
               onExit={exitGame}
               onExitToMap={() => { setRiftAuto(false); setGame(null); props.onGoToMap?.(); }}
+              onOpenRiftMap={() => { setRiftAuto(false); setGame(null); setSheet(null); setRiftMapOpen(true); }}
             />
     );
   };
@@ -746,7 +747,8 @@ export function AreaView(props: AreaViewProps) {
         {riftMapOpen && (
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             <RiftMap language={language} save={gsCtx?.gameState ?? {}} sprite={props.guild.mySprite} onClose={() => { setRiftMapOpen(false); setSheet('fenda'); }}
-              onRewind={(i) => gsCtx?.setGameState(prev => rewindToSet(prev, i))} />
+              onRewind={(i) => gsCtx?.setGameState(prev => rewindToSet(prev, i))}
+              onTeleport={(o) => gsCtx?.setGameState(prev => teleportToPortal(prev, o))} />
           </Suspense>
         )}
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
