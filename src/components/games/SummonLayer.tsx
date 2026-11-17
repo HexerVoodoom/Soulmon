@@ -22,11 +22,11 @@ export interface StageSummon {
 interface SpotLike { readonly x: number; readonly y: number; readonly size: number }
 
 /** Tamanho do companheiro em relação ao invocador, e o quanto ele se adianta (frações do tamanho do invocador). */
-export const SUMMON_SIZE = 0.55;
+export const SUMMON_SIZE = 0.7;
 /** Avanço HORIZONTAL (lado do oponente): o companheiro fica no chão ao lado do invocador, não em cima do corpo dele. */
-export const SUMMON_ADVANCE = 0.8;
+export const SUMMON_ADVANCE = 0.65;
 /** Subida leve (profundidade), SEMPRE para cima: o companheiro do inimigo não desce sobre a barra de HP do jogador. */
-export const SUMMON_LIFT = 0.12;
+export const SUMMON_LIFT = 0.02;
 const OUT_MS = 200;
 
 /**
@@ -64,12 +64,28 @@ function SummonSprite({ summon, from, to, reduced, z }: { summon: StageSummon; f
   const p = summonPlace(from, to);
   const style: CSSProperties = {
     position: 'absolute', left: p.x - p.size / 2, top: p.y - p.size, width: p.size, height: p.size, zIndex: z, pointerEvents: 'none',
-    imageRendering: 'pixelated', objectFit: 'contain', opacity: shown ? 1 : 0,
+    opacity: shown ? 1 : 0,
     transform: `${p.flip ? 'scaleX(-1) ' : ''}translateY(${shown ? 0 : 10}px) scale(${shown ? 1 : 0.7})`,
     transformOrigin: '50% 100%',
-    transition: reduced ? 'none' : `opacity ${OUT_MS}ms ease-out, transform ${OUT_MS}ms ease-out`,
+    // Surge/some embebido em luz branca: o sprite nasce e morre estourado de brilho.
+    filter: shown ? 'none' : 'brightness(6)',
+    transition: reduced ? 'none' : `opacity ${OUT_MS}ms ease-out, transform ${OUT_MS}ms ease-out, filter ${OUT_MS}ms ease-out`,
   };
-  return <img src={src} alt="" aria-hidden="true" data-stage-summon={String(summon.side)} data-stage-summon-turns={summon.turns} loading="lazy" decoding="async" draggable={false} style={style} />;
+  const flash: CSSProperties = {
+    position: 'absolute', left: p.x - p.size, top: p.y - p.size * 1.5, width: p.size * 2, height: p.size * 1.5, zIndex: z + 1, pointerEvents: 'none',
+    background: 'radial-gradient(ellipse at 50% 60%, #fff 0%, rgba(255,255,255,.85) 30%, rgba(255,255,255,0) 70%)',
+    animation: `sm-summon-flash ${OUT_MS * 2}ms ease-out both`,
+  };
+  return (
+    <>
+      <div data-stage-summon={String(summon.side)} data-stage-summon-turns={summon.turns} style={style}>
+        {/* Mesmo "bounce" idle do Soulmon (squash a partir dos pés); o espelho fica no wrapper. */}
+        <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} className="sm-bs-bounce"
+          style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', ['--sm-idle-dur' as string]: summon.side === 'me' ? '1.05s' : '1.25s' } as CSSProperties} />
+      </div>
+      {!reduced && <div key={shown ? 'in' : 'out'} aria-hidden="true" data-stage-summon-flash={shown ? 'in' : 'out'} style={flash} />}
+    </>
+  );
 }
 
 /** A camada: um sprite por companheiro (no máximo 1 por combatente, `COMPANHEIROS_POR_COMBATENTE`). */
