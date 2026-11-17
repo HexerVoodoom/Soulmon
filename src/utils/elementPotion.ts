@@ -126,9 +126,6 @@ export function affordablePotionElements(essences: Record<string, number> | unde
   return elementsMatchingBases(selected, ESSENCE_ELEMENT_IDS).filter(id => canAffordPotion(essences, id, inventory));
 }
 
-export type PotionFilter = 'all' | 'can' | 'enough' | 'base' | 'composite';
-export const POTION_FILTERS: readonly PotionFilter[] = ['all', 'can', 'enough', 'base', 'composite'];
-
 export interface PotionRecipeRow { id: string; have: number; need: number }
 export interface PotionRecipe {
   id: string;
@@ -149,22 +146,11 @@ export function potionRecipe(id: string, essences: Record<string, number> | unde
 }
 
 /**
- * A LISTA COMPLETA (todas as poções do catálogo), filtrada pelas bases escolhidas (E) e por `filter`; as que o jogador já consegue
- * criar vêm primeiro (ordem do catálogo dentro de cada grupo).
+ * A LISTA COMPLETA (todas as poções do catálogo), filtrada pelas bases escolhidas (E); as que o jogador já consegue
+ * criar vêm primeiro (ordem do catálogo dentro de cada grupo). O Neutro não entra aqui: a tela o põe no fim, como as demais.
  */
-export function potionListFor(essences: Record<string, number> | undefined, inventory: Inventory, selected: readonly (string | null | undefined)[], filter: PotionFilter = 'all', unlocked?: readonly string[]): PotionRecipe[] {
-  const rows = elementsMatchingBases(selected, ESSENCE_ELEMENT_IDS).map(id => potionRecipe(id, essences, inventory))
-    .filter(r => {
-      const open = isPotionUnlocked(r.id, unlocked);
-      const comp = elementComposition(r.id)?.length ?? 0;
-      switch (filter) {
-        case 'can': return open && r.canCraft;
-        case 'enough': return r.enoughEssences;
-        case 'base': return comp === 1;
-        case 'composite': return comp > 1;
-        default: return true;
-      }
-    });
+export function potionListFor(essences: Record<string, number> | undefined, inventory: Inventory, selected: readonly (string | null | undefined)[], unlocked?: readonly string[]): PotionRecipe[] {
+  const rows = elementsMatchingBases(selected, ESSENCE_ELEMENT_IDS).map(id => potionRecipe(id, essences, inventory));
   const ok = (r: PotionRecipe) => (r.canCraft && isPotionUnlocked(r.id, unlocked) ? 0 : 1);
   return rows.map((r, i) => ({ r, i })).sort((a, b) => ok(a.r) - ok(b.r) || a.i - b.i).map(x => x.r);
 }
