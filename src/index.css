@@ -9311,6 +9311,11 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm2-hex-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
+/* 17/11/2026 (dono): Coroa ENCAIXADA ganha placa atrás da arte (a do dano contínuo é quase preta e sumia no fundo escuro do slot, ≈1,2:1).
+   Duas placas fixas, iguais nos temas claro e escuro: clara (#EAF6F3) para as artes escuras, escura (#08191A) para as três claras
+   (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa. */
+.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: #EAF6F3; box-shadow: 0 0 0 1px var(--sm2-primary-ink); }
+.sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: #08191A; }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
   display: grid; place-items: center;
