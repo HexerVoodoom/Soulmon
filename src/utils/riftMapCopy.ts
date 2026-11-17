@@ -17,6 +17,16 @@ export interface RiftMapCopy {
   sureNo: string;
   doneNote: (floor: number) => string;
   you: string;
+  /** O indicador da descida no mapa: "Camada 9 · Fogo 2". */
+  hereLayer: (layer: number, floorName: string) => string;
+  portalAria: (layer: number, state: 'locked' | 'unlocked' | 'here') => string;
+  portalWord: string;
+  portalLockedNote: string;
+  portalUnlockedToast: string;
+  /** O nó logo abaixo do portal onde o jogador está: seguir sem usar o portal. */
+  downTitle: string;
+  downYes: string;
+  teleportNote: (layer: number) => string;
 }
 
 export function riftMapCopy(isPt: boolean): RiftMapCopy {
@@ -38,6 +48,14 @@ export function riftMapCopy(isPt: boolean): RiftMapCopy {
     sureNo: 'Cancelar',
     doneNote: f => `Pronto. A próxima descida começa no andar ${f}.`,
     you: 'Seu Soulmon',
+    hereLayer: (l, f) => `Camada ${l} · ${f}`,
+    portalAria: (l, st) => `Portal da camada ${l}, ${st === 'here' ? 'você está aqui' : st === 'unlocked' ? 'desbloqueado, toque para teletransportar' : 'bloqueado'}`,
+    portalWord: 'Portal',
+    portalLockedNote: 'Esse portal ainda não foi desbloqueado.',
+    portalUnlockedToast: 'Portal desbloqueado',
+    downTitle: 'Descer para estes andares?',
+    downYes: 'Descer',
+    teleportNote: l => `Teletransportado. A próxima descida começa no andar ${l}.`,
   } : {
     title: 'Rift map',
     back: 'Back',
@@ -56,5 +74,13 @@ export function riftMapCopy(isPt: boolean): RiftMapCopy {
     sureNo: 'Cancel',
     doneNote: f => `Done. Your next descent starts at floor ${f}.`,
     you: 'Your Soulmon',
+    hereLayer: (l, f) => `Layer ${l} · ${f}`,
+    portalAria: (l, st) => `Layer ${l} portal, ${st === 'here' ? 'you are here' : st === 'unlocked' ? 'unlocked, tap to teleport' : 'locked'}`,
+    portalWord: 'Portal',
+    portalLockedNote: "This portal isn't unlocked yet.",
+    portalUnlockedToast: 'Portal unlocked',
+    downTitle: 'Go down to these floors?',
+    downYes: 'Go down',
+    teleportNote: l => `Teleported. Your next descent starts at floor ${l}.`,
   };
 }

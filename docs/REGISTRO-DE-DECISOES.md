@@ -6337,6 +6337,16 @@ Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `S
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
 
+## §471 — Rift: portais a cada 50 andares e o nome do elemento no indicador do mapa (17/11/2026, dono)
+
+- **Pedido.** No mapa, o indicador da descida mostra "Camada N · Elemento parte" (ex.: "Camada 9 · Fogo 2"). Um portal em cada camada múltipla de 50 (50, 100 … 500: 10 portais nos 538 andares). Quem já passou por um portal pode teletransportar entre portais.
+- **Onde mora.** Cada nó vale 2 andares (49-50, 99-100…): a camada 50k é sempre o 2º andar do nó 25k-1, e o portal fica nesse nó. Dono: `utils/riftMap.ts` (seção PORTAIS); tela em `components/rift/RiftMap.tsx`; parada da descida em `DungeonGame.tsx` (`avancar`).
+- **Desbloqueio.** Ao COMPLETAR o andar do portal (leitura conservadora): é derivado do recorde (`dungeonDepthRecord`, que só sobe), logo idempotente e vale também para a descida fora do app. O save só guarda quantos portais o jogador já foi AVISADO (`riftPortalsSeen`, 0..10, campo aditivo, leitura tolerante); o aviso de topo "Portal desbloqueado" / "Portal unlocked" sai 1× por portal. Jogador que já passou de 50 antes desta versão recebe o aviso uma vez.
+- **Teleporte.** Só de portal para portal e só para portal liberado; sem descida em andamento. Estando no nó de um portal, todo portal liberado brilha (sem animação com reduced-motion) e tocar em um teletransporta: grava `dungeonResumeLayer` = 1º andar do nó do portal. Sem custo de energia, HP ou recorde.
+- **Volta ao portal.** Ao limpar o andar de um portal que tem outro mais fundo liberado, a descida PARA (como "sair") e o jogador vai à tela do mapa, parado no nó do portal, em vez de seguir ao próximo andar.
+- **Seguir sem o portal.** Tocar no nó logo abaixo do portal atual e escolher "Descer" (sem o aviso "Sem volta", que é de quem recua).
+- **Servidor.** Nada: o servidor não valida o ponto de largada nem portais (§387); `riftPortalsSeen` é só do cliente.
+
 ## §470 — Rift: andares 1 e 2 nos nomes, folha com só duas portas, mapa com película preta; Arena: "Comprar convites" no topo com leque (16/11/2026, dono)
 
 Decisão (cinco pedidos literais do dono, um commit por item):

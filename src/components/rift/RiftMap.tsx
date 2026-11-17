@@ -2,10 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ModalSheet, sm2Button, sm2Text } from '../form/FormKit';
 import { ElementIcon, elName } from '../ElementBaseSlots';
 import {
-  RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
+  RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftPortalHere, riftPortalIsUnlocked, riftPortalLayer, riftPortalNodeIndex, riftPortalOfNode, riftTeleportRefusal, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
   riftSegmentReached, riftVisibleRange, type RiftMapNode, type RiftMapSave,
 } from '../../utils/riftMap';
-import { RIFT_SET_COUNT, riftSetName, riftSetOfLayer } from '../../utils/riftSets';
+import { RIFT_SET_COUNT, riftFloorName, riftSetName, riftSetOfLayer } from '../../utils/riftSets';
 import { riftMapCopy } from '../../utils/riftMapCopy';
 import type { Language } from '../../utils/i18n';
 
@@ -33,10 +33,12 @@ export interface RiftMapProps {
   sprite?: string | null;
   /** Confirmou o "Sem volta": o dono do save aplica `rewindToSet`. */
   onRewind: (index: number) => void;
+  /** Tocou num portal liberado estando no nó de um portal: o dono do save aplica `teleportToPortal` (ordinal 1-based). */
+  onTeleport?: (ordinal: number) => void;
   onClose: () => void;
 }
 
-export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapProps) {
+export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose }: RiftMapProps) {
   const isPt = language === 'pt-BR';
   const t = riftMapCopy(isPt);
   const scroller = useRef<HTMLDivElement>(null);
@@ -46,6 +48,10 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
   const [note, setNote] = useState<string | null>(null);
   const [ask, setAsk] = useState<number | null>(null);
   const [sure, setSure] = useState<number | null>(null);
+  // PORTAIS (REGISTRO §471): em que portal o jogador está (se está num nó de portal) e o nó logo abaixo dele ("Descer" sem usar o portal)
+  const portalHere = riftPortalHere(save);
+  const belowPortalIdx = portalHere === undefined ? undefined : riftPortalNodeIndex(portalHere) + 1;
+  const curLayer = riftCurrentLayer(save);
 
   const measure = useCallback(() => {
     const el = scroller.current;
@@ -93,6 +99,14 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
 
   const tap = (n: RiftMapNode) => {
     if (n.state === 'locked') { setNote(t.lockedNote); return; }
+    const po = riftPortalOfNode(n.index);
+    if (po !== undefined && portalHere !== undefined && n.state !== 'current') {
+      // no nó de um portal, tocar em outro portal LIBERADO teletransporta (só portal → portal)
+      if (!riftPortalIsUnlocked(save, po)) { setNote(t.portalLockedNote); return; }
+      const why = riftTeleportRefusal(save, po);
+      if (why === 'busy') { setNote(t.busyNote); return; }
+      if (!why && onTeleport) { onTeleport(po); setNote(t.teleportNote(n.floors[0])); return; }
+    }
     if (n.state === 'current') { setNote(t.hereNote); return; }
     if (riftRewindRefusal(save, n.index) === 'busy') { setNote(t.busyNote); return; }
     setAsk(n.index);
@@ -107,7 +121,7 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
         <button type="button" data-rift-map-close onClick={onClose} aria-label={t.back} style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 44, padding: '0 12px' }}>←</button>
         <h2 style={{ margin: 0, fontSize: 'var(--sm2-text-lg, 18px)', fontWeight: 700 }}>{t.title}</h2>
       </header>
-      <style>{`[data-rift-node] button:focus-visible{outline:3px solid #fff;outline-offset:4px}@keyframes rift-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}@media (prefers-reduced-motion:no-preference){[data-rift-node][data-state="current"] button{animation:rift-pulse 2.4s ease-in-out infinite}}`}</style>
+      <style>{`[data-rift-node] button:focus-visible{outline:3px solid #fff;outline-offset:4px}@keyframes rift-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}@keyframes rift-glow{0%,100%{opacity:.75}50%{opacity:1}}@media (prefers-reduced-motion:no-preference){[data-rift-node][data-state="current"] button{animation:rift-pulse 2.4s ease-in-out infinite}[data-rift-portal-glow]{animation:rift-glow 1.8s ease-in-out infinite}}`}</style>
       <div ref={scroller} data-rift-map-scroll style={{ position: 'relative', flex: 1, overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
         <div data-rift-map-canvas style={{
           position: 'relative', height: RIFT_MAP_HEIGHT, width: '100%',
@@ -130,9 +144,13 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
             const setName = riftSetName(el, isPt);
             const locked = n.state === 'locked';
             const current = n.state === 'current';
+            const portalOrd = riftPortalOfNode(n.index);
+            const portalLayer = portalOrd === undefined ? 0 : riftPortalLayer(portalOrd);
+            const portalState: 'locked' | 'unlocked' | 'here' = portalOrd === undefined ? 'locked' : current && portalHere === portalOrd ? 'here' : riftPortalIsUnlocked(save, portalOrd) ? 'unlocked' : 'locked';
+            const glow = portalOrd !== undefined && portalHere !== undefined && portalState !== 'locked'; // todos os liberados brilham enquanto o jogador está num nó de portal
             return (
               <div key={n.index} data-rift-node={n.index} data-state={n.state} style={{ position: 'absolute', left: n.x * view.w - NODE / 2, top: n.y - NODE / 2, width: NODE, height: NODE }}>
-                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={t.nodeAria(n.label, setName, n.state)} style={{
+                <button type="button" aria-current={current ? 'step' : undefined} onClick={() => tap(n)} aria-label={portalOrd !== undefined ? `${t.nodeAria(n.label, setName, n.state)}. ${t.portalAria(portalLayer, portalState)}` : t.nodeAria(n.label, setName, n.state)} style={{
                   width: NODE, height: NODE, borderRadius: '50%', padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
                   background: locked ? '#050607' : 'radial-gradient(circle at 35% 30%, #1d5a5c, #0b2a2d)',
                   border: `3px solid ${locked ? '#7a828b' : current ? '#ffd27a' : '#4fd8c8'}`,
@@ -145,6 +163,25 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
                   position: 'absolute', top: '50%', transform: 'translateY(-50%)', [labelLeft ? 'right' : 'left']: NODE + 8, whiteSpace: 'nowrap',
                   fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700, color: locked ? '#d5dade' : '#e6f4f1', textShadow: '0 1px 3px rgba(0,0,0,.9)', cursor: 'pointer', padding: '1px 7px', borderRadius: 999, background: 'rgba(6,14,16,.55)',
                 }}>{locked ? n.label : setName}</span>
+                {portalOrd !== undefined && (
+                  <>
+                    <span aria-hidden="true" data-rift-portal={portalOrd} data-portal-state={portalState} {...(glow ? { 'data-rift-portal-glow': '' } : {})} style={{
+                      position: 'absolute', inset: -9, borderRadius: '50%', pointerEvents: 'none',
+                      border: `3px ${portalState === 'locked' ? 'dashed' : 'solid'} ${portalState === 'locked' ? '#7a828b' : '#9ff3ea'}`,
+                      boxShadow: glow ? '0 0 16px 6px rgba(159,243,234,.85), inset 0 0 12px 2px rgba(159,243,234,.6)' : portalState === 'unlocked' ? '0 0 6px 1px rgba(159,243,234,.45)' : 'none',
+                    }} />
+                    <span data-rift-portal-tag aria-hidden="true" style={{
+                      position: 'absolute', top: NODE + 12, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', fontSize: 'var(--sm2-text-xs, 12px)', fontWeight: 700,
+                      color: portalState === 'locked' ? '#c3c9ce' : '#9ff3ea', padding: '0 6px', borderRadius: 999, background: 'rgba(6,14,16,.7)',
+                    }}>{t.portalWord} {portalLayer}</span>
+                  </>
+                )}
+                {current && (
+                  <span data-rift-here className="sm2-num" style={{
+                    position: 'absolute', top: NODE + (portalOrd !== undefined ? 34 : 12), left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', fontSize: 'var(--sm2-text-sm, 14px)', fontWeight: 700,
+                    color: '#ffe3a6', padding: '1px 8px', borderRadius: 999, background: 'rgba(6,14,16,.75)', border: '1px solid rgba(255,210,122,.45)',
+                  }}>{t.hereLayer(curLayer, riftFloorName(el, riftSetOfLayer(curLayer).part))}</span>
+                )}
                 {current && sprite && (
                   <img data-rift-sprite src={sprite} alt={t.you} width={52} height={52} draggable={false} style={{
                     position: 'absolute', top: '50%', transform: 'translateY(-60%)', [labelLeft ? 'left' : 'right']: NODE + 2, width: 52, height: 52, filter: 'drop-shadow(0 0 4px rgba(6,14,16,.95)) drop-shadow(0 2px 3px rgba(6,14,16,.9))', objectFit: 'contain', imageRendering: 'pixelated', pointerEvents: 'none',
@@ -156,10 +193,14 @@ export function RiftMap({ language, save, sprite, onRewind, onClose }: RiftMapPr
         </div>
       </div>
       {note && <p role="status" data-rift-map-note style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: 16, margin: 0, padding: '10px 14px', borderRadius: 12, background: 'rgba(8,18,20,.95)', border: '1px solid rgba(80,200,190,.35)', color: '#e6f4f1', textAlign: 'center' }}>{note}</p>}
-      <ModalSheet open={askNode !== null} onClose={() => setAsk(null)} language={language} title={t.askTitle} maxWidth={380}
+      <ModalSheet open={askNode !== null} onClose={() => setAsk(null)} language={language} title={askNode && askNode.index === belowPortalIdx ? t.downTitle : t.askTitle} maxWidth={380}
         footer={askNode && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-            <button type="button" data-rift-ask-yes onClick={() => { setSure(askNode.index); setAsk(null); }} style={{ ...sm2Button('primary'), width: '100%' }}>{t.askYes}</button>
+            <button type="button" data-rift-ask-yes onClick={() => {
+              // o nó logo abaixo do portal: "Descer" é seguir adiante, sem o "Sem volta" (que é de quem recua)
+              if (askNode.index === belowPortalIdx) { onRewind(askNode.index); setAsk(null); setNote(t.doneNote(askNode.floors[0])); return; }
+              setSure(askNode.index); setAsk(null);
+            }} style={{ ...sm2Button('primary'), width: '100%' }}>{askNode.index === belowPortalIdx ? t.downYes : t.askYes}</button>
             <button type="button" data-rift-ask-no onClick={() => setAsk(null)} style={{ ...sm2Button('outline'), width: '100%' }}>{t.askNo}</button>
           </div>
         )}>
