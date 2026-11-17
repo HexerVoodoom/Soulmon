@@ -6336,3 +6336,10 @@ Decisão: o botão "DEMO — experimentar sem conta" da tela de abertura (`Soulm
 Por que reapareceu: o §320 (commit 53037e48d) criou `demoButton.ts`, o teste `SoulmonOnboarding.demoOff.render.test.tsx` e a condição `DEMO_BUTTON_ENABLED && onStartDemo`; o squash do "Release beta12" (#897, 8c7b4a804) apagou os três e devolveu `{onStartDemo && (`, ressuscitando o botão sem aviso. Restaurados os três arquivos/condição; saves `accountTier:'demo'` e demo local já salva seguem abrindo (`demoMode.ts`/`demoStart.ts` intactos).
 
 Régua: o teste demoOff agora também confere que nenhum botão/aria "DEMO" aparece sem sessão e que o fonte do portão contém `DEMO_BUTTON_ENABLED && onStartDemo` (falha se um merge de release soltar o interruptor de novo). `CACHE_VERSION` v262. **Alternativa que perdeu:** apagar botão e fluxo (quebraria demo salva). **Falsifica:** o botão aparecer sem sessão com o interruptor `false`.
+
+## §467 — Vesca só oferece poção de elemento base; Centro de Evolução sem filtros de status; Maslin sem evocação (17/11/2026, dono)
+
+- **Vesca**: o pop-up que propõe fazer poção só aparece para elemento BASE (100 essências). Composto e Neutro saem da oferta (era o pop-up da §461/#987 aos 50); quem quiser faz pelo fluxo normal do Centro de Evolução. Sem campo de save órfão: o "já ofereci" é local (`soulmon:vescaOffered`) e a leitura continua tolerante.
+- **Centro de Evolução**: some a linha de filtros de status (Todas / Posso criar / Essências ok / Base / Composta); ficam só os três espaços de elemento base. O painel do Neutro some; a poção do Neutro é uma linha comum, a ÚLTIMA da lista, sem destaque (some só quando há elemento base escolhido no filtro, pois não contém nenhum).
+- **Bug da Maslin** (usou o especial e a evocação não saiu): o gatilho só lia o cache `soulmonEvocacao`, que só nasce quando o perfil local roda a ficha. Save sem o cache do estágio = sem companheiro, mesmo com o título de classe (Verdejante) no próprio save. Agora, sem cache do estágio, vale o título guardado em `soulmonClassTitles` (só o positivo; o cache, quando existe, manda). Espelho no servidor (`tituloEEvocador`) e paridade travada.
+
