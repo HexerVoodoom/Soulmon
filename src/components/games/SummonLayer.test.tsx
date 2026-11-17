@@ -45,11 +45,13 @@ describe('render', () => {
   it('com sprite: desenha 1 imagem, lazy, e some quando o contador chega a 0 (movimento reduzido: na hora)', async () => {
     reduzir();
     const { container, rerender } = render(<SummonLayer summons={[{ side: 'me', creature: 'lobo', turns: 2 }]} me={me} foes={foes} reduced />);
-    const img = container.querySelector('[data-stage-summon="me"]') as HTMLImageElement;
-    expect(img).not.toBeNull();
+    const caixa = container.querySelector('[data-stage-summon="me"]') as HTMLElement;
+    expect(caixa).not.toBeNull();
+    const img = caixa.querySelector('img') as HTMLImageElement;
+    expect(img.className).toContain('sm-bs-bounce');
     expect(img.getAttribute('src')).toBe('lobo-teste.png');
     expect(img.getAttribute('loading')).toBe('lazy');
-    expect(img.style.transition).toBe('none');
+    expect(caixa.style.transition).toBe('none');
     await act(async () => { rerender(<SummonLayer summons={[{ side: 'me', creature: 'lobo', turns: 0 }]} me={me} foes={foes} reduced />); });
     expect(container.querySelector('[data-stage-summon]')).toBeNull();
   });

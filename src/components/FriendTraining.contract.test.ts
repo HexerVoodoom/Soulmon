@@ -1,13 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { friendTrainingSide } from './FriendTraining';
+import { friendTrainingSide, friendTrainingOpp } from './FriendTraining';
 import { lotMissionMarks } from '../utils/lotMarks';
 
 describe('treino com amigo (§242): não vale nada', () => {
-  it('o lado do amigo nasce só do estágio público', () => {
+  it('o lado COMUM do amigo (sem ficha) nasce só do estágio público', () => {
     const a = friendTrainingSide({ stage: 'rookie' });
     expect(a.combatant).toBeTruthy();
     expect(a.fx).toBeUndefined();
+  });
+  it('com ficha real do amigo (Maslin-like: evocador) o lado usa a ficha; sem ela, cai no comum', () => {
+    const real = { ...friendTrainingSide({ stage: 'ultimate' }), invoca: true, companheiro: 'ent' } as const;
+    expect(friendTrainingOpp({ stage: 'ultimate' }, real).invoca).toBe(true);
+    expect(friendTrainingOpp({ stage: 'ultimate' }, real).companheiro).toBe('ent');
+    expect(friendTrainingOpp({ stage: 'ultimate' }, null).invoca).toBeUndefined();
+    expect(friendTrainingOpp({ stage: 'ultimate' }).special).toBeTruthy();
   });
   it('o componente não toca rede, save, Bits, Honra nem ranking', () => {
     const src = readFileSync(new URL('./FriendTraining.tsx', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
