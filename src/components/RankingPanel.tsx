@@ -4,7 +4,7 @@ import { RankingModal } from './RankingModal';
 import { BotaoEspecial } from './ui/BotaoEspecial';
 import { RankingList, RANKING_LIST_SIZE } from './RankingList';
 import {
-  fetchRanking, submitScore, RANKING_TIER_NAMES, isTimeRanked, formatRankTime,
+  fetchRanking, submitScore, isTimeRanked, formatRankTime,
   type RankedGame, type RankingBoard, type RankingPeriod,
 } from '../utils/rankings';
 
@@ -45,22 +45,11 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
   }
   const timed = isTimeRanked(game);
   const fmt = (n: number) => (timed ? formatRankTime(n) : String(n));
-  const tier = board.me?.tier ? RANKING_TIER_NAMES[board.me.tier] : null;
   return (
     <div data-ranking-panel={game} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {timed && board.me && (
         <p data-ranking-best style={{ margin: 0 }}>
           {isPt ? `Seu melhor tempo na semana: ${formatRankTime(board.me.score)}` : `Your best time this week: ${formatRankTime(board.me.score)}`}
-        </p>
-      )}
-      {board.me && board.me.tier && tier && (
-        <p data-ranking-tier={board.me.tier} style={{ margin: 0 }}>
-          {isPt ? `Sua faixa ${period === 'monthly' ? 'no mês' : 'na semana'}: ${tier.pt}` : `Your tier this ${period === 'monthly' ? 'month' : 'week'}: ${tier.en}`}
-        </p>
-      )}
-      {period === 'monthly' && (game === 'match3' || game === 'match3-pvp') && (
-        <p data-ranking-premio style={{ margin: 0 }}>
-          {isPt ? 'O 1º do mês ganha o Fliperama de Canto.' : 'The month’s #1 wins the Corner Arcade.'}
         </p>
       )}
       {inline ? (
