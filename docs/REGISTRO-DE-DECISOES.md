@@ -6582,3 +6582,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Sem efeito colateral:** pontuação = dano dado − dano tomado (não depende do HP inicial); o servidor (`functions/api`) não valida HP; o HUD lê `player.max`.
 
 **Adendo §485 — acabamento do modal e do pódio (18/11/2026, dono):** pedestais quase encostados (colunas de 80/84/80 px, gap 2 px, 1º no meio); sem troféu/coroa e sem o glow dourado atrás da medalha 1; as laterais da moldura começam a 6,5u (sob o topo) para nenhuma barra aparecer acima do ornamento; `CristalChama` maior (13u, topo −1,8u) preenchendo o crescente; corpo com respiro de 36 px no topo para a medalha 1 não ser coberta. Conferido a 360/375 px (412 por escala de `--u`).
+### Adendo (18/11/2026, 2ª rodada): bônus sobe para +80%
+
+- **Pedido do dono:** testers ainda acham o PvP difícil; "mais HP no jogador, dano igual" (`M3C_PVP_ENEMY_DMG_FACTOR` segue 1).
+- **Decisão:** `M3C_PVP_PLAYER_HP_BONUS = 0.8`; jogador 936 de HP (base 520), adversário 520. Só o PvP muda.
+- **Calibração** (N=80, sementes fixas, jogador ao acaso): +60% 36,3% · +70% 37,5% · +75% 40,0% · +80% 43,8% · +100% 51,3% · +120% 58,8%. Escolhido +80% (centro de ~40-45%; +75% é o limite inferior).
+- **Sem efeito colateral:** HUD usa barra por razão (sem texto HP N/N); pontuação = dano dado − tomado (+bônus de derrota), cortes e teto do servidor (`_rankings.js`, `match3-pvp` 10.000) não dependem de HP.
