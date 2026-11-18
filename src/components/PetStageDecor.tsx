@@ -2,6 +2,9 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
 import { DECOR_ART } from '../utils/decorArt';
+import { ArcadeTela } from './ArcadeTela';
+import campfireApagada from '../assets/decor-fx/furn-campfire-apagada.png';
+import campfireFogo from '../assets/decor-fx/furn-campfire-fogo.png';
 import { useWindChime } from '../hooks/useWindChime';
 import { DECOR_LUZ, decorLuzAcesa } from '../utils/decorLuz';
 import iconTrophyGold from '../assets/icons/icon-trophy-gold.png';
@@ -65,7 +68,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         const slot = DECOR_SLOTS[slotId];
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
-        const art = DECOR_ART[item.id];
+        const art = item.id === 'furn-campfire' ? campfireApagada : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo; o fogo é o sprite pixelfx desenhado por cima (§481)
         const luz = DECOR_LUZ[item.id];
         const acesa = luz ? decorLuzAcesa(luz, isSleeping) : false;
         const artFiltro = luz && !acesa ? 'brightness(.5) saturate(.55) drop-shadow(0 1px 2px rgba(0,0,0,0.35))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))';
@@ -103,6 +106,14 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}
+            {item.id === 'furn-campfire' && (
+              <span className="sm-decor-quadro" aria-hidden="true">
+                <span className="sm-decor-quadro-i">
+                  <span className="sm-decor-fogo" data-on={acesa || undefined}><img src={campfireFogo} alt="" /></span>
+                  <span className="sm-decor-brasa" data-on={!acesa || undefined} />
+                </span>
+              </span>
+            )}
             {luz && (
               <span
                 className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={acesa || undefined}
@@ -126,6 +137,9 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               </span>
             )}
 
+            {item.id === 'furn-arcade-cab' && (
+              <span className="sm-decor-quadro" aria-hidden="true"><span className="sm-decor-quadro-i"><ArcadeTela dormindo={isSleeping} /></span></span>
+            )}
             {item.id === 'furn-hourglass' && (
               <span className="sm-decor-areia" data-decor-areia>
                 <i /><i /><i />

@@ -5053,6 +5053,20 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm-decor-luz-halo[data-on] { opacity: .85; transform: translate(-50%, -50%) scale(1); animation: sm-decor-luz-pulso 3.6s ease-in-out infinite; }
 @keyframes sm-decor-luz-pulso { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .6; transform: translate(-50%, -50%) scale(.94); } }
 
+/* Quadro quadrado da arte (168×168) dentro da caixa do slot: overlays em % da arte (fogo da fogueira, tela do fliperama). */
+.sm-decor-quadro { position: absolute; inset: 0; container-type: size; display: grid; place-items: center; pointer-events: none; }
+.sm-decor-quadro-i { position: relative; width: min(100cqw, 100cqh); aspect-ratio: 1; }
+/* Fogo pixelfx (MIT, patch-gg/pixelfx): tira de 30 quadros de 64×128 passando em steps(); só transform/opacity. Base do fogo no cruzamento das toras. */
+.sm-decor-fogo { position: absolute; left: 19.4%; top: -42.4%; width: 61%; aspect-ratio: 64 / 128; overflow: hidden; opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-fogo[data-on] { opacity: 1; }
+.sm-decor-fogo img { display: block; height: 100%; width: 3000%; max-width: none; image-rendering: pixelated; animation: sm-decor-fogo-quadros 3s steps(30) infinite; }
+@keyframes sm-decor-fogo-quadros { to { transform: translateX(-100%); } }
+.sm-decor-brasa { position: absolute; left: 42%; top: 58%; width: 16%; aspect-ratio: 2; border-radius: 50%; background: radial-gradient(closest-side, hsl(176 80% 50% / .5), transparent); opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-brasa[data-on] { opacity: .55; animation: sm-decor-brasa-pulso 4.5s ease-in-out infinite; }
+@keyframes sm-decor-brasa-pulso { 50% { opacity: .3; } }
+/* Tela do fliperama: 41×40 px da arte em (70,44). */
+.sm-decor-tela { position: absolute; left: 41.7%; top: 26.2%; width: 24.4%; height: 23.8%; image-rendering: pixelated; border-radius: 2px; opacity: .92; }
+
 /* Ampulheta (REGISTRO §480): grãos turquesa caindo pelo gargalo. Só transform/opacity; reduzido = grãos parados no gargalo. */
 .sm-decor-areia { position: absolute; left: 50%; top: 44%; width: 10%; height: 26%; transform: translateX(-50%); pointer-events: none; }
 .sm-decor-areia i { position: absolute; left: 50%; top: 0; width: 2px; height: 2px; margin-left: -1px; background: var(--sm2-primary-ink, hsl(176 82% 55%)); box-shadow: 0 0 3px hsl(176 90% 70%); opacity: 0; animation: sm-decor-areia-cai 1.5s linear infinite; }
@@ -5086,6 +5100,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   .sm-visor-hop,
   .sm-decor-luz-halo,
   .sm-decor-areia i,
+  .sm-decor-fogo img,
+  .sm-decor-brasa,
   .sm-battle-idle { animation: none !important; }
 }
 
