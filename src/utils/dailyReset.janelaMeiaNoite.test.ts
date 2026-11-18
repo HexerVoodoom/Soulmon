@@ -64,6 +64,12 @@ describe('o handler de marcar atividade assenta a virada pendente primeiro (QA L
     const src = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
     const i = src.indexOf('const handleToggleActivityCompletion');
     expect(i).toBeGreaterThan(0);
-    expect(src.slice(i, i + 1500)).toContain('settlePendingRollover(prevRaw)');
+    // Desde o adendo ao §478 o updater é `applyHabitCompletion` (utils/habitCompletionPay.ts, compartilhado com o
+    // widget da Home), e é ELE que assenta a virada antes de escrever o dia.
+    expect(src.slice(i, i + 1500)).toContain('setGameState(prevRaw => applyHabitCompletion(prevRaw,');
+    const pay = readFileSync(new URL('./habitCompletionPay.ts', import.meta.url), 'utf8');
+    const corpo = pay.slice(pay.indexOf('export function applyHabitCompletion'));
+    expect(corpo.indexOf('settlePendingRollover(prevRaw, now)')).toBeGreaterThan(0);
+    expect(corpo.indexOf('settlePendingRollover(prevRaw, now)')).toBeLessThan(corpo.indexOf('completedToday: true'));
   });
 });

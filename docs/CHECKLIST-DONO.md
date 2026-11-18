@@ -75,6 +75,8 @@ Só o dono:
 
 Código na `main` (PRs do widget da Home). Kotlin compilado e JUnit verdes LOCALMENTE (Gradle offline, sem assinar); **nunca instalado em aparelho**.
 
+**Adendo (hábitos no widget, PR `feat/widget-home-habitos`): o AAB novo TEM que ser gerado DEPOIS do merge deste PR**, senão o widget sai sem hábitos e sem `habit_done`.
+
 | Passo | Quem | Estado |
 |---|---|---|
 | Gerar e assinar AAB novo (subir `versionCode`) e mandar ao teste interno | Dono | ⬜ 📱 |
@@ -86,6 +88,9 @@ Código na `main` (PRs do widget da Home). Kotlin compilado e JUnit verdes LOCAL
 | Virar a meia-noite com o app fechado: a lista some ("Abra o Soulmon…"), sem check em tarefa de ontem | Dono | ⬜ 📱 |
 | Testar em 2 fabricantes (ex.: Pixel/AOSP e Samsung ou Xiaomi): altura máxima, rolagem da lista, toque no check | Dono | ⬜ 📱 |
 | APK antigo + web nova: nada quebra (sem widget novo, sem drenagem) | Dono | ⬜ 📱 |
+| Hábitos: a lista mostra Tarefas e depois Hábitos na mesma ordem da Home; hábito com etapas aparece sem check | Dono | ⬜ 📱 |
+| Marcar um hábito no widget com o app fechado e abrir: paga igual ao toque na Home (comida, constância, Vínculo; marco 7/21/66 com cerimônia) | Dono | ⬜ 📱 |
+| Marcar o hábito no widget às 23h59 e abrir o jogo depois da meia-noite: NÃO conta para o dia novo | Dono | ⬜ 📱 |
 
 Não verificado por ninguém: aparência real (escala do bitmap do V-Pet, cores do painel), rolagem da `ListView` em cada launcher, tempo até o check aparecer, comportamento com "economia de bateria" agressiva.
 

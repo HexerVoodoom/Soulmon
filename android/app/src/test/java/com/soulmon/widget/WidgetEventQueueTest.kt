@@ -43,7 +43,7 @@ class WidgetEventQueueTest {
 
     @Test fun pendingRefsOnlyTaskDone() {
         val q = listOf(ev("e1", "t1"), Event("e2", "outro", "t2", "", 0))
-        assertEquals(setOf("t1"), WidgetEventQueue.pendingDoneRefs(q))
+        assertEquals(setOf("task:t1"), WidgetEventQueue.pendingDoneKeys(q))
     }
 
     @Test fun tasksSanitize() {
@@ -63,7 +63,7 @@ class WidgetEventQueueTest {
 
     @Test fun pendingShowsAsDone() {
         val items = listOf(Item("a", "A", false), Item("b", "B", false))
-        val out = WidgetHomeTasks.withPending(items, setOf("b"))
+        val out = WidgetHomeTasks.withPending(items, setOf("task:b"))
         assertFalse(out[0].done)
         assertTrue(out[1].done)
     }
@@ -72,5 +72,27 @@ class WidgetEventQueueTest {
         assertTrue(WidgetHomeTasks.isFresh(10L, 20L))
         assertFalse(WidgetHomeTasks.isFresh(20L, 20L))
         assertFalse(WidgetHomeTasks.isFresh(10L, null))
+    }
+
+    @Test fun habitEventsQueueAndShowAsDone() {
+        val h = Event("e9", WidgetEventQueue.KIND_HABIT_DONE, "h1", "2026-11-18", 2L)
+        val q = WidgetEventQueue.enqueue(listOf(ev("e1", "h1")), h) // mesmo id, tipo diferente: entra
+        assertEquals(2, q.size)
+        assertSame(q, WidgetEventQueue.enqueue(q, h.copy(eid = "e10"))) // segundo check do mesmo habito: nao entra
+        assertEquals(setOf("task:h1", "habit:h1"), WidgetEventQueue.pendingDoneKeys(q))
+        val items = listOf(Item("h1", "Correr", false, WidgetHomeTasks.KIND_HABIT), Item("h2", "Ler", false, WidgetHomeTasks.KIND_HABIT))
+        val out = WidgetHomeTasks.withPending(items, setOf("habit:h1"))
+        assertTrue(out[0].done)
+        assertFalse(out[1].done)
+        assertEquals(WidgetEventQueue.KIND_HABIT_DONE, WidgetEventQueue.eventKindFor(WidgetHomeTasks.KIND_HABIT))
+        assertEquals(null, WidgetEventQueue.eventKindFor("outro"))
+    }
+
+    @Test fun taskAndHabitWithSameIdAreDistinctAndLockIsNotCheckable() {
+        val raw = listOf(Item("x", "Tarefa", false), Item("x", "Habito", false, WidgetHomeTasks.KIND_HABIT), Item("y", "Etapas", false, WidgetHomeTasks.KIND_HABIT, lock = true), Item("z", "Lixo", false, "outro"))
+        val out = WidgetHomeTasks.sanitize(raw)
+        assertEquals(listOf("task:x", "habit:x", "habit:y"), out.map { it.key })
+        assertFalse(out[2].checkable)
+        assertTrue(out[1].checkable)
     }
 }

@@ -677,6 +677,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ Nunca estorna pela metade: comida já usada, missão já resgatada, outro dia ou entrada sem recibo (anterior a esta versão) → recusa.
 - ⚠️ Campo novo concedido pela conclusão de tarefa entra no RECIBO e no estorno, senão desmarcar/marcar vira farm.
 
+### `src/utils/habitCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de HÁBITO (sem etapas), uma regra só para o toque na Home e para o `habit_done` do widget grande da Home (adendo ao REGISTRO §478, 18/11/2026). Footgun 9.
+**Exports:**
+- `function withHabitCompletion(prev, activityId, category, todayKey, bondDayKey)` — constância do mesmo dia (`completeHabit`, idempotente por dayKey), bônus de atributo por maturidade, Vínculo da conclusão e do marco 7/21/66. Saiu do `App.tsx` (o fechamento por etapas também usa).
+- `function applyHabitCompletion(prevRaw, activityId, now, today?)` — o updater do toque: `settlePendingRollover` primeiro, marca de hoje, estatística, comida da categoria, `activityLog`, `withHabitCompletion`. Já feito hoje ou inexistente = MESMA referência.
+- `ACTIVITY_LOG_CAP` (90).
+**Chamado por:** `src/App.tsx` (`handleToggleActivityCompletion`, fechamento por etapas), `src/utils/widgetEvents.ts` (`habit_done`).
+**Régua:** `src/utils/habitCompletionPay.test.ts` (paridade contra a cópia literal do updater anterior: comum, marco de 7, estatística prévia, feito ontem; fila: já feito no app, eid repetido, check de ontem, inexistente, com etapas, mesmo id de tarefa; ordem da lista); `src/utils/dailyReset.janelaMeiaNoite.test.ts` (a virada antes da escrita).
+**Avisos do arquivo:**
+- ⚠️ Hábito com ETAPAS fecha pelas etapas na Home; o widget o mostra sem check (`lock`) e a drenagem o ignora.
+- ⚠️ Efeitos (marco/cerimônia, selo dos passos, som, Desfazer) ficam no App.
+
 ### `src/utils/taskCompletionPay.ts`
 **Dono de:** o PAGAMENTO da conclusão de tarefa avulsa, uma regra só para o toque na Home e para o check do widget grande da Home (decisão do dono, 18/11/2026). Footgun 9: a regra mora aqui, nunca copiada.
 **Exports:**
@@ -4672,7 +4684,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/widgetEvents.ts`
 **Dono de:** a DRENAGEM da fila do check do widget grande da Home (decisão do dono, 18/11/2026): o widget só marca e grava um evento nativo (`WidgetEventQueue.kt`); o app aplica cada `task_done` ao abrir ou voltar ao primeiro plano, pela regra do toque na Home (`applyTaskCompletion`, `taskCompletionPay.ts`).
 **Exports:**
-- `WidgetEvent` (tipo) — `{eid, kind, ref, dayKey?, ts?}` como vem do nativo. Só `task_done` paga; outro `kind` é descartado (vai no ack sem aplicar).
+- `WidgetEvent` (tipo) — `{eid, kind, ref, dayKey?, ts?}` como vem do nativo. `task_done` paga por `applyTaskCompletion`; `habit_done` (adendo ao §478) por `applyHabitCompletion`, só se `dayKey` = hoje (`localIsoDay`), hábito existe e não tem etapas; outro `kind` é descartado (vai no ack sem aplicar).
 - `function sanitizeWidgetEvents(raw)` — filtra o que veio do plugin (eid em forma de UUID, `ref` até 200).
 - `function sanitizeApplied(raw)` · `WIDGET_APPLIED_CAP` (200) — o registro de `eid` já aplicados neste aparelho (`STORAGE_KEYS.WIDGET_EVENTS_APPLIED`).
 - `function applyWidgetEvents(state, events, applied, now)` — aplica em ordem de `ts`; devolve `handled` (tudo que vai no `ack`), `applied` (registro novo) e `paid` (o que pagou, para o feedback). Sem nada a pagar, a MESMA referência. Pura (updater).

@@ -16,6 +16,15 @@ import java.util.UUID
  */
 object WidgetEventQueue {
     const val KIND_TASK_DONE = "task_done"
+    /** Adendo ao §478: hábito do dia. `dayKey` (data local) importa: o app ignora check de ontem. */
+    const val KIND_HABIT_DONE = "habit_done"
+
+    /** O evento de cada tipo de linha da lista ([WidgetHomeTasks.Item.kind]). */
+    fun eventKindFor(itemKind: String): String? = when (itemKind) {
+        WidgetHomeTasks.KIND_TASK -> KIND_TASK_DONE
+        WidgetHomeTasks.KIND_HABIT -> KIND_HABIT_DONE
+        else -> null
+    }
 
     /** Teto da fila. Passou disso, sai o mais antigo (50 tarefas marcadas sem abrir o app uma vez). */
     const val MAX_EVENTS = 50
@@ -41,9 +50,15 @@ object WidgetEventQueue {
         return events.filterNot { it.eid in set }
     }
 
-    /** As tarefas com check pendente: o widget as mostra riscadas até o app drenar. */
-    fun pendingDoneRefs(events: List<Event>): Set<String> =
-        events.filter { it.kind == KIND_TASK_DONE }.map { it.ref }.toSet()
+    /** Os itens com check pendente, como chaves `tipo:id` ([WidgetHomeTasks.Item.key]): o widget os mostra riscados até o app drenar. */
+    fun pendingDoneKeys(events: List<Event>): Set<String> =
+        events.mapNotNull {
+            when (it.kind) {
+                KIND_TASK_DONE -> "${WidgetHomeTasks.KIND_TASK}:${it.ref}"
+                KIND_HABIT_DONE -> "${WidgetHomeTasks.KIND_HABIT}:${it.ref}"
+                else -> null
+            }
+        }.toSet()
 
     /** Leitura/escrita em SharedPreferences (org.json: só no aparelho, fora do JUnit). */
     object Store {
@@ -53,10 +68,10 @@ object WidgetEventQueue {
 
         fun read(context: Context): List<Event> = synchronized(lock) { parse(prefs(context).getString(KEY, null)) }
 
-        /** Grava o check. `true` = entrou agora (a fila mudou). */
-        fun addTaskDone(context: Context, ref: String, dayKey: String, nowMs: Long): Boolean = synchronized(lock) {
+        /** Grava o check (`kind` = [KIND_TASK_DONE] ou [KIND_HABIT_DONE]). `true` = entrou agora (a fila mudou). */
+        fun addDone(context: Context, kind: String, ref: String, dayKey: String, nowMs: Long): Boolean = synchronized(lock) {
             val before = parse(prefs(context).getString(KEY, null))
-            val after = enqueue(before, Event(UUID.randomUUID().toString(), KIND_TASK_DONE, ref, dayKey, nowMs))
+            val after = enqueue(before, Event(UUID.randomUUID().toString(), kind, ref, dayKey, nowMs))
             if (after === before) return@synchronized false
             prefs(context).edit().putString(KEY, toJson(after)).commit()
         }

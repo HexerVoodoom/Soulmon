@@ -576,7 +576,7 @@ object WidgetRenderer {
         val dayEndsAt = if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null
         if (!WidgetHomeTasks.isFresh(System.currentTimeMillis(), dayEndsAt)) return emptyList()
         val items = WidgetHomeTasks.sanitize(WidgetHomeTasks.Json.parse(prefs.getString("tasks_json", null)))
-        return WidgetHomeTasks.withPending(items, WidgetEventQueue.pendingDoneRefs(WidgetEventQueue.Store.read(context)))
+        return WidgetHomeTasks.withPending(items, WidgetEventQueue.pendingDoneKeys(WidgetEventQueue.Store.read(context)))
     }
 
     /** A moldura a desenhar: o arquivo baixado (se valido em disco) e, por baixo, o drawable embutido / padrao. */

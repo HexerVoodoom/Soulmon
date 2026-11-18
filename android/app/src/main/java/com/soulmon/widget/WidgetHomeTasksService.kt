@@ -50,17 +50,29 @@ class WidgetHomeTasksService : RemoteViewsService() {
             views.setImageViewResource(R.id.widget_home_check, if (item.done) R.drawable.widget_home_check_on else R.drawable.widget_home_check_off)
             views.setContentDescription(
                 R.id.widget_home_check_hit,
-                context.getString(if (item.done) R.string.widget_home_check_done else R.string.widget_home_check_mark, item.name),
+                context.getString(
+                    when {
+                        item.done -> R.string.widget_home_check_done
+                        item.lock -> R.string.widget_home_check_steps
+                        else -> R.string.widget_home_check_mark
+                    },
+                    item.name,
+                ),
             )
-            if (!item.done) {
-                views.setOnClickFillInIntent(R.id.widget_home_check_hit, Intent().putExtra(SoulmonWidgetHomeProvider.EXTRA_TASK_ID, item.id))
+            // Hábito com etapas: na Home ele fecha pelas etapas, então aqui o aro fica apagado e sem clique.
+            views.setInt(R.id.widget_home_check, "setImageAlpha", if (item.lock) 90 else 255)
+            if (item.checkable) {
+                views.setOnClickFillInIntent(
+                    R.id.widget_home_check_hit,
+                    Intent().putExtra(SoulmonWidgetHomeProvider.EXTRA_TASK_ID, item.id).putExtra(SoulmonWidgetHomeProvider.EXTRA_KIND, item.kind),
+                )
             }
             return views
         }
 
         override fun getLoadingView(): RemoteViews? = null
         override fun getViewTypeCount(): Int = 1
-        override fun getItemId(position: Int): Long = items.getOrNull(position)?.id?.hashCode()?.toLong() ?: position.toLong()
+        override fun getItemId(position: Int): Long = items.getOrNull(position)?.key?.hashCode()?.toLong() ?: position.toLong()
         override fun hasStableIds(): Boolean = true
     }
 
