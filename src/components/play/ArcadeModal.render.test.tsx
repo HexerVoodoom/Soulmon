@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * O Fliperama de Canto abre SÓ o modal de minigames sobre a Home (REGISTRO §485): o corpo do Salão (cartas dos jogos), sem o NPC Pipo e sem mapa.
+ * O Fliperama de Canto abre SÓ o modal de minigames sobre a Home (REGISTRO §486): o corpo do Salão (cartas dos jogos), sem o NPC Pipo e sem mapa.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';

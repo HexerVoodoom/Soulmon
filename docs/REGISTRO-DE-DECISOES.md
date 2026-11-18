@@ -6532,7 +6532,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** um `BotaoModo` próprio (duplicaria `BotaoEspecial`).
 **Gatilho para rever:** setas de subida/descida pedem a posição anterior no servidor (hoje não existe); modal de ranking e botão especial dependem da arte nova.
 
-## §485 — Fliperama de Canto abre SÓ o modal de minigames, sobre a Home (18/11/2026, dono)
+## §486 — Fliperama de Canto abre SÓ o modal de minigames, sobre a Home (18/11/2026, dono)
 
 **Decisão:** tocar no Fliperama de Canto abre um modal de moldura normal sobre a própria Home (`components/play/ArcadeModal.tsx`) com o CORPO do Salão de jogos (`SalaoSheet`: tickets, compra de tickets, as cartas dos minigames), SEM o NPC Pipo e SEM mandar o jogador ao mapa/prédio; fechar volta à Home. Substitui a abertura do sheet do prédio (pedido anterior). O `SalaoSheet` já era só o corpo (o NPC mora no `AreaSheet`), então foi reaproveitado, não duplicado, com as mesmas regras (`funTicketStatus`, `buyFunTickets`, `ticketBuyRefusal`).
 

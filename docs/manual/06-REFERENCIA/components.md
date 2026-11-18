@@ -2602,6 +2602,6 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 **Chamado por:** `src/components/PetStageDecor.tsx`
 
 ### `src/components/play/ArcadeModal.tsx`
-**Dono de:** o modal de minigames sobre a Home aberto pelo Fliperama de Canto (corpo do `SalaoSheet`, sem o Pipo nem o mapa; REGISTRO §485).
+**Dono de:** o modal de minigames sobre a Home aberto pelo Fliperama de Canto (corpo do `SalaoSheet`, sem o Pipo nem o mapa; REGISTRO §486).
 **Props:** `open`, `onClose`, `language`, `bitsToday`, `funStatus`, `onBuyTickets`, `onStart(jogo)`.
 **Chamado por:** `src/App.tsx`

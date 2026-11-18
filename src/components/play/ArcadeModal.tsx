@@ -8,7 +8,7 @@ import type { FunTicketStatus } from '../../utils/funTickets';
 const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoSheet })));
 
 /**
- * O modal de MINIGAMES sobre a própria Home (REGISTRO §485): o Fliperama de Canto abre isto. É o corpo do Salão de jogos (`SalaoSheet`: tickets,
+ * O modal de MINIGAMES sobre a própria Home (REGISTRO §486): o Fliperama de Canto abre isto. É o corpo do Salão de jogos (`SalaoSheet`: tickets,
  * compra de tickets e as cartas dos jogos) numa moldura de modal normal, SEM o NPC Pipo e SEM levar o jogador ao mapa. Fechar volta à Home.
  * Jogar fecha o modal e abre o jogo escolhido (o jogo roda na área Jogos, que cobra a rodada e pergunta o modo, como no Salão).
  */

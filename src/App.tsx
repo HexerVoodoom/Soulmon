@@ -1147,7 +1147,7 @@ export default function App() {
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
   const [refugeLaunch, setRefugeLaunch] = useState(false);
-  /** §485: o modal de minigames do Fliperama de Canto (sobre a Home) e o jogo que ele pediu (abre na área Jogos). */
+  /** §486: o modal de minigames do Fliperama de Canto (sobre a Home) e o jogo que ele pediu (abre na área Jogos). */
   const [arcadeOpen, setArcadeOpen] = useState(false);
   const [arcadeGame, setArcadeGame] = useState<SalaoGame | null>(null);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
@@ -9249,7 +9249,7 @@ export default function App() {
                 feedAnim={feedAnim}
                 play={playDeck}
               />
-              {/* §485: o Fliperama de Canto abre SÓ o modal de minigames, aqui na Home (sem o Pipo, sem ir ao mapa). Jogar fecha o modal e abre o jogo na área Jogos. */}
+              {/* §486: o Fliperama de Canto abre SÓ o modal de minigames, aqui na Home (sem o Pipo, sem ir ao mapa). Jogar fecha o modal e abre o jogo na área Jogos. */}
               <ArcadeModal
                 open={arcadeOpen}
                 onClose={() => setArcadeOpen(false)}

@@ -315,7 +315,7 @@ interface CompanionHUDProps {
   materialExtras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
   /** O "Ir lá" do material na Mochila (o App navega). */
   onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
-  /** Toque no Fliperama de Canto: abre o modal de minigames sobre a Home (§485). Sem isto, cai no atalho do prédio do Salão. */
+  /** Toque no Fliperama de Canto: abre o modal de minigames sobre a Home (§486). Sem isto, cai no atalho do prédio do Salão. */
   onOpenArcade?: () => void;
   /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
   demoMode?: boolean;
