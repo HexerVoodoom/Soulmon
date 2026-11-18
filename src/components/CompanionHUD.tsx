@@ -1464,6 +1464,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             equippedBackground={equippedBackground ?? null}
             trophies={trophies}
             language={language}
+            isSleeping={isSleeping}
           />
 
           {/* Care Event Sprite */}

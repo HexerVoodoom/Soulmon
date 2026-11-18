@@ -1269,3 +1269,6 @@ Prioridade **baixa**. Os enfeites da Honra (`honraDecor`) mantêm por enquanto o
 
 - [ ] Gerar arte própria da Honra (machado) para substituir o emoji ⚒️ em `honraDecor`.
 - [ ] Gerar arte própria da Honra (cajado) para substituir o emoji 🔮 em `honraDecor`.
+
+- [ ] Versão APAGADA (autoral, ChatGPT, reprodução fiel) de lamp, lantern, campfire, lanterna de pétalas, altar de magma, flor de brasa; hoje o apagado é filtro CSS (§480). Cogumelos: arte atual = aceso; gerar versão apagada.
+- [ ] Quadros de animação da Ampulheta (areia caindo, grãos turquesa).
