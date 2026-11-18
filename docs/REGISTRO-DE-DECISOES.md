@@ -6440,3 +6440,17 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **UI.** Guia (PT/EN) explica: perder só reinicia os combates do andar atual. **Testes:** `dungeonIdle.profundidade.test.ts` (§477), `riftMap*.test.ts`.
 
 **Adendo (18/11/2026, dono):** no modal "Hoje" as bufadas saem da lista de Hábitos e vão para uma seção própria ABAIXO das normais (`role="group"`, separador sutil + texto "Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude."), mesma linha, negrito dourado. Sem bufadas, a seção não existe. A regra do §474 não muda (marcar = aceitar).
+
+## §478 — Widget grande da Home: o check só marca, os pontos entram ao abrir o jogo, moldura V-Pet básica (18/11/2026, dono)
+
+- **Decisão do dono:** construir o widget A (Home) do estudo `relatorio-widgets-grandes.md`: widget Android grande, na VERTICAL, que reproduz a Home (Soulmon + estado + tarefas de hoje). Ajusta-se à largura/altura que o launcher der, dentro de um limite (alvo 4x5, de 2x3 até 8x10; abaixo de 220dp de altura o V-Pet sai e fica só a lista; o texto cresce com a largura).
+- **O check do widget SÓ MARCA.** Grava `task_done` numa fila nativa do aparelho (`WidgetEventQueue.kt`, SharedPreferences, `eid` UUID + `ts` + id da tarefa, uma entrada por tarefa, teto 50) e a linha aparece riscada na hora. O widget NÃO dá comida, XP de Vínculo nem Bits e não fala com o servidor (sem login no nativo).
+- **Os pontos entram quando o jogo abre ou volta ao primeiro plano:** o app lê a fila (`peekWidgetEvents`), aplica cada evento pela MESMA regra do toque na Home (`applyTaskCompletion` em `src/utils/taskCompletionPay.ts`, extraída do `handleToggleTask`, com teste de paridade), grava o save local e só então apaga (`ackWidgetEvents`). Idempotente: tarefa já concluída/ausente = no-op; `eid` já aplicado = no-op (registro no aparelho, `STORAGE_KEYS.WIDGET_EVENTS_APPLIED`). Tarefa assombrada, premium e repetição seguem as regras atuais.
+- **Moldura:** o topo do widget é o bitmap do V-Pet com o casco PADRÃO (`vpet_moldura.png`, "o elemento básico que temos hoje"); sem variantes por elemento e sem SKU. O painel da lista usa as cores do casco. Placeholder aprovado até existir arte própria.
+- **Compatibilidade:** APK anterior não tem `peekWidgetEvents`; a web detecta pela rejeição e não drena (regra 5). Tudo do widget exige AAB novo.
+- **Escopo:** só TAREFA avulsa de hoje (abertas + concluídas hoje, até 12). Hábitos ficam fora do check do widget nesta versão.
+
+**Alternativa que perdeu:** pagar no próprio widget (regra copiada no Kotlin) ou exigir login nativo. Perdeu por duplicar a regra de pagamento (footgun 9) e abrir uma superfície de token sem revisão de segurança.
+
+**Gatilho para rever:** o dono querer hábitos no check do widget, o ganho aparecer no widget sem abrir o jogo, ou launcher de fabricante cortar a lista (testar em aparelho).
+
