@@ -313,7 +313,7 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
         />
         <GameCard
           id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
-          title="Elemental Fusion"
+          title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
           onPress={() => onStart('match3')}
           badges={<Match3Badges language={language} paga={paga} />}
         />
