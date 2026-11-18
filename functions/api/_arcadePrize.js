@@ -18,6 +18,7 @@
 import { kvOrThrow } from './_kv.js';
 import { enqueueMail, temItemNaCaixa } from './_mensageiro.js';
 import { payablePlacements, monthKey, MENSAL_COM_LEGADO_SEMANAL, semanasDoMes } from './_rankings.js';
+import { adminSaveIdsSeguro } from './_rankAdmin.js';
 import { lerSave, possuidosDoSave } from './_feiraLoja.js';
 
 export const ARCADE_ITEM_ID = 'furn-arcade-cab';
@@ -69,7 +70,7 @@ export function cartaDoPremio(pk, game, anexo, alt) {
 
 // Legado semanal (REGISTRO §473, adendo 18/11/2026): no mês da troca (`2026-11`) o `match3` junta as semanas do mês, a MESMA régua do
 // quadro (`readBoard`): o melhor placar de cada jogador; empate no placar = o mais antigo. De dezembro em diante, só o mensal.
-async function entries(store, game, pk) {
+async function entries(env, store, game, pk) {
   const legado = MENSAL_COM_LEGADO_SEMANAL[game]?.includes(pk) ? semanasDoMes(pk) : [];
   const porId = new Map();
   for (const per of [pk, ...legado]) {
@@ -78,7 +79,8 @@ async function entries(store, game, pk) {
       if (!prev || e.score > prev.score || (e.score === prev.score && e.t < prev.t)) porId.set(e.saveId, e);
     }
   }
-  return [...porId.values()].sort((a, b) => b.score - a.score || a.t - b.t || (a.saveId < b.saveId ? -1 : 1));
+  const admins = await adminSaveIdsSeguro(env); // GM/admin nunca leva o Fliperama (dono 18/11/2026)
+  return [...porId.values()].filter((e) => !admins.has(e.saveId)).sort((a, b) => b.score - a.score || a.t - b.t || (a.saveId < b.saveId ? -1 : 1));
 }
 
 async function entriesDe(store, game, pk) {
@@ -136,7 +138,7 @@ export async function closeArcadeMonth(env, now = new Date()) {
     if (back?.token !== token) return { status: 'busy', month: pk };
     const results = [];
     for (const game of ARCADE_MONTHLY_GAMES) {
-      const [w] = payablePlacements(await entries(store, game, pk), 1);
+      const [w] = payablePlacements(await entries(env, store, game, pk), 1);
       if (!w) continue;
       const r = await premiar(env, store, pk, game, w, now);
       if (r) results.push(r);

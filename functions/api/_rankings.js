@@ -33,6 +33,7 @@
 // ---------------------------------------------------------------------------
 
 import { kvOrThrow } from './_kv.js';
+import { adminSaveIdsSeguro } from './_rankAdmin.js';
 import { getProfile } from './_profile.js';
 import { nomeDaGuildaDe, campoGuilda } from './_guildaNome.js';
 
@@ -214,10 +215,13 @@ export async function submitScore(env, { game, period, saveId, score, now = new 
   // Quem se escondeu da lista pública (`publicHidden`) nunca tem o NOME gravado no placar (QA beta3 R1): `h` marca, e a leitura mascara.
   const hidden = profile?.publicHidden === true;
   const ttl = { expirationTtl: 86400 * 70 }; // cobre o mês inteiro + folga
-  await store.put(scoreKey(game, pk, score, saveId), '', {
-    ...ttl,
-    metadata: { s: score, n: hidden ? 'Anônimo' : cleanName(profile?.name), ...(hidden ? { h: true } : {}), sim: profile?.simulated === true, t: now.getTime() },
-  });
+  // GM/admin (dono 18/11/2026): joga e guarda o melhor em `rkme`, mas NÃO entra no índice ordenável do quadro.
+  if (!(await adminSaveIdsSeguro(env)).has(saveId)) {
+    await store.put(scoreKey(game, pk, score, saveId), '', {
+      ...ttl,
+      metadata: { s: score, n: hidden ? 'Anônimo' : cleanName(profile?.name), ...(hidden ? { h: true } : {}), sim: profile?.simulated === true, t: now.getTime() },
+    });
+  }
   if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
   await store.put(mk, String(score), ttl);
   return { improved: true, best: score };
@@ -234,6 +238,9 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
   const store = kvOrThrow(env);
   const n = Math.max(1, Math.min(TOP_MAX, Math.floor(top) || TOP_DEFAULT));
   const prefix = boardPrefix(game, pk);
+  // GM/admin fora do quadro (dono 18/11/2026): filtrado na LEITURA (vale já para placares gravados antes). Sem `ADMIN_EMAILS` = vazio.
+  const admins = await adminSaveIdsSeguro(env);
+  const idDe = (k) => k.name.slice(k.name.lastIndexOf(':') + 1);
 
   const simRow = (k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(':') + 1));
   // Teto dos simulados / legado semanal (§473, adendo): reordena em memória; os demais jogos seguem a ordem do `list`.
@@ -247,6 +254,7 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
       const pg = await store.list({ prefix: pf, limit: 1000 });
       for (const k of pg.keys) {
         const id = k.name.slice(k.name.lastIndexOf(':') + 1);
+        if (admins.has(id)) continue;
         const sim = simRow(k);
         const score = sim ? escalaFake(game, k.metadata?.s) : (Number(k.metadata?.s) || 0);
         const prev = porId.get(id);
@@ -256,7 +264,7 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
     // Empate: o real antes do simulado; depois a ordem da chave (saveId), como no `list`.
     ordenado = [...porId.values()].sort((a, b) => b.score - a.score || Number(a.sim) - Number(b.sim) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
-  const page = ordenado ? { keys: ordenado.slice(0, n).map((e) => e.k) } : await store.list({ prefix, limit: n });
+  const page = ordenado ? { keys: ordenado.slice(0, n).map((e) => e.k) } : await listaSemAdmin(store, prefix, n, admins);
   const scoreDe = ordenado ? new Map(ordenado.map((e) => [e.k.name, e.score])) : null;
   const memoGuilda = new Map();
   /** @type {{ rank: number, name: string, guildName?: string, score: number, me: boolean, prizePlace?: number }[]} */
@@ -283,26 +291,36 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
     const raw = await store.get(meKey(game, pk, saveId));
     const best = raw === null || raw === undefined ? null : Number(raw);
     const minha = ordenado ? ordenado.findIndex((e) => e.id === saveId) : -1;
-    if (ordenado && minha >= 0) {
+    if (admins.has(saveId)) {
+      // O admin vê o próprio melhor placar, mas sem posição nem faixa de prêmio.
+      if (best !== null && Number.isFinite(best)) me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: null };
+    } else if (ordenado && minha >= 0) {
       // Quadro reordenado: a posição e o melhor placar saem da mesma lista mostrada (inclui o legado semanal).
       const sc = ordenado[minha].score;
       me = { score: sc, tier: tierFor(game, sc), rank: minha + 1 };
     } else if (best !== null && Number.isFinite(best)) {
-      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
+      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId), admins) };
     }
   }
   return { game, period, periodKey: pk, top: rows, me };
 }
 
+/** `list` das `n` primeiras linhas SEM os admins (pede `n + admins` e corta; admin tem no máximo 1 linha por jogo/período). */
+async function listaSemAdmin(store, prefix, n, admins) {
+  if (!admins.size) return store.list({ prefix, limit: n });
+  const pg = await store.list({ prefix, limit: Math.min(1000, n + admins.size) });
+  return { ...pg, keys: pg.keys.filter((k) => !admins.has(k.name.slice(k.name.lastIndexOf(':') + 1))).slice(0, n) };
+}
+
 /** Posição (1-based) da chave no placar; `null` se passar da janela varrida. */
-async function rankOf(store, prefix, key) {
+async function rankOf(store, prefix, key, admins = new Set()) {
   let seen = 0;
   let cursor;
   for (let p = 0; p < RANK_SCAN_PAGES; p++) {
     const page = await store.list({ prefix, limit: 1000, ...(cursor ? { cursor } : {}) });
     const idx = page.keys.findIndex(k => k.name === key);
-    if (idx >= 0) return seen + idx + 1;
-    seen += page.keys.length;
+    if (idx >= 0) return seen + page.keys.slice(0, idx).filter(k => !admins.has(k.name.slice(k.name.lastIndexOf(':') + 1))).length + 1;
+    seen += page.keys.filter(k => !admins.has(k.name.slice(k.name.lastIndexOf(':') + 1))).length;
     if (page.list_complete || !page.cursor) return null;
     cursor = page.cursor;
   }
