@@ -1,5 +1,5 @@
 /**
- * BALANÇO DO PVP (REGISTRO §472): jogador aleatório (lance válido ao acaso), duelo de HP igual contra 1 inimigo que joga a melhor troca.
+ * BALANÇO DO PVP (REGISTRO §473): jogador aleatório (lance válido ao acaso), duelo de HP igual contra 1 inimigo que joga a melhor troca.
  * Medido (N=80, sementes 1..80, determinístico): Aventura 27,5%; PVP fator 0,2 = 96,3%; 0,5 = 51,2%; 0,8 = 22,5%; 1,0 = 13,8%.
  * Com 0,8 a folga sobre a Aventura era 5 pontos (ruído de N=40: 7/40 = 7/40, empate); com 1,0 são ~14. O dono recalibra com jogadores reais.
  */

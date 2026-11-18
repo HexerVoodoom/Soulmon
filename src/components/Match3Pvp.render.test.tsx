@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * ELEMENTAL FUSION — as DUAS opções ao entrar (Aventura / PVP, REGISTRO §472): o seletor, a Aventura de 4 inimigos, o PVP 1 contra 1 com o
+ * ELEMENTAL FUSION — as DUAS opções ao entrar (Aventura / PVP, REGISTRO §473): o seletor, a Aventura de 4 inimigos, o PVP 1 contra 1 com o
  * oponente da rota `opponents` (só Soulmon e level, nunca nome), 6 elementos básicos fixos e o jogador simulado de reserva sem rede.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';

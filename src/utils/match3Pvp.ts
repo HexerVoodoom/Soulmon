@@ -1,8 +1,8 @@
 /**
- * ELEMENTAL FUSION — o modo PVP (1 contra 1) e o sorteio de elementos misturados, a regra PURA (pedido do dono, 26/10/2026; invertido em 17/11/2026, REGISTRO §472).
+ * ELEMENTAL FUSION — o modo PVP (1 contra 1) e o sorteio de elementos misturados, a regra PURA (pedido do dono, 26/10/2026; invertido em 17/11/2026, REGISTRO §473).
  *
  * Duas coisas moram aqui:
- *  1. OS ELEMENTOS MISTURADOS: 6 sorteados por semente do pool INTEIRO de ícones de elemento (base E mistos), sem repetir. Desde §472 isto é da
+ *  1. OS ELEMENTOS MISTURADOS: 6 sorteados por semente do pool INTEIRO de ícones de elemento (base E mistos), sem repetir. Desde §473 isto é da
  *     AVENTURA (ex-Normal/PvE). O PVP é o contrário: os 6 elementos básicos FIXOS de `M3_TILE_ELEMENTS`, sem sorteio.
  *  2. O OPONENTE do PVP: SEMPRE um jogador. O SERVIDOR sorteia (a mesma rota `opponents` do Torneio, `_rankedPick.js`: perto da faixa de quem
  *     pede, inclusive os simulados = "jogador real fake"); o cliente escolhe o de level mais PARECIDO. Sem ninguém (offline, pool vazio) cai num
@@ -94,7 +94,7 @@ export function simulatedFoe(level: number, rng: Rng): { foe: PvpFoe; entry: Ros
 }
 
 /**
- * O que UMA partida de PVP rende (§472, "equivalente à Arena"): vitória = `ARENA_FIGHT_BITS` Bits (o combate médio do Duelo da Arena) + Honra
+ * O que UMA partida de PVP rende (§473, "equivalente à Arena"): vitória = `ARENA_FIGHT_BITS` Bits (o combate médio do Duelo da Arena) + Honra
  * de vitória do Torneio; derrota = só a Honra de consolo (perder nunca custa nada; a Arena também não paga na derrota). Boss e Calabouço não passam aqui.
  */
 export function pvpRewards(won: boolean): { bits: number; honor: number } {

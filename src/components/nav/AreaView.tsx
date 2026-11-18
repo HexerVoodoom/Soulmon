@@ -138,7 +138,7 @@ export interface PlayHandlers {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
   /** BOSS do Elemental Fusion (03/11/2026): venceu um boss → +1 Fragmento de Boss no save. */
   onBossShard?: () => void;
-  /** PVP do Elemental Fusion (§472): a Honra da partida, pelo mesmo caminho da Honra do Torneio. */
+  /** PVP do Elemental Fusion (§473): a Honra da partida, pelo mesmo caminho da Honra do Torneio. */
   onEarnHonor?: (amount: number) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };

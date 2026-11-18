@@ -357,7 +357,7 @@ const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['
   medium: { points: 7,  tier: 'champion' },
   boss:   { points: 16, tier: 'mega' },
 };
-/** Bits de UM combate de Arena de classe média na escada base (REGISTRO §472): a recompensa por vitória do PvP do Elemental Fusion é esta, não um número novo. */
+/** Bits de UM combate de Arena de classe média na escada base (REGISTRO §473): a recompensa por vitória do PvP do Elemental Fusion é esta, não um número novo. */
 export const ARENA_FIGHT_BITS: number = CLASS_FLAVOR.medium.points;
 
 /**
