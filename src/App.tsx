@@ -1150,6 +1150,8 @@ export default function App() {
   /** §486: o modal de minigames do Fliperama de Canto (sobre a Home) e o jogo que ele pediu (abre na área Jogos). */
   const [arcadeOpen, setArcadeOpen] = useState(false);
   const [arcadeGame, setArcadeGame] = useState<SalaoGame | null>(null);
+  /** O jogo em andamento veio do Fliperama: sair dele volta DIRETO à Home (§487). */
+  const [arcadeFromHome, setArcadeFromHome] = useState(false);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -4907,6 +4909,16 @@ export default function App() {
     if (alvo === 'home') { setMissionsOpen(null); if (currentViewRef.current !== 'home') goTo('home'); return; }
     irAoPredioDaMissao(alvo);
   }, [goTo, irAoPredioDaMissao]);
+
+  /** §487: sair do jogo aberto pelo Fliperama volta DIRETO à Home. A Home → Jogos foi um `pushState`, então `history.back()` a desfaz (sem passar pelo mapa); sem entrada nossa (recarga), vai à Home pelo estado. */
+  const voltarAHomeDoJogo = useCallback(() => {
+    setArcadeFromHome(false);
+    const st = window.history.state as { smView?: string } | null;
+    if (st && typeof st.smView === 'string' && st.smView !== 'home') window.history.back();
+    else setCurrentView('home');
+  }, []);
+  /** Saiu da área Jogos por outro caminho (sistema voltar, mapa): o próximo jogo não herda o "voltar à Home". */
+  useEffect(() => { if (currentView !== 'area:jogos' && arcadeFromHome) setArcadeFromHome(false); }, [currentView, arcadeFromHome]);
 
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
@@ -8818,6 +8830,8 @@ export default function App() {
                 emCristal={!!cristal}
                 initialGame={area === 'jogos' ? (refugeLaunch ? 'respiracao' : arcadeGame ?? undefined) : undefined}
                 onInitialGameConsumed={() => { handleRefugeLaunchConsumed(); setArcadeGame(null); }}
+                returnHomeOnGameExit={arcadeFromHome}
+                onReturnHome={voltarAHomeDoJogo}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
                 initialSection={pendingSheet && pendingSheet.area === area ? pendingSheet.section : undefined}
                 onInitialSheetConsumed={() => setPendingSheet(null)}
@@ -9262,7 +9276,7 @@ export default function App() {
                   setGameState(prev => buyFunTickets(prev, now));
                   return true;
                 }}
-                onStart={(g) => { if (guardWake(g)) return; setArcadeOpen(false); setArcadeGame(g); goTo(areaView('jogos')); }}
+                onStart={(g) => { if (guardWake(g)) return; setArcadeOpen(false); setArcadeGame(g); setArcadeFromHome(true); goTo(areaView('jogos')); }}
               />
 
               {/* H7 (02/10/2026): ÚNICA região que rola na Home — tudo abaixo da área

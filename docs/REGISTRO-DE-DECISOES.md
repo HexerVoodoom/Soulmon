@@ -6544,6 +6544,14 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 **Adendo §485 — texto dos botões e entradas do ranking (18/11/2026, dono):** `BotaoEspecial` pve/pvp/ranking usa o tamanho do CTA (`clamp(--sm2-text-md, 4.8vw, --sm2-text-lg)`: 20 px onde cabe, até 16 px em tela estreita, sem cortar) e o rótulo invade 10 px das pontas lisas da placa. Entradas do ranking: toda tabela passa por `RankingPanel` (fim de jogo, "Ver ranking" do Salão) e pelo `RankingModal`; o ranking da Fenda (`PlaySheets`) migrou do `ModalSheet` para o `RankingModal`. Modais dos prédios seguem com a moldura padrão.
 
+## §487 — Jogo aberto pelo Fliperama roda e termina na Home (18/11/2026, dono)
+
+**Decisão (corrige o §486):** escolher um jogo no modal do Fliperama abre o jogo e, ao SAIR dele (voltar, fechar, ficar sem ticket ou desistir da pergunta de modo), a pessoa volta DIRETO à Home, sem passar pela área Jogos nem pelo mapa. Mecanismo: o jogo ainda monta no `AreaView` da área Jogos (`initialGame`), mas com `returnHomeOnGameExit`; ao fechar o jogo, `onReturnHome` do `App` desfaz a navegação com `history.back()` (a ida Home → Jogos foi um `pushState`; sem entrada nossa, vai à Home pelo estado). A marca só vale para o jogo aberto assim: sair da área por outro caminho a desarma (`arcadeFromHome`), e abrir o Salão pelo mapa segue como sempre. Não rodar o jogo em cima da Home: os jogos dependem do `play` e dos handlers do `AreaView`; duplicar isso na Home foi descartado.
+
+**Régua:** `playArea.render.test.tsx` (sair volta uma vez; sem a marca, fica na área).
+
+**Gatilho para rever:** se piscar a cena da área Jogos antes do jogo, mover o jogo para uma camada própria da Home.
+
 **Adendo §482 — prêmio alternativo LIGADO (dono, 18/11/2026):** quem já tem o Fliperama e vence de novo recebe, na mesma carta do Papus, **30 de Honra** de anexo (`ARCADE_ALT_PRIZE = { enabled: true, bits: 0, emblems: 30 }`). O valor é o que `seasonPrize` paga do 4º ao 20º lugar da temporada (1º = 120, 2º = 90, 3º = 60): consolação coerente com a economia, nunca maior que o prêmio de pódio, e a Honra só compra cosmético do Torneio (não mexe na economia de Bits). A carta diz "vai outro presente anexado" e o resgate usa o mesmo caminho do correio (`claimMail`, uma vez por `mid`). Rankings semanais e Endless Rift seguem FORA (dono, mesma data): só `match3` e `match3-pvp` premiam; nenhum total mensal foi inventado. Para voltar a só o aplauso: `enabled: false`.
 
 **Adendo §485 — pódio A em CSS (18/11/2026, dono):** pedestais do `RankingPodium` em degraus (1º centro, mais alto): pedra turquesa escura com aro do metal da posição (ouro/prata/bronze), FAIXA VERMELHA na base (`--sm2-rank-faixa`, token novo, vermelho escuro fixo nos dois temas) e medalha com aro claro; colunas `minmax(0, …)` para não vazar no modal. Sem arte nova: se vier arte de pedestal/medalha, o slot `resolvePodiumArt` assume. Botões Aventura/PVP conferidos a 375 px (sem corte).
