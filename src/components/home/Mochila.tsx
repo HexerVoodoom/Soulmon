@@ -33,7 +33,7 @@ import { InfoTip } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { ModalFrame } from '../ui/ModalFrame';
 import { MOLDURA_MODAL } from '../nav/AreaSheet';
-import cristalUrl from '../../assets/soulmon/ui/files/files-cristal.webp';
+import { CristalChama } from '../ui/CristalChama';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
 import type { BuildingId } from '../../utils/gates';
@@ -301,7 +301,7 @@ export function Mochila({
   const corpo = (
     <>
       {/* O CRISTAL-CHAMA (arte aprovada, 18/11/2026) no encaixe do topo: o "puxador" da pasta. Decorativo. */}
-      {MOLDURA_MODAL && <img className="sm3-files-cristal" src={cristalUrl} alt="" aria-hidden="true" draggable={false} />}
+      {MOLDURA_MODAL && <CristalChama />}
       {!MOLDURA_MODAL && <div className="sm3-mochila-alca" aria-hidden="true" />}
       {/* Fechar (X redondo, alvo 44) à ESQUERDA + título no centro; o "i" mora no ornamento da moldura (`ModalFrame info`).
           Sem moldura (kill-switch), o "i" volta para a linha do título. */}
