@@ -1,5 +1,8 @@
 # Handoff — sessão de QA e revisão do app inteiro
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > **Escrito em 08/09/2026**, ao fim de duas sessões que mudaram muita coisa em
 > pouco tempo. Esta página existe para a sessão de QA **não gastar o turno
 > redescobrindo o terreno** — e, principalmente, para ela saber **onde eu

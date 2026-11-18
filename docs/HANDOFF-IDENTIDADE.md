@@ -1,5 +1,8 @@
 # Handoff — redesenho do Soulmon, Fase 2: identidade sobre os wireframes aprovados
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > **Dono:** `soulmon-coordenador` (orquestrador da SQUAD-DESIGN) · **Data:** 15/09/2026 ·
 > **Estado:** plano validado com o dono em 15/09/2026 (quatro escolhas, §2) — pronto para
 > `/squad-design identidade sistema`.
