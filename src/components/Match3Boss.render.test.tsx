@@ -32,18 +32,25 @@ describe('Elemental Fusion — BOSS', () => {
     expect(document.querySelector('[data-m3-turn]')?.getAttribute('data-m3-turn')).toBe('0');
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(document.querySelectorAll('[data-m3-boss-rule]')).toHaveLength(3);
+    // C: as regras moram num ÚNICO botão; fora dele só o selo Boss (e a maré/relógio quando há)
+    expect(document.querySelectorAll('[data-m3-boss-rules-btn]')).toHaveLength(1);
+    expect(document.querySelector('[data-m3-boss-bar] [data-m3-boss-rule]')).toBeNull();
+    expect(document.querySelector('[data-m3-boss-tag]')).toBeTruthy();
     const inimigos = document.querySelectorAll('[data-m3-enemy]');
     expect(inimigos).toHaveLength(1);
     expect(inimigos[0].getAttribute('data-m3-hp')).toBe(String(M3C_PLAYER_HP));
     expect(inimigos[0].getAttribute('aria-label')).toContain('Boss');
-    // o chip mostra a explicação da regra ao tocar
-    fireEvent.click(document.querySelector(`[data-m3-boss-rule="${rules[0]}"]`) as HTMLButtonElement);
-    expect(document.querySelector('[data-m3-boss-tip]')?.textContent).toBe(bossRuleInfo(rules[0]).en.line);
+    // o botão "Rules" abre o modalzinho com as 3 regras (nome + explicação)
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(document.querySelector('[data-m3-boss-rules-btn]') as HTMLButtonElement);
+    const modal = screen.getByRole('dialog');
+    expect(modal.querySelectorAll('[data-m3-boss-rule]')).toHaveLength(3);
+    for (const id of rules) { expect(modal.textContent).toContain(bossRuleInfo(id).en.name); expect(modal.textContent).toContain(bossRuleInfo(id).en.line); }
   });
 
   it('em PT o cartão sai em português', () => {
     renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} rankSaveId="t" initialMode="pve" />);
-    expect(screen.getByRole('dialog').textContent).toContain('Um Boss apareceu!');
+    // título em ARTE (PT) com o texto no alt; sem rolagem na intro
+    expect(screen.getByRole('dialog').querySelector('[data-boss-splash-title-art] img')!.getAttribute('alt')).toBe('Batalha de Boss');
   });
 });
