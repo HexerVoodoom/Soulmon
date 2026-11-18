@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { mulberry32 } from './combate/rng';
 import { elementIconIds } from './elementIconArt';
 import { M3_KINDS, M3_TILE_ELEMENTS, type Step } from './match3';
-import { M3C_ADVENTURE_ENEMY_HP, M3C_ENEMY_HP, M3C_PLAYER_HP, M3C_PVP_ENEMY_HP, applyPlayerSteps, newCombat, newPvpCombat } from './match3Combat';
+import { M3C_ADVENTURE_ENEMY_HP, M3C_ENEMY_HP, M3C_PLAYER_HP, M3C_PVP_ENEMY_HP, M3C_PVP_PLAYER_HP, M3C_PVP_PLAYER_HP_BONUS, applyPlayerSteps, newCombat, newPvpCombat } from './match3Combat';
 import { ARENA_FIGHT_BITS } from './arena';
 import { EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN } from './currencies';
 import { ENEMY_ROSTER_KEYS } from './enemyRoster';
@@ -111,11 +111,19 @@ describe('PVP — o combate 1 contra 1', () => {
     expect(s.elements).toEqual([...M3_TILE_ELEMENTS]);
   });
 
-  it('HP SIMÉTRICO: o inimigo tem o mesmo HP do jogador', () => {
+  it('HP do PVP: o jogador ganha o bônus (base + bônus); o inimigo segue com o HP base', () => {
     const s = newPvpCombat(mulberry32(1), els);
-    expect(s.enemies[0].hp).toBe(s.player.hp);
+    expect(M3C_PVP_PLAYER_HP).toBe(Math.round(M3C_PLAYER_HP * (1 + M3C_PVP_PLAYER_HP_BONUS)));
+    expect(s.player.hp).toBe(M3C_PVP_PLAYER_HP);
+    expect(s.player.max).toBe(M3C_PVP_PLAYER_HP);
+    expect(s.player.hp).toBeGreaterThan(M3C_PLAYER_HP);
     expect(s.enemies[0].hp).toBe(M3C_PLAYER_HP);
     expect(M3C_PVP_ENEMY_HP).toBe(M3C_PLAYER_HP);
+  });
+
+  it('Aventura, boss e desafio NÃO levam o bônus de HP', () => {
+    expect(newCombat(mulberry32(1), []).player.hp).toBe(M3C_PLAYER_HP);
+    expect(newCombat(mulberry32(1), [], undefined, undefined, undefined, { elements: els }).player.max).toBe(M3C_PLAYER_HP);
   });
 
   it('o golpe usa o elemento do tipo da peça (os 6 básicos)', () => {
