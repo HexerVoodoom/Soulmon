@@ -274,7 +274,7 @@ import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskComple
 import { applyHabitCompletion, withHabitCompletion, ACTIVITY_LOG_CAP } from './utils/habitCompletionPay';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
-import { isCorvo, spriteLineOf } from './utils/corvoPet';
+import { isCorvo, shouldAutoAdoptCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
 // import dinâmico, fora do chunk de entrada.
 const gmTools = () => import('./utils/gmTools');
@@ -4529,21 +4529,21 @@ export default function App() {
   // (`utils/adminFlag.ts`). Nada aqui toca rota de servidor: tudo é o save
   // LOCAL, com updaters puros de `utils/gmTools.ts` / `utils/corvoPet.ts`.
   const isAdmin = useAdmin();
-  // Auto-adoção do corvinho: UMA vez por sessão, só para o admin. `adoptCorvo`
-  // é idempotente (mesma referência se já é corvo), então o StrictMode rodar o
-  // updater 2× não muda nada. Sem toast: a troca de pele não é aviso.
-  // Não é "uma vez por sessão": se um save remoto SEM corvo entrar depois da
-  // adoção (cloud save de outro aparelho), o efeito vê `!isCorvo` de novo e
-  // adota outra vez — a marca do admin vence. O ref só evita import duplo em voo.
+  // Auto-adoção do corvinho (incidente 18/11/2026): NÃO é por admin. Só a conta
+  // dev do dono (`isCorvoOwnerSaveId`, por hash do e-mail) e só sobre save vazio
+  // ou demo — uma criatura real nunca é trocada sozinha (`shouldAutoAdoptCorvo`).
+  // O updater reconfere sobre o `prev` (um save real pode ter entrado no meio).
+  // `adoptCorvo` é idempotente; o ref só evita import duplo em voo. Sem toast.
   const corvoAdoptingRef = useRef(false);
-  const stateIsCorvo = isCorvo(gameState);
+  const corvoAutoAdopt = shouldAutoAdoptCorvo(gameState, saveId);
   useEffect(() => {
-    if (!isAdmin || stateIsCorvo || corvoAdoptingRef.current) return;
+    if (!corvoAutoAdopt || corvoAdoptingRef.current) return;
     corvoAdoptingRef.current = true;
+    const alvo = saveId;
     void corvoAdocao()
-      .then(m => setGameState(m.adoptCorvo))
+      .then(m => setGameState(prev => (shouldAutoAdoptCorvo(prev, alvo) ? m.adoptCorvo(prev) : prev)))
       .finally(() => { corvoAdoptingRef.current = false; });
-  }, [isAdmin, stateIsCorvo, setGameState]);
+  }, [corvoAutoAdopt, saveId, setGameState]);
   const gmActions = useMemo(() => ({
     isCorvo: petIsCorvo,
     currentForm: gameState.evolutionStage,
