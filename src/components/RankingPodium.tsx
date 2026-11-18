@@ -54,7 +54,7 @@ export function RankingPodium({ rows, language, format = String, art = resolvePo
         );
         const medal = (
           <span className="sm-rank-podium__medal sm2-num" data-podium-medal={a.medal ? 'art' : 'css'} aria-hidden="true">
-            {a.medal ? <img src={a.medal} alt="" draggable={false} /> : place}
+            {a.medal ? <><img src={a.medal} alt="" draggable={false} /><span className="sm-rank-podium__num">{place}</span></> : place}
           </span>
         );
 

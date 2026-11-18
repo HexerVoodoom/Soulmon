@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { ModalFrame } from './ui/ModalFrame';
 import { Icon } from './ui/Icon';
+import { CristalChama } from './ui/CristalChama';
 
 /**
  * MODAL DO RANKING (18/11/2026, pedido do dono; REGISTRO §485): a moldura própria do ranking (`assets/soulmon/ui/ranking/`: ouro envelhecido,
@@ -22,7 +24,8 @@ export function RankingModal({ open, onClose, language, title, info, children }:
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   if (!open) return null;
-  return (
+  // No <body>: dentro de uma folha com `transform` (AreaSheet) o `position: fixed` vira relativo a ela e o modal ficava com largura/altura erradas (texto cortado).
+  const tela = (
     <div
       className="sm3-ranking-bg sm2-sheet-fade"
       data-ranking-modal-bg=""
@@ -39,6 +42,8 @@ export function RankingModal({ open, onClose, language, title, info, children }:
         fillOpacity={0}
         info={info ? { label: isPt ? 'Sobre o ranking' : 'About the ranking', content: info, language } : undefined}
       >
+        {/* O CRISTAL-CHAMA no crescente de louro do topo (decorativo), como nos outros modais. */}
+        <CristalChama tamanho={10} topo={2.2} pulsar />
         <button type="button" className="sm3-ranking-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
           <Icon name="close" size={20} tone="inherit" />
         </button>
@@ -46,4 +51,5 @@ export function RankingModal({ open, onClose, language, title, info, children }:
       </ModalFrame>
     </div>
   );
+  return typeof document === 'undefined' ? tela : createPortal(tela, document.body);
 }
