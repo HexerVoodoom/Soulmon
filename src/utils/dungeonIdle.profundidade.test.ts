@@ -65,17 +65,24 @@ describe('zona de conforto, andar efetivo e teto', () => {
 });
 
 describe('ponto de retorno, marcos e recorde', () => {
-  it('começa logo depois do último marco limpo, nunca acima do teto', () => {
-    expect(startLayerFor(0, 100)).toBe(1);
-    expect(startLayerFor(1, 100)).toBe(1);
+  it('começa logo DEPOIS do andar mais fundo limpo (a derrota nunca rebaixa o andar, §477), nunca acima do teto', () => {
+    expect(startLayerFor(0, 100)).toBe(1); // save antigo / sem recorde: andar 1, como sempre
+    expect(startLayerFor(1, 100)).toBe(2);
     expect(startLayerFor(2, 100)).toBe(3);
+    expect(startLayerFor(3, 100)).toBe(4); // limpou o 1º andar do elemento (3) e caiu no 2º (4): volta ao 4, combate 1
     expect(startLayerFor(4, 100)).toBe(5);
-    expect(startLayerFor(5, 100)).toBe(5); // no máximo 1 camada abaixo do recorde (§31, emenda 09/11)
-    expect(startLayerFor(37, 100)).toBe(37);
-    expect(startLayerFor(38, 100)).toBe(39);
-    expect(startLayerFor(37, 10)).toBe(9); // teto 10: começa no 9, ainda dá para tentar o 10
+    expect(startLayerFor(37, 100)).toBe(38);
+    expect(startLayerFor(37, 10)).toBe(10); // teto 10: começa no 10
     expect(startLayerFor(999, 999)).toBe(999);
     expect(startLayerFor(50, 3)).toBe(3);
+  });
+  it('elementos independentes: cada recorde vira o seu andar de largada e a derrota no andar 1 reentra no andar 1', () => {
+    // 1º andar de um elemento (ímpar) cai no 1º: recorde = andar anterior limpo → largada = esse 1º andar, combate 1
+    expect(startLayerFor(4, 100)).toBe(5);
+    // 2º andar do elemento seguinte: vencer os 6 do 5 e cair no 6 → recorde 5 → reentra no 6
+    expect(startLayerFor(5, 100)).toBe(6);
+    // vencer o 6 (completa o elemento) → recorde 6 → próximo elemento, andar 7
+    expect(startLayerFor(6, 100)).toBe(7);
   });
   it('marco = múltiplo de 5', () => {
     expect([4, 5, 6, 10, 0].map(isMilestoneLayer)).toEqual([false, true, false, true, false]);
@@ -168,5 +175,26 @@ describe('a PAREDE por Lv, medida no núcleo real (simulação)', () => {
     const maxNaParede = porCamada(MARGEM_PAREDE, 1);
     expect(porCamada(500, TOP)).toBeLessThanOrEqual(maxNaParede);
     expect(porCamada(comfortLayers(21) + MARGEM_PAREDE, 21)).toBe(maxNaParede);
+  });
+});
+
+describe('REGISTRO §477: a derrota nunca rebaixa o andar', () => {
+  // elemento = 2 andares (1º ímpar, 2º par); recorde = andar mais fundo LIMPO; largada = recorde + 1 (combate 1 do andar)
+  it('vence os 6 do andar 1 → derrota no andar 2 → reentra no andar 2, combate 1', () => {
+    expect(startLayerFor(1)).toBe(2);
+    expect(startLayerFor(7)).toBe(8); // idem num elemento mais fundo (andares 7-8)
+  });
+  it('derrota no andar 1 (recorde = fim do elemento anterior) → reentra no andar 1 do mesmo elemento', () => {
+    expect(startLayerFor(0)).toBe(1);
+    expect(startLayerFor(6)).toBe(7);
+  });
+  it('vencer o andar 2 completa o elemento: o próximo largo é o andar 1 do elemento seguinte', () => {
+    expect(startLayerFor(2)).toBe(3);
+    expect(startLayerFor(8)).toBe(9);
+  });
+  it('save antigo (recorde ausente/lixo) comporta como sempre: andar 1; e o recorde só sobe, logo nunca rebaixa', () => {
+    expect(startLayerFor(Number.NaN)).toBe(1);
+    expect(startLayerFor(-5)).toBe(1);
+    for (let r = 0; r < 998; r++) expect(startLayerFor(r + 1)).toBeGreaterThanOrEqual(startLayerFor(r));
   });
 });

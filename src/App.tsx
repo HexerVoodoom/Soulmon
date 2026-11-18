@@ -145,7 +145,7 @@ import { applyLateralSwitch } from './utils/trocaLateral';
 import { demoEvolucaoAtiva } from './utils/demoEvolucao';
 import { getNextEvolution, activitiesForWeekDay, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
-  feedFood, rubHeal, rubRefusal, completeTask,
+  feedFood, rubHeal, rubRefusal,
   FOOD_LIMIT_PER_HOUR,
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
@@ -269,7 +269,8 @@ import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
-import { uncompleteTask, uncompleteBlock, uncompleteBlockText, type TaskCompletionReceipt } from './utils/taskUncomplete';
+import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
+import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
@@ -360,7 +361,6 @@ import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
   shrink, effortOf, focusComplete, setFocus, focusTasks, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
-import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
@@ -3752,24 +3752,17 @@ export default function App() {
       // WP0.13: o numerador de "a pilha de culpa virou loop de jogo?". Aqui,
       // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
       if (relief) track('haunted_done');
-      if (relief) contarMissao('haunted-done');
+      // As transições de estado do toque moram em `utils/taskCompletionPay.ts`: o
+      // check do widget grande da Home paga pela MESMA regra (footgun 9).
+      if (relief) setGameState(prev => countHauntedMission(prev, new Date()));
 
       // Mark task as completed first
-      setGameState(prev => ({
-        ...prev,
-        tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t),
-      }));
+      setGameState(prev => markTaskChecked(prev, taskId));
 
       if (relief) {
         const food = FOOD_BY_CATEGORY[task.category];
         if (food) {
-          setGameState(prev => ({
-            ...prev,
-            foodInventory: {
-              ...prev.foodInventory,
-              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-            },
-          }));
+          setGameState(prev => grantReliefFood(prev, task.category).state);
           dispararFeedAnim(food.emoji);
         }
         // O mesmo caminho de fala do resto do app — o pet reage, não um banner.
@@ -3807,46 +3800,13 @@ export default function App() {
         let concluiu = false;
         let ganhouPremium = false;
         setGameState(prev => {
-          const feito = completeTask(prev, taskId) ?? prev;
-          ganhouPremium = Object.keys(feito.foodInventory).some(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
-          // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
-          // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
-          // rendesse por item, cadastrar cinco triviais valeria mais que encarar
-          // a difícil, que é o defeito documentado do Karma do Todoist.
-          //
-          // Só rende se a conclusão ACONTECEU (`completeTask` devolve o mesmo
-          // objeto quando não há o que fazer): tocar duas vezes não paga duas.
-          const next = feito === prev ? prev : awardBondXP(
-            feito,
-            { kind: 'completion', weight: effortOf(task) },
-            playerDayKey(new Date(), prev.playerDayTz),
-          );
-          // Nada de `queueMicrotask` DENTRO do updater (footgun 6: StrictMode
-          // invoca 2× e o toast saía dobrado). A flag é idempotente; quem
-          // dispara é a linha depois do updater.
-          concluiu = next !== prev;
-          if (!concluiu) return next;
-          // ↩️ RECIBO da conclusão (`utils/taskUncomplete.ts`): o que entrou, para o
-          // "Desmarcar" do segurar estornar exatamente isso — e nada além.
-          const agoraRecibo = new Date();
-          const naHora = prev.tasks.find(t => t.id === taskId);
-          const comida = FOOD_BY_CATEGORY[task.category]?.emoji;
-          const premio = Object.keys(feito.foodInventory).find(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
-          const proxima = feito.tasks.find(t => !prev.tasks.some(p => p.id === t.id));
-          const receipt: TaskCompletionReceipt = {
-            food: comida ? { [comida]: relief ? 2 : 1 } : {},
-            ...(premio ? { premium: premio, premiumDay: feito.premiumFood?.day, premiumWeek: feito.premiumFood?.week } : {}),
-            xp: Math.max(0, (next.totalXP ?? 0) - (feito.totalXP ?? 0)),
-            day: playerDayKey(agoraRecibo, prev.playerDayTz),
-            ...(relief ? { mission: 'haunted-done' as const, week: prev.weeklyMissions?.week } : {}),
-            ...(proxima ? { nextId: proxima.id } : {}),
-            task: (naHora ?? task) as unknown as TaskCompletionReceipt['task'],
-          };
-          const ct = next.completedTasks;
-          const ult = ct[ct.length - 1];
-          return ult && ult.id === taskId
-            ? { ...next, completedTasks: [...ct.slice(0, -1), { ...ult, receipt }] }
-            : next;
+          // `completeTask` + Vínculo pelo peso de esforço + recibo do "Desmarcar":
+          // `settleTaskCompletion` (utils/taskCompletionPay.ts). Pura, então pode
+          // rodar 2× no StrictMode (footgun 6); só as flags saem do updater.
+          const r = settleTaskCompletion(prev, task, relief, new Date());
+          concluiu = r.paid;
+          ganhouPremium = r.premium;
+          return r.state;
         });
         // Microtask: React 18 agenda o flush do lote num microtask criado no
         // primeiro `setState`, então este roda DEPOIS do updater acima.

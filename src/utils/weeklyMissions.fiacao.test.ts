@@ -38,6 +38,8 @@ describe('as missões semanais estão plugadas', () => {
     // missão nova que alguém acrescenta ao pool sem ligar em lugar nenhum.
     const semGatilho = weeklyMissionPool()
       .map(m => m.id)
+      // `haunted-done`: o toque na Home conta por `countHauntedMission` (utils/taskCompletionPay.ts), a mesma regra do widget da Home.
+      .filter(id => !(id === 'haunted-done' && app.includes('countHauntedMission(prev, new Date())')))
       .filter(id => !app.includes(`contarMissao('${id}')`) && !app.includes(`countWeeklyMission(prev, '${id}'`) && !app.includes(`countWeeklyMission(r.state, '${id}'`) && !app.includes(`countWeeklyMission(comprou, '${id}'`) && !app.includes(`'${id}', new Date(now))`));
     expect(semGatilho).toEqual([]);
   });

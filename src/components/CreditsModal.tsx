@@ -1,6 +1,7 @@
 import { useCreditPackLabels, useUnlockPriceLabel } from '../utils/priceLabel';
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from './ui/Icon';
+import { CreditIcon } from './ui/CreditIcon';
 import { CREDIT_COLOR } from '../utils/currencies';
 import { ModalSheet, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import {
@@ -135,7 +136,7 @@ export function CreditsModal({
       <span className="sm2-conta-crow-tx">
         <span className={credit ? 'sm2-conta-crow-t sm2-conta-mono' : 'sm2-conta-crow-t'}>
           {credit && (
-            <Icon name="diamond" size={20} fill={1} tone="inherit" style={disabled ? undefined : { color: CREDIT_COLOR }} />
+            <CreditIcon size={20} />
           )}
           {title}
         </span>
@@ -159,7 +160,7 @@ export function CreditsModal({
       footer={
         /* O saldo: `diamond` 20 FILL `credit-ink` + o número em mono `ink`. */
         <div className="sm2-conta-bal">
-          <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} label={isPt ? 'Créditos' : 'Credits'} />
+          <CreditIcon size={20} label={isPt ? 'Créditos' : 'Credits'} />
           <b>{credits}</b>
         </div>
       }

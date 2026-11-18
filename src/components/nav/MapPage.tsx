@@ -3,6 +3,7 @@ import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
 import { BitsAmount } from '../ui/BitsAmount';
+import { CreditIcon } from '../ui/CreditIcon';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
@@ -120,6 +121,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
           style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
         >
+          <CreditIcon size={16} style={{ marginInlineEnd: 4 }} />
           <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
         </span>
       </div>

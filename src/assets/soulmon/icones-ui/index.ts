@@ -122,6 +122,7 @@ export const DUNGEON_PROP_ART = {
 /** Moedas (64²). ⚠️ SEM CHAMADA: desde 19/10/2026 os Bits têm ícone, mas via `BitsIcon`/`BitsAmount`
  *  (vetorial, REGISTRO §105 revogado pela D-62), não por este PNG; Honra/Créditos ficam na UI de
  *  sistema, que é vetorial (D2).
+ *  EXCEÇÃO (18/11/2026): `creditos` (256², diamante turquesa com chama da alma) TEM chamada: `components/ui/CreditIcon.tsx`, em todos os pontos de Créditos.
  *  `emblema` é a moeda do Torneio (campo `emblems`, rótulo "Honra"/"Honor" na UI). */
 export const CURRENCY_ART = {
   bits: moedaBits,

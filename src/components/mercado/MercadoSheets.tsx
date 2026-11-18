@@ -4,6 +4,7 @@ import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
+import { CreditIcon } from '../ui/CreditIcon';
 import { BitsAmount } from '../ui/BitsAmount';
 import { BitsIcon } from '../ui/BitsIcon';
 import { InfoTip } from '../ui/InfoTip';
@@ -84,7 +85,7 @@ export function CurrencyPills({ tabs, value, onChange, isPt }: {
           >
             {c === 'bits' ? <BitsIcon size={20} />
               : c === 'emblems' ? <Icon name="military_tech" size={20} fill={1} tone="gold" />
-              : <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />}
+              : <CreditIcon size={20} />}
             <span>{currencyLabel(c, isPt)}</span>
           </button>
         );
@@ -545,7 +546,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
                         style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
                       >
                         <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
-                        <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />
+                        <CreditIcon size={20} />
                         <span className="sm2-num" data-essence-price>{price}</span>
                       </button>
                     );
