@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { SCENE_BG } from '../../utils/fxPackArt';
+import { SCENE_BG, ARENA_BANNER_ATIVO } from '../../utils/fxPackArt';
 import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
@@ -110,7 +110,7 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
   return (
     <div data-arena-escolha role="list" aria-label={isPt ? 'Escolha seus adversários' : 'Choose your opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Banner ÚNICO acima da lista (mesma imagem de cena do lobby do Torneio). */}
-      <div aria-hidden="true" data-arena-banner style={{ height: 112, borderRadius: 12, border: '1px solid var(--sm2-line)', background: `url(${SCENE_BG.duelo}) center 30%/cover var(--sm2-surface-2)`, imageRendering: 'pixelated' }} />
+      {ARENA_BANNER_ATIVO && <div aria-hidden="true" data-arena-banner style={{ height: 112, borderRadius: 12, border: '1px solid var(--sm2-line)', background: `url(${SCENE_BG.duelo}) center 30%/cover var(--sm2-surface-2)`, imageRendering: 'pixelated' }} />}
       {seeds.map((seed, i) => {
         const els = arenaCardElements(seed); // §199: o elemento da RUN (o de todo inimigo, fundido nas combinadas)
         const label = els.map(e => elementLabel(e, isPt)).join(' · ');

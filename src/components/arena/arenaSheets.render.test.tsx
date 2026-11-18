@@ -159,9 +159,10 @@ describe('Duelo', () => {
     const onStart = vi.fn();
     const { container, rerender } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={onStart} />);
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
-    expect(container.querySelectorAll('[data-arena-banner]')).toHaveLength(1);
+    /* Banner desabilitado (ARENA_BANNER_ATIVO=false, 18/11/2026): nada de vão, a lista abre direto. */
+    expect(container.querySelectorAll('[data-arena-banner]')).toHaveLength(0);
     expect(container.querySelector('[data-arena-card] [data-arena-banner], [data-arena-card-banner], [data-arena-card-img]')).toBeNull();
-    expect(container.querySelector('[data-arena-escolha]')!.firstElementChild!.hasAttribute('data-arena-banner')).toBe(true);
+    expect(container.querySelector('[data-arena-escolha]')!.firstElementChild!.hasAttribute('data-arena-card')).toBe(true);
     expect(container.querySelector('[data-arena-sem-ficha]')).toBeNull();
     fireEvent.click(container.querySelector('[data-arena-card-fight="2"]')!);
     expect(onStart).toHaveBeenCalledOnce();
