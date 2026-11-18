@@ -93,7 +93,7 @@ const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
  * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
  * teto não tira nada nem fecha jogo nenhum, só para de somar.
  */
-export function BitsHoje({ language, earned, extraCap = 0, category }: { language: Language; earned?: number; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number; /** §456: a categoria da folha; mostra também "hoje: x de 75 neste tipo de atividade". */ category?: BitsCategory }) {
+export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }: { language: Language; earned?: number; /** Salão (18/11/2026): só a linha da categoria; o total geral some. */ hideTotal?: boolean; /** Agulha de bússola (§393): só a Fenda passa; os outros jogos seguem no teto base. */ extraCap?: number; /** §456: a categoria da folha; mostra também "hoje: x de 75 neste tipo de atividade". */ category?: BitsCategory }) {
   const gs = useGameStateOptional()?.gameState;
   if (earned === undefined) return null;
   const isPt = language === 'pt-BR';
@@ -104,9 +104,11 @@ export function BitsHoje({ language, earned, extraCap = 0, category }: { languag
   const cheio = n >= cap;
   return (
     <p data-bits-hoje style={{ ...note, margin: 0 }}>
-      <span className="sm2-num">
-        {isPt ? `Bits de minijogo hoje: ${n} de ${cap}` : `Minigame Bits today: ${n} of ${cap}`}
-      </span>
+      {!(hideTotal && catN !== undefined) && (
+        <span className="sm2-num">
+          {isPt ? `Bits de minijogo hoje: ${n} de ${cap}` : `Minigame Bits today: ${n} of ${cap}`}
+        </span>
+      )}
       {catN !== undefined && (
         <span data-bits-categoria className="sm2-num" style={{ display: 'block' }}>
           {isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}
@@ -272,7 +274,7 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
       {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} />}
       {funStatus && <TicketBuyModal open={buyOpen} language={language} status={funStatus} onBuy={comprar} onClose={recusarCompra} onBought={() => setBuyOpen(false)} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <BitsHoje language={language} earned={bitsToday} category="minigames" />
+        <BitsHoje language={language} earned={bitsToday} category="minigames" hideTotal />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
           <InfoTipSection title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}>
             {isPt
@@ -300,28 +302,24 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
         <GameCard
           id="dino" icon={iconCorrida} dataAttrs={{ 'data-dino-start': 'true' }}
           title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
-          description={isPt ? 'Pule os obstáculos' : 'Jump the obstacles'}
           onPress={() => onStart('dino')}
           badges={<DinoBadges language={language} paga={paga} />}
         />
         <GameCard
           id="ppt" icon={iconPpt} dataAttrs={{ 'data-ppt-start': 'true' }}
           title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
-          description={isPt ? `Primeiro a ${WINS_NEEDED} rodadas` : `First to ${WINS_NEEDED} rounds`}
           onPress={() => onStart('ppt')}
           badges={<PptBadges language={language} paga={paga} />}
         />
         <GameCard
           id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
-          title="Elemental Fusion"
-          description={isPt ? 'Alinhe 3 ou mais peças' : 'Line up 3 or more tiles'}
+          title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
           onPress={() => onStart('match3')}
           badges={<Match3Badges language={language} paga={paga} />}
         />
         <GameCard
           id="barrage" icon={iconCorrida} dataAttrs={{ 'data-barrage-open': 'true' }}
           title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
-          description={isPt ? 'Desvie dos tiros' : 'Dodge the shots'}
           onPress={() => onStart('barrage')}
           badges={paga ? <TicketCost /> : undefined}
         />
@@ -365,7 +363,7 @@ export function MenteSheet({ language, onStart, bitsToday }: {
   return (
     <div data-mente style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <BitsHoje language={language} earned={bitsToday} category="minigames" />
+        <BitsHoje language={language} earned={bitsToday} category="minigames" hideTotal />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Ateliê' : 'How the Atelier works'} align="right">
           <InfoTipSection title={isPt ? 'O Ateliê' : 'The Atelier'}>
             {isPt

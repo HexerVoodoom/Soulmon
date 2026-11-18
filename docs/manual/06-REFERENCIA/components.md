@@ -428,7 +428,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `GateRanking` (type), `MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp?, onPick, … })`.
 
 ### `src/components/play/GameCard.tsx`
-**Dono de:** a carta de jogo em retrato 3:4 (arte ou placeholder procedural, nome em Cinzel na faixa, uma linha de descrição, selos fora do botão) e a grade de 2 colunas usadas pelas folhas `SalaoSheet`, `MenteSheet` e `RefugioSheet`. A arte é `src/assets/soulmon/cards/<id>.webp` (`docs/CARDS-JOGOS.md`).
+**Dono de:** a carta de jogo dentro da MOLDURA de card (`CardFrame`; arte ou placeholder procedural no vão, nome na placa, descrição opcional no pergaminho — o Salão passa só o título; selos fora do botão) e a grade de 2 colunas usadas pelas folhas `SalaoSheet`, `MenteSheet` e `RefugioSheet`. A arte é `src/assets/soulmon/cards/<id>.webp` (`docs/CARDS-JOGOS.md`).
 **Exports:** `CARD_IDS`, `CardId`, `cardArt(id)`, `GameCard(props)`, `GameCardGrid(props)`.
 **Chamado por:** `src/components/play/PlaySheets.tsx`.
 
