@@ -29,4 +29,11 @@
     <string name="widget_companion_content">Soulmon Companion</string>
     <string name="widget_vpet_content">Soulmon V-Pet</string>
     <string name="widget_name_count">%1$s · %2$s today</string>
+    <!-- Widget grande da Home (18/11/2026): Soulmon + tarefas de hoje. O check so marca; vale ao abrir o jogo (sem prometer ganho). -->
+    <string name="widget_home_label">Soulmon: today</string>
+    <string name="widget_home_description">Your Soulmon and today\'s tasks; check one off here and it counts when you open the game</string>
+    <string name="widget_home_empty_today">Nothing left on today\'s list.</string>
+    <string name="widget_home_empty_stale">Open Soulmon to load today\'s list.</string>
+    <string name="widget_home_check_mark">Mark %1$s as done</string>
+    <string name="widget_home_check_done">%1$s: done</string>
 </resources>

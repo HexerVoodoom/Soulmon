@@ -89,6 +89,24 @@
                 android:resource="@xml/soulmon_widget_vpet_info" />
         </receiver>
 
+        <!-- Widget grande da Home (18/11/2026): Soulmon + tarefas de hoje com check. O check so grava na fila (HOME_TASK_CHECK,
+             PendingIntent explicito); o app paga ao abrir. A lista vem do RemoteViewsService abaixo. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetHomeProvider"
+            android:label="@string/widget_home_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_home_info" />
+        </receiver>
+        <service
+            android:name=".widget.WidgetHomeTasksService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
         <!-- Widget "Companheiro" (beta12 A3): o Cage com o Soulmon grande. -->
         <receiver
             android:name=".widget.SoulmonWidgetCompanionProvider"

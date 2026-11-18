@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Uma linha da lista do widget da Home: o check (alvo de 44dp) e o nome. So o check tem clique (fill-in). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:minHeight="44dp">
+    <FrameLayout
+        android:id="@+id/widget_home_check_hit"
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+        <ImageView
+            android:id="@+id/widget_home_check"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/widget_home_check_off" />
+    </FrameLayout>
+    <TextView
+        android:id="@+id/widget_home_task_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingEnd="8dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="#F2E3C6"
+        android:textSize="15sp" />
+</LinearLayout>

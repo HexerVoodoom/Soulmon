@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Painel do widget grande da Home: as cores do casco V-Pet padrao (vpet_moldura): verde-azulado escuro com borda de cobre.
+     Placeholder aprovado pelo dono (18/11/2026) ate existir arte propria. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#16393B" />
+    <stroke android:width="3dp" android:color="#B8692F" />
+    <corners android:radius="14dp" />
+</shape>
