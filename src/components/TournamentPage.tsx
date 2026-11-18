@@ -868,7 +868,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         {isPt ? 'Ver ranking' : 'See ranking'}
       </BotaoEspecial>
 
-      <RankingModal open={histOpen} title="Ranking" onClose={() => setHistOpen(false)} language={lang}>
+      <RankingModal open={histOpen} title={isPt ? 'Ranking' : 'Leaderboard'} onClose={() => setHistOpen(false)} language={lang}>
         <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
             <div data-torneio-posicao-atual style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
