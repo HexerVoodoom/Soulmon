@@ -440,7 +440,7 @@ export function ModalSheet({
   const noMiolo = !!area && !sobreTelas;
   if (!open) return null;
   const folha = (
-    <ModalInfoSlotProvider slot={slot}>
+    <ModalInfoSlotProvider slot={slot} inherit={noMiolo}>
     <div
       className="sm2-sheet-fade"
       data-modal-backdrop
@@ -500,6 +500,7 @@ export function ModalSheet({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
           {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título. */}
+          {/* No miolo de uma moldura o "i" da folha usa o ornamento da arte do modal pai (`inherit`); aqui o encaixe fica sem uso. */}
           <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />
           {info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
           {closeSide === 'end' && (

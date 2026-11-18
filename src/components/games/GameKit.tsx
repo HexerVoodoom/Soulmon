@@ -29,7 +29,7 @@ import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
 import { SPARK_ART } from '../../utils/fxArt';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { FX_ART } from '../../utils/fxArt';
 import { gameStory, type GameStoryId } from '../../utils/gameStories';
 import type { Language } from '../../utils/i18n';
@@ -47,6 +47,9 @@ export const DIALOG_VISOR_W = 144;
  * caminho legítimo) e rola por dentro quando não cabe.
  */
 export function GameRoot({ children, style, full = false, moldura }: { children: ReactNode; style?: CSSProperties; full?: boolean; /** Fundo + moldura da tela cheia (`TelaMoldura`). */ moldura?: { tela: TelaMolduraId; title?: string } }) {
+  // Com moldura, o botão de informação da tela mora no ornamento "i" da arte (`TelaMoldura`); sem ela, cada `InfoTip` é o "i" de sempre.
+  const { slot, slotRef } = useModalInfoSlot();
+  const comMoldura = !!moldura && MOLDURA_TELAS;
   return (
     <div
       data-game-root
@@ -70,8 +73,8 @@ export function GameRoot({ children, style, full = false, moldura }: { children:
         ...style,
       }}
     >
-      {moldura && <TelaMoldura tela={moldura.tela} title={moldura.title} />}
-      {children}
+      {moldura && <TelaMoldura tela={moldura.tela} title={moldura.title} infoSlotRef={slotRef} />}
+      {comMoldura ? <ModalInfoSlotProvider slot={slot} bare>{children}</ModalInfoSlotProvider> : children}
     </div>
   );
 }

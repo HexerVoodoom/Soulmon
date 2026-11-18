@@ -44,15 +44,15 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     else delete (HTMLElement.prototype as { offsetParent?: unknown }).offsetParent;
   });
 
-  it('Hall > prédio Grove abre room="grove": cena, "Enter the Grove" e o "i" NA LINHA DO TÍTULO do modal', async () => {
+  it('Hall > prédio Grove abre room="grove": cena, "Enter the Grove" e o "i" SOBRE O ORNAMENTO da moldura', async () => {
     const r = renderWithCss(area('hall'));
     fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
     await waitFor(() => expect(document.querySelector('[data-guild-room-open="grove"]')).toBeTruthy(), { timeout: 8000 });
     await waitFor(() => expect(document.querySelector('[data-guild-bosque-entrar]')).toBeTruthy(), { timeout: 8000 });
     expect(document.querySelector('[data-grove-cena]')).toBeTruthy();
-    const slot = document.querySelector('[data-modal-info-slot]')!;
-    expect(slot.querySelector('button')).toBeTruthy(); // o "i" está no cabeçalho
-    expect(slot.closest('[data-area-sheet-head]')).toBeTruthy();
+    const slot = document.querySelector('[data-moldura-info]')!;
+    expect(slot.querySelector('button')).toBeTruthy(); // o "i" é o ornamento da própria moldura
+    expect(slot.closest('[data-area-sheet]')).toBeTruthy();
     // e só um "i" no modal: o corpo não repete
     expect(document.querySelectorAll('[data-guild-room-open="grove"] [aria-label="Como o bosque cresce"]')).toHaveLength(0);
   });

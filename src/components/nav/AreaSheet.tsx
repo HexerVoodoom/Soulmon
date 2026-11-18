@@ -75,6 +75,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   // L1 #24): foco inicial no primeiro focável (o fechar), Tab preso, fundo
   // `inert`, Escape e o foco DEVOLVIDO ao lote que abriu, nunca ao `<body>`.
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  // Com a moldura, o `ModalFrame` é o dono do encaixe do "i" (sobre o ornamento da arte); sem ela, o encaixe da linha do título.
   const { slot, slotRef } = useModalInfoSlot();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
@@ -211,8 +212,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               ? <span style={{ flex: 1 }} />
               : <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>{title}</h2>}
             {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
-            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título (com a moldura, sobre o disco do canto). */}
-            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: MOLDURA_MODAL ? 0 : -10, pointerEvents: 'auto' }} />
+            {/* Sem moldura: o "i" ÚNICO da folha (`ModalInfo`) entra aqui, canto direito, na linha do título. Com ela o botão mora no ornamento da arte (`ModalFrame`). */}
+            {!MOLDURA_MODAL && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10, pointerEvents: 'auto' }} />}
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
@@ -224,7 +225,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
             : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
-            <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
+            {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
           </div>
           {footer && (
             <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
