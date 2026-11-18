@@ -129,6 +129,28 @@ describe('Fliperama de Canto: carta do Papus com o item anexo para o 1º lugar d
     expect(await caixa(env, 'b')).toHaveLength(1);
   });
 
+  // REGISTRO §473, adendo 18/11/2026: novembro (mês da troca semanal → mensal) junta as semanas do mês, como o quadro.
+  it('novembro de 2026: o placar SEMANAL do mês conta (melhor por jogador); semana com quinta em outubro não', async () => {
+    const DEZ = new Date('2026-12-02T09:00:00Z');
+    const semana = (c, score, at) => submitScore(env, { game: 'match3', period: 'weekly', saveId: id(c), score, now: at });
+    await sub(env, 'match3', 'a', 1105, new Date('2026-11-18T12:00:00Z'));
+    await semana('m', 1166, new Date('2026-11-04T12:00:00Z')); // W45
+    await semana('m', 958, new Date('2026-11-11T12:00:00Z')); // W46
+    await semana('x', 5000, new Date('2026-10-30T12:00:00Z')); // W44: quinta 29/10, fora de novembro
+    const r = await closeArcadeMonth(env, DEZ);
+    expect(r.results.filter(x => x.game === 'match3').map(x => x.saveId)).toEqual([id('m')]);
+    expect(await caixa(env, 'a')).toEqual([]);
+    expect(await caixa(env, 'x')).toEqual([]);
+  });
+
+  it('dezembro em diante: só o mensal (o semanal do mês não conta)', async () => {
+    const JAN = new Date('2027-01-02T09:00:00Z');
+    await sub(env, 'match3', 'a', 100, new Date('2026-12-10T12:00:00Z'));
+    await submitScore(env, { game: 'match3', period: 'weekly', saveId: id('m'), score: 9000, now: new Date('2026-12-10T12:00:00Z') });
+    const r = await closeArcadeMonth(env, JAN);
+    expect(r.results.filter(x => x.game === 'match3').map(x => x.saveId)).toEqual([id('a')]);
+  });
+
   it('sem ninguém no ranking fecha sem erro', async () => {
     expect(await closeArcadeMonth(env, NOV)).toMatchObject({ status: 'closed', results: [] });
   });
