@@ -2,7 +2,6 @@ import type { Language } from '../utils/i18n';
 import type { RankingRow } from '../utils/rankings';
 import { resolvePodiumArt, type PodiumArt, type PodiumPlace } from '../assets/soulmon/ranking';
 import { PlayerName } from './ui/PlayerName';
-import { Icon } from './ui/Icon';
 
 /** A linha do pódio. `guildName` chega pelo §319 (o clã embaixo do nome); ausente = sem clã. */
 export type PodiumRow = RankingRow & { guildName?: string | null };
@@ -80,11 +79,6 @@ export function RankingPodium({ rows, language, format = String, art = resolvePo
             aria-current={r.me ? 'true' : undefined}
           >
             <span className="sm-rank-podium__head">
-              {place === 1 && (
-                <span className="sm-rank-podium__crown" data-podium-crown={a.crown ? 'art' : 'css'} aria-hidden="true">
-                  {a.crown ? <img src={a.crown} alt="" draggable={false} /> : <Icon name="emoji_events" size={24} fill={1} tone="gold" />}
-                </span>
-              )}
               {medal}
               <span className="sm-rank-podium__name">
                 <PlayerName name={r.name} suffix={r.me ? youTag : ''} guildName={r.guildName} isPt={isPt} align="center" />

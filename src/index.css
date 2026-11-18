@@ -8523,7 +8523,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
-.sm2-moldura-modal--ranking .sm2-moldura-modal__lado { width: calc(var(--u) * 5.56); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__lado { top: calc(var(--u) * 6.5); width: calc(var(--u) * 5.56); } /* começam sob o topo: nenhuma barra acima do ornamento */
 .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
 /* Título na placa de bronze da arte (centro y 132 = 18,3u). */
@@ -8544,7 +8544,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-ranking-fechar:focus-visible { outline: 2px solid color-mix(in srgb, #FBF1D2 70%, transparent); outline-offset: -6px; }
 .sm3-ranking .sm2-moldura-modal__conteudo { padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b); }
 .sm3-ranking-corpo {
-  flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: 12px 3px 0;
+  flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: 36px 3px 0;
   /* o miolo é escuro (viewport): a lista herda tinta clara, nunca a tinta do tema claro */
   --sm2-ink: var(--sm2-viewport-ink); --sm2-muted: color-mix(in srgb, var(--sm2-viewport-ink) 65%, transparent); color: var(--sm2-viewport-ink);
 }
@@ -9412,9 +9412,9 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-rank-podium {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: 80px 84px 80px; justify-content: center;
   align-items: end;
-  column-gap: var(--sm2-space-2);
+  column-gap: 2px; /* pedestais quase encostados (dono, 18/11/2026) */
   margin: 0;
   padding: var(--sm2-space-2) 0 0;
   list-style: none;
@@ -9438,16 +9438,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-rank-podium__slot[data-place="2"] { grid-column: 1; }
 .sm-rank-podium__slot[data-place="3"] { grid-column: 3; --pod-fill: var(--sm2-bronze-fill); --pod-ink: var(--sm2-on-bronze); --pod-ratio: 2 / 1; }
 /* o brilho do vencedor: um halo de ouro atrás da coroa e da medalha (decorativo, fica atrás do texto) */
-.sm-rank-podium__slot[data-place="1"]:not([data-podium-empty])::before {
-  content: '';
-  position: absolute;
-  left: -12%;
-  right: -12%;
-  top: -12px;
-  height: 96px;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--sm2-gold-fill) 34%, transparent), transparent);
-  pointer-events: none;
-}
+/* sem glow dourado atrás da medalha do 1º (dono, 18/11/2026) */
 .sm-rank-podium__head {
   position: relative;
   display: flex;
