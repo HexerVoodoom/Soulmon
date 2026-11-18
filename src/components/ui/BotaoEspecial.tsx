@@ -16,7 +16,7 @@ export interface BotaoEspecialProps extends ButtonHTMLAttributes<HTMLButtonEleme
    * folhinha e diamante da alma) e `pvp` (PvP do Match-3 e Ranqueada do Torneio: faixa vermelha e ouro envelhecido com espinhos). Mesma estrutura
    * 3-slice e 3 estados (`btn-pve{,-press,-off}.webp`, `btn-pvp{,-press,-off}.webp`).
    */
-  variant?: 'dourado' | 'pve' | 'pvp';
+  variant?: 'dourado' | 'pve' | 'pvp' | 'ranking';
 }
 
 export const BotaoEspecial = forwardRef<HTMLButtonElement, BotaoEspecialProps>(function BotaoEspecial(

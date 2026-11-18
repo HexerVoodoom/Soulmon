@@ -1,6 +1,7 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
 ## FEITO — botões PvE e PvP do ranking (18/11/2026, pedido do dono)
+**Modal e botão do ranking (18/11/2026, mesma sessão):** `ui/btn-ranking{,-press,-off}.webp` (580×151) e `ui/ranking/ranking-{topo,base,lado-e,lado-d}.webp` (moldura em fatias de 720; topo 720×252, base 720×100, laterais 40×80). Uso: `RankingModal` + `BotaoEspecial variant="ranking"`. `ranking-botao-redondo.webp` NÃO é usado (decisão do dono). Fonte: `E:/Soulmon-assets/gerar-chatgpt/ranking/lote3/`.
 `ui/btn-pve{,-press,-off}.webp` (pedra com musgo, folhinha, diamante da alma) e `ui/btn-pvp{,-press,-off}.webp` (faixa vermelha, ouro envelhecido com espinhos), 580×~145, alfa real, ChatGPT (referência: `btn-especial*`). Uso: `BotaoEspecial variant="pve"|"pvp"`. Fonte/prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ranking/`.
 
 ## FEITO — arte do modal FILES (18/11/2026, pedido do dono; só a arte)
