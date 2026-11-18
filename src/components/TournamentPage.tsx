@@ -111,7 +111,8 @@ import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { BotaoEspecial } from './ui/BotaoEspecial';
-import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet } from './form/FormKit';
+import { RankingModal } from './RankingModal';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -348,9 +349,45 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** Linhas visíveis, carregando o índice ORIGINAL: a posição mostrada é
    *  sempre a real, nunca a posição dentro da fatia. */
   const rankRows: Array<{ row: RankRow; place: number }> = (rank ?? []).map((row, i) => ({ row, place: i + 1 }));
-  const visibleRank = rankExpanded || myIndex < 0
+  const visibleRank = myIndex < 0
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
+  /** O cartão de linhas do ranking da season (a janela ±3 na tela e a lista inteira no `RankingModal`): um só desenho. */
+  const renderRankCard = (rows: Array<{ row: RankRow; place: number }>) => (
+<div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
+              {rows.map(({ row: r, place }) => {
+                const isMe = r.id === saveId;
+                return (
+                  <div
+                    key={r.id}
+                    data-rank-row={isMe ? 'me' : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
+                      borderRadius: 'var(--sm2-radius-sm)',
+                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
+                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
+                    }}
+                  >
+                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+                      {place}
+                    </span>
+                    <AvatarFrame frame={isMe ? myFrame : frameOrBasic(r.frameId)} plaque={isMe ? standing?.place : null}>
+                      <MiniGlass size={32}>
+                        {(() => {
+                          const icon = opponentIcon(r, 32);
+                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
+                        })()}
+                      </MiniGlass>
+                    </AvatarFrame>
+                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
+                    </span>
+                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
+                  </div>
+                );
+              })}
+            </div>
+  );
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
@@ -865,7 +902,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       </button>
       </div>
 
-      <ModalSheet open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
+      <RankingModal open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
         <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {histView.best && (
             <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
@@ -894,7 +931,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             </ul>
           )}
         </div>
-      </ModalSheet>
+      </RankingModal>
 
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
@@ -1278,51 +1315,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               não é de linha; a linha se identifica pelo NOME —, nome 14,
               pontos 12. A linha "you" em `primary-soft` + anel `primary-ink` —
               o idioma de seleção, não um pódio (sem ouro no top 3). */}
-          {visibleRank.length > 0 && (
-            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
-              {visibleRank.map(({ row: r, place }) => {
-                const isMe = r.id === saveId;
-                return (
-                  <div
-                    key={r.id}
-                    data-rank-row={isMe ? 'me' : undefined}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
-                      borderRadius: 'var(--sm2-radius-sm)',
-                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
-                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
-                    }}
-                  >
-                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
-                      {place}
-                    </span>
-                    <AvatarFrame frame={isMe ? myFrame : frameOrBasic(r.frameId)} plaque={isMe ? standing?.place : null}>
-                      <MiniGlass size={32}>
-                        {(() => {
-                          const icon = opponentIcon(r, 32);
-                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
-                        })()}
-                      </MiniGlass>
-                    </AvatarFrame>
-                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
-                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
-                    </span>
-                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {visibleRank.length > 0 && renderRankCard(visibleRank)}
 
-          {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
-            <button
-              type="button"
-              onClick={() => setRankExpanded(true)}
-              style={{ ...sm2Button('outline'), width: '100%' }}
-            >
+          {rank && myIndex >= 0 && rank.length > visibleRank.length && (
+            <BotaoEspecial variant="ranking" data-torneio-ranking-inteiro onClick={() => setRankExpanded(true)}>
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
-            </button>
+            </BotaoEspecial>
           )}
+          <RankingModal open={rankExpanded} onClose={() => setRankExpanded(false)} language={lang} title={isPt ? 'Ranking da season' : 'Season ranking'}>
+            {renderRankCard(rankRows)}
+          </RankingModal>
         </div>
         </TorneioPanel>
       )}

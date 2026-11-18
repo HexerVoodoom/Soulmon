@@ -80,25 +80,35 @@ describe('Fliperama de Canto: carta do Papus com o item anexo para o 1º lugar d
     expect(await claimMail(env.SOULMON_SAVES, id('a'), [arcadeMark('2026-10', 'match3')], meses)).toEqual([]);
   });
 
-  it('item único: o mesmo jogador vencendo dois jogos recebe UM anexo; a 2ª carta é só o aplauso (alternativo desligado)', async () => {
+  it('item único: o mesmo jogador vencendo dois jogos recebe UM anexo; a 2ª carta leva o alternativo (30 de Honra)', async () => {
     await sub(env, 'match3', 'a', 300); await sub(env, 'match3-pvp', 'a', 500);
     const r = await closeArcadeMonth(env, NOV);
-    expect(r.results.map(x => x.status)).toEqual(['item', 'owned']);
+    expect(r.results.map(x => x.status)).toEqual(['item', 'alt']);
     const q = await caixa(env, 'a');
     expect(q.filter(m => m.item === ARCADE_ITEM_ID)).toHaveLength(1);
     expect(q).toHaveLength(2);
-    expect(ARCADE_ALT_PRIZE.enabled).toBe(false);
-    const aplauso = q.find(m => !m.item);
-    expect(aplauso.bodyPt).toContain('só o nosso aplauso');
-    expect(aplauso.bits).toBe(0);
+    expect(ARCADE_ALT_PRIZE).toMatchObject({ enabled: true, emblems: 30, bits: 0 });
+    const alt = q.find(m => !m.item);
+    expect(alt.bodyPt).toContain('outro presente anexado');
+    expect(alt.emblems).toBe(30);
+    expect(alt.bits).toBe(0);
+    expect(alt.claimedAt).toBe(0);
   });
 
-  it('quem já tem o item no save gravado recebe a carta sem anexo', async () => {
+  it('quem já tem o item no save gravado recebe a carta com o alternativo, sem o item', async () => {
     env.SOULMON_SAVES.store.set(id('a'), { v: JSON.stringify({ ownedFurniture: [ARCADE_ITEM_ID] }) });
     await sub(env, 'match3', 'a', 300);
     const r = await closeArcadeMonth(env, NOV);
-    expect(r.results[0].status).toBe('owned');
-    expect((await caixa(env, 'a'))[0].item).toBeUndefined();
+    expect(r.results[0].status).toBe('alt');
+    const c = (await caixa(env, 'a'))[0];
+    expect(c.item).toBeUndefined();
+    expect(c.emblems).toBe(30);
+  });
+
+  it('com o alternativo DESLIGADO (config), a carta de quem já tem é só o aplauso', () => {
+    const c = cartaDoPremio('2026-10', 'match3', false, null);
+    expect(c.bodyPt).toContain('só o nosso aplauso');
+    expect(c.bits ?? 0).toBe(0); expect(c.emblems ?? 0).toBe(0);
   });
 
   it('com o alternativo LIGADO (config), a carta de quem já tem leva Bits/Honra de anexo', () => {

@@ -5243,6 +5243,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-bronze-fill: #8E4A2B;
   --sm2-on-bronze: #FFFFFF;
   /* perigo */
+  --sm2-rank-faixa: #A32626; /* faixa vermelha do ranking (pódio A, 18/11/2026): vermelho escuro fixo, não o aviso */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
   --sm2-on-danger: #FFFFFF;
@@ -5266,7 +5267,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
      3,47:1 sobre `surface-2`. Este dá 6,55:1 / 6,23:1. */
-  --sm2-credit-ink: #6D28D9;
+  --sm2-credit-ink: #087480; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #6D28D9); AA >= 4,5:1 nos fundos claros */
   /* ASSOMBRO — a tinta PRÓPRIA da tarefa assombrada (P5 do canvas Home,
      decisão do dono em 16/09/2026: cor dedicada, um azul-acinzentado
      "fantasma", nunca opacidade e nunca vermelho). Sólida: quem esmaece é a
@@ -5317,6 +5318,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-on-silver: #0E2422;
   --sm2-bronze-fill: #8E4A2B;
   --sm2-on-bronze: #FFFFFF;
+  --sm2-rank-faixa: #A32626;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -5328,7 +5330,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-danger: #FF8B8B;
   --sm2-viewport-warn: #EBBE84;
   --sm2-viewport-accent: #5FF3E0;
-  --sm2-credit-ink: #C9A7FF;
+  --sm2-credit-ink: #6FE6F2; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #C9A7FF) */
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
      `surface`, 6,63:1 sobre `bg`, 4,73:1 sobre `surface-2` (medido no teste,
@@ -8541,7 +8543,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-ranking-fechar:focus-visible { outline: 2px solid color-mix(in srgb, #FBF1D2 70%, transparent); outline-offset: -6px; }
 .sm3-ranking .sm2-moldura-modal__conteudo { padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b); }
 .sm3-ranking-corpo {
-  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sm2-space-3);
+  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: 12px 3px 0;
   /* o miolo é escuro (viewport): a lista herda tinta clara, nunca a tinta do tema claro */
   --sm2-ink: var(--sm2-viewport-ink); --sm2-muted: color-mix(in srgb, var(--sm2-viewport-ink) 65%, transparent); color: var(--sm2-viewport-ink);
 }
@@ -9408,7 +9410,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-rank-podium {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1.25fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
   align-items: end;
   column-gap: var(--sm2-space-2);
   margin: 0;
@@ -9470,7 +9472,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__slot[data-place="1"] .sm-rank-podium__medal { width: 44px; height: 44px; font-size: var(--sm2-text-lg); }
 .sm-rank-podium__medal[data-podium-medal="css"] {
-  color: var(--pod-ink);
+  color: var(--pod-ink); border: 2px solid color-mix(in srgb, var(--sm2-viewport-ink) 85%, transparent);
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-ink)) 0%, var(--pod-fill) 55%, color-mix(in srgb, var(--pod-fill) 70%, var(--sm2-viewport-bg)) 100%);
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-bg)), 0 1px 0 color-mix(in srgb, var(--sm2-viewport-bg) 25%, transparent);
 }
@@ -9501,13 +9503,11 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__pedestal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
 .sm-rank-podium__pedestal[data-podium-pedestal="css"] {
+  /* PÓDIO A, degraus (18/11/2026, dono): pedra turquesa escura com aro do metal da posição (ouro/prata/bronze envelhecidos) e a FAIXA VERMELHA na base. */
   border-radius: var(--sm2-radius-sm) var(--sm2-radius-sm) 0 0;
-  /* tampo claro de 6px, face do metal, base escurecida */
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-ink)) 0 6px,
-    var(--pod-fill) 6px,
-    color-mix(in srgb, var(--pod-fill) 72%, var(--sm2-viewport-bg)) 100%);
-  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pod-fill) 22%, var(--sm2-viewport-bg)) 0, var(--sm2-viewport-bg) 100%);
+  border: 3px solid var(--pod-fill); border-bottom: 0;
+  box-shadow: inset 0 -8px 0 var(--sm2-rank-faixa), inset 0 0 0 1px color-mix(in srgb, var(--pod-fill) 40%, transparent);
 }
 /* a lasca turquesa no meio da face: o único acento de identidade do pódio em CSS */
 .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after {
@@ -9523,7 +9523,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__slot[data-place="1"] .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after { width: 10px; height: 10px; }
 /* a posição do jogador: o anel turquesa do idioma de seleção, também no pedestal */
-.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg)), 0 0 0 2px var(--sm2-primary-ink); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -8px 0 var(--sm2-rank-faixa), 0 0 0 2px var(--sm2-primary-ink); }
 .sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="art"] { box-shadow: none; outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
 /* lugar vazio: o mesmo pedestal, apagado (a arte também), e nada de nome nem pontos */
 .sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__pedestal,
