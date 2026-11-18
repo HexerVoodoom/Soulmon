@@ -1,5 +1,8 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — título BOSS BATTLE e ícone do Fragmento de Boss (18/11/2026)
+`ui/boss-battle-title.png` (1024×275) e `ui/boss-battle-title-pt.png` "BATALHA DE BOSS" (1024×248): lettering de cristal vermelho/ferro no estilo do WIN, alfa real, ChatGPT. `items/boss-shard.png` (256², legível a 24 px), ligado em `itemArt.ts` (`BOSS_SHARD_KEY`, `BOSS_SHARD_ART`) para o `icon` da linha "Boss Shard ×1" do resultado do Match-3. Falta só o código do Match-3 consumir os arquivos. Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/`.
+
 ## FEITO — botão ESPECIAL de compra (18/11/2026, pedido do dono)
 Placa dourada em pedra turquesa escura, 3 estados (`ui/btn-especial{,-press,-off}.webp`, 580×146, alfa real, sem texto), pintada no ChatGPT com a moldura de card e a placa de nome como referência. Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/` (`botao-folha-2.png`, `prompts/botao-especial.txt`, `registro.jsonl`). Usada por `BotaoEspecial` em "Comprar 3 tickets" (Salão) e "Comprar convites" (Arena).
 
