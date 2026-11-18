@@ -2,6 +2,7 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
 import { DECOR_ART } from '../utils/decorArt';
+import { useWindChime } from '../hooks/useWindChime';
 import { DECOR_LUZ, decorLuzAcesa } from '../utils/decorLuz';
 import iconTrophyGold from '../assets/icons/icon-trophy-gold.png';
 import iconTrophySilver from '../assets/icons/icon-trophy-silver.png';
@@ -35,11 +36,15 @@ interface PetStageDecorProps {
   isSleeping?: boolean;
   /** Toque no Fliperama de Canto abre o Salão de jogos. Sem isto (editor da Home) a peça é só cenário. */
   onOpenArcade?: () => void;
+  /** Só a Home real toca o sino de vento; o editor da Home fica mudo. */
+  somAtivo?: boolean;
 }
 
 const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
 
-export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade }: PetStageDecorProps) {
+export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade, somAtivo = false }: PetStageDecorProps) {
+  const temSino = Object.values(equippedDecor).includes('furn-wind-chime') && !!equippedBackground;
+  useWindChime(somAtivo && temSino && !isSleeping);
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
   // Sem cenário equipado o box é transparente — o "palco" é a página, e não há
   // composição em que apoiar a decoração.
@@ -121,6 +126,11 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               </span>
             )}
 
+            {item.id === 'furn-hourglass' && (
+              <span className="sm-decor-areia" data-decor-areia>
+                <i /><i /><i />
+              </span>
+            )}
             {item.id === 'furn-arcade-cab' && onOpenArcade && (
               <button
                 type="button" data-decor-arcade onClick={onOpenArcade}

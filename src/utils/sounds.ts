@@ -10,7 +10,7 @@ import { assetPronto, prepararAssets, prepararSfxLivres, sfxLivrePronto, tocarBu
 import { aoGestoSonoro } from './trilha';
 import type { NomeSfxCombate } from './sfxCombate';
 import { prepararSfxCombate, sfxCombatePronto } from './sfxCombateCarga';
-import { ATAQUE_S, PISO, duracaoDe, parciaisDing, parciaisPop, parciaisTique, type Parcial } from './sonsRecompensa';
+import { ATAQUE_S, PISO, duracaoDe, parciaisDing, parciaisPop, parciaisSinoDeVento, parciaisTique, type Parcial } from './sonsRecompensa';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -384,7 +384,7 @@ export function playVisorTune(): void {
    **D11 mora no CHAMADOR** (`useRewardReveal`): aba visível + áudio já liberado por um gesto da sessão. Os parciais vêm de
    `sonsRecompensa.ts` — a mesma lista que o teste de loudness renderiza e mede. NÃO OUVIDOS (sem escuta humana ainda — S8). */
 function tocarParciais(
-  nomeDoSom: 'playRewardPop' | 'playCoinRoll' | 'playCoinLand',
+  nomeDoSom: 'playRewardPop' | 'playCoinRoll' | 'playCoinLand' | 'playWindChime',
   parciais: readonly Parcial[],
 ): void {
   play(nomeDoSom, (ctx, destino) => {
@@ -418,3 +418,6 @@ export function playRewardPop(pitch = 0): void { tocarParciais('playRewardPop', 
 export function playCoinRoll(): void { tocarParciais('playCoinRoll', parciaisTique()); }
 /** O "ding" de quando o contador pousa no valor. */
 export function playCoinLand(): void { tocarParciais('playCoinLand', parciaisDing()); }
+
+/** Sino de vento da decoração (`variacao` escolhe uma das badaladas). D11 mora no chamador (`useWindChime`). */
+export function playWindChime(variacao = 0): void { tocarParciais('playWindChime', parciaisSinoDeVento(variacao)); }

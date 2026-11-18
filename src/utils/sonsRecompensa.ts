@@ -60,3 +60,23 @@ export function parciaisDing(): Parcial[] {
 
 /** Duração total (s) de uma lista de parciais. */
 export const duracaoDe = (ps: readonly Parcial[]): number => ps.reduce((m, p) => Math.max(m, p.t + p.dur), 0);
+
+/** Sino de vento (decoração, REGISTRO §480): 4 variações de 3 badaladas de pentatônica, parciais inarmônicas de tubo metálico. */
+const SINO_NOTAS: readonly (readonly number[])[] = [
+  [1175, 1568, 1319],
+  [1319, 1760, 1568],
+  [1047, 1319, 1760],
+  [1568, 1175, 1760],
+];
+export const SINO_VARIACOES = SINO_NOTAS.length;
+export function parciaisSinoDeVento(variacao = 0): Parcial[] {
+  const notas = SINO_NOTAS[((variacao % SINO_VARIACOES) + SINO_VARIACOES) % SINO_VARIACOES];
+  const g = GANHO_NOMINAL_RECOMPENSA * 0.7;
+  const out: Parcial[] = [];
+  notas.forEach((f, i) => {
+    const t = i * 0.19;
+    out.push({ type: 'sine', f0: f, f1: f, t, dur: 1.5, gain: g });
+    out.push({ type: 'sine', f0: f * 2.76, f1: f * 2.76, t, dur: 0.5, gain: g * 0.22 });
+  });
+  return out;
+}

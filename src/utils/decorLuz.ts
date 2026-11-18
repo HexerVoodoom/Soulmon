@@ -12,8 +12,8 @@ export interface DecorLuz {
 
 export const DECOR_LUZ: Readonly<Record<string, DecorLuz>> = Object.freeze({
   'furn-lamp': { modo: 'luz', tom: 'turquesa', x: 50, y: 22, d: 110 },
-  'furn-lantern': { modo: 'luz', tom: 'fogo', x: 50, y: 55, d: 110 },
-  'furn-campfire': { modo: 'luz', tom: 'fogo', x: 50, y: 55, d: 130 },
+  'furn-lantern': { modo: 'luz', tom: 'turquesa', x: 50, y: 55, d: 110 },
+  'furn-campfire': { modo: 'luz', tom: 'turquesa', x: 50, y: 55, d: 130 },
   'furn-cerejeira-lanterna-de-petalas': { modo: 'luz', tom: 'petala', x: 50, y: 55, d: 110 },
   'furn-lava-altar-de-magma': { modo: 'luz', tom: 'fogo', x: 50, y: 40, d: 110 },
   'furn-lava-flor-de-brasa': { modo: 'luz', tom: 'fogo', x: 50, y: 40, d: 90 },

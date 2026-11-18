@@ -5053,6 +5053,13 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm-decor-luz-halo[data-on] { opacity: .85; transform: translate(-50%, -50%) scale(1); animation: sm-decor-luz-pulso 3.6s ease-in-out infinite; }
 @keyframes sm-decor-luz-pulso { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .6; transform: translate(-50%, -50%) scale(.94); } }
 
+/* Ampulheta (REGISTRO §480): grãos turquesa caindo pelo gargalo. Só transform/opacity; reduzido = grãos parados no gargalo. */
+.sm-decor-areia { position: absolute; left: 50%; top: 44%; width: 10%; height: 26%; transform: translateX(-50%); pointer-events: none; }
+.sm-decor-areia i { position: absolute; left: 50%; top: 0; width: 2px; height: 2px; margin-left: -1px; background: var(--sm2-primary-ink, hsl(176 82% 55%)); box-shadow: 0 0 3px hsl(176 90% 70%); opacity: 0; animation: sm-decor-areia-cai 1.5s linear infinite; }
+.sm-decor-areia i:nth-child(2) { animation-delay: .5s; margin-left: -2px; }
+.sm-decor-areia i:nth-child(3) { animation-delay: 1s; margin-left: 0; }
+@keyframes sm-decor-areia-cai { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(22px); } }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
    ═══════════════════════════════════════════════════════════════════════════
@@ -5078,6 +5085,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   .sm-haunt-particle,
   .sm-visor-hop,
   .sm-decor-luz-halo,
+  .sm-decor-areia i,
   .sm-battle-idle { animation: none !important; }
 }
 
