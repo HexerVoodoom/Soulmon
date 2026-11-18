@@ -17,7 +17,6 @@ export const DECOR_PRICE_TABLE: ReadonlyArray<{ id: string; old: number; tier: D
   { id: 'furn-cauldron', old: 130, tier: 5, reason: 'arcano, borbulha (magia ativa)' },
   { id: 'furn-crystal', old: 120, tier: 5, reason: 'cristal arcano, peça rara de vitrine' },
   { id: 'furn-hourglass', old: 130, tier: 5, reason: 'mecanismo de tempo, arte rica' },
-  { id: 'furn-arcade-cab', old: 140, tier: 5, reason: 'máquina com tela/luz, peça rara' },
   { id: 'furn-well', old: 140, tier: 5, reason: 'construção de pedra grande, centro de cena' },
   { id: 'furn-sofa', old: 100, tier: 3, reason: 'móvel trabalhado' },
   { id: 'furn-chair', old: 120, tier: 3, reason: 'móvel trabalhado' },
