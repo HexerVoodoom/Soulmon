@@ -8493,13 +8493,13 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-moldura-modal--files .sm2-moldura-modal__lado { width: calc(var(--u) * 3.47); }
 .sm2-moldura-modal--files .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/files/files-lado-e.webp'); }
 .sm2-moldura-modal--files .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/files/files-lado-d.webp'); }
-/* Sem placa de madeira: o título é do cabeçalho do Files. Fundo = a grade da referência (sem pedra com runas). Linhas a 18% da tinta sobre o painel ≈ 1,7:1 (eram 5%, quase invisíveis). */
+/* Sem placa de madeira: o título é do cabeçalho do Files. Fundo = a grade da referência (sem pedra com runas). Linhas discretas a 5% da tinta (o dono pediu a grade sutil de volta). */
 .sm2-moldura-modal--files .sm2-moldura-modal__placa { display: none; }
 .sm2-moldura-modal--files.sm2-moldura-modal--pedra .sm2-moldura-modal__fundo {
   opacity: 1; background-size: calc(var(--u) * 12) calc(var(--u) * 12); background-repeat: repeat; background-position: center top;
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--sm2-viewport-ink) 18%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--sm2-viewport-ink) 18%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in srgb, var(--sm2-viewport-ink) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--sm2-viewport-ink) 5%, transparent) 1px, transparent 1px);
 }
 /* O "i": o disco direito do topo é vazio na arte, então o botão (transparente, ≥ 44 px) desenha a letra no centro dele. */
 .sm2-moldura-modal--files .sm2-moldura-modal__info { right: calc(var(--u) * 3.8); top: calc(var(--u) * 4.75); width: calc(var(--u) * 8); height: calc(var(--u) * 8); }
