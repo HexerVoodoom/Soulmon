@@ -6440,3 +6440,29 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **UI.** Guia (PT/EN) explica: perder só reinicia os combates do andar atual. **Testes:** `dungeonIdle.profundidade.test.ts` (§477), `riftMap*.test.ts`.
 
 **Adendo (18/11/2026, dono):** no modal "Hoje" as bufadas saem da lista de Hábitos e vão para uma seção própria ABAIXO das normais (`role="group"`, separador sutil + texto "Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude."), mesma linha, negrito dourado. Sem bufadas, a seção não existe. A regra do §474 não muda (marcar = aceitar).
+
+## §478 — Widget grande da Home: o check só marca, os pontos entram ao abrir o jogo, moldura V-Pet básica (18/11/2026, dono)
+
+- **Decisão do dono:** construir o widget A (Home) do estudo `relatorio-widgets-grandes.md`: widget Android grande, na VERTICAL, que reproduz a Home (Soulmon + estado + tarefas de hoje). Ajusta-se à largura/altura que o launcher der, dentro de um limite (alvo 4x5, de 2x3 até 8x10; abaixo de 220dp de altura o V-Pet sai e fica só a lista; o texto cresce com a largura).
+- **O check do widget SÓ MARCA.** Grava `task_done` numa fila nativa do aparelho (`WidgetEventQueue.kt`, SharedPreferences, `eid` UUID + `ts` + id da tarefa, uma entrada por tarefa, teto 50) e a linha aparece riscada na hora. O widget NÃO dá comida, XP de Vínculo nem Bits e não fala com o servidor (sem login no nativo).
+- **Os pontos entram quando o jogo abre ou volta ao primeiro plano:** o app lê a fila (`peekWidgetEvents`), aplica cada evento pela MESMA regra do toque na Home (`applyTaskCompletion` em `src/utils/taskCompletionPay.ts`, extraída do `handleToggleTask`, com teste de paridade), grava o save local e só então apaga (`ackWidgetEvents`). Idempotente: tarefa já concluída/ausente = no-op; `eid` já aplicado = no-op (registro no aparelho, `STORAGE_KEYS.WIDGET_EVENTS_APPLIED`). Tarefa assombrada, premium e repetição seguem as regras atuais.
+- **Moldura:** o topo do widget é o bitmap do V-Pet com o casco PADRÃO (`vpet_moldura.png`, "o elemento básico que temos hoje"); sem variantes por elemento e sem SKU. O painel da lista usa as cores do casco. Placeholder aprovado até existir arte própria.
+- **Compatibilidade:** APK anterior não tem `peekWidgetEvents`; a web detecta pela rejeição e não drena (regra 5). Tudo do widget exige AAB novo.
+- **Escopo:** só TAREFA avulsa de hoje (abertas + concluídas hoje, até 12). Hábitos ficam fora do check do widget nesta versão.
+
+**Alternativa que perdeu:** pagar no próprio widget (regra copiada no Kotlin) ou exigir login nativo. Perdeu por duplicar a regra de pagamento (footgun 9) e abrir uma superfície de token sem revisão de segurança.
+
+**Gatilho para rever:** o dono querer hábitos no check do widget, o ganho aparecer no widget sem abrir o jogo, ou launcher de fabricante cortar a lista (testar em aparelho).
+
+
+## §479 — Cambista: a lista não mostra posse; comprar abre o modal com seletor de quantidade (18/11/2026, pedido do dono)
+
+**Decisão:** nas linhas do Cambista (aba Essências) some o "×N" de estoque (§#1050); tocar numa linha abre `EssenceBuySheet` (imagem, nome, custo unitário, "Você tem N", − / número / +, custo total ao vivo, Cancelar / "Comprar N · custo"). A moeda do Cambista de essências é **Crédito**, não Bits. A venda de poções elementais não mora no Cambista (poção é criada pela Vesca com essências), então o fluxo cobre as essências.
+
+**Teto (máximo do seletor):** `min(ESSENCE_MAX_PER_BUY = 100, ESSENCE_MAX_PER_ELEMENT (1.000.000) − estoque, maior N que o saldo de Créditos paga)`. O teto de estoque já existia (`essences.ts`, servidor 409 `cap`); o limite de 100 por compra é novo (decisão minha, ajustável numa constante). Máximo 0: botão desabilitado com "Estoque cheio" ou "Créditos insuficientes".
+
+**Contrato:** `POST /api/entitlements?action=buy-essence` aceita `qty` inteiro 1..100 (antes só 1 ou 5; retrocompatível: 1 e 5 custam o mesmo de antes). Preço = grupos COMPLETOS de 5 com 10% off (arredondado para baixo) + resto no unitário; o servidor continua dono do preço, do saldo, do trancado e do teto (400 `bad-qty`, 402, 403, 409). Paridade cliente x servidor em `essenceShop.parity.test.js`.
+
+**Alternativa que perdeu:** N chamadas de 1 (não atômico, N cobranças e N opIds).
+
+**Gatilho para rever:** pedido de limite diferente por compra, ou o dono querer o desconto de 10% em qualquer N.

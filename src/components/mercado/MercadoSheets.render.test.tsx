@@ -184,6 +184,7 @@ describe('moeda certa por aba', () => {
 
 import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
 import { elementsMatchingBases } from '../../utils/elementPotion';
+import { ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
 
 describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
   const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
@@ -210,48 +211,102 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
   });
 
-  it('Essências: preço por linha, ×5 com desconto, posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
+  const abrirModal = (id: string, p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) => {
+    const r = abrirC({ unlockedElements: [id], onBuyEssence: async () => true, ...p });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    fireEvent.click(r.container.querySelector(`[data-essence-row="${id}"] [data-essence-buy]`)!);
+    return { ...r, dlg: screen.getByRole('dialog', { name: 'Confirm purchase' }) };
+  };
+  const q = (dlg: HTMLElement, sel: string) => dlg.querySelector(sel) as HTMLElement;
+
+  it('Essências: a lista mostra só item e preço unitário, sem ×N possuído; trancado (???) sem compra', () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const par = ALL_ELEMENT_IDS.find(id => !BASE_ELEMENT_IDS.includes(id))!;
     const trancado = BASE_ELEMENT_IDS[1];
-    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 7 }, onBuyEssence: async () => true });
+    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 10 }, onBuyEssence: async () => true });
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
     const row = (id: string) => container.querySelector(`[data-essence-row="${id}"]`)!;
-    const prices = (id: string) => [...row(id).querySelectorAll('[data-essence-price]')].map(e => e.textContent);
-    expect(prices(fogo)).toEqual(['1', '4']);
-    expect(prices(par)).toEqual(['2', '9']);
-    expect(row(fogo).querySelector('[data-essence-owned]')!.textContent).toBe('×7');
+    expect(row(fogo).querySelector('[data-essence-price]')!.textContent).toBe('1');
+    expect(row(par).querySelector('[data-essence-price]')!.textContent).toBe('2');
+    expect(row(fogo).textContent).not.toMatch(/×\s*\d/);
+    expect(container.querySelector('[data-essence-owned]')).toBeNull();
     expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
     expect(row(trancado).textContent).toMatch(/\?\?\?/);
-    expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
-    expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
-    expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {
+  it('Essências: tocar na linha abre o modal com imagem, nome, custo unitário e "You have N" (só aqui)', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 10, essences: { [fogo]: 7 } });
+    expect(q(dlg, '[data-essence-art] img')).not.toBeNull();
+    expect(q(dlg, '[data-essence-unit]').textContent).toBe('1');
+    expect(q(dlg, '[data-essence-have]').textContent).toBe('7');
+    expect(dlg.textContent).toMatch(/You have 7/);
+  });
+
+  it('Essências: seletor − / + atualiza o custo total (desconto por grupo de 5) e o botão "Buy N · custo"', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 20 });
+    const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
+    expect(qty.getAttribute('role')).toBe('spinbutton');
+    expect(qty.value).toBe('1');
+    expect((q(dlg, '[data-essence-minus]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 1 · 1 Credit');
+    for (let i = 0; i < 4; i++) fireEvent.click(q(dlg, '[data-essence-plus]'));
+    expect(qty.value).toBe('5');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 5 · 4 Credits');
+    fireEvent.click(q(dlg, '[data-essence-minus]'));
+    expect(qty.getAttribute('aria-valuenow')).toBe('4');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
+    fireEvent.change(qty, { target: { value: '12' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('12');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('10 Credits');
+  });
+
+  it('Essências: o máximo respeita o saldo e o teto de estoque; + desabilita no limite', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const a = abrirModal(fogo, { credits: 3 });
+    expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuemax')).toBe('3');
+    fireEvent.change(q(a.dlg, '[data-essence-qty]'), { target: { value: '99' } });
+    expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuenow')).toBe('3');
+    expect((q(a.dlg, '[data-essence-plus]') as HTMLButtonElement).disabled).toBe(true);
+    a.unmount();
+    const b = abrirModal(fogo, { credits: 50, essences: { [fogo]: ESSENCE_MAX_PER_ELEMENT - 2 } });
+    expect(q(b.dlg, '[data-essence-qty]').getAttribute('aria-valuemax')).toBe('2');
+  });
+
+  it('Essências: max 0 desabilita Comprar com o motivo (estoque cheio / sem Créditos)', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const a = abrirModal(fogo, { credits: 0 });
+    expect((q(a.dlg, '[data-purchase-ok]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(a.dlg, '[data-essence-blocked]').textContent).toBe('Not enough Credits');
+    a.unmount();
+    const b = abrirModal(fogo, { credits: 50, essences: { [fogo]: ESSENCE_MAX_PER_ELEMENT } });
+    expect((q(b.dlg, '[data-purchase-ok]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(b.dlg, '[data-essence-blocked]').textContent).toBe('Stock full');
+  });
+
+  it('Essências: Cancelar não cobra; Comprar chama o servidor com a quantidade escolhida', async () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const onBuyEssence = vi.fn(async () => true);
-    const { container } = abrirC({ credits: 10, unlockedElements: [fogo], onBuyEssence });
-    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="5"]`)!);
-    let dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
-    expect(dlg.querySelector('[data-purchase-cost]')!.textContent).toMatch(/^4 /);
+    const { dlg, container } = abrirModal(fogo, { credits: 20, onBuyEssence });
     const btns = [...dlg.querySelectorAll('button[data-purchase-cancel], button[data-purchase-ok]')];
     expect(btns.map(b => b.hasAttribute('data-purchase-cancel'))).toEqual([true, false]);
-    fireEvent.click(dlg.querySelector('[data-purchase-cancel]')!);
+    fireEvent.click(q(dlg, '[data-purchase-cancel]'));
     expect(onBuyEssence).not.toHaveBeenCalled();
-    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!);
-    dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
-    fireEvent.click(dlg.querySelector('[data-purchase-ok]')!);
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy]`)!);
+    const dlg2 = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    for (let i = 0; i < 6; i++) fireEvent.click(q(dlg2, '[data-essence-plus]'));
+    fireEvent.click(q(dlg2, '[data-purchase-ok]'));
     await Promise.resolve();
-    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 1);
+    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 7);
   });
 
   it('Essências em PT: botão Comprar e regra de preço', () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const { container } = abrirC({ language: 'pt-BR', unlockedElements: [fogo], onBuyEssence: async () => true });
     fireEvent.click(screen.getByRole('tab', { name: 'Essências' }));
-    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!.textContent).toMatch(/Comprar/);
+    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy]`)!.textContent).toMatch(/Comprar/);
     expect(container.textContent).toMatch(/1 por elemento base, 2 por par/);
   });
 
