@@ -47,8 +47,8 @@ describe('modal Files', () => {
     const dialog = screen.getByRole('dialog', { name: 'Files' });
     expect(dialog.hasAttribute('data-moldura-modal')).toBe(true);
     expect(dialog.className).toContain('sm2-moldura-modal--files');
-    const cristal = dialog.querySelector('.sm3-files-cristal') as HTMLImageElement;
-    expect(cristal.getAttribute('src')).toMatch(/files-cristal/);
+    const cristal = dialog.querySelector('.sm2-cristal-chama') as HTMLImageElement;
+    expect(cristal.getAttribute('src')).toMatch(/cristal-chama/);
     expect(cristal.getAttribute('aria-hidden')).toBe('true');
     expect(within(dialog).getByRole('button', { name: 'Close' }).className).toContain('sm3-files-fechar');
     expect(dialog.querySelector('.sm3-mochila-titulo')!.textContent).toBe('Files');
