@@ -121,7 +121,7 @@ export interface M3Combat {
  * Um combate novo. `lines` = linhas de arte candidatas (a tela passa as de `DUNGEON_LINE_SPRITES`); `exclude` = a do jogador (ninguém encara
  * um espelho). Os três elementos são DISTINTOS e as três linhas também — tudo sorteado pelo `rng` por parâmetro.
  */
-export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number, playerElement?: string, adventure?: { elements: readonly string[] }): M3Combat {
+export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number, playerElement?: string, adventure?: { elements: readonly string[]; /** §487: o elemento escolhido na tela de 3: o time de 4 cai DAQUELE elemento (com level). */ element?: string }): M3Combat {
   const pool = lines.filter(l => l !== exclude);
   const els: M3Element[] = [...M3_TILE_ELEMENTS];
   const pick = <T,>(arr: T[]): T => arr.splice(Math.min(arr.length - 1, Math.floor(rng() * arr.length)), 1)[0];
@@ -138,7 +138,7 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
     const used = new Set<string>();
     const pedido = adventure ? ['rookie', 'champion', 'champion', 'ultimate'] as const : ['rookie', 'champion', 'ultimate'] as const;
-    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used, tabela: true }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
+    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used, tabela: true, ...(adventure?.element ? { element: adventure.element } : {}) }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
   }
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(adventure ? { elements: [...adventure.elements] } : {}), ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
