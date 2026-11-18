@@ -4,9 +4,10 @@ import { EnergyCost } from '../ui/EnergyCost';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketCost, TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
-import { sm2Button, sm2Hint, sm2Text, ModalSheet } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { createPortal } from 'react-dom';
 import { RankingPanel } from '../RankingPanel';
+import { RankingModal } from '../RankingModal';
 import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../../utils/dungeonBase';
@@ -152,11 +153,11 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, hea
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {rankBtn && (headSlot ? createPortal(rankBtn, headSlot) : headSlot === undefined ? <div style={{ display: 'flex' }}>{rankBtn}</div> : null)}
-      <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
+      <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'}>
         <div data-masmorra-ranking-panel>
           <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />
         </div>
-      </ModalSheet>
+      </RankingModal>
       <ModalInfo language={language} label="Drop rate">
         <b data-masmorra-drops-title style={{ display: 'block', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, marginBottom: 4 }}>Drop rate</b>
         <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
