@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AreaSheet } from '../nav/AreaSheet';
 import { RankingPanel } from '../RankingPanel';
 import { sm2Button } from '../form/FormKit';
@@ -20,7 +20,7 @@ import { BotaoEspecial } from '../ui/BotaoEspecial';
  */
 export type GateRanking = { game: RankedGame; label?: string | { pt: string; en: string }; /** Ausente = semanal (o de sempre). */ period?: RankingPeriod };
 
-export function MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp = false, tickets, onPick, onBack }: {
+export function MinigameModeGate<C = unknown>({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp = false, tickets, renderChoices, onPick, onBack }: {
   /** Tickets em posse: aparecem em leque ao lado do NPC (09/11/2026). Ausente = sem leque. */
   tickets?: number;
   language: Language;
@@ -31,7 +31,12 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
   withDifficulty: boolean;
   /** Dois botões Aventura (esquerda) | PvP (direita), como o Fusão Elemental: `onPick(1)` = Aventura, `onPick(2)` = PvP. */
   pveVsPvp?: boolean;
-  onPick: (level?: 1 | 2) => void;
+  /**
+   * ESCOLHA DE 3 (§487, Elemental Fusion = Torneio): com isto os dois botões de modo viram SELETOR (rádio, como Ranqueada | Treino) e
+   * a lista do modo escolhido aparece embaixo; "Lutar" numa linha chama `pick(escolha)` → `onPick(modo, escolha)`.
+   */
+  renderChoices?: (level: 1 | 2, pick: (choice: C) => void) => ReactNode;
+  onPick: (level?: 1 | 2, choice?: C) => void;
   onBack: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -45,6 +50,8 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
   const labelOf = (lvl: 1 | 2) => (pveVsPvp ? (lvl === 1 ? (isPt ? 'Aventura' : 'Adventure') : 'PvP') : difficultyLabel(lvl, isPt));
   const [tab, setTab] = useState(0);
   const [rankOpen, setRankOpen] = useState(false);
+  const [sel, setSel] = useState<1 | 2>(1);
+  const seletor = !!renderChoices && two;
   const current = rankings[Math.min(tab, rankings.length - 1)];
   return (
     <AreaSheet
@@ -81,8 +88,13 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
           </div>
         </RankingModal>
         {two ? (
-          <div role="group" aria-label={pveVsPvp ? (isPt ? 'Modo' : 'Mode') : (isPt ? 'Dificuldade' : 'Difficulty')} style={{ display: 'flex', gap: 8 }}>
-            {pveVsPvp ? (
+          <div role={seletor ? 'radiogroup' : 'group'} aria-label={pveVsPvp ? (isPt ? 'Modo' : 'Mode') : (isPt ? 'Dificuldade' : 'Difficulty')} style={{ display: 'flex', gap: 8 }}>
+            {seletor ? (
+              <>
+                <BotaoEspecial variant="pve" role="radio" aria-checked={sel === 1} data-especial-state={sel === 1 ? 'pressed' : undefined} data-gate-pick="1" onClick={() => setSel(1)} style={{ flex: 1, minWidth: 0 }}>{labelOf(1)}</BotaoEspecial>
+                <BotaoEspecial variant="pvp" role="radio" aria-checked={sel === 2} data-especial-state={sel === 2 ? 'pressed' : undefined} data-gate-pick="2" onClick={() => setSel(2)} style={{ flex: 1, minWidth: 0 }}>{labelOf(2)}</BotaoEspecial>
+              </>
+            ) : pveVsPvp ? (
               <>
                 <BotaoEspecial variant="pve" data-gate-pick="1" onClick={() => onPick(1)} style={{ flex: 1, minWidth: 0 }}>{labelOf(1)}</BotaoEspecial>
                 <BotaoEspecial variant="pvp" data-gate-pick="2" onClick={() => onPick(2)} style={{ flex: 1, minWidth: 0 }}>{labelOf(2)}</BotaoEspecial>
@@ -102,6 +114,11 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
           <button type="button" data-gate-play onClick={() => onPick()} style={{ ...sm2Button('primary', false, 'lg'), minHeight: 64 }}>
             {isPt ? 'Jogar' : 'Play'}
           </button>
+        )}
+        {seletor && (
+          <div key={sel} data-gate-choices={sel}>
+            {renderChoices!(sel, choice => onPick(sel, choice))}
+          </div>
         )}
       </div>
     </AreaSheet>

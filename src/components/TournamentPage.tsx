@@ -103,6 +103,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
+import { EscolhaLinha, SortearNovos } from './ui/EscolhaLinha';
 import { PixelMeter } from './pixel/PixelKit';
 import { ResultScreen } from './games/ResultScreen';
 import { RitualDialog } from './ritual/RitualKit';
@@ -1025,64 +1026,40 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           )}
 
           {opponents?.map(o => {
-            const busy = fighting === o.id;
             // Um duelo sendo aberto trava TODOS os "Desafiar": outro duelStart em voo fecharia este como derrota.
-            const lockedByOther = fighting !== null;
             const blocked = matchesLeft === 0;
             return (
-              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                {/* A criatura do amigo no estágio REAL, num mini-visor 64 —
-                    o ícone-ficha 64² da linha (rodada 2, D-J13) ou, quando o
-                    estágio não é de linha, o sprite a 0,25× — sem faixa, sem
-                    rank (J1, veto 3b). */}
-                <MiniGlass size={64}>
-                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
-                </MiniGlass>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* §321: o clã embaixo do nome do oponente. */}
-                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
-                    <PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />
-                  </div>
-                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
-                  </p>
-                </div>
-                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
+              <EscolhaLinha
+                key={o.id}
+                // A criatura do amigo no estágio REAL, num mini-visor 64 (ícone-ficha 64² da linha, D-J13; ou o sprite a 0,25×) — sem faixa, sem rank (J1, veto 3b).
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                // §321: o clã embaixo do nome do oponente.
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
                   { kind: 'xp', max: bondXP({ kind: 'tournamentMatch', won: true }) },
                   { kind: 'honor', max: EMBLEMS_PER_WIN },
-                ]} />
-                {/* WCAG 2.5.3 (Label in Name): o texto visível "Fight" está
-                    CONTIDO no nome acessível, que ainda nomeia o oponente
-                    ("Fight — challenge Lu"); quem usa comando de voz diz
-                    "Fight" e acerta. */}
-                <button
-                  type="button"
-                  disabled={blocked || busy || lockedByOther}
-                  onClick={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
-                  aria-label={blocked
-                    ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
-                    : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
-                  style={{ ...sm2Button('primary', blocked || busy || lockedByOther, 'sm'), flexShrink: 0, minWidth: 88 }}
-                >
-                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
-                  {isPt ? 'Desafiar' : 'Fight'}
-                </button>
-              </div>
+                ]} />}
+                disabled={blocked || fighting !== null}
+                busy={fighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
+                actionLabel={isPt ? 'Desafiar' : 'Fight'}
+                actionAriaLabel={blocked
+                  ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
+                  : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
+              />
             );
           })}
 
           {/* Refresh dos 3: UMA vez entre combates. Usou, some; depois de um combate o servidor libera e ele volta. */}
           {opponents && opponents.length > 0 && !rerolled && !loadFailed && (
-            <button
-              type="button"
-              data-torneio-reroll
+            <SortearNovos
+              buttonProps={{ 'data-torneio-reroll': true }}
               disabled={rerolling || fighting !== null}
+              spinning={rerolling}
               onClick={rerollOpponents}
-              style={{ ...sm2Button('outline', rerolling || fighting !== null), width: '100%' }}
-            >
-              <Icon name="sync" size={20} className={rerolling ? 'animate-spin' : undefined} />
-              {isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
-            </button>
+              label={isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+            />
           )}
         </div>
       )}
@@ -1160,45 +1137,31 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             </p>
           )}
           {sparOpps?.map(o => {
-            const busy = sparFighting === o.id;
             const locked = sparFighting !== null || (tickets !== undefined && tickets.left <= 0);
             return (
-              <div key={o.id} data-treino-oponente style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                <MiniGlass size={64}>
-                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
-                </MiniGlass>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}><PlayerName name={o.name} guildName={o.guildName} isPt={isPt} /></div>
-                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
-                  </p>
-                </div>
-                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />
-                <button
-                  type="button"
-                  disabled={busy || locked}
-                  onClick={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
-                  aria-label={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
-                  style={{ ...sm2Button('primary', busy || locked, 'sm'), flexShrink: 0, minWidth: 88 }}
-                >
-                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
-                  {isPt ? 'Treinar' : 'Spar'}
-                </button>
-              </div>
+              <EscolhaLinha
+                key={o.id}
+                rowProps={{ 'data-treino-oponente': true }}
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />}
+                disabled={locked}
+                busy={sparFighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
+                actionLabel={isPt ? 'Treinar' : 'Spar'}
+                actionAriaLabel={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
+              />
             );
           })}
           {/* Refresh ILIMITADO neste modo: sem custo, sem teto — o servidor sorteia de novo a cada pedido. */}
           {!sparFailed && sparOpps !== null && (
-            <button
-              type="button"
-              data-treino-refresh
+            <SortearNovos
+              buttonProps={{ 'data-treino-refresh': true }}
               disabled={sparFighting !== null}
               onClick={() => { setSparOpps(null); loadSpar(); }}
-              style={{ ...sm2Button('outline', sparFighting !== null), width: '100%' }}
-            >
-              <Icon name="sync" size={20} />
-              {isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
-            </button>
+              label={isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
+            />
           )}
         </div>
       )}

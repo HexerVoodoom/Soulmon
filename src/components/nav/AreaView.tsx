@@ -41,6 +41,8 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { MinigameModeGate, type GateRanking } from '../play/MinigameModeGate';
+import { Match3Escolha } from '../play/Match3Escolha';
+import type { M3Choice } from '../../utils/match3Escolha';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
@@ -446,7 +448,7 @@ export function AreaView(props: AreaViewProps) {
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
-  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
+  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2; choice?: M3Choice } | null>(null);
   /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
      não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
   const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
@@ -772,7 +774,10 @@ export function AreaView(props: AreaViewProps) {
               tickets={isFunGame(game) ? funApi?.status(Date.now()).count : undefined}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
-              onPick={level => setModeChosen({ game, level })}
+              renderChoices={game === 'match3'
+                ? (level: 1 | 2, pick: (c: M3Choice) => void) => <Match3Escolha language={language} mode={level === 2 ? 'pvp' : 'adventure'} saveId={props.guild.saveId} playerLevel={props.playerLevel} onFight={pick} />
+                : undefined}
+              onPick={(level, choice) => setModeChosen({ game, level, ...(choice ? { choice: choice as M3Choice } : {}) })}
               onBack={exitGame}
             />
           </div>
@@ -825,7 +830,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} onEarnHonor={play.onEarnHonor} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} initialChoice={modeChosen?.choice} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} onEarnHonor={play.onEarnHonor} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('eco'); return creditado; }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); return creditado; }} />}
