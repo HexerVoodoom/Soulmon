@@ -23,8 +23,9 @@ import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
 import { ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
-import { essenceName, ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
-import { essencePackPrice, ESSENCE_PACK_SIZES } from '../../utils/essenceShop';
+import { essenceName } from '../../utils/essences';
+import { essenceUnitPrice } from '../../utils/essenceShop';
+import { EssenceBuySheet } from './EssenceBuySheet';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
@@ -458,14 +459,14 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
-  const [pendingEss, setPendingEss] = useState<{ id: string; qty: number; price: number } | null>(null);
+  const [pendingEss, setPendingEss] = useState<string | null>(null);
   const [buyingEss, setBuyingEss] = useState(false);
-  const confirmEssence = async () => {
-    const p = pendingEss;
-    if (!p || !onBuyEssence) return;
+  const confirmEssence = async (qty: number) => {
+    const id = pendingEss;
+    if (!id || !onBuyEssence) return;
     setPendingEss(null);
     setBuyingEss(true);
-    try { await onBuyEssence(p.id, p.qty); } finally { setBuyingEss(false); }
+    try { await onBuyEssence(id, qty); } finally { setBuyingEss(false); }
   };
   const label = (t: CambistaTab) => t === 'bits' ? 'Bits' : t === 'essences' ? (isPt ? 'Essências' : 'Essences') : (isPt ? 'Outros' : 'Other');
   return (
@@ -523,53 +524,41 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
             {elementsMatchingBases(slots, ESSENCE_ELEMENT_IDS).map(id => {
               const known = isPotionUnlocked(id, unlockedElements);
-              const owned = essences?.[id] ?? 0;
               const name = known ? essenceName(id, isPt) : '???';
               return (
                 <li key={id} data-essence-row={id} data-essence-locked={known ? undefined : ''} style={{ opacity: known ? 1 : 0.6, minHeight: 40, display: 'flex', alignItems: 'center', gap: 8, ...sm2Text }}>
                   {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
                   <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive')}>
                     {name}
-                    {known && <span data-essence-owned className="sm2-num" style={{ ...sm2Hint, marginLeft: 6 }}>×{owned}</span>}
                   </span>
-                  {known && onBuyEssence ? ESSENCE_PACK_SIZES.map(qty => {
-                    const price = essencePackPrice(id, qty);
-                    const can = price > 0 && credits >= price && !buyingEss && owned + qty <= ESSENCE_MAX_PER_ELEMENT;
-                    return (
-                      <button
-                        key={qty}
-                        type="button"
-                        data-essence-buy={qty}
-                        disabled={!can}
-                        aria-label={isPt ? `Comprar ${qty} ${name} por ${price} ${price === 1 ? 'Crédito' : 'Créditos'}` : `Buy ${qty} ${name} for ${price} ${price === 1 ? 'Credit' : 'Credits'}`}
-                        onClick={() => setPendingEss({ id, qty, price })}
-                        style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
-                      >
-                        <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
-                        <CreditIcon size={20} />
-                        <span className="sm2-num" data-essence-price>{price}</span>
-                      </button>
-                    );
-                  }) : (
-                    <span style={{ ...sm2Hint, flexShrink: 0 }}>{known ? (isPt ? `${essencePackPrice(id, 1)} Créd.` : `${essencePackPrice(id, 1)} Cr.`) : (isPt ? 'trancado' : 'locked')}</span>
+                  {known && onBuyEssence ? (
+                    <button
+                      type="button"
+                      data-essence-buy
+                      disabled={buyingEss}
+                      aria-label={isPt ? `Comprar ${name}, ${essenceUnitPrice(id)} ${essenceUnitPrice(id) === 1 ? 'Crédito' : 'Créditos'} cada` : `Buy ${name}, ${essenceUnitPrice(id)} ${essenceUnitPrice(id) === 1 ? 'Credit' : 'Credits'} each`}
+                      onClick={() => setPendingEss(id)}
+                      style={{ ...sm2Button('outline', buyingEss), flexShrink: 0, padding: '4px 10px', gap: 4 }}
+                    >
+                      <span>{isPt ? 'Comprar' : 'Buy'}</span>
+                      <CreditIcon size={20} />
+                      <span className="sm2-num" data-essence-price>{essenceUnitPrice(id)}</span>
+                    </button>
+                  ) : (
+                    <span style={{ ...sm2Hint, flexShrink: 0 }}>{known ? (isPt ? `${essenceUnitPrice(id)} Créd.` : `${essenceUnitPrice(id)} Cr.`) : (isPt ? 'trancado' : 'locked')}</span>
                   )}
                 </li>
               );
             })}
           </ul>
-          <PurchaseConfirmSheet
-            open={!!pendingEss}
+          <EssenceBuySheet
+            id={pendingEss}
             language={language}
-            question={pendingEss
-              ? (isPt
-                ? <>Comprar <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, true)}?</>
-                : <>Buy <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, false)}?</>)
-              : null}
-            balance={credits}
-            cost={pendingEss?.price ?? 0}
-            currency="credits"
+            credits={credits}
+            owned={pendingEss ? (essences?.[pendingEss] ?? 0) : 0}
+            busy={buyingEss}
             onCancel={() => setPendingEss(null)}
-            onConfirm={() => { void confirmEssence(); }}
+            onConfirm={qty => { void confirmEssence(qty); }}
           />
         </section>
       )}

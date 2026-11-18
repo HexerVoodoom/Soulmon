@@ -6440,3 +6440,94 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **UI.** Guia (PT/EN) explica: perder só reinicia os combates do andar atual. **Testes:** `dungeonIdle.profundidade.test.ts` (§477), `riftMap*.test.ts`.
 
 **Adendo (18/11/2026, dono):** no modal "Hoje" as bufadas saem da lista de Hábitos e vão para uma seção própria ABAIXO das normais (`role="group"`, separador sutil + texto "Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude."), mesma linha, negrito dourado. Sem bufadas, a seção não existe. A regra do §474 não muda (marcar = aceitar).
+
+## §478 — Widget grande da Home: o check só marca, os pontos entram ao abrir o jogo, moldura V-Pet básica (18/11/2026, dono)
+
+- **Decisão do dono:** construir o widget A (Home) do estudo `relatorio-widgets-grandes.md`: widget Android grande, na VERTICAL, que reproduz a Home (Soulmon + estado + tarefas de hoje). Ajusta-se à largura/altura que o launcher der, dentro de um limite (alvo 4x5, de 2x3 até 8x10; abaixo de 220dp de altura o V-Pet sai e fica só a lista; o texto cresce com a largura).
+- **O check do widget SÓ MARCA.** Grava `task_done` numa fila nativa do aparelho (`WidgetEventQueue.kt`, SharedPreferences, `eid` UUID + `ts` + id da tarefa, uma entrada por tarefa, teto 50) e a linha aparece riscada na hora. O widget NÃO dá comida, XP de Vínculo nem Bits e não fala com o servidor (sem login no nativo).
+- **Os pontos entram quando o jogo abre ou volta ao primeiro plano:** o app lê a fila (`peekWidgetEvents`), aplica cada evento pela MESMA regra do toque na Home (`applyTaskCompletion` em `src/utils/taskCompletionPay.ts`, extraída do `handleToggleTask`, com teste de paridade), grava o save local e só então apaga (`ackWidgetEvents`). Idempotente: tarefa já concluída/ausente = no-op; `eid` já aplicado = no-op (registro no aparelho, `STORAGE_KEYS.WIDGET_EVENTS_APPLIED`). Tarefa assombrada, premium e repetição seguem as regras atuais.
+- **Moldura:** o topo do widget é o bitmap do V-Pet com o casco PADRÃO (`vpet_moldura.png`, "o elemento básico que temos hoje"); sem variantes por elemento e sem SKU. O painel da lista usa as cores do casco. Placeholder aprovado até existir arte própria.
+- **Compatibilidade:** APK anterior não tem `peekWidgetEvents`; a web detecta pela rejeição e não drena (regra 5). Tudo do widget exige AAB novo.
+- **Escopo:** só TAREFA avulsa de hoje (abertas + concluídas hoje, até 12). Hábitos ficam fora do check do widget nesta versão.
+
+**Alternativa que perdeu:** pagar no próprio widget (regra copiada no Kotlin) ou exigir login nativo. Perdeu por duplicar a regra de pagamento (footgun 9) e abrir uma superfície de token sem revisão de segurança.
+
+**Gatilho para rever:** o dono querer hábitos no check do widget, o ganho aparecer no widget sem abrir o jogo, ou launcher de fabricante cortar a lista (testar em aparelho).
+
+**Adendo (18/11/2026, dono): hábitos do dia no widget.** A lista do widget passa a ser o "Hoje" da Home inteiro, na mesma ordem do `DailyRituals`: Tarefas (avulsas de hoje, tarefas de dias específicos, concluídas hoje) e depois Hábitos (abertos, feitos), até 24 itens, rolável. Cada linha leva o tipo (`task`/`habit`). O check de hábito grava `habit_done` (eid UUID, id, ts, data local) na mesma fila e também SÓ MARCA. Ao abrir, o app paga pela regra do toque no hábito da Home (`applyHabitCompletion` em `src/utils/habitCompletionPay.ts`, extraída de `handleToggleActivityCompletion`, com teste de paridade): virada pendente primeiro, comida, constância, bônus de maturidade, Vínculo e marco 7/21/66 iguais; o selo dos passos e a cerimônia do marco também rodam. Idempotente: hábito já feito hoje = ignora; eid repetido = no-op. **Check de ontem não conta hoje** (a virada já fechou o dia; o evento só é descartado). **Hábito com etapas** aparece sem check (na Home ele fecha pelas etapas). Diferença consciente do toque antigo: o updater compartilhado nunca DESMARCA um hábito já feito (o antigo invertia o estado num toque duplo antes do re-render).
+
+## §479 — Cambista: a lista não mostra posse; comprar abre o modal com seletor de quantidade (18/11/2026, pedido do dono)
+
+**Decisão:** nas linhas do Cambista (aba Essências) some o "×N" de estoque (§#1050); tocar numa linha abre `EssenceBuySheet` (imagem, nome, custo unitário, "Você tem N", − / número / +, custo total ao vivo, Cancelar / "Comprar N · custo"). A moeda do Cambista de essências é **Crédito**, não Bits. A venda de poções elementais não mora no Cambista (poção é criada pela Vesca com essências), então o fluxo cobre as essências.
+
+**Teto (máximo do seletor):** `min(ESSENCE_MAX_PER_BUY = 100, ESSENCE_MAX_PER_ELEMENT (1.000.000) − estoque, maior N que o saldo de Créditos paga)`. O teto de estoque já existia (`essences.ts`, servidor 409 `cap`); o limite de 100 por compra é novo (decisão minha, ajustável numa constante). Máximo 0: botão desabilitado com "Estoque cheio" ou "Créditos insuficientes".
+
+**Contrato:** `POST /api/entitlements?action=buy-essence` aceita `qty` inteiro 1..100 (antes só 1 ou 5; retrocompatível: 1 e 5 custam o mesmo de antes). Preço = grupos COMPLETOS de 5 com 10% off (arredondado para baixo) + resto no unitário; o servidor continua dono do preço, do saldo, do trancado e do teto (400 `bad-qty`, 402, 403, 409). Paridade cliente x servidor em `essenceShop.parity.test.js`.
+
+**Alternativa que perdeu:** N chamadas de 1 (não atômico, N cobranças e N opIds).
+
+**Gatilho para rever:** pedido de limite diferente por compra, ou o dono querer o desconto de 10% em qualquer N.
+
+**Adendo (18/11/2026, dono): SEM limite por compra.** Some o teto de 100 (`ESSENCE_MAX_PER_BUY`). Máximo do seletor = min(1.000.000 − estoque, maior N que o saldo de Créditos paga), por busca binária (preço monótono). O servidor aceita qualquer inteiro seguro ≥1; acima do teto de estoque segue 409 `cap`, sem saldo 402, não inteiro/≤0 400 `bad-qty`. Mesma regra de preço (10% por grupo completo de 5); a conta é inteira e para N ≤ 1.000.000 não passa de 3 milhões. Paridade cobre 1, 5, 99, 100, 101, 1000, 999.999 e 1.000.000. O campo do meio aceita digitar até 7 dígitos com clamp; segurar para repetir ficou de fora.
+
+## §480 — Decoração com luz: halo + afterglow, apaga ao dormir; luz "de noite" é o contrário (18/11/2026, dono)
+
+**Decisão:** peças que emitem luz (lâmpada, lanterna, fogueira, lanterna de pétalas, altar de magma, flor de brasa) ganham halo suave que pulsa e APAGAM com o pet dormindo (`isSleeping` da Home): halo some, arte escurece (filtro). `furn-mushrooms` faz o inverso (acende ao dormir) — easter egg: nenhum texto menciona. Fonte única em `utils/decorLuz.ts`; só opacity/transform; movimento reduzido = estado estático.
+
+**Alternativa que perdeu (por ora):** gerar versão "apagada" da arte no ChatGPT. Escurecer por filtro entrega o efeito sem peso de asset; arte própria apagada fica na fila (`docs/ASSETS-A-GERAR.md`).
+
+**Auditoria de luz:** lamp, lantern, campfire, cerejeira-lanterna-de-petalas, lava-altar-de-magma, lava-flor-de-brasa. Fora: crystal, cauldron, window, garland (bandeirinhas) — não são fonte de luz.
+
+**Gatilho para rever:** o dono pedir a arte apagada autoral, ou a biblioteca de efeitos chegar.
+
+**Adendo §480 — Fliperama de Canto:** tocar na peça (botão ≥44px, `aria-label` "Abrir minigames"/"Open minigames", invisível) chama `onGoToBuilding('jogos.salao')`, o mesmo caminho do Caderno: abre a folha do Salão existente (tickets/energia regidos por ela). Fora do editor da Home (sem handler = só cenário).
+
+**Adendo §480 — Sino e Ampulheta:** sino de vento = som PROCEDURAL (`parciaisSinoDeVento`, 4 variações, `playWindChime`, categoria `arcade`, offset +1,9 dB medido no arnês nominal; NÃO OUVIDO, falta gate S8), agendado por `hooks/useWindChime.ts` a cada 14–38 s aleatórios, só na Home real (`somAtivo`), pet acordado, aba visível, áudio já liberado, mudo global respeitado, sem som em movimento reduzido. Ampulheta = 3 grãos turquesa em CSS caindo no gargalo (sem asset novo). **Biblioteca pixelfx** (patch-gg/pixelfx, MIT, © Patch / Hugo Duprez; fonte da galeria fora da licença): clonada em `E:/Soulmon-wt/aprovacao/pixelfx-src` e skill instalada em `~/.claude/skills/pixelfx`; NÃO entrou no bundle (canvas em pixel 128×128 + core ~140 KB; estilo ainda a validar com o dono).
+
+## §481 — Fogueira sem fogo + fogo pixelfx; tela animada no Fliperama (18/11/2026, dono)
+
+**Decisão:** a Fogueira do palco usa a arte SEM fogo em 2 camadas (`furn-campfire-base.png`: toras e pedras; `furn-campfire-frente.png`: aro e postes; o fogo passa entre as duas; `furn-campfire-apagada`, derivada por edição de pixel da arte aprovada: chama removida, aro de trás redesenhado) e o fogo é um sprite do pixelfx (efeito `fire/campfire` sem toras/brasas, paleta turquesa, 30 quadros 80×128 (chama larga, como a original) em `furn-campfire-fogo.png`) que passa por trás da arte via `steps()` (CSS, só transform/opacity). Dormindo: o fogo some e fica uma brasa turquesa fraca. A loja continua mostrando a arte original com fogo. O Fliperama ganha tela viva (`ArcadeTela`, canvas 40×40 a ~10 fps: invasores + nave + tiro em turquesa médio de contraste baixo, com linhas de varredura, faixa que desce, tremida e ruído); pausa em aba oculta; pet dormindo = tela escurecida; movimento reduzido = quadro parado.
+
+**Licença:** pixelfx é MIT (© 2026 Patch, © 2026 Hugo Duprez; a fonte da galeria NÃO entra). O sprite é derivado de `src/fx/fire/campfire.js` (que adapta o fogo do Sprite Fusion, MIT). Nenhum código da biblioteca roda no app: só a tira de imagem.
+
+**Alternativa que perdeu:** embarcar o core do pixelfx (~140 KB) e desenhar em canvas em tempo real; e gerar a fogueira sem fogo no ChatGPT (edição de pixel é determinística e fiel à arte aprovada).
+
+**Gatilho para rever:** o dono preferir o fogo mais largo/alto, ou a arte autoral sem fogo via ChatGPT.
+
+## §482 — Fliperama de Canto: sai da loja e vira prêmio do 1º lugar nos rankings mensais de minigame (18/11/2026, dono)
+
+**Decisão:** o Fliperama de Canto (`furn-arcade-cab`) deixa de ser vendido (sai de `SHOP_ITEMS`, do espelho `FEIRA_LOJA_CATALOGO` e de `decorPrices.ts`; entra em `RANK_ITEMS` (shop.ts, vizinho de `GUILD_ITEMS`), o trilho de "conquista que não se compra": `not-for-sale`, equipável na folha "da sua roda"). Quem já comprou segue dono (posse permanente). No FECHAMENTO DO MÊS, quem liderou o ranking MENSAL de cada minigame dos prédios de jogos ganha o item: hoje `match3` (Aventura do Elemental Fusion) e `match3-pvp`. Entrega AUTOMÁTICA pelo servidor (`functions/api/_arcadePrize.js`, fechamento preguiçoso no primeiro acesso de ranking do mês seguinte, junto do Rift): trava por mês, marca idempotente `arcade:<mês>:<jogo>` no `ent.rankPrizes` + id em `ent.itemPrizes` sob a trava do ent, auditoria `arcade-prize:<mês>:<jogo>`, simulados nunca ganham, conta apagada recusa. O cliente lê `itemPrizes` do GET de entitlements e põe o item no save (`grantGuildTrophy`). Texto no ranking mensal do Elemental Fusion: "O 1º do mês ganha o Fliperama de Canto."
+
+**Item único:** quem já tem o item (save gravado ou `itemPrizes`) e vence de novo cai no PRÊMIO ALTERNATIVO `ARCADE_ALT_PRIZE` (`{ enabled: false }`: DESLIGADO até o dono escolher; hoje só registra `owned`). Opções propostas ao dono, derivadas da economia existente: (a) Créditos, na faixa do prêmio do Rift (`RIFT_PAYOUT` 50/25/10, então 25 como degrau do meio); (b) 1 essência do elemento do jogador (a mesma unidade do Cambista); (c) outra decoração de vitrine de preço semelhante (700 Bits como referência do preço antigo). Só `credits` está implementado.
+
+**Fora desta decisão (perguntar ao dono):** o Endless Rift é da Masmorra, não dos dois prédios de minigame, e já tem prêmio próprio em Créditos. Os rankings SEMANAIS dos dois prédios não têm agregado mensal e NÃO foram inventados: Salão (`dino-1`, `dino-2`, `ppt`, `soul-barrage`, `soul-barrage-2`) e Ateliê da Mente (`eco`, `zip`, `patches`; zip e patches são por tempo, menor vence). Falta o dono dizer se o prêmio deles é por semana, ou por um agregado mensal novo (ex.: quem mais semanas liderou).
+
+**Alternativa que perdeu:** pendente aprovado à mão como o Rift (o dono pediu entrega automática); premiar a cada semana (dá o item toda semana).
+
+**Gatilho para rever:** escolha do prêmio alternativo, ou decisão sobre os rankings semanais.
+
+**Adendo §482 — a entrega é uma CARTA do Papus com o item anexo (dono, 18/11/2026):** o servidor não concede o item direto: ao fechar o mês, manda ao vencedor uma carta do correio (`functions/api/_mensageiro.js`) com parabéns em PT/EN ("Parabéns pelo 1º lugar!", jogo e mês no corpo, sem citar outros itens) e o Fliperama de Canto de ANEXO (`item`, lista fechada `MAIL_ITEMS`). O jogador abre a carta e resgata; o resgate (`claimMail`, uma vez por `mid`) devolve o `item` e o cliente o põe em `ownedFurniture` (`applyMail` → `grantGuildTrophy`, junto de `mailClaimed`). Carta com anexo pendente conta como prêmio pendente: nunca expira nem some sem `force` (o correio já avisa antes de apagar). Idempotência: o `mid` `arcade:<mês>:<jogo>` (o correio nunca aceita o mesmo duas vezes) + trava do mês + auditoria `arcade-prize:<mês>:<jogo>`. Item único: quem já tem (save gravado ou outra carta com o anexo) recebe a carta SEM anexo (só o aplauso) ou, com `ARCADE_ALT_PRIZE` ligado, com Bits/Honra anexados (desligado até o dono escolher; essência e outra decoração pedem suporte novo no correio). Sai o caminho antigo por `ent.itemPrizes` (nunca foi para produção).
+
+## §483 — Espelho Escuro abre o Perfil (18/11/2026, dono)
+
+**Decisão:** na Home, tocar no Espelho Escuro (`furn-el-sombra`) abre o Perfil (`onGoToBuilding('laboratorio.perfil')`, o mesmo caminho do Fliperama e do Caderno). Botão invisível sobre a peça, alvo ≥44px, rótulo "Abrir perfil" / "Open profile"; só na Home real (sem handler no editor da Home, a peça é só cenário). Sem arte nova.
+
+**Gatilho para rever:** o dono querer um brilho/animação no espelho.
+
+## §484 — Três bugs do decor achados na Home real: toque nas peças, brilho de noite, parede atrás (18/11/2026, dono)
+
+**Bugs e causa:** (1) tocar no Fliperama de Canto (e no Espelho Escuro) não fazia nada: o botão morava dentro de `PetStageDecor`, camada de TRÁS com `aria-hidden`, e o grupo do pet (`inset: 0`, depois no DOM) cobre o palco inteiro e engolia o toque (e o leitor de tela não anunciava o botão). (2) o cogumelo "não acendia" ao apagar a luz: a luz da Home é a soneca (o botão da soneca é a "luz do display"; `isSleeping`, que a Home também liga com `dayWakePending`), e o véu da noite (`data-sleep-veil`, 55% de escuro) fica por cima da decoração, então o cogumelo aceso morava sob o véu. (3) a parede era a ÚLTIMA de `SLOT_ORDER`, desenhada por cima das outras peças.
+
+**Correções:** (1) `PetStageToques`: camada própria (`z-index 5`, contêiner sem captura de toque, só o botão ≥44px, fora de `aria-hidden`, `stopPropagation`) com os toques do Fliperama (→ Salão de jogos, `jogos.salao`) e do Espelho (→ Perfil, `laboratorio.perfil`); sem handler (editor da Home) não renderiza. (2) `PetStageBrilhos`: o brilho das peças "de noite" (arte cheia + halo) vai numa camada DEPOIS do véu; acordado fica em opacidade 0. Lanterna, fogueira e demais luzes seguem apagando com o sono (o halo some e a arte escurece; o véu já as escurece). Há um só gatilho de "luz apagada" na Home: o sono (soneca manual, sono automático, ou o app aberto com o pet dormindo). (3) `DRAW_ORDER` põe a parede primeiro, atrás de tudo; `SLOT_ORDER` segue como ordem de catálogo/editor, e o editor da Home e a Home usam o mesmo `PetStageDecor`.
+
+**Régua:** `CompanionHUD.decorBugs.render.test.tsx` (Home real: toque abre Salão e Perfil, z-index do toque acima do pet, brilho depois do véu, lanterna/fogueira apagam, parede primeiro).
+
+**Gatilho para rever:** se existir outro jeito de "apagar a luz" além da soneca, ligar o mesmo estado.
+
+**Adendo §484 — cogumelo aceso mais forte (dono, 18/11/2026):** acendia, mas fraco. A camada de brilho usa a arte ORIGINAL (a clara) com `brightness(1.3) saturate(1.25)` e dois `drop-shadow` turquesa, e o halo sobe para 190% da caixa a 100% de opacidade (pulso suave 1 → .82). O estado apagado (acordado) segue escurecido por filtro.
+
+## §485 — Ranking: botões PvE/PvP aplicados, lista sem moldura interna (18/11/2026, pedido do dono)
+
+**Decisão:** o par PvE/PvP usa o `BotaoEspecial` com `variant="pve"|"pvp"` (arte do #1072) no Match-3 (Aventura/PVP), no Salão (`MinigameModeGate`) e no Torneio (Treino/Sparring = pve, Ranqueada = pvp; a aba escolhida usa o estado pressionado e mantém `role="radio"`). Sai a moldura de cobre interna do ranking do Salão ("borda dentro de borda") e as posições 1–10 ganham o número em `gold-ink`. Pódio em degraus (opção A do dono) = o atual §326.
+**Alternativa que perdeu:** um `BotaoModo` próprio (duplicaria `BotaoEspecial`).
+**Gatilho para rever:** setas de subida/descida pedem a posição anterior no servidor (hoje não existe); modal de ranking e botão especial dependem da arte nova.

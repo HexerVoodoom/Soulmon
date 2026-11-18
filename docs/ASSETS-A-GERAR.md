@@ -1,5 +1,11 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — botões PvE e PvP do ranking (18/11/2026, pedido do dono)
+`ui/btn-pve{,-press,-off}.webp` (pedra com musgo, folhinha, diamante da alma) e `ui/btn-pvp{,-press,-off}.webp` (faixa vermelha, ouro envelhecido com espinhos), 580×~145, alfa real, ChatGPT (referência: `btn-especial*`). Uso: `BotaoEspecial variant="pve"|"pvp"`. Fonte/prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ranking/`.
+
+## FEITO — arte do modal FILES (18/11/2026, pedido do dono; só a arte)
+`ui/files/` (11 peças WebP alfa real, ChatGPT, ref3 cristal-chama): moldura em fatias (topo/base/laterais), cristal separado, abas normal/ativa, slot vazio/selecionado e disquete 3.5" normal/selecionado para comidas (rótulo creme liso para a arte da comida). Medidas e uso em `ui/files/LEIA-ME.md`. Falta o código do modal montar a moldura (outro agente).
+
 ## FEITO — ícone dos Créditos: diamante turquesa (18/11/2026, pedido do dono; aguarda aprovação visual)
 `icones-ui/moeda-creditos.png` (256², alfa real, legível a 20 px) trocou o glifo `diamond` em todos os pontos de Créditos via `CreditIcon` (AccountSection, CreditsModal, Cambista/ShopShelf, MercadoSheets). Moeda premium = Créditos (comprada com dinheiro de verdade, vira Bits no Cambista). Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/`.
 
@@ -1266,3 +1272,6 @@ Prioridade **baixa**. Os enfeites da Honra (`honraDecor`) mantêm por enquanto o
 
 - [ ] Gerar arte própria da Honra (machado) para substituir o emoji ⚒️ em `honraDecor`.
 - [ ] Gerar arte própria da Honra (cajado) para substituir o emoji 🔮 em `honraDecor`.
+
+- [ ] Versão APAGADA (autoral, ChatGPT, reprodução fiel) de lamp, lantern, campfire, lanterna de pétalas, altar de magma, flor de brasa; hoje o apagado é filtro CSS (§480). Fogueira: feito em §481 (sem fogo + fogo pixelfx). Cogumelos: arte atual = aceso; gerar versão apagada.
+- [ ] Quadros de animação da Ampulheta (areia caindo, grãos turquesa).

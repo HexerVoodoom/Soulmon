@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget grande da Home (18/11/2026): na VERTICAL, 4x5 sugerido. Celula ~ 70n - 30 dp: min 3x4 (180x250), redimensiona de
+     2x3 (110x180) ate 8x10 (530x670). Quem limita de verdade e a grade do launcher (fabricante): o resto e sugestao. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="250dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="180dp"
+    android:maxResizeWidth="530dp"
+    android:maxResizeHeight="670dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="5"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_soulmon_home"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_home_description"
+    android:previewImage="@drawable/widget_preview_vpet" />

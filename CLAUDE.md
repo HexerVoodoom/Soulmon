@@ -1,5 +1,8 @@
 # Soulmon — Guia para agentes
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agentes/sessões que não abrem modal devolvem a dúvida à sessão principal, que pergunta em modal; enquanto isso, decidem pela opção mais segura e registram. Ao briefar qualquer agente, repetir esta regra. `docs/PERGUNTAS-DO-DONO.md` é só registro, nunca canal de pergunta.
+
+
 > **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
 > **Checklist de revisão de arte:** conferir pela CATEGORIA do asset, conforme `docs/REGRA-IDENTIDADE-SOULMON.md` (versão de 09/11/2026). Criatura/sprite, FX e ícone de elemento NÃO são reprovados por faltar turquesa, cristal, cobre ou circuito: ali o elemento e a espécie mandam.
 

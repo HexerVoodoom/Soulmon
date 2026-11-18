@@ -20,6 +20,8 @@ const DONE_MAX = 100;
 const TTL_S = 86400 * 400;
 export const MAIL_BITS_MAX = 5000;
 export const MAIL_EMBLEMS_MAX = 500;
+/** Itens de decoração que uma carta pode levar de ANEXO (§482). Lista fechada: dado de fora nunca inventa item. */
+export const MAIL_ITEMS = new Set(['furn-arcade-cab']);
 
 const texto = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const inteiro = (v, max) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0);
@@ -35,6 +37,7 @@ export function sanitizeMail(m) {
     mid, bodyPt, bodyEn,
     titlePt: texto(m.titlePt, 60) || tituloDe(bodyPt), titleEn: texto(m.titleEn, 60) || tituloDe(bodyEn),
     bits: inteiro(m.bits, MAIL_BITS_MAX), emblems: inteiro(m.emblems, MAIL_EMBLEMS_MAX),
+    ...(MAIL_ITEMS.has(m.item) ? { item: m.item } : {}),
     at: inteiro(m.at, Number.MAX_SAFE_INTEGER),
     read: m.read === true || inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER) > 0,
     claimedAt: inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER),
@@ -58,7 +61,7 @@ const PID_RE = /^[a-zA-Z0-9_-]{8,64}$/;
 const tituloDe = (corpo) => { const f = corpo.split(/(?<=[.!?])\s/)[0] || corpo; return f.length > 60 ? `${f.slice(0, 57)}...` : f; };
 
 /** Tem prêmio e ainda não foi resgatado. */
-export const pendingReward = (m) => (m.bits > 0 || m.emblems > 0) && !m.claimedAt;
+export const pendingReward = (m) => (m.bits > 0 || m.emblems > 0 || !!m.item) && !m.claimedAt;
 
 /** Sem prêmio pendente e velha demais (contada do envio, ou do resgate se foi depois). */
 const expirada = (m, now) => !pendingReward(m) && m.at > 0 && now - Math.max(m.at, m.claimedAt) > MAIL_TTL_MS;
@@ -99,6 +102,12 @@ export const falhaDaCarta = (onde, saveId) => (err) => {
   console.warn(`[mensageiro] carta não processada (${onde}); a ação principal segue valendo`, { saveId, error: err?.message ?? String(err) });
 };
 const gravar = (kv, id, rec) => kv.put(`mail:${id}`, JSON.stringify(rec), { expirationTtl: TTL_S });
+
+/** Alguma carta da caixa leva esse item de anexo (resgatada ou não)? Só leitura; falha do KV propaga. */
+export async function temItemNaCaixa(kv, id, item) {
+  const rec = await ler(kv, id);
+  return rec.q.some(m => m.item === item);
+}
 
 /** Enfileira uma carta. Mesmo `mid` (na fila ou já confirmado) e simulado são no-op.
  *  `recusarSeCheia`: não entra se a fila já está no teto só com prêmio pendente (o corte apagaria um prêmio; quem chama usa o caminho antigo). */
@@ -248,7 +257,7 @@ export async function claimMail(kv, id, mids, now = Date.now(), db) {
   const resgatadas = new Set(candidatas.map(m => m.mid));
   rec.q = rec.q.map(m => {
     if (!resgatadas.has(m.mid)) return m;
-    if (ganhas.has(m.mid)) granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems });
+    if (ganhas.has(m.mid)) granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems, ...(m.item ? { item: m.item } : {}) });
     return { ...m, read: true, claimedAt: now };
   });
   try {

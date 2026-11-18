@@ -71,6 +71,29 @@ Só o dono:
 | Widget redimensionável com texto por prioridade | ✅ #542 | `SoulmonWidgetAdaptiveProvider`, `WidgetAdaptive.kt`; Gradle e 5 testes passaram localmente | nunca visto em aparelho; só chega com AAB novo |
 | Arena escala: Rookie, Champion, Ultimate, sem subir ao perder | ✅ #543 | `arenaLadder`, §222; números vêm de simulação | não jogado; a dificuldade inicial segue igual à de hoje |
 
+## 1.1 Widget grande da Home (18/11/2026, REGISTRO §478) — o que depende do dono
+
+Código na `main` (PRs do widget da Home). Kotlin compilado e JUnit verdes LOCALMENTE (Gradle offline, sem assinar); **nunca instalado em aparelho**.
+
+**Adendo (hábitos no widget, PR `feat/widget-home-habitos`): o AAB novo TEM que ser gerado DEPOIS do merge deste PR**, senão o widget sai sem hábitos e sem `habit_done`.
+
+| Passo | Quem | Estado |
+|---|---|---|
+| Gerar e assinar AAB novo (subir `versionCode`) e mandar ao teste interno | Dono | ⬜ 📱 |
+| Pôr o widget "Soulmon: hoje" na tela inicial; conferir tamanho padrão 4x5 e redimensionar (estreito, baixo < 3 linhas some o V-Pet, alto até a tela útil) | Dono | ⬜ 📱 |
+| Marcar uma tarefa no widget com o app FECHADO: a linha fica riscada na hora e nada muda no jogo ainda | Dono | ⬜ 📱 |
+| Abrir o jogo: a tarefa sai da lista e paga IGUAL ao toque na Home (mesma comida, mesmo Vínculo; assombrada com comida extra); toast "marcada no widget" | Dono | ⬜ 📱 |
+| Fechar e abrir de novo / marcar duas vezes: não paga duas vezes | Dono | ⬜ 📱 |
+| Concluir a mesma tarefa no app antes de abrir pelo widget: o evento vira no-op | Dono | ⬜ 📱 |
+| Virar a meia-noite com o app fechado: a lista some ("Abra o Soulmon…"), sem check em tarefa de ontem | Dono | ⬜ 📱 |
+| Testar em 2 fabricantes (ex.: Pixel/AOSP e Samsung ou Xiaomi): altura máxima, rolagem da lista, toque no check | Dono | ⬜ 📱 |
+| APK antigo + web nova: nada quebra (sem widget novo, sem drenagem) | Dono | ⬜ 📱 |
+| Hábitos: a lista mostra Tarefas e depois Hábitos na mesma ordem da Home; hábito com etapas aparece sem check | Dono | ⬜ 📱 |
+| Marcar um hábito no widget com o app fechado e abrir: paga igual ao toque na Home (comida, constância, Vínculo; marco 7/21/66 com cerimônia) | Dono | ⬜ 📱 |
+| Marcar o hábito no widget às 23h59 e abrir o jogo depois da meia-noite: NÃO conta para o dia novo | Dono | ⬜ 📱 |
+
+Não verificado por ninguém: aparência real (escala do bitmap do V-Pet, cores do painel), rolagem da `ListView` em cada launcher, tempo até o check aparecer, comportamento com "economia de bateria" agressiva.
+
 ## 2. Pedidos de 04/11/2026
 
 | # | Pedido | Estado | Responsável | Evidência e o que falta |

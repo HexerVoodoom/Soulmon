@@ -5038,6 +5038,48 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   @keyframes sm2-elem-new-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
 }
 
+
+/* ── Decoração que emite luz (REGISTRO §480): halo com afterglow que pulsa de leve; apaga (ou acende, nos de noite) conforme o sono do pet.
+   Só opacity/transform. Movimento reduzido: o bloco canônico acima zera a animação e fica o estado estático. */
+.sm-decor-luz-halo {
+  --sm-luz-cor: hsl(32 95% 62%);
+  position: absolute; z-index: 0; aspect-ratio: 1; transform: translate(-50%, -50%) scale(.85); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sm-luz-cor) 70%, transparent), color-mix(in srgb, var(--sm-luz-cor) 22%, transparent) 55%, transparent 100%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity 1.2s ease, transform 1.2s ease;
+}
+.sm-decor-luz-halo[data-tom="turquesa"] { --sm-luz-cor: var(--sm2-primary-ink, hsl(176 82% 55%)); }
+.sm-decor-luz-halo[data-tom="petala"] { --sm-luz-cor: hsl(340 85% 72%); }
+.sm-decor-luz-halo[data-tom="cogumelo"] { --sm-luz-cor: hsl(165 90% 60%); }
+.sm-decor-luz-halo[data-on] { opacity: .85; transform: translate(-50%, -50%) scale(1); animation: sm-decor-luz-pulso 3.6s ease-in-out infinite; }
+@keyframes sm-decor-luz-pulso { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .6; transform: translate(-50%, -50%) scale(.94); } }
+
+.sm-decor-brilho { opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-brilho[data-on] { opacity: 1; }
+/* Cogumelos acesos: o halo vai a 100% e o brilho de bioluminescência é forte (o véu da noite não o apaga). */
+.sm-decor-brilho .sm-decor-luz-halo[data-on] { opacity: 1; animation-name: sm-decor-brilho-pulso; }
+@keyframes sm-decor-brilho-pulso { 0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .82; transform: translate(-50%, -50%) scale(.96); } }
+
+/* Quadro quadrado da arte (168×168) dentro da caixa do slot: overlays em % da arte (fogo da fogueira, tela do fliperama). */
+.sm-decor-quadro { position: absolute; inset: 0; container-type: size; display: grid; place-items: center; pointer-events: none; }
+.sm-decor-quadro-i { position: relative; width: min(100cqw, 100cqh); aspect-ratio: 1; }
+/* Fogo pixelfx (MIT, patch-gg/pixelfx): tira de 30 quadros de 80×128 passando em steps(); só transform/opacity. Base do fogo no cruzamento das toras. */
+.sm-decor-fogo { position: absolute; left: 8%; top: -39.5%; width: 84%; aspect-ratio: 80 / 128; overflow: hidden; opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-fogo[data-on] { opacity: 1; }
+.sm-decor-fogo img { display: block; height: 100%; width: 3000%; max-width: none; image-rendering: pixelated; animation: sm-decor-fogo-quadros 3s steps(30) infinite; }
+@keyframes sm-decor-fogo-quadros { to { transform: translateX(-100%); } }
+.sm-decor-brasa { position: absolute; left: 42%; top: 66%; width: 16%; aspect-ratio: 2; border-radius: 50%; background: radial-gradient(closest-side, hsl(176 80% 50% / .5), transparent); opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-brasa[data-on] { opacity: .55; animation: sm-decor-brasa-pulso 4.5s ease-in-out infinite; }
+@keyframes sm-decor-brasa-pulso { 50% { opacity: .3; } }
+/* Tela do fliperama: 41×40 px da arte em (70,44). */
+.sm-decor-tela { position: absolute; left: 41.7%; top: 26.2%; width: 24.4%; height: 23.8%; image-rendering: pixelated; border-radius: 2px; opacity: .92; }
+
+/* Ampulheta (REGISTRO §480): grãos turquesa caindo pelo gargalo. Só transform/opacity; reduzido = grãos parados no gargalo. */
+.sm-decor-areia { position: absolute; left: 50%; top: 44%; width: 10%; height: 26%; transform: translateX(-50%); pointer-events: none; }
+.sm-decor-areia i { position: absolute; left: 50%; top: 0; width: 2px; height: 2px; margin-left: -1px; background: var(--sm2-primary-ink, hsl(176 82% 55%)); box-shadow: 0 0 3px hsl(176 90% 70%); opacity: 0; animation: sm-decor-areia-cai 1.5s linear infinite; }
+.sm-decor-areia i:nth-child(2) { animation-delay: .5s; margin-left: -2px; }
+.sm-decor-areia i:nth-child(3) { animation-delay: 1s; margin-left: 0; }
+@keyframes sm-decor-areia-cai { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(22px); } }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
    ═══════════════════════════════════════════════════════════════════════════
@@ -5062,6 +5104,10 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      e ainda podem receber a propriedade por inline em algum ponto. */
   .sm-haunt-particle,
   .sm-visor-hop,
+  .sm-decor-luz-halo,
+  .sm-decor-areia i,
+  .sm-decor-fogo img,
+  .sm-decor-brasa,
   .sm-battle-idle { animation: none !important; }
 }
 
@@ -5211,6 +5257,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-danger: #FF8B8B;
   /* Aviso discreto sobre o vidro (fome 'faminto'): dourado claro, nunca vermelho — o estado descreve, não cobra. */
   --sm2-viewport-warn: #EBBE84;
+  /* Realce turquesa SOBRE o vidro escuro (modal Files: aba ativa, foco, "i"): claro nos dois temas, como `--sm2-viewport-ink`. */
+  --sm2-viewport-accent: #5FF3E0;
   /* CRÉDITOS — a moeda de dinheiro real. É a única das três cuja distinção é
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
@@ -5273,6 +5321,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-ring-deep: #241507;
   --sm2-viewport-danger: #FF8B8B;
   --sm2-viewport-warn: #EBBE84;
+  --sm2-viewport-accent: #5FF3E0;
   --sm2-credit-ink: #C9A7FF;
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
@@ -5955,6 +6004,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 @media (prefers-reduced-motion: reduce) {
   .sm2-vit-chakra[data-ready="true"] { animation: none; }
   .sm2-evo-run { animation: none; padding-left: 0; }
+  .sm2-cristal-chama[data-pulsar] { animation: none; } /* CristalChama */
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
@@ -8452,6 +8502,117 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-chatbar { padding: 0; background: none; border: 0; box-shadow: none; }
 .sm3-mochila-painel { min-height: 120px; }
 
+/* ── MODAL FILES (18/11/2026) ────────────────────────────────────────────────
+   Referência escolhida pelo dono: `E:/Soulmon-assets/referencias-files/ref3-cristal-chama-ESCOLHIDA.jpg` (pasta de computador minimalista).
+   Moldura = a ARTE APROVADA de `assets/soulmon/ui/files/` (LEIA-ME) sobre o `ModalFrame`: `--u` = 1% da largura do modal; as medidas em `u` são
+   px do arquivo / 720 * 100. Topo 720×146: a barra opaca começa em y 35 (o resto, cipós e encaixe do cristal, sobra para cima) e vai até y 142;
+   os discos (fechar à esquerda, "i" à direita) têm centro em x 56 / 664, y 98 e diâmetro 56. Base 720×29; laterais 25 px (repeat-y). */
+.sm3-mochila.sm3-files {
+  max-width: 520px; min-height: 56vh; max-height: 90vh; padding: 0; overflow: visible;
+  background-color: var(--sm2-viewport-bg); border: 0; border-radius: 0; color: var(--sm2-viewport-ink);
+  --sm2-moldura-pad-x: calc(var(--u) * 5); --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 5);
+}
+.sm2-moldura-modal--files .sm2-moldura-modal__topo { top: calc(var(--u) * -4.86); height: calc(var(--u) * 20.28); background-image: url('./assets/soulmon/ui/files/files-topo.webp'); }
+.sm2-moldura-modal--files .sm2-moldura-modal__base { height: calc(var(--u) * 4.03); background-image: url('./assets/soulmon/ui/files/files-base.webp'); }
+.sm2-moldura-modal--files .sm2-moldura-modal__lado { width: calc(var(--u) * 3.47); }
+.sm2-moldura-modal--files .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/files/files-lado-e.webp'); }
+.sm2-moldura-modal--files .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/files/files-lado-d.webp'); }
+/* Sem placa de madeira: o título é do cabeçalho do Files. Fundo = a grade da referência (sem pedra com runas). Linhas discretas a 5% da tinta (o dono pediu a grade sutil de volta). */
+.sm2-moldura-modal--files .sm2-moldura-modal__placa { display: none; }
+.sm2-moldura-modal--files.sm2-moldura-modal--pedra .sm2-moldura-modal__fundo {
+  opacity: 1; background-size: calc(var(--u) * 12) calc(var(--u) * 12); background-repeat: repeat; background-position: center top;
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--sm2-viewport-ink) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--sm2-viewport-ink) 5%, transparent) 1px, transparent 1px);
+}
+/* O "i": o disco direito do topo é vazio na arte, então o botão (transparente, ≥ 44 px) desenha a letra no centro dele. */
+.sm2-moldura-modal--files .sm2-moldura-modal__info { right: calc(var(--u) * 3.8); top: calc(var(--u) * 4.75); width: calc(var(--u) * 8); height: calc(var(--u) * 8); }
+.sm2-moldura-modal--files .sm2-info-hit::before {
+  content: 'i'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  /* não a display (Cinzel só tem maiúsculas: o "i" virava "I") */
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-viewport-ink);
+}
+.sm2-moldura-modal--files .sm2-info-hit:focus-visible { outline-color: var(--sm2-viewport-accent); }
+.sm3-files .sm2-moldura-modal__conteudo { padding: 0 var(--sm2-moldura-pad-x) calc(var(--u) * 4.03 + 10px + env(safe-area-inset-bottom, 0px)); }
+/* CRISTAL-CHAMA reutilizável (`ui/CristalChama.tsx`): `--u` do pai; `--cristal-w`/`--cristal-top` em `u`. Brilho pulsante opcional (`data-pulsar`). */
+.sm2-cristal-chama {
+  position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * var(--cristal-top, -14)); width: calc(var(--u) * var(--cristal-w, 17)); height: auto;
+  transform: translateX(-50%); pointer-events: none; user-select: none; -webkit-user-select: none;
+}
+.sm2-cristal-chama[data-pulsar] { animation: sm2-cristal-pulso 3.2s ease-in-out infinite; }
+.sm2-cristal-chama[data-pausado] { animation-play-state: paused; }
+@keyframes sm2-cristal-pulso {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 calc(var(--u) * 2) color-mix(in srgb, var(--sm2-viewport-accent, var(--sm2-primary-ink)) 70%, transparent)); }
+}
+.sm3-files-fechar {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; padding: 0; margin: 0;
+  border: 0; border-radius: 50%; background: transparent; color: var(--sm2-ink); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.sm3-files-fechar:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+.sm3-files .sm3-mochila-head {
+  position: relative; z-index: 3; flex-shrink: 0; display: block; height: calc(var(--u) * 14.9); margin: 0 calc(var(--sm2-moldura-pad-x) * -1);
+}
+.sm3-files .sm3-files-fechar { position: absolute; left: calc(var(--u) * 7.8 - 22px); top: calc(var(--u) * 8.75 - 22px); color: var(--sm2-viewport-ink); }
+.sm3-files .sm3-files-fechar:focus-visible { outline-color: var(--sm2-viewport-accent); }
+.sm3-files .sm3-mochila-titulo {
+  position: absolute; left: 50%; top: calc(var(--u) * 8.75); max-width: calc(var(--u) * 60); transform: translate(-50%, -50%);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .14em; color: var(--sm2-viewport-ink);
+}
+/* Abas: a arte aprovada em 3 fatias horizontais (cantos com folhinhas, miolo liso), desenhada num ::before para o texto usar a largura toda. */
+.sm3-files .sm3-mochila-abas {
+  position: relative; z-index: 3; flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--u) * 1.5);
+  margin: calc(var(--u) * 1.5) 0 calc(var(--u) * 3); border-bottom: 0;
+}
+.sm3-files .sm3-mochila-abas button {
+  isolation: isolate; height: 44px; min-height: 44px; padding: 0 6px; line-height: 1.15; letter-spacing: .04em;
+  color: color-mix(in srgb, var(--sm2-viewport-ink) 70%, transparent);
+}
+.sm3-files .sm3-mochila-abas button::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; border-style: solid; border-width: 0 calc(44px * 64 / 107);
+  border-image: url('./assets/soulmon/ui/files/files-aba.webp') 0 64 fill / 0 calc(44px * 64 / 107) stretch;
+}
+.sm3-files .sm3-mochila-abas button[data-on] { color: var(--sm2-viewport-accent); }
+.sm3-files .sm3-mochila-abas button[data-on]::before { border-image-source: url('./assets/soulmon/ui/files/files-aba-ativa.webp'); }
+.sm3-files .sm3-mochila-abas button[data-on]::after { display: none; }
+.sm3-files .sm3-mochila-abas button:focus-visible { outline-color: var(--sm2-viewport-accent); }
+.sm3-files .sm3-mochila-painel { position: relative; flex: 1; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; padding: 2px 2px 8px; }
+.sm3-files .sm3-mochila-painel:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -2px; }
+.sm3-files .sm3-mochila-grade, .sm3-files .sm3-materiais-lista { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * 3) calc(var(--u) * 2.2); }
+/* SLOT (arte aprovada) e DISQUETE (só comida; o rótulo foi escurecido para o painel). O selecionado troca pela versão "-sel" da mesma peça. */
+.sm3-item-slot {
+  position: relative; display: block; width: 100%; aspect-ratio: 256 / 242; flex-shrink: 0;
+  background: url('./assets/soulmon/ui/files/files-slot.webp') center / 100% 100% no-repeat;
+}
+.sm3-item[data-on] .sm3-item-slot { background-image: url('./assets/soulmon/ui/files/files-slot-sel.webp'); }
+.sm3-item-slot[data-disquete] { background-image: url('./assets/soulmon/ui/files/files-disquete.webp'); }
+.sm3-item[data-on] .sm3-item-slot[data-disquete] { background-image: url('./assets/soulmon/ui/files/files-disquete-sel.webp'); }
+.sm3-files .sm3-item {
+  min-height: 0; gap: 2px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--sm2-viewport-ink);
+  font-family: var(--sm2-font-mono); font-weight: 600;
+}
+.sm3-files .sm3-item:focus-visible { outline-color: var(--sm2-viewport-accent); }
+/* A arte no centro do slot; no disquete, no meio do rótulo (x 13–86 %, y 41–85 % da peça). */
+.sm3-item-slot .sm3-item-arte {
+  position: absolute; left: 50%; top: 50%; width: 52%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); font-size: calc(var(--u) * 7);
+}
+.sm3-item-slot[data-disquete] .sm3-item-arte { left: 49%; top: 63%; width: 42%; }
+.sm3-item-slot .sm3-item-arte img { width: 100%; height: 100%; object-fit: contain; }
+.sm3-files .sm3-item-nome { margin-top: 4px; font-size: var(--sm2-text-xs); }
+.sm3-files .sm3-item small, .sm3-files .sm3-materiais-lista small { color: color-mix(in srgb, var(--sm2-viewport-ink) 68%, transparent); font-family: var(--sm2-font-mono); }
+.sm3-files .sm3-materiais { margin-top: 0; }
+.sm3-files .sm3-materiais-lista li { color: var(--sm2-viewport-ink); }
+.sm3-files .sm3-material-btn:focus-visible { outline-color: var(--sm2-viewport-accent); }
+.sm3-item-slot .sm3-material-icone { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.sm3-files .sm3-mochila-vazia { color: color-mix(in srgb, var(--sm2-viewport-ink) 72%, transparent); }
+.sm3-files .sm3-mochila-usar, .sm3-files .sm3-material-pop {
+  background: color-mix(in srgb, var(--sm2-viewport-ink) 7%, var(--sm2-viewport-bg));
+  border-color: color-mix(in srgb, var(--sm2-viewport-accent) 35%, transparent);
+}
+.sm3-files .sm3-mochila-usar { position: sticky; bottom: 0; z-index: 2; }
+.sm3-files .sm3-mochila-usar-nome, .sm3-files .sm3-material-pop-nome { color: var(--sm2-viewport-ink); font-family: var(--sm2-font-mono); }
+.sm3-files .sm3-mochila-usar-desc, .sm3-files .sm3-material-pop-texto { color: color-mix(in srgb, var(--sm2-viewport-ink) 72%, transparent); }
+
 /* ── GUILDA (fatia A, 29/09/2026) ───────────────────────────────────────────
    Composição da folha da Guilda sobre o kit `--sm2-*`. Nenhum token novo.
    `min-width: 0` no card e `overflow-wrap: anywhere` no nome: um nome de 24
@@ -9326,12 +9487,13 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* 17/11/2026 (dono): Coroa ENCAIXADA ganha placa atrás da arte (a do dano contínuo é quase preta e sumia no fundo escuro do slot, ≈1,2:1).
    18/11/2026 (dono, rodada 2): SEM placa clara atrás da Coroa (era a mancha branca): só o OUTER GLOW turquesa; as artes escuras (heal, hot, spdBuff) seguem com a placa escura. (Antes: a placa clara deixou de ser branca: TURQUESA CLARO (#B4F4EA) com OUTER GLOW turquesa (`primary-ink`), o mesmo brilho externo do hexágono do lápis. Duas placas fixas, iguais nos temas claro e escuro: clara (#B4F4EA) para as artes escuras, escura (#08191A) para as três claras
    (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa.) */
-.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: transparent; box-shadow: 0 0 0 1px var(--sm2-primary-ink), 0 0 8px 2px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent), 0 0 16px 4px color-mix(in srgb, var(--sm2-primary-ink) 25%, transparent); }
-.sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: #08191A; }
+/* 18/11/2026 (dono, rodada 3): SEM anel/círculo/glow/borda redonda em volta do ícone da HEX (Coroa incluída): o ícone fica DIRETO sobre o hexágono.
+   As três artes escuras (heal, hot, spdBuff) ganham só um preenchimento escuro recortado no hexágono (clip-path), nunca um círculo. */
+.sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: var(--sm2-hex-plate, #08191A); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
   display: grid; place-items: center;
-  width: 48px; height: 48px; padding: 0; margin: 0;
+  width: 56px; height: 56px; padding: 0; margin: 0;
   background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer; color: var(--sm2-ink);
   transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
   &:hover { background-color: var(--sm2-primary-soft); }
@@ -9487,6 +9649,12 @@ button.sm2-hex-row {
   &:focus-visible { outline: 2px solid #FBF1D2; outline-offset: 2px; filter: drop-shadow(0 0 2px #F2C25B); }
   &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-especial-off.webp'); color: #C9D2D0; transform: none; }
 }
+.sm2-especial[data-especial-variant="pve"] { border-image-source: url('./assets/soulmon/ui/btn-pve.webp'); }
+.sm2-especial[data-especial-variant="pve"]:active:not(:disabled), .sm2-especial[data-especial-variant="pve"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-pve-press.webp'); }
+.sm2-especial[data-especial-variant="pve"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-pve-off.webp'); }
+.sm2-especial[data-especial-variant="pvp"] { border-image-source: url('./assets/soulmon/ui/btn-pvp.webp'); }
+.sm2-especial[data-especial-variant="pvp"]:active:not(:disabled), .sm2-especial[data-especial-variant="pvp"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-pvp-press.webp'); }
+.sm2-especial[data-especial-variant="pvp"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-pvp-off.webp'); filter: saturate(.35); } /* a faixa vermelha não pode ler como erro quando travado */
 .sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;

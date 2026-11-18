@@ -11,10 +11,16 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 export interface BotaoEspecialProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** `full` ocupa a linha inteira (padrão); `auto` só o conteúdo (com largura mínima). */
   width?: 'full' | 'auto';
+  /**
+   * Arte do botão (18/11/2026, ranking): `dourado` (padrão, compras), `pve` (Aventura do Match-3 e Amistoso/Sparring do Torneio: pedra com musgo,
+   * folhinha e diamante da alma) e `pvp` (PvP do Match-3 e Ranqueada do Torneio: faixa vermelha e ouro envelhecido com espinhos). Mesma estrutura
+   * 3-slice e 3 estados (`btn-pve{,-press,-off}.webp`, `btn-pvp{,-press,-off}.webp`).
+   */
+  variant?: 'dourado' | 'pve' | 'pvp';
 }
 
 export const BotaoEspecial = forwardRef<HTMLButtonElement, BotaoEspecialProps>(function BotaoEspecial(
-  { width = 'full', className, type = 'button', children, disabled, ...rest }, ref,
+  { width = 'full', variant = 'dourado', className, type = 'button', children, disabled, ...rest }, ref,
 ) {
   return (
     <button
@@ -22,6 +28,7 @@ export const BotaoEspecial = forwardRef<HTMLButtonElement, BotaoEspecialProps>(f
       type={type}
       data-botao-especial=""
       data-especial-width={width}
+      data-especial-variant={variant}
       disabled={disabled}
       aria-disabled={disabled || undefined}
       className={['sm2-especial', className].filter(Boolean).join(' ')}

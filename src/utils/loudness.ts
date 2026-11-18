@@ -155,6 +155,8 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   playRewardPop: 'arcade',
   playCoinRoll: 'arcade',
   playCoinLand: 'arcade',
+  // 18/11/2026 (pedido do dono, sino de vento da decoração): ambiente discreto → `arcade`, o degrau de baixo.
+  playWindChime: 'arcade',
 };
 
 /**
@@ -209,6 +211,7 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   playRewardPop: 14.1,
   playCoinRoll: 10.91,
   playCoinLand: 6.49,
+  playWindChime: 1.9,
 };
 
 /** dB → linear. A conversão mora aqui porque o alvo mora aqui. */

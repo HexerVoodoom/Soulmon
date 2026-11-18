@@ -278,14 +278,16 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(within(sec).getByLabelText('Ore × 0')); // Masmorra — liberada
     expect(document.querySelector('[data-material-go]')).toBeTruthy();
   });
-  it('cabeçalho: Fechar (X), título e "i" na MESMA linha; Fechar tem alvo ≥44 e rótulo, e não existe "Voltar"', () => {
+  it('cabeçalho: Fechar (X redondo) e título no topo; o "i" no ornamento da moldura; Fechar tem alvo ≥44 e rótulo, e não existe "Voltar"', () => {
     const onClose = vi.fn();
     montar({ onClose });
     const head = document.querySelector('.sm3-mochila-head') as HTMLElement;
     const fechar = within(head).getByRole('button', { name: 'Fechar' });
-    expect(fechar.className).toContain('sm2-ora-back'); // alvo 44×44 (index.css)
+    expect(fechar.className).toContain('sm3-files-fechar'); // alvo 44×44 (index.css), sobre o disco esquerdo do topo
     expect(head.querySelector('.sm3-mochila-titulo')!.textContent).toBe('Arquivos');
-    expect(within(head).getByLabelText('Como usar um item')).toBeTruthy();
+    // modal Files (18/11/2026): o "i" é o ornamento da moldura (`ModalFrame info`), não um botão do cabeçalho.
+    const info = document.querySelector('[data-moldura-info]') as HTMLElement;
+    expect(within(info).getByLabelText('Como usar um item')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /voltar/i })).toBeNull();
     fireEvent.click(fechar);
     expect(onClose).toHaveBeenCalledTimes(1);

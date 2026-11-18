@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { lufsMMax, truePeakDbtp } from '../test/lufsM';
 import { ALVO_LUFS_M, CATEGORIA_DO_SOM, OFFSET_POR_SOM_DB, TOLERANCIA_LU, TETO_DBTP, db2lin } from './loudness';
-import { ATAQUE_S, PISO, duracaoDe, parciaisDing, parciaisPop, parciaisTique, type Parcial } from './sonsRecompensa';
+import { ATAQUE_S, PISO, duracaoDe, parciaisSinoDeVento, parciaisDing, parciaisPop, parciaisTique, type Parcial } from './sonsRecompensa';
 
 const SR = 48000;
 
@@ -35,6 +35,8 @@ const casos: Array<[string, Parcial[]]> = [
   ['playRewardPop (pitch 8)', parciaisPop(8)],
   ['playCoinRoll', parciaisTique()],
   ['playCoinLand', parciaisDing()],
+  ['playWindChime', parciaisSinoDeVento(0)],
+  ['playWindChime (v2)', parciaisSinoDeVento(2)],
 ];
 
 describe('loudness dos sons da revelação de recompensa', () => {
