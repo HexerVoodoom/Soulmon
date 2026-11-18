@@ -1,5 +1,8 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — arte do modal FILES (18/11/2026, pedido do dono; só a arte)
+`ui/files/` (11 peças WebP alfa real, ChatGPT, ref3 cristal-chama): moldura em fatias (topo/base/laterais), cristal separado, abas normal/ativa, slot vazio/selecionado e disquete 3.5" normal/selecionado para comidas (rótulo creme liso para a arte da comida). Medidas e uso em `ui/files/LEIA-ME.md`. Falta o código do modal montar a moldura (outro agente).
+
 ## FEITO — ícone dos Créditos: diamante turquesa (18/11/2026, pedido do dono; aguarda aprovação visual)
 `icones-ui/moeda-creditos.png` (256², alfa real, legível a 20 px) trocou o glifo `diamond` em todos os pontos de Créditos via `CreditIcon` (AccountSection, CreditsModal, Cambista/ShopShelf, MercadoSheets). Moeda premium = Créditos (comprada com dinheiro de verdade, vira Bits no Cambista). Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/`.
 
