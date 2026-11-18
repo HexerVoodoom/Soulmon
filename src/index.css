@@ -9614,6 +9614,14 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   position: absolute; z-index: 4; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8);
   display: flex; align-items: center; justify-content: center;
 }
+/* Sem info registrada o encaixe fica vazio e some: o ornamento "i" da arte é só decoração (sem botão). */
+.sm2-moldura-modal__info:empty { display: none; }
+/* O botão de informação é TRANSPARENTE e fica exatamente sobre o ornamento "i" da arte: o disco (8u) com alvo de toque mínimo de 44 px, centrado nele. */
+.sm2-info-hit {
+  position: relative; flex-shrink: 0; box-sizing: border-box; padding: 0; margin: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer;
+  width: max(44px, calc(var(--u, 1vw) * 8)); height: max(44px, calc(var(--u, 1vw) * 8)); -webkit-tap-highlight-color: transparent;
+}
+.sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
 .sm2-moldura-modal__conteudo {
   /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
   position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
@@ -9675,6 +9683,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-tela .sm2-moldura-modal__fundo { z-index: -1; inset: 0; }
 .sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo, .sm2-moldura-tela .sm2-moldura-modal__base { z-index: 60; }
 .sm2-moldura-tela .sm2-moldura-modal__placa { z-index: 61; }
+/* O encaixe do botão "i" da tela: sobre o ornamento da arte (mesma geometria do modal), por cima das peças e recebendo toque. */
+.sm2-moldura-tela .sm2-moldura-modal__info { position: fixed; z-index: 62; pointer-events: auto; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8); }
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 @keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}

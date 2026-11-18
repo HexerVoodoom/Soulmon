@@ -1676,7 +1676,8 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/ModalFrame.tsx`
 **Dono de:** a MOLDURA de modal (17/11/2026, `docs/PLANO-MOLDURAS-MODAIS.md`): fatiamento vertical de largura fixa (topo e base de proporção fixa + laterais repetidas em Y), base escura e fundo do lote (`fundo`) a 15% de opacidade; sem `fundo`, pedra com runas. Visual em `.sm2-moldura-modal` (`index.css`); arte em `src/assets/soulmon/ui/moldura/` (WebP).
-**Props principais:** `title` (texto da placa), `fundo`, `fillOpacity`, `children`; repassa `data-*`/`aria-*`/`className`/`style`/`ref`.
+**Props principais:** `title` (texto da placa), `info?: { label, content, language }` (atalho do `ModalInfo`), `fundo`, `fillOpacity`, `children`; repassa `data-*`/`aria-*`/`className`/`style`/`ref`.
+**Informação (18/11/2026):** a arte já traz o ornamento "i" no canto superior direito; o modal NÃO desenha ícone próprio. Abre um `ModalInfoSlotProvider` com o encaixe `.sm2-moldura-modal__info` sobre o ornamento (unidade `--u`); todo `InfoTip`/`ModalInfo` dentro dele se registra e vira UM botão transparente (`.sm2-info-hit`, ≥ 44 px, `aria-label`) com painel único (uma seção por info). Sem info, sem botão.
 **Exports:** `ModalFrame`, `ModalFrameProps`.
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 
@@ -1686,6 +1687,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/TelaMoldura.tsx`
 **Dono de:** a moldura de TELA CHEIA como decoração solta (fundo por baixo do conteúdo, moldura por cima, nada intercepta toque); reusa as classes `.sm2-moldura-tela` + `.sm2-moldura-modal__*`.
+**Props:** `tela`, `title`, `infoSlotRef?` (encaixe do botão "i" sobre o ornamento da arte; `GameRoot` liga o provedor). Só o botão recebe toque; o resto é `aria-hidden`.
 **Exports:** `TelaMoldura`, `MOLDURA_TELAS`.
 
 ### `src/assets/soulmon/ui/moldura/fundos.ts`
@@ -2010,8 +2012,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 ### `src/components/ui/InfoTip.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** prop `trigger?: ReactNode` (gatilho próprio no lugar do "i") e o tooltip aberto registra camada de voltar (`useBackLayer`).
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
-**Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`.
-**Exports:** `InfoTip`.
+**Sync 18/11/2026:** dentro de uma moldura (`ModalInfoSlotProvider`, aberto por `ModalFrame`/`GameRoot moldura`) o `InfoTip`/`ModalInfo` NÃO desenha ícone: se registra e o provedor monta um único botão transparente sobre o ornamento "i" da arte (várias infos = um painel com seções; nenhuma = sem botão). `inherit` faz a sub-folha do miolo assumir o ornamento. Fora de moldura nada muda.
+**Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`, `trigger?`.
+**Exports:** `InfoTip`, `InfoTipSection`, `ModalInfo`, `ModalInfoSlotProvider`, `useModalInfoSlot`, `alvo44`.
 **Estado/efeitos relevantes:** tooltip num portal em `document.body` (nunca cortado por `overflow`), posicionado junto ao botão e preso às bordas; fecha com novo toque, toque fora ou Esc; `aria-expanded` + `aria-describedby`. Alvo de toque 44.
 **Chamado por:** as telas que tinham texto explicativo corrido (Duelo, Feira, Torneio, Masmorra, Seus dados…).
 **Régua:** `src/components/ui/InfoTip.render.test.tsx`.

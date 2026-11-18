@@ -1,5 +1,6 @@
 import { createContext, forwardRef, useCallback, useContext, useRef, useState, useLayoutEffect, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { PEDRA_RUNAS_URL } from '../../assets/soulmon/ui/moldura/fundos';
+import { ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from './InfoTip';
 
 /**
  * MOLDURA DE MODAL (arte aprovada pelo dono, 17/11/2026; `docs/PLANO-MOLDURAS-MODAIS.md`). NÃO é `border-image` nem uma imagem esticada:
@@ -13,10 +14,10 @@ import { PEDRA_RUNAS_URL } from '../../assets/soulmon/ui/moldura/fundos';
 export interface ModalFrameProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Texto da placa de título (já traduzido por quem chama, PT-BR e EN). Sem ele, a placa fica vazia. */
   title?: ReactNode;
-  /** Botão (i) sobre o disco do canto superior direito (ex.: `ModalInfo`/`InfoTip`). */
-  info?: ReactNode;
-  /** Ref-callback do encaixe do (i), quando o filho entra por portal (ex.: `useModalInfoSlot`). */
-  infoSlotRef?: (el: HTMLElement | null) => void;
+  /** Informação do modal, atrás do ornamento "i" que a ARTE já traz no canto superior direito (o botão é transparente, ≥ 44 px, exatamente sobre ele).
+   *  Atalho declarativo: o mesmo que escrever `<ModalInfo>` em `children`. Qualquer `InfoTip`/`ModalInfo` dentro da moldura se agrupa no MESMO botão do canto
+   *  (um painel, uma seção por info); sem nenhuma info o ornamento fica decorativo, sem botão. */
+  info?: { label: string; content: ReactNode; language: 'pt-BR' | 'en-US' };
   /** URL do fundo do lote. Sem ela: pedra com runas. */
   fundo?: string;
   /** Opacidade do fundo, 0..1. Padrão 0,15 (fundo do lote) ou 0,6 (pedra com runas). */
@@ -33,7 +34,7 @@ const ModalAreaContext = createContext<HTMLElement | null>(null);
 export function useModalArea(): HTMLElement | null { return useContext(ModalAreaContext); }
 
 export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function ModalFrame(
-  { title, info, infoSlotRef, fundo, fillOpacity, className, style, children, ...rest }, ref,
+  { title, info, fundo, fillOpacity, className, style, children, ...rest }, ref,
 ) {
   // `--u` (1% da largura) é medido aqui, e NÃO por `container-type`: um contêiner de layout vira o bloco de contenção dos filhos `position: fixed`,
   // e as sub-folhas (ModalSheet, Hexsmith, Criar poção) ficavam presas e cortadas dentro do modal. Sem contenção, elas sobem à tela inteira.
@@ -62,6 +63,7 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
     ro.observe(el);
     return () => { ro.disconnect(); area?.remove(); };
   }, [area]);
+  const { slot: infoSlot, slotRef: infoSlotRef } = useModalInfoSlot();
   const op = Math.min(1, Math.max(0, fillOpacity ?? (fundo ? 0.15 : 0.6)));
   const st = {
     ...style,
@@ -78,12 +80,16 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
       <div className="sm2-moldura-modal__placa" data-moldura-placa="">
         {title != null && <h2 className="sm2-moldura-modal__titulo">{title}</h2>}
       </div>
-      {(info != null || infoSlotRef) && (
-        <span className="sm2-moldura-modal__info" data-moldura-info="" ref={infoSlotRef}>{info}</span>
-      )}
-      <ModalAreaContext.Provider value={area}>
-        <div className="sm2-moldura-modal__conteudo" data-moldura-conteudo="">{children}</div>
-      </ModalAreaContext.Provider>
+      {/* O encaixe do botão de informação: EXATAMENTE sobre o ornamento "i" da arte (`--u`). Vazio = não existe (ornamento só decorativo). */}
+      <span className="sm2-moldura-modal__info" data-moldura-info="" ref={infoSlotRef} />
+      <ModalInfoSlotProvider slot={infoSlot} bare>
+        <ModalAreaContext.Provider value={area}>
+          <div className="sm2-moldura-modal__conteudo" data-moldura-conteudo="">
+            {info && <ModalInfo language={info.language} label={info.label}>{info.content}</ModalInfo>}
+            {children}
+          </div>
+        </ModalAreaContext.Provider>
+      </ModalInfoSlotProvider>
     </div>
   );
 });
