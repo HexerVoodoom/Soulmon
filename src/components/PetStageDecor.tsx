@@ -33,11 +33,13 @@ interface PetStageDecorProps {
   language: string;
   /** Pet dormindo: as luzes apagam (e as de noite acendem). */
   isSleeping?: boolean;
+  /** Toque no Fliperama de Canto abre o Salão de jogos. Sem isto (editor da Home) a peça é só cenário. */
+  onOpenArcade?: () => void;
 }
 
 const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
 
-export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false }: PetStageDecorProps) {
+export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade }: PetStageDecorProps) {
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
   // Sem cenário equipado o box é transparente — o "palco" é a página, e não há
   // composição em que apoiar a decoração.
@@ -117,6 +119,14 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               }}>
                 {item.icon}
               </span>
+            )}
+
+            {item.id === 'furn-arcade-cab' && onOpenArcade && (
+              <button
+                type="button" data-decor-arcade onClick={onOpenArcade}
+                aria-label={isPt ? 'Abrir minigames' : 'Open minigames'}
+                style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', minWidth: 44, minHeight: 44, width: '100%', height: '100%', background: 'transparent', border: 0, padding: 0, cursor: 'pointer', pointerEvents: 'auto', touchAction: 'manipulation' }}
+              />
             )}
 
             {/* A vitrine exibe as conquistas REAIS: até 3 medalhas de season

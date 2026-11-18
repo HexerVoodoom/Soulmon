@@ -6479,3 +6479,5 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Auditoria de luz:** lamp, lantern, campfire, cerejeira-lanterna-de-petalas, lava-altar-de-magma, lava-flor-de-brasa. Fora: crystal, cauldron, window, garland (bandeirinhas) — não são fonte de luz.
 
 **Gatilho para rever:** o dono pedir a arte apagada autoral, ou a biblioteca de efeitos chegar.
+
+**Adendo §480 — Fliperama de Canto:** tocar na peça (botão ≥44px, `aria-label` "Abrir minigames"/"Open minigames", invisível) chama `onGoToBuilding('jogos.salao')`, o mesmo caminho do Caderno: abre a folha do Salão existente (tickets/energia regidos por ela). Fora do editor da Home (sem handler = só cenário).
