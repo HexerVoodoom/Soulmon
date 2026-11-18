@@ -5,6 +5,8 @@ import { essenceLedgerRows } from '../utils/resultEssences';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
+import { Match3Escolha } from './play/Match3Escolha';
+import type { M3Choice } from '../utils/match3Escolha';
 import { pickPvpOpponent, mixedElementsForSeed, pvpRewards, simulatedFoe, tileElementName, type PvpFoe } from '../utils/match3Pvp';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
@@ -112,6 +114,8 @@ export interface Match3Props extends EarningGameProps {
   /** Sessão de diversão: 'De novo' conta uma rodada (também no PvP). `false` = sem energia. */
   onReplayRound?: () => boolean;
   initialMode?: 'pve' | 'pvp';
+  /** §487: a opção escolhida na lista de 3 do Salão (`Match3Escolha`). Com ela a partida é a da escolha e o "De novo" volta à lista. */
+  initialChoice?: M3Choice;
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
   /** D-85: saldo de Bits e a via de gasto do app (`play.onSpendBits`, devolve `false` se não cobrou). Sem elas, não dá para comprar dica. */
@@ -146,16 +150,16 @@ const bossFor = (sd: number, challenge: unknown, allowed: boolean): BossRound | 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 
 /** O combate de uma rodada a partir da semente (o rng do tabuleiro NÃO é tocado: os dois têm fluxo próprio). */
-function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string, boss?: BossRound | null, challenge?: unknown): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
+function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string, boss?: BossRound | null, challenge?: unknown, adventureElement?: string): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
   // BOSS: UM inimigo com o HP do jogador, os 6 elementos fixos (vale na Aventura e no PvP).
   if (boss) return { combat: newBossCombat(mulberry32(sd + 99), undefined, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
   // PVP (§473): os 6 elementos básicos FIXOS e UM inimigo com o HP do jogador.
   if (pvp) return { combat: newPvpCombat(mulberry32(sd + 99), M3_TILE_ELEMENTS, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
   // Modo desafio do Calabouço: INTACTO (6 fixos, time de 3).
   if (challenge) return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
-  // AVENTURA (§473): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4.
+  // AVENTURA (§473): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4; §487: com a escolha, o time é do elemento escolhido.
   const elements = mixedElementsForSeed(sd);
-  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement, { elements }), rng: mulberry32(sd ^ 0x5eed), elements };
+  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement, { elements, ...(adventureElement ? { element: adventureElement } : {}) }), rng: mulberry32(sd ^ 0x5eed), elements };
 }
 
 /** M10: arte e nome de um inimigo do roster (`enemyRoster.ts`), ou `undefined` (combate sem level: linhas próprias, como antes). */
@@ -165,12 +169,12 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, petBase, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard, onEarnHonor, bossAllowed = false }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp: pvpProp, adventureElement, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, petBase, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard, onEarnHonor, bossAllowed = false }: Match3Props & { pvp?: PvpFoe; adventureElement?: string; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
     const boss = bossFor(sd, challenge, bossAllowed);
-    return { sd, boss, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, boss, challenge) };
+    return { sd, boss, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, boss, challenge, adventureElement) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, demoCharacterId, playerLevel, pvpProp]);
   const [boss, setBoss] = useState<BossRound | null>(first.boss);
@@ -679,7 +683,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     setBossIntro(!!nb);
     setRulesOpen(false);
     setClock(BOSS_CLOCK_MS);
-    const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, nb, challenge);
+    const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, nb, challenge, adventureElement);
     setElements(c.elements);
     boardRef.current = r.board;
     rngRef.current = r.rng;
@@ -1296,6 +1300,7 @@ export function Match3Game(props: Match3Props) {
   const [mode, setMode] = useState<'pick' | 'adventure' | 'pvp'>(initialMode ? (initialMode === 'pvp' && !challenge ? 'pvp' : 'adventure') : rankSaveId && !challenge ? 'pick' : 'adventure');
   // BOSS: só depois da escolha Aventura/PVP; a geração da partida é o sorteio (no PVP, antes da busca do oponente)
   const bossAllowed = !!rankSaveId && !challenge;
+  if (props.initialChoice && !challenge) return <Match3ChoiceEntry {...props} initialChoice={props.initialChoice} />;
   if (mode === 'adventure') return <Match3Round {...props} bossAllowed={bossAllowed} />;
   if (mode === 'pvp') return <Match3PvpEntry {...props} onBack={() => (initialMode ? onExit() : setMode('pick'))} />;
   return (
@@ -1352,6 +1357,34 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
     <GameRoot full>
       <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} onBack={onBack} backLabel={isPt ? 'Voltar' : 'Back'} />
       <p role="status" data-m3-pvp-searching style={phaseLine}>{isPt ? 'Procurando um oponente…' : 'Finding an opponent…'}</p>
+    </GameRoot>
+  );
+}
+
+/**
+ * §487: a partida que veio da LISTA DE 3 (Aventura = elemento, PvP = jogador da rota `opponents`). O "De novo" (`onNewOpponent`) volta para a
+ * mesma lista dentro do jogo, com 3 opções novas — nunca inventa adversário (sem jogador simulado local, demo ou monstro no PvP).
+ */
+function Match3ChoiceEntry(props: Match3Props & { initialChoice: M3Choice }) {
+  const { language, rankSaveId, playerLevel, onExit, initialChoice } = props;
+  const isPt = language === 'pt-BR';
+  const [choice, setChoice] = useState<M3Choice | null>(initialChoice);
+  const [run, setRun] = useState(0);
+  const mode = initialChoice.mode;
+  if (choice) {
+    return (
+      <Match3Round
+        key={`${choice.seed}:${run}`} {...props} seed={choice.seed} bossAllowed
+        pvp={choice.mode === 'pvp' && !choice.boss ? choice.foe : undefined}
+        adventureElement={choice.mode === 'adventure' ? choice.element : undefined}
+        onNewOpponent={() => setChoice(null)}
+      />
+    );
+  }
+  return (
+    <GameRoot full>
+      <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
+      <Match3Escolha language={language} mode={mode} saveId={rankSaveId} playerLevel={playerLevel} onFight={c => { setChoice(c); setRun(r => r + 1); }} />
     </GameRoot>
   );
 }

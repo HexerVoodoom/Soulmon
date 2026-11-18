@@ -29,7 +29,7 @@ describe('ícone de estágio: um único renderizador', () => {
 
   it('todo ponto que mostra o ícone de estágio usa EstagioIcone/EstagioMarca (varredura por consumidor)', () => {
     const usam = fontes.filter(p => /<Estagio(Icone|Marca)\b/.test(texto(p))).map(rel).sort();
-    expect(usam).toEqual(['components/EvolutionPath.tsx', 'components/TournamentPage.tsx', 'components/games/BattleStage.tsx', 'components/ui/EstagioMarca.tsx']);
+    expect(usam).toEqual(['components/EvolutionPath.tsx', 'components/TournamentPage.tsx', 'components/games/BattleStage.tsx', 'components/play/Match3Escolha.tsx', 'components/ui/EstagioMarca.tsx']);
   });
 
   it('ícone de TIPO (elemento) nunca recebe a cor de caminho', () => {
