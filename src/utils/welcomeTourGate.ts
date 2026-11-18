@@ -10,7 +10,9 @@
  * em Configurações. `shown` é a flag local (`STORAGE_KEYS.WELCOME_TOUR_SHOWN`).
  */
 export function needsWelcomeTour(p: { shown: boolean; jaConcluiuAlgo: boolean }): boolean {
-  return !p.shown && !p.jaConcluiuAlgo;
+  void p;
+  // DESLIGADO pelo dono em 17/11/2026: o tour nunca abre sozinho; só o replay manual (Configurações > Ajuda).
+  return false;
 }
 
 /**
@@ -32,5 +34,7 @@ export function sanitizeMapTutorialSeen(raw: unknown, save: Record<string, any> 
 
 /** O tutorial do mapa abre com o Mapa na tela, ainda não visto e sem o tour de boas-vindas na frente. */
 export function needsMapTutorial(p: { seen: boolean | undefined; onMap: boolean; welcomeTourOpen: boolean }): boolean {
-  return p.seen === false && p.onMap && !p.welcomeTourOpen;
+  void p;
+  // DESLIGADO pelo dono em 17/11/2026: o tutorial do mapa nunca abre sozinho (a flag `mapTutorialSeen` segue no save).
+  return false;
 }

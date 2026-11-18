@@ -93,6 +93,8 @@ describe('portão de identidade', () => {
     resposta = { ok: true, email: 'a@b.com' };
     chamadas = [];
     googlePendura = false;
+    // Nuvem sem save nesse e-mail: e o que faz o login seguir para os termos (nuvem ilegivel NAO segue — ver restauraSave).
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ found: false }), { status: 200 })));
   });
 
   it('A2: a PRIMEIRA tela tem UM botão só — nada de e-mail, senha ou "New User"', async () => {

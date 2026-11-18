@@ -279,7 +279,7 @@ describe('P2 (beta-2) — a folha da aventura', () => {
     const x = document.querySelector('[data-area-sheet-close]') as HTMLElement;
     expect(folha.contains(x)).toBe(true);
     expect(document.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1); // sem o anel sobre a cena
-    expect(x.compareDocumentPosition(folha.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título mora na placa da moldura; o ✕ pousa por cima (z 4), à esquerda
     fireEvent.click(x);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

@@ -30,10 +30,10 @@ describe('RiftMap', () => {
     const locked = node(container, 5);
     expect(locked.dataset.state).toBe('locked');
     expect(locked.querySelector('button')?.textContent).toBe('?');
-    expect(node(container, 5).querySelector('[data-rift-node-label]')?.textContent).toBe('11-12');
+    expect(node(container, 5).querySelector('[data-rift-node-label]')?.textContent).toBe('Layers 11-12 Arcane');
     expect(node(container, 1).dataset.state).toBe('visited');
     expect(node(container, 1).querySelector('button')?.textContent).not.toBe('?');
-    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('Water 1 & 2');
+    expect(node(container, 1).querySelector('[data-rift-node-label]')?.textContent).toBe('Layers 3-4 Water');
     expect(container.querySelector('[data-rift-map-veil]')).toBeTruthy();
   });
 

@@ -168,6 +168,11 @@ export const STORAGE_KEYS = {
   INTRO_CINEMATICA_VISTA: 'soulmon-intro-cinematica-vista',
   /** ONBOARDING_VELADO: a sequência narrativa (puzzle/tarefa/alimentar/duelo) já foi vista. */
   ONBOARDING_VELADO_VISTO: 'soulmon-onboarding-velado-visto',
+  /** INÍCIO BB (17/11/2026): o nascimento ainda espera o BB e o chocar em tela cheia. JSON `{ pago, prompts? }`; some depois de chocar
+   *  (`utils/inicioBB.ts`). Por aparelho de propósito: sem campo novo no save; outro aparelho só vê o BB já pronto. */
+  BB_NASCIMENTO: 'soulmon-bb-nascimento',
+  /** INÍCIO BB: o convite "para evoluir agora, assine" já abriu sozinho uma vez neste aparelho (rookie → champion, D8). */
+  PAYWALL_CHAMPION_VISTO: 'soulmon-paywall-champion-visto',
   /** Até quando o botão "Gerar personagem" (Configurações › Sua conta) fica em espera (ms epoch). */
   GENERATE_CHARACTER_UNTIL: 'soulmon-generate-character-until',
   /** Quantos dos usos do botão "Gerar Soulmon" (teste fechado, `utils/generateCharacterUses.ts`) já foram gastos neste aparelho. */

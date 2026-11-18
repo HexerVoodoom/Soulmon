@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
@@ -10,6 +10,11 @@ import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor, t
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
+import { ModalFrame } from '../ui/ModalFrame';
+import { fundoDoLote } from '../../assets/soulmon/ui/moldura/fundos';
+
+/** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
+export const MOLDURA_MODAL = true;
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -163,8 +168,10 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={npcVoice ? `fn:${npcVoice.name}` : lotId ? `${areaId}:${lotId}` : undefined} />
         </div>
 
-        <div
+        <SheetShell
           data-area-sheet
+          title={title}
+          fundo={fundoDoLote(areaId, lotId)}
           className="sm2-sheet-rise"
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
@@ -177,44 +184,60 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             // range min/max: o 1/3 de cima da TELA, acima da folha, é do NPC.
             height: '66.6667dvh',
             flex: 'none',
-            background: 'var(--sm2-surface)',
-            borderRadius: '20px 20px 0 0',
-            display: 'flex', flexDirection: 'column',
-            boxSizing: 'border-box',
-            boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
-            overflow: 'hidden',
+            ...(MOLDURA_MODAL
+              ? { overflow: 'hidden' }
+              : {
+                background: 'var(--sm2-surface)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex', flexDirection: 'column',
+                boxSizing: 'border-box',
+                boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
+                overflow: 'hidden',
+              }),
           }}
         >
           {closeInSheet && !hideClose && (
-            <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+            <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
-          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
-            {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
-              {title}
-            </h2>
-            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título. */}
-            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />
+          {/* Com a moldura (`MOLDURA_MODAL`) o TÍTULO mora na PLACA do topo (`ModalFrame title`, serifa dourada, centrado, reticências se longo) e esta
+              linha vira só os encaixes (start-slot, head-slot, "i"), pousados POR CIMA da moldura (z 4) sobre a placa e o disco do canto. */}
+          <div data-area-sheet-head style={MOLDURA_MODAL
+            ? { position: 'absolute', top: 0, left: 0, right: 0, height: 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
+            : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
+            {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
+            {MOLDURA_MODAL
+              ? <span style={{ flex: 1 }} />
+              : <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>{title}</h2>}
+            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
+            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título (com a moldura, sobre o disco do canto). */}
+            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: MOLDURA_MODAL ? 0 : -10, pointerEvents: 'auto' }} />
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
               top: 0`) encostar no título sem vão — o conteúdo não aparece mais
               passando por trás numa faixa entre os dois. O respiro de cima é um
               espaçador que rola junto. */}
-          <div data-area-sheet-body style={{ flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+          <div data-area-sheet-body style={MOLDURA_MODAL
+            // Com a moldura: o rolável começa sob a placa e vai até a borda de baixo — por baixo das peças —, com respiro (`--sm2-moldura-pad-*`) para o fim não ficar escondido.
+            ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
+            : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
             <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
           </div>
           {footer && (
-            <div data-area-sheet-footer style={{ flexShrink: 0, padding: '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: 'var(--sm2-surface)' }}>
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
               {footer}
             </div>
           )}
-        </div>
+        </SheetShell>
       </div>
     </div>
   );
+}
+
+/** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
+function SheetShell({ fundo, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; fundo?: string; title?: string }) {
+  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} title={title || undefined} {...props} /> : <div {...props} />;
 }

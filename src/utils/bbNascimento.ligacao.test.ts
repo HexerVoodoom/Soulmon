@@ -1,13 +1,14 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { generateOracle } from '../test/oracleSync';
-import { setVeladoTester } from './bbStage';
+import { setInicioBB, setVeladoTester } from './bbStage';
 
 const INPUT = { fullName: 'Maria da Silva', birthDate: '1990-08-15', birthTime: '14:30', birthPlace: 'São Paulo, Brasil' };
-afterEach(() => setVeladoTester(false));
+afterEach(() => { setVeladoTester(false); setInicioBB(true); });
 
 describe('prompt do estágio bb (D31)', () => {
-  it('interruptor desligado: o resultado do oráculo é idêntico ao de antes (sem bbPrompts)', () => {
+  it('interruptor e Início BB desligados: o resultado do oráculo é idêntico ao de antes (sem bbPrompts)', () => {
+    setInicioBB(false);
     expect(generateOracle(INPUT).creature.bbPrompts).toBeUndefined();
   });
   it('ligado: bebê redondo, cláusula anti-franquia, fallback sem referências', () => {

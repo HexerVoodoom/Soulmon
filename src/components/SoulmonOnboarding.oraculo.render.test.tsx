@@ -180,7 +180,7 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
   it('a tela 12 (rascunho antigo parado na bifurcação, ou erro de geração) tem UM primário e nunca gera com pergunta faltando', () => {
     writeOracleDraft(rascunho(REFINE_OFFER));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    expect(screen.getByText('All set')).toBeTruthy();
+    expect(screen.getByText('Almost there')).toBeTruthy();
     expect(screen.queryByText(/choice is final/)).toBeNull();
     const revelar = btn('Reveal my Soulmon');
     expect(variante(revelar)).toBe('primary');

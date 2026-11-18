@@ -85,7 +85,6 @@ async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onE
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-  fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena|Enter the Arena/i }));
   await avancar(10);
   if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS); // §202: ~1 s entre a carga e o anel
 }

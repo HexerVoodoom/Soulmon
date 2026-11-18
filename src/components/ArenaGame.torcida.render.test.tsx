@@ -91,7 +91,6 @@ async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onE
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-  fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena|Enter the Arena/i }));
   await avancar(10);
   if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS); // §202: ~1 s entre a carga do especial e o anel
 }
@@ -151,18 +150,6 @@ describe('Arena em grupo — a cena', () => {
     expect(ratio()).toBe(0);
   });
 
-  it('a explicação da intro mora atrás do "?" (InfoTip) e fala do grupo, do anel e da esquiva', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(screen.queryByText(/luta e se defende sozinho/i)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Como funciona o Duelo' }));
-    const texto = document.body.textContent ?? '';
-    expect(texto).toMatch(/barra de cheer/i);
-    expect(texto).toMatch(/anel/i);
-    expect(texto).toMatch(/deslize/i);
-    expect(texto).toMatch(/ao mesmo tempo/i);
-  });
-
   it('o relógio é o do núcleo: nada chega antes do primeiro evento, e os números só aparecem no IMPACTO', async () => {
     await entrar();
     expect(numeros()).toHaveLength(0);
@@ -207,14 +194,6 @@ describe('Arena em grupo — a barra de cheer (a torcida)', () => {
     fireEvent.click(mascote());
     expect(ratio()).toBeGreaterThan(0);
     expect(document.querySelector('[data-cheer-bubble]')?.textContent).toBe('VAI!');
-  });
-
-  it('antes da luta (intro) o toque não vale nada', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    for (let i = 0; i < 10; i++) fireEvent.pointerDown(camada());
-    fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena/i }));
-    expect(ratio()).toBe(0);
   });
 });
 
@@ -375,7 +354,6 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
         <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
       );
       await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-      fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena/i }));
       await avancar(10);
       if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS);
       for (let r = 1; r <= 4; r++) await proximaRodada();

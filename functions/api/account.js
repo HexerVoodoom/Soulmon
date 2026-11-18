@@ -294,11 +294,12 @@ async function collectSprites(env, saveId) {
  * filtrada pelo saveId (mesmo método do `rank:`); `riftlayers` tem TTL de 70 dias, então 3 meses bastam.
  * @returns {Promise<{ keys: string[], ranking: {game:string,period:string,best:number}[] }>}
  */
-async function collectRankingKeys(env, saveId) {
+async function collectRankingKeys(env, saveId, leve = false) {
   const store = kvOrThrow(env);
   const keys = [];
   const ranking = [];
-  for (const k of (await listPrefix(env, 'rkme:')).filter(x => x.endsWith(`:${saveId}`))) {
+  // `leve` (delete-request): sem as varreduras GLOBAIS (rkme:/rift-*), ate 20 listagens cada; estouravam em 503.
+  if (!leve) for (const k of (await listPrefix(env, 'rkme:')).filter(x => x.endsWith(`:${saveId}`))) {
     const [, game, period] = k.split(':');
     const best = Number(await store.get(k));
     keys.push(k);
@@ -313,7 +314,7 @@ async function collectRankingKeys(env, saveId) {
     const rl = `riftlayers:${m}:${saveId}`;
     if ((await store.get(rl)) !== null) keys.push(rl);
   }
-  for (const prefix of ['rift-pending:', 'rift-paid:']) {
+  if (!leve) for (const prefix of ['rift-pending:', 'rift-paid:']) {
     for (const k of (await listPrefix(env, prefix)).filter(x => x.endsWith(`:${saveId}`))) keys.push(k);
   }
   // Jornada do foco (§247): o registro ativo e os razões dos dias (TTL de 3 dias), por prefixo do próprio titular.
@@ -440,7 +441,9 @@ function steamLicenseKeysOf(ent) {
     .map(o => `${ORDER_PREFIX}${o}`);
 }
 
-async function collect(env, saveId) {
+/** `opts.leve`: inventario BARATO do `delete-request` (sem varrer rank:/rkme:/rift-* do servidor todo); o `delete-confirm` faz a completa. */
+async function collect(env, saveId, opts = {}) {
+  const leve = opts.leve === true;
   const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
 
@@ -469,7 +472,7 @@ async function collect(env, saveId) {
     }
   }
 
-  const rankKeys = (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
+  const rankKeys = leve ? [] : (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
   /** @type {Array<{ season: string, record: any }>} */
   const ranks = [];
   for (const k of rankKeys) {
@@ -484,7 +487,7 @@ async function collect(env, saveId) {
   const pidIndexed = (await store.get(`pid:${pid}`)) === saveId;
 
   const sprites = await collectSprites(env, saveId);
-  const rankingData = await collectRankingKeys(env, saveId);
+  const rankingData = await collectRankingKeys(env, saveId, leve);
 
   // Grupo cooperativo (se houver). `grupoDe` já limpa `coopOf:` órfão.
   let coopGroupId = null;
@@ -537,7 +540,7 @@ async function collect(env, saveId) {
   // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys, leve };
 }
 
 /**
@@ -628,6 +631,7 @@ function plan(c, saveId) {
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
+      ...(c.leve ? ['season ranking, minigame ranking and Endless Rift records (listed when you confirm)'] : []),
       'mentions of you in other players\' friend lists',
       'notification subscriptions (push:*/fcm:*) linked to your account',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : []),
@@ -649,7 +653,8 @@ function plan(c, saveId) {
 }
 
 async function handleDeleteRequest(env, saveId) {
-  const c = await collect(env, saveId);
+  // Inventario LEVE: pedir o token nao depende da varredura cara (prod: 503 apos ~15 s, 17/11/2026).
+  const c = await collect(env, saveId, { leve: true });
   const token = [...crypto.getRandomValues(new Uint8Array(16))]
     .map(b => b.toString(16).padStart(2, '0')).join('');
   await kvOrThrow(env).put(
@@ -834,6 +839,12 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of [`freq:${saveId}`, `gsent:${saveId}`, `gnote:${saveId}`, `gmir:${saveId}`]) await tentar(k, () => store.delete(k));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
+
+  // 7c) Backups da guarda de regressao (`savebak:<saveId>:<ts>`, `_saveGuard.js`, 17/11/2026): copia INTEGRAL do save, TTL 30 dias.
+  //    Sem isto o conteudo da conta apagada sobrevivia 30 dias fora do inventario. Varre so o prefixo do titular.
+  await tentar(`savebak:${saveId}`, async () => {
+    for (const k of await listPrefix(env, `savebak:${saveId}:`)) await store.delete(k);
+  });
 
   // 8) O SAVE, por último. É o que a pessoa mais quer ver sumir — e é o que,
   //    apagado cedo, deixava o retry encontrar 404 com o token ainda válido.

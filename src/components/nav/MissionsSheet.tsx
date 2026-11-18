@@ -138,7 +138,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
                 )}
                 <Section title={isPt ? 'Hoje' : 'Today'} mark={marks.daily} glyph={false} isPt={isPt} id="daily">
                   <DailyMissionBoard
-                    language={language} special={special} crossings={crossings} todayKey={todayKey}
+                    language={language} special={special} crossings={crossings} todayKey={todayKey} hideStroll={Boolean(firstDay)}
                     onClaimStroll={onClaimStroll} onDoneStroll={onDoneStroll} onGoStroll={onGoStroll} buildings={buildings} dailies={dailies} nav={nav}
                   />
                 </Section>

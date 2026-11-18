@@ -35,7 +35,8 @@ import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react'
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { FormasAlternativasSheet } from './evolution/FormasAlternativasSheet';
 import { altSpriteKey, type FormaAltEquipada, type FormasAlt } from '../utils/formasAlternativas';
-import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
+import { getSpriteForStage, type StarterId } from '../utils/sprites';
+import { inicialNaoEvolui } from '../utils/inicioBB';
 import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
@@ -112,6 +113,8 @@ interface EvolutionPathProps {
   eggType?: StarterId;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
+  /** Início BB (D8): o inicial grátis só segue além do rookie assinando — o texto diz isso em vez de "fica como é". */
+  evolucaoPaga?: boolean;
   unlockedEvolutions?: string[];
   /** Evolution padlock: tapping the CURRENT Soulmon toggles it. */
   evolutionLocked?: boolean;
@@ -227,6 +230,7 @@ export function EvolutionPath({
   onSwitchForm,
   stages,
   demoCharacterId,
+  evolucaoPaga = false,
   unlockedEvolutions = [],
   evolutionLocked = false,
   onToggleEvolutionLock,
@@ -252,8 +256,8 @@ export function EvolutionPath({
   // arte, sem id de arte no DOM e sem o gesto de revelar. A flag vem do servidor
   // (`utils/adminFlag.ts`), nunca do aparelho.
   const isAdmin = useAdmin();
-  // Os 5 iniciais não evoluem (um sprite só): a página mostra só a forma deles.
-  const naoEvolui = isStarterId(demoCharacterId);
+  // Os 5 iniciais não evoluem (um sprite só): a página mostra só a forma deles. Exceção: o BB que vai virar um (Início BB).
+  const naoEvolui = inicialNaoEvolui(demoCharacterId, currentStageId);
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
   const topAttr = Math.max(powerPoints, harmonyPoints, benevolencePoints);
   const isTie = topAttr > 0
@@ -1358,9 +1362,13 @@ export function EvolutionPath({
         <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-label={isPt ? 'Seu Soulmon' : 'Your Soulmon'} data-evo-heading data-testid="sm-nao-evolui">
           <p style={sectionLabel}>{isPt ? 'Seu Soulmon' : 'Your Soulmon'}</p>
           <p style={{ ...sm2Text, margin: 0 }}>
-            {isPt
-              ? 'Este Soulmon fica como é. Não há outras formas a esperar — é só cuidar dele.'
-              : 'This Soulmon stays as it is. There are no other forms to wait for — just look after them.'}
+            {evolucaoPaga
+              ? (isPt
+                ? 'Para evoluir daqui em diante, assine: o seu Soulmon próprio nasce das suas respostas.'
+                : 'To evolve from here on, subscribe: your own Soulmon is born from your answers.')
+              : isPt
+                ? 'Este Soulmon fica como é. Não há outras formas a esperar — é só cuidar dele.'
+                : 'This Soulmon stays as it is. There are no other forms to wait for — just look after them.'}
           </p>
         </section>
       ) : (

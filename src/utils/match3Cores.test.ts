@@ -9,7 +9,7 @@ import {
   M3_COR_PROXIMA_SILHUETA, M3_MAX_SILHUETA, m3DeltaBrilho, m3DeltaEDaltonico, m3DeltaEPaleta, m3ParProibido, m3Silhueta, m3SilhuetaConfunde,
   pickM3Distinct, simulaDaltonismo,
 } from './match3Cores';
-import { pickPvpElements, pvpElementPool, pvpElementsForSeed } from './match3Pvp';
+import { pickMixedElements, mixedElementPool, mixedElementsForSeed } from './match3Pvp';
 
 describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
   it('CIEDE2000 bate com os pares de referência de Sharma et al. (2005)', () => {
@@ -41,7 +41,7 @@ describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
   });
   it('em 3000 sementes: nenhum par curado nem abaixo do limiar, sempre 6 distintos', () => {
     for (let sd = 1; sd <= 3000; sd++) {
-      const els = pvpElementsForSeed(sd * 104729);
+      const els = mixedElementsForSeed(sd * 104729);
       expect(els).toHaveLength(6);
       expect(new Set(els).size).toBe(6);
       for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
@@ -51,15 +51,15 @@ describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
     }
   });
   it('determinístico pela semente', () => {
-    expect(pvpElementsForSeed(777)).toEqual(pvpElementsForSeed(777));
-    expect(pvpElementsForSeed(777)).not.toEqual(pvpElementsForSeed(778));
+    expect(mixedElementsForSeed(777)).toEqual(mixedElementsForSeed(777));
+    expect(mixedElementsForSeed(777)).not.toEqual(mixedElementsForSeed(778));
   });
   it('pool pequeno: não trava, relaxa só o limiar e NUNCA a lista curada', () => {
     // 3 ícones: 2 formam par curado (nebulosa/espectro) e o 3º é distante; pedir 3 não pode devolver o par proibido.
     const r = pickM3Distinct(['nebulosa', 'espectro', 'fogo'], 3);
     expect(r.elements).toEqual(['nebulosa', 'fogo']);
     // pool de gêmeos de cor mas fora da lista: relaxa até o limiar caber e avisa.
-    const pool = pvpElementPool().filter(id => m3DeltaE('fogo', id) < 12 && id !== 'fogo').slice(0, 3);
+    const pool = mixedElementPool().filter(id => m3DeltaE('fogo', id) < 12 && id !== 'fogo').slice(0, 3);
     const g = pickM3Distinct(['fogo', ...pool], 3, M3_MIN_DELTA_E);
     expect(g.elements.length).toBeGreaterThanOrEqual(1);
     expect(g.relaxado || g.elements.length === 1).toBe(true);
@@ -72,7 +72,7 @@ describe('Match-3: cores distintas no mesmo tabuleiro (REGISTRO §400)', () => {
     let relaxadas = 0;
     for (let sd = 1; sd <= 3000; sd++) {
       const rng = mulberry32((sd ^ 0x3e1e) | 0);
-      if (pickM3Distinct(pickPvpElements(rng, pvpElementPool(), 400), 6).relaxado) relaxadas++;
+      if (pickM3Distinct(pickMixedElements(rng, mixedElementPool(), 400), 6).relaxado) relaxadas++;
     }
     expect(relaxadas).toBe(0);
   });
@@ -113,7 +113,7 @@ describe('Match-3 rodada 1: paleta e daltonismo (REGISTRO §402)', () => {
   it('em 3000 sementes: nenhum par abaixo do limiar de paleta nem de daltonismo, sempre 6, sem relaxar', () => {
     for (let sd = 1; sd <= 3000; sd++) {
       const rng = mulberry32((sd * 104729 ^ 0x3e1e) | 0);
-      const r = pickM3Distinct(pickPvpElements(rng, pvpElementPool(), 400), 6);
+      const r = pickM3Distinct(pickMixedElements(rng, mixedElementPool(), 400), 6);
       expect(r.relaxado).toBe(false);
       expect(r.elements).toHaveLength(6);
       for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
@@ -130,7 +130,7 @@ describe('Match-3 rodada 1: paleta e daltonismo (REGISTRO §402)', () => {
     expect(pickM3Distinct(['nebulosa', 'espectro'], 2).elements).toEqual(['nebulosa']);
   });
   it('determinístico mesmo com as camadas novas', () => {
-    expect(pvpElementsForSeed(31337)).toEqual(pvpElementsForSeed(31337));
+    expect(mixedElementsForSeed(31337)).toEqual(mixedElementsForSeed(31337));
   });
 });
 
@@ -162,7 +162,7 @@ describe('Match-3 rodada 2: silhueta e brilho (REGISTRO §402)', () => {
   it('em 3000 sementes: nenhum par de forma confundível, sempre 6, sem relaxar', () => {
     for (let sd = 1; sd <= 3000; sd++) {
       const rng = mulberry32((sd * 104729 ^ 0x3e1e) | 0);
-      const r = pickM3Distinct(pickPvpElements(rng, pvpElementPool(), 400), 6);
+      const r = pickM3Distinct(pickMixedElements(rng, mixedElementPool(), 400), 6);
       expect(r.relaxado).toBe(false);
       expect(r.elements).toHaveLength(6);
       for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(m3SilhuetaConfunde(r.elements[i], r.elements[j])).toBe(false);
@@ -187,10 +187,10 @@ describe('Match-3 rodada 3: curadoria a olho e pool efetivo (REGISTRO §402)', (
     expect(M3_MIN_DELTA_E_DALTONICO).toBe(8);
   });
   it('o pool não esvazia: cada ícone tem dezenas de companheiros compatíveis e 3000 sorteios nunca relaxam', () => {
-    const pool = pvpElementPool();
+    const pool = mixedElementPool();
     for (const a of pool.filter((_, i) => i % 7 === 0)) expect(pool.filter(b => b !== a && !m3Conflito(a, b)).length).toBeGreaterThan(40);
     const vistos = new Set<string>();
-    for (let sd = 1; sd <= 3000; sd++) for (const e of pvpElementsForSeed(sd * 104729)) vistos.add(e);
+    for (let sd = 1; sd <= 3000; sd++) for (const e of mixedElementsForSeed(sd * 104729)) vistos.add(e);
     expect(vistos.size).toBeGreaterThan(pool.length * 0.95);
   });
 });
@@ -203,10 +203,10 @@ describe('Match-3: Flora e Titã (REGISTRO §402, dono 15/11/2026)', () => {
   });
   it('em 3000 sementes: flora e tita nunca aparecem juntos e o pool de cada um continua grande', () => {
     for (let sd = 1; sd <= 3000; sd++) {
-      const els = pvpElementsForSeed(sd * 104729);
+      const els = mixedElementsForSeed(sd * 104729);
       expect(els.includes('flora') && els.includes('tita')).toBe(false);
     }
-    const pool = pvpElementPool();
+    const pool = mixedElementPool();
     for (const a of ['flora', 'tita']) expect(pool.filter(b => b !== a && !m3Conflito(a, b)).length).toBeGreaterThan(40);
   });
 });

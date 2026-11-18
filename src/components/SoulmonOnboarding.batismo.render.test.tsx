@@ -11,7 +11,11 @@
  *
  * PT e EN sempre, porque a copy É o conserto.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding, type OnboardingCompleteData } from './SoulmonOnboarding';
