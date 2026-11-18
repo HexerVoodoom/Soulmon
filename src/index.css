@@ -9324,12 +9324,13 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* 17/11/2026 (dono): Coroa ENCAIXADA ganha placa atrás da arte (a do dano contínuo é quase preta e sumia no fundo escuro do slot, ≈1,2:1).
    18/11/2026 (dono, rodada 2): SEM placa clara atrás da Coroa (era a mancha branca): só o OUTER GLOW turquesa; as artes escuras (heal, hot, spdBuff) seguem com a placa escura. (Antes: a placa clara deixou de ser branca: TURQUESA CLARO (#B4F4EA) com OUTER GLOW turquesa (`primary-ink`), o mesmo brilho externo do hexágono do lápis. Duas placas fixas, iguais nos temas claro e escuro: clara (#B4F4EA) para as artes escuras, escura (#08191A) para as três claras
    (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa.) */
-.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: transparent; box-shadow: 0 0 0 1px var(--sm2-primary-ink), 0 0 8px 2px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent), 0 0 16px 4px color-mix(in srgb, var(--sm2-primary-ink) 25%, transparent); }
-.sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: #08191A; }
+/* 18/11/2026 (dono, rodada 3): SEM anel/círculo/glow/borda redonda em volta do ícone da HEX (Coroa incluída): o ícone fica DIRETO sobre o hexágono.
+   As três artes escuras (heal, hot, spdBuff) ganham só um preenchimento escuro recortado no hexágono (clip-path), nunca um círculo. */
+.sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: var(--sm2-hex-plate, #08191A); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
   display: grid; place-items: center;
-  width: 48px; height: 48px; padding: 0; margin: 0;
+  width: 56px; height: 56px; padding: 0; margin: 0;
   background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer; color: var(--sm2-ink);
   transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
   &:hover { background-color: var(--sm2-primary-soft); }
