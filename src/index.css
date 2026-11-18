@@ -8553,7 +8553,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
    px do arquivo / 720 * 100. Topo 720×146: a barra opaca começa em y 35 (o resto, cipós e encaixe do cristal, sobra para cima) e vai até y 142;
    os discos (fechar à esquerda, "i" à direita) têm centro em x 56 / 664, y 98 e diâmetro 56. Base 720×29; laterais 25 px (repeat-y). */
 .sm3-mochila.sm3-files {
-  max-width: 520px; min-height: 56vh; max-height: 90vh; padding: 0; overflow: visible;
+  /* ALTURA FIXA, igual nas três abas (Comida, Especiais, Materiais): a área de conteúdo rola por dentro; nunca depende de quantos itens há. */
+  max-width: 520px; height: 72vh; min-height: 56vh; max-height: 90vh; padding: 0; overflow: visible;
   background-color: var(--sm2-viewport-bg); border: 0; border-radius: 0; color: var(--sm2-viewport-ink);
   --sm2-moldura-pad-x: calc(var(--u) * 5); --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 5);
 }
