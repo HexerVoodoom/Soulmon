@@ -263,7 +263,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-scene="exploracao"]')).toBeTruthy();
   });
 
-  it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
+  it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, ganho 1 Bit a cada 100 no pergaminho, e o CTA abre a DinoGame', async () => {
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '1240');
     const p = props({ area: 'jogos' });
     const { container, getByRole } = renderWithCss(<PlayAreaView {...p} />);
@@ -271,7 +271,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const start = await achar(container, '[data-dino-start]');
     const folha = getByRole('dialog', { name: 'Salão de Jogos' });
     expect(folha.textContent).toContain('1240');
-    expect(folha.textContent).toContain('12 Bits');
+    expect(folha.textContent).toContain('a cada 100 pts');
     fireEvent.click(start);
     fireEvent.click(await achar(container, '[data-gate-pick="2"]'));
     await achar(container, '[data-jogo="dino"]');
@@ -468,7 +468,7 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
 });
 
 describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
-  it('Corrida sem recorde: nenhum selo "0"/"0 Bits"; com recorde, os dois entram', () => {
+  it('Corrida: o selo de recorde só aparece com recorde; o ganho (1 Bit a cada 100 pts) fica no pergaminho', () => {
     const { container, unmount } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const dino = () => container.querySelector('[data-game-card="dino"]')!.textContent!;
     expect(dino()).not.toMatch(/seu recorde/);
@@ -477,7 +477,8 @@ describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
     const r = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const t = r.container.querySelector('[data-game-card="dino"]')!.textContent!;
     expect(t).toContain('seu recorde');
-    expect(t).toContain('2 Bits');
+    expect(t).toContain('a cada 100 pts');
+    expect(r.container.querySelector('[data-game-card="dino"] [data-game-card-badges]')!.textContent).not.toMatch(/Bits/);
     localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
   });
   it('Elemental Fusion sem recorde: só o "até N Bits"', () => {

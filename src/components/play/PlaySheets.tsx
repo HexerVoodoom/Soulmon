@@ -204,6 +204,17 @@ function Badge({ children, style }: { children: ReactNode; style?: CSSProperties
   return <span className="sm2-num" style={{ whiteSpace: 'nowrap', ...style }}>{children}</span>;
 }
 
+/** Ganho de cada jogo do Salão, no pergaminho da carta (só constantes dos donos; nada inventado). */
+const ganho = (language: Language) => {
+  const isPt = language === 'pt-BR';
+  return {
+    dino: <><BitsAmount value={1} size={14} /> {isPt ? `a cada ${DINO_POINTS_PER_BIT} pts` : `per ${DINO_POINTS_PER_BIT} pts`}</>,
+    ppt: <><BitsAmount value={MATCH_POINTS} size={14} /> {isPt ? 'por vitória' : 'per win'}</>,
+    match3: <><RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} size={14} /> {isPt ? 'por rodada' : 'per round'}</>,
+    barrage: <><BitsAmount value={1} size={14} /> {isPt ? `a cada ${BARRAGE_POINTS_PER_BIT} pts` : `per ${BARRAGE_POINTS_PER_BIT} pts`}</>,
+  };
+};
+
 /** Selos da Corrida: recorde e os Bits que ele rendeu (somem sem recorde: não há "0 Bits" a mostrar, P10) + o ticket da partida. */
 function DinoBadges({ language, paga }: { language: Language; paga: boolean }) {
   const isPt = language === 'pt-BR';
@@ -211,7 +222,6 @@ function DinoBadges({ language, paga }: { language: Language; paga: boolean }) {
   return (
     <>
       {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
-      {best > 0 && <Badge style={bitsStyle}><BitsAmount value={Math.floor(best / DINO_POINTS_PER_BIT)} /></Badge>}
       {paga && <TicketCost />}
     </>
   );
@@ -224,7 +234,6 @@ function Match3Badges({ language, paga }: { language: Language; paga: boolean })
   return (
     <>
       {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
-      <Badge style={bitsStyle}><RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} /> {isPt ? 'por rodada' : 'per round'}</Badge>
       {paga && <TicketCost />}
     </>
   );
@@ -235,7 +244,6 @@ function PptBadges({ language, paga }: { language: Language; paga: boolean }) {
   const isPt = language === 'pt-BR';
   return (
     <>
-      <Badge style={bitsStyle}><BitsAmount value={MATCH_POINTS} /> {isPt ? 'por vitória' : 'per win'}</Badge>
       {paga && <TicketCost />}
     </>
   );
@@ -302,24 +310,28 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
         <GameCard
           id="dino" icon={iconCorrida} dataAttrs={{ 'data-dino-start': 'true' }}
           title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
+          reward={ganho(language).dino}
           onPress={() => onStart('dino')}
           badges={<DinoBadges language={language} paga={paga} />}
         />
         <GameCard
           id="ppt" icon={iconPpt} dataAttrs={{ 'data-ppt-start': 'true' }}
           title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
+          reward={ganho(language).ppt}
           onPress={() => onStart('ppt')}
           badges={<PptBadges language={language} paga={paga} />}
         />
         <GameCard
           id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
           title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
+          reward={ganho(language).match3}
           onPress={() => onStart('match3')}
           badges={<Match3Badges language={language} paga={paga} />}
         />
         <GameCard
           id="barrage" icon={iconCorrida} dataAttrs={{ 'data-barrage-open': 'true' }}
           title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
+          reward={ganho(language).barrage}
           onPress={() => onStart('barrage')}
           badges={paga ? <TicketCost /> : undefined}
         />

@@ -31,12 +31,14 @@ export function cardArt(id: string): string | undefined {
   return ART[`../../assets/soulmon/cards/${id}.webp`];
 }
 
-export function GameCard({ id, title, description, icon, badges, onPress, dataAttrs, art }: {
+export function GameCard({ id, title, description, reward, icon, badges, onPress, dataAttrs, art }: {
   /** Id da carta (`CARD_IDS`) — escolhe a ilustração. */
   id: string;
   title: string;
   /** Uma linha curta (opcional: o Salão mostra só o título). */
   description?: string;
+  /** Quanto o jogo ganha (Bits): vai no pergaminho, centralizado, quando não há descrição. */
+  reward?: ReactNode;
   /** Ícone/glifo do placeholder (quando não há arte). Sem ele, a inicial do nome. */
   icon?: string;
   /** Linha pequena de selos sob a carta (Bits, custo de energia…). */
@@ -52,8 +54,8 @@ export function GameCard({ id, title, description, icon, badges, onPress, dataAt
     <li className="sm-game-card" data-game-card={id}>
       <button type="button" className="sm-game-card__btn" onClick={onPress} {...dataAttrs}>
         <CardFrame
-          name={description ? title : undefined}
-          description={description ?? <span className="sm-game-card__titulo">{title}</span>}
+          name={<span className="sm-game-card__titulo" data-game-card-nome>{title}</span>}
+          description={description ?? (reward != null ? <span className="sm-game-card__ganho" data-game-card-ganho>{reward}</span> : undefined)}
           art={src ? (
             <img src={src} alt="" loading="lazy" decoding="async" data-game-card-art />
           ) : (
