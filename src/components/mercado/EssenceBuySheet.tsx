@@ -68,7 +68,7 @@ export function EssenceBuySheet({ id, language, credits, owned, busy, onCancel, 
               aria-valuenow={n}
               disabled={blocked}
               value={draft ?? String(n)}
-              onChange={e => { const t = e.target.value.replace(/\D/g, '').slice(0, 4); setDraft(t); if (t) setQty(Math.min(Math.max(1, Number(t)), Math.max(1, max))); }}
+              onChange={e => { const t = e.target.value.replace(/\D/g, '').slice(0, 7); setDraft(t); if (t) setQty(Math.min(Math.max(1, Number(t)), Math.max(1, max))); }}
               onBlur={() => setDraft(null)}
               className="sm2-num"
               style={{ ...sm2Text, width: 72, minHeight: 48, boxSizing: 'border-box', textAlign: 'center', borderRadius: 'var(--sm2-radius-md)', border: '1px solid currentColor', background: 'transparent', color: 'inherit' }}

@@ -8,21 +8,21 @@ import { elementComposition } from './elementPotion';
 export const ESSENCE_PACK_SIZES = [1, 5] as const;
 export type EssencePackSize = (typeof ESSENCE_PACK_SIZES)[number];
 
+/** Teto de estoque por elemento (espelho de `ESSENCE_MAX_PER_ELEMENT`; também o maior N aceito numa compra). */
+const ESSENCE_STOCK_CAP = 1_000_000;
+
 export function essenceUnitPrice(id: string): number {
   const n = elementComposition(id)?.length ?? 0;
   return n <= 0 ? 0 : Math.min(3, n);
 }
 
-/** Teto de essências por COMPRA (§479); espelho de `ESSENCE_MAX_PER_BUY` do servidor. */
-export const ESSENCE_MAX_PER_BUY = 100;
-
 /**
- * Preço total de N essências (1..ESSENCE_MAX_PER_BUY); 0 = inválido. Cada grupo completo de 5 sai com 10% off
+ * Preço total de N essências (inteiro de 1 até o teto de estoque); 0 = inválido. Cada grupo completo de 5 sai com 10% off
  * (arredondado para baixo), o resto paga o unitário. N=1 e N=5 dão os preços de sempre (§205).
  */
 export function essencePackPrice(id: string, qty: number): number {
   const unit = essenceUnitPrice(id);
-  if (!unit || !Number.isInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_BUY) return 0;
+  if (!unit || !Number.isSafeInteger(qty) || qty < 1 || qty > ESSENCE_STOCK_CAP) return 0;
   const packs = Math.floor(qty / 5);
   return packs * Math.floor(5 * unit * 0.9) + (qty - packs * 5) * unit;
 }
@@ -30,14 +30,15 @@ export function essencePackPrice(id: string, qty: number): number {
 export type EssenceBuyLimit = 'ok' | 'cap' | 'credits';
 
 /**
- * Quantas essências a pessoa pode comprar AGORA: min(teto por compra, teto de estoque − posse, o que o saldo paga).
+ * Quantas essências a pessoa pode comprar AGORA: min(teto de estoque − posse, o que o saldo paga); sem limite por compra.
  * `reason` só vale quando `max` = 0 (estoque cheio / Créditos insuficientes). O servidor reconfere tudo.
  */
 export function essenceMaxBuy(id: string, credits: number, owned: number, cap: number): { max: number; reason: EssenceBuyLimit } {
   const room = Math.max(0, cap - Math.max(0, owned));
   if (room <= 0) return { max: 0, reason: 'cap' };
-  const limit = Math.min(ESSENCE_MAX_PER_BUY, room);
-  let max = 0;
-  for (let n = 1; n <= limit; n++) { if (essencePackPrice(id, n) > credits) break; max = n; }
+  // O preço é monótono em N: busca binária pelo maior N que o saldo paga (sem laço de 1.000.000 passos).
+  let lo = 0, hi = room;
+  while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (essencePackPrice(id, mid) <= credits) lo = mid; else hi = mid - 1; }
+  const max = lo;
   return max === 0 ? { max: 0, reason: 'credits' } : { max, reason: 'ok' };
 }

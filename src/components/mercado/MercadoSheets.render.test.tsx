@@ -261,6 +261,17 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     fireEvent.change(qty, { target: { value: '12' } });
     expect(qty.getAttribute('aria-valuenow')).toBe('12');
     expect(q(dlg, '[data-essence-total]').textContent).toBe('10 Credits');
+    fireEvent.change(qty, { target: { value: '1000' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('25');
+  });
+
+  it('Essências: digitar N grande vale até o que o saldo paga, sem limite por compra', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 800 });
+    const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
+    fireEvent.change(qty, { target: { value: '1000' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('1000');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('800 Credits');
   });
 
   it('Essências: o máximo respeita o saldo e o teto de estoque; + desabilita no limite', () => {

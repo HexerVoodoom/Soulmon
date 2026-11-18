@@ -9,8 +9,6 @@
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
 export const ESSENCE_PACK_SIZES = /** @type {const} */ ([1, 5]);
 export const ESSENCE_PACK_DISCOUNT = 0.1;
-/** Teto de essências por COMPRA (§479): o seletor do Cambista vai de 1 a este valor. O teto de estoque é `ESSENCE_MAX_PER_ELEMENT`. */
-export const ESSENCE_MAX_PER_BUY = 100;
 
 export const BASE_ELEMENTS = ['fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz',
   'vileza', 'morte', 'vida', 'vigor', 'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta'];
@@ -47,14 +45,14 @@ export function essenceUnitPrice(id) {
 }
 
 /**
- * Preço total de N essências (1..`ESSENCE_MAX_PER_BUY`); 0 = inválido (§479, retrocompatível com §205).
+ * Preço total de N essências (inteiro de 1 até o teto de estoque, sem limite por compra); 0 = inválido (§479, retrocompatível com §205). Aritmética inteira: para N ≤ 1.000.000 e unit ≤ 3 o total passa de 3 milhões, bem abaixo de 2^53.
  * Cada grupo COMPLETO de 5 sai com 10% off arredondado para baixo; o resto paga o preço unitário.
  * N=1 e N=5 dão exatamente os preços de antes (unit e floor(5*unit*0.9)).
  * @param {string} id @param {number} qty
  */
 export function essencePackPrice(id, qty) {
   const unit = essenceUnitPrice(id);
-  if (!unit || !Number.isInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_BUY) return 0;
+  if (!unit || !Number.isSafeInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_ELEMENT) return 0;
   const packs = Math.floor(qty / 5);
   return packs * Math.floor(5 * unit * (1 - ESSENCE_PACK_DISCOUNT)) + (qty - packs * 5) * unit;
 }

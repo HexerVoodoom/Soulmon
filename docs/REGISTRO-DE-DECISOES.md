@@ -6467,3 +6467,5 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** N chamadas de 1 (não atômico, N cobranças e N opIds).
 
 **Gatilho para rever:** pedido de limite diferente por compra, ou o dono querer o desconto de 10% em qualquer N.
+
+**Adendo (18/11/2026, dono): SEM limite por compra.** Some o teto de 100 (`ESSENCE_MAX_PER_BUY`). Máximo do seletor = min(1.000.000 − estoque, maior N que o saldo de Créditos paga), por busca binária (preço monótono). O servidor aceita qualquer inteiro seguro ≥1; acima do teto de estoque segue 409 `cap`, sem saldo 402, não inteiro/≤0 400 `bad-qty`. Mesma regra de preço (10% por grupo completo de 5); a conta é inteira e para N ≤ 1.000.000 não passa de 3 milhões. Paridade cobre 1, 5, 99, 100, 101, 1000, 999.999 e 1.000.000. O campo do meio aceita digitar até 7 dígitos com clamp; segurar para repetir ficou de fora.
