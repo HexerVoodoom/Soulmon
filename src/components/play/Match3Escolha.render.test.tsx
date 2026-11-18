@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * §487 — Elemental Fusion igual ao Torneio: botões de modo em cima, LISTA DE 3 embaixo (mesma linha do Torneio, `EscolhaLinha`) e
+ * §488 — Elemental Fusion igual ao Torneio: botões de modo em cima, LISTA DE 3 embaixo (mesma linha do Torneio, `EscolhaLinha`) e
  * "Sortear 3 novos". Aventura mostra ELEMENTO (nunca o inimigo); PvP mostra só jogadores da rota `opponents` (sem demo, sem monstro);
  * Lutar avança para o jogo com a escolha.
  */

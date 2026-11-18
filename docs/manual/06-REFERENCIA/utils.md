@@ -1352,7 +1352,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/match3Escolha.ts`
 
-**Dono de:** a regra PURA da escolha de 3 do Elemental Fusion (REGISTRO §487). **Exports:** `M3_CHOICES` (3), `M3_REDRAWS_PER_VISIT` (1, grátis — a regra do Torneio ranqueado), `adventureElementPool()` (elementos do pool misturado que têm criatura no roster), `adventureChoices(screenSeed)` (3 elementos distintos + semente de partida por opção; o time de 4 cai daquele elemento via `newCombat(..., { element })`), `pvpChoices(screenSeed, opponents, myLevel, artOf)` (boss decidido antes = só a linha do boss; senão até 3 jogadores da rota, sem demo, sementes sem boss), `isDemoOpponent(o)`, tipos `M3Choice`/`M3AdventureChoice`/`M3PvpChoice`. Determinístico (`mulberry32`). Régua: `utils/match3Escolha.test.ts`.
+**Dono de:** a regra PURA da escolha de 3 do Elemental Fusion (REGISTRO §488). **Exports:** `M3_CHOICES` (3), `M3_REDRAWS_PER_VISIT` (1, grátis — a regra do Torneio ranqueado), `adventureElementPool()` (elementos do pool misturado que têm criatura no roster), `adventureChoices(screenSeed)` (3 elementos distintos + semente de partida por opção; o time de 4 cai daquele elemento via `newCombat(..., { element })`), `pvpChoices(screenSeed, opponents, myLevel, artOf)` (boss decidido antes = só a linha do boss; senão até 3 jogadores da rota, sem demo, sementes sem boss), `isDemoOpponent(o)`, tipos `M3Choice`/`M3AdventureChoice`/`M3PvpChoice`. Determinístico (`mulberry32`). Régua: `utils/match3Escolha.test.ts`.
 
 ### `src/utils/match3Powers.ts`
 
