@@ -2594,3 +2594,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 - `rift/RiftMap.tsx`: película preta `data-rift-map-veil` (`RIFT_VEIL_START` 24, `RIFT_VEIL_FADE` 110, `RIFT_VEIL_ALPHA` 0,96), nó com `riftSetName`.
 - `arena/DueloSheet.tsx`: `ComprarConvites` (1º item; `EnergyCost`, `DUEL_INVITE_ENERGY_COST`), "Duelar" desabilitado sem convite. `arena/conviteDueloArt.ts`: novo `conviteDueloFan(language, max): FanArt | undefined`. `play/TicketFan.tsx`: `TicketFan({ count, language, art? })` e a interface `FanArt` (`src`, `portrait`, `ratio`, `max`, `unit`, `attr`); sem `art` é o ticket dos minijogos (teto 6).
 - `ElementPotionSheet.tsx`: sem filtros de status nem `NeutroPotionPanel`; Neutro = última linha comum (`neutroProgresso`). `VescaPotionOffer.tsx`: só elemento base (texto único "Gasta N essências"). `App.tsx`: fila da Vesca por `VESCA_OFFER_ELEMENT_IDS`.
+
+### `src/components/ui/BotaoModo.tsx`
+
+**Dono de:** o botão de MODO (18/11/2026, pedido do dono, §481): `variant="pve"` (Aventura/Amistoso, relaxado) e `variant="pvp"` (PvP/Ranqueada, competitivo), 3-slice por `border-image` como o `BotaoEspecial`, um WebP por estado (`ui/btn-modo-{pve,pvp}{,-press,-off}.webp`; arte provisória = placas cta/especial até a do ChatGPT). **Props:** `variant`, `hint?` (linha de apoio), restante de `<button>`. **Usado por:** `Match3Game` (escolha Aventura/PVP), `MinigameModeGate` (`pveVsPvp`). Visual em `.sm2-modo` (`index.css`). **Régua:** `BotaoModo.render.test.tsx`.

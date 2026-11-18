@@ -6483,3 +6483,10 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Adendo §480 — Fliperama de Canto:** tocar na peça (botão ≥44px, `aria-label` "Abrir minigames"/"Open minigames", invisível) chama `onGoToBuilding('jogos.salao')`, o mesmo caminho do Caderno: abre a folha do Salão existente (tickets/energia regidos por ela). Fora do editor da Home (sem handler = só cenário).
 
 **Adendo §480 — Sino e Ampulheta:** sino de vento = som PROCEDURAL (`parciaisSinoDeVento`, 4 variações, `playWindChime`, categoria `arcade`, offset +1,9 dB medido no arnês nominal; NÃO OUVIDO, falta gate S8), agendado por `hooks/useWindChime.ts` a cada 14–38 s aleatórios, só na Home real (`somAtivo`), pet acordado, aba visível, áudio já liberado, mudo global respeitado, sem som em movimento reduzido. Ampulheta = 3 grãos turquesa em CSS caindo no gargalo (sem asset novo). **Biblioteca pixelfx** (patch-gg/pixelfx, MIT, © Patch / Hugo Duprez; fonte da galeria fora da licença): clonada em `E:/Soulmon-wt/aprovacao/pixelfx-src` e skill instalada em `~/.claude/skills/pixelfx`; NÃO entrou no bundle (canvas em pixel 128×128 + core ~140 KB; estilo ainda a validar com o dono).
+
+## §481 — Ranking repensado: botões de modo PvE/PvP, modal próprio e pódio (18/11/2026, pedido do dono)
+
+**Decisão:** dois tipos de botão reutilizáveis (`BotaoModo` pve/pvp) aplicados onde há par PvE/PvP (Match-3, Salão); depois modal de ranking com moldura própria + botão especial de ranking; por fim pódio/lista. Só a apresentação muda; regras de ranking no servidor intactas.
+**Alternativa que perdeu:** estilizar `sm2Button` (sem arte própria; não distingue competitivo de relaxado).
+**Gatilho para rever:** o dono reprovar a arte ou pedir o Torneio (abas Ranqueada/Treino) também em `BotaoModo` — hoje seguem como `Segment`, pois são abas, não ações.
+**Estado:** PR1 com arte provisória; arte final pendente do ChatGPT (PC ocupado por outra sessão).

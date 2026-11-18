@@ -9,6 +9,7 @@ import type { Language } from '../../utils/i18n';
 import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
 import type { RankedGame, RankingPeriod } from '../../utils/rankings';
 import { TicketFan } from './TicketFan';
+import { BotaoModo } from '../ui/BotaoModo';
 
 /**
  * A pergunta do Pipo antes de cada minijogo (pedido do dono, 30/10/2026): o NPC do Salão
@@ -81,12 +82,21 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
         </ModalSheet>
         {two ? (
           <div role="group" aria-label={pveVsPvp ? (isPt ? 'Modo' : 'Mode') : (isPt ? 'Dificuldade' : 'Difficulty')} style={{ display: 'flex', gap: 8 }}>
-            <button type="button" data-gate-pick="1" onClick={() => onPick(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64 }}>
-              {labelOf(1)}
-            </button>
-            <button type="button" data-gate-pick="2" onClick={() => onPick(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64 }}>
-              {labelOf(2)}
-            </button>
+            {pveVsPvp ? (
+              <>
+                <BotaoModo variant="pve" data-gate-pick="1" onClick={() => onPick(1)} style={{ flex: 1, minWidth: 0 }}>{labelOf(1)}</BotaoModo>
+                <BotaoModo variant="pvp" data-gate-pick="2" onClick={() => onPick(2)} style={{ flex: 1, minWidth: 0 }}>{labelOf(2)}</BotaoModo>
+              </>
+            ) : (
+              <>
+                <button type="button" data-gate-pick="1" onClick={() => onPick(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64 }}>
+                  {labelOf(1)}
+                </button>
+                <button type="button" data-gate-pick="2" onClick={() => onPick(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64 }}>
+                  {labelOf(2)}
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <button type="button" data-gate-play onClick={() => onPick()} style={{ ...sm2Button('primary', false, 'lg'), minHeight: 64 }}>

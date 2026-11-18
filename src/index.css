@@ -9626,6 +9626,21 @@ button.sm2-hex-row {
   &:focus-visible { outline: 2px solid #FBF1D2; outline-offset: 2px; filter: drop-shadow(0 0 2px #F2C25B); }
   &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-especial-off.webp'); color: #C9D2D0; transform: none; }
 }
+/* Botão de MODO (`BotaoModo`, 18/11/2026): PvE (turquesa/aventura) e PvP (vermelho/competitivo), 3-slice como o especial. Arte provisória = as
+   placas existentes (cta/especial) até a arte própria do ChatGPT entrar; só as variáveis `--modo-*` mudam. */
+.sm2-modo {
+  --modo-art: url('./assets/soulmon/ui/btn-cta.webp'); --modo-press: url('./assets/soulmon/ui/btn-cta-press.webp'); --modo-off: url('./assets/soulmon/ui/btn-cta-off.webp');
+  box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 100%; min-height: 64px; margin: 0; padding: 0 var(--sm2-space-2);
+  cursor: pointer; background: transparent; border-style: solid; border-width: 0 40px; border-image: var(--modo-art) 0 110 0 110 fill / 0 40px stretch;
+  color: #FBF1D2; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 700; line-height: 1.1; text-shadow: 0 1px 0 rgba(0, 0, 0, .65);
+  transition: transform var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-botao-modo="pvp"] { --modo-art: url('./assets/soulmon/ui/btn-especial.webp'); --modo-press: url('./assets/soulmon/ui/btn-especial-press.webp'); --modo-off: url('./assets/soulmon/ui/btn-especial-off.webp'); }
+  &:active:not(:disabled) { transform: translateY(2px); border-image-source: var(--modo-press); }
+  &:focus-visible { outline: 2px solid #FBF1D2; outline-offset: 2px; }
+  &:disabled { cursor: not-allowed; border-image-source: var(--modo-off); color: #C9D2D0; transform: none; }
+}
+.sm2-modo-label { text-align: center; }
+.sm2-modo-hint { font-size: var(--sm2-text-sm); font-weight: 500; opacity: .85; text-align: center; }
 .sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;
