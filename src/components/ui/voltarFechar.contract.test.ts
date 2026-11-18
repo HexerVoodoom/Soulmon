@@ -111,7 +111,11 @@ describe('voltar/fechar — contrato (I3)', () => {
     }
     for (const path of cheias.filter(p => p !== 'components/ui/BackArrow.tsx')) {
       const f = FILES.find(x => x.path === path)!;
-      expect(f.src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
+      // Exceção do dono (18/11/2026): a moldura de AÇO da Hexsmith (`AreaSheet moldura="aco"`) desenha o ✕ no disco esquerdo da arte
+      // (o mesmo do modal Files). Só o componente `FecharAco` pode usar o glifo; o resto do arquivo segue sem ✕.
+      const src = path === 'components/nav/AreaSheet.tsx' ? f.src.replace(/function FecharAco\([\s\S]*?\r?\n\}\r?\n/, '') : f.src;
+      if (path === 'components/nav/AreaSheet.tsx') expect(src.length, 'FecharAco encontrado e recortado').toBeLessThan(f.src.length);
+      expect(src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
     }
     const kit = FILES.find(f => f.path === 'components/games/GameKit.tsx')!.src;
     expect(kit).not.toContain('data-game-close-end');
