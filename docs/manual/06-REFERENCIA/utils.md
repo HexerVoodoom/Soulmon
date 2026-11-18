@@ -677,6 +677,20 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ Nunca estorna pela metade: comida já usada, missão já resgatada, outro dia ou entrada sem recibo (anterior a esta versão) → recusa.
 - ⚠️ Campo novo concedido pela conclusão de tarefa entra no RECIBO e no estorno, senão desmarcar/marcar vira farm.
 
+### `src/utils/taskCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de tarefa avulsa, uma regra só para o toque na Home e para o check do widget grande da Home (decisão do dono, 18/11/2026). Footgun 9: a regra mora aqui, nunca copiada.
+**Exports:**
+- `function markTaskChecked(state, taskId)` — o check: a tarefa fica `completed: true` e continua na lista até o acerto.
+- `function grantReliefFood(state, category)` — bônus de alívio da tarefa ASSOMBRADA: +1 comida da categoria (`emoji` para a animação).
+- `function countHauntedMission(state, now)` — missão semanal `haunted-done` (o mesmo que `contarMissao('haunted-done')`, sem evento diário).
+- `function settleTaskCompletion(prev, task, relief, now)` — o acerto: `completeTask` (sai da lista, histórico, comida, premium) + XP de Vínculo pelo peso de esforço (`effortOf`) + recibo do "Desmarcar" (`TaskCompletionReceipt`). `paid: false` = nada a pagar (mesma referência).
+- `function applyTaskCompletion(state, taskId, now)` — o toque inteiro de uma vez (missão, check, alívio, acerto): é o que a drenagem da fila do widget usa. Tarefa ausente ou já marcada = no-op.
+**Chamado por:** `src/App.tsx` (`handleToggleTask`: as quatro primeiras, em dois tempos — clique e acerto 3 s depois).
+**Régua:** `src/utils/taskCompletionPay.test.ts` (paridade contra a cópia literal do `handleToggleTask` anterior: comum, assombrada, premium, repetição, esforço; idempotência; contrato no App.tsx); `src/utils/weeklyMissions.fiacao.test.ts` (o gatilho de `haunted-done`).
+**Avisos do arquivo:**
+- ⚠️ Puras: rodam dentro do updater (footgun 6). Som, toast, fala, refeição e gesto do 1º dia continuam no App.
+- ⚠️ Campo novo concedido pela conclusão entra no recibo (ver `taskUncomplete.ts`).
+
 ### `src/utils/completionUndo.ts`
 **Dono de:** A janela de 5 s para DESFAZER uma conclusão de hábito (decisão do dono #57, 22/09/2026) — o que a reversão devolve, e nada mais.
 **Exports:**
@@ -4514,7 +4528,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/bossSplash.ts`
 **Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
-**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`, `bossBattleTitleArt` (título "BOSS BATTLE" por glob), `resultOpponentSrc` (arte do adversário no resultado do Fusion).
 **Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
 
 ### `src/utils/soulBarrage.ts`

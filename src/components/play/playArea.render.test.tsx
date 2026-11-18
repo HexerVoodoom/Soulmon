@@ -196,8 +196,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    const info = folha.querySelector('[data-area-sheet-head] [data-info-tip]') as HTMLButtonElement;
+    const info = folha.querySelector('[data-moldura-info] [data-info-tip]') as HTMLButtonElement; // o botão mora sobre o ornamento "i" da arte
     expect(info.getAttribute('aria-label')).toBe('Drop rate');
+    expect(folha.querySelectorAll('[data-info-tip]')).toHaveLength(1);
     fireEvent.click(info);
     const painel = document.querySelector('[data-info-tip-panel]')!;
     expect(painel.textContent).toContain('Drop rate');
@@ -291,7 +292,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
     expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
     expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
-    fireEvent.click(container.querySelector('[data-area-sheet-head] [data-info-tip]')!);
+    fireEvent.click(container.querySelector('[data-moldura-info] [data-info-tip]')!);
     expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
   });
 });

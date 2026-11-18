@@ -8,7 +8,7 @@ import { pickPvpOpponent, mixedElementsForSeed, pvpRewards, simulatedFoe, tileEl
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './mente/types';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameRoot, GameHeader, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { Icon } from './ui/Icon';
@@ -46,7 +46,8 @@ import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { petScaleStyle } from '../utils/spriteScale';
 import { BossSplash } from './games/BossSplash';
-import { fusionBossMonster } from '../utils/bossSplash';
+import { BOSS_SHARD_ART } from '../utils/itemArt';
+import { fusionBossMonster, bossBattleTitleArt, resultOpponentSrc } from '../utils/bossSplash';
 import { entrarNaSuperficie } from '../utils/musica';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
@@ -190,7 +191,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
   const bossMonster = useMemo(() => (boss ? fusionBossMonster(boss.seed, language === 'pt-BR') : null), [boss, language]);
   // música de chefe (superfície própria; hoje a faixa de combate, a `chefe-adrenalina` do dono é pendente)
   useEffect(() => (boss ? entrarNaSuperficie('chefe-minigame') : undefined), [boss]);
-  const [ruleTip, setRuleTip] = useState<BossRuleId | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [clock, setClock] = useState(BOSS_CLOCK_MS);
   const boardRules: BoardRules = useMemo(() => (boss ? bossBoardRules(boss.rules) : {}), [boss]);
   const boardRulesRef = useRef(boardRules);
@@ -223,7 +224,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
   }, [flashMira]);
   // M10: os 3 inimigos do roster entram em cena juntos → bestiário (idempotente no App).
   useEffect(() => {
-    if (!onEnemySeen) return;
+    if (!onEnemySeen || pvp || boss) return;
     for (const e of combat.enemies) if (e.roster) onEnemySeen(e.roster);
   }, [combat.enemies, onEnemySeen]);
   // §213: desgarrado de JOGADOR por cima de um inimigo da Fenda (só arte/rótulo; nunca no PvP). Raro, determinístico pela semente.
@@ -675,7 +676,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     setBoss(nb);
     bossTrackRef.current = newBossTrack();
     setBossIntro(!!nb);
-    setRuleTip(null);
+    setRulesOpen(false);
     setClock(BOSS_CLOCK_MS);
     const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, nb, challenge);
     setElements(c.elements);
@@ -810,8 +811,8 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           const ros = rosterOf(e);
           // PVP: arte do adversário (jogador real ou NPC) e o rótulo genérico — o nome do roster/da pessoa nunca aparece
           const wp = wildPlayers[i];
-          const src = boss ? (bossMonster?.art || ros?.src || '') : pvp ? (pvp.sprite ?? ros?.src ?? '') : (wp?.spriteUrl ?? ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
-          const enemyName = boss ? 'Boss' : pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wp ? wildFoeLabel('rookie', isPt) : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
+          const src = boss ? (bossMonster?.art || ros?.src || '') : pvp ? (pvp.sprite ?? '') : (wp?.spriteUrl ?? ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
+          const enemyName = boss ? 'Boss' : pvp ? `${isPt ? 'Jogador' : 'Player'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wp ? wildFoeLabel('rookie', isPt) : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);
@@ -829,6 +830,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
               data-m3-hp={e.hp}
               data-m3-element={e.element}
               data-m3-pvp-level={pvp ? pvp.level : undefined}
+              data-m3-foe-kind={boss ? 'boss' : pvp ? pvp.kind : undefined}
               aria-current={isActive ? 'true' : undefined}
               aria-label={nome}
               role="group"
@@ -922,17 +924,12 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
         </span>
         {boss && !over && (
-          <div data-m3-boss-bar role="group" aria-label={isPt ? 'Regras do boss' : 'Boss rules'} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-            <span data-m3-boss-tag style={{ ...BOSS_CHIP, fontWeight: 700, color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}>Boss</span>
-            {boss.rules.map(id => {
-              const l = isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en;
-              return (
-                <button key={id} type="button" data-m3-boss-rule={id} aria-expanded={ruleTip === id} aria-label={`${l.name}: ${l.line}`} onClick={() => setRuleTip(t => (t === id ? null : id))} style={{ ...BOSS_CHIP, cursor: 'pointer' }}>
-                  <span>{l.name}</span>
-                  <Icon name="help" size={20} tone="ink" />
-                </button>
-              );
-            })}
+          <div data-m3-boss-bar role="group" aria-label={isPt ? 'Boss' : 'Boss'} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+            <span data-m3-boss-tag style={{ ...BOSS_CHIP, minHeight: 24, padding: '0 8px', fontWeight: 700, color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}>Boss</span>
+            <button type="button" data-m3-boss-rules-btn aria-haspopup="dialog" aria-expanded={rulesOpen} onClick={() => setRulesOpen(true)} style={{ ...BOSS_CHIP, cursor: 'pointer' }}>
+              <span>{isPt ? 'Regras' : 'Rules'}</span>
+              <Icon name="help" size={20} tone="ink" />
+            </button>
             {boss.rules.includes('elemental-tide') && (() => {
               const el = elements[tideKind(boss.seed, combat.turns)];
               const ic = elementIcon(el);
@@ -948,11 +945,6 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
               <span role="timer" data-m3-clock={Math.ceil(clock / 1000)} aria-label={isPt ? `${Math.ceil(clock / 1000)} segundos para jogar` : `${Math.ceil(clock / 1000)} seconds to move`} style={{ ...BOSS_CHIP, fontWeight: 700, color: clock <= 5000 ? 'var(--sm2-danger-ink)' : undefined }}>
                 <span className="sm2-num">{Math.ceil(clock / 1000)}s</span>
               </span>
-            )}
-            {ruleTip && (
-              <p data-m3-boss-tip role="note" style={{ ...sm2Hint, flexBasis: '100%', textAlign: 'center', margin: 0 }}>
-                {(isPt ? bossRuleInfo(ruleTip).pt : bossRuleInfo(ruleTip).en).line}
-              </p>
             )}
           </div>
         )}
@@ -1012,11 +1004,11 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           recordNote={isPt ? 'Novo recorde' : 'New best'}
           strip={pvp || boss || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
           ledger={boss
-            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1 }] : []), ...essenceLedgerRows(essenciasRodada)]
+            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1, icon: BOSS_SHARD_ART }] : []), ...essenceLedgerRows(essenciasRodada)]
             : [{ key: 'bits', kind: 'bits' as const, value: earned }, ...(pvp && honorEarned > 0 ? [{ key: 'honor', kind: 'honor' as const, value: honorEarned }] : []), ...essenceLedgerRows(essenciasRodada)]}
           emptyLedgerLine={boss ? (isPt ? 'Sem Fragmento de Boss desta vez.' : 'No Boss Shard this time.') : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           petSrc={playerSprite}
-          opponentSrc={pvp ? pvp.sprite : (wildPlayers[0]?.spriteUrl ?? rosterOf(combat.enemies[0])?.src)}
+          opponentSrc={resultOpponentSrc({ boss: bossMonster, pvp, stray: wildPlayers[0]?.spriteUrl, roster: rosterOf(combat.enemies[0])?.src })}
           playAgainLabel={isPt ? 'De novo' : 'Again'}
           onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; restart(); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
@@ -1034,13 +1026,29 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           </p>
         </>
       )}
+      {boss && (
+        <ModalSheet open={rulesOpen && !over && !bossIntro} title={isPt ? 'Regras do Boss' : 'Boss rules'} onClose={() => setRulesOpen(false)} language={language} placement="center">
+          <ol data-m3-boss-rules-modal style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {boss.rules.map(id => {
+              const l = isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en;
+              return (
+                <li key={id} data-m3-boss-rule={id} style={{ ...sm2Text, fontSize: 'var(--sm2-text-sm)' }}>
+                  <strong style={{ display: 'block' }}>{l.name}</strong>
+                  <span>{l.line}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </ModalSheet>
+      )}
       {boss && bossIntro && !over && bossMonster && (
         <BossSplash
           monster={bossMonster.name}
           art={bossMonster.art}
           portrait={bossMonster.portrait}
           kicker="Boss"
-          title={isPt ? 'Um Boss apareceu!' : 'A Boss appeared!'}
+          title={isPt ? 'Batalha de Boss' : 'Boss Battle'}
+          titleArt={bossBattleTitleArt(isPt)}
           intro={isPt ? 'Esta luta tem 3 regras especiais. Não vale ranking nem Bits; vencer dá 1 Fragmento de Boss.' : 'This fight has 3 special rules. No ranking or Bits; winning gives 1 Boss Shard.'}
           cards={boss.rules.map(id => ({ id, ...(isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en) }))}
           okLabel="OK"
@@ -1284,7 +1292,7 @@ const PVP_SEARCH_TIMEOUT_MS = 6000;
 export function Match3Game(props: Match3Props) {
   const { language, rankSaveId, challenge, onExit, initialMode } = props;
   const isPt = language === 'pt-BR';
-  const [mode, setMode] = useState<'pick' | 'adventure' | 'pvp'>(initialMode ? (initialMode === 'pvp' && rankSaveId && !challenge ? 'pvp' : 'adventure') : rankSaveId && !challenge ? 'pick' : 'adventure');
+  const [mode, setMode] = useState<'pick' | 'adventure' | 'pvp'>(initialMode ? (initialMode === 'pvp' && !challenge ? 'pvp' : 'adventure') : rankSaveId && !challenge ? 'pick' : 'adventure');
   // BOSS: só depois da escolha Aventura/PVP; a geração da partida é o sorteio (no PVP, antes da busca do oponente)
   const bossAllowed = !!rankSaveId && !challenge;
   if (mode === 'adventure') return <Match3Round {...props} bossAllowed={bossAllowed} />;
@@ -1323,13 +1331,17 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
     if (boss) return undefined;
     let dead = false;
     const level = playerLevel ?? 1;
-    const reserva = () => {
-      const { foe: f, entry } = simulatedFoe(level, mulberry32(freshSeed()));
-      return { ...f, sprite: rosterSpriteOf(entry) };
+    // Reserva = jogador SIMULADO (kind 'player'): arte de Soulmon de jogador (stand-in estável), sem chave de roster (nada de bestiário nem monstro selvagem).
+    const reserva = (): PvpFoe => {
+      const rng = mulberry32(freshSeed());
+      const { foe: f } = simulatedFoe(level, rng);
+      const { roster: _roster, ...jogador } = f;
+      return { ...jogador, sprite: opponentSprite({ stage: level >= 40 ? 'champion' : 'rookie', id: `sim-${Math.floor(rng() * 1e9)}` }) };
     };
     const t = setTimeout(() => { if (!dead) { dead = true; setFoe(reserva()); } }, PVP_SEARCH_TIMEOUT_MS);
     const done = (f: PvpFoe) => { if (dead) return; dead = true; clearTimeout(t); setFoe(f); };
-    getOpponents(rankSaveId!)
+    if (!rankSaveId) { done(reserva()); return () => { dead = true; clearTimeout(t); }; }
+    getOpponents(rankSaveId)
       .then(r => {
         const o = pickPvpOpponent(r.opponents ?? [], level);
         done(o ? { kind: 'player', level: o.duel?.level ?? level, sprite: opponentSprite(o), ...(typeof o.element === 'string' ? { element: o.element } : {}) } : reserva());

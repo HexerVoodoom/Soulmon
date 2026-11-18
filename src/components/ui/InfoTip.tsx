@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
 import { useBackLayer } from '../../utils/backStack';
@@ -36,8 +36,8 @@ export function alvo44(style: CSSProperties | undefined): CSSProperties {
  * - Sem estilos de classe: tudo inline, para não depender de CSS novo
  *   (footgun do `index.css.contract`).
  */
-export function InfoTip({
-  children, label, language, align = 'center', style, trigger,
+function InfoTipBase({
+  children, label, language, align = 'center', style, trigger, bare = false,
 }: {
   children: ReactNode;
   /** Nome acessível do "?" (ex.: "Como funciona a Feira" / "How the Fair works"). */
@@ -48,6 +48,8 @@ export function InfoTip({
   style?: React.CSSProperties;
   /** Gatilho próprio no lugar do "i" (ex.: o ícone de uma poção que explica de onde ela vem). Mesmo popover, mesmo fechar. */
   trigger?: ReactNode;
+  /** Disparador TRANSPARENTE sobre o ornamento "i" que a arte da moldura já traz (sem ícone próprio, ≥ 44 px, foco visível). */
+  bare?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; maxHeight: number; left: number; width: number } | null>(null);
@@ -120,9 +122,11 @@ export function InfoTip({
         aria-label={label}
         aria-expanded={open}
         aria-describedby={open ? id : undefined}
-        title={label}
+        title={bare ? undefined : label}
+        data-info-bare={bare ? '' : undefined}
+        className={bare ? 'sm2-info-hit' : undefined}
         onClick={() => setOpen(o => !o)}
-        style={{
+        style={bare ? undefined : {
           background: 'none', border: 'none', padding: 0, margin: 0,
           minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--sm2-muted)', flexShrink: 0,
@@ -132,7 +136,7 @@ export function InfoTip({
           ...alvo44(style),
         }}
       >
-        {trigger ?? <Icon name="info" size={20} tone="inherit" />}
+        {bare ? null : (trigger ?? <Icon name="info" size={20} tone="inherit" />)}
       </button>
       {open && pos && typeof document !== 'undefined' && createPortal(
         <div
@@ -175,15 +179,24 @@ export function InfoTipSection({ title, children, last = false }: { title: strin
 }
 
 /**
- * O ENCAIXE DO "i" NA LINHA DO TÍTULO (ajuste do dono, 05/10/2026): o "i" de um
- * modal/folha mora no canto superior DIREITO, NA MESMA LINHA do título. Quem
- * desenha o título (as molduras `ModalSheet` e `AreaSheet`) é o ÚNICO dono da
- * posição: ele abre um encaixe (`ModalInfoSlot`) e publica o elemento por
- * contexto. O conteúdo da folha usa `ModalInfo`, que entra no encaixe por portal
- * — nenhuma folha posiciona o próprio "i". Fora de uma moldura (sem encaixe),
- * `ModalInfo` cai no `InfoTip` comum, onde foi escrito.
+ * O "i" ÚNICO DE UMA MOLDURA (pedido do dono, 18/11/2026): a arte da moldura (`ModalFrame`/`TelaMoldura`) JÁ traz um ornamento circular com um "i" desenhado
+ * no canto superior direito. Quem desenha a moldura (dono único da posição) abre um provedor (`ModalInfoSlotProvider`) com o encaixe exatamente sobre
+ * esse ornamento; todo `InfoTip`/`ModalInfo` escrito DENTRO dela deixa de desenhar o próprio ícone e se REGISTRA no provedor. O provedor então:
+ *  - sem nenhum registro, não renderiza nada (o ornamento fica puramente decorativo, sem botão);
+ *  - com um, monta UM botão transparente (≥ 44 px, `aria-label` do registro) sobre o ornamento, que abre o painel do registro;
+ *  - com vários, monta o MESMO botão com um painel único: uma seção por registro (o título é o `label` de cada um).
+ * Sem provedor (página, card, folha sem moldura) o `InfoTip` é o "i" de sempre, onde foi escrito. `trigger` próprio nunca é capturado.
+ * Uma sub-folha que abre no miolo da moldura (`inherit`) assume o ornamento enquanto está aberta e o devolve ao fechar.
  */
-const ModalInfoSlotContext = createContext<HTMLElement | null>(null);
+interface InfoEntry { label: string; language: 'pt-BR' | 'en-US'; node: ReactNode }
+interface InfoRegistry {
+  slot: HTMLElement | null;
+  bare: boolean;
+  set: (id: string, e: InfoEntry) => void;
+  remove: (id: string) => void;
+  cover: () => () => void;
+}
+const ModalInfoCtx = createContext<InfoRegistry | null>(null);
 
 /** Moldura: chame no título e passe `slot` para o `<span ref>` do canto direito. */
 export function useModalInfoSlot() {
@@ -191,13 +204,63 @@ export function useModalInfoSlot() {
   return { slot, slotRef: setSlot };
 }
 
-export function ModalInfoSlotProvider({ slot, children }: { slot: HTMLElement | null; children: ReactNode }) {
-  return <ModalInfoSlotContext.Provider value={slot}>{children}</ModalInfoSlotContext.Provider>;
+export function ModalInfoSlotProvider({ slot, bare, inherit = false, children }: {
+  slot: HTMLElement | null;
+  /** O encaixe fica sobre o ornamento "i" da arte: o botão é transparente, sem ícone. */
+  bare?: boolean;
+  /** Sub-folha no miolo de uma moldura: usa o encaixe do pai (se houver) e o cobre enquanto estiver montada. */
+  inherit?: boolean;
+  children: ReactNode;
+}) {
+  const parent = useContext(ModalInfoCtx);
+  const herda = inherit && !!parent?.slot;
+  const effSlot = herda ? parent!.slot : slot;
+  const effBare = herda ? parent!.bare : !!bare;
+  const store = useRef(new Map<string, InfoEntry>());
+  const [, bump] = useReducer((x: number) => x + 1, 0);
+  const [covered, setCovered] = useState(0);
+  const cover = useCallback(() => { setCovered(c => c + 1); return () => setCovered(c => c - 1); }, []);
+  const set = useCallback((id: string, e: InfoEntry) => {
+    const prev = store.current.get(id);
+    store.current.set(id, e);
+    if (!prev || prev.label !== e.label || prev.language !== e.language || prev.node !== e.node) bump();
+  }, []);
+  const remove = useCallback((id: string) => { if (store.current.delete(id)) bump(); }, []);
+  const parentCover = parent?.cover;
+  useLayoutEffect(() => (herda && parentCover ? parentCover() : undefined), [herda, parentCover]);
+  const value = useMemo<InfoRegistry>(() => ({ slot: effSlot, bare: effBare, set, remove, cover }), [effSlot, effBare, set, remove, cover]);
+  const list = Array.from(store.current.values());
+  const first = list[0];
+  const isPt = first?.language === 'pt-BR';
+  const trigger = effSlot && first && covered === 0 ? createPortal(
+    <InfoTipBase bare={effBare} language={first.language} align="right" label={list.length === 1 ? first.label : (isPt ? 'Informações' : 'Info')}>
+      {list.length === 1 ? first.node : list.map((e, i) => <InfoTipSection key={i} title={e.label} last={i === list.length - 1}>{e.node}</InfoTipSection>)}
+    </InfoTipBase>,
+    effSlot,
+  ) : null;
+  return (
+    <>
+      <ModalInfoCtx.Provider value={value}>{children}</ModalInfoCtx.Provider>
+      {trigger}
+    </>
+  );
 }
 
-/** O "i" ÚNICO de um modal/folha — sempre na linha do título da moldura em volta. */
-export function ModalInfo(props: Parameters<typeof InfoTip>[0]) {
-  const slot = useContext(ModalInfoSlotContext);
-  const tip = <InfoTip {...props} align={props.align ?? 'right'} />;
-  return slot ? createPortal(tip, slot) : tip;
+function InfoRegistrado({ reg, label, language, children }: { reg: InfoRegistry; label: string; language: 'pt-BR' | 'en-US'; children: ReactNode }) {
+  const id = useId();
+  useLayoutEffect(() => { reg.set(id, { label, language, node: children }); });
+  useLayoutEffect(() => () => reg.remove(id), [id, reg]);
+  return null;
+}
+
+/** O "i" PADRÃO. Dentro de uma moldura (provedor) vira entrada do disparador único do canto; fora dela é o botão "i" de sempre. */
+export function InfoTip(props: Parameters<typeof InfoTipBase>[0]) {
+  const reg = useContext(ModalInfoCtx);
+  if (reg && !props.trigger) return <InfoRegistrado reg={reg} label={props.label} language={props.language}>{props.children}</InfoRegistrado>;
+  return <InfoTipBase {...props} />;
+}
+
+/** O "i" ÚNICO de um modal/folha (mesma API do `InfoTip`; ancora à direita). */
+export function ModalInfo(props: Parameters<typeof InfoTipBase>[0]) {
+  return <InfoTip {...props} align={props.align ?? 'right'} />;
 }

@@ -146,10 +146,11 @@ export function sanitizeDepthRecord(raw: unknown): number {
   return Math.min(DUNGEON_MAX_LAYER, Math.max(0, int(raw, 0)));
 }
 
-/** Onde a descida começa: logo depois do último múltiplo de `DUNGEON_RETURN_EVERY` já limpo (sem teto por Lv; `cap` opcional só limita). */
+/** Onde a descida começa: logo DEPOIS do andar mais fundo já limpo (REGISTRO §477: a derrota nunca rebaixa o andar; só reinicia os combates dele, no combate 1).
+ *  Sem teto por Lv; `cap` opcional só limita. Sem campo novo no save: o recorde (que só sobe) é a fonte; recorde ≤ 0 = andar 1 (comportamento de sempre). */
 export function startLayerFor(record: number, cap: number = DUNGEON_MAX_LAYER): number {
   const lim = Math.min(sanitizeDepthRecord(record), Math.max(1, int(cap, 1)) - 1);
-  return 1 + DUNGEON_RETURN_EVERY * Math.floor(Math.max(0, lim) / DUNGEON_RETURN_EVERY);
+  return Math.min(DUNGEON_MAX_LAYER, Math.max(0, lim) + 1);
 }
 
 /** A camada `layer` é um marco da descida (o item 🌀 1× por descida, no primeiro)? */

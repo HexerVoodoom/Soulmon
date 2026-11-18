@@ -1676,7 +1676,8 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/ModalFrame.tsx`
 **Dono de:** a MOLDURA de modal (17/11/2026, `docs/PLANO-MOLDURAS-MODAIS.md`): fatiamento vertical de largura fixa (topo e base de proporção fixa + laterais repetidas em Y), base escura e fundo do lote (`fundo`) a 15% de opacidade; sem `fundo`, pedra com runas. Visual em `.sm2-moldura-modal` (`index.css`); arte em `src/assets/soulmon/ui/moldura/` (WebP).
-**Props principais:** `title` (texto da placa), `fundo`, `fillOpacity`, `children`; repassa `data-*`/`aria-*`/`className`/`style`/`ref`.
+**Props principais:** `title` (texto da placa), `info?: { label, content, language }` (atalho do `ModalInfo`), `fundo`, `fillOpacity`, `children`; repassa `data-*`/`aria-*`/`className`/`style`/`ref`.
+**Informação (18/11/2026):** a arte já traz o ornamento "i" no canto superior direito; o modal NÃO desenha ícone próprio. Abre um `ModalInfoSlotProvider` com o encaixe `.sm2-moldura-modal__info` sobre o ornamento (unidade `--u`); todo `InfoTip`/`ModalInfo` dentro dele se registra e vira UM botão transparente (`.sm2-info-hit`, ≥ 44 px, `aria-label`) com painel único (uma seção por info). Sem info, sem botão.
 **Exports:** `ModalFrame`, `ModalFrameProps`.
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 
@@ -1686,6 +1687,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/TelaMoldura.tsx`
 **Dono de:** a moldura de TELA CHEIA como decoração solta (fundo por baixo do conteúdo, moldura por cima, nada intercepta toque); reusa as classes `.sm2-moldura-tela` + `.sm2-moldura-modal__*`.
+**Props:** `tela`, `title`, `infoSlotRef?` (encaixe do botão "i" sobre o ornamento da arte; `GameRoot` liga o provedor). Só o botão recebe toque; o resto é `aria-hidden`.
 **Exports:** `TelaMoldura`, `MOLDURA_TELAS`.
 
 ### `src/assets/soulmon/ui/moldura/fundos.ts`
@@ -1987,6 +1989,10 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 
 **Dono de:** o botão ESPECIAL de compra (18/11/2026, pedido do dono): placa dourada em pedra turquesa escura, 3-slice por `border-image` (pontas de 110 px na arte, 40 px na tela; miolo liso estica), um WebP por estado (`assets/soulmon/ui/btn-especial{,-press,-off}.webp`, 580x146, alfa real, sem texto, pintado no ChatGPT). **Exports:** `BotaoEspecial({ width?: 'full'|'auto', ...button })` (`forwardRef`; rótulo e `EnergyCost` vêm como `children`). Visual único em `.sm2-especial` (`index.css`; reduced-motion no bloco canônico). **Usos:** "Comprar 3 tickets" (`TicketPanel` do Salão e confirmação do `TicketBuyModal`) e "Comprar convites" (`ComprarConvites` do `DueloSheet`). A compra não mudou. Outras ações seguem `CtaButton`/`sm2-kit-btn`.
 
+### `src/components/ui/CreditIcon.tsx`
+
+**Dono de:** o ícone dos CRÉDITOS (a moeda premium, comprada com dinheiro de verdade; 18/11/2026, pedido do dono): o diamante turquesa lapidado com a chama da alma (`assets/soulmon/icones-ui/moeda-creditos.png`, 256², alfa real, pintado no ChatGPT). **Exports:** `CreditIcon({ size = 20, label?, className?, style? })` (decorativo por padrão; com `label` vira imagem nomeada). Substitui o glifo `diamond` em Conta, `CreditsModal`, Cambista/`ShopShelf`, `MercadoSheets` e no chip do Mapa; o glifo `diamond` segue para outros usos.
+
 ### `src/components/ui/CtaButton.tsx`
 **Dono de:** o botão especial dos CTAs principais (REGISTRO §316, §316b, §316c): `CtaButton({ width: 'full' | 'auto', tone: 'padrao' | 'acao', ...button })`, visual em `.sm2-cta` (`index.css`, o mesmo botão do site do beta: `assets/soulmon/ui/btn-cta{,-hover,-press,-off}.webp`, de `site-beta/public/dono/botao*.webp`, 9-slice `62 74 fill`). Um arquivo por estado como no site: normal, hover, pressed (desce 2 px), disabled (moldura cinza), foco (arte de hover + brilho turquesa); `ref` repassado ao `<button>`; alvo >= 56, `prefers-reduced-motion`. E a secundária dele, `CtaTextButton({ width: 'auto' | 'full', surface: 'claro' | 'escuro', ...button })` (`data-cta-texto`), visual em `.sm2-cta-texto`: SÓ TEXTO, sem fundo e sem borda, cor `--sm2-muted` (`--sm2-viewport-ink` em `surface="escuro"`), sublinhado ao tocar/hover/foco, alvo >= 44, anel de foco `primary-ink`. **Usado por:** `App.tsx` (Criar poção), `FocusBoard` (Começar jornada), `RestRoom` (Seguir + `CtaTextButton` Concluir a missão e Sair), `EvoRecapModal` (Seguir), `PocaoCriada` (OK, §364), `EvolutionCeremony`/`MilestoneCeremony`/`GroveMilestoneCeremony` (§364), `TalentTreeEntry` ("Árvore de talentos"), `GuildSheet` (Entrar, sem conta + `CtaTextButton` Tentar de novo).
 **Tom (§316b, 13/11/2026):** `tone="acao"` (`data-cta-tone="acao"`) = a ação que a pessoa VEIO buscar, não uma escolha: repousa na arte CHEIA (`btn-cta-hover.webp`), porque no celular não existe hover. Pressionado (`btn-cta-press`) e desabilitado (`btn-cta-off`) mantêm a arte própria; hover e foco usam a mesma arte cheia (o foco ainda ganha o brilho turquesa). `padrao` (omissão) = confirmar, seguir, entrar. Hoje em `acao`: "Criar poção" (Laboratório), "Árvore de talentos", "Começar jornada" (Foco).
@@ -2010,8 +2016,9 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 ### `src/components/ui/InfoTip.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** prop `trigger?: ReactNode` (gatilho próprio no lugar do "i") e o tooltip aberto registra camada de voltar (`useBackLayer`).
 **Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
-**Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`.
-**Exports:** `InfoTip`.
+**Sync 18/11/2026:** dentro de uma moldura (`ModalInfoSlotProvider`, aberto por `ModalFrame`/`GameRoot moldura`) o `InfoTip`/`ModalInfo` NÃO desenha ícone: se registra e o provedor monta um único botão transparente sobre o ornamento "i" da arte (várias infos = um painel com seções; nenhuma = sem botão). `inherit` faz a sub-folha do miolo assumir o ornamento. Fora de moldura nada muda.
+**Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`, `trigger?`.
+**Exports:** `InfoTip`, `InfoTipSection`, `ModalInfo`, `ModalInfoSlotProvider`, `useModalInfoSlot`, `alvo44`.
 **Estado/efeitos relevantes:** tooltip num portal em `document.body` (nunca cortado por `overflow`), posicionado junto ao botão e preso às bordas; fecha com novo toque, toque fora ou Esc; `aria-expanded` + `aria-describedby`. Alvo de toque 44.
 **Chamado por:** as telas que tinham texto explicativo corrido (Duelo, Feira, Torneio, Masmorra, Seus dados…).
 **Régua:** `src/components/ui/InfoTip.render.test.tsx`.

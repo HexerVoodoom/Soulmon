@@ -6413,3 +6413,30 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** manter o botão separado de aceite. Perdeu por duplicar a linha do hábito e exigir um segundo toque que o dono não percebia.
 
 **Gatilho para rever:** o dono querer a original e a bufada como escolhas distintas na mesma lista.
+
+
+## §475 — Drive em accordion e categoria Boss (18/11/2026, pedido do dono)
+
+- **Regra:** cada nível do Drive (Bestiário) vira seção recolhível (setinha, `aria-expanded`/`aria-controls`, alvo de 44 px, sem animação); o estado fechado por nível fica em `localStorage` (`soulmon-drive-fechados-v1`, padrão tudo aberto) e a contagem "vistos / total" fica no cabeçalho mesmo recolhido. A categoria **Boss** (`BOSS_ROSTER`, 24 chefes) é sempre a última.
+- **Pendência:** o save NÃO tem registro de "boss visto/derrotado" (`BossFightScreen` não grava nada). Hoje o componente aceita `bossesSeen` (ids de `BOSS_ROSTER`), que a `LibraryPage` ainda não alimenta: todos os bosses aparecem como silhueta `???`. Falta decidir qual evento marca "visto" (primeiro encontro na Feira vs. vitória) e gravá-lo no save.
+
+**Alternativa que perdeu:** derivar "visto" de fragmentos/histórico de Match-3 ou masmorra; não existe fonte confiável por chefe.
+
+**Gatilho para rever:** o dono definir o evento de "boss visto".
+
+## §476 — Elemental Fusion: boss legível, resultado do boss com o boss certo, regras num botão, PvP sempre contra jogador (18/11/2026, dono reportou testando)
+
+**Decisão:** (A) A intro do boss usa o título em ARTE "BOSS BATTLE" (`ui/boss-battle-title.png` / `-pt.png`, por glob em `utils/bossSplash.ts`; sem o arquivo cai num título de texto claro com contorno em tokens) e o layout foi compactado para as 3 regras caberem SEM rolagem em 375×667. (B) O resultado do boss mostra o BOSS da luta (o mesmo da intro, `resultOpponentSrc`), não o inimigo de roster que o combate carrega por baixo; a linha "Fragmento de Boss" ganha o ícone `BOSS_SHARD_ART` (`items/boss-shard.png`, `itemArt.ts`). (C) As regras do boss saem da barra e viram UM botão "Regras"/"Rules" que abre o `ModalSheet` com nome + explicação; ficam fora só o selo "Boss", a maré atual ("Maré Vida ×2") e o relógio; o boss sobe e o HP dele fica visível. (D) PvP é SEMPRE contra jogador: causa achada = (1) `initialMode="pvp"` sem `rankSaveId` virava Aventura (monstros de bestiário) em silêncio; (2) a reserva sem rede usava arte de roster e alimentava o bestiário (`onEnemySeen`); (3) o sprite do PvP tinha fallback para roster. Agora PvP nunca cai em Aventura, a reserva é jogador simulado (`kind: 'player'`, arte de jogador, sem chave de roster), `onEnemySeen` não dispara em PvP/boss, o rótulo é "Jogador nv N"/"Player Lv N" e `data-m3-foe-kind` marca `player`/`boss`.
+**Boss no PvP (mantido):** o boss é decidido antes da busca e a partida é só contra ele (sem jogador); isso pode parecer "selvagem" — por isso a UI o marca "Boss" e `data-m3-foe-kind="boss"`. **Alternativa que perdeu:** tirar o boss do PvP (muda a regra do §473; fica como pergunta ao dono: o PvP deve ter boss?).
+**Arte:** entregue na #1046 (título EN/PT e Fragmento); o título de texto com contorno fica como fallback. **Teste:** `Match3Pvp`, `Match3Boss`, `BossSplash` (render) e `bossSplash.test.ts`.
+
+
+## §477 — Rift: a derrota nunca rebaixa o andar, só reinicia os combates dele (18/11/2026, pedido do dono)
+
+- **Regra.** Cada elemento tem 2 andares e cada andar 6 combates. Venceu os 6 do 1º andar e caiu no 2º? A próxima entrada larga no 2º andar, combate 1 de 6. Caiu no 1º? Reentra no 1º, combate 1. Vencer o 2º completa o elemento (a descida segue ao 1º andar do próximo). Vale por elemento, de forma independente (o andar é absoluto: elemento = andares 2k+1 e 2k+2).
+- **Onde estava.** Não há campo de "andar por elemento": o progresso é o recorde `dungeonDepthRecord` (andar mais fundo LIMPO, só sobe) e a largada era `startLayerFor(recorde)` = último múltiplo de 2 (§31, emenda), o que rebaixava do 2º para o 1º andar do elemento (recorde ímpar → largava nele de novo). A derrota (`perder` em `DungeonGame`) só encerra a descida (`endDescent('hp')`); não mexe em recorde.
+- **Mudança.** `startLayerFor(recorde)` = recorde + 1 (teto 999/`cap`); recorde ausente/lixo = andar 1. Sem campo novo no save: save antigo se comporta sozinho (só difere de antes quando o recorde era ímpar). `DUNGEON_RETURN_EVERY` ficou sem uso na descida (o §31 de "no máximo 1 abaixo do recorde" vira "logo depois do recorde").
+- **Preservado.** Portais/§471 (o resume por nó e a volta ao portal são `dungeonResumeLayer`, intocados; "voltar ao nó" continua podendo recuar de propósito), recompensas (pagas ao limpar a camada, idempotentes pelo recorde; reentrar no andar do recorde+1 não paga de novo nada que já foi), rank/placar. **Servidor:** não valida ponto de largada; o lastro mensal (`_dayCounters.js`, espelho `riftStartLayer`) usa base mais baixa ou igual = mais folgada, então segue válido; não foi alterado.
+- **UI.** Guia (PT/EN) explica: perder só reinicia os combates do andar atual. **Testes:** `dungeonIdle.profundidade.test.ts` (§477), `riftMap*.test.ts`.
+
+**Adendo (18/11/2026, dono):** no modal "Hoje" as bufadas saem da lista de Hábitos e vão para uma seção própria ABAIXO das normais (`role="group"`, separador sutil + texto "Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude."), mesma linha, negrito dourado. Sem bufadas, a seção não existe. A regra do §474 não muda (marcar = aceitar).

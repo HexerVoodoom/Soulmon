@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { dayPlanFocusIds, type DayPlanCandidate, type DayPlanFocusSource } from '../utils/dayPlan';
 import { MAX_DAILY_FOCUS } from '../types/taskModel';
-import { tinyOfferIntro } from '../utils/tinyOffer';
 import type { CatalogItem } from '../types/activityCatalog';
 import { CheckRow, ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 
@@ -54,7 +53,8 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
     if (on) next.add(id); else next.delete(id);
     return next;
   });
-  const habits = candidates.filter(c => c.kind === 'habit');
+  const buffedIds: ReadonlySet<string> = new Set(fuse && mode !== 'add' && fuse.onTinyHabit ? candidates.filter(c => c.kind === 'habit' && (fuse.plan.tinyOffer ?? []).includes(c.id)).map(c => c.id) : []);
+  const habits = candidates.filter(c => c.kind === 'habit' && !buffedIds.has(c.id));
   const tasks = candidates.filter(c => c.kind === 'task');
   const count = candidates.filter(c => picked.has(c.id)).length + suggestions.filter(i => picked.has(`sug:${i.id}`)).length;
   const confirm = () => {
@@ -67,22 +67,24 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
     onConfirm(ids, fuse ? dayPlanFocusIds(ids, fuse.taskIds, fuse.plan, MAX_DAILY_FOCUS) : []);
   };
   const adding = mode === 'add';
-  const tinyIds: ReadonlySet<string> = new Set(fuse && !adding && fuse.onTinyHabit ? habits.filter(h => (fuse.plan.tinyOffer ?? []).includes(h.id)).map(h => h.id) : []);
-  const struggle = fuse && !adding ? tinyOfferIntro(fuse.soulStruggle, isPt) : null;
+  const tinyIds = buffedIds;
+  const buffed = candidates.filter(c => buffedIds.has(c.id));
+
+  const row = (c: DayPlanCandidate) => (
+      <div key={c.id} className="sm2-conta-card" data-day-goal={c.id} style={{ padding: '2px 12px' }}>
+        <CheckRow checked={picked.has(c.id)} onChange={on => toggle(c.id, on)}>
+          {tinyIds.has(c.id)
+            /* A bufada: MESMA linha, caixa e cartão das demais; só o texto muda — negrito e dourado (`gold-ink`, AA nos dois temas). */
+            ? <span data-day-goals-bonus style={{ fontWeight: 700, color: 'var(--sm2-gold-ink)' }}>{`${c.name || (isPt ? 'Esse hábito' : 'This habit')} · ${isPt ? 'bônus de 5 min' : '5-min bonus'}`}</span>
+            : <span style={{ fontWeight: 600 }}>{c.name || (isPt ? 'Sem nome' : 'Unnamed')}</span>}
+        </CheckRow>
+      </div>
+  );
 
   const group = (key: string, label: string, items: readonly DayPlanCandidate[]) => items.length === 0 ? null : (
     <section key={key} data-day-goals-group={key} aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</h3>
-      {items.map(c => (
-        <div key={c.id} className="sm2-conta-card" data-day-goal={c.id} style={{ padding: '2px 12px' }}>
-          <CheckRow checked={picked.has(c.id)} onChange={on => toggle(c.id, on)}>
-            {tinyIds.has(c.id)
-              /* A bufada: MESMA linha, caixa e cartão das demais; só o texto muda — negrito e dourado (`gold-ink`, AA nos dois temas). */
-              ? <span data-day-goals-bonus style={{ fontWeight: 700, color: 'var(--sm2-gold-ink)' }}>{`${c.name || (isPt ? 'Esse hábito' : 'This habit')} · ${isPt ? 'bônus de 5 min' : '5-min bonus'}`}</span>
-              : <span style={{ fontWeight: 600 }}>{c.name || (isPt ? 'Sem nome' : 'Unnamed')}</span>}
-          </CheckRow>
-        </div>
-      ))}
+      {items.map(c => row(c))}
     </section>
   );
 
@@ -139,8 +141,14 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
         </section>
       )}
       {/* A oferta reduzida (nunca falte duas vezes): a linha do hábito vira a tarefa BÔNUS do dia ao marcar (`utils/bonusTask.ts`); sem botão de recusar — desmarcada, não cobra nada. */}
-      {tinyIds.size > 0 && (
-        <p data-day-goals-tiny style={sm2Hint}>{struggle ? `${struggle} ` : ''}{isPt ? 'Marcar um hábito com bônus vira a tarefa bônus de hoje: 5 minutos bastam, marque quando fizer.' : 'Checking a bonus habit makes it today’s bonus task: 5 minutes is enough, check it when you do it.'}</p>
+      {buffed.length > 0 && (
+        <section role="group" aria-labelledby="day-goals-buff-txt" data-day-goals-group="buffed" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <hr aria-hidden="true" data-day-goals-buff-sep style={{ border: 0, borderTop: '1px solid var(--sm2-line)', margin: '8px 0 4px', width: '100%' }} />
+          <p id="day-goals-buff-txt" data-day-goals-tiny style={sm2Hint}>
+            {isPt ? 'Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude.' : "You've been struggling to complete these tasks. They got a buff — hope it helps."}
+          </p>
+          {buffed.map(c => row(c))}
+        </section>
       )}
       <p role="status" aria-live="polite" data-day-goals-count style={sm2Hint}>
         {isPt ? `${count} marcadas` : `${count} checked`}
