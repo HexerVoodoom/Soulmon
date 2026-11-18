@@ -1,5 +1,8 @@
 # Handoff — Implementação da UI de Identidade (Fase 2, mão na massa)
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > **Para:** uma sessão nova do Claude Code, especialista em implementação de
 > identidade visual no Soulmon (código real, não canvas).
 > **Não substitui** [`HANDOFF-IDENTIDADE.md`](HANDOFF-IDENTIDADE.md) — aquele
