@@ -4911,10 +4911,12 @@ export default function App() {
   }, [goTo, irAoPredioDaMissao]);
 
   /** §487: sair do jogo aberto pelo Fliperama volta DIRETO à Home. A Home → Jogos foi um `pushState`, então `history.back()` a desfaz (sem passar pelo mapa); sem entrada nossa (recarga), vai à Home pelo estado. */
+  /** O próximo `popstate` é a nossa volta do Fliperama: vai à Home, sem a regra de "fechar a camada" nem o grafo (que de uma área leva ao MAPA). */
+  const voltaDoFlipperamaRef = useRef(false);
   const voltarAHomeDoJogo = useCallback(() => {
     setArcadeFromHome(false);
     const st = window.history.state as { smView?: string } | null;
-    if (st && typeof st.smView === 'string' && st.smView !== 'home') window.history.back();
+    if (st && typeof st.smView === 'string' && st.smView !== 'home') { voltaDoFlipperamaRef.current = true; window.setTimeout(() => { voltaDoFlipperamaRef.current = false; }, 1500); window.history.back(); }
     else setCurrentView('home');
   }, []);
   /** Saiu da área Jogos por outro caminho (sistema voltar, mapa): o próximo jogo não herda o "voltar à Home". */
@@ -4932,6 +4934,8 @@ export default function App() {
   useEffect(() => {
     try { window.history.replaceState({ smView: 'home' }, ''); } catch { /* idem */ }
     const onPop = () => {
+      // §487: a volta do jogo aberto pelo Fliperama termina na HOME (o grafo levaria ao mapa; a folha do Salão, que reabre ao sair do jogo, seria "fechada" no lugar).
+      if (voltaDoFlipperamaRef.current) { voltaDoFlipperamaRef.current = false; setCurrentView('home'); return; }
       /* Camada aberta por cima da tela (folha de lote, minijogo): o voltar a
          fecha e a tela continua — a entrada de history já foi consumida pelo
          navegador, então repõe a mesma para o próximo voltar. */
