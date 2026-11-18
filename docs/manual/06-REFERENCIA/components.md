@@ -2600,3 +2600,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 **Props:** `dormindo` (tela escurecida e parada).
 **Estado/efeitos relevantes:** canvas 40×40 redesenhado por `setInterval` de 100 ms; pausa com `document.hidden`; movimento reduzido = um quadro.
 **Chamado por:** `src/components/PetStageDecor.tsx`
+
+### `src/components/RankingModal.tsx`
+
+**Dono de:** o MODAL DO RANKING (18/11/2026, §485): `ModalFrame` com a moldura própria `ui/ranking/` (ouro envelhecido, faixas vermelhas, medalhas, placa de bronze), corpo rolável SEM borda interna. **Props:** `open`, `onClose`, `language`, `title`, `info?`, `children`. X e "i" são só glifos sobre os discos da arte (alvo ≥ 44 px transparente). **Usado por:** `MinigameModeGate` (Ver ranking) e `RankingPanel` (modal da semana/mês). **Régua:** `RankingModal.render.test.tsx`. Geometria em `index.css` (`.sm2-moldura-modal--ranking`). O botão que o abre é `BotaoEspecial variant="ranking"` (`ui/btn-ranking{,-press,-off}.webp`).
