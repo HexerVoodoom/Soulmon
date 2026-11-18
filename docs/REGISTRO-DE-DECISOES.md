@@ -6401,3 +6401,15 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** ligar o `ONBOARDING_VELADO` inteiro para todos. Perdeu porque arrastaria o preço D9 (Play Console é do dono), a sequência narrativa e a Guilda, que o dono não pediu agora.
 
 **Gatilho para rever:** a taxa de quem recusa assinar no fim do onboarding e abandona antes do chocar; ou o BB exclusivo estourar a espera de 12 s com frequência (o pagante cairia no pool).
+
+
+## §474 — Várias tarefas bônus no mesmo dia, linha da bufada igual às outras e chat com o apelido (18/11/2026, dono reportou testando)
+
+- **Bug:** `GameState.bonusTask` era um slot único `{ day, activityId }`; a segunda oferta aceita sobrescrevia a primeira (só uma ia com bônus) e a bufada não entrava no compromisso do dia: o dono precisava de "Adicionar tarefa → Comprometer-me → selecionar as originais". O chat também recebia o nome da ESPÉCIE (`currentStage`) em vez do apelido.
+- **Regra:** `bonusTask` vira LISTA (`BonusTaskState[]`; save antigo com objeto único é lido como lista de 1, `sanitizeBonusTask`/`bonusTaskList`). Aceitar acrescenta sem tirar as outras do dia (`addBonusTask`) e já grava o hábito no plano do dia (`addToDayPlan`, mesmo id, sem duplicata). Cada bônus concluído rende +1 acima do teto na virada (antes: no máximo 1).
+- **Qual versão vence (decisão mais segura):** no modal "Hoje" há UMA linha por hábito. Hábito com oferta de 5 min aparece na mesma linha/cartão/caixa dos demais, só com texto em negrito e `--sm2-gold-ink` (AA nos dois temas, já coberto em `tokens.contrast.test.ts`). Marcar a linha = aceitar a bufada (original e bufada nunca coexistem nem se sobrescrevem); desmarcada não cobra nada. O botão "hoje, só 5 minutos?" saiu.
+- **Chat:** `petName` do `ChatBox` usa `petDisplayName || currentStage` (mesma fonte da Home, `soulmonDisplayName`); o servidor já recebia `petName` do cliente.
+
+**Alternativa que perdeu:** manter o botão separado de aceite. Perdeu por duplicar a linha do hábito e exigir um segundo toque que o dono não percebia.
+
+**Gatilho para rever:** o dono querer a original e a bufada como escolhas distintas na mesma lista.

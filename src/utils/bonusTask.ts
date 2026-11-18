@@ -23,30 +23,65 @@ export interface BonusTaskState {
 /** Fragmentos extras, acima do teto diário, por concluir a tarefa bônus. */
 export const BONUS_TASK_GAUGE_WEIGHT = 1;
 
-/** Valida o que vem do save (cliente ou nuvem). Inválido → `undefined`. */
-export function sanitizeBonusTask(v: unknown): BonusTaskState | undefined {
+/**
+ * O save guarda a LISTA de tarefas bônus do dia (REGISTRO §474: antes era um slot único e a segunda oferta aceita
+ * sobrescrevia a primeira). Saves antigos trazem um objeto só: vira lista de 1.
+ */
+export type BonusTaskSave = BonusTaskState | readonly BonusTaskState[] | undefined;
+
+function one(v: unknown): BonusTaskState | undefined {
   if (!v || typeof v !== 'object') return undefined;
   const { day, activityId } = v as Record<string, unknown>;
   if (typeof day !== 'string' || !day || typeof activityId !== 'string' || !activityId) return undefined;
   return { day, activityId };
 }
 
-/** A atividade é a tarefa bônus de `day`? */
-export function isBonusActivity(s: BonusTaskState | undefined, activityId: string, day: string): boolean {
-  return !!s && s.day === day && s.activityId === activityId;
+/** Normaliza objeto único (legado) ou lista para lista sem duplicata (mesmo dia + mesma atividade). */
+export function bonusTaskList(v: unknown): BonusTaskState[] {
+  const raw = Array.isArray(v) ? v : v ? [v] : [];
+  const out: BonusTaskState[] = [];
+  for (const r of raw) {
+    const t = one(r);
+    if (t && !out.some(x => x.day === t.day && x.activityId === t.activityId)) out.push(t);
+  }
+  return out;
+}
+
+/** Valida o que vem do save (cliente ou nuvem). Nada válido → `undefined`. */
+export function sanitizeBonusTask(v: unknown): BonusTaskState[] | undefined {
+  const l = bonusTaskList(v);
+  return l.length > 0 ? l : undefined;
+}
+
+/** Acrescenta a tarefa bônus de `day` SEM tirar as outras do mesmo dia (as de dias antigos saem). */
+export function addBonusTask(s: BonusTaskSave, activityId: string, day: string): BonusTaskState[] {
+  const keep = bonusTaskList(s).filter(t => t.day === day && t.activityId !== activityId);
+  return [...keep, { day, activityId }];
+}
+
+/** Ids das tarefas bônus de `day`. */
+export function bonusActivityIdsOf(s: BonusTaskSave, day: string): string[] {
+  return bonusTaskList(s).filter(t => t.day === day).map(t => t.activityId);
+}
+
+/** A atividade é uma tarefa bônus de `day`? */
+export function isBonusActivity(s: BonusTaskSave, activityId: string, day: string): boolean {
+  return bonusTaskList(s).some(t => t.day === day && t.activityId === activityId);
 }
 
 /**
- * Bônus de gauge da virada: `BONUS_TASK_GAUGE_WEIGHT` se a tarefa bônus do dia
- * julgado foi concluída nesse dia; senão 0. A virada limpa o estado depois,
- * então paga uma vez só.
+ * Bônus de gauge da virada: `BONUS_TASK_GAUGE_WEIGHT` POR tarefa bônus do dia julgado concluída nesse dia; senão 0.
+ * A virada limpa o estado depois, então paga uma vez só.
  */
 export function bonusTaskGaugeBonus(
-  s: BonusTaskState | undefined,
+  s: BonusTaskSave,
   activities: readonly { id: string; completedToday?: boolean; lastCompletedDate?: string }[] | undefined,
   judgedDay: string,
 ): number {
-  if (!s || s.day !== judgedDay) return 0;
-  const a = (activities ?? []).find(x => x.id === s.activityId);
-  return a && a.completedToday && a.lastCompletedDate === judgedDay ? BONUS_TASK_GAUGE_WEIGHT : 0;
+  let n = 0;
+  for (const id of bonusActivityIdsOf(s, judgedDay)) {
+    const a = (activities ?? []).find(x => x.id === id);
+    if (a && a.completedToday && a.lastCompletedDate === judgedDay) n += BONUS_TASK_GAUGE_WEIGHT;
+  }
+  return n;
 }

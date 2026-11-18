@@ -94,7 +94,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
-import { bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
+import { addBonusTask, bonusActivityIdsOf, bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
 import { weeklyBonusActivityToday, weeklyRetro, needsWeeklyRetro, makeWeeklyBonus, recordWeekStage, evolvedLastWeek, mondayOf } from './utils/weeklyRetro';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
@@ -3406,7 +3406,12 @@ export default function App() {
   /** ⭐ Aceitar a oferta reduzida: o hábito vira a tarefa bônus de HOJE. Não conclui nada (13/11/2026). */
   const handleAcceptBonusTask = useCallback((activityId: string) => {
     const day = new Date().toDateString();
-    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : { ...prev, bonusTask: { day, activityId } }));
+    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : {
+      ...prev,
+      bonusTask: addBonusTask(prev.bonusTask, activityId, day),
+      // Aceitar já COMPROMETE a tarefa: a bufada entra na lista do Hoje (mesmo id, sem duplicata), mesmo se o modal fechar sem confirmar.
+      dayPlan: addToDayPlan(prev.dayPlan, playerDayIso(new Date(), prev.playerDayTz), [activityId]),
+    }));
   }, []);
   /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
   const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
@@ -9735,7 +9740,7 @@ export default function App() {
                     </button>
                   )}
                   <DailyRituals
-                    bonusActivityId={gameState.bonusTask?.day === new Date().toDateString() ? gameState.bonusTask.activityId : undefined}
+                    bonusActivityIds={bonusActivityIdsOf(gameState.bonusTask, new Date().toDateString())}
                     weeklyBonusActivityId={weeklyBonusActivityToday(gameState.weeklyBonus, new Date().toDateString())}
                     tasks={gameState.tasks}
                     activities={gameState.activities}
