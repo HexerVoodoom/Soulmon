@@ -5053,6 +5053,9 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm-decor-luz-halo[data-on] { opacity: .85; transform: translate(-50%, -50%) scale(1); animation: sm-decor-luz-pulso 3.6s ease-in-out infinite; }
 @keyframes sm-decor-luz-pulso { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .6; transform: translate(-50%, -50%) scale(.94); } }
 
+.sm-decor-brilho { opacity: 0; transition: opacity 1.2s ease; }
+.sm-decor-brilho[data-on] { opacity: 1; }
+
 /* Quadro quadrado da arte (168×168) dentro da caixa do slot: overlays em % da arte (fogo da fogueira, tela do fliperama). */
 .sm-decor-quadro { position: absolute; inset: 0; container-type: size; display: grid; place-items: center; pointer-events: none; }
 .sm-decor-quadro-i { position: relative; width: min(100cqw, 100cqh); aspect-ratio: 1; }
