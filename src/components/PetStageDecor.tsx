@@ -40,13 +40,15 @@ interface PetStageDecorProps {
   isSleeping?: boolean;
   /** Toque no Fliperama de Canto abre o Salão de jogos. Sem isto (editor da Home) a peça é só cenário. */
   onOpenArcade?: () => void;
+  /** Toque no Espelho Escuro (`furn-el-sombra`) abre o Perfil. Sem isto (editor da Home) a peça é só cenário. */
+  onOpenProfile?: () => void;
   /** Só a Home real toca o sino de vento; o editor da Home fica mudo. */
   somAtivo?: boolean;
 }
 
 const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
 
-export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade, somAtivo = false }: PetStageDecorProps) {
+export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade, onOpenProfile, somAtivo = false }: PetStageDecorProps) {
   const temSino = Object.values(equippedDecor).includes('furn-wind-chime') && !!equippedBackground;
   useWindChime(somAtivo && temSino && !isSleeping);
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
@@ -156,6 +158,13 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               <span className="sm-decor-areia" data-decor-areia>
                 <i /><i /><i />
               </span>
+            )}
+            {item.id === 'furn-el-sombra' && onOpenProfile && (
+              <button
+                type="button" data-decor-espelho onClick={onOpenProfile}
+                aria-label={isPt ? 'Abrir perfil' : 'Open profile'}
+                style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', minWidth: 44, minHeight: 44, width: '100%', height: '100%', background: 'transparent', border: 0, padding: 0, cursor: 'pointer', pointerEvents: 'auto', touchAction: 'manipulation' }}
+              />
             )}
             {item.id === 'furn-arcade-cab' && onOpenArcade && (
               <button

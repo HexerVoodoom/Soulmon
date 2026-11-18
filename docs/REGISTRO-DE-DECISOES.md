@@ -6493,3 +6493,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** embarcar o core do pixelfx (~140 KB) e desenhar em canvas em tempo real; e gerar a fogueira sem fogo no ChatGPT (edição de pixel é determinística e fiel à arte aprovada).
 
 **Gatilho para rever:** o dono preferir o fogo mais largo/alto, ou a arte autoral sem fogo via ChatGPT.
+
+## §483 — Espelho Escuro abre o Perfil (18/11/2026, dono)
+
+**Decisão:** na Home, tocar no Espelho Escuro (`furn-el-sombra`) abre o Perfil (`onGoToBuilding('laboratorio.perfil')`, o mesmo caminho do Fliperama e do Caderno). Botão invisível sobre a peça, alvo ≥44px, rótulo "Abrir perfil" / "Open profile"; só na Home real (sem handler no editor da Home, a peça é só cenário). Sem arte nova.
+
+**Gatilho para rever:** o dono querer um brilho/animação no espelho.

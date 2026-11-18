@@ -1467,6 +1467,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             isSleeping={isSleeping}
             somAtivo
             onOpenArcade={onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined}
+            onOpenProfile={onGoToBuilding ? () => onGoToBuilding('laboratorio.perfil') : undefined}
           />
 
           {/* Care Event Sprite */}
