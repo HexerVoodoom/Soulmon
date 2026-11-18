@@ -167,6 +167,10 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 
       {/* O MAPA DE SLOTS */}
       <div data-hex-map className="sm2-hex-map">
+        {/* O miolo do hexágono das Portas COM HEX equipado (turquesa claro), atrás da placa: o vazado dela mostra o preenchimento. */}
+        {HEX_SLOTS.filter((s) => hx.equipped[s] !== undefined).map((s) => (
+          <span key={`fill-${s}`} aria-hidden="true" data-hex-fill={s} className="sm2-hex-slot-fill" style={{ left: `${PORTS[s].x}%`, top: `${PORTS[s].y - 0.15}%` }} />
+        ))}
         <img src={HEX_MAP_ART} alt="" aria-hidden="true" draggable={false} className="sm2-hex-map-art" />
         {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" style={{ left: `${CORE.x}%`, top: `${CORE.y}%` }} />}
         {HEX_SLOTS.map((s) => {

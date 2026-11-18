@@ -45,6 +45,25 @@ beforeEach(() => { installDomGlobals(); localStorage.clear(); forjaServidor.mock
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('HexsmithSheet', () => {
+  it('Porta com HEX equipado ganha o miolo do hexágono em turquesa claro; as vazias não (18/11/2026)', () => {
+    abrir({ hexsmith: { owned: ['garra:agua'], equipped: { garra: 'garra:agua' } } });
+    const fills = document.querySelectorAll('[data-hex-fill]');
+    expect([...fills].map(f => f.getAttribute('data-hex-fill'))).toEqual(['garra']);
+    expect(fills[0].classList.contains('sm2-hex-slot-fill')).toBe(true);
+    expect(fills[0].getAttribute('aria-hidden')).toBe('true');
+    // atrás da placa do mapa (vem antes dela no DOM) e no centro da Porta
+    const arte = document.querySelector('.sm2-hex-map-art')!;
+    expect(fills[0].compareDocumentPosition(arte) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect((fills[0] as HTMLElement).style.left).toBe('87.7%');
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    expect(css).toMatch(/\.sm2-hex-slot-fill \{[^}]*background-color: var\(--sm2-hex-slot-on\);[^}]*clip-path: polygon\(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%\)/);
+  });
+
+  it('sem nada equipado, nenhuma Porta tem o preenchimento claro', () => {
+    abrir({});
+    expect(document.querySelectorAll('[data-hex-fill]')).toHaveLength(0);
+  });
+
   it('sem Provider não renderiza nada', () => {
     const { container } = render(<HexsmithSheet language="pt-BR" />);
     expect(container.innerHTML).toBe('');
