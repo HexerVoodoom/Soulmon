@@ -123,4 +123,41 @@ describe('Elemental Fusion — a entrada com duas opções', () => {
     expect(document.querySelector('[data-m3-pvp-level]')).toBeNull();
     expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(1);
   });
+
+  it('D: PvP NUNCA monta inimigo de bestiário — reserva (sem rede, lista vazia, falha, sem conta) é jogador simulado, sem roster, sem bestiário', async () => {
+    const casos: Array<() => void> = [
+      () => getOpponents.mockRejectedValue(new Error('offline')),
+      () => getOpponents.mockResolvedValue({ opponents: [], matchesLeft: 1 }),
+      () => getOpponents.mockResolvedValue({ opponents: [{ id: 'p1', stage: 'rookie', duel: { level: 9 } }], matchesLeft: 1 }),
+    ];
+    for (const caso of casos) {
+      getOpponents.mockReset(); caso();
+      const seen = vi.fn();
+      renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" rankSaveId="abc" initialMode="pvp" playerLevel={10} onEnemySeen={seen} onEarnPoints={() => {}} onExit={() => {}} seed={SEED} />);
+      await settle();
+      const e = document.querySelector('[data-m3-enemy="1"]') as HTMLElement;
+      expect(e.getAttribute('data-m3-foe-kind')).toBe('player');
+      expect(e.getAttribute('aria-label')).toMatch(/^Player Lv /);
+      expect(e.getAttribute('aria-label')).not.toMatch(/wild|rift|Boss/i);
+      expect((e.querySelector('img[src]:not([data-m3-enemy-element-icon])') as HTMLImageElement | null)?.getAttribute('src')).toBeTruthy();
+      expect(seen).not.toHaveBeenCalled();
+      cleanup();
+    }
+  });
+
+  it('D: PvP sem conta (rankSaveId ausente) continua PvP: jogador simulado, sem tela de Aventura nem rota de oponentes', async () => {
+    renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" initialMode="pvp" playerLevel={10} onEarnPoints={() => {}} onExit={() => {}} seed={SEED} />);
+    await settle();
+    expect(getOpponents).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(1);
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-foe-kind')).toBe('player');
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('aria-label')).toMatch(/^Jogador nv /);
+  });
+
+  it('D: no PvP o boss é rotulado "Boss" (data-m3-foe-kind=boss), nunca confundido com jogador/selvagem', async () => {
+    renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" rankSaveId="abc" initialMode="pvp" playerLevel={10} onEarnPoints={() => {}} onExit={() => {}} seed={74} />);
+    await settle();
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-foe-kind')).toBe('boss');
+    expect(document.querySelector('[data-m3-boss-tag]')!.textContent).toBe('Boss');
+  });
 });

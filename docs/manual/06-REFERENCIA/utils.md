@@ -4514,7 +4514,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/bossSplash.ts`
 **Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
-**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`, `bossBattleTitleArt` (título "BOSS BATTLE" por glob), `BOSS_SHARD_ICON`, `resultOpponentSrc` (arte do adversário no resultado do Fusion).
 **Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
 
 ### `src/utils/soulBarrage.ts`
