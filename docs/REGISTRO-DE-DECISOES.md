@@ -6507,3 +6507,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Gatilho para rever:** escolha do prêmio alternativo, ou decisão sobre os rankings semanais.
 
 **Adendo §482 — a entrega é uma CARTA do Papus com o item anexo (dono, 18/11/2026):** o servidor não concede o item direto: ao fechar o mês, manda ao vencedor uma carta do correio (`functions/api/_mensageiro.js`) com parabéns em PT/EN ("Parabéns pelo 1º lugar!", jogo e mês no corpo, sem citar outros itens) e o Fliperama de Canto de ANEXO (`item`, lista fechada `MAIL_ITEMS`). O jogador abre a carta e resgata; o resgate (`claimMail`, uma vez por `mid`) devolve o `item` e o cliente o põe em `ownedFurniture` (`applyMail` → `grantGuildTrophy`, junto de `mailClaimed`). Carta com anexo pendente conta como prêmio pendente: nunca expira nem some sem `force` (o correio já avisa antes de apagar). Idempotência: o `mid` `arcade:<mês>:<jogo>` (o correio nunca aceita o mesmo duas vezes) + trava do mês + auditoria `arcade-prize:<mês>:<jogo>`. Item único: quem já tem (save gravado ou outra carta com o anexo) recebe a carta SEM anexo (só o aplauso) ou, com `ARCADE_ALT_PRIZE` ligado, com Bits/Honra anexados (desligado até o dono escolher; essência e outra decoração pedem suporte novo no correio). Sai o caminho antigo por `ent.itemPrizes` (nunca foi para produção).
+
+## §483 — Espelho Escuro abre o Perfil (18/11/2026, dono)
+
+**Decisão:** na Home, tocar no Espelho Escuro (`furn-el-sombra`) abre o Perfil (`onGoToBuilding('laboratorio.perfil')`, o mesmo caminho do Fliperama e do Caderno). Botão invisível sobre a peça, alvo ≥44px, rótulo "Abrir perfil" / "Open profile"; só na Home real (sem handler no editor da Home, a peça é só cenário). Sem arte nova.
+
+**Gatilho para rever:** o dono querer um brilho/animação no espelho.

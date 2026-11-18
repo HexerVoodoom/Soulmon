@@ -8,7 +8,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { cleanup, fireEvent, screen, within, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
-import { Mochila, ehDisquete, slotsVazios, mochilaTabs } from './Mochila';
+import { Mochila, ehDisquete, mochilaTabs } from './Mochila';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { dishKey } from '../../utils/dishItems';
 
@@ -24,7 +24,7 @@ function abrir(inv: Record<string, number>, language: 'pt-BR' | 'en-US' = 'en-US
   );
 }
 
-describe('ehDisquete / slotsVazios (puras)', () => {
+describe('ehDisquete (pura)', () => {
   it('comida, prato e comida premium viram disquete; chip e especiais não', () => {
     expect(ehDisquete('🍎')).toBe(true);
     expect(ehDisquete(dishKey('cha-de-orvalho'))).toBe(true);
@@ -32,12 +32,6 @@ describe('ehDisquete / slotsVazios (puras)', () => {
     if (premium) expect(ehDisquete(premium)).toBe(true);
     expect(ehDisquete(chip)).toBe(false);
     expect(ehDisquete(heart)).toBe(false);
-  });
-  it('a grade fecha fileiras de 4 e tem no mínimo 8 lugares', () => {
-    expect(slotsVazios(0)).toBe(8);
-    expect(slotsVazios(3)).toBe(5);
-    expect(slotsVazios(8)).toBe(0);
-    expect(slotsVazios(9)).toBe(3);
   });
 });
 
@@ -72,8 +66,7 @@ describe('modal Files', () => {
     const chipEl = itens.find(i => i.getAttribute('data-item') === chip)!;
     expect(chipEl.querySelector('.sm3-item-slot')!.hasAttribute('data-disquete')).toBe(false);
     expect(chipEl.querySelector('.sm3-item-nome')!.textContent!.endsWith('.exe')).toBe(true);
-    expect(document.querySelectorAll('[data-slot-vazio]').length).toBe(slotsVazios(itens.length));
-    for (const v of document.querySelectorAll('[data-slot-vazio]')) expect(v.getAttribute('aria-hidden')).toBe('true');
+    expect(document.querySelectorAll('[data-slot-vazio]').length).toBe(0);
     expect(screen.getByRole('button', { name: 'Apple.exe × 2' })).toBeTruthy();
   });
 
