@@ -139,7 +139,7 @@ export interface DailyRitualsProps {
   /** beta12 §J: o "Ir lá" do hábito linkado a um prédio (`forja.caderno`, `forja.oficina`). */
   onGoToBuilding?: (building: string) => void;
   /** ⭐ Id da atividade que é a tarefa bônus de HOJE (`utils/bonusTask.ts`): título em bronze, nada mais muda. */
-  bonusActivityId?: string;
+  bonusActivityIds?: readonly string[];
   /** 🔥 Id do hábito com o BÔNUS DE RETORNO da semana (`utils/weeklyRetro.ts`): o mesmo selo (título em bronze) da tarefa bônus. */
   weeklyBonusActivityId?: string;
 }
@@ -152,7 +152,7 @@ export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, playerDayTz, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onHoldDoneTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings, stepsInfo, onGoToBuilding, bonusActivityId, weeklyBonusActivityId,
+  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings, stepsInfo, onGoToBuilding, bonusActivityIds, weeklyBonusActivityId,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
@@ -509,7 +509,7 @@ export function DailyRituals({
         action={acao}
         kind="habit"
         name={activity.name}
-        bonus={bonusActivityId === activity.id || weeklyBonusActivityId === activity.id}
+        bonus={!!bonusActivityIds?.includes(activity.id) || weeklyBonusActivityId === activity.id}
         value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}

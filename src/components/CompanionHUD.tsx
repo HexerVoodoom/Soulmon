@@ -1315,7 +1315,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     <div className="sm-chat-fixed sm3-dock">
       <Suspense fallback={null}>
       <ChatBox
-        petName={currentStage}
+        petName={petDisplayName || currentStage}
         mood={companionMood}
         evolutionStage={evolutionStage}
         dominantBranch={dominantBranch}

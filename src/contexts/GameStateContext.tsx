@@ -979,7 +979,7 @@ export interface GameState {
    * oferta reduzida. NÃO vem concluído; concluir rende +1 Fragmento de Alma
    * acima do teto diário, na virada (que limpa o campo).
    */
-  bonusTask?: BonusTaskState;
+  bonusTask?: BonusTaskState[];
   /** 🔥 Bônus de retorno da semana (utils/weeklyRetro.ts, 16/11/2026): o hábito mais difícil da semana passada rende +1 Fragmento por dia concluído, de segunda a domingo. */
   weeklyBonus?: WeeklyBonusState;
   /** dayKey da segunda cuja retrospectiva já foi mostrada. */

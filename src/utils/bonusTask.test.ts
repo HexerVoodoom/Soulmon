@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeDailyReset } from './dailyReset';
-import { bonusTaskGaugeBonus, isBonusActivity, sanitizeBonusTask, BONUS_TASK_GAUGE_WEIGHT } from './bonusTask';
+import { addBonusTask, bonusActivityIdsOf, bonusTaskGaugeBonus, isBonusActivity, sanitizeBonusTask, BONUS_TASK_GAUGE_WEIGHT } from './bonusTask';
 
 const NOW = new Date(2026, 9, 13, 0, 5);
 const ONTEM = new Date(2026, 9, 12).toDateString();
@@ -20,7 +20,10 @@ const st = (done: number, total: number, over: Record<string, unknown> = {}) => 
 
 describe('tarefa bônus — regra pura', () => {
   it('sanitiza o save', () => {
-    expect(sanitizeBonusTask({ day: ONTEM, activityId: 'h1' })).toEqual({ day: ONTEM, activityId: 'h1' });
+    // objeto único (save antigo) vira lista de 1
+    expect(sanitizeBonusTask({ day: ONTEM, activityId: 'h1' })).toEqual([{ day: ONTEM, activityId: 'h1' }]);
+    expect(sanitizeBonusTask([{ day: ONTEM, activityId: 'h1' }, { day: ONTEM, activityId: 'h1' }, { day: '', activityId: 'x' }, { day: ONTEM, activityId: 'h2' }]))
+      .toEqual([{ day: ONTEM, activityId: 'h1' }, { day: ONTEM, activityId: 'h2' }]);
     expect(sanitizeBonusTask({ day: '', activityId: 'h1' })).toBeUndefined();
     expect(sanitizeBonusTask('x')).toBeUndefined();
     expect(sanitizeBonusTask(undefined)).toBeUndefined();
@@ -36,6 +39,35 @@ describe('tarefa bônus — regra pura', () => {
     expect(bonusTaskGaugeBonus(s, [habito(true)], ONTEM)).toBe(BONUS_TASK_GAUGE_WEIGHT);
     expect(bonusTaskGaugeBonus(s, [habito(false)], ONTEM)).toBe(0);
     expect(bonusTaskGaugeBonus(undefined, [habito(true)], ONTEM)).toBe(0);
+  });
+});
+
+describe('várias tarefas bônus no mesmo dia (regressão: slot único perdia a primeira)', () => {
+  it('aceitar uma segunda NÃO sobrescreve a primeira; repetir a mesma não duplica', () => {
+    let l = addBonusTask(undefined, 'h1', ONTEM);
+    l = addBonusTask(l, 'h2', ONTEM);
+    l = addBonusTask(l, 'h1', ONTEM);
+    expect(bonusActivityIdsOf(l, ONTEM).sort()).toEqual(['h1', 'h2']);
+    expect(isBonusActivity(l, 'h1', ONTEM)).toBe(true);
+    expect(isBonusActivity(l, 'h2', ONTEM)).toBe(true);
+  });
+  it('bônus de dia antigo sai ao aceitar um de hoje', () => {
+    const l = addBonusTask([{ day: 'antigo', activityId: 'h9' }], 'h1', ONTEM);
+    expect(l).toEqual([{ day: ONTEM, activityId: 'h1' }]);
+  });
+  it('paga +1 POR bônus concluído', () => {
+    const l = [{ day: ONTEM, activityId: 'h1' }, { day: ONTEM, activityId: 'h2' }];
+    const h2 = (done: boolean) => ({ ...habito(done), id: 'h2' });
+    expect(bonusTaskGaugeBonus(l, [habito(true), h2(true)], ONTEM)).toBe(2 * BONUS_TASK_GAUGE_WEIGHT);
+    expect(bonusTaskGaugeBonus(l, [habito(true), h2(false)], ONTEM)).toBe(BONUS_TASK_GAUGE_WEIGHT);
+  });
+  it('na virada: 2 bônus concluídos rendem +2 acima do teto', () => {
+    const h2 = { ...habito(true), id: 'h2' };
+    const bonusTask = [{ day: ONTEM, activityId: 'h1' }, { day: ONTEM, activityId: 'h2' }];
+    const sem: any = computeDailyReset(st(9, 9, { activities: [habito(true), h2] }) as any, { now: NOW });
+    const com: any = computeDailyReset(st(9, 9, { activities: [habito(true), h2], bonusTask }) as any, { now: NOW });
+    expect(com.evolutionPoints - sem.evolutionPoints).toBe(2);
+    expect(com.lastDayReport.bonusTaskBonus).toBe(2);
   });
 });
 
