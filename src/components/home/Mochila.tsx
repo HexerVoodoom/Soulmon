@@ -121,12 +121,6 @@ export function ehDisquete(emoji: string): boolean {
   return !k || k === 'dish' || k === 'premium';
 }
 
-/** Slots vazios (decorativos) que completam a grade: no mínimo 2 fileiras de 4, sempre fileira cheia (referência ref3). */
-export function slotsVazios(n: number, colunas = 4, minimo = 8): number {
-  const alvo = Math.max(minimo, Math.ceil(n / colunas) * colunas);
-  return Math.max(0, alvo - n);
-}
-
 const ABAS: ReadonlyArray<{ id: MochilaAbaVista; pt: string; en: string }> = [
   { id: 'comida', pt: 'Comida e chips', en: 'Food and chips' },
   { id: 'especiais', pt: 'Especiais', en: 'Specials' },
@@ -381,9 +375,6 @@ export function Mochila({
                   </button>
                 );
               })}
-              {Array.from({ length: slotsVazios(lista.length) }, (_, k) => (
-                <span key={`vazio-${k}`} className="sm3-item-vazio" aria-hidden="true" data-slot-vazio><span className="sm3-item-slot" /></span>
-              ))}
             </div>
           )}
 
