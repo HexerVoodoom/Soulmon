@@ -6587,3 +6587,8 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decisão:** `M3C_PVP_PLAYER_HP_BONUS = 0.8`; jogador 936 de HP (base 520), adversário 520. Só o PvP muda.
 - **Calibração** (N=80, sementes fixas, jogador ao acaso): +60% 36,3% · +70% 37,5% · +75% 40,0% · +80% 43,8% · +100% 51,3% · +120% 58,8%. Escolhido +80% (centro de ~40-45%; +75% é o limite inferior).
 - **Sem efeito colateral:** HUD usa barra por razão (sem texto HP N/N); pontuação = dano dado − tomado (+bônus de derrota), cortes e teto do servidor (`_rankings.js`, `match3-pvp` 10.000) não dependem de HP.
+
+### Adendo (18/11/2026, 3ª rodada): bônus sobe para +120%
+
+- **Decisão (dono 18/11/2026: +120% por enquanto):** `M3C_PVP_PLAYER_HP_BONUS = 1.2`; jogador 1144 de HP (base 520), adversário 520, dano inalterado. Só o PvP muda (Aventura, boss e desafio intactos). Chegou-se a pedir +140% (medido 61,3%), trocado por +120%.
+- **Medido** (N=80, sementes fixas, jogador ao acaso): +120% = 58,8% de vitória. A faixa de 40-47% do teste deixou de valer; agora medido ±6 pontos (52,8-64,8%).

@@ -113,9 +113,9 @@ describe('PVP — o combate 1 contra 1', () => {
 
   it('HP do PVP: o jogador ganha o bônus (base + bônus); o inimigo segue com o HP base', () => {
     const s = newPvpCombat(mulberry32(1), els);
-    expect(M3C_PVP_PLAYER_HP_BONUS).toBe(0.8);
+    expect(M3C_PVP_PLAYER_HP_BONUS).toBe(1.2);
     expect(M3C_PVP_PLAYER_HP).toBe(Math.round(M3C_PLAYER_HP * (1 + M3C_PVP_PLAYER_HP_BONUS)));
-    expect(M3C_PVP_PLAYER_HP).toBe(936);
+    expect(M3C_PVP_PLAYER_HP).toBe(1144);
     expect(s.player.hp).toBe(M3C_PVP_PLAYER_HP);
     expect(s.player.max).toBe(M3C_PVP_PLAYER_HP);
     expect(s.player.hp).toBeGreaterThan(M3C_PLAYER_HP);
