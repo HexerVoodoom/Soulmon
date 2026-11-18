@@ -338,10 +338,6 @@ export const SHOP_ITEMS: ShopItem[] = [
     slot: 'rug', fits: 'any',
     namePt: 'Tapete de Circuito', nameEn: 'Circuit Mat',
     descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 420 },
-  { id: 'furn-arcade-cab', kind: 'furniture', icon: '🕹️',
-    slot: 'floor-left', fits: 'indoor',
-    namePt: 'Fliperama de Canto', nameEn: 'Corner Arcade',
-    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 700 },
   { id: 'furn-cauldron', kind: 'furniture', icon: '⚗️',
     slot: 'floor-left', fits: 'any',
     namePt: 'Caldeirão Borbulhante', nameEn: 'Bubbling Cauldron',
@@ -656,6 +652,13 @@ export const GUILD_ITEMS: ShopItem[] = [
     namePt: GUILD_COPY_CORE['guild.concha.nome'][0], nameEn: GUILD_COPY_CORE['guild.concha.nome'][1],
     descPt: GUILD_COPY_CORE['guild.concha.desc'][0], descEn: GUILD_COPY_CORE['guild.concha.desc'][1],
     price: 0,
+    unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
+  // 18/11/2026 (REGISTRO §482): o Fliperama de Canto saiu da loja e é PRÊMIO do 1º lugar no ranking mensal de minigame (concedido pelo servidor ao
+  // fechar o mês; `ent.itemPrizes` → `applyGuildClaim`). Mesmo trilho das conquistas da Guilda: nunca comprável, equipável pela folha "da sua roda".
+  { id: 'furn-arcade-cab', kind: 'furniture', icon: '🕹️',
+    slot: 'floor-left', fits: 'indoor',
+    namePt: 'Fliperama de Canto', nameEn: 'Corner Arcade',
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 0,
     unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
 ];
 

@@ -2081,9 +2081,11 @@ export default function App() {
         setSubscriptionFromEntitlement(ent);
         setPaidWidgetFramesFromEntitlement(ent);
         if (!ent) return;
-        setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
-          ? prev
-          : { ...prev, credits: ent.credits, accountTier: ent.tier });
+        setGameState(prev => {
+          const base = (prev.credits === ent.credits && prev.accountTier === ent.tier) ? prev : { ...prev, credits: ent.credits, accountTier: ent.tier };
+          // §482: o Fliperama de Canto (1º lugar no ranking mensal de minigame) chega pelo servidor; entra no save, idempotente (`grantGuildTrophy`).
+          return (ent.itemPrizes ?? []).reduce((acc, id) => grantGuildTrophy(acc, id), base);
+        });
       },
     });
     /* Compra paga e interrompida (app fechado, rede, pagamento pendente que aprovou) é creditada SOZINHA: ao abrir e ao

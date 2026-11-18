@@ -405,6 +405,8 @@ export function publicView(ent) {
     // Só quando a conta já teve assinatura: contas sem ela mantêm o formato de sempre.
     // Só quando há alguma: contas sem moldura mantêm o formato de sempre.
     ...(Array.isArray(ent.frames) && ent.frames.length ? { frames: [...ent.frames] } : {}),
+    // §482: itens de decoração ganhos como prêmio de ranking (o cliente põe no save). Só aparece quando há algum.
+    ...(Array.isArray(ent.itemPrizes) && ent.itemPrizes.length ? { itemPrizes: [...ent.itemPrizes] } : {}),
     ...(ent.sub ? { subActive: isSubscriptionActive(ent), subUntil: Number(ent.sub.until) || 0 } : {}),
   };
 }
@@ -1049,6 +1051,28 @@ export async function grantRankPrize(env, saveId, amount, markKey, since = 0) {
   const tomb = await readTombstone(env, saveId).catch(() => null);
   // Prêmio aprovado pelo dono não recusa por `busy`: espera a trava (§381).
   return comTravaDoEnt(env, saveId, () => creditarPremio(env, saveId, amount, markKey, since, tomb), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+}
+
+/**
+ * Entrega um ITEM de decoração como PRÊMIO de ranking (REGISTRO §482): grava o id em `ent.itemPrizes` (o cliente lê e põe no save) e a marca em
+ * `ent.rankPrizes`, no mesmo ler-modificar-gravar sob a trava do ent. Idempotente por marca; conta apagada a partir de `since` recusa.
+ * @returns {Promise<{ ent: any|null, granted: boolean, duplicate?: boolean, refused?: 'deleted'|'invalid' }>}
+ */
+export async function grantItemPrize(env, saveId, itemId, markKey, since = 0) {
+  if (typeof itemId !== 'string' || !/^[a-z0-9-]{3,64}$/.test(itemId) || typeof markKey !== 'string' || !markKey) return { ent: null, granted: false, refused: 'invalid' };
+  const tomb = await readTombstone(env, saveId).catch(() => null);
+  return comTravaDoEnt(env, saveId, async () => {
+    const ent = await readEntitlement(env, saveId);
+    const delAt = Math.max(tomb ? Number(tomb.at) || 1 : 0, Number(ent.accountDeletedAt) || 0);
+    if (delAt > 0 && delAt >= since) return { ent: null, granted: false, refused: 'deleted' };
+    const marks = Array.isArray(ent.rankPrizes) ? ent.rankPrizes : [];
+    if (marks.includes(markKey)) return { ent, granted: false, duplicate: true };
+    const itens = Array.isArray(ent.itemPrizes) ? ent.itemPrizes : [];
+    ent.itemPrizes = itens.includes(itemId) ? itens : [...itens, itemId];
+    ent.rankPrizes = [...marks, markKey].slice(-RANK_PRIZES_MAX);
+    await writeEntitlement(env, saveId, ent);
+    return { ent, granted: true };
+  }, { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
 }
 
 async function creditarPremio(env, saveId, amount, markKey, since, tomb) {

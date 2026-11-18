@@ -6493,3 +6493,15 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Alternativa que perdeu:** embarcar o core do pixelfx (~140 KB) e desenhar em canvas em tempo real; e gerar a fogueira sem fogo no ChatGPT (edição de pixel é determinística e fiel à arte aprovada).
 
 **Gatilho para rever:** o dono preferir o fogo mais largo/alto, ou a arte autoral sem fogo via ChatGPT.
+
+## §482 — Fliperama de Canto: sai da loja e vira prêmio do 1º lugar nos rankings mensais de minigame (18/11/2026, dono)
+
+**Decisão:** o Fliperama de Canto (`furn-arcade-cab`) deixa de ser vendido (sai de `SHOP_ITEMS`, do espelho `FEIRA_LOJA_CATALOGO` e de `decorPrices.ts`; entra em `GUILD_ITEMS`, o trilho de "conquista que não se compra": `not-for-sale`, equipável na folha "da sua roda"). Quem já comprou segue dono (posse permanente). No FECHAMENTO DO MÊS, quem liderou o ranking MENSAL de cada minigame dos prédios de jogos ganha o item: hoje `match3` (Aventura do Elemental Fusion) e `match3-pvp`. Entrega AUTOMÁTICA pelo servidor (`functions/api/_arcadePrize.js`, fechamento preguiçoso no primeiro acesso de ranking do mês seguinte, junto do Rift): trava por mês, marca idempotente `arcade:<mês>:<jogo>` no `ent.rankPrizes` + id em `ent.itemPrizes` sob a trava do ent, auditoria `arcade-prize:<mês>:<jogo>`, simulados nunca ganham, conta apagada recusa. O cliente lê `itemPrizes` do GET de entitlements e põe o item no save (`grantGuildTrophy`). Texto no ranking mensal do Elemental Fusion: "O 1º do mês ganha o Fliperama de Canto."
+
+**Item único:** quem já tem o item (save gravado ou `itemPrizes`) e vence de novo cai no PRÊMIO ALTERNATIVO `ARCADE_ALT_PRIZE` (`{ enabled: false }`: DESLIGADO até o dono escolher; hoje só registra `owned`). Opções propostas ao dono, derivadas da economia existente: (a) Créditos, na faixa do prêmio do Rift (`RIFT_PAYOUT` 50/25/10, então 25 como degrau do meio); (b) 1 essência do elemento do jogador (a mesma unidade do Cambista); (c) outra decoração de vitrine de preço semelhante (700 Bits como referência do preço antigo). Só `credits` está implementado.
+
+**Fora desta decisão (perguntar ao dono):** o Endless Rift é da Masmorra, não dos dois prédios de minigame, e já tem prêmio próprio em Créditos. Os rankings SEMANAIS dos dois prédios não têm agregado mensal e NÃO foram inventados: Salão (`dino-1`, `dino-2`, `ppt`, `soul-barrage`, `soul-barrage-2`) e Ateliê da Mente (`eco`, `zip`, `patches`; zip e patches são por tempo, menor vence). Falta o dono dizer se o prêmio deles é por semana, ou por um agregado mensal novo (ex.: quem mais semanas liderou).
+
+**Alternativa que perdeu:** pendente aprovado à mão como o Rift (o dono pediu entrega automática); premiar a cada semana (dá o item toda semana).
+
+**Gatilho para rever:** escolha do prêmio alternativo, ou decisão sobre os rankings semanais.

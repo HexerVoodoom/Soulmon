@@ -18,6 +18,7 @@ import {
 import { readRiftLayers } from './_dayCounters.js';
 import { agendarSimuladosDia, stripSimulated } from './_simulados.js';
 import { closePreviousMonth, readMyPrize, RIFT_GAME } from './_riftPayout.js';
+import { closeArcadeMonth } from './_arcadePrize.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,8 @@ export async function onRequest(context) {
 
   // Fechamento preguiçoso do mês anterior do Endless Rift (`_riftPayout.js`): idempotente, nunca lança.
   await closePreviousMonth(env);
+  // §482: o 1º dos rankings mensais de minigame ganha o Fliperama de Canto (`_arcadePrize.js`): idempotente, nunca lança.
+  await closeArcadeMonth(env);
   // M11: os simulados escrevem o dia deles nos placares (preguiçoso, nunca lança; no-op sem `SIMULADOS_ON`).
   await agendarSimuladosDia(context);
 
