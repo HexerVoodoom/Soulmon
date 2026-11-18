@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { PlayerDayAnchor } from '../utils/playerDay';
 import {
-  applyGrants, deletableRead, hasNewMail, isFriendInvite, isGuildInvite, markClaimed, sortMail, unclaimedInSave,
+  applyGrants, deletableRead, hasNewMail, hasPendingReward, isFriendInvite, isGuildInvite, markClaimed, sortMail, unclaimedInSave,
   type MailGrant, type MailItem, type MailState,
 } from '../utils/mensageiro';
 
@@ -145,7 +145,7 @@ export function useMailbox<S extends MailState & { friends?: string[]; playerDay
     mail,
     unread: hasNewMail(mail),
     /** Há algo que "Resgatar tudo" faria. */
-    canClaimAll: mail.some(m => (m.bits > 0 || m.emblems > 0) && !m.claimedAt),
+    canClaimAll: mail.some(hasPendingReward),
     /** Há algo que "Excluir todas lidas" apagaria. */
     canDeleteRead: deletableRead(mail).length > 0,
     refresh, openLetter, claim, claimAll, remove, removeRead, answerInvite, joinGuildFromLetter,

@@ -1,10 +1,14 @@
 import type { NpcIntroId } from './buildingIntro';
+import { ALL_SHOP_ITEMS } from './shop';
+import { grantGuildTrophy } from './guildClaimLocal';
 /**
  * O MENSAGEIRO (NPC 440, Papus; §241): o crédito das cartas no save. Puro. A fila mora no servidor (`functions/api/_mensageiro.js`);
  * `mailClaimed` guarda o que já foi creditado, então a mesma carta entregue de novo não paga duas vezes.
  */
 export interface MailItem {
   mid: string; bodyPt: string; bodyEn: string; bits: number; emblems: number;
+  /** ANEXO (§482): id de uma decoração que a carta entrega ao resgatar (ex.: o Fliperama de Canto). Só o servidor define. */
+  item?: string;
   /** Caixa de cartas (§246). Cartas de servidor antigo chegam sem estes campos: lidos como carta nova e sem resgate. */
   titlePt?: string; titleEn?: string; at?: number;
   /** O dono já abriu (ou resgatou). Só o servidor grava. */
@@ -24,8 +28,8 @@ export interface MailItem {
 }
 export type MailKind = 'gift' | 'friend-invite' | 'guild-invite' | 'global';
 /** O que o servidor entregou num resgate: só o prêmio e o título. */
-export interface MailGrant { mid: string; titlePt?: string; titleEn?: string; bits: number; emblems: number }
-export interface MailState { gamePoints?: number; emblems?: number; mailClaimed?: string[] }
+export interface MailGrant { mid: string; titlePt?: string; titleEn?: string; bits: number; emblems: number; item?: string }
+export interface MailState { gamePoints?: number; emblems?: number; mailClaimed?: string[]; ownedFurniture?: string[] }
 
 const CLAIMED_MAX = 100;
 
@@ -39,8 +43,10 @@ export function sanitizeMailClaimed(raw: unknown): string[] | undefined {
 /** Idempotente: carta já creditada devolve a MESMA referência. */
 export function applyMail<T extends MailState>(prev: T, mail: MailItem): T {
   if (prev.mailClaimed?.includes(mail.mid)) return prev;
+  // O anexo entra em `ownedFurniture` (só ids de `GUILD_ITEMS` passam, `grantGuildTrophy`), junto da marca `mailClaimed`: uma vez só.
+  const comItem = mail.item ? grantGuildTrophy(prev, mail.item) : prev;
   return {
-    ...prev,
+    ...comItem,
     gamePoints: (prev.gamePoints ?? 0) + Math.max(0, mail.bits),
     emblems: (prev.emblems ?? 0) + Math.max(0, mail.emblems),
     mailClaimed: [...(prev.mailClaimed ?? []), mail.mid].slice(-CLAIMED_MAX),
@@ -48,7 +54,7 @@ export function applyMail<T extends MailState>(prev: T, mail: MailItem): T {
 }
 
 /** Tem item a resgatar. */
-export const hasPendingReward = (m: MailItem): boolean => (m.bits > 0 || m.emblems > 0) && !m.claimedAt;
+export const hasPendingReward = (m: MailItem): boolean => (m.bits > 0 || m.emblems > 0 || !!m.item) && !m.claimedAt;
 /** Convite de amizade com o que o servidor precisa para responder. */
 export const isFriendInvite = (m: MailItem): m is MailItem & { fromPid: string } => m.kind === 'friend-invite' && typeof m.fromPid === 'string' && m.fromPid.length > 0;
 /** Convite de clã por carta (§358) com o código para entrar. Carta de clã de antes do §358 (sem `kind`) é carta comum: o corpo traz o código. */
@@ -65,16 +71,22 @@ export const mailTitle = (m: MailItem, isPt: boolean): string => (isPt ? m.title
 export const mailBody = (m: MailItem, isPt: boolean): string => (isPt ? m.bodyPt : m.bodyEn);
 
 /** Ex.: "6 de Honra e 10 Bits". Vazio se não há item. */
-export function rewardText(r: { bits: number; emblems: number }, isPt: boolean): string {
+export function rewardText(r: { bits: number; emblems: number; item?: string; items?: readonly string[] }, isPt: boolean): string {
+  const nomes = [...(r.items ?? (r.item ? [r.item] : []))].map(id => {
+    const it = ALL_SHOP_ITEMS.find(i => i.id === id);
+    return it ? (isPt ? it.namePt : it.nameEn) : '';
+  }).filter(Boolean);
   return [
+    ...nomes,
     r.emblems > 0 ? `${r.emblems} ${isPt ? 'de Honra' : 'Honor'}` : '',
     r.bits > 0 ? `${r.bits} Bits` : '',
   ].filter(Boolean).join(isPt ? ' e ' : ' and ');
 }
 
 /** O total do pop-up do "Resgatar tudo". */
-export function sumGrants(list: readonly { bits: number; emblems: number }[]): { bits: number; emblems: number } {
-  return list.reduce((t, g) => ({ bits: t.bits + g.bits, emblems: t.emblems + g.emblems }), { bits: 0, emblems: 0 });
+export function sumGrants(list: readonly { bits: number; emblems: number; item?: string }[]): { bits: number; emblems: number; items?: string[] } {
+  const items = list.flatMap(g => (g.item ? [g.item] : []));
+  return { bits: list.reduce((t, g) => t + g.bits, 0), emblems: list.reduce((t, g) => t + g.emblems, 0), ...(items.length ? { items } : {}) };
 }
 
 /** Cartas que o servidor já entregou mas que o save ainda não registrou (app fechou entre o resgate e o crédito): creditar de novo é seguro, `applyMail` deduplica. */
