@@ -114,6 +114,43 @@ export function widgetNextTask(state: WidgetTaskState, now: Date, done: number, 
   return next ? next.slice(0, WIDGET_TASK_NAME_MAX) : '';
 }
 
+/** Teto da lista do widget grande da Home (o Kotlin corta de novo) e do nome de cada linha. */
+export const WIDGET_TASK_LIST_MAX = 12;
+const WIDGET_TASK_LINE_MAX = 40;
+
+/** Uma linha da lista do widget grande da Home: id, nome curto, feita ou não. Nunca peso, prazo ou recompensa. */
+export interface WidgetTaskItem { id: string; name: string; done: boolean }
+
+/**
+ * `tasksJson` do widget grande da Home (18/11/2026): as tarefas avulsas DE HOJE, abertas primeiro (o foco do dia na
+ * frente, como no `widgetNextTask`) e depois as concluídas hoje (riscadas). Mesmo filtro do `widgetNextTask`: adiada
+ * para outro dia ou escondida no plano do dia não entra. Hábitos ficam de fora (o check do widget só conclui TAREFA).
+ */
+export function widgetTaskList(
+  state: Pick<WidgetTaskState, 'tasks' | 'dayPlan' | 'playerDayTz'> & { completedTasks?: Array<{ id?: string; name?: string; completedAt?: string }> },
+  now: Date,
+): WidgetTaskItem[] {
+  const dayKey = now.toDateString();
+  const hidden = hiddenForDayKey(state.dayPlan, dayKey, state.playerDayTz);
+  const startOfTomorrow = widgetDayEndsAt(now);
+  const linha = (n?: string) => (n ?? '').replace(/\s+/g, ' ').trim().slice(0, WIDGET_TASK_LINE_MAX);
+  const hoje = (state.tasks ?? []).filter(t => {
+    if (taskStatus(t) !== 'open' || hidden.has(String(t.id))) return false;
+    const start = t.startDate ? parseDayValue(t.startDate) : null;
+    return !start || start.getTime() < startOfTomorrow;
+  });
+  const abertas = [...focusTasks(hoje, dayKey), ...hoje].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i);
+  const itens: WidgetTaskItem[] = abertas
+    .map(t => ({ id: String(t.id), name: linha(t.name), done: t.completed === true }))
+    .sort((a, b) => Number(a.done) - Number(b.done));
+  const feitasHoje = (state.completedTasks ?? [])
+    .filter(c => typeof c.id === 'string' && c.completedAt && new Date(c.completedAt).toDateString() === dayKey)
+    .map(c => ({ id: String(c.id), name: linha(c.name), done: true }));
+  return [...itens, ...feitasHoje]
+    .filter((t, i, a) => t.name && a.findIndex(x => x.id === t.id) === i)
+    .slice(0, WIDGET_TASK_LIST_MAX);
+}
+
 /** A próxima meia-noite do aparelho: o mesmo dia de `useProgressTracking` (`toDateString`). */
 export function widgetDayEndsAt(now: Date): number {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
@@ -184,6 +221,8 @@ export interface DigiWidgetData {
   petSleeping?: boolean;
   /** Id do cenário equipado (`bg-...`) para o fundo do LCD do V-Pet, ou `''`. O Kotlin só usa se houver miniatura `vpet_bg_<id>` no APK. */
   vpetBg?: string;
+  /** Widget grande da Home: `JSON.stringify(widgetTaskList(...))`. Chave NOVA; APK antigo ignora; ausente = o plugin remove. */
+  tasksJson?: string;
 }
 
 export interface SoulmonWidgetPlugin {
@@ -194,6 +233,13 @@ export interface SoulmonWidgetPlugin {
    * em segundo plano, no maximo 1x por hora. No APK anterior o metodo nao existe (rejeita): quem chama engole o erro.
    */
   syncWidgetFrames(): Promise<void>;
+  /**
+   * Widget grande da Home (18/11/2026): LÊ a fila de checks do widget sem apagar (`peek`). Apagar é `ackWidgetEvents`,
+   * só depois de o app aplicar e gravar. APK anterior não tem o método (rejeita): use `readWidgetEvents`, que trata isso.
+   */
+  peekWidgetEvents(): Promise<{ events: unknown }>;
+  /** Apaga da fila os eventos já aplicados (por `eid`). Idempotente: `eid` que não está lá é ignorado. */
+  ackWidgetEvents(options: { eids: string[] }): Promise<void>;
 }
 
 const SoulmonWidget = registerPlugin<SoulmonWidgetPlugin>('SoulmonWidget', {
@@ -201,7 +247,28 @@ const SoulmonWidget = registerPlugin<SoulmonWidgetPlugin>('SoulmonWidget', {
   web: {
     async updateWidgetData() {},
     async syncWidgetFrames() {},
+    async peekWidgetEvents() { return { events: [] }; },
+    async ackWidgetEvents() {},
   },
 });
 
 export { SoulmonWidget };
+
+/**
+ * A fila do widget, ou `null` quando ESTE APK não tem o recurso (método ausente = APK anterior ao widget da Home; a regra 5
+ * de Compatibilidade: a web publicada fala com APKs velhos). `null` ≠ fila vazia: sem recurso, ninguém chama o `ack`.
+ */
+export async function readWidgetEvents(plugin: Pick<SoulmonWidgetPlugin, 'peekWidgetEvents'> = SoulmonWidget): Promise<unknown[] | null> {
+  try {
+    const r = await plugin.peekWidgetEvents();
+    return Array.isArray(r?.events) ? r.events : [];
+  } catch {
+    return null;
+  }
+}
+
+/** `ack` que nunca lança (APK sem o método, plugin ausente): o pior caso é reler os mesmos eventos, que é no-op. */
+export async function ackWidgetEvents(eids: string[], plugin: Pick<SoulmonWidgetPlugin, 'ackWidgetEvents'> = SoulmonWidget): Promise<void> {
+  if (eids.length === 0) return;
+  try { await plugin.ackWidgetEvents({ eids }); } catch { /* sem recurso: no-op */ }
+}

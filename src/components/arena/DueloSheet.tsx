@@ -3,7 +3,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { SCENE_BG } from '../../utils/fxPackArt';
-import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
+import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -122,7 +122,6 @@ function EscolhaDeAdversarios({ isPt, semFicha, onStart, startBlocked, arena }: 
                 return a ? <img key={e} src={a} alt="" width={28} height={28} style={{ width: 28, height: 28, imageRendering: 'pixelated' }} /> : null;
               })}
               <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {arenaRunIsStray(seed, arena.ladder) && <span data-arena-stray>{isPt ? 'Desgarrado · ' : 'Stray · '}</span>}
                 {label}
               </span>
             </span>
@@ -239,11 +238,6 @@ export function DueloSheet({ language, onStart, arena, semFicha }: {
               {isPt
                 ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
                 : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
-            </span>
-            <span data-duelo-ajuda-stray style={{ display: 'block', marginTop: 6 }}>
-              {isPt
-                ? 'Desgarrado: um desafio em que os adversários aparecem nas formas mais altas (Ultimate em diante).'
-                : 'Stray: a challenge whose opponents show up in their highest forms (Ultimate and beyond).'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt

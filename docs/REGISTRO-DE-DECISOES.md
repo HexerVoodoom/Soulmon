@@ -6417,7 +6417,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 ## §475 — Drive em accordion e categoria Boss (18/11/2026, pedido do dono)
 
-- **Regra:** cada nível do Drive (Bestiário) vira seção recolhível (setinha, `aria-expanded`/`aria-controls`, alvo de 44 px, sem animação); o estado fechado por nível fica em `localStorage` (`sm2.drive.fechados.v1`, padrão tudo aberto) e a contagem "vistos / total" fica no cabeçalho mesmo recolhido. A categoria **Boss** (`BOSS_ROSTER`, 24 chefes) é sempre a última.
+- **Regra:** cada nível do Drive (Bestiário) vira seção recolhível (setinha, `aria-expanded`/`aria-controls`, alvo de 44 px, sem animação); o estado fechado por nível fica em `localStorage` (`soulmon-drive-fechados-v1`, padrão tudo aberto) e a contagem "vistos / total" fica no cabeçalho mesmo recolhido. A categoria **Boss** (`BOSS_ROSTER`, 24 chefes) é sempre a última.
 - **Pendência:** o save NÃO tem registro de "boss visto/derrotado" (`BossFightScreen` não grava nada). Hoje o componente aceita `bossesSeen` (ids de `BOSS_ROSTER`), que a `LibraryPage` ainda não alimenta: todos os bosses aparecem como silhueta `???`. Falta decidir qual evento marca "visto" (primeiro encontro na Feira vs. vitória) e gravá-lo no save.
 
 **Alternativa que perdeu:** derivar "visto" de fragmentos/histórico de Match-3 ou masmorra; não existe fonte confiável por chefe.
@@ -6438,3 +6438,5 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Mudança.** `startLayerFor(recorde)` = recorde + 1 (teto 999/`cap`); recorde ausente/lixo = andar 1. Sem campo novo no save: save antigo se comporta sozinho (só difere de antes quando o recorde era ímpar). `DUNGEON_RETURN_EVERY` ficou sem uso na descida (o §31 de "no máximo 1 abaixo do recorde" vira "logo depois do recorde").
 - **Preservado.** Portais/§471 (o resume por nó e a volta ao portal são `dungeonResumeLayer`, intocados; "voltar ao nó" continua podendo recuar de propósito), recompensas (pagas ao limpar a camada, idempotentes pelo recorde; reentrar no andar do recorde+1 não paga de novo nada que já foi), rank/placar. **Servidor:** não valida ponto de largada; o lastro mensal (`_dayCounters.js`, espelho `riftStartLayer`) usa base mais baixa ou igual = mais folgada, então segue válido; não foi alterado.
 - **UI.** Guia (PT/EN) explica: perder só reinicia os combates do andar atual. **Testes:** `dungeonIdle.profundidade.test.ts` (§477), `riftMap*.test.ts`.
+
+**Adendo (18/11/2026, dono):** no modal "Hoje" as bufadas saem da lista de Hábitos e vão para uma seção própria ABAIXO das normais (`role="group"`, separador sutil + texto "Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude."), mesma linha, negrito dourado. Sem bufadas, a seção não existe. A regra do §474 não muda (marcar = aceitar).

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget grande da Home, BAIXO (menos de 220dp de altura): sem o V-Pet, so titulo e lista. Ver widget_soulmon_home.xml. Original: o V-Pet em cima (mesmo bitmap do Cage: casco padrao vpet_moldura, Soulmon, fala e
+     icones de estado) e a lista de tarefas de hoje embaixo, com check. So LinearLayout/FrameLayout/ImageView/TextView/ListView
+     (RemoteViews, footgun 2). Tocar no V-Pet ou no titulo abre o jogo; o check so marca (WidgetEventQueue). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:background="@drawable/widget_home_panel"
+>
+
+
+    <TextView
+        android:id="@+id/widget_home_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="2dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#F2E3C6"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <ListView
+            android:id="@+id/widget_home_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp" />
+        <TextView
+            android:id="@+id/widget_home_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="8dp"
+            android:textColor="#BFD9D6"
+            android:textSize="13sp" />
+    </FrameLayout>
+</LinearLayout>

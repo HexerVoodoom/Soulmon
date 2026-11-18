@@ -280,6 +280,10 @@ export const STORAGE_KEYS = {
    *  (`{'balaoDourado:<tipo>:<dia>': n}`); no 2º, o App grava o `dispensar` do save. Fora do save; o logout apaga.
    *  Congelada: nunca renomear. Dono: `utils/balaoDourado.ts` (`registrarIgnorado`). */
   BALAO_DOURADO_IGNORADOS: 'soulmon-balao-dourado-ignorados',
+  /** 18/11/2026 — widget grande da Home: os últimos ~200 `eid` da fila do widget que este aparelho já APLICOU
+   *  (`string[]`). A fila é nativa e deste aparelho, então o registro também é; o pagamento já é idempotente pela
+   *  tarefa sair da lista, isto só cobre reabrir no meio do `ack`. Congelada: nunca renomear. Dono: `utils/widgetEvents.ts`. */
+  WIDGET_EVENTS_APPLIED: 'soulmon-widget-events-applied',
   /** L08-01 (20/10/2026) — QUARENTENA do save local que NÃO virou estado (JSON truncado, array/string, `hydrateSave`
    *  lançou, ou o local ficou atrás por cota cheia). Guarda `{formato, salvoEm, saveId, motivo, cru, cortado?}`
    *  ANTES de qualquer sobrescrita. SOBREVIVE ao logout (rastro forense, como `CONFLICT_BACKUP`). Dono: `saveQuarantine.ts`. */
@@ -293,6 +297,8 @@ export const STORAGE_KEYS = {
   /** L03-01 (21/10/2026) — gids dos presentes de amigos JÁ CREDITADOS neste aparelho (lista JSON, teto 200, FIFO).
    *  Impede recrédito quando o ack ao servidor se perde. É da CONTA: o logout apaga. Dono: `community.ts` (`resgatarPresentes`). */
   GIFTS_CREDITED: 'soulmon-gifts-credited-v1',
+  /** Drive em accordion (Biblioteca): ids dos níveis FECHADOS, JSON string[]. */
+  DRIVE_ACORDEAO_FECHADOS: 'soulmon-drive-fechados-v1',
 } as const;
 
 /**

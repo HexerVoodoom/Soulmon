@@ -49,6 +49,7 @@ const GAME_STATE = 'soulmon_state_v1';
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-drive-fechados-v1',
   'soulmon-bb-nascimento',
   'soulmon-paywall-champion-visto',
   'soulmon-clan-buffs',
@@ -83,6 +84,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-barrage-best',   // nasceu depois de 20/10 (QA beta3 R2): estava na lista congelada por engano
   'soulmon-balao-dicas-vistas', // §333 (13/11/2026): cooldown dos balões de dica do Soulmon, no aparelho
   'soulmon-balao-dourado-ignorados', // §383 (14/11/2026): sumiços sem toque do balão dourado, no aparelho
+  'soulmon-widget-events-applied', // 18/11/2026: eids da fila do widget da Home já aplicados, no aparelho
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */

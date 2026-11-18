@@ -4669,6 +4669,19 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Exports:** `comNomeDoEspecial(skills, nome)`.
 **Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).
 
+### `src/utils/widgetEvents.ts`
+**Dono de:** a DRENAGEM da fila do check do widget grande da Home (decisão do dono, 18/11/2026): o widget só marca e grava um evento nativo (`WidgetEventQueue.kt`); o app aplica cada `task_done` ao abrir ou voltar ao primeiro plano, pela regra do toque na Home (`applyTaskCompletion`, `taskCompletionPay.ts`).
+**Exports:**
+- `WidgetEvent` (tipo) — `{eid, kind, ref, dayKey?, ts?}` como vem do nativo. Só `task_done` paga; outro `kind` é descartado (vai no ack sem aplicar).
+- `function sanitizeWidgetEvents(raw)` — filtra o que veio do plugin (eid em forma de UUID, `ref` até 200).
+- `function sanitizeApplied(raw)` · `WIDGET_APPLIED_CAP` (200) — o registro de `eid` já aplicados neste aparelho (`STORAGE_KEYS.WIDGET_EVENTS_APPLIED`).
+- `function applyWidgetEvents(state, events, applied, now)` — aplica em ordem de `ts`; devolve `handled` (tudo que vai no `ack`), `applied` (registro novo) e `paid` (o que pagou, para o feedback). Sem nada a pagar, a MESMA referência. Pura (updater).
+**Chamado por:** `src/App.tsx` (`drenarWidget`: 2,5 s depois do boot e 0,8 s depois de voltar ao primeiro plano; o `ack` só no efeito seguinte, depois de o provider gravar o save local).
+**Régua:** `src/plugins/widgetHomeFila.contract.test.ts` (paga igual ao toque, uma vez; reaplicar = no-op com e sem registro; já concluída/sumiu = ignora; APK sem o comando; fontes).
+**Avisos do arquivo:**
+- ⚠️ O widget NUNCA dá comida, XP nem Bits. A copy do widget não promete ganho na hora.
+- ⚠️ Nada de `pop`: `peek` → aplicar → gravar → `ack`. Reabrir no meio = reaplicar, e reaplicar é no-op.
+
 ### `src/utils/widgetFrames.ts`
 
 **Dono de:** as molduras do widget V-Pet por elemento base: catálogo, posse (evolução ou compra real) e moldura equipada.
