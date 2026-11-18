@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-/** Torneio (11/11/2026): "Temporada atual" e "Última temporada" são pílulas SEPARADAS (a atual à esquerda). */
+/** Torneio (11/11/2026; 18/11/2026): "Temporada atual" e "Última temporada" são pílulas SEPARADAS (a atual à esquerda), agora DENTRO do modal "Ver ranking"; o tempo da temporada fica na linha do Rank. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup, waitFor } from '@testing-library/react';
+import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 vi.mock('../utils/community', async importOriginal => {
@@ -23,9 +23,14 @@ const props = {
 };
 afterEach(cleanup);
 
-describe('Torneio: pílulas de temporada separadas', () => {
+describe('Torneio: pílulas de temporada separadas (no modal Ver ranking)', () => {
   it.each([['pt-BR', 'Temporada atual', 'Última temporada'], ['en', 'Current season', 'Last season']])('%s', async (language, atual, ultima) => {
     render(<TournamentPage {...props} language={language} />);
+    await waitFor(() => expect(document.querySelector('[data-torneio-ver-ranking]')).toBeTruthy());
+    expect(document.querySelector('[data-torneio-posicao-atual]')).toBeNull();
+    const rankRow = document.querySelector('[data-torneio-rank]')!.parentElement as HTMLElement;
+    expect(rankRow.querySelector('[data-torneio-temporada]')).toBeTruthy();
+    fireEvent.click(document.querySelector('[data-torneio-ver-ranking]') as HTMLElement);
     await waitFor(() => expect(document.querySelector('[data-torneio-posicao-atual]')).toBeTruthy());
     const a = document.querySelector('[data-torneio-posicao-atual]') as HTMLElement;
     const u = document.querySelector('[data-torneio-ultima-temporada]') as HTMLElement;

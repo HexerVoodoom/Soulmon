@@ -90,9 +90,9 @@ describe('FX por folha', () => {
 });
 
 describe('fundos e placa', () => {
-  it('fundos aplicados em Fusion, Torneio, Duelo e Evolução', () => {
+  it('fundos aplicados em Fusion, Duelo e Evolução (o banner do lobby do Torneio saiu em 18/11/2026, §485)', () => {
     expect(src('components/Match3Game.tsx')).toMatch(/SCENE_BG\.fusion/);
-    expect(src('components/TournamentPage.tsx')).toMatch(/SCENE_BG\.torneioLobby/);
+    expect(src('components/TournamentPage.tsx')).not.toMatch(/TORNEIO_BANNER_ATIVO/);
     expect(src('components/EvolutionCeremony.tsx')).toMatch(/SCENE_BG\.evolucao/);
     expect(src('components/DuelScreen.tsx')).toMatch(/DUEL_SCENE\.bg/);
     expect(DUEL_SCENE.bg).toContain('duelo-bg');

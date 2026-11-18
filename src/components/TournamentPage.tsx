@@ -117,7 +117,7 @@ import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 import { coliseuSceneFor } from '../utils/coliseuScenes';
-import { SCENE_BG, TORNEIO_BANNER_ATIVO } from '../utils/fxPackArt';
+import { SCENE_BG } from '../utils/fxPackArt';
 
 interface TournamentPageProps {
   saveId: string;
@@ -345,7 +345,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
    *  comparação social que a faixa (mostrada antes) existe para substituir.
    *  A vizinhança é a comparação útil — e a lista inteira continua a UM toque. */
   const RANK_WINDOW = 3;
-  const [rankExpanded, setRankExpanded] = useState(false);
   /** Linhas visíveis, carregando o índice ORIGINAL: a posição mostrada é
    *  sempre a real, nunca a posição dentro da fatia. */
   const rankRows: Array<{ row: RankRow; place: number }> = (rank ?? []).map((row, i) => ({ row, place: i + 1 }));
@@ -839,7 +838,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
       {/* Cena do lobby/chaves (B2, 02/11/2026): a entrada da arena, distinta da cena da final (`tournament-final`, usada no resultado). Decorativa. */}
-      {TORNEIO_BANNER_ATIVO && <div aria-hidden="true" data-torneio-lobby-bg style={{ height: 112, borderRadius: 12, border: '1px solid var(--sm2-line)', background: `url(${SCENE_BG.torneioLobby}) center 30%/cover var(--sm2-surface-2)`, imageRendering: 'pixelated' }} />}
       {/* minimal-ui F5 — o título "Torneio" é do `AreaSheet`; aqui fica a
           rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
           e os Emblemas, ícone em ouro + número com serifa: as três moedas
@@ -849,10 +847,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       )}
       {headSlot && createPortal(headRight, headSlot)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, margin: 0, fontWeight: 500 }}>
+        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, margin: 0, fontWeight: 500 }}>
           {standing && <TierMark id={standing.tier.id} size={24} state="current" place={standing.place} />}
           Rank
         </p>
+        {/* 18/11/2026 (dono): o tempo da temporada mora NESTA linha (Rank · faltam N dias · Honra), para ganhar espaço no topo. */}
+        <span data-torneio-temporada style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0, textAlign: 'right' }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</span>
         <span
           title={isPt ? 'Honra — só compra os prêmios do Torneio' : 'Honor — only buys Tournament rewards'}
           aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
@@ -863,47 +863,25 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
       </div>
 
-      {/* Pontos da FAIXA (só somam; sobem a faixa) separados dos pontos da TEMPORADA (ranking do mês): a faixa só avança em vitória. */}
-      {standing && (
-        <p data-torneio-faixa-pontos className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
-          {isPt ? 'Pontos da faixa' : 'Tier points'} · {faixaPontosTexto(standing, myLifetime, isPt)}
-        </p>
-      )}
+      {/* VER RANKING (18/11/2026, dono): no lugar das pílulas "Temporada atual" e "Última temporada"; elas moram DENTRO do modal. */}
+      <BotaoEspecial variant="ranking" data-torneio-ver-ranking aria-haspopup="dialog" onClick={() => setHistOpen(true)}>
+        {isPt ? 'Ver ranking' : 'See ranking'}
+      </BotaoEspecial>
 
-      <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
-
-      {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
-          tocar abre o modal com TODAS as temporadas e a melhor colocação. Troféu em ouro quando foi pódio. */}
-      {/* 11/11/2026 (dono): pílulas SEPARADAS lado a lado: à esquerda a colocação nesta temporada (a do servidor; sem ela,
-          a da lista pública), à direita a da última temporada. Quebra linha em telas estreitas, sem cortar texto. */}
-      <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
-      <div
-        data-torneio-posicao-atual
-        style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}
-      >
-        <Icon name="emoji_events" size={20} tone="muted" />
-        <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
-        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
-      </div>
-      <button
-        type="button"
-        data-torneio-ultima-temporada
-        onClick={() => setHistOpen(true)}
-        aria-haspopup="dialog"
-        aria-label={isPt
-          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Nesta temporada: ${myPlace !== null ? `${myPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
-          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. This season: ${myPlace !== null ? `place ${myPlace}` : 'no placement'}. Open the history`}
-        style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
-      >
-        <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
-        <span>{isPt ? 'Última temporada' : 'Last season'}</span>
-        <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
-        <Icon name="chevron_right" size={20} tone="muted" />
-      </button>
-      </div>
-
-      <RankingModal open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
+      <RankingModal open={histOpen} title={isPt ? 'Ranking' : 'Leaderboard'} onClose={() => setHistOpen(false)} language={lang}>
         <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
+            <div data-torneio-posicao-atual style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone="muted" />
+              <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
+            </div>
+            <div data-torneio-ultima-temporada style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
+              <span>{isPt ? 'Última temporada' : 'Last season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+            </div>
+          </div>
           {histView.best && (
             <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
               <Icon name="emoji_events" size={32} tone="gold" fill={1} />
@@ -929,6 +907,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 </li>
               ))}
             </ul>
+          )}
+          {rank && rank.length > 0 && (
+            <>
+              <p style={{ ...sm2Hint, margin: 0, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
+              </p>
+              {renderRankCard(rankRows)}
+            </>
           )}
         </div>
       </RankingModal>
@@ -1318,13 +1304,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           {visibleRank.length > 0 && renderRankCard(visibleRank)}
 
           {rank && myIndex >= 0 && rank.length > visibleRank.length && (
-            <BotaoEspecial variant="ranking" data-torneio-ranking-inteiro onClick={() => setRankExpanded(true)}>
+            <BotaoEspecial variant="ranking" data-torneio-ranking-inteiro onClick={() => setHistOpen(true)}>
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
             </BotaoEspecial>
           )}
-          <RankingModal open={rankExpanded} onClose={() => setRankExpanded(false)} language={lang} title={isPt ? 'Ranking da season' : 'Season ranking'}>
-            {renderRankCard(rankRows)}
-          </RankingModal>
         </div>
         </TorneioPanel>
       )}
