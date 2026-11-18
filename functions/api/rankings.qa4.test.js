@@ -89,14 +89,14 @@ describe('lastro do Endless Rift ancorado no ponto de retomada (R1 CRÍTICO / R2
 
 describe('tetos de score por jogo (R1 MÉDIO) e jogos novos', () => {
   it('cada jogo de pontos tem teto próprio bem abaixo de 1e9', () => {
-    for (const g of ['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'soul-barrage', 'endless-rift', 'rogue-dungeon']) {
+    for (const g of ['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'match3-pvp', 'eco', 'soul-barrage', 'endless-rift', 'rogue-dungeon']) {
       expect(MAX_SCORE_BY_GAME[g], g).toBeLessThan(1_000_000);
       expect(cleanScore(MAX_SCORE_BY_GAME[g] + 1, g), g).toBeNull();
       expect(cleanScore(MAX_SCORE_BY_GAME[g], g), g).toBe(MAX_SCORE_BY_GAME[g]);
     }
   });
   it('Obstacle Run por nível; o id sem nível continua aceito (cliente antigo e recorde antigo)', () => {
-    expect(RANKED_GAMES).toEqual(expect.arrayContaining(['dino', 'dino-1', 'dino-2', 'zip', 'patches']));
+    expect(RANKED_GAMES).toEqual(expect.arrayContaining(['dino', 'dino-1', 'dino-2', 'zip', 'patches', 'match3', 'match3-pvp']));
   });
   it('tempo: faixa plausível [2 s, 30 min]', () => {
     expect(scoreIsPlausible('zip', 1999)).toBe(false);

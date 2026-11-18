@@ -357,6 +357,8 @@ const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['
   medium: { points: 7,  tier: 'champion' },
   boss:   { points: 16, tier: 'mega' },
 };
+/** Bits de UM combate de Arena de classe média na escada base (REGISTRO §472): a recompensa por vitória do PvP do Elemental Fusion é esta, não um número novo. */
+export const ARENA_FIGHT_BITS: number = CLASS_FLAVOR.medium.points;
 
 /**
  * The flavour of the foes of one round (1-based): one of the 17 new creatures (`novosSoulmonData.ts`: name, element, form), Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:

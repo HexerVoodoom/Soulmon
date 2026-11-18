@@ -138,6 +138,8 @@ export interface PlayHandlers {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
   /** BOSS do Elemental Fusion (03/11/2026): venceu um boss → +1 Fragmento de Boss no save. */
   onBossShard?: () => void;
+  /** PVP do Elemental Fusion (§472): a Honra da partida, pelo mesmo caminho da Honra do Torneio. */
+  onEarnHonor?: (amount: number) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
@@ -198,7 +200,7 @@ const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }
   dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
   ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
   barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, difficulty: true, rankings: [{ game: 'soul-barrage', label: 'Comum' }, { game: 'soul-barrage-2', label: 'Avançado' }] },
-  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
+  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3', label: { pt: 'Aventura', en: 'Adventure' }, period: 'monthly' }, { game: 'match3-pvp', label: { pt: 'PvP', en: 'PvP' }, period: 'monthly' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
 };
@@ -823,7 +825,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} onEarnHonor={play.onEarnHonor} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('eco'); return creditado; }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); return creditado; }} />}

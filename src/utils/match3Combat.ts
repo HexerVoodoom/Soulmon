@@ -22,13 +22,15 @@ import { elementHits } from './combate/curve';
 import { escolherAlvo, tocarAlvo } from './combate/alvo';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 
-/** Id de elemento (ícone). No Normal são os 6 de `M3_TILE_ELEMENTS`; no PVP, 6 sorteados do pool inteiro (`match3Pvp.ts`). */
+/** Id de elemento (ícone). No PVP e no modo desafio são os 6 de `M3_TILE_ELEMENTS`; na Aventura, 6 sorteados do pool inteiro (`match3Pvp.ts`). */
 export type M3Element = string;
 
 /** HP do Soulmon do jogador. */
 export const M3C_PLAYER_HP = 520;
-/** HP de cada um dos três inimigos (1→3). O último é o mais duro. */
+/** HP de cada um dos três inimigos (1→3) do modo desafio do Calabouço (que segue com o time de 3). O último é o mais duro. */
 export const M3C_ENEMY_HP: readonly [number, number, number] = [290, 350, 410];
+/** AVENTURA (REGISTRO §472): o time ganha um 4º inimigo (o mais duro); os três primeiros são os de sempre. */
+export const M3C_ADVENTURE_ENEMY_HP: readonly number[] = [...M3C_ENEMY_HP, 470];
 /** Dano por peça limpa (× o multiplicador da cascata). */
 export const M3C_DMG_PER_TILE = 10;
 /**
@@ -77,7 +79,7 @@ export interface M3Enemy extends M3Fighter {
   /** M10: chave do roster (`enemyRoster.ts`, `<id>-<estágio>`) quando o combate foi montado com o level do jogador; manda na arte/nome. */
   roster?: string;
 }
-export type M3Target = 'player' | 0 | 1 | 2;
+export type M3Target = 'player' | 0 | 1 | 2 | 3;
 export interface M3Event {
   by: 'player' | 'enemy';
   /** Elemento do golpe (o da peça do jogador; o do inimigo que bateu). */
@@ -89,13 +91,15 @@ export interface M3Event {
 export type M3Outcome = 'playing' | 'win' | 'loss';
 export interface M3Combat {
   player: M3Fighter;
-  /** 3 no Normal; 1 no PVP (1 contra 1). */
+  /** 4 na Aventura; 3 no modo desafio; 1 no PVP (1 contra 1) e no boss. */
   enemies: M3Enemy[];
-  /** PVP: o elemento de cada TIPO de peça (índice = `Tile.k`). Ausente = os 6 fixos `M3_TILE_ELEMENTS` (save/estado antigo e Normal). */
+  /** Aventura: o elemento de cada TIPO de peça (índice = `Tile.k`). Ausente = os 6 fixos `M3_TILE_ELEMENTS` (PVP, boss, modo desafio e estado antigo). */
   elements?: readonly string[];
   /** Elemento do Soulmon do jogador (base ou par): o defensor da conta de vantagem dos golpes do INIMIGO. Ausente = neutro. */
   playerElement?: string;
-  /** Índice (0..2) do inimigo ativo (o 1º de pé: é quem responde). */
+  /** PVP: fator de dano do inimigo próprio do duelo (`M3C_PVP_ENEMY_DMG_FACTOR`). Ausente = `M3C_ENEMY_DMG_FACTOR` (Aventura, boss, desafio). */
+  foeDmgFactor?: number;
+  /** Índice (0..3) do inimigo ativo (o 1º de pé: é quem responde). */
   active: number;
   /**
    * ALVO POR TOQUE (03/11/2026, dono): o inimigo que o jogador escolheu para levar os golpes dele. Ausente/caído = o ativo
@@ -117,29 +121,33 @@ export interface M3Combat {
  * Um combate novo. `lines` = linhas de arte candidatas (a tela passa as de `DUNGEON_LINE_SPRITES`); `exclude` = a do jogador (ninguém encara
  * um espelho). Os três elementos são DISTINTOS e as três linhas também — tudo sorteado pelo `rng` por parâmetro.
  */
-export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number, playerElement?: string): M3Combat {
+export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number, playerElement?: string, adventure?: { elements: readonly string[] }): M3Combat {
   const pool = lines.filter(l => l !== exclude);
   const els: M3Element[] = [...M3_TILE_ELEMENTS];
   const pick = <T,>(arr: T[]): T => arr.splice(Math.min(arr.length - 1, Math.floor(rng() * arr.length)), 1)[0];
-  const mk = (i: 0 | 1 | 2): M3Enemy => ({
-    hp: M3C_ENEMY_HP[i], max: M3C_ENEMY_HP[i], element: pick(els),
+  const hps = adventure ? M3C_ADVENTURE_ENEMY_HP : M3C_ENEMY_HP;
+  const mk = (i: number): M3Enemy => ({
+    hp: hps[i], max: hps[i], element: pick(els),
     ...(lines.length > 0 ? { line: pick(pool.length > 0 ? pool : [...lines]) } : {}),
   });
-  const enemies: M3Enemy[] = [mk(0), mk(1), mk(2)];
+  const enemies: M3Enemy[] = hps.map((_, i) => mk(i));
   // O elemento do inimigo É o do sprite dele (`spriteElement.ts`; dono, 30/10/2026) — o sorteio acima só gasta o rng (sequência antiga intacta).
   for (const e of enemies) { const le = e.line ? LINE_ELEMENT[e.line] : undefined; if (le) e.element = le; }
   if (level !== undefined) {
-    // M10: as 3 vagas pedem rookie/champion/ultimate, rebaixadas ao teto do level (progressão do roster); sem repetir criatura.
+    // M10: as vagas pedem rookie/champion/ultimate (Aventura: rookie/champion/champion/ultimate), rebaixadas ao teto do level (progressão do roster); sem repetir criatura.
     // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
     const used = new Set<string>();
-    const pedido = ['rookie', 'champion', 'ultimate'] as const;
+    const pedido = adventure ? ['rookie', 'champion', 'champion', 'ultimate'] as const : ['rookie', 'champion', 'ultimate'] as const;
     enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used, tabela: true }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
   }
-  return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
+  return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(adventure ? { elements: [...adventure.elements] } : {}), ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
 
-/** PVP: HP do único inimigo = a SOMA do time do Normal (o placar, e portanto os Bits, ficam na mesma escala; SUPOSIÇÃO a confirmar pelo dono). */
-export const M3C_PVP_ENEMY_HP: number = M3C_ENEMY_HP.reduce((a, b) => a + b, 0);
+/** PVP (REGISTRO §472, dono 17/11/2026): o HP do único inimigo é o MESMO do jogador (duelo simétrico; era a soma do time do Normal). */
+export const M3C_PVP_ENEMY_HP: number = M3C_PLAYER_HP;
+
+/** PVP mais DIFÍCIL que a Aventura (dono, 17/11/2026): o dano do adversário. Duelo simétrico (o adversário bate tanto quanto o jogador). Calibrado por `match3Pvp.balanco.test.ts` (jogador ao acaso: ~14% no PVP contra ~28% na Aventura). */
+export const M3C_PVP_ENEMY_DMG_FACTOR = 1;
 
 /**
  * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
@@ -151,7 +159,7 @@ export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: str
   return {
     player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
     enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],
-    elements: [...elements], ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
+    elements: [...elements], foeDmgFactor: M3C_PVP_ENEMY_DMG_FACTOR, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
   };
 }
 
@@ -225,7 +233,7 @@ export function applyEnemySteps(state: M3Combat, steps: readonly Step[]): M3Comb
     for (const k of st.kinds) porElemento.set(k, (porElemento.get(k) ?? 0) + 1);
     for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
       if (s.outcome !== 'playing') return s;
-      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * M3C_ENEMY_DMG_FACTOR * m3ElementMult(s.enemies[s.active]?.element, s.playerElement)));
+      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * (s.foeDmgFactor ?? M3C_ENEMY_DMG_FACTOR) * m3ElementMult(s.enemies[s.active]?.element, s.playerElement)));
       const dmg = Math.min(s.player.hp, bruto);
       s.player.hp -= dmg;
       s.taken += dmg;
@@ -304,5 +312,5 @@ export function combatScore(s: M3Combat): number {
   return Math.max(0, Math.round(s.dealt - s.taken + s.defeated * M3C_DEFEAT_BONUS));
 }
 
-/** Teto REAL de Bits por partida (placar perfeito: todo HP inimigo, nenhum dano recebido). Derivado, nunca literal. */
-export const M3C_MAX_BITS: number = match3Bits(M3C_ENEMY_HP.reduce((a, b) => a + b, 0) + M3C_ENEMY_HP.length * M3C_DEFEAT_BONUS);
+/** Teto REAL de Bits por partida de Aventura (placar perfeito: todo HP inimigo, nenhum dano recebido). Derivado, nunca literal. */
+export const M3C_MAX_BITS: number = match3Bits(M3C_ADVENTURE_ENEMY_HP.reduce((a, b) => a + b, 0) + M3C_ADVENTURE_ENEMY_HP.length * M3C_DEFEAT_BONUS);
