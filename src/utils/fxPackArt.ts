@@ -21,6 +21,10 @@ import bauSheet from '../assets/soulmon/fx-pack/bau-sheet.png';
 import recompensaSheet from '../assets/soulmon/fx-pack/recompensa-sheet.png';
 import evolucaoSheet from '../assets/soulmon/fx-pack/evolucao-sheet.png';
 
+/** Banners de ilustração no topo do modal da Arena (DueloSheet) e do Torneio. Desabilitados a pedido do dono em 18/11/2026; religar = true. */
+export const ARENA_BANNER_ATIVO = false;
+export const TORNEIO_BANNER_ATIVO = false;
+
 export const SCENE_BG = { fusion: fusionBg, torneioLobby: torneioLobbyBg, duelo: dueloBg, evolucao: evolucaoBg,
   barrage: barrageBg, eco: ecoBg, zip: zipBg, patches: patchesBg, selo: seloBg } as const;
 /** O `background` de tela cheia de um minijogo: degradê turquesa escuro embaixo (legibilidade) sobre a cena. */
