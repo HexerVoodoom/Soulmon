@@ -1,4 +1,5 @@
 import { RankingPanel } from './RankingPanel';
+import { BotaoModo } from './ui/BotaoModo';
 import { ResultScreen } from './games/ResultScreen';
 import { essenceLedgerRows } from '../utils/resultEssences';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
@@ -1302,14 +1303,12 @@ export function Match3Game(props: Match3Props) {
     <GameRoot full>
       <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
       <div role="group" aria-label={isPt ? 'Escolha o modo' : 'Choose a mode'} data-m3-modes style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 'none' }}>
-        <button type="button" onClick={() => setMode('adventure')} data-m3-mode="adventure" style={choice}>
-          <span style={phaseTitle}>{isPt ? 'Aventura' : 'Adventure'}</span>
-          <span style={phaseLine}>{isPt ? 'Enfrente o time da fenda (4 Soulmon) com elementos misturados.' : 'Face the rift team (4 Soulmon) with mixed elements.'}</span>
-        </button>
-        <button type="button" onClick={() => setMode('pvp')} data-m3-mode="pvp" style={choice}>
-          <span style={phaseTitle}>PVP</span>
-          <span style={phaseLine}>{isPt ? '1 contra 1 com outro jogador, poder parecido, 6 elementos básicos.' : '1 vs 1 against another player, similar power, 6 basic elements.'}</span>
-        </button>
+        <BotaoModo variant="pve" onClick={() => setMode('adventure')} data-m3-mode="adventure" hint={isPt ? 'Enfrente o time da fenda (4 Soulmon) com elementos misturados.' : 'Face the rift team (4 Soulmon) with mixed elements.'}>
+          {isPt ? 'Aventura' : 'Adventure'}
+        </BotaoModo>
+        <BotaoModo variant="pvp" onClick={() => setMode('pvp')} data-m3-mode="pvp" hint={isPt ? '1 contra 1 com outro jogador, poder parecido, 6 elementos básicos.' : '1 vs 1 against another player, similar power, 6 basic elements.'}>
+          PVP
+        </BotaoModo>
       </div>
     </GameRoot>
   );
