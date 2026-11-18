@@ -45,4 +45,12 @@ describe('BotaoEspecial (botão de compra, 18/11/2026)', () => {
     expect(css.indexOf('.sm2-especial { transition: none; }')).toBeLessThan(css.indexOf('SENTINELA-MOVIMENTO-REDUZIDO-CANONICO'));
     expect(canonico.length).toBeGreaterThan(0);
   });
+  it('variant: dourado por padrão; pve e pvp trocam a arte nos 3 estados (18/11/2026)', () => {
+    render(<><BotaoEspecial>A</BotaoEspecial><BotaoEspecial variant="pve">B</BotaoEspecial><BotaoEspecial variant="pvp">C</BotaoEspecial></>);
+    expect(screen.getByRole('button', { name: 'A' }).getAttribute('data-especial-variant')).toBe('dourado');
+    expect(screen.getByRole('button', { name: 'B' }).getAttribute('data-especial-variant')).toBe('pve');
+    expect(screen.getByRole('button', { name: 'C' }).getAttribute('data-especial-variant')).toBe('pvp');
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    for (const v of ['pve', 'pvp']) for (const s of ['', '-press', '-off']) expect(css).toContain(`btn-${v}${s}.webp`);
+  });
 });
