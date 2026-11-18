@@ -2605,3 +2605,7 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 **Dono de:** o modal de minigames sobre a Home aberto pelo Fliperama de Canto (corpo do `SalaoSheet`, sem o Pipo nem o mapa; REGISTRO §486).
 **Props:** `open`, `onClose`, `language`, `bitsToday`, `funStatus`, `onBuyTickets`, `onStart(jogo)`.
 **Chamado por:** `src/App.tsx`
+
+### `src/components/RankingModal.tsx`
+
+**Dono de:** o MODAL DO RANKING (18/11/2026, §485): `ModalFrame` com a moldura própria `ui/ranking/` (ouro envelhecido, faixas vermelhas, medalhas, placa de bronze), corpo rolável SEM borda interna. **Props:** `open`, `onClose`, `language`, `title`, `info?`, `children`. X e "i" são só glifos sobre os discos da arte (alvo ≥ 44 px transparente). **Usado por:** `MinigameModeGate` (Ver ranking) e `RankingPanel` (modal da semana/mês). **Régua:** `RankingModal.render.test.tsx`. Geometria em `index.css` (`.sm2-moldura-modal--ranking`). O botão que o abre é `BotaoEspecial variant="ranking"` (`ui/btn-ranking{,-press,-off}.webp`).

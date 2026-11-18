@@ -36,6 +36,7 @@ const TABELA: Record<string, Classe> = {
   'components/guild/GroveFolha.tsx': 'base-esquerda', // o panorama do Bosque: tela cheia, ✕ no topo ESQUERDO
   'components/AdventureDiary.tsx': 'base-esquerda', // modal de tela cheia (rodada 7, I7): ✕ no topo ESQUERDO
   'components/home/Mochila.tsx': 'base-esquerda',
+  'components/RankingModal.tsx': 'base-esquerda',
   'components/TalentTreeEntry.tsx': 'base-esquerda', // árvore de talentos em tela cheia: só a árvore, o ✕ no topo ESQUERDO e o Refazer embaixo
   'components/mercado/ShopItemSheet.tsx': 'base-esquerda', // lightbox: ✕ no topo ESQUERDO
   'components/ElementosNovosModal.tsx': 'base-esquerda', // a carta: ✕ no topo ESQUERDO (BackArrow close)

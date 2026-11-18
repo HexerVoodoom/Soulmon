@@ -6539,3 +6539,5 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Jogar:** escolher uma carta fecha o modal e abre o jogo na área Jogos (`initialGame` do `AreaView`, o mesmo caminho do Refúgio): a rodada é cobrada ao começar (`onStartRound`) e a pergunta de modo do Pipo (`MinigameModeGate`) continua valendo, como no Salão. Soulmon dormindo: o aviso de acordar segura a abertura (`guardWake`).
 
 **Gatilho para rever:** o dono querer o jogo rodando também em cima da Home (hoje ele abre na área Jogos e o voltar leva ao mapa).
+
+**Adendo §485 — modal e botão do ranking (18/11/2026, dono):** o ranking ganha moldura própria (`RankingModal`, base na borda G do Files + faixas vermelhas + medalhas de ouro envelhecido, arte da sessão de assets) e o botão "Ver ranking" vira `BotaoEspecial variant="ranking"`. O X e o "i" são só glifos centrados nos discos da arte (nada de círculo por cima: `ranking-botao-redondo.webp` não é usado). A lista inline ganhou os estados carregando e offline (antes sumia em silêncio); no fim da partida o painel segue silencioso.

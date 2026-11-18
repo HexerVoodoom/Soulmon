@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { AreaSheet } from '../nav/AreaSheet';
 import { RankingPanel } from '../RankingPanel';
-import { sm2Button, ModalSheet } from '../form/FormKit';
+import { sm2Button } from '../form/FormKit';
+import { RankingModal } from '../RankingModal';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { difficultyLabel } from '../../utils/minigameDifficulty';
@@ -53,10 +54,10 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
       npcOverlay={tickets !== undefined ? <TicketFan count={tickets} language={language} /> : undefined}
     >
       <div data-minigame-gate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <button type="button" data-gate-ranking-open onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false), minHeight: 44 }}>
+        <BotaoEspecial variant="ranking" data-gate-ranking-open onClick={() => setRankOpen(true)}>
           {isPt ? 'Ver ranking' : 'See ranking'}
-        </button>
-        <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
+        </BotaoEspecial>
+        <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'}>
           {/* 18/11/2026 (dono): sem moldura interna ("borda dentro de borda"); a moldura é a do modal. */}
           <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rankings.length > 1 && (
@@ -78,7 +79,7 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
               </div>
             )}
           </div>
-        </ModalSheet>
+        </RankingModal>
         {two ? (
           <div role="group" aria-label={pveVsPvp ? (isPt ? 'Modo' : 'Mode') : (isPt ? 'Dificuldade' : 'Difficulty')} style={{ display: 'flex', gap: 8 }}>
             {pveVsPvp ? (
