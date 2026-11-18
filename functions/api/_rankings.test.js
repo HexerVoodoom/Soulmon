@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   RANKED_GAMES, cleanScore, isoWeekKey, monthKey, periodKey, tierFor, payablePlacements,
-  submitScore, readBoard, MAX_SCORE,
+  submitScore, readBoard, MAX_SCORE, RANK_FAKE_TETO, FAKE_BRUTO_MAX_FATOR, escalaFake, semanasDoMes, TIER_CUTS,
 } from './_rankings.js';
+import { SIMULADOS } from './_simulados.data.js';
+import { scoresDoDia } from './_simulados.js';
 import { onRequest, LIMIT_SUBMIT } from './rankings.js';
 import { resetRateLimits } from './_rateLimit.js';
 
@@ -134,5 +136,64 @@ describe('rota /api/rankings', () => {
     let last;
     for (let i = 0; i <= LIMIT_SUBMIT.limit; i++) last = await call(env, 'POST', { id: A, game: 'dino', score: i });
     expect(last.status).toBe(429);
+  });
+});
+
+// §473, adendo 18/11/2026: teto dos simulados no Elemental Fusion e legado semanal do mês da troca.
+describe('teto dos simulados (RANK_FAKE_TETO) e legado semanal do match3', () => {
+  const SIM_DIAS = Array.from({ length: 120 }, (_, i) => new Date(Date.UTC(2026, 9, 25) + i * 86400000).toISOString().slice(0, 10));
+
+  it('teto documentado: abaixo dos placares reais de referência (Aventura 1166, PvP 440)', () => {
+    expect(RANK_FAKE_TETO.match3).toBeLessThan(1166);
+    expect(RANK_FAKE_TETO['match3-pvp']).toBeLessThan(440);
+  });
+
+  it('nenhum simulado, em nenhum dia, aparece com placar >= teto; a escala preserva a ordem', () => {
+    for (const game of Object.keys(RANK_FAKE_TETO)) {
+      const brutos = [];
+      for (const p of SIMULADOS) for (const d of SIM_DIAS) for (const s of scoresDoDia(p, d)) if (s.game === game) brutos.push(s.score);
+      // Inclui o máximo bruto teórico e os placares já gravados em novembro (até 2687).
+      brutos.push(Math.ceil(TIER_CUTS[game].at(-1) * FAKE_BRUTO_MAX_FATOR), 2687, 100_000);
+      const vistos = brutos.map((b) => escalaFake(game, b));
+      expect(Math.max(...vistos)).toBeLessThan(RANK_FAKE_TETO[game]);
+      const ord = [...brutos].sort((a, b) => a - b);
+      for (let i = 1; i < ord.length; i++) expect(escalaFake(game, ord[i])).toBeGreaterThanOrEqual(escalaFake(game, ord[i - 1]));
+    }
+    expect(escalaFake('dino', 2687)).toBe(2687); // jogo sem teto: intacto
+  });
+
+  it('readBoard: real fica acima de todos os simulados, mesmo com placar bruto menor', async () => {
+    const env = mkEnv();
+    const kvs = env.SOULMON_SAVES;
+    const now = new Date('2026-12-05T12:00:00Z');
+    const put = (id, s, sim) => kvs.put(`rk:match3-pvp:2026-12:${String(MAX_SCORE - s).padStart(10, '0')}:${id}`, '', { metadata: { s, n: id, sim } });
+    await put('sim_0001', 650, true);
+    await put('sim_0002', 500, true);
+    await put('real-a', 440, false);
+    await kvs.put('rkme:match3-pvp:2026-12:real-a', '440');
+    const b = await readBoard(env, { game: 'match3-pvp', period: 'monthly', saveId: 'real-a', now });
+    expect(b.top.map((r) => r.name)).toEqual(['real-a', 'sim_0001', 'sim_0002']);
+    expect(b.top[0].score).toBe(440);
+    expect(b.top[1].score).toBeLessThan(RANK_FAKE_TETO['match3-pvp']);
+    expect(b.top[1].score).toBeGreaterThan(b.top[2].score);
+    expect(b.me).toEqual({ score: 440, tier: tierFor('match3-pvp', 440), rank: 1 });
+  });
+
+  it('match3 mensal de 2026-11 junta as semanas do mês (quinta no mês), o melhor por jogador', async () => {
+    expect(semanasDoMes('2026-11')).toEqual(['2026-W45', '2026-W46', '2026-W47', '2026-W48']);
+    const env = mkEnv();
+    const kvs = env.SOULMON_SAVES;
+    const put = (pk, id, s, sim) => kvs.put(`rk:match3:${pk}:${String(MAX_SCORE - s).padStart(10, '0')}:${id}`, '', { metadata: { s, n: id, sim } });
+    await put('2026-11', 'sim_0003', 2687, true);
+    await put('2026-11', 'real-b', 1597, false);
+    await put('2026-W45', 'real-m', 1166, false);
+    await put('2026-W46', 'real-m', 958, false);
+    await put('2026-W44', 'real-m', 1224, false); // quinta em outubro: fora de novembro
+    const b = await readBoard(env, { game: 'match3', period: 'monthly', saveId: 'real-m', now: new Date('2026-11-18T12:00:00Z') });
+    expect(b.top.map((r) => [r.name, r.score])).toEqual([['real-b', 1597], ['real-m', 1166], ['sim_0003', escalaFake('match3', 2687)]]);
+    expect(b.me?.rank).toBe(2);
+    // Fora do mês da troca não há leitura das semanais.
+    const dez = await readBoard(env, { game: 'match3', period: 'monthly', saveId: 'real-m', now: new Date('2026-12-02T12:00:00Z') });
+    expect(dez.top).toEqual([]);
   });
 });
