@@ -36,8 +36,6 @@ export interface Entitlement {
   subUntil?: number;
   /** Molduras do widget V-Pet COMPRADAS (ids de elemento base; só o servidor escreve). Ausente = nenhuma. Cosmético. */
   frames?: string[];
-  /** §482: itens de decoração ganhos como prêmio de ranking (ids; só o servidor escreve). O cliente põe no save com `grantGuildTrophy`. */
-  itemPrizes?: string[];
   /** §373: Bits que ainda cabem na troca de HOJE. Ausente = a conta não trocou hoje (dia inteiro livre). Campo antigo, segue lido. */
   bitsPackLeft?: number;
   /** §386: o que cabe hoje no dia do JOGADOR (o servidor manda sempre) e o instante em que esse dia vira (ms). */
@@ -58,7 +56,6 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     ...(r.betaFull === true ? { betaFull: true } : {}),
     ...(typeof r.subActive === 'boolean' ? { subActive: r.subActive } : {}),
     ...(sanitizeOwnedWidgetFrames(r.frames).length ? { frames: sanitizeOwnedWidgetFrames(r.frames) } : {}),
-    ...(Array.isArray(r.itemPrizes) && r.itemPrizes.some(x => typeof x === 'string') ? { itemPrizes: r.itemPrizes.filter((x): x is string => typeof x === 'string').slice(0, 20) } : {}),
     ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
     ...(typeof r.bitsPackLeft === 'number' && Number.isFinite(r.bitsPackLeft) && r.bitsPackLeft >= 0 ? { bitsPackLeft: Math.floor(r.bitsPackLeft) } : {}),
     ...(typeof r.bitsLeftToday === 'number' && Number.isFinite(r.bitsLeftToday) && r.bitsLeftToday >= 0 ? { bitsLeftToday: Math.floor(r.bitsLeftToday) } : {}),
