@@ -24,8 +24,8 @@ describe('riftMap — dados', () => {
   });
 
   it('visitado = 1º andar ≤ recorde; o atual é o ponto de largada; o resto bloqueado', () => {
-    const s: RiftMapSave = { dungeonDepthRecord: 9 }; // start = 9 → nó 4 (andares 9-10)
-    expect(riftCurrentLayer(s)).toBe(9);
+    const s: RiftMapSave = { dungeonDepthRecord: 9 }; // start = 10 (derrota não rebaixa o andar, §477) → nó 4 (andares 9-10)
+    expect(riftCurrentLayer(s)).toBe(10);
     const st = (i: number) => riftMapNode(i, s).state;
     expect([0, 1, 2, 3].map(st)).toEqual(['visited', 'visited', 'visited', 'visited']);
     expect(st(4)).toBe('current');
@@ -80,7 +80,8 @@ describe('riftMap — voltar ao nó', () => {
   it('é idempotente (mesmo nó = mesma referência) e recusa nó bloqueado, inválido ou com descida em andamento', () => {
     const n = rewindToSet(base, 2);
     expect(rewindToSet(n, 2)).toBe(n);
-    expect(rewindToSet(base, 10)).toBe(base); // já é o ponto de largada
+    const r22 = { ...base, dungeonDepthRecord: 22 };
+    expect(rewindToSet(r22, 11)).toBe(r22); // já é o ponto de largada (recorde 22 → 23)
     expect(riftRewindRefusal(base, 11)).toBe('locked');
     expect(rewindToSet(base, 11)).toBe(base);
     expect(riftRewindRefusal(base, -1)).toBe('invalid');

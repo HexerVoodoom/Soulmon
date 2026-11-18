@@ -49,7 +49,7 @@ describe('Masmorra — energia por camada', () => {
   it('lobby: mostra energia, custo, ponto de retorno e o teto do Lv (EN)', () => {
     montar({ energyPoints: 3, dungeonDepthRecord: 7, totalXP: 5000, perfectDays: 5 }); // Vínculo ≥ 8 (portão aberto) e Lv 6
     const plano = document.querySelector('[data-dungeon-plan]')!.textContent!;
-    expect(plano).toMatch(/Starts at layer 7/);
+    expect(plano).toMatch(/Starts at layer 8/);
     expect(plano).toMatch(/enough for 3 now/);
     expect(document.body.textContent).not.toMatch(/HP\s*\d+%/);
     expect(screen.getByText('Deepest')).toBeTruthy();

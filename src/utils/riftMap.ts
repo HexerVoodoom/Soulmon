@@ -6,6 +6,7 @@
 //
 // REGRAS (decisões do dono + as que tomei onde ele não falou, marcadas com [decisão]):
 //  · NÓ visitado = o 1º andar do conjunto ≤ `dungeonDepthRecord` (o recorde só sobe). Antes disso é BLOQUEADO (cinza, "?").
+//  · [§477] A derrota NUNCA rebaixa o andar: o ponto de largada é o andar logo depois do recorde (`startLayerFor`), combate 1; o 2º andar do elemento reentra no 2º.
 //  · NÓ atual = o conjunto do andar onde a descida está (`riftCurrentLayer`): a descida em andamento (`dungeonAway.layer`), senão o ponto de
 //    largada (`dungeonResumeLayer` da volta, senão `startLayerFor(recorde)`). Depois do 538, a lista dá a volta: o atual cai no nó de novo.
 //  · VOLTAR AO NÓ = `rewindToSet`: grava `dungeonResumeLayer` = 1º andar do conjunto (a descida recomeça dali, UMA vez: quem larga a descida

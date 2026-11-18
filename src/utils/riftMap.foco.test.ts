@@ -11,7 +11,7 @@ const estado = (): GameState => ({
 
 describe('descida do foco × volta do mapa', () => {
   it('sem volta: larga do ponto de retorno do recorde', () => {
-    expect(startFocusDescent(estado(), T0, 7, T0 + 25 * 60_000).dungeonAway?.layer).toBe(21);
+    expect(startFocusDescent(estado(), T0, 7, T0 + 25 * 60_000).dungeonAway?.layer).toBe(22); // recorde 21 → combate 1 do andar 22 (§477)
   });
   it('com volta ao nó 2: larga do andar 5, consome o campo e o recorde fica', () => {
     const volta = rewindToSet(estado(), 2);
