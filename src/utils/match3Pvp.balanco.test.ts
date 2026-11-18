@@ -1,7 +1,8 @@
 /**
  * BALANÇO DO PVP (REGISTRO §473): jogador aleatório (lance válido ao acaso), duelo de HP igual contra 1 inimigo que joga a melhor troca.
  * Medido (N=80, sementes 1..80, determinístico): Aventura 27,5%; PVP fator 0,2 = 96,3%; 0,5 = 51,2%; 0,8 = 22,5%; 1,0 = 13,8%.
- * §488: bônus de HP do jogador no PVP (N=80): +0% 13,8%; +20% 20,0%; +30% 23,8%; +40% 25,0%; +50% 32,5%. Escolhido +40% (menor que chega a ~25%).
+ * §488: bônus de HP do jogador no PVP (N=80): +0% 13,8%; +20% 20,0%; +30% 23,8%; +40% 25,0%; +50% 32,5%. Rodada 1: +40%; superada pela rodada 2 abaixo.
+ * §488 (2ª rodada, dono: mais HP, dano igual; N=80): +60% 36,3%; +70% 37,5%; +75% 40,0%; +80% 43,8%; +100% 51,3%; +120% 58,8%. Escolhido +80% (centro de ~40-45%).
  * Com 0,8 a folga sobre a Aventura era 5 pontos (ruído de N=40: 7/40 = 7/40, empate); com 1,0 são ~14. O dono recalibra com jogadores reais.
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -34,9 +35,9 @@ describe('balanço PVP x Aventura', () => {
     const adv = taxa(N, i => newCombat(mulberry32(i + 99), ['a', 'b', 'c', 'd', 'e'], 'a', undefined, undefined, { elements: [...M3_TILE_ELEMENTS] }));
     const pvp = taxa(N, i => newPvpCombat(mulberry32(i + 99), [...M3_TILE_ELEMENTS]));
     expect(M3C_PVP_ENEMY_DMG_FACTOR).toBe(1);
-    // Com o bônus de HP do jogador (§488) o PVP fica perto da Aventura, mas ainda não mais fácil que ela.
-    expect(pvp).toBeGreaterThanOrEqual(0.2);
-    expect(pvp).toBeLessThanOrEqual(0.33);
-    expect(pvp).toBeLessThanOrEqual(adv + 0.05);
+    // Com o bônus de HP do jogador (§488, +80%) o jogador ao acaso vence ~40-45% no PVP (a Aventura segue ~27%).
+    expect(pvp).toBeGreaterThanOrEqual(0.4);
+    expect(pvp).toBeLessThanOrEqual(0.47);
+    expect(adv).toBeLessThan(0.4);
   });
 });
