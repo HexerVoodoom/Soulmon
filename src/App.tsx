@@ -98,7 +98,8 @@ import { addBonusTask, bonusActivityIdsOf, bonusTaskGaugeBonus, isBonusActivity 
 import { weeklyBonusActivityToday, weeklyRetro, needsWeeklyRetro, makeWeeklyBonus, recordWeekStage, evolvedLastWeek, mondayOf } from './utils/weeklyRetro';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId, widgetTaskList, readWidgetEvents, ackWidgetEvents } from './plugins/SoulmonWidgetPlugin';
+import { applyWidgetEvents, sanitizeApplied, sanitizeWidgetEvents, type WidgetDrainResult } from './utils/widgetEvents';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -3066,6 +3067,8 @@ export default function App() {
         };
       })(),
       nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
+      // Widget grande da Home (18/11/2026): as tarefas de hoje (id, nome curto, feita). Chave NOVA; APK antigo ignora.
+      tasksJson: JSON.stringify(widgetTaskList(gameState, new Date())),
       dayEndsAtMs: widgetDayEndsAt(new Date()),
       // Moldura do widget V-Pet: o escolhido SE ainda é do jogador, senão '' (casco padrão). Arquivo ausente no APK = padrão também.
       vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
@@ -3077,7 +3080,7 @@ export default function App() {
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
-      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
+      gameState.hunger, gameState.tasks, gameState.completedTasks, gameState.activities, gameState.dayPlan,
       gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames,
       gameState.demoCharacterId, widgetSpriteUrl, isSleeping, gameState.equippedBackground]);
 
@@ -3966,6 +3969,83 @@ export default function App() {
     // conclusão seguinte. O gatilho é o sinal, nunca o formatador.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gainSignal]);
+
+  /* ── WIDGET GRANDE DA HOME: a fila do check (decisão do dono, 18/11/2026) ──────────────────────
+     O check do widget SÓ MARCA (nativo: `WidgetEventQueue.kt`); quem paga é o app, ao abrir ou voltar ao
+     primeiro plano, pela MESMA regra do toque na Home (`applyWidgetEvents` → `applyTaskCompletion`).
+     `readWidgetEvents` devolve `null` em APK sem o recurso. O `ack` (apagar da fila) espera o save local
+     ser gravado: o efeito do provider grava no commit, e o `setTimeout` abaixo roda depois dele. */
+  const widgetAckPendente = useRef<{ eids: string[]; applied: string[] } | null>(null);
+  const drenandoWidget = useRef(false);
+  const [widgetAckTick, setWidgetAckTick] = useState(0);
+  const widgetFeedbackRef = useRef<(paid: WidgetDrainResult<GameState>['paid']) => void>(() => {});
+  widgetFeedbackRef.current = paid => {
+    for (const p of paid) {
+      track('task_done', { kind: 0 });
+      if (p.relief) track('haunted_done');
+    }
+    playTaskComplete();
+    queueTaskGains(paid[paid.length - 1].task.category);
+    toast(language === 'pt-BR'
+      ? (paid.length === 1 ? `✅ "${paid[0].task.name}" (marcada no widget) foi concluída.` : `✅ ${paid.length} tarefas marcadas no widget foram concluídas.`)
+      : (paid.length === 1 ? `✅ "${paid[0].task.name}" (checked on the widget) is done.` : `✅ ${paid.length} tasks checked on the widget are done.`));
+    if (paid.some(p => p.premium)) {
+      toast(language === 'pt-BR'
+        ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
+        : '⭐ Every step done! You earned a premium food.');
+    }
+    falar(paid.some(p => p.relief) ? 'haunted' : 'task');
+    marcarGestoDoDia('task');
+    atenderRefeicao('tenSeconds');
+  };
+  const drenarWidget = useCallback(async () => {
+    if (demo || !hasCompletedOnboarding || drenandoWidget.current || widgetAckPendente.current) return;
+    drenandoWidget.current = true;
+    try {
+      const cru = await readWidgetEvents();
+      if (!cru || cru.length === 0) return;
+      const eventos = sanitizeWidgetEvents(cru);
+      if (eventos.length === 0) return;
+      const applied = sanitizeApplied(readJson<unknown>(STORAGE_KEYS.WIDGET_EVENTS_APPLIED, []));
+      let res: WidgetDrainResult<GameState> | null = null;
+      setGameState(prev => {
+        res = applyWidgetEvents(prev, eventos, applied, new Date());
+        return res.state;
+      });
+      // Microtask: o lote do React roda o updater antes deste (mesmo padrão do `handleToggleTask`).
+      await new Promise<void>(ok => queueMicrotask(ok));
+      const r = res as WidgetDrainResult<GameState> | null;
+      if (!r) return;
+      widgetAckPendente.current = { eids: r.handled, applied: r.applied };
+      if (r.paid.length > 0) widgetFeedbackRef.current(r.paid);
+      else setWidgetAckTick(n => n + 1); // nada mudou no estado: o efeito do ack precisa de um empurrão
+    } finally {
+      drenandoWidget.current = false;
+    }
+  }, [demo, hasCompletedOnboarding, setGameState]);
+  useEffect(() => {
+    const p = widgetAckPendente.current;
+    if (!p) return;
+    const h = window.setTimeout(() => {
+      if (widgetAckPendente.current !== p) return;
+      widgetAckPendente.current = null;
+      writeJson(STORAGE_KEYS.WIDGET_EVENTS_APPLIED, p.applied, { silent: true });
+      void ackWidgetEvents(p.eids);
+    }, 0);
+    return () => window.clearTimeout(h);
+  }, [gameState, widgetAckTick]);
+  useEffect(() => {
+    // Depois da hidratação e do 1º sync da nuvem (o mesmo motivo do atraso: a adoção da nuvem não pode passar por cima).
+    const t = window.setTimeout(() => { void drenarWidget(); }, 2500);
+    let tv = 0;
+    const aoVoltar = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(tv);
+      tv = window.setTimeout(() => { void drenarWidget(); }, 800);
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => { window.clearTimeout(t); window.clearTimeout(tv); document.removeEventListener('visibilitychange', aoVoltar); };
+  }, [drenarWidget]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setGameState(prev => ({
