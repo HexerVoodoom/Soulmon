@@ -109,7 +109,8 @@ import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
-import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet, Segment } from './form/FormKit';
+import { BotaoEspecial } from './ui/BotaoEspecial';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -925,8 +926,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           continua na lista vazia de oponentes. */}
       {pvpAberto && (
         <div role="radiogroup" data-torneio-abas aria-label={isPt ? 'Modo do Torneio' : 'Tournament mode'} style={{ display: 'flex', gap: 8 }}>
-          <Segment tonal selected={tab === 'ranked'} onSelect={() => setTab('ranked')} label={isPt ? 'Ranqueada' : 'Ranked'} />
-          <Segment tonal selected={tab === 'sparring'} onSelect={() => setTab('sparring')} label={isPt ? 'Treino' : 'Sparring'} />
+          <BotaoEspecial variant="pvp" role="radio" aria-checked={tab === 'ranked'} data-especial-state={tab === 'ranked' ? 'pressed' : undefined} onClick={() => setTab('ranked')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Ranqueada' : 'Ranked'}</BotaoEspecial>
+          <BotaoEspecial variant="pve" role="radio" aria-checked={tab === 'sparring'} data-especial-state={tab === 'sparring' ? 'pressed' : undefined} onClick={() => setTab('sparring')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Treino' : 'Sparring'}</BotaoEspecial>
         </div>
       )}
 

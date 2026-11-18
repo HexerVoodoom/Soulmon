@@ -49,7 +49,7 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
         color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
       }}
     >
-      <span className="sm2-num" style={{ width: 32, flexShrink: 0, textAlign: 'right', color: r.me ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.rank}</span>
+      <span className="sm2-num" style={{ width: 32, flexShrink: 0, textAlign: 'right', color: r.me ? 'var(--sm2-primary-ink)' : (typeof r.rank === 'number' && r.rank <= 10 ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)'), fontWeight: typeof r.rank === 'number' && r.rank <= 10 ? 700 : undefined }}>{r.rank}</span>
       {/* §321: o clã embaixo do nome (a própria linha também: é o que os outros veem). */}
       <span style={{ flex: 1, minWidth: 0 }}>
         <PlayerName name={r.name} suffix={r.me && r.name !== youLabel ? youTag : ''} guildName={r.guildName} isPt={isPt} nameStyle={{ fontWeight: r.me ? 700 : 400 }} />

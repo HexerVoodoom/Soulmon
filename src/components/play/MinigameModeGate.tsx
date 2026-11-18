@@ -6,10 +6,9 @@ import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { difficultyLabel } from '../../utils/minigameDifficulty';
 import type { Language } from '../../utils/i18n';
-import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
 import type { RankedGame, RankingPeriod } from '../../utils/rankings';
 import { TicketFan } from './TicketFan';
-import { BotaoModo } from '../ui/BotaoModo';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
 
 /**
  * A pergunta do Pipo antes de cada minijogo (pedido do dono, 30/10/2026): o NPC do Salão
@@ -58,8 +57,8 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
           {isPt ? 'Ver ranking' : 'See ranking'}
         </button>
         <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
-          {/* 30/10/2026 (dono): sem a moldura de cobre; a lista ocupa a largura do modal. */}
-          <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8, borderStyle: 'solid', borderWidth: 28, borderImage: `url(${quadroRanking}) 82 / 28px stretch`, padding: 4, imageRendering: 'pixelated' }}>
+          {/* 18/11/2026 (dono): sem moldura interna ("borda dentro de borda"); a moldura é a do modal. */}
+          <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rankings.length > 1 && (
               <div role="tablist" aria-label={isPt ? 'Tabelas de ranking' : 'Ranking boards'} style={{ display: 'flex', gap: 6 }}>
                 {rankings.map((r, i) => (
@@ -84,8 +83,8 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
           <div role="group" aria-label={pveVsPvp ? (isPt ? 'Modo' : 'Mode') : (isPt ? 'Dificuldade' : 'Difficulty')} style={{ display: 'flex', gap: 8 }}>
             {pveVsPvp ? (
               <>
-                <BotaoModo variant="pve" data-gate-pick="1" onClick={() => onPick(1)} style={{ flex: 1, minWidth: 0 }}>{labelOf(1)}</BotaoModo>
-                <BotaoModo variant="pvp" data-gate-pick="2" onClick={() => onPick(2)} style={{ flex: 1, minWidth: 0 }}>{labelOf(2)}</BotaoModo>
+                <BotaoEspecial variant="pve" data-gate-pick="1" onClick={() => onPick(1)} style={{ flex: 1, minWidth: 0 }}>{labelOf(1)}</BotaoEspecial>
+                <BotaoEspecial variant="pvp" data-gate-pick="2" onClick={() => onPick(2)} style={{ flex: 1, minWidth: 0 }}>{labelOf(2)}</BotaoEspecial>
               </>
             ) : (
               <>

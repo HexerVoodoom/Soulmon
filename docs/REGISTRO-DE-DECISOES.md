@@ -6525,3 +6525,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Gatilho para rever:** se existir outro jeito de "apagar a luz" além da soneca, ligar o mesmo estado.
 
 **Adendo §484 — cogumelo aceso mais forte (dono, 18/11/2026):** acendia, mas fraco. A camada de brilho usa a arte ORIGINAL (a clara) com `brightness(1.3) saturate(1.25)` e dois `drop-shadow` turquesa, e o halo sobe para 190% da caixa a 100% de opacidade (pulso suave 1 → .82). O estado apagado (acordado) segue escurecido por filtro.
+
+## §485 — Ranking: botões PvE/PvP aplicados, lista sem moldura interna (18/11/2026, pedido do dono)
+
+**Decisão:** o par PvE/PvP usa o `BotaoEspecial` com `variant="pve"|"pvp"` (arte do #1072) no Match-3 (Aventura/PVP), no Salão (`MinigameModeGate`) e no Torneio (Treino/Sparring = pve, Ranqueada = pvp; a aba escolhida usa o estado pressionado e mantém `role="radio"`). Sai a moldura de cobre interna do ranking do Salão ("borda dentro de borda") e as posições 1–10 ganham o número em `gold-ink`. Pódio em degraus (opção A do dono) = o atual §326.
+**Alternativa que perdeu:** um `BotaoModo` próprio (duplicaria `BotaoEspecial`).
+**Gatilho para rever:** setas de subida/descida pedem a posição anterior no servidor (hoje não existe); modal de ranking e botão especial dependem da arte nova.
