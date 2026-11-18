@@ -299,7 +299,7 @@ describe('D-04: a arena', () => {
     for (const e of inimigos) expect(e.querySelector('img[src]')).not.toBeNull();
     expect(arena.querySelectorAll('[role="progressbar"]').length).toBe(5);
     // o primeiro é o ativo; os outros não
-    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['1', '0', '0']);
+    expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['1', '0', '0', '0']);
     expect(inimigos[0].getAttribute('aria-current')).toBe('true');
     expect(inimigos[0].textContent).toContain('▸');
     // o elemento de cada inimigo é o do SPRITE dele (linhas próprias: fogo/luz), não um sorteio independente da arte (dono, 30/10/2026)
