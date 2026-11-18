@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import type { Language } from '../../utils/i18n';
 import { FUN_TICKET_BATCH, FUN_TICKET_COST, FUN_TICKET_PER_ROUND, type FunTicketStatus } from '../../utils/funTickets';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
 import { EnergyCost } from '../ui/EnergyCost';
 import { TicketArt, TicketCost } from './TicketFan';
 
@@ -69,10 +70,10 @@ export function TicketBuyModal({ open, language, status, onBuy, onClose, onBough
           <TicketCost amount={FUN_TICKET_PER_ROUND} size={22} />
           <span className="sm2-sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{FUN_TICKET_PER_ROUND} ticket</span>
         </p>
-        <button type="button" data-ticket-buy-confirm disabled={!st.canBuy} aria-disabled={!st.canBuy} onClick={() => { if (onBuy()) onBought(); }} style={{ ...sm2Button('primary', !st.canBuy), minHeight: 48, width: '100%' }}>
+        <BotaoEspecial data-ticket-buy-confirm disabled={!st.canBuy} onClick={() => { if (onBuy()) onBought(); }}>
           {isPt ? `Comprar ${FUN_TICKET_BATCH} tickets` : `Buy ${FUN_TICKET_BATCH} tickets`}
           <EnergyCost amount={FUN_TICKET_COST} />
-        </button>
+        </BotaoEspecial>
         <button type="button" data-ticket-buy-decline onClick={onClose} style={{ ...sm2Button('outline'), minHeight: 44, width: '100%' }}>
           {isPt ? 'Agora não' : 'Not now'}
         </button>

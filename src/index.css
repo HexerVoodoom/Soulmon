@@ -5959,6 +5959,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
   .sm2-cta { transition: none; } .sm2-cta:active:not(:disabled), .sm2-cta[data-cta-state="pressed"]:not(:disabled) { transform: none; } /* CtaButton */
   .sm2-cta-texto { transition: none; } /* CtaTextButton */
+  .sm2-especial { transition: none; } .sm2-especial:active:not(:disabled) { transform: none; } /* BotaoEspecial */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -9459,6 +9460,23 @@ button.sm2-hex-row {
 /* Variante PREENCHER AO TOQUE (16/11/2026): o toque dispara o preenchimento, que corre da esquerda para a direita em `--sm2-fill-ms`. Texto por cima. */
 .sm2-cta[data-cta-fill] { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .sm2-cta[data-cta-fill] .sm2-cta-label { position: relative; z-index: 1; }
+/* Botão ESPECIAL de compra (`BotaoEspecial`, 18/11/2026, pedido do dono): placa dourada em pedra turquesa escura, fatiada em 3 (pontas fixas, miolo liso que estica).
+   Arte 580x146 por estado; a ponta tem 110 px na arte e 40 px na tela (altura 56 px: escala 0,38). Texto/custo por cima, nunca na arte. */
+.sm2-especial {
+  box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; height: 56px; min-width: 44px; /* altura FIXA: as pontas só batem com a arte a 56 px */
+  margin: 0; padding: 0 var(--sm2-space-2); cursor: pointer; background: transparent;
+  border-style: solid; border-width: 0 40px; border-image: url('./assets/soulmon/ui/btn-especial.webp') 0 110 0 110 fill / 0 40px stretch;
+  border-image-outset: 0;
+  color: #FBF1D2; font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); white-space: nowrap; font-weight: 700; line-height: 1;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .65);
+  transition: transform var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-especial-width="full"] { width: 100%; }
+  &[data-especial-width="auto"] { min-width: 200px; }
+  &:active:not(:disabled), &[data-especial-state="pressed"]:not(:disabled) { transform: translateY(2px); border-image-source: url('./assets/soulmon/ui/btn-especial-press.webp'); }
+  &:focus-visible { outline: 2px solid #FBF1D2; outline-offset: 2px; filter: drop-shadow(0 0 2px #F2C25B); }
+  &:disabled { cursor: not-allowed; border-image-source: url('./assets/soulmon/ui/btn-especial-off.webp'); color: #C9D2D0; transform: none; }
+}
+.sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;
   background: linear-gradient(90deg, #12877D, #2FD6C4); box-shadow: 0 0 14px 2px rgba(77, 240, 220, .75); }
