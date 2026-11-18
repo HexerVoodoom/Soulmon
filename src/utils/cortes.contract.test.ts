@@ -262,6 +262,7 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
       playRewardPop: ['hooks/useRewardReveal.ts'],
       playCoinRoll: ['hooks/useRewardReveal.ts'],
       playCoinLand: ['hooks/useRewardReveal.ts'],
+      playWindChime: ['hooks/useWindChime.ts'],
       playShower: ['components/CompanionHUD.tsx'],
       playSleep: ['App.tsx'],
       playEvolve: ['App.tsx'],

@@ -2,6 +2,8 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
 import { DECOR_ART } from '../utils/decorArt';
+import { useWindChime } from '../hooks/useWindChime';
+import { DECOR_LUZ, decorLuzAcesa } from '../utils/decorLuz';
 import iconTrophyGold from '../assets/icons/icon-trophy-gold.png';
 import iconTrophySilver from '../assets/icons/icon-trophy-silver.png';
 import iconTrophyBronze from '../assets/icons/icon-trophy-bronze.png';
@@ -30,11 +32,19 @@ interface PetStageDecorProps {
   /** Troféus REAIS de season — a vitrine exibe estes, não enfeite genérico. */
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
   language: string;
+  /** Pet dormindo: as luzes apagam (e as de noite acendem). */
+  isSleeping?: boolean;
+  /** Toque no Fliperama de Canto abre o Salão de jogos. Sem isto (editor da Home) a peça é só cenário. */
+  onOpenArcade?: () => void;
+  /** Só a Home real toca o sino de vento; o editor da Home fica mudo. */
+  somAtivo?: boolean;
 }
 
 const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
 
-export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language }: PetStageDecorProps) {
+export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language, isSleeping = false, onOpenArcade, somAtivo = false }: PetStageDecorProps) {
+  const temSino = Object.values(equippedDecor).includes('furn-wind-chime') && !!equippedBackground;
+  useWindChime(somAtivo && temSino && !isSleeping);
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
   // Sem cenário equipado o box é transparente — o "palco" é a página, e não há
   // composição em que apoiar a decoração.
@@ -56,6 +66,9 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
         const art = DECOR_ART[item.id];
+        const luz = DECOR_LUZ[item.id];
+        const acesa = luz ? decorLuzAcesa(luz, isSleeping) : false;
+        const artFiltro = luz && !acesa ? 'brightness(.5) saturate(.55) drop-shadow(0 1px 2px rgba(0,0,0,0.35))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))';
 
         // Tapete: caixa larga e baixa, arte já desenhada em perspectiva rasa
         // (foreshortening) exatamente para esse formato — ver utils/decorArt.ts.
@@ -90,12 +103,18 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}
+            {luz && (
+              <span
+                className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={acesa || undefined}
+                style={{ left: `${luz.x}%`, top: `${luz.y}%`, width: `${luz.d}%` }}
+              />
+            )}
             {art ? (
               <img
                 src={art} alt=""
                 style={{
                   position: 'relative', width: '100%', height: '100%', objectFit: 'contain',
-                  imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+                  imageRendering: 'pixelated', filter: artFiltro, transition: 'filter .8s ease',
                 }}
               />
             ) : (
@@ -105,6 +124,19 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               }}>
                 {item.icon}
               </span>
+            )}
+
+            {item.id === 'furn-hourglass' && (
+              <span className="sm-decor-areia" data-decor-areia>
+                <i /><i /><i />
+              </span>
+            )}
+            {item.id === 'furn-arcade-cab' && onOpenArcade && (
+              <button
+                type="button" data-decor-arcade onClick={onOpenArcade}
+                aria-label={isPt ? 'Abrir minigames' : 'Open minigames'}
+                style={{ position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', minWidth: 44, minHeight: 44, width: '100%', height: '100%', background: 'transparent', border: 0, padding: 0, cursor: 'pointer', pointerEvents: 'auto', touchAction: 'manipulation' }}
+              />
             )}
 
             {/* A vitrine exibe as conquistas REAIS: até 3 medalhas de season

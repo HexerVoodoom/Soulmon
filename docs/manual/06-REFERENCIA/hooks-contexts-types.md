@@ -345,3 +345,8 @@ Fonte única das 10 categorias (sono, corpo, mente, foco, aprendizado, relaçõe
 
 ### Sincronização 16/11/2026 (delta `b0c1e59c..6b7773143`, verificado em 16/11/2026)
 Entradas novas acima: `useRegenAparencia`, `useReviewWatcher`. Já cobertos antes neste arquivo: `useBalaoDica`, `useBalaoDouradoIgnorado`, `useGroveAtaque`, `useLibraryMemory`, `useOcioso`, `useOfertaPendente`, `usePlayerSearch`; `useDialogA11y`, `useItemForm`, `useMailbox`, `useSpriteGeneration`, `GameStateContext`, `useTalentBonus` e os tipos (`activityCatalog`, `attributes`, `categories`, `category-icons`, `progression`, `travessias`) têm a entrada no corpo do arquivo. Nenhum arquivo desta árvore foi apagado no delta.
+
+### `src/hooks/useWindChime.ts`
+**Dono de:** agendador do sino de vento da decoração (badaladas aleatórias, D11: aba visível + áudio liberado, sem movimento reduzido).
+**Exports:** `useWindChime(ativo)`, `SINO_MIN_MS`, `SINO_MAX_MS`.
+**Chamado por:** `src/components/PetStageDecor.tsx`

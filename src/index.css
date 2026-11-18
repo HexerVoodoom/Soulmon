@@ -5038,6 +5038,28 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   @keyframes sm2-elem-new-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
 }
 
+
+/* ── Decoração que emite luz (REGISTRO §480): halo com afterglow que pulsa de leve; apaga (ou acende, nos de noite) conforme o sono do pet.
+   Só opacity/transform. Movimento reduzido: o bloco canônico acima zera a animação e fica o estado estático. */
+.sm-decor-luz-halo {
+  --sm-luz-cor: hsl(32 95% 62%);
+  position: absolute; z-index: 0; aspect-ratio: 1; transform: translate(-50%, -50%) scale(.85); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sm-luz-cor) 70%, transparent), color-mix(in srgb, var(--sm-luz-cor) 22%, transparent) 55%, transparent 100%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity 1.2s ease, transform 1.2s ease;
+}
+.sm-decor-luz-halo[data-tom="turquesa"] { --sm-luz-cor: var(--sm2-primary-ink, hsl(176 82% 55%)); }
+.sm-decor-luz-halo[data-tom="petala"] { --sm-luz-cor: hsl(340 85% 72%); }
+.sm-decor-luz-halo[data-tom="cogumelo"] { --sm-luz-cor: hsl(165 90% 60%); }
+.sm-decor-luz-halo[data-on] { opacity: .85; transform: translate(-50%, -50%) scale(1); animation: sm-decor-luz-pulso 3.6s ease-in-out infinite; }
+@keyframes sm-decor-luz-pulso { 0%, 100% { opacity: .85; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .6; transform: translate(-50%, -50%) scale(.94); } }
+
+/* Ampulheta (REGISTRO §480): grãos turquesa caindo pelo gargalo. Só transform/opacity; reduzido = grãos parados no gargalo. */
+.sm-decor-areia { position: absolute; left: 50%; top: 44%; width: 10%; height: 26%; transform: translateX(-50%); pointer-events: none; }
+.sm-decor-areia i { position: absolute; left: 50%; top: 0; width: 2px; height: 2px; margin-left: -1px; background: var(--sm2-primary-ink, hsl(176 82% 55%)); box-shadow: 0 0 3px hsl(176 90% 70%); opacity: 0; animation: sm-decor-areia-cai 1.5s linear infinite; }
+.sm-decor-areia i:nth-child(2) { animation-delay: .5s; margin-left: -2px; }
+.sm-decor-areia i:nth-child(3) { animation-delay: 1s; margin-left: 0; }
+@keyframes sm-decor-areia-cai { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(22px); } }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
    ═══════════════════════════════════════════════════════════════════════════
@@ -5062,6 +5084,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      e ainda podem receber a propriedade por inline em algum ponto. */
   .sm-haunt-particle,
   .sm-visor-hop,
+  .sm-decor-luz-halo,
+  .sm-decor-areia i,
   .sm-battle-idle { animation: none !important; }
 }
 

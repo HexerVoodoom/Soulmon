@@ -6469,3 +6469,17 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Gatilho para rever:** pedido de limite diferente por compra, ou o dono querer o desconto de 10% em qualquer N.
 
 **Adendo (18/11/2026, dono): SEM limite por compra.** Some o teto de 100 (`ESSENCE_MAX_PER_BUY`). Máximo do seletor = min(1.000.000 − estoque, maior N que o saldo de Créditos paga), por busca binária (preço monótono). O servidor aceita qualquer inteiro seguro ≥1; acima do teto de estoque segue 409 `cap`, sem saldo 402, não inteiro/≤0 400 `bad-qty`. Mesma regra de preço (10% por grupo completo de 5); a conta é inteira e para N ≤ 1.000.000 não passa de 3 milhões. Paridade cobre 1, 5, 99, 100, 101, 1000, 999.999 e 1.000.000. O campo do meio aceita digitar até 7 dígitos com clamp; segurar para repetir ficou de fora.
+
+## §480 — Decoração com luz: halo + afterglow, apaga ao dormir; luz "de noite" é o contrário (18/11/2026, dono)
+
+**Decisão:** peças que emitem luz (lâmpada, lanterna, fogueira, lanterna de pétalas, altar de magma, flor de brasa) ganham halo suave que pulsa e APAGAM com o pet dormindo (`isSleeping` da Home): halo some, arte escurece (filtro). `furn-mushrooms` faz o inverso (acende ao dormir) — easter egg: nenhum texto menciona. Fonte única em `utils/decorLuz.ts`; só opacity/transform; movimento reduzido = estado estático.
+
+**Alternativa que perdeu (por ora):** gerar versão "apagada" da arte no ChatGPT. Escurecer por filtro entrega o efeito sem peso de asset; arte própria apagada fica na fila (`docs/ASSETS-A-GERAR.md`).
+
+**Auditoria de luz:** lamp, lantern, campfire, cerejeira-lanterna-de-petalas, lava-altar-de-magma, lava-flor-de-brasa. Fora: crystal, cauldron, window, garland (bandeirinhas) — não são fonte de luz.
+
+**Gatilho para rever:** o dono pedir a arte apagada autoral, ou a biblioteca de efeitos chegar.
+
+**Adendo §480 — Fliperama de Canto:** tocar na peça (botão ≥44px, `aria-label` "Abrir minigames"/"Open minigames", invisível) chama `onGoToBuilding('jogos.salao')`, o mesmo caminho do Caderno: abre a folha do Salão existente (tickets/energia regidos por ela). Fora do editor da Home (sem handler = só cenário).
+
+**Adendo §480 — Sino e Ampulheta:** sino de vento = som PROCEDURAL (`parciaisSinoDeVento`, 4 variações, `playWindChime`, categoria `arcade`, offset +1,9 dB medido no arnês nominal; NÃO OUVIDO, falta gate S8), agendado por `hooks/useWindChime.ts` a cada 14–38 s aleatórios, só na Home real (`somAtivo`), pet acordado, aba visível, áudio já liberado, mudo global respeitado, sem som em movimento reduzido. Ampulheta = 3 grãos turquesa em CSS caindo no gargalo (sem asset novo). **Biblioteca pixelfx** (patch-gg/pixelfx, MIT, © Patch / Hugo Duprez; fonte da galeria fora da licença): clonada em `E:/Soulmon-wt/aprovacao/pixelfx-src` e skill instalada em `~/.claude/skills/pixelfx`; NÃO entrou no bundle (canvas em pixel 128×128 + core ~140 KB; estilo ainda a validar com o dono).
