@@ -59,6 +59,14 @@ describe('HexsmithSheet', () => {
     expect(css).toMatch(/\.sm2-hex-slot-fill \{[^}]*background-color: var\(--sm2-hex-slot-on\);[^}]*clip-path: polygon\(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%\)/);
   });
 
+  it('a introdução mora atrás do "i" (ModalInfo), não solta acima do mapa (18/11/2026)', () => {
+    abrir({});
+    expect(document.querySelector('[data-hex-intro]')).toBeNull();
+    const i = screen.getByRole('button', { name: /Hexsmith/ });
+    click(i);
+    expect(document.querySelector('[data-hex-intro]')?.textContent).toMatch(/Toque numa Porta/);
+  });
+
   it('sem nada equipado, nenhuma Porta tem o preenchimento claro', () => {
     abrir({});
     expect(document.querySelectorAll('[data-hex-fill]')).toHaveLength(0);

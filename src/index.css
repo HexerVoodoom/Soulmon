@@ -9527,7 +9527,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
    escolhido = `primary-soft` + fronteira e tinta `primary-ink` + negrito;
    não dá para forjar = tinta `muted` (escolhido mantém fundo/fronteira). */
 .sm2-hex { display: grid; gap: var(--sm2-space-4); width: 100%; max-width: 420px; margin: 0 auto; box-sizing: border-box; }
-.sm2-hex-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; }
+.sm2-hex-map { position: relative; width: 100%; max-width: 420px; /* 18/11: 360 → 420 (a introdução foi para o "i") */ aspect-ratio: 1 / 1; margin: 0 auto; }
 .sm2-hex-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
