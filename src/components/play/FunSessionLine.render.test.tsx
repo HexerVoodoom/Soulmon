@@ -26,16 +26,20 @@ describe('Salão: o painel de tickets', () => {
     expect(c.querySelector('[data-fun-tickets-count]')?.textContent).toContain('3/5');
     expect(c.querySelector('[data-fun-tickets-expiry]')?.textContent).toBe('vence em 01:02:05');
     expect((c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement).disabled).toBe(true);
+    // dica "tickets de sobra" removida a pedido do dono (18/11/2026)
+    expect(c.querySelector('[data-fun-tickets-hint]')).toBeNull();
+    expect(c.textContent).not.toContain('de sobra');
   });
   it('sem energia aponta para outras atividades, em PT e EN', () => {
     expect(painel(st({ canBuy: false, buyRefusal: 'no-energy' })).textContent).toContain('Ateliê da Mente');
     cleanup();
     expect(painel(st({ canBuy: false, buyRefusal: 'no-energy' }), 'en-US').textContent).toContain('Mind Atelier');
   });
-  it('cada Jogar mostra o ticketzinho com x1 quando há painel de tickets', () => {
+  it('o custo (sempre 1 ticket) NÃO se repete embaixo de cada carta: o painel de tickets já informa', () => {
     const c = painel(st({ count: 2, canPlay: true }));
     for (const k of ['dino', 'ppt', 'match3', 'barrage']) {
-      expect(c.querySelector(`[data-game-card="${k}"] [data-ticket-cost="1"]`)?.textContent, k).toContain('x1');
+      expect(c.querySelector(`[data-game-card="${k}"] [data-ticket-cost]`), k).toBeNull();
+      expect(c.querySelector(`[data-game-card="${k}"] [data-game-card-ganho]`)?.textContent, k).toBeTruthy();
     }
   });
 });

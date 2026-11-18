@@ -6525,3 +6525,21 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Gatilho para rever:** se existir outro jeito de "apagar a luz" além da soneca, ligar o mesmo estado.
 
 **Adendo §484 — cogumelo aceso mais forte (dono, 18/11/2026):** acendia, mas fraco. A camada de brilho usa a arte ORIGINAL (a clara) com `brightness(1.3) saturate(1.25)` e dois `drop-shadow` turquesa, e o halo sobe para 190% da caixa a 100% de opacidade (pulso suave 1 → .82). O estado apagado (acordado) segue escurecido por filtro.
+
+## §485 — Ranking: botões PvE/PvP aplicados, lista sem moldura interna (18/11/2026, pedido do dono)
+
+**Decisão:** o par PvE/PvP usa o `BotaoEspecial` com `variant="pve"|"pvp"` (arte do #1072) no Match-3 (Aventura/PVP), no Salão (`MinigameModeGate`) e no Torneio (Treino/Sparring = pve, Ranqueada = pvp; a aba escolhida usa o estado pressionado e mantém `role="radio"`). Sai a moldura de cobre interna do ranking do Salão ("borda dentro de borda") e as posições 1–10 ganham o número em `gold-ink`. Pódio em degraus (opção A do dono) = o atual §326.
+**Alternativa que perdeu:** um `BotaoModo` próprio (duplicaria `BotaoEspecial`).
+**Gatilho para rever:** setas de subida/descida pedem a posição anterior no servidor (hoje não existe); modal de ranking e botão especial dependem da arte nova.
+
+## §486 — Fliperama de Canto abre SÓ o modal de minigames, sobre a Home (18/11/2026, dono)
+
+**Decisão:** tocar no Fliperama de Canto abre um modal de moldura normal sobre a própria Home (`components/play/ArcadeModal.tsx`) com o CORPO do Salão de jogos (`SalaoSheet`: tickets, compra de tickets, as cartas dos minigames), SEM o NPC Pipo e SEM mandar o jogador ao mapa/prédio; fechar volta à Home. Substitui a abertura do sheet do prédio (pedido anterior). O `SalaoSheet` já era só o corpo (o NPC mora no `AreaSheet`), então foi reaproveitado, não duplicado, com as mesmas regras (`funTicketStatus`, `buyFunTickets`, `ticketBuyRefusal`).
+
+**Jogar:** escolher uma carta fecha o modal e abre o jogo na área Jogos (`initialGame` do `AreaView`, o mesmo caminho do Refúgio): a rodada é cobrada ao começar (`onStartRound`) e a pergunta de modo do Pipo (`MinigameModeGate`) continua valendo, como no Salão. Soulmon dormindo: o aviso de acordar segura a abertura (`guardWake`).
+
+**Gatilho para rever:** o dono querer o jogo rodando também em cima da Home (hoje ele abre na área Jogos e o voltar leva ao mapa).
+
+**Adendo §485 — modal e botão do ranking (18/11/2026, dono):** o ranking ganha moldura própria (`RankingModal`, base na borda G do Files + faixas vermelhas + medalhas de ouro envelhecido, arte da sessão de assets) e o botão "Ver ranking" vira `BotaoEspecial variant="ranking"`. O X e o "i" são só glifos centrados nos discos da arte (nada de círculo por cima: `ranking-botao-redondo.webp` não é usado). A lista inline ganhou os estados carregando e offline (antes sumia em silêncio); no fim da partida o painel segue silencioso.
+
+**Adendo §485 — texto dos botões e entradas do ranking (18/11/2026, dono):** `BotaoEspecial` pve/pvp/ranking usa o tamanho do CTA (`clamp(--sm2-text-md, 4.8vw, --sm2-text-lg)`: 20 px onde cabe, até 16 px em tela estreita, sem cortar) e o rótulo invade 10 px das pontas lisas da placa. Entradas do ranking: toda tabela passa por `RankingPanel` (fim de jogo, "Ver ranking" do Salão) e pelo `RankingModal`; o ranking da Fenda (`PlaySheets`) migrou do `ModalSheet` para o `RankingModal`. Modais dos prédios seguem com a moldura padrão.

@@ -290,6 +290,8 @@ const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbP
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
 import type { BitsExchangeOutcome } from './utils/bitsPackCopy';
+import { ArcadeModal } from './components/play/ArcadeModal';
+import type { SalaoGame } from './components/play/PlaySheets';
 import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
@@ -1145,6 +1147,9 @@ export default function App() {
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
   const [refugeLaunch, setRefugeLaunch] = useState(false);
+  /** §486: o modal de minigames do Fliperama de Canto (sobre a Home) e o jogo que ele pediu (abre na área Jogos). */
+  const [arcadeOpen, setArcadeOpen] = useState(false);
+  const [arcadeGame, setArcadeGame] = useState<SalaoGame | null>(null);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -8811,8 +8816,8 @@ export default function App() {
                 area={area}
                 naMasmorra={naMasmorra}
                 emCristal={!!cristal}
-                initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
-                onInitialGameConsumed={handleRefugeLaunchConsumed}
+                initialGame={area === 'jogos' ? (refugeLaunch ? 'respiracao' : arcadeGame ?? undefined) : undefined}
+                onInitialGameConsumed={() => { handleRefugeLaunchConsumed(); setArcadeGame(null); }}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
                 initialSection={pendingSheet && pendingSheet.area === area ? pendingSheet.section : undefined}
                 onInitialSheetConsumed={() => setPendingSheet(null)}
@@ -9190,6 +9195,7 @@ export default function App() {
                 hasNewItems={newItemsReady}
                 onBackpackSeen={handleBackpackSeen}
                 onSleep={handleSleep}
+                onOpenArcade={() => setArcadeOpen(true)}
                 isSleeping={isSleeping || dayWakePending}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
@@ -9242,6 +9248,21 @@ export default function App() {
                 evolutionFlash={evolutionFlash}
                 feedAnim={feedAnim}
                 play={playDeck}
+              />
+              {/* §486: o Fliperama de Canto abre SÓ o modal de minigames, aqui na Home (sem o Pipo, sem ir ao mapa). Jogar fecha o modal e abre o jogo na área Jogos. */}
+              <ArcadeModal
+                open={arcadeOpen}
+                onClose={() => setArcadeOpen(false)}
+                language={language}
+                bitsToday={minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz))}
+                funStatus={(now) => funTicketStatus(gameState, now)}
+                onBuyTickets={() => {
+                  const now = Date.now();
+                  if (ticketBuyRefusal(gameState, now)) return false;
+                  setGameState(prev => buyFunTickets(prev, now));
+                  return true;
+                }}
+                onStart={(g) => { if (guardWake(g)) return; setArcadeOpen(false); setArcadeGame(g); goTo(areaView('jogos')); }}
               />
 
               {/* H7 (02/10/2026): ÚNICA região que rola na Home — tudo abaixo da área

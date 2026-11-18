@@ -5248,6 +5248,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-on-danger: #FFFFFF;
   /* o vidro é ESCURO nos dois temas — é um visor, não um cartão */
   --sm2-viewport-bg: #0E2422;
+  --sm2-pergaminho-ink: #050E0D; /* tinta sobre o pergaminho tan da moldura de card (≥7:1 no pior pixel), igual nos dois temas */
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #B0722F;
   --sm2-viewport-ring-deep: #5E3612;
@@ -5320,6 +5321,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
   --sm2-viewport-bg: #071413;
+  --sm2-pergaminho-ink: #050E0D;
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
@@ -8506,6 +8508,43 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-chatbar { padding: 0; background: none; border: 0; box-shadow: none; }
 .sm3-mochila-painel { min-height: 120px; }
 
+/* ── MODAL DO RANKING (18/11/2026) ───────────────────────────────────────────
+   Moldura = a ARTE APROVADA de `assets/soulmon/ui/ranking/` (ouro envelhecido, faixas vermelhas, medalhas) sobre o `ModalFrame`. `--u` = 1% da largura;
+   medidas em `u` = px do arquivo / 7,2. Topo 720×252 (6 px de margem transparente em cima; discos de X/"i" com centro em x 88 / 634, y 133; placa de bronze
+   central); base 720×100; laterais 40 px (repeat-y). As laterais são pintadas ANTES do topo e da base (mesmo z): as pontas do topo/base cobrem as laterais. */
+.sm3-ranking-bg { position: fixed; inset: 0; z-index: 120; display: flex; align-items: center; justify-content: center; padding: 16px 12px; box-sizing: border-box; background: rgba(4, 18, 20, .55); }
+.sm3-ranking {
+  width: 100%; max-width: 520px; height: min(92dvh, 760px); padding: 0; overflow: visible; border: 0; border-radius: 0;
+  background-color: var(--sm2-viewport-bg); color: var(--sm2-viewport-ink);
+  --sm2-moldura-pad-x: calc(var(--u) * 6.4); --sm2-moldura-pad-t: calc(var(--u) * 36.5); --sm2-moldura-pad-b: calc(var(--u) * 12.5);
+}
+.sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__lado { width: calc(var(--u) * 5.56); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
+/* Título na placa de bronze da arte (centro y 132 = 18,3u). */
+.sm2-moldura-modal--ranking .sm2-moldura-modal__placa { left: calc(var(--u) * 28); width: calc(var(--u) * 44); top: calc(var(--u) * 14.47); height: calc(var(--u) * 8); }
+.sm2-moldura-modal--ranking .sm2-moldura-modal__titulo { letter-spacing: .12em; text-transform: uppercase; color: #FBF1D2; }
+/* "i": só o glifo, centrado no disco direito da arte (sem aro). */
+.sm2-moldura-modal--ranking .sm2-moldura-modal__info { right: calc(var(--u) * 7.94); top: calc(var(--u) * 14.47); width: calc(var(--u) * 8); height: calc(var(--u) * 8); }
+.sm2-moldura-modal--ranking .sm2-info-hit::before {
+  content: 'i'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: var(--sm2-text-lg); font-weight: 700; color: #FBF1D2;
+}
+.sm2-moldura-modal--ranking .sm2-info-hit:focus-visible { outline: 2px solid color-mix(in srgb, #FBF1D2 70%, transparent); outline-offset: -6px; }
+/* "X": só o glifo, centrado no disco esquerdo da arte; alvo ≥ 44 transparente. */
+.sm3-ranking-fechar {
+  position: absolute; z-index: 5; left: calc(var(--u) * 12.22 - 22px); top: calc(var(--u) * 18.47 - 22px); display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; margin: 0; border: 0; border-radius: 50%; background: transparent; color: #FBF1D2; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.sm3-ranking-fechar:focus-visible { outline: 2px solid color-mix(in srgb, #FBF1D2 70%, transparent); outline-offset: -6px; }
+.sm3-ranking .sm2-moldura-modal__conteudo { padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b); }
+.sm3-ranking-corpo {
+  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sm2-space-3);
+  /* o miolo é escuro (viewport): a lista herda tinta clara, nunca a tinta do tema claro */
+  --sm2-ink: var(--sm2-viewport-ink); --sm2-muted: color-mix(in srgb, var(--sm2-viewport-ink) 65%, transparent); color: var(--sm2-viewport-ink);
+}
 /* ── MODAL FILES (18/11/2026) ────────────────────────────────────────────────
    Referência escolhida pelo dono: `E:/Soulmon-assets/referencias-files/ref3-cristal-chama-ESCOLHIDA.jpg` (pasta de computador minimalista).
    Moldura = a ARTE APROVADA de `assets/soulmon/ui/files/` (LEIA-ME) sobre o `ModalFrame`: `--u` = 1% da largura do modal; as medidas em `u` são
@@ -9709,6 +9748,13 @@ button.sm2-hex-row {
 .sm2-especial[data-especial-variant="pvp"] { border-image-source: url('./assets/soulmon/ui/btn-pvp.webp'); }
 .sm2-especial[data-especial-variant="pvp"]:active:not(:disabled), .sm2-especial[data-especial-variant="pvp"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-pvp-press.webp'); }
 .sm2-especial[data-especial-variant="pvp"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-pvp-off.webp'); filter: saturate(.35); } /* a faixa vermelha não pode ler como erro quando travado */
+.sm2-especial[data-especial-variant="ranking"] { border-image-source: url('./assets/soulmon/ui/btn-ranking.webp'); }
+.sm2-especial[data-especial-variant="ranking"]:active:not(:disabled), .sm2-especial[data-especial-variant="ranking"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-ranking-press.webp'); }
+.sm2-especial[data-especial-variant="ranking"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-ranking-off.webp'); }
+/* Texto dos botões de MODO/RANKING (pve/pvp/ranking, 18/11/2026, dono): o MESMO tamanho do CTA (`--sm2-text-lg`, 20 px) onde cabe; em tela estreita encolhe
+   até `--sm2-text-md` (16 px) em vez de cortar, e o rótulo invade um pouco as pontas lisas da placa (margem negativa) para ocupar o espaço dela. */
+.sm2-especial[data-especial-variant="pve"], .sm2-especial[data-especial-variant="pvp"], .sm2-especial[data-especial-variant="ranking"] { font-size: clamp(var(--sm2-text-md), 4.8vw, var(--sm2-text-lg)); }
+.sm2-especial[data-especial-variant="pve"] .sm2-especial-label, .sm2-especial[data-especial-variant="pvp"] .sm2-especial-label, .sm2-especial[data-especial-variant="ranking"] .sm2-especial-label { margin: 0 -10px; }
 .sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;
@@ -9779,12 +9825,15 @@ button.sm2-hex-row {
   font-family: var(--sm2-font-display); font-weight: 700; font-size: 40px; line-height: 1;
   color: var(--sm2-primary-ink); opacity: .7;
 }
-/* o nome vai na PLACA dourada: fonte menor e até 2 linhas, sem cortar (título longo em 375px) */
-.sm-game-card__titulo { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 4.6); line-height: 1.05; overflow-wrap: anywhere; text-wrap: balance; }
-/* o ganho do jogo vai no PERGAMINHO, numa linha só, centralizado */
-.sm-game-card__ganho { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--u) * 1.5); white-space: nowrap; font-weight: 700; font-size: calc(var(--u) * 5.4); line-height: 1.1; color: var(--sm2-ink); }
+/* o nome vai na PLACA dourada (miolo escuro ~9,6u de altura): 2 linhas a 5u cabem; nome curto (≤13 letras) cabe em 1 linha e cresce */
+.sm-game-card__titulo { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 5); line-height: 1; overflow-wrap: anywhere; text-wrap: balance; }
+.sm-game-card__titulo[data-nome-curto] { font-size: calc(var(--u) * 6.4); }
+/* o ganho vai no PERGAMINHO (tan): tinta escura fixa nos dois temas (≥7:1), até 2 linhas, centralizado. O `BitsAmount` pinta o número por estilo inline em turquesa: aqui ele herda a tinta do pergaminho. */
+.sm-game-card__ganho { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: calc(var(--u) * 1.5); row-gap: 0; text-align: center; text-wrap: balance; font-weight: 700; font-size: calc(var(--u) * 6.2); line-height: 1.12; color: var(--sm2-pergaminho-ink); }
+.sm-game-card__ganho, .sm-game-card__ganho * { color: var(--sm2-pergaminho-ink) !important; text-shadow: none; }
 .sm-game-card__ganho img { flex: none; }
 .sm-game-card .sm2-moldura-card__arte > img { width: 100%; height: 100%; object-fit: cover; }
+.sm-game-card__badges:empty { display: none; }
 .sm-game-card__badges {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
   font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
@@ -9902,7 +9951,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 .sm2-moldura-card__desc {
   left: calc(var(--u) * 11); right: calc(var(--u) * 11); bottom: calc(var(--u) * 5); height: calc(var(--u) * 17);
-  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; color: #3a2a0c;
+  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; font-weight: 600; color: var(--sm2-pergaminho-ink);
 }
 .sm2-moldura-card__recompensa {
   z-index: 1; left: 50%; transform: translateX(-50%); bottom: calc(var(--u) * 41); gap: 6px; padding: 2px 12px; border-radius: 999px;
