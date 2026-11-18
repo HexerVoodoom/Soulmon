@@ -3,7 +3,8 @@ import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
 import { DECOR_ART } from '../utils/decorArt';
 import { ArcadeTela } from './ArcadeTela';
-import campfireApagada from '../assets/decor-fx/furn-campfire-apagada.png';
+import campfireBase from '../assets/decor-fx/furn-campfire-base.png';
+import campfireFrente from '../assets/decor-fx/furn-campfire-frente.png';
 import campfireFogo from '../assets/decor-fx/furn-campfire-fogo.png';
 import { useWindChime } from '../hooks/useWindChime';
 import { DECOR_LUZ, decorLuzAcesa } from '../utils/decorLuz';
@@ -68,7 +69,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         const slot = DECOR_SLOTS[slotId];
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
-        const art = item.id === 'furn-campfire' ? campfireApagada : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo; o fogo é o sprite pixelfx desenhado por cima (§481)
+        const art = item.id === 'furn-campfire' ? campfireBase : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo em 2 camadas (base: toras e pedras; frente: aro e postes); o fogo do pixelfx passa ENTRE as duas (§481)
         const luz = DECOR_LUZ[item.id];
         const acesa = luz ? decorLuzAcesa(luz, isSleeping) : false;
         const artFiltro = luz && !acesa ? 'brightness(.5) saturate(.55) drop-shadow(0 1px 2px rgba(0,0,0,0.35))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))';
@@ -106,14 +107,6 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}
-            {item.id === 'furn-campfire' && (
-              <span className="sm-decor-quadro" aria-hidden="true">
-                <span className="sm-decor-quadro-i">
-                  <span className="sm-decor-fogo" data-on={acesa || undefined}><img src={campfireFogo} alt="" /></span>
-                  <span className="sm-decor-brasa" data-on={!acesa || undefined} />
-                </span>
-              </span>
-            )}
             {luz && (
               <span
                 className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={acesa || undefined}
@@ -121,13 +114,32 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
               />
             )}
             {art ? (
-              <img
-                src={art} alt=""
-                style={{
-                  position: 'relative', width: '100%', height: '100%', objectFit: 'contain',
-                  imageRendering: 'pixelated', filter: artFiltro, transition: 'filter .8s ease',
-                }}
-              />
+              <>
+                <img
+                  src={art} alt=""
+                  style={{
+                    position: 'relative', width: '100%', height: '100%', objectFit: 'contain',
+                    imageRendering: 'pixelated', filter: artFiltro, transition: 'filter .8s ease',
+                  }}
+                />
+                {item.id === 'furn-campfire' && (
+                  <>
+                    <span className="sm-decor-quadro" aria-hidden="true">
+                      <span className="sm-decor-quadro-i">
+                        <span className="sm-decor-fogo" data-on={acesa || undefined}><img src={campfireFogo} alt="" /></span>
+                        <span className="sm-decor-brasa" data-on={!acesa || undefined} />
+                      </span>
+                    </span>
+                    <img
+                      src={campfireFrente} alt="" data-decor-frente
+                      style={{
+                        position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
+                        imageRendering: 'pixelated', filter: artFiltro, transition: 'filter .8s ease',
+                      }}
+                    />
+                  </>
+                )}
+              </>
             ) : (
               <span style={{
                 position: 'relative', fontSize: emojiSize, lineHeight: 1,
