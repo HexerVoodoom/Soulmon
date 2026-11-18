@@ -12,7 +12,7 @@
 //   · o que NUNCA duplica é o `mid` da carta (`arcade:<mês>:<jogo>`): o correio não aceita o mesmo `mid` duas vezes, nem depois de apagada;
 //   · a carta com anexo pendente NÃO expira nem some sem `force` (regra do correio: prêmio pendente nunca vence calado);
 //   · item ÚNICO: quem já tem o Fliperama (save gravado ou outra carta com o anexo) recebe a carta SEM anexo (só o aplauso), ou com o
-//     PRÊMIO ALTERNATIVO (`ARCADE_ALT_PRIZE`, Bits/Honra, configurável e DESLIGADO até o dono decidir);
+//     PRÊMIO ALTERNATIVO (`ARCADE_ALT_PRIZE`: 30 de Honra na própria carta, decisão do dono 18/11/2026; configurável);
 //   · simulados nunca recebem (`payablePlacements`); cada decisão grava a auditoria `arcade-prize:<mês>:<jogo>`.
 // ---------------------------------------------------------------------------
 import { kvOrThrow } from './_kv.js';
@@ -25,10 +25,10 @@ export const ARCADE_ITEM_ID = 'furn-arcade-cab';
 export const ARCADE_MONTHLY_GAMES = Object.freeze(['match3', 'match3-pvp']);
 /**
  * Prêmio alternativo para quem JÁ tem o Fliperama e vence de novo, entregue na própria carta (Bits e/ou Honra, os prêmios que o correio
- * carrega). DESLIGADO até o dono escolher (modal): `enabled: false` = carta só com os parabéns. Outras opções (essência, outra decoração)
- * pedem suporte novo no correio e dependem da escolha do dono (REGISTRO §482).
+ * carrega). LIGADO pelo dono (18/11/2026): 30 de Honra, o mesmo valor que `seasonPrize` (`_mensageiro.js`) paga do 4º ao 20º lugar da
+ * temporada, abaixo dos 120 do 1º: é consolação, não substitui o item. `enabled: false` volta à carta só com os parabéns.
  */
-export const ARCADE_ALT_PRIZE = Object.freeze({ enabled: false, bits: 0, emblems: 0 });
+export const ARCADE_ALT_PRIZE = Object.freeze({ enabled: true, bits: 0, emblems: 30 });
 
 const RUNNING_STALE_MS = 10 * 60 * 1000;
 const TTL = { expirationTtl: 86400 * 400 };
