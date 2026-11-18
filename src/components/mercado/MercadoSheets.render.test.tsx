@@ -189,10 +189,10 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
   const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
     renderWithCss(<CambistaSheet language="en-US" credits={3} onExchangeCredits={async () => true} {...p} />);
 
-  it('abre na aba Bits: diamante credit-ink + a troca, e nenhum item à venda', () => {
+  it('abre na aba Bits: diamante turquesa dos Créditos + a troca, e nenhum item à venda', () => {
     const { container } = abrirC();
     expect(screen.getByRole('tab', { name: 'Bits' }).getAttribute('aria-selected')).toBe('true');
-    expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
+    expect(container.querySelector('[data-credit-icon]')).not.toBeNull();
     // §373: três pacotes lado a lado, preço em Créditos e desconto derivado; com 3 Créditos nenhum cabe
     expect(screen.getByRole('button', { name: 'Pouch: 200 Bits for 200 Credits' }).hasAttribute('disabled')).toBe(true);
     expect(screen.getByRole('button', { name: 'Purse: 500 Bits for 460 Credits, ~8% off' }).hasAttribute('disabled')).toBe(true);

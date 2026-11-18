@@ -7668,6 +7668,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-acc-chev { flex: 0 0 auto; width: 16px; height: 16px; transform: rotate(-90deg); }
 .sm2-acc-btn[aria-expanded="true"] .sm2-acc-chev { transform: rotate(0deg); }
 .sm2-acc-nome { flex: 1; min-width: 0; }
+.sm2-dex-cap { font-size: 10px; text-align: center; }
 .sm2-acc-cont { flex: 0 0 auto; font-weight: 400; color: var(--sm2-muted); }
 .sm2-lib-act {
   width: 44px; height: 44px; flex: none;

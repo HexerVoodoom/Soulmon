@@ -9,6 +9,8 @@ import { STAGE_NAMES } from '../utils/oracle/base';
 import { NewBadge } from './LibraryNewBadge';
 import { BOSS_ROSTER, bossArt, bossText } from '../data/bossRoster';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
+import { readLocal, writeLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 
 /**
@@ -22,10 +24,10 @@ import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 const STAGE_LABEL_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'rookie', champion: 'champion', ultimate: 'perfeito', mega: 'mega', ultra: 'ultra' };
 
 /** Estado recolhido por nível (Drive em accordion, 18/11/2026): lista dos níveis FECHADOS; sem storage, tudo aberto. */
-const ACC_KEY = 'sm2.drive.fechados.v1';
+const ACC_KEY = STORAGE_KEYS.DRIVE_ACORDEAO_FECHADOS;
 function lerFechados(): string[] {
   try {
-    const v = JSON.parse(localStorage.getItem(ACC_KEY) ?? '[]');
+    const v = JSON.parse(readLocal(ACC_KEY) ?? '[]');
     return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
   } catch { return []; }
 }
@@ -63,7 +65,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
   const [fechados, setFechados] = useState<string[]>(lerFechados);
   const alternar = useCallback((id: string) => setFechados(prev => {
     const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-    try { localStorage.setItem(ACC_KEY, JSON.stringify(next)); } catch { /* sem storage: vale só nesta visita */ }
+    writeLocal(ACC_KEY, JSON.stringify(next)); // sem storage: vale só nesta visita
     return next;
   }), []);
   const bossSet = useMemo(() => new Set(bossesSeen ?? []), [bossesSeen]);
@@ -107,7 +109,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
                       <img src={src} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48}
                         style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain', filter: vista ? undefined : 'brightness(0) opacity(0.45)' }} />
                     )}
-                    <span style={{ fontSize: 10, textAlign: 'center' }}>{vista ? `#${i + 1}` : '???'}</span>
+                    <span className="sm2-dex-cap">{vista ? `#${i + 1}` : '???'}</span>
                   </>
                 );
                 const st = { position: 'relative' as const, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 2 };
@@ -133,7 +135,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
               return (
                 <li key={b.id} data-boss-cell={b.id} data-seen={vista ? '1' : '0'} aria-label={vista ? nome : (isPt ? 'Ainda não encontrado' : 'Not met yet')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   {src && <img src={src} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48} style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain', filter: vista ? undefined : 'brightness(0) opacity(0.45)' }} />}
-                  <span style={{ fontSize: 10, textAlign: 'center' }}>{vista ? nome : '???'}</span>
+                  <span className="text-[9px]" style={{ textAlign: 'center' }}>{vista ? nome : '???'}</span>
                 </li>
               );
             })}
@@ -170,7 +172,7 @@ function StrayPlayerCell({ s, n, isPt, isNew }: { s: StrayPlayerSeen; n: number;
       {s.spriteUrl
         ? <img src={s.spriteUrl} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48} style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain' }} />
         : (s.element && elementIcon(s.element) ? <img src={elementIcon(s.element)} alt="" aria-hidden="true" width={48} height={48} draggable={false} style={{ width: 48, height: 48, imageRendering: 'pixelated' }} /> : <span aria-hidden="true" style={{ width: 48, height: 48 }} />)}
-      <span style={{ fontSize: 10, textAlign: 'center' }}>#{n}</span>
+      <span className="sm2-dex-cap">#{n}</span>
     </li>
   );
 }

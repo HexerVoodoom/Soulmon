@@ -34,3 +34,23 @@ export function fusionBossMonster(seed: number, isPt: boolean): SplashMonster {
 export function barrageSpecialMonster(isPt: boolean): SplashMonster {
   return toMonster(BOSS_ROSTER.find(e => e.id === SPECIAL_BARRAGE_BOSS_ID)!, isPt, true);
 }
+
+/**
+ * ARTE DO TÍTULO "BOSS BATTLE" (18/11/2026): `ui/boss-battle-title.png` (EN) e `ui/boss-battle-title-pt.png` (PT-BR; sem ele, usa o EN), por glob:
+ * sem o arquivo o resultado é `undefined` e a intro cai no título de texto (nenhuma importação quebra). O ícone do Fragmento é `BOSS_SHARD_ART` (`itemArt.ts`).
+ */
+const TITLE_ART = import.meta.glob('../assets/soulmon/ui/boss-battle-title*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const artOf = (g: Record<string, string>, tail: string): string | undefined => Object.entries(g).find(([k]) => k.endsWith(tail))?.[1];
+
+export const bossBattleTitleArt = (isPt: boolean): string | undefined =>
+  (isPt ? artOf(TITLE_ART, '/boss-battle-title-pt.png') : undefined) ?? artOf(TITLE_ART, '/boss-battle-title.png');
+
+/**
+ * A arte do adversário na TELA DE RESULTADO do Elemental Fusion. Boss: SEMPRE o chefe da luta (o da intro, `fusionBossMonster`), nunca o
+ * inimigo do roster que o combate carrega por baixo. PvP: o sprite do jogador (nunca roster). Aventura: desgarrado de jogador, senão roster.
+ */
+export function resultOpponentSrc(o: { boss: SplashMonster | null; pvp?: { sprite?: string } | null; stray?: string; roster?: string }): string | undefined {
+  if (o.boss) return o.boss.art || undefined;
+  if (o.pvp) return o.pvp.sprite;
+  return o.stray ?? o.roster;
+}

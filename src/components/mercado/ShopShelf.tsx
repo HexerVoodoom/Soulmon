@@ -4,6 +4,7 @@ import { bitsStyle, emblemStyle, BITS_PACKS, BITS_PACK_DAILY_CAP, CREDIT_COLOR, 
 import { bitsPackLeftToday, subscribeBitsPackLeft } from '../../utils/entitlements';
 import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName, bitsPackBlockedLabel, bitsExchangeFailText, type BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { Icon } from '../ui/Icon';
+import { CreditIcon } from '../ui/CreditIcon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from '../ui/InfoTip';
@@ -117,7 +118,7 @@ export function CurrencyBalance({ currency, value, language }: { currency: Curre
   if (currency === 'credits') {
     return (
       <p data-balance="credits" style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
         <span className="sm2-num">{value}</span>
         <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Créditos' : 'Credits'}</span>
       </p>
@@ -627,7 +628,7 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ways.map(w => (
             <li key={w.key} data-how-to-earn-way={w.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />
+              {w.key === 'creditos' ? <CreditIcon size={24} /> : <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />}
               <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{w.text}</span>
             </li>
           ))}
@@ -677,7 +678,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
   return (
     <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
         <span>
           {isPt ? 'Pacotes de Bits — você tem ' : 'Bits packs — you have '}
           <span className="sm2-num">{credits}</span>
@@ -708,7 +709,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
               <span style={{ ...sm2Hint, margin: 0 }}>{bitsPackName(pack, isPt)}</span>
               {busy ? <Icon name="sync" size={ICON_INLINE} tone="muted" /> : <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />}
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+                <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
                 <span className="sm2-num">{pack.credits}</span>
               </span>
               <span data-bits-pack-off style={{ ...sm2Hint, margin: 0, minHeight: '1.2em' }}>{off ?? ''}</span>
@@ -720,7 +721,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
       </div>
       {faltaSaldo && onGetCredits && (
         <button type="button" data-get-credits onClick={onGetCredits} style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', gap: 6 }}>
-          <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+          <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
           {isPt ? 'Comprar Créditos' : 'Get Credits'}
         </button>
       )}
