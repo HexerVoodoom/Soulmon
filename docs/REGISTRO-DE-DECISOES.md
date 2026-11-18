@@ -6595,3 +6595,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 - **Decisão (dono 18/11/2026: +120% por enquanto):** `M3C_PVP_PLAYER_HP_BONUS = 1.2`; jogador 1144 de HP (base 520), adversário 520, dano inalterado. Só o PvP muda (Aventura, boss e desafio intactos). Chegou-se a pedir +140% (medido 61,3%), trocado por +120%.
 - **Medido** (N=80, sementes fixas, jogador ao acaso): +120% = 58,8% de vitória. A faixa de 40-47% do teste deixou de valer; agora medido ±6 pontos (52,8-64,8%).
+
+## §489 — Corvo só na conta dev do dono, nunca por cima de Soulmon real (18/11/2026, incidente, dono)
+
+- **Incidente:** a conta de JOGO do dono entrou em `ADMIN_EMAILS` (para sumir dos rankings, #1100) e a auto-adoção do corvo (`App.tsx`, que valia para TODO `useAdmin()`) trocou o Soulmon real dele pelo corvinho. `adoptCorvo` substitui `soulmonStages` inteiro (nomes/descrições/prompts das 11 formas), `soulmonMeta.baseName`/`creature` e zera `demoCharacterId`; preserva estágio, XP, atributos, moedas, inventário e o acervo (`spriteLibrary`). Não guarda a criatura anterior em lugar nenhum.
+- **Decisão:** a auto-adoção sai do papel de admin. `shouldAutoAdoptCorvo(state, saveId)` (`utils/corvoPet.ts`) só é true para o saveId da conta dev do dono (hash `soulmon:<email>`, `CORVO_OWNER_SAVE_IDS`; o e-mail não vai no bundle) **e** sobre save vazio/demo (`hasRealSoulmon` falso). O updater reconfere sobre o `prev`. Admin comum não vira corvo; nem a conta dev troca uma criatura real sozinha. `ADMIN_EMAILS` volta a ser só papel de GM/ranking. O botão "adotar" do painel de GM segue manual.
+- **Recuperação:** o save anterior está nos backups de regressão do servidor (`savebak:<saveId>:<ts>`, `_saveGuard.js`); restauração pela tela Configurações → Seus dados → Restaurar backup.
