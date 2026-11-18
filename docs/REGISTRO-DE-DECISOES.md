@@ -6523,3 +6523,5 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Régua:** `CompanionHUD.decorBugs.render.test.tsx` (Home real: toque abre Salão e Perfil, z-index do toque acima do pet, brilho depois do véu, lanterna/fogueira apagam, parede primeiro).
 
 **Gatilho para rever:** se existir outro jeito de "apagar a luz" além da soneca, ligar o mesmo estado.
+
+**Adendo §484 — cogumelo aceso mais forte (dono, 18/11/2026):** acendia, mas fraco. A camada de brilho usa a arte ORIGINAL (a clara) com `brightness(1.3) saturate(1.25)` e dois `drop-shadow` turquesa, e o halo sobe para 190% da caixa a 100% de opacidade (pulso suave 1 → .82). O estado apagado (acordado) segue escurecido por filtro.

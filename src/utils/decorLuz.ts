@@ -17,7 +17,7 @@ export const DECOR_LUZ: Readonly<Record<string, DecorLuz>> = Object.freeze({
   'furn-cerejeira-lanterna-de-petalas': { modo: 'luz', tom: 'petala', x: 50, y: 55, d: 110 },
   'furn-lava-altar-de-magma': { modo: 'luz', tom: 'fogo', x: 50, y: 40, d: 110 },
   'furn-lava-flor-de-brasa': { modo: 'luz', tom: 'fogo', x: 50, y: 40, d: 90 },
-  'furn-mushrooms': { modo: 'noite', tom: 'cogumelo', x: 50, y: 55, d: 120 },
+  'furn-mushrooms': { modo: 'noite', tom: 'cogumelo', x: 50, y: 55, d: 190 },
 });
 
 export function decorLuzAcesa(l: DecorLuz, dormindo: boolean): boolean {

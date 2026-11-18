@@ -243,7 +243,7 @@ export function PetStageBrilhos({ equippedDecor, equippedBackground, isSleeping 
         return (
           <div key={slotId} className="sm-decor-brilho" data-on={decorLuzAcesa(luz, isSleeping) || undefined} style={{ ...slotBoxStyle(slot), display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <span className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={decorLuzAcesa(luz, isSleeping) || undefined} style={{ left: `${luz.x}%`, top: `${luz.y}%`, width: `${luz.d}%` }} />
-            {art && <img src={art} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />}
+            {art && <img src={art} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: 'brightness(1.3) saturate(1.25) drop-shadow(0 0 5px hsl(165 95% 62% / .95)) drop-shadow(0 0 14px hsl(165 90% 55% / .65))' }} />}
           </div>
         );
       })}
