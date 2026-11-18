@@ -97,6 +97,8 @@ export interface M3Combat {
   elements?: readonly string[];
   /** Elemento do Soulmon do jogador (base ou par): o defensor da conta de vantagem dos golpes do INIMIGO. Ausente = neutro. */
   playerElement?: string;
+  /** PVP: fator de dano do inimigo próprio do duelo (`M3C_PVP_ENEMY_DMG_FACTOR`). Ausente = `M3C_ENEMY_DMG_FACTOR` (Aventura, boss, desafio). */
+  foeDmgFactor?: number;
   /** Índice (0..3) do inimigo ativo (o 1º de pé: é quem responde). */
   active: number;
   /**
@@ -144,6 +146,9 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
 /** PVP (REGISTRO §472, dono 17/11/2026): o HP do único inimigo é o MESMO do jogador (duelo simétrico; era a soma do time do Normal). */
 export const M3C_PVP_ENEMY_HP: number = M3C_PLAYER_HP;
 
+/** PVP mais DIFÍCIL que a Aventura (dono, 17/11/2026): o dano do adversário. Duelo simétrico (o adversário bate tanto quanto o jogador). Calibrado por `match3Pvp.balanco.test.ts` (jogador ao acaso: ~14% no PVP contra ~28% na Aventura). */
+export const M3C_PVP_ENEMY_DMG_FACTOR = 1;
+
 /**
  * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
  * `roster` = chave do roster quando o adversário é um NPC (bestiário); jogador real não leva nada (arte e level vêm da tela).
@@ -154,7 +159,7 @@ export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: str
   return {
     player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
     enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],
-    elements: [...elements], ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
+    elements: [...elements], foeDmgFactor: M3C_PVP_ENEMY_DMG_FACTOR, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
   };
 }
 
@@ -228,7 +233,7 @@ export function applyEnemySteps(state: M3Combat, steps: readonly Step[]): M3Comb
     for (const k of st.kinds) porElemento.set(k, (porElemento.get(k) ?? 0) + 1);
     for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
       if (s.outcome !== 'playing') return s;
-      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * M3C_ENEMY_DMG_FACTOR * m3ElementMult(s.enemies[s.active]?.element, s.playerElement)));
+      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * (s.foeDmgFactor ?? M3C_ENEMY_DMG_FACTOR) * m3ElementMult(s.enemies[s.active]?.element, s.playerElement)));
       const dmg = Math.min(s.player.hp, bruto);
       s.player.hp -= dmg;
       s.taken += dmg;
