@@ -1,5 +1,8 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — botão ESPECIAL de compra (18/11/2026, pedido do dono)
+Placa dourada em pedra turquesa escura, 3 estados (`ui/btn-especial{,-press,-off}.webp`, 580×146, alfa real, sem texto), pintada no ChatGPT com a moldura de card e a placa de nome como referência. Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/` (`botao-folha-2.png`, `prompts/botao-especial.txt`, `registro.jsonl`). Usada por `BotaoEspecial` em "Comprar 3 tickets" (Salão) e "Comprar convites" (Arena).
+
 ## FEITO — fundos da Home refeitos com a identidade (14/11/2026, REGISTRO §377)
 
 Os 33 cenários do palco (32 `bg-{cerejeira,el,jardim,lava,mar-profundo,neve,ruinas}-*` + `bg-lakeside`) foram refeitos no ChatGPT (original como âncora de composição, chão igual, levemente pixelado) e ganharam malha digital discreta por pós-processo determinístico; aprovados pelo dono em 14/11/2026. Fontes e folhas de contato: `E:/Soulmon-assets/_lote-14-11/fundos-home/` (`contato-*.png`, `contato-malha.png`, `_malha-v3.json`). Fica laranja de propósito: chamas de forja/braseiro em `bg-el-industrial` e `bg-el-fogo` (só o cristal da alma é turquesa). Pendente do dono: `bg-cerejeira-bosque-de-cerejeiras` mostra lava/vulcão, não cerejeiras (nada renomeado).

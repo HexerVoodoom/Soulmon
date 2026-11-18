@@ -9,6 +9,7 @@ import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
 import { EnergyCost } from '../ui/EnergyCost';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
 import { DUEL_INVITE_ENERGY_COST, podeComprarConvites } from '../../utils/duelInvites';
 import { bitsCategoryCap, minigameBitsCategoryToday } from '../../utils/currencies';
 import { playerDayKey } from '../../utils/playerDay';
@@ -169,11 +170,10 @@ function ComprarConvites({ isPt, inv }: { isPt: boolean; inv: NonNullable<ArenaR
   const [recusou, setRecusou] = useState(false);
   return (
     <div data-duelo-convites style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <button type="button" data-duelo-comprar onClick={() => setRecusou(!inv.onExchange())}
-        style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <BotaoEspecial data-duelo-comprar onClick={() => setRecusou(!inv.onExchange())}>
         {isPt ? 'Comprar convites' : 'Buy invites'}
         <EnergyCost amount={DUEL_INVITE_ENERGY_COST} />
-      </button>
+      </BotaoEspecial>
       <p data-duelo-convites-count className="sm2-num" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
         {isPt
           ? `${DUEL_INVITE_ENERGY_COST} energia = ${inv.perEnergy} convites`
