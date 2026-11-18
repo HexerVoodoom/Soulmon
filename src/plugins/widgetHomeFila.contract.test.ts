@@ -26,7 +26,7 @@ describe('drenagem: paga igual ao toque na Home, uma vez', () => {
   it('cada check vira a conclusão da Home (mesmo estado do applyTaskCompletion)', () => {
     const gs = estado([tarefa('a'), tarefa('b')]);
     const r = applyWidgetEvents(gs, [ev(1, 'a')], [], AGORA);
-    expect(r.paid.map(p => p.task.id)).toEqual(['a']);
+    expect(r.paid.map(p => p.id)).toEqual(['a']);
     expect(r.state).toEqual(applyTaskCompletion(gs, 'a', AGORA).state);
     expect(r.handled).toEqual([EID(1)]);
   });
@@ -71,7 +71,7 @@ describe('drenagem: paga igual ao toque na Home, uma vez', () => {
 
   it('aplica na ordem do toque (ts)', () => {
     const r = applyWidgetEvents(estado([tarefa('a'), tarefa('b')]), [ev(2, 'b', 20), ev(1, 'a', 10)], [], AGORA);
-    expect(r.paid.map(p => p.task.id)).toEqual(['a', 'b']);
+    expect(r.paid.map(p => p.id)).toEqual(['a', 'b']);
   });
 
   it('o registro tem teto', () => {
@@ -111,7 +111,7 @@ describe('APK antigo (sem o comando): detecção de recurso', () => {
 });
 
 describe('widgetTaskList: a lista do widget', () => {
-  it('abertas de hoje primeiro (foco na frente), feitas hoje depois; adiada fica de fora', () => {
+  it('tarefas na ordem da Home (abertas, depois marcadas, depois concluídas hoje); adiada fica de fora', () => {
     const lista = widgetTaskList({
       tasks: [
         tarefa('a'),
@@ -121,7 +121,8 @@ describe('widgetTaskList: a lista do widget', () => {
       ],
       completedTasks: [{ id: 'z', name: 'Feita hoje', completedAt: ISO }, { id: 'y', name: 'Ontem', completedAt: new Date(2026, 10, 17).toISOString() }],
     } as never, AGORA);
-    expect(lista.map(t => [t.id, t.done])).toEqual([['foco', false], ['a', false], ['marcada', true], ['z', true]]);
+    expect(lista.map(t => [t.id, t.done])).toEqual([['a', false], ['foco', false], ['marcada', true], ['z', true]]);
+    expect(lista.every(t => t.kind === 'task')).toBe(true);
   });
   it('teto e nome curto', () => {
     const lista = widgetTaskList({ tasks: Array.from({ length: 30 }, (_, i) => tarefa(`t${i}`, { name: `  nome   ${'x'.repeat(80)}` })) } as never, AGORA);

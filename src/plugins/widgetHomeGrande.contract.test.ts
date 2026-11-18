@@ -34,16 +34,17 @@ describe('widget grande da Home (nativo)', () => {
   });
 
   it('o check funciona em todas as versões: ImageView + fill-in, nunca só o checkbox da API 31+', () => {
-    expect(service).toMatch(/setOnClickFillInIntent\(R\.id\.widget_home_check_hit/);
+    expect(service).toMatch(/setOnClickFillInIntent\(\s*R\.id\.widget_home_check_hit/);
     expect(service + renderer).not.toMatch(/setCompoundButtonChecked|setOnCheckedChangeResponse/);
     expect(renderer).toMatch(/setPendingIntentTemplate\(\s*R\.id\.widget_home_list/);
   });
 
   it('o check SÓ MARCA: grava na fila e redesenha; nada de regra de jogo no nativo', () => {
-    expect(provider).toMatch(/WidgetEventQueue\.Store\.addTaskDone\(/);
+    expect(provider).toMatch(/WidgetEventQueue\.Store\.addDone\(context, eventKind, id,/);
     expect(provider + service).not.toMatch(/foodInventory|totalXP|gamePoints|awardBond/);
-    // só tarefa da lista de hoje e ainda aberta
-    expect(provider).toMatch(/homeTaskItems\(context\)\.none \{ it\.id == id && !it\.done \}/);
+    // só item da lista de hoje, do mesmo tipo, aberto e sem etapas (adendo ao §478: hábitos)
+    expect(provider).toMatch(/homeTaskItems\(context\)\.none \{ it\.id == id && it\.kind == kind && it\.checkable \}/);
+    expect(service).toMatch(/if \(item\.checkable\)/);
   });
 
   it('o resto do widget abre o jogo e entra no updateAll (atualiza com o estado e com o WidgetRefreshWorker)', () => {

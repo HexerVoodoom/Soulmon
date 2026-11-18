@@ -16,8 +16,14 @@
 
 import type { GameState, Task } from '../contexts/GameStateContext';
 import { applyTaskCompletion } from './taskCompletionPay';
+import { applyHabitCompletion } from './habitCompletionPay';
 
-/** Um evento da fila nativa. Só `task_done` existe hoje; tipo desconhecido é descartado (ack sem aplicar). */
+/** `YYYY-MM-DD` do aparelho: o mesmo `LocalDate.now()` que o Kotlin grava em `dayKey`. */
+export function localIsoDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Um evento da fila nativa: `task_done` ou `habit_done` (adendo ao §478); tipo desconhecido é descartado (ack sem aplicar). */
 export interface WidgetEvent {
   eid: string;
   kind: string;
@@ -60,8 +66,8 @@ export interface WidgetDrainResult<S> {
   handled: string[];
   /** O registro atualizado (o que vai para o localStorage). */
   applied: string[];
-  /** O que pagou agora, na ordem da fila, para o feedback do app. */
-  paid: Array<{ task: Task; relief: boolean; premium: boolean }>;
+  /** O que pagou agora, na ordem da fila, para o feedback do app. Hábito: `relief`/`premium` sempre `false`. */
+  paid: Array<{ kind: 'task' | 'habit'; id: string; name: string; category: Task['category']; relief: boolean; premium: boolean }>;
 }
 
 /**
@@ -81,11 +87,23 @@ export function applyWidgetEvents<S extends GameState>(state: S, events: WidgetE
     if (visto.has(ev.eid)) continue;
     visto.add(ev.eid);
     novos.push(ev.eid);
+    if (ev.kind === 'habit_done') {
+      // Hábito é do DIA em que foi marcado: check de ontem não conta hoje (a virada já fechou ontem sem ele).
+      if (ev.dayKey !== localIsoDay(now)) continue;
+      const hab = s.activities.find(a => a.id === ev.ref);
+      // Com etapas, a Home fecha pelas etapas, não pelo check: o widget também não fecha.
+      if (!hab || hab.steps.length > 0) continue;
+      const next = applyHabitCompletion(s, ev.ref, now);
+      if (next === s) continue; // já feito hoje (no app ou noutro evento)
+      s = next;
+      paid.push({ kind: 'habit', id: hab.id, name: hab.name, category: hab.category as Task['category'], relief: false, premium: false });
+      continue;
+    }
     if (ev.kind !== 'task_done') continue;
     const r = applyTaskCompletion(s, ev.ref, now);
     if (!r.paid || !r.task) continue;
     s = r.state;
-    paid.push({ task: r.task, relief: r.relief, premium: r.premium });
+    paid.push({ kind: 'task', id: r.task.id, name: r.task.name, category: r.task.category, relief: r.relief, premium: r.premium });
   }
   return { state: s, handled, applied: [...applied, ...novos].slice(-WIDGET_APPLIED_CAP), paid };
 }

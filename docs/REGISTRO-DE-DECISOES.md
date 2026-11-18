@@ -6454,6 +6454,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 **Gatilho para rever:** o dono querer hábitos no check do widget, o ganho aparecer no widget sem abrir o jogo, ou launcher de fabricante cortar a lista (testar em aparelho).
 
+**Adendo (18/11/2026, dono): hábitos do dia no widget.** A lista do widget passa a ser o "Hoje" da Home inteiro, na mesma ordem do `DailyRituals`: Tarefas (avulsas de hoje, tarefas de dias específicos, concluídas hoje) e depois Hábitos (abertos, feitos), até 24 itens, rolável. Cada linha leva o tipo (`task`/`habit`). O check de hábito grava `habit_done` (eid UUID, id, ts, data local) na mesma fila e também SÓ MARCA. Ao abrir, o app paga pela regra do toque no hábito da Home (`applyHabitCompletion` em `src/utils/habitCompletionPay.ts`, extraída de `handleToggleActivityCompletion`, com teste de paridade): virada pendente primeiro, comida, constância, bônus de maturidade, Vínculo e marco 7/21/66 iguais; o selo dos passos e a cerimônia do marco também rodam. Idempotente: hábito já feito hoje = ignora; eid repetido = no-op. **Check de ontem não conta hoje** (a virada já fechou o dia; o evento só é descartado). **Hábito com etapas** aparece sem check (na Home ele fecha pelas etapas). Diferença consciente do toque antigo: o updater compartilhado nunca DESMARCA um hábito já feito (o antigo invertia o estado num toque duplo antes do re-render).
 
 ## §479 — Cambista: a lista não mostra posse; comprar abre o modal com seletor de quantidade (18/11/2026, pedido do dono)
 

@@ -36,4 +36,5 @@
     <string name="widget_home_empty_stale">Open Soulmon to load today\'s list.</string>
     <string name="widget_home_check_mark">Mark %1$s as done</string>
     <string name="widget_home_check_done">%1$s: done</string>
+    <string name="widget_home_check_steps">%1$s: open the game to tick the steps</string>
 </resources>

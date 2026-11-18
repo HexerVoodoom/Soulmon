@@ -8,7 +8,9 @@ import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
 import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
 import { activitiesForWeekDay, habitWeightOf } from '../utils/dailyReset';
 import { hiddenForDayKey, type DayPlan } from '../utils/dayPlan';
-import { focusTasks, parseDayValue, taskStatus, type TriageTask } from '../utils/taskTriage';
+import { focusTasks, isActive, parseDayValue, taskStatus, type TriageTask } from '../utils/taskTriage';
+import { activityBucket, taskIsForToday } from '../utils/atividadesLista';
+import { habitCountsOn } from '../utils/habitRhythm';
 import { activityDoneOn } from '../hooks/useProgressTracking';
 import type { PlayerDayAnchor } from '../utils/playerDay';
 
@@ -114,40 +116,67 @@ export function widgetNextTask(state: WidgetTaskState, now: Date, done: number, 
   return next ? next.slice(0, WIDGET_TASK_NAME_MAX) : '';
 }
 
-/** Teto da lista do widget grande da Home (o Kotlin corta de novo) e do nome de cada linha. */
-export const WIDGET_TASK_LIST_MAX = 12;
+/** Teto da lista do widget grande da Home (o Kotlin corta de novo) e do nome de cada linha. A lista rola no widget. */
+export const WIDGET_TASK_LIST_MAX = 24;
 const WIDGET_TASK_LINE_MAX = 40;
 
-/** Uma linha da lista do widget grande da Home: id, nome curto, feita ou não. Nunca peso, prazo ou recompensa. */
-export interface WidgetTaskItem { id: string; name: string; done: boolean }
+/**
+ * Uma linha da lista do widget grande da Home: tipo (`task` = tarefa avulsa, `habit` = hábito ou tarefa de dias
+ * específicos, que no save são `Activity`), id, nome curto, feita ou não, e `lock` (hábito com etapas: na Home ele fecha
+ * pelas etapas, então o widget mostra sem check). Nunca peso, prazo ou recompensa.
+ */
+export interface WidgetTaskItem { id: string; kind: 'task' | 'habit'; name: string; done: boolean; lock?: true }
+
+type WidgetActivity = {
+  id: string; name?: string; steps: Array<{ completed?: boolean }>; completedToday?: boolean; lastCompletedDate?: string;
+  schedule?: unknown; weekDays?: number[];
+};
 
 /**
- * `tasksJson` do widget grande da Home (18/11/2026): as tarefas avulsas DE HOJE, abertas primeiro (o foco do dia na
- * frente, como no `widgetNextTask`) e depois as concluídas hoje (riscadas). Mesmo filtro do `widgetNextTask`: adiada
- * para outro dia ou escondida no plano do dia não entra. Hábitos ficam de fora (o check do widget só conclui TAREFA).
+ * `tasksJson` do widget grande da Home: o "Hoje" da Home, na MESMA ordem do `DailyRituals` (variant home):
+ * seção Tarefas = avulsas de hoje (abertas, depois marcadas), tarefas de dias específicos abertas e feitas, avulsas já
+ * concluídas hoje; seção Hábitos = abertos, depois feitos. Mesmos filtros: avulsa adiada para outro dia não entra; hábito
+ * só se conta hoje (`habitCountsOn`) ou já foi feito hoje; o escondido pelo plano do dia sai (salvo se já feito).
  */
 export function widgetTaskList(
-  state: Pick<WidgetTaskState, 'tasks' | 'dayPlan' | 'playerDayTz'> & { completedTasks?: Array<{ id?: string; name?: string; completedAt?: string }> },
+  state: Pick<WidgetTaskState, 'tasks' | 'dayPlan' | 'playerDayTz'> & {
+    completedTasks?: Array<{ id?: string; name?: string; completedAt?: string }>;
+    activities?: WidgetActivity[];
+    habitRhythms?: Record<string, unknown>;
+  },
   now: Date,
 ): WidgetTaskItem[] {
-  const dayKey = now.toDateString();
-  const hidden = hiddenForDayKey(state.dayPlan, dayKey, state.playerDayTz);
-  const startOfTomorrow = widgetDayEndsAt(now);
+  const today = now.toDateString();
+  const hidden = hiddenForDayKey(state.dayPlan, today, state.playerDayTz);
   const linha = (n?: string) => (n ?? '').replace(/\s+/g, ' ').trim().slice(0, WIDGET_TASK_LINE_MAX);
-  const hoje = (state.tasks ?? []).filter(t => {
-    if (taskStatus(t) !== 'open' || hidden.has(String(t.id))) return false;
-    const start = t.startDate ? parseDayValue(t.startDate) : null;
-    return !start || start.getTime() < startOfTomorrow;
-  });
-  const abertas = [...focusTasks(hoje, dayKey), ...hoje].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i);
-  const itens: WidgetTaskItem[] = abertas
-    .map(t => ({ id: String(t.id), name: linha(t.name), done: t.completed === true }))
-    .sort((a, b) => Number(a.done) - Number(b.done));
+  const tasks = state.tasks ?? [];
+  const tarefas = tasks
+    .filter(t => isActive(t) && taskIsForToday(t, now) && (t.completed === true || !hidden.has(String(t.id))))
+    .sort((a, b) => Number(a.completed === true) - Number(b.completed === true))
+    .map((t): WidgetTaskItem => ({ id: String(t.id), kind: 'task', name: linha(t.name), done: t.completed === true }));
+  const vivos = new Set(tasks.map(t => String(t.id)));
   const feitasHoje = (state.completedTasks ?? [])
-    .filter(c => typeof c.id === 'string' && c.completedAt && new Date(c.completedAt).toDateString() === dayKey)
-    .map(c => ({ id: String(c.id), name: linha(c.name), done: true }));
-  return [...itens, ...feitasHoje]
-    .filter((t, i, a) => t.name && a.findIndex(x => x.id === t.id) === i)
+    .filter(c => typeof c.id === 'string' && !vivos.has(c.id) && c.completedAt && new Date(c.completedAt).toDateString() === today)
+    .map((c): WidgetTaskItem => ({ id: String(c.id), kind: 'task', name: linha(c.name), done: true }));
+  const devidos = (state.activities ?? []).map(a => {
+    const isComplete = a.steps.length > 0 ? a.steps.every(s => s.completed) : !!(a.completedToday && a.lastCompletedDate === today);
+    const conta = habitCountsOn(a as never, state.habitRhythms?.[a.id] as never, now, state.playerDayTz);
+    return { a, isComplete, devido: (conta || isComplete) && (isComplete || !hidden.has(String(a.id))) };
+  }).filter(x => x.devido);
+  const item = (x: (typeof devidos)[number]): WidgetTaskItem => ({
+    id: String(x.a.id), kind: 'habit', name: linha(x.a.name), done: x.isComplete, ...(x.a.steps.length > 0 ? { lock: true as const } : {}),
+  });
+  const agendadas = devidos.filter(x => activityBucket(x.a) === 'scheduled');
+  const habitos = devidos.filter(x => activityBucket(x.a) === 'habit');
+  return [
+    ...tarefas,
+    ...agendadas.filter(x => !x.isComplete).map(item),
+    ...agendadas.filter(x => x.isComplete).map(item),
+    ...feitasHoje,
+    ...habitos.filter(x => !x.isComplete).map(item),
+    ...habitos.filter(x => x.isComplete).map(item),
+  ]
+    .filter((t, i, arr) => t.name && arr.findIndex(x => x.kind === t.kind && x.id === t.id) === i)
     .slice(0, WIDGET_TASK_LIST_MAX);
 }
 

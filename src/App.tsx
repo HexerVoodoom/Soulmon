@@ -138,7 +138,6 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 /** Teto do log de conclusões de atividade — registro de ritmo, não arquivo.
  *  A leitura do ritmo olha 14 dias; 90 entradas cobrem isso com folga sem
  *  inchar o save (localStorage e nuvem). */
-const ACTIVITY_LOG_CAP = 90;
 const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
@@ -272,6 +271,7 @@ import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
 import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
+import { applyHabitCompletion, withHabitCompletion, ACTIVITY_LOG_CAP } from './utils/habitCompletionPay';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
@@ -744,82 +744,6 @@ function nascerElementoJornada(dominante: string | undefined, seed: number | und
 function elementoAoEvoluir(prev: Pick<GameState, 'elementoJornada' | 'demoCharacterId' | 'soulmonMeta'>, destino: string): GameState['elementoJornada'] {
   if (prev.demoCharacterId || prev.soulmonMeta?.creature === 'corvo') return prev.elementoJornada;
   return registrarElementoDoEstagio(prev.elementoJornada, { stage: fichaStageOf(destino), base: prev.soulmonMeta?.dominantElement, ...dadosDaSorte(prev.soulmonMeta?.seed) });
-}
-
-/**
- * Registra a conclusão de um hábito NO MESMO DIA em que ela acontece.
- *
- * A virada do dia (`utils/dailyReset.ts`) já escreve faltas, escudos e a
- * conclusão de ONTEM — isto aqui não duplica aquilo: `completeHabit` é
- * idempotente por dayKey, então quando a virada reprocessar o mesmo dia ela não
- * acha nada para fazer. O que se ganha escrevendo agora é a única coisa que a
- * virada não pode dar: a pessoa marca o hábito e VÊ a constância mexer, em vez
- * de esperar até depois da meia-noite para descobrir se contou.
- *
- * O rendimento de atributo é o BÔNUS de maturidade (`attributeMultiplier`, de
- * `habitRhythm.ts`), e só ele: a base continua vindo da comida, como sempre
- * veio. Um hábito maduro rende MAIS, nunca menos — a "eficiência decrescente"
- * comum em jogos de idle ensinaria a abandonar exatamente o que o app quer
- * preservar. Hábito novo (tier semente) tem multiplicador 1, logo bônus zero:
- * ninguém ganha nada que já não ganhava.
- *
- * Função PURA sobre `prev`, para poder viver dentro de um updater sem violar o
- * footgun 6 (a celebração do marco fica fora, no chamador).
- */
-function withHabitCompletion(
-  prev: GameState,
-  activityId: string,
-  category: ActivityCategory,
-  todayKey: string,
-  /** Dia do JOGADOR (`utils/playerDay.ts`) — a régua do ledger de teto do
-   *  Vínculo. Vem por parâmetro, e não de um `new Date()` aqui dentro, porque
-   *  esta função roda DENTRO de um updater e precisa continuar pura. */
-  bondDayKey: string,
-): GameState {
-  const before = prev.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
-  const after = completeHabit(before, todayKey);
-  if (after === before) return prev; // já marcado hoje — nada a fazer
-
-  const extra = attributeMultiplier(after.totalDone) - 1;
-  const base = CATEGORY_ATTRIBUTES[category] ?? { power: 0, harmony: 0, benevolence: 0 };
-  const bonus = {
-    power: Math.round(base.power * extra),
-    harmony: Math.round(base.harmony * extra),
-    benevolence: Math.round(base.benevolence * extra),
-  };
-
-  // 🔗 Vínculo: a conclusão do hábito é UM dos eventos que a trilha relê. O
-  // multiplicador é o MESMO tier de maturidade que já rege o atributo
-  // (`habitRhythm.ts`) — nada de segunda tabela (footgun 9), e nenhuma ação
-  // nova é pedida: quem marcaria o hábito de qualquer jeito sobe.
-  const comXP = awardBondXP(prev, {
-    kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after.totalDone),
-  }, bondDayKey);
-
-  /* 🔗 #59b — 🌳 MARCO DE HÁBITO (7/21/66). Um dos 6 `BondEvent` que a tabela
-     do §55 declarava e ninguém emitia (QA rodada 2 §2.4: 7 dos 11 mudos).
-     `milestoneReached` é a MESMA detecção que a cerimônia usa — nada de
-     segunda tabela (footgun 9) —, e `completeHabit` é idempotente por dayKey,
-     então marcar o hábito duas vezes no mesmo dia não paga duas vezes.
-     Os dias saem de `HABIT_MILESTONES` (`types/taskModel.ts`), dono único dos
-     números, e não de literais. */
-  const marco = milestoneReached(before.totalDone, after.totalDone);
-  const comMarco = marco
-    ? awardBondXP(comXP, { kind: 'habitMilestone', days: after.totalDone }, bondDayKey)
-    : comXP;
-
-  return {
-    ...comMarco,
-    habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
-    powerPoints: prev.powerPoints + bonus.power,
-    harmonyPoints: prev.harmonyPoints + bonus.harmony,
-    benevolencePoints: prev.benevolencePoints + bonus.benevolence,
-    attributesSinceLastEvolution: {
-      power: (prev.attributesSinceLastEvolution?.power ?? 0) + bonus.power,
-      harmony: (prev.attributesSinceLastEvolution?.harmony ?? 0) + bonus.harmony,
-      benevolence: (prev.attributesSinceLastEvolution?.benevolence ?? 0) + bonus.benevolence,
-    },
-  };
 }
 
 /**
@@ -3426,83 +3350,9 @@ export default function App() {
     if (activity?.completedToday && activity?.lastCompletedDate === today) return;
     if (activity) track('task_done', { kind: 1 }); // métricas: só o fato, nunca o nome
 
-    setGameState(prevRaw => {
-      // Virada pendente (até 30 s depois da meia-noite): fecha ontem ANTES de escrever hoje (QA L02-02).
-      const prev = settlePendingRollover(prevRaw);
-      const activity = prev.activities.find(a => a.id === activityId);
-      if (!activity) return prev;
-
-      const isCurrentlyCompleted = activity.completedToday && activity.lastCompletedDate === today;
-      const newCompletedState = !isCurrentlyCompleted;
-
-      const updatedActivities = prev.activities.map(act =>
-        act.id === activityId
-          ? {
-            ...act,
-            completedToday: newCompletedState,
-            lastCompletedDate: newCompletedState ? today : act.lastCompletedDate,
-          }
-          : act
-      );
-
-      // Update activity stats if completing
-      let newActivityStats = prev.activityStats;
-      if (newCompletedState && activity) {
-        const activityKey = `activity-${activity.id}`;
-        const currentStats = prev.activityStats[activityKey] || {
-          name: activity.name,
-          emoji: activity.emoji,
-          category: activity.category,
-          completionCount: 0,
-        };
-
-        newActivityStats = {
-          ...prev.activityStats,
-          [activityKey]: {
-            ...currentStats,
-            completionCount: currentStats.completionCount + 1,
-          },
-        };
-      }
-
-      // Concluir atividade rende a comida da categoria. (O ramo antigo de
-      // "estágio inicial ganha energia direto" saiu: a árvore nasce em rookie,
-      // então getStageLevel nunca devolvia os estágios de ovo/bebê e ele era inalcançável
-      // — o mesmo ramo morto que já tinha sido removido do caminho das tarefas.)
-      let newFoodInventory = prev.foodInventory;
-      let newActivityLog = prev.activityLog ?? [];
-      if (newCompletedState && activity) {
-        const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
-        if (food) {
-          newFoodInventory = {
-            ...prev.foodInventory,
-            [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-          };
-        }
-        // Registra a conclusão para o ritmo de cuidado enxergar atividades —
-        // `completedTasks` só recebe tarefas avulsas, e `lastCompletedDate`
-        // some na virada do dia.
-        newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
-      }
-
-      const next: GameState = {
-        ...prev,
-        activities: updatedActivities,
-        activityStats: newActivityStats,
-        foodInventory: newFoodInventory,
-        activityLog: newActivityLog,
-      };
-
-      // A constância do hábito é alimentada NO MESMO DIA (ver
-      // `withHabitCompletion`), e não só na virada — senão marcar o hábito não
-      // move nada visível até depois da meia-noite.
-      return newCompletedState
-        ? withHabitCompletion(
-          next, activityId, activity.category, today,
-          playerDayKey(new Date(), prev.playerDayTz),
-        )
-        : next;
-    });
+    // O pagamento (virada pendente, marca de hoje, estatística, comida, registro, constância, Vínculo, marco) mora em
+    // `utils/habitCompletionPay.ts`: o check de hábito do widget grande da Home paga pela MESMA regra (footgun 9).
+    setGameState(prevRaw => applyHabitCompletion(prevRaw, activityId, new Date(), today));
 
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
@@ -3981,18 +3831,24 @@ export default function App() {
   const widgetFeedbackRef = useRef<(paid: WidgetDrainResult<GameState>['paid']) => void>(() => {});
   widgetFeedbackRef.current = paid => {
     for (const p of paid) {
-      track('task_done', { kind: 0 });
+      track('task_done', { kind: p.kind === 'habit' ? 1 : 0 });
       if (p.relief) track('haunted_done');
     }
     playTaskComplete();
-    queueTaskGains(paid[paid.length - 1].task.category);
+    queueTaskGains(paid[paid.length - 1].category);
     toast(language === 'pt-BR'
-      ? (paid.length === 1 ? `✅ "${paid[0].task.name}" (marcada no widget) foi concluída.` : `✅ ${paid.length} tarefas marcadas no widget foram concluídas.`)
-      : (paid.length === 1 ? `✅ "${paid[0].task.name}" (checked on the widget) is done.` : `✅ ${paid.length} tasks checked on the widget are done.`));
+      ? (paid.length === 1 ? `✅ "${paid[0].name}" (marcada no widget) foi concluída.` : `✅ ${paid.length} itens marcados no widget foram concluídos.`)
+      : (paid.length === 1 ? `✅ "${paid[0].name}" (checked on the widget) is done.` : `✅ ${paid.length} items checked on the widget are done.`));
     if (paid.some(p => p.premium)) {
       toast(language === 'pt-BR'
         ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
         : '⭐ Every step done! You earned a premium food.');
+    }
+    // Hábito: os mesmos efeitos do toque na Home — marco 7/21/66 (lido do estado de ANTES, como lá) e o selo dos passos.
+    for (const p of paid) {
+      if (p.kind !== 'habit') continue;
+      celebrateHabitMilestone(p.id, p.name, new Date().toDateString());
+      grantStepsVerified(p.category);
     }
     falar(paid.some(p => p.relief) ? 'haunted' : 'task');
     marcarGestoDoDia('task');
