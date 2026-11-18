@@ -150,7 +150,7 @@ export const M3C_PVP_ENEMY_HP: number = M3C_PLAYER_HP;
 export const M3C_PVP_ENEMY_DMG_FACTOR = 1;
 
 /** PVP: bônus de HP do JOGADOR (fração do HP base; REGISTRO §488, testers: "o PvP do Match 3 ficou muito difícil"). O adversário segue com `M3C_PVP_ENEMY_HP`. Só o PVP; Aventura, boss e desafio ficam com `M3C_PLAYER_HP`. */
-export const M3C_PVP_PLAYER_HP_BONUS = 0.4;
+export const M3C_PVP_PLAYER_HP_BONUS = 0.8;
 /** HP inicial (e máximo) do jogador no PVP: base + bônus. */
 export const M3C_PVP_PLAYER_HP: number = Math.round(M3C_PLAYER_HP * (1 + M3C_PVP_PLAYER_HP_BONUS));
 

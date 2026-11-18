@@ -6580,3 +6580,10 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decisão:** `M3C_PVP_PLAYER_HP_BONUS = 0.4` em `match3Combat.ts`; no PvP o jogador começa com `M3C_PVP_PLAYER_HP` = 728 de HP (base 520), o adversário segue com 520 e dano fator 1. Aventura, boss e Calabouço intactos.
 - **Calibração** (`match3Pvp.balanco.test.ts`, N=80, sementes fixas, jogador ao acaso): +0% 13,8% · +20% 20,0% · +30% 23,8% · +40% 25,0% · +50% 32,5% (Aventura 27,5%). Menor bônus que chega à faixa de ~25-30%: +40%.
 - **Sem efeito colateral:** pontuação = dano dado − dano tomado (não depende do HP inicial); o servidor (`functions/api`) não valida HP; o HUD lê `player.max`.
+
+### Adendo (18/11/2026, 2ª rodada): bônus sobe para +80%
+
+- **Pedido do dono:** testers ainda acham o PvP difícil; "mais HP no jogador, dano igual" (`M3C_PVP_ENEMY_DMG_FACTOR` segue 1).
+- **Decisão:** `M3C_PVP_PLAYER_HP_BONUS = 0.8`; jogador 936 de HP (base 520), adversário 520. Só o PvP muda.
+- **Calibração** (N=80, sementes fixas, jogador ao acaso): +60% 36,3% · +70% 37,5% · +75% 40,0% · +80% 43,8% · +100% 51,3% · +120% 58,8%. Escolhido +80% (centro de ~40-45%; +75% é o limite inferior).
+- **Sem efeito colateral:** HUD usa barra por razão (sem texto HP N/N); pontuação = dano dado − tomado (+bônus de derrota), cortes e teto do servidor (`_rankings.js`, `match3-pvp` 10.000) não dependem de HP.
