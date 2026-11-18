@@ -19,7 +19,7 @@
  * arrastar): o item selecionado — por toque OU por foco — mostra um botão
  * "Usar"/"Use" logo abaixo da grade, com o nome do item no rótulo.
  */
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
@@ -103,6 +103,7 @@ export interface MochilaProps {
 
 interface Arrasto {
   emoji: string;
+  inerte?: boolean;
   x0: number;
   y0: number;
   ativo: boolean;
@@ -136,7 +137,7 @@ export function Mochila({
   const isPt = language === 'pt-BR';
   const [aba, setAba] = useState<MochilaAbaVista>('comida');
   const [selecionado, setSelecionado] = useState<string | null>(null);
-  const [fantasma, setFantasma] = useState<{ emoji: string; x: number; y: number } | null>(null);
+  const [fantasma, setFantasma] = useState<{ emoji: string; x: number; y: number; icone?: ReactNode } | null>(null);
   const arrastoRef = useRef<Arrasto | null>(null);
   /** O `click` que o navegador dispara depois de um arrasto NÃO é um toque. */
   const engolirCliqueRef = useRef(false);
@@ -226,15 +227,16 @@ export function Mochila({
     onTargetChange?.(false);
     if (a?.ativo) {
       engolirCliqueRef.current = true;
-      if (usar && a.sobre) onUse(a.emoji);
+      if (usar && a.sobre && !a.inerte) onUse(a.emoji);
     }
   }, [onTargetChange, onUse]);
 
-  const onItemPointerDown = (e: ReactPointerEvent<HTMLButtonElement>, emoji: string) => {
-    if ((foodInventory[emoji] ?? 0) <= 0) return;
+  // `inerte` = material (somente leitura): o MESMO arrasto e o mesmo recolher do sheet, mas soltar no pet não usa nada nem acende o pet.
+  const onItemPointerDown = (e: ReactPointerEvent<HTMLButtonElement>, emoji: string, inerte?: { icone: ReactNode }) => {
+    if (!inerte && (foodInventory[emoji] ?? 0) <= 0) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const [x0, y0] = coords(e);
-    arrastoRef.current = { emoji, x0, y0, ativo: false, sobre: false };
+    arrastoRef.current = { emoji, x0, y0, ativo: false, sobre: false, inerte: !!inerte };
     engolirCliqueRef.current = false;
 
     const mover = (ev: Event) => {
@@ -246,7 +248,8 @@ export function Mochila({
         a.ativo = true;
       }
       if (ev.cancelable) ev.preventDefault();
-      setFantasma({ emoji: a.emoji, x, y });
+      setFantasma({ emoji: a.emoji, x, y, icone: inerte?.icone });
+      if (a.inerte) return;
       const alvo = petTargetRef.current?.getBoundingClientRect();
       const sobre = !!alvo && pontoSobre(x, y, alvo);
       if (sobre !== a.sobre) {
@@ -397,7 +400,8 @@ export function Mochila({
                       {/* Material no SLOT da grade (modal Files, 18/11/2026), como os demais itens; só leitura. */}
                       <button type="button" className="sm3-material-btn" data-material-btn={m.id} aria-expanded={aberto}
                         aria-controls={aberto ? 'sm3-material-pop' : undefined} aria-label={`${nome} × ${n}`}
-                        onClick={() => setMatAberto(aberto ? null : m.id)}>
+                        onPointerDown={(e) => onItemPointerDown(e, m.id, { icone: <MaterialIcon id={m.id} emoji={m.icon} size={52} /> })}
+                        onClick={() => { if (engolirCliqueRef.current) { engolirCliqueRef.current = false; return; } setMatAberto(aberto ? null : m.id); }}>
                         <span aria-hidden="true" className="sm3-item-slot">
                           <span className="sm3-material-icone"><MaterialIcon id={m.id} emoji={m.icon} size={32} /></span>
                         </span>
@@ -416,7 +420,8 @@ export function Mochila({
                     <li key={x.id} data-material={x.id} data-material-extra>
                       <button type="button" className="sm3-material-btn" data-material-btn={x.id} aria-expanded={aberto}
                         aria-controls={aberto ? 'sm3-material-pop' : undefined} aria-label={`${nome} × ${n}`}
-                        onClick={() => setMatAberto(aberto ? null : x.id)}>
+                        onPointerDown={(e) => onItemPointerDown(e, x.id, { icone: x.icon })}
+                        onClick={() => { if (engolirCliqueRef.current) { engolirCliqueRef.current = false; return; } setMatAberto(aberto ? null : x.id); }}>
                         <span aria-hidden="true" className="sm3-item-slot"><span className="sm3-material-icone">{x.icon}</span></span>
                         <span className="sm3-item-nome">{nome}</span>
                         <small className="sm2-num">×{n}</small>
@@ -529,7 +534,7 @@ export function Mochila({
           aria-hidden="true"
           style={{ left: fantasma.x, top: fantasma.y }}
         >
-          {ITEM_ART[fantasma.emoji] && <img src={ITEM_ART[fantasma.emoji]} alt="" width={52} height={52} draggable={false} />}
+          {fantasma.icone ?? (ITEM_ART[fantasma.emoji] && <img src={ITEM_ART[fantasma.emoji]} alt="" width={52} height={52} draggable={false} />)}
         </span>
       )}
     </div>
