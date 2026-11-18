@@ -446,3 +446,8 @@ Passe de medição: `npm run orcamento`.
 ## Delta de 17/11/2026 (`6b7773143..65ba36dc7`)
 
 Sem módulo, rota nem dependência nova. `src/App.tsx` passa a importar `VESCA_OFFER_ELEMENT_IDS` (fila da Vesca só com elemento base, §468); `components/NeutroPotionPanel.tsx` foi apagado; `components/arena/conviteDueloArt.ts` ganha `conviteDueloFan` (reusa `play/TicketFan`, §470); `DungeonGame` recebe a prop `autoStart` (§470). O índice do chat (`functions/api/_chatKnowledge.data.js`) é gerado de `02`/`11` (`npm run gen:chat-kb`).
+
+## Delta de 18/11/2026: widget grande da Home (REGISTRO §478)
+
+**Widget "Soulmon: hoje"** (`SoulmonWidgetHomeProvider`, `res/xml/soulmon_widget_home_info.xml`, layouts `widget_soulmon_home*.xml`): vertical, alvo 4x5, redimensiona de 2x3 a 8x10. Topo = bitmap do V-Pet com o casco padrão (`WidgetRenderer.renderHome` → `vpetBitmap(..., defaultCasing = true)`); embaixo a lista de tarefas de hoje por `WidgetHomeTasksService` (`RemoteViewsService`, minSdk 26, um caminho só). O check é ImageView + fill-in em broadcast explícito; o provider aceita só id da lista de hoje ainda aberta e grava em `WidgetEventQueue` (SharedPreferences `soulmon_widget_events`). Decisões puras com JUnit: `WidgetHomeLayout.kt`, `WidgetHomeTasks.kt`, `WidgetEventQueue.kt`. **Continua sem falar com o servidor e sem regra de jogo no nativo:** o app drena a fila (`peekWidgetEvents`/`ackWidgetEvents` no plugin, `src/utils/widgetEvents.ts`) e paga pela regra do toque na Home (`src/utils/taskCompletionPay.ts`). Dados novos da ponte: `tasksJson` → `tasks_json` (`widgetTaskList`). Guards: `src/plugins/widgetHomeFila.contract.test.ts`, `src/plugins/widgetHomeGrande.contract.test.ts`.
+
