@@ -22,7 +22,7 @@ import { Icon } from '../ui/Icon';
 import { spendableBits } from '../../utils/bitsOrigin';
 import { elementComposition, elementsMatchingBases, isPotionUnlocked, potionKey, POTION_COSTS } from '../../utils/elementPotion';
 import { potionArt } from '../../utils/potionArt';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { BitsIcon } from '../ui/BitsIcon';
 import { SoulFragmentIcon } from '../ui/SoulFragmentIcon';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
@@ -162,11 +162,16 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 
   return (
     <section data-hexsmith aria-label={tx(HEX_UI.title, isPt)} className="sm2-hex">
-      <p style={sm2Hint}>{tx(HEX_UI.intro, isPt)}</p>
+      {/* 18/11/2026 (dono): a introdução mora atrás do "i" do disco direito da moldura (o mapa ganha o espaço). */}
+      <ModalInfo language={language as Language} label={tx(HEX_UI.title, isPt)}><span data-hex-intro>{tx(HEX_UI.intro, isPt)}</span></ModalInfo>
       {companheiroDescansa && <p role="note" data-hex-companion-rests style={sm2Hint}>{tx(HEX_UI.companionRests, isPt)}</p>}
 
       {/* O MAPA DE SLOTS */}
       <div data-hex-map className="sm2-hex-map">
+        {/* O miolo do hexágono das Portas COM HEX equipado (turquesa claro), atrás da placa: o vazado dela mostra o preenchimento. */}
+        {HEX_SLOTS.filter((s) => hx.equipped[s] !== undefined).map((s) => (
+          <span key={`fill-${s}`} aria-hidden="true" data-hex-fill={s} className="sm2-hex-slot-fill" style={{ left: `${PORTS[s].x}%`, top: `${PORTS[s].y - 0.15}%` }} />
+        ))}
         <img src={HEX_MAP_ART} alt="" aria-hidden="true" draggable={false} className="sm2-hex-map-art" />
         {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" style={{ left: `${CORE.x}%`, top: `${CORE.y}%` }} />}
         {HEX_SLOTS.map((s) => {

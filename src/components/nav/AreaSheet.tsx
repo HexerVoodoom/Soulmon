@@ -1,4 +1,4 @@
-import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
@@ -12,6 +12,9 @@ import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 import { ModalFrame } from '../ui/ModalFrame';
 import { fundoDoLote } from '../../assets/soulmon/ui/moldura/fundos';
+import { CristalChama } from '../ui/CristalChama';
+import { Icon } from '../ui/Icon';
+import { useBackDimmed } from '../../utils/modalDepth';
 
 /** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
 export const MOLDURA_MODAL = true;
@@ -30,7 +33,7 @@ export const MOLDURA_MODAL = true;
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, headStartRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, headStartRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -67,6 +70,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   footer?: ReactNode;
   /** Peça por cima da cena, na ZONA DO NPC, entre o NPC e o balão (ex.: o leque de tickets do Salão). Largura zero: o filho se posiciona sozinho. */
   npcOverlay?: ReactNode;
+  /** Variante da moldura (só com `MOLDURA_MODAL`). `'aco'` (18/11/2026, decisão do dono: SÓ a Hexsmith) = a moldura de AÇO com runas
+   *  (`assets/soulmon/ui/hex-moldura/`): o ✕ entra no disco ESQUERDO do topo, o "i" no direito, o título na placa central e o cristal-chama no encaixe. */
+  moldura?: 'padrao' | 'aco';
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -80,6 +86,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
   const frame = npcFrame ?? npcFrameFor(areaId, lotId);
+  const aco = MOLDURA_MODAL && moldura === 'aco';
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -111,7 +118,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        {!closeInSheet && !hideClose && (
+        {!closeInSheet && !hideClose && !aco && (
           <BackCircleButton
             data-area-sheet-close=""
             onClick={() => onClose()}
@@ -173,7 +180,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           data-area-sheet
           title={title}
           fundo={fundoDoLote(areaId, lotId)}
-          className="sm2-sheet-rise"
+          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : 'sm2-sheet-rise'}
+          data-moldura-variante={aco ? 'aco' : undefined}
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
           style={{
@@ -186,7 +194,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             height: '66.6667dvh',
             flex: 'none',
             ...(MOLDURA_MODAL
-              ? { overflow: 'hidden' }
+              // Aço: o cristal-chama sobe para fora do topo (o rolável tem a própria rolagem, então a casca pode transbordar).
+              ? { overflow: aco ? 'visible' : 'hidden' }
               : {
                 background: 'var(--sm2-surface)',
                 borderRadius: '20px 20px 0 0',
@@ -197,7 +206,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               }),
           }}
         >
-          {closeInSheet && !hideClose && (
+          {aco && <CristalChama />}
+          {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} />}
+          {closeInSheet && !hideClose && !aco && (
             <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
@@ -205,7 +216,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           {/* Com a moldura (`MOLDURA_MODAL`) o TÍTULO mora na PLACA do topo (`ModalFrame title`, serifa dourada, centrado, reticências se longo) e esta
               linha vira só os encaixes (start-slot, head-slot, "i"), pousados POR CIMA da moldura (z 4) sobre a placa e o disco do canto. */}
           <div data-area-sheet-head style={MOLDURA_MODAL
-            ? { position: 'absolute', top: 0, left: 0, right: 0, height: 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
+            ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
             : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
             {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
             {MOLDURA_MODAL
@@ -238,7 +249,19 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   );
 }
 
+/** O ✕ da moldura de AÇO: SÓ o glifo, centrado no disco ESQUERDO que a arte do topo já desenha (alvo transparente ≥ 44 px). Fica apagado quando uma sub-folha está aberta por cima. */
+function FecharAco({ label, onClose }: { label: string; onClose: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const dimmed = useBackDimmed(ref);
+  return (
+    <button ref={ref} type="button" className="sm2-moldura-aco__fechar" data-area-sheet-close="" aria-label={label} title={label}
+      disabled={dimmed} data-modal-dimmed={dimmed ? '' : undefined} onClick={e => { e.stopPropagation(); onClose(); }}>
+      <Icon name="close" size={20} tone="inherit" />
+    </button>
+  );
+}
+
 /** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
-function SheetShell({ fundo, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; fundo?: string; title?: string }) {
+function SheetShell({ fundo, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; title?: string }) {
   return MOLDURA_MODAL ? <ModalFrame fundo={fundo} title={title || undefined} {...props} /> : <div {...props} />;
 }
