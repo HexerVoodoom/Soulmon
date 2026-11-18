@@ -117,7 +117,7 @@ export function TicketPanel({ language, status, onBuy }: { language: Language; s
   useEffect(() => { const id = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(id); }, []);
   const st = status(Date.now()); // relógio lido a cada render: um lote recém-comprado nunca fica "no futuro"
   const hint = st.canBuy
-    ? (isPt ? `${FUN_TICKET_COST} energia = ${FUN_TICKET_BATCH} tickets (valem 24 h)` : `${FUN_TICKET_COST} energy = ${FUN_TICKET_BATCH} tickets (good for 24 h)`)
+    ? null // a linha "1 energia = 3 tickets" saiu a pedido do dono (18/11/2026): o botão já mostra o custo
     : st.buyRefusal === 'has-tickets'
       ? (isPt ? 'Você ainda tem tickets de sobra: compre mais quando restarem 2 ou menos.' : 'You still have plenty of tickets: buy more when 2 or fewer are left.')
       : (isPt ? 'Sem energia para comprar tickets agora. A energia volta com o tempo; que tal uma tarefa, o Ateliê da Mente ou o Refúgio?' : 'No energy to buy tickets right now. Energy comes back over time; how about a task, the Mind Atelier or the Refuge?');
@@ -133,7 +133,7 @@ export function TicketPanel({ language, status, onBuy }: { language: Language; s
           <EnergyCost amount={FUN_TICKET_COST} />
         </button>
       )}
-      <p data-fun-tickets-hint style={{ ...sm2Hint, margin: 0, opacity: 0.8, textAlign: 'center' }}>{hint}</p>
+      {hint && <p data-fun-tickets-hint style={{ ...sm2Hint, margin: 0, opacity: 0.8, textAlign: 'center' }}>{hint}</p>}
     </section>
   );
 }

@@ -14,11 +14,11 @@ afterEach(cleanup);
 describe('Salão: o painel de tickets', () => {
   it('sem ticket mostra o custo da compra e o botão de comprar habilitado', () => {
     const c = painel(st({}));
-    expect(c.querySelector('[data-fun-tickets-hint]')?.textContent).toBe('1 energia = 3 tickets (valem 24 h)');
+    expect(c.querySelector('[data-fun-tickets-hint]')).toBeNull();
     expect((c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement).disabled).toBe(false);
     expect(c.querySelector('[data-ticket-fan]')).toBeNull(); // o leque mora FORA do modal (sem faixa reservada)
     cleanup();
-    expect(painel(st({}), 'en-US').querySelector('[data-fun-tickets-hint]')?.textContent).toBe('1 energy = 3 tickets (good for 24 h)');
+    expect(painel(st({}), 'en-US').querySelector('[data-fun-tickets-hint]')).toBeNull();
   });
   it('com tickets: contagem e validade do lote que vence primeiro (o leque fica fora do modal)', () => {
     const c = painel(st({ count: 3, canPlay: true, canBuy: false, buyRefusal: 'has-tickets', msLeft: 3_725_000 }));

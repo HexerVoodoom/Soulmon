@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
+import { CardFrame } from '../ui/CardFrame';
 
 /**
  * CARTA DE JOGO (04/11/2026, pedido do dono): nos menus do Ateliê da Mente, do
@@ -34,8 +35,8 @@ export function GameCard({ id, title, description, icon, badges, onPress, dataAt
   /** Id da carta (`CARD_IDS`) — escolhe a ilustração. */
   id: string;
   title: string;
-  /** Uma linha curta. */
-  description: string;
+  /** Uma linha curta (opcional: o Salão mostra só o título). */
+  description?: string;
   /** Ícone/glifo do placeholder (quando não há arte). Sem ele, a inicial do nome. */
   icon?: string;
   /** Linha pequena de selos sob a carta (Bits, custo de energia…). */
@@ -50,8 +51,10 @@ export function GameCard({ id, title, description, icon, badges, onPress, dataAt
   return (
     <li className="sm-game-card" data-game-card={id}>
       <button type="button" className="sm-game-card__btn" onClick={onPress} {...dataAttrs}>
-        <span className="sm-game-card__art" aria-hidden="true">
-          {src ? (
+        <CardFrame
+          name={description ? title : undefined}
+          description={description ?? <span className="sm-game-card__titulo">{title}</span>}
+          art={src ? (
             <img src={src} alt="" loading="lazy" decoding="async" data-game-card-art />
           ) : (
             <span className="sm-game-card__placeholder" data-game-card-placeholder>
@@ -60,9 +63,7 @@ export function GameCard({ id, title, description, icon, badges, onPress, dataAt
                 : <span className="sm-game-card__initial">{title.charAt(0)}</span>}
             </span>
           )}
-        </span>
-        <span className="sm-game-card__banner">{title}</span>
-        <span className="sm-game-card__desc">{description}</span>
+        />
       </button>
       {badges !== undefined && <div className="sm-game-card__badges" data-game-card-badges>{badges}</div>}
     </li>
