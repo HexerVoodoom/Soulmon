@@ -6531,3 +6531,11 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Decisão:** o par PvE/PvP usa o `BotaoEspecial` com `variant="pve"|"pvp"` (arte do #1072) no Match-3 (Aventura/PVP), no Salão (`MinigameModeGate`) e no Torneio (Treino/Sparring = pve, Ranqueada = pvp; a aba escolhida usa o estado pressionado e mantém `role="radio"`). Sai a moldura de cobre interna do ranking do Salão ("borda dentro de borda") e as posições 1–10 ganham o número em `gold-ink`. Pódio em degraus (opção A do dono) = o atual §326.
 **Alternativa que perdeu:** um `BotaoModo` próprio (duplicaria `BotaoEspecial`).
 **Gatilho para rever:** setas de subida/descida pedem a posição anterior no servidor (hoje não existe); modal de ranking e botão especial dependem da arte nova.
+
+## §485 — Fliperama de Canto abre SÓ o modal de minigames, sobre a Home (18/11/2026, dono)
+
+**Decisão:** tocar no Fliperama de Canto abre um modal de moldura normal sobre a própria Home (`components/play/ArcadeModal.tsx`) com o CORPO do Salão de jogos (`SalaoSheet`: tickets, compra de tickets, as cartas dos minigames), SEM o NPC Pipo e SEM mandar o jogador ao mapa/prédio; fechar volta à Home. Substitui a abertura do sheet do prédio (pedido anterior). O `SalaoSheet` já era só o corpo (o NPC mora no `AreaSheet`), então foi reaproveitado, não duplicado, com as mesmas regras (`funTicketStatus`, `buyFunTickets`, `ticketBuyRefusal`).
+
+**Jogar:** escolher uma carta fecha o modal e abre o jogo na área Jogos (`initialGame` do `AreaView`, o mesmo caminho do Refúgio): a rodada é cobrada ao começar (`onStartRound`) e a pergunta de modo do Pipo (`MinigameModeGate`) continua valendo, como no Salão. Soulmon dormindo: o aviso de acordar segura a abertura (`guardWake`).
+
+**Gatilho para rever:** o dono querer o jogo rodando também em cima da Home (hoje ele abre na área Jogos e o voltar leva ao mapa).

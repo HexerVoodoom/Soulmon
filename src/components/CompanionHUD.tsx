@@ -315,6 +315,8 @@ interface CompanionHUDProps {
   materialExtras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
   /** O "Ir lá" do material na Mochila (o App navega). */
   onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
+  /** Toque no Fliperama de Canto: abre o modal de minigames sobre a Home (§485). Sem isto, cai no atalho do prédio do Salão. */
+  onOpenArcade?: () => void;
   /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
   demoMode?: boolean;
   onFeed?: (foodEmoji: string) => void;
@@ -412,6 +414,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   materials,
   materialExtras,
   onGoToBuilding,
+  onOpenArcade,
   demoMode,
   onFeed,
   onShower,
@@ -1472,7 +1475,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             equippedDecor={equippedDecor}
             equippedBackground={equippedBackground ?? null}
             language={language}
-            onOpenArcade={onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined}
+            onOpenArcade={onOpenArcade ?? (onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined)}
             onOpenProfile={onGoToBuilding ? () => onGoToBuilding('laboratorio.perfil') : undefined}
           />
 
