@@ -7,7 +7,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { difficultyLabel } from '../../utils/minigameDifficulty';
 import type { Language } from '../../utils/i18n';
 import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
-import type { RankedGame } from '../../utils/rankings';
+import type { RankedGame, RankingPeriod } from '../../utils/rankings';
 import { TicketFan } from './TicketFan';
 
 /**
@@ -17,7 +17,7 @@ import { TicketFan } from './TicketFan';
  * "Comum" à esquerda, "Avançado" à direita. Sem dificuldade: um único "Jogar".
  * Esquerda = o menor / voltar, direita = avançar. O voltar fecha de volta à área.
  */
-export type GateRanking = { game: RankedGame; label?: string };
+export type GateRanking = { game: RankedGame; label?: string | { pt: string; en: string }; /** Ausente = semanal (o de sempre). */ period?: RankingPeriod };
 
 export function MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp = false, tickets, onPick, onBack }: {
   /** Tickets em posse: aparecem em leque ao lado do NPC (09/11/2026). Ausente = sem leque. */
@@ -28,7 +28,7 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
   saveId?: string;
   /** Com dificuldade: dois botões (Comum | Avançado); sem: um "Jogar". */
   withDifficulty: boolean;
-  /** Dois botões PvE (esquerda) | PvP (direita), como o Fusão Elemental: `onPick(1)` = PvE, `onPick(2)` = PvP. */
+  /** Dois botões Aventura (esquerda) | PvP (direita), como o Fusão Elemental: `onPick(1)` = Aventura, `onPick(2)` = PvP. */
   pveVsPvp?: boolean;
   onPick: (level?: 1 | 2) => void;
   onBack: () => void;
@@ -39,9 +39,9 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
   const line = withDifficulty
     ? (isPt ? 'Você quer jogar no modo Comum ou no modo Avançado?' : 'Common or Advanced mode?')
     : pveVsPvp
-      ? (isPt ? 'Você quer enfrentar a fenda (PvE) ou outro jogador (PvP)?' : 'Face the rift (PvE) or another player (PvP)?')
+      ? (isPt ? 'Você quer uma Aventura contra a fenda ou um PvP contra outro jogador?' : 'An Adventure against the rift, or a PvP against another player?')
       : (isPt ? 'Pronto para jogar?' : 'Ready to play?');
-  const labelOf = (lvl: 1 | 2) => (pveVsPvp ? (lvl === 1 ? 'PvE' : 'PvP') : difficultyLabel(lvl, isPt));
+  const labelOf = (lvl: 1 | 2) => (pveVsPvp ? (lvl === 1 ? (isPt ? 'Aventura' : 'Adventure') : 'PvP') : difficultyLabel(lvl, isPt));
   const [tab, setTab] = useState(0);
   const [rankOpen, setRankOpen] = useState(false);
   const current = rankings[Math.min(tab, rankings.length - 1)];
@@ -67,14 +67,14 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
                     onClick={() => setTab(i)}
                     style={{ ...sm2Button(i === tab ? 'primary' : 'outline', false), flex: 1, minWidth: 0, minHeight: 36 }}
                   >
-                    {withDifficulty ? difficultyLabel((i + 1) as 1 | 2, isPt) : (r.label ?? r.game)}
+                    {withDifficulty ? difficultyLabel((i + 1) as 1 | 2, isPt) : typeof r.label === 'object' ? (isPt ? r.label.pt : r.label.en) : (r.label ?? r.game)}
                   </button>
                 ))}
               </div>
             )}
             {current && (
               <div key={current.game} role={rankings.length > 1 ? 'tabpanel' : undefined}>
-                <RankingPanel game={current.game} saveId={saveId} language={language} inline />
+                <RankingPanel game={current.game} period={current.period} saveId={saveId} language={language} inline />
               </div>
             )}
           </div>

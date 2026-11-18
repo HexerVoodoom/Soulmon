@@ -43,6 +43,8 @@ vi.mock('../RPSGame', async (orig) => {
 // Os jogos dos prédios novos: dublês que só registram as props (a
 // jogabilidade tem teste próprio em `components/mente/*.render.test.tsx`).
 const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[nome] = p; return <div data-jogo={nome} />; };
+vi.mock('../Match3Game', () => ({ Match3Game: dubleDe('match3') }));
+vi.mock('../SoulBarrage', () => ({ SoulBarrage: dubleDe('barrage') }));
 vi.mock('../mente/EcoGame', () => ({ EcoGame: dubleDe('eco') }));
 vi.mock('../mente/BolhasGame', () => ({ BolhasGame: (p: Record<string, unknown>) => dubleDe(`bolhas-${p.mode as string}`)(p) }));
 vi.mock('../mente/ZipGame', () => ({ ZipGame: dubleDe('zip') }));
@@ -483,5 +485,26 @@ describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
     const t = container.querySelector('[data-game-card="match3"]')!.textContent!;
     expect(t).not.toContain('seu recorde');
     expect(t).toMatch(/até\s*\d+/);
+  });
+});
+
+describe('Salão — o roteamento do Elemental Fusion nunca cai na Soul Barrage (REGISTRO §473)', () => {
+  it.each([[1, 'pve'], [2, 'pvp']] as const)('Elemental Fusion + botão %i abre o Match3Game em modo %s, e NÃO a Soul Barrage', async (btn, modo) => {
+    const p = props({ area: 'jogos' });
+    const { container } = renderWithCss(<PlayAreaView {...p} />);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
+    fireEvent.click(await achar(container, '[data-match3-start]'));
+    fireEvent.click(await achar(container, `[data-gate-pick="${btn}"]`));
+    await achar(container, '[data-jogo="match3"]');
+    expect(container.querySelector('[data-jogo="barrage"]')).toBeNull();
+    expect(recebidas.match3.initialMode).toBe(modo);
+  });
+  it('Soul Barrage continua abrindo a Soul Barrage', async () => {
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
+    fireEvent.click(await achar(container, '[data-barrage-open]'));
+    fireEvent.click(await achar(container, '[data-gate-pick="1"]'));
+    await achar(container, '[data-jogo="barrage"]');
+    expect(container.querySelector('[data-jogo="match3"]')).toBeNull();
   });
 });
