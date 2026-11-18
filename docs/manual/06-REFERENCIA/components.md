@@ -305,6 +305,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx`, `src/components/TournamentPage.tsx`; `src/components/nav/AreaView.tsx` importa só os tipos `ShopOwnership`/`ShopActions` (24/09/2026).
 **Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`, `src/utils/weeklyMissions.fiacao.test.ts`.
 
+### `src/components/mercado/EssenceBuySheet.tsx`
+**Dono de:** a confirmação de compra de essência do Cambista com SELETOR DE QUANTIDADE (§479): imagem grande, nome, custo unitário, "Você tem N" (só aqui; a lista não mostra posse), − / número (`role="spinbutton"`) / +, custo total ao vivo e "Comprar N · custo". O máximo vem de `essenceMaxBuy` (teto por compra, teto de estoque e saldo); com máximo 0 o botão desabilita com o motivo.
+
+**Exports:** `EssenceBuySheet`.
+
+**Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`, `src/utils/essenceShop.test.ts`.
+
 ### `src/components/mercado/ShopItemSheet.tsx`
 **Dono de:** a FOLHA DO ITEM da lojinha (I5/I6, 02/10/2026): tocar num item abre um bottom sheet com as opções (Comprar / Equipar / Tirar) e um PREVIEW GRANDE — o ícone do item solto, SEM o quadradinho de vidro, centrado na área escurecida acima da folha (portal em `document.body`, decorativo); para cenário a miniatura abre o LIGHTBOX (fundo escurecido, arte grande, ✕ no topo esquerdo, fecha ao tocar fora). A compra real continua na `PurchaseConfirmSheet`. Também dono da pílula Interno/Externo/Qualquer da decoração.
 **Props principais:** `item`, `language`, `currency`, `balance`, `owned`, `equipped`, `onClose`, `onBuy`, `onEquip`, `bitsPrice`, `emblemPrice` (render props do preço).
