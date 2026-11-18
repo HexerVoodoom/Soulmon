@@ -9,6 +9,7 @@ import { STAGE_NAMES } from '../utils/oracle/base';
 import { NewBadge } from './LibraryNewBadge';
 import { BOSS_ROSTER, bossArt, bossText } from '../data/bossRoster';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
+import { readLocal, writeLocal } from '../utils/safeStorage';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 
 /**
@@ -25,7 +26,7 @@ const STAGE_LABEL_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'roo
 const ACC_KEY = 'sm2.drive.fechados.v1';
 function lerFechados(): string[] {
   try {
-    const v = JSON.parse(localStorage.getItem(ACC_KEY) ?? '[]');
+    const v = JSON.parse(readLocal(ACC_KEY) ?? '[]');
     return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
   } catch { return []; }
 }
@@ -63,7 +64,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
   const [fechados, setFechados] = useState<string[]>(lerFechados);
   const alternar = useCallback((id: string) => setFechados(prev => {
     const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-    try { localStorage.setItem(ACC_KEY, JSON.stringify(next)); } catch { /* sem storage: vale só nesta visita */ }
+    writeLocal(ACC_KEY, JSON.stringify(next)); // sem storage: vale só nesta visita
     return next;
   }), []);
   const bossSet = useMemo(() => new Set(bossesSeen ?? []), [bossesSeen]);
@@ -133,7 +134,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
               return (
                 <li key={b.id} data-boss-cell={b.id} data-seen={vista ? '1' : '0'} aria-label={vista ? nome : (isPt ? 'Ainda não encontrado' : 'Not met yet')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   {src && <img src={src} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48} style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain', filter: vista ? undefined : 'brightness(0) opacity(0.45)' }} />}
-                  <span style={{ fontSize: 10, textAlign: 'center' }}>{vista ? nome : '???'}</span>
+                  <span className="text-[9px]" style={{ textAlign: 'center' }}>{vista ? nome : '???'}</span>
                 </li>
               );
             })}
