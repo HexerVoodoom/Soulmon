@@ -50,6 +50,7 @@ describe('Elemental Fusion — BOSS', () => {
 
   it('em PT o cartão sai em português', () => {
     renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} rankSaveId="t" initialMode="pve" />);
-    expect(screen.getByRole('dialog').textContent).toContain('Batalha de Boss');
+    // título em ARTE (PT) com o texto no alt; sem rolagem na intro
+    expect(screen.getByRole('dialog').querySelector('[data-boss-splash-title-art] img')!.getAttribute('alt')).toBe('Batalha de Boss');
   });
 });

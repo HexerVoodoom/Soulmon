@@ -60,7 +60,8 @@ describe('BossSplash', () => {
   });
   it('Fusion: a intro mostra "Boss Battle" (EN) / "Batalha de Boss" (PT) e as 3 regras sem rolagem', () => {
     render(<Match3Game language="en-US" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={74} rankSaveId="t" initialMode="pve" />);
-    expect(document.querySelector('#boss-splash-title')!.textContent).toMatch(/Boss Battle/);
+    expect(document.querySelector('#boss-splash-title img')!.getAttribute('alt')).toBe('Boss Battle');
+    expect(document.querySelector('#boss-splash-title img')!.getAttribute('src')).toMatch(/boss-battle-title/);
     expect((document.querySelector('[data-boss-splash-body]') as HTMLElement).style.overflowY).toBe('');
   });
   it('Chuva de Almas: sem splash antes do boss especial', () => {

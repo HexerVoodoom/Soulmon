@@ -36,17 +36,14 @@ export function barrageSpecialMonster(isPt: boolean): SplashMonster {
 }
 
 /**
- * ARTE DO TÍTULO "BOSS BATTLE" e ÍCONE DO FRAGMENTO (18/11/2026): entram por glob, então enquanto a sessão de arte não entrega os PNGs o
- * resultado é `undefined` e a tela cai no fallback de texto / sem ícone (nenhuma importação quebra).
- * `ui/boss-battle-title.png` (EN) e `ui/boss-battle-title-pt.png` (PT-BR; sem ele, usa o EN); `items/boss-shard.png`.
+ * ARTE DO TÍTULO "BOSS BATTLE" (18/11/2026): `ui/boss-battle-title.png` (EN) e `ui/boss-battle-title-pt.png` (PT-BR; sem ele, usa o EN), por glob:
+ * sem o arquivo o resultado é `undefined` e a intro cai no título de texto (nenhuma importação quebra). O ícone do Fragmento é `BOSS_SHARD_ART` (`itemArt.ts`).
  */
 const TITLE_ART = import.meta.glob('../assets/soulmon/ui/boss-battle-title*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const SHARD_ART = import.meta.glob('../assets/soulmon/items/boss-shard.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const artOf = (g: Record<string, string>, tail: string): string | undefined => Object.entries(g).find(([k]) => k.endsWith(tail))?.[1];
 
 export const bossBattleTitleArt = (isPt: boolean): string | undefined =>
   (isPt ? artOf(TITLE_ART, '/boss-battle-title-pt.png') : undefined) ?? artOf(TITLE_ART, '/boss-battle-title.png');
-export const BOSS_SHARD_ICON: string | undefined = artOf(SHARD_ART, '/boss-shard.png');
 
 /**
  * A arte do adversário na TELA DE RESULTADO do Elemental Fusion. Boss: SEMPRE o chefe da luta (o da intro, `fusionBossMonster`), nunca o

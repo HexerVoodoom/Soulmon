@@ -46,7 +46,8 @@ import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { petScaleStyle } from '../utils/spriteScale';
 import { BossSplash } from './games/BossSplash';
-import { fusionBossMonster, bossBattleTitleArt, BOSS_SHARD_ICON, resultOpponentSrc } from '../utils/bossSplash';
+import { BOSS_SHARD_ART } from '../utils/itemArt';
+import { fusionBossMonster, bossBattleTitleArt, resultOpponentSrc } from '../utils/bossSplash';
 import { entrarNaSuperficie } from '../utils/musica';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
@@ -1003,7 +1004,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           recordNote={isPt ? 'Novo recorde' : 'New best'}
           strip={pvp || boss || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
           ledger={boss
-            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1, ...(BOSS_SHARD_ICON ? { icon: BOSS_SHARD_ICON } : {}) }] : []), ...essenceLedgerRows(essenciasRodada)]
+            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1, icon: BOSS_SHARD_ART }] : []), ...essenceLedgerRows(essenciasRodada)]
             : [{ key: 'bits', kind: 'bits' as const, value: earned }, ...(pvp && honorEarned > 0 ? [{ key: 'honor', kind: 'honor' as const, value: honorEarned }] : []), ...essenceLedgerRows(essenciasRodada)]}
           emptyLedgerLine={boss ? (isPt ? 'Sem Fragmento de Boss desta vez.' : 'No Boss Shard this time.') : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           petSrc={playerSprite}
