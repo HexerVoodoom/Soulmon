@@ -653,8 +653,14 @@ export const GUILD_ITEMS: ShopItem[] = [
     descPt: GUILD_COPY_CORE['guild.concha.desc'][0], descEn: GUILD_COPY_CORE['guild.concha.desc'][1],
     price: 0,
     unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
-  // 18/11/2026 (REGISTRO §482): o Fliperama de Canto saiu da loja e é PRÊMIO do 1º lugar no ranking mensal de minigame (concedido pelo servidor ao
-  // fechar o mês; `ent.itemPrizes` → `applyGuildClaim`). Mesmo trilho das conquistas da Guilda: nunca comprável, equipável pela folha "da sua roda".
+];
+
+/**
+ * PRÊMIOS DE RANKING (REGISTRO §482): o Fliperama de Canto saiu da loja e é o prêmio do 1º lugar nos rankings mensais de minigame, entregue
+ * por CARTA do Papus com o item de anexo (`functions/api/_arcadePrize.js`). Nunca comprável; equipável pela folha "da sua roda". Fica fora de
+ * `GUILD_ITEMS` (que é só a Concha da Maré, travado por `guildReward.contract.test.js`), mas segue o mesmo trilho via `isGuildReward`.
+ */
+export const RANK_ITEMS: ShopItem[] = [
   { id: 'furn-arcade-cab', kind: 'furniture', icon: '🕹️',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Fliperama de Canto', nameEn: 'Corner Arcade',
@@ -663,7 +669,7 @@ export const GUILD_ITEMS: ShopItem[] = [
 ];
 
 /** É uma conquista da Guilda? Nunca comprável, venha de onde vier. */
-export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id);
+export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id) || RANK_ITEMS.some(g => g.id === item.id);
 
 /**
  * CONJUNTO COSMÉTICO DO TRIMESTRE da assinatura (`docs/ASSINATURA-SPEC.md`, D10).
@@ -711,4 +717,4 @@ export const SUBSCRIPTION_ITEMS: ShopItem[] = [
 /** É item da assinatura? Nunca comprável com moeda, venha de onde vier. */
 export const isSubscriptionReward = (item: Pick<ShopItem, 'id'>): boolean => SUBSCRIPTION_ITEMS.some(s => s.id === item.id);
 
-export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...SUBSCRIPTION_ITEMS];
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS];
