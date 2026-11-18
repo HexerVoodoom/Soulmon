@@ -220,6 +220,9 @@ export interface AreaViewProps {
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
   onInitialGameConsumed?: () => void;
+  /** O jogo veio do Fliperama de Canto da Home (§487): ao SAIR dele (voltar, fechar, sem ticket) a pessoa volta DIRETO à Home, sem passar pela área Jogos nem pelo mapa. Só vale junto de `initialGame`. */
+  returnHomeOnGameExit?: boolean;
+  onReturnHome?: () => void;
   /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
    *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
   initialSheet?: string;
@@ -479,6 +482,14 @@ export function AreaView(props: AreaViewProps) {
     setActive('minigame', game);
     return () => { endRoundRef.current?.(); endRoundRef.current = null; setActive('minigame', null); };
   }, [gameRunning, game]);
+  /* §487: jogo aberto pelo Fliperama da Home: ao sair dele, volta DIRETO à Home (a decisão vale pela montagem; sair da área não a rearma). */
+  const voltaAHomeRef = useRef(!!props.returnHomeOnGameExit && !!props.initialGame);
+  const jaTeveJogoRef = useRef(false);
+  const { onReturnHome } = props;
+  useEffect(() => {
+    if (game) { jaTeveJogoRef.current = true; return; }
+    if (jaTeveJogoRef.current && voltaAHomeRef.current) { voltaAHomeRef.current = false; onReturnHome?.(); }
+  }, [game, onReturnHome]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;

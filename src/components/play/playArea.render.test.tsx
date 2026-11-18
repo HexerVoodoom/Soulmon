@@ -412,6 +412,37 @@ describe('Jogos — os três prédios', () => {
   });
 });
 
+describe('jogo aberto pelo Fliperama da Home (§487): sair volta DIRETO à Home', () => {
+  function Montar({ volta, onReturnHome }: { volta: boolean; onReturnHome: () => void }) {
+    const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ area: 'jogos' });
+    const areaProps = {
+      area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
+      initialGame: 'respiracao' as const, returnHomeOnGameExit: volta, onReturnHome,
+      points: totalPoints, emblems: 0, credits: 0,
+      ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
+      onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
+      labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
+      guild: { saveId: 's', metaDoDiaCumprida: false },
+    } satisfies AreaViewProps;
+    return <AreaView {...areaProps} />;
+  }
+  it('com returnHomeOnGameExit: fechar o jogo chama onReturnHome UMA vez', async () => {
+    const volta = vi.fn();
+    const { container } = renderWithCss(<Montar volta onReturnHome={volta} />);
+    await achar(container, '[data-jogo="respiracao"]');
+    expect(volta).not.toHaveBeenCalled();
+    act(() => { (recebidas.respiracao.onExit as () => void)(); });
+    expect(volta).toHaveBeenCalledTimes(1);
+  });
+  it('sem returnHomeOnGameExit: sair do jogo fica na área (comportamento de sempre)', async () => {
+    const volta = vi.fn();
+    const { container } = renderWithCss(<Montar volta={false} onReturnHome={volta} />);
+    await achar(container, '[data-jogo="respiracao"]');
+    act(() => { (recebidas.respiracao.onExit as () => void)(); });
+    expect(volta).not.toHaveBeenCalled();
+  });
+});
+
 describe('convite ao Refúgio → a respiração abre direto', () => {
   it('initialGame="respiracao" monta a RespiracaoGame e avisa o App (one-shot)', async () => {
     const consumed = vi.fn();

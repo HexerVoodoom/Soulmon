@@ -6543,3 +6543,11 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Adendo §485 — modal e botão do ranking (18/11/2026, dono):** o ranking ganha moldura própria (`RankingModal`, base na borda G do Files + faixas vermelhas + medalhas de ouro envelhecido, arte da sessão de assets) e o botão "Ver ranking" vira `BotaoEspecial variant="ranking"`. O X e o "i" são só glifos centrados nos discos da arte (nada de círculo por cima: `ranking-botao-redondo.webp` não é usado). A lista inline ganhou os estados carregando e offline (antes sumia em silêncio); no fim da partida o painel segue silencioso.
 
 **Adendo §485 — texto dos botões e entradas do ranking (18/11/2026, dono):** `BotaoEspecial` pve/pvp/ranking usa o tamanho do CTA (`clamp(--sm2-text-md, 4.8vw, --sm2-text-lg)`: 20 px onde cabe, até 16 px em tela estreita, sem cortar) e o rótulo invade 10 px das pontas lisas da placa. Entradas do ranking: toda tabela passa por `RankingPanel` (fim de jogo, "Ver ranking" do Salão) e pelo `RankingModal`; o ranking da Fenda (`PlaySheets`) migrou do `ModalSheet` para o `RankingModal`. Modais dos prédios seguem com a moldura padrão.
+
+## §487 — Jogo aberto pelo Fliperama roda e termina na Home (18/11/2026, dono)
+
+**Decisão (corrige o §486):** escolher um jogo no modal do Fliperama abre o jogo e, ao SAIR dele (voltar, fechar, ficar sem ticket ou desistir da pergunta de modo), a pessoa volta DIRETO à Home, sem passar pela área Jogos nem pelo mapa. Mecanismo: o jogo ainda monta no `AreaView` da área Jogos (`initialGame`), mas com `returnHomeOnGameExit`; ao fechar o jogo, `onReturnHome` do `App` desfaz a navegação com `history.back()` (a ida Home → Jogos foi um `pushState`; sem entrada nossa, vai à Home pelo estado). A marca só vale para o jogo aberto assim: sair da área por outro caminho a desarma (`arcadeFromHome`), e abrir o Salão pelo mapa segue como sempre. Não rodar o jogo em cima da Home: os jogos dependem do `play` e dos handlers do `AreaView`; duplicar isso na Home foi descartado.
+
+**Régua:** `playArea.render.test.tsx` (sair volta uma vez; sem a marca, fica na área).
+
+**Gatilho para rever:** se piscar a cena da área Jogos antes do jogo, mover o jogo para uma camada própria da Home.
