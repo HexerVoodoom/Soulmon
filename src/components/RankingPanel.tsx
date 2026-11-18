@@ -49,6 +49,11 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
           {isPt ? `Sua faixa ${period === 'monthly' ? 'no mês' : 'na semana'}: ${tier.pt}` : `Your tier this ${period === 'monthly' ? 'month' : 'week'}: ${tier.en}`}
         </p>
       )}
+      {period === 'monthly' && (game === 'match3' || game === 'match3-pvp') && (
+        <p data-ranking-premio style={{ margin: 0 }}>
+          {isPt ? 'O 1º do mês ganha o Fliperama de Canto.' : 'The month’s #1 wins the Corner Arcade.'}
+        </p>
+      )}
       {inline ? (
         <RankingList rows={board.top} meRank={board.me?.rank ?? null} meScore={board.me?.score ?? null} language={language} format={fmt} />
       ) : (<>

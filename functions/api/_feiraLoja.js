@@ -63,7 +63,6 @@ export const FEIRA_LOJA_CATALOGO = Object.freeze([
   ['furn-stone-tiles', 'furniture', 260, 'any'],
   ['furn-deck', 'furniture', 260, 'any'],
   ['furn-circuit-mat', 'furniture', 420, 'any'],
-  ['furn-arcade-cab', 'furniture', 700, 'indoor'],
   ['furn-cauldron', 'furniture', 650, 'any'],
   ['furn-crystal', 'furniture', 600, 'outdoor'],
   ['furn-well', 'furniture', 700, 'outdoor'],
@@ -250,7 +249,7 @@ const lerJson = async (env, chave) => {
   try { const v = await kvOrThrow(env).get(chave); return v ? JSON.parse(v) : null; } catch { return null; }
 };
 
-async function lerSave(env, save) {
+export async function lerSave(env, save) {
   try { const v = await kvOrThrow(env).get(save); const s = v ? JSON.parse(v) : null; return s && typeof s === 'object' && !Array.isArray(s) ? s : null; } catch { return null; }
 }
 
