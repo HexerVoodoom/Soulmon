@@ -42,6 +42,28 @@ describe('BossSplash', () => {
     render(<BossSplash monster="M" art="s.png" portrait="p.webp" okLabel="OK" kicker="k" title="T" tapHint="t" onDone={() => {}} />);
     expect(document.querySelector('[data-boss-splash]')!.getAttribute('data-boss-splash-art-kind')).toBe('portrait');
   });
+  it('A: com a arte do título usa a imagem (alt = título); sem ela, texto claro com contorno; sem barra de rolagem na lista', () => {
+    const cards = [1, 2, 3].map(n => ({ id: `r${n}`, name: `Regra ${n}`, line: 'linha longa da regra para ocupar espaço' }));
+    render(<BossSplash monster="M" art="s.png" kicker="Boss" title="Boss Battle" titleArt="t.png" cards={cards} okLabel="OK" tapHint="t" onDone={() => {}} />);
+    const img = document.querySelector('[data-boss-splash-title-art] img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('t.png');
+    expect(img.getAttribute('alt')).toBe('Boss Battle');
+    const body = document.querySelector('[data-boss-splash-body]') as HTMLElement;
+    expect(body.style.overflowY).not.toBe('auto');
+    expect(body.style.overflowY).not.toBe('scroll');
+    cleanup();
+    render(<BossSplash monster="M" art="s.png" kicker="Boss" title="Boss Battle" okLabel="OK" tapHint="t" onDone={() => {}} />);
+    const h = document.querySelector('[data-boss-splash-title-text]') as HTMLElement;
+    expect(h.textContent).toBe('Boss Battle');
+    expect(h.style.color).toBe('var(--sm2-gold-ink)');
+    expect(h.style.textShadow).toContain('var(--sm2-bg)');
+  });
+  it('Fusion: a intro mostra "Boss Battle" (EN) / "Batalha de Boss" (PT) e as 3 regras sem rolagem', () => {
+    render(<Match3Game language="en-US" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={74} rankSaveId="t" initialMode="pve" />);
+    expect(document.querySelector('#boss-splash-title img')!.getAttribute('alt')).toBe('Boss Battle');
+    expect(document.querySelector('#boss-splash-title img')!.getAttribute('src')).toMatch(/boss-battle-title/);
+    expect((document.querySelector('[data-boss-splash-body]') as HTMLElement).style.overflowY).toBe('');
+  });
   it('Chuva de Almas: sem splash antes do boss especial', () => {
     render(<SoulBarrage language="en-US" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} />);
     expect(document.querySelector('[data-boss-splash]')).toBeNull();
