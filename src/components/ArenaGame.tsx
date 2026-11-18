@@ -286,6 +286,14 @@ export function ArenaGame({
     montarRodada(1, pool);
   }, [pool, montarRodada]);
 
+  /** Entrada direta: pool carregado = a run começa (uma vez; a semente/escada congelam em `comecar`, convite recusado volta à folha). */
+  const autoIniciouRef = useRef(false);
+  useEffect(() => {
+    if (fase !== 'intro' || !pool || autoIniciouRef.current) return;
+    autoIniciouRef.current = true;
+    comecar();
+  }, [fase, pool, comecar]);
+
   /** A rodada que o núcleo vai lutar: lê as refs no começo da luta (sempre o estado mais novo). */
   const rodadaDoNucleo = useCallback((): GroupRound => {
     const p = jogadorRef.current;
@@ -485,7 +493,7 @@ export function ArenaGame({
   }
 
   return (
-    <GameRoot>
+    <GameRoot moldura={{ tela: 'arena-livre', title: isPt ? 'Arena livre' : 'Free Arena' }}>
       <TorcidaLayer onTap={batalha.cheer} active={false} isPt={isPt} style={{ flex: '1 0 auto' }}>
       <GameHeader
         run={false}
@@ -529,64 +537,11 @@ export function ArenaGame({
         </div>
       )}
 
+      {/* Sem tela de entrada (dono, 17/11/2026): o "Lutar" do card já inicia a run. Enquanto `comecar` roda (1 quadro), o visor segue como no "carregando". */}
       {fase === 'intro' && (
-        <>
-          <GameVisor height={80} scene={cenaDaRun.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-          </GameVisor>
-          {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
-            <StatTag label={isPt ? 'Poder' : 'Power'} value={statExibido(jogador.combatant.atk)} />
-            <StatTag label={isPt ? 'Essência' : 'Essence'} value={isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en} />
-          </div>
-
-          {/* A ficha do jogador é o que torna a Arena DELE. Sem ela, o texto
-              diz o porquê em vez de mostrar um par genérico sem explicação. */}
-          {basica && especial ? (
-            <>
-              <p style={phaseLine}>
-                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? basica.nome.pt : basica.nome.en}</b>
-                {' · '}{isPt ? 'a cada golpe' : 'every strike'}
-              </p>
-              <p style={phaseLine}>
-                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? especial.nome.pt : especial.nome.en}</b>
-                {' · '}{isPt ? 'com a energia cheia' : 'with full energy'}
-              </p>
-            </>
-          ) : (
-            <p style={phaseLine}>
-              {isPt
-                ? 'Sua ficha ainda não está neste aparelho, então você entra com um par genérico. Abra a página do seu Soulmon uma vez para lutar com as habilidades dele.'
-                : "Your sheet is not on this device yet, so you go in with a generic pair. Open your Soulmon's page once to fight with its own skills."}
-            </p>
-          )}
-
-          {/* A explicação mora atrás do "?" (InfoTip) — nenhum texto explicativo solto (04/10/2026). */}
-          <div style={{ display: 'flex', justifyContent: 'center' }} data-arena-torcida-legenda>
-            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funciona o Duelo' : 'How the Duel works'}>
-              <span style={{ display: 'block' }}>
-                {isPt
-                  ? 'Seu Soulmon luta e se defende sozinho, contra todos ao mesmo tempo. Toque na tela (ou no mascote) para encher a barra de cheer.'
-                  : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to fill the cheer bar.'}
-              </span>
-              <span style={{ display: 'block', marginTop: 6 }}>
-                {isPt
-                  ? 'No especial, toque no anel na hora certa; para esquivar do inimigo, deslize o dedo para o lado.'
-                  : 'On its special, tap the ring at the right moment; to dodge the enemy’s, swipe sideways.'}
-              </span>
-            </InfoTip>
-          </div>
-          <p style={phaseLine}>
-            {isPt
-              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. O elemento pesa no dano; perder custa a run, nunca os seus corações.`
-              : `${ARENA_ROUNDS} rounds back to back, each harder. Element weighs on damage; losing costs the run, never your hearts.`}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
-          <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-            {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
-          </button>
-        </>
+        <GameVisor height={80} scene={cenaDaRun.bg}>
+          <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
+        </GameVisor>
       )}
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}

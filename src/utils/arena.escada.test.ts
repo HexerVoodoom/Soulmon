@@ -168,6 +168,15 @@ describe('o chefe ULTRA (Mareoror/Salsolura, 10/11/2026; + os 5 Ultra das linhas
       expect([e.cls, e.element, e.namePt, e.form]).toEqual(['boss', el, nome, 'ultimate']);
     }
   });
+  it('em run de elemento o chefe Ultra é SÓ daquele elemento (17/11/2026: run de vileza não sorteia marcial/som)', () => {
+    const emRun = (run: string, n = 800) => Array.from({ length: n }, (_, s) => buildArenaRound(5, 1, mulberry32(s * 7919 + 13), undefined, false, false, run, 40)[0]);
+    for (const run of ['vileza', 'planta', 'industrial', 'fada']) expect(emRun(run).some(e => e.chefeUltra)).toBe(false); // sem espécie Ultra do elemento
+    for (const [run, id] of [['som', 'vibri'], ['marcial', 'kenjo'], ['tempo', 'chronib'], ['arcano', 'runix'], ['eletricidade', 'voltrix']] as const) {
+      const ids = new Set(emRun(run).filter(e => e.chefeUltra).map(e => e.chefeUltra));
+      expect(ids.size).toBeGreaterThan(0); expect([...ids]).toEqual([id]);
+    }
+    for (const run of ['fogo', 'agua']) for (const e of emRun(run)) if (e.chefeUltra) expect(['mareoror', 'salsolura']).toContain(e.chefeUltra);
+  });
   it('determinístico (card = luta) e fora do Desgarrado/combinada', () => {
     expect(ult(40, 50)).toEqual(ult(40, 50));
     for (let s = 0; s < 200; s++) {

@@ -138,6 +138,7 @@ describe('restaurarCopia', () => {
     expect(ring().map(c => c.motivo)).toContain('nuvem-antes-de-restaurar');
     expect(cloudSave).toHaveBeenCalledTimes(1);
     expect(cloudSave.mock.calls[0][0]).toBe('conta1');
+    expect(cloudSave.mock.calls[0][2]).toEqual({ allowRegression: 'restore' }); // restaurar é gesto explícito
     expect((cloudSave.mock.calls[0][1] as { soulmonMeta: { baseName: string } }).soulmonMeta.baseName).toBe('Velha');
   });
 

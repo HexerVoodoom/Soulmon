@@ -20,7 +20,6 @@ vi.mock('../utils/sprites', () => ({
 
 async function lutar(petElement: string) {
   renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" petElement={petElement} seed={7} onExit={() => {}} />);
-  fireEvent.click(await screen.findByRole('button', { name: /Entrar na Arena/i }));
   await waitFor(() => expect(document.querySelector('[data-battle-stage]')).toBeTruthy());
   return [...document.querySelectorAll('[data-stage-element]')].map(n => n.getAttribute('data-stage-element'));
 }
@@ -37,7 +36,6 @@ describe('Arena: icone do jogador, inimigos gerais e cenario de arena', () => {
     const vistos = new Set<string>();
     for (const seed of [7, 8, 9, 10, 11]) {
       renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" petElement="sombra" seed={seed} onExit={() => {}} />);
-      fireEvent.click(await screen.findByRole('button', { name: /Entrar na Arena/i }));
       await waitFor(() => expect(document.querySelector('[data-battle-stage]')).toBeTruthy());
       [...document.querySelectorAll('[data-stage-element]')].forEach(n => vistos.add(n.getAttribute('data-stage-element')!));
       expect(document.querySelector('[data-stage-scene]')?.getAttribute('data-stage-scene') ?? '').not.toMatch(/^dominio:/);

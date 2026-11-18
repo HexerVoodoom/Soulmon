@@ -1,11 +1,14 @@
 import { PixelIcon } from '../ui/PixelIcon';
 import { Icon } from '../ui/Icon';
 import { CARTA_ART } from '../../assets/soulmon/icones-ui/carta';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_ICON_SCALE, CORNER_SIDE } from './cornerAnchor';
+
+/** A arte da carta (96×96) tem margem transparente: o envelope visível mede 76 px de largura (bbox medido em alfa). Compensa para a largura visível = 32, a altura de caixa do Mapa. */
+const CARTA_FILL = 96 / 76;
 
 /**
- * O ÍCONE DA CAIXA DE CARTAS na Home (§246): na pilha do canto direito, ENTRE o Mapa (linha 0) e as Missões (linha 2). Pelado, 32 px,
- * como os vizinhos. A bolinha vermelha (`data-mail-dot`) aparece só com carta NOVA (não aberta nem resgatada); é um ponto absoluto sobre o
+ * O ÍCONE DA CAIXA DE CARTAS na Home (§246): na pilha do canto direito, ENTRE o Mapa (linha 0) e as Missões (linha 2). Pelado, 32 px escalado por `CORNER_ICON_SCALE` (44 visíveis),
+ * o MESMO do Mapa. A bolinha vermelha (`data-mail-dot`) aparece só com carta NOVA (não aberta nem resgatada); é um ponto absoluto sobre o
  * canto do ícone, então ligar e desligar não move nada. Sem número, parado, sem som. Sem arte (`CARTA_ART` ausente) usa o glifo `chat_bubble`.
  */
 export function MailLink({ unread, label, unreadLabel, onClick }: {
@@ -34,9 +37,9 @@ export function MailLink({ unread, label, unreadLabel, onClick }: {
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
       }}
     >
-      <span aria-hidden="true" style={{ display: 'flex', position: 'relative', width: 32, height: 32 }}>
+      <span aria-hidden="true" data-mail-icon style={{ display: 'flex', position: 'relative', width: 32, height: 32, transform: `scale(${CORNER_ICON_SCALE})`, transformOrigin: 'right center' }}>
         {CARTA_ART
-          ? <PixelIcon src={CARTA_ART} size={32} />
+          ? <PixelIcon src={CARTA_ART} size={32} style={{ transform: `scale(${CARTA_FILL})` }} />
           : <Icon name="chat_bubble" size={32} tone="viewport" />}
         {unread && (
           <span

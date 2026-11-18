@@ -179,6 +179,9 @@ export const getFriendForms = (saveId: string, friendPid: string) =>
   call<{ forms: { stage: string; spriteUrl: string | null; element: string | null; date: number }[] }>('forms', { params: { id: saveId, friend: friendPid } });
 
 /** Desgarrados de jogadores (§213): o pool anônimo do servidor (90+ dias sem entrar). Sanear com `sanitizeStrayPool`. */
+/** Treino com amigo: a ficha de luta REAL do amigo (o mesmo `DuelSide` que o duelo entrega ao oponente). Só entre amigos; 403/404 = sem ficha (o treino cai no lado comum). */
+export const getFriendSide = (saveId: string, friendPid: string) =>
+  call<{ side: DuelSide }>('friendSide', { params: { id: saveId, friend: friendPid } });
 export const getStrays = () => call<{ strays: unknown }>('strays');
 /** Faixa de evoluções (04/11/2026): o feed global curto (sem saveId). Sanear com `sanitizeEvoEvents`. */
 export const getEvoFeed = () => call<{ events: unknown }>('evoFeed');

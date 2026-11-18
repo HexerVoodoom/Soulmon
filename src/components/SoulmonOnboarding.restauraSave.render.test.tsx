@@ -17,7 +17,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { emailToSaveId } from '../utils/cloudSave';
 
 const { nuvem } = vi.hoisted(() => ({
-  nuvem: { resposta: { found: false } as { found: boolean; state?: unknown }, status: 200 },
+  nuvem: { resposta: { found: false } as { found: boolean; state?: unknown }, status: 200, sessao: null as string | null },
 }));
 
 vi.mock('../utils/auth', async () => {
@@ -25,7 +25,7 @@ vi.mock('../utils/auth', async () => {
   return {
     ...real,
     isAuthConfigured: () => true,
-    getCurrentEmail: async () => null,
+    getCurrentEmail: async () => nuvem.sessao,
     authHeaders: async () => ({}),
     entrarComGoogle: async () => ({ ok: true, email: 'Antiga@Exemplo.com' }),
   };
@@ -43,6 +43,8 @@ beforeEach(() => {
     value: { ...window.location, reload: recarregar },
   });
   nuvem.status = 200;
+  nuvem.sessao = null;
+  try { sessionStorage.clear(); } catch { /* ok */ }
   globalThis.fetch = vi.fn(async () => new Response(JSON.stringify(nuvem.resposta), { status: nuvem.status })) as typeof fetch;
 });
 afterEach(() => { globalThis.fetch = fetchReal; });
@@ -82,12 +84,33 @@ describe('login Google em conta existente', () => {
     expect(screen.getByText('Before we start')).toBeTruthy();
   });
 
-  it('nuvem fora do ar (5xx): não adota nada e segue como conta nova', async () => {
+  it('nuvem fora do ar (5xx): NAO vira conta nova — fica no portao com "tente de novo" e nao adota nada', async () => {
     nuvem.status = 503;
-    await entrarComGoogle();
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    await act(async () => {});
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' })); });
+    await waitFor(() => { expect(screen.queryByText(/No connection right now/)).not.toBeNull(); });
     expect(recarregar).not.toHaveBeenCalled();
     expect(localStorage.getItem(STORAGE_KEYS.GAME_STATE)).toBeNull();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(screen.queryByText('Before we start')).toBeNull();
+  });
+
+  it('sessao JA aberta na montagem (app reaberto): le a nuvem e restaura antes dos termos (incidente 17/11)', async () => {
+    nuvem.sessao = 'antiga@exemplo.com';
+    nuvem.resposta = { found: true, state: { totalXP: 500, activities: [{ id: 'a' }], completedTasks: [] } };
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    await waitFor(() => { expect(recarregar).toHaveBeenCalled(); });
+    expect(localStorage.getItem(STORAGE_KEYS.GAME_STATE)).not.toBeNull();
+    expect(screen.queryByText('Before we start')).toBeNull();
+  });
+
+  it('sessao aberta + nuvem ilegivel: fica no portao com erro, sem termos', async () => {
+    nuvem.sessao = 'antiga@exemplo.com';
+    nuvem.status = 503;
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    await waitFor(() => { expect(screen.queryByText(/No connection right now/)).not.toBeNull(); });
+    expect(screen.queryByText('Before we start')).toBeNull();
+    expect(recarregar).not.toHaveBeenCalled();
   });
 
   it('save vazio na nuvem (nasceu antes do fim do onboarding): adota mas NÃO pula o ritual', async () => {

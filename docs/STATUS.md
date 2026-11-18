@@ -1,11 +1,19 @@
 # Status do Soulmon — registro vivo
 
+> ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
+> - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
+> - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.
+
 > ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §469)
 > - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
 
 > ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §467)
 > - **Feito:** placa atrás da Coroa encaixada (CSS, todas, claro e escuro; contraste 5,0 a 16,9:1) e descrição PT/EN nas 10 famílias; teste de cobertura.
 > - **Pendente:** capturas 360x640 não geradas; não visto em aparelho. **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Sincronização do manual (`docs/manter-docs-2026-11-16`)
+> - **Feito:** manual sincronizado `b0c1e59c..6b7773143` (363 commits, PRs #977–#998): 01–05, 07–10 e 06-REFERENCIA (components, utils, api-workers, hooks, plugins) atualizados e verificados por amostra (5 correções do verificador: 404 em exchange-bits, CROWN_ONLY_FAMILIES, MAX_OUT, utils/steps.ts, SLEEP_ENERGY_REGEN_BONUS). Guard docsManual/docsSemMentira verde. `.sincronizado.json` = 6b7773143. Fila de arte: 2 linhas Honra (machado/cajado) em `ASSETS-A-GERAR.md`.
+> - **Pendente:** divergências para o dono/código: Glitchtama no CLAUDE.md e §7/§48 do doc 02 (buff 10%/7 dias, 1 por semana no código); `SCHEDULE_EXACT_ALARM` voltou ao manifesto mas PLAY-DATA-SAFETY/PLAY-LANCAMENTO dizem removida. Docs 00-MAPA/12 não precisaram de mudança (sem módulo novo). Branch sem PR, não mergeada.
 
 > ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
 > - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.

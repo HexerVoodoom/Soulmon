@@ -90,12 +90,13 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     expect(container.querySelector('[data-duelo-convites-count]')).not.toBeNull();
   });
 
-  it.each([3, 5, 7])('com %i convites o botão e o texto de custo NÃO são renderizados; Lutar segue', (count) => {
-    H.load = () => new Promise(() => {});
+  it.each([3, 5, 7])('com %i convites o botão e o texto de custo NÃO são renderizados; Lutar segue', async (count) => {
+    H.load = () => Promise.resolve([]);
     const inv = { count, max: 7, perEnergy: 5, canExchange: true, onExchange: () => true, onBegin: () => true };
     const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="en-US" onStart={() => {}} />);
     expect(container.querySelector('[data-duelo-comprar]')).toBeNull();
     expect(container.querySelector('[data-duelo-convites]')).toBeNull();
-    expect((container.querySelector('[data-duelo-start]') as HTMLButtonElement).disabled).toBe(false);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card-fight]')).toHaveLength(ARENA_CHOICES));
+    for (const b of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-arena-card-fight]'))) expect(b.disabled).toBe(false);
   });
 });

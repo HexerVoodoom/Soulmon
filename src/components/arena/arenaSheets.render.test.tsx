@@ -119,7 +119,7 @@ describe('Duelo', () => {
     expect(en.container.querySelector('[data-duelo-poder]')).toBeNull();
   });
 
-  it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
+  it('mostra a ficha padrão sem skills e o botão do card abre a luta', async () => {
     const onStart = vi.fn();
     const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
     // I9: só o essencial na folha; a explicação mora atrás do "?".
@@ -134,7 +134,8 @@ describe('Duelo', () => {
     expect(como).toMatch(/torcer/);
     expect(como).toMatch(/anel/);
     expect(como).toMatch(/esquivar/);
-    fireEvent.click(screen.getByRole('button', { name: 'Lutar' }));
+    await waitFor(() => expect(document.querySelectorAll('[data-arena-card-fight]').length).toBe(ARENA_CHOICES));
+    fireEvent.click(document.querySelector('[data-arena-card-fight="0"]')!);
     expect(onStart).toHaveBeenCalledOnce();
   });
 
@@ -144,23 +145,36 @@ describe('Duelo', () => {
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
     expect(ARENA_CHOICES).toBe(4);
     expect(container.querySelector('[data-arena-escolha]')!.textContent).not.toMatch(/Você escolhe contra quem lutar/); // folha limpa: só cards, sortear e Lutar
-    expect(screen.getAllByRole('radio')).toHaveLength(ARENA_CHOICES);
+    expect(screen.getAllByRole('listitem')).toHaveLength(ARENA_CHOICES);
     const last = ARENA_CHOICES - 1;
-    fireEvent.click(container.querySelector(`[data-arena-card="${last}"]`)!);
-    expect(container.querySelector(`[data-arena-card="${last}"]`)!.getAttribute('aria-checked')).toBe('true');
-    expect(container.querySelector('[data-arena-card="0"]')!.getAttribute('aria-checked')).toBe('false');
     expect(container.querySelector('[data-arena-reroll]')!.getAttribute('aria-label')).toMatch(new RegExp(`Sortear outros ${ARENA_CHOICES} adversários`));
-    fireEvent.click(screen.getByRole('button', { name: 'Lutar' }));
+    fireEvent.click(container.querySelector(`[data-arena-card-fight="${last}"]`)!);
+    expect(container.querySelector('[data-duelo-start]')).toBeNull(); // sem CTA global: a luta começa pelo Lutar de cada card
     expect(typeof onStart.mock.calls.at(-1)![0]).toBe('number');
     fireEvent.click(screen.getByRole('button', { name: /Como funciona a Arena/ }));
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain(`1 de ${ARENA_CHOICES} desafios`);
   });
 
+  it('card = só uma linha (ícone + nome + "Fight"); o banner é ÚNICO e fica acima da lista; "Fight" inicia a run daquele card; aviso de ficha só quando aplicável', async () => {
+    const onStart = vi.fn();
+    const { container, rerender } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={onStart} />);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
+    expect(container.querySelectorAll('[data-arena-banner]')).toHaveLength(1);
+    expect(container.querySelector('[data-arena-card] [data-arena-banner], [data-arena-card-banner], [data-arena-card-img]')).toBeNull();
+    expect(container.querySelector('[data-arena-escolha]')!.firstElementChild!.hasAttribute('data-arena-banner')).toBe(true);
+    expect(container.querySelector('[data-arena-sem-ficha]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-arena-card-fight="2"]')!);
+    expect(onStart).toHaveBeenCalledOnce();
+    expect(typeof onStart.mock.calls[0][0]).toBe('number');
+    rerender(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" semFicha onStart={onStart} />);
+    expect(container.querySelector('[data-arena-sem-ficha]')!.textContent).toMatch(/sheet is not on this device/);
+  });
+
   it('em inglês, também: 4 cards, o rótulo do sorteio e a ajuda saem da constante', async () => {
     const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Fight' })).toBeTruthy();
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(ARENA_CHOICES));
-    expect(screen.getByRole('radiogroup', { name: 'Choose your opponents' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^Fight — challenge/ })).toHaveLength(ARENA_CHOICES);
+    expect(screen.getByRole('list', { name: 'Choose your opponents' })).toBeTruthy();
     expect(container.querySelector('[data-arena-reroll]')!.getAttribute('aria-label')).toMatch(new RegExp(`Draw ${ARENA_CHOICES} other opponents`));
     fireEvent.click(screen.getByRole('button', { name: /How the Arena works/ }));
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain(`1 of ${ARENA_CHOICES} challenges`);

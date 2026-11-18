@@ -12,7 +12,11 @@
  * E pelo pedido seguinte do dono, no mesmo dia: as 6 do ritual e os 20 itens
  * do teste viraram parte OBRIGATÓRIA do onboarding, entre o nome e as metas.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';

@@ -10,7 +10,7 @@
  */
 import { escolherChaveDeMatiz } from '../../../functions/api/_chromaHue.js';
 import { SPRITE_FACING_PROMPT } from '../spritePose';
-import { isOnboardingVelado } from '../bbStage';
+import { bbNoNascimento } from '../bbStage';
 import { umMotivoDeTempo, motivoTempoPorSemente, motivosNoTexto, MOTIVO_TEMPO_EN, type MotivoTempo } from '../motivoTempo';
 import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
 import { REALM_MOTIFS, ROLE_METAMORPHS_EXTRA } from './formasReino';
@@ -2595,8 +2595,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     }),
   });
 
-  // ----- BB exclusivo (Onboarding Velado D31): só com o interruptor ligado; não consome o `rng` -----
-  const bbPrompts = isOnboardingVelado()
+  // ----- BB exclusivo (Onboarding Velado D31): com o Início BB ou o interruptor ligado; não consome o `rng` -----
+  const bbPrompts = bbNoNascimento()
     ? composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: accentFor(dominantAlignment, colorDesc, dominantElement, goldTrim), chroma,
         ...visualFor(dominantAlignment),

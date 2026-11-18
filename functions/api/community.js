@@ -547,7 +547,7 @@ async function handleCommunity(context) {
      oponente some), devolvida ANTES de qualquer partida ser gasta. */
   const loadDuelSides = async (mySave, oppSave) => {
     const [meLoad, oppLoad] = await Promise.all([loadDuelSideWithSprite(env, mySave), loadDuelSideWithSprite(env, oppSave)]);
-    // Forma BB (D5): recusa MOTIVADA (`velado.parity.test.js`). Desligado o interruptor, `bbLocked` nunca vem.
+    // Forma BB (D5): recusa MOTIVADA (`velado.parity.test.js`). Desde o Início BB (17/11/2026) vale sem o interruptor: o estágio do save decide.
     if (meLoad.bbLocked) return { res: json({ error: 'bb-locked', reason: 'bb-locked', ...BB_LOCKED_MESSAGE }, 403) };
     if (oppLoad.bbLocked) return { res: json({ error: 'opponent unavailable' }, 404) };
     const meSide = meLoad.side;
@@ -1715,6 +1715,23 @@ async function handleCommunity(context) {
       if (typeof value === 'string' && value.length <= DUEL_SAVE_MAX_CHARS) state = JSON.parse(value);
     } catch { state = null; }
     return json({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
+  }
+
+  // ── Ficha de luta de um AMIGO para o Treino com amigo (17/11/2026, decisão do dono) ─────────────────────────
+  // Só entre amigos (mesma régua de `forms`). Devolve APENAS o lado do amigo, o mesmo `DuelSide` que o duelo ranqueado já
+  // entrega ao oponente (especial da escola, fx cosmético e, se evocador, `invoca`/`companheiro`): nada de pontos, limiares,
+  // save nem pid/saveId. Sem custo, sem ticket, sem cota e sem gravar nada. Falha = 404 e o cliente cai no lado comum.
+  if (action === 'friendSide' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const friendPid = url.searchParams.get('friend') || '';
+    const friendSave = VALID_ID.test(friendPid) ? await saveIdForPublicId(env, friendPid) : null;
+    const me = await getProfile(env, id);
+    const p = friendSave ? await getProfile(env, friendSave) : null;
+    if (!friendSave || !me || !(me.friends || []).includes(friendSave) || !p || isHidden(p)) return json({ error: 'not friends' }, 403);
+    const { side, bbLocked } = await loadDuelSideWithSprite(env, friendSave);
+    if (!side || bbLocked) return json({ error: 'side unavailable' }, 404);
+    return json({ side });
   }
 
   // ── Amizade por CONVITE (§243) ────────────────────────────────────────────

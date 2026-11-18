@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { sortearBB, BB_POOL, type BBEntry } from './bbPool';
-import { initialStageForNewSave, setOnboardingVelado, setVeladoTester, isOnboardingVelado } from '../utils/bbStage';
+import { initialStageForNewSave, setOnboardingVelado, setVeladoTester, isOnboardingVelado, setInicioBB } from '../utils/bbStage';
 
 const pool: BBEntry[] = [
   { id: 'a', elemento: 'fogo', sprite: 's' }, { id: 'b', elemento: 'fogo', sprite: 's' },
@@ -23,8 +23,9 @@ describe('sortearBB', () => {
 });
 
 describe('interruptor por usuário', () => {
-  afterEach(() => { setOnboardingVelado(false); setVeladoTester(false); });
-  it('desligado por padrão; global OU tester liga', () => {
+  afterEach(() => { setOnboardingVelado(false); setVeladoTester(false); setInicioBB(true); });
+  it('desligado por padrão; global OU tester liga (com o Início BB desligado)', () => {
+    setInicioBB(false);
     expect(initialStageForNewSave()).toBe('rookie');
     setVeladoTester(true);
     expect(isOnboardingVelado()).toBe(true);

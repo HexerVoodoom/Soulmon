@@ -148,8 +148,10 @@ describe('account.js — exclusão', () => {
     expect(body.confirmToken).toMatch(/^[0-9a-f]{32}$/);
     expect(body.expiresInSeconds).toBe(900);
     expect(body.plano.apaga).toEqual(expect.arrayContaining([
-      `${ID} (save)`, `profile:${ID}`, `pid:${pid}`, `gifts:${ID}`, `rank:2026-08:${ID}`, `rank:2026-07:${ID}`,
+      `${ID} (save)`, `profile:${ID}`, `pid:${pid}`, `gifts:${ID}`,
     ]));
+    // Inventario LEVE (17/11/2026): rank:/rkme:/rift-* so sao varridos no delete-confirm.
+    expect(body.plano.apaga.some(k => k.startsWith('rank:'))).toBe(false);
     expect(body.plano.sobrevive).toEqual(['ord:GPA.1234']);
     // Nada foi apagado ainda — pedir não é executar.
     expect(e.DIGIAPP_SAVES.store.has(ID)).toBe(true);

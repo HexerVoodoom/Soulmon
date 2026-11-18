@@ -5904,7 +5904,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm2-vit-backdrop { position: absolute; inset: 0; }
 .sm2-vit-spot { position: absolute; width: 0; height: 0; --r: max(22px, 9cqw); }
 /* Título e voltar por cima da arte, com véu escuro para ler em qualquer trecho; respeitam a área segura. */
-.sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
+.sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px + 1vw * 15) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
 .sm2-vit-back { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 var(--sm2-space-3); cursor: pointer; border-radius: 22px; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 82%, transparent); color: var(--sm2-ink); font: inherit; font-size: var(--sm2-text-sm); &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 .sm2-vit-title { margin: 0; color: var(--sm2-ink); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-stats-lab.sm2-vit-title { color: var(--sm2-ink); }
@@ -9312,9 +9312,9 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
 /* 17/11/2026 (dono): Coroa ENCAIXADA ganha placa atrás da arte (a do dano contínuo é quase preta e sumia no fundo escuro do slot, ≈1,2:1).
-   Duas placas fixas, iguais nos temas claro e escuro: clara (#EAF6F3) para as artes escuras, escura (#08191A) para as três claras
-   (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa. */
-.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: #EAF6F3; box-shadow: 0 0 0 1px var(--sm2-primary-ink); }
+   18/11/2026 (dono, rodada 2): SEM placa clara atrás da Coroa (era a mancha branca): só o OUTER GLOW turquesa; as artes escuras (heal, hot, spdBuff) seguem com a placa escura. (Antes: a placa clara deixou de ser branca: TURQUESA CLARO (#B4F4EA) com OUTER GLOW turquesa (`primary-ink`), o mesmo brilho externo do hexágono do lápis. Duas placas fixas, iguais nos temas claro e escuro: clara (#B4F4EA) para as artes escuras, escura (#08191A) para as três claras
+   (heal, hot, spdBuff). Contraste da mediana da arte contra a placa ≥ 3:1 em todas as Coroas (medido). Porta vazia segue sem placa.) */
+.sm2-hex-art[data-hex-crown] { border-radius: var(--sm2-radius-md); background-color: transparent; box-shadow: 0 0 0 1px var(--sm2-primary-ink), 0 0 8px 2px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent), 0 0 16px 4px color-mix(in srgb, var(--sm2-primary-ink) 25%, transparent); }
 .sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: #08191A; }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
@@ -9574,3 +9574,107 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    mira dourada tracejada do inimigo. Foco de teclado visível no mesmo turquesa; o pulso some com movimento reduzido (regra no bloco canônico). */
 .sm-alvo-aliado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
 @keyframes sm-alvo-aliado-pulso { from { opacity: .7; } to { opacity: 1; } }
+
+/* §MOLDURA (17/11/2026): moldura de modal e de card por FATIAMENTO VERTICAL de largura fixa (`components/ui/ModalFrame.tsx`, `CardFrame.tsx`).
+   Topo e base são imagens de proporção fixa (cantos nunca deformam), laterais = faixa reta repetida em Y, miolo transparente. `--u` = 1% da largura
+   (a arte escala com a largura; app é retrato). Arte em `assets/soulmon/ui/moldura/` (~2x do exibido); trocar a arte = trocar os .webp
+   e as proporções abaixo (altura de topo/base em `u` = px do arquivo / largura do arquivo * 100). */
+.sm2-moldura-card { container-type: inline-size; --u: 1cqw; }
+/* Modal: `--u` é medido em JS (`ModalFrame`) — sem `container-type`, que prenderia as sub-folhas `position: fixed` dentro do modal. `1vw` é só o 1º quadro. */
+.sm2-moldura-modal { --u: 1vw; }
+.sm2-moldura-modal {
+  position: relative; box-sizing: border-box; display: flex; flex-direction: column; isolation: isolate;
+  /* MODAL = base turquesa escura SÓLIDA (token do DS) + fundo do lote a ~15% por cima, cobrindo TODA a área. A MOLDURA fica POR CIMA do conteúdo
+     (topo, base, laterais: z 2, centro vazado, sem toque) e o conteúdo rola por baixo dela; `--sm2-moldura-pad-*` é o respiro que quem rola usa
+     para não ficar escondido sob as peças. */
+  background: var(--sm2-viewport-bg, #0E2422); min-height: calc(var(--u) * 52);
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3);
+}
+.sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
+.sm2-moldura-modal__fundo {
+  inset: 0; z-index: -2; background: var(--sm2-moldura-fundo, none) center / cover no-repeat; opacity: var(--sm2-moldura-fill-op, .15);
+}
+/* Pedra com runas (genérico/sem prédio): ladrilho, no máximo 2x2 repetições. */
+.sm2-moldura-modal--pedra .sm2-moldura-modal__fundo { background-size: 50% auto; background-repeat: repeat; background-position: top left; }
+.sm2-moldura-modal__lado { top: 0; bottom: 0; width: calc(var(--u) * 2.1); z-index: 2; background-repeat: repeat-y; background-size: 100% auto; }
+.sm2-moldura-modal__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-e.webp'); }
+.sm2-moldura-modal__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/painel-lado-d.webp'); }
+.sm2-moldura-modal__topo, .sm2-moldura-modal__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
+.sm2-moldura-modal__topo { top: 0; height: calc(var(--u) * 16.9); background-image: url('./assets/soulmon/ui/moldura/painel-topo.webp'); }
+.sm2-moldura-modal__base { bottom: 0; height: calc(var(--u) * 34.4); background-image: url('./assets/soulmon/ui/moldura/painel-base.webp'); }
+.sm2-moldura-modal__placa {
+  position: absolute; z-index: 3; left: calc(var(--u) * 24); width: calc(var(--u) * 57); top: calc(var(--u) * 4.3); height: calc(var(--u) * 8.2);
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.sm2-moldura-modal__titulo {
+  margin: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; line-height: 1.1;
+  font-family: Georgia, 'Times New Roman', serif; font-size: var(--sm2-text-md, 1rem); font-weight: 700; color: #e3c06a; text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
+}
+.sm2-moldura-modal__info {
+  position: absolute; z-index: 4; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8);
+  display: flex; align-items: center; justify-content: center;
+}
+.sm2-moldura-modal__conteudo {
+  /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
+  position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;
+}
+/* SUB-FOLHA (17/11/2026): encaixe do miolo para as folhas que abrem de dentro do modal. Entre o conteúdo (z auto) e as peças da moldura (z 2); o mesmo respiro
+   do conteúdo; vazio = não existe (`:empty`). Turquesa escuro SÓLIDO + o fundo do lote em baixa opacidade (as mesmas variáveis do modal pai). */
+.sm2-moldura-modal__subfolha {
+  position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; pointer-events: none;
+  /* cobre o modal todo (o conteúdo do pai some por baixo das peças); o respiro de dentro é o miolo útil */
+  padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b);
+  background: var(--sm2-viewport-bg, #0E2422); color: var(--sm2-viewport-ink, #E9F5F2);
+}
+.sm2-moldura-modal__subfolha:empty { display: none; }
+.sm2-moldura-modal__subfolha::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--sm2-moldura-fill-op, .15);
+  background: var(--sm2-moldura-fundo, none) center / cover no-repeat;
+}
+.sm2-moldura-modal--pedra .sm2-moldura-modal__subfolha::before { background-size: 50% auto; background-repeat: repeat; background-position: top left; }
+.sm2-moldura-modal__subfolha > [data-modal-backdrop] { pointer-events: auto; }
+.sm2-moldura-modal__subfolha .sm2-title { color: var(--sm2-viewport-ink, #E9F5F2); }
+/* a seta/✕ do cabeçalho da folha também fica clara sobre o turquesa. */
+.sm2-moldura-modal__subfolha .sm2-ora-back { color: var(--sm2-viewport-ink, #E9F5F2); }
+/* texto solto sobre o turquesa (fora dos cards brancos): tinta clara; o que está dentro de cards segue a tinta escura. */
+.sm2-moldura-modal__subfolha [role='dialog'] > div > p { color: var(--sm2-viewport-ink, #E9F5F2) !important; }
+/* CARD: topo 231/600 e base 369/600 (do arquivo); vão da arte entre os dois. */
+.sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; min-height: calc(var(--u) * 126); }
+.sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }
+.sm2-moldura-card__lado { top: 0; bottom: 0; width: calc(var(--u) * 6.7); z-index: 1; background-repeat: repeat-y; background-size: 100% auto; }
+.sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
+.sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
+.sm2-moldura-card__topo, .sm2-moldura-card__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
+.sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
+.sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
+.sm2-moldura-card__arte {
+  position: absolute; z-index: 0; left: calc(var(--u) * 6); right: calc(var(--u) * 6); top: calc(var(--u) * 5); bottom: calc(var(--u) * 38.9);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a2e2c;
+}
+.sm2-moldura-card__arte > img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.sm2-moldura-card__nome, .sm2-moldura-card__desc, .sm2-moldura-card__recompensa {
+  position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; overflow: hidden;
+}
+.sm2-moldura-card__nome {
+  left: calc(var(--u) * 22); right: calc(var(--u) * 20); bottom: calc(var(--u) * 25.5); height: calc(var(--u) * 10.3);
+  font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: var(--sm2-text-md, 1rem); color: #f0d98c; text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+.sm2-moldura-card__desc {
+  left: calc(var(--u) * 11); right: calc(var(--u) * 11); bottom: calc(var(--u) * 5); height: calc(var(--u) * 17);
+  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; color: #3a2a0c;
+}
+.sm2-moldura-card__recompensa {
+  z-index: 1; left: 50%; transform: translateX(-50%); bottom: calc(var(--u) * 41); gap: 6px; padding: 2px 12px; border-radius: 999px;
+  background: rgba(10, 22, 22, .82); border: 1px solid #b98f3e; font-size: var(--sm2-text-sm, .875rem); font-weight: 700; color: #e3c06a;
+}
+/* Telas cheias: decoração solta (`components/ui/TelaMoldura.tsx`): fundo por baixo do conteúdo (z -1), moldura por cima, nada intercepta toque. */
+.sm2-moldura-tela.sm2-moldura-modal { display: contents; container-type: normal; --u: 1vw; background: none; min-height: 0; }
+.sm2-moldura-tela .sm2-moldura-modal__fundo, .sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo,
+.sm2-moldura-tela .sm2-moldura-modal__base, .sm2-moldura-tela .sm2-moldura-modal__placa { position: fixed; pointer-events: none; }
+.sm2-moldura-tela::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #0d1a1a; pointer-events: none; }
+.sm2-moldura-tela .sm2-moldura-modal__fundo { z-index: -1; inset: 0; }
+.sm2-moldura-tela .sm2-moldura-modal__lado, .sm2-moldura-tela .sm2-moldura-modal__topo, .sm2-moldura-tela .sm2-moldura-modal__base { z-index: 60; }
+.sm2-moldura-tela .sm2-moldura-modal__placa { z-index: 61; }
+/* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
+[data-forge-view="map"] .sm2-vit-title { opacity: 0; }
+@keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}

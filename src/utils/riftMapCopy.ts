@@ -84,3 +84,9 @@ export function riftMapCopy(isPt: boolean): RiftMapCopy {
     teleportNote: l => `Teleported. Your next descent starts at floor ${l}.`,
   };
 }
+
+/** Rótulo do nó do mapa: andares em negrito + elemento em regular ("Layers 7-8" + "Fire"). `range` vem de RiftMapNode.label ("7-8"). */
+export function nodeLabel(range: string, elementName: string, isPt: boolean): { floors: string; element: string } {
+  const plural = range.includes('-');
+  return { floors: `${isPt ? 'Camada' : 'Layer'}${plural ? 's' : ''} ${range}`, element: elementName };
+}
