@@ -294,7 +294,7 @@ export const STORAGE_KEYS = {
    *  Impede recrédito quando o ack ao servidor se perde. É da CONTA: o logout apaga. Dono: `community.ts` (`resgatarPresentes`). */
   GIFTS_CREDITED: 'soulmon-gifts-credited-v1',
   /** Drive em accordion (Biblioteca): ids dos níveis FECHADOS, JSON string[]. */
-  DRIVE_ACORDEAO_FECHADOS: 'sm2.drive.fechados.v1',
+  DRIVE_ACORDEAO_FECHADOS: 'soulmon-drive-fechados-v1',
 } as const;
 
 /**
