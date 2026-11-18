@@ -210,7 +210,7 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
   });
 
-  it('Essências: preço por linha, ×5 com desconto, posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
+  it('Essências: preço por linha, ×5 com desconto, sem posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const par = ALL_ELEMENT_IDS.find(id => !BASE_ELEMENT_IDS.includes(id))!;
     const trancado = BASE_ELEMENT_IDS[1];
@@ -220,12 +220,22 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const prices = (id: string) => [...row(id).querySelectorAll('[data-essence-price]')].map(e => e.textContent);
     expect(prices(fogo)).toEqual(['1', '4']);
     expect(prices(par)).toEqual(['2', '9']);
-    expect(row(fogo).querySelector('[data-essence-owned]')!.textContent).toBe('×7');
+    expect(row(fogo).querySelector('[data-essence-owned]')).toBeNull();
     expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
     expect(row(trancado).textContent).toMatch(/\?\?\?/);
     expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
     expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
     expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Essências: com 10 em estoque o Cambista NÃO mostra ×10 (só o ×5 do pacote entregue)', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { container } = abrirC({ credits: 50, unlockedElements: [fogo], essences: { [fogo]: 10 }, onBuyEssence: async () => true });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    const row = container.querySelector(`[data-essence-row="${fogo}"]`)!;
+    expect(row.textContent).not.toMatch(/×\s*10/);
+    expect(container.querySelector('[data-essence-owned]')).toBeNull();
+    expect(row.querySelector('[data-essence-buy="5"]')!.textContent).toMatch(/×5/);
   });
 
   it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {

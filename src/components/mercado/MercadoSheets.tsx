@@ -529,7 +529,6 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
                   {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
                   <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive')}>
                     {name}
-                    {known && <span data-essence-owned className="sm2-num" style={{ ...sm2Hint, marginLeft: 6 }}>×{owned}</span>}
                   </span>
                   {known && onBuyEssence ? ESSENCE_PACK_SIZES.map(qty => {
                     const price = essencePackPrice(id, qty);
