@@ -120,7 +120,7 @@ export function TicketPanel({ language, status, onBuy }: { language: Language; s
   const hint = st.canBuy
     ? null // a linha "1 energia = 3 tickets" saiu a pedido do dono (18/11/2026): o botão já mostra o custo
     : st.buyRefusal === 'has-tickets'
-      ? (isPt ? 'Você ainda tem tickets de sobra: compre mais quando restarem 2 ou menos.' : 'You still have plenty of tickets: buy more when 2 or fewer are left.')
+      ? null // a dica "você ainda tem tickets de sobra" saiu a pedido do dono (18/11/2026)
       : (isPt ? 'Sem energia para comprar tickets agora. A energia volta com o tempo; que tal uma tarefa, o Ateliê da Mente ou o Refúgio?' : 'No energy to buy tickets right now. Energy comes back over time; how about a task, the Mind Atelier or the Refuge?');
   return (
     <section data-fun-tickets={st.count} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
 import { CardFrame } from '../ui/CardFrame';
 
@@ -31,14 +31,16 @@ export function cardArt(id: string): string | undefined {
   return ART[`../../assets/soulmon/cards/${id}.webp`];
 }
 
-export function GameCard({ id, title, description, reward, icon, badges, onPress, dataAttrs, art }: {
+export function GameCard({ id, title, description, reward, hint, icon, badges, onPress, dataAttrs, art }: {
   /** Id da carta (`CARD_IDS`) — escolhe a ilustração. */
   id: string;
   title: string;
   /** Uma linha curta (opcional: o Salão mostra só o título). */
   description?: string;
-  /** Quanto o jogo ganha (Bits): vai no pergaminho, centralizado, quando não há descrição. */
+  /** Quanto o jogo ganha (Bits): vai no PERGAMINHO, em tinta escura, e tem prioridade sobre `description`. */
   reward?: ReactNode;
+  /** Descrição que NÃO cabe no card (fica fora da vista): vira a descrição acessível do botão. */
+  hint?: string;
   /** Ícone/glifo do placeholder (quando não há arte). Sem ele, a inicial do nome. */
   icon?: string;
   /** Linha pequena de selos sob a carta (Bits, custo de energia…). */
@@ -49,13 +51,14 @@ export function GameCard({ id, title, description, reward, icon, badges, onPress
   /** Força a URL da arte (testes); o padrão é `cardArt(id)`. */
   art?: string | null;
 }) {
+  const hintId = useId();
   const src = art === undefined ? cardArt(id) : art ?? undefined;
   return (
     <li className="sm-game-card" data-game-card={id}>
-      <button type="button" className="sm-game-card__btn" onClick={onPress} {...dataAttrs}>
+      <button type="button" className="sm-game-card__btn" onClick={onPress} aria-describedby={hint ? hintId : undefined} {...dataAttrs}>
         <CardFrame
-          name={<span className="sm-game-card__titulo" data-game-card-nome>{title}</span>}
-          description={description ?? (reward != null ? <span className="sm-game-card__ganho" data-game-card-ganho>{reward}</span> : undefined)}
+          name={<span className="sm-game-card__titulo" data-game-card-nome data-nome-curto={title.length <= 13 ? 'true' : undefined}>{title}</span>}
+          description={reward != null ? <span className="sm-game-card__ganho" data-game-card-ganho>{reward}</span> : description}
           art={src ? (
             <img src={src} alt="" loading="lazy" decoding="async" data-game-card-art />
           ) : (
@@ -67,6 +70,7 @@ export function GameCard({ id, title, description, reward, icon, badges, onPress
           )}
         />
       </button>
+      {hint && <span id={hintId} className="sm2-sr-only" data-game-card-hint>{hint}</span>}
       {badges !== undefined && <div className="sm-game-card__badges" data-game-card-badges>{badges}</div>}
     </li>
   );

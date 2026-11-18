@@ -5245,6 +5245,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-on-danger: #FFFFFF;
   /* o vidro é ESCURO nos dois temas — é um visor, não um cartão */
   --sm2-viewport-bg: #0E2422;
+  --sm2-pergaminho-ink: #050E0D; /* tinta sobre o pergaminho tan da moldura de card (≥7:1 no pior pixel), igual nos dois temas */
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #B0722F;
   --sm2-viewport-ring-deep: #5E3612;
@@ -5314,6 +5315,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
   --sm2-viewport-bg: #071413;
+  --sm2-pergaminho-ink: #050E0D;
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
@@ -9763,12 +9765,15 @@ button.sm2-hex-row {
   font-family: var(--sm2-font-display); font-weight: 700; font-size: 40px; line-height: 1;
   color: var(--sm2-primary-ink); opacity: .7;
 }
-/* o nome vai na PLACA dourada: fonte menor e até 2 linhas, sem cortar (título longo em 375px) */
-.sm-game-card__titulo { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 4.6); line-height: 1.05; overflow-wrap: anywhere; text-wrap: balance; }
-/* o ganho do jogo vai no PERGAMINHO, numa linha só, centralizado */
-.sm-game-card__ganho { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--u) * 1.5); white-space: nowrap; font-weight: 700; font-size: calc(var(--u) * 5.4); line-height: 1.1; color: var(--sm2-ink); }
+/* o nome vai na PLACA dourada (miolo escuro ~9,6u de altura): 2 linhas a 5u cabem; nome curto (≤13 letras) cabe em 1 linha e cresce */
+.sm-game-card__titulo { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 5); line-height: 1; overflow-wrap: anywhere; text-wrap: balance; }
+.sm-game-card__titulo[data-nome-curto] { font-size: calc(var(--u) * 6.4); }
+/* o ganho vai no PERGAMINHO (tan): tinta escura fixa nos dois temas (≥7:1), até 2 linhas, centralizado. O `BitsAmount` pinta o número por estilo inline em turquesa: aqui ele herda a tinta do pergaminho. */
+.sm-game-card__ganho { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: calc(var(--u) * 1.5); row-gap: 0; text-align: center; text-wrap: balance; font-weight: 700; font-size: calc(var(--u) * 6.2); line-height: 1.12; color: var(--sm2-pergaminho-ink); }
+.sm-game-card__ganho, .sm-game-card__ganho * { color: var(--sm2-pergaminho-ink) !important; text-shadow: none; }
 .sm-game-card__ganho img { flex: none; }
 .sm-game-card .sm2-moldura-card__arte > img { width: 100%; height: 100%; object-fit: cover; }
+.sm-game-card__badges:empty { display: none; }
 .sm-game-card__badges {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
   font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
@@ -9886,7 +9891,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 .sm2-moldura-card__desc {
   left: calc(var(--u) * 11); right: calc(var(--u) * 11); bottom: calc(var(--u) * 5); height: calc(var(--u) * 17);
-  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; color: #3a2a0c;
+  font-size: var(--sm2-text-sm, .875rem); line-height: 1.25; font-weight: 600; color: var(--sm2-pergaminho-ink);
 }
 .sm2-moldura-card__recompensa {
   z-index: 1; left: 50%; transform: translateX(-50%); bottom: calc(var(--u) * 41); gap: 6px; padding: 2px 12px; border-radius: 999px;

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
+import { BitsIcon } from '../ui/BitsIcon';
 import type { FunTicketStatus } from '../../utils/funTickets';
-import { TicketCost, TicketPanel } from './TicketFan';
+import { TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text, ModalSheet } from '../form/FormKit';
 import { createPortal } from 'react-dom';
@@ -17,7 +18,7 @@ import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
-import { bitsStyle, minigameBitsCap, bitsCategoryCap, minigameBitsCategoryToday, type BitsCategory } from '../../utils/currencies';
+import { minigameBitsCap, bitsCategoryCap, minigameBitsCategoryToday, type BitsCategory } from '../../utils/currencies';
 import { playerDayKey } from '../../utils/playerDay';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
@@ -101,7 +102,6 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
   const catN = gs && category ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), category)) : undefined;
   const cap = minigameBitsCap(extraCap);
   const n = Math.min(cap, Math.max(0, Math.floor(earned)));
-  const cheio = n >= cap;
   return (
     <p data-bits-hoje style={{ ...note, margin: 0 }}>
       {!(hideTotal && catN !== undefined) && (
@@ -111,12 +111,9 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
       )}
       {catN !== undefined && (
         <span data-bits-categoria className="sm2-num" style={{ display: 'block' }}>
-          {isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}
+          {isPt ? 'Hoje: ' : 'Today: '}{catN}{' '}<BitsIcon size={14} label="Bits" />{isPt ? ` de ${catCap}` : ` of ${catCap}`}
         </span>
       )}
-      {cheio && (isPt
-        ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
-        : ' · the games stay open; Bits come back tomorrow.')}
     </p>
   );
 }
@@ -215,36 +212,24 @@ const ganho = (language: Language) => {
   };
 };
 
-/** Selos da Corrida: recorde e os Bits que ele rendeu (somem sem recorde: não há "0 Bits" a mostrar, P10) + o ticket da partida. */
-function DinoBadges({ language, paga }: { language: Language; paga: boolean }) {
+/** Selos da Corrida: o recorde (some sem recorde: não há "0 Bits" a mostrar, P10). O custo é sempre 1 ticket e o painel de tickets já informa: não se repete na carta. */
+function DinoBadges({ language }: { language: Language }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
     <>
       {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
-      {paga && <TicketCost />}
     </>
   );
 }
 
 /** Selos do Elemental Fusion: recorde (só se houver) + "até N Bits por rodada" + o ticket. */
-function Match3Badges({ language, paga }: { language: Language; paga: boolean }) {
+function Match3Badges({ language }: { language: Language }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   return (
     <>
       {best > 0 && <Badge>{isPt ? 'seu recorde' : 'your best'} {best}</Badge>}
-      {paga && <TicketCost />}
-    </>
-  );
-}
-
-/** Selos do Pedra-papel-tesoura: Bits por vitória + o ticket. */
-function PptBadges({ language, paga }: { language: Language; paga: boolean }) {
-  const isPt = language === 'pt-BR';
-  return (
-    <>
-      {paga && <TicketCost />}
     </>
   );
 }
@@ -275,8 +260,6 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
   const recusarCompra = () => { setBuyOpen(false); setPendente(null); };
   const comprar = (): boolean => !!onBuyTickets && onBuyTickets() !== false;
   const isPt = language === 'pt-BR';
-  /* Cada partida gasta 1 ticket (09/11/2026): sem `funStatus` (testes antigos) = sem custo. */
-  const paga = !!funStatus;
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
       {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} />}
@@ -312,28 +295,26 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
           title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
           reward={ganho(language).dino}
           onPress={() => onStart('dino')}
-          badges={<DinoBadges language={language} paga={paga} />}
+          badges={<DinoBadges language={language} />}
         />
         <GameCard
           id="ppt" icon={iconPpt} dataAttrs={{ 'data-ppt-start': 'true' }}
           title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
           reward={ganho(language).ppt}
           onPress={() => onStart('ppt')}
-          badges={<PptBadges language={language} paga={paga} />}
         />
         <GameCard
           id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
           title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
           reward={ganho(language).match3}
           onPress={() => onStart('match3')}
-          badges={<Match3Badges language={language} paga={paga} />}
+          badges={<Match3Badges language={language} />}
         />
         <GameCard
           id="barrage" icon={iconCorrida} dataAttrs={{ 'data-barrage-open': 'true' }}
           title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
           reward={ganho(language).barrage}
           onPress={() => onStart('barrage')}
-          badges={paga ? <TicketCost /> : undefined}
         />
       </GameCardGrid>
     </div>
@@ -348,28 +329,28 @@ export function MenteSheet({ language, onStart, bitsToday }: {
   onStart: (g: MenteGame) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const upTo = (n: number) => <RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: n }]} />;
-  const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode }[] = [
+  const upTo = (n: number, size?: number) => <RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: n }]} size={size} />;
+  const rows: { id: MenteGame; title: string; asks: string; detail: string; max: number }[] = [
     {
       id: 'eco',
       title: isPt ? 'Eco do Pet' : "Pet's Echo",
       asks: isPt ? 'Pede: lembrar uma sequência' : 'Asks: remember a sequence',
       detail: isPt ? 'Repita a sequência que o seu Soulmon mostra. Ela cresce a cada acerto.' : 'Repeat the sequence your Soulmon shows. It grows with every match.',
-      meta: <span style={bitsStyle}>{upTo(ECO_MAX_BITS)}</span>,
+      max: ECO_MAX_BITS,
     },
     {
       id: 'zip',
       title: isPt ? 'Trilha do Pet' : 'Pet Trail',
       asks: isPt ? 'Pede: planejar um caminho' : 'Asks: plan a route',
       detail: isPt ? 'Trace um caminho só pelos números, em ordem, passando por todas as casas.' : 'Trace one path through the numbers, in order, covering every cell.',
-      meta: <span style={bitsStyle}>{upTo(ZIP_MAX_BITS)}</span>,
+      max: ZIP_MAX_BITS,
     },
     {
       id: 'selo',
       title: isPt ? 'Selo Faltante' : 'Missing Seal',
       asks: isPt ? 'Pede: achar o padrão' : 'Asks: find the pattern',
       detail: isPt ? 'Descubra o padrão da grade de selos e escolha o que falta. Exercita raciocínio.' : 'Find the pattern in the grid of seals and pick the missing one. It exercises reasoning.',
-      meta: <span style={bitsStyle}>{upTo(SELO_MAX_BITS)}</span>,
+      max: SELO_MAX_BITS,
     },
   ];
   return (
@@ -391,9 +372,8 @@ export function MenteSheet({ language, onStart, bitsToday }: {
         {rows.map(r => (
           <GameCard
             key={r.id} id={r.id} dataAttrs={{ 'data-mente-start': r.id }}
-            title={r.title} description={r.asks}
+            title={r.title} reward={upTo(r.max, 14)} hint={r.asks}
             onPress={() => onStart(r.id)}
-            badges={r.meta}
           />
         ))}
       </GameCardGrid>
