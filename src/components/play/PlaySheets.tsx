@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
+import { BitsIcon } from '../ui/BitsIcon';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
@@ -101,7 +102,6 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
   const catN = gs && category ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), category)) : undefined;
   const cap = minigameBitsCap(extraCap);
   const n = Math.min(cap, Math.max(0, Math.floor(earned)));
-  const cheio = n >= cap;
   return (
     <p data-bits-hoje style={{ ...note, margin: 0 }}>
       {!(hideTotal && catN !== undefined) && (
@@ -111,12 +111,9 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
       )}
       {catN !== undefined && (
         <span data-bits-categoria className="sm2-num" style={{ display: 'block' }}>
-          {isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}
+          {isPt ? 'Hoje: ' : 'Today: '}{catN}{' '}<BitsIcon size={14} label="Bits" />{isPt ? ` de ${catCap}` : ` of ${catCap}`}
         </span>
       )}
-      {cheio && (isPt
-        ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
-        : ' · the games stay open; Bits come back tomorrow.')}
     </p>
   );
 }
