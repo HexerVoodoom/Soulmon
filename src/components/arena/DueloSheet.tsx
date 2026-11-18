@@ -67,7 +67,7 @@ export interface ArenaRerollProps {
   invites?: { count: number; max: number; perEnergy: number; canExchange: boolean; onExchange: () => boolean; onBegin: () => boolean };
 }
 
-function EscolhaDeAdversarios({ isPt, semFicha, onStart, startBlocked, arena }: { isPt: boolean; semFicha: boolean; onStart: (seed: number) => void; startBlocked: boolean; arena: ArenaRerollProps }) {
+function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: boolean; onStart: (seed: number) => void; startBlocked: boolean; arena: ArenaRerollProps }) {
   const done = arenaRerollsToday(arena.reroll, arena.dayIso);
   // `ARENA_CHOICES` desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
   // §370: uma coluna só (o padrão desta folha): 4 cards de largura cheia cabem em 360 px sem rolagem lateral e o nome do chefe não corta.
@@ -148,13 +148,6 @@ function EscolhaDeAdversarios({ isPt, semFicha, onStart, startBlocked, arena }: 
             : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
         </span>
       </button>
-      {semFicha && (
-        <p data-arena-sem-ficha style={{ ...sm2Hint, margin: 0 }}>
-          {isPt
-            ? 'Sua ficha ainda não está neste aparelho: você luta com um par genérico. Abra a página do seu Soulmon uma vez.'
-            : "Your sheet is not on this device yet: you fight with a generic pair. Open your Soulmon's page once."}
-        </p>
-      )}
       {!canReroll && (
         <p data-arena-reroll-faltam style={{ ...sm2Hint, margin: 0 }}>
           {isPt ? `Faltam ${cost - arena.bits} Bits para sortear de novo hoje.` : `${cost - arena.bits} more Bits needed to draw again today.`}
@@ -187,9 +180,8 @@ function ComprarConvites({ isPt, inv }: { isPt: boolean; inv: NonNullable<ArenaR
   );
 }
 
-export function DueloSheet({ language, onStart, arena, semFicha }: {
+export function DueloSheet({ language, onStart, arena }: {
   /** A ficha de habilidades ainda não está neste aparelho: o card avisa em uma linha. */
-  semFicha?: boolean;
   language: Language;
   /** Sorteio dos cards e reroll (`utils/arenaSorteio.ts`): os cards mostram os MESMOS inimigos que a `ArenaGame` luta (`arenaFoesOfSeed`). */
   arena: ArenaRerollProps;
@@ -247,7 +239,7 @@ export function DueloSheet({ language, onStart, arena, semFicha }: {
           </span>
         </ModalInfo>
       </div>
-      <EscolhaDeAdversarios isPt={isPt} semFicha={!!semFicha} onStart={onStart} startBlocked={!!arena.invites && arena.invites.count < 1} arena={arena} />
+      <EscolhaDeAdversarios isPt={isPt} onStart={onStart} startBlocked={!!arena.invites && arena.invites.count < 1} arena={arena} />
       {catN !== undefined && (
         <p data-bits-categoria style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
           <span className="sm2-num">{isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}</span>

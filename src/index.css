@@ -5219,6 +5219,9 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-primary-fill: #0B6F68;
   --sm2-primary-deep: #08544F;
   --sm2-primary-soft: #D6F5EF;
+  /* Hexsmith (18/11/2026): miolo do hexágono da Porta COM HEX equipado = o turquesa claro do miolo do hexágono do lápis (`hexsmith/btn-lapis.webp`).
+     Igual nos dois temas: o mapa mora no modal de prédio, sempre turquesa escuro. */
+  --sm2-hex-slot-on: #02857A;
   --sm2-on-primary: #FFFFFF;
   /* ouro — tinta e fill NUNCA são o mesmo valor */
   --sm2-gold-ink: #8A5A2B;
@@ -5240,6 +5243,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-bronze-fill: #8E4A2B;
   --sm2-on-bronze: #FFFFFF;
   /* perigo */
+  --sm2-rank-faixa: #A32626; /* faixa vermelha do ranking (pódio A, 18/11/2026): vermelho escuro fixo, não o aviso */
   --sm2-danger-ink: #B3261E;
   --sm2-danger-fill: #B3261E;
   --sm2-on-danger: #FFFFFF;
@@ -5263,7 +5267,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
      3,47:1 sobre `surface-2`. Este dá 6,55:1 / 6,23:1. */
-  --sm2-credit-ink: #6D28D9;
+  --sm2-credit-ink: #087480; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #6D28D9); AA >= 4,5:1 nos fundos claros */
   /* ASSOMBRO — a tinta PRÓPRIA da tarefa assombrada (P5 do canvas Home,
      decisão do dono em 16/09/2026: cor dedicada, um azul-acinzentado
      "fantasma", nunca opacidade e nunca vermelho). Sólida: quem esmaece é a
@@ -5294,6 +5298,9 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-primary-fill: #5FF3E0;
   --sm2-primary-deep: #29C9B8;
   --sm2-primary-soft: rgba(95, 243, 224, .14);
+  /* Hexsmith (18/11/2026): miolo do hexágono da Porta COM HEX equipado = o turquesa claro do miolo do hexágono do lápis (`hexsmith/btn-lapis.webp`).
+     Igual nos dois temas: o mapa mora no modal de prédio, sempre turquesa escuro. */
+  --sm2-hex-slot-on: #02857A;
   --sm2-on-primary: #04211F;
   --sm2-gold-ink: #EBBE84;
   --sm2-gold-fill: #D9A05B;
@@ -5311,6 +5318,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-on-silver: #0E2422;
   --sm2-bronze-fill: #8E4A2B;
   --sm2-on-bronze: #FFFFFF;
+  --sm2-rank-faixa: #A32626;
   --sm2-danger-ink: #FF8B8B;
   --sm2-danger-fill: #FF8B8B;
   --sm2-on-danger: #04211F;
@@ -5322,7 +5330,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-danger: #FF8B8B;
   --sm2-viewport-warn: #EBBE84;
   --sm2-viewport-accent: #5FF3E0;
-  --sm2-credit-ink: #C9A7FF;
+  --sm2-credit-ink: #6FE6F2; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #C9A7FF) */
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
      `surface`, 6,63:1 sobre `bg`, 4,73:1 sobre `surface-2` (medido no teste,
@@ -8535,7 +8543,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-ranking-fechar:focus-visible { outline: 2px solid color-mix(in srgb, #FBF1D2 70%, transparent); outline-offset: -6px; }
 .sm3-ranking .sm2-moldura-modal__conteudo { padding: var(--sm2-moldura-pad-t) var(--sm2-moldura-pad-x) var(--sm2-moldura-pad-b); }
 .sm3-ranking-corpo {
-  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sm2-space-3);
+  flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: 12px 3px 0;
   /* o miolo é escuro (viewport): a lista herda tinta clara, nunca a tinta do tema claro */
   --sm2-ink: var(--sm2-viewport-ink); --sm2-muted: color-mix(in srgb, var(--sm2-viewport-ink) 65%, transparent); color: var(--sm2-viewport-ink);
 }
@@ -8571,6 +8579,49 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 }
 .sm2-moldura-modal--files .sm2-info-hit:focus-visible { outline-color: var(--sm2-viewport-accent); }
 .sm3-files .sm2-moldura-modal__conteudo { padding: 0 var(--sm2-moldura-pad-x) calc(var(--u) * 4.03 + 10px + env(safe-area-inset-bottom, 0px)); }
+/* ── MOLDURA DE AÇO (18/11/2026, decisão do dono: SÓ a Hexsmith) ─────────────────────────────────────────────────────────────
+   A arte do "Files novo" (aço com runas, `assets/soulmon/ui/hex-moldura/`, LEIA-ME) sobre o `ModalFrame`, ligada por `AreaSheet moldura="aco"`.
+   `--u` = 1% da largura; medidas = px do arquivo / 720 * 100. Topo 720×164: a faixa opaca começa em y 41 no centro (encaixe do cristal) e vai até
+   y 157; placa x 155–565 / y 45–145; discos com centro em (84,5; 91,5) = ✕ e (635; 90,5) = "i", diâmetro ≈ 70. Base 720×136; laterais 40 px (repeat-y).
+   A base turquesa escura e o fundo do prédio começam em 5,7u (abaixo do encaixe), para a cena aparecer em volta do cristal e dos cantos. */
+/* duas classes: vence o bloco base `.sm2-moldura-modal` (que vem depois no arquivo) */
+.sm2-moldura-modal.sm2-moldura-modal--aco {
+  background: transparent;
+  --sm2-moldura-pad-t: calc(var(--u) * 22.5); --sm2-moldura-pad-b: calc(var(--u) * 12); --sm2-moldura-pad-x: calc(var(--u) * 6.5);
+}
+.sm2-moldura-modal--aco::before {
+  content: ''; position: absolute; z-index: -3; left: 0; right: 0; bottom: 0; top: calc(var(--u) * 5.7); background: var(--sm2-viewport-bg); pointer-events: none;
+}
+.sm2-moldura-modal--aco .sm2-moldura-modal__fundo { top: calc(var(--u) * 5.7); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__subfolha { top: calc(var(--u) * 5.7); padding-top: calc(var(--sm2-moldura-pad-t) - var(--u) * 5.7); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__topo { height: calc(var(--u) * 22.78); background-image: url('./assets/soulmon/ui/hex-moldura/aco-topo.webp'); }
+/* Base 720×136 (cantos de aço inteiros; a faixa do meio vai de y 83 a 122 e há 7 px de margem transparente embaixo, que fica para fora da tela).
+   As laterais (z 2, antes no DOM) passam POR BAIXO do topo e da base. */
+.sm2-moldura-modal--aco .sm2-moldura-modal__base { bottom: calc(var(--u) * -0.9); height: calc(var(--u) * 18.89); background-image: url('./assets/soulmon/ui/hex-moldura/aco-base.webp'); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__lado { width: calc(var(--u) * 5.56); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/hex-moldura/aco-lado-e.webp'); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/hex-moldura/aco-lado-d.webp'); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__placa { left: calc(var(--u) * 25); width: calc(var(--u) * 50); top: calc(var(--u) * 8.3); height: calc(var(--u) * 10.4); }
+.sm2-moldura-modal--aco .sm2-moldura-modal__titulo { color: var(--sm2-viewport-ink); letter-spacing: .08em; }
+/* O "i": SÓ o glifo, centrado no disco direito que a arte já desenha (sem botão/aro por cima, pedido do dono); alvo transparente ≥ 44 px.
+   Sem info o encaixe some e o disco fica vazio, como na arte. */
+.sm2-moldura-modal--aco .sm2-moldura-modal__info { right: calc(var(--u) * 7.5); top: calc(var(--u) * 8.27); width: calc(var(--u) * 8.6); height: calc(var(--u) * 8.6); }
+.sm2-moldura-modal--aco .sm2-info-hit::before {
+  content: 'i'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: var(--sm2-text-lg); font-weight: 700; color: var(--sm2-viewport-ink);
+}
+.sm2-moldura-modal--aco .sm2-info-hit:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -6px; }
+/* O rótulo da Porta equipada fica claro sobre o turquesa escuro também no tema claro (a moldura é sempre escura). */
+.sm2-moldura-modal--aco .sm2-hex-slot-label[data-on="true"] { color: var(--sm2-viewport-ink); }
+/* O ✕: SÓ o glifo, centrado no disco ESQUERDO que a arte já desenha (sem botão/aro por cima, pedido do dono); alvo transparente ≥ 44 px. */
+.sm2-moldura-aco__fechar {
+  position: absolute; z-index: 5; left: calc(var(--u) * 11.74); top: calc(var(--u) * 12.71); transform: translate(-50%, -50%);
+  width: max(44px, calc(var(--u) * 8.6)); height: max(44px, calc(var(--u) * 8.6)); box-sizing: border-box; padding: 0; margin: 0; border: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; color: var(--sm2-viewport-ink);
+  background: transparent; -webkit-tap-highlight-color: transparent;
+  &:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -6px; }
+  &:disabled { opacity: .45; cursor: default; }
+}
 /* CRISTAL-CHAMA reutilizável (`ui/CristalChama.tsx`): `--u` do pai; `--cristal-w`/`--cristal-top` em `u`. Brilho pulsante opcional (`data-pulsar`). */
 .sm2-cristal-chama {
   position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * var(--cristal-top, -14)); width: calc(var(--u) * var(--cristal-w, 17)); height: auto;
@@ -9359,7 +9410,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-rank-podium {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1.25fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
   align-items: end;
   column-gap: var(--sm2-space-2);
   margin: 0;
@@ -9421,7 +9472,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__slot[data-place="1"] .sm-rank-podium__medal { width: 44px; height: 44px; font-size: var(--sm2-text-lg); }
 .sm-rank-podium__medal[data-podium-medal="css"] {
-  color: var(--pod-ink);
+  color: var(--pod-ink); border: 2px solid color-mix(in srgb, var(--sm2-viewport-ink) 85%, transparent);
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-ink)) 0%, var(--pod-fill) 55%, color-mix(in srgb, var(--pod-fill) 70%, var(--sm2-viewport-bg)) 100%);
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pod-fill) 60%, var(--sm2-viewport-bg)), 0 1px 0 color-mix(in srgb, var(--sm2-viewport-bg) 25%, transparent);
 }
@@ -9452,13 +9503,11 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__pedestal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
 .sm-rank-podium__pedestal[data-podium-pedestal="css"] {
+  /* PÓDIO A, degraus (18/11/2026, dono): pedra turquesa escura com aro do metal da posição (ouro/prata/bronze envelhecidos) e a FAIXA VERMELHA na base. */
   border-radius: var(--sm2-radius-sm) var(--sm2-radius-sm) 0 0;
-  /* tampo claro de 6px, face do metal, base escurecida */
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-ink)) 0 6px,
-    var(--pod-fill) 6px,
-    color-mix(in srgb, var(--pod-fill) 72%, var(--sm2-viewport-bg)) 100%);
-  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pod-fill) 22%, var(--sm2-viewport-bg)) 0, var(--sm2-viewport-bg) 100%);
+  border: 3px solid var(--pod-fill); border-bottom: 0;
+  box-shadow: inset 0 -8px 0 var(--sm2-rank-faixa), inset 0 0 0 1px color-mix(in srgb, var(--pod-fill) 40%, transparent);
 }
 /* a lasca turquesa no meio da face: o único acento de identidade do pódio em CSS */
 .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after {
@@ -9474,7 +9523,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm-rank-podium__slot[data-place="1"] .sm-rank-podium__pedestal[data-podium-pedestal="css"]::after { width: 10px; height: 10px; }
 /* a posição do jogador: o anel turquesa do idioma de seleção, também no pedestal */
-.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--pod-fill) 55%, var(--sm2-viewport-bg)), 0 0 0 2px var(--sm2-primary-ink); }
+.sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="css"] { box-shadow: inset 0 -8px 0 var(--sm2-rank-faixa), 0 0 0 2px var(--sm2-primary-ink); }
 .sm-rank-podium__slot[data-ranking-me] .sm-rank-podium__pedestal[data-podium-pedestal="art"] { box-shadow: none; outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
 /* lugar vazio: o mesmo pedestal, apagado (a arte também), e nada de nome nem pontos */
 .sm-rank-podium__slot[data-podium-empty] .sm-rank-podium__pedestal,
@@ -9517,7 +9566,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
    escolhido = `primary-soft` + fronteira e tinta `primary-ink` + negrito;
    não dá para forjar = tinta `muted` (escolhido mantém fundo/fronteira). */
 .sm2-hex { display: grid; gap: var(--sm2-space-4); width: 100%; max-width: 420px; margin: 0 auto; box-sizing: border-box; }
-.sm2-hex-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; }
+.sm2-hex-map { position: relative; width: 100%; max-width: 420px; /* 18/11: 360 → 420 (a introdução foi para o "i") */ aspect-ratio: 1 / 1; margin: 0 auto; }
 .sm2-hex-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
@@ -9527,6 +9576,13 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 /* 18/11/2026 (dono, rodada 3): SEM anel/círculo/glow/borda redonda em volta do ícone da HEX (Coroa incluída): o ícone fica DIRETO sobre o hexágono.
    As três artes escuras (heal, hot, spdBuff) ganham só um preenchimento escuro recortado no hexágono (clip-path), nunca um círculo. */
 .sm2-hex-art[data-hex-crown="heal"], .sm2-hex-art[data-hex-crown="hot"], .sm2-hex-art[data-hex-crown="spdBuff"] { background-color: var(--sm2-hex-plate, #08191A); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+/* 18/11/2026 (dono): Porta com HEX EQUIPADO = o miolo do HEXÁGONO preenchido de turquesa claro (`--sm2-hex-slot-on`). Fica ATRÁS da arte do mapa
+   (o vazado da placa mostra o preenchimento; o aro da arte esconde a costura), recortado no hexágono de ponta para cima do vazado (medido no
+   `mapa-portas.png`: 97×96 de 640, chanfro em 25%); sem borda nem brilho novo. Porta vazia: sem preenchimento. */
+.sm2-hex-slot-fill {
+  position: absolute; width: 15.6%; height: 15.4%; transform: translate(-50%, -50%); pointer-events: none;
+  background-color: var(--sm2-hex-slot-on); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
   display: grid; place-items: center;

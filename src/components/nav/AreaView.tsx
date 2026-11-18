@@ -664,7 +664,6 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                semFicha={!props.skills?.[props.evolutionStage as FichaStage]}
                 arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, invites: props.play.arena?.invites, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
                 onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
@@ -727,7 +726,7 @@ export function AreaView(props: AreaViewProps) {
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
         palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} headStartRef={open?.id === 'fenda' ? setRiftHeadStart : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} moldura={area === 'forja' && open?.id === 'hexsmith' ? 'aco' : undefined} headStartRef={open?.id === 'fenda' ? setRiftHeadStart : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
