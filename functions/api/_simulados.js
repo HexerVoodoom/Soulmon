@@ -226,6 +226,7 @@ export function jogaHoje(p, day) {
  * Scores do dia: `[{ game, score }]` — só dos jogos que ele joga e se jogou hoje. Função pura de (perfil, dia).
  * Escala pelo corte mais alto de `TIER_CUTS` (`ceil`): habilidade e competitividade do jogo puxam para o topo,
  * o ruído do dia a dia (0,75–1,10) mantém o placar vivo. O Endless Rift (camada) fica em ~45% do teto da descida.
+ * Elemental Fusion: o placar gravado é o BRUTO; a exibição passa por `escalaFake` (`RANK_FAKE_TETO`, REGISTRO §473 adendo).
  */
 export function scoresDoDia(p, day) {
   if (!jogaHoje(p, day)) return [];
