@@ -8579,7 +8579,6 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm3-item[data-on] .sm3-item-slot { background-image: url('./assets/soulmon/ui/files/files-slot-sel.webp'); }
 .sm3-item-slot[data-disquete] { background-image: url('./assets/soulmon/ui/files/files-disquete.webp'); }
 .sm3-item[data-on] .sm3-item-slot[data-disquete] { background-image: url('./assets/soulmon/ui/files/files-disquete-sel.webp'); }
-.sm3-item-vazio { display: block; opacity: .55; }
 .sm3-files .sm3-item {
   min-height: 0; gap: 2px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--sm2-viewport-ink);
   font-family: var(--sm2-font-mono); font-weight: 600;
