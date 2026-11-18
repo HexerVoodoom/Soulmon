@@ -5263,7 +5263,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
      3,47:1 sobre `surface-2`. Este dá 6,55:1 / 6,23:1. */
-  --sm2-credit-ink: #6D28D9;
+  --sm2-credit-ink: #087480; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #6D28D9); AA >= 4,5:1 nos fundos claros */
   /* ASSOMBRO — a tinta PRÓPRIA da tarefa assombrada (P5 do canvas Home,
      decisão do dono em 16/09/2026: cor dedicada, um azul-acinzentado
      "fantasma", nunca opacidade e nunca vermelho). Sólida: quem esmaece é a
@@ -5322,7 +5322,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-danger: #FF8B8B;
   --sm2-viewport-warn: #EBBE84;
   --sm2-viewport-accent: #5FF3E0;
-  --sm2-credit-ink: #C9A7FF;
+  --sm2-credit-ink: #6FE6F2; /* 18/11/2026: turquesa do diamante dos Créditos (era roxo #C9A7FF) */
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
      de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
      `surface`, 6,63:1 sobre `bg`, 4,73:1 sobre `surface-2` (medido no teste,
