@@ -44,3 +44,23 @@ describe('GameCard', () => {
     expect(cardArt('nao-existe')).toBeUndefined();
   });
 });
+
+describe('GameCard: nome na placa, ganho no pergaminho', () => {
+  it.each([
+    ['pt-BR', 'Pedra, papel e tesoura', 'por vitória'],
+    ['en', 'Rock, paper, scissors', 'per win'],
+  ])('%s: título longo na placa e ganho (uma linha) no pergaminho', (_l, title, ganho) => {
+    const { container } = render(
+      <GameCard id="ppt" title={title} reward={<>5 {ganho}</>} onPress={() => {}} art={null} />,
+    );
+    expect(container.querySelector('[data-moldura-nome]')!.textContent).toBe(title);
+    expect(container.querySelector('[data-moldura-desc] [data-game-card-ganho]')!.textContent).toBe(`5 ${ganho}`);
+    expect(container.querySelector('[data-moldura-desc]')!.textContent).not.toContain(title);
+  });
+  it('com descrição (Mente/Refúgio): nome na placa, descrição no pergaminho, sem ganho', () => {
+    const { container } = render(<GameCard id="eco" title="Eco do Pet" description="Pede: lembrar" onPress={() => {}} art={null} />);
+    expect(container.querySelector('[data-moldura-nome]')!.textContent).toBe('Eco do Pet');
+    expect(container.querySelector('[data-moldura-desc]')!.textContent).toBe('Pede: lembrar');
+    expect(container.querySelector('[data-game-card-ganho]')).toBeNull();
+  });
+});

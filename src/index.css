@@ -9528,7 +9528,11 @@ button.sm2-hex-row {
   font-family: var(--sm2-font-display); font-weight: 700; font-size: 40px; line-height: 1;
   color: var(--sm2-primary-ink); opacity: .7;
 }
-.sm-game-card__titulo { font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 7.2); line-height: 1.1; overflow-wrap: anywhere; } /* sem descrição, o título vai no pergaminho */
+/* o nome vai na PLACA dourada: fonte menor e até 2 linhas, sem cortar (título longo em 375px) */
+.sm-game-card__titulo { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--sm2-font-display); font-weight: 700; font-size: calc(var(--u) * 4.6); line-height: 1.05; overflow-wrap: anywhere; text-wrap: balance; }
+/* o ganho do jogo vai no PERGAMINHO, numa linha só, centralizado */
+.sm-game-card__ganho { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--u) * 1.5); white-space: nowrap; font-weight: 700; font-size: calc(var(--u) * 5.4); line-height: 1.1; color: var(--sm2-ink); }
+.sm-game-card__ganho img { flex: none; }
 .sm-game-card .sm2-moldura-card__arte > img { width: 100%; height: 100%; object-fit: cover; }
 .sm-game-card__badges {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
