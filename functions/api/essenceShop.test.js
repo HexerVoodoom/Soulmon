@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { onRequestPost } from './entitlements.js';
 import { ENT_PREFIX } from './_entitlements.js';
-import { essencePackPrice, essenceUnitPrice, ESSENCE_MAX_PER_ELEMENT } from './_essenceShop.js';
+import { essencePackPrice, essenceUnitPrice, ESSENCE_MAX_PER_ELEMENT, ESSENCE_MAX_PER_BUY } from './_essenceShop.js';
 
 const ID = 'e'.repeat(32);
 const OP = 'op_essence_0001';
@@ -24,12 +24,28 @@ describe('tabela de preço (servidor)', () => {
     expect(essencePackPrice('fogo', 1)).toBe(1);
     expect(essencePackPrice('fogo', 5)).toBe(4);
     expect(essencePackPrice('vapor', 5)).toBe(9);
-    expect(essencePackPrice('fogo', 3)).toBe(0);
+    expect(essencePackPrice('fogo', 3)).toBe(3);
+    expect(essencePackPrice('fogo', 12)).toBe(10); // 2 grupos de 5 (4+4) + 2 soltas
+    expect(essencePackPrice('vapor', 7)).toBe(9 + 4);
+    expect(essencePackPrice('fogo', 0)).toBe(0);
+    expect(essencePackPrice('fogo', 1.5)).toBe(0);
+    expect(essencePackPrice('fogo', ESSENCE_MAX_PER_BUY + 1)).toBe(0);
     expect(essencePackPrice('nada', 1)).toBe(0);
   });
 });
 
 describe('action=buy-essence', () => {
+  it('compra de N qualquer (§479): cobra o preço do servidor para N e credita N', async () => {
+    const t = setup(20);
+    const r = await t.buy({ element: 'fogo', qty: 7 });
+    expect(r.body).toMatchObject({ ok: true, qty: 7, price: 6, credits: 14 });
+    expect(t.saldo()).toBe(14);
+  });
+  it('N acima do saldo = 402 sem cobrar', async () => {
+    const t = setup(3);
+    expect((await t.buy({ element: 'fogo', qty: 4 })).status).toBe(402);
+    expect(t.saldo()).toBe(3);
+  });
   it('debita o preço do SERVIDOR (ignora price do corpo) e devolve o novo saldo', async () => {
     const t = setup(20);
     const r = await t.buy({ element: 'vapor', qty: 5, price: 1 });
@@ -57,13 +73,13 @@ describe('action=buy-essence', () => {
     expect((await t.buy({ element: 'fogo', qty: 1, opId: 'x' })).status).toBe(400);
     expect(t.saldo()).toBe(20);
   });
-  it('elemento desconhecido = 400; trancado (fora da Biblioteca) = 403; qty fora de 1/5 = 400', async () => {
+  it('elemento desconhecido = 400; trancado (fora da Biblioteca) = 403; qty inválida (0, fracionada, acima do teto por compra) = 400', async () => {
     const t = setup(20);
     expect((await t.buy({ element: 'unobtainium', qty: 1 })).body.reason).toBe('unknown-element');
     const lk = await t.buy({ element: 'agua', qty: 1 });
     expect(lk.status).toBe(403);
     expect(lk.body.reason).toBe('locked');
-    expect((await t.buy({ element: 'fogo', qty: 2 })).body.reason).toBe('bad-qty');
+    for (const qty of [0, 1.5, -3, ESSENCE_MAX_PER_BUY + 1]) expect((await t.buy({ element: 'fogo', qty })).body.reason).toBe('bad-qty');
     expect(t.saldo()).toBe(20);
   });
   it('teto por elemento = 409 sem cobrar', async () => {

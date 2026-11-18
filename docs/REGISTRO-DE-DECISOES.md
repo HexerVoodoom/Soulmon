@@ -6454,3 +6454,15 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 **Gatilho para rever:** o dono querer hábitos no check do widget, o ganho aparecer no widget sem abrir o jogo, ou launcher de fabricante cortar a lista (testar em aparelho).
 
+
+## §479 — Cambista: a lista não mostra posse; comprar abre o modal com seletor de quantidade (18/11/2026, pedido do dono)
+
+**Decisão:** nas linhas do Cambista (aba Essências) some o "×N" de estoque (§#1050); tocar numa linha abre `EssenceBuySheet` (imagem, nome, custo unitário, "Você tem N", − / número / +, custo total ao vivo, Cancelar / "Comprar N · custo"). A moeda do Cambista de essências é **Crédito**, não Bits. A venda de poções elementais não mora no Cambista (poção é criada pela Vesca com essências), então o fluxo cobre as essências.
+
+**Teto (máximo do seletor):** `min(ESSENCE_MAX_PER_BUY = 100, ESSENCE_MAX_PER_ELEMENT (1.000.000) − estoque, maior N que o saldo de Créditos paga)`. O teto de estoque já existia (`essences.ts`, servidor 409 `cap`); o limite de 100 por compra é novo (decisão minha, ajustável numa constante). Máximo 0: botão desabilitado com "Estoque cheio" ou "Créditos insuficientes".
+
+**Contrato:** `POST /api/entitlements?action=buy-essence` aceita `qty` inteiro 1..100 (antes só 1 ou 5; retrocompatível: 1 e 5 custam o mesmo de antes). Preço = grupos COMPLETOS de 5 com 10% off (arredondado para baixo) + resto no unitário; o servidor continua dono do preço, do saldo, do trancado e do teto (400 `bad-qty`, 402, 403, 409). Paridade cliente x servidor em `essenceShop.parity.test.js`.
+
+**Alternativa que perdeu:** N chamadas de 1 (não atômico, N cobranças e N opIds).
+
+**Gatilho para rever:** pedido de limite diferente por compra, ou o dono querer o desconto de 10% em qualquer N.
