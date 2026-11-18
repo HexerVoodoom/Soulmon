@@ -3,7 +3,8 @@
  * (`resolveHexCrownArt`): a arte é resolvida por `import.meta.glob`; assim que o PNG cair nesta pasta com o nome-alvo, o pódio passa a
  * usá-lo sozinho. Sem o arquivo, `undefined` → o pódio desenha a versão em CSS (tokens `--sm2-*`). Nenhuma linha de código muda.
  *
- * Nomes-alvo (PNG, alfa real, fila em `docs/ASSETS-A-GERAR.md` → "Pódio do ranking"):
+ * (18/11/2026: lote 4 do ChatGPT instalado em WEBP — pedestais `podio-N`, medalhas `medalha-N` SEM número: o código põe o algarismo; sem troféu.)
+ * Nomes-alvo (alfa real, fila em `docs/ASSETS-A-GERAR.md` → "Pódio do ranking"):
  *  - `podio-1.png` 360×240 · `podio-2.png` 288×180 · `podio-3.png` 288×144 — o pedestal (ouro/prata/bronze), encostado na base do
  *    quadro, SEM número desenhado (o número mora na medalha). A caixa do pedestal tem a MESMA proporção (3:2, 8:5, 2:1): a arte
  *    entra com `object-fit: contain` ancorada embaixo e a altura do pódio não muda quando ela chega.
@@ -13,9 +14,9 @@
  */
 export type PodiumPlace = 1 | 2 | 3;
 
-const ARTE = import.meta.glob('./{podio-*,medalha-*,coroa-*}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const ARTE = import.meta.glob('./{podio-*,medalha-*,coroa-*}.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
-const art = (nome: string): string | undefined => ARTE[`./${nome}.png`];
+const art = (nome: string): string | undefined => ARTE[`./${nome}.webp`];
 
 export interface PodiumArt {
   /** Pedestal da posição; `undefined` = pedestal em CSS. */
