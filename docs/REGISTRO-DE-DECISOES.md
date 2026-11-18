@@ -6569,3 +6569,11 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Teste:** `utils/match3Escolha.test.ts`, `components/play/Match3Escolha.render.test.tsx`.
 
 **Adendo §485 — ajustes do modal e pódio com arte (18/11/2026, dono):** `RankingModal` sobe com a MESMA altura dos modais de prédio (66,67 dvh ancorado embaixo, conteúdo rola dentro), vai ao `<body>` por portal (dentro de folha com `transform` o `fixed` vazava e cortava o texto), traz o `CristalChama` no crescente do topo, margens internas maiores (`--sm2-moldura-pad-x` 8,2u) e título menor na placa. Saem do modal as linhas "Sua faixa …" e "O 1º do mês ganha o Fliperama de Canto" (só a apresentação; tier e prêmio no servidor intactos). Pódio: lote 4 do ChatGPT instalado (`assets/soulmon/ranking/podio-{1,2,3}.webp`, `medalha-{1,2,3}.webp` sem número — o código põe o algarismo), alturas 132/124/92 px (100:94:70), SEM troféu; nome e pontos ficam ACIMA do pedestal (a frente do bronze é baixa demais para texto).
+
+
+## §488 — PvP do Match-3: HP bônus de +40% para o jogador (18/11/2026, dono; adendo ao §473)
+
+- **Problema:** testers: "o PvP do Match 3 ficou muito difícil" (jogador ao acaso vencia ~14% no PvP contra ~28% na Aventura).
+- **Decisão:** `M3C_PVP_PLAYER_HP_BONUS = 0.4` em `match3Combat.ts`; no PvP o jogador começa com `M3C_PVP_PLAYER_HP` = 728 de HP (base 520), o adversário segue com 520 e dano fator 1. Aventura, boss e Calabouço intactos.
+- **Calibração** (`match3Pvp.balanco.test.ts`, N=80, sementes fixas, jogador ao acaso): +0% 13,8% · +20% 20,0% · +30% 23,8% · +40% 25,0% · +50% 32,5% (Aventura 27,5%). Menor bônus que chega à faixa de ~25-30%: +40%.
+- **Sem efeito colateral:** pontuação = dano dado − dano tomado (não depende do HP inicial); o servidor (`functions/api`) não valida HP; o HUD lê `player.max`.
