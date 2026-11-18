@@ -7659,6 +7659,14 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-lib-nm { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .sm2-lib-nm .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); }
 .sm2-lib-nm .s, .sm2-lib-s { font-size: var(--sm2-text-xs); font-weight: 400; line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+/* Drive em accordion (18/11/2026): cabeçalho de nível/Boss com setinha. Sem transição: a rotação é instantânea, então não há movimento a reduzir. */
+.sm2-acc-h { margin: 12px 0 6px; font-size: inherit; }
+.sm2-acc-btn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 4px; background: none; border: 0; cursor: pointer; color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; text-align: left; }
+.sm2-acc-btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
+.sm2-acc-chev { flex: 0 0 auto; width: 16px; height: 16px; transform: rotate(-90deg); }
+.sm2-acc-btn[aria-expanded="true"] .sm2-acc-chev { transform: rotate(0deg); }
+.sm2-acc-nome { flex: 1; min-width: 0; }
+.sm2-acc-cont { flex: 0 0 auto; font-weight: 400; color: var(--sm2-muted); }
 .sm2-lib-act {
   width: 44px; height: 44px; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
