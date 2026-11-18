@@ -88,7 +88,7 @@ const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'perfil/SoulmonPerfil.tsx': { fontSize: 1 },
   'play/StrollFind.tsx': { fontSize: 1 },
   'ritual/RitualKit.tsx': { rolagem: 1 },
-  'ui/InfoTip.tsx': { fontSize: 1, rolagem: 1 },
+  'ui/InfoTip.tsx': { fontSize: 1 },
   'ui/OfflineSeal.tsx': { fontSize: 1 },
 };
 
