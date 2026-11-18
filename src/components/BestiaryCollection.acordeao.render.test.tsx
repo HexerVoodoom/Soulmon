@@ -6,7 +6,7 @@ import { BestiaryCollection } from './BestiaryCollection';
 import { ENEMY_ROSTER } from '../utils/enemyRoster';
 import { BOSS_ROSTER } from '../data/bossRoster';
 
-const KEY = 'sm2.drive.fechados.v1';
+const KEY = 'soulmon-drive-fechados-v1';
 const primeiroMega = ENEMY_ROSTER.find(e => e.stage === 'mega')!;
 
 describe('BestiaryCollection — accordion e Boss', () => {

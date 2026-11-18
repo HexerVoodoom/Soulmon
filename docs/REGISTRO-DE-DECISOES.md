@@ -6417,7 +6417,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 ## §475 — Drive em accordion e categoria Boss (18/11/2026, pedido do dono)
 
-- **Regra:** cada nível do Drive (Bestiário) vira seção recolhível (setinha, `aria-expanded`/`aria-controls`, alvo de 44 px, sem animação); o estado fechado por nível fica em `localStorage` (`sm2.drive.fechados.v1`, padrão tudo aberto) e a contagem "vistos / total" fica no cabeçalho mesmo recolhido. A categoria **Boss** (`BOSS_ROSTER`, 24 chefes) é sempre a última.
+- **Regra:** cada nível do Drive (Bestiário) vira seção recolhível (setinha, `aria-expanded`/`aria-controls`, alvo de 44 px, sem animação); o estado fechado por nível fica em `localStorage` (`soulmon-drive-fechados-v1`, padrão tudo aberto) e a contagem "vistos / total" fica no cabeçalho mesmo recolhido. A categoria **Boss** (`BOSS_ROSTER`, 24 chefes) é sempre a última.
 - **Pendência:** o save NÃO tem registro de "boss visto/derrotado" (`BossFightScreen` não grava nada). Hoje o componente aceita `bossesSeen` (ids de `BOSS_ROSTER`), que a `LibraryPage` ainda não alimenta: todos os bosses aparecem como silhueta `???`. Falta decidir qual evento marca "visto" (primeiro encontro na Feira vs. vitória) e gravá-lo no save.
 
 **Alternativa que perdeu:** derivar "visto" de fragmentos/histórico de Match-3 ou masmorra; não existe fonte confiável por chefe.
