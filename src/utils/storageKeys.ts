@@ -293,6 +293,8 @@ export const STORAGE_KEYS = {
   /** L03-01 (21/10/2026) — gids dos presentes de amigos JÁ CREDITADOS neste aparelho (lista JSON, teto 200, FIFO).
    *  Impede recrédito quando o ack ao servidor se perde. É da CONTA: o logout apaga. Dono: `community.ts` (`resgatarPresentes`). */
   GIFTS_CREDITED: 'soulmon-gifts-credited-v1',
+  /** Drive em accordion (Biblioteca): ids dos níveis FECHADOS, JSON string[]. */
+  DRIVE_ACORDEAO_FECHADOS: 'sm2.drive.fechados.v1',
 } as const;
 
 /**
