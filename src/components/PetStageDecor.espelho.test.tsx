@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
-import { PetStageDecor } from './PetStageDecor';
+import { PetStageToques } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
@@ -15,12 +15,12 @@ const slot = SLOT_ORDER.find(s => PET_BACKGROUNDS[bgId].slots.includes(s) && DEC
 describe('espelho escuro', () => {
   it('toque abre o perfil; sem handler não há botão', () => {
     const fn = vi.fn();
-    const { container, rerender } = render(<PetStageDecor equippedDecor={{ [slot]: 'furn-el-sombra' }} equippedBackground={bgId} trophies={[]} language="pt-BR" onOpenProfile={fn} />);
+    const { container, rerender } = render(<PetStageToques equippedDecor={{ [slot]: 'furn-el-sombra' }} equippedBackground={bgId} language="pt-BR" onOpenProfile={fn} />);
     const b = container.querySelector('[data-decor-espelho]') as HTMLElement;
     expect(b.getAttribute('aria-label')).toBe('Abrir perfil');
     fireEvent.click(b);
     expect(fn).toHaveBeenCalledOnce();
-    rerender(<PetStageDecor equippedDecor={{ [slot]: 'furn-el-sombra' }} equippedBackground={bgId} trophies={[]} language="en" />);
+    rerender(<PetStageToques equippedDecor={{ [slot]: 'furn-el-sombra' }} equippedBackground={bgId} language="en" />);
     expect(container.querySelector('[data-decor-espelho]')).toBeNull();
   });
 });

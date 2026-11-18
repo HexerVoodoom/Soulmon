@@ -6513,3 +6513,15 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Decisão:** na Home, tocar no Espelho Escuro (`furn-el-sombra`) abre o Perfil (`onGoToBuilding('laboratorio.perfil')`, o mesmo caminho do Fliperama e do Caderno). Botão invisível sobre a peça, alvo ≥44px, rótulo "Abrir perfil" / "Open profile"; só na Home real (sem handler no editor da Home, a peça é só cenário). Sem arte nova.
 
 **Gatilho para rever:** o dono querer um brilho/animação no espelho.
+
+## §484 — Três bugs do decor achados na Home real: toque nas peças, brilho de noite, parede atrás (18/11/2026, dono)
+
+**Bugs e causa:** (1) tocar no Fliperama de Canto (e no Espelho Escuro) não fazia nada: o botão morava dentro de `PetStageDecor`, camada de TRÁS com `aria-hidden`, e o grupo do pet (`inset: 0`, depois no DOM) cobre o palco inteiro e engolia o toque (e o leitor de tela não anunciava o botão). (2) o cogumelo "não acendia" ao apagar a luz: a luz da Home é a soneca (o botão da soneca é a "luz do display"; `isSleeping`, que a Home também liga com `dayWakePending`), e o véu da noite (`data-sleep-veil`, 55% de escuro) fica por cima da decoração, então o cogumelo aceso morava sob o véu. (3) a parede era a ÚLTIMA de `SLOT_ORDER`, desenhada por cima das outras peças.
+
+**Correções:** (1) `PetStageToques`: camada própria (`z-index 5`, contêiner sem captura de toque, só o botão ≥44px, fora de `aria-hidden`, `stopPropagation`) com os toques do Fliperama (→ Salão de jogos, `jogos.salao`) e do Espelho (→ Perfil, `laboratorio.perfil`); sem handler (editor da Home) não renderiza. (2) `PetStageBrilhos`: o brilho das peças "de noite" (arte cheia + halo) vai numa camada DEPOIS do véu; acordado fica em opacidade 0. Lanterna, fogueira e demais luzes seguem apagando com o sono (o halo some e a arte escurece; o véu já as escurece). Há um só gatilho de "luz apagada" na Home: o sono (soneca manual, sono automático, ou o app aberto com o pet dormindo). (3) `DRAW_ORDER` põe a parede primeiro, atrás de tudo; `SLOT_ORDER` segue como ordem de catálogo/editor, e o editor da Home e a Home usam o mesmo `PetStageDecor`.
+
+**Régua:** `CompanionHUD.decorBugs.render.test.tsx` (Home real: toque abre Salão e Perfil, z-index do toque acima do pet, brilho depois do véu, lanterna/fogueira apagam, parede primeiro).
+
+**Gatilho para rever:** se existir outro jeito de "apagar a luz" além da soneca, ligar o mesmo estado.
+
+**Adendo §484 — cogumelo aceso mais forte (dono, 18/11/2026):** acendia, mas fraco. A camada de brilho usa a arte ORIGINAL (a clara) com `brightness(1.3) saturate(1.25)` e dois `drop-shadow` turquesa, e o halo sobe para 190% da caixa a 100% de opacidade (pulso suave 1 → .82). O estado apagado (acordado) segue escurecido por filtro.

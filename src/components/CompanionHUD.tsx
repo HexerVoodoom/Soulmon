@@ -26,7 +26,7 @@ import { FeedBubble } from './home/FeedBubble';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { sm2Button } from './form/FormKit';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
-import { PetStageDecor } from './PetStageDecor';
+import { PetStageDecor, PetStageToques, PetStageBrilhos } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { sleepZPlacement } from '../utils/sleepZ';
 import { showerPlacement } from '../utils/showerPlacement';
@@ -1466,6 +1466,12 @@ export const CompanionHUD = memo(function CompanionHUD({
             language={language}
             isSleeping={isSleeping}
             somAtivo
+          />
+          {/* §484: os toques nas peças (Fliperama → Salão de jogos, Espelho → Perfil) numa camada ACIMA do grupo do pet, que cobre o palco todo. */}
+          <PetStageToques
+            equippedDecor={equippedDecor}
+            equippedBackground={equippedBackground ?? null}
+            language={language}
             onOpenArcade={onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined}
             onOpenProfile={onGoToBuilding ? () => onGoToBuilding('laboratorio.perfil') : undefined}
           />
@@ -1484,6 +1490,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: -400, pointerEvents: 'none', background: 'rgba(4, 10, 24, .55)' }}
             />
           )}
+          {/* §484: o que acende no escuro (cogumelos) fica ACIMA do véu da noite. */}
+          <PetStageBrilhos equippedDecor={equippedDecor} equippedBackground={equippedBackground ?? null} isSleeping={isSleeping} />
 
           {/* Soulmon Sprite - Centered with walking animation.
               O GRUPO do pet cresce `CENA_ZOOM` (abordagem B, "pet grande") com
