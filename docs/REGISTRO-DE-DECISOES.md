@@ -6483,3 +6483,13 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Adendo §480 — Fliperama de Canto:** tocar na peça (botão ≥44px, `aria-label` "Abrir minigames"/"Open minigames", invisível) chama `onGoToBuilding('jogos.salao')`, o mesmo caminho do Caderno: abre a folha do Salão existente (tickets/energia regidos por ela). Fora do editor da Home (sem handler = só cenário).
 
 **Adendo §480 — Sino e Ampulheta:** sino de vento = som PROCEDURAL (`parciaisSinoDeVento`, 4 variações, `playWindChime`, categoria `arcade`, offset +1,9 dB medido no arnês nominal; NÃO OUVIDO, falta gate S8), agendado por `hooks/useWindChime.ts` a cada 14–38 s aleatórios, só na Home real (`somAtivo`), pet acordado, aba visível, áudio já liberado, mudo global respeitado, sem som em movimento reduzido. Ampulheta = 3 grãos turquesa em CSS caindo no gargalo (sem asset novo). **Biblioteca pixelfx** (patch-gg/pixelfx, MIT, © Patch / Hugo Duprez; fonte da galeria fora da licença): clonada em `E:/Soulmon-wt/aprovacao/pixelfx-src` e skill instalada em `~/.claude/skills/pixelfx`; NÃO entrou no bundle (canvas em pixel 128×128 + core ~140 KB; estilo ainda a validar com o dono).
+
+## §481 — Fogueira sem fogo + fogo pixelfx; tela animada no Fliperama (18/11/2026, dono)
+
+**Decisão:** a Fogueira do palco usa a arte SEM fogo em 2 camadas (`furn-campfire-base.png`: toras e pedras; `furn-campfire-frente.png`: aro e postes; o fogo passa entre as duas; `furn-campfire-apagada`, derivada por edição de pixel da arte aprovada: chama removida, aro de trás redesenhado) e o fogo é um sprite do pixelfx (efeito `fire/campfire` sem toras/brasas, paleta turquesa, 30 quadros 80×128 (chama larga, como a original) em `furn-campfire-fogo.png`) que passa por trás da arte via `steps()` (CSS, só transform/opacity). Dormindo: o fogo some e fica uma brasa turquesa fraca. A loja continua mostrando a arte original com fogo. O Fliperama ganha tela viva (`ArcadeTela`, canvas 40×40 a ~10 fps: invasores + nave + tiro em turquesa médio de contraste baixo, com linhas de varredura, faixa que desce, tremida e ruído); pausa em aba oculta; pet dormindo = tela escurecida; movimento reduzido = quadro parado.
+
+**Licença:** pixelfx é MIT (© 2026 Patch, © 2026 Hugo Duprez; a fonte da galeria NÃO entra). O sprite é derivado de `src/fx/fire/campfire.js` (que adapta o fogo do Sprite Fusion, MIT). Nenhum código da biblioteca roda no app: só a tira de imagem.
+
+**Alternativa que perdeu:** embarcar o core do pixelfx (~140 KB) e desenhar em canvas em tempo real; e gerar a fogueira sem fogo no ChatGPT (edição de pixel é determinística e fiel à arte aprovada).
+
+**Gatilho para rever:** o dono preferir o fogo mais largo/alto, ou a arte autoral sem fogo via ChatGPT.
