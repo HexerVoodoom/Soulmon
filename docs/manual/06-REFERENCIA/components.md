@@ -757,10 +757,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/CreateModal.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** `CATEGORIES` vem de `ACTIVITY_CATEGORIES` (`types/categories.ts`, lista única de 10 categorias); "Novo hábito" mostra tudo aberto (`habitMode`, exemplo "Caminhar 20 minutos"); `isAtCap` só vale com teto finito (teto infinito nunca imprime "até Infinity"); a dica `stageCapHint` (teto de hábitos do estágio) é texto visível (`data-create-cap-hint`, §385).
-**Dono de:** formulário de criação de hábito/tarefa — Quick-Add como caminho primário, formulário completo atrás de "mais opções".
+**Dono de:** formulário de criação de hábito/tarefa — Quick-Add como caminho primário e formulário sempre aberto (sem More/Fewer options, sem campo Name duplicado, exemplo por categoria via `categoryExamples.ts`, 22/11/2026).
 **Props principais:** `CreateModalProps` — `isOpen`, `onClose`, `onSaveTask(data)` (nome, categoria, recorrência, esforço, passos…).
 **Exports:** `HabitScheduleFields`, `HabitAnchorFields`, `CategoryChips`, `StrengthensLine`, `StepsFields`, `EffortFields` (blocos de campo reaproveitados por `EditModal`/`TaskEditModal`) · `CreateModal(props)`.
-**Estado/efeitos relevantes:** `useState` (`gradeAberta`, `isSingleExecution`, `quickText`, `quickTokens`, `showForm`, entre outros); usa `useItemForm`/`useHabitSchedule` (`src/hooks/useItemForm.ts`); `parseQuickAdd`/`quickAddHint` (`src/utils/quickAdd.ts`) interpretam a linha digitada; renderiza `UnlockNudge` quando o cadastro esbarra no teto do modo demo.
+**Estado/efeitos relevantes:** `useState` (`gradeAberta`, `isSingleExecution`, `quickText`, `quickTokens`, entre outros); usa `useItemForm`/`useHabitSchedule` (`src/hooks/useItemForm.ts`); `parseQuickAdd`/`quickAddHint` (`src/utils/quickAdd.ts`) interpretam a linha digitada; renderiza `UnlockNudge` quando o cadastro esbarra no teto do modo demo.
 **Chamado por:** `src/components/EditModal.tsx`, `src/components/TaskEditModal.tsx` (blocos de campo); consumo principal em `src/App.tsx` via `lazy(() => import('./components/CreateModal'))` (`grep -rl`/`grep -n "lazy("`, 09/09/2026).
 **Régua:** `src/components/CreateModal.presets.render.test.tsx`.
 **Avisos do arquivo:** Quick-Add e formulário completo abertos ao mesmo tempo eram a maior fonte de poluição visual do app — por isso o formulário fica atrás de "mais opções"; os blocos de campo são exportados porque há três usos reais (não abstração antecipada).

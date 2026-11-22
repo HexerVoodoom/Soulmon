@@ -36,7 +36,7 @@ export const LIFE_AREA_LABEL: Record<LifeArea, { pt: string; en: string }> = {
   sono: { pt: 'Sono', en: 'Sleep' },
   corpo: { pt: 'Corpo', en: 'Body' },
   mente: { pt: 'Mente', en: 'Mind' },
-  foco: { pt: 'Foco', en: 'Focus' },
+  foco: { pt: 'Foco e Trabalho', en: 'Focus & Work' },
   aprendizado: { pt: 'Aprendizado', en: 'Learning' },
   relacoes: { pt: 'Relações', en: 'Relationships' },
   casa: { pt: 'Casa', en: 'Home' },
