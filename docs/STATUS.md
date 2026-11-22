@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P0a: 5 bugs (`fix/p0a-bugs`)
+> - **Feito:** (1) fala automática do pet (saudação aos ~0,7 s) não esconde mais o balão dourado dentro dos 5 s do §383, ela espera; (2) Oficina › Prioridades com aviso próprio (sem citar hábitos) e pool só de tarefas; (3) a próxima evolução usa como referência a arte da forma equipada (`currentKey`), com fallback na original; (4) Bosque/Maslin: causa = cartão `coopMem` velho (perfil já ultimate, cartão com a arte antiga); perfil com sprite novo renova o cartão, e o perfil publica a última arte alcançada, não a 1ª do acervo; (5) Jornada avisa "teto do dia atingido" em vez de baú vazio mudo (números intactos; proposta em scratchpad).
+> - **Pendente do dono:** `spriteForMember` sem URL válida segue no rookie da linha (LV-G10 proíbe expor estágio alheio; mudar exige revogar); novos tetos do Focus. **Rollback:** `git revert` do merge (nenhum campo novo no save, contrato aditivo).
+
 > ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
 > - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
 > - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.
