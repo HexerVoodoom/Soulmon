@@ -98,21 +98,11 @@ describe('D1 — confirmar a compra', () => {
 });
 
 describe('D2 — a regra da decoração, na tela', () => {
-  it('a lojinha de Decoração abre com o limite (1 por espaço, até 5) e onde a peça aparece', () => {
+  it('a lojinha de Decoração NÃO mostra mais a linha "Decoration rule" (P3 7.2, 22/11/2026)', () => {
     const { container } = abrir({ stall: 'decoracao' });
-    const rule = container.querySelector('[data-decor-rule]')!;
-    // I13: a regra mora atrás do "?" — fora da tela até tocar.
-    expect(rule.textContent).not.toContain('1 piece per spot');
-    fireEvent.click(within(rule as HTMLElement).getByRole('button', { name: 'How decoration works' }));
-    const tip = document.querySelector('[data-info-tip-panel]')!;
-    expect(tip.textContent).toContain('1 piece per spot');
-    expect(tip.textContent).toContain('up to 5 at once');
-    expect(tip.textContent).toContain('indoor');
-    // só UMA vez (a prateleira não repete)
-    expect(container.querySelectorAll('[data-decor-rule]').length).toBe(1);
-    // e vem ANTES da prateleira
-    const shelf = container.querySelector('[data-shop-shelf]')!;
-    expect(rule.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('[data-decor-rule]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Decoration rule/i);
+    expect(container.querySelector('[data-shop-shelf]')).toBeTruthy();
   });
 
   it('a lojinha de Itens não fala de decoração', () => {

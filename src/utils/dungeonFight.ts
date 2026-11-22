@@ -300,11 +300,11 @@ export const NIGHTMARE_KNOBS: NightmareKnobs = {
 };
 
 /** One fight of the Nightmare: `dungeonFight` + the shadow rules above. `cheers()` = discharges collected so far. */
-export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight & { options: { foeOpeningDelay: number } } {
+export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight & { options: { foeOpeningDelay: number; ataqueExtra: true } } {
   const f = dungeonFight({ ...p, ring: k.ring }, foe, seed, true);
   return {
     ...f,
-    options: { foeOpeningDelay: NIGHTMARE_OPENING_WINDOW_S },
+    options: { foeOpeningDelay: NIGHTMARE_OPENING_WINDOW_S, ataqueExtra: true },
     hitScale(who, n) {
       const s = f.hitScale(who, n);
       return who === 0 ? s * k.basic : s * k.foeDamage * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));

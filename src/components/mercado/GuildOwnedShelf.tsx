@@ -1,12 +1,12 @@
 import { useState, type CSSProperties } from 'react';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Text } from '../form/FormKit';
 import { PET_BACKGROUNDS, isGuildSceneRetired } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ALL_SHOP_ITEMS, isGuildReward } from '../../utils/shop';
 import { GROVE_STAGES, type GroveStageId } from '../../utils/guildRules';
-import { guildText, groveStageName } from '../../utils/guildCopy';
+import { groveStageName } from '../../utils/guildCopy';
 import type { Language } from '../../utils/i18n';
 import { BackgroundLightbox, ItemLightbox } from './ShopItemSheet';
 import { shopTagStyle, type ShopActions, type ShopOwnership } from './ShopShelf';
@@ -59,10 +59,7 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
   if (items.length === 0) return null;
 
   return (
-    <section data-guild-owned={kind} aria-label={guildText(language, 'guild.cenarios.titulo')} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-        {guildText(language, 'guild.cenarios.titulo')}
-      </h3>
+    <section data-guild-owned={kind} aria-label={isPt ? 'Já são seus' : 'Already yours'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {items.map(it => {
         const equipped = it.slot ? ownership.equippedDecor[it.slot] === it.id : ownership.equippedBackground === it.id;
         const toggle = () => {

@@ -38,7 +38,7 @@ import { sanitizeHunger, sanitizeEnergyClock, type EnergyClock } from '../utils/
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
 import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaSorteio';
-import { sanitizeArenaLadder } from '../utils/arena';
+import { arenaRollover, sanitizeArenaLadder } from '../utils/arena';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -594,6 +594,8 @@ export interface GameState {
   arenaRuns?: ArenaReroll;
   /** 🪜 A escada da Arena (04/11/2026, REGISTRO §222): vitórias de run acumuladas; decide a forma por rodada e a força dos inimigos. Ausente = 0. Servidor: só cresce (`_dayCounters.js`). */
   arenaLadder?: number;
+  /** Temporada mensal da Arena em UTC ("AAAA-MM", 22/11/2026): na virada `arenaLadder` volta a 0. Ausente em save antigo = adota o mês atual sem zerar. */
+  arenaSeason?: string;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1571,7 +1573,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),
-        arenaLadder: sanitizeArenaLadder(loadedState.arenaLadder),
+        arenaLadder: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).ladder,
+        arenaSeason: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).season,
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'

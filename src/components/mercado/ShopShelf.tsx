@@ -227,7 +227,7 @@ export interface ShopActions {
  * recusa item de outra moeda (ele seria julgado contra o saldo errado).
  */
 export function ShopShelf({
-  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts,
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts, afterOwned, atEnd,
 }: {
   language: Language;
   items: ShopItem[];
@@ -240,6 +240,10 @@ export function ShopShelf({
   emptyHint?: string;
   /** A lojinha de Decoração já desenha a regra no topo da folha. */
   hideDecorRule?: boolean;
+  /** P3 7.2 (22/11/2026): peças do Bosque, logo abaixo de "Já são seus". */
+  afterOwned?: ReactNode;
+  /** P3 7.2: conjunto da assinatura, depois da lista à venda. */
+  atEnd?: ReactNode;
   /** A FEIRA DE VERDADE (10/11/2026): preço cheio e % de desconto por id; os `items` já trazem o preço FINAL. Sem isto, nada muda. */
   discounts?: Record<string, { was: number; pct: number }>;
 }) {
@@ -439,9 +443,11 @@ export function ShopShelf({
                 {owned.map(renderItem)}
               </section>
             )}
+            {afterOwned}
             {forSale.length === 0
               ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
               : forSale.map(renderItem)}
+            {atEnd}
           </>
         )}
       <ShopItemSheet
@@ -644,6 +650,9 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
 /** OS PACOTES DE BITS do Cambista (§373): três pacotes pagos em Créditos, com desconto progressivo, lado a lado.
  *  O servidor decide o pacote, cobra e conta o teto de `BITS_PACK_DAILY_CAP` Bits/dia; a tela só oferece e confirma.
  *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
+/** P3 7.4 (22/11/2026): arte do pacote (Pouch/Purse/Chest) em `assets/soulmon/bits-packs/<id>.webp`; sem o arquivo, nada é desenhado (fallback = só texto). */
+const PACK_ART = import.meta.glob('../../assets/soulmon/bits-packs/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
 export function CreditExchange({ language, credits, onExchangeCredits, onRecoverPending, onGetCredits, say }: {
   language: Language;
   credits: number;
@@ -706,9 +715,13 @@ export function CreditExchange({ language, credits, onExchangeCredits, onRecover
               onClick={() => setPending(pack)}
               style={{ ...sm2Button('outline', !can), width: '100%', minWidth: 0, height: 'auto', padding: '8px 4px', flexDirection: 'column', gap: 4, whiteSpace: 'normal' }}
             >
+              {PACK_ART[`../../assets/soulmon/bits-packs/${pack.id}.webp`] && (
+                <img data-bits-pack-art src={PACK_ART[`../../assets/soulmon/bits-packs/${pack.id}.webp`]} alt="" aria-hidden="true" width={56} height={56} draggable={false} style={{ width: 56, height: 56, objectFit: 'contain' }} />
+              )}
               <span style={{ ...sm2Hint, margin: 0 }}>{bitsPackName(pack, isPt)}</span>
-              {busy ? <Icon name="sync" size={ICON_INLINE} tone="muted" /> : <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />}
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {/* a RECOMPENSA manda (grande); o preço fica abaixo dela, menor e apagado */}
+              {busy ? <Icon name="sync" size={ICON_INLINE} tone="muted" /> : <BitsAmount value={pack.bits} size={24} dim={!can} style={{ fontSize: bitsNum.fontSize }} />}
+              <span data-bits-pack-price style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
                 <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
                 <span className="sm2-num">{pack.credits}</span>
               </span>

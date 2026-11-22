@@ -6605,3 +6605,21 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 ## §490 — Arena aberta na mesma linha do Torneio e do Elemental Fusion (18/11/2026, dono)
 
 **Decisão:** o `DueloSheet` (Arena livre) troca o card próprio (`box` local) pela linha compartilhada `ui/EscolhaLinha` e o botão de sorteio por `SortearNovos` (que ganhou `ariaLabel` e rótulo em nó). Regras da Arena INTACTAS: elemento(s) da run + "Lutar" (1º elemento no mini-visor 64, o nome "A · B" no título, os demais ícones na linha de baixo), "Sortear de novo · N grátis" / "· 15 Bits" com o custo e o aviso de Bits que faltam, os limites do dia, os textos, o banner atrás de `ARENA_BANNER_ATIVO` e sem o aviso de ficha. Os `data-arena-*` continuam. Sem CSS novo; o card próprio da Arena saiu (sem estilo duplicado). **Alternativa que perdeu:** manter o card próprio da Arena (visual diferente das outras listas de escolha). **Teste:** `arena/DueloSheet.estados.render.test.tsx` (usa a linha compartilhada) e os da Arena existentes.
+
+## §491 — P3 do dono (22/11/2026): Decoration limpa e "Da aventura de ontem" removido
+
+- **Decoration (7.2):** saem a linha "Decoration rule", o título "From the grove" e o título "Of the quarter". "Já são seus / Already yours" fica no topo; as peças do Bosque vêm logo abaixo dele, depois a lista à venda e, por último, o conjunto da assinatura (sem título; só `aria-label` neutro). A regra de quantas peças cabem (`decorRules`) segue valendo na equipagem, só não tem mais texto fixo na loja.
+- **Passeio (9.1) — REVOGA o §66 no que toca ao nome:** o texto "From Yesterday's Adventure / Da aventura de ontem" sai de TODOS os lugares (folha do Passeio, passo do resumo do dia e cena do Passeio, que passam a se chamar "Stroll / Passeio"). O conteúdo do achado (missão, destino, o que o Soulmon encontrou) permanece; só perde o rótulo.
+- **Rollback:** só texto/estrutura de tela, sem save nem servidor; reverter o commit basta.
+
+## §493 — Mercado só tem missão SEMANAL (22/11/2026, dono; revoga em parte os §52 e §314)
+
+- **Decisão (6):** o Mercado não passa missão diária. `d-mercado` ganha `retired: true` (id estável; sai do sorteio). As diárias de NPC do Mercado (`n-lamela` compra, `n-snapjaw` prato, `n-medra` conquista) saem do rodízio e entram em `NPCS_SEM_MISSAO` com o motivo, como Lasca e Panora já estavam. O prato segue como semanal `cook-dish`; decoração e cenário como `buy-decor`/`buy-backdrop`. As demais diárias (jogos, pet, arena, torneio…) ficam como estão.
+- **Lacuna declarada:** "comprar um item" e "resgatar conquista" ainda não têm versão semanal (exigem evento novo); fica para decisão do dono.
+- **Compat:** `sanitizeDailyMissions` já descarta id/evento desconhecido (um save com `n-lamela` ou contagem `compra` é saneado sem quebrar). Rollback: reverter o commit.
+
+## §492 — Power Reducer tira 6 pontos de um caminho e Exchanger com hierarquia recompensa × preço (22/11/2026, dono)
+
+- **Decisão (7.1):** `REDUCE_CHIP_BOOST` passa de 3 para 6 (Poder/Harmonia/Benevolência). Não afeta tarefas nem progresso de evolução (o gauge é por esforço); só ajusta, de forma limitada, qual caminho evolui (limite PRÓPRIO de 3 por estágio, preço 360 e clamp em 0 inalterados). Não viola G-01. Chips já na pastinha passam a valer −6 (mesma chave). Arte própria dos chips: fila de arte.
+- **Exchanger (7.4):** a carta do pacote põe a RECOMPENSA (Bits) em destaque e o preço em Créditos menor e apagado logo abaixo; há um slot de arte (`assets/soulmon/bits-packs/<id>.webp`, `bits-200|500|1000` = Pouch/Purse/Chest) que só desenha se o arquivo existir. Ids e `aria-label` intactos.
+- **Rollback:** reverter o commit (sem save/servidor; o valor é lido da constante).
