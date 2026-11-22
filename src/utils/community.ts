@@ -1054,6 +1054,16 @@ export const seekGuildWar = (id: string, tz?: PlayerDayAnchor) =>
     war: sanitizeWar(r.war),
   }));
 
+/** O replay da guerra de clã (22/11/2026): a semente e as duas fichas de cada confronto, como o servidor gravou. */
+export interface GuildWarReplay { enemy: string; duels: Array<{ seed: number; me: DuelSide; opp: DuelSide }> }
+export const getGuildWarReplay = (id: string): Promise<GuildWarReplay | null> =>
+  guildCall<{ replay?: unknown }>('guildWarReplay', { params: { id } }).then(r => {
+    const x = r.replay as { enemy?: unknown; duels?: unknown } | null | undefined;
+    if (!x || !Array.isArray(x.duels)) return null;
+    const duels = x.duels.filter((d): d is GuildWarReplay['duels'][number] => !!d && typeof d === 'object' && Number.isFinite((d as { seed?: unknown }).seed) && !!(d as { me?: unknown }).me && !!(d as { opp?: unknown }).opp).slice(0, 4);
+    return duels.length ? { enemy: typeof x.enemy === 'string' ? x.enemy.slice(0, 24) : '', duels } : null;
+  });
+
 /** O que há para colher: semanas com direito (`pending`), os cenários já liberados e a peça da maré. */
 export interface GuildRewards {
   pending: Array<{ week: string; outcome: 'dissipada' | 'recuou'; emblems: number }>;

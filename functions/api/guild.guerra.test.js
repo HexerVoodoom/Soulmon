@@ -124,3 +124,36 @@ describe('resolverGuerra — pura e determinística', () => {
     expect(a.duels).toHaveLength(2);
   });
 });
+
+describe('cartinha da guerra no Mensageiro (22/11/2026)', () => {
+  it('quando a batalha é encontrada os dois clãs recebem a carta `guild-war` (sem prêmio) e o replay fica legível', async () => {
+    const { e, g } = await mundo({ Alfa: mk('a', 3), Beta: mk('b', 3) });
+    expect((await seek(e, g.Alfa.host)).state).toBe('waiting');
+    expect((await seek(e, g.Beta.host)).state).toBe('done');
+    const kv = e.DIGIAPP_SAVES;
+    for (const nome of ['Alfa', 'Beta']) {
+      for (const m of g[nome].membros) {
+        const raw = JSON.parse(kv.store.get(`mail:${m}`) ?? kv.store.get(`mailbox:${m}`) ?? 'null');
+        const q = raw?.q ?? [];
+        const carta = q.find(c => c.kind === 'guild-war');
+        expect(carta, `${nome}/${m}`).toBeTruthy();
+        expect(carta.bits + carta.emblems).toBe(0);
+        expect(carta.mid).toBe(`guerra:${g[nome].id}:${carta.mid.split(':')[2]}`);
+      }
+      const rep = await J(await call(e, 'guildWarReplay', { method: 'GET', params: { id: g[nome].host } }));
+      expect(rep.replay.duels.length).toBe(3);
+      expect(typeof rep.replay.duels[0].seed).toBe('number');
+      expect(rep.replay.duels[0].me.combatant).toBeTruthy();
+    }
+  });
+  it('o resultado não muda: o `last` de cada guilda é o mesmo de sempre e o replay reproduz o mesmo vencedor', async () => {
+    const { e, g } = await mundo({ Alfa: mk('a', 2), Beta: mk('b', 2) });
+    await seek(e, g.Alfa.host);
+    const done = await seek(e, g.Beta.host);
+    const rep = await J(await call(e, 'guildWarReplay', { method: 'GET', params: { id: g.Beta.host } }));
+    const { simulateDuel } = await import('./_duel.js');
+    const venceu = rep.replay.duels.map(d => simulateDuel({ me: d.me, opp: d.opp, seed: d.seed, taps: [], elementScale: 0.5 }).winner);
+    const esperado = done.war.last.duels.map(x => (x === 'win' ? 'me' : x === 'loss' ? 'opp' : 'draw'));
+    expect(venceu).toEqual(esperado);
+  });
+});

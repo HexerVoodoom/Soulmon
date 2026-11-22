@@ -38,6 +38,7 @@ import { kvOrThrow } from './_kv.js';
 import { loadDuelSide } from './_duelLoad.js';
 import { simulateDuel, duelSeed } from './_duel.js';
 import { somarPontos } from './_casa.js';
+import { enqueueMail } from './_mensageiro.js';
 
 export const WAR_MIN = 2;
 export const WAR_MAX = 4;
@@ -49,6 +50,10 @@ export const WAR_RES_TTL = 86400 * 30;
 export const coopWarQKey = size => `coopWarQ:${size}`;
 export const coopWarWaitKey = gid => `coopWarWait:${gid}`;
 export const coopWarResKey = gid => `coopWarRes:${gid}`;
+/** O replay da última guerra de uma guilda (22/11/2026): as fichas e a semente de cada confronto, para o "Assistir" da carta. */
+export const coopWarReplayKey = gid => `coopWarReplay:${gid}`;
+/** Quanto o replay e a carta duram (o mesmo prazo da caixa do Mensageiro). */
+const WAR_REPLAY_TTL = 3 * 86400;
 export const coopWarSeedKey = gid => `coopWarSeed:${gid}`;
 /** O registro das guildas semente (escrito SÓ pelo script do dono, `seed-guildas.mjs`): `{ v, tag, slots: { slot: { gid, code } } }`. */
 export const SEED_REGISTRY_KEY = 'seedGuild:v1';
@@ -78,19 +83,23 @@ const porNivel = lados => lados
 
 /**
  * Resolve a guerra entre dois esquadrões do mesmo tamanho. PURA e determinística na semente.
- * @returns {{ aWins: number, bWins: number, duels: Array<'a'|'b'|'draw'> }}
+ * @returns {{ aWins: number, bWins: number, duels: Array<'a'|'b'|'draw'>, pares: Array<{ seed: number, a: any, b: any }> }}
  */
 export function resolverGuerra(A, B, sementeBase) {
   const a = porNivel(A), b = porNivel(B);
   const n = Math.min(a.length, b.length);
   /** @type {Array<'a'|'b'|'draw'>} */
   const duels = [];
+  /** @type {Array<{ seed: number, a: any, b: any }>} */
+  const pares = [];
   let aWins = 0, bWins = 0;
   for (let i = 0; i < n; i++) {
-    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [], elementScale: 0.5 });
+    const seed = duelSeed(sementeBase, i);
+    pares.push({ seed, a: a[i].side, b: b[i].side });
+    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed, taps: [], elementScale: 0.5 });
     if (r.winner === 'me') { aWins++; duels.push('a'); } else if (r.winner === 'opp') { bWins++; duels.push('b'); } else duels.push('draw');
   }
-  return { aWins, bWins, duels };
+  return { aWins, bWins, duels, pares };
 }
 
 const resultadoDe = (meus, deles) => (meus > deles ? 'win' : meus < deles ? 'loss' : 'draw');
@@ -155,7 +164,7 @@ export async function buscarGuerra(env, g, requester, hoje, lerGrupo) {
   }
   const n = Math.min(meus.length, deles.length);
   const A = meus.slice(0, n), B = deles.slice(0, n);
-  const { aWins, bWins, duels } = resolverGuerra(A, B, `guerra|${g.id}|${rival.id}|${hoje}`);
+  const { aWins, bWins, duels, pares } = resolverGuerra(A, B, `guerra|${g.id}|${rival.id}|${hoje}`);
   const meu = resultadoDe(aWins, bWins);
   const dele = resultadoDe(bWins, aWins);
   const grava = (gid, outcome, d, lado, nomeInimigo) => kvs.put(
@@ -172,7 +181,43 @@ export async function buscarGuerra(env, g, requester, hoje, lerGrupo) {
     ...A.map(x => somarPontos(env, g.id, x.save, 'guerra', WAR_PTS[meu])),
     ...B.map(x => somarPontos(env, rival.id, x.save, 'guerra', WAR_PTS[dele])),
   ]);
+  // CARTINHA no Mensageiro (22/11/2026): quando a batalha é encontrada os dois clãs recebem a carta + o replay. SEM push (LV-G4).
+  await registrarGuerra(env, [
+    { gid: g.id, nome: g.name, membros: g.members, outcome: meu, enemy: rival.name, lado: 'a' },
+    { gid: rival.id, nome: rival.name, membros: rival.members, outcome: dele, enemy: g.name, lado: 'b' },
+  ], hoje, pares);
   return { state: 'done', waiting: null, last: { day: hoje, outcome: meu, duels: duelosDe(duels, 'a'), size: n, enemy: rival.name } };
+}
+
+/** O replay gravado da guilda (ou `null`): `{ day, enemy, duels: [{ seed, me, opp }] }`. */
+export async function replayDaGuerra(env, gid) {
+  const r = parse(await kvOrThrow(env).get(coopWarReplayKey(gid)));
+  return r && typeof r === 'object' && Array.isArray(r.duels) ? r : null;
+}
+
+/**
+ * Grava o replay e entrega a carta `guild-war` a cada membro dos clãs REAIS. Nunca derruba a guerra (falha só é logada).
+ * Sem push: a carta só existe na caixa do Mensageiro (`guild.semPush.contract.test.js` segue valendo). O resultado não muda.
+ * @param {Array<{gid:string,nome:string,membros:string[],outcome:'win'|'draw'|'loss',enemy:string,lado:'a'|'b'}>} lados
+ */
+export async function registrarGuerra(env, lados, hoje, pares) {
+  const kvs = kvOrThrow(env);
+  const rot = { win: ['Vitória', 'Victory'], draw: ['Empate', 'Draw'], loss: ['Derrota', 'Defeat'] };
+  await Promise.all(lados.map(async l => {
+    try {
+      const duels = pares.map(p => (l.lado === 'a' ? { seed: p.seed, me: p.a, opp: p.b } : { seed: p.seed, me: p.b, opp: p.a }));
+      await kvs.put(coopWarReplayKey(l.gid), JSON.stringify({ day: hoje, enemy: l.enemy, outcome: l.outcome, duels }), { expirationTtl: WAR_REPLAY_TTL });
+      const [pt, en] = rot[l.outcome];
+      for (const m of l.membros ?? []) {
+        await enqueueMail(env, kvs, m, {
+          mid: `guerra:${l.gid}:${hoje}`, kind: 'guild-war', at: Date.now(), bits: 0, emblems: 0,
+          titlePt: 'Batalha encontrada', titleEn: 'Battle found',
+          bodyPt: `Seu clã enfrentou ${l.enemy}: ${pt}. Quer assistir ao combate?`,
+          bodyEn: `Your clan faced ${l.enemy}: ${en}. Want to watch the fight?`,
+        }).catch(() => false);
+      }
+    } catch (err) { console.warn('guerra: replay/carta falhou', String(err)); }
+  }));
 }
 
 // ── RIVAL SEMENTE (§322) ────────────────────────────────────────────────────────────────────────────────────────

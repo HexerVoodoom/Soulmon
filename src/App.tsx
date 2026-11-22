@@ -705,6 +705,7 @@ const RefugeInviteCard = lazyOverlay(() => import('./components/refugio/RefugeIn
 const DemoExitButton = lazyOverlay(() => import('./components/home/DemoExitButton').then(m => ({ default: m.DemoExitButton })));
 const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m => ({ default: m.UnlockNudge })));
 const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
+const GuildWarReplay = lazyOverlay(() => import('./components/GuildWarReplay').then(m => ({ default: m.GuildWarReplay })));
 const MailboxSheet = lazyOverlay(() => import('./components/MailboxSheet').then(m => ({ default: m.MailboxSheet })));
 const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
 const BonusTaskIntroModal = lazyOverlay(() => import('./components/BonusTaskIntroModal').then(m => ({ default: m.BonusTaskIntroModal })));
@@ -835,6 +836,7 @@ import { duelInviteCount, duelInviteExchangeRefusal, duelInvitesPerEnergy, excha
 import type { CreateAction } from './utils/chatActions';
 import { WakeToEnterProvider } from './components/WakeToEnter';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
+const getGuildWarReplay = (...a: Parameters<typeof import('./utils/community').getGuildWarReplay>) => import('./utils/community').then(m => m.getGuildWarReplay(...a));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const RevisaoGame = lazy(() => import('./components/mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
@@ -1707,6 +1709,7 @@ export default function App() {
   const mailbox = useMailbox({ saveId, demo: isDemoMode(gameState), getState: () => gameStateRef.current, setState: setGameState });
   const mostraCarta = !isDemoMode(gameState) && mailbox.mail.length > 0;
   const [mailOpen, setMailOpen] = useState(false);
+  const [warReplay, setWarReplay] = useState<import('./utils/community').GuildWarReplay | null>(null);
   const [mailAnnounced, setMailAnnounced] = useState<string[]>(() => parseAnnounced(readLocal(STORAGE_KEYS.MAIL_ANNOUNCED)));
   // §390: o pop-up do Papus só na 1ª carta da conta; depois só a bolinha do ícone (`mailPopupToShow`).
   const mailToAnnounce = useMemo(() => mailPopupToShow({ mail: mailbox.mail, announced: mailAnnounced, introsSeen: gameState.buildingIntrosSeen }), [mailbox.mail, mailAnnounced, gameState.buildingIntrosSeen]);
@@ -9928,6 +9931,7 @@ export default function App() {
           onClick={abrirMissoes}
         />
       )}
+      {warReplay && <GuildWarReplay replay={warReplay} isPt={language === 'pt-BR'} onClose={() => setWarReplay(null)} />}
       {currentView === 'home' && !demo && mailOpen && (
         <MailboxSheet
           open
@@ -9941,6 +9945,7 @@ export default function App() {
           onDeleteRead={mailbox.removeRead}
           onAnswerInvite={mailbox.answerInvite}
           onJoinGuild={mailbox.joinGuildFromLetter}
+          onWatchWar={() => { void getGuildWarReplay(saveId).then(r => { if (r) setWarReplay(r); else toast(language === 'pt-BR' ? 'O replay não está mais disponível.' : 'The replay is no longer available.'); }).catch(() => toast(language === 'pt-BR' ? 'Sem conexão.' : 'No connection.')); }}
         />
       )}
       {currentView === 'home' && (
