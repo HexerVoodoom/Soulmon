@@ -1,0 +1,1 @@
+function r(n){if(typeof n!="string")return"";const e=n.replace(/\s+/g," ").trim();if(e.length<=80)return e;const t=e.slice(0,80),o=t.lastIndexOf(" ");return(o>20?t.slice(0,o):t).trim()}function c(n,e){const t=r(n);return t?e?`Você me contou que ${t} costuma atrapalhar.`:`You told me that ${t} usually gets in the way.`:null}export{c as t};

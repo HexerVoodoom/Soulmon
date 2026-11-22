@@ -162,7 +162,6 @@ var EntitlementIlegivelError = class extends Error {
   }
 };
 function respostaEntitlementIlegivel(err2, headers6) {
-  if (err2 instanceof EntitlementOcupadoError) return Response.json({ ok: false, reason: err2.code }, { status: err2.status, headers: headers6 });
   if (!(err2 instanceof EntitlementIlegivelError)) return null;
   return Response.json({ error: err2.code }, { status: err2.status, headers: headers6 });
 }
@@ -205,79 +204,16 @@ async function writeEntitlement(env, saveId, ent) {
   return ent;
 }
 __name(writeEntitlement, "writeEntitlement");
-var ENT_LOCK_PREFIX = "entlock:";
-var ENT_LOCK_TTL_MS = 3e4;
-var ENT_LOCK_ESPERA_MS = 2e3;
-var ENT_LOCK_ESPERA_LONGA_MS = ENT_LOCK_TTL_MS + 5e3;
-var EntitlementOcupadoError = class extends Error {
-  static {
-    __name(this, "EntitlementOcupadoError");
-  }
-  constructor(saveId) {
-    super("entitlement-busy");
-    this.name = "EntitlementOcupadoError";
-    this.status = 409;
-    this.code = "busy";
-    this.saveIdPrefix = String(saveId).slice(0, 8);
-  }
-};
-async function tentarTravaDoEnt(env, saveId, nowMs) {
-  const row = ENT_LOCK_PREFIX + saveId;
-  await env.DB.prepare("DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?").bind(row, nowMs).run();
-  try {
-    await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(row, saveId, nowMs, nowMs + ENT_LOCK_TTL_MS).run();
-  } catch (err2) {
-    if (!ehViolacaoDeChave(err2)) throw err2;
-    return null;
-  }
-  return async () => {
-    try {
-      await env.DB.prepare("DELETE FROM order_claims WHERE order_id = ? AND claimed_at = ? AND expires_at = ?").bind(row, nowMs, nowMs + ENT_LOCK_TTL_MS).run();
-    } catch (err2) {
-      console.warn(JSON.stringify({ event: "entitlement.lock.release-failed", saveIdPrefix: String(saveId).slice(0, 8), error: err2?.message ?? String(err2) }));
-    }
-  };
-}
-__name(tentarTravaDoEnt, "tentarTravaDoEnt");
-async function tomarTravaDoEnt(env, saveId, { nowMs = Date.now(), esperaMs = 0 } = {}) {
-  if (!env?.DB) return { ok: true, release: /* @__PURE__ */ __name(async () => {
-  }, "release") };
-  const inicio = Date.now();
-  let pausa = 25;
-  for (; ; ) {
-    const decorrido = Date.now() - inicio;
-    const release = await tentarTravaDoEnt(env, saveId, nowMs + decorrido);
-    if (release) return { ok: true, release };
-    if (decorrido >= esperaMs) return { ok: false, release: /* @__PURE__ */ __name(async () => {
-    }, "release") };
-    const resta = esperaMs - decorrido;
-    await new Promise((r) => setTimeout(r, Math.min(resta, pausa / 2 + Math.random() * pausa)));
-    pausa = Math.min(pausa * 2, 500);
-  }
-}
-__name(tomarTravaDoEnt, "tomarTravaDoEnt");
-async function comTravaDoEnt(env, saveId, fn, { esperaMs = ENT_LOCK_ESPERA_MS } = {}) {
-  const trava = await tomarTravaDoEnt(env, saveId, { esperaMs });
-  if (!trava.ok) throw new EntitlementOcupadoError(saveId);
-  try {
-    return await fn();
-  } finally {
-    await trava.release();
-  }
-}
-__name(comTravaDoEnt, "comTravaDoEnt");
 var REBIRTH_SPRITE_RESET_FIELD = "rebirthSpriteResetAt";
 async function resetSpriteLifetimeOnRebirth(env, saveId) {
-  return comTravaDoEnt(env, saveId, async () => {
-    const ent = await readEntitlement(env, saveId);
-    if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
-      return { ent, jaFeito: true, anterior: 0 };
-    }
-    const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
-    ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
-    await writeEntitlement(env, saveId, ent);
-    return { ent, jaFeito: false, anterior };
-  });
+  const ent = await readEntitlement(env, saveId);
+  if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
+    return { ent, jaFeito: true, anterior: 0 };
+  }
+  const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
+  ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
+  await writeEntitlement(env, saveId, ent);
+  return { ent, jaFeito: false, anterior };
 }
 __name(resetSpriteLifetimeOnRebirth, "resetSpriteLifetimeOnRebirth");
 function paidProviderOf(ent) {
@@ -312,18 +248,16 @@ function isSubscriptionActive(ent, now = Date.now()) {
 }
 __name(isSubscriptionActive, "isSubscriptionActive");
 async function applySubscriptionState(env, saveId, { rootHash, until, state, entitled, test = false }, now = Date.now()) {
-  return comTravaDoEnt(env, saveId, async () => {
-    const ent = await readEntitlement(env, saveId);
-    const cur = ent.sub;
-    if (cur && cur.rootHash !== rootHash && !entitled) return { ent, changed: false };
-    const next = { rootHash, until: Math.max(0, Number(until) || 0), state: String(state ?? ""), test: !!test, updatedAt: now };
-    if (cur && cur.rootHash === rootHash && cur.until === next.until && cur.state === next.state && cur.test === next.test) {
-      return { ent, changed: false };
-    }
-    ent.sub = next;
-    await writeEntitlement(env, saveId, ent);
-    return { ent, changed: true };
-  }, { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+  const ent = await readEntitlement(env, saveId);
+  const cur = ent.sub;
+  if (cur && cur.rootHash !== rootHash && !entitled) return { ent, changed: false };
+  const next = { rootHash, until: Math.max(0, Number(until) || 0), state: String(state ?? ""), test: !!test, updatedAt: now };
+  if (cur && cur.rootHash === rootHash && cur.until === next.until && cur.state === next.state && cur.test === next.test) {
+    return { ent, changed: false };
+  }
+  ent.sub = next;
+  await writeEntitlement(env, saveId, ent);
+  return { ent, changed: true };
 }
 __name(applySubscriptionState, "applySubscriptionState");
 async function lookupOrderOwner(env, orderId) {
@@ -358,49 +292,40 @@ async function rtdnMarkSeen(env, messageId, now = Date.now()) {
 }
 __name(rtdnMarkSeen, "rtdnMarkSeen");
 var SPEND_TTL_SECONDS = 24 * 60 * 60;
-var SPEND_OPS_MAX = 20;
 async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
-  const opValido = typeof opId === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(opId);
-  const chave = opValido ? `spend:${saveId}:${opId}` : null;
-  return comTravaDoEnt(env, saveId, async () => {
-    if (chave) {
-      const anterior = await kvOrThrow(env).get(chave);
-      if (anterior) {
-        try {
-          return JSON.parse(anterior);
-        } catch {
-          return null;
-        }
+  const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId) ? `spend:${saveId}:${opId}` : null;
+  if (chave) {
+    const anterior = await kvOrThrow(env).get(chave);
+    if (anterior) {
+      try {
+        return JSON.parse(anterior);
+      } catch {
+        return null;
       }
     }
-    const ent = await readEntitlement(env, saveId);
-    const ops = Array.isArray(ent.spendOps) ? ent.spendOps.filter((o) => typeof o === "string") : [];
-    if (opValido && ops.includes(opId)) return ent;
-    if (ent.credits < amount) return null;
-    ent.credits -= amount;
-    if (opValido) ent.spendOps = [...ops, opId].slice(-SPEND_OPS_MAX);
-    await writeEntitlement(env, saveId, ent);
-    if (chave) {
-      await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
-    }
-    return ent;
-  });
+  }
+  const ent = await readEntitlement(env, saveId);
+  if (ent.credits < amount) return null;
+  ent.credits -= amount;
+  await writeEntitlement(env, saveId, ent);
+  if (chave) {
+    await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+  }
+  return ent;
 }
 __name(spendCredits, "spendCredits");
 async function grantAdReward(env, saveId) {
-  return comTravaDoEnt(env, saveId, async () => {
-    const ent = await readEntitlement(env, saveId);
-    if (ent.adDate !== today()) {
-      ent.adDate = today();
-      ent.adCount = 0;
-    }
-    if (ent.adCount >= AD_DAILY_CAP) return null;
-    ent.adCount += 1;
-    ent.credits += AD_REWARD_CREDITS;
-    await writeEntitlement(env, saveId, ent);
-    return ent;
-  });
+  const ent = await readEntitlement(env, saveId);
+  if (ent.adDate !== today()) {
+    ent.adDate = today();
+    ent.adCount = 0;
+  }
+  if (ent.adCount >= AD_DAILY_CAP) return null;
+  ent.adCount += 1;
+  ent.credits += AD_REWARD_CREDITS;
+  await writeEntitlement(env, saveId, ent);
+  return ent;
 }
 __name(grantAdReward, "grantAdReward");
 async function claimOrder(env, saveId, orderId) {
@@ -466,11 +391,7 @@ function podarOrderDetails(details, max2 = ORDER_HISTORY_MAX) {
   return details.filter((o) => fica.has(o));
 }
 __name(podarOrderDetails, "podarOrderDetails");
-async function applyVerifiedPurchase(env, saveId, compra) {
-  return comTravaDoEnt(env, saveId, () => aplicarCompraVerificada(env, saveId, compra), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
-}
-__name(applyVerifiedPurchase, "applyVerifiedPurchase");
-async function aplicarCompraVerificada(env, saveId, {
+async function applyVerifiedPurchase(env, saveId, {
   orderId,
   grantTier,
   grantCredits,
@@ -527,7 +448,7 @@ async function aplicarCompraVerificada(env, saveId, {
   }
   return { ent, duplicate: false };
 }
-__name(aplicarCompraVerificada, "aplicarCompraVerificada");
+__name(applyVerifiedPurchase, "applyVerifiedPurchase");
 var COURTESY_PROVIDER = "courtesy";
 var COURTESY_COUNT_KEY = "courtesy:count";
 var COURTESY_DEFAULT_MAX = 25;
@@ -580,10 +501,6 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     }
     if (voided === true) voidedIds.push(order.orderId);
   }
-  return comTravaDoEnt(env, saveId, () => aplicarReembolsos(env, saveId, voidedIds, now), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
-}
-__name(auditRefunds, "auditRefunds");
-async function aplicarReembolsos(env, saveId, voidedIds, now) {
   const fresh = await readEntitlement(env, saveId);
   if (now - (fresh.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent: fresh, revoked: [] };
   const revoked = [];
@@ -602,15 +519,11 @@ async function aplicarReembolsos(env, saveId, voidedIds, now) {
   await writeEntitlement(env, saveId, fresh);
   return { ent: fresh, revoked };
 }
-__name(aplicarReembolsos, "aplicarReembolsos");
+__name(auditRefunds, "auditRefunds");
 var RANK_PRIZES_MAX = 24;
 async function grantRankPrize(env, saveId, amount, markKey, since = 0) {
   if (!Number.isInteger(amount) || amount <= 0 || typeof markKey !== "string" || !markKey) return { ent: null, granted: false, refused: "invalid" };
   const tomb = await readTombstone(env, saveId).catch(() => null);
-  return comTravaDoEnt(env, saveId, () => creditarPremio(env, saveId, amount, markKey, since, tomb), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
-}
-__name(grantRankPrize, "grantRankPrize");
-async function creditarPremio(env, saveId, amount, markKey, since, tomb) {
   const ent = await readEntitlement(env, saveId);
   const delAt = Math.max(tomb ? Number(tomb.at) || 1 : 0, Number(ent.accountDeletedAt) || 0);
   if (delAt > 0 && delAt >= since) return { ent: null, granted: false, refused: "deleted" };
@@ -621,7 +534,7 @@ async function creditarPremio(env, saveId, amount, markKey, since, tomb) {
   await writeEntitlement(env, saveId, ent);
   return { ent, granted: true };
 }
-__name(creditarPremio, "creditarPremio");
+__name(grantRankPrize, "grantRankPrize");
 
 // api/_killSwitch.js
 var LIGADO = /^(1|true|yes|on|sim)$/i;
@@ -1062,81 +975,6 @@ async function desindexarInscricao(kv2, chave) {
 }
 __name(desindexarInscricao, "desindexarInscricao");
 
-// api/_admin.js
-var ADMIN_AI_CAP_MULTIPLIER = 3;
-var ADMIN_SPRITE_MONTHLY_CAP = 40;
-var ADMIN_CREDITS_DISPLAY = 999999;
-function parseAdminEmails(raw) {
-  if (typeof raw !== "string") return /* @__PURE__ */ new Set();
-  return new Set(raw.split(/[\s,;]+/).map(normalizeEmail2).filter((e) => e.includes("@")));
-}
-__name(parseAdminEmails, "parseAdminEmails");
-function isAdminEmail(env, email) {
-  if (typeof email !== "string" || !email) return false;
-  return parseAdminEmails(env?.ADMIN_EMAILS).has(normalizeEmail2(email));
-}
-__name(isAdminEmail, "isAdminEmail");
-async function verifiedAdmin(env, request, saveId) {
-  try {
-    const projectId = env?.FIREBASE_PROJECT_ID;
-    if (!projectId) return { admin: false };
-    const noList = parseAdminEmails(env?.ADMIN_EMAILS).size === 0;
-    const claims = await verifyIdToken(bearerToken(request), projectId);
-    if (!claims) return { admin: false };
-    if (noList) {
-      logAdminDenied("no-allowlist");
-      return { admin: false };
-    }
-    if (!isAdminEmail(env, claims.email)) {
-      logAdminDenied("not-listed");
-      return { admin: false };
-    }
-    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) {
-      logAdminDenied("saveid-mismatch");
-      return { admin: false };
-    }
-    return { admin: true };
-  } catch {
-    return { admin: false };
-  }
-}
-__name(verifiedAdmin, "verifiedAdmin");
-function adminPublicView(view) {
-  return { ...view, tier: "paid", credits: ADMIN_CREDITS_DISPLAY, admin: true };
-}
-__name(adminPublicView, "adminPublicView");
-function logAdminSession(route) {
-  console.log(JSON.stringify({ event: "admin_session", route }));
-}
-__name(logAdminSession, "logAdminSession");
-function logAdminDenied(reason) {
-  console.log(JSON.stringify({ event: "admin_denied", reason }));
-}
-__name(logAdminDenied, "logAdminDenied");
-
-// api/_rankAdmin.js
-var cache = /* @__PURE__ */ new Map();
-async function adminSaveIds(env) {
-  const raw = typeof env?.ADMIN_EMAILS === "string" ? env.ADMIN_EMAILS : "";
-  if (!raw) return /* @__PURE__ */ new Set();
-  const hit = cache.get(raw);
-  if (hit) return hit;
-  const emails = [...parseAdminEmails(raw)];
-  const ids3 = new Set(await Promise.all(emails.map((e) => emailToSaveId(e))));
-  cache.clear();
-  cache.set(raw, ids3);
-  return ids3;
-}
-__name(adminSaveIds, "adminSaveIds");
-async function adminSaveIdsSeguro(env) {
-  try {
-    return await adminSaveIds(env);
-  } catch {
-    return /* @__PURE__ */ new Set();
-  }
-}
-__name(adminSaveIdsSeguro, "adminSaveIdsSeguro");
-
 // api/_profile.js
 function stagePower(stage) {
   if (!stage) return 1;
@@ -1524,71 +1362,6 @@ function soulLevel(state) {
 }
 __name(soulLevel, "soulLevel");
 
-// api/_combateAux.js
-var SPECIAL_BUDGET_HITS = 3;
-var SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
-var SHIELD_DOT_TICK_ABSORB = 0.5;
-var SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB });
-function shieldAbsorbPoints(sh, d, src) {
-  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
-}
-__name(shieldAbsorbPoints, "shieldAbsorbPoints");
-var CHEER = {
-  tapsFull: 24,
-  tapsCapPerBucket: 16,
-  bucketSeconds: 3,
-  energyPerDischarge: 9,
-  pvpEnergyPerDischarge: 2.5
-};
-var CHEER_SCALE_MAX = 1.15;
-var START_ENERGY_MAX = 9;
-var DOT_RESIST_MAX = 0.18;
-function cleanStartEnergy(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(START_ENERGY_MAX, Math.max(0, x2)) : 0;
-}
-__name(cleanStartEnergy, "cleanStartEnergy");
-function cleanDotResist(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(DOT_RESIST_MAX, Math.max(0, x2)) : 0;
-}
-__name(cleanDotResist, "cleanDotResist");
-function cleanCheerScale(x2) {
-  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x2)) : 1;
-}
-__name(cleanCheerScale, "cleanCheerScale");
-function cheerEvents(taps, side, scale = 1) {
-  const out = [];
-  const k = cleanCheerScale(scale);
-  const perBucket = /* @__PURE__ */ new Map();
-  let acc = 0;
-  for (const tap of [...taps].filter((x2) => Number.isFinite(x2) && x2 >= 0).sort((x2, y) => x2 - y)) {
-    const b = Math.floor(tap / CHEER.bucketSeconds);
-    const n = perBucket.get(b) ?? 0;
-    if (n >= CHEER.tapsCapPerBucket) continue;
-    perBucket.set(b, n + 1);
-    acc++;
-    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
-  }
-  return out;
-}
-__name(cheerEvents, "cheerEvents");
-var COMPANHEIRO_TURNOS = 3;
-var COMPANHEIRO_EFEITO_FATOR = 0.8;
-var COMPANHEIRO_ATAQUE_FATOR = 0.25;
-function especialInvoca(sp) {
-  if (!sp) return false;
-  if (sp.family === "heal") return false;
-  if (sp.family === "shield" && sp.effect === "hot") return false;
-  return true;
-}
-__name(especialInvoca, "especialInvoca");
-function planoInvocacao(sp, scale) {
-  if (!sp || !especialInvoca(sp)) return null;
-  const E = SPECIAL_BUDGET_HITS * sp.power * scale;
-  if (sp.family === "direct" || sp.family === "dot") return { papel: "ataque", escalaEfeito: 0, ataqueE: E, turnosAtaque: COMPANHEIRO_TURNOS };
-  return { papel: "misto", escalaEfeito: scale * COMPANHEIRO_EFEITO_FATOR, ataqueE: SPECIAL_BUDGET_HITS * scale * COMPANHEIRO_ATAQUE_FATOR, turnosAtaque: COMPANHEIRO_TURNOS - 1 };
-}
-__name(planoInvocacao, "planoInvocacao");
-
 // api/_combate.js
 function mulberry32(seed) {
   let a = seed | 0;
@@ -1735,21 +1508,61 @@ function toAttrBonus(b) {
   return { atk: cleanN(b?.atk), def: cleanN(b?.def), spd: cleanN(b?.spd) };
 }
 __name(toAttrBonus, "toAttrBonus");
+var SPECIAL_BUDGET_HITS = 3;
+var SHIELD_DIRECT_SPECIAL_ABSORB = 0.5;
+var SHIELD_DOT_TICK_ABSORB = 0.5;
+var SHIELD_ABSORB = Object.freeze({ basic: 1, direct: SHIELD_DIRECT_SPECIAL_ABSORB, tick: SHIELD_DOT_TICK_ABSORB });
+function shieldAbsorbPoints(sh, d, src) {
+  return sh > 0 ? Math.min(sh, Math.floor(d * SHIELD_ABSORB[src] + 1e-9)) : 0;
+}
+__name(shieldAbsorbPoints, "shieldAbsorbPoints");
 var SPECIAL_FAMILIES = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
-var CROWN_ONLY_FAMILIES = ["defBuff", "atkDebuff", "spdDebuff"];
-var ALL_SPECIAL_FAMILIES = [...SPECIAL_FAMILIES, ...CROWN_ONLY_FAMILIES];
-var SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2, defBuff: 1.1, atkDebuff: 1.1, spdDebuff: 0.64 };
-var EFFECT_TUNE_PVP = { silenceHits: 1, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.8, hotScale: 1.05 };
-var FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
-var EFFECT_FAMILY = { hot: "shield", slow: "defDebuff", silence: "defDebuff" };
-function specialOf(family, effect) {
+var SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2 };
+function specialOf(family) {
   const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
-  const base = { family: f, power: SPECIAL_POWER[f] };
-  return typeof effect === "string" && Object.prototype.hasOwnProperty.call(EFFECT_FAMILY, effect) && EFFECT_FAMILY[effect] === f ? { ...base, effect } : base;
+  return { family: f, power: SPECIAL_POWER[f] };
 }
 __name(specialOf, "specialOf");
 var ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
 var ENERGY_TRIGGER = 100;
+var CHEER = {
+  tapsFull: 24,
+  tapsCapPerBucket: 16,
+  bucketSeconds: 3,
+  energyPerDischarge: 9,
+  pvpEnergyPerDischarge: 2.5
+};
+var CHEER_SCALE_MAX = 1.15;
+var START_ENERGY_MAX = 9;
+var DOT_RESIST_MAX = 0.18;
+function cleanStartEnergy(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(START_ENERGY_MAX, Math.max(0, x2)) : 0;
+}
+__name(cleanStartEnergy, "cleanStartEnergy");
+function cleanDotResist(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(DOT_RESIST_MAX, Math.max(0, x2)) : 0;
+}
+__name(cleanDotResist, "cleanDotResist");
+function cleanCheerScale(x2) {
+  return typeof x2 === "number" && Number.isFinite(x2) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x2)) : 1;
+}
+__name(cleanCheerScale, "cleanCheerScale");
+function cheerEvents(taps, side, scale = 1) {
+  const out = [];
+  const k = cleanCheerScale(scale);
+  const perBucket = /* @__PURE__ */ new Map();
+  let acc = 0;
+  for (const tap of [...taps].filter((x2) => Number.isFinite(x2) && x2 >= 0).sort((x2, y) => x2 - y)) {
+    const b = Math.floor(tap / CHEER.bucketSeconds);
+    const n = perBucket.get(b) ?? 0;
+    if (n >= CHEER.tapsCapPerBucket) continue;
+    perBucket.set(b, n + 1);
+    acc++;
+    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
+  }
+  return out;
+}
+__name(cheerEvents, "cheerEvents");
 var MIRROR_SECONDS = 25;
 var HIT_UNIT_H0 = 10;
 var PVP_HP_SCALE = 1.7;
@@ -1811,22 +1624,8 @@ function* fightSteps(a, b, opts) {
       nVuln: 0,
       nSpd: 0,
       nHit: 0,
-      nSil: 0,
-      nSlow: 0,
-      nDrag: 0,
-      nGuard: 0,
-      nWeak: 0,
-      nHot: 0,
-      hots: (
-        /** @type {{ pulse: number, left: number }[]} */
-        []
-      ),
       dotResist: cleanDotResist(s.dotResist),
-      dots: (
-        /** @type {{ src: object, E: number, left: number, comp?: boolean }[]} */
-        []
-      ),
-      invoca: s.invoca === true
+      dots: []
     };
   }, "mk");
   const F = [mk(a, 0), mk(b, 1)];
@@ -1866,35 +1665,18 @@ function* fightSteps(a, b, opts) {
     pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   }, "hit");
   const tickOwnTurn = /* @__PURE__ */ __name((me) => {
-    if (!me.dots.length && !me.hots.length || me.dead < Infinity || me.hp <= EPS) return false;
+    if (!me.dots.length || me.dead < Infinity || me.hp <= EPS) return false;
     for (const d of me.dots) {
       d.left--;
       if (me.hp > EPS) hit(d.src, me, d.E / DOT_TICKS * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), "tick", "tick");
     }
     me.dots = me.dots.filter((d) => d.left > 0);
-    for (const h of me.hots) {
-      h.left--;
-      me.nHot--;
-      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
-    }
-    me.hots = me.hots.filter((h) => h.left > 0);
     return me.hp <= EPS;
   }, "tickOwnTurn");
   const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
-    const plano = me.invoca ? planoInvocacao(me.sp, scale) : null;
-    if (!plano) {
-      castFamilia(me, foe, t0, scale);
-      return;
-    }
-    for (const f of F) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
-    if (plano.escalaEfeito > 0) castFamilia(me, foe, t0, plano.escalaEfeito);
-    foe.dots.push({ src: me, E: plano.ataqueE, left: plano.turnosAtaque, comp: true });
-  }, "cast");
-  const castFamilia = /* @__PURE__ */ __name((me, foe, t0, scale) => {
     const sp = me.sp;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
-    const tune = sp.tune ?? EFFECT_TUNE_PVP;
     switch (sp.family) {
       case "direct":
         hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack", "direct");
@@ -1906,41 +1688,20 @@ function* fightSteps(a, b, opts) {
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round(E / hitsOn(foe, me) * me.pts)) / me.pts;
         break;
       case "shield":
-        if (sp.effect === "hot") {
-          const pulse = Math.round(E * tune.hotScale / DOT_TICKS / hitsOn(foe, me) * me.pts);
-          me.nHot += DOT_TICKS;
-          me.hots.push({ pulse, left: DOT_TICKS });
-          break;
-        }
         me.shield = (Math.round(me.shield * me.pts) + Math.round(E / hitsOn(foe, me) * me.pts)) / me.pts;
         break;
       case "atkBuff":
         me.nAtk += E;
         break;
       case "defDebuff":
-        if (sp.effect === "slow") {
-          foe.nSlow += E * tune.slowScale;
-          foe.nVuln += E * tune.slowKeep;
-        } else if (sp.effect === "silence" && foe.sp) {
-          foe.nSil = Math.max(foe.nSil, tune.silenceHits);
-          foe.nVuln += E * tune.silenceKeep;
-        } else foe.nVuln += E;
-        break;
-      case "defBuff":
-        me.nGuard += E / FAMILY_TUNE.guardCut;
-        break;
-      case "atkDebuff":
-        foe.nWeak += E / FAMILY_TUNE.weakCut;
-        break;
-      case "spdDebuff":
-        foe.nDrag += E * FAMILY_TUNE.spdDebuffScale;
+        foe.nVuln += E;
         break;
       case "spdBuff":
         me.nSpd += E;
         me.next = Math.min(me.next, t0 + iv / 2);
         break;
     }
-  }, "castFamilia");
+  }, "cast");
   function* flush() {
     while (pending.length) yield pending.shift();
   }
@@ -1956,7 +1717,7 @@ function* fightSteps(a, b, opts) {
   __name(markDead, "markDead");
   function* tryCast(i2, tt) {
     const me = F[i2];
-    if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
+    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
       const caiu = tickOwnTurn(me);
       yield* flush();
       if (caiu) return;
@@ -1987,7 +1748,7 @@ function* fightSteps(a, b, opts) {
     for (const e of timed) if (e.t < tt) tt = e.t;
     let tEn = Infinity;
     for (const f of F) {
-      if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     t = Math.min(F[0].next, F[1].next, tt, tEn);
     for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
@@ -2018,16 +1779,6 @@ function* fightSteps(a, b, opts) {
         mulN += x2;
         foe.nVuln -= x2;
       }
-      if (foe.nGuard > EPS) {
-        const x2 = Math.min(1, foe.nGuard);
-        mulN *= 1 - FAMILY_TUNE.guardCut * x2;
-        foe.nGuard -= x2;
-      }
-      if (me.nWeak > EPS) {
-        const x2 = Math.min(1, me.nWeak);
-        mulN *= 1 - FAMILY_TUNE.weakCut * x2;
-        me.nWeak -= x2;
-      }
       const hs = opts.hitScale ? opts.hitScale(i2, me.nHit) : 1;
       me.nHit++;
       hit(me, foe, mulN * me.mult() * hs / hitsOn(me, foe), "attack", "basic");
@@ -2038,17 +1789,6 @@ function* fightSteps(a, b, opts) {
       } else {
         me.next = t + interval(me.c.spd);
       }
-      if (me.nSlow > EPS) {
-        const x2 = Math.min(1, me.nSlow);
-        me.nSlow -= x2;
-        me.next += interval(me.c.spd) * x2;
-      }
-      if (me.nDrag > EPS) {
-        const x2 = Math.min(1, me.nDrag);
-        me.nDrag -= x2;
-        me.next += interval(me.c.spd) * x2 * FAMILY_TUNE.dragStretch;
-      }
-      if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();
     yield* markDead();
@@ -2209,7 +1949,7 @@ var PICKABLE = {
   "tal-pve-01": { maxRank: 4, kind: "combatBonus", scope: "pve", perRank: 6e-3 },
   "tal-pve-02": { maxRank: 4, kind: "combatBonus", scope: "pve", attr: "def", perRank: 6e-3, requires: [req("tal-pve-01", 2)] },
   "tal-pve-03": { maxRank: 3, kind: "healBoost", perRank: 5e-3, requires: [req("tal-pve-01", 2)] },
-  "tal-pve-04": { maxRank: 3, kind: "riftBitsCap", perRank: 10, requires: [req("tal-pve-03", 1)] },
+  "tal-pve-04": { maxRank: 3, kind: "riftBits", perRank: 0.03, requires: [req("tal-pve-03", 1)] },
   "tal-pve-05": { maxRank: 3, kind: "combatBonus", scope: "nightmare", perRank: 4e-3, requires: [req("tal-pve-03", 1)] },
   "tal-pve-06": { maxRank: 3, kind: "combatBonus", scope: "pve", attr: "spd", perRank: 4e-3, requires: [req("tal-pve-02", 2)] },
   "tal-pve-07": { maxRank: 1, kind: "startShield", perRank: 0.01, requires: [req("tal-pve-05", 1), req("tal-pve-06", 1)] },
@@ -2926,13 +2666,7 @@ function migrateHexId(id) {
   return to ? `luvas:${to}` : id;
 }
 __name(migrateHexId, "migrateHexId");
-var HEX_CROWN_EFFECTS = ["hot", "slow", "silence"];
-var HEX_CROWN_VARIANTS = {
-  hot: { family: "shield", effect: "hot" },
-  slow: { family: "defDebuff", effect: "slow" },
-  silence: { family: "defDebuff", effect: "silence" }
-};
-var HEX_MAX_OWNED = 3 * 210 + 7 + HEX_CROWN_EFFECTS.length + CROWN_ONLY_FAMILIES.length + 2;
+var HEX_MAX_OWNED = 3 * 210 + 7 + 2;
 var ELEMENT_IDS = /* @__PURE__ */ new Set([...COUNTER_RING, ...Object.keys(BASE_DO_PAR)]);
 function parseHexItem(idRaw) {
   const id = migrateHexId(idRaw);
@@ -2945,8 +2679,7 @@ function parseHexItem(idRaw) {
   if (HEX_ELEMENT_SLOTS.includes(slot)) return ELEMENT_IDS.has(value) ? { slot, value } : void 0;
   if (slot === "coroa") return (
     /** @type {readonly string[]} */
-    SPECIAL_FAMILIES.includes(value) || /** @type {readonly string[]} */
-    CROWN_ONLY_FAMILIES.includes(value) || HEX_CROWN_EFFECTS.includes(value) ? { slot, value } : void 0
+    SPECIAL_FAMILIES.includes(value) ? { slot, value } : void 0
   );
   return HEX_STRIKES.includes(value) ? { slot, value } : void 0;
 }
@@ -2983,10 +2716,6 @@ function sanitizeHexsmith(raw) {
   return { owned, equipped };
 }
 __name(sanitizeHexsmith, "sanitizeHexsmith");
-function hexCrownEquipped(raw) {
-  return sanitizeHexsmith(raw).equipped.coroa !== void 0;
-}
-__name(hexCrownEquipped, "hexCrownEquipped");
 function hexOverrides(raw) {
   const { equipped } = sanitizeHexsmith(raw);
   const v = /* @__PURE__ */ __name((slot) => equipped[slot] ? parseHexItem(equipped[slot])?.value : void 0, "v");
@@ -2995,15 +2724,6 @@ function hexOverrides(raw) {
   for (const [slot, key2] of pairs) {
     const x2 = v(slot);
     if (x2) out[key2] = x2;
-  }
-  const crown = v("coroa");
-  if (crown && HEX_CROWN_EFFECTS.includes(crown)) {
-    const variant = (
-      /** @type {Record<string, { family: string, effect: string }>} */
-      HEX_CROWN_VARIANTS[crown]
-    );
-    out.specialFamily = variant.family;
-    out.specialEffect = variant.effect;
   }
   return out;
 }
@@ -3038,7 +2758,7 @@ function forgeOnServer(stored, itemId) {
   if (c.fragments > 0 && frag < c.fragments) return { ok: false, reason: "fragments" };
   const gp = num(stored.gamePoints);
   const paidLeft = num(stored.bitsOrigin?.paidLeft);
-  if (c.bits > 0 && gp < c.bits) return { ok: false, reason: "bits" };
+  if (c.bits > 0 && Math.max(0, gp - Math.min(gp, paidLeft)) < c.bits) return { ok: false, reason: "bits" };
   const next = { ...stored };
   if (c.potions > 0) {
     const foodInventory = { ...food, [k]: num(food[k]) - c.potions };
@@ -3449,7 +3169,7 @@ function duelSide(save, opts = {}) {
   const elBasicaOrig = pet.neutro ? null : pet.el ?? elementoDoBasico(skills);
   const elEspecialOrig = pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId);
   const comItemDeIdentidade = Boolean(hx.specialFamily || hx.specialElement || hx.basicElement);
-  return { combatant, special: specialOf(family, hx.specialEffect), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, ...hx.specialEffect ? { efeito: hx.specialEffect } : {}, lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {}, ...typeof state.simMagia === "boolean" ? { magia: state.simMagia } : {}, ...!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}, ...comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}, ...hx.strike ? { golpe: hx.strike } : {} } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {}, ...typeof state.simMagia === "boolean" ? { magia: state.simMagia } : {}, ...!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}, ...comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}, ...hx.strike ? { golpe: hx.strike } : {} } };
 }
 __name(duelSide, "duelSide");
 function duelSeed(...parts) {
@@ -3465,8 +3185,8 @@ __name(duelSeed, "duelSeed");
 function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
   const { meCombatant, oppCombatant } = elementScale > 0 ? aplicarElementosDuelo(me, opp, elementScale) : { meCombatant: me.combatant, oppCombatant: opp.combatant };
   const g = fightSteps(
-    { combatant: meCombatant, special: me.special, dotResist: me.dotResist, invoca: me.invoca },
-    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist, invoca: opp.invoca },
+    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
+    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) }
   );
   const events = [];
@@ -4436,7 +4156,7 @@ async function comGuildas(env, linhas, saveIdDe) {
 __name(comGuildas, "comGuildas");
 
 // api/_rankings.js
-var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "soul-barrage-2", "zip", "patches", "match3-pvp"]);
+var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "soul-barrage-2", "zip", "patches"]);
 var LOWER_IS_BETTER = Object.freeze(["zip", "patches"]);
 var isLowerBetter = /* @__PURE__ */ __name((game) => LOWER_IS_BETTER.includes(game), "isLowerBetter");
 var PERIODS = Object.freeze(["weekly", "monthly"]);
@@ -4453,8 +4173,6 @@ var TIER_CUTS = Object.freeze({
   "dino-2": [0, 300, 800, 1500, 2500, 4e3],
   ppt: [0, 10, 20, 30, 40, 50],
   match3: [0, 300, 800, 1500, 2500, 4e3],
-  // PVP (HP simétrico): o placar máximo é o HP do jogador + o bônus de 1 inimigo (620), então os cortes são bem menores que os da Aventura. PROPOSTOS, o dono calibra.
-  "match3-pvp": [0, 100, 200, 300, 450, 600],
   eco: [0, 4, 6, 8, 10, 13],
   // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
   // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
@@ -4471,32 +4189,10 @@ var MAX_SCORE_BY_GAME = Object.freeze({
   "dino-2": 1e5,
   ppt: 200,
   match3: 1e5,
-  "match3-pvp": 1e4,
   eco: 100,
   "soul-barrage": 5e4,
   "soul-barrage-2": 5e4
 });
-var RANK_FAKE_TETO = Object.freeze({ match3: 1100, "match3-pvp": 400 });
-var FAKE_BRUTO_MAX_FATOR = 0.04 + 0.96 * 1.1;
-function escalaFake(game, raw) {
-  const teto = RANK_FAKE_TETO[game];
-  const s = Math.max(0, Number(raw) || 0);
-  if (teto === void 0) return s;
-  const cuts = TIER_CUTS[game];
-  const bruto = cuts[cuts.length - 1] * FAKE_BRUTO_MAX_FATOR;
-  return Math.min(teto - 1, Math.floor(s * (teto - 1) / bruto));
-}
-__name(escalaFake, "escalaFake");
-var MENSAL_COM_LEGADO_SEMANAL = Object.freeze({ match3: Object.freeze(["2026-11"]) });
-function semanasDoMes(pk) {
-  const [y, m] = pk.split("-").map(Number);
-  const out = [];
-  for (let d = new Date(Date.UTC(y, m - 1, 1)); d.getUTCMonth() === m - 1; d = new Date(d.getTime() + 864e5)) {
-    if (d.getUTCDay() === 4) out.push(isoWeekKey(d));
-  }
-  return out;
-}
-__name(semanasDoMes, "semanasDoMes");
 var TIME_BOUNDS_MS = Object.freeze({ zip: [2e3, 18e5], patches: [2e3, 18e5] });
 function scoreIsPlausible(game, score) {
   const tb = TIME_BOUNDS_MS[game];
@@ -4568,12 +4264,10 @@ async function submitScore(env, { game, period, saveId, score, now = /* @__PURE_
   const profile = await getProfile(env, saveId).catch(() => null);
   const hidden = profile?.publicHidden === true;
   const ttl = { expirationTtl: 86400 * 70 };
-  if (!(await adminSaveIdsSeguro(env)).has(saveId)) {
-    await store.put(scoreKey(game, pk, score, saveId), "", {
-      ...ttl,
-      metadata: { s: score, n: hidden ? "An\xF4nimo" : cleanName(profile?.name), ...hidden ? { h: true } : {}, sim: profile?.simulated === true, t: now.getTime() }
-    });
-  }
+  await store.put(scoreKey(game, pk, score, saveId), "", {
+    ...ttl,
+    metadata: { s: score, n: hidden ? "An\xF4nimo" : cleanName(profile?.name), ...hidden ? { h: true } : {}, sim: profile?.simulated === true, t: now.getTime() }
+  });
   if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
   await store.put(mk, String(score), ttl);
   return { improved: true, best: score };
@@ -4584,29 +4278,8 @@ async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /
   const store = kvOrThrow(env);
   const n = Math.max(1, Math.min(TOP_MAX, Math.floor(top) || TOP_DEFAULT));
   const prefix = boardPrefix(game, pk);
-  const admins = await adminSaveIdsSeguro(env);
-  const idDe = /* @__PURE__ */ __name((k) => k.name.slice(k.name.lastIndexOf(":") + 1), "idDe");
+  const page = await store.list({ prefix, limit: n });
   const simRow = /* @__PURE__ */ __name((k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(":") + 1)), "simRow");
-  const legado = period === "monthly" && MENSAL_COM_LEGADO_SEMANAL[game]?.includes(pk) ? semanasDoMes(pk) : [];
-  const ajusta = !isLowerBetter(game) && (RANK_FAKE_TETO[game] !== void 0 || legado.length > 0);
-  let ordenado = null;
-  if (ajusta) {
-    const porId = /* @__PURE__ */ new Map();
-    for (const pf of [prefix, ...legado.map((w) => boardPrefix(game, w))]) {
-      const pg = await store.list({ prefix: pf, limit: 1e3 });
-      for (const k of pg.keys) {
-        const id = k.name.slice(k.name.lastIndexOf(":") + 1);
-        if (admins.has(id)) continue;
-        const sim = simRow(k);
-        const score = sim ? escalaFake(game, k.metadata?.s) : Number(k.metadata?.s) || 0;
-        const prev = porId.get(id);
-        if (!prev || score > prev.score) porId.set(id, { k, id, score, sim });
-      }
-    }
-    ordenado = [...porId.values()].sort((a, b) => b.score - a.score || Number(a.sim) - Number(b.sim) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  }
-  const page = ordenado ? { keys: ordenado.slice(0, n).map((e) => e.k) } : await listaSemAdmin(store, prefix, n, admins);
-  const scoreDe = ordenado ? new Map(ordenado.map((e) => [e.k.name, e.score])) : null;
   const memoGuilda = /* @__PURE__ */ new Map();
   const rows = await Promise.all(page.keys.map(async (k, i2) => {
     const escondido = k.metadata?.h === true;
@@ -4615,7 +4288,7 @@ async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /
       rank: i2 + 1,
       name: escondido ? "An\xF4nimo" : cleanName(k.metadata?.n),
       ...campoGuilda(guilda),
-      score: scoreDe ? scoreDe.get(k.name) ?? 0 : Number(k.metadata?.s) || 0,
+      score: Number(k.metadata?.s) || 0,
       me: !!saveId && k.name.endsWith(`:${saveId}`)
     };
   }));
@@ -4629,42 +4302,30 @@ async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /
   if (saveId) {
     const raw = await store.get(meKey(game, pk, saveId));
     const best = raw === null || raw === void 0 ? null : Number(raw);
-    const minha = ordenado ? ordenado.findIndex((e) => e.id === saveId) : -1;
-    if (admins.has(saveId)) {
-      if (best !== null && Number.isFinite(best)) me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: null };
-    } else if (ordenado && minha >= 0) {
-      const sc = ordenado[minha].score;
-      me = { score: sc, tier: tierFor(game, sc), rank: minha + 1 };
-    } else if (best !== null && Number.isFinite(best)) {
-      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId), admins) };
+    if (best !== null && Number.isFinite(best)) {
+      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
     }
   }
   return { game, period, periodKey: pk, top: rows, me };
 }
 __name(readBoard, "readBoard");
-async function listaSemAdmin(store, prefix, n, admins) {
-  if (!admins.size) return store.list({ prefix, limit: n });
-  const pg = await store.list({ prefix, limit: Math.min(1e3, n + admins.size) });
-  return { ...pg, keys: pg.keys.filter((k) => !admins.has(k.name.slice(k.name.lastIndexOf(":") + 1))).slice(0, n) };
-}
-__name(listaSemAdmin, "listaSemAdmin");
-async function rankOf(store, prefix, key2, admins = /* @__PURE__ */ new Set()) {
+async function rankOf(store, prefix, key2) {
   let seen = 0;
   let cursor;
   for (let p = 0; p < RANK_SCAN_PAGES; p++) {
     const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
     const idx = page.keys.findIndex((k) => k.name === key2);
-    if (idx >= 0) return seen + page.keys.slice(0, idx).filter((k) => !admins.has(k.name.slice(k.name.lastIndexOf(":") + 1))).length + 1;
-    seen += page.keys.filter((k) => !admins.has(k.name.slice(k.name.lastIndexOf(":") + 1))).length;
+    if (idx >= 0) return seen + idx + 1;
+    seen += page.keys.length;
     if (page.list_complete || !page.cursor) return null;
     cursor = page.cursor;
   }
   return null;
 }
 __name(rankOf, "rankOf");
-function payablePlacements(entries2, n) {
+function payablePlacements(entries, n) {
   const out = [];
-  for (const e of entries2 ?? []) {
+  for (const e of entries ?? []) {
     if (out.length >= n) break;
     if (e?.simulated === true || e?.sim === true) continue;
     if (typeof e?.saveId === "string" && /^sim_[0-9]{4}$/.test(e.saveId)) continue;
@@ -5138,11 +4799,11 @@ async function collectSprites(env, saveId) {
   return { imgs, locks, blobs, emails };
 }
 __name(collectSprites, "collectSprites");
-async function collectRankingKeys(env, saveId, leve = false) {
+async function collectRankingKeys(env, saveId) {
   const store = kvOrThrow(env);
   const keys = [];
   const ranking2 = [];
-  if (!leve) for (const k of (await listPrefix(env, "rkme:")).filter((x2) => x2.endsWith(`:${saveId}`))) {
+  for (const k of (await listPrefix(env, "rkme:")).filter((x2) => x2.endsWith(`:${saveId}`))) {
     const [, game, period] = k.split(":");
     const best = Number(await store.get(k));
     keys.push(k);
@@ -5157,7 +4818,7 @@ async function collectRankingKeys(env, saveId, leve = false) {
     const rl = `riftlayers:${m}:${saveId}`;
     if (await store.get(rl) !== null) keys.push(rl);
   }
-  if (!leve) for (const prefix of ["rift-pending:", "rift-paid:"]) {
+  for (const prefix of ["rift-pending:", "rift-paid:"]) {
     for (const k of (await listPrefix(env, prefix)).filter((x2) => x2.endsWith(`:${saveId}`))) keys.push(k);
   }
   if (await store.get(`fj:${saveId}`) !== null) keys.push(`fj:${saveId}`);
@@ -5248,8 +4909,7 @@ function steamLicenseKeysOf(ent) {
   return orders.filter((o) => typeof o === "string" && o.startsWith("steam:own:")).map((o) => `${ORDER_PREFIX}${o}`);
 }
 __name(steamLicenseKeysOf, "steamLicenseKeysOf");
-async function collect(env, saveId, opts = {}) {
-  const leve = opts.leve === true;
+async function collect(env, saveId) {
   const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
   let state = null;
@@ -5285,7 +4945,7 @@ async function collect(env, saveId, opts = {}) {
       if (!(err2 instanceof EntitlementIlegivelError)) throw err2;
     }
   }
-  const rankKeys = leve ? [] : (await listPrefix(env, "rank:")).filter((k) => k.endsWith(`:${saveId}`));
+  const rankKeys = (await listPrefix(env, "rank:")).filter((k) => k.endsWith(`:${saveId}`));
   const ranks = [];
   for (const k of rankKeys) {
     try {
@@ -5298,7 +4958,7 @@ async function collect(env, saveId, opts = {}) {
   }
   const pidIndexed = await store.get(`pid:${pid}`) === saveId;
   const sprites = await collectSprites(env, saveId);
-  const rankingData = await collectRankingKeys(env, saveId, leve);
+  const rankingData = await collectRankingKeys(env, saveId);
   let coopGroupId = null;
   let coopExport = null;
   try {
@@ -5353,7 +5013,7 @@ async function collect(env, saveId, opts = {}) {
   } catch {
   }
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys, leve };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
 }
 __name(collect, "collect");
 async function pidDeAmigo(env, friendSaveId) {
@@ -5429,7 +5089,6 @@ function plan(c, saveId) {
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
-      ...c.leve ? ["season ranking, minigame ranking and Endless Rift records (listed when you confirm)"] : [],
       "mentions of you in other players' friend lists",
       "notification subscriptions (push:*/fcm:*) linked to your account",
       ...c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
@@ -5447,7 +5106,7 @@ function plan(c, saveId) {
 }
 __name(plan, "plan");
 async function handleDeleteRequest(env, saveId) {
-  const c = await collect(env, saveId, { leve: true });
+  const c = await collect(env, saveId);
   const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
   await kvOrThrow(env).put(
     DEL_PREFIX + saveId,
@@ -5546,7 +5205,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     const ent = c.entitlement;
     const COURTESY_PREFIX = "courtesy:";
     const ehCortesia = (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).some((o) => typeof o === "string" && o.startsWith(COURTESY_PREFIX)) && (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).some((o) => o?.orderId?.startsWith?.(COURTESY_PREFIX) && !o.voided);
-    await tentar(`${ENT_PREFIX}${saveId}`, () => comTravaDoEnt(env, saveId, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
+    await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       // REGISTRO §49 (dono, 14/10/2026): excluiu a conta, paga de novo. O direito
       // pago e o saldo NÃO sobrevivem (nem para quem volta com o mesmo e-mail);
       // o vínculo comprovante→conta sobrevive ANONIMIZADO em `order_claims`/`ord:`.
@@ -5570,7 +5229,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now()
-    }), { expirationTtl: RETENTION_TTL_SECONDS }), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS }));
+    }), { expirationTtl: RETENTION_TTL_SECONDS }));
   }
   for (const k of c.rankKeys) await tentar(k, () => store.delete(k));
   for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
@@ -5579,9 +5238,6 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of [`freq:${saveId}`, `gsent:${saveId}`, `gnote:${saveId}`, `gmir:${saveId}`]) await tentar(k, () => store.delete(k));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
-  await tentar(`savebak:${saveId}`, async () => {
-    for (const k of await listPrefix(env, `savebak:${saveId}:`)) await store.delete(k);
-  });
   if (c.state) await tentar(`${saveId} (save)`, () => store.delete(saveId));
   if (falhou.length === 0) {
     await tentar(`${DEL_PREFIX}${saveId}`, () => store.delete(DEL_PREFIX + saveId));
@@ -6261,6 +5917,58 @@ function legacyFormIdOf(formId) {
 }
 __name(legacyFormIdOf, "legacyFormIdOf");
 
+// api/_admin.js
+var ADMIN_AI_CAP_MULTIPLIER = 3;
+var ADMIN_SPRITE_MONTHLY_CAP = 40;
+var ADMIN_CREDITS_DISPLAY = 999999;
+function parseAdminEmails(raw) {
+  if (typeof raw !== "string") return /* @__PURE__ */ new Set();
+  return new Set(raw.split(/[\s,;]+/).map(normalizeEmail2).filter((e) => e.includes("@")));
+}
+__name(parseAdminEmails, "parseAdminEmails");
+function isAdminEmail(env, email) {
+  if (typeof email !== "string" || !email) return false;
+  return parseAdminEmails(env?.ADMIN_EMAILS).has(normalizeEmail2(email));
+}
+__name(isAdminEmail, "isAdminEmail");
+async function verifiedAdmin(env, request, saveId) {
+  try {
+    const projectId = env?.FIREBASE_PROJECT_ID;
+    if (!projectId) return { admin: false };
+    const noList = parseAdminEmails(env?.ADMIN_EMAILS).size === 0;
+    const claims = await verifyIdToken(bearerToken(request), projectId);
+    if (!claims) return { admin: false };
+    if (noList) {
+      logAdminDenied("no-allowlist");
+      return { admin: false };
+    }
+    if (!isAdminEmail(env, claims.email)) {
+      logAdminDenied("not-listed");
+      return { admin: false };
+    }
+    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) {
+      logAdminDenied("saveid-mismatch");
+      return { admin: false };
+    }
+    return { admin: true };
+  } catch {
+    return { admin: false };
+  }
+}
+__name(verifiedAdmin, "verifiedAdmin");
+function adminPublicView(view) {
+  return { ...view, tier: "paid", credits: ADMIN_CREDITS_DISPLAY, admin: true };
+}
+__name(adminPublicView, "adminPublicView");
+function logAdminSession(route) {
+  console.log(JSON.stringify({ event: "admin_session", route }));
+}
+__name(logAdminSession, "logAdminSession");
+function logAdminDenied(reason) {
+  console.log(JSON.stringify({ event: "admin_denied", reason }));
+}
+__name(logAdminDenied, "logAdminDenied");
+
 // api/_rateLimit.js
 var buckets = /* @__PURE__ */ new Map();
 var MAX_TRACKED = 5e3;
@@ -6679,18 +6387,9 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   }
   try {
     if (hasLifetime || hasFormCap) {
-      const recusa = await comTravaDoEnt(env, saveId, async () => {
-        const atual = await readEntitlement(env, saveId);
-        const vida = hasLifetime ? lifetimeUsed(atual, bucket) : 0;
-        const forma = hasFormCap ? formUsed(atual, formId) : 0;
-        if (hasLifetime && vida + units > capLifetime) return refuse(402, "sprite-lifetime-cap");
-        if (hasFormCap && forma + units > capForm) return refuse(409, "sprite-form-cap");
-        if (hasLifetime) atual.aiLifetime = { ...atual.aiLifetime || {}, [bucket]: vida + units };
-        if (hasFormCap) atual.aiForms = { ...foldLegacyForm(atual.aiForms, formId), [formId]: forma + units };
-        await writeEntitlement(env, saveId, atual);
-        return null;
-      });
-      if (recusa) return recusa;
+      if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: usedLifetime + units };
+      if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: usedForm + units };
+      await writeEntitlement(env, saveId, ent);
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
@@ -6718,12 +6417,10 @@ function makeRelease(env, ctx) {
     const menos = /* @__PURE__ */ __name((n) => Math.max(0, n - units), "menos");
     try {
       if (hasLifetime || hasFormCap) {
-        await comTravaDoEnt(env, saveId, async () => {
-          const ent = await readEntitlement(env, saveId);
-          if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: menos(lifetimeUsed(ent, bucket)) };
-          if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
-          await writeEntitlement(env, saveId, ent);
-        });
+        const ent = await readEntitlement(env, saveId);
+        if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: menos(lifetimeUsed(ent, bucket)) };
+        if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
+        await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
@@ -7216,7 +6913,7 @@ var KNOWLEDGE = [
   { "id": "regra-45", "t": "Anivers\xE1rio e mem\xF3rias", "x": "O save guarda quando a criatura nasceu e quando cada pe\xE7a de cole\xE7\xE3o chegou, e devolve isso como fala de anivers\xE1rio, cart\xE3o de 30/90 dias e sauda\xE7\xE3o de reencontro \u2014 nunca como balan\xE7o. O que N\xC3O faz. O anivers\xE1rio n\xE3o d\xE1 XP, item nem push \u2014 rende UMA fala. A mem\xF3ria n\xE3o \xE9 balan\xE7o: nenhuma contagem de tarefa, nenhum percentual, nenhuma compara\xE7\xE3o com o m\xEAs anterior; as contagens que aparecem s\xE3o de COLE\xC7\xC3O (formas vividas, sonhos), que s\xF3 crescem. N\xE3o gera push, badge nem lembrete." },
   { "id": "regra-46", "t": "As tr\xEAs moedas", "x": 'Tr\xEAs moedas com tr\xEAs origens diferentes, e a origem \xE9 o que decide o que cada uma pode comprar \u2014 mistur\xE1-las visualmente j\xE1 fez o jogador pagar por uma coisa achando que comprava outra. R\xE9gua. src/utils/currencies.test.ts (fronteira entre as moedas, c\xE2mbio, aus\xEAncia do caminho inverso, "o torneio s\xF3 vende cosm\xE9tico"), functions/api/_entitlements.test.js, functions/api/_entitlements.ttl.test.js, src/utils/monetization.fronteira.test.ts, src/styles/tokens.contrast.test.ts.' },
   { "id": "regra-47", "t": "Loja", "x": "Um cat\xE1logo est\xE1tico de consum\xEDveis, cen\xE1rios e decora\xE7\xE3o, com uma compra que debita, entrega e equipa na hora \u2014 e nada dela d\xE1 vantagem de jogo: os tr\xEAs chips de atributo s\xF3 d\xE3o pontos de tipo (inclinam o caminho e a distribui\xE7\xE3o na evolu\xE7\xE3o), sem XP, sem level e sem alterar o total de pontos de combate (combate v3, PR6; save antigo com +3 j\xE1 somado fica como est\xE1 \u2014 o combate l\xEA o level e normaliza os pontos de tipo em fatias de 15% a 45%)." },
-  { "id": "regra-48", "t": "Itens especiais (o uso da pastinha)", "x": "Cinco itens que moram na mesma pastinha da comida e se comportam de forma completamente diferente dela: chip d\xE1 atributo, cora\xE7\xE3ozinho cura, Glitchtama liga um buff de +10% por 7 dias (1 por semana) \u2014 e nenhum conta no teto de comida." },
+  { "id": "regra-48", "t": "Itens especiais (o uso da pastinha)", "x": "Cinco itens que moram na mesma pastinha da comida e se comportam de forma completamente diferente dela: chip d\xE1 atributo, cora\xE7\xE3ozinho cura, Glitchtama d\xE1 um dia completo \u2014 e nenhum conta no teto de comida." },
   { "id": "regra-49", "t": "Miss\xF5es permanentes", "x": "Seis conquistas vital\xEDcias que n\xE3o pagam moeda nenhuma \u2014 elas liberam a compra de seis cen\xE1rios que j\xE1 estavam na loja, com cadeado. R\xE9gua. src/utils/missions.test.ts (progresso, clamp, every mission unlocks a distinct shop item, with CSS defined for bg rewards e plain (unlock-less) items are always unlocked; Glitchtama is never sold \u2014 os blocos est\xE3o em ingl\xEAs, como o resto daquele arquivo)." },
   { "id": "regra-50", "t": "Miss\xF5es semanais", "x": "Tr\xEAs objetivos por semana, sorteados de um pool de doze de forma determin\xEDstica, pagos em Honra \u2014 e nenhum deles premia quantidade de tarefa. Determinismo n\xE3o \xE9 eleg\xE2ncia: \xE9 a diferen\xE7a entre uma miss\xE3o e um sorteio. Se a lista mudasse a cada abertura, a pessoa aprenderia a reabrir o app at\xE9 cair uma f\xE1cil." },
   { "id": "regra-50-a", "t": "Miss\xE3o especial di\xE1ria", "x": 'Uma miss\xE3o calma por dia, de passos ou de deitar na janela, que pesa como um h\xE1bito no gauge de evolu\xE7\xE3o e fica fora do selo "dia completo" (REGISTRO \xA7106). Limite honesto. A recompensa \xE9 local ao save; o servidor n\xE3o valida o gauge. Passo forjado rende no m\xE1ximo +1/dia.' },
@@ -7264,7 +6961,7 @@ var KNOWLEDGE = [
   { "id": "termo-constancia", "t": "Const\xE2ncia", "x": '"N das \xFAltimas 7" \u2014 a m\xE9trica que substitui o streak. Uma falha custa uma fra\xE7\xE3o, nunca tudo. O denominador conta s\xF3 os dias em que o h\xE1bito era devido.' },
   { "id": "termo-coracao-hp", "t": "Cora\xE7\xE3o (HP)", "x": "A barra de sa\xFAde do pet, em passos de 0,5. Perde-se na virada do dia proporcionalmente ao que n\xE3o foi cumprido, com teto di\xE1rio. HP 0 leva \xE0 degenera\xE7\xE3o." },
   { "id": "termo-coracaozinho", "t": "Cora\xE7\xE3ozinho", "x": "Item consum\xEDvel (loja ou drop raro da masmorra) que cura HP ao ser usado na pastinha. N\xE3o tem teto di\xE1rio \u2014 por isso o uso n\xE3o mora junto dos tetos." },
-  { "id": "termo-creditos", "t": "Cr\xE9ditos", "x": "A moeda comprada com dinheiro real. Vive no servidor, nunca no save do cliente. Compra reroll e pacotes de Bits no Cambista \u2014 e \xE9 a \xFAnica que libera gerar o pet pr\xF3prio." },
+  { "id": "termo-creditos", "t": "Cr\xE9ditos", "x": "A moeda comprada com dinheiro real. Vive no servidor, nunca no save do cliente. Compra reroll, cura instant\xE2nea e troca por Bits \u2014 e \xE9 a \xFAnica que libera gerar o pet pr\xF3prio." },
   { "id": "termo-criatura", "t": "Criatura", "x": "O companheiro do jogador. No modo gr\xE1tis \xE9 um dos tr\xEAs personagens prontos; no modo pago \xE9 gerada pelo or\xE1culo a partir da leitura da pessoa." },
   { "id": "termo-cortesia", "t": "Cortesia", "x": "Tier paid concedido sem compra, por rota administrativa, a um n\xFAmero limitado de contas (o E0: 10 conhecidos). Abre o port\xE3o do Or\xE1culo e das 11 formas; n\xE3o paga a conta \u2014 gasta o or\xE7amento de IA como um pagante (_aiGuard.js n\xE3o l\xEA provider). O pedido tem provider:'courtesy' e orderId = courtesy:<saveId> (idempotente por constru\xE7\xE3o). Decis\xE3o #12 (21/09/2026)." },
   { "id": "termo-cota-de-chat-por-tier", "t": "Cota de chat por tier", "x": "O teto di\xE1rio de mensagens do chat do Soulmon deixou de ser \xFAnico: demo 30 / paid 120 por conta (provis\xF3rio #55, 22/09/2026) \u2014 antes AI_LIMITS.chat.perAccount era igual para todos, e 1 000 contas gr\xE1tis no teto custariam R$ 950/m\xEAs com receita zero. Regra registrada junto: sem SKU recorrente, sem modelo acima do 8b." },
@@ -7294,8 +6991,7 @@ var KNOWLEDGE = [
   { "id": "termo-estacoes", "t": "Esta\xE7\xF5es", "x": "O calend\xE1rio sem battle pass: quatro esta\xE7\xF5es por ano, tr\xEAs caminhos alternativos para a medalha, contadores que j\xE1 existiam. Fora de esta\xE7\xE3o o app segue inteiro." },
   { "id": "termo-evolucao-manual", "t": "Evolu\xE7\xE3o manual", "x": "Quem dispara a evolu\xE7\xE3o \xE9 o JOGADOR, tocando na criatura com a barra cheia. A virada do dia nunca evolui sozinha." },
   { "id": "termo-e0", "t": "E0", "x": "O primeiro experimento com gente de verdade, decidido em 21/09/2026 (#11): 10 conhecidos do dono, adultos, PWA, cortesia, 14 dias. Testa se o produto ret\xE9m quem chega com contexto; crit\xE9rio de morte first_task_done < 6/10 ou retained.d7 \u2264 2/10 (denominador = pessoas, nunca install; leitura no D15, efeito no D21). \xC9 tamb\xE9m o gatilho de descongelar a Camada 3 (#13)." },
-  { "id": "termo-caminho-cor", "t": "CAMINHO_COR", "x": "A cor do caminho no \xEDcone de est\xE1gio (dono, 14/11/2026, REGISTRO \xA7369): Poder #4cd964 verde, Harmonia #4aa3ff azul, Benevol\xEAncia #ffd23f amarelo. Rookie e ultra ficam neutros. S\xF3 o \xEDcone usa; anel, texto e linha seguem em ATTR_COLOR/ATTR_INK." },
-  { "id": "termo-estagio-icone-set", "t": "ESTAGIO_ICONE_SET", "x": "Qual dos dois sets de \xEDcone de est\xE1gio vale: 'creme' (pixel art) ou 'branco' (procedurais, o set no ar). Rookie, champion, ultimate, mega e ultra t\xEAm \xEDcone; o beb\xEA/ovo N\xC3O tem. Troca = mudar a constante." },
+  { "id": "termo-estagio-icone-set", "t": "ESTAGIO_ICONE_SET", "x": "Qual dos dois sets de \xEDcone de est\xE1gio vale: 'creme' (pixel art, padr\xE3o) ou 'branco' (procedurais). Rookie, champion, ultimate, mega e ultra t\xEAm \xEDcone; o beb\xEA/ovo N\xC3O tem. Troca = mudar a constante." },
   { "id": "termo-faixas-do-torneio", "t": "Faixas do Torneio", "x": "Madeira, Bronze, Prata, Ouro, Platina, Diamante, Mestre (EN: Wood, Bronze, Silver, Gold, Platinum, Diamond, Master). Aparecem antes do ranking global: posi\xE7\xE3o absoluta \xE9 a leitura associada a compara\xE7\xE3o t\xF3xica; a faixa mede o jogador contra ele mesmo e nunca rebaixa." },
   { "id": "termo-feira", "t": "Feira", "x": "A sala do Cl\xE3 na Arena (NPC Fanfare): uma vez por semana a roda encontra um fen\xF4meno da Malha (nevoa/mare/estatica/enxame \u2014 tempo, nunca inimigo, sem cl\xE3 \xD7 cl\xE3) e cada pessoa faz UMA rodada por dia. HP coletivo max(ativos,3) \xD7 45; o dano \xE9 sorteado no servidor e nunca sai dele. O cliente v\xEA aberta/dissipada, o booleano ferido e o desfecho da semana anterior." },
   { "id": "termo-fio", "t": "Fio", "x": "A presen\xE7a de UM membro num dia do Cl\xE3: guildThread, um por pessoa por dia do jogador, firmado com a meta de CORA\xC7\xC3O (G1, aguarda o dono). Vale 1 e nunca \xE9 peso nem contagem de tarefa. \xC9 o que fecha o dia do Bosque. Dias distintos de fio (7) liberam os cen\xE1rios do Bosque." },
@@ -7377,7 +7073,7 @@ var KNOWLEDGE = [
   { "id": "termo-triagem-arrumar-a-pilha", "t": "Triagem (arrumar a pilha)", "x": "A fila de tudo atrasado ou assombrado, ordenada, apresentada como cartas com quatro a\xE7\xF5es grandes. Terminar rende recompensa: planejar \xE9 o que alivia, mais que concluir (Masicampo & Baumeister)." },
   { "id": "termo-tombstone-lapide-de-conta", "t": "Tombstone (l\xE1pide de conta)", "x": 'Registro del:done:<saveId> (TTL 30 dias) gravado no delete-confirm antes de destruir qualquer coisa. save.js o l\xEA em GET/POST e devolve 410 account-deleted \u2014 sem ele, outro aparelho do titular ainda logado recriava o save inteiro 3 s depois da exclus\xE3o. Depois dos 30 dias o mesmo e-mail cria conta nova do zero ("a porta fica aberta").' },
   { "id": "termo-tombstone-reautenticacao", "t": "Tombstone \xD7 reautentica\xE7\xE3o", "x": "A corre\xE7\xE3o da l\xE1pide (22/09/2026, provis\xF3rio #56): a l\xE1pide del:done: bloqueava tamb\xE9m o pr\xF3prio titular que fizesse login de novo nos 30 dias (onboarding \u2192 410 \u2192 wipe + logout em loop). Agora um token cujo auth_time \xE9 posterior a tombstone.at limpa a l\xE1pide (clearTombstone) e a conta renasce vazia; o cliente guarda CONFLICT_BACKUP antes de apagar o local." },
-  { "id": "termo-ultra", "t": "Ultra", "x": 'O \xE1pice da escada, acima do mega. S\xF3 abre com as tr\xEAs megas liberadas; depois delas, a barra do Ultra pede 45 dias de teto do mega (paci\xEAncia: "o recurso que n\xE3o cresce indefinidamente", o argumento do teto do Glitchtama).' },
+  { "id": "termo-ultra", "t": "Ultra", "x": 'O \xE1pice da escada, acima do mega. Tem um segundo caminho por paci\xEAncia, al\xE9m dos dias completos \u2014 e a paci\xEAncia \xE9 "o recurso que n\xE3o cresce indefinidamente", que \xE9 o argumento que justifica o teto do Glitchtama.' },
   { "id": "termo-unlocknudge", "t": "UnlockNudge", "x": "O convite de compra dentro do app. Nunca abre sozinho e aparece em pontos declarados \u2014 ao bater o teto de cria\xE7\xE3o do modo gr\xE1tis e na p\xE1gina de Evolu\xE7\xE3o de quem est\xE1 no demo." },
   { "id": "termo-viajante", "t": "Viajante", "x": "Quem est\xE1 sem fio h\xE1 4 semanas (TRAVELER_AFTER_WEEKS): sai do denominador do Bosque e continua na roda. Derivado, nunca gravado e invis\xEDvel para todos \u2014 ningu\xE9m \xE9 marcado como ausente." },
   { "id": "termo-vinculo-bond", "t": "V\xEDnculo (bond)", "x": "A trilha unificadora: XP por peso de esfor\xE7o, dias completos, noites, sonhos, marcos, triagem e check-in, com tetos por fonte repet\xEDvel. O n\xEDvel NUNCA vai para o save \u2014 \xE9 sempre derivado do XP total na leitura (footgun 9 na forma mais cara: duas fontes para o mesmo n\xFAmero). Destrava cosm\xE9tico e superf\xEDcie social, nunca capacidade de cuidar do bicho." },
@@ -8038,6 +7734,21 @@ function ordenar(p) {
 }
 __name(ordenar, "ordenar");
 
+// api/_rankAdmin.js
+var cache = /* @__PURE__ */ new Map();
+async function adminSaveIds(env) {
+  const raw = typeof env?.ADMIN_EMAILS === "string" ? env.ADMIN_EMAILS : "";
+  if (!raw) return /* @__PURE__ */ new Set();
+  const hit = cache.get(raw);
+  if (hit) return hit;
+  const emails = [...parseAdminEmails(raw)];
+  const ids3 = new Set(await Promise.all(emails.map((e) => emailToSaveId(e))));
+  cache.clear();
+  cache.set(raw, ids3);
+  return ids3;
+}
+__name(adminSaveIds, "adminSaveIds");
+
 // api/_seasonHist.js
 var TTL3 = 86400 * 125;
 var HIST_WINDOW_DAYS = 120;
@@ -8135,8 +7846,8 @@ __name(historicoDoJogador, "historicoDoJogador");
 // api/_velado.js
 var BB_STAGE = "bb";
 var isOnboardingVelado = /* @__PURE__ */ __name((env) => flagOn(env?.ONBOARDING_VELADO), "isOnboardingVelado");
-function bbRefusal(_env, evolutionStage) {
-  return evolutionStage === BB_STAGE ? "bb-locked" : null;
+function bbRefusal(env, evolutionStage) {
+  return isOnboardingVelado(env) && evolutionStage === BB_STAGE ? "bb-locked" : null;
 }
 __name(bbRefusal, "bbRefusal");
 var BB_LOCKED_MESSAGE = {
@@ -8155,26 +7866,6 @@ async function isVeladoTester(env, email) {
   return lista2.includes(await veladoTesterHash(email));
 }
 __name(isVeladoTester, "isVeladoTester");
-function recusaGeracaoBB(state, opts = {}) {
-  if (opts.regenerar) return "bb-birth-only";
-  if (!state || typeof state !== "object" || Array.isArray(state)) return null;
-  const s = (
-    /** @type {Record<string, any>} */
-    state
-  );
-  const unlocked = Array.isArray(s.unlockedEvolutions) ? s.unlockedEvolutions : [];
-  const sprites = s.spriteLibrary && typeof s.spriteLibrary === "object" ? s.spriteLibrary.sprites : null;
-  if (sprites && typeof sprites === "object" && sprites[BB_STAGE] && typeof sprites[BB_STAGE].url === "string" && sprites[BB_STAGE].url) return "bb-birth-only";
-  if (unlocked.includes(BB_STAGE) && s.evolutionStage !== BB_STAGE) return "bb-birth-only";
-  const temCriatura = Array.isArray(s.soulmonStages) && s.soulmonStages.length > 0 || typeof s.demoCharacterId === "string" && s.demoCharacterId.length > 0;
-  if (temCriatura && !unlocked.includes(BB_STAGE) && s.evolutionStage !== BB_STAGE) return "bb-birth-only";
-  return null;
-}
-__name(recusaGeracaoBB, "recusaGeracaoBB");
-var BB_BIRTH_ONLY_MESSAGE = {
-  pt: "A primeira forma s\xF3 \xE9 desenhada no nascimento. As pr\xF3ximas formas podem ser s\xF3 suas.",
-  en: "The first form is only drawn at birth. The next forms can be yours alone."
-};
 
 // api/_usageRegistry.js
 var TIME_KINDS = ["screen", "feature", "minigame"];
@@ -8669,36 +8360,6 @@ async function onRequest2({ request, env }) {
 }
 __name(onRequest2, "onRequest");
 
-// api/_conviteLimite.js
-var INVITE_DECLINE_BLOCK_MS = 7 * 864e5;
-var FRIEND_INVITE_HOURLY = Object.freeze({ limit: 30, windowMs: 36e5 });
-var GUILD_INVITE_HOURLY = Object.freeze({ limit: 20, windowMs: 36e5 });
-var FRIEND_INVITE_DAILY_CAP = 60;
-var GUILD_INVITE_DAILY_CAP = 40;
-var blkKey = /* @__PURE__ */ __name((tipo, de, para) => `invblk:${tipo}:${de}:${para}`, "blkKey");
-var diaKey = /* @__PURE__ */ __name((tipo, de, nowMs) => `invday:${tipo}:${de}:${new Date(nowMs).toISOString().slice(0, 10)}`, "diaKey");
-async function marcarRecusa(kv2, tipo, de, para, nowMs = Date.now()) {
-  await kv2.put(blkKey(tipo, de, para), String(nowMs), { expirationTtl: Math.ceil(INVITE_DECLINE_BLOCK_MS / 1e3) });
-}
-__name(marcarRecusa, "marcarRecusa");
-async function parBloqueado(kv2, tipo, de, para, nowMs = Date.now()) {
-  const raw = await kv2.get(blkKey(tipo, de, para));
-  if (raw === null || raw === void 0) return false;
-  const at = Number(raw);
-  return !Number.isFinite(at) || nowMs - at < INVITE_DECLINE_BLOCK_MS;
-}
-__name(parBloqueado, "parBloqueado");
-async function contarConviteDoDia(kv2, tipo, de, nowMs = Date.now()) {
-  const teto = tipo === "f" ? FRIEND_INVITE_DAILY_CAP : GUILD_INVITE_DAILY_CAP;
-  const k = diaKey(tipo, de, nowMs);
-  const n = Math.max(0, Math.floor(Number(await kv2.get(k)) || 0));
-  if (n >= teto) return false;
-  await kv2.put(k, String(n + 1), { expirationTtl: 2 * 86400 });
-  return true;
-}
-__name(contarConviteDoDia, "contarConviteDoDia");
-var segundosAteAmanhaUtc = /* @__PURE__ */ __name((nowMs = Date.now()) => Math.max(1, Math.ceil(((Math.floor(nowMs / 864e5) + 1) * 864e5 - nowMs) / 1e3)), "segundosAteAmanhaUtc");
-
 // api/_foeFamilies.js
 var FOE_MIX = {
   rookie: { direct: 75, buff: 5, dot: 5, heal: 5, hot: 5, debuff: 5 },
@@ -8978,7 +8639,7 @@ var SIM_ELEMENTO_REVISADO = Object.freeze({
   sim_0170: { de: "industrial", para: "arcano" }
 });
 
-// ../../nm-cache/node_modules/fflate/esm/browser.js
+// ../../forma2/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -10418,10 +10079,6 @@ function temPrimeiraGeracao(ent, formId) {
 }
 __name(temPrimeiraGeracao, "temPrimeiraGeracao");
 async function reserveRegen(env, saveId, formId, opId, now = Date.now()) {
-  return comTravaDoEnt(env, saveId, () => reservar(env, saveId, formId, opId, now));
-}
-__name(reserveRegen, "reserveRegen");
-async function reservar(env, saveId, formId, opId, now) {
   if (typeof opId !== "string" || !REGEN_OP_RE.test(opId)) return { ok: false, status: 400, reason: "regen-op-id-required" };
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
@@ -10438,12 +10095,8 @@ async function reservar(env, saveId, formId, opId, now) {
   await writeEntitlement(env, saveId, ent);
   return { ok: true, credits: ent.credits, month: month2 };
 }
-__name(reservar, "reservar");
+__name(reserveRegen, "reserveRegen");
 async function completeRegen(env, saveId, opId) {
-  return comTravaDoEnt(env, saveId, () => concluir(env, saveId, opId));
-}
-__name(completeRegen, "completeRegen");
-async function concluir(env, saveId, opId) {
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
   if (!ops[opId] || ops[opId].s !== "debited") return;
@@ -10451,12 +10104,8 @@ async function concluir(env, saveId, opId) {
   ent.regenOps = ops;
   await writeEntitlement(env, saveId, ent);
 }
-__name(concluir, "concluir");
+__name(completeRegen, "completeRegen");
 async function refundRegen(env, saveId, opId) {
-  return comTravaDoEnt(env, saveId, () => devolver(env, saveId, opId), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
-}
-__name(refundRegen, "refundRegen");
-async function devolver(env, saveId, opId) {
   const ent = await readEntitlement(env, saveId);
   const ops = opsOf(ent);
   const op = ops[opId];
@@ -10470,7 +10119,7 @@ async function devolver(env, saveId, opId) {
   await writeEntitlement(env, saveId, ent);
   return { refunded: true, credits: ent.credits };
 }
-__name(devolver, "devolver");
+__name(refundRegen, "refundRegen");
 
 // api/_ipHash.js
 var IP_HASH_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -10503,7 +10152,6 @@ async function takeIpQuota(env, request, kind, now = /* @__PURE__ */ new Date())
 __name(takeIpQuota, "takeIpQuota");
 
 // api/generate-sprite.js
-var BB_SAVE_MAX_CHARS = 2e6;
 var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -10519,17 +10167,6 @@ var LOCK_TTL_SECONDS = 120;
 var LOCK_RETRY_AFTER = 20;
 var MAX_BLOB_BYTES = 8 * 1024 * 1024;
 var cacheKey = /* @__PURE__ */ __name((saveId, formId) => `${CACHE_PREFIX}${saveId}:${formId}`, "cacheKey");
-var JANELA_FORMA_BASE_MS = 20 * 60 * 1e3;
-function formaBaseRecente(bruto) {
-  if (!bruto) return null;
-  try {
-    const g = JSON.parse(bruto);
-    return g?.image && Number.isFinite(g.at) && Date.now() - g.at >= 0 && Date.now() - g.at < JANELA_FORMA_BASE_MS ? bruto : null;
-  } catch {
-    return null;
-  }
-}
-__name(formaBaseRecente, "formaBaseRecente");
 var lockKey = /* @__PURE__ */ __name((saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`, "lockKey");
 async function destravar(env, key2) {
   if (!key2) return;
@@ -10960,21 +10597,6 @@ async function onRequestPostBruto2({ request, env }) {
         return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS6 });
       }
     }
-    if (formId === "bb") {
-      let estado2 = null;
-      try {
-        const bruto = await kvOrThrow(env).get(id);
-        if (typeof bruto === "string" && bruto.length > BB_SAVE_MAX_CHARS) {
-          return Response.json({ error: "bb-birth-only", reason: "bb-birth-only", ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS6 });
-        }
-        estado2 = typeof bruto === "string" ? JSON.parse(bruto) : null;
-      } catch (err2) {
-        console.error("generate-sprite: save ileg\xEDvel para o BB, recusando", err2?.message);
-        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS6 });
-      }
-      const recusa = recusaGeracaoBB(estado2, { regenerar: corpo.regenerate === true || regenPago });
-      if (recusa) return Response.json({ error: recusa, reason: recusa, ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS6 });
-    }
     if (typeof formId === "string" && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
@@ -10983,7 +10605,6 @@ async function onRequestPostBruto2({ request, env }) {
         pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         const antigo = legacyFormIdOf(formId);
         if (!pronta && antigo && !regenerar) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
-        if (!pronta && !regenerar && formId.includes("@")) pronta = formaBaseRecente(await kvOrThrow(env).get(cacheKey(id, formId.split("@")[0])));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err2) {
         console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err2?.message);
@@ -11710,7 +11331,6 @@ var DONE_MAX = 100;
 var TTL_S = 86400 * 400;
 var MAIL_BITS_MAX = 5e3;
 var MAIL_EMBLEMS_MAX = 500;
-var MAIL_ITEMS = /* @__PURE__ */ new Set(["furn-arcade-cab"]);
 var texto = /* @__PURE__ */ __name((v, max2) => typeof v === "string" ? v.trim().slice(0, max2) : "", "texto");
 var inteiro = /* @__PURE__ */ __name((v, max2) => typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(max2, Math.floor(v))) : 0, "inteiro");
 function sanitizeMail(m) {
@@ -11727,23 +11347,19 @@ function sanitizeMail(m) {
     titleEn: texto(m.titleEn, 60) || tituloDe(bodyEn),
     bits: inteiro(m.bits, MAIL_BITS_MAX),
     emblems: inteiro(m.emblems, MAIL_EMBLEMS_MAX),
-    ...MAIL_ITEMS.has(m.item) ? { item: m.item } : {},
     at: inteiro(m.at, Number.MAX_SAFE_INTEGER),
     read: m.read === true || inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER) > 0,
     claimedAt: inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER),
     // Cartas especiais (§288): o tipo decide os botões e o corpo na caixa. Só valores conhecidos; o resto é carta comum.
     ...KINDS.has(m.kind) ? { kind: m.kind } : {},
     ...m.kind === "friend-invite" && PID_RE.test(m.fromPid || "") ? { fromPid: m.fromPid } : {},
-    // Convite de clã (§358): só o código, que o corpo da carta já mostra; o botão "Entrar no clã" usa o mesmo `guildJoin` do Salão.
-    ...m.kind === "guild-invite" && CODE_RE.test(m.guildCode || "") ? { guildCode: m.guildCode } : {},
     ...m.kind === "global" && TUTORIAIS.has(m.tutorial) ? { tutorial: m.tutorial } : {},
     // NPC remetente (imagem grande na carta). Só o servidor define; jogador remetente = sem NPC.
     ...m.kind === "global" && NPCS.has(m.npc) ? { npc: m.npc } : {}
   };
 }
 __name(sanitizeMail, "sanitizeMail");
-var KINDS = /* @__PURE__ */ new Set(["gift", "friend-invite", "guild-invite", "global"]);
-var CODE_RE = /^[A-Z0-9]{4,12}$/;
+var KINDS = /* @__PURE__ */ new Set(["gift", "friend-invite", "global"]);
 var TUTORIAIS = /* @__PURE__ */ new Set(["widget"]);
 var NPCS = /* @__PURE__ */ new Set(["mensageiro", "hexsmith"]);
 var PID_RE = /^[a-zA-Z0-9_-]{8,64}$/;
@@ -11751,7 +11367,7 @@ var tituloDe = /* @__PURE__ */ __name((corpo) => {
   const f = corpo.split(/(?<=[.!?])\s/)[0] || corpo;
   return f.length > 60 ? `${f.slice(0, 57)}...` : f;
 }, "tituloDe");
-var pendingReward = /* @__PURE__ */ __name((m) => (m.bits > 0 || m.emblems > 0 || !!m.item) && !m.claimedAt, "pendingReward");
+var pendingReward = /* @__PURE__ */ __name((m) => (m.bits > 0 || m.emblems > 0) && !m.claimedAt, "pendingReward");
 var expirada = /* @__PURE__ */ __name((m, now) => !pendingReward(m) && m.at > 0 && now - Math.max(m.at, m.claimedAt) > MAIL_TTL_MS, "expirada");
 function cortar(q) {
   const out = [...q];
@@ -11763,12 +11379,10 @@ function cortar(q) {
 }
 __name(cortar, "cortar");
 async function ler(kv2, id) {
-  const raw = await kv2.get(`mail:${id}`);
   let r = null;
   try {
-    r = JSON.parse(raw || "null");
-  } catch (err2) {
-    console.warn("[mensageiro] mail ileg\xEDvel no KV; a caixa recome\xE7a vazia", { saveId: id, error: err2?.name ?? String(err2) });
+    r = JSON.parse(await kv2.get(`mail:${id}`) || "null");
+  } catch {
     r = null;
   }
   return {
@@ -11778,15 +11392,7 @@ async function ler(kv2, id) {
   };
 }
 __name(ler, "ler");
-var falhaDaCarta = /* @__PURE__ */ __name((onde, saveId) => (err2) => {
-  console.warn(`[mensageiro] carta n\xE3o processada (${onde}); a a\xE7\xE3o principal segue valendo`, { saveId, error: err2?.message ?? String(err2) });
-}, "falhaDaCarta");
 var gravar2 = /* @__PURE__ */ __name((kv2, id, rec) => kv2.put(`mail:${id}`, JSON.stringify(rec), { expirationTtl: TTL_S }), "gravar");
-async function temItemNaCaixa(kv2, id, item) {
-  const rec = await ler(kv2, id);
-  return rec.q.some((m) => m.item === item);
-}
-__name(temItemNaCaixa, "temItemNaCaixa");
 async function enqueueMail(env, kv2, id, raw, { recusarSeCheia = false } = {}) {
   const msg = sanitizeMail(raw);
   if (!msg || isSimuladoId(id)) return false;
@@ -11875,11 +11481,6 @@ async function readMail(env, kv2, id, now = Date.now()) {
 }
 __name(readMail, "readMail");
 var alvoDe = /* @__PURE__ */ __name((mids) => new Set(Array.isArray(mids) ? mids : []), "alvoDe");
-async function bitsResgatadosDesde(kv2, id, desdeMs) {
-  const rec = await ler(kv2, id);
-  return rec.q.reduce((s, m) => m.claimedAt > 0 && m.claimedAt >= desdeMs ? s + m.bits : s, 0);
-}
-__name(bitsResgatadosDesde, "bitsResgatadosDesde");
 async function markRead(kv2, id, mids) {
   const rec = await ler(kv2, id);
   const alvo = alvoDe(mids);
@@ -11889,65 +11490,35 @@ async function markRead(kv2, id, mids) {
   return n;
 }
 __name(markRead, "markRead");
-var claimRow = /* @__PURE__ */ __name((id, mid) => `mailclaim:${id}:${mid}`, "claimRow");
-async function reivindicar(db, id, mid, now) {
-  const row = claimRow(id, mid);
-  await db.prepare("DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?").bind(row, now).run();
-  try {
-    await db.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(row, id, now, now + TTL_S * 1e3).run();
-    return true;
-  } catch (err2) {
-    if (!ehViolacaoDeChave(err2)) throw err2;
-    return false;
-  }
-}
-__name(reivindicar, "reivindicar");
-async function claimMail(kv2, id, mids, now = Date.now(), db) {
+async function claimMail(kv2, id, mids, now = Date.now()) {
   const rec = await ler(kv2, id);
   const alvo = mids === null ? null : alvoDe(mids);
-  const candidatas = rec.q.filter((m) => pendingReward(m) && (!alvo || alvo.has(m.mid)));
-  if (!candidatas.length) return [];
-  const ganhas = /* @__PURE__ */ new Set();
-  for (const m of candidatas) if (!db || await reivindicar(db, id, m.mid, now)) ganhas.add(m.mid);
   const granted = [];
-  const resgatadas = new Set(candidatas.map((m) => m.mid));
   rec.q = rec.q.map((m) => {
-    if (!resgatadas.has(m.mid)) return m;
-    if (ganhas.has(m.mid)) granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems, ...m.item ? { item: m.item } : {} });
+    if (!pendingReward(m) || alvo && !alvo.has(m.mid)) return m;
+    granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems });
     return { ...m, read: true, claimedAt: now };
   });
-  try {
-    await gravar2(kv2, id, rec);
-  } catch (err2) {
-    if (db) for (const mid of ganhas) await db.prepare("DELETE FROM order_claims WHERE order_id = ?").bind(claimRow(id, mid)).run();
-    throw err2;
-  }
+  if (granted.length) await gravar2(kv2, id, rec);
   return granted;
 }
 __name(claimMail, "claimMail");
 async function deleteMail(kv2, id, mids, force = false) {
   const rec = await ler(kv2, id);
   const alvo = mids === "read" ? null : alvoDe(mids);
-  const candidatas = rec.q.filter((m) => alvo ? alvo.has(m.mid) : m.read && !isInviteLetter(m));
+  const candidatas = rec.q.filter((m) => alvo ? alvo.has(m.mid) : m.read);
   const blocked = [];
   const removidas = [];
   for (const m of candidatas) (pendingReward(m) && !(force && alvo) ? blocked : removidas).push(m.mid);
-  const convitesDeClaRecusados = alvo ? candidatas.filter((m) => removidas.includes(m.mid) && ehConviteDeCla(m)).map((m) => gidDoConvite(m.mid)).filter(Boolean) : [];
   if (removidas.length) {
     const fora = new Set(removidas);
     rec.q = rec.q.filter((m) => !fora.has(m.mid));
     rec.done = [...rec.done, ...removidas].slice(-DONE_MAX);
     await gravar2(kv2, id, rec);
   }
-  return { removed: removidas.length, blocked, ...convitesDeClaRecusados.length ? { convitesDeClaRecusados } : {} };
+  return { removed: removidas.length, blocked };
 }
 __name(deleteMail, "deleteMail");
-function gidDoConvite(mid) {
-  if (typeof mid !== "string" || !mid.startsWith("ginv:")) return null;
-  const fim = mid.lastIndexOf(":");
-  return fim > 5 ? mid.slice(5, fim) : null;
-}
-__name(gidDoConvite, "gidDoConvite");
 async function removerConvitesDe(kv2, id, fromPid) {
   const rec = await ler(kv2, id);
   const fora = rec.q.filter((m) => m.kind === "friend-invite" && m.fromPid === fromPid).map((m) => m.mid);
@@ -11958,27 +11529,6 @@ async function removerConvitesDe(kv2, id, fromPid) {
   return fora.length;
 }
 __name(removerConvitesDe, "removerConvitesDe");
-var INVITE_PENDING_MAX = 20;
-var ehConviteDeCla = /* @__PURE__ */ __name((m) => m.kind === "guild-invite" || m.mid.startsWith("ginv:"), "ehConviteDeCla");
-var isInviteLetter = /* @__PURE__ */ __name((m) => m.kind === "friend-invite" || ehConviteDeCla(m), "isInviteLetter");
-async function enqueueInvite(env, kv2, id, raw, mesmoPar) {
-  if (isSimuladoId(id)) return "skip";
-  const rec = await ler(kv2, id);
-  if (rec.q.some((m) => isInviteLetter(m) && mesmoPar(m))) return "dup";
-  if (rec.q.filter(isInviteLetter).length >= INVITE_PENDING_MAX) return "full";
-  return await enqueueMail(env, kv2, id, raw) ? "sent" : "skip";
-}
-__name(enqueueInvite, "enqueueInvite");
-async function removerConvitesDeCla(kv2, id) {
-  const rec = await ler(kv2, id);
-  const fora = rec.q.filter(ehConviteDeCla).map((m) => m.mid);
-  if (!fora.length) return 0;
-  rec.q = rec.q.filter((m) => !fora.includes(m.mid));
-  rec.done = [...rec.done, ...fora].slice(-DONE_MAX);
-  await gravar2(kv2, id, rec);
-  return fora.length;
-}
-__name(removerConvitesDeCla, "removerConvitesDeCla");
 async function ackMail(kv2, id, mids) {
   const rec = await ler(kv2, id);
   const alvo = new Set(mids);
@@ -11990,105 +11540,6 @@ async function ackMail(kv2, id, mids) {
   return removidas.length;
 }
 __name(ackMail, "ackMail");
-
-// api/_companheiroInvocado.js
-var COMPANHEIRO_INVOCADO = true;
-var CRIATURAS_COMPANHEIRO = [
-  "lobo",
-  "urso",
-  "felino",
-  "javali",
-  "falcao",
-  "coruja",
-  "serpente_marinha",
-  "tubarao",
-  "salamandra",
-  "cao_de_lava",
-  "fenix_menor",
-  "ghoul",
-  "cavaleiro_morto",
-  "sombra_rastejante",
-  "olho_vil",
-  "trevo_carnivoro",
-  "ent",
-  "fada",
-  "anjo_menor",
-  "espectro",
-  "golem_pedra",
-  "automato",
-  "imp",
-  "demonio_maior",
-  "wyvern",
-  "dragao_jovem",
-  "troll_montanhes",
-  "ciclope_forjador",
-  "gosma_acida",
-  "slime_cristalino",
-  "batedor_orc",
-  "arauto_elfico"
-];
-var PAPEL_POR_ELEMENTO = {
-  terra: "tanque",
-  planta: "tanque",
-  vida: "tanque",
-  vigor: "tanque",
-  industrial: "tanque",
-  agua: "suporte",
-  luz: "suporte",
-  fogo: "fisico",
-  marcial: "fisico",
-  ar: "alcance"
-};
-var EVOCACAO_POR_PAPEL = { tanque: ["harmonia", "benevolencia"], magico: ["benevolencia"] };
-function simuladoEvocador(elemento, linha) {
-  const papel = typeof elemento === "string" && Object.hasOwn(PAPEL_POR_ELEMENTO, elemento) ? PAPEL_POR_ELEMENTO[elemento] : "magico";
-  return typeof linha === "string" && (EVOCACAO_POR_PAPEL[papel] ?? []).includes(linha);
-}
-__name(simuladoEvocador, "simuladoEvocador");
-var ARQUETIPOS_EVOCACAO = ["invocador", "senhor_das_feras", "xama_totemico", "necromante", "demonologista", "verdejante", "senhor_dos_mortos_vis", "bokor", "escriba_do_pacto"];
-var NOMES_ARQUETIPO_EVOCACAO = {
-  invocador: "invocador",
-  summoner: "invocador",
-  "senhor das feras": "senhor_das_feras",
-  beastlord: "senhor_das_feras",
-  "xama totemico": "xama_totemico",
-  "totem shaman": "xama_totemico",
-  necromante: "necromante",
-  necromancer: "necromante",
-  demonologista: "demonologista",
-  demonologist: "demonologista",
-  verdejante: "verdejante",
-  "verdant warden": "verdejante",
-  "senhor dos mortos vis": "senhor_dos_mortos_vis",
-  "lord of the vile dead": "senhor_dos_mortos_vis",
-  bokor: "bokor",
-  "escriba do pacto": "escriba_do_pacto",
-  "scribe of the pact": "escriba_do_pacto"
-};
-function tituloEEvocador(t) {
-  if (!t || typeof t !== "object" || Array.isArray(t)) return false;
-  if (t.origem === "generico") return false;
-  if (typeof t.id === "string" && t.id.length > 0) return ARQUETIPOS_EVOCACAO.includes(t.id);
-  const norm2 = /* @__PURE__ */ __name((x2, tira) => typeof x2 === "string" ? x2.replace(tira, "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase() : "", "norm");
-  return [norm2(t.nome?.en, / aspirant$/i), norm2(t.nome?.pt, /^aspirante a /i)].some((n) => !!n && Object.hasOwn(NOMES_ARQUETIPO_EVOCACAO, n));
-}
-__name(tituloEEvocador, "tituloEEvocador");
-var SIM_POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
-function companheiroDoLado(state, saveId, ligado = COMPANHEIRO_INVOCADO) {
-  if (!ligado) return null;
-  const sim = typeof saveId === "string" ? SIM_POR_ID.get(saveId) : void 0;
-  if (sim) return simuladoEvocador(sim.element, sim.line) ? { invoca: true } : null;
-  if (hexCrownEquipped(state?.hexsmith)) return null;
-  const estagio = fichaStageOf(state?.evolutionStage);
-  const evoc = state?.soulmonEvocacao;
-  const e = evoc && typeof evoc === "object" && !Array.isArray(evoc) && Object.hasOwn(evoc, estagio) ? evoc[estagio] : null;
-  const titulos = state?.soulmonClassTitles;
-  const porTitulo = !e && titulos && typeof titulos === "object" && Object.hasOwn(titulos, estagio) && tituloEEvocador(titulos[estagio]);
-  if (!porTitulo && (!e || typeof e !== "object" || e.evocador !== true)) return null;
-  const id = state?.soulmonCompanheiro?.id;
-  return typeof id === "string" && CRIATURAS_COMPANHEIRO.includes(id) ? { invoca: true, companheiro: id } : null;
-}
-__name(companheiroDoLado, "companheiroDoLado");
 
 // api/_duelLoad.js
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
@@ -12105,9 +11556,7 @@ async function loadDuelSideWithSprite(env, saveId) {
     if (!state || typeof state !== "object" || Array.isArray(state)) return { side: null, spriteUrl: null, artLine: null };
     if (bbRefusal(env, state.evolutionStage)) return { side: null, spriteUrl: null, artLine: null, bbLocked: true };
     const { spriteUrl, artLine } = spriteFromSaveState(state);
-    const side = duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) });
-    const companheiro = companheiroDoLado(state, saveId);
-    return { side: companheiro ? { ...side, ...companheiro } : side, spriteUrl, artLine };
+    return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
   } catch (err2) {
     console.warn("duel: ficha indispon\xEDvel", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
     return { side: null, spriteUrl: null, artLine: null };
@@ -12739,11 +12188,14 @@ var MISTERIO_TTL = 86400 * 120;
 var MISTERIO_ALVO = 100;
 var MISTERIO_TETO_DIA = 10;
 var MISTERIO_IDS_MAX = 200;
+var MISTERIO_IDS_DIAS = 14;
+var TASK_ID_RE = /^[A-Za-z0-9_:.-]{1,64}$/;
 var MISTERIO_PESOS = Object.freeze({ bits: 600, decor: 370, chip: 30 });
 var MISTERIO_BITS = Object.freeze([20, 30, 40, 50]);
 var misKey = /* @__PURE__ */ __name((gid, save) => `claMis:${gid}:${save}`, "misKey");
 var misRodadaKey = /* @__PURE__ */ __name((gid) => `claMisRodada:${gid}`, "misRodadaKey");
 var DIA_RE3 = /^\d{4}-\d{2}-\d{2}$/;
+var numDia3 = /* @__PURE__ */ __name((d) => Math.round(Date.parse(`${d}T00:00:00Z`) / 864e5), "numDia");
 var parse5 = /* @__PURE__ */ __name((raw) => {
   try {
     return raw ? JSON.parse(raw) : null;
@@ -12801,6 +12253,46 @@ async function coletivo(env, g) {
   return { membros: Object.fromEntries(g.members.map((m, i2) => [m, lidos[i2]])), ...b };
 }
 __name(coletivo, "coletivo");
+async function enviarMisterio(env, g, save) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (m.sentRound !== null) return { ok: false, reason: m.sentRound < c.rodada ? "reward-pending" : "already-sent" };
+  m.sentRound = c.rodada;
+  await gravarMis(env, g.id, save, m);
+  return { ok: true };
+}
+__name(enviarMisterio, "enviarMisterio");
+async function somarTarefa(env, g, save, hoje, taskId) {
+  if (typeof taskId !== "string" || !TASK_ID_RE.test(taskId)) return { ok: false, reason: "invalid-task" };
+  const m = await lerMis(env, g.id, save);
+  const hojeN = numDia3(hoje);
+  if (m.ids.some((x2) => x2.id === taskId && hojeN - numDia3(x2.day) <= MISTERIO_IDS_DIAS)) return { ok: true, counted: false, reason: "duplicate" };
+  const dayPts = m.day === hoje ? m.dayPts : 0;
+  if (dayPts >= MISTERIO_TETO_DIA) return { ok: true, counted: false, reason: "daily-cap" };
+  m.ids = [...m.ids.filter((x2) => hojeN - numDia3(x2.day) <= MISTERIO_IDS_DIAS), { id: taskId, day: hoje }].slice(-MISTERIO_IDS_MAX);
+  m.day = hoje;
+  m.dayPts = dayPts + 1;
+  m.pts += 1;
+  await gravarMis(env, g.id, save, m);
+  return { ok: true, counted: true };
+}
+__name(somarTarefa, "somarTarefa");
+async function resgatarMisterio(env, g, save, rng = rngSeguro) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (m.sentRound === null || m.sentRound >= c.rodada) {
+    if (m.lastClaim) return { ok: true, repeat: true, ...m.lastClaim };
+    return { ok: false, reason: "nothing-to-claim" };
+  }
+  const reward = sortearRecompensaMisterio(rng);
+  const rodada = m.sentRound;
+  m.sentRound = null;
+  const receipt = `${g.id}|mis|${rodada}|${save.slice(0, 8)}`;
+  m.lastClaim = { reward, receipt };
+  await gravarMis(env, g.id, save, m);
+  return { ok: true, reward, receipt };
+}
+__name(resgatarMisterio, "resgatarMisterio");
 var MISTERIO_HONRA_CONVERSAO = 2;
 async function converterMisterio(env, g, save, rng = rngSeguro) {
   const c = await coletivo(env, g);
@@ -12822,6 +12314,22 @@ async function converterMisterio(env, g, save, rng = rngSeguro) {
   return { kind: f.kind, amount: f.amount, receipt: f.receipt };
 }
 __name(converterMisterio, "converterMisterio");
+async function vistaDoMisterio(env, g, eu, hoje) {
+  const c = await coletivo(env, g);
+  const m = c.membros[eu] ?? normalizarMis(null);
+  const ativos = g.members.filter((x2) => c.membros[x2].sentRound !== null && c.membros[x2].sentRound >= c.rodada).length;
+  return {
+    bar: c.bar,
+    round: c.rodada,
+    investigating: ativos,
+    mine: {
+      sent: m.sentRound !== null && m.sentRound >= c.rodada,
+      rewardPending: m.sentRound !== null && m.sentRound < c.rodada,
+      capReached: m.day === hoje && m.dayPts >= MISTERIO_TETO_DIA
+    }
+  };
+}
+__name(vistaDoMisterio, "vistaDoMisterio");
 
 // api/_feira.js
 var FEIRA_CHEFE_DESDE = "2026-10-29";
@@ -13624,6 +13132,7 @@ var FEIRA_LOJA_CATALOGO = Object.freeze([
   ["furn-stone-tiles", "furniture", 260, "any"],
   ["furn-deck", "furniture", 260, "any"],
   ["furn-circuit-mat", "furniture", 420, "any"],
+  ["furn-arcade-cab", "furniture", 700, "indoor"],
   ["furn-cauldron", "furniture", 650, "any"],
   ["furn-crystal", "furniture", 600, "outdoor"],
   ["furn-well", "furniture", 700, "outdoor"],
@@ -13692,11 +13201,7 @@ var FEIRA_LOJA_CATALOGO = Object.freeze([
   ["furn-jardim-arco-de-flores", "furniture", 300, "any"],
   ["furn-jardim-regador-encantado", "furniture", 300, "any"],
   ["furn-jardim-canteiro-redondo", "furniture", 200, "any"],
-  ["furn-jardim-vaso-suspenso", "furniture", 300, "any"],
-  ["furn-ruinas-carro-engolido", "furniture", 300, "any"],
-  ["furn-ruinas-placa-torta", "furniture", 300, "any"],
-  ["furn-ruinas-asfalto-rachado", "furniture", 200, "any"],
-  ["furn-ruinas-fiacao-com-musgo", "furniture", 300, "any"]
+  ["furn-jardim-vaso-suspenso", "furniture", 300, "any"]
 ]);
 var FEIRA_LOJA_VENDEDORES = Object.freeze([
   { id: "mercado", file: "src/assets/avatares/ativo-mercado.webp", tipo: "itens", peso: 18, ativo: true, hex: false, pool: /* @__PURE__ */ __name((i2) => i2.origem === "mercado" && i2.tipo === "chip", "pool") },
@@ -13716,13 +13221,13 @@ var HONRA_EM_BITS = 10;
 var FEIRA_LOJA_MATERIAIS = Object.freeze(["spark", "moss", "prism", "pebble", "ore", "ink", "gear", "fang", "laurel", "ribbon", "essence", "down", "cipher", "page", "keepsake", "crest"]);
 var FEIRA_LOJA_PRATOS = Object.freeze([
   ["salada-viva", 20, false],
-  ["cha-de-orvalho", 23, false],
+  ["cha-de-orvalho", 15, false],
   ["tigela-do-bosque", 30, false],
   ["espetinho-de-vinha", 30, true],
   ["sopa-de-raiz", 30, true],
   ["mordida-da-flor", 35, true],
-  ["pao-de-faisca", 23, false],
-  ["ensopado-do-caldeirao", 60, false],
+  ["pao-de-faisca", 15, false],
+  ["ensopado-do-caldeirao", 40, false],
   ["torta-de-mel-lunar", 20, false],
   ["caldo-de-brasa", 30, true],
   ["pizza-de-ferro", 30, true],
@@ -13855,7 +13360,7 @@ function feiraHexOnServer(stored, itemId, preco) {
   if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: "invalid" };
   const gp = num2(stored.gamePoints);
   const paidLeft = num2(stored.bitsOrigin?.paidLeft);
-  if (gp < preco) return { ok: false, reason: "bits" };
+  if (Math.max(0, gp - Math.min(gp, paidLeft)) < preco) return { ok: false, reason: "bits" };
   const next = { ...stored, gamePoints: gp - preco };
   if (stored.bitsOrigin && typeof stored.bitsOrigin === "object") {
     const left = Math.min(Math.max(0, paidLeft - preco), next.gamePoints);
@@ -14061,7 +13566,7 @@ var GUILD_ACTIONS = Object.freeze({
   guildRequestsOpen: "POST",
   guildInvite: "POST"
 });
-var GUILD_INVITE_LIMIT = GUILD_INVITE_HOURLY;
+var GUILD_INVITE_LIMIT = { limit: 20, windowMs: 36e5 };
 var GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 36e5 };
 var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
 async function onRequestOptions7() {
@@ -14266,7 +13771,6 @@ async function handleGuild({ request, env }) {
     }
     await apagarPedido(env, quem);
     await renovarCartao(env, confirmado.id, quem);
-    await removerConvitesDeCla(kvOrThrow(env), quem).catch(falhaDaCarta("guild.join", quem));
     return { g: rolarSemana(confirmado, semana) };
   }
   __name(entrarNoGrupo, "entrarNoGrupo");
@@ -14347,23 +13851,18 @@ async function handleGuild({ request, env }) {
     if (await grupoDe(env, alvo, semana)) return erro("already in a {g}", 409);
     const gate2 = takeToken("guildInvite", id, GUILD_INVITE_LIMIT);
     if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS7);
-    if (!await contarConviteDoDia(kvOrThrow(env), "g", id)) return tooManyRequests(segundosAteAmanhaUtc(), CORS7);
-    if (await parBloqueado(kvOrThrow(env), "g", g.id, alvo)) return json15({ invited: true });
     const eu = await getProfile(env, id).catch(() => null);
     const quem = eu && eu.publicHidden !== true && typeof eu.name === "string" ? eu.name.slice(0, 40) : "";
     try {
-      await enqueueInvite(env, kvOrThrow(env), alvo, {
+      await enqueueMail(env, kvOrThrow(env), alvo, {
         mid: `ginv:${g.id}:${hoje}`,
-        kind: "guild-invite",
-        guildCode: g.code,
         titlePt: "Convite para um cl\xE3",
         titleEn: "Clan invite",
         bodyPt: `${quem || "Algu\xE9m"} convidou voc\xEA para o cl\xE3 ${g.name}. Para entrar, abra o Sal\xE3o do cl\xE3 e use o c\xF3digo ${g.code}.`,
         bodyEn: `${quem || "Someone"} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
         at: Date.now()
-      }, (m) => m.mid.startsWith(`ginv:${g.id}:`));
-    } catch (err2) {
-      falhaDaCarta("guildInvite", alvo)(err2);
+      });
+    } catch {
       return erro("try again", 503);
     }
     return json15({ invited: true });
@@ -14476,7 +13975,7 @@ async function handleGuild({ request, env }) {
     await cartao(g);
     return json15({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
-  if (action === "guildShopBuy") return erro("gone", 404);
+  if (action === "guildShopBuy") return erro("shop closed", 410);
   if (action === "guildBuffBuy") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
@@ -14499,7 +13998,6 @@ async function handleGuild({ request, env }) {
     await cartao(g);
     return vista(await montar(g, id, hoje));
   }
-  if (action.startsWith("claMisterio")) return erro("gone", 404);
   if (action.startsWith("cla")) {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
@@ -14509,6 +14007,7 @@ async function handleGuild({ request, env }) {
     const salvoDe = /* @__PURE__ */ __name((opaco) => g.members.find((m) => ids3[m] === opaco), "salvoDe");
     const praca = /* @__PURE__ */ __name(async () => vistaDaPraca(env, g.id, id, g.members, ids3, hoje2), "praca");
     const plantio = /* @__PURE__ */ __name(async () => vistaDoPlantio(env, g, id, hoje2), "plantio");
+    const misterio = /* @__PURE__ */ __name(async () => vistaDoMisterio(env, g, id, hoje2), "misterio");
     const conflito = /* @__PURE__ */ __name((r) => erro(r.reason.replace(/-/g, " "), r.reason === "no-plant" ? 404 : 409), "conflito");
     if (action === "claPraca") return json15({ praca: await praca() });
     if (action === "claPracaSlot") {
@@ -14547,6 +14046,22 @@ async function handleGuild({ request, env }) {
       const r = await (action === "claRegar" ? regar : action === "claProteger" ? proteger : colher)(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
       return json15({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
+    }
+    if (action === "claMisterio") return json15({ misterio: await misterio() });
+    if (action === "claMisterioEnviar") {
+      const r = await enviarMisterio(env, g, id);
+      if (!r.ok) return conflito(r);
+      return json15({ misterio: await misterio() });
+    }
+    if (action === "claMisterioTarefa") {
+      const r = await somarTarefa(env, g, id, hoje2, body.taskId);
+      if (!r.ok) return erro("invalid task", 400);
+      return json15({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
+    }
+    if (action === "claMisterioClaim") {
+      const r = await resgatarMisterio(env, g, id);
+      if (!r.ok) return erro("nothing to claim", 404);
+      return json15({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
     }
   }
   if (action.startsWith("guildFeira")) {
@@ -14964,25 +14479,6 @@ async function marcarPresenteDeHoje(env, id, friendSave, dia) {
   await gravar3(env, sentKey(id), { day: dia, to });
 }
 __name(marcarPresenteDeHoje, "marcarPresenteDeHoje");
-var GIFT_CLAIM_TTL_MS = 2 * 864e5;
-async function reivindicarPresenteDoDia(env, id, friendSave, dia) {
-  if (!env.DB) return { ok: true, soltar: /* @__PURE__ */ __name(async () => {
-  }, "soltar") };
-  const row = `gift:${id}:${friendSave}:${dia}`;
-  const agora = Date.now();
-  await env.DB.prepare("DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?").bind(row, agora).run();
-  try {
-    await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(row, id, agora, agora + GIFT_CLAIM_TTL_MS).run();
-  } catch (err2) {
-    if (!ehViolacaoDeChave(err2)) throw err2;
-    return { ok: false, soltar: /* @__PURE__ */ __name(async () => {
-    }, "soltar") };
-  }
-  return { ok: true, soltar: /* @__PURE__ */ __name(async () => {
-    await env.DB.prepare("DELETE FROM order_claims WHERE order_id = ?").bind(row).run();
-  }, "soltar") };
-}
-__name(reivindicarPresenteDoDia, "reivindicarPresenteDoDia");
 async function lembrarTz(env, id, tz) {
   if (!tz || !tz.zone && tz.offsetMs === void 0) return;
   const atual = await lerJson3(env, tzKey(id), {});
@@ -15219,14 +14715,10 @@ var sparHonorRoll = /* @__PURE__ */ __name((rng) => SPAR_HONOR_MIN + (rng() < 0.
 var sparHonorKey = /* @__PURE__ */ __name((id, day2) => `sparHonor:${id}:${day2}`, "sparHonorKey");
 var sparPendingKey = /* @__PURE__ */ __name((id) => `spar:${id}`, "sparPendingKey");
 var sparDoneKey = /* @__PURE__ */ __name((id) => `sparDone:${id}`, "sparDoneKey");
-async function readSparHonorUsed(env, id, day2) {
-  const raw = await kvOrThrow(env).get(sparHonorKey(id, day2));
-  return Math.max(0, Math.min(SPAR_HONOR_DAILY_CAP, Math.floor(Number(raw)) || 0));
-}
-__name(readSparHonorUsed, "readSparHonorUsed");
-async function grantSparHonor(env, id, day2, rng, usedLido) {
+async function grantSparHonor(env, id, day2, rng) {
   const key2 = sparHonorKey(id, day2);
-  const used = Number.isFinite(usedLido) ? usedLido : await readSparHonorUsed(env, id, day2);
+  const raw = await kvOrThrow(env).get(key2).catch(() => null);
+  const used = Math.max(0, Math.min(SPAR_HONOR_DAILY_CAP, Math.floor(Number(raw)) || 0));
   const roll = sparHonorRoll(rng);
   const honor = Math.max(0, Math.min(roll, SPAR_HONOR_DAILY_CAP - used));
   if (honor > 0) await kvOrThrow(env).put(key2, String(used + honor), { expirationTtl: 172800 });
@@ -15268,7 +14760,7 @@ function sparTicketStatus(t) {
 }
 __name(sparTicketStatus, "sparTicketStatus");
 async function readSparTicket(env, id, day2) {
-  const raw = await kvOrThrow(env).get(sparTicketKey(id, day2));
+  const raw = await kvOrThrow(env).get(sparTicketKey(id, day2)).catch(() => null);
   return sanitizeSparTicket(raw);
 }
 __name(readSparTicket, "readSparTicket");
@@ -15283,10 +14775,11 @@ async function buySparTicket(env, id, day2, phase) {
     return { ok: true, reserved: true, status: sparTicketStatus(t) };
   }
   if (phase === "confirm") {
-    const raw = await kvOrThrow(env).get(sparReserveKey(id, day2));
+    const raw = await kvOrThrow(env).get(sparReserveKey(id, day2)).catch(() => null);
     const at = Number(raw);
     if (!Number.isFinite(at) || at <= 0 || Date.now() - at > SPAR_RESERVE_TTL_S * 1e3) return { ok: false, reason: "no-reserve", status: sparTicketStatus(t) };
-    await kvOrThrow(env).delete(sparReserveKey(id, day2));
+    await kvOrThrow(env).delete(sparReserveKey(id, day2)).catch(() => {
+    });
   }
   if (t.extra >= TREINO_EXTRA_TICKETS_MAX) return { ok: false, status: sparTicketStatus(t) };
   const next = { ...t, extra: t.extra + 1 };
@@ -15301,16 +14794,17 @@ var sparTzKey = /* @__PURE__ */ __name((id) => `sparTz:${id}`, "sparTzKey");
 async function fixarTzTreino(env, id, tz) {
   const kv2 = kvOrThrow(env);
   const novo = tz && (tz.zone || tz.offsetMs !== void 0) ? tz : { offsetMs: 0 };
-  const raw = await kv2.get(sparTzKey(id));
   let atual = null;
   try {
+    const raw = await kv2.get(sparTzKey(id));
     atual = raw ? JSON.parse(raw) : null;
   } catch {
     atual = null;
   }
   const valido = atual && typeof atual === "object" && (atual.zone || Number.isFinite(atual.offsetMs));
   const grava = /* @__PURE__ */ __name(async (v) => {
-    await kv2.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S });
+    await kv2.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S }).catch(() => {
+    });
     return v;
   }, "grava");
   if (!valido) return grava(novo);
@@ -15322,8 +14816,8 @@ async function fixarTzTreino(env, id, tz) {
   return ancora;
 }
 __name(fixarTzTreino, "fixarTzTreino");
-async function spendSparMatch(env, id, day2, lido) {
-  const t = lido ? sanitizeSparTicket(lido) : await readSparTicket(env, id, day2);
+async function spendSparMatch(env, id, day2) {
+  const t = await readSparTicket(env, id, day2);
   const withHonor = t.played < TREINO_TICKET_MATCHES;
   const next = { ...t, played: t.played + 1 };
   await writeSparTicket(env, id, day2, next);
@@ -15668,7 +15162,7 @@ async function putRank(env, season, id, rec) {
 }
 __name(putRank, "putRank");
 var rerollKey = /* @__PURE__ */ __name((id) => `reroll:${id}`, "rerollKey");
-var rerollUsado = /* @__PURE__ */ __name(async (env, id) => !!await kvOrThrow(env).get(rerollKey(id)), "rerollUsado");
+var rerollUsado = /* @__PURE__ */ __name(async (env, id) => !!await kvOrThrow(env).get(rerollKey(id)).catch(() => null), "rerollUsado");
 var RANK_INDEX_BUDGET = 100;
 var RANK_SCAN_MAX = 150;
 var CLOSE_INDEX_BUDGET = 500;
@@ -15723,29 +15217,6 @@ async function buscarNicks(env, termo) {
   return { nickKeys: [...inicio, ...meio].slice(0, NICK_CANDIDATOS), truncated };
 }
 __name(buscarNicks, "buscarNicks");
-async function buscarNicksPorInicioDobrado(env, termoDobrado, max2) {
-  const out = [];
-  let cursor;
-  let paginas = 0;
-  do {
-    const page = await kvOrThrow(env).list({ prefix: "nick:", cursor, limit: 1e3 });
-    paginas++;
-    for (const k of page.keys ?? []) {
-      let n;
-      try {
-        n = decodeURIComponent(String(k.name).slice(5));
-      } catch {
-        continue;
-      }
-      if (!foldNome(n).startsWith(termoDobrado)) continue;
-      out.push(k.name);
-      if (out.length >= max2) return out;
-    }
-    cursor = page.list_complete ? void 0 : page.cursor;
-  } while (cursor && paginas < NICK_SCAN_PAGES);
-  return out;
-}
-__name(buscarNicksPorInicioDobrado, "buscarNicksPorInicioDobrado");
 async function onRequestOptions8() {
   return new Response(null, { headers: CORS8 });
 }
@@ -15815,7 +15286,8 @@ async function handleCommunity(context) {
   }, "denyUnlessOwner");
   const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, outcome, sides, pts: pts2 }) => {
     const season = currentSeason();
-    await kvOrThrow(env).delete(rerollKey(id2)).catch((err2) => console.warn("[community] reroll unlock failed", { id: id2, err: String(err2) }));
+    await kvOrThrow(env).delete(rerollKey(id2)).catch(() => {
+    });
     const nada = { gain: 0, factor: 1, reason: null };
     if (outcome === "draw") {
       await putRank(env, season, id2, myRank);
@@ -16005,16 +15477,8 @@ async function handleCommunity(context) {
     } catch {
       evoEvento = null;
     }
-    profile.friends = (await getProfile(env, id))?.friends ?? profile.friends;
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if ((profile.spriteUrl ?? null) !== (prev.spriteUrl ?? null)) {
-      try {
-        const gid = await kvOrThrow(env).get(coopOfKey(id));
-        if (gid) await renovarCartao(env, gid, id);
-      } catch {
-      }
-    }
     const evoSaiu = publicHidden && prev.publicHidden !== true || !profile.pvpEnabled && prev.pvpEnabled === true;
     try {
       if (evoEvento || evoSaiu) {
@@ -16097,24 +15561,15 @@ async function handleCommunity(context) {
     const memoGuilda = /* @__PURE__ */ new Map();
     const vistos = /* @__PURE__ */ new Set();
     const achados = [];
-    const candidatos = (page.keys ?? []).map((k) => saveIdDaChaveDobrada(k.name));
-    if (candidatos.length < PLAYER_SEARCH_SCAN) {
-      const legado = await buscarNicksPorInicioDobrado(env, termo, PLAYER_SEARCH_SCAN);
-      for (const chave of legado) {
-        const dono = await kvOrThrow(env).get(chave);
-        if (typeof dono === "string" && dono) candidatos.push(dono);
-      }
-    }
-    for (const dono of candidatos) {
+    for (const k of page.keys ?? []) {
       if (achados.length >= PLAYER_SEARCH_MAX) break;
+      const dono = saveIdDaChaveDobrada(k.name);
       if (!VALID_ID4.test(dono) || dono === id || vistos.has(dono)) continue;
       vistos.add(dono);
       let p = null;
       try {
         p = await getProfile(env, dono);
-      } catch (err2) {
-        if (!(err2 instanceof SyntaxError)) throw err2;
-        console.warn("[community] perfil ileg\xEDvel na busca de jogador; pulado", { saveIdPrefix: dono.slice(0, 8) });
+      } catch {
         continue;
       }
       if (!p || isHidden(p) || typeof p.name !== "string") continue;
@@ -16380,20 +15835,7 @@ async function handleCommunity(context) {
     if (!opp?.pvpEnabled || isHidden(opp) || (await adminSaveIds(env)).has(oppSave)) return { res: json3({ error: "opponent unavailable" }, 404) };
     return { opponentId, oppSave, me, opp };
   }, "sparContext");
-  const lerJsonKv = /* @__PURE__ */ __name(async (key2, saveId) => {
-    const raw = await kvOrThrow(env).get(key2);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      console.warn("[community] spar record unreadable", { key: key2.split(":")[0], saveId });
-      return null;
-    }
-  }, "lerJsonKv");
-  const lerSpar = /* @__PURE__ */ __name(async (saveId) => {
-    const v = await lerJsonKv(sparPendingKey(saveId), saveId);
-    return v && v.sides?.me && v.sides?.opp ? v : null;
-  }, "lerSpar");
+  const lerSpar = /* @__PURE__ */ __name((saveId) => kvOrThrow(env).get(sparPendingKey(saveId)).then((r) => r ? JSON.parse(r) : null).then((v) => v && v.sides?.me && v.sides?.opp ? v : null).catch(() => null), "lerSpar");
   if (action === "duelStart" && method === "POST") return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
     if (ctx.res) return ctx.res;
@@ -16609,13 +16051,11 @@ async function handleCommunity(context) {
       return ctx.res;
     }
     const { opponentId, opp } = ctx;
-    const feito = await lerJsonKv(sparDoneKey(id), id);
+    const feito = await kvOrThrow(env).get(sparDoneKey(id)).then((r) => r ? JSON.parse(r) : null).catch(() => null);
     const aberto = await lerSpar(id);
-    if (feito && feito.opp === opponentId && body.seed !== void 0 && feito.seed === body.seed && (!aberto || aberto.seed === feito.seed)) {
-      if (aberto) await kvOrThrow(env).delete(sparPendingKey(id));
-      return json3({ ...feito.res, replayed: true });
-    }
+    if (!aberto && feito && feito.opp === opponentId && body.seed !== void 0 && feito.seed === body.seed) return json3({ ...feito.res, replayed: true });
     if (!aberto || aberto.opp !== opponentId) return json3({ error: "no open duel" }, 409);
+    await kvOrThrow(env).delete(sparPendingKey(id));
     const oppSpriteUrl = await spriteVivoDoSimulado(env, ctx.oppSave) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name,
@@ -16627,23 +16067,19 @@ async function handleCommunity(context) {
       ...oppSpriteUrl ? { spriteUrl: oppSpriteUrl } : {}
     };
     if (body.forfeit === true || Date.now() - (aberto.at || 0) > DUEL_PENDING_MS) {
-      await kvOrThrow(env).delete(sparPendingKey(id));
       return json3({ won: false, draw: false, outcome: "loss", forfeit: true, myScore: 0, oppScore: 100, honor: 0, opponent });
     }
     const duel = simulateDuel({ me: aberto.sides.me, opp: aberto.sides.opp, seed: aberto.seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === "me" ? "win" : duel.winner === "opp" ? "loss" : "draw";
-    const diaTk = aberto.spent && aberto.day ? aberto.day : diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off)));
-    const ticket = await readSparTicket(env, id, diaTk);
-    const withHonor = aberto.spent ? aberto.withHonor === true : ticket.played < TREINO_TICKET_MATCHES;
-    const honraUsada = outcome === "win" && withHonor ? await readSparHonorUsed(env, id, diaTk) : 0;
-    const gasto = aberto.spent ? { withHonor, status: sparTicketStatus(ticket) } : await spendSparMatch(env, id, diaTk, ticket);
     let honra = { honor: 0, capped: false };
+    const diaTk = aberto.spent && aberto.day ? aberto.day : diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off)));
+    const gasto = aberto.spent ? { withHonor: aberto.withHonor === true, status: sparTicketStatus(await readSparTicket(env, id, diaTk)) } : await spendSparMatch(env, id, diaTk);
     if (outcome === "win" && gasto.withHonor) {
       honra = await grantSparHonor(env, id, diaTk, () => {
         const b = new Uint32Array(1);
         crypto.getRandomValues(b);
         return b[0] / 4294967296;
-      }, honraUsada);
+      });
     }
     const resposta = {
       won: outcome === "win",
@@ -16658,7 +16094,6 @@ async function handleCommunity(context) {
       opponent
     };
     await kvOrThrow(env).put(sparDoneKey(id), JSON.stringify({ opp: opponentId, seed: aberto.seed, res: resposta }), { expirationTtl: SPAR_PENDING_TTL_S });
-    await kvOrThrow(env).delete(sparPendingKey(id));
     return json3({ ...resposta, duel: { events: duel.events, me: aberto.sides.me, opp: aberto.sides.opp } });
   });
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
@@ -16826,16 +16261,14 @@ async function handleCommunity(context) {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     if (body.all !== true && !midsValidos(body.mids)) return json3({ error: "invalid mids" }, 400);
-    return json3({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids, Date.now(), env.DB ?? null) });
+    return json3({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids) });
   }
   if (action === "mailDelete" && method === "POST") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     if (body.scope === "read") return json3({ ok: true, ...await deleteMail(kvOrThrow(env), id, "read") });
     if (!midsValidos(body.mids)) return json3({ error: "invalid mids" }, 400);
-    const { convitesDeClaRecusados = [], ...apagadas } = await deleteMail(kvOrThrow(env), id, body.mids, body.force === true);
-    for (const gid of convitesDeClaRecusados) await marcarRecusa(kvOrThrow(env), "g", gid, id).catch(falhaDaCarta("mailDelete.recusa", id));
-    return json3({ ok: true, ...apagadas });
+    return json3({ ok: true, ...await deleteMail(kvOrThrow(env), id, body.mids, body.force === true) });
   }
   if (action === "mailSend" && method === "POST") {
     if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json3({ error: "unauthorized" }, 401);
@@ -16873,18 +16306,6 @@ async function handleCommunity(context) {
     }
     return json3({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
-  if (action === "friendSide" && method === "GET") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    const friendPid = url.searchParams.get("friend") || "";
-    const friendSave = VALID_ID4.test(friendPid) ? await saveIdForPublicId(env, friendPid) : null;
-    const me = await getProfile(env, id);
-    const p = friendSave ? await getProfile(env, friendSave) : null;
-    if (!friendSave || !me || !(me.friends || []).includes(friendSave) || !p || isHidden(p)) return json3({ error: "not friends" }, 403);
-    const { side, bbLocked } = await loadDuelSideWithSprite(env, friendSave);
-    if (!side || bbLocked) return json3({ error: "side unavailable" }, 404);
-    return json3({ side });
-  }
   const friendPids = /* @__PURE__ */ __name(async (saveIds) => (await Promise.all(saveIds.map((f) => pidDeSaveId(env, f)))).filter(Boolean), "friendPids");
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
@@ -16898,7 +16319,8 @@ async function handleCommunity(context) {
     if (!me) return json3({ error: "profile not found" }, 404);
     if (remove) {
       await desfazerAmizade(env, id, friendSave);
-      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(falhaDaCarta("friends.remove", friendSave));
+      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(() => {
+      });
       const depois = await getProfile(env, id);
       return json3({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
@@ -16907,9 +16329,8 @@ async function handleCommunity(context) {
     me.friends = me.friends || [];
     if (me.friends.includes(friendSave)) return json3({ ok: true, status: "friends", friends: await friendPids(me.friends) });
     if (me.friends.length >= MAX_FRIENDS) return json3({ error: `friend limit (${MAX_FRIENDS})` }, 400);
-    const gate2 = takeToken("friend-invite", id, FRIEND_INVITE_HOURLY);
+    const gate2 = takeToken("friend-invite", id, { limit: 30, windowMs: 36e5 });
     if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS8);
-    if (!await contarConviteDoDia(kvOrThrow(env), "f", id)) return tooManyRequests(segundosAteAmanhaUtc(), CORS8);
     const minha = await lerConvites(env, id);
     if (minha.in.some((r) => r.from === friendSave)) {
       const r = await ligarAmizade(env, id, friendSave);
@@ -16918,13 +16339,13 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: minha.in.filter((x2) => x2.from !== friendSave), out: minha.out.filter((f) => f !== friendSave) });
       const dele2 = await lerConvites(env, friendSave);
       await gravarConvites(env, friendSave, { in: dele2.in.filter((x2) => x2.from !== id), out: dele2.out.filter((f) => f !== id) });
-      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(falhaDaCarta("friendAccept", id));
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {
+      });
       return json3({ ok: true, status: "friends", friends: await friendPids((await getProfile(env, id))?.friends || []) });
     }
     if (minha.out.includes(friendSave)) return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
     if (minha.out.length >= MAX_OUT) return json3({ error: "too many pending invites" }, 429);
     if (alvo.simulated === true) return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
-    if (await parBloqueado(kvOrThrow(env), "f", id, friendSave)) return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
     const dele = await lerConvites(env, friendSave);
     const novo = !dele.in.some((r) => r.from === id) && dele.in.length < MAX_IN;
     if (novo) dele.in.push({ from: id, at: Date.now() });
@@ -16933,7 +16354,7 @@ async function handleCommunity(context) {
       try {
         const pid = await ensurePid(env, me);
         const nome = me.name || "";
-        await enqueueInvite(env, kvOrThrow(env), friendSave, {
+        await enqueueMail(env, kvOrThrow(env), friendSave, {
           mid: `invite:${pid}:${Date.now().toString(36)}`,
           kind: "friend-invite",
           fromPid: pid,
@@ -16942,9 +16363,8 @@ async function handleCommunity(context) {
           bodyPt: `${nome || "Algu\xE9m"} convidou voc\xEA para ser amigo. Aceitar?`,
           bodyEn: `${nome || "Someone"} invited you to be friends. Accept?`,
           at: Date.now()
-        }, (m) => m.kind === "friend-invite" && m.fromPid === pid);
-      } catch (err2) {
-        falhaDaCarta("friends.invite", friendSave)(err2);
+        });
+      } catch {
       }
     }
     minha.out.push(friendSave);
@@ -16964,11 +16384,11 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: meus.in.filter((r2) => r2.from !== quem), out: meus.out });
       const dele = await lerConvites(env, quem);
       await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter((f) => f !== id) });
-      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(falhaDaCarta("friendAccept", id));
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {
+      });
     }, "limpar");
     if (decline === true) {
       await limpar();
-      await marcarRecusa(kvOrThrow(env), "f", quem, id);
       return json3({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) });
     }
     const alvo = await getProfile(env, quem);
@@ -17068,14 +16488,7 @@ async function handleCommunity(context) {
     return await withDuelLock(`gift:${id}:${friendSave}`, async () => {
       const hoje = await presentesDeHoje(env, id, diaMeu);
       if (hoje.includes(friendSave) || me.giftLog && me.giftLog[friendSave] === diaMeu) return json3({ error: "already gifted today" }, 429);
-      const reivindicacao = await reivindicarPresenteDoDia(env, id, friendSave, diaMeu);
-      if (!reivindicacao.ok) return json3({ error: "already gifted today" }, 429);
-      try {
-        await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
-      } catch (err2) {
-        await reivindicacao.soltar();
-        throw err2;
-      }
+      await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
       try {
         await recordMissionEvent(kvOrThrow(env), id, "g", diaMeu);
       } catch {
@@ -17099,8 +16512,7 @@ async function handleCommunity(context) {
               bits: credited,
               at: Date.now()
             }, { recusarSeCheia: true });
-          } catch (err2) {
-            falhaDaCarta("gift", friendSave)(err2);
+          } catch {
             viaCarta = false;
           }
         }
@@ -17402,6 +16814,10 @@ __name(onRequest5, "onRequest");
 
 // api/_essenceShop.js
 var ESSENCE_MAX_PER_ELEMENT = 1e6;
+var ESSENCE_PACK_SIZES = (
+  /** @type {const} */
+  [1, 5]
+);
 var ESSENCE_PACK_DISCOUNT = 0.1;
 var BASE_ELEMENTS = [
   "fogo",
@@ -17446,135 +16862,13 @@ function essenceUnitPrice(id) {
 __name(essenceUnitPrice, "essenceUnitPrice");
 function essencePackPrice(id, qty) {
   const unit = essenceUnitPrice(id);
-  if (!unit || !Number.isSafeInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_ELEMENT) return 0;
-  const packs = Math.floor(qty / 5);
-  return packs * Math.floor(5 * unit * (1 - ESSENCE_PACK_DISCOUNT)) + (qty - packs * 5) * unit;
+  if (!unit || !ESSENCE_PACK_SIZES.includes(
+    /** @type {1|5} */
+    qty
+  )) return 0;
+  return qty === 1 ? unit : Math.floor(qty * unit * (1 - ESSENCE_PACK_DISCOUNT));
 }
 __name(essencePackPrice, "essencePackPrice");
-
-// api/_bitsPacks.js
-var BITS_PACKS = [
-  { id: "bits-200", bits: 200, credits: 200 },
-  { id: "bits-500", bits: 500, credits: 460 },
-  { id: "bits-1000", bits: 1e3, credits: 800 }
-];
-var BITS_PACK_DAILY_CAP = 1e3;
-var OPS_MAX = 20;
-var OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
-var isoDayUtc = /* @__PURE__ */ __name((ms = Date.now()) => new Date(ms).toISOString().slice(0, 10), "isoDayUtc");
-function bitsPackById(id) {
-  return BITS_PACKS.find((p) => p.id === id);
-}
-__name(bitsPackById, "bitsPackById");
-var BITS_TZ_LOCK_MS = 24 * 3600 * 1e3;
-var DAY_MS3 = 864e5;
-var MAX_OFFSET_MS = 14 * 3600 * 1e3;
-var UTC = Object.freeze({ offsetMs: 0 });
-function tzValido(tz, nowMs) {
-  if (!tz || typeof tz !== "object") return null;
-  const out = {};
-  if (typeof tz.zone === "string" && tz.zone.length > 0 && tz.zone.length <= 64) {
-    try {
-      new Intl.DateTimeFormat("en-CA", { timeZone: tz.zone }).format(new Date(nowMs));
-      out.zone = tz.zone;
-    } catch {
-    }
-  }
-  if (typeof tz.offsetMs === "number" && Number.isFinite(tz.offsetMs) && Math.abs(tz.offsetMs) <= MAX_OFFSET_MS) out.offsetMs = tz.offsetMs;
-  if (!out.zone && out.offsetMs === void 0) return null;
-  const dia = playerDayOf(nowMs, out);
-  if (dia !== isoDayUtc(nowMs) && dia !== isoDayUtc(nowMs - DAY_MS3) && dia !== isoDayUtc(nowMs + DAY_MS3)) return null;
-  return out;
-}
-__name(tzValido, "tzValido");
-function ancoraGravada(ent) {
-  const a = ent?.bitsTz;
-  if (!a || typeof a !== "object") return null;
-  const out = {};
-  if (typeof a.zone === "string" && a.zone.length > 0) out.zone = a.zone;
-  if (typeof a.offsetMs === "number" && Number.isFinite(a.offsetMs)) out.offsetMs = a.offsetMs;
-  if (!out.zone && out.offsetMs === void 0) return null;
-  return { ...out, at: Number(a.at) || 0 };
-}
-__name(ancoraGravada, "ancoraGravada");
-var semAt = /* @__PURE__ */ __name((a) => ({ ...a.zone ? { zone: a.zone } : {}, ...a.offsetMs !== void 0 ? { offsetMs: a.offsetMs } : {} }), "semAt");
-function ancoraDaCompra(ent, tzPedido, nowMs = Date.now()) {
-  const pedido = tzValido(tzPedido, nowMs);
-  const atual = ancoraGravada(ent);
-  if (!atual) return { anchor: pedido ?? UTC, gravar: true };
-  if (!pedido) return { anchor: semAt(atual), gravar: false };
-  const igual = pedido.zone === atual.zone && pedido.offsetMs === atual.offsetMs;
-  if (!igual && nowMs - atual.at >= BITS_TZ_LOCK_MS) return { anchor: pedido, gravar: true };
-  return { anchor: semAt(atual), gravar: false };
-}
-__name(ancoraDaCompra, "ancoraDaCompra");
-function ancoraDeLeitura(ent, tzPedido, nowMs = Date.now()) {
-  const atual = ancoraGravada(ent);
-  return atual ? semAt(atual) : tzValido(tzPedido, nowMs) ?? UTC;
-}
-__name(ancoraDeLeitura, "ancoraDeLeitura");
-function bitsDayResetAt(nowMs, anchor = UTC) {
-  const hoje = playerDayOf(nowMs, anchor);
-  let lo = nowMs;
-  let hi = nowMs + 27 * 3600 * 1e3;
-  while (hi - lo > 1) {
-    const meio = Math.floor((lo + hi) / 2);
-    if (playerDayOf(meio, anchor) === hoje) lo = meio;
-    else hi = meio;
-  }
-  return hi;
-}
-__name(bitsDayResetAt, "bitsDayResetAt");
-function bitsBoughtToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
-  const r = ent?.bitsBuy;
-  if (!r || typeof r !== "object") return 0;
-  const hoje = playerDayOf(nowMs, anchor);
-  const diaDoRegistro = typeof r.at === "number" && Number.isFinite(r.at) ? playerDayOf(r.at, anchor) : r.day;
-  if (diaDoRegistro !== hoje) return 0;
-  const n = Number(r.bits);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
-}
-__name(bitsBoughtToday, "bitsBoughtToday");
-function bitsPackLeftToday(ent, nowMs = Date.now(), anchor = ancoraDeLeitura(ent, null, nowMs)) {
-  return Math.max(0, BITS_PACK_DAILY_CAP - bitsBoughtToday(ent, nowMs, anchor));
-}
-__name(bitsPackLeftToday, "bitsPackLeftToday");
-async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
-  const admin = opts.admin === true;
-  const nowMs = typeof opts.nowMs === "number" ? opts.nowMs : Date.now();
-  const replayOnly = opts.replayOnly === true;
-  if (typeof opId !== "string" || !OP_ID.test(opId)) return { ok: false, status: 400, reason: "bad-op" };
-  const pack = bitsPackById(packId);
-  if (!pack && !replayOnly) return { ok: false, status: 400, reason: "unknown-pack" };
-  const lock = await tomarTravaDoEnt(env, saveId, { nowMs, esperaMs: 0 });
-  if (!lock.ok) return { ok: false, status: 409, reason: "busy" };
-  try {
-    const ent = await readEntitlement(env, saveId);
-    const { anchor, gravar: gravar5 } = ancoraDaCompra(ent, opts.tz, nowMs);
-    const resetAt = bitsDayResetAt(nowMs, anchor);
-    const ops = Array.isArray(ent.bitsBuyOps) ? ent.bitsBuyOps.filter((o) => o && typeof o === "object") : [];
-    const feito = ops.find((o) => o.op === opId);
-    if (feito) {
-      const p = bitsPackById(feito.pack) ?? pack;
-      if (p) return { ok: true, status: 200, pack: p.id, bits: p.bits, price: p.credits, leftToday: bitsPackLeftToday(ent, nowMs, anchor), resetAt, ent, replay: true };
-    }
-    const left = bitsPackLeftToday(ent, nowMs, anchor);
-    if (replayOnly || !pack) return { ok: false, status: 409, reason: "no-op", leftToday: left, resetAt };
-    if (!admin && pack.bits > left) return { ok: false, status: 409, reason: "daily-cap", leftToday: left, resetAt };
-    if (!admin) {
-      if (!(Number(ent.credits) >= pack.credits)) return { ok: false, status: 402, reason: "insufficient", leftToday: left, resetAt };
-      ent.credits -= pack.credits;
-      ent.bitsBuy = { day: playerDayOf(nowMs, anchor), bits: bitsBoughtToday(ent, nowMs, anchor) + pack.bits, at: nowMs };
-      if (gravar5) ent.bitsTz = { ...anchor, at: nowMs };
-      ent.bitsBuyOps = [...ops, { op: opId, pack: pack.id }].slice(-OPS_MAX);
-      await writeEntitlement(env, saveId, ent);
-    }
-    return { ok: true, status: 200, pack: pack.id, bits: pack.bits, price: admin ? 0 : pack.credits, leftToday: admin ? left : left - pack.bits, resetAt, ent };
-  } finally {
-    await lock.release();
-  }
-}
-__name(buyBitsPack, "buyBitsPack");
 
 // api/entitlements.js
 var GRANT_RATE = { limit: 10, windowMs: 6e4 };
@@ -17644,16 +16938,7 @@ async function onRequestGetBruto({ request, env }) {
   const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
   const base = betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent);
   const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
-  const agora = Date.now();
-  const ancora = ancoraDeLeitura(ent, tzDe(url.searchParams.get("zone"), url.searchParams.get("off")), agora);
-  const trocaHoje = bitsBoughtToday(ent, agora, ancora) > 0 ? { bitsPackLeft: bitsPackLeftToday(ent, agora, ancora) } : {};
-  return json5({
-    ...view,
-    ...trocaHoje,
-    bitsLeftToday: bitsPackLeftToday(ent, agora, ancora),
-    bitsResetAt: bitsDayResetAt(agora, ancora),
-    adsEnabled: env.ADMOB_SSV_ENABLED === "true"
-  });
+  return json5({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGetBruto, "onRequestGetBruto");
 async function onRequestPostBruto3({ request, env }) {
@@ -17670,7 +16955,6 @@ async function onRequestPostBruto3({ request, env }) {
   const { betaFull } = admin ? { betaFull: false } : await verifiedBetaFull(env, request, saveId);
   const view = /* @__PURE__ */ __name((ent) => admin ? adminPublicView(publicView(ent)) : { ...betaFull ? betaFullPublicView(publicView(ent)) : publicView(ent), admin: false }, "view");
   if (action === "spend") {
-    if (body?.reason === "exchange-bits") return json5({ ok: false, reason: "exchange-moved", error: "gone" }, 404);
     const amount = Number(body?.amount);
     if (admin) {
       if (!Number.isInteger(amount) || amount <= 0) return json5({ ok: false, reason: "insufficient" }, 402);
@@ -17720,20 +17004,6 @@ async function onRequestPostBruto3({ request, env }) {
     if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
     log2("essence-buy", saveId, { element, qty, price, admin });
     return json5(out);
-  }
-  if (action === "buy-bits") {
-    const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin, replayOnly: body?.replayOnly === true, tz: tzDe(body?.zone, body?.off) });
-    const doDia = {
-      ...typeof r.leftToday === "number" ? { leftToday: r.leftToday, bitsLeftToday: r.leftToday } : {},
-      ...typeof r.resetAt === "number" ? { bitsResetAt: r.resetAt } : {}
-    };
-    if (!r.ok) {
-      log2("bits-pack.refused", saveId, { reason: r.reason });
-      return json5({ ok: false, reason: r.reason, ...doDia }, r.status);
-    }
-    if (admin) logAdminSession("buy-bits");
-    log2("bits-pack", saveId, { pack: r.pack, price: r.price, replay: !!r.replay, admin });
-    return json5({ ok: true, pack: r.pack, bits: r.bits, price: r.price, ...doDia, ...r.replay ? { replay: true } : {}, ...view(r.ent) });
   }
   if (action === "rebirth-reset") {
     const store = kv(env);
@@ -18995,15 +18265,15 @@ __name(onRequestGet6, "onRequestGet");
 
 // api/_dayCounters.js
 var ISO_DAY2 = /^\d{4}-\d{2}-\d{2}$/;
-var DAY_MS4 = 864e5;
+var DAY_MS3 = 864e5;
 var DUNGEON_MAX_LAYER = 999;
 var CHECKIN_SLOTS = ["morning", "afternoon", "night"];
-function isoDayUtc2(ms) {
+function isoDayUtc(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
-__name(isoDayUtc2, "isoDayUtc");
+__name(isoDayUtc, "isoDayUtc");
 function maxAcceptableDay(nowMs = Date.now()) {
-  return isoDayUtc2(nowMs + DAY_MS4);
+  return isoDayUtc(nowMs + DAY_MS3);
 }
 __name(maxAcceptableDay, "maxAcceptableDay");
 function sanitizeDungeonDaily(raw) {
@@ -19119,7 +18389,7 @@ async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now(), 
   const delta = layersDelta(antes, depois);
   if (delta <= 0) return 0;
   const month2 = monthOf(nowMs);
-  const day2 = isoDayUtc2(nowMs);
+  const day2 = isoDayUtc(nowMs);
   let l = await readRiftLastro(store, saveId, nowMs, month2);
   const recDepois = num3(ctx.recordDepois, 0, DUNGEON_MAX_LAYER);
   if (!l) {
@@ -19154,15 +18424,13 @@ function prevMonthKey(now = /* @__PURE__ */ new Date()) {
   return monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)));
 }
 __name(prevMonthKey, "prevMonthKey");
-async function readEntries(env, store, pk) {
-  const admins = await adminSaveIdsSeguro(env);
+async function readEntries(store, pk) {
   const prefix = `rk:${RIFT_GAME}:${pk}:`;
   const out = [];
   let cursor;
   for (let p = 0; p < 5; p++) {
     const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
     for (const k of page.keys) {
-      if (admins.has(k.name.slice(k.name.lastIndexOf(":") + 1))) continue;
       const t = Number(k.metadata?.t);
       out.push({
         saveId: k.name.slice(k.name.lastIndexOf(":") + 1),
@@ -19201,8 +18469,8 @@ async function closePreviousMonth(env, now = /* @__PURE__ */ new Date()) {
     await store.put(lockKey2(pk), JSON.stringify({ state: "running", at: now.getTime(), token }), LOCK_TTL2);
     const back = JSON.parse(await store.get(lockKey2(pk)) || "null");
     if (back?.token !== token) return { status: "busy", month: pk };
-    const entries2 = await readEntries(env, store, pk);
-    const winners = payablePlacements(entries2, RIFT_PAYOUT.length);
+    const entries = await readEntries(store, pk);
+    const winners = payablePlacements(entries, RIFT_PAYOUT.length);
     const pending = [];
     for (let i2 = 0; i2 < winners.length; i2++) {
       const w = winners[i2];
@@ -19412,123 +18680,6 @@ async function onRequestGet8({ request, env }) {
 }
 __name(onRequestGet8, "onRequestGet");
 
-// api/_arcadePrize.js
-var ARCADE_ITEM_ID = "furn-arcade-cab";
-var ARCADE_MONTHLY_GAMES = Object.freeze(["match3", "match3-pvp"]);
-var ARCADE_ALT_PRIZE = Object.freeze({ enabled: true, bits: 0, emblems: 30 });
-var RUNNING_STALE_MS2 = 10 * 60 * 1e3;
-var TTL5 = { expirationTtl: 86400 * 400 };
-var lockKey3 = /* @__PURE__ */ __name((pk) => `arcade-prize:lock:${pk}`, "lockKey");
-var auditKey = /* @__PURE__ */ __name((pk, game) => `arcade-prize:${pk}:${game}`, "auditKey");
-var arcadeMark = /* @__PURE__ */ __name((pk, game) => `arcade:${pk}:${game}`, "arcadeMark");
-var closed = /* @__PURE__ */ new Set();
-var prevMonth = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))), "prevMonth");
-var MESES_PT = ["janeiro", "fevereiro", "mar\xE7o", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-var MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-var JOGO_NOME = { match3: ["Elemental Fusion (Aventura)", "Elemental Fusion (Adventure)"], "match3-pvp": ["Elemental Fusion (PvP)", "Elemental Fusion (PvP)"] };
-function cartaDoPremio(pk, game, anexo, alt) {
-  const [y, m] = pk.split("-").map(Number);
-  const [jp, je] = JOGO_NOME[game] ?? [game, game];
-  const mesPt = `${MESES_PT[m - 1]} de ${y}`;
-  const mesEn = `${MESES_EN[m - 1]} ${y}`;
-  const comAlt = !anexo && !!alt && (alt.bits > 0 || alt.emblems > 0);
-  const fimPt = anexo ? "Vai anexado a esta carta o Fliperama de Canto: toque em resgatar e ele entra na sua decora\xE7\xE3o." : comAlt ? "Voc\xEA j\xE1 tem o Fliperama de Canto, ent\xE3o vai outro presente anexado: toque em resgatar." : "Voc\xEA j\xE1 tem o Fliperama de Canto, ent\xE3o esta carta \xE9 s\xF3 o nosso aplauso.";
-  const fimEn = anexo ? "The Corner Arcade is attached to this letter: tap claim and it goes to your decor." : comAlt ? "You already own the Corner Arcade, so another gift is attached: tap claim." : "You already own the Corner Arcade, so this letter is just our applause.";
-  return {
-    mid: arcadeMark(pk, game),
-    titlePt: "Parab\xE9ns pelo 1\xBA lugar!",
-    titleEn: "Congratulations on 1st place!",
-    bodyPt: `Voc\xEA terminou em 1\xBA lugar no ranking de ${mesPt} em ${jp}. ${fimPt}`,
-    bodyEn: `You finished 1st in the ${mesEn} ranking of ${je}. ${fimEn}`,
-    ...anexo ? { item: ARCADE_ITEM_ID } : {},
-    ...comAlt ? { bits: alt.bits, emblems: alt.emblems } : {}
-  };
-}
-__name(cartaDoPremio, "cartaDoPremio");
-async function entries(env, store, game, pk) {
-  const legado = MENSAL_COM_LEGADO_SEMANAL[game]?.includes(pk) ? semanasDoMes(pk) : [];
-  const porId = /* @__PURE__ */ new Map();
-  for (const per of [pk, ...legado]) {
-    for (const e of await entriesDe(store, game, per)) {
-      const prev = porId.get(e.saveId);
-      if (!prev || e.score > prev.score || e.score === prev.score && e.t < prev.t) porId.set(e.saveId, e);
-    }
-  }
-  const admins = await adminSaveIdsSeguro(env);
-  return [...porId.values()].filter((e) => !admins.has(e.saveId)).sort((a, b) => b.score - a.score || a.t - b.t || (a.saveId < b.saveId ? -1 : 1));
-}
-__name(entries, "entries");
-async function entriesDe(store, game, pk) {
-  const prefix = `rk:${game}:${pk}:`;
-  const out = [];
-  let cursor;
-  for (let p = 0; p < 5; p++) {
-    const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
-    for (const k of page.keys) {
-      const t = Number(k.metadata?.t);
-      out.push({
-        saveId: k.name.slice(k.name.lastIndexOf(":") + 1),
-        score: Number(k.metadata?.s) || 0,
-        t: Number.isFinite(t) && k.metadata?.t != null ? t : Number.MAX_SAFE_INTEGER,
-        sim: k.metadata?.sim === true
-      });
-    }
-    if (page.list_complete || !page.cursor) break;
-    cursor = page.cursor;
-  }
-  return out;
-}
-__name(entriesDe, "entriesDe");
-async function premiar(env, store, pk, game, w, now) {
-  const key2 = auditKey(pk, game);
-  if (await store.get(key2)) return null;
-  const save = await lerSave(env, w.saveId);
-  const jaTem = possuidosDoSave(save).has(ARCADE_ITEM_ID) || await temItemNaCaixa(store, w.saveId, ARCADE_ITEM_ID);
-  const carta = cartaDoPremio(pk, game, !jaTem, ARCADE_ALT_PRIZE.enabled ? ARCADE_ALT_PRIZE : null);
-  const enviada = await enqueueMail(env, store, w.saveId, { ...carta, at: now.getTime() });
-  const status = !enviada ? "already" : !jaTem ? "item" : carta.bits || carta.emblems ? "alt" : "owned";
-  await store.put(key2, JSON.stringify({ month: pk, game, saveId: w.saveId, score: w.score, at: now.getTime(), status, mid: carta.mid }), TTL5);
-  return { game, saveId: w.saveId, status };
-}
-__name(premiar, "premiar");
-async function closeArcadeMonth(env, now = /* @__PURE__ */ new Date()) {
-  const pk = prevMonth(now);
-  try {
-    if (closed.has(pk)) return { status: "already", month: pk };
-    const store = kvOrThrow(env);
-    const raw = await store.get(lockKey3(pk));
-    if (raw) {
-      let lock = null;
-      try {
-        lock = JSON.parse(raw);
-      } catch {
-      }
-      if (lock?.state === "done") {
-        closed.add(pk);
-        return { status: "already", month: pk };
-      }
-      if (lock && Number(lock.at) > now.getTime() - RUNNING_STALE_MS2) return { status: "busy", month: pk };
-    }
-    const token = `${now.getTime()}-${Math.random().toString(36).slice(2)}`;
-    await store.put(lockKey3(pk), JSON.stringify({ state: "running", at: now.getTime(), token }), TTL5);
-    const back = JSON.parse(await store.get(lockKey3(pk)) || "null");
-    if (back?.token !== token) return { status: "busy", month: pk };
-    const results = [];
-    for (const game of ARCADE_MONTHLY_GAMES) {
-      const [w] = payablePlacements(await entries(env, store, game, pk), 1);
-      if (!w) continue;
-      const r = await premiar(env, store, pk, game, w, now);
-      if (r) results.push(r);
-    }
-    await store.put(lockKey3(pk), JSON.stringify({ state: "done", at: now.getTime(), token }), TTL5);
-    closed.add(pk);
-    return { status: "closed", month: pk, results };
-  } catch {
-    return { status: "skipped", month: pk };
-  }
-}
-__name(closeArcadeMonth, "closeArcadeMonth");
-
 // api/rankings.js
 var CORS13 = {
   "Access-Control-Allow-Origin": "*",
@@ -19571,7 +18722,6 @@ async function onRequest7(context) {
     return json8(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
   await closePreviousMonth(env);
-  await closeArcadeMonth(env);
   await agendarSimuladosDia(context);
   if (request.method === "POST") {
     const score = cleanScore(q.score, game);
@@ -19883,65 +19033,6 @@ function enforceWidgetFramesOwned(state, gravado) {
 }
 __name(enforceWidgetFramesOwned, "enforceWidgetFramesOwned");
 
-// api/_saveGuard.js
-var SAVEBAK_TTL_SECONDS = 86400 * 30;
-var SAVEBAK_MAX = 5;
-var REGRESSAO_FRACAO_XP = 0.5;
-var INTENCOES_REGRESSAO = ["restore", "rebirth", "reset"];
-var ehObjeto = /* @__PURE__ */ __name((v) => typeof v === "object" && v !== null && !Array.isArray(v), "ehObjeto");
-function saveTemProgresso(state) {
-  if (!ehObjeto(state)) return false;
-  const len = /* @__PURE__ */ __name((v) => Array.isArray(v) ? v.length : 0, "len");
-  return !!state.soulmonMeta || !!state.demoCharacterId || len(state.activities) > 0 || len(state.completedTasks) > 0 || typeof state.totalXP === "number" && state.totalXP > 0;
-}
-__name(saveTemProgresso, "saveTemProgresso");
-var xpDe = /* @__PURE__ */ __name((s) => ehObjeto(s) && typeof s.totalXP === "number" && Number.isFinite(s.totalXP) ? s.totalXP : 0, "xpDe");
-function detectarRegressao(gravado, novo) {
-  if (!saveTemProgresso(gravado)) return null;
-  if (!saveTemProgresso(novo)) return { motivo: "sem-progresso" };
-  const antes = xpDe(gravado);
-  if (antes > 0 && xpDe(novo) < antes * REGRESSAO_FRACAO_XP) return { motivo: "xp-caiu" };
-  return null;
-}
-__name(detectarRegressao, "detectarRegressao");
-function intencaoDeRegressao(url) {
-  const v = url.searchParams.get("allowRegression");
-  return INTENCOES_REGRESSAO.includes(v) ? v : null;
-}
-__name(intencaoDeRegressao, "intencaoDeRegressao");
-async function sha256Hex4(text) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-__name(sha256Hex4, "sha256Hex");
-async function guardarBackupAntesDeRegressao(store, saveId, raw, agora = Date.now()) {
-  try {
-    if (typeof raw !== "string" || !raw) return false;
-    const h = await sha256Hex4(raw);
-    const prefixo = `savebak:${saveId}:`;
-    let chaves = [];
-    try {
-      const page = await store.list({ prefix: prefixo, limit: 100 });
-      chaves = (page?.keys ?? []).slice().sort((a, b) => a.name < b.name ? -1 : 1);
-    } catch {
-      chaves = [];
-    }
-    const ultimo = chaves[chaves.length - 1];
-    if (ultimo?.metadata?.h === h) return true;
-    const nome = `${prefixo}${String(agora).padStart(13, "0")}`;
-    await store.put(nome, raw, { expirationTtl: SAVEBAK_TTL_SECONDS, metadata: { h, t: agora } });
-    const todas = [...chaves, { name: nome }];
-    const excesso = todas.length - SAVEBAK_MAX;
-    for (let i2 = 0; i2 < excesso; i2++) await store.delete(todas[i2].name).catch(() => {
-    });
-    return true;
-  } catch (err2) {
-    console.warn("save: backup antes da regressao falhou", { saveIdPrefix: String(saveId).slice(0, 8), erro: String(err2?.message ?? err2) });
-    return false;
-  }
-}
-__name(guardarBackupAntesDeRegressao, "guardarBackupAntesDeRegressao");
-
 // api/_hexRename.js
 var HEX_RENAME_COST = 200;
 var HEX_RENAME_KINDS = ["pet", "especial"];
@@ -19958,7 +19049,7 @@ function renameOnServer(stored, kind, nomeRaw, now = Date.now()) {
   if (atual === nome) return { ok: true, already: true, state: stored };
   const gp = num4(stored.gamePoints);
   const paidLeft = num4(stored.bitsOrigin?.paidLeft);
-  if (gp < HEX_RENAME_COST) return { ok: false, reason: "bits" };
+  if (Math.max(0, gp - Math.min(gp, paidLeft)) < HEX_RENAME_COST) return { ok: false, reason: "bits" };
   const next = { ...stored, gamePoints: gp - HEX_RENAME_COST };
   if (stored.bitsOrigin && typeof stored.bitsOrigin === "object") {
     const left = Math.min(Math.max(0, paidLeft - HEX_RENAME_COST), next.gamePoints);
@@ -20062,6 +19153,7 @@ var DAILY_EVENTS = [
   "melhoria",
   "mente",
   "cla",
+  "cenario",
   "prato",
   "hex",
   "feira",
@@ -20104,6 +19196,8 @@ var DAILY_MISSION_IDS = [
   "n-lume",
   "n-sumi",
   "n-vultrak",
+  "n-lasca",
+  "n-panora",
   "n-corva",
   "n-tinta",
   "n-snapjaw",
@@ -20521,7 +19615,7 @@ var FUN_TICKET_MAX = 5;
 var FUN_TICKET_BUY_AT_MOST = FUN_TICKET_MAX - FUN_TICKET_BATCH;
 var FUN_TICKET_TTL_MS = 24 * 60 * 60 * 1e3;
 var FUN_TICKET_MAX_BATCHES = 4;
-var DAY_MS5 = 864e5;
+var DAY_MS4 = 864e5;
 function sanitizeFunTickets(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
   const b = (
@@ -20546,7 +19640,7 @@ function sanitizeFunTickets(raw) {
   return { batches: out.slice(-FUN_TICKET_MAX_BATCHES) };
 }
 __name(sanitizeFunTickets, "sanitizeFunTickets");
-var vivo = /* @__PURE__ */ __name((x2, nowMs) => nowMs - x2.at < FUN_TICKET_TTL_MS && x2.at - nowMs <= DAY_MS5, "vivo");
+var vivo = /* @__PURE__ */ __name((x2, nowMs) => nowMs - x2.at < FUN_TICKET_TTL_MS && x2.at - nowMs <= DAY_MS4, "vivo");
 var soma = /* @__PURE__ */ __name((l) => l.reduce((n, x2) => n + x2.left, 0), "soma");
 function enforceFunTickets(incoming, stored, nowMs = Date.now()) {
   const inc = sanitizeFunTickets(incoming)?.batches ?? [];
@@ -20556,41 +19650,13 @@ function enforceFunTickets(incoming, stored, nowMs = Date.now()) {
     const v = inc.find((i2) => i2.at === x2.at);
     return { at: x2.at, left: v ? Math.min(v.left, x2.left) : x2.left };
   });
-  const novos = inc.filter((i2) => !porAt.has(i2.at) && vivo(i2, nowMs) && i2.at <= nowMs + DAY_MS5);
+  const novos = inc.filter((i2) => !porAt.has(i2.at) && vivo(i2, nowMs) && i2.at <= nowMs + DAY_MS4);
   const novo = novos[novos.length - 1];
   if (novo && novo.left > 0 && soma(merged) <= FUN_TICKET_BUY_AT_MOST && soma(merged) + novo.left <= FUN_TICKET_MAX) merged.push(novo);
   const out = merged.sort((a, b) => a.at - b.at).slice(-FUN_TICKET_MAX_BATCHES);
   return out.length ? { batches: out } : void 0;
 }
 __name(enforceFunTickets, "enforceFunTickets");
-
-// api/_duelInvites.js
-var DUEL_INVITE_MAX = 7;
-var DUEL_INVITE_INITIAL = 7;
-var DUEL_INVITE_MIN_GAP_MS = 6e4;
-var DAY_MS6 = 864e5;
-function sanitizeDuelInvites(raw) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
-  const { n, at } = (
-    /** @type {{n?:unknown,at?:unknown}} */
-    raw
-  );
-  if (typeof n !== "number" || !Number.isFinite(n)) return void 0;
-  const a = typeof at === "number" && Number.isFinite(at) && at >= 0 ? Math.floor(at) : 0;
-  return { n: Math.min(DUEL_INVITE_MAX, Math.max(0, Math.floor(n))), at: a };
-}
-__name(sanitizeDuelInvites, "sanitizeDuelInvites");
-function enforceDuelInvites(incoming, stored, nowMs = Date.now()) {
-  const inc = sanitizeDuelInvites(incoming);
-  const sto = sanitizeDuelInvites(stored);
-  if (!inc) return sto;
-  const base = sto ?? { n: DUEL_INVITE_INITIAL, at: 0 };
-  if (inc.n <= base.n) return { n: inc.n, at: base.at };
-  const novo = inc.at > base.at + DUEL_INVITE_MIN_GAP_MS && inc.at <= nowMs + DAY_MS6;
-  if (!novo) return { n: base.n, at: base.at };
-  return { n: Math.min(DUEL_INVITE_MAX, inc.n), at: inc.at };
-}
-__name(enforceDuelInvites, "enforceDuelInvites");
 
 // api/_glitchtama.js
 var GLITCHTAMA_JANELA_MS = 7 * 24 * 60 * 60 * 1e3;
@@ -20673,134 +19739,6 @@ function enforceEssences(incoming, stored, incomingSpent, storedSpent) {
 }
 __name(enforceEssences, "enforceEssences");
 
-// api/_bitsOrcamento.js
-var BITS_ORCAMENTO_POR_DIA = 1500;
-var BITS_ORCAMENTO_DIAS = 15;
-var BITS_ORCAMENTO_TETO = BITS_ORCAMENTO_POR_DIA * BITS_ORCAMENTO_DIAS;
-var DAY_MS7 = 864e5;
-var CREDITO_FOLGA_MS = DAY_MS7;
-var BITS_OBS_TTL_S = 45 * 86400;
-var BITS_OBS_PREFIXO = "bitsobs:";
-var finito = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v), "finito");
-function lerOrcamento(metadata) {
-  if (!metadata || typeof metadata !== "object") return null;
-  const m = (
-    /** @type {any} */
-    metadata
-  );
-  if (!finito(m.ob) || m.ob < 0 || !finito(m.ot) || m.ot <= 0) return null;
-  return { b: Math.min(m.ob, BITS_ORCAMENTO_TETO), t: m.ot };
-}
-__name(lerOrcamento, "lerOrcamento");
-function metaDoOrcamentoGravada(metadata) {
-  const o = lerOrcamento(metadata);
-  return o ? { ob: o.b, ot: o.t } : {};
-}
-__name(metaDoOrcamentoGravada, "metaDoOrcamentoGravada");
-function metaDoSaldo(gamePoints) {
-  return finito(gamePoints) ? { g: gamePoints } : {};
-}
-__name(metaDoSaldo, "metaDoSaldo");
-function saldoGravado(prev) {
-  const g = prev?.metadata && typeof prev.metadata === "object" ? (
-    /** @type {any} */
-    prev.metadata.g
-  ) : void 0;
-  if (finito(g)) return g;
-  if (typeof prev?.value !== "string") return null;
-  let gravado;
-  try {
-    gravado = JSON.parse(prev.value);
-  } catch {
-    return null;
-  }
-  return finito(gravado?.gamePoints) ? gravado.gamePoints : null;
-}
-__name(saldoGravado, "saldoGravado");
-function avaliarOrcamentoDeBits({ antes, depois, orcamento, agora, creditos = 0 }) {
-  const decorrido = orcamento ? Math.max(0, agora - orcamento.t) : 0;
-  const cheia = orcamento ? Math.min(BITS_ORCAMENTO_TETO, orcamento.b + BITS_ORCAMENTO_POR_DIA * decorrido / DAY_MS7) : BITS_ORCAMENTO_TETO;
-  if (!finito(antes) || !finito(depois)) return { dentro: true, excedente: 0, orcamentoNovo: { b: cheia, t: agora } };
-  const crescimento = Math.max(
-    0,
-    /** @type {number} */
-    depois - /** @type {number} */
-    antes
-  );
-  const folga = cheia + Math.max(0, finito(creditos) ? creditos : 0);
-  const excedente = Math.max(0, Math.ceil(crescimento - folga));
-  return {
-    dentro: excedente === 0,
-    excedente,
-    orcamentoNovo: { b: Math.min(BITS_ORCAMENTO_TETO, Math.max(0, folga - crescimento)), t: agora }
-  };
-}
-__name(avaliarOrcamentoDeBits, "avaliarOrcamentoDeBits");
-async function creditosDoServidorDesde(env, saveId, desdeMs) {
-  const ent = await readEntitlement(env, saveId);
-  const compra = ent?.bitsBuy;
-  const pacote = compra && finito(compra.at) && compra.at >= desdeMs && finito(Number(compra.bits)) ? Math.max(0, Number(compra.bits)) : 0;
-  const store = kv(env);
-  const cartas = store ? await bitsResgatadosDesde(store, saveId, desdeMs) : 0;
-  const notas = await lerNotas(env, saveId);
-  const presentes = notas.items.reduce((s, n) => n.at >= desdeMs ? s + n.bits : s, 0);
-  return pacote + cartas + presentes;
-}
-__name(creditosDoServidorDesde, "creditosDoServidorDesde");
-async function medirOrcamentoDeBits({ env, saveId, prev, gamePoints, agora, ehAdmin, playerDayTz }) {
-  const antes = saldoGravado(prev);
-  const depois = finito(gamePoints) ? (
-    /** @type {number} */
-    gamePoints
-  ) : null;
-  const orcamento = lerOrcamento(prev?.metadata);
-  let r = avaliarOrcamentoDeBits({ antes, depois, orcamento, agora });
-  let creditos = 0;
-  if (r.excedente > 0) {
-    const desde = (orcamento ? orcamento.t : agora - DAY_MS7) - CREDITO_FOLGA_MS;
-    creditos = await creditosDoServidorDesde(env, saveId, desde);
-    r = avaliarOrcamentoDeBits({ antes, depois, orcamento, agora, creditos });
-  }
-  if (r.excedente > 0 && await ehAdmin()) {
-    r = { dentro: true, excedente: 0, orcamentoNovo: { b: BITS_ORCAMENTO_TETO, t: agora } };
-  }
-  const meta = { ...metaDoSaldo(depois), ob: r.orcamentoNovo.b, ot: r.orcamentoNovo.t };
-  const observacao = r.excedente > 0 ? {
-    dia: playerDayOf(
-      agora,
-      /** @type {any} */
-      playerDayTz
-    ),
-    excedente: r.excedente,
-    saldo_antes: (
-      /** @type {number} */
-      antes
-    ),
-    saldo_depois: (
-      /** @type {number} */
-      depois
-    ),
-    creditos,
-    criado_em: agora
-  } : null;
-  return { meta, observacao };
-}
-__name(medirOrcamentoDeBits, "medirOrcamentoDeBits");
-async function registrarObservacao(env, saveId, obs) {
-  const store = kv(env);
-  if (!store) return false;
-  const chave = `${BITS_OBS_PREFIXO}${obs.dia}:${saveId.slice(0, 8)}`;
-  const atual = await store.getWithMetadata(chave);
-  const anterior = atual?.metadata && typeof atual.metadata === "object" ? Number(
-    /** @type {any} */
-    atual.metadata.excedente
-  ) : NaN;
-  if (finito(anterior) && anterior >= obs.excedente) return false;
-  await store.put(chave, JSON.stringify(obs), { expirationTtl: BITS_OBS_TTL_S, metadata: obs });
-  return true;
-}
-__name(registrarObservacao, "registrarObservacao");
-
 // api/save.js
 var CORS15 = {
   "Access-Control-Allow-Origin": "*",
@@ -20879,11 +19817,11 @@ function revisionMeta(metadata) {
   return out;
 }
 __name(revisionMeta, "revisionMeta");
-async function sha256Hex5(text) {
+async function sha256Hex4(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
-__name(sha256Hex5, "sha256Hex");
+__name(sha256Hex4, "sha256Hex");
 async function onRequestOptions14() {
   return new Response(null, { headers: CORS15 });
 }
@@ -20949,10 +19887,7 @@ async function onRequestBruto2({ request, env }) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS2,
             // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
-            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata), ...metaDoOrcamentoGravada(metadata), ...metaDoSaldo(
-              /** @type {any} */
-              metadata?.g
-            ) }
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata) }
           });
         } else {
           console.info("save: renova\xE7\xE3o de TTL pulada, conte\xFAdo mudou entre leitura e renova\xE7\xE3o", { saveIdPrefix: saveId.slice(0, 8) });
@@ -20992,9 +19927,9 @@ async function onRequestBruto2({ request, env }) {
     const campos = /* @__PURE__ */ __name((st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, foodInventory: st.foodInventory, equipment: st.equipment, bitsOrigin: st.bitsOrigin }), "campos");
     if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS15 });
     const serialized = JSON.stringify(r.state);
-    const h = await sha256Hex5(serialized);
+    const h = await sha256Hex4(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h } });
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS15 });
   }
   if (request.method === "POST" && url.searchParams.get("action") === "hexRename") {
@@ -21019,9 +19954,9 @@ async function onRequestBruto2({ request, env }) {
     const campos = /* @__PURE__ */ __name((st) => ({ gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin, soulmonMeta: st.soulmonMeta, especialNome: st.especialNome, especialNomeAt: st.especialNomeAt }), "campos");
     if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS15 });
     const serialized = JSON.stringify(r.state);
-    const h = await sha256Hex5(serialized);
+    const h = await sha256Hex4(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h } });
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS15 });
   }
   if (request.method === "POST" && url.searchParams.get("action") === "hexFair") {
@@ -21051,9 +19986,9 @@ async function onRequestBruto2({ request, env }) {
     const campos = /* @__PURE__ */ __name((st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin }), "campos");
     if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS15 });
     const serialized = JSON.stringify(r.state);
-    const h = await sha256Hex5(serialized);
+    const h = await sha256Hex4(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
-    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h } });
     await marcarCompraFeiraLoja(env, saveId, body.dayKey, v.item.id);
     return Response.json({ ok: true, already: false, price: v.item.price, revision: cur + 1, ...campos(r.state) }, { headers: CORS15 });
   }
@@ -21347,22 +20282,6 @@ async function onRequestBruto2({ request, env }) {
       }
     }
     {
-      const temGravado = typeof prev?.value === "string" && prev.value.includes('"duelInvites"');
-      if (temGravado || "duelInvites" in state) {
-        let gravado = {};
-        if (temGravado) {
-          try {
-            gravado = JSON.parse(prev.value) ?? {};
-          } catch {
-            gravado = {};
-          }
-        }
-        const di = enforceDuelInvites(state.duelInvites, gravado.duelInvites);
-        if (di) state.duelInvites = di;
-        else delete state.duelInvites;
-      }
-    }
-    {
       const temGravado = typeof prev?.value === "string" && prev.value.includes('"glitchtamaUsadoEm"');
       if (temGravado || "glitchtamaUsadoEm" in state) {
         let gravado = {};
@@ -21400,7 +20319,7 @@ async function onRequestBruto2({ request, env }) {
     const cur = revisionOf(prev?.metadata);
     const base = body?.baseRevision;
     const temBase = Number.isInteger(base) && base >= 0;
-    const h = await sha256Hex5(serialized);
+    const h = await sha256Hex4(serialized);
     if (!temBase) {
       console.info("save: escrita sem baseRevision", { saveIdPrefix: saveId.slice(0, 8) });
     } else if (base !== cur) {
@@ -21410,49 +20329,11 @@ async function onRequestBruto2({ request, env }) {
       console.warn("save: 409 conflito de revis\xE3o", { saveIdPrefix: saveId.slice(0, 8), base, cur });
       return Response.json({ error: "conflict", revision: cur }, { status: 409, headers: CORS15 });
     }
-    if (typeof prev?.value === "string") {
-      let gravadoParaGuarda;
-      try {
-        gravadoParaGuarda = JSON.parse(prev.value);
-      } catch {
-        gravadoParaGuarda = void 0;
-      }
-      const regressao = detectarRegressao(gravadoParaGuarda, state);
-      if (regressao) {
-        const intencao = intencaoDeRegressao(url);
-        await guardarBackupAntesDeRegressao(kvOrThrow(env), saveId, prev.value);
-        if (!intencao) {
-          console.warn("save: 409 regressao recusada", { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo });
-          return Response.json({ error: "regression", revision: cur }, { status: 409, headers: CORS15 });
-        }
-        console.warn("save: regressao PERMITIDA por intencao explicita", { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo, intencao });
-      }
-    }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
-    let orcamento = null;
-    try {
-      orcamento = await medirOrcamentoDeBits({
-        env,
-        saveId,
-        prev,
-        gamePoints: state.gamePoints,
-        agora: Date.now(),
-        playerDayTz: state.playerDayTz,
-        ehAdmin: /* @__PURE__ */ __name(async () => (await verifiedAdmin(env, request, saveId)).admin, "ehAdmin")
-      });
-    } catch (err2) {
-      console.warn("save: or\xE7amento de Bits n\xE3o medido, save segue", { saveIdPrefix: saveId.slice(0, 8), erro: String(err2?.message ?? err2) });
-    }
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS2,
-      metadata: { t: Date.now(), f, r: cur + 1, h, ...orcamento?.meta ?? {} }
+      metadata: { t: Date.now(), f, r: cur + 1, h }
     });
-    if (orcamento?.observacao) {
-      console.warn("save: crescimento de Bits acima do or\xE7amento (s\xF3 observa\xE7\xE3o)", { saveIdPrefix: saveId.slice(0, 8), excedente: orcamento.observacao.excedente });
-      await registrarObservacao(env, saveId, orcamento.observacao).catch((err2) => {
-        console.warn("save: registro do or\xE7amento de Bits falhou, save segue", { saveIdPrefix: saveId.slice(0, 8), erro: String(err2?.message ?? err2) });
-      });
-    }
     await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {
     });
     await recoverStrayFromSave(env, saveId, state);
@@ -21481,16 +20362,13 @@ async function onRequestPostBruto5({ request, env }) {
   const antigo = legacyFormIdOf(formId);
   await store.delete(`sprite:img:${id}:${formId}`);
   if (antigo) await store.delete(`sprite:img:${id}:${antigo}`);
-  const { forms, antes } = await comTravaDoEnt(env, id, async () => {
-    const ent = await readEntitlement(env, id);
-    const forms2 = { ...ent.aiForms || {} };
-    const antes2 = (Number(forms2[formId]) || 0) + (antigo ? Number(forms2[antigo]) || 0 : 0);
-    if (antigo) delete forms2[antigo];
-    forms2[formId] = Math.max(0, antes2 - 1);
-    ent.aiForms = forms2;
-    await writeEntitlement(env, id, ent);
-    return { forms: forms2, antes: antes2 };
-  });
+  const ent = await readEntitlement(env, id);
+  const forms = { ...ent.aiForms || {} };
+  const antes = (Number(forms[formId]) || 0) + (antigo ? Number(forms[antigo]) || 0 : 0);
+  if (antigo) delete forms[antigo];
+  forms[formId] = Math.max(0, antes - 1);
+  ent.aiForms = forms;
+  await writeEntitlement(env, id, ent);
   console.log(JSON.stringify({ event: "sprite.admin.release-form", saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
   return json11({ ok: true, formId, antes, depois: forms[formId] });
 }
@@ -22249,7 +21127,7 @@ var headers5 = { "Cache-Control": "no-store" };
 var json14 = /* @__PURE__ */ __name((body, status = 200) => Response.json(body, { status, headers: headers5 }), "json");
 var ENVS = ["forest", "shore", "cavern", "garden", "workshop", "observatory"];
 var DAY2 = /^\d{4}-\d{2}-\d{2}$/;
-var TTL6 = 86400 * 3;
+var TTL5 = 86400 * 3;
 async function lerJson4(store, key2) {
   try {
     return JSON.parse(await store.get(key2) || "null");
@@ -22272,13 +21150,13 @@ async function lerRazao2(store, id, day2) {
   };
 }
 __name(lerRazao2, "lerRazao");
-var gravar4 = /* @__PURE__ */ __name((store, key2, v) => store.put(key2, JSON.stringify(v), { expirationTtl: TTL6 }), "gravar");
+var gravar4 = /* @__PURE__ */ __name((store, key2, v) => store.put(key2, JSON.stringify(v), { expirationTtl: TTL5 }), "gravar");
 function diaValido2(day2, now) {
   if (typeof day2 !== "string" || !DAY2.test(day2)) return false;
   return Math.abs(Date.parse(`${day2}T12:00:00Z`) - now) <= 36 * 36e5;
 }
 __name(diaValido2, "diaValido");
-function pagar(fj, razao, now, concluir2) {
+function pagar(fj, razao, now, concluir) {
   const p = journeyProgress(fj, now);
   let dungeonKeyDay;
   let concluiu = false;
@@ -22292,7 +21170,7 @@ function pagar(fj, razao, now, concluir2) {
     }
   }
   const doneId = `${fj.sid}:done`;
-  if (concluir2 && p >= 1 && !razao.claims.includes(doneId)) {
+  if (concluir && p >= 1 && !razao.claims.includes(doneId)) {
     const nth = razao.done + 1;
     const r = capLoot(razao, doneId, completionLoot(fj.seed, nth, fj.env));
     Object.assign(razao, r.ledger, { done: nth });
@@ -22384,7 +21262,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-dFMwa8/functionsRoutes-0.5718525942945695.mjs
+// ../.wrangler/tmp/pages-VqmZMM/functionsRoutes-0.2488808892401373.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -22801,7 +21679,7 @@ var routes = [
   }
 ];
 
-// ../../nm-cache/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../forma2/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens2 = [];
   var i2 = 0;
@@ -23127,7 +22005,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../nm-cache/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../forma2/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
