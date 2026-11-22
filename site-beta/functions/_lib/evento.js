@@ -1,5 +1,5 @@
 // Allowlist de eventos do site. Cliente (src/scripts/app.ts) e servidor importam este arquivo.
-export const SECOES = ['topo', 'ciclo', 'seu-soulmon', 'colete', 'universo', 'recursos', 'trailer', 'entrar', 'inscrever', 'perguntas'];
+export const SECOES = ['topo', 'ciclo', 'seu-soulmon', 'colete', 'universo', 'recursos', 'trailer', 'entrar', 'inscrever', 'perguntas', 'como-funciona', 'mundo'];
 export const EVENTOS = ['view', 'scroll25', 'scroll50', 'scroll75', 'scroll100', 'tempo30', 'tempo90', 'cta', ...SECOES.map((s) => 'sec_' + s)];
 export const REFS = ['instagram', 'reddit', 'google', 'facebook', 'discord', 'whatsapp', 'play', 'outro', ''];
 

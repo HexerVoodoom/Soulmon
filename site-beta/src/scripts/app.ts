@@ -581,6 +581,7 @@ function partilha() {
 // ---------- Âncoras: salto direto e corrigido até a posição estabilizar; foca o campo ao chegar no formulário ----------
 function ancoras() {
   document.addEventListener('click', (e) => {
+    if (e.defaultPrevented) return; // já tratado (ex.: modal guiado do CTA, modal-entrar.ts)
     const a = (e.target as Element).closest?.<HTMLAnchorElement>('a[href^="#"]');
     const alvo = a && document.getElementById(a.hash.slice(1));
     if (!alvo) return;

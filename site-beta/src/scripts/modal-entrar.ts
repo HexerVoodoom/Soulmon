@@ -20,8 +20,8 @@ if (d) {
   document.addEventListener('click', (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>('a[href="#entrar"]');
     if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
-    e.preventDefault(); abrir(a);
-  });
+    e.preventDefault(); abrir(a); // captura: roda antes de ancoras() (app.ts), que então vê defaultPrevented e não rola até #entrar
+  }, true);
   d.querySelectorAll('[data-em-ok]').forEach((b) => b.addEventListener('click', () => ir(atual + 1)));
   voltar.addEventListener('click', () => ir(atual - 1));
   q('[data-em-fechar]').addEventListener('click', () => d.close());

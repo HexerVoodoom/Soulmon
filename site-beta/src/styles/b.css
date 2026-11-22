@@ -1,0 +1,118 @@
+/* Versão B (acquisition landing). Só o que a A não tem; o resto reusa site.css. Tokens --sb-*, mobile primeiro, gutters 16px. */
+
+/* Logo sempre no topo (o hero não repete a marca, para o CTA entrar na primeira dobra). */
+.vb-topo .topo-logo { visibility: visible; opacity: 1; }
+.vb-topo .topo-logo img { height: 40px; width: auto; }
+
+/* ---------- Hero ---------- */
+.vb-hero { min-height: 100svh; }
+.vb-hero .hero-corpo { justify-content: flex-start; gap: var(--sb-e-5); padding-top: calc(var(--topo-h) + var(--sb-e-3)); }
+.vb-hero-texto { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sb-e-3); align-self: start; width: 100%; max-width: 40rem; }
+.vb-eyebrow { font: var(--sb-peso-forte) .8125rem/1.2 var(--sb-fonte-texto); letter-spacing: .14em; color: var(--sb-ouro); }
+.vb-hero h1 { max-width: 16ch; margin-top: 0; }
+.vb-sub { font-size: var(--sb-t-lead); line-height: 1.45; max-width: 36rem; text-wrap: pretty; }
+.vb-acao { display: grid; justify-items: start; gap: var(--sb-e-2); margin-top: var(--sb-e-2); }
+.vb-cta { text-transform: uppercase; letter-spacing: .04em; }
+.vb-hero .vb-cta, .vb-fundador .vb-cta { height: 80px; border-width: 28px 32px; width: min(100%, 360px); }
+.vb-ver { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: var(--sb-peso-medio); }
+.vb-micro { font-size: var(--sb-t-legal); color: var(--sb-tx); text-shadow: 0 1px 0 #000; }
+.vb-hero-visual { display: grid; justify-items: center; gap: var(--sb-e-4); padding-bottom: var(--sb-e-4); }
+.vb-aparelho.aparelho { width: 176px; }
+.vb-evo { display: flex; justify-content: center; gap: 4px; width: 100%; max-width: 360px; }
+.vb-evo li { flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: 2px; font-size: .6875rem; text-align: center; color: var(--sb-ouro); opacity: .55; background: var(--sb-veu-texto); padding: 4px 2px; }
+.vb-evo img { width: 100%; max-width: 64px; height: auto; aspect-ratio: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .vb-evo li { animation: vb-destaque 7.5s steps(1, end) infinite; animation-delay: calc(var(--i) * 1.5s); }
+}
+@media (prefers-reduced-motion: reduce) { .vb-evo li { opacity: 1; } }
+@keyframes vb-destaque { 0% { opacity: 1; translate: 0 -4px; } 20%, 100% { opacity: .55; translate: 0 0; } }
+@media (min-width: 768px) { .vb-aparelho.aparelho { width: 220px; } .vb-evo li { font-size: .8125rem; } .vb-evo img { max-width: 96px; } .vb-evo { max-width: 560px; } }
+@media (min-width: 1024px) {
+  .vb-hero { min-height: min(100svh, 900px); }
+  .vb-hero .hero-corpo { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); align-items: center; gap: var(--sb-e-7); padding: calc(var(--topo-h) + 24px) var(--pad-d) var(--sb-e-7) var(--pad-e); }
+  .vb-aparelho.aparelho { width: 260px; }
+  .vb-evo img { max-width: 112px; }
+}
+@media (max-height: 700px) and (max-width: 1023px) { .vb-hero .vb-cta { height: 68px; border-width: 24px 28px; } }
+
+/* ---------- 2 · Como funciona ---------- */
+.vb-como { display: grid; gap: var(--sb-e-6); justify-items: center; text-align: center; }
+.vb-passos3 { display: grid; gap: var(--sb-e-4); width: 100%; max-width: 64rem; }
+.vb-passos3 li { display: grid; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-4); background: var(--sb-sup); border: 2px solid var(--sb-anel-fundo); }
+.vb-passos3 p { color: var(--sb-tx-2); max-width: 32ch; }
+.vb-num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--sb-fundo); border: 2px solid var(--sb-ouro); color: var(--sb-ouro); font: var(--sb-peso-titulo) 1.25rem/1 var(--sb-fonte-titulo); }
+@media (min-width: 768px) { .vb-passos3 { grid-template-columns: repeat(3, 1fr); } }
+.vb-demo { display: grid; gap: var(--sb-e-5); width: 100%; max-width: 56rem; padding: var(--sb-e-4); text-align: left; }
+.vb-demo-palco { display: grid; justify-items: center; gap: var(--sb-e-2); align-content: center; }
+.vb-demo-img { width: 192px; height: 192px; }
+.vb-demo-forma { display: grid; justify-items: center; gap: 2px; color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
+.vb-demo-forma strong { color: var(--sb-ouro); font: var(--sb-peso-titulo) 1.25rem/1.2 var(--sb-fonte-titulo); }
+.vb-barra { width: min(100%, 240px); height: 10px; background: var(--sb-fundo); border: 2px solid var(--sb-anel-fundo); overflow: hidden; }
+.vb-barra i { display: block; height: 100%; background: var(--sb-pri); transform: scaleX(0); transform-origin: left; transition: transform var(--sb-dur-entrada) var(--sb-ease); }
+.vb-demo-lista { display: grid; gap: var(--sb-e-2); align-content: center; }
+.vb-demo-dica, .vb-demo-nota { color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
+.vb-demo-lista ul { display: grid; gap: 4px; }
+.vb-tarefa { display: flex; align-items: center; gap: var(--sb-e-3); min-height: 48px; padding: 4px var(--sb-e-3); cursor: pointer; background: var(--sb-fundo-2); border: 2px solid transparent; font-size: var(--sb-t-tarefa); }
+.vb-tarefa:has(input:checked) { border-color: var(--sb-pri); }
+.vb-tarefa:has(input:checked) span { text-decoration: line-through; color: var(--sb-tx-2); }
+.vb-tarefa:has(input:focus-visible) { outline: var(--sb-foco-largura) solid var(--sb-foco-cor); outline-offset: 2px; }
+.vb-tarefa input { width: 24px; height: 24px; accent-color: var(--sb-pri); flex: none; }
+.vb-demo-estado { font-weight: var(--sb-peso-medio); color: var(--sb-ouro); }
+.vb-recomecar { justify-self: start; min-height: 44px; }
+.vb-surge { animation: vb-surge .28s var(--sb-ease, ease-out); }
+@keyframes vb-surge { from { scale: .9; filter: brightness(1.6); } to { scale: 1; filter: none; } }
+@media (min-width: 768px) { .vb-demo { grid-template-columns: 1fr 1.2fr; padding: var(--sb-e-6); } .vb-demo-img { width: 256px; height: 256px; } }
+.vb-cta-linha { display: grid; justify-items: center; width: 100%; }
+.vb-cta-linha .vb-cta { width: min(100%, 360px); }
+
+/* ---------- 3 · Conheça seu Soulmon ---------- */
+.vb-meet { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); display: grid; gap: var(--sb-e-6); justify-items: center; text-align: center; }
+.vb-meet-grade { display: grid; gap: var(--sb-e-6); justify-items: center; width: 100%; max-width: 64rem; }
+.vb-meet-texto { display: grid; justify-items: center; }
+.vb-meet-texto .frase { margin-inline: auto; }
+.vb-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sb-e-3) var(--sb-e-6); margin-top: var(--sb-e-4); font-size: var(--sb-t-lead); font-weight: var(--sb-peso-medio); }
+.vb-stats li { display: flex; align-items: baseline; gap: 8px; }
+@media (min-width: 1024px) { .vb-meet-grade { grid-template-columns: 1fr 1fr; align-items: center; } }
+.vb-mais { width: min(100%, 48rem); text-align: left; }
+.vb-mais summary { display: flex; align-items: center; justify-content: center; min-height: 48px; cursor: pointer; font-weight: var(--sb-peso-medio); color: var(--sb-pri); }
+.vb-els { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: var(--sb-e-3); margin-top: var(--sb-e-4); }
+.vb-els li { display: grid; justify-items: center; gap: 4px; font-size: var(--sb-t-legal); text-align: center; }
+.vb-els img { width: 48px; height: 48px; image-rendering: auto; }
+
+/* ---------- 4 · Mundo ---------- */
+.vb-mundo { display: grid; gap: var(--sb-e-5); justify-items: center; text-align: center; }
+.vb-mundo .frase { margin-inline: auto; margin-top: 0; }
+.vb-pilares { display: grid; gap: var(--sb-e-4); width: 100%; max-width: 72rem; text-align: left; }
+.vb-pilar { display: grid; align-content: start; gap: var(--sb-e-2); padding: var(--sb-e-3); background: var(--sb-sup); border: 2px solid var(--sb-anel-fundo); }
+.vb-pilar p { color: var(--sb-tx-2); }
+.vb-pilar h3 { text-align: left; }
+.vb-pilar-arte { display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--sb-fundo); }
+.vb-pilar-arte img, .vb-pilar-arte picture { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vb-colecao { display: flex; align-items: center; justify-content: center; height: 100%; gap: 0; }
+.vb-colecao img { width: 33%; height: auto; }
+.vb-selo { justify-self: start; padding: 2px 10px; font-size: .75rem; font-weight: var(--sb-peso-forte); letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--sb-pri); color: var(--sb-pri); }
+.vb-selo.depois { border-color: var(--sb-tx-2); color: var(--sb-tx-2); }
+.vb-legenda { font-size: var(--sb-t-legal); color: var(--sb-tx-2); }
+@media (min-width: 640px) { .vb-pilares { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .vb-pilares { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- 5 · Em ação ---------- */
+.vb-acao-sec { gap: var(--sb-e-5); }
+.vb-telas-h { margin-top: var(--sb-e-4); }
+.vb-telas { display: flex; gap: var(--sb-e-4); width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 12px; justify-content: flex-start; }
+.vb-telas li { flex: none; scroll-snap-align: center; }
+@media (min-width: 768px) { .vb-telas { justify-content: center; overflow: visible; } }
+
+/* ---------- 6 · Treinador Fundador ---------- */
+.vb-fundador .inscrever-caixa { width: min(100%, 560px); }
+.vb-itens { display: grid; gap: var(--sb-e-2); text-align: left; margin: var(--sb-e-2) 0; }
+.vb-itens li { position: relative; padding-left: 28px; }
+.vb-itens li::before { content: ''; position: absolute; left: 4px; top: .45em; width: 10px; height: 10px; background: var(--sb-ouro); rotate: 45deg; }
+
+/* ---------- 7 · Como entrar ---------- */
+.vb-antes { margin-top: var(--sb-e-5); max-width: 48rem; padding: var(--sb-e-4); background: var(--sb-sup); border: 2px solid var(--sb-ouro); display: grid; gap: var(--sb-e-2); }
+.vb-antes h3 { color: var(--sb-ouro); }
+.vb-entrar-nota { margin-top: var(--sb-e-5); color: var(--sb-tx-2); }
+
+/* ---------- Barra fixa (celular): some quando já há CTA, seção de entrada ou modal ---------- */
+.fixo[data-vb-off] { display: none !important; }
