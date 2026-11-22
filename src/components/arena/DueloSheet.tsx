@@ -233,7 +233,7 @@ export function DueloSheet({ language, onStart, arena }: {
       <EscolhaDeAdversarios isPt={isPt} onStart={onStart} startBlocked={!!arena.invites && arena.invites.count < 1} arena={arena} />
       {catN !== undefined && (
         <p data-bits-categoria style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-          <span className="sm2-num">{isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}</span>
+          <span className="sm2-num">{isPt ? `Bits de hoje nos duelos: ${catN} de ${catCap}` : `today's duel Bits: ${catN} of ${catCap}`}</span>
         </p>
       )}
     </div>
