@@ -20,7 +20,7 @@ describe('Novo hábito: tudo visível', () => {
     expect(screen.getByRole('group', { name: 'Categoria' })).toBeTruthy();
     expect(screen.getByText('Quando')).toBeTruthy();
     expect(screen.queryByText(/Horário/)).toBeNull();
-    expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Exemplo: Caminhar 20 minutos');
+    expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Exemplo: Deitar às 22h30');
     expect(document.getElementById('sm-create-name')).toBeNull();
     expect(screen.queryByText('Nome')).toBeNull();
   });
@@ -29,7 +29,7 @@ describe('Novo hábito: tudo visível', () => {
     expect(screen.queryByRole('button', { name: /More options|Fewer options/ })).toBeNull();
     expect(screen.getByRole('group', { name: 'Category' })).toBeTruthy();
     expect(screen.getByText('When')).toBeTruthy();
-    expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Example: Walk 20 minutes');
+    expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Example: Lights out at 10:30 p.m.');
     expect(document.getElementById('sm-create-name')).toBeNull();
   });
 });
