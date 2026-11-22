@@ -52,7 +52,9 @@ export function MinigameModeGate<C = unknown>({ language, gameName, rankings, sa
   const [rankOpen, setRankOpen] = useState(false);
   const [sel, setSel] = useState<1 | 2>(1);
   const seletor = !!renderChoices && two;
-  const current = rankings[Math.min(tab, rankings.length - 1)];
+  // Aventura | PvP escolhidos no seletor de baixo: o ranking abre DIRETO na modalidade escolhida, sem abas internas (22/11/2026).
+  const porModo = seletor && pveVsPvp && rankings.length > 1;
+  const current = porModo ? rankings[Math.min(sel - 1, rankings.length - 1)] : rankings[Math.min(tab, rankings.length - 1)];
   return (
     <AreaSheet
       areaId="jogos" lotId="salao" language={language} title={gameName}
@@ -67,7 +69,7 @@ export function MinigameModeGate<C = unknown>({ language, gameName, rankings, sa
         <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'}>
           {/* 18/11/2026 (dono): sem moldura interna ("borda dentro de borda"); a moldura é a do modal. */}
           <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rankings.length > 1 && (
+            {rankings.length > 1 && !porModo && (
               <div role="tablist" aria-label={isPt ? 'Tabelas de ranking' : 'Ranking boards'} style={{ display: 'flex', gap: 6 }}>
                 {rankings.map((r, i) => (
                   <button
@@ -81,7 +83,7 @@ export function MinigameModeGate<C = unknown>({ language, gameName, rankings, sa
               </div>
             )}
             {current && (
-              <div key={current.game} role={rankings.length > 1 ? 'tabpanel' : undefined}>
+              <div key={current.game} role={rankings.length > 1 && !porModo ? 'tabpanel' : undefined}>
                 <RankingPanel game={current.game} period={current.period} saveId={saveId} language={language} inline />
               </div>
             )}

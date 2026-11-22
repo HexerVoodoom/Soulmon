@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P0b: rankings padronizados + Torneio mais rápido (`fix/p0b-rankings`)
+> - **Feito:** Rift usa o mesmo botão "Ver ranking" (`BotaoEspecial ranking`) e o `RankingModal` do Torneio/Match-3 (saiu o botão próprio e o `headStartRef`); ranking do Match-3 abre direto na modalidade escolhida no seletor Aventura|PvP, sem abas internas. Servidor (`community.js`, `_rankIndex.js`): `opponents` e `rank&id=` leem KV em lotes paralelos de 25 (resposta idêntica; `publicProfile`/`ensurePid` só para os 3 sorteados). Bench local (N=120, 3 ms/leitura): `opponents` 530→100 ms; `rank&id` morno 822→39 ms, frio 1317→64 ms.
+> - **Pendente:** Worker `functions/` publica com o deploy do Pages (push na main); não medido em produção. **Rollback:** `git revert` do merge (só leitura, sem mudança de dado/contrato).
+
 > ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
 > - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
 > - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.

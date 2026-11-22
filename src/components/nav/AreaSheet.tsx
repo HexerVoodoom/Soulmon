@@ -33,7 +33,7 @@ export const MOLDURA_MODAL = true;
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, headStartRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -57,8 +57,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Encaixe no canto DIREITO da linha do título (ex.: o indicador da faixa do
    *  Torneio, que entra por portal). Ref-callback: o conteúdo recebe o elemento. */
   headSlotRef?: (el: HTMLElement | null) => void;
-  /** Encaixe à ESQUERDA do título (ex.: o botão "Ranking" da Fenda). */
-  headStartRef?: (el: HTMLElement | null) => void;
   /** P2 (beta-2): o ✕ mora DENTRO da folha, no canto superior esquerdo acima do título (o mesmo lugar do `ModalSheet`), e não no anel sobre a
    *  cena. Para a folha que faz parte de uma SEQUÊNCIA de `ModalSheet` (a aventura do resumo), onde o fechar não pode mudar de lugar. */
   closeInSheet?: boolean;
@@ -218,7 +216,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           <div data-area-sheet-head style={MOLDURA_MODAL
             ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
             : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
-            {headStartRef && <span ref={headStartRef} data-area-sheet-head-start style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
             {MOLDURA_MODAL
               ? <span style={{ flex: 1 }} />
               : <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>{title}</h2>}
