@@ -35,6 +35,7 @@ describe('contadores diários: servidor e app concordam na FORMA', () => {
     expect(srv.enforceArenaLadder(8, 7)).toBe(8);
     expect(srv.enforceArenaLadder('lixo', undefined)).toBe(0);
   });
+  // campo `arenaSeason` do save (22/11/2026): `save.js` o valida por `enforceArenaSeason`
   it('servidor: temporada mensal da Arena (a nova vence e pode zerar; a velha ou futura é rejeitada)', () => {
     const now = Date.parse('2026-12-02T00:00:00Z');
     for (const c of [null, 3, '2026-13', '2026-12']) expect(srv.sanitizeArenaSeason(c), String(c)).toBe(sanitizeArenaSeason(c));

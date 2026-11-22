@@ -1572,7 +1572,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),
-        ...(() => { const r = arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason); return { arenaLadder: r.ladder, arenaSeason: r.season }; })(),
+        arenaLadder: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).ladder,
+        arenaSeason: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).season,
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
