@@ -17,7 +17,7 @@ import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
-import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
+import { descritorDoElemento } from './elementoDescritoresStore';
 import { umMotivoDeTempo, motivosNoTexto, type MotivoTempo } from './motivoTempo';
 
 /** O elemento é de TEMPO (o próprio `tempo` ou qualquer combinado que o tenha como componente, de 2, 3 ou 4). */
@@ -37,7 +37,7 @@ export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
   if (!ehElementoDeTempo(id)) return undefined;
   const comp = essenceComposition(id) ?? [];
   if (comp.length > 1) {
-    const doKit = motivosNoTexto(DESCRITORES_ELEMENTO[id]?.forma ?? '');
+    const doKit = motivosNoTexto(descritorDoElemento(id)?.forma ?? '');
     if (doKit.length === 1) return doKit[0];
   }
   const outros = comp.filter(c => c !== 'tempo');
@@ -78,7 +78,7 @@ const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
 
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
 export function pistasVisuaisDoElemento(id: string): string | undefined {
-  const d = DESCRITORES_ELEMENTO[id];
+  const d = descritorDoElemento(id);
   if (!d || (!d.forma && !d.paleta)) return undefined;
   let forma = d.forma ?? '';
   const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !nomeiaBase(`${forma} ${d.paleta ?? ''}`.toLowerCase(), c));
