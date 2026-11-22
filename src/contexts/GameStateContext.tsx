@@ -65,7 +65,8 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { migrateBranchIds } from '../utils/branchMigration';
-import { normalizeSpriteLibrary, displaySprite, type SpriteLibrary } from '../utils/spriteLibrary';
+import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
+import { spriteDoPerfilUrl } from '../utils/spriteDoPerfil';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
@@ -2406,7 +2407,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         spriteUrl: (() => {
           if (isCorvo(gameState)) return null;
           const lib = spriteVisorOf(normalizeSpriteLibrary(gameState.spriteLibrary), gameState.formasAlt, gameState.formaAltEquipada);
-          const rawUrl = displaySprite(lib, gameState.evolutionStage)?.url ?? Object.values(lib.sprites)[0]?.url ?? null;
+          const rawUrl = spriteDoPerfilUrl(lib, gameState.evolutionStage, gameState.unlockedEvolutions); // última arte alcançada, nunca a 1ª do acervo
           if (!rawUrl) return null;
           const m = /(?:^https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(rawUrl.trim());
           return m ? m[1] : rawUrl;

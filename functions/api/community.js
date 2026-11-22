@@ -72,7 +72,7 @@ import {
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, ganhoPorRank } from './_honra.js';
-import { sanitizarNomeDeGuilda } from './_coop.js';
+import { sanitizarNomeDeGuilda, coopOfKey, renovarCartao } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
 import { fixarTzTreino, pickSparOpponents, bondELevelOf, grantSparHonor, readSparHonorUsed, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S, TREINO_TICKET_MATCHES } from './_treino.js';
@@ -714,6 +714,14 @@ async function handleCommunity(context) {
     profile.friends = (await getProfile(env, id))?.friends ?? profile.friends;
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    // Bosque do Clã (22/11/2026): o cartão da guilda (`coopMem`) guarda o sprite que a vista mostra e só era renovado por ação de guilda do PRÓPRIO
+    // membro; quem evoluía sem agir ficava no Bosque com a arte antiga. Sprite novo no perfil => renova o cartão (melhor esforço, aditivo: sem guilda, nada).
+    if ((profile.spriteUrl ?? null) !== (prev.spriteUrl ?? null)) {
+      try {
+        const gid = await kvOrThrow(env).get(coopOfKey(id));
+        if (gid) await renovarCartao(env, gid, id);
+      } catch { /* cartão é cache: a próxima ação de guilda o refaz */ }
+    }
     // Saiu da lista (escondeu-se ou desligou o PvP): limpa o blob. Se esta escrita falhar, o filtro de `evoFeed` na leitura já não mostra a pessoa.
     const evoSaiu = (publicHidden && prev.publicHidden !== true) || (!profile.pvpEnabled && prev.pvpEnabled === true);
     try {
