@@ -25,7 +25,7 @@ export function HexRenameModal({ kind, language, gs, atual, aviso, ocupado, onCl
   const mostraRecusa = recusa && recusa !== 'empty' && (recusa !== 'same');
   const limpo = hexRenameClean(texto);
   return (
-    <ModalSheet open title={tx(C.title, isPt)} onClose={onClose} language={language}
+    <ModalSheet open title={tx(C.title, isPt)} onClose={onClose} onBack={onClose} language={language}
       footer={pedindo && limpo ? (
         <div data-hex-rename-confirm className="sm2-hex-footer">
           <p style={{ ...sm2Text, textAlign: 'center' }}>{tx(HEX_RENAME_COPY.confirmAsk, isPt).replace('{n}', String(HEX_RENAME_COST))} <strong>{limpo}</strong></p>

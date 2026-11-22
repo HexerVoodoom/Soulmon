@@ -15,7 +15,7 @@ import { useId, useMemo, useState, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { companheiroDoEstado } from '../../utils/companheiroInvocado';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
 import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
@@ -196,8 +196,9 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
         ))}
       </div>
 
-      {/* O CÓDIGO HEX legível — avançado, fica fechado */}
-      <Disclosure label={tx(HEX_UI.code, isPt)}>
+      {/* O CÓDIGO HEX legível — sempre aberto, sem seta (dono, 22/11/2026) */}
+      <section data-hex-code-block className="sm2-hex-code-block">
+        <h3 className="sm2-conta-t">{tx(HEX_UI.code, isPt)}</h3>
         <ul data-hex-code className="sm2-hex-code">
           {HEX_SLOTS.map((s) => {
             const v = now[s];
@@ -210,7 +211,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
             );
           })}
         </ul>
-      </Disclosure>
+      </section>
 
       {renomear && (
         <HexRenameModal key={renomear} kind={renomear} language={language as Language} gs={gs} aviso={aviso} ocupado={forjando}
@@ -278,7 +279,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const selName = sel ? hexValueName(slot, selValue, isPt) : '';
 
   return (
-    <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].port, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} language={language as Language}
+    <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].port, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} onBack={onClose} language={language as Language}
       footer={sel ? (
         <div data-hex-forge-footer className="sm2-hex-footer">
           <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? refusalId : undefined}
