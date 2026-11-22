@@ -9907,6 +9907,17 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   position: relative; flex-shrink: 0; box-sizing: border-box; padding: 0; margin: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer;
   width: max(44px, calc(var(--u, 1vw) * 8)); height: max(44px, calc(var(--u, 1vw) * 8)); -webkit-tap-highlight-color: transparent;
 }
+/* FOLHA DE BAIXO (`components/ui/SheetFrame.tsx`): o mesmo quadro sem base (encosta no fundo da tela); alça desenhada por CSS (provisório). */
+.sm2-moldura-sheet { min-height: 0; }
+.sm2-moldura-sheet .sm2-moldura-modal__base { display: none; }
+.sm2-moldura-sheet::before {
+  content: ''; position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * 1.1); width: calc(var(--u) * 9); height: 3px; margin-left: calc(var(--u) * -4.5);
+  border-radius: 2px; background: rgba(227, 192, 106, .55); pointer-events: none;
+}
+.sm2-moldura-sheet .sm2-moldura-modal__conteudo { padding-bottom: 0; }
+/* Diálogo centrado (`RitualDialog`): o miolo rola e carrega o respiro/gap que o cartão liso tinha. */
+.sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
 .sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
 .sm2-moldura-modal__conteudo {
   /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */

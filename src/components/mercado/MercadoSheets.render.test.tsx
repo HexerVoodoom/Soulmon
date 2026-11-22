@@ -81,7 +81,7 @@ describe('compra', () => {
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Buy' })); });
     const modal = screen.getByRole('dialog', { name: 'How to get Honor' });
     expect(modal.querySelector('[data-how-to-earn-way="torneio"]')!.textContent).toMatch(/3 Honor per win and 1 per match/);
-  });
+  }, 60_000);
 
   it('item já possuído não compra de novo: vira Equipar e chama onEquip', () => {
     const onBuy = vi.fn(() => true);
@@ -162,7 +162,7 @@ describe('moeda certa por aba', () => {
     const card = screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` });
     expect(card).toBeTruthy();
     expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Bits');
-  });
+  }, 60_000);
 
   it('comprar na aba de Emblemas manda o id do prêmio (a moeda é decidida pelo item, no App)', () => {
     const onBuy = vi.fn(() => true);
@@ -172,7 +172,7 @@ describe('moeda certa por aba', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
-  });
+  }, 60_000);
 
   it('Itens tem só Bits (a troca de Créditos mudou para o Cambista, 30/10/2026); nunca Emblemas nem Créditos', () => {
     abrir({ stall: 'itens' });

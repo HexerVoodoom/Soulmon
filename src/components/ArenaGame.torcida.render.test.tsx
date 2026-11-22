@@ -358,7 +358,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
       const onEarn = vi.fn(() => 50);
       const onDefeated = vi.fn();
       renderWithCss(
-        <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
+        <ArenaGame seed={SEED_FIXA} evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
       );
       await act(async () => { await Promise.resolve(); await Promise.resolve(); });
       await avancar(10);
