@@ -44,8 +44,10 @@ export function itemLabel(it: JourneyItem, isPt: boolean): string {
   return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn} ×${it.qty}` : `${it.id} ×${it.qty}`;
 }
 
-export function JourneyScreen({ language, active, delta, petSprite, lastItems, collected = [], focusTaskId, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
+export function JourneyScreen({ language, active, delta, petSprite, lastItems, tetoDia = false, collected = [], focusTaskId, tasks = [], onToggleTask = () => {}, onToggleStep = () => {}, onPause, onResume, onClaim, onEnd, onClose }: {
   language: Language; active: ActiveJourney; delta: number; petSprite?: string; lastItems: JourneyItem[] | null;
+  /** O teto diário de itens da Jornada já foi atingido: os baús que faltam abrem vazios, e a tela diz isso (22/11/2026). */
+  tetoDia?: boolean;
   /** Lista de tarefas da sessão (§304): as da Home, com subtópicos; marcar usa os handlers da Home. */
   /** Tudo o que o Soulmon achou na sessão (o baú do canto) e a tarefa escolhida ao começar (§300). */
   collected?: readonly JourneyItem[]; focusTaskId?: string | null;
@@ -198,6 +200,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
         </div>
         {confirmEnd && p < 1 && <p role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Toque de novo para encerrar e voltar' : 'Tap again to end and go back'}</p>}
         {p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
+        {tetoDia && p < 1 && <p data-journey-cap role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Teto do dia atingido: os próximos baús vêm vazios. Os itens voltam amanhã.' : "Daily cap reached: the next chests will be empty. Items are back tomorrow."}</p>}
       </section>
       <FocusTaskDock language={language} tasks={tasks} focusId={focusTaskId} onToggleTask={onToggleTask} onToggleStep={onToggleStep} top={clockBottom} bottom={dockBottom} />
       {!awake && p < 1 && !paused && <p role="status" data-journey-awake-hint style={{ ...sm2Hint, position: 'absolute', zIndex: 1, top: `calc(${clockBottom}px + 4px)`, left: 16, right: 16, margin: 0, textAlign: 'center', color: '#e9f5f2' }}>{isPt ? 'Este aparelho não segura a tela acesa: mantenha-a ligada.' : "This device can't keep the screen on: keep it awake yourself."}</p>}

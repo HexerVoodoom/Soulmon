@@ -72,7 +72,7 @@ import {
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, ganhoPorRank } from './_honra.js';
-import { sanitizarNomeDeGuilda } from './_coop.js';
+import { sanitizarNomeDeGuilda, coopOfKey, renovarCartao } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
 import { fixarTzTreino, pickSparOpponents, bondELevelOf, grantSparHonor, readSparHonorUsed, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S, TREINO_TICKET_MATCHES } from './_treino.js';
@@ -223,6 +223,14 @@ async function publicProfile(env, p, extra = {}) {
  * passa por aqui, ou o teste `community.publicOptOut` reprova.
  */
 const isHidden = p => !!p && p.publicHidden === true;
+
+/** Quantas leituras de KV disparar juntas (Torneio: `opponents` e `rank`). Lotes, não tudo de uma vez: o Worker limita conexões simultâneas. */
+const LOTE_KV = 25;
+function emLotes(itens, n) {
+  const out = [];
+  for (let i = 0; i < itens.length; i += n) out.push(itens.slice(i, i + n));
+  return out;
+}
 
 async function getRank(env, season, id) {
   const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
@@ -714,6 +722,14 @@ async function handleCommunity(context) {
     profile.friends = (await getProfile(env, id))?.friends ?? profile.friends;
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    // Bosque do Clã (22/11/2026): o cartão da guilda (`coopMem`) guarda o sprite que a vista mostra e só era renovado por ação de guilda do PRÓPRIO
+    // membro; quem evoluía sem agir ficava no Bosque com a arte antiga. Sprite novo no perfil => renova o cartão (melhor esforço, aditivo: sem guilda, nada).
+    if ((profile.spriteUrl ?? null) !== (prev.spriteUrl ?? null)) {
+      try {
+        const gid = await kvOrThrow(env).get(coopOfKey(id));
+        if (gid) await renovarCartao(env, gid, id);
+      } catch { /* cartão é cache: a próxima ação de guilda o refaz */ }
+    }
     // Saiu da lista (escondeu-se ou desligou o PvP): limpa o blob. Se esta escrita falhar, o filtro de `evoFeed` na leitura já não mostra a pessoa.
     const evoSaiu = (publicHidden && prev.publicHidden !== true) || (!profile.pvpEnabled && prev.pvpEnabled === true);
     try {
@@ -1062,13 +1078,17 @@ async function handleCommunity(context) {
     const me = id;
     const pool = [];
     const adminsOpp = await adminSaveIds(env);
-    for (const k of keys) {
-      if (adminsOpp.has(k.slice('profile:'.length))) continue; // GM/admin não aparece como oponente de ranking
-      const raw = await kvOrThrow(env).get(k);
-      if (!raw) continue;
-      const p = JSON.parse(raw);
-      if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
-      pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice('profile:'.length) });
+    // Leitura dos perfis em LOTES paralelos (era um `await` por perfil, em série: até 300 round-trips de KV). A ordem de `keys` e o
+    // filtro são os mesmos; a vista pública (`publicProfile`, que pode gravar o pid na migração) só é montada para os 3 sorteados, abaixo.
+    const candidatas = keys.filter(k => !adminsOpp.has(k.slice('profile:'.length))); // GM/admin não aparece como oponente de ranking
+    for (const lote of emLotes(candidatas, LOTE_KV)) {
+      const lidos = await Promise.all(lote.map(async k => ({ k, raw: await kvOrThrow(env).get(k) })));
+      for (const { k, raw } of lidos) {
+        if (!raw) continue;
+        const p = JSON.parse(raw);
+        if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
+        pool.push({ profile: p, saveId: k.slice('profile:'.length) });
+      }
     }
     // TORNEIO = ranqueado: o servidor sorteia (aleatório) dentre quem está MAIS PERTO de quem pede no RANKING
     // DA SEASON (pontos da season, a mesma ordem que a tela mostra). Antes media por `lifetimePoints`
@@ -1105,7 +1125,8 @@ async function handleCommunity(context) {
     const publicDuel = (side) => (side ? { level: side.combatant.level } : null);
     const meSide = id ? await loadDuelSide(id) : null;
     const memoGuilda = new Map();
-    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
+    const opponents = await Promise.all(pool.slice(0, 3).map(async ({ profile, saveId }) => {
+      const pub = await publicProfile(env, profile);
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
       // Simulado: o sprite publicado em `sim:sprite:<id>` vence (o perfil pode estar defasado até o motor rodar).
       const effectiveSprite = (await spriteVivoDoSimulado(env, saveId)) ?? pub.spriteUrl ?? spriteUrl;
@@ -1496,41 +1517,49 @@ async function handleCommunity(context) {
     const allPoints = [];
     /** §321: linha → saveId dono, para o nome do clã ser lido DEPOIS do corte (só das linhas que saem), sem campo extra na linha. */
     const saveDaLinha = new Map();
-    for (const k of keys) {
+    // Linha + perfil lidos em LOTES paralelos (era um round-trip por linha, em série); o processamento segue na ordem do ranking.
+    // O lote só adianta LEITURAS: nada é gravado fora do passo sequencial abaixo, e a varredura para na mesma linha de antes.
+    const linhasLidas = async (lote) => Promise.all(lote.map(async k => {
+      const raw = await kvOrThrow(env).get(k);
+      if (!raw) return { k, raw: null, p: null };
+      return { k, raw, p: await getProfile(env, k.slice(`rank:${season}:`.length)) };
+    }));
+    for (const lote of emLotes(keys, LOTE_KV)) {
       // Lista pública cheia: no caminho do índice o resto da varredura não muda nada (só o `me` oculto, abaixo).
       if (ordenados && rows.length >= 50) break;
-      const raw = await kvOrThrow(env).get(k);
-      if (!raw) { semLinha.push(k.slice(`rank:${season}:`.length)); continue; }
-      let rec;
-      try { rec = JSON.parse(raw); } catch { continue; }
-      allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
-      // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
-      // o que ajudava a esconder que o ranking publicava a chave do save.
-      const ownerSave = k.slice(`rank:${season}:`.length);
-      const p = await getProfile(env, ownerSave);
-      if (isHidden(p)) {
-        // Fora da lista de TODOS os outros — nem a linha, nem o apelido.
-        if (meId && ownerSave === meId) {
-          meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+      for (const { k, raw, p } of await linhasLidas(lote)) {
+        if (ordenados && rows.length >= 50) break;
+        if (!raw) { semLinha.push(k.slice(`rank:${season}:`.length)); continue; }
+        let rec;
+        try { rec = JSON.parse(raw); } catch { continue; }
+        allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
+        // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
+        // o que ajudava a esconder que o ranking publicava a chave do save.
+        const ownerSave = k.slice(`rank:${season}:`.length);
+        if (isHidden(p)) {
+          // Fora da lista de TODOS os outros — nem a linha, nem o apelido.
+          if (meId && ownerSave === meId) {
+            meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+          }
+          continue;
         }
-        continue;
+        const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
+        const linha = {
+          // Sem perfil não há identidade pública: a linha do rank existe (o
+          // `rank:` dura mais que o `profile:`), mas não é endereçável.
+          // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
+          // autenticado (meId passou por denyUnlessOwner) migra o pid legado.
+          id: p ? (meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p)) : null,
+          name: p?.name || 'Anônimo', petName: petNameDoSimulado(p) || '', stage: p?.stage || 'rookie',
+          avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
+          ...(rowSpriteUrl ? { spriteUrl: rowSpriteUrl } : {}),
+          points: rec.points, wins: rec.wins, losses: rec.losses,
+          // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
+          lifetime: p?.lifetimePoints ?? 0,
+        };
+        if (p) saveDaLinha.set(linha, ownerSave);
+        rows.push(linha);
       }
-      const rowSpriteUrl = spriteUrlOrNull(p?.spriteUrl);
-      const linha = {
-        // Sem perfil não há identidade pública: a linha do rank existe (o
-        // `rank:` dura mais que o `profile:`), mas não é endereçável.
-        // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
-        // autenticado (meId passou por denyUnlessOwner) migra o pid legado.
-        id: p ? (meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p)) : null,
-        name: p?.name || 'Anônimo', petName: petNameDoSimulado(p) || '', stage: p?.stage || 'rookie',
-        avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
-        ...(rowSpriteUrl ? { spriteUrl: rowSpriteUrl } : {}),
-        points: rec.points, wins: rec.wins, losses: rec.losses,
-        // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
-        lifetime: p?.lifetimePoints ?? 0,
-      };
-      if (p) saveDaLinha.set(linha, ownerSave);
-      rows.push(linha);
     }
     rows.sort((a, b) => b.points - a.points);
     const publicas = await comGuildas(env, rows.slice(0, 50), r => saveDaLinha.get(r));

@@ -1,5 +1,5 @@
 /**
- * ELEMENTAL FUSION — a ESCOLHA DE 3 antes da partida (pedido do dono, 18/11/2026, REGISTRO §487), a regra PURA.
+ * ELEMENTAL FUSION — a ESCOLHA DE 3 antes da partida (pedido do dono, 18/11/2026, REGISTRO §488), a regra PURA.
  *
  * O Match-3 passou a funcionar como o Torneio/Arena: escolhido o modo, o jogador vê 3 opções e toca em "Lutar" numa delas.
  *  - AVENTURA: cada opção é um ELEMENTO (ícone + nome, como as linhas da Arena aberta). O time de 4 só aparece na partida: ele é

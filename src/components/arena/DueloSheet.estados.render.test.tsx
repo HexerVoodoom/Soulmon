@@ -110,4 +110,15 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card-fight]')).toHaveLength(ARENA_CHOICES));
     for (const b of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-arena-card-fight]'))) expect(b.disabled).toBe(false);
   });
+
+  it('§489: cada card é a linha compartilhada (mini-visor + "Fight" 44 px) e o sorteio mantém o custo da Arena', async () => {
+    H.load = () => Promise.resolve([]);
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, reroll: { day: '2026-10-28', count: 99 } }} language="en-US" onStart={() => {}} />);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card]')).toHaveLength(ARENA_CHOICES));
+    for (const card of container.querySelectorAll('[data-arena-card]')) {
+      expect(card.querySelector('[data-mini-glass] img')).not.toBeNull();
+      expect(card.querySelector('[data-arena-card-fight]')!.textContent).toBe('Fight');
+    }
+    expect(container.querySelector('[data-arena-reroll-label]')!.textContent).toMatch(/^Draw again · \d+ Bits$/);
+  });
 });

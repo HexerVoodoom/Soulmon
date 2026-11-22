@@ -12,7 +12,7 @@ import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import { FOCUS_ENVIRONMENTS, isFocusEnvironmentId, type FocusEnvironmentId } from '../../utils/focusExpedition';
-import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
+import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, journeyItemsCapReached, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
 import { keyEarned, loadBoardKeys, saveBoardKeys } from '../../utils/focusBoard';
 import { journeyAction, journeyStart, journeyState, type ActiveJourney, type JourneyResponse } from '../../utils/focusJourneyApi';
 import type { Ice } from '../../utils/iceScore';
@@ -71,6 +71,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   const [busy, setBusy] = useState(false);
   const [showJourney, setShowJourney] = useState(false);
   const [lastItems, setLastItems] = useState<JourneyItem[] | null>(null);
+  const [tetoDia, setTetoDia] = useState(false);
   const [doneNote, setDoneNote] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [envOpen, setEnvOpen] = useState(false);
@@ -95,6 +96,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
 
   const absorb = useCallback((r: JourneyResponse, prevGrants?: Set<string>) => {
     setDelta(r.now - Date.now());
+    if (r.ledger) setTetoDia(journeyItemsCapReached(r.ledger));
     if (r.grants && r.ledger) {
       const novos = Object.keys(r.grants).filter(k => !prevGrants?.has(k));
       if (novos.length) { const itens = novos.flatMap(k => r.grants![k]); setLastItems(itens); updateSession(s => ({ ...s, collected: mergeItems(s.collected, itens) })); }
@@ -266,7 +268,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
       {envOpen && <EnvModal isPt={isPt} current={prefs.env} onPick={id => { setPref({ env: id }); setEnvOpen(false); }} onClose={() => setEnvOpen(false)} />}
 
       {showJourney && !active && rest && <RestRoom language={language} rest={rest} petSprite={petSprite} cycles={session?.cycles ?? 1} now={nowMs} busy={busy} error={restNote} onNext={nextCycle} onFinish={finishMission} onClose={() => setShowJourney(false)} />}
-      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} collected={session?.collected ?? []} focusTaskId={session?.taskId} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
+      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} tetoDia={tetoDia} collected={session?.collected ?? []} focusTaskId={session?.taskId} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
         onPause={() => act('pause')} onResume={() => act('resume')} onClaim={() => act('claim')} onEnd={() => act('end')} onClose={() => setShowJourney(false)} />}
     </div>
   );

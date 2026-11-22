@@ -83,10 +83,17 @@ function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
 
+/**
+ * Semente FIXA da run. Sem ela cada `entrar` sorteia uma (`newDefenseSeed`), e a semente decide a família do especial do chefe, as fases
+ * dos casts e a duração da luta: em algumas sementes a rodada 5 passava dos 30 s simulados do `ate` e o teste caía (flake do CI de
+ * 18/11/2026, "vitória: as 5 rodadas…", e irmãos desta suíte). Com a semente fixa a luta inteira é determinística.
+ */
+const SEED_FIXA = 104736;
+
 async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void } = {}) {
   renderWithCss(
     <ArenaGame
-      evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
+      seed={SEED_FIXA} evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
       onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd}
     />,
   );
@@ -351,7 +358,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
       const onEarn = vi.fn(() => 50);
       const onDefeated = vi.fn();
       renderWithCss(
-        <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
+        <ArenaGame seed={SEED_FIXA} evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
       );
       await act(async () => { await Promise.resolve(); await Promise.resolve(); });
       await avancar(10);

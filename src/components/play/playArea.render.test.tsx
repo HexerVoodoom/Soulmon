@@ -44,7 +44,7 @@ vi.mock('../RPSGame', async (orig) => {
 // jogabilidade tem teste próprio em `components/mente/*.render.test.tsx`).
 const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[nome] = p; return <div data-jogo={nome} />; };
 vi.mock('../Match3Game', () => ({ Match3Game: dubleDe('match3') }));
-// §487: a lista de 3 do Match-3 vira um botão "Lutar" que devolve uma escolha do modo (a lista real tem teste próprio).
+// §488: a lista de 3 do Match-3 vira um botão "Lutar" que devolve uma escolha do modo (a lista real tem teste próprio).
 vi.mock('./Match3Escolha', () => ({ Match3Escolha: ({ mode, onFight }: { mode: 'adventure' | 'pvp'; onFight: (c: unknown) => void }) => (
   <button type="button" data-m3-escolha-lutar="0" onClick={() => onFight(mode === 'pvp' ? { mode, seed: 7, foe: { kind: 'player', level: 3 } } : { mode, element: 'fogo', seed: 7 })}>Lutar</button>
 ) }));
@@ -178,21 +178,18 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
+    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(3); // Ver ranking, Entrar no Rift, Ver o mapa
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
     // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
-    // "Ranking": no cabeçalho, à esquerda do título, outline, negrito + sublinhado
-    const head = folha.querySelector('[data-area-sheet-head]')!;
-    const rank = head.querySelector('[data-masmorra-ranking]') as HTMLButtonElement;
-    expect(rank.textContent).toBe('Ranking');
-    expect(rank.style.fontWeight).toBe('700');
-    expect(rank.style.textDecoration).toBe('underline');
-    expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
-    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título vai na placa da moldura; o Ranking pousa à esquerda dela
+    // "Ver ranking": o mesmo botão do Torneio (BotaoEspecial ranking), no corpo da folha; sem CSS próprio
+    const rank = folha.querySelector('[data-masmorra] [data-masmorra-ranking]') as HTMLButtonElement;
+    expect(rank.textContent).toBe('Ver ranking');
+    expect(rank.getAttribute('data-especial-variant')).toBe('ranking');
+    expect(folha.querySelector('[data-area-sheet-head-start]')).toBeNull();
   });
 
   it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {
@@ -294,7 +291,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
-    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
+    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('See ranking');
     expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
     fireEvent.click(container.querySelector('[data-moldura-info] [data-info-tip]')!);
     expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
@@ -532,7 +529,7 @@ describe('Salão — o roteamento do Elemental Fusion nunca cai na Soul Barrage 
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     fireEvent.click(await achar(container, '[data-match3-start]'));
     fireEvent.click(await achar(container, `[data-gate-pick="${btn}"]`));
-    // §487: o botão de modo só escolhe a lista; quem abre o jogo é o "Lutar" de uma linha.
+    // §488: o botão de modo só escolhe a lista; quem abre o jogo é o "Lutar" de uma linha.
     expect(container.querySelector('[data-jogo="match3"]')).toBeNull();
     fireEvent.click(await achar(container, '[data-m3-escolha-lutar="0"]'));
     await achar(container, '[data-jogo="match3"]');

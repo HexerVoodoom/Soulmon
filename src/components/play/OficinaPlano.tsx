@@ -105,6 +105,8 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
   }, [dumpEnd]);
 
   const pool = tasks.filter(t => !t.completed).slice(0, MAX_POOL);
+  /* Prioridades é só de TAREFA (hábito não é tarefa): o pool próprio não divide o teto com os hábitos, que vêm na frente da lista. */
+  const prioPool = tasks.filter(t => !t.completed && t.kind !== 'habit').slice(0, MAX_POOL);
   const set = <K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) => setDraft(p => ({ ...p, [key]: value }));
   useEffect(() => { if (missing && missingToSave(draft) !== missing) setMissing(missingToSave(draft)); }, [draft, missing]);
   const meta = STEPS[step];
@@ -121,6 +123,7 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
     if (why === 'name') rootRef.current?.querySelector('input')?.focus();
   };
   const habitChip = (t: PlanTask) => (t.kind === 'habit' ? <TagChips tags={['habit']} isPt={isPt} /> : null);
+  const emptyPrio = <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Você não tem tarefas abertas hoje. Pode pular esta etapa.' : 'You have no open tasks today. You can skip this step.'}</p>;
   const empty = <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Você não tem tarefas nem hábitos abertos hoje. Pode pular esta etapa.' : 'You have no open tasks or habits today. You can skip this step.'}</p>;
 
   const environmentPicker = <fieldset data-oficina-environment style={{ display: 'grid', gap: 8, margin: 0, padding: 0, border: 0 }}>
@@ -175,7 +178,7 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
           {pool.map(t => <PickRow key={t.id} role="checkbox" data-oficina-pick={t.id} checked={draft.twoMin.includes(t.id)} onClick={() => setDraft(d => toggleTwoMin(d, t.id))} habit={habitChip(t)}>{t.name}</PickRow>)}
         </div>)}
 
-        {step === 'eisenhower' && (pool.filter(t => t.kind !== 'habit').length === 0 ? empty : <OficinaPrioridades language={language} tasks={pool} onSetIce={onSetIce} onComplete={onCompleteTask} />)}
+        {step === 'eisenhower' && (prioPool.length === 0 ? emptyPrio : <OficinaPrioridades language={language} tasks={prioPool} onSetIce={onSetIce} onComplete={onCompleteTask} />)}
 
         {step === 'sapo' && (pool.length === 0 ? empty : <div data-oficina-frog role="radiogroup" aria-label={isPt ? 'A tarefa mais difícil' : 'The hardest task'} style={{ display: 'grid', gap: 6 }}>
           {pool.map(t => <PickRow key={t.id} role="radio" data-oficina-pick={t.id} checked={draft.frog === t.id} onClick={() => setDraft(d => setFrog(d, t.id))} habit={habitChip(t)}>{t.name}</PickRow>)}
@@ -221,7 +224,7 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
       {only && keyMissing && <p role="alert" data-oficina-key-missing style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Faça a técnica acima e toque de novo.' : 'Do the technique above, then tap again.'}</p>}
       {only ? <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <button type="button" data-oficina-cancel-key onClick={onCancel} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
-        {pool.length === 0 && ['dois-minutos', 'eisenhower', 'sapo'].includes(step) && <button type="button" data-oficina-no-tasks onClick={() => setKeyMissing(!only.onKey(draft, { noTasks: true, dumpDone, classified }))} style={softLink}>{isPt ? 'Não tenho tarefas agora' : 'No tasks right now'}</button>}
+        {(step === 'eisenhower' ? prioPool.length === 0 : pool.length === 0 && ['dois-minutos', 'sapo'].includes(step)) && <button type="button" data-oficina-no-tasks onClick={() => setKeyMissing(!only.onKey(draft, { noTasks: true, dumpDone, classified }))} style={softLink}>{isPt ? 'Não tenho tarefas agora' : 'No tasks right now'}</button>}
         <button type="button" data-oficina-take-key onClick={() => setKeyMissing(!only.onKey(draft, { noTasks: false, dumpDone, classified }))} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Pegar a chave' : 'Take the key'}</button>
       </footer> : <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {step !== 'preparar' && <button type="button" data-oficina-back onClick={() => setStep(prevStep(step))} style={softLink}>{isPt ? 'Voltar' : 'Back'}</button>}
