@@ -10,6 +10,7 @@ import { MiniGlass } from '../ui/MiniGlass';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
 import { EnergyCost } from '../ui/EnergyCost';
+import { BitsAmount } from '../ui/BitsAmount';
 import { BotaoEspecial } from '../ui/BotaoEspecial';
 import { DUEL_INVITE_ENERGY_COST, podeComprarConvites } from '../../utils/duelInvites';
 import { bitsCategoryCap, minigameBitsCategoryToday } from '../../utils/currencies';
@@ -128,7 +129,7 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
         );
       })}
       <SortearNovos
-        buttonProps={{ 'data-arena-reroll': true }}
+        buttonProps={{ 'data-arena-reroll': true, 'data-arena-reroll-kind': free > 0 ? 'free' : 'paid' }}
         disabled={!canReroll}
         onClick={() => { if (canReroll) arena.onReroll(); }}
         ariaLabel={free > 0 ? (isPt ? `Sortear outros ${ARENA_CHOICES} adversários, ${free} grátis` : `Draw ${ARENA_CHOICES} other opponents, ${free} free`) : (isPt ? `Sortear outros ${ARENA_CHOICES} adversários por ${cost} Bits` : `Draw ${ARENA_CHOICES} other opponents for ${cost} Bits`)}
@@ -136,7 +137,7 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
           <span data-arena-reroll-label>
             {free > 0
               ? (isPt ? `Sortear de novo · ${free} grátis` : `Draw again · ${free} free left`)
-              : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
+              : (<>{isPt ? 'Sortear de novo · ' : 'Draw again · '}<BitsAmount value={cost} size={14} /></>)}
           </span>
         )}
       />
