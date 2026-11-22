@@ -38,7 +38,7 @@ Levantamento (código, 22/11/2026): **~718 `<button` em 223 arquivos .tsx**; 139
 | **CTA principal** (a ação que a pessoa veio fazer) | `CtaButton` (`tone` padrao/acao, `width` full/auto, `fillMs`): moldura de cobre 9-slice, um arquivo por estado (`btn-cta`, `-hover`, `-press`, `-off`) | altura ≥ 44, texto `--sm2-text-*` | **Sim** |
 | CTA de texto (secundário ao lado de CTA) | `CtaTextButton`: só texto, empilhado abaixo | — | n/a (sem fundo) |
 | **Ação especial de combate/ranking** | `BotaoEspecial` `variant` dourado/pve/pvp/ranking (`btn-especial\|pve\|pvp\|ranking` + `-off`/`-press`) | full/auto | **Sim** |
-| **Padrão de formulário/modal** (primary, outline, ghost, quiet) | `sm2Button(variant, disabled, size)` em `FormKit.tsx`; classes `sm2-kit-btn-{primary,outline,quiet,ghost}-{sm,md,lg}` | sm 44 · md 48 · lg 56 | **Não** (só CSS; decisão: modais pequenos não usam CtaButton, §316c) |
+| **Padrão de formulário/modal** (primary, outline, ghost, quiet) | `sm2Button(variant, disabled, size)` em `FormKit.tsx`; classes `sm2-kit-btn-{primary,outline,quiet,ghost}-{sm,md,lg}` | sm 44 · md 48 · lg 56 | **Não** (só CSS; §316c revogado pelo dono em 22/11: vai ganhar arte própria (P6)) |
 | Escolha de linha / sorteio | `EscolhaLinha`, `SortearNovos` (Torneio, Match-3; Arena no PR #1093) | — | Não |
 | Voltar / fechar | `BackArrow`, `BackCircleButton`, `ChevronAcao`; ✕ da moldura de aço (`sm2-moldura-aco__fechar`, sobre o disco da arte) | 44 | Glifo; ✕ de aço usa o disco da arte |
 | Ícone de ação / nav | `sm-icon-action-btn`, `sm-nav-btn`, `NavGlyphs` | 44 | Parcial (`icones-ui`) |
@@ -92,7 +92,7 @@ Alvo ≥ 44 (`alvo44.test.tsx`), foco visível em todo botão, `aria-label` em b
 
 ## 7. Lacunas encontradas (auditoria 22/11/2026)
 1. ~25 classes de botão locais sem categoria nem arte; migrar para `sm2Button`/`CtaButton`.
-2. Categoria "padrão de modal" (`sm2Button`) só tem CSS; decidir se recebe arte.
+2. Categoria "padrão de modal" (`sm2Button`) só tem CSS; vai receber arte (P6); componente e regra de uso ajustam quando a arte chegar.
 3. Estados ativo/inativo/bloqueado/selecionado de card sem token/classe única.
 4. Pads de moldura em 5 conjuntos; sem teste de contrato de margem (Fase 2).
 5. Dois sistemas de tokens convivem (`--sm-*` legado → `--sm2-*`).
