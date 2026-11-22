@@ -76,7 +76,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-humor', event: 'humor', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
   // ^ 11/11/2026: ao tocar, leva à CONVERSA com o Soulmon (`dailyTarget` → 'chat'); QUALQUER mensagem enviada a ele conta (`contarDiaria('humor')`).
   { id: 'd-sono', event: 'sono', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
-  { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market' },
+  { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market', retired: true },
   // 11/11/2026: "Visite a criatura de um amigo" ninguém sabia cumprir; vira ENVIAR UM PRESENTE (mesma tela dos amigos, mesmo prédio, mesmo material,
   // alvo 1). Mesma posição no catálogo = mesmo sorteio do dia. O id/evento antigo (`d-amigo`/`amigo`) fica aposentado no fim, só para o save.
   { id: 'd-presente', event: 'presente', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Envie um presente a um amigo', descEn: 'Send a friend a gift' },

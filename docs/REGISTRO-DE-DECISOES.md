@@ -6612,6 +6612,12 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Passeio (9.1) — REVOGA o §66 no que toca ao nome:** o texto "From Yesterday's Adventure / Da aventura de ontem" sai de TODOS os lugares (folha do Passeio, passo do resumo do dia e cena do Passeio, que passam a se chamar "Stroll / Passeio"). O conteúdo do achado (missão, destino, o que o Soulmon encontrou) permanece; só perde o rótulo.
 - **Rollback:** só texto/estrutura de tela, sem save nem servidor; reverter o commit basta.
 
+## §493 — Mercado só tem missão SEMANAL (22/11/2026, dono; revoga em parte os §52 e §314)
+
+- **Decisão (6):** o Mercado não passa missão diária. `d-mercado` ganha `retired: true` (id estável; sai do sorteio). As diárias de NPC do Mercado (`n-lamela` compra, `n-snapjaw` prato, `n-medra` conquista) saem do rodízio e entram em `NPCS_SEM_MISSAO` com o motivo, como Lasca e Panora já estavam. O prato segue como semanal `cook-dish`; decoração e cenário como `buy-decor`/`buy-backdrop`. As demais diárias (jogos, pet, arena, torneio…) ficam como estão.
+- **Lacuna declarada:** "comprar um item" e "resgatar conquista" ainda não têm versão semanal (exigem evento novo); fica para decisão do dono.
+- **Compat:** `sanitizeDailyMissions` já descarta id/evento desconhecido (um save com `n-lamela` ou contagem `compra` é saneado sem quebrar). Rollback: reverter o commit.
+
 ## §492 — Power Reducer tira 6 pontos de um caminho e Exchanger com hierarquia recompensa × preço (22/11/2026, dono)
 
 - **Decisão (7.1):** `REDUCE_CHIP_BOOST` passa de 3 para 6 (Poder/Harmonia/Benevolência). Não afeta tarefas nem progresso de evolução (o gauge é por esforço); só ajusta, de forma limitada, qual caminho evolui (limite PRÓPRIO de 3 por estágio, preço 360 e clamp em 0 inalterados). Não viola G-01. Chips já na pastinha passam a valer −6 (mesma chave). Arte própria dos chips: fila de arte.
