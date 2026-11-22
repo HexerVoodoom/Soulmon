@@ -6611,3 +6611,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decoration (7.2):** saem a linha "Decoration rule", o título "From the grove" e o título "Of the quarter". "Já são seus / Already yours" fica no topo; as peças do Bosque vêm logo abaixo dele, depois a lista à venda e, por último, o conjunto da assinatura (sem título; só `aria-label` neutro). A regra de quantas peças cabem (`decorRules`) segue valendo na equipagem, só não tem mais texto fixo na loja.
 - **Passeio (9.1) — REVOGA o §66 no que toca ao nome:** o texto "From Yesterday's Adventure / Da aventura de ontem" sai de TODOS os lugares (folha do Passeio, passo do resumo do dia e cena do Passeio, que passam a se chamar "Stroll / Passeio"). O conteúdo do achado (missão, destino, o que o Soulmon encontrou) permanece; só perde o rótulo.
 - **Rollback:** só texto/estrutura de tela, sem save nem servidor; reverter o commit basta.
+
+## §492 — Power Reducer tira 6 pontos de um caminho e Exchanger com hierarquia recompensa × preço (22/11/2026, dono)
+
+- **Decisão (7.1):** `REDUCE_CHIP_BOOST` passa de 3 para 6 (Poder/Harmonia/Benevolência). Não afeta tarefas nem progresso de evolução (o gauge é por esforço); só ajusta, de forma limitada, qual caminho evolui (limite PRÓPRIO de 3 por estágio, preço 360 e clamp em 0 inalterados). Não viola G-01. Chips já na pastinha passam a valer −6 (mesma chave). Arte própria dos chips: fila de arte.
+- **Exchanger (7.4):** a carta do pacote põe a RECOMPENSA (Bits) em destaque e o preço em Créditos menor e apagado logo abaixo; há um slot de arte (`assets/soulmon/bits-packs/<id>.webp`, `bits-200|500|1000` = Pouch/Purse/Chest) que só desenha se o arquivo existir. Ids e `aria-label` intactos.
+- **Rollback:** reverter o commit (sem save/servidor; o valor é lido da constante).
