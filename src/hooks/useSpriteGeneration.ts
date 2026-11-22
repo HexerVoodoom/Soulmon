@@ -170,9 +170,13 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           // pedida — é o que a geração incremental compra de graça (§8.6).
           // Na regeneração manual (`opts.regenerate`) ou quando a forma gerada é a PRÓPRIA forma atual,
           // não envia o sprite atual como referência (senão o provedor copia o desenho antigo).
-          const anterior = opts.regenerate || formId === argsRef.current.trigger.evolutionStage
+          // 22/11/2026: a referência é a arte da forma EQUIPADA (`currentKey`: original ou `forma@elemento`); sem arte nela, a da original.
+          // Só muda QUAL url segue em `referenceImageUrls` — dados do acervo, chave do cristal (§404) e campos do pedido ficam como estavam.
+          const { evolutionStage, currentKey } = argsRef.current.trigger;
+          const lib = argsRef.current.library;
+          const anterior = opts.regenerate || formId === evolutionStage || formId === currentKey
             ? null
-            : displaySprite(argsRef.current.library, argsRef.current.trigger.evolutionStage);
+            : (currentKey ? displaySprite(lib, currentKey) : null) ?? displaySprite(lib, evolutionStage);
           const { image, provider } = await requestSprite(stage.imagePrompt, {
             promptFallback: stage.imagePromptFallback,
             formId,

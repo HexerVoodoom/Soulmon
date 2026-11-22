@@ -120,6 +120,9 @@ export const emptyLedger = (day: string): JourneyLedger => ({ day, items: 0, ess
 /** O que o servidor já pagou no dia, por recibo (o cliente credita o que ainda não está no save). */
 export type JourneyGrants = Record<string, JourneyItem[]>;
 
+/** O teto diário de itens já foi usado? Daí em diante os baús abrem vazios (`capLoot` corta em silêncio): a UI avisa em vez de mostrar baú vazio. */
+export const journeyItemsCapReached = (ledger: Pick<JourneyLedger, 'items'> | null | undefined): boolean => !!ledger && ledger.items >= JOURNEY_ITEMS_DAILY_CAP;
+
 /** Aplica os tetos do dia: corta o que passa e devolve o que entrou + o razão novo. Idempotente por `claimId`. */
 export function capLoot(ledger: JourneyLedger, claimId: string, items: readonly JourneyItem[]): { granted: JourneyItem[]; ledger: JourneyLedger } {
   if (ledger.claims.includes(claimId)) return { granted: [], ledger };
