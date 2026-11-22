@@ -274,6 +274,11 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} category="minigames" hideTotal />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
+          <InfoTipSection title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}>
+            {isPt
+              ? `Alinhe 3 ou mais peças: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · ${M3_POINTS_PER_BIT} pontos = 1 Bit, até ${M3C_MAX_BITS}`
+              : `Line up 3+ tiles: each line strikes the rift team · the round ends when one side steps back · ${M3_POINTS_PER_BIT} points = 1 Bit, up to ${M3C_MAX_BITS}`}
+          </InfoTipSection>
           <InfoTipSection title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}>
             {isPt
               ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
@@ -284,19 +289,21 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}>
+          <InfoTipSection title={isPt ? 'Chuva de Almas' : 'Soul Barrage'} last>
             {isPt
               ? `Arraste (ou use as setas) para desviar dos tiros: o seu Soulmon atira sozinho · cada ${BARRAGE_POINTS_PER_BIT} pontos vira 1 Bit`
               : `Drag (or use the arrow keys) to dodge the shots: your Soulmon fires on its own · every ${BARRAGE_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'} last>
-            {isPt
-              ? `Alinhe 3 ou mais peças: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · ${M3_POINTS_PER_BIT} pontos = 1 Bit, até ${M3C_MAX_BITS}`
-              : `Line up 3+ tiles: each line strikes the rift team · the round ends when one side steps back · ${M3_POINTS_PER_BIT} points = 1 Bit, up to ${M3C_MAX_BITS}`}
-          </InfoTipSection>
         </ModalInfo>
       </div>
       <GameCardGrid>
+        <GameCard
+          id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
+          title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
+          reward={ganho(language).match3}
+          onPress={() => onStart('match3')}
+          badges={<Match3Badges language={language} />}
+        />
         <GameCard
           id="dino" icon={iconCorrida} dataAttrs={{ 'data-dino-start': 'true' }}
           title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
@@ -309,13 +316,6 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onB
           title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
           reward={ganho(language).ppt}
           onPress={() => onStart('ppt')}
-        />
-        <GameCard
-          id="match3" icon={iconCombina} dataAttrs={{ 'data-match3-start': 'true' }}
-          title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
-          reward={ganho(language).match3}
-          onPress={() => onStart('match3')}
-          badges={<Match3Badges language={language} />}
         />
         <GameCard
           id="barrage" icon={iconCorrida} dataAttrs={{ 'data-barrage-open': 'true' }}
