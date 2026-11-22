@@ -25,8 +25,8 @@
  *
  * ⚠️ O corvo não é privilégio de jogo: não mexe em HP, energia, atributo,
  * requisito nem teto. Troca só a PELE, exatamente como `handleUpgradeRevealed`.
- * Quem o recebe é decidido fora daqui (`useAdmin()`, vindo só do servidor);
- * `isCorvo` só vira true por `adoptCorvo`.
+ * Quem o recebe sozinho: `shouldAutoAdoptCorvo` (abaixo) — só a conta dev do dono,
+ * nunca por cima de criatura real. `isCorvo` só vira true por `adoptCorvo`.
  *
  * O que `adoptCorvo` PRESERVA e o que SUBSTITUI (C1, L2 de 29/09/2026 — o texto
  * antigo dizia "o corvo não apaga nada", e isso era falso):
@@ -124,6 +124,34 @@ export interface CorvoCarrier {
 /** True só quando o save foi marcado por `adoptCorvo`. */
 export function isCorvo(state: CorvoCarrier | null | undefined): boolean {
   return state?.soulmonMeta?.creature === CORVO_LINE;
+}
+
+// ── Quem recebe o corvo sozinho (incidente 18/11/2026) ───────────────────────
+// O corvo NÃO é do "admin": é da conta de teste/dev do dono. Antes a auto-adoção
+// valia para todo `useAdmin()`, e cadastrar a conta de JOGO do dono em
+// `ADMIN_EMAILS` (para sumir dos rankings) trocou o Soulmon real dele pelo corvo.
+// Agora a dona do corvo é identificada pelo `saveId` (hash do e-mail normalizado,
+// `emailToSaveId` — o e-mail não vai no bundle) e a adoção automática NUNCA
+// passa por cima de uma criatura real: só pega save vazio ou de demo.
+
+/** saveIds (hash `soulmon:<email>`) cuja criatura automática é o corvo. Só a conta dev do dono. */
+export const CORVO_OWNER_SAVE_IDS: ReadonlySet<string> = new Set(['b76bcd8db47c0a3afd5be2e0a64341a9']);
+
+export function isCorvoOwnerSaveId(saveId: string | null | undefined): boolean {
+  return typeof saveId === 'string' && CORVO_OWNER_SAVE_IDS.has(saveId);
+}
+
+/** O save já tem uma criatura do oráculo (não demo, com estágios)? Essa nunca é trocada sozinha. */
+export function hasRealSoulmon(state: (CorvoCarrier & { soulmonStages?: unknown[] }) | null | undefined): boolean {
+  return !!state && !state.demoCharacterId && (state.soulmonStages?.length ?? 0) > 0;
+}
+
+/** A auto-adoção do corvo pode rodar? Só para a dona do corvo, só sobre save vazio/demo. */
+export function shouldAutoAdoptCorvo(
+  state: (CorvoCarrier & { soulmonStages?: unknown[] }) | null | undefined,
+  saveId: string | null | undefined,
+): boolean {
+  return isCorvoOwnerSaveId(saveId) && !isCorvo(state) && !hasRealSoulmon(state);
 }
 
 /**
