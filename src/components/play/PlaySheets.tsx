@@ -12,6 +12,7 @@ import { RankingModal } from '../RankingModal';
 import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../../utils/dungeonBase';
+import { riftCurrentLayer } from '../../utils/riftMap';
 import { DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER, sanitizeDepthRecord } from '../../utils/dungeonIdle';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { useRiftTalents } from '../../contexts/useTalentBonus';
@@ -141,6 +142,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, hea
   const rift = useRiftTalents();
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
+  const currentLayer = riftCurrentLayer(gs);
   const [rankOpen, setRankOpen] = useState(false);
   const rankBtn = saveId ? (
     <button type="button" data-masmorra-ranking onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false, 'sm'), fontWeight: 700, textDecoration: 'underline' }}>
@@ -176,6 +178,11 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, hea
           />
         </ul>
       </ModalInfo>
+      {/* P3 9.3b (22/11/2026): a camada ATUAL (onde o "Entrar no Rift" retoma) em destaque; o recorde (a mais funda) fica abaixo, discreto. Arte própria da camada: fila de arte (slot com fallback). */}
+      <div data-masmorra-current-layer style={{ ...box, flex: 'none', borderColor: 'var(--sm2-primary)', alignItems: 'center', textAlign: 'center', padding: '14px 12px' }}>
+        <span className="sm2-num" style={{ ...boxValue, fontSize: 'var(--sm2-text-xl, 28px)', color: 'var(--sm2-primary-ink)' }}>{isPt ? `Camada ${currentLayer}` : `Layer ${currentLayer}`}</span>
+        <p style={boxLabel}>{isPt ? 'camada atual' : 'current layer'}</p>
+      </div>
       {(deepest > 0 || best > 0) && (
         <div style={{ display: 'flex', gap: 8 }}>
           {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}

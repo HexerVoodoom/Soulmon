@@ -216,7 +216,7 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   });
 });
 
-describe('4.3 — sem título 'From Yesterday’s Adventure' (P3 9.1), `New` dourado, vínculo com o Passeio de ontem', () => {
+describe('4.3 — sem título de aventura (P3 9.1), `New` dourado, vínculo com o Passeio de ontem', () => {
   const irAteAventura = () => { proximo(); };
 
   it('título EN/PT; a folha é independente e sem textos de tarefa', () => {
