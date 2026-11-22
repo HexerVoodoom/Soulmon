@@ -4,8 +4,12 @@
 export const JOURNEY_KEYS = ['bancada', 'relampago', 'quadrantes', 'brejo', 'elo', 'pena'];
 export const JOURNEY_MODES = { p25: { focusMin: 25, chests: 6 }, p50: { focusMin: 50, chests: 10 } };
 export const SPECIAL_CHANCE = 0.4;
-export const JOURNEY_ITEMS_DAILY_CAP = 16;
+export const JOURNEY_ITEMS_DAILY_CAP = 28;
 export const JOURNEY_ESSENCES_DAILY_CAP = 8;
+export const JOURNEY_SESSION_ITEMS_CAP = { p25: 6, p50: 10 };
+export const ESSENCE_BY_ELEMENTS = {
+  1: { common: 0.10, special: 1 }, 2: { common: 0.15, special: 1 }, 3: { common: 0.20, special: 2 }, 4: { common: 0.25, special: 2 },
+};
 export const JOURNEY_COMPLETIONS_REWARDED = 4;
 /** Focos extras por dia (depois dos 4 recompensados) que ainda dão um item simples (§302). */
 export const JOURNEY_EXTRA_COMPLETIONS = 3;
@@ -52,22 +56,23 @@ export function journeyProgress(c, now) {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 60_000));
 }
 
-export function chestLoot(seed, chest, keys, env) {
+export function chestLoot(seed, chest, keys, env, elems = 1) {
+  const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1))];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 0x9e3779b1)) >>> 0);
   const mats = ENV_MATERIALS[env];
   const pick = (a) => a[Math.min(a.length - 1, Math.floor(rng() * a.length))];
   const mat = () => ({ kind: 'material', id: pick(mats), qty: 1 });
   const food = () => ({ kind: 'food', id: pick(JOURNEY_FOODS), qty: 1 });
   const ess = (qty) => ({ kind: 'essence', id: ENV_ELEMENT[env], qty });
-  const common = () => [Math.floor(rng() * 5) < 4 ? mat() : food()];
+  const common = () => (rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()]);
   if (chest.type === 'common' || !keys.includes(chest.type)) return common();
   switch (chest.type) {
-    case 'bancada': return [food(), food()];
-    case 'relampago': return [mat(), mat()];
-    case 'quadrantes': { const a = mat(); let b = mat(); for (let i = 0; i < 4 && b.id === a.id; i++) b = mat(); return [a, b]; }
-    case 'brejo': return [ess(2)];
-    case 'elo': return [mat(), food()];
-    case 'pena': return [ess(1), mat()];
+    case 'bancada': return [food()];
+    case 'relampago': return [mat()];
+    case 'quadrantes': return [mat()];
+    case 'brejo': return [ess(tier.special)];
+    case 'elo': return [mat()];
+    case 'pena': return [mat()];
     default: return common();
   }
 }

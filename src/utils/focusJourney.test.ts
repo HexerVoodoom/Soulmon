@@ -32,7 +32,7 @@ describe('jornada do foco (§247)', () => {
     const sem = chestLoot(7, chest, [], 'forest');
     expect(sem).toHaveLength(1);
     expect(sem[0].kind).not.toBe('essence');
-    expect(chestLoot(7, chest, ['brejo'], 'forest')).toEqual([{ kind: 'essence', id: 'planta', qty: 2 }]);
+    expect(chestLoot(7, chest, ['brejo'], 'forest')).toEqual([{ kind: 'essence', id: 'planta', qty: 1 }]);
     expect(chestLoot(7, chest, ['brejo'], 'forest')).toEqual(chestLoot(7, chest, ['brejo'], 'forest'));
   });
   it('material do baú é sempre do cenário', () => {
@@ -48,7 +48,7 @@ describe('jornada do foco (§247)', () => {
   });
   it('tetos do dia cortam o excesso e o mesmo recibo não paga duas vezes', () => {
     let l = emptyLedger('2026-11-08');
-    for (let i = 0; i < 20; i++) l = capLoot(l, `c${i}`, [{ kind: 'food', id: '🍎', qty: 1 }, { kind: 'essence', id: 'agua', qty: 1 }]).ledger;
+    for (let i = 0; i < JOURNEY_ITEMS_DAILY_CAP + 2; i++) l = capLoot(l, `c${i}`, [{ kind: 'food', id: '🍎', qty: 1 }, { kind: 'essence', id: 'agua', qty: 1 }]).ledger;
     expect(l.items).toBe(JOURNEY_ITEMS_DAILY_CAP);
     expect(l.ess).toBe(JOURNEY_ESSENCES_DAILY_CAP);
     expect(capLoot(l, 'c3', [{ kind: 'food', id: '🍎', qty: 1 }]).granted).toEqual([]);

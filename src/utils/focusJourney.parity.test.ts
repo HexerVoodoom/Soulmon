@@ -11,11 +11,13 @@ describe('jornada: cliente e servidor pagam igual (§247)', () => {
     expect(S.JOURNEY_FOODS).toEqual([...C.JOURNEY_FOODS]);
     expect(S.ENV_ELEMENT).toEqual(C.ENV_ELEMENT);
     for (const e of FOCUS_ENVIRONMENTS) expect(S.ENV_MATERIALS[e.id]).toEqual([...e.materials]);
+    expect(S.JOURNEY_SESSION_ITEMS_CAP).toEqual(C.JOURNEY_SESSION_ITEMS_CAP);
+    expect(S.ESSENCE_BY_ELEMENTS).toEqual(C.ESSENCE_BY_ELEMENTS);
     for (const k of ['JOURNEY_ITEMS_DAILY_CAP', 'JOURNEY_ESSENCES_DAILY_CAP', 'JOURNEY_COMPLETIONS_REWARDED', 'JOURNEY_MAX_PAUSES', 'JOURNEY_MAX_PAUSED_MS', 'SPECIAL_CHANCE'] as const) expect(S[k]).toBe(C[k]);
   });
   it('focos extras (§302): do 5º ao 7º do dia dá UM item simples, sem Bits; do 8º em diante, nada (servidor e cliente)', () => {
     for (const M of [S, C]) for (let seed = 0; seed < 50; seed++) {
-      for (const n of [5, 6, 7]) { const l = M.completionLoot(seed, n, 'forest'); expect(l).toHaveLength(1); expect(['material', 'food']).toContain(l[0].kind); }
+      for (const n of [5, 6, 7]) { const l = M.completionLoot(seed, n, 'forest'); expect(l).toHaveLength(1); expect(['material', 'food', 'essence']).toContain(l[0].kind); }
       expect(M.completionLoot(seed, 8, 'forest')).toEqual([]);
     }
   });
@@ -25,7 +27,7 @@ describe('jornada: cliente e servidor pagam igual (§247)', () => {
       expect(S.journeyChests(s, mode)).toEqual(chests);
       const env = FOCUS_ENVIRONMENTS[s % FOCUS_ENVIRONMENTS.length].id;
       const keys = C.JOURNEY_KEYS.filter((_, i) => (s >> i) & 1);
-      for (const ch of chests) expect(S.chestLoot(s, ch, keys, env)).toEqual(C.chestLoot(s, ch, keys, env));
+      for (const ch of chests) for (const el of [1, 2, 3, 4]) expect(S.chestLoot(s, ch, keys, env, el)).toEqual(C.chestLoot(s, ch, keys, env, el));
       for (const n of [1, 2, 5, 7, 8]) expect(S.completionLoot(s, n, env)).toEqual(C.completionLoot(s, n, env));
     }
   });
