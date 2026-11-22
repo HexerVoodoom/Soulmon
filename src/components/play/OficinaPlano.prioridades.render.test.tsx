@@ -6,7 +6,7 @@ import { OficinaPlano } from './OficinaPlano';
 import { emptyDraft, type PlanTask } from '../../utils/focoSessao';
 
 afterEach(cleanup);
-const montar = (tasks: PlanTask[], language: 'pt-BR' | 'en' = 'pt-BR') => render(
+const montar = (tasks: PlanTask[], language: 'pt-BR' | 'en-US' = 'pt-BR') => render(
   <OficinaPlano language={language} tasks={tasks} initial={emptyDraft()} onSave={vi.fn()} onCancel={vi.fn()}
     only={{ step: 'eisenhower', onKey: () => true }} />);
 const texto = () => document.body.textContent ?? '';
@@ -26,7 +26,7 @@ describe('Oficina — passo Prioridades, estado vazio', () => {
     expect(document.querySelector('[data-oficina-prio]')).toBeNull();
   });
   it('EN: aviso próprio, sem citar habits', () => {
-    montar([hab('a')], 'en');
+    montar([hab('a')], 'en-US');
     expect(texto()).toContain('You have no open tasks today. You can skip this step.');
     expect(texto()).not.toMatch(/habit/i);
   });
