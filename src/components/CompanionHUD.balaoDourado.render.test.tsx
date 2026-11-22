@@ -129,6 +129,18 @@ describe('balão dourado do CompanionHUD', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
       expect(ign).toHaveBeenCalledTimes(1);
     });
+    it('a saudação de abertura (~0,7 s) NÃO tira o balão da tela: ele fica os 5 s e a fala espera a vez', async () => {
+      const ign = vi.fn();
+      const { container, rerender } = renderWithCss(<CompanionHUD {...base} balaoDourado={comTempo('grove')} onBalaoDourado={() => {}} onBalaoIgnorado={ign} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1500); });
+      expect(container.querySelector('[data-pet-gold-bubble="grove"]')).not.toBeNull();
+      expect(container.querySelector('[data-pet-bubble]')).toBeNull();
+      await act(async () => { await vi.advanceTimersByTimeAsync(3600); });
+      expect(ign).toHaveBeenCalledTimes(1);
+      rerender(<CompanionHUD {...base} balaoDourado={null} onBalaoDourado={() => {}} onBalaoIgnorado={ign} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(50); });
+      expect(container.querySelector('[data-pet-bubble]')).not.toBeNull(); // a fala adiada entra quando o balão sai
+    });
     it('sem `tempoMs` (dica dourada, que tem relógio próprio) o HUD nunca avisa ignorado', async () => {
       const ign = vi.fn();
       renderWithCss(<CompanionHUD {...base} balaoDourado={dourado()} onBalaoDourado={() => {}} onBalaoIgnorado={ign} />);

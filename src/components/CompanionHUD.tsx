@@ -504,6 +504,12 @@ export const CompanionHUD = memo(function CompanionHUD({
   const goldIgnoradoRef = useRef(onBalaoIgnorado);
   goldIgnoradoRef.current = onBalaoIgnorado;
   const goldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* §383 (emenda 22/11): enquanto o balão dourado com relógio está na janela dos 5 s, a fala AUTOMÁTICA do pet (saudação de abertura aos ~0,7 s,
+     idle, sinais) não o esconde: ela espera e entra quando o balão sai (toque ou ignorado). Fala de gesto do jogador (`manual`) segue passando. */
+  const goldAtivo = !!balaoDourado && !!goldTempoMs;
+  const goldAtivoRef = useRef(goldAtivo);
+  goldAtivoRef.current = goldAtivo;
+  const falaAdiadaRef = useRef<{ text: string; durationMs: number; raw: boolean } | null>(null);
   useEffect(() => {
     if (!goldNaTela || !goldTipo || !goldTempoMs) return;
     goldTimerRef.current = setTimeout(() => { goldTimerRef.current = null; goldIgnoradoRef.current?.(goldTipo); }, goldTempoMs);
@@ -617,10 +623,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   }, [ausente]);
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
-  const speak = useCallback((text: string, durationMs = 4000) => {
+  const speak = useCallback((text: string, durationMs = 4000, manual = false) => {
     if (ausenteRef.current) return;
     const clean = (text || '').replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
     if (!clean) return;
+    if (goldAtivoRef.current && !manual) { falaAdiadaRef.current = { text: clean, durationMs, raw: false }; return; }
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     setBubbleText(clean);
     setShowBubble(true);
@@ -634,6 +641,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   // speakRaw: no emoji stripping — only for the ❤️ feeding response
   const speakRaw = useCallback((text: string, durationMs = 3000) => {
     if (!text || ausenteRef.current) return;
+    if (goldAtivoRef.current) { falaAdiadaRef.current = { text, durationMs, raw: true }; return; }
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     setBubbleText(text);
     setShowBubble(true);
@@ -650,9 +658,17 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setHugBalloon(false), 2000);
   };
 
+  /* Balão dourado saiu (toque ou ignorado): a fala que ficou esperando entra agora. */
+  useEffect(() => {
+    if (goldAtivo || !falaAdiadaRef.current) return;
+    const f = falaAdiadaRef.current;
+    falaAdiadaRef.current = null;
+    if (f.raw) speakRaw(f.text, f.durationMs); else speak(f.text, f.durationMs);
+  }, [goldAtivo, speak, speakRaw]);
+
   // Chat message from ChatBox — strip emojis, show for 5s
   const handleChatMessage = useCallback((response: string) => {
-    speak(response, 5000);
+    speak(response, 5000, true);
   }, [speak]);
 
   /**
@@ -690,7 +706,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     // 0 é a montagem: ninguém fez nada ainda, e abrir o app não é um evento.
     if (!triggerMessage || triggerMessage === triggerVistoRef.current) return;
     triggerVistoRef.current = triggerMessage;
-    speak(mensagemAtualRef.current);
+    speak(mensagemAtualRef.current, undefined, true);
   }, [triggerMessage, speak]);
 
   useEffect(() => {
@@ -987,7 +1003,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     else if (ratio >= 0.35) fallback = petVoiceLine('idle', isPt, Math.random());
     else if (ratio >= 0.1) fallback = petVoiceLine('peckish', isPt, Math.random());
     else fallback = petVoiceLine('starving', isPt, Math.random());
-    speak(fallback, 4000);
+    speak(fallback, 4000, true);
 
     /* Decisão do dono (19/10/2026): o toque no pet é SÓ frase local (sem /api/chat);
        a cota inteira fica para o chat aberto. */
@@ -1103,7 +1119,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     if (!play.canPlay) {
       speak(language === 'pt-BR'
         ? 'Brincar pede 1 de energia — dá pra deixar pra depois de uma comidinha.'
-        : 'Playing takes 1 energy — it can wait until after a snack.', 3500);
+        : 'Playing takes 1 energy — it can wait until after a snack.', 3500, true);
       return;
     }
     play.onPlay();
