@@ -3,7 +3,7 @@ import { sm2Button, sm2Hint } from '../form/FormKit';
 import { ARENA_ROUNDS, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { SCENE_BG, ARENA_BANNER_ATIVO } from '../../utils/fxPackArt';
-import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
+import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_HOUR, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsThisHour, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { EscolhaLinha, SortearNovos, escolhaCardStyle } from '../ui/EscolhaLinha';
 import { MiniGlass } from '../ui/MiniGlass';
@@ -63,13 +63,14 @@ export interface ArenaRerollProps {
 }
 
 function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: boolean; onStart: (seed: number) => void; startBlocked: boolean; arena: ArenaRerollProps }) {
-  const done = arenaRerollsToday(arena.reroll, arena.dayIso);
+  const done = arenaRerollsToday(arena.reroll, arena.dayIso); // do DIA: entra na semente dos cards
+  const doneHora = arenaRerollsThisHour(arena.reroll); // da HORA: decide os 3 grátis e o preço
   // `ARENA_CHOICES` desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
   // §370: uma coluna só (o padrão desta folha): 4 cards de largura cheia cabem em 360 px sem rolagem lateral e o nome do chefe não corta.
   const runsDone = arenaRerollsToday(arena.runs, arena.dayIso);
   const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done, ARENA_CHOICES, runsDone), [arena.dayIso, arena.accountKey, done, runsDone]);
-  const cost = arenaRerollCost(done);
-  const free = arenaRerollsFreeLeft(done);
+  const cost = arenaRerollCost(doneHora);
+  const free = arenaRerollsFreeLeft(doneHora);
   const canReroll = arena.bits >= cost;
   const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
   /** QA r4: a carga do bestiário falhou (rede, cache frio). Antes, `.catch` vazio + `return null` sumiam com os cards sem aviso. */
@@ -219,8 +220,8 @@ export function DueloSheet({ language, onStart, arena }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_DAY} grátis por dia, depois Bits.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_DAY} free a day, then Bits.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários (1 de ${ARENA_CHOICES} desafios), de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: ${ARENA_REROLL_FREE_PER_HOUR} grátis por hora, depois Bits.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power (1 of ${ARENA_CHOICES} challenges). Wins earn Bits; losses cost nothing. Draw again: ${ARENA_REROLL_FREE_PER_HOUR} free an hour, then Bits.`}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt

@@ -8,8 +8,8 @@
  *     o aumento nunca passa de 7 (teto do estoque);
  *   · campo omitido pelo cliente não zera nem enche: vale o gravado;
  *   · sem nada gravado vale o estoque inicial (7): então só dá para descer.
- * Limite honesto: quem forja JSON válido pode reencher o estoque (no máximo a cada 60 s) sem gastar energia, e a diferença 5 x 7 da
- * conta paga não é verificada aqui (o estoque máximo é 7 para todos).
+ * Limite honesto: quem forja JSON válido pode reencher o estoque (no máximo a cada 60 s) sem gastar energia, e a troca é de 3 convites
+ * por energia para TODOS (22/11/2026; a diferença 5 x 7 da conta paga foi revogada), valor que o servidor não verifica aqui (o estoque máximo é 7).
  */
 export const DUEL_INVITE_MAX = 7;
 export const DUEL_INVITE_INITIAL = 7;

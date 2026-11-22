@@ -35,6 +35,17 @@ describe('contadores diários: servidor e app concordam na FORMA', () => {
     expect(srv.enforceArenaLadder(8, 7)).toBe(8);
     expect(srv.enforceArenaLadder('lixo', undefined)).toBe(0);
   });
+  it('servidor: giros por HORA (22/11/2026): a hora mais nova vence, na mesma hora o maior contador, hora futura demais é ignorada', () => {
+    const now = Date.parse('2026-10-13T12:30:00Z'); const d = '2026-10-13';
+    const reg = (hour, hcount, count = 5) => ({ day: d, count, hour, hcount });
+    expect(srv.enforceArenaReroll(reg('2026-10-13T12', 1), reg('2026-10-13T12', 3), now)).toEqual(reg('2026-10-13T12', 3));
+    expect(srv.enforceArenaReroll(reg('2026-10-13T12', 1), reg('2026-10-13T11', 3), now)).toEqual(reg('2026-10-13T12', 1));
+    expect(srv.enforceArenaReroll(reg('2026-10-13T11', 0), reg('2026-10-13T12', 2), now)).toEqual(reg('2026-10-13T12', 2));
+    expect(srv.enforceArenaReroll(reg('2026-10-13T20', 0), reg('2026-10-13T12', 2), now)).toEqual(reg('2026-10-13T12', 2));
+    expect(srv.enforceArenaReroll({ day: d, count: 2 }, reg('2026-10-13T12', 2, 1), now)).toEqual(reg('2026-10-13T12', 2, 2));
+    for (const x of [reg('lixo', 1), reg('2026-10-13T12', NaN), { day: d, count: 1, hour: 5 }]) expect(srv.sanitizeArenaReroll(x)).toEqual({ day: d, count: x.count });
+    expect(sanitizeArenaReroll(reg('2026-10-13T12', 2))).toEqual(srv.sanitizeArenaReroll(reg('2026-10-13T12', 2)));
+  });
   it('servidor: rerolls só crescem no dia e o dia só anda para a frente', () => {
     const d = '2026-10-13'; const now = Date.parse('2026-10-13T12:00:00Z');
     expect(srv.enforceArenaReroll({ day: d, count: 1 }, { day: d, count: 4 }, now)).toEqual({ day: d, count: 4 });

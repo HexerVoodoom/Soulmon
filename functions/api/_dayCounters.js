@@ -52,11 +52,16 @@ export function sanitizeCheckIns(raw) {
 
 /** Espelho de `sanitizeArenaReroll` (`src/utils/arenaSorteio.ts`, 28/10/2026): rerolls da Arena livre no dia. @param {unknown} raw @returns {{day:string,count:number}|undefined} */
 export const ARENA_REROLL_MAX_COUNT = 999;
+const ISO_HOUR = /^\d{4}-\d{2}-\d{2}T\d{2}$/;
+/** A hora UTC ("AAAA-MM-DDTHH") de um instante: a janela dos 3 giros grátis (22/11/2026). */
+export const isoHourUtc = ms => new Date(ms).toISOString().slice(0, 13);
+/** @returns {{day:string,count:number,hour?:string,hcount?:number}|undefined} */
 export function sanitizeArenaReroll(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-  const r = /** @type {{day?:unknown,count?:unknown}} */ (raw);
+  const r = /** @type {{day?:unknown,count?:unknown,hour?:unknown,hcount?:unknown}} */ (raw);
   if (typeof r.day !== 'string' || !ISO_DAY.test(r.day) || typeof r.count !== 'number' || !Number.isFinite(r.count)) return undefined;
-  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))) };
+  const comHora = typeof r.hour === 'string' && ISO_HOUR.test(r.hour) && typeof r.hcount === 'number' && Number.isFinite(r.hcount);
+  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))), ...(comHora ? { hour: /** @type {string} */ (r.hour), hcount: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(/** @type {number} */ (r.hcount)))) } : {}) };
 }
 
 /**
@@ -101,7 +106,14 @@ export function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
  * @returns {{day:string,count:number}|undefined}
  */
 export function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
-  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
+  const limite = isoHourUtc(nowMs + 3_600_000); // a hora mais à frente aceita: a do servidor + 1
+  const hora = x => (x && x.hour !== undefined && x.hour <= limite ? x : undefined);
+  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => {
+    const ha = hora(a); const hb = hora(b);
+    // Hora: a MAIS NOVA vence; na mesma hora o MAIOR contador (apagar o save local não devolve giro grátis).
+    const h = ha && hb ? (ha.hour > hb.hour ? ha : hb.hour > ha.hour ? hb : (ha.hcount ?? 0) >= (hb.hcount ?? 0) ? ha : hb) : (ha ?? hb);
+    return { day: a.day, count: Math.max(a.count, b.count), ...(h ? { hour: h.hour, hcount: h.hcount } : {}) };
+  }, nowMs);
 }
 
 /** Espelho de `sanitizeArenaLadder` (`src/utils/arena.ts`, §222). @param {unknown} raw @returns {number} */

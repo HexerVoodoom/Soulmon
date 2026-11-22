@@ -2,8 +2,7 @@
  * ⚔️ CONVITE DE DUELO (REGISTRO §458, pedido do dono, 16/11/2026): a "ficha" da Arena livre (Duelo).
  *
  * Cada run de Duelo gasta 1 convite (`spendDuelInvite`, ao começar a run; "Lutar de novo" gasta outro). O estoque vai de 0 a
- * `DUEL_INVITE_MAX` (7). O jogador troca 1 energia por convites: `DUEL_INVITE_PER_ENERGY` (5) e, na conta paga
- * (`accountTier:'paid'`), `DUEL_INVITE_PER_ENERGY_PAID` (7). O estoque nunca passa de 7.
+ * `DUEL_INVITE_MAX` (7). O jogador troca 1 energia por `DUEL_INVITE_PER_ENERGY` (3) convites, IGUAL para todos (decisão do dono, 22/11/2026: revoga a vantagem 5/7 da conta paga do §458 original). O estoque nunca passa de 7.
  *
  * ⚠️ DECISÃO DO DONO, ciente da linha "nada pago dá vantagem de combate": o pagante recebe MAIS CONVITES POR ENERGIA (volume de
  * lutas por energia gasta), nunca poder, atributo, drop ou chance. O teto de Bits por categoria (§456) vale igual para todos.
@@ -19,8 +18,7 @@ import { setEnergy, settleEnergy, type HungerState } from './hunger';
 
 export const DUEL_INVITE_MAX = 7;
 export const DUEL_INVITE_INITIAL = 7;
-export const DUEL_INVITE_PER_ENERGY = 5;
-export const DUEL_INVITE_PER_ENERGY_PAID = 7;
+export const DUEL_INVITE_PER_ENERGY = 3;
 export const DUEL_INVITE_ENERGY_COST = 1;
 /** Só a UI: "Comprar convites" aparece com 2 ou menos convites (pedido do dono, 17/11/2026). Com 0 continua possível (nunca tranca). O servidor segue aceitando a troca até o teto de 7. */
 export const DUEL_INVITE_BUY_MAX_COUNT = 2;
@@ -46,8 +44,9 @@ export function duelInviteCount(state: { duelInvites?: unknown }): number {
   return sanitizeDuelInvites(state.duelInvites)?.n ?? DUEL_INVITE_INITIAL;
 }
 
-export function duelInvitesPerEnergy(state: { accountTier?: string }): number {
-  return state.accountTier === 'paid' ? DUEL_INVITE_PER_ENERGY_PAID : DUEL_INVITE_PER_ENERGY;
+/** Convites por energia: o MESMO para todos (a conta paga não compra mais volume). O parâmetro fica só para não quebrar quem chama. */
+export function duelInvitesPerEnergy(_state?: { accountTier?: string }): number {
+  return DUEL_INVITE_PER_ENERGY;
 }
 
 export type DuelInviteRefusal = 'full' | 'no-energy';
@@ -59,7 +58,7 @@ export function duelInviteExchangeRefusal(state: DuelInviteState, nowMs: number)
   return undefined;
 }
 
-/** Troca 1 energia por convites (5; 7 na conta paga), sem passar de 7. Recusa = mesma referência. */
+/** Troca 1 energia por 3 convites (todos), sem passar de 7. Recusa = mesma referência. */
 export function exchangeDuelInvites<T extends DuelInviteState>(prev: T, nowMs: number): T {
   if (duelInviteExchangeRefusal(prev, nowMs)) return prev;
   const gasto = setEnergy(prev, nowMs, (cur) => cur - DUEL_INVITE_ENERGY_COST);
