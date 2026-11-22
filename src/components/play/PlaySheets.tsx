@@ -6,9 +6,9 @@ import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { createPortal } from 'react-dom';
 import { RankingPanel } from '../RankingPanel';
 import { RankingModal } from '../RankingModal';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
 import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../../utils/dungeonBase';
@@ -134,7 +134,7 @@ function DropItem({ label, value }: { label: string; value: string }) {
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
 /** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Pedido de 17/11/2026: "Ranking" (outline, negrito sublinhado) à esquerda da linha do título (`headSlot`, o encaixe da moldura; sem ele, entra no topo da folha) e o "i" com o "Drop rate" (os itens e as chances, num tooltip) na frente do título; a nota "Pode cair" saiu do corpo. */
-export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, headSlot }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number; /** Conta do jogador: sem ela não há ranking (o botão some). */ saveId?: string; /** Encaixe à esquerda do título da moldura (`AreaSheet`); `undefined` = sem moldura, o botão fica no corpo. */ headSlot?: HTMLElement | null }) {
+export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number; /** Conta do jogador: sem ela não há ranking (o botão some). */ saveId?: string; }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
@@ -142,14 +142,13 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId, hea
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
   const [rankOpen, setRankOpen] = useState(false);
-  const rankBtn = saveId ? (
-    <button type="button" data-masmorra-ranking onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false, 'sm'), fontWeight: 700, textDecoration: 'underline' }}>
-      Ranking
-    </button>
-  ) : null;
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {rankBtn && (headSlot ? createPortal(rankBtn, headSlot) : headSlot === undefined ? <div style={{ display: 'flex' }}>{rankBtn}</div> : null)}
+      {saveId && (
+        <BotaoEspecial variant="ranking" data-masmorra-ranking aria-haspopup="dialog" onClick={() => setRankOpen(true)}>
+          {isPt ? 'Ver ranking' : 'See ranking'}
+        </BotaoEspecial>
+      )}
       <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'}>
         <div data-masmorra-ranking-panel>
           <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />

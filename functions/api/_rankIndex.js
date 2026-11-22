@@ -85,14 +85,22 @@ export async function completarIndice(env, season, orcamento = 100) {
     let faltam = 0;
     for (const k of page.keys) if (!(k.name.slice(pre.length) in idx.p) && !Number.isFinite(k.metadata?.pts)) faltam++;
     if (gastos > 0 && gastos + faltam > orcamento) break; // esta página fica para a próxima leitura
+    const ler = [];
     for (const k of page.keys) {
       const id = k.name.slice(pre.length);
       if (id in idx.p) continue;
       if (Number.isFinite(k.metadata?.pts)) { idx.p[id] = k.metadata.pts; continue; }
-      const raw = await store.get(k.name);
-      gastos++;
-      if (!raw) continue;
-      try { idx.p[id] = Number(JSON.parse(raw)?.points) || 0; } catch { /* linha ilegível: fora da ordem */ }
+      ler.push(k.name);
+    }
+    // As linhas sem `metadata.pts` são lidas em lotes PARALELOS (eram um `get` por vez; o preenchimento frio do índice custava N round-trips em série).
+    for (let i = 0; i < ler.length; i += 25) {
+      const lote = ler.slice(i, i + 25);
+      const lidos = await Promise.all(lote.map(nome => store.get(nome)));
+      gastos += lote.length;
+      lidos.forEach((raw, n) => {
+        if (!raw) return;
+        try { idx.p[lote[n].slice(pre.length)] = Number(JSON.parse(raw)?.points) || 0; } catch { /* linha ilegível: fora da ordem */ }
+      });
     }
     if (page.list_complete || !page.cursor) { done = true; cursor = undefined; } else cursor = page.cursor;
     if (gastos >= orcamento) break;
