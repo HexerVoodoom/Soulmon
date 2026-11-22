@@ -12,7 +12,7 @@
 //   3. A tabela de CUSTO do reroll: 3 grátis por dia do jogador; do 4º em diante só Bits (15, 30, 45 e 45 fixo). Nunca Crédito/Emblema.
 //   4. `arenaSceneOfSeed(seed)` — o cenário da run: sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
 // ---------------------------------------------------------------------------
-import { ARENA_ROUNDS, arenaLadderStage, buildArenaRound, nextArenaLadder, sanitizeArenaLadder, type ArenaEnemy } from './arena';
+import { ARENA_ROUNDS, arenaLadderStage, arenaRollover, buildArenaRound, nextArenaLadder, sanitizeArenaLadder, type ArenaEnemy } from './arena';
 import { NOVOS_DATA } from './novosSoulmonData';
 import { mulberry32 } from './combate/rng';
 import { arenaCardSeeds, isStraySeed } from './strayFoes';
@@ -137,7 +137,8 @@ export function applyArenaReroll<T extends BitsOriginState & { arenaReroll?: Are
  * Runs da Arena TERMINADAS no dia (`arenaRuns {day,count}`, mesma forma do `arenaReroll`). Cada fim de run soma 1 e
  * re-sorteia os cards (`arenaCards(..., runsDone)`), SEM tocar no contador do reroll (que é o pago/limitado).
  */
-export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll; arenaLadder?: number }>(prev: T, dayIso: string, outcome: 'win' | 'loss' | 'draw' = 'loss'): T {
+export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll; arenaLadder?: number; arenaSeason?: string }>(prev: T, dayIso: string, outcome: 'win' | 'loss' | 'draw' = 'loss', now: Date | number = Date.now()): T {
   // §222: vitória sobe 1 degrau da escada; derrota e empate seguram. Sem valor gravado = 0 (começa de baixo).
-  return { ...prev, arenaRuns: nextArenaReroll(prev.arenaRuns, dayIso), arenaLadder: nextArenaLadder(sanitizeArenaLadder(prev.arenaLadder), outcome) };
+  const r = arenaRollover(prev.arenaLadder, prev.arenaSeason, now); // temporada nova: a escada recomeça em 0 antes de contar esta run
+  return { ...prev, arenaRuns: nextArenaReroll(prev.arenaRuns, dayIso), arenaLadder: nextArenaLadder(r.ladder, outcome), arenaSeason: r.season };
 }

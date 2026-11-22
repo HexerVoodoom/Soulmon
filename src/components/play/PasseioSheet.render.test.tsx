@@ -244,7 +244,7 @@ describe('o achado de ontem dentro da folha do Passeio (REGISTRO §66, 15/10/202
     const { container } = render(createElement(PasseioSheet, { language: 'pt-BR', crossings: CROSSINGS_EMPTY, onChange: () => {}, todayKey: DIA, seed: SEED, achado }));
     const sec = container.querySelector('[data-passeio-achado]') as HTMLElement;
     expect(sec).toBeTruthy();
-    expect(sec.textContent).toContain('Da aventura de ontem');
+    expect(sec.textContent).not.toContain('Da aventura de ontem');
     expect(sec.querySelector('[data-stroll-mission]')!.textContent).toBe('Respirar ao ar livre');
     expect(sec.querySelector('[data-stroll-destination]')!.textContent).toBe('Praia');
     expect(sec.textContent).toContain('Uma concha');
@@ -260,6 +260,6 @@ describe('o achado de ontem dentro da folha do Passeio (REGISTRO §66, 15/10/202
 
   it('EN: título da seção', () => {
     const { container } = render(createElement(PasseioSheet, { language: 'en-US', crossings: CROSSINGS_EMPTY, onChange: () => {}, todayKey: DIA, seed: SEED, achado }));
-    expect(container.querySelector('[data-passeio-achado]')!.textContent).toContain("From Yesterday's Adventure");
+    expect(container.querySelector('[data-passeio-achado]')!.textContent).not.toContain("From Yesterday's Adventure");
   });
 });

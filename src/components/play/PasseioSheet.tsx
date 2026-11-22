@@ -367,8 +367,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           </InfoTipSection>
       </ModalInfo>
       {achado && (
-        <section data-passeio-achado aria-label={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={sectionHead}>{isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}</p>
+        <section data-passeio-achado aria-label={isPt ? 'Passeio de ontem' : 'Yesterday’s stroll'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <StrollFind adventure={achado.adventure} isNew={achado.isNew} stroll={achado.stroll} language={language} />
           <hr style={divider} />
         </section>

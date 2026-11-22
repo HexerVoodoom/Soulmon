@@ -97,10 +97,7 @@ export function SubscriptionShelf({ language, kind, ownership, actions }: {
     : 'Part of the quarterly subscription. In Settings, "Your account", you can see how it works.';
 
   return (
-    <section data-subscription-shelf={kind} aria-label={isPt ? 'Do trimestre' : 'Of the quarter'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-        {isPt ? 'Do trimestre' : 'Of the quarter'}
-      </h3>
+    <section data-subscription-shelf={kind} aria-label={isPt ? 'Conjunto da assinatura' : 'Subscription set'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {items.map(item => {
         const name = isPt ? item.namePt : item.nameEn;
         const owned = ownedList.includes(item.id);

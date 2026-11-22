@@ -91,7 +91,7 @@ describe('PR6: copy dos chips (EN primeiro, PT-BR) sem promessa de forca', () =>
     .flatMap(i => [i.descEn, i.descPt]);
   it('8.1 (beta-2): a descrição é só nome do efeito + valor ("+3 Power") e nunca promete força', () => {
     expect(textos.length).toBe(20 * 2); // loja: 3 comuns + 3 maiores + 3 redutores (9); uso: + prisma + triplo (11), PT+EN
-    for (const t of textos) expect(t).toMatch(/^(\+[36]|−3) (Power|Harmony|Benevolence|Poder|Harmonia|Benevolência)$|^\+2 (Power, Harmony and Benevolence|Poder, Harmonia e Benevolência)$|^\+9 (to each attribute|em cada atributo)$/);
+    for (const t of textos) expect(t).toMatch(/^(\+[36]|−6) (Power|Harmony|Benevolence|Poder|Harmonia|Benevolência)$|^\+2 (Power, Harmony and Benevolence|Poder, Harmonia e Benevolência)$|^\+9 (to each attribute|em cada atributo)$/);
     for (const t of textos) expect(t).not.toMatch(/(Use|Usar|use|usar) (for|dá) \+\d|forç|strength/i);
   });
 });

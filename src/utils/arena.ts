@@ -346,6 +346,25 @@ export function arenaLadderStage(ladder: number, round: number): ArenaLadderStag
   return fromEnd < step ? 'champion' : 'rookie';
 }
 
+/**
+ * TEMPORADA DA ARENA (decisão do dono, 22/11/2026): mensal, alinhada ao mês em UTC ("AAAA-MM"). Na virada a escada volta a 0 (nível 1);
+ * ranking, prêmios e histórico NÃO são tocados. A 1ª temporada é a de agora: save sem `arenaSeason` adota o mês atual SEM zerar.
+ * Espelho do servidor em `functions/api/_dayCounters.js` (`enforceArenaLadder`), travado por `dayCounters.parity.test.js`.
+ */
+export const arenaSeasonKey = (now: Date | number = Date.now()): string => new Date(now).toISOString().slice(0, 7);
+export function sanitizeArenaSeason(raw: unknown): string | undefined {
+  return typeof raw === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : undefined;
+}
+/** A escada e a temporada no mês de `now`: temporada mais velha (ou virada de mês) → escada 0; sem temporada → adota o mês, mantém a escada; temporada no futuro (relógio que voltou) → mantém. */
+export function arenaRollover(ladder: unknown, season: unknown, now: Date | number = Date.now()): { ladder: number; season: string } {
+  const cur = arenaSeasonKey(now);
+  const l = sanitizeArenaLadder(ladder);
+  const s = sanitizeArenaSeason(season);
+  if (s === undefined) return { ladder: l, season: cur };
+  if (s < cur) return { ladder: 0, season: cur };
+  return { ladder: l, season: s };
+}
+
 /** Depois de uma run: vitória sobe 1; derrota e empate SEGURAM (param de subir, não descem). */
 export const nextArenaLadder = (ladder: unknown, outcome: 'win' | 'loss' | 'draw'): number => {
   const l = sanitizeArenaLadder(ladder);

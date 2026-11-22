@@ -58,6 +58,12 @@ export interface GroupOptions {
   /** Efficiency of the area. Default AREA_EFFICIENCY (1); a knob for the ruler to price the alternatives (0.9, or full E per foe). */
   readonly areaEfficiency?: number;
   /**
+   * PESADELO (decisão do dono, 16/11/2026, pedido 22/11): o ataque `dot` do companheiro invocado vira UM ataque extra, disparado
+   * logo após o especial do jogador (mesmo orçamento `E`, sem DoT residual). O evento sai marcado `comp` e o dano é somado à parte
+   * em `GroupResult.compDano`. Ausente/`false` = o comportamento de sempre (todos os outros modos).
+   */
+  readonly ataqueExtra?: boolean;
+  /**
    * PR16 (read-only, opt-in): when `true` every event carries `fx` — the REAL status counters of each fighter
    * (index = `who`). Nothing else changes: same draws, same events, same result. Off by default (the ruler runs this
    * loop hundreds of thousands of times and pays nothing).
@@ -93,11 +99,15 @@ export interface GroupResult {
   readonly hpLeft: number;
   readonly energyLeft: number;
   readonly casts: number;
+  /** Só com `GroupOptions.ataqueExtra`: dano (fração da barra dos inimigos) do ataque extra do companheiro, contabilizado à parte. */
+  readonly compDano?: number;
 }
 
 /** `cast` PAUSES: the driver answers with the cast multiplier of `who` (ring, dodge...). */
 export interface GroupEvent {
   readonly kind: 'attack' | 'cast' | 'tick' | 'ko';
+  /** Ataque extra do companheiro invocado no Pesadelo (`GroupOptions.ataqueExtra`); ausente nos demais eventos. */
+  readonly comp?: true;
   readonly t: number;
   /** 0 = player, 1+i = foe i. */
   readonly who: number;
@@ -233,7 +243,8 @@ export function* groupFightSteps(
   const gain = (f: G, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
+  let compDano = 0;
+  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', from: ShieldSource, comp = false) => {
     if (v.dead < Infinity) return;
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
@@ -250,7 +261,9 @@ export function* groupFightSteps(
     v.hp = (hp0 - lose) / v.pts;
     gain(src, d / v.pts, ENERGY.perDealt);
     gain(v, d / v.pts, ENERGY.perReceived);
-    pending.push(ev(kind, src.who, lose / v.pts));
+    const e = ev(kind, src.who, lose / v.pts);
+    if (comp) { compDano += lose / v.pts; (e as { comp?: true }).comp = true; }
+    pending.push(e);
   };
   /**
    * §334 (dono, 13/11/2026): o começo do golpe de `me`. Cada DoT que ele carrega tica (o escudo absorve metade, §327) e depois cada
@@ -294,6 +307,12 @@ export function* groupFightSteps(
       // (função mista) é o do especial normal em escala menor, e o ataque do companheiro é um DoT marcado `comp`
       for (const f of all) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
       if (plano.escalaEfeito > 0) cast(me, t0, plano.escalaEfeito, true);
+      if (opts.ataqueExtra && sp.family === 'dot' && plano.papel === 'ataque') {
+        // PESADELO: o `dot` do companheiro vira um golpe extra logo após o especial (sem DoT residual); `direct` e os demais modos seguem iguais
+        const shareExtra = isArea ? (plano.ataqueE * (opts.areaEfficiency ?? areaEff)) / spread.length : plano.ataqueE;
+        for (const v of spread) hit(me, v, (shareExtra * me.mult()) / hitsOn(me, v), 'attack', 'direct', true);
+        return;
+      }
       const shareAtaque = isArea ? (plano.ataqueE * (opts.areaEfficiency ?? areaEff)) / spread.length : plano.ataqueE;
       const single = spread.length === 1 && me === pl;
       for (const v of spread) v.dots.push({ src: me, share: shareAtaque, single, left: plano.turnosAtaque, comp: true });
@@ -430,7 +449,7 @@ export function* groupFightSteps(
     const fDead = alive().length === 0;
     if (pDead || fDead) {
       const winner: GroupWinner = pDead && fDead ? 'draw' : pDead ? 'foes' : 'player';
-      return { winner, t, hpLeft: Math.max(0, pl.hp), energyLeft: pl.en, casts: pl.casts };
+      return { winner, t, hpLeft: Math.max(0, pl.hp), energyLeft: pl.en, casts: pl.casts, ...(opts.ataqueExtra ? { compDano } : {}) };
     }
   }
   throw new Error(`combate: groupFight did not end within ${MAX_EVENTS} events (seed ${seed})`);

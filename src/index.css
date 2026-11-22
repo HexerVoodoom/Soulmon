@@ -9265,7 +9265,7 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 /* Chip de REDUÇÃO (04/11/2026): arte do chip comum + o valor real no canto (`REDUCE_CHIP_BOOST`). */
 .sm3-item-arte[data-reduce] { position: relative; }
 .sm3-item-arte[data-reduce]::after {
-  content: '\2212 3';
+  content: '\2212 6';
   position: absolute; top: -6px; right: -4px;
   font-size: 16px; font-weight: 800; line-height: 1;
   color: var(--sm2-danger, #e5484d);
@@ -9821,9 +9821,17 @@ button.sm2-hex-row {
 .sm-game-card__placeholder {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   background:
-    radial-gradient(circle at 50% 40%, var(--sm2-primary-soft), transparent 65%),
+    radial-gradient(circle at 50% 40%, var(--sm-game-accent, var(--sm2-primary-soft)), transparent 65%),
     linear-gradient(160deg, var(--sm2-surface) 0%, var(--sm2-bg) 100%);
 }
+/* P3 8 (22/11/2026): um esquema de cor por jogo (acento do placeholder até a arte própria chegar). */
+.sm-game-card[data-game-card="match3"] { --sm-game-accent: hsl(275 55% 42% / .55); }
+.sm-game-card[data-game-card="dino"] { --sm-game-accent: hsl(32 70% 45% / .55); }
+.sm-game-card[data-game-card="ppt"] { --sm-game-accent: hsl(350 55% 45% / .5); }
+.sm-game-card[data-game-card="barrage"] { --sm-game-accent: hsl(210 65% 45% / .55); }
+.sm-game-card[data-game-card="eco"] { --sm-game-accent: hsl(165 50% 38% / .55); }
+.sm-game-card[data-game-card="zip"] { --sm-game-accent: hsl(48 70% 45% / .5); }
+.sm-game-card[data-game-card="selo"] { --sm-game-accent: hsl(300 40% 42% / .5); }
 .sm-game-card__glyph { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; opacity: .9; }
 .sm-game-card__initial {
   font-family: var(--sm2-font-display); font-weight: 700; font-size: 40px; line-height: 1;

@@ -216,18 +216,18 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   });
 });
 
-describe('4.3 — From Yesterday’s Adventure, `New` dourado, vínculo com o Passeio de ontem', () => {
+describe('4.3 — sem título de aventura (P3 9.1), `New` dourado, vínculo com o Passeio de ontem', () => {
   const irAteAventura = () => { proximo(); };
 
   it('título EN/PT; a folha é independente e sem textos de tarefa', () => {
     abrir();
     irAteAventura();
-    expect(screen.getByText("From Yesterday's Adventure")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
     expect(document.body.textContent).not.toMatch(/From today's adventure|Front Today/i);
     cleanup();
     abrir({}, {}, 'pt-BR');
     irAteAventura();
-    expect(screen.getByText('Da aventura de ontem')).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
   });
 
   it('`New` só quando inédito, e com os tokens do dourado da paleta (nunca hex)', () => {

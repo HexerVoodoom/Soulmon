@@ -240,6 +240,7 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
+import { arenaRollover } from './utils/arena';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -9054,7 +9055,7 @@ export default function App() {
                     dayIso: playerDayIso(new Date(), gameState.playerDayTz),
                     reroll: gameState.arenaReroll,
                     runs: gameState.arenaRuns,
-                    ladder: gameState.arenaLadder,
+                    ladder: arenaRollover(gameState.arenaLadder, gameState.arenaSeason).ladder,
                     /* ⚔️ Convite de Duelo (§458): 1 por run. O gasto reconfere sobre o `prev` (porta única `spendDuelInvite`). */
                     invites: {
                       count: duelInviteCount(gameState),
