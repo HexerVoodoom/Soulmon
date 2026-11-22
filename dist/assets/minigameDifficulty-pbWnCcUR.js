@@ -1,1 +1,0 @@
-function a(n,r){return n===1?r?"Comum":"Common":r?"Avançado":"Advanced"}const t=1.5;function o(n,r){return r!==2||!(n>0)?n:Math.max(1,Math.round(n*t))}function e(n){const r=String(t);return`×${n?r.replace(".",","):r}`}export{e as a,o as b,a as d};

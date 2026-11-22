@@ -1,1 +1,0 @@
-import{d7 as f,c9 as h,ca as u,d8 as r,d9 as y}from"./index-fRA17t0_.js";function g(n,l){const c=new Set(n??[]),t=f.filter(e=>!c.has(e.key));if(t.length===0)return null;const o=h(u(`passeio-descoberta:${l}`)>>>0),a=t.some(e=>e.key===r.key),s=t.filter(e=>e.key!==r.key),i=o();return a&&(i<y||s.length===0)?r:s[Math.floor(o()*s.length)%s.length]}export{g as s};

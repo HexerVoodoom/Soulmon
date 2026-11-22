@@ -1,1 +1,0 @@
-const e=2;function r(t,d){if(!d||t.length===0)return{drops:t.flat(),dobrados:[]};const a=t[t.length-1].map(s=>({id:s.id,qty:s.qty*2}));return{drops:[...t.slice(0,-1).flat(),...a],dobrados:a}}export{e as A,r as a};
