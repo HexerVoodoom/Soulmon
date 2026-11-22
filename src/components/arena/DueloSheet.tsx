@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { useEffect, useMemo, useState } from 'react';
+import { sm2Button, sm2Hint } from '../form/FormKit';
 import { ARENA_ROUNDS, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { SCENE_BG, ARENA_BANNER_ATIVO } from '../../utils/fxPackArt';
 import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_DAY, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
-import { Icon } from '../ui/Icon';
+import { EscolhaLinha, SortearNovos, escolhaCardStyle } from '../ui/EscolhaLinha';
+import { MiniGlass } from '../ui/MiniGlass';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
 import { EnergyCost } from '../ui/EnergyCost';
@@ -35,12 +36,6 @@ import { playerDayKey } from '../../utils/playerDay';
  * ("Honra") por vitória; a `ArenaGame` rende **Bits** e isso não mudou aqui —
  * mudar a moeda de um jogo é regra de economia, não fatia de UI.
  */
-const box: CSSProperties = {
-  flex: 1, minWidth: 0, padding: '10px 12px', boxSizing: 'border-box', minHeight: 56,
-  border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
-  backgroundColor: 'var(--sm2-bg)',
-  display: 'flex', alignItems: 'center', gap: 8,
-};
 
 /**
  * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). `ARENA_CHOICES` desafios (4 desde 14/11/2026, §370; eram 3) de poder PARECIDO com o seu
@@ -102,7 +97,7 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
     return (
       <div data-arena-escolha-carregando aria-busy="true" aria-label={isPt ? 'Carregando os adversários' : 'Loading the opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {Array.from({ length: ARENA_CHOICES }, (_, i) => (
-          <span key={i} aria-hidden="true" data-arena-card-placeholder style={{ ...box, flex: 'none', width: '100%', opacity: 0.5 }} />
+          <span key={i} aria-hidden="true" data-arena-card-placeholder style={{ ...escolhaCardStyle, display: 'block', minHeight: 80, opacity: 0.5 }} />
         ))}
       </div>
     );
@@ -114,40 +109,36 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
       {seeds.map((seed, i) => {
         const els = arenaCardElements(seed); // §199: o elemento da RUN (o de todo inimigo, fundido nas combinadas)
         const label = els.map(e => elementLabel(e, isPt)).join(' · ');
+        const icone = (e: string, px: number) => { const a = elementIcon(e); return a ? <img key={e} src={a} alt="" width={px} height={px} style={{ width: px, height: px, imageRendering: 'pixelated', display: 'block' }} /> : null; };
+        // §489: a MESMA linha do Torneio e do Elemental Fusion (`EscolhaLinha`): o 1º elemento no mini-visor, os demais na linha de baixo.
         return (
-          <div key={seed} data-arena-card={i} role="listitem" style={{ ...box, flex: 'none', width: '100%', gap: 8 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-              {els.slice(0, 3).map(e => {
-                const a = elementIcon(e);
-                return a ? <img key={e} src={a} alt="" width={28} height={28} style={{ width: 28, height: 28, imageRendering: 'pixelated' }} /> : null;
-              })}
-              <span style={{ ...sm2Text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {label}
-              </span>
-            </span>
-            <button
-              type="button" data-arena-card-fight={i} disabled={startBlocked}
-              aria-label={isPt ? `Lutar contra o desafio ${i + 1}: ${label}` : `Fight — challenge ${i + 1}: ${label}`}
-              onClick={() => onStart(seed)}
-              style={{ ...sm2Button('primary', startBlocked, 'sm'), flexShrink: 0, minWidth: 88 }}
-            >
-              {isPt ? 'Lutar' : 'Fight'}
-            </button>
-          </div>
+          <EscolhaLinha
+            key={seed}
+            rowProps={{ 'data-arena-card': i, role: 'listitem' }}
+            lead={<MiniGlass size={64}>{icone(els[0], 48)}</MiniGlass>}
+            title={<span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>}
+            sub={els.length > 1 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{els.slice(1, 3).map(e => icone(e, 20))}</span> : undefined}
+            disabled={startBlocked}
+            onAction={() => onStart(seed)}
+            actionLabel={isPt ? 'Lutar' : 'Fight'}
+            actionAriaLabel={isPt ? `Lutar contra o desafio ${i + 1}: ${label}` : `Fight — challenge ${i + 1}: ${label}`}
+            actionProps={{ 'data-arena-card-fight': i }}
+          />
         );
       })}
-      <button
-        type="button" data-arena-reroll disabled={!canReroll} onClick={() => { if (canReroll) arena.onReroll(); }}
-        aria-label={free > 0 ? (isPt ? `Sortear outros ${ARENA_CHOICES} adversários, ${free} grátis` : `Draw ${ARENA_CHOICES} other opponents, ${free} free`) : (isPt ? `Sortear outros ${ARENA_CHOICES} adversários por ${cost} Bits` : `Draw ${ARENA_CHOICES} other opponents for ${cost} Bits`)}
-        style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: canReroll ? 1 : 0.55 }}
-      >
-        <Icon name="refresh" size={24} tone="inherit" />
-        <span data-arena-reroll-label>
-          {free > 0
-            ? (isPt ? `Sortear de novo · ${free} grátis` : `Draw again · ${free} free left`)
-            : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
-        </span>
-      </button>
+      <SortearNovos
+        buttonProps={{ 'data-arena-reroll': true }}
+        disabled={!canReroll}
+        onClick={() => { if (canReroll) arena.onReroll(); }}
+        ariaLabel={free > 0 ? (isPt ? `Sortear outros ${ARENA_CHOICES} adversários, ${free} grátis` : `Draw ${ARENA_CHOICES} other opponents, ${free} free`) : (isPt ? `Sortear outros ${ARENA_CHOICES} adversários por ${cost} Bits` : `Draw ${ARENA_CHOICES} other opponents for ${cost} Bits`)}
+        label={(
+          <span data-arena-reroll-label>
+            {free > 0
+              ? (isPt ? `Sortear de novo · ${free} grátis` : `Draw again · ${free} free left`)
+              : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
+          </span>
+        )}
+      />
       {!canReroll && (
         <p data-arena-reroll-faltam style={{ ...sm2Hint, margin: 0 }}>
           {isPt ? `Faltam ${cost - arena.bits} Bits para sortear de novo hoje.` : `${cost - arena.bits} more Bits needed to draw again today.`}
@@ -242,7 +233,7 @@ export function DueloSheet({ language, onStart, arena }: {
       <EscolhaDeAdversarios isPt={isPt} onStart={onStart} startBlocked={!!arena.invites && arena.invites.count < 1} arena={arena} />
       {catN !== undefined && (
         <p data-bits-categoria style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-          <span className="sm2-num">{isPt ? `hoje: ${catN} de ${catCap} neste tipo de atividade` : `today: ${catN} of ${catCap} for this kind of activity`}</span>
+          <span className="sm2-num">{isPt ? `Bits de hoje nos duelos: ${catN} de ${catCap}` : `today's duel Bits: ${catN} of ${catCap}`}</span>
         </p>
       )}
     </div>

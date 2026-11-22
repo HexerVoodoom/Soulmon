@@ -18,7 +18,7 @@ import {
 import type { Language } from '../../utils/i18n';
 
 /**
- * ELEMENTAL FUSION — a LISTA DE 3 embaixo dos botões de modo (pedido do dono, 18/11/2026, REGISTRO §487). Mesma tabelinha do Torneio
+ * ELEMENTAL FUSION — a LISTA DE 3 embaixo dos botões de modo (pedido do dono, 18/11/2026, REGISTRO §488). Mesma tabelinha do Torneio
  * (`EscolhaLinha`) e o mesmo "Sortear 3 novos" no fim. Aventura: 3 ELEMENTOS (o time de 4 só aparece na partida). PvP: até 3 JOGADORES da
  * rota `opponents` (reais ou simulados do servidor), nunca demo, monstro ou jogador inventado no cliente; boss decidido antes = só a linha "Boss".
  * Mora no `MinigameModeGate` (Salão) e dentro do jogo (o "De novo" volta para cá).
