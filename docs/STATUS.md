@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P3 parte 1: Decoration limpa, Passeio sem "Da aventura de ontem", Rift com Camada atual (`p3/mercado-jogos-passeio`, REGISTRO §490)
+> - **Feito:** loja de Decoração sem "Decoration rule", "From the grove" e "Of the quarter" ("Já são seus" no topo); "From Yesterday's Adventure" removido de todos os lugares (revoga o §66 no nome); folha do Rift com a caixa "Camada atual" em destaque. tsc/tsc server limpos; suíte completa verde (4 timeouts de carga passaram isolados).
+> - **Pendente (P3):** Games (Elemental Fusion primeiro), Honor, Exchanger, Power Reducer de 6 pts, semanais de mercado, margens do Logbook, portal visual entre andares do Rift. **Arte pela fila:** ícone da camada/portal do Rift, chips Power Reducer, cards Pouch/Purse/Chest, cards novos de Games. **Rollback:** `git revert` (só UI/texto, sem save).
+
 > ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
 > - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
 > - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.
