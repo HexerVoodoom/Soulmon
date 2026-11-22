@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P3 parte 1: Decoration limpa, Passeio sem "Da aventura de ontem", Rift com Camada atual (`p3/mercado-jogos-passeio`, REGISTRO §491)
+> - **Feito:** loja de Decoração sem "Decoration rule", "From the grove" e "Of the quarter" ("Já são seus" no topo); "From Yesterday's Adventure" removido de todos os lugares (revoga o §66 no nome); folha do Rift com a caixa "Camada atual" em destaque. tsc/tsc server limpos; suíte completa verde (4 timeouts de carga passaram isolados).
+> - **Pendente (P3):** Games (Elemental Fusion primeiro), Honor, Exchanger, Power Reducer de 6 pts, semanais de mercado, margens do Logbook, portal visual entre andares do Rift. **Arte pela fila:** ícone da camada/portal do Rift, chips Power Reducer, cards Pouch/Purse/Chest, cards novos de Games. **Rollback:** `git revert` (só UI/texto, sem save).
+
 > ## 22/11/2026 — P0a: 5 bugs (`fix/p0a-bugs`)
 > - **Feito:** (1) fala automática do pet (saudação aos ~0,7 s) não esconde mais o balão dourado dentro dos 5 s do §383, ela espera; (2) Oficina › Prioridades com aviso próprio (sem citar hábitos) e pool só de tarefas; (3) a próxima evolução usa como referência a arte da forma equipada (`currentKey`), com fallback na original; (4) Bosque/Maslin: causa = cartão `coopMem` velho (perfil já ultimate, cartão com a arte antiga); perfil com sprite novo renova o cartão, e o perfil publica a última arte alcançada, não a 1ª do acervo; (5) Jornada avisa "teto do dia atingido" em vez de baú vazio mudo (números intactos; proposta em scratchpad).
 > - **Pendente do dono:** `spriteForMember` sem URL válida segue no rookie da linha (LV-G10 proíbe expor estágio alheio; mudar exige revogar); novos tetos do Focus. **Rollback:** `git revert` do merge (nenhum campo novo no save, contrato aditivo).

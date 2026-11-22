@@ -447,9 +447,10 @@ describe('L4 M4: "Do bosque" no TOPO do segmento, antes dos ~20 cenários da loj
   it('Decoração: a Concha da Maré também vem antes da lista; sem nada na posse, silêncio (nem o título)', () => {
     const { container, unmount } = abrir({ stall: 'decoracao', ownedFurniture: ['trophy-concha-mare'] });
     const stall = container.querySelector('[data-mercado-stall]') as HTMLElement;
-    // children[1] é a regra da decoração (D2, 02/10/2026); a roda vem logo depois, antes da lista.
-    expect(stall.children[1]).toBe(container.querySelector('[data-decor-rule]'));
-    expect(stall.children[2]).toBe(container.querySelector('[data-guild-owned="furniture"]'));
+    // P3 7.2: sem regra da decoração; a peça da roda mora dentro da prateleira, logo depois de "Já são seus".
+    expect(container.querySelector('[data-decor-rule]')).toBeNull();
+    const guild = container.querySelector('[data-guild-owned="furniture"]')!;
+    expect(stall.querySelector('[data-shop-shelf]')!.contains(guild)).toBe(true);
     unmount();
     const vazio = abrir({ stall: 'decoracao' });
     expect(vazio.container.querySelector('[data-guild-owned]')).toBeNull();
