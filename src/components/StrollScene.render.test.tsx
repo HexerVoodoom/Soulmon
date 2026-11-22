@@ -28,7 +28,7 @@ describe('cena do Passeio', () => {
     abrir();
     const cena = q('[data-stroll-scene]');
     expect(cena.style.position).toBe('fixed');
-    expect(q('[data-scene-card="intro"]').textContent).toMatch(/Da aventura de ontem/);
+    expect(q('[data-scene-card="intro"]').textContent).not.toMatch(/Da aventura de ontem/);
     expect(q('[data-scene-card="intro"]').textContent).toMatch(/Observar o céu/);
     expect(q('[data-scene-pet="player"]')).toBeTruthy();
     expect(q('[data-scene-pet="found"]')).toBeTruthy();
