@@ -5,6 +5,7 @@
 > - **Pendente:** animação própria do 2º golpe do Pesadelo na cena; arte própria do botão Draw again (especificação vai à orquestradora); merge dos #1110/#1113/#1114 depende do CI verde (reruns de teste flaky em andamento); `fuzz2` precisa somar +1 campo ao juntar #1110 (`arenaSeason`). **Rollback:** `git revert` de cada PR (campos aditivos).
 
 > ## 22/11/2026 — P3 fechado (PRs #1116–#1119, REGISTRO §491–§493)
+> - **Pós-P3 (22/11):** semanais `buy-item` (Lamela) e `claim-achievement` (Medra) criadas; Honor confirmado = aba Honor do Mercado.
 > - **Feito:** Decoration limpa; "Da aventura de ontem" removido; Rift com "Camada atual"; Elemental Fusion primeiro no Salão e acento de cor por jogo; Power Reducer −6; Exchanger com recompensa em destaque e slot de arte; Mercado só com missões semanais (diárias de Mercado aposentadas, espelho do servidor alinhado).
 > - **Pendente (P3):** (a) Honor: já mostra missões semanais no topo; não achei "Achievements" na aba — falta o dono dizer onde. (b) Logbook cortado pela moldura e margens do Passeio: precisa de captura de tela. (c) Portal visual entre andares do Rift: pede arte nova (o anel atual é lógica de teleporte). (d) Semanais "comprar item" e "resgatar conquista" (eventos novos). **Arte pela fila:** ícone de camada/portal do Rift, chips Power Reducer, Pouch/Purse/Chest (`assets/soulmon/bits-packs/bits-200|500|1000.webp`), cards novos de Games. **Rollback:** `git revert` por PR.
 

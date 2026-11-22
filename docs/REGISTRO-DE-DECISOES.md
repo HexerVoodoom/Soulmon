@@ -6621,7 +6621,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 ## §493 — Mercado só tem missão SEMANAL (22/11/2026, dono; revoga em parte os §52 e §314)
 
 - **Decisão (6):** o Mercado não passa missão diária. `d-mercado` ganha `retired: true` (id estável; sai do sorteio). As diárias de NPC do Mercado (`n-lamela` compra, `n-snapjaw` prato, `n-medra` conquista) saem do rodízio e entram em `NPCS_SEM_MISSAO` com o motivo, como Lasca e Panora já estavam. O prato segue como semanal `cook-dish`; decoração e cenário como `buy-decor`/`buy-backdrop`. As demais diárias (jogos, pet, arena, torneio…) ficam como estão.
-- **Lacuna declarada:** "comprar um item" e "resgatar conquista" ainda não têm versão semanal (exigem evento novo); fica para decisão do dono.
+- **Fechada em 22/11/2026 (dono):** Lamela ganha a semanal `buy-item` (2 compras em Itens, não conta decoração nem cenário) e Medra `claim-achievement` (1 conquista resgatada); 3 Emblemas cada, no FIM do pool. Eventos só no cliente (como `buy-decor`); o servidor só valida journal/foco/presente, então não há espelho novo e a paridade segue verde. O sorteio da semana corrente pode mudar uma vez (pool maior).
 - **Compat:** `sanitizeDailyMissions` já descarta id/evento desconhecido (um save com `n-lamela` ou contagem `compra` é saneado sem quebrar). Rollback: reverter o commit.
 
 ## §492 — Power Reducer tira 6 pontos de um caminho e Exchanger com hierarquia recompensa × preço (22/11/2026, dono)

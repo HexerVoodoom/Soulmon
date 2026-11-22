@@ -24,6 +24,8 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
     case 'buy-decor': return 'mercado.decoracao';
     case 'buy-backdrop': return 'mercado.background';
     case 'cook-dish': return 'mercado.itens';
+    case 'buy-item': return 'mercado.itens';
+    case 'claim-achievement': return 'mercado.conquistas';
     case 'rest-nights': case 'checkins': case 'haunted-done': case 'rub-days': case 'shower': case 'play-days': case 'mood-checkins':
       return 'home';
     case 'dream-new': return 'home';
