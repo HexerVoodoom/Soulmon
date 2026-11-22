@@ -120,6 +120,30 @@ export function enforceArenaLadder(incoming, stored) {
   return Math.max(sanitizeArenaLadder(incoming), sanitizeArenaLadder(stored));
 }
 
+/** Espelho de `sanitizeArenaSeason`/`arenaSeasonKey` (`src/utils/arena.ts`): temporada mensal da Arena, "AAAA-MM" em UTC (22/11/2026). @param {unknown} raw @returns {string|undefined} */
+export function sanitizeArenaSeason(raw) {
+  return typeof raw === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : undefined;
+}
+
+/**
+ * Escada + temporada: a temporada mais NOVA (até o mês do relógio do servidor) vence e leva a escada dela, que pode ter voltado a 0;
+ * na mesma temporada a escada só cresce (`enforceArenaLadder`). Temporada mais velha que a gravada ou no futuro do servidor é rejeitada.
+ * Sem temporada gravada (save legado) o que chega é a 1ª temporada: segue a regra de só crescer. Cliente que omite a temporada: vale a gravada.
+ * @param {{ladder?:unknown,season?:unknown}} incoming @param {{ladder?:unknown,season?:unknown}} stored @param {number} [nowMs]
+ * @returns {{ladder:number, season:string|undefined}}
+ */
+export function enforceArenaSeason(incoming, stored, nowMs = Date.now()) {
+  const cur = new Date(nowMs).toISOString().slice(0, 7);
+  const sIn = sanitizeArenaSeason(incoming?.season);
+  const sSt = sanitizeArenaSeason(stored?.season);
+  const inOk = sIn !== undefined && sIn <= cur ? sIn : undefined;
+  if (inOk !== undefined && (sSt === undefined || inOk > sSt)) {
+    // temporada nova: a escada que chega é a dela (pode ser 0). Se a gravada não tinha temporada, a escada ainda só cresce (a 1ª temporada é a de agora).
+    return { ladder: sSt === undefined ? enforceArenaLadder(incoming?.ladder, stored?.ladder) : sanitizeArenaLadder(incoming?.ladder), season: inOk };
+  }
+  return { ladder: enforceArenaLadder(incoming?.ladder, stored?.ladder), season: sSt ?? inOk };
+}
+
 // ---------------------------------------------------------------------------
 // LASTRO DO SCORE DO ENDLESS RIFT (QA beta3 R1/R2/R3, decisão do dono 1).
 //
