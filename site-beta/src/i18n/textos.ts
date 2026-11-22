@@ -7,6 +7,7 @@ export type Lang = 'pt' | 'en';
 
 const pt = {
   html: 'pt-BR', idioma: 'pt-BR', home: `${B}/`, priv: `${B}/privacidade/`, outraHome: `${B}/en/`, outraPriv: `${B}/en/privacy/`, outraNome: 'English', outraCod: 'en',
+  vb: { h2: 'Sorteie um Soulmon selvagem', tx: 'Ele vai com você pelo site e evolui enquanto você rola.', sortear: 'Sortear', outro: 'Sortear outro', evoluiu: 'evoluiu para', tocar: 'Falar com seu Soulmon', falas: ['Um passo por vez. Hoje conta.', 'Você já começou. Continue.', 'Constância vence intensidade.', 'Feito é melhor que perfeito.', 'Descansar também faz parte do caminho.', 'Cada tarefa cumprida me fortalece.', 'Não precisa ser muito. Precisa ser hoje.', 'Eu evoluo quando você aparece.', 'Dia difícil? Faça o mínimo, e já vale.', 'Estamos crescendo juntos.'] },
   titulo: 'Soulmon: Evolua sua vida', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
   h1: 'Agora você tem mais motivação para evoluir na vida real.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
@@ -136,6 +137,7 @@ const pt = {
 
 const en: typeof pt = {
   html: 'en', idioma: 'en', home: `${B}/en/`, priv: `${B}/en/privacy/`, outraHome: `${B}/`, outraPriv: `${B}/privacidade/`, outraNome: 'Português', outraCod: 'pt-BR',
+  vb: { h2: 'Draw a wild Soulmon', tx: 'It comes along as you scroll and evolves on the way.', sortear: 'Draw', outro: 'Draw another', evoluiu: 'evolved into', tocar: 'Talk to your Soulmon', falas: ['One step at a time. Today counts.', 'You already started. Keep going.', 'Consistency beats intensity.', 'Done is better than perfect.', 'Rest is part of the path too.', 'Every task you finish makes me stronger.', 'It does not have to be a lot. It has to be today.', 'I grow when you show up.', 'Rough day? Do the minimum. It still counts.', 'We are growing together.'] },
   titulo: 'Soulmon: Evolve your life', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
   h1: 'Now you have more motivation to grow in real life.', cta: 'Join the beta', ctaEspera: 'Join the line',

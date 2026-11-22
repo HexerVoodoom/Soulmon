@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Soulmon A vs C</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;background:#0d1b1e;color:#e8f1ef;font:14px system-ui,sans-serif}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid #234}
+button{background:#163238;color:#e8f1ef;border:1px solid #2f5a60;border-radius:6px;padding:6px 10px;cursor:pointer}
+button[aria-pressed=true]{background:#2e7d7a}
+main{display:flex;gap:16px;padding:16px;justify-content:center;overflow-x:auto}
+section{display:flex;flex-direction:column;gap:6px}
+h2{margin:0;font-size:14px}
+iframe{border:1px solid #2f5a60;border-radius:8px;background:#000;height:calc(100vh - 110px)}
+</style></head><body>
+<header><strong>Soulmon beta: A (atual) vs C (nova)</strong>
+<span>Idioma:</span><button data-l="en/" aria-pressed="true">EN</button><button data-l="">PT</button>
+<span>Tela:</span><button data-w="390" aria-pressed="true">Celular</button><button data-w="1280">Desktop</button></header>
+<main>
+<section><h2>A · atual</h2><iframe id="a"></iframe></section>
+<section><h2>C · nova</h2><iframe id="b"></iframe></section>
+</main>
+<script>
+const O='http://127.0.0.1:4329/beta/';let L='en/',W=390,sync=true;
+const a=document.getElementById('a'),b=document.getElementById('b');
+function load(){a.src=O+L+'?v=a';b.src=O+L+'c/';[a,b].forEach(f=>f.style.width=W+'px')}
+document.querySelectorAll('[data-l]').forEach(x=>x.onclick=()=>{L=x.dataset.l;document.querySelectorAll('[data-l]').forEach(y=>y.setAttribute('aria-pressed',y===x));load()});
+document.querySelectorAll('[data-w]').forEach(x=>x.onclick=()=>{W=+x.dataset.w;document.querySelectorAll('[data-w]').forEach(y=>y.setAttribute('aria-pressed',y===x));load()});
+load();
+</script></body></html>

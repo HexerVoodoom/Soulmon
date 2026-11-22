@@ -16,8 +16,9 @@ import universoDados from '../content/universo.json';
 import elenco from '../content/elenco.json';
 import fusoes from '../content/fusoes.json';
 import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+interface Props { lang: Lang; variante?: 'b' }
+const { lang, variante } = Astro.props;
+const VB = variante === 'b'; // Versão B (dono, 09/11): sem sorteio e sem demo de scroll; companheiro que evolui rolando.
 const t = TEXTOS[lang];
 const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const j = t.jogo; const r = t.recursos; const mo = t.modal;
 type Video = { src: string; poster: string; posterAvif?: string; posterP?: string; posterPAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
@@ -67,6 +68,7 @@ const temSprite = (rel: string) => existsSync(`public${rel}`);
 const temForma = (lin: string, fm: string) => temSprite(`/sprites/${lin}-${fm}.webp`) && temSprite(`/sprites/${lin}-${fm}-128.webp`);
 // Árvore: entra com Champion..Ultra (o Rookie, se faltar, fica em sombra). Demo: só com as 5 formas.
 const NOTURNO = c.formas.slice(1).every((fm) => temForma('noturno', fm));
+const LINHAS_B = ['arcano','espaco','fada','fogo','morte','noturno','planta','sombra','vigor','vileza'];
 const LINHA_DEMO = c.formas.every((fm) => temForma('noturno', fm)) ? 'noturno' : 'fogo';
 const LINHAS = [['planta', s.linhas[0]], ['fada', s.linhas[1]], ['fogo', s.linhas[2]], ...(NOTURNO ? [['noturno', s.linhaNoturno]] : [])] as [string, string][];
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
@@ -92,13 +94,13 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   ultimate: { poder: [['/sprites/colete/ultimate/chama_azul.webp', t.colete.nomes.chama_azul], ['/sprites/colete/ultimate/brinquedo.webp', t.colete.nomes.brinquedo], ['/sprites/colete/ultimate/raiz_profunda.webp', t.colete.nomes.raiz_profunda]] },
 };
 ---
-<Base lang={lang} alternativa={t.outraHome} aqui={t.home} canonico={t.home} versaoB={t.home + 'b/'} preload>
+<Base lang={lang} alternativa={VB ? t.outraHome + 'b/' : t.outraHome} aqui={VB ? t.home + 'b/' : t.home} canonico={t.home} versaoB={VB ? undefined : t.home + 'b/'} preload>
   <a class="pular" href="#conteudo">{t.pular}</a>
 
   <header class="topo" data-topo>
     <a class="topo-logo" href="#topo" aria-label={t.logoTopo}><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-tarde-src={b('/marca/logo-160.webp')} width="160" height="120" alt="" /></a>
     <a class="ig ig-topo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a>
-    <a class="idioma" href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod} aria-label={t.outraNome} title={t.outraNome}><Fragment set:html={lang === 'pt' ? BANDEIRA_EN : BANDEIRA_PT} /></a>
+    <a class="idioma" href={VB ? t.outraHome + 'b/' : t.outraHome} hreflang={t.outraCod} lang={t.outraCod} aria-label={t.outraNome} title={t.outraNome}><Fragment set:html={lang === 'pt' ? BANDEIRA_EN : BANDEIRA_PT} /></a>
   </header>
 
   <!-- 1 · Hero: Exploração em tela cheia, elenco pisando no mapa -->
@@ -132,7 +134,19 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   </section>
 
   <main id="conteudo" tabindex="-1">
+    {VB && (
+    <section class="calmo meu-soulmon" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={t.vb.outro} data-falas={JSON.stringify(t.vb.falas)}>
+      <h2 id="meu-h">{t.vb.h2}</h2>
+      <div class="meu-palco">
+        <img class="sprite meu-sombra" data-meu-sombra src={b('/sprites/fogo-rookie.webp')} width="192" height="192" alt="" aria-hidden="true" loading="lazy" />
+        <img class="sprite" data-meu-img hidden width="192" height="192" alt="" />
+      </div>
+      <p class="meu-info" data-meu-info aria-live="polite"></p>
+      <button type="button" class="botao primario" data-meu-sortear>{t.vb.sortear}</button>
+    </section>
+    )}
     <!-- 2 · O jogo na sua mão: aparelho com o loop real ao lado da demo (Laboratório, scroll no desktop) -->
+    {!VB && (
     <section class="cena ciclo" id="ciclo" aria-labelledby="ciclo-h" data-linha-demo={LINHA_DEMO}>
       <div class="ciclo-palco" data-palco>
         <Mapa id="laboratorio" desk="laboratorio-d" aD={841 / 600} fy={0.4} dfy={0.5} />
@@ -184,6 +198,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         </div>
       </div>
     </section>
+    )}
 
     <!-- 4 · Seu Soulmon: Jogos; número grande, árvore e fichas -->
     <section class="cena soul" id="seu-soulmon" aria-labelledby="soul-h">
@@ -195,6 +210,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <p class="numero"><span class="num-g">{s.num}</span> <span class="num-tx">{s.numTx}</span></p>
           <p class="numero"><span class="num-pre">{s.num2Pre}</span> <span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
         </div>
+        {!VB && (
         <div class="sorteio ficha-moldura" role="group" aria-label={s.sorteioRotulo} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento} data-nomes={JSON.stringify(c.nomes)} data-el-base={b('/el/')} data-fusoes={JSON.stringify(fusoes)} data-lang={lang}>
           <div class="sorteio-palco">
             <img class="sorteio-sombra sprite" data-sort-sombra aria-hidden="true" src={b('/sprites/agua-ultimate.webp')} width="256" height="256" alt="" loading="lazy" />
@@ -204,6 +220,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <p class="sorteio-info" data-sort-info aria-live="polite">{s.sombra}</p>
           <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
         </div>
+        )}
         <div class="arvore-bloco veu" data-trilho>
           <h3>{s.arvoreH}</h3>
           <div class="arvore-palco">
@@ -479,6 +496,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   </footer>
 
   <button type="button" class="link pular-demo" data-pular-demo hidden>{c.pular}</button>
+  {VB && <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden><span class="comp-tx" data-comp-tx aria-live="polite"></span><span class="comp-x" role="button" tabindex="0" data-comp-x aria-label={c.fechar}>×</span></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>}
   <div class="fixo" data-fixo><a class="ig ig-fixo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a><a class="botao primario fixo-cta" href="#entrar" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
   <dialog class="ramo-modal" data-ramo-modal aria-label={s.ramoModal} data-estagio={s.estagio} data-els={JSON.stringify(u.els)} data-base={b('/el/')} data-nomes={JSON.stringify(c.nomes)}>
     <button type="button" class="ramo-x" data-ramo-fechar aria-label={s.ramoFechar}><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>

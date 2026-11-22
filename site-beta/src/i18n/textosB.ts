@@ -1,4 +1,4 @@
-// Copy da Versão B (landing de aquisição, /beta/b/ e /beta/en/b/). Fatos continuam vindos de textos.ts / FEATURE_TRUTH.md;
+// Copy da Versão B (landing de aquisição, /beta/c/ e /beta/en/c/). Fatos continuam vindos de textos.ts / FEATURE_TRUTH.md;
 // o que não está no repo está marcado com "CONFERIR" para o dono confirmar (ver relatório da entrega).
 // Nada de recompensa, medalha ou título exclusivo para o primeiro grupo (decisão do dono).
 import { CONTATO } from './textos';
@@ -6,7 +6,7 @@ import { CONTATO } from './textos';
 const pt = {
   titulo: 'Soulmon: acesso antecipado para Android',
   desc: 'Crie uma criatura nascida da sua personalidade, cumpra atividades da vida real e evolua seu Soulmon. Acesso antecipado para Android.',
-  cta: 'Quero acesso antecipado', ctaConvite: 'Pedir meu convite',
+  cta: 'Quero acesso antecipado', ctaConvite: 'Quero acesso antecipado',
   hero: {
     eyebrow: 'ACESSO ANTECIPADO · ANDROID',
     h1: 'Suas ações reais. A evolução dele.',
@@ -63,7 +63,7 @@ const pt = {
     h2: 'Faça parte do começo do Soulmon.',
     p: 'Entre na primeira geração de Treinadores Soulmon. Conheça o jogo antes do lançamento público, conte como foi e ajude a moldar o mundo enquanto ele cresce.',
     itens: ['Acesso antecipado ao jogo', 'Recursos novos antes do lançamento público', 'Ajude a influenciar as próximas melhorias'],
-    nota: 'Só Android · 18+ · Convites enviados em levas.',
+    nota: 'Só Android · 18+ · Grátis para entrar.',
   },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
@@ -94,7 +94,7 @@ const pt = {
 const en: typeof pt = {
   titulo: 'Soulmon: early access for Android',
   desc: 'Raise a creature born from your personality, complete real-life activities and evolve your Soulmon. Early access for Android.',
-  cta: 'Get early access', ctaConvite: 'Request your invitation',
+  cta: 'Get early access', ctaConvite: 'Get early access',
   hero: {
     eyebrow: 'EARLY ACCESS · ANDROID',
     h1: 'Your real-life actions. Their evolution.',
@@ -150,7 +150,7 @@ const en: typeof pt = {
     h2: "Be part of Soulmon's beginning.",
     p: 'Join the first generation of Soulmon Trainers. Discover the game before its public launch, share your experience and help shape the world as it grows.',
     itens: ['Early access to the game', 'New features before the public release', 'Help influence future improvements'],
-    nota: 'Android only · 18+ · Invitations sent in batches.',
+    nota: 'Android only · 18+ · Free to join.',
   },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
