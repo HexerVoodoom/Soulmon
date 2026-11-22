@@ -227,7 +227,7 @@ export interface ShopActions {
  * recusa item de outra moeda (ele seria julgado contra o saldo errado).
  */
 export function ShopShelf({
-  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts,
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts, afterOwned, atEnd,
 }: {
   language: Language;
   items: ShopItem[];
@@ -240,6 +240,10 @@ export function ShopShelf({
   emptyHint?: string;
   /** A lojinha de Decoração já desenha a regra no topo da folha. */
   hideDecorRule?: boolean;
+  /** P3 7.2 (22/11/2026): peças do Bosque, logo abaixo de "Já são seus". */
+  afterOwned?: ReactNode;
+  /** P3 7.2: conjunto da assinatura, depois da lista à venda. */
+  atEnd?: ReactNode;
   /** A FEIRA DE VERDADE (10/11/2026): preço cheio e % de desconto por id; os `items` já trazem o preço FINAL. Sem isto, nada muda. */
   discounts?: Record<string, { was: number; pct: number }>;
 }) {
@@ -439,9 +443,11 @@ export function ShopShelf({
                 {owned.map(renderItem)}
               </section>
             )}
+            {afterOwned}
             {forSale.length === 0
               ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
               : forSale.map(renderItem)}
+            {atEnd}
           </>
         )}
       <ShopItemSheet
