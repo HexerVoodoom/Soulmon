@@ -52,6 +52,19 @@ describe('MinigameModeGate (pedido do dono, 30/10/2026)', () => {
     expect(onPick).toHaveBeenCalledWith(1);
   });
 
+  it('Fusão Elemental com seletor: o ranking abre direto na modalidade escolhida, sem abas PvE/PvP', () => {
+    const { container } = render(<MinigameModeGate {...base} gameName="Fusão Elemental" language="pt-BR" withDifficulty={false} pveVsPvp renderChoices={() => null}
+      rankings={[{ game: 'match3', period: 'monthly' }, { game: 'match3-pvp', period: 'monthly' }]} />);
+    fireEvent.click(container.querySelector('[data-gate-ranking-open]')!);
+    expect(document.body.querySelectorAll('[data-gate-rank-tab]')).toHaveLength(0);
+    expect(document.body.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('match3');
+    fireEvent.click(document.body.querySelector('[data-ranking-modal] .sm3-ranking-fechar')!);
+    fireEvent.click(container.querySelector('[data-gate-pick="2"]')!);
+    fireEvent.click(container.querySelector('[data-gate-ranking-open]')!);
+    expect(document.body.querySelectorAll('[data-gate-rank-tab]')).toHaveLength(0);
+    expect(document.body.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('match3-pvp');
+  });
+
   it('em inglês: Common / Advanced', () => {
     const { container } = render(<MinigameModeGate {...base} language="en-US" withDifficulty rankings={[{ game: 'ppt' }]} />);
     expect([...container.querySelectorAll('[data-gate-pick]')].map(b => b.textContent)).toEqual(['Common', 'Advanced']);

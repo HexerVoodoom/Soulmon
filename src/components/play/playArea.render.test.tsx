@@ -178,21 +178,18 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2);
+    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(3); // Ver ranking, Entrar no Rift, Ver o mapa
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
     // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
-    // "Ranking": no cabeçalho, à esquerda do título, outline, negrito + sublinhado
-    const head = folha.querySelector('[data-area-sheet-head]')!;
-    const rank = head.querySelector('[data-masmorra-ranking]') as HTMLButtonElement;
-    expect(rank.textContent).toBe('Ranking');
-    expect(rank.style.fontWeight).toBe('700');
-    expect(rank.style.textDecoration).toBe('underline');
-    expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
-    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título vai na placa da moldura; o Ranking pousa à esquerda dela
+    // "Ver ranking": o mesmo botão do Torneio (BotaoEspecial ranking), no corpo da folha; sem CSS próprio
+    const rank = folha.querySelector('[data-masmorra] [data-masmorra-ranking]') as HTMLButtonElement;
+    expect(rank.textContent).toBe('Ver ranking');
+    expect(rank.getAttribute('data-especial-variant')).toBe('ranking');
+    expect(folha.querySelector('[data-area-sheet-head-start]')).toBeNull();
   });
 
   it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {
@@ -294,7 +291,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
-    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
+    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('See ranking');
     expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
     fireEvent.click(container.querySelector('[data-moldura-info] [data-info-tip]')!);
     expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
