@@ -6605,3 +6605,10 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 ## §490 — Arena aberta na mesma linha do Torneio e do Elemental Fusion (18/11/2026, dono)
 
 **Decisão:** o `DueloSheet` (Arena livre) troca o card próprio (`box` local) pela linha compartilhada `ui/EscolhaLinha` e o botão de sorteio por `SortearNovos` (que ganhou `ariaLabel` e rótulo em nó). Regras da Arena INTACTAS: elemento(s) da run + "Lutar" (1º elemento no mini-visor 64, o nome "A · B" no título, os demais ícones na linha de baixo), "Sortear de novo · N grátis" / "· 15 Bits" com o custo e o aviso de Bits que faltam, os limites do dia, os textos, o banner atrás de `ARENA_BANNER_ATIVO` e sem o aviso de ficha. Os `data-arena-*` continuam. Sem CSS novo; o card próprio da Arena saiu (sem estilo duplicado). **Alternativa que perdeu:** manter o card próprio da Arena (visual diferente das outras listas de escolha). **Teste:** `arena/DueloSheet.estados.render.test.tsx` (usa a linha compartilhada) e os da Arena existentes.
+
+## §491 — Arena: giros por hora, convites 3 por energia e temporada mensal (22/11/2026, dono)
+- **Decisão:** o Draw again dá 3 giros grátis por HORA (UTC) e depois 15/30/45 Bits; o convite de Duelo vale 3 por energia para TODOS. **Revoga** o §180 ("3 grátis por dia") e a vantagem 5/7 da conta paga do §458. A Arena tem temporada própria mensal em UTC alinhada ao mês; a 1ª vai de agora ao fim de novembro e na virada a escada volta ao nível 1 (0); ranking, prêmios e histórico não mudam (PR #1110, #1114).
+- **Alternativa que perdeu:** manter 3/dia e 5/7 por energia (vantagem de volume da conta paga).
+- **Gatilho de revisão:** abuso de giros por relógio adiantado ou queda de retenção na Arena.
+- **Pesadelo (§492):** o `dot` do companheiro vira ataque extra após o especial só no Pesadelo; cura não invoca (16/11); buff mantém (#1112).
+- **Clan War (§493):** carta no Mensageiro quando a batalha é encontrada, sem push (`guild.semPush` mantido), com Assistir pela semente gravada; resultado inalterado (#1113).
