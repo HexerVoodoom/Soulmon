@@ -23,3 +23,9 @@ Se a regra é "quantos elementos a Jornada/ambiente mistura": peso da essência 
 | 3 | 20% | 2 |
 | 4 | 25% | 2 |
 Racional: mais elementos = mais variedade a custear; o teto de 8/dia limita a inflação. Se o 15.5 pedir outra coisa (ex.: distribuição de ENTRE elementos), me devolva o texto e eu reescrevo.
+
+## DECISÃO (dono, 22/11/2026): Opção A aprovada e implementada
+- `JOURNEY_ITEMS_DAILY_CAP` 16 -> 28; `JOURNEY_SESSION_ITEMS_CAP` p25=6 / p50=10 (1 item por baú); baú especial paga 1 item raro; essências seguem 8/dia.
+- `ESSENCE_BY_ELEMENTS`: chance no baú comum 10/15/20/25% (1..4 elementos), especial 1/1/2/2. `chestLoot(..., elems = 1)` (aditivo: o cenário de hoje tem 1 elemento até o mapa 20x6 chegar).
+- Paridade: `src/utils/focusJourney.ts` + `functions/api/_focusJourney.js`; testes parity/balanco/focusJourney atualizados.
+- Rollback: reverter constantes e `chestLoot` nos dois lados (o razão do dia guarda só contadores, sem migração).
