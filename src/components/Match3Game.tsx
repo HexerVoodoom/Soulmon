@@ -114,7 +114,7 @@ export interface Match3Props extends EarningGameProps {
   /** Sessão de diversão: 'De novo' conta uma rodada (também no PvP). `false` = sem energia. */
   onReplayRound?: () => boolean;
   initialMode?: 'pve' | 'pvp';
-  /** §487: a opção escolhida na lista de 3 do Salão (`Match3Escolha`). Com ela a partida é a da escolha e o "De novo" volta à lista. */
+  /** §488: a opção escolhida na lista de 3 do Salão (`Match3Escolha`). Com ela a partida é a da escolha e o "De novo" volta à lista. */
   initialChoice?: M3Choice;
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
@@ -157,7 +157,7 @@ function combatFor(sd: number, playerLine: string | undefined, level?: number, p
   if (pvp) return { combat: newPvpCombat(mulberry32(sd + 99), M3_TILE_ELEMENTS, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
   // Modo desafio do Calabouço: INTACTO (6 fixos, time de 3).
   if (challenge) return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
-  // AVENTURA (§473): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4; §487: com a escolha, o time é do elemento escolhido.
+  // AVENTURA (§473): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4; §488: com a escolha, o time é do elemento escolhido.
   const elements = mixedElementsForSeed(sd);
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement, { elements, ...(adventureElement ? { element: adventureElement } : {}) }), rng: mulberry32(sd ^ 0x5eed), elements };
 }
@@ -1362,7 +1362,7 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
 }
 
 /**
- * §487: a partida que veio da LISTA DE 3 (Aventura = elemento, PvP = jogador da rota `opponents`). O "De novo" (`onNewOpponent`) volta para a
+ * §488: a partida que veio da LISTA DE 3 (Aventura = elemento, PvP = jogador da rota `opponents`). O "De novo" (`onNewOpponent`) volta para a
  * mesma lista dentro do jogo, com 3 opções novas — nunca inventa adversário (sem jogador simulado local, demo ou monstro no PvP).
  */
 function Match3ChoiceEntry(props: Match3Props & { initialChoice: M3Choice }) {

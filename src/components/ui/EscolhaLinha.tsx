@@ -3,8 +3,8 @@ import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { Icon } from './Icon';
 
 /**
- * A LINHA "ESCOLHA 1 DE 3" (extraída do Torneio em 18/11/2026, REGISTRO §487): arte à esquerda (mini-visor 64), nome e detalhe no meio,
- * a recompensa ("até N …") e o botão de lutar à direita. Dono único do formato: Torneio (Ranqueada e Treino) e Elemental Fusion
+ * A LINHA "ESCOLHA 1 DE 3" (extraída do Torneio em 18/11/2026, REGISTRO §488; a Arena aberta entrou no §489): arte à esquerda (mini-visor 64), nome e detalhe no meio,
+ * a recompensa ("até N …") e o botão de lutar à direita. Dono único do formato: Torneio (Ranqueada e Treino), Arena aberta (`DueloSheet`) e Elemental Fusion
  * (Aventura e PvP) usam ESTA linha, para as tabelinhas serem iguais. Sem CSS novo: estilos inline com os tokens do kit.
  *
  * a11y: o botão tem alvo de 44 px (`sm2Button` 'sm' + `minWidth` 88) e o rótulo visível ("Lutar"/"Fight") fica CONTIDO no nome
@@ -61,12 +61,13 @@ export function EscolhaLinha({ lead, title, sub, reward, actionLabel, actionAria
 }
 
 /** O "Sortear N novos" no fim da lista (mesmo botão do Torneio): contorno, largura cheia, ícone de sorteio. */
-export function SortearNovos({ label, onClick, disabled = false, spinning = false, buttonProps }: {
-  label: string; onClick: () => void; disabled?: boolean; spinning?: boolean;
+export function SortearNovos({ label, ariaLabel, onClick, disabled = false, spinning = false, buttonProps }: {
+  /** Texto visível (nó: a Arena põe o custo dentro de um `span` próprio). */
+  label: ReactNode; ariaLabel?: string; onClick: () => void; disabled?: boolean; spinning?: boolean;
   buttonProps?: Record<string, string | number | boolean | undefined>;
 }) {
   return (
-    <button type="button" {...buttonProps} disabled={disabled} onClick={onClick} style={{ ...sm2Button('outline', disabled), width: '100%' }}>
+    <button type="button" {...buttonProps} disabled={disabled} aria-label={ariaLabel} onClick={onClick} style={{ ...sm2Button('outline', disabled), width: '100%' }}>
       <Icon name="sync" size={20} className={spinning ? 'animate-spin' : undefined} />
       {label}
     </button>

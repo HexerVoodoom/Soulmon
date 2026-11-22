@@ -44,7 +44,7 @@ vi.mock('../RPSGame', async (orig) => {
 // jogabilidade tem teste próprio em `components/mente/*.render.test.tsx`).
 const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[nome] = p; return <div data-jogo={nome} />; };
 vi.mock('../Match3Game', () => ({ Match3Game: dubleDe('match3') }));
-// §487: a lista de 3 do Match-3 vira um botão "Lutar" que devolve uma escolha do modo (a lista real tem teste próprio).
+// §488: a lista de 3 do Match-3 vira um botão "Lutar" que devolve uma escolha do modo (a lista real tem teste próprio).
 vi.mock('./Match3Escolha', () => ({ Match3Escolha: ({ mode, onFight }: { mode: 'adventure' | 'pvp'; onFight: (c: unknown) => void }) => (
   <button type="button" data-m3-escolha-lutar="0" onClick={() => onFight(mode === 'pvp' ? { mode, seed: 7, foe: { kind: 'player', level: 3 } } : { mode, element: 'fogo', seed: 7 })}>Lutar</button>
 ) }));
@@ -532,7 +532,7 @@ describe('Salão — o roteamento do Elemental Fusion nunca cai na Soul Barrage 
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     fireEvent.click(await achar(container, '[data-match3-start]'));
     fireEvent.click(await achar(container, `[data-gate-pick="${btn}"]`));
-    // §487: o botão de modo só escolhe a lista; quem abre o jogo é o "Lutar" de uma linha.
+    // §488: o botão de modo só escolhe a lista; quem abre o jogo é o "Lutar" de uma linha.
     expect(container.querySelector('[data-jogo="match3"]')).toBeNull();
     fireEvent.click(await achar(container, '[data-m3-escolha-lutar="0"]'));
     await achar(container, '[data-jogo="match3"]');

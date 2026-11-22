@@ -1,5 +1,5 @@
 /**
- * §487 — a escolha de 3 do Elemental Fusion (regra pura): sorteio determinístico por semente, 3 opções, redraw, Aventura por ELEMENTO
+ * §488 — a escolha de 3 do Elemental Fusion (regra pura): sorteio determinístico por semente, 3 opções, redraw, Aventura por ELEMENTO
  * com o time de 4 daquele elemento, PvP só com jogadores (sem demo) e o boss decidido antes.
  */
 import { describe, it, expect } from 'vitest';
