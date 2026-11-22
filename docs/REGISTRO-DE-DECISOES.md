@@ -6611,3 +6611,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decoration (7.2):** saem a linha "Decoration rule", o título "From the grove" e o título "Of the quarter". "Já são seus / Already yours" fica no topo; as peças do Bosque vêm logo abaixo dele, depois a lista à venda e, por último, o conjunto da assinatura (sem título; só `aria-label` neutro). A regra de quantas peças cabem (`decorRules`) segue valendo na equipagem, só não tem mais texto fixo na loja.
 - **Passeio (9.1) — REVOGA o §66 no que toca ao nome:** o texto "From Yesterday's Adventure / Da aventura de ontem" sai de TODOS os lugares (folha do Passeio, passo do resumo do dia e cena do Passeio, que passam a se chamar "Stroll / Passeio"). O conteúdo do achado (missão, destino, o que o Soulmon encontrou) permanece; só perde o rótulo.
 - **Rollback:** só texto/estrutura de tela, sem save nem servidor; reverter o commit basta.
+
+## §493 — Mercado só tem missão SEMANAL (22/11/2026, dono; revoga em parte os §52 e §314)
+
+- **Decisão (6):** o Mercado não passa missão diária. `d-mercado` ganha `retired: true` (id estável; sai do sorteio). As diárias de NPC do Mercado (`n-lamela` compra, `n-snapjaw` prato, `n-medra` conquista) saem do rodízio e entram em `NPCS_SEM_MISSAO` com o motivo, como Lasca e Panora já estavam. O prato segue como semanal `cook-dish`; decoração e cenário como `buy-decor`/`buy-backdrop`. As demais diárias (jogos, pet, arena, torneio…) ficam como estão.
+- **Lacuna declarada:** "comprar um item" e "resgatar conquista" ainda não têm versão semanal (exigem evento novo); fica para decisão do dono.
+- **Compat:** `sanitizeDailyMissions` já descarta id/evento desconhecido (um save com `n-lamela` ou contagem `compra` é saneado sem quebrar). Rollback: reverter o commit.

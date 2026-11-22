@@ -89,7 +89,8 @@ describe('Lasca e Panora: missões semanais da loja', () => {
     expect(migrateWeeklyLegacy(antigo)).toBe(antigo);
     expect(isWeeklyDone(antigo, weeklyMissionPool().find(m => m.id === 'buy-decor')!)).toBe(false);
     const s = sanitizeDailyMissions({ day: 'd', counts: { compra: 2, cenario: 1 }, claimed: ['n-lasca', 'n-panora', 'n-lamela'] })!;
-    expect(s.counts).toEqual({ compra: 2 });
-    expect(s.claimed).toEqual(['n-lamela']);
+    // P3 6 (22/11/2026): as diárias do Mercado saíram (só semanais); `compra` e `n-lamela` deixam de existir no catálogo diário e são saneados.
+    expect(s.counts).toEqual({});
+    expect(s.claimed).toEqual([]);
   });
 });
