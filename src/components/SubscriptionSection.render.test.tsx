@@ -149,7 +149,9 @@ describe('Mercado — a vitrine "Do trimestre"', () => {
   it('sem assinatura: o item APARECE escurecido e diz o porquê — nunca some em silêncio', () => {
     abrir({ stall: 'background' });
     const s = shelf('bg')!;
-    expect(within(s).getByRole('heading', { name: 'Do trimestre' })).toBeTruthy();
+    // P3 7.2: sem título visível; só o rótulo neutro de acessibilidade.
+    expect(within(s).queryByRole('heading')).toBeNull();
+    expect(s.getAttribute('aria-label')).toBe('Conjunto da assinatura');
     const row = s.querySelector(`[data-subscription-item="${bgItem.id}"]`)!;
     expect(row.getAttribute('data-state')).toBe('locked');
     expect(row.getAttribute('role')).toBe('group');

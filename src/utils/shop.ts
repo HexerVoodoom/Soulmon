@@ -77,7 +77,7 @@ export const CHIP_PRICE = 360;
 // Chave no inventário = emoji do chip comum + `REDUCE_CHIP_SUFFIX` (mesmo molde da comida premium ★):
 // a arte é a do chip comum e a Mochila desenha o "−" por cima (`data-reduce`).
 export const REDUCE_CHIP_SUFFIX = '➖';
-export const REDUCE_CHIP_BOOST = 3;
+export const REDUCE_CHIP_BOOST = 6; // P3 7.1 (22/11/2026, dono): tira 6 pontos de UM caminho (era 3); limite por estágio e preço seguem
 export const REDUCE_CHIP_PRICE = 360;
 export const BIG_CHIP_PRICE = 840;
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED

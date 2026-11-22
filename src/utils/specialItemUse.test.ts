@@ -383,14 +383,14 @@ describe('chips de REDUÇÃO (04/11/2026)', () => {
     expect(isReduceChipKey(CHIP_EMOJI.power)).toBe(false);
   });
   it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
-    'redutor de %s tira 3 só nele', (attr, pontos) => {
+    'redutor de %s tira 6 só nele', (attr, pontos) => {
       const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI[attr]]: 1 }, powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10,
-        attributesSinceLastEvolution: { power: 5, harmony: 5, benevolence: 5 }, totalXP: 70 });
+        attributesSinceLastEvolution: { power: 8, harmony: 8, benevolence: 8 }, totalXP: 70 });
       const { state, refused } = applySpecialItem(prev, REDUCE_CHIP_EMOJI[attr], AGORA);
       expect(refused).toBeUndefined();
       expect(state[pontos]).toBe(10 - REDUCE_CHIP_BOOST);
-      expect(state.attributesSinceLastEvolution[attr]).toBe(2);
-      expect(state.powerPoints + state.harmonyPoints + state.benevolencePoints).toBe(27);
+      expect(state.attributesSinceLastEvolution[attr]).toBe(8 - REDUCE_CHIP_BOOST);
+      expect(state.powerPoints + state.harmonyPoints + state.benevolencePoints).toBe(30 - REDUCE_CHIP_BOOST);
       expect(state.totalXP).toBe(70);
       expect(state.foodInventory[REDUCE_CHIP_EMOJI[attr]]).toBeUndefined();
     });
@@ -409,7 +409,7 @@ describe('chips de REDUÇÃO (04/11/2026)', () => {
   });
   it('limites independentes: 3 que somam + 3 que reduzem no mesmo estágio; o 4º de cada recusa', () => {
     let st = estado({ foodInventory: { [CHIP_EMOJI.power]: 9, [REDUCE_CHIP_EMOJI.harmony]: 9 }, evolutionStage: 'rookie',
-      powerPoints: 0, harmonyPoints: 30 });
+      powerPoints: 0, harmonyPoints: 60 });
     for (let i = 0; i < 3; i++) {
       let r = applySpecialItem(st, CHIP_EMOJI.power, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
       r = applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
@@ -417,7 +417,7 @@ describe('chips de REDUÇÃO (04/11/2026)', () => {
     expect(chipsUsedThisStage(st)).toBe(3);
     expect(reduceChipsUsedThisStage(st)).toBe(REDUCE_CHIPS_PER_STAGE);
     expect(st.powerPoints).toBe(9);
-    expect(st.harmonyPoints).toBe(21);
+    expect(st.harmonyPoints).toBe(60 - 3 * REDUCE_CHIP_BOOST);
     expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBe('stage-cap');
     expect(applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA).refused).toBe('stage-cap');
     // redutor no teto não trava o que soma (e vice-versa)

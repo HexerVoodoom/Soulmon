@@ -108,7 +108,7 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
     if (discovery && !discovered.current) { discovered.current = true; onDiscover(discovery.key); }
     setPhase('pan-back');
   };
-  const title = isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure";
+  const title = isPt ? 'Passeio' : 'Stroll';
 
   return (
     <div data-stroll-scene data-phase={phase} data-region={regionId} data-scene-art={art ? 'painted' : 'fallback'}

@@ -471,7 +471,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
           areaId="exploracao"
           lotId="passeio"
           language={language}
-          title={isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure"}
+          title={isPt ? 'Passeio' : 'Stroll'}
           closeLabel={closeLabel}
           closeInSheet
           open

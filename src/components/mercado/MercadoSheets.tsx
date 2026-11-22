@@ -34,7 +34,7 @@ import { WidgetFramePicker } from '../WidgetFramePicker';
 import type { WidgetFramePickerData } from '../../utils/widgetFrames';
 import { ShopItemSheet } from './ShopItemSheet';
 import {
-  CreditExchange, CurrencyBalance, PurchaseConfirmSheet, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
+  CreditExchange, CurrencyBalance, PurchaseConfirmSheet, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
@@ -165,30 +165,6 @@ export function MercadoStallSheet(props: MercadoStallProps) {
         </section>
       )}
 
-      {/* D2 (02/10/2026): a regra da decoração no TOPO — quantas peças cabem e onde aparecem. */}
-      {stall === 'decoracao' && <DecorRuleLine language={language} />}
-
-      {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
-          NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
-          Vazio é silêncio — a seção nem desenha o título. */}
-      {!showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') && (
-        <GuildOwnedShelf
-          language={language}
-          kind={stall === 'background' ? 'bg' : 'furniture'}
-          ownership={props}
-          actions={props}
-        />
-      )}
-      {/* O conjunto do trimestre da assinatura: sempre visível (escurecido com o porquê
-          quando a vitrine está fechada), de graça no resgate, posse permanente depois. */}
-      {cur === 'bits' && !showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') && (
-        <SubscriptionShelf
-          language={language}
-          kind={stall === 'background' ? 'bg' : 'furniture'}
-          ownership={props}
-          actions={props}
-        />
-      )}
       {showWidget ? (
         <WidgetFramePicker language={language} data={props.widgetFrames!} />
       ) : showFrames ? (
@@ -213,6 +189,22 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           say={say}
           flash={flash}
           hideDecorRule
+          afterOwned={!showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') ? (
+            <GuildOwnedShelf
+              language={language}
+              kind={stall === 'background' ? 'bg' : 'furniture'}
+              ownership={props}
+              actions={props}
+            />
+          ) : undefined}
+          atEnd={cur === 'bits' && !showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') ? (
+            <SubscriptionShelf
+              language={language}
+              kind={stall === 'background' ? 'bg' : 'furniture'}
+              ownership={props}
+              actions={props}
+            />
+          ) : undefined}
         />
       )}
     </div>
