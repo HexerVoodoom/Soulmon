@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  ARENA_REROLL_FREE_PER_DAY, ARENA_REROLL_PRICES, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, nextArenaReroll,
+  ARENA_REROLL_FREE_PER_HOUR, ARENA_REROLL_PRICES, arenaHourKey, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsThisHour, arenaRerollsToday, nextArenaReroll,
   sanitizeArenaReroll, ARENA_BASE_ELEMENTS, ARENA_CHOICES, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
 } from './arenaSorteio';
 import { ARENA_BG_SCENES } from './dungeonScenes';
@@ -52,9 +52,35 @@ describe('reroll: determinismo', () => {
   });
 });
 
+const H1 = Date.parse('2026-10-28T10:20:00Z');
+const H2 = Date.parse('2026-10-28T11:05:00Z');
+
+describe('reroll: 3 grátis POR HORA (22/11/2026)', () => {
+  it('a hora UTC vira e os 3 grátis voltam; o dia segue contando para a semente', () => {
+    let r = nextArenaReroll(undefined, '2026-10-28', H1);
+    r = nextArenaReroll(r, '2026-10-28', H1);
+    r = nextArenaReroll(r, '2026-10-28', H1);
+    expect(arenaRerollsThisHour(r, H1)).toBe(3);
+    expect(arenaRerollCost(arenaRerollsThisHour(r, H1))).toBe(15);
+    expect(arenaRerollsThisHour(r, H2)).toBe(0);
+    expect(arenaRerollCost(arenaRerollsThisHour(r, H2))).toBe(0);
+    expect(arenaRerollsToday(r, '2026-10-28')).toBe(3);
+    expect(arenaHourKey(H1)).toBe('2026-10-28T10');
+  });
+  it('save antigo (só dia) começa a hora zerada', () => {
+    expect(arenaRerollsThisHour({ day: '2026-10-28', count: 9 }, H1)).toBe(0);
+  });
+  it('BUG do dia à frente (P0 item 3): dia gravado depois de hoje conta como o dia corrente e o contador anda', () => {
+    const futuro = { day: '2026-10-30', count: 2 };
+    expect(arenaRerollsToday(futuro, '2026-10-28')).toBe(2);
+    const prox = nextArenaReroll(futuro, '2026-10-28', H1);
+    expect(arenaRerollsToday(prox, '2026-10-28')).toBe(3); // antes ficava preso em 0 e os cards nunca mudavam
+  });
+});
+
 describe('reroll: tabela de custo', () => {
   it('3 grátis, depois 15, 30, 45 e 45 fixo', () => {
-    expect(ARENA_REROLL_FREE_PER_DAY).toBe(3);
+    expect(ARENA_REROLL_FREE_PER_HOUR).toBe(3);
     expect(ARENA_REROLL_PRICES).toEqual([15, 30, 45]);
     expect([0, 1, 2, 3, 4, 5, 6, 7, 50].map(arenaRerollCost)).toEqual([0, 0, 0, 15, 30, 45, 45, 45, 45]);
     expect([0, 1, 2, 3, 9].map(arenaRerollsFreeLeft)).toEqual([3, 2, 1, 0, 0]);
@@ -64,9 +90,9 @@ describe('reroll: tabela de custo', () => {
     const r = { day: '2026-10-28', count: 4 };
     expect(arenaRerollsToday(r, '2026-10-28')).toBe(4);
     expect(arenaRerollsToday(r, '2026-10-29')).toBe(0);
-    expect(nextArenaReroll(r, '2026-10-29')).toEqual({ day: '2026-10-29', count: 1 });
-    expect(nextArenaReroll(r, '2026-10-28')).toEqual({ day: '2026-10-28', count: 5 });
-    expect(nextArenaReroll(r, '2026-10-27')).toEqual({ day: '2026-10-28', count: 5 }); // relógio que voltou não reabre os grátis
+    expect(nextArenaReroll(r, '2026-10-29', H1)).toMatchObject({ day: '2026-10-29', count: 1 });
+    expect(nextArenaReroll(r, '2026-10-28', H1)).toMatchObject({ day: '2026-10-28', count: 5 });
+    expect(nextArenaReroll(r, '2026-10-27', H1)).toMatchObject({ day: '2026-10-28', count: 5 }); // relógio que voltou não reabre os grátis
   });
 
   it('sanitizador tolerante e idempotente', () => {
@@ -78,19 +104,19 @@ describe('reroll: tabela de custo', () => {
 });
 
 describe('reroll: cobrança só em Bits, sobre o prev', () => {
-  const base = { gamePoints: 100, arenaReroll: undefined as undefined | { day: string; count: number } };
+  const base = { gamePoints: 100, arenaReroll: undefined as undefined | { day: string; count: number; hour?: string; hcount?: number } };
   it('grátis não gasta Bits; o 4º gasta 15, o 5º 30; sem saldo devolve o mesmo objeto', () => {
     let s: typeof base = base;
-    for (let i = 0; i < 3; i++) s = applyArenaReroll(s, '2026-10-28');
+    for (let i = 0; i < 3; i++) s = applyArenaReroll(s, '2026-10-28', H1);
     expect(s.gamePoints).toBe(100);
-    expect(s.arenaReroll).toEqual({ day: '2026-10-28', count: 3 });
-    s = applyArenaReroll(s, '2026-10-28');
+    expect(s.arenaReroll).toMatchObject({ day: '2026-10-28', count: 3, hcount: 3 });
+    s = applyArenaReroll(s, '2026-10-28', H1);
     expect(s.gamePoints).toBe(85);
-    s = applyArenaReroll(s, '2026-10-28');
+    s = applyArenaReroll(s, '2026-10-28', H1);
     expect(s.gamePoints).toBe(55);
-    const pobre = { gamePoints: 10, arenaReroll: { day: '2026-10-28', count: 3 } };
-    expect(applyArenaReroll(pobre, '2026-10-28')).toBe(pobre);
-    expect(applyArenaReroll(pobre, '2026-10-29').arenaReroll).toEqual({ day: '2026-10-29', count: 1 });
+    const pobre = { gamePoints: 10, arenaReroll: { day: '2026-10-28', count: 3, hour: arenaHourKey(H1), hcount: 3 } };
+    expect(applyArenaReroll(pobre, '2026-10-28', H1)).toBe(pobre);
+    expect(applyArenaReroll(pobre, '2026-10-28', H2).arenaReroll).toMatchObject({ day: '2026-10-28', count: 4, hcount: 1 }); // outra hora: 3 grátis de novo
   });
 });
 

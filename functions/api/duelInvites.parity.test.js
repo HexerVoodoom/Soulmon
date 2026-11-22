@@ -41,7 +41,7 @@ describe('servidor: anti-trapaça dos convites', () => {
   it('o que o app produz numa troca real é aceito pelo servidor', () => {
     const prev = { energyPoints: 5, duelInvites: { n: 0, at: 1000 } };
     const depois = app.exchangeDuelInvites(prev, NOW);
-    expect(depois.duelInvites).toEqual({ n: 5, at: NOW });
+    expect(depois.duelInvites).toEqual({ n: 3, at: NOW });
     expect(srv.enforceDuelInvites(depois.duelInvites, prev.duelInvites, NOW)).toEqual(depois.duelInvites);
   });
 });

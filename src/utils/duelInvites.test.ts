@@ -29,16 +29,16 @@ describe('convite de duelo (§458)', () => {
     const zero = base({ duelInvites: { n: 0, at: 0 } });
     expect(spendDuelInvite(zero)).toBe(zero);
   });
-  it('conta comum: 1 energia = 5 convites', () => {
+  it('conta comum: 1 energia = 3 convites', () => {
     const r = exchangeDuelInvites(base({ duelInvites: { n: 0, at: 0 } }), NOW);
-    expect(r.duelInvites?.n).toBe(5);
+    expect(r.duelInvites?.n).toBe(3);
     expect(r.energyPoints).toBe(4);
   });
-  it('conta paga: 1 energia = 7 convites; teto de estoque 7 para todos', () => {
+  it('conta paga: IGUAL à comum, 1 energia = 3 convites (22/11/2026); teto de estoque 7 para todos', () => {
     const r = exchangeDuelInvites(base({ accountTier: 'paid', duelInvites: { n: 0, at: 0 } }), NOW);
-    expect(r.duelInvites?.n).toBe(7);
-    const c = exchangeDuelInvites(base({ duelInvites: { n: 4, at: 0 } }), NOW);
-    expect(c.duelInvites?.n).toBe(7); // 4 + 5 limitado a 7
+    expect(r.duelInvites?.n).toBe(3);
+    const c = exchangeDuelInvites(base({ duelInvites: { n: 6, at: 0 } }), NOW);
+    expect(c.duelInvites?.n).toBe(7); // 6 + 3 limitado a 7
   });
   it('estoque cheio ou sem energia recusa sem gastar (mesma referência)', () => {
     const cheio = base();
@@ -51,7 +51,7 @@ describe('convite de duelo (§458)', () => {
   it('quem tem 0 convites sempre tem caminho: com energia, troca e luta', () => {
     let s = base({ duelInvites: { n: 0, at: 0 } });
     s = exchangeDuelInvites(s, NOW);
-    expect(duelInviteCount(spendDuelInvite(s))).toBe(4);
+    expect(duelInviteCount(spendDuelInvite(s))).toBe(2);
   });
   it('a saneação é idempotente', () => {
     const a = sanitizeDuelInvites({ n: 3.7, at: 12.2 });

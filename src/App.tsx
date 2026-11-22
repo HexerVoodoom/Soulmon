@@ -239,7 +239,7 @@ import {
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
-import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
+import { arenaRerollCost, arenaRerollsThisHour, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
 import { arenaRollover } from './utils/arena';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
@@ -9076,7 +9076,7 @@ export default function App() {
                     // ⚰️ §372 `onRunCleared` (+1 Presa 1×/dia) revogado por §384: o último adversário dropa em dobro (`utils/arenaUltimoAdversario.ts`).
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
-                      const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
+                      const custo = arenaRerollCost(arenaRerollsThisHour(gameState.arenaReroll));
                       if (custo > 0 && demo) { refuseDemo(); return false; }
                       if ((gameState.gamePoints ?? 0) < custo) return false;
                       setGameState(prev => applyArenaReroll(prev, dia)); // o preço é reconferido sobre o `prev`

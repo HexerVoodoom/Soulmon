@@ -113,7 +113,7 @@ describe('DueloSheet: estados da escolha de adversários', () => {
 
   it('§489: cada card é a linha compartilhada (mini-visor + "Fight" 44 px) e o sorteio mantém o custo da Arena', async () => {
     H.load = () => Promise.resolve([]);
-    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, reroll: { day: '2026-10-28', count: 99 } }} language="en-US" onStart={() => {}} />);
+    const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, reroll: { day: '2026-10-28', count: 99, hour: new Date().toISOString().slice(0, 13), hcount: 99 } }} language="en-US" onStart={() => {}} />);
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]')).toHaveLength(ARENA_CHOICES));
     for (const card of container.querySelectorAll('[data-arena-card]')) {
       expect(card.querySelector('[data-mini-glass] img')).not.toBeNull();
