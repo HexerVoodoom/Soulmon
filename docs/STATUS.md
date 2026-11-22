@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P3 fechado (PRs #1116–#1119, REGISTRO §491–§493)
+> - **Feito:** Decoration limpa; "Da aventura de ontem" removido; Rift com "Camada atual"; Elemental Fusion primeiro no Salão e acento de cor por jogo; Power Reducer −6; Exchanger com recompensa em destaque e slot de arte; Mercado só com missões semanais (diárias de Mercado aposentadas, espelho do servidor alinhado).
+> - **Pendente (P3):** (a) Honor: já mostra missões semanais no topo; não achei "Achievements" na aba — falta o dono dizer onde. (b) Logbook cortado pela moldura e margens do Passeio: precisa de captura de tela. (c) Portal visual entre andares do Rift: pede arte nova (o anel atual é lógica de teleporte). (d) Semanais "comprar item" e "resgatar conquista" (eventos novos). **Arte pela fila:** ícone de camada/portal do Rift, chips Power Reducer, Pouch/Purse/Chest (`assets/soulmon/bits-packs/bits-200|500|1000.webp`), cards novos de Games. **Rollback:** `git revert` por PR.
+
 > ## 22/11/2026 — P3 parte 1: Decoration limpa, Passeio sem "Da aventura de ontem", Rift com Camada atual (`p3/mercado-jogos-passeio`, REGISTRO §491)
 > - **Feito:** loja de Decoração sem "Decoration rule", "From the grove" e "Of the quarter" ("Já são seus" no topo); "From Yesterday's Adventure" removido de todos os lugares (revoga o §66 no nome); folha do Rift com a caixa "Camada atual" em destaque. tsc/tsc server limpos; suíte completa verde (4 timeouts de carga passaram isolados).
 > - **Pendente (P3):** Games (Elemental Fusion primeiro), Honor, Exchanger, Power Reducer de 6 pts, semanais de mercado, margens do Logbook, portal visual entre andares do Rift. **Arte pela fila:** ícone da camada/portal do Rift, chips Power Reducer, cards Pouch/Purse/Chest, cards novos de Games. **Rollback:** `git revert` (só UI/texto, sem save).
