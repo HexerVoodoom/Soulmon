@@ -1,0 +1,1 @@
+import{eW as r,j as i,eX as o,eY as n}from"./index-fRA17t0_.js";function x({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:n(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{x as R};
