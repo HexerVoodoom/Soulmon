@@ -43,7 +43,7 @@ export function RankingModal({ open, onClose, language, title, info, children }:
         info={info ? { label: isPt ? 'Sobre o ranking' : 'About the ranking', content: info, language } : undefined}
       >
         {/* O CRISTAL-CHAMA no crescente de louro do topo (decorativo), como nos outros modais. */}
-        <CristalChama tamanho={10} topo={2.2} pulsar />
+        <CristalChama tamanho={13} topo={-1.8} pulsar />
         <button type="button" className="sm3-ranking-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
           <Icon name="close" size={20} tone="inherit" />
         </button>

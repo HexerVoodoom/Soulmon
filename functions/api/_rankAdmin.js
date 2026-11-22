@@ -31,3 +31,11 @@ export async function adminSaveIds(env) {
 export async function isAdminSaveId(env, saveId) {
   return (await adminSaveIds(env)).has(saveId);
 }
+
+/**
+ * Igual a `adminSaveIds`, mas NUNCA lança: erro ao ler a lista = conjunto vazio (falha fechada para os OUTROS jogadores:
+ * um problema aqui jamais pode esconder jogador comum). Usado pelos rankings dos minigames e pelos prêmios mensais.
+ */
+export async function adminSaveIdsSeguro(env) {
+  try { return await adminSaveIds(env); } catch { return new Set(); }
+}

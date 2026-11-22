@@ -149,6 +149,11 @@ export const M3C_PVP_ENEMY_HP: number = M3C_PLAYER_HP;
 /** PVP mais DIFÍCIL que a Aventura (dono, 17/11/2026): o dano do adversário. Duelo simétrico (o adversário bate tanto quanto o jogador). Calibrado por `match3Pvp.balanco.test.ts` (jogador ao acaso: ~14% no PVP contra ~28% na Aventura). */
 export const M3C_PVP_ENEMY_DMG_FACTOR = 1;
 
+/** PVP: bônus de HP do JOGADOR (fração do HP base; REGISTRO §488, testers: "o PvP do Match 3 ficou muito difícil"). O adversário segue com `M3C_PVP_ENEMY_HP`. Só o PVP; Aventura, boss e desafio ficam com `M3C_PLAYER_HP`. */
+export const M3C_PVP_PLAYER_HP_BONUS = 1.2;
+/** HP inicial (e máximo) do jogador no PVP: base + bônus. */
+export const M3C_PVP_PLAYER_HP: number = Math.round(M3C_PLAYER_HP * (1 + M3C_PVP_PLAYER_HP_BONUS));
+
 /**
  * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
  * `roster` = chave do roster quando o adversário é um NPC (bestiário); jogador real não leva nada (arte e level vêm da tela).
@@ -157,7 +162,7 @@ export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: str
   // O elemento do oponente é o do SPRITE dele (NPC: o do roster; jogador real: o que o perfil publica); só sem ele cai no sorteio dos 6 da partida.
   const el = foeElement ?? elements[Math.min(elements.length - 1, Math.floor(rng() * elements.length))];
   return {
-    player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
+    player: { hp: M3C_PVP_PLAYER_HP, max: M3C_PVP_PLAYER_HP },
     enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],
     elements: [...elements], foeDmgFactor: M3C_PVP_ENEMY_DMG_FACTOR, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
   };

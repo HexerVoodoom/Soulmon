@@ -9,15 +9,13 @@ const mk = (n: number, meAt = -1): PodiumRow[] =>
 const slots = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('[data-ranking-podium] > li')];
 
 describe('RankingPodium (§326)', () => {
-  it('DOM e leitor de tela em 1 · 2 · 3; a posição é o rótulo do pedestal; medalha e coroa decorativas', () => {
+  it('DOM e leitor de tela em 1 · 2 · 3; a posição é o rótulo do pedestal; medalha decorativa; sem troféu/coroa (dono, 18/11/2026)', () => {
     const { container } = render(<RankingPodium rows={mk(3)} language="pt-BR" />);
     expect(slots(container).map(e => e.getAttribute('data-podium-place'))).toEqual(['1', '2', '3']);
     for (const n of [1, 2, 3]) expect(container.querySelector(`[role="img"][aria-label="${n}º lugar"]`)).toBeTruthy();
     expect([...container.querySelectorAll('.sm-rank-podium__medal')].every(m => m.getAttribute('aria-hidden') === 'true')).toBe(true);
-    expect(container.querySelector('[data-podium-crown]')!.getAttribute('aria-hidden')).toBe('true');
-    // coroa só no 1º
-    expect(container.querySelectorAll('[data-podium-crown]').length).toBe(1);
-    expect(slots(container)[0].querySelector('[data-podium-crown]')).toBeTruthy();
+    // sem troféu nem coroa em nenhum lugar
+    expect(container.querySelectorAll('[data-podium-crown]').length).toBe(0);
   });
 
   it('resolvePodiumArt: cada peça é URL ou undefined; coroa só existe para o 1º (soltar o PNG não quebra este teste)', () => {
@@ -29,13 +27,13 @@ describe('RankingPodium (§326)', () => {
     expect(resolvePodiumArt(3).crown).toBeUndefined();
   });
 
-  it('sem PNG: tudo em CSS (pedestal vazio, número em texto na medalha, troféu-glifo no lugar da coroa)', () => {
+  it('sem PNG: tudo em CSS (pedestal vazio, número em texto na medalha, sem troféu)', () => {
     const { container } = render(<RankingPodium rows={mk(3)} language="en-US" art={() => ({})} />);
     expect([...container.querySelectorAll('[data-podium-pedestal]')].map(e => e.getAttribute('data-podium-pedestal'))).toEqual(['css', 'css', 'css']);
     expect([...container.querySelectorAll('.sm-rank-podium__medal')].map(e => e.textContent)).toEqual(['1', '2', '3']);
     expect(container.querySelector('[aria-label="Rank 1"]')).toBeTruthy();
     expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('[data-podium-crown="css"]')).toBeTruthy();
+    expect(container.querySelector('[data-podium-crown]')).toBeNull();
   });
 
   it('com a arte: cada peça vira <img alt=""> da sua posição, sem mudar a estrutura', () => {
@@ -44,7 +42,7 @@ describe('RankingPodium (§326)', () => {
     const s = slots(container);
     expect(s[0].querySelector('[data-podium-pedestal="art"] img')!.getAttribute('src')).toBe('podio-1.png');
     expect(s[2].querySelector('[data-podium-medal="art"] img')!.getAttribute('src')).toBe('medalha-3.png');
-    expect(s[0].querySelector('[data-podium-crown="art"] img')!.getAttribute('src')).toBe('coroa-1.png');
+    expect(s[0].querySelector('[data-podium-crown]')).toBeNull();
     expect([...container.querySelectorAll('img')].every(i => i.getAttribute('alt') === '')).toBe(true);
     // o rótulo de posição continua no pedestal
     expect(s[1].querySelector('[data-podium-pedestal][aria-label="2º lugar"]')).toBeTruthy();
