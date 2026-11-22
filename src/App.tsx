@@ -5081,7 +5081,11 @@ export default function App() {
     if (!(gameStateRef.current.missionsClaimed ?? []).includes(id)) {
       toast(language === 'pt-BR' ? 'Conquista resgatada: já dá para comprar o item no Mercado.' : 'Achievement claimed: you can now buy the item at the Market.');
     }
-    setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : bumpDailyIn({ ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }, 'conquista'))); // 12/11/2026: missão da Medra
+    setGameState(prev => {
+      if ((prev.missionsClaimed ?? []).includes(id)) return prev;
+      const resgatou = bumpDailyIn({ ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }, 'conquista'); // 12/11/2026: missão da Medra
+      return countWeeklyMission(resgatou, 'claim-achievement', new Date()); // semanal da Medra (22/11/2026)
+    });
   }, [missionProgress, setGameState, language]);
   /* CONQUISTAS (30/10/2026): o prêmio em Bits sai UMA vez por conquista (`conquistasPagas`); save sem o campo é semeado com as já abertas
      (sem Bits retroativos). Os Pontos de Conquista são derivados — aqui só se MOSTRA o ganho. */
@@ -5328,7 +5332,7 @@ export default function App() {
       const comprou = bumpDailyIn(r.state, 'compra');
       if (item.kind === 'furniture') return countWeeklyMission(comprou, 'buy-decor', new Date());
       if (item.kind === 'bg') return countWeeklyMission(comprou, 'buy-backdrop', new Date());
-      return comprou;
+      return countWeeklyMission(comprou, 'buy-item', new Date()); // Lamela (22/11/2026): o resto do Mercado de Itens
     });
     // C-3 (run `som-01`): comprar deixa de soar como COMER. Era o mesmo som
     // para o unico evento do app que gasta moeda, e o gasto e irreversivel —

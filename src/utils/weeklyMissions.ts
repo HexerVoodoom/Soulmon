@@ -24,7 +24,8 @@ export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
   | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'
-  | 'journal-days' | 'focus-days' | 'cook-dish' | 'buy-decor' | 'buy-backdrop';
+  | 'journal-days' | 'focus-days' | 'cook-dish' | 'buy-decor' | 'buy-backdrop'
+  | 'buy-item' | 'claim-achievement';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -60,6 +61,9 @@ const POOL: readonly WeeklyMission[] = [
   // 16/11/2026 (dono): as missões da Lasca (Decoração) e da Panora (Background) saíram do rodízio diário e vieram para cá. NO FIM do pool.
   { id: 'buy-decor', target: 2, emblems: 3, descPt: 'Compre 2 itens de decoração na lojinha de Decoração', descEn: 'Buy 2 decor pieces at the Decor stall' },
   { id: 'buy-backdrop', target: 1, emblems: 3, descPt: 'Compre 1 cenário na lojinha de Background', descEn: 'Buy 1 backdrop at the Background stall' },
+  // 22/11/2026 (dono, REGISTRO §493): Lamela (Itens) e Medra (Conquistas) perderam a diária; o Mercado só tem semanais. NO FIM do pool.
+  { id: 'buy-item', target: 2, emblems: 3, descPt: 'Compre 2 itens na lojinha de Itens', descEn: 'Buy 2 items at the Items stall' },
+  { id: 'claim-achievement', target: 1, emblems: 3, descPt: 'Resgate 1 conquista na lojinha de Conquistas', descEn: 'Claim 1 achievement at the Achievements stall' },
 ];
 
 /**

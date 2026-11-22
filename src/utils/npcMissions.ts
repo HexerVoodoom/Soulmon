@@ -95,8 +95,8 @@ export const NPCS_SEM_MISSAO: Readonly<Record<string, string>> = {
   'laboratorio:perfil': 'Corvo do Perfil: leitura da ficha, sem ação',
   'mercado:decoracao': 'Lasca (16/11/2026, dono): a missão dela é SEMANAL (`buy-decor`, utils/weeklyMissions.ts), não do rodízio diário',
   'mercado:background': 'Panora (16/11/2026, dono): a missão dela é SEMANAL (`buy-backdrop`, utils/weeklyMissions.ts), não do rodízio diário',
-  'mercado:itens': 'Lamela (22/11/2026, dono): o Mercado não tem missão diária, só semanal; a compra de item ainda não tem missão semanal (evento novo)',
+  'mercado:itens': 'Lamela (22/11/2026, dono): o Mercado não tem missão diária, só semanal; a semanal é `buy-item` (utils/weeklyMissions.ts)',
   'mercado:restaurante': 'Snapjaw (22/11/2026, dono): o Mercado não tem missão diária; o prato é a semanal `cook-dish` (utils/weeklyMissions.ts)',
-  'mercado:conquistas': 'Medra (22/11/2026, dono): o Mercado não tem missão diária, só semanal; resgatar conquista ainda não tem missão semanal (evento novo)',
+  'mercado:conquistas': 'Medra (22/11/2026, dono): o Mercado não tem missão diária, só semanal; a semanal é `claim-achievement` (utils/weeklyMissions.ts)',
   'mercado:cambista': 'Farthing: o Cambista não passa missão (dono, 12/11/2026: a troca no bazar foi excluída)',
 };

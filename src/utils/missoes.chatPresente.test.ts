@@ -105,8 +105,8 @@ describe('semanal: friend-visit virou gift-sent com o progresso preservado', () 
     expect(g.target).toBe(1);
     expect(g.emblems).toBe(2);
     expect(weeklyTarget('gift-sent')).toBe('laboratorio.amigos');
-    // `cook-dish` (15/11/2026) e, em 16/11/2026, `buy-decor` e `buy-backdrop` foram acrescentadas DEPOIS dela, no fim do pool: `gift-sent` é a quarta do fim e não se mexeu.
-    expect(pool.findIndex(m => m.id === 'gift-sent')).toBe(pool.length - 4);
+    // `cook-dish` (15/11/2026) e, em 16/11/2026, `buy-decor` e `buy-backdrop` foram acrescentadas DEPOIS dela, no fim do pool: `gift-sent` e não se mexeu (22/11/2026: `buy-item` e `claim-achievement` entraram depois, no fim; ela é a sexta do fim).
+    expect(pool.findIndex(m => m.id === 'gift-sent')).toBe(pool.length - 6);
   });
   it('save com a antiga cumprida/resgatada vira a nova: não perde e não paga de novo', () => {
     const velho = { week: '2026-W46', counts: { 'friend-visit': 1, shower: 2 }, claimed: ['friend-visit'] } as unknown as WeeklyMissionProgress;
