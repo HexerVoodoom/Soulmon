@@ -7,7 +7,11 @@
  * que nunca entra no ritual, não grava nada — um rascunho do demo retomaria
  * um ritual que a pessoa não escolheu.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, afterAll, beforeAll, it, expect, beforeEach, vi } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';

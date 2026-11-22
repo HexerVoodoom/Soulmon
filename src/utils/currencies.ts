@@ -67,7 +67,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 //
 //   Bits     `--sm2-primary-ink`  5,55:1 (claro) / 13,21:1 (escuro) sobre `bg`
 //   Emblemas `--sm2-gold-ink`     5,41:1 (claro) / 10,51:1 (escuro) sobre `bg`
-//   Créditos `--sm2-credit-ink`   6,55:1 (claro) /  8,98:1 (escuro) sobre `bg`
+//   Créditos `--sm2-credit-ink`   turquesa do diamante (18/11/2026; era roxo), AA medido em `tokens.contrast.test.ts`
 //
 // A família também virou token (`--sm2-font-mono` / `--sm2-font-serif`): estilo
 // inline com nome de fonte literal é justamente o que fez o app terminar com
@@ -131,7 +131,7 @@ export const emblemStyle: CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-/** Créditos: roxo do sistema, sempre acompanhados do ícone Gem. */
+/** Créditos: turquesa do diamante (18/11/2026; era roxo), sempre acompanhados do `CreditIcon`. */
 export const CREDIT_COLOR = 'var(--sm2-credit-ink)';
 
 // ───────────────────────────────────────────────────────────────── câmbio

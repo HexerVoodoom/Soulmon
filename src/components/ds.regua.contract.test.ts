@@ -50,7 +50,6 @@ function medir(): Map<string, Partial<Record<Regra, number>>> {
 /** CONGELADO em 01/11/2026. Só pode diminuir. */
 const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'AdventureDiary.tsx': { fontSize: 1 },
-  'BestiaryCollection.tsx': { fontSize: 2 },
   'BetaClosedScreen.tsx': { fontSize: 1 },
   'ConsentGate.tsx': { checkbox: 1 },
   'DailyReportModal.tsx': { fontSize: 2 },
@@ -88,7 +87,7 @@ const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'perfil/SoulmonPerfil.tsx': { fontSize: 1 },
   'play/StrollFind.tsx': { fontSize: 1 },
   'ritual/RitualKit.tsx': { rolagem: 1 },
-  'ui/InfoTip.tsx': { fontSize: 1, rolagem: 1 },
+  'ui/InfoTip.tsx': { fontSize: 1 },
   'ui/OfflineSeal.tsx': { fontSize: 1 },
 };
 

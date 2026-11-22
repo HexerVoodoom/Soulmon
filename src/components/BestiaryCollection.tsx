@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName } from './ElementDex';
@@ -7,7 +7,10 @@ import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { STAGE_NAMES } from '../utils/oracle/base';
 import { NewBadge } from './LibraryNewBadge';
+import { BOSS_ROSTER, bossArt, bossText } from '../data/bossRoster';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
+import { readLocal, writeLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 
 /**
@@ -20,12 +23,53 @@ import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 // Nome do estágio = o do jogo (STAGE_NAMES), nunca Rookie/Champion/Ultimate/Mega (decisão do dono, 09/11/2026).
 const STAGE_LABEL_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'rookie', champion: 'champion', ultimate: 'perfeito', mega: 'mega', ultra: 'ultra' };
 
-export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases }: { seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[] }) {
+/** Estado recolhido por nível (Drive em accordion, 18/11/2026): lista dos níveis FECHADOS; sem storage, tudo aberto. */
+const ACC_KEY = STORAGE_KEYS.DRIVE_ACORDEAO_FECHADOS;
+function lerFechados(): string[] {
+  try {
+    const v = JSON.parse(readLocal(ACC_KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch { return []; }
+}
+
+function Chevron() {
+  return (
+    <svg className="sm2-acc-chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  );
+}
+
+/** Seção recolhível: cabeçalho-botão (setinha + nome + "vistos/total", sempre visível) e o corpo em `hidden` quando fechada. */
+function Acordeao({ id, titulo, contagem, aberto, onToggle, children }: { id: string; titulo: string; contagem: string; aberto: boolean; onToggle: () => void; children: ReactNode }) {
+  const corpo = `${useId()}-corpo`;
+  return (
+    <div data-bestiary-stage={id}>
+      <h3 className="sm2-acc-h">
+        <button type="button" className="sm2-acc-btn" aria-expanded={aberto} aria-controls={corpo} data-acc-toggle={id} onClick={onToggle}>
+          <Chevron />
+          <span className="sm2-acc-nome">{titulo}</span>
+          <span className="sm2-acc-cont sm2-num" data-acc-count={id}>{contagem}</span>
+        </button>
+      </h3>
+      <div id={corpo} hidden={!aberto}>{children}</div>
+    </div>
+  );
+}
+
+/** Bosses ainda não têm registro de "visto" no save (REGISTRO §475): `bossesSeen` vazio = todos em silhueta. */
+export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases, bossesSeen }: { seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[]; bossesSeen?: readonly string[] }) {
   const isPt = language === 'pt-BR';
   const seenSet = useMemo(() => new Set((seen ?? []).filter(k => ENEMY_ROSTER_KEYS.has(k))), [seen]);
   // Ordem por estágio (sort estável: dentro do estágio vale a ordem do roster); a posição na lista é o número `#N`.
   const entries = useMemo(() => [...ENEMY_ROSTER].sort((a, b) => ENEMY_STAGES.indexOf(a.stage) - ENEMY_STAGES.indexOf(b.stage)), []);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [fechados, setFechados] = useState<string[]>(lerFechados);
+  const alternar = useCallback((id: string) => setFechados(prev => {
+    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    writeLocal(ACC_KEY, JSON.stringify(next)); // sem storage: vale só nesta visita
+    return next;
+  }), []);
+  const bossSet = useMemo(() => new Set(bossesSeen ?? []), [bossesSeen]);
+  const bossVistos = BOSS_ROSTER.filter(b => bossSet.has(b.id)).length;
   const openEntry = openKey ? entries.find(e => e.key === openKey) : undefined;
   // 01/11/2026 (dono): desgarrado do roster e desgarrado de jogador (§213) são a MESMA coleção, sem distinção — os de
   // jogador entram no fim da mesma grade e somam na mesma contagem.
@@ -47,8 +91,9 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
         <p className="sm2-lib-s" data-filter-empty style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Nenhum Soulmon com essas bases.' : 'No Soulmon with these bases.'}</p>
       )}
       {stageGroups.map(({ stage, cells, last }) => (
-        <div key={stage} data-bestiary-stage={stage}>
-          <h3 className="sm2-lib-s" style={{ margin: '12px 0 6px', fontWeight: 600 }}>{STAGE_LABEL_KEY[stage] ? STAGE_NAMES[STAGE_LABEL_KEY[stage]][isPt ? 'pt' : 'en'] : stage}</h3>
+        <Acordeao key={stage} id={stage} titulo={STAGE_LABEL_KEY[stage] ? STAGE_NAMES[STAGE_LABEL_KEY[stage]][isPt ? 'pt' : 'en'] : stage}
+          contagem={`${entries.filter(e => e.stage === stage && seenSet.has(e.key)).length + (last ? extra.length : 0)} / ${entries.filter(e => e.stage === stage).length + (last ? extra.length : 0)}`}
+          aberto={!fechados.includes(stage)} onToggle={() => alternar(stage)}>
       <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
         {cells.map(({ e, i }) => {
           const vista = seenSet.has(e.key);
@@ -64,7 +109,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
                       <img src={src} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48}
                         style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain', filter: vista ? undefined : 'brightness(0) opacity(0.45)' }} />
                     )}
-                    <span style={{ fontSize: 10, textAlign: 'center' }}>{vista ? `#${i + 1}` : '???'}</span>
+                    <span className="sm2-dex-cap">{vista ? `#${i + 1}` : '???'}</span>
                   </>
                 );
                 const st = { position: 'relative' as const, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 2 };
@@ -78,8 +123,25 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
         })}
         {last && shownExtra.map(({ s, i }) => <StrayPlayerCell key={s.sid} s={s} n={entries.length + i + 1} isPt={isPt} isNew={playersNew?.has(s.sid)} />)}
       </ul>
-        </div>
+        </Acordeao>
       ))}
+      {!filtering && (
+        <Acordeao id="boss" titulo="Boss" contagem={`${bossVistos} / ${BOSS_ROSTER.length}`} aberto={!fechados.includes('boss')} onToggle={() => alternar('boss')}>
+          <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
+            {BOSS_ROSTER.map(b => {
+              const vista = bossSet.has(b.id);
+              const src = bossArt(b.id);
+              const nome = bossText(b, isPt).name;
+              return (
+                <li key={b.id} data-boss-cell={b.id} data-seen={vista ? '1' : '0'} aria-label={vista ? nome : (isPt ? 'Ainda não encontrado' : 'Not met yet')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  {src && <img src={src} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48} style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain', filter: vista ? undefined : 'brightness(0) opacity(0.45)' }} />}
+                  <span className="text-[9px]" style={{ textAlign: 'center' }}>{vista ? nome : '???'}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Acordeao>
+      )}
       {openEntry && (
         <RitualDialog onClose={() => setOpenKey(null)} labelledBy="sm2-bestiary-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
           <h2 id="sm2-bestiary-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>{openEntry.name}</h2>
@@ -110,7 +172,7 @@ function StrayPlayerCell({ s, n, isPt, isNew }: { s: StrayPlayerSeen; n: number;
       {s.spriteUrl
         ? <img src={s.spriteUrl} alt="" aria-hidden="true" loading="lazy" draggable={false} width={48} height={48} style={{ width: 48, height: 48, imageRendering: 'pixelated', objectFit: 'contain' }} />
         : (s.element && elementIcon(s.element) ? <img src={elementIcon(s.element)} alt="" aria-hidden="true" width={48} height={48} draggable={false} style={{ width: 48, height: 48, imageRendering: 'pixelated' }} /> : <span aria-hidden="true" style={{ width: 48, height: 48 }} />)}
-      <span style={{ fontSize: 10, textAlign: 'center' }}>#{n}</span>
+      <span className="sm2-dex-cap">#{n}</span>
     </li>
   );
 }

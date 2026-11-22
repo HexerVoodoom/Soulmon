@@ -103,13 +103,16 @@ import { Icon } from './ui/Icon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
+import { EscolhaLinha, SortearNovos } from './ui/EscolhaLinha';
 import { PixelMeter } from './pixel/PixelKit';
 import { ResultScreen } from './games/ResultScreen';
 import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
-import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet, Segment } from './form/FormKit';
+import { BotaoEspecial } from './ui/BotaoEspecial';
+import { RankingModal } from './RankingModal';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -342,13 +345,48 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
    *  comparação social que a faixa (mostrada antes) existe para substituir.
    *  A vizinhança é a comparação útil — e a lista inteira continua a UM toque. */
   const RANK_WINDOW = 3;
-  const [rankExpanded, setRankExpanded] = useState(false);
   /** Linhas visíveis, carregando o índice ORIGINAL: a posição mostrada é
    *  sempre a real, nunca a posição dentro da fatia. */
   const rankRows: Array<{ row: RankRow; place: number }> = (rank ?? []).map((row, i) => ({ row, place: i + 1 }));
-  const visibleRank = rankExpanded || myIndex < 0
+  const visibleRank = myIndex < 0
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
+  /** O cartão de linhas do ranking da season (a janela ±3 na tela e a lista inteira no `RankingModal`): um só desenho. */
+  const renderRankCard = (rows: Array<{ row: RankRow; place: number }>) => (
+<div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
+              {rows.map(({ row: r, place }) => {
+                const isMe = r.id === saveId;
+                return (
+                  <div
+                    key={r.id}
+                    data-rank-row={isMe ? 'me' : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
+                      borderRadius: 'var(--sm2-radius-sm)',
+                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
+                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
+                    }}
+                  >
+                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+                      {place}
+                    </span>
+                    <AvatarFrame frame={isMe ? myFrame : frameOrBasic(r.frameId)} plaque={isMe ? standing?.place : null}>
+                      <MiniGlass size={32}>
+                        {(() => {
+                          const icon = opponentIcon(r, 32);
+                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
+                        })()}
+                      </MiniGlass>
+                    </AvatarFrame>
+                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
+                    </span>
+                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
+                  </div>
+                );
+              })}
+            </div>
+  );
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
@@ -800,7 +838,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
       {/* Cena do lobby/chaves (B2, 02/11/2026): a entrada da arena, distinta da cena da final (`tournament-final`, usada no resultado). Decorativa. */}
-      <div aria-hidden="true" data-torneio-lobby-bg style={{ height: 112, borderRadius: 12, border: '1px solid var(--sm2-line)', background: `url(${SCENE_BG.torneioLobby}) center 30%/cover var(--sm2-surface-2)`, imageRendering: 'pixelated' }} />
       {/* minimal-ui F5 — o título "Torneio" é do `AreaSheet`; aqui fica a
           rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
           e os Emblemas, ícone em ouro + número com serifa: as três moedas
@@ -810,10 +847,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       )}
       {headSlot && createPortal(headRight, headSlot)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, margin: 0, fontWeight: 500 }}>
+        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, margin: 0, fontWeight: 500 }}>
           {standing && <TierMark id={standing.tier.id} size={24} state="current" place={standing.place} />}
           Rank
         </p>
+        {/* 18/11/2026 (dono): o tempo da temporada mora NESTA linha (Rank · faltam N dias · Honra), para ganhar espaço no topo. */}
+        <span data-torneio-temporada style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0, textAlign: 'right' }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</span>
         <span
           title={isPt ? 'Honra — só compra os prêmios do Torneio' : 'Honor — only buys Tournament rewards'}
           aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
@@ -824,47 +863,25 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
       </div>
 
-      {/* Pontos da FAIXA (só somam; sobem a faixa) separados dos pontos da TEMPORADA (ranking do mês): a faixa só avança em vitória. */}
-      {standing && (
-        <p data-torneio-faixa-pontos className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
-          {isPt ? 'Pontos da faixa' : 'Tier points'} · {faixaPontosTexto(standing, myLifetime, isPt)}
-        </p>
-      )}
+      {/* VER RANKING (18/11/2026, dono): no lugar das pílulas "Temporada atual" e "Última temporada"; elas moram DENTRO do modal. */}
+      <BotaoEspecial variant="ranking" data-torneio-ver-ranking aria-haspopup="dialog" onClick={() => setHistOpen(true)}>
+        {isPt ? 'Ver ranking' : 'See ranking'}
+      </BotaoEspecial>
 
-      <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
-
-      {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
-          tocar abre o modal com TODAS as temporadas e a melhor colocação. Troféu em ouro quando foi pódio. */}
-      {/* 11/11/2026 (dono): pílulas SEPARADAS lado a lado: à esquerda a colocação nesta temporada (a do servidor; sem ela,
-          a da lista pública), à direita a da última temporada. Quebra linha em telas estreitas, sem cortar texto. */}
-      <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
-      <div
-        data-torneio-posicao-atual
-        style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}
-      >
-        <Icon name="emoji_events" size={20} tone="muted" />
-        <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
-        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
-      </div>
-      <button
-        type="button"
-        data-torneio-ultima-temporada
-        onClick={() => setHistOpen(true)}
-        aria-haspopup="dialog"
-        aria-label={isPt
-          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Nesta temporada: ${myPlace !== null ? `${myPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
-          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. This season: ${myPlace !== null ? `place ${myPlace}` : 'no placement'}. Open the history`}
-        style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
-      >
-        <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
-        <span>{isPt ? 'Última temporada' : 'Last season'}</span>
-        <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
-        <Icon name="chevron_right" size={20} tone="muted" />
-      </button>
-      </div>
-
-      <ModalSheet open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
+      <RankingModal open={histOpen} title={isPt ? 'Ranking' : 'Leaderboard'} onClose={() => setHistOpen(false)} language={lang}>
         <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
+            <div data-torneio-posicao-atual style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone="muted" />
+              <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
+            </div>
+            <div data-torneio-ultima-temporada style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
+              <span>{isPt ? 'Última temporada' : 'Last season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+            </div>
+          </div>
           {histView.best && (
             <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
               <Icon name="emoji_events" size={32} tone="gold" fill={1} />
@@ -891,8 +908,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               ))}
             </ul>
           )}
+          {rank && rank.length > 0 && (
+            <>
+              <p style={{ ...sm2Hint, margin: 0, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
+              </p>
+              {renderRankCard(rankRows)}
+            </>
+          )}
         </div>
-      </ModalSheet>
+      </RankingModal>
 
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
@@ -925,8 +950,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           continua na lista vazia de oponentes. */}
       {pvpAberto && (
         <div role="radiogroup" data-torneio-abas aria-label={isPt ? 'Modo do Torneio' : 'Tournament mode'} style={{ display: 'flex', gap: 8 }}>
-          <Segment tonal selected={tab === 'ranked'} onSelect={() => setTab('ranked')} label={isPt ? 'Ranqueada' : 'Ranked'} />
-          <Segment tonal selected={tab === 'sparring'} onSelect={() => setTab('sparring')} label={isPt ? 'Treino' : 'Sparring'} />
+          <BotaoEspecial variant="pvp" role="radio" aria-checked={tab === 'ranked'} data-especial-state={tab === 'ranked' ? 'pressed' : undefined} onClick={() => setTab('ranked')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Ranqueada' : 'Ranked'}</BotaoEspecial>
+          <BotaoEspecial variant="pve" role="radio" aria-checked={tab === 'sparring'} data-especial-state={tab === 'sparring' ? 'pressed' : undefined} onClick={() => setTab('sparring')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Treino' : 'Sparring'}</BotaoEspecial>
         </div>
       )}
 
@@ -1024,64 +1049,40 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           )}
 
           {opponents?.map(o => {
-            const busy = fighting === o.id;
             // Um duelo sendo aberto trava TODOS os "Desafiar": outro duelStart em voo fecharia este como derrota.
-            const lockedByOther = fighting !== null;
             const blocked = matchesLeft === 0;
             return (
-              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                {/* A criatura do amigo no estágio REAL, num mini-visor 64 —
-                    o ícone-ficha 64² da linha (rodada 2, D-J13) ou, quando o
-                    estágio não é de linha, o sprite a 0,25× — sem faixa, sem
-                    rank (J1, veto 3b). */}
-                <MiniGlass size={64}>
-                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
-                </MiniGlass>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* §321: o clã embaixo do nome do oponente. */}
-                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
-                    <PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />
-                  </div>
-                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
-                  </p>
-                </div>
-                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
+              <EscolhaLinha
+                key={o.id}
+                // A criatura do amigo no estágio REAL, num mini-visor 64 (ícone-ficha 64² da linha, D-J13; ou o sprite a 0,25×) — sem faixa, sem rank (J1, veto 3b).
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                // §321: o clã embaixo do nome do oponente.
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
                   { kind: 'xp', max: bondXP({ kind: 'tournamentMatch', won: true }) },
                   { kind: 'honor', max: EMBLEMS_PER_WIN },
-                ]} />
-                {/* WCAG 2.5.3 (Label in Name): o texto visível "Fight" está
-                    CONTIDO no nome acessível, que ainda nomeia o oponente
-                    ("Fight — challenge Lu"); quem usa comando de voz diz
-                    "Fight" e acerta. */}
-                <button
-                  type="button"
-                  disabled={blocked || busy || lockedByOther}
-                  onClick={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
-                  aria-label={blocked
-                    ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
-                    : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
-                  style={{ ...sm2Button('primary', blocked || busy || lockedByOther, 'sm'), flexShrink: 0, minWidth: 88 }}
-                >
-                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
-                  {isPt ? 'Desafiar' : 'Fight'}
-                </button>
-              </div>
+                ]} />}
+                disabled={blocked || fighting !== null}
+                busy={fighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
+                actionLabel={isPt ? 'Desafiar' : 'Fight'}
+                actionAriaLabel={blocked
+                  ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
+                  : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
+              />
             );
           })}
 
           {/* Refresh dos 3: UMA vez entre combates. Usou, some; depois de um combate o servidor libera e ele volta. */}
           {opponents && opponents.length > 0 && !rerolled && !loadFailed && (
-            <button
-              type="button"
-              data-torneio-reroll
+            <SortearNovos
+              buttonProps={{ 'data-torneio-reroll': true }}
               disabled={rerolling || fighting !== null}
+              spinning={rerolling}
               onClick={rerollOpponents}
-              style={{ ...sm2Button('outline', rerolling || fighting !== null), width: '100%' }}
-            >
-              <Icon name="sync" size={20} className={rerolling ? 'animate-spin' : undefined} />
-              {isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
-            </button>
+              label={isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+            />
           )}
         </div>
       )}
@@ -1159,45 +1160,31 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             </p>
           )}
           {sparOpps?.map(o => {
-            const busy = sparFighting === o.id;
             const locked = sparFighting !== null || (tickets !== undefined && tickets.left <= 0);
             return (
-              <div key={o.id} data-treino-oponente style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                <MiniGlass size={64}>
-                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
-                </MiniGlass>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}><PlayerName name={o.name} guildName={o.guildName} isPt={isPt} /></div>
-                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
-                  </p>
-                </div>
-                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />
-                <button
-                  type="button"
-                  disabled={busy || locked}
-                  onClick={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
-                  aria-label={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
-                  style={{ ...sm2Button('primary', busy || locked, 'sm'), flexShrink: 0, minWidth: 88 }}
-                >
-                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
-                  {isPt ? 'Treinar' : 'Spar'}
-                </button>
-              </div>
+              <EscolhaLinha
+                key={o.id}
+                rowProps={{ 'data-treino-oponente': true }}
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />}
+                disabled={locked}
+                busy={sparFighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
+                actionLabel={isPt ? 'Treinar' : 'Spar'}
+                actionAriaLabel={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
+              />
             );
           })}
           {/* Refresh ILIMITADO neste modo: sem custo, sem teto — o servidor sorteia de novo a cada pedido. */}
           {!sparFailed && sparOpps !== null && (
-            <button
-              type="button"
-              data-treino-refresh
+            <SortearNovos
+              buttonProps={{ 'data-treino-refresh': true }}
               disabled={sparFighting !== null}
               onClick={() => { setSparOpps(null); loadSpar(); }}
-              style={{ ...sm2Button('outline', sparFighting !== null), width: '100%' }}
-            >
-              <Icon name="sync" size={20} />
-              {isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
-            </button>
+              label={isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
+            />
           )}
         </div>
       )}
@@ -1314,50 +1301,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               não é de linha; a linha se identifica pelo NOME —, nome 14,
               pontos 12. A linha "you" em `primary-soft` + anel `primary-ink` —
               o idioma de seleção, não um pódio (sem ouro no top 3). */}
-          {visibleRank.length > 0 && (
-            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
-              {visibleRank.map(({ row: r, place }) => {
-                const isMe = r.id === saveId;
-                return (
-                  <div
-                    key={r.id}
-                    data-rank-row={isMe ? 'me' : undefined}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
-                      borderRadius: 'var(--sm2-radius-sm)',
-                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
-                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
-                    }}
-                  >
-                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
-                      {place}
-                    </span>
-                    <AvatarFrame frame={isMe ? myFrame : frameOrBasic(r.frameId)} plaque={isMe ? standing?.place : null}>
-                      <MiniGlass size={32}>
-                        {(() => {
-                          const icon = opponentIcon(r, 32);
-                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
-                        })()}
-                      </MiniGlass>
-                    </AvatarFrame>
-                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
-                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
-                    </span>
-                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {visibleRank.length > 0 && renderRankCard(visibleRank)}
 
-          {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
-            <button
-              type="button"
-              onClick={() => setRankExpanded(true)}
-              style={{ ...sm2Button('outline'), width: '100%' }}
-            >
+          {rank && myIndex >= 0 && rank.length > visibleRank.length && (
+            <BotaoEspecial variant="ranking" data-torneio-ranking-inteiro onClick={() => setHistOpen(true)}>
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
-            </button>
+            </BotaoEspecial>
           )}
         </div>
         </TorneioPanel>

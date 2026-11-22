@@ -1,12 +1,16 @@
 package com.soulmon.plugins
 
 import android.content.Context
+import com.soulmon.widget.WidgetEventQueue
 import com.soulmon.widget.WidgetFrameStore
+import com.soulmon.widget.WidgetHomeTasks
 import com.soulmon.widget.WidgetFramesSync
 import com.soulmon.widget.WidgetFramesSyncWorker
 import com.soulmon.widget.WidgetOwnSprite
 import com.soulmon.widget.WidgetRenderer
 import com.soulmon.widget.WidgetVpet
+import com.getcapacitor.JSArray
+import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
@@ -130,6 +134,11 @@ class SoulmonWidgetPlugin : Plugin() {
         val vpetBg = call.getString("vpetBg") ?: ""
         if (WidgetVpet.bgDrawableName(vpetBg) != null) editor.putString("vpet_bg", vpetBg) else editor.remove("vpet_bg")
 
+        // Widget grande da Home (18/11/2026): as tarefas de hoje (id, nome curto, feita). Chave NOVA, cortada e limpa aqui
+        // (`WidgetHomeTasks.sanitize`); ausente ou vazia = remove (o widget mostra o estado sem lista).
+        val tasks = WidgetHomeTasks.sanitize(WidgetHomeTasks.Json.parse(call.getString("tasksJson")))
+        if (tasks.isNotEmpty()) editor.putString("tasks_json", WidgetHomeTasks.Json.toJson(tasks)) else editor.remove("tasks_json")
+
         editor.apply()
 
         // O sprite PRÓPRIO (gerado/equipado): baixa/guarda em segundo plano; vazio apaga e volta ao inicial.
@@ -163,6 +172,26 @@ class SoulmonWidgetPlugin : Plugin() {
     fun syncWidgetFrames(call: PluginCall) {
         WidgetFramesSyncWorker.schedule(context)
         WidgetFramesSync.syncAsync(context, false)
+        call.resolve()
+    }
+
+    /**
+     * Widget grande da Home: devolve a fila de checks SEM apagar (o app aplica, grava e so entao chama `ackWidgetEvents`).
+     * Nao existe em APK anterior: a web detecta pela rejeicao (`readWidgetEvents` devolve null).
+     */
+    @PluginMethod
+    fun peekWidgetEvents(call: PluginCall) {
+        val events = WidgetEventQueue.Store.read(context)
+        call.resolve(JSObject().put("events", JSArray(WidgetEventQueue.Store.toJson(events))))
+    }
+
+    /** Apaga da fila os `eid` ja aplicados e redesenha os widgets (o check otimista vira o estado real). */
+    @PluginMethod
+    fun ackWidgetEvents(call: PluginCall) {
+        val arr = call.getArray("eids") ?: JSArray()
+        val eids = (0 until arr.length()).mapNotNull { arr.optString(it, null) }.filter { it.isNotEmpty() }
+        WidgetEventQueue.Store.ack(context, eids)
+        WidgetRenderer.updateAll(context)
         call.resolve()
     }
 }

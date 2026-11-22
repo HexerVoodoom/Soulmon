@@ -80,7 +80,7 @@ import { isReviewableSpriteUrl, type ReviewReport, type ReviewSnapshot } from '.
 import { ReviewResultModal, reviewResultMessage, type ReviewRowState } from './components/ReviewSoulmonRow';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, canManualRetry, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
-import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
+import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS, STARTER_NAMES } from './utils/sprites';
 import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
@@ -94,11 +94,12 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
-import { bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
+import { addBonusTask, bonusActivityIdsOf, bonusTaskGaugeBonus, isBonusActivity } from './utils/bonusTask';
 import { weeklyBonusActivityToday, weeklyRetro, needsWeeklyRetro, makeWeeklyBonus, recordWeekStage, evolvedLastWeek, mondayOf } from './utils/weeklyRetro';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId, widgetTaskList, readWidgetEvents, ackWidgetEvents } from './plugins/SoulmonWidgetPlugin';
+import { applyWidgetEvents, sanitizeApplied, sanitizeWidgetEvents, type WidgetDrainResult } from './utils/widgetEvents';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -137,7 +138,6 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 /** Teto do log de conclusões de atividade — registro de ritmo, não arquivo.
  *  A leitura do ritmo olha 14 dias; 90 entradas cobrem isso com folga sem
  *  inchar o save (localStorage e nuvem). */
-const ACTIVITY_LOG_CAP = 90;
 const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
@@ -145,7 +145,7 @@ import { applyLateralSwitch } from './utils/trocaLateral';
 import { demoEvolucaoAtiva } from './utils/demoEvolucao';
 import { getNextEvolution, activitiesForWeekDay, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
-  feedFood, rubHeal, rubRefusal, completeTask,
+  feedFood, rubHeal, rubRefusal,
   FOOD_LIMIT_PER_HOUR,
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
@@ -178,7 +178,6 @@ import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
-import { evolutionPaywalled } from './utils/evolutionPaywall';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
@@ -270,10 +269,12 @@ import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
-import { uncompleteTask, uncompleteBlock, uncompleteBlockText, type TaskCompletionReceipt } from './utils/taskUncomplete';
+import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
+import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
+import { applyHabitCompletion, withHabitCompletion, ACTIVITY_LOG_CAP } from './utils/habitCompletionPay';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
-import { isCorvo, spriteLineOf } from './utils/corvoPet';
+import { isCorvo, shouldAutoAdoptCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
 // import dinâmico, fora do chunk de entrada.
 const gmTools = () => import('./utils/gmTools');
@@ -289,6 +290,8 @@ const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbP
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
 import type { BitsExchangeOutcome } from './utils/bitsPackCopy';
+import { ArcadeModal } from './components/play/ArcadeModal';
+import type { SalaoGame } from './components/play/PlaySheets';
 import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
@@ -333,7 +336,10 @@ const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/Seque
 import { mostraVideoDeMarca, tocaCinematicaInicial, exigeTermo } from './utils/embedGates';
 const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
-import { initialStageForNewSave } from './utils/bbStage';
+import { initialStageForNewSave, isBBStage } from './utils/bbStage';
+import { aguardandoChocar, elementoDoInicial, evolucaoPaga, gravarBBNascimento, inicialNaoEvolui, lerBBNascimento, limparBBNascimento, prontoParaChocar, recusaGeracaoBB, type BBNascimento } from './utils/inicioBB';
+import { soulmonIntroLines } from './utils/soulmonIntro';
+const ChocarBB = lazy(() => import('./components/ChocarBB').then(m => ({ default: m.ChocarBB })));
 import { addBossShards } from './utils/bossShards';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import type { UnlockReason } from './components/unlockReason';
@@ -358,7 +364,6 @@ import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
   shrink, effortOf, focusComplete, setFocus, focusTasks, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
-import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
@@ -741,82 +746,6 @@ function nascerElementoJornada(dominante: string | undefined, seed: number | und
 function elementoAoEvoluir(prev: Pick<GameState, 'elementoJornada' | 'demoCharacterId' | 'soulmonMeta'>, destino: string): GameState['elementoJornada'] {
   if (prev.demoCharacterId || prev.soulmonMeta?.creature === 'corvo') return prev.elementoJornada;
   return registrarElementoDoEstagio(prev.elementoJornada, { stage: fichaStageOf(destino), base: prev.soulmonMeta?.dominantElement, ...dadosDaSorte(prev.soulmonMeta?.seed) });
-}
-
-/**
- * Registra a conclusão de um hábito NO MESMO DIA em que ela acontece.
- *
- * A virada do dia (`utils/dailyReset.ts`) já escreve faltas, escudos e a
- * conclusão de ONTEM — isto aqui não duplica aquilo: `completeHabit` é
- * idempotente por dayKey, então quando a virada reprocessar o mesmo dia ela não
- * acha nada para fazer. O que se ganha escrevendo agora é a única coisa que a
- * virada não pode dar: a pessoa marca o hábito e VÊ a constância mexer, em vez
- * de esperar até depois da meia-noite para descobrir se contou.
- *
- * O rendimento de atributo é o BÔNUS de maturidade (`attributeMultiplier`, de
- * `habitRhythm.ts`), e só ele: a base continua vindo da comida, como sempre
- * veio. Um hábito maduro rende MAIS, nunca menos — a "eficiência decrescente"
- * comum em jogos de idle ensinaria a abandonar exatamente o que o app quer
- * preservar. Hábito novo (tier semente) tem multiplicador 1, logo bônus zero:
- * ninguém ganha nada que já não ganhava.
- *
- * Função PURA sobre `prev`, para poder viver dentro de um updater sem violar o
- * footgun 6 (a celebração do marco fica fora, no chamador).
- */
-function withHabitCompletion(
-  prev: GameState,
-  activityId: string,
-  category: ActivityCategory,
-  todayKey: string,
-  /** Dia do JOGADOR (`utils/playerDay.ts`) — a régua do ledger de teto do
-   *  Vínculo. Vem por parâmetro, e não de um `new Date()` aqui dentro, porque
-   *  esta função roda DENTRO de um updater e precisa continuar pura. */
-  bondDayKey: string,
-): GameState {
-  const before = prev.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
-  const after = completeHabit(before, todayKey);
-  if (after === before) return prev; // já marcado hoje — nada a fazer
-
-  const extra = attributeMultiplier(after.totalDone) - 1;
-  const base = CATEGORY_ATTRIBUTES[category] ?? { power: 0, harmony: 0, benevolence: 0 };
-  const bonus = {
-    power: Math.round(base.power * extra),
-    harmony: Math.round(base.harmony * extra),
-    benevolence: Math.round(base.benevolence * extra),
-  };
-
-  // 🔗 Vínculo: a conclusão do hábito é UM dos eventos que a trilha relê. O
-  // multiplicador é o MESMO tier de maturidade que já rege o atributo
-  // (`habitRhythm.ts`) — nada de segunda tabela (footgun 9), e nenhuma ação
-  // nova é pedida: quem marcaria o hábito de qualquer jeito sobe.
-  const comXP = awardBondXP(prev, {
-    kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after.totalDone),
-  }, bondDayKey);
-
-  /* 🔗 #59b — 🌳 MARCO DE HÁBITO (7/21/66). Um dos 6 `BondEvent` que a tabela
-     do §55 declarava e ninguém emitia (QA rodada 2 §2.4: 7 dos 11 mudos).
-     `milestoneReached` é a MESMA detecção que a cerimônia usa — nada de
-     segunda tabela (footgun 9) —, e `completeHabit` é idempotente por dayKey,
-     então marcar o hábito duas vezes no mesmo dia não paga duas vezes.
-     Os dias saem de `HABIT_MILESTONES` (`types/taskModel.ts`), dono único dos
-     números, e não de literais. */
-  const marco = milestoneReached(before.totalDone, after.totalDone);
-  const comMarco = marco
-    ? awardBondXP(comXP, { kind: 'habitMilestone', days: after.totalDone }, bondDayKey)
-    : comXP;
-
-  return {
-    ...comMarco,
-    habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
-    powerPoints: prev.powerPoints + bonus.power,
-    harmonyPoints: prev.harmonyPoints + bonus.harmony,
-    benevolencePoints: prev.benevolencePoints + bonus.benevolence,
-    attributesSinceLastEvolution: {
-      power: (prev.attributesSinceLastEvolution?.power ?? 0) + bonus.power,
-      harmony: (prev.attributesSinceLastEvolution?.harmony ?? 0) + bonus.harmony,
-      benevolence: (prev.attributesSinceLastEvolution?.benevolence ?? 0) + bonus.benevolence,
-    },
-  };
 }
 
 /**
@@ -1218,6 +1147,11 @@ export default function App() {
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
   const [refugeLaunch, setRefugeLaunch] = useState(false);
+  /** §486: o modal de minigames do Fliperama de Canto (sobre a Home) e o jogo que ele pediu (abre na área Jogos). */
+  const [arcadeOpen, setArcadeOpen] = useState(false);
+  const [arcadeGame, setArcadeGame] = useState<SalaoGame | null>(null);
+  /** O jogo em andamento veio do Fliperama: sair dele volta DIRETO à Home (§487). */
+  const [arcadeFromHome, setArcadeFromHome] = useState(false);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -1429,7 +1363,8 @@ export default function App() {
     // por que isto NAO depende do `GET /api/whoami` (que nao existe e nao tem
     // dono). `birthBatch` ja filtra o que existe, entao ligar isto nao pode
     // gerar duas vezes.
-    newborn: isNewbornLibrary(spriteAcervo),
+    // Início BB: no BB a forma de nascimento é o BB (pedido abaixo); o rookie só é desenhado no cristal da 1ª evolução (D17).
+    newborn: isNewbornLibrary(spriteAcervo) && !isBBStage(gameState.evolutionStage),
   });
   /* 💎 O CRISTAL (31/10/2026, dono): a fase vem de `utils/evolutionCrystal.ts` — gerando · falhou · pronto. */
   const cristal = activeCrystal(gameState);
@@ -1463,8 +1398,12 @@ export default function App() {
   /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
      o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
      troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
-  const petChocando = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
-    && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage);
+  /* INÍCIO BB (`utils/inicioBB.ts`): o Soulmon fica NO CRISTAL até a pessoa chocá-lo; a arte do BB não aparece antes do chocar. */
+  const [bbNasc, setBbNasc] = useState<BBNascimento | null>(() => lerBBNascimento());
+  const bbNoCristal = aguardandoChocar(bbNasc, gameState.evolutionStage);
+  const spriteBB = spriteAcervo.sprites.bb?.url;
+  const petChocando = bbNoCristal || ((!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0
+    && isNewbornLibrary(spriteAcervo) && !isAccountCapped(spriteAcervo) && !isFormCapped(spriteAcervo, gameState.evolutionStage));
   // Criatura do oráculo (nunca o inicial de fogo de reserva, mesmo se a geração falhar/estiver no teto).
   const petOraculo = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   // Registra os sprites próprios (e o cristal enquanto chocam) para as telas que escolhem a arte do pet só por `getSpriteForStage`.
@@ -1472,9 +1411,9 @@ export default function App() {
   setPetSizeSeed(sizeSeedOf(gameState));
   // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
   useMemo(() => {
-    const map = mapaDeSpritesProprios(spriteVisor);
+    const map = bbNoCristal ? {} : mapaDeSpritesProprios(spriteVisor);
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
-  }, [spriteVisor, petChocando, petOraculo]);
+  }, [spriteVisor, petChocando, petOraculo, bbNoCristal]);
   /**
    * A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`) e o relatório do dia guarda a chave NA MESMA
    * escrita: fechar o app antes de sair do resumo e reabrir não pode sortear um segundo Soulmon no mesmo dia. Idempotente.
@@ -2000,6 +1939,54 @@ export default function App() {
     if (reason && demo) { refuseDemo(); return; }
     setUnlockReasonRaw(reason);
   }, [demo, refuseDemo]);
+
+  /* INÍCIO BB (dono, 17/11/2026; `utils/inicioBB.ts`) — o BB de nascimento chega DEPOIS de o jogo abrir: pago pede o BB
+     exclusivo (D31, com o pool de reserva); free recebe o do pool (D30), filtrado pelo elemento do inicial que ele vai virar.
+     Uma vez por abertura; se nada vier, o marcador sai e o Soulmon não fica preso no cristal. */
+  const bbPedidoRef = useRef(false);
+  useEffect(() => {
+    if (!hasCompletedOnboarding || !bbNasc || !bbNoCristal || spriteBB || bbPedidoRef.current) return;
+    bbPedidoRef.current = true;
+    const pedido = bbNasc;
+    const elemento = isStarterId(gameState.demoCharacterId) ? elementoDoInicial(gameState.demoCharacterId) : gameState.soulmonMeta?.dominantElement;
+    void (async () => {
+      let url: string | null = null;
+      // Só no nascimento (`recusaGeracaoBB`, o mesmo critério do servidor): fora dele, o pool.
+      if (pedido.pago && pedido.prompts && !recusaGeracaoBB(gameState)) url = (await obterBBExclusivo(pedido.prompts).catch(() => null))?.url ?? null;
+      if (!url) {
+        if (!bbPoolRef.current) bbPoolRef.current = await carregarBBPool().catch(() => null);
+        url = obterBBDoSorteio({ elemento })?.url ?? null;
+      }
+      if (url) {
+        const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
+        updateSpriteLibrary(prev => recordSprite(prev, { url: url as string, formId: 'bb', at: Date.now() }, { adopt: 'now', dayKey }));
+      } else {
+        limparBBNascimento();
+        setBbNasc(null);
+      }
+    })();
+  }, [hasCompletedOnboarding, bbNasc, bbNoCristal, spriteBB, gameState.demoCharacterId, gameState.soulmonMeta?.dominantElement, obterBBExclusivo, obterBBDoSorteio, updateSpriteLibrary]);
+  const chocarAberto = hasCompletedOnboarding && prontoParaChocar(bbNasc, gameState.evolutionStage, spriteBB);
+  const terminarChocar = useCallback(() => { limparBBNascimento(); setBbNasc(null); }, []);
+  const nomeDoBB = soulmonDisplayName(gameState.soulmonMeta)
+    || (isStarterId(gameState.demoCharacterId) ? STARTER_NAMES[gameState.demoCharacterId] : '') || 'Soulmon';
+  const falasDoBB = useMemo(() => (chocarAberto ? soulmonIntroLines({
+    name: nomeDoBB,
+    element: (isStarterId(gameState.demoCharacterId) ? elementoDoInicial(gameState.demoCharacterId) : gameState.soulmonMeta?.dominantElement) ?? '',
+    alignment: gameState.soulmonMeta?.dominantAlignment ?? 'harmonia',
+    petPassive: gameState.petPassive,
+    categories: [...gameState.activities.map(a => a.category), ...(gameState.tasks ?? []).map(t => t.category)],
+  }, language === 'pt-BR' ? 'pt' : 'en') : []), [chocarAberto, nomeDoBB, language]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* D8 no Início BB: quando o rookie grátis PODE ir a champion, o convite de assinar abre SOZINHO uma vez (por aparelho);
+     depois disso o botão Evoluir (que aparece com a barra cheia) é que o abre. */
+  const prontoMasPago = hasCompletedOnboarding && evolucaoPaga(veladoOn, gameState) && !gameState.evolutionLocked
+    && gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)
+    && podeEvoluirDepoisDaQueda(gameState);
+  useEffect(() => {
+    if (!prontoMasPago || currentView !== 'home' || readFlag(STORAGE_KEYS.PAYWALL_CHAMPION_VISTO)) return;
+    writeFlag(STORAGE_KEYS.PAYWALL_CHAMPION_VISTO, true, { silent: true });
+    setUnlockReason('evolve-free');
+  }, [prontoMasPago, currentView, setUnlockReason]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
   /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
@@ -2593,6 +2580,10 @@ export default function App() {
      marcado e se houve confirmação; o dia só "começa" (lista aparece) depois dela. */
   const [dayGoalsOpen, setDayGoalsOpen] = useState(false);
   const dayPlanActive = hasCompletedOnboarding && hasCompletedTutorial;
+  /* 17/11/2026 (dono): no PRIMEIRO dia (o cartão `firstDay` ainda de pé, nascido ao fim do onboarding) nenhum modal re-pergunta
+     tarefa/hábito — `dayGoals`, `checkIn` e `catalogOnboarding` ficam fora da fila. Derivado de dado existente (sem campo novo);
+     save antigo não tem `firstDay` de hoje, então o dia a dia de quem já joga não muda. */
+  const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
   const dayPlanToday = playerDayIso(new Date(), gameState.playerDayTz);
   /* §371: o que NASCEU hoje escapa do "plano de outro dia" — criar é um ato do próprio dia, aparece na hora. */
   const dayPlanBornToday = useMemo(
@@ -2634,14 +2625,14 @@ export default function App() {
   // Dia novo: pede a reafirmação UMA vez (o "visto" é gravado ao MOSTRAR, então não volta em laço no mesmo dia), depois do resumo do dia.
   const dayGoalsPromptedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!dayPlanActive || rolloverPending || showDailyReport) return;
+    if (!dayPlanActive || rolloverPending || showDailyReport || primeiroDiaAtivo) return;
     const rep = gameState.lastDayReport;
     if (rep && readLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN) !== rep.date) return; // o resumo ainda vai aparecer: ele vem antes
     if (dayGoalsPromptedRef.current === dayPlanToday) return;
     if (!needsDayPlan(gameState.dayPlan, dayPlanToday) || dayPlanCandidatesNow.length === 0) return;
     dayGoalsPromptedRef.current = dayPlanToday;
     setDayGoalsOpen(true);
-  }, [dayPlanActive, rolloverPending, showDailyReport, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
+  }, [dayPlanActive, rolloverPending, showDailyReport, primeiroDiaAtivo, gameState.lastDayReport, gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow]);
   /* ACORDAR O SOULMON (19/10/2026, dono — REGISTRO §110; `utils/dayWake.ts`). Na 1ª abertura de cada dia o pet aparece dormindo e
      um toque no "Acordar" do deck o acorda. É APRESENTAÇÃO: o sono real (`isSleeping`: dreno, cocô, janela de descanso) não muda. Até
      acordar, só as ações do pet e dos jogos param (aviso curto + atalho); concluir tarefa/hábito sempre funciona e acorda sozinho. */
@@ -2683,9 +2674,9 @@ export default function App() {
       mapTutorial: mapTutorialOpen,
       unlockToast: unlockToastIds.length > 0,
       noticeToast: noticeKey !== null,
-      catalogOnboarding: needsCatalogOnboarding(gameState as any),
-      dayGoals: dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
-      checkIn: Boolean(checkInPlanData),
+      catalogOnboarding: !primeiroDiaAtivo && needsCatalogOnboarding(gameState as any),
+      dayGoals: !primeiroDiaAtivo && dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
+      checkIn: !primeiroDiaAtivo && Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
@@ -2836,7 +2827,7 @@ export default function App() {
   })();
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
   const minhaCriaturaUrl = (!petIsCorvo
-    ? (displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
+    ? (displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? Object.entries(spriteAcervo.sprites).find(([k]) => k !== 'bb')?.[1]?.url)
     : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /** FEIRA DO CHEFE: o SEU bicho na luta (elemento = o do Soulmon (`petElementOf`, a mesma fonte do resto do combate)). */
@@ -3007,6 +2998,8 @@ export default function App() {
         };
       })(),
       nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
+      // Widget grande da Home (18/11/2026): as tarefas de hoje (id, nome curto, feita). Chave NOVA; APK antigo ignora.
+      tasksJson: JSON.stringify(widgetTaskList(gameState, new Date())),
       dayEndsAtMs: widgetDayEndsAt(new Date()),
       // Moldura do widget V-Pet: o escolhido SE ainda é do jogador, senão '' (casco padrão). Arquivo ausente no APK = padrão também.
       vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
@@ -3018,7 +3011,7 @@ export default function App() {
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
-      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
+      gameState.hunger, gameState.tasks, gameState.completedTasks, gameState.activities, gameState.dayPlan,
       gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames,
       gameState.demoCharacterId, widgetSpriteUrl, isSleeping, gameState.equippedBackground]);
 
@@ -3347,7 +3340,12 @@ export default function App() {
   /** ⭐ Aceitar a oferta reduzida: o hábito vira a tarefa bônus de HOJE. Não conclui nada (13/11/2026). */
   const handleAcceptBonusTask = useCallback((activityId: string) => {
     const day = new Date().toDateString();
-    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : { ...prev, bonusTask: { day, activityId } }));
+    setGameState(prev => (isBonusActivity(prev.bonusTask, activityId, day) ? prev : {
+      ...prev,
+      bonusTask: addBonusTask(prev.bonusTask, activityId, day),
+      // Aceitar já COMPROMETE a tarefa: a bufada entra na lista do Hoje (mesmo id, sem duplicata), mesmo se o modal fechar sem confirmar.
+      dayPlan: addToDayPlan(prev.dayPlan, playerDayIso(new Date(), prev.playerDayTz), [activityId]),
+    }));
   }, []);
   /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
   const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
@@ -3359,83 +3357,9 @@ export default function App() {
     if (activity?.completedToday && activity?.lastCompletedDate === today) return;
     if (activity) track('task_done', { kind: 1 }); // métricas: só o fato, nunca o nome
 
-    setGameState(prevRaw => {
-      // Virada pendente (até 30 s depois da meia-noite): fecha ontem ANTES de escrever hoje (QA L02-02).
-      const prev = settlePendingRollover(prevRaw);
-      const activity = prev.activities.find(a => a.id === activityId);
-      if (!activity) return prev;
-
-      const isCurrentlyCompleted = activity.completedToday && activity.lastCompletedDate === today;
-      const newCompletedState = !isCurrentlyCompleted;
-
-      const updatedActivities = prev.activities.map(act =>
-        act.id === activityId
-          ? {
-            ...act,
-            completedToday: newCompletedState,
-            lastCompletedDate: newCompletedState ? today : act.lastCompletedDate,
-          }
-          : act
-      );
-
-      // Update activity stats if completing
-      let newActivityStats = prev.activityStats;
-      if (newCompletedState && activity) {
-        const activityKey = `activity-${activity.id}`;
-        const currentStats = prev.activityStats[activityKey] || {
-          name: activity.name,
-          emoji: activity.emoji,
-          category: activity.category,
-          completionCount: 0,
-        };
-
-        newActivityStats = {
-          ...prev.activityStats,
-          [activityKey]: {
-            ...currentStats,
-            completionCount: currentStats.completionCount + 1,
-          },
-        };
-      }
-
-      // Concluir atividade rende a comida da categoria. (O ramo antigo de
-      // "estágio inicial ganha energia direto" saiu: a árvore nasce em rookie,
-      // então getStageLevel nunca devolvia os estágios de ovo/bebê e ele era inalcançável
-      // — o mesmo ramo morto que já tinha sido removido do caminho das tarefas.)
-      let newFoodInventory = prev.foodInventory;
-      let newActivityLog = prev.activityLog ?? [];
-      if (newCompletedState && activity) {
-        const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
-        if (food) {
-          newFoodInventory = {
-            ...prev.foodInventory,
-            [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-          };
-        }
-        // Registra a conclusão para o ritmo de cuidado enxergar atividades —
-        // `completedTasks` só recebe tarefas avulsas, e `lastCompletedDate`
-        // some na virada do dia.
-        newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
-      }
-
-      const next: GameState = {
-        ...prev,
-        activities: updatedActivities,
-        activityStats: newActivityStats,
-        foodInventory: newFoodInventory,
-        activityLog: newActivityLog,
-      };
-
-      // A constância do hábito é alimentada NO MESMO DIA (ver
-      // `withHabitCompletion`), e não só na virada — senão marcar o hábito não
-      // move nada visível até depois da meia-noite.
-      return newCompletedState
-        ? withHabitCompletion(
-          next, activityId, activity.category, today,
-          playerDayKey(new Date(), prev.playerDayTz),
-        )
-        : next;
-    });
+    // O pagamento (virada pendente, marca de hoje, estatística, comida, registro, constância, Vínculo, marco) mora em
+    // `utils/habitCompletionPay.ts`: o check de hábito do widget grande da Home paga pela MESMA regra (footgun 9).
+    setGameState(prevRaw => applyHabitCompletion(prevRaw, activityId, new Date(), today));
 
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
@@ -3688,24 +3612,17 @@ export default function App() {
       // WP0.13: o numerador de "a pilha de culpa virou loop de jogo?". Aqui,
       // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
       if (relief) track('haunted_done');
-      if (relief) contarMissao('haunted-done');
+      // As transições de estado do toque moram em `utils/taskCompletionPay.ts`: o
+      // check do widget grande da Home paga pela MESMA regra (footgun 9).
+      if (relief) setGameState(prev => countHauntedMission(prev, new Date()));
 
       // Mark task as completed first
-      setGameState(prev => ({
-        ...prev,
-        tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t),
-      }));
+      setGameState(prev => markTaskChecked(prev, taskId));
 
       if (relief) {
         const food = FOOD_BY_CATEGORY[task.category];
         if (food) {
-          setGameState(prev => ({
-            ...prev,
-            foodInventory: {
-              ...prev.foodInventory,
-              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-            },
-          }));
+          setGameState(prev => grantReliefFood(prev, task.category).state);
           dispararFeedAnim(food.emoji);
         }
         // O mesmo caminho de fala do resto do app — o pet reage, não um banner.
@@ -3743,46 +3660,13 @@ export default function App() {
         let concluiu = false;
         let ganhouPremium = false;
         setGameState(prev => {
-          const feito = completeTask(prev, taskId) ?? prev;
-          ganhouPremium = Object.keys(feito.foodInventory).some(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
-          // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
-          // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
-          // rendesse por item, cadastrar cinco triviais valeria mais que encarar
-          // a difícil, que é o defeito documentado do Karma do Todoist.
-          //
-          // Só rende se a conclusão ACONTECEU (`completeTask` devolve o mesmo
-          // objeto quando não há o que fazer): tocar duas vezes não paga duas.
-          const next = feito === prev ? prev : awardBondXP(
-            feito,
-            { kind: 'completion', weight: effortOf(task) },
-            playerDayKey(new Date(), prev.playerDayTz),
-          );
-          // Nada de `queueMicrotask` DENTRO do updater (footgun 6: StrictMode
-          // invoca 2× e o toast saía dobrado). A flag é idempotente; quem
-          // dispara é a linha depois do updater.
-          concluiu = next !== prev;
-          if (!concluiu) return next;
-          // ↩️ RECIBO da conclusão (`utils/taskUncomplete.ts`): o que entrou, para o
-          // "Desmarcar" do segurar estornar exatamente isso — e nada além.
-          const agoraRecibo = new Date();
-          const naHora = prev.tasks.find(t => t.id === taskId);
-          const comida = FOOD_BY_CATEGORY[task.category]?.emoji;
-          const premio = Object.keys(feito.foodInventory).find(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
-          const proxima = feito.tasks.find(t => !prev.tasks.some(p => p.id === t.id));
-          const receipt: TaskCompletionReceipt = {
-            food: comida ? { [comida]: relief ? 2 : 1 } : {},
-            ...(premio ? { premium: premio, premiumDay: feito.premiumFood?.day, premiumWeek: feito.premiumFood?.week } : {}),
-            xp: Math.max(0, (next.totalXP ?? 0) - (feito.totalXP ?? 0)),
-            day: playerDayKey(agoraRecibo, prev.playerDayTz),
-            ...(relief ? { mission: 'haunted-done' as const, week: prev.weeklyMissions?.week } : {}),
-            ...(proxima ? { nextId: proxima.id } : {}),
-            task: (naHora ?? task) as unknown as TaskCompletionReceipt['task'],
-          };
-          const ct = next.completedTasks;
-          const ult = ct[ct.length - 1];
-          return ult && ult.id === taskId
-            ? { ...next, completedTasks: [...ct.slice(0, -1), { ...ult, receipt }] }
-            : next;
+          // `completeTask` + Vínculo pelo peso de esforço + recibo do "Desmarcar":
+          // `settleTaskCompletion` (utils/taskCompletionPay.ts). Pura, então pode
+          // rodar 2× no StrictMode (footgun 6); só as flags saem do updater.
+          const r = settleTaskCompletion(prev, task, relief, new Date());
+          concluiu = r.paid;
+          ganhouPremium = r.premium;
+          return r.state;
         });
         // Microtask: React 18 agenda o flush do lote num microtask criado no
         // primeiro `setState`, então este roda DEPOIS do updater acima.
@@ -3942,6 +3826,89 @@ export default function App() {
     // conclusão seguinte. O gatilho é o sinal, nunca o formatador.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gainSignal]);
+
+  /* ── WIDGET GRANDE DA HOME: a fila do check (decisão do dono, 18/11/2026) ──────────────────────
+     O check do widget SÓ MARCA (nativo: `WidgetEventQueue.kt`); quem paga é o app, ao abrir ou voltar ao
+     primeiro plano, pela MESMA regra do toque na Home (`applyWidgetEvents` → `applyTaskCompletion`).
+     `readWidgetEvents` devolve `null` em APK sem o recurso. O `ack` (apagar da fila) espera o save local
+     ser gravado: o efeito do provider grava no commit, e o `setTimeout` abaixo roda depois dele. */
+  const widgetAckPendente = useRef<{ eids: string[]; applied: string[] } | null>(null);
+  const drenandoWidget = useRef(false);
+  const [widgetAckTick, setWidgetAckTick] = useState(0);
+  const widgetFeedbackRef = useRef<(paid: WidgetDrainResult<GameState>['paid']) => void>(() => {});
+  widgetFeedbackRef.current = paid => {
+    for (const p of paid) {
+      track('task_done', { kind: p.kind === 'habit' ? 1 : 0 });
+      if (p.relief) track('haunted_done');
+    }
+    playTaskComplete();
+    queueTaskGains(paid[paid.length - 1].category);
+    toast(language === 'pt-BR'
+      ? (paid.length === 1 ? `✅ "${paid[0].name}" (marcada no widget) foi concluída.` : `✅ ${paid.length} itens marcados no widget foram concluídos.`)
+      : (paid.length === 1 ? `✅ "${paid[0].name}" (checked on the widget) is done.` : `✅ ${paid.length} items checked on the widget are done.`));
+    if (paid.some(p => p.premium)) {
+      toast(language === 'pt-BR'
+        ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
+        : '⭐ Every step done! You earned a premium food.');
+    }
+    // Hábito: os mesmos efeitos do toque na Home — marco 7/21/66 (lido do estado de ANTES, como lá) e o selo dos passos.
+    for (const p of paid) {
+      if (p.kind !== 'habit') continue;
+      celebrateHabitMilestone(p.id, p.name, new Date().toDateString());
+      grantStepsVerified(p.category);
+    }
+    falar(paid.some(p => p.relief) ? 'haunted' : 'task');
+    marcarGestoDoDia('task');
+    atenderRefeicao('tenSeconds');
+  };
+  const drenarWidget = useCallback(async () => {
+    if (demo || !hasCompletedOnboarding || drenandoWidget.current || widgetAckPendente.current) return;
+    drenandoWidget.current = true;
+    try {
+      const cru = await readWidgetEvents();
+      if (!cru || cru.length === 0) return;
+      const eventos = sanitizeWidgetEvents(cru);
+      if (eventos.length === 0) return;
+      const applied = sanitizeApplied(readJson<unknown>(STORAGE_KEYS.WIDGET_EVENTS_APPLIED, []));
+      let res: WidgetDrainResult<GameState> | null = null;
+      setGameState(prev => {
+        res = applyWidgetEvents(prev, eventos, applied, new Date());
+        return res.state;
+      });
+      // Microtask: o lote do React roda o updater antes deste (mesmo padrão do `handleToggleTask`).
+      await new Promise<void>(ok => queueMicrotask(ok));
+      const r = res as WidgetDrainResult<GameState> | null;
+      if (!r) return;
+      widgetAckPendente.current = { eids: r.handled, applied: r.applied };
+      if (r.paid.length > 0) widgetFeedbackRef.current(r.paid);
+      else setWidgetAckTick(n => n + 1); // nada mudou no estado: o efeito do ack precisa de um empurrão
+    } finally {
+      drenandoWidget.current = false;
+    }
+  }, [demo, hasCompletedOnboarding, setGameState]);
+  useEffect(() => {
+    const p = widgetAckPendente.current;
+    if (!p) return;
+    const h = window.setTimeout(() => {
+      if (widgetAckPendente.current !== p) return;
+      widgetAckPendente.current = null;
+      writeJson(STORAGE_KEYS.WIDGET_EVENTS_APPLIED, p.applied, { silent: true });
+      void ackWidgetEvents(p.eids);
+    }, 0);
+    return () => window.clearTimeout(h);
+  }, [gameState, widgetAckTick]);
+  useEffect(() => {
+    // Depois da hidratação e do 1º sync da nuvem (o mesmo motivo do atraso: a adoção da nuvem não pode passar por cima).
+    const t = window.setTimeout(() => { void drenarWidget(); }, 2500);
+    let tv = 0;
+    const aoVoltar = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(tv);
+      tv = window.setTimeout(() => { void drenarWidget(); }, 800);
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => { window.clearTimeout(t); window.clearTimeout(tv); document.removeEventListener('visibilitychange', aoVoltar); };
+  }, [drenarWidget]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setGameState(prev => ({
@@ -4207,9 +4174,9 @@ export default function App() {
   }, [setGameState, language]);
 
   const handleEvolveRequest = useCallback(() => {
-    if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
-    // D8 (ONBOARDING_VELADO): grátis depois do rookie pede conta paga — abre o convite.
-    if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
+    // D8 (ONBOARDING_VELADO / Início BB): grátis depois do rookie pede conta paga — abre o convite (também no inicial que nasceu BB).
+    if (evolucaoPaga(veladoOn, { accountTier: gameState.accountTier, evolutionStage, unlockedEvolutions })) { setUnlockReason('evolve-free'); return; }
+    if (inicialNaoEvolui(gameState.demoCharacterId, evolutionStage)) return; // os iniciais não evoluem (o BB que vai virar um, sim)
     const { stage: next, branch: nextBranch } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -4260,9 +4227,9 @@ export default function App() {
       // a regra é de `utils/evolutionGauge.ts`, aqui só se delega).
       if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions, prev.totalXP)) return prev;
       // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
-      if (isStarterId(prev.demoCharacterId)) return prev;
-      // D8 (ONBOARDING_VELADO): reconferida sobre o `prev`, é o updater que commita.
-      if (evolutionPaywalled({ velado: veladoOn, accountTier: prev.accountTier, evolutionStage: prev.evolutionStage })) return prev;
+      if (inicialNaoEvolui(prev.demoCharacterId, prev.evolutionStage)) return prev;
+      // D8 (ONBOARDING_VELADO / Início BB): reconferida sobre o `prev`, é o updater que commita.
+      if (evolucaoPaga(veladoOn, prev)) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -4562,21 +4529,21 @@ export default function App() {
   // (`utils/adminFlag.ts`). Nada aqui toca rota de servidor: tudo é o save
   // LOCAL, com updaters puros de `utils/gmTools.ts` / `utils/corvoPet.ts`.
   const isAdmin = useAdmin();
-  // Auto-adoção do corvinho: UMA vez por sessão, só para o admin. `adoptCorvo`
-  // é idempotente (mesma referência se já é corvo), então o StrictMode rodar o
-  // updater 2× não muda nada. Sem toast: a troca de pele não é aviso.
-  // Não é "uma vez por sessão": se um save remoto SEM corvo entrar depois da
-  // adoção (cloud save de outro aparelho), o efeito vê `!isCorvo` de novo e
-  // adota outra vez — a marca do admin vence. O ref só evita import duplo em voo.
+  // Auto-adoção do corvinho (incidente 18/11/2026): NÃO é por admin. Só a conta
+  // dev do dono (`isCorvoOwnerSaveId`, por hash do e-mail) e só sobre save vazio
+  // ou demo — uma criatura real nunca é trocada sozinha (`shouldAutoAdoptCorvo`).
+  // O updater reconfere sobre o `prev` (um save real pode ter entrado no meio).
+  // `adoptCorvo` é idempotente; o ref só evita import duplo em voo. Sem toast.
   const corvoAdoptingRef = useRef(false);
-  const stateIsCorvo = isCorvo(gameState);
+  const corvoAutoAdopt = shouldAutoAdoptCorvo(gameState, saveId);
   useEffect(() => {
-    if (!isAdmin || stateIsCorvo || corvoAdoptingRef.current) return;
+    if (!corvoAutoAdopt || corvoAdoptingRef.current) return;
     corvoAdoptingRef.current = true;
+    const alvo = saveId;
     void corvoAdocao()
-      .then(m => setGameState(m.adoptCorvo))
+      .then(m => setGameState(prev => (shouldAutoAdoptCorvo(prev, alvo) ? m.adoptCorvo(prev) : prev)))
       .finally(() => { corvoAdoptingRef.current = false; });
-  }, [isAdmin, stateIsCorvo, setGameState]);
+  }, [corvoAutoAdopt, saveId, setGameState]);
   const gmActions = useMemo(() => ({
     isCorvo: petIsCorvo,
     currentForm: gameState.evolutionStage,
@@ -4943,6 +4910,18 @@ export default function App() {
     irAoPredioDaMissao(alvo);
   }, [goTo, irAoPredioDaMissao]);
 
+  /** §487: sair do jogo aberto pelo Fliperama volta DIRETO à Home. A Home → Jogos foi um `pushState`, então `history.back()` a desfaz (sem passar pelo mapa); sem entrada nossa (recarga), vai à Home pelo estado. */
+  /** O próximo `popstate` é a nossa volta do Fliperama: vai à Home, sem a regra de "fechar a camada" nem o grafo (que de uma área leva ao MAPA). */
+  const voltaDoFlipperamaRef = useRef(false);
+  const voltarAHomeDoJogo = useCallback(() => {
+    setArcadeFromHome(false);
+    const st = window.history.state as { smView?: string } | null;
+    if (st && typeof st.smView === 'string' && st.smView !== 'home') { voltaDoFlipperamaRef.current = true; window.setTimeout(() => { voltaDoFlipperamaRef.current = false; }, 1500); window.history.back(); }
+    else setCurrentView('home');
+  }, []);
+  /** Saiu da área Jogos por outro caminho (sistema voltar, mapa): o próximo jogo não herda o "voltar à Home". */
+  useEffect(() => { if (currentView !== 'area:jogos' && arcadeFromHome) setArcadeFromHome(false); }, [currentView, arcadeFromHome]);
+
   const goBack = useCallback(() => {
     if (viewBack(currentViewRef.current) === null) return;
     const st = window.history.state as { smView?: string } | null;
@@ -4955,6 +4934,8 @@ export default function App() {
   useEffect(() => {
     try { window.history.replaceState({ smView: 'home' }, ''); } catch { /* idem */ }
     const onPop = () => {
+      // §487: a volta do jogo aberto pelo Fliperama termina na HOME (o grafo levaria ao mapa; a folha do Salão, que reabre ao sair do jogo, seria "fechada" no lugar).
+      if (voltaDoFlipperamaRef.current) { voltaDoFlipperamaRef.current = false; setCurrentView('home'); return; }
       /* Camada aberta por cima da tela (folha de lote, minijogo): o voltar a
          fecha e a tela continua — a entrada de history já foi consumida pelo
          navegador, então repõe a mesma para o próximo voltar. */
@@ -7424,15 +7405,14 @@ export default function App() {
     writeLocal(STORAGE_KEYS.USER_NAME, data.userName);
     writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
     setUserName(data.userName);
-    setHasCompletedOnboarding(true);
+    // Início BB (17/11/2026): o jogo só abre DEPOIS de o save do nascimento existir (fim desta função). Antes, a Home
+    // aparecia durante as idas à nuvem com o save vazio. O "visto" persistente segue gravado aqui (retomada/recarga).
 
     // E-mail é OPCIONAL no caminho grátis (ver SoulmonOnboarding). Sem ele o
     // jogo roda local, com o saveId aleatório que já existe — e o app pede o
     // e-mail depois, quando houver progresso a perder (ProtectProgressModal).
     const normalizedEmail = data.email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setHasCompletedOnboarding(true);
-    } else {
+    if (normalizedEmail) {
       // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
       // Configurações (saveId = hash do e-mail).
       const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave } = await import('./utils/cloudSave');
@@ -7511,6 +7491,8 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
+      const estagioGratis = initialStageForNewSave();
+      if (estagioGratis === 'bb') { const m: BBNascimento = { pago: false }; gravarBBNascimento(m); setBbNasc(m); }
       const demoEgg = migrateEggType(data.demoCharacterId);
       writeLocal(STORAGE_KEYS.EGG_TYPE, demoEgg);
       setGameState(prev => ({
@@ -7518,10 +7500,11 @@ export default function App() {
         activities: newActivities,
         tasks: firstTasks,
         eggType: demoEgg,
-        evolutionStage: 'rookie',
-        unlockedEvolutions: ['rookie'],
-        healthPoints: getMaxHPForStage('rookie'),
-        maxHealthPoints: getMaxHPForStage('rookie'),
+        // Início BB: o grátis nasce BB (do pool, pedido depois de o jogo abrir) e vira este inicial no rookie.
+        evolutionStage: estagioGratis,
+        unlockedEvolutions: [estagioGratis],
+        healthPoints: getMaxHPForStage(estagioGratis),
+        maxHealthPoints: getMaxHPForStage(estagioGratis),
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
         soulmonStages: premade ? getDemoCreatureStages(premade) : [],
         // `petName` só entra quando a pessoa trocou o sugerido — assim o save
@@ -7558,6 +7541,7 @@ export default function App() {
         // WP1.3 — o cartão dos três gestos nasce aqui e morre no fim do dia.
         firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
       }));
+      setHasCompletedOnboarding(true);
       return;
     }
 
@@ -7567,6 +7551,13 @@ export default function App() {
     const GENERIC_LINES = STARTER_IDS;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
+    // Início BB: o pagante nasce BB e o BB EXCLUSIVO (D31) é pedido depois de o jogo abrir. Já revelado no onboarding
+    // (fluxo antigo do Velado, `revealSprite` bb) = nada a chocar.
+    if (initialStageForNewSave() === 'bb' && data.revealSprite?.formId !== 'bb') {
+      const m: BBNascimento = { pago: true, ...(data.oracleResult.creature.bbPrompts ? { prompts: data.oracleResult.creature.bbPrompts } : {}) };
+      gravarBBNascimento(m);
+      setBbNasc(m);
+    }
 
     // O onboarding É o ritual de nascimento — o pet já nasce Rookie na SUA
     // forma única (sem ovo/baby).
@@ -7619,6 +7610,7 @@ export default function App() {
       lastCheckInDate: playerDayKey(new Date(), prev.playerDayTz),
       firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
     }));
+    setHasCompletedOnboarding(true);
   };
 
   // Segundo onboarding (GameTutorialFlow): uma atividade de entrada, com
@@ -7791,13 +7783,12 @@ export default function App() {
 
   /** As marcas "!" / "?" de todo local de missão (`utils/questMarks.ts`, dono da regra). */
   /** O cartão do primeiro dia ainda está de pé? (uma missão: menu de Missões, nunca a lista de tarefas) */
-  const primeiroDiaAtivo = shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz));
   /* A linha "Take a stroll" do menu: "!" até o Passeio ser concluído NO NPC, "?" (Resgatar) depois, nada quando resgatada. */
   const diaDoPasseio = playerDayIso(new Date(), gameState.playerDayTz);
   const marcasDeMissao = useMemo(() => questMarks({
     firstDay: primeiroDiaAtivo,
-    passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
-    passeioReady: strollLineState(crossings, diaDoPasseio) === 'ready',
+    passeio: primeiroDiaAtivo ? null : missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()), // 17/11/2026 (dono): sem Stroll puxado no 1º dia
+    passeioReady: !primeiroDiaAtivo && strollLineState(crossings, diaDoPasseio) === 'ready',
     weekly: missoesDaSemana,
     missionProgress,
     ownedBackgrounds: gameState.ownedBackgrounds ?? [],
@@ -7843,7 +7834,9 @@ export default function App() {
     /* 14/10/2026: a PRIMEIRA entrada no prédio abre a apresentação do NPC (uma vez só). Marca ao MOSTRAR; save sem o campo
        não apresenta nada (migração por construção — `sanitizeBuildingIntrosSeen` semeia os já abertos). */
     const vistos = gameStateRef.current.buildingIntrosSeen;
-    if (vistos !== undefined && isBuildingId(id) && !vistos.includes(id)) {
+    // DESLIGADO pelo dono em 17/11/2026: a apresentação do NPC não abre mais sozinha na 1ª visita (chave `buildingIntrosSeen` segue no save).
+    const BUILDING_INTRO_AUTO = false as boolean;
+    if (BUILDING_INTRO_AUTO && vistos !== undefined && isBuildingId(id) && !vistos.includes(id)) {
       setIntroShown([id]);
       setGameState(prev => {
         const seen = markBuildingIntroSeen(prev.buildingIntrosSeen, id);
@@ -8001,6 +7994,16 @@ export default function App() {
         {selo}
         <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} obterBB={veladoOn ? obterBBDoSorteio : undefined} obterBBExclusivo={veladoOn ? obterBBExclusivo : undefined} /></Suspense>
       </>
+    );
+  }
+
+  // INÍCIO BB: o BB ficou pronto — o chocar em TELA CHEIA (tocar até rachar; a apresentação só com a arte carregada).
+  if (chocarAberto && spriteBB) {
+    return (
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {selo}
+        <ChocarBB language={language} spriteUrl={spriteBB} nome={nomeDoBB} falas={falasDoBB} onDone={terminarChocar} />
+      </Suspense>
     );
   }
 
@@ -8180,7 +8183,7 @@ export default function App() {
             </div>
           )}
 
-          {labTab === 'evolution' && evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage }) && (
+          {labTab === 'evolution' && evolucaoPaga(veladoOn, gameState) && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge language={language} reason="evolve-free" onOpen={() => setUnlockReason('evolve-free')} />
             </div>
@@ -8212,6 +8215,7 @@ export default function App() {
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
+              evolucaoPaga={evolucaoPaga(veladoOn, gameState)}
               currentBranch={getDominantBranch() === 'balanced' ? 'harmony' : getDominantBranch() as 'power' | 'harmony' | 'benevolence'}
               powerPoints={gameState.powerPoints}
               harmonyPoints={gameState.harmonyPoints}
@@ -8828,8 +8832,10 @@ export default function App() {
                 area={area}
                 naMasmorra={naMasmorra}
                 emCristal={!!cristal}
-                initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
-                onInitialGameConsumed={handleRefugeLaunchConsumed}
+                initialGame={area === 'jogos' ? (refugeLaunch ? 'respiracao' : arcadeGame ?? undefined) : undefined}
+                onInitialGameConsumed={() => { handleRefugeLaunchConsumed(); setArcadeGame(null); }}
+                returnHomeOnGameExit={arcadeFromHome}
+                onReturnHome={voltarAHomeDoJogo}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
                 initialSection={pendingSheet && pendingSheet.area === area ? pendingSheet.section : undefined}
                 onInitialSheetConsumed={() => setPendingSheet(null)}
@@ -8951,6 +8957,8 @@ export default function App() {
                   },
                   onElementsDefeated: handleElementsDefeated,
                   onBossShard: () => setGameState(prev => ({ ...prev, bossShards: addBossShards(prev.bossShards) })),
+                  // §473: Honra do PVP do Elemental Fusion, pelo MESMO caminho da Honra do Torneio (`earnEmblems`); a demo não entra em PvP.
+                  onEarnHonor: amount => { if (!demo) earnEmblems(amount); },
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
@@ -9149,7 +9157,7 @@ export default function App() {
                 spritePose={gameState.spritePose}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
-                ownSpriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url}
+                ownSpriteUrl={bbNoCristal ? undefined : displaySprite(spriteVisor, gameState.evolutionStage)?.url}
                 chocando={petChocando}
                 emCristal={cristalFase}
                 onCristalRetry={cristal && canManualRetry(spriteAcervo, cristal.to) ? handleCristalRetry : undefined}
@@ -9170,8 +9178,9 @@ export default function App() {
                 perfectDays={gameState.perfectDays}
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
-                  if (isStarterId(gameState.demoCharacterId)) return false;
-                  if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage })) return false;
+                  // Início BB (17/11/2026): travado pelo pagamento, o botão APARECE quando a barra enche — o toque abre o convite.
+                  const paga = evolucaoPaga(veladoOn, gameState);
+                  if (!paga && inicialNaoEvolui(gameState.demoCharacterId, gameState.evolutionStage)) return false;
                   if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.
@@ -9204,6 +9213,7 @@ export default function App() {
                 hasNewItems={newItemsReady}
                 onBackpackSeen={handleBackpackSeen}
                 onSleep={handleSleep}
+                onOpenArcade={() => setArcadeOpen(true)}
                 isSleeping={isSleeping || dayWakePending}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
@@ -9256,6 +9266,21 @@ export default function App() {
                 evolutionFlash={evolutionFlash}
                 feedAnim={feedAnim}
                 play={playDeck}
+              />
+              {/* §486: o Fliperama de Canto abre SÓ o modal de minigames, aqui na Home (sem o Pipo, sem ir ao mapa). Jogar fecha o modal e abre o jogo na área Jogos. */}
+              <ArcadeModal
+                open={arcadeOpen}
+                onClose={() => setArcadeOpen(false)}
+                language={language}
+                bitsToday={minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz))}
+                funStatus={(now) => funTicketStatus(gameState, now)}
+                onBuyTickets={() => {
+                  const now = Date.now();
+                  if (ticketBuyRefusal(gameState, now)) return false;
+                  setGameState(prev => buyFunTickets(prev, now));
+                  return true;
+                }}
+                onStart={(g) => { if (guardWake(g)) return; setArcadeOpen(false); setArcadeGame(g); setArcadeFromHome(true); goTo(areaView('jogos')); }}
               />
 
               {/* H7 (02/10/2026): ÚNICA região que rola na Home — tudo abaixo da área
@@ -9650,7 +9675,7 @@ export default function App() {
                     </button>
                   )}
                   <DailyRituals
-                    bonusActivityId={gameState.bonusTask?.day === new Date().toDateString() ? gameState.bonusTask.activityId : undefined}
+                    bonusActivityIds={bonusActivityIdsOf(gameState.bonusTask, new Date().toDateString())}
                     weeklyBonusActivityId={weeklyBonusActivityToday(gameState.weeklyBonus, new Date().toDateString())}
                     tasks={gameState.tasks}
                     activities={gameState.activities}

@@ -6,7 +6,7 @@
 //   GET  /api/entitlements?id=<saveId>          → { tier, credits, adsLeft }
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
-//   POST /api/entitlements?action=buy-essence   { id, element, qty: 1|5, opId }  ← CAMBISTA (§205)
+//   POST /api/entitlements?action=buy-essence   { id, element, qty: inteiro ≥1, opId }  ← CAMBISTA (§205, qty livre e sem limite por compra §479)
 //   POST /api/entitlements?action=buy-bits      { id, pack, opId, replayOnly?, zone?, off? }  ← PACOTES DE BITS (§373; `_bitsPacks.js`)
 //        `replayOnly: true` (§386): só o replay de um pedido já atendido; desconhecido = 409 `no-op`, nada comprado
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)

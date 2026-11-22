@@ -41,11 +41,11 @@ describe('MinigameModeGate (pedido do dono, 30/10/2026)', () => {
     expect(onPick).toHaveBeenCalledWith(2);
   });
 
-  it('Fusão Elemental: PvE à esquerda, PvP à direita, escolher já devolve o modo', () => {
+  it('Fusão Elemental: Aventura à esquerda, PvP à direita, escolher já devolve o modo', () => {
     const onPick = vi.fn();
     const { container } = render(<MinigameModeGate {...base} gameName="Fusão Elemental" language="pt-BR" withDifficulty={false} pveVsPvp rankings={[{ game: 'match3' }]} onPick={onPick} />);
     const botoes = [...container.querySelectorAll('[data-gate-pick]')] as HTMLElement[];
-    expect(botoes.map(b => b.textContent)).toEqual(['PvE', 'PvP']);
+    expect(botoes.map(b => b.textContent)).toEqual(['Aventura', 'PvP']);
     fireEvent.click(container.querySelector('[data-gate-ranking-open]')!);
     expect(document.body.querySelectorAll('[data-gate-rank-tab]')).toHaveLength(0);
     fireEvent.click(botoes[0]);

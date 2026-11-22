@@ -4,6 +4,8 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -20,6 +22,7 @@ import android.text.TextUtils
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import com.soulmon.R
@@ -457,7 +460,22 @@ object WidgetRenderer {
         renderVpetLike(context, mgr, appWidgetId, WidgetVpet.COMPANION, R.layout.widget_soulmon_companion)
 
     private fun renderVpetLike(context: Context, mgr: AppWidgetManager, appWidgetId: Int, geo: WidgetVpet.Layout, layoutId: Int) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val views = RemoteViews(context.packageName, layoutId)
+        val bmp = vpetBitmap(context, geo)
+        if (bmp != null) views.setImageViewBitmap(R.id.widget_vpet, bmp)
+        else views.setImageViewResource(R.id.widget_vpet, vpetCasing(context, prefsOf(context).getString("vpet_frame", "")).res)
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun prefsOf(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    /**
+     * O bitmap do V-Pet (casco + LCD + Soulmon + fala + ícones de estado) para a geometria [geo]; `null` sem memória.
+     * Usado pelo Cage, pelo Companheiro e pelo topo do widget grande da Home ([renderHome], com o casco PADRÃO).
+     */
+    private fun vpetBitmap(context: Context, geo: WidgetVpet.Layout, defaultCasing: Boolean = false): Bitmap? {
+        val prefs = prefsOf(context)
         val spriteId = resolveSprite(
             context,
             prefs.getString("current_stage", "rookie") ?: "rookie",
@@ -474,20 +492,91 @@ object WidgetRenderer {
             prefs.getInt("max_energy_points", 0),
         )
         val poop = prefs.getBoolean("has_poop", false)
-        val casing = vpetCasing(context, prefs.getString("vpet_frame", ""))
+        val casing = if (defaultCasing) Casing(R.drawable.vpet_moldura, null) else vpetCasing(context, prefs.getString("vpet_frame", ""))
         val sleeping = prefs.getBoolean("pet_sleeping", false)
         val bgName = WidgetVpet.bgDrawableName(prefs.getString("vpet_bg", ""))
         val bgRes = if (bgName != null) context.resources.getIdentifier(bgName, "drawable", context.packageName) else 0
-        val views = RemoteViews(context.packageName, layoutId)
-        val bmp = try {
+        return try {
             drawVpet(context, geo, spriteId, adaptiveLine(context), food, energy, poop, casing, sleeping, bgRes)
         } catch (e: OutOfMemoryError) {
             null
         }
-        if (bmp != null) views.setImageViewBitmap(R.id.widget_vpet, bmp)
-        else views.setImageViewResource(R.id.widget_vpet, casing.res)
-        attachClick(context, views)
+    }
+
+    /**
+     * WIDGET GRANDE DA HOME (decisão do dono, 18/11/2026), vertical: o V-Pet em cima com o casco PADRÃO (`vpet_moldura`,
+     * "o elemento básico que temos hoje"; sem variante por elemento) e a lista de tarefas de hoje embaixo, com check
+     * ([WidgetHomeTasksService]). Baixo demais (< 220dp) o V-Pet sai e fica só a lista. Tocar no V-Pet ou no título abre o
+     * jogo; o check só marca ([SoulmonWidgetHomeProvider]).
+     */
+    fun renderHome(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
+        val prefs = prefsOf(context)
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val fresh = WidgetHomeTasks.isFresh(System.currentTimeMillis(), if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null)
+        val empty = context.getString(if (fresh) R.string.widget_home_empty_today else R.string.widget_home_empty_stale)
+        val title = WidgetHomeLayout.textSpec(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)).titleSp
+        val top = vpetBitmap(context, WidgetVpet.CAGE, defaultCasing = true)
+
+        fun build(withPet: Boolean): RemoteViews {
+            val views = RemoteViews(context.packageName, if (withPet) R.layout.widget_soulmon_home else R.layout.widget_soulmon_home_compact)
+            if (withPet) {
+                if (top != null) views.setImageViewBitmap(R.id.widget_vpet, top) else views.setImageViewResource(R.id.widget_vpet, R.drawable.vpet_moldura)
+            }
+            views.setTextViewText(R.id.widget_home_title, petName)
+            views.setTextViewTextSize(R.id.widget_home_title, TypedValue.COMPLEX_UNIT_SP, title)
+            val svc = Intent(context, WidgetHomeTasksService::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            svc.data = Uri.parse(svc.toUri(Intent.URI_INTENT_SCHEME)) // um adapter por instância
+            @Suppress("DEPRECATION")
+            views.setRemoteAdapter(R.id.widget_home_list, svc)
+            views.setEmptyView(R.id.widget_home_list, R.id.widget_home_empty)
+            views.setTextViewText(R.id.widget_home_empty, empty)
+            // Template do check: broadcast EXPLÍCITO para o provider; MUTABLE porque cada linha completa o id (fill-in).
+            val check = Intent(context, SoulmonWidgetHomeProvider::class.java).setAction(SoulmonWidgetHomeProvider.ACTION_CHECK)
+            val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+            views.setPendingIntentTemplate(
+                R.id.widget_home_list,
+                PendingIntent.getBroadcast(context, appWidgetId, check, PendingIntent.FLAG_UPDATE_CURRENT or mutable),
+            )
+            attachClick(context, views)
+            return views
+        }
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(WidgetHomeLayout.SIZE_KEYS.associate { SizeF(it.widthDp, it.heightDp) to build(it.withPet) })
+        } else {
+            build(
+                WidgetHomeLayout.showPet(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
         mgr.updateAppWidget(appWidgetId, views)
+        @Suppress("DEPRECATION")
+        mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_home_list)
+    }
+
+    /** Redesenha só os widgets da Home (depois de um check). */
+    fun updateHome(context: Context) {
+        val mgr = AppWidgetManager.getInstance(context)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetHomeProvider::class.java))) renderHome(context, mgr, id)
+    }
+
+    /**
+     * A lista que o widget da Home mostra: `tasks_json` do app, só no dia em que foi escrita (`day_ends_at`), com os checks
+     * ainda na fila aparecendo como feitos (otimista) até o app drenar.
+     */
+    fun homeTaskItems(context: Context): List<WidgetHomeTasks.Item> {
+        val prefs = prefsOf(context)
+        val dayEndsAt = if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null
+        if (!WidgetHomeTasks.isFresh(System.currentTimeMillis(), dayEndsAt)) return emptyList()
+        val items = WidgetHomeTasks.sanitize(WidgetHomeTasks.Json.parse(prefs.getString("tasks_json", null)))
+        return WidgetHomeTasks.withPending(items, WidgetEventQueue.pendingDoneKeys(WidgetEventQueue.Store.read(context)))
     }
 
     /** A moldura a desenhar: o arquivo baixado (se valido em disco) e, por baixo, o drawable embutido / padrao. */
@@ -692,6 +781,8 @@ object WidgetRenderer {
             renderVpet(context, mgr, id)
         for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetCompanionProvider::class.java)))
             renderCompanion(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetHomeProvider::class.java)))
+            renderHome(context, mgr, id)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

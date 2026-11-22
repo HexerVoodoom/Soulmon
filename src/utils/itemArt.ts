@@ -27,6 +27,7 @@ import itemChipPrism from '../assets/soulmon/items/item-chip-prism.png';
 import itemSpark from '../assets/soulmon/icones-ui/item-faisca.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
+import bossShard from '../assets/soulmon/items/boss-shard.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { DISHES } from './restaurantMenu';
 import { dishKey } from './dishItems';
@@ -39,6 +40,9 @@ import { elementIcon } from './elementIconArt';
 import { ALL_ELEMENT_IDS } from './elementDex';
 
 /** Chave = emoji-identidade do item (FOOD_BY_CATEGORY / SPECIAL_ITEMS). */
+/** Chave do Fragmento de Boss (a mesma `key` da linha do resultado do Match-3). */
+export const BOSS_SHARD_KEY = 'boss-shard';
+
 export const ITEM_ART: Record<string, string> = {
   // Comidas comuns (constants/labels.ts — FOOD_BY_CATEGORY)
   '🥩': foodProtein,
@@ -62,7 +66,11 @@ export const ITEM_ART: Record<string, string> = {
   '🌀': itemGlitchtama,
   '🔄': itemChipPrism, // Zerador de Pontos (31/10/2026): reusa o Prisma (os 3 atributos), sem arte nova
   '✨': itemSpark, // Faísca de Alma (30/10/2026): arte própria (ChatGPT, alfa real, 96²)
+  [BOSS_SHARD_KEY]: bossShard, // Fragmento de Boss (18/11/2026): arte própria (ChatGPT, alfa real, 256²); a linha do resultado do Match-3 usa `icon: BOSS_SHARD_ART`
 };
+
+/** O ícone do Fragmento de Boss (256², alfa real), para `icon` das linhas de resultado. */
+export const BOSS_SHARD_ART: string = bossShard;
 
 // Chips de REDUÇÃO (04/11/2026): a arte do chip comum do mesmo tipo; a Mochila desenha o "−" por cima (`data-reduce`).
 for (const [k, base] of [['👊', itemChipPower], ['🎶', itemChipHarmony], ['🤲', itemChipBenevolence]] as const) {

@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 /** QA r4 (item 4) e §384: a escolha de adversários mostra cards vazios de espera enquanto o bestiário carrega, erro com "Try again" quando a
- *  carga falha (antes os cards sumiam calados), a linha "o último adversário dropa em dobro" e a ajuda do "Stray / Desgarrado". */
+ *  carga falha (antes os cards sumiam calados), a linha "o último adversário dropa em dobro" e a ausencia do rotulo "Stray / Desgarrado" nas linhas. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, fireEvent, cleanup, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
-import { ARENA_CHOICES } from '../../utils/arenaSorteio';
+import { ARENA_CHOICES, arenaCards, arenaRunIsStray } from '../../utils/arenaSorteio';
 
 const H = vi.hoisted(() => ({ load: null as null | (() => Promise<unknown>) }));
 vi.mock('../../utils/arena', async importOriginal => {
@@ -53,11 +53,22 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     }
   });
 
-  it('a ajuda explica o "Stray / Desgarrado"', () => {
-    H.load = () => new Promise(() => {});
-    renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" onStart={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'How the Arena works' }));
-    expect(document.querySelector('[data-duelo-ajuda-stray]')?.textContent).toMatch(/^Stray: /);
+  it('regressao: a linha do adversario mostra so o elemento, sem "Stray"/"Desgarrado" (mesmo em run stray, EN e PT)', async () => {
+    H.load = () => Promise.resolve([]);
+    let achouStray = false;
+    for (const lang of ['en-US', 'pt-BR'] as const) {
+      for (let d = 1; d <= 28; d++) {
+        const dayIso = `2026-11-${String(d).padStart(2, '0')}`;
+        const seeds = arenaCards(dayIso, 'conta-teste', 0);
+        if (seeds.some(sd => arenaRunIsStray(sd, 999))) achouStray = true;
+        const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, dayIso, ladder: 999 }} language={lang} onStart={() => {}} />);
+        await waitFor(() => expect(container.querySelectorAll('[data-arena-card]')).toHaveLength(ARENA_CHOICES));
+        expect(container.querySelector('[data-arena-stray]')).toBeNull();
+        container.querySelectorAll('[data-arena-card]').forEach(c => expect(c.textContent).not.toMatch(/stray|desgarrado|·/i));
+        cleanup();
+      }
+    }
+    expect(achouStray).toBe(true);
   });
 
   it('"Comprar convites" é o PRIMEIRO item da folha, mostra o custo (1 energia = N convites) e chama a troca', () => {
@@ -90,12 +101,13 @@ describe('DueloSheet: estados da escolha de adversários', () => {
     expect(container.querySelector('[data-duelo-convites-count]')).not.toBeNull();
   });
 
-  it.each([3, 5, 7])('com %i convites o botão e o texto de custo NÃO são renderizados; Lutar segue', (count) => {
-    H.load = () => new Promise(() => {});
+  it.each([3, 5, 7])('com %i convites o botão e o texto de custo NÃO são renderizados; Lutar segue', async (count) => {
+    H.load = () => Promise.resolve([]);
     const inv = { count, max: 7, perEnergy: 5, canExchange: true, onExchange: () => true, onBegin: () => true };
     const { container } = renderWithCss(<DueloSheet arena={{ ...ARENA_PROPS, invites: inv }} language="en-US" onStart={() => {}} />);
     expect(container.querySelector('[data-duelo-comprar]')).toBeNull();
     expect(container.querySelector('[data-duelo-convites]')).toBeNull();
-    expect((container.querySelector('[data-duelo-start]') as HTMLButtonElement).disabled).toBe(false);
+    await waitFor(() => expect(container.querySelectorAll('[data-arena-card-fight]')).toHaveLength(ARENA_CHOICES));
+    for (const b of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-arena-card-fight]'))) expect(b.disabled).toBe(false);
   });
 });

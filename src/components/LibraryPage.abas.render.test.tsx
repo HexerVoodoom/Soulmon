@@ -57,7 +57,7 @@ describe('LibraryPage — abas do Hall', () => {
     const idx = cells.map(k => ordem.indexOf(ENEMY_ROSTER.find(e => e.key === k)!.stage));
     expect(idx).toEqual([...idx].sort((x, y) => x - y));
     // ultimate e mega agora estão na mesma lista, sob o próprio subtítulo
-    expect([...document.querySelectorAll('[data-bestiary-stage]')].map(g => g.getAttribute('data-bestiary-stage'))).toEqual(ordem);
+    expect([...document.querySelectorAll('[data-bestiary-stage]')].map(g => g.getAttribute('data-bestiary-stage'))).toEqual([...ordem, 'boss']);
     expect(document.querySelectorAll('[data-bestiary-stage="mega"] [data-bestiary-cell]').length).toBe(ENEMY_ROSTER.filter(e => e.stage === 'mega').length);
     expect(document.querySelector(`[data-bestiary-cell="${visto.key}"]`)!.getAttribute('data-seen')).toBe('1');
     expect(document.body.textContent).toContain('???');

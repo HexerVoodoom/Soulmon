@@ -196,8 +196,8 @@ async function subirParaNuvem(saveId: string, state: unknown, agora: () => Date)
         return; // indeterminado ou excluída: não decide por cima
       }
     }
-    const r = await cloudSave(saveId, state);
-    if (r.ok || r.status !== 409) return;
+    const r = await cloudSave(saveId, state, { allowRegression: 'restore' });
+    if (r.ok || r.status !== 409 || r.kind === 'regression') return;
   }
 }
 

@@ -25,6 +25,10 @@ describe('D8 — paywall da evolução', () => {
   });
   it('App usa a fonte única nos três pontos', () => {
     const app = readFileSync(resolve(__dirname, '../App.tsx'), 'utf8');
-    expect((app.match(/evolutionPaywalled\(/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    // Início BB (17/11/2026): o App passa por `evolucaoPaga` (utils/inicioBB.ts), que delega a `evolutionPaywalled`.
+    expect((app.match(/evolucaoPaga\(/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    expect(app).not.toMatch(/evolutionPaywalled\(/);
+    const ini = readFileSync(resolve(__dirname, './inicioBB.ts'), 'utf8');
+    expect(ini).toMatch(/evolutionPaywalled\(/);
   });
 });

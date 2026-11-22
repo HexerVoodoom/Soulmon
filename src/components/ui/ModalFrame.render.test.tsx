@@ -9,11 +9,11 @@ beforeEach(() => { installDomGlobals(); });
 afterEach(() => cleanup());
 
 describe('ModalFrame', () => {
-  it('renderiza conteúdo, placa de título e (i) opcionais', () => {
-    render(<ModalFrame title="Mercado" info={<button type="button">i</button>}><p>corpo</p></ModalFrame>);
+  it('renderiza conteúdo, placa de título e a informação (prop `info`) opcionais', () => {
+    render(<ModalFrame title="Mercado" info={{ label: 'Sobre o Mercado', content: 'texto', language: 'pt-BR' }}><p>corpo</p></ModalFrame>);
     expect(screen.getByRole('heading', { name: 'Mercado' })).toBeTruthy();
     expect(screen.getByText('corpo')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'i' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sobre o Mercado' })).toBeTruthy();
   });
   it('sem title não há placa; repassa data-* e className; opacidade vira variável limitada a 0..1', () => {
     const { container } = render(<ModalFrame data-area-sheet="" className="x" fillOpacity={3}>c</ModalFrame>);

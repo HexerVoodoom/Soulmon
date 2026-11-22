@@ -43,6 +43,12 @@ vi.mock('../RPSGame', async (orig) => {
 // Os jogos dos prédios novos: dublês que só registram as props (a
 // jogabilidade tem teste próprio em `components/mente/*.render.test.tsx`).
 const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[nome] = p; return <div data-jogo={nome} />; };
+vi.mock('../Match3Game', () => ({ Match3Game: dubleDe('match3') }));
+// §487: a lista de 3 do Match-3 vira um botão "Lutar" que devolve uma escolha do modo (a lista real tem teste próprio).
+vi.mock('./Match3Escolha', () => ({ Match3Escolha: ({ mode, onFight }: { mode: 'adventure' | 'pvp'; onFight: (c: unknown) => void }) => (
+  <button type="button" data-m3-escolha-lutar="0" onClick={() => onFight(mode === 'pvp' ? { mode, seed: 7, foe: { kind: 'player', level: 3 } } : { mode, element: 'fogo', seed: 7 })}>Lutar</button>
+) }));
+vi.mock('../SoulBarrage', () => ({ SoulBarrage: dubleDe('barrage') }));
 vi.mock('../mente/EcoGame', () => ({ EcoGame: dubleDe('eco') }));
 vi.mock('../mente/BolhasGame', () => ({ BolhasGame: (p: Record<string, unknown>) => dubleDe(`bolhas-${p.mode as string}`)(p) }));
 vi.mock('../mente/ZipGame', () => ({ ZipGame: dubleDe('zip') }));
@@ -186,7 +192,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(rank.style.fontWeight).toBe('700');
     expect(rank.style.textDecoration).toBe('underline');
     expect(rank.getAttribute('style')).toContain('--sm2-btn: outline');
-    expect(rank.compareDocumentPosition(head.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título vai na placa da moldura; o Ranking pousa à esquerda dela
   });
 
   it('Masmorra: o "i" (Drop rate) abre o tooltip com os itens e as chances; fecha pelo próprio "i", fora e Esc', async () => {
@@ -194,8 +200,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    const info = folha.querySelector('[data-area-sheet-head] [data-info-tip]') as HTMLButtonElement;
+    const info = folha.querySelector('[data-moldura-info] [data-info-tip]') as HTMLButtonElement; // o botão mora sobre o ornamento "i" da arte
     expect(info.getAttribute('aria-label')).toBe('Drop rate');
+    expect(folha.querySelectorAll('[data-info-tip]')).toHaveLength(1);
     fireEvent.click(info);
     const painel = document.querySelector('[data-info-tip-panel]')!;
     expect(painel.textContent).toContain('Drop rate');
@@ -261,7 +268,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-scene="exploracao"]')).toBeTruthy();
   });
 
-  it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
+  it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, ganho 1 Bit a cada 100 no pergaminho, e o CTA abre a DinoGame', async () => {
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '1240');
     const p = props({ area: 'jogos' });
     const { container, getByRole } = renderWithCss(<PlayAreaView {...p} />);
@@ -269,7 +276,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const start = await achar(container, '[data-dino-start]');
     const folha = getByRole('dialog', { name: 'Salão de Jogos' });
     expect(folha.textContent).toContain('1240');
-    expect(folha.textContent).toContain('12 Bits');
+    expect(folha.textContent).toContain('a cada 100 pts');
     fireEvent.click(start);
     fireEvent.click(await achar(container, '[data-gate-pick="2"]'));
     await achar(container, '[data-jogo="dino"]');
@@ -289,7 +296,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
     expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('Ranking');
     expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
-    fireEvent.click(container.querySelector('[data-area-sheet-head] [data-info-tip]')!);
+    fireEvent.click(container.querySelector('[data-moldura-info] [data-info-tip]')!);
     expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
   });
 });
@@ -409,6 +416,37 @@ describe('Jogos — os três prédios', () => {
   });
 });
 
+describe('jogo aberto pelo Fliperama da Home (§487): sair volta DIRETO à Home', () => {
+  function Montar({ volta, onReturnHome }: { volta: boolean; onReturnHome: () => void }) {
+    const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ area: 'jogos' });
+    const areaProps = {
+      area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
+      initialGame: 'respiracao' as const, returnHomeOnGameExit: volta, onReturnHome,
+      points: totalPoints, emblems: 0, credits: 0,
+      ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
+      onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
+      labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
+      guild: { saveId: 's', metaDoDiaCumprida: false },
+    } satisfies AreaViewProps;
+    return <AreaView {...areaProps} />;
+  }
+  it('com returnHomeOnGameExit: fechar o jogo chama onReturnHome UMA vez', async () => {
+    const volta = vi.fn();
+    const { container } = renderWithCss(<Montar volta onReturnHome={volta} />);
+    await achar(container, '[data-jogo="respiracao"]');
+    expect(volta).not.toHaveBeenCalled();
+    act(() => { (recebidas.respiracao.onExit as () => void)(); });
+    expect(volta).toHaveBeenCalledTimes(1);
+  });
+  it('sem returnHomeOnGameExit: sair do jogo fica na área (comportamento de sempre)', async () => {
+    const volta = vi.fn();
+    const { container } = renderWithCss(<Montar volta={false} onReturnHome={volta} />);
+    await achar(container, '[data-jogo="respiracao"]');
+    act(() => { (recebidas.respiracao.onExit as () => void)(); });
+    expect(volta).not.toHaveBeenCalled();
+  });
+});
+
 describe('convite ao Refúgio → a respiração abre direto', () => {
   it('initialGame="respiracao" monta a RespiracaoGame e avisa o App (one-shot)', async () => {
     const consumed = vi.fn();
@@ -466,7 +504,7 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
 });
 
 describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
-  it('Corrida sem recorde: nenhum selo "0"/"0 Bits"; com recorde, os dois entram', () => {
+  it('Corrida: o selo de recorde só aparece com recorde; o ganho (1 Bit a cada 100 pts) fica no pergaminho', () => {
     const { container, unmount } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const dino = () => container.querySelector('[data-game-card="dino"]')!.textContent!;
     expect(dino()).not.toMatch(/seu recorde/);
@@ -475,7 +513,8 @@ describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
     const r = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const t = r.container.querySelector('[data-game-card="dino"]')!.textContent!;
     expect(t).toContain('seu recorde');
-    expect(t).toContain('2 Bits');
+    expect(t).toContain('a cada 100 pts');
+    expect(r.container.querySelector('[data-game-card="dino"] [data-game-card-badges]')!.textContent).not.toMatch(/Bits/);
     localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
   });
   it('Elemental Fusion sem recorde: só o "até N Bits"', () => {
@@ -483,5 +522,30 @@ describe('P10 (beta-2) — selos zerados do Salão não aparecem', () => {
     const t = container.querySelector('[data-game-card="match3"]')!.textContent!;
     expect(t).not.toContain('seu recorde');
     expect(t).toMatch(/até\s*\d+/);
+  });
+});
+
+describe('Salão — o roteamento do Elemental Fusion nunca cai na Soul Barrage (REGISTRO §473)', () => {
+  it.each([[1, 'pve'], [2, 'pvp']] as const)('Elemental Fusion + botão %i abre o Match3Game em modo %s, e NÃO a Soul Barrage', async (btn, modo) => {
+    const p = props({ area: 'jogos' });
+    const { container } = renderWithCss(<PlayAreaView {...p} />);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
+    fireEvent.click(await achar(container, '[data-match3-start]'));
+    fireEvent.click(await achar(container, `[data-gate-pick="${btn}"]`));
+    // §487: o botão de modo só escolhe a lista; quem abre o jogo é o "Lutar" de uma linha.
+    expect(container.querySelector('[data-jogo="match3"]')).toBeNull();
+    fireEvent.click(await achar(container, '[data-m3-escolha-lutar="0"]'));
+    await achar(container, '[data-jogo="match3"]');
+    expect(container.querySelector('[data-jogo="barrage"]')).toBeNull();
+    expect(recebidas.match3.initialMode).toBe(modo);
+    expect((recebidas.match3.initialChoice as { mode: string }).mode).toBe(modo === 'pvp' ? 'pvp' : 'adventure');
+  });
+  it('Soul Barrage continua abrindo a Soul Barrage', async () => {
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
+    fireEvent.click(await achar(container, '[data-barrage-open]'));
+    fireEvent.click(await achar(container, '[data-gate-pick="1"]'));
+    await achar(container, '[data-jogo="barrage"]');
+    expect(container.querySelector('[data-jogo="match3"]')).toBeNull();
   });
 });

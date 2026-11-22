@@ -26,7 +26,7 @@ import { FeedBubble } from './home/FeedBubble';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { sm2Button } from './form/FormKit';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
-import { PetStageDecor } from './PetStageDecor';
+import { PetStageDecor, PetStageToques, PetStageBrilhos } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { sleepZPlacement } from '../utils/sleepZ';
 import { showerPlacement } from '../utils/showerPlacement';
@@ -315,6 +315,8 @@ interface CompanionHUDProps {
   materialExtras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
   /** O "Ir lá" do material na Mochila (o App navega). */
   onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
+  /** Toque no Fliperama de Canto: abre o modal de minigames sobre a Home (§486). Sem isto, cai no atalho do prédio do Salão. */
+  onOpenArcade?: () => void;
   /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
   demoMode?: boolean;
   onFeed?: (foodEmoji: string) => void;
@@ -412,6 +414,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   materials,
   materialExtras,
   onGoToBuilding,
+  onOpenArcade,
   demoMode,
   onFeed,
   onShower,
@@ -1315,7 +1318,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     <div className="sm-chat-fixed sm3-dock">
       <Suspense fallback={null}>
       <ChatBox
-        petName={currentStage}
+        petName={petDisplayName || currentStage}
         mood={companionMood}
         evolutionStage={evolutionStage}
         dominantBranch={dominantBranch}
@@ -1464,6 +1467,16 @@ export const CompanionHUD = memo(function CompanionHUD({
             equippedBackground={equippedBackground ?? null}
             trophies={trophies}
             language={language}
+            isSleeping={isSleeping}
+            somAtivo
+          />
+          {/* §484: os toques nas peças (Fliperama → Salão de jogos, Espelho → Perfil) numa camada ACIMA do grupo do pet, que cobre o palco todo. */}
+          <PetStageToques
+            equippedDecor={equippedDecor}
+            equippedBackground={equippedBackground ?? null}
+            language={language}
+            onOpenArcade={onOpenArcade ?? (onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined)}
+            onOpenProfile={onGoToBuilding ? () => onGoToBuilding('laboratorio.perfil') : undefined}
           />
 
           {/* Care Event Sprite */}
@@ -1480,6 +1493,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: -400, pointerEvents: 'none', background: 'rgba(4, 10, 24, .55)' }}
             />
           )}
+          {/* §484: o que acende no escuro (cogumelos) fica ACIMA do véu da noite. */}
+          <PetStageBrilhos equippedDecor={equippedDecor} equippedBackground={equippedBackground ?? null} isSleeping={isSleeping} />
 
           {/* Soulmon Sprite - Centered with walking animation.
               O GRUPO do pet cresce `CENA_ZOOM` (abordagem B, "pet grande") com
@@ -1641,14 +1656,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                 }}
               />
               {emCristal && (
-                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {emCristal === 'falhou'
                     ? (language === 'pt-BR' ? 'A forma nova não veio desta vez' : "The new form didn't come this time")
                     : (language === 'pt-BR' ? 'Seu Soulmon está no cristal, evoluindo…' : 'Your Soulmon is in the crystal, evolving…')}
                 </span>
               )}
               {chocando && !emCristal && (
-                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {language === 'pt-BR' ? 'Seu Soulmon está chocando…' : 'Your Soulmon is hatching…'}
                 </span>
               )}

@@ -161,6 +161,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',
       'components/Match3Game.tsx': 'PVP do Elemental Fusion: só é oferecido com `rankSaveId` (saveId de CONTA; a demo não tem) e a rota `opponents` exige token — sem conta o jogo abre o Normal direto',
+      'components/play/Match3Escolha.tsx': 'lista de 3 do Elemental Fusion (§487): o PvP só chama `opponents` com `saveId` de CONTA (a demo não tem; sem conta mostra o estado vazio) e a rota exige token',
       'utils/strayPlayerEncounter.ts': 'só LÊ o pool anônimo e público de desgarrados (`action=strays`, sem id nem token); na demo não grava nada na nuvem (o visto vai ao save local)',
       'components/home/StrayRecoveryNotice.tsx': 'só lê o status do PRÓPRIO Soulmon (`strayStatus`, exige token de conta); na demo não monta (`disabled={demo}`)',
       'hooks/useMailbox.ts': 'caixa de cartas (§246): na demo o hook nem lê (`demo` é verdadeiro) e o ícone da Home não monta; toda ação exige token de conta',

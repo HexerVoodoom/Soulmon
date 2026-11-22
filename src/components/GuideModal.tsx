@@ -33,7 +33,7 @@ import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { BITS_PACK_DAILY_CAP } from '../utils/currencies';
-import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
+import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
 import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
@@ -503,8 +503,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A próxima descida recomeça perto do seu recorde (a cada ${DUNGEON_RETURN_EVERY} camadas há um ponto de retorno: no máximo 1 camada abaixo). A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco, com 1% de chance de render o item 🌀, no máximo um por semana (veja Itens).`,
-              `The next descent resumes near your record (a return point every ${DUNGEON_RETURN_EVERY} layers: at most 1 layer below). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone with a 1% chance to earn the 🌀 item, at most one a week (see Items).`,
+              `A próxima descida recomeça no andar onde você parou, no combate 1 dele: perder nunca faz voltar de andar, só reinicia os combates do andar atual (ex.: venceu os 6 combates do andar 1 de um elemento e caiu no andar 2? Volta ao combate 1 do andar 2). A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco, com 1% de chance de render o item 🌀, no máximo um por semana (veja Itens).`,
+              `The next descent resumes at the layer where you stopped, at its fight 1: losing never sends you back a layer, it only restarts the fights of the current layer (e.g. you cleared all 6 fights of an element's layer 1 and fell on layer 2? You go back to fight 1 of layer 2). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone with a 1% chance to earn the 🌀 item, at most one a week (see Items).`,
             )}
           </p>
           <p style={para}>

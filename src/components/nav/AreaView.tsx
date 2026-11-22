@@ -41,6 +41,8 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { MinigameModeGate, type GateRanking } from '../play/MinigameModeGate';
+import { Match3Escolha } from '../play/Match3Escolha';
+import type { M3Choice } from '../../utils/match3Escolha';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
@@ -138,6 +140,8 @@ export interface PlayHandlers {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
   /** BOSS do Elemental Fusion (03/11/2026): venceu um boss → +1 Fragmento de Boss no save. */
   onBossShard?: () => void;
+  /** PVP do Elemental Fusion (§473): a Honra da partida, pelo mesmo caminho da Honra do Torneio. */
+  onEarnHonor?: (amount: number) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
@@ -198,7 +202,7 @@ const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }
   dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
   ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
   barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, difficulty: true, rankings: [{ game: 'soul-barrage', label: 'Comum' }, { game: 'soul-barrage-2', label: 'Avançado' }] },
-  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
+  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3', label: { pt: 'Aventura', en: 'Adventure' }, period: 'monthly' }, { game: 'match3-pvp', label: { pt: 'PvP', en: 'PvP' }, period: 'monthly' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
 };
@@ -218,6 +222,9 @@ export interface AreaViewProps {
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
   onInitialGameConsumed?: () => void;
+  /** O jogo veio do Fliperama de Canto da Home (§487): ao SAIR dele (voltar, fechar, sem ticket) a pessoa volta DIRETO à Home, sem passar pela área Jogos nem pelo mapa. Só vale junto de `initialGame`. */
+  returnHomeOnGameExit?: boolean;
+  onReturnHome?: () => void;
   /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
    *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
   initialSheet?: string;
@@ -444,7 +451,7 @@ export function AreaView(props: AreaViewProps) {
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
-  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
+  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2; choice?: M3Choice } | null>(null);
   /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
      não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
   const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
@@ -477,6 +484,14 @@ export function AreaView(props: AreaViewProps) {
     setActive('minigame', game);
     return () => { endRoundRef.current?.(); endRoundRef.current = null; setActive('minigame', null); };
   }, [gameRunning, game]);
+  /* §487: jogo aberto pelo Fliperama da Home: ao sair dele, volta DIRETO à Home (a decisão vale pela montagem; sair da área não a rearma). */
+  const voltaAHomeRef = useRef(!!props.returnHomeOnGameExit && !!props.initialGame);
+  const jaTeveJogoRef = useRef(false);
+  const { onReturnHome } = props;
+  useEffect(() => {
+    if (game) { jaTeveJogoRef.current = true; return; }
+    if (jaTeveJogoRef.current && voltaAHomeRef.current) { voltaAHomeRef.current = false; onReturnHome?.(); }
+  }, [game, onReturnHome]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -651,7 +666,6 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                semFicha={!props.skills?.[props.evolutionStage as FichaStage]}
                 arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, invites: props.play.arena?.invites, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
                 onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
@@ -714,7 +728,7 @@ export function AreaView(props: AreaViewProps) {
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
         palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} headStartRef={open?.id === 'fenda' ? setRiftHeadStart : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} moldura={area === 'forja' && open?.id === 'hexsmith' ? 'aco' : undefined} headStartRef={open?.id === 'fenda' ? setRiftHeadStart : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -770,7 +784,10 @@ export function AreaView(props: AreaViewProps) {
               tickets={isFunGame(game) ? funApi?.status(Date.now()).count : undefined}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
-              onPick={level => setModeChosen({ game, level })}
+              renderChoices={game === 'match3'
+                ? (level: 1 | 2, pick: (c: M3Choice) => void) => <Match3Escolha language={language} mode={level === 2 ? 'pvp' : 'adventure'} saveId={props.guild.saveId} playerLevel={props.playerLevel} onFight={pick} />
+                : undefined}
+              onPick={(level, choice) => setModeChosen({ game, level, ...(choice ? { choice: choice as M3Choice } : {}) })}
               onBack={exitGame}
             />
           </div>
@@ -823,7 +840,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} initialChoice={modeChosen?.choice} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} onEarnHonor={play.onEarnHonor} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('eco'); return creditado; }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); return creditado; }} />}

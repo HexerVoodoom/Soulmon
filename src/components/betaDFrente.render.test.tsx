@@ -137,3 +137,16 @@ describe('12 — humor', () => {
     expect(document.querySelector('[data-mood-label]')!.textContent).toBe('Great');
   });
 });
+
+describe('Salão: ganho no pergaminho, não abaixo da carta', () => {
+  it.each([['pt-BR', /por vitória/, /a cada 100 pts/, /por rodada/], ['en-US', /per win/, /per 100 pts/, /per round/]] as const)('%s', (lang, win, pts, round) => {
+    const { container } = renderWithCss(<SalaoSheet language={lang} onStart={() => {}} />);
+    const ganhos = [...container.querySelectorAll('[data-moldura-desc] [data-game-card-ganho]')].map(e => e.textContent ?? '');
+    expect(ganhos).toHaveLength(4);
+    expect(ganhos.some(t => win.test(t))).toBe(true);
+    expect(ganhos.filter(t => pts.test(t))).toHaveLength(2);
+    expect(ganhos.some(t => round.test(t))).toBe(true);
+    for (const b of container.querySelectorAll('[data-game-card-badges]')) expect(b.textContent).not.toMatch(win);
+    expect(container.querySelectorAll('[data-moldura-nome]')).toHaveLength(4);
+  });
+});

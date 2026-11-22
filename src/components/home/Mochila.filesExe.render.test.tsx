@@ -42,7 +42,7 @@ describe('aba Files', () => {
   it('título Files/Arquivos; comida, prato e chip com .exe na grade; id (data-item) intacto', () => {
     for (const [lang, titulo] of [['en-US', 'Files'], ['pt-BR', 'Arquivos']] as const) {
       renderWithCss(<Mochila open onClose={() => {}} foodInventory={inv} language={lang} onUse={() => {}} petTargetRef={{ current: null }} />);
-      expect(document.querySelector('[data-moldura-placa] h2')!.textContent).toBe(titulo);
+      expect(document.querySelector('.sm3-mochila-titulo')!.textContent).toBe(titulo);
       const nomes = [...document.querySelectorAll('.sm3-item')].map(e => e.querySelector('.sm3-item-nome')!.textContent);
       expect(nomes.length).toBe(mochilaTabs(inv).comida.length);
       for (const n of nomes) expect(n!.endsWith('.exe'), n!).toBe(true);

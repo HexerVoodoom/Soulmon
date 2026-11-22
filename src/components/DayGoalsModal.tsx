@@ -2,9 +2,7 @@ import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { dayPlanFocusIds, type DayPlanCandidate, type DayPlanFocusSource } from '../utils/dayPlan';
 import { MAX_DAILY_FOCUS } from '../types/taskModel';
-import { tinyOfferIntro } from '../utils/tinyOffer';
 import type { CatalogItem } from '../types/activityCatalog';
-import { Icon } from './ui/Icon';
 import { CheckRow, ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 
 /**
@@ -40,7 +38,7 @@ export interface DayGoalsModalProps {
     plan: DayPlanFocusSource & { tinyOffer?: readonly string[] };
     /** Ids das TAREFAS do save (só elas viram foco; atividade agendada não). */
     taskIds: ReadonlySet<string>;
-    /** Aceitar a versão reduzida conta como FEITO, pelo mesmo caminho de sempre. */
+    /** Marcar a versão bufada (reduzida) a registra como tarefa bônus do dia (acumula: várias bufadas valem todas). */
     onTinyHabit?: (activityId: string) => void;
     /** O "o que costuma atrapalhar?" do onboarding, para a oferta reduzida reconhecê-lo. */
     soulStruggle?: string;
@@ -50,35 +48,43 @@ export interface DayGoalsModalProps {
 export function DayGoalsModal({ candidates, language, initiallyPicked = [], onConfirm, onClose, fuse, suggestions = [], onAcceptSuggestions, mode }: DayGoalsModalProps) {
   const isPt = language === 'pt-BR';
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set(initiallyPicked));
-  const [accepted, setAccepted] = useState<readonly string[]>([]);
   const toggle = (id: string, on: boolean) => setPicked(prev => {
     const next = new Set(prev);
     if (on) next.add(id); else next.delete(id);
     return next;
   });
-  const habits = candidates.filter(c => c.kind === 'habit');
+  const buffedIds: ReadonlySet<string> = new Set(fuse && mode !== 'add' && fuse.onTinyHabit ? candidates.filter(c => c.kind === 'habit' && (fuse.plan.tinyOffer ?? []).includes(c.id)).map(c => c.id) : []);
+  const habits = candidates.filter(c => c.kind === 'habit' && !buffedIds.has(c.id));
   const tasks = candidates.filter(c => c.kind === 'task');
   const count = candidates.filter(c => picked.has(c.id)).length + suggestions.filter(i => picked.has(`sug:${i.id}`)).length;
   const confirm = () => {
     const chosen = suggestions.filter(i => picked.has(`sug:${i.id}`));
     const created = chosen.length > 0 && onAcceptSuggestions ? onAcceptSuggestions([...chosen]) : [];
     const ids = [...candidates.filter(c => picked.has(c.id)).map(c => c.id), ...created];
+    // Marcar a versão bufada (hábito com oferta de 5 min) É aceitar: vira a tarefa bônus de hoje, na MESMA linha — sem duplicata
+    // da original e sem segunda ação (REGISTRO §474). Cada bufada marcada vira bônus; nenhuma sobrescreve a outra.
+    for (const id of ids) if (tinyIds.has(id)) fuse?.onTinyHabit?.(id);
     onConfirm(ids, fuse ? dayPlanFocusIds(ids, fuse.taskIds, fuse.plan, MAX_DAILY_FOCUS) : []);
   };
   const adding = mode === 'add';
-  const tiny = fuse && !adding ? habits.filter(h => (fuse.plan.tinyOffer ?? []).includes(h.id)) : [];
-  const struggle = fuse && !adding ? tinyOfferIntro(fuse.soulStruggle, isPt) : null;
+  const tinyIds = buffedIds;
+  const buffed = candidates.filter(c => buffedIds.has(c.id));
+
+  const row = (c: DayPlanCandidate) => (
+      <div key={c.id} className="sm2-conta-card" data-day-goal={c.id} style={{ padding: '2px 12px' }}>
+        <CheckRow checked={picked.has(c.id)} onChange={on => toggle(c.id, on)}>
+          {tinyIds.has(c.id)
+            /* A bufada: MESMA linha, caixa e cartão das demais; só o texto muda — negrito e dourado (`gold-ink`, AA nos dois temas). */
+            ? <span data-day-goals-bonus style={{ fontWeight: 700, color: 'var(--sm2-gold-ink)' }}>{`${c.name || (isPt ? 'Esse hábito' : 'This habit')} · ${isPt ? 'bônus de 5 min' : '5-min bonus'}`}</span>
+            : <span style={{ fontWeight: 600 }}>{c.name || (isPt ? 'Sem nome' : 'Unnamed')}</span>}
+        </CheckRow>
+      </div>
+  );
 
   const group = (key: string, label: string, items: readonly DayPlanCandidate[]) => items.length === 0 ? null : (
     <section key={key} data-day-goals-group={key} aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</h3>
-      {items.map(c => (
-        <div key={c.id} className="sm2-conta-card" data-day-goal={c.id} style={{ padding: '2px 12px' }}>
-          <CheckRow checked={picked.has(c.id)} onChange={on => toggle(c.id, on)}>
-            <span style={{ fontWeight: 600 }}>{c.name || (isPt ? 'Sem nome' : 'Unnamed')}</span>
-          </CheckRow>
-        </div>
-      ))}
+      {items.map(c => row(c))}
     </section>
   );
 
@@ -134,33 +140,14 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
           ))}
         </section>
       )}
-      {/* A oferta reduzida (nunca falte duas vezes): aceitar vira a TAREFA BÔNUS do dia (não conclui, `utils/bonusTask.ts`); não há botão de recusar — ignorar é a recusa. */}
-      {fuse?.onTinyHabit && tiny.length > 0 && (
-        <section data-day-goals-tiny style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {struggle && <p style={sm2Hint}>{struggle}</p>}
-          {tiny.map(h => {
-            const name = h.name || (isPt ? 'Esse hábito' : 'This habit');
-            if (accepted.includes(h.id)) {
-              return (
-                <span key={h.id} aria-disabled="true" data-day-goals-tiny-accepted style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, color: 'var(--sm2-primary-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500 }}>
-                  <Icon name="check" size={20} fill={1} tone="inherit" />
-                  {isPt ? `${name} · tarefa bônus` : `${name} · bonus task`}
-                </span>
-              );
-            }
-            return (
-              <button
-                key={h.id}
-                type="button"
-                data-day-goals-tiny-offer={h.id}
-                onClick={() => { fuse.onTinyHabit?.(h.id); setAccepted(prev => [...prev, h.id]); }}
-                style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start', textAlign: 'left' }}
-              >
-                {isPt ? `${name}: hoje, só 5 minutos?` : `${name}: just 5 minutes today?`}
-              </button>
-            );
-          })}
-          <p style={sm2Hint}>{isPt ? 'Aceitar vira a tarefa bônus de hoje: marque quando fizer.' : 'Saying yes makes it today’s bonus task: check it when you do it.'}</p>
+      {/* A oferta reduzida (nunca falte duas vezes): a linha do hábito vira a tarefa BÔNUS do dia ao marcar (`utils/bonusTask.ts`); sem botão de recusar — desmarcada, não cobra nada. */}
+      {buffed.length > 0 && (
+        <section role="group" aria-labelledby="day-goals-buff-txt" data-day-goals-group="buffed" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <hr aria-hidden="true" data-day-goals-buff-sep style={{ border: 0, borderTop: '1px solid var(--sm2-line)', margin: '8px 0 4px', width: '100%' }} />
+          <p id="day-goals-buff-txt" data-day-goals-tiny style={sm2Hint}>
+            {isPt ? 'Você está com dificuldade de cumprir estas tarefas. Elas receberam um buff, espero que ajude.' : "You've been struggling to complete these tasks. They got a buff — hope it helps."}
+          </p>
+          {buffed.map(c => row(c))}
         </section>
       )}
       <p role="status" aria-live="polite" data-day-goals-count style={sm2Hint}>

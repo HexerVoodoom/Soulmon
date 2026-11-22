@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, type CSSProperties } fr
 import type { Language } from '../../utils/i18n';
 import { FUN_TICKET_BATCH, FUN_TICKET_COST, FUN_TICKET_MAX, formatHms, type FunTicketStatus } from '../../utils/funTickets';
 import { EnergyCost } from '../ui/EnergyCost';
-import { sm2Button, sm2Hint } from '../form/FormKit';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
+import { sm2Hint } from '../form/FormKit';
 import ticketImg from '../../assets/soulmon/hud/ticket-minigame.png';
 
 /**
@@ -117,9 +118,9 @@ export function TicketPanel({ language, status, onBuy }: { language: Language; s
   useEffect(() => { const id = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(id); }, []);
   const st = status(Date.now()); // relógio lido a cada render: um lote recém-comprado nunca fica "no futuro"
   const hint = st.canBuy
-    ? (isPt ? `${FUN_TICKET_COST} energia = ${FUN_TICKET_BATCH} tickets (valem 24 h)` : `${FUN_TICKET_COST} energy = ${FUN_TICKET_BATCH} tickets (good for 24 h)`)
+    ? null // a linha "1 energia = 3 tickets" saiu a pedido do dono (18/11/2026): o botão já mostra o custo
     : st.buyRefusal === 'has-tickets'
-      ? (isPt ? 'Você ainda tem tickets de sobra: compre mais quando restarem 2 ou menos.' : 'You still have plenty of tickets: buy more when 2 or fewer are left.')
+      ? null // a dica "você ainda tem tickets de sobra" saiu a pedido do dono (18/11/2026)
       : (isPt ? 'Sem energia para comprar tickets agora. A energia volta com o tempo; que tal uma tarefa, o Ateliê da Mente ou o Refúgio?' : 'No energy to buy tickets right now. Energy comes back over time; how about a task, the Mind Atelier or the Refuge?');
   return (
     <section data-fun-tickets={st.count} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
@@ -128,12 +129,12 @@ export function TicketPanel({ language, status, onBuy }: { language: Language; s
         {st.count > 0 && <span data-fun-tickets-expiry style={{ fontWeight: 400, marginInlineStart: 8 }}>{isPt ? `vence em ${formatHms(st.msLeft)}` : `expires in ${formatHms(st.msLeft)}`}</span>}
       </p>
       {onBuy && (
-        <button type="button" data-fun-tickets-buy disabled={!st.canBuy} aria-disabled={!st.canBuy} onClick={onBuy} style={{ ...sm2Button('primary', !st.canBuy), minHeight: 44 }}>
+        <BotaoEspecial data-fun-tickets-buy disabled={!st.canBuy} onClick={onBuy}>
           {isPt ? `Comprar ${FUN_TICKET_BATCH} tickets` : `Buy ${FUN_TICKET_BATCH} tickets`}
           <EnergyCost amount={FUN_TICKET_COST} />
-        </button>
+        </BotaoEspecial>
       )}
-      <p data-fun-tickets-hint style={{ ...sm2Hint, margin: 0, opacity: 0.8, textAlign: 'center' }}>{hint}</p>
+      {hint && <p data-fun-tickets-hint style={{ ...sm2Hint, margin: 0, opacity: 0.8, textAlign: 'center' }}>{hint}</p>}
     </section>
   );
 }

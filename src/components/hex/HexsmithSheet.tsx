@@ -22,7 +22,7 @@ import { Icon } from '../ui/Icon';
 import { spendableBits } from '../../utils/bitsOrigin';
 import { elementComposition, elementsMatchingBases, isPotionUnlocked, potionKey, POTION_COSTS } from '../../utils/elementPotion';
 import { potionArt } from '../../utils/potionArt';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { BitsIcon } from '../ui/BitsIcon';
 import { SoulFragmentIcon } from '../ui/SoulFragmentIcon';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
@@ -72,7 +72,10 @@ const CORE = { x: 49.8, y: 53.5 };
 const RENAME_PORTS: Readonly<Record<HexRenameKind, { x: number; y: number }>> = { pet: { x: 73.5, y: 11.5 }, especial: { x: 91, y: 11.5 } };
 
 /** Degraus de `tokens.md` §6.1: `nav` 32 no mapa (o encaixe é um destino), `action` 24 nas linhas e no botão, `inline` 20 no saldo. */
-const ICON_MAP = 32;
+const ICON_MAP = 44;
+/** Ícone da Porta nas linhas de lista (Seus HEXes 56, Forja 40): maior, sem anel. */
+const ICON_OWNED = 56;
+const ICON_LIST = 40;
 const ICON_ROW = 24;
 const ICON_INLINE = 20;
 const ICON_COST = 28;
@@ -159,11 +162,16 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 
   return (
     <section data-hexsmith aria-label={tx(HEX_UI.title, isPt)} className="sm2-hex">
-      <p style={sm2Hint}>{tx(HEX_UI.intro, isPt)}</p>
+      {/* 18/11/2026 (dono): a introdução mora atrás do "i" do disco direito da moldura (o mapa ganha o espaço). */}
+      <ModalInfo language={language as Language} label={tx(HEX_UI.title, isPt)}><span data-hex-intro>{tx(HEX_UI.intro, isPt)}</span></ModalInfo>
       {companheiroDescansa && <p role="note" data-hex-companion-rests style={sm2Hint}>{tx(HEX_UI.companionRests, isPt)}</p>}
 
       {/* O MAPA DE SLOTS */}
       <div data-hex-map className="sm2-hex-map">
+        {/* O miolo do hexágono das Portas COM HEX equipado (turquesa claro), atrás da placa: o vazado dela mostra o preenchimento. */}
+        {HEX_SLOTS.filter((s) => hx.equipped[s] !== undefined).map((s) => (
+          <span key={`fill-${s}`} aria-hidden="true" data-hex-fill={s} className="sm2-hex-slot-fill" style={{ left: `${PORTS[s].x}%`, top: `${PORTS[s].y - 0.15}%` }} />
+        ))}
         <img src={HEX_MAP_ART} alt="" aria-hidden="true" draggable={false} className="sm2-hex-map-art" />
         {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" style={{ left: `${CORE.x}%`, top: `${CORE.y}%` }} />}
         {HEX_SLOTS.map((s) => {
@@ -304,7 +312,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                 return (
                   <li key={id} data-hex-owned={id}>
                     <div className="sm2-hex-row sm2-hex-owned-row" data-on={on} data-hex-is-equipped={on || undefined}>
-                      <SlotFace slot={slot} value={v} size={ICON_MAP} />
+                      <SlotFace slot={slot} value={v} size={ICON_OWNED} />
                       <span className="sm2-hex-row-name">{name}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
                       {on ? (
                         <button type="button" data-hex-unequip={id} onClick={onClear}
@@ -381,7 +389,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                   <li key={id} className="sm2-hex-line" data-on={on} data-ok={ok}>
                     <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row sm2-hex-pick"
                       data-on={on} data-ok={ok} onClick={() => setPicked(on ? null : id)}>
-                      {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_ROW} />}
+                      {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_LIST} />}
                       <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
                     </button>
                     <div className="sm2-hex-cost" data-hex-cost>

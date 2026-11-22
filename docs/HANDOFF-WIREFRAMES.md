@@ -1,5 +1,8 @@
 # Handoff — redesenho do Soulmon, Fase 1: wireframes de todas as telas
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > **Dono:** `soulmon-coordenador` (orquestrador da SQUAD-DESIGN) · **Data:** 13/09/2026 ·
 > **Estado:** pronto para a sessão de desenho — **as 20 decisões prévias estão respondidas em [design/DECISOES-WIREFRAME.md](design/DECISOES-WIREFRAME.md) (13/09/2026)**
 > **Verificação:** `docs/design/INVENTARIO-WIREFRAMES.md` (a lista do que desenhar, com

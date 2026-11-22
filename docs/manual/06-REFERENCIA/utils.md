@@ -14,7 +14,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`cosmeticosNovos.ts`](#srcutilscosmeticosnovosts), [`cosmeticosNovosCores.ts`](#srcutilscosmeticosnovoscorests), [`honraDecor.ts`](#srcutilshonradecorts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`arenaSorteio.ts`](#srcutilsarenasorteiots), [`arenaComponentes.ts`](#srcutilsarenacomponentests), [`arenaTema.ts`](#srcutilsarenatemats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
-**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`generateCharacterUses.ts`](#srcutilsgeneratecharacterusests), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/labels.ts`](#srcutilssoulprofileastrologylabelsts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/companheiro.ts`](#srcutilssoulprofilefichacompanheirots), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/comportamento.ts`](#srcutilssoulprofilefichacomportamentots), [`soulProfile/ficha/comportamentoSimulacao.ts`](#srcutilssoulprofilefichacomportamentosimulacaots), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/manifestacao.ts`](#srcutilssoulprofilefichamanifestacaots), [`soulProfile/ficha/manifestacaoSave.ts`](#srcutilssoulprofilefichamanifestacaosavets), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/elementoNome.ts`](#srcutilssoulprofilefichaelementonomets), [`soulProfile/ficha/nomeEspecial.ts`](#srcutilssoulprofilefichanomeespecialts), [`soulProfile/ficha/strikeForm.ts`](#srcutilssoulprofilefichastrikeformts), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/perfisSinteticos.ts`](#srcutilssoulprofileperfissinteticosts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
+**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`decorLuz.ts`](#srcutilsdecorluzts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`generateCharacterUses.ts`](#srcutilsgeneratecharacterusests), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/labels.ts`](#srcutilssoulprofileastrologylabelsts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/companheiro.ts`](#srcutilssoulprofilefichacompanheirots), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/comportamento.ts`](#srcutilssoulprofilefichacomportamentots), [`soulProfile/ficha/comportamentoSimulacao.ts`](#srcutilssoulprofilefichacomportamentosimulacaots), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/manifestacao.ts`](#srcutilssoulprofilefichamanifestacaots), [`soulProfile/ficha/manifestacaoSave.ts`](#srcutilssoulprofilefichamanifestacaosavets), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/elementoNome.ts`](#srcutilssoulprofilefichaelementonomets), [`soulProfile/ficha/nomeEspecial.ts`](#srcutilssoulprofilefichanomeespecialts), [`soulProfile/ficha/strikeForm.ts`](#srcutilssoulprofilefichastrikeformts), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/perfisSinteticos.ts`](#srcutilssoulprofileperfissinteticosts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
 **Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`musica.ts`](#srcutilsmusicats), [`sfxCombate.ts`](#srcutilssfxcombatets), [`sfxCombateCarga.ts`](#srcutilssfxcombatecargats), [`sonsAssets.ts`](#srcutilssonsassetsts), [`sounds.ts`](#srcutilssoundsts), [`trilha.ts`](#srcutilstrilhats)
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
@@ -570,6 +570,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (fila de avisos da Home, `key: 'refugio'`), `src/contexts/GameStateContext.tsx` (load).
 **Régua:** `src/utils/refugio/convite.test.ts`, `src/components/filaDeAvisos.contract.test.ts`.
 
+### `src/utils/loginDiag.ts`
+**Dono de:** Diagnóstico visível do login (linha `data-login-diag` no portão e nos termos): versão, plataforma, resultado da restauração, HTTP do GET /api/save e 6 chars do saveId. Sem e-mail, token nem conteúdo do save.
+**Exports:**
+- `ResultadoRestauracao` (type) — `restaurada | sem-save | indeterminado | storage | nao-chamada`.
+- `function registrarStatusDaNuvem(status: number): void` — guarda o status do último `lerNuvem` (0 = falha de rede).
+- `function registrarRestauracao(r: ResultadoRestauracao, saveId?: string): void` — guarda o resultado e os 6 primeiros chars do saveId.
+- `function assinarDiagnostico(f: () => void): () => void` — ouvinte de mudança; devolve o cancelamento.
+- `function textoDiagnosticoLogin(): string` — texto único da linha.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/utils/cloudSave.ts`
+
 ### `src/utils/lotIcons.ts`
 **Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
 **Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
@@ -666,6 +676,32 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ Nunca estorna pela metade: comida já usada, missão já resgatada, outro dia ou entrada sem recibo (anterior a esta versão) → recusa.
 - ⚠️ Campo novo concedido pela conclusão de tarefa entra no RECIBO e no estorno, senão desmarcar/marcar vira farm.
+
+### `src/utils/habitCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de HÁBITO (sem etapas), uma regra só para o toque na Home e para o `habit_done` do widget grande da Home (adendo ao REGISTRO §478, 18/11/2026). Footgun 9.
+**Exports:**
+- `function withHabitCompletion(prev, activityId, category, todayKey, bondDayKey)` — constância do mesmo dia (`completeHabit`, idempotente por dayKey), bônus de atributo por maturidade, Vínculo da conclusão e do marco 7/21/66. Saiu do `App.tsx` (o fechamento por etapas também usa).
+- `function applyHabitCompletion(prevRaw, activityId, now, today?)` — o updater do toque: `settlePendingRollover` primeiro, marca de hoje, estatística, comida da categoria, `activityLog`, `withHabitCompletion`. Já feito hoje ou inexistente = MESMA referência.
+- `ACTIVITY_LOG_CAP` (90).
+**Chamado por:** `src/App.tsx` (`handleToggleActivityCompletion`, fechamento por etapas), `src/utils/widgetEvents.ts` (`habit_done`).
+**Régua:** `src/utils/habitCompletionPay.test.ts` (paridade contra a cópia literal do updater anterior: comum, marco de 7, estatística prévia, feito ontem; fila: já feito no app, eid repetido, check de ontem, inexistente, com etapas, mesmo id de tarefa; ordem da lista); `src/utils/dailyReset.janelaMeiaNoite.test.ts` (a virada antes da escrita).
+**Avisos do arquivo:**
+- ⚠️ Hábito com ETAPAS fecha pelas etapas na Home; o widget o mostra sem check (`lock`) e a drenagem o ignora.
+- ⚠️ Efeitos (marco/cerimônia, selo dos passos, som, Desfazer) ficam no App.
+
+### `src/utils/taskCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de tarefa avulsa, uma regra só para o toque na Home e para o check do widget grande da Home (decisão do dono, 18/11/2026). Footgun 9: a regra mora aqui, nunca copiada.
+**Exports:**
+- `function markTaskChecked(state, taskId)` — o check: a tarefa fica `completed: true` e continua na lista até o acerto.
+- `function grantReliefFood(state, category)` — bônus de alívio da tarefa ASSOMBRADA: +1 comida da categoria (`emoji` para a animação).
+- `function countHauntedMission(state, now)` — missão semanal `haunted-done` (o mesmo que `contarMissao('haunted-done')`, sem evento diário).
+- `function settleTaskCompletion(prev, task, relief, now)` — o acerto: `completeTask` (sai da lista, histórico, comida, premium) + XP de Vínculo pelo peso de esforço (`effortOf`) + recibo do "Desmarcar" (`TaskCompletionReceipt`). `paid: false` = nada a pagar (mesma referência).
+- `function applyTaskCompletion(state, taskId, now)` — o toque inteiro de uma vez (missão, check, alívio, acerto): é o que a drenagem da fila do widget usa. Tarefa ausente ou já marcada = no-op.
+**Chamado por:** `src/App.tsx` (`handleToggleTask`: as quatro primeiras, em dois tempos — clique e acerto 3 s depois).
+**Régua:** `src/utils/taskCompletionPay.test.ts` (paridade contra a cópia literal do `handleToggleTask` anterior: comum, assombrada, premium, repetição, esforço; idempotência; contrato no App.tsx); `src/utils/weeklyMissions.fiacao.test.ts` (o gatilho de `haunted-done`).
+**Avisos do arquivo:**
+- ⚠️ Puras: rodam dentro do updater (footgun 6). Som, toast, fala, refeição e gesto do 1º dia continuam no App.
+- ⚠️ Campo novo concedido pela conclusão entra no recibo (ver `taskUncomplete.ts`).
 
 ### `src/utils/completionUndo.ts`
 **Dono de:** A janela de 5 s para DESFAZER uma conclusão de hábito (decisão do dono #57, 22/09/2026) — o que a reversão devolve, e nada mais.
@@ -770,6 +806,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/mercado/ShopShelf.tsx`
 **Régua:** `src/utils/decorRules.test.ts`, `src/components/mercado/MercadoConfirmar.render.test.tsx`.
 **Regra de negócio:** 1 peça por espaço do palco (`SLOT_ORDER`), até 5 ao mesmo tempo; equipar é livre, a restrição é de exibição (sem cenário, cenário `void`, espaço que o cenário não oferece, `fits` indoor/outdoor). Regras de composição de arte, não de economia; a alternativa que perdeu ("qualquer peça em qualquer fundo") está em `REGISTRO-DE-DECISOES.md` §19.
+
+### `src/utils/decorLuz.ts`
+**Dono de:** Quais peças de decoração emitem luz, onde fica o halo e se apagam (`luz`) ou acendem (`noite`) quando o pet dorme.
+**Exports:**
+- `DECOR_LUZ` — id da mobília → `{modo, tom, x, y, d}`.
+- `decorLuzAcesa(luz, dormindo)` — estado aceso/apagado.
+**Chamado por:** `src/components/PetStageDecor.tsx`
+**Régua:** `src/utils/decorLuz.test.ts`.
 
 ### `src/utils/decorArt.ts`
 **Dono de:** Mapa id de mobília (loja) → URL da arte.
@@ -1306,6 +1350,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Dono de:** o modo PVP (1 contra 1) do Elemental Fusion (pedido do dono, 26/10/2026), em funções PURAS. **Exports:** `pvpElementPool()` (todo ícone de elemento, base e misto, menos `neutro`), `pickPvpElements(rng, pool, n)`/`pvpElementsForSeed(seed)` (os 6 elementos do tabuleiro: sorteados por semente, distintos), `tileElementName(id, isPt)` (nome PT/EN de base ou misto), `pickPvpOpponent(cands, myLevel)` (entre os candidatos que a rota `opponents` do Torneio devolve — sorteio do servidor em `_rankedPick.js`, simulados inclusos —, o de level mais parecido), `npcFoe(level, rng)` (NPC do roster quando não há ninguém), `PvpFoe`. Nome de pessoa e ranking nunca saem daqui: só arte e level. Recompensa igual à do Normal (`match3Bits(combatScore)`). Régua: `utils/match3Pvp.test.ts`, `components/Match3Pvp.render.test.tsx`.
 
+### `src/utils/match3Escolha.ts`
+
+**Dono de:** a regra PURA da escolha de 3 do Elemental Fusion (REGISTRO §487). **Exports:** `M3_CHOICES` (3), `M3_REDRAWS_PER_VISIT` (1, grátis — a regra do Torneio ranqueado), `adventureElementPool()` (elementos do pool misturado que têm criatura no roster), `adventureChoices(screenSeed)` (3 elementos distintos + semente de partida por opção; o time de 4 cai daquele elemento via `newCombat(..., { element })`), `pvpChoices(screenSeed, opponents, myLevel, artOf)` (boss decidido antes = só a linha do boss; senão até 3 jogadores da rota, sem demo, sementes sem boss), `isDemoOpponent(o)`, tipos `M3Choice`/`M3AdventureChoice`/`M3PvpChoice`. Determinístico (`mulberry32`). Régua: `utils/match3Escolha.test.ts`.
+
 ### `src/utils/match3Powers.ts`
 
 **Dono de:** a conta PURA dos poderes por elemento do Elemental Fusion (D-100, REGISTRO §123): de onde sai o poder de um combo e qual dano mostrar. **Exports:** `comboOrigin(step, kind, closers)` (a célula da troca que entrou no combo; em cascata, a célula do meio das peças do tipo), `powerShots(step, events, closers)` (um `PowerShot` por evento de dano do passo: elemento, `dmg`, alvo, célula de origem). O dano NÃO é recalculado: vem dos eventos que `match3Combat` já gravou, então o número na tela é o aplicado. **D-102 (REGISTRO §131):** `PowerShot.big` (combo 4+), as constantes `FX_*` (aura 450 ms, viagem 950 ms, burst 420 ms, número 800 ms, poder 56/84 px, 2 pistas, teto 2500 ms) e `planFx(count, lanes, now, windowStart)` — o agendador puro (pistas livres, versão `quick` na cascata longa, nunca passa do teto). **Chamado por:** `Match3Game` (chunk lazy do jogo). **Régua:** `match3Powers.test.ts` e `Match3Game.render.test.tsx`.
@@ -1448,7 +1496,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/bonusTask.ts`
 **Dono de:** a TAREFA BÔNUS (13/11/2026). Aceitar a oferta reduzida (never miss twice) NÃO conclui mais o hábito: ele vira a tarefa bônus do dia (`GameState.bonusTask = { day, activityId }`). Concluída no próprio dia, rende `BONUS_TASK_GAUGE_WEIGHT` (+1) Fragmento de Alma ACIMA do teto diário, somado na virada (`computeDailyReset`, junto do bônus da missão especial); a virada limpa o campo, então paga uma vez só. O servidor não valida `evolutionPoints`.
-**Exports:** `BonusTaskState` · `BONUS_TASK_GAUGE_WEIGHT` · `sanitizeBonusTask` · `isBonusActivity` · `bonusTaskGaugeBonus`.
+**Exports:** `BonusTaskState` · `BonusTaskSave` · `BONUS_TASK_GAUGE_WEIGHT` · `bonusTaskList` · `sanitizeBonusTask` · `addBonusTask` · `bonusActivityIdsOf` · `isBonusActivity` · `bonusTaskGaugeBonus`. **18/11/2026 (REGISTRO §474):** `GameState.bonusTask` é uma LISTA (save antigo com objeto único vira lista de 1); várias bônus no mesmo dia, +1 por bônus concluído.
 **Chamado por:** `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx` (hidratação), `src/App.tsx` (aceite, linha bronze, prévia de fragmentos do toast, modal de apresentação).
 **Régua:** `src/utils/bonusTask.test.ts`.
 
@@ -4504,7 +4552,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/bossSplash.ts`
 **Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
-**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`, `bossBattleTitleArt` (título "BOSS BATTLE" por glob), `resultOpponentSrc` (arte do adversário no resultado do Fusion).
 **Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
 
 ### `src/utils/soulBarrage.ts`
@@ -4579,6 +4627,11 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/bbStage.ts`
 **Dono de:** a forma BB, estágio ANTES do rookie (Onboarding Velado, REGISTRO §207): HP máx 6, sem requisito diário, evolui quando `bondLevelFor(totalXP) >= 2`, `bbRefusal` para torneio/duelo/guilda, `sanitizeStageId` e o interruptor `isOnboardingVelado`.
 
+**Delta 17/11/2026 (REGISTRO §472, Início BB):** `isInicioBB`/`setInicioBB` (ligado por padrão; `VITE_INICIO_BB=false` desliga no build) e `bbNoNascimento()` (Início BB OU o interruptor): `initialStageForNewSave` devolve `bb` para TODO save novo; o motor do oráculo monta `creature.bbPrompts` com `bbNoNascimento()`.
+
+### `src/utils/inicioBB.ts`
+**Dono de:** o começo novo (Início BB, REGISTRO §472, 17/11/2026): `nasceuBB` (o save tem `bb` em `unlockedEvolutions`, sem campo novo), `evolucaoPaga` (D8 para quem nasceu BB: BB → rookie grátis, rookie → champion pede conta paga; delega a `evolutionPaywalled`), `inicialNaoEvolui` (os 5 iniciais não evoluem, exceto o BB que vira um), `inicialDoBB` (o inicial do grátis, determinístico pela conta) e `elementoDoInicial` (filtra o sorteio do BB do pool), e o marcador POR APARELHO "ainda vai chocar" (`STORAGE_KEYS.BB_NASCIMENTO`: `sanitizeBBNascimento`, `lerBBNascimento`, `gravarBBNascimento`, `limparBBNascimento`, `aguardandoChocar`, `prontoParaChocar`) e `recusaGeracaoBB` (BB personalizado só no nascimento; espelho de `functions/api/_velado.js`, que `generate-sprite.js` aplica com 409 `bb-birth-only`). **Chamado por:** `App.tsx` (nascimento, pedido do BB depois de o jogo abrir, chocar em tela cheia, botão/convite de evoluir), `components/EvolutionPath.tsx`, `components/SoulmonOnboarding.tsx` (`inicialDoBB`). **Régua:** `inicioBB.test.ts`, `components/ChocarBB.render.test.tsx`, `components/SoulmonOnboarding.inicioBB.render.test.tsx`.
+
 ### `src/utils/bbNascimento.ts`
 **Dono de:** quem é o BB no NASCIMENTO (Onboarding Velado D30-D32): `deveGerarBBExclusivo` e `gerarBBExclusivo` — o pagante que JÁ ENTRA pagando gera o BB exclusivo pelo pipeline de sprite (formId `bb`, prompt do estágio bb em `creature.bbPrompts`), com espera `BB_EXCLUSIVO_ESPERA_MS` (12 s) e `null` em falha (cai no BB do pool, `data/bbPool.ts`). Free nunca gera; quem paga depois (`jaTemBB`) não gera BB. **Chamado por:** `App.tsx` (`obterBBExclusivo`) → `SoulmonOnboarding`. **Régua:** `bbNascimento.test.ts`, `bbNascimento.ligacao.test.ts`.
 
@@ -4639,6 +4692,19 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
 **Exports:** `comNomeDoEspecial(skills, nome)`.
 **Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).
+
+### `src/utils/widgetEvents.ts`
+**Dono de:** a DRENAGEM da fila do check do widget grande da Home (decisão do dono, 18/11/2026): o widget só marca e grava um evento nativo (`WidgetEventQueue.kt`); o app aplica cada `task_done` ao abrir ou voltar ao primeiro plano, pela regra do toque na Home (`applyTaskCompletion`, `taskCompletionPay.ts`).
+**Exports:**
+- `WidgetEvent` (tipo) — `{eid, kind, ref, dayKey?, ts?}` como vem do nativo. `task_done` paga por `applyTaskCompletion`; `habit_done` (adendo ao §478) por `applyHabitCompletion`, só se `dayKey` = hoje (`localIsoDay`), hábito existe e não tem etapas; outro `kind` é descartado (vai no ack sem aplicar).
+- `function sanitizeWidgetEvents(raw)` — filtra o que veio do plugin (eid em forma de UUID, `ref` até 200).
+- `function sanitizeApplied(raw)` · `WIDGET_APPLIED_CAP` (200) — o registro de `eid` já aplicados neste aparelho (`STORAGE_KEYS.WIDGET_EVENTS_APPLIED`).
+- `function applyWidgetEvents(state, events, applied, now)` — aplica em ordem de `ts`; devolve `handled` (tudo que vai no `ack`), `applied` (registro novo) e `paid` (o que pagou, para o feedback). Sem nada a pagar, a MESMA referência. Pura (updater).
+**Chamado por:** `src/App.tsx` (`drenarWidget`: 2,5 s depois do boot e 0,8 s depois de voltar ao primeiro plano; o `ack` só no efeito seguinte, depois de o provider gravar o save local).
+**Régua:** `src/plugins/widgetHomeFila.contract.test.ts` (paga igual ao toque, uma vez; reaplicar = no-op com e sem registro; já concluída/sumiu = ignora; APK sem o comando; fontes).
+**Avisos do arquivo:**
+- ⚠️ O widget NUNCA dá comida, XP nem Bits. A copy do widget não promete ganho na hora.
+- ⚠️ Nada de `pop`: `peek` → aplicar → gravar → `ack`. Reabrir no meio = reaplicar, e reaplicar é no-op.
 
 ### `src/utils/widgetFrames.ts`
 

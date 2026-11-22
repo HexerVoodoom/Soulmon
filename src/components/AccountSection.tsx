@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AlertLine, sm2Button, sm2Hint } from './form/FormKit';
 import { InfoTip } from './ui/InfoTip';
 import { Icon } from './ui/Icon';
+import { CreditIcon } from './ui/CreditIcon';
 import { CREDIT_COLOR } from '../utils/currencies';
 import type { Language } from '../utils/i18n';
 import { fetchEntitlement, type Entitlement } from '../utils/entitlements';
@@ -166,7 +167,7 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
       <div className="sm2-conta-kv">
         <span>{isPt ? 'Créditos' : 'Credits'}</span>
         <span className="sm2-conta-kv-v sm2-conta-mono">
-          <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} label={isPt ? 'Créditos' : 'Credits'} />
+          <CreditIcon size={20} label={isPt ? 'Créditos' : 'Credits'} />
           {ent?.credits ?? 0}
         </span>
       </div>

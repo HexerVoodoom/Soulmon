@@ -13,7 +13,7 @@ import { specialMissionEntries, type SpecialMissionProps } from './SpecialMissio
  * especial ainda aberta no topo, com o rótulo "Missão especial", depois uma LINHA FINA, depois as normais — prontas ("?"),
  * abertas e, no fim, as resgatadas/entregues (a especial concluída desce junto, sem rótulo nem linha). Superfície muda (sem som).
  */
-export function DailyMissionBoard({ language, special, crossings, todayKey, onClaimStroll, onDoneStroll, onGoStroll, buildings, dailies, nav }: {
+export function DailyMissionBoard({ language, special, crossings, todayKey, onClaimStroll, onDoneStroll, onGoStroll, buildings, dailies, nav, hideStroll }: {
   language: Language;
   special?: Omit<SpecialMissionProps, 'language'>;
   crossings: CrossingsState;
@@ -24,11 +24,13 @@ export function DailyMissionBoard({ language, special, crossings, todayKey, onCl
   buildings?: BuildingQuestsProps;
   dailies?: DailyMissionsProps;
   nav?: MissionNav;
+  /** 17/11/2026 (dono): no 1º dia a linha do Stroll não é oferecida (o jogador ainda abre o passeio pelo mapa). */
+  hideStroll?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const items: (MissionEntry & { special: boolean })[] = [
     ...(special ? specialMissionEntries({ language, ...special }) : []).map(e => ({ ...e, special: true })),
-    ...strollEntries({ language, crossings, todayKey, onClaim: onClaimStroll, onDone: onDoneStroll, onGo: onGoStroll }).map(e => ({ ...e, special: false })),
+    ...(hideStroll ? [] : strollEntries({ language, crossings, todayKey, onClaim: onClaimStroll, onDone: onDoneStroll, onGo: onGoStroll })).map(e => ({ ...e, special: false })),
     ...(buildings ? buildingQuestEntries({ language, ...buildings }) : []).map(e => ({ ...e, special: false })),
     ...(dailies ? dailyMissionEntries({ language, ...dailies, nav }) : []).map(e => ({ ...e, special: false })),
   ];

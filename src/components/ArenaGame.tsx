@@ -493,7 +493,7 @@ export function ArenaGame({
   }
 
   return (
-    <GameRoot moldura={{ tela: 'arena-livre' }}>
+    <GameRoot moldura={{ tela: 'arena-livre', title: isPt ? 'Arena livre' : 'Free Arena' }}>
       <TorcidaLayer onTap={batalha.cheer} active={false} isPt={isPt} style={{ flex: '1 0 auto' }}>
       <GameHeader
         run={false}

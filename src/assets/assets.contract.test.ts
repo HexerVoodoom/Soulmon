@@ -824,13 +824,19 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
    * reabrir é um `import btn from '../assets/soulmon/ui/…'` num componente.
    */
   it('ZERO PNG: nenhuma arte de botão (ui/ ou buttons/) é importada por src/', () => {
-    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png' && !/^soulmon\/ui\/btn-cta(-hover|-press|-off)?\.webp$/.test(rel(f)) && rel(f) !== 'soulmon/ui/carta-elemento.webp' && !/^soulmon\/ui\/moldura\/.+\.webp$/.test(rel(f)));
+    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png' && !/^soulmon\/ui\/btn-(cta(-hover|-press|-off)?|especial(-press|-off)?|pv[ep](-press|-off)?|ranking(-press|-off)?)\.webp$/.test(rel(f)) && !/^soulmon\/ui\/boss-battle-title(-pt)?\.png$/.test(rel(f)) && rel(f) !== 'soulmon/ui/carta-elemento.webp' && rel(f) !== 'soulmon/ui/cristal-chama.webp' && !/^soulmon\/ui\/moldura\/.+\.webp$/.test(rel(f)) && !/^soulmon\/ui\/files\/.+\.webp$/.test(rel(f)) && !/^soulmon\/ui\/hex-moldura\/.+\.webp$/.test(rel(f)));
     expect(alvos.map(rel), 'arte de botão 9-slice de volta ao bundle — o kit é vetor').toEqual([]);
     // E as pastas não existem mais no repositório (foram para o arquivo de marca).
     // Única exceção (pedido do dono, 01/11/2026): o texto do selo NEW é imagem (`ui/new-tag.png`, `LibraryNewBadge`).
     // Segunda exceção (pedido do dono, 12/11/2026, REGISTRO §316): o botão especial CTA (`ui/btn-cta.webp`, arte do site do beta, `.sm2-cta`).
     // Terceira exceção (pedido do dono, 15/11/2026, REGISTRO §401): a CARTA preta do modal "Elemento novo" (`ui/carta-elemento.webp`) é arte raster, não botão.
-    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')).sort() : []).toEqual(['btn-cta-hover.webp', 'btn-cta-off.webp', 'btn-cta-press.webp', 'btn-cta.webp', 'carta-elemento.webp', 'moldura', 'new-tag.png']);
+    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')).sort() : []).toEqual(['boss-battle-title-pt.png', 'boss-battle-title.png', 'btn-cta-hover.webp', 'btn-cta-off.webp', 'btn-cta-press.webp', 'btn-cta.webp', 'btn-especial-off.webp', 'btn-especial-press.webp', 'btn-especial.webp', 'btn-pve-off.webp', 'btn-pve-press.webp', 'btn-pve.webp', 'btn-pvp-off.webp', 'btn-pvp-press.webp', 'btn-pvp.webp', 'btn-ranking-off.webp', 'btn-ranking-press.webp', 'btn-ranking.webp', 'carta-elemento.webp', 'cristal-chama.webp', 'files', 'hex-moldura', 'moldura', 'new-tag.png', 'ranking']);
+    // Décima exceção (pedido do dono, 18/11/2026): as peças da moldura de AÇO da Hexsmith (`ui/hex-moldura/`: fatias do topo, base e laterais) são arte de MOLDURA.
+    // Nona exceção (pedido do dono, 18/11/2026): o botão ESPECIAL do ranking (`ui/btn-ranking{,-press,-off}.webp`) e as peças do modal de RANKING (`ui/ranking/`: moldura em fatias) são arte de botão/MOLDURA aprovada.
+    // Oitava exceção (18/11/2026): `ui/cristal-chama.webp` (cristal-chama do topo, componente `CristalChama`) é ornamento de MOLDURA, não botão.
+    // Sétima exceção (pedido do dono, 18/11/2026): as peças do modal FILES (`ui/files/`: moldura em fatias, cristal, abas, slots, disquete) são arte de MOLDURA/ITEM, não de botão.
+    // Sexta exceção (pedido do dono, 18/11/2026): o TÍTULO "BOSS BATTLE" (`ui/boss-battle-title{,-pt}.png`, lettering em arte, não botão).
+    // Quinta exceção (pedido do dono, 18/11/2026): o BOTÃO ESPECIAL de compra (`ui/btn-especial{,-press,-off}.webp`, `.sm2-especial`, 3-slice dourado/turquesa).
     // Quarta exceção (17/11/2026, PR moldura de modais): as fatias WebP da moldura de modal/card (`ui/moldura/`) são arte de MOLDURA, não de botão.
     expect(fs.existsSync(path.join(ASSETS, 'soulmon/buttons'))).toBe(false);
   });

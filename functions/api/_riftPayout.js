@@ -21,6 +21,7 @@
 // ---------------------------------------------------------------------------
 import { kvOrThrow } from './_kv.js';
 import { grantRankPrize } from './_entitlements.js';
+import { adminSaveIdsSeguro } from './_rankAdmin.js';
 import { payablePlacements, monthKey } from './_rankings.js';
 import { readRiftLastro } from './_dayCounters.js';
 
@@ -42,13 +43,15 @@ export function prevMonthKey(now = new Date()) {
 }
 
 /** Placar completo do mês, em ordem de pagamento: score desc; empate → quem chegou ao score primeiro (`t`), depois saveId. */
-async function readEntries(store, pk) {
+async function readEntries(env, store, pk) {
+  const admins = await adminSaveIdsSeguro(env); // GM/admin nunca leva Crédito (dono 18/11/2026)
   const prefix = `rk:${RIFT_GAME}:${pk}:`;
   const out = [];
   let cursor;
   for (let p = 0; p < 5; p++) {
     const page = await store.list({ prefix, limit: 1000, ...(cursor ? { cursor } : {}) });
     for (const k of page.keys) {
+      if (admins.has(k.name.slice(k.name.lastIndexOf(':') + 1))) continue;
       const t = Number(k.metadata?.t);
       out.push({
         saveId: k.name.slice(k.name.lastIndexOf(':') + 1),
@@ -87,7 +90,7 @@ export async function closePreviousMonth(env, now = new Date()) {
     const back = JSON.parse((await store.get(lockKey(pk))) || 'null');
     if (back?.token !== token) return { status: 'busy', month: pk };
 
-    const entries = await readEntries(store, pk);
+    const entries = await readEntries(env, store, pk);
     const winners = payablePlacements(entries, RIFT_PAYOUT.length);
     const pending = [];
     for (let i = 0; i < winners.length; i++) {

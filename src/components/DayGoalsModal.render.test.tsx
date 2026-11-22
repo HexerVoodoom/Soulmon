@@ -118,15 +118,38 @@ describe('DayGoalsModal em modo "Hoje" (fuse)', () => {
     expect(onConfirm).toHaveBeenLastCalledWith(['t4'], ['t4']);
   });
 
-  it('a oferta reduzida (never miss twice) continua: aceitar vira a tarefa bônus (não conclui); não há botão de recusar', () => {
+  it('a bufada é a MESMA linha das demais (cartão + caixa), sem duplicata da original; só o texto vira negrito dourado', () => {
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={fuse()} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    const linhas = document.querySelectorAll('[data-day-goal="h2"]');
+    expect(linhas).toHaveLength(1);
+    expect(linhas[0].className).toBe(document.querySelector('[data-day-goal="t2"]')!.className);
+    expect((linhas[0] as HTMLElement).style.padding).toBe((document.querySelector('[data-day-goal="t2"]') as HTMLElement).style.padding);
+    const txt = linhas[0].querySelector('[data-day-goals-bonus]') as HTMLElement;
+    expect(txt.textContent).toBe('Alongar · bônus de 5 min');
+    expect(txt.style.fontWeight).toBe('700');
+    expect(txt.style.color).toBe('var(--sm2-gold-ink)');
+    expect(document.querySelector('[data-day-goals-tiny-offer]')).toBeNull();
+  });
+
+  it('marcar DUAS bufadas e confirmar registra as duas como tarefa bônus e as inclui nas metas', () => {
+    const f = fuse({ plan: { carryOver: [], suggestedFocus: [], tinyOffer: ['h1', 'h2'] } });
+    const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={f} onConfirm={onConfirm} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: /Beber água/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Alongar/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Comprar pão' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(f.onTinyHabit).toHaveBeenCalledTimes(2);
+    expect(f.onTinyHabit).toHaveBeenCalledWith('h1');
+    expect(f.onTinyHabit).toHaveBeenCalledWith('h2');
+    expect(onConfirm.mock.calls[0][0]).toEqual(expect.arrayContaining(['h1', 'h2', 't4']));
+  });
+
+  it('bufada NÃO marcada não vira bônus nem cobra nada', () => {
     const f = fuse();
     renderWithCss(<DayGoalsModal candidates={TAREFAS} language="pt-BR" fuse={f} onConfirm={vi.fn()} onClose={vi.fn()} />);
-    const oferta = document.querySelector('[data-day-goals-tiny-offer="h2"]') as HTMLElement;
-    expect(oferta.textContent).toBe('Alongar: hoje, só 5 minutos?');
-    fireEvent.click(oferta);
-    expect(f.onTinyHabit).toHaveBeenCalledWith('h2');
-    expect(document.querySelector('[data-day-goals-tiny-accepted]')!.textContent).toMatch(/Alongar · tarefa bônus/);
-    expect(document.querySelector('[data-day-goals-tiny-offer]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(f.onTinyHabit).not.toHaveBeenCalled();
   });
 
   it('"Hoje não" fecha sem confirmar (só onClose) e o EN tem o mesmo conjunto', () => {
@@ -156,5 +179,43 @@ describe('DayGoalsModal mode="add" (Comprometer-me com uma tarefa)', () => {
   it('EN', () => {
     renderWithCss(<DayGoalsModal mode="add" candidates={CANDS} language="en-US" onConfirm={vi.fn()} onClose={vi.fn()} />);
     expect(screen.getByText('Commit to a task')).toBeTruthy();
+  });
+});
+
+describe('DayGoalsModal — seção das tarefas bufadas (abaixo das normais)', () => {
+  const T = [
+    { id: 'h1', name: 'Beber água', kind: 'habit' as const },
+    { id: 'h2', name: 'Alongar', kind: 'habit' as const },
+    { id: 'h3', name: 'Ler', kind: 'habit' as const },
+    { id: 't1', name: 'Pagar conta', kind: 'task' as const },
+  ];
+  const fz = (tiny: string[]) => ({ plan: { carryOver: [], suggestedFocus: [], tinyOffer: tiny }, taskIds: new Set(['t1']), onTinyHabit: vi.fn() });
+
+  it('bufadas ficam depois das normais, com separador e o texto (PT), em role=group rotulado', () => {
+    renderWithCss(<DayGoalsModal candidates={T} language="pt-BR" fuse={fz(['h2', 'h3'])} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    const grupo = screen.getByRole('group', { name: /Você está com dificuldade de cumprir estas tarefas\. Elas receberam um buff, espero que ajude\./ });
+    expect(grupo.querySelector('hr')).toBeTruthy();
+    expect([...grupo.querySelectorAll('[data-day-goal]')].map(e => e.getAttribute('data-day-goal'))).toEqual(['h2', 'h3']);
+    const normal = document.querySelector('[data-day-goal="t1"]')!;
+    expect(normal.compareDocumentPosition(grupo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelectorAll('[data-day-goal="h2"]')).toHaveLength(1);
+  });
+  it('EN tem o texto equivalente', () => {
+    renderWithCss(<DayGoalsModal candidates={T} language="en-US" fuse={fz(['h2'])} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByRole('group', { name: "You've been struggling to complete these tasks. They got a buff — hope it helps." })).toBeTruthy();
+  });
+  it('sem bufadas não há seção nem separador', () => {
+    renderWithCss(<DayGoalsModal candidates={T} language="pt-BR" fuse={fz([])} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(document.querySelector('[data-day-goals-group="buffed"]')).toBeNull();
+    expect(document.querySelector('[data-day-goals-buff-sep]')).toBeNull();
+  });
+  it('marcar a bufada funciona: aceita o bônus e entra nas metas', () => {
+    const f = fz(['h2', 'h3']); const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal candidates={T} language="pt-BR" fuse={f} onConfirm={onConfirm} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: /Alongar/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Ler/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(f.onTinyHabit).toHaveBeenCalledTimes(2);
+    expect(onConfirm.mock.calls[0][0]).toEqual(expect.arrayContaining(['h2', 'h3']));
   });
 });

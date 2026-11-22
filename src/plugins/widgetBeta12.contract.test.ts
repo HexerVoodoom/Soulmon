@@ -115,7 +115,9 @@ describe('A2/A3 › receivers, rótulos e tamanhos', () => {
       'SoulmonWidgetVerticalProvider', 'SoulmonWidgetPetProvider', 'SoulmonWidgetChatProvider', 'SoulmonWidgetScreenProvider',
     ]) expect(receivers).toContain(r);
     expect(receivers).toContain('SoulmonWidgetCompanionProvider');
-    expect(receivers.length).toBe(9);
+    // 18/11/2026: + o widget grande da Home (SoulmonWidgetHomeProvider, widgetHomeGrande.contract.test.ts).
+    expect(receivers).toContain('SoulmonWidgetHomeProvider');
+    expect(receivers.length).toBe(11); // 10 receivers + o WidgetHomeTasksService (a regex pega todo .widget.*)
   });
 
   it('rótulos: Cage (pt e en) para o widget com moldura; Companheiro/Companion para o 3º', () => {

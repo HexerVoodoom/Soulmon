@@ -36,6 +36,7 @@ const TABELA: Record<string, Classe> = {
   'components/guild/GroveFolha.tsx': 'base-esquerda', // o panorama do Bosque: tela cheia, ✕ no topo ESQUERDO
   'components/AdventureDiary.tsx': 'base-esquerda', // modal de tela cheia (rodada 7, I7): ✕ no topo ESQUERDO
   'components/home/Mochila.tsx': 'base-esquerda',
+  'components/RankingModal.tsx': 'base-esquerda',
   'components/TalentTreeEntry.tsx': 'base-esquerda', // árvore de talentos em tela cheia: só a árvore, o ✕ no topo ESQUERDO e o Refazer embaixo
   'components/mercado/ShopItemSheet.tsx': 'base-esquerda', // lightbox: ✕ no topo ESQUERDO
   'components/ElementosNovosModal.tsx': 'base-esquerda', // a carta: ✕ no topo ESQUERDO (BackArrow close)
@@ -110,7 +111,11 @@ describe('voltar/fechar — contrato (I3)', () => {
     }
     for (const path of cheias.filter(p => p !== 'components/ui/BackArrow.tsx')) {
       const f = FILES.find(x => x.path === path)!;
-      expect(f.src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
+      // Exceção do dono (18/11/2026): a moldura de AÇO da Hexsmith (`AreaSheet moldura="aco"`) desenha o ✕ no disco esquerdo da arte
+      // (o mesmo do modal Files). Só o componente `FecharAco` pode usar o glifo; o resto do arquivo segue sem ✕.
+      const src = path === 'components/nav/AreaSheet.tsx' ? f.src.replace(/function FecharAco\([\s\S]*?\r?\n\}\r?\n/, '') : f.src;
+      if (path === 'components/nav/AreaSheet.tsx') expect(src.length, 'FecharAco encontrado e recortado').toBeLessThan(f.src.length);
+      expect(src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
     }
     const kit = FILES.find(f => f.path === 'components/games/GameKit.tsx')!.src;
     expect(kit).not.toContain('data-game-close-end');

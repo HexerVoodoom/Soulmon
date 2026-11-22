@@ -45,6 +45,33 @@ beforeEach(() => { installDomGlobals(); localStorage.clear(); forjaServidor.mock
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('HexsmithSheet', () => {
+  it('Porta com HEX equipado ganha o miolo do hexágono em turquesa claro; as vazias não (18/11/2026)', () => {
+    abrir({ hexsmith: { owned: ['garra:agua'], equipped: { garra: 'garra:agua' } } });
+    const fills = document.querySelectorAll('[data-hex-fill]');
+    expect([...fills].map(f => f.getAttribute('data-hex-fill'))).toEqual(['garra']);
+    expect(fills[0].classList.contains('sm2-hex-slot-fill')).toBe(true);
+    expect(fills[0].getAttribute('aria-hidden')).toBe('true');
+    // atrás da placa do mapa (vem antes dela no DOM) e no centro da Porta
+    const arte = document.querySelector('.sm2-hex-map-art')!;
+    expect(fills[0].compareDocumentPosition(arte) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect((fills[0] as HTMLElement).style.left).toBe('87.7%');
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    expect(css).toMatch(/\.sm2-hex-slot-fill \{[^}]*background-color: var\(--sm2-hex-slot-on\);[^}]*clip-path: polygon\(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%\)/);
+  });
+
+  it('a introdução mora atrás do "i" (ModalInfo), não solta acima do mapa (18/11/2026)', () => {
+    abrir({});
+    expect(document.querySelector('[data-hex-intro]')).toBeNull();
+    const i = screen.getByRole('button', { name: /Hexsmith/ });
+    click(i);
+    expect(document.querySelector('[data-hex-intro]')?.textContent).toMatch(/Toque numa Porta/);
+  });
+
+  it('sem nada equipado, nenhuma Porta tem o preenchimento claro', () => {
+    abrir({});
+    expect(document.querySelectorAll('[data-hex-fill]')).toHaveLength(0);
+  });
+
   it('sem Provider não renderiza nada', () => {
     const { container } = render(<HexsmithSheet language="pt-BR" />);
     expect(container.innerHTML).toBe('');
@@ -177,17 +204,27 @@ describe('HexsmithSheet', () => {
     expect(img.getAttribute('src')).toMatch(/coroa-dot/);
   });
 
-  it('Coroa equipada: placa turquesa clara com outer glow turquesa (não branca), ícone segue aria-hidden e o botão do slot rotulado', () => {
+  it('Coroa equipada: SEM anel/glow/borda redonda; ícone direto, maior, aria-hidden; botão do slot rotulado', () => {
     abrir({ hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } });
     const btn = q('[data-hex-slot="coroa"]');
     expect(btn.getAttribute('aria-label')).toMatch(/Coroa|Porta/);
-    expect(btn.querySelector('img')!.getAttribute('aria-hidden')).toBe('true');
-    // jsdom não carrega o CSS: confere a regra na fonte
+    const img = btn.querySelector('img')!;
+    expect(img.getAttribute('aria-hidden')).toBe('true');
+    expect(Number(img.getAttribute('width'))).toBeGreaterThanOrEqual(44);
+    // jsdom não carrega o CSS: confere a fonte
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
-    const regra = css.match(/\.sm2-hex-art\[data-hex-crown\] \{[^}]*\}/)![0];
-    expect(regra).not.toMatch(/#EAF6F3|#fff\b/i);
-    expect(regra).toMatch(/background-color: #B4F4EA/);
-    expect(regra).toMatch(/0 0 8px 2px color-mix\(in srgb, var\(--sm2-primary-ink\)/);
+    expect(css).not.toMatch(/\.sm2-hex-art\[data-hex-crown\] \{/);
+    const bloco = css.slice(css.indexOf('.sm2-hex-art {'), css.indexOf('.sm2-hex-slot {'));
+    expect(bloco).not.toMatch(/box-shadow|border-radius|border:/);
+    expect(bloco).toMatch(/clip-path: polygon/);
+    expect(css).toMatch(/\.sm2-hex-slot \{[^}]*width: 56px; height: 56px/);
+  });
+
+  it('linhas de lista: ícone maior (Seus HEXes 56, Forja 40), sem anel', () => {
+    abrir({ gamePoints: 2000, hexsmith: { owned: ['coroa:dot'], equipped: {} } });
+    click(q('[data-hex-slot="coroa"]'));
+    expect(Number(q('[data-hex-owned="coroa:dot"]').querySelector('img')!.getAttribute('width'))).toBe(56);
+    expect(Number(q('[data-hex-item]').querySelector('img')!.getAttribute('width'))).toBe(40);
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {

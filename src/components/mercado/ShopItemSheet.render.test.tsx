@@ -33,39 +33,32 @@ const chip = SHOP_ITEMS.find(i => i.kind === 'chip')!;
 const painted = SHOP_ITEMS.find(i => i.kind === 'bg' && !i.unlock && !i.currency && i.id !== 'bg-room' && /url\(/.test(PET_BACKGROUNDS[i.id]?.css ?? ''))!;
 
 describe('I5 — a folha do item', () => {
-  it('tocar no item NÃO compra: abre a folha com o preview grande SOLTO (sem o quadradinho de vidro)', () => {
+  it('tocar no item NÃO compra: abre a folha com o MESMO banner do cenário (arte dentro da folha, sem prévia flutuante)', () => {
     const onBuy = vi.fn(() => true);
     abrir({ stall: 'itens', onBuy });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
     expect(onBuy).not.toHaveBeenCalled();
     const sheet = screen.getByRole('dialog', { name: chip.nameEn });
     expect(within(sheet).getByRole('button', { name: 'Buy' })).toBeTruthy();
-    const prev = document.body.querySelector('[data-item-preview]') as HTMLElement;
-    expect(prev).not.toBeNull();
-    expect(prev.getAttribute('aria-hidden')).toBe('true');
-    // P1 (beta-2): véu próprio (a lista não vaza pelos lados), camada acima do véu da folha, e o toque nele FECHA a folha
-    expect(prev.style.pointerEvents).not.toBe('none');
-    expect(prev.style.background).toMatch(/rgba\(2, 8, 9/);
-    expect(Number(prev.style.zIndex)).toBeGreaterThan(120);
-    // solto na área escurecida: nada de MiniGlass/box em volta do ícone
-    expect(prev.querySelector('[data-mini-glass], .sm2-viewport-screen')).toBeNull();
-    expect(prev.querySelector('img, span')).not.toBeNull();
-  });
-
-  it('P1: tocar na prévia fecha a folha (e tira a prévia)', () => {
-    abrir({ stall: 'itens' });
-    fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
-    fireEvent.click(document.body.querySelector('[data-item-preview]') as HTMLElement);
-    expect(screen.queryByRole('dialog', { name: chip.nameEn })).toBeNull();
     expect(document.body.querySelector('[data-item-preview]')).toBeNull();
+    const banner = within(sheet).getByRole('button', { name: `View ${chip.nameEn} larger` });
+    expect(banner.getAttribute('data-item-banner')).toBe('item');
+    expect((banner as HTMLElement).style.aspectRatio.replace(/ /g, "")).toBe("96/52");
   });
 
-  it('fechar a folha tira o preview', () => {
+  it('decoração abre o mesmo banner do cenário', () => {
+    abrir({ stall: 'decoracao' });
+    const furn = SHOP_ITEMS.find(i => i.kind === 'furniture' && !i.unlock && !i.currency)!;
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${furn.nameEn} — `) }));
+    expect(document.body.querySelector('[data-item-banner="item"]')).not.toBeNull();
+  });
+
+  it('fechar a folha tira o banner', () => {
     abrir({ stall: 'itens' });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
     fireEvent.click(within(screen.getByRole('dialog', { name: chip.nameEn })).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog', { name: chip.nameEn })).toBeNull();
-    expect(document.body.querySelector('[data-item-preview]')).toBeNull();
+    expect(document.body.querySelector('[data-item-banner]')).toBeNull();
   });
 
   it('item possuído: o botão da folha é Equipar e equipa', () => {
