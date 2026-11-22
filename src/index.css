@@ -8589,7 +8589,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 /* duas classes: vence o bloco base `.sm2-moldura-modal` (que vem depois no arquivo) */
 .sm2-moldura-modal.sm2-moldura-modal--aco {
   background: transparent;
-  --sm2-moldura-pad-t: calc(var(--u) * 22.5); --sm2-moldura-pad-b: calc(var(--u) * 12); --sm2-moldura-pad-x: calc(var(--u) * 6.5);
+  --sm2-moldura-pad-t: calc(var(--u) * 22.5); --sm2-moldura-pad-b: calc(var(--u) * 12); --sm2-moldura-pad-x: calc(var(--u) * 7.1);
 }
 .sm2-moldura-modal--aco::before {
   content: ''; position: absolute; z-index: -3; left: 0; right: 0; bottom: 0; top: calc(var(--u) * 5.7); background: var(--sm2-viewport-bg); pointer-events: none;
@@ -9874,7 +9874,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
      (topo, base, laterais: z 2, centro vazado, sem toque) e o conteúdo rola por baixo dela; `--sm2-moldura-pad-*` é o respiro que quem rola usa
      para não ficar escondido sob as peças. */
   background: var(--sm2-viewport-bg, #0E2422); min-height: calc(var(--u) * 52);
-  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3);
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3.6);
 }
 .sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
 .sm2-moldura-modal__fundo {
