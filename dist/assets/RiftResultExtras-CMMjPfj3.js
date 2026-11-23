@@ -1,0 +1,1 @@
+import{eD as r,j as i,eE as o,eF as n}from"./index-DMWBGinR.js";function x({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:n(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{x as R};
