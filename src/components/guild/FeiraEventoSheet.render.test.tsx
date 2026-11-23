@@ -45,6 +45,7 @@ describe('Chefe', () => {
     open(boss, api);
     expect(q('[data-feira-evento="boss"]')).not.toBeNull();
     expect(q('[data-feira-pool]')!.getAttribute('data-feira-pool')).toBe('80');
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
     expect(document.body.textContent).toContain('Herald of the End');
     fireEvent.click(q('[data-feira-atacar]')!);
     await waitFor(() => expect(q('[data-boss-fight], [data-result-kind="boss"]')).not.toBeNull());

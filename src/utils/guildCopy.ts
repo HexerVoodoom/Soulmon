@@ -72,6 +72,10 @@ export const GUILD_COPY = {
   // ── A MISSÃO (guilda-lancamento PR3): o antigo circo/Feira vira investigação do Soulmon ──
   'guild.missao.titulo': ['Missão', 'Mission'],
   'guild.missao.mandar': ['Mandar investigar', 'Send to investigate'],
+  'guild.missao.investigar': ['Investigar', 'Investigate'],
+  'guild.missao.volteAmanha': ['Volte amanhã', 'Come back tomorrow'],
+  // PENDENTE (decidida pelo dono em 23/11/2026; ainda não está em docs/NARRATIVA-COPY-GUILDA.md)
+  'guild.feira.recuou.curto': ['O fenômeno voltou para a névoa.', 'The phenomenon went back into the mist.'],
   'guild.missao.historia': ['A feira abriu e algo chegou da névoa. Seu Soulmon vai ver de perto o que é e volta com o que achar. O que ele achar, a roda leva para a casa.', 'The fair opened and something came in from the mist. Your Soulmon goes to take a close look and comes back with what it finds. What it finds, the circle carries to the house.'],
   'guild.missao.fora': ['Seu Soulmon foi investigar. Volta às {hora}, em {min} min.', 'Your Soulmon went to investigate. Back at {hora}, in {min} min.'],
   'guild.missao.registrando': ['Seu Soulmon voltou. Estou buscando o que ele achou…', 'Your Soulmon is back. Fetching what it found…'],

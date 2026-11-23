@@ -67,7 +67,7 @@ describe('Feira × volta da Missão', () => {
     expect(onVer).toHaveBeenCalledTimes(1);
   });
 
-  it('o resultado fica pendente até ser visto; visto, o botão de ver some (e investigar só volta no dia seguinte)', async () => {
+  it('o resultado fica pendente até ser visto; visto, o botão de ver some (e o "Investigar" fica desabilitado até o dia seguinte)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(true));
     recordFeiraVolta({ day: hoje(), kind: 'achado', achado: { bits: 12 }, seen: false });
     expect(feiraVoltaPendente(readFeiraVolta(), hoje())).not.toBeNull();
@@ -75,7 +75,10 @@ describe('Feira × volta da Missão', () => {
     expect(feiraVoltaPendente(readFeiraVolta(), hoje())).toBeNull();
     await montar({ state: null, onVerAchado: vi.fn() });
     expect(sala().querySelector('[data-missao-ver-achado]')).toBeNull();
-    expect(sala().querySelector('[data-missao-mandar]')).toBeNull();
+    // dia fechado (dono, 23/11/2026): o "Investigar" segue na sala, mas DESABILITADO; só volta a valer no dia seguinte
+    const cta = sala().querySelector('[data-missao-mandar]') as HTMLElement;
+    expect(cta).not.toBeNull();
+    expect(cta.getAttribute('aria-disabled')).toBe('true');
     expect(sala().querySelector('[data-missao-feita]')).not.toBeNull();
   });
 

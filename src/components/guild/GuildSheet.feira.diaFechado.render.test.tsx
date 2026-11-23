@@ -73,12 +73,16 @@ describe('Feira: o dia fechado depois de enfrentar o inimigo', () => {
     const onVer = await montar(lang);
     expect(sala().querySelector('[data-feira-misterio-abrir]')).toBeNull();
     expect(sala().querySelector('[data-missao-ver-achado]')).toBeNull();
+    // desafio cumprido: nenhum CTA de mandar (o "Investigar" desabilitado é só do dia fechado sem desafio; ver o teste "dia fechado sem desafio")
     expect(sala().querySelector('[data-missao-mandar]')).toBeNull();
-    // nenhuma AÇÃO na sala (o único botão é o "?" da explicação do fenômeno)
+    // nenhuma AÇÃO na sala (o único botão é o "i" da explicação do fenômeno)
     expect([...sala().querySelectorAll('button')].filter(b => !b.closest('[data-infotip], [data-info-tip]') && !/Como funciona|How the/.test(b.getAttribute('aria-label') ?? '')).length).toBe(0);
-    expect(sala().querySelector('[data-feira-npc-hoje]')!.textContent).toMatch(lang === 'pt-BR' ? /Hoje .*Arauto do Fim.*enfrentou/ : /Today .*Herald of the End.*faced/);
-    expect(sala().querySelector('[data-feira-npc-cla]')!.textContent).toMatch(/62%/);
-    expect(sala().querySelector('[data-feira-npc-amanha]')!.textContent).toMatch(lang === 'pt-BR' ? /investigar de novo/ : /investigate again/);
+    // a fala do mercador mora no "i": fora da tela até tocar
+    expect(document.querySelector('[data-feira-npc-hoje]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
+    expect(document.querySelector('[data-feira-npc-hoje]')!.textContent).toMatch(lang === 'pt-BR' ? /Hoje .*Arauto do Fim.*enfrentou/ : /Today .*Herald of the End.*faced/);
+    expect(document.querySelector('[data-feira-npc-cla]')!.textContent).toMatch(/62%/);
+    expect(document.querySelector('[data-feira-npc-amanha]')!.textContent).toMatch(lang === 'pt-BR' ? /investigar de novo/ : /investigate again/);
     expect(onVer).not.toHaveBeenCalled();
     // a volta é dada como vista, então nada reabre o resultado velho
     await waitFor(() => expect(feiraVoltaPendente(readFeiraVolta(), hoje())).toBeNull());
@@ -96,7 +100,24 @@ describe('Feira: o dia fechado depois de enfrentar o inimigo', () => {
   it('volta que já foi vista e não era desafio (Bits do chão): o mercador fala do dia, sem botão', async () => {
     recordFeiraVolta({ day: hoje(), kind: 'achado', achado: { bits: 12 }, seen: true });
     await montar();
-    expect(sala().querySelector('[data-feira-npc-hoje]')!.textContent).toMatch(/Bits/);
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
+    expect(document.querySelector('[data-feira-npc-hoje]')!.textContent).toMatch(/Bits/);
     expect(sala().querySelector('[data-missao-ver-achado]')).toBeNull();
+  });
+
+  it.each([['pt-BR'], ['en-US']] as const)('%s: dia fechado sem desafio (volta vista): só a frase curta e o "Investigar" desabilitado; tocar diz "Volte amanhã"', async (lang) => {
+    const i = lang === 'pt-BR' ? 0 : 1;
+    recordFeiraVolta({ day: hoje(), kind: 'achado', achado: { bits: 12 }, seen: true });
+    renderWithCss(<GuildSheet saveId="save-12345678" language={lang} metaDoDiaCumprida room="feira" missao={{ state: null, onSend: vi.fn(), onVerAchado: vi.fn() }} />);
+    await waitFor(() => expect(sala().querySelector('[data-missao-mandar]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-recuou-curto]')!.textContent).toBe(GUILD_COPY['guild.feira.recuou.curto'][i]);
+    const cta = sala().querySelector('[data-missao-mandar]') as HTMLElement;
+    expect(cta.getAttribute('aria-disabled')).toBe('true');
+    expect(cta.textContent).toMatch(new RegExp(GUILD_COPY['guild.missao.investigar'][i] + '$'));
+    expect(sala().querySelectorAll('button[data-missao-mandar]').length).toBe(1);
+    expect(sala().querySelector('[data-missao-ver-achado]')).toBeNull();
+    expect(sala().querySelector('[data-feira-volte-amanha]')).toBeNull();
+    fireEvent.click(cta);
+    expect(sala().querySelector('[data-feira-volte-amanha]')!.textContent).toBe(GUILD_COPY['guild.missao.volteAmanha'][i]);
   });
 });
