@@ -9,7 +9,6 @@
  *  · 5× — peça arcana/rara de vitrine, com magia ou mecanismo (caldeirão, cristal, ampulheta, poço, fliperama).
  * Posse é permanente: quem já comprou segue dono — só o preço de quem compra daqui em diante muda.
  */
-import { COSMETICOS_NOVOS } from './cosmeticosNovos';
 
 export type DecorTier = 2 | 3 | 5;
 
@@ -41,5 +40,10 @@ export const DECOR_PRICE_TABLE: ReadonlyArray<{ id: string; old: number; tier: D
   { id: 'furn-food-bowl', old: 100, tier: 2, reason: 'adereço simples' },
   { id: 'furn-garland', old: 100, tier: 2, reason: 'adereço simples de parede' },
   // Cosméticos novos (04/11/2026): peça de tema 2×/3× (tapete/peça), peça de elemento 5× (rara). Só as com arte instalada.
-  ...COSMETICOS_NOVOS.filter(c => c.kind === 'furn').map(c => ({ id: c.id, old: 100, tier: c.tier!, reason: c.element ? 'peça exclusiva de elemento' : c.slot === 'rug' ? 'textura de chão' : 'peça de tema' })),
+  // (os cosméticos novos, 04/11/2026, entram no fim por `injetarPrecosDeDecor`, chunk lazy `catalogosNovos.ts`, REGISTRO §498)
 ];
+
+export function injetarPrecosDeDecor(novos: ReadonlyArray<{ id: string; old: number; tier: DecorTier; reason: string }>): void {
+  const tem = new Set(DECOR_PRICE_TABLE.map(r => r.id));
+  (DECOR_PRICE_TABLE as Array<{ id: string; old: number; tier: DecorTier; reason: string }>).push(...novos.filter(r => !tem.has(r.id)));
+}

@@ -135,6 +135,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `arena/DueloSheet.tsx`, `ArenaGame.tsx`, `App.tsx` (o `onReroll`), `GameStateContext` (`arenaReroll` no hydrate). **Régua:** `arenaSorteio.test.ts`, `ArenaGame.sorteio.render.test.tsx`, `functions/api/dayCounters.parity.test.js`.
 **Elemento da run (§199, 30/10/2026):** `ARENA_BASE_ELEMENTS` (os elementos BASE que têm criatura, ordenados) · `arenaRunElement(seed)` (o elemento BASE da run — o do card e de todo inimigo das 5 rodadas, salvo a chance `ARENA_FUSED_FOE_CHANCE` de um fundido que o contém; fundido não entra no sorteio). `arenaCardElements(seed)` agora devolve só `[arenaRunElement(seed)]` (antes derivava dos inimigos da 1ª rodada).
 
+### `src/utils/catalogosNovos.ts`
+
+**Dono de:** a injeção dos catálogos grandes de cosméticos (`cosmeticosNovos`, temas e elementos; `honraDecor`, decoração de Honra) na loja (`injetarCatalogosNovos` em `shop.ts`), nos cenários (`injetarCenariosNovos`), nas molduras (`injetarMolduras`), nos preços de decoração (`injetarPrecosDeDecor`) e na arte (`injetarArteDeDecor`), no MESMO lugar de antes (REGISTRO §498). Só existe para ser carregado por `import()` (fora do chunk de entrada). **Chamado por:** `catalogosNovosLoader.ts`, `vitest.setup.catalogos.ts`. **Régua:** `catalogosNovos.test.ts`, `cosmeticosNovos.test.ts`.
+
+### `src/utils/catalogosNovosLoader.ts`
+
+**Dono de:** `carregarCatalogosNovos()` (idempotente): o `import()` do chunk acima. O `main.tsx` espera a promessa antes do 1º render, então nenhum save é lido nem tela pintada sem o catálogo completo. Falha de rede = o app abre sem as peças novas, sem alterar save. **Régua:** `catalogosNovos.test.ts`.
+
 ### `src/utils/arenaLadder.ts`
 **Dono de:** o valor da escada e a temporada mensal da Arena, FORA de `arena.ts` (orçamento de bytes, REGISTRO §497: o `GameStateContext` e o `App` são entrada e não podem arrastar o motor da Arena): `ARENA_LADDER_MAX`, `sanitizeArenaLadder`, `nextArenaLadder`, `arenaSeasonKey`, `sanitizeArenaSeason`, `arenaRollover`. `arena.ts` reexporta tudo.
 **Chamado por:** `GameStateContext` (hydrate), `App.tsx`, `arenaReroll.ts`, `arena.ts`. **Régua:** `arena.test.ts`, `functions/api/dayCounters.parity.test.js`.

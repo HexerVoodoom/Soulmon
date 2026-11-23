@@ -6,8 +6,6 @@ import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
 import { DISH_SPECIAL_ITEMS } from './dishItems';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
-import { COSMETICOS_NOVOS } from './cosmeticosNovos';
-import { HONRA_DECOR } from './honraDecor';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -550,12 +548,8 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: 'Pódio dourado sob céu de fim de tarde', descEn: 'Golden podium under an evening sky', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rank-gold' } },
 
-  // COSMÉTICOS NOVOS (temas e elementos, 04/11/2026) — só as peças com arte instalada; catálogo em `utils/cosmeticosNovos.ts`.
-  ...COSMETICOS_NOVOS.filter(c => c.kind !== 'frame').map((c): ShopItem => ({
-    id: c.id, kind: c.kind === 'bg' ? 'bg' : 'furniture', icon: c.icon, namePt: c.namePt, nameEn: c.nameEn,
-    descPt: c.descPt, descEn: c.descEn, price: c.price,
-    ...(c.slot ? { slot: c.slot, fits: c.fits } : {}), ...(c.element ? { element: c.element } : {}),
-  })),
+  // COSMÉTICOS NOVOS (temas e elementos, 04/11/2026): entram no fim desta lista por `injetarCatalogosNovos` (chunk lazy
+  // `catalogosNovos.ts`, orçamento de bytes, REGISTRO §498); catálogo em `utils/cosmeticosNovos.ts`.
 ];
 
 /**
@@ -620,8 +614,7 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
     descPt: 'A luta principal da noite — e o pet é a atração', descEn: 'The main event of the night — and the pet is the draw',
     price: 70 },
   // Decoração de Honra (armeiro na parede, estátuas, manequins, bigornas, chãos de arena…): catálogo gerado em
-  // `utils/honraDecor.ts`, só as peças com arte instalada. Cosmético puro, preço pela escada 25/70/180/450.
-  ...HONRA_DECOR,
+  // `utils/honraDecor.ts`, só as peças com arte instalada; entra no fim desta lista por `injetarCatalogosNovos`. Preço pela escada 25/70/180/450.
 ];
 
 /**
@@ -718,3 +711,16 @@ export const SUBSCRIPTION_ITEMS: ShopItem[] = [
 export const isSubscriptionReward = (item: Pick<ShopItem, 'id'>): boolean => SUBSCRIPTION_ITEMS.some(s => s.id === item.id);
 
 export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS];
+
+/**
+ * Os cosméticos novos (`cosmeticosNovos.ts`) e a decoração de Honra (`honraDecor.ts`) moram num chunk lazy (REGISTRO §498): este é o
+ * ponto onde ELES entram no catálogo, no MESMO lugar de antes (fim de `SHOP_ITEMS` e de `TOURNAMENT_ITEMS`), mutando as listas
+ * e refazendo `ALL_SHOP_ITEMS` no lugar. Idempotente. O `main.tsx` espera a carga antes do 1º render (nenhum save é lido antes).
+ */
+export function injetarCatalogosNovos(novos: readonly ShopItem[], honra: readonly ShopItem[]): void {
+  const tem = new Set(ALL_SHOP_ITEMS.map(i => i.id));
+  SHOP_ITEMS.push(...novos.filter(i => !tem.has(i.id)));
+  TOURNAMENT_ITEMS.push(...honra.filter(i => !tem.has(i.id)));
+  ALL_SHOP_ITEMS.length = 0;
+  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS);
+}

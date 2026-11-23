@@ -3,8 +3,6 @@
 // caixa do slot que ocupa (DECOR_SLOTS em utils/petStage.ts) — nada aqui
 // redimensiona de forma não-uniforme, só encaixa.
 import { DECOR_ART_ALIASES } from './artAliases';
-import { ARTE_DECOR_NOVOS } from './cosmeticosNovos';
-import { ARTE_DECOR_HONRA } from './honraDecor';
 import furnSofa from '../assets/decor/furn-sofa.png';
 import furnChair from '../assets/decor/furn-chair.png';
 import furnBooks from '../assets/decor/furn-books.png';
@@ -82,13 +80,19 @@ export const DECOR_ART: Record<string, string> = {
   'furn-clock': furnClock,
 };
 
-// Decorações de tema/elemento (04/11/2026): `assets/decor/<id>.webp`; só existe para quem tem arquivo (`utils/cosmeticosNovos.ts`).
-Object.assign(DECOR_ART, ARTE_DECOR_NOVOS);
-
-// Decoração de Honra (14–15/11/2026): `assets/decor/hon-*.webp`; só existe para quem tem arquivo (`utils/honraDecor.ts`).
-Object.assign(DECOR_ART, ARTE_DECOR_HONRA);
-
 // Decorações novas que usam a arte de outra por ora (`artAliases.ts`): outro id, mesma imagem.
-for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
-  if (DECOR_ART[from]) DECOR_ART[id] = DECOR_ART[from];
+function aplicarAliasesDeDecor(): void {
+  for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
+    if (DECOR_ART[from]) DECOR_ART[id] = DECOR_ART[from];
+  }
+}
+aplicarAliasesDeDecor();
+
+/**
+ * Arte das decorações de tema/elemento (04/11/2026, `assets/decor/<id>.webp`) e de Honra (14–15/11/2026, `assets/decor/hon-*.webp`):
+ * vivem num chunk lazy (REGISTRO §498) e entram aqui por `catalogosNovos.ts`; os aliases são refeitos depois.
+ */
+export function injetarArteDeDecor(...tabelas: ReadonlyArray<Readonly<Record<string, string>>>): void {
+  for (const t of tabelas) Object.assign(DECOR_ART, t);
+  aplicarAliasesDeDecor();
 }
