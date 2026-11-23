@@ -78,13 +78,13 @@ const pt = {
   },
   premios: {
     h2: 'Prêmios do beta',
-    p: 'O conjunto Fundador: quatro itens exclusivos para todo mundo que joga o beta, liberados conforme você joga. Os dias se somam: conta cada dia em que você conclui pelo menos 1 tarefa, mesmo que não sejam seguidos.',
+    p: 'O conjunto Fundador: quatro itens exclusivos para todo mundo que joga o beta, liberados conforme você joga. Os dias se somam: conta cada dia em que você conclui pelo menos 1 tarefa, mesmo que não sejam seguidos. Quem já tem conta recebe os quatro de uma vez.',
     // [id, nome, marco que libera, texto]. Ordem de desbloqueio.
     itens: [
-      ['background', 'Fundo Fundador', '1ª tarefa concluída', 'Um fundo exclusivo para o seu perfil.'],
-      ['moldura', 'Moldura Fundador', '3 dias com tarefa', 'Uma moldura exclusiva para o seu retrato.'],
-      ['retrato', 'Retrato Fundador', '5 dias com tarefa', 'Um retrato único para representar você.'],
-      ['cristal', 'Cristal Fundador', 'Chegar a Champion', 'Um cristal para a sua Casa. O fogo turquesa fica sempre aceso.'],
+      ['background', 'Fundo Fundador', '1 dia com tarefa', 'Um fundo exclusivo para o seu perfil.'],
+      ['moldura', 'Moldura Fundador', '2 dias com tarefa', 'Uma moldura exclusiva para o seu retrato.'],
+      ['retrato', 'Retrato Fundador', '3 dias com tarefa', 'Um retrato único para representar você.'],
+      ['cristal', 'Cristal Fundador', '5 dias com tarefa', 'Um cristal para a sua Casa. O fogo turquesa fica sempre aceso.'],
     ] as [string, string, string, string][],
   },
   entrar: {
@@ -182,12 +182,12 @@ const en: typeof pt = {
   },
   premios: {
     h2: 'Beta rewards',
-    p: 'The Founder set: four exclusive items for everyone who plays the beta, unlocked as you play. Days add up: every day you complete at least one task counts, even if they are not in a row.',
+    p: 'The Founder set: four exclusive items for everyone who plays the beta, unlocked as you play. Days add up: every day you complete at least one task counts, even if they are not in a row. Already have an account? You get all four at once.',
     itens: [
-      ['background', 'Founder Background', 'First task completed', 'An exclusive background for your profile.'],
-      ['moldura', 'Founder Frame', '3 days with a task', 'An exclusive frame for your portrait.'],
-      ['retrato', 'Founder Portrait', '5 days with a task', 'A one-of-a-kind portrait to represent you.'],
-      ['cristal', 'Founder Crystal', 'Reach Champion', 'A crystal for your House. The turquoise fire is always lit.'],
+      ['background', 'Founder Background', '1 day with a task', 'An exclusive background for your profile.'],
+      ['moldura', 'Founder Frame', '2 days with a task', 'An exclusive frame for your portrait.'],
+      ['retrato', 'Founder Portrait', '3 days with a task', 'A one-of-a-kind portrait to represent you.'],
+      ['cristal', 'Founder Crystal', '5 days with a task', 'A crystal for your House. The turquoise fire is always lit.'],
     ],
   },
   entrar: {
