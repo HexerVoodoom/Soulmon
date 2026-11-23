@@ -5984,9 +5984,10 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   border-radius: 18px 18px 0 0;
   transition: transform .2s var(--sm2-ease);
 }
-/* Durante o ARRASTO a folha desce e o véu some — o pet tem de aparecer. */
+/* Durante o ARRASTO de um item o véu some, mas a folha FICA ONDE ESTÁ: o dono
+   (22/11/2026) não quer que ela recolha para baixo ao tocar e segurar um item. */
 .sm3-arrastando { background: transparent; }
-.sm3-arrastando .sm3-mochila { transform: translateY(78%); }
+.sm3-arrastando .sm3-mochila { transform: none; }
 .sm3-mochila-alca { width: 40px; height: 4px; border-radius: 2px; background-color: var(--sm2-line); margin: 0 auto 10px; }
 .sm3-mochila-head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
 .sm3-mochila-titulo {

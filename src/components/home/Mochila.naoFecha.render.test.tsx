@@ -69,6 +69,26 @@ describe('Mochila não fecha sozinha', () => {
   });
 });
 
+describe('Mochila: tocar e segurar um item não recolhe a folha', () => {
+  it('toque longo + arrasto vertical: a folha não desce (sem translateY) e nada fecha', () => {
+    const { onClose, onUse } = montar();
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
+    act(() => {
+      fireEvent.pointerMove(document, { clientX: 10, clientY: 380, pointerType: 'touch' });
+      fireEvent.pointerMove(document, { clientX: 10, clientY: 700, pointerType: 'touch' }); // puxa PARA BAIXO
+    });
+    const bg = document.querySelector('[data-mochila]') as HTMLElement;
+    expect(bg.className).toContain('sm3-arrastando');
+    const folha = document.querySelector('.sm3-mochila') as HTMLElement;
+    expect(getComputedStyle(folha).transform).not.toMatch(/translate/);
+    act(() => { fireEvent.pointerUp(document, { clientX: 10, clientY: 700, pointerType: 'touch' }); });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onUse).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-mochila]')).toBeTruthy();
+  });
+});
+
 describe('CompanionHUD: usar item não fecha a Mochila', () => {
   it('handleUseItem não chama setMochilaOpen(false)', () => {
     const src = readFileSync('src/components/CompanionHUD.tsx', 'utf8');
