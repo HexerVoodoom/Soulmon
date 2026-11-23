@@ -90,6 +90,8 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 
 **Rodada 5 (bug, 23/11): Perfil sem voltar.** Causa: no `ModalSheet` de baixo com moldura (`SheetFrame`), a linha do ✕/voltar ficava sob a arte do topo (z 2) e sumia atrás de cipó/cristal (reproduzido em 360 px: "Edit profile", aberto por Configurações › Perfil). Correção: linha `sm2-modal-fechar-linha` sobe (z 4) e cai no vão entre o cristal do canto e a placa; vale para TODA folha de baixo com moldura. Auditoria das páginas do menu: Configurações e Oráculo usam o `AreaTopBar` (voltar em círculo, ok); o defeito era das folhas com moldura. Teste: `ModalSheet.voltarVisivel.render.test.tsx`.
 
+**Rodada 5 (bug, 23/11): erro ao abrir o APK.** Tela de erro agora traz mensagem+versão+build (também no feedback), Recarregar limpa SW/caches, chunk velho recarrega uma vez. REGISTRO §508.
+
 **Rodada 5 (processo, 23/11): `dist/` fora dos PRs.** PR de feature/arte/fix não inclui `dist/` (o Cloudflare builda); um PR `chore(dist): rebuild` por lote sob o lock `D:\locks\heavy` roda os guards de bytes/entrada/swCache contra o build real; exceção para PRs de bytes/performance. Ver REGISTRO §507.
 
 **Rodada 5 (ajuste, 23/11): Fantasma sem ampulheta.** O Fantasma (Spectrel) deixa de ser elemento de tempo para o motivo de ampulheta/relógio no prompt de sprite (`ehElementoDeTempo` exclui `fantasma`); tempo puro e demais compostos mantêm. REGISTRO §507. Teste em `motivoTempo.test.ts`.

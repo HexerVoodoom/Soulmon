@@ -6720,3 +6720,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decisão:** o Fantasma (Spectrel, morte+vida+tempo) tem `tempo` só como componente e deixa de ser tratado como elemento de tempo no prompt de sprite: some a cláusula "Time motif: at most ONE small hourglass…". O motivo segue valendo para o `tempo` puro e para todos os outros compostos que o continham.
 - **Onde:** `ehElementoDeTempo` em `src/utils/elementoCombinado.ts` (alimenta `forcar` e `motivoTempoDoElemento`). Sorteio e hashes dos 183 originais intocados.
 - **Rollback:** reverter o commit.
+
+## §508 — Tela de erro ao abrir: endurecimento e diagnóstico (23/11/2026, número provisório)
+
+O dono vê "Algo deu errado" ao abrir o APK da Play e a produção não reproduz. Sem mudar regra de jogo: (1) `vite:preloadError`/import dinâmico falho fazem UM reload por sessão (guarda em `sessionStorage`); (2) `CACHE_VERSION` do SW v263 → v264 (rotaciona o cache estático; o index nunca é servido do cache com a rede viva); (3) a tela de erro mostra `Detalhes: <mensagem> · v<versão> · <build>` também em produção (scrub, ≤300 caracteres, sem stack longo) e a mesma linha vai no e-mail de feedback; (4) Recarregar limpa caches e desregistra o SW antes do reload. O stack completo segue em `/api/crash` (`scripts/crash-report.mjs`).

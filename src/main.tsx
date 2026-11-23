@@ -17,6 +17,7 @@
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
   import { iniciarMusica } from './utils/musica';
   import { installGlobalCrashHandlers } from './utils/crashReport';
+  import { installChunkReloadHandlers } from './utils/recargaPorChunk';
   import { BetaClosedGate } from './components/BetaClosedGate';
   import { installEmbedNetworkGuard } from './utils/embedMode';
   import { carregarCatalogosNovos } from './utils/catalogosNovosLoader';
@@ -34,6 +35,8 @@
   // Diagnóstico de falhas (error + unhandledrejection) para /api/crash: leve, sem
   // SDK de terceiro, sem conteúdo do usuário. Antes do render, para pegar o crash de boot.
   installGlobalCrashHandlers();
+  // Chunk velho depois de deploy: UM reload com guarda anti-laço (`utils/recargaPorChunk.ts`).
+  installChunkReloadHandlers();
 
   // A música-TEMA (S17, 07/10/2026): só instala ouvintes de gesto. Nada toca nem
   // é baixado até o primeiro toque/clique/tecla da sessão — D11, sem autoplay cego.

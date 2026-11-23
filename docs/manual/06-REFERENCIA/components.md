@@ -936,6 +936,8 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 **Régua:** `src/components/TermsUpdateBanner.render.test.tsx` (título por `changed`, links por idioma, `region`) e `TermsUpdateBanner.qa.render.test.tsx` (desde `a6c1cd8a`: "Entendi" não dispara no render e conta 1 por clique; EN sem PT vazando; idioma desconhecido cai em inglês).
 
 ### `src/components/ErrorBoundary.tsx`
+
+**Atualização 23/11/2026:** a tela de erro mostra a linha "Detalhes: <mensagem> · v<versão> · <build>" (`detalhesDoErro`, também no link de feedback, em produção) e o botão Recarregar limpa caches/SW antes do reload (`limparSwERecarregar`).
 **Dono de:** boundary de erro de renderização do app inteiro — tela de fallback com o mascote e um botão de recarregar.
 **Props principais:** `Props` (`children`), `State` (`hasError`, `error`).
 **Exports:** `ErrorBoundary` (class). Desde `42b07bec` a tela de erro monta um `FeedbackLink` abaixo do único botão "Recarregar" (`saveId` lido direto de `STORAGE_KEYS.SAVE_ID`, `errorMessage` = `error.message`, nunca o stack).
