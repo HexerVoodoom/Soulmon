@@ -3,12 +3,14 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { EtapaAlimentar } from './EtapaAlimentar';
 import { EAT_STAGE_MS } from '../../home/FeedBubble';
+import { LONG_PRESS_MS } from '../../home/Mochila';
 
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 function arrastar(item: HTMLElement, x: number, y: number) {
   fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
+  act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 20); }); // toque longo arma o arrasto
   act(() => {
     fireEvent.pointerMove(document, { clientX: 40, clientY: 350, pointerType: 'touch' });
     fireEvent.pointerMove(document, { clientX: x, clientY: y, pointerType: 'touch' });
