@@ -17,6 +17,8 @@ import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../
 const S = CHIP_MOEDA_SLICE;
 const CHIP: import('react').CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  // `inline-flex` descarta o espaço entre o número e o rótulo (texto só de espaço vira nada num flex): o vão vem do gap (QA 23/11/2026, "0Honra").
+  gap: 'var(--sm2-space-1)',
   minWidth: 88,
   padding: '1px 4px',
   borderStyle: 'solid',
@@ -121,7 +123,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
           style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
         >
-          <CreditIcon size={16} style={{ marginInlineEnd: 4 }} />
+          <CreditIcon size={16} />
           <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
         </span>
       </div>
