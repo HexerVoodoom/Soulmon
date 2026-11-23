@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 /**
- * Pedido do dono (22/11/2026): os modais da Home NÃO fecham ao clicar num item
- * nem por qualquer outro motivo. Só o jogador fecha (X, Esc, toque no véu).
+ * Mochila (22–23/11/2026): usar item e soltar arrasto sobre o véu NÃO fecham a folha; só o jogador fecha (X, Esc, toque no véu).
+ * Arrastar RECOLHE a folha (o pet aparece), mas só depois de um toque longo: rolar a lista nunca arrasta item sem querer.
  */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { createRef } from 'react';
 import { screen, fireEvent, act } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { renderWithCss } from '../../test/renderEnv';
-import { Mochila } from './Mochila';
+import { Mochila, LONG_PRESS_MS } from './Mochila';
 
 beforeAll(() => {
   if (typeof window.PointerEvent === 'undefined') {
@@ -52,10 +52,12 @@ describe('Mochila não fecha sozinha', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('soltar um arrasto sobre o véu (fora da folha) não fecha', () => {
+  it('soltar um arrasto (armado) sobre o véu não fecha; um toque de verdade no véu, depois, fecha', () => {
+    vi.useFakeTimers();
     const { onClose } = montar();
     const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
+    act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 20); });
     act(() => {
       fireEvent.pointerMove(document, { clientX: 40, clientY: 350, pointerType: 'touch' });
       fireEvent.pointerMove(document, { clientX: 320, clientY: 40, pointerType: 'touch' });
@@ -63,29 +65,79 @@ describe('Mochila não fecha sozinha', () => {
     act(() => { fireEvent.pointerUp(document, { clientX: 320, clientY: 40, pointerType: 'touch' }); });
     fireEvent.click(document.querySelector('[data-mochila]') as HTMLElement);
     expect(onClose).not.toHaveBeenCalled();
-    // um toque de verdade no véu, depois, ainda fecha
     fireEvent.click(document.querySelector('[data-mochila]') as HTMLElement);
     expect(onClose).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });
 
-describe('Mochila: tocar e segurar um item não recolhe a folha', () => {
-  it('toque longo + arrasto vertical: a folha não desce (sem translateY) e nada fecha', () => {
+const dedoNoItem = () => {
+  const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
+  fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
+  return item;
+};
+
+describe('Mochila: rolar a lista x arrastar o item (dono, 23/11/2026)', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('(a) mover na vertical ANTES do toque longo é rolagem: não arrasta, não recolhe, não usa', () => {
+    vi.useFakeTimers();
     const { onClose, onUse } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
-    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
-    act(() => {
-      fireEvent.pointerMove(document, { clientX: 10, clientY: 380, pointerType: 'touch' });
-      fireEvent.pointerMove(document, { clientX: 10, clientY: 700, pointerType: 'touch' }); // puxa PARA BAIXO
-    });
-    const bg = document.querySelector('[data-mochila]') as HTMLElement;
-    expect(bg.className).toContain('sm3-arrastando');
-    const folha = document.querySelector('.sm3-mochila') as HTMLElement;
-    expect(getComputedStyle(folha).transform).not.toMatch(/translate/);
-    act(() => { fireEvent.pointerUp(document, { clientX: 10, clientY: 700, pointerType: 'touch' }); });
-    expect(onClose).not.toHaveBeenCalled();
+    dedoNoItem();
+    act(() => { fireEvent.pointerMove(document, { clientX: 10, clientY: 370, pointerType: 'touch' }); });
+    act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 50); }); // o tempo passa, mas o gesto já foi desistido
+    act(() => { fireEvent.pointerMove(document, { clientX: 12, clientY: 300, pointerType: 'touch' }); });
+    expect((document.querySelector('[data-mochila]') as HTMLElement).className).not.toContain('sm3-arrastando');
+    expect(document.querySelector('[data-fantasma], .sm3-fantasma')).toBeNull();
+    act(() => { fireEvent.pointerUp(document, { clientX: 12, clientY: 300, pointerType: 'touch' }); });
     expect(onUse).not.toHaveBeenCalled();
-    expect(document.querySelector('[data-mochila]')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('(b) toque longo + mover arma o arrasto e a folha recolhe (para o pet aparecer)', () => {
+    vi.useFakeTimers();
+    montar();
+    dedoNoItem();
+    act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 20); });
+    act(() => { fireEvent.pointerMove(document, { clientX: 40, clientY: 350, pointerType: 'touch' }); });
+    expect((document.querySelector('[data-mochila]') as HTMLElement).className).toContain('sm3-arrastando');
+  });
+
+  it('(c) soltar sobre o pet usa o item', () => {
+    vi.useFakeTimers();
+    const { onUse, onClose } = montar();
+    dedoNoItem();
+    act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 20); });
+    act(() => {
+      fireEvent.pointerMove(document, { clientX: 60, clientY: 300, pointerType: 'touch' });
+      fireEvent.pointerMove(document, { clientX: 150, clientY: 150, pointerType: 'touch' });
+    });
+    act(() => { fireEvent.pointerUp(document, { clientX: 150, clientY: 150, pointerType: 'touch' }); });
+    expect(onUse).toHaveBeenCalledWith('🍎');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('(d) soltar fora do pet cancela: nada é usado e a folha volta', () => {
+    vi.useFakeTimers();
+    const { onUse, onClose } = montar();
+    dedoNoItem();
+    act(() => { vi.advanceTimersByTime(LONG_PRESS_MS + 20); });
+    act(() => {
+      fireEvent.pointerMove(document, { clientX: 60, clientY: 300, pointerType: 'touch' });
+      fireEvent.pointerMove(document, { clientX: 320, clientY: 40, pointerType: 'touch' });
+    });
+    act(() => { fireEvent.pointerUp(document, { clientX: 320, clientY: 40, pointerType: 'touch' }); });
+    expect(onUse).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect((document.querySelector('[data-mochila]') as HTMLElement).className).not.toContain('sm3-arrastando');
+  });
+
+  it('o item deixa a rolagem vertical passar (touch-action: pan-y no CSS)', () => {
+    const css = readFileSync('src/index.css', 'utf8');
+    const i = css.indexOf('.sm3-item {\n  display: flex');
+    expect(i).toBeGreaterThan(0);
+    expect(css.slice(i, css.indexOf('}', i))).toMatch(/touch-action:\s*pan-y/);
+    expect(css).toMatch(/\.sm3-arrastando \.sm3-mochila \{ transform: translateY\(78%\)/);
   });
 });
 
