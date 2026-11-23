@@ -630,6 +630,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `EditHomeProps` — `language`, `ownedFurniture`, `equippedDecor`, `equippedBackground`, `onSave(decor)`, `onClose`, `onOpenShop?`.
 **Exports:** `EditHomeScreen`, `EditHomeProps`.
 **Estado/efeitos relevantes:** `draft` (cópia de `equippedDecor`) e `picking` (espaço aberto); reusa `PetStageDecor` para desenhar o rascunho; Salvar só fica ativo com mudança; o pet fica de fora.
+**Cristal Fundador (§511):** peça com `slotsPermitidos:'chao'` desenha em qualquer espaço de chão (caixa via `slotParaItem`), no máximo uma vez; fora do chão ou duplicada não desenha.
 **Chamado por:** `components/SettingsPage.tsx` (`profile.editHome`, montado no `App.tsx` com `handleSaveHomeDecor`, que grava o mesmo `equippedDecor` da loja).
 **Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
 

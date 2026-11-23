@@ -6761,3 +6761,12 @@ O dono vê "Algo deu errado" ao abrir o APK da Play e a produção não reproduz
 - **Alternativa que perdeu:** `cache.addAll` dentro do SW com mensagem (exigiria bump do SW e duplicaria o teto/limpeza que já existem). **Falsifica:** o índice não existir em produção (o Cloudflare roda `npm run build`), a fila competir com a geração do sprite do onboarding, ou o cache passar de 25% da quota.
 - **Rollback:** reverter o commit; o índice some do build e nada no cache fica incoerente (só chunks/artes já baixados, que são os mesmos que o app pediria).
 - **PR sem `dist/`** (§506): o índice só existe no build do Cloudflare; o teste de contrato usa fixture.
+
+## §511 — Cristal Fundador em QUALQUER espaço de chão (23/11/2026, decisão do dono; número provisório, conferir colisão no merge)
+
+- **Regra:** o Cristal (`furn-cristal-fundador`) pode ficar em `rug`, `floor-left` ou `floor-right` (`CHAO_SLOTS`, `utils/petStage.ts`); o jogador escolhe no seletor de qualquer um desses espaços (Editar Home). A vitrine (`trophy`) e a parede ficam de fora.
+- **Como:** campo ADITIVO `slotsPermitidos?: 'chao'` em `ShopItem` (`slot: 'floor-right'` segue como padrão/legado). `itemCabeNoSlot(item, slot)` é a regra única (sem o campo = só o `slot` dele, os outros itens não mudam). `decorOptionsForSlot` usa-a; no tapete a peça usa a caixa de móvel em pé centrada nele (`slotParaItem`), porque a caixa do tapete é deitada.
+- **Um cristal só:** `applyDecorEquip` tira o item de qualquer outro espaço antes de pô-lo; no desenho, save adulterado (2 espaços ou espaço proibido) desenha no máximo um e só em chão. Halo e fogo seguem a caixa do espaço (`x/y/d` de `DECOR_LUZ` relativos à caixa).
+- **Save:** `equippedDecor` mantém o formato (slot→id); save antigo com o cristal em `floor-right` segue válido; id desconhecido não quebra. O servidor (`functions/api/save.js`) NÃO valida `equippedDecor` por slot (confirmado por busca), então não há espelho a manter.
+- **Alternativa descartada:** liberar cada item em vários espaços por `fits` (acoplado a cenário, não a espaço) ou duplicar o cristal por espaço.
+

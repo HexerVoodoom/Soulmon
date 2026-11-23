@@ -50,6 +50,8 @@ export interface ShopItem {
   /** Só em kind:'furniture'. ESPAÇO do palco que o item ocupa (utils/petStage.ts).
    *  Equipar troca o que estava naquele espaço — não empilha. */
   slot?: SlotId;
+  /** Aditivo, só em kind:'furniture'. 'chao' = o jogador escolhe QUALQUER espaço de chão (`CHAO_SLOTS`, petStage.ts); `slot` segue sendo o espaço padrão/legado. Um item só ocupa UM espaço por vez. */
+  slotsPermitidos?: 'chao';
   /** Só em kind:'furniture'. Em que tipo de cenário o item faz sentido. Um sofá
    *  numa planície de neve não é charme, é erro de composição. */
   fits?: DecorFit;

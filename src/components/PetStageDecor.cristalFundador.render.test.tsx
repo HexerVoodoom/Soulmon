@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
-import { decorFitsSetting } from '../utils/petStage';
+import { decorFitsSetting, CHAO_SLOTS, DECOR_SLOTS, itemCabeNoSlot, slotParaItem, applyDecorEquip, type SlotId } from '../utils/petStage';
+import { decorOptionsForSlot, pickDecor, type DecorMap } from '../utils/editHome';
 import { ALL_SHOP_ITEMS, SHOP_ITEMS, TOURNAMENT_ITEMS } from '../utils/shop';
 
 const ID = 'furn-cristal-fundador';
@@ -63,5 +64,51 @@ describe('Cristal Fundador', () => {
     expect(css).toMatch(/\.sm-decor-chama\s*\{[^}]*steps\(4, jump-none\)/);
     const reduzido = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)', css.indexOf('MOVIMENTO REDUZIDO')));
     expect(reduzido.slice(0, reduzido.indexOf('}\n}'))).toMatch(/\.sm-decor-chama,[\s\S]*animation: none !important/);
+  });
+});
+
+describe('Cristal Fundador em qualquer espaço de chão', () => {
+  const item = () => ALL_SHOP_ITEMS.find(i => i.id === ID)!;
+  const cenaCom = (slot: SlotId) => {
+    const bgId = Object.keys(PET_BACKGROUNDS).find(k => PET_BACKGROUNDS[k].slots.includes(slot) && decorFitsSetting('any', PET_BACKGROUNDS[k].setting))!;
+    return { bgId, slot };
+  };
+  it('declara slotsPermitidos chao e cabe em rug, canto esquerdo e direito (não na vitrine nem na parede)', () => {
+    expect(item().slotsPermitidos).toBe('chao');
+    for (const s of CHAO_SLOTS) expect(itemCabeNoSlot(item(), s)).toBe(true);
+    expect(itemCabeNoSlot(item(), 'trophy')).toBe(false);
+    expect(itemCabeNoSlot(item(), 'wall')).toBe(false);
+    expect(CHAO_SLOTS).toEqual(['rug', 'floor-left', 'floor-right']);
+  });
+  it.each(CHAO_SLOTS.map(s => [s]))('desenha halo e fogo no espaço %s', (s) => {
+    const { bgId, slot } = cenaCom(s as SlotId);
+    const c = renderWithCss(<CompanionHUD {...base} equippedBackground={bgId} equippedDecor={{ [slot]: ID }} isSleeping={false} />).container;
+    expect(c.querySelectorAll('.sm-decor-luz-halo').length).toBe(1);
+    expect(c.querySelectorAll('[data-decor-chama]').length).toBe(1);
+  });
+  it('save adulterado com o cristal em 2 espaços ou em espaço proibido: desenha no máximo um', () => {
+    const { bgId } = cenaCom('floor-left');
+    const dup = renderWithCss(<CompanionHUD {...base} equippedBackground={bgId} equippedDecor={{ 'floor-left': ID, 'floor-right': ID }} isSleeping={false} />).container;
+    expect(dup.querySelectorAll('[data-decor-chama]').length).toBe(1);
+    const prib = renderWithCss(<CompanionHUD {...base} equippedBackground={bgId} equippedDecor={{ wall: ID }} isSleeping={false} />).container;
+    expect(prib.querySelectorAll('[data-decor-chama]').length).toBe(0);
+  });
+  it('seletor: o cristal aparece em todo espaço de chão que o cenário oferece e some dos demais', () => {
+    const bgId = Object.keys(PET_BACKGROUNDS).find(k => CHAO_SLOTS.every(s => PET_BACKGROUNDS[k].slots.includes(s)) && PET_BACKGROUNDS[k].setting !== 'void')!;
+    for (const s of CHAO_SLOTS) expect(decorOptionsForSlot(s, bgId, [ID]).map(i => i.id)).toEqual([ID]);
+    expect(decorOptionsForSlot('wall', bgId, [ID])).toEqual([]);
+    expect(decorOptionsForSlot('trophy', bgId, [ID])).toEqual([]);
+  });
+  it('um cristal só: escolher em outro espaço tira do anterior; save antigo (floor-right) segue válido', () => {
+    const antigo: DecorMap = { 'floor-right': ID, wall: 'furn-x' };
+    expect(pickDecor(antigo, 'floor-left', ID)).toEqual({ 'floor-left': ID, wall: 'furn-x' });
+    expect(pickDecor(antigo, 'floor-right', null)).toEqual({ wall: 'furn-x' });
+    expect(applyDecorEquip({ rug: 'furn-desconhecido' }, ID, 'floor-right')).toEqual({ rug: 'furn-desconhecido', 'floor-right': ID });
+  });
+  it('no tapete a caixa é a de móvel em pé, centrada no tapete', () => {
+    const b = slotParaItem(item(), 'rug');
+    expect(b.anchor).toBe('ground');
+    expect(b.x).toBe(DECOR_SLOTS.rug.x);
+    expect(slotParaItem(item(), 'floor-left')).toBe(DECOR_SLOTS['floor-left']);
   });
 });
