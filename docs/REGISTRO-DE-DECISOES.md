@@ -6714,3 +6714,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Evidência.** Cada merge na main mexe em centenas de arquivos hasheados de `dist/`; todo PR com `dist/` conflita depois de ~6 min de CI e cada rebase exige novo build (máquina com pouca RAM). O Cloudflare builda sozinho: #1130 e #1122 foram mergeados sem `dist/` e a mudança apareceu no app do dono (`wrangler.jsonc` aponta `main`/`assets` para `./dist`; o Workers Builds roda e builda no PR).
 
 **Risco.** Os testes `src/deploy/orcamentoDeBytes.contract.test.ts`, `entradaEnxuta` e `swCache.contract.test.ts` leem o `dist/` COMMITADO ("exige npm run build antes"). Sem `dist/` atualizado, medem um build velho: passam sem proteger. Por isso o PR de rebuild por lote é obrigatório, não opcional.
+
+## §507 — Fantasma não leva o motivo de ampulheta/relógio (23/11/2026, pedido do dono)
+
+- **Decisão:** o Fantasma (Spectrel, morte+vida+tempo) tem `tempo` só como componente e deixa de ser tratado como elemento de tempo no prompt de sprite: some a cláusula "Time motif: at most ONE small hourglass…". O motivo segue valendo para o `tempo` puro e para todos os outros compostos que o continham.
+- **Onde:** `ehElementoDeTempo` em `src/utils/elementoCombinado.ts` (alimenta `forcar` e `motivoTempoDoElemento`). Sorteio e hashes dos 183 originais intocados.
+- **Rollback:** reverter o commit.

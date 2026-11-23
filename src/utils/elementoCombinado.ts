@@ -21,7 +21,8 @@ import { descritorDoElemento, chromaHueCarregado } from './elementoDescritoresSt
 import { umMotivoDeTempo, motivosNoTexto, type MotivoTempo } from './motivoTempo';
 
 /** O elemento é de TEMPO (o próprio `tempo` ou qualquer combinado que o tenha como componente, de 2, 3 ou 4). */
-export const ehElementoDeTempo = (id: string): boolean => (essenceComposition(id) ?? []).includes('tempo');
+/** O FANTASMA (morte+vida+tempo) leva `tempo` só como componente: não é elemento de tempo para o motivo de ampulheta/relógio (dono, 23/11/2026, REGISTRO §507). */
+export const ehElementoDeTempo = (id: string): boolean => id !== 'fantasma' && (essenceComposition(id) ?? []).includes('tempo');
 
 /** Variantes que pendem para a AMPULHETA (areia, ruína, decadência, crescimento lento) e para o RELÓGIO (mecânico, velocidade, compasso). */
 const COMPONENTES_AMPULHETA: ReadonlySet<string> = new Set(['terra', 'agua', 'fogo', 'vileza', 'morte', 'sombra', 'vida', 'planta']);
