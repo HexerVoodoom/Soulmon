@@ -368,7 +368,8 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
       }
     }
     expect([...achou.keys()].sort()).toEqual([...ELS, ...ULTIMATES_2COMP_DATA.map(d => d[1])].sort());
-  });
+  // timeout próprio: o laço (3000 sementes x 5 rodadas x elementos) leva ~9 s local e ~17 s no CI, acima do padrão de 15 s (flake)
+  }, 60_000);
   it('Arena Desgarrada e Desgarrado do Torneio não recebem forma paralela', () => {
     for (let seed = 1; seed <= 1500; seed++) for (let r = 1; r <= 5; r++) for (const e of buildArenaRound(r, 1, mulberry32(seed * 13 + r), undefined, true, false, ARENA_BASE_ELEMENTS[seed % ARENA_BASE_ELEMENTS.length], 32)) expect(e.paraleloKey).toBeUndefined();
     for (let d = 1; d <= 400; d++) expect(strayForTournament('conta', `2026-11-${d}`).kind).not.toBe('paralelo');
