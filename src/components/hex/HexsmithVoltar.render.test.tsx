@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Spec do dono (16/11/2026, 16.2): o modal PRINCIPAL da Hexsmith mantém o ✕ (fecha tudo); toda tela INTERNA (Porta, renomear,
- * confirmação do renomear) troca o ✕ por Voltar, que volta UM nível sem fechar o principal. Sem controle de fechar duplicado.
+ * confirmação do renomear) tem Voltar que volta UM nível sem fechar o principal. 23/11/2026: o Voltar mora no medalhão ESQUERDO da moldura de aço (nunca no corpo) e o ✕ principal no DIREITO, ativo, fechando tudo.
  * Montado como em produção: `AreaSheet moldura="aco"` (✕ do principal) com a `HexsmithSheet` dentro, em 360/375/412 px.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -66,24 +66,44 @@ for (const largura of [360, 375, 412]) {
     });
 
     for (const t of TELAS) {
-      it(`${t.nome}: tem Voltar, sem ✕ duplicado; Voltar volta ao mapa e o principal segue aberto`, async () => {
+      it(`${t.nome}: Voltar no medalhão ESQUERDO (não no corpo), ✕ no DIREITO ativo; Voltar volta um nível`, async () => {
         abrir();
         await t.abre();
         expect(q(t.esperado)).toBeTruthy();
         const dlg = interno()!;
         expect(dlg).toBeTruthy();
-        expect(dlg.querySelectorAll('[data-back-circle]')).toHaveLength(1);
+        // nenhuma seta no corpo nem controle de fechar dentro da tela interna
+        expect(document.querySelectorAll('[data-back-circle]')).toHaveLength(0);
+        expect(dlg.querySelectorAll('[data-aco-voltar]')).toHaveLength(0);
         expect(fechaveis(dlg)).toHaveLength(0);
-        // o ✕ do principal é o ÚNICO ✕ do conjunto (apagado enquanto a tela interna está por cima)
-        const todos = document.querySelectorAll('[data-area-sheet-close]');
+        // Voltar: UM, no medalhão esquerdo da moldura
+        const voltar = document.querySelectorAll<HTMLElement>('[data-aco-voltar]');
+        expect(voltar).toHaveLength(1);
+        expect(voltar[0].closest('[data-area-sheet]')).toBeTruthy();
+        expect(dlg.contains(voltar[0])).toBe(false);
+        expect(voltar[0].getAttribute('aria-label')).toBe('Voltar');
+        expect(voltar[0].hasAttribute('disabled')).toBe(false);
+        // ✕ principal: UM, no medalhão direito, visível e ativo
+        const todos = document.querySelectorAll<HTMLElement>('[data-area-sheet-close]');
         expect(todos).toHaveLength(1);
-        expect(todos[0].closest('[data-area-sheet]')).toBeTruthy();
-        await click(dlg.querySelector('[data-back-circle]')!);
+        expect(todos[0].classList.contains('sm2-moldura-aco__fechar--dir')).toBe(true);
+        expect(todos[0].hasAttribute('disabled')).toBe(false);
+        expect(todos[0].hasAttribute('data-modal-dimmed')).toBe(false);
+        expect(dlg.contains(todos[0])).toBe(false);
+        await click(voltar[0]);
         expect(document.querySelector(t.esperado)).toBeNull();
         expect(document.querySelector('[data-area-sheet]')).toBeTruthy();
         expect(q('[data-hex-map]')).toBeTruthy();
         expect(onClosePrincipal).not.toHaveBeenCalled();
+        expect(document.querySelector('[data-aco-voltar]')).toBeNull();
         // de volta ao mapa, o ✕ principal fecha tudo
+        await click(document.querySelector('[data-area-sheet-close]')!);
+        expect(onClosePrincipal).toHaveBeenCalledTimes(1);
+      });
+
+      it(`${t.nome}: o ✕ do medalhão direito fecha o fluxo inteiro`, async () => {
+        abrir();
+        await t.abre();
         await click(document.querySelector('[data-area-sheet-close]')!);
         expect(onClosePrincipal).toHaveBeenCalledTimes(1);
       });
@@ -106,12 +126,12 @@ for (const largura of [360, 375, 412]) {
       await act(async () => { fireEvent.change(q('#hex-rename-input'), { target: { value: 'Brasa' } }); });
       await click(q('[data-hex-rename-go]'));
       expect(q('[data-hex-rename-confirm]')).toBeTruthy();
-      const dlg = interno()!;
-      expect(dlg.querySelectorAll('[data-back-circle]')).toHaveLength(1);
-      await click(dlg.querySelector('[data-back-circle]')!);
+      expect(document.querySelectorAll('[data-back-circle]')).toHaveLength(0);
+      expect(document.querySelectorAll('[data-aco-voltar]')).toHaveLength(1);
+      await click(q('[data-aco-voltar]'));
       expect(document.querySelector('[data-hex-rename-confirm]')).toBeNull();
       expect(q('[data-hex-rename-panel="pet"]')).toBeTruthy();
-      await click(interno()!.querySelector('[data-back-circle]')!);
+      await click(q('[data-aco-voltar]'));
       expect(document.querySelector('[data-hex-rename-panel]')).toBeNull();
       expect(onClosePrincipal).not.toHaveBeenCalled();
     });

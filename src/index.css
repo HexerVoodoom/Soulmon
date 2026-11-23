@@ -6211,6 +6211,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   &:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -6px; }
   &:disabled { opacity: .45; cursor: default; }
 }
+/* Tela interna aberta: o ✕ muda para o disco DIREITO (centro em x 635 / y 90,5 do topo 720×164) e o Voltar ocupa o esquerdo. */
+.sm2-moldura-aco__fechar--dir { left: calc(var(--u) * 88.19); top: calc(var(--u) * 12.57); }
 /* CRISTAL-CHAMA reutilizável (`ui/CristalChama.tsx`): `--u` do pai; `--cristal-w`/`--cristal-top` em `u`. Brilho pulsante opcional (`data-pulsar`). */
 .sm2-cristal-chama {
   position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * var(--cristal-top, -14)); width: calc(var(--u) * var(--cristal-w, 17)); height: auto;
