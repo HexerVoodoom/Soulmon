@@ -1,7 +1,8 @@
 import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
-import { dexElementName } from './ElementDex';
+import { dexElementName, ElementModal } from './ElementModal';
+import { dexUnlockedSet } from '../utils/elementDex';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGES } from '../utils/enemyRoster';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -56,12 +57,15 @@ function Acordeao({ id, titulo, contagem, aberto, onToggle, children }: { id: st
 }
 
 /** Bosses ainda não têm registro de "visto" no save (REGISTRO §475): `bossesSeen` vazio = todos em silhueta. */
-export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases, bossesSeen }: { seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[]; bossesSeen?: readonly string[] }) {
+export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases, bossesSeen, defeatedElements }: { defeatedElements?: readonly string[]; seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[]; bossesSeen?: readonly string[] }) {
   const isPt = language === 'pt-BR';
   const seenSet = useMemo(() => new Set((seen ?? []).filter(k => ENEMY_ROSTER_KEYS.has(k))), [seen]);
   // Ordem por estágio (sort estável: dentro do estágio vale a ordem do roster); a posição na lista é o número `#N`.
   const entries = useMemo(() => [...ENEMY_ROSTER].sort((a, b) => ENEMY_STAGES.indexOf(a.stage) - ENEMY_STAGES.indexOf(b.stage)), []);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  // P5/24.6: o ícone do elemento da criatura abre o MESMO modal do dex, só se o elemento já foi destrancado.
+  const [elemId, setElemId] = useState<string | null>(null);
+  const elemUnlocked = useMemo(() => dexUnlockedSet(defeatedElements), [defeatedElements]);
   const [fechados, setFechados] = useState<string[]>(lerFechados);
   const alternar = useCallback((id: string) => setFechados(prev => {
     const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
@@ -150,13 +154,20 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
               <img src={rosterSpriteOf(openEntry)} alt="" aria-hidden="true" draggable={false} width={160} height={160}
                 style={{ width: 160, height: 160, imageRendering: 'pixelated', objectFit: 'contain' }} />
             )}
-            <p className="sm2-lib-s" data-bestiary-element={openEntry.element} style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--sm2-ink)' }}>
-              {elementIcon(openEntry.element) && <img src={elementIcon(openEntry.element)} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
-              <span>{isPt ? 'Elemento' : 'Element'}: {dexElementName(openEntry.element, isPt)}</span>
+            <p className="sm2-lib-s" data-bestiary-element={openEntry.element} style={{ margin: 0, color: 'var(--sm2-ink)' }}>
+              {elemUnlocked.has(openEntry.element) ? (
+                <button type="button" data-bestiary-element-open={openEntry.element} onClick={() => setElemId(openEntry.element)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, padding: 0, background: 'none', border: 0, cursor: 'pointer', color: 'inherit', font: 'inherit' }}>{elementIcon(openEntry.element) && <img src={elementIcon(openEntry.element)} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
+              <span>{isPt ? 'Elemento' : 'Element'}: {dexElementName(openEntry.element, isPt)}</span></button>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{elementIcon(openEntry.element) && <img src={elementIcon(openEntry.element)} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
+              <span>{isPt ? 'Elemento' : 'Element'}: {dexElementName(openEntry.element, isPt)}</span></span>
+              )}
             </p>
           </div>
         </RitualDialog>
       )}
+      {elemId && <ElementModal id={elemId} unlocked={elemUnlocked} isPt={isPt} onClose={() => setElemId(null)} />}
     </section>
   );
 }

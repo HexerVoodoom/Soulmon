@@ -6681,3 +6681,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 **Decisão:** pedido do dono: custo em poções da Hexsmith 3 → 1. `HEX_COSTS.element.potions` = 1 no cliente (`src/utils/hexsmith.ts`) e no servidor (`functions/api/_hexsmith.js`, `hexsmith.parity.test.js`). Coroa e luvas seguem com 0 poções; Bits e fragmentos não mudam. Peças já forjadas não mudam (posse só cresce); só o custo daqui para a frente. Textos (`hexsmithCopy.ts`, GuideModal, manual) atualizados em PT/EN.
 
 **Alternativa que perdeu:** manter 3 poções. **Falsifica:** forja de elemento recusando com 1 poção em estoque, ou cliente e servidor com custos diferentes (`hexsmith.parity.test.js`). **Rollback:** reverter o PR. **APK:** nada.
+
+## §504 — Drive de Elementos: categorias, filtro Novo, constituintes clicáveis e elemento da criatura (23/11/2026, pedido P5/24; número provisório, conferir colisão no merge)
+
+- **Decisão:** a aba Elementos ganha chips de categoria (Base, Comb II, Comb III, Comb IV, Special, por nº de componentes) e a caixa "Novo" (só destrancados com selo); tudo combina em E com o filtro por bases. A ficha vira `ElementModal`: cada componente destrancado abre a ficha dele (pilha, "Voltar" de um nível, X fecha tudo); trancado segue "?". O ícone do elemento da criatura no Bestiário abre o mesmo modal, só se o elemento já foi destrancado.
+- **Special = só Neutral:** não existe elemento Nightmare no dex (Pesadelo é modo de jogo). **Fora:** filtro "Novo" em Soulmons e ícone da criatura em outras telas (ficha, formas do pet).
+- **Rollback:** reverter o commit; nenhum dado de save mudou.

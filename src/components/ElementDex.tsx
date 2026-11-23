@@ -1,77 +1,56 @@
 import { useMemo, useState } from 'react';
-import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
-import { elementLabel } from '../utils/arena';
-import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
-import { LIBRARY_ELEMENT_IDS, BASE_ELEMENT_IDS, dexUnlockedSet, elementComponents } from '../utils/elementDex';
-import { curatedComponents, curatedElementName, isCuratedElement } from '../utils/elementosCurados';
+import { LIBRARY_ELEMENT_IDS, dexUnlockedSet, elementComponents } from '../utils/elementDex';
+import { curatedComponents } from '../utils/elementosCurados';
 import { NewBadge } from './LibraryNewBadge';
-import { elementMatchups } from '../utils/elementDexMatchups';
 import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
 import { compositionHasBases, selectedBases } from '../utils/elementPotion';
-import { textoDoElementoBase } from '../utils/elementoTextos.data';
+import { ElementModal, dexElementName } from './ElementModal';
+import { ELEMENTO_CATEGORIAS, ELEMENTO_CATEGORIA_ROTULO, elementoCategoria, type ElementoCategoria } from '../utils/elementoCategoria';
 
 /**
  * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 59 curados (205–207, 212–267) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
  * no aria: o id não vai para o DOM da célula trancada). Destranca ao vencer um inimigo identificado (`utils/elementDex.ts`). Tocar
- * num destrancado abre a ficha: ícone grande, nome, composição (derivado) e forte/fraco contra — o que ainda está trancado ali
- * também aparece como "?". Ícone pelado (nunca dentro de box).
+ * num destrancado abre a ficha (`ElementModal`, P5/24: constituintes clicáveis e Voltar). Filtros combinam em E: categoria
+ * (Base/Comb II/III/IV/Special), "Novo" e bases. Ícone pelado (nunca dentro de box).
  */
-const BASE_SET: ReadonlySet<string> = new Set(BASE_ELEMENT_IDS);
-export const dexElementName = (id: string, isPt: boolean): string =>
-  BASE_SET.has(id) ? elementLabel(id, isPt) : isCuratedElement(id) ? curatedElementName(id, isPt) : (isPt ? elementoNomeDe(id).pt : elementoNomeDe(id).en);
-
-function ElementRef({ id, open, isPt }: { id: string; open: boolean; isPt: boolean }) {
-  const icon = open ? elementIcon(id) : undefined;
-  return (
-    <li data-dex-ref={open ? id : undefined} data-open={open ? '1' : '0'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 32 }}>
-      {open ? (
-        <>
-          {icon && <img src={icon} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
-          <span className="sm2-lib-s" style={{ color: 'var(--sm2-ink)' }}>{dexElementName(id, isPt)}</span>
-        </>
-      ) : (
-        <span className="sm2-lib-s sm-dex-lock sm-dex-lock--sm" aria-label={isPt ? 'Elemento ainda trancado' : 'Element still locked'}>?</span>
-      )}
-    </li>
-  );
-}
-
-function RefList({ title, ids, unlocked, isPt }: { title: string; ids: readonly string[]; unlocked: ReadonlySet<string>; isPt: boolean }) {
-  return (
-    <div>
-      <p className="sm2-lib-s" style={{ margin: '0 0 4px' }}>{title}</p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-        {ids.map(id => <ElementRef key={id} id={id} open={unlocked.has(id)} isPt={isPt} />)}
-      </ul>
-    </div>
-  );
-}
+export { dexElementName };
 
 export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string> }) {
   const isPt = language === 'pt-BR';
   const unlocked = useMemo(() => dexUnlockedSet(defeated), [defeated]);
   const [openId, setOpenId] = useState<string | null>(null);
-  // Filtro por bases (o mesmo do Cambista): com filtro, só os já destrancados que batem (trancado não revela composição).
   const [bases, setBases] = useState<(string | null)[]>(emptySlots);
-  const filtering = selectedBases(bases).length > 0;
-  const shown = filtering
-    ? LIBRARY_ELEMENT_IDS.filter(id => unlocked.has(id) && compositionHasBases(elementComponents(id) ?? curatedComponents(id) ?? [id], bases))
-    : LIBRARY_ELEMENT_IDS;
+  const [cat, setCat] = useState<ElementoCategoria | null>(null);
+  const [soNovos, setSoNovos] = useState(false);
+  const baseFiltering = selectedBases(bases).length > 0;
+  const filtering = baseFiltering || cat !== null || soNovos;
+  // Trancado nunca revela composição nem selo: com filtro de bases ou "Novo", só destrancados.
+  const shown = LIBRARY_ELEMENT_IDS.filter(id =>
+    (cat === null || elementoCategoria(id) === cat)
+    && (!soNovos || (unlocked.has(id) && !!isNew?.has(id)))
+    && (!baseFiltering || (unlocked.has(id) && compositionHasBases(elementComponents(id) ?? curatedComponents(id) ?? [id], bases))));
   const count = LIBRARY_ELEMENT_IDS.filter(id => unlocked.has(id)).length;
-  const comps = openId ? (elementComponents(openId) ?? curatedComponents(openId)) : undefined;
-  // Curado: a vantagem é a do 1º componente (o dominante, que dá os golpes); neutro não tem anel (listas vazias).
-  const m = openId ? (openId === 'neutro' ? { strong: [], weak: [] } : elementMatchups(curatedComponents(openId)?.[0] ?? openId)) : undefined;
   return (
     <section data-element-dex aria-label={isPt ? 'Elementos' : 'Elements'}>
       <p className="sm2-lib-s" style={{ margin: '0 0 8px' }}>
         <span className="sm2-num" data-element-count>{count} / {LIBRARY_ELEMENT_IDS.length}</span>
       </p>
+      <div role="group" aria-label={isPt ? 'Categoria' : 'Category'} data-element-categories style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', margin: '0 0 12px' }}>
+        {ELEMENTO_CATEGORIAS.map(c => (
+          <button key={c} type="button" data-element-cat={c} aria-pressed={cat === c} className={cat === c ? 'sm2-kit-chip sm2-kit-chip-on' : 'sm2-kit-chip'}
+            onClick={() => setCat(cat === c ? null : c)}>{ELEMENTO_CATEGORIA_ROTULO[c][isPt ? 'pt' : 'en']}</button>
+        ))}
+        <label data-element-only-new style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, cursor: 'pointer' }}>
+          <input type="checkbox" checked={soNovos} onChange={e => setSoNovos(e.target.checked)} />
+          <span className="sm2-lib-s">{isPt ? 'Novo' : 'New'}</span>
+        </label>
+      </div>
       <div style={{ margin: '0 0 12px' }} data-base-filter>
         <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, v) => setBases(s => s.map((x, j) => (j === i ? v : x)))} />
       </div>
       {filtering && shown.length === 0 && (
-        <p className="sm2-lib-s" data-filter-empty style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Nenhum elemento com essas bases.' : 'No element with these bases.'}</p>
+        <p className="sm2-lib-s" data-filter-empty style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>{baseFiltering ? (isPt ? 'Nenhum elemento com essas bases.' : 'No element with these bases.') : (isPt ? 'Nenhum elemento com esse filtro.' : 'No element matches this filter.')}</p>
       )}
       <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
         {shown.map((id, i) => {
@@ -98,22 +77,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
           );
         })}
       </ul>
-      {openId && m && (
-        <RitualDialog onClose={() => setOpenId(null)} labelledBy="sm2-dex-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
-          <h2 id="sm2-dex-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
-            {dexElementName(openId, isPt)}
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
-            {elementIcon(openId) && <img src={elementIcon(openId)} alt="" aria-hidden="true" width={96} height={96} draggable={false} style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />}
-            <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {textoDoElementoBase(openId, isPt) && <p className="sm2-lib-s" data-element-text style={{ margin: 0 }}>{textoDoElementoBase(openId, isPt)}</p>}
-              {comps && <RefList title={isPt ? 'Composição' : 'Composition'} ids={comps} unlocked={unlocked} isPt={isPt} />}
-              <RefList title={isPt ? 'Forte contra' : 'Strong against'} ids={m.strong} unlocked={unlocked} isPt={isPt} />
-              <RefList title={isPt ? 'Fraco contra' : 'Weak against'} ids={m.weak} unlocked={unlocked} isPt={isPt} />
-            </div>
-          </div>
-        </RitualDialog>
-      )}
+      {openId && <ElementModal id={openId} unlocked={unlocked} isPt={isPt} onClose={() => setOpenId(null)} />}
     </section>
   );
 }
