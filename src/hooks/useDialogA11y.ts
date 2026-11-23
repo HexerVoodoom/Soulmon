@@ -188,6 +188,8 @@ function hideOthers(node: HTMLElement): () => void {
       // intocável sob a folha — o jogo "trava" até fechar o app. Quem está por cima não vira inerte por quem veio depois.
       // Mesma regra para o modal da retrospectiva semanal (`data-dialog-top`, z 240, portal no body): um aviso que monte DEPOIS dele
       // (ex.: introdução do bônus, fila de avisos) não pode inertizá-lo, senão o de cima fica sem scroll e com o CTA mudo (bug do aparelho, 16/11/2026).
+      // Medalhões da moldura de aço (Voltar à esquerda, ✕ à direita) ficam ativos com a tela interna aberta (23/11/2026).
+      if (sibling.matches('[data-aco-medalhao]')) continue;
       if (sibling.matches('[data-dialog-top]') || sibling.querySelector('[data-npc-sequence],[data-dialog-top]')) continue;
       markInert(sibling);
       marked.push(sibling);

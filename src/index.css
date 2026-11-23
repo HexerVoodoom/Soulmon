@@ -6211,6 +6211,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   &:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -6px; }
   &:disabled { opacity: .45; cursor: default; }
 }
+/* Tela interna aberta: o ✕ muda para o disco DIREITO (centro em x 635 / y 90,5 do topo 720×164) e o Voltar ocupa o esquerdo. */
+.sm2-moldura-aco__fechar--dir { left: calc(var(--u) * 88.19); top: calc(var(--u) * 12.57); }
 /* CRISTAL-CHAMA reutilizável (`ui/CristalChama.tsx`): `--u` do pai; `--cristal-w`/`--cristal-top` em `u`. Brilho pulsante opcional (`data-pulsar`). */
 .sm2-cristal-chama {
   position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * var(--cristal-top, -14)); width: calc(var(--u) * var(--cristal-w, 17)); height: auto;
@@ -7223,22 +7225,22 @@ button.sm2-hex-row {
 .sm2-hex-cost-cell[data-have="true"] .sm2-num { color: var(--sm2-ink); }
 .sm2-hex-plus { align-self: flex-start; line-height: 32px; }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
-/* 13/11/2026 (dono): HEX possuído = linha com UM botão grande que alterna Equipar ⇄ Desequipar (o "Esvaziar a porta" saiu).
-   O botão é do kit (`.sm2-kit-btn`), não o `CtaButton` do site: alvo 56 (maior que a pílula Forjar de 44), largura mínima fixa
-   para o texto não pular ao alternar. Ocioso = primário. Equipado = quieto e distinto: sem fill, contorno e tinta `primary-ink`,
-   duas linhas (✓ Equipado em cima, a ação Desequipar embaixo). */
-.sm2-hex-owned-row { min-height: 72px; padding: var(--sm2-space-2) var(--sm2-space-2) var(--sm2-space-2) var(--sm2-space-3); }
+/* 23/11/2026 (dono, padrão aprovado): UM botão que alterna e nomeia a AÇÃO (Equipar primário ⇄ Desequipar outline). "Equipado" é
+   SELO (pílula não interativa, aria-hidden) ao lado do nome; cartão equipado ganha borda de 2px `primary-ink` (`data-on`).
+   < 400 px o botão vai à linha própria em largura total (48 px); ≥ 400 px fica ao lado, largura fixa 112 px (não pula ao alternar). */
+.sm2-hex-owned-row { flex-wrap: wrap; min-height: 72px; border-width: 2px; padding: var(--sm2-space-2) var(--sm2-space-3); row-gap: var(--sm2-space-2); }
 .sm2-hex-owned-row .sm2-hex-row-name { white-space: normal; overflow-wrap: anywhere; font-size: var(--sm2-text-md); }
-.sm2-hex-equip-btn {
-  flex: none; min-height: 56px; min-width: 132px; padding: 0 var(--sm2-space-4);
-  flex-direction: column; gap: 0; font-weight: 700; line-height: 1.15;
-  &[data-state="equipped"] {
-    background-color: transparent; color: var(--sm2-primary-ink); box-shadow: inset 0 0 0 1px var(--sm2-primary-ink);
-    &:active { background-color: var(--sm2-surface-2); }
-  }
+.sm2-hex-row-title { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sm2-space-1) var(--sm2-space-2); }
+.sm2-hex-seal {
+  display: inline-flex; align-items: center; gap: var(--sm2-space-half); padding: 0 var(--sm2-space-2); border-radius: 999px;
+  background-color: var(--sm2-primary-soft); color: var(--sm2-primary-ink); box-shadow: inset 0 0 0 1px var(--sm2-primary-ink);
+  font-size: var(--sm2-text-xs); font-weight: 600; line-height: 1.6;
 }
-.sm2-hex-equip-state { display: inline-flex; align-items: center; gap: var(--sm2-space-half); font-size: var(--sm2-text-xs); font-weight: 500; }
-.sm2-hex-equip-action { font-size: var(--sm2-text-md); }
+.sm2-hex-equip-btn { flex: 1 0 100%; min-height: 48px; min-width: 112px; padding: 0 var(--sm2-space-4); font-weight: 700; }
+@media (min-width: 400px) {
+  .sm2-hex-owned-row { flex-wrap: nowrap; }
+  .sm2-hex-equip-btn { flex: none; width: 112px; }
+}
 
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
    Campo de elemento, opção de menu/lista e essência: reset explícito de botão (sem `all: unset`), tudo por token,

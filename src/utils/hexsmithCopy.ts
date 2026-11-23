@@ -103,6 +103,9 @@ export const HEX_UI = {
   equipped: p('Equipped', 'Equipado'),
   /** 13/11/2026 (dono): o "Esvaziar a porta" saiu; o próprio botão do HEX equipado desequipa. */
   unequip: p('Unequip', 'Desequipar'),
+  /** 23/11/2026: texto do status sr-only ao alternar ("X: equipado"). */
+  equippedMsg: p('equipped', 'equipado'),
+  unequippedMsg: p('unequipped', 'desequipado'),
   forge: p('Forge', 'Forjar'),
   catalog: p('Forge', 'Forja'),
   filterHint: p('Filter by up to 3 base elements: only elements that contain all of them are listed. What you can forge comes first.', 'Filtre por até 3 elementos base: aparecem só os elementos que contêm todos eles. O que dá para forjar vem primeiro.'),
