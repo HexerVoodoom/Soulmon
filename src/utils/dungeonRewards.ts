@@ -8,9 +8,6 @@ import { addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './equipment';
 import { sanitizeTalentPicks } from './talents';
 import { isoWeekKey } from './offerMoment';
 import { bumpWeekly, bumpWeeklyDay, forWeek, WEEKLY_ONCE_PER_DAY, type WeeklyMissionId } from './weeklyMissions';
-import { rosterEntryOfKey } from './enemyRoster';
-import { applyElementsDefeated, dexIdsOfFoe } from './elementDex';
-import { applyEssences, applyEssencesAway, essenceDropsOfFoe } from './essences';
 
 /** Conta uma missão semanal (a mesma conta de `contarMissao` do App, sem o setState). */
 export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 'playerDayTz'>>(prev: T, id: WeeklyMissionId, now: Date): T {
@@ -20,21 +17,6 @@ export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 
   const cur = forWeek(prev.weeklyMissions, semana);
   const prox = WEEKLY_ONCE_PER_DAY.includes(id) ? bumpWeeklyDay(cur, id, dia) : bumpWeekly(cur, id);
   return prox === cur && prev.weeklyMissions === cur ? prev : { ...prev, weeklyMissions: prox };
-}
-
-/** Um inimigo vencido: abate, bestiário e elemento do dex (a mesma conta de `handleDungeonEnemyDefeated`). */
-export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'bestiary' | 'defeatedElements' | 'essences' | 'essenceAway'>>(prev: T, enemyKey?: string, away?: { dayKey: string }): T {
-  const abatido: T = {
-    ...prev,
-    dungeonKills: (prev.dungeonKills ?? 0) + 1,
-    bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey) ? [...(prev.bestiary ?? []), enemyKey] : prev.bestiary,
-  };
-  // Dex de elementos (27/10/2026): vencer um inimigo IDENTIFICADO libera o elemento dele (composto = só o composto).
-  const comDex = applyElementsDefeated(abatido, dexIdsOfFoe(rosterEntryOfKey(enemyKey)));
-  // Essências (28/10/2026, REGISTRO §183): a do PRÓPRIO elemento, pelo estágio. Luta ativa = sem teto; descida automática (`away`) = teto diário.
-  const e = rosterEntryOfKey(enemyKey);
-  const drops = essenceDropsOfFoe(e, e?.stage);
-  return away ? applyEssencesAway(comDex, drops, away.dayKey) : applyEssences(comDex, drops);
 }
 
 /** Um inimigo VISTO sem abate (Elemental Fusion, M10): entra no bestiário (chave do roster `<id>-<estágio>`), IDEMPOTENTE, sem tocar `dungeonKills`. */

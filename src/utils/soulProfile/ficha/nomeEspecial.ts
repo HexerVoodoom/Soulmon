@@ -12,7 +12,7 @@
 // léxico de família; a escola e o elemento escolhem a FAMÍLIA, não o substantivo.
 // ---------------------------------------------------------------------------
 
-import { hashString, mulberry32, pick } from '../../oracle';
+import { hashString, mulberry32, pick } from '../../oracle/base';
 import { isSpecialFamily, SPECIAL_FAMILIES, type SpecialFamily } from '../../combate/specials';
 import type { EscolaSkillId } from './types';
 

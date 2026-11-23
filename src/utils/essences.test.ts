@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyEssences, applyEssencesAway, essenceDropOfFoe, essenceName, essenceQtyOfBoss, essenceQtyOfStage, sanitizeEssences, ESSENCE_AWAY_DAILY_CAP } from './essences';
-import { applyEnemyDefeated } from './dungeonRewards';
+import { applyEnemyDefeated } from './dungeonKill';
 import { ENEMY_ROSTER } from './enemyRoster';
 import { ALL_ELEMENT_IDS } from './elementDex';
 

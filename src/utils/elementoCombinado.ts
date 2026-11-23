@@ -17,7 +17,7 @@ import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
-import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
+import { descritorDoElemento, chromaHueCarregado } from './elementoDescritoresStore';
 import { umMotivoDeTempo, motivosNoTexto, type MotivoTempo } from './motivoTempo';
 
 /** O elemento é de TEMPO (o próprio `tempo` ou qualquer combinado que o tenha como componente, de 2, 3 ou 4). */
@@ -37,7 +37,7 @@ export function motivoTempoDoElemento(id: string): MotivoTempo | undefined {
   if (!ehElementoDeTempo(id)) return undefined;
   const comp = essenceComposition(id) ?? [];
   if (comp.length > 1) {
-    const doKit = motivosNoTexto(DESCRITORES_ELEMENTO[id]?.forma ?? '');
+    const doKit = motivosNoTexto(descritorDoElemento(id)?.forma ?? '');
     if (doKit.length === 1) return doKit[0];
   }
   const outros = comp.filter(c => c !== 'tempo');
@@ -78,7 +78,7 @@ const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
 
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
 export function pistasVisuaisDoElemento(id: string): string | undefined {
-  const d = DESCRITORES_ELEMENTO[id];
+  const d = descritorDoElemento(id);
   if (!d || (!d.forma && !d.paleta)) return undefined;
   let forma = d.forma ?? '';
   const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !nomeiaBase(`${forma} ${d.paleta ?? ''}`.toLowerCase(), c));
@@ -148,7 +148,6 @@ export function registrarElementoDoEstagio(
 /** O pedido de fundo chroma do prompt (a "cláusula do fundo"), que não conta como cor da criatura. */
 const CLAUSULA_FUNDO = /on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/;
 
-import { escolherChaveDeMatiz, semChaveSegura } from '../../functions/api/_chromaHue.js';
 
 export type ChromaKey = 'green' | 'magenta' | 'blue';
 
@@ -172,12 +171,12 @@ export const chromaDoPrompt = (prompt: string): ChromaKey => (/#0000FF/i.test(pr
  */
 export function escolherChroma(prompt: string): ChromaKey {
   const corpo = prompt.replace(CLAUSULA_FUNDO, '');
-  return escolherChaveDeMatiz(corpo).key;
+  return chromaHueCarregado()?.escolherChaveDeMatiz(corpo).key ?? 'green'; // sem a tabela carregada: o padrão (a geração só roda depois da carga)
 }
 
 /** true = o círculo cromático está cheio (nenhuma das 3 chaves fica a 30 graus ou mais das cores): listar para o dono. */
 export function semChromaSeguro(prompt: string): boolean {
-  return semChaveSegura(prompt.replace(CLAUSULA_FUNDO, ''));
+  return chromaHueCarregado()?.semChaveSegura(prompt.replace(CLAUSULA_FUNDO, '')) ?? false;
 }
 
 /** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, em qualquer sentido). */

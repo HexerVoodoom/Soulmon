@@ -17,7 +17,8 @@ import { ELENCO_ORACULO_DATA, INIMIGOS_API_DATA, INIMIGOS_DUO_DATA } from './ene
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
-import { applyBestiarySeen, applyEnemyDefeated } from './dungeonRewards';
+import { applyBestiarySeen } from './dungeonRewards';
+import { applyEnemyDefeated } from './dungeonKill';
 import { mulberry32 } from './combate/rng';
 import { ELEMENTO_FORMA_OVERRIDE } from './soulmonOverrides';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';

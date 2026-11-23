@@ -253,8 +253,8 @@ export interface CreatureStage {
 }
 
 // O núcleo leve mora em `oracle/base.ts` (o chunk de entrada importa de lá); reexportado aqui.
-import { creatureFormId, hashString, mulberry32, ELEMENT_INFO, STAGE_NAMES } from './oracle/base';
-export { creatureFormId, hashString, mulberry32, ELEMENT_INFO, STAGE_NAMES };
+import { creatureFormId, hashString, mulberry32, pick, ELEMENT_INFO, STAGE_NAMES } from './oracle/base';
+export { creatureFormId, hashString, mulberry32, pick, ELEMENT_INFO, STAGE_NAMES };
 
 export interface OracleResult {
   input: OracleInputSync | OracleInputWithClass; // o do pipeline guarda promptClassFlavor
@@ -312,9 +312,6 @@ export interface FamilyResult {
 // Utilidades: hash + RNG semeado
 // ---------------------------------------------------------------------------
 
-export function pick<T>(rng: () => number, arr: T[]): T {
-  return arr[Math.floor(rng() * arr.length) % arr.length];
-}
 
 /** Artigo indefinido em inglês (a/an) para os prompts. */
 function an(word: string): string {

@@ -1,0 +1,1 @@
+const a=new Set(["ultimate","mega","ultra"]);function n(o){const e=(o??"").slice((o??"").lastIndexOf("-")+1);return a.has(e)}function t(o,e){return n(o)?e?"Soulmon desgarrado":"Stray Soulmon":e?"Soulmon selvagem":"Wild Soulmon"}export{n as i,t as w};

@@ -237,7 +237,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // estilos que entraram na main pelas outras frentes do dia.
   // 04/11/2026: 199_237 -> 208_770 (+9,5 KB), build limpo da main (estava 1,3 KB acima da folga, vermelho antes desta branch; o CSS é único e
   // sem split, então os estilos das frentes mergeadas desde 01/11 entram todos aqui). Re-medida com justificativa, NÃO é do corte do JS.
-  'index.css': 223_537,
+  // 22/11/2026 (REGISTRO §497, perf/dist-orcamento): 223_537 -> 206_369 (-17,2 KB). Um build limpo da main media 256_163 (estourava a folga em ~24 KB); a poda
+  // das ~540 classes utilitárias do Tailwind que NENHUM arquivo do repo cita (e de sobras `sm2-*` mortas) levou a 206_369. Linha ABAIXADA, nunca elevada.
+  'index.css': 206_369,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
   // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.

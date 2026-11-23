@@ -117,6 +117,7 @@ import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities }
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
 import { petElementOf, petBaseOf } from './utils/starterElements';
+import { carregarDescritoresElemento, aoCarregarDescritores, descritoresCarregados } from './utils/elementoDescritoresStore';
 import { elementoParaGerar, formasDasPocoes, pocoesDoEstado, registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
 import { identityKey } from './utils/soulProfile/identity';
 import {
@@ -239,8 +240,8 @@ import {
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
-import { arenaRerollCost, arenaRerollsThisHour, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { arenaRollover } from './utils/arena';
+import { arenaRerollCost, arenaRerollsThisHour, applyArenaReroll, applyArenaRunEnd } from './utils/arenaReroll';
+import { arenaRollover } from './utils/arenaLadder';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -263,7 +264,7 @@ import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
 import { aplicarDropDoMarco } from './utils/glitchtamaDrop';
-import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem, countWeeklyMission } from './utils/dungeonRewards';
+import { applyBestiarySeen, applyFloorCleared, applyMilestoneItem, countWeeklyMission } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
@@ -1327,9 +1328,12 @@ export default function App() {
     [setGameState],
   );
   /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
+  // Pistas visuais de elemento: tabela em chunk lazy (orçamento de bytes); quando chega, os prompts de sprite são recalculados.
+  const [descritoresTick, setDescritoresTick] = useState(0);
+  useEffect(() => { void carregarDescritoresElemento(); return aoCarregarDescritores(() => setDescritoresTick(t => t + 1)); }, []);
   const pocoesDoSprite = useMemo(() => pocoesDoEstado(gameState), [gameState.potionElement, gameState.evolutionPotion, gameState.evolutionStage, gameState.evolutionCrystal]); // eslint-disable-line react-hooks/exhaustive-deps
-  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, formasDasPocoes(gameState)), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, gameState.evolutionStage, gameState.potionElement, gameState.evolutionPotion, gameState.evolutionCrystal]); // eslint-disable-line react-hooks/exhaustive-deps
-  const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
+  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, formasDasPocoes(gameState)), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, gameState.evolutionStage, gameState.potionElement, gameState.evolutionPotion, gameState.evolutionCrystal, descritoresTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0 && descritoresCarregados(); // só gera com as pistas de elemento já carregadas (chunk lazy)
   const spriteGen = useSpriteGeneration({
     trigger: {
       evolutionStage: gameState.evolutionStage,
@@ -4999,8 +5003,9 @@ export default function App() {
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
-    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonRewards.ts`).
-    setGameState(prev => applyEnemyDefeated(prev, enemyKey));
+    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonKill.ts`).
+    // `dungeonKill` (elenco de inimigos, ~28 KB) vem por import() — fora do chunk de entrada; o updater segue funcional e puro.
+    void import('./utils/dungeonKill').then(m => setGameState(prev => m.applyEnemyDefeated(prev, enemyKey)));
   }, []);
 
   // Dex de elementos (27/10/2026): vitória sobre inimigo identificado (Combina 3, Arena, Torneio). Idempotente; fora do updater não há efeito colateral.
@@ -7697,6 +7702,7 @@ export default function App() {
         }
       }
       // "Gerar personagem" usa o MESMO construtor de prompt da evolução: o elemento efetivo (poção/forma trocada/registro do estágio) entra nas palavras-chave.
+      await carregarDescritoresElemento(); // as pistas de elemento vêm de um chunk lazy (orçamento de bytes)
       const elGer = elementoParaGerar(novoResultado?.dominantElement, gameState.elementoJornada, gameState.soulmonMeta?.dominantElement);
       stagesParaGerar = stagesComElemento(stagesParaGerar, elGer.jornada, pocoesDoSprite, elGer.base, formasDasPocoes(gameState));
       // A sprite nasce na chave da forma EQUIPADA (`estágio` = original, `estágio@elemento` = forma alternativa): nunca por cima de outra.

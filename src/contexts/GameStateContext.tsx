@@ -37,8 +37,8 @@ import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../
 import { sanitizeHunger, sanitizeEnergyClock, type EnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
-import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaSorteio';
-import { arenaRollover, sanitizeArenaLadder } from '../utils/arena';
+import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaReroll';
+import { arenaRollover, sanitizeArenaLadder } from '../utils/arenaLadder';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';

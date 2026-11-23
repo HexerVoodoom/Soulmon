@@ -1,0 +1,1 @@
+import{j as d,aZ as e}from"./index-Bs7X5SYn.js";function o({size:t=20,label:i,className:a,style:r}){return d.jsx("img",{src:e.creditos,width:t,height:t,alt:i??"","aria-hidden":i?void 0:!0,draggable:!1,"data-credit-icon":"",className:a,style:{display:"inline-block",width:t,height:t,objectFit:"contain",verticalAlign:"middle",...r}})}export{o as C};
