@@ -713,8 +713,6 @@ export function AreaView(props: AreaViewProps) {
     /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
     const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
     const rogueGate = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false;
-    /** O mapa do Soulsmith (ferreiro) abre DIRETO em TELA CHEIA, de borda a borda (05/11/2026; sem a folha intermediária desde 23/11/2026, pedido do dono); o Voltar fecha de volta à área. */
-    const forgeFull = area === 'forja' && open?.id === 'ferreiro';
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -726,7 +724,7 @@ export function AreaView(props: AreaViewProps) {
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
         palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} moldura={area === 'forja' && open?.id === 'hexsmith' ? 'aco' : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate} onClose={close} moldura={area === 'forja' && open?.id === 'hexsmith' ? 'aco' : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -745,7 +743,8 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
-            {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
+            {/* 23/11/2026 (dono): a folha do Soulsmith abre COM a Vitra (fala + retrato, como na Hexsmith) e a Forja de Alma (ForgeCard, lista de upar) mora DENTRO dela, rolável; o ✕ é o da folha. */}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} view="list" />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => play.funSession!.onBuy!() : undefined} refused={funRefused} />}
@@ -761,7 +760,6 @@ export function AreaView(props: AreaViewProps) {
               onTeleport={(o) => gsCtx?.setGameState(prev => teleportToPortal(prev, o))} />
           </Suspense>
         )}
-        {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
         {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} onGoToWorkshop={() => { close(); requestGoToBuilding('forja.oficina'); }} /></Suspense>}
         {rogueFull && play.rogue && (
