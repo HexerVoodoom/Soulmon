@@ -6702,3 +6702,15 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Teste:** `hex/HexsmithVoltar.render.test.tsx` (360/375/412 px, as 5 Portas e os 2 renomear).
 - **Botão Equipar/Desequipar (aprovado pelo dono em 23/11/2026):** um único botão alterna com texto que nomeia a ação (Equipar primário ⇄ Desequipar outline); "Equipado" vira selo aria-hidden ao lado do nome, cartão equipado com borda 2px `primary-ink`; sem modal (reversível), status sr-only "X: equipado/desequipado"; < 400 px botão em linha própria largura total 48 px, ≥ 400 px ao lado com 112 px fixos. **Alternativa que perdeu:** dois textos empilhados ("✓ Equipado" + "Desequipar") no mesmo botão (rótulo ambíguo). **Falsifica:** dois rótulos no botão, selo no cartão livre ou aria-label com "(Equipado)" (`HexsmithSheet.render.test.tsx`).
 - **Rollback:** reverter o commit; sem save/servidor.
+
+## §506 — `dist/` fora dos PRs por padrão; um PR de rebuild por lote sob lock (23/11/2026, decisão da sessão [soulmon] 20-11 com a orquestradora, por delegação do dono; número provisório, conferir colisão no merge)
+
+**Regra única.**
+1. PR de feature/arte/fix **NÃO inclui `dist/`** por padrão (o Cloudflare builda no deploy).
+2. **Um PR dedicado `chore(dist): rebuild` por lote** (ao fim de cada onda de merges ou antes de release/AAB), feito por UMA sessão com o lock `D:\locks\heavy` (PASTA com `owner.txt`; só quem criou remove): roda `npm run build`, commita `dist/` e roda `orcamentoDeBytes`, `entradaEnxuta` e `swCache` contra o build real. Esse PR é o guard de verdade; se estourar o teto, a causa é achada no lote.
+3. **Exceção:** PR que muda tetos/`DIVIDA_ATUAL` do orçamento de bytes, ou que é puramente de performance/bundle (como #1125/#1128/#1131), inclui o `dist/` rebuildado para provar os números.
+4. **Nunca resolver conflito de `dist/` na mão:** descartar e reconstruir.
+
+**Evidência.** Cada merge na main mexe em centenas de arquivos hasheados de `dist/`; todo PR com `dist/` conflita depois de ~6 min de CI e cada rebase exige novo build (máquina com pouca RAM). O Cloudflare builda sozinho: #1130 e #1122 foram mergeados sem `dist/` e a mudança apareceu no app do dono (`wrangler.jsonc` aponta `main`/`assets` para `./dist`; o Workers Builds roda e builda no PR).
+
+**Risco.** Os testes `src/deploy/orcamentoDeBytes.contract.test.ts`, `entradaEnxuta` e `swCache.contract.test.ts` leem o `dist/` COMMITADO ("exige npm run build antes"). Sem `dist/` atualizado, medem um build velho: passam sem proteger. Por isso o PR de rebuild por lote é obrigatório, não opcional.

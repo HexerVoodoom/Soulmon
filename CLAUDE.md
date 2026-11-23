@@ -211,6 +211,9 @@ Repositório: `HexerVoodoom/Soulmon`.
 - `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
+  Em PRs, `dist/` **NÃO entra por padrão**; um PR `chore(dist): rebuild` por lote,
+  sob o lock `D:\locks\heavy`; exceção para PRs de bytes/performance; nunca
+  resolver conflito de `dist/` na mão (reconstruir). Ver REGISTRO §506.
   ⚠️ **Por isso `.env.production` é COMMITADO** (`.gitignore` tem `!.env.production`).
   As `VITE_*` são inlinadas em BUILD, não lidas em runtime; como o CI builda de
   novo a cada push sem o `.env` da máquina do dono, um deploy manual correto era
