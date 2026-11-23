@@ -19,6 +19,7 @@ import { ELEMENTO_FORMA_OVERRIDE } from './soulmonOverrides';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { curatedComponents } from './elementosCurados';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
+import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
@@ -318,6 +319,23 @@ function buildElencoOraculo(): RosterEntry[] {
   return out;
 }
 
+/**
+ * LOTE 5 (P5, 23/11/2026): fantasma, morto-vivo, sangue e fúria (trios 268-271). Rookies, 2 primeiros componentes mandam nos golpes. Entram no
+ * FIM de TUDO (depois dos ramos legados), de propósito: inserir no meio de `build()` deslocaria o `#N` do Bestiário de quem já tem criatura anotada.
+ */
+function buildLote5(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE5_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
+    });
+  }
+  return out;
+}
+
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
 /** REGISTRO §333: o elemento que o dono trocou na Tabela de Soulmons (`ELEMENTO_FORMA_OVERRIDE`). Troca `element` e os componentes; golpes, arte e chave ficam. */
 function comElementoDoDono(e: RosterEntry): RosterEntry {
@@ -328,7 +346,7 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
 }
 const ROOKIES_COMBINADOS = build();
 const ANTES_DO_PACOTE_A = [...ROOKIES_COMBINADOS, RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()];
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado()].map(comElementoDoDono);
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado(), ...buildLote5()].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

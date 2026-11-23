@@ -33,7 +33,7 @@ describe('poção de elemento', () => {
     expect(both).toContain('vapor'); expect(both).toContain('geiser');
     expect(elementsMatchingBases([]).length).toBe(210);
     expect(elementsMatchingBases([], ESSENCE_ELEMENT_IDS).length).toBe(ESSENCE_ELEMENT_IDS.length);
-    expect(ESSENCE_ELEMENT_IDS.length).toBe(269);
+    expect(ESSENCE_ELEMENT_IDS.length).toBe(273);
     expect(elementsMatchingBases([a, null, a])).toEqual(elementsMatchingBases([a]));
   });
   it('só o que dá para pagar (composto exige as poções das bases)', () => {

@@ -2695,6 +2695,11 @@ var BASE_DO_PAR = {
   pestilencia: "planta",
   maldicao: "fada",
   cyber: "industrial",
+  // lote 5 (23/11/2026, P5): 1o componente = dominante
+  fantasma: "morte",
+  morto_vivo: "morte",
+  sangue: "vida",
+  furia: "fogo",
   vapor: "fogo",
   lava: "fogo",
   incendio: "fogo",
@@ -3195,6 +3200,11 @@ var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
   "pestilencia",
   "maldicao",
   "cyber",
+  // lote 5 (23/11/2026, P5)
+  "fantasma",
+  "morto_vivo",
+  "sangue",
+  "furia",
   "fogo",
   "agua",
   "terra",
@@ -17496,7 +17506,7 @@ var BASE_ELEMENTS = [
   "planta"
 ];
 var PAIRS_RAW = "vapor:fogo+agua lava:fogo+terra incendio:fogo+ar plasma:fogo+eletricidade fogo_feiticeiro:fogo+arcano fogo_negro:fogo+sombra chama_solar:fogo+luz fogo_infernal:fogo+vileza chama_azul:fogo+morte fenix:fogo+vida fervor:fogo+vigor pantano:agua+terra gelo:agua+ar agua_viva:agua+eletricidade mare:agua+arcano abismo:agua+sombra prisma:agua+luz acido:agua+vileza veneno:agua+morte nascente:agua+vida correnteza:agua+vigor areia:terra+ar magnetismo:terra+eletricidade cristal:terra+arcano obsidiana:terra+sombra ouro_vivo:terra+luz solo_profano:terra+vileza ossuario:terra+morte flora:terra+vida tita:terra+vigor tempestade:ar+eletricidade eter:ar+arcano murmurio:ar+sombra aurora:ar+luz enxofre:ar+vileza miasma:ar+morte alento:ar+vida impeto:ar+vigor fluxo:eletricidade+arcano trovao_negro:eletricidade+sombra fulgor:eletricidade+luz tormento:eletricidade+vileza galvanismo:eletricidade+morte sinapse:eletricidade+vida reflexo:eletricidade+vigor ocultismo:arcano+sombra runa:arcano+luz pacto:arcano+vileza alma:arcano+morte essencia:arcano+vida encantamento:arcano+vigor crepusculo:sombra+luz terror:sombra+vileza espectro:sombra+morte parasita:sombra+vida assassinio:sombra+vigor heresia:luz+vileza julgamento:luz+morte santidade:luz+vida bravura:luz+vigor praga:vileza+morte mutacao:vileza+vida carnificina:vileza+vigor equilibrio:morte+vida ceifa:morte+vigor vitalidade:vida+vigor forja:marcial+fogo tempera:marcial+agua aco:marcial+terra esgrima:marcial+ar aco_voltaico:marcial+eletricidade arsenal:marcial+arcano lamina_oculta:marcial+sombra lamina_radiante:marcial+luz serrilha:marcial+vileza fio_funebre:marcial+morte lamina_viva:marcial+vida maestria:marcial+vigor pira_eterna:tempo+fogo erosao:tempo+agua fossil:tempo+terra aceleracao:tempo+ar instante:tempo+eletricidade cronomancia:tempo+arcano entropia:tempo+sombra eon:tempo+luz ruina:tempo+vileza ocaso:tempo+morte florescer:tempo+vida frenesi:tempo+vigor contratempo:tempo+marcial estrondo:som+fogo sonar:som+agua terremoto:som+terra estampido:som+ar trovao:som+eletricidade cantico:som+arcano sussurro:som+sombra harmonia:som+luz dissonancia:som+vileza requiem:som+morte melodia:som+vida brado:som+vigor cadencia:som+marcial eco:som+tempo fornalha_estelar:gravidade+fogo voragem:gravidade+agua colapso:gravidade+terra vacuo:gravidade+ar magnetar:gravidade+eletricidade singularidade:gravidade+arcano buraco_negro:gravidade+sombra halo_gravitacional:gravidade+luz jugo:gravidade+vileza implosao:gravidade+morte ancora_vital:gravidade+vida peso_descomunal:gravidade+vigor ariete:gravidade+marcial dilatacao:gravidade+tempo onda_de_choque:gravidade+som meteoro:espaco+fogo cometa:espaco+agua asteroide:espaco+terra estratosfera:espaco+ar pulsar:espaco+eletricidade portal:espaco+arcano vazio:espaco+sombra constelacao:espaco+luz devorador:espaco+vileza nebulosa:espaco+morte semente_estelar:espaco+vida gigante_estelar:espaco+vigor lamina_sideral:espaco+marcial continuum:espaco+tempo silencio_cosmico:espaco+som dobra:espaco+gravidade fogo_fatuo:fada+fogo orvalho:fada+agua circulo_feerico:fada+terra brisa_cintilante:fada+ar glitter:fada+eletricidade feerie:fada+arcano sonho_sombrio:fada+sombra arco_iris:fada+luz encanto_traicoeiro:fada+vileza banshee:fada+morte coracao:fada+vida graca:fada+vigor lamina_purpurina:fada+marcial sono_encantado:fada+tempo cancao_feerica:fada+som leveza:fada+gravidade poeira_estelar:fada+espaco fornalha:industrial+fogo hidraulica:industrial+agua mineracao:industrial+terra pneumatica:industrial+ar usina:industrial+eletricidade artificio:industrial+arcano fuligem:industrial+sombra holofote:industrial+luz poluicao:industrial+vileza ferro_velho:industrial+morte biomecanica:industrial+vida exoesqueleto:industrial+vigor armaria:industrial+marcial relojoaria:industrial+tempo britadeira:industrial+som prensa:industrial+gravidade estacao_orbital:industrial+espaco brinquedo:industrial+fada queimada:planta+fogo mangue:planta+agua raiz_profunda:planta+terra polen:planta+ar fotossintese:planta+eletricidade druidismo:planta+arcano fungo:planta+sombra girassol:planta+luz espinheiro:planta+vileza murcha:planta+morte seiva:planta+vida carvalho:planta+vigor bambu:planta+marcial estacoes:planta+tempo farfalhar:planta+som trepadeira:planta+gravidade arvore_mundo:planta+espaco jardim_encantado:planta+fada estufa:planta+industrial";
-var CURATED_RAW = "pestilencia:planta+morte+vileza maldicao:fada+sombra+vileza cyber:industrial+eletricidade+arcano geiser:fogo+agua+terra vulcao:fogo+terra+ar deserto:fogo+terra+tempo relampago_seco:fogo+ar+eletricidade supernova:fogo+gravidade+espaco nevasca:agua+terra+ar permafrost:agua+terra+tempo monsoes:agua+ar+vida peste_negra:agua+vileza+morte coro_dos_afogados:agua+morte+som ossario_vivo:terra+morte+vida jardim_eterno:terra+vida+tempo aurora_boreal:ar+eletricidade+luz duelista_temporal:ar+marcial+tempo pulso_cosmico:eletricidade+som+espaco sabbat:arcano+sombra+vileza hipnose:arcano+sombra+som materia_escura:gravidade+sombra+arcano milagre:luz+vida+arcano memoria:tempo+arcano+luz coral_celeste:som+luz+arcano via_lactea:espaco+luz+arcano delirio:vileza+som+arcano cacador_de_almas:marcial+morte+sombra presagio:tempo+sombra+espaco horizonte_de_eventos:gravidade+espaco+sombra lamina_do_juizo:marcial+luz+morte bencao_marcial:luz+marcial+vigor arauto:marcial+som+luz farol:luz+espaco+som carniceiro:vileza+vigor+morte entropia_final:tempo+morte+gravidade gladiador:marcial+vigor+som punho_gravitico:marcial+gravidade+vigor avatar_elemental:fogo+agua+terra+ar titano_forjado:fogo+terra+vigor+marcial cataclismo:fogo+terra+gravidade+espaco sopro_do_dragao:fogo+ar+vigor+marcial ragnarok:fogo+morte+tempo+gravidade genesis:agua+terra+luz+vida tempestade_perfeita:agua+ar+eletricidade+som leviata:agua+sombra+morte+gravidade senhor_da_praga:agua+vileza+morte+vida sinfonia_do_caos:arcano+sombra+vileza+som vontade_absoluta:arcano+luz+vigor+som arquiteto_da_realidade:arcano+tempo+gravidade+espaco ceifador_estelar:sombra+morte+marcial+espaco renascimento:luz+morte+vida+tempo juizo_final:luz+morte+tempo+som cavaleiro_absoluto:luz+vigor+marcial+tempo clareira:planta+luz+vida alto_forno:industrial+fogo+terra bencao_feerica:fada+luz+vida floresta_ancestral:planta+terra+tempo+arcano colosso_blindado:industrial+eletricidade+vigor+marcial corte_feerica:fada+arcano+luz+som";
+var CURATED_RAW = "pestilencia:planta+morte+vileza maldicao:fada+sombra+vileza cyber:industrial+eletricidade+arcano geiser:fogo+agua+terra vulcao:fogo+terra+ar deserto:fogo+terra+tempo relampago_seco:fogo+ar+eletricidade supernova:fogo+gravidade+espaco nevasca:agua+terra+ar permafrost:agua+terra+tempo monsoes:agua+ar+vida peste_negra:agua+vileza+morte coro_dos_afogados:agua+morte+som ossario_vivo:terra+morte+vida jardim_eterno:terra+vida+tempo aurora_boreal:ar+eletricidade+luz duelista_temporal:ar+marcial+tempo pulso_cosmico:eletricidade+som+espaco sabbat:arcano+sombra+vileza hipnose:arcano+sombra+som materia_escura:gravidade+sombra+arcano milagre:luz+vida+arcano memoria:tempo+arcano+luz coral_celeste:som+luz+arcano via_lactea:espaco+luz+arcano delirio:vileza+som+arcano cacador_de_almas:marcial+morte+sombra presagio:tempo+sombra+espaco horizonte_de_eventos:gravidade+espaco+sombra lamina_do_juizo:marcial+luz+morte bencao_marcial:luz+marcial+vigor arauto:marcial+som+luz farol:luz+espaco+som carniceiro:vileza+vigor+morte entropia_final:tempo+morte+gravidade gladiador:marcial+vigor+som punho_gravitico:marcial+gravidade+vigor avatar_elemental:fogo+agua+terra+ar titano_forjado:fogo+terra+vigor+marcial cataclismo:fogo+terra+gravidade+espaco sopro_do_dragao:fogo+ar+vigor+marcial ragnarok:fogo+morte+tempo+gravidade genesis:agua+terra+luz+vida tempestade_perfeita:agua+ar+eletricidade+som leviata:agua+sombra+morte+gravidade senhor_da_praga:agua+vileza+morte+vida sinfonia_do_caos:arcano+sombra+vileza+som vontade_absoluta:arcano+luz+vigor+som arquiteto_da_realidade:arcano+tempo+gravidade+espaco ceifador_estelar:sombra+morte+marcial+espaco renascimento:luz+morte+vida+tempo juizo_final:luz+morte+tempo+som cavaleiro_absoluto:luz+vigor+marcial+tempo clareira:planta+luz+vida alto_forno:industrial+fogo+terra bencao_feerica:fada+luz+vida floresta_ancestral:planta+terra+tempo+arcano colosso_blindado:industrial+eletricidade+vigor+marcial corte_feerica:fada+arcano+luz+som fantasma:morte+vida+tempo morto_vivo:morte+vida+vileza sangue:vida+vileza+agua furia:fogo+vigor+vileza";
 var COMPOSITION = new Map(BASE_ELEMENTS.map((b) => [b, [b]]));
 for (const tok of PAIRS_RAW.split(" ")) {
   const [id, comp] = tok.split(":");
@@ -20347,7 +20357,7 @@ function sanitizeFocusLoot(raw) {
 __name(sanitizeFocusLoot, "sanitizeFocusLoot");
 
 // api/_elementDex.js
-var ELEMENT_DEX_MAX = 270;
+var ELEMENT_DEX_MAX = 274;
 function sanitizeDefeatedElements(raw) {
   if (!Array.isArray(raw)) return void 0;
   const out = [];
@@ -22484,7 +22494,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-F9y8jk/functionsRoutes-0.3711664829149728.mjs
+// ../.wrangler/tmp/pages-pFIxLb/functionsRoutes-0.9231921142332838.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -7,16 +7,16 @@ import { isStrayFoe } from './wildFoeLabel';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
 
 // Pergunta do dono (01/11/2026): "Os novos elementos e soulmon foram adicionados na Biblioteca também?"
-describe('Biblioteca: os 59 elementos curados (205–207 promovidos, 212–267) e o corvo neutro', () => {
-  it('são exatamente 59: 205..207, 212..261 (lotes 1–3) e 262..267 (lote 4), sem repetir', () => {
-    const nums = [205, 206, 207, ...Array.from({ length: 56 }, (_, i) => 212 + i)];
+describe('Biblioteca: os 63 elementos curados (205–207 promovidos, 212–271) e o corvo neutro', () => {
+  it('são exatamente 63: 205..207, 212..261 (lotes 1–3), 262..267 (lote 4) e 268..271 (lote 5), sem repetir', () => {
+    const nums = [205, 206, 207, ...Array.from({ length: 60 }, (_, i) => 212 + i)];
     expect(ELEMENTOS_CURADOS.map(e => Number(e.num))).toEqual(nums);
-    expect(new Set(ELEMENTOS_CURADOS.map(e => e.id)).size).toBe(59);
+    expect(new Set(ELEMENTOS_CURADOS.map(e => e.id)).size).toBe(63);
   });
   it('entram no dex da Biblioteca (aba Elemento), mais o neutro; a Loja/Poção (ALL_ELEMENT_IDS) não muda', () => {
     expect(ALL_ELEMENT_IDS).toHaveLength(210);
-    expect(LIBRARY_ELEMENT_IDS).toHaveLength(270);
-    expect(new Set(LIBRARY_ELEMENT_IDS).size).toBe(270);
+    expect(LIBRARY_ELEMENT_IDS).toHaveLength(274);
+    expect(new Set(LIBRARY_ELEMENT_IDS).size).toBe(274);
     for (const id of CURATED_ELEMENT_IDS) expect(LIBRARY_ELEMENT_IDS).toContain(id);
     expect(ELEMENT_DEX_MAX).toBe(LIBRARY_ELEMENT_IDS.length);
   });
@@ -37,7 +37,7 @@ describe('Biblioteca: os 59 elementos curados (205–207 promovidos, 212–267) 
     }
     expect(Object.keys(CURATED_ELEMENT_NAMES).sort()).toEqual([...CURATED_ELEMENT_IDS].sort());
   });
-  it('cada Soulmon dos 59 está no roster como rookie (aba Selvagem) e vencê-lo destranca o elemento curado', () => {
+  it('cada Soulmon dos 63 está no roster como rookie (aba Selvagem) e vencê-lo destranca o elemento curado', () => {
     for (const e of ELEMENTOS_CURADOS) {
       const r = ENEMY_ROSTER.find(x => x.id === `cmb${e.num}`);
       expect(r, e.id).toBeDefined();
@@ -51,11 +51,11 @@ describe('Biblioteca: os 59 elementos curados (205–207 promovidos, 212–267) 
     expect(isStrayFoe(RAVEN_ENTRY.stage)).toBe(false);
     expect(dexIdsOfFoe(RAVEN_ENTRY)).toEqual(['neutro']);
   });
-  it('applyElementsDefeated aceita curados; o save guarda os 270 sem cortar', () => {
+  it('applyElementsDefeated aceita curados; o save guarda os 274 sem cortar', () => {
     const s = applyElementsDefeated({ defeatedElements: [] as string[] }, ['geiser', 'neutro', 'xyz']);
     expect(s.defeatedElements).toEqual(['geiser', 'neutro']);
     expect(dexUnlockedSet(s.defeatedElements).has('geiser')).toBe(true);
-    expect(sanitizeDefeatedElements([...LIBRARY_ELEMENT_IDS])).toHaveLength(270);
+    expect(sanitizeDefeatedElements([...LIBRARY_ELEMENT_IDS])).toHaveLength(274);
   });
   it('os 3 trios promovidos (Pestilência, Maldição, Cyber) estão no catálogo, com a receita do motor', () => {
     expect(curatedComponents('pestilencia')).toEqual(['planta', 'morte', 'vileza']);

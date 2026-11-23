@@ -8,10 +8,10 @@ import {
 } from './riftMap';
 
 describe('riftMap — dados', () => {
-  it('tem 269 nós, na ordem da masmorra (base → pares → trios → quádruplos), 2 andares cada', () => {
-    expect(RIFT_SET_COUNT).toBe(269);
+  it('tem 273 nós, na ordem da masmorra (base → pares → trios → quádruplos), 2 andares cada', () => {
+    expect(RIFT_SET_COUNT).toBe(273);
     const nodes = riftMapWindow({}, 0, 999);
-    expect(nodes).toHaveLength(269);
+    expect(nodes).toHaveLength(273);
     nodes.forEach((n, i) => {
       expect(n.index).toBe(i);
       expect(n.element).toBe(ELEMENTOS_DA_MASMORRA[i]);
@@ -20,7 +20,7 @@ describe('riftMap — dados', () => {
     });
     expect(nodes.slice(0, 20).every(n => n.count === 1)).toBe(true);
     expect(nodes[20].count).toBe(2);
-    expect(nodes[268].count).toBe(4);
+    expect(nodes[272].count).toBe(4);
   });
 
   it('visitado = 1º andar ≤ recorde; o atual é o ponto de largada; o resto bloqueado', () => {
@@ -33,18 +33,18 @@ describe('riftMap — dados', () => {
     expect(riftMapNode(0, {}).state).toBe('current'); // save novo: o 1º nó
   });
 
-  it('a descida em andamento manda no nó atual; depois do 538 a lista dá a volta', () => {
+  it('a descida em andamento manda no nó atual; depois do 546 a lista dá a volta', () => {
     expect(riftMapNode(3, { dungeonDepthRecord: 20, dungeonAway: { layer: 7 } }).state).toBe('current');
-    expect(riftMapNode(0, { dungeonDepthRecord: 539, dungeonAway: { layer: 539 } }).state).toBe('current');
+    expect(riftMapNode(0, { dungeonDepthRecord: 547, dungeonAway: { layer: 547 } }).state).toBe('current');
   });
 
   it('o caminho é determinístico, dentro da faixa segura, e o trecho tem curva', () => {
-    for (let i = 0; i < 269; i++) { const x = riftNodeX(i); expect(x).toBeGreaterThan(0.2); expect(x).toBeLessThan(0.8); expect(riftNodeX(i)).toBe(x); }
+    for (let i = 0; i < 273; i++) { const x = riftNodeX(i); expect(x).toBeGreaterThan(0.2); expect(x).toBeLessThan(0.8); expect(riftNodeX(i)).toBe(x); }
     expect(new Set([0, 1, 2, 3, 4, 5].map(riftNodeX)).size).toBe(6);
     expect(riftSegmentPath(3, 360)).toBe(riftSegmentPath(3, 360));
     expect(riftSegmentPath(3, 360)).toMatch(/^M [\d.]+ [\d.]+ C /);
-    expect(riftSegmentPath(268, 360)).toBeUndefined();
-    expect(riftMapNode(268, {}).y).toBeLessThan(RIFT_MAP_HEIGHT);
+    expect(riftSegmentPath(272, 360)).toBeUndefined();
+    expect(riftMapNode(272, {}).y).toBeLessThan(RIFT_MAP_HEIGHT);
   });
 
   it('o trecho é "percorrido" quando o nó de chegada não é bloqueado', () => {
@@ -60,7 +60,7 @@ describe('riftMap — dados', () => {
     expect(r.to - r.from).toBeLessThan(15);
     const far = riftVisibleRange(20000, 640);
     expect(far.from).toBeGreaterThan(100);
-    expect(riftVisibleRange(1e9, 640).to).toBe(268);
+    expect(riftVisibleRange(1e9, 640).to).toBe(272);
   });
 });
 
@@ -120,7 +120,7 @@ describe('riftMap — dupla de andares (reforço do dono, 16/11/2026)', () => {
   it('1 nó por dupla: floors = [a, a+1] com a ímpar; nunca um nó por andar', () => {
     const nodes = riftMapWindow({}, 0, 999);
     expect(nodes.every(n => n.floors[0] % 2 === 1 && n.floors[1] === n.floors[0] + 1)).toBe(true);
-    expect(new Set(nodes.map(n => n.floors[0])).size).toBe(269);
+    expect(new Set(nodes.map(n => n.floors[0])).size).toBe(273);
   });
   it('voltar a QUALQUER nó visitado sempre larga do 1º andar da dupla', () => {
     const s: RiftMapSave & { dungeonDepthRecord: number } = { dungeonDepthRecord: 60 };
@@ -144,7 +144,7 @@ describe('riftMap — caminho curvo e fluido', () => {
   const W = 360;
   it('a curva passa pelos pontos dos nós', async () => {
     const { riftSegmentBezier, riftNodeY } = await import('./riftMap');
-    for (let i = 0; i < 268; i++) {
+    for (let i = 0; i < 272; i++) {
       const b = riftSegmentBezier(i, W)!;
       expect(b.p0.x).toBeCloseTo(riftNodeX(i) * W, 6);
       expect(b.p0.y).toBe(riftNodeY(i));
@@ -154,7 +154,7 @@ describe('riftMap — caminho curvo e fluido', () => {
   });
   it('é contínua e SEM quina: a tangente que chega é a que sai, em todo nó', async () => {
     const { riftSegmentBezier } = await import('./riftMap');
-    for (let i = 1; i < 268; i++) {
+    for (let i = 1; i < 272; i++) {
       const prev = riftSegmentBezier(i - 1, W)!, next = riftSegmentBezier(i, W)!;
       expect(next.p0).toEqual(prev.p1); // sem salto
       expect(next.c1.x - next.p0.x).toBeCloseTo(prev.p1.x - prev.c2.x, 6); // mesma tangente dos dois lados
@@ -164,7 +164,7 @@ describe('riftMap — caminho curvo e fluido', () => {
   it('não é reta (as alças saem do segmento entre os nós) e é determinística', async () => {
     const { riftSegmentBezier, riftSegmentPath } = await import('./riftMap');
     let curvos = 0;
-    for (let i = 0; i < 268; i++) {
+    for (let i = 0; i < 272; i++) {
       const b = riftSegmentBezier(i, W)!;
       const cross = (b.p1.x - b.p0.x) * (b.c1.y - b.p0.y) - (b.p1.y - b.p0.y) * (b.c1.x - b.p0.x);
       if (Math.abs(cross) > 50) curvos++;

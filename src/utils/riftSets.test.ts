@@ -27,15 +27,15 @@ const primeiraCamada = (n: RiftCount): number => {
 };
 
 describe('riftSets: a ordem dos conjuntos', () => {
-  it('são 269 conjuntos: 20 base, 190 pares, 40 trios, 19 quádruplos, nesta ordem', () => {
-    expect(RIFT_SET_COUNT).toBe(269);
+  it('são 273 conjuntos: 20 base, 190 pares, 44 trios, 19 quádruplos, nesta ordem', () => {
+    expect(RIFT_SET_COUNT).toBe(273);
     const seq = Array.from({ length: RIFT_SET_COUNT }, (_, k) => riftSetOfLayer(2 * k + 1).count);
     const corridas: [number, number][] = [];
     for (const c of seq) {
       const u = corridas[corridas.length - 1];
       if (u && u[0] === c) u[1]++; else corridas.push([c, 1]);
     }
-    expect(corridas).toEqual([[1, 20], [2, 190], [3, 40], [4, 19]]);
+    expect(corridas).toEqual([[1, 20], [2, 190], [3, 44], [4, 19]]);
   });
 
   it('cada conjunto ocupa 2 andares seguidos e o seguinte começa no andar 2k+3', () => {
@@ -48,7 +48,7 @@ describe('riftSets: a ordem dos conjuntos', () => {
     }
   });
 
-  it('depois do último conjunto a lista dá a volta (o andar 539 é o 1)', () => {
+  it('depois do último conjunto a lista dá a volta (o andar 547 é o 1)', () => {
     expect(riftSetOfLayer(2 * RIFT_SET_COUNT + 1).element).toBe(riftSetOfLayer(1).element);
     expect(riftSetOfLayer(999).index).toBeLessThan(RIFT_SET_COUNT);
   });
@@ -126,7 +126,7 @@ describe('riftSets: a onda do Rift', () => {
     }
   });
 
-  it('mini-boss dos 190 pares e dos 40 trios: sempre forma do PRÓPRIO conjunto, no melhor estágio que ele tem', () => {
+  it('mini-boss dos 190 pares e dos 44 trios: sempre forma do PRÓPRIO conjunto, no melhor estágio que ele tem', () => {
     let pares = 0;
     let trios = 0;
     for (const el of ELEMENTOS_DA_MASMORRA) {
@@ -140,7 +140,7 @@ describe('riftSets: a onda do Rift', () => {
         expect(e.stage, `${el} seed ${seed}`).toBe(melhorForma(el, pedido));
       }
     }
-    expect([pares, trios]).toEqual([190, 40]);
+    expect([pares, trios]).toEqual([190, 44]);
   });
 
   it('o inimigo é do elemento do conjunto quando existe forma dele no estágio', () => {

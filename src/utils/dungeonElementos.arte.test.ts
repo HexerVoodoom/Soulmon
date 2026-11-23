@@ -15,7 +15,8 @@ import { PARALELOS_DATA } from './enemyRosterData';
  * Para TODO elemento que pode aparecer na Fenda: o inimigo sorteado é DAQUELE elemento, tem arte, e a arte não é o quebra-galho de
  * `enemyRosterArt.ts` (rookie da criatura base do 1º componente) — exceto os que estão na dívida de arte declarada abaixo.
  */
-const SEM_ARTE_PROPRIA: string[] = []; // 09/11/2026: os 6 do lote 4 ganharam rookie próprio (262-267)
+// 09/11/2026: os 6 do lote 4 ganharam rookie próprio (262-267). 23/11/2026 (P5): os 4 trios do lote 5 ainda usam o rookie do dominante (dívida declarada em `docs/ASSETS-A-GERAR.md`; tire daqui quando a arte entrar).
+const SEM_ARTE_PROPRIA: string[] = ['fantasma', 'morto_vivo', 'sangue', 'furia'];
 
 const baseRookie = (el: string) => rosterSpriteOf(ENEMY_ROSTER.find(e => e.kind === 'base' && e.element === el && e.stage === 'rookie')!);
 
@@ -119,7 +120,7 @@ describe('rookie de Chama Azul é o de verdade, não o champion (09/11/2026)', (
 
 describe('formas do pacote A (16/11/2026): PNG próprio', () => {
   it('205 PNG distintos entre si e do rookie', () => {
-    const pacote = ENEMY_ROSTER.slice(-205 - 15, -15); // os 15 ramos legados (§445) vão depois do pacote A
+    const pacote = ENEMY_ROSTER.slice(-205 - 19, -19); // os 15 ramos legados (§445) e os 4 do lote 5 (P5, 23/11/2026) vão depois do pacote A
     const hashes = new Set(pacote.map(e => sha(path.join(ART, 'combinados-formas', e.artFile + '.png'))));
     expect(hashes.size).toBe(205);
     for (const e of pacote) expect(hashes.has(sha(path.join(ART, 'combinados', e.artFile!.replace(/-(champion|ultimate|mega)$/, '') + '.png'))), e.key).toBe(false);
