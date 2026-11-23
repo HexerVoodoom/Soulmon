@@ -21,7 +21,7 @@ function habito(id: string, over: Partial<Activity> = {}): Activity {
 function estado(activities: Activity[], over: Partial<GameState> = {}): GameState {
   return {
     tasks: [], completedTasks: [], activities, activityStats: {}, foodInventory: {}, activityLog: [], totalXP: 40,
-    powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10, habitRhythms: {}, lastResetDate: HOJE, ...over,
+    powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10, habitRhythms: {}, lastResetDate: HOJE, fundadorUltimoDia: '2026-11-18', fundadorPremios: [], ...over, // Fundador já contado hoje (paridade com o toque ANTIGO; gancho novo em fundador.test.ts)
   } as unknown as GameState;
 }
 

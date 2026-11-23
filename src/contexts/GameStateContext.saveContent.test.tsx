@@ -130,7 +130,7 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.activityStats).toEqual({});
     expect(s.equippedDecor).toEqual({});
     expect(s.equippedBackground).toBeNull();
-    expect(s.ownedBackgrounds).toEqual(['bg-room']);
+    expect(s.ownedBackgrounds).toEqual(['bg-room', 'founder-fundo']); // conta existente: Fundo Fundador na 1ª carga (REGISTRO §506)
     expect(s.eggType).toBe('meteoro');
 
     // Conta e "porquê": save antigo é adotado como PAGO — nunca rebaixado.
@@ -413,7 +413,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
 describe('cenários e decoração na carga', () => {
   it('bg-room é sempre possuído, mesmo em save que nunca o teve, e sem duplicar', () => {
     const s = abrirComSave({ activities: [], tasks: [], ownedBackgrounds: ['bg-neon', 'bg-room'] });
-    expect(s.ownedBackgrounds).toEqual(['bg-neon', 'bg-room']);
+    expect(s.ownedBackgrounds).toEqual(['bg-neon', 'bg-room', 'founder-fundo']); // + Fundo Fundador (conta existente, REGISTRO §506)
     expect(s.ownedBackgrounds.filter((b: string) => b === 'bg-room')).toHaveLength(1);
   });
 

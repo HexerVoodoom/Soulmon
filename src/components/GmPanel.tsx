@@ -22,6 +22,8 @@ export interface GmActions {
   onAdoptCorvo: () => void;
   onFillCare: () => void;
   onAddPerfectDays: (n: number) => void;
+  /** Conjunto Fundador (23/11/2026): os 4 prêmios de uma vez, para o dono testar. Local e idempotente (`concederTodosFundador`). */
+  onGrantFundador?: () => void;
 }
 
 export function GmPanel({ language, gm }: { language: Language; gm: GmActions }) {
@@ -87,6 +89,14 @@ export function GmPanel({ language, gm }: { language: Language; gm: GmActions })
             </button>
           </div>
         </div>
+        {gm.onGrantFundador && (
+          <div style={{ marginTop: 12 }} data-gm-fundador>
+            <p style={{ ...sm2Text, fontWeight: 500, margin: '0 0 4px' }}>{isPt ? 'Conjunto Fundador' : 'Founder set'}</p>
+            <button type="button" style={sm2Button('outline', false, 'sm')} onClick={gm.onGrantFundador}>
+              {isPt ? 'Conceder os 4 prêmios' : 'Grant all 4 rewards'}
+            </button>
+          </div>
+        )}
         <div style={{ marginTop: 12 }}>
           <p style={{ ...sm2Text, fontWeight: 500, margin: '0 0 4px' }}>{isPt ? 'Somar dias completos' : 'Add complete days'}</p>
           <div style={{ display: 'flex', gap: 8 }}>

@@ -29,7 +29,7 @@ function tarefa(over: Partial<Task> = {}): Task {
 function estado(tasks: Task[], over: Partial<GameState> = {}): GameState {
   return {
     tasks, completedTasks: [], activityStats: {}, foodInventory: {}, totalXP: 40,
-    activities: [], ...over,
+    activities: [], fundadorUltimoDia: '2026-11-18', fundadorPremios: [], ...over, // Fundador já contado hoje: a paridade com o toque ANTIGO não enxerga o gancho novo (coberto em fundador.test.ts)
   } as unknown as GameState;
 }
 

@@ -49,6 +49,7 @@ import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
+import { enforceFundador, grantFundadorOnServer } from './_fundador.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { medirOrcamentoDeBits, registrarObservacao, metaDoOrcamentoGravada, metaDoSaldo } from './_bitsOrcamento.js';
 
@@ -341,6 +342,28 @@ async function onRequestBruto({ request, env }) {
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
   }
 
+  // CONCEDENTE DEV do Conjunto Fundador (23/11/2026, `_fundador.js`): `POST ?id=&action=fundadorGrant`. SÓ o e-mail do dono (`ADMIN_EMAILS`, token
+  // verificado e DESTE save): concede os 4 prêmios + posse na própria conta, na mesma escrita (revisão +1). Qualquer outro caso = 403 idêntico.
+  // Idempotente (200 `already`). Nunca loga e-mail nem saveId completo.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'fundadorGrant') {
+    if (!(await verifiedAdmin(env, request, saveId)).admin) return Response.json({ error: 'forbidden' }, { status: 403, headers: CORS });
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = grantFundadorOnServer(stored);
+    const campos = (st) => ({ fundadorDias: st.fundadorDias, fundadorPremios: st.fundadorPremios, ownedBackgrounds: st.ownedBackgrounds, ownedFrames: st.ownedFrames, ownedFurniture: st.ownedFurniture });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    console.log(JSON.stringify({ event: 'fundador_grant_dev' }));
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
   // RENOMEAR NA HEXSMITH (11/11/2026, `_hexRename.js`): `POST ?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }`.
   // Valida o nome (mesma régua do apelido), debita HEX_RENAME_COST Bits GANHOS e grava o nome na MESMA escrita (revisão +1). Mesmo nome = 200 `already`.
   if (request.method === 'POST' && url.searchParams.get('action') === 'hexRename') {
@@ -592,6 +615,15 @@ async function onRequestBruto({ request, env }) {
         const pedidos = Array.isArray(veio?.owned) ? veio.owned : [];
         const ignorados = pedidos.filter((id) => typeof id === 'string' && !state.hexsmith.owned.includes(id));
         if (ignorados.length) console.warn('save: HEX fora da posse gravada ignorado', { saveIdPrefix: saveId.slice(0, 8), ignorados: ignorados.slice(0, 10) });
+      }
+    }
+    // Conjunto Fundador (23/11/2026, `_fundador.js`): dias nunca diminuem, ids de prêmio em UNIÃO com o gravado (cliente antigo pode regravar sem o campo).
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"fundador');
+      if (temGravado || 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state) {
+        let gravado;
+        if (temGravado) { try { gravado = JSON.parse(prev.value); } catch { gravado = undefined; } }
+        enforceFundador(state, gravado);
       }
     }
     // Missoes validadas no servidor (12/11/2026, REGISTRO §307, `_missionEvents.js`): semanais journal-days / focus-days / gift-sent e a diaria

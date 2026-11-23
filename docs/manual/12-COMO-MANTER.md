@@ -321,3 +321,12 @@ Desde 20/10/2026 o app está em teste fechado na Google Play, com usuários reai
 
 Doc do manual que descreve save, contrato de servidor ou chave de storage **precisa citar a migração e o rollback** da mudança que descreve. A régua automática é `src/contexts/saveCompat.contract.test.ts`; decisão em `docs/REGISTRO-DE-DECISOES.md` §148.
 
+
+## 13. Testar o Conjunto Fundador na conta do dono (concedente dev, REGISTRO §506)
+
+Só a conta do e-mail em `ADMIN_EMAILS` (a mesma do Painel de GM) concede o conjunto a si mesma; qualquer outro jogador recebe 403 e nada é gravado.
+
+- **Pelo app (mais simples):** Configurações › Painel de GM › **Conjunto Fundador › Conceder os 4 prêmios**. Concede Fundo, Moldura, Retrato e Cristal Fundador na hora (idempotente) e o save sobe pelo caminho normal.
+- **Pela rota:** `POST /api/save?id=<seu saveId>&action=fundadorGrant` com `Authorization: Bearer <ID token do Firebase do dono>` e corpo `{}`. Devolve 200 `{ ok, already, revision, fundadorPremios, ... }` (já concedido = `already: true`, sem gravar). O servidor confere o token verificado e que ele é DESTE save e está em `ADMIN_EMAILS`; falhou qualquer uma = 403 `forbidden`. Nenhum segredo, e-mail ou saveId completo vai ao log.
+- **Testar a progressão real em outra conta:** abra uma conta nova e conclua tarefas em dias diferentes (1 dia = Fundo, 2 = Moldura, 3 = Retrato, 5 = Cristal); para repetir o teste, use uma conta nova (o concedente não zera nada).
+- **Onde cada prêmio aparece:** Fundo no seletor de cenários da Home; Moldura no seletor de molduras do perfil; Retrato na grade de fotos do Editar perfil (grupo "Fundador", só para quem ganhou); Cristal em Decoração (`floor-right`).

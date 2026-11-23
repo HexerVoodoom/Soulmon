@@ -13,6 +13,7 @@ import { injetarArteDeDecor, injetarChamasDeDecor } from './decorArt';
 import { COSMETICOS_NOVOS, ARTE_BG_NOVOS, ARTE_DECOR_NOVOS } from './cosmeticosNovos';
 import { HONRA_DECOR, ARTE_DECOR_HONRA } from './honraDecor';
 import { CRISTAL_FUNDADOR, ARTE_CRISTAL_FUNDADOR, CHAMA_CRISTAL_FUNDADOR } from './cristalFundador';
+import { FUNDADOR_FUNDO, FUNDADOR_FUNDO_CENARIO, FUNDADOR_MOLDURA } from './fundadorCatalogo';
 
 export function aplicarCatalogosNovos(): void {
   injetarCatalogosNovos(
@@ -34,6 +35,8 @@ export function aplicarCatalogosNovos(): void {
     id: c.id, old: 100, tier: c.tier!, reason: c.element ? 'peça exclusiva de elemento' : c.slot === 'rug' ? 'textura de chão' : 'peça de tema',
   })));
   injetarArteDeDecor(ARTE_DECOR_NOVOS, ARTE_DECOR_HONRA, ARTE_CRISTAL_FUNDADOR);
-  injetarConcessoes([CRISTAL_FUNDADOR]);
+  injetarConcessoes([CRISTAL_FUNDADOR, FUNDADOR_FUNDO]);
+  injetarCenariosNovos([FUNDADOR_FUNDO_CENARIO]);
+  injetarMolduras([FUNDADOR_MOLDURA]);
   injetarChamasDeDecor(CHAMA_CRISTAL_FUNDADOR);
 }
