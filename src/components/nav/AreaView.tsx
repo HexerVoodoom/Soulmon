@@ -501,6 +501,8 @@ export function AreaView(props: AreaViewProps) {
     onInitialSheetConsumed?.();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
+  /* O link do hábito ("Ir ao Caderno") traz o formato em `initialSection`; vale só para a abertura vinda dele. */
+  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre') ? (props.initialSection as 'gratidao' | 'livre') : undefined));
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
     if (area === 'laboratorio' && props.initialSheet && !initialLock) {
@@ -741,7 +743,7 @@ export function AreaView(props: AreaViewProps) {
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
-            {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
+            {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}

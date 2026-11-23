@@ -55,14 +55,16 @@ const areaStyle: CSSProperties = {
   fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-md)', lineHeight: 'var(--sm2-leading-body)',
 };
 
-export function CadernoSheet({ language, todayKey, entries, onChange }: {
+export function CadernoSheet({ language, todayKey, entries, onChange, formatoInicial }: {
+  /** O formato com que a folha abre (o link do hábito: gratidão, escrita livre); sem ele vale o sugerido do dia. */
+  formatoInicial?: CadernoFormato;
   language: Language; todayKey?: string;
   entries: CadernoEntry[];
   onChange: (f: (c: CadernoEntry[]) => CadernoEntry[]) => void;
 }) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
-  const [formato, setFormato] = useState<CadernoFormato>(() => formatoDoDia(day));
+  const [formato, setFormato] = useState<CadernoFormato>(() => formatoInicial ?? formatoDoDia(day));
   const [linhas, setLinhas] = useState(['', '', '']);
   const [texto, setTexto] = useState('');
   const [aviso, setAviso] = useState<'ok' | null>(null);
