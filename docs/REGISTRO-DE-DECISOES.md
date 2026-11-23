@@ -6641,9 +6641,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 
 ## §498 — Orçamento de bytes: catálogos de cosméticos e de Honra fora da entrada (23/11/2026, perf/catalogos-lazy)
 
-- **Medida:** JS de entrada 1.133.256 B (folga de 705 B) para 1.095.735 B (-38 KB). `cosmeticosNovos.ts` (18,7 KB) e `honraDecor.ts` (8,8 KB) e o que só eles puxavam saíram do `index-*.js`.
+- **Medida:** JS de entrada 1.133.256 B (folga de 705 B) para 1.095.753 B (-38 KB). `cosmeticosNovos.ts` (18,7 KB) e `honraDecor.ts` (8,8 KB) e o que só eles puxavam saíram do `index-*.js`.
 - **Mecanismo (modelo do `elementoDescritoresStore`):** o chunk `catalogosNovos.ts` injeta cada peça no mesmo lugar de antes: fim de `SHOP_ITEMS` (cosméticos) e de `TOURNAMENT_ITEMS` (Honra) com `ALL_SHOP_ITEMS` refeito no lugar (`shop.ts`), `PET_BACKGROUNDS` (+ aliases refeitos), `FRAMES`/`FRAME_IDS`, `DECOR_PRICE_TABLE`, `DECOR_ART` (+ aliases refeitos). Todos leem por lookup em tempo de render (mapa dos ~16 leitores de `SHOP_ITEMS`/`ALL_SHOP_ITEMS` e dos de `PET_BACKGROUNDS`/`DECOR_ART` feito antes; nenhum guarda cópia em módulo, só `FRAME_IDS`, que a injeção atualiza).
 - **Por que sem flash nem save mexido:** o `main.tsx` ESPERA `carregarCatalogosNovos()` antes do 1º render (a saída da splash também só começa depois). Assim o `GameStateProvider` lê o save já com o catálogo completo (nenhum id comprado/equipado é descartado por catálogo incompleto) e nenhum componente memoizado fica com lista velha. Custo: 1 fetch de ~30 KB antes do 1º render (cache do service worker depois do 1º boot). Falha de rede: abre sem as peças novas, nada é gravado por isso.
 - **Testes:** `vitest.setup.catalogos.ts` injeta tudo antes de cada arquivo de teste, então o código síncrono dos testes não muda.
-- **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA de 1.125.769 para 1.095.735 B (folga de 8.192 B sobre ele). CSS segue em 206.369. Nenhum teto mudou. Próximo corte: partir o `App.tsx`.
+- **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA de 1.125.769 para 1.095.753 B (folga de 8.192 B sobre ele). CSS segue em 206.369. Nenhum teto mudou. Próximo corte: partir o `App.tsx`.
 - **Rollback:** reverter o commit; sem save/servidor.

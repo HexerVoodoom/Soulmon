@@ -22226,8 +22226,14 @@ __name(onRequest9, "onRequest");
 var JOURNEY_KEYS = ["bancada", "relampago", "quadrantes", "brejo", "elo", "pena"];
 var JOURNEY_MODES = { p25: { focusMin: 25, chests: 6 }, p50: { focusMin: 50, chests: 10 } };
 var SPECIAL_CHANCE = 0.4;
-var JOURNEY_ITEMS_DAILY_CAP = 16;
+var JOURNEY_ITEMS_DAILY_CAP = 28;
 var JOURNEY_ESSENCES_DAILY_CAP = 8;
+var ESSENCE_BY_ELEMENTS = {
+  1: { common: 0.1, special: 1 },
+  2: { common: 0.15, special: 1 },
+  3: { common: 0.2, special: 2 },
+  4: { common: 0.25, special: 2 }
+};
 var JOURNEY_COMPLETIONS_REWARDED = 4;
 var JOURNEY_EXTRA_COMPLETIONS = 3;
 var JOURNEY_MAX_PAUSES = 3;
@@ -22275,32 +22281,29 @@ function journeyProgress(c, now) {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 6e4));
 }
 __name(journeyProgress, "journeyProgress");
-function chestLoot(seed, chest, keys, env) {
+function chestLoot(seed, chest, keys, env, elems = 1) {
+  const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1))];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 2654435761)) >>> 0);
   const mats = ENV_MATERIALS[env];
   const pick = /* @__PURE__ */ __name((a) => a[Math.min(a.length - 1, Math.floor(rng() * a.length))], "pick");
   const mat = /* @__PURE__ */ __name(() => ({ kind: "material", id: pick(mats), qty: 1 }), "mat");
   const food = /* @__PURE__ */ __name(() => ({ kind: "food", id: pick(JOURNEY_FOODS), qty: 1 }), "food");
   const ess = /* @__PURE__ */ __name((qty) => ({ kind: "essence", id: ENV_ELEMENT[env], qty }), "ess");
-  const common = /* @__PURE__ */ __name(() => [Math.floor(rng() * 5) < 4 ? mat() : food()], "common");
+  const common = /* @__PURE__ */ __name(() => rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()], "common");
   if (chest.type === "common" || !keys.includes(chest.type)) return common();
   switch (chest.type) {
     case "bancada":
-      return [food(), food()];
+      return [food()];
     case "relampago":
-      return [mat(), mat()];
-    case "quadrantes": {
-      const a = mat();
-      let b = mat();
-      for (let i2 = 0; i2 < 4 && b.id === a.id; i2++) b = mat();
-      return [a, b];
-    }
+      return [mat()];
+    case "quadrantes":
+      return [mat()];
     case "brejo":
-      return [ess(2)];
+      return [ess(tier.special)];
     case "elo":
-      return [mat(), food()];
+      return [mat()];
     case "pena":
-      return [ess(1), mat()];
+      return [mat()];
     default:
       return common();
   }
@@ -22481,7 +22484,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-70RdaT/functionsRoutes-0.20969186935352968.mjs
+// ../.wrangler/tmp/pages-MTiH9j/functionsRoutes-0.17634153757805116.mjs
 var routes = [
   {
     routePath: "/api/account",
