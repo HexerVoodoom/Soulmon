@@ -7631,3 +7631,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* FOLHA DE BAIXO com moldura: a linha do ✕/voltar do `ModalSheet` ficava ABAIXO do topo da arte (z 2, 16,9u) e sumia sob cipó/cristal (bug do dono, 23/11: Perfil
    aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
 .sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
+
+/* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
+.sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }
+.sm2-forja-resultado-arte { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; }
+.sm2-forja-resultado-arte img { max-width: 100%; height: auto; object-fit: contain; }
+.sm2-forja-resultado-nome { font-size: var(--sm2-text-lg); color: var(--sm2-ink); overflow-wrap: anywhere; }
+.sm2-forja-resultado-efeito { margin: 0; color: var(--sm2-muted); overflow-wrap: anywhere; }
+.sm2-forja-resultado-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-2); }

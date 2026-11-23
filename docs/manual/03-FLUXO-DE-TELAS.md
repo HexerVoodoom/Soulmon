@@ -2530,3 +2530,5 @@ Cobertura só no nível de existência de superfície e de ponto de entrada, por
 - **Folha do Duelo (§470).** "Comprar convites" abre a folha (`ComprarConvites`: "1 energia = 5 convites · você tem N de 7"); o leque de convites fica no topo pelo `TicketFan` com `art` (`conviteDueloFan`); "Duelar" fica desabilitado sem convite.
 - **Vesca e Centro de Evolução (§468).** `VescaPotionOffer` só abre para elemento base (100 essências); `ElementPotionSheet` perdeu a linha de filtros de status e o painel do Neutro (⚰️ `NeutroPotionPanel`).
 - **Hexsmith (§467).** Descrição PT/EN em todas as 10 Coroas; placa atrás da Coroa encaixada (CSS).
+
+- **Modal de resultado de forja (23/11/2026):** depois que o servidor confirma a forja de um HEX (e não é reentrega `already`), a Hexsmith abre `ForgeResultModal` (popup central, título inline, ✕ à direita) com arte, nome e efeito, e as ações «Equipar agora» / «Fechar»; erro ou recusa só mostram a mensagem. A «Criar poção» da Vesca (`ElementPotionSheet`) abre o mesmo modal para poção base ou composta, só com «Fechar», quando o craft é aceito.

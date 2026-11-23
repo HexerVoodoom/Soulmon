@@ -7990,8 +7990,9 @@ export default function App() {
             onBack={() => setPotionOpen(false)}
             onCraft={(id) => {
               // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
-              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return;
+              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false;
               setGameState(prev => craftPotion(prev, id));
+              return true;
             }}
           /></Suspense>}
           {labTab === 'evolution' && (
