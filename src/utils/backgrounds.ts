@@ -475,7 +475,7 @@ aplicarAliasesDeCenario();
  * Cenários novos de tema/elemento (04/11/2026): pintura 1200×648 WebP, chão em 74% (o prompt pede a linha em 74%). Catálogo:
  * `utils/cosmeticosNovos.ts`, que vive num chunk lazy (REGISTRO §498) e injeta aqui (`catalogosNovos.ts`). Refaz os aliases depois.
  */
-export function injetarCenariosNovos(cenarios: ReadonlyArray<{ id: string; namePt: string; nameEn: string; css: string; baseColor: string }>): void {
+export function injetarCenariosNovos(cenarios: ReadonlyArray<{ id: string; namePt: string; nameEn: string; css: string; baseColor: string | undefined }>): void {
   for (const c of cenarios) {
     PET_BACKGROUNDS[c.id] = { namePt: c.namePt, nameEn: c.nameEn, css: c.css, baseColor: c.baseColor, setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74 };
   }
