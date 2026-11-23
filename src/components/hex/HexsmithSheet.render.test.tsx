@@ -178,21 +178,48 @@ describe('HexsmithSheet', () => {
       expect(b.getAttribute('data-state')).toBe('idle');
       click(b);
       expect(estado().hx.equipped.coroa).toBe('coroa:dot');
-      // equipado: o MESMO lugar vira ✓ Equipado + Desequipar, com rótulo acessível que diz o estado
+      // equipado: o MESMO botão vira só "Desequipar" (outline); "Equipado" é SELO aria-hidden ao lado do nome
       const u = q('[data-hex-unequip="coroa:dot"]');
+      const nome = lang === 'en' ? 'Lingering damage' : 'Dano contínuo';
       expect(u.getAttribute('data-state')).toBe('equipped');
-      expect(u.querySelector('.sm2-hex-equip-state')!.textContent).toMatch(new RegExp(`${equipped}$`));
-      expect(u.querySelector('.sm2-hex-equip-state .sm2-icon, .sm2-hex-equip-state svg')).not.toBeNull();
-      expect(u.querySelector('.sm2-hex-equip-action')!.textContent).toBe(unequip);
-      expect(u.getAttribute('aria-label')).toBe(`${unequip}: ${lang === 'en' ? 'Lingering damage' : 'Dano contínuo'} (${equipped})`);
+      expect(u.textContent).toBe(unequip);
+      expect(u.className).toMatch(/sm2-kit-btn-outline/);
+      expect(u.getAttribute('aria-label')).toBe(`${unequip}: ${nome}`);
+      expect(u.getAttribute('aria-label')).not.toMatch(new RegExp(equipped));
+      expect(u.querySelector('.sm2-hex-equip-state')).toBeNull();
+      const card = u.closest('[data-on]')!;
+      expect(card.getAttribute('data-on')).toBe('true');
+      const selo = card.querySelector('[data-hex-seal]')!;
+      expect(selo.getAttribute('aria-hidden')).toBe('true');
+      expect(selo.textContent).toMatch(new RegExp(`${equipped}$`));
+      expect(selo.closest('.sm2-hex-row-name')).not.toBeNull();
+      expect(selo.closest('button')).toBeNull();
+      expect(document.querySelectorAll('[data-hex-seal]')).toHaveLength(1); // só no equipado
+      expect(q('[data-hex-equip="coroa:heal"]').closest('[data-on]')!.querySelector('[data-hex-seal]')).toBeNull();
+      expect(document.querySelector('[data-hex-equip-status]')!.textContent).toBe(`${nome}: ${lang === 'en' ? 'equipped' : 'equipado'}`);
       // equipar OUTRO com um já equipado: troca direto (a regra de equipHexItem), o anterior segue na posse
       click(q('[data-hex-equip="coroa:heal"]'));
       expect(estado().hx).toEqual({ owned: ['coroa:dot', 'coroa:heal'], equipped: { coroa: 'coroa:heal' } });
       expect(document.querySelector('[data-hex-unequip="coroa:dot"]')).toBeNull();
       click(q('[data-hex-unequip="coroa:heal"]'));
       expect(estado().hx.equipped).toEqual({});
+      expect(document.querySelector('[data-hex-equip-status]')!.textContent).toMatch(lang === 'en' ? /: unequipped$/ : /: desequipado$/);
+      expect(document.querySelector('[data-hex-seal]')).toBeNull();
       cleanup(); localStorage.clear();
     }
+  });
+
+  it('layout do botão Equipar/Desequipar (23/11/2026): empilha < 400 px (largura total, 48), ao lado ≥ 400 px (112 fixo); borda 2px no equipado; só tokens', () => {
+    // jsdom não carrega o CSS: confere a fonte do bloco, que vale para 360/375 (< 400) e 412 (≥ 400)
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    const ini = css.indexOf('.sm2-hex-owned-row {');
+    const bloco = css.slice(ini, css.indexOf('/* ── Laboratório e Cambista'));
+    expect(bloco).toMatch(/\.sm2-hex-owned-row \{[^}]*flex-wrap: wrap;[^}]*border-width: 2px/);
+    expect(bloco).toMatch(/\.sm2-hex-equip-btn \{[^}]*flex: 1 0 100%;[^}]*min-height: 48px/);
+    expect(bloco).toMatch(/@media \(min-width: 400px\) \{[^}]*flex-wrap: nowrap;[\s\S]*\.sm2-hex-equip-btn \{[^}]*flex: none; width: 112px/);
+    expect(bloco).toMatch(/\.sm2-hex-seal \{[^}]*var\(--sm2-primary-soft\)[^}]*var\(--sm2-primary-ink\)/);
+    expect(bloco).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+    expect(css).not.toMatch(/sm2-hex-equip-state|data-state="equipped"\]\s*\{/);
   });
 
   it('coroa por família: cada família mostra a própria coroa-<familia>.png (a coroa única só é reserva)', () => {

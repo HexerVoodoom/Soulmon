@@ -256,6 +256,7 @@ interface PanelProps {
 function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip, onClear }: PanelProps) {
   const [bases, setBases] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
+  const [status, setStatus] = useState('');
   const refusalId = useId();
   // O voltar do SISTEMA (Android/popstate) desfaz só ESTE nível (16/11/2026): sem a camada, ele fecharia a Hexsmith inteira por baixo.
   useBackLayer(true, onClose);
@@ -302,6 +303,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
           <p role="note" data-hex-companion-rests style={sm2Hint}>{tx(HEX_UI.companionRests, isPt)}</p>
         )}
         {aviso && <p role="status" data-hex-aviso style={sm2Text}>{aviso}</p>}
+        <span className="sm2-sr-only" role="status" data-hex-equip-status>{status}</span>
 
         <section aria-label={tx(HEX_UI.owned, isPt)} className="sm2-hex-group">
           <h3 style={{ ...sm2Label, margin: 0 }}>{tx(HEX_UI.owned, isPt)}</h3>
@@ -317,19 +319,23 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                   <li key={id} data-hex-owned={id}>
                     <div className="sm2-hex-row sm2-hex-owned-row" data-on={on} data-hex-is-equipped={on || undefined}>
                       <SlotFace slot={slot} value={v} size={ICON_OWNED} />
-                      <span className="sm2-hex-row-name">{name}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
+                      <span className="sm2-hex-row-name">
+                        <span className="sm2-hex-row-title">{name}{on && <span data-hex-seal aria-hidden="true" className="sm2-hex-seal"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>}</span>
+                        {hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}
+                      </span>
                       {on ? (
-                        <button type="button" data-hex-unequip={id} onClick={onClear}
-                          aria-label={`${tx(HEX_UI.unequip, isPt)}: ${name} (${tx(HEX_UI.equipped, isPt)})`}
-                          className="sm2-kit-btn sm2-hex-equip-btn" data-state="equipped">
-                          <span className="sm2-hex-equip-state"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>
-                          <span className="sm2-hex-equip-action">{tx(HEX_UI.unequip, isPt)}</span>
+                        <button type="button" data-hex-unequip={id}
+                          onClick={() => { onClear(); setStatus(`${name}: ${tx(HEX_UI.unequippedMsg, isPt)}`); }}
+                          aria-label={`${tx(HEX_UI.unequip, isPt)}: ${name}`}
+                          className="sm2-kit-btn sm2-kit-btn-outline sm2-hex-equip-btn" data-state="equipped">
+                          {tx(HEX_UI.unequip, isPt)}
                         </button>
                       ) : (
-                        <button type="button" data-hex-equip={id} onClick={() => onEquip(id)}
+                        <button type="button" data-hex-equip={id}
+                          onClick={() => { onEquip(id); setStatus(`${name}: ${tx(HEX_UI.equippedMsg, isPt)}`); }}
                           aria-label={`${tx(HEX_UI.equip, isPt)}: ${name}`}
                           className="sm2-kit-btn sm2-kit-btn-primary sm2-hex-equip-btn" data-state="idle">
-                          <span className="sm2-hex-equip-action">{tx(HEX_UI.equip, isPt)}</span>
+                          {tx(HEX_UI.equip, isPt)}
                         </button>
                       )}
                     </div>
