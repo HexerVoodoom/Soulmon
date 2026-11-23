@@ -44,7 +44,7 @@ describe('ramos LEGADOS (REGISTRO §445, 16/11/2026): as formas antigas de 5 lin
     }
   });
   it('ficam NO FIM do roster (o #N do Bestiário das entradas antigas não muda)', () => {
-    expect(ENEMY_ROSTER.slice(-19, -4)).toEqual(legados);
+    expect(ENEMY_ROSTER.slice(-27, -12)).toEqual(legados);
   });
   it('entram nos pools que já recebem ramos: sorteio comum (champion/ultimate/mega) e o do elemento do hospedeiro; nunca em rookie', () => {
     for (const stage of ['champion', 'ultimate', 'mega'] as const) {

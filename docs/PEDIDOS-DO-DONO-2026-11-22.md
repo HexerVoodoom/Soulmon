@@ -96,3 +96,5 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 **Rodada 5 (processo, 23/11): `dist/` fora dos PRs.** PR de feature/arte/fix não inclui `dist/` (o Cloudflare builda); um PR `chore(dist): rebuild` por lote sob o lock `D:\locks\heavy` roda os guards de bytes/entrada/swCache contra o build real; exceção para PRs de bytes/performance. Ver REGISTRO §507.
 
 **Rodada 5 (ajuste, 23/11): Fantasma sem ampulheta.** O Fantasma (Spectrel) deixa de ser elemento de tempo para o motivo de ampulheta/relógio no prompt de sprite (`ehElementoDeTempo` exclui `fantasma`); tempo puro e demais compostos mantêm. REGISTRO §507. Teste em `motivoTempo.test.ts`.
+
+**Rodada 5 (arte, 23/11): sprites do lote 5 aprovados.** O dono aprovou os 12 sprites (4 rookies + 4 champions + 4 ultimates) e os 8 nomes: Spectrel→Spectrane→Spectrarch (fantasma), Revenox→Revenoxar→Revenolord (morto-vivo), Hemolisk→Hemocarax→Hemocolossa (sangue), Furiosk→Furiozar→Furiotitan (fúria). Instalados em `novos-arquivo/combinados/` e `combinados-formas/`, registrados por `buildFormasLote5`; faltam só ícones, FX, poções/chips e cenários (P6). REGISTRO §510.

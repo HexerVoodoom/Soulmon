@@ -19,7 +19,7 @@ import { ELEMENTO_FORMA_OVERRIDE } from './soulmonOverrides';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { curatedComponents } from './elementosCurados';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
+import { COMBINADOS_LOTE5_DATA, FORMAS_LOTE5_DATA } from './elementosLote5.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
@@ -336,6 +336,20 @@ function buildLote5(): RosterEntry[] {
   return out;
 }
 
+/** FORMAS DO LOTE 5 (dono, 23/11/2026): champion e ultimate dos 4 rookies do lote 5, nome próprio aprovado (`FORMAS_LOTE5_DATA`). kind `forma`, golpes e componentes do rookie; no FIM de TUDO (depois de `buildLote5`), então nenhum `#N` do Bestiário muda. */
+function buildFormasLote5(rookies: readonly RosterEntry[]): RosterEntry[] {
+  const porArte = new Map(rookies.map(r => [r.artFile, r] as const));
+  const out: RosterEntry[] = [];
+  for (const [artFile, champion, ultimate] of FORMAS_LOTE5_DATA) {
+    const r = porArte.get(artFile);
+    if (!r) throw new Error(`lote 5: rookie ${artFile} não existe`);
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate]] as const) {
+      out.push({ key: chaveBestiario(r.id, stage), id: r.id, stage, kind: 'forma', element: r.element, elements: r.elements, name, basico: r.basico, especial: r.especial, artFile: `${artFile}-${stage}` });
+    }
+  }
+  return out;
+}
+
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
 /** REGISTRO §333: o elemento que o dono trocou na Tabela de Soulmons (`ELEMENTO_FORMA_OVERRIDE`). Troca `element` e os componentes; golpes, arte e chave ficam. */
 function comElementoDoDono(e: RosterEntry): RosterEntry {
@@ -346,7 +360,8 @@ function comElementoDoDono(e: RosterEntry): RosterEntry {
 }
 const ROOKIES_COMBINADOS = build();
 const ANTES_DO_PACOTE_A = [...ROOKIES_COMBINADOS, RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo(), ...buildUltimates2Comp()];
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado(), ...buildLote5()].map(comElementoDoDono);
+const ROOKIES_LOTE5 = buildLote5();
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...ANTES_DO_PACOTE_A, ...buildFormasPacoteA(ROOKIES_COMBINADOS, new Set(ANTES_DO_PACOTE_A.map(e => e.name))), ...buildLegado(), ...ROOKIES_LOTE5, ...buildFormasLote5(ROOKIES_LOTE5)].map(comElementoDoDono);
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

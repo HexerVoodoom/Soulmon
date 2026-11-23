@@ -15,3 +15,15 @@ export const COMBINADOS_LOTE5_DATA: ReadonlyArray<Lote5Row> = [
   ['270', 'sangue', 'Hemolisk', 'vida', 'vileza', 'agua'],
   ['271', 'furia', 'Furiosk', 'fogo', 'vigor', 'vileza'],
 ];
+
+/**
+ * FORMAS DO LOTE 5 (dono, 23/11/2026: 8 sprites e 8 nomes aprovados): [arte do rookie `NNN-slug`, nome do champion, nome do ultimate]. Arte em
+ * `combinados-formas/<NNN-slug>-<estágio>.png` do arquivo de ramos e combinados. Nome próprio por forma (não o `nomeDaForma` automático). Entram no FIM de tudo
+ * (depois dos 4 rookies do lote 5), então o `#N` do Bestiário de nenhuma outra criatura muda.
+ */
+export const FORMAS_LOTE5_DATA: ReadonlyArray<readonly [string, string, string]> = [
+  ['268-fantasma', 'Spectrane', 'Spectrarch'],
+  ['269-morto_vivo', 'Revenoxar', 'Revenolord'],
+  ['270-sangue', 'Hemocarax', 'Hemocolossa'],
+  ['271-furia', 'Furiozar', 'Furiotitan'],
+];
