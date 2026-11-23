@@ -240,8 +240,8 @@ import {
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { bitsPackById, creditMinigameBits, minigameBitsGrantedIn, minigameBitsToday, minigameBitsCategoryToday, type BitsCategory } from './utils/currencies';
-import { arenaRerollCost, arenaRerollsThisHour, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { arenaRollover } from './utils/arena';
+import { arenaRerollCost, arenaRerollsThisHour, applyArenaReroll, applyArenaRunEnd } from './utils/arenaReroll';
+import { arenaRollover } from './utils/arenaLadder';
 import { noteFreeBits, noteCreditBits, spendBitsPaidFirst, spendBitsIfCovered, spendableBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -264,7 +264,7 @@ import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
 import { aplicarDropDoMarco } from './utils/glitchtamaDrop';
-import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem, countWeeklyMission } from './utils/dungeonRewards';
+import { applyBestiarySeen, applyFloorCleared, applyMilestoneItem, countWeeklyMission } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
@@ -5003,8 +5003,9 @@ export default function App() {
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
-    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonRewards.ts`).
-    setGameState(prev => applyEnemyDefeated(prev, enemyKey));
+    // WP4.6 — o BESTIÁRIO + o contador de abates (`applyEnemyDefeated`, dono: `utils/dungeonKill.ts`).
+    // `dungeonKill` (elenco de inimigos, ~28 KB) vem por import() — fora do chunk de entrada; o updater segue funcional e puro.
+    void import('./utils/dungeonKill').then(m => setGameState(prev => m.applyEnemyDefeated(prev, enemyKey)));
   }, []);
 
   // Dex de elementos (27/10/2026): vitória sobre inimigo identificado (Combina 3, Arena, Torneio). Idempotente; fora do updater não há efeito colateral.

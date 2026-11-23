@@ -3,7 +3,7 @@ import {
   ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, DERIVED_ELEMENT_IDS, applyElementsDefeated, elementIdOfFoe, sanitizeDefeatedElements, elementComponents,
 } from './elementDex';
 import { elementMatchups } from './elementDexMatchups';
-import { applyEnemyDefeated } from './dungeonRewards';
+import { applyEnemyDefeated } from './dungeonKill';
 import { ENEMY_ROSTER } from './enemyRoster';
 
 describe('catálogo do dex', () => {

@@ -44,49 +44,10 @@ const PAIR_COMPONENTS = new Map<string, [string, string]>(
 /** EN labels for the 20 base elements (PT lives in BASE_ELEMENT_LABELS). */
 export { BASE_ELEMENT_LABELS_EN, elementLabel } from './elementLabels';
 import { elementLabel } from './elementLabels';
-
-/**
- * Counter chart over the 20 base elements — a curated RING where each element
- * counters the NEXT TWO and is countered by the PREVIOUS TWO. Building it as
- * a ring is what makes the coverage symmetric by construction (every element
- * counters exactly 2 and is countered by exactly 2 — locked by test).
- *
- * The ring (attacker → the two it beats):
- *   fogo     → planta, vida       (fire burns the field and the living)
- *   planta   → vida, terra        (the wild chokes the living, roots crack stone)
- *   vida     → terra, gravidade   (life takes root anywhere, defies weight)
- *   terra    → gravidade, ar      (earth grounds gravity and blocks wind)
- *   gravidade→ ar, som            (gravity pulls air down, crushes waves)
- *   ar       → som, eletricidade  (wind scatters sound and insulates)
- *   som      → eletricidade, industrial (resonance disrupts current, cracks machines)
- *   eletricidade → industrial, fada (short-circuits machines, zaps wings)
- *   industrial → fada, agua       (cold iron breaks the fae, pumps dry the water)
- *   fada     → agua, marcial      (charms the tide, disarms the fighter)
- *   agua     → marcial, arcano    (rusts steel, washes away sigils)
- *   marcial  → arcano, tempo      (cuts through casting, strikes first)
- *   arcano   → tempo, espaco      (magic bends time and space)
- *   tempo    → espaco, luz        (time outlasts space, dims all light)
- *   espaco   → luz, sombra        (the void swallows light and shadow)
- *   luz      → sombra, morte      (light banishes shadow and undeath)
- *   sombra   → morte, vileza      (shadow claims the dead and the vile)
- *   morte    → vileza, vigor      (death humbles the cruel and the strong)
- *   vileza   → vigor, fogo        (venom saps strength, smothers flame)
- *   vigor    → fogo, planta       (endurance outlasts fire, uproots the wild)
- *
- * 25/10/2026: fada, industrial e planta entram no anel (20 elementos) sem
- * quebrar a simetria 2-e-2 — vale para qualquer N, é a forma do anel.
- */
-const COUNTER_RING: string[] = [
-  'fogo', 'planta', 'vida', 'terra', 'gravidade', 'ar', 'som', 'eletricidade', 'industrial', 'fada', 'agua',
-  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor',
-];
-
-export const COUNTERS: Record<string, [string, string]> = Object.fromEntries(
-  COUNTER_RING.map((id, i) => [
-    id,
-    [COUNTER_RING[(i + 1) % COUNTER_RING.length], COUNTER_RING[(i + 2) % COUNTER_RING.length]],
-  ]),
-) as Record<string, [string, string]>;
+import { COUNTERS } from './arenaCounters';
+export { COUNTERS };
+import { ARENA_LADDER_MAX, sanitizeArenaLadder, nextArenaLadder, arenaSeasonKey, sanitizeArenaSeason, arenaRollover } from './arenaLadder';
+export { ARENA_LADDER_MAX, sanitizeArenaLadder, nextArenaLadder, arenaSeasonKey, sanitizeArenaSeason, arenaRollover };
 
 export function countersElement(attacker: string, defender: string): boolean {
   return COUNTERS[attacker]?.includes(defender) ?? false;
@@ -314,7 +275,6 @@ export const ARENA_ROUND_COMP: readonly (readonly ArenaEnemyClass[])[] = [
 
 /** A forma que a rodada mostra. A classe (`weak/medium/boss`) segue dando o formato da rodada e o pagamento; a FORMA vem só da escada. */
 export type ArenaLadderStage = 'rookie' | 'champion' | 'ultimate';
-export const ARENA_LADDER_MAX = 999;
 /** Vitórias com só Rookies antes do 1º Champion ("depois de derrotar muitos"). */
 export const ARENA_LADDER_FIRST_STEP = 5;
 /** Vitórias entre um degrau e o próximo depois disso. */
@@ -324,12 +284,6 @@ export const ARENA_LADDER_WINS_PER_STEP = 3;
 export const arenaStageForHp = (coreHp: number): ArenaLadderStage => { const f = stageForFoeHp(coreHp); return f === 'rookie' || f === 'champion' ? f : 'ultimate'; };
 export const maxLadderStage = (a: ArenaLadderStage, b: ArenaLadderStage): ArenaLadderStage => maxFoeStage(a, b);
 export const ARENA_LADDER_TOP_STEP = 2 * ARENA_ROUNDS;
-
-/** Valor bom ou 0 (espelho em `functions/api/_dayCounters.js`). */
-export function sanitizeArenaLadder(raw: unknown): number {
-  if (typeof raw !== 'number' || !Number.isFinite(raw)) return 0;
-  return Math.min(ARENA_LADDER_MAX, Math.max(0, Math.floor(raw)));
-}
 
 /** O degrau (0..10) de um valor da escada: 0 = só Rookies; 1..5 = Champions de trás para a frente; 6..10 = Ultimates de trás para a frente. */
 export function arenaLadderStep(ladder: number): number {
@@ -345,31 +299,6 @@ export function arenaLadderStage(ladder: number, round: number): ArenaLadderStag
   if (fromEnd < step - ARENA_ROUNDS) return 'ultimate';
   return fromEnd < step ? 'champion' : 'rookie';
 }
-
-/**
- * TEMPORADA DA ARENA (decisão do dono, 22/11/2026): mensal, alinhada ao mês em UTC ("AAAA-MM"). Na virada a escada volta a 0 (nível 1);
- * ranking, prêmios e histórico NÃO são tocados. A 1ª temporada é a de agora: save sem `arenaSeason` adota o mês atual SEM zerar.
- * Espelho do servidor em `functions/api/_dayCounters.js` (`enforceArenaLadder`), travado por `dayCounters.parity.test.js`.
- */
-export const arenaSeasonKey = (now: Date | number = Date.now()): string => new Date(now).toISOString().slice(0, 7);
-export function sanitizeArenaSeason(raw: unknown): string | undefined {
-  return typeof raw === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : undefined;
-}
-/** A escada e a temporada no mês de `now`: temporada mais velha (ou virada de mês) → escada 0; sem temporada → adota o mês, mantém a escada; temporada no futuro (relógio que voltou) → mantém. */
-export function arenaRollover(ladder: unknown, season: unknown, now: Date | number = Date.now()): { ladder: number; season: string } {
-  const cur = arenaSeasonKey(now);
-  const l = sanitizeArenaLadder(ladder);
-  const s = sanitizeArenaSeason(season);
-  if (s === undefined) return { ladder: l, season: cur };
-  if (s < cur) return { ladder: 0, season: cur };
-  return { ladder: l, season: s };
-}
-
-/** Depois de uma run: vitória sobe 1; derrota e empate SEGURAM (param de subir, não descem). */
-export const nextArenaLadder = (ladder: unknown, outcome: 'win' | 'loss' | 'draw'): number => {
-  const l = sanitizeArenaLadder(ladder);
-  return outcome === 'win' ? Math.min(ARENA_LADDER_MAX, l + 1) : l;
-};
 
 const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['dropTier'] }> = {
   weak:   { points: 4,  tier: 'rookie' },
