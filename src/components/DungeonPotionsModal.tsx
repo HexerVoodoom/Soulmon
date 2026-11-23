@@ -10,8 +10,10 @@ import type { Language } from '../utils/i18n';
  * poção de cura que o jogador tem (já deixadas + no inventário), de 0 até todas (ex.: 20 de 20). O Soulmon usa as deixadas sozinho nas
  * quedas; o que sobrar volta quando a descida acabar. `owned` = o total por tipo (inventário + estoque já deixado).
  */
-export function DungeonPotionsModal({ owned, initial, language, onConfirm }: {
+export function DungeonPotionsModal({ owned, initial, language, onConfirm, onClose }: {
   owned: PotionStock; initial: PotionStock; language: Language; onConfirm: (wanted: PotionStock) => void;
+  /** O ✕ / Esc / véu SÓ FECHAM o aviso (dono, 23/11/2026): nada é deixado nem gasto; confirmar é só o botão. Ausente (testes antigos) → confirma como antes. */
+  onClose?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const tipos = HEAL_POTIONS.filter(k => (owned[k] ?? 0) > 0);
@@ -21,7 +23,7 @@ export function DungeonPotionsModal({ owned, initial, language, onConfirm }: {
     <ModalSheet
       open
       placement="center" titulo="inline"
-      onClose={() => onConfirm(qty)}
+      onClose={onClose ?? (() => onConfirm(qty))}
       language={language}
       title={isPt ? 'Poções para o Soulmon' : 'Potions for your Soulmon'}
       maxWidth={380}

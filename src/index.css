@@ -7603,14 +7603,14 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: calc(var(--sm2-cristal-canto) * .35); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #1c0e05; }
 
-/* POPUP CENTRAL — VARIANTE `titulo="inline"` (23/11/2026, teste A/B pedido do dono): sem placa de bronze; fechar REDONDO no canto superior direito (≥ 44 px, fio de cobre)
+/* POPUP CENTRAL — VARIANTE `titulo="inline"` (23/11/2026, teste A/B pedido do dono): sem placa de bronze; fechar só o GLIFO ✕ (sem círculo, cobre, alvo ≥ 44 px) no canto superior direito
    e o título logo abaixo, dentro do modal, até 2 linhas, sem truncar. A variante `placa` (padrão) não muda. */
 .sm2-moldura-modal--titulo-inline .sm2-moldura-modal__placa { display: none; }
 .sm2-moldura-modal.sm2-moldura-modal--cristal.sm2-moldura-modal--titulo-inline { --sm2-moldura-pad-t: 0px; }
 .sm2-popup-fechar-linha { display: flex; justify-content: flex-end; flex-shrink: 0; margin: calc(var(--sm2-cristal-canto) * .24) calc(var(--sm2-cristal-canto) * .3) 0 0; }
 .sm2-popup-fechar {
   box-sizing: border-box; width: 44px; height: 44px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
-  border: 1.5px solid #c9884a; border-radius: 50%; background: transparent; color: var(--sm2-viewport-ink, #E9F5F2);
+  border: 0; border-radius: 12px; background: transparent; color: #c9884a;
   -webkit-tap-highlight-color: transparent; transition: background var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out), transform var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out);
 }
 .sm2-popup-fechar:active { background: rgba(201, 136, 74, .22); transform: scale(.96); }
