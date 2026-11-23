@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { escolherChaveDeMatiz, hueDist, KEY_HUE } from '../../functions/api/_chromaHue.js';
 import { createHash } from 'node:crypto';
-import { stagesComElemento, pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, nomeiaBase, pistaTerraDe, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
+import { ELEMENTOS_PUROS_LOTE5, PROMPT_ROOT_EXTRA, stagesComElemento, pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, nomeiaBase, pistaTerraDe, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
 import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition } from './elementDex';
 
@@ -163,6 +163,17 @@ const REGEX_FRANQUIA = /digimon|pok[eé]mon|monster rancher|yu-?gi-?oh|warhammer
 /** Lote 5 (P5, 23/11/2026): descritores provisórios montados dos componentes, fora do hash dos 183 originais. */
 const LOTE5_PROVISORIO: readonly string[] = ['fantasma', 'morto_vivo', 'sangue', 'furia'];
 
+describe('Hemolisk: override só do root (REGISTRO §505)', () => {
+  const rookie = (id: string, stage: string) => (stagesComElemento([{ stage, branch: 'poder', imagePrompt: RAW, imagePromptFallback: RAW }] as never, undefined, { [stage === 'rookie' ? 'rookie' : 'ultimate']: id } as never, undefined)![0] as P);
+  it('o rookie de sangue leva o Tarrasque bebê; o descritor geral e os outros estágios/espécies não', () => {
+    expect(rookie('sangue', 'rookie').imagePrompt).toContain(PROMPT_ROOT_EXTRA.sangue);
+    expect(rookie('sangue', 'perfeito').imagePrompt).not.toMatch(/tarrasque/i);
+    expect(rookie('fantasma', 'rookie').imagePrompt).not.toMatch(/tarrasque/i);
+    expect(textoDoDescritor('sangue')).not.toMatch(/tarrasque/);
+    expect(Object.keys(PROMPT_ROOT_EXTRA)).toEqual(['sangue']);
+  });
+});
+
 describe('descritores autorais (REGISTRO §407)', () => {
   it('são 86: 53 pares, 14 trios, 19 quartetos', () => {
     const n = (k: number) => REESCRITOS.filter(id => essenceComposition(id)?.length === k).length;
@@ -173,7 +184,7 @@ describe('descritores autorais (REGISTRO §407)', () => {
     expect(ruins).toEqual([]);
   });
   it('em TODO combinado do catálogo o descritor escrito já cobre os componentes (o código não precisa completar)', () => {
-    const ruins = ESSENCE_ELEMENT_IDS.filter(id => (essenceComposition(id) ?? []).some(c => !nomeiaBase(textoDoDescritor(id), c)));
+    const ruins = ESSENCE_ELEMENT_IDS.filter(id => !ELEMENTOS_PUROS_LOTE5.has(id)).filter(id => (essenceComposition(id) ?? []).some(c => !nomeiaBase(textoDoDescritor(id), c)));
     expect(ruins).toEqual([]);
     for (const id of REESCRITOS) expect(pistasVisuaisDoElemento(id), id).toBe([DESCRITORES_ELEMENTO[id].forma, `${DESCRITORES_ELEMENTO[id].paleta} palette`].join(', '));
   });
@@ -197,10 +208,10 @@ describe('descritores autorais (REGISTRO §407)', () => {
   it('determinismo: o mesmo elemento gera o mesmo prompt duas vezes', () => {
     for (const id of REESCRITOS) expect(gen(id, 'sombra').imagePrompt, id).toBe(gen(id, 'sombra').imagePrompt);
   });
-  it('lote 5 (fantasma, morto_vivo, sangue, furia): descritor existe, nomeia cada componente e cabe no teto', () => {
+  it('lote 5 (fantasma, morto_vivo, sangue, furia): elemento PURO (sem folha, gema, coração de luz, coroa de osso nem Tarrasque), sem completar com formas dos componentes, cabe no teto', () => {
     for (const id of LOTE5_PROVISORIO) {
       expect(DESCRITORES_ELEMENTO[id], id).toBeDefined();
-      expect((essenceComposition(id) ?? []).filter(c => !nomeiaBase(textoDoDescritor(id), c)), id).toEqual([]);
+      expect(textoDoDescritor(id), id).not.toMatch(/leaves|leaf|budding|gem|hearts? of light|antler|crystal|pipes?|tarrasque/);
       expect((pistasVisuaisDoElemento(id) ?? '').length, id).toBeLessThanOrEqual(TETO_PISTAS);
     }
   });
@@ -267,7 +278,7 @@ describe('sem repetição de texto e formas grandes novas (REGISTRO §411)', () 
       const comp = essenceComposition(id) ?? [];
       if (comp.includes('ar')) { expect(t, id).toContain('ring of wind'); expect(t, id).not.toMatch(/sky blue/); }
       if (comp.includes('arcano')) { expect(t, id).toContain('violet rune disc'); expect(t, id).toMatch(/violet/); }
-      if (comp.includes('morte')) { expect(t, id).toContain('bone-white antler crown'); expect(t, id).toMatch(/bone white/); }
+      if (comp.includes('morte') && !ELEMENTOS_PUROS_LOTE5.has(id)) { expect(t, id).toContain('bone-white antler crown'); expect(t, id).toMatch(/bone white/); }
     }
     expect(textoDoDescritor('ar')).toMatch(/silver-grey/);
   });
@@ -275,7 +286,7 @@ describe('sem repetição de texto e formas grandes novas (REGISTRO §411)', () 
     for (const id of ESSENCE_ELEMENT_IDS) {
       const t = textoDoDescritor(id); const comp = essenceComposition(id) ?? [];
       if (comp.includes('som')) expect(t, id).toContain('big bronze bell');
-      if (comp.includes('vigor')) expect(t, id).toContain('big amber gem glowing on its chest');
+      if (comp.includes('vigor') && !ELEMENTOS_PUROS_LOTE5.has(id)) expect(t, id).toContain('big amber gem glowing on its chest');
       if (comp.includes('gravidade')) expect(t, id).toContain('large dark stone orbiting a ring');
     }
   });
