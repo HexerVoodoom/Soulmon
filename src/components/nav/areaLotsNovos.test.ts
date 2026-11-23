@@ -112,11 +112,11 @@ describe('o Ferreiro (07/10/2026; #187: agora lote da Forja) para os equipamento
     expect(lotNpcVoice('forja', 'ferreiro', 'en-US').name).toContain('Vitra');
     expect(lotNpcVoice('forja', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });
-  it('o lote abre primeiro a entrada da Vitra (SoulsmithSheet), e o botão leva ao mapa em tela cheia da ForgeCard; as Estatísticas não a montam', () => {
+  it('o lote abre DIRETO o mapa em tela cheia da ForgeCard (sem folha intermediária); as Estatísticas não a montam', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
     expect(lerSrc('./AreaView.tsx')).toMatch(/forgeFull && <Suspense[^]*<ForgeCard[^>]*view="map"/);
-    expect(lerSrc('./AreaView.tsx')).toMatch(/forgeFull = area === 'forja' && open\?\.id === 'ferreiro' && forgeEntered/);
-    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && !forgeFull && <SoulsmithSheet[^>]*onGo=\{\(\) => setForgeEntered\(true\)\}/);
+    expect(lerSrc('./AreaView.tsx')).toMatch(/forgeFull = area === 'forja' && open\?\.id === 'ferreiro';/);
+    expect(lerSrc('./AreaView.tsx')).not.toMatch(/SoulsmithSheet|forgeEntered/);
     expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<ForgeCard/);
   });
 });
