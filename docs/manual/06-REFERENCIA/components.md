@@ -803,6 +803,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Quem chama:** `TournamentPage` (`fight` chama `startDuel`; o treino monta as fichas locais com `soulCombatant` e `npcSide`; o × antes do fim chama `leaveDuel` = derrota). Sair antes do fim NÃO entrega o resultado depois.
 **Régua:** `src/components/DuelScreen.render.test.tsx` e `TournamentPage.duelo.v3.render.test.tsx`. Nasce muda (R-NOVA).
 **Sync 09/11/2026 (`5229b1be..62f204e1b`):** **HP base no duelo** (`hpExibidoPvp`, `utils/combate/fight.ts`): o máximo mostrado (`maxHpOf`) é o HP base da Arena, não o inflado do PvP (`PVP_HP_SCALE` saiu daqui) — só exibição; a simulação e o servidor seguem iguais. Props novas: `scene?` (CSS `background`; o Torneio passa o coliseu da faixa, `coliseuSceneFor`; ausente = `DUEL_SCENE.bg`, sem `sceneElement`) e `oppEspecialNome?` (nome do especial do oponente, público e já filtrado no servidor). O fim da luta mostra `ResultBanner` (victory/defeat/draw, `ui/SpriteFx.tsx`); `me` leva `stageIcon` (ícone de estágio na placa) e o impacto do golpe vem de `meleeImpactOf`.
+### `src/components/GuildWarReplay.tsx`
+**Dono de:** o "Assistir" da Guerra de clãs (22/11/2026, P4/C): reproduz os duelos de uma guerra já resolvida, um depois do outro, com `DuelScreen observar` e silhuetas neutras (nunca nome nem estágio de outra guilda).
+**Exports:** `GuildWarReplay({ replay, onClose })`.
+**Chamado por:** `App.tsx` (lazy), aberto pelo botão "Assistir" da carta `guild-war` do `MailboxSheet`. Só mostra: o resultado vem do servidor (`functions/api/_guerra.js`, `replayDaGuerra`) e não muda; nasce muda (R-NOVA).
+
 ### `src/components/games/ArenaCuraModal.tsx`
 **Dono de:** o modal de fôlego entre rodadas da Arena (04/11/2026): cenário da run escurecido, 3 corações que enchem do "antes" ao "depois", e o botão "Pronto pro combate".
 **Exports:** `ArenaCuraModal(props)`.

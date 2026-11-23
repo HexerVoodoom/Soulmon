@@ -98,6 +98,8 @@ export interface DuelScreenProps {
   /** Nome do especial que o OPONENTE escolheu (público, já filtrado no servidor); sem ele, o nome por regra. */
   oppEspecialNome?: string;
   /** Fim da luta animada: os toques de cada BALDE vão para o servidor decidir. */
+  /** Só ASSISTE (replay da guerra de clã): a torcida não conta toque nenhum. */
+  observar?: boolean;
   onDone: (taps: number[]) => void;
   onClose: () => void;
 }
@@ -116,7 +118,7 @@ const maxHpOf = (s: DuelSide) => hpExibidoPvp(s.combatant.hp);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, oppEspecialNome, onDone, onClose, scene,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, oppEspecialNome, onDone, onClose, scene, observar = false,
 }: DuelScreenProps) {
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
@@ -342,7 +344,7 @@ export function DuelScreen({
   const cheering = phase === 'fight';
 
   return (
-    <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
+    <TorcidaLayer onTap={cheer} active={cheering && !pausado && !observar} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
         scene={scene ?? DUEL_SCENE.bg}
         sceneElement={scene ? null : oppEl}

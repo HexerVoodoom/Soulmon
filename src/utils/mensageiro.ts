@@ -26,7 +26,7 @@ export interface MailItem {
   /** NPC remetente: a caixa mostra a imagem dele na carta. Ausente = remetente jogador (sem imagem). */
   npc?: 'mensageiro' | 'hexsmith';
 }
-export type MailKind = 'gift' | 'friend-invite' | 'guild-invite' | 'global';
+export type MailKind = 'gift' | 'friend-invite' | 'guild-invite' | 'global' | 'guild-war';
 /** O que o servidor entregou num resgate: só o prêmio e o título. */
 export interface MailGrant { mid: string; titlePt?: string; titleEn?: string; bits: number; emblems: number; item?: string }
 export interface MailState { gamePoints?: number; emblems?: number; mailClaimed?: string[]; ownedFurniture?: string[] }
@@ -57,6 +57,8 @@ export function applyMail<T extends MailState>(prev: T, mail: MailItem): T {
 export const hasPendingReward = (m: MailItem): boolean => (m.bits > 0 || m.emblems > 0 || !!m.item) && !m.claimedAt;
 /** Convite de amizade com o que o servidor precisa para responder. */
 export const isFriendInvite = (m: MailItem): m is MailItem & { fromPid: string } => m.kind === 'friend-invite' && typeof m.fromPid === 'string' && m.fromPid.length > 0;
+/** Carta de guerra de clã (22/11/2026): "Batalha encontrada", com o botão Assistir (reproduz pela semente gravada). Sem prêmio e sem push. */
+export const isGuildWar = (m: MailItem): boolean => m.kind === 'guild-war';
 /** Convite de clã por carta (§358) com o código para entrar. Carta de clã de antes do §358 (sem `kind`) é carta comum: o corpo traz o código. */
 export const isGuildInvite = (m: MailItem): m is MailItem & { guildCode: string } => m.kind === 'guild-invite' && typeof m.guildCode === 'string' && m.guildCode.length > 0;
 /** Carta nova = ainda não aberta nem resgatada. */

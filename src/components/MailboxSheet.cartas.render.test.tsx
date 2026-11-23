@@ -87,3 +87,18 @@ describe('MailboxSheet › cartas especiais', () => {
     expect(container.querySelector('[data-carta-widget-img]')).toBeNull();
   });
 });
+
+describe('MailboxSheet › carta de guerra de clã (22/11/2026)', () => {
+  const guerra: MailItem = { mid: 'guerra:gidx:2026-11-22', kind: 'guild-war', titlePt: 'Batalha encontrada', titleEn: 'Battle found', bodyPt: 'Seu clã enfrentou Beta: Vitória.', bodyEn: 'Your clan faced Beta: Victory.', bits: 0, emblems: 0, at: 1 };
+  it('mostra Assistir (sem Resgatar) e o botão chama onWatchWar; sem o handler não há botão', () => {
+    const onWatchWar = vi.fn();
+    const { container, rerender } = render(<MailboxSheet {...base} mail={[guerra]} onWatchWar={onWatchWar} />);
+    fireEvent.click(container.querySelector('[data-mail-letter] button')!);
+    expect(container.querySelector('[data-mail-claim]')).toBeNull();
+    expect(container.querySelector('[data-mail-war-watch]')!.textContent).toBe('Assistir');
+    fireEvent.click(container.querySelector('[data-mail-war-watch]')!);
+    expect(onWatchWar).toHaveBeenCalledTimes(1);
+    rerender(<MailboxSheet {...base} mail={[guerra]} />);
+    expect(container.querySelector('[data-mail-war-watch]')).toBeNull();
+  });
+});

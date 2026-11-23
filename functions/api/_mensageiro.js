@@ -51,7 +51,7 @@ export function sanitizeMail(m) {
     ...(m.kind === 'global' && NPCS.has(m.npc) ? { npc: m.npc } : {}),
   };
 }
-const KINDS = new Set(['gift', 'friend-invite', 'guild-invite', 'global']);
+const KINDS = new Set(['gift', 'friend-invite', 'guild-invite', 'global', 'guild-war']);
 const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const TUTORIAIS = new Set(['widget']);
 const NPCS = new Set(['mensageiro', 'hexsmith']);

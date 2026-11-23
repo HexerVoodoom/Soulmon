@@ -7,7 +7,7 @@ import { CartaTutorialWidget } from './CartaTutorialWidget';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
 import npcHexsmith from '../assets/soulmon/npcs/npc-forja-hexsmith.png';
 import {
-  deletableRead, hasPendingReward, isFriendInvite, isGuildInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
+  deletableRead, hasPendingReward, isFriendInvite, isGuildInvite, isGuildWar, isUnread, mailBody, mailTitle, rewardText, sumGrants,
   type MailGrant, type MailItem,
 } from '../utils/mensageiro';
 import type { Language } from '../utils/i18n';
@@ -24,7 +24,7 @@ import type { GuildLetterResult } from '../hooks/useMailbox';
  */
 const CARTA_NPC_ART = { mensageiro: NPC_MENSAGEIRO_ART, hexsmith: npcHexsmith } as const;
 
-export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead, onAnswerInvite, onJoinGuild }: {
+export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead, onAnswerInvite, onJoinGuild, onWatchWar }: {
   open: boolean;
   language: Language;
   mail: readonly MailItem[];
@@ -38,6 +38,8 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
   onAnswerInvite?: (m: MailItem, decline: boolean) => Promise<'accepted' | 'declined' | 'gone'>;
   /** Convite de clã por carta (§358): "Entrar no clã" = o `guildJoin` do Salão com o código da carta. "Recusar" só apaga a carta. */
   onJoinGuild?: (m: MailItem) => Promise<GuildLetterResult>;
+  /** Carta de guerra de clã (22/11/2026): "Assistir" reproduz o combate pela semente gravada. */
+  onWatchWar?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const [aberta, setAberta] = useState<string | null>(null);
@@ -187,6 +189,10 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                         <button type="button" data-mail-invite-decline disabled={ocupado} onClick={() => void responder(m, true)}
                           style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
                       </div>
+                    )}
+                    {isGuildWar(m) && onWatchWar && (
+                      <button type="button" data-mail-war-watch disabled={ocupado} onClick={onWatchWar}
+                        style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Assistir' : 'Watch'}</button>
                     )}
                     {isGuildInvite(m) && onJoinGuild && (
                       <div data-mail-guild-invite style={{ display: 'flex', gap: 8 }}>

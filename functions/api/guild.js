@@ -93,7 +93,7 @@ import {
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
   marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
-import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
+import { buscarGuerra, estadoDaGuerra, replayDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
 import { converterMisterio } from './_claMisterio.js';
@@ -144,6 +144,7 @@ export const GUILD_ACTIONS = Object.freeze({
   guildClaim: 'POST',
   guildWar: 'GET',
   guildWarSeek: 'POST',
+  guildWarReplay: 'GET',
   guildDonate: 'POST',
   guildSlot: 'POST',
   guildShopBuy: 'POST',
@@ -674,6 +675,13 @@ export async function handleGuild({ request, env }) {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
     return json({ war: await estadoDaGuerra(env, g.id) });
+  }
+
+  if (action === 'guildWarReplay') {
+    // "Assistir" da carta (22/11/2026): as fichas e a semente gravadas na guerra; reproduz, não decide nada.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    return json({ replay: await replayDaGuerra(env, g.id) });
   }
 
   if (action === 'guildWarSeek') {
