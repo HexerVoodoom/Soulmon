@@ -48,6 +48,7 @@ import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
 import { TaskMeta } from './TaskMeta';
 import { recursoDaAtividade, passosLinha, irLaLabel, predioDoRecurso } from '../utils/tarefaLink';
+import { cadernoFormatoOfCatalogId } from '../data/catalogResources';
 import { habitCountsOn } from '../utils/habitRhythm';
 import { isHiddenByPlan, type DayPlanView } from '../utils/dayPlan';
 import { parseDayValue } from '../utils/taskTriage';
@@ -137,7 +138,7 @@ export interface DailyRitualsProps {
   /** beta12 §J: passos de hoje e a meta (das Configurações) para a linha do hábito de caminhar; `null`/ausente = sem permissão ou sem sensor (a linha não mostra nada). */
   stepsInfo?: { hoje: number; meta: number } | null;
   /** beta12 §J: o "Ir lá" do hábito linkado a um prédio (`forja.caderno`, `forja.oficina`). */
-  onGoToBuilding?: (building: string) => void;
+  onGoToBuilding?: (building: string, formato?: string) => void;
   /** ⭐ Id da atividade que é a tarefa bônus de HOJE (`utils/bonusTask.ts`): título em bronze, nada mais muda. */
   bonusActivityIds?: readonly string[];
   /** 🔥 Id do hábito com o BÔNUS DE RETORNO da semana (`utils/weeklyRetro.ts`): o mesmo selo (título em bronze) da tarefa bônus. */
@@ -499,7 +500,7 @@ export function DailyRituals({
       ? <span data-habit-link="steps">{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
       : undefined;
     const acao = recurso !== 'steps' && predio && irLa && onGoToBuilding
-      ? { label: irLa, kind: recurso, onClick: () => onGoToBuilding(predio) }
+      ? { label: irLa, kind: recurso, onClick: () => onGoToBuilding(predio, predio === 'forja.caderno' ? cadernoFormatoOfCatalogId(activity.catalogId) : undefined) }
       : undefined;
     return (
       <RitualRow

@@ -46,7 +46,7 @@ for (const tema of ['light', 'dark'] as const) {
       expect(btn.style.minWidth).toBe('44px');
       expect(btn.style.color).toBe('var(--sm2-primary-ink)');
       fireEvent.click(btn);
-      expect(ir).toHaveBeenCalledWith('forja.caderno');
+      expect(ir).toHaveBeenCalledWith('forja.caderno', 'gratidao');
       expect(marcar).not.toHaveBeenCalled();
     });
 
@@ -81,7 +81,7 @@ describe('§382: tocar no NOME da linha ligada a prédio abre o prédio; só o c
     expect(nome.getAttribute('aria-label')).toBe('Gratidão: Ir ao Caderno');
     expect(nome.textContent).toBe('Gratidão');
     fireEvent.click(nome);
-    expect(ir).toHaveBeenCalledWith('forja.caderno');
+    expect(ir).toHaveBeenCalledWith('forja.caderno', 'gratidao');
     fireEvent.click(container.querySelector('[data-ritual-tap]') as HTMLElement);
     expect(ir).toHaveBeenCalledTimes(2);
     expect(marcar).not.toHaveBeenCalled();
@@ -126,5 +126,14 @@ describe('a ação é UMA seta turquesa no FIM da linha (14/11/2026, §365; reve
     expect((container.querySelector('[data-ritual-inline]') as HTMLElement).style.color).toBe('var(--sm2-primary-ink)');
     expect(container.querySelector('[data-ritual-below]')).toBeNull();
     expect(container.querySelector('[data-ritual-action]')).toBeNull();
+  });
+});
+
+describe('Ir ao Caderno leva o formato do hábito (23/11/2026)', () => {
+  it('escrita livre abre em escrita livre; gratidão, em gratidão', () => {
+    const ir = vi.fn();
+    const { container } = mount([mk('l', 'Escrita livre', 'criatividade-escrita-livre')], { onGoToBuilding: ir });
+    fireEvent.click(container.querySelector('button[data-ritual-action]') as HTMLButtonElement);
+    expect(ir).toHaveBeenCalledWith('forja.caderno', 'livre');
   });
 });

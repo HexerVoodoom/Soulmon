@@ -4629,11 +4629,11 @@ export default function App() {
   const balaoDouradoHud = balaoTipoVisivel ? { tipo: balaoTipoVisivel, text: balaoDouradoText(balaoTipoVisivel, language), ariaLabel: balaoDouradoAria(balaoTipoVisivel, language), tempoMs: BALAO_DOURADO_VISIVEL_MS }
     : dicaDourada.ativa ? { tipo: dicaDourada.ativa, text: dicaTexto(dicaDourada.ativa, language), ariaLabel: dicaAria(dicaDourada.ativa, language) } : null;
 
-  const handleMaterialGoTo = useCallback((building: BuildingId) => {
+  const handleMaterialGoTo = useCallback((building: BuildingId, formato?: string) => {
     const dest = buildingDestination(building);
     if (!dest) return;
     if (dest.kind === 'missions') { setMissionsOpen('daily'); return; }
-    setPendingSheet({ area: dest.area, lot: dest.lot, section: dest.section });
+    setPendingSheet({ area: dest.area, lot: dest.lot, section: dest.section ?? formato });
     goTo(areaView(dest.area));
   }, [goTo]);
 
@@ -9479,7 +9479,7 @@ export default function App() {
                     onToggleActivity={(id: string) => handleToggleActivityCompletion(id)}
                     /* beta12 §J: recurso na linha do hábito linkado (passos de hoje / "Ir ao Caderno"). */
                     stepsInfo={progressoDePassos({ steps: gameState.steps, stepGoal: gameState.stepGoal, consent: gameState.stepsConsent, now: agora })}
-                    onGoToBuilding={(b: string) => handleMaterialGoTo(b as BuildingId)}
+                    onGoToBuilding={(b: string, f?: string) => handleMaterialGoTo(b as BuildingId, f)}
                     onUpdateStep={handleUpdateStep}
                     onRestoreTask={handleRestoreTask}
                     onCreate={handleAddNewActivity}

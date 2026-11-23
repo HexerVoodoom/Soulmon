@@ -22,3 +22,15 @@ export const CATALOG_RESOURCE: Readonly<Record<string, CatalogResource>> = {
 /** O recurso de um hábito (via `catalogId`), ou `undefined` (sem catálogo ou sem link). */
 export const resourceOfCatalogId = (catalogId: string | null | undefined): CatalogResource | undefined =>
   catalogId ? CATALOG_RESOURCE[catalogId] : undefined;
+
+/**
+ * Qual formato do Caderno cada hábito linkado abre ("Ir ao Caderno"): gratidão abre o Jornal de gratidão, escrita livre abre a
+ * escrita livre. Sem esta ponte a folha abria no formato do dia (bug reportado pelo dono, 23/11/2026).
+ */
+export const CATALOG_CADERNO_FORMATO: Readonly<Record<string, 'gratidao' | 'livre'>> = {
+  'mente-gratidao': 'gratidao',
+  'criatividade-escrita-livre': 'livre',
+};
+
+export const cadernoFormatoOfCatalogId = (catalogId: string | null | undefined): 'gratidao' | 'livre' | undefined =>
+  catalogId ? CATALOG_CADERNO_FORMATO[catalogId] : undefined;
