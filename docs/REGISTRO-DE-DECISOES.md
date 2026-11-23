@@ -6687,3 +6687,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decisão:** a aba Elementos ganha chips de categoria (Base, Comb II, Comb III, Comb IV, Special, por nº de componentes) e a caixa "Novo" (só destrancados com selo); tudo combina em E com o filtro por bases. A ficha vira `ElementModal`: cada componente destrancado abre a ficha dele (pilha, "Voltar" de um nível, X fecha tudo); trancado segue "?". O ícone do elemento da criatura no Bestiário abre o mesmo modal, só se o elemento já foi destrancado.
 - **Special = só Neutral:** não existe elemento Nightmare no dex (Pesadelo é modo de jogo). **Fora:** filtro "Novo" em Soulmons e ícone da criatura em outras telas (ficha, formas do pet).
 - **Rollback:** reverter o commit; nenhum dado de save mudou.
+
+## §505 — Descritores dos 4 elementos do lote 5: elemento puro + Tarrasque bebê só no root do Hemolisk (23/11/2026, decisão do dono em modal)
+
+- **Decisão:** fantasma (Spectrel), morto-vivo (Revenox), sangue (Hemolisk) e fúria (Furiosk) deixam de herdar folhas, gemas, corações de luz e coroa de osso dos componentes; o descritor é só o tema do próprio elemento, cor própria, expressão calma, sem folha/cristal/cano da marca. `ELEMENTOS_PUROS_LOTE5` desliga o completamento por componente (`PISTA_CURTA_BASE`) para esses 4, e os testes de "uma palavra-chave por componente" os excluem de forma explícita (os outros 269 seguem travados).
+- **Root do Hemolisk:** `PROMPT_ROOT_EXTRA.sangue` (Tarrasque bebê) é anexado só ao prompt do estágio `rookie` cujo elemento efetivo é `sangue`; o nome no jogo segue Hemolisk e o descritor geral não cita Tarrasque. Sem mudança de sorteio nem de hash dos 183 originais.
+- **Rollback:** reverter o commit.

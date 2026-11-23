@@ -3,7 +3,7 @@
  * e o trecho de elemento tem teto de tamanho (dono, 10/11/2026). Só texto de prompt; nenhum save muda.
  */
 import { describe, it, expect } from 'vitest';
-import { pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, nomeiaBase } from './elementoCombinado';
+import { ELEMENTOS_PUROS_LOTE5, pistasVisuaisDoElemento, PALAVRA_CHAVE_BASE, TETO_PISTAS, nomeiaBase } from './elementoCombinado';
 import { essenceComposition, ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS } from './elementDex';
 import { ELEMENTOS_CURADOS } from './elementosCurados';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
@@ -22,11 +22,11 @@ describe('uma pista por componente', () => {
     }
   });
   it('os 59 curados (3 e 4 componentes): cada componente aparece nas pistas', () => {
-    const ruins = ELEMENTOS_CURADOS.map(e => [e.id, faltas(e.id)] as const).filter(([, f]) => f.length);
+    const ruins = ELEMENTOS_CURADOS.filter(e => !ELEMENTOS_PUROS_LOTE5.has(e.id)).map(e => [e.id, faltas(e.id)] as const).filter(([, f]) => f.length);
     expect(ruins).toEqual([]);
   });
   it('todos os combinados de 2 componentes e todos os 269: cada componente aparece nas pistas', () => {
-    const ruins = ESSENCE_ELEMENT_IDS.map(id => [id, faltas(id)] as const).filter(([, f]) => f.length);
+    const ruins = ESSENCE_ELEMENT_IDS.filter(id => !ELEMENTOS_PUROS_LOTE5.has(id)).map(id => [id, faltas(id)] as const).filter(([, f]) => f.length);
     expect(ruins).toEqual([]);
   });
   it('pedra no lugar de ar: o avatar_elemental cita vento', () => {

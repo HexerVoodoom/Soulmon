@@ -76,12 +76,23 @@ const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
   gravidade: 'a large dark stone orbiting a ring', espaco: 'a large floating ring of stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
 };
 
+/** Elementos PUROS do lote 5 (dono, 23/11/2026): o descritor é só o tema do próprio elemento; NUNCA se completa com a forma curta dos componentes (folha, gema, coroa de osso...). */
+export const ELEMENTOS_PUROS_LOTE5: ReadonlySet<string> = new Set(['fantasma', 'morto_vivo', 'sangue', 'furia']);
+
+/**
+ * Extra SÓ do Rookie (root) de um elemento (dono, 23/11/2026): o Hemolisk (sangue) nasce como um Tarrasque bebê. Não entra no descritor geral
+ * (usado por todos os estágios) nem muda sorteio/hash; só é anexado ao prompt do estágio `rookie` cujo elemento efetivo é o id.
+ */
+export const PROMPT_ROOT_EXTRA: Readonly<Record<string, string>> = {
+  sangue: 'Root form: a baby Tarrasque-like hatchling, small and cute-but-menacing, spiked armored carapace, small curved horns, short tail, wide toothy mouth, with crimson veils and blood drops, no leaves.',
+};
+
 /** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
 export function pistasVisuaisDoElemento(id: string): string | undefined {
   const d = descritorDoElemento(id);
   if (!d || (!d.forma && !d.paleta)) return undefined;
   let forma = d.forma ?? '';
-  const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !nomeiaBase(`${forma} ${d.paleta ?? ''}`.toLowerCase(), c));
+  const faltam = ELEMENTOS_PUROS_LOTE5.has(id) ? [] : (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !nomeiaBase(`${forma} ${d.paleta ?? ''}`.toLowerCase(), c));
   if (faltam.length) {
     const extra = faltam.map(c => (c === 'terra' ? pistaTerraDe(id) : PISTA_CURTA_BASE[c])).join(', ');
     forma = forma ? (/ with hints of /.test(forma) ? `${forma}, ${extra}` : `${forma}, with hints of ${extra}`) : extra;
@@ -223,7 +234,8 @@ export function stagesComElemento<T extends { stage: string; branch?: string; im
     }
     const pistas = pistasVisuaisDoElemento(efetivo);
     const frasePistas = pistas ? ` Visual cues of this element: ${pistas}.` : '';
-    const extra = `${tema}${frasePistas}`;
+    const raiz = st.stage === 'rookie' && PROMPT_ROOT_EXTRA[efetivo] ? ` ${PROMPT_ROOT_EXTRA[efetivo]}` : '';
+    const extra = `${tema}${frasePistas}${raiz}`;
     if (!extra) return st;
     // Tempo: OU ampulheta OU relógio, nunca os dois, e a cláusula negativa (§324). Também limpa o prompt cru que já viesse com os dois.
     const tempo = { preferido: motivoTempoDoElemento(efetivo), semente: sementeTempo, forcar: ehElementoDeTempo(efetivo) };
