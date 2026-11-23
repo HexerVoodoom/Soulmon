@@ -112,10 +112,10 @@ describe('o Ferreiro (07/10/2026; #187: agora lote da Forja) para os equipamento
     expect(lotNpcVoice('forja', 'ferreiro', 'en-US').name).toContain('Vitra');
     expect(lotNpcVoice('forja', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });
-  it('o lote abre a folha COM a Vitra e a ForgeCard (lista) DENTRO dela; sem tela cheia, sem folha intermediária; as Estatísticas não a montam', () => {
+  it('o lote abre a folha COM a Vitra e a ForgeCard (mapa de chakras, inline) DENTRO dela; sem tela cheia, sem folha intermediária; as Estatísticas não a montam', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
-    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <ForgeCard[^>]*view="list"/);
-    expect(lerSrc('./AreaView.tsx')).not.toMatch(/forgeFull|SoulsmithSheet|forgeEntered|view="map"/);
+    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <ForgeCard[^>]*view="map"[^>]*inline/);
+    expect(lerSrc('./AreaView.tsx')).not.toMatch(/forgeFull|SoulsmithSheet|forgeEntered/);
     expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<ForgeCard/);
   });
 });

@@ -7557,6 +7557,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-tela .sm2-moldura-modal__info { position: fixed; z-index: 62; pointer-events: auto; right: calc(var(--u) * 2); top: calc(var(--u) * 3.7); width: calc(var(--u) * 8); height: calc(var(--u) * 8); }
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
+/* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
+.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; width: 100%; aspect-ratio: 852 / 1250; border-radius: var(--sm2-radius-md, 12px); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translateX(-50%); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-pop { width: min(250px, calc(100% - 16px)); }
 @keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 
 /* MOLDURA DE POPUP 'CRISTAL' (23/11/2026, arte do P6 aprovada pelo dono): popup central (`ModalSheet placement=center`) sem folha/cipó de prédio.
