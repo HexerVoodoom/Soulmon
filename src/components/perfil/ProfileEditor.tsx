@@ -33,9 +33,9 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onOpenFrameShop, especialNome }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, fundadorPremios, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onOpenFrameShop, especialNome }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
-  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string; petElement?: string;
+  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; fundadorPremios?: string[]; petStage: string; petElement?: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
   userName?: string; onChangeName?: (name: string) => void;
@@ -89,11 +89,11 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   const [group, setGroup] = useState('all');
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return AVATAR_CATALOG.map((e, i) => ({ e, i })).filter(({ e, i }) =>
+    return AVATAR_CATALOG.map((e, i) => ({ e, i })).filter(({ e }) => e.g !== 'founder' || !!fundadorPremios?.includes(e.id)).filter(({ e, i }) =>
       (group === 'all' || e.g === group) && (!t || avatarAlt(e, i, isPt).toLowerCase().includes(t) || e.n.includes(t)));
-  }, [q, group, isPt]);
+  }, [q, group, isPt, fundadorPremios]);
   const current = resolveAvatarId(avatarId, saveId);
-  const groups = ['all', ...Array.from(new Set(AVATAR_CATALOG.map(e => e.g)))];
+  const groups = ['all', ...Array.from(new Set(AVATAR_CATALOG.filter(e => e.g !== 'founder' || !!fundadorPremios?.includes(e.id)).map(e => e.g)))];
   const sec = { margin: '16px 0 8px', fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm2-ink)' } as const;
   return (
     <ModalSheet open={open} onClose={onClose} language={language} title={isPt ? 'Editar perfil' : 'Edit profile'}>

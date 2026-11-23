@@ -92,7 +92,8 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
   it('inventário e loja sobrevivem (o que foi comprado com Bits)', () => {
     const s = montar();
     expect(s.foodInventory).toEqual({ '💗': 2, '👊': 1 });
-    expect(s.ownedFurniture).toEqual(['furn-sofa']);
+    // + o Cristal Fundador: conta existente (save legado com Soulmon) recebe o conjunto na 1ª carga (REGISTRO §507).
+    expect(s.ownedFurniture).toEqual(['furn-sofa', 'furn-cristal-fundador']);
     expect(s.equippedBackground).toBe('bg-matrix');
     // 'bg-room' é grátis e entra mesmo em save anterior à sua existência
     expect(s.ownedBackgrounds).toEqual(expect.arrayContaining(['bg-matrix', 'bg-ocean', 'bg-room']));

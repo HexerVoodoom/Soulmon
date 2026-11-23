@@ -19,6 +19,7 @@ import { HABIT_WEIGHT } from '../types/taskModel';
 import { completeHabit, emptyRhythm, attributeMultiplier, milestoneReached, habitTier } from './habitRhythm';
 import { awardBondXP } from './bond';
 import { playerDayKey } from './playerDay';
+import { registrarDiaComTarefa } from './fundador';
 import { settlePendingRollover } from './dailyReset';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 
@@ -112,5 +113,6 @@ export function applyHabitCompletion<S extends GameState>(prevRaw: S, activityId
     // Para o ritmo de cuidado enxergar atividades (`completedTasks` só recebe tarefa avulsa).
     activityLog: [...(prev.activityLog ?? []), now.toISOString()].slice(-ACTIVITY_LOG_CAP),
   };
-  return withHabitCompletion(next, activityId, activity.category, today, playerDayKey(now, prev.playerDayTz)) as S;
+  // Conjunto Fundador: um dia a mais com atividade concluída (no-op no mesmo dia; `utils/fundador.ts`).
+  return registrarDiaComTarefa(withHabitCompletion(next, activityId, activity.category, today, playerDayKey(now, prev.playerDayTz)) as S, now);
 }

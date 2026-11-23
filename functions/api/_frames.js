@@ -37,6 +37,8 @@ export const FRAME_IDS = new Set([
   'frame-neve-geada-cristalina',
   'frame-ruinas-concreto-e-vergalhao',
   'frame-ruinas-sucata-florida',
+  // Conjunto Fundador (23/11/2026): moldura de concessão (2º dia com tarefa). Espelho de `fundadorCatalogo.ts`.
+  'founder-moldura',
 ]);
 
 /** Id de moldura do catalogo ou `null`. */

@@ -277,6 +277,7 @@ import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/comp
 import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
 import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
 import { applyHabitCompletion, withHabitCompletion, ACTIVITY_LOG_CAP } from './utils/habitCompletionPay';
+import { registrarDiaComTarefa, concederTodosFundador } from './utils/fundador';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, shouldAutoAdoptCorvo, spriteLineOf } from './utils/corvoPet';
@@ -3060,10 +3061,10 @@ export default function App() {
         // Um hábito de etapas fecha na ÚLTIMA etapa — a constância dele precisa
         // ser alimentada aqui também, senão só os hábitos sem etapas contariam.
         return isFullyCompleted && updatedActivity
-          ? withHabitCompletion(
+          ? registrarDiaComTarefa(withHabitCompletion(
             next, activityId, updatedActivity.category,
             new Date().toDateString(), playerDayKey(new Date(), prev.playerDayTz),
-          )
+          ), new Date())
           : next;
     };
     // Allow checking without confirmation
@@ -4331,6 +4332,7 @@ export default function App() {
       void gmTools().then(m => setGameState(m.gmFillCare));
     },
     onAddPerfectDays: (n: number) => { void gmTools().then(m => setGameState(prev => m.gmAddPerfectDays(prev, n))); },
+    onGrantFundador: () => { setGameState(prev => concederTodosFundador(prev)); },
   }), [petIsCorvo, gameState.evolutionStage, setGameState, careEvent, handleCareEventComplete]);
 
   /* Aviso calmo da penalidade de fome: fora do updater (footgun 6), só quando o que o resumo vai contar SOBE nesta sessão (a referência
@@ -9550,6 +9552,7 @@ export default function App() {
                 avatarId: gameState.avatarId ?? null,
                 equippedFrame: gameState.equippedFrame ?? null,
                 ownedFrames: gameState.ownedFrames ?? [],
+                fundadorPremios: gameState.fundadorPremios ?? [],
                 petElement: petElementOf(gameState),
                 petStage: gameState.evolutionStage,
                 totalXP: gameState.totalXP ?? 0,

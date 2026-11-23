@@ -41,6 +41,8 @@ for (const e of entradas) {
   if (!EN[e.nome]) throw new Error(`falta alt EN para ${e.nome} em scripts/avatares-en.json`);
   cat.push({ id, g: e.grupo, n: e.nome, en: EN[e.nome] });
 }
+// Avatar de CONCESSAO (Fundador, 23/11/2026): nao vem de NPC; a miniatura `founder-retrato.webp` e versionada a mao e so aparece na grade para quem a ganhou.
+cat.push({ id: 'founder-retrato', g: 'founder', n: 'retrato-fundador', en: 'Founder portrait' });
 await writeFile(join(OUT, 'catalogo.json'), JSON.stringify(cat) + '\n');
 await writeFile('functions/api/_avatares.js',
 `// GERADO por scripts/gerar-avatares.mjs — NAO editar a mao. A lista FECHADA de avatares de perfil (so ids).

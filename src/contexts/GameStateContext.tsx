@@ -132,6 +132,7 @@ import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
 import { loadCatalog } from '../data/catalogoCarga';
+import { concederFundador, sanitizeFundadorDias, sanitizeFundadorPremios, sanitizeFundadorUltimoDia } from '../utils/fundador';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
@@ -755,6 +756,10 @@ export interface GameState {
   /** 🖼️ MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA (`utils/frames.ts`; nunca vantagem). Posse das de loja/conquista/evento
    *  (as de rank vêm da faixa e não ficam aqui). Leitura: `?? []`. O servidor só confere a FORMA (`functions/api/save.js`). */
   ownedFrames?: string[];
+  /** CONJUNTO FUNDADOR (23/11/2026, `utils/fundador.ts`): dias acumulados com ≥1 tarefa/atividade, último dia (ISO do jogador) e ids concedidos. Ausente = save anterior (conta existente recebe os 4 na carga). */
+  fundadorDias?: number;
+  fundadorUltimoDia?: string;
+  fundadorPremios?: string[];
   /** 🌳 TALENTOS do usuário (Combate v3 / PR7). Um id por GRAU comprado (`utils/talents.ts`); o resto (pontos, bônus) é
    *  derivado do Vínculo (`bondLevelFor(totalXP)`, nunca persistido). Vetor inválido é descartado na carga e no servidor
    *  (`functions/api/save.js`). Sobrevive à degeneração. Leitura: `?? []`. */
@@ -1362,7 +1367,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
     new Date(),
   );
   // 🔄 Concessão única do beta (`utils/betaResetGrant.ts`): idempotente pela flag `grants`.
-  return applyBetaResetGrant({
+  return concederFundador(applyBetaResetGrant({
         ...loadedState,
         // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
@@ -1919,7 +1924,11 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           ? loadedState.stepsConsent
           : undefined,
         grants: sanitizeGrants(loadedState.grants),
-      } as GameState);
+        // Fundador: ausente = conta existente (a concessão roda logo abaixo, idempotente); lixo vira o saneado.
+        fundadorDias: sanitizeFundadorDias(loadedState.fundadorDias),
+        fundadorUltimoDia: sanitizeFundadorUltimoDia(loadedState.fundadorUltimoDia),
+        fundadorPremios: sanitizeFundadorPremios(loadedState.fundadorPremios),
+      } as GameState));
 }
 
 /** Estado de instalação nova. Também é o fallback de qualquer falha de carga. */
@@ -1976,6 +1985,9 @@ function freshGameState(): GameState {
       equippedBackground: null,
       ownedFurniture: [],
       equippedDecor: {},
+      // Conta NOVA: já nasce com a lista do Fundador (vazia), então nunca cai no critério de conta existente.
+      fundadorDias: 0,
+      fundadorPremios: [],
       guildDonatedItem: null,
       claReceipts: [],
       bosqueArvores: {},

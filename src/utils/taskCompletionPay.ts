@@ -25,6 +25,7 @@ import { completeTask } from './careRules';
 import { awardBondXP } from './bond';
 import { effortOf, isHaunted } from './taskTriage';
 import { playerDayKey } from './playerDay';
+import { registrarDiaComTarefa } from './fundador';
 import { isPremiumKey } from './premiumFood';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { isoWeekKey } from './offerMoment';
@@ -97,7 +98,8 @@ export function settleTaskCompletion<S extends GameState>(prev: S, task: Task, r
   const state = ult && ult.id === taskId
     ? { ...next, completedTasks: [...ct.slice(0, -1), { ...ult, receipt }] }
     : next;
-  return { state, paid, premium };
+  // Conjunto Fundador: um dia a mais com tarefa concluída (no-op no mesmo dia; `utils/fundador.ts`).
+  return { state: registrarDiaComTarefa(state, now), paid, premium };
 }
 
 export interface ApplyResult<S> extends SettleResult<S> {

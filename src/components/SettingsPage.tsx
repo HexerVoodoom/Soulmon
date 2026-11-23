@@ -109,7 +109,7 @@ interface SettingsPageProps {
   profile?: {
     /** Elemento do Soulmon (molduras exclusivas de elemento). */
     petElement?: string;
-    saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
+    saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; fundadorPremios?: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
     petName?: string;
@@ -415,6 +415,7 @@ export function SettingsPage({
             avatarId={profile.avatarId}
             equippedFrame={profile.equippedFrame}
             ownedFrames={profile.ownedFrames}
+            fundadorPremios={profile.fundadorPremios}
             petStage={profile.petStage}
             petElement={profile.petElement}
             onChangeAvatar={profile.onChangeAvatar}
