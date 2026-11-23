@@ -490,8 +490,19 @@ e-mail, ele está lá."* Um absoluto que o produto não pode honrar vira, para q
 perdeu o save, a prova de que o mundo mentiu.) Não é clemência do desenho: é que
 nada, na §5.1, oferece um jeito de parar de ser diferença.
 
-⚠️ **Vocabulário, e aqui não há margem** (parecer de psicologia de 21/09/2026;
-§11; checklist §17 item 11):
+> ✅ **DECISÃO DO DONO, 23/11/2026 (revoga a lista abaixo, que fica só como histórico):**
+> *"pode usar Morte SEMPRE. não precisa ter esses pudores assim, é pra +18. não vamos
+> falar em coisas muito sensíveis como suicídio e abuso sexual, mas isso nem faz parte
+> do contexto, então pode afrouxar essas regras aí de termos vetados."*
+> **Vetados agora, em qualquer texto, prompt de arte ou voz:** suicídio, automutilação
+> e abuso sexual. Todo o resto do vocabulário de término (morrer, morte, matar,
+> partir, despedida, adeus etc.) está LIBERADO, sobre criatura e corpos de fenda. Os
+> itens 11 do checklist §17 e a coluna "Vetada" da §12 que dependem dessa lista ficam
+> sem efeito, exceto os três temas acima. O parecer de psicologia de 21/09/2026 foi
+> superado pela decisão do dono; o app é +18.
+
+⚠️ **[HISTÓRICO, superado em 23/11/2026] Vocabulário** (parecer de psicologia de
+21/09/2026; §11; checklist §17 item 11):
 
 - **Sobre a criatura, em qualquer voz — proibidos:** morrer, morte, matar,
   falecer, partir, despedida, adeus, descansar, "acabou", "não existe mais".
@@ -886,6 +897,8 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 
 > **Renome (10/11/2026, dono):** a área antes chamada "Hall" é **Cidadela / Citadel** na UI. O id interno segue `hall` (save/cache). "Clan Hall / Salão do Clã" e "Game Hall / Salão de Jogos" são outros lugares e não mudaram. Ver `REGISTRO-DE-DECISOES.md` §278.
 
+> **23/11/2026 (dono):** a lista de vetos de MORTE/término e as colunas "Vetada" que dependem dela estão superadas; só suicídio, automutilação e abuso sexual são vetados. As tabelas "✅ Pode / ❌ Vetada" que citam adeus, despedida, morte e "morreu" (§11, §5.12) ficam como histórico.
+
 | PT | EN | Uso | Proibido em vez dele / por quê |
 |---|---|---|---|
 | **a Malha** ⚠️ | the Mesh | o lugar | "mundo digital" ⚠️ (fronteira de IP forte), "ciberespaço", "a rede", "o outro mundo", "portal" ⚠️ |
@@ -899,7 +912,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **inclinação** ⚠️ | leaning | a parte da ocasião que assenta fundo e decide o galho (§5.9) | "pontos de atributo" em voz de mundo, "XP", "stat" |
 | **sustentação** | hold | o que os corações medem (§5.4) | "vida", "HP", "saúde" em voz de mundo |
 | **reassentar** | to re-settle | dormir, o banho, recolher pesadelo, o corpo de fenda que volta à camada | "curar", "respawnar", "reviver" |
-| **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | "morte", "abate", "KO" — sempre, sem exceção |
+| **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | ~~"morte", "abate", "KO" — sempre, sem exceção~~ **liberado em 23/11/2026 (decisão do dono, §5.12)**; "término" segue como termo preferido em voz de mundo, mas "morte" pode ser usada |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
 | **Ruptura / Trama / Guarda** *(vocabulário de MUNDO, para lore — a UI diz Poder/Harmonia/Benevolência desde 29/09/2026; Ruptura=Poder, Trama=Harmonia, Guarda=Benevolência)* | Rupture / Braid / Ward | os três galhos, em texto de mundo | em EN prefira **Braid** a "Weave" em lore NOVO (*the Weave* é de D&D); o rótulo da UI não muda |
@@ -1078,9 +1091,11 @@ todo texto derivado desta bíblia.
     pessoa deu? (O produto está ensinando tipologia — §6.)
 
 **Sobre morte e perda**
-11. Aparece morrer, morte, partir, adeus, despedida, "perder", "regrediu", "do
-    zero", "custa"? **E, sobre corpos de fenda:** matar, abater, eliminar,
-    "caiu"? (§5.12)
+11. **[Revisado em 23/11/2026, decisão do dono, §5.12]** Aparece suicídio,
+    automutilação ou abuso sexual? Só esses três são vetados. Morrer, morte,
+    matar, partir, adeus, despedida etc. estão liberados. (A lista antiga:
+    morrer, morte, partir, adeus, despedida, "perder", "regrediu", "do zero",
+    "custa", e sobre corpos de fenda matar, abater, eliminar, "caiu", está superada.)
 12. Dita em voz alta, olhando no olho de quem teve a pior semana do ano —
     constrange?
 
