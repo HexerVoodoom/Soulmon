@@ -19,7 +19,7 @@ export function BlockedActionModal({ reason, onClose, language, onGo }: {
   const isPt = language === 'pt-BR';
   const ex = reason ? explainBlocked(reason, isPt) : null;
   return (
-    <ModalSheet open={!!ex} title={ex?.title ?? ''} onClose={onClose} language={language} placement="center" sobreTelas maxWidth={380}
+    <ModalSheet open={!!ex} title={ex?.title ?? ''} onClose={onClose} language={language} placement="center" titulo="inline" sobreTelas maxWidth={380}
       footer={<button type="button" className="sm2-kit-btn sm2-kit-btn-primary" style={{ width: '100%' }} data-blocked-ok onClick={onClose}>OK</button>}>
       {ex && reason && (
         <div data-blocked-action={reason.kind} style={{ display: 'grid', gap: 8 }}>

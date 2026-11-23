@@ -7602,3 +7602,24 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal .sm2-moldura-modal__placa { max-width: calc(100% - var(--sm2-cristal-canto) * 1.8); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: calc(var(--sm2-cristal-canto) * .35); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #1c0e05; }
+
+/* POPUP CENTRAL — VARIANTE `titulo="inline"` (23/11/2026, teste A/B pedido do dono): sem placa de bronze; fechar REDONDO no canto superior direito (≥ 44 px, fio de cobre)
+   e o título logo abaixo, dentro do modal, até 2 linhas, sem truncar. A variante `placa` (padrão) não muda. */
+.sm2-moldura-modal--titulo-inline .sm2-moldura-modal__placa { display: none; }
+.sm2-moldura-modal.sm2-moldura-modal--cristal.sm2-moldura-modal--titulo-inline { --sm2-moldura-pad-t: 0px; }
+.sm2-popup-fechar-linha { display: flex; justify-content: flex-end; flex-shrink: 0; margin: calc(var(--sm2-cristal-canto) * .24) calc(var(--sm2-cristal-canto) * .3) 0 0; }
+.sm2-popup-fechar {
+  box-sizing: border-box; width: 44px; height: 44px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border: 1.5px solid #c9884a; border-radius: 50%; background: transparent; color: var(--sm2-viewport-ink, #E9F5F2);
+  -webkit-tap-highlight-color: transparent; transition: background var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out), transform var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out);
+}
+.sm2-popup-fechar:active { background: rgba(201, 136, 74, .22); transform: scale(.96); }
+.sm2-popup-fechar:focus-visible { outline: 2px solid #e3c06a; outline-offset: 2px; }
+.sm2-popup-titulo {
+  margin: 4px 0 4px; padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); flex-shrink: 0; text-align: center; overflow-wrap: anywhere; text-wrap: balance;
+  font-family: var(--sm2-font-display, Georgia, serif); font-size: var(--sm2-text-lg, 1.25rem); font-weight: 700; line-height: 1.2; color: #e3c06a;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* sem linha do ✕ (closeSide none) o título ganha respiro em cima, longe do bracket do canto */
+.sm2-moldura-modal--titulo-inline .sm2-popup-titulo:first-child { margin-top: calc(var(--sm2-cristal-canto) * .45); }
+.sm2-moldura-modal--titulo-inline .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .3 + 50px); top: calc(var(--sm2-cristal-canto) * .24 - 1px); width: 44px; height: 44px; }

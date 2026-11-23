@@ -389,8 +389,12 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'placa',
 }: {
+  /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
+   *  fechar redondo no canto superior DIREITO e o título logo abaixo, dentro do modal (até 2 linhas, sem truncar). Exceção documentada ao "fechar à esquerda"
+   *  (`voltarFechar`): vale só para esta variante; com `onBack` volta a ser `'placa'`. */
+  titulo?: 'placa' | 'inline';
   open: boolean;
   title: string;
   onClose: () => void;
@@ -443,6 +447,7 @@ export function ModalSheet({
   // A moldura própria da folha só vale fora do miolo de outra moldura (no miolo ela já está dentro do quadro do modal pai).
   const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
+  const inline = framed && centered && titulo === 'inline' && !onBack;
   if (!open) return null;
   const folha = (
     <ModalInfoSlotProvider slot={slot} inherit={noMiolo}>
@@ -469,9 +474,9 @@ export function ModalSheet({
         aria-modal="true"
         aria-label={title}
         data-placement={placement}
-        className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
+        className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : 'sm2-sheet-rise'}
         {...(framed && centered ? { variante: 'cristal' } : null)}
-        {...(framed ? { 'data-theme': 'dark', title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
+        {...(framed ? { 'data-theme': 'dark', title: inline ? undefined : title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
         style={{
           ...(noMiolo
             ? { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', backgroundColor: 'transparent', borderRadius: 0, boxShadow: 'none' }
@@ -499,14 +504,25 @@ export function ModalSheet({
         />
         )}
 
-        {closeSide === 'start' ? (
+        {inline ? (
+          <>
+            {closeSide !== 'none' && (
+              <div className="sm2-popup-fechar-linha">
+                <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
+                  <Icon name="close" size={24} tone="inherit" />
+                </button>
+              </div>
+            )}
+            <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
+          </>
+        ) : closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
           <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
             <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
           </div>
         ) : null}
-        {framed && closeSide !== 'end' ? null : (
+        {framed && (closeSide !== 'end' || inline) ? null : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: framed ? 'flex-end' : undefined, padding: framed ? '0 4px' : closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
           {framed ? null : <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>}
           {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título (com a moldura, o encaixe é o disco do canto). */}

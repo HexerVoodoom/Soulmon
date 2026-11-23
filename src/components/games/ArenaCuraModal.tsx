@@ -40,7 +40,7 @@ export function ArenaCuraModal({ language, antes, depois, pontos, rodada, totalR
     return () => clearTimeout(t);
   }, [resta]);
   return (
-    <ModalSheet open placement="center" closeSide="none" dismissOnBackdrop={false} language={language} maxWidth={360}
+    <ModalSheet open placement="center" titulo="inline" closeSide="none" dismissOnBackdrop={false} language={language} maxWidth={360}
       title={isPt ? `Rodada ${rodada} de ${totalRodadas} vencida` : `Round ${rodada} of ${totalRodadas} cleared`}
       onClose={onNext}
       footer={(

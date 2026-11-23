@@ -20,7 +20,7 @@ export function DungeonPotionsModal({ owned, initial, language, onConfirm }: {
   return (
     <ModalSheet
       open
-      placement="center"
+      placement="center" titulo="inline"
       onClose={() => onConfirm(qty)}
       language={language}
       title={isPt ? 'Poções para o Soulmon' : 'Potions for your Soulmon'}
