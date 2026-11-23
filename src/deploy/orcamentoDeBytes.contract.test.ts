@@ -225,7 +225,8 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // +0,7 KB), #911 `ChevronAcao` +0,6 KB, #922 `catalogChoice` +0,5 KB, §372 `arenaClearBonus` +0,4 KB, §371 `dayPlan`/`habitRhythm` +0,6 KB.
   // GATILHO (§380): ao passar de 1_150_000 B (≈1,1 MB) o próximo PR que crescer a entrada PAGA antes de re-medir — começar por
   // `elementoDescritores.data` (47 KB, hoje lido no `useMemo` síncrono de `stagesComElemento`) e partir o `App.tsx` (173 KB).
-  'index.js': 1_125_769,
+  // 23/11/2026 (REGISTRO §498, perf/catalogos-lazy): 1_125_769 -> 1_095_753 (-30,7 KB): cosmeticosNovos e honraDecor viraram chunk lazy. Linha ABAIXADA, nunca elevada.
+  'index.js': 1_095_753,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
