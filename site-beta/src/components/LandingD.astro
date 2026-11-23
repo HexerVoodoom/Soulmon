@@ -21,6 +21,7 @@ const { lang } = Astro.props;
 const t = TEXTOS[lang]; const x = TEXTOS_B[lang];
 const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const mo = t.modal;
 const H1 = { pt: 'Evolua sua vida. Evolua seu jogo.', en: 'Evolve your life. Evolve your game.' }[lang];
+const QUIZ = { pt: 'Faça o quiz de personalidade e descubra qual Soulmon desperta em você.', en: 'Take the personality quiz and discover which Soulmon awakens in you.' }[lang];
 const trailerSlot = (midia as unknown as { trailer?: Record<string, { ativo?: boolean }> }).trailer?.[lang];
 const trailer = trailerSlot?.ativo;
 const heroArte = assets.heroArte as { desktop: string | null; celular: string | null; larguras?: { desktop: number[]; celular: number[] } };
@@ -42,7 +43,7 @@ const cen = (n: string) => `--cen-m:image-set(url(${b(`/dono/${n}-800.avif`)}) t
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
 const IMG_PILAR: Record<string, string> = { explorar: 'rift', batalhar: 'arena' };
 const PILARES = x.mundo.pilares.filter(([id]) => id !== 'colecionar');
-const TELAS = ['combate', 'mapa', 'home'];
+const TELAS = ['home', 'combate', 'mapa'];
 const TAREFAS_DEMO = c.tarefas.slice(0, 3);
 const CHECK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="m9.5 16.2-4-4 1.6-1.6 2.4 2.4 7.4-7.4 1.6 1.6-9 9Z"/></svg>';
 const premioArte = (id: string) => (temSprite(`/premios/${id}.webp`) ? b(`/premios/${id}.webp`) : null);
@@ -92,7 +93,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
     </div>
   </section>
 
-  <main id="conteudo" tabindex="-1">
+  <main id="conteudo" class="vd" tabindex="-1">
     <!-- 2 · Como funciona (C), compacto: 3 passos + lista para marcar -->
     <section class="calmo vb-como vd-como" id="como-funciona" aria-labelledby="como-h">
       <h2 id="como-h">{x.como.h2}</h2>
@@ -127,6 +128,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
     <section class="calmo meu-soulmon vd-meu" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={x.meet.outro} data-falas={JSON.stringify(t.vb.falas)}>
       <h2 id="meu-h">{x.meet.h2}</h2>
       <p class="frase">{x.meet.p}</p>
+      <p class="vd-quiz">{QUIZ}</p>
       <div class="meu-palco">
         <img class="sprite meu-sombra" data-meu-sombra src={b('/sprites/fogo-rookie.webp')} width="192" height="192" alt="" aria-hidden="true" loading="lazy" />
         <img class="sprite" data-meu-img hidden width="192" height="192" alt="" />

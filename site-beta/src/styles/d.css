@@ -45,3 +45,12 @@
 .vd-premios .vb-premio img { width: min(100%, 120px); height: auto; aspect-ratio: 1; }
 @media (min-width: 900px) { .vd-premios .vb-premios-lista { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 767px) { .vd-como .vb-demo-img { width: 80px; height: 80px; } .vd-como .vb-barra { width: 80px; } }
+
+/* Celular (dono, 23/11): espaço entre seções padronizado pelo Como funciona -> Nenhum Soulmon (~80px de conteúdo a conteúdo).
+   Fundo das cenas pode cortar; o que manda é a distância entre o fim de uma seção e o início da próxima. */
+@media (max-width: 767px) {
+  .vd > section { min-height: 0; padding-top: 40px; padding-bottom: 40px; }
+  .vd > section.cena { align-content: start; }
+  .vd > .vb-fundador .inscrever-caixa, .vd > .inscrever .inscrever-caixa { margin-block: 0; }
+}
+.vd-quiz { max-width: 30rem; margin-inline: auto; padding: 8px 16px; color: var(--sb-ouro); font-weight: var(--sb-peso-forte); border: 1px solid var(--sb-cobre); background: var(--sb-veu-texto); }
