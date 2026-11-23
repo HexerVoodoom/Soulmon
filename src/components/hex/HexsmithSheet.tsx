@@ -45,6 +45,7 @@ import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexCrownArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
+import { ForgeResultModal } from '../ForgeResultModal';
 
 export interface HexsmithSheetProps {
   language?: string;
@@ -101,6 +102,8 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   const [aviso, setAviso] = useState<string | null>(null);
   const [forjando, setForjando] = useState(false);
   const [renomear, setRenomear] = useState<HexRenameKind | null>(null);
+  /** Resultado da última forja CONFIRMADA pelo servidor (um por forja; `already` não abre). */
+  const [resultado, setResultado] = useState<string | null>(null);
   const gs = ctx?.gameState;
   const hx = useMemo(() => sanitizeHexsmith(gs?.hexsmith), [gs?.hexsmith]);
   const over = useMemo(() => hexOverrides(hx), [hx]);
@@ -159,6 +162,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
     }
     setGameState((prev) => applyServerHexForge(prev, id, !r.already));
     setAviso(tx(HEX_UI.forged, isPt));
+    if (!r.already) setResultado(id);
   };
 
   return (
@@ -227,6 +231,19 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
           onEquip={(id) => setGameState((prev) => equipHexItem(prev, id))}
           onClear={() => setGameState((prev) => unequipHexSlot(prev, open))} />
       )}
+      {resultado && (() => {
+        const it = parseHexItem(resultado);
+        if (!it) return null;
+        const nome = hexValueName(it.slot, it.value, isPt);
+        return (
+          <ForgeResultModal language={language as Language} title={tx(HEX_UI.resultTitle, isPt)} name={nome}
+            effect={hexLegend(it.slot, it.value, isPt) ?? tx(HEX_SLOT_COPY[it.slot].effect, isPt)}
+            art={<SlotFace slot={it.slot} value={it.value} size={ICON_OWNED} />}
+            closeLabel={tx(HEX_UI.resultClose, isPt)}
+            primary={{ label: tx(HEX_UI.equipNow, isPt), onClick: () => { setGameState((prev) => equipHexItem(prev, resultado)); setResultado(null); } }}
+            onClose={() => setResultado(null)} />
+        );
+      })()}
     </section>
   );
 }

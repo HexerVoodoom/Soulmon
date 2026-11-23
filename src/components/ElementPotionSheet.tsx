@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ForgeResultModal } from './ForgeResultModal';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
@@ -24,7 +25,8 @@ export interface ElementPotionSheetProps {
   /** Elemento da poção pendente no Soulmon (se houver), só para informar. */
   pending?: string;
   onBack: () => void;
-  onCraft: (elementId: string) => void;
+  /** Devolve `false` quando a criação foi recusada (saldo/bloqueio): aí o modal de resultado NÃO abre. */
+  onCraft: (elementId: string) => void | boolean;
   /** Elementos desbloqueados na Biblioteca (`defeatedElements`). Bloqueado = "???" e não se cria. */
   unlocked?: readonly string[];
 }
@@ -37,6 +39,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   const [shown, setShown] = useState(PAGE);
   const [sel, setSel] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  /** Poção recém-criada (base ou composta) para o modal de resultado: um por confirmação. */
+  const [result, setResult] = useState<string | null>(null);
 
   // O Neutro é uma poção como as outras: entra por último (e some quando há base escolhida no filtro, pois não contém nenhuma).
   const list = useMemo(() => {
@@ -66,6 +70,9 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     locked: isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive',
     lockedHint: isPt ? 'Desbloqueie no Drive' : 'Unlock in the Drive',
     note: isPt ? 'Base: 100 essências da própria. Composta: 1 poção de cada base + 50 essências dela. Dar uma poção ao Soulmon (Arquivos) troca a que já estava esperando.' : 'Base: 100 of its own essence. Compound: 1 potion of each base + 50 of its essence. Giving a potion to your Soulmon (Files) replaces the one already waiting.',
+    resultTitle: isPt ? 'Poção criada' : 'Potion created',
+    resultEffect: isPt ? 'Dê a poção ao Soulmon em Arquivos: vale só para a próxima evolução.' : 'Give the potion to your Soulmon in Files: it only affects the next evolution.',
+    close: isPt ? 'Fechar' : 'Close',
     potionOf: (id: string) => (isPt ? 'Poção de ' : '') + elName(id, isPt) + (isPt ? '' : ' potion'),
   };
   const art = (id: string, big: boolean) => (potionArt(id)
@@ -117,7 +124,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {/* §316c (13/11/2026, dono): folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site). */}
           <button type="button" data-potion-confirm className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ minWidth: 220 }} disabled={confirmDisabled}
-            onClick={() => { onCraft(sel); setDone(sel); setSel(null); }}>
+            onClick={() => { const ok = onCraft(sel) !== false; if (ok) { setDone(sel); setResult(sel); } setSel(null); }}>
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </button>
         </div>
@@ -174,6 +181,10 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
           </div>
         )}
       </div>
+      {result && (
+        <ForgeResultModal language={language} title={t.resultTitle} name={t.potionOf(result)} effect={t.resultEffect}
+          art={art(result, true)} closeLabel={t.close} onClose={() => setResult(null)} />
+      )}
     </ModalSheet>
   );
 }

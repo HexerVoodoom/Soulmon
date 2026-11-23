@@ -119,6 +119,9 @@ export const HEX_UI = {
   /** Aviso calmo na Coroa equipada, só para quem evoca: a invocação descansa enquanto a Coroa troca o especial. */
   companionRests: p('While the Crown is equipped, your companion rests.', 'Com a Coroa equipada, o companheiro descansa.'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
+  resultTitle: p('HEX forged', 'HEX forjado'),
+  equipNow: p('Equip now', 'Equipar agora'),
+  resultClose: p('Close', 'Fechar'),
   forging: p('Forging…', 'Forjando…'),
   forgeOffline: p('No connection. The HEX is forged on the server; nothing was charged. Try again when you are online.', 'Sem conexão. O HEX é forjado no servidor; nada foi cobrado. Tente de novo quando estiver online.'),
   forgeFailed: p('The forge did not answer. Nothing was charged; try again.', 'A forja não respondeu. Nada foi cobrado; tente de novo.'),
