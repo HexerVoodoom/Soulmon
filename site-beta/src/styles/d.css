@@ -51,6 +51,7 @@
 @media (max-width: 767px) {
   .vd > section { min-height: 0; padding-top: 40px; padding-bottom: 40px; }
   .vd > section.cena { align-content: start; }
+  .vd > #seu-soulmon { padding-bottom: 8px; } /* a árvore termina com o Ultra; o respiro já vem do sprite */
   .vd > .vb-fundador .inscrever-caixa, .vd > .inscrever .inscrever-caixa { margin-block: 0; }
 }
-.vd-quiz { max-width: 30rem; margin-inline: auto; padding: 8px 16px; color: var(--sb-ouro); font-weight: var(--sb-peso-forte); border: 1px solid var(--sb-cobre); background: var(--sb-veu-texto); }
+.vd-quiz { max-width: 36rem; margin: -8px auto 0; color: var(--sb-ouro); font-weight: var(--sb-peso-forte); }
