@@ -370,6 +370,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
+  // Pré-download em segundo plano enquanto o ritual roda (REGISTRO §510); só no onboarding de verdade, nunca no upgrade.
+  useEffect(() => {
+    if (isUpgrade) return undefined;
+    let cancelar: (() => void) | undefined;
+    let saiu = false;
+    import('../utils/prefetchOnboarding').then(m => { if (!saiu) cancelar = m.iniciarPrefetchOnboarding(); }).catch(() => undefined);
+    return () => { saiu = true; cancelar?.(); };
+  }, [isUpgrade]);
   // A1 (02/10/2026): sem escolha gravada o app abre em INGLÊS (`resolveLanguage`);
   // o idioma só muda quando a pessoa escolhe no seletor da entrada, e a
   // escolha persiste.
