@@ -81,7 +81,7 @@ function clampCaderno(raw) {
     if (!e || typeof e !== 'object') continue;
     if (typeof e.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(e.id)) continue;
     if (typeof e.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) continue;
-    if (!['tres-coisas', 'gratidao', 'aprendi', 'livre'].includes(e.formato)) continue;
+    if (!['tres-coisas', 'gratidao', 'aprendi', 'importa', 'livre'].includes(e.formato)) continue;
     if (typeof e.text !== 'string' || !e.text.trim() || !Number.isFinite(Number(e.at))) continue;
     out.push({ id: e.id, day: e.day, formato: e.formato, text: e.text.slice(0, CADERNO_MAX_CHARS), at: Number(e.at) });
     if (out.length >= CADERNO_MAX_ENTRIES) break;
