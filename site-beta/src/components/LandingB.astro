@@ -37,8 +37,8 @@ const PASSO_HREF = ['https://groups.google.com/g/soulmon-testers', 'https://play
 const ELS = Object.keys(u.els);
 // Mascote do canto: só linhas com as 5 formas. Mesmas dez linhas e mesmos requisitos da A.
 const LINHAS_MASCOTE = ['arcano', 'espaco', 'fada', 'fogo', 'morte', 'noturno', 'planta', 'sombra', 'vigor', 'vileza'].filter((l) => formas.every((fm) => existe(`/sprites/${l}-${fm}.webp`)));
-// Prêmios do beta: estrutura pronta e OCULTA até existir a arte dos quatro itens (dono, 23/11). Não ligue sem a arte e sem o ok do dono.
-const PREMIOS_BETA = false;
+// Prêmios do beta: LIGADO (dono, 23/11): os 4 itens valem para quem testar. Arte aprovada em public/premios/ (P6).
+const PREMIOS_BETA = true;
 const premioArte = (id: string) => (existe(`/premios/${id}.webp`) ? b(`/premios/${id}.webp`) : null);
 // Linha de fogo: Rookie + os 3 caminhos (Poder é o caminho principal, Harmonia e Benevolência vêm de /sprites/ramos). Arte real do jogo, sem engrenagem.
 const RAMOS_FOGO: { id: 'poder' | 'harmonia' | 'benevolencia'; formas: string[] }[] = [
@@ -47,6 +47,8 @@ const RAMOS_FOGO: { id: 'poder' | 'harmonia' | 'benevolencia'; formas: string[] 
   { id: 'benevolencia', formas: ['champion', 'ultimate', 'mega'].map((fm) => `/sprites/ramos/fogo-benevolencia-${fm}-128.webp`) },
 ];
 const TELAS = ['combate', 'mapa', 'home'];
+const SELO_TAREFA = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12.4 2.8 2.8L16.5 9.4"/></svg>';
+const SELO_HABITO = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="M15.5 14.2a3.6 3.6 0 1 0-1 2.5M15.6 12v2.3h-2.3"/></svg>';
 const CHECK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="m9.5 16.2-4-4 1.6-1.6 2.4 2.4 7.4-7.4 1.6 1.6-9 9Z"/></svg>';
 const TAREFAS_DEMO = c.tarefas.slice(0, 2); const HABITOS_DEMO = c.tarefas.slice(2);
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
@@ -89,7 +91,7 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
     <div class="hero-corpo vb-hero-corpo">
       <div class="vb-hero-texto veu-h">
         <p class="vb-eyebrow">{h.eyebrow}</p>
-        <h1 id="hero-h">{h.h1.map((ln) => <span class="vb-h1-l">{ln}</span>)}</h1>
+        <h1 id="hero-h">{h.h1.map((ln, i) => <Fragment>{i > 0 && ' '}<span class="vb-h1-l">{ln}</span></Fragment>)}</h1>
         <p class="vb-sub">{h.sub}</p>
         <div class="vb-acao" data-vb-hero-cta>
           <a class="botao primario vb-cta" href="#entrar" data-cta data-sa="c-cta-hero">{x.cta}</a>
@@ -122,18 +124,18 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
         <div class="vb-demo-lista">
           <h3>{x.como.demoH}</h3>
           <p class="vb-demo-dica">{x.como.demoDica}</p>
-          {/* Lista igual à Home do app (RitualPanel variante `home`): título Hoje + Missão N/G, "+", seções Tarefas/Hábitos, linhas de 56px, caixa de cobre com check turquesa. */}
+          {/* Lista igual ao RitualPanel do app: [selo 24 do tipo (tarefa/hábito, --sb-tx-2)] [nome] [caixa de cobre 24 num alvo de 44 à DIREITA]; título Hoje + Missão N/G, "+", seções Tarefas/Hábitos, linhas de 56px. */}
           <section class="vb-hoje" aria-label={x.como.demoRotulo}>
             <div class="vb-hoje-cab">
               <h4 class="vb-hoje-titulo"><span class="vb-cromo">{x.como.hoje}</span> <b class="vb-missao" data-vb-missao><span aria-hidden="true">{x.como.missao}</span> <span aria-hidden="true" data-vb-missao-n>0/{c.tarefas.length}</span></b></h4>
               <span class="vb-add" aria-hidden="true"><span>+</span></span>
             </div>
-            {[[x.como.secTarefas, TAREFAS_DEMO], [x.como.secHabitos, HABITOS_DEMO]].map(([rot, itens]) => (
+            {[[x.como.secTarefas, TAREFAS_DEMO, 'tarefa'], [x.como.secHabitos, HABITOS_DEMO, 'habito']].map(([rot, itens, tipo]) => (
               <>
                 <h5 class="vb-secao">{rot}</h5>
                 <ul class="vb-ritual-lista">
                   {(itens as string[]).map((tx) => (
-                    <li class="vb-ritual"><label class="vb-tarefa"><input type="checkbox" data-vb-tarefa /><span class="vb-caixa" aria-hidden="true"><Fragment set:html={CHECK_SVG} /></span><span class="vb-nome">{tx}</span></label></li>
+                    <li class="vb-ritual"><label class="vb-tarefa"><span class="vb-selo" aria-hidden="true"><Fragment set:html={tipo === 'habito' ? SELO_HABITO : SELO_TAREFA} /></span><span class="vb-nome">{tx}</span><input type="checkbox" data-vb-tarefa /><span class="vb-caixa" aria-hidden="true"><Fragment set:html={CHECK_SVG} /></span></label></li>
                   ))}
                 </ul>
               </>
@@ -148,7 +150,7 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
     </section>
 
     <!-- 3 · Gere seu Soulmon: gera o mascote do canto (companheiro() do app.ts: uma forma por seção ao rolar) + elementos recolhidos -->
-    <section class="cena soul vb-meet" id="seu-soulmon" aria-labelledby="meet-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_MASCOTE)} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(formas)} data-alt={c.alt} data-outro={x.meet.outro} data-falas={JSON.stringify(t.vb.falas)}>
+    <section class="cena soul vb-meet" id="seu-soulmon" aria-labelledby="meet-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_MASCOTE)} data-padrao={LINHAS_MASCOTE.includes('fogo') ? 'fogo' : LINHAS_MASCOTE[0]} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(formas)} data-alt={c.alt} data-outro={x.meet.outro} data-falas={JSON.stringify(t.vb.falas)}>
       <div class="soul-mosaico" aria-hidden="true" style={`--mosaico:image-set(url(${b('/site/mosaico-elementos.avif')}) type("image/avif"), url(${b('/site/mosaico-elementos.webp')}) type("image/webp"))`}></div>
       <div class="vb-meet-grade">
         <div class="vb-meet-texto veu">
@@ -210,7 +212,7 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
           </div>
           <ul class="vb-ramos" aria-label={co.caminhosH}>
             {RAMOS_FOGO.map((r, i) => (
-              <li class="vb-ramo" data-ramo={r.id}>
+              <li class="vb-ramo vb-card" data-ramo={r.id}>
                 <h4>{co.caminhos[i]}</h4>
                 <ol>
                   {r.formas.map((src, k) => <li><img class="sprite" loading="lazy" decoding="async" src={b(src)} width="128" height="128" alt={`${co.caminhos[i]}, ${c.nomes[k + 1]}`} /></li>)}
@@ -218,6 +220,11 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
               </li>
             ))}
           </ul>
+          <div class="vb-ultra">
+            <img class="sprite" loading="lazy" decoding="async" src={b('/sprites/fogo-ultra.webp')} width="256" height="256" alt={`${c.alt} ${c.nomes[4]}`} />
+            <strong>{c.nomes[4]}</strong>
+            <span>{co.ultraNota}</span>
+          </div>
         </figure>
       </div>
     </section>
@@ -279,15 +286,16 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
         <a class="botao primario grande vb-cta" href="#entrar" data-cta data-sa="c-cta-fundador">{x.ctaConvite}</a>
         <p class="grupo-nota">{x.fundador.nota}</p>
       </div>
-      {/* Prêmios do beta: pronto e oculto (PREMIOS_BETA = false) até haver arte e ok do dono. Dentro desta seção para não mudar a contagem de formas do mascote. */}
+      {/* Prêmios do beta (PREMIOS_BETA). Dentro desta seção para não mudar a contagem de formas do mascote. */}
       {PREMIOS_BETA && (
         <div class="vb-premios veu" aria-labelledby="premios-h">
           <h3 id="premios-h">{x.premios.h2}</h3>
           <p class="frase">{x.premios.p}</p>
           <ul class="vb-premios-lista">
-            {x.premios.itens.map(([id, nome, tx]) => (
+            {x.premios.itens.map(([id, nome, marco, tx]) => (
               <li class="vb-card vb-premio" data-premio={id}>
                 {premioArte(id) ? <img src={premioArte(id)!} width="160" height="160" alt="" loading="lazy" decoding="async" /> : <span class="vb-premio-vazio" aria-hidden="true"></span>}
+                <p class="vb-premio-marco">{marco}</p>
                 <h4>{nome}</h4>
                 <p>{tx}</p>
               </li>
@@ -357,6 +365,7 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
   </footer>
 
   <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden><span class="comp-tx" data-comp-tx aria-live="polite"></span><span class="comp-x" role="button" tabindex="0" data-comp-x aria-label={c.fechar}>×</span></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>
+  <button type="button" class="vb-comp-x" data-vb-comp-x hidden aria-label={lang === 'pt' ? 'Dispensar o mascote' : 'Dismiss the mascot'}><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
   <div class="fixo vb-fixo" data-fixo><a class="botao primario fixo-cta" href="#entrar" data-cta data-sa="c-cta-fixo">
     <Fragment set:html={PLAY} /><span>{x.cta}</span></a></div>
   <script src="../scripts/app.ts"></script>

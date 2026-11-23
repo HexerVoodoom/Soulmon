@@ -415,8 +415,8 @@ function companheiro() {
     setTimeout(trocar, 700);
     setTimeout(() => { chamas.forEach((ch) => ch.parentNode?.removeChild(ch)); comp.classList.remove('evoluindo'); correndo = false; proxima(); }, 1600);
   };
-  bt.addEventListener('click', () => {
-    let i = Math.floor(Math.random() * linhas.length); if (i === ant && linhas.length > 1) i = (i + 1) % linhas.length; ant = i;
+  const iniciar = (i: number) => {
+    ant = i;
     lin = linhas[i]; estagio = 0; alvo = 0;
     formas.forEach((_, k) => { new Image().src = src(lin, k); });
     img.src = src(lin, 0); img.alt = rotulo(); img.hidden = false; sombra.hidden = true;
@@ -425,7 +425,14 @@ function companheiro() {
     cimg.src = src(lin, 0); cimg.alt = rotulo(); comp.hidden = false; virar();
     if (raiz.dataset.outro) bt.textContent = raiz.dataset.outro;
     avaliar();
+  };
+  bt.addEventListener('click', () => {
+    let i = Math.floor(Math.random() * linhas.length); if (i === ant && linhas.length > 1) i = (i + 1) % linhas.length;
+    iniciar(i);
   });
+  // Versão C: mascote padrão visível desde o início (data-padrao = linha). A A não define o atributo e segue igual.
+  const padrao = linhas.indexOf(raiz.dataset.padrao ?? '');
+  if (padrao >= 0) iniciar(padrao);
   addEventListener('scroll', () => requestAnimationFrame(avaliar), { passive: true });
   comp.addEventListener('click', falar);
 }

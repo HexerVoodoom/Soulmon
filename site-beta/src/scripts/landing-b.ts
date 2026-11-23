@@ -43,4 +43,15 @@ function fixo() {
   if (m) new MutationObserver(() => { if (m.open) motivos.add('modal'); else motivos.delete('modal'); aplicar(); }).observe(m, { attributes: true, attributeFilter: ['open'] });
 }
 
-demo(); fixo();
+// Mascote do canto (app.ts companheiro()): "×" dispensa o mascote; some enquanto o Colecione e as telas estão na tela, para nunca cobri-los.
+function mascote() {
+  const comp = document.querySelector<HTMLElement>('[data-companheiro]'); const x = document.querySelector<HTMLButtonElement>('[data-vb-comp-x]'); if (!comp || !x) return;
+  const sync = () => { x.hidden = comp.hidden; };
+  new MutationObserver(sync).observe(comp, { attributes: true, attributeFilter: ['hidden'] });
+  x.addEventListener('click', () => { comp.hidden = true; sync(); }); // gerar de novo traz o mascote de volta
+  const dentro = new Set<Element>();
+  const io = new IntersectionObserver((es) => { for (const e of es) { if (e.isIntersecting) dentro.add(e.target); else dentro.delete(e.target); } comp.toggleAttribute('data-vb-fora', dentro.size > 0); x.toggleAttribute('data-vb-fora', dentro.size > 0); }, { threshold: 0.05 });
+  document.querySelectorAll('.vb-colecao, .vb-telas').forEach((el) => io.observe(el));
+}
+
+demo(); fixo(); mascote();

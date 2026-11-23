@@ -2,7 +2,7 @@
 
 /* Card da C: cantos QUADRADOS (dono), borda na identidade do app = --sm2-line (aqui --sb-linha) mais um fio turquesa por dentro
    (o mesmo turquesa do halo do check). Antes era o anel marrom-escuro (--sb-anel-fundo). */
-.vb-card { background: var(--sb-sup); border: 1px solid var(--sb-linha); border-radius: var(--sb-raio-0); box-shadow: inset 0 0 0 1px rgba(95, 243, 224, .10), var(--sb-sombra-1); }
+.vb-card { background: var(--sb-sup); border: 1px solid var(--sb-linha); border-radius: var(--sb-raio-0); box-shadow: inset 0 0 0 1px rgba(95, 243, 224, .25), var(--sb-sombra-1); }
 
 /* Logo sempre no topo (o hero não repete a marca, para o CTA entrar na primeira dobra). */
 .vb-topo .topo-logo { visibility: visible; opacity: 1; }
@@ -52,7 +52,7 @@
 .vb-num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--sb-fundo); border: 2px solid var(--sb-ouro); color: var(--sb-ouro); font: var(--sb-peso-titulo) 1.25rem/1 var(--sb-fonte-titulo); }
 @media (min-width: 768px) { .vb-passos3 { grid-template-columns: repeat(3, 1fr); } }
 .vb-demo { display: grid; gap: var(--sb-e-5); width: 100%; max-width: 56rem; padding: var(--sb-e-4); text-align: left; }
-.vb-app { background: var(--sb-fundo-2); } /* o fundo do app (--sm2-bg): a lista da Home mora direto sobre ele */
+.vb-app, .vb-ramo { background: var(--sb-fundo-2); } /* o fundo do app (--sm2-bg): a lista da Home mora direto sobre ele */
 .vb-demo-palco { display: grid; justify-items: center; gap: var(--sb-e-2); align-content: center; }
 .vb-demo-img { width: 192px; height: 192px; }
 .vb-demo-forma { display: grid; justify-items: center; gap: 2px; color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
@@ -75,8 +75,9 @@
 .vb-ritual { position: relative; }
 .vb-ritual + .vb-ritual::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--sb-linha); pointer-events: none; }
 .vb-tarefa { position: relative; display: flex; align-items: center; gap: 8px; min-height: 56px; cursor: pointer; }
-.vb-tarefa input { position: absolute; left: 0; top: 50%; width: 44px; height: 44px; margin: -22px 0 0; opacity: 0; cursor: pointer; }
-.vb-caixa { position: relative; flex: none; box-sizing: border-box; width: 24px; height: 24px; margin: 0 10px; display: grid; place-items: center; border: 2px solid var(--sb-cobre); border-radius: var(--sb-raio-sm); color: var(--sb-pri); }
+.vb-tarefa input { position: absolute; right: 0; top: 50%; width: 44px; height: 44px; margin: -22px 0 0; opacity: 0; cursor: pointer; }
+.vb-selo { flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin-left: 4px; color: var(--sb-tx-2); }
+.vb-caixa { position: relative; flex: none; box-sizing: border-box; width: 24px; height: 24px; margin: 0 10px 0 10px; display: grid; place-items: center; border: 2px solid var(--sb-cobre); border-radius: var(--sb-raio-sm); color: var(--sb-pri); }
 .vb-caixa svg { visibility: hidden; filter: var(--sb-brilho-cristal); }
 .vb-tarefa:has(input:checked) .vb-caixa svg { visibility: visible; }
 .vb-tarefa:has(input:checked) .vb-caixa::after { content: ''; position: absolute; inset: -8px; background: radial-gradient(circle, rgba(95, 243, 224, .30) 0%, transparent 72%); pointer-events: none; }
@@ -124,21 +125,21 @@
 .vb-colecao-texto { display: grid; gap: var(--sb-e-2); align-content: center; }
 .vb-colecao-texto p { color: var(--sb-tx-2); }
 .vb-colecao-texto .vb-colecao-dica { color: var(--sb-ouro); }
-.vb-arvore { display: grid; gap: var(--sb-e-2); justify-items: center; margin: 0; }
+.vb-arvore { display: grid; gap: 0; justify-items: center; margin: 0; width: 100%; }
 .vb-raiz { position: relative; display: grid; justify-items: center; gap: 2px; padding-bottom: var(--sb-e-4); }
 .vb-raiz img { width: 112px; height: 112px; }
 .vb-raiz span { font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: var(--sb-ls-rotulo); text-transform: uppercase; color: var(--sb-ouro); text-align: center; }
 .vb-raiz::after, .vb-ramo::before { content: ''; position: absolute; left: 50%; width: 2px; background: var(--sb-pri-2); translate: -1px 0; }
 .vb-raiz::after { bottom: 0; height: var(--sb-e-4); }
-.vb-ramos { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sb-e-2); width: 100%; padding-top: var(--sb-e-4); }
-.vb-ramos::before { content: ''; position: absolute; top: 0; left: calc(100% / 6); right: calc(100% / 6); height: 2px; background: var(--sb-pri-2); }
+.vb-ramos { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); --g: var(--sb-e-2); gap: var(--g); width: 100%; padding-top: var(--sb-e-4); }
+.vb-ramos::before { content: ''; position: absolute; top: 0; left: calc((100% - 2 * var(--g)) / 6); right: calc((100% - 2 * var(--g)) / 6); height: 2px; background: var(--sb-pri-2); }
 .vb-ramo { position: relative; display: grid; align-content: start; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-2) 2px; background: var(--sb-fundo-2); border: 1px solid var(--sb-linha); min-width: 0; }
 .vb-ramo::before { bottom: 100%; height: var(--sb-e-4); }
 .vb-ramo h4 { margin: 0; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: 0; color: var(--sb-pri); text-align: center; overflow-wrap: normal; hyphens: none; }
 .vb-ramo ol { display: grid; gap: var(--sb-e-1); justify-items: center; width: 100%; }
 .vb-ramo li { display: block; width: 100%; max-width: 104px; }
 .vb-ramo li img { display: block; width: 100%; height: auto; aspect-ratio: 1; }
-@media (min-width: 768px) { .vb-ramos { gap: var(--sb-e-4); } .vb-ramo li { max-width: 128px; } .vb-raiz img { width: 144px; height: 144px; } }
+@media (min-width: 768px) { .vb-ramos { --g: var(--sb-e-4); } .vb-ramo li { max-width: 128px; } .vb-raiz img { width: 144px; height: 144px; } }
 @media (min-width: 1024px) { .vb-colecao { grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); align-items: center; padding: var(--sb-e-6); gap: var(--sb-e-6); } }
 
 /* ---------- 5 · Em ação ---------- */
@@ -167,3 +168,36 @@
 
 /* ---------- Barra fixa (celular): some quando já há CTA, seção de entrada ou modal ---------- */
 .fixo[data-vb-off] { display: none !important; }
+
+/* Colecione em celular estreito: "Benevolência" cabe em 375 (h4 13px, menos respiro). */
+@media (max-width: 399px) { .vb-colecao { padding: var(--sb-e-3); } .vb-ramos { --g: var(--sb-e-1); } .vb-ramo { padding: var(--sb-e-2) 0; } .vb-ramo h4 { font-size: 13px; } }
+
+/* Mascote do canto: menor no celular estreito, dispensável, e escondido sobre o Colecione e as telas. */
+.vb-comp-x { position: fixed; right: 8px; bottom: calc(96px + 64px + env(safe-area-inset-bottom)); z-index: calc(var(--sb-z-cta) + 2); width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--sb-linha); border-radius: 50%; background: var(--sb-veu-barra); color: var(--sb-tx); cursor: pointer; }
+.vb-comp-x::before { content: ''; position: absolute; inset: -6px; }
+.vb-comp-x:focus-visible { outline: var(--sb-foco-largura) solid var(--sb-foco-cor); outline-offset: 2px; }
+.vb-comp-x[hidden], .vb-comp-x[data-vb-fora], .companheiro[data-vb-fora] { display: none; }
+@media (max-width: 399px) { .companheiro, .companheiro .sprite { width: 64px; height: 64px; } .vb-comp-x { bottom: calc(96px + 64px + env(safe-area-inset-bottom)); } }
+@media (min-width: 1024px) { .vb-comp-x { right: 20px; bottom: calc(96px + 128px + env(safe-area-inset-bottom)); } }
+
+/* Colecione: o Ultra no fim da árvore, ligado pelas três Megas. */
+.vb-ramos { margin-bottom: var(--sb-e-4); }
+.vb-ramos::after { content: ''; position: absolute; left: calc((100% - 2 * var(--g)) / 6); right: calc((100% - 2 * var(--g)) / 6); bottom: calc(-1 * var(--sb-e-4)); height: 2px; background: var(--sb-pri-2); }
+.vb-ramo::after { content: ''; position: absolute; top: 100%; left: 50%; width: 2px; height: var(--sb-e-4); translate: -1px 0; background: var(--sb-pri-2); }
+.vb-ultra { position: relative; display: grid; justify-items: center; gap: 2px; padding-top: var(--sb-e-4); text-align: center; }
+.vb-ultra::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: var(--sb-e-4); translate: -1px 0; background: var(--sb-pri-2); }
+.vb-ultra img { width: 112px; height: 112px; }
+.vb-ultra strong { font: var(--sb-peso-titulo) 1.125rem/1.2 var(--sb-fonte-titulo); color: var(--sb-ouro); }
+.vb-ultra span { font-size: var(--sb-t-legal); color: var(--sb-tx-2); }
+@media (min-width: 768px) { .vb-ultra img { width: 144px; height: 144px; } }
+
+/* Prêmios do beta */
+.vb-premio img { object-fit: contain; }
+.vb-premio[data-premio='retrato'] img, .vb-premio[data-premio='background'] img { object-fit: cover; }
+
+.vb-premio .vb-premio-marco { order: -1; justify-self: stretch; padding: 2px var(--sb-e-2); font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: .04em; color: var(--sb-ouro); border: 1px solid var(--sb-cobre); }
+/* Mascote: sem a barra fixa (hero, Fundador, Como entrar) ele desce para o canto. */
+@media (max-width: 1023px) {
+  body:has(.fixo[data-vb-off]) .companheiro { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  body:has(.fixo[data-vb-off]) .vb-comp-x { bottom: calc(16px + 64px + env(safe-area-inset-bottom)); }
+}

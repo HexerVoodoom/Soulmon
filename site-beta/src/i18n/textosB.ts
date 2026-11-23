@@ -1,7 +1,7 @@
 // Copy da Versão C (landing de aquisição, /beta/c/ e /beta/en/c/). Fatos continuam vindos de textos.ts / FEATURE_TRUTH.md;
 // o que não está no repo está marcado com "CONFERIR" para o dono confirmar (ver relatório da entrega).
-// Recompensa: nada é prometido ao primeiro grupo. A seção "Prêmios do beta" (premios) está pronta e DESLIGADA
-// (PREMIOS_BETA = false em LandingB.astro) até existir a arte dos quatro itens.
+// Recompensa: decisão do dono (23/11): quem testar o beta recebe 4 itens (moldura, retrato, cristal, fundo). Seção "Prêmios do beta" (premios),
+// com arte em public/premios/ e flag PREMIOS_BETA em LandingB.astro.
 import { CONTATO } from './textos';
 
 const pt = {
@@ -12,7 +12,7 @@ const pt = {
     eyebrow: 'ACESSO ANTECIPADO · ANDROID',
     // Uma entrada por linha;   = espaço que não quebra. "ações reais" nunca se separa.
     h1: ['Suas ações reais.', 'A evolução dele.'],
-    sub: 'Crie uma criatura nascida da sua personalidade. Cumpra atividades da vida real, evolua seu Soulmon e explore um mundo misterioso cheio de criaturas, desafios e descobertas.',
+    sub: 'Crie uma criatura nascida da sua personalidade. Cada atividade real que você cumpre ajuda o seu Soulmon a evoluir. Explore um mundo misterioso cheio de criaturas, desafios e descobertas.',
     ver: 'Veja como funciona',
     micro: 'Grátis para entrar · Só Android · 18+ · Acesso antecipado',
     evoRotulo: 'As cinco formas de um Soulmon',
@@ -53,11 +53,12 @@ const pt = {
     ] as [string, string, string][],
     alts: { explorar: 'Capa do Endless Rift, a descida sem fim do Soulmon.', batalhar: 'Capa da Arena do Soulmon.', social: 'Salão do Clã, no Hall do Soulmon.' } as Record<string, string>,
     colecao: {
-      rotulo: 'Uma criatura de fogo e os três caminhos de evolução que saem dela',
+      rotulo: 'Uma criatura de fogo, os três caminhos de evolução que saem dela e a forma final, que exige as três Megas',
       raiz: 'Ponto de partida',
       caminhosH: 'Três caminhos',
       caminhos: ['Poder', 'Harmonia', 'Benevolência'],
-      dica: 'Do mesmo ponto de partida, cada caminho leva a um corpo diferente.',
+      dica: 'Do mesmo ponto de partida, cada caminho leva a um corpo diferente. O Ultra só vem com as três Megas.',
+      ultraNota: 'Exige as 3 Megas',
     },
   },
   acao: {
@@ -75,16 +76,16 @@ const pt = {
     itens: ['Acesso antecipado ao jogo', 'Recursos novos antes do lançamento público', 'Ajude a influenciar as próximas melhorias'],
     nota: 'Só Android · 18+ · Grátis para entrar.',
   },
-  // Seção oculta (PREMIOS_BETA = false). Só publicar com a arte pronta e a decisão do dono sobre prometer prêmio.
   premios: {
     h2: 'Prêmios do beta',
-    p: 'Quem testa desde o começo leva quatro itens especiais para o perfil e para a Casa.',
+    p: 'O conjunto Fundador: quatro itens exclusivos para quem testar o Soulmon no beta, liberados conforme você joga.',
+    // [id, nome, marco que libera, texto]. Ordem de desbloqueio.
     itens: [
-      ['moldura', 'Moldura especial', 'Uma moldura exclusiva para o retrato do seu perfil.'],
-      ['retrato', 'Retrato especial', 'Um retrato único para representar você no jogo.'],
-      ['cristal', 'Cristal decorativo', 'Um cristal de enfeite, exclusivo, para decorar a sua Casa.'],
-      ['background', 'Background especial', 'Um fundo exclusivo para o seu perfil.'],
-    ] as [string, string, string][],
+      ['background', 'Fundo Fundador', '1ª tarefa concluída', 'Um fundo exclusivo para o seu perfil.'],
+      ['moldura', 'Moldura Fundador', '3 dias', 'Uma moldura exclusiva para o seu retrato.'],
+      ['retrato', 'Retrato Fundador', '5 dias', 'Um retrato único para representar você.'],
+      ['cristal', 'Cristal Fundador', 'Chegar a Champion', 'Um cristal para a sua Casa. O fogo turquesa fica sempre aceso.'],
+    ] as [string, string, string, string][],
   },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
@@ -116,7 +117,7 @@ const en: typeof pt = {
     eyebrow: 'EARLY ACCESS · ANDROID',
     // Dono (23/11): "real life" não quebra entre linhas. Cada entrada é uma linha;   = espaço que não quebra.
     h1: ['Your real-life', 'actions.', 'Their evolution.'],
-    sub: 'Raise a creature born from your personality. Complete real-life activities, evolve your Soulmon and explore a mysterious world filled with creatures, challenges and discoveries.',
+    sub: 'Raise a creature born from your personality. Every real-life action you complete helps your Soulmon evolve. Explore a mysterious world filled with creatures, challenges and discoveries.',
     ver: 'See how it works',
     micro: 'Free to join · Android only · 18+ · Early access',
     evoRotulo: 'The five forms of a Soulmon',
@@ -156,11 +157,12 @@ const en: typeof pt = {
     ],
     alts: { explorar: "Cover art of the Endless Rift, Soulmon's endless descent.", batalhar: 'Cover art of the Soulmon Arena.', social: "The Clan Hall, in Soulmon's Hall." },
     colecao: {
-      rotulo: 'A fire creature and the three evolution paths that branch from it',
+      rotulo: 'A fire creature, the three evolution paths that branch from it and the final form, which requires all three Megas',
       raiz: 'Starting point',
       caminhosH: 'Three paths',
       caminhos: ['Power', 'Harmony', 'Benevolence'],
-      dica: 'From the same starting point, each path leads to a different body.',
+      dica: 'From the same starting point, each path leads to a different body. The Ultra only comes with all three Megas.',
+      ultraNota: 'Requires all 3 Megas',
     },
   },
   acao: {
@@ -180,12 +182,12 @@ const en: typeof pt = {
   },
   premios: {
     h2: 'Beta rewards',
-    p: 'Players who test from the start get four special items for their profile and their House.',
+    p: 'The Founder set: four exclusive items for everyone who tests Soulmon in the beta, unlocked as you play.',
     itens: [
-      ['moldura', 'Special frame', 'An exclusive frame for your profile portrait.'],
-      ['retrato', 'Special portrait', 'A one-of-a-kind portrait to represent you in the game.'],
-      ['cristal', 'Decorative crystal', 'An exclusive ornamental crystal to decorate your House.'],
-      ['background', 'Special background', 'An exclusive background for your profile.'],
+      ['background', 'Founder Background', 'First task completed', 'An exclusive background for your profile.'],
+      ['moldura', 'Founder Frame', '3 days', 'An exclusive frame for your portrait.'],
+      ['retrato', 'Founder Portrait', '5 days', 'A one-of-a-kind portrait to represent you.'],
+      ['cristal', 'Founder Crystal', 'Reach Champion', 'A crystal for your House. The turquoise fire is always lit.'],
     ],
   },
   entrar: {
