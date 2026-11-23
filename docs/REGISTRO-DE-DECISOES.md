@@ -6693,3 +6693,10 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Decisão:** fantasma (Spectrel), morto-vivo (Revenox), sangue (Hemolisk) e fúria (Furiosk) deixam de herdar folhas, gemas, corações de luz e coroa de osso dos componentes; o descritor é só o tema do próprio elemento, cor própria, expressão calma, sem folha/cristal/cano da marca. `ELEMENTOS_PUROS_LOTE5` desliga o completamento por componente (`PISTA_CURTA_BASE`) para esses 4, e os testes de "uma palavra-chave por componente" os excluem de forma explícita (os outros 269 seguem travados).
 - **Root do Hemolisk:** `PROMPT_ROOT_EXTRA.sangue` (Tarrasque bebê) é anexado só ao prompt do estágio `rookie` cujo elemento efetivo é `sangue`; o nome no jogo segue Hemolisk e o descritor geral não cita Tarrasque. Sem mudança de sorteio nem de hash dos 183 originais.
 - **Rollback:** reverter o commit.
+
+## §503 — Hexsmith: o ✕ é só do modal principal; toda tela interna tem Voltar de UM nível (23/11/2026, p5/hex-voltar)
+
+- **Decisão do dono (16.2):** o modal principal da Hexsmith mantém o ✕ (`FecharAco`, fecha tudo). Toda tela interna (painel de Porta, renomear, confirmação do renomear) troca o ✕ pelo Voltar (`ModalSheet onBack`, círculo `data-back-circle`) e volta ao nível anterior SEM fechar o principal. Nunca dois controles de fechar: o ✕ principal fica apagado (`useBackDimmed`) enquanto há tela por cima.
+- **O que faltava (#1106 só pôs o botão):** o voltar do SISTEMA (Android/`popstate`) só conhecia a camada da `AreaSheet`, então fechava a Hexsmith inteira por baixo da tela interna; e na confirmação do renomear (Sim/Não) o Voltar fechava o modal em vez de voltar ao campo. Agora `SlotPanel` e `HexRenameModal` registram `useBackLayer`, e o renomear volta um passo por vez (confirmação, campo, mapa).
+- **Teste:** `hex/HexsmithVoltar.render.test.tsx` (360/375/412 px, as 5 Portas e os 2 renomear).
+- **Rollback:** reverter o commit; sem save/servidor.

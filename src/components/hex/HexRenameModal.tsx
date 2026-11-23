@@ -4,6 +4,7 @@
  * O `ModalSheet` cuida de modalDepth (a tela de trás esmaece) e do Voltar.
  */
 import { useState } from 'react';
+import { useBackLayer } from '../../utils/backStack';
 import type { Language } from '../../utils/i18n';
 import { Field, FieldWarn, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
 import { BitsAmount } from '../ui/BitsAmount';
@@ -24,8 +25,11 @@ export function HexRenameModal({ kind, language, gs, atual, aviso, ocupado, onCl
   const recusa = hexRenameRefusal(gs, kind, texto);
   const mostraRecusa = recusa && recusa !== 'empty' && (recusa !== 'same');
   const limpo = hexRenameClean(texto);
+  // Voltar = UM nível: na confirmação (Sim/Não) volta ao campo; no campo, volta ao mapa. Nunca fecha a Hexsmith (o ✕ é o do modal principal).
+  const voltar = () => { if (pedindo) setPedindo(false); else onClose(); };
+  useBackLayer(true, voltar);
   return (
-    <ModalSheet open title={tx(C.title, isPt)} onClose={onClose} onBack={onClose} language={language}
+    <ModalSheet open title={tx(C.title, isPt)} onClose={voltar} onBack={voltar} language={language}
       footer={pedindo && limpo ? (
         <div data-hex-rename-confirm className="sm2-hex-footer">
           <p style={{ ...sm2Text, textAlign: 'center' }}>{tx(HEX_RENAME_COPY.confirmAsk, isPt).replace('{n}', String(HEX_RENAME_COST))} <strong>{limpo}</strong></p>

@@ -12,6 +12,7 @@
  */
 import { emphasizeSoulFragment } from '../ui/SoulFragmentTerm';
 import { useId, useMemo, useState, type ReactNode } from 'react';
+import { useBackLayer } from '../../utils/backStack';
 import type { Language } from '../../utils/i18n';
 import { companheiroDoEstado } from '../../utils/companheiroInvocado';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
@@ -256,6 +257,8 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const [bases, setBases] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
   const refusalId = useId();
+  // O voltar do SISTEMA (Android/popstate) desfaz só ESTE nível (16/11/2026): sem a camada, ele fecharia a Hexsmith inteira por baixo.
+  useBackLayer(true, onClose);
   const hx = sanitizeHexsmith(gs.hexsmith);
   const isEl = HEX_ELEMENT_SLOTS.includes(slot);
   const mine = hx.owned.filter((id) => parseHexItem(id)!.slot === slot);

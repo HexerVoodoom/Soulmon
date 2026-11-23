@@ -2473,6 +2473,7 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 ### `src/components/hex/HexsmithSheet.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** Coroas de efeito (`hot`/`slow`/`silence`, H1), "Coroa equipada faz o companheiro descansar" (H4) com legenda por slot (`HEX_SLOT_COPY[slot].desc`); cada HEX possuído tem 1 botão Equipar/Desequipar (`data-hex-equip`/`data-hex-unequip`); tabela de custo com poção/fragmentos/Bits (`data-hex-cost-*`); os 2 botões de renomear (`HexRenameButton`) acima da linha da Coroa.
 **Dono de:** a tela da Hexsmith no lote `forja:hexsmith` (lazy em `nav/AreaView.tsx`): mapa de 5 encaixes ao redor do Soulmon, código hex e o painel de cada encaixe (itens possuídos, forja com filtro por elementos). Regras em `utils/hexsmith.ts`; textos em `utils/hexsmithCopy.ts`.
+**Navegação (23/11/2026, §500):** o ✕ é só o do modal principal (`AreaSheet moldura="aco"`, fecha tudo; fica apagado com tela por cima). O painel de Porta (`SlotPanel`, `ModalSheet onBack={onClose}`) e o `HexRenameModal` são telas internas: Voltar (`data-back-circle`) desfaz UM nível e o voltar do sistema também (`useBackLayer`); sem ✕ duplicado. Contrato: `hex/HexsmithVoltar.render.test.tsx` (360/375/412 px).
 **Itens possuídos (13/11/2026, §323):** cada HEX possuído tem UM botão grande na linha (`.sm2-kit-btn.sm2-hex-equip-btn`, alvo 56 px, `data-state="idle|equipped"`): "Equip"/"Equipar" (`data-hex-equip`, `equipHexItem`, troca se já há outro) ⇄ "✓ Equipped" + "Unequip"/"Desequipar" (`data-hex-unequip`, `unequipHexSlot`). A linha "Empty the Port" (`HEX_UI.clear`, `data-hex-clear`) saiu; o texto novo é `HEX_UI.unequip`. **Coroa por família:** `SlotFace` resolve a coroa com valor por `resolveHexCrownArt(familia)` (`assets/soulmon/hex/index.ts`: `coroa-<familia>.png`, fallback `slot-coroa.png`; `data-hex-crown` no `<img>`). Arte nova entra só soltando o PNG na pasta. **Régua:** `HexsmithSheet.render.test.tsx`.
 
 ### `src/components/hex/HexSlotGlyph.tsx`
@@ -2564,6 +2565,8 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/hex/HexRenameModal.tsx`
 
 **Dono de:** o modal de renomear (§287): caixa de texto, custo `HEX_RENAME_COST`, confirmação antes de gastar; a troca é do servidor (`cloudHexRename`). Usa `ModalSheet` (modalDepth/Voltar).
+
+**Voltar de UM nível (23/11/2026, §500):** `onBack`/`onClose` = `voltar`: na confirmação (Sim/Não) volta ao campo de texto; no campo, fecha só este modal (volta ao mapa). Registra `useBackLayer(true, voltar)`, então o voltar do sistema faz o mesmo e nunca fecha a Hexsmith. O ✕ é só o do modal principal (`AreaSheet moldura="aco"`).
 
 ### `src/components/perfil/EspecialNomeLeitura.tsx`
 
