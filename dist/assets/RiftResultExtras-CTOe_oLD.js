@@ -1,0 +1,1 @@
+import{eI as r,j as i,eJ as o,eK as n}from"./index-DydpnHoy.js";function x({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:n(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{x as R};
