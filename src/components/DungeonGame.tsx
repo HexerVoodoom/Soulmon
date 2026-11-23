@@ -1029,7 +1029,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           )}
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
-        {pocoesModal && gs && <DungeonPotionsModal owned={pocoesDoJogador(gs)} initial={gs.dungeonPotions ?? {}} language={language} onConfirm={confirmarPocoes} />}
+        {pocoesModal && gs && <DungeonPotionsModal owned={pocoesDoJogador(gs)} initial={gs.dungeonPotions ?? {}} language={language} onConfirm={confirmarPocoes} onClose={() => setPocoesModal(false)} />}
         {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
         {/* 💗 A queda: antes da derrota, "Usar Coraçãozinho". Esquerda = recusar (derrota normal), direita = confirmar (volta com 50% do HP). */}
         {reviveOffer && (
