@@ -7584,11 +7584,17 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before { left: 0; background-image: url('./assets/soulmon/ui/moldura-cristal/placa-titulo-esq.webp'); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after { right: 0; background-image: url('./assets/soulmon/ui/moldura-cristal/placa-titulo-dir.webp'); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #2b160a; text-shadow: 0 1px 0 rgba(255, 214, 160, .45); position: relative; z-index: 1; font-size: var(--sm2-text-sm, .875rem); }
-/* o ✕/voltar (canto superior esquerdo, contrato `voltarFechar`) desce para fora do cristal do canto. */
-.sm2-moldura-modal--cristal .sm2-moldura-modal__conteudo > div:first-child:not(.sm2-moldura-modal__info) { margin: calc(var(--sm2-cristal-canto) * .3) 0 0 calc(var(--sm2-cristal-canto) * .6); padding: 0 !important; }
+/* o ✕/voltar (canto superior esquerdo, contrato `voltarFechar`) fica ABAIXO da placa (a placa tem largura de título; ✕ e (i) ao lado dela colidiriam). */
 .sm2-moldura-modal--cristal .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .55); top: calc(var(--sm2-cristal-canto) * .12); width: var(--sm2-cristal-placa-h); height: var(--sm2-cristal-placa-h); }
 /* sem ornamento "i" na arte: o botão desenha o seu (anel de cobre). */
 .sm2-moldura-modal--cristal .sm2-info-hit::before {
   content: 'i'; position: absolute; inset: 22%; border: 1.5px solid #c9884a; border-radius: 50%; color: #e3c06a; display: flex; align-items: center; justify-content: center;
   font: 700 .8125rem/1 Georgia, serif;
 }
+.sm2-moldura-modal--cristal { --sm2-cristal-placa-fim: calc(var(--sm2-cristal-canto) * .12 + var(--sm2-cristal-placa-h) + 2px); }
+.sm2-moldura-modal--cristal .sm2-modal-fechar-linha { margin: var(--sm2-cristal-placa-fim) 0 0 calc(var(--sm2-cristal-canto) * .3); }
+/* sem linha do ✕ (closeSide none): o corpo começa logo abaixo da placa */
+.sm2-moldura-modal--cristal:not(:has(.sm2-modal-fechar-linha)) { --sm2-moldura-pad-t: var(--sm2-cristal-placa-fim); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa { max-width: calc(100% - var(--sm2-cristal-canto) * 1.8); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: calc(var(--sm2-cristal-canto) * .35); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #1c0e05; }
