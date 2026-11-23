@@ -87,7 +87,6 @@ const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => 
 // ⚒️ O Soulsmith (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
 const ForgeCard = lazy(() => import('../ForgeCard'));
 // 09/11/2026: a entrada do Soulsmith (Vitra fala + botão para a Forja de Alma), antes do mapa em tela cheia.
-const SoulsmithSheet = lazy(() => import('../SoulsmithSheet'));
 const HexsmithSheet = lazy(() => import('../hex/HexsmithSheet'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
@@ -457,8 +456,6 @@ export function AreaView(props: AreaViewProps) {
   const funChargedRef = useRef<string | null>(null);
   /* Sem energia: fecha o jogo e devolve à folha do Salão, com o aviso em destaque. */
   const [funRefused, setFunRefused] = useState(false);
-  /** O Soulsmith: a entrada com a Vitra vem antes do mapa em tela cheia (09/11/2026). */
-  const [forgeEntered, setForgeEntered] = useState(false);
   const refuseFun = () => { setGame(null); setModeChosen(null); setFunRefused(true); setSheet('salao'); };
   const replayRound = () => {
     if (funApi && !funApi.onStartRound()) { refuseFun(); return false; }
@@ -517,7 +514,7 @@ export function AreaView(props: AreaViewProps) {
   /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
      Vale só para a primeira abertura: fechar a folha apaga. */
   const [stallKind, setStallKind] = useState(props.initialStallKind);
-  const close = () => { setSheet(null); setStallKind(undefined); setForgeEntered(false); };
+  const close = () => { setSheet(null); setStallKind(undefined); };
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
   const layerOpen = sheet !== null || duelOpen || game !== null;
@@ -714,8 +711,8 @@ export function AreaView(props: AreaViewProps) {
     /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
     const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
     const rogueGate = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false;
-    /** O mapa do Soulsmith (ferreiro) também abre em TELA CHEIA, de borda a borda (05/11/2026, pedido do dono); o Voltar fecha de volta à área. */
-    const forgeFull = area === 'forja' && open?.id === 'ferreiro' && forgeEntered;
+    /** O mapa do Soulsmith (ferreiro) abre DIRETO em TELA CHEIA, de borda a borda (05/11/2026; sem a folha intermediária desde 23/11/2026, pedido do dono); o Voltar fecha de volta à área. */
+    const forgeFull = area === 'forja' && open?.id === 'ferreiro';
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -747,7 +744,6 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
-            {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => play.funSession!.onBuy!() : undefined} refused={funRefused} />}

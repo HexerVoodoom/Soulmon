@@ -2127,9 +2127,9 @@ O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus
 **Sync 09/11/2026 (`5229b1be..62f204e1b`):** prop `view?: 'list' | 'map'` (padrão `list`) e `onBack`: `map` desenha o Soulsmith como mapa de chakras (`forge/VitraMap`, balão com as duas opções de aprimoramento, `pop`/`popChoice`); as regras e as recusas são as mesmas nos dois; `runUpgrade` serve ao modal da lista e ao balão. Cada peça mostra o bônus de atributo que dá agora (`bonusTexto`); `forgeReadySlots` acende o indicador do prédio. Entrada pela `SoulsmithSheet` (a Vitra fala primeiro).
 
 
-### `src/components/SoulsmithSheet.tsx`
-Entrada do Soulsmith (08–09/11/2026, pedido do dono): a folha do lote `ferreiro` abre primeiro com a Vitra falando no balão (`AreaSheet` + `NpcSpeech`, fala de `areaNpcVoice` › `forja:ferreiro`), um texto curto sobre o que se faz ali e o botão primário "Go to the Soul Forge"/"Ir para a Forja de Alma", que monta a `ForgeCard` (lazy). O botão chama `onGo`, que liga `forgeEntered` no `AreaView` e abre o mapa em tela cheia (`ForgeCard view="map"`); fechar zera.
-**Régua:** `src/components/SoulsmithSheet.render.test.tsx`, `src/components/nav/areaLotsNovos.test.ts`.
+### `src/components/SoulsmithSheet.tsx` (removido em 23/11/2026)
+Removido a pedido do dono: o lote `ferreiro` abre DIRETO o mapa da `ForgeCard` (`view="map"`, tela cheia) em `AreaView`; não há mais folha com texto e botão intermediários. A Vitra segue falando no balão do próprio mapa.
+**Régua:** `src/components/nav/areaLotsNovos.test.ts`.
 
 
 ### `src/components/MaterialIcon.tsx`
