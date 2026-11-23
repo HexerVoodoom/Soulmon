@@ -19,6 +19,7 @@
 import { NOVOS_DATA } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
+import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
 import { ULTIMATES_2COMP_DATA } from './enemyRosterUltimates';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
@@ -80,6 +81,7 @@ function build(): Record<string, string> {
   for (const [num, slug] of COMBINADOS_LOTE2_DATA) t[`cmb:${num}`] = slug; // lote 2
   for (const [num, slug] of COMBINADOS_LOTE3_DATA) t[`cmb:${num}`] = slug; // lote 3
   for (const [num, slug] of COMBINADOS_LOTE4_DATA) t[`cmb:${num}`] = slug; // lote 4 (05/11/2026)
+  for (const [num, slug] of COMBINADOS_LOTE5_DATA) t[`cmb:${num}`] = slug; // lote 5 (23/11/2026)
   for (const [id, , , el] of INIMIGOS_API_DATA) t[`api:${id}`] = el;
   for (const [id, el] of INIMIGOS_DUO_DATA) t[`api:${id}`] = el;
   for (const [id, el] of ELENCO_ORACULO_DATA) t[`api:${id}`] = el; // elenco do Oráculo (10/11/2026)

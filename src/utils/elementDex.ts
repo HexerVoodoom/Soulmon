@@ -10,8 +10,8 @@ import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CURATED_ELEMENT_IDS, ELEMENTOS_CURADOS, isCuratedElement, curatedComponents } from './elementosCurados';
 
-/** Teto da lista no save (20 base + 190 derivados + 50 curados + neutro = 261; 01/11/2026; + 6 do lote 4 + 3 promovidos = 270, 05/11/2026). */
-export const ELEMENT_DEX_MAX = 270;
+/** Teto da lista no save (20 base + 190 derivados + 50 curados + neutro = 261; 01/11/2026; + 6 do lote 4 + 3 promovidos = 270, 05/11/2026; + 4 do lote 5 = 274, 23/11/2026). */
+export const ELEMENT_DEX_MAX = 274;
 
 export const BASE_ELEMENT_IDS: readonly string[] = CLASS_ELEMENT_ORDER;
 export const DERIVED_ELEMENT_IDS: readonly string[] = DERIVED_ELEMENT_PAIRS.map(d => d.id);
@@ -30,7 +30,7 @@ export const isDexElement = (id: unknown): id is string => typeof id === 'string
  */
 export const LIBRARY_ELEMENT_IDS: readonly string[] = [...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS];
 /**
- * Elementos que têm ESSÊNCIA e POÇÃO (08/11/2026, dono: curados "funcionam iguais aos equivalentes"): os 210 do catálogo + os 59 curados
+ * Elementos que têm ESSÊNCIA e POÇÃO (08/11/2026, dono: curados "funcionam iguais aos equivalentes"): os 210 do catálogo + os 63 curados
  * (sem o `neutro`, que é do corvo). `ALL_ELEMENT_IDS` segue fixo em 210 (Forja Hex, arte de item, paridade da Loja).
  */
 export const ESSENCE_ELEMENT_IDS: readonly string[] = [...ALL_ELEMENT_IDS, ...ELEMENTOS_CURADOS.map(e => e.id)];
@@ -73,7 +73,7 @@ export function elementIdOfFoe(elements: readonly (string | undefined | null)[] 
   return PAIR_ID.get([a, b].sort().join('+'));
 }
 
-/** Forma segura da lista (sem a regra do catálogo, para o servidor espelhar igual): strings `[a-z_]{2,24}`, sem repetir, teto 270. */
+/** Forma segura da lista (sem a regra do catálogo, para o servidor espelhar igual): strings `[a-z_]{2,24}`, sem repetir, teto 274. */
 export function sanitizeDefeatedElements(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const out: string[] = [];

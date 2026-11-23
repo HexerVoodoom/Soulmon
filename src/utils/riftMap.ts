@@ -1,6 +1,6 @@
 // O MAPA DE ANDARES DO RIFT INFINITO (pedido do dono, 16/11/2026 — REGISTRO §462).
 //
-// DONO ÚNICO e PURO do que o mapa mostra: um NÓ por CONJUNTO (`riftSets.ts`: 2 andares por elemento, 269 conjuntos = 538 andares, depois a
+// DONO ÚNICO e PURO do que o mapa mostra: um NÓ por CONJUNTO (`riftSets.ts`: 2 andares por elemento, 273 conjuntos = 546 andares, depois a
 // lista dá a volta), o estado de cada nó (visitado/atual/bloqueado), o CAMINHO sinuoso entre eles (determinístico) e a regra de "voltar ao nó".
 // Sem arte, sem relógio, sem `Math.random`: a tela (`components/rift/RiftMap.tsx`) e os testes leem o MESMO plano.
 //
@@ -8,7 +8,7 @@
 //  · NÓ visitado = o 1º andar do conjunto ≤ `dungeonDepthRecord` (o recorde só sobe). Antes disso é BLOQUEADO (cinza, "?").
 //  · [§477] A derrota NUNCA rebaixa o andar: o ponto de largada é o andar logo depois do recorde (`startLayerFor`), combate 1; o 2º andar do elemento reentra no 2º.
 //  · NÓ atual = o conjunto do andar onde a descida está (`riftCurrentLayer`): a descida em andamento (`dungeonAway.layer`), senão o ponto de
-//    largada (`dungeonResumeLayer` da volta, senão `startLayerFor(recorde)`). Depois do 538, a lista dá a volta: o atual cai no nó de novo.
+//    largada (`dungeonResumeLayer` da volta, senão `startLayerFor(recorde)`). Depois do 546, a lista dá a volta: o atual cai no nó de novo.
 //  · VOLTAR AO NÓ = `rewindToSet`: grava `dungeonResumeLayer` = 1º andar do conjunto (a descida recomeça dali, UMA vez: quem larga a descida
 //    consome o campo). O recorde NÃO diminui; a energia gasta NÃO volta; nada é devolvido. Idempotente (mesmo nó = mesma referência).
 //  · [decisão] Voltar vale para QUALQUER nó visitado, inclusive um POSTERIOR ao atual (recorde > atual): é "reposicionar", não só "recuar".
@@ -111,7 +111,7 @@ export function riftMapNode(index: number, state: RiftMapSave | null | undefined
   };
 }
 
-/** Os nós de `from` a `to` (inclusive) — a tela monta só a janela visível, nunca os 269 de uma vez. */
+/** Os nós de `from` a `to` (inclusive) — a tela monta só a janela visível, nunca os 273 de uma vez. */
 export function riftMapWindow(state: RiftMapSave | null | undefined, from: number, to: number): RiftMapNode[] {
   const lo = Math.max(0, Math.floor(from));
   const hi = Math.min(RIFT_SET_COUNT - 1, Math.floor(to));
@@ -192,13 +192,13 @@ export function consumeResume<T extends RiftMapSave>(prev: T): T {
 }
 
 // ── PORTAIS (pedido do dono, 17/11/2026 — REGISTRO §471) ─────────────────────────────────────────────────────────────────────────────────
-// Um portal em cada camada MÚLTIPLA DE 50 (50, 100, … 500: 10 portais nos 538 andares). Como um nó vale 2 andares (49-50, 99-100…), a camada
+// Um portal em cada camada MÚLTIPLA DE 50 (50, 100, … 500: 10 portais nos 546 andares). Como um nó vale 2 andares (49-50, 99-100…), a camada
 // 50k é SEMPRE o 2º andar do nó, e o portal vive nesse nó (índice 25k-1). [decisão] Desbloqueia ao COMPLETAR o andar do portal (o recorde chega
 // a 50k): o recorde só sobe, então o desbloqueio é DERIVADO dele (idempotente, e a descida fora do app também conta); o save só guarda o
 // quanto o jogador já foi avisado. Os portais liberados são sempre um prefixo (1..n).
 /** De quantas em quantas camadas há um portal. */
 export const RIFT_PORTAL_EVERY = 50;
-/** Quantos portais existem nos 538 andares da lista. */
+/** Quantos portais existem nos 546 andares da lista. */
 export const RIFT_PORTAL_COUNT = Math.floor((RIFT_SET_COUNT * CAMADAS_POR_ELEMENTO) / RIFT_PORTAL_EVERY);
 
 /** A camada do portal `ordinal` (1-based). */

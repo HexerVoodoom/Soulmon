@@ -5,7 +5,7 @@
 // testes leem o MESMO `riftWavePlan`; o servidor não monta onda (só valida o save), então não há espelho a manter.
 //
 // A ORDEM dos conjuntos já era a da masmorra temática (`dungeonElementos.ts`, 08/11/2026): cada elemento ocupa `CAMADAS_POR_ELEMENTO` (2)
-// andares seguidos = 1 CONJUNTO; primeiro os 20 base, depois os 190 pares, os 40 trios e os 19 quádruplos (269 conjuntos = 538 andares;
+// andares seguidos = 1 CONJUNTO; primeiro os 20 base, depois os 190 pares, os 44 trios e os 19 quádruplos (273 conjuntos = 546 andares;
 // depois disso volta ao começo, com a dificuldade de profundidade seguindo a subir). Este módulo NÃO repete essa lista: lê dela.
 //
 // O QUE É NOVO aqui (e substitui, no Rift/Masmorra idle, os degraus 60/200/500 de `dificuldadeEstagio.ts`, REGISTRO §437):

@@ -160,6 +160,9 @@ const REESCRITOS: readonly string[] = ['lava', 'fervor', 'pantano', 'correnteza'
 const textoDoDescritor = (id: string): string => `${DESCRITORES_ELEMENTO[id].forma ?? ''} ${DESCRITORES_ELEMENTO[id].paleta ?? ''}`.toLowerCase();
 const REGEX_FRANQUIA = /digimon|pok[eé]mon|monster rancher|yu-?gi-?oh|warhammer|palworld|final fantasy|hello kitty|tamagotchi|ragnarok online|warcraft|mana\b/i;
 
+/** Lote 5 (P5, 23/11/2026): descritores provisórios montados dos componentes, fora do hash dos 183 originais. */
+const LOTE5_PROVISORIO: readonly string[] = ['fantasma', 'morto_vivo', 'sangue', 'furia'];
+
 describe('descritores autorais (REGISTRO §407)', () => {
   it('são 86: 53 pares, 14 trios, 19 quartetos', () => {
     const n = (k: number) => REESCRITOS.filter(id => essenceComposition(id)?.length === k).length;
@@ -194,8 +197,15 @@ describe('descritores autorais (REGISTRO §407)', () => {
   it('determinismo: o mesmo elemento gera o mesmo prompt duas vezes', () => {
     for (const id of REESCRITOS) expect(gen(id, 'sombra').imagePrompt, id).toBe(gen(id, 'sombra').imagePrompt);
   });
+  it('lote 5 (fantasma, morto_vivo, sangue, furia): descritor existe, nomeia cada componente e cabe no teto', () => {
+    for (const id of LOTE5_PROVISORIO) {
+      expect(DESCRITORES_ELEMENTO[id], id).toBeDefined();
+      expect((essenceComposition(id) ?? []).filter(c => !nomeiaBase(textoDoDescritor(id), c)), id).toEqual([]);
+      expect((pistasVisuaisDoElemento(id) ?? '').length, id).toBeLessThanOrEqual(TETO_PISTAS);
+    }
+  });
   it('os outros 183 elementos: hash do conteúdo (REGISTRO §408 trocou as pistas fracas em 112 deles; antes de §408 o hash era 909d77b1…; §411 trocou mais 114 deles (180 dos 269 no total: 66 autorais + 114 daqui), hash 0c25ed7d… anterior; §412 trocou as pistas de espaço e vigor em 58 descritores no total, hash aae74725… anterior)', () => {
-    const resto = Object.keys(DESCRITORES_ELEMENTO).filter(i => !REESCRITOS.includes(i)).sort();
+    const resto = Object.keys(DESCRITORES_ELEMENTO).filter(i => !REESCRITOS.includes(i) && !LOTE5_PROVISORIO.includes(i)).sort(); // o lote 5 (P5, 23/11/2026) é provisório e vem abaixo: o hash dos 183 originais NÃO muda
     const h = createHash('sha256').update(JSON.stringify(resto.map(i => [i, DESCRITORES_ELEMENTO[i]]))).digest('hex');
     expect([resto.length, h]).toEqual([183, 'fa8c9f70b156ccff3e0a4be1b3d478392ad8a8111e0b7cc1bf70d496ea5c8442']);
   });

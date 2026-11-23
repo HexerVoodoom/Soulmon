@@ -5,8 +5,8 @@ import { essenceComposition } from './elementDex';
 import { rosterSpriteOf } from './novosSoulmon';
 import { mulberry32 } from './combate/rng';
 
-/** O roster sem os 15 ramos legados (§445), que vão no FIM de tudo (o pacote A fica logo antes deles). */
-const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -15);
+/** O roster sem os 15 ramos legados (§445) e os 4 rookies do lote 5 (P5, 23/11/2026), que vão no FIM de tudo (o pacote A fica logo antes deles). */
+const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -19);
 
 describe('formas do pacote A: 1 por combinação no estágio dela (dono, 16/11/2026)', () => {
   const pacote = ROSTER_SEM_LEGADO.slice(-205);
@@ -23,12 +23,17 @@ describe('formas do pacote A: 1 por combinação no estágio dela (dono, 16/11/2
     }
   });
   it('toda combinação de 2, 3 e 4 elementos tem ao menos uma forma no estágio-alvo (champion, ultimate, mega)', () => {
+    // Dívida de arte declarada (P5, 23/11/2026): os 4 trios do lote 5 ainda não têm a forma Ultimate (ver `docs/ASSETS-A-GERAR.md`). Tire daqui quando a arte entrar.
+    const SEM_FORMA_AINDA = ['fantasma', 'morto_vivo', 'sangue', 'furia'];
     for (const k of [2, 3, 4]) {
-      const elementos = new Set(ENEMY_ROSTER.filter(e => e.kind === 'combinado' && essenceComposition(e.element)?.length === k).map(e => e.element));
+      const elementos = new Set(ENEMY_ROSTER.filter(e => e.kind === 'combinado' && essenceComposition(e.element)?.length === k && !SEM_FORMA_AINDA.includes(e.element)).map(e => e.element));
       for (const el of elementos) {
         expect(ENEMY_ROSTER.some(e => e.element === el && e.stage === alvo[k] && e.kind !== 'mascote'), `${el} (${k}) sem ${alvo[k]}`).toBe(true);
       }
     }
+  });
+  it('dívida do lote 5: ainda sem forma além do rookie (se a arte entrou, tire o elemento de SEM_FORMA_AINDA)', () => {
+    for (const el of ['fantasma', 'morto_vivo', 'sangue', 'furia']) expect(ENEMY_ROSTER.some(e => e.element === el && e.stage !== 'rookie'), el).toBe(false);
   });
   it('fora do sorteio comum: só saem com o elemento pedido', () => {
     const chaves = new Set(pacote.map(e => e.key));
