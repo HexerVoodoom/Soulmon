@@ -46,6 +46,7 @@ export function DungeonReturnModal({ summary, language, onClose }: { summary: Du
     <ModalSheet
       open
       placement="center"
+      titulo="inline"
       onClose={onClose}
       language={language}
       title={isPt ? 'De volta da Fenda' : 'Back from the Rift'}

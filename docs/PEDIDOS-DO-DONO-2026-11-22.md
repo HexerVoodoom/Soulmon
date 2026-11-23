@@ -82,3 +82,5 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 
 - Etapa 2 (feita, só layout): altura mínima `min(70u, 80dvh)`, respiro interno = `--sm2-moldura-pad-t/x/b` + folga (texto não encosta na placa nem no botão), margem externa 16 → 24 px.
 - Etapa 3 (feita): moldura `cristal` (9-slice slice 225 + placa de bronze em 3 partes), aprovada pelo dono em 23/11; `ModalSheet placement=center` usa `ModalFrame variante="cristal"`. `RitualDialog` (RitualKit) segue na moldura padrão.
+
+**Rodada 5 (cont.) — popup com título inline (teste A/B, 23/11):** `ModalSheet titulo="inline"` (padrão segue `placa`): sem placa de bronze; ✕ redondo (44 px, fio de cobre) no canto superior DIREITO e o título logo abaixo, dentro do modal, até 2 linhas, sem truncar. Aplicado nos popups pequenos de resultado/aviso: `DungeonPotionsModal`, `DungeonReturnModal`, `BlockedActionModal`, `ArenaCuraModal`. Os demais popups e os modais de prédio/sheets ficam na placa. Exceção ao contrato "fechar à esquerda" só para esta variante (com `onBack` volta à placa). Comparação lado a lado: `D:\Soulmon\comparacao-popup-placa-vs-inline.jpg`.
