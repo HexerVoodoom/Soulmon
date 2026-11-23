@@ -71,3 +71,12 @@ Mapas código×spec (só leitura): scratchpad da sessão `mapa-spec-1/2/3.md`.
 Adiados: 9.2 Dungeon, 14 Clan Hall, 22 botão Play. Já feitos: BL2a (#1092), 15.1 arte dos cenários, 18 falas aprovadas.
 
 Regras de execução: dúvida só em modal; branch/worktree por pacote no D: com junction para `D:\nm-cache\node_modules`; merge só com todos os checks verdes; PT/EN; compat de save; módulo novo entra em `docs/manual/06-REFERENCIA`.
+
+## Rodada 5 — Popups centrais (pedido do dono, 23/11/2026)
+
+Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maior, mais margem interna para respiro e borda própria, com menos folha, mais tecnológica, mais cristal, mais minimalista, mas bordas arredondadas. Precisa de margem externa também."
+
+**Inventário** (`ModalSheet placement="center"`, moldura `MOLDURA_HOME_DIALOGOS`): App (inline), AppUpdateGate, BonusTaskIntroModal, DailyReportModal (3), DayGoalsModal, DungeonPotionsModal, DungeonReturnModal ("Back from the Rift"), EvolutionStatsModal, MailboxSheet (2), Match3Game, PlayReviewModal, WakeToEnter, CatalogOnboardingFlow (2), ArenaCuraModal, FeiraEventoSheet, FeiraLojaSheet, ArcadeModal, TicketBuyModal, BlockedActionModal; mais `RitualDialog` (`RitualKit`, mesma moldura).
+
+- Etapa 2 (feita, só layout): altura mínima `min(70u, 80dvh)`, respiro interno = `--sm2-moldura-pad-t/x/b` + folga (texto não encosta na placa nem no botão), margem externa 16 → 24 px.
+- Etapa 3 (moldura `cristal`: cantos arredondados, fio turquesa, 1–2 cristais, sem cipó): aguarda 9-slice do P6 (amostra ao dono antes do lote).

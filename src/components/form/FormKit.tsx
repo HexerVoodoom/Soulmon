@@ -460,7 +460,7 @@ export function ModalSheet({
         ...(noMiolo ? { position: 'relative' as const, flex: 1, minHeight: 0 } : { position: 'fixed' as const, inset: 0 }), zIndex: 120,
         background: noMiolo ? 'transparent' : 'rgba(4, 18, 20, .55)',
         display: 'flex', alignItems: noMiolo ? 'stretch' : centered ? 'center' : 'flex-end', justifyContent: 'center',
-        ...(centered && !noMiolo ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
+        ...(centered && !noMiolo ? { padding: 'calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
       <Casca
@@ -475,7 +475,7 @@ export function ModalSheet({
           ...(noMiolo
             ? { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', backgroundColor: 'transparent', borderRadius: 0, boxShadow: 'none' }
             : framed
-              ? { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', boxShadow: SM2_SHADOW_SHEET }
+              ? { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', ...(centered ? { minHeight: 'min(calc(var(--u, 1vw) * 70), 80dvh)' } : null), boxShadow: SM2_SHADOW_SHEET }
               : { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', backgroundColor: 'var(--sm2-surface)', borderRadius: centered ? 20 : '20px 20px 0 0', boxShadow: SM2_SHADOW_SHEET }),
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}
@@ -537,9 +537,12 @@ export function ModalSheet({
         <div
           style={{
             overflowY: 'auto', ...(framed ? { flex: 1, minHeight: 0 } : null),
-            padding: footer
-              ? '4px 18px 18px'
-              : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
+            padding: framed && centered
+              /* Popup central com moldura: o respiro vem dos tokens da moldura (texto não encosta na placa nem nas bordas). */
+              ? 'calc(var(--sm2-moldura-pad-t) + 8px) calc(var(--sm2-moldura-pad-x) + 12px) 20px'
+              : footer
+                ? '4px 18px 18px'
+                : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
             display: 'flex', flexDirection: 'column', gap: 18,
           }}
         >
@@ -549,7 +552,9 @@ export function ModalSheet({
         {footer && (
           <div
             style={{
-              padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
+              padding: framed && centered
+                ? '16px calc(var(--sm2-moldura-pad-x) + 12px) calc(var(--sm2-moldura-pad-b) + 8px)'
+                : '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
               borderTop: '1px solid var(--sm2-line)',
             }}
           >
