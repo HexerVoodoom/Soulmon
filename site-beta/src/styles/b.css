@@ -1,4 +1,8 @@
-/* Versão B (acquisition landing). Só o que a A não tem; o resto reusa site.css. Tokens --sb-*, mobile primeiro, gutters 16px. */
+/* Versão C (acquisition landing). Só o que a A não tem; o resto reusa site.css. Tokens --sb-* (que espelham os --sm2-* do app), mobile primeiro, gutters 16px. */
+
+/* Card da C: cantos QUADRADOS (dono), borda na identidade do app = --sm2-line (aqui --sb-linha) mais um fio turquesa por dentro
+   (o mesmo turquesa do halo do check). Antes era o anel marrom-escuro (--sb-anel-fundo). */
+.vb-card { background: var(--sb-sup); border: 1px solid var(--sb-linha); border-radius: var(--sb-raio-0); box-shadow: inset 0 0 0 1px rgba(95, 243, 224, .10), var(--sb-sombra-1); }
 
 /* Logo sempre no topo (o hero não repete a marca, para o CTA entrar na primeira dobra). */
 .vb-topo .topo-logo { visibility: visible; opacity: 1; }
@@ -9,12 +13,17 @@
 .vb-hero .hero-corpo { justify-content: flex-start; gap: var(--sb-e-5); padding-top: calc(var(--topo-h) + var(--sb-e-3)); }
 .vb-hero-texto { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sb-e-3); align-self: start; width: 100%; max-width: 40rem; }
 .vb-eyebrow { font: var(--sb-peso-forte) .8125rem/1.2 var(--sb-fonte-texto); letter-spacing: .14em; color: var(--sb-ouro); }
-.vb-hero h1 { max-width: 16ch; margin-top: 0; }
+.vb-hero h1 { max-width: none; margin: 0; text-wrap: initial; }
+.vb-h1-l { display: block; text-wrap: balance; }
 .vb-sub { font-size: var(--sb-t-lead); line-height: 1.45; max-width: 36rem; text-wrap: pretty; }
 .vb-acao { display: grid; justify-items: start; gap: var(--sb-e-2); margin-top: var(--sb-e-2); }
 .vb-cta { text-transform: uppercase; letter-spacing: .04em; }
 .vb-hero .vb-cta, .vb-fundador .vb-cta { height: 80px; border-width: 28px 32px; width: min(100%, 360px); }
-.vb-ver { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: var(--sb-peso-medio); }
+/* CTA secundário: botão fantasma (contorno turquesa fino, sem preenchimento), mesma largura do primário, alvo de 48px. */
+.vb-ver { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: min(100%, 360px); min-height: 48px; padding: 0 var(--sb-e-4); box-sizing: border-box; font: var(--sb-peso-forte) var(--sb-t-botao-p)/1 var(--sb-fonte-texto); color: var(--sb-pri); text-decoration: none; background: var(--sb-veu-texto); border: 1px solid var(--sb-pri-2); }
+.vb-ver:hover { background: var(--sb-sup-2); }
+.vb-ver:focus-visible { outline: var(--sb-foco-largura) solid var(--sb-foco-cor); outline-offset: var(--sb-foco-recuo); }
+.vb-ver svg { flex: none; }
 .vb-micro { font-size: var(--sb-t-legal); color: var(--sb-tx); text-shadow: 0 1px 0 #000; }
 .vb-hero-visual { display: grid; justify-items: center; gap: var(--sb-e-4); padding-bottom: var(--sb-e-4); }
 .vb-aparelho.aparelho { width: 176px; }
@@ -38,25 +47,42 @@
 /* ---------- 2 · Como funciona ---------- */
 .vb-como { display: grid; gap: var(--sb-e-6); justify-items: center; text-align: center; }
 .vb-passos3 { display: grid; gap: var(--sb-e-4); width: 100%; max-width: 64rem; }
-.vb-passos3 li { display: grid; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-4); background: var(--sb-sup); border: 2px solid var(--sb-anel-fundo); }
+.vb-passos3 li { display: grid; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-4); }
 .vb-passos3 p { color: var(--sb-tx-2); max-width: 32ch; }
 .vb-num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--sb-fundo); border: 2px solid var(--sb-ouro); color: var(--sb-ouro); font: var(--sb-peso-titulo) 1.25rem/1 var(--sb-fonte-titulo); }
 @media (min-width: 768px) { .vb-passos3 { grid-template-columns: repeat(3, 1fr); } }
 .vb-demo { display: grid; gap: var(--sb-e-5); width: 100%; max-width: 56rem; padding: var(--sb-e-4); text-align: left; }
+.vb-app { background: var(--sb-fundo-2); } /* o fundo do app (--sm2-bg): a lista da Home mora direto sobre ele */
 .vb-demo-palco { display: grid; justify-items: center; gap: var(--sb-e-2); align-content: center; }
 .vb-demo-img { width: 192px; height: 192px; }
 .vb-demo-forma { display: grid; justify-items: center; gap: 2px; color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
 .vb-demo-forma strong { color: var(--sb-ouro); font: var(--sb-peso-titulo) 1.25rem/1.2 var(--sb-fonte-titulo); }
-.vb-barra { width: min(100%, 240px); height: 10px; background: var(--sb-fundo); border: 2px solid var(--sb-anel-fundo); overflow: hidden; }
+.vb-barra { width: min(100%, 240px); height: 10px; background: var(--sb-sup-2); border-radius: var(--sb-raio-sm); overflow: hidden; }
 .vb-barra i { display: block; height: 100%; background: var(--sb-pri); transform: scaleX(0); transform-origin: left; transition: transform var(--sb-dur-entrada) var(--sb-ease); }
 .vb-demo-lista { display: grid; gap: var(--sb-e-2); align-content: center; }
 .vb-demo-dica, .vb-demo-nota { color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
-.vb-demo-lista ul { display: grid; gap: 4px; }
-.vb-tarefa { display: flex; align-items: center; gap: var(--sb-e-3); min-height: 48px; padding: 4px var(--sb-e-3); cursor: pointer; background: var(--sb-fundo-2); border: 2px solid transparent; font-size: var(--sb-t-tarefa); }
-.vb-tarefa:has(input:checked) { border-color: var(--sb-pri); }
-.vb-tarefa:has(input:checked) span { text-decoration: line-through; color: var(--sb-tx-2); }
-.vb-tarefa:has(input:focus-visible) { outline: var(--sb-foco-largura) solid var(--sb-foco-cor); outline-offset: 2px; }
-.vb-tarefa input { width: 24px; height: 24px; accent-color: var(--sb-pri); flex: none; }
+
+/* A lista do dia, igual à Home do app (RitualPanel variante `home`, index.css .sm3-hoje-* / .sm2-ritual-*): título "Hoje" cromado + "Missão N/G" em ouro,
+   "+" em círculo turquesa, rótulos de seção em caixa alta, linhas de 56px com divisória de 1px, caixa de cobre 24px (raio 4) e check turquesa com brilho. */
+.vb-hoje-cab { display: flex; align-items: center; gap: 8px; padding: 4px 4px 6px 12px; }
+.vb-hoje-titulo { margin: 0; flex: 1; font: 800 var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: var(--sb-ls-rotulo); text-transform: uppercase; color: var(--sb-tx-2); }
+.vb-cromo { color: var(--sb-tx); background-image: linear-gradient(180deg, var(--sb-tx) 0%, var(--sb-tx-2) 46%, var(--sb-tx) 54%, var(--sb-tx-2) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.vb-missao { margin-left: 6px; color: var(--sb-ouro); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vb-add { flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--sb-pri); }
+.vb-add > span { width: 30px; height: 30px; display: grid; place-items: center; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--sb-pri); background: var(--sb-sup); font: 900 18px/1 var(--sb-fonte-texto); }
+.vb-secao { margin: 0; padding: 10px 12px 2px; font: 700 var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: var(--sb-ls-rotulo); text-transform: uppercase; color: var(--sb-tx-2); }
+.vb-ritual-lista { list-style: none; margin: 0; padding: 0 12px; }
+.vb-ritual { position: relative; }
+.vb-ritual + .vb-ritual::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--sb-linha); pointer-events: none; }
+.vb-tarefa { position: relative; display: flex; align-items: center; gap: 8px; min-height: 56px; cursor: pointer; }
+.vb-tarefa input { position: absolute; left: 0; top: 50%; width: 44px; height: 44px; margin: -22px 0 0; opacity: 0; cursor: pointer; }
+.vb-caixa { position: relative; flex: none; box-sizing: border-box; width: 24px; height: 24px; margin: 0 10px; display: grid; place-items: center; border: 2px solid var(--sb-cobre); border-radius: var(--sb-raio-sm); color: var(--sb-pri); }
+.vb-caixa svg { visibility: hidden; filter: var(--sb-brilho-cristal); }
+.vb-tarefa:has(input:checked) .vb-caixa svg { visibility: visible; }
+.vb-tarefa:has(input:checked) .vb-caixa::after { content: ''; position: absolute; inset: -8px; background: radial-gradient(circle, rgba(95, 243, 224, .30) 0%, transparent 72%); pointer-events: none; }
+.vb-nome { flex: 1; min-width: 0; padding: 8px 0; font: var(--sb-peso-medio) var(--sb-t-tarefa)/1.45 var(--sb-fonte-texto); color: var(--sb-tx); }
+.vb-tarefa:has(input:checked) .vb-nome { color: var(--sb-tx-2); font-weight: var(--sb-peso-texto); text-decoration: line-through; }
+.vb-tarefa:has(input:focus-visible) .vb-caixa { outline: var(--sb-foco-largura) solid var(--sb-foco-cor); outline-offset: 3px; }
 .vb-demo-estado { font-weight: var(--sb-peso-medio); color: var(--sb-ouro); }
 .vb-recomecar { justify-self: start; min-height: 44px; }
 .vb-surge { animation: vb-surge .28s var(--sb-ease, ease-out); }
@@ -68,6 +94,8 @@
 /* ---------- 3 · Conheça seu Soulmon ---------- */
 .vb-meet { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); display: grid; gap: var(--sb-e-6); justify-items: center; text-align: center; }
 .vb-meet-grade { display: grid; gap: var(--sb-e-6); justify-items: center; width: 100%; max-width: 64rem; }
+.vb-gerador { display: grid; justify-items: center; gap: var(--sb-e-3); width: min(100%, 28rem); padding: var(--sb-e-5); text-align: center; }
+.vb-gerador-dica { color: var(--sb-tx-2); font-size: var(--sb-t-legal); max-width: 30ch; }
 .vb-meet-texto { display: grid; justify-items: center; }
 .vb-meet-texto .frase { margin-inline: auto; }
 .vb-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sb-e-3) var(--sb-e-6); margin-top: var(--sb-e-4); font-size: var(--sb-t-lead); font-weight: var(--sb-peso-medio); }
@@ -83,18 +111,35 @@
 .vb-mundo { display: grid; gap: var(--sb-e-5); justify-items: center; text-align: center; }
 .vb-mundo .frase { margin-inline: auto; margin-top: 0; }
 .vb-pilares { display: grid; gap: var(--sb-e-4); width: 100%; max-width: 72rem; text-align: left; }
-.vb-pilar { display: grid; align-content: start; gap: var(--sb-e-2); padding: var(--sb-e-3); background: var(--sb-sup); border: 2px solid var(--sb-anel-fundo); }
+.vb-pilar { display: grid; align-content: start; gap: var(--sb-e-2); padding: var(--sb-e-3); }
 .vb-pilar p { color: var(--sb-tx-2); }
 .vb-pilar h3 { text-align: left; }
 .vb-pilar-arte { display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--sb-fundo); }
 .vb-pilar-arte img, .vb-pilar-arte picture { display: block; width: 100%; height: 100%; object-fit: cover; }
-.vb-colecao { display: flex; align-items: center; justify-content: center; height: 100%; gap: 0; }
-.vb-colecao img { width: 33%; height: auto; }
-.vb-selo { justify-self: start; padding: 2px 10px; font-size: .75rem; font-weight: var(--sb-peso-forte); letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--sb-pri); color: var(--sb-pri); }
-.vb-selo.depois { border-color: var(--sb-tx-2); color: var(--sb-tx-2); }
-.vb-legenda { font-size: var(--sb-t-legal); color: var(--sb-tx-2); }
-@media (min-width: 640px) { .vb-pilares { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1100px) { .vb-pilares { grid-template-columns: repeat(4, 1fr); } }
+.vb-pilar-arte .vb-hall { object-position: 50% 40%; }
+@media (min-width: 720px) { .vb-pilares { grid-template-columns: repeat(3, 1fr); } }
+
+/* Colecione: a forma inicial (Rookie) e os 3 caminhos que saem dela, 3 estágios por caminho. Arte real do jogo (linha de fogo). */
+.vb-colecao { display: grid; gap: var(--sb-e-5); width: 100%; max-width: 72rem; padding: var(--sb-e-4); text-align: left; }
+.vb-colecao-texto { display: grid; gap: var(--sb-e-2); align-content: center; }
+.vb-colecao-texto p { color: var(--sb-tx-2); }
+.vb-colecao-texto .vb-colecao-dica { color: var(--sb-ouro); }
+.vb-arvore { display: grid; gap: var(--sb-e-2); justify-items: center; margin: 0; }
+.vb-raiz { position: relative; display: grid; justify-items: center; gap: 2px; padding-bottom: var(--sb-e-4); }
+.vb-raiz img { width: 112px; height: 112px; }
+.vb-raiz span { font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: var(--sb-ls-rotulo); text-transform: uppercase; color: var(--sb-ouro); text-align: center; }
+.vb-raiz::after, .vb-ramo::before { content: ''; position: absolute; left: 50%; width: 2px; background: var(--sb-pri-2); translate: -1px 0; }
+.vb-raiz::after { bottom: 0; height: var(--sb-e-4); }
+.vb-ramos { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sb-e-2); width: 100%; padding-top: var(--sb-e-4); }
+.vb-ramos::before { content: ''; position: absolute; top: 0; left: calc(100% / 6); right: calc(100% / 6); height: 2px; background: var(--sb-pri-2); }
+.vb-ramo { position: relative; display: grid; align-content: start; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-2) 2px; background: var(--sb-fundo-2); border: 1px solid var(--sb-linha); min-width: 0; }
+.vb-ramo::before { bottom: 100%; height: var(--sb-e-4); }
+.vb-ramo h4 { margin: 0; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); letter-spacing: 0; color: var(--sb-pri); text-align: center; overflow-wrap: normal; hyphens: none; }
+.vb-ramo ol { display: grid; gap: var(--sb-e-1); justify-items: center; width: 100%; }
+.vb-ramo li { display: block; width: 100%; max-width: 104px; }
+.vb-ramo li img { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+@media (min-width: 768px) { .vb-ramos { gap: var(--sb-e-4); } .vb-ramo li { max-width: 128px; } .vb-raiz img { width: 144px; height: 144px; } }
+@media (min-width: 1024px) { .vb-colecao { grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); align-items: center; padding: var(--sb-e-6); gap: var(--sb-e-6); } }
 
 /* ---------- 5 · Em ação ---------- */
 .vb-acao-sec { gap: var(--sb-e-5); }
@@ -110,9 +155,15 @@
 .vb-itens li::before { content: ''; position: absolute; left: 4px; top: .45em; width: 10px; height: 10px; background: var(--sb-ouro); rotate: 45deg; }
 
 /* ---------- 7 · Como entrar ---------- */
-.vb-antes { margin-top: var(--sb-e-5); max-width: 48rem; padding: var(--sb-e-4); background: var(--sb-sup); border: 2px solid var(--sb-ouro); display: grid; gap: var(--sb-e-2); }
-.vb-antes h3 { color: var(--sb-ouro); }
 .vb-entrar-nota { margin-top: var(--sb-e-5); color: var(--sb-tx-2); }
+
+/* ---------- Prêmios do beta (oculto: PREMIOS_BETA = false) ---------- */
+.vb-premios { display: grid; justify-items: center; gap: var(--sb-e-3); margin-top: var(--sb-e-6); text-align: center; }
+.vb-premios-lista { display: grid; gap: var(--sb-e-3); width: 100%; max-width: 64rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.vb-premio { display: grid; justify-items: center; gap: var(--sb-e-2); padding: var(--sb-e-3); }
+.vb-premio img, .vb-premio-vazio { width: 120px; height: 120px; }
+.vb-premio-vazio { border: 1px dashed var(--sb-linha); }
+.vb-premio p { color: var(--sb-tx-2); font-size: var(--sb-t-legal); }
 
 /* ---------- Barra fixa (celular): some quando já há CTA, seção de entrada ou modal ---------- */
 .fixo[data-vb-off] { display: none !important; }

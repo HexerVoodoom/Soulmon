@@ -1,8 +1,9 @@
 ---
-// Versão B (acquisition landing): mesma identidade, outra arquitetura. Hero com CTA na primeira dobra, 3 passos,
-// demo de evolução por toque, "Conheça seu Soulmon" (sorteio + elementos recolhidos), mundo com 4 pilares,
-// trailer + telas, Treinador Fundador, como entrar (grupo Google, modal guiado), FAQ. Reusa Base, Aparelho, Mapa, Cria,
-// app.ts (sorteio, trailer, loop, medição, âncoras) e modal-entrar.ts. Só o que é da B vive em landing-b.ts e b.css.
+// Versão C (acquisition landing, /beta/c/): mesma identidade, outra arquitetura. Hero com CTA na primeira dobra, 3 passos,
+// demo "complete o dia" com a lista de tarefas igual à Home do app, "Gere seu Soulmon" (mascote no canto que evolui rolando),
+// mundo com pilares e o painel Colecione (Rookie e 3 caminhos), trailer + telas, Treinador Fundador (+ Prêmios do beta,
+// oculto), como entrar (grupo Google, modal guiado), FAQ. Reusa Base, Aparelho, Mapa, Cria, app.ts (companheiro, trailer, loop,
+// medição, âncoras) e modal-entrar.ts. Só o que é da C vive em landing-b.ts e b.css. Esta rota nunca aponta para a /b/.
 import Base from '../layouts/Base.astro';
 import { existsSync } from 'node:fs';
 import '../styles/b.css';
@@ -13,14 +14,12 @@ import Aparelho from './Aparelho.astro';
 import midia from '../content/midia.json';
 import assets from '../content/assets.json';
 import universoDados from '../content/universo.json';
-import elenco from '../content/elenco.json';
-import fusoes from '../content/fusoes.json';
 import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
 import { TEXTOS_B } from '../i18n/textosB';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = TEXTOS[lang]; const x = TEXTOS_B[lang];
-const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const mo = t.modal; const h = x.hero;
+const c = t.ciclo; const u = t.universo; const e = t.entrar; const mo = t.modal; const h = x.hero;
 type Video = { src: string; poster: string; posterAvif?: string; posterP?: string; posterPAvif?: string; gameplay: boolean; largura: number; altura: number };
 const loopRaw = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && v.src);
 const loop = loopRaw && { ...loopRaw, src: b(loopRaw.src), poster: b(loopRaw.poster), posterAvif: loopRaw.posterAvif && b(loopRaw.posterAvif), posterP: b(loopRaw.posterP!), posterPAvif: loopRaw.posterPAvif && b(loopRaw.posterPAvif) };
@@ -36,23 +35,39 @@ const TRAILER_V = existe(`/video/trailer-${lang}-v.mp4`);
 const passos = [assets.passoCard1.src, assets.passoCard2.src, assets.passoCard3.src].map(b);
 const PASSO_HREF = ['https://groups.google.com/g/soulmon-testers', 'https://play.google.com/apps/testing/com.soulmon', 'https://play.google.com/store/apps/details?id=com.soulmon'];
 const ELS = Object.keys(u.els);
-const POOL = JSON.stringify(elenco.elegiveis.filter((q) => q.el && !q.el.split(',').includes('som')).map((q) => [q.id, q.el, q.forma]));
+// Mascote do canto: só linhas com as 5 formas. Mesmas dez linhas e mesmos requisitos da A.
+const LINHAS_MASCOTE = ['arcano', 'espaco', 'fada', 'fogo', 'morte', 'noturno', 'planta', 'sombra', 'vigor', 'vileza'].filter((l) => formas.every((fm) => existe(`/sprites/${l}-${fm}.webp`)));
+// Prêmios do beta: estrutura pronta e OCULTA até existir a arte dos quatro itens (dono, 23/11). Não ligue sem a arte e sem o ok do dono.
+const PREMIOS_BETA = false;
+const premioArte = (id: string) => (existe(`/premios/${id}.webp`) ? b(`/premios/${id}.webp`) : null);
+// Linha de fogo: Rookie + os 3 caminhos (Poder é o caminho principal, Harmonia e Benevolência vêm de /sprites/ramos). Arte real do jogo, sem engrenagem.
+const RAMOS_FOGO: { id: 'poder' | 'harmonia' | 'benevolencia'; formas: string[] }[] = [
+  { id: 'poder', formas: ['champion', 'ultimate', 'mega'].map((fm) => `/sprites/fogo-${fm}-128.webp`) },
+  { id: 'harmonia', formas: ['champion', 'ultimate', 'mega'].map((fm) => `/sprites/ramos/fogo-harmonia-${fm}-128.webp`) },
+  { id: 'benevolencia', formas: ['champion', 'ultimate', 'mega'].map((fm) => `/sprites/ramos/fogo-benevolencia-${fm}-128.webp`) },
+];
+const TELAS = ['combate', 'mapa', 'home'];
+const CHECK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="m9.5 16.2-4-4 1.6-1.6 2.4 2.4 7.4-7.4 1.6 1.6-9 9Z"/></svg>';
+const TAREFAS_DEMO = c.tarefas.slice(0, 2); const HABITOS_DEMO = c.tarefas.slice(2);
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
 const IMG_PILAR: Record<string, string> = { explorar: 'rift', batalhar: 'arena' };
+const PILARES_CARD = x.mundo.pilares.filter(([id]) => id !== 'colecionar');
+const PILAR_COLECAO = x.mundo.pilares.find(([id]) => id === 'colecionar')!;
+const co = x.mundo.colecao;
 const IG = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>';
 const BANDEIRA_PT = '<svg class="bandeira" viewBox="0 0 28 20" width="34" height="24" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#009c3b"/><path d="M14 2.5 25.5 10 14 17.5 2.5 10Z" fill="#ffdf00"/><circle cx="14" cy="10" r="4.6" fill="#002776"/><path d="M9.6 9.1c3-.9 6.2-.5 8.8 1.2" stroke="#fff" stroke-width=".9" fill="none"/></svg>';
 const BANDEIRA_EN = '<svg class="bandeira" viewBox="0 0 60 40" width="34" height="24" aria-hidden="true"><clipPath id="bq"><rect width="60" height="40" rx="6"/></clipPath><g clip-path="url(#bq)"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg>';
 const PLAY = '<svg class="loja-ico" viewBox="0 0 24 26" width="28" height="30" aria-hidden="true"><path fill="#00d7fe" d="M1.2.6 13.4 12.9 1.2 25.2C.8 25 .5 24.5.5 23.9V2C.5 1.4.8.9 1.2.6Z"/><path fill="#00f076" d="M17.6 8.7 13.4 12.9 1.2.6c.4-.3 1-.3 1.6 0Z"/><path fill="#ff3a44" d="M17.6 17.1 2.8 25.3c-.6.3-1.2.3-1.6-.1l12.2-12.3Z"/><path fill="#ffd400" d="m17.6 8.7 4.6 2.6c1.3.7 1.3 2.2 0 2.9l-4.6 2.9-4.2-4.2Z"/></svg>';
 const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-rendering="crispEdges"><g fill="#101418"><rect x='8' y='2' width='11' height='5'/><rect x='2' y='3' width='10' height='11'/><rect x='9' y='5' width='5' height='4'/><rect x='9' y='7' width='5' height='4'/><rect x='9' y='9' width='4' height='4'/><rect x='4' y='1' width='6' height='4'/><rect x='-1' y='2' width='5' height='12'/></g><g fill="#fff"><rect x='9' y='3' width='9' height='3'/><rect x='3' y='4' width='8' height='9'/><rect x='10' y='6' width='3' height='2'/><rect x='10' y='8' width='3' height='2'/><rect x='10' y='10' width='2' height='2'/><rect x='5' y='2' width='4' height='2'/><rect x='0' y='3' width='3' height='10'/></g><g fill="#b8c4cc"><rect x='10' y='8' width='3' height='0.6'/><rect x='10' y='10' width='3' height='0.6'/><rect x='2' y='3' width='1' height='10'/><rect x='4' y='12' width='6' height='1'/></g></svg>`;
 ---
-<Base lang={lang} titulo={x.titulo} desc={x.desc} alternativa={t.outraHome + 'b/'} aqui={t.home + 'b/'} canonico={t.home} preload>
+<Base lang={lang} titulo={x.titulo} desc={x.desc} alternativa={t.outraHome + 'c/'} aqui={t.home + 'c/'} canonico={t.home} preload>
   <a class="pular" href="#conteudo">{t.pular}</a>
 
   <header class="topo vb-topo" data-topo>
     <a class="topo-logo" href="#topo" aria-label={t.logoTopo}><img src={b('/marca/logo-160.webp')} width="160" height="120" alt="" /></a>
     <a class="ig ig-topo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a>
-    <a class="idioma" href={t.outraHome + 'b/'} hreflang={t.outraCod} lang={t.outraCod} aria-label={t.outraNome} title={t.outraNome}><Fragment set:html={lang === 'pt' ? BANDEIRA_EN : BANDEIRA_PT} /></a>
+    <a class="idioma" href={t.outraHome + 'c/'} hreflang={t.outraCod} lang={t.outraCod} aria-label={t.outraNome} title={t.outraNome}><Fragment set:html={lang === 'pt' ? BANDEIRA_EN : BANDEIRA_PT} /></a>
   </header>
 
   <!-- 1 · Hero: promessa, CTA na primeira dobra, visual com aparelho e a sequência de evolução -->
@@ -74,11 +89,11 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
     <div class="hero-corpo vb-hero-corpo">
       <div class="vb-hero-texto veu-h">
         <p class="vb-eyebrow">{h.eyebrow}</p>
-        <h1 id="hero-h">{h.h1}</h1>
+        <h1 id="hero-h">{h.h1.map((ln) => <span class="vb-h1-l">{ln}</span>)}</h1>
         <p class="vb-sub">{h.sub}</p>
         <div class="vb-acao" data-vb-hero-cta>
           <a class="botao primario vb-cta" href="#entrar" data-cta data-sa="c-cta-hero">{x.cta}</a>
-          <a class="vb-ver" href="#como-funciona" data-sa="b-ver-como">{h.ver} <span aria-hidden="true">↓</span></a>
+          <a class="vb-ver" href="#como-funciona" data-sa="c-ver-como"><span>{h.ver}</span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11 4h2v12.2l4.6-4.6L19 13l-7 7-7-7 1.4-1.4 4.6 4.6Z"/></svg></a>
         </div>
         <p class="vb-micro">{h.micro}</p>
       </div>
@@ -96,9 +111,9 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
     <section class="calmo vb-como" id="como-funciona" aria-labelledby="como-h">
       <h2 id="como-h">{x.como.h2}</h2>
       <ol class="vb-passos3">
-        {x.como.passos.map(([a, d], i) => <li><span class="vb-num" aria-hidden="true">{i + 1}</span><h3>{a}</h3><p>{d}</p></li>)}
+        {x.como.passos.map(([a, d], i) => <li class="vb-card"><span class="vb-num" aria-hidden="true">{i + 1}</span><h3>{a}</h3><p>{d}</p></li>)}
       </ol>
-      <div class="vb-demo moldura" data-vb-demo data-base={b('/sprites/')} data-linha={LINHA} data-formas={JSON.stringify(formas)} data-nomes={JSON.stringify(c.nomes)} data-alt={c.alt} data-estagio={x.como.estagio} data-progresso={x.como.progresso} data-fim={x.como.demoFim}>
+      <div class="vb-demo vb-app vb-card" data-vb-demo data-base={b('/sprites/')} data-linha={LINHA} data-formas={JSON.stringify(formas)} data-nomes={JSON.stringify(c.nomes)} data-alt={c.alt} data-estagio={x.como.estagio} data-progresso={x.como.progresso} data-fim={x.como.demoFim} data-missao={x.como.missao}>
         <div class="vb-demo-palco">
           <img class="sprite vb-demo-img" data-vb-img src={b(`/sprites/${LINHA}-${formas[0]}.webp`)} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
           <p class="vb-demo-forma"><span data-vb-estagio>{x.como.estagio.replace('{n}', '1')}</span> <strong data-vb-nome>{c.nomes[0]}</strong></p>
@@ -107,9 +122,23 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
         <div class="vb-demo-lista">
           <h3>{x.como.demoH}</h3>
           <p class="vb-demo-dica">{x.como.demoDica}</p>
-          <ul aria-label={x.como.demoRotulo}>
-            {c.tarefas.map((tx) => <li><label class="vb-tarefa"><input type="checkbox" data-vb-tarefa /><span>{tx}</span></label></li>)}
-          </ul>
+          {/* Lista igual à Home do app (RitualPanel variante `home`): título Hoje + Missão N/G, "+", seções Tarefas/Hábitos, linhas de 56px, caixa de cobre com check turquesa. */}
+          <section class="vb-hoje" aria-label={x.como.demoRotulo}>
+            <div class="vb-hoje-cab">
+              <h4 class="vb-hoje-titulo"><span class="vb-cromo">{x.como.hoje}</span> <b class="vb-missao" data-vb-missao><span aria-hidden="true">{x.como.missao}</span> <span aria-hidden="true" data-vb-missao-n>0/{c.tarefas.length}</span></b></h4>
+              <span class="vb-add" aria-hidden="true"><span>+</span></span>
+            </div>
+            {[[x.como.secTarefas, TAREFAS_DEMO], [x.como.secHabitos, HABITOS_DEMO]].map(([rot, itens]) => (
+              <>
+                <h5 class="vb-secao">{rot}</h5>
+                <ul class="vb-ritual-lista">
+                  {(itens as string[]).map((tx) => (
+                    <li class="vb-ritual"><label class="vb-tarefa"><input type="checkbox" data-vb-tarefa /><span class="vb-caixa" aria-hidden="true"><Fragment set:html={CHECK_SVG} /></span><span class="vb-nome">{tx}</span></label></li>
+                  ))}
+                </ul>
+              </>
+            ))}
+          </section>
           <p class="vb-demo-estado" data-vb-estado aria-live="polite">{x.como.progresso.replace('{n}', '0').replace('{total}', String(c.tarefas.length))}</p>
           <button type="button" class="link vb-recomecar" data-vb-recomecar hidden>{x.como.recomecar}</button>
           <p class="vb-demo-nota">{x.como.demoNota}</p>
@@ -118,8 +147,8 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
       <div class="vb-cta-linha"><a class="botao primario vb-cta" href="#entrar" data-cta data-sa="c-cta-demo">{x.cta}</a></div>
     </section>
 
-    <!-- 3 · Conheça seu Soulmon: sorteio (reusa app.ts) + elementos recolhidos -->
-    <section class="cena soul vb-meet" id="seu-soulmon" aria-labelledby="meet-h">
+    <!-- 3 · Gere seu Soulmon: gera o mascote do canto (companheiro() do app.ts: uma forma por seção ao rolar) + elementos recolhidos -->
+    <section class="cena soul vb-meet" id="seu-soulmon" aria-labelledby="meet-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_MASCOTE)} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(formas)} data-alt={c.alt} data-outro={x.meet.outro} data-falas={JSON.stringify(t.vb.falas)}>
       <div class="soul-mosaico" aria-hidden="true" style={`--mosaico:image-set(url(${b('/site/mosaico-elementos.avif')}) type("image/avif"), url(${b('/site/mosaico-elementos.webp')}) type("image/webp"))`}></div>
       <div class="vb-meet-grade">
         <div class="vb-meet-texto veu">
@@ -129,13 +158,15 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
             {x.meet.stats.map(([n, tx]) => <li><span class="num-g">{n}</span> <span>{tx}</span></li>)}
           </ul>
         </div>
-        <div class="sorteio ficha-moldura" role="group" aria-label={x.meet.sorteioH} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento} data-nomes={JSON.stringify(c.nomes)} data-el-base={b('/el/')} data-fusoes={JSON.stringify(fusoes)} data-lang={lang}>
-          <div class="sorteio-palco">
-            <img class="sorteio-sombra sprite" data-sort-sombra aria-hidden="true" src={b('/sprites/agua-ultimate.webp')} width="256" height="256" alt="" loading="lazy" />
-            <img class="sprite" data-sort-img hidden width="256" height="256" alt="" decoding="async" />
+        <div class="vb-card vb-gerador" role="group" aria-label={x.meet.sorteioH}>
+          <h3>{x.meet.sorteioH}</h3>
+          <div class="meu-palco">
+            <img class="sprite meu-sombra" data-meu-sombra src={b('/sprites/fogo-rookie.webp')} width="192" height="192" alt="" aria-hidden="true" loading="lazy" />
+            <img class="sprite" data-meu-img hidden width="192" height="192" alt="" decoding="async" />
           </div>
-          <p class="sorteio-info" data-sort-info aria-live="polite">{s.sombra}</p>
-          <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
+          <p class="meu-info" data-meu-info aria-live="polite"></p>
+          <button type="button" class="botao primario" data-meu-sortear data-sa="c-gerar">{x.meet.gerar}</button>
+          <p class="vb-gerador-dica">{x.meet.dica}</p>
         </div>
       </div>
       <details class="vb-mais veu">
@@ -146,29 +177,49 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
       </details>
     </section>
 
-    <!-- 4 · Um mundo para explorar: 4 pilares, com selo do que já está no beta -->
+    <!-- 4 · Um mundo para explorar: Explore, Batalhe, Cresça com amigos + painel Colecione (Rookie e os 3 caminhos) -->
     <section class="calmo vb-mundo" id="mundo" aria-labelledby="mundo-h">
       <h2 id="mundo-h">{x.mundo.h2}</h2>
       <p class="frase">{x.mundo.p}</p>
       <ul class="vb-pilares">
-        {x.mundo.pilares.map(([id, h3, p, selo]) => (
-          <li class="vb-pilar">
+        {PILARES_CARD.map(([id, h3, p]) => (
+          <li class="vb-pilar vb-card">
             <span class="vb-pilar-arte">
               {IMG_PILAR[id] ? (
-                <picture><source type="image/avif" srcset={`${capaJogo(IMG_PILAR[id])}.avif 400w, ${capaJogo(IMG_PILAR[id], 800)}.avif 800w`} sizes="(min-width: 1024px) 280px, 90vw" /><img loading="lazy" decoding="async" src={`${capaJogo(IMG_PILAR[id])}.webp`} srcset={`${capaJogo(IMG_PILAR[id])}.webp 400w, ${capaJogo(IMG_PILAR[id], 800)}.webp 800w`} sizes="(min-width: 1024px) 280px, 90vw" width="400" height="300" alt={x.mundo.alts[id]} /></picture>
-              ) : id === 'social' ? (
-                <img class="vb-predio" loading="lazy" decoding="async" src={b('/site/card-mercado-mapa.webp')} alt={x.mundo.alts[id]} />
+                <picture><source type="image/avif" srcset={`${capaJogo(IMG_PILAR[id])}.avif 400w, ${capaJogo(IMG_PILAR[id], 800)}.avif 800w`} sizes="(min-width: 1024px) 360px, 90vw" /><img loading="lazy" decoding="async" src={`${capaJogo(IMG_PILAR[id])}.webp`} srcset={`${capaJogo(IMG_PILAR[id])}.webp 400w, ${capaJogo(IMG_PILAR[id], 800)}.webp 800w`} sizes="(min-width: 1024px) 360px, 90vw" width="400" height="300" alt={x.mundo.alts[id]} /></picture>
               ) : (
-                <span class="vb-colecao" role="img" aria-label={x.mundo.alts[id]}>{['/sprites/fogo-champion-128.webp', '/sprites/colete/champion/agua.webp', '/sprites/colete/champion/industrial.webp'].map((src) => <img class="sprite" loading="lazy" decoding="async" src={b(src)} width="128" height="128" alt="" />)}</span>
+                <picture><source type="image/avif" srcset={`${b('/mapa/hall-d.avif')} 821w`} sizes="(min-width: 1024px) 360px, 90vw" /><img class="vb-hall" loading="lazy" decoding="async" src={b('/mapa/hall-d.webp')} width="821" height="600" alt={x.mundo.alts[id]} /></picture>
               )}
             </span>
-            <span class:list={['vb-selo', selo]}>{x.mundo.selo[selo]}</span>
             <h3>{h3}</h3>
             <p>{p}</p>
           </li>
         ))}
       </ul>
-      <p class="vb-legenda">{x.mundo.legenda}</p>
+      {/* Colecione: a forma inicial e os 3 caminhos que saem dela (linha de fogo, arte real do jogo). */}
+      <div class="vb-colecao vb-card" role="group" aria-labelledby="colecao-h">
+        <div class="vb-colecao-texto">
+          <h3 id="colecao-h">{PILAR_COLECAO[1]}</h3>
+          <p>{PILAR_COLECAO[2]}</p>
+          <p class="vb-colecao-dica">{co.dica}</p>
+        </div>
+        <figure class="vb-arvore" aria-label={co.rotulo}>
+          <div class="vb-raiz">
+            <img class="sprite" loading="lazy" decoding="async" src={b('/sprites/fogo-rookie.webp')} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
+            <span>{co.raiz}</span>
+          </div>
+          <ul class="vb-ramos" aria-label={co.caminhosH}>
+            {RAMOS_FOGO.map((r, i) => (
+              <li class="vb-ramo" data-ramo={r.id}>
+                <h4>{co.caminhos[i]}</h4>
+                <ol>
+                  {r.formas.map((src, k) => <li><img class="sprite" loading="lazy" decoding="async" src={b(src)} width="128" height="128" alt={`${co.caminhos[i]}, ${c.nomes[k + 1]}`} /></li>)}
+                </ol>
+              </li>
+            ))}
+          </ul>
+        </figure>
+      </div>
     </section>
 
     <!-- 5 · Veja em ação: trailer (toque para tocar, nunca sozinho) + telas reais -->
@@ -196,7 +247,7 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
       )}
       <h3 class="vb-telas-h">{x.acao.telasH}</h3>
       <ul class="vb-telas" tabindex="0" aria-label={x.acao.telasH}>
-        {['combate', 'hall', 'jogos'].map((id) => (
+        {TELAS.map((id) => (
           <li>
             <figure class="aparelho mini">
               <div class="casca"><div class="tela"><picture>
@@ -228,17 +279,29 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
         <a class="botao primario grande vb-cta" href="#entrar" data-cta data-sa="c-cta-fundador">{x.ctaConvite}</a>
         <p class="grupo-nota">{x.fundador.nota}</p>
       </div>
+      {/* Prêmios do beta: pronto e oculto (PREMIOS_BETA = false) até haver arte e ok do dono. Dentro desta seção para não mudar a contagem de formas do mascote. */}
+      {PREMIOS_BETA && (
+        <div class="vb-premios veu" aria-labelledby="premios-h">
+          <h3 id="premios-h">{x.premios.h2}</h3>
+          <p class="frase">{x.premios.p}</p>
+          <ul class="vb-premios-lista">
+            {x.premios.itens.map(([id, nome, tx]) => (
+              <li class="vb-card vb-premio" data-premio={id}>
+                {premioArte(id) ? <img src={premioArte(id)!} width="160" height="160" alt="" loading="lazy" decoding="async" /> : <span class="vb-premio-vazio" aria-hidden="true"></span>}
+                <h4>{nome}</h4>
+                <p>{tx}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
 
-    <!-- 7 · Como entrar: 3 passos do grupo Google + caixa "Antes de entrar" -->
+    <!-- 7 · Como entrar: 3 passos do grupo Google -->
     <section class="calmo entrar vb-entrar" id="entrar" aria-labelledby="entrar-h">
       <div class="entrar-cab">
         <h2 id="entrar-h">{x.entrar.h2}</h2>
         <p class="frase">{x.entrar.frase}</p>
-      </div>
-      <div class="vb-antes" role="note" aria-labelledby="antes-h">
-        <h3 id="antes-h">{x.entrar.antesH}</h3>
-        <p>{x.entrar.antes}</p>
       </div>
       <ol class="passos" data-passos data-ativo="0">
         {e.passos.map(([a, d], i) => (
@@ -288,11 +351,12 @@ const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-renderin
       <li><a href={t.priv}>{t.rodape.priv}</a></li>
       <li><a href={TERMOS} rel="noopener">{t.rodape.termos}</a></li>
       <li><a href={`mailto:${CONTATO}`}>{t.rodape.contato}</a></li>
-      <li><a href={t.outraHome + 'b/'} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a></li>
+      <li><a href={t.outraHome + 'c/'} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a></li>
     </ul>
     <p class="copy">{t.rodape.copy}</p>
   </footer>
 
+  <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden><span class="comp-tx" data-comp-tx aria-live="polite"></span><span class="comp-x" role="button" tabindex="0" data-comp-x aria-label={c.fechar}>×</span></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>
   <div class="fixo vb-fixo" data-fixo><a class="botao primario fixo-cta" href="#entrar" data-cta data-sa="c-cta-fixo">
     <Fragment set:html={PLAY} /><span>{x.cta}</span></a></div>
   <script src="../scripts/app.ts"></script>

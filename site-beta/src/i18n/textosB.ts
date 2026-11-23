@@ -1,6 +1,7 @@
-// Copy da Versão B (landing de aquisição, /beta/c/ e /beta/en/c/). Fatos continuam vindos de textos.ts / FEATURE_TRUTH.md;
+// Copy da Versão C (landing de aquisição, /beta/c/ e /beta/en/c/). Fatos continuam vindos de textos.ts / FEATURE_TRUTH.md;
 // o que não está no repo está marcado com "CONFERIR" para o dono confirmar (ver relatório da entrega).
-// Nada de recompensa, medalha ou título exclusivo para o primeiro grupo (decisão do dono).
+// Recompensa: nada é prometido ao primeiro grupo. A seção "Prêmios do beta" (premios) está pronta e DESLIGADA
+// (PREMIOS_BETA = false em LandingB.astro) até existir a arte dos quatro itens.
 import { CONTATO } from './textos';
 
 const pt = {
@@ -9,9 +10,10 @@ const pt = {
   cta: 'Quero acesso antecipado', ctaConvite: 'Quero acesso antecipado',
   hero: {
     eyebrow: 'ACESSO ANTECIPADO · ANDROID',
-    h1: 'Suas ações reais. A evolução dele.',
+    // Uma entrada por linha;   = espaço que não quebra. "ações reais" nunca se separa.
+    h1: ['Suas ações reais.', 'A evolução dele.'],
     sub: 'Crie uma criatura nascida da sua personalidade. Cumpra atividades da vida real, evolua seu Soulmon e explore um mundo misterioso cheio de criaturas, desafios e descobertas.',
-    ver: 'Veja como o Soulmon funciona',
+    ver: 'Veja como funciona',
     micro: 'Grátis para entrar · Só Android · 18+ · Acesso antecipado',
     evoRotulo: 'As cinco formas de um Soulmon',
   },
@@ -25,6 +27,7 @@ const pt = {
     demoH: 'Experimente: complete o dia',
     demoDica: 'Toque nas tarefas e veja o que acontece com ele.',
     demoRotulo: 'Tarefas de exemplo',
+    hoje: 'Hoje', missao: 'Missão', secTarefas: 'Tarefas', secHabitos: 'Hábitos',
     estagio: 'Forma {n} de 5', progresso: '{n} de {total} tarefas',
     demoFim: 'Dia completo. Foi assim que ele chegou à última forma.', recomecar: 'Recomeçar',
     demoNota: 'Demonstração. No jogo, a evolução segue as atividades que você mesmo registra.',
@@ -33,29 +36,36 @@ const pt = {
     h2: 'Nenhum Soulmon é igual a outro.',
     p: 'Sua personalidade molda a criatura que você desperta. O elemento dela influencia o visual, as habilidades e os caminhos de evolução.',
     stats: [['20', 'elementos base'], ['200+', 'combinações']] as [string, string][],
-    sorteioH: 'Conheça alguns Soulmon',
+    sorteioH: 'Gere o seu Soulmon',
+    gerar: 'Gerar meu Soulmon', outro: 'Gerar outro',
+    dica: 'Ele fica no canto da tela e evolui enquanto você desce a página.',
     maisResumo: 'Ver os 20 elementos', maisRotulo: 'Os 20 elementos base',
   },
   mundo: {
     h2: 'Um mundo para explorar',
     p: 'Passeie, colecione, batalhe e cresça junto com outros jogadores.',
-    legenda: 'Selo "No beta": já dá para experimentar no teste.',
-    selo: { beta: 'No beta', depois: 'Depois do beta' },
     pilares: [
-      // [id, título, texto, selo]. Selo 'beta' só para o que o site já afirma hoje. CONFERIR com o dono item a item.
-      ['explorar', 'Explore', 'Passeios, o Endless Rift e a Masmorra: uma descida sem teto de camadas.', 'beta'],
-      ['colecionar', 'Colecione', 'Cada forma tem uma versão para cada elemento. Colecione todas.', 'beta'],
-      ['batalhar', 'Batalhe', 'Duelos no Torneio e na Arena, contra jogadores (PvP) e contra a máquina (PvE).', 'beta'],
-      ['social', 'Cresça com amigos', 'Compartilhe seu progresso, ajude amigos e tenha uma Casa e missões de clã.', 'beta'],
-    ] as [string, string, string, 'beta' | 'depois'][],
-    alts: { explorar: 'Capa do Endless Rift, a descida sem fim do Soulmon.', batalhar: 'Capa da Arena do Soulmon.', social: 'Tenda da Feira, no Mercado do Soulmon.', colecionar: 'Três formas diferentes de Soulmon.' } as Record<string, string>,
+      // [id, título, texto]. CONFERIR com o dono item a item.
+      ['explorar', 'Explore', 'Passeios, o Endless Rift e a Masmorra: uma descida sem teto de camadas.'],
+      ['colecionar', 'Colecione', 'Cada forma tem uma versão para cada elemento. Colecione todas.'],
+      ['batalhar', 'Batalhe', 'Duelos no Torneio e na Arena, contra jogadores (PvP) e contra a máquina (PvE).'],
+      ['social', 'Cresça com amigos', 'Compartilhe seu progresso, ajude amigos e tenha uma Casa e missões de clã.'],
+    ] as [string, string, string][],
+    alts: { explorar: 'Capa do Endless Rift, a descida sem fim do Soulmon.', batalhar: 'Capa da Arena do Soulmon.', social: 'Salão do Clã, no Hall do Soulmon.' } as Record<string, string>,
+    colecao: {
+      rotulo: 'Uma criatura de fogo e os três caminhos de evolução que saem dela',
+      raiz: 'Ponto de partida',
+      caminhosH: 'Três caminhos',
+      caminhos: ['Poder', 'Harmonia', 'Benevolência'],
+      dica: 'Do mesmo ponto de partida, cada caminho leva a um corpo diferente.',
+    },
   },
   acao: {
     h2: 'Veja em ação',
     p: 'Telas reais do app e o trailer do jogo.',
     trailerLegenda: 'Telas do app e a música do jogo. Toque para assistir.',
     telasH: 'Telas do jogo',
-    printAlt: { combate: 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.', hall: 'Mapa da Cidadela no Soulmon, com Feira, Jardim e Salão do Clã.', jogos: 'Tela de minijogos do Soulmon.' } as Record<string, string>,
+    printAlt: { combate: 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.', mapa: 'Mapa central do Soulmon, com Mercado, Jogos, Exploração, Arena, Hall e Laboratório ao redor do cristal.', home: 'Home do Soulmon: sua criatura no quarto e a lista de tarefas e hábitos do dia.' } as Record<string, string>,
   },
   fundador: {
     selo: 'Treinador Fundador',
@@ -65,10 +75,19 @@ const pt = {
     itens: ['Acesso antecipado ao jogo', 'Recursos novos antes do lançamento público', 'Ajude a influenciar as próximas melhorias'],
     nota: 'Só Android · 18+ · Grátis para entrar.',
   },
+  // Seção oculta (PREMIOS_BETA = false). Só publicar com a arte pronta e a decisão do dono sobre prometer prêmio.
+  premios: {
+    h2: 'Prêmios do beta',
+    p: 'Quem testa desde o começo leva quatro itens especiais para o perfil e para a Casa.',
+    itens: [
+      ['moldura', 'Moldura especial', 'Uma moldura exclusiva para o retrato do seu perfil.'],
+      ['retrato', 'Retrato especial', 'Um retrato único para representar você no jogo.'],
+      ['cristal', 'Cristal decorativo', 'Um cristal de enfeite, exclusivo, para decorar a sua Casa.'],
+      ['background', 'Background especial', 'Um fundo exclusivo para o seu perfil.'],
+    ] as [string, string, string][],
+  },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
-    antesH: 'Antes de entrar',
-    antes: 'O Google Play exige que quem testa continue inscrito por 14 dias seguidos. Não precisa jogar todo dia: é só permanecer no teste nesse período.',
   },
   faq: {
     h2: 'Perguntas frequentes',
@@ -95,9 +114,10 @@ const en: typeof pt = {
   cta: 'Get early access', ctaConvite: 'Get early access',
   hero: {
     eyebrow: 'EARLY ACCESS · ANDROID',
-    h1: 'Your real-life actions. Their evolution.',
+    // Dono (23/11): "real life" não quebra entre linhas. Cada entrada é uma linha;   = espaço que não quebra.
+    h1: ['Your real-life', 'actions.', 'Their evolution.'],
     sub: 'Raise a creature born from your personality. Complete real-life activities, evolve your Soulmon and explore a mysterious world filled with creatures, challenges and discoveries.',
-    ver: 'See how Soulmon works',
+    ver: 'See how it works',
     micro: 'Free to join · Android only · 18+ · Early access',
     evoRotulo: 'The five forms of a Soulmon',
   },
@@ -111,6 +131,7 @@ const en: typeof pt = {
     demoH: 'Try it: finish your day',
     demoDica: 'Tap the tasks and watch what happens to it.',
     demoRotulo: 'Sample tasks',
+    hoje: 'Today', missao: 'Mission', secTarefas: 'Tasks', secHabitos: 'Habits',
     estagio: 'Form {n} of 5', progresso: '{n} of {total} tasks',
     demoFim: 'Day complete. That is how it reached its last form.', recomecar: 'Start over',
     demoNota: 'Demo. In the game, evolution follows the activities you log yourself.',
@@ -119,28 +140,35 @@ const en: typeof pt = {
     h2: 'No two Soulmon are alike.',
     p: 'Your personality shapes the creature you awaken. Its element influences its appearance, abilities and evolution paths.',
     stats: [['20', 'base elements'], ['200+', 'combinations']],
-    sorteioH: 'Meet a few Soulmon',
+    sorteioH: 'Generate your Soulmon',
+    gerar: 'Generate my Soulmon', outro: 'Generate another',
+    dica: 'It stays in the corner of the screen and evolves as you scroll down the page.',
     maisResumo: 'See all 20 elements', maisRotulo: 'The 20 base elements',
   },
   mundo: {
     h2: 'A world to explore',
     p: 'Explore, collect, battle and grow alongside other players.',
-    legenda: '"In the beta" badge: you can already try it in the test.',
-    selo: { beta: 'In the beta', depois: 'After the beta' },
     pilares: [
-      ['explorar', 'Explore', 'Strolls, the Endless Rift and the Dungeon: a descent with no floor limit.', 'beta'],
-      ['colecionar', 'Collect', 'Every form has a version for each element. Collect them all.', 'beta'],
-      ['batalhar', 'Battle', 'Duels in the Tournament and the Arena, against players (PvP) and against the game (PvE).', 'beta'],
-      ['social', 'Grow with friends', 'Share your progress, help your friends and have a House and clan missions.', 'beta'],
+      ['explorar', 'Explore', 'Strolls, the Endless Rift and the Dungeon: a descent with no floor limit.'],
+      ['colecionar', 'Collect', 'Every form has a version for each element. Collect them all.'],
+      ['batalhar', 'Battle', 'Duels in the Tournament and the Arena, against players (PvP) and against the game (PvE).'],
+      ['social', 'Grow with friends', 'Share your progress, help your friends and have a House and clan missions.'],
     ],
-    alts: { explorar: "Cover art of the Endless Rift, Soulmon's endless descent.", batalhar: 'Cover art of the Soulmon Arena.', social: "The Fair tent in Soulmon's Market.", colecionar: 'Three different Soulmon forms.' },
+    alts: { explorar: "Cover art of the Endless Rift, Soulmon's endless descent.", batalhar: 'Cover art of the Soulmon Arena.', social: "The Clan Hall, in Soulmon's Hall." },
+    colecao: {
+      rotulo: 'A fire creature and the three evolution paths that branch from it',
+      raiz: 'Starting point',
+      caminhosH: 'Three paths',
+      caminhos: ['Power', 'Harmony', 'Benevolence'],
+      dica: 'From the same starting point, each path leads to a different body.',
+    },
   },
   acao: {
     h2: 'See it in action',
     p: 'Real app screens and the game trailer.',
     trailerLegenda: "App screens and the game's music. Tap to watch.",
     telasH: 'Game screens',
-    printAlt: { combate: 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.', hall: 'Soulmon Citadel map, with the Fair, the Grove and the Clan Hall.', jogos: 'Soulmon minigames screen.' },
+    printAlt: { combate: 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.', mapa: 'Soulmon central map, with Market, Games, Exploration, Arena, Hall and Laboratory around the crystal.', home: "Soulmon Home: your creature in its room and the day's task and habit list." },
   },
   fundador: {
     selo: 'Founding Trainer',
@@ -150,10 +178,18 @@ const en: typeof pt = {
     itens: ['Early access to the game', 'New features before the public release', 'Help influence future improvements'],
     nota: 'Android only · 18+ · Free to join.',
   },
+  premios: {
+    h2: 'Beta rewards',
+    p: 'Players who test from the start get four special items for their profile and their House.',
+    itens: [
+      ['moldura', 'Special frame', 'An exclusive frame for your profile portrait.'],
+      ['retrato', 'Special portrait', 'A one-of-a-kind portrait to represent you in the game.'],
+      ['cristal', 'Decorative crystal', 'An exclusive ornamental crystal to decorate your House.'],
+      ['background', 'Special background', 'An exclusive background for your profile.'],
+    ],
+  },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
-    antesH: 'Before you join',
-    antes: 'Google Play requires testers to stay opted in for 14 consecutive days. You do not need to play every day: just remain in the test during that period.',
   },
   faq: {
     h2: 'FAQ',

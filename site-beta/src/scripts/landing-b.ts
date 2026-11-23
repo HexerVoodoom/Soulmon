@@ -1,4 +1,4 @@
-// JS só da Versão B: demo de evolução por toque e barra fixa que some quando já há um CTA ou o modal na tela.
+// JS só da Versão C: demo de evolução por toque e barra fixa que some quando já há um CTA ou o modal na tela.
 // Sem JS: a demo vira uma lista de tarefas estática e o CTA fixo continua sendo um link para #entrar.
 const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -7,7 +7,7 @@ function demo() {
   const base = raiz.dataset.base!; const linha = raiz.dataset.linha!;
   const formas = JSON.parse(raiz.dataset.formas!) as string[]; const nomes = JSON.parse(raiz.dataset.nomes!) as string[];
   const img = raiz.querySelector<HTMLImageElement>('[data-vb-img]')!; const est = raiz.querySelector('[data-vb-estagio]')!; const nome = raiz.querySelector('[data-vb-nome]')!;
-  const barra = raiz.querySelector<HTMLElement>('[data-vb-barra]')!; const estado = raiz.querySelector('[data-vb-estado]')!;
+  const barra = raiz.querySelector<HTMLElement>('[data-vb-barra]')!; const missao = raiz.querySelector('[data-vb-missao-n]')!; const estado = raiz.querySelector('[data-vb-estado]')!;
   const reiniciar = raiz.querySelector<HTMLButtonElement>('[data-vb-recomecar]')!;
   const caixas = [...raiz.querySelectorAll<HTMLInputElement>('[data-vb-tarefa]')];
   const total = caixas.length;
@@ -18,7 +18,7 @@ function demo() {
     const i = Math.min(formas.length - 1, Math.round((n / total) * (formas.length - 1)));
     img.src = `${base}${linha}-${formas[i]}.webp`; img.alt = `${raiz.dataset.alt} ${nomes[i]}`;
     est.textContent = raiz.dataset.estagio!.replace('{n}', String(i + 1)); nome.textContent = nomes[i];
-    barra.style.transform = `scaleX(${n / total})`;
+    barra.style.transform = `scaleX(${n / total})`; missao.textContent = `${n}/${total}`;
     estado.textContent = n === total ? raiz.dataset.fim! : raiz.dataset.progresso!.replace('{n}', String(n)).replace('{total}', String(total));
     reiniciar.hidden = n === 0;
     if (!reduzido && n > 0) { img.classList.remove('vb-surge'); void img.offsetWidth; img.classList.add('vb-surge'); }
