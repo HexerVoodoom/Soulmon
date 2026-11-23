@@ -11,3 +11,13 @@ describe('MapPage — número das pílulas de moeda legível', () => {
     });
   }
 });
+
+/** QA 23/11/2026: a pílula é `inline-flex`, onde o espaço entre `</span>` e o rótulo some ("0Honra"); o vão tem que vir do `gap`. */
+describe('MapPage — espaço entre número e rótulo nas pílulas', () => {
+  const src = readFileSync(new URL('./MapPage.tsx', import.meta.url), 'utf8');
+  it('a pílula (CHIP) é flex com gap por token', () => {
+    const chip = src.slice(src.indexOf('const CHIP'), src.indexOf('};', src.indexOf('const CHIP')));
+    expect(chip).toContain("display: 'inline-flex'");
+    expect(chip).toContain("gap: 'var(--sm2-space-1)'");
+  });
+});
