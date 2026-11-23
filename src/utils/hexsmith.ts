@@ -75,7 +75,7 @@ export const isCrownEffect = (v: unknown): v is HexCrownEffect => typeof v === '
 
 /** Custos padrão (ajustáveis). `potions` = poções do PRÓPRIO elemento do item. */
 export const HEX_COSTS = {
-  element: { potions: 3, bits: 1500, fragments: 12 },
+  element: { potions: 1, bits: 1500, fragments: 12 },
   coroa: { potions: 0, bits: 2000, fragments: 70 },
   luvas: { potions: 0, bits: 500, fragments: 18 },
 } as const;

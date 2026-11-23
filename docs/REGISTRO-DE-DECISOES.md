@@ -6675,3 +6675,9 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Roster:** os 4 rookies entram no FIM de TUDO do `ENEMY_ROSTER` (depois dos 15 legados), para não deslocar o `#N` do Bestiário de quem já tem criatura anotada. Arte de reserva = rookie da criatura base do dominante (`enemyRosterArt.ts`); ícone provisório = o do 1º componente. Nomes dos Soulmon (Spectrel, Revenox, Hemolisk, Furiosk) e descritores visuais são PROVISÓRIOS, montados dos componentes; sem texto de descrição PT/EN (aguarda o dono).
 - **Dívida de arte declarada nos testes (cada uma falha se a arte entrar sem tirar o id da lista):** `SEM_ARTE_PROPRIA` da Fenda, `SEM_POCAO_AINDA` (poção e chip), `SEM_FORMA_AINDA` (pacote A). Lista do que falta: `docs/ASSETS-A-GERAR.md`, seção "Curados novos: lote 5".
 - **Rollback:** reverter o commit; o save guarda só ids de elemento destrancados (id desconhecido é descartado na leitura), então não há migração.
+
+## §502 — Hexsmith: custo em poções do HEX de elemento 3 → 1 (23/11/2026, pedido do dono)
+
+**Decisão:** pedido do dono: custo em poções da Hexsmith 3 → 1. `HEX_COSTS.element.potions` = 1 no cliente (`src/utils/hexsmith.ts`) e no servidor (`functions/api/_hexsmith.js`, `hexsmith.parity.test.js`). Coroa e luvas seguem com 0 poções; Bits e fragmentos não mudam. Peças já forjadas não mudam (posse só cresce); só o custo daqui para a frente. Textos (`hexsmithCopy.ts`, GuideModal, manual) atualizados em PT/EN.
+
+**Alternativa que perdeu:** manter 3 poções. **Falsifica:** forja de elemento recusando com 1 poção em estoque, ou cliente e servidor com custos diferentes (`hexsmith.parity.test.js`). **Rollback:** reverter o PR. **APK:** nada.

@@ -111,7 +111,7 @@ describe('HexsmithSheet', () => {
     expect(forjaServidor).toHaveBeenCalledTimes(1);
     const s = estado();
     expect(s.bits).toBe(2000 - HEX_COSTS.element.bits);
-    expect(s.food[potionKey('agua')]).toBeUndefined();
+    expect(s.food[potionKey('agua')]).toBe(3 - HEX_COSTS.element.potions);
     expect(s.hx.owned).toEqual(['garra:agua']);
     expect(s.hx.equipped.garra).toBe('garra:agua');
     expect(q('[data-hex-line="garra"]').textContent).toMatch(/Água.*era/);
@@ -131,7 +131,7 @@ describe('HexsmithSheet', () => {
   });
 
   it('recusa: o Forjar fica desabilitado e o motivo aparece (convite, sem cobrança)', () => {
-    abrir({ gamePoints: 5000, foodInventory: { [potionKey('agua')]: 1 } });
+    abrir({ gamePoints: 5000, foodInventory: { [potionKey('agua')]: 0 } });
     click(q('[data-hex-slot="garra"]'));
     click(q('[data-hex-item="garra:agua"]'));
     expect(q('[data-hex-forge="garra:agua"]').disabled).toBe(true);
