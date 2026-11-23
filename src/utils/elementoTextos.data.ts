@@ -39,7 +39,7 @@ export const TEXTOS_ELEMENTO_BASE: Readonly<Record<string, { pt: string; en: str
   },
   vileza: {
     pt: "A vileza é áspera e tem apetite. Raspa a borda de toda moeda que passa pelo balcão. O pouco que leva por vez forma uma pilha. Representa os desejos humanos, os prazeres e os vínculos que podem se transformar em correntes. É o confronto com aquilo que nos domina.",
-    en: "Vileness is rough and has an appetite. It scrapes the edge off every coin that crosses the counter. The little it takes each time makes a pile. It represents human desires, pleasures and bonds that can turn into chains. It is the confrontation with what dominates us.",
+    en: "Fel is rough and has an appetite. It scrapes the edge off every coin that crosses the counter. The little it takes each time makes a pile. It represents human desires, pleasures and bonds that can turn into chains. It is the confrontation with what dominates us.",
   },
   morte: {
     pt: "Nas fendas, a morte é o término. O corpo de linha antiga deixa de insistir ali, o mesmo padrão volta à camada, e a camada o levanta de novo noutro lugar. Representa o encerramento inevitável de ciclos. A morte simbólica de uma identidade, crença ou condição permite que algo novo surja.",
