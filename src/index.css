@@ -7623,3 +7623,5 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* sem linha do ✕ (closeSide none) o título ganha respiro em cima, longe do bracket do canto */
 .sm2-moldura-modal--titulo-inline .sm2-popup-titulo:first-child { margin-top: calc(var(--sm2-cristal-canto) * .45); }
 .sm2-moldura-modal--titulo-inline .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .3 + 50px); top: calc(var(--sm2-cristal-canto) * .24 - 1px); width: 44px; height: 44px; }
+/* closeSide none (sem ✕): o (i) vai para o canto, sem o vão que o ✕ ocupava */
+.sm2-moldura-modal--titulo-inline:not(:has(.sm2-popup-fechar-linha)) .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .3); }
