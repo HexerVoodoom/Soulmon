@@ -5,13 +5,14 @@
  * Idempotente (as injeções ignoram o que já entrou).
  */
 import type { ShopItem } from './shop';
-import { injetarCatalogosNovos } from './shop';
+import { injetarCatalogosNovos, injetarConcessoes } from './shop';
 import { injetarCenariosNovos } from './backgrounds';
 import { injetarMolduras, type AvatarFrame } from './frames';
 import { injetarPrecosDeDecor } from './decorPrices';
-import { injetarArteDeDecor } from './decorArt';
+import { injetarArteDeDecor, injetarChamasDeDecor } from './decorArt';
 import { COSMETICOS_NOVOS, ARTE_BG_NOVOS, ARTE_DECOR_NOVOS } from './cosmeticosNovos';
 import { HONRA_DECOR, ARTE_DECOR_HONRA } from './honraDecor';
+import { CRISTAL_FUNDADOR, ARTE_CRISTAL_FUNDADOR, CHAMA_CRISTAL_FUNDADOR } from './cristalFundador';
 
 export function aplicarCatalogosNovos(): void {
   injetarCatalogosNovos(
@@ -32,5 +33,7 @@ export function aplicarCatalogosNovos(): void {
   injetarPrecosDeDecor(COSMETICOS_NOVOS.filter(c => c.kind === 'furn').map(c => ({
     id: c.id, old: 100, tier: c.tier!, reason: c.element ? 'peça exclusiva de elemento' : c.slot === 'rug' ? 'textura de chão' : 'peça de tema',
   })));
-  injetarArteDeDecor(ARTE_DECOR_NOVOS, ARTE_DECOR_HONRA);
+  injetarArteDeDecor(ARTE_DECOR_NOVOS, ARTE_DECOR_HONRA, ARTE_CRISTAL_FUNDADOR);
+  injetarConcessoes([CRISTAL_FUNDADOR]);
+  injetarChamasDeDecor(CHAMA_CRISTAL_FUNDADOR);
 }

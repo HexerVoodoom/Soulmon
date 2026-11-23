@@ -6656,3 +6656,10 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA para o medido. Nenhum teto mudou.
 - **Rollback:** reverter o commit; sem save/servidor.
 
+## §500 — Decoração que nunca apaga: modo `sempre` e o Cristal Fundador (23/11/2026, feat/cristal-fundador)
+
+- **Decisão (dono):** `DecorLuzModo` ganha `'sempre'`: `decorLuzAcesa` devolve `true` acordado ou dormindo, a peça nunca escurece (sem o filtro de apagado) e, com o pet dormindo, é redesenhada na camada ACIMA do véu da noite (`PetStageBrilhos`) para o véu de 55% não a apagar. `luz` e `noite` não mudam.
+- **Item:** `furn-cristal-fundador` (Cristal Fundador / Founder Crystal), `kind: 'furniture'`, `fits: 'any'`, espaço do chão `floor-right`, NUNCA à venda (lista `CONCESSOES_ITEMS`, fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS`, sem preço). O chunk lazy `cristalFundador.ts` o injeta; a entrada só ganha a linha de `DECOR_LUZ`.
+- **Fogo:** 2ª camada em folha de 5 quadros (`DECOR_CHAMA`), `background-position` em `steps(4, jump-none)` (N-1 passos = N quadros), ~140 ms/quadro; em `prefers-reduced-motion` fica parado no quadro 1.
+- **Não feito:** a entrega por progressão (Fundo/Moldura/Retrato/Cristal) aguarda decisões do dono. Sem campo nem chave nova no save; item desconhecido segue sem quebrar save antigo.
+- **Rollback:** reverter o commit; um save com o id equipado cai no emoji/some do palco, sem erro.

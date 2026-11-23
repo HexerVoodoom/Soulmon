@@ -1,7 +1,7 @@
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
-import { DECOR_ART } from '../utils/decorArt';
+import { DECOR_ART, DECOR_CHAMA } from '../utils/decorArt';
 import { ArcadeTela } from './ArcadeTela';
 import campfireBase from '../assets/decor-fx/furn-campfire-base.png';
 import campfireFrente from '../assets/decor-fx/furn-campfire-frente.png';
@@ -59,6 +59,20 @@ function itensDoPalco(equippedDecor: Partial<Record<SlotId, string>>, equippedBa
     if (!item || !decorFitsSetting(item.fits ?? 'any', bg.setting)) return [];
     return [{ slotId, item, slot: DECOR_SLOTS[slotId] }];
   });
+}
+
+/** Fogo em TIRA de quadros sobre a arte do suporte (Cristal Fundador): `steps(quadros - 1)` no CSS; parado no quadro 1 em movimento reduzido. */
+function ChamaTira({ id, on }: { id: string; on: boolean }) {
+  const c = DECOR_CHAMA[id];
+  if (!c) return null;
+  return (
+    <span className="sm-decor-quadro" aria-hidden="true">
+      <span className="sm-decor-quadro-i">
+        <span className="sm-decor-chama" data-decor-chama data-quadros={c.quadros} data-on={on || undefined}
+          style={{ backgroundImage: `url(${c.src})`, backgroundSize: `${c.quadros * 100}% 100%` }} />
+      </span>
+    </span>
+  );
 }
 
 const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
@@ -124,7 +138,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}
-            {luz && luz.modo === 'luz' && (
+            {luz && (luz.modo === 'luz' || luz.modo === 'sempre') && (
               <span
                 className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={acesa || undefined}
                 style={{ left: `${luz.x}%`, top: `${luz.y}%`, width: `${luz.d}%` }}
@@ -139,6 +153,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                     imageRendering: 'pixelated', filter: artFiltro, transition: 'filter .8s ease',
                   }}
                 />
+                {DECOR_CHAMA[item.id] && <ChamaTira id={item.id} on={acesa} />}
                 {item.id === 'furn-campfire' && (
                   <>
                     <span className="sm-decor-quadro" aria-hidden="true">
@@ -233,7 +248,8 @@ export function PetStageToques({ equippedDecor, equippedBackground, language, on
 export function PetStageBrilhos({ equippedDecor, equippedBackground, isSleeping }: {
   equippedDecor: Partial<Record<SlotId, string>>; equippedBackground: string | null; isSleeping: boolean;
 }) {
-  const itens = itensDoPalco(equippedDecor, equippedBackground).filter(i => DECOR_LUZ[i.item.id]?.modo === 'noite');
+  // 'noite' (cogumelos) acende quando dorme; 'sempre' (Cristal Fundador) nunca apaga: dormindo, é redesenhado ACIMA do véu para não escurecer.
+  const itens = itensDoPalco(equippedDecor, equippedBackground).filter(i => { const m = DECOR_LUZ[i.item.id]?.modo; return m === 'noite' || (m === 'sempre' && isSleeping); });
   if (!itens.length) return null;
   return (
     <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 4 }} aria-hidden="true" data-decor-brilhos>
@@ -243,7 +259,9 @@ export function PetStageBrilhos({ equippedDecor, equippedBackground, isSleeping 
         return (
           <div key={slotId} className="sm-decor-brilho" data-on={decorLuzAcesa(luz, isSleeping) || undefined} style={{ ...slotBoxStyle(slot), display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <span className="sm-decor-luz-halo" data-decor-luz={luz.modo} data-tom={luz.tom} data-on={decorLuzAcesa(luz, isSleeping) || undefined} style={{ left: `${luz.x}%`, top: `${luz.y}%`, width: `${luz.d}%` }} />
-            {art && <img src={art} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: 'brightness(1.3) saturate(1.25) drop-shadow(0 0 5px hsl(165 95% 62% / .95)) drop-shadow(0 0 14px hsl(165 90% 55% / .65))' }} />}
+            {art && luz.modo === 'sempre' && <img src={art} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }} />}
+            {luz.modo === 'sempre' && <ChamaTira id={item.id} on />}
+            {art && luz.modo === 'noite' && <img src={art} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated', filter: 'brightness(1.3) saturate(1.25) drop-shadow(0 0 5px hsl(165 95% 62% / .95)) drop-shadow(0 0 14px hsl(165 90% 55% / .65))' }} />}
           </div>
         );
       })}

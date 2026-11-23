@@ -710,7 +710,14 @@ export const SUBSCRIPTION_ITEMS: ShopItem[] = [
 /** É item da assinatura? Nunca comprável com moeda, venha de onde vier. */
 export const isSubscriptionReward = (item: Pick<ShopItem, 'id'>): boolean => SUBSCRIPTION_ITEMS.some(s => s.id === item.id);
 
-export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS];
+/**
+ * CONCESSÕES (Cristal Fundador, `utils/cristalFundador.ts`, chunk lazy): cosmético que NUNCA está à venda — fora de `SHOP_ITEMS` e de
+ * `TOURNAMENT_ITEMS`, sem preço e travado por uma `unlock` que não existe (como a Concha da Maré). Só entra aqui para o palco resolver o id.
+ * A entrega por progressão ainda não existe (aguarda o dono); posse = `ownedFurniture`, sem campo novo no save.
+ */
+export const CONCESSOES_ITEMS: ShopItem[] = [];
+
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS];
 
 /**
  * Os cosméticos novos (`cosmeticosNovos.ts`) e a decoração de Honra (`honraDecor.ts`) moram num chunk lazy (REGISTRO §498): este é o
@@ -722,5 +729,13 @@ export function injetarCatalogosNovos(novos: readonly ShopItem[], honra: readonl
   SHOP_ITEMS.push(...novos.filter(i => !tem.has(i.id)));
   TOURNAMENT_ITEMS.push(...honra.filter(i => !tem.has(i.id)));
   ALL_SHOP_ITEMS.length = 0;
-  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS);
+  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS);
+}
+
+/** Entra o cosmético de concessão (nunca à venda) no catálogo resolvível. Idempotente. */
+export function injetarConcessoes(itens: readonly ShopItem[]): void {
+  const tem = new Set(ALL_SHOP_ITEMS.map(i => i.id));
+  CONCESSOES_ITEMS.push(...itens.filter(i => !tem.has(i.id)));
+  ALL_SHOP_ITEMS.length = 0;
+  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS);
 }

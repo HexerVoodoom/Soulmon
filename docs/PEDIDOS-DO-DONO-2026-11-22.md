@@ -53,6 +53,7 @@ Mapas código×spec (só leitura): scratchpad da sessão `mapa-spec-1/2/3.md`.
 - **Modais da Home que não recolhem:** o pedido era SÓ sobre a Mochila/pasta (Arquivos), PR #1127. Fenda, Ver tudo e intersticiais ficam como estão.
 - **4 elementos combinados novos:** fantasma = morte+vida+tempo, morto-vivo = morte+vida+vileza, sangue = vida+vileza+água, fúria = fogo+vigor+vileza; receitas aprovadas, rookies no pool comum e regravação de 2 hashes aceitas (PR #1129). Texto próprio deles aguarda decisão do dono; descrições com arcanas valem só para os 20 base.
 - **Fonte dos 20 textos:** `docs/REFERENCIA-ARCANAS-PERSONA3.md` (só o texto descritivo entra).
+- **Item Cristal Fundador / Founder Crystal** (decorativo, `furn-cristal-fundador`): aprovado pelo dono, em qualquer cenário (`fits: any`), nunca à venda, sempre aceso (modo `sempre` em `decorLuz.ts`: nunca escurece nem apaga com o pet dormindo; halo turquesa depois do véu da noite) e com fogo turquesa animado em tira de 5 quadros. Código, arte final (168 e folha 5×168) e testes entram no PR `feat/cristal-fundador`. **Pendente:** a entrega por progressão (Fundo/Moldura/Retrato/Cristal) aguarda decisões do dono; hoje o item só existe para quem o receber por concessão futura.
 - **Dívida do dist paga** (#1125, #1128, #1131): folga de JS ~71 KB; partir o corpo do `App.tsx` fica no REGISTRO §499.
 
 ## Pacotes

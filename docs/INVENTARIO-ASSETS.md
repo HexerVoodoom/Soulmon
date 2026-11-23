@@ -108,6 +108,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | Pasta | Qtd | Mapa (chave) | Fluxo |
 |---|---|---|---|
 | `decor/` | 33 (14 delas refeitas em 08/09 — `decor-v2`) | `decorArt.ts` (id do item) | Loja (`CenariosMobilias`), Home (palco) |
+| `decor/furn-cristal-fundador.png` + `decor-fx/furn-cristal-fundador-chama.png` | 2 · 168² (base acesa) e folha 5×168 (5 quadros, ~140 ms/quadro); fonte em `E:\Soulmon-assets\p6-premios-beta\` (`final-item-base-aceso-168`, `final-item-chama-folha-5x168`; as versões 512 não entram: o app desenha na caixa do slot) — arte final APROVADA pelo dono e instalada em 23/11/2026 | `cristalFundador.ts` → `decorArt.ts` (`DECOR_ART`, `DECOR_CHAMA`) | Home (palco), item de concessão (nunca à venda) |
 | `soulmon/nest-base.png` (+cushion, basket) | 3 · 444×249 | `nestArt` / `PetStageDecor` | Home (palco) |
 | `soulmon/items/` | 13 · 96² — 8 comidas + 3 chips + coração + glitchtama | `itemArt.ts` (**emoji**) | Home (`ItensPastinha`, `AlimentarFolha`, `ItensUsar`) |
 | `soulmon/dreams/` | 30 · 96² | `dreamArt.ts` (`Dream.id`) | Rituais (`SonhoComCena`), Pet (`DexCompleto/Parcial`) |
