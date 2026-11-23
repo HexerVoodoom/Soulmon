@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
@@ -422,6 +422,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   // cadastrar custa três telas, a pessoa para de cadastrar, e um app de tarefas
   // onde ninguém cadastra não é usado errado, é desinstalado.
   const [quickText, setQuickText] = useState('');
+  // Último texto que o parser já aplicou: evita reaplicar (e apagar os chips) no blur.
+  const appliedQuick = useRef('');
   const [quickTokens, setQuickTokens] = useState<string[]>([]);
   // O formulário inteiro atrás de UMA divulgação. Antes conviviam abertos a
   // captura rápida, o formulário e um segundo accordion de passos/alarme.
@@ -509,7 +511,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   const applyQuickAdd = () => {
     const raw = quickText.trim();
     // O campo agora É o nome: reaplicar o texto já aplicado apagaria os chips.
-    if (!raw || raw === name.trim()) return;
+    if (!raw || raw === appliedQuick.current) return;
     const parsed: QuickAddResult = parseQuickAdd(raw, {
       now: new Date(),
       language: isPt ? 'pt-BR' : 'en',
@@ -531,6 +533,17 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     if (parsed.time) handleCustomTimeChange(parsed.time);
     setQuickTokens(parsed.tokens);
     setQuickText(parsed.name);
+    appliedQuick.current = parsed.name.trim();
+  };
+
+  /** O nome acompanha o que está digitado (salvar sem blur funciona; apagar zera). */
+  const onQuickChange = (value: string) => {
+    setQuickText(value);
+    setName(value.trim() ? value : '');
+    if (!value.trim()) {
+      setQuickTokens([]);
+      appliedQuick.current = '';
+    }
   };
 
   // Habit e Task: tudo visível (sem 'Mais opções'), um só campo de nome (a captura).
@@ -616,7 +629,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           autoComplete="off"
           aria-label={isPt ? 'Captura rápida' : 'Quick add'}
           value={quickText}
-          onChange={(e) => setQuickText(e.target.value)}
+          maxLength={60}
+          onChange={(e) => onQuickChange(e.target.value)}
           onBlur={applyQuickAdd}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyQuickAdd(); } }}
           placeholder={categoryExample(category, isPt)}

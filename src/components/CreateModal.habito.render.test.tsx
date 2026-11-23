@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { CreateModal } from './CreateModal';
 import { activitiesFromCatalogChoice } from '../utils/catalogChoice';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
@@ -53,5 +53,31 @@ describe('Catálogo -> linha de Hábitos', () => {
     expect(migrateCatalogHabitDaily(editada, ACTIVITY_CATALOG_BY_ID)).toBe(editada);
     const custom = { id: 'z', schedule: { kind: 'timesPerWeek', target: 3 } };
     expect(migrateCatalogHabitDaily(custom, ACTIVITY_CATALOG_BY_ID)).toBe(custom);
+  });
+});
+
+describe('Nova tarefa: o campo único é o nome', () => {
+  const quick = () => document.getElementById('sm-quick-add') as HTMLInputElement;
+  const saveBtn = () => screen.getByRole('button', { name: /^(Salvar|Save)/ }) as HTMLButtonElement;
+
+  it('digitar habilita Salvar sem precisar de blur; apagar volta a bloquear', () => {
+    render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
+    expect(saveBtn().disabled).toBe(true);
+    fireEvent.change(quick(), { target: { value: 'Meditate' } });
+    expect(saveBtn().disabled).toBe(false);
+    fireEvent.change(quick(), { target: { value: '' } });
+    expect(saveBtn().disabled).toBe(true);
+  });
+  it('o exemplo só aparece com o campo vazio e acompanha a categoria', () => {
+    render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
+    expect(quick().placeholder).toBe('Example: Lights out at 10:30 p.m.');
+    fireEvent.click(screen.getByText('Body'));
+    expect(quick().placeholder).toBe('Example: Walk 20 minutes');
+    fireEvent.change(quick(), { target: { value: 'abc' } });
+    expect(quick().value).toBe('abc');
+  });
+  it('o nome tem teto de 60 caracteres', () => {
+    render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
+    expect(quick().maxLength).toBe(60);
   });
 });
