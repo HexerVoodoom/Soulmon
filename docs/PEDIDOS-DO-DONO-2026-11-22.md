@@ -47,6 +47,14 @@ Mapas código×spec (só leitura): scratchpad da sessão `mapa-spec-1/2/3.md`.
 - Categoria nova **Focus & Work / Foco e Trabalho**: junta o Focus atual e o trabalho. Learning continua separada. O id antigo é aceito na leitura, com migração idempotente.
 - PR #1093 mergeado (`12a33a164`) pela orquestradora, com autorização do dono. O #1024 é mergeado quando o CI ficar todo verde.
 
+### Rodada 5 (23/11/2026)
+
+- **Termos vetados afrouxados** (confirmado pelo dono em modal): *"pode usar Morte SEMPRE. não precisa ter esses pudores assim, é pra +18. não vamos falar em coisas muito sensíveis como suicídio e abuso sexual, mas isso nem faz parte do contexto, então pode afrouxar essas regras aí de termos vetados."* Vetados só: suicídio, automutilação e abuso sexual. Vale para textos e prompts de arte. Bíblia atualizada (`NARRATIVA-E-UNIVERSO` §5.12, §12, §17 item 11).
+- **Modais da Home que não recolhem:** o pedido era SÓ sobre a Mochila/pasta (Arquivos), PR #1127. Fenda, Ver tudo e intersticiais ficam como estão.
+- **4 elementos combinados novos:** fantasma = morte+vida+tempo, morto-vivo = morte+vida+vileza, sangue = vida+vileza+água, fúria = fogo+vigor+vileza; receitas aprovadas, rookies no pool comum e regravação de 2 hashes aceitas (PR #1129). Texto próprio deles aguarda decisão do dono; descrições com arcanas valem só para os 20 base.
+- **Fonte dos 20 textos:** `docs/REFERENCIA-ARCANAS-PERSONA3.md` (só o texto descritivo entra).
+- **Dívida do dist paga** (#1125, #1128, #1131): folga de JS ~71 KB; partir o corpo do `App.tsx` fica no REGISTRO §499.
+
 ## Pacotes
 
 | Pacote | Itens | Modelo executor |
