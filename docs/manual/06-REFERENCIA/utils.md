@@ -852,6 +852,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/cristalFundador.ts`
 **Dono de:** o Cristal Fundador / Founder Crystal (`furn-cristal-fundador`): cosmético de concessão, `kind: 'furniture'`, espaço `floor-right`, `fits: 'any'`, **nunca à venda** (fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS`, `price: 0`, `unlock` de missão inexistente; entra por `injetarConcessoes` em `shop.ts`). Sempre aceso (`decorLuz.ts`, modo `sempre`), com a arte `assets/decor/furn-cristal-fundador.png` (168×168) e o fogo turquesa `assets/decor-fx/furn-cristal-fundador-chama.png` (folha 5×168, ~140 ms/quadro). Sem campo nem chave nova no save. **A entrega por progressão (Fundo/Moldura/Retrato/Cristal) ainda não existe: aguarda decisão do dono.**
+**Cristal em qualquer chão (REGISTRO §511):** `slotsPermitidos:'chao'` (aditivo em `ShopItem`); `petStage.ts` exporta `CHAO_SLOTS` (`rug`, `floor-left`, `floor-right`), `itemCabeNoSlot(item, slot)` e `slotParaItem(item, slotId)` (no tapete usa a caixa de móvel em pé); `applyDecorEquip` tira o item de outro espaço (um só); `editHome.decorOptionsForSlot`/`slotHoldsDrawnItem` seguem a mesma regra. Sem mudança de contrato do save.
 **Chamado por:** `catalogosNovos.ts`. **Régua:** `src/components/PetStageDecor.cristalFundador.render.test.tsx`, `src/utils/decorLuz.test.ts`.
 
 ### `src/utils/fundador.ts`

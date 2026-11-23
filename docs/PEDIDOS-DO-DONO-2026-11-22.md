@@ -48,6 +48,7 @@ Mapas código×spec (só leitura): scratchpad da sessão `mapa-spec-1/2/3.md`.
 - PR #1093 mergeado (`12a33a164`) pela orquestradora, com autorização do dono. O #1024 é mergeado quando o CI ficar todo verde.
 
 ### Rodada 5 (23/11/2026)
+- **Cristal Fundador em qualquer espaço de chão** (dono, 23/11): `slotsPermitidos:'chao'` (rug, canto esquerdo, canto direito), um cristal só, save antigo valido; REGISTRO §511.
 
 - **Termos vetados afrouxados** (confirmado pelo dono em modal): *"pode usar Morte SEMPRE. não precisa ter esses pudores assim, é pra +18. não vamos falar em coisas muito sensíveis como suicídio e abuso sexual, mas isso nem faz parte do contexto, então pode afrouxar essas regras aí de termos vetados."* Vetados só: suicídio, automutilação e abuso sexual. Vale para textos e prompts de arte. Bíblia atualizada (`NARRATIVA-E-UNIVERSO` §5.12, §12, §17 item 11).
 - **Modais da Home que não recolhem:** o pedido era SÓ sobre a Mochila/pasta (Arquivos), PR #1127. Fenda, Ver tudo e intersticiais ficam como estão.

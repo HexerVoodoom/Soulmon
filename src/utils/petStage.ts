@@ -113,6 +113,22 @@ export const DECOR_SLOTS: Record<SlotId, DecorSlot> = {
 
 export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right', 'wall'];
 
+/** Espaços de CHÃO onde uma peça `slotsPermitidos:'chao'` (Cristal Fundador) pode ficar. A vitrine (`trophy`) e a parede ficam de fora. */
+export const CHAO_SLOTS: readonly SlotId[] = ['rug', 'floor-left', 'floor-right'];
+
+/** A peça pode ocupar este espaço? Padrão: só o `slot` dela; com `slotsPermitidos:'chao'`, qualquer espaço de chão. */
+export function itemCabeNoSlot(item: { slot?: SlotId; slotsPermitidos?: 'chao' }, slot: SlotId): boolean {
+  if (item.slotsPermitidos === 'chao') return CHAO_SLOTS.includes(slot);
+  return item.slot === slot;
+}
+
+/** Caixa que a peça usa no espaço: peça de chão livre posta no tapete (caixa deitada) usa a caixa de móvel em pé, centrada no tapete. */
+export function slotParaItem(item: { slotsPermitidos?: 'chao' }, slotId: SlotId): DecorSlot {
+  const s = DECOR_SLOTS[slotId];
+  if (item.slotsPermitidos === 'chao' && s.anchor === 'ground-flat') return { ...DECOR_SLOTS['floor-right'], id: slotId, x: s.x };
+  return s;
+}
+
 /**
  * QUANTO A DECORAÇÃO CRESCE NO PALCO (04/11/2026, dono: "as decorações estão
  * todas minúsculas, aumenta bastante"). A caixa de `DECOR_SLOTS` segue sendo o
@@ -276,6 +292,10 @@ export function applyDecorEquip(
 ): Partial<Record<SlotId, string>> {
   const next = { ...current };
   if (itemId === null) delete next[slot];
-  else next[slot] = itemId;      // um espaço, um item: substitui quem estava lá
+  else {
+    // Um item só ocupa UM espaço: peça de chão livre (Cristal) que muda de espaço sai do anterior.
+    for (const k of Object.keys(next) as SlotId[]) if (next[k] === itemId) delete next[k];
+    next[slot] = itemId;
+  }      // um espaço, um item: substitui quem estava lá
   return next;
 }
