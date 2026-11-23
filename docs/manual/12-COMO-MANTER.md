@@ -322,7 +322,7 @@ Desde 20/10/2026 o app está em teste fechado na Google Play, com usuários reai
 Doc do manual que descreve save, contrato de servidor ou chave de storage **precisa citar a migração e o rollback** da mudança que descreve. A régua automática é `src/contexts/saveCompat.contract.test.ts`; decisão em `docs/REGISTRO-DE-DECISOES.md` §148.
 
 
-## 13. Testar o Conjunto Fundador na conta do dono (concedente dev, REGISTRO §508)
+## 13. Testar o Conjunto Fundador na conta do dono (concedente dev, REGISTRO §509)
 
 Só a conta do e-mail em `ADMIN_EMAILS` (a mesma do Painel de GM) concede o conjunto a si mesma; qualquer outro jogador recebe 403 e nada é gravado.
 
