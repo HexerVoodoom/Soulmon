@@ -1,0 +1,47 @@
+/* Versão D: B + estratégia da C. Só ajustes de encaixe; o resto vem de site.css (B) e b.css (blocos da C). */
+
+/* Como funciona compacto: passos, título e lista cabem numa dobra. */
+.vd-como { gap: var(--sb-e-4); padding-top: var(--sb-e-6); padding-bottom: var(--sb-e-6); }
+.vd-como .vb-passos3 { gap: var(--sb-e-2); }
+.vd-como .vb-passos3 li { grid-template-columns: auto 1fr; justify-items: start; align-items: center; column-gap: var(--sb-e-3); row-gap: 0; padding: var(--sb-e-2) var(--sb-e-3); text-align: left; }
+.vd-como .vb-passos3 .vb-num { grid-row: span 2; width: 32px; height: 32px; font-size: 1rem; }
+.vd-como .vb-passos3 h3 { margin: 0; font-size: 1rem; text-align: left; }
+.vd-como .vb-passos3 p { margin: 0; font-size: var(--sb-t-legal); max-width: none; }
+.vd-como .vb-demo { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--sb-e-3); padding: var(--sb-e-3); max-width: 44rem; }
+.vd-como .vb-demo-img { width: 96px; height: 96px; }
+.vd-como .vb-demo-forma strong { font-size: 1rem; }
+.vd-como .vb-barra { width: 96px; height: 6px; }
+.vd-como .vb-demo-lista { gap: 0; }
+.vd-como .vb-demo-lista h3 { margin: 0 0 2px; font-size: 1rem; text-align: left; }
+.vd-como .vb-hoje-cab { padding: 0 4px 0 12px; }
+.vd-como .vb-tarefa { min-height: 44px; }
+.vd-como .vb-nome { padding: 4px 0; }
+.vd-como .vb-recomecar { min-height: 32px; }
+@media (min-width: 768px) {
+  .vd-como .vb-passos3 li { grid-template-columns: 1fr; justify-items: center; text-align: center; row-gap: var(--sb-e-1); }
+  .vd-como .vb-passos3 .vb-num { grid-row: auto; }
+  .vd-como .vb-passos3 h3 { text-align: center; }
+  .vd-como .vb-demo { grid-template-columns: auto minmax(0, 1fr); padding: var(--sb-e-4) var(--sb-e-5); }
+  .vd-como .vb-demo-img { width: 128px; height: 128px; }
+  .vd-como .vb-barra { width: 128px; }
+}
+
+/* Nenhum Soulmon é igual: o sorteio da B direto no fundo, sem card. */
+.vd-meu .frase { max-width: 36rem; margin-inline: auto; }
+
+/* Um mundo para explorar: os cards da C sobre o cenário do Hall da B. */
+.vd-mundo { display: grid; gap: var(--sb-e-5); justify-items: center; padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); }
+.vd-mundo .universo-cab { justify-self: center; }
+.vd-mundo .vb-pilares { position: relative; }
+
+/* Veja em ação: trailer e telas centralizados. */
+.vd-acao { justify-items: center; }
+.vd-acao .trailer-fig { width: 100%; max-width: 960px; margin: 0; }
+.vd-acao .vb-telas { position: relative; }
+
+/* Prêmios do beta: seção própria. */
+.vd-premios .vb-premios { margin-top: 0; width: 100%; }
+.vd-premios .vb-premios-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-inline: auto; }
+.vd-premios .vb-premio img { width: min(100%, 120px); height: auto; aspect-ratio: 1; }
+@media (min-width: 900px) { .vd-premios .vb-premios-lista { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .vd-como .vb-demo-img { width: 80px; height: 80px; } .vd-como .vb-barra { width: 80px; } }
