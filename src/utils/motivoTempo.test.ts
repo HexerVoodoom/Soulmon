@@ -58,6 +58,16 @@ describe('todo elemento de tempo: no máximo UM dos dois motivos, e a instruçã
     const lados = new Set(Array.from({ length: 40 }, (_, i) => motivoTempoPorSemente(`criatura-${i}`)));
     expect(lados).toEqual(new Set(['ampulheta', 'relogio']));
   });
+  it('fantasma (morte+vida+tempo) NÃO é elemento de tempo: sem ampulheta e sem cláusula; o tempo puro e a cronomancia continuam com ela', () => {
+    expect(ehElementoDeTempo('fantasma')).toBe(false);
+    expect(TEMPO).not.toContain('fantasma');
+    const f = gerar(CRUS.neutro, 'fantasma');
+    for (const p of [f.imagePrompt, f.imagePromptFallback]) {
+      expect(p).not.toMatch(/hourglass/i);
+      expect(p).not.toContain(CLAUSULA_TEMPO_INICIO);
+    }
+    for (const id of ['tempo', 'cronomancia']) expect(gerar(CRUS.neutro, id).imagePrompt, id).toContain(CLAUSULA_TEMPO_INICIO);
+  });
   it('elemento sem tempo e prompt sem motivo: nada muda', () => {
     expect(umMotivoDeTempo(CRUS.neutro, { semente: 's' })).toBe(CRUS.neutro);
     expect(gerar(CRUS.neutro, 'fogo').imagePrompt).not.toContain(CLAUSULA_TEMPO_INICIO);
