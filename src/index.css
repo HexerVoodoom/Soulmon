@@ -7555,3 +7555,50 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 @keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
+
+/* MOLDURA DE POPUP 'CRISTAL' (23/11/2026, arte do P6 aprovada pelo dono): popup central (`ModalSheet placement=center`) sem folha/cipó de prédio.
+   9-slice de UMA imagem (cantos 22% = 225/1024, lados lisos; cristais só em topo-esq e baixo-dir) + placa de título de bronze como peça separada (3 partes).
+   `--sm2-cristal-canto` = canto renderizado (56px @320 → 120px @900, medido em `--u`). Pads: topo/base = pouco além do canto (o canto é arte, não conteúdo),
+   laterais = metade do canto (o lado liso tem ~30% dele). Nada de `--sm2-moldura-pad-x` do padrão: este tem o próprio contrato. */
+.sm2-moldura-modal--cristal {
+  --sm2-cristal-canto: clamp(52px, calc(var(--u) * 17.5), 120px);
+  --sm2-cristal-placa-h: clamp(40px, calc(var(--u) * 13), 64px);
+  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .5); --sm2-moldura-pad-t: 8px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .45);
+  min-height: 0; border-radius: calc(var(--sm2-cristal-canto) * .4); background: var(--sm2-viewport-bg, #0E2422);
+}
+.sm2-moldura-modal--cristal .sm2-moldura-modal__fundo,
+.sm2-moldura-modal--cristal .sm2-moldura-modal__lado,
+.sm2-moldura-modal--cristal .sm2-moldura-modal__topo,
+.sm2-moldura-modal--cristal .sm2-moldura-modal__base { display: none; }
+.sm2-moldura-modal--cristal::after {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-sizing: border-box;
+  border: solid transparent; border-width: var(--sm2-cristal-canto);
+  border-image: url('./assets/soulmon/ui/moldura-cristal/popup-cristal-1024.webp') 225 / var(--sm2-cristal-canto) stretch;
+}
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa {
+  left: 50%; width: auto; min-width: 52%; max-width: calc(100% - var(--sm2-cristal-canto) * 1.6); transform: translateX(-50%);
+  top: calc(var(--sm2-cristal-canto) * .12); height: var(--sm2-cristal-placa-h); box-sizing: border-box;
+  padding: 0 calc(var(--sm2-cristal-placa-h) * .55); z-index: 3;
+  background: url('./assets/soulmon/ui/moldura-cristal/placa-titulo-meio.webp') center / 100% 100% no-repeat;
+}
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before,
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: calc(var(--sm2-cristal-placa-h) * .311); background-repeat: no-repeat; background-size: 100% 100%;
+}
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before { left: 0; background-image: url('./assets/soulmon/ui/moldura-cristal/placa-titulo-esq.webp'); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after { right: 0; background-image: url('./assets/soulmon/ui/moldura-cristal/placa-titulo-dir.webp'); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #2b160a; text-shadow: 0 1px 0 rgba(255, 214, 160, .45); position: relative; z-index: 1; font-size: var(--sm2-text-sm, .875rem); }
+/* o ✕/voltar (canto superior esquerdo, contrato `voltarFechar`) fica ABAIXO da placa (a placa tem largura de título; ✕ e (i) ao lado dela colidiriam). */
+.sm2-moldura-modal--cristal .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .55); top: calc(var(--sm2-cristal-canto) * .12); width: var(--sm2-cristal-placa-h); height: var(--sm2-cristal-placa-h); }
+/* sem ornamento "i" na arte: o botão desenha o seu (anel de cobre). */
+.sm2-moldura-modal--cristal .sm2-info-hit::before {
+  content: 'i'; position: absolute; inset: 22%; border: 1.5px solid #c9884a; border-radius: 50%; color: #e3c06a; display: flex; align-items: center; justify-content: center;
+  font: 700 .8125rem/1 Georgia, serif;
+}
+.sm2-moldura-modal--cristal { --sm2-cristal-placa-fim: calc(var(--sm2-cristal-canto) * .12 + var(--sm2-cristal-placa-h) + 2px); }
+.sm2-moldura-modal--cristal .sm2-modal-fechar-linha { margin: var(--sm2-cristal-placa-fim) 0 0 calc(var(--sm2-cristal-canto) * .3); }
+/* sem linha do ✕ (closeSide none): o corpo começa logo abaixo da placa */
+.sm2-moldura-modal--cristal:not(:has(.sm2-modal-fechar-linha)) { --sm2-moldura-pad-t: var(--sm2-cristal-placa-fim); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__placa { max-width: calc(100% - var(--sm2-cristal-canto) * 1.8); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: calc(var(--sm2-cristal-canto) * .35); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #1c0e05; }

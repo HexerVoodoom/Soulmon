@@ -15,7 +15,7 @@ import { bumpDailyIn } from './dailyMissions';
 
 /** Teto por elemento no save (sanidade, não regra de jogo). */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
-/** 269 do catálogo (210 + 59 curados) + `pesadelo` + `neutro`. */
+/** 273 do catálogo (210 + 63 curados) + `pesadelo` + `neutro`. */
 export const ESSENCE_MAX_KEYS = 271;
 /** Teto diário da descida AUTOMÁTICA (jogador fora / relatório de volta). Constante ÚNICA (o servidor limita o contador a 999). */
 export const ESSENCE_AWAY_DAILY_CAP = 30;
@@ -28,7 +28,7 @@ export const essenceQtyOfBoss = (level: number): number => 5 + Math.floor(Math.m
 
 export interface EssenceDrop { id: string; qty: number }
 
-/** Quem deixa essência ao cair: os 269 do catálogo e o `neutro` do Corvo (o Pesadelo vem do próprio caminho dele). */
+/** Quem deixa essência ao cair: os 273 do catálogo e o `neutro` do Corvo (o Pesadelo vem do próprio caminho dele). */
 export const ehEssenciaColetavel = (id: unknown): id is string => isEssenceElement(id) || id === ELEMENTO_NEUTRO_ID;
 
 /** Só a FORMA (a mesma do servidor): os chefes da Feira têm elemento próprio, fora dos 210 do dex, e dropam a essência dele. */

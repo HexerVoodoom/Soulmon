@@ -28,12 +28,12 @@ import { ARENA_BASE_ELEMENTS } from './arenaSorteio';
 import { isStrayFoe } from './wildFoeLabel';
 
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
-/** O roster sem os 15 ramos legados (§445), que vão no FIM de tudo: os testes de "no fim do roster" das levas anteriores contam a partir daqui. */
-const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -15);
+/** O roster sem os 15 ramos legados (§445) e os 4 rookies do lote 5 (P5), que vão no FIM de tudo: os testes de "no fim do roster" das levas anteriores contam a partir daqui. */
+const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -19);
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) = 878 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205 + 15);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) + 15 ramos legados (§445) + 4 rookies do lote 5 (P5, 23/11) = 897 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205 + 15 + 4);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -46,7 +46,7 @@ describe('roster de inimigos (M10): cobertura', () => {
   });
   it('todo elemento base aparece em todos os estágios; toda entrada tem arte e nome', () => {
     for (const n of NOVOS_DATA) for (const s of ORDEM) expect(rosterEntryOfKey(`${n.id}-${s}`), `${n.id}-${s}`).toBeDefined();
-    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211 + 50 + 6); // +17/+17/+16 dos lotes 1-3 e +6 do lote 4 (arte de reserva)
+    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211 + 50 + 6 + 4); // +17/+17/+16 dos lotes 1-3, +6 do lote 4 e +4 do lote 5 (arte de reserva)
     for (const e of ENEMY_ROSTER) {
       expect(rosterSpriteOf(e), e.key).toBeTruthy();
       expect(e.name.length, e.key).toBeGreaterThan(0);

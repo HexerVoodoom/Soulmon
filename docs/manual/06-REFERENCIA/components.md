@@ -2369,6 +2369,8 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/ElementDex.tsx`
 **Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
 
+**Sync 23/11/2026 (P5):** o modal de um elemento BASE mostra, acima da composição e das vantagens, o texto aprovado do dono (`[data-element-text]`, de `utils/elementoTextos.data.ts`); combinado e curado seguem sem texto. **Régua:** `src/components/ElementDex.textos.render.test.tsx`.
+
 ### `src/components/EssencesSection.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** a dica da Essência de Pesadelo diz "ainda sem uso, só guardar" (`data-essence-sem-uso`).
 **Dono de:** a seção Essências do Laboratório (aba do pet, logo abaixo dos Sonhos; 28/10/2026): só as com quantidade > 0, cada uma = ícone do próprio elemento (`elementIcon`; `nightmareIcon` no Pesadelo) + quantidade, sem caixa; tocar mostra o nome EN/PT. Sem nenhuma, não renderiza. **Exports:** `EssencesSection({ essences, language })`.

@@ -8,7 +8,7 @@ import {
 describe('portais do Rift (REGISTRO §471)', () => {
   it('um portal a cada 50 camadas: 10 portais, cada um no 2º andar do nó que contém a camada', () => {
     expect(RIFT_PORTAL_COUNT).toBe(10);
-    expect(RIFT_SET_COUNT * 2).toBe(538);
+    expect(RIFT_SET_COUNT * 2).toBe(546);
     for (let k = 1; k <= 10; k++) {
       expect(riftPortalLayer(k)).toBe(50 * k);
       expect(riftPortalNodeIndex(k)).toBe(25 * k - 1);

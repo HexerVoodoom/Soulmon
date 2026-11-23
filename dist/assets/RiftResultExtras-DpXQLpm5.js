@@ -1,1 +1,0 @@
-import{ez as r,j as i,eA as o,eB as n}from"./index-BMYUQBHJ.js";function x({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:n(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{x as R};

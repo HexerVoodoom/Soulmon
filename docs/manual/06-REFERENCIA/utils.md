@@ -137,7 +137,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/catalogosNovos.ts`
 
-**Dono de:** a injeção dos catálogos grandes de cosméticos (`cosmeticosNovos`, temas e elementos; `honraDecor`, decoração de Honra) na loja (`injetarCatalogosNovos` em `shop.ts`), nos cenários (`injetarCenariosNovos`), nas molduras (`injetarMolduras`), nos preços de decoração (`injetarPrecosDeDecor`) e na arte (`injetarArteDeDecor`), no MESMO lugar de antes (REGISTRO §498). Só existe para ser carregado por `import()` (fora do chunk de entrada). **Chamado por:** `catalogosNovosLoader.ts`, `vitest.setup.catalogos.ts`. **Régua:** `catalogosNovos.test.ts`, `cosmeticosNovos.test.ts`.
+**Dono de:** a injeção dos catálogos grandes de cosméticos (`cosmeticosNovos`, temas e elementos; `honraDecor`, decoração de Honra) na loja (`injetarCatalogosNovos` em `shop.ts`), nos cenários (`injetarCenariosNovos`), nas molduras (`injetarMolduras`), nos preços de decoração (`injetarPrecosDeDecor`) e na arte (`injetarArteDeDecor`), no MESMO lugar de antes (REGISTRO §500). Só existe para ser carregado por `import()` (fora do chunk de entrada). **Chamado por:** `catalogosNovosLoader.ts`, `vitest.setup.catalogos.ts`. **Régua:** `catalogosNovos.test.ts`, `cosmeticosNovos.test.ts`.
 
 ### `src/utils/catalogosNovosLoader.ts`
 
@@ -4702,13 +4702,17 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/elementosLote4.data.ts`
 **Dono de:** o lote 4 dos elementos curados (nº 262-267: Clareira Sagrada, Alto-Forno, Bênção Feérica, Floresta Ancestral, Colosso Blindado, Corte Feérica) e `CURADOS_PROMOVIDOS_DATA` (Pestilência, Maldição, Cyber, nº 205-207). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts`, `enemyRosterArt.ts`, `spriteElement.ts`.
 
+### `src/utils/elementosLote5.data.ts`
+**Dono de:** o lote 5 dos elementos curados (nº 268-271, P5, 23/11/2026, REGISTRO §500): 4 trios, `[número, id, nome PROVISÓRIO do Soulmon, dominante, comp. 2, comp. 3]`: `fantasma` (morte, vida, tempo), `morto_vivo` (morte, vida, vileza), `sangue` (vida, vileza, água), `furia` (fogo, vigor, vileza). O 1º componente é o dominante (golpes, arte de reserva, vantagem). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts` (`buildLote5`, no FIM do roster para não deslocar o #N do Bestiário), `enemyRosterArt.ts`, `spriteElement.ts`. Espelhos do servidor: `_duel.js`, `_elementoBase.js`, `_essenceShop.js`, `_elementDex.js`. **Régua:** `elementosLote5.test.ts`.
+
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
 
 ### `src/utils/elementosCurados.ts`
-**Dono de:** os 59 elementos curados (205–207 promovidos, 212–267, lotes 1–4) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
+**Dono de:** os 63 elementos curados (205–207 promovidos, 212–271, lotes 1–5) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
 **Sincronização 09/11/2026:** os curados passaram de 50 para 59 (os 50 dos lotes 1–3, os 6 do lote 4 de `elementosLote4.data.ts` — planta, industrial e fada — e os 3 trios promovidos 205–207: Pestilência, Maldição, Cyber; 05/11/2026, emenda ao §232). Os promovidos não geram roster (já existem). Nomes novos de cenário/elemento: `clareira`, `alto_forno`, `bencao_feerica`, `floresta_ancestral`, `colosso_blindado`, `corte_feerica`, `pestilencia`, `maldicao`, `cyber`.
+**Sincronização 23/11/2026 (P5, §500):** de 59 para 63, com os 4 trios do lote 5 (`fantasma`, `morto_vivo`, `sangue`, `furia`; ver `elementosLote5.data.ts`). `ELEMENT_DEX_MAX` 270 para 274 (cliente e servidor).
 
 ### `src/utils/libraryNew.ts`
 **Dono de:** o aviso de entrada nova na Biblioteca (01/11/2026): `GameState.libraryAck = {b,e,s}` (tamanhos de bestiary/defeatedElements/strayPlayersSeen na última abertura), o que é NEW (`libraryNewKeys`/`libraryNewCount`), a abertura que grava o visto (`ackLibrary`) e o texto exato do aviso. Save antigo nasce sem NEW retroativo. **Chamado por:** `App.tsx`, `LibraryPage.tsx`, `GameStateContext.tsx`. **Régua:** `libraryNew.test.ts`, `LibraryNewBadge.render.test.tsx`.
@@ -4831,6 +4835,9 @@ O guia da aba Materiais da Mochila: para cada material de prédio, ONDE consegui
 ### `src/utils/formaEquip.ts` (10/11/2026)
 
 Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.
+
+### `src/utils/elementoTextos.data.ts` (23/11/2026, P5)
+**Dono de:** os textos dos 20 elementos BASE no modal do dex (descrição do elemento + parágrafo conceitual), em PT e EN, aprovados pelo dono em 23/11/2026 (`docs/TEXTOS-ELEMENTOS-ARCANOS-FINAL.md`). `TEXTOS_ELEMENTO_BASE` (id → `{pt, en}`) e `textoDoElementoBase(id, isPt)`. O arcano de cada texto é metadado só do doc e não aparece no app. Combinados, curados, neutro e os 4 do lote 5 não têm texto próprio (`undefined`). Só `ElementDex` importa (fora da entrada). Régua: `src/components/ElementDex.textos.render.test.tsx`.
 
 ### `src/utils/elementoDescritores.data.ts` (10/11/2026)
 

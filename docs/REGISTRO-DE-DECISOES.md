@@ -6656,10 +6656,22 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA para o medido. Nenhum teto mudou.
 - **Rollback:** reverter o commit; sem save/servidor.
 
-## §500 — Decoração que nunca apaga: modo `sempre` e o Cristal Fundador (23/11/2026, feat/cristal-fundador)
+## §501 — Decoração que nunca apaga: modo `sempre` e o Cristal Fundador (23/11/2026, feat/cristal-fundador)
 
 - **Decisão (dono):** `DecorLuzModo` ganha `'sempre'`: `decorLuzAcesa` devolve `true` acordado ou dormindo, a peça nunca escurece (sem o filtro de apagado) e, com o pet dormindo, é redesenhada na camada ACIMA do véu da noite (`PetStageBrilhos`) para o véu de 55% não a apagar. `luz` e `noite` não mudam.
 - **Item:** `furn-cristal-fundador` (Cristal Fundador / Founder Crystal), `kind: 'furniture'`, `fits: 'any'`, espaço do chão `floor-right`, NUNCA à venda (lista `CONCESSOES_ITEMS`, fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS`, sem preço). O chunk lazy `cristalFundador.ts` o injeta; a entrada só ganha a linha de `DECOR_LUZ`.
 - **Fogo:** 2ª camada em folha de 5 quadros (`DECOR_CHAMA`), `background-position` em `steps(4, jump-none)` (N-1 passos = N quadros), ~140 ms/quadro; em `prefers-reduced-motion` fica parado no quadro 1.
 - **Não feito:** a entrega por progressão (Fundo/Moldura/Retrato/Cristal) aguarda decisões do dono. Sem campo nem chave nova no save; item desconhecido segue sem quebrar save antigo.
 - **Rollback:** reverter o commit; um save com o id equipado cai no emoji/some do palco, sem erro.
+
+
+## §500 — Lote 5 dos elementos curados: Fantasma, Morto-Vivo, Sangue e Fúria (23/11/2026, pedido P5; número provisório, conferir colisão no merge)
+
+- **Decisão:** 4 elementos combinados NOVOS, todos TRIOS, no catálogo curado (`elementosLote5.data.ts`, nº 268-271; ids sem acento; nomes PT/EN Fantasma/Ghost, Morto-Vivo/Undead, Sangue/Blood, Fúria/Fury). Receitas (todas livres em `ELEMENTOS_CURADOS`, e os 190 pares já estavam ocupados): **fantasma = vida+morte+tempo**; **morto_vivo = vida+morte+vileza**; **sangue = vida+vileza+água**; **furia = fogo+vigor+vileza**.
+- **Por que sangue leva água:** sangue é o líquido da vida; vida+vileza sozinho era um par já ocupado, e o trio precisava de um componente que dissesse "fluido". Água dá a forma (gota, correnteza) sem tomar o papel de dominante.
+- **Dominante (1º componente da linha; dá golpes, arte de reserva, vantagem/fraqueza por `BASE_DO_PAR` e `baseDominanteDoElemento`):** fantasma→**morte** (a essência de um espectro é estar morto e ainda presente; vida e tempo qualificam), morto_vivo→**morte** (corpo morto que anda; a vida é o que o reanima, a vileza é o que o corrompe), sangue→**vida** (é o que a vida faz circular; vileza e água o tornam arma), furia→**fogo** (raiva é calor; vigor dá o corpo e vileza a malícia). A ordem das linhas guardada é `[dominante, …]`; a receita (conjunto) é a pedida.
+- **Aditivo / compat:** nenhum id nem receita existente muda. `ELEMENT_DEX_MAX` (save da Biblioteca, cliente e servidor) sobe de 270 para 274: save antigo (≤270) lê normal; o servidor e o cliente precisam subir JUNTOS (um servidor ainda em 270 cortaria os 4 últimos destrancados de um cliente novo). Espelhos do servidor atualizados: `_duel.js` (`ELEMENTOS_FICHA`), `_elementoBase.js` (`BASE_DO_PAR`), `_essenceShop.js` (`CURATED_RAW`, preço 3 como os demais trios), `_elementDex.js`.
+- **Efeitos colaterais conhecidos (todos derivados das listas, nenhum número mexido à mão):** Loja de Essências/poção passam a ter 273 do catálogo (210 + 63); o Rift/Masmorra passa de 269 para 273 conjuntos (546 andares; a volta começa no andar 547). Os 4 trios entram na faixa dos trios, ANTES dos quádruplos: a camada em que cada quádruplo aparece desloca 8 andares (só o conteúdo da camada; recorde, portais e save não guardam elemento).
+- **Roster:** os 4 rookies entram no FIM de TUDO do `ENEMY_ROSTER` (depois dos 15 legados), para não deslocar o `#N` do Bestiário de quem já tem criatura anotada. Arte de reserva = rookie da criatura base do dominante (`enemyRosterArt.ts`); ícone provisório = o do 1º componente. Nomes dos Soulmon (Spectrel, Revenox, Hemolisk, Furiosk) e descritores visuais são PROVISÓRIOS, montados dos componentes; sem texto de descrição PT/EN (aguarda o dono).
+- **Dívida de arte declarada nos testes (cada uma falha se a arte entrar sem tirar o id da lista):** `SEM_ARTE_PROPRIA` da Fenda, `SEM_POCAO_AINDA` (poção e chip), `SEM_FORMA_AINDA` (pacote A). Lista do que falta: `docs/ASSETS-A-GERAR.md`, seção "Curados novos: lote 5".
+- **Rollback:** reverter o commit; o save guarda só ids de elemento destrancados (id desconhecido é descartado na leitura), então não há migração.
