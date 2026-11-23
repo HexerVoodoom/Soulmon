@@ -79,4 +79,4 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 **Inventário** (`ModalSheet placement="center"`, moldura `MOLDURA_HOME_DIALOGOS`): App (inline), AppUpdateGate, BonusTaskIntroModal, DailyReportModal (3), DayGoalsModal, DungeonPotionsModal, DungeonReturnModal ("Back from the Rift"), EvolutionStatsModal, MailboxSheet (2), Match3Game, PlayReviewModal, WakeToEnter, CatalogOnboardingFlow (2), ArenaCuraModal, FeiraEventoSheet, FeiraLojaSheet, ArcadeModal, TicketBuyModal, BlockedActionModal; mais `RitualDialog` (`RitualKit`, mesma moldura).
 
 - Etapa 2 (feita, só layout): altura mínima `min(70u, 80dvh)`, respiro interno = `--sm2-moldura-pad-t/x/b` + folga (texto não encosta na placa nem no botão), margem externa 16 → 24 px.
-- Etapa 3 (moldura `cristal`: cantos arredondados, fio turquesa, 1–2 cristais, sem cipó): aguarda 9-slice do P6 (amostra ao dono antes do lote).
+- Etapa 3 (feita): moldura `cristal` (9-slice slice 225 + placa de bronze em 3 partes), aprovada pelo dono em 23/11; `ModalSheet placement=center` usa `ModalFrame variante="cristal"`. `RitualDialog` (RitualKit) segue na moldura padrão.

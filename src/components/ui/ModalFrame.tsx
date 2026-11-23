@@ -22,6 +22,8 @@ export interface ModalFrameProps extends Omit<HTMLAttributes<HTMLDivElement>, 't
   fundo?: string;
   /** Opacidade do fundo, 0..1. Padrão 0,15 (fundo do lote) ou 0,6 (pedra com runas). */
   fillOpacity?: number;
+  /** `'cristal'`: moldura de POPUP central (fio turquesa + cobre, cristais em 2 cantos, placa de título de bronze). 9-slice por CSS (`.sm2-moldura-modal--cristal`); sem fundo de lote. */
+  variante?: 'cristal';
   children?: ReactNode;
 }
 
@@ -34,7 +36,7 @@ const ModalAreaContext = createContext<HTMLElement | null>(null);
 export function useModalArea(): HTMLElement | null { return useContext(ModalAreaContext); }
 
 export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function ModalFrame(
-  { title, info, fundo, fillOpacity, className, style, children, ...rest }, ref,
+  { title, info, fundo, fillOpacity, variante, className, style, children, ...rest }, ref,
 ) {
   // `--u` (1% da largura) é medido aqui, e NÃO por `container-type`: um contêiner de layout vira o bloco de contenção dos filhos `position: fixed`,
   // e as sub-folhas (ModalSheet, Hexsmith, Criar poção) ficavam presas e cortadas dentro do modal. Sem contenção, elas sobem à tela inteira.
@@ -71,7 +73,7 @@ export const ModalFrame = forwardRef<HTMLDivElement, ModalFrameProps>(function M
     '--sm2-moldura-fundo': fundo ? `url("${fundo}")` : PEDRA_RUNAS_URL ? `url("${PEDRA_RUNAS_URL}")` : 'none',
   } as CSSProperties;
   return (
-    <div ref={setRef} data-moldura-modal="" data-moldura-fundo={fundo ? 'lote' : 'pedra'} className={['sm2-moldura-modal', fundo ? '' : 'sm2-moldura-modal--pedra', className].filter(Boolean).join(' ')} style={st} {...rest}>
+    <div ref={setRef} data-moldura-modal="" data-moldura-fundo={fundo ? 'lote' : 'pedra'} className={['sm2-moldura-modal', variante === 'cristal' ? 'sm2-moldura-modal--cristal' : fundo ? '' : 'sm2-moldura-modal--pedra', className].filter(Boolean).join(' ')} style={st} {...rest}>
       <span className="sm2-moldura-modal__fundo" aria-hidden="true" />
       <span className="sm2-moldura-modal__lado sm2-moldura-modal__lado--e" aria-hidden="true" />
       <span className="sm2-moldura-modal__lado sm2-moldura-modal__lado--d" aria-hidden="true" />

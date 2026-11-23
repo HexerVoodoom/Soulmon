@@ -470,6 +470,7 @@ export function ModalSheet({
         aria-label={title}
         data-placement={placement}
         className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
+        {...(framed && centered ? { variante: 'cristal' } : null)}
         {...(framed ? { 'data-theme': 'dark', title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
         style={{
           ...(noMiolo
@@ -501,7 +502,7 @@ export function ModalSheet({
         {closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
-          <div style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
+          <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
             <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
           </div>
         ) : null}
