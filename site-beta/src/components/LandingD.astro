@@ -16,8 +16,8 @@ import midia from '../content/midia.json';
 import assets from '../content/assets.json';
 import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
 import { TEXTOS_B } from '../i18n/textosB';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+interface Props { lang: Lang; principal?: boolean }
+const { lang, principal = false } = Astro.props;
 const t = TEXTOS[lang]; const x = TEXTOS_B[lang];
 const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const mo = t.modal;
 const H1 = { pt: 'Evolua sua vida. Evolua seu jogo.', en: 'Evolve your life. Evolve your game.' }[lang];
@@ -58,7 +58,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   ultimate: { poder: [['/sprites/colete/ultimate/chama_azul.webp', t.colete.nomes.chama_azul], ['/sprites/colete/ultimate/brinquedo.webp', t.colete.nomes.brinquedo], ['/sprites/colete/ultimate/raiz_profunda.webp', t.colete.nomes.raiz_profunda]] },
 };
 ---
-<Base lang={lang} titulo={x.titulo} desc={x.desc} alternativa={t.outraHome + 'd/'} aqui={t.home + 'd/'} canonico={t.home} preload>
+<Base lang={lang} titulo={x.titulo} desc={x.desc} alternativa={principal ? t.outraHome : t.outraHome + 'd/'} aqui={principal ? t.home : t.home + 'd/'} canonico={t.home} preload>
   <a class="pular" href="#conteudo">{t.pular}</a>
 
   <header class="topo" data-topo>
