@@ -9,6 +9,7 @@ import { NewBadge } from './LibraryNewBadge';
 import { elementMatchups } from '../utils/elementDexMatchups';
 import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
 import { compositionHasBases, selectedBases } from '../utils/elementPotion';
+import { textoDoElementoBase } from '../utils/elementoTextos.data';
 
 /**
  * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 59 curados (205–207, 212–267) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
@@ -105,6 +106,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
             {elementIcon(openId) && <img src={elementIcon(openId)} alt="" aria-hidden="true" width={96} height={96} draggable={false} style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />}
             <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {textoDoElementoBase(openId, isPt) && <p className="sm2-lib-s" data-element-text style={{ margin: 0 }}>{textoDoElementoBase(openId, isPt)}</p>}
               {comps && <RefList title={isPt ? 'Composição' : 'Composition'} ids={comps} unlocked={unlocked} isPt={isPt} />}
               <RefList title={isPt ? 'Forte contra' : 'Strong against'} ids={m.strong} unlocked={unlocked} isPt={isPt} />
               <RefList title={isPt ? 'Fraco contra' : 'Weak against'} ids={m.weak} unlocked={unlocked} isPt={isPt} />
