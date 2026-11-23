@@ -79,6 +79,19 @@ function cacheavel(res) {
   return !!res && res.status === 200 && res.type === 'basic' && !res.redirected;
 }
 
+/**
+ * O Worker responde 200 text/html (fallback SPA) para /assets/* inexistente (chunk de deploy antigo).
+ * Isso nunca pode ser servido nem gravado como JS/CSS/imagem: vira 404 real, e o import dinâmico
+ * falha de forma reconhecível (o app limpa o cache e recarrega uma vez).
+ */
+function htmlNoLugarDeAsset(pathname, res) {
+  const tipo = (res && res.headers && res.headers.get('content-type')) || '';
+  return pathname.startsWith('/assets/') && /text\/html/i.test(tipo);
+}
+function semHtmlFalso(pathname, res) {
+  return htmlNoLugarDeAsset(pathname, res) ? new Response('', { status: 404, statusText: 'Asset ausente' }) : res;
+}
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -162,7 +175,7 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(
         caches.match(webpRequest).then((cached) => {
           if (cached) return cached;
-          return fetch(webpRequest)
+          return fetch(webpRequest).then((r) => semHtmlFalso(url.pathname, r))
             .then((res) => {
               if (!cacheavel(res)) throw new Error('WebP not found');
               const clone = res.clone();
@@ -173,7 +186,7 @@ self.addEventListener('fetch', (event) => {
               caches.match(request).then(
                 (c) =>
                   c ||
-                  fetch(request).then((res) => {
+                  fetch(request).then((r0) => semHtmlFalso(url.pathname, r0)).then((res) => {
                     if (cacheavel(res)) {
                       const clone = res.clone();
                       caches.open(cacheDoAsset(url.pathname)).then((cache) => cache.put(request, clone));
@@ -191,7 +204,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then(
         (cached) =>
           cached ||
-          fetch(request).then((res) => {
+          fetch(request).then((r0) => semHtmlFalso(url.pathname, r0)).then((res) => {
             if (cacheavel(res)) {
               const clone = res.clone();
               caches.open(cacheDoAsset(url.pathname)).then((c) => c.put(request, clone));

@@ -1,10 +1,12 @@
+import { limparSwERecarregar } from './erroDetalhes';
+
 // Chunk velho / import dinâmico que falha logo depois de um deploy (o index em cache aponta para um
 // arquivo com hash que já não existe): UM reload resolve. A guarda em sessionStorage impede o laço
 // de reloads se o erro persistir (aí a tela de erro aparece, com os detalhes).
 export const CHAVE_RECARGA_CHUNK = 'soulmon-chunk-reload';
 
 /** Padrões de mensagem de falha de import dinâmico nos WebViews/navegadores comuns. */
-const PADRAO_CHUNK = /dynamically imported module|importing a module script failed|error loading dynamically imported|failed to fetch dynamically|unable to preload css|loading (css )?chunk [\w-]+ failed/i;
+const PADRAO_CHUNK = /dynamically imported module|importing a module script failed|error loading dynamically imported|failed to fetch dynamically|unable to preload css|unexpected token '?<|loading (css )?chunk [\w-]+ failed/i;
 
 export function ehErroDeChunk(reason: unknown): boolean {
   const msg = reason instanceof Error ? reason.message : typeof reason === 'string' ? reason : (reason as { message?: unknown } | null)?.message;
@@ -24,7 +26,12 @@ export function recarregarUmaVez(recarregar: () => void = () => window.location.
   return true;
 }
 
-export function installChunkReloadHandlers(target: Pick<Window, 'addEventListener'> = window, recarregar?: () => void): void {
+/** Chunk faltante: limpa caches/SW e recarrega UMA vez por sessão. `true` = recarga iniciada (não mostrar a tela de erro). */
+export function recargaPorChunkFaltante(error: unknown, recarregar: () => void = () => { void limparSwERecarregar(); }): boolean {
+  return ehErroDeChunk(error) && recarregarUmaVez(recarregar);
+}
+
+export function installChunkReloadHandlers(target: Pick<Window, 'addEventListener'> = window, recarregar: () => void = () => { void limparSwERecarregar(); }): void {
   target.addEventListener('vite:preloadError', (e) => {
     if (recarregarUmaVez(recarregar)) (e as Event).preventDefault?.();
   });

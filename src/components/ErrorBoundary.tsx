@@ -7,9 +7,11 @@ import { sm2Button } from './form/FormKit';
 import { FeedbackLink } from './FeedbackLink';
 import { reportCrash } from '../utils/crashReport';
 import { detalhesDoErro, limparSwERecarregar } from '../utils/erroDetalhes';
+import { recargaPorChunkFaltante } from '../utils/recargaPorChunk';
 
 interface Props { children: ReactNode; }
-interface State { hasError: boolean; error: Error | null; }
+interface State { hasError: boolean; error: Error | null; recarregando?: boolean; }
+export const ErrorBoundaryRecarga = { fn: undefined as (() => void) | undefined };
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
@@ -21,12 +23,15 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Relatório mínimo e sem conteúdo do usuário (`utils/crashReport.ts`). Nunca lança.
     reportCrash('boundary', error);
+    // Chunk de deploy antigo (HTML no lugar do JS): limpa SW/caches e recarrega 1x; no 2º erro mostra a tela.
+    if (recargaPorChunkFaltante(error, ErrorBoundaryRecarga.fn)) this.setState({ recarregando: true });
     if (import.meta.env.DEV) {
       console.error('[Soulmon] Render error:', error, info.componentStack);
     }
   }
 
   render() {
+    if (this.state.hasError && this.state.recarregando) return null;
     if (this.state.hasError) {
       // A tela de erro é a única superfície que pode aparecer antes de o app
       // montar, então lê o idioma direto do localStorage.
