@@ -82,9 +82,8 @@ describe('HexsmithSheet', () => {
     const slots = document.querySelectorAll('[data-hex-slot]');
     expect(slots).toHaveLength(5);
     for (const s of HEX_SLOTS) expect(q(`[data-hex-slot="${s}"]`).getAttribute('aria-label')).toMatch(/Vazio/);
-    // o código hex fica num Disclosure fechado
-    expect(document.querySelectorAll('[data-hex-line]')).toHaveLength(0);
-    click(screen.getByRole('button', { name: 'Código hex' }));
+    // o código hex fica sempre aberto, sem seta (dono, 22/11/2026)
+    expect(screen.queryByRole('button', { name: 'Código hex' })).toBeNull();
     expect(document.querySelectorAll('[data-hex-line]')).toHaveLength(5);
   });
 
@@ -115,7 +114,6 @@ describe('HexsmithSheet', () => {
     expect(s.food[potionKey('agua')]).toBeUndefined();
     expect(s.hx.owned).toEqual(['garra:agua']);
     expect(s.hx.equipped.garra).toBe('garra:agua');
-    click(screen.getByRole('button', { name: 'Código hex', hidden: true }));
     expect(q('[data-hex-line="garra"]').textContent).toMatch(/Água.*era/);
   });
 

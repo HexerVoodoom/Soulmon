@@ -9604,6 +9604,8 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
   color: var(--sm2-muted); text-decoration: underline dotted var(--sm2-line); text-underline-offset: 3px;
   &[data-on="true"] { color: var(--sm2-ink); }
 }
+.sm2-hex-code-block { display: grid; gap: var(--sm2-space-3); padding: var(--sm2-space-4) var(--sm2-space-3); }
+.sm2-hex-code-block h3 { margin: 0; }
 .sm2-hex-code {
   list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-half);
   font-family: var(--sm2-font-mono); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); color: var(--sm2-muted);
