@@ -4709,6 +4709,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
 
+### `src/utils/elementoCategoria.ts`
+**Dono de:** a categoria de um elemento na aba Elementos da Biblioteca (P5/24.3): `elementoCategoria(id)` = base (20) · ii (pares) · iii (curados de 3) · iv (curados de 4) · special (só o `neutro`; não existe elemento Nightmare no dex), `ELEMENTO_CATEGORIAS`, `ELEMENTO_CATEGORIA_ROTULO` (PT/EN). **Chamado por:** `ElementDex.tsx`. **Régua:** `ElementDex.drive.render.test.tsx`.
+
 ### `src/utils/elementosCurados.ts`
 **Dono de:** os 63 elementos curados (205–207 promovidos, 212–271, lotes 1–5) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
 **Sincronização 09/11/2026:** os curados passaram de 50 para 59 (os 50 dos lotes 1–3, os 6 do lote 4 de `elementosLote4.data.ts` — planta, industrial e fada — e os 3 trios promovidos 205–207: Pestilência, Maldição, Cyber; 05/11/2026, emenda ao §232). Os promovidos não geram roster (já existem). Nomes novos de cenário/elemento: `clareira`, `alto_forno`, `bencao_feerica`, `floresta_ancestral`, `colosso_blindado`, `corte_feerica`, `pestilencia`, `maldicao`, `cyber`.

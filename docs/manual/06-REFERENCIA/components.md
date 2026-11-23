@@ -2371,12 +2371,17 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 **Sync 23/11/2026 (P5):** o modal de um elemento BASE mostra, acima da composição e das vantagens, o texto aprovado do dono (`[data-element-text]`, de `utils/elementoTextos.data.ts`); combinado e curado seguem sem texto. **Régua:** `src/components/ElementDex.textos.render.test.tsx`.
 
+**Sync 23/11/2026 (P5/24):** a aba ganhou chips de categoria (`[data-element-cat]`: Base, Comb II, Comb III, Comb IV, Special; `utils/elementoCategoria.ts`) e a caixa "Novo" (`[data-element-only-new]`, só destrancados com selo); combinam em E com o filtro por bases. A ficha mora em `ElementModal.tsx` (`dexElementName` segue reexportado). O cabeçalho `X / Y` já existia (PT/EN iguais).
+
 ### `src/components/EssencesSection.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** a dica da Essência de Pesadelo diz "ainda sem uso, só guardar" (`data-essence-sem-uso`).
 **Dono de:** a seção Essências do Laboratório (aba do pet, logo abaixo dos Sonhos; 28/10/2026): só as com quantidade > 0, cada uma = ícone do próprio elemento (`elementIcon`; `nightmareIcon` no Pesadelo) + quantidade, sem caixa; tocar mostra o nome EN/PT. Sem nenhuma, não renderiza. **Exports:** `EssencesSection({ essences, language })`.
 
 ### `src/components/games/ElementAdvantageBadge.tsx`
 **Dono de:** o selo "Super eficiente!/Pouco eficiente" (EN "Super effective!/Not very effective") a partir de `elementAdvantage` (+1/-1; neutro não renderiza). Vai no slot `badge` do `BattleStage` (Arena, Duelo) e sob o ícone do jogador no Combina 3; textos em `pveTags.ts` (`ELEMENT_ADVANTAGE_TAG`). **Chamado por:** `ArenaGame.tsx`, `DuelScreen.tsx`, `Match3Game.tsx`. **Régua:** `ElementAdvantageBadge.test.tsx`.
+
+### `src/components/ElementModal.tsx`
+**Dono de:** a ficha de um elemento destrancado (P5/24, 23/11/2026), extraída do `ElementDex`: ícone, texto (base), Composição, Forte/Fraco contra. Cada componente destrancado da Composição é botão (`[data-dex-ref-open]`) que abre a ficha dele numa pilha; "Voltar" (`[data-element-back]`, e o voltar do sistema via `useBackLayer`) volta um nível, o X fecha tudo; trancado segue "?". **Exports:** `ElementModal({ id, unlocked, isPt, onClose })`, `dexElementName`. **Chamado por:** `ElementDex.tsx`, `BestiaryCollection.tsx` (ícone do elemento da criatura, só se destrancado). **Régua:** `ElementDex.drive.render.test.tsx`.
 
 ### `src/components/ElementBaseSlots.tsx`
 

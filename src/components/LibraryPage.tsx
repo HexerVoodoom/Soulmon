@@ -679,7 +679,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 <ElementBaseSlots slots={wildBases} isPt={isPt} onChange={(i, v) => setWildBases(s => s.map((x, j) => (j === i ? v : x)))} />
               </div>
               {/* 09/11/2026 (dono, §254): UMA lista só, rookie → mega, com subtítulo por estágio; desgarrado de jogador (§213) junto, no fim. */}
-              <BestiaryCollection seen={bestiary} language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
+              <BestiaryCollection seen={bestiary} defeatedElements={defeatedElements} language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
             </>
           )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}

@@ -8995,7 +8995,7 @@ var SIM_ELEMENTO_REVISADO = Object.freeze({
   sim_0170: { de: "industrial", para: "arcano" }
 });
 
-// ../../nm-cache/node_modules/fflate/esm/browser.js
+// ../../../nm-cache/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -22494,7 +22494,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-R8Bzno/functionsRoutes-0.7458552468593193.mjs
+// ../.wrangler/tmp/pages-mMEvir/functionsRoutes-0.3012683217664591.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -22911,7 +22911,7 @@ var routes = [
   }
 ];
 
-// ../../nm-cache/node_modules/path-to-regexp/dist.es2015/index.js
+// ../../../nm-cache/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens2 = [];
   var i2 = 0;
@@ -23237,7 +23237,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../nm-cache/node_modules/wrangler/templates/pages-template-worker.ts
+// ../../../nm-cache/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
