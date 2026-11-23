@@ -9,8 +9,10 @@
  * na nuvem do próprio titular. NUNCA entram em payload de IA/chat, telemetria, métricas, perfil
  * público ou guilda — há contrato (`cadernoSensivel.contract.test.ts`).
  */
-export type CadernoFormato = 'tres-coisas' | 'gratidao' | 'aprendi' | 'livre';
-export const CADERNO_FORMATOS: readonly CadernoFormato[] = ['tres-coisas', 'gratidao', 'aprendi', 'livre'];
+export type CadernoFormato = 'tres-coisas' | 'gratidao' | 'aprendi' | 'importa' | 'livre';
+/** Os 4 cards da grade (`importa` entrou em 23/11/2026, aditivo: save antigo segue valendo); a escrita livre fica fora, num botão largo. */
+export const CADERNO_CARDS: readonly CadernoFormato[] = ['tres-coisas', 'gratidao', 'aprendi', 'importa'];
+export const CADERNO_FORMATOS: readonly CadernoFormato[] = [...CADERNO_CARDS, 'livre'];
 
 /** Teto de texto por entrada e de entradas guardadas — só higiene de storage. */
 export const MAX_CHARS = 2000;
@@ -60,7 +62,7 @@ export const removeEntry = (list: CadernoEntry[], id: string): CadernoEntry[] =>
 export function formatoDoDia(dayKey: string): CadernoFormato {
   let h = 0;
   for (const c of dayKey) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return CADERNO_FORMATOS[h % CADERNO_FORMATOS.length];
+  return CADERNO_CARDS[h % CADERNO_CARDS.length];
 }
 
 /** As anotações da 1ª versão (só no aparelho, `soulmon-caderno`), higienizadas. Vazio se não houver. */

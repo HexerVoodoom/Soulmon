@@ -6,7 +6,7 @@ import { SupportNote } from '../refugio/SupportNote';
 import { sheetCard, sheetCardList } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import {
-  CADERNO_FORMATOS, MAX_CHARS, addEntry, formatoDoDia, removeEntry, sinaisDeSofrimento,
+  CADERNO_CARDS, MAX_CHARS, addEntry, formatoDoDia, removeEntry, sinaisDeSofrimento,
   type CadernoEntry, type CadernoFormato,
 } from '../../utils/cadernoLocal';
 
@@ -29,8 +29,18 @@ const FORMATO: Record<CadernoFormato, { pt: string; en: string; askPt: string; a
   'tres-coisas': { pt: '3 coisas boas', en: '3 good things', askPt: 'Três coisas boas de hoje', askEn: 'Three good things from today' },
   gratidao: { pt: 'Gratidão', en: 'Gratitude', askPt: 'Algo pelo que você é grato hoje', askEn: 'Something you are grateful for today' },
   aprendi: { pt: 'O que aprendi', en: 'What I learned', askPt: 'Algo que você aprendeu hoje', askEn: 'Something you learned today' },
+  importa: { pt: 'O que importa hoje', en: 'What matters today', askPt: 'O que importa hoje?', askEn: 'What matters today?' },
   livre: { pt: 'Escrita livre', en: 'Free writing', askPt: 'Escreva à vontade, uns 3 minutos', askEn: 'Write freely, about 3 minutes' },
 };
+
+/** Perguntas-guia do 5º campo: só apontam o caminho, a pessoa escreve do jeito dela. */
+const GUIA_IMPORTA = {
+  pt: ['O que pede minha atenção hoje?', 'Que valor eu quero honrar hoje?', 'Que pequeno passo me aproxima disso?'],
+  en: ['What asks for my attention today?', 'Which value do I want to honor today?', 'What small step brings me closer to it?'],
+};
+
+/** Prefixo fixo da gratidão: não editável, em turquesa; vai junto no texto guardado. */
+const PREFIXO_GRATIDAO = { pt: 'Eu sou grato por', en: 'I am grateful for' };
 
 const fallbackDay = (): string => {
   const d = new Date();
@@ -61,7 +71,10 @@ export function CadernoSheet({ language, todayKey, entries, onChange }: {
   const [mostrarTodas, setMostrarTodas] = useState(false);
   const [diaFiltro, setDiaFiltro] = useState('all');
 
-  const rascunho = formato === 'tres-coisas' ? linhas.filter(l => l.trim()).join('\n') : texto;
+  const prefixo = isPt ? PREFIXO_GRATIDAO.pt : PREFIXO_GRATIDAO.en;
+  const rascunho = formato === 'tres-coisas'
+    ? linhas.filter(l => l.trim()).join('\n')
+    : formato === 'gratidao' ? (texto.trim() ? `${prefixo} ${texto.trim()}` : '') : texto;
   const sofrimento = useMemo(() => sinaisDeSofrimento(rascunho), [rascunho]);
   const mostraApoio = sofrimento || sinalSalvo;
 
@@ -95,9 +108,12 @@ export function CadernoSheet({ language, todayKey, entries, onChange }: {
       </div>
 
       <div role="radiogroup" aria-label={isPt ? 'Formato' : 'Format'} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {CADERNO_FORMATOS.map(f => (
+        {CADERNO_CARDS.map(f => (
           <Segment key={f} selected={formato === f} onSelect={() => { setFormato(f); mudou(); }} label={isPt ? FORMATO[f].pt : FORMATO[f].en} />
         ))}
+        <div data-caderno-livre style={{ gridColumn: '1 / -1' }}>
+          <Segment selected={formato === 'livre'} onSelect={() => { setFormato('livre'); mudou(); }} label={isPt ? FORMATO.livre.pt : FORMATO.livre.en} />
+        </div>
       </div>
 
       <div data-caderno-form style={{ ...sheetCard }}>
@@ -114,11 +130,21 @@ export function CadernoSheet({ language, todayKey, entries, onChange }: {
             />
           ))
           : (
+            <>
+              {formato === 'importa' && (
+                <ul data-caderno-guia style={{ ...sm2Hint, margin: 0, paddingLeft: 18 }}>
+                  {(isPt ? GUIA_IMPORTA.pt : GUIA_IMPORTA.en).map(q => <li key={q}>{q}</li>)}
+                </ul>
+              )}
+              {formato === 'gratidao' && (
+                <span data-caderno-prefixo style={{ ...sm2Text, fontWeight: 600, color: 'var(--sm2-primary-ink)' }}>{prefixo}</span>
+              )}
             <textarea
-              id="caderno-campo-0" data-caderno-texto value={texto} maxLength={MAX_CHARS}
+              id="caderno-campo-0" data-caderno-texto value={texto} maxLength={MAX_CHARS - (formato === 'gratidao' ? prefixo.length + 1 : 0)}
               onChange={e => { setTexto(e.target.value); mudou(); }}
               style={areaStyle}
             />
+            </>
           )}
         <button type="button" data-caderno-guardar disabled={!rascunho.trim()} onClick={guardar} style={sm2Button('primary', !rascunho.trim())}>
           {isPt ? 'Guardar' : 'Save'}
