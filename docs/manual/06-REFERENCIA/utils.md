@@ -4371,6 +4371,14 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
 **Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
 
+### `src/utils/recargaPorChunk.ts`
+
+Chunk velho depois de deploy: `installChunkReloadHandlers` (chamado em `main.tsx`) escuta `vite:preloadError` e `unhandledrejection` de import dinâmico e faz UM `location.reload()` por sessão (`recarregarUmaVez`, guarda em `sessionStorage`; sem storage não recarrega). Exports: `ehErroDeChunk`, `recarregarUmaVez`, `installChunkReloadHandlers`, `CHAVE_RECARGA_CHUNK`. Teste: `recargaPorChunk.test.ts`.
+
+### `src/utils/erroDetalhes.ts`
+
+`detalhesDoErro(error)`: linha curta (mensagem + 2 linhas de stack, passadas por `scrub`, até 300 caracteres) + `v<versão> · <build>`, mostrada na tela do `ErrorBoundary` e no e-mail de feedback. `limparSwERecarregar()`: apaga os caches e desregistra os service workers (try/catch) e recarrega.
+
 ### `src/utils/crashReport.ts`
 **Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
 **Exports:**

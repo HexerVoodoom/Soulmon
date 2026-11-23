@@ -6,9 +6,12 @@ import { Viewport } from './ui/Viewport';
 import { sm2Button } from './form/FormKit';
 import { FeedbackLink } from './FeedbackLink';
 import { reportCrash } from '../utils/crashReport';
+import { detalhesDoErro, limparSwERecarregar } from '../utils/erroDetalhes';
+import { recargaPorChunkFaltante } from '../utils/recargaPorChunk';
 
 interface Props { children: ReactNode; }
-interface State { hasError: boolean; error: Error | null; }
+interface State { hasError: boolean; error: Error | null; recarregando?: boolean; }
+export const ErrorBoundaryRecarga = { fn: undefined as (() => void) | undefined };
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
@@ -20,12 +23,15 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Relatório mínimo e sem conteúdo do usuário (`utils/crashReport.ts`). Nunca lança.
     reportCrash('boundary', error);
+    // Chunk de deploy antigo (HTML no lugar do JS): limpa SW/caches e recarrega 1x; no 2º erro mostra a tela.
+    if (recargaPorChunkFaltante(error, ErrorBoundaryRecarga.fn)) this.setState({ recarregando: true });
     if (import.meta.env.DEV) {
       console.error('[Soulmon] Render error:', error, info.componentStack);
     }
   }
 
   render() {
+    if (this.state.hasError && this.state.recarregando) return null;
     if (this.state.hasError) {
       // A tela de erro é a única superfície que pode aparecer antes de o app
       // montar, então lê o idioma direto do localStorage.
@@ -33,6 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // O `saveId` também vem direto do storage, pelo mesmo motivo. Vai só um
       // trecho no e-mail (`FeedbackLink.tsx`).
       const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
+      const detalhes = this.state.error ? detalhesDoErro(this.state.error) : null;
       /* Canvas Home, `HomeErro` (HOME-47) / D-H7 / D-H9 / X7: mascote em
          pixel DENTRO de um vidro 96², título Cinzel 20, corpo Rubik 14
          `muted`, e UM `primary` "Reload" — a única ação. Sem `danger`, sem
@@ -56,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => { void limparSwERecarregar(); }}
             style={{ ...sm2Button('primary'), marginTop: 12, minWidth: 160 }}
           >
             {isPt ? 'Recarregar' : 'Reload'}
@@ -68,8 +75,13 @@ export class ErrorBoundary extends Component<Props, State> {
           <FeedbackLink
             language={isPt ? 'pt-BR' : 'en-US'}
             saveId={saveId}
-            errorMessage={this.state.error?.message ?? null}
+            errorMessage={detalhes}
           />
+          {detalhes && (
+            <p data-testid="erro-detalhes" style={{ margin: 0, maxWidth: 320, fontFamily: 'var(--sm2-font-mono)', fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)', wordBreak: 'break-word' }}>
+              {isPt ? 'Detalhes' : 'Details'}: {detalhes}
+            </p>
+          )}
           {import.meta.env.DEV && this.state.error && (
             <pre style={{
               marginTop: 24, padding: 12, background: 'var(--sm2-surface-2)',
