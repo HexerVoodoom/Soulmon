@@ -1,22 +1,23 @@
 {
  "tamanho_arte": "1080x232 (enter) / 1080x233 (map), WebP alfa real",
  "slice_horizontal": {
-  "enter": {
+  "btn-rift*": {
    "esq": 200,
    "dir": 200
   },
-  "map": {
+  "btn-rift-sec*": {
    "esq": 150,
    "dir": 150
   }
  },
  "slice_vertical": "nenhum (esticar so na horizontal; altura css 72-84, minimo 48)",
  "arquivos": [
-  "final/rift-enter-normal.webp",
-  "final/rift-enter-pressed.webp",
-  "final/rift-enter-disabled.webp",
-  "final/rift-map-normal.webp",
-  "final/rift-map-pressed.webp"
+  "btn-rift.webp",
+  "btn-rift-press.webp",
+  "btn-rift-off.webp",
+  "btn-rift-sec.webp",
+  "btn-rift-sec-press.webp",
+  "btn-rift-sec-off.webp"
  ],
  "texto": "sem texto na arte; Enter: texto escuro sobre turquesa luminoso (como hoje) + raio + numero; disabled: cinza-ardosia, raio visivel e numero vermelho-cobre por CSS; Map: texto claro #F2FFFB sobre miolo teal escuro",
  "pressed": "afundar ~2px (css translateY) ja embutido 3px na arte + miolo mais escuro",
