@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { CheckRow } from './form/FormKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { LIBRARY_ELEMENT_IDS, dexUnlockedSet, elementComponents } from '../utils/elementDex';
 import { curatedComponents } from '../utils/elementosCurados';
@@ -41,10 +42,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
           <button key={c} type="button" data-element-cat={c} aria-pressed={cat === c} className={cat === c ? 'sm2-kit-chip sm2-kit-chip-on' : 'sm2-kit-chip'}
             onClick={() => setCat(cat === c ? null : c)}>{ELEMENTO_CATEGORIA_ROTULO[c][isPt ? 'pt' : 'en']}</button>
         ))}
-        <label data-element-only-new style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, cursor: 'pointer' }}>
-          <input type="checkbox" checked={soNovos} onChange={e => setSoNovos(e.target.checked)} />
-          <span className="sm2-lib-s">{isPt ? 'Novo' : 'New'}</span>
-        </label>
+        <span data-element-only-new><CheckRow checked={soNovos} onChange={setSoNovos}>{isPt ? 'Novo' : 'New'}</CheckRow></span>
       </div>
       <div style={{ margin: '0 0 12px' }} data-base-filter>
         <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, v) => setBases(s => s.map((x, j) => (j === i ? v : x)))} />
