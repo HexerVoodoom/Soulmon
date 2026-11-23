@@ -2789,6 +2789,9 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm-decor-brasa { position: absolute; left: 42%; top: 66%; width: 16%; aspect-ratio: 2; border-radius: 50%; background: radial-gradient(closest-side, hsl(176 80% 50% / .5), transparent); opacity: 0; transition: opacity 1.2s ease; }
 .sm-decor-brasa[data-on] { opacity: .55; animation: sm-decor-brasa-pulso 4.5s ease-in-out infinite; }
 @keyframes sm-decor-brasa-pulso { 50% { opacity: .3; } }
+/* Fogo turquesa do Cristal Fundador: folha de N quadros lado a lado sobre a arte; `steps(N-1, jump-none)` mostra os N quadros (0%..100%). Reduzido = quadro 1. */
+.sm-decor-chama { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; animation: sm-decor-chama-quadros .7s steps(4, jump-none) infinite; }
+@keyframes sm-decor-chama-quadros { to { background-position: 100% 0; } }
 /* Tela do fliperama: 41×40 px da arte em (70,44). */
 .sm-decor-tela { position: absolute; left: 41.7%; top: 26.2%; width: 24.4%; height: 23.8%; image-rendering: pixelated; border-radius: 2px; opacity: .92; }
 
@@ -2826,6 +2829,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   .sm-decor-luz-halo,
   .sm-decor-areia i,
   .sm-decor-fogo img,
+  .sm-decor-chama,
   .sm-decor-brasa,
   .sm-battle-idle { animation: none !important; }
 }

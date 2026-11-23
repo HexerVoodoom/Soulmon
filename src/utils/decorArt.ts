@@ -96,3 +96,12 @@ export function injetarArteDeDecor(...tabelas: ReadonlyArray<Readonly<Record<str
   for (const t of tabelas) Object.assign(DECOR_ART, t);
   aplicarAliasesDeDecor();
 }
+
+/**
+ * Camada de fogo animado em TIRA de quadros (a Fogueira tem a sua, em 2 camadas, no `PetStageDecor`). `src` = folha de `quadros` quadros
+ * quadrados lado a lado, sobreposta ao quadro da arte do suporte; o CSS (`sm-decor-chama`) a percorre em `steps(quadros - 1)`.
+ * Vazio na entrada: as peças entram por `injetarChamasDeDecor` (chunk lazy `catalogosNovos.ts`).
+ */
+export interface DecorChama { src: string; quadros: number }
+export const DECOR_CHAMA: Record<string, DecorChama> = {};
+export function injetarChamasDeDecor(t: Readonly<Record<string, DecorChama>>): void { Object.assign(DECOR_CHAMA, t); }
