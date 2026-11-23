@@ -95,6 +95,11 @@ export function ReviewSoulmonRow({ language, review }: { language: Language; rev
   );
 }
 
+/** O aviso de conclusão a partir do resultado bruto (o `App` o carrega por `import()`: a mensagem e o modal vivem juntos). */
+export function ReviewResultFromReport({ language, finished, onClose }: { language: Language; finished: Pick<ReviewReport, 'status'>[]; onClose: () => void }) {
+  return <ReviewResultModal language={language} message={reviewResultMessage(language, finished)} onClose={onClose} />;
+}
+
 /** O aviso de conclusão (uma vez por conclusão). */
 export function ReviewResultModal({ language, message, onClose }: { language: Language; message: string | null; onClose: () => void }) {
   const t = reviewCopy(language);

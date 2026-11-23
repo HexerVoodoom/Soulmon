@@ -77,14 +77,17 @@ import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCh
 import { useRegenAparencia } from './hooks/useRegenAparencia';
 import { useReviewWatcher } from './hooks/useReviewWatcher';
 import { isReviewableSpriteUrl, type ReviewReport, type ReviewSnapshot } from './utils/reviewSoulmon';
-import { ReviewResultModal, reviewResultMessage, type ReviewRowState } from './components/ReviewSoulmonRow';
+import type { ReviewRowState } from './components/ReviewSoulmonRow';
+// O aviso de conclusão da revisão só monta quando há resultado: chunk lazy, fora do caminho do boot (REGISTRO §499).
+const ReviewResultModal = lazy(() => import('./components/ReviewSoulmonRow').then(m => ({ default: m.ReviewResultFromReport })));
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, canManualRetry, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS, STARTER_NAMES } from './utils/sprites';
 import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
 import { sanitizeAvatarId } from './utils/avatar';
 import { ContentModals } from './components/ContentModals';
-import { NotificationManager } from './components/NotificationManager';
+// Sem UI (só agenda lembretes/push): chunk lazy, fora do caminho do boot (REGISTRO §499).
+const NotificationManager = lazy(() => import('./components/NotificationManager').then(m => ({ default: m.NotificationManager })));
 import { crossingsTouchMap, missionMark, strollLineState, claimStroll } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { sanitizeEquippedFrame } from './utils/frames';
@@ -269,7 +272,7 @@ import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
-import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
+import type { PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
 import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
@@ -367,7 +370,8 @@ import {
   shrink, effortOf, focusComplete, setFocus, focusTasks, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
-import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
+import type { SuggestedTask } from './utils/taskSuggestions';
+const PostponeNudgeSheet = lazy(() => import('./components/PostponeNudgeSheet').then(m => ({ default: m.PostponeNudgeSheet })));
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
   constancy, needsIntervention, GOOD_CONSTANCY_RATIO,
@@ -453,245 +457,6 @@ const EMPTY_NIGHTMARES = createNightmareState();
 // sheet fecha e nada acontece, e o texto diz isso.
 // ---------------------------------------------------------------------------
 
-/** Estado da chamada de IA da decomposição. Erro e vazio são estados de
- *  primeira classe: a rede do celular cai, e o sheet não pode virar um spinner
- *  eterno na tela de quem já estava evitando a tarefa. */
-type DecomposeState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'ready'; items: SuggestedTask[] }
-  | { kind: 'empty' }
-  | { kind: 'error' };
-
-function PostponeNudgeSheet({
-  task, language, onClose, onShrink, onDrop, onDecompose,
-}: {
-  task: Task | null;
-  language: Language;
-  onClose: () => void;
-  onShrink: (taskId: string) => void;
-  onDrop: (taskId: string) => void;
-  onDecompose: (taskId: string, picks: SuggestedTask[]) => void;
-}) {
-  const isPt = language === 'pt-BR';
-  const [state, setState] = useState<DecomposeState>({ kind: 'idle' });
-  /* A9 (QA rodada 2): o nome acessível do botão era título + explicação (30
-     palavras). O título nomeia (`aria-labelledby`), a explicação descreve
-     (`aria-describedby`) — o leitor de tela lê o nome e, só depois, a ajuda. */
-  const idBase = useId();
-  const ids = {
-    decT: `${idBase}-dec-t`, decH: `${idBase}-dec-h`,
-    encT: `${idBase}-enc-t`, encH: `${idBase}-enc-h`,
-    dxT: `${idBase}-dx-t`, dxH: `${idBase}-dx-h`,
-  };
-  const [picked, setPicked] = useState<Record<string, boolean>>({});
-
-  // Trocar de tarefa (ou fechar) zera o painel — senão o próximo sheet abriria
-  // já com as sugestões da tarefa anterior, que é como se oferece à pessoa um
-  // passo que não tem nada a ver com o que ela abriu.
-  const taskId = task?.id ?? null;
-  useEffect(() => {
-    setState({ kind: 'idle' });
-    setPicked({});
-  }, [taskId]);
-
-  const effort = task ? effortOf(task) : 1;
-  const canShrink = effort > 1;
-
-  const runDecompose = useCallback(async () => {
-    if (!task) return;
-    setState({ kind: 'loading' });
-    try {
-      const items = await suggestTasks(
-        task.name,
-        [task.category as ActivityCategory],
-        isPt ? 'pt-BR' : 'en-US',
-      );
-      // `suggestTasks` já engole rede caída / IA fora do ar e devolve []. "Não
-      // veio nada" e "quebrou" não são a mesma coisa para o usuário, então
-      // 'empty' tem texto próprio e caminho manual em vez de um "erro" — e o
-      // catch fica de pé para o que a função não prometeu engolir.
-      setState(items.length ? { kind: 'ready', items: items.slice(0, 4) } : { kind: 'empty' });
-    } catch {
-      setState({ kind: 'error' });
-    }
-  }, [task, isPt]);
-
-  if (!task) return null;
-
-  const picks = state.kind === 'ready' ? state.items.filter(i => picked[i.name]) : [];
-
-  /* Canvas Atividades `NudgeAdiamento` (D-A5): as três saídas são `outline`
-     64 de duas linhas (glifo 24 pelado + título 14/500 + pista 12 `muted`),
-     NENHUMA primária — a folha mostra, não decide. Inerte ("Shrink it" no
-     esforço 1) = fronteira `line` + tinta `muted`, com o motivo escrito, sem
-     `opacity` (Home E7). */
-  const opt = (disabled = false): React.CSSProperties => ({
-    ...sm2Button('outline', disabled),
-    ...(disabled ? { backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)' } : null),
-    width: '100%', minHeight: 64, flexDirection: 'column', alignItems: 'flex-start',
-    gap: 2, padding: '8px 16px', textAlign: 'left', fontSize: 'var(--sm2-text-sm)',
-  });
-  const optTitle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 };
-  const optHint = (disabled = false): React.CSSProperties => ({ ...sm2Hint, fontWeight: 400, color: disabled ? 'var(--sm2-muted)' : 'var(--sm2-muted)' });
-
-  return (
-    <ModalSheet
-      open
-      onClose={onClose}
-      language={language}
-      title={isPt ? 'Essa aí tá difícil?' : 'Is this one stuck?'}
-      maxWidth={480}
-    >
-      <p style={{ ...sm2Text, margin: 0 }}>
-        {isPt
-          ? `"${task.name}" já foi adiada ${task.postponedCount ?? 0} vezes. Isso é um dado, não uma bronca — e dado tem botão. Escolha uma saída, ou feche: nada acontece se você fechar.`
-          : `"${task.name}" has been postponed ${task.postponedCount ?? 0} times. That's data, not a scolding — and data has buttons. Pick a way out, or close: nothing happens if you close.`}
-      </p>
-
-      {/* ---- DECOMPOR ---- */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <button
-          type="button"
-          style={{ ...opt(), cursor: state.kind === 'loading' ? 'progress' : 'pointer' }}
-          onClick={runDecompose}
-          disabled={state.kind === 'loading'}
-          aria-busy={state.kind === 'loading' || undefined}
-          aria-labelledby={ids.decT}
-          aria-describedby={ids.decH}
-        >
-          <span style={optTitle} id={ids.decT}>
-            <Icon name="psychology" size={24} />
-            {isPt ? 'Decompor' : 'Break it down'}
-          </span>
-          <span style={optHint()} id={ids.decH}>
-            {isPt
-              ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa. O nome da tarefa vai para o provedor de IA.'
-              : 'Your pet thinks up small first steps and you pick which become tasks. The task name goes to the AI provider.'}
-          </span>
-        </button>
-
-        {/* Estados da chamada — todos anunciados, nenhum silencioso. */}
-        <div aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {state.kind === 'loading' && (
-            <span style={sm2Hint}>{isPt ? 'Pensando em passos…' : 'Thinking of steps…'}</span>
-          )}
-
-          {state.kind === 'error' && (
-            <span style={sm2Hint}>
-              {isPt ? 'Não deu pra pensar agora (sem conexão?).' : 'Could not think right now (offline?).'}
-            </span>
-          )}
-
-          {state.kind === 'empty' && (
-            <span style={sm2Hint}>
-              {isPt
-                ? 'Não achei um passo bom pra essa. Encolher costuma resolver igual — ou deixe pra lá sem culpa.'
-                : 'I could not find a good step for this one. Shrinking usually works just as well — or let it go, guilt-free.'}
-            </span>
-          )}
-
-          {state.kind === 'ready' && (
-            <>
-              <span style={sm2Hint}>
-                {isPt ? 'Toque nos passos que você quer:' : 'Tap the steps you want:'}
-              </span>
-              {/* Passos sugeridos = linhas de 44 com checkbox 24 (canvas):
-                  `role="checkbox"`, a linha inteira é o alvo. */}
-              {state.items.map(item => {
-                const on = !!picked[item.name];
-                return (
-                  <button
-                    key={item.name}
-                    type="button"
-                    role="checkbox"
-                    aria-checked={on}
-                    onClick={() => setPicked(p => ({ ...p, [item.name]: !p[item.name] }))}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, width: '100%',
-                      padding: '0 4px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer',
-                    }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        width: 24, height: 24, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: `2px solid ${on ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
-                        backgroundColor: on ? 'var(--sm2-primary-fill)' : 'transparent',
-                        color: 'var(--sm2-on-primary)',
-                      }}
-                    >
-                      {on && <Icon name="check" size={20} fill={1} weight={700} />}
-                    </span>
-                    <span style={sm2Text}>{item.name}</span>
-                  </button>
-                );
-              })}
-              {/* "Add N steps": o único `primary` da folha — há UMA ação;
-                  inerte até escolher, rotulado. */}
-              <button
-                type="button"
-                style={{ ...sm2Button('primary', picks.length === 0, 'sm'), alignSelf: 'flex-start' }}
-                disabled={picks.length === 0}
-                aria-disabled={picks.length === 0 || undefined}
-                onClick={() => { onDecompose(task.id, picks); onClose(); }}
-              >
-                {isPt
-                  ? `Adicionar ${picks.length || ''} ${picks.length === 1 ? 'passo' : 'passos'}`.replace('  ', ' ')
-                  : `Add ${picks.length || ''} ${picks.length === 1 ? 'step' : 'steps'}`.replace('  ', ' ')}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ---- ENCOLHER ---- */}
-      <button
-        type="button"
-        style={opt(!canShrink)}
-        disabled={!canShrink}
-        aria-disabled={!canShrink || undefined}
-        onClick={() => { onShrink(task.id); onClose(); }}
-        aria-labelledby={ids.encT}
-        aria-describedby={ids.encH}
-      >
-        <span style={optTitle} id={ids.encT}>
-          <Icon name="do_not_disturb_on" size={24} />
-          {isPt ? 'Encolher' : 'Shrink it'}
-        </span>
-        <span className="sm2-num" style={optHint(!canShrink)} id={ids.encH}>
-          {canShrink
-            ? (isPt
-              ? `esforço ${effort} → ${effort - 1} · zera o contador`
-              : `effort ${effort} → ${effort - 1} · resets the counter`)
-            : (isPt
-              ? 'Já é do tamanho mínimo — não dá pra encolher mais.'
-              : 'Already at the smallest size — nothing left to shrink.')}
-        </span>
-      </button>
-
-      {/* ---- DEIXAR PRA LÁ ---- `archive` (D-A8): `nightlight` é o Someday. */}
-      <button
-        type="button"
-        style={opt()}
-        onClick={() => { onDrop(task.id); onClose(); }}
-        aria-labelledby={ids.dxT}
-        aria-describedby={ids.dxH}
-      >
-        <span style={optTitle} id={ids.dxT}>
-          <Icon name="archive" size={24} />
-          {isPt ? 'Deixar pra lá' : 'Let it go'}
-        </span>
-        <span style={optHint()} id={ids.dxH}>
-          {isPt
-            ? 'Sai da lista sem ser concluída e sem ser apagada. Fica guardada, e dá pra trazer de volta quando quiser.'
-            : 'Leaves the list without being completed and without being deleted. It stays tucked away, and you can bring it back any time.'}
-        </span>
-      </button>
-    </ModalSheet>
-  );
-}
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
@@ -5075,7 +4840,8 @@ export default function App() {
   /** Mostra o GANHO de um resgate (pedido do dono, 30/10/2026; mesma linha única do 29/10): toast com `RewardPreview mode="after"`. Fora de updater (footgun 6). */
   const mostrarGanho = useCallback((titulo: string, items: PreviewItem[]) => {
     if (items.length === 0) { toast(titulo); return; }
-    toast(<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{titulo}<RewardPreview items={items} mode="after" language={language} size={14} /></span>);
+    // `RewardPreview` vem por import() (fora da entrada); o toast sai assim que ele chega (milissegundos, o chunk é pequeno).
+    void import('./components/ui/RewardPreview').then(({ RewardPreview }) => toast(<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{titulo}<RewardPreview items={items} mode="after" language={language} size={14} /></span>));
   }, [language]);
   /** O material pago por um resgate de missão (nome/emoji da tabela lazy do prédio); `qty` 0 (estoque no teto) não mostra nada. */
   const anunciarMaterial = useCallback((titulo: string, material: string | null, qty: number) => {
@@ -8605,7 +8371,7 @@ export default function App() {
         )}
 
         {/* Help Modal */}
-        <ReviewResultModal language={language} message={reviewDone ? reviewResultMessage(language, reviewDone) : null} onClose={() => setReviewDone(null)} />
+        {reviewDone && <Suspense fallback={null}><ReviewResultModal language={language} finished={reviewDone} onClose={() => setReviewDone(null)} /></Suspense>}
         {showHelpModal && (
           <Suspense fallback={null}>
             <HelpModal
@@ -10340,14 +10106,18 @@ export default function App() {
       {/* O sheet das três saídas da tarefa adiada. Vive aqui em cima e não
           dentro da lista: a lista re-renderiza a cada conclusão, e um sheet
           montado lá dentro perderia o estado da decomposição no meio dela. */}
-      <PostponeNudgeSheet
-        task={nudgeTaskId ? (gameState.tasks.find(t => t.id === nudgeTaskId) ?? null) : null}
-        language={language}
-        onClose={handleCloseNudge}
-        onShrink={handleShrinkTask}
-        onDrop={handleDropTask}
-        onDecompose={handleDecomposeTask}
-      />
+      {nudgeTaskId && (
+        <Suspense fallback={null}>
+          <PostponeNudgeSheet
+            task={gameState.tasks.find(t => t.id === nudgeTaskId) ?? null}
+            language={language}
+            onClose={handleCloseNudge}
+            onShrink={handleShrinkTask}
+            onDrop={handleDropTask}
+            onDecompose={handleDecomposeTask}
+          />
+        </Suspense>
+      )}
 
       {/* ⚠️ `evolutionCeremony === null` é o encadeamento, e ele faltava
           (auditoria de 06/09/2026): evoluir abria a CERIMÔNIA (z-500) e este
@@ -10395,54 +10165,56 @@ export default function App() {
       {playReviewOpen && <PlayReviewModal language={language} onAccept={playReviewAccept} onLater={playReviewLater} />}
 
       {/* Notification Manager */}
-      <NotificationManager
-        activities={gameState.activities}
-        tasks={gameState.tasks}
-        userName={userName}
-        petName={notificationPetName(gameState.soulmonMeta, getCurrentStageName())}
-        /* WP1.17 — a idade da criatura viaja com a inscrição de push, e morre
-           com ela: cancelar o push apaga a idade junto. */
-        bornAt={gameState.bornAt}
-        /* WP3.11 — a janela da PESSOA é quem dá a hora do único push que esta
-           mecânica manda. `sleepReminderAt` existia, com teste, e nunca tinha
-           sido chamado por ninguém. */
-        restWindow={gameState.rest?.window ?? null}
-        mealRhythm={gameState.mealRhythm}
-        isSleeping={isSleeping}
-        /* REGISTRO §113: o estado de que os pushes de evento (fome mediana, energia cheia,
-           cocô) projetam a hora; o teto de 4/dia mora em `utils/petPushEvents.ts`. */
-        petState={{
-          hunger: gameState.hunger,
-          energyPoints: gameState.energyPoints,
-          energyClock: gameState.energyClock,
-          evolutionStage: gameState.evolutionStage,
-          dungeonAway: gameState.dungeonAway,
-          poopEventsScheduled: gameState.poopEventsScheduled,
-          poopEventsShown: gameState.poopEventsShown,
-          foodCount: Object.values(gameState.foodInventory ?? {}).reduce((a, n) => a + (n > 0 ? n : 0), 0),
-        }}
-        /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
-           alcance o push no servidor; muda no login e o manager reenvia. */
-        saveId={saveId}
-        language={language}
-        enabled={notificationsEnabled}
-        healthPoints={gameState.healthPoints}
-        maxHealthPoints={gameState.maxHealthPoints}
-        completedSteps={dailyDone}
-        /* A meta é min(cadastradas, requisito do estágio) — a MESMA de
-           computeDailyReset, e por isso vem de `dailyGoalFor` em vez de uma
-           cópia da fórmula. Passar o requisito puro fazia as notificações
-           cobrarem quem já tinha cumprido a própria meta: um rookie com 2
-           atividades tem meta 2, mas levava 3 cobranças por dia por "faltar"
-           até 4. A correção da época consertou o TETO e deixou a FONTE: com
-           `activities.length` cru, uma atividade de seg–sex ainda contava na
-           meta de sábado, e a cobrança voltava exatamente no fim de semana. */
-        /* Com o `dayKey`: `completedSteps` (dailyDone) JÁ conta as tarefas que
-           saíram da lista ao serem concluídas; sem o dayKey aqui o denominador
-           ignorava essas mesmas tarefas e as duas props do mesmo componente
-           passavam a medir populações diferentes. */
-        totalRequired={dailyGoalFor(gameState, new Date().getDay(), new Date().toDateString())}
-      />
+      <Suspense fallback={null}>
+        <NotificationManager
+          activities={gameState.activities}
+          tasks={gameState.tasks}
+          userName={userName}
+          petName={notificationPetName(gameState.soulmonMeta, getCurrentStageName())}
+          /* WP1.17 — a idade da criatura viaja com a inscrição de push, e morre
+             com ela: cancelar o push apaga a idade junto. */
+          bornAt={gameState.bornAt}
+          /* WP3.11 — a janela da PESSOA é quem dá a hora do único push que esta
+             mecânica manda. `sleepReminderAt` existia, com teste, e nunca tinha
+             sido chamado por ninguém. */
+          restWindow={gameState.rest?.window ?? null}
+          mealRhythm={gameState.mealRhythm}
+          isSleeping={isSleeping}
+          /* REGISTRO §113: o estado de que os pushes de evento (fome mediana, energia cheia,
+             cocô) projetam a hora; o teto de 4/dia mora em `utils/petPushEvents.ts`. */
+          petState={{
+            hunger: gameState.hunger,
+            energyPoints: gameState.energyPoints,
+            energyClock: gameState.energyClock,
+            evolutionStage: gameState.evolutionStage,
+            dungeonAway: gameState.dungeonAway,
+            poopEventsScheduled: gameState.poopEventsScheduled,
+            poopEventsShown: gameState.poopEventsShown,
+            foodCount: Object.values(gameState.foodInventory ?? {}).reduce((a, n) => a + (n > 0 ? n : 0), 0),
+          }}
+          /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
+             alcance o push no servidor; muda no login e o manager reenvia. */
+          saveId={saveId}
+          language={language}
+          enabled={notificationsEnabled}
+          healthPoints={gameState.healthPoints}
+          maxHealthPoints={gameState.maxHealthPoints}
+          completedSteps={dailyDone}
+          /* A meta é min(cadastradas, requisito do estágio) — a MESMA de
+             computeDailyReset, e por isso vem de `dailyGoalFor` em vez de uma
+             cópia da fórmula. Passar o requisito puro fazia as notificações
+             cobrarem quem já tinha cumprido a própria meta: um rookie com 2
+             atividades tem meta 2, mas levava 3 cobranças por dia por "faltar"
+             até 4. A correção da época consertou o TETO e deixou a FONTE: com
+             `activities.length` cru, uma atividade de seg–sex ainda contava na
+             meta de sábado, e a cobrança voltava exatamente no fim de semana. */
+          /* Com o `dayKey`: `completedSteps` (dailyDone) JÁ conta as tarefas que
+             saíram da lista ao serem concluídas; sem o dayKey aqui o denominador
+             ignorava essas mesmas tarefas e as duas props do mesmo componente
+             passavam a medir populações diferentes. */
+          totalRequired={dailyGoalFor(gameState, new Date().getDay(), new Date().toDateString())}
+        />
+      </Suspense>
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
       {interstitial === 'welcomeTour' && (
         <PresentationSlot id="welcomeTour" onFail={() => presentation.fail('welcomeTour')} fallback={null}>
