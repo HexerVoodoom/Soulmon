@@ -1,0 +1,25 @@
+{
+ "tamanho_arte": "1080x232 (enter) / 1080x233 (map), WebP alfa real",
+ "slice_horizontal": {
+  "enter": {
+   "esq": 200,
+   "dir": 200
+  },
+  "map": {
+   "esq": 150,
+   "dir": 150
+  }
+ },
+ "slice_vertical": "nenhum (esticar so na horizontal; altura css 72-84, minimo 48)",
+ "arquivos": [
+  "final/rift-enter-normal.webp",
+  "final/rift-enter-pressed.webp",
+  "final/rift-enter-disabled.webp",
+  "final/rift-map-normal.webp",
+  "final/rift-map-pressed.webp"
+ ],
+ "texto": "sem texto na arte; Enter: texto escuro sobre turquesa luminoso (como hoje) + raio + numero; disabled: cinza-ardosia, raio visivel e numero vermelho-cobre por CSS; Map: texto claro #F2FFFB sobre miolo teal escuro",
+ "pressed": "afundar ~2px (css translateY) ja embutido 3px na arte + miolo mais escuro",
+ "familia": "pedra facetada teal + filete de bronze do btn-ranking, SEM medalhao dourado (Enter = cristais turquesa nas pontas; Map = pontas lisas sem joia)",
+ "nota": "disabled e pressed derivados por processamento do normal (mesma geometria). 4 estados de Enter + 2 de Map gerados no ChatGPT (2 geracoes)"
+}
