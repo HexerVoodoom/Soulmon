@@ -17,7 +17,7 @@ import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
-import { descritorDoElemento } from './elementoDescritoresStore';
+import { descritorDoElemento, chromaHueCarregado } from './elementoDescritoresStore';
 import { umMotivoDeTempo, motivosNoTexto, type MotivoTempo } from './motivoTempo';
 
 /** O elemento é de TEMPO (o próprio `tempo` ou qualquer combinado que o tenha como componente, de 2, 3 ou 4). */
@@ -148,7 +148,6 @@ export function registrarElementoDoEstagio(
 /** O pedido de fundo chroma do prompt (a "cláusula do fundo"), que não conta como cor da criatura. */
 const CLAUSULA_FUNDO = /on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/;
 
-import { escolherChaveDeMatiz, semChaveSegura } from '../../functions/api/_chromaHue.js';
 
 export type ChromaKey = 'green' | 'magenta' | 'blue';
 
@@ -172,12 +171,12 @@ export const chromaDoPrompt = (prompt: string): ChromaKey => (/#0000FF/i.test(pr
  */
 export function escolherChroma(prompt: string): ChromaKey {
   const corpo = prompt.replace(CLAUSULA_FUNDO, '');
-  return escolherChaveDeMatiz(corpo).key;
+  return chromaHueCarregado()?.escolherChaveDeMatiz(corpo).key ?? 'green'; // sem a tabela carregada: o padrão (a geração só roda depois da carga)
 }
 
 /** true = o círculo cromático está cheio (nenhuma das 3 chaves fica a 30 graus ou mais das cores): listar para o dono. */
 export function semChromaSeguro(prompt: string): boolean {
-  return semChaveSegura(prompt.replace(CLAUSULA_FUNDO, ''));
+  return chromaHueCarregado()?.semChaveSegura(prompt.replace(CLAUSULA_FUNDO, '')) ?? false;
 }
 
 /** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, em qualquer sentido). */

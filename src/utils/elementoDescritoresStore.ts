@@ -7,23 +7,29 @@
  */
 import type { DescritorElemento } from './elementoDescritores.data';
 
+/** A escolha de matiz do fundo chroma (`functions/api/_chromaHue.js`, ~2,4 KB) viaja no mesmo chunk lazy: só o prompt de sprite a usa. */
+export interface ChromaHue { escolherChaveDeMatiz: (corpo: string) => { key: 'green' | 'magenta' | 'blue' }; semChaveSegura: (corpo: string) => boolean }
+
 let tabela: Readonly<Record<string, DescritorElemento>> = {};
+let chromaHue: ChromaHue | undefined;
 let carga: Promise<void> | undefined;
 const ouvintes = new Set<() => void>();
 
 export const descritorDoElemento = (id: string): DescritorElemento | undefined => tabela[id];
+export const chromaHueCarregado = (): ChromaHue | undefined => chromaHue;
 export const descritoresCarregados = (): boolean => Object.keys(tabela).length > 0;
 
-export function registrarDescritoresElemento(t: Readonly<Record<string, DescritorElemento>>): void {
+export function registrarDescritoresElemento(t: Readonly<Record<string, DescritorElemento>>, chroma?: ChromaHue): void {
   tabela = t;
+  if (chroma) chromaHue = chroma;
   carga = Promise.resolve();
   ouvintes.forEach(f => f());
 }
 
 /** Idempotente: a 1ª chamada dispara o `import()`, as seguintes devolvem a mesma promessa. */
 export function carregarDescritoresElemento(): Promise<void> {
-  carga ??= import('./elementoDescritores.data')
-    .then(m => registrarDescritoresElemento(m.DESCRITORES_ELEMENTO))
+  carga ??= Promise.all([import('./elementoDescritores.data'), import('../../functions/api/_chromaHue.js')])
+    .then(([m, c]) => registrarDescritoresElemento(m.DESCRITORES_ELEMENTO, c))
     .catch(() => { carga = undefined; });
   return carga;
 }
