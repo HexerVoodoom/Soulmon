@@ -7625,3 +7625,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--titulo-inline .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .3 + 50px); top: calc(var(--sm2-cristal-canto) * .24 - 1px); width: 44px; height: 44px; }
 /* closeSide none (sem ✕): o (i) vai para o canto, sem o vão que o ✕ ocupava */
 .sm2-moldura-modal--titulo-inline:not(:has(.sm2-popup-fechar-linha)) .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .3); }
+
+/* FOLHA DE BAIXO com moldura: a linha do ✕/voltar do `ModalSheet` ficava ABAIXO do topo da arte (z 2, 16,9u) e sumia sob cipó/cristal (bug do dono, 23/11: Perfil
+   aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
+.sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
