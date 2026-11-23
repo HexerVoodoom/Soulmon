@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
+import { InfoTip } from '../ui/InfoTip';
 import { BitsAmount } from '../ui/BitsAmount';
 import { CreditIcon } from '../ui/CreditIcon';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
@@ -111,21 +112,45 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))',
         }}
       >
-        <span data-map-chip aria-label={`${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          <BitsAmount value={bits} size={16} />
-        </span>
-        <span data-map-chip aria-label={isPt ? `${emblems} de Honra` : `${emblems} Honor`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          {/* O número vai na fonte de texto: o 0 do Cinzel é um "O" e lia-se "o Honra" (QA L05-08). */}
-          <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{emblems}</span> {isPt ? 'Honra' : 'Honor'}
-        </span>
-        <span
-          data-map-chip
-          aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
-          style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
+        <InfoTip
+          language={language}
+          align="right"
+          autoCloseMs={4000}
+          label={`${bits} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`}
+          style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)', minHeight: 30 }}
+          trigger={<span data-map-chip><BitsAmount value={bits} size={16} /></span>}
         >
-          <CreditIcon size={16} />
-          <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
-        </span>
+          {isPt ? 'Bits: ganhe cumprindo o dia (tarefas e hábitos) e jogando minijogos, a Masmorra e a Arena. Gaste na loja.' : 'Bits: earn them by finishing your day (tasks and habits) and playing minigames, the Dungeon and the Arena. Spend them in the shop.'}
+        </InfoTip>
+        <InfoTip
+          language={language}
+          align="right"
+          autoCloseMs={4000}
+          label={isPt ? `${emblems} de Honra — como conseguir` : `${emblems} Honor — how to earn`}
+          style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)', minHeight: 30 }}
+          trigger={(
+            <span data-map-chip>
+              <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{emblems}</span> {isPt ? 'Honra' : 'Honor'}
+            </span>
+          )}
+        >
+          {isPt ? 'Honra: ganhe em combates do Torneio, no treino e em missões da semana. Gaste na aba Honra das lojinhas.' : 'Honor: earn it in Tournament fights, sparring and weekly missions. Spend it in the Honor tab of the shops.'}
+        </InfoTip>
+        <InfoTip
+          language={language}
+          align="right"
+          autoCloseMs={4000}
+          label={isPt ? `${credits} Créditos — como conseguir` : `${credits} Credits — how to get`}
+          style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums', minHeight: 30 }}
+          trigger={(
+            <span data-map-chip>
+              <CreditIcon size={16} style={{ marginInlineEnd: 4 }} />
+              <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
+            </span>
+          )}
+        >
+          {isPt ? 'Créditos: só por compra com dinheiro real. Servem para pacotes de Bits e para sortear de novo.' : 'Credits: only by purchase with real money. Use them for Bits packs and rerolls.'}
+        </InfoTip>
       </div>
 
       {/* Os distritos vêm pintados no fundo (05/11/2026): cada botão é só o alvo de toque e o rótulo, no palco da imagem. */}

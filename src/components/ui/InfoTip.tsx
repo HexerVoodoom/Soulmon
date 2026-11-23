@@ -37,7 +37,7 @@ export function alvo44(style: CSSProperties | undefined): CSSProperties {
  *   (footgun do `index.css.contract`).
  */
 function InfoTipBase({
-  children, label, language, align = 'center', style, trigger, bare = false,
+  children, label, language, align = 'center', style, trigger, bare = false, autoCloseMs,
 }: {
   children: ReactNode;
   /** Nome acessível do "?" (ex.: "Como funciona a Feira" / "How the Fair works"). */
@@ -50,6 +50,8 @@ function InfoTipBase({
   trigger?: ReactNode;
   /** Disparador TRANSPARENTE sobre o ornamento "i" que a arte da moldura já traz (sem ícone próprio, ≥ 44 px, foco visível). */
   bare?: boolean;
+  /** Fecha sozinho depois de N ms aberto (ex.: dica de moeda, 4000). */
+  autoCloseMs?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; maxHeight: number; left: number; width: number } | null>(null);
@@ -78,6 +80,11 @@ function InfoTipBase({
   useLayoutEffect(() => { if (open) place(); }, [open, place]);
   // O voltar do Android/navegador fecha só a dica (camada própria), sem sair da tela.
   useBackLayer(open, () => setOpen(false));
+  useEffect(() => {
+    if (!open || !autoCloseMs) return;
+    const t = setTimeout(() => setOpen(false), autoCloseMs);
+    return () => clearTimeout(t);
+  }, [open, autoCloseMs]);
 
   useEffect(() => {
     if (!open) return;
