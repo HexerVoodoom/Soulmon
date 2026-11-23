@@ -3014,7 +3014,7 @@ function hexOverrides(raw) {
 }
 __name(hexOverrides, "hexOverrides");
 var HEX_COSTS = {
-  element: { potions: 3, bits: 1500, fragments: 12 },
+  element: { potions: 1, bits: 1500, fragments: 12 },
   coroa: { potions: 0, bits: 2e3, fragments: 70 },
   luvas: { potions: 0, bits: 500, fragments: 18 }
 };
@@ -22494,7 +22494,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-dp2BCH/functionsRoutes-0.8668051935554557.mjs
+// ../.wrangler/tmp/pages-JaMmzb/functionsRoutes-0.31350241042898896.mjs
 var routes = [
   {
     routePath: "/api/account",
