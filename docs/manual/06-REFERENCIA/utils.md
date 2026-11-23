@@ -135,6 +135,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `arena/DueloSheet.tsx`, `ArenaGame.tsx`, `App.tsx` (o `onReroll`), `GameStateContext` (`arenaReroll` no hydrate). **Régua:** `arenaSorteio.test.ts`, `ArenaGame.sorteio.render.test.tsx`, `functions/api/dayCounters.parity.test.js`.
 **Elemento da run (§199, 30/10/2026):** `ARENA_BASE_ELEMENTS` (os elementos BASE que têm criatura, ordenados) · `arenaRunElement(seed)` (o elemento BASE da run — o do card e de todo inimigo das 5 rodadas, salvo a chance `ARENA_FUSED_FOE_CHANCE` de um fundido que o contém; fundido não entra no sorteio). `arenaCardElements(seed)` agora devolve só `[arenaRunElement(seed)]` (antes derivava dos inimigos da 1ª rodada).
 
+### `src/utils/arenaLadder.ts`
+**Dono de:** o valor da escada e a temporada mensal da Arena, FORA de `arena.ts` (orçamento de bytes, REGISTRO §497: o `GameStateContext` e o `App` são entrada e não podem arrastar o motor da Arena): `ARENA_LADDER_MAX`, `sanitizeArenaLadder`, `nextArenaLadder`, `arenaSeasonKey`, `sanitizeArenaSeason`, `arenaRollover`. `arena.ts` reexporta tudo.
+**Chamado por:** `GameStateContext` (hydrate), `App.tsx`, `arenaReroll.ts`, `arena.ts`. **Régua:** `arena.test.ts`, `functions/api/dayCounters.parity.test.js`.
+
+### `src/utils/arenaReroll.ts`
+**Dono de:** o reroll e o fim de run da Arena, a parte PURA e leve de `arenaSorteio.ts` (REGISTRO §497): preço e contador por hora/dia, `sanitizeArenaReroll`, `applyArenaReroll`, `applyArenaRunEnd`. `arenaSorteio.ts` reexporta tudo.
+**Chamado por:** `App.tsx`, `GameStateContext` (hydrate), `arenaSorteio.ts`. **Régua:** `arenaSorteio.test.ts`, `functions/api/dayCounters.parity.test.js`.
+
+### `src/utils/arenaCounters.ts`
+**Dono de:** o anel de vantagens entre os 20 elementos base (`COUNTERS`), fora de `arena.ts` (REGISTRO §497): `soulmonIntro.ts`, que é entrada, só precisa da tabela. `arena.ts` reexporta.
+**Chamado por:** `arena.ts`, `soulmonIntro.ts`. **Régua:** `arena.test.ts` (simetria 2-e-2).
+
 ### `src/utils/arenaComponentes.ts`
 **Dono de:** quantos elementos tem o inimigo Ultimate/Mega da Arena (dono, 15/11/2026, REGISTRO §403): a tabela `ARENA_COMPONENT_WEIGHTS` (Ultimate: base 25 · 2 comp. 55 · 3 comp. 15 · 4 comp. 5; Mega 10/20/50/20; Rookie/Champion fora da tabela), o sorteio do tamanho e o relaxamento para o tamanho mais próximo com arte (empate: o maior). Puro, sem RNG próprio: `buildArenaRound` entrega UM número do `mulberry32` da run.
 **Exports:** `ARENA_COMPONENT_WEIGHTS`, `ARENA_COMPONENT_COUNTS`, `drawComponentCount(stage, u)`, `relaxComponentCount(want, available)`, `combinedPoolOf(stage, runElement)` (os `forma`/`paralelo` com arte que contêm o elemento da run, por nº de componentes), `entryComponents(entry)`, `planArenaComponents(stage, runElement, v, used)` → `{ want, got, entry? }`.
@@ -1299,7 +1311,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonRewards.ts`
 
-**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (a recompensa da run no marco: Vínculo, `dungeonRunsCompleted`, fragmentos da run; o 🌀 saiu daqui em 05/11/2026 e mora em `utils/glitchtamaDrop.ts`: 1%/marco, 1/semana), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário; moveu para `dungeonKill.ts` no §497), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (a recompensa da run no marco: Vínculo, `dungeonRunsCompleted`, fragmentos da run; o 🌀 saiu daqui em 05/11/2026 e mora em `utils/glitchtamaDrop.ts`: 1%/marco, 1/semana), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/dungeonKill.ts`
+
+**Dono de:** `applyEnemyDefeated` (abate + bestiário + elemento do dex + essência), separado de `dungeonRewards.ts` porque puxa o elenco de inimigos (`enemyRoster`, ~28 KB) (REGISTRO §497). O `App` o chama por `import()`; `dungeonAway.ts` (chunk preguiçoso) importa direto. **Régua:** `enemyRoster.test.ts`, `elementDex.test.ts`, `essences.test.ts`.
 
 ### `src/utils/glitchtamaDrop.ts`
 
@@ -4721,6 +4737,10 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/elementoCombinado.ts`
 
 Dono da regra do elemento combinado por estágio (§232): tabela de chances, sorte fixa, escolha contendo a base nº 1, registro imutável e prompt das formas novas. **Régua:** `elementoCombinado.test.ts` e `elementoCombinado.balanco.test.ts` (±3pp por modo, com prova vermelha).
+
+### `src/utils/elementoDescritoresStore.ts`
+
+Ponteiro minúsculo da tabela de descritores de elemento (`elementoDescritores.data.ts`, ~50 KB) e do `_chromaHue.js`, que vivem atrás de `import()` fora do chunk de entrada (REGISTRO §497). `carregarDescritoresElemento()` (idempotente) é disparada no boot pelo `App`; a geração de sprite só liga com a tabela carregada. Nos testes o `setupFiles` (`vitest.setup.descritores.ts`) já a registra. **Régua:** `elementoCombinado.test.ts`, `elementoDescritores.test.ts`.
 
 ### `src/utils/elementoJornada.ts`
 
