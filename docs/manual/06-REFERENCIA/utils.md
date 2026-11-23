@@ -855,7 +855,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `catalogosNovos.ts`. **Régua:** `src/components/PetStageDecor.cristalFundador.render.test.tsx`, `src/utils/decorLuz.test.ts`.
 
 ### `src/utils/fundador.ts`
-**Dono de:** o Conjunto Fundador (REGISTRO §506): 4 prêmios por dias acumulados com ≥1 tarefa/atividade concluída (1 = Fundo `founder-fundo`, 2 = Moldura `founder-moldura`, 3 = Retrato `founder-retrato`, 5 = Cristal `furn-cristal-fundador`). Módulo PURO e leve (chunk de entrada): toda função devolve o MESMO objeto quando nada muda.
+**Dono de:** o Conjunto Fundador (REGISTRO §507): 4 prêmios por dias acumulados com ≥1 tarefa/atividade concluída (1 = Fundo `founder-fundo`, 2 = Moldura `founder-moldura`, 3 = Retrato `founder-retrato`, 5 = Cristal `furn-cristal-fundador`). Módulo PURO e leve (chunk de entrada): toda função devolve o MESMO objeto quando nada muda.
 **Exports:** `FUNDADOR_MARCOS` · `FUNDADOR_PREMIOS` · `FUNDADOR_*_ID` · `concederFundador` (carga: conta existente = `fundadorPremios` ausente + Soulmon criado recebe os 4; cura posse perdida) · `registrarDiaComTarefa` (soma 1 dia novo do jogador e entrega o marco; nunca usa o critério de conta existente) · `concederTodosFundador` (concedente dev do Painel de GM) · `temPremioFundador` · `sanitizeFundador*`.
 **Chamado por:** `GameStateContext.tsx` (`hydrateSave`, `freshGameState`), `taskCompletionPay.ts`, `habitCompletionPay.ts`, `App.tsx` (hábito de etapas e GM), `ProfileEditor.tsx` (retrato só para quem ganhou). Espelho no servidor: `functions/api/_fundador.js`.
 **Régua:** `src/utils/fundador.test.ts`, `functions/api/fundador.parity.test.js`, `functions/api/save.fundador.test.js`.
