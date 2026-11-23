@@ -17,7 +17,14 @@
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
   import { iniciarMusica } from './utils/musica';
   import { installGlobalCrashHandlers } from './utils/crashReport';
+  import { installChunkReloadHandlers } from './utils/recargaPorChunk';
   import { BetaClosedGate } from './components/BetaClosedGate';
+  import { installEmbedNetworkGuard } from './utils/embedMode';
+  import { carregarCatalogosNovos } from './utils/catalogosNovosLoader';
+
+  // /embed (demo do portfólio): sem termo, então NADA sai — corta `/api/*` e beacon
+  // antes de qualquer provider ou handler de crash (ver `utils/embedMode.ts`). Fora do embed é no-op.
+  installEmbedNetworkGuard();
 
   // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
   // inicializador do próprio estado, então uma migração que rodasse depois
@@ -28,6 +35,8 @@
   // Diagnóstico de falhas (error + unhandledrejection) para /api/crash: leve, sem
   // SDK de terceiro, sem conteúdo do usuário. Antes do render, para pegar o crash de boot.
   installGlobalCrashHandlers();
+  // Chunk velho depois de deploy: UM reload com guarda anti-laço (`utils/recargaPorChunk.ts`).
+  installChunkReloadHandlers();
 
   // A música-TEMA (S17, 07/10/2026): só instala ouvintes de gesto. Nada toca nem
   // é baixado até o primeiro toque/clique/tecla da sessão — D11, sem autoplay cego.
@@ -35,7 +44,9 @@
   // O diretor de música (11/10/2026): só DECIDE a faixa da Home; nada toca antes do gesto.
   iniciarMusica();
 
-  createRoot(document.getElementById("root")!).render(
+  // Os catálogos grandes de cosméticos vêm de um chunk lazy (fora da entrada, REGISTRO §498): o 1º render espera a carga, para o
+  // `GameStateProvider` ler o save e a Home pintar já com a loja, os cenários e as molduras completos.
+  void carregarCatalogosNovos().then(() => { createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <ThemeProvider>
         <GameStateProvider>
@@ -46,7 +57,7 @@
         </GameStateProvider>
       </ThemeProvider>
     </ErrorBoundary>
-  );
+  ); sairDaSplash(); });
 
   // Splash estática do index.html: some com fade assim que o app pinta o
   // primeiro frame (2× rAF = depois do primeiro paint de verdade). Sem timer
@@ -64,17 +75,20 @@
   // por baixo — "não consigo passar da tela de loading", reportado pelo
   // dono. Agora o timeout é agendado NA HORA, fora do rAF: ele dispara
   // independente de a aba estar visível, e some a splash mesmo sem o fade.
-  const remover = () => {
-    const sp = document.getElementById('splash');
-    if (!sp) return;
-    sp.remove();
+  // A saída da splash só começa DEPOIS do 1º render (a carga dos catálogos lazy vem antes dele): senão ela sumiria sobre um app ainda vazio.
+  const sairDaSplash = () => {
+    const remover = () => {
+      const sp = document.getElementById('splash');
+      if (!sp) return;
+      sp.remove();
+    };
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const sp = document.getElementById('splash');
+      if (!sp) return;
+      // A barra completa (100%) e a splash some em fade curto (REGISTRO §50).
+      sp.querySelector('.sm2-loadbar')?.classList.add('is-done');
+      sp.classList.add('done');
+      sp.addEventListener('transitionend', remover, { once: true });
+    }));
+    window.setTimeout(remover, 1200);
   };
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const sp = document.getElementById('splash');
-    if (!sp) return;
-    // A barra completa (100%) e a splash some em fade curto (REGISTRO §50).
-    sp.querySelector('.sm2-loadbar')?.classList.add('is-done');
-    sp.classList.add('done');
-    sp.addEventListener('transitionend', remover, { once: true });
-  }));
-  window.setTimeout(remover, 1200);

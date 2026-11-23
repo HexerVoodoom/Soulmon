@@ -54,7 +54,7 @@ describe('dayWakePending — dormindo para acordar, 1ª abertura de CADA dia, pa
 describe('D-67 — a lista EXATA do que o aviso "acorde o Soulmon" segura', () => {
   it('pet (alimentar, banho, carinho, brincar) + jogos (Masmorra e minijogos do Salão/Ateliê da Mente): nada além disso', () => {
     expect([...WAKE_BLOCKED_PET]).toEqual(['feed', 'shower', 'pet', 'play']);
-    expect([...WAKE_BLOCKED_GAMES]).toEqual(['masmorra', 'dino', 'ppt', 'match3', 'barrage', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches']);
+    expect([...WAKE_BLOCKED_GAMES]).toEqual(['masmorra', 'dino', 'ppt', 'match3', 'barrage', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches', 'selo']);
     expect([...WAKE_BLOCKED_ACTIONS]).toEqual([...WAKE_BLOCKED_PET, ...WAKE_BLOCKED_GAMES]);
     expect([...WAKE_ALL_ACTIONS]).toEqual([...WAKE_BLOCKED_ACTIONS]);
   });
@@ -106,10 +106,12 @@ describe('D-67 — tarefa/hábito nunca bloqueados, nos 3 caminhos (app, widget 
     // o guard (`guardWake(`) é chamado SÓ pelos handlers do pet (feed, shower, play, pet)
     const chamadas = [...app.matchAll(/guardWake\('([a-z0-9-]+)'\)/g)].map(m => m[1]).sort();
     expect(chamadas).toEqual(['feed', 'pet', 'play', 'shower']);
-    // e os jogos, por `wakeGuard` (prop) no `start` do AreaView — nunca na navegação
-    expect(areaView).toContain('const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };');
-    expect((areaView.match(/wakeGuard/g) ?? []).length).toBe(2); // declaração da prop + o uso no `start`
-    expect(app).toContain('wakeGuard={guardWake}');
+    // e os jogos, desde §329, pela pergunta "Quer acordá-lo?" (`components/WakeToEnter.tsx`) no `start` do AreaView — que cobre
+    // o "Acordar" do dia E o sono real; a lista dos jogos continua sendo `WAKE_BLOCKED_GAMES` (`utils/wakeToEnter.ts` a reusa).
+    expect(areaView).toContain('const start = (g: PlayGame) => { wakeGate.require(g, () => { setSheet(null); setModeChosen(null); setGame(g); }); };');
+    expect(areaView).not.toMatch(/wakeGuard/);
+    expect(app).not.toContain('wakeGuard={guardWake}');
+    expect(app).toContain('<WakeToEnterProvider isSleeping={isSleeping} dayWakePending={dayWakePending}');
   });
 
   it('APP: concluir acorda sozinho, lido do SAVE (vale também para o que o widget e o desktop concluíram sem abrir a Home)', () => {
@@ -176,7 +178,10 @@ describe('K-20 — o despertar diário é só apresentação: dreno, cocô e jan
     }
     // o que NÃO muda: o sono real alimenta o resto
     expect(app).toContain('isSleeping={isSleeping || dayWakePending}');
-    expect((app.match(/isSleeping=\{isSleeping\}/g) ?? []).length).toBe(1); // NotificationManager continua no sono REAL
+    // NotificationManager continua no sono REAL; a pergunta das atividades (§329) recebe os DOIS sinais, separados (o efeito de
+    // acordar só é dito no sono real), e não mexe em dreno, cocô, noite nem janela.
+    expect((app.match(/isSleeping=\{isSleeping\}/g) ?? []).length).toBe(2);
+    expect(app).toContain('<WakeToEnterProvider isSleeping={isSleeping} dayWakePending={dayWakePending}');
   });
 
   it('o gesto de acordar só grava a marca LOCAL do dia: não deita o pet, não grava noite, não paga nada, não toca o save', () => {

@@ -2,7 +2,7 @@
  * OFICINA DO FOCO — a SESSÃO em etapas (10/10/2026, `docs/PLANO-OFICINA-FOCO.md` §9).
  *
  * Máquina de estados PURA (sem React, sem storage, relógio sempre por parâmetro). Dono único de:
- * a ordem das etapas, as escolhas do planejamento (dois minutos, Eisenhower, sapo, se-então,
+ * a ordem das etapas, as escolhas do planejamento (dois minutos, Prioridades ICE, sapo, se-então,
  * brain dump), a LISTA ORGANIZADA que sai delas (`buildPlan`) e a normalização da sessão salva.
  *
  * Regras que não se negociam aqui:
@@ -10,13 +10,15 @@
  *    Home não muda; concluir é o handler real do App (injetado na folha), nunca uma cópia.
  *  · Cada etapa é pulável: pular não apaga o que já foi escolhido, só avança.
  *  · A recompensa de concluir o processo não olha contagem de tarefas (`canCompleteSession` só exige
- *    que exista um plano e um nome) — o teto diário mora em `focusExpedition.ts`.
+ *    a sessão pronta) — o teto diário mora em `focusExpedition.ts`.
  */
 import { FOCO_MODES, type FocoModeId } from './focoTimer';
 import { isFocusEnvironmentId, type FocusEnvironmentId } from './focusExpedition';
+import { iceScore, sanitizeIce, sortByIce, type Ice } from './iceScore';
 
 export const STEP_ORDER = ['preparar', 'ritmo', 'dois-minutos', 'eisenhower', 'sapo', 'se-entao', 'esvaziar', 'revisar'] as const;
 export type StepId = typeof STEP_ORDER[number];
+/** LEGADO (matriz de Eisenhower, aposentada em 12/11/2026): só para ler rascunhos/sessões antigas sem apagar o campo `matrix`. A UI não usa mais. */
 export const QUADRANTS = ['do', 'schedule', 'delegate', 'drop'] as const;
 export type Quadrant = typeof QUADRANTS[number];
 
@@ -28,9 +30,9 @@ export const MAX_NAME = 60;
 export const MAX_TEXT = 2000;
 
 /** `kind: 'habit'` = um hábito de hoje que entrou na escolha (id `habit:<id>`, montado no App). */
-export interface PlanTask { id: string; name: string; completed: boolean; kind?: 'habit' }
-export type PlanTag = 'habit' | 'quick' | 'frog' | Quadrant;
-export interface PlanItem { id: string; name: string; tags: PlanTag[] }
+export interface PlanTask { id: string; name: string; completed: boolean; kind?: 'habit'; /** Prioridades (ICE); só tarefa, nunca hábito. */ ice?: Ice }
+export type PlanTag = 'habit' | 'quick' | 'frog';
+export interface PlanItem { id: string; name: string; tags: PlanTag[]; /** Pontuação ICE congelada ao salvar (só para exibir). */ score?: number }
 
 export interface SessionDraft {
   name: string;
@@ -39,7 +41,7 @@ export interface SessionDraft {
   prepChecked: Record<string, boolean>;
   /** Ids escolhidos para a regra dos dois minutos, na ordem do toque. */
   twoMin: string[];
-  /** Quadrante de Eisenhower por tarefa. */
+  /** LEGADO: quadrante de Eisenhower por tarefa (aposentado; mantido no save, não usado). As Prioridades moram em `Task.ice`. */
   matrix: Record<string, Quadrant>;
   /** O sapo: a tarefa mais difícil. Vazio = nenhuma. */
   frog: string;
@@ -79,47 +81,34 @@ export function toggleTwoMin(d: SessionDraft, id: string): SessionDraft {
   return { ...d, twoMin: [...d.twoMin, id] };
 }
 
-/** `null` limpa a escolha daquela tarefa. */
-export function setQuadrant(d: SessionDraft, id: string, q: Quadrant | null): SessionDraft {
-  const matrix = { ...d.matrix };
-  if (q === null) delete matrix[id]; else matrix[id] = q;
-  return { ...d, matrix };
-}
-
 /** Tocar no sapo de novo o solta. */
 export const setFrog = (d: SessionDraft, id: string): SessionDraft => ({ ...d, frog: d.frog === id ? '' : id });
 
-const rank = (q: Quadrant) => QUADRANTS.indexOf(q);
-
-/** Tarefas já classificadas, em ordem de prioridade (quadrante; empate = ordem original da lista). */
-export function matrixOrder(d: SessionDraft, tasks: readonly PlanTask[]): Array<PlanTask & { quadrant: Quadrant }> {
-  return tasks
-    .map((t, i) => ({ t, i, q: d.matrix[t.id] }))
-    .filter((x): x is { t: PlanTask; i: number; q: Quadrant } => !!x.q && !x.t.completed)
-    .sort((a, b) => rank(a.q) - rank(b.q) || a.i - b.i)
-    .map(x => ({ ...x.t, quadrant: x.q }));
+/** As tarefas abertas CLASSIFICADAS (têm `ice`), da maior pontuação para a menor (desempate em `sortByIce`). Hábito nunca entra. */
+export function iceOrder(tasks: readonly PlanTask[]): Array<PlanTask & { ice: Ice; score: number }> {
+  return sortByIce(tasks.filter(t => !t.completed && t.kind !== 'habit'))
+    .flatMap(t => { const ice = sanitizeIce(t.ice); return ice ? [{ ...t, ice, score: iceScore(ice) }] : []; });
 }
 
 /**
  * A lista organizada. Ordem: (1) dois minutos, na ordem do toque — aquecimento que tira o pequeno do
- * caminho; (2) o sapo; (3) o resto por quadrante (fazer → agendar → delegar). "Deixar de lado" sai da
- * lista, a menos que a pessoa também tenha tocado nela como dois-minutos/sapo (o toque explícito vence).
+ * caminho; (2) o sapo; (3) o resto pela pontuação de Prioridades (ICE), da maior para a menor. Tarefa sem
+ * classificação não entra sozinha (como antes: só entra o que a pessoa escolheu ou classificou).
  */
 export function buildPlan(d: SessionDraft, tasks: readonly PlanTask[]): PlanItem[] {
   const open = new Map(tasks.filter(t => !t.completed).map(t => [t.id, t]));
   const out = new Map<string, PlanItem>();
-  const add = (id: string, tag: PlanTag) => {
+  const add = (id: string, tag?: PlanTag) => {
     const t = open.get(id);
     if (!t) return;
     const cur = out.get(id);
-    if (cur) { if (!cur.tags.includes(tag)) cur.tags.push(tag); } else out.set(id, { id, name: t.name, tags: t.kind === 'habit' ? ['habit', tag] : [tag] });
+    if (cur) { if (tag && !cur.tags.includes(tag)) cur.tags.push(tag); return; }
+    const ice = sanitizeIce(t.ice);
+    out.set(id, { id, name: t.name, tags: [...(t.kind === 'habit' ? ['habit' as const] : []), ...(tag ? [tag] : [])], ...(ice ? { score: iceScore(ice) } : {}) });
   };
   for (const id of d.twoMin) add(id, 'quick');
   if (d.frog) add(d.frog, 'frog');
-  for (const t of matrixOrder(d, tasks)) {
-    if (t.quadrant === 'drop' && !out.has(t.id)) continue;
-    add(t.id, t.quadrant);
-  }
+  for (const t of iceOrder(tasks)) add(t.id);
   return [...out.values()];
 }
 
@@ -133,8 +122,8 @@ export const canSave = (d: SessionDraft): boolean => missingToSave(d) === null;
 export const missingToSave = (d: SessionDraft): 'name' | 'environment' | null =>
   d.name.trim().length === 0 ? 'name' : !isFocusEnvironmentId(d.environment) ? 'environment' : null;
 
-/** Concluir o PROCESSO exige um plano e a sessão pronta — nunca um número de tarefas. */
-export const canCompleteSession = (s: FocoSession): boolean => s.status === 'ready' && s.plan.length > 0;
+/** Concluir o PROCESSO só exige a sessão pronta: nunca um número de tarefas, e a sessão sem lista (que a revisão oferece) também conclui (REGISTRO §238). */
+export const canCompleteSession = (s: FocoSession): boolean => s.status === 'ready';
 
 export function saveSession(d: SessionDraft, tasks: readonly PlanTask[], meta: { id: string; day: string; prev?: FocoSession | null }): FocoSession | null {
   if (!canSave(d)) return null;
@@ -179,8 +168,9 @@ export function normalizeSession(raw: unknown): FocoSession | null {
     ? r.plan.flatMap((p): PlanItem[] => {
         const o = p as Record<string, unknown> | null;
         if (!o || typeof o.id !== 'string' || typeof o.name !== 'string') return [];
-        const tags = Array.isArray(o.tags) ? o.tags.filter((t): t is PlanTag => t === 'habit' || t === 'quick' || t === 'frog' || (QUADRANTS as readonly unknown[]).includes(t)) : [];
-        return [{ id: o.id.slice(0, 80), name: o.name.slice(0, 200), tags }];
+        const tags = Array.isArray(o.tags) ? o.tags.filter((t): t is PlanTag => t === 'habit' || t === 'quick' || t === 'frog') : [];
+        const score = typeof o.score === 'number' && Number.isFinite(o.score) && o.score > 0 && o.score <= 25 ? o.score : undefined;
+        return [{ id: o.id.slice(0, 80), name: o.name.slice(0, 200), tags, ...(score !== undefined ? { score } : {}) }];
       }).slice(0, MAX_POOL)
     : [];
   const it = (r.ifThen && typeof r.ifThen === 'object' ? r.ifThen : {}) as Record<string, unknown>;

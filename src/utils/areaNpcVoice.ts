@@ -24,36 +24,36 @@ export interface AreaNpcVoice {
   lineEn: string;
 }
 
-const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
+export const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
   mercado: {
     namePt: 'Grom, o mercador',
     nameEn: 'Grom, the merchant',
     // H5 (01/10/2026): "Escolha uma lojinha" era dito DENTRO da lojinha, e "se tiver
     // os Bits" condicionava a acolhida ao saldo. Agora só constata e convida (L1, L12).
-    linePt: 'Pode entrar e olhar com calma. As prateleiras ficam aqui.',
-    lineEn: 'Come in and look around. The shelves stay right here.',
+    linePt: 'Entra aí e dá uma olhada. Tem de tudo nas prateleiras.',
+    lineEn: 'Come on in and take a look. The shelves have a bit of everything.',
   },
   arena: {
     namePt: 'Vultrak, mestre da arena',
     nameEn: 'Vultrak, master of the arena',
     // H5 (01/10/2026): o imperativo ("Escolha:") e o julgamento de quem chega
     // ("de braços cruzados") saíram. As arenas são chão antigo, mantido por costume (bíblia §7.1).
-    linePt: 'Chão antigo, mantido por costume. Sempre tem alguém por aqui para encontrar.',
-    lineEn: 'Old ground, kept by habit. There is always someone here to meet.',
+    linePt: 'Chão antigo, mantido por costume. Sempre tem alguém aqui pra encarar.',
+    lineEn: 'Old ground, kept by habit. There is always someone here to face.',
   },
   exploracao: {
     namePt: 'Zeph, a guia',
     nameEn: 'Zeph, the guide',
     // A Corrida mudou para o Salão de Jogos (30/09/2026); aqui ficou a Masmorra.
-    linePt: 'A névoa esconde caminhos. A Fenda está logo ali, quando quiser descer.',
-    lineEn: 'The mist hides paths. The Endless Rift is right there, whenever you want to go down.',
+    linePt: 'A névoa esconde caminhos. A Fenda tá logo ali. Bora descer?',
+    lineEn: 'The mist hides paths. The Endless Rift is right there. Want to go down?',
   },
-  // #187 (28/10/2026): a Forja (produtividade e disciplina). Voz provisória = a da Vitra, a Soulsmith do lote; sem cobrança, sem pressa.
+  // #187 (28/10/2026): a Forja (produtividade e disciplina). Voz provisória = a da Vitra, a Soulsmith do lote; sem cobrança.
   forja: {
     namePt: 'Vitra, a Soulsmith',
     nameEn: 'Vitra, the Soulsmith',
-    linePt: 'O forno está aceso. O que se faz com calma pega a forma certa.',
-    lineEn: 'The furnace is lit. What is made patiently takes the right shape.',
+    linePt: 'O forno tá aceso. O que se faz com cuidado pega a forma certa.',
+    lineEn: "The furnace is lit. What's made with care takes the right shape.",
   },
   jogos: {
     namePt: 'Pipo, o anfitrião',
@@ -66,7 +66,7 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     nameEn: 'Vesca, the alchemist',
     // H5 (01/10/2026): "começa numa mistura certa" dava à alquimia uma regra que o
     // jogo não tem — a forma muda pelos dias completos e pelo toque da pessoa (L10).
-    linePt: 'Toda forma que ele já teve cresce nesta árvore. Venha ver para onde os galhos vão.',
+    linePt: 'Toda forma que ele já teve cresce nesta árvore. Vem ver pra onde os galhos vão.',
     lineEn: 'Every form it has taken grows on this tree. Come see where the branches go.',
   },
   hall: {
@@ -125,13 +125,13 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // Falas: descrevem o ofício e o objeto, sem cobrança, sem preço, sem pressa.
   'mercado:itens': {
     namePt: 'Lamela, a mascate', nameEn: 'Lamela, the peddler',
-    linePt: 'Tudo o que cabe nos meus bolsos tem serventia. Fique à vontade para olhar.',
-    lineEn: 'Everything that fits in my pockets has a use. Feel free to look.',
+    linePt: 'Tudo o que cabe nos meus bolsos serve pra alguma coisa. Olha só.',
+    lineEn: 'Everything that fits in my pockets is good for something. Have a look.',
   },
   'mercado:decoracao': {
     namePt: 'Lasca, a marceneira', nameEn: 'Lasca, the carpenter',
-    linePt: 'Cada peça daqui foi lixada à mão. Escolha um canto para ela, se quiser.',
-    lineEn: 'Every piece here was sanded by hand. Pick a corner for it, if you like.',
+    linePt: 'Cada peça daqui foi lixada à mão. Já pensou em qual canto ela fica?',
+    lineEn: 'Every piece here was sanded by hand. Got a corner in mind for it?',
   },
   'mercado:conquistas': {
     namePt: 'Medra, o guardião dos marcos', nameEn: 'Medra, keeper of milestones',
@@ -142,20 +142,20 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // preço, sem pressa e sem prometer efeito (L1..L12 da bíblia): o equipamento é do companheiro, a forja só dá forma.
   'forja:ferreiro': {
     namePt: 'Vitra, a Soulsmith', nameEn: 'Vitra, the Soulsmith',
-    linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
-    lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
+    linePt: 'A peça chega crua e melhora com o material que você traz. Escolhe o lado que quer reforçar.',
+    lineEn: 'A piece arrives rough and gets better with the materials you bring. Pick the side you want to strengthen.',
   },
   // 💱 Cambista (30/10/2026, dono): troca de Créditos por Bits e, em breve, essências. Fala descreve o ofício; sem preço, sem pressa, sem cobrança.
   'mercado:cambista': {
     namePt: 'Farthing, o cambista', nameEn: 'Farthing, the exchanger', // criatura verde de tentáculos com balança e bolsas de moedas (#389)
-    linePt: 'Minha balança pesa cada moeda com o mesmo cuidado. Os Créditos entram, os Bits saem; a taxa é a mesma para todos, sem pressa.',
-    lineEn: 'My scale weighs every coin with the same care. Credits go in, Bits come out; the rate is the same for everyone, no rush.',
+    linePt: 'Minha balança pesa toda moeda igual. Os Créditos entram, os Bits saem, e a taxa é a mesma pra todo mundo.',
+    lineEn: 'My scale weighs every coin the same. Credits go in, Bits come out, and the rate is the same for everyone.',
   },
-  // 🏗️ Restaurante em obra (14/10/2026, dono): caranguejo pedreiro de tijolo. Só fala; sem ação, sem preço, sem cobrança.
+  // 🍲 Restaurante (05/11/2026, dono): abriu. A voz do LOTE é a da Snapjaw; o chef do dia (e a fala dele) vem de `restaurantCopy.ts`.
   'mercado:restaurante': {
-    namePt: 'Brickle, o pedreiro', nameEn: 'Brickle, the bricklayer',
-    linePt: 'Estamos em obra! Em breve o restaurante abre as portas e eu vou poder cozinhar comidas especiais por aqui. Volte logo!',
-    lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
+    namePt: 'Snapjaw, a chef carnívora', nameEn: 'Snapjaw, the carnivorous chef',
+    linePt: 'Mesa posta! Traga o que você colheu e eu transformo em prato.',
+    lineEn: 'Table is set! Bring what you gathered and I will turn it into a dish.',
   },
   'arena:duelo': {
     namePt: 'Tessaria, a gladiadora', nameEn: 'Tessaria, the gladiator', // 30/10/2026 (dono): era Naia. 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte). 29/10/2026 (dono): gladiadora de tridente e rede, nada de pescaria
@@ -196,20 +196,20 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // 🔣 01/11/2026: a Hexsmith — reescreve o código hex do Soulmon com poções de elemento. Convite, sem preço e sem prometer efeito.
   'forja:hexsmith': {
     namePt: 'Hexsmith', nameEn: 'Hexsmith',
-    linePt: 'Traga suas poções de elemento. Eu forjo HEXes e reescrevo o código hex do seu Soulmon, Porta por Porta, sem pressa.',
-    lineEn: "Bring your element potions. I forge HEXes and rewrite your Soulmon's hex code, Port by Port, no rush.",
+    linePt: 'Traga suas poções de elemento. Eu forjo HEXes e reescrevo o código hex do seu Soulmon, Porta por Porta.',
+    lineEn: "Bring your element potions. I forge HEXes and rewrite your Soulmon's hex code, Port by Port.",
   },
   'forja:refugio': {
     namePt: 'Yuzu, a guardiã da fonte', nameEn: 'Yuzu, the spring warden', // 29/10/2026: novo NPC (guardiã de fonte quente; era Marim, o mensageiro da maré)
-    linePt: 'A água está morna. Entre quando quiser, sem pressa.',
-    lineEn: "The water's warm. Step in whenever you like, no rush.",
+    linePt: 'A água tá morna. Entra, vai por mim.',
+    lineEn: "The water's warm. Hop in, trust me.",
   },
   // 🧭 O Passeio: Lisel, a mariposa arquivista (22/10/2026; antes Mirk, o espírito do charco, antes Brume). Convite, nunca cobrança — e nenhuma palavra sobre o que as
   // Travessias "rendem".
   'exploracao:passeio': {
     namePt: 'Lisel, a mariposa do caminho', nameEn: 'Lisel, the path moth', // 22/10/2026 (pedido do dono): busto trocado pela mariposa arquivista (era Mirk, o espírito do charco)
-    linePt: 'A névoa abre um pouco mais a cada passo. Ande devagar o quanto quiser.',
-    lineEn: 'The mist opens a little further each step. Walk as slow as you like.',
+    linePt: 'A névoa abre um pouco mais a cada passo. Vem andando.',
+    lineEn: 'The mist opens a little further each step. Come along.',
   },
   // 🛠️ 04/10/2026 (pedido do dono): os dois prédios da clareira de baixo. Falas sem cobrança, sem
   // número e sem prometer efeito (a Oficina descreve; o Caderno guarda e cala).
@@ -231,7 +231,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // D-50 (19/10/2026): o Grove (o bosque do clã) é prédio do Hall. O dono escolheu o busto nº 57 (Lilia, a musa do jardim) como NPC dele.
   'hall:grove': {
     namePt: 'Lilia, a musa do jardim', nameEn: 'Lilia, the garden muse',
-    linePt: 'O bosque cresce devagar. Venha ver.',
+    linePt: 'O bosque cresce devagar. Vem ver.',
     lineEn: 'The grove grows slowly. Come see.',
   },
   'hall:guilda': {
@@ -246,8 +246,8 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     // O nome antigo era de personagem de terceiro — a bíblia das áreas §1.3 A4 decidiu Bento.
     namePt: 'Tinta, a escriba do Arquivo', nameEn: 'Tinta, scribe of the Archive', // 07/10/2026: busto trocado a pedido do dono (era Faro; Faro segue como NPC de função `conta`)
     // H5 (01/10/2026): "pelagem" não vale para toda criatura (padrão, cobre — bíblia §5.1).
-    linePt: 'Tudo o que você guardou está em ordem. Pode olhar com calma.',
-    lineEn: 'Everything you kept is in order. Look at your own pace.',
+    linePt: 'Tudo o que você guardou está em ordem. Pode olhar.',
+    lineEn: 'Everything you kept is in order. Go ahead and look.',
   },
   'laboratorio:stats': {
     namePt: 'Sumi, o guardião do Vínculo', nameEn: 'Sumi, keeper of the Bond', // 07/10/2026: busto trocado a pedido do dono (era Oriel; ela segue em EXTRA_NPC_VOICE.sacerdotisa)
@@ -279,16 +279,16 @@ export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, langua
  */
 export type FunctionNpcId = 'onboarding' | 'oraculo' | 'cuidados';
 
-const FUNCTION_NPC_VOICE: Record<FunctionNpcId, AreaNpcVoice> = {
+export const FUNCTION_NPC_VOICE: Record<FunctionNpcId, AreaNpcVoice> = {
   onboarding: {
     namePt: 'Ambra', nameEn: 'Ambra',
-    linePt: 'Sem pressa. Tudo aqui já está arrumado pra você.',
-    lineEn: 'Take your time. Everything here is already set up for you.',
+    linePt: 'Tá tudo arrumado pra você. É só entrar.',
+    lineEn: 'Everything is set up for you. Just step in.',
   },
   oraculo: {
     namePt: 'Iris', nameEn: 'Iris',
-    linePt: 'A luz se dobra com gentileza hoje. Olhe o quanto quiser.',
-    lineEn: 'The light bends kindly today. Look as long as you like.',
+    linePt: 'A luz se dobra com gentileza hoje. Dá uma olhada.',
+    lineEn: 'The light bends kindly today. Take a look.',
   },
   cuidados: {
     namePt: 'Nuri', nameEn: 'Nuri',
@@ -382,15 +382,15 @@ export const EXTRA_NPC_VOICE: Record<ExtraNpcId, ExtraNpcVoice> = {
   },
   sacerdotisa: {
     namePt: 'Oriel', nameEn: 'Oriel', officePt: 'Sacerdotisa do Oráculo', officeEn: 'Priestess of the Oracle',
-    linePt: 'A maré trouxe um presságio. Só olhe se quiser.',
-    lineEn: 'The tide brought an omen. Only look if you want to.',
+    linePt: 'A maré trouxe um presságio. Dá uma olhada.',
+    lineEn: 'The tide brought an omen. Take a look.',
   },
   // 01/10/2026 (instalação final da rodada 3): três do banco, finalizados como as outras. Nomes
   // originais curtos (sem "-mon"); falas sem cobrança, sem flerte, sem número.
   lua: {
     namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua, das sombras e do pântano', officeEn: 'Goddess of the moon, shadows and the swamp',
-    linePt: 'A lua guarda tudo o que a noite esconde. Sente aqui, se quiser ouvir.',
-    lineEn: 'The moon keeps whatever the night hides. Sit with me, if you would like to listen.',
+    linePt: 'A lua guarda tudo o que a noite esconde. Senta aqui que eu te conto.',
+    lineEn: "The moon keeps whatever the night hides. Sit with me and I'll tell you.",
   },
   ferreiro: {
     namePt: 'Mallo', nameEn: 'Mallo', officePt: 'Ferreiro e forjador de martelos', officeEn: 'Blacksmith and hammer forger',
@@ -399,14 +399,14 @@ export const EXTRA_NPC_VOICE: Record<ExtraNpcId, ExtraNpcVoice> = {
   },
   ferreira: {
     namePt: 'Kova', nameEn: 'Kova', officePt: 'Ferreira', officeEn: 'Blacksmith',
-    linePt: 'Cada peça tem o seu tempo. Eu espero junto com você.',
-    lineEn: "Every piece takes its own time. I'll wait it out with you.",
+    linePt: 'Peça boa leva o tempo que leva. Eu espero junto.',
+    lineEn: "A good piece takes as long as it takes. I'll wait it out with you.",
   },
   // 28/10/2026 (beta3, `p2-08`): o arauto do ranking — coruja-cervo com sinos e o pergaminho da lista. Sem chamada hoje (não há tela de ranking).
   arauto: {
     namePt: 'Tilin', nameEn: 'Tilin', officePt: 'Arauto do ranking', officeEn: 'Herald of the ranking',
-    lineEn: 'The bells ring for everyone who climbed this month. Come and read the scroll whenever you like.',
-    linePt: 'Os sinos tocam para quem subiu neste mês. Venha ler o pergaminho quando quiser.',
+    lineEn: 'The bells ring for everyone who climbed this month. Come read the scroll.',
+    linePt: 'Os sinos tocam pra quem subiu neste mês. Vem ler o pergaminho.',
   },
 };
 
@@ -433,7 +433,7 @@ export type NovoNpcId =
   | 'alquimistaLimo' | 'alquimistaLimoCostas' | 'enfermeira' | 'colheita' | 'tempo' | 'musa'
   | 'ossarioFera' | 'ossarioForma' | 'serpentePlumadaFera' | 'serpentePlumadaForma'
   | 'broto' | 'corvo' | 'cozinheiro' | 'besouro'
-  | 'luaTronoSentada' | 'luaTronoDePe';
+  | 'luaTronoSentada' | 'luaTronoDePe' | 'sereiaPintora';
 
 export interface NovoNpcVoice extends ExtraNpcVoice {
   category: NovoNpcCategory;
@@ -452,13 +452,13 @@ export const NOVO_NPC_VOICE: Record<NovoNpcId, NovoNpcVoice> = {
   },
   enfermeira: {
     category: 'sombrio', namePt: 'Rubra', nameEn: 'Rubra', officePt: 'Enfermeira da Sombra', officeEn: 'Shade nurse',
-    linePt: 'Sente-se. Eu cuido do que dói, com calma.',
-    lineEn: 'Sit down. I tend whatever aches, nice and slow.',
+    linePt: 'Senta aí. Eu cuido do que dói.',
+    lineEn: "Sit down. I'll tend whatever aches.",
   },
   colheita: {
     category: 'natureza', namePt: 'Espiga', nameEn: 'Tassel', officePt: 'Guardiã da colheita', officeEn: 'Harvest keeper',
-    linePt: 'O que se planta com paciência volta em dobro. Sem pressa.',
-    lineEn: 'What you plant with patience comes back doubled. Take all the time you need.',
+    linePt: 'O que se planta com paciência volta em dobro.',
+    lineEn: 'What you plant with patience comes back doubled.',
   },
   tempo: {
     category: 'mistico', namePt: 'Clepsi', nameEn: 'Clepsy', officePt: 'Guardião das horas', officeEn: 'Keeper of the hours',
@@ -507,18 +507,23 @@ export const NOVO_NPC_VOICE: Record<NovoNpcId, NovoNpcVoice> = {
   },
   besouro: {
     category: 'criatura', namePt: 'Brio', nameEn: 'Sheen', officePt: 'Sentinela besouro', officeEn: 'Beetle sentinel',
-    linePt: 'Minha casca brilha mais depois da chuva. Fico de guarda, sem pressa.',
-    lineEn: 'My shell shines brighter after rain. I keep watch, no rush.',
+    linePt: 'Minha casca brilha mais depois da chuva. Eu fico de guarda.',
+    lineEn: 'My shell shines brighter after rain. I keep watch.',
   },
   luaTronoSentada: {
     category: 'mistico', namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua no trono (sentada)', officeEn: 'Moon goddess on her throne (seated)',
-    linePt: 'No meu trono a noite fica quieta. Sente aos meus pés, se quiser.',
-    lineEn: 'On my throne the night grows quiet. Sit at my feet, if you like.',
+    linePt: 'No meu trono a noite fica quieta. Senta aos meus pés.',
+    lineEn: 'On my throne the night grows quiet. Sit at my feet.',
   },
   luaTronoDePe: {
     category: 'mistico', namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua no trono (de pé)', officeEn: 'Moon goddess on her throne (standing)',
     linePt: 'Levanto o cajado e a lua responde. Venha ver.',
     lineEn: 'I raise the staff and the moon answers. Come and see.',
+  },
+  sereiaPintora: {
+    category: 'mistico', namePt: 'Maré', nameEn: 'Tide', officePt: 'Sereia pintora', officeEn: 'Mermaid painter',
+    linePt: 'Cada onda é uma tinta. Pinto o que o mar guardou para você.',
+    lineEn: 'Every wave is a pigment. I paint what the sea kept for you.',
   },
 };
 

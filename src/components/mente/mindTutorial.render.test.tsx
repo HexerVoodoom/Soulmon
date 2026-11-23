@@ -1,18 +1,18 @@
 // @vitest-environment jsdom
-/** Tutorial da 1ª abertura (Eco, Trilha, Colcha): aparece 1×, "Pular"/× também contam, o "i" reabre sem regravar, EN e PT-BR. */
+/** Tutorial da 1ª abertura (Eco, Trilha, Selo Faltante): aparece 1×, "Pular"/× também contam, o "i" reabre sem regravar, EN e PT-BR. */
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { EcoGame } from './EcoGame';
 import { ZipGame } from './ZipGame';
-import { PatchesGame } from './PatchesGame';
+import { SeloGame } from './SeloGame';
 import { markMindGameTutorial, sanitizeMindGameTutorials } from '../../utils/mente/mindTutorials';
 
 const base = { evolutionStage: 'rookie', onExit: () => {}, onEarnPoints: () => {} };
 const JOGOS = [
   ['eco', EcoGame, '[data-eco-start]'],
   ['zip', ZipGame, '[data-zip-grid]'],
-  ['patches', PatchesGame, '[data-patches-grid]'],
+  ['selo', SeloGame, '[data-selo-start]'],
 ] as const;
 
 describe.each(JOGOS)('tutorial de %s', (id, Game, jogoSel) => {
@@ -76,7 +76,9 @@ describe('mindGameTutorials (save)', () => {
     expect(sanitizeMindGameTutorials(undefined)).toEqual({});
     expect(sanitizeMindGameTutorials('x')).toEqual({});
     expect(sanitizeMindGameTutorials([true])).toEqual({});
-    expect(sanitizeMindGameTutorials({ eco: true, zip: 'sim', patches: 1, outro: true })).toEqual({ eco: true });
+    expect(sanitizeMindGameTutorials({ eco: true, zip: 'sim', selo: 1, outro: true })).toEqual({ eco: true });
+    // 04/11/2026: a Colcha saiu do Ateliê; o visto antigo cai na carga.
+    expect(sanitizeMindGameTutorials({ patches: true, selo: true })).toEqual({ selo: true });
   });
   it('marcar é idempotente (mesma referência)', () => {
     const a = markMindGameTutorial({}, 'zip');

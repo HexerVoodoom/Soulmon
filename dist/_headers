@@ -6,6 +6,13 @@
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
 
+# Molduras do widget (beta12 A1, docs/design/PLANO-WIDGET-MOLDURAS-REMOTAS.md): o manifesto SEMPRE revalida (ETag do edge permite 304);
+# as imagens levam o hash no nome, entao sao imutaveis. Regras disjuntas de proposito (o Cloudflare soma cabecalhos de regras que casam).
+/widget-frames/manifest.json
+  Cache-Control: no-cache
+/widget-frames/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
 # Never cache the service worker
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
@@ -70,3 +77,48 @@
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors https://portfolio.mateus-sprnd.workers.dev https://mateus-sperandio.mateus-sprnd.workers.dev https://mateus-sperandio.pages.dev https://*.mateus-sperandio.pages.dev; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-ZpbXoJAYQEB9rJBNQCGdUhQphNAnAOIcYiIOgvMGvFg=' 'sha256-8zacJ5YuLSqpQ6dAe2BWPFQn5juYRemTwv1DCoNrV1s=' 'sha256-I6VkHdCs21CF1GgemooM+GLxMbok0nqFVGKt5iQjjgs=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com
   Cache-Control: no-cache, no-store, must-revalidate
+# >>> gm-pages (gerado por scripts/build-gm-pages.mjs; não editar)
+
+# /gm/soulmons — página do GM estática (scripts/build-gm-pages.mjs); CSP por hash, sem nonce.
+/gm/soulmons
+  ! X-Frame-Options
+  ! X-Content-Type-Options
+  ! Content-Security-Policy
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-TCCEt1tMlyJqQNWRmgpH/BfYFpVJXvbe5XZjHJ5Im7w=' https://www.gstatic.com https://apis.google.com; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+# /gm/rift — página do GM estática (scripts/build-gm-pages.mjs); CSP por hash, sem nonce.
+/gm/rift
+  ! X-Frame-Options
+  ! X-Content-Type-Options
+  ! Content-Security-Policy
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-7m7q/nZ2YGjneGQAVDmV7VWrKuB1OdleBUTXdCYxdD4=' https://www.gstatic.com https://apis.google.com; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+# /gm/carta — página do GM estática (scripts/build-gm-pages.mjs); CSP por hash, sem nonce.
+/gm/carta
+  ! X-Frame-Options
+  ! X-Content-Type-Options
+  ! Content-Security-Policy
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-i/uWv399owHNxwBkaptWRr3bJ60u1t3b/z5RIyOVY6A=' https://www.gstatic.com https://apis.google.com; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+# /gm/reviews — página do GM estática (scripts/build-gm-pages.mjs); CSP por hash, sem nonce.
+/gm/reviews
+  ! X-Frame-Options
+  ! X-Content-Type-Options
+  ! Content-Security-Policy
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-f9LqI4fXMyNeJm80HYmXGet/G6vtv1NOYrboEUF1NQ4=' https://www.gstatic.com https://apis.google.com; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'

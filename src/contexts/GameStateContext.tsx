@@ -1,22 +1,44 @@
+import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
+import { sanitizeBonusTask, type BonusTaskState } from '../utils/bonusTask';
+import { sanitizeWeeklyBonus, sanitizeStageByWeek, type WeeklyBonusState, type StageWeekEntry } from '../utils/weeklyRetro';
+import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
+import { sanitizeJourneyCredited } from '../utils/focusBoard';
+import { sanitizeMailClaimed } from '../utils/mensageiro';
+import { sanitizeBalaoDourado, type BalaoDispensados } from '../utils/balaoDourado';
+import { sanitizeTarefaAuto } from '../utils/tarefaLink';
+import { sanitizeFunSession } from '../utils/funSession';
+import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
+import { sanitizeFormaSnapshots, forcarOriginal } from '../utils/formaSnapshot';
+import { sanitizeFormasAlt, sanitizeFormaAltEquipada, spriteVisorOf } from '../utils/formasAlternativas';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
+import { sanitizeRefugioEnergyDay } from '../utils/refugio/energia';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
+import { sanitizeElementoJornada } from '../utils/elementoJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { sanitizeChipsStage } from '../utils/specialItemUse';
+import { sanitizeGlitchtamaDrop } from '../utils/glitchtamaDrop';
+import { sanitizeStatFloor } from '../utils/combate/level';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
+import { normalizeCategory } from '../types/categories';
+
+/** Categoria de um save: id antigo (`Health`…) vira o equivalente de hoje; o desconhecido passa intacto (a UI já tolera). */
+const migrateCategory = (raw: unknown): ActivityCategory => (normalizeCategory(raw) ?? raw) as ActivityCategory;
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
 import { isBBStage, sanitizeStageId } from '../utils/bbStage';
+import { devolverPocoes, sanitizeDungeonPotions } from '../utils/dungeonPotions';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
-import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeHunger, sanitizeEnergyClock, type EnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
-import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaSorteio';
+import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaReroll';
+import { arenaRollover, sanitizeArenaLadder } from '../utils/arenaLadder';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -35,6 +57,7 @@ import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/or
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
+import { sanitizeEvocacao, type EvocacaoPorEstagio } from '../utils/companheiroInvocado';
 import { sanitizeManifestacao, type Manifestacao } from '../utils/soulProfile/ficha/manifestacaoSave';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
@@ -42,7 +65,8 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { migrateBranchIds } from '../utils/branchMigration';
-import { normalizeSpriteLibrary, displaySprite, type SpriteLibrary } from '../utils/spriteLibrary';
+import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
+import { spriteDoPerfilUrl } from '../utils/spriteDoPerfil';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import { meetsPvpBond, bondLevelFor } from '../utils/bond';
@@ -54,7 +78,7 @@ import { sanitizeHexsmith, type HexsmithState } from '../utils/hexsmith';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, sanitizeConquistasPagas, type AchievementId } from '../utils/achievements';
 import {
-  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
+  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs, playerDayKey,
   type PlayerDayAnchor,
 } from '../utils/playerDay';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
@@ -66,7 +90,9 @@ import { createNightmareState, sanitizeNightmareState } from '../utils/nightmare
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
+import { sanitizeIce, type Ice } from '../utils/iceScore';
 import { sanitizeMercMission, type MercMissionState } from '../utils/mercMissionSave';
+import { sanitizeBossShards } from '../utils/bossShards';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
@@ -76,8 +102,8 @@ import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/c
 import { sanitizeMealRhythm, sanitizeMealRitual, type MealRhythmSettings, type MealRitualRecord } from '../utils/mealRhythm';
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
-import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
-import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
+import { migrateWeeklyLegacy, type WeeklyMissionProgress } from '../utils/weeklyMissions';
+import { sanitizeBuildingQuests, settleRetiredListed, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeFeats, type Feats } from '../utils/feats';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
@@ -99,17 +125,27 @@ import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { applyBetaResetGrant, sanitizeGrants, type Grants } from '../utils/betaResetGrant';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
+import { sanitizeOwnedWidgetFrames, sanitizeSelectedWidgetFrame } from '../utils/widgetFrames';
 import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
+import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
+import { loadCatalog } from '../data/catalogoCarga';
+import { concederFundador, sanitizeFundadorDias, sanitizeFundadorPremios, sanitizeFundadorUltimoDia } from '../utils/fundador';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
+import { unionSeenIds } from '../utils/librarySeen';
+import { unionFormsMaps, type SeenForm } from '../utils/libraryForms';
+import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantState';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
-import { sanitizeElementId } from '../utils/elementPotion';
+import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
+import { sanitizeVoiceMode, type SoulmonVoiceMode } from '../utils/soulmonCharacter';
 import type { Answers } from '../utils/soulProfile/personality/types';
+import { sanitizeBitsCat } from '../utils/currencies';
+import { sanitizeDuelInvites, type DuelInvites } from '../utils/duelInvites';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -184,6 +220,10 @@ export interface Activity {
    *  desmarcadas todo dia, então o contador zera sozinho quando o dia do jogador muda. */
   stepXpPaid?: number;
   stepXpDay?: string;
+  /** ISO de quando a atividade NASCEU (gravado no portão `commitHabitCreate`, §371). Opcional: save antigo não tem e lê como
+   *  "não nasceu hoje". Serve para o hábito criado antes da reafirmação do dia aparecer na hora e para a âncora do
+   *  "a cada N dias" contado do calendário sem histórico (`habitRhythm.ts`). */
+  createdAt?: string;
 }
 
 /**
@@ -229,6 +269,8 @@ export interface Task {
   /** XP por subtarefa (REGISTRO §44): quantas subtarefas desta tarefa JÁ pagaram XP. Só sobe; teto
    *  `XP_STEP_MAX_PAID`. Ausente (save antigo) = as subtarefas já feitas contam como pagas. */
   stepXpPaid?: number;
+  /** PRIORIDADES (12/11/2026, modelo ICE adaptado — `utils/iceScore.ts`): as 4 notas de 1 a 5. Ausente = não classificada (save antigo lê assim). */
+  ice?: Ice;
 }
 
 export interface CompletedTask {
@@ -244,6 +286,8 @@ export interface CompletedTask {
   effort?: Effort;
   /** Era uma tarefa assombrada quando foi concluída (bônus de alívio). */
   wasHaunted?: boolean;
+  /** O que a conclusão rendeu — o estorno do "Desmarcar" (`utils/taskUncomplete.ts`). Ausente em entrada antiga. */
+  receipt?: import('../utils/taskUncomplete').TaskCompletionReceipt;
 }
 
 export interface ActivityStats {
@@ -331,6 +375,10 @@ export interface GameState {
   libraryAck?: LibraryAck;
   /** Desgarrados de JOGADORES vistos (01/11/2026, REGISTRO §213, `utils/strayPlayers.ts`): só cresce; aba Desgarrado da Biblioteca. */
   strayPlayersSeen?: StrayPlayerSeen[];
+  /** "Já vistos" da Biblioteca (10/11/2026, `utils/librarySeen.ts`): ids de jogadores/simulados vistos, ≤ 500. Migra da chave local `LIBRARY_SEEN` por união; vai na nuvem (aba Other players, filtro H17). */
+  librarySeen?: string[];
+  /** Formas já vistas de cada Soulmon de outro jogador (10/11/2026, `utils/libraryForms.ts`): `{ id: SeenForm[] }`, ≤ 500 jogadores × ≤ 8 formas. Migra da chave local `LIBRARY_FORMS` por união. */
+  libraryForms?: Record<string, SeenForm[]>;
   /** 💧 Essências dos elementos (28/10/2026, `utils/essences.ts`, REGISTRO §183): `{ elementId: quantidade }`, só cresce, só coleta (sem uso). Servidor: monotônico por elemento (`_essences.js`). */
   essences?: Record<string, number>;
   /** 💧 Acumulado GASTO por essência (30/10/2026, Poção de Elemento): só cresce; o servidor só deixa `essences` baixar pelo aumento dele. */
@@ -339,6 +387,8 @@ export interface GameState {
   evolutionPotion?: string;
   /** 🧪 Elemento que o Soulmon passou a carregar pela última poção consumida numa evolução (lido por `petElementOf`). */
   potionElement?: string;
+  /** §232: o elemento de cada estágio e a sorte fixa do Soulmon (`utils/elementoJornada.ts`). Ausente = save antigo, até a próxima evolução. */
+  elementoJornada?: import('../utils/elementoJornada').ElementoJornada;
   /** Quanto a descida AUTOMÁTICA da Fenda já rendeu de essência no dia do jogador (teto diário `ESSENCE_AWAY_DAILY_CAP`). Servidor: monotônico no dia (`_dayCounters.js`). */
   essenceAway?: EssenceAway;
   /**
@@ -359,6 +409,12 @@ export interface GameState {
   incubation?: import('../utils/spriteTrigger').Incubation;
   /** O CRISTAL da evolução (31/10/2026, `utils/evolutionCrystal.ts`): o jogador tocou Evoluir e a forma nova está sendo desenhada. */
   evolutionCrystal?: import('../utils/evolutionCrystal').EvolutionCrystal;
+  /** FORMAS ALTERNATIVAS (05/11/2026, `utils/formasAlternativas.ts`): por forma, os elementos já desbloqueados (o 1º é a original). */
+  formasAlt?: import('../utils/formasAlternativas').FormasAlt;
+  /** Qual forma alternativa está equipada em cada forma (ausente = a original). Cosmético. */
+  formaAltEquipada?: import('../utils/formasAlternativas').FormaAltEquipada;
+  /** O QUE CADA FORMA CARREGA (09/11/2026, `utils/formaSnapshot.ts`): poção, elemento do nível e skills de cada forma já vivida. */
+  formaSnapshots?: import('../utils/formaSnapshot').FormaSnapshots;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -408,6 +464,14 @@ export interface GameState {
    *  `soulmonSkills`: determinístico pela identidade, recomputável só de um
    *  perfil que não vai à nuvem. Decisão 2 do PLANO-ORACULO.md §9. */
   soulmonCompanheiro?: CompanheiroVisivel;
+  /** Companheiro invocado (16/11/2026, PR 1, atrás da flag `COMPANHEIRO_INVOCADO`): por estágio, se a forma é de um evocador
+   *  (arquétipo da lista OU escola dominante = Evocação) e o id do arquétipo de origem. Cache ADITIVO, primeiro valor vence
+   *  (`migrarEvocacao`); ausente = nada decidido ainda. Dono: `utils/companheiroInvocado.ts`. Rollback: ignorar o campo. */
+  soulmonEvocacao?: EvocacaoPorEstagio;
+  /** Nome do especial escolhido pelo jogador (público; `''` = padrão). O servidor filtra e limita a troca a 1/semana
+   *  (`functions/api/_especialNomeRegra.js`); este campo reflete a resposta dele. `especialNomeAt` = quando o servidor aceitou. */
+  especialNome?: string;
+  especialNomeAt?: number;
   /** Talento e profissão da ficha por estágio (`ficha/manifestacao.ts`) — o
    *  que o class-system MANIFESTA (fala do pet, jeito na masmorra) sem que a
    *  ficha apareça. Cache pelo mesmo motivo de `soulmonSkills`; preenchido
@@ -461,17 +525,28 @@ export interface GameState {
   /** Quanto o dreno de cocô já cobrou no dia civil — é o que faz o teto ser
    *  DIÁRIO (regra em `utils/poopDrain.ts`). */
   poopDrainCharge?: { day: string; hearts: number };
-  /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
-   *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
-  glitchtamaUse?: { day: string; used: number };
+  /** 🌀 Instante (ms) do último uso do Glitchtama: buff de +10% na progressão e cooldown de 7 dias (`utils/glitchtamaBuff.ts`). Espelhado no servidor. */
+  glitchtamaUsadoEm?: number;
+  /** Fração (0..1) do +10% do buff ainda não creditada em ponto inteiro (`utils/glitchtamaBuff.ts`). */
+  glitchtamaCarry?: number;
+  /** ⚠️ TESTE (`utils/glitchtamaTeste.ts`): compras do 🌀 no Desfeito hoje — dia do jogador, no save. */
+  glitchtamaBuy?: { day: string; used: number };
+  /** O drop RARO do 🌀 na masmorra: semana (segunda) do último drop e quantos caíram (teto 1/semana — `utils/glitchtamaDrop.ts`). */
+  glitchtamaDrop?: { week: string; dropped: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
   premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
+  /** 🍲 Restaurante do Mercado (05/11/2026, `utils/restaurant.ts`): o buff do prato (um por vez, 24 h) e os pratos do dia do jogador. */
+  restaurant?: RestaurantState;
   /** Chips usados no ESTÁGIO atual, todos os tipos (D-97, limite 3 — `utils/specialItemUse.ts`). */
   chipsStage?: { stage: string; used: number };
+  /** Chips de REDUÇÃO usados no estágio (limite próprio, `REDUCE_CHIPS_PER_STAGE`). */
+  chipsReduceStage?: { stage: string; used: number };
+  /** Piso de atributo da evolução (REGISTRO §229, "Evoluir nunca reduz"): gravado pelo `handleEvolve`, vale só no estágio `s`. */
+  evoStatFloor?: { s: number; atk: number; def: number; spd: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
-  minigameBits?: { day: string; earned: number };
+  minigameBits?: { day: string; earned: number; /** §456: Bits do dia por categoria (aditivo; ausente = zero). */ cat?: Partial<Record<'minigames' | 'explorar' | 'arena', number>> };
   /** O HP do jogador na Masmorra (descida idle, 08/10/2026): fração do máximo + instante da medida.
    *  NUNCA se lê direto — `hpAgora(state, now)` (`utils/dungeonIdle.ts`) soma a regeneração por timestamp.
    *  Ausente = cheio. Não compra vantagem (só limita a descida), então é do cliente como Emblemas/placar. */
@@ -479,6 +554,11 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
+  /** O ponto de largada escolhido no MAPA DE ANDARES do Rift (1º andar, ímpar, de um conjunto já visitado; REGISTRO §462). Só vale uma descida: quem larga
+   *  dele o consome. O recorde NÃO desce com ele. Dono: `utils/riftMap.ts` (`rewindToSet`, `consumeResume`). */
+  dungeonResumeLayer?: number;
+  /** Quantos PORTAIS do mapa do Rift (um a cada 50 andares) o jogador já foi avisado que desbloqueou (0..10; REGISTRO §471). O desbloqueio sai do recorde; isto guarda só o aviso "Portal desbloqueado", 1× por portal. Dono: `utils/riftMap.ts` (`markPortalsSeen`). */
+  riftPortalsSeen?: number;
   /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
    *  recompensa já paga no mês }`. Ausente/velho = score 0 no mês atual. Dono: `utils/endlessRift.ts`. Só do cliente; os Créditos do
    *  top 3 são pagos pelo servidor (`functions/api/_riftPayout.js`), nunca lidos daqui. */
@@ -487,21 +567,36 @@ export interface GameState {
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
   dungeonAway?: DungeonAway;
+  /** 🧪 As poções de cura que o jogador DEIXOU com o Soulmon na masmorra (08/11/2026): o Soulmon usa uma sozinho a cada queda da descida
+   *  fora do app; o que sobra volta ao inventário quando a descida acaba. Dono: `utils/dungeonPotions.ts`. Ausente = nada deixado. */
+  dungeonPotions?: Record<string, number>;
   /** 🍽️ A FOME (beta-2 3.5, REGISTRO §40): nível 0..100 + o instante da medida. NUNCA se lê direto — `hungerAt`/`energyStatus` (`utils/hunger.ts`)
    *  somam a queda por timestamp. Comer SOBE a fome (não a energia). Ausente = cheia (sem dívida retroativa). Fome não tira coração nem Bits. */
   hunger?: { v: number; at: number };
   /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
    *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
-  energyClock?: { at: number; carry: number };
+  energyClock?: EnergyClock;
   /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
   hungerPenalty?: { since: number; paid: number; unreported: number };
   /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (REMOVIDO em beta3 F2; o contador segue) morava no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
+  /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): 1 energia = 3 rodadas em 30 min. Ausente = nenhuma sessão. */
+  funSession?: { startedAt: number; rounds: number };
+  /** 🎫 Tickets dos minijogos do Salão (09/11/2026, `utils/funTickets.ts`): 1 energia = 3 tickets, teto 5, 24 h por lote. Ausente = nenhum ticket. Substitui a `funSession`. */
+  funTickets?: FunTickets;
+  /** ⚔️ Convites de Duelo (REGISTRO §458, `utils/duelInvites.ts`): estoque 0..7 + carimbo da última troca. Ausente = estoque inicial 7. */
+  duelInvites?: DuelInvites;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
-  /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
+  /** 🎲 Rerolls dos `ARENA_CHOICES` cards da Arena livre (4 desde o §370) feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
   arenaReroll?: ArenaReroll;
+  /** 🔁 Runs da Arena TERMINADAS no dia (04/11/2026, `applyArenaRunEnd`): cada fim de run re-sorteia os `ARENA_CHOICES` cards de graça (entra na semente), sem tocar no `arenaReroll`. Sem valor econômico: o servidor só repassa. */
+  arenaRuns?: ArenaReroll;
+  /** 🪜 A escada da Arena (04/11/2026, REGISTRO §222): vitórias de run acumuladas; decide a forma por rodada e a força dos inimigos. Ausente = 0. Servidor: só cresce (`_dayCounters.js`). */
+  arenaLadder?: number;
+  /** Temporada mensal da Arena em UTC ("AAAA-MM", 22/11/2026): na virada `arenaLadder` volta a 0. Ausente em save antigo = adota o mês atual sem zerar. */
+  arenaSeason?: string;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -585,6 +680,18 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
   focusKeyDay?: string;
+  /** Cartas do Mensageiro já creditadas (§241). */
+  mailClaimed?: string[];
+  /** Dia do jogador em que concluiu uma sessão da Oficina: abre o Calabouço naquele dia (§239). */
+  dungeonKeyDay?: string;
+  /** Recibos da jornada do foco já creditados no dia (§247). */
+  journeyCredited?: { day: string; ids: string[] };
+  /** beta12 §G: balões dourados já tocados HOJE (`balaoDourado:<tipo>:<AAAA-MM-DD>` → true; só o dia corrente; `utils/balaoDourado.ts`). Opcional: save antigo não tem. */
+  balaoDourado?: BalaoDispensados;
+  /** beta12 §J: check automático por recurso já feito (`<AAAA-MM-DD>|<id da atividade>`; só o dia corrente; `utils/tarefaLink.ts`). Garante 1×/dia e nunca desmarca. Opcional. */
+  tarefaAuto?: string[];
+  /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
+  refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
   rogueDungeon?: RogueRun;
   /** beta3: resumo da volta SOZINHA do Soulmon da masmorra, guardado até o jogador fechar o aviso (sobrevive a fechar o app). Opcional: save antigo não tem. */
@@ -623,8 +730,8 @@ export interface GameState {
    *  nunca o humor que o disparou (dado sensível). Dono: `utils/refugio/convite.ts`. */
   refugeInvite?: RefugeInviteState;
   /** 🍽️ Ritmo das refeições (`utils/mealRhythm.ts`): horários locais das três
-   *  janelas e os dois interruptores (cartão no app: ligado; push: DESLIGADO,
-   *  opt-in). Mora no save para viajar entre aparelhos. Lixo → padrão. */
+   *  janelas e os dois interruptores (cartão no app: ligado; push: LIGADO por
+   *  padrão, `DEFAULT_MEAL_RHYTHM`). Mora no save para viajar entre aparelhos. Lixo → padrão. */
   mealRhythm?: MealRhythmSettings;
   /** 🍽️ Quais janelas de HOJE já foram atendidas/dispensadas. Do DIA do jogador
    *  e se esvazia na virada — sem histórico, sem sequência, sem contador. */
@@ -649,6 +756,10 @@ export interface GameState {
   /** 🖼️ MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA (`utils/frames.ts`; nunca vantagem). Posse das de loja/conquista/evento
    *  (as de rank vêm da faixa e não ficam aqui). Leitura: `?? []`. O servidor só confere a FORMA (`functions/api/save.js`). */
   ownedFrames?: string[];
+  /** CONJUNTO FUNDADOR (23/11/2026, `utils/fundador.ts`): dias acumulados com ≥1 tarefa/atividade, último dia (ISO do jogador) e ids concedidos. Ausente = save anterior (conta existente recebe os 4 na carga). */
+  fundadorDias?: number;
+  fundadorUltimoDia?: string;
+  fundadorPremios?: string[];
   /** 🌳 TALENTOS do usuário (Combate v3 / PR7). Um id por GRAU comprado (`utils/talents.ts`); o resto (pontos, bônus) é
    *  derivado do Vínculo (`bondLevelFor(totalXP)`, nunca persistido). Vetor inválido é descartado na carga e no servidor
    *  (`functions/api/save.js`). Sobrevive à degeneração. Leitura: `?? []`. */
@@ -668,6 +779,11 @@ export interface GameState {
   /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
    *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
   equippedFrame?: string | null;
+  /** 🖼️ MOLDURAS DO WIDGET V-PET (04/11/2026, `utils/widgetFrames.ts`) — COSMÉTICA. Elementos base cuja moldura a EVOLUÇÃO liberou
+   *  (as COMPRADAS vivem no servidor, `ent.frames`). Leitura: `?? []`; save antigo entra vazio. */
+  widgetFramesOwned?: string[];
+  /** Moldura do widget ESCOLHIDA (id de elemento base) ou `null`/ausente = a padrão. Se a posse some (reembolso), o widget cai na padrão. */
+  widgetFrame?: string | null;
   /** 🧑 FOTO DE PERFIL (Tarefa C, 06/10/2026): id de um NPC da lista fechada (`assets/avatares/catalogo.json`; `utils/avatar.ts`). Só o ID vai
    *  para o save e o servidor (`functions/api/save.js` confere contra a lista). Ausente/`null` = o padrão determinístico do saveId. Leitura: `?? null`. */
   avatarId?: string | null;
@@ -686,6 +802,8 @@ export interface GameState {
   conquistasPagas?: AchievementId[];
   /** Guilda dos Mercenários (plano do onboarding velado §11): a missão de UM dia, de UMA Ordem. Ausente = nunca escolheu. Leitura tolerante via `sanitizeMercMission`. */
   mercMission?: MercMissionState;
+  /** Fragmento de Boss (03/11/2026): +1 por BOSS vencido no Elemental Fusion; ainda sem uso. Ausente = 0. Leitura tolerante via `sanitizeBossShards`. */
+  bossShards?: number;
   /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
    *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
   season?: SeasonProgressState;
@@ -720,6 +838,8 @@ export interface GameState {
      *  reabrir o resumo do MESMO dia não a repete. Mora DENTRO do relatório de propósito — a virada do dia
      *  grava um relatório novo e a marca some sozinha ("uma vez por dia"), e o save não ganha campo de topo. */
     heartsAnimSeen?: boolean;
+    /** A chave do Soulmon descoberto no Passeio deste relatório (`utils/strollDiscovery.ts`): presente = o dia já descobriu. */
+    strollDiscovered?: string;
     /** P2 — a folga da semana absorveu a perda desta virada. A UI CONTA isso:
      *  perdão que a pessoa não soube que recebeu não acalma, e faz a cobrança
      *  da semana seguinte parecer arbitrária. */
@@ -754,6 +874,14 @@ export interface GameState {
    * `public/privacidade.html`.
    */
   soulTestAnswers?: Answers;
+  /**
+   * 12/11/2026 (beta12, B2) — como o Soulmon se relaciona com o jeito do
+   * jogador: `complementar` (padrão; o que equilibra) ou `similar` (o mesmo
+   * jeito). Escolha das Configurações; o rótulo nunca revela o tipo. Opcional:
+   * save anterior não tem = complementar. Em `similar` o veto de
+   * vulnerabilidade prevalece (`utils/soulmonCharacter.ts`).
+   */
+  soulmonVoiceMode?: SoulmonVoiceMode;
   /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
@@ -854,6 +982,20 @@ export interface GameState {
    * evolução, como bônus acima do teto; fora do selo, do coração e da meta.
    */
   specialMission?: SpecialMissionState;
+  /**
+   * ⭐ Tarefa bônus do dia (utils/bonusTask.ts, 13/11/2026): o hábito aceito na
+   * oferta reduzida. NÃO vem concluído; concluir rende +1 Fragmento de Alma
+   * acima do teto diário, na virada (que limpa o campo).
+   */
+  bonusTask?: BonusTaskState[];
+  /** 🔥 Bônus de retorno da semana (utils/weeklyRetro.ts, 16/11/2026): o hábito mais difícil da semana passada rende +1 Fragmento por dia concluído, de segunda a domingo. */
+  weeklyBonus?: WeeklyBonusState;
+  /** dayKey da segunda cuja retrospectiva já foi mostrada. */
+  lastWeeklyRetroDate?: string;
+  /** A forma do Soulmon no início de cada semana (últimas 3): é daqui que sai "evoluiu na semana". */
+  stageByWeek?: StageWeekEntry[];
+  /** O modal de apresentação da tarefa bônus já foi visto (mostrado uma vez só). */
+  bonusIntroSeen?: boolean;
   /** Meta de passos escolhida pelo jogador. Ausente = DEFAULT_STEP_GOAL (ler com `??`). */
   stepGoal?: number;
   /**
@@ -984,7 +1126,7 @@ function hydrateActivity(v: unknown): Activity | null {
     ...(raw as object),
     id,
     name: str(raw.name) ?? '',
-    category: raw.category as ActivityCategory,
+    category: migrateCategory(raw.category),
     emoji: str(raw.emoji) ?? '⭐',
     steps: arr<unknown>(raw.steps).map(hydrateStep),
     // A ponte com o widget Android e o desktop lê `weekDays` direto.
@@ -1003,10 +1145,12 @@ function hydrateTask(v: unknown): Task | null {
     ...(raw as object),
     id,
     name: str(raw.name) ?? '',
-    category: raw.category as ActivityCategory,
+    category: migrateCategory(raw.category),
     emoji: str(raw.emoji) ?? '⭐',
     completed: raw.completed === true,
     ...(raw.steps !== undefined ? { steps: arr<unknown>(raw.steps).map(hydrateStep) } : {}),
+    /* ice: lixo/incompleto vira "não classificada" (nunca derruba a lista). */
+    ice: sanitizeIce(raw.ice),
   } as Task;
 }
 
@@ -1027,6 +1171,7 @@ function hydrateCompletedTask(v: unknown): unknown {
   const raw = v as Record<string, unknown>;
   return {
     ...raw,
+    ...(raw.category !== undefined ? { category: migrateCategory(raw.category) } : {}),
     ...(str(raw.emoji) === undefined ? { emoji: '⭐' } : {}),
     ...(str(raw.name) === undefined ? { name: '' } : {}),
   };
@@ -1175,6 +1320,26 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
 }
 
 /**
+ * Nuvem adotada (409/boot/visível/carga degradada) = a nuvem vence o save INTEIRO, mas a memória da Biblioteca só CRESCE: o que o
+ * aparelho já tinha (`atual`) entra por UNIÃO em cima do que a nuvem trouxe — nunca perde um id nem uma forma (dois aparelhos).
+ * Idempotente (união de união = a mesma) e sem efeito se `atual` não tem nada a somar.
+ */
+/**
+ * Porta única do load (envolve `hydrateSave`). Depois de higienizar tudo, reaplica o INVARIANTE da forma equipada: a forma ORIGINAL é sempre o elemento base
+ * (e, por ele, o tipo de ataque). Antes o `potionElement` base posto ao equipar era descartado como "órfão" ao reabrir e o app caía
+ * no registro do nível — o elemento da última evolução paralela (bug do dono, 11/11/2026). Saves já afetados se curam aqui, sem apagar dado.
+ */
+function carregarSave(rawState: Partial<GameState>): GameState {
+  return forcarOriginal(hydrateSave(rawState));
+}
+
+export function hidratarNuvem(nuvem: Partial<GameState>, atual?: GameState): GameState {
+  const h = carregarSave(nuvem);
+  if (!atual) return h;
+  return { ...h, librarySeen: unionSeenIds(h.librarySeen, atual.librarySeen), libraryForms: unionFormsMaps(h.libraryForms, atual.libraryForms) };
+}
+
+/**
  * Migra/completa um save carregado. Isolada da leitura de propósito: o
  * inicializador precisa poder cair para o estado novo se QUALQUER coisa aqui
  * lançar, e para isso o corpo tem que ser uma expressão que ele possa embrulhar.
@@ -1202,12 +1367,13 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
     new Date(),
   );
   // 🔄 Concessão única do beta (`utils/betaResetGrant.ts`): idempotente pela flag `grants`.
-  return applyBetaResetGrant({
+  return concederFundador(applyBetaResetGrant({
         ...loadedState,
         // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
         activities: arr<unknown>(loadedState.activities)
-          .map(hydrateActivity).filter((a): a is Activity => a !== null),
+          .map(hydrateActivity).filter((a): a is Activity => a !== null)
+          .map(a => migrateCatalogHabitDaily(a)),
         tasks: arr<unknown>(loadedState.tasks)
           .map(hydrateTask).filter((t): t is Task => t !== null),
         completedTasks: arr<unknown>(loadedState.completedTasks)
@@ -1228,6 +1394,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
               const e = s as Record<string, unknown>;
               return [id, {
                 ...e,
+                ...(e.category !== undefined ? { category: migrateCategory(e.category) } : {}),
                 name: str(e.name) ?? id,
                 emoji: str(e.emoji) ?? '⭐',
                 completionCount: Math.max(0, num(e.completionCount, 0)),
@@ -1277,10 +1444,12 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), // dex de elementos: ausente/lixo = lista vazia
         strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen), // §213: ausente/lixo = lista vazia
         libraryAck: sanitizeLibraryAck(loadedState.libraryAck, { bestiary: migrateBestiary(strArr(loadedState.bestiary)), defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen) }), // ausente = tamanhos atuais (sem NEW retroativo)
+        librarySeen: unionSeenIds(loadedState.librarySeen, readJson<unknown>(STORAGE_KEYS.LIBRARY_SEEN, [])), // save vence na ordem; a chave local (aparelho) entra por UNIÃO, idempotente, e não é apagada
+        libraryForms: unionFormsMaps(loadedState.libraryForms, readJson<unknown>(STORAGE_KEYS.LIBRARY_FORMS, {})), // idem: união por jogador, ≤ 500 × ≤ 8
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
         essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
         evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma
-        potionElement: sanitizeElementId(loadedState.potionElement),
+        potionElement: curarPocaoOrfa(sanitizeElementId(loadedState.potionElement), typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : undefined, sanitizeFormaAltEquipada(loadedState.formaAltEquipada)),
         essenceAway: sanitizeEssenceAway(loadedState.essenceAway),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,
@@ -1337,17 +1506,19 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const c = obj<unknown>(loadedState.poopDrainCharge);
           return typeof c.day === 'string' ? { day: c.day, hearts: num(c.hearts, 0) } : undefined;
         })(),
-        // Teto diário do Glitchtama. Save antigo não tem o campo e entra como
-        // `undefined`, que `glitchtamaUsedToday` lê como zero — quem já jogava
-        // ganha o dia de hoje inteiro, nunca uma dívida retroativa.
-        glitchtamaUse: (() => {
-          const g = obj<unknown>(loadedState.glitchtamaUse);
-          return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
-        })(),
+        // Buff/cooldown semanal do Glitchtama. Save antigo não tem o campo (`undefined` = nunca usou, ninguém fica travado);
+        // timestamp absurdamente no futuro é saneado para "agora" (`sanitizeGlitchtamaUsadoEm`).
+        glitchtamaUsadoEm: sanitizeGlitchtamaUsadoEm(loadedState.glitchtamaUsadoEm),
+        glitchtamaCarry: sanitizeGlitchtamaCarry(loadedState.glitchtamaCarry),
+        glitchtamaBuy: sanitizeGlitchtamaBuy(loadedState.glitchtamaBuy),
+        // Teto semanal do drop do Glitchtama. Save antigo entra `undefined` = nenhum drop na semana (nunca fica travado).
+        glitchtamaDrop: sanitizeGlitchtamaDrop(loadedState.glitchtamaDrop),
         // D-97: chips por estágio. Ausente/lixo → `undefined` (0 usados): o save antigo
         // não registra uso de chip, então não há como saber quem já usou — ninguém é
         // bloqueado por dado que não existe. Presente e válido: mantém (idempotente).
         chipsStage: sanitizeChipsStage(loadedState.chipsStage),
+        chipsReduceStage: sanitizeChipsStage(loadedState.chipsReduceStage),
+        evoStatFloor: sanitizeStatFloor(loadedState.evoStatFloor),
         // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
         premiumFood: (() => {
           const p = obj<unknown>(loadedState.premiumFood);
@@ -1355,11 +1526,14 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             ? { day: p.day, dropped: num(p.dropped, 0), used: num(p.used, 0), week: p.week, weekDropped: num(p.weekDropped, 0) }
             : undefined;
         })(),
+        // 🍲 Restaurante: ausente/lixo → `undefined` (sem buff, nenhum prato hoje). Idempotente.
+        restaurant: sanitizeRestaurant(loadedState.restaurant),
         // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
         minigameBits: (() => {
           const m = obj<unknown>(loadedState.minigameBits);
-          return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+          const cat = sanitizeBitsCat(m.cat);
+          return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0), ...(cat ? { cat } : {}) } : undefined;
         })(),
         // HP da descida idle: lixo/ausente → `undefined` (cheio). Mesma regra de `sanitizeDungeonHp`
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
@@ -1372,6 +1546,13 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
         dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
           ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
+        // Ponto de largada do mapa do Rift: inteiro ímpar em [1, 999] (mesma regra de `sanitizeResumeLayer`, `utils/riftMap.ts`; inline pelo mesmo motivo).
+        dungeonResumeLayer: typeof loadedState.dungeonResumeLayer === 'number' && Number.isFinite(loadedState.dungeonResumeLayer)
+          && loadedState.dungeonResumeLayer >= 1 && loadedState.dungeonResumeLayer <= 999 && Math.floor(loadedState.dungeonResumeLayer) % 2 === 1
+          ? Math.floor(loadedState.dungeonResumeLayer) : undefined,
+        // Portais avisados do mapa do Rift: inteiro em [1, 10] (mesma regra de `sanitizePortalsSeen`, `utils/riftMap.ts`); ausente/0/lixo = nenhum.
+        riftPortalsSeen: typeof loadedState.riftPortalsSeen === 'number' && Number.isFinite(loadedState.riftPortalsSeen) && loadedState.riftPortalsSeen >= 1
+          ? Math.min(10, Math.floor(loadedState.riftPortalsSeen)) : undefined,
         // Endless Rift (M6): score mensal. Registro bom ou nada (mesma regra de `sanitizeRiftMonth`, `utils/endlessRift.ts`; inline
         // para não puxar a masmorra para o chunk de entrada). Save antigo sem o campo = score 0 do mês atual.
         riftMonth: (() => {
@@ -1384,14 +1565,21 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
+        dungeonPotions: sanitizeDungeonPotions(loadedState.dungeonPotions),
         // Fome, relógio da energia, camadas do dia e check-ins (beta-2): registro bom ou nada (lixo → ausente = cheia / relógio novo /
         // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
         hunger: sanitizeHunger(loadedState.hunger),
         energyClock: sanitizeEnergyClock(loadedState.energyClock),
         hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
+        funSession: sanitizeFunSession(loadedState.funSession),
+        funTickets: sanitizeFunTickets(loadedState.funTickets),
+        duelInvites: sanitizeDuelInvites(loadedState.duelInvites),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
+        arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),
+        arenaLadder: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).ladder,
+        arenaSeason: arenaRollover(loadedState.arenaLadder, loadedState.arenaSeason).season,
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
@@ -1431,13 +1619,15 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         weeklyMissions: (() => {
           const w = obj<unknown>(loadedState.weeklyMissions);
           if (typeof w.week !== 'string') return undefined;
-          return {
+          return migrateWeeklyLegacy({
             week: w.week,
             counts: obj<number>(w.counts) as WeeklyMissionProgress['counts'],
             claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
-          };
+            ...(w.last && typeof w.last === 'object' && !Array.isArray(w.last) ? { last: Object.fromEntries(Object.entries(w.last as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.length <= 40)) as WeeklyMissionProgress['last'] } : {}),
+          });
         })(),
-        buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
+        // Caderno saiu das diárias (12/11/2026): o que estava pronto e sem resgate é pago aqui (`settleRetiredListed`), nada pendente se perde.
+        buildingQuests: settleRetiredListed(sanitizeBuildingQuests(loadedState.buildingQuests), playerDayKey(new Date(), ancoraDoDia), bondLevelFor(num(loadedState.totalXP, 0))),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),
         missionsClaimed: sanitizeMissionsClaimed(loadedState.missionsClaimed),
         feats: sanitizeFeats(loadedState.feats),
@@ -1478,6 +1668,12 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
+        mailClaimed: sanitizeMailClaimed(loadedState.mailClaimed),
+        dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
+        journeyCredited: sanitizeJourneyCredited(loadedState.journeyCredited),
+        refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
+        balaoDourado: sanitizeBalaoDourado(loadedState.balaoDourado),
+        tarefaAuto: sanitizeTarefaAuto(loadedState.tarefaAuto),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
@@ -1510,6 +1706,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonSkills'] : undefined;
         })(),
         fichaJornada: sanitizeFichaJornada(loadedState.fichaJornada),
+        elementoJornada: sanitizeElementoJornada(loadedState.elementoJornada),
         soulmonClassTitles: (() => {
           const v = loadedState.soulmonClassTitles;
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;
@@ -1520,9 +1717,15 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           if (typeof v.id !== 'string' || typeof v.nome?.pt !== 'string' || typeof v.nome?.en !== 'string') return undefined;
           return { id: v.id, nome: { pt: v.nome.pt, en: v.nome.en } };
         })(),
+        soulmonEvocacao: sanitizeEvocacao(loadedState.soulmonEvocacao),
         soulmonManifestacao: sanitizeManifestacao(loadedState.soulmonManifestacao),
+        especialNome: typeof loadedState.especialNome === 'string' ? loadedState.especialNome.slice(0, 20) : undefined,
+        especialNomeAt: typeof loadedState.especialNomeAt === 'number' && Number.isFinite(loadedState.especialNomeAt) ? loadedState.especialNomeAt : undefined,
         evolutionLocked: loadedState.evolutionLocked === true,
         evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
+        formasAlt: sanitizeFormasAlt(loadedState.formasAlt),
+        formaAltEquipada: sanitizeFormaAltEquipada(loadedState.formaAltEquipada),
+        formaSnapshots: sanitizeFormaSnapshots(loadedState.formaSnapshots),
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
@@ -1552,6 +1755,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // As 20 do teste (01/10/2026): só resposta bem formada passa; sem o
         // campo, continua ausente.
         soulTestAnswers: sanitizeSoulTestAnswers(loadedState.soulTestAnswers),
+        // Beta12: só os dois valores conhecidos passam; ausente = padrão (complementar).
+        soulmonVoiceMode: sanitizeVoiceMode(loadedState.soulmonVoiceMode),
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);
@@ -1590,7 +1795,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // derruba o load; save sem o campo entra vazio.
         review: sanitizeReview(loadedState.review),
         refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
-        // Ritmo das refeições: lixo vira o padrão (push DESLIGADO), nunca derruba o load.
+        // Ritmo das refeições: lixo vira o padrão (`DEFAULT_MEAL_RHYTHM`: push LIGADO), nunca derruba o load.
         mealRhythm: sanitizeMealRhythm(loadedState.mealRhythm),
         mealRitual: sanitizeMealRitual(loadedState.mealRitual),
         // Pose do sprite: lixo vira o padrão (`sanitizeSpritePose`), nunca derruba o load.
@@ -1602,6 +1807,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Molduras: lixo é descartado (`utils/frames.ts`), nunca derruba o load; save antigo entra vazio / sem moldura.
         ownedFrames: sanitizeOwnedFrames(loadedState.ownedFrames),
         equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
+        // Molduras do widget: lixo é descartado, save antigo entra vazio / padrão (`utils/widgetFrames.ts`).
+        widgetFramesOwned: sanitizeOwnedWidgetFrames(loadedState.widgetFramesOwned),
+        widgetFrame: sanitizeSelectedWidgetFrame(loadedState.widgetFrame),
         // Foto de perfil: só id bem formado (`utils/avatar.ts`); o catálogo é conferido na tela e no servidor.
         avatarId: sanitizeAvatarId(loadedState.avatarId),
         // Talentos: vetor inválido para o Vínculo do save é DESCARTADO (`utils/talents.ts`), nunca corrigido.
@@ -1625,6 +1833,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           : (gatilhoAntigoTasks100(loadedState) ? ['dias-completos-30'] : []),
         conquistasPagas: sanitizeConquistasPagas(loadedState.conquistasPagas), // ausente/lixo = undefined (o App semeia)
         mercMission: sanitizeMercMission(loadedState.mercMission),
+        bossShards: sanitizeBossShards(loadedState.bossShards),
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,
@@ -1702,6 +1911,11 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         playLog: hydratePlayLog(loadedState.playLog),
         steps: hydrateSteps(loadedState.steps),
         specialMission: sanitizeSpecialMission(loadedState.specialMission),
+        bonusTask: sanitizeBonusTask(loadedState.bonusTask),
+        weeklyBonus: sanitizeWeeklyBonus(loadedState.weeklyBonus),
+        lastWeeklyRetroDate: str(loadedState.lastWeeklyRetroDate),
+        stageByWeek: sanitizeStageByWeek(loadedState.stageByWeek),
+        bonusIntroSeen: loadedState.bonusIntroSeen === true ? true : undefined,
         stepGoal: loadedState.stepGoal === undefined ? undefined : sanitizeStepGoal(loadedState.stepGoal),
         // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
         // "ainda não perguntei", que é o estado seguro (perguntar de novo é
@@ -1710,7 +1924,11 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           ? loadedState.stepsConsent
           : undefined,
         grants: sanitizeGrants(loadedState.grants),
-      } as GameState);
+        // Fundador: ausente = conta existente (a concessão roda logo abaixo, idempotente); lixo vira o saneado.
+        fundadorDias: sanitizeFundadorDias(loadedState.fundadorDias),
+        fundadorUltimoDia: sanitizeFundadorUltimoDia(loadedState.fundadorUltimoDia),
+        fundadorPremios: sanitizeFundadorPremios(loadedState.fundadorPremios),
+      } as GameState));
 }
 
 /** Estado de instalação nova. Também é o fallback de qualquer falha de carga. */
@@ -1767,6 +1985,9 @@ function freshGameState(): GameState {
       equippedBackground: null,
       ownedFurniture: [],
       equippedDecor: {},
+      // Conta NOVA: já nasce com a lista do Fundador (vazia), então nunca cai no critério de conta existente.
+      fundadorDias: 0,
+      fundadorPremios: [],
       guildDonatedItem: null,
       claReceipts: [],
       bosqueArvores: {},
@@ -1898,7 +2119,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     let resultado: GameState | null = null;
     if (loadedState) {
       try {
-        resultado = hydrateSave(loadedState);
+        resultado = carregarSave(loadedState);
       } catch (err) {
         motivoQuarentena = 'hydrate-lancou';
         console.error('[GameState] falha ao migrar o save; caindo para estado novo', {
@@ -1957,7 +2178,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       if (cancelado) return;
       parar = m.repetirComRecuo(() => m.lerParaSairDaCargaDegradada<GameState>({
         estadoAtual: () => estadoRef.current,
-        hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+        hidratar: nuvem => hidratarNuvem(nuvem as Partial<GameState>, estadoRef.current),
         aplicar: setGameState,
         liberar,
         cancelado: () => cancelado,
@@ -1977,6 +2198,23 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const montado = useRef(true);
   useEffect(() => { montado.current = true; return () => { montado.current = false; }; }, []);
 
+  // Migração "hábito do catálogo = todo dia" (§295): precisa do catálogo, que mora fora do chunk de entrada (`catalogoCarga.ts`).
+  // Roda quando o índice chega (e a cada save carregado que traga hábito do catálogo); idempotente: sem mudança devolve o MESMO estado.
+  const temCatalogId = (gameState.activities ?? []).some((a: { catalogId?: unknown }) => !!a.catalogId);
+  useEffect(() => {
+    if (!temCatalogId) return;
+    let vivo = true;
+    void loadCatalog().then(porId => {
+      if (!vivo) return;
+      setGameState(s => {
+        const acts = s.activities ?? [];
+        const novas = acts.map(a => migrateCatalogHabitDaily(a, porId));
+        return novas.some((a, i) => a !== acts[i]) ? { ...s, activities: novas } : s;
+      });
+    }).catch(() => {});
+    return () => { vivo = false; };
+  }, [temCatalogId, gameState.activities]);
+
   /** 409: a revisão que o servidor informou; a leitura da reconciliação abaixo dela é réplica atrasada. */
   const revisaoDo409 = useRef<number | undefined>(undefined);
   /**
@@ -1990,7 +2228,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       motivo,
       revisaoMinima: motivo === '409' ? revisaoDo409.current : undefined,
       estadoAtual: () => estadoRef.current,
-      hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+      hidratar: nuvem => hidratarNuvem(nuvem as Partial<GameState>, estadoRef.current),
       aplicar: setGameState,
       rajada: rajadaComecouEm,
       montado,
@@ -2002,6 +2240,13 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   reconciliarRef.current = reconciliarComNuvem;
 
   // D3 — pedido vindo do 409. Indeterminado/ilegível: tenta de novo com recuo (máx 4), POST suspenso.
+  // 🧪 Invariante das poções deixadas na masmorra (08/11/2026): estoque SEM descida viva volta para o inventário (save antigo, descida
+  // apagada por qualquer caminho, outro aparelho). Idempotente: sem estoque ou com descida viva o updater devolve o MESMO estado.
+  const pocoesSemDescida = !!gameState.dungeonPotions && !gameState.dungeonAway;
+  useEffect(() => {
+    if (pocoesSemDescida) setGameState(prev => devolverPocoes(prev));
+  }, [pocoesSemDescida]);
+
   useEffect(() => {
     if (pedidoReconciliar === 0) return;
     let cancelado = false;
@@ -2152,7 +2397,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       function publicarPerfil() {
       if (!gameState.pvpEnabled) return;
       // H13: sem interruptor, o que segura a publicação é o Vínculo. Abaixo do
-      // nível 5 o servidor recusaria de qualquer jeito — não vale mandar nome e
+      // o nível mínimo do PvP (hoje 1, `GATES.pvp`) o servidor recusaria de qualquer jeito — não vale mandar nome e
       // pet de quem ainda não está no Torneio nem gastar a leitura do save.
       if (!meetsPvpBond(gameState.totalXP ?? 0)) return;
       pushProfile({
@@ -2176,8 +2421,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // Sprite próprio gerado (quando existe): permite mostrar o Soulmon real do jogador no Torneio, Biblioteca e Bosque.
         spriteUrl: (() => {
           if (isCorvo(gameState)) return null;
-          const lib = normalizeSpriteLibrary(gameState.spriteLibrary);
-          const rawUrl = displaySprite(lib, gameState.evolutionStage)?.url ?? Object.values(lib.sprites)[0]?.url ?? null;
+          const lib = spriteVisorOf(normalizeSpriteLibrary(gameState.spriteLibrary), gameState.formasAlt, gameState.formaAltEquipada);
+          const rawUrl = spriteDoPerfilUrl(lib, gameState.evolutionStage, gameState.unlockedEvolutions); // última arte alcançada, nunca a 1ª do acervo
           if (!rawUrl) return null;
           const m = /(?:^https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(rawUrl.trim());
           return m ? m[1] : rawUrl;
@@ -2189,7 +2434,24 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         publicHidden: gameState.hideFromPublicList === true,
         attrs: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
+        // Nome do especial (aditivo): só vai quando a pessoa já mexeu nele (`''` = voltar ao padrão); ausente = o servidor herda.
+        ...(gameState.especialNome !== undefined ? { especialNome: gameState.especialNome } : {}),
       }).then(resposta => {
+        // O servidor decide o nome do especial (filtro e troca semanal): o save local passa a refletir a resposta.
+        // `setGameState` só roda quando algo difere, então não reagenda o envio em loop.
+        if (resposta && typeof resposta.especialNome === 'string') {
+          const nome = resposta.especialNome;
+          const em = typeof resposta.especialNomeAt === 'number' ? resposta.especialNomeAt : undefined;
+          if (nome !== (gameState.especialNome ?? '') || em !== gameState.especialNomeAt) {
+            setGameState(prev => (prev.especialNome === nome && prev.especialNomeAt === em ? prev : { ...prev, especialNome: nome, especialNomeAt: em }));
+          }
+          if (resposta.especialNomeRejected || resposta.especialNomeLimit) {
+            const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+            toast.warning(resposta.especialNomeRejected
+              ? (pt ? 'Esse nome de especial não pôde ser usado. O nome anterior continua; tente outro.' : 'That special name could not be used. Your previous name stays; try another.')
+              : (pt ? 'O nome do especial só muda uma vez por semana.' : 'The special name can only change once a week.'));
+          }
+        }
         // ── H13 (02/10/2026): a recusa NÃO desliga mais nada nem avisa ────────
         // Sem interruptor, `pvpEnabled` é sempre `true` e "ligar" não é um gesto
         // da pessoa — então não há o que desfazer nem o que avisar aqui (o aviso

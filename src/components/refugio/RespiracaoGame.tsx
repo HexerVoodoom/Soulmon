@@ -9,6 +9,7 @@ import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { entrarNaSuperficie } from '../../utils/musica';
+import { CenaSubaquatica, BolhaGuia } from './CenaSubaquatica';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
 } from '../../utils/refugio/respiracao';
@@ -22,7 +23,7 @@ const PET_SCALE_MINIGAME = 1;
  *
  * NÃO mede nada, NÃO pontua, NÃO paga — por isso recebe `MiniGameBaseProps`,
  * sem o callback de Bits. Funciona sem toque nenhum; o botão de segurar é só um
- * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA) quanto a SFX; a música "Meditation Theme" é a exceção pedida pelo dono (S18, REGISTRO), sob o interruptor "Música".
+ * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA) quanto a SFX; a música própria "Respiração subaquática" é a exceção pedida pelo dono (S18, REGISTRO; `docs/SOM.md` §17), sob o interruptor "Música".
  * Movimento reduzido troca a escala por uma barra de preenchimento — reduz o
  * MOVIMENTO, nunca a pausa.
  */
@@ -43,14 +44,17 @@ function phaseWord(phase: BreathPhase, isPt: boolean): string {
 }
 
 /** O aviso de ajuda — mesma peça do Refúgio (`SupportNote`, dono dos números: `utils/supportLine.ts`). */
-export function CrisisNote({ isPt }: { isPt: boolean }) {
-  return <SupportNote isPt={isPt} data-respiracao-crisis />;
+export function CrisisNote({ isPt, style }: { isPt: boolean; style?: CSSProperties }) {
+  return <SupportNote isPt={isPt} style={style} data-respiracao-crisis />;
 }
 
-export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit }: MiniGameBaseProps) {
+export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit, onComplete }: MiniGameBaseProps & {
+  /** A sessão foi até o fim (sair antes não conta): devolve a energia do dia. */
+  onComplete?: () => void;
+}) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
-  useEffect(() => entrarNaSuperficie('meditacao'), []); // S18: a trilha de meditação acompanha a respiração
+  useEffect(() => entrarNaSuperficie('respiracao'), []); // S18; 04/11/2026: superfície e faixa próprias ("Respiração subaquática")
   const [screen, setScreen] = useState<Screen>('setup');
   const [patternId, setPatternId] = useState(BREATH_PATTERNS[0].id);
   const [minutes, setMinutes] = useState(BREATH_DURATIONS_MIN[0]);
@@ -80,6 +84,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
         setElapsed(total);
         setHolding(false);
         setScreen('done');
+        onComplete?.();
         return;
       }
       setElapsed(e);
@@ -176,40 +181,29 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   }
 
   // ---- respirando ----
-  // Bolha: de 40% a 100% do diâmetro máximo. Com movimento reduzido ela não
-  // muda de tamanho — só de opacidade — e a barra abaixo mostra o enchimento.
-  const BUBBLE = 144;
-  const scale = reduced ? 1 : 0.4 + 0.6 * level;
-  const petScale = reduced ? 1 : 0.94 + 0.08 * level;
+  // TELA CHEIA SUBAQUÁTICA (04/11/2026): a cena (`CenaSubaquatica`) cobre o fundo e o guia é a bolha
+  // em volta do pet — cresce na inspiração, encolhe na expiração. Movimento reduzido: cena parada, a bolha só
+  // muda de opacidade e a barra abaixo mostra o enchimento.
   const ease = `${TICK_MS}ms linear`;
+  // A raiz usa `backgroundColor`, não `background`: ao sair da rodada o React limparia o atalho e levaria junto a cor do GameRoot (tela final transparente sobre o Mapa).
+  const tinta: CSSProperties = { color: '#e8fbff', textShadow: '0 1px 6px rgba(0,20,35,0.8)' };
   return (
-    <GameRoot>
+    <GameRoot style={{ backgroundColor: '#061a2b' }}>
+      <CenaSubaquatica level={level} reduced={reduced} />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, ...tinta }}>
       <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
-        <GameStory id="respiracao" language={language} />
-      <GameVisor height={80} scene={REFUGIO_SCENE_SUAVE}>
-        <div
-          aria-hidden="true"
-          data-respiracao-bubble
-          style={{
-            position: 'absolute', left: '50%', top: '50%', width: BUBBLE, height: BUBBLE,
-            marginLeft: -BUBBLE / 2, marginTop: -BUBBLE / 2,
-            // Bolha vetorial (D-81): degradê radial + anel, escala suave — nada de bitmap 48² esticado.
-            background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55) 0, rgba(190,235,240,0.35) 28%, rgba(120,200,215,0.22) 62%, rgba(120,200,215,0.10) 100%)',
-            border: '2px solid rgba(220,245,250,0.7)', borderRadius: '50%', boxSizing: 'border-box',
-            opacity: reduced ? 0.25 + 0.65 * level : (holding ? 0.95 : 0.8),
-            transform: `scale(${scale})`,
-            transition: reduced ? `opacity ${ease}` : `transform ${ease}, opacity 200ms linear`,
-          }}
-        />
-        <VisorSprite
-          src={sprite}
-          size={64}
-          idle={false}
-          data-visor-pet
-          style={{ left: 'calc(50% - 32px)', top: 'calc(50% - 32px)', ...petScaleStyle(petBodyScale, 'center'), transform: `scale(${petScale})`, transition: reduced ? undefined : `transform ${ease}` }}
-        />
-      </GameVisor>
-      <p aria-live="polite" data-respiracao-phase style={{ ...phaseTitle, fontSize: 'var(--sm2-text-lg)' }}>
+      <div style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <BolhaGuia level={level} reduced={reduced} size={240}>
+          <VisorSprite
+            src={sprite}
+            size={128}
+            idle={false}
+            data-visor-pet
+            style={{ position: 'relative', left: 'auto', top: 'auto', ...petScaleStyle(petBodyScale, 'center') }}
+          />
+        </BolhaGuia>
+      </div>
+      <p aria-live="polite" data-respiracao-phase style={{ ...phaseTitle, fontSize: 'var(--sm2-text-lg)', ...tinta }}>
         {phaseWord(phase, isPt)}
       </p>
       {reduced && (
@@ -252,11 +246,12 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           {isPt ? 'Segure enquanto respira (opcional)' : 'Hold while you breathe (optional)'}
         </span>
       </button>
-      <p style={phaseLine}>{isPt ? 'Se preferir, só olhe a bolha.' : 'Or just watch the bubble.'}</p>
-      <button type="button" data-respiracao-stop onClick={finish} style={sm2Button('quiet')}>
+      <p style={{ ...phaseLine, ...tinta }}>{isPt ? 'Se preferir, só olhe a bolha.' : 'Or just watch the bubble.'}</p>
+      <button type="button" data-respiracao-stop onClick={finish} style={{ ...sm2Button('quiet'), ...tinta }}>
         {isPt ? 'Terminar' : 'Finish'}
       </button>
-      <CrisisNote isPt={isPt} />
+      <CrisisNote isPt={isPt} style={tinta} />
+      </div>
     </GameRoot>
   );
 }

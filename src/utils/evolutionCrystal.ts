@@ -20,6 +20,8 @@
  */
 import type { Branch } from './evolutionTarget';
 import { hasSprite, isAccountCapped, isFormCapped, type SpriteLibrary } from './spriteLibrary';
+import { altSpriteKey, elementoDaForma, type FormasAlt } from './formasAlternativas';
+import type { ElementoJornada } from './elementoJornada';
 
 export interface EvolutionCrystal {
   v: 1;
@@ -30,7 +32,14 @@ export interface EvolutionCrystal {
   branch: Branch;
   /** ISO do toque. */
   since: string;
+  /**
+   * A chave de acervo da forma-destino, CONGELADA no toque (`forma` ou `forma@elemento`). Recalculada a cada render ela mudava quando a própria arte
+   * recém-chegada entrava no acervo, e o lote da forma partia uma 2ª vez (REGISTRO §404). Ausente = cristal anterior a esta correção: recalcula.
+   */
+  key?: string;
 }
+
+const KEY_RE = /^(?:ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))(?:@[a-z_]{2,24})?$/;
 
 export type CrystalPhase = 'gerando' | 'falhou' | 'pronto';
 
@@ -67,7 +76,8 @@ export function sanitizeCrystal(raw: unknown): EvolutionCrystal | undefined {
   if (typeof r.from !== 'string' || typeof r.to !== 'string' || typeof r.since !== 'string') return undefined;
   if (!r.from || !r.to || r.from === r.to) return undefined;
   const branch = typeof r.branch === 'string' && BRANCHES.includes(r.branch) ? (r.branch as Branch) : 'harmony';
-  return { v: 1, from: r.from, to: r.to, branch, since: r.since };
+  const key = typeof r.key === 'string' && KEY_RE.test(r.key) && r.key.split('@')[0] === r.to ? r.key : undefined;
+  return { v: 1, from: r.from, to: r.to, branch, since: r.since, ...(key ? { key } : {}) };
 }
 
 /** O cristal que VALE agora: só se ele partiu do estágio atual. */
@@ -76,8 +86,8 @@ export function activeCrystal(state: { evolutionCrystal?: EvolutionCrystal; evol
   return c && c.from === state.evolutionStage ? c : null;
 }
 
-export function startCrystal(from: string, to: string, branch: Branch, now: Date): EvolutionCrystal {
-  return { v: 1, from, to, branch, since: now.toISOString() };
+export function startCrystal(from: string, to: string, branch: Branch, now: Date, key?: string): EvolutionCrystal {
+  return { v: 1, from, to, branch, since: now.toISOString(), ...(key ? { key } : {}) };
 }
 
 export interface CrystalPhaseInput {
@@ -103,4 +113,30 @@ export function crystalPhase(i: CrystalPhaseInput): CrystalPhase {
   const t = Date.parse(crystal.since);
   if (Number.isFinite(t) && i.now - t >= CRYSTAL_STUCK_MS) return 'falhou';
   return 'gerando';
+}
+
+/** O que a chave do cristal lê do save. */
+export interface CrystalKeyState {
+  evolutionCrystal?: EvolutionCrystal;
+  evolutionStage: string;
+  evolutionPotion?: string;
+  elementoJornada?: ElementoJornada;
+  formasAlt?: FormasAlt;
+}
+
+/** A chave de acervo da forma-destino do cristal (`forma` ou `forma@elemento`); `null` sem cristal ativo. Congelada no toque (`EvolutionCrystal.key`). */
+export function crystalSpriteKey(state: CrystalKeyState, library: SpriteLibrary): string | null {
+  const c = activeCrystal(state);
+  if (!c) return null;
+  if (c.key) return c.key;
+  return altSpriteKey(c.to, state.evolutionPotion || elementoDaForma(state.elementoJornada, c.to), state.formasAlt, library);
+}
+
+/** O cristal do TOQUE, já com a chave de acervo congelada (REGISTRO §404). `elementoJornada` = o registro JÁ com o elemento da forma-destino. */
+export function startCrystalFrozen(
+  state: Omit<CrystalKeyState, 'evolutionCrystal'>, library: SpriteLibrary, to: string, branch: Branch, now: Date,
+): EvolutionCrystal {
+  const base = startCrystal(state.evolutionStage, to, branch, now);
+  const key = crystalSpriteKey({ ...state, evolutionCrystal: base }, library);
+  return key ? { ...base, key } : base;
 }

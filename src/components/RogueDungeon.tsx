@@ -5,14 +5,16 @@
  * VISÍVEL (`RogueFight`, a `BattleStage` da Masmorra); os desafios que não são combate seguem sendo os jogos reais em modo desafio.
  * A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada. A superfície NASCE MUDA (nenhum som novo).
  */
+import { formatarEspera } from '../utils/dungeonIdle';
 import { BackCircleButton } from './ui/BackCircleButton';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
 import { rogueBonusIcon } from '../utils/rogueBonusArt';
 import { rogueCardArt } from '../utils/rogueCardArt';
 import type { GameChallenge } from '../utils/gameChallenge';
-import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
+import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadSeloGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
 import type { Combatant } from '../utils/combate/curve';
 import { hpPoints } from '../utils/combate/fight';
@@ -24,9 +26,10 @@ import { ResultScreen } from './games/ResultScreen';
 import { RankingPanel } from './RankingPanel';
 import floorDoor from '../assets/soulmon/icones-ui/masmorra-porta.png';
 import floorStairs from '../assets/soulmon/icones-ui/masmorra-escada.png';
+import { TelaMoldura } from './ui/TelaMoldura';
 import floorChest from '../assets/soulmon/icones-ui/masmorra-bau-fechado.png';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
+  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, rogueRestMs, settleRest, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
   resolveStep, startChallenge, rogueBits, rogueScore, runForDay, stepInFloor,
   type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
@@ -38,6 +41,7 @@ const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
 const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const SeloGame = lazy(() => loadSeloGame().then(m => ({ default: m.SeloGame })));
 const RogueFight = lazy(() => import('./RogueFight').then(m => ({ default: m.RogueFight })));
 const SoulBarrage = lazy(() => import('./SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 
@@ -47,6 +51,7 @@ const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: 
   rps: g => ({ en: `Rock Paper Scissors: win ${g} rounds first.`, pt: `Pedra, Papel, Tesoura: vença ${g} rodadas primeiro.` }),
   zip: () => ({ en: 'Pet Trail: solve the puzzle.', pt: 'Trilha do Pet: resolva o puzzle.' }),
   patches: () => ({ en: 'Patchwork: solve the puzzle.', pt: 'Colcha: resolva o puzzle.' }),
+  selo: () => ({ en: 'Missing Seal: pick the seal that completes the grid.', pt: 'Selo Faltante: escolha o selo que completa a grade.' }),
   eco: g => ({ en: `Pet Echo: repeat an echo of ${g} stones.`, pt: `Eco do Pet: repita um eco de ${g} pedras.` }),
   barrage: g => ({ en: `Soul Barrage: survive ${g} seconds.`, pt: `Soul Barrage: sobreviva ${g} segundos.` }),
 };
@@ -114,12 +119,14 @@ export interface RogueDungeonProps {
   combatant: Combatant;
   saveId?: string;
   /** Bits pelo funil/teto diário existente dos minigames. */
-  onEarnPoints?: (points: number) => void;
+  onEarnPoints?: (points: number) => number | void;
   /** Dados do Soulmon para os jogos em modo desafio e para a luta (arte/sprite/golpes). */
   evolutionStage?: string;
   demoCharacterId?: string;
   petName?: string;
   petElement?: string;
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem no Combina 3. */
+  petBase?: string;
   playerLevel?: number;
   /** As skills da ficha (a identidade de golpe da luta). */
   skills?: FichaSkills;
@@ -145,7 +152,7 @@ const sheetStyle = {
 } as const;
 const hudText = { margin: 0, color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)', textShadow: '0 1px 2px rgba(0,0,0,.9)' } as const;
 
-export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel, skills, onClose, onEnemySeen }: RogueDungeonProps) {
+export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, petBase, playerLevel, skills, onClose, onEnemySeen }: RogueDungeonProps) {
   // S18: o Calabouço toca o "Dungeon Theme" inteiro (mapa e escolhas; a luta troca para a música de combate).
   useEffect(() => entrarNaSuperficie('masmorra-mapa'), []);
   const isPt = language === 'pt-BR';
@@ -159,14 +166,19 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
   // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita). `paidRef` trava remontagem/re-render antes de o save voltar com
   // `paid`; `onEarnPoints` (instável, vem inline do pai) fica fora das deps, lido pelo ref.
-  const paidRef = useRef(false);
+  const paidRef = useRef(-1);
+  const [bitsPagos, setBitsPagos] = useState<number | null>(null); // o creditado (teto diário); null = pago em outra sessão, mostra o cheio
   const earnRef = useRef(onEarnPoints);
   earnRef.current = onEarnPoints;
   useEffect(() => {
-    if (!finished || run.paid || paidRef.current) return;
-    paidRef.current = true;
-    if (run.won > 0) earnRef.current?.(rogueBits(run));
-    onChange(markPaid(run));
+    /* §239: a derrota também paga o que a incursão rendeu até ali (a pessoa pode não voltar hoje); `paidWon` evita pagar de novo. */
+    const resting = run.hpAt !== undefined;
+    if ((!finished && !resting) || run.paid || paidRef.current === run.won) return;
+    const owed = rogueBits(run) - rogueBits({ won: run.paidWon ?? 0 });
+    if (!finished && owed <= 0) return;
+    paidRef.current = run.won;
+    if (owed > 0) setBitsPagos(earnRef.current?.(owed) ?? owed);
+    onChange(finished ? markPaid({ ...run, paidWon: run.won }) : { ...run, paidWon: run.won });
   }, [finished, run, onChange]);
 
   // Voltou com um desafio em curso (saiu/desmontou/fechou o app sem terminar): o passo é CONSUMIDO — sem re-tentar de graça nem espiar.
@@ -189,12 +201,15 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
   const choose = (kind: PathKind) => {
     if (kind !== 'combat') { settled.current = false; setChallenge(kind); onChange(startChallenge(run, kind)); return; }
+    const rest = rogueRestMs(run, Date.now());
+    if (rest > 0) { setNote(isPt ? `O Soulmon ainda se recupera. Volte em ${formatarEspera(rest, true)}; a incursão espera.` : `Your Soulmon is still recovering. Come back in ${formatarEspera(rest, false)}; the run will wait.`); return; }
+    if (run.hpAt !== undefined) onChange(settleRest(run, Date.now()));
     setNote(null);
     setFighting(true); // o combate é uma luta visível (`RogueFight`); o passo só resolve quando ela termina
   };
   const fightResult = (won: boolean, foeName: string, hpLeft: number) => finish('combat', won, won
     ? (isPt ? `Você venceu ${foeName}!` : `You defeated ${foeName}!`)
-    : (isPt ? `${foeName} venceu. O dia na masmorra acabou — volte amanhã.` : `${foeName} won. The dungeon day is over — come back tomorrow.`), hpLeft);
+    : (isPt ? `${foeName} venceu. Sair não custa nada: recupere a vida e continue daqui, hoje mesmo.` : `${foeName} won. Leaving costs nothing: recover and pick up right here, today.`), hpLeft);
 
   // Resultado do jogo real em modo desafio (vitória/derrota voltam ao mapa). Ignora chamada repetida.
   const settled = useRef(false);
@@ -207,11 +222,12 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const gameProps = { language, evolutionStage, demoCharacterId, onEarnPoints: () => {}, onExit: () => gameResult(false), challenge: challengeProp } as const;
   const renderGame = (g: ChallengeGame) => {
     switch (g) {
-      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} playerLevel={playerLevel} />;
+      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} petBase={petBase} playerLevel={playerLevel} />;
       case 'dino': return <DinoGame {...gameProps} onScore={() => {}} petElement={petElement} />;
       case 'rps': return <RPSGame {...gameProps} />;
       case 'zip': return <ZipGame {...gameProps} />;
       case 'patches': return <PatchesGame {...gameProps} />;
+      case 'selo': return <SeloGame {...gameProps} />;
       case 'eco': return <EcoGame {...gameProps} />;
       case 'barrage': return <SoulBarrage {...gameProps} petElement={petElement} playerLevel={playerLevel} />;
     }
@@ -228,11 +244,12 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const walked = Math.min(1, run.step / ROGUE_MAX_STEPS);
 
   return (
-    <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
+    <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, isolation: 'isolate', overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
+      <TelaMoldura tela="calabouco" title={isPt ? 'Calabouço' : 'Dungeon'} />
       {/* véu para o texto e a trilha lerem sobre qualquer cenário */}
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,18,22,.62), rgba(6,18,22,.38) 40%, rgba(6,18,22,.72))' }} />
 
-      <header style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 4, display: 'flex', alignItems: 'flex-start', gap: 8, padding: 'calc(10px + env(safe-area-inset-top, 0px)) 8px 0 8px' }}>
+      <header style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 4, display: 'flex', alignItems: 'flex-start', gap: 8, padding: 'calc(10px + env(safe-area-inset-top, 0px) + 1vw * 15) 8px 0 8px' }}>
         {onClose && (
           <BackCircleButton data-rogue-close="" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} overScene />
         )}
@@ -334,6 +351,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       {/* O fim do dia: tela padrão (Proposta D). Concluir os 3 andares = vitória; a incursão que acabou antes = calma, sem luto. */}
       {!ch && !fighting && finished && (
         <ResultScreen
+          playAgainIcon={lotIconName('exploracao', 'fenda')} playAgainArt={lotIconArt('exploracao', 'fenda')} dailyEvent="calabouco"
           language={language}
           outcome={run.over ? 'tired' : 'win'}
           gameName={isPt ? 'Incursão do dia' : "Today's run"}
@@ -344,7 +362,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           rootAttrs={{ 'data-rogue-over': true }}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: rogueScore(run) }}
           strip={[{ key: 'won', label: isPt ? 'Desafios vencidos' : 'Challenges won', value: run.won }]}
-          ledger={[{ key: 'bits', kind: 'bits', value: run.won > 0 ? rogueBits(run) : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: run.won > 0 ? (bitsPagos ?? rogueBits(run)) : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           notes={note ? <p data-rogue-note style={text}>{note}</p> : undefined}
           petSrc={petSprite}

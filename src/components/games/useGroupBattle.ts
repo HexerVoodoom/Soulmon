@@ -26,17 +26,25 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** Modo rápido (speed > 1): a nota fixa do especial do pet, o meio da faixa do anel (`ruim` < `bom` < `otimo`). */
+export const RAPIDO_RING_GRADE: RingGrade = 'bom';
+
 /** §202: a pausa entre o anúncio do especial (a carga) e o anel de tempo aparecer (ms). */
 export const RING_LEAD_MS = 1000;
+/** Pausa de apresentação depois do 2º golpe do companheiro no Pesadelo (só visual: o relógio da luta segue parado). */
+export const COMP_STRIKE_TAIL_MS = 250;
 import type { StageAction, StageHit } from './BattleStage';
 import {
   impactMs, introMs, specialTailMs, isSelfOnlySpecial, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
+import { efeitoVisivel } from '../../utils/combate/elementEffects';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
 import { groupFightSteps, type GroupEvent, type GroupOptions, type GroupResult } from '../../utils/combate/group';
+import { escolherAlvo, tocarAlvo } from '../../utils/combate/alvo';
 import type { FightSide } from '../../utils/combate/fight';
 import { CHEER, ENERGY, ENERGY_TRIGGER } from '../../utils/combate/specials';
+import type { ImpactoMelee } from '../../utils/combate/golpeImpacto';
 
 /** Pausa entre o último golpe de uma luta e o aviso de fim (o inimigo cai, o pet respira). */
 const END_BEAT_MS = 900;
@@ -71,8 +79,13 @@ export interface GroupScene {
   /** A FORMA do golpe do pet — da SKILL dele (básica ou especial). Nunca de índice/sorteio. */
   playerKind(special: boolean): StrikeForm;
   foeKind(foe: number, special: boolean): StrikeForm;
+  /** Corte × concussão do golpe CORPO A CORPO (05/11/2026; `utils/combate/golpeImpacto.ts`). Só visual; ausente = corte. */
+  playerImpact?(special: boolean): ImpactoMelee;
+  foeImpact?(foe: number, special: boolean): ImpactoMelee;
   /** PR16: a ESCOLA do especial do pet (só decide o SELO: `maldicao` + família `defDebuff` mostra MALDIÇÃO, mecânica e balanço iguais). Inimigos não têm escola. */
   playerSpecialEscola?: string | null;
+  /** §228: o ELEMENTO do especial do pet (o original, derivado incluso): decide o selo do efeito. */
+  playerSpecialElemento?: string | null;
   /** Selos curtos (já traduzidos). */
   labels: { blocked: string; ring: Record<RingGrade, string>; dodge: Partial<Record<DodgeGrade, string>> };
   /** Selo no pet quando o especial dele é pessoal (cura, escudo, buff): sem dano para mostrar. */
@@ -104,6 +117,9 @@ export interface GroupBattleOptions {
   autoSpecial?: { ring(n: number): RingGrade; dodge(n: number): DodgeGrade };
 }
 
+/** Sem companheiro em cena: a MESMA referência vazia sempre (não re-renderiza a cena à toa). */
+const SEM_COMPANHEIRO: readonly number[] = [];
+
 const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export interface GroupBattle {
@@ -124,6 +140,8 @@ export interface GroupBattle {
   charging: boolean;
   /** Efeitos de status do pet e de cada inimigo (PR11): derivados dos eventos do núcleo, só para a cena desenhar. */
   status: { me: StageStatus[]; foes: StageStatus[][] };
+  /** COMPANHEIRO INVOCADO (PR 2): turnos de ataque que o companheiro de cada lutador ainda tem (índice = `who`: 0 pet, 1+i inimigo); o contador REAL do núcleo (`FighterFx.comp`). Vazio sem companheiro. */
+  summon: readonly number[];
   cheer(): void;
   swipe(dir: -1 | 1): void;
   resolveRing(grade: RingGrade): void;
@@ -133,6 +151,11 @@ export interface GroupBattle {
   clock(): number;
   /** Quantas descargas de torcida o núcleo já recolheu nesta luta (o Pesadelo lê para a regra de vitória). */
   cheersUsed(): number;
+  /** ALVO POR TOQUE (03/11/2026): o inimigo que o jogador escolheu (`null` = regra automática) e o mirado de fato agora. */
+  picked: number | null;
+  target: number;
+  /** Toque num inimigo: vira o alvo a partir do PRÓXIMO golpe do pet (só com 2+ inimigos e ele vivo; `combate/alvo.ts`). */
+  pickTarget(foe: number): void;
 }
 
 export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
@@ -155,7 +178,12 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const [petDodge, setPetDodge] = useState<GroupBattle['petDodge']>(null);
   const [charging, setCharging] = useState(false);
   const [status, setStatus] = useState<GroupBattle['status']>({ me: [], foes: [[]] });
+  const [summon, setSummon] = useState<readonly number[]>(SEM_COMPANHEIRO);
   const [stateKey, setStateKey] = useState(-1);
+  const [picked, setPicked] = useState<number | null>(null);
+  const pickedRef = useRef<number | null>(null);
+  const foesHpRef = useRef<number[]>([1]);
+  foesHpRef.current = foesHp;
 
   const mtr = useRef(0);
   const seq = useRef(0);
@@ -202,6 +230,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
     dodgeAt.current = wallClock() - dodgeStart.current;
     setPetDodge({ id: ++seq.current, dir });
   }, [wallClock]);
+
+  const pickTarget = useCallback((foe: number) => {
+    const next = tocarAlvo(foesHpRef.current, pickedRef.current, foe);
+    if (next === pickedRef.current) return;
+    pickedRef.current = next;
+    setPicked(next);
+  }, []);
 
   const resolveRing = useCallback((grade: RingGrade) => {
     const r = ringResolver.current;
@@ -258,6 +293,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       buckets.current = new Map();
       discharges.current = 0;
       drained.current = 0;
+      pickedRef.current = null; setPicked(null); // rodada nova, inimigos novos: volta à regra automática
       let nRing = 0;
       let nDodge = 0;
       let hpNow = round.startHp;
@@ -269,15 +305,23 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       setPhaseBoth('idle');
       // PR11: o quadro de efeitos (0 = pet, 1+i = inimigo i). Vem SÓ dos eventos do núcleo; a tela não inventa status.
       let board: StatusBoard = emptyStatusBoard(nFoes);
-      const publish = () => setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
+      let summonNow: readonly number[] = SEM_COMPANHEIRO;
+      const publish = () => {
+        setStatus({ me: stageStatusOf(board[0]), foes: foes.map((_, i) => stageStatusOf(board[i + 1])) });
+        setSummon((prev) => (prev.length === summonNow.length && prev.every((v, i) => v === summonNow[i]) ? prev : summonNow));
+      };
       publish();
       /** Gasta os efeitos que os golpes/ticks deste grupo de eventos gastam; quem caiu leva os seus embora. */
       // PR16: o debuff de DEFESA que o pet deixa nos inimigos mostra o selo de MALDIÇÃO quando o especial dele é da escola maldicao
       const curseOn = (holder: number) => holder > 0 && isCurseSpecial(player.special?.family, scene.playerSpecialEscola);
+      // §228: hoje só o pet tem especial de família com estado (inimigo = `direct`), então o sabor vem sempre do elemento do especial dele.
+      const efeitoDoPet = efeitoVisivel(player.special?.family, scene.playerSpecialElemento, true);
+      const efeitoOn = (holder: number, origem: 'self' | 'foe') => ((origem === 'self') === (holder === 0) ? efeitoDoPet : null);
       /** Os turnos REAIS: os contadores que o núcleo expôs no evento (PR16); cura (instantânea) segue na aproximação. */
       const realFx = (fx: GroupEvent['fx']) => {
         const down = [...(hpNow <= EPS ? [0] : []), ...foesNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
-        board = withRealFx(board, fx, down, curseOn);
+        board = withRealFx(board, fx, down, curseOn, efeitoOn);
+        if (fx) summonNow = fx.some((f) => (f.comp ?? 0) > 0) ? fx.map((f) => f.comp ?? 0) : SEM_COMPANHEIRO;
       };
       const spendStatus = (batch: GroupEvent[], hpPet: number, foesHpNow: readonly number[]) => {
         for (const e of batch) if (e.kind === 'attack' || e.kind === 'tick') board = tickStatus(board, { kind: e.kind, who: e.who });
@@ -301,6 +345,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         seed: round.seed, startHp: round.startHp, startEnergy: round.startEnergy,
         hitScale: round.hitScale,
         cheerDrain: () => { const n = discharges.current; discharges.current = 0; drained.current += n; return n; },
+        target: () => pickedRef.current, // ALVO POR TOQUE: lido a cada golpe do pet
         withFx: true, // PR16: os turnos do selo vêm dos contadores reais do núcleo (não mudam a luta)
       });
       const queue: GroupEvent[] = [];
@@ -313,11 +358,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         if (r.done) { result = r.value; return null; }
         return r.value;
       };
+      /** O inimigo que o golpe do pet acertou de fato (o que perdeu vida); sem diferença, o alvo da regra. */
+      const hitFoe = (e: GroupEvent, before: readonly number[]) => { const i = e.foesHp.findIndex((h, k) => h < (before[k] ?? h) - EPS); return i >= 0 ? i : alivePos(before); };
       const showHits = (list: StageHit[]) => { if (list.length) setHits(list); };
-      const alivePos = (a: readonly number[]) => Math.max(0, a.findIndex(h => h > EPS));
+      const alivePos = (a: readonly number[]) => escolherAlvo(a, pickedRef.current);
 
       /** Aplica um grupo de eventos do mesmo instante: HP, energia, números. */
-      const apply = (batch: GroupEvent[], special: boolean, dodgeG: DodgeGrade | null) => {
+      const apply = (batch: GroupEvent[], special: boolean, dodgeG: DodgeGrade | null, keep: readonly StageHit[] = []): StageHit[] => {
         const last = batch[batch.length - 1];
         const out: StageHit[] = [];
         const dt = Math.max(0, last.t - tEn);
@@ -345,7 +392,9 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         hpNow = last.hp; foesNow = last.foesHp.slice();
         setHp(Math.max(0, hpNow)); setFoesHp(foesNow); setPetEnergy(last.energy); setFoeEnergy(fEn.slice());
         spendStatus(batch, hpNow, foesNow);
-        showHits(out);
+        // §334: `keep` = os números dos ticks que abriram este turno; seguem na tela junto com o do golpe
+        showHits([...keep, ...out]);
+        return out;
       };
       const ringTagRef = { current: 'bom' as RingGrade };
 
@@ -363,6 +412,11 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             if (auto) {
               // ESPECIAL AUTOMÁTICO (§36): sem anel — o Soulmon carrega sozinho; a nota é o sorteio com semente do número do cast.
               ringG = auto.ring(nRing++);
+            } else if ((optsRef.current.speed ?? 1) > 1) {
+              // MODO RÁPIDO (dono, 04/11/2026): sem anel de carga — ao encher a energia o Soulmon solta o especial sozinho
+              // com a intensidade do MEIO da faixa (`bom`, multiplicador 1). Em 1× nada muda: o anel abre como sempre.
+              nRing++;
+              ringG = RAPIDO_RING_GRADE;
             } else {
               const spec = ringSpec(seed, nRing++);
               setCharging(true);
@@ -378,7 +432,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             }
             ringTagRef.current = ringG;
             const pForm = scene.playerKind(true);
-            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, element: scene.playerElement(true), selfOnly: isSelfOnlySpecial(player.special?.family) });
+            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, impacto: scene.playerImpact?.(true), element: scene.playerElement(true), selfOnly: isSelfOnlySpecial(player.special?.family) });
             const scale = round.castScale({ who: 0, ring: ringG, dodge: null, foesHp: ev.foesHp });
             const first = pull(scale); // o núcleo devolve os eventos do especial no mesmo instante
             const batch: GroupEvent[] = [];
@@ -388,7 +442,11 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             // PR18: a cena do especial (nome + fundo escuro) vem antes do golpe; é só pausa de apresentação (nenhum `pull`
             // acontece nela, então a ordem e o resultado do motor não mudam).
             if (!(await wait(introMs('special') + impactMs('special', reduced())))) return;
-            if (batch.length) apply(batch, true, null);
+            // PESADELO (22/11/2026): o ataque extra do companheiro (`comp`) é o 2º golpe: sai DEPOIS do especial, em cena própria
+            const extra = batch.filter((e) => e.comp);
+            const main = batch.filter((e) => !e.comp);
+            if (main.length) apply(main, true, null);
+            else if (extra.length) { /* só o companheiro bate: o número dele sai na cena do 2º golpe */ }
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
             // PR11: o efeito que a família do especial deixa — no foco único, ou em todos os vivos se a escola dele é em área
@@ -396,6 +454,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             // 11/10/2026: UM especial de cada vez — o efeito termina de aparecer ANTES de qualquer golpe (de qualquer lado)
             // começar; o relógio da luta segue parado (`wait` não o avança), então nada é pulado: só retomado depois.
             if (!(await wait(specialTailMs(reduced())))) return;
+            if (extra.length) {
+              const kindX: StageActionKind = scene.playerKind(false);
+              setAction({ id: ++seq.current, actor: 'me', foe: hitFoe(extra[extra.length - 1], foesNow), kind: kindX, impacto: scene.playerImpact?.(false), element: scene.playerElement(false) });
+              if (!(await wait(impactMs(kindX, reduced())))) return;
+              apply(extra, false, null);
+              if (!(await wait(COMP_STRIKE_TAIL_MS))) return;
+            }
             ev = pull();
             continue;
           }
@@ -404,7 +469,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           // PR18: a cena do especial (nome grande + fundo escuro) abre ANTES de a janela da esquiva: a ação entra agora,
           // o relógio da esquiva só começa quando a cena acaba (e a arte do golpe sai depois dela, no `BattleStage`).
           setAction({
-            id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), element: scene.foeElement(casterFoe),
+            id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), impacto: scene.foeImpact?.(casterFoe, true), element: scene.foeElement(casterFoe),
             castMs: spec.castMs, impactMs: spec.impactMs, totalMs: spec.impactMs + 500,
             selfOnly: isSelfOnlySpecial(foes[casterFoe]?.special?.family), // §198
           });
@@ -444,8 +509,14 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         while (nx && nx.kind !== 'cast' && Math.abs(nx.t - ev.t) < EPS) { batch.push(nx); nx = pull(); }
         if (nx) queue.unshift(nx);
 
-        const first = batch[0];
+        // §334: DoT/HoT tocam no COMEÇO do turno de quem os carrega, no mesmo instante do golpe dele. Os ticks que abrem o
+        // grupo saem quando a ação desse lutador começa (antes do golpe chegar); a ação desenhada é a do golpe que vem depois.
+        const nTicks = batch.findIndex((e) => e.kind !== 'tick');
+        const ticks = nTicks > 0 ? batch.slice(0, nTicks) : [];
+        const rest = ticks.length ? batch.slice(nTicks) : batch;
+        const first = rest[0];
         const isAttack = first.kind === 'attack';
+        let tickHits: StageHit[] | null = null;
         if (isAttack && first.who >= 0) {
           const foeIdx = first.who - 1;
           const blocked = first.who !== 0 && first.frac <= EPS;
@@ -456,15 +527,18 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           const start = room >= lead ? first.t - lead : clockS.current;
           const land = room >= lead ? first.t : Math.max(first.t, clockS.current + Math.min(lead, CUT_MIN_S));
           if (!(await waitTo(start))) return;
+          if (ticks.length) tickHits = apply(ticks, false, null);
           setAction({
             id: ++seq.current, actor: first.who === 0 ? 'me' : 'foe',
-            foe: first.who === 0 ? alivePos(foesNow) : foeIdx, kind,
+            foe: first.who === 0 ? hitFoe(first, foesNow) : foeIdx, kind,
+            impacto: first.who === 0 ? scene.playerImpact?.(false) : scene.foeImpact?.(foeIdx, false),
             element: first.who === 0 ? scene.playerElement(false) : scene.foeElement(foeIdx),
             shield: blocked ? scene.playerElement(false) : null,
           });
           if (!(await waitTo(land))) return;
         } else if (!(await waitTo(first.t))) return;
-        apply(batch, false, null);
+        if (tickHits) apply(rest, false, null, tickHits);
+        else apply(batch, false, null);
         ev = pull();
       }
 
@@ -487,7 +561,8 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   }, [running, seed, opts.runKey]);
 
   return {
-    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
+    action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status, summon,
+    picked, target: escolherAlvo(foesHp, picked), pickTarget,
     cheer, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
   };
 }

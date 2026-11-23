@@ -101,26 +101,32 @@ export interface QuickAddOptions {
  */
 const CATEGORY_ALIASES: Record<string, ActivityCategory> = {
   // Health
-  health: 'Health', saude: 'Health', saudavel: 'Health', medico: 'Health', doctor: 'Health',
+  health: 'corpo', saude: 'corpo', saudavel: 'corpo', medico: 'corpo', doctor: 'corpo',
   // Creativity
-  creativity: 'Creativity', creative: 'Creativity', criatividade: 'Creativity',
-  criativo: 'Creativity', arte: 'Creativity', art: 'Creativity',
+  creativity: 'criatividade', creative: 'criatividade', criatividade: 'criatividade',
+  criativo: 'criatividade', arte: 'criatividade', art: 'criatividade',
   // Discipline
-  discipline: 'Discipline', disciplina: 'Discipline', rotina: 'Discipline', routine: 'Discipline',
+  discipline: 'foco', disciplina: 'foco', rotina: 'foco', routine: 'foco',
   // Study
-  study: 'Study', studies: 'Study', estudo: 'Study', estudos: 'Study',
-  estudar: 'Study', faculdade: 'Study', school: 'Study',
+  study: 'aprendizado', studies: 'aprendizado', estudo: 'aprendizado', estudos: 'aprendizado',
+  estudar: 'aprendizado', faculdade: 'aprendizado', school: 'aprendizado',
   // Work
-  work: 'Work', trabalho: 'Work', job: 'Work', escritorio: 'Work', office: 'Work',
+  work: 'foco', trabalho: 'foco', job: 'foco', escritorio: 'foco', office: 'foco',
+  // Categorias novas (11/11/2026)
+  sono: 'sono', sleep: 'sono', dormir: 'sono', corpo: 'corpo', body: 'corpo',
+  foco: 'foco', focus: 'foco', aprendizado: 'aprendizado', learning: 'aprendizado',
+  relacoes: 'relacoes', relationships: 'relacoes', casa: 'casa', home: 'casa', house: 'casa',
+  financas: 'financas', finances: 'financas', dinheiro: 'financas', money: 'financas',
+  proposito: 'proposito', purpose: 'proposito',
   // Social
-  social: 'Social', socializar: 'Social', amigos: 'Social', friends: 'Social', family: 'Social', familia: 'Social',
+  social: 'relacoes', socializar: 'relacoes', amigos: 'relacoes', friends: 'relacoes', family: 'relacoes', familia: 'relacoes',
   // Wellness
-  wellness: 'Wellness', bemestar: 'Wellness', autocuidado: 'Wellness',
-  selfcare: 'Wellness', mente: 'Wellness', mind: 'Wellness',
+  wellness: 'mente', bemestar: 'mente', autocuidado: 'mente',
+  selfcare: 'mente', mente: 'mente', mind: 'mente',
   // Fitness
-  fitness: 'Fitness', treino: 'Fitness', treinar: 'Fitness', academia: 'Fitness',
-  gym: 'Fitness', exercicio: 'Fitness', exercise: 'Fitness', workout: 'Fitness',
-  corrida: 'Fitness', esporte: 'Fitness', sport: 'Fitness',
+  fitness: 'corpo', treino: 'corpo', treinar: 'corpo', academia: 'corpo',
+  gym: 'corpo', exercicio: 'corpo', exercise: 'corpo', workout: 'corpo',
+  corrida: 'corpo', esporte: 'corpo', sport: 'corpo',
 };
 
 /** Alternativas de dia da semana, do mais longo para o mais curto (o regex é

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { SpriteFx } from './SpriteFx';
 
 /**
  * A CELEBRAÇÃO (rodada 7, M5, 04/10/2026): um estouro curto de faíscas quando
@@ -37,6 +38,8 @@ export function Celebration({ fixed = false, onDone }: { fixed?: boolean; onDone
         pointerEvents: 'none', zIndex: fixed ? 80 : 2,
       }}
     >
+      {/* F3 (02/11/2026): estouro de cristais e brilhos por folha de 6 quadros, centrado; some junto com o resto em movimento reduzido. */}
+      <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" data-celebration-fx="" style={{ position: 'absolute', left: -64, top: -64 }} />
       {Array.from({ length: SPARKS }, (_, i) => {
         const ang = (360 / SPARKS) * i;
         const style = {

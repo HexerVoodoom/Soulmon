@@ -201,7 +201,33 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // nos encontros, recuperação em 2 dias e nomes dos 50 curados (REGISTRO §213). Corte real segue = partir o `App.tsx`.
   // 01/11/2026: 885_104 -> 895_367 (+10 KB), build limpo da v244. Oficina do Foco (salvar, hábitos, ✓ sincronizado com a origem),
   // âncora do pé na sombra (spriteFeetTable) e nome nas notificações. Corte real segue = partir o `App.tsx`.
-  'index.js': 895_367,
+  // 04/11/2026 (PAGO, branch fix/orcamento-index): build limpo da main medido em 943_826 (Vitra, Bond, chefões, Selo, Edit Home etc. mergeados
+  // sem re-medir; 48 KB acima da linha anterior). Saíram da entrada por import()/React.lazy: o pool de 280 BBs (`data/bbPool.ts` + `bbPoolArt.ts`,
+  // ~33 KB; o App pré-carrega o chunk só em save novo e `obterBBDoSorteio` devolve null — o fluxo sem pool — se ele não chegar) e a cinemática
+  // de abertura (`IntroCinematica`, ~10 KB; as regras `deveTocarIntro` foram para `introGate.ts`, que fica na entrada). 943_826 -> 888_945 (−54,9 KB).
+  // Quem impede a volta: 2 sentinelas novas em `entradaEnxuta.contract.test.ts`. Corte real segue = partir o `App.tsx`.
+  // (CI lê o dist/ COMMITADO, defasado até o próximo release; a dívida fica em 895_367 para ele passar. Build limpo desta branch: 888_945.)
+  // 05/11/2026: 895_367 -> 906_777 (+11 KB): a base limpa já estava em 903_361 (no teto + folga) antes desta mudança; +3,4 KB da
+  // recuperação da forma atual sem arte (bug "evoluiu para a mesma forma") e das formas alternativas (sanitizadores do save, visor do acervo).
+  // A tela delas e os nomes de elemento já ficaram fora da entrada (EvolutionPath lazy + import() no pedido do sprite).
+  // 12/11/2026 (beta12): 906_777 -> 1_091_309 (+184,5 KB), build limpo da branch. NÃO é das 5 frentes da beta12: a `main` limpa (merge-base 8367d278e,
+  // `vite build` sem dist commitado) já media 1_113_267 B — o `dist/` commitado era de 09/11 e escondia 7 dias de merges (elementoDescritores.data
+  // 47 KB, shop 25 KB, cosmeticosNovos 17 KB, enemyRosterData 14 KB, derivedElements 13 KB...). Esta branch JÁ TIROU o catálogo de atividades
+  // (31 KB+) da entrada (`catalogHabitMigrate` importava `activityCatalog` estático desde #821; agora usa `catalogoCarga`) e as frentes somam só
+  // ~19 KB (petVoice, tarefaLink, balaoDourado, soulmonCharacter; ChatPanel/ChatBox/npcFichas ficam em chunk lazy). Corte real segue = partir o `App.tsx`
+  // (169 KB do chunk) e mover `elementoDescritores.data` para `import()` (só `pistasVisuaisDoElemento`, 1 consumidor).
+  // 13/11/2026 (release beta12-prod): 1_091_309 -> 1_115_569 (+24 KB) pelas frentes da beta12 (widgets, chat painel, balões, guilda, efeitos de combate).
+  // 14/11/2026 (REGISTRO §380, fix/orcamento-bytes-js): 1_115_569 -> 1_125_769 (+10,0 KB), `npm run build` limpo de origin/main ec00287d. O `dist/`
+  // commitado ainda é o da release (#897) e por isso o CI passa; quem builda localmente via 1_125_769 > 1_123_761 (dívida + folga). Build limpo da
+  // própria release 8c7b4a80 já media 1_117_441 (+1,9 KB que o dist commitado escondia). O resto (+7,7 KB, `analisar:entrada` base × agora) são os
+  // 48 commits de 14/11, sem nenhum único responsável: §373 câmbio/pacotes (`entitlements` +1,5 KB, `currencies`), #887 /embed (`telemetry` +1,5 KB,
+  // `embedMode`, `embedGates`), #924 §378 (`pendingOpId` +0,9 KB, `entitlements`), `App.tsx` +0,8 KB (#922, #902, §371–§373), #902 cartas (`useMailbox`
+  // +0,7 KB), #911 `ChevronAcao` +0,6 KB, #922 `catalogChoice` +0,5 KB, §372 `arenaClearBonus` +0,4 KB, §371 `dayPlan`/`habitRhythm` +0,6 KB.
+  // GATILHO (§380): ao passar de 1_150_000 B (≈1,1 MB) o próximo PR que crescer a entrada PAGA antes de re-medir — começar por
+  // `elementoDescritores.data` (47 KB, hoje lido no `useMemo` síncrono de `stagesComElemento`) e partir o `App.tsx` (173 KB).
+  // 23/11/2026 (REGISTRO §498, perf/catalogos-lazy): 1_125_769 -> 1_095_753 (-30,7 KB): cosmeticosNovos e honraDecor viraram chunk lazy. Linha ABAIXADA, nunca elevada.
+  // 23/11/2026 (REGISTRO §499, perf/app-split): 1_095_753 -> 1_062_299 (-33,5 KB): PostponeNudgeSheet, NotificationManager, ReviewResultModal e RewardPreview saíram do App.tsx para chunks lazy. Linha ABAIXADA.
+  'index.js': 1_062_299,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
@@ -211,8 +237,13 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
   // 01/11/2026: 190_071 -> 199_237 (+9 KB), build limpo da v244: selo NEW em imagem, aviso de recuperação do desgarrado e
   // estilos que entraram na main pelas outras frentes do dia.
-  'index.css': 199_237,
-  'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
+  // 04/11/2026: 199_237 -> 208_770 (+9,5 KB), build limpo da main (estava 1,3 KB acima da folga, vermelho antes desta branch; o CSS é único e
+  // sem split, então os estilos das frentes mergeadas desde 01/11 entram todos aqui). Re-medida com justificativa, NÃO é do corte do JS.
+  // 22/11/2026 (REGISTRO §497, perf/dist-orcamento): 223_537 -> 206_369 (-17,2 KB). Um build limpo da main media 256_163 (estourava a folga em ~24 KB); a poda
+  // das ~540 classes utilitárias do Tailwind que NENHUM arquivo do repo cita (e de sobras `sm2-*` mortas) levou a 206_369. Linha ABAIXADA, nunca elevada.
+  'index.css': 206_369,
+  // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
+  // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
 };
 
@@ -315,7 +346,7 @@ describe('orçamento de bytes (decisão #31) — lido do dist/', () => {
     expect(problema).toContain('gigante-Abcdefgh.webp');
     expect(problema).toMatch(/arquivo novo/);
     // Mídia em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovada.
-    expect(avaliar('bg-forja-Abcdefgh.webp', DIVIDA_ATUAL['bg-forja.webp'] + 1, TETO_IMAGEM, 0)).toMatch(/cresceu/);
+    expect(avaliar('index-Abcdefgh.css', DIVIDA_ATUAL['index.css'] + 1, 0, 0)).toMatch(/cresceu/); // sem mídia em dívida desde 05/11/2026: folga 0 = regra da mídia
     // Dívida registrada para arquivo que não existe → linha morta (o guard cobra a remoção).
     const medidor = (n: string) => (n === 'index-Abcdefgh.js' ? DIVIDA_ATUAL['index.js'] : 0);
     expect(dividasMortas({ 'index.js': 1, 'fantasma.webp': 999_999 }, ['index-Abcdefgh.js'], medidor, tetoPorExtensao)).toEqual(['fantasma.webp']);

@@ -24,10 +24,9 @@ describe('cadeado dos prédios', () => {
     const base = { language: 'en-US' as const, onOpenArea: () => {}, bits: 0, emblems: 0, credits: 0 };
     const a = render(<MapPage {...base} bondLevel={1} />);
     // beta3 N10: a Fenda (Vínculo 1) veio para a Arena, então a Arena já abre no 1; o Hall (Clã, Vínculo 2).
-    expect(a.container.querySelector('[data-map-area="arena"]')!.getAttribute('data-map-locked')).toBe('3');
-    const arena = a.container.querySelector('[data-map-area="hall"]')!;
-    expect(arena.getAttribute('data-map-locked')).toBe('2');
-    expect(arena.getAttribute('aria-label')).toContain('Locked, opens at Bond 2');
+    // 12/11/2026 (dono): sem limite por level — nenhuma área trava no Vínculo 1 (o cadeado e o aviso seguem prontos para uma tabela futura).
+    expect(a.container.querySelector('[data-map-area="arena"]')!.getAttribute('data-map-locked')).toBeNull();
+    expect(a.container.querySelector('[data-map-area="hall"]')!.getAttribute('data-map-locked')).toBeNull();
     expect(a.container.querySelector('[data-map-area="mercado"]')!.getAttribute('data-map-locked')).toBeNull();
     a.unmount();
     const b = render(<MapPage {...base} bondLevel={9} />);
@@ -35,5 +34,23 @@ describe('cadeado dos prédios', () => {
     b.unmount();
     const c = render(<MapPage {...base} />);
     expect(c.container.querySelector('[data-map-locked]')).toBeNull();
+  });
+});
+
+describe('LockNotice com X (16/11/2026)', () => {
+  it('não some em 10 s, tocar fora não fecha, o X fecha', async () => {
+    const { vi } = await import('vitest');
+    const { fireEvent, act } = await import('@testing-library/react');
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      const { container } = render(<LockNotice text="Opens at Bond 5." onClose={onClose} />);
+      act(() => { vi.advanceTimersByTime(10_000); });
+      fireEvent.click(document.body);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-lock-notice]')).not.toBeNull();
+      fireEvent.click(container.querySelector('[data-lock-notice-close]')!);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
   });
 });

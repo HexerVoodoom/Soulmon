@@ -1,3 +1,4 @@
+import { efeitoElementoPve } from '../../utils/combate/elementEffects';
 /**
  * A LUTA DO BOSQUE (30/10/2026, REGISTRO §204): o ataque ao Plantio virou combate em grupo na `BattleStage`, com torcida,
  * anel do especial e esquiva — o mesmo kit do Calabouço (`RogueFight`). O núcleo decide tudo pela semente (`groveRaidRound`);
@@ -10,9 +11,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from '../games/BattleStage';
 import { TorcidaLayer } from '../games/TorcidaKit';
 import { useGroupBattle, type GroupRound, type GroupScene } from '../games/useGroupBattle';
+import { useBattleSpeed, BattleSpeedButton } from '../games/BattleSpeed';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from '../games/pveTags';
 import { sm2Button } from '../form/FormKit';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel } from '../../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel } from '../../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../../utils/fighterIdentity';
 import { dungeonFamily, dungeonPlayerSide } from '../../utils/dungeonFight';
 import { stageSkillsFor, type FichaSkills } from '../../utils/soulProfile/ficha/stageSkillsFor';
@@ -26,6 +29,9 @@ import { groveRaidLineup, groveRaidRound } from '../../utils/groveRaid';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
 import { PANORAMA_SRC, ARVORE_SRC } from '../../assets/bosque';
 import { ESTACOES_BOSQUE, type EstacaoBosque } from '../../utils/bosqueArvores';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { companheiroDoEstado } from '../../utils/companheiroInvocado';
+import { summonsDoGrupo } from '../games/SummonLayer';
 
 /**
  * O fundo da luta: o PANORAMA do Plantio (dono, 01/11/2026), o mesmo cenário do `PlantioVisor`/`GroveVisor`/`GroveCena` onde
@@ -56,7 +62,8 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
-  const cfg = useMemo(() => ({ combatant, family }), [combatant, family]);
+  const companheiro = companheiroDoEstado(useGameStateOptional()?.gameState); // PR 2: sempre `null` com a flag desligada
+  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento, hx), companheiro }), [combatant, family, ident.especial.elemento, hx, companheiro]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
   const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
@@ -85,13 +92,17 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
     foeElement: f => foeEl[f] ?? foeEl[0],
     playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
-    foeKind: (f, sp) => elementStrikeForm(foeEl[f] ?? foeEl[0], sp ? 'especial' : 'basica'),
+    playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+    foeImpact: (f, sp) => meleeImpactOf({ element: foeEl[f] ?? foeEl[0], key: `${f}|${foeEl[f] ?? foeEl[0]}`, forma: foeStrikeForm(foeEl[f] ?? foeEl[0], sp ? 'especial' : 'basica') }),
+    foeKind: (f, sp) => foeStrikeForm(foeEl[f] ?? foeEl[0], sp ? 'especial' : 'basica'),
     labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
     personalTag: PERSONAL_TAG[lang][family],
     playerSpecialEscola: ident.especial.escola,
+    playerSpecialElemento: ident.especial.elemento,
   }), [hpMax, foeMax, ident, foeEl, isPt, lang, family]);
 
-  const battle = useGroupBattle({ running: !end, paused, reduced: reduced.current, runKey: 1, seed, round, scene, onEnd: setEnd, torcida: true });
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
+  const battle = useGroupBattle({ running: !end, paused, reduced: reduced.current, runKey: 1, seed, round, scene, onEnd: setEnd, torcida: true, speed });
   const pronto = battle.stateKey === 1;
   const won = end?.winner === 'player';
 
@@ -99,12 +110,13 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-grove-raid style={{ display: 'contents' }} />
       <BattleStage
-        specialLabel={specialLabel(isPt, par?.especial)}
+        summon={summonsDoGrupo(battle.summon, companheiro)}
+        specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}
         scene={GROVE_RAID_SCENE}
         me={{
-          key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
+          key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
           element: fxElementId(ident.basico.elemento), energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={lineup.map((e, i) => {
@@ -116,6 +128,9 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
             status: pronto ? battle.status.foes[i] : undefined,
           };
         })}
+        target={pronto ? battle.target : 0}
+        picked={pronto ? battle.picked : null}
+        onPickFoe={battle.pickTarget}
         action={pronto ? battle.action : null}
         hit={pronto ? battle.hits : []}
         charging={pronto && battle.charging}
@@ -124,6 +139,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         dodge={pronto ? battle.dodge : null}
         onDodge={battle.swipe}
         petDodge={pronto ? battle.petDodge : null}
+        fast={speed > 1}
         mechLabels={{ strike: isPt ? 'Golpear' : 'Strike', dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left', dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right' }}
         title={isPt ? 'Bosque · ataque' : 'Grove · raid'}
         closeLabel={isPt ? 'Sair da luta (não custa nada)' : 'Leave the fight (costs nothing)'}
@@ -143,6 +159,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
             })}
           </div>
         )}
+        {!end && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />}
         {end && (
           <div role="status" data-grove-raid-end={won ? 'won' : 'lost'} style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 700 }}>

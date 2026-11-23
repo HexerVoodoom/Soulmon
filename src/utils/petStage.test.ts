@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  GROUND_Y, DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, applyDecorEquip, type SlotId,
+  GROUND_Y, DECOR_SLOTS, SLOT_ORDER, decorRenderBox, DECOR_RENDER_SCALE, decorFitsSetting, slotBoxStyle, applyDecorEquip, type SlotId,
 } from './petStage';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { ALL_SHOP_ITEMS, isGuildReward } from './shop';
@@ -48,10 +48,44 @@ describe('geometria do palco', () => {
   });
 
   it('a peça apoiada no chão sobe a própria altura; a pendurada não', () => {
-    expect(slotBoxStyle(DECOR_SLOTS['floor-left']).marginTop).toBe(-DECOR_SLOTS['floor-left'].h);
+    expect(slotBoxStyle(DECOR_SLOTS['floor-left']).marginTop).toBe(-decorRenderBox(DECOR_SLOTS['floor-left']).h);
     expect(slotBoxStyle(DECOR_SLOTS.wall).marginTop).toBe(0);
     expect(slotBoxStyle(DECOR_SLOTS.wall).top).toBe(`${DECOR_SLOTS.wall.y}%`);
     expect(slotBoxStyle(DECOR_SLOTS['floor-left']).top).toBe(`${GROUND_Y}%`);
+  });
+});
+
+describe('escala da decoração no palco (04/11/2026)', () => {
+  it('cantos, chão e parede crescem 2,5× com escala uniforme', () => {
+    for (const id of ['rug', 'floor-left', 'floor-right', 'wall'] as SlotId[]) {
+      expect(DECOR_RENDER_SCALE[id]).toBe(2.5);
+      const s = DECOR_SLOTS[id]; const b = decorRenderBox(s);
+      expect(Math.abs(b.w / b.h - s.w / s.h)).toBeLessThan(0.15);
+    }
+  });
+  it('atinge o alvo do dono no print de 720 px (1 px CSS = 1,7 px)', () => {
+    const k = 1.7;
+    expect(decorRenderBox(DECOR_SLOTS['floor-left']).h * k).toBeGreaterThanOrEqual(220); // fliperama: arte ocupa a altura toda
+    expect(decorRenderBox(DECOR_SLOTS['floor-left']).h * k).toBeLessThanOrEqual(245);
+    const tapeteVisivel = decorRenderBox(DECOR_SLOTS.rug).w * k * (245 / 312); // furn-circuit-mat: 245 de 312 px opacos
+    expect(tapeteVisivel).toBeGreaterThanOrEqual(330);
+    expect(tapeteVisivel).toBeLessThanOrEqual(370);
+  });
+  it('peça de chão mantém a base na linha do chão ao crescer', () => {
+    const s = DECOR_SLOTS['floor-left'];
+    const box = slotBoxStyle(s);
+    expect(box.top).toBe(`${GROUND_Y}%`);
+    expect(box.marginTop + box.height).toBe(0);
+  });
+  it('escaladas, as peças de chão não se sobrepõem nem saem do palco a 390 px', () => {
+    const STAGE_W = 390;
+    const chao = Object.values(DECOR_SLOTS).filter(s => s.anchor === 'ground').map(s => {
+      const { w } = decorRenderBox(s);
+      return { id: s.id, l: (s.x / 100) * STAGE_W - w / 2, r: (s.x / 100) * STAGE_W + w / 2 };
+    }).sort((a, b) => a.l - b.l);
+    expect(chao[0].l).toBeGreaterThanOrEqual(0);
+    expect(chao[chao.length - 1].r).toBeLessThanOrEqual(STAGE_W);
+    for (let i = 1; i < chao.length; i++) expect(chao[i].l, `${chao[i - 1].id} × ${chao[i].id}`).toBeGreaterThanOrEqual(chao[i - 1].r);
   });
 });
 

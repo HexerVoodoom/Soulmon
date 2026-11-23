@@ -1,7 +1,10 @@
+import { elementShopVisible } from '../../utils/elementExclusive';
+import type { BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
+import { CreditIcon } from '../ui/CreditIcon';
 import { BitsAmount } from '../ui/BitsAmount';
 import { BitsIcon } from '../ui/BitsIcon';
 import { InfoTip } from '../ui/InfoTip';
@@ -11,7 +14,7 @@ import { resolveGo, type MissionNav } from '../nav/MissionCard';
 import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
 import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory } from '../../utils/missions';
-import { SHOP_ITEMS } from '../../utils/shop';
+import { SHOP_ITEMS, type ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -19,14 +22,19 @@ import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
-import { essenceName, ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
-import { essencePackPrice, ESSENCE_PACK_SIZES } from '../../utils/essenceShop';
+import { ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
+import { essenceName } from '../../utils/essences';
+import { essenceUnitPrice } from '../../utils/essenceShop';
+import { EssenceBuySheet } from './EssenceBuySheet';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
+import { WidgetFramePicker } from '../WidgetFramePicker';
+import type { WidgetFramePickerData } from '../../utils/widgetFrames';
+import { ShopItemSheet } from './ShopItemSheet';
 import {
-  CreditExchange, CurrencyBalance, PurchaseConfirmSheet, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
+  CreditExchange, CurrencyBalance, PurchaseConfirmSheet, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
@@ -41,12 +49,11 @@ import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions'
  * compra de `onBuy` (→ `handleShopBuy`), a troca de `onExchangeCredits`.
  */
 
-/** Cabeçalho fixo da folha (abas + saldo) — não rola junto da prateleira. */
+/** Cabeçalho da folha (abas + saldo): no FLUXO normal, rola junto e sem fundo próprio. Com a moldura, um bloco sólido sticky virava uma barra turquesa
+ *  desalinhada com o resto rolando por baixo dela (feedback do dono, 18/11/2026). */
 const stickyHead: CSSProperties = {
-  position: 'sticky', top: 0, zIndex: 1,
   display: 'flex', flexDirection: 'column', gap: 8,
   paddingBottom: 8,
-  backgroundColor: 'var(--sm2-surface)',
 };
 
 function currencyLabel(c: CurrencyId, isPt: boolean): string {
@@ -79,7 +86,7 @@ export function CurrencyPills({ tabs, value, onChange, isPt }: {
           >
             {c === 'bits' ? <BitsIcon size={20} />
               : c === 'emblems' ? <Icon name="military_tech" size={20} fill={1} tone="gold" />
-              : <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />}
+              : <CreditIcon size={20} />}
             <span>{currencyLabel(c, isPt)}</span>
           </button>
         );
@@ -105,11 +112,13 @@ export interface MercadoStallProps extends ShopOwnership, ShopActions {
   /** D-58: as missões da semana (pagas em Honra) moram no TOPO da aba Honra do Mercado. Sem elas, a aba não as desenha. */
   weekly?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   onClaimWeekly?: (id: WeeklyMissionId) => void;
+  /** Moldura do WIDGET V-Pet (dinheiro real, `utils/widgetFrames.ts`): a 3ª aba da lojinha de Background. Sem isto a aba não existe. */
+  widgetFrames?: WidgetFramePickerData;
 }
 
-/** As duas abas da lojinha de Background (D-24): Backgrounds à esquerda (abre nela), Frames à direita. */
-export type StallKind = 'backgrounds' | 'frames';
-export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames'];
+/** As abas da lojinha de Background (D-24): Backgrounds à esquerda (abre nela), Frames à direita. */
+export type StallKind = 'backgrounds' | 'frames' | 'widget';
+export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames', 'widget'];
 
 /** Uma lojinha de compra (Itens, Decoração ou Background), com abas por moeda. */
 export function MercadoStallSheet(props: MercadoStallProps) {
@@ -121,6 +130,8 @@ export function MercadoStallSheet(props: MercadoStallProps) {
   /** C3: a lojinha da Panora vende DUAS coisas — separadas em Backgrounds / Frames; a moeda (Bits / Honra) fica dentro de cada uma. */
   const [kind, setKind] = useState<StallKind>(initialKind ?? 'backgrounds');
   const showFrames = stall === 'background' && kind === 'frames';
+  /** A aba do widget V-Pet não tem moeda do jogo: o preço vem da Play. */
+  const showWidget = stall === 'background' && kind === 'widget' && !!props.widgetFrames;
   const balance = cur === 'emblems' ? emblems : points;
 
   return (
@@ -128,69 +139,49 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       <div style={stickyHead}>
         {stall === 'background' && (
           <PixelTabs
-            items={STALL_KIND_ORDER.map(k => ({ key: k, label: k === 'frames' ? (isPt ? 'Molduras' : 'Frames') : 'Backgrounds' }))}
+            items={STALL_KIND_ORDER.filter(k => k !== 'widget' || !!props.widgetFrames).map(k => ({ key: k, label: k === 'frames' ? (isPt ? 'Molduras' : 'Frames') : k === 'widget' ? 'Widget' : 'Backgrounds' }))}
             value={kind}
             onChange={setKind}
             ariaLabel={isPt ? 'O que a Panora vende' : 'What Panora sells'}
           />
         )}
-        {tabs.length > 1 && (
+        {tabs.length > 1 && !showWidget && (
           <CurrencyPills tabs={tabs} value={cur} onChange={c => setCur(c as 'bits' | 'emblems')} isPt={isPt} />
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {!showWidget && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <ShopStatus flash={flash} idle={idleLine(cur, isPt)} language={language} />
           </div>
           <CurrencyBalance currency={cur} value={balance} language={language} />
-        </div>
+        </div>}
       </div>
 
 
       {/* D-58 (19/10/2026): as missões da semana (pagas em Honra) abrem a aba Honra — a torneira ao lado do ralo, e só ali. */}
-      {cur === 'emblems' && weekly && weekly.length > 0 && (
+      {!showWidget && cur === 'emblems' && weekly && weekly.length > 0 && (
         <section data-mercado-weekly aria-label={isPt ? 'Missões da semana' : 'Weekly missions'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <h3 className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)' }}>{isPt ? 'Esta semana' : 'This week'}</h3>
           <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
         </section>
       )}
 
-      {/* D2 (02/10/2026): a regra da decoração no TOPO — quantas peças cabem e onde aparecem. */}
-      {stall === 'decoracao' && <DecorRuleLine language={language} />}
-
-      {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
-          NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
-          Vazio é silêncio — a seção nem desenha o título. */}
-      {!showFrames && (stall === 'background' || stall === 'decoracao') && (
-        <GuildOwnedShelf
-          language={language}
-          kind={stall === 'background' ? 'bg' : 'furniture'}
-          ownership={props}
-          actions={props}
-        />
-      )}
-      {/* O conjunto do trimestre da assinatura: sempre visível (escurecido com o porquê
-          quando a vitrine está fechada), de graça no resgate, posse permanente depois. */}
-      {cur === 'bits' && !showFrames && (stall === 'background' || stall === 'decoracao') && (
-        <SubscriptionShelf
-          language={language}
-          kind={stall === 'background' ? 'bg' : 'furniture'}
-          ownership={props}
-          actions={props}
-        />
-      )}
-      {showFrames ? (
+      {showWidget ? (
+        <WidgetFramePicker language={language} data={props.widgetFrames!} />
+      ) : showFrames ? (
         <FrameShelf
           language={language}
           currency={cur}
           balance={balance}
           owned={props.ownedFrames ?? []}
+          petElement={props.petElement}
           onBuy={props.onBuyFrame}
         />
       ) : (
         <ShopShelf
           language={language}
           // B1: cenário de conquista só se compra no prédio Conquistas; aqui só aparece se já é seu (para equipar).
-          items={stallItems(stall, cur).filter(i => i.unlock?.kind !== 'mission' || props.ownedBackgrounds.includes(i.id) || (props.ownedFurniture ?? []).includes(i.id))}
+          items={stallItems(stall, cur).filter(i => (i.unlock?.kind !== 'mission' || props.ownedBackgrounds.includes(i.id) || (props.ownedFurniture ?? []).includes(i.id))
+            && elementShopVisible(i, props.petElement, [...props.ownedBackgrounds, ...(props.ownedFurniture ?? [])]))}
           currency={cur}
           balance={balance}
           ownership={props}
@@ -198,6 +189,22 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           say={say}
           flash={flash}
           hideDecorRule
+          afterOwned={!showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') ? (
+            <GuildOwnedShelf
+              language={language}
+              kind={stall === 'background' ? 'bg' : 'furniture'}
+              ownership={props}
+              actions={props}
+            />
+          ) : undefined}
+          atEnd={cur === 'bits' && !showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') ? (
+            <SubscriptionShelf
+              language={language}
+              kind={stall === 'background' ? 'bg' : 'furniture'}
+              ownership={props}
+              actions={props}
+            />
+          ) : undefined}
         />
       )}
     </div>
@@ -239,6 +246,8 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
+  /** Cenário tocado — abre a MESMA folha de prévia grande da lojinha de Background (ShopItemSheet). */
+  const [preview, setPreview] = useState<{ item: ShopItem; missionId: string; buyable: boolean } | null>(null);
   const list = missionsInQueueOrder(
     MISSIONS.filter(m => m.category === cat),
     m => {
@@ -264,7 +273,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
           const resgatada = done && (!m.bgReward || claimed === undefined || claimed.includes(m.id));
-          const go = resolveGo(nav, achievementTarget(m.category), language);
+          const go = resolveGo(nav, achievementTarget(m.category, m.id), language);
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);
           const rewardName = reward ? (isPt ? reward.namePt : reward.nameEn) : null;
@@ -316,12 +325,20 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
               {go.lockNote && !resgatada && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{go.lockNote}</p>}
               {rewardName && (
                 <div data-mission-reward style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button
+                    type="button"
+                    data-mission-preview={reward!.id}
+                    aria-label={isPt ? `Ver ${rewardName}` : `View ${rewardName}`}
+                    onClick={() => setPreview({ item: reward!, missionId: m.id, buyable: !!shop && resgatada && !shop.ownedBackgrounds.includes(reward!.id) })}
+                    style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer', flex: 'none', display: 'flex' }}
+                  >
                   <MiniGlass size={52} style={{ width: 96, height: 52, flex: 'none' }}>
                     {thumb
                       ? <img src={thumb} alt="" width={96} height={52} className="sm2-shop-bg" />
                       : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[reward!.id]?.css }} />}
                     {!resgatada && <span aria-hidden="true" className="sm2-shop-veil" />}
                   </MiniGlass>
+                  </button>
                   <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ ...sm2Hint, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
                       {isPt ? 'O que ganha' : 'What you get'}
@@ -374,6 +391,28 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
           );
         })}
       </ul>
+      <ShopItemSheet
+        item={preview?.item ?? null}
+        language={language}
+        currency="bits"
+        balance={shop?.balance ?? 0}
+        owned={!!preview && !!shop && shop.ownedBackgrounds.includes(preview.item.id)}
+        equipped={false}
+        hidePrimary={!preview?.buyable}
+        onClose={() => setPreview(null)}
+        onBuy={it => {
+          const mid = preview?.missionId;
+          setPreview(null);
+          if (!shop || !mid) return;
+          const nome = isPt ? it.namePt : it.nameEn;
+          if (shop.balance < it.price) { setAviso({ id: mid, ok: false, msg: isPt ? `Faltam Bits para ${nome}. Eles vêm dos minijogos.` : `Not enough Bits for ${nome} yet. They come from the minigames.` }); return; }
+          setAviso(null);
+          setConfirmando(mid);
+        }}
+        onEquip={() => setPreview(null)}
+        bitsPrice={(v, dim) => <BitsAmount value={v} size={16} style={dim ? { color: 'var(--sm2-muted)' } : undefined} />}
+        emblemPrice={(v) => <span className="sm2-num">{v}</span>}
+      />
     </div>
   );
 }
@@ -391,7 +430,11 @@ export const CAMBISTA_TABS: readonly CambistaTab[] = ['bits', 'essences', 'other
 export interface CambistaSheetProps {
   language: Language;
   credits: number;
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
+  /** §386 (A4c): abre a compra de Créditos que já existe (atalho quando falta saldo). */
+  onGetCredits?: () => void;
+  /** §386: reenvia os pacotes de Bits pendentes ao abrir (o servidor só devolve o que já tinha entregue). */
+  onRecoverPendingBits?: () => void;
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
@@ -403,19 +446,19 @@ export interface CambistaSheetProps {
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, onGetCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
-  const [pendingEss, setPendingEss] = useState<{ id: string; qty: number; price: number } | null>(null);
+  const [pendingEss, setPendingEss] = useState<string | null>(null);
   const [buyingEss, setBuyingEss] = useState(false);
-  const confirmEssence = async () => {
-    const p = pendingEss;
-    if (!p || !onBuyEssence) return;
+  const confirmEssence = async (qty: number) => {
+    const id = pendingEss;
+    if (!id || !onBuyEssence) return;
     setPendingEss(null);
     setBuyingEss(true);
-    try { await onBuyEssence(p.id, p.qty); } finally { setBuyingEss(false); }
+    try { await onBuyEssence(id, qty); } finally { setBuyingEss(false); }
   };
   const label = (t: CambistaTab) => t === 'bits' ? 'Bits' : t === 'essences' ? (isPt ? 'Essências' : 'Essences') : (isPt ? 'Outros' : 'Other');
   return (
@@ -439,7 +482,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
 
       {tab === 'bits' && (
         <>
-          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} say={say} />
+          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} onRecoverPending={onRecoverPendingBits} onGetCredits={onGetCredits} say={say} />
           {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ───────────────
               A pessoa ENCONTRA: fora do cap semanal, não some com `offerDismissed`, sem ×.
               Mora na aba do dinheiro real, DEPOIS do que a pessoa veio ver. */}
@@ -471,55 +514,43 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
           </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
-            {elementsMatchingBases(slots).map(id => {
+            {elementsMatchingBases(slots, ESSENCE_ELEMENT_IDS).map(id => {
               const known = isPotionUnlocked(id, unlockedElements);
-              const owned = essences?.[id] ?? 0;
               const name = known ? essenceName(id, isPt) : '???';
               return (
                 <li key={id} data-essence-row={id} data-essence-locked={known ? undefined : ''} style={{ opacity: known ? 1 : 0.6, minHeight: 40, display: 'flex', alignItems: 'center', gap: 8, ...sm2Text }}>
                   {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
                   <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive')}>
                     {name}
-                    {known && <span data-essence-owned className="sm2-num" style={{ ...sm2Hint, marginLeft: 6 }}>×{owned}</span>}
                   </span>
-                  {known && onBuyEssence ? ESSENCE_PACK_SIZES.map(qty => {
-                    const price = essencePackPrice(id, qty);
-                    const can = price > 0 && credits >= price && !buyingEss && owned + qty <= ESSENCE_MAX_PER_ELEMENT;
-                    return (
-                      <button
-                        key={qty}
-                        type="button"
-                        data-essence-buy={qty}
-                        disabled={!can}
-                        aria-label={isPt ? `Comprar ${qty} ${name} por ${price} ${price === 1 ? 'Crédito' : 'Créditos'}` : `Buy ${qty} ${name} for ${price} ${price === 1 ? 'Credit' : 'Credits'}`}
-                        onClick={() => setPendingEss({ id, qty, price })}
-                        style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
-                      >
-                        <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
-                        <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />
-                        <span className="sm2-num" data-essence-price>{price}</span>
-                      </button>
-                    );
-                  }) : (
-                    <span style={{ ...sm2Hint, flexShrink: 0 }}>{known ? (isPt ? `${essencePackPrice(id, 1)} Créd.` : `${essencePackPrice(id, 1)} Cr.`) : (isPt ? 'trancado' : 'locked')}</span>
+                  {known && onBuyEssence ? (
+                    <button
+                      type="button"
+                      data-essence-buy
+                      disabled={buyingEss}
+                      aria-label={isPt ? `Comprar ${name}, ${essenceUnitPrice(id)} ${essenceUnitPrice(id) === 1 ? 'Crédito' : 'Créditos'} cada` : `Buy ${name}, ${essenceUnitPrice(id)} ${essenceUnitPrice(id) === 1 ? 'Credit' : 'Credits'} each`}
+                      onClick={() => setPendingEss(id)}
+                      style={{ ...sm2Button('outline', buyingEss), flexShrink: 0, padding: '4px 10px', gap: 4 }}
+                    >
+                      <span>{isPt ? 'Comprar' : 'Buy'}</span>
+                      <CreditIcon size={20} />
+                      <span className="sm2-num" data-essence-price>{essenceUnitPrice(id)}</span>
+                    </button>
+                  ) : (
+                    <span style={{ ...sm2Hint, flexShrink: 0 }}>{known ? (isPt ? `${essenceUnitPrice(id)} Créd.` : `${essenceUnitPrice(id)} Cr.`) : (isPt ? 'trancado' : 'locked')}</span>
                   )}
                 </li>
               );
             })}
           </ul>
-          <PurchaseConfirmSheet
-            open={!!pendingEss}
+          <EssenceBuySheet
+            id={pendingEss}
             language={language}
-            question={pendingEss
-              ? (isPt
-                ? <>Comprar <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, true)}?</>
-                : <>Buy <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, false)}?</>)
-              : null}
-            balance={credits}
-            cost={pendingEss?.price ?? 0}
-            currency="credits"
+            credits={credits}
+            owned={pendingEss ? (essences?.[pendingEss] ?? 0) : 0}
+            busy={buyingEss}
             onCancel={() => setPendingEss(null)}
-            onConfirm={() => { void confirmEssence(); }}
+            onConfirm={qty => { void confirmEssence(qty); }}
           />
         </section>
       )}

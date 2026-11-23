@@ -17,6 +17,22 @@
 
 import { flagOn } from './_killSwitch.js';
 
+// JANELA ABERTA DE TESTE (decisão do dono, 12/11/2026): o teste da Play virou GRUPO
+// de testadores; por 2 semanas QUALQUER conta com e-mail verificado conta como se
+// estivesse na allowlist (acesso liberado) E tivesse a licença paga (beta-full).
+// ÚNICO lugar da data: depois dela a janela fecha sozinha e a lista/pagamento voltam
+// a mandar, sem mexer em código. A hora é a do SERVIDOR (`Date.now()`) — o relógio do
+// aparelho não conta. Fail-closed mantido: sem e-mail verificado, a janela não abre.
+//   · Fim: 27/11/2026 00:00 (-03:00) = 26/11 inclusive.
+//   · Encerrar antes sem deploy: var `OPEN_TEST_OFF=1` no Worker (ou mudar a constante).
+export const OPEN_TEST_UNTIL = '2026-11-27T00:00:00-03:00';
+const OPEN_TEST_UNTIL_MS = Date.parse(OPEN_TEST_UNTIL);
+
+/** A janela aberta está valendo agora? (`now` injetável para teste.) */
+export function openTestActive(env, now = Date.now()) {
+  return !flagOn(env?.OPEN_TEST_OFF) && Number.isFinite(OPEN_TEST_UNTIL_MS) && now < OPEN_TEST_UNTIL_MS;
+}
+
 /** Mesma régua de `normalizeEmail` (`_auth.js`): trim + minúsculas, nada mais.
  *  Cópia local para este módulo não depender do `_auth.js` (que os testes
  *  substituem por dublê); paridade travada em `betaAccess.test.js`. */
@@ -59,9 +75,10 @@ export function betaRuleApplies(env, tipo) {
 }
 
 /** O e-mail (já verificado pelo token) está na lista? */
-export function betaAllows(env, email) {
+export function betaAllows(env, email, now = Date.now()) {
   const e = canonBetaEmail(email);
   if (!e || !e.includes('@')) return false;
+  if (openTestActive(env, now)) return true; // janela aberta: qualquer e-mail verificado
   return parseBetaEmails(env?.BETA_EMAILS).includes(e);
 }
 
@@ -69,9 +86,9 @@ export function betaAllows(env, email) {
  * @param {{ email?: string }|null|undefined} auth resultado de `authorizeSaveAccess`
  * @returns {null | { status: 403, reason: 'beta-closed' }}
  */
-export function betaGate(env, auth, tipo) {
+export function betaGate(env, auth, tipo, now = Date.now()) {
   if (!betaRuleApplies(env, tipo)) return null;
-  if (betaAllows(env, auth?.email)) return null;
+  if (betaAllows(env, auth?.email, now)) return null;
   return { status: 403, reason: 'beta-closed' };
 }
 

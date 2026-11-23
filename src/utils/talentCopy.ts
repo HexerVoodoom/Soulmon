@@ -3,7 +3,7 @@
  * `TalentTreeCard` (carregada `lazy`) os lê, e `talents.ts` entra no chunk de entrada (orçamento de bytes). Neutro
  * (`copy.semFomo`): sem contagem que apressa. "Vínculo", nunca "nível".
  */
-import { TALENT_BY_ID, PVP_STEP, PVE_STEP, RESPEC_STEP, CHEER_STEP, START_ENERGY_STEP, DOT_RESIST_STEP, CROWN_STEP, HEAL_BOOST_STEP, RIFT_BITS_STEP, START_SHIELD_STEP, NIGHTMARE_STEP, ARC_STEP } from './talents';
+import { TALENT_BY_ID, PVP_STEP, PVE_STEP, RESPEC_STEP, CHEER_STEP, START_ENERGY_STEP, DOT_RESIST_STEP, CROWN_STEP, HEAL_BOOST_STEP, RIFT_BITS_CAP_STEP, START_SHIELD_STEP, NIGHTMARE_STEP, ARC_STEP } from './talents';
 import { ENERGY } from './combate/specials';
 import { PRICE_STEP, FRAGMENT_GAIN_STEP, BACKPACK_BASE, BACKPACK_STEP, MISSION_BITS_STEP } from './equipment';
 
@@ -45,8 +45,8 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
     descPt: `A cura entre as camadas da Fenda sobe ${pct(HEAL_BOOST_STEP, true)} do HP máximo por grau.`,
     descEn: `The healing between Endless Rift layers grows by ${pct(HEAL_BOOST_STEP, false)} of max HP per rank.` },
   'tal-pve-04': { namePt: 'Agulha de bússola', nameEn: 'Compass needle',
-    descPt: `${pct(RIFT_BITS_STEP, true)} mais Bits por grau nos que você ganha na fenda. Não cria fonte nova: só rende mais do que a fenda já dava.`,
-    descEn: `${pct(RIFT_BITS_STEP, false)} more Bits per rank on the ones you earn in the rift. No new source: it only adds to what the rift already gave.` },
+    descPt: `Cada grau soma +${RIFT_BITS_CAP_STEP} ao teto diário de Bits da fenda. O que cada luta paga não muda: você só pode juntar mais por dia ali.`,
+    descEn: `Each rank adds +${RIFT_BITS_CAP_STEP} to the daily Bits cap in the rift. What each fight pays does not change: you can just collect more there each day.` },
   'tal-pve-05': { namePt: 'Lua com olho', nameEn: 'Eyed moon',
     descPt: dpt(NIGHTMARE_STEP, 'O seu Soulmon bate mais forte', 'só no Pesadelo (ataque)'),
     descEn: den(NIGHTMARE_STEP, 'Your Soulmon hits harder', 'in the Nightmare only (attack)') },
@@ -63,8 +63,8 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
     descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },
   'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: `+${BACKPACK_STEP} espaço por grau nos Arquivos (peças guardadas fora dos slots; os Arquivos começam com ${BACKPACK_BASE}). É capacidade, não combate.`, descEn: `+${BACKPACK_STEP} Files slot per rank (pieces kept outside the slots; Files starts with ${BACKPACK_BASE}). Capacity, not combat.` },
   'tal-com-05': { namePt: 'Balança', nameEn: 'Scales',
-    descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto (Bits que você ganhou jogando). É conveniência, não combate.',
-    descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point (Bits you earned by playing). Convenience, not combat.' },
+    descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto, em Bits. É conveniência, não combate.',
+    descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point, in Bits. Convenience, not combat.' },
   'tal-com-06': { namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: `${pct(MISSION_BITS_STEP, true)} mais Bits por grau no dia completo, até +25%. Não cria Bits novos: só rende mais do que o dia já dava. É moeda, não combate.`, descEn: `${pct(MISSION_BITS_STEP, false)} more Bits per rank on a complete day, up to +25%. No new source of Bits: it only adds to what the day already gave. Currency, not combat.` },
 };
 
@@ -93,7 +93,7 @@ export function talentEffectLine(id: string, rank: number, isPt: boolean): strin
       case 'cheerBoost': return isPt ? `+${pct(e.perRank * g, true)} de energia da torcida` : `+${pct(e.perRank * g, false)} cheer energy`;
       case 'dotResist': return isPt ? `${pct(e.perRank * g, true)} menos dano de efeito contínuo` : `${pct(e.perRank * g, false)} less over-time damage`;
       case 'healBoost': return isPt ? `+${pct(e.perRank * g, true)} do HP máximo na cura entre andares` : `+${pct(e.perRank * g, false)} of max HP in the between-floor heal`;
-      case 'riftBits': return isPt ? `+${pct(e.perRank * g, true)} de Bits ganhos na fenda` : `+${pct(e.perRank * g, false)} Bits earned in the rift`;
+      case 'riftBitsCap': return isPt ? `+${e.perRank * g} no teto diário de Bits da fenda` : `+${e.perRank * g} on the daily Bits cap in the rift`;
       case 'startShield': return isPt ? `escudo de ${pct(e.perRank * g, true)} do HP no começo da luta` : `a shield worth ${pct(e.perRank * g, false)} of HP at the start of the fight`;
       default: return null;
     }

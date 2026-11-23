@@ -24,7 +24,7 @@
  * sintéticas provando que o detector acusa o que deve acusar e não acusa o que
  * não deve. Sem isso um guard passa sempre, pelo motivo errado.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ts, fonteDe } from '../test/tsAst';
@@ -497,15 +497,30 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
     expect(naGrade(escala({ w: 64, h: 64 }, { w: 32, h: 16 }))).toBe(false);
   });
 
+  // O import frio de `utils/petStage` + `utils/shop` (grafo grande, transformado pelo Vite) é o grosso do custo do 1º caso
+  // do visor — 6,6 s ocioso, >15 s com a suíte inteira disputando CPU. Paga aqui, num hook com teto próprio, e o caso passa a
+  // medir só o que afirma (a metadata dos PNGs).
+  beforeAll(async () => {
+    await import('../utils/petStage');
+    await import('../utils/shop');
+  }, 120_000);
+
+  /** Cada PNG é medido UMA vez (o inventário é lido por 2 casos; sharp.metadata é I/O). */
+  const medidas = new Map<string, Promise<{ w: number; h: number }>>();
+
   /** Todo PNG que o visor desenha, com a caixa em px em que ele é desenhado. */
   async function pecasDoVisor(): Promise<Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }>> {
     const { BASE_SLOTS, DECOR_SLOTS } = await import('../utils/petStage');
     const { ALL_SHOP_ITEMS } = await import('../utils/shop');
     const pecas: Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }> = [];
 
-    const medir = async (arquivo: string) => {
-      const m = await sharp(arquivo).metadata();
-      return { w: m.width ?? 0, h: m.height ?? 0 };
+    const medir = (arquivo: string) => {
+      let dim = medidas.get(arquivo);
+      if (!dim) {
+        dim = sharp(arquivo).metadata().then((m) => ({ w: m.width ?? 0, h: m.height ?? 0 }));
+        medidas.set(arquivo, dim);
+      }
+      return dim;
     };
 
     // A mobília base (o berço), que fica DEBAIXO do pet — o pior vizinho
@@ -515,20 +530,28 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
 
     // A decoração: id do item da loja → `decor/<id>.png` (a convenção de nome
     // é do `utils/decorArt.ts`; arquivo faltando aqui é achado por si só).
+    const decor: Array<{ nome: string; arquivo: string; box: { w: number; h: number } }> = [];
     for (const item of ALL_SHOP_ITEMS) {
       if (item.kind !== 'furniture' || !item.slot) continue;
       const arquivo = path.join(ASSETS, 'decor', `${item.id}.png`);
       if (!fs.existsSync(arquivo)) continue;
       const slot = DECOR_SLOTS[item.slot];
-      pecas.push({ nome: `decor/${item.id}.png`, src: await medir(arquivo), box: { w: slot.w, h: slot.h } });
+      decor.push({ nome: `decor/${item.id}.png`, arquivo, box: { w: slot.w, h: slot.h } });
     }
+    // Em paralelo: eram N awaits em série sobre I/O de disco (o que a carga multiplica).
+    pecas.push(...await Promise.all(decor.map(async (d) => ({ nome: d.nome, src: await medir(d.arquivo), box: d.box }))));
     return pecas;
   }
 
   it('o inventário de peças do visor não está vazio (senão o guard passa por omissão)', async () => {
     const pecas = await pecasDoVisor();
     expect(pecas.length).toBeGreaterThan(10);
-  });
+    // Teto próprio, justificado: este é o PRIMEIRO caso a pagar o import frio de
+    // `utils/petStage` + `utils/shop` (grafo grande) e a ler a metadata de todo o
+    // `decor/`; custo intrínseco de contrato que lê centenas de PNGs. Sob carga
+    // (suíte inteira + outras sessões) passava de 15 s. O custo repetido já saiu
+    // (`medidas` mede cada PNG uma vez).
+  }, 60_000);
 
   it('REGRESSÃO (passa hoje): o sprite do pet cai em escala inteira', async () => {
     // O que JÁ foi consertado, e a prova de que o guard mede a coisa certa:
@@ -801,11 +824,21 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
    * reabrir é um `import btn from '../assets/soulmon/ui/…'` num componente.
    */
   it('ZERO PNG: nenhuma arte de botão (ui/ ou buttons/) é importada por src/', () => {
-    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png');
+    const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)) && rel(f) !== 'soulmon/ui/new-tag.png' && !/^soulmon\/ui\/btn-(cta(-hover|-press|-off)?|especial(-press|-off)?|pv[ep](-press|-off)?|ranking(-press|-off)?)\.webp$/.test(rel(f)) && !/^soulmon\/ui\/boss-battle-title(-pt)?\.png$/.test(rel(f)) && rel(f) !== 'soulmon/ui/carta-elemento.webp' && rel(f) !== 'soulmon/ui/cristal-chama.webp' && !/^soulmon\/ui\/moldura\/.+\.webp$/.test(rel(f)) && !/^soulmon\/ui\/files\/.+\.webp$/.test(rel(f)) && !/^soulmon\/ui\/hex-moldura\/.+\.webp$/.test(rel(f)));
     expect(alvos.map(rel), 'arte de botão 9-slice de volta ao bundle — o kit é vetor').toEqual([]);
     // E as pastas não existem mais no repositório (foram para o arquivo de marca).
     // Única exceção (pedido do dono, 01/11/2026): o texto do selo NEW é imagem (`ui/new-tag.png`, `LibraryNewBadge`).
-    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')) : []).toEqual(['new-tag.png']);
+    // Segunda exceção (pedido do dono, 12/11/2026, REGISTRO §316): o botão especial CTA (`ui/btn-cta.webp`, arte do site do beta, `.sm2-cta`).
+    // Terceira exceção (pedido do dono, 15/11/2026, REGISTRO §401): a CARTA preta do modal "Elemento novo" (`ui/carta-elemento.webp`) é arte raster, não botão.
+    // Exceção (pedido do dono, 23/11/2026): as peças da moldura de POPUP `ui/moldura-cristal/` (9-slice + placa de título, só via CSS) são arte de MOLDURA, não botão.
+    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui')) ? fs.readdirSync(path.join(ASSETS, 'soulmon/ui')).sort() : []).toEqual(['boss-battle-title-pt.png', 'boss-battle-title.png', 'btn-cta-hover.webp', 'btn-cta-off.webp', 'btn-cta-press.webp', 'btn-cta.webp', 'btn-especial-off.webp', 'btn-especial-press.webp', 'btn-especial.webp', 'btn-pve-off.webp', 'btn-pve-press.webp', 'btn-pve.webp', 'btn-pvp-off.webp', 'btn-pvp-press.webp', 'btn-pvp.webp', 'btn-ranking-off.webp', 'btn-ranking-press.webp', 'btn-ranking.webp', 'carta-elemento.webp', 'cristal-chama.webp', 'files', 'hex-moldura', 'moldura', 'moldura-cristal', 'new-tag.png', 'ranking']);
+    // Décima exceção (pedido do dono, 18/11/2026): as peças da moldura de AÇO da Hexsmith (`ui/hex-moldura/`: fatias do topo, base e laterais) são arte de MOLDURA.
+    // Nona exceção (pedido do dono, 18/11/2026): o botão ESPECIAL do ranking (`ui/btn-ranking{,-press,-off}.webp`) e as peças do modal de RANKING (`ui/ranking/`: moldura em fatias) são arte de botão/MOLDURA aprovada.
+    // Oitava exceção (18/11/2026): `ui/cristal-chama.webp` (cristal-chama do topo, componente `CristalChama`) é ornamento de MOLDURA, não botão.
+    // Sétima exceção (pedido do dono, 18/11/2026): as peças do modal FILES (`ui/files/`: moldura em fatias, cristal, abas, slots, disquete) são arte de MOLDURA/ITEM, não de botão.
+    // Sexta exceção (pedido do dono, 18/11/2026): o TÍTULO "BOSS BATTLE" (`ui/boss-battle-title{,-pt}.png`, lettering em arte, não botão).
+    // Quinta exceção (pedido do dono, 18/11/2026): o BOTÃO ESPECIAL de compra (`ui/btn-especial{,-press,-off}.webp`, `.sm2-especial`, 3-slice dourado/turquesa).
+    // Quarta exceção (17/11/2026, PR moldura de modais): as fatias WebP da moldura de modal/card (`ui/moldura/`) são arte de MOLDURA, não de botão.
     expect(fs.existsSync(path.join(ASSETS, 'soulmon/buttons'))).toBe(false);
   });
 });

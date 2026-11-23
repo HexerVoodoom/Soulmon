@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { RankingPanel } from './RankingPanel';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -7,17 +8,26 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { SCENE_BG } from '../utils/fxPackArt';
+import heartFull from '../assets/soulmon/hud/bars/heart-full.png';
+import heartEmpty from '../assets/soulmon/hud/bars/heart-empty.png';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { RewardPreview } from './ui/RewardPreview';
 import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { temaSpriteOf } from '../utils/temaInimigosArt';
+import { BARRAGE_ROSTER } from '../utils/temaInimigos';
 import {
-  FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT,
-  newBarrage, stepBarrage, barrageBits, type BarrageState,
+  FIELD_W, FIELD_H, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT, BIG_SHOT_R, SPECIAL_COST,
+  newBarrage, stepBarrage, barrageBits, activateSpecial, specialKindOf, isTap, registerTap, type TapPoint, type BarrageState, type BarrageSpecial,
 } from '../utils/soulBarrage';
+import { BARRAGE_ART } from '../assets/soulmon/barrage';
 import { emitFeat } from '../utils/feats';
+import { BossSplash } from './games/BossSplash';
+import { barrageSpecialMonster } from '../utils/bossSplash';
+import { entrarNaSuperficie } from '../utils/musica';
+import { advancedFactorLabel, bitsForLevel, difficultyLabel } from '../utils/minigameDifficulty';
 
 /**
  * Soul Barrage (EN) / Chuva de Almas (PT) — bullet hell vertical do Salão de Jogos (BETA3 M9).
@@ -25,7 +35,7 @@ import { emitFeat } from '../utils/feats';
  * Superfície NASCE MUDA (R-NOVA): nenhum som. Bits pelo MESMO funil dos minigames
  * (`onEarnPoints`, teto diário aplicado fora). Score semanal: ranking genérico `soul-barrage`.
  */
-export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, language, onEarnPoints, rankSaveId, onExit, challenge }: {
+export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, initialLevel, onReplayRound, specialFamily, language, onEarnPoints, rankSaveId, onExit, challenge }: {
   /** Modo desafio (Calabouço): vence sobrevivendo `goal` segundos; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
   evolutionStage: string;
@@ -33,22 +43,35 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   /** Elemento dominante do Soulmon: escolhe o sprite `fx-<el>-orb` do tiro. */
   petElement?: string;
   playerLevel?: number;
+  /** 1 = Comum (setas/arrasto em X); 2 = Avançado (arrasto livre em X e Y, sem setas, botão Especial). Desafio sempre Comum. */
+  /** Sessão de diversão: jogar de novo conta uma rodada. `false` = sem energia. */
+  onReplayRound?: () => boolean;
+  initialLevel?: 1 | 2;
+  /** Família do especial do Soulmon (`StageSkills.especial.familia`): escolhe o efeito do botão Especial. */
+  specialFamily?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   rankSaveId?: string;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const level: 1 | 2 = challenge ? 1 : initialLevel === 2 ? 2 : 1;
+  const special: BarrageSpecial = specialKindOf(specialFamily);
   const challengeRef = useRef(challenge);
   challengeRef.current = challenge;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   const [paused, setPaused] = useState(false);
+  // boss ESPECIAL: splash (a partida espera) e música de chefe enquanto ele vive
+  const [splash, setSplash] = useState(false);
+  const [bossMusic, setBossMusic] = useState(false);
+  const specialMonster = barrageSpecialMonster(isPt);
+  useEffect(() => (bossMusic ? entrarNaSuperficie('chefe-minigame') : undefined), [bossMusic]);
   const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
   const [prevBest, setPrevBest] = useState(0);
-  const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.BARRAGE_BEST, 0));
+  const [best, setBest] = useState(() => readNumber(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, 0));
   const onEarnRef = useRef(onEarnPoints);
   onEarnRef.current = onEarnPoints;
   const bestRef = useRef(best);
@@ -58,8 +81,14 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const keysRef = useRef({ left: false, right: false, btnLeft: false, btnRight: false });
   const g = useRef<BarrageState>(newBarrage());
   const targetX = useRef(FIELD_W / 2);
+  const targetY = useRef(FIELD_H - 70);
+  const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const tapDown = useRef<TapPoint | null>(null);
+  const lastTap = useRef<TapPoint | null>(null);
+  const specialBtn = useRef<HTMLButtonElement>(null);
   const hudRef = useRef<HTMLSpanElement>(null);
-  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
+  const heartsRef = useRef<HTMLSpanElement>(null);
+  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; boss?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
 
   const loadImg = (src: string | undefined) => { if (!src) return undefined; const i = new Image(); i.src = src; return i; };
 
@@ -106,13 +135,16 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
 
   const start = () => {
     g.current = newBarrage();
+    setSplash(false);
+    setBossMusic(false);
     targetX.current = FIELD_W / 2;
+    targetY.current = g.current.py;
     setEarned(0);
     setPhase('playing');
   };
 
   useEffect(() => {
-    if (phase !== 'playing' || paused || hidden) return;
+    if (phase !== 'playing' || paused || hidden || splash) return;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
@@ -134,13 +166,15 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (dirRef.current !== 0) {
         targetX.current = Math.min(FIELD_W, Math.max(0, targetX.current + dirRef.current * PLAYER_SPEED * Math.min(dt, 0.05)));
       }
-      const ev = stepBarrage(s, dt, targetX.current, playerLevel, Math.random);
+      const ev = stepBarrage(s, dt, targetX.current, level, Math.random, level === 2 ? targetY.current : undefined);
+      if (ev.bossSpawned) { setBossMusic(true); imgs.current.boss = undefined; if (ev.bossSpecial) setSplash(true); }
+      if (ev.bossDefeated) setBossMusic(false);
       if (ev.hit && !calm) { try { navigator.vibrate?.(30); } catch { /* noop */ } }
 
       // fundo: faixas que rolam para cima
+      // o cenário (`SCENE_BG.barrage`) fica ATRÁS do canvas (CSS); o canvas só escurece um pouco e desenha as estrelas sutis
       ctx.clearRect(0, 0, FIELD_W, FIELD_H);
-      ctx.fillStyle = '#0b1220'; ctx.fillRect(0, 0, FIELD_W, FIELD_H);
-      ctx.fillStyle = 'rgba(233,245,242,0.35)';
+      ctx.fillStyle = 'rgba(233,245,242,0.18)';
       for (let i = 0; i < 40; i++) {
         const x = (i * 97) % FIELD_W;
         const y = (((i * 53) % FIELD_H) - (calm ? 0 : s.scroll) * (0.5 + (i % 3) * 0.4)) % FIELD_H;
@@ -156,6 +190,17 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           ctx.fillStyle = '#5E3612'; ctx.fillRect(e.x - bw / 2, e.y - e.size / 2 - 4, bw, 4);
           ctx.fillStyle = '#E9F5F2'; ctx.fillRect(e.x - bw / 2, e.y - e.size / 2 - 4, bw * (e.hp / e.maxHp), 4);
         }
+      }
+      // Boss: o maior dos ultimates da Chuva, com barra de vida larga no topo
+      if (s.boss) {
+        const bo = s.boss;
+        if (!imgs.current.boss) { if (bo.special) imgs.current.boss = loadImg(specialMonster.art); else { const ent = BARRAGE_ROSTER.find(e => e.stage === 'ultimate') ?? BARRAGE_ROSTER[BARRAGE_ROSTER.length - 1]; imgs.current.boss = loadImg(ent ? temaSpriteOf(ent) : undefined); } }
+        const bi = imgs.current.boss;
+        if (ready(bi)) ctx.drawImage(bi!, bo.x - bo.size / 2, bo.y - bo.size / 2, bo.size, bo.size);
+        else { ctx.fillStyle = '#7a2fb0'; ctx.fillRect(bo.x - bo.size / 3, bo.y - bo.size / 3, bo.size * 0.66, bo.size * 0.66); }
+        const bw = FIELD_W - 32;
+        ctx.fillStyle = '#2a1238'; ctx.fillRect(16, 6, bw, 8);
+        ctx.fillStyle = '#e9f5f2'; ctx.fillRect(16, 6, bw * Math.max(0, bo.hp / bo.maxHp), 8);
       }
       // tiros
       const orb = imgs.current.orb;
@@ -176,15 +221,40 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           ctx.restore();
         } else { ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill(); }
       }
+      // Especial (Avançado): feixe, pulso e escudo
+      // O projétil grande do especial: o MESMO orbe do especial de combate, enorme, subindo pela tela
+      for (const g of s.bigShots) {
+        const sz = BIG_SHOT_R * 4;
+        if (ready(orb)) { ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(-Math.PI / 2); ctx.drawImage(orb!, -sz / 2, -sz / 2, sz, sz); ctx.restore(); }
+        else { ctx.fillStyle = 'rgba(120,230,240,0.8)'; ctx.beginPath(); ctx.arc(g.x, g.y, BIG_SHOT_R, 0, Math.PI * 2); ctx.fill(); }
+      }
+      if (s.pulse > 0) {
+        ctx.strokeStyle = 'rgba(120,230,240,' + (s.pulse * 1.6).toFixed(2) + ')'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(s.px, s.py, (0.5 - s.pulse) * 2 * FIELD_H, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (s.slow > 0) { ctx.fillStyle = 'rgba(80,140,255,0.08)'; ctx.fillRect(0, 0, FIELD_W, FIELD_H); }
       // jogador (pisca na invulnerabilidade)
       const pet = imgs.current.pet;
       if (calm && s.invuln > 0) ctx.globalAlpha = 0.5;
       if (calm || !(s.invuln > 0 && Math.floor(s.t * 12) % 2 === 0)) {
-        if (ready(pet)) ctx.drawImage(pet!, s.px - PLAYER_SIZE / 2, PLAYER_Y - PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
-        else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(s.px - 12, PLAYER_Y - 12, 24, 24); }
+        if (ready(pet)) ctx.drawImage(pet!, s.px - PLAYER_SIZE / 2, s.py - PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
+        else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(s.px - 12, s.py - 12, 24, 24); }
       }
       ctx.globalAlpha = 1;
-      const nextHud = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score} · ${'♥'.repeat(Math.max(0, s.lives))}`;
+      if (s.shield > 0) { ctx.strokeStyle = 'rgba(120,230,240,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.px, s.py, PLAYER_SIZE * 0.62, 0, Math.PI * 2); ctx.stroke(); }
+      if (s.overdrive > 0) { ctx.strokeStyle = 'rgba(255,200,90,0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.px, s.py, PLAYER_SIZE * 0.55, 0, Math.PI * 2); ctx.stroke(); }
+      const btn = specialBtn.current;
+      if (btn) {
+        const pct = Math.round((s.charge / SPECIAL_COST) * 100);
+        btn.style.setProperty('--charge', pct + '%');
+        btn.dataset.ready = s.charge >= SPECIAL_COST ? 'true' : 'false';
+      }
+      const nextHud = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score}`;
+      const livesNow = Math.max(0, s.lives);
+      if (heartsRef.current && heartsRef.current.dataset.lives !== String(livesNow)) {
+        heartsRef.current.dataset.lives = String(livesNow);
+        heartsRef.current.querySelectorAll('img').forEach((im, i) => { im.src = i < livesNow ? heartFull : heartEmpty; });
+      }
       if (hudRef.current && nextHud !== hudText) {
         hudText = nextHud;
         hudRef.current.textContent = nextHud;
@@ -197,52 +267,77 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (!s.over && !survived) { raf = requestAnimationFrame(tick); return; }
       if (ch) { ch.onResult(survived); return; }
       const score = s.score;
-      const pts = barrageBits(score);
+      const pts = bitsForLevel(barrageBits(score), level);
       setFinalScore(score);
       setPrevBest(bestRef.current);
-      setEarned(pts);
-      if (pts > 0) onEarnRef.current(pts);
+      setEarned(pts > 0 ? (onEarnRef.current(pts) ?? pts) : 0);
       emitFeat('barrageBest', Math.floor(score));
       const nb = Math.max(bestRef.current, score);
-      writeLocal(STORAGE_KEYS.BARRAGE_BEST, String(nb));
+      writeLocal(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, String(nb));
       setBest(nb);
+      setBossMusic(false);
       setPhase('over');
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [phase, paused, hidden, playerLevel, isPt]);
+  }, [phase, paused, hidden, splash, level, isPt]); // eslint-disable-line react-hooks/exhaustive-deps -- specialMonster é derivado de isPt
 
-  const moveTo = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    if (r.width > 0) targetX.current = ((e.clientX - r.left) / r.width) * FIELD_W;
+  const moveTo = (e: React.PointerEvent<HTMLElement>) => {
+    const r = canvasRef.current?.getBoundingClientRect();
+    if (!r) return;
+    if (r.width <= 0) return;
+    if (level === 2) {
+      // Avançado: arrasto RELATIVO (o dedo não cobre o Soulmon), em X e Y.
+      const d = drag.current;
+      if (!d) return;
+      targetX.current = Math.min(FIELD_W, Math.max(0, d.tx + ((e.clientX - d.x) / r.width) * FIELD_W));
+      targetY.current = Math.min(FIELD_H, Math.max(0, d.ty + ((e.clientY - d.y) / r.height) * FIELD_H));
+      return;
+    }
+    targetX.current = ((e.clientX - r.left) / r.width) * FIELD_W;
+  };
+  const fireSpecial = () => { if (phase === 'playing' && !paused) activateSpecial(g.current, special); };
+  /* Double tap na área (Avançado): o toque curto e parado conta; o arrasto de movimento nunca conta. Sem carga, `activateSpecial` não faz nada. */
+  const tapDownAt = (e: React.PointerEvent<HTMLElement>) => { tapDown.current = { t: e.timeStamp, x: e.clientX, y: e.clientY }; };
+  const tapUpAt = (e: React.PointerEvent<HTMLElement>) => {
+    const d = tapDown.current; tapDown.current = null;
+    if (level !== 2 || !d) return;
+    const up = { t: e.timeStamp, x: e.clientX, y: e.clientY };
+    if (!isTap(d, up)) { lastTap.current = null; return; }
+    const r = registerTap(lastTap.current, up);
+    lastTap.current = r.last;
+    if (r.double) fireSpecial();
   };
 
   return (
-    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
+    // Tela cheia (04/11/2026, dono): o fundo da área do jogo cobre a tela toda; o campo não fica mais numa "janela" com outro fundo atrás.
+    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)', background: `linear-gradient(rgba(5,18,24,.35), rgba(5,18,24,.35)), url(${SCENE_BG.barrage}) center/cover #0b1220` }}>
       <GameHeader
         title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
-          : `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
+          ? (level === 2 ? `Arraste o dedo para mover o Soulmon em qualquer direção: ele atira sozinho. Desviar e abater enche o botão Especial (o efeito é o do especial dele). Bits ${advancedFactorLabel(true)}. ` : '') + `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
+          : (level === 2 ? `Drag a finger to move the Soulmon in any direction: it fires on its own. Defeating foes fills the Special button (its effect matches the Soulmon's special). Bits ${advancedFactorLabel(false)}. ` : '') + `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}
         onPauseChange={setPaused}
       />
-      <div style={{ position: 'relative', flex: '1 1 0', minHeight: 240, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+      <div data-barrage-area style={{ position: 'relative', flex: '1 1 0', minHeight: 240, display: 'flex', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
+        onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; tapDownAt(e); moveTo(e); }}
+        onPointerUp={e => { drag.current = null; tapUpAt(e); }}
+        onPointerCancel={() => { drag.current = null; tapDown.current = null; }}
+        onPointerMove={moveTo}>
         <canvas
           ref={canvasRef}
           data-barrage-canvas
           width={FIELD_W}
           height={FIELD_H}
-          onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } moveTo(e); }}
-          onPointerMove={moveTo}
           role="application"
-          aria-label={isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.'}
-          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: '#0b1220' }}
+          aria-label={level === 2 ? (isPt ? 'Campo da Chuva de Almas. Arraste para mover em qualquer direção.' : 'Soul Barrage field. Drag to move in any direction.') : (isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.')}
+          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: 'transparent' }}
         />
         <span
           aria-live="off"
@@ -251,9 +346,27 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           style={{ position: 'absolute', left: 8, top: 8, padding: '2px 6px', fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)', borderRadius: 'var(--sm2-radius-sm)' }}
         >
           <span ref={hudRef}>{isPt ? 'Fase' : 'Phase'} 1 · 0</span>
+          <span ref={heartsRef} data-lives="3" aria-hidden="true" style={{ display: 'inline-flex', gap: 2, marginLeft: 6, verticalAlign: 'middle' }}>
+            {[0, 1, 2].map(i => <img key={i} src={heartFull} alt="" width={14} height={11} style={{ display: 'block' }} />)}
+          </span>
         </span>
+        {level === 2 && phase === 'playing' && (
+          <button
+            ref={specialBtn}
+            type="button"
+            data-barrage-special={special}
+            data-ready="false"
+            onPointerDown={e => { e.preventDefault(); e.stopPropagation(); fireSpecial(); }}
+            onPointerUp={e => e.stopPropagation()}
+            aria-label={isPt ? 'Especial' : 'Special'}
+            style={{ ...sm2Button('primary'), position: 'absolute', right: 10, bottom: 10, minWidth: 96, minHeight: 48, touchAction: 'none', overflow: 'hidden', background: `linear-gradient(to right, var(--sm2-accent, #3fd0c9) var(--charge, 0%), color-mix(in srgb, var(--sm2-viewport-bg) 80%, transparent) var(--charge, 0%))${BARRAGE_ART.specialBar ? `, url(${BARRAGE_ART.specialBar}) center/100% 100% no-repeat` : ''}`, color: 'var(--sm2-viewport-ink)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.1 }}
+          >
+            <span>{isPt ? 'Especial' : 'Special'}</span>
+            <span data-barrage-doubletap style={{ fontSize: 'var(--sm2-text-xs, 11px)', opacity: 0.85 }}>{isPt ? 'Toque duplo' : 'Double tap'}</span>
+          </button>
+        )}
       </div>
-      {phase === 'playing' && (
+      {phase === 'playing' && level === 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flex: 'none' }}>
           {(['left', 'right'] as const).map(side => {
             const key = side === 'left' ? 'btnLeft' : 'btnRight';
@@ -276,6 +389,19 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           })}
         </div>
       )}
+      {phase === 'playing' && splash && (
+        <BossSplash
+          monster={specialMonster.name}
+          art={specialMonster.art}
+          portrait={specialMonster.portrait}
+          kicker={isPt ? 'Boss especial' : 'Special Boss'}
+          title={isPt ? 'Um Boss especial chegou!' : 'A Special Boss has arrived!'}
+          intro={isPt ? 'Muita vida, mais tiros e ele se move de um lado a outro. Aguente firme.' : 'Lots of health, more shots, and it sweeps from side to side. Hold on.'}
+          okLabel={isPt ? 'Vamos lá' : "Let's go"}
+          tapHint={isPt ? 'Toque em qualquer lugar para continuar' : 'Tap anywhere to continue'}
+          onDone={() => setSplash(false)}
+        />
+      )}
       {phase === 'ready' && (<>
         <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
         <button type="button" data-barrage-start onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
@@ -284,8 +410,10 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       </>)}
       {phase === 'over' && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="barrage"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
+          bannerKind={prevBest > 0 && finalScore > prevBest ? undefined : 'complete'}
           gameName={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
           title={isPt ? 'Chuva encerrada' : 'Barrage over'}
           line={prevBest > 0 && finalScore > prevBest
@@ -293,15 +421,15 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
             : (isPt ? 'Ele está pronto quando você estiver.' : 'He is ready when you are.')}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
           recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
-          strip={prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : undefined}
+          strip={[...(level === 2 ? [{ key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: difficultyLabel(2, isPt) }] : []), ...(prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : [])]}
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
           playAgainLabel={isPt ? 'Jogar de novo' : 'Play again'}
-          onPlayAgain={start}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; start(); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
-          below={<RankingPanel key={finalScore} game="soul-barrage" saveId={rankSaveId} language={language} score={finalScore} />}
+          below={<RankingPanel key={finalScore} game={level === 2 ? 'soul-barrage-2' : 'soul-barrage'} saveId={rankSaveId} language={language} score={finalScore} />}
         />
       )}
     </GameRoot>

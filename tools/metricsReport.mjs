@@ -164,6 +164,98 @@ export function renderTudo(totais) {
   return out;
 }
 
+
+// ───────────────────────────────────────────────────────────────────────────
+// TEMPO DE USO (docs/PLANO-METRICAS.md). Lê os histogramas de FAIXA que `applyAggregate` grava:
+//   time.<tela|feature|minigame>.<nome>.{users,band_0..11,sec_est} · minigame.<nome>.{start,end_0..2,band_n,sec_est}
+//   tasks_planned_sum / tasks_done_sum / completion_bucket_0..10 · session.{band_n,sec_est,build_n}
+// "users" é PESSOA-DIA (uma pessoa em 5 dias conta 5): é a unidade honesta de um agregado sem ID. Mediana = faixa que contém o meio
+// (resolução de faixa, nunca segundo exato); média = sec_est/users (segundos estimados pelo ponto médio da faixa).
+// ───────────────────────────────────────────────────────────────────────────
+const FAIXAS = ['<5s', '<10s', '<20s', '<30s', '<1m', '<2m', '<3m', '<5m', '<10m', '<20m', '<40m', '40m+'];
+const fmtSeg = (s) => (s >= 3600 ? `${(s / 3600).toFixed(1)}h` : s >= 60 ? `${(s / 60).toFixed(1)}min` : `${Math.round(s)}s`);
+
+/** Mediana de um histograma de faixa `band_0..11`, devolvida como rótulo (`'<2m'`), ou `null` sem dados. */
+export function medianaDeFaixa(totais, prefixo) {
+  const balde = {};
+  for (let b = 0; b < FAIXAS.length; b++) balde[b] = n(totais, `${prefixo}band_${b}`);
+  const m = medianaDeHistograma(balde);
+  return m === null ? null : FAIXAS[m];
+}
+
+/** Tabela de uso (pessoa-dia, média, mediana) por nome dentro de um tipo; vazio se nada foi gravado. */
+export function renderTempoPorTipo(totais, tipo, titulo) {
+  const prefixo = `time.${tipo}.`;
+  const nomes = new Set();
+  for (const k of Object.keys(totais ?? {})) if (k.startsWith(prefixo) && k.endsWith('.users')) nomes.add(k.slice(prefixo.length, -'.users'.length));
+  if (nomes.size === 0) return [`${titulo}`, '  sem dados', ''];
+  const linhas = [...nomes].map((nome) => {
+    const users = n(totais, `${prefixo}${nome}.users`);
+    const media = users > 0 ? n(totais, `${prefixo}${nome}.sec_est`) / users : 0;
+    return { nome, users, media, mediana: medianaDeFaixa(totais, `${prefixo}${nome}.`) };
+  }).sort((a, b) => b.users - a.users);
+  const out = [titulo, `  ${'nome'.padEnd(26)} ${'pessoa-dia'.padStart(10)} ${'média'.padStart(8)} ${'mediana'.padStart(8)}`];
+  for (const l of linhas) out.push(`  ${l.nome.padEnd(26)} ${String(l.users).padStart(10)} ${fmtSeg(l.media).padStart(8)} ${(l.mediana ?? '-').padStart(8)}`);
+  out.push('');
+  return out;
+}
+
+export function renderMinigames(totais) {
+  const nomes = new Set();
+  for (const k of Object.keys(totais ?? {})) if (k.startsWith('minigame.') && k.endsWith('.start')) nomes.add(k.slice('minigame.'.length, -'.start'.length));
+  if (nomes.size === 0) return ['MINIGAMES (partidas)', '  sem dados', ''];
+  const out = ['MINIGAMES (partidas)', `  ${'jogo'.padEnd(16)} ${'partidas'.padStart(8)} ${'vitória'.padStart(8)} ${'derrota'.padStart(8)} ${'saiu'.padStart(6)} ${'tempo médio'.padStart(12)} ${'mediana'.padStart(8)}`];
+  for (const nome of [...nomes].sort((a, b) => n(totais, `minigame.${b}.start`) - n(totais, `minigame.${a}.start`))) {
+    const fim = [0, 1, 2].map((o) => n(totais, `minigame.${nome}.end_${o}`));
+    const fins = fim.reduce((x, y) => x + y, 0);
+    const pct = (v) => (fins > 0 ? `${Math.round((v / fins) * 100)}%` : '-');
+    const media = fins > 0 ? n(totais, `minigame.${nome}.sec_est`) / fins : 0;
+    out.push(`  ${nome.padEnd(16)} ${String(n(totais, `minigame.${nome}.start`)).padStart(8)} ${pct(fim[0]).padStart(8)} ${pct(fim[1]).padStart(8)} ${pct(fim[2]).padStart(6)} ${(fins ? fmtSeg(media) : '-').padStart(12)} ${(medianaDeFaixa(totais, `minigame.${nome}.`) ?? '-').padStart(8)}`);
+  }
+  out.push('');
+  return out;
+}
+
+export function renderTarefas(totais) {
+  const plan = n(totais, 'tasks_planned_sum');
+  const feito = n(totais, 'tasks_done_sum');
+  const out = ['TAREFAS E HÁBITOS (peso de esforço)'];
+  if (plan <= 0) return [...out, '  sem dados', ''];
+  out.push(`  ${linhaDeRazao('concluído ÷ planejado (meta do dia, dias fechados)', razao(Math.min(feito, plan), plan))}`);
+  const buckets = {};
+  for (let b = 0; b <= 10; b++) buckets[b] = n(totais, `completion_bucket_${b}`);
+  const dias = Object.values(buckets).reduce((x, y) => x + y, 0);
+  const med = medianaDeHistograma(buckets);
+  out.push(`  pessoa-dias com meta: ${dias}${med !== null ? ` · mediana de conclusão: ${med * 10}% a ${Math.min(100, med * 10 + 9)}%` : ''}`);
+  out.push(`  concluídas (eventos): tarefa ${n(totais, 'task_done.task')} · hábito ${n(totais, 'task_done.habit')} · deixadas/adiadas: tarefa ${n(totais, 'task_skipped.task')} · hábito ${n(totais, 'task_skipped.habit')}`);
+  out.push(...barras(buckets).map((l) => `  ${l}`));
+  out.push('');
+  return out;
+}
+
+export function renderSessoes(totais) {
+  const out = ['SESSÕES'];
+  const total = FAIXAS.reduce((s, _, b) => s + n(totais, `session.band_${b}`), 0);
+  if (total === 0) return [...out, '  sem dados', ''];
+  out.push(`  sessões: ${total} · duração média: ${fmtSeg(n(totais, 'session.sec_est') / total)} · mediana: ${medianaDeFaixa(totais, 'session.') ?? '-'}`);
+  const builds = Object.keys(totais).filter((k) => k.startsWith('session.build_')).map((k) => [k.slice('session.build_'.length), n(totais, k)]).sort((a, b) => b[1] - a[1]);
+  if (builds.length) out.push(`  versões (build → sessões): ${builds.map(([b, c]) => `${b}:${c}`).join('  ')}`);
+  out.push('');
+  return out;
+}
+
+/** O bloco todo, na ordem em que o dono lê. */
+export function renderUsoDoApp(totais) {
+  return [
+    ...renderTempoPorTipo(totais, 'screen', 'TEMPO POR TELA'),
+    ...renderTempoPorTipo(totais, 'feature', 'TEMPO POR FEATURE (prédio)'),
+    ...renderTempoPorTipo(totais, 'minigame', 'TEMPO POR MINIGAME (acumulado do dia)'),
+    ...renderMinigames(totais),
+    ...renderTarefas(totais),
+    ...renderSessoes(totais),
+  ];
+}
+
 /**
  * O relatório inteiro, como linhas de texto.
  * @param {object} payload  o JSON de `GET /api/metrics`
@@ -345,6 +437,8 @@ export function renderRelatorio(payload, opts = {}) {
   out.push('RITUAL DO DIA');
   out.push(`  ${linhaDeRazao('assumiram a meta ÷ ritual oferecido', razao(n(totais, 'checkin_commit'), ofertado))}`);
   out.push('');
+
+  out.push(...renderUsoDoApp(totais));
 
   if (opts?.full) {
     out.push(...renderTudo(totais));

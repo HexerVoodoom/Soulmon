@@ -7,9 +7,11 @@
  *     Pesadelo .............. "pesadelo" ("Stone Hall Nightmare", streaming, `musicaDeCombate.ts`)
  *     Masmorra (lobby, fim, retorno)
  *       e Calabouço ......... "masmorra" ("Dungeon Theme", S18; as LUTAS da descida seguem em `combate`)
+ *     Soulmon dormindo ...... "meditacao" (10/11/2026: música calma do Refúgio em vez de silêncio)
  *     Cerimônia de evolução . "evolucao" ("Evolution Theme", S18)
- *     Meditação (Respiração,
- *       Bolhas calmas) ...... "meditacao" ("Meditation Theme", S18)
+ *     Bolhas calmas ......... "meditacao" ("Meditation Theme", S18)
+ *     Respiração subaquática  "respiracao" (04/11/2026)
+ *     Chama (Trataka) ....... "chama" (04/11/2026)
  *
  * Este módulo é só a TABELA e o apply: não toca nada, não tem constante de loudness, não lê relógio. Quem toca é o
  * `tema.ts` (streaming, `busTema`) e o `musicaDeCombate.ts` (streaming, `busTrilha`); o loop de camadas de `trilha.ts`
@@ -32,7 +34,7 @@ import { pedirMusicaDeCombate } from './musicaDeCombate';
 import type { MusicaDeCombate } from './sonsAssets';
 
 /** `pesadelo` (15/10/2026): o convite e a luta do Pesadelo. `torneio`/`duelo` (19/10/2026): o lobby e a luta do PvP. */
-export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo' | 'masmorra-mapa' | 'evolucao' | 'meditacao';
+export type Superficie = 'casa' | 'dormir' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo' | 'masmorra-mapa' | 'evolucao' | 'meditacao' | 'intro' | 'respiracao' | 'chama' | 'chefe-minigame';
 export type FaixaDeMusica = 'tema' | MusicaDeCombate;
 
 /** A tabela superfície → faixa de COMBATE (a que o interruptor de música liga). A Home não tem: é o tema. */
@@ -46,12 +48,21 @@ export const FAIXA_DE_COMBATE: Record<Exclude<Superficie, 'casa'>, MusicaDeComba
   'masmorra-mapa': 'masmorra',
   evolucao: 'evolucao',
   meditacao: 'meditacao',
+  // 04/11/2026: a Respiração subaquática e a Chama têm faixa própria do dono (Suno), `docs/SOM.md` §17.
+  respiracao: 'respiracao',
+  chama: 'chama',
+  // 04/11/2026: boss do Elemental Fusion e boss especial da Chuva de Almas. Por ora a faixa de combate existente; quando a
+  // `chefe-adrenalina` (Suno, pendente do dono) chegar, só esta linha muda para a faixa nova.
+  'chefe-minigame': 'combate',
+  // 10/11/2026 (dono): o Soulmon DORMINDO toca a música calma do Refúgio (a meditação das Bolhas calmas) em vez de calar; acordado, o tema normal.
+  dormir: 'meditacao',
+  intro: 'parede', // 01/11/2026: a trilha da intro 'A Parede'; só o botão de som da intro entra aqui (nasce desligado)
 };
 
 /** Em combate a música desce o offset da política. O lobby do Torneio NÃO é luta. */
 export const SUPERFICIE_EM_COMBATE: Record<Superficie, boolean> = {
-  casa: false, torneio: false, masmorra: true, arena: true, duelo: true, pesadelo: true,
-  'masmorra-mapa': false, evolucao: false, meditacao: false, // exploração/cerimônia/calma: sem o degrau de combate
+  casa: false, dormir: false, torneio: false, masmorra: true, arena: true, duelo: true, pesadelo: true,
+  'masmorra-mapa': false, evolucao: false, meditacao: false, intro: false, respiracao: false, chama: false, 'chefe-minigame': true, // exploração/cerimônia/calma: sem o degrau de combate
 };
 
 /** Pura: a faixa que deve soar dada a superfície e a preferência única. `null` = silêncio. */
@@ -107,7 +118,9 @@ export function desligarMusica(): void {
  */
 export function entrarNaSuperficie(s: Superficie): () => void {
   pilha.push(s);
-  if (s !== 'casa') consentirNestaSessao();
+  /* 'dormir' NÃO é gesto: o sono automático (23h–7h) e o app aberto com o pet já dormindo entram aqui sem toque nenhum, e consentir
+     ali ligaria a música sem gesto (D11, "sem autoplay no carregamento"). O gesto de dormir à mão passa por `playSleep` → `aoGestoSonoro`. */
+  if (s !== 'casa' && s !== 'dormir') consentirNestaSessao();
   reavaliarMusica();
   let saiu = false;
   return () => {

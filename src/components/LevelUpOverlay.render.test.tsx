@@ -63,6 +63,31 @@ describe('LevelUpOverlay — abre e escurece', () => {
     expect(container.querySelector('[data-lvup-pet]')?.getAttribute('src')).toBe('/pet.png');
   });
 
+  it('12/11/2026: layout — BOND UP no topo, pet grande no meio, LV e "Tap to continue" por último (base)', () => {
+    const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const col = container.querySelector('[data-lvup-column]') as HTMLElement;
+    const ordem = ['[data-lvup-banner]', '[data-lvup-pet]', '[data-lvup-gains]', '[data-lvup-number]', '[data-lvup-continue]']
+      .map((q) => container.querySelector(q) as Node);
+    ordem.forEach((n) => expect(n).not.toBeNull());
+    for (let i = 0; i < ordem.length - 1; i++) {
+      expect(ordem[i].compareDocumentPosition(ordem[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(col.style.flexDirection).toBe('column');
+    // o meio (pet) ocupa o espaço que sobra; topo e base não encolhem
+    const palco = container.querySelector('[data-lvup-stage]') as HTMLElement;
+    expect(palco.style.flexGrow).toBe('1');
+    expect((container.querySelector('[data-lvup-top]') as HTMLElement).style.flexGrow).toBe('0');
+    expect((container.querySelector('[data-lvup-plate]') as HTMLElement).style.flexGrow).toBe('0');
+    // sprite grande, proporcional (contain), pixel nítido; teto de 512
+    const pet = container.querySelector('[data-lvup-pet]') as HTMLElement;
+    expect(pet.style.height).toBe('100%');
+    expect(pet.style.maxHeight).toBe('512px');
+    expect(pet.style.objectFit).toBe('contain');
+    expect(pet.style.imageRendering).toBe('pixelated');
+    // o glow é filho do palco do pet (centrado nele)
+    expect(palco.contains(container.querySelector('[data-lvup-glow]'))).toBe(true);
+  });
+
   it('com a arte do banner instalada (28/10/2026): a imagem substitui o texto procedural', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toBeTruthy();
@@ -126,21 +151,21 @@ describe('LevelUpOverlay — vários níveis de uma vez', () => {
 
 describe('LevelUpOverlay — o que ganhou', () => {
   it('a recompensa do Vínculo e, sob "Now Open", o que abriu — SEM pontos de talento e SEM "Your bond grew"', () => {
-    // 4 → 5: o nível 5 dá o sonho "À deriva num barquinho". O Duelo e o Torneio abrem no Vínculo 3 (c4f7078c0: a Arena
-    // inteira abre no 3), então o "Now Open" é checado numa subida 2 → 3.
+    // 4 → 5: o nível 5 dá o sonho "À deriva num barquinho". Sem limite por level (dono 12/11/2026), o único portão que
+    // sobrou é a Ranqueada, no Vínculo 5: o "Now Open" é checado nesta mesma subida 4 → 5.
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-talent]')).toBeNull();
     expect(container.textContent).not.toMatch(/talent|Your bond grew/i);
     expect(container.querySelector('[data-lvup-reward]')?.textContent).toMatch(/Adrift on a little boat/);
     cleanup();
-    const abre = renderWithCss(<LevelUpOverlay {...base} event={{ from: 2, to: 3 }} onDone={() => {}} />).container;
+    const abre = renderWithCss(<LevelUpOverlay {...base} event={{ from: 4, to: 5 }} onDone={() => {}} />).container;
     expect(abre.querySelector('[data-lvup-open-label]')?.textContent).toBe('Now Open');
     const gates = [...abre.querySelectorAll('[data-lvup-gate]')].map(n => n.textContent);
-    expect(gates).toEqual(expect.arrayContaining(['The Duel', 'The Tournament']));
+    expect(gates).toEqual(expect.arrayContaining(['Ranked']));
   });
 
   it('PT-BR: "Agora aberto"; sem desbloqueio, o rótulo nem aparece', () => {
-    const { container } = renderWithCss(<LevelUpOverlay {...base} event={{ from: 2, to: 3 }} language="pt-BR" onDone={() => {}} />);
+    const { container } = renderWithCss(<LevelUpOverlay {...base} event={{ from: 4, to: 5 }} language="pt-BR" onDone={() => {}} />);
     expect(container.querySelector('[data-lvup-open-label]')?.textContent).toBe('Agora aberto');
     expect(container.textContent).not.toMatch(/talento/);
     cleanup();
@@ -156,14 +181,39 @@ describe('LevelUpOverlay — o que ganhou', () => {
     expect(container.querySelector('[data-lvup-glow]')).not.toBeNull();
   });
 
-  it('7.2: o ícone das três setas não é cortado — caixa visível, escala 0,5× exata, pixel nítido', () => {
+  it('05/11/2026: a seta fica por cima e ultrapassa a barrinha — sem corte, 96 px, pixel nítido', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     const box = container.querySelector('[data-lvup-chevron-box]') as HTMLElement;
     const img = container.querySelector('[data-lvup-chevron]') as HTMLElement;
     expect(box.style.overflow).toBe('visible');
-    expect(parseInt(box.style.height)).toBeGreaterThan(parseInt(img.style.height)); // respiro: a arte vai de borda a borda
-    expect(img.style.width).toBe('48px');
+    expect(parseInt(img.style.height)).toBeGreaterThan(parseInt(box.style.height)); // sai da caixa de propósito
+    expect(img.style.width).toBe('96px');
+    expect(img.style.position).toBe('absolute');
+    expect(box.style.zIndex).toBe('2'); // acima da moldura
     expect(img.style.imageRendering).toBe('pixelated');
+  });
+
+  it('05/11/2026: o emblema toca a entrada, fica em laço e, com movimento reduzido, mostra o quadro fixo', () => {
+    const anim = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const src = () => anim.container.querySelector('[data-lvup-banner]')?.getAttribute('src');
+    expect(src()).toMatch(/bond-up-en-entrada/);
+    act(() => { vi.advanceTimersByTime(1600); });
+    expect(src()).toMatch(/bond-up-en-laco/);
+    cleanup();
+    reducao(true);
+    const pt = renderWithCss(<LevelUpOverlay {...base} language="pt-BR" onDone={() => {}} />);
+    expect(pt.container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toMatch(/bond-up-pt-fixo/);
+  });
+
+  it('05/11/2026: glow Tiffany em CSS atrás do emblema, que respira e fica parado com movimento reduzido', () => {
+    const a = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const g = a.container.querySelector('[data-lvup-emblem-glow]') as HTMLElement;
+    expect(g.style.background).toMatch(/radial-gradient/);
+    expect(g.className).toBe('sm-lvup-glow');
+    cleanup();
+    reducao(true);
+    const r = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    expect((r.container.querySelector('[data-lvup-emblem-glow]') as HTMLElement).className).toBe('');
   });
 
   it('nunca cobra: sem "faltam", sem urgência', () => {

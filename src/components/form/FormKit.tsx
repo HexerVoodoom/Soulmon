@@ -1,11 +1,15 @@
 import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
-import { useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useAcoVoltar, useAcoVoltarRegistro } from '../nav/acoVoltar';
+import { useId, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
+import { ModalFrame } from '../ui/ModalFrame';
+import { SheetFrame, MOLDURA_HOME_DIALOGOS, MOLDURA_HOME_FOLHAS } from '../ui/SheetFrame';
 import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { useModalArea } from '../ui/ModalFrame';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 
@@ -386,8 +390,12 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'placa',
 }: {
+  /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
+   *  fechar redondo no canto superior DIREITO e o título logo abaixo, dentro do modal (até 2 linhas, sem truncar). Exceção documentada ao "fechar à esquerda"
+   *  (`voltarFechar`): vale só para esta variante; com `onBack` volta a ser `'placa'`. */
+  titulo?: 'placa' | 'inline';
   open: boolean;
   title: string;
   onClose: () => void;
@@ -434,38 +442,53 @@ export function ModalSheet({
   const comecouNoVeu = useRef(false);
   const { slot, slotRef } = useModalInfoSlot();
   useBackLayer(open && sobreTelas && closeSide !== 'none', onClose);
+  // Dentro de um modal com moldura: a folha ocupa o MIOLO dela (encaixe do `ModalFrame`), e não a tela inteira. `sobreTelas` segue indo ao <body>.
+  const area = useModalArea();
+  const noMiolo = !!area && !sobreTelas;
+  // A moldura própria da folha só vale fora do miolo de outra moldura (no miolo ela já está dentro do quadro do modal pai).
+  const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
+  // Dentro da moldura de AÇO o voltar mora no medalhão esquerdo da `AreaSheet` (nada de seta no corpo).
+  const acoVoltar = useAcoVoltar();
+  const viaMedalhao = !!acoVoltar && !!onBack && closeSide === 'start' && !sobreTelas && open;
+  useAcoVoltarRegistro(acoVoltar, onBack, viaMedalhao);
+  const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
+  const inline = framed && centered && titulo === 'inline' && !onBack;
   if (!open) return null;
   const folha = (
-    <ModalInfoSlotProvider slot={slot}>
+    <ModalInfoSlotProvider slot={slot} inherit={noMiolo}>
     <div
       className="sm2-sheet-fade"
       data-modal-backdrop
       data-dismiss-on-backdrop={fechaNoVeu ? 'true' : 'false'}
+      data-no-miolo={noMiolo ? '' : undefined}
       onPointerDown={(e) => { comecouNoVeu.current = e.target === e.currentTarget; }}
       onClick={(e) => {
         if (fechaNoVeu && comecouNoVeu.current && e.target === e.currentTarget) onClose();
         comecouNoVeu.current = false;
       }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 120,
-        background: 'rgba(4, 18, 20, .55)',
-        display: 'flex', alignItems: centered ? 'center' : 'flex-end', justifyContent: 'center',
-        ...(centered ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
+        ...(noMiolo ? { position: 'relative' as const, flex: 1, minHeight: 0 } : { position: 'fixed' as const, inset: 0 }), zIndex: 120,
+        background: noMiolo ? 'transparent' : 'rgba(4, 18, 20, .55)',
+        display: 'flex', alignItems: noMiolo ? 'stretch' : centered ? 'center' : 'flex-end', justifyContent: 'center',
+        ...(centered && !noMiolo ? { padding: 'calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
-      <div
+      <Casca
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         data-placement={placement}
-        className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
+        className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : 'sm2-sheet-rise'}
+        {...(framed && centered ? { variante: 'cristal' } : null)}
+        {...(framed ? { 'data-theme': 'dark', title: inline ? undefined : title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
         style={{
-          width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh',
+          ...(noMiolo
+            ? { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', backgroundColor: 'transparent', borderRadius: 0, boxShadow: 'none' }
+            : framed
+              ? { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', ...(centered ? { minHeight: 'min(calc(var(--u, 1vw) * 70), 80dvh)' } : null), boxShadow: SM2_SHADOW_SHEET }
+              : { width: '100%', maxWidth, maxHeight: centered ? '88dvh' : '92vh', backgroundColor: 'var(--sm2-surface)', borderRadius: centered ? 20 : '20px 20px 0 0', boxShadow: SM2_SHADOW_SHEET }),
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: centered ? 20 : '20px 20px 0 0',
-          boxShadow: SM2_SHADOW_SHEET,
         }}
       >
         {/* O GRABBER — a alcinha. É a convenção que diz "isto vem de baixo e
@@ -474,7 +497,7 @@ export function ModalSheet({
             existe aqui (fechar é o X e o Escape, os dois já acessíveis), então
             ele é `aria-hidden` — anunciar uma alça que não arrasta seria pior
             que não ter alça nenhuma. */}
-        {centered ? null : (
+        {centered || framed || noMiolo ? null : (
         <div
           aria-hidden="true"
           style={{
@@ -486,18 +509,30 @@ export function ModalSheet({
         />
         )}
 
-        {closeSide === 'start' ? (
+        {inline ? (
+          <>
+            {closeSide !== 'none' && (
+              <div className="sm2-popup-fechar-linha">
+                <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
+                  <Icon name="close" size={24} tone="inherit" />
+                </button>
+              </div>
+            )}
+            <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
+          </>
+        ) : closeSide === 'start' && !viaMedalhao ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
-          <div style={{ padding: '2px 18px 0 18px', flexShrink: 0 }}>
+          <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
             <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
           </div>
         ) : null}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
-          <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
-          {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título. */}
-          <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />
-          {info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
+        {framed && (closeSide !== 'end' || inline) ? null : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: framed ? 'flex-end' : undefined, padding: framed ? '0 4px' : closeSide === 'start' ? '0 18px 12px 18px' : closeSide === 'none' ? '14px 18px 12px 18px' : '10px 8px 12px 18px' }}>
+          {framed ? null : <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>}
+          {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título (com a moldura, o encaixe é o disco do canto). */}
+          {framed ? null : <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />}
+          {!framed && info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
           {closeSide === 'end' && (
             <button
               type="button"
@@ -512,6 +547,7 @@ export function ModalSheet({
             </button>
           )}
         </div>
+        )}
 
         {/* SAFE AREA. O sheet encosta no fundo da tela por definição, e o fundo
             da tela é justamente onde moram a barra de gestos do Android e a
@@ -522,10 +558,13 @@ export function ModalSheet({
             ela vai para o fim do conteúdo rolável. */}
         <div
           style={{
-            overflowY: 'auto',
-            padding: footer
-              ? '4px 18px 18px'
-              : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
+            overflowY: 'auto', ...(framed ? { flex: 1, minHeight: 0 } : null),
+            padding: framed && centered
+              /* Popup central com moldura: o respiro vem dos tokens da moldura (texto não encosta na placa nem nas bordas). */
+              ? 'calc(var(--sm2-moldura-pad-t) + 8px) calc(var(--sm2-moldura-pad-x) + 12px) 20px'
+              : footer
+                ? '4px 18px 18px'
+                : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
             display: 'flex', flexDirection: 'column', gap: 18,
           }}
         >
@@ -535,17 +574,20 @@ export function ModalSheet({
         {footer && (
           <div
             style={{
-              padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
+              padding: framed && centered
+                ? '16px calc(var(--sm2-moldura-pad-x) + 12px) calc(var(--sm2-moldura-pad-b) + 8px)'
+                : '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
               borderTop: '1px solid var(--sm2-line)',
             }}
           >
             {footer}
           </div>
         )}
-      </div>
+      </Casca>
     </div>
     </ModalInfoSlotProvider>
   );
+  if (noMiolo && area) return createPortal(folha, area);
   return sobreTelas && typeof document !== 'undefined' ? createPortal(folha, document.body) : folha;
 }
 
@@ -679,11 +721,13 @@ export function SwitchRow({
 /** Linha que LEVA a algum lugar (outro painel, o guia, a política): 44 com
  *  `chevron_right` 24 `muted` pelado. Com `href` é um link na mesma linha. */
 export function ActionRow({
-  label, hint, onClick, href, language,
+  label, hint, onClick, href, language, disabled,
 }: {
   label: string;
   hint?: string;
   onClick?: () => void;
+  /** Inativa (sem toque, `aria-disabled`, esmaecida): so para linhas de acao (nao `href`). */
+  disabled?: boolean;
   href?: string;
   /** Idioma do sufixo acessível "(abre em nova aba)" de `href` externo
    *  (A5, QA rodada 2 — a mesma regra do `TermsUpdateBanner`). Sem ele,
@@ -716,7 +760,18 @@ export function ActionRow({
     if (href.startsWith('mailto:')) return <a href={href} className="sm2-conta-arow">{inner}</a>;
     return <a href={href} target="_blank" rel="noopener noreferrer" className="sm2-conta-arow">{inner}</a>;
   }
-  return <button type="button" onClick={onClick} className="sm2-conta-arow">{inner}</button>;
+  return (
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      className="sm2-conta-arow"
+      style={disabled ? { opacity: 0.6, cursor: 'default' } : undefined}
+    >
+      {inner}
+    </button>
+  );
 }
 
 /**

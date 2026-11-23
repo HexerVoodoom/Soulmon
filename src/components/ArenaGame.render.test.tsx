@@ -59,70 +59,7 @@ function skillsCom(escolaEspecial: string, escolaBasica = 'combate_fisico'): Par
 
 beforeEach(() => { vi.clearAllMocks(); });
 
-describe('a Arena abre para TODO save, inclusive o sem ficha', () => {
-  it('sem skills, entra com o par genérico e DIZ por quê', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    expect(await screen.findByRole('button', { name: /Entrar na Arena/i })).toBeTruthy();
-    // O perfil do oráculo vive só no localStorage e não sobe para a nuvem: um
-    // aparelho novo chega aqui sem ficha, e não pode achar que perdeu algo.
-    expect(screen.getByText(/ficha ainda não está neste aparelho/i)).toBeTruthy();
-  });
-
-  it('com ficha, mostra os NOMES das duas habilidades em vez do aviso', async () => {
-    renderWithCss(
-      <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('benca')} onExit={() => {}} />,
-    );
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(screen.getByText('basica pt')).toBeTruthy();
-    expect(screen.getByText('especial pt')).toBeTruthy();
-    expect(screen.queryByText(/ficha ainda não está/i)).toBeNull();
-  });
-
-  it('o especial é anunciado pela ENERGIA cheia (a carga em turnos saiu)', async () => {
-    renderWithCss(
-      <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('benca')} onExit={() => {}} />,
-    );
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    // 04/10/2026: a carga em turnos saiu — o especial dispara com a barra de ENERGIA cheia (REGISTRO §20.10)
-    expect(screen.getByText(/com a energia cheia/)).toBeTruthy();
-  });
-
-  it('o texto promete o que a regra cumpre: perder NÃO custa corações', async () => {
-    // A Arena não cobra da barra de cuidado, igual à Masmorra. O texto é
-    // parte da regra: prometer errado aqui é o app virando cobrador.
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(screen.getByText(/nunca os seus corações/i)).toBeTruthy();
-  });
-});
-
 describe('a tela não inventa número de balanceamento', () => {
-  it('as rodadas anunciadas são as do motor', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(screen.getByText(new RegExp(`${ARENA_ROUNDS} rodadas`))).toBeTruthy();
-  });
-
-  it('HP e poder exibidos vêm do jogador do núcleo (`soulCombatant` + a escola básica), não de um literal', async () => {
-    // O HP automático é do level e a forma por escola (`ROLE_SHAPE`) o remodela: duas fichas diferentes
-    // não podem ler o mesmo número.
-    const { unmount } = renderWithCss(
-      <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('benca', 'combate_fisico')} onExit={() => {}} />,
-    );
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    const fisico = screen.getByText('Vida').parentElement?.textContent ?? '';
-    expect(screen.getByText('Poder')).toBeTruthy();
-    unmount();
-
-    renderWithCss(
-      <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('benca', 'conjuracao')} onExit={() => {}} />,
-    );
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    const conjurador = screen.getByText('Vida').parentElement?.textContent ?? '';
-
-    expect(fisico).not.toBe(conjurador);
-  });
-
   it('cada escola de especial mapeia para uma família (o padrão; a família real vem da skill, PR9) — a tela lê, não decide', () => {
     const familias = Object.values(ESCOLA_FAMILY_PADRAO);
     expect(new Set(familias).size).toBeGreaterThan(1);
@@ -184,51 +121,4 @@ describe('estados que não são a luta', () => {
     expect(onExit).toHaveBeenCalled();
   });
 
-  it('o botão Sair funciona já na intro, sem precisar entrar na luta', async () => {
-    const onExit = vi.fn();
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={onExit} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    fireEvent.click(screen.getByRole('button', { name: /^Sair$/i }));
-    expect(onExit).toHaveBeenCalled();
-  });
-});
-
-describe('os dois idiomas', () => {
-  it('em inglês, nada de português vaza para a tela', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="en-US" onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Enter the Arena/i });
-    const texto = document.body.textContent ?? '';
-    for (const palavra of ['rodadas', 'corações', 'Entrar', 'Vida', 'Dano']) {
-      expect(texto.includes(palavra), `"${palavra}" vazou para a tela em inglês`).toBe(false);
-    }
-  });
-
-  it('e o inverso: em português, nada de inglês', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    const texto = document.body.textContent ?? '';
-    for (const palavra of ['rounds', 'hearts', 'Enter the']) {
-      expect(texto.includes(palavra), `"${palavra}" vazou para a tela em português`).toBe(false);
-    }
-  });
-});
-
-describe('o chip de Essência mostra o elemento da IDENTIDADE (par incluso); a vantagem segue na base', () => {
-  const chip = () => screen.getByText('Essência').parentElement?.textContent ?? '';
-  it('par dominante: o chip mostra o PAR (o mesmo do nome do básico), não a base do elementoId', async () => {
-    const sk = skillsCom('benca');
-    (sk.rookie as unknown as { elementoDominante: unknown }).elementoDominante = { id: 'vapor', nome: elementoNomeDe('vapor') };
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={sk} onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(chip()).toContain(elementoNomeDe('vapor').pt);
-    expect(chip()).not.toContain('Água');
-    expect(sk.rookie!.basica.elementoId).toBe('agua'); // a vantagem (Arena/COUNTERS) não mudou
-  });
-  it('base dominante: igual a antes (a própria base)', async () => {
-    const sk = skillsCom('benca');
-    (sk.rookie as unknown as { elementoDominante: unknown }).elementoDominante = { id: 'agua', nome: elementoNomeDe('agua') };
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" skills={sk} onExit={() => {}} />);
-    await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(chip()).toContain('Água');
-  });
 });

@@ -234,3 +234,98 @@ export const INIMIGOS_API_DATA: ReadonlyArray<readonly [string, 'rookie' | 'cham
   ['tidewark', 'ultimate', 'Tidewark', 'agua', 746], // R14
   ['gloomhorn', 'champion', 'Gloomhorn', 'sombra', 823], // R42
 ];
+
+/**
+ * AS DUAS CADEIAS DA API (dono, 09/11/2026): selvagens com rookie/champion/ultimate, gerados pelo processo REAL do Oráculo
+ * (Higgsfield API, `E:\Soulmon-assets\playstore\duo\*.meta.json`; sprite de Soulmon só via API). Elemento = o PAR derivado do
+ * catálogo; golpes = os da criatura base do tema do Oráculo. Arte em `assets/soulmon/inimigos-api/<id>-<estágio>.png` (256², alfa real).
+ * [id, elemento (par), componentes, golpes de, nome rookie, nome champion, nome ultimate].
+ */
+export const INIMIGOS_DUO_DATA: ReadonlyArray<readonly [string, string, readonly [string, string], string, string, string, string]> = [
+  ['krowlix', 'praga', ['vileza', 'morte'], 'sombra', 'Krowlix', 'RageKrowlix', 'ChaosKrowlix'],
+  ['mantralun', 'arco_iris', ['fada', 'luz'], 'luz', 'Mantralun', 'AegisMantralun', 'LumenMantralun'],
+];
+
+/**
+ * AS 2 ESPÉCIES DO ELENCO DO ORÁCULO (dono, 10/11/2026): Mareoror e Salsolura (fogo+água, elemento fundido `vapor`), cada uma com a LINHA
+ * COMPLETA — rookie + 3 ramos (poder/harmonia/benevolência) × champion/ultimate/mega + ultra. Arte em `assets/soulmon/inimigos-api/`
+ * (`<espécie>-rookie`, `<espécie>-<ramo>-<estágio>`, `<espécie>-ultra`; 256², alfa binário). Ultra NÃO entra no roster (só o chefe da Arena usa ultra);
+ * a arte fica instalada. Golpes = os da criatura base `fogo`. Ids do roster: `<espécie>` (rookie) e `<espécie><ramo>` (champion/ultimate/mega).
+ * [id, elemento (fundido), componentes, golpes de, nome rookie, {ramo: [champion, ultimate, mega]}, nome ultra].
+ */
+export const ELENCO_ORACULO_DATA: ReadonlyArray<readonly [string, string, readonly [string, string], string, string, Readonly<Record<'poder' | 'harmonia' | 'benevolencia', readonly [string, string, string]>>, string]> = [
+  ['mareoror', 'vapor', ['fogo', 'agua'], 'fogo', 'Mareoror', {
+    poder: ['FangMareoror', 'ChaosMareoror', 'OmegaMareoror'],
+    harmonia: ['SageMareoror', 'AstraMareoror', 'ZenithMareoror'],
+    benevolencia: ['SolMareoror', 'ArchMareoror', 'SeraphMareoror'],
+  }, 'TriuneMareoror'],
+  ['salsolura', 'vapor', ['fogo', 'agua'], 'fogo', 'Salsolura', {
+    poder: ['FangSalsolura', 'ChaosSalsolura', 'AbyssSalsolura'],
+    harmonia: ['SageSalsolura', 'AstraSalsolura', 'CosmoSalsolura'],
+    benevolencia: ['AegisSalsolura', 'ArchSalsolura', 'SeraphSalsolura'],
+  }, 'TriuneSalsolura'],
+];
+
+/**
+ * OS 40 RAMOS EVOLUÍDOS COMO INIMIGOS (dono, 04/11/2026, REGISTRO §220): os 2 ramos de alinhamento que cada uma das 20 criaturas não usa,
+ * cada um em champion/ultimate/mega (120 sprites, `assets/soulmon/novos-arquivo/ramos/<elemento>/<ramo>-<estágio>.png`). Elemento e golpes =
+ * os da criatura. Nomes GERADOS (raiz da criatura + sufixo fixo por ramo e estágio; PT = EN como `FORMAS_ALTAS`): o dono renomeia aqui, sem
+ * migração (a chave do bestiário usa o id `<criatura><ramo>`). [id da criatura, elemento, ramo, nome champion, nome ultimate, nome mega].
+ */
+export const RAMOS_INIMIGOS_DATA: ReadonlyArray<readonly [string, string, string, string, string, string]> = [
+  ['embrit', 'fogo', 'benevolencia', 'Embrellis', 'Embrelyra', 'Embrethiel'],
+  ['embrit', 'fogo', 'harmonia', 'Embraris', 'Embralune', 'Embranthos'],
+  ['spinvex', 'vileza', 'benevolencia', 'Spinvellis', 'Spinvelyra', 'Spinvethiel'],
+  ['spinvex', 'vileza', 'harmonia', 'Spinvaris', 'Spinvalune', 'Spinvanthos'],
+  ['ossumi', 'morte', 'benevolencia', 'Ossuellis', 'Ossuelyra', 'Ossuethiel'],
+  ['ossumi', 'morte', 'harmonia', 'Ossuaris', 'Ossualune', 'Ossuanthos'],
+  ['umbrae', 'sombra', 'benevolencia', 'Umbrellis', 'Umbrelyra', 'Umbrethiel'],
+  ['umbrae', 'sombra', 'harmonia', 'Umbraris', 'Umbralune', 'Umbranthos'],
+  ['brawnu', 'vigor', 'benevolencia', 'Brawnellis', 'Brawnelyra', 'Brawnethiel'],
+  ['brawnu', 'vigor', 'harmonia', 'Brawnaris', 'Brawnalune', 'Brawnanthos'],
+  ['kenjo', 'marcial', 'benevolencia', 'Kenvellis', 'Kenvelyra', 'Kenvethiel'],
+  ['kenjo', 'marcial', 'harmonia', 'Kenvaris', 'Kenvalune', 'Kenvanthos'],
+  ['runix', 'arcano', 'benevolencia', 'Runellis', 'Runelyra', 'Runethiel'],
+  ['runix', 'arcano', 'poder', 'Runarok', 'Runaxion', 'Runokhan'],
+  ['chronib', 'tempo', 'benevolencia', 'Chronellis', 'Chronelyra', 'Chronethiel'],
+  ['chronib', 'tempo', 'poder', 'Chronarok', 'Chronaxion', 'Chronokhan'],
+  ['voidlet', 'espaco', 'benevolencia', 'Voidellis', 'Voidelyra', 'Voidethiel'],
+  ['voidlet', 'espaco', 'poder', 'Voidarok', 'Voidaxion', 'Voidokhan'],
+  ['gravul', 'gravidade', 'benevolencia', 'Gravellis', 'Gravelyra', 'Gravethiel'],
+  ['gravul', 'gravidade', 'poder', 'Gravarok', 'Gravaxion', 'Gravokhan'],
+  ['vibri', 'som', 'benevolencia', 'Vibrellis', 'Vibrelyra', 'Vibrethiel'],
+  ['vibri', 'som', 'poder', 'Vibrarok', 'Vibraxion', 'Vibrokhan'],
+  ['voltrix', 'eletricidade', 'benevolencia', 'Voltellis', 'Voltelyra', 'Voltethiel'],
+  ['voltrix', 'eletricidade', 'poder', 'Voltarok', 'Voltaxion', 'Voltokhan'],
+  ['sprouti', 'vida', 'harmonia', 'Sproutaris', 'Sproutalune', 'Sproutanthos'],
+  ['sprouti', 'vida', 'poder', 'Sproutarok', 'Sproutaxion', 'Sproutokhan'],
+  ['solion', 'luz', 'harmonia', 'Soliaris', 'Solialune', 'Solianthos'],
+  ['solion', 'luz', 'poder', 'Soliarok', 'Soliaxion', 'Soliokhan'],
+  ['bubbo', 'agua', 'harmonia', 'Bubbaris', 'Bubbalune', 'Bubbanthos'],
+  ['bubbo', 'agua', 'poder', 'Bubbarok', 'Bubbaxion', 'Bubbokhan'],
+  ['pebblo', 'terra', 'harmonia', 'Pebblaris', 'Pebblalune', 'Pebblanthos'],
+  ['pebblo', 'terra', 'poder', 'Pebblarok', 'Pebblaxion', 'Pebblokhan'],
+  ['zephir', 'ar', 'harmonia', 'Zepharis', 'Zephalune', 'Zephanthos'],
+  ['zephir', 'ar', 'poder', 'Zepharok', 'Zephaxion', 'Zephokhan'],
+  ['glimmi', 'fada', 'harmonia', 'Glimmaris', 'Glimmalune', 'Glimmanthos'],
+  ['glimmi', 'fada', 'poder', 'Glimmarok', 'Glimmaxion', 'Glimmokhan'],
+  ['smeltu', 'industrial', 'benevolencia', 'Smeltellis', 'Smeltelyra', 'Smeltethiel'],
+  ['smeltu', 'industrial', 'harmonia', 'Smeltaris', 'Smeltalune', 'Smeltanthos'],
+  ['brotto', 'planta', 'benevolencia', 'Brottellis', 'Brottelyra', 'Brottethiel'],
+  ['brotto', 'planta', 'poder', 'Brottarok', 'Brottaxion', 'Brottokhan'],
+];
+
+/**
+ * FORMAS PARALELAS (09/11/2026, dono): a versão alternativa do Champion e do Ultimate da linha de fogo (lagarto-dragão de crânio e
+ * capa) em 5 elementos. `[id, elemento do sprite (id fundido nos combinados), componentes, elemento DOS GOLPES, champion, ultimate]`.
+ * Só entram no sorteio quando o elemento é pedido (masmorra temática, Arena de run do elemento): ficam FORA do sorteio comum de estágio,
+ * que não muda. Os dois de elemento base (`agua`, `industrial`) são irmãos dos ramos; os 3 combinados dão a Chama Azul, o Brinquedo e a
+ * Raiz Profunda um Champion e um Ultimate (antes só tinham rookie). Nomes propostos: o dono pode vetar.
+ */
+export const PARALELOS_DATA: ReadonlyArray<readonly [string, string, readonly string[], string, string, string]> = [
+  ['paragua', 'agua', ['agua'], 'agua', 'Aquarisk', 'Marevorn'],
+  ['parindustrial', 'industrial', ['industrial'], 'industrial', 'Rivetisk', 'Ferrovorn'],
+  ['parchamaazul', 'chama_azul', ['fogo', 'morte'], 'fogo', 'Cyanolisk', 'Azurvorn'],
+  ['parbrinquedo', 'brinquedo', ['industrial', 'fada'], 'industrial', 'Clockolisk', 'Springvorn'],
+  ['parraizprofunda', 'raiz_profunda', ['planta', 'terra'], 'planta', 'Rootolisk', 'Rhizovorn'],
+];

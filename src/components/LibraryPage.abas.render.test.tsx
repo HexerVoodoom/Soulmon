@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * BIBLIOTECA EM 4 ABAS (27/10/2026, D-01/D-02/D-05/D-06): Encontrados (a lista de sempre), Selvagem, Desgarrado e Elemento.
+ * BIBLIOTECA EM 4 ABAS (27/10/2026, D-01/D-02/D-05/D-06): Encontrados (a lista de sempre), Selvagens (Selvagem + Desgarrado numa lista só, §254) e Elemento.
  * O dex de elementos começa trancado: "?" sem nome e sem ícone — nem no aria.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -24,40 +24,44 @@ const render = (over: Partial<Parameters<typeof LibraryPage>[0]> = {}, language:
 describe('LibraryPage — abas do Hall', () => {
   beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }); });
 
-  it('mostra as 3 abas (EN e PT), a primeira ativa, e Encontrados segue com a busca', async () => {
+  it('mostra as 3 abas (EN e PT), a primeira ativa, e a primeira aba segue com a busca', async () => {
     render();
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.textContent)).toEqual(['Encountered', 'Wild', 'Element']);
+    expect(tabs.map(t => t.textContent)).toEqual(['Other players', 'Wild', 'Element']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('textbox')).toBeTruthy();
   });
 
-  it('PT: Encontrados · Selvagens · Elemento', () => {
+  it('PT: Outros jogadores · Selvagens · Elemento', () => {
     render({}, 'pt-BR');
-    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Encontrados', 'Selvagens', 'Elemento']);
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Outros jogadores', 'Selvagens', 'Elemento']);
   });
 
   it('teclado: seta para a direita troca de aba', () => {
     render();
-    fireEvent.keyDown(screen.getByRole('tab', { name: 'Encountered' }), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Other players' }), { key: 'ArrowRight' });
     expect(screen.getByRole('tab', { name: 'Wild' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('Selvagem × Desgarrado dividem o roster pela regra de estágio, com contagem e silhueta', () => {
-    const vistoSelvagem = ENEMY_ROSTER.find(e => !isStrayFoe(e.stage))!;
-    render({ bestiary: [vistoSelvagem.key] });
+  it('Selvagens: UMA lista só, rookie → champion → ultimate → mega, com subtítulo por estágio, contagem e silhueta', () => {
+    const visto = ENEMY_ROSTER.find(e => !isStrayFoe(e.stage))!;
+    render({ bestiary: [visto.key] });
     fireEvent.click(screen.getByRole('tab', { name: 'Wild' }));
-    const totalSelvagem = ENEMY_ROSTER.filter(e => !isStrayFoe(e.stage)).length;
-    const totalDesgarrado = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage)).length;
-    // Selvagem e Desgarrado moram na MESMA aba (28/10/2026): duas seções, cada uma com a sua contagem.
-    expect(document.querySelector('[data-bestiary="wild"] [data-bestiary-count]')!.textContent).toBe(`1 / ${totalSelvagem}`);
-    expect(document.querySelectorAll('[data-bestiary="wild"] [data-bestiary-cell]').length).toBe(totalSelvagem);
-    expect(document.querySelector(`[data-bestiary-cell="${vistoSelvagem.key}"]`)!.getAttribute('data-seen')).toBe('1');
+    expect(document.querySelectorAll('[data-bestiary]').length).toBe(1);
+    expect(document.querySelector('[data-bestiary="stray"]')).toBeNull();
+    expect(document.querySelector('[data-bestiary-count]')!.textContent).toBe(`1 / ${ENEMY_ROSTER.length}`);
+    const cells = [...document.querySelectorAll('[data-bestiary-cell]')].map(c => c.getAttribute('data-bestiary-cell')!);
+    expect(cells.length).toBe(ENEMY_ROSTER.length);
+    const ordem = ['rookie', 'champion', 'ultimate', 'mega'];
+    const idx = cells.map(k => ordem.indexOf(ENEMY_ROSTER.find(e => e.key === k)!.stage));
+    expect(idx).toEqual([...idx].sort((x, y) => x - y));
+    // ultimate e mega agora estão na mesma lista, sob o próprio subtítulo
+    expect([...document.querySelectorAll('[data-bestiary-stage]')].map(g => g.getAttribute('data-bestiary-stage'))).toEqual([...ordem, 'boss']);
+    expect(document.querySelectorAll('[data-bestiary-stage="mega"] [data-bestiary-cell]').length).toBe(ENEMY_ROSTER.filter(e => e.stage === 'mega').length);
+    expect(document.querySelector(`[data-bestiary-cell="${visto.key}"]`)!.getAttribute('data-seen')).toBe('1');
     expect(document.body.textContent).toContain('???');
-    expect(document.querySelector('[data-bestiary="stray"] [data-bestiary-count]')!.textContent).toBe(`0 / ${totalDesgarrado}`);
-    expect(document.querySelector(`[data-bestiary="stray"] [data-bestiary-cell="${vistoSelvagem.key}"]`)).toBeNull();
-    expect(document.body.textContent).not.toMatch(/%|faltam|left to find/i);
+    expect(document.body.textContent).not.toMatch(/Desgarrado|Stray|%|faltam|left to find/i);
   });
 
   it('Elemento: tudo trancado ("?" sem nome, ícone nem id no DOM) e destranca por defeatedElements', () => {
@@ -68,13 +72,13 @@ describe('LibraryPage — abas do Hall', () => {
     expect(painel.querySelector('img')).toBeNull();
     expect(painel.textContent).not.toMatch(/Fire|Water/);
     expect(painel.innerHTML).not.toContain('fogo');
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 261');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 274');
   });
 
   it('Elemento destrancado abre a ficha com forte/fraco contra, e os trancados ali são "?"', () => {
     render({ defeatedElements: ['fogo', 'lava'] });
     fireEvent.click(screen.getByRole('tab', { name: 'Element' }));
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 261');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 274');
     fireEvent.click(document.querySelector('[data-element-cell="fogo"]')!);
     const dlg = screen.getByRole('dialog');
     expect(within(dlg).getByText('Strong against')).toBeTruthy();

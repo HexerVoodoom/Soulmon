@@ -14,8 +14,8 @@ import { noteFreeBits, type BitsOriginState } from './bitsOrigin';
 //                                          ÚNICA que libera gerar o pet próprio
 //
 // Créditos são universais no sentido de que dá para trocá-los por Bits
-// (ver CREDIT_TO_BITS) — mas o caminho contrário não existe, senão jogando
-// minijogo alguém chegaria ao que só o dinheiro real deveria abrir.
+// (pacotes `BITS_PACKS`, no Cambista) — mas o caminho contrário não existe,
+// senão jogando minijogo alguém chegaria ao que só o dinheiro real deveria abrir.
 
 export type CurrencyId = 'bits' | 'emblems' | 'credits';
 
@@ -67,7 +67,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 //
 //   Bits     `--sm2-primary-ink`  5,55:1 (claro) / 13,21:1 (escuro) sobre `bg`
 //   Emblemas `--sm2-gold-ink`     5,41:1 (claro) / 10,51:1 (escuro) sobre `bg`
-//   Créditos `--sm2-credit-ink`   6,55:1 (claro) /  8,98:1 (escuro) sobre `bg`
+//   Créditos `--sm2-credit-ink`   turquesa do diamante (18/11/2026; era roxo), AA medido em `tokens.contrast.test.ts`
 //
 // A família também virou token (`--sm2-font-mono` / `--sm2-font-serif`): estilo
 // inline com nome de fonte literal é justamente o que fez o app terminar com
@@ -131,38 +131,57 @@ export const emblemStyle: CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-/** Créditos: roxo do sistema, sempre acompanhados do ícone Gem. */
+/** Créditos: turquesa do diamante (18/11/2026; era roxo), sempre acompanhados do `CreditIcon`. */
 export const CREDIT_COLOR = 'var(--sm2-credit-ink)';
 
 // ───────────────────────────────────────────────────────────────── câmbio
 
 /**
- * Quantos Bits cada Crédito vira. Só nesta direção.
+ * PACOTES DE BITS do Cambista, pagos em Créditos (REGISTRO §373, dono 14/11/2026). Fonte única no app; o SERVIDOR tem o espelho
+ * que vale (`functions/api/_bitsPacks.js`, travado por `functions/api/bitsPacks.parity.test.js`): ele decide os Bits de cada
+ * pacote, debita os Créditos e conta o teto do dia. O cliente só manda o `id` e credita os Bits que a resposta trouxer.
  *
- * A troca inversa (Bits → Créditos) NÃO existe de propósito: créditos são a
- * moeda que libera gerar o pet próprio, e permitir farmá-los em minijogo
- * anularia a única coisa que o dinheiro real compra com exclusividade.
- */
-export const CREDIT_TO_BITS = 10;
-
-/**
- * Pacotes de troca oferecidos na loja (PR12a, decisão do dono §2.28 A).
+ * Desconto progressivo (estilo Pokémon Sleep): o pacote de 200 é a referência (1 Crédito por Bit); os maiores saem mais baratos por
+ * Bit. A etiqueta de desconto é DERIVADA destes números (`bitsPackDiscountPct`), nunca escrita à mão.
  *
- * Os pacotes cabem no teto de 25% do ganho GRÁTIS do dia (`bitsOrigin.ts`). Medido no código: o dia completo rende
- * `BITS_PER_COMPLETE_DAY` (100) e o minijogo até `MINIGAME_BITS_PER_DAY` (150). Dia típico (dia completo + metade do minijogo)
- * = 175 grátis → espaço de 43 Bits; dia só de cuidado (100) → 25 (o piso de referência); dia cheio (250) → 62.
- * Pacotes 10/20/40: o de 10 cabe em qualquer dia, o de 20 cabe já no piso, o de 40 cabe no dia típico (≥ 160 grátis).
- * Os antigos 100/250/600 só cabiam em dias de 400/1.000/2.400 Bits grátis, que não existem.
+ * A troca é só nesta direção. A inversa (Bits → Créditos) NÃO existe de propósito: Créditos são a moeda que libera gerar o pet
+ * próprio, e permitir farmá-los em minijogo anularia a única coisa que o dinheiro real compra com exclusividade.
+ *
+ * ⚰️ `CREDIT_TO_BITS = 10` e `BITS_EXCHANGE` (1/2/4 Créditos → 10/20/40 Bits, teto de 25% do ganho grátis do dia) saíram em §373.
  */
-export const BITS_EXCHANGE = [
-  { credits: 1, bits: 1 * CREDIT_TO_BITS },
-  { credits: 2, bits: 2 * CREDIT_TO_BITS },
-  { credits: 4, bits: 4 * CREDIT_TO_BITS },
+export const BITS_PACKS = [
+  { id: 'bits-200', bits: 200, credits: 200 },
+  { id: 'bits-500', bits: 500, credits: 460 },
+  { id: 'bits-1000', bits: 1000, credits: 800 },
 ] as const;
+
+export type BitsPack = (typeof BITS_PACKS)[number];
+export type BitsPackId = BitsPack['id'];
+
+/** Teto de Bits comprados com Créditos por DIA (UTC, contado no servidor). O pacote de 1.000 usa o dia inteiro. */
+export const BITS_PACK_DAILY_CAP = 1000;
+
+export function bitsPackById(id: unknown): BitsPack | undefined {
+  return BITS_PACKS.find(p => p.id === id);
+}
+
+/** Desconto do pacote contra o de referência (o primeiro, sem desconto), em % inteiro arredondado. 0 = sem etiqueta. */
+export function bitsPackDiscountPct(pack: Pick<BitsPack, 'bits' | 'credits'>): number {
+  const base = BITS_PACKS[0].credits / BITS_PACKS[0].bits;
+  return Math.max(0, Math.round((1 - pack.credits / pack.bits / base) * 100));
+}
 
 /** Recompensa em Emblemas por partida de torneio. */
 export const EMBLEMS_PER_WIN = 3;
 export const EMBLEMS_PER_LOSS = 1;   // consolo: jogar sempre rende alguma coisa
+
+/**
+ * TREINO ("Sparring", a 2a aba do Torneio, 10/11/2026): a vitória rende POUCA Honra e o servidor decide o valor (1 a 2) e o teto do dia (20).
+ * Espelho de `functions/api/_treino.js` (`SPAR_HONOR_MAX`, `SPAR_HONOR_DAILY_CAP`) só para a PRÉVIA da tela; o que vale é o `honor` que a
+ * resposta do servidor traz. Travado por `functions/api/community.treino.test.js` (paridade).
+ */
+export const SPAR_HONOR_MAX = 2;
+export const SPAR_HONOR_DAILY_CAP = 20;
 
 // ──────────────────────────────────────────────── o teto de Bits do dia (#61/#63)
 
@@ -224,6 +243,26 @@ export interface MinigameBitsCharge {
   day: string;
   /** Bits de minijogo já creditados neste dia. */
   earned: number;
+  /** §456: quanto desse total veio de cada CATEGORIA hoje. Campo aditivo: save antigo não o tem e lê como zero em todas
+   *  (a migração é a própria leitura tolerante, idempotente). */
+  cat?: Partial<Record<BitsCategory, number>>;
+}
+
+/** As três categorias de atividade que pagam Bits (§456). Cada uma tem o seu teto diário, ALÉM do teto geral. */
+export type BitsCategory = 'minigames' | 'explorar' | 'arena';
+export const BITS_CATEGORIES: readonly BitsCategory[] = ['minigames', 'explorar', 'arena'];
+/** Teto diário POR CATEGORIA (§456, pedido do dono 16/11/2026). O teto geral (`MINIGAME_BITS_PER_DAY`) continua valendo. */
+export const BITS_PER_CATEGORY_PER_DAY = 75;
+
+/** Normaliza o `cat` vindo do save (dado não confiável): só chaves conhecidas, só números finitos ≥ 0. Ausente/lixo = `undefined`. */
+export function sanitizeBitsCat(raw: unknown): Partial<Record<BitsCategory, number>> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Partial<Record<BitsCategory, number>> = {};
+  for (const c of BITS_CATEGORIES) {
+    const v = (raw as Record<string, unknown>)[c];
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) out[c] = Math.floor(v);
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** Fatia do GameState que o crédito de Bits de minijogo lê e escreve. */
@@ -242,9 +281,56 @@ export function minigameBitsToday(state: MinigameBitsState, dayKey: string): num
   return reg && reg.day === dayKey && Number.isFinite(reg.earned) ? Math.max(0, reg.earned) : 0;
 }
 
+/** Quantos Bits de UMA categoria já foram creditados HOJE (dia diferente ou save antigo = zero). */
+export function minigameBitsCategoryToday(state: MinigameBitsState, dayKey: string, category: BitsCategory): number {
+  const reg = state.minigameBits;
+  if (!reg || reg.day !== dayKey) return 0;
+  const v = reg.cat?.[category];
+  return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, v) : 0;
+}
+
+/** Teto da categoria: a base de 75 + o `extraCap` (Agulha de bússola, §393) que a Fenda/Arena já passam. */
+export function bitsCategoryCap(extraCap = 0): number {
+  return BITS_PER_CATEGORY_PER_DAY + (Number.isFinite(extraCap) && extraCap > 0 ? Math.floor(extraCap) : 0);
+}
+
+/**
+ * Como `minigameBitsGranted`, mais o teto da categoria: o menor dos dois limites decide. Recusa SUAVE: só o excedente de Bits
+ * é cortado; quem chama segue com o resto da recompensa e o progresso da atividade intacto.
+ */
+export function minigameBitsGrantedIn(already: number, categoryAlready: number, amount: number, extraCap = 0): number {
+  const geral = minigameBitsGranted(already, amount, extraCap);
+  return Math.max(0, Math.min(geral, bitsCategoryCap(extraCap) - Math.max(0, categoryAlready)));
+}
+
 /** Quanto o minijogo ainda PODE render hoje (0 = teto do dia gasto). */
-export function remainingMinigameBits(state: MinigameBitsState, dayKey: string): number {
-  return Math.max(0, MINIGAME_BITS_PER_DAY - minigameBitsToday(state, dayKey));
+export function remainingMinigameBits(state: MinigameBitsState, dayKey: string, extraCap = 0): number {
+  return Math.max(0, minigameBitsCap(extraCap) - minigameBitsToday(state, dayKey));
+}
+
+/**
+ * Teto diário EFETIVO de quem joga a Fenda/Masmorra/Arena (§393): `MINIGAME_BITS_PER_DAY` + o `extraCap` do talento
+ * `tal-pve-04` (Agulha de bússola, +10 por grau). O teto continua UM só (a soma de todos os jogos); o extra só vale para
+ * o crédito que a Fenda pede: Dino, PPT, Salão e Ateliê seguem parando em 150 e não gastam o extra.
+ * Sempre finito e nunca abaixo da base (`extraCap` inválido ou negativo = 0).
+ */
+export function minigameBitsCap(extraCap = 0): number {
+  return MINIGAME_BITS_PER_DAY + (Number.isFinite(extraCap) && extraCap > 0 ? Math.floor(extraCap) : 0);
+}
+
+/**
+ * Quanto de um pedido de `amount` Bits o teto do dia REALMENTE credita, dado o
+ * quanto já foi creditado hoje (`already`). É a regra única: `creditMinigameBits`
+ * a usa para creditar e o funil do `App` a usa para dizer à tela de resultado o
+ * valor creditado (o que a tela mostra = o que entrou).
+ */
+export function minigameBitsGranted(already: number, amount: number, extraCap = 0): number {
+  // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
+  // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
+  // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return 0;
+  const pedido = Math.max(0, Math.floor(amount));
+  return Math.max(0, Math.min(pedido, minigameBitsCap(extraCap) - Math.max(0, already)));
 }
 
 /**
@@ -265,19 +351,19 @@ export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState
   prev: T,
   amount: number,
   dayKey: string,
+  extraCap = 0,
+  category?: BitsCategory,
 ): T {
-  // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
-  // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
-  // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
-  if (typeof amount !== 'number' || Number.isNaN(amount)) return prev;
-  const pedido = Math.max(0, Math.floor(amount));
-  if (pedido <= 0) return prev;
-  const ganho = Math.min(pedido, remainingMinigameBits(prev, dayKey));
+  const ganho = category
+    ? minigameBitsGrantedIn(minigameBitsToday(prev, dayKey), minigameBitsCategoryToday(prev, dayKey, category), amount, extraCap)
+    : minigameBitsGranted(minigameBitsToday(prev, dayKey), amount, extraCap);
   if (ganho <= 0) return prev;
-  // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (a base do teto de +25% do câmbio).
+  const catAtual = prev.minigameBits?.day === dayKey ? prev.minigameBits.cat : undefined;
+  const cat = category ? { ...catAtual, [category]: minigameBitsCategoryToday(prev, dayKey, category) + ganho } : catAtual;
+  // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (só contagem desde §373: o teto da troca é do servidor).
   return noteFreeBits({
     ...prev,
     gamePoints: (prev.gamePoints ?? 0) + ganho,
-    minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho },
+    minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho, ...(cat ? { cat } : {}) },
   }, ganho, dayKey);
 }

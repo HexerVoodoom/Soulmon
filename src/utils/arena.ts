@@ -12,8 +12,10 @@
 // module's foes): the constants below were measured by `_sim/cv3-medir/grupo.ts`
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
-import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
-import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, withRaven } from './enemyRoster';
+import { FORMAS_ALTAS, NOVOS_DATA, novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
+import { ELENCO_ORACULO_DATA } from './enemyRosterData';
+import { entryComponents, planArenaChampion, planArenaComponents } from './arenaComponentes';
+import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
@@ -23,7 +25,10 @@ import type { StageSkills } from './soulProfile/ficha/skills';
 import type { Combatant } from './combate/curve';
 import { elementHits } from './combate/curve';
 import type { FightSide } from './combate/fight';
-import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
+import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
+import { comEfeitoDoElemento } from './combate/elementEffects';
+import { foeSpecialOf } from './combate/foeFamilies';
+import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, specialOfPve, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
@@ -39,49 +44,10 @@ const PAIR_COMPONENTS = new Map<string, [string, string]>(
 /** EN labels for the 20 base elements (PT lives in BASE_ELEMENT_LABELS). */
 export { BASE_ELEMENT_LABELS_EN, elementLabel } from './elementLabels';
 import { elementLabel } from './elementLabels';
-
-/**
- * Counter chart over the 20 base elements — a curated RING where each element
- * counters the NEXT TWO and is countered by the PREVIOUS TWO. Building it as
- * a ring is what makes the coverage symmetric by construction (every element
- * counters exactly 2 and is countered by exactly 2 — locked by test).
- *
- * The ring (attacker → the two it beats):
- *   fogo     → planta, vida       (fire burns the field and the living)
- *   planta   → vida, terra        (the wild chokes the living, roots crack stone)
- *   vida     → terra, gravidade   (life takes root anywhere, defies weight)
- *   terra    → gravidade, ar      (earth grounds gravity and blocks wind)
- *   gravidade→ ar, som            (gravity pulls air down, crushes waves)
- *   ar       → som, eletricidade  (wind scatters sound and insulates)
- *   som      → eletricidade, industrial (resonance disrupts current, cracks machines)
- *   eletricidade → industrial, fada (short-circuits machines, zaps wings)
- *   industrial → fada, agua       (cold iron breaks the fae, pumps dry the water)
- *   fada     → agua, marcial      (charms the tide, disarms the fighter)
- *   agua     → marcial, arcano    (rusts steel, washes away sigils)
- *   marcial  → arcano, tempo      (cuts through casting, strikes first)
- *   arcano   → tempo, espaco      (magic bends time and space)
- *   tempo    → espaco, luz        (time outlasts space, dims all light)
- *   espaco   → luz, sombra        (the void swallows light and shadow)
- *   luz      → sombra, morte      (light banishes shadow and undeath)
- *   sombra   → morte, vileza      (shadow claims the dead and the vile)
- *   morte    → vileza, vigor      (death humbles the cruel and the strong)
- *   vileza   → vigor, fogo        (venom saps strength, smothers flame)
- *   vigor    → fogo, planta       (endurance outlasts fire, uproots the wild)
- *
- * 25/10/2026: fada, industrial e planta entram no anel (20 elementos) sem
- * quebrar a simetria 2-e-2 — vale para qualquer N, é a forma do anel.
- */
-const COUNTER_RING: string[] = [
-  'fogo', 'planta', 'vida', 'terra', 'gravidade', 'ar', 'som', 'eletricidade', 'industrial', 'fada', 'agua',
-  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor',
-];
-
-export const COUNTERS: Record<string, [string, string]> = Object.fromEntries(
-  COUNTER_RING.map((id, i) => [
-    id,
-    [COUNTER_RING[(i + 1) % COUNTER_RING.length], COUNTER_RING[(i + 2) % COUNTER_RING.length]],
-  ]),
-) as Record<string, [string, string]>;
+import { COUNTERS } from './arenaCounters';
+export { COUNTERS };
+import { ARENA_LADDER_MAX, sanitizeArenaLadder, nextArenaLadder, arenaSeasonKey, sanitizeArenaSeason, arenaRollover } from './arenaLadder';
+export { ARENA_LADDER_MAX, sanitizeArenaLadder, nextArenaLadder, arenaSeasonKey, sanitizeArenaSeason, arenaRollover };
 
 export function countersElement(attacker: string, defender: string): boolean {
   return COUNTERS[attacker]?.includes(defender) ?? false;
@@ -93,8 +59,12 @@ export function countersElement(attacker: string, defender: string): boolean {
  * (advantage and disadvantage cancel out when the defender has mixed elements).
  */
 export function elementAdvantage(attackEl: string, defenderEls: readonly string[]): -1 | 0 | 1 {
-  const adv = defenderEls.some(d => countersElement(attackEl, d));
-  const dis = defenderEls.some(d => countersElement(d, attackEl));
+  // Nenhum elemento especial (par/derivado) cai em neutro por vir cru: tudo se resolve para a BASE dominante antes da tabela (idempotente nas
+  // bases; só 'neutro' de verdade segue neutro). Decisão do dono (10/11/2026).
+  const atk = baseDominanteDoElemento(attackEl);
+  const defs = defenderEls.map(d => baseDominanteDoElemento(d));
+  const adv = defs.some(d => countersElement(atk, d));
+  const dis = defs.some(d => countersElement(d, atk));
   if (adv && !dis) return 1;
   if (dis && !adv) return -1;
   return 0;
@@ -230,7 +200,9 @@ export interface ArenaEnemy {
   cls: ArenaEnemyClass;
   /** Sprite tier for getDungeonEnemySprite (resolved by the component, so
    *  this module stays free of asset imports and fully testable). */
-  tier: 'rookie' | 'champion' | 'mega';
+  tier: 'rookie' | 'champion' | 'ultimate' | 'mega';
+  /** §222: o tier que define o DROP de essência (segue a classe do slot, como antes da escada): a escada muda a forma vista, não o que a rodada paga. */
+  dropTier: 'rookie' | 'champion' | 'mega';
   /** A criatura NOVA do inimigo (`novosSoulmonData.ts`, REGISTRO §68) e a forma dela: o componente resolve o sprite. */
   creature?: string;
   form?: NovoAnyStage;
@@ -238,24 +210,59 @@ export interface ArenaEnemy {
   stray?: true;
   /** Run COMBINADA (28/10/2026, REGISTRO §180 emenda): o inimigo é um rookie de elemento combinado (2 elementos). `artFile` = `NNN-slug` da arte (`COMBINADOS_ART`). Só arte/nome/elementos; a força segue sendo do slot. */
   artFile?: string;
+  /** §221 (04/11/2026): o inimigo é um RAMO evoluído (`kind: 'ramo'`); = a chave do bestiário/roster (`<criatura><ramo>-<estágio>`). Só arte/nome; a força segue sendo do slot. */
+  ramoKey?: string;
+  /** 09/11/2026: o inimigo é uma FORMA PARALELA (`kind: 'paralelo'`, champion/ultimate de run de elemento); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
+  paraleloKey?: string;
+  /** 15/11/2026 (dono): o inimigo é a forma Ultimate de um elemento COMBINADO (`kind: 'forma'`, 3–4 componentes); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
+  formaKey?: string;
+  /** 10/11/2026 (dono): o inimigo é o CHEFE ULTRA da Arena (Mareoror/Salsolura): = o id da espécie; a arte é `<id>-ultra` (`INIMIGOS_API_ART`). A força vem de `arenaFoe(..., ultraChefe)`. */
+  chefeUltra?: string;
 }
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
 const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
+/** 09/11/2026: chance de um inimigo Champion/Ultimate de run de elemento ser a FORMA PARALELA desse elemento (quando existe). */
+export const ARENA_PARALELO_CHANCE = 1 / 6;
 /** §199 (emenda do dono, 30/10/2026): chance de UM inimigo de uma run de elemento base ser um FUNDIDO que contém esse elemento. */
 export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "variados do elemento escolhido, não só o base" — era 0.12
 /** Os fundidos (rookie combinado) cuja composição inclui o elemento base `el`. */
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
 /** A chave do BESTIÁRIO (`<id>-<estágio>`) de um inimigo da Arena, ou `undefined` (forma fora do roster, ex.: ultra). 31/10/2026: a Arena não registrava. */
-export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>): string | undefined {
-  const k = e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
+export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string; paraleloKey?: string; formaKey?: string }): string | undefined {
+  const k = e.ramoKey ? e.ramoKey : e.paraleloKey ? e.paraleloKey : e.formaKey ? e.formaKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
 
+/** A chave da FORMA para os ajustes do dono (`soulmonOverrides.ts`): a do bestiário; o chefe Ultra (fora do roster) = `<espécie>-ultra`. */
+export const arenaFoeFormKey = (e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form' | 'chefeUltra'> & { ramoKey?: string; paraleloKey?: string; formaKey?: string }): string | undefined =>
+  (e.chefeUltra ? `${e.chefeUltra}-ultra` : arenaFoeKey(e));
+
 export const ARENA_ROUNDS = 5;
 
-/** Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. THE declared composition (the ruler reads it). */
+// ── O chefe ULTRA (dono, 10/11/2026) ────────────────────────────────────────
+
+/** Só com a escada NO TOPO (32 vitórias = todas as 5 rodadas em Ultimate = `ARENA_LADDER_STRENGTH_CAP`, o mesmo ponto em que a força dos inimigos para de subir) o chefe da rodada 5 pode ser um Ultra. Antes disso, NUNCA. */
+export const ARENA_CHEFE_ULTRA_MIN_LADDER = 32;
+/** Chance de a rodada 5 de uma run (já liberada) ser o chefe Ultra: 1 em 4 ("muito raro e muito difícil"; a espécie sai uniforme entre as 7 de `ARENA_CHEFES_ULTRA`). */
+export const ARENA_CHEFE_ULTRA_CHANCE = 0.25;
+/** "Muito difícil": multiplicadores SOBRE o chefe comum (hp × e dano ×). O chefe comum já tem o especial. */
+export const ARENA_CHEFE_ULTRA_MULT = { hp: 1.5, power: 1.25 } as const;
+/** As 5 linhas que ganharam Ultra novo (REGISTRO §445, dono 16/11/2026): o Ultra vira chefe de Arena, ao lado dos 2 do Oráculo. Id = o da criatura base; arte = `FORMAS_ALTAS_ART[id].ultra`. */
+export const ARENA_CHEFES_ULTRA_NOVOS: readonly string[] = ['vibri', 'voltrix', 'chronib', 'runix', 'kenjo'];
+/** As espécies que podem ser o chefe Ultra: as 2 do elenco do Oráculo (id, elementos, nome do Ultra) e os 5 Ultra novos das linhas v1 (elemento da criatura, nome de `FORMAS_ALTAS`), nesta ordem. Ultra fica fora do roster comum. */
+export const ARENA_CHEFES_ULTRA: ReadonlyArray<{ id: string; element: string; elements: readonly string[]; name: string }> = [
+  ...ELENCO_ORACULO_DATA.map(([id, element, elements, , , , ultra]) => ({ id, element, elements, name: ultra })),
+  ...ARENA_CHEFES_ULTRA_NOVOS.map(id => {
+    const n = NOVOS_DATA.find(d => d.id === id)!;
+    return { id, element: n.element, elements: [n.element], name: FORMAS_ALTAS[id]?.ultra ?? n.champion };
+  }),
+];
+/** A escada libera o chefe Ultra? */
+export const arenaChefeUltraLiberado = (ladder: unknown): boolean => sanitizeArenaLadder(ladder) >= ARENA_CHEFE_ULTRA_MIN_LADDER;
+
+/** §222: a composição dá o FORMATO e o pagamento da rodada; a forma do bicho vem da escada (`arenaLadderStage`). Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. THE declared composition (the ruler reads it). */
 export const ARENA_ROUND_COMP: readonly (readonly ArenaEnemyClass[])[] = [
   ['medium'],
   ['weak', 'weak'],
@@ -264,11 +271,42 @@ export const ARENA_ROUND_COMP: readonly (readonly ArenaEnemyClass[])[] = [
   ['boss'],
 ];
 
-const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['tier'] }> = {
+// ── A escada (§222, dono 04/11/2026) ────────────────────────────────────────
+
+/** A forma que a rodada mostra. A classe (`weak/medium/boss`) segue dando o formato da rodada e o pagamento; a FORMA vem só da escada. */
+export type ArenaLadderStage = 'rookie' | 'champion' | 'ultimate';
+/** Vitórias com só Rookies antes do 1º Champion ("depois de derrotar muitos"). */
+export const ARENA_LADDER_FIRST_STEP = 5;
+/** Vitórias entre um degrau e o próximo depois disso. */
+export const ARENA_LADDER_WINS_PER_STEP = 3;
+/** 5 rodadas de Champion + 5 de Ultimate. */
+/** Coerência estágio × HP (`estagioPorHp.ts`, regra única): a forma do inimigo sobe até a faixa do HP dele. A Arena só tem arte até Ultimate: o teto é Ultimate. */
+export const arenaStageForHp = (coreHp: number): ArenaLadderStage => { const f = stageForFoeHp(coreHp); return f === 'rookie' || f === 'champion' ? f : 'ultimate'; };
+export const maxLadderStage = (a: ArenaLadderStage, b: ArenaLadderStage): ArenaLadderStage => maxFoeStage(a, b);
+export const ARENA_LADDER_TOP_STEP = 2 * ARENA_ROUNDS;
+
+/** O degrau (0..10) de um valor da escada: 0 = só Rookies; 1..5 = Champions de trás para a frente; 6..10 = Ultimates de trás para a frente. */
+export function arenaLadderStep(ladder: number): number {
+  const l = sanitizeArenaLadder(ladder);
+  if (l < ARENA_LADDER_FIRST_STEP) return 0;
+  return Math.min(ARENA_LADDER_TOP_STEP, 1 + Math.floor((l - ARENA_LADDER_FIRST_STEP) / ARENA_LADDER_WINS_PER_STEP));
+}
+
+/** A forma da rodada `round` (1-based) no valor `ladder`. Determinística: é a tabela que o dono ditou. */
+export function arenaLadderStage(ladder: number, round: number): ArenaLadderStage {
+  const step = arenaLadderStep(ladder);
+  const fromEnd = ARENA_ROUNDS - Math.min(Math.max(round, 1), ARENA_ROUNDS);
+  if (fromEnd < step - ARENA_ROUNDS) return 'ultimate';
+  return fromEnd < step ? 'champion' : 'rookie';
+}
+
+const CLASS_FLAVOR: Record<ArenaEnemyClass, { points: number; tier: ArenaEnemy['dropTier'] }> = {
   weak:   { points: 4,  tier: 'rookie' },
   medium: { points: 7,  tier: 'champion' },
   boss:   { points: 16, tier: 'mega' },
 };
+/** Bits de UM combate de Arena de classe média na escada base (REGISTRO §473): a recompensa por vitória do PvP do Elemental Fusion é esta, não um número novo. */
+export const ARENA_FIGHT_BITS: number = CLASS_FLAVOR.medium.points;
 
 /**
  * The flavour of the foes of one round (1-based): one of the 17 new creatures (`novosSoulmonData.ts`: name, element, form), Bits. `rng` is the run's `mulberry32(seed)` stream — NEVER `Math.random`. The strength is not here:
@@ -286,19 +324,43 @@ export function buildArenaRound(
   /** §199 (emenda do dono, 30/10/2026): o elemento BASE da run — todo inimigo é dele; com `ARENA_FUSED_FOE_CHANCE` um inimigo é um fundido
    *  que CONTÉM esse elemento (o elemento dele = o id fundido do sprite). Sem ele, o sorteio antigo. */
   runElement?: string,
+  /** §222: o valor da escada do jogador, congelado no começo da run (card = luta). Ausente = 0, só Rookies. */
+  ladder = 0,
+  /** Level do jogador (coerência estágio × HP): com ele, a forma de cada inimigo nunca fica abaixo da faixa do HP que ele terá (`arenaStageForHp`). Ausente = só a escada. */
+  playerLevel?: number,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
+  const ladderStage = arenaLadderStage(ladder, roundIdx);
+  /** Forma do inimigo de classe `cls`: a da escada, subida até a faixa do HP real dele (nunca desce). */
+  const stageOf = (cls: ArenaEnemyClass): ArenaLadderStage => (playerLevel === undefined ? ladderStage : maxLadderStage(ladderStage, arenaStageForHp(arenaFoe(playerLevel, cls, roundIdx - 1, ladder).combatant.hp)));
   // 31/10/2026 (dono): cada inimigo passa pelo portão central do corvo (`withRaven`): 1/1000, sem sorteio a mais (card = luta).
-  return comp.map(cls => withRaven<ArenaEnemy>(rng, rr => arenaFoeComum(cls, rr), () => ({
+  return comp.map(cls => withRaven<ArenaEnemy>(rng, rr => arenaFoeComum(cls, rr), () => { const stage = stageOf(cls); return ({
     namePt: RAVEN_ENTRY.name, nameEn: RAVEN_ENTRY.name, elements: ['neutro'], element: 'neutro',
-    points: CLASS_FLAVOR[cls].points + Math.max(0, difficulty - 1), cls, tier: CLASS_FLAVOR[cls].tier, creature: RAVEN_ENTRY.id, form: 'rookie' as const,
-  })));
+    points: CLASS_FLAVOR[cls].points + Math.max(0, difficulty - 1), cls, tier: stage, dropTier: CLASS_FLAVOR[cls].tier, creature: RAVEN_ENTRY.id, form: 'rookie' as const,
+  }); }));
   function arenaFoeComum(cls: ArenaEnemyClass, rng: () => number): ArenaEnemy {
     const shape = CLASS_FLAVOR[cls];
+    const stage = stageOf(cls);
+    const strayHere = stray && stage === 'ultimate'; // §222: Desgarrado só onde a escada já chegou em Ultimate; antes disso a rodada é a comum
+    // Chefe ULTRA: só a rodada-chefe e só com a escada no topo; abaixo disso NENHUM `rng` a mais (os sorteios de antes não mudam). Fora do Desgarrado/combinada.
+    if (cls === 'boss' && !stray && !combo && arenaChefeUltraLiberado(ladder)) {
+      const roll = rng();
+      // 17/11/2026 (dono): em run de elemento, o chefe Ultra só vem se for DAQUELE elemento (run de vileza não sorteia marcial/som). O `roll` continua
+      // sendo consumido igual (card = luta); sem espécie do elemento, cai no chefe comum. Sem `runElement` (chamadas antigas), todas as espécies.
+      const ultras = runElement ? ARENA_CHEFES_ULTRA.filter(u => u.elements.includes(runElement)) : ARENA_CHEFES_ULTRA;
+      if (ultras.length > 0 && roll < ARENA_CHEFE_ULTRA_CHANCE) {
+        const c = ultras[Math.floor((roll / ARENA_CHEFE_ULTRA_CHANCE) * ultras.length)];
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', chefeUltra: c.id,
+        };
+      }
+    }
     const fusedOk = runElement ? arenaFusedOf(runElement) : [];
-    const fused = !!runElement && !stray && fusedOk.length > 0 && rng() < ARENA_FUSED_FOE_CHANCE;
-    if (fused || (!runElement && combo && !stray && COMBO_ROOKIES.length > 0)) {
+    // O sorteio do fundido segue na mesma ordem; fundido só existe em rookie, então fora dele o resultado é ignorado.
+    const fused = !!runElement && !stray && fusedOk.length > 0 && rng() < ARENA_FUSED_FOE_CHANCE && stage === 'rookie';
+    if (fused || (!runElement && combo && !stray && stage === 'rookie' && COMBO_ROOKIES.length > 0)) {
       const base = fused ? fusedOk : COMBO_ROOKIES;
       const fresh = base.filter(e => !used.has(e.id));
       const pool = fresh.length > 0 ? fresh : base;
@@ -306,14 +368,72 @@ export function buildArenaRound(
       used.add(c.id);
       return {
         namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
-        cls, tier: 'rookie' as const, artFile: c.artFile, form: 'rookie' as const,
+        cls, tier: 'rookie' as const, dropTier: shape.tier, artFile: c.artFile, form: 'rookie' as const,
       };
     }
     // REGISTRO §68: o inimigo é UMA das 17 criaturas novas, sorteada por elemento com chance igual (o anel é simétrico, então a
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
-    // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
-    const prefer: NovoAnyStage[] = stray ? (cls === 'boss' ? ['ultra', 'mega', 'ultimate'] : cls === 'medium' ? ['mega', 'ultimate'] : ['ultimate', 'mega']) : cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
-    const picked = (runElement ? pickNovo(prefer, used, rng, runElement) ?? pickNovo(['champion', 'rookie'], used, rng, runElement) : null) ?? pickNovo(prefer, used, rng)!;
+    // §222: a FORMA vem da escada (`arenaLadderStage`); sem arte naquela forma, desce para a anterior.
+    const prefer: NovoAnyStage[] = stage === 'ultimate' ? ['ultimate', 'champion', 'rookie'] : stage === 'champion' ? ['champion', 'rookie'] : ['rookie'];
+    // §221/§222: ramo evoluído só onde a escada já chegou em Ultimate. Zero `rng` a mais:
+    // o ramo sai dos bits baixos do MESMO número que escolhe a criatura (`ramoFromRoll`), então a contagem de sorteios não muda (card = luta).
+    let u0: number | undefined;
+    const rngU = () => { const v = rng(); u0 ??= v; return v; };
+    const picked = (runElement ? pickNovo(prefer, used, rngU, runElement) ?? pickNovo(['champion', 'rookie'], used, rngU, runElement) : null) ?? pickNovo(prefer, used, rngU)!;
+    // 15/11/2026 (dono): o Ultimate quase só vinha de elemento único (97,4% medido). Em run de elemento comum, o nº de componentes do
+    // elemento do Ultimate sai da tabela `ARENA_COMPONENT_WEIGHTS` (`arenaComponentes.ts`). UM `rng()` a mais, só neste caso (Rookie e Champion
+    // idênticos; o Desgarrado fica de fora, como no paralelo); base (1) continua no fluxo de baixo, 2–4 trocam o inimigo por um combinado com arte que contém o elemento da run.
+    if (runElement && !stray && stage === 'ultimate') {
+      const plan = planArenaComponents('ultimate', runElement, rng(), used);
+      if (plan?.entry) {
+        const c = plan.entry;
+        used.add(c.id);
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }),
+        };
+      }
+    }
+    // REGISTRO §437: o Champion de run de elemento também segue a tabela §232 (60% de 2 componentes). UM `rng()` a mais, só aqui; base (1) segue abaixo.
+    if (runElement && !stray && stage === 'champion') {
+      const plan = planArenaChampion(runElement, rng(), used);
+      if (plan?.entry) {
+        const c = plan.entry;
+        used.add(c.id);
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'champion', dropTier: shape.tier, form: 'champion', ...(c.kind === 'paralelo' ? { paraleloKey: c.key } : { formaKey: c.key }),
+        };
+      }
+    }
+    const ramoStage = stage === 'ultimate' ? 'ultimate' : undefined;
+    if (ramoStage && u0 !== undefined) {
+      const ramos = ENEMY_ROSTER.filter(e => e.kind === 'ramo' && e.stage === ramoStage && (!runElement || e.element === runElement) && !used.has(e.id));
+      const roll = ramoFromRoll(u0, ramos.length);
+      if (roll.hit) {
+        const r = ramos[roll.pick];
+        used.add(r.id);
+        return {
+          namePt: r.name, nameEn: r.name, elements: [r.element], points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: stage, dropTier: shape.tier, form: ramoStage, ramoKey: r.key, ...(strayHere ? { stray: true as const } : {}),
+        };
+      }
+    }
+    // 09/11/2026 (dono): FORMA PARALELA (Champion/Ultimate alternativos, `PARALELOS_DATA`) em run de elemento: só quando o elemento da run está nos
+    // componentes dela (agua → Aquarisk/Marevorn; fogo ou morte → Cyanolisk/Azurvorn…), na forma da escada, 1 em `ARENA_PARALELO_CHANCE`.
+    // Zero `rng` a mais (bits do MESMO `u0`, janela diferente da do ramo) e fora do Desgarrado: card = luta e o resto do sorteio não muda.
+    if (runElement && !stray && u0 !== undefined && (stage === 'champion' || stage === 'ultimate')) {
+      // No Ultimate os paralelos de 2+ componentes já saem pela tabela de componentes (acima); aqui ficam os de elemento único.
+      const paralelos = ENEMY_ROSTER.filter(e => e.kind === 'paralelo' && e.stage === stage && e.elements.includes(runElement) && !used.has(e.id) && (stage !== 'ultimate' || entryComponents(e).length === 1));
+      if (paralelos.length > 0 && (u0 * 65536) % 1 < ARENA_PARALELO_CHANCE) {
+        const p = paralelos[ramoFromRoll(u0, paralelos.length).pick];
+        used.add(p.id);
+        return {
+          namePt: p.name, nameEn: p.name, elements: [...p.elements], element: p.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: stage, dropTier: shape.tier, form: stage, paraleloKey: p.key,
+        };
+      }
+    }
     used.add(picked.data.id);
     const nome = novoFormName(picked.data, picked.stage);
     return {
@@ -322,10 +442,11 @@ export function buildArenaRound(
       elements: [picked.data.element],
       points: shape.points + Math.max(0, difficulty - 1),
       cls,
-      tier: shape.tier,
+      tier: stage,
+      dropTier: shape.tier,
       creature: picked.data.id,
       form: picked.stage,
-      ...(stray ? { stray: true as const } : {}),
+      ...(strayHere ? { stray: true as const } : {}),
     };
   }
 }
@@ -346,17 +467,37 @@ export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.142 } as const;
 /** HP fraction recovered when a round is cleared (the breather between rounds). */
 export const ROUND_CLEAR_HEAL = 0.3;
 
+/** Quanto cada vitória fortalece os inimigos (HP e dano), relativo ao jogador. Medido em `arena.escada.test.ts`. */
+export const ARENA_LADDER_BASE = 1;
+export const ARENA_LADDER_INC = 0.0025;
+/** A partir daqui a escada segue contando, mas a força para de subir: há um teto em que jogar perfeito ainda vence. */
+export const ARENA_LADDER_STRENGTH_CAP = 32;
+export function arenaLadderStrength(ladder: number): number {
+  return ARENA_LADDER_BASE + ARENA_LADDER_INC * Math.min(ARENA_LADDER_STRENGTH_CAP, sanitizeArenaLadder(ladder));
+}
+
+/**
+ * Piso de força da forma (dono, 05/11/2026: "evoluíram, mas não aumentaram de poder"; §240): a escada só somava +0,25% por vitória, então o
+ * primeiro Champion entrava a ×1,0125 e o último Ultimate a ×1,08. A rodada evoluída vale o maior entre a escada e este piso. Rookie = sem piso.
+ */
+export const ARENA_STAGE_FLOOR: Record<ArenaLadderStage, number> = { rookie: 1, champion: 1.07, ultimate: 1.08 };
+
 /**
  * The foe of class `cls` at round `r` (0..4) for a player of level `L`:
  * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.142·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
  */
-export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide {
+export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0, ultraChefe = false, mix?: { seed: number; i: number }): FightSide {
   const s = ARENA_FOES[cls];
   const b = combatantAt(L, REFERENCE_BUILDS.balanced);
+  const k = Math.max(arenaLadderStrength(ladder), ARENA_STAGE_FLOOR[arenaLadderStage(ladder, r + 1)]) * (1 + Math.max(0, playerBonus));
+  const u = ultraChefe && cls === 'boss' ? ARENA_CHEFE_ULTRA_MULT : { hp: 1, power: 1 };
+  const stage = arenaLadderStage(ladder, r + 1);
+  const temEspecial = 'special' in s || stage !== 'rookie';
   return {
-    combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r), bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) - 1 },
-    special: 'special' in s ? specialOf('direct') : null,
+    combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r) * k * u.hp, bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) * k * u.power - 1 },
+    // Especiais variados (dono, 11/11/2026): com `mix` o tipo é sorteado por (semente da run, rodada, posição); sem `mix` segue `direct` (régua antiga).
+    special: !temEspecial ? null : mix ? foeSpecialOf(stage, `arena|${mix.seed}|${r}|${mix.i}`) : specialOf('direct'),
   };
 }
 
@@ -370,8 +511,8 @@ export function arenaElementsFor(
   attrs: { principal: string; secundario: string },
 ): ArenaElements {
   return {
-    basica: ficha.basica ?? baseDominanteDoElemento(ident.basico.elemento),
-    especial: ficha.especial ?? baseDominanteDoElemento(ident.especial.elemento),
+    basica: baseDominanteDoElemento(ficha.basica ?? ident.basico.elemento),
+    especial: baseDominanteDoElemento(ficha.especial ?? ident.especial.elemento),
     attrs,
   };
 }
@@ -396,6 +537,10 @@ export interface ArenaPlayerCfg {
   escolaBasica?: EscolaSkillId;
   /** Absent = neutral element (what the balance sample measures). */
   elements?: ArenaElements;
+  /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  efeitoElemento?: string;
+  /** COMPANHEIRO INVOCADO (PR 2): a criatura do evocador (`companheiroDoEstado`); ausente/`null` = o especial roda como sempre. */
+  companheiro?: string | null;
 }
 
 const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[escolaSkillSegura(p.escolaBasica)] : null);
@@ -405,8 +550,9 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
   const role = roleOf(p);
   return {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
-    special: specialOf(p.family),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento),
     area: p.area,
+    ...(p.companheiro ? { invoca: true } : {}),
   };
 }
 
@@ -421,8 +567,8 @@ export function arenaPlayerHitScale(p: ArenaPlayerCfg): number {
  * foe's element shrinks or grows the FOE's HP; the foe's element against the player's attributes
  * shrinks or grows the foe's damage bonus.
  */
-export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[]): FightSide[] {
-  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r), p, foeElements?.[i]));
+export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[], ladder = 0, ultraChefe = false, mixSeed?: number): FightSide[] {
+  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r, ladder, p.combatant.bonus, ultraChefe, mixSeed === undefined ? undefined : { seed: mixSeed, i }), p, foeElements?.[i]));
 }
 
 /** One foe with the element matchup applied (see `arenaFoeSides`); neutral when there is no element on either side. */
@@ -491,12 +637,13 @@ export interface ArenaKnobs {
  * How well the player plays the mechanics: `nenhuma` never acts (ring `ruim`, no dodge), `media` and
  * `boa` draw the grades with these odds.
  */
-export type ArenaSkill = 'nenhuma' | 'media' | 'boa';
+export type ArenaSkill = 'nenhuma' | 'media' | 'boa' | 'perfeita';
 /** Odds of [ruim, bom, otimo] on the ring and of [nada, bom, otimo] on the dodge. */
 export const ARENA_SKILL_ODDS: Record<ArenaSkill, { ring: readonly number[]; dodge: readonly number[] }> = {
   nenhuma: { ring: [1, 0, 0], dodge: [1, 0, 0] },
   media: { ring: [0.25, 0.5, 0.25], dodge: [0.3, 0.4, 0.3] },
   boa: { ring: [0.1, 0.3, 0.6], dodge: [0.1, 0.3, 0.6] },
+  perfeita: { ring: [0, 0, 1], dodge: [0, 0, 1] },
 };
 const RING_GRADES: readonly RingGrade[] = ['ruim', 'bom', 'otimo'];
 const DODGE_GRADES: readonly DodgeGrade[] = ['nada', 'bom', 'otimo'];
@@ -519,6 +666,16 @@ export interface ArenaRunConfig {
   knobs?: ArenaKnobs;
   /** Largada justa (§195): nenhum inimigo abre antes do jogador. Padrão `true` (é o que a Arena joga); `false` só para a régua medir o antes. */
   fairStart?: boolean;
+  /** §222: o valor da escada. Ausente = 0. */
+  ladder?: number;
+  /** §222: todos os inimigos deste elemento (mede o pior e o melhor confronto). */
+  foeElement?: string;
+  /** §228: ver `ArenaPlayerCfg.efeitoElemento`. */
+  efeitoElemento?: string;
+  /** Especiais variados dos inimigos (11/11/2026). Ausente/false = tudo `direct` (régua antiga). */
+  foeMix?: boolean;
+  /** Só da régua: os elementos EXATOS dos inimigos de cada rodada (0..4), no lugar do sorteio de `foeElement`/`pool`. É como a medição entrega o que `arenaFoesOfSeed` sorteou. */
+  foeElementsOfRound?: (r: number) => readonly (readonly string[])[];
 }
 
 export interface ArenaRunResult {
@@ -542,7 +699,7 @@ const CHEER_CEILING_TAPS: readonly number[] = Array.from({ length: 30 * 16 }, (_
 export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: ArenaSkill = 'media', areaEfficiency?: number): ArenaRunResult {
   const p: ArenaPlayerCfg = {
     combatant: combatantAt(cfg.level, cfg.build), family: cfg.family, area: cfg.area,
-    escolaBasica: cfg.escolaBasica, elements: cfg.elements,
+    escolaBasica: cfg.escolaBasica, elements: cfg.elements, efeitoElemento: cfg.efeitoElemento,
   };
   const player0 = arenaPlayerSide(p);
   const role = cfg.knobs?.role;
@@ -554,9 +711,9 @@ export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: Are
   const rounds: number[] = [];
   for (let r = 0; r < ARENA_ROUNDS; r++) {
     const rng = mulberry32((seed * 7919 + r) | 0);
-    const foeEls = cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
+    const foeEls = cfg.foeElementsOfRound ? cfg.foeElementsOfRound(r) : cfg.foeElement ? ARENA_ROUND_COMP[r].map(() => [cfg.foeElement!]) : cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
     const foeHp = cfg.knobs?.foeHp ?? 1;
-    const foes = arenaFoeSides(p, r, foeEls).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
+    const foes = arenaFoeSides(p, r, foeEls, cfg.ladder, false, cfg.foeMix ? seed : undefined).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
     const g = groupFightSteps(player, foes, {
       seed: arenaRoundSeed(seed, r), startHp: hp, startEnergy: en, areaEfficiency, cheer, fairStart: cfg.fairStart ?? true,
       hitScale: (who) => {

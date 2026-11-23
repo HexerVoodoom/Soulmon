@@ -10,10 +10,13 @@ import { readTombstone } from './_accountTombstone.js';
 // de eventos verificados no servidor (compra validada na Play, anúncio dentro
 // do cap diário).
 //
-// Limitação conhecida: o KV do Cloudflare não tem transação. Um read-modify-
-// write concorrente pode perder uma escrita (ex.: dois gastos simultâneos).
-// Para a escala deste app é aceitável; se virar problema, migrar o registro
-// de entitlement para Durable Objects (que serializam por chave).
+// O KV do Cloudflare não tem transação: dois ler-modificar-gravar simultâneos
+// da mesma conta perdiam uma escrita (dois débitos viravam um; Créditos de
+// compra sumiam sob uma auditoria). Com o D1 ligado (`env.DB`, produção), TODO
+// escritor de `ent:<saveId>` passa por `comTravaDoEnt` (§381): uma linha
+// `entlock:<saveId>` em `order_claims` serializa a conta. Sem D1 (dev/teste
+// local) a janela de corrida continua, e o fim dela de verdade seria Durable
+// Objects (que serializam por chave).
 
 export const ENT_PREFIX = 'ent:';
 /** Comprovante de compra → conta Soulmon que o resgatou (ver claimOrder). */
@@ -156,6 +159,11 @@ function emptyEntitlement() {
      * pode tocar nela, e ela não concede tier nem Créditos.
      */
     sub: null,
+    /**
+     * MOLDURAS DO WIDGET V-PET compradas (ids de elemento base). Só `applyVerifiedPurchase` escreve (a partir de uma compra
+     * verificada na Play); `auditRefunds` tira a do pedido reembolsado. COSMÉTICO: nada de regra de jogo lê isto.
+     */
+    frames: [],
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
@@ -180,11 +188,12 @@ export class EntitlementIlegivelError extends Error {
 
 /** A Response 503 do erro acima, ou `null` se `err` for outra coisa (aí quem chamou relança). */
 export function respostaEntitlementIlegivel(err, headers) {
+  if (err instanceof EntitlementOcupadoError) return Response.json({ ok: false, reason: err.code }, { status: err.status, headers });
   if (!(err instanceof EntitlementIlegivelError)) return null;
   return Response.json({ error: err.code }, { status: err.status, headers });
 }
 
-/** Envolve um handler de rota: `EntitlementIlegivelError` vira 503 com os cabeçalhos da rota; o resto segue o caminho de sempre. */
+/** Envolve um handler de rota: `EntitlementIlegivelError` vira 503 e `EntitlementOcupadoError` vira `409 busy`, com os cabeçalhos da rota; o resto segue o caminho de sempre. */
 export function comEntitlementLegivel(handler, headers) {
   return async (context) => {
     try {
@@ -221,6 +230,89 @@ export async function writeEntitlement(env, saveId, ent) {
     { expirationTtl: RETENTION_TTL_SECONDS },
   );
   return ent;
+}
+
+/**
+ * TRAVA ÚNICA DO ENTITLEMENT (§381; generaliza a `bitslock:` de §373/§378). Uma linha `entlock:<saveId>` em `order_claims`
+ * (PRIMARY KEY, sem schema novo, o mesmo truque do `grant:`): quem ganha o INSERT é o único que lê-modifica-grava `ent:<saveId>`
+ * até soltar. A trava vence sozinha em `ENT_LOCK_TTL_MS` (worker que morreu no meio não prende a conta) e só é solta por quem a pegou
+ * (`claimed_at`/`expires_at` identificam a posse, §378).
+ *
+ * Sem `env.DB` (dev/teste local) não há trava: o comportamento é o de antes de §381, com a janela de corrida do KV.
+ * O KV continua eventualmente consistente ENTRE colos; a trava fecha a corrida do mesmo ponto de presença, que é onde a mesma conta
+ * pede em paralelo (dois toques, retry, abas).
+ */
+export const ENT_LOCK_PREFIX = 'entlock:';
+export const ENT_LOCK_TTL_MS = 30_000;
+/** Espera padrão por uma trava ocupada: cobre o ler-gravar de outro escritor (dezenas de ms) sem o jogador perceber. */
+export const ENT_LOCK_ESPERA_MS = 2_000;
+/** Compra verificada, reembolso, prêmio e exclusão não recusam por `busy`: esperam mais que o TTL, então até a trava de um worker morto vence antes. */
+export const ENT_LOCK_ESPERA_LONGA_MS = ENT_LOCK_TTL_MS + 5_000;
+
+/** A trava não veio dentro da espera. Rota envolvida por `comEntitlementLegivel` responde `409 { ok:false, reason:'busy' }`. */
+export class EntitlementOcupadoError extends Error {
+  constructor(saveId) {
+    super('entitlement-busy');
+    this.name = 'EntitlementOcupadoError';
+    this.status = 409;
+    this.code = 'busy';
+    this.saveIdPrefix = String(saveId).slice(0, 8);
+  }
+}
+
+async function tentarTravaDoEnt(env, saveId, nowMs) {
+  const row = ENT_LOCK_PREFIX + saveId;
+  // Trava vencida sai ANTES da disputa, como em `claimOrderAtomic`.
+  await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?').bind(row, nowMs).run();
+  try {
+    await env.DB.prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(row, saveId, nowMs, nowMs + ENT_LOCK_TTL_MS).run();
+  } catch (err) {
+    if (!ehViolacaoDeChave(err)) throw err;
+    return null;
+  }
+  return async () => {
+    try {
+      await env.DB.prepare('DELETE FROM order_claims WHERE order_id = ? AND claimed_at = ? AND expires_at = ?')
+        .bind(row, nowMs, nowMs + ENT_LOCK_TTL_MS).run();
+    } catch (err) {
+      console.warn(JSON.stringify({ event: 'entitlement.lock.release-failed', saveIdPrefix: String(saveId).slice(0, 8), error: err?.message ?? String(err) }));
+    }
+  };
+}
+
+/**
+ * Pega a trava da conta, tentando de novo com recuo exponencial (e jitter) até `esperaMs`.
+ * `nowMs`: relógio da primeira tentativa (testes simulam o vencimento por ele); as seguintes somam o tempo real decorrido.
+ * @returns {Promise<{ ok: boolean, release: () => Promise<void> }>}
+ */
+export async function tomarTravaDoEnt(env, saveId, { nowMs = Date.now(), esperaMs = 0 } = {}) {
+  if (!env?.DB) return { ok: true, release: async () => {} };
+  const inicio = Date.now();
+  let pausa = 25;
+  for (;;) {
+    const decorrido = Date.now() - inicio;
+    const release = await tentarTravaDoEnt(env, saveId, nowMs + decorrido);
+    if (release) return { ok: true, release };
+    if (decorrido >= esperaMs) return { ok: false, release: async () => {} };
+    const resta = esperaMs - decorrido;
+    await new Promise(r => setTimeout(r, Math.min(resta, pausa / 2 + Math.random() * pausa)));
+    pausa = Math.min(pausa * 2, 500);
+  }
+}
+
+/**
+ * Roda `fn` (o ler-modificar-gravar inteiro de `ent:<saveId>`) com a trava da conta; solta no `finally`.
+ * Trava que não vem dentro de `esperaMs` lança `EntitlementOcupadoError`. NÃO é reentrante: `fn` não pode chamar outro escritor travado.
+ */
+export async function comTravaDoEnt(env, saveId, fn, { esperaMs = ENT_LOCK_ESPERA_MS } = {}) {
+  const trava = await tomarTravaDoEnt(env, saveId, { esperaMs });
+  if (!trava.ok) throw new EntitlementOcupadoError(saveId);
+  try {
+    return await fn();
+  } finally {
+    await trava.release();
+  }
 }
 
 /**
@@ -265,19 +357,21 @@ export const REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt';
  * @returns {Promise<{ ent: any, jaFeito: boolean, anterior: number }>}
  */
 export async function resetSpriteLifetimeOnRebirth(env, saveId) {
-  const ent = await readEntitlement(env, saveId);
-  if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
-    return { ent, jaFeito: true, anterior: 0 };
-  }
-  // ⚰️ release/beta-1 (dono, 11/10/2026): "o usuário NÃO pode ficar regerando
-  // o Soulmon". O renascimento NÃO zera mais o vitalício: as formas já geradas
-  // reusam a arte do cache (`sprite:img:<saveId>:<formId>`) e as que nunca foram
-  // geradas ainda podem sair UMA vez cada (dentro do vitalício). A marca segue
-  // gravada para a rota continuar idempotente.
-  const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
-  ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
-  await writeEntitlement(env, saveId, ent);
-  return { ent, jaFeito: false, anterior };
+  return comTravaDoEnt(env, saveId, async () => {
+    const ent = await readEntitlement(env, saveId);
+    if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
+      return { ent, jaFeito: true, anterior: 0 };
+    }
+    // ⚰️ release/beta-1 (dono, 11/10/2026): "o usuário NÃO pode ficar regerando
+    // o Soulmon". O renascimento NÃO zera mais o vitalício: as formas já geradas
+    // reusam a arte do cache (`sprite:img:<saveId>:<formId>`) e as que nunca foram
+    // geradas ainda podem sair UMA vez cada (dentro do vitalício). A marca segue
+    // gravada para a rota continuar idempotente.
+    const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
+    ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
+    await writeEntitlement(env, saveId, ent);
+    return { ent, jaFeito: false, anterior };
+  });
 }
 
 export function paidProviderOf(ent) {
@@ -309,6 +403,8 @@ export function publicView(ent) {
     // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
     ...(provider ? { provider } : {}),
     // Só quando a conta já teve assinatura: contas sem ela mantêm o formato de sempre.
+    // Só quando há alguma: contas sem moldura mantêm o formato de sempre.
+    ...(Array.isArray(ent.frames) && ent.frames.length ? { frames: [...ent.frames] } : {}),
     ...(ent.sub ? { subActive: isSubscriptionActive(ent), subUntil: Number(ent.sub.until) || 0 } : {}),
   };
 }
@@ -329,16 +425,18 @@ export function isSubscriptionActive(ent, now = Date.now()) {
  * @returns {Promise<{ ent: any, changed: boolean }>}
  */
 export async function applySubscriptionState(env, saveId, { rootHash, until, state, entitled, test = false }, now = Date.now()) {
-  const ent = await readEntitlement(env, saveId);
-  const cur = ent.sub;
-  if (cur && cur.rootHash !== rootHash && !entitled) return { ent, changed: false };
-  const next = { rootHash, until: Math.max(0, Number(until) || 0), state: String(state ?? ''), test: !!test, updatedAt: now };
-  if (cur && cur.rootHash === rootHash && cur.until === next.until && cur.state === next.state && cur.test === next.test) {
-    return { ent, changed: false };
-  }
-  ent.sub = next;
-  await writeEntitlement(env, saveId, ent);
-  return { ent, changed: true };
+  return comTravaDoEnt(env, saveId, async () => {
+    const ent = await readEntitlement(env, saveId);
+    const cur = ent.sub;
+    if (cur && cur.rootHash !== rootHash && !entitled) return { ent, changed: false };
+    const next = { rootHash, until: Math.max(0, Number(until) || 0), state: String(state ?? ''), test: !!test, updatedAt: now };
+    if (cur && cur.rootHash === rootHash && cur.until === next.until && cur.state === next.state && cur.test === next.test) {
+      return { ent, changed: false };
+    }
+    ent.sub = next;
+    await writeEntitlement(env, saveId, ent);
+    return { ent, changed: true };
+  }, { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
 }
 
 /** Quem reivindicou este comprovante? `null` = ninguém. */
@@ -401,42 +499,55 @@ export async function rtdnMarkSeen(env, messageId, now = Date.now()) {
  * por causa de um campo que o app instalado não manda.
  */
 const SPEND_TTL_SECONDS = 24 * 60 * 60;
+/**
+ * §381: os últimos gestos de gasto também ficam no PRÓPRIO `ent` (`spendOps`), gravados na mesma escrita do débito (padrão de
+ * `bitsBuyOps`). A chave `spend:` segue gravada e lida (worker da versão anterior só conhece ela).
+ * Lança `EntitlementOcupadoError` se a trava da conta não vier na espera padrão (a rota responde `409 busy`; o cliente reenvia o mesmo opId).
+ */
+const SPEND_OPS_MAX = 20;
 
 export async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
 
-  const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId)
-    ? `spend:${saveId}:${opId}`
-    : null;
-  if (chave) {
-    const anterior = await kvOrThrow(env).get(chave);
-    // Repetição do MESMO gesto: devolve o que já aconteceu. Debitar de novo
-    // seria cobrar duas vezes; recusar seria mentir sobre uma compra feita.
-    if (anterior) { try { return JSON.parse(anterior); } catch { return null; } }
-  }
+  const opValido = typeof opId === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(opId);
+  const chave = opValido ? `spend:${saveId}:${opId}` : null;
+  return comTravaDoEnt(env, saveId, async () => {
+    if (chave) {
+      const anterior = await kvOrThrow(env).get(chave);
+      // Repetição do MESMO gesto: devolve o que já aconteceu. Debitar de novo
+      // seria cobrar duas vezes; recusar seria mentir sobre uma compra feita.
+      if (anterior) { try { return JSON.parse(anterior); } catch { return null; } }
+    }
 
-  const ent = await readEntitlement(env, saveId);
-  if (ent.credits < amount) return null;
-  ent.credits -= amount;
-  await writeEntitlement(env, saveId, ent);
-  if (chave) {
-    await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
-  }
-  return ent;
+    const ent = await readEntitlement(env, saveId);
+    const ops = Array.isArray(ent.spendOps) ? ent.spendOps.filter(o => typeof o === 'string') : [];
+    // O mesmo gesto que já debitou, visto pela lista do próprio `ent` (a chave `spend:` acima é eventual entre colos).
+    if (opValido && ops.includes(opId)) return ent;
+    if (ent.credits < amount) return null;
+    ent.credits -= amount;
+    if (opValido) ent.spendOps = [...ops, opId].slice(-SPEND_OPS_MAX);
+    await writeEntitlement(env, saveId, ent);
+    if (chave) {
+      await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+    }
+    return ent;
+  });
 }
 
 /** Credita a recompensa de um anúncio, respeitando o teto diário do servidor. */
 export async function grantAdReward(env, saveId) {
-  const ent = await readEntitlement(env, saveId);
-  if (ent.adDate !== today()) {
-    ent.adDate = today();
-    ent.adCount = 0;
-  }
-  if (ent.adCount >= AD_DAILY_CAP) return null;
-  ent.adCount += 1;
-  ent.credits += AD_REWARD_CREDITS;
-  await writeEntitlement(env, saveId, ent);
-  return ent;
+  return comTravaDoEnt(env, saveId, async () => {
+    const ent = await readEntitlement(env, saveId);
+    if (ent.adDate !== today()) {
+      ent.adDate = today();
+      ent.adCount = 0;
+    }
+    if (ent.adCount >= AD_DAILY_CAP) return null;
+    ent.adCount += 1;
+    ent.credits += AD_REWARD_CREDITS;
+    await writeEntitlement(env, saveId, ent);
+    return ent;
+  });
 }
 
 /**
@@ -672,8 +783,13 @@ export function podarOrderDetails(details, max = ORDER_HISTORY_MAX) {
  * `provider`/`productId`/`purchaseToken` são guardados só para o reembolso
  * saber o que desfazer depois (ver auditRefunds).
  */
-export async function applyVerifiedPurchase(env, saveId, {
-  orderId, grantTier, grantCredits, provider, productId, purchaseToken,
+export async function applyVerifiedPurchase(env, saveId, compra) {
+  // Compra verificada não recusa por `busy` (a loja já cobrou): espera a trava mais que o TTL dela (§381).
+  return comTravaDoEnt(env, saveId, () => aplicarCompraVerificada(env, saveId, compra), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+}
+
+async function aplicarCompraVerificada(env, saveId, {
+  orderId, grantTier, grantCredits, grantFrame, provider, productId, purchaseToken,
 }) {
   const ent = await readEntitlement(env, saveId);
   if (orderId && ent.consumedOrders.includes(orderId)) {
@@ -698,12 +814,17 @@ export async function applyVerifiedPurchase(env, saveId, {
   }
   if (grantTier === 'paid') ent.tier = 'paid';
   if (grantCredits > 0) ent.credits += grantCredits;
+  if (typeof grantFrame === 'string') {
+    if (!Array.isArray(ent.frames)) ent.frames = [];
+    if (!ent.frames.includes(grantFrame)) ent.frames.push(grantFrame);
+  }
   if (orderId) {
     ent.consumedOrders.push(orderId);
     ent.orderDetails.push({
       orderId, provider, productId, purchaseToken,
       grantTier: grantTier ?? null,
       grantCredits: grantCredits ?? 0,
+      ...(typeof grantFrame === 'string' ? { grantFrame } : {}),
     });
     // Mantém as listas limitadas — só precisamos do histórico recente.
     if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
@@ -800,6 +921,7 @@ export async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
     orderId,
     grantTier: 'paid',
     grantCredits: 0,
+    grantFrame: null,
     provider: COURTESY_PROVIDER,
     productId: COURTESY_PROVIDER,
     purchaseToken: null,
@@ -855,9 +977,13 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     if (voided === true) voidedIds.push(order.orderId);
   }
 
-  // FASE 2 — relê o registro ATUAL e aplica só o delta. Entre a releitura e a
-  // gravação não há await de rede; a janela que sobra é a de todo RMW deste
-  // arquivo (KV sem CAS, ADR-005, já conhecida).
+  // FASE 2 — relê o registro ATUAL e aplica só o delta, sob a trava da conta
+  // (§381): compra ou gasto simultâneo espera, e nenhum dos dois apaga o outro.
+  return comTravaDoEnt(env, saveId, () => aplicarReembolsos(env, saveId, voidedIds, now), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+}
+
+/** Fase 2 de `auditRefunds`; só roda com a trava da conta na mão. */
+async function aplicarReembolsos(env, saveId, voidedIds, now) {
   const fresh = await readEntitlement(env, saveId);
   // Outra auditoria concorrente terminou enquanto esta esperava a loja.
   if (now - (fresh.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent: fresh, revoked: [] };
@@ -874,6 +1000,11 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     // O jogador que reembolsa depois de gastar sai no lucro dessa diferença —
     // cobrar dele um saldo que não existe mais só criaria uma conta travada.
     if (order.grantCredits > 0) fresh.credits = Math.max(0, fresh.credits - order.grantCredits);
+    // Moldura de widget comprada e reembolsada: sai da conta (outra compra viva do MESMO elemento a mantém).
+    if (typeof order.grantFrame === 'string' && Array.isArray(fresh.frames)
+        && !fresh.orderDetails.some(o => o !== order && !o.voided && o.grantFrame === order.grantFrame)) {
+      fresh.frames = fresh.frames.filter(f => f !== order.grantFrame);
+    }
   }
 
   // O TIER É DERIVADO, não decrementado. A versão anterior fazia
@@ -916,6 +1047,11 @@ export async function grantRankPrize(env, saveId, amount, markKey, since = 0) {
   if (!Number.isInteger(amount) || amount <= 0 || typeof markKey !== 'string' || !markKey) return { ent: null, granted: false, refused: 'invalid' };
   // `since` = quando o prêmio foi GANHO (fechamento do mês). Exclusão a partir daí recusa; quem apagou ANTES e voltou depois (conta nova) não é barrado.
   const tomb = await readTombstone(env, saveId).catch(() => null);
+  // Prêmio aprovado pelo dono não recusa por `busy`: espera a trava (§381).
+  return comTravaDoEnt(env, saveId, () => creditarPremio(env, saveId, amount, markKey, since, tomb), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS });
+}
+
+async function creditarPremio(env, saveId, amount, markKey, since, tomb) {
   const ent = await readEntitlement(env, saveId);
   const delAt = Math.max(tomb ? Number(tomb.at) || 1 : 0, Number(ent.accountDeletedAt) || 0);
   if (delAt > 0 && delAt >= since) return { ent: null, granted: false, refused: 'deleted' };

@@ -1,3 +1,4 @@
+import { IDS_DOS_CURADOS } from './soulProfile/ficha/elementoIds';
 /**
  * Identidade do lutador: o ESPELHO do servidor (`duelSide(save).fx`, `_duel.js`) e o dono único do app dão a MESMA
  * resposta para o mesmo save — o que o oponente vê no PvP é o que o dono vê nas outras telas.
@@ -20,8 +21,8 @@ const doServidor = (par: unknown, fallback?: string) =>
   fighterIdentityFromFx(duelSide({ evolutionStage: 'rookie', ...(fallback ? { soulmonMeta: { dominantElement: fallback } } : {}), soulmonSkills: { rookie: par } }).fx, fallback);
 
 describe('identidade do lutador: cliente == servidor', () => {
-  it('a lista fechada de elementos do servidor é a do app (17 base + 136 pares)', () => {
-    expect([...ELEMENTOS_FICHA].sort()).toEqual([...CLASS_ELEMENT_ORDER, ...DERIVED_ELEMENT_PAIRS.map(d => d.id)].sort());
+  it('a lista fechada de elementos do servidor é a do app (20 base + 190 pares + 50 curados, §232)', () => {
+    expect([...ELEMENTOS_FICHA].sort()).toEqual([...CLASS_ELEMENT_ORDER, ...DERIVED_ELEMENT_PAIRS.map(d => d.id), ...IDS_DOS_CURADOS].sort());
   });
 
   it('fichas geradas (todas as escolas × bases × pares × sementes): a mesma identidade nos dois lados', () => {

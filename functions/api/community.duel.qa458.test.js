@@ -3,7 +3,7 @@
  *  - QA-4: reenvio do MESMO `match` (resposta perdida na rede) devolve o resultado já liquidado, sem gastar outra partida.
  *  - QA-5: oponente que some (oculta/desliga PvP/apaga perfil) no meio do duelo = cancelamento sem custo, ele não pontua.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { onRequest } from './community.js';
 import { DUEL_PENDING_MS } from './_duel.js';
 
@@ -12,6 +12,12 @@ const OPP = 'b'.repeat(32);
 const OPP2 = 'c'.repeat(32);
 const PID = { [OPP]: 'p'.repeat(24), [OPP2]: 'q'.repeat(24) };
 const DAY = 86400000;
+// Relógio FIXO (QA rodada 1, 11/11/2026): o caso "duelo que ficou aberto" recua `pending.at` em DUEL_PENDING_MS + 1 s; rodado nos
+// primeiros ~5 min do dia UTC, esse instante caía no dia ANTERIOR e o `refundOpenDuel` (corretamente) não devolvia a partida.
+// Agora o teste roda sempre às 12:00 UTC, longe da virada; `DIA_FIXO` permite reproduzir a virada de propósito.
+const DIA_FIXO = process.env.QA458_NOW ? Date.parse(process.env.QA458_NOW) : Date.parse('2026-06-15T12:00:00.000Z');
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(DIA_FIXO); });
+afterEach(() => { vi.useRealTimers(); });
 
 function fakeKV(seed = {}) {
   const store = new Map(Object.entries(seed));

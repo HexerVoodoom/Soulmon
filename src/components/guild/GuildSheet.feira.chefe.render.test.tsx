@@ -3,9 +3,9 @@
  * A SALA DA FEIRA com o mistério do Chefe (`docs/PLANO-FEIRA-CHEFE.md`, F-09): só o agregado do clã e o gesto de reabrir a folha.
  * Com a Feira DESLIGADA (a vista sem `feira`) a sala é exatamente a de antes: nenhum bloco novo.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
-import { renderWithCss } from '../../test/renderEnv';
+import { aquecerRender, renderWithCss } from '../../test/renderEnv';
 
 vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
@@ -38,6 +38,14 @@ const montar = async (feira = true) => {
   await waitFor(() => expect(screen.queryByText(GUILD_COPY['guild.salao.carregando'][0])).toBeNull());
   return r;
 };
+
+// O 1º caso pagava, dentro do teto dele, o import frio do chunk lazy da folha do Chefe (FeiraEventoSheet + a luta) e o
+// parse do index.css (19,6 s medido sob carga). Os dois custos únicos vão para um hook com teto próprio; o caso passa a
+// esperar só o ESTADO (a folha montada).
+beforeAll(async () => {
+  aquecerRender();
+  await Promise.all([import('./FeiraEventoSheet'), import('./GroveFolha')]);
+}, 120_000);
 
 beforeEach(() => {
   for (const f of [getGuild, getGuildRewards, getGuildFeira]) vi.mocked(f).mockReset();
@@ -94,5 +102,39 @@ describe('sala da Feira × mistério', () => {
     await waitFor(() => expect(getGuildFeira).toHaveBeenCalled());
     expect(document.querySelector('[data-feira-evento]')).toBeNull();
     expect((document.querySelector('[data-feira-misterio-abrir]') as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+describe('sala da Feira × desafio do dia (dono, 04/11/2026)', () => {
+  const boss = { state: 'boss', level: 3, bossId: 'arauto-do-fim', bossHpPct: 62, hitters: [] };
+  const montarMissao = async () => {
+    const r = renderWithCss(<GuildSheet saveId="save-12345678" language="pt-BR" metaDoDiaCumprida room="feira" feira={{ me, onCredit: vi.fn() }} missao={{ state: null, onSend: vi.fn() }} />);
+    await waitFor(() => expect(screen.queryByText(GUILD_COPY['guild.salao.carregando'][0])).toBeNull());
+    return r;
+  };
+  it('o Soulmon voltou HOJE com o inimigo: o desafio aparece', async () => {
+    const { playerDayKey } = await import('../../utils/playerDay');
+    const { recordFeiraDesafio } = await import('../../utils/feiraDesafio');
+    recordFeiraDesafio(playerDayKey(new Date(), undefined), 1);
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-feira-misterio-abrir]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-escapou]')).toBeNull();
+  });
+  it('voltou ONTEM e não lutou: "O inimigo apareceu, mas escapou" e a sala pede nova investigação', async () => {
+    const { recordFeiraDesafio } = await import('../../utils/feiraDesafio');
+    recordFeiraDesafio('1999-01-01', 1);
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-feira-escapou]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-escapou]')!.textContent).toContain('O inimigo apareceu, mas escapou');
+    expect(sala().querySelector('[data-feira-misterio-abrir]')).toBeNull();
+    expect(sala().querySelector('[data-missao-mandar]')).not.toBeNull();
+  });
+  it('sem ter mandado investigar hoje: nada de inimigo, só "Mandar investigar"', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-missao-mandar]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-misterio-abrir]')).toBeNull();
   });
 });

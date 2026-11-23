@@ -59,9 +59,13 @@
  * Vínculo) + os dois handlers de conclusão do `App.tsx` (atividade,
  * `activityStats`, `foodInventory`, `activityLog`).
  *
- * ⚠️ Campo novo na conclusão entra AQUI. `completionUndo.test.ts` compara esta
- * lista com o que uma conclusão de verdade muda no estado e reprova se sobrar
- * alguma coisa — é o que impede o desfazer de ficar pela metade em silêncio.
+ * ⚠️ Campo novo na conclusão entra AQUI. HOJE a única guarda é a âncora em
+ * `regrasDeJogo.qaRodada2.test.ts` ("a lista de campos cobre tudo o que
+ * `withHabitCompletion` escreve"), que compara esta lista com uma lista fixa de
+ * nomes — NÃO com uma conclusão real (`withHabitCompletion` não é exportada).
+ * O teste que aplica uma conclusão de verdade e compara as chaves alteradas
+ * com esta lista (`completionUndo.test.ts`) ainda NÃO existe: vem quando
+ * `withHabitCompletion` for extraída para `utils/habitCompletion.ts` (antislop P3).
  */
 export const CAMPOS_DA_CONCLUSAO = [
   'activities',

@@ -17,6 +17,19 @@
 //   coopWarQ:<size>     fila: { gid, roster:[saveId…], at }           (só o servidor lê os saveIds)
 //   coopWarWait:<gid>   "estou na fila": { size, at }
 //   coopWarRes:<gid>    o último resultado: { day, outcome, duels[], size, enemy }
+//   coopWarSeed:<gid>   (§322) a guilda SEMENTE já lutou: { day, gid, at }, 24 h. Uma guerra por semente por vez.
+//
+// RIVAL SEMENTE (§322, 13/11/2026, pedido do dono): quando a fila do tamanho NÃO tem rival real, a guilda real
+// enfrenta uma das guildas semente (`seedGuild:v1`, gravado pelo script do dono; sem a chave = comportamento antigo,
+// entra na fila). O lado semente são SIMULADOS lutando com os saves que já têm (como no duelo). Regras:
+//   - o registro é lido UMA vez e SÓ quando a fila não tem rival real (cache local da requisição);
+//   - nunca a própria guilda; só blob com o marcador `seed.tag`; só os simulados marcados (`seed.members`), nunca
+//     um jogador real que tenha entrado na guilda semente;
+//   - esquadrão do MESMO tamanho; semente reservada (`coopWarSeed:<gid>`) é pulada; tenta no máximo 2 sementes;
+//   - o lado semente NÃO ganha nada e NÃO grava nada (sem `coopWarRes`, sem seiva, sem fila): só o lado real
+//     recebe o resultado e a seiva de sempre. Nenhum ranking lê a guerra.
+// Custo extra sobre "entrar na fila": 1 leitura do registro + 2 por semente tentada (reserva + blob) + os saves do
+// esquadrão semente (os mesmos que uma guerra real leria do rival); 2 escritas (reserva + resultado) + a seiva.
 //
 // A resposta NUNCA traz saveId, estágio, HP, nem número de dano de ninguém; os inimigos aparecem só como
 // "N criaturas" e o nome (já higienizado) da guilda deles.
@@ -25,6 +38,7 @@ import { kvOrThrow } from './_kv.js';
 import { loadDuelSide } from './_duelLoad.js';
 import { simulateDuel, duelSeed } from './_duel.js';
 import { somarPontos } from './_casa.js';
+import { enqueueMail } from './_mensageiro.js';
 
 export const WAR_MIN = 2;
 export const WAR_MAX = 4;
@@ -36,6 +50,19 @@ export const WAR_RES_TTL = 86400 * 30;
 export const coopWarQKey = size => `coopWarQ:${size}`;
 export const coopWarWaitKey = gid => `coopWarWait:${gid}`;
 export const coopWarResKey = gid => `coopWarRes:${gid}`;
+/** O replay da última guerra de uma guilda (22/11/2026): as fichas e a semente de cada confronto, para o "Assistir" da carta. */
+export const coopWarReplayKey = gid => `coopWarReplay:${gid}`;
+/** Quanto o replay e a carta duram (o mesmo prazo da caixa do Mensageiro). */
+const WAR_REPLAY_TTL = 3 * 86400;
+export const coopWarSeedKey = gid => `coopWarSeed:${gid}`;
+/** O registro das guildas semente (escrito SÓ pelo script do dono, `seed-guildas.mjs`): `{ v, tag, slots: { slot: { gid, code } } }`. */
+export const SEED_REGISTRY_KEY = 'seedGuild:v1';
+/** O marcador que o script põe no blob (`g.seed.tag`): sem ele, a guilda não é semente. */
+export const SEED_TAG = 'seed-guildas-v1';
+/** Quantas sementes uma busca tenta antes de desistir e entrar na fila (teto de custo). */
+export const SEED_TENTATIVAS = 2;
+/** A reserva da semente vale um dia: no máximo uma guerra por semente a cada 24 h. */
+export const SEED_RESERVA_TTL = 86400;
 
 const parse = raw => { try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
 
@@ -56,19 +83,23 @@ const porNivel = lados => lados
 
 /**
  * Resolve a guerra entre dois esquadrões do mesmo tamanho. PURA e determinística na semente.
- * @returns {{ aWins: number, bWins: number, duels: Array<'a'|'b'|'draw'> }}
+ * @returns {{ aWins: number, bWins: number, duels: Array<'a'|'b'|'draw'>, pares: Array<{ seed: number, a: any, b: any }> }}
  */
 export function resolverGuerra(A, B, sementeBase) {
   const a = porNivel(A), b = porNivel(B);
   const n = Math.min(a.length, b.length);
   /** @type {Array<'a'|'b'|'draw'>} */
   const duels = [];
+  /** @type {Array<{ seed: number, a: any, b: any }>} */
+  const pares = [];
   let aWins = 0, bWins = 0;
   for (let i = 0; i < n; i++) {
-    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [], elementScale: 0.5 });
+    const seed = duelSeed(sementeBase, i);
+    pares.push({ seed, a: a[i].side, b: b[i].side });
+    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed, taps: [], elementScale: 0.5 });
     if (r.winner === 'me') { aWins++; duels.push('a'); } else if (r.winner === 'opp') { bWins++; duels.push('b'); } else duels.push('draw');
   }
-  return { aWins, bWins, duels };
+  return { aWins, bWins, duels, pares };
 }
 
 const resultadoDe = (meus, deles) => (meus > deles ? 'win' : meus < deles ? 'loss' : 'draw');
@@ -108,8 +139,13 @@ export async function buscarGuerra(env, g, requester, hoje, lerGrupo) {
 
   const fila = parse(await kvs.get(coopWarQKey(size)));
   const rival = fila && typeof fila.gid === 'string' && fila.gid !== g.id && Array.isArray(fila.roster) ? await lerGrupo(fila.gid) : null;
+  /** Cache da requisição: o registro das sementes é lido no máximo uma vez. */
+  const cache = {};
   if (!rival) {
-    // Ninguém (válido) esperando: entra na fila. A fila guarda só saveIds de ESQUADRÃO, nunca devolvidos.
+    // Ninguém (válido) esperando: tenta uma guilda semente (§322); sem semente livre, entra na fila.
+    const contraSemente = await guerraContraSemente(env, g, meus, hoje, lerGrupo, cache);
+    if (contraSemente) return contraSemente;
+    // A fila guarda só saveIds de ESQUADRÃO, nunca devolvidos.
     await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map(x => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: 'waiting', waiting: { size }, last: antes.last };
@@ -119,14 +155,16 @@ export async function buscarGuerra(env, g, requester, hoje, lerGrupo) {
   await kvs.delete(coopWarQKey(size));
   const deles = (await Promise.all(fila.roster.filter(m => rival.members.includes(m)).map(async m => ({ save: m, side: await loadDuelSide(env, m) })))).filter(x => x.side).slice(0, WAR_MAX);
   if (deles.length < WAR_MIN) {
-    // O esquadrão rival não existe mais: descarta e entra na fila no lugar dele.
+    // O esquadrão rival não existe mais: descarta; tenta uma semente (§322) e, sem ela, entra na fila no lugar dele.
+    const contraSemente = await guerraContraSemente(env, g, meus, hoje, lerGrupo, cache);
+    if (contraSemente) return contraSemente;
     await kvs.put(coopWarQKey(size), JSON.stringify({ gid: g.id, roster: meus.map(x => x.save), at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     await kvs.put(coopWarWaitKey(g.id), JSON.stringify({ size, at: Date.now() }), { expirationTtl: WAR_QUEUE_TTL });
     return { state: 'waiting', waiting: { size }, last: antes.last };
   }
   const n = Math.min(meus.length, deles.length);
   const A = meus.slice(0, n), B = deles.slice(0, n);
-  const { aWins, bWins, duels } = resolverGuerra(A, B, `guerra|${g.id}|${rival.id}|${hoje}`);
+  const { aWins, bWins, duels, pares } = resolverGuerra(A, B, `guerra|${g.id}|${rival.id}|${hoje}`);
   const meu = resultadoDe(aWins, bWins);
   const dele = resultadoDe(bWins, aWins);
   const grava = (gid, outcome, d, lado, nomeInimigo) => kvs.put(
@@ -143,5 +181,116 @@ export async function buscarGuerra(env, g, requester, hoje, lerGrupo) {
     ...A.map(x => somarPontos(env, g.id, x.save, 'guerra', WAR_PTS[meu])),
     ...B.map(x => somarPontos(env, rival.id, x.save, 'guerra', WAR_PTS[dele])),
   ]);
+  // CARTINHA no Mensageiro (22/11/2026): quando a batalha é encontrada os dois clãs recebem a carta + o replay. SEM push (LV-G4).
+  await registrarGuerra(env, [
+    { gid: g.id, nome: g.name, membros: g.members, outcome: meu, enemy: rival.name, lado: 'a' },
+    { gid: rival.id, nome: rival.name, membros: rival.members, outcome: dele, enemy: g.name, lado: 'b' },
+  ], hoje, pares);
   return { state: 'done', waiting: null, last: { day: hoje, outcome: meu, duels: duelosDe(duels, 'a'), size: n, enemy: rival.name } };
+}
+
+/** O replay gravado da guilda (ou `null`): `{ day, enemy, duels: [{ seed, me, opp }] }`. */
+export async function replayDaGuerra(env, gid) {
+  const r = parse(await kvOrThrow(env).get(coopWarReplayKey(gid)));
+  return r && typeof r === 'object' && Array.isArray(r.duels) ? r : null;
+}
+
+/**
+ * Grava o replay e entrega a carta `guild-war` a cada membro dos clãs REAIS. Nunca derruba a guerra (falha só é logada).
+ * Sem push: a carta só existe na caixa do Mensageiro (`guild.semPush.contract.test.js` segue valendo). O resultado não muda.
+ * @param {Array<{gid:string,nome:string,membros:string[],outcome:'win'|'draw'|'loss',enemy:string,lado:'a'|'b'}>} lados
+ */
+export async function registrarGuerra(env, lados, hoje, pares) {
+  const kvs = kvOrThrow(env);
+  const rot = { win: ['Vitória', 'Victory'], draw: ['Empate', 'Draw'], loss: ['Derrota', 'Defeat'] };
+  await Promise.all(lados.map(async l => {
+    try {
+      const duels = pares.map(p => (l.lado === 'a' ? { seed: p.seed, me: p.a, opp: p.b } : { seed: p.seed, me: p.b, opp: p.a }));
+      await kvs.put(coopWarReplayKey(l.gid), JSON.stringify({ day: hoje, enemy: l.enemy, outcome: l.outcome, duels }), { expirationTtl: WAR_REPLAY_TTL });
+      const [pt, en] = rot[l.outcome];
+      for (const m of l.membros ?? []) {
+        await enqueueMail(env, kvs, m, {
+          mid: `guerra:${l.gid}:${hoje}`, kind: 'guild-war', at: Date.now(), bits: 0, emblems: 0,
+          titlePt: 'Batalha encontrada', titleEn: 'Battle found',
+          bodyPt: `Seu clã enfrentou ${l.enemy}: ${pt}. Quer assistir ao combate?`,
+          bodyEn: `Your clan faced ${l.enemy}: ${en}. Want to watch the fight?`,
+        }).catch(() => false);
+      }
+    } catch (err) { console.warn('guerra: replay/carta falhou', String(err)); }
+  }));
+}
+
+// ── RIVAL SEMENTE (§322) ────────────────────────────────────────────────────────────────────────────────────────
+
+/** Os gids das guildas semente, na ordem estável do slot (registro ilegível/ausente = `[]`). */
+export function gidsDoRegistro(reg) {
+  const slots = reg && typeof reg === 'object' && reg.slots && typeof reg.slots === 'object' && !Array.isArray(reg.slots) ? reg.slots : {};
+  const vistos = new Set();
+  for (const slot of Object.keys(slots).sort()) {
+    const gid = slots[slot]?.gid;
+    if (typeof gid === 'string' && gid) vistos.add(gid);
+  }
+  return [...vistos];
+}
+
+/** Hash pequeno e estável (FNV-1a) para espalhar as guildas reais pelas sementes. */
+const hash32 = txt => { let h = 0x811c9dc5; for (const ch of txt) { h ^= ch.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h; };
+
+/**
+ * A ordem em que `gidReal` tenta as sementes hoje: rotação da lista por hash(gidReal|hoje), SEM a própria guilda.
+ * Guildas reais diferentes começam em sementes diferentes (menos colisão na reserva).
+ */
+export function ordemDasSementes(gids, gidReal, hoje) {
+  const lista = gids.filter(x => x !== gidReal);
+  if (lista.length === 0) return [];
+  const k = hash32(`${gidReal}|${hoje}`) % lista.length;
+  return [...lista.slice(k), ...lista.slice(0, k)];
+}
+
+/** Até `size` fichas dos simulados, na ordem da lista, lendo em lotes só o que falta (sem ler os 12 de uma vez). */
+async function esquadraoSemente(env, sims, size) {
+  const deles = [];
+  let i = 0;
+  while (deles.length < size && i < sims.length) {
+    const lote = sims.slice(i, i + (size - deles.length));
+    i += lote.length;
+    const lidos = await Promise.all(lote.map(async m => ({ save: m, side: await loadDuelSide(env, m) })));
+    deles.push(...lidos.filter(x => x.side));
+  }
+  return deles.slice(0, size);
+}
+
+/**
+ * Procura uma semente livre e, achando, resolve a guerra NA HORA contra ela. Devolve o mesmo `{ state:'done', ... }`
+ * de uma guerra real, ou `null` (sem registro, sem semente livre/válida do tamanho): o chamador entra na fila.
+ * O lado semente não grava nada; só a guilda real recebe o resultado e a seiva.
+ */
+async function guerraContraSemente(env, g, meus, hoje, lerGrupo, cache) {
+  const kvs = kvOrThrow(env);
+  if (!('reg' in cache)) cache.reg = parse(await kvs.get(SEED_REGISTRY_KEY));
+  const ordem = ordemDasSementes(gidsDoRegistro(cache.reg), g.id, hoje).slice(0, SEED_TENTATIVAS);
+  const size = meus.length;
+  for (const sid of ordem) {
+    const [reserva, semente] = await Promise.all([kvs.get(coopWarSeedKey(sid)), lerGrupo(sid)]);
+    if (reserva) continue; // já lutou nas últimas 24 h
+    if (!semente || semente.id !== sid || semente.seed?.tag !== SEED_TAG || !Array.isArray(semente.members)) continue;
+    // Só os SIMULADOS marcados e ainda na guilda; nunca um real que tenha entrado, nunca alguém da guilda que busca.
+    const sims = (Array.isArray(semente.seed.members) ? semente.seed.members : [])
+      .filter(m => typeof m === 'string' && semente.members.includes(m) && !g.members.includes(m));
+    const B = await esquadraoSemente(env, sims, size);
+    if (B.length < size) continue; // o esquadrão semente tem de ter o MESMO tamanho
+    // Reserva ANTES de resolver (como a fila é apagada antes): uma segunda busca pula esta semente.
+    await kvs.put(coopWarSeedKey(sid), JSON.stringify({ day: hoje, gid: g.id, at: Date.now() }), { expirationTtl: SEED_RESERVA_TTL });
+    const { aWins, bWins, duels } = resolverGuerra(meus, B, `guerra|${g.id}|${sid}|${hoje}`);
+    const meu = resultadoDe(aWins, bWins);
+    const last = { day: hoje, outcome: meu, duels: duelosDe(duels, 'a'), size, enemy: semente.name };
+    await Promise.all([
+      kvs.put(coopWarResKey(g.id), JSON.stringify(last), { expirationTtl: WAR_RES_TTL }),
+      // Seiva só para o lado REAL (a mesma de uma guerra entre guildas reais); o lado semente não recebe nada.
+      ...meus.map(x => somarPontos(env, g.id, x.save, 'guerra', WAR_PTS[meu])),
+    ]);
+    console.log('guild war: rival semente', { size, outcome: meu });
+    return { state: 'done', waiting: null, last };
+  }
+  return null;
 }

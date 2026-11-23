@@ -28,6 +28,8 @@ interface SoulNodeProps {
   label: string;
   title?: string;
   onClick?: () => void;
+  /** Nó que alterna uma seleção (ex.: mostrar a ação da forma): vira `aria-pressed`. */
+  pressed?: boolean;
 }
 
 /**
@@ -51,7 +53,7 @@ interface SoulNodeProps {
  * (88 ≥ 44).
  */
 export function SoulNode({
-  visual, sprite, silhouette = false, busy = false, ringColor, glowColor, label, title, onClick,
+  visual, sprite, silhouette = false, busy = false, ringColor, glowColor, label, title, onClick, pressed,
 }: SoulNodeProps) {
   const box: CSSProperties = {
     position: 'relative',
@@ -132,7 +134,7 @@ export function SoulNode({
   }
 
   return (
-    <button type="button" onClick={onClick} aria-label={label} title={title} data-soul-node={visual} style={box}>
+    <button type="button" onClick={onClick} aria-pressed={pressed} aria-label={label} title={title} data-soul-node={visual} style={box}>
       {body}
     </button>
   );

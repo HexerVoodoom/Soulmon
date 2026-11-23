@@ -104,17 +104,19 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
 });
 
 describe('o Ferreiro (07/10/2026; #187: agora lote da Forja) para os equipamentos', () => {
-  it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Vitra', () => {
+  it('existe, com rótulo EN/PT, sem Vínculo mínimo e o NPC Vitra', () => {
     expect(forjaLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect(forjaLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect((mercadoLots('en-US') as { id: string }[]).some(l => l.id === 'ferreiro')).toBe(false);
-    expect(BUILDING_GATES['forja.ferreiro'].minBond).toBe(2);
+    expect(BUILDING_GATES['forja.ferreiro'].minBond).toBe(1);
     expect(lotNpcVoice('forja', 'ferreiro', 'en-US').name).toContain('Vitra');
     expect(lotNpcVoice('forja', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });
-  it('a folha do lote abre a ForgeCard, e as Estatísticas não a montam mais', () => {
+  it('o lote abre DIRETO o mapa em tela cheia da ForgeCard (sem folha intermediária); as Estatísticas não a montam', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');
-    expect(lerSrc('./AreaView.tsx')).toMatch(/open\?\.id === 'ferreiro' && <ForgeCard/);
+    expect(lerSrc('./AreaView.tsx')).toMatch(/forgeFull && <Suspense[^]*<ForgeCard[^>]*view="map"/);
+    expect(lerSrc('./AreaView.tsx')).toMatch(/forgeFull = area === 'forja' && open\?\.id === 'ferreiro';/);
+    expect(lerSrc('./AreaView.tsx')).not.toMatch(/SoulsmithSheet|forgeEntered/);
     expect(lerSrc('../StatsPage.tsx')).not.toMatch(/<ForgeCard/);
   });
 });

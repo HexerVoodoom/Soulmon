@@ -8,7 +8,7 @@ export const AVATAR_GROUPS: Record<string, { pt: string; en: string }> = {
   floresta: { pt: 'Floresta', en: 'Forest' }, fogo: { pt: 'Fogo', en: 'Fire' }, gelo: { pt: 'Gelo', en: 'Ice' },
   industrial: { pt: 'Industrial', en: 'Industrial' }, luz: { pt: 'Luz', en: 'Light' }, oceano: { pt: 'Oceano', en: 'Ocean' },
   pantano: { pt: 'Pântano', en: 'Swamp' }, picos: { pt: 'Picos', en: 'Peaks' }, planta: { pt: 'Planta', en: 'Plant' },
-  sombra: { pt: 'Sombra', en: 'Shadow' }, terra: { pt: 'Terra', en: 'Earth' },
+  sombra: { pt: 'Sombra', en: 'Shadow' }, terra: { pt: 'Terra', en: 'Earth' }, founder: { pt: 'Fundador', en: 'Founder' },
 };
 
 export interface AvatarEntry { id: string; g: string; n: string; /** descrição EN (padrão/fallback) */ en: string }

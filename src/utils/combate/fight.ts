@@ -20,9 +20,13 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
+import type { FightEvent, FightFxPair, FighterFx, FightOptions, FightResult, FightSide, FightWinner } from './fightTypes';
 import { REFERENCE_BUILDS, combatantAt } from './level';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
-import { CHEER, cleanCheerScale, cleanDotResist, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special } from './specials';
+import { planoInvocacao } from './companheiro';
+import {
+  CHEER, cleanCheerScale, cleanDotResist, EFFECT_TUNE_PVP, ENERGY, ENERGY_TRIGGER, FAMILY_TUNE, shieldAbsorbPoints, SPECIAL_BUDGET_HITS, type ShieldSource, type Special,
+} from './specials';
 
 /** The balanced mirror of every level lasts this long (seconds). */
 export const MIRROR_SECONDS = 25;
@@ -53,6 +57,23 @@ export function hpPoints(hp: number): number {
   return Math.max(1, Math.round(hp * HP_POINTS_PER_HP));
 }
 
+/**
+ * HP EXIBIDO no PvP/Duelo (decisão do dono, 09/11/2026, §252): a tela mostra o HP BASE, o mesmo número da Arena,
+ * e não o inflado por `PVP_HP_SCALE`. Só apresentação: o motor segue lutando com `hp × PVP_HP_SCALE` (a luta dura o
+ * mesmo); a barra é fração, então a proporção não muda, e dano/HP atual derivam da fração × este máximo.
+ */
+export function hpExibidoPvp(combatantHp: number): number {
+  return hpPoints(combatantHp);
+}
+
+/** Fator SÓ VISUAL de ataque/defesa/velocidade (decisão do dono, 09/11/2026, §252). HP não multiplica. */
+export const STAT_DISPLAY_SCALE = 10;
+
+/** Ataque, defesa ou velocidade como a tela mostra: valor de combate × `STAT_DISPLAY_SCALE`, arredondado. Mecânica intocada. */
+export function statExibido(v: number): number {
+  return Math.round(v * STAT_DISPLAY_SCALE);
+}
+
 /** Points removed by a hit worth `frac` of a `pts`-point bar: at least 1 when it does any damage, 0 when it does none. */
 export function damagePoints(frac: number, pts: number): number {
   return frac > 1e-9 ? Math.max(1, Math.round(frac * pts)) : 0;
@@ -79,101 +100,7 @@ export function hitUnit(level: number, h0: number = HIT_UNIT_H0): number {
   return hitsToKnockOut(bal, bal) / h0;
 }
 
-export interface FightSide {
-  readonly combatant: Combatant;
-  readonly special: Special | null;
-  /** Read only by `groupFight`: 'area' splits the special over every living foe. Default 'single'. */
-  readonly area?: 'single' | 'area';
-  /** Tarefa B (`tal-pvp-06`): fraction of the DoT damage this side RECEIVES that never lands (capped by `cleanDotResist`). Default 0. */
-  readonly dotResist?: number;
-  /** Tarefa B (`tal-pve-07`): opening shield of this side, as a fraction of its HP (capped by `cleanStartShield`). Read by `groupFight`. */
-  readonly startShield?: number;
-}
-
-export interface CheerEvent {
-  readonly t: number;
-  readonly side: 0 | 1;
-  /** PR7b: yield multiplier of this discharge (a talent); default 1, sanitised by `cleanCheerScale`. */
-  readonly scale?: number;
-}
-
-export interface FightOptions {
-  /** Fight seed (in PvP it is drawn by the server). */
-  readonly seed: number;
-  /** Multiplies both HPs (the ruler measures with HP×3 so a single special does not dominate). */
-  readonly hpScale?: number;
-  /** Damage variance; `null` turns it off. Default: VARIANCE. */
-  readonly variance?: VarianceConfig | null;
-  /** Level whose window is used. Default: the higher of the two levels. */
-  readonly windowLevel?: number;
-  /** Opening phases (fraction of the first interval) of A and B. Default: drawn from the seed. */
-  readonly phases?: readonly [number, number];
-  /** Normalised-hit constant. Default HIT_UNIT_H0; `null` = raw curve hits (u = 1, the PR1 behaviour). */
-  readonly unitH0?: number | null;
-  /** Starting HP fraction of A and B (default 1, 1). */
-  readonly startHp?: readonly [number, number];
-  /** Starting energy of A and B (default 0, 0). */
-  readonly startEnergy?: readonly [number, number];
-  /** Multiplier of the n-th (0-based) BASIC attack of a side (auto-defence, counter-attack...). Default 1. */
-  readonly hitScale?: (who: 0 | 1, n: number) => number;
-  /** Cheer discharges: at `t` seconds `side` gains CHEER.pvpEnergyPerDischarge energy (if it has a special). The 1v1 is the PvP's. */
-  readonly cheer?: readonly CheerEvent[];
-  /** End at the first KO (PvE: no ghost timing); HP/energy left are reported at that instant. */
-  readonly stopAtFirstKo?: boolean;
-  /**
-   * PR16 (read-only, opt-in): the driver passes an array and the core pushes ONE `FightFxPair` per yielded event, in the
-   * same order — the REAL counters of each side at that event (for a `cast`, AFTER it takes effect). It changes nothing in
-   * the fight (no draw, no event field), so the events stay byte-identical to the server mirror (`_combate.js`).
-   */
-  readonly fxTrace?: FightFxPair[];
-}
-
-/**
- * The real status counters of a fighter (PR16): what the scene draws as the seal's turns, read from the core instead of
- * guessed from the events. `nAtk`/`nSpd` = attack/speed boosts left (each basic attack spends up to 1); `nVuln` = defence-down
- * hits left ON this fighter; `shield` = absorption left (HP fraction) and `shieldHits` = the same in hits of the enemy;
- * `dot` = DoT ticks still to land ON this fighter.
- */
-export interface FighterFx {
-  readonly nAtk: number;
-  readonly nVuln: number;
-  readonly nSpd: number;
-  readonly shield: number;
-  readonly shieldHits: number;
-  readonly dot: number;
-}
-export type FightFxPair = readonly [FighterFx, FighterFx];
-
-export type FightWinner = 'A' | 'B' | 'draw';
-
-export interface FightResult {
-  /** Time at which A (resp. B) is knocked out, in seconds (Infinity if it never fell, with stopAtFirstKo). */
-  readonly timeA: number;
-  readonly timeB: number;
-  readonly castsA: number;
-  readonly castsB: number;
-  readonly winner: FightWinner;
-  /** HP fraction and energy of A and B when the fight ended. */
-  readonly hpA: number;
-  readonly hpB: number;
-  readonly energyA: number;
-  readonly energyB: number;
-}
-
-/**
- * Step event. `cast` PAUSES the fight: the driver answers with the cast
- * multiplier (ring, dodge...) through `next(mult)`; `fight()` answers 1.
- */
-export interface FightEvent {
-  readonly kind: 'attack' | 'cast' | 'tick' | 'ko';
-  readonly t: number;
-  /** 0 = A, 1 = B: who attacks / casts / is knocked out. */
-  readonly side: 0 | 1;
-  /** HP fraction that LEFT the bar (attack/tick) — whole points / pts (INTEGER HP; 0 = fully absorbed); 0 for cast/ko. */
-  readonly frac: number;
-  readonly hp: readonly [number, number];
-  readonly energy: readonly [number, number];
-}
+export type { CheerEvent, FightEvent, FightFxPair, FightOptions, FightResult, FightSide, FighterFx, FightWinner } from './fightTypes';
 
 interface Fighter {
   readonly c: Combatant;
@@ -191,14 +118,42 @@ interface Fighter {
   nVuln: number;
   nSpd: number;
   nHit: number;
+  /** Hexsmith H2 (1v1): golpes de silêncio, de lentidão, de reforço de defesa e de debuff de ataque que faltam; pulsos de cura contínua. */
+  nSil: number;
+  nSlow: number;
+  /** `spdDebuff` (família só de Coroa): golpes de arrasto que faltam (contador à parte do `nSlow` do efeito de lentidão). */
+  nDrag: number;
+  nGuard: number;
+  nWeak: number;
+  nHot: number;
+  hots: { readonly pulse: number; left: number }[];
   dotResist: number;
+  /** §334: DoTs que este lutador CARREGA; cada um tica no começo de cada golpe dele (`tickOwnTurn`). */
+  dots: OwnTurnDot[];
+  readonly invoca: boolean;
 }
+
+/**
+ * §334 (dono, 13/11/2026): um DoT é guardado em quem o CARREGA e tica no turno DELE: no começo de cada golpe básico do
+ * afetado, antes de o golpe sair. `left` = golpes do afetado que ainda levam tick (a duração conta os turnos dele).
+ */
+interface OwnTurnDot {
+  readonly src: Fighter;
+  readonly E: number;
+  left: number;
+  /** Ataque do companheiro invocado (PR 2): é um DoT como outro qualquer, só marcado para a cena e para a regra de 1 por combatente. */
+  readonly comp?: true;
+}
+
+/** §334: ticks de um DoT (a duração, em golpes do afetado). */
+export const DOT_TICKS = 3;
+
+/** `comp` só entra no contador quando há companheiro em cena (os eventos de quem não invoca ficam byte a byte iguais). */
+export const compFx = (n: number): { comp?: number } => (n > 0 ? { comp: n } : {});
 
 interface Timed {
   readonly t: number;
   readonly fn: () => void;
-  /** A DoT tick: whoever it lands on (for the real counter of ticks left). */
-  readonly dotOn?: Fighter;
 }
 
 export function* fightSteps(
@@ -224,7 +179,7 @@ export function* fightSteps(
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nGuard: 0, nWeak: 0, nHot: 0, hots: [], dotResist: cleanDotResist(s.dotResist), dots: [], invoca: s.invoca === true,
     };
   };
   const F: [Fighter, Fighter] = [mk(a, 0), mk(b, 1)];
@@ -250,21 +205,24 @@ export function* fightSteps(
   const hitsOn = (me: Fighter, foe: Fighter) => hitsToKnockOut(me.c, foe.c) / u;
   const fxOf = (f: Fighter, foe: Fighter): FighterFx => ({
     nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield, shieldHits: f.shield * hitsOn(foe, f),
-    dot: timed.reduce((n, e) => n + (e.dotOn === f ? 1 : 0), 0),
+    dot: f.dots.reduce((n, d) => n + d.left, 0),
+    ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow + f.nDrag > EPS ? { nSlow: f.nSlow + f.nDrag } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
+    ...(f.nGuard > EPS ? { nGuard: f.nGuard } : {}), ...(f.nWeak > EPS ? { nWeak: f.nWeak } : {}),
+    ...(f.invoca ? compFx(foe.dots.reduce((n, d) => (d.src === f && d.comp ? n + d.left : n), 0)) : {}),
   });
   const snapFx = (): FightFxPair => [fxOf(F[0], F[1]), fxOf(F[1], F[0])];
   const gain = (f: Fighter, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
+  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', from: ShieldSource) => {
     if (v.dead < Infinity) return; // leftover damage expires
     // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -275,32 +233,76 @@ export function* fightSteps(
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   };
+  /**
+   * §334: o começo do golpe de `me`: cada DoT que ele carrega tica (o escudo dele absorve metade, §327) e gasta 1 turno.
+   * Devolve `true` quando o tick o derrubou: aí ele NÃO golpeia neste turno.
+   */
+  const tickOwnTurn = (me: Fighter): boolean => {
+    if ((!me.dots.length && !me.hots.length) || me.dead < Infinity || me.hp <= EPS) return false;
+    for (const d of me.dots) {
+      d.left--; // antes do golpe: o evento do tick já mostra os ticks que FALTAM (o contador real do selo)
+      if (me.hp > EPS) hit(d.src, me, (d.E / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), 'tick', 'tick');
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    // Hexsmith H2: a cura contínua (Coroa de cura contínua) pulsa depois dos ticks, no começo do golpe de quem a recebe (como em `group.ts`)
+    for (const h of me.hots) {
+      h.left--;
+      me.nHot--;
+      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
+    }
+    me.hots = me.hots.filter((h) => h.left > 0);
+    return me.hp <= EPS;
+  };
   const cast = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
+    const plano = me.invoca ? planoInvocacao(me.sp, scale) : null;
+    if (!plano) { castFamilia(me, foe, t0, scale); return; }
+    // 1 companheiro por combatente: invocar de novo troca o que estava em cena
+    for (const f of F) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
+    if (plano.escalaEfeito > 0) castFamilia(me, foe, t0, plano.escalaEfeito);
+    foe.dots.push({ src: me, E: plano.ataqueE, left: plano.turnosAtaque, comp: true });
+  };
+  const castFamilia = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
     const sp = me.sp as Special;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
+    const tune = sp.tune ?? EFFECT_TUNE_PVP;
     switch (sp.family) {
       case 'direct':
-        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
+        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
         break;
-      case 'dot': {
-        const cap = foe.shield; // escudo do alvo no instante do cast
-        for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
-        }
+      case 'dot':
+        // §334: o veneno fica em quem o recebe e tica nos PRÓXIMOS golpes dele (não num relógio, nem no turno de quem lançou)
+        foe.dots.push({ src: me, E, left: DOT_TICKS });
         break;
-      }
       case 'heal':
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
+        if (sp.effect === 'hot') {
+          // Hexsmith H2: 3 pulsos de E/3 em pontos inteiros no começo dos 3 próximos golpes de quem recebe (a regra de `group.ts`)
+          const pulse = Math.round(((E * tune.hotScale) / DOT_TICKS / hitsOn(foe, me)) * me.pts);
+          me.nHot += DOT_TICKS;
+          me.hots.push({ pulse, left: DOT_TICKS });
+          break;
+        }
         me.shield = (Math.round(me.shield * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += E;
         break;
       case 'defDebuff':
-        foe.nVuln += E;
+        if (sp.effect === 'slow') { foe.nSlow += E * tune.slowScale; foe.nVuln += E * tune.slowKeep; }
+        else if (sp.effect === 'silence' && foe.sp) { foe.nSil = Math.max(foe.nSil, tune.silenceHits); foe.nVuln += E * tune.silenceKeep; } // alvo sem especial: `defDebuff` inteiro
+        else foe.nVuln += E;
+        break;
+      case 'defBuff':
+        me.nGuard += E / FAMILY_TUNE.guardCut;
+        break;
+      case 'atkDebuff':
+        foe.nWeak += E / FAMILY_TUNE.weakCut;
+        break;
+      case 'spdDebuff':
+        foe.nDrag += E * FAMILY_TUNE.spdDebuffScale;
         break;
       case 'spdBuff':
         me.nSpd += E;
@@ -321,7 +323,12 @@ export function* fightSteps(
   }
   function* tryCast(i: 0 | 1, tt: number): Generator<FightEvent, void, number | undefined> {
     const me = F[i];
-    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+    if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026: "Sim, o especial também"): lançar o especial também é turno do afetado. O DoT tica no começo
+      // da ação, antes de o especial sair; quem cai no tick não lança (a energia fica, ele já caiu).
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const e = ev('cast', i, 0, tt);
@@ -345,7 +352,8 @@ export function* fightSteps(
     for (const e of timed) if (e.t < tt) tt = e.t;
     let tEn = Infinity;
     for (const f of F) {
-      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+      // silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
+      if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     t = Math.min(F[0].next, F[1].next, tt, tEn);
     for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
@@ -357,12 +365,17 @@ export function* fightSteps(
       const me = F[i];
       const foe = F[1 - i];
       if (me.next - t >= EPS) continue;
+      // §334: o DoT tica no COMEÇO do turno do afetado; quem cai no tick não golpeia (o turno passa do mesmo jeito)
+      if (tickOwnTurn(me)) { me.next = t + interval(me.c.spd); continue; }
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
+      // Hexsmith H2: o reforço de defesa de quem apanha (`guardCut`) e o debuff de ataque de quem bate (`weakCut`) cortam o golpe, cada um (só com contador)
+      if (foe.nGuard > EPS) { const x = Math.min(1, foe.nGuard); mulN *= 1 - FAMILY_TUNE.guardCut * x; foe.nGuard -= x; }
+      if (me.nWeak > EPS) { const x = Math.min(1, me.nWeak); mulN *= 1 - FAMILY_TUNE.weakCut * x; me.nWeak -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack');
+      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;
@@ -370,6 +383,9 @@ export function* fightSteps(
       } else {
         me.next = t + interval(me.c.spd);
       }
+      if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nDrag > EPS) { const x = Math.min(1, me.nDrag); me.nDrag -= x; me.next += interval(me.c.spd) * x * FAMILY_TUNE.dragStretch; }
+      if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();
     yield* markDead();

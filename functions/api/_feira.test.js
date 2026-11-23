@@ -212,7 +212,7 @@ describe('a Trilha: instâncias semeadas, conferidas por solução', () => {
         expect(conferirTrilha(g, seed, solucaoDaTrilha(g, seed)), `${g}/${seed}`).toBe(true);
         expect(conferirTrilha(g, seed, {}), g).toBe(false);
         expect(conferirTrilha(g, seed, null), g).toBe(false);
-        expect(conferirTrilha(g, seed, { path: 'x', rects: 'x', cells: 'x', sides: 'x', score: 'x' }), g).toBe(false);
+        expect(conferirTrilha(g, seed, { path: 'x', rects: 'x', cells: 'x', sides: 'x', choice: 'x', score: 'x' }), g).toBe(false);
       }
     }
   });

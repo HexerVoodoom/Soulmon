@@ -40,10 +40,12 @@ a última linha pela proporção da caixa.
 ```
 High-fidelity polished pixel art of <ITEM>, for the UI of a mobile game in the
 distinct arcane-tech style of the attached reference. Dark petroleum-teal base
-palette with deep copper frames and fine wiring details. Energy elements - soul
-flames and crystals - glow in neon cyan. Organic elements such as vines woven
-into metal tubes and gears. Where it fits the object, a decorative border of
-metal and vines.
+palette in the closed dark-turquoise tone of the game's Home, with deep copper
+pipes and fine digital circuit wiring. Energy elements - soul crystals with a
+flame glowing inside, usually the main element - glow in neon cyan. Small leafy
+branches woven into the copper pipes and connected by cable, plant integrated
+with the machine, in small amounts. NO gears, no steampunk. Where it fits the
+object, a decorative border of copper pipe and leaves.
 Depth and glow come from STEPPED SHADING in flat color bands, never from soft
 gradients: crisp hard-edged pixels, no anti-aliasing, no blur, no soft shading.
 Limited palette of 5-7 colors plus a dark near-black 1px outline around the

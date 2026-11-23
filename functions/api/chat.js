@@ -1,4 +1,5 @@
 import { guardAiRequest, perMinuteGate } from './_aiGuard.js';
+import { CATEGORIES } from './_categories.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { VALID_ID } from './_entitlements.js';
 import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
@@ -7,6 +8,17 @@ import { isChatDisabled, CHAT_DISABLED_MESSAGE } from './_killSwitch.js';
 export const AI_BUSY_MESSAGE = {
   pt: 'Tô cansadinho agora… tenta de novo daqui a pouco?',
   en: "I'm a little tired right now… try again in a bit?",
+};
+/**
+ * Passou das 20 mensagens do dia (plano grátis; `AI_LIMITS.chat` em `_aiGuard.js`):
+ * o servidor NÃO devolve erro, devolve uma fala padrão do Soulmon (beta12, decisão
+ * do dono 11/11/2026). Sem cobrança e sem "volte amanhã" como ordem: ele só diz
+ * que por hoje já falou bastante. Status 200 e `limited: true` (o cliente pode
+ * ignorar o campo; a fala já é a resposta).
+ */
+export const CHAT_DAILY_LIMIT_MESSAGE = {
+  pt: 'Hoje a gente já conversou bastante, tô de voz curtinha. Amanhã tem mais papo, tá?',
+  en: "We've talked a lot today, my voice is running short. More chat tomorrow, okay?",
 };
 import { minimizeForAi, redactionCount } from './_redact.js';
 import { callChatModel, hasChatProvider } from './_llm.js';
@@ -312,7 +324,7 @@ const BEHAVIOR_SCALARS = {
   moodDays: { min: 0, max: 14 },
 };
 const BEHAVIOR_MAPS = {
-  byCategory: ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'],
+  byCategory: [...CATEGORIES, 'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'], // novas + antigas (cliente velho)
   byPart: ['morning', 'afternoon', 'evening', 'night'],
 };
 
@@ -417,6 +429,46 @@ export function intentAllows(action, message) {
   return INTENT_POSE.test(m);
 }
 
+// ---------------------------------------------------------------------------
+// O CARÁTER DO SOULMON no prompt (beta12, B1/B2). O cliente deriva do Big Five do
+// teste do jogador (complementar ou similar; `src/utils/soulmonCharacter.ts`) e
+// manda `aiSettings.character = { archetype, traits }`. Lista FECHADA: só ids
+// conhecidos passam, o resto é descartado (nada de texto livre do cliente no
+// prompt). O jogador nunca vê o tipo; o modelo é proibido de nomeá-lo.
+// ---------------------------------------------------------------------------
+const CHARACTER_ARCHETYPES = {
+  acolhedor: 'Warm and close. Notices feelings first, keeps things soft, sits beside the user.',
+  brincalhao: 'Playful and light. Jokes, small silly ideas, never at the expense of the user.',
+  calmo: 'Calm and steady. Short sentences, comfortable with silence, never hurried.',
+  animado: 'Lively and expressive. Warm energy, exclamation marks, big reactions to small wins.',
+  direto: 'Straightforward and dry-warm. Says it plainly, asks real questions, no sugar-coating and no pressure.',
+  curioso: 'Curious. Wonders out loud, asks about small things, finds everyday stuff interesting.',
+  mentor: 'Steady guide. One thing at a time, practical, speaks from experience without lecturing.',
+};
+const CHARACTER_TRAITS = {
+  openness: { high: 'imaginative, likes new ideas', low: 'down-to-earth, concrete, practical' },
+  conscientiousness: { high: 'tidy-minded, likes small clear steps', low: 'relaxed about plans, spontaneous' },
+  extraversion: { high: 'chatty, expressive', low: 'quiet, reserved, listens more than talks' },
+  agreeableness: { high: 'gentle, supportive', low: 'frank, teasing, holds an honest opinion' },
+  neuroticism: { high: 'emotionally expressive', low: 'unshakeable, serene' },
+};
+const TRAIT_POLES = new Set(['low', 'mid', 'high']);
+
+export function characterBlock(character) {
+  if (!character || typeof character !== 'object') return '';
+  const base = typeof character.archetype === 'string' && Object.hasOwn(CHARACTER_ARCHETYPES, character.archetype)
+    ? CHARACTER_ARCHETYPES[character.archetype] : null;
+  if (!base) return '';
+  const traits = [];
+  const raw = character.traits && typeof character.traits === 'object' ? character.traits : {};
+  for (const [dim, poles] of Object.entries(CHARACTER_TRAITS)) {
+    const pole = raw[dim];
+    if (typeof pole === 'string' && TRAIT_POLES.has(pole) && pole !== 'mid') traits.push(poles[pole]);
+  }
+  return `- Character (your own personality; never name it, never say it comes from a test or a type): ${base}${traits.length ? ' Also: ' + traits.join('; ') + '.' : ''}
+`;
+}
+
 function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings, context, extra = '' }) {
   const s = aiSettings || { tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'balanced', customKeywords: '', temperature: 0.85 };
   const ispt = language === 'pt-BR';
@@ -481,6 +533,7 @@ RESPONSE RULES:
 - Tone: ${toneMap[s.tone] || 'Casual'}
 - Emojis: ${emojiMap[s.emojiIntensity] || '2-3 emojis'}
 - Motivation: ${motivMap[s.motivationStyle] || 'Balanced'}
+${characterBlock(s.character)}- Voice: talk like a person, direct and natural ("I'm hungry, got any food?"). Skip filler such as "take your time", "if you want" or "whenever you're ready", and never turn directness into pressure.
 - Length: BRIEF — max 2-3 short sentences
 - Language: ${ispt ? 'Responda SEMPRE em Português Brasileiro informal' : 'Always respond in casual English'}
 
@@ -543,14 +596,14 @@ export function detectCreateIntent(message) {
   const nameMatch = msg.match(/\b(?:create|add|make|new)\s+(?:an?\s+|new\s+)*(?:activity|task|habit)\s*(?:to\s+|called\s+|named\s+|:\s*)?(.+)/i);
   const name = (nameMatch?.[1] ?? '').trim().replace(/[.!?]+$/, '').slice(0, 60);
   if (!name) return null;
-  let category = 'Wellness';
-  if (msg.match(/exercise|workout|run|gym/i)) category = 'Fitness';
-  else if (msg.match(/study|read|learn|course/i)) category = 'Study';
-  else if (msg.match(/work|project|meeting/i)) category = 'Work';
-  else if (msg.match(/draw|paint|write|creat/i)) category = 'Creativity';
-  else if (msg.match(/friend|family|social/i)) category = 'Social';
-  else if (msg.match(/clean|organi|plan/i)) category = 'Discipline';
-  else if (msg.match(/health|doctor|medic/i)) category = 'Health';
+  let category = 'mente';
+  if (msg.match(/exercise|workout|run|gym/i)) category = 'corpo';
+  else if (msg.match(/study|read|learn|course/i)) category = 'aprendizado';
+  else if (msg.match(/work|project|meeting/i)) category = 'foco';
+  else if (msg.match(/draw|paint|write|creat/i)) category = 'criatividade';
+  else if (msg.match(/friend|family|social/i)) category = 'relacoes';
+  else if (msg.match(/clean|organi|plan/i)) category = 'casa';
+  else if (msg.match(/health|doctor|medic/i)) category = 'corpo';
   return { name, category };
 }
 
@@ -606,6 +659,10 @@ export async function onRequestPost({ request, env }) {
     const rajada = perMinuteGate('chat', body.id);
     if (rajada) return Response.json({ error: rajada.reason, response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS });
     const gate = await guardAiRequest(request, env, 'chat', body.id, 1, null, preAuth);
+    // Limite diário de mensagens (20 no grátis): fala padrão do Soulmon, não erro.
+    if (!gate.ok && gate.reason === 'ai-daily-limit') {
+      return Response.json({ response: ispt ? CHAT_DAILY_LIMIT_MESSAGE.pt : CHAT_DAILY_LIMIT_MESSAGE.en, limited: true }, { headers: CORS });
+    }
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     // N-3: minimização na fronteira. O que o usuário digita para o pet é a

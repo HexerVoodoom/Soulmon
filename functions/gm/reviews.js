@@ -1,0 +1,39 @@
+// Pagina `/gm/reviews` - fila "Revisar meu Soulmon": casca HTML SEM dados (mesmo molde de `/gm/soulmons`). Login Firebase (Google) e
+// chamada a `/api/gm-reviews` (somente leitura); quem decide e o servidor. Cada linha mostra status, veredito do Claude e antes/depois.
+
+import { firebaseScripts, gmHeaders, gmNonce } from './_gmPage.js';
+
+export async function onRequestGet({ env }) {
+  const nonce = gmNonce();
+  const cfg = { apiKey: env?.FIREBASE_API_KEY || '', authDomain: env?.FIREBASE_AUTH_DOMAIN || '', projectId: env?.FIREBASE_PROJECT_ID || '' };
+  const cfgJson = JSON.stringify(cfg).replace(/</g, '\\u003c');
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>GM · Revisões de Soulmon</title>
+<style>body{font:14px system-ui;margin:16px;background:#14121c;color:#eee}button{padding:8px 14px}#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:14px}
+.c{background:#201c2e;border-radius:8px;padding:10px;word-break:break-word}.pair{display:flex;gap:8px;margin-top:8px}.pair figure{margin:0;flex:1;text-align:center;font-size:11px;opacity:.8}
+.pair img{width:100%;aspect-ratio:1;object-fit:contain;background:repeating-conic-gradient(#0006 0 25%,#0003 0 50%) 0 0/16px 16px;border-radius:6px}.m{opacity:.75;font-size:12px;margin-top:4px}
+.s{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:#3a3350}.s.consertado{background:#1f5a3a}.s.sem-problema{background:#33506b}.s.falhou,.s.precisa-manual{background:#6b2d2d}</style></head><body>
+<h1>Revisões de Soulmon</h1><div id="s">Carregando…</div><div id="g"></div><button id="more" hidden>Carregar mais</button>
+${firebaseScripts(nonce)}
+<script nonce="${nonce}">
+const $=id=>document.getElementById(id);let cursor=null;
+function txt(d,t){const p=document.createElement('div');p.className='m';p.textContent=t;d.appendChild(p);}
+function fig(label,src){const f=document.createElement('figure');if(src){const im=document.createElement('img');im.src=src;im.loading='lazy';im.alt='';f.appendChild(im);}else{txt(f,'—');}const c=document.createElement('figcaption');c.textContent=label;f.appendChild(c);return f;}
+function card(i){const d=document.createElement('div');d.className='c';const st=document.createElement('span');st.className='s '+i.status;st.textContent=i.status;d.appendChild(st);
+const pair=document.createElement('div');pair.className='pair';pair.appendChild(fig('antes',i.beforeUrl));pair.appendChild(fig('depois',i.afterUrl));d.appendChild(pair);
+txt(d,(i.soulmonId||i.formId)+' · '+(i.stage||'?')+' · '+(i.element||'?')+' · conta '+i.saveIdPrefix);
+if(i.note)txt(d,'Nota: '+i.note);
+if(i.verdict)txt(d,'Claude: '+i.verdict.problema+' → '+i.verdict.acao+(i.verdict.detalhe?' — '+i.verdict.detalhe:'')+(i.method?' (feito por '+i.method+(i.chroma?', fundo '+i.chroma:'')+')':''));
+if(i.detail)txt(d,'Detalhe: '+i.detail);
+if(i.saveSync)txt(d,'Save: '+i.saveSync+(i.applied?' · aplicado no app':''));
+txt(d,i.createdAt?new Date(i.createdAt).toLocaleString('pt-BR'):'');
+return d;}
+async function load(user){const t=await user.getIdToken();const r=await fetch('/api/gm-reviews'+(cursor?'?cursor='+encodeURIComponent(cursor):''),{headers:{Authorization:'Bearer '+t}});
+if(r.status===403){$('s').textContent='Acesso negado.';return;}if(!r.ok){$('s').textContent='Erro '+r.status;return;}
+const j=await r.json();$('s').textContent=(j.items.length||cursor)?'':'Nenhum pedido de revisão ainda.';j.items.forEach(i=>$('g').appendChild(card(i)));cursor=j.cursor;$('more').hidden=!cursor;}
+const cfg=${cfgJson};
+if(!cfg.apiKey){$('s').textContent='Firebase não configurado (FIREBASE_API_KEY / FIREBASE_AUTH_DOMAIN).';}else{
+firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u);$('more').onclick=()=>load(firebase.auth().currentUser);}else{$('s').innerHTML='';const b=document.createElement('button');b.textContent='Entrar com Google';b.onclick=()=>firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());$('s').appendChild(b);}});}
+</script></body></html>`;
+  return new Response(html, { headers: gmHeaders(nonce) });
+}

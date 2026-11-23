@@ -1,3 +1,4 @@
+import { CtaButton } from './ui/CtaButton';
 import { useEffect, useState } from 'react';
 import type { Language } from '../utils/i18n';
 import type { EvoRecap } from '../utils/evoRecap';
@@ -82,9 +83,9 @@ export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; l
       </p>
       <p style={{ ...sm2Hint, textAlign: 'center' }} data-evo-recap-left>{tail}</p>
       <div style={{ paddingTop: 4 }}>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+        <CtaButton onClick={onClose}>
           {isPt ? 'Seguir' : 'Continue'}
-        </button>
+        </CtaButton>
       </div>
     </RitualDialog>
   );

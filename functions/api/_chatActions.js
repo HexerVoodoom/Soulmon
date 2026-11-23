@@ -1,4 +1,5 @@
 import { minimizeForAi } from './_redact.js';
+import { CATEGORIES, normalizeCategory } from './_categories.js';
 
 // ---------------------------------------------------------------------------
 // AÇÕES PROPOSTAS DO CHAT — o contrato entre o modelo e o app.
@@ -20,7 +21,7 @@ import { minimizeForAi } from './_redact.js';
 // `chatActions.parity.test.js` trava as duas contra divergência.
 // ---------------------------------------------------------------------------
 
-export const CATEGORIES = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+export { CATEGORIES };
 /** Por resposta. "Crie 500 hábitos" vira, no máximo, estas propostas — e cada
  *  uma ainda exige o toque da pessoa. */
 export const MAX_ACTIONS = 2;
@@ -128,7 +129,7 @@ function cleanDate(v) {
 
 /** @returns {string|undefined} */
 function cleanCategory(v) {
-  return CATEGORIES.includes(v) ? v : undefined;
+  return normalizeCategory(v);
 }
 
 /**
@@ -151,7 +152,7 @@ export function validateToolCall(name, rawArgs) {
 
   const title = cleanName(args.name);
   if (!title) return { ok: false, reason: 'empty-name' };
-  const category = cleanCategory(args.category) ?? 'Discipline';
+  const category = cleanCategory(args.category) ?? 'foco';
 
   if (name === 'create_task') {
     const effortRaw = int(args.effort);

@@ -3,6 +3,7 @@
 import { CLASS_ELEMENT_ORDER } from '../types';
 import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
 import { essenceLabel, baseElementLabel } from '../essenceLabels';
+import { CURATED_ELEMENT_NAMES, curatedComponents, isCuratedElement } from '../../elementosCurados';
 
 export interface TextoPar { pt: string; en: string }
 
@@ -11,7 +12,7 @@ const BASES = new Set<string>(CLASS_ELEMENT_ORDER);
 
 /** O id está na lista fechada de elementos (17 base + pares derivados)? */
 export function elementoConhecido(id: unknown): id is string {
-  return typeof id === 'string' && (BASES.has(id) || PAR_NOME.has(id));
+  return typeof id === 'string' && (BASES.has(id) || PAR_NOME.has(id) || (id !== 'neutro' && isCuratedElement(id)));
 }
 
 export function elementoNomeDe(id: string): TextoPar {
@@ -20,6 +21,8 @@ export function elementoNomeDe(id: string): TextoPar {
     const candidate = { id: par.id, nome: par.nome, score: 0, componentes: par.componentes };
     return { pt: essenceLabel(candidate, true), en: essenceLabel(candidate, false) };
   }
+  const curado = CURATED_ELEMENT_NAMES[id];
+  if (curado) return curado;
   return { pt: baseElementLabel(id, true), en: baseElementLabel(id, false) };
 }
 
@@ -31,7 +34,7 @@ export function elementoNomeDe(id: string): TextoPar {
  */
 export function baseDominanteDoElemento(id: string, pesos?: Readonly<Record<string, number | undefined>>): string {
   const par = PAR_NOME.get(id);
-  if (!par) return id;
+  if (!par) return curatedComponents(id)?.[0] ?? id; // curado: o 1º da receita; a base nº 1 do Soulmon vem do registro (`petBaseOf`)
   const [a, b] = par.componentes;
   return (pesos?.[b] ?? 0) > (pesos?.[a] ?? 0) ? b : a;
 }

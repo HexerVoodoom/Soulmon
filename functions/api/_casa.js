@@ -11,7 +11,7 @@
 //    em número — só o estágio e um binário `perto`. Doar não vira placar;
 //  · só sobe: sair NÃO diminui (os pontos do membro viram `casaLegado`);
 //  · o slot mostra o ITEM (decoração que a pessoa quis pôr), nunca quanto doou;
-//  · dinheiro real não entra aqui: Bits GANHOS, e só cosmético muda.
+//  · dinheiro real não compra poder aqui: a doação é em Bits (ganhos ou vindos de Crédito, §373; sem gate por origem), e só cosmético muda.
 //
 // Chave pessoal (escrita só pelo dono, sem corrida entre membros — I3):
 //   coopCasa:<gid>:<save> = { v:1, day, bitsToday, pts:{doacao,missao,guerra}, slot }
@@ -22,10 +22,15 @@ import { kvOrThrow } from './_kv.js';
 export const CASA_TTL = 86400 * 120;
 /** 1 ponto de seiva a cada 10 Bits doados. */
 export const CASA_BITS_POR_PONTO = 10;
-/** Teto de Bits doados por pessoa por DIA DO JOGADOR (anti-esvaziar-a-carteira e anti-abuso). */
-export const CASA_BITS_POR_DIA = 200;
+/**
+ * DOAÇÃO DE BITS AO CLÃ (pedido do dono, 10/11/2026): UMA doação por pessoa por DIA DO JOGADOR, de um valor FECHADO
+ * (`CASA_DOACOES`: 50 ou 100, nenhum outro). Antes eram várias doações até o teto de 200/dia.
+ */
+export const CASA_DOACOES = Object.freeze([50, 100]);
+/** Teto de Bits doados por pessoa por DIA DO JOGADOR = a maior doação (só cabe UMA). */
+export const CASA_BITS_POR_DIA = 100;
 /** Menor doação aceita (múltiplo de `CASA_BITS_POR_PONTO`). */
-export const CASA_BITS_MIN = 10;
+export const CASA_BITS_MIN = 50;
 /**
  * Seiva de UMA missão: cresce com o LEVEL do Soulmon (`stagePower` 1..5) e com o tamanho da roda ativa
  * (pedido do dono: "mais membros e mais level = mais pontos"). 4 → 17; sempre inteiro, ≥ 1.
@@ -61,6 +66,9 @@ export function normalizarCasa(r) {
     day: typeof r?.day === 'string' ? r.day : null,
     bitsToday: int0(r?.bitsToday),
     pts: { doacao: int0(p.doacao), missao: int0(p.missao), guerra: int0(p.guerra) },
+    // Bits que o DESAFIO DO MERCADOR deu ao tesouro do clã (11/11/2026): `DESAFIO_BITS_CLA` por dia no máximo, 1× por dia (`desafioDay`).
+    desafioBits: int0(r?.desafioBits),
+    desafioDay: typeof r?.desafioDay === 'string' ? r.desafioDay : null,
     slot: typeof r?.slot === 'string' && CASA_ITEM_RE.test(r.slot) ? r.slot : null,
   };
 }
@@ -89,24 +97,39 @@ export function casaStageFor(total) {
 
 /**
  * Doação de Bits. O CLIENTE só desconta o que o servidor aceitar (`accepted`).
- * Aceita no máximo o que falta do teto do dia; o resto sobra na carteira.
+ * UMA vez por dia do jogador, e só 50 ou 100 (`CASA_DOACOES`). A doação enche o TESOURO do clã (`bitsDaCasa`, de onde saem os
+ * Buffs) E rende seiva como sempre (10 Bits = 1 ponto): uma doação, duas leituras do MESMO registro (`pts.doacao`), sem
+ * segunda contabilidade. A seiva NÃO diminui quando o clã gasta o tesouro (a árvore só cresce).
  * @returns {Promise<{ accepted: number, capped: boolean, invalid?: boolean }>}
  */
 export async function doarBits(env, gid, save, day, bits) {
-  const pedido = int0(bits);
-  // Múltiplos de 10 (nenhum Bit "perdido" no arredondamento do ponto).
-  const quer = pedido - (pedido % CASA_BITS_POR_PONTO);
-  if (quer < CASA_BITS_MIN) return { accepted: 0, capped: false, invalid: true };
+  if (!CASA_DOACOES.includes(bits)) return { accepted: 0, capped: false, invalid: true };
   const c = await lerCasa(env, gid, save);
-  const hoje = c.day === day ? c.bitsToday : 0;
-  const resta = Math.max(0, CASA_BITS_POR_DIA - hoje);
-  const aceito = Math.min(quer, resta - (resta % CASA_BITS_POR_PONTO));
-  if (aceito < CASA_BITS_MIN) return { accepted: 0, capped: true };
+  // O registro guarda só o ÚLTIMO dia doado e o `dayKey` vem do cliente (janela ±1 dia UTC): sem exigir dia ESTRITAMENTE mais
+  // novo, alternar 10/11 ↔ 11/11 doava sem fim (tesouro e seiva ilimitados = Buffs do clã de graça). Dia igual ou anterior ao
+  // último doado = já doou (texto ISO AAAA-MM-DD compara na ordem cronológica). Segurança, rodada 1 (11/11/2026).
+  if (c.day && c.bitsToday > 0 && day <= c.day) return { accepted: 0, capped: true };
   c.day = day;
-  c.bitsToday = hoje + aceito;
-  c.pts.doacao += aceito / CASA_BITS_POR_PONTO;
+  c.bitsToday = bits;
+  c.pts.doacao += bits / CASA_BITS_POR_PONTO;
   await gravarCasa(env, gid, save, c);
-  return { accepted: aceito, capped: aceito < quer };
+  return { accepted: bits, capped: false };
+}
+
+/** Bits do clã por Desafio cumprido (pequeno; o teto de economia é 1× por dia por pessoa). */
+export const DESAFIO_BITS_CLA = 10;
+
+/**
+ * O Desafio do Mercador enche o TESOURO do clã (não a seiva, não o bolso de ninguém). Idempotente por dia do jogador.
+ * @returns {Promise<number>} os Bits que entraram agora (0 = já entraram hoje).
+ */
+export async function somarBitsDesafio(env, gid, save, hoje) {
+  const c = await lerCasa(env, gid, save);
+  if (c.desafioDay && c.desafioDay >= hoje) return 0;
+  c.desafioDay = hoje;
+  c.desafioBits += DESAFIO_BITS_CLA;
+  await gravarCasa(env, gid, save, c);
+  return DESAFIO_BITS_CLA;
 }
 
 /** Seiva de outra fonte (missão, guerra). `pts` é clampado; devolve o que entrou. */
@@ -141,7 +164,7 @@ export async function recolherCasaDeQuemSai(env, gid, save) {
 export async function recolherCasaDetalhe(env, gid, save) {
   const c = await lerCasa(env, gid, save);
   await kvOrThrow(env).delete(coopCasaKey(gid, save));
-  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO };
+  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO + c.desafioBits };
 }
 
 /**
@@ -162,6 +185,9 @@ export function totalDaCasa(g, cartoes) {
  */
 export function bitsDaCasa(g, cartoes) {
   let t = int0(g.bitsLegado);
-  for (const m of g.members) t += (cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null)).pts.doacao * CASA_BITS_POR_PONTO;
+  for (const m of g.members) {
+    const x = cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null);
+    t += x.pts.doacao * CASA_BITS_POR_PONTO + x.desafioBits;
+  }
   return t;
 }

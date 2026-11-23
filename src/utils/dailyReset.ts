@@ -1,3 +1,4 @@
+import { aoDescerDeForma, type FormaState } from './formaSnapshot';
 import type { PardonReason } from './pardonReason';
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch, canReachUltra } from '../types/progression';
 import type { EvolutionStage } from '../types/progression';
@@ -28,10 +29,13 @@ import { playerDayKey } from './playerDay';
 import { hiddenForDayKey, type DayPlan } from './dayPlan';
 import type { PlayerDayAnchor } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
-import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
+import { creditGauge, gaugeContribution, gaugeFull, aplicarBuffClaGauge, gaugeTravadaPelasMegas } from './evolutionGauge';
+import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
+import { bonusTaskGaugeBonus } from './bonusTask';
+import { weeklyBonusGaugeBonus } from './weeklyRetro';
 import { isBBStage, BB_MAX_HP } from './bbStage';
 
 /**
@@ -116,10 +120,6 @@ export function getNextEvolution(
   currentStage: string,
   branch: Attr,
   unlockedEvolutions: string[],
-  /** Pontos do gauge desde a última evolução — abrem o caminho da PERMANÊNCIA
-   *  para o Ultra (`canReachUltra`, WP4.2/D6; em pontos desde 11/10/2026).
-   *  Zero por omissão: só a coleção das três megas. */
-  evolutionPoints = 0,
 ): string {
   branch = clampBranch(branch) as Attr;
   if (isBBStage(currentStage)) return 'rookie'; // Forma BB: o próximo passo é o rookie (D4)
@@ -131,7 +131,7 @@ export function getNextEvolution(
     // A pergunta "existe destino?" é de `canReachUltra` (dono da árvore).
     // Aqui não se decide critério — se decidisse, seria a segunda cópia de uma
     // regra de evolução, que é como este projeto já se machucou antes.
-    if (canReachUltra({ unlockedEvolutions, evolutionPoints })) return 'ultra';
+    if (canReachUltra({ unlockedEvolutions })) return 'ultra';
     return currentStage;
   }
   return currentStage; // ultra — já no topo
@@ -980,8 +980,25 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
   // Missão especial (REGISTRO §106): BÔNUS ACIMA do teto diário (guard-rail G-01:
   // não reduz o peso das tarefas reais). Fora do selo de dia completo, do
   // coração e de dailyGoalFor — por isso NÃO entra em `dailyDone`.
-  const specialBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
-  const gaugeGain = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
+  const specialMissionBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
+  // ⭐ Tarefa bônus (13/11/2026, `utils/bonusTask.ts`): +1 ACIMA do teto diário se a tarefa bônus do dia julgado foi concluída.
+  // Somada ao `specialBonus` — mesma natureza (fora do selo, do coração e de `dailyDone`) e mesmos buffs.
+  // 🔥 + bônus de retorno da semana (`utils/weeklyRetro.ts`): mesma via, mesma natureza; expira sozinho pela janela.
+  const bonusTaskGain = bonusTaskGaugeBonus((prev as any).bonusTask, prev.activities as any, yesterdayString)
+    + weeklyBonusGaugeBonus(prev.weeklyBonus, prev.activities, yesterdayString);
+  const specialBonus = specialMissionBonus + bonusTaskGain;
+  const gaugeGainBase = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
+  /* 🌀 Buff do Glitchtama (10/11/2026): +10% sobre o GANHO deste crédito (tarefas + missão especial), só com o buff ativo na virada.
+     É o ÚNICO ponto onde pontos de progressão entram (`creditGauge` abaixo); o que já estava acumulado não muda. A fração vai no carry. */
+  const buffGlitch = aplicarBuffGlitchtama(
+    gaugeGainBase,
+    (prev as any).glitchtamaCarry ?? 0,
+    glitchtamaBuffAtivo((prev as any).glitchtamaUsadoEm, now.getTime()),
+  );
+  /* Buff do clã (10/11/2026): +5% sobre o crédito de TAREFAS do dia, nunca acima do teto diário do estágio (`aplicarBuffClaGauge`). */
+  const clanContrib = gaugeContribution(dailyDone, prev.evolutionStage);
+  const clanExtra = aplicarBuffClaGauge(clanContrib, prev.evolutionStage, now.getTime()) - clanContrib;
+  const gaugeGain = buffGlitch.ganho + clanExtra;
   // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
   const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 
@@ -1010,7 +1027,11 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
-  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus;
+  // 16/11/2026: no mega, a barra do Ultra só acumula com as três megas liberadas; antes, os pontos ficam como estão (guardados).
+  const ultraTravado = gaugeTravadaPelasMegas(prev.evolutionStage, prev.unlockedEvolutions);
+  let newEvolutionPoints = ultraTravado
+    ? (prev.evolutionPoints ?? 0)
+    : creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus + (gaugeGain - gaugeGainBase);
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
@@ -1127,7 +1148,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     newCurrentBranch = branch;
     newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
 
-    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.evolutionPoints ?? 0);
+    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions);
     const naturalNext = newEvolutionStage;
 
     const newStageLevel = getStageLevel(newEvolutionStage);
@@ -1284,7 +1305,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     : (dailyDone > 0 && rawHeartsLost === 0 && !dayWasPerfect) ? 'partialGoal'
     : (weeklyReliefApplied && heartsLost > 0) ? 'mondayRelief'
     : 'none';
-  return {
+  return aoDescerDeForma(prev as unknown as FormaState, {
     ...comVinculo,
     activities: resetActivities,
     // P2 — a folga vive no save (um contador por JOGADOR, não por aparelho).
@@ -1295,7 +1316,10 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     maxHealthPoints: newMaxHP,
     perfectDays: newPerfectDays,
     evolutionPoints: newEvolutionPoints,
-    ...(specialBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
+    ...((prev as any).glitchtamaCarry !== undefined || buffGlitch.carry > 0 ? { glitchtamaCarry: buffGlitch.carry } : {}),
+    ...(specialMissionBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
+    // A tarefa bônus vale só para o dia dela: a virada a encerra (paga ou não), então nunca paga duas vezes.
+    ...((prev as any).bonusTask ? { bonusTask: undefined } : {}),
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,
     poopEventsScheduled: [],
@@ -1378,9 +1402,11 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
       hungerHeartsLost: Math.max(0, Number((prev as any).hungerPenalty?.unreported) || 0),
       perfectDays: newPerfectDays,
       /** 🧬 Quanto o gauge recebeu nesta virada e onde ele ficou. */
-      gaugeGain,
+      gaugeGain: ultraTravado ? 0 : gaugeGain,
       /** Parte de `gaugeGain` que veio da missão especial (0 ou 1). */
-      specialBonus,
+      specialBonus: specialMissionBonus,
+      /** Parte de `gaugeGain` que veio da tarefa bônus (0 ou 1, `utils/bonusTask.ts`). */
+      bonusTaskBonus: bonusTaskGain,
       evolutionPoints: newEvolutionPoints,
       degenerated: wasDegeneratedByHP,
       // Modo boas-vindas: a UI deve receber quem voltou sem nenhuma cobrança.
@@ -1410,5 +1436,5 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
       /** Quantas folgas ainda restam nesta semana, depois desta virada. */
       restDaysLeft,
     },
-  };
+  });
 }

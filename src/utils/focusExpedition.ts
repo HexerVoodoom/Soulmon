@@ -1,4 +1,4 @@
-import { FOOD_BY_CATEGORY } from '../constants/labels';
+import { UNIQUE_FOODS } from '../constants/labels';
 import { MATERIAL_CAP, MATERIAL_IDS, type BuildingQuestState, type MaterialId } from './buildingQuests';
 
 export const FOCUS_ENVIRONMENTS = [
@@ -40,7 +40,7 @@ const MATERIAL_COPY: Record<MaterialId, { pt: string; en: string; icon: string }
   cipher: { pt: 'Cifra', en: 'Cipher', icon: '🔣' }, page: { pt: 'Página', en: 'Page', icon: '📜' },
   keepsake: { pt: 'Lembrança', en: 'Keepsake', icon: '🎁' }, crest: { pt: 'Brasão', en: 'Crest', icon: '🛡️' },
 };
-const FOOD_ITEMS: FocusLootItem[] = Object.values(FOOD_BY_CATEGORY).map(food => ({
+const FOOD_ITEMS: FocusLootItem[] = UNIQUE_FOODS.map(food => ({
   kind: 'food', id: food.emoji, icon: food.emoji,
   namePt: ({ '🥩': 'Proteína', '🥗': 'Salada', '🍎': 'Maçã', '☕': 'Café', '🧃': 'Suco', '🍚': 'Arroz', '🍕': 'Pizza', '🍭': 'Doce' } as Record<string, string>)[food.emoji] ?? food.name,
   nameEn: food.name,

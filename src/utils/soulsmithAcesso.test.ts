@@ -75,20 +75,20 @@ describe('8.3 — correção: entrar no prédio paga (uma vez por dia do jogador
     s = applyBuildingEntry(s, '2026-11-05', 'exploracao.fenda');
     expect(stockOf(s.buildingQuests, 'ore')).toBe(1);
   });
-  it('Vínculo insuficiente não paga (nada é liberado de graça): Duelo exige Vínculo 5', () => {
+  it('sem limite por level (dono 12/11/2026): o Duelo paga já no Vínculo 2', () => {
     const baixo = applyBuildingEntry(base(xpForLevel(2)), '2026-11-01', 'arena.duelo');
-    expect(owned(baixo)).toEqual([]);
-    expect(stockOf(baixo.buildingQuests, 'fang')).toBe(0);
+    expect(owned(baixo)).toEqual(['eq-nucleo-t2']);
+    expect(stockOf(baixo.buildingQuests, 'fang')).toBe(1);
     const alto = applyBuildingEntry(base(xpForLevel(5)), '2026-11-01', 'arena.duelo');
     expect(owned(alto)).toEqual(['eq-nucleo-t2']);
     expect(stockOf(alto.buildingQuests, 'fang')).toBe(1);
   });
-  it('prédio sem peça paga só o material (Biblioteca); o Caderno (listado) segue manual', () => {
+  it('prédio sem peça paga só o material (Biblioteca); o Caderno (não listado desde 12/11/2026) também paga na entrada', () => {
     const b = applyBuildingEntry(base(BOND2), '2026-11-01', 'laboratorio.biblioteca');
     expect(owned(b)).toEqual([]);
     expect(stockOf(b.buildingQuests, 'page')).toBe(1);
     const c = applyBuildingEntry(base(BOND2), '2026-11-01', 'forja.caderno');
-    expect(stockOf(c.buildingQuests, 'ink')).toBe(0); // listado: a ação real + Resgatar
+    expect(stockOf(c.buildingQuests, 'ink')).toBe(1); // sem prédio listado: todos pagam na entrada
   });
   it('com o dia andando, o aprimoramento do Soulsmith passa a ter material (não fica "no-materials" para sempre)', () => {
     let s: S = base(xpForLevel(3));

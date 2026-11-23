@@ -1,5 +1,5 @@
 /**
- * OS RITUAIS — CHECK-IN, RELATÓRIO SEMANAL E FRESH START
+ * OS RITUAIS — CHECK-IN E FRESH START
  * ======================================================
  *
  * Parte 2.4 do `docs/PLANO-TAREFAS.md`. O princípio que rege este arquivo
@@ -18,8 +18,7 @@
  * trivial criada só para pontuar, lição mínima só para não zerar o contador.
  *
  * Por isso nenhuma função daqui recompensa conclusão. Elas montam o plano
- * (`checkInPlan`), devolvem a leitura da semana (`weeklyReport`), sugerem uma
- * âncora (`stackingSuggestion`) e oferecem recomeço (`freshStartOffer`). O que
+ * (`checkInPlan`) e oferecem recomeço (`freshStartOffer`). O que
  * pontua continua vivendo em `careRules.ts` e `dailyReset.ts`.
  *
  * Estilo, igual a `careRules.ts` / `taskTriage.ts` / `habitRhythm.ts`: funções
@@ -46,12 +45,11 @@ import {
   sameDay,
 } from './taskTriage';
 import type { TriageTask } from './taskTriage';
-import { constancy, habitTier, dayKeyOf, weekStart, habitCountsOn, needsIntervention } from './habitRhythm';
+import { dayKeyOf, habitCountsOn, needsIntervention } from './habitRhythm';
 import type { Schedule } from '../types/taskModel';
 import type { HabitRhythm } from './habitRhythm';
 import type { RestState } from './restWindow';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
-import { parseDayKeyLocal } from './dayKeyParse';
 
 export { MAX_DAILY_FOCUS };
 
@@ -109,8 +107,6 @@ export interface RitualState {
    * virando interrupção, que é exatamente o que o campo existe para evitar.
    */
   lastCheckInDate?: string;
-  /** dayKey do último relatório semanal mostrado. */
-  lastWeeklyReportDate?: string;
   /** dayKey do último fresh start aceito. */
   lastFreshStartDate?: string;
 }
@@ -120,8 +116,6 @@ export type RitualLanguage = string;
 function isPt(language: RitualLanguage): boolean {
   return language === 'pt-BR';
 }
-
-const DAY_MS = 86400000;
 
 function midnight(date: Date): Date {
   const d = new Date(date.getTime());
@@ -140,9 +134,6 @@ function addDays(date: Date, n: number): Date {
 // `<input type="date">`). Eram uma cópia byte-a-byte aqui — duas
 // implementações da mesma comparação, ambas vivas, é o footgun 9 esperando a
 // correção que só chega num dos lados.
-
-const WEEKDAY_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const WEEKDAY_PT = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
 // ---------------------------------------------------------------------------
 // 1. Check-in matinal — o ritual de ≤20 segundos
@@ -286,246 +277,6 @@ export function completeCheckIn<T extends RitualState>(
     tasks: setFocus(state.tasks ?? [], focusIds, dayKey),
     lastCheckInDate: dayKey,
   };
-}
-
-// ---------------------------------------------------------------------------
-// 2. Relatório semanal — domingo
-// ---------------------------------------------------------------------------
-
-/**
- * É domingo e o relatório desta semana ainda não foi mostrado?
- *
- * Uma vez por semana, e a checagem é pela SEMANA (domingo como início, igual a
- * `weekStart` em `habitRhythm.ts`) e não pelo dia: assim reabrir o app no mesmo
- * domingo não repete o ritual, e um domingo pulado não faz o relatório da
- * semana passada aparecer atrasado na segunda.
- */
-export function needsWeeklyReport(state: RitualState, now: Date): boolean {
-  if (now.getDay() !== 0) return false;
-  if (!weeklyReportHasSubstance(state, now)) return false;
-  const last = state.lastWeeklyReportDate;
-  if (!last) return true;
-  const lastDate = parseDayValue(last);
-  if (!lastDate) return true;
-  return weekStart(lastDate).getTime() !== weekStart(now).getTime();
-}
-
-/**
- * O relatório desta semana tem ALGUMA coisa dentro?
- *
- * O calendário sozinho não bastava, e o caso medido é o de quem instala o app
- * num sábado: no domingo — SEGUNDA sessão da vida do save — ele recebia um
- * painel "SUA SEMANA" com a lista de hábitos vazia (todo hábito novo cai em
- * `window === 0` e some do painel), "0 tarefas · 0 pontos de esforço" e "0
- * sonhos". Um painel de zeros não é descrição neutra: é a primeira leitura que o
- * app faz do usuário, e ela diz que ele não fez nada — quando na verdade o app é
- * que não tem o que dizer ainda. Vale aqui o mesmo critério de
- * `stackingSuggestion` e de `carePattern.ts`: **sem dados, o silêncio é a
- * resposta certa**, porque a tela que se desacredita na estreia não volta a ser
- * lida depois.
- *
- * Suprimir NÃO acumula dívida, e por isso esta função não escreve nada: o portão
- * de `needsWeeklyReport` é "é domingo de uma semana ainda não relatada", e não
- * uma fila de relatórios pendentes. Um domingo suprimido simplesmente não
- * acontece; no domingo seguinte, já com histórico, o relatório aparece normal e
- * fala da janela das últimas 7 manhãs. Marcar `lastWeeklyReportDate` de um
- * relatório que ninguém viu seria escrever no save uma mentira sem nenhum ganho.
- */
-export function weeklyReportHasSubstance(state: RitualState, now: Date): boolean {
-  const report = weeklyReport(state, now);
-  return (
-    report.perHabit.some(l => l.window > 0)
-    || report.tasksDone > 0
-    || report.dreams > 0
-  );
-}
-
-export interface WeeklyHabitLine {
-  id: string;
-  name: string;
-  emoji: string;
-  /** Dias feitos na janela de constância (escudo conta como feito). */
-  done: number;
-  /** Denominador: dias em que o hábito era devido. */
-  window: number;
-  ratio: number;
-  tier: ReturnType<typeof habitTier>;
-}
-
-export interface WeeklyReport {
-  perHabit: WeeklyHabitLine[];
-  /** O hábito mais constante da semana, ou `null` se não houver hábito. */
-  bestHabitId: string | null;
-  /** Categoria com mais conclusões na semana, ou `null` sem histórico. */
-  dominantCategory: string | null;
-  tasksDone: number;
-  /** Esforço concluído — a métrica honesta. Contagem premiaria item trivial. */
-  effortDone: number;
-  /** Sonhos coletados até aqui (barra de coleção, nunca de desempenho). */
-  dreams: number;
-}
-
-/**
- * A leitura da semana.
- *
- * Tudo aqui é DESCRIÇÃO, nunca veredito: constância por hábito, o hábito que
- * foi melhor, a categoria dominante, esforço concluído e o Dex de sonhos.
- * Nenhum número deste relatório pode diminuir por castigo — um relatório
- * semanal que cobrasse seria a tela que o usuário aprende a fechar sem ler, e
- * levaria junto a única parte do app que se apresenta como conselho.
- *
- * `effortDone` soma ESFORÇO e não itens, pelo motivo de sempre (`weightOf`):
- * medir por contagem ensina a cadastrar cinco coisas triviais.
- *
- * Histórico vazio devolve zeros e `null`s — nunca lança. Este relatório é a
- * primeira coisa que um usuário novo vê num domingo.
- */
-export function weeklyReport(state: RitualState, now: Date): WeeklyReport {
-  const activities = state.activities ?? [];
-  const rhythms = state.habitRhythms ?? {};
-
-  const perHabit: WeeklyHabitLine[] = activities.map(a => {
-    const rhythm = rhythms[a.id];
-    const c = rhythm
-      ? constancy(rhythm, now)
-      : { done: 0, window: 0, ratio: 1 };
-    return {
-      id: a.id,
-      name: a.name ?? '',
-      emoji: a.emoji ?? '✨',
-      done: c.done,
-      window: c.window,
-      ratio: c.ratio,
-      tier: habitTier(rhythm?.totalDone ?? 0),
-    };
-  });
-
-  // Melhor hábito: maior razão e, no empate, quem fez mais dias — a razão
-  // sozinha coroaria um hábito com um único dia devido (ratio 1) por cima de
-  // quem manteve seis dos sete.
-  let bestHabitId: string | null = null;
-  let best: WeeklyHabitLine | null = null;
-  for (const line of perHabit) {
-    if (line.window === 0) continue;
-    if (!best || line.ratio > best.ratio || (line.ratio === best.ratio && line.done > best.done)) {
-      best = line;
-      bestHabitId = line.id;
-    }
-  }
-
-  // A janela é a das ÚLTIMAS 7 manhãs (a semana que acabou de passar), e não do
-  // domingo em diante: o relatório aparece NO domingo, e uma janela que
-  // começasse ali resumiria um dia só — o próprio. É a mesma janela de
-  // `constancy`, o que mantém os hábitos e as tarefas falando do mesmo período.
-  const start = addDays(now, -6).getTime();
-  const end = midnight(now).getTime() + DAY_MS;
-  const doneThisWeek = (state.completedTasks ?? []).filter(t => {
-    if (!t.completedAt) return false;
-    const at = new Date(t.completedAt).getTime();
-    return !Number.isNaN(at) && at >= start && at < end;
-  });
-
-  const byCategory = new Map<string, number>();
-  for (const t of doneThisWeek) {
-    if (!t.category) continue;
-    byCategory.set(t.category, (byCategory.get(t.category) ?? 0) + 1);
-  }
-  let dominantCategory: string | null = null;
-  let bestCount = 0;
-  for (const [cat, count] of byCategory) {
-    if (count > bestCount) {
-      bestCount = count;
-      dominantCategory = cat;
-    }
-  }
-
-  const effortDone = doneThisWeek.reduce((sum, t) => sum + weightOf({ id: t.id, effort: t.effort }), 0);
-
-  return {
-    perHabit,
-    bestHabitId,
-    dominantCategory,
-    tasksDone: doneThisWeek.length,
-    effortDone,
-    dreams: state.rest?.dreams?.length ?? 0,
-  };
-}
-
-/** Constância a partir da qual um hábito serve de ÂNCORA (o forte). */
-export const STACKING_STRONG_RATIO = 0.8;
-/** Constância abaixo da qual um hábito é candidato a ser ancorado (o fraco). */
-export const STACKING_WEAK_RATIO = 0.5;
-/** Dias registrados mínimos para a leitura valer alguma coisa. */
-export const STACKING_MIN_WINDOW = 4;
-
-/**
- * A sugestão de HABIT STACKING — "depois de X, faça Y".
- *
- * Acha um hábito com constância ALTA e um com constância BAIXA e propõe ancorar
- * o fraco logo depois do forte. É a implementation intention do Gollwitzer
- * aplicada ao que o app já sabe sobre a pessoa, e é a coisa mais próxima de "o
- * app melhorou minha vida" que dá para entregar sem IA nenhuma.
- *
- * **Sem dados suficientes, devolve `null` — e isso é a metade importante da
- * função.** Uma sugestão inventada em cima de dois ou três registros destrói a
- * confiança na única parte do app que se apresenta como CONSELHO, e conselho
- * desacreditado não volta a ser acreditado depois. O silêncio é a resposta
- * certa até a leitura existir; é o mesmo critério de `carePattern.ts`, que se
- * declara não-confiável e não desempata com pouco histórico.
- */
-export function stackingSuggestion(
-  state: RitualState,
-  now: Date,
-  language: RitualLanguage,
-): string | null {
-  const activities = state.activities ?? [];
-  const rhythms = state.habitRhythms ?? {};
-
-  type Line = { activity: RitualActivity; ratio: number; window: number; day: number };
-  const lines: Line[] = [];
-
-  for (const a of activities) {
-    const rhythm = rhythms[a.id];
-    if (!rhythm) continue;
-    const c = constancy(rhythm, now);
-    if (c.window < STACKING_MIN_WINDOW) continue;
-    // O dia da semana mais frequente entre as conclusões — é ele que vira o
-    // "às terças" da frase. Sem conclusão nenhuma, o hábito não pode ser âncora.
-    const counts = new Map<number, number>();
-    for (const key of rhythm.done) {
-      const d = parseDayKeyLocal(key);
-      if (!d) continue;
-      counts.set(d.getDay(), (counts.get(d.getDay()) ?? 0) + 1);
-    }
-    let day = -1;
-    let top = 0;
-    for (const [wd, n] of counts) {
-      if (n > top) {
-        top = n;
-        day = wd;
-      }
-    }
-    lines.push({ activity: a, ratio: c.ratio, window: c.window, day });
-  }
-
-  if (lines.length < 2) return null;
-
-  const strong = lines
-    .filter(l => l.ratio >= STACKING_STRONG_RATIO && l.day >= 0)
-    .sort((a, b) => b.ratio - a.ratio)[0];
-  const weak = lines
-    .filter(l => l.ratio <= STACKING_WEAK_RATIO && l.activity.id !== strong?.activity.id)
-    .sort((a, b) => a.ratio - b.ratio)[0];
-
-  if (!strong || !weak) return null;
-
-  const strongName = strong.activity.name ?? '';
-  const weakName = weak.activity.name ?? '';
-  if (!strongName || !weakName) return null;
-
-  return isPt(language)
-    ? `Você quase nunca falha em ${strongName} às ${WEEKDAY_PT[strong.day]}. Que tal fazer ${weakName} logo depois?`
-    : `You almost never miss ${strongName} on ${WEEKDAY_EN[strong.day]}. How about doing ${weakName} right after?`;
 }
 
 // ---------------------------------------------------------------------------

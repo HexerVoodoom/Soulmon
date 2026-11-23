@@ -1,7 +1,10 @@
 import type { Language } from '../../utils/i18n';
 import { dailyCount, dailyMissionsFor, dailyStatus, type DailyMissionsState } from '../../utils/dailyMissions';
 import { dailyTarget } from '../../utils/missionTargets';
+import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { ClaimButton, MissionCard, resolveGo, type MissionEntry, type MissionNav } from './MissionCard';
+import { RewardChip } from './RewardChip';
+import { giverOf, npcKeyOfBuilding } from './npcGiver';
 
 export interface DailyMissionsProps {
   state: DailyMissionsState | undefined;
@@ -24,6 +27,11 @@ export function dailyMissionEntries({ language, state, day, bondLevel, onClaim, 
     const st = dailyStatus(state, day, m);
     const status = st === 'available' ? 'open' : st;
     const go = resolveGo(nav, dailyTarget(m), language);
+    // 12/11/2026 (pedido do dono): cada cartão diz NOME, o que fazer, RECOMPENSA (sempre) e QUEM passa. Missão de NPC tem nome e NPC próprios;
+    // as demais diárias têm o anfitrião do prédio delas e o nome é a própria descrição.
+    const nome = isPt ? m.namePt : m.nameEn;
+    const mat = MATERIALS.find(x => x.id === m.material);
+    const premio = mat ? <RewardChip kind="material" materialId={mat.id} name={isPt ? mat.namePt : mat.nameEn} isPt={isPt} /> : '+1 material';
     return {
       key: `daily:${m.id}`,
       state: status,
@@ -33,9 +41,12 @@ export function dailyMissionEntries({ language, state, day, bondLevel, onClaim, 
           language={language}
           attrs={{ 'data-daily-mission': m.id, 'data-status': st }}
           status={status}
-          title={isPt ? m.descPt : m.descEn}
+          title={nome ?? (isPt ? m.descPt : m.descEn)}
+          desc={nome ? (isPt ? m.descPt : m.descEn) : undefined}
+          giver={giverOf(m.npc ?? npcKeyOfBuilding(m.building), language)}
+          rewardAlways
           progress={m.target > 1 ? { cur: dailyCount(state, day, m), target: m.target } : null}
-          reward="+1 material"
+          reward={premio}
           onGo={go.onGo}
           lockNote={go.lockNote}
           action={<ClaimButton language={language} attrs={{ 'data-claim-daily': m.id }} onClick={() => onClaim(m.id)} />}

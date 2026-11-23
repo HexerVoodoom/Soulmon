@@ -38,6 +38,7 @@ import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext
 import { normalizeSchedule } from '../types/taskModel';
 import { isActive, isHaunted } from '../utils/taskTriage';
 import type { HabitRhythm } from '../utils/habitRhythm';
+import type { PlayerDayAnchor } from '../utils/playerDay';
 import { Icon } from './ui/Icon';
 import { BackArrow } from './ui/BackArrow';
 import { useBackLayer } from '../utils/backStack';
@@ -46,6 +47,8 @@ import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
 import { TaskMeta } from './TaskMeta';
+import { recursoDaAtividade, passosLinha, irLaLabel, predioDoRecurso } from '../utils/tarefaLink';
+import { cadernoFormatoOfCatalogId } from '../data/catalogResources';
 import { habitCountsOn } from '../utils/habitRhythm';
 import { isHiddenByPlan, type DayPlanView } from '../utils/dayPlan';
 import { parseDayValue } from '../utils/taskTriage';
@@ -97,6 +100,8 @@ export interface DailyRitualsProps {
   /** ⚰️ D3 (01/10/2026): a linha não desenha mais a constância. Ficam
    *  opcionais para não quebrar quem ainda passa. */
   habitRhythms?: Record<string, HabitRhythm>;
+  /** QA r4: a âncora do dia do jogador (`playerDayTz`), a mesma do plano do dia, para o nascimento do "a cada N dias". */
+  playerDayTz?: PlayerDayAnchor;
   hideMetrics?: boolean;
   language: Language;
   now: Date;
@@ -110,6 +115,8 @@ export interface DailyRitualsProps {
   /** Subitem de uma tarefa (o último fecha a tarefa — quem fecha é o App). */
   onToggleTaskStep?: (taskId: string, stepId: string) => void;
   onEditTask: (taskId: string) => void;
+  /** Segurar uma tarefa JÁ marcada: abre "Desmarcar / Editar". `completedAt` ausente = conclusão ainda nos 3 s de animação. */
+  onHoldDoneTask?: (ref: { id: string; completedAt?: string }) => void;
   onPostponeNudge: (taskId: string) => void;
   onEditActivity: (activityId: string) => void;
   onToggleActivity: (activityId: string) => void;
@@ -128,6 +135,14 @@ export interface DailyRitualsProps {
   dayPlan?: { view: DayPlanView; invite?: boolean; onInvite?: () => void };
   /** G2 (beta3): na Home o botão do fim da lista vira atalho para as Configurações (a tela `View all` segue pelo gesto). */
   onOpenSettings?: () => void;
+  /** beta12 §J: passos de hoje e a meta (das Configurações) para a linha do hábito de caminhar; `null`/ausente = sem permissão ou sem sensor (a linha não mostra nada). */
+  stepsInfo?: { hoje: number; meta: number } | null;
+  /** beta12 §J: o "Ir lá" do hábito linkado a um prédio (`forja.caderno`, `forja.oficina`). */
+  onGoToBuilding?: (building: string, formato?: string) => void;
+  /** ⭐ Id da atividade que é a tarefa bônus de HOJE (`utils/bonusTask.ts`): título em bronze, nada mais muda. */
+  bonusActivityIds?: readonly string[];
+  /** 🔥 Id do hábito com o BÔNUS DE RETORNO da semana (`utils/weeklyRetro.ts`): o mesmo selo (título em bronze) da tarefa bônus. */
+  weeklyBonusActivityId?: string;
 }
 
 /** Distância mínima (px) e razão horizontal/vertical do gesto que abre `View all`. */
@@ -135,10 +150,10 @@ const SWIPE_MIN_PX = 64;
 const SWIPE_RATIO = 2;
 
 export function DailyRituals({
-  tasks, activities, completedTasks, habitRhythms, language, now,
-  expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
+  tasks, activities, completedTasks, habitRhythms, playerDayTz, language, now,
+  expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onHoldDoneTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings,
+  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings, stepsInfo, onGoToBuilding, bonusActivityIds, weeklyBonusActivityId,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
@@ -201,7 +216,7 @@ export function DailyRituals({
 
   const atividades = activities.map((activity): Activity & { disponivelHoje: boolean; isComplete: boolean } => ({
     ...activity,
-    disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now),
+    disponivelHoje: habitCountsOn(activity as Parameters<typeof habitCountsOn>[0], habitRhythms?.[activity.id], now, playerDayTz),
     isComplete: activity.steps.length > 0
       ? activity.steps.every(s => s.completed)
       : !!(activity.completedToday && activity.lastCompletedDate === todayString),
@@ -272,6 +287,8 @@ export function DailyRituals({
         done={task.completed}
         haunted={isHaunted(task, now)}
         onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
+        /* Segurar: pendente → edição; marcada → "Desmarcar / Editar". */
+        onLongPress={task.completed ? (onHoldDoneTask ? () => onHoldDoneTask({ id: task.id }) : undefined) : () => onEditTask(task.id)}
         language={language}
         expandable={comFilhos}
         expanded={aberta}
@@ -327,6 +344,7 @@ export function DailyRituals({
         done
         inert
         onToggle={() => {}}
+        onLongPress={onHoldDoneTask ? () => onHoldDoneTask({ id: c.id, completedAt: c.completedAt }) : undefined}
         language={language}
         toggleLabelPt={`Tarefa concluída: ${c.name}`}
         toggleLabelEn={`Task completed: ${c.name}`}
@@ -472,12 +490,27 @@ export function DailyRituals({
     const etapas = activity.steps ?? [];
     const feitasEtapas = etapas.filter(s => s.completed).length;
     const aberta = isRitualOpen(expanded, activity.id, activity.isComplete);
+    const recurso = recursoDaAtividade(activity);
+    const predio = predioDoRecurso(recurso);
+    const irLa = irLaLabel(recurso, language);
+    /* beta12 §J: o recurso na PRÓPRIA linha. Caminhar: só o contador (sem cobrança), NA MESMA LINHA do nome, logo na frente e em turquesa
+       (REGISTRO §413, 16/11/2026; antes ia embaixo, em cinza); journaling/foco: UMA SETA turquesa no FIM da linha, sem texto (§365,
+       14/11/2026), com o `irLaLabel` no nome acessível. */
+    const contador = recurso === 'steps' && stepsInfo
+      ? <span data-habit-link="steps">{passosLinha(stepsInfo.hoje, stepsInfo.meta, language)}</span>
+      : undefined;
+    const acao = recurso !== 'steps' && predio && irLa && onGoToBuilding
+      ? { label: irLa, kind: recurso, onClick: () => onGoToBuilding(predio, predio === 'forja.caderno' ? cadernoFormatoOfCatalogId(activity.catalogId) : undefined) }
+      : undefined;
     return (
       <RitualRow
         key={activity.id}
         flipKey={`h:${activity.id}`}
+        inline={contador}
+        action={acao}
         kind="habit"
         name={activity.name}
+        bonus={!!bonusActivityIds?.includes(activity.id) || weeklyBonusActivityId === activity.id}
         value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import type { Language } from '../utils/i18n';
 import { gaugeView } from '../utils/evolutionGauge';
 import { fragmentBarLabel, fragmentTodayHint } from '../utils/soulFragment';
@@ -29,6 +30,16 @@ export function EvolutionGaugeMini({
   const isPt = language === 'pt-BR';
   const v = gaugeView({ evolutionPoints, evolutionStage, unlockedEvolutions, todayWeight });
   if (v.top) return null;
+  if (v.locked) {
+    // 16/11/2026: a barra do Ultra só abre com as três megas liberadas — antes disso a Home só diz quantas já vieram.
+    return (
+      <section data-evo-gauge-mini data-evo-gauge-mini-locked style={{ padding: '0 2px', fontSize: 'var(--sm2-text-xs, 12px)', color: 'var(--sm2-muted)' }}>
+        {isPt
+          ? `Libere as ${v.megasTotal} Megas para abrir o Ultra · ${v.megasLiberadas}/${v.megasTotal}`
+          : `Unlock all ${v.megasTotal} Megas to open the Ultra · ${v.megasLiberadas}/${v.megasTotal}`}
+      </section>
+    );
+  }
   const pct = Math.round(v.pct * 100);
   const pctHoje = Math.round(v.pctWithToday * 100);
   const trilho: CSSProperties = {
@@ -39,7 +50,7 @@ export function EvolutionGaugeMini({
   return (
     <section data-evo-gauge-mini style={{ display: 'grid', gap: 4, padding: '0 2px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 'var(--sm2-text-xs, 12px)', color: 'var(--sm2-muted)' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><SoulFragmentIcon size={14} />{rotulo}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><SoulFragmentIcon size={14} />{emphasizeSoulFragment(rotulo)}</span>
         <span data-evo-gauge-mini-count>
           {`${Math.min(v.points, v.goal)}/${v.goal}`}
           {v.today > 0 && !v.full ? ` · +${v.today} ${isPt ? 'hoje' : 'today'}` : ''}

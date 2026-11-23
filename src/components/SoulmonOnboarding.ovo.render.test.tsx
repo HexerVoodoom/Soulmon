@@ -11,7 +11,11 @@
  * Cada `it` é uma frase do pedido; a régua é o DOM (jsdom não anima nem faz layout: movimento reduzido é checado pelo
  * NOME da animação escolhida, não por quadros).
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
@@ -182,7 +186,7 @@ describe('§81 — o ovo-cristal', () => {
     expect(cristal).toBeTruthy();
     expect(cristal.getAttribute('aria-label')).toBe('Crystal with a sleeping being inside. Tap to wake it.');
     expect((cristal.querySelector('[data-ovo-arte]') as HTMLElement).getAttribute('data-ovo-arte')).toBe('dormant');
-    expect((cristal.querySelector('img') as HTMLImageElement).getAttribute('src')).toContain('dormant');
+    expect((cristal.querySelector('[data-ovo-rachadura]') as HTMLElement).getAttribute('data-ovo-rachadura')).toBe('0');
     expect(screen.queryByText('How do you want to start?')).toBeNull();
     expect(screen.queryByText(/Start now/)).toBeNull();
     expect(screen.queryByText('Your soul\'s creature')).toBeNull();
@@ -195,7 +199,7 @@ describe('§81 — o ovo-cristal', () => {
     await ateOOvo();
     const vibra = navigator.vibrate as unknown as ReturnType<typeof vi.fn>;
     const pulso = () => document.querySelector('[data-ovo-pulso]') as HTMLElement;
-    expect(pulso().style.animation).toBe('none');
+    expect(pulso().style.animation).toContain('sm-ovo-convite'); // o pulso que convida o 1º toque
     tocarOvo(1);
     expect(pulso().style.animation).toContain('sm-ovo-balanco');
     expect(pulso().getAttribute('data-ovo-pulso')).toBe('1');

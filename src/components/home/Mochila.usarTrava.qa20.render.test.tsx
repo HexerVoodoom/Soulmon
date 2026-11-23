@@ -37,8 +37,8 @@ describe('Mochila — trava do botão "Usar"', () => {
     let agora = 1_000_000;
     vi.spyOn(Date, 'now').mockImplementation(() => agora);
     const { onUse } = montar();
-    act(() => { screen.getByRole('button', { name: 'Chip de Poder × 3' }).focus(); });
-    const usar = screen.getByRole('button', { name: 'Usar Chip de Poder' });
+    act(() => { screen.getByRole('button', { name: 'Chip de Poder.exe × 3' }).focus(); });
+    const usar = screen.getByRole('button', { name: 'Usar Chip de Poder.exe' });
 
     fireEvent.click(usar);
     agora += USAR_TRAVA_MS - 1; // 399 ms depois: toque duplo

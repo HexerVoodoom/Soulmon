@@ -114,6 +114,37 @@ export function bugLabel(language: Language): string {
   return language === 'pt-BR' ? 'Reportar bug' : 'Report a bug';
 }
 
+/**
+ * FEEDBACK DA HOME (dono, 04/11/2026): o botão só-ícone abaixo do avatar abre o e-mail
+ * para a caixa de revisão (`REVISOR_EMAIL`, não o e-mail pessoal do dono), com assunto
+ * fixo e um modelo curto. Diagnóstico não pessoal: versão, build e plataforma — sem saveId.
+ */
+export const REVISOR_EMAIL = 'soulmon.revisor@gmail.com';
+
+export function homeFeedbackMailto(opts: { language: Language; platform?: string }): string {
+  const isPt = opts.language === 'pt-BR';
+  const platform = opts.platform ?? Capacitor.getPlatform();
+  const plat = platform === 'android' ? 'Android' : platform === 'ios' ? 'iOS' : 'web';
+  const subject = isPt ? 'Feedback e bug report' : 'Feedback & bug report';
+  const linhas = [
+    isPt ? 'O que aconteceu:' : 'What happened:',
+    '',
+    '',
+    isPt ? 'O que você esperava:' : 'What you expected:',
+    '',
+    '',
+    '---',
+    `${isPt ? 'Versão' : 'Version'}: ${APP_VERSION}`,
+    `Build: ${BUILD_ID}`,
+    `${isPt ? 'Plataforma' : 'Platform'}: ${plat}`,
+  ];
+  return `mailto:${REVISOR_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(linhas.join('\n'))}`;
+}
+
+export function homeFeedbackLabel(language: Language): string {
+  return language === 'pt-BR' ? 'Enviar feedback ou reportar bug' : 'Send feedback or report a bug';
+}
+
 /** A linha logo ABAIXO do feedback — mesmo `ActionRow`, mesma largura e espaçamento. */
 export function BugReportRow({ language, view }: { language: Language; view?: string }) {
   const isPt = language === 'pt-BR';

@@ -11,7 +11,9 @@ const D2 = '2026-10-15';
 
 describe('catálogo', () => {
   it('ids únicos, PT/EN presentes, alvo baixo (1–2), material e prédio válidos', () => {
-    const pool = dailyMissionPool();
+    // As missões dos NPCs (12/11/2026) têm teste próprio (`npcMissions.test.ts`): alvos maiores e eventos que se repetem entre NPCs.
+    const pool = dailyMissionPool().filter(m => !m.npc);
+    expect(new Set(dailyMissionPool().map(m => m.id)).size).toBe(dailyMissionPool().length);
     expect(new Set(pool.map(m => m.id)).size).toBe(pool.length);
     expect(new Set(pool.map(m => m.event)).size).toBe(pool.length);
     for (const m of pool) {
@@ -28,7 +30,7 @@ describe('catálogo', () => {
       expect(`${m.descPt} ${m.descEn}`).not.toMatch(/tarefa|task|todos? os|every|streak|sequência|perder|lose|não esqueça|don.t forget|hurry|corra para/i);
     }
   });
-  it('até 6 por dia e a pessoa nova (Vínculo 1) sempre tem as 6, todas abertas', () => {
+  it('até 8 por dia e a pessoa nova (Vínculo 1) sempre tem as 8, todas abertas', () => {
     for (let d = 1; d <= 28; d += 1) {
       const list = dailyMissionsFor(`2026-10-${String(d).padStart(2, '0')}`, 1);
       expect(list.length).toBe(DAILY_MISSION_COUNT);
@@ -44,21 +46,20 @@ describe('rotação determinística', () => {
     for (let d = 1; d <= 30; d += 1) conjuntos.add(dailyMissionsFor(`2026-09-${String(d).padStart(2, '0')}`, 99).map(m => m.id).join());
     expect(conjuntos.size).toBeGreaterThan(15);
   });
-  it('RESPEITA BLOQUEIOS: nada de Duelo/Torneio/Oficina/Amigos antes do Vínculo que abre o prédio, em nenhum dia', () => {
+  it('RESPEITA a tabela de portões (hoje todos abrem no 1): toda missão do dia está num prédio aberto, em nenhum dia diferente', () => {
     for (let d = 1; d <= 60; d += 1) {
       const day = `2026-08-${String((d % 28) + 1).padStart(2, '0')}-${d}`;
       for (const bond of [1, 2, 3, 4, 5]) {
         for (const m of dailyMissionsFor(day, bond)) expect(buildingGateFor(m.building, bond).open).toBe(true);
       }
       // a Masmorra abre no Vínculo 1 desde a #328 (REGISTRO §51): sai da lista de bloqueadas, o portão é lido da tabela.
-      const b1 = dailyMissionsFor(day, 1).map(m => m.event);
-      for (const e of ['arena', 'torneio', 'foco', 'amigo'] as const) expect(b1).not.toContain(e);
+      // 12/11/2026 (dono): sem limite por level — no Vínculo 1 nada está trancado, então a lista só é conferida contra a tabela acima.
     }
   });
   it('as missões dos recursos novos aparecem quando o Vínculo os abre', () => {
     const vistos = new Set<string>();
     for (let d = 0; d < 200; d += 1) for (const m of dailyMissionsFor(`seed-${d}`, 99)) vistos.add(m.event);
-    expect(vistos.size).toBe(dailyMissionPool().length);
+    expect(vistos.size).toBe(new Set(dailyMissionPool().map(m => m.event)).size);
   });
 });
 
@@ -117,7 +118,7 @@ describe('condição, 1 recompensa por dia, sem duplicar', () => {
 });
 
 describe('economia (REGISTRO §52): o máximo diário por faixa de Vínculo', () => {
-  it('no máximo DAILY_MISSION_COUNT (6) materiais por dia, sempre materiais (sem moeda nova)', () => {
+  it('no máximo DAILY_MISSION_COUNT (8) materiais por dia, sempre materiais (sem moeda nova)', () => {
     for (const bond of [1, 2, 3, 5]) {
       for (let d = 0; d < 50; d += 1) {
         const list = dailyMissionsFor(`eco-${d}`, bond);
@@ -138,11 +139,11 @@ describe('sanitize', () => {
   });
 });
 
-describe('rotação com 6 por dia', () => {
-  it('quem tem menos recursos abertos recebe menos que 6, nunca mais; o Vínculo 1 enche as 6', () => {
-    expect(DAILY_MISSION_COUNT).toBe(6);
-    expect(dailyMissionsFor('2026-10-14', 1).length).toBe(6);
-    expect(new Set(dailyMissionsFor('2026-10-14', 99).map(m => m.id)).size).toBe(6);
+describe('rotação com 8 por dia', () => {
+  it('quem tem menos recursos abertos recebe menos que 8, nunca mais; o Vínculo 1 enche as 8', () => {
+    expect(DAILY_MISSION_COUNT).toBe(8);
+    expect(dailyMissionsFor('2026-10-14', 1).length).toBe(8);
+    expect(new Set(dailyMissionsFor('2026-10-14', 99).map(m => m.id)).size).toBe(8);
   });
 });
 
@@ -161,8 +162,7 @@ describe('primeiras vezes (missões únicas)', () => {
   it('só lista o que o Vínculo abriu', () => {
     const ids1 = firstTimesFor(1).map(f => f.id);
     expect(ids1).toContain('visit:mercado.itens');
-    expect(ids1).not.toContain('visit:hall.feira');
-    expect(ids1).not.toContain('first-focus');
+    expect(ids1).toContain('visit:hall.feira'); // sem limite por level (dono 12/11/2026)
     expect(firstTimesFor(99).length).toBe(FIRST_TIME_IDS.length);
   });
   it('visita e estreia por evento marcam; id estranho e repetição devolvem o MESMO estado', () => {
@@ -189,9 +189,9 @@ describe('primeiras vezes (missões únicas)', () => {
     expect(de.paid).toBeNull();
     expect(de.state).toBe(r.state);
   });
-  it('não resgata o que o Vínculo ainda não abriu', () => {
+  it('resgata no Vínculo 1: nenhum prédio fica trancado (dono 12/11/2026)', () => {
     const s = { firstTimes: markFirst(undefined, 'visit:hall.feira'), buildingQuests: undefined as BuildingQuestState | undefined };
-    expect(claimFirst(s, D, 1, 'visit:hall.feira').paid).toBeNull();
+    expect(claimFirst(s, D, 1, 'visit:hall.feira').paid).toBe('ribbon');
     expect(claimFirst(s, D, 99, 'visit:hall.feira').paid).toBe('ribbon');
   });
   it('SEM RETROATIVO PAGO: quem já jogava tem tudo que o Vínculo abre como feito e resgatado, e nada a pagar; o que abrir depois é novo', () => {
@@ -202,7 +202,8 @@ describe('primeiras vezes (missões únicas)', () => {
       expect(claimFirst(s, D, 1, f.id).paid).toBeNull();
     }
     expect(firstTimesMark(seed, 1)).toBeNull();
-    expect(firstStatus(seed, 'visit:hall.feira')).toBe('available');
+    expect(firstStatus(seed, 'visit:hall.feira')).toBe('claimed'); // tudo abre no 1: nada "abre depois"
+
   });
   it('sanitize: lixo cai, claimed implica done', () => {
     expect(sanitizeFirstTimes(null)).toBeUndefined();
@@ -212,12 +213,13 @@ describe('primeiras vezes (missões únicas)', () => {
 
 describe('rodízio da rodada 6: Salão, Ateliê e Calabouço', () => {
   const dia = (n: number) => new Date(Date.UTC(2026, 9, 1 + n)).toISOString().slice(0, 10);
-  it('com tudo aberto: 1 do Salão (dino/ppt/match3/barrage), 1 do Ateliê (eco/zip/patches) e o Calabouço, TODO dia; os 4 e os 3 giram', () => {
+  it('com tudo aberto: 1 do Salão (dino/ppt/match3/barrage), 1 do Ateliê (eco/zip/selo) e o Calabouço, TODO dia; os 4 e os 3 giram', () => {
     const salao = new Set<string>(); const mente = new Set<string>();
     for (let n = 0; n < 24; n += 1) {
       const ev = dailyMissionsFor(dia(n), 99).map(m => m.event);
       const s = ev.filter(e => ['dino', 'ppt', 'match3', 'barrage'].includes(e));
-      const m = ev.filter(e => ['eco', 'zip', 'patches'].includes(e));
+      const m = ev.filter(e => ['eco', 'zip', 'selo', 'patches'].includes(e));
+      expect(ev).not.toContain('patches'); // a Colcha está aposentada (04/11/2026)
       expect(s.length).toBe(1); expect(m.length).toBe(1); expect(ev).toContain('calabouco');
       expect(ev.length).toBe(DAILY_MISSION_COUNT);
       salao.add(s[0]); mente.add(m[0]);
@@ -231,10 +233,9 @@ describe('rodízio da rodada 6: Salão, Ateliê e Calabouço', () => {
     expect(new Set([0, 1, 2, 3].map(n => salaoDe(dia(n)))).size).toBe(4);
     expect(salaoDe(dia(0))).toBe(salaoDe(dia(4)));
   });
-  it('respeita portões: Vínculo 1 não vê Ateliê nem Calabouço (Vínculo 3), mas sempre tem 1 do Salão', () => {
+  it('sem portões por Vínculo (12/11/2026): Vínculo 1 já vê Ateliê e Calabouço, e sempre tem 1 do Salão', () => {
     for (let n = 0; n < 12; n += 1) {
       const ev = dailyMissionsFor(dia(n), 1).map(m => m.event);
-      expect(ev).not.toContain('calabouco'); expect(ev).not.toContain('zip');
       expect(ev.filter(e => ['dino', 'ppt', 'match3', 'barrage'].includes(e)).length).toBe(1);
       expect(ev.length).toBe(DAILY_MISSION_COUNT);
     }

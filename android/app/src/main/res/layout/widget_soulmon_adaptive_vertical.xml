@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget F, vertical: criatura em cima, nome e a frase da vez embaixo.
+     So ImageView/TextView/ViewFlipper/Linear/FrameLayout (footgun 2). REGISTRO 221. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@drawable/widget_bg"
+    android:gravity="center">
+
+    <ViewFlipper
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:autoStart="true"
+        android:flipInterval="450">
+        <ImageView
+            android:id="@+id/widget_sprite"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:contentDescription="@null"
+            android:src="@drawable/sprite_starter_industrial" />
+        <ImageView
+            android:id="@+id/widget_sprite_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:paddingTop="4dp"
+            android:contentDescription="@null"
+            android:src="@drawable/sprite_starter_industrial" />
+    </ViewFlipper>
+
+    <TextView
+        android:id="@+id/widget_pet_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Soulmon"
+        android:textSize="13sp"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#E9F5F2"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/widget_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="12sp"
+        android:textColor="#E9F5F2"
+        android:includeFontPadding="false"
+        android:maxLines="4"
+        android:ellipsize="end"
+        android:gravity="center" />
+
+</LinearLayout>

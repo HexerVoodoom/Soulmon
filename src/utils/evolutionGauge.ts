@@ -21,12 +21,15 @@
  *
  * Funções PURAS: sem React, sem localStorage.
  */
+import { BUFF_GAUGE_MULT, clanBuffActive } from './guildBuffs';
 import { isBBStage, bbEvolveReady } from './bbStage';
 import {
   FORM_REQUIREMENTS,
   getStageLevel,
   hasMegaCollection,
   ULTRA_PATIENCE_POINTS,
+  ULTRA_MEGA_IDS,
+  megasLiberadas,
 } from '../types/progression';
 
 /** Número finito ≥ 0 ou 0. O save vem do cliente e da nuvem. */
@@ -40,19 +43,40 @@ export function dailyGaugeCap(stage: string): number {
 }
 
 /**
- * Pontos para encher o gauge do estágio. No mega depende do caminho para o
- * Ultra: com a coleção das três megas basta `gauge`; sem ela, o caminho da
- * permanência (`ULTRA_PATIENCE_POINTS`). No ultra não há próxima forma: 0.
+ * Pontos para encher o gauge do estágio. No mega a meta é SEMPRE a do Ultra
+ * (`ULTRA_PATIENCE_POINTS`, 45 dias de teto) — o `unlockedEvolutions` ficou na
+ * assinatura só para os chamadores não mudarem. No ultra não há próxima forma: 0.
  */
-export function gaugeGoalFor(stage: string, unlockedEvolutions?: readonly string[]): number {
+export function gaugeGoalFor(stage: string, _unlockedEvolutions?: readonly string[]): number {
   const level = getStageLevel(stage);
-  if (level === 'mega' && !hasMegaCollection(unlockedEvolutions)) return ULTRA_PATIENCE_POINTS;
+  if (level === 'mega') return ULTRA_PATIENCE_POINTS;
   return FORM_REQUIREMENTS[level].gauge;
+}
+
+/**
+ * A barra do Ultra está TRAVADA? No mega, enquanto faltam megas para liberar
+ * (16/11/2026): ela não acumula, não enche e a UI pede as três megas. Os
+ * pontos que já existiam ficam guardados (nunca se tira progresso) e passam a
+ * valer quando a terceira mega abre.
+ */
+export function gaugeTravadaPelasMegas(stage: string, unlockedEvolutions?: readonly string[]): boolean {
+  return getStageLevel(stage) === 'mega' && !hasMegaCollection(unlockedEvolutions);
 }
 
 /** Quanto o peso feito num dia rende ao gauge: 0..teto diário. */
 export function gaugeContribution(doneWeight: number, stage: string): number {
   return Math.min(dailyGaugeCap(stage), Math.floor(safe(doneWeight)));
+}
+
+/**
+ * Buff do CLÃ (10/11/2026, `utils/guildBuffs.ts`): +5% no ganho do dia com o buff ativo em `nowMs`, ARREDONDADO e NUNCA acima do
+ * teto diário do estágio (o teto É a meta: o buff acelera os dias de esforço parcial, não fura a trava anti-farm). Sem buff,
+ * devolve o próprio ganho. O ÚNICO ponto onde o buff do clã toca o gauge.
+ */
+export function aplicarBuffClaGauge(contribution: number, stage: string, nowMs: number): number {
+  const c = Math.floor(safe(contribution));
+  if (c <= 0 || !clanBuffActive('gauge', nowMs)) return c;
+  return Math.min(dailyGaugeCap(stage), Math.max(c, Math.round(c * BUFF_GAUGE_MULT)));
 }
 
 /** Credita um dia. Nunca devolve menos do que recebeu. */
@@ -64,6 +88,7 @@ export function creditGauge(points: number, doneWeight: number, stage: string): 
 export function gaugeFull(points: number | undefined, stage: string, unlockedEvolutions?: readonly string[], totalXP?: number): boolean {
   // Forma BB (D4): não há gauge — a porta da cerimônia abre pelo Vínculo ≥ 2 (utils/bbStage.ts).
   if (isBBStage(stage)) return bbEvolveReady(totalXP);
+  if (gaugeTravadaPelasMegas(stage, unlockedEvolutions)) return false;
   const goal = gaugeGoalFor(stage, unlockedEvolutions);
   return goal > 0 && safe(points) >= goal;
 }
@@ -96,11 +121,6 @@ export function hydrateEvolutionPoints(loaded: { evolutionPoints?: unknown; perf
   return migrateEvolutionPoints(loaded.perfectDays, typeof loaded.evolutionStage === 'string' ? loaded.evolutionStage : 'rookie');
 }
 
-/** 🌀 O item da masmorra: um dia de teto do estágio (o item continua 1 por dia). */
-export function dayItemGaugeGain(stage: string): number {
-  return dailyGaugeCap(stage);
-}
-
 export interface GaugeView {
   /** Pontos já creditados. */
   points: number;
@@ -116,6 +136,11 @@ export interface GaugeView {
   /** Quanto falta (creditado). Nunca negativo. */
   left: number;
   full: boolean;
+  /** Mega com menos de 3 megas liberadas: a barra do Ultra não acumula nem enche. */
+  locked: boolean;
+  /** Megas liberadas (0..3) e o total exigido — só faz sentido com `locked`. */
+  megasLiberadas: number;
+  megasTotal: number;
   /** Estágio final: não há barra. */
   top: boolean;
 }
@@ -131,6 +156,7 @@ export function gaugeView(input: {
   const dailyCap = dailyGaugeCap(input.evolutionStage);
   const today = gaugeContribution(input.todayWeight ?? 0, input.evolutionStage);
   const top = goal <= 0;
+  const locked = gaugeTravadaPelasMegas(input.evolutionStage, input.unlockedEvolutions);
   return {
     points,
     today,
@@ -139,7 +165,10 @@ export function gaugeView(input: {
     pct: top ? 1 : Math.min(1, points / goal),
     pctWithToday: top ? 1 : Math.min(1, (points + today) / goal),
     left: top ? 0 : Math.max(0, goal - points),
-    full: !top && points >= goal,
+    full: !top && !locked && points >= goal,
+    locked,
+    megasLiberadas: megasLiberadas(input.unlockedEvolutions),
+    megasTotal: ULTRA_MEGA_IDS.length,
     top,
   };
 }

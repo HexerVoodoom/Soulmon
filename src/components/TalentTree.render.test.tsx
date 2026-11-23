@@ -89,7 +89,7 @@ describe('TalentTree', () => {
     expect(estadoTxt()).toMatch(/0\/1 pontos/);
   });
 
-  it('respec é SEMPRE pago: pede confirmação, cobra Bits ganhos e devolve os pontos', () => {
+  it('respec é SEMPRE pago: pede confirmação, cobra Bits (o saldo inteiro, §373) e devolve os pontos', () => {
     abrir({ totalXP: xpForLevel(3), gamePoints: 500, talentPicks: ['tal-pvp-01', 'tal-pve-01'] });
     const botao = screen.getByRole('button', { name: /Refazer a árvore\s*\d+\s*Bits/ });
     expect(botao.textContent).toContain(String(2 * RESPEC_COST_PER_POINT));
@@ -117,6 +117,19 @@ describe('TalentTree', () => {
     abrir({ totalXP: 0 }, 'en-US');
     expect(estadoTxt()).toMatch(/^0\/1 points spent/);
     expect(document.querySelector('[data-talent-tree]')!.textContent).not.toMatch(/Level|Nível/);
+  });
+
+  it('§316c: o modal do nó usa o par PADRÃO do app em linha (Cancelar, Confirmar), sem o CTA do site', () => {
+    abrir({ totalXP: 0 });
+    abrirNo('tal-pvp-01');
+    const conf = confirmBtn();
+    const canc = document.querySelector('[data-talent-cancel]')!;
+    expect(conf.hasAttribute('data-cta-button')).toBe(false);
+    expect(conf.className).toContain('sm2-kit-btn-primary');
+    expect(canc.className).toContain('sm2-kit-btn-quiet');
+    expect(canc.compareDocumentPosition(conf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(conf.parentElement!.hasAttribute('data-cta-stack')).toBe(false);
+    expect((conf.parentElement as HTMLElement).style.display).toBe('flex');
   });
 });
 

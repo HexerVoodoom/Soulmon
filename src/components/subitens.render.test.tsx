@@ -17,7 +17,7 @@ const AGORA = new Date('2026-10-14T10:00:00'); // quarta
 
 function habito(over: Partial<Activity> = {}): Activity {
   return {
-    id: 'h1', name: 'Atividade física', category: 'Fitness', emoji: '💪', steps: [],
+    id: 'h1', name: 'Atividade física', category: 'corpo', emoji: '💪', steps: [],
     weekDays: [0, 1, 2, 3, 4, 5, 6], schedule: { kind: 'timesPerWeek', target: 3 }, ...over,
   } as Activity;
 }
@@ -70,7 +70,7 @@ describe('hábito semanal: o check é de HOJE (A)', () => {
 
 describe('tarefa com subitens (C)', () => {
   const tarefa: Task = {
-    id: 't1', name: 'Pagar contas', category: 'Work', emoji: '🧾', completed: false, effort: 2,
+    id: 't1', name: 'Pagar contas', category: 'foco', emoji: '🧾', completed: false, effort: 2,
     steps: [
       { id: 'a', label: 'Pagar água', completed: true },
       { id: 'b', label: 'Pagar luz', completed: false },

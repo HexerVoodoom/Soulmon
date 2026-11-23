@@ -58,6 +58,19 @@ export function getTournamentWindow(now: Date = new Date()): TournamentWindow {
   return { isOpen: false, daysUntilNext: (ROUND_START_DAY - day + 7) % 7, daysLeft: 0 };
 }
 
+/** Dias até a temporada do Torneio virar, contando hoje. A temporada é o mês em UTC (`currentSeason`, `functions/api/community.js`). */
+export function seasonDaysLeft(now: Date = new Date()): number {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate() - now.getUTCDate() + 1;
+}
+
+/** "7 Days Remaining" / "1 Day Remaining" — o número em ALGARISMO, nos dois idiomas (dono, 06/11/2026: "26", não "Twenty-six"). */
+export function seasonDaysLabel(now: Date, language: 'pt-BR' | 'en-US'): string {
+  const n = seasonDaysLeft(now);
+  return language === 'pt-BR'
+    ? `${n} ${n === 1 ? 'dia restante' : 'dias restantes'}`
+    : `${n} ${n === 1 ? 'Day' : 'Days'} Remaining`;
+}
+
 /**
  * Texto MÍNIMO para a UI, nos dois idiomas (02/10/2026, pedido do dono: sem
  * frases). Rodada aberta: "Dias restantes: N". Fora da janela: "Próxima

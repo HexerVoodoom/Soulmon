@@ -224,6 +224,21 @@ describe('feiraEvento (a volta da Missão encontra o Chefe/Desafio)', () => {
   });
 });
 
+describe('evoStats (o modalzinho de atributos depois da evolução)', () => {
+  it('entra logo depois da feira e antes do início de dia; aviso de gesto, fora do teto, e vem ANTES do "crie atividades"', () => {
+    expect(presentationRank('evoStats')).toBe(presentationRank('feiraEvento') + 1);
+    expect(presentationRank('evoStats')).toBeLessThan(presentationRank('evolveTask'));
+    expect(DAY_START_IDS).not.toContain('evoStats');
+    expect(CELEBRATION_IDS).not.toContain('evoStats');
+    expect(INVITE_IDS).not.toContain('evoStats');
+  });
+  it('mesmo com o teto de 3 cheio, ele aparece (senão o antes/depois se perderia); o resto segue a ordem', () => {
+    const shown = new Set<PresentationId>(['dailyReport', 'dayGoals', 'levelUp']);
+    expect(pickPresentation(all(['evoStats', 'evolveTask']), null, undefined, { shown })).toBe('evoStats');
+    expect(sessao(all(['evolveTask', 'evoStats']))).toEqual(['evoStats', 'evolveTask']);
+  });
+});
+
 describe('evoRecap (REGISTRO §190)', () => {
   it('vem logo depois do resumo e não gasta vaga no teto', async () => {
     const q = await import('./presentationQueue');

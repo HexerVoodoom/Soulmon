@@ -34,6 +34,32 @@ export async function legacyPidFor(saveId) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
 }
 
+/** Formato de pid/saveId aceito na resolução (o MESMO `VALID_ID` de `community.js`). */
+const PID_VALIDO = /^[a-zA-Z0-9_-]{8,64}$/;
+
+/**
+ * pid → saveId. `null` quando o alvo não existe (ou ainda não se registrou).
+ *
+ * Recusa explicitamente um pid que seja a derivação antiga do saveId ao qual
+ * ele aponta: enquanto esses índices existirem no KV, a cadeia
+ * e-mail → saveId → pid continuaria resolvendo e o oráculo continuaria vivo.
+ * A recusa é imediata e não depende da migração ter passado por aquele perfil.
+ *
+ * O hash é calculado nos DOIS ramos (com um saveId de mentira do mesmo
+ * tamanho quando não há acerto) e não há escrita em ramo nenhum: um KV `get`,
+ * um SHA-256, sempre. Sem isso, "pid inexistente" e "pid legado de conta
+ * existente" gastariam trabalhos diferentes e o oráculo voltaria pelo relógio.
+ */
+// (Movida de `community.js` em 13/11/2026, sem mudança de comportamento: o convite do clã em `guild.js` resolve o alvo por ela.)
+const PID_PLACEHOLDER = '0'.repeat(32);
+export async function saveIdForPublicId(env, pid) {
+  if (!PID_VALIDO.test(pid || '')) return null;
+  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
+  const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
+  if (!saveId || pid === legado) return null;
+  return saveId;
+}
+
 /**
  * Identidade pública nova: 24 hex ALEATÓRIOS, sem relação com o saveId.
  *
@@ -105,8 +131,46 @@ export async function claimNick(env, saveId, name) {
   if (dono && dono !== saveId) return false;
   const antiga = await kv.get(`nickof:${saveId}`);
   if (antiga && antiga !== key && (await kv.get(antiga)) === saveId) await kv.delete(antiga);
+  // O índice DOBRADO (busca de jogadores) sai junto com o apelido antigo: ele é derivado do mesmo nome, então não precisa de ponteiro.
+  if (antiga && antiga !== key) {
+    const velha = nickFoldKeyDaChave(antiga, saveId);
+    if (velha && velha !== nickFoldKey(name, saveId)) await kv.delete(velha);
+  }
   const ttl = { expirationTtl: 86400 * 400 };
   await kv.put(key, saveId, ttl);
   await kv.put(`nickof:${saveId}`, key, ttl);
+  const dobrada = nickFoldKey(name, saveId);
+  if (dobrada) await kv.put(dobrada, '', ttl);
   return true;
 }
+
+// ── Índice DOBRADO de apelidos: a busca de jogadores (13/11/2026, REGISTRO §321) ────────────────────
+// `nickf:<dobrado>:<saveId>` → ''. "Dobrado" = sem acento, minúsculo, NFKC (`foldNome`): "João", "JOAO" e "joão" viram `joao`,
+// e a busca por PREFIXO é uma `list({ prefix })` do KV — que já devolve as chaves em ordem: o índice é a própria chave.
+// O saveId vai NA CHAVE porque dois apelidos distintos podem dobrar igual ("João" e "Joao" são contas diferentes); o nome da chave
+// nunca sai do servidor. `encodeURIComponent` codifica `:` (`%3A`), então o separador final é inequívoco.
+// Nasce em `claimNick` (perfil salvo, apelido reservado, `backfillNicks`) e morre com o apelido (renomear, exclusão de conta).
+export const NICK_FOLD_PREFIX = 'nickf:';
+/** Nome → forma de busca: sem diacrítico, minúsculo, espaço colapsado. ESPELHO de `src/utils/playerSearch.ts` › `foldPlayerName` (teste de paridade). */
+export function foldNome(raw) {
+  return String(raw ?? '').normalize('NFKD').replace(/\p{M}/gu, '').normalize('NFKC')
+    .replace(/\p{C}/gu, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+const dobradoCodificado = (dobrado) => encodeURIComponent(dobrado).slice(0, 200);
+/** Chave do índice dobrado de um apelido; `null` para nome vazio. */
+export function nickFoldKey(name, saveId) {
+  const d = foldNome(name);
+  return d && saveId ? `${NICK_FOLD_PREFIX}${dobradoCodificado(d)}:${saveId}` : null;
+}
+/** Prefixo de `list` para o termo digitado (já dobrado aqui). Sem o `:` final: "joa" casa "joao:<id>" e "joana:<id>". */
+export function nickFoldPrefix(termo) {
+  const d = foldNome(termo);
+  return d ? `${NICK_FOLD_PREFIX}${dobradoCodificado(d)}` : null;
+}
+/** A chave dobrada que corresponde a uma chave `nick:` (o apelido antigo que `nickof:` aponta). */
+export function nickFoldKeyDaChave(chaveNick, saveId) {
+  if (typeof chaveNick !== 'string' || !chaveNick.startsWith('nick:')) return null;
+  try { return nickFoldKey(decodeURIComponent(chaveNick.slice(5)), saveId); } catch { return null; }
+}
+/** saveId dono de uma chave dobrada (o que vem depois do último `:`). */
+export const saveIdDaChaveDobrada = (chave) => String(chave).slice(String(chave).lastIndexOf(':') + 1);

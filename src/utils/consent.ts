@@ -32,7 +32,7 @@ export const MIN_AGE_YEARS = 18;
  * publicado.
  */
 export const TERMS_VERSION = '2026-10-26'; // §5: "Gerar de novo" a aparência é um sorteio PAGO (50 Créditos, 1 por forma por mês, sem garantia de resultado, débito devolvido se falhar; REGISTRO §34b, rodada 5); antes, 10-11: §4b: assinatura cosmética trimestral publicada (beta-play-01); antes, 09-30: §8: as Travessias são opcionais (parecer de menores R-9, MIS-15)
-export const PRIVACY_VERSION = '2026-10-30'; // D28: hash do e-mail + URL da imagem grátis guardados após a exclusão da conta; antes, 10-28: revisão D2b: voz direto no Groq e Gemini de reserva no chat (REGISTRO §185); antes, 10-26: §6d: e-mail guardado com cada imagem gerada por IA, só para auditoria do admin (decisão do dono 26/10); antes, 10-20: §2b/§6d: resumo de comportamento com humor ao Groq, check-ins de refeição ligados por padrão, contador de cota de IA (REGISTRO §137, decisão do dono 20/10); antes, 10-19: §6 voz: a transcrição vai ao Groq pelo nosso Worker, texto da política já cobria, versão sobe só para registrar (REGISTRO §128); antes, 10-11: §6b assinatura + §6c diagnóstico de falhas publicados (beta-play-01); antes, 10-04: §2: o Caderno (anotações no save na nuvem, dado sensível); antes, 10-02: lista pública do Torneio
+export const PRIVACY_VERSION = '2026-11-09'; // §2/§6: passos pelo Health Connect (READ_STEPS, só o total do dia, só com opt-in; texto publicado antes do recurso chegar ao app, para o formulário de permissões do Google; REGISTRO §253); antes, 11-04: uma única alta cobre: §5 faixa de evoluções (PR #562: apelido/criatura/forma/alinhamento/hora, 24 h, visível a qualquer pessoa), §6/§6e feedback (Resend + Gmail, retenção 30 dias desde 05/11, sem nova versão porque só encurta, fora da cópia/exclusão da conta) e §8; antes, §6e: mensagem de feedback/sugestão/bug enviada pelo modal da Home (texto + tipo + versão/build/plataforma/idioma, sem identidade, 30 dias, encaminhada por e-mail); antes, 10-30: D28: hash do e-mail + URL da imagem grátis guardados após a exclusão da conta; antes, 10-28: revisão D2b: voz direto no Groq e Gemini de reserva no chat (REGISTRO §185); antes, 10-26: §6d: e-mail guardado com cada imagem gerada por IA, só para auditoria do admin (decisão do dono 26/10); antes, 10-20: §2b/§6d: resumo de comportamento com humor ao Groq, check-ins de refeição ligados por padrão, contador de cota de IA (REGISTRO §137, decisão do dono 20/10); antes, 10-19: §6 voz: a transcrição vai ao Groq pelo nosso Worker, texto da política já cobria, versão sobe só para registrar (REGISTRO §128); antes, 10-11: §6b assinatura + §6c diagnóstico de falhas publicados (beta-play-01); antes, 10-04: §2: o Caderno (anotações no save na nuvem, dado sensível); antes, 10-02: lista pública do Torneio
 
 export interface ConsentRecord {
   /** ISO de quando o usuário marcou a caixa. */
@@ -50,13 +50,21 @@ export function buildConsentRecord(now: Date = new Date()): ConsentRecord {
   };
 }
 
+const VERSION_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A versão aceita cobre a publicada? Datas AAAA-MM-DD comparam por ordem (aceite de versão IGUAL OU MAIS NOVA vale); formato
+ *  desconhecido (`'desconhecida'`, vazio) nunca cobre. A igualdade `===` tratava aceite mais novo (app/servidor revertido) como vencido. */
+function versionCovers(accepted: string, current: string): boolean {
+  if (!VERSION_DATE.test(accepted) || !VERSION_DATE.test(current)) return accepted === current;
+  return accepted >= current;
+}
+
 /**
- * O registro guardado ainda vale para os documentos PUBLICADOS agora? Só o
- * aceite das duas versões atuais dispensa a tela de termos (A3, 02/10/2026):
- * quem aceitou uma versão antiga volta a ver o aceite.
+ * O registro guardado ainda vale para os documentos PUBLICADOS agora? Só o aceite das duas versões atuais (ou de uma mais nova)
+ * dispensa a tela de termos (A3, 02/10/2026): quem aceitou uma versão ANTIGA, ou de formato desconhecido, volta a ver o aceite.
  */
 export function isConsentCurrent(c: ConsentRecord | null | undefined): boolean {
-  return !!c && c.termsVersion === TERMS_VERSION && c.privacyVersion === PRIVACY_VERSION;
+  return !!c && versionCovers(c.termsVersion, TERMS_VERSION) && versionCovers(c.privacyVersion, PRIVACY_VERSION);
 }
 
 /**

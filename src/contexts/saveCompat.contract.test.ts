@@ -22,6 +22,7 @@ import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { sanitizeStageId } from '../utils/bbStage';
 import { sanitizeMercMission } from '../utils/mercMission';
+import { sanitizeBossShards } from '../utils/bossShards';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -48,6 +49,24 @@ const GAME_STATE = 'soulmon_state_v1';
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-drive-fechados-v1',
+  'soulmon-bb-nascimento',
+  'soulmon-paywall-champion-visto',
+  'soulmon-clan-buffs',
+  'soulmon-mail-announced',
+  'soulmon-play-review',
+  'soulmon-foco-plan-draft',
+  'soulmon-foco-journey-keys',
+  'soulmon-foco-journey-prefs',
+  'soulmon-foco-session',
+  'soulmon-foco-rest',
+  'soulmon-pending-op-ids',
+  'soulmon-evo-seen-at',
+  'soulmon-chama-pago',
+  'soulmon-chama-aviso',
+  'soulmon-feira-desafio',
+  'soulmon-feira-volta',
+  'soulmon-barrage-best-2',
   'soulmon-library-forms',
   'soulmon-intro-cinematica-vista',
   'soulmon-onboarding-velado-visto',
@@ -63,6 +82,9 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-generate-character-uses',
   'soulmon-evo-recap-v1',
   'soulmon-barrage-best',   // nasceu depois de 20/10 (QA beta3 R2): estava na lista congelada por engano
+  'soulmon-balao-dicas-vistas', // §333 (13/11/2026): cooldown dos balões de dica do Soulmon, no aparelho
+  'soulmon-balao-dourado-ignorados', // §383 (14/11/2026): sumiços sem toque do balão dourado, no aparelho
+  'soulmon-widget-events-applied', // 18/11/2026: eids da fila do widget da Home já aplicados, no aparelho
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */
@@ -361,5 +383,19 @@ describe('GUILDA DOS MERCENÁRIOS (§11 do plano do onboarding): `mercMission` e
   });
   it('o servidor sanitiza o mesmo campo (paridade em functions/api/mercMission.parity.test.js)', () => {
     expect(SAVE_JS).toMatch(/'mercMission' in state/);
+  });
+});
+
+describe('FRAGMENTO DE BOSS (03/11/2026): `bossShards` entra no save com leitura tolerante', () => {
+  it('hydrateSave lê bossShards por sanitizador (lixo = ausente)', () => {
+    expect(corpoHydrate(CTX)).toMatch(/bossShards:\s*sanitizeBossShards\(loadedState\.bossShards\)/);
+  });
+  it('o sanitizador é idempotente e recusa lixo', () => {
+    expect(sanitizeBossShards(sanitizeBossShards(3))).toBe(3);
+    expect(sanitizeBossShards(-2)).toBe(0);
+    for (const lixo of [undefined, null, 'x', '3', [], {}, NaN]) expect(sanitizeBossShards(lixo)).toBeUndefined();
+  });
+  it('o servidor sanitiza o mesmo campo (paridade em functions/api/bossShards.parity.test.js)', () => {
+    expect(SAVE_JS).toMatch(/'bossShards' in state/);
   });
 });

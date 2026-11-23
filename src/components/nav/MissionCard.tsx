@@ -5,6 +5,7 @@ import type { GoTarget } from '../../utils/missionTargets';
 import { Icon } from '../ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { MissionMark } from '../play/MissionMark';
+import type { MissionGiver } from './npcGiver';
 
 /**
  * COMO UMA MISSÃO SE MOVE (dono, 14/10/2026, REGISTRO §62): quem renderiza a lista recebe isto e só pergunta por alvo.
@@ -19,11 +20,14 @@ export interface MissionNav {
 /** O que o cartão faz com o alvo: `onGo` quando pode navegar, `lockNote` quando o prédio ainda está fechado. */
 export function resolveGo(nav: MissionNav | undefined, target: GoTarget | undefined, language: Language): { onGo?: () => void; lockNote?: string } {
   if (!nav || !target) return {};
-  if (target === 'home') return { onGo: () => nav.onGo('home') };
+  if (target === 'home' || target === 'chat') return { onGo: () => nav.onGo(target) };
   const gate = buildingGateFor(target, nav.bondLevel);
   if (!gate.open) return { lockNote: buildingLockLine(gate.minBond, language) };
   return { onGo: () => nav.onGo(target) };
 }
+
+/** Enquadramento padrão do retrato: centro na cabeça do busto (o rosto fica no terço de cima). */
+export const MISSION_PORTRAIT_FOCUS = '50% 18%';
 
 export type MissionCardStatus = 'open' | 'ready' | 'claimed';
 
@@ -36,16 +40,20 @@ export interface MissionEntry { key: string; state: MissionCardStatus; node: Rea
  * fazer; concluída vira o check. Título (vira botão "Ir" quando a missão tem lugar), descrição curta, progresso, recompensa e
  * estado. Estável em layout: altura mínima fixa e a ação sempre à direita.
  */
-export function MissionCard({ language, attrs, status, title, desc, progress, reward, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, quiet = false }: {
+export function MissionCard({ language, attrs, status, title, desc, progress, reward, rewardAlways = false, giver, onGo, goAttr = 'data-mission-go', goValue = '', lockNote, action, openAction, quiet = false }: {
   language: Language;
   /** Atributos `data-*` do cartão (os ids que os testes e o manual citam). */
   attrs: Record<string, string>;
   status: MissionCardStatus;
-  title: string;
+  title: ReactNode;
   desc?: string;
   progress?: { cur: number; target: number } | null;
   /** Texto curto da recompensa (ex.: "+1 material"). Só aparece com a missão PRONTA (dono, 15/10/2026): antes disso o cartão não mostra recompensa. */
   reward?: ReactNode;
+  /** Missões do DIA (12/11/2026, pedido do dono, REGISTRO §318): a recompensa aparece SEMPRE, também depois de resgatada. */
+  rewardAlways?: boolean;
+  /** Quem passa a missão (12/11/2026): retrato pequeno + nome do NPC. */
+  giver?: MissionGiver;
   onGo?: () => void;
   goAttr?: string;
   goValue?: string;
@@ -53,6 +61,8 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
   lockNote?: string;
   /** O botão de Resgatar (já pronto por quem chama) — só aparece com `status="ready"`. */
   action?: ReactNode;
+  /** Botão do estado ABERTO (REGISTRO §413: o "Done" do passeio escolhido, direto no cartão). */
+  openAction?: ReactNode;
   /** Cartão calmo (missão especial): sem marca "!"/"?", "Done/Feita" no lugar de Resgatada e recompensa em todo status. */
   quiet?: boolean;
 }) {
@@ -87,7 +97,7 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             {title}
           </button>
         ) : <p style={titleStyle}>{title}</p>}
-        {desc && <p style={{ ...sm2Hint, margin: 0 }}>{desc}</p>}
+        {desc && <p data-mission-desc style={{ ...sm2Hint, margin: 0 }}>{desc}</p>}
         {progress && progress.cur > 0 && status === 'open' && (
           <>
             <p className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{progress.cur}/{progress.target}</p>
@@ -96,14 +106,27 @@ export function MissionCard({ language, attrs, status, title, desc, progress, re
             </span>
           </>
         )}
-        {reward && (quiet || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {reward && (quiet || rewardAlways || status === 'ready') && <p data-mission-reward-text style={{ ...sm2Hint, margin: 0 }}>{reward}</p>}
+        {giver && (
+          <p data-mission-giver style={{ ...sm2Hint, margin: 0 }}>
+            <span>{isPt ? 'Com ' : 'From '}{giver.name}</span>
+          </p>
+        )}
         {lockNote && !claimed && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{lockNote}</p>}
       </div>
       <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
         {status === 'ready' && !quiet && <MissionMark kind="ready" tone="gold" size={24} isPt={isPt} />}
         {status === 'ready' && action}
+        {status === 'open' && openAction}
         {claimed && <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-muted)' }}>{quiet ? (isPt ? 'Feita' : 'Done') : (isPt ? 'Resgatada' : 'Claimed')}</span>}
       </div>
+      {/* Retrato de PERFIL do NPC (12/11/2026, pedido do dono): quadrado, foco no ROSTO (topo do busto), à direita do cartão. Sem NPC, não existe. */}
+      {giver && (
+        <img
+          src={giver.art} alt="" aria-hidden="true" draggable={false} data-mission-giver-art
+          style={{ flex: 'none', width: 64, height: 64, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', objectFit: 'cover', objectPosition: MISSION_PORTRAIT_FOCUS, imageRendering: 'pixelated', backgroundColor: 'var(--sm2-surface-2, transparent)' }}
+        />
+      )}
     </li>
   );
 }

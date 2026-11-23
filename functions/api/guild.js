@@ -23,7 +23,8 @@
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
 //   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
-//   POST guildShopBuy {id, dayKey, itemId, opId} → { guild, repeated }  404 no guild · 400 invalid item/op · 409 not enough bits / already owned / op reuse   (a LOJA: `_lojaCla.js`; cliente nunca manda preço)
+//   POST guildShopBuy → 404 `gone` (LÁPIDE 10/11/2026, 404 desde 14/11 §375: a Loja do clã saiu; ver guildBuffBuy)
+//   POST guildBuffBuy {id, dayKey, buffId, opId} → { guild, repeated }  404 no guild · 403 host only · 400 invalid buff/op · 409 not enough bits / op reuse   (os BUFFS DO CLÃ: `_buffsCla.js`; cliente nunca manda preço)
 //   POST claPracaSlot {id, dayKey, slot:0..3, item|null} → { praca }   404 no guild · 400 invalid slot/item   (a PRAÇA: `_claPraca.js`)
 //   GET  claPraca     ?id=&dayKey=         → { praca: { slots[4], gifts[], mine:{sentToday[]} } }   404 no guild
 //   POST claPresente  {id, dayKey, to}     → { sent: true, praca }   404 no guild · 400 invalid target · 409 already sent today
@@ -32,10 +33,8 @@
 //   POST claPlantar|claRegar|claProteger|claColher {id, dayKey} → { plantio, fruit? }
 //   POST claSortear {id, dayKey} → { plantio, task:'water'|'protect' } (a função do dia, atribuída pelo servidor: 1 'protect' por clã/dia; aditivo)
 //        409 already planted|already watered|already protected|already harvested|not grown|grown · 404 no plant
-//   GET  claMisterio  ?id=&dayKey=         → { misterio }   404 no guild   (o MISTÉRIO: `_claMisterio.js`)
-//   POST claMisterioEnviar {id, dayKey}    → { misterio }   409 already sent|reward pending
-//   POST claMisterioTarefa {id, dayKey, taskId} → { counted, reason?, misterio }   400 invalid task
-//   POST claMisterioClaim  {id, dayKey}    → { claimed:{reward,receipt}, misterio }   404 nothing to claim
+//   GET  claMisterio / POST claMisterioEnviar|Tarefa|Claim → 404 `gone` (LÁPIDE 14/11/2026, §374: o Mistério saiu do app em
+//        27/10; a recompensa pendente segue convertida por `guildRewards` → `converterMisterio`)
 //   GET  guildWar     ?id=&dayKey=         → { war: { waiting: {size}|null, last: {day,outcome,duels[],size,enemy}|null } }   404 no guild
 //   POST guildWarSeek {id, dayKey}         → { state: 'small'|'already'|'waiting'|'done', war }   404 no guild   (a GUERRA: `_guerra.js`)
 //   (A FEIRA: O CHEFE E O DESAFIO — `_feira.js`; DESLIGADA até `FEIRA_CHEFE_DESDE`: antes disso respondem 404 `not available`)
@@ -47,12 +46,16 @@
 //   POST guildFeiraTrailStart {id, dayKey} → { trail:{k,game,seed,puzzle}, evento }   404 no guild · 409 no trail|already cleared
 //   POST guildFeiraTrailDone  {id, dayKey, path|rects|cells|sides|score} → { cleared:true, reward:{emblems,sap}, receipt, evento }
 //                                            400 wrong solution|too fast · 409 no trail|not started|already cleared · 429 daily limit
+//   GET  guildFeiraLoja      ?id=&dayKey=  → { loja }   `loja` = a FEIRA DE VERDADE de hoje ({day,vendor,items:[{id,type,kind,price,was,pct,bought}]}) ou null
+//   POST guildFeiraLojaBuy   {id, dayKey, itemId} → { ok:true, price, item }   só item de tipo `shop` (Mercado); o cliente debita `price`.
+//                                            404 no offer · 409 no item|bought|owned|hex item (a Hexsmith se compra por /api/save?action=hexFair)
+//   `guildRaidHit` ganha `feiraLoja?` (ADITIVO, rara: ~8% das voltas, só com a Feira ligada; ver `_feiraLoja.js`).
 //   `guildRaidHit` ganha `evento?` (ADITIVO: ausente com a Feira desligada, e um erro ao calculá-lo nunca derruba o golpe).
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
 //   (PROCURAR CLÃ — `_claDiretorio.js`, REGISTRO §203; o código continua valendo igual)
-//   GET  guildDirectory ?id=              → { clans:[{dirId,name,size,max}], pending:{dirId,name}|null }   (com clã: clans=[])
+//   GET  guildDirectory ?id=              → { clans:[{dirId,name,size,max,full?}], pending:{dirId,name}|null }   (com clã: clans=[]; §322: cheios no fim, full:true)
 //   POST guildRequest   {id, dirId}        → { pending }   409 already in a guild · 404 invalid clan · 409 guild full
 //                                            · 409 request pending (+{pending}: um pedido por vez; o MESMO clã = 200 idempotente) · 429
 //   POST guildRequestCancel {id}           → { ok: true } (sempre; idempotente)
@@ -61,17 +64,22 @@
 //                                            recusa pedido novo com 409 requests closed; os pendentes seguem decidíveis; o código vale igual)
 //   POST guildRequestDecide {id, requestId, approve} → { guild, result:'approved'|'declined'|'gone' }
 //                                            404 no guild · 403 not host · 409 guild full (o pedido fica para depois)
+//   (CONVIDAR — §321: a carta do Papus com o nome e o código do clã)
+//   POST guildInvite {id, dayKey, to: pid} → { invited: true }   404 no guild · 400 invalid target · 404 player not found
+//                                            · 409 already member · 409 guild full · 409 already in a guild · 429 · 503 try again
 // Não existe expulsão (G7): o código novo é a ferramenta de fechar a porta.
 //
 // `dayKey` é o DIA DO JOGADOR (`playerDayKey`), aceito a ±1 do dia UTC — o
 // override de G6 registrado em `PLANO-GUILDA.md` §0.1.
 
 import { authorizeSaveAccess, authStatus } from './_auth.js';
+import { GUILD_INVITE_HOURLY, contarConviteDoDia, parBloqueado, segundosAteAmanhaUtc } from './_conviteLimite.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { loadDuelSideWithSprite } from './_duelLoad.js';
 import { BB_LOCKED_MESSAGE } from './_velado.js';
-import { getProfile, newPid, stagePower } from './_profile.js';
+import { getProfile, newPid, stagePower, saveIdForPublicId } from './_profile.js';
+import { enqueueInvite, falhaDaCarta, removerConvitesDeCla } from './_mensageiro.js';
 import {
   COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -85,21 +93,23 @@ import {
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
   marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado, membrosAtivos,
 } from './_coop.js';
-import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
+import { buscarGuerra, estadoDaGuerra, replayDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
-import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio, converterMisterio } from './_claMisterio.js';
-import { comprarNaLoja, lerLoja, vistaDaLoja } from './_lojaCla.js';
+import { converterMisterio } from './_claMisterio.js';
+import { lerEncontro, gravarEncontro, sortearEncontro, resolverEncontro, achadoDoDia, eventoDoDesafio, estadoDoDesafio, ehDesafioK, desafioK } from './_encontro.js';
+import { comprarBuff, vistaDosBuffs, clanTemBuff } from './_buffsCla.js';
 import {
   feiraLigada, lerEstadoFeira, eventoDaFeira, resumoDaFeira, simularAtaque, fichaDoAtacante, sementeDoServidor,
   gravarGolpe, marcarFeira, resgatarChefe, iniciarTrilha, entregarTrilha, FIGHT_SECONDS,
 } from './_feira.js';
+import { FEIRA_LOJA_PCT_BUFF, abrirFeiraLoja, feiraLojaDoDia, validarCompraFeiraLoja, marcarCompraFeiraLoja } from './_feiraLoja.js';
 import { lerFeiraHit } from './_coop.js';
 import {
   listarDiretorio, lerEntrada, idOpacoValido, lerPedido, lerPedidoNoCla, gravarPedido, apagarPedido, listarPedidos,
-  tirarDoDiretorio, coopReqInKey, coopDirKey,
+  tirarDoDiretorio, coopReqInKey, apagarEntrada,
 } from './_claDiretorio.js';
-import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
+import { CASA_BITS_MIN as CASA_MIN_DOACAO, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -134,9 +144,11 @@ export const GUILD_ACTIONS = Object.freeze({
   guildClaim: 'POST',
   guildWar: 'GET',
   guildWarSeek: 'POST',
+  guildWarReplay: 'GET',
   guildDonate: 'POST',
   guildSlot: 'POST',
   guildShopBuy: 'POST',
+  guildBuffBuy: 'POST',
   claPraca: 'GET',
   claPracaSlot: 'POST',
   claPresente: 'POST',
@@ -156,6 +168,8 @@ export const GUILD_ACTIONS = Object.freeze({
   guildFeiraClaim: 'POST',
   guildFeiraTrailStart: 'POST',
   guildFeiraTrailDone: 'POST',
+  guildFeiraLoja: 'GET',
+  guildFeiraLojaBuy: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -165,7 +179,11 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRequests: 'GET',
   guildRequestDecide: 'POST',
   guildRequestsOpen: 'POST',
+  guildInvite: 'POST',
 });
+
+/** Convidar (§321): no máximo 20 convites por hora por pessoa — ninguém vira alvo de spam de cartas. Dono: `_conviteLimite.js` (§388). */
+export const GUILD_INVITE_LIMIT = GUILD_INVITE_HOURLY;
 
 /** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
 export const GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 3_600_000 };
@@ -228,7 +246,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   // A3: UMA leitura por membro (o cartão), em vez de ~9. Ver `_coop.js` › cartão.
   const cartoes = await lerCartoes(env, g, new Date(), cartoesProntos ?? {});
   const cart = g.members.map(m => cartoes[m]);
-  const loja = await lerLoja(env, g.id);
+  const buffs = await vistaDosBuffs(env, g, cartoes);
   const dias = cart.map((c, i) => {
     const proprios = checkinsDoCartao(c, semana);
     return proprios.length > 0 ? proprios : (g.checkins?.[g.members[i]] || []);
@@ -317,11 +335,11 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
         const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
         return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
       }),
-      // R5/A: a Loja do clã (campo ADITIVO; cliente antigo ignora). Itens do clã + saldo de Bits do clã.
-      loja: vistaDaLoja(loja, g, cartoes),
+      // BUFFS DO CLÃ (10/11/2026; campo ADITIVO, cliente antigo ignora): tesouro, preço e buffs ativos (do clã inteiro). A Loja saiu.
+      buffs: { ...buffs, euPosso: anfitriaoDe(g) === euSave },
       mine: (() => {
         const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
-        return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
+        return { slot: c?.slot ?? null, capReached: !!c && !!c.day && c.day >= hoje && c.bitsToday >= CASA_MIN_DOACAO };
       })(),
     },
     raid: {
@@ -426,6 +444,8 @@ export async function handleGuild({ request, env }) {
     // Entrou (por código OU aprovação): o pedido pendente, se havia, deixa de existir.
     await apagarPedido(env, quem);
     await renovarCartao(env, confirmado.id, quem);
+    // §358: as cartas de convite de clã que ainda estavam na caixa perdem o sentido (melhor esforço: a entrada já está gravada).
+    await removerConvitesDeCla(kvOrThrow(env), quem).catch(falhaDaCarta('guild.join', quem));
     return { g: rolarSemana(confirmado, semana) };
   }
 
@@ -434,8 +454,8 @@ export async function handleGuild({ request, env }) {
     if (await grupoDe(env, id, semana)) return json({ clans: [], pending: null });
     const pend = await lerPedido(env, id);
     const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
-    const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS))
-      .sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
+    // §322: os com vaga primeiro (até 30), os cheios depois (até 12, `full: true`); ordem e tetos são do módulo.
+    const clans = await listarDiretorio(env, COOP_MAX_MEMBERS);
     return json({ clans, pending });
   }
 
@@ -450,7 +470,7 @@ export async function handleGuild({ request, env }) {
     const entrada = idOpacoValido(dirId) ? await lerEntrada(env, dirId) : null;
     const g = entrada ? await lerGrupo(env, entrada.gid) : null;
     if (!g) {
-      if (entrada) await kvOrThrow(env).delete(coopDirKey(dirId));
+      if (entrada) await apagarEntrada(env, dirId);
       return erro('invalid clan', 404);
     }
     const atual = await lerPedido(env, id);
@@ -499,6 +519,49 @@ export async function handleGuild({ request, env }) {
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
     return json({ result: 'approved', guild: await montar(r.g, id, hoje) });
+  }
+
+  // ── CONVIDAR PARA O CLÃ (13/11/2026, REGISTRO §321): o botão "Convidar" do Salão. ──
+  // Qualquer membro convida (o código do clã já é visível a todo membro; o convite só o entrega a UMA pessoa escolhida).
+  // O convite é uma CARTA do Papus (`_mensageiro.js`) com o nome do clã e o código — quem recebe entra pelo mesmo "Entrar com
+  // código" de sempre, sem estado novo no servidor. Uma carta por clã por pessoa por dia (o `mid` é estável e a fila deduplica).
+  // Não confirma quem existe: alvo escondido, inexistente ou com pid antigo respondem igual (404 'player not found').
+  if (action === 'guildInvite') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const to = String(body.to ?? '');
+    if (!VALID_ID.test(to)) return erro('invalid target', 400);
+    const alvo = await saveIdForPublicId(env, to);
+    const perfil = alvo ? await getProfile(env, alvo).catch(() => null) : null;
+    if (!alvo || !perfil || perfil.publicHidden === true) return erro('player not found', 404);
+    if (alvo === id || g.members.includes(alvo)) return erro('already member', 409);
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
+    if (await grupoDe(env, alvo, semana)) return erro('already in a {g}', 409);
+    const gate = takeToken('guildInvite', id, GUILD_INVITE_LIMIT);
+    if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    // §388: teto DIÁRIO por remetente no KV; e o clã que a pessoa recusou há menos de 7 dias recebe a resposta do sucesso, sem carta.
+    if (!(await contarConviteDoDia(kvOrThrow(env), 'g', id))) return tooManyRequests(segundosAteAmanhaUtc(), CORS);
+    if (await parBloqueado(kvOrThrow(env), 'g', g.id, alvo)) return json({ invited: true });
+    const eu = await getProfile(env, id).catch(() => null);
+    // Quem saiu da lista pública convida sem o próprio nome na carta (o mesmo cuidado da carta de amizade).
+    const quem = eu && eu.publicHidden !== true && typeof eu.name === 'string' ? eu.name.slice(0, 40) : '';
+    // §358: a carta leva `kind: 'guild-invite'` e o código (o botão "Entrar no clã" da caixa chama o mesmo `guildJoin`). Uma carta PENDENTE
+    // por clã por pessoa (o `mid` do dia continua, mas outro dia não empilha enquanto a anterior está na caixa) e no máximo 20 convites
+    // pendentes por pessoa. Duplicada ou caixa no teto respondem igual ao sucesso: quem convida não fica sabendo da caixa do outro.
+    try {
+      await enqueueInvite(env, kvOrThrow(env), alvo, {
+        mid: `ginv:${g.id}:${hoje}`, kind: 'guild-invite', guildCode: g.code,
+        titlePt: 'Convite para um clã', titleEn: 'Clan invite',
+        bodyPt: `${quem || 'Alguém'} convidou você para o clã ${g.name}. Para entrar, abra o Salão do clã e use o código ${g.code}.`,
+        bodyEn: `${quem || 'Someone'} invited you to the clan ${g.name}. To join, open the Clan Hall and use the code ${g.code}.`,
+        at: Date.now(),
+      }, m => m.mid.startsWith(`ginv:${g.id}:`));
+    } catch (err) {
+      // Aqui a carta É o convite (não há outro estado): falhou, 503 e o app tenta de novo; nunca 200 sem carta.
+      falhaDaCarta('guildInvite', alvo)(err);
+      return erro('try again', 503);
+    }
+    return json({ invited: true });
   }
 
   // Forma BB (D5): a Guilda é trancada ao BB, com o motivo. O estágio vem do SAVE do servidor (`_velado.js`).
@@ -614,6 +677,13 @@ export async function handleGuild({ request, env }) {
     return json({ war: await estadoDaGuerra(env, g.id) });
   }
 
+  if (action === 'guildWarReplay') {
+    // "Assistir" da carta (22/11/2026): as fichas e a semente gravadas na guerra; reproduz, não decide nada.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    return json({ replay: await replayDaGuerra(env, g.id) });
+  }
+
   if (action === 'guildWarSeek') {
     // GUERRA 4×4 (PR4): o servidor monta os esquadrões a partir dos SAVES, pareia por tamanho e resolve com o
     // combate v3. Qualquer membro pode procurar; uma guerra por guilda por dia do jogador. Nada do corpo decide a luta.
@@ -635,16 +705,22 @@ export async function handleGuild({ request, env }) {
     return json({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
 
-  if (action === 'guildShopBuy') {
-    // Compra na Loja do clã: o cliente manda SÓ `itemId` + `opId`; preço e saldo são do servidor.
+  // LÁPIDE (10/11/2026): a LOJA DO CLÃ (cosméticos da Casa, `guildShopBuy`, `_lojaCla.js`) foi aposentada pelo pedido do dono e
+  // substituída pelos BUFFS DO CLÃ (`guildBuffBuy`, `_buffsCla.js`). Cliente antigo que ainda chame a ação recebe 404 sem cobrar
+  // (NÃO 410: `guildCall` no app lê qualquer 410 como conta excluída e desloga; §375).
+  if (action === 'guildShopBuy') return erro('gone', 404);
+
+  if (action === 'guildBuffBuy') {
+    // Compra de BUFF do clã com o tesouro: só o anfitrião decide pelo clã; o cliente manda SÓ `buffId` + `opId` (preço/saldo/duração são do servidor).
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
+    if (anfitriaoDe(g) !== id) return erro('host only', 403);
     const cartoes = await lerCartoes(env, g);
-    const r = await comprarNaLoja(env, g, cartoes, body.itemId, body.opId);
+    const r = await comprarBuff(env, g, cartoes, body.buffId, body.opId);
     if (!r.ok) {
-      if (r.reason === 'invalid-item') return erro('invalid item', 400);
+      if (r.reason === 'invalid-buff') return erro('invalid buff', 400);
       if (r.reason === 'invalid-op') return erro('invalid op', 400);
-      return erro(r.reason === 'insufficient' ? 'not enough bits' : r.reason === 'already-owned' ? 'already owned' : 'op reuse', 409);
+      return erro(r.reason === 'insufficient' ? 'not enough bits' : 'op reuse', 409);
     }
     return json({ repeated: r.repeated, guild: await montar(g, id, hoje) });
   }
@@ -659,8 +735,15 @@ export async function handleGuild({ request, env }) {
     return vista(await montar(g, id, hoje));
   }
 
+  // LÁPIDE (14/11/2026, Antislop P1 D2, REGISTRO §374): o MISTÉRIO saiu do app em 27/10 (`3b2332f5`) e as rotas seguiam vivas,
+  // aceitando `taskId` inventado (até 10 pontos/dia) que liberava recompensa. Agora não tocam o KV. ⚠️ É 404 `gone`, NÃO 410:
+  // no app, `guildCall` lê QUALQUER 410 como "conta excluída" e encerra a sessão (`reagirContaExcluida`), e o bundle de antes de
+  // 27/10 chamava `claMisterioTarefa` a cada tarefa concluída (com `.catch` silencioso, que engole o 404). A recompensa pendente
+  // de quem tinha enviado segue convertida, uma vez, em `guildRewards` (`converterMisterio`).
+  if (action.startsWith('claMisterio')) return erro('gone', 404);
+
   if (action.startsWith('cla')) {
-    // OS TRÊS PRÉDIOS DO CLÃ (Praça, Plantio, Mistério). Estado em chaves KV próprias, o servidor decide
+    // OS PRÉDIOS DO CLÃ AINDA ABERTOS (Praça e Plantio; o Mistério tem lápide acima). Estado em chaves KV próprias, o servidor decide
     // (sorteios, limites, calendário); a vista não traz saveId nem número por pessoa.
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
@@ -672,7 +755,6 @@ export async function handleGuild({ request, env }) {
     const salvoDe = opaco => g.members.find(m => ids[m] === opaco);
     const praca = async () => vistaDaPraca(env, g.id, id, g.members, ids, hoje);
     const plantio = async () => vistaDoPlantio(env, g, id, hoje);
-    const misterio = async () => vistaDoMisterio(env, g, id, hoje);
     const conflito = r => erro(r.reason.replace(/-/g, ' '), r.reason === 'no-plant' ? 404 : 409);
 
     if (action === 'claPraca') return json({ praca: await praca() });
@@ -713,22 +795,6 @@ export async function handleGuild({ request, env }) {
       if (!r.ok) return conflito(r);
       return json({ plantio: await plantio(), ...(r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {}) });
     }
-    if (action === 'claMisterio') return json({ misterio: await misterio() });
-    if (action === 'claMisterioEnviar') {
-      const r = await enviarMisterio(env, g, id);
-      if (!r.ok) return conflito(r);
-      return json({ misterio: await misterio() });
-    }
-    if (action === 'claMisterioTarefa') {
-      const r = await somarTarefa(env, g, id, hoje, body.taskId);
-      if (!r.ok) return erro('invalid task', 400);
-      return json({ counted: r.counted, ...(r.reason ? { reason: r.reason } : {}), misterio: await misterio() });
-    }
-    if (action === 'claMisterioClaim') {
-      const r = await resgatarMisterio(env, g, id);
-      if (!r.ok) return erro('nothing to claim', 404);
-      return json({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
-    }
   }
 
   if (action.startsWith('guildFeira')) {
@@ -744,9 +810,24 @@ export async function handleGuild({ request, env }) {
       if (r.reason === 'claimed') return erro('already claimed', 409, { receipt: r.claimed.receipt, claimed: r.claimed });
       return erro('nothing to claim', 404);
     }
+    // A FEIRA DE VERDADE (`_feiraLoja.js`): a oferta é da CONTA (não da guilda) e do dia; o servidor define itens e preços.
+    if (action === 'guildFeiraLoja') return json({ loja: await feiraLojaDoDia(env, id, hoje) });
+    if (action === 'guildFeiraLojaBuy') {
+      const r = await validarCompraFeiraLoja(env, id, hoje, typeof body.itemId === 'string' ? body.itemId : '');
+      if (!r.ok) return erro(r.reason === 'no-offer' ? 'no offer' : r.reason === 'no-item' ? 'no item' : r.reason, r.reason === 'no-offer' ? 404 : 409);
+      if (r.item.type === 'hex') return erro('hex item', 409);
+      await marcarCompraFeiraLoja(env, id, hoje, r.item.id);
+      return json({ ok: true, price: r.item.price, item: { id: r.item.id, kind: r.item.kind } });
+    }
     if (!g) return erro('no {g}', 404);
     const cartoes = await lerCartoes(env, g);
-    const estado = await lerEstadoFeira(env, g, hoje, { cartoes });
+    /** @type {any} */
+    let estado = await lerEstadoFeira(env, g, hoje, { cartoes });
+    // O DESAFIO DO MERCADOR da volta (`k` sintético): só vale se a volta de HOJE sorteou desafio e ele ainda não foi cumprido.
+    if ((action === 'guildFeiraTrailStart' || action === 'guildFeiraTrailDone') && ehDesafioK(body?.k)) {
+      if (body.k !== desafioK(hoje) || (await lerEncontro(env, id, hoje))?.tipo !== 'desafio') return erro('no trail', 409);
+      estado = estadoDoDesafio(hoje, estado.level);
+    }
     if (action === 'guildFeira') return json({ evento: await eventoDaFeira(env, g, id, hoje, estado) });
     if (action === 'guildFeiraAttack') {
       if (estado.phase !== 'boss') return erro(estado.phase === 'rest' && estado.done.lastKind === 'boss' ? 'boss dead' : 'no boss', 409);
@@ -769,7 +850,7 @@ export async function handleGuild({ request, env }) {
     if (action === 'guildFeiraTrailStart') {
       const r = await iniciarTrilha(env, g, id, hoje, estado);
       if (!r.ok) return erro(r.reason === 'already-cleared' ? 'already cleared' : 'no trail', 409);
-      return json({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado) });
+      return json({ trail: r.trail, evento: estado.desafio ? eventoDoDesafio(hoje, estado.level) : await eventoDaFeira(env, g, id, hoje, estado) });
     }
     if (action === 'guildFeiraTrailDone') {
       const r = await entregarTrilha(env, g, id, hoje, estado, body);
@@ -781,7 +862,7 @@ export async function handleGuild({ request, env }) {
         return erro(r.reason === 'no-start' ? 'not started' : 'no trail', 409);
       }
       await cartao(g);
-      return json({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+      return json({ cleared: true, reward: r.reward, receipt: r.receipt, evento: estado.desafio ? eventoDoDesafio(hoje, estado.level, true) : await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
     }
   }
 
@@ -828,11 +909,35 @@ export async function handleGuild({ request, env }) {
     await cartao(g);
     // O EVENTO DA VOLTA (Feira: Chefe ou Desafio): calculado DEPOIS de tudo acima, para que a Missão, o fenômeno e a seiva
     // fiquem idênticos; campo ADITIVO (cliente antigo ignora), ausente com a Feira desligada, e falha aqui nunca derruba o golpe.
+    /** @type {any} */
     let evento;
     if (feiraLigada(env)) {
       try { evento = await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes: cartoesDaRoda })); } catch (err) { console.warn('feira: evento indisponível', String(err)); evento = undefined; }
     }
-    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}) });
+    // A FEIRA DE VERDADE vira o MERCADOR (rara, ~8% das voltas; 12% com o buff): campo ADITIVO. Falha aqui nunca derruba o golpe.
+    const bonusLoja = (await clanTemBuff(env, g.id, 'feira').catch(() => false)) ? FEIRA_LOJA_PCT_BUFF : 0;
+    let feiraLoja;
+    if (feiraLigada(env)) {
+      try { await abrirFeiraLoja(env, id, hoje, bonusLoja); feiraLoja = (await feiraLojaDoDia(env, id, hoje)) ?? undefined; } catch (err) { console.warn('feira: loja indisponível', String(err)); feiraLoja = undefined; }
+    }
+    // O ENCONTRO DA VOLTA (`_encontro.js`): SEMPRE um. Sorteio por (conta, dia); o que não abre cai para o próximo; o achado só se nada mais abrir.
+    let achado;
+    if (feiraLigada(env)) {
+      try {
+        const sorteado = sortearEncontro(id, hoje, bonusLoja);
+        const ja = await lerEncontro(env, id, hoje);
+        const evChefe = evento && ((evento.kind === 'boss' && evento.canAttack) || (evento.kind === 'rest' && evento.claimable)) ? evento : null;
+        const desafioFeito = ja?.tipo === 'desafio' && ja.cumprido === true;
+        const tipo = ja ? ja.tipo : resolverEncontro(sorteado, { mercador: !!feiraLoja, desafio: true, chefe: !!evChefe });
+        if (!ja) await gravarEncontro(env, id, hoje, { tipo });
+        if (tipo === 'desafio' && !desafioFeito) evento = eventoDoDesafio(hoje, evento?.level ?? 1);
+        else if (tipo === 'chefe') evento = evChefe ?? evento;
+        else if (tipo === 'mercador') evento = undefined;
+        else if (tipo === 'achado') { evento = undefined; achado = achadoDoDia(id, hoje); }
+        if (tipo !== 'mercador') feiraLoja = undefined;
+      } catch (err) { console.warn('feira: encontro indisponível', String(err)); }
+    }
+    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}), ...(feiraLoja ? { feiraLoja } : {}), ...(achado ? { achado } : {}) });
   }
 
   if (action === 'guildRewards' || action === 'guildClaim') {

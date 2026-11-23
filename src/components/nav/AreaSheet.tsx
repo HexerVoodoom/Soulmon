@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
@@ -6,10 +6,20 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor, type NpcFrame } from './npcScale';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
+import { ModalFrame } from '../ui/ModalFrame';
+import { fundoDoLote } from '../../assets/soulmon/ui/moldura/fundos';
+import { CristalChama } from '../ui/CristalChama';
+import { Icon } from '../ui/Icon';
+import { useBackDimmed } from '../../utils/modalDepth';
+import { NavGlyph } from '../ui/NavGlyphs';
+import { AcoVoltarProvider, useAcoVoltarPilha } from './acoVoltar';
+
+/** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
+export const MOLDURA_MODAL = true;
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -25,7 +35,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -37,6 +47,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Override explícito do NPC (raro — testes/casos sem lote). Sem ele, usa
    *  `lotNpcArt(areaId, lotId)`. */
   npcArt?: string;
+  /** Um SEGUNDO busto, ao lado do primeiro (Restaurante no domingo: os dois chefs, 15/11/2026). Os dois encolhem para dividir a zona do NPC. */
+  npcArt2?: string;
   /** Nome + fala do NPC quando ele NÃO é de lote (NPC de função, `functionNpcVoice`). Sem ele, `lotNpcVoice`. */
   npcVoice?: { name: string; line: string };
   title: string;
@@ -52,6 +64,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   closeInSheet?: boolean;
   /** Esconde o voltar da folha: o conteúdo (o duelo do Torneio, com o `BattleStage`) traz o PRÓPRIO voltar padrão — duas setas era o bug de 27/10/2026. O voltar do sistema e o Escape seguem fechando. */
   hideClose?: boolean;
+  /** Enquadramento do NPC de função (sem lote), no lugar de `npcFrameFor`. */
+  npcFrame?: NpcFrame;
+  /** Rodapé FIXO da folha (ex.: as ações em lote da caixa de cartas): fica colado embaixo, fora do trecho rolável, com a safe-area. */
+  footer?: ReactNode;
+  /** Peça por cima da cena, na ZONA DO NPC, entre o NPC e o balão (ex.: o leque de tickets do Salão). Largura zero: o filho se posiciona sozinho. */
+  npcOverlay?: ReactNode;
+  /** Variante da moldura (só com `MOLDURA_MODAL`). `'aco'` (18/11/2026, decisão do dono: SÓ a Hexsmith) = a moldura de AÇO com runas
+   *  (`assets/soulmon/ui/hex-moldura/`): o ✕ entra no disco ESQUERDO do topo, o "i" no direito, o título na placa central e o cristal-chama no encaixe. */
+  moldura?: 'padrao' | 'aco';
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -60,9 +81,13 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   // L1 #24): foco inicial no primeiro focável (o fechar), Tab preso, fundo
   // `inert`, Escape e o foco DEVOLVIDO ao lote que abriu, nunca ao `<body>`.
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  // Com a moldura, o `ModalFrame` é o dono do encaixe do "i" (sobre o ornamento da arte); sem ela, o encaixe da linha do título.
   const { slot, slotRef } = useModalInfoSlot();
+  const acoVoltar = useAcoVoltarPilha();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
+  const frame = npcFrame ?? npcFrameFor(areaId, lotId);
+  const aco = MOLDURA_MODAL && moldura === 'aco';
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -94,7 +119,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        {!closeInSheet && !hideClose && (
+        {!closeInSheet && !hideClose && !aco && (
           <BackCircleButton
             data-area-sheet-close=""
             onClick={() => onClose()}
@@ -127,27 +152,37 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           }}
         >
           {/* Sem zoom, como antes de 07/10/2026: o <img> direto (a caixa vem da altura da zona); a base entra sob a folha só `NPC_BASE_UNDER_SHEET`. */}
-          <img
-            src={npcSrc}
-            alt=""
-            aria-hidden="true"
-            data-area-sheet-npc
-            style={{
-              height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
-              flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
-              transform: `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
-            }}
-          />
+          {[npcSrc, ...(npcArt2 ? [npcArt2] : [])].map((src, i, all) => (
+            <img
+              key={`${i}:${src}`}
+              src={src}
+              alt=""
+              aria-hidden="true"
+              data-area-sheet-npc
+              style={{
+                height: '100%', width: 'auto', maxWidth: `${all.length > 1 ? NPC_MAX_WIDTH_PCT * 0.45 : NPC_MAX_WIDTH_PCT}%`,
+                flex: all.length > 1 ? '0 1 auto' : 'none', minWidth: 0, objectFit: 'contain', objectPosition: 'bottom',
+                transform: frame
+                  ? `translateY(${100 * (NPC_BASE_UNDER_SHEET + frame.underSheet)}%) scale(${frame.zoom})`
+                  : `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
+                ...(frame ? { transformOrigin: 'left bottom', ...(frame.flushLeft ? { marginLeft: -12 } : {}) } : {}),
+                pointerEvents: 'none',
+                filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
+              }}
+            />
+          ))}
+          {npcOverlay}
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={npcVoice ? `fn:${npcVoice.name}` : lotId ? `${areaId}:${lotId}` : undefined} />
         </div>
 
-        <div
+        <SheetShell
           data-area-sheet
-          className="sm2-sheet-rise"
+          title={title}
+          fundo={fundoDoLote(areaId, lotId)}
+          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : 'sm2-sheet-rise'}
+          data-moldura-variante={aco ? 'aco' : undefined}
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
           style={{
@@ -159,38 +194,91 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             // range min/max: o 1/3 de cima da TELA, acima da folha, é do NPC.
             height: '66.6667dvh',
             flex: 'none',
-            background: 'var(--sm2-surface)',
-            borderRadius: '20px 20px 0 0',
-            display: 'flex', flexDirection: 'column',
-            boxSizing: 'border-box',
-            boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
-            overflow: 'hidden',
+            ...(MOLDURA_MODAL
+              // Aço: o cristal-chama sobe para fora do topo (o rolável tem a própria rolagem, então a casca pode transbordar).
+              ? { overflow: aco ? 'visible' : 'hidden' }
+              : {
+                background: 'var(--sm2-surface)',
+                borderRadius: '20px 20px 0 0',
+                display: 'flex', flexDirection: 'column',
+                boxSizing: 'border-box',
+                boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
+                overflow: 'hidden',
+              }),
           }}
         >
-          {closeInSheet && !hideClose && (
-            <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+          {aco && <CristalChama />}
+          {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} voltar={acoVoltar.voltar} voltarLabel={language === 'pt-BR' ? 'Voltar' : 'Back'} />}
+          {closeInSheet && !hideClose && !aco && (
+            <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
-          <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
-            <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
-              {title}
-            </h2>
-            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
-            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título. */}
-            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />
+          {/* Com a moldura (`MOLDURA_MODAL`) o TÍTULO mora na PLACA do topo (`ModalFrame title`, serifa dourada, centrado, reticências se longo) e esta
+              linha vira só os encaixes (start-slot, head-slot, "i"), pousados POR CIMA da moldura (z 4) sobre a placa e o disco do canto. */}
+          <div data-area-sheet-head style={MOLDURA_MODAL
+            ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
+            : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
+            {MOLDURA_MODAL
+              ? <span style={{ flex: 1 }} />
+              : <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>{title}</h2>}
+            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
+            {/* Sem moldura: o "i" ÚNICO da folha (`ModalInfo`) entra aqui, canto direito, na linha do título. Com ela o botão mora no ornamento da arte (`ModalFrame`). */}
+            {!MOLDURA_MODAL && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10, pointerEvents: 'auto' }} />}
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
               top: 0`) encostar no título sem vão — o conteúdo não aparece mais
               passando por trás numa faixa entre os dois. O respiro de cima é um
               espaçador que rola junto. */}
-          <div data-area-sheet-body style={{ flex: 1, overflowY: 'auto', padding: '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+          <div data-area-sheet-body style={MOLDURA_MODAL
+            // Com a moldura: o rolável começa sob a placa e vai até a borda de baixo — por baixo das peças —, com respiro (`--sm2-moldura-pad-*`) para o fim não ficar escondido.
+            ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
+            : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
-            <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
+            <AcoVoltarProvider value={aco ? acoVoltar.ctx : null}>
+              {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
+            </AcoVoltarProvider>
           </div>
-        </div>
+          {footer && (
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
+              {footer}
+            </div>
+          )}
+        </SheetShell>
       </div>
     </div>
   );
+}
+
+/** Os medalhões da moldura de AÇO (SÓ o glifo, alvo transparente ≥ 44 px). Tela principal: ✕ no disco ESQUERDO (apagado se algo abrir por cima).
+ *  Com TELA INTERNA aberta (`voltar`): Voltar no disco ESQUERDO e o ✕ no DIREITO, ativo, fechando o fluxo inteiro (decisão do dono, 23/11/2026). */
+function FecharAco({ label, onClose, voltar, voltarLabel }: { label: string; onClose: () => void; voltar: (() => void) | null; voltarLabel: string }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const dimmed = useBackDimmed(ref);
+  if (voltar) {
+    return (
+      <>
+        <button type="button" className="sm2-moldura-aco__fechar" data-aco-medalhao="" data-aco-voltar="" aria-label={voltarLabel} title={voltarLabel}
+          onClick={e => { e.stopPropagation(); voltar(); }}>
+          <NavGlyph name="arrow_back" size={24} tone="inherit" />
+        </button>
+        <button type="button" className="sm2-moldura-aco__fechar sm2-moldura-aco__fechar--dir" data-aco-medalhao="" data-area-sheet-close="" aria-label={label} title={label}
+          onClick={e => { e.stopPropagation(); onClose(); }}>
+          <Icon name="close" size={20} tone="inherit" />
+        </button>
+      </>
+    );
+  }
+  return (
+    <button ref={ref} type="button" className="sm2-moldura-aco__fechar" data-area-sheet-close="" aria-label={label} title={label}
+      disabled={dimmed} data-modal-dimmed={dimmed ? '' : undefined} onClick={e => { e.stopPropagation(); onClose(); }}>
+      <Icon name="close" size={20} tone="inherit" />
+    </button>
+  );
+}
+
+/** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
+function SheetShell({ fundo, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; title?: string }) {
+  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} title={title || undefined} {...props} /> : <div {...props} />;
 }

@@ -19,6 +19,8 @@ import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
+import { ResultBanner, SpriteFx, bannerForOutcome, type BannerSet } from '../ui/SpriteFx';
+import type { ResultBannerKind } from '../../utils/fxPackArt';
 import { useRewardReveal } from '../../hooks/useRewardReveal';
 import type { RevealStep } from '../../utils/rewardReveal';
 import { POP_STAGGER_MS, STAIRS_STAGGER_MS } from '../../utils/rewardReveal';
@@ -26,6 +28,11 @@ import { ENERGY_ICON, RECORD_SEAL_ICON, useRewardItemIcon, type RewardItemKind }
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CURRENCIES, emblemStyle } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
+import type { DailyEvent } from '../../utils/dailyMissions';
+import { essenceIconSrc, essenceName } from '../../utils/resultEssences';
+import { useResultExtras } from './ResultExtrasContext';
+import { TicketCost, useFunTicketCost } from '../play/TicketFan';
+import { noteMinigameOutcome } from '../../utils/usageTime';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
 export type ResultOutcome = 'win' | 'record' | 'calm' | 'tired';
@@ -62,6 +69,8 @@ export type ResultLedgerRow =
   | { key: string; kind: 'xp'; value: number }
   /** `itemKind` resolve o ícone pelo resolvedor único (`utils/rewardIcons`); `icon` é o escape para uma arte avulsa. */
   | { key: string; kind: 'item'; label: string; amount?: number; icon?: string; itemKind?: RewardItemKind }
+  /** Essência de um elemento (drop de inimigo derrotado): ícone do elemento + nome + ×qtd. */
+  | { key: string; kind: 'essence'; id: string; qty: number }
   | { key: string; kind: 'node'; label: string; node: ReactNode }
   | { key: string; kind: 'text'; label: string };
 
@@ -80,6 +89,8 @@ export interface ResultScreenProps {
   kind?: 'boss';
   pool?: ResultPool;
   outcome: ResultOutcome;
+  /** Par do título: `epic` = VICTORY/DEFEAT (Torneio); `game` = WIN/LOSE (minigames, padrão). */
+  bannerSet?: BannerSet;
   /** Nome do jogo, na barra (sem seta de voltar). */
   gameName: string;
   title: string;
@@ -102,6 +113,12 @@ export interface ResultScreenProps {
   notes?: ReactNode;
   /** Sprite do pet no visor (omitido = visor só com a cena). */
   petSrc?: string;
+  /** Sprite do adversário nos combates (à direita do banner): o vencedor anima com efeito, o que perdeu fica parado. Sem ele, só o pet. */
+  opponentSrc?: string;
+  /** O recurso que acabou (missão do dia): com ele a tela mostra a linha da missão do dia desse jogo. */
+  dailyEvent?: DailyEvent;
+  /** Banner de arte que substitui o do desfecho (fim normal "Complete" da Chuva de Almas). */
+  bannerKind?: ResultBannerKind;
   /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
   visorOpponent?: ReactNode;
   /** `background` da cena do visor. */
@@ -109,6 +126,10 @@ export interface ResultScreenProps {
   /** Ações. `onPlayAgain` ausente = só o botão de sair. */
   playAgainLabel?: string;
   onPlayAgain?: () => void;
+  /** Ícone do botão de revanche: o do PRÉDIO onde mora a atividade (`utils/lotIcons.ts`). Ausente = `replay`. */
+  playAgainIcon?: string;
+  /** Arte (PNG) do prédio no botão, no lugar do glifo: a mesma da pílula do mapa (`lotIconArt`). */
+  playAgainArt?: string;
   /** Sem `onHome` não há botão de sair (o Torneio tem uma ação só: "Continuar"). */
   homeLabel?: string;
   onHome?: () => void;
@@ -224,12 +245,17 @@ const MOOD_CLASS: Record<string, string> = { happy: 'sm-result-visor--happy', ca
 export function ResultScreen(p: ResultScreenProps) {
   const isPt = p.language === 'pt-BR';
   const record = p.outcome === 'record';
+  useEffect(() => { noteMinigameOutcome(p.outcome === 'tired' ? 1 : 0); }, [p.outcome]); // métricas: como a partida terminou
+  const ticketCost = useFunTicketCost(); // jogos do Salão: o "jogar de novo" gasta 1 ticket (09/11/2026)
   const mode = p.mode ?? 'page';
   const { step, skip, animated } = useResultReveal({ record, quick: !!p.quick, instant: !!p.instant });
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [summary, setSummary] = useState('');
 
-  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0));
+  const extras = useResultExtras();
+  // Teto diário gasto: o livro vem vazio porque o funil creditou 0, e "rodada leve" soaria como culpa do jogador. Texto neutro.
+  const emptyLedgerLine = p.emptyLedgerLine && extras && extras.bitsToday >= extras.bitsCap ? (isPt ? 'Sem Bits desta vez.' : 'No Bits this time.') : p.emptyLedgerLine;
+  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0) && !(r.kind === 'essence' && !(r.qty >= 1)));
   const strip = (p.strip ?? []).filter(c => !(record && c.hideOnRecord));
   const stats = p.stats ?? [];
   const honorName = CURRENCIES.emblems.name[isPt ? 'pt' : 'en'];
@@ -255,8 +281,8 @@ export function ResultScreen(p: ResultScreenProps) {
     p.deepest ? `${p.deepest.label}: ${p.deepest.value}` : '',
     recordText,
     ...stats.map(c => `${c.label}: ${typeof c.value === 'number' || typeof c.value === 'string' ? c.value : ''}`),
-    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
-    ledger.length === 0 ? p.emptyLedgerLine : '',
+    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.kind === 'essence' ? `${essenceName(r.id, isPt)} ×${r.qty}` : r.label),
+    ledger.length === 0 ? emptyLedgerLine : '',
   ].filter(Boolean).join('. ');
 
   // A região viva existe vazia desde a montagem e recebe o resumo logo depois (leitor de tela só anuncia mudança).
@@ -288,6 +314,9 @@ export function ResultScreen(p: ResultScreenProps) {
   const mood = MOOD[p.outcome];
   const ledgerShown = ledger.length === 0 || reveal.isShown(`row-${ledger[0].key}`);
   const notesOn = step >= RESULT_FINAL_STEP && !reveal.animated;
+  const mission = p.dailyEvent ? extras?.missions[p.dailyEvent] : undefined;
+  /** A barra de Bits do dia só aparece com o teto em 100% (pedido do dono, 03/11/2026). */
+  const bitsCapped = !!extras && extras.bitsToday >= extras.bitsCap;
 
   return (
     <div
@@ -310,17 +339,19 @@ export function ResultScreen(p: ResultScreenProps) {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '12px 16px 16px' }}>
         <p style={{ ...sm2Hint, textAlign: 'center' }} data-result-game>{p.gameName}</p>
 
-        <div className={`sm-result-visor ${MOOD_CLASS[mood]}${record ? ' sm-result-visor--record' : ''}${animated ? ' sm-result-visor--live' : ''}`} aria-hidden="true">
-          <GameVisor height={84} scene={p.scene}>
-            {p.petSrc && (
-              <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: p.visorOpponent ? 8 : '50%', marginLeft: p.visorOpponent ? 0 : -64, bottom: 6, width: 128, height: 128 }}>
-                <VisorSprite src={p.petSrc} style={{ left: 0, bottom: 0 }} data-visor-pet />
-              </div>
-            )}
-            {p.visorOpponent}
-            {(record || p.outcome === 'win') && step >= 1 && <div className="sm-result-sparks"><VisorSparks /></div>}
-          </GameVisor>
-        </div>
+        {p.visorOpponent && (
+          <div className={`sm-result-visor ${MOOD_CLASS[mood]}${record ? ' sm-result-visor--record' : ''}${animated ? ' sm-result-visor--live' : ''}`} aria-hidden="true">
+            <GameVisor height={84} scene={p.scene}>
+              {p.petSrc && (
+                <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: p.visorOpponent ? 8 : '50%', marginLeft: p.visorOpponent ? 0 : -64, bottom: 6, width: 128, height: 128 }}>
+                  <VisorSprite src={p.petSrc} style={{ left: 0, bottom: 0 }} data-visor-pet />
+                </div>
+              )}
+              {p.visorOpponent}
+              {(record || p.outcome === 'win') && step >= 1 && <div className="sm-result-sparks"><VisorSparks /></div>}
+            </GameVisor>
+          </div>
+        )}
 
         {/* O título e a frase ficam na leitura (o foco inicial é o título); hero, selo, faixa, livro e notas vão ao leitor pela região viva. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', maxWidth: 348 }}>
@@ -333,7 +364,19 @@ export function ResultScreen(p: ResultScreenProps) {
             >
               {p.title}
             </h2>
-            {p.line && <p style={{ margin: '4px 0 0', fontSize: 'var(--sm2-text-sm)', lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)' }} data-result-line {...p.lineAttrs}>{p.line}</p>}
+            {p.line && <p className="sm2-sr-only" data-result-line {...p.lineAttrs}>{p.line}</p>}
+          </div>
+
+          {/* O Soulmon colado no título do resultado, com um pouco de sobreposição (aprovado pelo dono, 03/11/2026). Sem o box do visor. */}
+          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 150 }} data-result-banner-wrap>
+            {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', ...(p.opponentSrc ? { left: 4 } : { right: 24 }), top: '50%', marginTop: -64 }} data-result-reward-fx />}
+            {!p.visorOpponent && p.petSrc && (
+              <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className={p.opponentSrc && p.outcome === 'tired' ? 'sm-result-loser' : 'sm-result-pet-free'} style={{ width: p.opponentSrc ? 104 : 128, height: p.opponentSrc ? 104 : 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
+            )}
+            <ResultBanner kind={p.bannerKind ?? bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />
+            {!p.visorOpponent && p.opponentSrc && (
+              <img src={p.opponentSrc} alt="" aria-hidden="true" draggable={false} data-result-opponent className={p.outcome === 'tired' ? 'sm-result-pet-free' : p.outcome === 'calm' ? undefined : 'sm-result-loser'} style={{ width: 104, height: 104, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginLeft: -30, flex: 'none' }} />
+            )}
           </div>
 
           {p.hero && (
@@ -398,20 +441,23 @@ export function ResultScreen(p: ResultScreenProps) {
             </div>
           )}
 
-          {(ledger.length > 0 || p.emptyLedgerLine) && (
+          {(ledger.length > 0 || emptyLedgerLine) && (
             <div aria-hidden="true" style={{ width: '100%' }} data-result-ledger>
               {ledger.length > 0 ? (
-                <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-result-loot>
+                  {(record || p.outcome === 'win') && <div style={{ flex: 'none', width: 104, height: 104, marginLeft: -4 }}>{ledgerShown && <SpriteFx sheet="bau" size={104} ms={900} still="last" data-result-chest-fx />}</div>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <div className={`sm-result-in${ledgerShown ? ' sm-result-in--on' : ''}`} style={{ ...sm2Hint, fontWeight: 500, marginBottom: 4 }}>{p.ledgerLabel ?? (isPt ? 'Ganhou' : 'Earned')}</div>
                   {ledger.map(r => {
                     const key = `row-${r.key}`;
                     const shown = reveal.isShown(key);
                     return (
-                      <div key={r.key} className={rowCls(key)} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
+                      <div key={r.key} className={`${rowCls(key)}${shown && !still ? ' sm-result-fromchest' : ''}`} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
                           {r.kind === 'item' && <ItemRowIcon r={r} on={shown} still={still} />}
                           {r.kind === 'xp' && <Icon name="star" size={20} fill={1} tone="gold" />}
-                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.kind === 'xp' ? 'XP' : r.label}
+                          {r.kind === 'essence' && <RewardIcon src={essenceIconSrc(r.id) ?? null} size={24} on={shown} still={still} data-result-essence-icon={r.id} />}
+                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.kind === 'xp' ? 'XP' : r.kind === 'essence' ? essenceName(r.id, isPt) : r.label}
                         </span>
                         {r.kind === 'bits' && (
                           <RewardPop on={shown} still={still} data-result-bits-pop>
@@ -421,13 +467,38 @@ export function ResultScreen(p: ResultScreenProps) {
                         {r.kind === 'honor' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'xp' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-xp style={{ fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
+                        {r.kind === 'essence' && <span className="sm2-num" data-result-essence={r.id} style={{ fontWeight: 600 }}>×{r.qty}</span>}
                         {r.kind === 'item' && r.amount ? <span className="sm2-num" style={{ fontWeight: 600 }}>×{r.amount}</span> : null}
                       </div>
                     );
                   })}
-                </>
+                  </div>
+                </div>
               ) : (
-                <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{p.emptyLedgerLine}</p>
+                <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{emptyLedgerLine}</p>
+              )}
+            </div>
+          )}
+
+          {(mission || bitsCapped) && (
+            <div aria-hidden="true" className={`sm-result-in${notesOn ? ' sm-result-in--on' : ''}`} data-result-extras style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {mission && (
+                <div data-result-mission style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                  <span style={{ ...sm2Hint, textAlign: 'left', minWidth: 0 }}>{mission.label}</span>
+                  <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', color: mission.status === 'available' ? 'var(--sm2-ink)' : 'var(--sm2-accent, var(--sm2-ink))' }}>
+                    {mission.status === 'claimed' ? (isPt ? 'Resgatada' : 'Claimed') : mission.status === 'ready' ? (isPt ? 'Pronta' : 'Ready') : `${mission.count}/${mission.target}`}
+                  </span>
+                </div>
+              )}
+              {bitsCapped && extras && (
+                <div data-result-bitscap style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Teto diário de Bits (pedido do dono 04/11): cor e ícone dos Bits, texto visível, longe do baú. */}
+                  <span style={{ ...sm2Hint, display: 'inline-flex', alignItems: 'center', gap: 6, textAlign: 'left' }} data-result-bitscap-label>
+                    {isPt ? 'Você já ganhou o máximo de hoje:' : "You've earned today's max:"}
+                    <BitsAmount value={extras.bitsCap} size={14} />
+                  </span>
+                  <PixelMeter ratio={1} tone="cyan" height={8} label={isPt ? `Bits de hoje: ${extras.bitsToday} de ${extras.bitsCap} (máximo)` : `Today's Bits: ${extras.bitsToday} of ${extras.bitsCap} (max)`} />
+                </div>
               )}
             </div>
           )}
@@ -439,15 +510,19 @@ export function ResultScreen(p: ResultScreenProps) {
       </div>
 
       {/* Dock fixo, ativo desde 0 ms; sem seta de voltar duplicada. Regra do dono (30/10/2026): ESQUERDA = sair/voltar/cancelar, DIREITA = continuar/avançar/revanche. */}
-      <div data-result-dock style={{ display: 'flex', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
-        {p.onHome && (
-          <button type="button" data-result-home onClick={p.onHome} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {p.homeLabel}
+      <div data-result-dock style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
+        {p.onPlayAgain && (
+          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), width: '100%', padding: '0 8px', gap: 8 }}>
+            {p.playAgainArt
+              ? <img src={p.playAgainArt} alt="" aria-hidden="true" width={28} height={28} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
+              : <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />}
+            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
+            {ticketCost && <TicketCost />}
           </button>
         )}
-        {p.onPlayAgain && (
-          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
+        {p.onHome && (
+          <button type="button" data-result-home onClick={p.onHome} style={{ ...sm2Button('outline'), width: '100%', padding: '0 8px' }}>
+            {p.homeLabel}
           </button>
         )}
       </div>

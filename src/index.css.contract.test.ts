@@ -48,7 +48,10 @@ beforeAll(async () => {
   const fs = await import(/* @vite-ignore */ specFs);
   const { fileURLToPath } = await import(/* @vite-ignore */ specUrl);
   const aqui = fileURLToPath(new URL('.', import.meta.url));
-  cssRaw = fs.readFileSync(`${aqui}index.css`, 'utf8');
+  // + CSS colocado ao componente lazy (fora do `index.css` para não pesar o CSS de entrada, `orcamentoDeBytes.contract`).
+  cssRaw = fs.readFileSync(`${aqui}index.css`, 'utf8') + '\n' + fs.readFileSync(`${aqui}components/ChatPanel.css`, 'utf8');
+  // + CSS que o próprio componente injeta num <style> (const CSS/CHAMA_CSS = template, ex.: WeeklyRetroModal, ChamaGame): a classe EXISTE, só mora ao lado do uso.
+  for (const [, src] of ARQUIVOS) for (const blo of src.matchAll(/\bconst [A-Z_]*CSS = `([\s\S]*?)`;/g)) cssRaw += '\n' + blo[1];
 });
 
 /** Toda classe que o CSS de fato define (desescapando `.w-\[44px\]`, `.top-1\/2`). */

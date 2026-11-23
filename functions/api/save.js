@@ -8,35 +8,50 @@
 // dar créditos infinitos.
 
 import { VALID_ID, readEntitlement, publicView, comEntitlementLegivel } from './_entitlements.js';
+import { COUNTER_RING } from './_elementoBase.js';
+import { enforceWidgetFramesOwned } from './_widgetFrames.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { takeIpQuota } from './_ipHash.js';
 import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { verifiedBetaFull } from './_betaFull.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { detectarRegressao, intencaoDeRegressao, guardarBackupAntesDeRegressao } from './_saveGuard.js';
 import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
-import { sanitizeHexsmith } from './_hexsmith.js';
+import { enforceStoredHexOwned, forgeOnServer } from './_hexsmith.js';
+import { renameOnServer } from './_hexRename.js';
+import { feiraLigada } from './_feira.js';
+import { feiraHexOnServer, validarCompraFeiraLoja, marcarCompraFeiraLoja, diaDoJogadorValido } from './_feiraLoja.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
+import { recordJournalDays, enforceWeeklyMissions, enforceDailyMissions } from './_missionEvents.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
+import { sanitizeLibrarySeen, sanitizeLibraryForms } from './_libraryMemory.js';
 import { touchLastLogin, recoverStrayFromSave } from './_strays.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeMercMission } from './_mercMission.js';
+import { sanitizeBossShards } from './_bossShards.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
-import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
+import { enforceImmutableElementoJornada } from './_elementoJornada.js';
+import { enforceFunTickets } from './_funTickets.js';
+import { enforceDuelInvites } from './_duelInvites.js';
+import { enforceGlitchtamaUsadoEm } from './_glitchtama.js';
+import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaSeason, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
+import { enforceFundador, grantFundadorOnServer } from './_fundador.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { medirOrcamentoDeBits, registrarObservacao, metaDoOrcamentoGravada, metaDoSaldo } from './_bitsOrcamento.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +65,7 @@ const CORS = {
 
 /** Campos que o cliente NUNCA define — sempre vêm do entitlement do servidor. */
 const SERVER_OWNED_FIELDS = ['accountTier', 'credits'];
+const isPlainObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /**
  * Teto do save serializado. O KV aceita 25 MB por chave; sem teto nenhum, um
@@ -66,7 +82,7 @@ function clampCaderno(raw) {
     if (!e || typeof e !== 'object') continue;
     if (typeof e.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(e.id)) continue;
     if (typeof e.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) continue;
-    if (!['tres-coisas', 'gratidao', 'aprendi', 'livre'].includes(e.formato)) continue;
+    if (!['tres-coisas', 'gratidao', 'aprendi', 'importa', 'livre'].includes(e.formato)) continue;
     if (typeof e.text !== 'string' || !e.text.trim() || !Number.isFinite(Number(e.at))) continue;
     out.push({ id: e.id, day: e.day, formato: e.formato, text: e.text.slice(0, CADERNO_MAX_CHARS), at: Number(e.at) });
     if (out.length >= CADERNO_MAX_ENTRIES) break;
@@ -275,7 +291,7 @@ async function onRequestBruto({ request, env }) {
           await kvOrThrow(env).put(saveId, raw, {
             expirationTtl: SAVE_TTL_SECONDS,
             // `f` (1ª gravação) atravessa a renovação: ela só renova o PRAZO, nunca a data que o teto S1 lê.
-            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata) },
+            metadata: { t: Date.now(), ...firstSeenMeta(metadata), ...revisionMeta(metadata), ...metaDoOrcamentoGravada(metadata), ...metaDoSaldo(/** @type {any} */ (metadata)?.g) },
           });
         } else {
           console.info('save: renovação de TTL pulada, conteúdo mudou entre leitura e renovação', { saveIdPrefix: saveId.slice(0, 8) });
@@ -299,6 +315,114 @@ async function onRequestBruto({ request, env }) {
     return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS });
   }
 
+  // FORJA DA HEXSMITH (REGISTRO §216): `POST ?id=&action=hexForge { itemId, baseRevision? }`. Lê o save GRAVADO, confere o saldo,
+  // debita e entrega o HEX na MESMA escrita (revisão +1; ADR-004: mesmo intervalo residual get->put do POST normal). Item já possuído
+  // = 200 `already`, sem cobrar nem gravar. Devolve os campos que mudaram para o cliente aplicar.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'hexForge') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = forgeOnServer(stored, body?.itemId);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'invalid' ? 400 : 402, headers: CORS });
+    const campos = (st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, foodInventory: st.foodInventory, equipment: st.equipment, bitsOrigin: st.bitsOrigin });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
+  // CONCEDENTE DEV do Conjunto Fundador (23/11/2026, `_fundador.js`): `POST ?id=&action=fundadorGrant`. SÓ o e-mail do dono (`ADMIN_EMAILS`, token
+  // verificado e DESTE save): concede os 4 prêmios + posse na própria conta, na mesma escrita (revisão +1). Qualquer outro caso = 403 idêntico.
+  // Idempotente (200 `already`). Nunca loga e-mail nem saveId completo.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'fundadorGrant') {
+    if (!(await verifiedAdmin(env, request, saveId)).admin) return Response.json({ error: 'forbidden' }, { status: 403, headers: CORS });
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = grantFundadorOnServer(stored);
+    const campos = (st) => ({ fundadorDias: st.fundadorDias, fundadorPremios: st.fundadorPremios, ownedBackgrounds: st.ownedBackgrounds, ownedFrames: st.ownedFrames, ownedFurniture: st.ownedFurniture });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    console.log(JSON.stringify({ event: 'fundador_grant_dev' }));
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
+  // RENOMEAR NA HEXSMITH (11/11/2026, `_hexRename.js`): `POST ?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }`.
+  // Valida o nome (mesma régua do apelido), debita HEX_RENAME_COST Bits GANHOS e grava o nome na MESMA escrita (revisão +1). Mesmo nome = 200 `already`.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'hexRename') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = renameOnServer(stored, body?.kind, body?.nome);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'bits' ? 402 : 400, headers: CORS });
+    const campos = (st) => ({ gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin, soulmonMeta: st.soulmonMeta, especialNome: st.especialNome, especialNomeAt: st.especialNomeAt });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
+  // ITEM DA HEXSMITH NA FEIRA DE VERDADE (10/11/2026, `_feiraLoja.js`): `POST ?id=&action=hexFair { itemId, dayKey, baseRevision? }`.
+  // A posse de HEX é do servidor (§216), então a compra do item com desconto também é: confere que o item está na OFERTA de hoje (sorteada
+  // e gravada pelo servidor), que não foi comprado, e debita SÓ o preço da oferta em Bits ganhos (sem ingredientes). Mesma escrita da forja.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'hexFair') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
+    if (!feiraLigada(env)) return Response.json({ error: 'not available' }, { status: 404, headers: CORS });
+    if (!diaDoJogadorValido(body?.dayKey)) return Response.json({ error: 'invalid' }, { status: 400, headers: CORS });
+    const v = await validarCompraFeiraLoja(env, saveId, body.dayKey, typeof body?.itemId === 'string' ? body.itemId : '');
+    if (!v.ok) return Response.json({ error: v.reason }, { status: v.reason === 'no-offer' ? 404 : 409, headers: CORS });
+    if (v.item.type !== 'hex') return Response.json({ error: 'not hex' }, { status: 409, headers: CORS });
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = feiraHexOnServer(stored, v.item.id, v.item.price);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'invalid' ? 400 : 402, headers: CORS });
+    const campos = (st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    await marcarCompraFeiraLoja(env, saveId, body.dayKey, v.item.id);
+    return Response.json({ ok: true, already: false, price: v.item.price, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
   if (request.method === 'POST') {
     const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
     if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
@@ -317,9 +441,24 @@ async function onRequestBruto({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    // Recibos da jornada do foco já creditados (§247): só a forma. Quem paga é `/api/focus-journey` (razão `fjd:`).
+    if ('journeyCredited' in state) {
+      const j = state.journeyCredited;
+      const ok = j && typeof j === 'object' && typeof j.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(j.day) && Array.isArray(j.ids);
+      if (ok) state.journeyCredited = { day: j.day, ids: [...new Set(j.ids.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 60))].slice(-80) };
+      else delete state.journeyCredited;
+    }
+    // Cartas do Mensageiro já creditadas (§241): só a forma e o teto.
+    if ('mailClaimed' in state) {
+      const q = Array.isArray(state.mailClaimed) ? state.mailClaimed.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 80).slice(-100) : [];
+      if (q.length) state.mailClaimed = q; else delete state.mailClaimed;
+    }
+    // Chave do Calabouço (§239): só a forma; como `focusKeyDay` e `rogueDungeon`, nasce de sessão guardada no aparelho, o servidor não a prova.
+    if ('dungeonKeyDay' in state && !(typeof state.dungeonKeyDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(state.dungeonKeyDay))) delete state.dungeonKeyDay;
     if ('equippedFrame' in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
     if ('avatarId' in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    if ('widgetFrame' in state && !COUNTER_RING.includes(state.widgetFrame)) state.widgetFrame = null;
     // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
     // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
     // corrigido. Limite honesto: `totalXP` tambem e escrito pelo cliente (ver `_bond.js`); o teto de 5% do canal
@@ -329,8 +468,6 @@ async function onRequestBruto({ request, env }) {
     // fragmentos sao clampados. O bonus do duelo e recalculado daqui (`_duel.js`) e o teto de 5% limita um save forjado.
     if ('equipment' in state) state.equipment = sanitizeEquipment(state.equipment);
     if ('forge' in state) state.forge = sanitizeForge(state.forge);
-    // Hexsmith (01/11/2026): item fora do catalogo, slot forjado e posse repetida saem; o duelo le os overrides daqui (`_duel.js`).
-    if ('hexsmith' in state) state.hexsmith = sanitizeHexsmith(state.hexsmith);
     if ('bitsOrigin' in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;
@@ -376,12 +513,26 @@ async function onRequestBruto({ request, env }) {
       const q = sanitizeStrayPlayersSeen(state.strayPlayersSeen);
       if (q) state.strayPlayersSeen = q; else delete state.strayPlayersSeen;
     }
+    // Memória da Biblioteca (10/11/2026): ids vistos (≤ 500) e formas vistas por jogador (≤ 500 × 8). Espelhos de `sanitizeSeenIds`/`sanitizeFormsMap` (cliente).
+    if ('librarySeen' in state) {
+      const q = sanitizeLibrarySeen(state.librarySeen);
+      if (q) state.librarySeen = q; else delete state.librarySeen;
+    }
+    if ('libraryForms' in state) {
+      const q = sanitizeLibraryForms(state.libraryForms);
+      if (q) state.libraryForms = q; else delete state.libraryForms;
+    }
     // Conquistas pagas (30/10/2026): lista fechada de ids. Espelho de `sanitizeConquistasPagas` (cliente).
     if ('conquistasPagas' in state) {
       const q = sanitizeConquistasPagas(state.conquistasPagas);
       if (q) state.conquistasPagas = q; else delete state.conquistasPagas;
     }
     // Guilda dos Mercenarios (30/10/2026): {day, ordem, activityId, done}, so a forma. Espelho de `sanitizeMercMission` (cliente).
+    // Fragmento de Boss (03/11/2026): inteiro 0..1e6, so a forma. Espelho de `sanitizeBossShards` (cliente).
+    if ('bossShards' in state) {
+      const q = sanitizeBossShards(state.bossShards);
+      if (q !== undefined) state.bossShards = q; else delete state.bossShards;
+    }
     if ('mercMission' in state) {
       const q = sanitizeMercMission(state.mercMission);
       if (q) state.mercMission = q; else delete state.mercMission;
@@ -403,6 +554,30 @@ async function onRequestBruto({ request, env }) {
     }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    // Molduras do WIDGET V-Pet (04/11/2026): o SERVIDOR decide a posse (`_widgetFrames.js`). O `widgetFramesOwned` do cliente NUNCA entra: vale o
+    // que já estava gravado (moldura legítima de quem já tem não some) mais a do elemento do pet, para quem evoluiu. A comprada vive só em `ent.frames`.
+    if ('widgetFramesOwned' in state) {
+      let gravado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"widgetFramesOwned"')) {
+        try { gravado = JSON.parse(prev.value).widgetFramesOwned; } catch { gravado = undefined; }
+      }
+      state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
+    }
+    // Chave do Calabouço (§247): dia NOVO só entra se a jornada do foco daquele dia foi concluída no razão do servidor (`fjd:`);
+    // o que já estava gravado fica. Fecha a brecha do §239 (a chave nascia só no aparelho).
+    if (typeof state.dungeonKeyDay === 'string') {
+      let gravado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"dungeonKeyDay"')) {
+        try { gravado = JSON.parse(prev.value).dungeonKeyDay; } catch { gravado = undefined; }
+      }
+      if (state.dungeonKeyDay !== gravado) {
+        let razao = null;
+        try { razao = JSON.parse((await kvOrThrow(env).get(`fjd:${saveId}:${state.dungeonKeyDay}`)) || 'null'); } catch { razao = null; }
+        if (!(Number(razao?.done) >= 1)) {
+          if (typeof gravado === 'string') state.dungeonKeyDay = gravado; else delete state.dungeonKeyDay;
+        }
+      }
+    }
     // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,
     // `familia` na lista fechada, `plano` recalculado dos galhos) e um estagio JA gravado no servidor nao e sobrescrito.
     // So parseia o gravado quando o campo existe nele (save de 5 MB nao e relido a toa). NUNCA recusa o save: o que nao
@@ -416,13 +591,74 @@ async function onRequestBruto({ request, env }) {
       if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
     }
+    // §232: sorte e estágio já gravados não mudam. Sem o campo no que chegou, nada muda (reset/renascimento o apagam).
+    if ('elementoJornada' in state) {
+      let guardado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"elementoJornada"')) {
+        try { guardado = JSON.parse(prev.value).elementoJornada; } catch { guardado = undefined; }
+      }
+      const el = enforceImmutableElementoJornada(state.elementoJornada, guardado);
+      if (el) state.elementoJornada = el; else delete state.elementoJornada;
+    }
+    // Pagamento da Hexsmith (REGISTRO §216, `_hexsmith.js` › `enforceHexPayment`): HEX novo na posse sem a queda correspondente de
+    // poções/fragmentos/Bits em relação ao gravado é REVERTIDO (o resto do save segue). Só parseia o gravado quando há item da posse ausente do texto gravado.
+    // Hexsmith (REGISTRO §216): a POSSE de HEX só cresce pela ação `hexForge` (o servidor debita e entrega). Aqui `owned` = o do save
+    // GRAVADO, sempre; o `equipped` do cliente vale para item possuído no slot certo (o duelo lê os overrides daqui, `_duel.js`).
+    // Só parseia o gravado quando ele tem o campo.
+    {
+      const gravadoTemHex = typeof prev?.value === 'string' && prev.value.includes('"hexsmith"');
+      if (gravadoTemHex || 'hexsmith' in state) {
+        let gravado;
+        if (gravadoTemHex) { try { gravado = JSON.parse(prev.value); } catch { gravado = undefined; } }
+        const veio = 'hexsmith' in state ? state.hexsmith : undefined;
+        state.hexsmith = enforceStoredHexOwned(veio, gravado);
+        const pedidos = Array.isArray(veio?.owned) ? veio.owned : [];
+        const ignorados = pedidos.filter((id) => typeof id === 'string' && !state.hexsmith.owned.includes(id));
+        if (ignorados.length) console.warn('save: HEX fora da posse gravada ignorado', { saveIdPrefix: saveId.slice(0, 8), ignorados: ignorados.slice(0, 10) });
+      }
+    }
+    // Conjunto Fundador (23/11/2026, `_fundador.js`): dias nunca diminuem, ids de prêmio em UNIÃO com o gravado (cliente antigo pode regravar sem o campo).
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"fundador');
+      if (temGravado || 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state) {
+        let gravado;
+        if (temGravado) { try { gravado = JSON.parse(prev.value); } catch { gravado = undefined; } }
+        enforceFundador(state, gravado);
+      }
+    }
+    // Missoes validadas no servidor (12/11/2026, REGISTRO §307, `_missionEvents.js`): semanais journal-days / focus-days / gift-sent e a diaria
+    // d-presente so contam o que o servidor confirmou (entrada do Caderno salva, jornada do foco concluida com recibo, presente aceito).
+    // O journal e registrado AQUI (as entradas vem neste POST), antes da conferencia; o resto ja foi gravado pelas rotas dos eventos.
+    // Monotonico: nunca baixa o ja gravado, nunca sobe alem do razao. Melhor esforco: falha de KV no razao nao recusa o save.
+    {
+      const temSemanal = isPlainObj(state.weeklyMissions) && (state.weeklyMissions.counts !== undefined || state.weeklyMissions.claimed !== undefined);
+      const temDiaria = isPlainObj(state.dailyMissions);
+      if (Array.isArray(state.caderno) && state.caderno.length) {
+        try { await recordJournalDays(kvOrThrow(env), saveId, state.caderno); } catch (err) { console.warn('save: razao do journal indisponivel', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) }); }
+      }
+      if (temSemanal || temDiaria) {
+        let gravado = {};
+        if (typeof prev?.value === 'string' && (prev.value.includes('"weeklyMissions"') || prev.value.includes('"dailyMissions"'))) {
+          try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; }
+        }
+        try {
+          if (temSemanal) state.weeklyMissions = await enforceWeeklyMissions(kvOrThrow(env), saveId, state.weeklyMissions, gravado.weeklyMissions);
+          if (temDiaria) state.dailyMissions = await enforceDailyMissions(kvOrThrow(env), saveId, state.dailyMissions, gravado.dailyMissions);
+        } catch (err) {
+          // Sem o razao nao ha como provar: o que veio de NOVO nessas missoes e descartado (volta ao gravado), o resto do save segue.
+          console.warn('save: razao das missoes indisponivel, mantido o gravado', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+          if (temSemanal) { if (gravado.weeklyMissions !== undefined) state.weeklyMissions = gravado.weeklyMissions; else delete state.weeklyMissions; }
+          if (temDiaria) { if (gravado.dailyMissions !== undefined) state.dailyMissions = gravado.dailyMissions; else delete state.dailyMissions; }
+        }
+      }
+    }
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
     // crescem dentro do dia e o dia so anda para a frente (ate o dia do servidor + 1). Apagar o save local ou voltar o contador nao
     // devolve camada nem janela; omitir o campo mantem o gravado. So parseia o gravado quando algum dos dois campos existe nele.
     let ddAntes; let ddDepois; let recAntes; let recDepois;
     {
-      const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
-      if (temGravado || 'dungeonDaily' in state || 'checkIns' in state || 'arenaReroll' in state || 'essences' in state || 'essenceAway' in state || 'essenceSpent' in state) {
+      const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"arenaLadder"') || prev.value.includes('"arenaSeason"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
+      if (temGravado || 'dungeonDaily' in state || 'checkIns' in state || 'arenaReroll' in state || 'arenaLadder' in state || 'arenaSeason' in state || 'essences' in state || 'essenceAway' in state || 'essenceSpent' in state) {
         let gravado = {};
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
@@ -434,6 +670,9 @@ async function onRequestBruto({ request, env }) {
         if (ci) state.checkIns = ci; else delete state.checkIns;
         const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
         if (ar) state.arenaReroll = ar; else delete state.arenaReroll;
+        const al = enforceArenaSeason({ ladder: state.arenaLadder, season: state.arenaSeason }, { ladder: gravado.arenaLadder, season: gravado.arenaSeason });
+        if (al.ladder > 0) state.arenaLadder = al.ladder; else delete state.arenaLadder;
+        if (al.season) state.arenaSeason = al.season; else delete state.arenaSeason;
         // Essências (28/10/2026, REGISTRO §183): por elemento só crescem; o contador da descida automática segue a regra do arenaReroll.
         const es = enforceEssences(state.essences, gravado.essences, state.essenceSpent, gravado.essenceSpent);
         if (es && Object.keys(es).length) state.essences = es; else delete state.essences;
@@ -442,6 +681,37 @@ async function onRequestBruto({ request, env }) {
         if (esp && Object.keys(esp).length) state.essenceSpent = esp; else delete state.essenceSpent;
         const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
         if (ea) state.essenceAway = ea; else delete state.essenceAway;
+      }
+    }
+    // Tickets dos minijogos (09/11/2026, `_funTickets.js`): gasto so desce, lote novo so com posse viva <= 2, teto 5, validade 24 h.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"funTickets"');
+      if (temGravado || 'funTickets' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const ft = enforceFunTickets(state.funTickets, gravado.funTickets);
+        if (ft) state.funTickets = ft; else delete state.funTickets;
+      }
+    }
+    // Convite de Duelo (REGISTRO §458, `_duelInvites.js`): gasto só desce; aumento só com carimbo novo, teto 7.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"duelInvites"');
+      if (temGravado || 'duelInvites' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const di = enforceDuelInvites(state.duelInvites, gravado.duelInvites);
+        if (di) state.duelInvites = di; else delete state.duelInvites;
+      }
+    }
+    // Cooldown/buff do 🌀 Glitchtama (10/11/2026, `_glitchtama.js`): o instante do último uso só anda para a frente — apagar o save local ou
+    // voltar o relógio não devolve o uso semanal. Só parseia o gravado quando ele tem o campo.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"glitchtamaUsadoEm"');
+      if (temGravado || 'glitchtamaUsadoEm' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const gu = enforceGlitchtamaUsadoEm(state.glitchtamaUsadoEm, gravado.glitchtamaUsadoEm);
+        if (gu !== undefined) state.glitchtamaUsadoEm = gu; else delete state.glitchtamaUsadoEm;
       }
     }
     // JSON aninhado fundo cabe no teto de bytes mas estoura a pilha em `JSON.stringify` (RangeError → exceção solta/500): recusa 400.
@@ -484,11 +754,47 @@ async function onRequestBruto({ request, env }) {
       console.warn('save: 409 conflito de revisão', { saveIdPrefix: saveId.slice(0, 8), base, cur });
       return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
     }
+    // GUARDA DE REGRESSAO (incidente 17/11/2026, `_saveGuard.js`): save COM progresso nao e trocado por um SEM progresso (ou com
+    // totalXP < 50% do gravado) sem gesto explicito (`?allowRegression=restore|rebirth|reset`). Antes de qualquer regressao o raw
+    // anterior vai para `savebak:`. Sem gravado parseavel = sem guarda (conta nova / save ilegivel).
+    if (typeof prev?.value === 'string') {
+      let gravadoParaGuarda;
+      try { gravadoParaGuarda = JSON.parse(prev.value); } catch { gravadoParaGuarda = undefined; }
+      const regressao = detectarRegressao(gravadoParaGuarda, state);
+      if (regressao) {
+        const intencao = intencaoDeRegressao(url);
+        await guardarBackupAntesDeRegressao(kvOrThrow(env), saveId, prev.value);
+        if (!intencao) {
+          console.warn('save: 409 regressao recusada', { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo });
+          return Response.json({ error: 'regression', revision: cur }, { status: 409, headers: CORS });
+        }
+        console.warn('save: regressao PERMITIDA por intencao explicita', { saveIdPrefix: saveId.slice(0, 8), motivo: regressao.motivo, intencao });
+      }
+    }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
+    // Orçamento de Bits (REGISTRO §387, `_bitsOrcamento.js`), MODO OBSERVAÇÃO: só mede e registra; `state`/`serialized` não são
+    // tocados aqui. Engolir a falha é o correto: é instrumentação, e um erro dela (KV, `ent:` ilegível) não pode custar o save do
+    // jogador. Sem medida, o metadata sai sem `g`/`ob`/`ot` e a conta recomeça cheia na próxima gravação.
+    let orcamento = null;
+    try {
+      orcamento = await medirOrcamentoDeBits({
+        env, saveId, prev, gamePoints: state.gamePoints, agora: Date.now(), playerDayTz: state.playerDayTz,
+        ehAdmin: async () => (await verifiedAdmin(env, request, saveId)).admin,
+      });
+    } catch (err) {
+      console.warn('save: orçamento de Bits não medido, save segue', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+    }
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
-      metadata: { t: Date.now(), f, r: cur + 1, h },
+      metadata: { t: Date.now(), f, r: cur + 1, h, ...(orcamento?.meta ?? {}) },
     });
+    if (orcamento?.observacao) {
+      console.warn('save: crescimento de Bits acima do orçamento (só observação)', { saveIdPrefix: saveId.slice(0, 8), excedente: orcamento.observacao.excedente });
+      // Mesmo motivo do `try` acima: o save já está gravado, e o registro é só para a decisão de 28/11/2026.
+      await registrarObservacao(env, saveId, orcamento.observacao).catch((err) => {
+        console.warn('save: registro do orçamento de Bits falhou, save segue', { saveIdPrefix: saveId.slice(0, 8), erro: String(err?.message ?? err) });
+      });
+    }
     // Camadas do Endless Rift no MES (so cresce; lastro do score aceito em /api/rankings). Falha aqui nunca derruba o save.
     await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {});
     // §213 emenda: desgarrado recupera com 2 dias completos seguidos, recalculados AQUI a partir do save gravado.

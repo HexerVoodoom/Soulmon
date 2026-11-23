@@ -3,7 +3,7 @@
  * Cartões de missão e "Ir" (dono, 14/10/2026, REGISTRO §62): um CARTÃO por missão em todas as abas, o "!" é o amarelo da paleta,
  * toda missão com lugar LEVA até ele (prédio fechado mostra o requisito em vez de navegar) e o "This week" não tem "!" na frente.
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
@@ -13,6 +13,13 @@ import { dailyTarget, weeklyTarget, achievementTarget } from '../../utils/missio
 import { weeklyMissionPool, type WeeklyMission } from '../../utils/weeklyMissions';
 
 afterEach(cleanup);
+
+// O 1º `render` da folha pagava, DENTRO do teto do teste, o import frio dos três painéis lazy (ShopShelf, MercadoSheets,
+// DailyMissionBoard — grafo grande, ~3x mais lento com a suíte inteira rodando). Paga aqui, num hook com teto próprio;
+// os casos passam a esperar só o ESTADO (o painel montado), e a espera deixa de ser o teto do runner.
+beforeAll(async () => {
+  await Promise.all([import('../mercado/ShopShelf'), import('../mercado/MercadoSheets'), import('./DailyMissionBoard')]);
+}, 120_000);
 
 const DAY = '2026-10-14';
 const semanal = (id: WeeklyMission['id']): WeeklyMission => weeklyMissionPool().find(m => m.id === id)!;
@@ -30,12 +37,12 @@ const mk = (over: Partial<Parameters<typeof MissionsSheet>[0]> = {}) => (
 );
 
 describe('um cartão por missão, com o "!" amarelo', () => {
-  it('Diárias: o passeio, as 6 do dia e as primeiras vezes são cartões separados, cada um com seu "!" dourado e sem azul', async () => {
+  it('Diárias: o passeio, as 8 do dia e as primeiras vezes são cartões separados, cada um com seu "!" dourado e sem azul', async () => {
     render(mk());
     await waitFor(() => expect(document.querySelectorAll('[data-first-time]').length).toBeGreaterThan(0), T);
     const cartoes = [...document.querySelectorAll('li[data-mission-card]')];
     const dosDias = document.querySelectorAll('[data-daily-mission]').length;
-    expect(dosDias).toBe(6);
+    expect(dosDias).toBe(8);
     expect(cartoes.length).toBe(1 + dosDias + document.querySelectorAll('[data-first-time]').length);
     for (const c of cartoes) {
       expect(c.parentElement!.tagName).toBe('UL');
@@ -76,7 +83,7 @@ describe('toda missão com lugar leva até ele', () => {
   it('diária de minijogo: tocar no título chama onGoBuilding com o prédio; cuidado leva à Home', async () => {
     const onGo = vi.fn();
     render(mk({ onGoBuilding: onGo }));
-    await waitFor(() => expect(document.querySelectorAll('[data-daily-mission]').length).toBe(6), T);
+    await waitFor(() => expect(document.querySelectorAll('[data-daily-mission]').length).toBe(8), T);
     const lista = dailyMissionsFor(DAY, 99);
     const predio = lista.find(m => dailyTarget(m) !== 'home' && dailyTarget(m) !== null);
     if (predio) {
@@ -109,14 +116,13 @@ describe('toda missão com lugar leva até ele', () => {
     expect(onGo).toHaveBeenCalledWith('exploracao.fenda');
   });
 
-  it('PRÉDIO FECHADO não navega: sem "Ir", mostra o requisito de Vínculo', async () => {
+  it('sem prédio fechado por Vínculo (12/11/2026): no Vínculo 1 o Torneio mostra "Ir" e nenhum cadeado', async () => {
     const onGo = vi.fn();
     render(mk({ initialTab: 'weekly', bondLevel: 1, onGoBuilding: onGo, weekly: [{ mission: semanal('tournament-match'), count: 0, done: false, claimed: false }] }));
     await waitFor(() => expect(document.querySelector('[data-weekly-mission="tournament-match"]')).not.toBeNull(), T);
     const c = document.querySelector('[data-weekly-mission="tournament-match"]')!;
-    expect(c.querySelector('[data-mission-go]')).toBeNull();
-    expect(c.querySelector('[data-mission-lock]')!.textContent).toMatch(/Opens at Bond \d/);
-    expect(onGo).not.toHaveBeenCalled();
+    expect(c.querySelector('[data-mission-go]')).not.toBeNull();
+    expect(c.querySelector('[data-mission-lock]')).toBeNull();
   });
 
   it('conquista de Masmorra leva à Masmorra', async () => {
@@ -141,22 +147,22 @@ describe('tabela de destinos', () => {
   });
 });
 
-describe('recompensa só quando a missão está PRONTA (dono, 15/10/2026)', () => {
-  it('diária: cartão não pronto não mostra recompensa; pronto mostra "+1 material" e o Claim; resgatado vira concluído, sem recompensa', async () => {
+describe('recompensa: só quando PRONTA (dono, 15/10/2026), exceto na lista do DIA, que a mostra sempre (dono, 12/11/2026)', () => {
+  it('diária: o cartão mostra a recompensa já ao abrir (nome do material); pronto mostra o Claim; resgatado vira concluído e a recompensa CONTINUA à vista (§318)', async () => {
     const m = dailyMissionsFor(DAY, 99)[0];
     const { rerender } = render(mk());
     await waitFor(() => expect(document.querySelector(`[data-daily-mission="${m.id}"]`)).not.toBeNull(), T);
     const card = () => document.querySelector(`[data-daily-mission="${m.id}"]`)!;
     expect(card().getAttribute('data-status')).toBe('available');
-    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
-    const pronta = bumpDaily(undefined, DAY, m.event);
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 \S+/);
+    const pronta = bumpDaily(undefined, DAY, m.event, m.target);
     rerender(mk({ dailies: { state: pronta, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
     expect(card().getAttribute('data-status')).toBe('ready');
-    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toBe('+1 material');
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 \S+/);
     expect(card().querySelector('[data-claim-daily]')).not.toBeNull();
     rerender(mk({ dailies: { state: { ...pronta, claimed: [m.id] }, day: DAY, bondLevel: 99, onClaim: vi.fn() } }));
     expect(card().getAttribute('data-status')).toBe('claimed');
-    expect(card().querySelector('[data-mission-reward-text]')).toBeNull();
+    expect(card().querySelector('[data-mission-reward-text]')!.textContent).toMatch(/\+1 \S+/);
   });
 
   it('semanal: não pronta sem "Honra"; pronta mostra "+N" no Resgatar', async () => {

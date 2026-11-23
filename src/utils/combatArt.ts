@@ -17,8 +17,13 @@
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { curatedComponents } from './elementosCurados';
 import { ELEMENT_VISUAL } from './elementVisual.data';
-import { ELEMENTO_BG_MEAN } from './combatArtElementoMedias.data';
+import { ELEMENTO_BG_MEAN as ELEMENTO_BG_MEAN_V1 } from './combatArtElementoMedias.data';
+import { ELEMENTO_BG_MEAN_V2 } from './combatArtElementoMedias2.data';
+
+/** Cor média dos cenários próprios dos fundidos: os 93 antigos (png, 360×640) + os 151 compostos de 11/11/2026 (webp, 450×800). */
+const ELEMENTO_BG_MEAN: Record<string, string> = { ...ELEMENTO_BG_MEAN_V1, ...ELEMENTO_BG_MEAN_V2 };
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -35,10 +40,10 @@ const BG = porId(bgs, 'bg');
 
 // Cenário PRÓPRIO de cada elemento fundido: `combate/elemento/<id>.png` (360×640, instalado por `tools/instalar-cenarios-elemento.py`).
 // Vem ANTES do cenário do elemento base; sem arquivo, cai no base (comportamento anterior).
-const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.{png,webp}', { eager: true, import: 'default' }) as Record<string, string>;
 const ELEMENTO_BG: Record<string, string> = {};
 for (const [p, url] of Object.entries(elementoBgs)) {
-  const m = /\/([a-z_]+)\.png$/.exec(p);
+  const m = /\/([a-z_]+)\.(?:png|webp)$/.exec(p);
   if (m) ELEMENTO_BG[m[1]] = url;
 }
 
@@ -51,11 +56,11 @@ const ESCUDO = porId(escudos, 'escudo');
 
 /** Cor média medida de cada cenário: pinta o fundo enquanto a imagem carrega (mesma regra de `dungeonScenes.ts`). */
 const BG_MEAN: Record<string, string> = {
-  agua: '#184f53', ar: '#33686a', arcano: '#18474d', eletricidade: '#195154', espaco: '#174352',
-  fogo: '#274644', gravidade: '#17434b', luz: '#716c48', marcial: '#245859', morte: '#275455',
-  vida: '#1c504c', som: '#1e5c5f', sombra: '#12303b', tempo: '#1c5656', terra: '#39443c',
-  vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
-  fada: '#16312f', industrial: '#0c3532', planta: '#0e3830', // 30/10/2026: cenários base próprios
+  agua: '#0b6874', ar: '#5da0cc', arcano: '#3b2a61', eletricidade: '#484e43', espaco: '#2c3466',
+  fogo: '#6a2b20', gravidade: '#3b2a69', luz: '#a78c69', marcial: '#362f3b', morte: '#5c8984',
+  vida: '#5b855c', som: '#205761', sombra: '#1a3240', tempo: '#836147', terra: '#7f4430',
+  vigor: '#761f1b', vileza: '#343728', neutro: '#285558',
+  fada: '#79738f', industrial: '#40362e', planta: '#2f6735', // 10/11/2026: 20 cenários base novos (masmorra-cenarios-v2); `neutro` segue o antigo
 };
 
 const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes[0]]));
@@ -64,7 +69,7 @@ const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEME
 export function combatBaseElement(id: string | null | undefined): string | undefined {
   if (!id) return undefined;
   const mapped = id;
-  const base = DERIVED_TO_BASE[mapped] ?? mapped;
+  const base = DERIVED_TO_BASE[mapped] ?? curatedComponents(mapped)?.[0] ?? mapped;
   return BG[base] ? base : undefined;
 }
 
@@ -76,6 +81,22 @@ export function combatSceneBg(id: string | null | undefined): string | undefined
   if (base) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
   // Fallback (save antigo sem a arte): planta/industrial usam o cenário do domínio. Desde 30/10/2026 têm `bg-` próprio, que vem antes.
   return id === 'planta' || id === 'industrial' ? combatDomainSceneBg(id, 0) : undefined;
+}
+
+/**
+ * O cenário de uma CAMADA da masmorra: o próprio do elemento; sem arte própria, o do elemento BASE que o compõe, girando pela camada
+ * (antes era sempre o 1º componente: até 20 elementos seguidos, 40 camadas, no mesmo cenário). Camada ímpar = 1º componente, par = 2º…
+ */
+export function combatSceneBgDaCamada(id: string | null | undefined, layer: number): string | undefined {
+  const proprio = sceneBgDoElemento(id, ELEMENTO_BG, ELEMENTO_BG_MEAN);
+  if (proprio) return proprio;
+  const comps = id ? (DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes ?? curatedComponents(id)) : undefined;
+  if (comps && comps.length > 1) {
+    const l = Number.isFinite(layer) ? Math.max(1, Math.floor(layer)) : 1;
+    const base = comps[(l - 1) % comps.length];
+    if (BG[base]) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
+  }
+  return combatSceneBg(id);
 }
 
 // ── Cenários por DOMÍNIO (Arena por tema, 27/10/2026) ──────────────────────
@@ -129,7 +150,7 @@ export function combatGlowColor(id: string | null | undefined): string | undefin
  * Cada uma passa por `combatGlowColor`.
  */
 export function combatGlowPair(id: string | null | undefined): [string | undefined, string | undefined] {
-  const comps = id ? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes : undefined;
+  const comps = id ? (DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes ?? curatedComponents(id)) : undefined;
   if (!comps) { const c = combatGlowColor(id); return [c, c]; }
   return [combatGlowColor(comps[0]), combatGlowColor(comps[1])];
 }

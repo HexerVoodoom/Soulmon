@@ -106,6 +106,9 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     ['masmorra-mapa', 'masmorra'],
     ['evolucao', 'evolucao'],
     ['meditacao', 'meditacao'],
+    ['intro', 'parede'],
+    ['respiracao', 'respiracao'],
+    ['chama', 'chama'],
   ] as const)('ligada: %s → %s; desligada → null; sem o degrau de combate', (s, f) => {
     expect(escolherFaixa(s, true)).toBe(f);
     expect(escolherFaixa(s, false)).toBeNull();
@@ -122,6 +125,31 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     sair();
     expect(M.chamadas).toEqual(['combate:false', 'faixa:null', ...SAI_DO_TEMA]);
   });
+  it('10/11/2026 — dormindo toca a faixa calma do Refúgio (meditação); acordar devolve o tema normal', () => {
+    expect(FAIXA_DE_COMBATE.dormir).toBe('meditacao');
+    expect(SUPERFICIE_EM_COMBATE.dormir).toBe(false);
+    const sair = entrarNaSuperficie('dormir');
+    expect(M.chamadas).toContain('combate-faixa:meditacao:false');
+    expect(M.chamadas).toContain('tema-pausa:cena');
+    M.chamadas.length = 0;
+    sair();
+    expect(M.chamadas).toEqual(['combate:false', 'faixa:null', ...SAI_DO_TEMA]);
+  });
+  it('dormir NÃO consente a sessão (sono automático / app aberto dormindo não é gesto); superfície aberta por toque consente', () => {
+    const sair = entrarNaSuperficie('dormir');
+    expect(M.chamadas).not.toContain('consentir');
+    sair();
+    M.chamadas.length = 0;
+    entrarNaSuperficie('meditacao')();
+    expect(M.chamadas).toContain('consentir');
+  });
+  it('o App não cala a música por sono nem por janela de descanso: dormir é superfície, só o mudo pausa (a fonte)', () => {
+    const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+    expect(app).toContain("entrarNaSuperficie('dormir')");
+    expect(app).not.toContain("pausarTrilha('sono')");
+    expect(app).not.toContain("pausarTrilha('descanso')");
+    expect(app).toContain("pausarTrilha('mudo')");
+  });
   it('lobby da masmorra → descida → lobby: crossfade entre `masmorra` e `combate`, uma música por vez', () => {
     const sairMapa = entrarNaSuperficie('masmorra-mapa');
     expect(M.chamadas).toContain('combate-faixa:masmorra:false');
@@ -133,8 +161,9 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
   });
   it('as telas ligam cada faixa à superfície certa (a fonte, não a memória)', () => {
     const lê = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
+    expect(lê('../components/onboarding/intro/IntroCinematica.tsx')).toContain("entrarNaSuperficie('intro')");
     expect(lê('../components/EvolutionCeremony.tsx')).toContain("entrarNaSuperficie('evolucao')");
-    expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('meditacao')");
+    expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('respiracao')");
     expect(lê('../components/mente/BolhasGame.tsx')).toContain("calma ? entrarNaSuperficie('meditacao')");
     expect(lê('../components/RogueDungeon.tsx')).toContain("entrarNaSuperficie('masmorra-mapa')");
     expect(lê('../components/DungeonGame.tsx')).toContain("emDescida ? 'masmorra' : 'masmorra-mapa'");

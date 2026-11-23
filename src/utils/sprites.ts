@@ -321,7 +321,8 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
   // Os 5 iniciais: o MESMO sprite em todos os estágios (limitação declarada).
   // 21/10/2026 (dono): se o jogador já tem o sprite GERADO dele, ele vence o inicial de reserva (contas que mostravam o Meteoro),
   // mesmo que o jogador já tenha evoluído e só tenha a arte gerada de outra forma no acervo (`Object.values(ownSprites)[0]`).
-  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? Object.values(ownSprites)[0] ?? STARTER_SPRITES[demoCharacterId];
+  // Início BB (17/11/2026): a arte do BB (`bb`) é berço e nunca vale por outra forma (D20): o inicial que nasceu BB volta a ser ele no rookie.
+  if (isStarterId(demoCharacterId)) return ownSprites[key] ?? semBB(ownSprites)[0] ?? STARTER_SPRITES[demoCharacterId];
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {
@@ -331,6 +332,15 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     return line[level] ?? line.rookie;
   }
   // O Soulmon PRÓPRIO (criatura do Oráculo) já adotado no acervo; enquanto ele ainda não nasceu, o cristal (`setOwnSprites`).
-  return ownSprites[key] ?? Object.values(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
+  // 10/11/2026: forma sem arte própria usa antes a arte de OUTRA forma do MESMO nível (linha irmã) e só depois a 1ª do acervo
+  // (que é a Rookie): equipar/trocar nunca devolve a Rookie num Ultimate que tem arte.
+  const lvl = getStageLevel(key);
+  const mesmoNivel = Object.entries(ownSprites).find(([k]) => getStageLevel(k) === lvl && k !== 'rookie' && k !== 'bb')?.[1];
+  return ownSprites[key] ?? (lvl !== 'rookie' ? mesmoNivel : undefined) ?? semBB(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
+}
+
+/** As artes próprias SEM a do BB (a do BB só responde pela chave `bb`). */
+function semBB(map: Readonly<Record<string, string>>): string[] {
+  return Object.entries(map).filter(([k]) => k !== 'bb').map(([, v]) => v);
 }
 

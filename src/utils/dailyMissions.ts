@@ -27,11 +27,18 @@ import { hashString, mulberry32 } from './oracle/base';
 import { BUILDING_GATES, buildingGateFor, currentBuildingId, type BuildingId } from './gates';
 import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay, type BuildingQuestState, type MaterialId } from './buildingQuests';
 import type { QuestMark } from './questMarks';
+import { NPC_MISSIONS, NPC_MISSIONS_RODIZIO, NPCS_POR_SEMANA } from './npcMissions';
+import type { PlayerDayAnchor } from './playerDay';
+import { playerDayKey } from './playerDay';
 
 export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
-  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco';
+  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente'
+  // Missões dos NPCs (12/11/2026, REGISTRO §314): `salao`/`mente` são AGREGADOS dos jogos do Salão e do Ateliê (`bumpDaily` soma junto).
+  | 'essencia' | 'hex' | 'melhoria' | 'compra' | 'conquista' | 'prato' | 'feira' | 'cla' | 'passeio' | 'salao' | 'mente'
+  // Trilho (REGISTRO §318): um registro novo guardado no Caderno.
+  | 'journal';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -45,6 +52,12 @@ export interface DailyMission {
   material: MaterialId;
   descPt: string;
   descEn: string;
+  /** Missão de NPC (12/11/2026): NOME da missão (a `desc` é o que fazer) e a CHAVE de quem a passa (`area:lote`, `papus`, `nuri`). */
+  namePt?: string;
+  nameEn?: string;
+  npc?: string;
+  /** Aposentada: fica no catálogo só para o save antigo (ids/eventos válidos); nunca é sorteada. */
+  retired?: true;
 }
 
 /**
@@ -55,15 +68,18 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-dino', event: 'dino', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Dê uma corrida na Corrida com obstáculos', descEn: 'Take a run in the obstacle course' },
   { id: 'd-ppt', event: 'ppt', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma partida de Pedra, papel e tesoura', descEn: 'Play a match of Rock, paper, scissors' },
   { id: 'd-match3', event: 'match3', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma rodada de Elemental Fusion', descEn: 'Play a round of Elemental Fusion' },
-  { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
+  { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop', retired: true },
   { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'exploracao.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
   { id: 'd-banho', event: 'banho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },
   { id: 'd-carinho', event: 'carinho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Faça carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
   { id: 'd-comida', event: 'comida', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
   { id: 'd-humor', event: 'humor', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
+  // ^ 11/11/2026: ao tocar, leva à CONVERSA com o Soulmon (`dailyTarget` → 'chat'); QUALQUER mensagem enviada a ele conta (`contarDiaria('humor')`).
   { id: 'd-sono', event: 'sono', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
-  { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market' },
-  { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
+  { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market', retired: true },
+  // 11/11/2026: "Visite a criatura de um amigo" ninguém sabia cumprir; vira ENVIAR UM PRESENTE (mesma tela dos amigos, mesmo prédio, mesmo material,
+  // alvo 1). Mesma posição no catálogo = mesmo sorteio do dia. O id/evento antigo (`d-amigo`/`amigo`) fica aposentado no fim, só para o save.
+  { id: 'd-presente', event: 'presente', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Envie um presente a um amigo', descEn: 'Send a friend a gift' },
   { id: 'd-arena', event: 'arena', target: 1, building: 'arena.duelo', material: 'fang', descPt: 'Faça um Duelo na Arena', descEn: 'Have a Duel in the Arena' },
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
   // Rodada 6 (L4): Chuva de Almas no rodízio do Salão; Eco/Trilha/Colcha no rodízio do Ateliê; Calabouço sempre. O Calabouço não tem material
@@ -71,13 +87,18 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-barrage', event: 'barrage', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Encare uma Chuva de Almas', descEn: 'Face a Soul Barrage' },
   { id: 'd-eco', event: 'eco', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Jogue uma rodada do Eco do Pet', descEn: 'Play a round of Pet Echo' },
   { id: 'd-zip', event: 'zip', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Resolva uma Trilha do Pet', descEn: 'Solve a Pet Trail' },
-  { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork' },
+  { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork', retired: true },
   { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'exploracao.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
+  // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
+  { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
+  { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
+  // 12/11/2026 (REGISTRO §314/§318): uma missão por NPC, em rodízio SEMANAL (`npcsOfWeek`) + a fixa do Trilho; nunca entram no sorteio comum.
+  ...NPC_MISSIONS.map((n): DailyMission => ({ id: n.id, event: n.event, target: n.target, building: n.building, material: n.material, descPt: n.descPt, descEn: n.descEn, namePt: n.namePt, nameEn: n.nameEn, npc: n.npc })),
 ];
 
 /** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */
 const ROTA_SALAO: readonly string[] = ['d-dino', 'd-ppt', 'd-match3', 'd-barrage'];
-const ROTA_MENTE: readonly string[] = ['d-eco', 'd-zip', 'd-patches'];
+const ROTA_MENTE: readonly string[] = ['d-eco', 'd-zip', 'd-selo'];
 const FIXA_CALABOUCO = 'd-calabouco';
 const NA_ROTA: readonly string[] = [...ROTA_SALAO, ...ROTA_MENTE, FIXA_CALABOUCO];
 
@@ -88,17 +109,21 @@ function numeroDoDia(day: string): number {
   return (hashString(`daily-rota:${day}`) >>> 0) % 100000;
 }
 
-/** Até 6 por dia (dono, 14/10/2026, REGISTRO §54): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
-export const DAILY_MISSION_COUNT = 6;
+/**
+ * Até 8 por dia: eram 6 (dono, 14/10/2026, REGISTRO §54) e, com as missões de NPC (o Trilho fixo + `NPCS_POR_SEMANA` da semana, REGISTRO §318),
+ * passaram a 6 + 2 para o sorteio comum continuar com o mesmo espaço (3 rodízios fixos + 2 sorteadas). Quem tem menos recursos abertos
+ * recebe menos (o filtro de portão vem antes do corte).
+ */
+export const DAILY_MISSION_COUNT = 8;
 /** Teto de contagem por evento (higiene do save; nenhum alvo passa de 2). */
 export const DAILY_COUNT_CAP = 99;
 
 /** O catálogo inteiro — existe para o teste varrer o vocabulário e a soma de recompensa. */
-export function dailyMissionPool(): readonly DailyMission[] { return POOL; }
+export function dailyMissionPool(): readonly DailyMission[] { return POOL.filter(m => !m.retired); }
 
 /** Listas fechadas que o servidor espelha (`functions/api/_dailyMissions.js`, travado por `dailyMissions.parity.test.js`). */
 export const DAILY_MISSION_IDS: readonly string[] = POOL.map(m => m.id);
-export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
+export const DAILY_EVENTS: readonly DailyEvent[] = [...new Set(POOL.map(m => m.event))];
 
 /**
  * As missões do dia. DETERMINÍSTICO por `day` (dia do jogador): a mesma chave devolve a mesma ordem em qualquer aparelho.
@@ -107,7 +132,7 @@ export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
  */
 export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[] {
   const rng = mulberry32(hashString(`daily-missions:${day}`));
-  const resto = POOL.filter(m => !NA_ROTA.includes(m.id));
+  const resto = POOL.filter(m => !NA_ROTA.includes(m.id) && !m.retired && !m.npc);
   for (let i = resto.length - 1; i > 0; i -= 1) {
     const j = Math.floor(rng() * (i + 1));
     [resto[i], resto[j]] = [resto[j], resto[i]];
@@ -117,7 +142,40 @@ export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[
   const n = numeroDoDia(day);
   const byId = (id: string) => POOL.find(m => m.id === id)!;
   const fixas = [byId(ROTA_SALAO[n % ROTA_SALAO.length]), byId(ROTA_MENTE[n % ROTA_MENTE.length]), byId(FIXA_CALABOUCO)];
-  return [...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
+  // As missões de NPC abrem a lista (a fixa do Trilho + as da semana); o resto (rodízios + sorteio) completa até `DAILY_MISSION_COUNT`.
+  return [...npcMissionsOfDay(day, bondLevel), ...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
+}
+
+/** Número da semana (segunda a domingo) a partir do número do dia: 1970-01-01 foi quinta, então `(n + 3) / 7` vira na segunda. */
+function numeroDaSemana(day: string): number { return Math.floor((numeroDoDia(day) + 3) / 7); }
+
+/**
+ * Os NPCs DA SEMANA (12/11/2026, REGISTRO §318). Rodízio semanal e determinístico pelo dia do jogador: a semana `w` parte da posição
+ * `w × NPCS_POR_SEMANA` da lista do rodízio e pega os próximos NPCs cujo prédio o jogador JÁ ABRIU (pula os fechados; nunca repete).
+ * A missão fica na lista do dia em TODOS os dias da semana (cada dia paga a sua, como toda diária). Sem prédio aberto = lista vazia.
+ */
+export function npcsOfWeek(day: string, bondLevel: unknown): DailyMission[] {
+  const ids = new Set(NPC_MISSIONS_RODIZIO.map(m => m.id));
+  const lista = POOL.filter(m => ids.has(m.id));
+  const start = (numeroDaSemana(day) * NPCS_POR_SEMANA) % lista.length;
+  const out: DailyMission[] = [];
+  for (let i = 0; i < lista.length && out.length < NPCS_POR_SEMANA; i += 1) {
+    const m = lista[(start + i) % lista.length];
+    if (buildingGateFor(m.building, bondLevel).open) out.push(m);
+  }
+  return out;
+}
+
+/** A missão FIXA do Trilho (journal): todo dia, fora do rodízio, enquanto o Caderno estiver aberto. */
+export function trilhoMission(bondLevel: unknown): DailyMission | undefined {
+  const t = POOL.find(m => NPC_MISSIONS.some(n => n.id === m.id && n.fixa));
+  return t && buildingGateFor(t.building, bondLevel).open ? t : undefined;
+}
+
+/** Todas as missões de NPC de HOJE: a fixa do Trilho e as da semana. */
+export function npcMissionsOfDay(day: string, bondLevel: unknown): DailyMission[] {
+  const t = trilhoMission(bondLevel);
+  return [...(t ? [t] : []), ...npcsOfWeek(day, bondLevel)];
 }
 
 export interface DailyMissionsState {
@@ -134,12 +192,29 @@ export function dailyForDay(s: DailyMissionsState | undefined, day: string): Dai
   return { day, counts: {}, claimed: [] };
 }
 
-/** Um evento real aconteceu. Soma 1 (até o teto) na contagem do dia. */
-export function bumpDaily(s: DailyMissionsState | undefined, day: string, event: DailyEvent): DailyMissionsState {
-  const cur = dailyForDay(s, day);
+/** Os minijogos do Salão e do Ateliê também contam no AGREGADO da missão do NPC (Pipo / Tessela). */
+const AGREGADO: Partial<Record<DailyEvent, DailyEvent>> = { dino: 'salao', ppt: 'salao', match3: 'salao', barrage: 'salao', eco: 'mente', zip: 'mente', selo: 'mente' };
+
+/** Um evento real aconteceu. Soma `qty` (padrão 1, até o teto) na contagem do dia; jogo do Salão/Ateliê soma também no agregado. */
+export function bumpDaily(s: DailyMissionsState | undefined, day: string, event: DailyEvent, qty = 1): DailyMissionsState {
+  const add = Math.floor(qty);
+  if (!(add >= 1)) return dailyForDay(s, day);
+  let cur = dailyForDay(s, day);
   const n = cur.counts[event] ?? 0;
-  if (n >= DAILY_COUNT_CAP) return cur;
-  return { ...cur, counts: { ...cur.counts, [event]: n + 1 } };
+  if (n < DAILY_COUNT_CAP) cur = { ...cur, counts: { ...cur.counts, [event]: Math.min(DAILY_COUNT_CAP, n + add) } };
+  const agg = AGREGADO[event];
+  if (agg) cur = bumpDaily(cur, day, agg, add);
+  return cur;
+}
+
+/**
+ * O mesmo evento sobre um save/estado inteiro (dia do jogador pela âncora dele). PURO: o `prev` do updater; o utilitário dono do gesto
+ * (`applyEssences`, `applyUpgrade`, `applyShopBuy`...) chama no ramo de SUCESSO — recusa devolve o MESMO `prev` e não conta.
+ */
+export function bumpDailyIn<T extends object>(prev: T, event: DailyEvent, qty = 1, now: Date = new Date()): T {
+  const h = prev as T & { dailyMissions?: DailyMissionsState; playerDayTz?: PlayerDayAnchor };
+  const next = bumpDaily(h.dailyMissions, playerDayKey(now, h.playerDayTz), event, qty);
+  return next === h.dailyMissions ? prev : { ...prev, dailyMissions: next };
 }
 
 export function dailyCount(s: DailyMissionsState | undefined, day: string, m: DailyMission): number {
@@ -182,7 +257,7 @@ export function dailyMissionsMark(s: DailyMissionsState | undefined, day: string
   return st.includes('available') ? 'available' : null;
 }
 
-const EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
+const EVENTS: readonly DailyEvent[] = DAILY_EVENTS;
 
 /** Higienização do load (e do que vem da nuvem): eventos só do catálogo, contagem inteira 0..cap, `claimed` só de ids do catálogo. */
 export function sanitizeDailyMissions(raw: unknown): DailyMissionsState | undefined {
@@ -220,7 +295,8 @@ export interface FirstTime {
 }
 
 // Prédios placeholder (exploracao.dungeon) não pagam material: sem tela própria para "visitar" (QA 25/10/2026).
-const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'exploracao.dungeon'];
+// 12/11/2026: o Centro de Evolução também sai — "visitar a Vesca" não era missão; ela agora passa a de coletar 30 essências (`n-vesca`).
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'exploracao.dungeon', 'laboratorio.evolucao'];
 
 const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
   .filter(b => !NO_VISIT.includes(b))

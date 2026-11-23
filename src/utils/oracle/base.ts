@@ -51,6 +51,11 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
+/** Sorteio semeado (movido de oracle.ts: nomeEspecial.ts, na entrada, só precisa disto). */
+export function pick<T>(rng: () => number, arr: T[]): T {
+  return arr[Math.floor(rng() * arr.length) % arr.length];
+}
+
 export const ELEMENT_INFO: Record<ElementId, { name: LText; emoji: string; personality: LText }> = {
   agua: { name: { pt: 'Água', en: 'Water' }, emoji: '💧', personality: { pt: 'Fluido, empático e profundo — sente antes de entender e cura pela presença.', en: 'Fluid, empathetic and deep — feels before understanding and heals through presence.' } },
   fogo: { name: { pt: 'Fogo', en: 'Fire' }, emoji: '🔥', personality: { pt: 'Ardente, apaixonado e inquieto — inspira e incendeia quem está por perto.', en: 'Burning, passionate and restless — inspires and ignites those around.' } },

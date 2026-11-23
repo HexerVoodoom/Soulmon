@@ -4,8 +4,25 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.TextUtils
+import android.os.Build
+import android.os.Bundle
+import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import com.soulmon.R
@@ -122,8 +139,10 @@ object WidgetRenderer {
         }
     }
 
-    private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int): Bitmap? {
-        val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+    private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int, maxPx: Int = Int.MAX_VALUE): Bitmap? {
+        val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceIn(1, maxPx)
+        // O sprite PRÓPRIO do jogador (gerado/equipado) vence o inicial de reserva.
+        WidgetOwnSprite.load(context, px)?.let { return it }
         return try {
             val opts = BitmapFactory.Options().apply { inScaled = false }
             val raw = BitmapFactory.decodeResource(context.resources, spriteId, opts) ?: return null
@@ -265,6 +284,482 @@ object WidgetRenderer {
         mgr.updateAppWidget(appWidgetId, views)
     }
 
+    /**
+     * The resizable widget (REGISTRO §221). API 31+ hands the system one RemoteViews per
+     * size and it swaps them without waking the app; below that, the size reported in the
+     * options picks one layout (portrait reading: minWidth x maxHeight).
+     *
+     * One sprite bitmap, shared by every layout, capped at the 256px of the source art, so
+     * the size map carries the same Bitmap object in each RemoteViews instead of a bigger
+     * one per layout: this payload crosses binder.
+     */
+    fun renderAdaptive(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val sprite = spriteBitmap(context, spriteId, 96, 256)
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val line = adaptiveLine(context)
+        fun build(shape: WidgetAdaptive.Shape) = adaptiveViews(context, shape, sprite, spriteId, petName, line)
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(WidgetAdaptive.SIZE_KEYS.associate { SizeF(it.widthDp, it.heightDp) to build(it.shape) })
+        } else {
+            build(
+                WidgetAdaptive.chooseShape(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun adaptiveViews(
+        context: Context,
+        shape: WidgetAdaptive.Shape,
+        sprite: Bitmap?,
+        spriteId: Int,
+        petName: String,
+        line: String,
+    ): RemoteViews {
+        val layoutId = when (shape) {
+            WidgetAdaptive.Shape.SQUARE -> R.layout.widget_soulmon_adaptive_square
+            WidgetAdaptive.Shape.HORIZONTAL -> R.layout.widget_soulmon_adaptive_horizontal
+            WidgetAdaptive.Shape.VERTICAL -> R.layout.widget_soulmon_adaptive_vertical
+        }
+        val views = RemoteViews(context.packageName, layoutId)
+        if (sprite != null) {
+            views.setImageViewBitmap(R.id.widget_sprite, sprite)
+            views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
+        } else {
+            views.setImageViewResource(R.id.widget_sprite, spriteId)
+            views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+        }
+        // The square has no text views: only the creature, by the owner's request.
+        if (shape != WidgetAdaptive.Shape.SQUARE) {
+            views.setTextViewText(R.id.widget_pet_name, petName)
+            views.setTextViewText(R.id.widget_message, line)
+        }
+        attachClick(context, views)
+        return views
+    }
+
+    private fun adaptiveLine(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val task = prefs.getString("next_task", null)
+        return when (
+            WidgetAdaptive.selectMessage(
+                now = System.currentTimeMillis(),
+                hungryAt = if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
+                hasPoop = prefs.getBoolean("has_poop", false),
+                nextTask = task,
+                dayEndsAt = if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null,
+                completed = prefs.getInt("completed_tasks", 0),
+                total = prefs.getInt("total_tasks", 0),
+            )
+        ) {
+            WidgetAdaptive.Message.HUNGRY -> context.getString(R.string.widget_line_hungry)
+            WidgetAdaptive.Message.POOP -> context.getString(R.string.widget_line_poop)
+            WidgetAdaptive.Message.TASK -> context.getString(R.string.widget_line_task, task)
+            WidgetAdaptive.Message.DAY_CLOSED -> context.getString(R.string.widget_line_day_closed)
+            WidgetAdaptive.Message.SUPPORT -> context.getString(R.string.widget_line_support)
+        }
+    }
+
+    /**
+     * Widget "Soulmon" (transparent): no background at all, the creature straight on the wallpaper.
+     * Text is white with a tight black shadow; only the speech line sits in a low-opacity rounded box.
+     */
+    fun renderClear(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val sprite = spriteBitmap(context, spriteId, 96, 256)
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val counter = taskCounter(prefs.getInt("completed_tasks", 0), prefs.getInt("total_tasks", 0))
+        val line = adaptiveLine(context)
+
+        fun build(shape: WidgetAdaptive.ClearShape): RemoteViews {
+            val views = RemoteViews(
+                context.packageName,
+                when (shape) {
+                    WidgetAdaptive.ClearShape.COMPACT -> R.layout.widget_soulmon_clear_compact
+                    WidgetAdaptive.ClearShape.VERTICAL -> R.layout.widget_soulmon_clear_vertical
+                    WidgetAdaptive.ClearShape.FULL -> R.layout.widget_soulmon_clear
+                },
+            )
+            if (sprite != null) {
+                views.setImageViewBitmap(R.id.widget_sprite, sprite)
+                views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
+            } else {
+                views.setImageViewResource(R.id.widget_sprite, spriteId)
+                views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+            }
+            if (shape == WidgetAdaptive.ClearShape.COMPACT) {
+                // 1x1: só a criatura. O nome vai como descrição para o leitor de tela.
+                views.setContentDescription(R.id.widget_root, petName)
+            } else {
+                // FULL (horizontal, fala à direita) e VERTICAL (1 célula de largura, fala ABAIXO do Soulmon) têm o mesmo conteúdo.
+                views.setTextViewText(
+                    R.id.widget_pet_name,
+                    if (counter != null) context.getString(R.string.widget_name_count, petName, counter) else petName,
+                )
+                views.setTextViewText(R.id.widget_message, line)
+            }
+            attachClick(context, views)
+            return views
+        }
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(WidgetAdaptive.CLEAR_KEYS.associate { SizeF(it.widthDp, it.heightDp) to build(it.shape) })
+        } else {
+            build(
+                WidgetAdaptive.chooseClearShape(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    /**
+     * Widget "Soulmon V-Pet": everything is drawn into ONE 576x384 bitmap (the casing's size),
+     * because RemoteViews cannot pin content to a percentage of an aspect-fit image. The LCD,
+     * scanlines, creature, speech text and status icons go under the casing (real alpha), and
+     * every box comes from `WidgetVpet`, inside the opening, so nothing can overflow the screen.
+     */
+    fun renderVpet(context: Context, mgr: AppWidgetManager, appWidgetId: Int) =
+        renderVpetLike(context, mgr, appWidgetId, WidgetVpet.CAGE, R.layout.widget_soulmon_vpet)
+
+    /**
+     * Widget "Companheiro" (beta12, A3): o MESMO conteudo do Cage (cenario, fala, icones, moldura) com a criatura GRANDE.
+     * A geometria e [WidgetVpet.COMPANION] (bitmap quadrado); o ImageView escala (fitCenter) para 2x2, 3x3 ou o que o
+     * jogador colocar, entao o layout se adapta sozinho.
+     */
+    fun renderCompanion(context: Context, mgr: AppWidgetManager, appWidgetId: Int) =
+        renderVpetLike(context, mgr, appWidgetId, WidgetVpet.COMPANION, R.layout.widget_soulmon_companion)
+
+    private fun renderVpetLike(context: Context, mgr: AppWidgetManager, appWidgetId: Int, geo: WidgetVpet.Layout, layoutId: Int) {
+        val views = RemoteViews(context.packageName, layoutId)
+        val bmp = vpetBitmap(context, geo)
+        if (bmp != null) views.setImageViewBitmap(R.id.widget_vpet, bmp)
+        else views.setImageViewResource(R.id.widget_vpet, vpetCasing(context, prefsOf(context).getString("vpet_frame", "")).res)
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun prefsOf(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    /**
+     * O bitmap do V-Pet (casco + LCD + Soulmon + fala + ícones de estado) para a geometria [geo]; `null` sem memória.
+     * Usado pelo Cage, pelo Companheiro e pelo topo do widget grande da Home ([renderHome], com o casco PADRÃO).
+     */
+    private fun vpetBitmap(context: Context, geo: WidgetVpet.Layout, defaultCasing: Boolean = false): Bitmap? {
+        val prefs = prefsOf(context)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val food = WidgetVpet.foodTier(
+            System.currentTimeMillis(),
+            if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
+            if (prefs.contains("starving_at")) prefs.getLong("starving_at", 0L) else null,
+        )
+        val energy = WidgetVpet.energyLevel(
+            if (prefs.contains("energy_points")) prefs.getInt("energy_points", 0) else 0,
+            prefs.getInt("max_energy_points", 0),
+        )
+        val poop = prefs.getBoolean("has_poop", false)
+        val casing = if (defaultCasing) Casing(R.drawable.vpet_moldura, null) else vpetCasing(context, prefs.getString("vpet_frame", ""))
+        val sleeping = prefs.getBoolean("pet_sleeping", false)
+        val bgName = WidgetVpet.bgDrawableName(prefs.getString("vpet_bg", ""))
+        val bgRes = if (bgName != null) context.resources.getIdentifier(bgName, "drawable", context.packageName) else 0
+        return try {
+            drawVpet(context, geo, spriteId, adaptiveLine(context), food, energy, poop, casing, sleeping, bgRes)
+        } catch (e: OutOfMemoryError) {
+            null
+        }
+    }
+
+    /**
+     * WIDGET GRANDE DA HOME (decisão do dono, 18/11/2026), vertical: o V-Pet em cima com o casco PADRÃO (`vpet_moldura`,
+     * "o elemento básico que temos hoje"; sem variante por elemento) e a lista de tarefas de hoje embaixo, com check
+     * ([WidgetHomeTasksService]). Baixo demais (< 220dp) o V-Pet sai e fica só a lista. Tocar no V-Pet ou no título abre o
+     * jogo; o check só marca ([SoulmonWidgetHomeProvider]).
+     */
+    fun renderHome(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
+        val prefs = prefsOf(context)
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val fresh = WidgetHomeTasks.isFresh(System.currentTimeMillis(), if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null)
+        val empty = context.getString(if (fresh) R.string.widget_home_empty_today else R.string.widget_home_empty_stale)
+        val title = WidgetHomeLayout.textSpec(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)).titleSp
+        val top = vpetBitmap(context, WidgetVpet.CAGE, defaultCasing = true)
+
+        fun build(withPet: Boolean): RemoteViews {
+            val views = RemoteViews(context.packageName, if (withPet) R.layout.widget_soulmon_home else R.layout.widget_soulmon_home_compact)
+            if (withPet) {
+                if (top != null) views.setImageViewBitmap(R.id.widget_vpet, top) else views.setImageViewResource(R.id.widget_vpet, R.drawable.vpet_moldura)
+            }
+            views.setTextViewText(R.id.widget_home_title, petName)
+            views.setTextViewTextSize(R.id.widget_home_title, TypedValue.COMPLEX_UNIT_SP, title)
+            val svc = Intent(context, WidgetHomeTasksService::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            svc.data = Uri.parse(svc.toUri(Intent.URI_INTENT_SCHEME)) // um adapter por instância
+            @Suppress("DEPRECATION")
+            views.setRemoteAdapter(R.id.widget_home_list, svc)
+            views.setEmptyView(R.id.widget_home_list, R.id.widget_home_empty)
+            views.setTextViewText(R.id.widget_home_empty, empty)
+            // Template do check: broadcast EXPLÍCITO para o provider; MUTABLE porque cada linha completa o id (fill-in).
+            val check = Intent(context, SoulmonWidgetHomeProvider::class.java).setAction(SoulmonWidgetHomeProvider.ACTION_CHECK)
+            val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+            views.setPendingIntentTemplate(
+                R.id.widget_home_list,
+                PendingIntent.getBroadcast(context, appWidgetId, check, PendingIntent.FLAG_UPDATE_CURRENT or mutable),
+            )
+            attachClick(context, views)
+            return views
+        }
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(WidgetHomeLayout.SIZE_KEYS.associate { SizeF(it.widthDp, it.heightDp) to build(it.withPet) })
+        } else {
+            build(
+                WidgetHomeLayout.showPet(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
+        mgr.updateAppWidget(appWidgetId, views)
+        @Suppress("DEPRECATION")
+        mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_home_list)
+    }
+
+    /** Redesenha só os widgets da Home (depois de um check). */
+    fun updateHome(context: Context) {
+        val mgr = AppWidgetManager.getInstance(context)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetHomeProvider::class.java))) renderHome(context, mgr, id)
+    }
+
+    /**
+     * A lista que o widget da Home mostra: `tasks_json` do app, só no dia em que foi escrita (`day_ends_at`), com os checks
+     * ainda na fila aparecendo como feitos (otimista) até o app drenar.
+     */
+    fun homeTaskItems(context: Context): List<WidgetHomeTasks.Item> {
+        val prefs = prefsOf(context)
+        val dayEndsAt = if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null
+        if (!WidgetHomeTasks.isFresh(System.currentTimeMillis(), dayEndsAt)) return emptyList()
+        val items = WidgetHomeTasks.sanitize(WidgetHomeTasks.Json.parse(prefs.getString("tasks_json", null)))
+        return WidgetHomeTasks.withPending(items, WidgetEventQueue.pendingDoneKeys(WidgetEventQueue.Store.read(context)))
+    }
+
+    /** A moldura a desenhar: o arquivo baixado (se valido em disco) e, por baixo, o drawable embutido / padrao. */
+    class Casing(val res: Int, val file: java.io.File?)
+
+    /**
+     * Ordem (WidgetFrameStore.resolveSource): cache em disco valido > drawable embutido (as 20 do APK) > casco padrao.
+     * So le o disco; nunca faz rede, nunca lanca, nunca devolve `res` 0.
+     */
+    private fun vpetCasing(context: Context, frameId: String?): Casing {
+        val bundled = bundledCasingRes(context, frameId)
+        val file = WidgetFrameStore.Disk.cachedFrame(context, frameId)
+        return Casing(WidgetVpet.pickCasing(bundled, R.drawable.vpet_moldura), file)
+    }
+
+    /** The embedded casing for the id if the art is in the APK, else 0. */
+    private fun bundledCasingRes(context: Context, frameId: String?): Int {
+        val name = WidgetVpet.frameDrawableName(frameId) ?: return 0
+        return context.resources.getIdentifier(name, "drawable", context.packageName)
+    }
+
+    /** Decodes the casing: the downloaded PNG only if it is exactly 576x384, else the embedded/default drawable. */
+    private fun decodeCasing(context: Context, casing: Casing, raw: BitmapFactory.Options): Bitmap? {
+        casing.file?.let { f ->
+            try {
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(f.path, bounds)
+                if (bounds.outWidth == WidgetVpet.W && bounds.outHeight == WidgetVpet.H) {
+                    val opts = BitmapFactory.Options().apply { inScaled = false; inPreferredConfig = Bitmap.Config.ARGB_8888 }
+                    BitmapFactory.decodeFile(f.path, opts)?.let { return it }
+                }
+            } catch (e: Exception) {
+                // arquivo ruim: cai na embutida
+            }
+        }
+        // A variant that fails to decode (corrupt/oversized art) falls back to the default casing instead of a bare LCD.
+        return BitmapFactory.decodeResource(context.resources, casing.res, raw)
+            ?: BitmapFactory.decodeResource(context.resources, R.drawable.vpet_moldura, raw)
+    }
+
+    private fun drawVpet(
+        context: Context, geo: WidgetVpet.Layout, spriteId: Int, line: String,
+        food: WidgetVpet.FoodTier, energy: WidgetVpet.EnergyLevel, poop: Boolean, casing: Casing,
+        sleeping: Boolean, bgRes: Int,
+    ): Bitmap {
+        val raw = BitmapFactory.Options().apply { inScaled = false }
+        val out = Bitmap.createBitmap(geo.w, geo.h, Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
+        val crisp = Paint().apply { isFilterBitmap = false; isAntiAlias = false }
+
+        // LCD, scene and scanlines live in the casing's own coordinates: shifted down by `geo.casingY` (0 in the Cage).
+        c.save()
+        c.translate(0f, geo.casingY.toFloat())
+        // LCD, a few px larger than the opening so the casing's inner edge hides the seam.
+        val lcd = Paint().apply { color = Color.parseColor("#0F2A29") }
+        c.drawRect(
+            (WidgetVpet.SCREEN_L - 4).toFloat(), (WidgetVpet.SCREEN_T - 4).toFloat(),
+            (WidgetVpet.SCREEN_R + 4).toFloat(), (WidgetVpet.SCREEN_B + 4).toFloat(), lcd,
+        )
+        // Equipped scene behind the creature (thumbnail in the APK; absent = plain LCD), dimmed so text and icons stay legible.
+        if (bgRes != 0) {
+            BitmapFactory.decodeResource(context.resources, bgRes, raw)?.let { bg ->
+                c.drawBitmap(bg, null, Rect(WidgetVpet.SCREEN_L, WidgetVpet.SCREEN_T, WidgetVpet.SCREEN_R, WidgetVpet.SCREEN_B), Paint(Paint.FILTER_BITMAP_FLAG))
+                bg.recycle()
+                c.drawRect(
+                    WidgetVpet.SCREEN_L.toFloat(), WidgetVpet.SCREEN_T.toFloat(), WidgetVpet.SCREEN_R.toFloat(), WidgetVpet.SCREEN_B.toFloat(),
+                    Paint().apply { color = Color.argb(120, 7, 20, 19) },
+                )
+            }
+        }
+        val scan = Paint().apply { color = Color.argb(46, 0, 0, 0) }
+        var y = WidgetVpet.SCREEN_T
+        while (y < WidgetVpet.SCREEN_B) {
+            c.drawRect(WidgetVpet.SCREEN_L.toFloat(), y.toFloat(), WidgetVpet.SCREEN_R.toFloat(), (y + 1).toFloat(), scan)
+            y += 3
+        }
+        c.restore()
+
+        // Creature (square, as large as the sprite box allows, centred horizontally, on the floor) and the sleep Z next to it:
+        // dark/dim when awake, lit (warm glow) while asleep. Drawn text, no asset needed. In the Cage they go UNDER the casing,
+        // in the Companion they stand out in front of it.
+        fun creature() {
+            val sp = geo.sprite
+            val side = minOf(sp.w, sp.h)
+            val sx = sp.l + (sp.w - side) / 2
+            val sy = sp.b - side
+            (WidgetOwnSprite.load(context, 256) ?: BitmapFactory.decodeResource(context.resources, spriteId, raw))?.let {
+                c.drawBitmap(it, null, Rect(sx, sy, sx + side, sy + side), crisp)
+                it.recycle()
+            }
+            val zb = geo.sleepZ
+            val zp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = zb.h.toFloat()
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.CENTER
+                if (sleeping) { color = Color.parseColor("#FFE680"); setShadowLayer(8f, 0f, 0f, Color.parseColor("#FFB300")) }
+                else { color = Color.BLACK; alpha = 70 }
+            }
+            c.drawText("Z", (zb.l + zb.w / 2).toFloat(), (zb.b - 4).toFloat(), zp)
+        }
+        if (!geo.spriteOverCasing) creature()
+
+        // Speech text, white, shrunk until it fits the box; ellipsized as the last resort.
+        val tb = geo.text
+        val tp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        fun layout(sizePx: Float, maxLines: Int): StaticLayout {
+            tp.textSize = sizePx
+            return StaticLayout.Builder.obtain(line, 0, line.length, tp, tb.w)
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setMaxLines(maxLines)
+                .setEllipsize(TextUtils.TruncateAt.END)
+                .build()
+        }
+        var size = 26f
+        var lay = layout(size, Int.MAX_VALUE)
+        while (lay.height > tb.h && size > 13f) {
+            size -= 1f
+            lay = layout(size, Int.MAX_VALUE)
+        }
+        if (lay.height > tb.h) {
+            val fit = (tb.h / (lay.height / lay.lineCount.toFloat())).toInt().coerceAtLeast(1)
+            lay = layout(size, fit)
+        }
+        c.save()
+        c.clipRect(tb.l, tb.t, tb.r, tb.b)
+        c.translate(tb.l.toFloat(), tb.t + (tb.h - lay.height) / 2f)
+        lay.draw(c)
+        c.restore()
+
+        // Status icons, as in the game: food (whole meat / half meat / bone only, always in colour), poop (dark silhouette
+        // when there is none) and the energy bolt (dark = none, half-filled = some, full = full).
+        val row = geo.iconRow
+        val iy = row.t + (row.h - WidgetVpet.ICON) / 2
+        fun dim() = Paint(crisp).apply {
+            colorFilter = PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
+            alpha = 70
+        }
+        fun icon(resId: Int, x: Int, active: Boolean) {
+            val ic = BitmapFactory.decodeResource(context.resources, resId, raw) ?: return
+            c.drawBitmap(ic, null, Rect(x, iy, x + WidgetVpet.ICON, iy + WidgetVpet.ICON), if (active) crisp else dim())
+            ic.recycle()
+        }
+        icon(
+            when (food) {
+                WidgetVpet.FoodTier.FED -> R.drawable.vpet_fome_cheio
+                WidgetVpet.FoodTier.FAIR -> R.drawable.vpet_fome_medio
+                WidgetVpet.FoodTier.STARVING -> R.drawable.vpet_fome_faminto
+            },
+            row.l, true,
+        )
+        val step = WidgetVpet.ICON + WidgetVpet.ICON_GAP
+        icon(R.drawable.fx_poop, row.l + step, poop)
+        // The bolt is taller than wide (89x128): fit the icon height, centre in the slot.
+        BitmapFactory.decodeResource(context.resources, R.drawable.vpet_icon_energia, raw)?.let { bolt ->
+            val w = (WidgetVpet.ICON * bolt.width / bolt.height.toFloat()).toInt().coerceAtLeast(1)
+            val bx = row.l + 2 * step + (WidgetVpet.ICON - w) / 2
+            val dst = Rect(bx, iy, bx + w, iy + WidgetVpet.ICON)
+            when (energy) {
+                WidgetVpet.EnergyLevel.FULL -> c.drawBitmap(bolt, null, dst, crisp)
+                WidgetVpet.EnergyLevel.EMPTY -> c.drawBitmap(bolt, null, dst, dim())
+                WidgetVpet.EnergyLevel.HALF -> {
+                    c.drawBitmap(bolt, null, dst, dim())
+                    c.save()
+                    c.clipRect(dst.left, dst.top + dst.height() / 2, dst.right, dst.bottom)
+                    c.drawBitmap(bolt, null, dst, crisp)
+                    c.restore()
+                }
+            }
+            bolt.recycle()
+        }
+
+        // Casing on top (downloaded art when valid on disk, else the embedded one, else the default).
+        decodeCasing(context, casing, raw)?.let {
+            c.drawBitmap(it, 0f, geo.casingY.toFloat(), crisp)
+            it.recycle()
+        }
+        if (geo.spriteOverCasing) creature()
+        return out
+    }
+
     // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
@@ -278,6 +773,16 @@ object WidgetRenderer {
             renderChat(context, mgr, id, R.layout.widget_soulmon_chat)
         for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetScreenProvider::class.java)))
             renderScreen(context, mgr, id, R.layout.widget_soulmon_screen)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetAdaptiveProvider::class.java)))
+            renderAdaptive(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetClearProvider::class.java)))
+            renderClear(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetVpetProvider::class.java)))
+            renderVpet(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetCompanionProvider::class.java)))
+            renderCompanion(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetHomeProvider::class.java)))
+            renderHome(context, mgr, id)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

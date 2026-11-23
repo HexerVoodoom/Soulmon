@@ -12,9 +12,12 @@ import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
 import { Icon } from './ui/Icon';
+import { ChevronAcao } from './ui/ChevronAcao';
 import { UI_ICON_ART, pastaGlifo, pastaAbertaGlifo, displayLuzAcesa, displayLuzApagada } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
+import { dishIdOfKey } from '../utils/dishItems';
+import { dishById } from '../utils/restaurantMenu';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
@@ -23,7 +26,7 @@ import { FeedBubble } from './home/FeedBubble';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { sm2Button } from './form/FormKit';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
-import { PetStageDecor } from './PetStageDecor';
+import { PetStageDecor, PetStageToques, PetStageBrilhos } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { sleepZPlacement } from '../utils/sleepZ';
 import { showerPlacement } from '../utils/showerPlacement';
@@ -42,6 +45,8 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
+import type { BalaoTipo } from '../utils/balaoDourado';
+import type { DicaDouradaTipo, DicaTipo } from '../utils/balaoDica';
 const Mochila = lazy(() => import('./home/Mochila').then(m => ({ default: m.Mochila })));
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
@@ -255,6 +260,18 @@ interface CompanionHUDProps {
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;
+  /** beta12 §G: o BALÃO DOURADO (borda dourada) que LEVA o jogador a um lugar. `null`/ausente = nenhum. UM por vez (a fila é do App). Não cobre cenário nem os botões de cuidado: mora na faixa do balão comum e some enquanto o pet fala.
+   *  `ariaLabel` = o DESTINO; o nome acessível do botão é a fala visível + o destino (§383). `tempoMs` (§383, só os de evento): quanto
+   *  tempo ele fica NA TELA antes de sumir sozinho (⚰️ "persistente, sem timeout"); ao vencer, `onBalaoIgnorado`. */
+  balaoDourado?: { tipo: BalaoTipo | DicaDouradaTipo; text: string; ariaLabel: string; tempoMs?: number } | null;
+  /** Toque no balão dourado: o App navega e grava o dia (`utils/balaoDourado.ts`); dica dourada (§333) navega pelo `requestGoToBuilding`. */
+  onBalaoDourado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
+  /** §383: o balão com `tempoMs` ficou esse tempo na tela sem toque e sumiu. */
+  onBalaoIgnorado?: (tipo: BalaoTipo | DicaDouradaTipo) => void;
+  /** §333: a dica COMUM da vez (fome, cochilo), já fora do cooldown (`utils/balaoDica.ts`). Entra no LUGAR da fala ociosa (a cada 3 min),
+   *  nunca por cima de outra fala; ao falar, o HUD avisa `onDicaFalada` para o App gravar a aparição. `null`/ausente = a escada de sempre. */
+  dicaFala?: { tipo: DicaTipo; text: string } | null;
+  onDicaFalada?: (tipo: DicaTipo) => void;
   /** Toque na plaquinha: abre o aviso "Ele está na masmorra" (com o "Retirar da masmorra"). */
   onSinalMasmorra?: () => void;
   /** Ms até o Soulmon voltar da masmorra (`useDungeonReturn`, estado persistido) — a placa de madeira mostra. `null` = sem número. */
@@ -286,12 +303,20 @@ interface CompanionHUDProps {
   onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
   /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
   getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary | Promise<import('../utils/chatBehavior').BehaviorSummary>;
+  /** Uma mensagem foi enviada ao Soulmon no chat (qualquer uma): conta para a missão do dia "Conte como você está se sentindo". */
+  onChatSent?: () => void;
+  /** `Date.now()` do toque numa missão que leva à conversa: o campo do chat ganha foco. */
+  chatFocusRequest?: number;
   language: Language;
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
   materials?: Partial<Record<string, number>>;
+  /** Fragmento do Soulsmith, Fragmento de Boss e Essências (aba Materiais da Mochila, 10/11/2026). */
+  materialExtras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
   /** O "Ir lá" do material na Mochila (o App navega). */
   onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
+  /** Toque no Fliperama de Canto: abre o modal de minigames sobre a Home (§486). Sem isto, cai no atalho do prédio do Salão. */
+  onOpenArcade?: () => void;
   /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
   demoMode?: boolean;
   onFeed?: (foodEmoji: string) => void;
@@ -318,6 +343,9 @@ interface CompanionHUDProps {
   evolutionFlash?: boolean;
   feedAnim?: { emoji: string; n: number } | null;
 }
+
+/** Fator de porte do Soulmon na Home (01/11/2026, dono: "uns 30% menor"). */
+export const HOME_PET_SIZE = 0.7;
 
 export const CompanionHUD = memo(function CompanionHUD({
   companionMood, 
@@ -351,6 +379,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   statsSlots,
   missionAway = false,
   naMasmorra = false,
+  balaoDourado = null,
+  onBalaoDourado,
+  onBalaoIgnorado,
+  dicaFala = null,
+  onDicaFalada,
   onSinalMasmorra,
   masmorraRetornoMs,
   daysAway = 0,
@@ -374,10 +407,14 @@ export const CompanionHUD = memo(function CompanionHUD({
   aiSettings,
   onChatCreate,
   getBehavior,
+  onChatSent,
+  chatFocusRequest,
   language,
   foodInventory = {},
   materials,
+  materialExtras,
   onGoToBuilding,
+  onOpenArcade,
   demoMode,
   onFeed,
   onShower,
@@ -460,6 +497,24 @@ export const CompanionHUD = memo(function CompanionHUD({
   const telaW = tela.w * VIEW_SCALE;
   const position = 50 + (walkPx * 100) / telaW;
   const [showBubble, setShowBubble] = useState(false);
+  /* §383: o relógio do balão dourado de evento conta só com ele NA TELA (cede a vez à fala do pet = recomeça); o toque o desarma. */
+  const goldNaTela = !!balaoDourado && !showBubble;
+  const goldTipo = balaoDourado?.tipo;
+  const goldTempoMs = balaoDourado?.tempoMs;
+  const goldIgnoradoRef = useRef(onBalaoIgnorado);
+  goldIgnoradoRef.current = onBalaoIgnorado;
+  const goldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* §383 (emenda 22/11): enquanto o balão dourado com relógio está na janela dos 5 s, a fala AUTOMÁTICA do pet (saudação de abertura aos ~0,7 s,
+     idle, sinais) não o esconde: ela espera e entra quando o balão sai (toque ou ignorado). Fala de gesto do jogador (`manual`) segue passando. */
+  const goldAtivo = !!balaoDourado && !!goldTempoMs;
+  const goldAtivoRef = useRef(goldAtivo);
+  goldAtivoRef.current = goldAtivo;
+  const falaAdiadaRef = useRef<{ text: string; durationMs: number; raw: boolean } | null>(null);
+  useEffect(() => {
+    if (!goldNaTela || !goldTipo || !goldTempoMs) return;
+    goldTimerRef.current = setTimeout(() => { goldTimerRef.current = null; goldIgnoradoRef.current?.(goldTipo); }, goldTempoMs);
+    return () => { if (goldTimerRef.current) clearTimeout(goldTimerRef.current); goldTimerRef.current = null; };
+  }, [goldNaTela, goldTipo, goldTempoMs]);
   const [squashFrame, setSquashFrame] = useState(0);
   const [bubbleText, setBubbleText] = useState('');
   const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -529,8 +584,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const rubBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway, dicaFala, onDicaFalada };
 
   /* Fase 3 do Oráculo — a fala do TALENTO. A tabela (65 pares PT+EN,
      `utils/talentoVoice.ts`) entra por import DINÂMICO: no bundle de entrada
@@ -568,10 +623,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   }, [ausente]);
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
-  const speak = useCallback((text: string, durationMs = 4000) => {
+  const speak = useCallback((text: string, durationMs = 4000, manual = false) => {
     if (ausenteRef.current) return;
     const clean = (text || '').replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
     if (!clean) return;
+    if (goldAtivoRef.current && !manual) { falaAdiadaRef.current = { text: clean, durationMs, raw: false }; return; }
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     setBubbleText(clean);
     setShowBubble(true);
@@ -585,6 +641,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   // speakRaw: no emoji stripping — only for the ❤️ feeding response
   const speakRaw = useCallback((text: string, durationMs = 3000) => {
     if (!text || ausenteRef.current) return;
+    if (goldAtivoRef.current) { falaAdiadaRef.current = { text, durationMs, raw: true }; return; }
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     setBubbleText(text);
     setShowBubble(true);
@@ -601,9 +658,17 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setHugBalloon(false), 2000);
   };
 
+  /* Balão dourado saiu (toque ou ignorado): a fala que ficou esperando entra agora. */
+  useEffect(() => {
+    if (goldAtivo || !falaAdiadaRef.current) return;
+    const f = falaAdiadaRef.current;
+    falaAdiadaRef.current = null;
+    if (f.raw) speakRaw(f.text, f.durationMs); else speak(f.text, f.durationMs);
+  }, [goldAtivo, speak, speakRaw]);
+
   // Chat message from ChatBox — strip emojis, show for 5s
   const handleChatMessage = useCallback((response: string) => {
-    speak(response, 5000);
+    speak(response, 5000, true);
   }, [speak]);
 
   /**
@@ -641,7 +706,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     // 0 é a montagem: ninguém fez nada ainda, e abrir o app não é um evento.
     if (!triggerMessage || triggerMessage === triggerVistoRef.current) return;
     triggerVistoRef.current = triggerMessage;
-    speak(mensagemAtualRef.current);
+    speak(mensagemAtualRef.current, undefined, true);
   }, [triggerMessage, speak]);
 
   useEffect(() => {
@@ -887,6 +952,13 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (document.hidden) return;
       const p = propsRef.current;
       if (p.isSleeping) return;
+      /* §333: a dica da vez (fome/cochilo) ocupa ESTE turno da fala ociosa — nunca um turno a mais, nunca por cima de outra fala.
+         Ausente (masmorra/missão), `speak` já cala; aí não grava a aparição. */
+      if (p.dicaFala && !ausenteRef.current) {
+        speak(p.dicaFala.text, 6000);
+        p.onDicaFalada?.(p.dicaFala.tipo);
+        return;
+      }
       speak(getIdlePhrase(), 5000);
       /* Decisão do dono (19/10/2026): fala ociosa é SÓ frase local. A cota inteira
          da IA fica para o chat aberto; 15 falas ociosas esgotavam a cota em ~45 min. */
@@ -931,7 +1003,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     else if (ratio >= 0.35) fallback = petVoiceLine('idle', isPt, Math.random());
     else if (ratio >= 0.1) fallback = petVoiceLine('peckish', isPt, Math.random());
     else fallback = petVoiceLine('starving', isPt, Math.random());
-    speak(fallback, 4000);
+    speak(fallback, 4000, true);
 
     /* Decisão do dono (19/10/2026): o toque no pet é SÓ frase local (sem /api/chat);
        a cota inteira fica para o chat aberto. */
@@ -947,9 +1019,17 @@ export const CompanionHUD = memo(function CompanionHUD({
   const sprite = emCristal ? PLACEHOLDER_ART.forming : (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
     ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
   /* Porte por estágio (utils/spriteScale.ts): escala a CAIXA VISÍVEL do bicho, com origem nos pés — layout, chão e alvo de toque ficam. */
-  const petScale = usePetScale(evolutionStage, sprite);
+  /* 01/11/2026 (dono): na Home o bicho fica 30% menor para ocupar menos do visor; sombra e âncora do pé seguem o mesmo fator. */
+  const petScale = usePetScale(evolutionStage, sprite) * HOME_PET_SIZE;
   /* O PNG tem linhas transparentes embaixo (0–25%): alinhar pela caixa deixava o pé PAIRANDO acima da sombra. Desce o sprite até o último pixel opaco tocar a linha de chão. */
-  const petGroundDrop = useGroundDrop(sprite, petScale, PET_RENDER);
+  /* ⚠️ 05/11/2026 (dono: "a maioria dos Soulmons flutua em cima da sombra"). A causa: o `scale: petScale` do <img> NÃO APLICA — o React 18
+     escreve número em `style` com "px" ("0.25px"), `scale` não é unitless e o navegador joga o valor fora (conferido no DOM: o atributo
+     `style` do <img> não tem `scale`). O bicho sempre foi desenhado em 100%, mas a descida do pé era calculada para o bicho ENCOLHIDO
+     (`petScale` ~0,25: descia 3 px em vez de ~12) e a sombra era dimensionada pelo mesmo número. Aqui o pé e a sombra seguem o que está
+     de fato na tela (escala 1). Ligar o `scale` de verdade muda o tamanho de todos os bichos (alvos do dono em `spriteScale.ts`): é decisão
+     à parte — quando ligar, troque `PET_DRAWN_SCALE` pelo `petScale`. */
+  const PET_DRAWN_SCALE = 1;
+  const petGroundDrop = useGroundDrop(sprite, PET_DRAWN_SCALE, PET_RENDER);
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -1039,7 +1119,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     if (!play.canPlay) {
       speak(language === 'pt-BR'
         ? 'Brincar pede 1 de energia — dá pra deixar pra depois de uma comidinha.'
-        : 'Playing takes 1 energy — it can wait until after a snack.', 3500);
+        : 'Playing takes 1 energy — it can wait until after a snack.', 3500, true);
       return;
     }
     play.onPlay();
@@ -1254,7 +1334,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     <div className="sm-chat-fixed sm3-dock">
       <Suspense fallback={null}>
       <ChatBox
-        petName={currentStage}
+        petName={petDisplayName || currentStage}
         mood={companionMood}
         evolutionStage={evolutionStage}
         dominantBranch={dominantBranch}
@@ -1263,6 +1343,9 @@ export const CompanionHUD = memo(function CompanionHUD({
         aiSettings={aiSettings}
         onChatCreate={onChatCreate}
         getBehavior={getBehavior}
+        onUserMessage={onChatSent}
+        focusRequest={chatFocusRequest}
+        spriteSrc={sprite || undefined}
         chatContext={chatContext}
         language={language}
       />
@@ -1400,6 +1483,16 @@ export const CompanionHUD = memo(function CompanionHUD({
             equippedBackground={equippedBackground ?? null}
             trophies={trophies}
             language={language}
+            isSleeping={isSleeping}
+            somAtivo
+          />
+          {/* §484: os toques nas peças (Fliperama → Salão de jogos, Espelho → Perfil) numa camada ACIMA do grupo do pet, que cobre o palco todo. */}
+          <PetStageToques
+            equippedDecor={equippedDecor}
+            equippedBackground={equippedBackground ?? null}
+            language={language}
+            onOpenArcade={onOpenArcade ?? (onGoToBuilding ? () => onGoToBuilding('jogos.salao') : undefined)}
+            onOpenProfile={onGoToBuilding ? () => onGoToBuilding('laboratorio.perfil') : undefined}
           />
 
           {/* Care Event Sprite */}
@@ -1416,6 +1509,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: -400, pointerEvents: 'none', background: 'rgba(4, 10, 24, .55)' }}
             />
           )}
+          {/* §484: o que acende no escuro (cogumelos) fica ACIMA do véu da noite. */}
+          <PetStageBrilhos equippedDecor={equippedDecor} equippedBackground={equippedBackground ?? null} isSleeping={isSleeping} />
 
           {/* Soulmon Sprite - Centered with walking animation.
               O GRUPO do pet cresce `CENA_ZOOM` (abordagem B, "pet grande") com
@@ -1500,7 +1595,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               >
                 {ITEM_ART[eatingEmoji]
                   ? <img src={ITEM_ART[eatingEmoji]} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  : eatingEmoji}
+                  : (dishById(dishIdOfKey(eatingEmoji) ?? '')?.icon ?? eatingEmoji)}
               </span>
             )}
             {/* Migalhas (entrega 4): a comida sobe, as migalhas caem — uma vez por mordida. */}
@@ -1565,24 +1660,26 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{
                   position: 'absolute',
                   left: '50%',
-                  bottom: PET_GROUND_KEEP + PET_LIFT,
+                  /* Âncora nos PÉS: a borda de baixo da caixa do sprite é a linha do chão (a descida do pé a leva até lá); a elipse fica
+                     centrada logo abaixo dela. Era `PET_GROUND_KEEP + PET_LIFT` (68 px ACIMA da caixa: a sombra ficava escondida atrás do corpo). */
+                  bottom: -Math.round(PET_RENDER * 0.12 * 0.4),
                   transform: 'translateX(-50%)',
-                  width: Math.round(PET_RENDER * 0.52 * Math.min(1, petScale + 0.15)),
-                  height: Math.round(PET_RENDER * 0.12 * Math.min(1, petScale + 0.15)),
+                  width: Math.round(PET_RENDER * 0.6 * Math.min(1, PET_DRAWN_SCALE + 0.15)),
+                  height: Math.round(PET_RENDER * 0.12 * Math.min(1, PET_DRAWN_SCALE + 0.15)),
                   pointerEvents: 'none',
                   /* No ar a sombra fica NO CHÃO, menor e mais fraca: é ela que diz "voando". */
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
               {emCristal && (
-                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {emCristal === 'falhou'
                     ? (language === 'pt-BR' ? 'A forma nova não veio desta vez' : "The new form didn't come this time")
                     : (language === 'pt-BR' ? 'Seu Soulmon está no cristal, evoluindo…' : 'Your Soulmon is in the crystal, evolving…')}
                 </span>
               )}
               {chocando && !emCristal && (
-                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: `translateX(-50%) ${getHorizontalFlip()}`, whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {language === 'pt-BR' ? 'Seu Soulmon está chocando…' : 'Your Soulmon is hatching…'}
                 </span>
               )}
@@ -1823,6 +1920,52 @@ export const CompanionHUD = memo(function CompanionHUD({
               />
             </div>
           </div>
+          );
+        })()}
+
+        {/* BALÃO DOURADO (beta12 §G): borda dourada, leva ao lugar; o de evento some sozinho em `tempoMs` (§383). Mesma faixa do balão comum (fora do fluxo, não muda
+            a altura da Home); só um por vez e cede a vez enquanto o pet fala (`showBubble`). É um BOTÃO nomeado pelo destino, alvo >= 44. */}
+        {balaoDourado && !showBubble && (() => {
+          const x = balaoDourado.tipo === 'rift' ? 84 : Math.min(100, Math.max(0, 50 + (position - 50) * CENA_ZOOM));
+          return (
+            <div data-pet-gold-bubble-row style={{ position: 'absolute', top: BUBBLE_TOP, left: 0, right: 0, zIndex: 25, pointerEvents: 'none' }}>
+              <button
+                type="button"
+                data-pet-gold-bubble={balaoDourado.tipo}
+                aria-label={`${balaoDourado.text} ${balaoDourado.ariaLabel}`}
+                className={reducedMotion ? undefined : 'sm3-balao'}
+                onClick={() => {
+                  if (goldTimerRef.current) { clearTimeout(goldTimerRef.current); goldTimerRef.current = null; }
+                  onBalaoDourado?.(balaoDourado.tipo);
+                }}
+                style={{
+                  pointerEvents: 'auto', cursor: 'pointer', position: 'relative', display: 'block', width: 'fit-content', maxWidth: '80%', minHeight: 44,
+                  left: `${x}%`, transform: `translateX(-${x}%)`, textAlign: 'left',
+                  background: 'var(--sm2-surface)', border: '2px solid var(--sm2-gold-fill)', borderRadius: 'var(--sm2-radius-md)', padding: '6px 10px',
+                  boxShadow: '0 2px 8px color-mix(in srgb, var(--sm2-ink) 18%, transparent)',
+                }}
+              >
+                <span
+                  className="break-words"
+                  style={{
+                    display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3, overflow: 'hidden', overflowWrap: 'anywhere',
+                    fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.3, color: 'var(--sm2-ink)',
+                  }}
+                >
+                  <BalaoDouradoTexto text={balaoDourado.text} />
+                </span>
+                <span
+                  aria-hidden="true"
+                  data-pet-gold-bubble-tail
+                  style={{
+                    position: 'absolute', bottom: -7, left: `clamp(16px, ${x}%, calc(100% - 16px))`, marginLeft: -5,
+                    width: 10, height: 10, background: 'var(--sm2-surface)',
+                    borderRight: '2px solid var(--sm2-gold-fill)', borderBottom: '2px solid var(--sm2-gold-fill)',
+                    transform: 'rotate(45deg)',
+                  }}
+                />
+              </button>
+            </div>
           );
         })()}
 
@@ -2131,6 +2274,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
             foodInventory={foodInventory}
             materials={materials}
+            extras={materialExtras}
             onGoToBuilding={onGoToBuilding}
             demo={demoMode}
             language={language}
@@ -2152,3 +2296,27 @@ export const CompanionHUD = memo(function CompanionHUD({
     </div>
   );
 });
+
+/**
+ * O texto do balão DOURADO com a SETA no fim da linha (pedido do dono, 13/11/2026, REGISTRO §333; desenho revisto em 14/11/2026, §365):
+ * diz "este balão leva a algum lugar". Vale para TODO balão dourado (eventos de `balaoDourado.ts` e as dicas douradas); o balão comum não tem seta.
+ * · A seta é o `ChevronAcao` (`ui/ChevronAcao.tsx`, o MESMO da linha de hábito): chevron `>` turquesa SEM haste e SEM círculo.
+ * · Tinta = `--sm2-primary-ink` (turquesa do tema), decorativa: o balão inteiro é o botão.
+ * · 20px na linha do texto. A ÚLTIMA PALAVRA e a seta moram num `nowrap`: a seta nunca quebra
+ *   sozinha para a linha de baixo.
+ * · `aria-hidden`: o nome acessível do botão já diz o destino (`balaoDouradoAria`/`dicaAria`). Estática: sem animação própria.
+ */
+function BalaoDouradoTexto({ text }: { text: string }) {
+  const corte = text.trimEnd().lastIndexOf(' ');
+  const inicio = corte >= 0 ? text.slice(0, corte + 1) : '';
+  const ultima = corte >= 0 ? text.trimEnd().slice(corte + 1) : text.trimEnd();
+  return (
+    <>
+      {inicio}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {ultima}
+        <ChevronAcao data-pet-gold-bubble-arrow="" style={{ marginLeft: 2, verticalAlign: '-0.3em' }} />
+      </span>
+    </>
+  );
+}

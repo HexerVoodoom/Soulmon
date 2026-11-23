@@ -132,7 +132,8 @@ describe('(c) nada fora do app fala de Travessia ou Passeio (R-38, Passeio R-1)'
   // EXCEÇÃO NOMEADA (CI do main, 14/10/2026): o espelho do servidor valida os IDs PERSISTIDOS no save das Primeiras vezes
   // (`first-stroll`, `visit:exploracao.passeio` — REGISTRO §54; os mesmos IDs de `utils/dailyMissions.ts` e `BuildingId`).
   // São chaves de dados, nunca texto ao jogador (push/widget/overlay seguem varridos); renomeá-las apagaria o progresso salvo.
-  const EXCECOES = new Set(['functions/api/_dailyMissions.js', 'functions/api/dailyMissions.parity.test.js']);
+  // EXCEÇÃO NOMEADA (09/11/2026, docs/PLANO-METRICAS.md): o registro de nomes do tempo de uso cita o id de prédio `exploracao.passeio` (chave de dados do agregado, nunca texto ao jogador).
+  const EXCECOES = new Set(['functions/api/_dailyMissions.js', 'functions/api/dailyMissions.parity.test.js', 'functions/api/_usageRegistry.js']);
 
   it('a varredura acha arquivos (senão ela passaria sem olhar nada)', () => {
     expect(ARQUIVOS.length).toBeGreaterThan(20);
@@ -171,7 +172,7 @@ describe('(d) o formato: nada distingue a versão pequena, nada paga, o save só
     // e trip (dia + região da viagem da noite). Nenhum texto livre.
     // Rodada 7 (M4, M6): + pickAt (instante da escolha, a janela de 24 h) e log (o registro: dia + região + id).
     // 07/10/2026: + claimDay (o dia do recibo da linha "Take a stroll" do menu; só um dia).
-    const CAMPOS = ['active', 'claimDay', 'destination', 'doneDay', 'hidden', 'log', 'opened', 'pending', 'pickAt', 'pickDay', 'score', 'trip'].sort();
+    const CAMPOS = ['active', 'claimDay', 'destination', 'doneDay', 'hidden', 'log', 'opened', 'pending', 'pickAt', 'pickDay', 'sceneDay', 'score', 'trip'].sort();
     expect(campos(corpo('CrossingsState')).sort()).toEqual(CAMPOS);
     expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(CAMPOS);
   });

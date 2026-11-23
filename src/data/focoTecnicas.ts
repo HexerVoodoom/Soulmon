@@ -72,11 +72,11 @@ export const FOCO_TECNICAS: readonly FocoTecnica[] = [
   },
   {
     id: 'eisenhower', icon: 'task_alt', evidencia: 'fraca',
-    namePt: 'Matriz de Eisenhower', nameEn: 'Eisenhower matrix',
-    linePt: 'Separe o urgente do importante.', lineEn: 'Tell urgent from important.',
-    howPt: 'Divida as tarefas em quatro: importante e urgente (faça), importante e não urgente (agende), urgente e não importante (delegue, se der), nenhum dos dois (largue). Ajuda a notar o que só grita. Evidência fraca: é uma ferramenta de organização, sem ensaio próprio.',
-    howEn: 'Sort tasks into four: important and urgent (do), important and not urgent (schedule), urgent and not important (delegate if you can), neither (drop). It helps spot what merely shouts. Weak evidence: an organizing tool with no trial of its own.',
-    fonte: 'Covey (1989), The 7 Habits (atribuída a Eisenhower, 1954)',
+    namePt: 'Prioridades', nameEn: 'Priorities',
+    linePt: 'Dê nota e a lista se ordena sozinha.', lineEn: 'Rate tasks and the list orders itself.',
+    howPt: 'Dê a cada tarefa uma nota de 1 a 5 em tempo, esforço, recompensa e urgência. A pontuação é (recompensa × urgência) ÷ (esforço × tempo): o que rende e vence logo e custa pouco sobe na lista. Evidência fraca: é uma ferramenta de organização (modelo ICE adaptado), sem ensaio próprio.',
+    howEn: 'Rate each task from 1 to 5 on time, effort, reward and urgency. The score is (reward × urgency) ÷ (effort × time): what pays off, is due soon and costs little rises on the list. Weak evidence: an organizing tool (adapted ICE model) with no trial of its own.',
+    fonte: 'Modelo ICE (Sean Ellis), adaptado',
   },
   {
     id: 'sapo', icon: 'eco', evidencia: 'fraca',

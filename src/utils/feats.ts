@@ -14,7 +14,7 @@ export const FEAT_CAP = 999999;
 
 /** Soma 1 por evento. */
 export const FEAT_ADD_KEYS = [
-  'zipSolved', 'patchesSolved', 'rogueFloors', 'dinoDashSmashed', 'pptNormalWins', 'clanShopBuys', 'regens', 'focusPrepared',
+  'zipSolved', 'patchesSolved', 'rogueFloors', 'dinoDashSmashed', 'pptNormalWins', 'clanShopBuys', 'regens', 'focusPrepared', 'seloSolved',
 ] as const;
 /** Guarda o maior valor. */
 export const FEAT_MAX_KEYS = ['barrageBest', 'dinoNormalBest', 'rankTier'] as const;

@@ -1,10 +1,22 @@
-import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import type { BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
+import { useWakeGate } from '../WakeToEnter';
+import { lotEntryAsks } from '../../utils/wakeToEnter';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
+import type { BitsCategory } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
+import { DungeonKeyBadge } from './DungeonKeyBadge';
+import { requestGoToBuilding } from '../../utils/blockedAction';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { rewindToSet, teleportToPortal } from '../../utils/riftMap';
+import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
+import { chefsOn, playerWeekday } from '../../utils/restaurant';
+import { restaurantNpcVoice } from '../../utils/restaurantCopy';
+import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
@@ -21,6 +33,7 @@ import { useBackLayer } from '../../utils/backStack';
 import { playerDayIso, type PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
+import type { WidgetFramePickerData } from '../../utils/widgetFrames';
 import type { MercadoStallProps } from '../mercado/MercadoSheets';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
@@ -28,18 +41,28 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { MinigameModeGate, type GateRanking } from '../play/MinigameModeGate';
+import { Match3Escolha } from '../play/Match3Escolha';
+import type { M3Choice } from '../../utils/match3Escolha';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
 import type { ArenaReroll } from '../../utils/arenaSorteio';
 import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
-import type { FocusRewardResult } from '../play/OficinaSheet';
+import type { JourneyGrants } from '../../utils/focusJourney';
+import type { FocusLootItem } from '../../utils/focusExpedition';
+export type FocusRewardResult = { accepted: boolean; items: FocusLootItem[]; chancePercent: number };
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
+import { isFunGame } from '../../utils/funSession';
+import type { FunTicketStatus } from '../../utils/funTickets';
+import { FunTicketCostContext, TicketFan } from '../play/TicketFan';
+import { conviteDueloFan } from '../arena/conviteDueloArt';
+import { setActive, trackMinigame } from '../../utils/usageTime';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
-  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadPatchesGame,
+  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
   loadRespiracaoGame,
+  loadChamaGame,
 } from './playPrefetch';
 
 /**
@@ -58,10 +81,12 @@ import {
  * numa área diferente).
  */
 const MercadoStallSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.MercadoStallSheet })));
+const RestauranteSheet = lazy(() => import('../mercado/RestauranteSheet').then(m => ({ default: m.RestauranteSheet })));
 const CambistaSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.CambistaSheet })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 // ⚒️ O Soulsmith (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
 const ForgeCard = lazy(() => import('../ForgeCard'));
+// 09/11/2026: a entrada do Soulsmith (Vitra fala + botão para a Forja de Alma), antes do mapa em tela cheia.
 const HexsmithSheet = lazy(() => import('../hex/HexsmithSheet'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
@@ -69,14 +94,16 @@ const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
+const RiftMap = lazy(() => import('../rift/RiftMap').then(m => ({ default: m.RiftMap })));
 const MasmorraSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MasmorraSheet })));
 // Os três prédios de Jogos (30/09/2026): Salão (livres), Ateliê da Mente e Refúgio.
 const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoSheet })));
 const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteSheet })));
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
-const PrepararFocoSheet = lazy(() => import('../play/PrepararFocoSheet').then(m => ({ default: m.PrepararFocoSheet })));
-const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
+const RogueKeyGate = lazy(() => import('../play/RogueKeyGate').then(m => ({ default: m.RogueKeyGate })));
+import type { Ice } from '../../utils/iceScore';
+const FocusBoard = lazy(() => import('../play/FocusBoard').then(m => ({ default: m.FocusBoard })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
@@ -87,8 +114,9 @@ const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
-const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const SeloGame = lazy(() => loadSeloGame().then(m => ({ default: m.SeloGame })));
 const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.RespiracaoGame })));
+const ChamaGame = lazy(() => loadChamaGame().then(m => ({ default: m.ChamaGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
  *  MESMOS que a antiga `ActivitiesPage` repassava. Nenhuma regra nasce aqui:
@@ -98,32 +126,57 @@ export interface PlayHandlers {
   onDungeonEnter: () => { ok: true; level?: number; best: number };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
-  onGlitchtama: () => void;
+  onGlitchtama: (m: { runReward: boolean; drop: boolean }) => void;
   onFloorCleared?: () => void;
   /** beta3 A4: a descida terminou com ao menos 1 camada limpa (conta a missão "runs da masmorra"). */
   onRunEnd?: () => void;
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   /** M10: inimigo visto fora da masmorra (Combina 3) — só o bestiário. */
   onBestiarySeen?: (enemyKey: string) => void;
+  /** Refúgio (02/11/2026): uma atividade foi concluída (respiração inteira / 30 bolhas calmas) → energia do dia, 1×/dia (`utils/refugio/energia.ts`). */
+  onRefugioComplete?: () => void;
   /** Dex de elementos (27/10/2026): ids de elemento de inimigos identificados VENCIDOS (Combina 3 e Arena). */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
+  /** BOSS do Elemental Fusion (03/11/2026): venceu um boss → +1 Fragmento de Boss no save. */
+  onBossShard?: () => void;
+  /** PVP do Elemental Fusion (§473): a Honra da partida, pelo mesmo caminho da Honra do Torneio. */
+  onEarnHonor?: (amount: number) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
+  /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): o estado AGORA e a porta que começa uma rodada
+   *  (cobra 1 energia ao abrir sessão; `false` = sem energia). Ausente (testes antigos) = jogos do Salão sem custo. */
+  funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
-  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean };
+  arena?: { invites?: { count: number; max: number; perEnergy: number; canExchange: boolean; onExchange: () => boolean; onBegin: () => boolean }; dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void; };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
-  focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
+  focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; ice?: Ice; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
+  /** beta12 §J: uma sessão de foco concluída com a tarefa escolhida (`habit:<id>` = hábito): marca o hábito de foco adotado que ela usou. */
+  onFocusSessionTask?: (taskId?: string) => void;
+  onToggleFocusStep?: (taskId: string, stepId: string) => void;
+  /** Prioridades (ICE): grava/limpa as 4 notas na tarefa. */
+  onSetFocusIce?: (taskId: string, ice: Ice | null) => void;
+  /** Cria uma tarefa a partir do modal de escolha da sessão de foco (§300). `false` = não coube. */
+  onCreateFocusTask?: (name: string) => boolean;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
   /** beta3 F1: a chave do dia ("Prepare to Focus" concluído) libera a Focus Workshop. Ausente = sem trava (testes antigos). */
   focusKeyActive?: boolean;
   onFocusPrepared?: () => void;
+  /** §239: a chave do Calabouço: concluir uma sessão da Oficina abre a dungeon naquele dia. Ausente = sem trava (testes antigos). */
+  dungeonKeyActive?: boolean;
+  /** §299: a chave existe no save mas passou das 48 h (o portão diz que expirou). */
+  dungeonKeyExpired?: boolean;
+  /** 13/11/2026 (dono): quando a chave do Calabouço expira (ms, `dungeonKeyExpiresAt`); o mapa da Exploração mostra a chave e o relógio. `null`/ausente = sem chave, nada no mapa. */
+  dungeonKeyExpiresAt?: number | null;
+  onFocusSessionComplete?: () => void;
+  /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
+  onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
@@ -142,16 +195,15 @@ export interface PlayHandlers {
 
 /**
  * Os minijogos com a pergunta do Pipo antes de abrir (30/10/2026): ranking no topo + escolha. `difficulty` = Comum | Avançado
- * (só a Corrida com obstáculos e o Pedra·Papel·Tesoura têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
+ * (a Corrida com obstáculos, o Pedra·Papel·Tesoura e a Chuva de Almas têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
  */
 const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }; rankings: GateRanking[]; difficulty?: boolean; pveVsPvp?: boolean }>> = {
   dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
   ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
-  barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, rankings: [{ game: 'soul-barrage' }] },
-  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
+  barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, difficulty: true, rankings: [{ game: 'soul-barrage', label: 'Comum' }, { game: 'soul-barrage-2', label: 'Avançado' }] },
+  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3', label: { pt: 'Aventura', en: 'Adventure' }, period: 'monthly' }, { game: 'match3-pvp', label: { pt: 'PvP', en: 'PvP' }, period: 'monthly' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
-  patches: { name: { pt: 'Colcha', en: 'Patchwork' }, rankings: [{ game: 'patches' }] },
 };
 
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
@@ -161,8 +213,6 @@ type TournamentProps = ComponentProps<typeof TournamentPageT>;
 
 export interface AreaViewProps {
   area: AreaId;
-  /** Acordar o Soulmon (REGISTRO §112): `true` = a ação de jogo ficou parada (o `App` já mostrou o aviso curto + o atalho "Acordar"). Só os JOGOS passam por aqui (`WAKE_BLOCKED_GAMES`); abrir a área e navegar nunca param. */
-  wakeGuard?: (action: string) => boolean;
   /** O Soulmon JÁ está na descida (`soulmonNaMasmorra`): tocar a Fenda entra direto na tela da descida, sem a folha com o CTA. */
   naMasmorra?: boolean;
   /** 💎 O Soulmon está no CRISTAL da evolução: Masmorra, Fenda, Feira, Grove e Arena recusam com o aviso curto (`utils/evolutionCrystal.ts`). */
@@ -171,6 +221,9 @@ export interface AreaViewProps {
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
   onInitialGameConsumed?: () => void;
+  /** O jogo veio do Fliperama de Canto da Home (§487): ao SAIR dele (voltar, fechar, sem ticket) a pessoa volta DIRETO à Home, sem passar pela área Jogos nem pelo mapa. Só vale junto de `initialGame`. */
+  returnHomeOnGameExit?: boolean;
+  onReturnHome?: () => void;
   /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
    *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
   initialSheet?: string;
@@ -186,19 +239,29 @@ export interface AreaViewProps {
   onVisitBuilding?: (id: BuildingId) => void;
   /** O marcador da missão de cada prédio hoje (`buildingMarks`): "!" disponível (some ao fazer a missão), "?" pronta (não recolhe aqui). Ausente = nenhum. */
   buildingMarks?: Partial<Record<BuildingId, QuestMark>>;
+  /** Recurso disponível agora em cada prédio (`lotCoins`): vira a moeda amarela ao lado do "!". Ausente = nenhuma. */
+  buildingCoins?: Partial<Record<BuildingId, readonly string[]>>;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
+  /** Há uma ATIVIDADE rodando agora (jogo aberto, duelo, luta do Torneio)? Diferente de `onLayerChange`: uma folha aberta não é atividade. Alimenta o portão da carta "Elemento novo". */
+  onActivityChange?: (ativa: boolean | undefined) => void;
   /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
   onGoToMap?: () => void;
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
   ownership: ShopOwnership;
   actions: ShopActions;
+  /** Seletor de moldura do widget V-Pet (aba Widget da lojinha de Background). */
+  widgetFrames?: WidgetFramePickerData;
   points: number;
   emblems: number;
   credits: number;
   /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
   unlockedElements?: readonly string[];
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
+  /** §386 (A4c): o atalho "Get Credits" do Cambista abre a compra de Créditos que já existe. */
+  onGetCredits?: () => void;
+  /** §386: o Cambista aberto reenvia os pacotes de Bits pendentes (rede caiu depois do débito). */
+  onRecoverPendingBits?: () => void;
   /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
   essences?: Record<string, number>;
@@ -224,7 +287,10 @@ export interface AreaViewProps {
   profissaoNome?: { pt: string; en: string } | null;
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
   petElement?: string;
-  onEarnPoints: (points: number) => void;
+  /** §232: a base nº 1 do Soulmon combinado. */
+  petBase?: string;
+  /** Devolve os Bits REALMENTE creditados (teto diario aplicado); as telas de resultado mostram esse valor. */
+  onEarnPoints: (points: number, extraCap?: number, category?: BitsCategory) => number | void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
   onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
@@ -239,6 +305,10 @@ export interface AreaViewProps {
     seed?: string;
     /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §66): o MESMO achado do resumo do dia, agora também aqui. */
     achado?: PasseioAchado | null;
+    /** Concluir o passeio (cena + recompensas na hora, REGISTRO §413). */
+    onDone?: () => void;
+    /** A missão foi escolhida (o `App` mostra "Tarefa criada"). */
+    onPicked?: () => void;
   };
   /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */
   caderno?: {
@@ -327,27 +397,47 @@ export function AreaView(props: AreaViewProps) {
   const bbBlocks = (lotId: string | null | undefined) =>
     !!lotId && `${area}.${lotId}` in BB_LOCKED_BUILDINGS && bbRefusal({ evolutionStage: props.evolutionStage }) !== null;
   const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
+  /* 💤 Soulmon dormindo (REGISTRO §329, `utils/wakeToEnter.ts`): só o prédio cuja ENTRADA já é a atividade (`SLEEP_BLOCKED_LOTS`, o
+     Calabouço) pergunta na porta. As folhas com parte de leitura (Arena, Torneio, Guerra, Fenda, Passeio, Oficina, Feira, Grove —
+     `SLEEP_ACTION_LOTS`) entram livres; o botão de lutar/agir lá dentro pergunta na hora do toque. Mapa, lojas e Laboratório, livres. */
+  const wakeGate = useWakeGate();
+  const sleepEntry = (lotId: string | null | undefined): string | null =>
+    lotId && lotEntryAsks(`${area}.${lotId}`) ? `${area}.${lotId}` : null;
   const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
-  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
+  /* Atalho da Home/missão para um prédio de atividade com o Soulmon dormindo: a folha não abre na montagem; a pergunta abre (efeito abaixo). */
+  const initialSleepEntry = props.initialSheet && !initialLock && !initialDemoBlocked ? sleepEntry(props.initialSheet) : null;
+  const [initialSleepHeld] = useState(() => !!initialSleepEntry && wakeGate.held(initialSleepEntry));
+  /* Plaquinha da Home "Ir à Fenda": com o Soulmon lá, `initialSheet: 'fenda'` abre direto a TELA da descida (como o toque no lote), sem a folha de início. */
+  const initialFenda = props.area === 'exploracao' && props.initialSheet === 'fenda' && !!props.naMasmorra && !initialLock && !initialDemoBlocked;
+  const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked || initialFenda || initialSleepHeld ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
     cristalBlocks(props.initialSheet) ? crystalRefusalText(language === 'pt-BR')
       : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
       : initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
-  useEffect(() => {
-    if (!lockNote) return;
-    const t = setTimeout(() => setLockNote(null), 5000);
-    return () => clearTimeout(t);
-  }, [lockNote]);
+  /* O aviso de prédio trancado NÃO some sozinho (dono, 16/11/2026): só pelo X da faixa. */
+  const gsCtx = useGameStateOptional();
+  const gsForIndicators = gsCtx?.gameState;
+  /** O mapa de andares do Rift em tela cheia (REGISTRO §462). */
+  const [riftMapOpen, setRiftMapOpen] = useState(false);
+  /** "Entrar no Rift" na folha: a descida larga SOZINHA do ponto onde parou, sem o lobby nem 2º toque (pedido do dono, 16/11/2026). */
+  const [riftAuto, setRiftAuto] = useState(false);
+  const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
-  const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
+  const gated = (lots: AreaLot[]): AreaLot[] => lots.map(lote => {
+    let l = lote;
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
     if (cristalBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(crystalRefusalText(language === 'pt-BR')) };
     if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
-    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined };
+    const dormindo = sleepEntry(l.id);
+    if (!g && dormindo) {
+      const abrir = l.onOpen;
+      l = { ...l, onOpen: () => { wakeGate.require(dormindo, abrir); } };
+    }
+    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0, indicator: lotFlags[`${area}.${l.id}`] };
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);
@@ -357,14 +447,62 @@ export function AreaView(props: AreaViewProps) {
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
-  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
+  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? (initialFenda ? 'masmorra' : null));
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
-  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
+  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2; choice?: M3Choice } | null>(null);
+  /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
+     não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
+  const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
+  const funChargedRef = useRef<string | null>(null);
+  /* Sem energia: fecha o jogo e devolve à folha do Salão, com o aviso em destaque. */
+  const [funRefused, setFunRefused] = useState(false);
+  const refuseFun = () => { setGame(null); setModeChosen(null); setFunRefused(true); setSheet('salao'); };
+  const replayRound = () => {
+    if (funApi && !funApi.onStartRound()) { refuseFun(); return false; }
+    if (game) { endRoundRef.current?.(); endRoundRef.current = trackMinigame(game); } // nova rodada = nova partida nas métricas
+    return true;
+  };
+  const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
+  useEffect(() => {
+    if (!funKey) { funChargedRef.current = null; return; }
+    if (funChargedRef.current === funKey || !funApi) return;
+    funChargedRef.current = funKey;
+    if (!funApi.onStartRound()) refuseFun();
+  }, [funKey, funApi]);
+  /* Métricas de tempo (docs/PLANO-METRICAS.md): o prédio aberto (feature) e o jogo em andamento (minigame). Só agregado; o nome vem do registro. */
+  useEffect(() => { setActive('feature', sheet ? `${area}.${sheet}` : null); return () => setActive('feature', null); }, [area, sheet]);
+  const endRoundRef = useRef<((o?: 0 | 1 | 2) => void) | null>(null);
+  const gameRunning = !!game && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  useEffect(() => {
+    if (!gameRunning || !game) return;
+    endRoundRef.current = trackMinigame(game);
+    setActive('minigame', game);
+    return () => { endRoundRef.current?.(); endRoundRef.current = null; setActive('minigame', null); };
+  }, [gameRunning, game]);
+  /* §487: jogo aberto pelo Fliperama da Home: ao sair dele, volta DIRETO à Home (a decisão vale pela montagem; sair da área não a rearma). */
+  const voltaAHomeRef = useRef(!!props.returnHomeOnGameExit && !!props.initialGame);
+  const jaTeveJogoRef = useRef(false);
+  const { onReturnHome } = props;
+  useEffect(() => {
+    if (game) { jaTeveJogoRef.current = true; return; }
+    if (jaTeveJogoRef.current && voltaAHomeRef.current) { voltaAHomeRef.current = false; onReturnHome?.(); }
+  }, [game, onReturnHome]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
-  useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!props.initialSheet) return;
+    const lote = props.initialSheet;
+    if (initialSleepHeld && initialSleepEntry) {
+      // 💤 §329: a pergunta abre; "Acordar" entra no prédio pedido (conta a visita só aí), "Agora não" fica na área.
+      wakeGate.require(initialSleepEntry, () => { onVisitBuilding?.(`${area}.${lote}` as BuildingId); setSheet(lote); });
+    } else if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${lote}` as BuildingId);
+    onInitialSheetConsumed?.();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
+  /* O link do hábito ("Ir ao Caderno") traz o formato em `initialSection`; vale só para a abertura vinda dele. */
+  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre') ? (props.initialSection as 'gratidao' | 'livre') : undefined));
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
     if (area === 'laboratorio' && props.initialSheet && !initialLock) {
@@ -389,6 +527,12 @@ export function AreaView(props: AreaViewProps) {
     onLayerChange?.(layerOpen);
     return () => onLayerChange?.(false);
   }, [layerOpen, onLayerChange]);
+  const emAtividadeAgora = game !== null || duelOpen || tournamentDuelOpen;
+  const { onActivityChange } = props;
+  useEffect(() => {
+    onActivityChange?.(emAtividadeAgora);
+    return () => onActivityChange?.(undefined);
+  }, [emAtividadeAgora, onActivityChange]);
   // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
   useBackLayer(duelOpen, () => setDuelOpen(false));
   // A masmorra registra o PRÓPRIO voltar (vai direto ao mapa, igual ao ícone do mapa); os outros jogos voltam à área.
@@ -397,17 +541,22 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'mercado') {
     const lots = mercadoLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
+    // Restaurante: o busto e a fala são os do chef DO DIA (do jogador), e no domingo os dois lado a lado (`chefsOn`); o resto do Mercado segue o NPC do lote.
+    const chefsHoje = chefsOn(playerWeekday(new Date(), gsForIndicators?.playerDayTz));
+    const restNpc = open?.id === 'restaurante'
+      ? { npcArt: RESTAURANT_CHEF_ART[chefsHoje[0]], npcArt2: chefsHoje[1] ? RESTAURANT_CHEF_ART[chefsHoje[1]] : undefined, npcVoice: restaurantNpcVoice(chefsHoje, language === 'pt-BR') }
+      : {};
     const stall = open && open.id !== 'conquistas' && open.id !== 'restaurante' && open.id !== 'cambista' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'restaurante' | 'cambista'> : null;
     return (
       <AreaScene
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        // O Restaurante em obra (14/10/2026) e o Cambista (30/10/2026) ficam FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
+        // O Restaurante (aberto em 05/11/2026) e o Cambista (30/10/2026) ficam FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
         lots={lots.map(l => l.id === 'restaurante' || l.id === 'cambista'
           ? ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)
           : gated([{ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot])[0])}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet
           areaId={area}
@@ -417,6 +566,7 @@ export function AreaView(props: AreaViewProps) {
           closeLabel={closeLabel}
           open={!!open}
           onClose={close}
+          {...restNpc}
         >
           <Suspense fallback={<SheetLoading language={language} />}>
             {stall && (
@@ -429,15 +579,17 @@ export function AreaView(props: AreaViewProps) {
                 initialKind={stall === 'background' ? stallKind : undefined}
                 weekly={props.weekly}
                 onClaimWeekly={props.onClaimWeekly}
+                widgetFrames={props.widgetFrames}
                 {...ownership}
                 {...actions}
               />
             )}
+            {open?.id === 'restaurante' && <RestauranteSheet language={language} />}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} onGetCredits={props.onGetCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}
             {open?.id === 'conquistas' && (
-              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />
+              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: id => actions.onBuy(id) === true }} />
             )}
           </Suspense>
         </AreaSheet>
@@ -445,13 +597,24 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
+  /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
+     pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
+  const funGate = funApi;
+  /* 💤 Jogo com o Soulmon dormindo (§329; antes, §112, era só o aviso curto do início de dia): pergunta e, ao acordar, o jogo abre. */
+  const start = (g: PlayGame) => { wakeGate.require(g, () => { setSheet(null); setModeChosen(null); setGame(g); }); };
+  /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
+  const startSalao = (g: PlayGame) => {
+    if (funGate && isFunGame(g) && !funGate.status(Date.now()).canPlay) return;
+    setFunRefused(false);
+    start(g);
+  };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
-    const exitGame = () => setGame(null);
+    const exitGame = () => { setRiftAuto(false); setGame(null); };
     return (
             <DungeonGame
+              autoStart={riftAuto}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
               profissao={props.profissao}
@@ -467,13 +630,14 @@ export function AreaView(props: AreaViewProps) {
               onRunEnd={play.onRunEnd}
               onEnemyDefeated={play.onDungeonEnemyDefeated}
               onEnemySeen={play.onBestiarySeen}
-              onEarnPoints={props.onEarnPoints}
+              onEarnPoints={(pts, extra) => props.onEarnPoints(pts, extra, 'explorar')}
               rankSaveId={props.guild.saveId}
               /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
               bits={props.points}
               onSpendBits={play.onSpendBits}
               onExit={exitGame}
-              onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
+              onExitToMap={() => { setRiftAuto(false); setGame(null); props.onGoToMap?.(); }}
+              onOpenRiftMap={() => { setRiftAuto(false); setGame(null); setSheet(null); setRiftMapOpen(true); }}
             />
     );
   };
@@ -481,15 +645,17 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'arena') {
     const lots = arenaLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
+    const conviteArt = props.play?.arena?.invites ? conviteDueloFan(language, props.play.arena.invites.max) : undefined;
     return (
       <AreaScene
         areaId={area}
         language={language}
         background={AREA_BG.arena}
         lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}
+          npcOverlay={open?.id === 'duelo' && props.play?.arena?.invites && conviteArt ? <TicketFan count={props.play.arena.invites.count} language={language} art={conviteArt} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} onEnemySeen={props.play.onBestiarySeen} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />
@@ -498,8 +664,9 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
-                onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
+                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, ladder: props.play.arena?.ladder, invites: props.play.arena?.invites, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
+                // 💤 §329: a folha é livre (oponentes, sorteio); LUTAR pergunta, no toque (o sono automático pode chegar com ela aberta).
+                onStart={(seed) => { wakeGate.require('arena.duelo', () => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }); }}
               />
             )}
             {open?.id === 'guerra' && (
@@ -510,6 +677,7 @@ export function AreaView(props: AreaViewProps) {
         {duelOpen && (
           <Suspense fallback={<SheetLoading language={language} />}>
             <ArenaGame
+              petBase={props.petBase}
               seed={duelSeed}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
@@ -518,7 +686,10 @@ export function AreaView(props: AreaViewProps) {
               petElement={props.petElement}
               onElementsDefeated={props.play.onElementsDefeated}
               onEnemySeen={props.play.onBestiarySeen}
-              onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('arena'); }}
+              onEarnPoints={(pts, extra) => { const creditado = props.onEarnPoints(pts, extra, 'arena'); props.onDailyEvent?.('arena'); return creditado; }}
+              onRunEnd={props.play.arena?.onRunEnd}
+              onBeginRun={props.play.arena?.invites?.onBegin}
+              ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
             />
           </Suspense>
@@ -531,8 +702,8 @@ export function AreaView(props: AreaViewProps) {
     const exitGame = () => { setModeChosen(null); setGame(null); };
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
-        // A Fenda Sem Fim com o Soulmon JÁ na descida entra direto na tela da descida, sem a folha com o CTA (`naMasmorra`).
-        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('exploracao.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); },
+        // A Fenda Sem Fim abre a folha com as DUAS portas (Descer / Ver o mapa, §462); com o Soulmon JÁ na descida, "Descer" entra direto na tela dela (`naMasmorra`).
+        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => enter(l.id),
       }))
       : area === 'forja'
         ? forjaLots(language).map(l => ({ ...l, art: FORJA_LOT_ART[l.id], onOpen: () => enter(l.id) }))
@@ -540,7 +711,10 @@ export function AreaView(props: AreaViewProps) {
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
     /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
-    const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue;
+    const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
+    const rogueGate = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false;
+    /** O mapa do Soulsmith (ferreiro) abre DIRETO em TELA CHEIA, de borda a borda (05/11/2026; sem a folha intermediária desde 23/11/2026, pedido do dono); o Voltar fecha de volta à área. */
+    const forgeFull = area === 'forja' && open?.id === 'ferreiro';
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -550,8 +724,9 @@ export function AreaView(props: AreaViewProps) {
     const mt = play.mindTutorials;
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
-      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull} onClose={close}>
+      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote} onNoticeClose={() => setLockNote(null)}
+        palco={area === 'exploracao' ? <DungeonKeyBadge expiresAt={play.dungeonKeyExpiresAt} language={language} /> : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} moldura={area === 'forja' && open?.id === 'hexsmith' ? 'aco' : undefined} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -561,27 +736,38 @@ export function AreaView(props: AreaViewProps) {
                 todayKey={play.todayKey}
                 seed={props.passeio?.seed}
                 achado={props.passeio?.achado}
+                onDone={props.passeio?.onDone ? () => { close(); props.passeio?.onDone?.(); } : undefined}
+                onPicked={() => { close(); props.passeio?.onPicked?.(); }}
               />
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
-            {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
-            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
-            {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
-            {open?.id === 'ferreiro' && <ForgeCard language={language} />}
+            {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
+            {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
+            {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => play.funSession!.onBuy!() : undefined} refused={funRefused} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
           </Suspense>
         </AreaSheet>
+        {riftMapOpen && (
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
+            <RiftMap language={language} save={gsCtx?.gameState ?? {}} sprite={props.guild.mySprite} onClose={() => { setRiftMapOpen(false); setSheet('fenda'); }}
+              onRewind={(i) => gsCtx?.setGameState(prev => rewindToSet(prev, i))}
+              onTeleport={(o) => gsCtx?.setGameState(prev => teleportToPortal(prev, o))} />
+          </Suspense>
+        )}
+        {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
+        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} expired={play.dungeonKeyExpired} onGoToWorkshop={() => { close(); requestGoToBuilding('forja.oficina'); }} /></Suspense>}
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
+              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={(pts) => props.onEarnPoints(pts, 0, 'explorar')} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}
@@ -592,14 +778,19 @@ export function AreaView(props: AreaViewProps) {
               gameName={MINIGAME_GATE[game]!.name[language === 'pt-BR' ? 'pt' : 'en']}
               rankings={MINIGAME_GATE[game]!.rankings}
               saveId={props.guild.saveId}
+              tickets={isFunGame(game) ? funApi?.status(Date.now()).count : undefined}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
-              onPick={level => setModeChosen({ game, level })}
+              renderChoices={game === 'match3'
+                ? (level: 1 | 2, pick: (c: M3Choice) => void) => <Match3Escolha language={language} mode={level === 2 ? 'pvp' : 'adventure'} saveId={props.guild.saveId} playerLevel={props.playerLevel} onFight={pick} />
+                : undefined}
+              onPick={(level, choice) => setModeChosen({ game, level, ...(choice ? { choice: choice as M3Choice } : {}) })}
               onBack={exitGame}
             />
           </div>
         )}
         {game && (!MINIGAME_GATE[game] || modeChosen?.game === game) && (
+          <FunTicketCostContext.Provider value={!!funApi && isFunGame(game)}>
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && renderMasmorra()}
@@ -609,8 +800,9 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 language={language}
                 initialLevel={modeChosen?.level}
-                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
+                onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('dino'); return creditado; }}
                 onScore={play.onDinoScore}
+                onReplayRound={replayRound}
                 petElement={props.petElement}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
@@ -622,8 +814,11 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 petElement={props.petElement}
                 playerLevel={props.playerLevel}
+                initialLevel={modeChosen?.level}
+                onReplayRound={replayRound}
+                specialFamily={props.skills?.[props.evolutionStage as FichaStage]?.especial.familia}
                 language={language}
-                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); }}
+                onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); return creditado; }}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
@@ -636,21 +831,26 @@ export function AreaView(props: AreaViewProps) {
                 initialLevel={modeChosen?.level}
                 onEarnPoints={props.onEarnPoints}
                 onMatchEnd={() => props.onDailyEvent?.('ppt')}
+                onReplayRound={replayRound}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} initialChoice={modeChosen?.choice} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} onEarnHonor={play.onEarnHonor} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
-            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
-            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
-            {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('patches'); emitFeat('patchesSolved'); }} />}
-            {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
-            {game === 'respiracao' && <RespiracaoGame {...base} />}
-            {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}
+            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('eco'); return creditado; }} />}
+            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); return creditado; }} />}
+            {/* Selo Faltante (04/11/2026, substitui a Colcha): sem ranking; a rodada fechada conta a missão do dia e o feito, mesmo com 0 Bits. */}
+            {game === 'selo' && <SeloGame {...base} tutorial={mindTut('selo')} onEarnPoints={(pts) => { const creditado = pts > 0 ? props.onEarnPoints(pts) : 0; props.onDailyEvent?.('selo'); emitFeat('seloSolved'); return creditado; }} />}
+            {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam Bits nem pontuam. Concluir devolve a energia do dia (`onComplete`, 1×/dia). */}
+            {game === 'respiracao' && <RespiracaoGame {...base} onComplete={play.onRefugioComplete} />}
+            {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" onComplete={play.onRefugioComplete} />}
+            {/* Chama (04/11/2026): a exceção do Refúgio que paga — Bits FIXOS da sessão concluída, 1×/dia, pelo mesmo funil. */}
+            {game === 'chama' && <ChamaGame {...base} onEarnPoints={props.onEarnPoints} onComplete={play.onRefugioComplete} />}
           </Suspense>
           </div>
+          </FunTicketCostContext.Provider>
         )}
       </AreaScene>
     );
@@ -671,7 +871,7 @@ export function AreaView(props: AreaViewProps) {
         language={language}
         background={LABORATORIO_BG}
         lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); enter(l.id); } } satisfies AreaLot)))}
-        notice={lockNote}
+        notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           {open?.id === 'biblioteca' ? (
@@ -705,7 +905,7 @@ export function AreaView(props: AreaViewProps) {
       language={language}
       background={HALL_BG}
       lots={gated(lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
-      notice={lockNote}
+      notice={lockNote} onNoticeClose={() => setLockNote(null)}
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
         <Suspense fallback={<SheetLoading language={language} />}>

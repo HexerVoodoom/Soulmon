@@ -88,15 +88,15 @@ describe('sugestão "Pagar contas" removida', () => {
 });
 
 describe('Hábito = todo dia · Tarefa = pontual ou em dias específicos', () => {
-  const abrirForm = (re: RegExp) => fireEvent.click(screen.getByRole('button', { name: re }));
-
   it('hábito não pergunta dias: salva como atividade de todo dia', () => {
     const onSaveActivity = vi.fn();
     render(<CreateModal isOpen initialKind="habit" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={onSaveActivity} language="pt-BR" />);
-    abrirForm(/Mais opções/);
+    // Novo hábito: tudo já visível, sem 'Mais opções'; o nome vem do campo de cima.
+    expect(screen.queryByRole('button', { name: /Mais opções/ })).toBeNull();
     expect(screen.getByRole('radio', { name: 'Hábito' })).toBeTruthy();
     expect(screen.queryByRole('radio', { name: 'Dias específicos' })).toBeNull();
-    fireEvent.change(document.getElementById('sm-create-name')!, { target: { value: 'Meditar' } });
+    fireEvent.change(document.getElementById('sm-quick-add')!, { target: { value: 'Meditar' } });
+    fireEvent.blur(document.getElementById('sm-quick-add')!);
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     const data = onSaveActivity.mock.calls[0][0];
     expect(data.schedule).toEqual({ kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] });
@@ -105,7 +105,7 @@ describe('Hábito = todo dia · Tarefa = pontual ou em dias específicos', () =>
 
   it('tarefa pode ser "Uma vez" ou "Dias específicos"', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="pt-BR" />);
-    abrirForm(/Mais opções/);
+    expect(screen.queryByRole('button', { name: /Mais opções|Menos opções/ })).toBeNull();
     expect(screen.getByRole('radio', { name: 'Uma vez' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Dias específicos' }));
     expect(screen.getByRole('radio', { name: 'Dias específicos' }).getAttribute('aria-checked')).toBe('true');
@@ -113,7 +113,7 @@ describe('Hábito = todo dia · Tarefa = pontual ou em dias específicos', () =>
 
   it('EN: Habit / Task / Specific days', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
-    abrirForm(/More options/);
+    expect(screen.queryByRole('button', { name: /More options|Fewer options/ })).toBeNull();
     expect(screen.getByRole('radio', { name: 'Habit' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Task' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Specific days' })).toBeTruthy();

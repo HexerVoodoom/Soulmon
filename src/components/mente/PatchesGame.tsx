@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
+import { sceneBackground } from '../../utils/fxPackArt';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { RankingPanel } from '../RankingPanel';
@@ -88,7 +90,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       setSolveMs(t0.current != null ? Math.max(0, Date.now() - t0.current) : 0);
       const bits = patchesBits(size);
       setEarned(bits);
-      if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
+      if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else setEarned(onEarnPoints(bits) ?? bits); }
     }
   };
 
@@ -206,7 +208,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   if (tut.open) return <MindTutorialScreen game="patches" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
 
   return (
-    <GameRoot>
+    <GameRoot full style={{ background: sceneBackground('patches') }}>
       <GameHeader
         title={title}
         language={language}
@@ -294,6 +296,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
 
       {solved && !challenge && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'mente')} playAgainArt={lotIconArt('jogos', 'mente')} dailyEvent="patches"
           language={language}
           outcome="win"
           gameName={title}

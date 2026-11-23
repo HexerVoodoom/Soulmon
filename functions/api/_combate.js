@@ -15,6 +15,8 @@
  * Os tetos de estagio vem de `_soulXP.js` (nao se copia duas vezes).
  */
 import { STAGE_LEVEL_CAPS, MAX_LEVEL, soulLevel } from './_soulXP.js';
+import { SPECIAL_BUDGET_HITS, SHIELD_DIRECT_SPECIAL_ABSORB, SHIELD_DOT_TICK_ABSORB, SHIELD_ABSORB, shieldAbsorbPoints, CHEER, CHEER_SCALE_MAX, START_ENERGY_MAX, DOT_RESIST_MAX, cleanStartEnergy, cleanDotResist, cleanCheerScale, cheerEvents, COMPANHEIRO_TURNOS, COMPANHEIRO_EFEITO_FATOR, COMPANHEIRO_ATAQUE_FATOR, especialInvoca, planoInvocacao } from './_combateAux.js';
+export { SPECIAL_BUDGET_HITS, SHIELD_DIRECT_SPECIAL_ABSORB, SHIELD_DOT_TICK_ABSORB, SHIELD_ABSORB, shieldAbsorbPoints, CHEER, CHEER_SCALE_MAX, START_ENERGY_MAX, DOT_RESIST_MAX, cleanStartEnergy, cleanDotResist, cleanCheerScale, cheerEvents, COMPANHEIRO_TURNOS, COMPANHEIRO_EFEITO_FATOR, COMPANHEIRO_ATAQUE_FATOR, especialInvoca, planoInvocacao };
 
 // ── rng.ts ───────────────────────────────────────────────────────────────────
 /** mulberry32: 32 bits, uniforme em [0, 1). */
@@ -117,14 +119,31 @@ export function distributePoints(level, weights) {
   }
   return p;
 }
-export function combatantAt(level, weights, bonus = 0) {
+export function combatantAt(level, weights, bonus = 0, floor) {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights);
-  if (typeof bonus === 'number') return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  // "Evoluir nunca reduz" (REGISTRO §229): o piso (do estagio certo) entra ANTES do bonus de PvP. Espelho de `combate/level.ts`.
+  const f = floor && floor.s === stageOfLevel(L) ? floor : undefined;
+  const atk = Math.max(b + p.atk, f?.atk ?? 0), def0 = Math.max(b + p.def, f?.def ?? 0), spd0 = Math.max(b + p.spd, f?.spd ?? 0);
+  if (typeof bonus === 'number') return { level: L, atk, def: def0, spd: spd0, hp: autoHp(L), bonus };
   const ab = toAttrBonus(bonus);
   const fold = (v, x) => (x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v);
-  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
+  return { level: L, atk, def: fold(def0, ab.def), spd: fold(spd0, ab.spd), hp: autoHp(L), bonus: ab.atk };
+}
+/** Maior valor de UM atributo no estagio `s` (espelho de `statMaxOfStage`). */
+export function statMaxOfStage(s) {
+  const L = STAGE_LEVEL_CAPS[s];
+  return stageBase(s) + Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+}
+/** Le o piso gravado no save (espelho de `sanitizeStatFloor`): lixo -> undefined; cada valor limitado ao teto legitimo. */
+export function sanitizeStatFloor(v) {
+  if (!v || typeof v !== 'object') return undefined;
+  const s = v.s;
+  if (typeof s !== 'number' || !Number.isInteger(s) || s < 1 || s >= STAGE_LEVEL_CAPS.length) return undefined;
+  const max = statMaxOfStage(s - 1);
+  const c = (x) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(max, Math.max(0, Math.floor(x))) : 0);
+  return { s, atk: c(v.atk), def: c(v.def), spd: c(v.spd) };
 }
 
 // ── bonus.ts ─────────────────────────────────────────────────────────────────
@@ -159,53 +178,23 @@ export function toAttrBonus(b) {
 }
 
 // ── specials.ts ──────────────────────────────────────────────────────────────
-export const SPECIAL_BUDGET_HITS = 3;
 export const SPECIAL_FAMILIES = ['direct', 'dot', 'heal', 'shield', 'atkBuff', 'defDebuff', 'spdBuff'];
-export const SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
-/** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. */
-export function specialOf(family) {
+/** Hexsmith H2: familias que so existem via Coroa (espelho de `CROWN_ONLY_FAMILIES`); nunca sorteadas. */
+export const CROWN_ONLY_FAMILIES = ['defBuff', 'atkDebuff', 'spdDebuff'];
+export const ALL_SPECIAL_FAMILIES = [...SPECIAL_FAMILIES, ...CROWN_ONLY_FAMILIES];
+export const SPECIAL_POWER = { direct: 1, dot: 1.14, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 2, defBuff: 1.1, atkDebuff: 1.1, spdDebuff: 0.64 };
+/** Hexsmith H2 (espelho de `EFFECT_TUNE_PVP`, `FAMILY_TUNE`, `EFFECT_FAMILY`). */
+export const EFFECT_TUNE_PVP = { silenceHits: 1, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.8, hotScale: 1.05 };
+export const FAMILY_TUNE = { guardCut: 0.5, weakCut: 0.57, spdDebuffScale: 1, dragStretch: 1.75 };
+export const EFFECT_FAMILY = { hot: 'shield', slow: 'defDebuff', silence: 'defDebuff' };
+/** Familia desconhecida cai em `direct` (nunca lanca): o save e do cliente. O efeito so vale sobre a familia-base dele. */
+export function specialOf(family, effect) {
   const f = typeof family === 'string' && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : 'direct';
-  return { family: f, power: SPECIAL_POWER[f] };
+  const base = { family: f, power: SPECIAL_POWER[f] };
+  return typeof effect === 'string' && Object.prototype.hasOwnProperty.call(EFFECT_FAMILY, effect) && EFFECT_FAMILY[effect] === f ? { ...base, effect } : base;
 }
 export const ENERGY = { perDealt: 60, perReceived: 60, perSecond: 2 };
 export const ENERGY_TRIGGER = 100;
-/** Torcida: 24 toques = 1 descarga; no maximo 16 toques por balde de 3 s. `pvpEnergyPerDischarge` e o rendimento do PvP. */
-export const CHEER = {
-  tapsFull: 24, tapsCapPerBucket: 16, bucketSeconds: 3, energyPerDischarge: 9, pvpEnergyPerDischarge: 2.5,
-};
-/** Marcas de toque (s) -> descargas. Toque alem do teto do balde e descartado; a cada `tapsFull` aceitos, 1 descarga. */
-export const CHEER_SCALE_MAX = 1.15;
-
-/** Tarefa B (§2.38): espelho de `START_ENERGY_MAX`/`DOT_RESIST_MAX` e dos limpadores de `combate/specials.ts`. */
-export const START_ENERGY_MAX = 9;
-export const DOT_RESIST_MAX = 0.18;
-/** @param {unknown} x */
-export function cleanStartEnergy(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(START_ENERGY_MAX, Math.max(0, x)) : 0;
-}
-/** @param {unknown} x */
-export function cleanDotResist(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(DOT_RESIST_MAX, Math.max(0, x)) : 0;
-}
-export function cleanCheerScale(x) {
-  return typeof x === 'number' && Number.isFinite(x) ? Math.min(CHEER_SCALE_MAX, Math.max(1, x)) : 1;
-}
-export function cheerEvents(taps, side, scale = 1) {
-  const out = [];
-  const k = cleanCheerScale(scale);
-  const perBucket = new Map();
-  let acc = 0;
-  for (const tap of [...taps].filter((x) => Number.isFinite(x) && x >= 0).sort((x, y) => x - y)) {
-    const b = Math.floor(tap / CHEER.bucketSeconds);
-    const n = perBucket.get(b) ?? 0;
-    if (n >= CHEER.tapsCapPerBucket) continue;
-    perBucket.set(b, n + 1);
-    acc++;
-    if (acc % CHEER.tapsFull === 0) out.push(k === 1 ? { t: tap, side } : { t: tap, side, scale: k });
-  }
-  return out;
-}
-
 // ── fight.ts ─────────────────────────────────────────────────────────────────
 export const MIRROR_SECONDS = 25;
 export const HIT_UNIT_H0 = 10;
@@ -225,6 +214,8 @@ export function startPoints(frac, pts) {
 export const EPS = 1e-9;
 export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;
+/** §334: ticks de um DoT, em golpes do AFETADO (espelho de `DOT_TICKS`). */
+export const DOT_TICKS = 3;
 
 export function windowSeconds(level) {
   const d = combatantAt(level, REFERENCE_BUILDS.balanced);
@@ -237,8 +228,8 @@ export function hitUnit(level, h0 = HIT_UNIT_H0) {
 
 /**
  * Gerador da luta. `cast` PAUSA e recebe o multiplicador (no PvP sempre 1: nao ha anel nem esquiva).
- * @param {{ combatant: any, special: any, dotResist?: number }} a
- * @param {{ combatant: any, special: any, dotResist?: number }} b
+ * @param {{ combatant: any, special: any, dotResist?: number, invoca?: boolean }} a
+ * @param {{ combatant: any, special: any, dotResist?: number, invoca?: boolean }} b
  * @param {{ seed: number, hpScale?: number, variance?: any, windowLevel?: number, phases?: number[], unitH0?: number | null,
  *   startHp?: number[], startEnergy?: number[], hitScale?: (who: 0 | 1, n: number) => number,
  *   cheer?: { t: number, side: 0 | 1, scale?: number }[], stopAtFirstKo?: boolean }} opts
@@ -263,7 +254,7 @@ export function* fightSteps(a, b, opts) {
     const pts = hpPoints(c.hp);
     return {
       c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
-      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
+      next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nDrag: 0, nGuard: 0, nWeak: 0, nHot: 0, hots: /** @type {{ pulse: number, left: number }[]} */ ([]), dotResist: cleanDotResist(s.dotResist), dots: /** @type {{ src: object, E: number, left: number, comp?: boolean }[]} */ ([]), invoca: s.invoca === true,
     };
   };
   const F = [mk(a, 0), mk(b, 1)];
@@ -288,15 +279,15 @@ export function* fightSteps(a, b, opts) {
   const gain = (f, x, per) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src, v, frac, kind, shieldCap = Infinity) => {
+  const hit = (src, v, frac, kind, from) => {
     if (v.dead < Infinity) return;
     // VIDA INTEIRA: o golpe vale pontos inteiros (min 1); o evento leva os pontos que SAIRAM da barra
     const d = damagePoints(frac, v.pts);
     let lose = d;
-    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
+    // §327: o escudo absorve o básico inteiro, METADE do especial direto e METADE de cada tick de DoT (`SHIELD_ABSORB`)
     const sh = Math.round(v.shield * v.pts);
-    if (sh > 0) {
-      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+    const ab = shieldAbsorbPoints(sh, lose, from);
+    if (ab > 0) {
       v.shield = (sh - ab) / v.pts;
       lose -= ab;
     }
@@ -307,32 +298,72 @@ export function* fightSteps(a, b, opts) {
     gain(v, d / v.pts, ENERGY.perReceived);
     pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   };
+  /** §334: o comeco do golpe de `me` (espelho de `tickOwnTurn` de `fight.ts`); `true` = o tick o derrubou e ele nao golpeia. */
+  const tickOwnTurn = (me) => {
+    if ((!me.dots.length && !me.hots.length) || me.dead < Infinity || me.hp <= EPS) return false;
+    for (const d of me.dots) {
+      d.left--;
+      if (me.hp > EPS) hit(d.src, me, (d.E / DOT_TICKS) * d.src.mult() / hitsOn(d.src, me) * (1 - me.dotResist), 'tick', 'tick');
+    }
+    me.dots = me.dots.filter((d) => d.left > 0);
+    // Hexsmith H2: a cura continua pulsa depois dos ticks, no comeco do golpe de quem a recebe (espelho de `fight.ts`)
+    for (const h of me.hots) {
+      h.left--;
+      me.nHot--;
+      if (me.hp > EPS) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + h.pulse) / me.pts;
+    }
+    me.hots = me.hots.filter((h) => h.left > 0);
+    return me.hp <= EPS;
+  };
   const cast = (me, foe, t0, scale) => {
+    const plano = me.invoca ? planoInvocacao(me.sp, scale) : null;
+    if (!plano) { castFamilia(me, foe, t0, scale); return; }
+    // 1 companheiro por combatente: invocar de novo troca o que estava em cena
+    for (const f of F) f.dots = f.dots.filter((d) => !(d.src === me && d.comp));
+    if (plano.escalaEfeito > 0) castFamilia(me, foe, t0, plano.escalaEfeito);
+    foe.dots.push({ src: me, E: plano.ataqueE, left: plano.turnosAtaque, comp: true });
+  };
+  const castFamilia = (me, foe, t0, scale) => {
     const sp = me.sp;
     const E = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
+    const tune = sp.tune ?? EFFECT_TUNE_PVP;
     switch (sp.family) {
       case 'direct':
-        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
+        hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack', 'direct');
         break;
-      case 'dot': {
-        const cap = foe.shield;
-        for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
-        }
+      case 'dot':
+        // §334: o veneno fica em quem o recebe e tica nos PROXIMOS golpes dele (espelho de `fight.ts`)
+        foe.dots.push({ src: me, E, left: DOT_TICKS });
         break;
-      }
       case 'heal':
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
+        if (sp.effect === 'hot') {
+          const pulse = Math.round(((E * tune.hotScale) / DOT_TICKS / hitsOn(foe, me)) * me.pts);
+          me.nHot += DOT_TICKS;
+          me.hots.push({ pulse, left: DOT_TICKS });
+          break;
+        }
         me.shield = (Math.round(me.shield * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += E;
         break;
       case 'defDebuff':
-        foe.nVuln += E;
+        if (sp.effect === 'slow') { foe.nSlow += E * tune.slowScale; foe.nVuln += E * tune.slowKeep; }
+        else if (sp.effect === 'silence' && foe.sp) { foe.nSil = Math.max(foe.nSil, tune.silenceHits); foe.nVuln += E * tune.silenceKeep; }
+        else foe.nVuln += E;
+        break;
+      case 'defBuff':
+        me.nGuard += E / FAMILY_TUNE.guardCut;
+        break;
+      case 'atkDebuff':
+        foe.nWeak += E / FAMILY_TUNE.weakCut;
+        break;
+      case 'spdDebuff':
+        foe.nDrag += E * FAMILY_TUNE.spdDebuffScale;
         break;
       case 'spdBuff':
         me.nSpd += E;
@@ -353,7 +384,11 @@ export function* fightSteps(a, b, opts) {
   }
   function* tryCast(i, tt) {
     const me = F[i];
-    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+    if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
+      // §334 (dono, 13/11/2026): lancar o especial tambem e turno do afetado (espelho de `fight.ts`): o DoT tica antes; quem cai nao lanca
+      const caiu = tickOwnTurn(me);
+      yield* flush();
+      if (caiu) return;
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const m = yield ev('cast', i, 0, tt);
@@ -374,7 +409,7 @@ export function* fightSteps(a, b, opts) {
     for (const e of timed) if (e.t < tt) tt = e.t;
     let tEn = Infinity;
     for (const f of F) {
-      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+      if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     t = Math.min(F[0].next, F[1].next, tt, tEn);
     for (const f of F) if (f.sp && f.dead === Infinity) f.en += ENERGY.perSecond * (t - tPrev);
@@ -386,12 +421,16 @@ export function* fightSteps(a, b, opts) {
       const me = F[i];
       const foe = F[1 - i];
       if (me.next - t >= EPS) continue;
+      // §334: o DoT tica no COMECO do turno do afetado; quem cai no tick nao golpeia
+      if (tickOwnTurn(me)) { me.next = t + interval(me.c.spd); continue; }
       let mulN = 1;
       if (me.nAtk > EPS) { const x = Math.min(1, me.nAtk); mulN += x; me.nAtk -= x; }
       if (foe.nVuln > EPS) { const x = Math.min(1, foe.nVuln); mulN += x; foe.nVuln -= x; }
+      if (foe.nGuard > EPS) { const x = Math.min(1, foe.nGuard); mulN *= 1 - FAMILY_TUNE.guardCut * x; foe.nGuard -= x; }
+      if (me.nWeak > EPS) { const x = Math.min(1, me.nWeak); mulN *= 1 - FAMILY_TUNE.weakCut * x; me.nWeak -= x; }
       const hs = opts.hitScale ? opts.hitScale(i, me.nHit) : 1;
       me.nHit++;
-      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack');
+      hit(me, foe, (mulN * me.mult() * hs) / hitsOn(me, foe), 'attack', 'basic');
       if (me.nSpd > EPS) {
         const x = Math.min(1, me.nSpd);
         me.nSpd -= x;
@@ -399,6 +438,9 @@ export function* fightSteps(a, b, opts) {
       } else {
         me.next = t + interval(me.c.spd);
       }
+      if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nDrag > EPS) { const x = Math.min(1, me.nDrag); me.nDrag -= x; me.next += interval(me.c.spd) * x * FAMILY_TUNE.dragStretch; }
+      if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();
     yield* markDead();
@@ -442,7 +484,10 @@ export function soulWeights(state) {
  * @param {{ maxLevel?: number, bonus?: number }} [opts]
  */
 export function soulCombatant(state, opts = {}) {
-  let level = soulLevel(state);
+  const real = soulLevel(state);
+  let level = real;
   if (typeof opts.maxLevel === 'number' && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
-  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
+  // o teto de level do duelo (S1) desliga o piso: o piso e do level real, nao de um level limitado
+  const floor = level === real ? sanitizeStatFloor(state?.evoStatFloor) : undefined;
+  return combatantAt(level, soulWeights(state), opts.bonus ?? 0, floor);
 }

@@ -3,8 +3,8 @@
 import { authHeaders } from './auth';
 import { emitFeat, RANK_TIER_ORDER } from './feats';
 
-// `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
-export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'zip' | 'patches';
+// `match3` = ranking da AVENTURA do Elemental Fusion (o id antigo ficou); `match3-pvp` = o do PVP (REGISTRO §473). `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
+export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'soul-barrage-2' | 'zip' | 'patches' | 'match3-pvp';
 
 /** Jogos de tempo (menor é melhor): o score é o tempo de resolução em ms. */
 export const TIME_RANKED_GAMES: readonly RankedGame[] = ['zip', 'patches'];
@@ -23,7 +23,7 @@ export function formatRankTime(ms: number): string {
 export type RankingPeriod = 'weekly' | 'monthly';
 export type RankingTierId = 'madeira' | 'bronze' | 'prata' | 'ouro' | 'platina' | 'diamante';
 
-export interface RankingRow { rank: number; name: string; score: number; me: boolean; /** Só `endless-rift`: 1..3 = esta linha recebe prêmio (simulados não contam; o rótulo "#4" pode levar o 1º prêmio). */ prizePlace?: number }
+export interface RankingRow { rank: number; name: string; /** §321: nome do clã (ausente = sem clã). */ guildName?: string; score: number; me: boolean; /** Só `endless-rift`: 1..3 = esta linha recebe prêmio (simulados não contam; o rótulo "#4" pode levar o 1º prêmio). */ prizePlace?: number }
 /** `tier` é `null` nos jogos de tempo (sem faixa: o tempo se compara só dentro da mesma grade). */
 export interface RankingMe { score: number; tier: RankingTierId | null; rank: number | null }
 export interface RankingBoard {

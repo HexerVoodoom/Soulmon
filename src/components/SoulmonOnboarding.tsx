@@ -1,3 +1,4 @@
+import { DEMO_BUTTON_ENABLED } from '../utils/demoButton';
 import { useState, useRef, useEffect, useMemo, lazy, Suspense, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { Viewport } from './ui/Viewport';
@@ -19,8 +20,10 @@ import {
   type LifeArea, type StruggleId, type StrengthId,
 } from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
+import { CRIACAO_ART } from '../utils/criacaoEvolucaoArt';
 import { ONBOARDING_VELADO as VELADO_BUILD } from './onboarding/sequencia/flag';
-import { isOnboardingVelado } from '../utils/bbStage';
+import { isInicioBB, isOnboardingVelado } from '../utils/bbStage';
+import { inicialDoBB } from '../utils/inicioBB';
 /* Build OU testador (o teste por pessoa só chega depois do login; lido a cada render/uso, não no load). */
 const veladoLigado = () => VELADO_BUILD || isOnboardingVelado();
 import { ROTEIRO, BERCO, ANCIAO, t as tVelado } from './onboarding/sequencia/copy';
@@ -50,9 +53,10 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite } from '../utils/monetization';
 import type { StarterId } from '../utils/sprites';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
-import { fetchBetaFull } from '../utils/entitlements';
+import { fetchBetaFull, fetchEntitlement } from '../utils/entitlements';
 import { isEmbedMode } from '../utils/embedMode';
 import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
+import { assinarDiagnostico, textoDiagnosticoLogin } from '../utils/loginDiag';
 import {
   isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
 } from '../utils/auth';
@@ -335,6 +339,31 @@ export const REVEAL_WAIT_MS = 12_000;
  */
 export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
+/** Erro do login do Google → código de `gate_login.outcome` (utils/telemetry.ts). Só categoria, nunca texto. */
+export function gateLoginOutcome(erro?: AuthErro): number {
+  switch (erro) {
+    case 'popup-fechado': return 2;
+    case 'sem-resposta': return 3;
+    case 'rede': return 4;
+    case 'dominio-nao-autorizado': case 'provedor-desligado': case 'popup-bloqueado': return 5;
+    default: return 6;
+  }
+}
+
+/** Linha técnica discreta (dono lê na tela do APK, sem logs): versão, plataforma, restauração, HTTP do GET /api/save, saveId[0..6]. */
+function LoginDiag() {
+  const [texto, setTexto] = useState(textoDiagnosticoLogin);
+  useEffect(() => {
+    setTexto(textoDiagnosticoLogin());
+    return assinarDiagnostico(() => setTexto(textoDiagnosticoLogin()));
+  }, []);
+  return (
+    <p data-login-diag style={{ margin: '12px 0 0', fontSize: 'var(--sm2-text-xs, 11px)', opacity: 0.6, color: 'var(--sm2-muted)', textAlign: 'center', wordBreak: 'break-all' }}>
+      {texto}
+    </p>
+  );
+}
+
 interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories, obterBB, obterBBExclusivo }: SoulmonOnboardingProps) {
@@ -455,6 +484,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // mandava a compra ao Play sem `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado ela seria
   // RECUSADA: a pessoa pagaria e não receberia. O rascunho do portão que parou no -7 retoma no ovo.
   const CHOICE_STEP = -7;
+  // INÍCIO BB (dono, 17/11/2026; `utils/inicioBB.ts`): com ele ligado, o CHOICE_STEP deixa de ser o ovo e vira a
+  // PERGUNTA DE ACESSO (pago segue direto; quem não tem acesso é convidado a assinar ou segue com um BB do pool), e o
+  // onboarding termina em PRONTO_STEP ("pronto em breve") → o jogo abre com o Soulmon no cristal. O chocar é na Home.
+  // Id -8 (livre, nunca usado; telemetria 42), sem renumerar nada.
+  const PRONTO_STEP = -8;
   // A tela dos TERMOS (A3, 02/10/2026). Vem DEPOIS do login: o portão tem um
   // botão só ("Continue with Google") e, com a conta já autenticada, esta tela
   // pede o aceite dos Termos/Privacidade e a declaração de 18+. Sem aceitar
@@ -720,6 +754,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const petNameFinal = petNameValue.trim() || registerDisplayName;
   // O traço dito na apresentação é o MESMO que vai para o save (finish -> petPassive). No upgrade vem do save.
   const [introPassive] = useState(() => getPassive(introPetPassive)?.id ?? rollPetPassive());
+  /** Início BB ligado (e não é o ritual de upgrade, que segue o fluxo dele). */
+  const inicioBBLigado = () => isInicioBB() && !isUpgrade;
+  const geracaoPagaRef = useRef(false);
   const introNome = isUpgrade ? (result?.creature.baseName ?? petNameFinal) : petNameFinal;
   const introLinhas = useMemo<NpcSequenceLine[]>(() => {
     if (!result) return [];
@@ -844,6 +881,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       const atual = usavel ? await getCurrentEmail() : null;
       if (cancelado) return;
       setAuthUsavel(usavel);
+      // SESSÃO JÁ ABERTA NA MONTAGEM (17/11/2026, incidente do dono): quem chega aqui já autenticado (app reaberto, sessão do
+      // Firebase persistida) NÃO passava por `aposAutenticar`, então a nuvem nunca era lida: iam os termos e o jogo abria com o
+      // estado inicial por cima de uma conta que tinha save. Agora a montagem faz a MESMA restauração do login, uma vez por
+      // sessão (o carimbo evita laço de reload quando o save adotado ainda não concluiu o onboarding).
+      if (atual) {
+        let jaTentou = false;
+        try { jaTentou = sessionStorage.getItem('soulmon-restore-na-montagem') === '1'; sessionStorage.setItem('soulmon-restore-na-montagem', '1'); } catch { /* sem sessionStorage: tenta mesmo assim */ }
+        if (!jaTentou) {
+          const rest = await restaurarContaNoLogin(atual);
+          if (cancelado) return;
+          if (rest === 'restaurada') { window.location.reload(); return; }
+          if (rest === 'indeterminado' || rest === 'storage') {
+            try { sessionStorage.removeItem('soulmon-restore-na-montagem'); } catch { /* idem */ }
+            setAuthErro('rede');
+            setAuthEmail('');
+            return;
+          }
+        }
+      }
       setAuthEmail(atual ?? '');
       // Retomada: autenticado e com aceite já provado nesta instalação, o
       // portão não tem mais o que perguntar. Desde 01/10/2026 a retomada vai
@@ -882,6 +938,30 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setComprado(true);
     setCompraAberta(false);
   }, [betaFull, step, comprado]);
+
+  // Início BB: a conta JÁ paga (compra antiga, outro aparelho) também conta como acesso. O servidor decide; falha = pergunta.
+  useEffect(() => {
+    if (!inicioBBLigado() || step !== CHOICE_STEP || comprado || !authEmail) return;
+    let cancelado = false;
+    void fetchEntitlement().then(ent => {
+      if (cancelado || ent?.tier !== 'paid') return;
+      setFlow('oracle');
+      setComprado(true);
+      setCompraAberta(false);
+    }).catch(() => { /* sem resposta: a pergunta fica */ });
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, authEmail]);
+
+  // Início BB: quem TEM acesso (compra confirmada pelo servidor ou BETA_EMAILS) não vê pergunta nenhuma: a leitura do
+  // oráculo é feita (local, sem custo de imagem) e o onboarding vai ao "pronto em breve".
+  useEffect(() => {
+    if (!inicioBBLigado() || step !== CHOICE_STEP || !comprado || geracaoPagaRef.current) return;
+    geracaoPagaRef.current = true;
+    setStep(GENERATING);
+    runGenerate(testAnswers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, comprado]);
 
   // Rascunho do portão: gravado em todo o trecho do onboarding que não é o
   // ritual PAGO (este tem o rascunho dele, `oracleDraft`). Some assim que o
@@ -993,6 +1073,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
     // jogador o reroll pelo qual ele pode ter pagado. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, profile);
+    // Início BB: nada de desenho aqui; o BB exclusivo é pedido pelo App depois de entrar no jogo.
+    if (inicioBBLigado()) { setStep(PRONTO_STEP); return; }
     // D-150: primeiro a Iris diz o elemento; o desenho (e o custo dele) só começam no "Gostei".
     setStep(ELEMENT_DECIDE);
   };
@@ -1303,7 +1385,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
    *  save. Aqui só registramos o e-mail e seguimos para a escolha — se o
    *  reload vier antes, melhor ainda. */
-  const aposAutenticar = async (mail?: string) => {
+  const aposAutenticar = async (mailRecebido?: string) => {
+    // APK: `signInWithCredential` pode devolver `user.email` vazio; sem e-mail a restauração era PULADA em silêncio
+    // e a pessoa caía nos termos como conta nova. Cai para o e-mail da sessão do Firebase antes de desistir.
+    const mail = mailRecebido || (await getCurrentEmail().catch(() => null)) || undefined;
     // F1 (QA rodada 2, FATAL): e-mail com lápide (410) NÃO entra no
     // onboarding. `checarContaExcluidaNoLogin` já deslogou e gravou o aviso;
     // aqui a pessoa fica no portão, com a mensagem e o caminho de volta
@@ -1331,6 +1416,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       const rest = await restaurarContaNoLogin(mail);
       if (rest === 'restaurada') { window.location.reload(); return; }
       setAuthOcupado(false);
+      // Dúvida não vira conta nova (17/11/2026, bug do dono): se NÃO deu para ler a nuvem (5xx, 401 logo após o login, rede) ou
+      // o storage recusou a adoção, a pessoa fica no portão com "tente de novo". Seguir para termos+onboarding tratava "não consegui
+      // ler" como "não existe save" e abria o caminho de criar conta nova por cima de uma conta existente.
+      if (rest === 'indeterminado' || rest === 'storage') {
+        setAuthErro('rede');
+        setAuthEmail('');
+        setStep(IDENTITY_STEP);
+        return;
+      }
     }
     // A3: com a conta pronta, falta o aceite dos termos — a menos que esta
     // instalação já tenha provado o aceite da versão ATUAL. Autenticado e
@@ -1423,6 +1517,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const aoEntrarComGoogle = async () => {
     if (authOcupado) return;
+    track('gate_login', { outcome: 0 });
     setAuthOcupado(true);
     setAuthErro(null);
     // Rede de segurança: ver `GOOGLE_SEM_RESPOSTA_MS`. Ela LIBERA a tela sem
@@ -1432,6 +1527,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     redeGoogleRef.current = window.setTimeout(() => {
       redeGoogleRef.current = null;
       setAuthOcupado(false);
+      track('gate_login', { outcome: 3 });
       setAuthErro('sem-resposta');
     }, GOOGLE_SEM_RESPOSTA_MS);
 
@@ -1442,7 +1538,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       redeGoogleRef.current = null;
     }
     setAuthOcupado(false);
-    if (r.ok) { await aposAutenticar(r.email); return; }
+    if (r.ok) { track('gate_login', { outcome: 1 }); await aposAutenticar(r.email); return; }
+    track('gate_login', { outcome: gateLoginOutcome(r.erro) });
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1548,6 +1645,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setStep(GENERATING);
     runGenerate(testAnswers);
   });
+
+  /** Início BB: recusou assinar → BB do pool (o App sorteia) e, no rookie, um inicial pronto escolhido pela conta. */
+  const escolherGratis = () => {
+    track('demo_pick');
+    setCompraAberta(false);
+    setFlow('demo');
+    setDemoCharacterId(inicialDoBB((authEmail ?? nickname).trim().toLowerCase()));
+    setStep(PRONTO_STEP);
+  };
 
   /** A demo CONFIRMADA ("Sim"): a Ambra fala de novo e, ao fim dela, o app entra na demo (`finish`). */
   const confirmarDemo = () => {
@@ -1752,6 +1858,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             sem checagem de idade por um lado da bifurcação. */}
         {step === IDENTITY_STEP && (
           <>
+          <LoginDiag />
           {/* A1 (checklist do dono, 01/10/2026): A MARCA é o LOGO do app
               (`src/assets/brand/final/logo-wordmark.png`, o wordmark SOUL/MON
               — DEFINITIVO desde 04/10/2026: gerado pelo dono com alfa real,
@@ -1819,13 +1926,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               escolha do portão, sem dourado e sem empurrão. Abre a escolha dos 5
               iniciais; o resto da regra (Vínculo 5, só no aparelho, sem XP/compra/PvP)
               é do `utils/demoMode.ts`, e a tela a diz em uma linha antes do toque. */}
-          {onStartDemo && (
+          {DEMO_BUTTON_ENABLED && onStartDemo && (
             <div style={{ marginTop: mostrarAuth ? 12 : 24 }}>
               <button
                 type="button"
                 data-demo-button
                 style={{ ...sm2Button('outline'), width: '100%' }}
-                onClick={() => setStep(DEMO_LOCAL_PICK)}
+                onClick={() => { track('gate_login', { outcome: 7 }); setStep(DEMO_LOCAL_PICK); }}
                 aria-label={isPt ? 'DEMO — experimentar sem conta' : 'DEMO — try it without an account'}
               >
                 DEMO
@@ -1848,6 +1955,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               ? 'Sua conta está pronta. Confirme os dois documentos e sua idade para continuar.'
               : 'Your account is ready. Confirm the two documents and your age to continue.'}>
             {blocoLegal}
+            <LoginDiag />
             <button
               type="button"
               style={{ ...sm2Button('primary', !podeAutenticar), width: '100%', marginTop: 20 }}
@@ -1888,7 +1996,61 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* O OVO-CRISTAL (§81) — o fim das perguntas, no lugar da escolha grátis/completo e do reveal demo. Tocar balança;
             com 5 toques aparecem "Conhecer o seu Soulmon" (abre o modal de compra existente) e "Me empreste um Soulmon
             guia" (a escolha dos 5 iniciais, que pede confirmação). Comprado: só o "Chocar". */}
-        {step === CHOICE_STEP && (
+        {step === CHOICE_STEP && inicioBBLigado() && (
+          comprado ? (
+            <div role="status" aria-live="polite" style={{ paddingTop: 40, textAlign: 'center' }}><Spinner /></div>
+          ) : (
+            <StepShell
+              title={isPt ? 'Quer gerar o seu próprio Soulmon?' : 'Want to generate your own Soulmon?'}
+              hint={isPt
+                ? 'Assinando, ele nasce das suas respostas: uma criatura só sua, desenhada para você. Sem assinar, você recebe um Soulmon do berçário e pode jogar do mesmo jeito.'
+                : 'Subscribe and it is born from your answers: a creature that is yours alone, drawn for you. Without subscribing, you get a Soulmon from the nursery and can play just the same.'}>
+              {/* Adendo do dono (17/11/2026): dito com calma, sem pressa — é um fato do nascimento, não uma oferta que acaba. */}
+              <p data-inicio-bb-aviso style={{ ...sm2Hint, margin: '0 0 16px' }}>
+                {isPt
+                  ? 'A primeira forma, o bebê, só é desenhada para você agora, no nascimento: depois ela não é gerada de novo. As outras formas podem ser suas mais tarde, se você assinar.'
+                  : 'The first form, the baby, is only drawn for you now, at birth: it is not generated again later. The other forms can become yours later on, if you subscribe.'}
+              </p>
+              <div data-inicio-acesso style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button type="button" data-inicio-assinar style={{ ...sm2Button('primary'), width: '100%' }} onClick={abrirCompra}>
+                  {isPt ? 'Assinar e gerar o meu' : 'Subscribe and generate mine'}
+                </button>
+                <button type="button" data-inicio-gratis style={{ ...sm2Button('outline'), width: '100%' }} onClick={escolherGratis}>
+                  {isPt ? 'Agora não' : 'Not now'}
+                </button>
+              </div>
+              {avisoCompra && <p role="alert" style={{ ...alertStyle, marginTop: 16 }}>{avisoCompra}</p>}
+              {compraAberta && (
+                <UnlockAccountModal
+                  language={lang}
+                  reason="ovo"
+                  onUnlocked={aoComprar}
+                  onClose={() => setCompraAberta(false)}
+                />
+              )}
+            </StepShell>
+          )
+        )}
+
+        {/* PRONTO_STEP (Início BB): o fim do onboarding. O jogo abre na hora, com o Soulmon no cristal; o chocar é na Home. */}
+        {step === PRONTO_STEP && (
+          <StepShell
+            title={isPt ? 'Seu Soulmon estará pronto em breve' : 'Your Soulmon will be ready soon'}
+            hint={isPt
+              ? 'Ele está tomando forma dentro do cristal. Quando ficar pronto, você o ajuda a chocar.'
+              : "It's taking shape inside the crystal. When it's ready, you help it hatch."}>
+            <div data-inicio-pronto style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 20px' }}>
+              <img src={PLACEHOLDER_ART.forming} alt="" aria-hidden="true" width={128} height={128}
+                style={{ width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated' }} />
+            </div>
+            <button type="button" data-inicio-entrar style={{ ...sm2Button('primary', submitting), width: '100%' }}
+              onClick={() => { void finish(); }} disabled={submitting} aria-busy={submitting || undefined}>
+              {submitting ? <Spinner /> : (isPt ? 'Entrar' : 'Enter')}
+            </button>
+          </StepShell>
+        )}
+
+        {step === CHOICE_STEP && !inicioBBLigado() && (
           <>
             <OvoCristal
               language={lang}
@@ -2238,7 +2400,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             bifurcação. */}
         {step === REFINE_OFFER && (
           <StepShell
-            title={isPt ? 'Tudo pronto' : 'All set'}
+            title={isPt ? 'Quase lá' : 'Almost there'}
             hint={isPt ? 'Suas respostas estão guardadas.' : 'Your answers are saved.'}>
             {/* ONB-29 (D-Q12): o erro de geração é âmbar — a falha não é da
                 pessoa; o botão tenta outra vez. */}
@@ -2300,9 +2462,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               breathing={false}
               screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
+              {/* 03/11/2026: depois do "Chocar" o cristal já está ABERTO (luz saindo), não o fechado de antes. */}
               <img
                 className="sm2-ora-cocoon sm2-ora-pulse"
-                src={PLACEHOLDER_ART.forming}
+                data-ora-cristal-aberto
+                src={CRIACAO_ART.crystalOpen}
                 alt=""
                 width={128}
                 height={128}

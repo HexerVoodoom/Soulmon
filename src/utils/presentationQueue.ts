@@ -41,6 +41,8 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  1. `welcomeTour` — a boas-vindas do primeiro uso (nada mais faz sentido antes dela);
  *  2. `triage` — a única aberta por TOQUE do usuário: ele acabou de pedir;
  *  2b. `feiraEvento` — o chefe/desafio/dia calmo da Feira que a VOLTA da Missão encontra (aviso de gesto, fora do teto; 28/10/2026, `docs/PLANO-FEIRA-CHEFE.md`);
+ *  2d. `evoStats` — o modalzinho "quanto subiu cada atributo" depois da cerimônia de evolução (05/11/2026): aviso de gesto, fora do teto, antes de `evolveTask`;
+ *  2e. `elementoNovo` — o modalzinho transparente "Elemento novo" (15/11/2026, dono; sem brilho; vários liberados = UM modal em carrossel): aviso de gesto, fora do teto, logo depois de `evoStats`;
  *  ── INÍCIO DE DIA (D-64, REGISTRO §111), depois de acordar o Soulmon ──
  *  3. `nightmare` — o pesadelo da manhã (jogável) logo depois do despertar; NUNCA junto do sonho;
  *  4. `dream` — o sonho da manhã, no lugar do pesadelo quando não há luta;
@@ -54,7 +56,8 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  ── DEPOIS, se sobrar vaga no teto de 3 (senão, próxima abertura) ──
  *  9. `levelUp` (celebração), 10. `evolveTask` ("crie mais atividades" depois de evoluir), 11. `groveMilestone`;
  *  ── FORA do início de dia ──
- * 12. `catalogLevelInvite`, 13. `restSetup` — convite e configuração: só numa abertura sem nada do início de dia;
+ * 12. `catalogLevelInvite`, 13. `restSetup`, 13b. `stepsInvite` — convite e configuração: só numa abertura sem nada do início de dia
+ *     (`stepsInvite` = o convite curto da contagem de passos, só no app Android com contador e SÓ depois do onboarding; REGISTRO §283);
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
  * 14b. `noticeToast` — balãozinho NÃO bloqueante de um aviso acionável (refeição, Refúgio, termos, triagem, recomeço), 1× por dia cada, o mais leve de todos;
  * 15. `welcome` — ocioso (o pedido de instalar/notificar decide sozinho se tem algo a dizer; não aparece no início de dia).
@@ -64,6 +67,8 @@ export const PRESENTATION_ORDER = [
   'triage',
   'dungeonReturn',
   'feiraEvento',
+  'evoStats',
+  'elementoNovo',
   'nightmare',
   'dream',
   'dailyReport',
@@ -76,8 +81,10 @@ export const PRESENTATION_ORDER = [
   'levelUp',
   'evolveTask',
   'groveMilestone',
+  'messenger',
   'catalogLevelInvite',
   'restSetup',
+  'stepsInvite',
   'unlockToast',
   'noticeToast',
   PRESENTATION_IDLE,
@@ -100,10 +107,10 @@ export const START_OF_DAY_MODAL_CAP = 3;
 export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', 'dailyReport', 'evoRecap', 'dayGoals', 'checkIn'];
 
 /** Celebrações: vêm DEPOIS do início de dia, e só se sobrar vaga no teto; senão, próxima abertura. */
-export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone'];
+export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone', 'messenger'];
 
 /** Convites e configuração: SAEM do início de dia (próxima abertura ou ação). */
-export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup'];
+export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup', 'stepsInvite'];
 
 /** Quem o Soulmon dormindo (`holdDayStart`) segura: início de dia, celebrações e convites. O que nasce de GESTO (triagem, intro de prédio, mapa) e o onboarding não. */
 const HELD_WHILE_ASLEEP: ReadonlySet<PresentationId> = new Set<PresentationId>([...DAY_START_IDS, ...CELEBRATION_IDS, ...INVITE_IDS]);

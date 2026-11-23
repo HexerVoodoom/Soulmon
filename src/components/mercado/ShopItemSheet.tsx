@@ -1,5 +1,5 @@
 import { BackCircleButton } from '../ui/BackCircleButton';
-import { useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
@@ -8,6 +8,7 @@ import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
+import { isReduceChipKey } from '../../utils/shop';
 import { decorFitLabel } from '../../utils/decorRules';
 import type { Language } from '../../utils/i18n';
 
@@ -16,12 +17,7 @@ import type { Language } from '../../utils/i18n';
  * lojinha NÃO compra nem equipa direto — sobe esta folhinha com as opções
  * (comprar / equipar) e um PREVIEW GRANDE.
  *
- *  · Peça e item (chip, mobília): o ícone do item aparece GRANDE e solto,
- *    centrado na área escurecida ACIMA da folha — sem o quadradinho do
- *    `MiniGlass` (regra do dono: ícone nunca dentro de box). Mora num portal
- *    em `document.body` (a folha é `position: fixed`) e é decorativo
- *    (`aria-hidden`, sem toque): o nome acessível está no título da folha.
- *  · Cenário: a miniatura vai DENTRO da folha e é um botão — tocar abre o
+ *  · Cenário, item e decoração (mesmo banner, 18/11/2026): a arte vai DENTRO da folha e é um botão — tocar abre o
  *    LIGHTBOX (fundo escurecido, a arte do cenário grande, fecha ao tocar
  *    fora, no ✕ do topo ESQUERDO ou no Esc). O "Equipar" continua no botão.
  *
@@ -35,51 +31,6 @@ const FRAME: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12
 function paintedUrl(css: string | undefined): string | null {
   const m = css?.match(/url\((['"]?)(.*?)\1\)/);
   return m ? m[2] : null;
-}
-
-/** O ícone grande, solto, no centro da área escurecida acima da folha. */
-function FloatingPreview({ anchor, item, onClose }: { anchor: HTMLElement | null; item: ShopItem; onClose: () => void }) {
-  const [top, setTop] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    if (!anchor) return;
-    const measure = () => {
-      const dlg = anchor.closest('[role="dialog"]') as HTMLElement | null;
-      // Posição de LAYOUT (a folha é colada no rodapé): `getBoundingClientRect().top` incluía o `translateY` da animação de subida e, no 1º
-      // quadro, media a tela inteira — com o véu próprio da prévia (P1) isso cobriria a folha. `offsetHeight` não vê transformação.
-      setTop(dlg ? Math.max(0, window.innerHeight - dlg.offsetHeight) : null);
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
-    const dlg = anchor.closest('[role="dialog"]');
-    if (ro && dlg) ro.observe(dlg);
-    return () => { window.removeEventListener('resize', measure); ro?.disconnect(); };
-  }, [anchor]);
-
-  const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
-  // Sem medida ainda (1º quadro), reserva ~metade da tela: nunca pisca no topo.
-  const area = top ?? Math.round((typeof window !== 'undefined' ? window.innerHeight : 640) * 0.45);
-  const size = Math.max(72, Math.min(200, Math.round(area * 0.6)));
-  return createPortal(
-    <div
-      aria-hidden="true"
-      data-item-preview
-      /* P1 (beta-2): a prévia é a camada MAIS ALTA acima da folha, com o PRÓPRIO véu (a lista da loja não vaza mais pelos lados do ícone)
-         e o toque nela FECHA a folha (como o toque no véu). Decorativa para leitor de tela: o ✕ e o Esc da folha seguem sendo o caminho. */
-      onClick={onClose}
-      style={{
-        position: 'fixed', left: 0, right: 0, top: 0, height: area, zIndex: 121,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(2, 8, 9, .96)', cursor: 'pointer',
-        paddingTop: 'env(safe-area-inset-top, 0px)', boxSizing: 'border-box',
-      }}
-    >
-      {png
-        ? <img src={png} alt="" style={{ height: size, width: 'auto', maxWidth: '78vw', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.55))' }} />
-        : <span style={{ fontSize: Math.round(size * 0.7), lineHeight: 1, filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.55))' }}>{item.icon}</span>}
-    </div>,
-    document.body,
-  );
 }
 
 /** Visualização AMPLIADA do cenário: fundo escurecido, imagem grande, fecha ao tocar fora. */
@@ -165,7 +116,7 @@ export function DecorFitTag({ fits, isPt }: { fits: ShopItem['fits']; isPt: bool
 }
 
 export function ShopItemSheet({
-  item, language, currency, balance, owned, equipped, onClose, onBuy, onEquip, bitsPrice, emblemPrice,
+  item, language, currency, balance, owned, equipped, onClose, onBuy, onEquip, bitsPrice, emblemPrice, hidePrimary,
 }: {
   item: ShopItem | null;
   language: Language;
@@ -181,9 +132,10 @@ export function ShopItemSheet({
   /** O preço desenhado como o card o desenha (mono primary-ink / serifa gold-ink). */
   bitsPrice: (value: number, dim: boolean) => ReactNode;
   emblemPrice: (value: number, dim: boolean) => ReactNode;
+  /** Só a prévia (sem Comprar/Equipar): usado pela folha de Conquistas quando o cenário ainda está travado ou já é seu. */
+  hidePrimary?: boolean;
 }) {
   const isPt = language === 'pt-BR';
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [zoom, setZoom] = useState(false);
   useEffect(() => { if (!item) setZoom(false); }, [item]);
   const open = !!item;
@@ -204,39 +156,31 @@ export function ShopItemSheet({
         {item && (
           <div
             data-item-sheet={item.id}
-            ref={setAnchorEl}
             style={FRAME}
           >
-            {isBg && (
-              <button
-                type="button"
-                data-item-zoom
-                onClick={() => setZoom(true)}
-                aria-label={isPt ? `Ver ${name} ampliado` : `View ${name} larger`}
-                style={{
-                  display: 'block', width: '100%', padding: 0, border: 'none', cursor: 'zoom-in',
-                  borderRadius: 'var(--sm2-radius-lg)', overflow: 'hidden', background: 'var(--sm2-viewport-bg)',
-                  aspectRatio: '96 / 52', position: 'relative',
-                }}
-              >
-                {thumbSrc
+            {/* Mesmo banner para cenário, item e decoração (feedback do dono, 18/11/2026): a arte DENTRO da folha, num botão que abre o zoom. */}
+            <button
+              type="button"
+              data-item-zoom
+              data-item-banner={isBg ? 'bg' : 'item'}
+              onClick={() => setZoom(true)}
+              aria-label={isPt ? `Ver ${name} ampliado` : `View ${name} larger`}
+              style={{
+                display: 'block', width: '100%', padding: 0, border: 'none', cursor: 'zoom-in',
+                borderRadius: 'var(--sm2-radius-lg)', overflow: 'hidden', background: 'var(--sm2-viewport-bg)',
+                aspectRatio: '96 / 52', position: 'relative',
+              }}
+            >
+              {isBg
+                ? (thumbSrc
                   ? <img src={thumbSrc} alt="" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[item.id]?.css }} />}
-              </button>
-            )}
-            {!isBg && (
-              <button
-                type="button"
-                data-item-zoom
-                onClick={() => setZoom(true)}
-                aria-label={isPt ? `Ver ${name} ampliado` : `View ${name} larger`}
-                style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 44, minHeight: 44, padding: 0, background: 'none', border: 'none', cursor: 'zoom-in' }}
-              >
-                {itemThumb
-                  ? <img src={itemThumb} alt="" style={{ height: 40, width: 'auto', objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  : <span aria-hidden="true" style={{ fontSize: 32, lineHeight: 1 }}>{item.icon}</span>}
-              </button>
-            )}
+                  : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[item.id]?.css }} />)
+                : (itemThumb
+                  ? <span className="sm3-item-arte" data-reduce={isReduceChipKey(item.icon) || undefined} style={{ position: 'absolute', inset: 0, width: 'auto', height: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img src={itemThumb} alt="" style={{ height: '70%', width: 'auto', maxWidth: '80%', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 6px 10px rgba(0,0,0,.5))' }} />
+                    </span>
+                  : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, lineHeight: 1 }}>{item.icon}</span>)}
+            </button>
             <p style={{ ...sm2Text, margin: 0 }}>{isPt ? item.descPt : item.descEn}</p>
             {isFurniture && <DecorFitTag fits={item.fits} isPt={isPt} />}
             {!owned && (
@@ -245,7 +189,7 @@ export function ShopItemSheet({
                 {currency === 'emblems' ? emblemPrice(item.price, !affordable) : bitsPrice(item.price, !affordable)}
               </p>
             )}
-            <button
+            {!hidePrimary && <button
               type="button"
               data-item-primary
               onClick={() => { if (owned) onEquip(item); else onBuy(item); }}
@@ -253,11 +197,10 @@ export function ShopItemSheet({
               style={{ ...sm2Button(owned || affordable ? 'primary' : 'outline'), width: '100%' }}
             >
               {owned ? (equipped ? (isPt ? 'Tirar' : 'Unequip') : (isPt ? 'Equipar' : 'Equip')) : (isPt ? 'Comprar' : 'Buy')}
-            </button>
+            </button>}
           </div>
         )}
       </ModalSheet>
-      {item && !isBg && <FloatingPreview anchor={anchorEl} item={item} onClose={onClose} />}
       {item && !isBg && <ItemLightbox open={zoom} item={item} name={name} language={language} onClose={() => setZoom(false)} />}
       {item && isBg && <BackgroundLightbox open={zoom} bgId={item.id} name={name} language={language} onClose={() => setZoom(false)} />}
     </>

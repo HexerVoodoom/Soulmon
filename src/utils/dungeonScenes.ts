@@ -9,6 +9,9 @@
 // gone since the canvas Jogos, DECISÕES §25: the scene is the `cover` of a
 // visor now — `games/GameKit.tsx` — and continuous motion without purpose was
 // the thing `prefers-reduced-motion` never reached.)
+import dueloBg from '../assets/soulmon/bg/duelo-bg.png';
+import visorFeira from '../assets/soulmon/bg/visor-feira.png';
+import arenaFosso from '../assets/soulmon/bg/arena-fosso.png';
 import classicRetro from '../assets/soulmon/bg/dungeon-classic-retro.png';
 import classicVhs from '../assets/soulmon/bg/dungeon-classic-vhs.png';
 import classicSol from '../assets/soulmon/bg/dungeon-classic-sol.png';
@@ -155,8 +158,22 @@ export function nightmareScene(dayKey: string = localDayKey(new Date())): Dungeo
 
 /** A cena da ARENA (`ArenaGame`) — o Abismo Violeta (`dungeon-4`, canvas `Arena`). */
 export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
-/** As duas arenas do Torneio (Arena Noturna, Coliseu Ancião): o cenário da Arena livre (28/10/2026), escolhido por run em `arenaSorteio.ts`. */
-export const ARENA_BG_SCENES: readonly DungeonScene[] = SPIRIT_BG_SCENES.filter(s => s.nameEn === 'Night Arena' || s.nameEn === 'Elder Colosseum');
+/** A cena PRÓPRIA do Duelo (02/11/2026, `bg/duelo-bg`): clareira circular, duas plataformas frente a frente sobre uma poça turquesa. */
+export const DUEL_SCENE: DungeonScene = { namePt: 'Clareira do Duelo', nameEn: 'Duel Clearing', accent: '#3fd2d9', bg: `url(${dueloBg}) center/cover` };
+/**
+ * A cena PRÓPRIA da luta da FEIRA (dono, 04/11/2026: "o combate da feira precisa do seu próprio mapa"). Slot dedicado:
+ * se existir `bg/feira-batalha.png` (vertical 9:16, ver `docs/ASSETS-A-GERAR.md`), ela manda; até lá, a melhor arte da
+ * Feira que existe — o visor da sala (`bg/visor-feira`, horizontal; `cover` mostra o miolo, as tendas).
+ */
+const FEIRA_BATALHA = Object.values(import.meta.glob<string>('../assets/soulmon/bg/feira-batalha.png', { eager: true, import: 'default' }))[0];
+export const FEIRA_SCENE: DungeonScene = { namePt: 'Feira', nameEn: 'Fair', accent: '#e8b04a', bg: `url(${FEIRA_BATALHA ?? visorFeira}) center/cover` };
+/** As arenas EXCLUSIVAS da Arena livre (Arena Noturna, Coliseu Ancião), escolhidas por run em `arenaSorteio.ts`; o Torneio usa o coliseu por faixa (`coliseuScenes.ts`). */
+// 03/11/2026 (rodada 5): a terceira, o Fosso de Cristal, NÃO entra em SPIRIT_BG_SCENES (cujos índices ARENA/NIGHTMARE/DINO dependem da ordem).
+const ARENA_FOSSO_SCENE: DungeonScene = { namePt: 'Fosso de Cristal', nameEn: 'Crystal Pit', accent: '#5ad6ff', bg: `url(${arenaFosso}) center/cover` };
+export const ARENA_BG_SCENES: readonly DungeonScene[] = [
+  ...SPIRIT_BG_SCENES.filter(s => s.nameEn === 'Night Arena' || s.nameEn === 'Elder Colosseum'),
+  ARENA_FOSSO_SCENE,
+];
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */
 export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 
@@ -164,7 +181,8 @@ export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 // pet, e no campo de batalha (uma caixa ALTA, `cover`) o `bg-sakura` virava um tile enorme repetido. A masmorra só sorteia cenas VERTICAIS
 // (as 5 clássicas + as pintadas 9:16); régua em `dungeonScenes.verticais.test.ts`.
 /** O pool do sorteio da masmorra: só cenas verticais (9:16). */
-export const RUN_SCENE_POOL: readonly DungeonScene[] = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES];
+// 03/11/2026 (dono): as duas arenas (Arena Noturna, Coliseu Ancião) são EXCLUSIVAS da Arena — saíram do sorteio da masmorra.
+export const RUN_SCENE_POOL: readonly DungeonScene[] = [...SPIRIT_BG_SCENES.filter(s => !ARENA_BG_SCENES.includes(s)), ...DUNGEON_SCENES];
 
 /**
  * Scenes for one run: 5 picks without repeats, drawn at random from the painted

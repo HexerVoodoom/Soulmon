@@ -197,19 +197,36 @@ export interface ChatPersonalitySettings {
   motivationStyle: PersonalityMotivation;
   customKeywords: string;
   temperature: number;
+  /** Beta12 (B1/B2): o CARÁTER do Soulmon (Big Five do teste, complementar ou
+   *  similar). Ausente = sem teste = neutro. O servidor só aceita o que está na
+   *  lista fechada de `functions/api/chat.js`; nunca vai à tela. */
+  character?: { archetype: string; traits: Record<string, 'low' | 'mid' | 'high'> };
 }
+
+/** Arquétipo → o `tone` do chat. O teste decide o caráter; o veto de
+ *  `derivePersonality` (motivação, emoji) continua valendo por cima. */
+const ARCHETYPE_TONE: Record<string, PersonalityTone> = {
+  acolhedor: 'calm', brincalhao: 'playful', calmo: 'calm', animado: 'energetic', direto: 'casual', curioso: 'playful', mentor: 'calm',
+};
 
 export function chatSettingsFor(
   profile: PersonalityProfile | null | undefined,
   stored?: { customKeywords?: unknown; temperature?: unknown } | null,
+  /** Beta12: o caráter vindo do teste (`soulmonCharacterFor`). Opcional; sem ele, nada muda. */
+  character?: { archetype: string; traits: Record<string, 'low' | 'mid' | 'high'> } | null,
 ): ChatPersonalitySettings {
   const p = derivePersonality(profile);
+  const fromTest = character && character.archetype !== 'neutro' ? ARCHETYPE_TONE[character.archetype] : undefined;
+  const tone = fromTest ?? p.tone;
+  // Voz calma/acolhedora pede menos emoji; o veto (`quiet`) já rebaixa quando há vulnerabilidade.
+  const emoji = fromTest === 'calm' ? 'low' : p.emojiIntensity;
   const t = typeof stored?.temperature === 'number' && Number.isFinite(stored.temperature) ? stored.temperature : 0.85;
   return {
-    tone: p.tone,
-    emojiIntensity: p.emojiIntensity,
+    tone,
+    emojiIntensity: emoji,
     motivationStyle: p.motivationStyle,
     customKeywords: typeof stored?.customKeywords === 'string' ? stored.customKeywords : '',
     temperature: t,
+    ...(character && character.archetype !== 'neutro' ? { character: { archetype: character.archetype, traits: character.traits } } : {}),
   };
 }

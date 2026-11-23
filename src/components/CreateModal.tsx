@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
@@ -21,7 +22,8 @@ import {
 import { UnlockNudge } from './UnlockAccountModal';
 import { sm2Tag } from './TaskMeta';
 import { minimumViableHint } from '../utils/taskSuggestions';
-import { parseQuickAdd, quickAddHint, type QuickAddResult } from '../utils/quickAdd';
+import { parseQuickAdd, type QuickAddResult } from '../utils/quickAdd';
+import { categoryExample } from '../utils/categoryExamples';
 import type { Effort, HabitAnchor, Schedule } from '../types/taskModel';
 
 /**
@@ -278,9 +280,7 @@ export function HabitAnchorFields({ sched, language }: { sched: HabitScheduleSta
   );
 }
 
-const CATEGORIES: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
-];
+const CATEGORIES: ActivityCategory[] = ACTIVITY_CATEGORIES as ActivityCategory[];
 
 /** Chips de categoria com o ícone VETOR de 20 (D-A7: `CATEGORY_ICON_NAME`,
  *  todos no subset — o PNG `icon-cat-*` fora do visor saiu). */
@@ -422,10 +422,11 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   // cadastrar custa três telas, a pessoa para de cadastrar, e um app de tarefas
   // onde ninguém cadastra não é usado errado, é desinstalado.
   const [quickText, setQuickText] = useState('');
+  // Último texto que o parser já aplicou: evita reaplicar (e apagar os chips) no blur.
+  const appliedQuick = useRef('');
   const [quickTokens, setQuickTokens] = useState<string[]>([]);
   // O formulário inteiro atrás de UMA divulgação. Antes conviviam abertos a
   // captura rápida, o formulário e um segundo accordion de passos/alarme.
-  const [showForm, setShowForm] = useState(false);
 
   const {
     name, setName,
@@ -458,7 +459,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   // Tarefa avulsa (`isSingleExecution`) NUNCA bate no teto — D-12: ela é o uso
   // espontâneo, e no desenho antigo custava a mesma cota de um hábito.
   // Só o HÁBITO (todo dia) gasta cota; a tarefa em dias específicos também não (dono, 14/10/2026).
-  const isAtCap = kind === 'habit' && activitiesCount >= activitiesCap;
+  const isAtCap = kind === 'habit' && Number.isFinite(activitiesCap) && activitiesCount >= activitiesCap; // teto infinito = sem teto (nunca imprime "até Infinity")
   const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
 
@@ -509,7 +510,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
    */
   const applyQuickAdd = () => {
     const raw = quickText.trim();
-    if (!raw) return;
+    // O campo agora É o nome: reaplicar o texto já aplicado apagaria os chips.
+    if (!raw || raw === appliedQuick.current) return;
     const parsed: QuickAddResult = parseQuickAdd(raw, {
       now: new Date(),
       language: isPt ? 'pt-BR' : 'en',
@@ -530,17 +532,24 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     }
     if (parsed.time) handleCustomTimeChange(parsed.time);
     setQuickTokens(parsed.tokens);
-    setQuickText('');
+    setQuickText(parsed.name);
+    appliedQuick.current = parsed.name.trim();
   };
 
+  /** O nome acompanha o que está digitado (salvar sem blur funciona; apagar zera). */
+  const onQuickChange = (value: string) => {
+    setQuickText(value);
+    setName(value.trim() ? value : '');
+    if (!value.trim()) {
+      setQuickTokens([]);
+      appliedQuick.current = '';
+    }
+  };
+
+  // Habit e Task: tudo visível (sem 'Mais opções'), um só campo de nome (a captura).
+  const habitMode = kind === 'habit';
+
   const txt = {
-    name: isPt ? 'Nome' : 'Name',
-    namePlaceholder: isPt ? 'Ex: Meditar 10 minutos' : 'Ex: Meditate 10 minutes',
-    quickHelp: isPt
-      ? 'Enter preenche o resto. Nada é salvo até você tocar em Salvar.'
-      : 'Enter fills in the rest. Nothing is saved until you hit Save.',
-    moreOptions: isPt ? 'Mais opções' : 'More options',
-    lessOptions: isPt ? 'Menos opções' : 'Fewer options',
     kindLabel: isPt ? 'Tipo' : 'Type',
     habit: isPt ? 'Hábito' : 'Habit',
     task: isPt ? 'Tarefa' : 'Task',
@@ -563,6 +572,10 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
       : `Free mode: up to ${activitiesCap} active habits. Tasks (one-off or on specific days) stay unlimited; `
         + 'evolving your own Soulmon is what raises this ceiling.',
+    /* §385: o limite fora da conta grátis (teto do estágio), em texto VISÍVEL — antes só no `title`. */
+    stageCapHint: isPt
+      ? `Neste estágio, até ${activitiesCap} hábitos diários ativos. Tarefas (pontuais ou em dias específicos) continuam sem limite.`
+      : `At this stage, up to ${activitiesCap} active daily habits. Tasks (one-off or on specific days) stay unlimited.`,
     projectSteps: isPt
       ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'
       : 'A project is too big for a single line. How about breaking it into steps?',
@@ -586,11 +599,16 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           onClick={handleSave}
           disabled={!name.trim() || (taskOnDays && !sched.isValid) || isBlocked}
           style={{ ...sm2Button('primary', !name.trim() || (taskOnDays && !sched.isValid) || isBlocked), flex: 1.4 }}
-          title={isAtCap ? (capIsDemoBoundary ? txt.demoCapHint : `${txt.limitReached} (${activitiesCap})`) : ''}
+          aria-describedby={isAtCap ? 'sm-create-cap-hint' : undefined}
         >
           {isAtCap ? txt.limitReached : txt.save}
         </button>
       </div>
+      {isAtCap && (
+        <p id="sm-create-cap-hint" data-create-cap-hint style={{ ...sm2Hint, margin: '8px 0 0' }}>
+          {capIsDemoBoundary ? txt.demoCapHint : txt.stageCapHint}
+        </p>
+      )}
     </>
   );
 
@@ -611,21 +629,20 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           autoComplete="off"
           aria-label={isPt ? 'Captura rápida' : 'Quick add'}
           value={quickText}
-          onChange={(e) => setQuickText(e.target.value)}
+          maxLength={60}
+          onChange={(e) => onQuickChange(e.target.value)}
           onBlur={applyQuickAdd}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyQuickAdd(); } }}
-          placeholder={quickAddHint(isPt ? 'pt-BR' : 'en')}
+          placeholder={categoryExample(category, isPt)}
         />
-        <HintTip language={language} label={isPt ? 'Sobre a captura rápida' : 'About quick add'}>{txt.quickHelp}</HintTip>
       </div>
 
-      {/* O que foi entendido. Só aparece com o formulário fechado — com ele
-          aberto, os próprios campos preenchidos já são a conferência. */}
-      {!showForm && name.trim() && (
+      {/* O que foi entendido (chips da captura e a dica). O nome vive no próprio campo;
+          não há campo Name duplicado (spec 3.1b). */}
+      {name.trim() && (quickTokens.length > 0 || minHint) && (
         <div>
-          <p className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)', fontWeight: 500 }}>{name}</p>
           {quickTokens.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {quickTokens.map((tk, i) => (
                 <span key={`${tk}-${i}`} style={{ ...sm2Tag, color: 'var(--sm2-primary-ink)' }}>{tk}</span>
               ))}
@@ -635,36 +652,17 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         </div>
       )}
 
-      {/* 2. O FORMULÁRIO INTEIRO, atrás de uma divulgação só. */}
+      {/* 2. O formulário inteiro, sempre aberto (sem More/Fewer options). */}
       <div>
-        <button
-          type="button"
-          onClick={() => setShowForm(v => !v)}
-          aria-expanded={showForm}
-          style={{ ...sm2Button('quiet', false, 'sm'), padding: '0 8px', alignSelf: 'flex-start' }}
-        >
-          <Icon name={showForm ? 'expand_less' : 'expand_more'} size={20} />
-          {showForm ? txt.lessOptions : txt.moreOptions}
-        </button>
-
-        {showForm && (
+        {(
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
-            <div>
-              <label style={sm2Label} htmlFor="sm-create-name">{txt.name}</label>
-              <Field id="sm-create-name" type="text" value={name} onChange={(e) => setName(e.target.value)}
-                placeholder={txt.namePlaceholder} maxLength={60} />
-              {/* Convite, não correção: some se o usuário ignorar, e a meta
-                  segue sendo dele (autonomia da SDT). */}
-              {minHint && <p style={sm2Hint}>{minHint}</p>}
-            </div>
-
             <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
 
             <div>
               <label style={sm2Label}>{txt.kindLabel}</label>
               <div role="radiogroup" aria-label={txt.kindLabel} style={{ display: 'flex', gap: 8 }}>
                 <Segment selected={kind === 'habit'} onSelect={() => { setKind('habit'); setTaskOnDays(false); }} label={txt.habit} />
-                <Segment selected={kind === 'task'} onSelect={() => setKind('task')} label={txt.task} />
+                <Segment selected={kind === 'task'} onSelect={() => { setKind('task'); }} label={txt.task} />
               </div>
               <HintTip language={language} label={isPt ? 'Hábito ou tarefa?' : 'Habit or task?'}>{txt.kindHint}</HintTip>
             </div>
@@ -727,7 +725,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
             <div>
               <label style={sm2Label} htmlFor="sm-create-alarm">
-                {isSingleExecution ? txt.alarm : isPt ? 'Horário (opcional)' : 'Time (optional)'}
+                {isSingleExecution ? txt.alarm : habitMode ? txt.frequency : isPt ? 'Horário (opcional)' : 'Time (optional)'}
               </label>
               {isSingleExecution && hasDeadline && (
                 <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>

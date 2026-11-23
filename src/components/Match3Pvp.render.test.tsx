@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * ELEMENTAL FUSION — as DUAS opções ao entrar (Normal / PVP, 26/10/2026): o seletor, o Normal idêntico, o PVP 1 contra 1 com o
- * oponente da rota `opponents` (só Soulmon e level, nunca nome), 6 elementos sorteados no tabuleiro e o NPC de reserva sem rede.
+ * ELEMENTAL FUSION — as DUAS opções ao entrar (Aventura / PVP, REGISTRO §473): o seletor, a Aventura de 4 inimigos, o PVP 1 contra 1 com o
+ * oponente da rota `opponents` (só Soulmon e level, nunca nome), 6 elementos básicos fixos e o jogador simulado de reserva sem rede.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
@@ -15,7 +15,6 @@ vi.mock('../utils/community', async () => {
 
 import { Match3Game } from './Match3Game';
 import { M3_TILE_ELEMENTS } from '../utils/match3';
-import { pvpElementsForSeed } from '../utils/match3Pvp';
 
 const SEED = 31337;
 beforeEach(() => {
@@ -32,34 +31,34 @@ const kinds = () => Array.from(document.querySelectorAll('[data-m3-cell]')).map(
 const modo = (m: string) => document.querySelector(`[data-m3-mode="${m}"]`) as HTMLElement;
 
 describe('Elemental Fusion — a entrada com duas opções', () => {
-  it('com a conta, mostra Normal e PVP (EN/PT) e o nome novo', () => {
+  it('com a conta, mostra Aventura e PVP (EN/PT) e o nome novo', () => {
     montar({ rankSaveId: 'abc' });
     expect(screen.getByText('Elemental Fusion')).toBeTruthy();
-    expect(modo('normal')).toBeTruthy();
+    expect(modo('adventure')).toBeTruthy();
     expect(modo('pvp')).toBeTruthy();
     expect(document.querySelector('[data-m3-board]')).toBeNull();
-    expect(screen.getByText('Face the rift team (3 Soulmon).')).toBeTruthy();
+    expect(screen.getByText('Face the rift team (4 Soulmon) with mixed elements.')).toBeTruthy();
     cleanup();
     montar({ rankSaveId: 'abc', language: 'pt-BR' });
-    expect(screen.getByText('Enfrente o time da fenda (3 Soulmon).')).toBeTruthy();
+    expect(screen.getByText('Enfrente o time da fenda (4 Soulmon) com elementos misturados.')).toBeTruthy();
   });
 
-  it('sem conta (testes, desafio) abre o Normal direto, como antes', () => {
+  it('sem conta (testes, desafio) abre a Aventura direto, como antes', () => {
     montar();
     expect(document.querySelector('[data-m3-modes]')).toBeNull();
     expect(document.querySelector('[data-m3-board]')).toBeTruthy();
   });
 
-  it('Normal: a rodada de sempre — 3 inimigos e os 6 elementos fixos', () => {
+  it('Aventura: 4 inimigos e os 6 elementos misturados da semente', () => {
     montar({ rankSaveId: 'abc' });
-    fireEvent.click(modo('normal'));
-    expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(3);
-    expect(document.querySelector('[data-m3-board]')!.hasAttribute('data-m3-elements')).toBe(false);
+    fireEvent.click(modo('adventure'));
+    expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(4);
+    expect(document.querySelector('[data-m3-board]')!.getAttribute('data-m3-elements')!.split(',')).toHaveLength(6);
     expect(Math.max(...kinds())).toBeLessThan(M3_TILE_ELEMENTS.length);
     expect(getOpponents).not.toHaveBeenCalled();
   });
 
-  it('PVP: usa a rota do Torneio, pareia pelo level, mostra só Soulmon e level, 1 inimigo e 6 elementos da semente', async () => {
+  it('PVP: usa a rota do Torneio, pareia pelo level, mostra só Soulmon e level, 1 inimigo e os 6 elementos básicos fixos', async () => {
     getOpponents.mockResolvedValue({
       opponents: [
         { id: 'p1', name: 'Fulano Real', petName: 'Zeca', stage: 'rookie', duel: { level: 3 } },
@@ -77,13 +76,11 @@ describe('Elemental Fusion — a entrada com duas opções', () => {
     expect(enemies.length).toBe(1);
     expect(enemies[0].getAttribute('data-m3-pvp-level')).toBe('11');
     expect(document.body.innerHTML).not.toMatch(/Fulano|Sicrana|Beltrano|Zeca|Bianca|Leonardo/);
-    const els = pvpElementsForSeed(SEED);
-    expect(document.querySelector('[data-m3-board]')!.getAttribute('data-m3-elements')).toBe(els.join(','));
-    expect(new Set(els).size).toBe(6);
+    expect(document.querySelector('[data-m3-board]')!.getAttribute('data-m3-elements')).toBe(M3_TILE_ELEMENTS.join(','));
     expect(Math.max(...kinds())).toBeLessThan(6);
   });
 
-  it('PVP sem rede: cai no NPC de reserva, sem travar', async () => {
+  it('PVP sem rede: cai no jogador simulado de reserva, sem travar', async () => {
     getOpponents.mockRejectedValue(new Error('offline'));
     montar({ rankSaveId: 'abc' });
     fireEvent.click(modo('pvp'));
@@ -92,7 +89,7 @@ describe('Elemental Fusion — a entrada com duas opções', () => {
     expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-pvp-level')).toBe('10');
   });
 
-  it('PVP com a rede pendurada: o tempo limite abre o NPC', async () => {
+  it('PVP com a rede pendurada: o tempo limite abre o jogador simulado', async () => {
     getOpponents.mockReturnValue(new Promise(() => {}));
     montar({ rankSaveId: 'abc' });
     fireEvent.click(modo('pvp'));
@@ -100,7 +97,7 @@ describe('Elemental Fusion — a entrada com duas opções', () => {
     expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(1);
   });
 
-  it('PVP com a lista vazia: NPC de reserva, sem recorde gravado', async () => {
+  it('PVP com a lista vazia: jogador simulado de reserva, sem recorde gravado', async () => {
     getOpponents.mockResolvedValue({ opponents: [], matchesLeft: 1 });
     montar({ rankSaveId: 'abc' });
     fireEvent.click(modo('pvp'));
@@ -111,10 +108,56 @@ describe('Elemental Fusion — a entrada com duas opções', () => {
 
   it('os ícones de elemento do Soulmon (jogador e oponente) ficam maiores que os 18/14 px de antes', () => {
     montar({ rankSaveId: 'abc' });
-    fireEvent.click(modo('normal'));
+    fireEvent.click(modo('adventure'));
     const jogador = document.querySelector('[data-m3-player-element]') as HTMLImageElement;
     const inimigo = document.querySelector('[data-m3-enemy-element-icon]') as HTMLImageElement;
     expect(jogador.width).toBeGreaterThan(18);
     expect(inimigo.width).toBeGreaterThan(14);
+  });
+
+  it('BOSS no PVP: a partida é só contra o boss, sem buscar adversário', async () => {
+    renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" rankSaveId="abc" initialMode="pvp" playerLevel={10} onEarnPoints={() => {}} onExit={() => {}} seed={74} />);
+    await settle();
+    expect(getOpponents).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-m3-pvp-searching]')).toBeNull();
+    expect(document.querySelector('[data-m3-pvp-level]')).toBeNull();
+    expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(1);
+  });
+
+  it('D: PvP NUNCA monta inimigo de bestiário — reserva (sem rede, lista vazia, falha, sem conta) é jogador simulado, sem roster, sem bestiário', async () => {
+    const casos: Array<() => void> = [
+      () => getOpponents.mockRejectedValue(new Error('offline')),
+      () => getOpponents.mockResolvedValue({ opponents: [], matchesLeft: 1 }),
+      () => getOpponents.mockResolvedValue({ opponents: [{ id: 'p1', stage: 'rookie', duel: { level: 9 } }], matchesLeft: 1 }),
+    ];
+    for (const caso of casos) {
+      getOpponents.mockReset(); caso();
+      const seen = vi.fn();
+      renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" rankSaveId="abc" initialMode="pvp" playerLevel={10} onEnemySeen={seen} onEarnPoints={() => {}} onExit={() => {}} seed={SEED} />);
+      await settle();
+      const e = document.querySelector('[data-m3-enemy="1"]') as HTMLElement;
+      expect(e.getAttribute('data-m3-foe-kind')).toBe('player');
+      expect(e.getAttribute('aria-label')).toMatch(/^Player Lv /);
+      expect(e.getAttribute('aria-label')).not.toMatch(/wild|rift|Boss/i);
+      expect((e.querySelector('img[src]:not([data-m3-enemy-element-icon])') as HTMLImageElement | null)?.getAttribute('src')).toBeTruthy();
+      expect(seen).not.toHaveBeenCalled();
+      cleanup();
+    }
+  });
+
+  it('D: PvP sem conta (rankSaveId ausente) continua PvP: jogador simulado, sem tela de Aventura nem rota de oponentes', async () => {
+    renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" initialMode="pvp" playerLevel={10} onEarnPoints={() => {}} onExit={() => {}} seed={SEED} />);
+    await settle();
+    expect(getOpponents).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('[data-m3-enemy]').length).toBe(1);
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-foe-kind')).toBe('player');
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('aria-label')).toMatch(/^Jogador nv /);
+  });
+
+  it('D: no PvP o boss é rotulado "Boss" (data-m3-foe-kind=boss), nunca confundido com jogador/selvagem', async () => {
+    renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" rankSaveId="abc" initialMode="pvp" playerLevel={10} onEarnPoints={() => {}} onExit={() => {}} seed={74} />);
+    await settle();
+    expect(document.querySelector('[data-m3-enemy="1"]')!.getAttribute('data-m3-foe-kind')).toBe('boss');
+    expect(document.querySelector('[data-m3-boss-tag]')!.textContent).toBe('Boss');
   });
 });

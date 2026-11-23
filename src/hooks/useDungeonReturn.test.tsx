@@ -16,7 +16,7 @@ const away = (over: Partial<DungeonAway> = {}): DungeonAway => {
   const c = soulCombatant({ evolutionStage: 'ultimate' });
   return {
     since: T0, seed: 424242, layer: 1, slot: DUNGEON_FIGHTS_PER_FLOOR, hp: 1, en: 0, ms: false,
-    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: 'ultimate' },
+    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage: 'ultimate' },
     ...over,
   };
 };
@@ -45,16 +45,16 @@ describe('useDungeonReturn', () => {
   });
 
   it('NÃO reinicia ao reabrir: remontar o hook (navegar/fechar/abrir) com o mesmo estado dá o MESMO instante de retorno, e o tempo restante só diminui', async () => {
-    const st = estado({ energyPoints: 12 }); // 10 camadas (limite diário) ≈ 27 min de descida
+    const st = estado({ energyPoints: 12 }); // o limite diário (5 andares, 30 lutas) fecha a descida em poucos minutos
     const a = renderHook(() => useDungeonReturn(st));
     await waitFor(() => expect(a.result.current.returnAt).toBeLessThan(T0 + DUNGEON_AWAY_MAX_MS));
     const fim = a.result.current.returnAt!;
     const msAntes = a.result.current.msLeft!;
     a.unmount();
-    vi.setSystemTime(T0 + 18 * 60_000); // 8 min depois, "reabriu o app"
+    vi.setSystemTime(T0 + 12 * 60_000); // 2 min depois, "reabriu o app"
     const b = renderHook(() => useDungeonReturn(JSON.parse(JSON.stringify(st)) as GameState));
     await waitFor(() => expect(b.result.current.returnAt).toBe(fim));
-    expect(b.result.current.msLeft!).toBeLessThanOrEqual(msAntes - 8 * 60_000 + 1);
+    expect(b.result.current.msLeft!).toBeLessThanOrEqual(msAntes - 2 * 60_000 + 1);
   });
 
   it('muda quando o ESTADO muda: mais energia, descida mais longa (sem teto diário)', async () => {

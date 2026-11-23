@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GUILD_MISSION_MINUTES, startGuildMission, normalizeGuildMission, isMissionAway, isMissionDue, msUntilReturn } from './guildMission';
+import { GUILD_MISSION_MINUTES, startGuildMission, normalizeGuildMission, isMissionAway, msUntilReturn } from './guildMission';
 
 describe('guildMission — a ida do Soulmon', () => {
   const t0 = Date.parse('2026-10-11T12:00:00Z');
@@ -11,9 +11,11 @@ describe('guildMission — a ida do Soulmon', () => {
     const m = startGuildMission('2026-10-11', t0);
     expect(isMissionAway(m, t0 + 1)).toBe(true);
     expect(isMissionAway(m, m.returnAt)).toBe(false);
-    expect(isMissionDue(m, m.returnAt)).toBe(true);
     expect(isMissionAway(null, t0)).toBe(false);
     expect(msUntilReturn(m, m.returnAt + 5)).toBe(0);
+  });
+  it('isMissionDue saiu (Antislop P6, código morto: só este teste a usava); o módulo não a exporta mais', async () => {
+    expect(await import('./guildMission')).not.toHaveProperty('isMissionDue');
   });
   it('save com lixo vira "sem missão"', () => {
     for (const bad of [null, 3, 'x', {}, { day: 'ontem', returnAt: 5 }, { day: '2026-10-11', returnAt: NaN }, { day: '2026-10-11', returnAt: -1 }]) expect(normalizeGuildMission(bad)).toBeNull();

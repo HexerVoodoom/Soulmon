@@ -51,30 +51,37 @@
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
+import { PlayerName } from './ui/PlayerName';
 import { useHexOverrides } from '../hooks/useHexOverrides';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily } from '../utils/hexsmith';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { markSeenId } from '../utils/librarySeen';
+import { markSeenId, addSeenToState } from '../utils/librarySeen';
 import { useEffect, useMemo, useState } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
-import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
-import { availableFrames, frameById, resolveEquippedFrame, type FrameContext } from '../utils/frames';
+import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace, faixaPontosTexto, motivoSemPontosTexto } from '../utils/tournamentTiers';
+import { availableFrames, frameOrBasic, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { dexIdsOfFoe, elementIdOfFoe } from '../utils/elementDex';
 import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
+import { essenceIconSrc, essenceName } from '../utils/resultEssences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { comCriaturaDoOponente, companheiroDoNpc } from '../utils/companheiroCriatura';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
+import { EstagioMarca } from './ui/EstagioMarca';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { lineIconForStage } from '../utils/lineIcons';
 import { opponentSprite, opponentIcon } from '../utils/opponentArt';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
+import { useRequireAwake } from './WakeToEnter';
 import { fxDoLutador } from '../utils/fighterIdentity';
 import { simulatePvp, type DuelSide } from '../utils/combate/duel';
 import { specialOf } from '../utils/combate/specials';
@@ -85,25 +92,32 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
 import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
-import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
-import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, buySparTicket, confirmSparTicketComRetry, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
+import { buildSeasonHistoryView, placeLabel, prevSeasonKey, seasonMonthLabel } from '../utils/seasonHistoryView';
+import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, SPAR_HONOR_MAX, SPAR_HONOR_DAILY_CAP, emblemStyle } from '../utils/currencies';
+import { sanitizeTreinoTickets, TREINO_TICKET_MATCHES, TREINO_EXTRA_TICKET_BITS, TREINO_EXTRA_TICKETS_MAX, type TreinoTickets } from '../utils/treinoTickets';
 import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
-import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
+import { seasonDaysLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
+import { EscolhaLinha, SortearNovos } from './ui/EscolhaLinha';
 import { PixelMeter } from './pixel/PixelKit';
 import { ResultScreen } from './games/ResultScreen';
 import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
+import { BotaoEspecial } from './ui/BotaoEspecial';
+import { RankingModal } from './RankingModal';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
-import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { bondXP, bondLevelFor, meetsPvpBond, meetsRankedBond, xpToRankedBond, xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
+import { coliseuSceneFor } from '../utils/coliseuScenes';
+import { SCENE_BG } from '../utils/fxPackArt';
 
 interface TournamentPageProps {
   saveId: string;
@@ -125,6 +139,11 @@ interface TournamentPageProps {
   /** B3: saldo de Bits e compra de moldura de loja. */
   bits?: number;
   onBuyFrame?: (id: string) => void;
+  /** Treino: os Bits que pagam o ticket extra (o saldo inteiro, §373) e a cobrança, chamada só DEPOIS de o servidor confirmar a compra. `false` = nada cobrado. */
+  spendableBits?: number;
+  onChargeTreinoTicket?: () => boolean;
+  /** Âncora do dia do jogador (`gameState.playerDayTz`): o Treino usa o MESMO dia dos demais tetos. */
+  playerDayTz?: { zone?: string; offsetMs?: number };
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
   emblems: number;
@@ -241,14 +260,17 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
       data-tier-insignia={id}
       width={size}
       height={size}
-      style={{ width: size, height: size, display: 'block', imageRendering: 'pixelated', filter: state === 'next' ? 'grayscale(1) brightness(0.55)' : undefined }}
+      style={{ width: size, height: size, display: 'block', objectFit: 'contain', filter: state === 'next' ? 'grayscale(1) brightness(0.55)' : undefined }}
     />
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, spendableBits: spendableBitsProp = 0, onChargeTreinoTicket, playerDayTz, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
+  /* 💤 §329: o Torneio entra livre (ranking, histórico, molduras); LUTAR, TREINAR e o desgarrado perguntam com o Soulmon dormindo,
+     na hora do toque (o sono automático pode chegar com a folha aberta). Repetir o envio de uma partida já jogada não pergunta. */
+  const requireAwake = useRequireAwake();
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -275,6 +297,19 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const [fightError, setFightError] = useState<string | null>(null);
   /* QA-4: partida acabada cuja resposta não chegou (rede). Guardada para "tentar de novo"; o servidor segue com o duelo aberto. */
   const [matchRetry, setMatchRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
+  /* TREINO ("Sparring", 2a aba do Torneio): luta contra outros jogadores que NÃO ranqueia e rende 1–2 de Honra (teto no servidor).
+     Estado próprio e separado do ranqueado — nada daqui toca o placar, a cota de partidas nem o ranking. */
+  const [tab, setTab] = useState<'ranked' | 'sparring'>('ranked');
+  const [sparOpps, setSparOpps] = useState<Opponent[] | null>(null);
+  const [sparFailed, setSparFailed] = useState(false);
+  const [sparFighting, setSparFighting] = useState<string | null>(null);
+  const [sparDuel, setSparDuel] = useState<{ opp: Opponent; seed: number; me: DuelSide; oppSide: DuelSide } | null>(null);
+  const [sparResult, setSparResult] = useState<SparResult | null>(null);
+  const [sparError, setSparError] = useState<string | null>(null);
+  const [sparRetry, setSparRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
+  /* Tickets do dia (servidor): 20 partidas com Honra grátis + extras de 30 Bits sem Honra. `undefined` = servidor antigo (sem contador). */
+  const [tickets, setTickets] = useState<TreinoTickets | undefined>(undefined);
+  const [buyingTicket, setBuyingTicket] = useState(false);
   /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
      season. Os pontos da season descem por três caminhos (derrota própria,
      ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
@@ -294,20 +329,64 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
   const myFrame = resolveEquippedFrame(equippedFrame, frameCtx);
   const [framesOpen, setFramesOpen] = useState(false);
-  const round = getTournamentWindow();
+  /* Histórico de temporadas (06/11/2026): a pílula "Última temporada" e o modal com todas. A colocação é do SERVIDOR
+     (`seasonHistory`, só o dono lê); offline/falha cai nos troféus que o save já carrega. */
+  const [seasonHist, setSeasonHist] = useState<SeasonHistory | null>(null);
+  const [histOpen, setHistOpen] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    getSeasonHistory(saveId).then(h => { if (vivo) setSeasonHist(h); }).catch(() => { /* sem rede: vale o que o save tem */ });
+    return () => { vivo = false; };
+  }, [saveId]);
+  const histView = buildSeasonHistoryView(seasonHist, trophies, prevSeasonKey());
   /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
    *  A season inteira transformava a tela num placar absoluto: dois dedos de
    *  scroll e a pessoa se lê como "47º", que é justamente a leitura de
    *  comparação social que a faixa (mostrada antes) existe para substituir.
    *  A vizinhança é a comparação útil — e a lista inteira continua a UM toque. */
   const RANK_WINDOW = 3;
-  const [rankExpanded, setRankExpanded] = useState(false);
   /** Linhas visíveis, carregando o índice ORIGINAL: a posição mostrada é
    *  sempre a real, nunca a posição dentro da fatia. */
   const rankRows: Array<{ row: RankRow; place: number }> = (rank ?? []).map((row, i) => ({ row, place: i + 1 }));
-  const visibleRank = rankExpanded || myIndex < 0
+  const visibleRank = myIndex < 0
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
+  /** O cartão de linhas do ranking da season (a janela ±3 na tela e a lista inteira no `RankingModal`): um só desenho. */
+  const renderRankCard = (rows: Array<{ row: RankRow; place: number }>) => (
+<div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
+              {rows.map(({ row: r, place }) => {
+                const isMe = r.id === saveId;
+                return (
+                  <div
+                    key={r.id}
+                    data-rank-row={isMe ? 'me' : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
+                      borderRadius: 'var(--sm2-radius-sm)',
+                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
+                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
+                    }}
+                  >
+                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+                      {place}
+                    </span>
+                    <AvatarFrame frame={isMe ? myFrame : frameOrBasic(r.frameId)} plaque={isMe ? standing?.place : null}>
+                      <MiniGlass size={32}>
+                        {(() => {
+                          const icon = opponentIcon(r, 32);
+                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
+                        })()}
+                      </MiniGlass>
+                    </AvatarFrame>
+                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                      <PlayerName name={r.name} suffix={isMe ? (isPt ? ' (você)' : ' (you)') : ''} guildName={r.guildName} isPt={isPt} />
+                    </span>
+                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
+                  </div>
+                );
+              })}
+            </div>
+  );
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
@@ -323,6 +402,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** O resultado do treino LOCAL: vitória, derrota ou empate (neutro). `null` = sem diálogo. */
   const stray = useMemo(() => strayForTournament(saveId, new Date().toISOString().slice(0, 10)), [saveId]);
   const [trainingOutcome, setTrainingOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
+  /** A essência que o Desgarrado do treino deixou (a mesma creditada por `onElementsDefeated`): aparece no aviso do treino. */
+  const [trainingEssence, setTrainingEssence] = useState<EssenceDrop | null>(null);
   // O level e o ramo do treino vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
   const hx = useHexOverrides(); // 🔣 Hexsmith: o treino usa o mesmo código reescrito que o servidor aplica no duelo
@@ -333,29 +414,33 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     // O SEU lado: o combatente do save (level e ramo) e a família do especial da ficha. O treino é 100% LOCAL, então
     // a semente pode ser sorteada aqui (não vale nada: sem partida, sem pontos, sem Honra).
     const estado: SoulXPState = gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage: petStage };
     const combatant = soulCombatant(estado, talentosPvp.bonus);
     const par = stageSkillsFor(skills, petStage);
+    const minhaCriatura = companheiroDoEstado(gs);
+    // chefe NOMEADO do Torneio (`CHEFES_NOMEADOS_INVOCAM`): só ele invoca entre os NPCs; flag desligada = `null`
+    const criaturaNpc = npc ? companheiroDoNpc(npc.id, DESAFIANTE_ELEMENT[npc.id]) : null;
     const me: DuelSide = {
       combatant,
       cheerScale: talentosPvp.cheerScale,
       startEnergy: talentosPvp.startEnergy,
       dotResist: talentosPvp.dotResist,
-      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
+      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx), hx.specialEffect),
       fx: fxDoLutador(par, petElement),
+      ...(minhaCriatura ? { invoca: true, companheiro: minhaCriatura } : {}), // PR 2: sempre ausente com a flag desligada
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
     if (stray) onEnemySeen?.(stray.key);
-    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray });
+    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: criaturaNpc ? { ...npcSide(combatant.level), invoca: true, companheiro: criaturaNpc } : npcSide(combatant.level), npc, stray });
   };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
-     nasce no PvP. O que sobra é o requisito de Vínculo (`BOND_PVP_MIN_LEVEL`,
+     nasce no PvP. O que sobra é o requisito de Vínculo da Ranqueada (`BOND_RANKED_MIN_LEVEL`,
      REGISTRO: o único destrave não-cosmético e social), e a tela o EXPLICA em
      vez de parecer quebrada. A trava inforjável continua sendo a do servidor. */
   /* Duelo, faixas/ranking e moldura cobrem a folha com o voltar PADRÃO próprio: a folha esconde o dela (uma seta só). */
-  const coverOpen = duel !== null || tiersOpen || framesOpen;
+  const coverOpen = duel !== null || sparDuel !== null || tiersOpen || framesOpen;
   useEffect(() => {
     onCoverChange?.(coverOpen);
     return () => { if (coverOpen) onCoverChange?.(false); };
@@ -363,9 +448,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   }, [coverOpen]);
 
   const pvpAberto = meetsPvpBond(totalXP);
+  /** Dono 12/11/2026: só a aba Ranqueada mantém limite por Vínculo (`BOND_RANKED_MIN_LEVEL`); o Treino abre para todos. */
+  const rankedAberto = meetsRankedBond(totalXP);
 
   const loadOpponents = (reroll = false) => {
-    if (!pvpAberto) return;
+    if (!pvpAberto || !rankedAberto) return;
     setLoadFailed(false);
     getOpponents(saveId, reroll)
       .then(r => {
@@ -381,7 +468,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       .catch(() => { setOpponents([]); setLoadFailed(true); });
   };
 
-  useEffect(() => { loadOpponents(); }, [pvpAberto, saveId]);
+  useEffect(() => { loadOpponents(); }, [pvpAberto, rankedAberto, saveId]);
 
   /** Sorteia os 3 de novo. O servidor recusa o segundo pedido sem combate no meio (429): aí só some o botão. */
   const rerollOpponents = () => {
@@ -396,6 +483,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       })
       .catch(() => { setRerolled(true); })
       .finally(() => setRerolling(false));
+  };
+  /** Relê o ranking sem apagar o que está na tela (a insígnia não pisca entre lutas). */
+  const reloadRank = () => {
+    getRank(undefined, saveId)
+      .then(r => { setRank(r.rank ?? []); setMeRank(r.me ?? null); setServerPlace(typeof r.myPlace === 'number' ? r.myPlace : null); setRankFailed(false); })
+      .catch(() => { /* mantém o ranking anterior */ });
   };
   useEffect(() => {
     if (!rank) {
@@ -415,14 +508,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      sozinhos e o dono torce. Sair antes do fim é DERROTA (`leaveDuel`).
      Sem a ficha (servidor antigo), a partida segue direto como antes. */
   const fight = async (opp: Opponent) => {
-    markSeenId(opp.id); // enfrentou = viu o Soulmon (mesma lista da Biblioteca; simulado entra igual a jogador real)
+    if (ctx) ctx.setGameState(prev => addSeenToState(prev, opp.id)); else markSeenId(opp.id); // enfrentou = viu o Soulmon (mesma lista da Biblioteca; simulado entra igual a jogador real)
     if (!(opp.duel && myDuel)) { void resolveMatch(opp, []); return; }
     setFighting(opp.id);
     setFightError(null);
     try {
       const r = await startDuel(saveId, opp.id);
       setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
-      setDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
+      setDuel({ opp, seed: r.seed, me: r.me, oppSide: comCriaturaDoOponente(r.opp, opp.id, opp.element) });
     } catch (err) {
       setFightError(err instanceof Error && err.message === 'duel open'
         ? (isPt ? 'Há um duelo aberto. Termine esse ou espere ele fechar sozinho, em alguns minutos.' : 'A duel is still open. Finish it or wait a few minutes for it to close by itself.')
@@ -478,7 +571,85 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       setFighting(null);
       setDuel(null);
       // A semente depende da partida do dia: a lista velha já não vale.
+      // A posição também mudou: o ranking é relido (antes só carregava uma vez e a janela ±3 ficava parada).
       loadOpponents();
+      reloadRank();
+    }
+  };
+
+  /* ── TREINO ── a lista nasce no SERVIDOR e muda a CADA pedido: o "Refresh" é ilimitado e sem custo (nada de cota, nada de Honra). */
+  const loadSpar = () => {
+    if (!pvpAberto) return;
+    setSparFailed(false);
+    getSparOpponents(saveId, playerDayTz)
+      .then(r => { setSparOpps(r.opponents ?? []); const t = sanitizeTreinoTickets(r.tickets); if (t) setTickets(t); })
+      .catch(() => { setSparOpps([]); setSparFailed(true); });
+  };
+  useEffect(() => { if (tab === 'sparring') loadSpar(); }, [tab, pvpAberto, saveId]);
+
+  const fightSpar = async (opp: Opponent) => {
+    setSparFighting(opp.id);
+    setSparError(null);
+    try {
+      if (tickets && tickets.left <= 0) { setSparError(isPt ? 'As partidas de hoje acabaram. Amanhã tem um ticket novo.' : "Today's matches are used up. A new ticket comes tomorrow."); return; }
+      const r = await startSpar(saveId, opp.id, playerDayTz);
+      setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: comCriaturaDoOponente(r.opp, opp.id, opp.element) });
+    } catch (err) {
+      setSparError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'O treino não aconteceu. Tente de novo.' : "The sparring match didn't happen. Try again."));
+    } finally {
+      setSparFighting(null);
+    }
+  };
+  /** Compra o ticket EXTRA: o servidor conta (e limita 3/dia) e SÓ ENTÃO os Bits são cobrados; falha em qualquer ponto não cobra nada. */
+  const buyTreinoTicket = async () => {
+    if (buyingTicket || !onChargeTreinoTicket) return;
+    setBuyingTicket(true);
+    setSparError(null);
+    try {
+      // Duas fases: o servidor RESERVA (sem conceder), o app debita e só então CONFIRMA; recusa local = nada concedido, nada cobrado.
+      if (spendableBitsProp < TREINO_EXTRA_TICKET_BITS) { setSparError(isPt ? 'Bits insuficientes para o ticket.' : 'Not enough Bits for the ticket.'); return; }
+      await buySparTicket(saveId, playerDayTz, 'reserve');
+      if (!onChargeTreinoTicket()) { setSparError(isPt ? 'Bits insuficientes para o ticket.' : 'Not enough Bits for the ticket.'); return; }
+      try {
+        const r = await confirmSparTicketComRetry(saveId, playerDayTz);
+        const tk = sanitizeTreinoTickets(r.tickets);
+        if (tk) setTickets(tk);
+      } catch {
+        loadSpar(); // a confirmação pode ter chegado e só a resposta se perdeu: relê o contador do servidor
+        setSparError(isPt ? 'Cobrado, mas o ticket não confirmou. Toque em atualizar a lista.' : "Charged, but the ticket didn't confirm. Refresh the list.");
+      }
+    } catch {
+      setSparError(isPt ? 'Não deu para comprar o ticket agora. Nada foi cobrado.' : "Couldn't buy the ticket right now. Nothing was charged.");
+    } finally {
+      setBuyingTicket(false);
+    }
+  };
+  const leaveSpar = (opp: Opponent) => { void resolveSpar(opp, [], true); };
+  const resolveSpar = async (opp: Opponent, taps: number[], forfeit = false, seed?: number) => {
+    setSparFighting(opp.id);
+    setSparError(null);
+    setSparRetry(null);
+    try {
+      const r = typeof seed === 'number' && !forfeit
+        ? await playSparComRetry(saveId, opp.id, taps, seed, undefined, playerDayTz)
+        : await playSpar(saveId, opp.id, taps, forfeit, undefined, playerDayTz);
+      // A Honra é a do SERVIDOR (1–2 por vitória, teto de 20 por dia): o app só soma o que veio, e não soma o reenvio.
+      const honor = Number.isFinite(r.honor) ? Math.max(0, Math.min(SPAR_HONOR_MAX, Math.floor(r.honor))) : 0;
+      if (honor > 0 && !r.replayed) onEarnEmblems(honor);
+      const tk = sanitizeTreinoTickets(r.tickets);
+      if (tk) setTickets(tk);
+      if (!forfeit) setSparResult(r);
+    } catch (err) {
+      setSparResult(null);
+      if (typeof seed === 'number' && !forfeit && isFalhaDeRede(err)) setSparRetry({ opp, taps, seed });
+      setSparError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'O treino não aconteceu. Tente de novo.' : "The sparring match didn't happen. Try again."));
+    } finally {
+      setSparFighting(null);
+      setSparDuel(null);
     }
   };
 
@@ -531,12 +702,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           </span>
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Desafiar' : 'Challenge'}>
-          {!pvpAberto
+          {!rankedAberto
             ? (
               <span data-torneio-social>
                 {isPt
-                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa, ele entra sozinho.`
-                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush, it joins on its own.`}
+                  ? `A Ranqueada abre no Vínculo ${BOND_RANKED_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa, ele entra sozinho. O Treino já está aberto.`
+                  : `Ranked opens at Bond ${BOND_RANKED_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush, it joins on its own. Sparring is already open.`}
               </span>
             )
             : (
@@ -548,8 +719,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
                 {' '}
                 {isPt
-                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer alguém bem abaixo de você, ou o mesmo oponente de novo, rende cada vez menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
-                  : 'There is a daily match limit; losing earns Honor too. Beating someone far below you, or the same opponent again, earns less each time. ' + 'With no opponents, three NPCs train with you, no match used.'}
+                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer quem está acima de você no ranking rende mais pontos; vencer quem está bem abaixo, ou o mesmo oponente de novo, rende menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
+                  : 'There is a daily match limit; losing earns Honor too. Beating someone ranked above you earns more points; beating someone far below you, or the same opponent again, earns less. ' + 'With no opponents, three NPCs train with you, no match used.'}
               </span>
             )}
         </InfoTipSection>
@@ -560,6 +731,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               : 'The Soulmons fight on their own. Tap the screen (or the mascot) to cheer: the cheer bar fills and feeds your Soulmon energy, then it unleashes its special.'}
           </InfoTipSection>
         </span>
+        <InfoTipSection title={isPt ? 'Treino' : 'Sparring'}>
+          {isPt
+            ? `A aba Treino é amistosa: você enfrenta jogadores de Vínculo parecido, sem mexer na posição nem gastar partida. Todo dia você ganha 1 ticket grátis: ${TREINO_TICKET_MATCHES} partidas com Honra (vencer rende de 1 a ${SPAR_HONOR_MAX}, até ${SPAR_HONOR_DAILY_CAP} de Honra por dia). Para jogar mais, o ticket extra custa ${TREINO_EXTRA_TICKET_BITS} Bits e dá +${TREINO_TICKET_MATCHES} partidas sem Honra (até ${TREINO_EXTRA_TICKETS_MAX} por dia). Dá para sortear outros oponentes quantas vezes quiser.`
+            : `The Sparring tab is friendly: you face players of a similar Bond, without touching your rank or using a match. Every day you get 1 free ticket: ${TREINO_TICKET_MATCHES} matches with Honor (a win earns 1 to ${SPAR_HONOR_MAX}, up to ${SPAR_HONOR_DAILY_CAP} Honor a day). To play more, an extra ticket costs ${TREINO_EXTRA_TICKET_BITS} Bits and gives +${TREINO_TICKET_MATCHES} matches without Honor (up to ${TREINO_EXTRA_TICKETS_MAX} a day). You can draw new opponents as often as you like.`}
+        </InfoTipSection>
         <InfoTipSection title={isPt ? 'Missões' : 'Missions'}>
           {isPt
             ? 'Três missões por semana, pagas em Honra. Contam partidas e jogo, nunca quantidade de tarefas.'
@@ -583,6 +759,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   if (training) {
     return (
       <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
         me={training.me}
         opp={training.opp}
         seed={training.seed}
@@ -598,7 +775,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         onDone={taps => {
           const w = simulatePvp({ me: training.me, opp: training.opp, seed: training.seed, taps }).winner;
           // Dex de elementos: vencer o Desgarrado do Torneio sem par libera o elemento dele (o treino de NPC não libera: o elemento é só visual).
-          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); const dex = dexIdsOfFoe(training.stray); if (dex.length) onElementsDefeated?.(dex, id ? [{ id, qty: essenceQtyOfStage(training.stray.stage) }] : []); }
+          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); const dex = dexIdsOfFoe(training.stray); if (dex.length) { const drop = id ? { id, qty: essenceQtyOfStage(training.stray.stage) } : undefined; onElementsDefeated?.(dex, drop ? [drop] : []); setTrainingEssence(onElementsDefeated && drop ? drop : null); } }
+          else setTrainingEssence(null);
           setTrainingOutcome(w === 'me' ? 'win' : w === 'opp' ? 'loss' : 'draw');
           setTraining(null);
         }}
@@ -610,6 +788,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   if (duel) {
     return (
       <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
         me={duel.me}
         opp={duel.oppSide}
         seed={duel.seed}
@@ -624,6 +803,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         oppElement={duel.oppSide.fx?.elBasica ?? opponentElementFor(duel.opp)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
+        oppEspecialNome={duel.opp.especialNome}
         isPt={isPt}
         onDone={taps => { void resolveMatch(duel.opp, taps, false, duel.seed, duel.oppSide.fx?.elBasica ?? undefined); }}
         onClose={() => leaveDuel(duel.opp)}
@@ -631,8 +811,33 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     );
   }
 
+  if (sparDuel) {
+    return (
+      <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
+        me={sparDuel.me}
+        opp={sparDuel.oppSide}
+        seed={sparDuel.seed}
+        petSprite={getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={opponentSprite(sparDuel.opp, 256)}
+        oppStage={sparDuel.opp.stage}
+        petElement={petElement}
+        petStage={petStage}
+        skills={skills}
+        oppElement={sparDuel.oppSide.fx?.elBasica ?? opponentElementFor(sparDuel.opp)}
+        petName={isPt ? 'Você' : 'You'}
+        oppName={sparDuel.opp.petName || sparDuel.opp.name}
+        oppEspecialNome={sparDuel.opp.especialNome}
+        isPt={isPt}
+        onDone={taps => { void resolveSpar(sparDuel.opp, taps, false, sparDuel.seed); }}
+        onClose={() => leaveSpar(sparDuel.opp)}
+      />
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
+      {/* Cena do lobby/chaves (B2, 02/11/2026): a entrada da arena, distinta da cena da final (`tournament-final`, usada no resultado). Decorativa. */}
       {/* minimal-ui F5 — o título "Torneio" é do `AreaSheet`; aqui fica a
           rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
           e os Emblemas, ícone em ouro + número com serifa: as três moedas
@@ -642,7 +847,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       )}
       {headSlot && createPortal(headRight, headSlot)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <p style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
+        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, margin: 0, fontWeight: 500 }}>
+          {standing && <TierMark id={standing.tier.id} size={24} state="current" place={standing.place} />}
+          Rank
+        </p>
+        {/* 18/11/2026 (dono): o tempo da temporada mora NESTA linha (Rank · faltam N dias · Honra), para ganhar espaço no topo. */}
+        <span data-torneio-temporada style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0, textAlign: 'right' }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</span>
         <span
           title={isPt ? 'Honra — só compra os prêmios do Torneio' : 'Honor — only buys Tournament rewards'}
           aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
@@ -653,48 +863,84 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
       </div>
 
-      {/* Troféus de season — só existem se foram ganhos. Um selo por season,
-          com o lugar dito em PALAVRA no `title`/`aria`, em vez de três hexes
-          de pódio que ninguém decodifica sem legenda. */}
-      {trophies.length > 0 && (
-        <ul style={{ display: 'flex', gap: 8, flexWrap: 'wrap', listStyle: 'none', margin: 0, padding: 0 }}>
-          {trophies.map((t, i) => (
-            <li
-              key={`${t.season}-${i}`}
-              title={isPt ? `${t.season} — ${t.place}º lugar` : `${t.season} — place ${t.place}`}
-              /* `.chip.tag.season` (canvas): etiqueta 28 em `surface-2`, troféu
-                 `gold-ink` FILL, texto em `ink`. */
-              style={{ ...sm2Tag, minHeight: 28, color: 'var(--sm2-ink)' }}
-            >
-              <Icon name="emoji_events" size={20} tone="gold" fill={1} />
-              <span className="sm2-num">{t.season} · {t.place}º</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* VER RANKING (18/11/2026, dono): no lugar das pílulas "Temporada atual" e "Última temporada"; elas moram DENTRO do modal. */}
+      <BotaoEspecial variant="ranking" data-torneio-ver-ranking aria-haspopup="dialog" onClick={() => setHistOpen(true)}>
+        {isPt ? 'Ver ranking' : 'See ranking'}
+      </BotaoEspecial>
+
+      <RankingModal open={histOpen} title={isPt ? 'Ranking' : 'Leaderboard'} onClose={() => setHistOpen(false)} language={lang}>
+        <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
+            <div data-torneio-posicao-atual style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone="muted" />
+              <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
+            </div>
+            <div data-torneio-ultima-temporada style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}>
+              <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
+              <span>{isPt ? 'Última temporada' : 'Last season'}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+            </div>
+          </div>
+          {histView.best && (
+            <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
+              <Icon name="emoji_events" size={32} tone="gold" fill={1} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Melhor colocação (últimos 120 dias)' : 'Best placement (last 120 days)'}</p>
+                <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
+                  <span className="sm2-num">{placeLabel(histView.best.place, lang)}</span> · {seasonMonthLabel(histView.best.season, lang)}
+                </p>
+              </div>
+            </div>
+          )}
+          {histView.seasons.length === 0 ? (
+            <p data-torneio-historico-vazio style={{ ...sm2Hint, margin: 0, textAlign: 'center', padding: '12px 0' }}>
+              {isPt ? 'Nenhuma temporada encerrada ainda. Quando o mês virar, sua colocação aparece aqui.' : 'No finished seasons yet. When the month turns, your placement shows up here.'}
+            </p>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {histView.seasons.map(h => (
+                <li key={h.season} data-torneio-temporada-item={h.season} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', minHeight: 44 }}>
+                  <Icon name="emoji_events" size={20} tone={h.place <= 3 ? 'gold' : 'muted'} fill={h.place <= 3 ? 1 : 0} />
+                  <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{seasonMonthLabel(h.season, lang)}</span>
+                  <span className="sm2-num" style={{ ...sm2Text, fontWeight: 600 }}>{placeLabel(h.place, lang)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {rank && rank.length > 0 && (
+            <>
+              <p style={{ ...sm2Hint, margin: 0, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
+              </p>
+              {renderRankCard(rankRows)}
+            </>
+          )}
+        </div>
+      </RankingModal>
 
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
           dívida. Aberto, só o aviso do apelido público (informação, não gesto). */}
-      {!pvpAberto && (
+      {pvpAberto && tab === 'ranked' && !rankedAberto && (
         <div data-torneio-requisito style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0 -8px 0' }}>
             <p style={{ ...sm2Text, margin: 0, fontWeight: 500, flex: 1, minWidth: 0 }}>
-              {isPt ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}` : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}`}
+              {isPt ? `A Ranqueada abre no Vínculo ${BOND_RANKED_MIN_LEVEL}` : `Ranked opens at Bond ${BOND_RANKED_MIN_LEVEL}`}
             </p>
           </div>
           <PixelMeter
-            ratio={totalXP / Math.max(1, xpForLevel(BOND_PVP_MIN_LEVEL))}
+            ratio={totalXP / Math.max(1, xpForLevel(BOND_RANKED_MIN_LEVEL))}
             tone="gold"
             height={10}
-            label={isPt ? `Caminho até o Vínculo ${BOND_PVP_MIN_LEVEL}` : `Progress to Bond ${BOND_PVP_MIN_LEVEL}`}
+            label={isPt ? `Caminho até o Vínculo ${BOND_RANKED_MIN_LEVEL}` : `Progress to Bond ${BOND_RANKED_MIN_LEVEL}`}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Icon name="link" size={20} tone="muted" />
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
               {isPt
-                ? `Vínculo ${bondLevelFor(totalXP)} · faltam ${xpToPvpBond(totalXP)} XP`
-                : `Bond ${bondLevelFor(totalXP)} · ${xpToPvpBond(totalXP)} XP to go`}
+                ? `Vínculo ${bondLevelFor(totalXP)} · faltam ${xpToRankedBond(totalXP)} XP`
+                : `Bond ${bondLevelFor(totalXP)} · ${xpToRankedBond(totalXP)} XP to go`}
             </p>
           </div>
         </div>
@@ -703,10 +949,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       {/* D-58 (19/10/2026): o botão "Train" saiu — o Torneio é só de lutas. O treino contra os desafiantes NPC (`startTraining(npc)`)
           continua na lista vazia de oponentes. */}
       {pvpAberto && (
+        <div role="radiogroup" data-torneio-abas aria-label={isPt ? 'Modo do Torneio' : 'Tournament mode'} style={{ display: 'flex', gap: 8 }}>
+          <BotaoEspecial variant="pvp" role="radio" aria-checked={tab === 'ranked'} data-especial-state={tab === 'ranked' ? 'pressed' : undefined} onClick={() => setTab('ranked')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Ranqueada' : 'Ranked'}</BotaoEspecial>
+          <BotaoEspecial variant="pve" role="radio" aria-checked={tab === 'sparring'} data-especial-state={tab === 'sparring' ? 'pressed' : undefined} onClick={() => setTab('sparring')} style={{ flex: 1, minWidth: 0 }}>{isPt ? 'Treino' : 'Sparring'}</BotaoEspecial>
+        </div>
+      )}
+
+      {pvpAberto && rankedAberto && tab === 'ranked' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <p data-torneio-ranqueado style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? 'Ranqueado: os oponentes são sorteados perto da sua faixa.' : 'Ranked: opponents are drawn near your tier.'}
-          </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>
               {matchesLeft === null
@@ -756,7 +1006,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               </div>
               <button
                 type="button"
-                onClick={() => startTraining(n)}
+                onClick={() => { requireAwake('arena.torneio', () => startTraining(n)); }}
                 aria-label={isPt ? `Desafiar ${n.namePt} (treino, sem prêmio)` : `Fight — challenge ${n.nameEn} (training, no reward)`}
                 style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}
               >
@@ -776,7 +1026,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wildFoeLabel(stray.stage, isPt)}</p>
                 <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isPt ? 'Treino' : 'Training'} · {getStageLevel(petStage)}</p>
               </div>
-              <button type="button" onClick={() => startTraining(undefined, stray)} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
+              <button type="button" onClick={() => { requireAwake('arena.torneio', () => startTraining(undefined, stray)); }} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
                 {isPt ? 'Desafiar' : 'Fight'}
               </button>
             </div>
@@ -799,63 +1049,142 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           )}
 
           {opponents?.map(o => {
-            const busy = fighting === o.id;
             // Um duelo sendo aberto trava TODOS os "Desafiar": outro duelStart em voo fecharia este como derrota.
-            const lockedByOther = fighting !== null;
             const blocked = matchesLeft === 0;
             return (
-              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                {/* A criatura do amigo no estágio REAL, num mini-visor 64 —
-                    o ícone-ficha 64² da linha (rodada 2, D-J13) ou, quando o
-                    estágio não é de linha, o sprite a 0,25× — sem faixa, sem
-                    rank (J1, veto 3b). */}
-                <MiniGlass size={64}>
-                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
-                </MiniGlass>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.name}
-                  </p>
-                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.petName || o.stage} · {getStageLevel(o.stage)}
-                  </p>
-                </div>
-                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
+              <EscolhaLinha
+                key={o.id}
+                // A criatura do amigo no estágio REAL, num mini-visor 64 (ícone-ficha 64² da linha, D-J13; ou o sprite a 0,25×) — sem faixa, sem rank (J1, veto 3b).
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                // §321: o clã embaixo do nome do oponente.
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
                   { kind: 'xp', max: bondXP({ kind: 'tournamentMatch', won: true }) },
                   { kind: 'honor', max: EMBLEMS_PER_WIN },
-                ]} />
-                {/* WCAG 2.5.3 (Label in Name): o texto visível "Fight" está
-                    CONTIDO no nome acessível, que ainda nomeia o oponente
-                    ("Fight — challenge Lu"); quem usa comando de voz diz
-                    "Fight" e acerta. */}
-                <button
-                  type="button"
-                  disabled={blocked || busy || lockedByOther}
-                  onClick={() => fight(o)}
-                  aria-label={blocked
-                    ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
-                    : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
-                  style={{ ...sm2Button('primary', blocked || busy || lockedByOther, 'sm'), flexShrink: 0, minWidth: 88 }}
-                >
-                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
-                  {isPt ? 'Desafiar' : 'Fight'}
-                </button>
-              </div>
+                ]} />}
+                disabled={blocked || fighting !== null}
+                busy={fighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fight(o); }); }}
+                actionLabel={isPt ? 'Desafiar' : 'Fight'}
+                actionAriaLabel={blocked
+                  ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
+                  : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
+              />
             );
           })}
 
           {/* Refresh dos 3: UMA vez entre combates. Usou, some; depois de um combate o servidor libera e ele volta. */}
           {opponents && opponents.length > 0 && !rerolled && !loadFailed && (
-            <button
-              type="button"
-              data-torneio-reroll
+            <SortearNovos
+              buttonProps={{ 'data-torneio-reroll': true }}
               disabled={rerolling || fighting !== null}
+              spinning={rerolling}
               onClick={rerollOpponents}
-              style={{ ...sm2Button('outline', rerolling || fighting !== null), width: '100%' }}
-            >
-              <Icon name="sync" size={20} className={rerolling ? 'animate-spin' : undefined} />
-              {isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+              label={isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+            />
+          )}
+        </div>
+      )}
+
+      {/* TREINO ("Sparring"): luta contra outros jogadores, parecida com a ranqueada, mas que NÃO ranqueia (sem pontos, sem faixa, sem
+          cota de partidas, sem Vínculo) e rende pouca Honra. O servidor sorteia 5 por faixa de Vínculo — nenhum número de ranking aparece. */}
+      {pvpAberto && tab === 'sparring' && (
+        <div data-torneio-treino style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt
+              ? `Treino amistoso contra outros jogadores: não muda a sua posição. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra (até ${SPAR_HONOR_DAILY_CAP} por dia), nas partidas com Honra do ticket do dia.`
+              : `Friendly practice against other players: it never changes your rank. A win earns 1 to ${SPAR_HONOR_MAX} Honor (up to ${SPAR_HONOR_DAILY_CAP} a day) in the matches with Honor from today's ticket.`}
+          </p>
+          {tickets && (
+            <div data-treino-tickets style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p data-treino-contador className="sm2-num" style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+                {isPt ? 'Partidas com Honra hoje' : 'Matches with Honor today'}: {Math.min(TREINO_TICKET_MATCHES, tickets.played)}/{TREINO_TICKET_MATCHES}
+              </p>
+              {tickets.honorLeft === 0 && tickets.left > 0 && (
+                <p data-treino-extras style={{ ...sm2Hint, margin: 0 }}>
+                  {isPt ? `Ticket extra em uso: ${tickets.left} ${tickets.left === 1 ? 'partida restante' : 'partidas restantes'}, sem Honra.` : `Extra ticket in use: ${tickets.left} ${tickets.left === 1 ? 'match' : 'matches'} left, no Honor.`}
+                </p>
+              )}
+              {tickets.left === 0 && (
+                <div data-treino-oferta style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
+                  <p style={{ ...sm2Text, margin: 0 }}>
+                    {tickets.canBuy
+                      ? (isPt ? 'As partidas de hoje acabaram. Se quiser jogar mais, dá para pegar um ticket extra.' : "Today's matches are done. If you want to play more, you can get an extra ticket.")
+                      : (isPt ? 'Você usou todos os tickets de hoje. Amanhã tem um novo, grátis.' : "You used all of today's tickets. A new free one comes tomorrow.")}
+                  </p>
+                  {tickets.canBuy && (
+                    <>
+                      <button
+                        type="button"
+                        data-treino-comprar
+                        disabled={buyingTicket || !onChargeTreinoTicket || spendableBitsProp < TREINO_EXTRA_TICKET_BITS}
+                        onClick={() => { void buyTreinoTicket(); }}
+                        style={{ ...sm2Button('outline', buyingTicket || spendableBitsProp < TREINO_EXTRA_TICKET_BITS), width: '100%' }}
+                      >
+                        {isPt ? `+${TREINO_TICKET_MATCHES} partidas, sem Honra — ${TREINO_EXTRA_TICKET_BITS} Bits` : `+${TREINO_TICKET_MATCHES} matches, no Honor — ${TREINO_EXTRA_TICKET_BITS} Bits`}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {sparError && (
+            <p role="alert" style={{ ...sm2Text, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--sm2-gold-ink)' }}>{sparError}</p>
+          )}
+          {sparRetry && (
+            <button type="button" onClick={() => { void resolveSpar(sparRetry.opp, sparRetry.taps, false, sparRetry.seed); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+              {isPt ? 'Tentar de novo' : 'Try again'}
             </button>
+          )}
+          {sparOpps === null && (
+            <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+              <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+              {isPt ? 'Procurando parceiros de treino…' : 'Looking for sparring partners…'}
+            </p>
+          )}
+          {sparFailed && (
+            <div role="status" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: 12 }}>
+              <Icon name="cloud_off" size={24} tone="muted" />
+              <p style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Não deu para carregar o treino.' : "Couldn't load sparring."}</p>
+              <p style={sm2Hint}>{isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}</p>
+              <button type="button" onClick={() => { setSparOpps(null); loadSpar(); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+                {isPt ? 'Tentar de novo' : 'Try again'}
+              </button>
+            </div>
+          )}
+          {sparOpps?.length === 0 && !sparFailed && (
+            <p data-treino-vazio style={{ ...sm2Hint, textAlign: 'center', padding: '12px 0' }}>
+              {isPt ? 'Ninguém para treinar agora. Tente de novo daqui a pouco.' : 'No one to practise with right now. Try again in a little while.'}
+            </p>
+          )}
+          {sparOpps?.map(o => {
+            const locked = sparFighting !== null || (tickets !== undefined && tickets.left <= 0);
+            return (
+              <EscolhaLinha
+                key={o.id}
+                rowProps={{ 'data-treino-oponente': true }}
+                lead={<MiniGlass size={64}><img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} /></MiniGlass>}
+                title={<PlayerName name={o.name} guildName={o.guildName} isPt={isPt} />}
+                sub={<><EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}</>}
+                reward={<RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />}
+                disabled={locked}
+                busy={sparFighting === o.id}
+                onAction={() => { requireAwake('arena.torneio', () => { void fightSpar(o); }); }}
+                actionLabel={isPt ? 'Treinar' : 'Spar'}
+                actionAriaLabel={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
+              />
+            );
+          })}
+          {/* Refresh ILIMITADO neste modo: sem custo, sem teto — o servidor sorteia de novo a cada pedido. */}
+          {!sparFailed && sparOpps !== null && (
+            <SortearNovos
+              buttonProps={{ 'data-treino-refresh': true }}
+              disabled={sparFighting !== null}
+              onClick={() => { setSparOpps(null); loadSpar(); }}
+              label={isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
+            />
           )}
         </div>
       )}
@@ -937,8 +1266,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
                   {standing.next
                     ? (isPt
-                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}`
-                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}`)
+                        ? `${faixaPontosTexto(standing, myLifetime, true)} (pontos da faixa; só vitórias somam)`
+                        : `${faixaPontosTexto(standing, myLifetime, false)} (tier points; only wins add)`)
                     : standing.seat
                       ? (isPt ? `Lugar da season: #${standing.place}` : `Season seat: #${standing.place}`)
                       : (isPt ? 'Top 100 da season = Mestre · top 20 = Grão-Mestre' : 'Season top 100 = Master · top 20 = Grandmaster')}
@@ -957,7 +1286,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
           {rank && rank.length > 0 && (
             <p style={{ ...sm2Hint, marginTop: 4, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-              {isPt ? 'Ranking da season' : 'Season ranking'}
+              {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
             </p>
           )}
           {rank && rank.length === 0 && !rankFailed && (
@@ -972,50 +1301,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               não é de linha; a linha se identifica pelo NOME —, nome 14,
               pontos 12. A linha "you" em `primary-soft` + anel `primary-ink` —
               o idioma de seleção, não um pódio (sem ouro no top 3). */}
-          {visibleRank.length > 0 && (
-            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
-              {visibleRank.map(({ row: r, place }) => {
-                const isMe = r.id === saveId;
-                return (
-                  <div
-                    key={r.id}
-                    data-rank-row={isMe ? 'me' : undefined}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
-                      borderRadius: 'var(--sm2-radius-sm)',
-                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
-                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
-                    }}
-                  >
-                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
-                      {place}
-                    </span>
-                    <AvatarFrame frame={isMe ? myFrame : frameById(r.frameId)} plaque={isMe ? standing?.place : null}>
-                      <MiniGlass size={32}>
-                        {(() => {
-                          const icon = opponentIcon(r, 32);
-                          return <img src={icon ?? opponentSprite(r)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
-                        })()}
-                      </MiniGlass>
-                    </AvatarFrame>
-                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.name}{isMe ? (isPt ? ' (você)' : ' (you)') : ''}
-                    </span>
-                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {visibleRank.length > 0 && renderRankCard(visibleRank)}
 
-          {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
-            <button
-              type="button"
-              onClick={() => setRankExpanded(true)}
-              style={{ ...sm2Button('outline'), width: '100%' }}
-            >
+          {rank && myIndex >= 0 && rank.length > visibleRank.length && (
+            <BotaoEspecial variant="ranking" data-torneio-ranking-inteiro onClick={() => setHistOpen(true)}>
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
-            </button>
+            </BotaoEspecial>
           )}
         </div>
         </TorneioPanel>
@@ -1025,10 +1316,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         <TorneioPanel label={isPt ? 'Moldura do avatar' : 'Avatar frame'} title={isPt ? 'Moldura' : 'Frame'} backLabel={isPt ? 'Voltar' : 'Back'} onClose={() => setFramesOpen(false)}>
           <FrameSelector
             ctx={frameCtx}
-            equipped={myFrame?.id ?? null}
+            equipped={myFrame.id}
             onEquip={onEquipFrame}
             bits={bits}
             onBuy={onBuyFrame}
+            petElement={petElement}
             previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)}
             isPt={isPt}
           />
@@ -1046,8 +1338,42 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
             {trainingOutcome === 'win' ? (isPt ? 'Treino vencido' : 'Training won') : trainingOutcome === 'draw' ? (isPt ? 'Treino empatado' : 'Training drawn') : (isPt ? 'Treino perdido' : 'Training lost')}
           </h2>
-          <p style={sm2Hint}>{isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.'}</p>
+          {trainingEssence && trainingOutcome === 'win' ? (
+            <div data-treino-essence={trainingEssence.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src={essenceIconSrc(trainingEssence.id)} alt="" aria-hidden="true" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />
+              <span style={{ ...sm2Hint, color: 'var(--sm2-ink)' }}>{essenceName(trainingEssence.id, isPt)}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>×{trainingEssence.qty}</span>
+            </div>
+          ) : null}
+          <p style={sm2Hint}>{trainingEssence && trainingOutcome === 'win' ? (isPt ? 'Sem Bits e sem custo.' : 'No Bits, no cost.') : (isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.')}</p>
           <button type="button" onClick={() => setTrainingOutcome(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
+            {isPt ? 'Continuar' : 'Continue'}
+          </button>
+        </RitualDialog>
+      )}
+
+      {sparResult && (
+        <RitualDialog
+          label={isPt ? 'Treino' : 'Sparring'}
+          onClose={() => { setSparResult(null); loadSpar(); }}
+          zIndex={400}
+          maxWidth={320}
+          style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}
+        >
+          <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+            {sparResult.draw ? (isPt ? 'Treino empatado' : 'Sparring drawn') : sparResult.won ? (isPt ? 'Treino vencido' : 'Sparring won') : (isPt ? 'Treino encerrado' : 'Sparring over')}
+          </h2>
+          <p style={sm2Hint}>
+            {isPt ? `Contra ${sparResult.opponent.name} · ${sparResult.myScore} × ${sparResult.oppScore}` : `Against ${sparResult.opponent.name} · ${sparResult.myScore} × ${sparResult.oppScore}`}
+          </p>
+          {sparResult.honor > 0 ? (
+            <p data-treino-honra className="sm2-num" style={{ ...emblemNum, margin: 0 }}>{isPt ? `Honra +${sparResult.honor}` : `Honor +${sparResult.honor}`}</p>
+          ) : sparResult.won && sparResult.honorCapped ? (
+            <p data-treino-honra-teto style={sm2Hint}>{isPt ? 'A Honra do treino de hoje já está completa. Volte amanhã.' : "Today's sparring Honor is complete. Come back tomorrow."}</p>
+          ) : (
+            <p style={sm2Hint}>{isPt ? 'Nada se perde. Treina de novo.' : 'Nothing is lost. Spar again.'}</p>
+          )}
+          <button type="button" onClick={() => { setSparResult(null); loadSpar(); }} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
             {isPt ? 'Continuar' : 'Continue'}
           </button>
         </RitualDialog>
@@ -1078,27 +1404,33 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
   const draw = result.draw === true;
   const petSpriteSrc = getSpriteForStage(petStage, petLine, 256);
   const petScale = usePetScale(petStage, petSpriteSrc);
+  /* Vitória que rendeu 0 (ou menos que o cheio) de ponto de faixa: diz o porquê (só leitura; a regra é do servidor). */
+  const motivo = result.won && !draw ? motivoSemPontosTexto(result.gainReason, result.gain ?? 0, isPt) : null;
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <ResultScreen
+      playAgainIcon={lotIconName('arena', 'torneio')} playAgainArt={lotIconArt('arena', 'torneio')} dailyEvent="torneio"
       language={isPt ? 'pt-BR' : 'en-US'}
       mode="dialog"
+      bannerSet="epic"
       outcome={draw ? 'calm' : result.won ? 'win' : 'tired'}
       gameName={isPt ? 'Torneio' : 'Tournament'}
       title={title}
       line={draw
         ? (isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.')
-        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`)}
+        : `${isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`}${motivo ? ` · ${motivo}` : ''}`}
       lineAttrs={draw ? { 'data-empate': true } : undefined}
       hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
-      strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}
+      strip={draw ? undefined : [
+        { key: 'pts', label: isPt ? 'Pontos da temporada' : 'Season points', value: `${result.points} pts` },
+        ...(typeof result.gain === 'number' && result.won ? [{ key: 'tier', label: isPt ? 'Pontos da faixa' : 'Tier points', value: `+${result.gain}` }] : []),
+      ]}
       ledger={draw ? [] : [
         { key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS },
         { key: 'xp', kind: 'xp', value: bondXP({ kind: 'tournamentMatch', won: result.won }) },
       ]}
       petSrc={petSpriteSrc}
-      scene={`url(${tournamentFinal}) center/cover`}
-      visorOpponent={result.won ? <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" idle={false} flip style={{ right: 8, bottom: 6 }} data-visor-enemy /> : undefined}
+      opponentSrc={opponentSprite({ ...result.opponent, id: result.opponent.name })}
       playAgainLabel={isPt ? 'Continuar' : 'Continue'}
       onPlayAgain={onClose}
       onDismiss={onClose}

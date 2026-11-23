@@ -13,12 +13,12 @@ import { ScreenSkeleton } from './ui/ScreenSkeleton';
 
 const TalentTree = lazy(() => import('./TalentTree'));
 
-export default function TalentTreeCard({ language = 'pt-BR' }: { language?: string }) {
+export default function TalentTreeCard({ language = 'pt-BR', bare = false }: { language?: string; bare?: boolean }) {
   const ctx = useGameStateOptional();
   if (!ctx) return null; // sem save (demo, testes): não há o que gastar
   return (
     <Suspense fallback={<ScreenSkeleton language={language === 'pt-BR' ? 'pt-BR' : 'en-US'} variant="inline" />}>
-      <TalentTree language={language} />
+      <TalentTree language={language} bare={bare} />
     </Suspense>
   );
 }

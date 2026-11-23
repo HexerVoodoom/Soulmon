@@ -33,6 +33,27 @@
 
         </activity>
 
+        <!-- Health Connect (REGISTRO §283): a tela de "por que pedimos" que o Health Connect exige para mostrar o diálogo de permissão
+             (Android 13 e antes) e o alias da visualização de uso (Android 14+). Só abre a política de privacidade. -->
+        <activity
+            android:name=".plugins.HealthRationaleActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".plugins.HealthRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -42,6 +63,76 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Widgets G (transparente) e H (V-Pet): escolha no seletor do Android. Os anteriores ficam registrados. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetClearProvider"
+            android:label="@string/widget_clear_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_clear_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SoulmonWidgetVpetProvider"
+            android:label="@string/widget_vpet_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_vpet_info" />
+        </receiver>
+
+        <!-- Widget grande da Home (18/11/2026): Soulmon + tarefas de hoje com check. O check so grava na fila (HOME_TASK_CHECK,
+             PendingIntent explicito); o app paga ao abrir. A lista vem do RemoteViewsService abaixo. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetHomeProvider"
+            android:label="@string/widget_home_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_home_info" />
+        </receiver>
+        <service
+            android:name=".widget.WidgetHomeTasksService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
+        <!-- Widget "Companheiro" (beta12 A3): o Cage com o Soulmon grande. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetCompanionProvider"
+            android:label="@string/widget_companion_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_companion_info" />
+        </receiver>
+
+        <!-- WIDGET F — redimensionável: quadrado, horizontal ou vertical (REGISTRO §221).
+             Os A..E ficam registrados: tirar um receiver apaga o widget já colocado. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetAdaptiveProvider"
+            android:label="@string/widget_adaptive_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_adaptive_info" />
+        </receiver>
 
         <!-- WIDGET A — horizontal (sprite + info ao lado) -->
         <receiver
@@ -133,10 +224,19 @@
 
     </application>
 
+    <!-- Android 13 e antes: o Health Connect é um app à parte; sem isto o aparelho esconde que ele existe. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Beta12 (item I): so o aviso de fim do Pomodoro (Foco) pede o minuto exato com o app fechado. Permissao que o usuario pode
+         conceder em "Alarmes e lembretes"; sem ela o app cai no alarme inexato (SoulmonAlarmPlugin.scheduleAtInternal). Na Play:
+         declarar o uso na ficha de permissoes de alarme (timer/pomodoro). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- Contador de passos (@capgo/capacitor-pedometer → Sensor.TYPE_STEP_COUNTER).
          O manifesto do plugin já declara esta permissão e o merger a traria de
          qualquer jeito; está repetida aqui DE PROPÓSITO, porque é a permissão
@@ -146,6 +246,11 @@
          dados de saúde ou política dedicada. Opcional: o app roda inteiro sem
          ela (ver src/utils/steps.ts). -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+    <!-- Passos pelo Health Connect (REGISTRO §283, SoulmonStepsPlugin.kt): SÓ LEITURA de passos. Nenhuma outra permissão de saúde, nenhuma
+         de escrita, nenhuma de segundo plano (READ_HEALTH_DATA_IN_BACKGROUND) e nenhuma de histórico. Ao contrário do contador do
+         aparelho acima, esta EXIGE a declaração de permissões de saúde no Play Console (formulário próprio) e a política de
+         privacidade (§2/§6) dizendo isso. Opcional: o app roda inteiro sem ela. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <!-- Microfone, para o recado FALADO ao bichinho (ChatBox → /api/transcribe).
          Runtime, e OPCIONAL do mesmo jeito que o contador de passos: negar não
          impede nada além de gravar — o campo de texto continua inteiro.
@@ -164,4 +269,7 @@
          a gravação existe só enquanto a tela do chat está aberta e a pessoa
          está com o botão apertado. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Capacitor (BridgeWebChromeClient) pede RECORD_AUDIO + MODIFY_AUDIO_SETTINGS juntos
+         para o getUserMedia do WebView; sem esta linha o pedido volta negado. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 </manifest>

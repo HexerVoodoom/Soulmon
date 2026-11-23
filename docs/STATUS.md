@@ -1,5 +1,410 @@
 # Status do Soulmon — registro vivo
 
+> ## 22/11/2026 — P4 Combate (PRs #1110 Arena temporada, #1112 Pesadelo, #1113 Clan War, #1114 Draw again)
+> - **Feito:** (A) no Pesadelo o `dot` do companheiro vira 1 ataque extra após o especial (`GroupOptions.ataqueExtra`, evento `comp`, `compDano` à parte; #1112 mergeado). (B) temporada mensal UTC da Arena: campo `arenaSeason`, escada volta a 0 na virada, espelho no servidor (`enforceArenaSeason`). (C) carta `guild-war` no Mensageiro (sem push) + Assistir pelo replay gravado (`coopWarReplay`, `guildWarReplay`). (D) Draw again: bug do dia à frente corrigido, 3 giros grátis por HORA UTC (`arenaReroll.hour/hcount`), 3 convites por energia para todos, ícone de Bits no custo.
+> - **Pendente:** animação própria do 2º golpe do Pesadelo na cena; arte própria do botão Draw again (especificação vai à orquestradora); merge dos #1110/#1113/#1114 depende do CI verde (reruns de teste flaky em andamento); `fuzz2` precisa somar +1 campo ao juntar #1110 (`arenaSeason`). **Rollback:** `git revert` de cada PR (campos aditivos).
+
+> ## 22/11/2026 — P3 fechado (PRs #1116–#1119, REGISTRO §491–§493)
+> - **Pós-P3 (22/11):** semanais `buy-item` (Lamela) e `claim-achievement` (Medra) criadas; Honor confirmado = aba Honor do Mercado.
+> - **Feito:** Decoration limpa; "Da aventura de ontem" removido; Rift com "Camada atual"; Elemental Fusion primeiro no Salão e acento de cor por jogo; Power Reducer −6; Exchanger com recompensa em destaque e slot de arte; Mercado só com missões semanais (diárias de Mercado aposentadas, espelho do servidor alinhado).
+> - **Pendente (P3):** (a) Honor: já mostra missões semanais no topo; não achei "Achievements" na aba — falta o dono dizer onde. (b) Logbook cortado pela moldura e margens do Passeio: precisa de captura de tela. (c) Portal visual entre andares do Rift: pede arte nova (o anel atual é lógica de teleporte). (d) Semanais "comprar item" e "resgatar conquista" (eventos novos). **Arte pela fila:** ícone de camada/portal do Rift, chips Power Reducer, Pouch/Purse/Chest (`assets/soulmon/bits-packs/bits-200|500|1000.webp`), cards novos de Games. **Rollback:** `git revert` por PR.
+
+> ## 22/11/2026 — P3 parte 1: Decoration limpa, Passeio sem "Da aventura de ontem", Rift com Camada atual (`p3/mercado-jogos-passeio`, REGISTRO §491)
+> - **Feito:** loja de Decoração sem "Decoration rule", "From the grove" e "Of the quarter" ("Já são seus" no topo); "From Yesterday's Adventure" removido de todos os lugares (revoga o §66 no nome); folha do Rift com a caixa "Camada atual" em destaque. tsc/tsc server limpos; suíte completa verde (4 timeouts de carga passaram isolados).
+> - **Pendente (P3):** Games (Elemental Fusion primeiro), Honor, Exchanger, Power Reducer de 6 pts, semanais de mercado, margens do Logbook, portal visual entre andares do Rift. **Arte pela fila:** ícone da camada/portal do Rift, chips Power Reducer, cards Pouch/Purse/Chest, cards novos de Games. **Rollback:** `git revert` (só UI/texto, sem save).
+
+> ## 22/11/2026 — P0a: 5 bugs (`fix/p0a-bugs`)
+> - **Feito:** (1) fala automática do pet (saudação aos ~0,7 s) não esconde mais o balão dourado dentro dos 5 s do §383, ela espera; (2) Oficina › Prioridades com aviso próprio (sem citar hábitos) e pool só de tarefas; (3) a próxima evolução usa como referência a arte da forma equipada (`currentKey`), com fallback na original; (4) Bosque/Maslin: causa = cartão `coopMem` velho (perfil já ultimate, cartão com a arte antiga); perfil com sprite novo renova o cartão, e o perfil publica a última arte alcançada, não a 1ª do acervo; (5) Jornada avisa "teto do dia atingido" em vez de baú vazio mudo (números intactos; proposta em scratchpad).
+> - **Pendente do dono:** `spriteForMember` sem URL válida segue no rookie da linha (LV-G10 proíbe expor estágio alheio; mudar exige revogar); novos tetos do Focus. **Rollback:** `git revert` do merge (nenhum campo novo no save, contrato aditivo).
+
+> ## 22/11/2026 — P0b: rankings padronizados + Torneio mais rápido (`fix/p0b-rankings`)
+> - **Feito:** Rift usa o mesmo botão "Ver ranking" (`BotaoEspecial ranking`) e o `RankingModal` do Torneio/Match-3 (saiu o botão próprio e o `headStartRef`); ranking do Match-3 abre direto na modalidade escolhida no seletor Aventura|PvP, sem abas internas. Servidor (`community.js`, `_rankIndex.js`): `opponents` e `rank&id=` leem KV em lotes paralelos de 25 (resposta idêntica; `publicProfile`/`ensurePid` só para os 3 sorteados). Bench local (N=120, 3 ms/leitura): `opponents` 530→100 ms; `rank&id` morno 822→39 ms, frio 1317→64 ms.
+> - **Pendente:** Worker `functions/` publica com o deploy do Pages (push na main); não medido em produção. **Rollback:** `git revert` do merge (só leitura, sem mudança de dado/contrato).
+
+> ## 17/11/2026 — Manual sincronizado com o pacote 17/11 (`docs/manter-docs-2026-11-16`, merge de `origin/main`)
+> - **Feito:** `origin/main` mesclada na branch de docs (conflito só no STATUS, mantidos os dois lados); manual re-sincronizado `6b7773143..34c8a1b02` (PRs #1001–#1008, REGISTRO §467–§470): docs 02, 03, 04, 05, 08, 09, 10 e 06-REFERENCIA (components, utils, api-workers); `.sincronizado.json` = `34c8a1b02`.
+> - **Pendente:** nada de código; branch aguarda o CI e o merge do dono.
+
+> ## 17/11/2026 — Cartas no Salão e no Ateliê (`feat/cartas-salao-mente`, REGISTRO §469)
+> - **Feito:** os 7 jogos do Salão e da Mente viram `GameCard` (como o Refúgio); selos de Bits/recorde/ticket sob a carta. **Pendente:** as 7 artes serão regeneradas no ChatGPT (2º PR só com arte); não visto em aparelho.
+
+> ## 17/11/2026 — Hexsmith: contraste e descrições das Coroas (`feat/hexsmith-contraste-descricoes`, REGISTRO §467)
+> - **Feito:** placa atrás da Coroa encaixada (CSS, todas, claro e escuro; contraste 5,0 a 16,9:1) e descrição PT/EN nas 10 famílias; teste de cobertura.
+> - **Pendente:** capturas 360x640 não geradas; não visto em aparelho. **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Sincronização do manual (`docs/manter-docs-2026-11-16`)
+> - **Feito:** manual sincronizado `b0c1e59c..6b7773143` (363 commits, PRs #977–#998): 01–05, 07–10 e 06-REFERENCIA (components, utils, api-workers, hooks, plugins) atualizados e verificados por amostra (5 correções do verificador: 404 em exchange-bits, CROWN_ONLY_FAMILIES, MAX_OUT, utils/steps.ts, SLEEP_ENERGY_REGEN_BONUS). Guard docsManual/docsSemMentira verde. `.sincronizado.json` = 6b7773143. Fila de arte: 2 linhas Honra (machado/cajado) em `ASSETS-A-GERAR.md`.
+> - **Pendente:** divergências para o dono/código: Glitchtama no CLAUDE.md e §7/§48 do doc 02 (buff 10%/7 dias, 1 por semana no código); `SCHEDULE_EXACT_ALARM` voltou ao manifesto mas PLAY-DATA-SAFETY/PLAY-LANCAMENTO dizem removida. Docs 00-MAPA/12 não precisaram de mudança (sem módulo novo). Branch sem PR, não mergeada.
+
+> ## 16/11/2026 — QA geral do pacote (`qa/pacote-2026-11-16`)
+> - **Feito:** merge de `origin/main`; §446/§452/§457/§461 duplicados renumerados (Linhas v1 = §463, Hexsmith H2 = §464, Feira guarda o prato = §465, Passeio sem "Pular" = §466; refs em STATUS/CLAUDE/manual acertadas); antislop de volta ao baseline (3 arquivos acima de 500 linhas divididos, `_combateAux.js` novo, sem `any` novo); contratos velhos atualizados ao código (artMaps/dish, FriendTraining, evolucaoCristal, catalogOnboardingGate, spriteTrigger, index.css com `const CSS` do componente); `CreateModal` com teto infinito não imprime "até Infinity"; emojis do bloco Emoji 12+ saem da Honra; manifesto do widget em `dist/`; chat-kb regenerado; 17 módulos novos no manual 06-REFERENCIA.
+> - **Pendente do dono:** abrir o PR pacote→main no GitHub (CI).
+
+> ## 16/11/2026 — Mapa de andares do Rift (`feat/rift-mapa`, REGISTRO §462)
+>
+> - **Feito:** `utils/riftMap.ts` (nós por dupla, caminho, volta ao 1º andar), `RiftMap` virtualizado, folha da Fenda com "Ver o mapa", `dungeonResumeLayer` no save. Prévias em `E:\Soulmon-assets\_lote-16-11
+ift-mapa\previas\`.
+> - **Pendente:** tile de fundo (`src/assets/soulmon/rift/mapa-tile.webp`); não visto em aparelho. **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Stroll sem "Pular" + Feira: dia fechado sem botão e fala do mercador (`feat/stroll-tarefa-feira`, REGISTRO §466)
+>
+> - **Feito:** `StrollScene` sem o "Pular"; bug da Feira (dois botões depois de enfrentar: "Enfrentar" dava erro, "Ver o que ele achou" entrava no combate e cancelava) corrigido na raiz (desafio feito deixava de contar como aberto, volta dada por vista, 429/409 fecham o desafio, balão/"Ver" não reabrem o combate); o mercador conta o dia (o que achou, o clã em agregado, amanhã). Linha "Stroll" turquesa da Home e o "feito" já eram do §413, agora com teste.
+> - **Não feito/limite:** o servidor não manda o que cada aliado achou (só agregado do chefe/marcas); sem fala por aliado. Não visto em aparelho (capturas 360x640 de harness em `E:\Soulmon-assets\_lote-16-11\stroll-feira\previas\`). Falhas herdadas fora do escopo: `ds.regua` (NpcSequence/PratoFeito/LockBadge) e `guildSemCobranca` (`guild.help.buffs.def`).
+
+> ## 16/11/2026 — Hexsmith H4: Coroa equipada = o companheiro descansa (`feat/hexsmith-h4`, REGISTRO §460)
+>
+> - **Feito:** `companheiroAtivo`/`companheiroDoEstado` (cliente) e `companheiroDoLado` (servidor) devolvem `null` com Coroa equipada; textos das 6 Coroas e aviso calmo para evocadores; selos reais de `nGuard`/`nWeak`/`nDrag`; `fx.efeito` publicado e lido no nome do especial do oponente; manual sincronizado (8 entradas).
+> - **Falta:** ligar a flag do companheiro (outra frente); regerar 3 selos de arte. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+> ## 16/11/2026 — Companheiro invocado LIGADO no pacote (`feat/companheiro-liga-chave`, REGISTRO §459)
+>
+> - **Feito:** chave ligada no app e no servidor (paridade travada); simulados no duelo (criatura por `hash(id)`), Rogue Dungeon e Treino com amigo ligados; criatura de simulado/NPC em módulo leve; cache `soulmonEvocacao` idempotente (sem regravar à toa); cena do companheiro AO LADO do invocador (antes subia ao peito e, no inimigo, caía sobre a barra de HP). Servidor alinhado ao app em `cenario`/`n-lasca`/`n-panora` e 4 decorações `furn-ruinas-*` (regressões da pacote).
+> - **Não visto em aparelho real.** Prévias no navegador embutido (360×640 e 412×915; luta real só na Arena; Masmorra pela mesma cena com o fundo dela; `prefers-reduced-motion` só por teste).
+> - **Rollback:** `git revert` ou desligar a chave nos dois arquivos.
+
+
+> ## 16/11/2026 — Feira guarda o prato + pasta "Files" e `.exe` em comida/prato/chip (`feat/pastinha-files-exe`, REGISTRO §465)
+>
+> - **Feito:** `applyFeiraDish` guarda `dish:<id>` e abre `PratoFeito` ("Comprado!"); pasta = Files/Arquivos nos textos; `<nome>.exe` só em comida, prato e chip (especiais não); bíblia §12 + régua.
+> - **Não visto em aparelho.** Falhas herdadas fora do escopo: `feiraLoja.paridade` e `guildSemCobranca`. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Prédio bloqueado / Bastion não fecham sozinhos nem ao tocar fora (`fix/predio-bloqueado-modal`, REGISTRO §454)
+>
+> - **Feito:** removido o timer de 5 s do aviso de prédio trancado (AreaView, MapPage) e dado X ao `LockNotice`; `NpcSequence` ganhou `closeOnTap` e o portão do Bastion só fecha por X, CTA, Esc ou voltar. Testes de render + guarda.
+> - **Não visto em aparelho.**
+
+> ## 16/11/2026 — Restaurante: prato feito vai para a pastinha + modal "Prato feito" (`feat/restaurante-item-pastinha`, REGISTRO §455)
+>
+> - **Feito:** cozinhar guarda `dish:<id>` na pastinha (não serve na hora); usar passa por `applySpecialItem` → `serveDish`; modal `PratoFeito` no molde da poção criada (agrupa ×N); Mochila mostra o prato na aba de comida; docs/RESTAURANTE.md.
+> - **Não visto em aparelho.** Feira (prato pronto) segue servindo na hora. **Rollback:** `git revert`; só cliente.
+
+> ## 16/11/2026 — Rift sem limite diário + energia mais escassa (`feat/rift-economia-energia`, REGISTRO §453)
+>
+> - **Feito:** removido o limite diário do Rift (§441 revogado em parte); regen 60 → 80 min (`ENERGY_REGEN_MINUTES`); Faísca de Alma 4% → 2%; pratos de energia ×1,5 (23/23/60 Bits, espelho `_feiraLoja.js`); Guia/Ajuda/CLAUDE.md/manual/RESTAURANTE.md.
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente e `_feiraLoja.js`; saves compatíveis.
+> ## 16/11/2026 — Hexsmith H2: o motor lê `specialEffect` + 3 famílias só de Coroa (`feat/hexsmith-motor`, REGISTRO §464)
+>
+> - **Feito:** `hot`/`slow`/`silence` valem no 1v1 (PvP, treino, Torneio) e no PvE pela Coroa (token `coroa:<efeito>` no canal `efeitoElemento`, prevalece sobre o Amuleto); famílias `defBuff`/`atkDebuff`/`spdDebuff` (só por Coroa, nunca sorteadas); espelho em `_combate.js` com paridade do log inteiro (7800 lutas); léxicos de nome, cópias, perfil e selos provisórios.
+> - **Calibração:** régua do 1v1 ±5% (4 builds × 15 níveis) e gates PvE ±3pp (Arena, Masmorra, Pesadelo) em `hexsmith.motor.test.ts` e `hexsmith.motorPve.medicao.test.ts`.
+> - **Falta:** H4 (Coroa troca o especial e a invocação some), `fx.efeito` do oponente no PvP. Não visto em aparelho.
+> - **Rollback:** `git revert`; sem campo novo no save.
+
+>
+> ## 16/11/2026 — Hexsmith: arte das 6 Coroas e 3 selos (`feat/hexsmith-arte`, REGISTRO §451)
+>
+> - **Feito:** 6 PNGs de coroa e 3 de selo instalados e testados (dimensão e alfa); coroas resolvem pelo glob. Selos sem ligação ao `STATUS_FX` até a H2 criar as famílias (ligados na H2, REGISTRO §452).
+> - **Pendente:** regerar `st-debuff-atk`, `coroa-silence`, `coroa-hot` (só trocar arquivo). **Rollback:** `git revert`.
+>
+> ## 16/11/2026 — Mini-boss do Rift com a forma do próprio conjunto (`feat/rift-miniboss-forma-propria`, REGISTRO §448)
+>
+> - **Feito:** `pickEnemyDoConjunto` usa a melhor forma do próprio elemento (Ultimate, senão Champion, senão Rookie); testes dos 190 pares e 40 trios. Render `DungeonGame.marco`: travamento era regime artificial do teste (HP a 5%, abaixo do piso de 3 golpes).
+> - **Não visto em aparelho.** **Rollback:** `git revert`; só cliente.
+
+>
+> ## 16/11/2026 — Companheiro invocado PR 2: combate, servidor e cena (`feat/companheiro-invocado-combate`, REGISTRO §449)
+>
+> - **Feito:** regra pura `combate/companheiro.ts` (3 turnos, função mista, cura não invoca, 1 por combatente), `FightSide.invoca` em `fight.ts`/`group.ts`, espelho em `_combate.js` + `_companheiroInvocado.js` (paridade), cena `SummonLayer`, ligação em Arena/Masmorra/Pesadelo/Grove/Duelo/Torneio. TUDO atrás da flag `COMPANHEIRO_INVOCADO = false` (cliente e servidor): comportamento idêntico ao de hoje (testado).
+> - **Calibração:** vitória invocada − normal de −7 a +6pp (1v1, simulação); valor nominal ~0,97 do especial normal.
+> - **Falta:** PNGs dos 32 (PR 1b), ligar a flag, Rogue Dungeon, decisão do dono sobre o cache no save do cliente. Não visto em aparelho.
+> - **Rollback:** `git revert`; flag desligada = sem efeito.
+>
+> ## 16/11/2026 — Linhas v1 PR 2: ramos legados + chefes Ultra (`feat/linhas-v1-legado-ultras`, REGISTRO §463)
+>
+> - **Feito:** as formas antigas das 5 linhas viram 15 ramos legados (kind `ramo`, ids `lg…`, no fim do roster, arte em `novos-arquivo/legado/`) em ar, espaço, indústria, luz e água; os 5 Ultra novos entram no chefe Ultra da Arena (7 espécies, uniforme; escada, chance, multiplicadores e recompensas intocados). Testes do roster e da Arena atualizados.
+> - **Não visto em aparelho:** só testes e tipos; nomes provisórios.
+> - **Pendente do dono:** os 3 hospedeiros ajustados (eletricidade→espaço, tempo→indústria, marcial→água) e os 15 nomes.
+> - **Rollback:** `git revert`; só cliente.
+>
+> ## 16/11/2026 — Rift em conjuntos de andares com mini-boss (`feat/rift-conjuntos-elemento`, REGISTRO §445)
+>
+> - **Feito:** `utils/riftSets.ts` (profundidade → conjunto → estágio comum/mini-boss; 2 andares por elemento, 20→190→40→19); `pickEnemyDoConjunto` com vizinho; mini-boss = 6ª luta do 2º andar (+1 andar de crescimento); HUD com elemento e rótulo "mini-boss"; Guia atualizado.
+> - **Não visto em aparelho:** só testes e tipos. Mini-boss de 4 elementos é Mega (gancho do Ultra documentado).
+> - **Pendente do dono:** volta da lista depois do andar 538; força do mini-boss.
+> - **Rollback:** `git revert`; só cliente.
+>
+
+> ## 16/11/2026 — Botão DEMO do portão escondido de novo (`fix/oculta-botao-demo`, REGISTRO §446)
+>
+> - **Causa:** o release #897 apagou `demoButton.ts`, o teste demoOff e a condição do §320. **Feito:** restaurados + guarda de fonte; sw v262. Demo salva intacta.
+> - **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Vileza em EN vira "Fel" (`chore/rename-vileness-fel`, REGISTRO §442)
+>
+> - **Feito:** rótulos EN do elemento `vileza` (elementLabels, essenceLabels, cosmeticosNovos, manifest e script dos widgets) = Fel; PT e ids intactos; guarda `felRename.test.ts`.
+> - **Não mudou:** "Vile Eye" e "Lord of the Vile Dead" (adjetivos). **Rollback:** `git revert`; sem save.
+> ## 16/11/2026 — Nome do especial coerente com o efeito (`fix/nomes-especiais-coerentes`, REGISTRO §443)
+>
+> - **Feito:** selo do especial de inimigo (Arena, Masmorra/Rift, Pesadelo) e da Coroa da Hexsmith segue a família que vale; léxico: Rapture→Renewal, Flurry→Haste; básicas e 3 nomes de criatura sem cara de cura; guarda em `nomeEspecialCoerente.test.ts`.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
+> ## 16/11/2026 — Companheiro invocado PR 1b: 32 sprites (`feat/companheiro-sprites`, REGISTRO §447)
+>
+> - **Feito:** 32 PNG 256² RGBA (~2,4 MB) em `assets/soulmon/companheiros/`, gosma = a verdinha, 1ª geração de salamandra/coruja/espectro; QA de franja (coruja, cavaleiro_morto, gosma limpos). Flag segue DESLIGADA.
+> - **A refinar:** fada, arauto_elfico, wyvern, falcao, coruja (elemento solto). **Rollback:** `git revert`.
+>
+> ## 16/11/2026 — Companheiro invocado PR 1: fundação (`feat/companheiro-invocado-fundacao`, REGISTRO §444)
+>
+> - **Feito:** módulo `utils/companheiroInvocado.ts` (gatilho arquétipo OU escola Evocação, 32 criaturas), cache aditivo `soulmonEvocacao` + `ClassTitle.id?`, mapa de sprites tolerante, tabela provisória de simulados/NPCs, teste de medição. Flag `COMPANHEIRO_INVOCADO` DESLIGADA.
+> - **Sprites:** PNG fora (dono escolhe 1ª geração x refeita): PR 1b. 5 com elemento solto a refinar: fada, arauto_elfico, wyvern, falcao, coruja.
+> - **Não feito:** combate, cena, espelho no servidor: PR 2+.
+> - **Rollback:** `git revert`; campo aditivo, flag desligada.
+>
+> ## 16/11/2026 — Pacote A: 205 formas de combinados (`feat/combinados-pacote-a`, REGISTRO §440)
+>
+> - **Feito:** 1 forma por combinação no estágio dela (2 elementos champion, 3 ultimate, 4 mega), 205 PNG 256² via API alpha, no fim do `ENEMY_ROSTER` (kind `forma`, fora do sorteio comum); scripts `combinados-alvos/fila.mjs`; prompt+tags em `_banco/registro.jsonl`.
+> - **Visto em tela:** folhas de QA (rookie ao lado da forma) em `E:/Soulmon-assets/_lote-16-11/combinados/`; não visto no app.
+> - **Pendente:** sorteio dos inimigos usar as formas (outro pacote); veto de nomes pelo dono.
+> - **Rollback:** `git revert`; só dados e PNG.
+>
+> ## 16/11/2026 — Rift: limite diário de 30 lutas, sem teto por level (`feat/rift-limite-diario`, REGISTRO §441)
+>
+> - **Feito:** `dungeonLayerCap` saiu; limite diário `DUNGEON_DAILY_FIGHTS` (30 lutas = 5 andares por dia do jogador) na porta única `layerRefusal`, valendo na tela, fora da tela e no foco; lobby mostra "hoje: x de 5 andares", no limite "o Rift descansa até amanhã".
+> - **Pendente do dono:** confirmar 30 lutas (5 andares) vs 30 andares; para 30 andares trocar só a constante.
+> - **Não visto em aparelho:** só testes. **Rollback:** `git revert`; sem migração de save.
+>
+> ## 16/11/2026 — Amizade que some e chat que fecha fora (`fix/amizade-chat-fecha`, REGISTRO §439)
+>
+> - **Feito:** upsert do perfil relê `friends` ao gravar (corrida com aceite de convite); Amigos adota a lista do servidor ao ler o estado social; chat fecha ao tocar fora, foco fora, diálogo novo ou Esc.
+> - **Não visto em aparelho:** só testes (servidor, render). A corrida residual do KV (sem CAS) segue possível, menor.
+> - **Rollback:** `git revert`; sem save nem migração.
+>
+> ## 16/11/2026 — Troca de arte das linhas v1 (`feat/linhas-v1-arte`, REGISTRO §438)
+> 21 PNGs trocados no lugar (som, eletricidade, tempo, arcano, marcial); backup em `E:/Soulmon-assets/_lote-16-11/legado-v0/`. PR 2 (ramos legados, Ultras chefe de Arena) pendente.
+>
+> ## 16/11/2026 — Regra de dificuldade: estágio e mistura de elementos pela tabela §232 (`feat/regra-dificuldade-estagio`, REGISTRO §437)
+>
+> - **Feito:** `utils/dificuldadeEstagio.ts` (peso §232, vizinho mais próximo se a célula está vazia, curva de profundidade 60/200/500); `pickEnemy({ tabela: true })` na Masmorra/Rift, Match-3 (vagas, chefe, PVP) e Champion da Arena de elemento.
+> - **Efeito real:** limitado pela arte: com o roster atual, 2 elementos em Ultimate/Mega e 3-4 em Champion caem no vizinho mais simples até a arte nova entrar.
+> - **Pendente do dono:** Arena Ultimate (25/55/15/5 de 15/11 vs. §232); curva 60/200/500.
+> - **Rollback:** `git revert`; só cliente.
+>
+> ## 16/11/2026 — Retrospectiva v3: cristal com chama, título por qualidade, CTA que preenche, instância única (`feat/retro-v3`, REGISTRO §436)
+>
+> - **Feito:** chama da alma dentro de cristal (ilustração lisa, folha 4x2 gerada no ChatGPT desktop, alfa real; cristal estabilizado e só a chama varia); scrim `rgba(2,16,15,.7)` + blur; título/subtítulo por qualidade da semana (`retroQuality`: boa >= 70%, média 40-69%, ruim < 40% da taxa geral de hábitos; sem hábito = média); Soulmon à esquerda das frases; contadores "hábitos cumpridos"/"tarefas pontuais"; CTA "Vamos começar a semana" com preenchimento turquesa ao toque (`CtaButton fillMs`, 1,2 s, toques repetidos ignorados, movimento reduzido fecha direto). Do aparelho: scroll interno, CTA fora da área rolável, instância única e `data-dialog-top` em `useDialogA11y` (um diálogo posterior inertizava a retrospectiva portalizada: causa do "modal travado").
+> - **Visto em tela:** Chrome headless 360x640 e 412x915, 3 qualidades + fim da rolagem + CTA preenchendo (`E:/Soulmon-assets/_lote-16-11/retro-chama/previas/v3-*.png`). Não visto no app completo nem no aparelho; a dupla montagem real em App.tsx NÃO foi reproduzida (só um ponto de render), o teste reproduz a hipótese do `inert`.
+> - **Pendente do dono:** limiares 70%/40% e textos dos três tons; 1,2 s do preenchimento.
+> - **Rollback:** `git revert`; só front, sem save. Asset: `chama-alma-folha.webp` trocado (v1 pixelada fica em `E:/Soulmon-assets/_lote-16-11/retro-chama/`).
+>
+> ## 16/11/2026 — Missões da Lasca e da Panora viram semanais (`fix/missoes-loja-semanal`, REGISTRO §435)
+>
+> - **Feito:** `buy-decor` (2 itens de decoração, lojinha de Decoração) e `buy-backdrop` (1 cenário, lojinha de Background) no pool semanal; saem do rodízio diário de NPCs. Contagem por tipo de item no `handleShopBuy`; "Ir" leva à lojinha certa. Teste novo `missoes.lojaSemanal.test.ts`.
+> - **Save:** tolerante (chaves novas = 0; resgates e contagem diária antigos saneados). **Não visto em tela:** só portões e testes.
+> - **Rollback:** `git revert`.
+
+> ## 16/11/2026 — Retrospectiva refeita: card liso, chama metade fora, CTA padrão (`feat/retro-redesign`, REGISTRO §434)
+>
+> - **Feito:** sem `border-image`; card liso com a chama grande metade dentro/metade fora, Soulmon inteiro abaixo; `CtaButton tone="acao"` fixo no rodapé; a11y (`useDialogA11y`) e plural corrigidos; `moldura-retro.webp` removida.
+> - **Visto em tela:** prévia local em 360 e 412 px com ícones Material carregando (prints em `E:/Soulmon-assets/_lote-16-11/retro-chama/previas/v2-*.png`); design-critic: APROVA (8 achados, os fixáveis aplicados). Não visto no app completo numa segunda real.
+> - **Rollback:** `git revert`; só front.
+
+> ## 16/11/2026 — Chama da alma animada + moldura e selo da retrospectiva (`feat/chama-alma-anim`, REGISTRO §433)
+>
+> - **Feito:** folha de 8 quadros da chama turquesa (ChatGPT, alfa real) + componente `ui/SoulFlameAnim` (CSS `steps`, movimento reduzido = parado); `WeeklyRetroModal` usa a chama animada, moldura 9-slice e selo no cartão do bônus. Prompts e tags no `registro.jsonl`.
+> - **Visto em tela:** prévia local (Chrome headless, 500 px, movimento reduzido = quadro 1). Loop animado visto só na folha estática; não visto no app completo.
+> - **Pendente do dono:** usar a chama animada também na meditação `ChamaGame` (hoje âmbar)?
+> - **Rollback:** `git revert`; só front, sem save.
+
+> ## 16/11/2026 — Cartão semanal de domingo removido (`chore/remove-weekly-report-card`, REGISTRO §432)
+>
+> - **Feito:** `WeeklyReportCard` e seu slot na fila de avisos saem; `weeklyReport`/`needsWeeklyReport`/`stackingSuggestion` e testes saem de `rituals`. A retrospectiva é o modal de segunda (§431), intocado.
+> - **Save:** `lastWeeklyReportDate` segue na hidratação (tolerante), sem leitor.
+> - **Não visto em tela:** só portões e testes.
+
+> ## 16/11/2026 — Retrospectiva de segunda com bônus de retorno (`feat/retro-semanal`, REGISTRO §431)
+>
+> - **Feito:** `WeeklyRetroModal` (chama turquesa, Soulmon do usuário, contadores, accordion de tarefas fechado, cartão do bônus, etapa "Essa semana eu evoluí!"); regra em `src/utils/weeklyRetro.ts`; save novo: `weeklyBonus`, `lastWeeklyRetroDate`, `stageByWeek`; bônus paga na virada (`dailyReset`), selo bronze na Home.
+> - **Visto em tela:** prévia local do modal (celular 400 px). Não visto no app completo numa segunda real.
+> - **Rollback:** `git revert`; campos novos são opcionais.
+
+> ## 16/11/2026 — O Passeio paga na hora (`feat/stroll-imediato`, REGISTRO §413)
+>
+> - **Feito:** timer de 30 min removido; escolher o passeio fecha o modal e sobe "Tarefa criada"; a linha da Home vira "Stroll" (turquesa) + o nome, com "Done"; NPC e Home concluem pelo mesmo `applyStrollNow` (cena + região + achado + avistado + Vínculo na hora, 1×; `crossings.sceneDay` evita repetir na virada). Contador de passos na mesma linha do hábito, em turquesa; adotar o hábito abre o modal 3/5/7/10 mil.
+> - **Migração:** passeio feito antes (sem `sceneDay`) segue com a cena na virada; Resgatar só para esse caso.
+> - **Não visto em tela:** sem build/emulador; coberto por testes de unidade e render. Linha R-32 ("Fiz não abre nada na hora") revista pelo dono.
+> ## 16/11/2026 — Janela de abertura de 1,2 s no Pesadelo (`feat/pesadelo-janela`, REGISTRO §430)
+>
+> - **Feito:** no começo de cada luta do Pesadelo o inimigo só golpeia a partir de 1,2 s (`NIGHTMARE_OPENING_WINDOW_S`, `src/utils/dungeonFight.ts`; opção `foeOpeningDelay` do núcleo `groupFightSteps`). Cliente e simulação leem o mesmo valor via `nightmareFight().options`. Chip "Torça já!/Cheer now!" na tela durante a janela.
+> - **Não visto em tela:** só testes; o §392 (-25% de dano) segue valendo.
+>
+
+> ## 15/11/2026 — Bosque de cerejeiras de verdade (`feat/cerejeira-bosque-real`, REGISTRO §410)
+>
+> - **Feito:** `bg-cerejeira-bosque-de-cerejeiras` troca a arte do vulcão pelo bosque em flor (v1, pixelização leve); mesmo id, preço e slots. Pós-processo `tools/pixelizar-fundo.py`, instalação pelo caminho dos 33 fundos.
+> - **Android:** a miniatura do widget V-Pet só atualiza com AAB novo; o app antigo mostra o vulcão ali até lá.
+> - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cerejeira-bosque-em-flor\instalado.png`.
+>
+
+> ## 15/11/2026 — Descritores 4ª ronda (`fix/descritores-espaco-vigor`, REGISTRO §412)
+>
+> - **Feito:** R3 mediu 22/2/0; os 2 parciais (espaço no Cataclismo, vigor no Titã Forjado) ganharam forma grande: `a large floating ring of stars` e `a big amber gem glowing on its chest` em 58 descritores. Guard de hash atualizado.
+> - **Não visto em imagem:** só uma 4ª amostra no Higgsfield prova. **Rollback:** `git revert`; só criaturas novas.
+>
+> ## 15/11/2026 — Descritores 3ª ronda (`fix/descritores-ronda3`, REGISTRO §411)
+>
+> - **Feito:** bug "a band of a band of stars" (30 descritores, texto colado duas vezes à mão) corrigido, com teste de repetição nos 269 e nos prompts finais; ar, arcano, som, morte, vigor e gravidade ganharam forma grande com cor própria; a terra alterna 3 formas pelo hash do id. 180 de 269 mudaram.
+> - **Não visto em imagem:** amostras R1 11/6/7 e R2 16/6/2 (sim/parcial/não); a 3ª rodada no Higgsfield é quem prova.
+> - **Rollback:** `git revert`; só criaturas novas.
+>
+> ## 15/11/2026 — Cenário fogo+planta na loja (`feat/cenario-fogo-planta`, REGISTRO §409)
+>
+> - **Feito:** o vulcão do antigo bosque de cerejeiras virou `bg-el-queimada` (elemento `queimada` = fogo+planta), 720 moedas, exclusivo do elemento; combate já tinha cenário próprio e não mudou.
+> - **Seguimento:** o id `bg-cerejeira-bosque-de-cerejeiras` recebeu o bosque real no §410.
+> - **Não visto em tela:** sem build; prancha em `E:\Soulmon-assets\_lote-15-11\cenario-fogo-planta\instalado.png`.
+>
+> ## 15/11/2026 — Pistas fortes nos descritores (`fix/descritores-pistas-fortes`, REGISTRO §408)
+>
+> - **Feito:** amostras do Higgsfield (11 aparecem, 6 em parte, 7 não) mostraram que textura e objeto pequeno somem; 186 de 269 descritores trocaram `cracked clay`, `amber beads`, `crossed blades`, `sound waves`, `stars` etc. por formas grandes (boulder shoulder, sword, amber collar, concentric rings, band of stars, antler crown, rune circle, large orbiting stone).
+> - **Ordem:** nos pares, trios e quartetos a forma grande vem primeiro; teto 260 agora testado nos 269; hash do guard dos 183 atualizado de propósito.
+> - **Só criaturas novas.** Não visto em imagem: falta nova rodada de amostras para provar que aparecem.
+> ## 15/11/2026 — 14 Ultimates de 2 componentes instalados, só Ultimate (`feat/ultimates-2comp`, REGISTRO §405) — branch pushada, SEM PR
+>
+> - **Feito:** tabela `utils/enemyRosterUltimates.ts` + `buildUltimates2Comp` (14 linhas `paralelo`, sem Champion, no fim do roster) e 14 PNG em `novos-arquivo/paralelos/`. Ultimate da Arena (base/2/3/4): 24,9/19,6/51,6/3,9 antes, 24,9/58,5/12,7/3,9 agora (tabela 25/55/15/5); os 20 elementos têm pool de 2 componentes.
+> - **Pendente do dono:** aprovar os 14 nomes (`E:/Soulmon-assets/_lote-15-11/ultimate-2comp/nomes-propostos.md`); hoje o nome é o do par. Sem build, não visto em tela.
+
+
+> ## 15/11/2026 — 20 decorações novas + lanterna + `prism` instalados (`feat/decor-novas-20`, REGISTRO §406) — branch pushada, SEM PR
+>
+> - **Feito:** 4 de Ruínas + 16 de elemento (`src/assets/decor/<id>.webp`, preços e espaços do código), lanterna refeita no mesmo id, `prism.webp` 128×128. Instalador `tools/instalar-decor-elementos.py`; guard `decorElementos.test.ts`. 20 webp = 444,6 KB.
+> - **Depende do dono:** aprovar em modal (PR); trocar ou não a arte antiga de fogo/água/terra/ar (PNG novos prontos); `prism` sem contorno escuro. Sem build, não visto em tela.
+
+
+> ## 15/11/2026 — Descritores de elemento autorais (`feat/descritores-autorais`, REGISTRO §407) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a `forma` dos 86 combinados (53 pares, 14 trios, 19 quartetos) foi reescrita em `elementoDescritores.data.ts` para nomear cada componente com a palavra-chave de `PALAVRA_CHAVE_BASE`, em vez de depender do completamento genérico do código; os outros 183 ficam byte a byte iguais (hash no teste).
+> - **Só criaturas novas:** prompts gerados depois do deploy mudam; sprites e saves existentes não. Prancha de texto com 12 antes/depois: `E:Soulmon-assets_lote-15-11auditoria-promptsantes-depois.md`.
+> - **Não visto em imagem:** nenhuma geração de teste; as pistas novas só foram provadas como texto (teto 260, regra do tempo, sem franquia).
+>
+> ## 15/11/2026 — Evolução gerava DUAS imagens (`fix/evolucao-uma-imagem`, REGISTRO §404) — PR aberto, NÃO mergeado
+>
+> - **Causa:** a chave de acervo da forma-destino do cristal (`altSpriteKey`) dependia do acervo vivo; a própria imagem recém-chegada (`champion-power`) a trocava para `champion-power@elemento` e o lote partia de novo. Valia para toda ida a champion/ultimate/mega/ultra.
+> - **Feito:** chave congelada no toque (`EvolutionCrystal.key`, `startCrystalFrozen`); servidor devolve a forma-base recém-desenhada (janela de 20 min) a cliente antigo que pede `forma@elemento` na sequência, sem IA nem cota.
+> - **Não visto em tela:** sem build; provado por teste que conta os pedidos. Contas reais que já gastaram a 2ª imagem: ver o PR (dado de produção não foi alterado).
+
+> ## 15/11/2026 — Arena: Ultimate sorteia o nº de elementos por tabela de pesos (`feat/arena-elemento-combinado`, REGISTRO §403) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `utils/arenaComponentes.ts` (tabela `ARENA_COMPONENT_WEIGHTS`: Ultimate 25/55/15/5, Mega 10/20/50/20). Ultimate combinado da Arena foi de 2,6% para 68,2% (75,5% nas runs comuns; Desgarrada fora); Rookie/Champion idênticos à main (hash). Vitória da Arena 17,07→16,70% e 14,82→14,15% (dentro do erro).
+> - **Pendência de arte:** só 6 dos 20 elementos têm sprite Ultimate de 2 componentes, então o "2 componentes" realizado é ~20% (3 comp. ~51%); faltam sprites. Mega não existe na Arena. **Não visto em tela:** sem build.
+>
+> ## 15/11/2026 — Match-3 PVP: Flora e Titã proibidos juntos (`fix/match3-flora-tita`, REGISTRO §402) — PR aberto, NÃO mergeado
+> - **Feito:** par `flora`/`tita` na lista curada (124 pares); folha completa em `E:\Soulmon-assets\_lote-15-11\match3\folha-completa-*.png` + `pares-proibidos.csv`. Sem build, não visto no tabuleiro.
+>
+> ## 15/11/2026 — Match-3 PVP: 3 rodadas contra ícones parecidos (`fix/match3-cores-rodadas`, REGISTRO §402) — PR aberto, NÃO mergeado
+>
+> - **Feito:** em `match3Cores.ts`, camada de paleta + daltonismo (rodada 1), silhueta/brilho (rodada 2) e calibragem a olho com 3 pares novos na lista curada (rodada 3). Dados por `scripts/element-paleta.py` e `element-silhueta.py`. 0 de 20 000 sorteios relaxam; 285 de 285 elementos ainda aparecem; pool efetivo: 46 a 197 candidatos ao sexto ícone.
+> - **Não visto em tela:** sem build. Pranchas `rodada-1/2/3.png` em `E:\Soulmon-assets\_lote-15-11\match3\`.
+
+> ## 15/11/2026 — Match-3 PVP: ícones de cor parecida nunca dividem tabuleiro (`fix/match3-cores-distintas`, REGISTRO §400) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `utils/match3Cores.ts` (lista curada de 120 pares proibidos que nunca relaxa + ΔE CIEDE2000 mínimo 24 entre quaisquer dois ícones) e tabela `elementDominante.data.ts`. Tabuleiros do PVP com par parecido (ΔE < 12): 16,3% antes, 0% depois (20 000 sementes). O Normal (6 fixos) já era distante e não muda.
+> - **Fora:** nada no servidor (não há espelho do sorteio). **Não visto em tela:** sem build; prancha dos pares em `E:\Soulmon-assets\_lote-15-11\match3\pares-parecidos.png`.
+> ## 15/11/2026 — "Elemento novo" vira CARTA grande (`feat/carta-elemento-novo`, REGISTRO §401) — PR aberto, NÃO mergeado
+>
+> - **Feito:** carta preta (arte `ui/carta-elemento.webp`) com ícone, nome e, nos compostos, os componentes; só abre no fim da atividade (gate `emAtividade`); carrossel com setas e deslize, OK desativado até ver todas, X no topo. Frase de poção/Laboratório REMOVIDA; na evolução a carta é o último item da sequência.
+> - **Não visto em tela:** sem build; layout 360x640/412x915 só em jsdom e na prancha `E:\Soulmon-assets\_lote-15-11\carta-elemento\mock-carta.png`. Arte final = V3 escolhida pelo dono, instalada por `tools/instalar-carta-elemento.py`.
+
+> ## 15/11/2026 — 33 decorações no estilo novo instaladas no mesmo id (`feat/decor-estilo-novo`, REGISTRO §398) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a arte das 33 peças de mobília troca no mesmo id (PNG, caixa × 3, alfa real) por `tools/instalar-decor-refeitas.py`; sem id novo, sem save, sem código. Os 34 PNG de decoração foram de 488 KB para 829 KB (maior 38,8 KB).
+> - **Fora:** `furn-lantern` (o PNG do piloto não está na pasta do lote; segue a arte antiga).
+> - **Não visto em tela:** sem build; prancha ANTES/DEPOIS em `E:\Soulmon-assets\_lote-14-11\decoracao\instalado-contato.png`. Faixas de grama e areia ficam finas (~22 px de altura).
+
+> ## 15/11/2026 — Restaurante com o chef certo, missão do prato, elemento da evolução e modal "Elemento novo" (`feat/restaurante-npc-missao-elemento`, REGISTRO §396) — PR aberto, NÃO mergeado
+>
+> - **Feito:** a folha do Restaurante mostra o chef do dia (antes era sempre a Snapjaw) e os dois lado a lado no domingo; semanal `cook-dish`; evoluir desbloqueia o elemento da forma; modal transparente sem brilho (carrossel se vários) na fila central.
+> - **Dono respondeu (15/11, modal):** prato semanal ENTRA no sorteio (como está; 3/13, lista da semana pode mudar uma vez); composto libera só o composto; 3 Emblemas só do prato do Restaurante; convite ok.
+> - **Ajustes pós-resposta:** retroativo (Soulmon já evoluído com elemento fora do dex ganha desbloqueio + modal na próxima abertura, uma vez, no máximo 1 elemento) e luta que desbloqueia espera a Home para abrir o modal.
+> - **Não visto em tela:** sem build; layout 360 px e carrossel só em jsdom.
+> ## 15/11/2026 — Sem ticket de minijogo abre o modal de compra (`feat/minigame-sem-ticket-modal`, REGISTRO §395) — PR aberto, NÃO mergeado
+>
+> - **Feito:** jogar sem ticket (ou ficar sem no "jogar de novo") abre o `TicketBuyModal` com o ticket metade dentro, metade fora da borda; Comprar (1 energia = 3 tickets) ou Agora não; mostra "Cada partida gasta x1" (`FUN_TICKET_PER_ROUND`). Aviso vermelho do painel retirado.
+> - **Fora:** pagar ticket com Bits (não existe hoje; decisão do dono) e custo por jogo/dificuldade (hoje sempre 1).
+> - **Não visto em tela:** sem build; só testes de render em jsdom.
+
+> ## 15/11/2026 — Honra: 8 peças de cristal restantes (`feat/honra-cristal-restante`, REGISTRO §399) — PR aberto, NÃO mergeado
+>
+> - **Feito:** estátua de guerreiro, estátua de mago, bigorna e pedestal, em `cristal-turquesa` (700) e `cristal-irisdescente` (1100): catálogo de Honra de combate 83 para 91. Quatro linhas em `CRISTAL_PECAS` mais 8 webp.
+> - **Bytes:** os 8 novos somam 83.744 B (total 667.860 B); maior arquivo 13,8 KB (teto 400 KB).
+> - **Não visto em tela:** sem build. Prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-3.png`. O cabo do martelo da bigorna turquesa saiu laranja-avermelhado; o dono aprovou assim.
+
+> ## 15/11/2026 — Honra: ouro envelhecido e cristal instalados (`feat/honra-ouro-cristal`, REGISTRO §397) — PR aberto, NÃO mergeado
+>
+> - **Feito:** as 18 peças de ouro (180) e 8 armas de cristal (`cristal-turquesa` 700, `cristal-irisdescente` 1100, acima do mithril) entram na aba Honra: 83 peças. Catálogo gerado em `utils/honraDecor.ts` (`CRISTAL_PECAS` recebe as outras de cristal quando houver PNG).
+> - **Fora:** estátuas, bigorna e pedestal de cristal (sem arte ainda); Serpente da Feira (P6).
+> - **Não visto em tela:** sem build; aba Honra com 83 itens numa lista só. Prancha em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato-2.png`. Preços 700/1100 por recomendação, para o dono rever.
+
+> ## 15/11/2026 — Decoração de Honra de combate instalada (`feat/honra-itens-instalacao`, REGISTRO §391) — PR aberto, NÃO mergeado
+>
+> - **Feito:** 57 das 75 peças do plano (bronze, prata e mithril; armas de parede, estandartes, estátuas, manequins, bigornas, armas de chão, pedestais, 3 chãos de arena) entram na aba Honra, pela escada 25/70/180/450 (chão 40). Arma mora dentro do `wall`; nada de espaço novo nem campo de save. Catálogo em `utils/honraDecor.ts`, instalador `tools/instalar-honra-decor.py`.
+> - **Fora:** ouro (arte sendo refeita), cristal (em geração) e a Serpente da Feira (P6 em aberto; o teste de paridade do servidor ignora `hon-*`).
+> - **Não visto em tela:** sem build; a aba Honra ficou com 65 itens numa lista só (seções/filtro por espaço seguem pendentes, é desenho de tela). Folha de contato dos PNGs finais em `E:\Soulmon-assets\_lote-14-11\honra\instalado-contato.png`.
+
+> ## 15/11/2026 — Ícone de estágio colorido em todo o app (`feat/icone-estagio-cor-todos`, REGISTRO §394) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `CAMINHO_SEM_COR` (creme `#fff1d6`) ao lado de `CAMINHO_COR`; `EstagioIcone` sempre tinge e deriva o caminho do id (sem `<img>` cru); guard de fonte garante um único renderizador. Ícone de tipo já era colorido, não mudou.
+> - **Não visto em tela:** sem build; só jsdom e prancha de contato em `E:\Soulmon-assets\_prints-estagio-cor	odos.png`. Conferir no aparelho plaquinha de combate (claro/escuro), nós da Evolução e Torneio.
+> ## 15/11/2026 — Balanço: Pesadelo −25% de dano e Agulha de bússola (`fix/balanco-pesadelo-agulha`, REGISTRO §392–§393) — PR aberto, NÃO mergeado
+>
+> - **Pesadelo (§392):** o inimigo causa ×0,75 (`NIGHTMARE_FOE_DAMAGE_FACTOR`, só `nightmareFight`; Masmorra/Arena intactas). Medido: com torcida a vitória foi de ~78–93% para ~98–100% e o HP perdido de 77–88% para 59–73%; sem torcida de ~3–29% para 23–64%. Testes de calibragem do §65 rebaixados (sem torcida perde ≥ 35%, antes 70%).
+> - **Agulha de bússola (§393):** `tal-pve-04` soma +10/grau ao teto diário de Bits (150 → até 180) só para Fenda/Masmorra/Arena; o +3% no ganho foi revogado. `rb` do `dungeonAway` virou `rc`. O teto de 150 ainda não é imposto no servidor (só observação, §387).
+> - **Não verificado:** tela/aparelho; Pesadelo com testadores reais.
+
+> ## 15/11/2026 — Orçamento de Bits do save em MODO OBSERVAÇÃO (`feat/bits-orcamento-observacao`, emenda do REGISTRO §387) — PR aberto, NÃO mergeado
+>
+> - **Feito:** `functions/api/_bitsOrcamento.js` mede no POST de `/api/save` o crescimento de `gamePoints` contra um token bucket na metadata do save (1.500/dia, até 15 dias, + créditos do servidor; admin isento) e grava `bitsobs:<dia>:<prefixo>` no KV (TTL 45 d, 1 por conta por dia). **Nunca corta**: o save sai intacto.
+> - **Revisão: 28/11/2026** (pergunta no `PERGUNTAS-DO-DONO.md`). Ler: `npx wrangler kv key list --binding SOULMON_SAVES --remote --prefix "bitsobs:"`.
+> - **Não verificado:** KV de produção e tráfego real (só fakes em teste); `dist/` não regenerado.
+
+> ## 14/11/2026 — QA r4, pacote C2 (`feat/qa-r4-cambista-servidor`, REGISTRO §386–§390) — PR aberto, NÃO mergeado
+>
+> - **Cambista (§386):** opId de pacote pendente é reenviado com `replayOnly` ao reabrir/abrir o Cambista (Créditos pagos sem Bits deixam de ficar presos); o opId só fecha depois de os Bits entrarem no estado; teto de 1.000/dia vira à meia-noite do JOGADOR (âncora presa 24 h); célula diz o motivo; uma mensagem por resultado; atalho "Get Credits".
+> - **Convites (§388) e cartas (§389, §390):** recusa bloqueia o par por 7 dias (resposta igual à do sucesso), teto diário de convites no KV; "Excluir todas lidas" não apaga convite; pop-up do Papus só na 1ª carta da conta.
+> - **Não implementado (§387):** teto de crescimento de `gamePoints` no save. Levantamento e proposta (orçamento por token bucket na metadata do save) no registro; risco de cortar jogador honesto sem razão de servidor para cartas de compensação e conquistas.
+> - **Não verificado:** aparelho real (replay pós-queda de rede, fuso), D1/KV reais; `dist/` não regenerado.
+> ## 14/11/2026 — QA r4, pacote C1 de UX do cliente (`feat/qa-r4-ux`, REGISTRO §382–§385) — PR aberto, NÃO mergeado
+>
+> - **Feito:** nome da linha ligada a prédio abre o prédio (§382); balão dourado some em 5 s e o 2º ignorado do dia dispensa (§383, chave nova `soulmon-balao-dourado-ignorados`); Arena: o último adversário dropa 2× a essência, ⚰️ +1 Presa (§384); estados da escolha de adversários (carregando/erro) e ajuda do Desgarrado; limites visíveis (§385); closure velho do `commitHabitCreate`; nome acessível do ícone de estágio; "Bits ganhos" fora dos textos (§373); `bornDay` na âncora do dia do jogador.
+> - **Não visto em tela:** sem build nesta rodada (`dist/` não regenerado); só testes de render em jsdom.
+> - **Servidor:** nenhuma mudança necessária (`enforceEssences` não limita ganho de essência).
+
+> ## 14/11/2026 — QA r4, pacote A do servidor (`fix/qa-r4-servidor`, REGISTRO §381) — PR aberto, NÃO mergeado
+>
+> - **Feito:** trava única `entlock:<saveId>` (D1) para todo escritor de `ent:`; resgate de carta e presente do dia por INSERT único; `sparMatch` apaga o duelo aberto por último; treino e busca de jogador propagam queda do KV; troca livre antiga `404 gone`; cliente reenvia 200 ilegível de `buy-bits`/`buy-essence` com o mesmo opId.
+> - **Sem D1** (dev/teste local) nada disso trava: comportamento de antes.
+> - **Não verificado:** produção/D1 real e corrida entre colos (só fakes em teste); `dist/` não regenerado (nenhum build nesta rodada).
+
+> ## 10/11/2026 — Passos pelo Health Connect (`feat/passos-health-connect`, REGISTRO §283) — PR aberto, NÃO mergeado
+>
+> - **Feito:** plugin nativo `SoulmonSteps` (só `READ_STEPS`), convite curto `stepsInvite` depois do onboarding (fila central), Health Connect como fonte preferida com o contador do aparelho de reserva, feature detect para o APK antigo. Revoga em parte a linha vermelha do Google Fit no `CLAUDE.md`. `PRIVACY_VERSION` NÃO subiu (já era `2026-11-09`, §253).
+> - **NÃO mergear antes do AAB beta11:** o push na `main` publica o app web que o APK carrega; sem o plugin no APK o JS cai no contador do aparelho (seguro), mas o convite já apareceria para quem tem sensor.
+> - **Depende do dono (Play Console):** declaração de permissões do Health Connect (`READ_STEPS`) e atualização da declaração de Apps de saúde e do Data Safety; roteiro em `docs/PASSOS-HEALTH-CONNECT-LANCAMENTO.md`. `versionCode`/`versionName` NÃO foram tocados (vão junto com as molduras do widget).
+> - **Não compilado nem testado em aparelho:** o Kotlin novo só é provado pelo `android-build.yml` e por um teste em aparelho com Health Connect.
+
+> ## 09/11/2026 — Sincronização do manual (`5229b1be..62f204e1b`, 271 commits, + arte instalada até `f80a470d6`; #674 simulados-elemento entra só como dado, sem reescrita no manual)
+>
+> - Feito: 02 (§68 novo), 03 (delta 09/11), 04, 05, 07, 08, 06-REFERENCIA (utils, components, api-workers, hooks, plugins, desktop), 09, 10, 11 e MAPA; `doc-verificador` carimbou todos, com escopo (só o que o diff tocou; ~45 módulos de mudança interna em utils não foram reconferidos). Corrigiu: `DailyMissionEvent`→`DailyEvent`, cut projétil 0,05→1,00, "2 chefs por dia" (é 1 chef/dia), `CACHE_VERSION` v248→v260, Forja com 5 prédios, RANKED_GAMES completo.
+> - ⚠️ Divergência para o dono/código: REGISTRO §253 diz só banner sem reaceite, mas o código (`versionCovers` + `ConsentGate`) bloqueia quem aceitou versão anterior a `PRIVACY_VERSION` 2026-11-09. Manual segue o código. Manual diz "Health Connect" mas o manifesto ainda não declara `READ_STEPS`.
+> - ⚠️ "Higgsfield vetado" é decisão do dono de 09/11 só no briefing; `docs/ASSETS-A-GERAR.md` ainda diz "ChatGPT primeiro, Higgsfield reserva". `PLAY-DATA-SAFETY.md` diz 90 dias de feedback; código/política dizem 30. `run_worker_first` ligado (`a4f90382b`) e revertido (`9454d68a8`): não habilitar; `/gm/*` não abre no navegador (SPA fallback).
+> - Dívida: lacuna 21/10–01/11 no 09/10 (849 commits sem entrada própria); numeração do REGISTRO tem colisões (§220–§222, §242/243, §255).
+
+> ## 05/11/2026 — Cena do Passeio em tela cheia + descoberta garantida (pedido do dono)
+>
+> - **Feito (código):** com Passeio no dia anterior (`strollSummary`, agora com `regionId`), o passo "Da aventura de ontem" do resumo vira `StrollScene` (tela cheia): cenário da região, cartãozinho de texto no topo, "Espera… tem alguma coisa ali." → o cenário desliza → **descoberta de 1 Soulmon que o jogador nunca viu** (`utils/strollDiscovery.ts`, determinística por dia, aleatória, garantida enquanto restar algum; Corvinho com a mesma chance rara de sempre, 1/1000, e vem se for o último) → OK grava a chave em `bestiary` (aba Selvagem/Desgarrado do Drive, com o aviso NEW de sempre) → desliza de volta → "Começar o dia". Sem som novo (R-NOVA). Sem campo novo no save (usa `bestiary`).
+> - **Pendente (arte):** os 8 panoramas horizontais 2:1 (`passeio-cenas/cena-<região>.webp`), pedidos em `docs/ASSETS-A-GERAR.md` §25 com composição (chão em 80%, Soulmons em 25%/75%), bloco de estilo e um prompt por região, para uma sessão local gerar no ChatGPT. Enquanto não chegam, a cena usa o postal da região espelhado (sem costura). Quando o arquivo cai, assume sozinho.
+> - **Rollback:** reverter só remove a cena (volta a folha); as chaves já gravadas em `bestiary` continuam válidas.
+
+> ## 05/11/2026 — O Soulmon flutuava sobre a sombra (Home)
+>
+> - **Causa:** o `scale: petScale` do `<img>` do bicho NÃO APLICA: o React 18 escreve número em `style` com "px" ("0.25px"), `scale` não é unitless e o navegador descarta (conferido no DOM: o `style` do `<img>` não tem `scale`). O bicho sempre foi desenhado em 100%, mas a descida do pé (`useGroundDrop`) era calculada para o bicho ENCOLHIDO (3 px em vez de ~12) e a sombra ficava a 68 px ACIMA da caixa, escondida atrás do corpo. **Correção:** `PET_DRAWN_SCALE = 1` para pé e sombra; sombra ancorada nos pés. Guarda: `spriteScale.test.ts` ("o pé não flutua").
+> - **⚠️ Decisão do dono pendente:** como o `scale` nunca aplicou, os alvos de porte (`STAGE_TARGET`, rookie a 50%, `HOME_PET_SIZE` 0,7) NÃO estão valendo em lugar nenhum que use `petScaleStyle`/`scale:` numérico (Home, Pet, Respiração, Pesadelo, Zip, Torneio). Ligar (passar o valor como string) encolhe todos os bichos de uma vez — o rookie ficaria ~35 px. Não foi ligado.
+
+> ## 05/11/2026 — Acervo de assets que sobrevive ao bump do cache (`public/sw.js`)
+>
+> - Antes: todo bump de `CACHE_VERSION` apagava os ~100 MB de `/assets/` (cenários, sprites, chunks), e o jogador baixava tudo de novo — sentido como lentidão com internet ruim. Agora `/assets/*` com hash no nome mora em `soulmon-assets-v1` (sem versão no nome), que o `activate` não apaga; teto `ASSET_CACHE_MAX` (poda dos mais antigos); na 1ª versão nova, os assets já guardados nos caches de versão são migrados. Testado no Chromium (bump simulado: acervo intacto; migração com a rede bloqueada para o arquivo). Guard: `swCache.contract.test.ts` §8. **Bump de `CACHE_VERSION` continua necessário** para HTML/ícones; para assets já não custa download.
+
+> ## 05/11/2026 — "Evoluiu para a mesma forma" + Formas alternativas
+>
+> - **Causa:** quando o cristal fechava SEM a arte nova (falha, 10 min sem arte, ou "Evoluir assim"), a evolução commitava e a barra zerava — e nenhuma ocasião voltava a pedir a forma ATUAL. O visor caía em `Object.values(ownSprites)[0]` (o sprite da forma anterior) para sempre. **Correção:** ocasião `R` (`currentFormRecovery`, `utils/spriteTrigger.ts`): forma atual sem sprite é pedida de novo (teto da forma/conta continua fechando a porta; falha espera o intervalo de sempre). Quem já está nessa situação recebe a arte sozinho ao abrir o app.
+> - **Formas alternativas (pedido do dono):** `utils/formasAlternativas.ts` + `FormasAlternativasSheet`. Cartões alcançados (menos rookie) com setinha →; atual abre a lista direto, anterior/lateral oferece Degenerar/Trocar + "Formas alternativas". Voltar a um estágio com outro elemento (poção) desbloqueia e equipa uma forma nova, com arte própria na chave `forma@elemento` (servidor: `VALID_FORM_ID` aceita o sufixo). Save: `formasAlt`, `formaAltEquipada` (leitura tolerante; cosmético, sem espelho de regra no servidor). Rollback: reverter deixa os campos ignorados e as chaves `@` órfãs no acervo, sem corromper nada.
+
 > ## 29/10/2026 — Sincronização parcial do manual (`f3acead1..15624b69b`, 1089 commits)
 >
 > - Feito: entradas de 06-REFERENCIA para `evoRecap.ts`, `CompletionTag`, `EvoRecapModal`, `ui/RewardPreview`; lápides de `GuerraClaSheet`, `RestWindowCard`, `UndoToast`; `RECOMPENSAS-VISIVEIS.md` no 00-MAPA. Guard verde (2 arquivos, 10 testes).
@@ -320,7 +725,7 @@
 
 > ## 11/10/2026 — Guilda de lançamento, PR1: Torneio ranqueado × Arena livre (`claude/guilda-lancamento`)
 >
-> - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido; a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
+> - **Torneio = ranqueado:** `opponents` sorteia dentre os mais próximos da faixa (`functions/api/_rankedPick.js`, `rankedPick.test.js`). **Arena livre** (lote `duelo`): o jogador escolhe 1 de 3 desafios de poder parecido (⚰️ 14/11/2026, §370: hoje são `ARENA_CHOICES` = 4); a semente do card vira a da run (`ArenaGame` `seed`). Copy no Torneio ("Ranqueado…"), na folha da Arena, no Guia e no mapa (`areaHint`).
 > - **Linhas velhas no `CLAUDE.md` (não editei, a pedido):** a linha do 🎪 Rodada do Torneio segue certa; a do ⚔️ Masmorra não é tocada. A linha "Arena" do 🛒/Combate não descreve a escolha de adversários — acrescentar quando o dono quiser.
 > - **Depende do dono:** nada novo. Decisão registrada em `REGISTRO-DE-DECISOES.md` §28.
 > ## 11/10/2026 — Música: auditoria, volume, rotas por superfície; golpe físico × à distância; FX maior e especiais em série
@@ -4196,7 +4601,7 @@ Detalhe achado a achado em **1.1** (N-3 a N-8) e **1.5**. Resumo:
 | ✅ | Service worker para de cachear resposta de outra origem | `3b45df1b` |
 | ✅ | `customKeywords` delimitado no prompt; `temperature` `clamp`ada | `4997bccb` |
 | ✅ | Keystores: são do **DigiApp**, e com Play App Signing a rotação é formulário | análise |
-| 🔴 | SEC-3 (resgate atômico) e SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`) **seguem abertos** | — |
+| 🔴 | ~~SEC-3 (resgate atômico) e~~ SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`) **segue aberto**. ⚰️ *Reconferido em 14/11/2026 (Antislop P1, REGISTRO §374): o SEC-3 fechou em 22/09 — o D1 `DB` está no `wrangler.jsonc` e a tabela `order_claims` foi aplicada (registro do dono #65; ver a lista do dono abaixo). O SEC-4 é o que segue aberto: decisão do dono D1 (14/11) = ligar a flag só depois que o APK com `setObfuscatedAccountId` estiver no ar.* | — |
 
 ### 📦 Suprimentos — e o achado mais desconfortável do dia
 
@@ -4600,11 +5005,12 @@ novo é gravado), então também aqui não houve migração — mas por outro mo
 > linha sozinho, então com D1 ligado a decisão de 5 anos não se aplica ao
 > recibo"*.
 >
-> **Mas é preparação de um caminho que nunca dispara.** Enquanto não houver
-> binding de D1 no `wrangler.jsonc`, `env.DB` é `undefined`, `claimOrderAtomic`
-> não roda, e a tabela `order_claims` não existe em produção. **Ligar o D1
-> continua sendo o conserto do SEC-3** — e agora ele chega com a retenção já
-> resolvida, em vez de abrir uma ponta nova no dia em que for ligado.
+> ⚰️ **Superado (reconferido em 14/11/2026, Antislop P1 item 12, REGISTRO §374).** O parágrafo
+> original dizia que, sem binding de D1 no `wrangler.jsonc`, `env.DB` era `undefined` e o
+> `claimOrderAtomic` não rodava. Isso deixou de ser verdade em **22/09/2026**: o `wrangler.jsonc`
+> tem `d1_databases` com `DB` → `soulmon-billing`, e a tabela `order_claims` foi aplicada
+> (registro do dono #65; provas na lista do dono, mais abaixo). **O D1 é o conserto do SEC-3 e
+> está ligado.** O que segue aberto é o SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`).
 >
 > ⚠️ Não confunda as duas coisas: *a migração existir* e *o caminho atômico
 > rodar* são afirmações diferentes, e só a primeira é verdade hoje. Este é
@@ -4925,7 +5331,7 @@ decisão sua.
 | 🔴 | Registrar o pacote no Firebase + baixar `google-services.json` |
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
-| 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
+| 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md). **Decisão do dono D1 (14/11/2026, Antislop): ligar, mas só depois que o APK com `setObfuscatedAccountId` estiver no ar — NÃO ligada ainda** (antes disso recusaria toda compra; REGISTRO §374). O SEC-3 (D1 `DB`) já fechou em 22/09 (linha abaixo) |
 | ✅ | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims` — **APLICADO em 22/09/2026** (registro do dono **#65**). É o conserto do **SEC-3**, que a §1.2 chamava de *maior risco de dinheiro que sobrou*. O que aconteceu, para o próximo que perguntar "está aplicado?": `0001_order_claims.sql` rodou **ok**; `0002_order_claims_expires_at.sql` **falhou com `duplicate column name: expires_at`** — a tabela **já existia com a coluna**, vinda do caminho `d1 execute --remote --file` que o `migrations/README.md` antigo mandava usar — e por isso foi **marcada como aplicada**. Provas colhidas: `npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"` → **4 colunas** (com `expires_at`); `npx wrangler d1 migrations list soulmon-billing --remote` → **"No migrations to apply"**. Consequência: **a 1ª compra da Play não dá mais 500** — `claimOrderAtomic` encontra a tabela. ⚰️ Esta linha já carregou duas mentiras mortas ("o `wrangler.jsonc` não tem binding `d1_databases`" e "sem a tabela, a query falha e o resgate cai no caminho antigo" — o `DELETE` inicial estava FORA do `try`, e a 1ª compra dava 500). A lápide do caminho `execute --file` está em [`migrations/README.md`](../migrations/README.md): **não use `execute --file` para migração**, foi ele que produziu a colisão |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
@@ -5463,3 +5869,23 @@ O dono mandou `archive (5).zip` com cinco PNGs (1024×1024, alfa real, brilho su
 ### 01/11/2026 — D17 (formas sob demanda) marcada como implementada
 
 O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `rookie` (D-G5b), forma seguinte gerada na incubação (cristal ou forma-destino), e em empate de galho o lote segue cobrindo os líderes empatados (até 3 formas). Só documentação: `PLANO-ONBOARDING-VELADO.md` (tabela e §6.2); nenhum código mudou.
+
+## Sincronização do manual — 02/11/2026 (8649fa42 → 5229b1be)
+- doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
+- Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
+- ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
+
+## §456 — Teto de Bits por categoria (16/11/2026)
+- Feito: 75/dia por categoria (minijogos, explorar, arena) além dos 150; save `minigameBits.cat`; linha de UI; arte Hexsmith v2 trocada.
+- Pendente do dono: convite de Duelo e VIP (ver REGISTRO §458).
+
+## §458 — Convite de Duelo (16/11/2026)
+- Feito: gate de 1 convite por run de Duelo, troca 1 energia = 5 (7 na conta paga), estoque 0-7 inicial 7, servidor com paridade, arte PT/EN.
+
+## §470 — Rift e Arena: ajustes do dono (16/11/2026)
+- Feito: andares "Fogo 1/Fogo 2" (HUD e mapa); folha da Fenda só com "Entrar no Rift" (retoma direto) e "Ver o mapa" (outline); película preta com gradiente no mapa; "Comprar convites" no topo da Arena com leque de convites (reuso do `TicketFan`).
+- Pendente do dono: ver as capturas em `E:\Soulmon-assets\_lote-17-11\rift-arena\previas\`.
+## §468 — Vesca base-only, Centro de Evolução limpo, Maslin (17/11/2026)
+- Feito: Vesca oferece só poção base; Centro de Evolução sem filtros de status e com o Neutro como última linha comum; companheiro invocado lê o título de classe do save quando falta o cache (cliente + servidor + paridade). Capturas PT/EN em E:\Soulmon-assets\_lote-17-11esca-evolucao\previas\.
+- Pendente: confirmar com a Maslin real em produção (não verificado aqui).
+

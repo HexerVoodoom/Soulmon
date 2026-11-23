@@ -3,15 +3,19 @@
  * DUELO — círculo de cast e status pela tela (PR11, run `combate-v3-01`). O núcleo (PR5) roda de VERDADE com a ficha do
  * servidor: o círculo de cast só existe com o especial; o status (família não-direta) é a dobra dos eventos já chegados.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { DuelScreen, cheerQuality } from './DuelScreen';
 import { simulatePvp, DUEL_CHEER_BUCKETS, type DuelSide } from '../utils/combate/duel';
 import { PVP_HP_SCALE } from '../utils/combate/fight';
 import { CHEER, specialOf } from '../utils/combate/specials';
 import { duelSide } from '../../functions/api/_duel.js';
+import { COMBAT_V3_ART_IDS, loadCombatV3Art } from '../utils/combatV3Art';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
+// §331: o efeito só aparece no marcador do canto, que pede a arte por import() sob demanda; o relógio falso daqui
+// não deixa o import frio terminar dentro do laço síncrono do observar() — a arte entra no cache antes, uma vez.
+beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
 
 const SEED = 123;
 const lado = (perfectDays = 3, evolutionStage = 'rookie'): DuelSide => duelSide({ evolutionStage, perfectDays }) as unknown as DuelSide;
@@ -42,7 +46,7 @@ const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
 
 
-const status = () => [...document.querySelectorAll('[data-stage-status]')].map(e => e.getAttribute('aria-label'));
+const status = () => [...document.querySelectorAll('[data-stage-fx-mark]')].map(e => e.getAttribute('aria-label'));
 /** Corre o relógio de 100 em 100 ms e coleta o que `ver` leu a cada passo, até a luta terminar. */
 function observar(onDone: ReturnType<typeof vi.fn>, ver: () => void) {
   for (let i = 0; i < 1200 && !onDone.mock.calls.length; i++) { act(() => { vi.advanceTimersByTime(100); }); ver(); }
@@ -60,7 +64,7 @@ describe('DuelScreen — círculo de cast e status (PR11)', () => {
       if (cast) viuCast = true;
       expect(cast, 'o círculo só existe com o selo do especial').toBe(especial);
       if (!cast && document.querySelector('[data-stage-fx]')) viuBasicoSemCast = true;
-      expect(document.querySelector('[data-stage-status]')).toBeNull();
+      expect(document.querySelector('[data-stage-fx-mark]')).toBeNull();
     });
     expect(viuCast).toBe(true);
     expect(viuBasicoSemCast).toBe(true);

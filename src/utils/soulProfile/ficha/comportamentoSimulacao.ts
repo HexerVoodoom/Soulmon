@@ -21,9 +21,9 @@ export const POLITICAS: readonly PoliticaId[] = ['uniforme', 'so-poder', 'so-har
 
 /** Categoria preferida de cada política (a de maior fatia do galho: Creativity 3/1/0, Study 0/3/1, Discipline 0/1/3). */
 const PREFERIDA: Record<Exclude<PoliticaId, 'uniforme' | 'alternante'>, ActivityCategory> = {
-  'so-poder': 'Creativity', 'so-harmonia': 'Study', 'so-benevolencia': 'Discipline',
+  'so-poder': 'corpo', 'so-harmonia': 'aprendizado', 'so-benevolencia': 'relacoes',
 };
-const ALTERNANTE: readonly ActivityCategory[] = ['Creativity', 'Study', 'Discipline'];
+const ALTERNANTE: readonly ActivityCategory[] = ['corpo', 'aprendizado', 'relacoes'];
 const CATEGORIAS = Object.keys(CATEGORY_ATTRIBUTES) as ActivityCategory[];
 
 /** Chance de a alimentação cair na categoria preferida da política. */

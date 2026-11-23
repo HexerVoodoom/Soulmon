@@ -16,7 +16,7 @@ vi.mock('./DuelScreen', () => ({
   ),
 }));
 import { TournamentPage } from './TournamentPage';
-import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { xpForLevel, BOND_RANKED_MIN_LEVEL } from '../utils/bond';
 
 const saveId = 'a'.repeat(32);
 const side = (level: number) => ({
@@ -40,7 +40,7 @@ function stubApi(matchBody: object) {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 const base = {
-  saveId, petStage: 'rookie', trophies: [], language: 'en-US', emblems: 0, totalXP: xpForLevel(BOND_PVP_MIN_LEVEL),
+  saveId, petStage: 'rookie', trophies: [], language: 'en-US', emblems: 0, totalXP: xpForLevel(BOND_RANKED_MIN_LEVEL),
 };
 const lutar = async () => {
   fireEvent.click(await screen.findByRole('button', { name: /Fight — challenge Rival/ }));
@@ -61,6 +61,20 @@ describe('Torneio v3 — a fiação do duelo', () => {
     // `seed` = a chave de idempotência do reenvio (QA-4): é a semente que o SERVIDOR deu; ele luta com a do duelo aberto, nunca com esta.
     expect(match.body).toEqual({ id: saveId, opponentId: OPP.id, taps: [5, 7], seed: 4242 });
     expect(JSON.stringify(match.body)).not.toMatch(/stats|level|combatant|won/i); // nada que decida o resultado sai do cliente
+  });
+
+  it('depois da luta, a lista de oponentes E o ranking são relidos (o rank mudou; antes o ranking só carregava uma vez)', async () => {
+    const chamadas = stubApi({ won: true, draw: false, outcome: 'win', myScore: 40, oppScore: 0, points: 20, matchesLeft: 4, opponent: { name: 'Rival', petName: 'Bicho', stage: 'rookie' } });
+    render(<TournamentPage {...base} onEarnEmblems={() => {}} onMatchPlayed={() => {}} />);
+    await screen.findByRole('button', { name: /Fight — challenge Rival/ });
+    const conta = (re: RegExp) => chamadas.filter(c => re.test(c.url)).length;
+    const opp0 = conta(/action=opponents/), rank0 = conta(/action=rank/);
+    await lutar();
+    await waitFor(() => expect(chamadas.some(c => /action=match/.test(c.url))).toBe(true));
+    await waitFor(() => {
+      expect(conta(/action=opponents/)).toBeGreaterThan(opp0);
+      expect(conta(/action=rank/)).toBeGreaterThan(rank0);
+    });
   });
 
   it('VITÓRIA: Honra e Vínculo como sempre', async () => {

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { sm2Hint } from '../form/FormKit';
 import {
   HELPLINE_DIRECTORY_URL, HELPLINE_TEL_BR, helplineDirectoryLabel, helplineNumbers, notProfessionalHelp,
@@ -10,10 +11,10 @@ import {
  * "Preciso de ajuda agora" (`tel:188`); nos dois idiomas, o diretório
  * internacional para quem não está nos países listados.
  */
-export function SupportNote({ isPt, ...data }: { isPt: boolean; [k: `data-${string}`]: boolean | undefined }) {
+export function SupportNote({ isPt, style, ...data }: { isPt: boolean; style?: CSSProperties; [k: `data-${string}`]: boolean | undefined }) {
   const link = { color: 'inherit', textDecoration: 'underline' } as const;
   return (
-    <p {...data} style={{ ...sm2Hint, textAlign: 'center', margin: 0 }}>
+    <p {...data} style={{ ...sm2Hint, textAlign: 'center', margin: 0, ...style }}>
       {notProfessionalHelp(isPt)} {isPt ? 'Em crise' : 'In a crisis'} — {helplineNumbers(isPt)}{' '}
       {isPt && <><a href={HELPLINE_TEL_BR} style={link}>Preciso de ajuda agora</a>{' · '}</>}
       <a href={HELPLINE_DIRECTORY_URL} target="_blank" rel="noopener noreferrer" style={link}>

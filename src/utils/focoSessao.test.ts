@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   MAX_TWO_MIN, STEP_ORDER, buildPlan, canCompleteSession, canSave, completeSession, doneToday, dumpRemaining, emptyDraft,
-  markDone, matrixOrder, nextStep, normalizeHistory, normalizeSession, prevStep, recordDone, saveSession, setFrog,
-  setQuadrant, skipStep, startDump, toggleTwoMin, type PlanTask, type SessionDraft,
+  markDone, iceOrder, nextStep, normalizeHistory, normalizeSession, prevStep, recordDone, saveSession, setFrog,
+  skipStep, startDump, toggleTwoMin, type PlanTask, type SessionDraft,
 } from './focoSessao';
 
 const T = (id: string, completed = false): PlanTask => ({ id, name: `Tarefa ${id}`, completed });
@@ -11,7 +11,7 @@ const ids = (p: Array<{ id: string }>) => p.map(x => x.id);
 const ready = (d: Partial<SessionDraft> = {}): SessionDraft => ({ ...emptyDraft(), name: 'Manhã', environment: 'forest', ...d });
 
 describe('focoSessao — etapas', () => {
-  it('a ordem é a do dono: ritmo (pomodoro) → dois minutos → Eisenhower → sapo → se-então → brain dump → lista', () => {
+  it('a ordem é a do dono: ritmo (pomodoro) → dois minutos → Prioridades (ICE) → sapo → se-então → brain dump → lista', () => {
     expect([...STEP_ORDER]).toEqual(['preparar', 'ritmo', 'dois-minutos', 'eisenhower', 'sapo', 'se-entao', 'esvaziar', 'revisar']);
   });
   it('avançar/voltar têm teto nas pontas e skip não toca no rascunho', () => {
@@ -32,11 +32,13 @@ describe('focoSessao — escolhas', () => {
     expect(toggleTwoMin(d, 'g')).toBe(d);
     expect(toggleTwoMin(d, 'a').twoMin).not.toContain('a');
   });
-  it('Eisenhower ordena por quadrante e, no empate, pela ordem da lista; limpar tira da ordem', () => {
-    let d = emptyDraft();
-    d = setQuadrant(d, 'c', 'delegate'); d = setQuadrant(d, 'a', 'do'); d = setQuadrant(d, 'e', 'do'); d = setQuadrant(d, 'b', 'schedule');
-    expect(ids(matrixOrder(d, tasks))).toEqual(['a', 'e', 'b', 'c']);
-    expect(ids(matrixOrder(setQuadrant(d, 'a', null), tasks))).toEqual(['e', 'b', 'c']);
+  it('Prioridades: classificadas por pontuação (maior primeiro), sem nota fora; concluída e hábito não entram', () => {
+    const ice = (r: number, u: number, e: number, t: number) => ({ recompensa: r, urgencia: u, esforco: e, tempo: t });
+    const list: PlanTask[] = [
+      { ...T('a'), ice: ice(5, 5, 1, 1) }, { ...T('b'), ice: ice(3, 3, 3, 3) }, T('c'), { ...T('d', true), ice: ice(5, 5, 1, 1) },
+      { id: 'habit:h', name: 'H', completed: false, kind: 'habit', ice: ice(5, 5, 1, 1) }, { ...T('e'), ice: ice(5, 5, 2, 1) },
+    ];
+    expect(ids(iceOrder(list))).toEqual(['a', 'e', 'b']);
   });
   it('sapo: um só; tocar de novo solta', () => {
     const d = setFrog(setFrog(emptyDraft(), 'a'), 'b');
@@ -46,19 +48,20 @@ describe('focoSessao — escolhas', () => {
 });
 
 describe('focoSessao — a lista organizada', () => {
-  it('dois minutos primeiro (ordem do toque), depois o sapo, depois quadrantes; sem duplicar e juntando etiquetas', () => {
+  it('dois minutos primeiro (ordem do toque), depois o sapo, depois a pontuação ICE; sem duplicar e juntando etiquetas', () => {
+    const ice = (r: number, u: number, e: number, t: number) => ({ recompensa: r, urgencia: u, esforco: e, tempo: t });
+    const rated = tasks.map(t => (t.id === 'a' ? { ...t, ice: ice(5, 5, 1, 1) } : t.id === 'c' ? { ...t, ice: ice(2, 2, 3, 3) } : t.id === 'e' ? { ...t, ice: ice(4, 4, 2, 2) } : t));
     let d = ready();
     d = toggleTwoMin(toggleTwoMin(d, 'd'), 'a');
     d = setFrog(d, 'b');
-    d = setQuadrant(setQuadrant(setQuadrant(d, 'c', 'schedule'), 'a', 'do'), 'e', 'delegate');
-    const plan = buildPlan(d, tasks);
-    expect(ids(plan)).toEqual(['d', 'a', 'b', 'c', 'e']);
-    expect(plan.find(p => p.id === 'a')!.tags).toEqual(['quick', 'do']);
+    const plan = buildPlan(d, rated);
+    expect(ids(plan)).toEqual(['d', 'a', 'b', 'e', 'c']);
+    expect(plan.find(p => p.id === 'a')!.tags).toEqual(['quick']);
+    expect(plan.find(p => p.id === 'a')!.score).toBe(25);
+    expect(plan.find(p => p.id === 'd')!.score).toBeUndefined();
   });
-  it('"deixar de lado" sai da lista, a menos que a pessoa tenha tocado nela como sapo/2 min', () => {
-    let d = setQuadrant(setQuadrant(ready(), 'a', 'drop'), 'b', 'drop');
-    d = setFrog(d, 'b');
-    expect(ids(buildPlan(d, tasks))).toEqual(['b']);
+  it('tarefa sem nota não entra na lista sozinha', () => {
+    expect(ids(buildPlan(ready(), tasks))).toEqual([]);
   });
   it('tarefa concluída na Home não entra; a ordem das tarefas recebidas não é mutada', () => {
     const list = [T('a', true), T('b')];
@@ -76,10 +79,10 @@ describe('focoSessao — salvar e concluir', () => {
     expect(saveSession(emptyDraft(), tasks, { id: 'x', day: '2026-10-10' })).toBeNull();
     expect(canSave(ready())).toBe(true);
   });
-  it('concluir o processo exige plano (não um número de tarefas) e é idempotente', () => {
+  it('concluir o processo não exige lista nem número de tarefas (§238) e é idempotente', () => {
     const empty = saveSession(ready(), tasks, { id: 's1', day: '2026-10-10' })!;
-    expect(canCompleteSession(empty)).toBe(false);
-    expect(completeSession(empty)).toBe(empty);
+    expect(canCompleteSession(empty)).toBe(true);
+    expect(completeSession(empty).status).toBe('completed');
     const one = saveSession(setFrog(ready(), 'a'), tasks, { id: 's2', day: '2026-10-10' })!;
     expect(canCompleteSession(one)).toBe(true);
     const done = completeSession(one);
@@ -115,12 +118,12 @@ describe('focoSessao — brain dump e storage', () => {
     expect(normalizeSession(null)).toBeNull();
     expect(normalizeSession({ id: 1 })).toBeNull();
     expect(normalizeHistory('x')).toEqual([]);
-    const s = normalizeSession({ id: 's', name: 'N', day: '2026-10-10', status: 'ready', mode: 'p50', environment: 'nope', matrix: { a: 'do', b: 'zzz' }, twoMin: ['a', 'a', 3], dumpMinutes: 7, plan: [{ id: 'a', name: 'A', tags: ['frog', 'x'] }, 5], completedCycles: 500 })!;
+    const s = normalizeSession({ id: 's', name: 'N', day: '2026-10-10', status: 'ready', mode: 'p50', environment: 'nope', matrix: { a: 'do', b: 'zzz' }, twoMin: ['a', 'a', 3], dumpMinutes: 7, plan: [{ id: 'a', name: 'A', tags: ['frog', 'do', 'x'], score: 4.5 }, 5], completedCycles: 500 })!;
     expect(s.environment).toBe('');
     expect(s.matrix).toEqual({ a: 'do' });
     expect(s.twoMin).toEqual(['a']);
     expect(s.dumpMinutes).toBe(5);
-    expect(s.plan).toEqual([{ id: 'a', name: 'A', tags: ['frog'] }]);
+    expect(s.plan).toEqual([{ id: 'a', name: 'A', tags: ['frog'], score: 4.5 }]);
     expect(s.completedCycles).toBe(99);
   });
   it('sessão salva no formato antigo (taskIds/quadrant) carrega sem plano', () => {

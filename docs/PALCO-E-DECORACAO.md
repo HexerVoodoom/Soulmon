@@ -213,6 +213,36 @@ Duas coisas aprendidas ao fechar isso, e que valem para a próxima leva:
 
 ---
 
+## A decoração de Honra de combate (instalada em 15/11/2026; ouro e cristal em 15/11/2026, REGISTRO §397)
+
+Catálogo gerado em `src/utils/honraDecor.ts` (molde de `cosmeticosNovos.ts`; plano e escada em
+[`PLANO-HONRA-DECORACAO.md`](PLANO-HONRA-DECORACAO.md)). **A arte é a porta**: a peça só entra em
+`TOURNAMENT_ITEMS` quando existe `assets/decor/hon-<categoria>-<peça>-<material>.webp`. Instalador:
+`python tools/instalar-honra-decor.py` (recorta na bounding box do alfa, encaixa sem deformar em caixa × 3, ×2 no `rug`,
+NEAREST, webp com alfa real; o tapete 3:2 vira a faixa 13:2 pela linha de maior massa de alfa).
+
+| Categoria | Espaço | Instaladas hoje (bronze / prata / ouro / mithril; armas também em 2 cristais) |
+|---|---|---|
+| Armas de parede (lança, espada, escudo, machado, arco, cajado) | `wall` — **dentro do espaço de hoje, sem espaço novo** | 32 (24 de metal + 8 de cristal) |
+| Estandarte da Ordem | `wall` | 4 |
+| Estátuas (guerreiro, mago, guardião, arqueira) | `floor-left` | 16 |
+| Manequim de armadura | `floor-left` | 4 |
+| Bigornas | `floor-right` | 4 |
+| Armas de chão (espada na pedra, cajado, escudo de guarda, feixe de lanças) | `floor-right` | 16 |
+| Pedestal de troféus | `trophy` (exibe as medalhas reais) | 4 |
+| Chão de arena (círculo de duelo, lajes, passadeira) | `rug` (sem nível, 40) | 3 |
+
+91 de 91 planejadas (75 de bronze a mithril + 16 de cristal). O **ouro** (envelhecido escuro, refeito) entrou nas 18 peças a 180.
+O **cristal** são dois níveis acima do mithril, `cristal-turquesa` (700) e `cristal-irisdescente` (1100), em espada, lança,
+escudo e cajado de parede, estátuas do guerreiro e do mago, bigorna e pedestal (`hon-arma-<peça>-cristal-<variante>`; nome "Crystal Sword · Turquoise" / "Espada de cristal · turquesa").
+As outras de cristal (guardião, arqueira, manequim, estandarte, chão): ao chegar o PNG, uma linha em `CRISTAL_PECAS` (`honraDecor.ts`) as cadastra.
+Preço pela escada 25 / 70 / 180 / 450 (`HONRA_PRECO`). Tudo cosmético
+puro, só Honra, `fits: 'any'`. A arma é retrato (5:6) dentro da caixa paisagem do `wall` (56 × 40): fica estreita
+(~2,5× de render ≈ 100 px de altura); se o dono quiser maior, é decisão de arte ou de escala do `wall`, não de código.
+A Serpente da Feira **não** vende estas peças (P6 em aberto; o espelho do servidor não as lista).
+
+---
+
 ## A mobília base (o berço) — `BASE_SLOTS`
 
 Além dos cinco espaços de decoração, existe **um espaço que o app preenche
@@ -275,3 +305,23 @@ lugar e corta a cabeça dele nas telas baixas, a menos que a janela também
 cresça (o que custa altura da lista de atividades — o motivo declarado de a
 janela existir). É troca de um defeito por outro e a escolha é do dono. Mexer em
 `PET_TOP_OFFSET` sem mexer em `--sm-petstage-h` **não** é o conserto.
+
+## Escala no palco (04/11/2026)
+
+A caixa de `DECOR_SLOTS` segue sendo o contrato da arte. O palco desenha maior via `DECOR_RENDER_SCALE` (`utils/petStage.ts`): cantos, chão e parede 2,5×, vitrine 1,75× (alvo medido pelo dono em print de 720 px). O canto esquerdo foi de x=16 para x=18 para não sair do palco a 390 px. Na prateleira da loja a peça foi de 0,5× para 0,85×.
+
+## Decoração no estilo novo (15/11/2026, REGISTRO §398)
+
+As 33 peças do acervo foram refeitas e entram no MESMO id (`src/assets/decor/<id>.png`, caixa do espaço × 3, alfa real). Instalador: `tools/instalar-decor-refeitas.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-14-11/decoracao/`; rodar duas vezes grava os mesmos bytes). Para trocar uma peça de novo, substitua o PNG de origem e rode o script. O tapete (13:2) recebe a janela de maior alfa; grass e sand ancoram embaixo. A lanterna (`furn-lantern`) segue com a arte antiga até o PNG do piloto aparecer na pasta do lote. Guard: `src/assets/decorEstiloNovo.test.ts`.
+
+## Cenário de elemento derivado (15/11/2026, REGISTRO §409)
+
+Os `bg-el-*` agora também existem para um elemento DERIVADO: `bg-el-queimada` (fogo+planta, vulcão com flores de brasa), exclusivo do id `queimada`, 720 moedas, 1200×648, chão em 74%. Declarado em `BG_EL_DERIVADOS` de `src/utils/cosmeticosNovos.ts`.
+
+## As 20 decorações novas e a lanterna (15/11/2026, REGISTRO §406)
+
+Ruínas (4) e elemento (16) deixaram de ser só id: `src/assets/decor/<id>.webp` (sem perda, caixa × 3; tapete × 2 = 208×32, como os demais `.webp`). Instalador `tools/instalar-decor-elementos.py` (fonte sempre o PNG canônico em `E:/Soulmon-assets/_lote-15-11/chatgpt-fila/`; idempotente; não toca quem já tem `.webp`). Ancoragem: chão embaixo, parede e tapete no centro; o asfalto 3:1 é recortado para 13:2. A lanterna (`furn-lantern`) troca a arte no mesmo id (PNG 144×156). Guard: `src/assets/decorElementos.test.ts`.
+
+## Bosque de cerejeiras de verdade (15/11/2026, REGISTRO §410)
+
+`bg-cerejeira-bosque-de-cerejeiras` agora tem o bosque em flor (a árvore grande à esquerda, chão claro e liso no terço de baixo, cristais turquesa discretos); o vulcão antigo vive em `bg-el-queimada`. Pós-processo `tools/pixelizar-fundo.py` (fator 2, 128 cores) e instalação por `scripts/instalar-cosmeticos.mjs`; 1200×648 WebP 158 KB, `baseColor` `#bb8c92`. A miniatura do widget V-Pet só atualiza com AAB novo.

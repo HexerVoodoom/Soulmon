@@ -1,6 +1,6 @@
 {
   "name": "soulmon",
-  "version": "1.3.0-beta2",
+  "version": "1.3.0-beta12",
   "private": true,
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.5.2",
@@ -41,7 +41,7 @@
     "gen:cascata-fixtures": "node scripts/gen-cascata-fixtures.mjs",
     "dev": "vite",
     "booklet:pdf": "node scripts/booklet-pdf.mjs",
-    "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
+    "build": "vite build && node scripts/convert-to-webp.mjs && node scripts/build-gm-pages.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",
     "oraculo:auditoria": "vitest run --config vitest.oraculo.config.ts",
     "test:watch": "vitest",
@@ -49,6 +49,7 @@
     "orcamento": "node scripts/orcamento-de-tempo.mjs",
     "typecheck": "tsc --noEmit",
     "portoes": "node scripts/portoes.mjs",
+    "antislop:check": "bash scripts/antislop-check.sh",
     "test:fast": "vitest run --changed origin/main --passWithNoTests",
     "test:shard": "vitest run --shard",
     "gates": "node scripts/gates.mjs",

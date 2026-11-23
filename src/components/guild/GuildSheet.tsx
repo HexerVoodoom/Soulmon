@@ -39,7 +39,7 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildFeira, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
+  hitGuildRaid, getGuildFeira, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildBuff, getGuildWar, seekGuildWar,
   type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type FeiraEvento, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
@@ -52,10 +52,18 @@ import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
-import { GuildLoja } from './GuildLoja';
+// LÁPIDE (10/11/2026): `GuildLoja` (a Loja do clã, cosméticos da Casa) saiu; entram os Buffs do clã.
+import { GuildBuffs } from './GuildBuffs';
+import { BitsAmount } from '../ui/BitsAmount';
+import { clearClanBuffs, type BuffId } from '../../utils/guildBuffs';
 import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
+import { GuildInviteSheet } from './GuildInviteSheet';
+import { PlayerName } from '../ui/PlayerName';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
+import { feiraDesafioStatus, readFeiraDesafio, markFeiraDesafioDone } from '../../utils/feiraDesafio';
+import { readFeiraVolta, feiraVoltaDoDia, feiraVoltaPendente, markFeiraVoltaSeen } from '../../utils/feiraVolta';
+import { feiraNpcDia } from '../../utils/feiraNpcDia';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -69,6 +77,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
+import { CtaButton, CtaTextButton } from '../ui/CtaButton';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
@@ -90,6 +99,7 @@ import { SalaPlantio } from './PlantioVisor';
 import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
 import { emitFeat } from '../../utils/feats';
+import { useRequireAwake } from '../WakeToEnter';
 
 interface GuildSheetProps {
   saveId: string;
@@ -132,7 +142,7 @@ interface GuildSheetProps {
     onSlot: (item: string | null) => void;
   };
   /** A MISSÃO (PR3, ex-Feira): o estado da ida do Soulmon (no save) e o gesto de mandá-lo. */
-  missao?: { state: GuildMissionState | null; onSend: () => void };
+  missao?: { state: GuildMissionState | null; onSend: () => void; /** Reabre o que a volta achou (guardado em `utils/feiraVolta.ts`). */ onVerAchado?: () => void };
   /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
   /** FEIRA DO CHEFE: reabrir o evento pela sala (a folha de volta é uma só vez). Só aparece quando o servidor manda `guild.feira`. */
   feira?: { me: BossFightMe; onCredit: (c: FeiraCredit) => void };
@@ -157,6 +167,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   /** Saída do clã em DUAS confirmações (dono, 30/10/2026 — revoga o "um toque" do LV-G5: saiu sem querer, era o único
    *  membro e o clã foi apagado com tudo que tinha sido doado). 0 = fechado, 1 = "sair?", 2 = a confirmação final. */
+  /* 💤 §329: a Guerra entra livre (ver a guerra); BUSCAR a guerra leva o Soulmon e pergunta com ele dormindo, no toque. */
+  const requireAwake = useRequireAwake();
   const [sairEtapa, setSairEtapa] = useState<0 | 1 | 2>(0);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -166,6 +178,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const [codigo, setCodigo] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [ajustes, setAjustes] = useState(false);
+  /** §321: a folha "Convidar" (busca de jogadores) aberta; o foco volta ao botão ao fechar. */
+  const [convidando, setConvidando] = useState(false);
+  const convidarRef = useRef<HTMLButtonElement>(null);
   const [novoNome, setNovoNome] = useState('');
   const [copiado, setCopiado] = useState(false);
   /** Dia (do jogador) em que ESTE aparelho viu cada estágio — só para o Mural. Memória de UI, não do save. */
@@ -183,7 +198,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
-  const lojaOps = useRef(new Map<string, string>()); // itemId → opId da compra em andamento (idempotência no reenvio)
+  const lojaOps = useRef(new Map<string, string>()); // buffId → opId da compra em andamento (idempotência no reenvio)
   const busy = useRef(false);            // trava SÍNCRONA: `disabled` só vale depois do re-render
   const seq = useRef(0);                 // resposta velha nunca sobrescreve a nova
   const tz = useRef(playerDayTz);
@@ -267,6 +282,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   useEffect(() => {
     if (load.status !== 'ready') return;
     casaRef.current?.onSlot(load.guild ? (load.guild.casa?.mine.slot ?? null) : null);
+    if (!load.guild) clearClanBuffs(); // sem clã, nenhum Buff do clã vale
   }, [load]);
 
   // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
@@ -472,7 +488,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
     const semConta = load.kind === 'login';
     const demo = semConta && accountTier === 'demo';
     corpo = (
-      <div className="sm2-guild-sec">
+      <div className="sm2-guild-sec" style={{ gap: 'var(--sm2-space-2)' }}>
         <p role="alert" className="sm2-lib-alert">{t(demo ? 'guild.erro.demo' : GUILD_ERROR_KEY[load.kind])}</p>
         {demo && onUnlock && (
           <div style={{ maxWidth: 280 }} data-guild-unlock>
@@ -480,15 +496,20 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           </div>
         )}
         {semConta && onLogin && (
-          <button type="button" onClick={onLogin} data-guild-entrar className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}>
+          <CtaButton onClick={onLogin} data-guild-entrar>
             <Icon name="lock_open" size={20} />
             {t('guild.erro.entrar')}
+          </CtaButton>
+        )}
+        {/* §316c (13/11/2026, dono): ao lado do CTA de Entrar, "Tentar de novo" é só texto (sem ícone: o sublinhado é a affordance); sozinho, segue o contorno de sempre. */}
+        {semConta && onLogin ? (
+          <CtaTextButton onClick={() => void carregar(false)} data-guild-tentar>{t('guild.erro.tentar')}</CtaTextButton>
+        ) : (
+          <button type="button" onClick={() => void carregar(false)} data-guild-tentar className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
+            <Icon name="refresh" size={20} />
+            {t('guild.erro.tentar')}
           </button>
         )}
-        <button type="button" onClick={() => void carregar(false)} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
-          <Icon name="refresh" size={20} />
-          {t('guild.erro.tentar')}
-        </button>
       </div>
     );
   } else if (!load.guild && room === 'guerra') {
@@ -604,7 +625,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         ocupado={ocupado}
         mySprite={meuSprite}
         reducedMotion={reducedMotion}
-        onBuscar={buscarGuerra}
+        onBuscar={() => { requireAwake('arena.guerra', buscarGuerra); }}
       />
     );
     const renderPredio = (id: PredioId) => {
@@ -664,7 +685,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             onAbrir: () => {
               if (feiraLendo) return;
               setFeiraLendo(true);
-              getGuildFeira(saveId, tz.current).then(e => { if (vivo.current && e) setFeiraAberto(e); }).catch(() => { /* silêncio */ }).finally(() => { if (vivo.current) setFeiraLendo(false); });
+              getGuildFeira(saveId, tz.current).then(e => { if (!vivo.current || !e) return; if ((e.kind === 'boss' && !e.canAttack) || (e.kind === 'trail' && !e.trail.pending)) markFeiraDesafioDone(); setFeiraAberto(e); }).catch(() => { /* silêncio */ }).finally(() => { if (vivo.current) setFeiraLendo(false); });
             },
           } : undefined}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
@@ -749,7 +770,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             </section>
           )}
 
-          <SalaRoda guild={g} t={t} nominal={nominal} />
+          <SalaRoda guild={g} t={t} nominal={nominal} language={language} />
 
           <div className="sm2-coop-code">
             <span className="sm2-lib-s">{t('guild.codigo.label')}</span>
@@ -776,6 +797,22 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             )}
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
+          {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores. Botão SIMPLES do kit (não a arte do
+              `CtaButton`, decisão do dono), com a MESMA largura dos outros botões da ficha (`sm2-guild-btn` = largura total,
+              alvo de 48 px). Clã cheio = o botão fica, apagado, com o porquê (nunca some em silêncio). */}
+          <button
+            type="button"
+            ref={convidarRef}
+            data-guild-convidar
+            disabled={g.full}
+            aria-disabled={g.full ? true : undefined}
+            aria-describedby={g.full ? `${ajustesId}-convidar-cheio` : undefined}
+            onClick={() => setConvidando(true)}
+            className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}
+          >
+            {t('guild.convidar.botao')}
+          </button>
+          {g.full && <p id={`${ajustesId}-convidar-cheio`} className="sm2-lib-s" style={{ margin: 0 }} data-guild-convidar-cheio>{t('guild.convidar.cheio')}</p>}
           {g.size <= 1 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.criar.codigo.corpo', { n: guildInviteRoom() })}</p>}
 
         </div>
@@ -800,25 +837,26 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 return v;
               }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
             />
-            <GuildLoja
+            <GuildBuffs
               casa={g.casa}
               language={language}
               ocupado={ocupado}
-              onComprar={(itemId) => void agir(async () => {
+              now={Date.now()}
+              onComprar={(buffId: BuffId) => void agir(async () => {
                 // O `opId` vale por tentativa: se a rede cair e a pessoa tocar de novo, vai o MESMO (o servidor não cobra duas vezes).
-                const opId = lojaOps.current.get(itemId) ?? `op-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
-                lojaOps.current.set(itemId, opId);
+                const opId = lojaOps.current.get(buffId) ?? `op-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
+                lojaOps.current.set(buffId, opId);
                 try {
-                  const v = await buyGuildShopItem(saveId, itemId, opId, tz.current);
-                  lojaOps.current.delete(itemId);
+                  const v = await buyGuildBuff(saveId, buffId, opId, tz.current);
+                  lojaOps.current.delete(buffId);
                   emitFeat('clanShopBuys');
                   return v;
                 } catch (e) {
-                  // 409 (saldo mudou / já é do clã): não é frase de tela; relê e o estado verdadeiro aparece.
-                  if (e instanceof GuildError && e.status === 409) { lojaOps.current.delete(itemId); return await getGuild(saveId, tz.current); }
+                  // 409 (saldo mudou) / 403 (não é o anfitrião): não é frase de tela; relê e o estado verdadeiro aparece.
+                  if (e instanceof GuildError && (e.status === 409 || e.status === 403)) { lojaOps.current.delete(buffId); return await getGuild(saveId, tz.current); }
                   throw e;
                 }
-              })}
+              }, { anunciar: 'guild.buffs.ok' })}
             />
         </div>
         )}
@@ -850,6 +888,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           </button>
           <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.sair.nota')}</p>
         </div>
+        {convidando && (
+          <GuildInviteSheet
+            saveId={saveId}
+            language={language}
+            guildName={g.name}
+            tz={tz.current}
+            onClose={() => { setConvidando(false); requestAnimationFrame(() => convidarRef.current?.focus()); }}
+          />
+        )}
         <ConfirmDialog
           isOpen={sairEtapa === 1}
           onClose={() => setSairEtapa(0)}
@@ -1039,7 +1086,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
   const [lista, setLista] = useState(false);
   const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
   const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
-  const bits = casa?.bits ?? 0;
+  const bits = casa?.bits ?? 0; // §373: o saldo inteiro doa (o Bit vindo de Crédito também)
   const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
   const meu = c.mine.slot;
   return (
@@ -1053,7 +1100,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
 
       {/* W14b: "Bring Bits" é a seção de Bits do clã: o TOTAL (um número do clã, nunca por pessoa) e, com carteira, o gesto de trazer. */}
       <p className="sm2-stats-t" style={{ margin: 0 }} data-casa-bits-titulo>{t('guild.casa.doar.titulo')}</p>
-      {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-bits-total>{t('guild.casa.bits.total', { n: c.bitsTotal })}</p>}
+      {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }} data-casa-bits-total>{t('guild.casa.bits.total')} <BitsAmount value={c.bitsTotal} size={16} /></p>}
       {casa && (
         <>
           {c.mine.capReached ? (
@@ -1072,8 +1119,8 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                   onClick={() => onDoar(d)}
                   className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"
                 >
-                  <Icon name="diamond" size={20} />
-                  {t('guild.casa.doar.botao', { bits: d })}
+                  {t('guild.casa.doar.botao')}
+                  <BitsAmount value={d} size={18} />
                 </button>
               ))}
             </div>
@@ -1136,8 +1183,8 @@ const GESTO_ICONE: Record<GuildGesture, string> = { aceno: 'pan_tool', luz: 'lig
  * sem quantos, e sem nada quando não veio nenhum. Roda de uma pessoa só não tem
  * para quem gesticular: a fileira não é desenhada.
  */
-function SalaRoda({ guild, t, nominal }: {
-  guild: GuildView; t: T; nominal: boolean;
+function SalaRoda({ guild, t, nominal, language }: {
+  guild: GuildView; t: T; nominal: boolean; language: Language;
 }) {
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.aria.roda')} data-guild-room="roda">
@@ -1148,7 +1195,8 @@ function SalaRoda({ guild, t, nominal }: {
       <ul className="sm2-coop-mem">
         {guild.members.map((m, i) => (
           <li key={m.id ?? `m${i}`}>
-            <span className="t">{m.name ?? t('guild.roda.alguem')}</span>
+            {/* §321: o nome do clã embaixo do nome, como em toda lista de jogadores (aqui é o da própria roda). */}
+            <span className="t"><PlayerName name={m.name ?? t('guild.roda.alguem')} guildName={m.name ? guild.name : null} isPt={language === 'pt-BR'} /></span>
             {m.euMesmo && (
               <span className="sm2-guild-you">
                 {/* O ponto é enfeite: o leitor de tela lê só "você", não "ponto você". */}
@@ -1225,6 +1273,23 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
+  /* 💤 §329: a Feira entra livre (ler a sala, colher o prêmio); a RODADA do chefe e MANDAR o Soulmon na missão perguntam com ele
+     dormindo, no toque (o sono automático pode chegar com a folha aberta). */
+  const requireAwake = useRequireAwake();
+  // O DESAFIO DO DIA (dono, 04/11/2026): com a Missão, o inimigo só está na sala no MESMO dia em que o Soulmon voltou com
+  // ele; noutro dia sem luta ele "escapou" e a sala volta a pedir a investigação. Sem Missão (Feira antiga) nada muda.
+  const desafioSt = missao ? feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), tz)) : 'open';
+  // A VOLTA GUARDADA (`utils/feiraVolta.ts`): conta como "voltou hoje" mesmo que a releitura da vista venha velha, e guarda o que ele achou até ser visto.
+  const hojeJogador = playerDayKey(new Date(), tz);
+  const [, relerVolta] = useState(0);
+  const voltaGuardada = missao ? feiraVoltaDoDia(readFeiraVolta(), hojeJogador) : null;
+  // Desafio de hoje JÁ cumprido (luta, desafio ou "já bateu hoje" do servidor): a sala não oferece enfrentar de novo nem reabrir o
+  // resultado (bug do dono, 16/11/2026: dois botões, "enfrentar" dava erro e "ver o que achou" entrava no combate e cancelava).
+  const desafioFeito = !!missao && desafioSt === 'done';
+  const voltaPendente = missao && !desafioFeito ? feiraVoltaPendente(voltaGuardada, hojeJogador) : null;
+  useEffect(() => { if (desafioFeito) markFeiraVoltaSeen(); }, [desafioFeito]);
+  const voltouHoje = !!raid?.hitToday || !!voltaGuardada;
+  const desafioAtivo = !!feira && feira.resumo.state !== 'rest' && (desafioSt === 'open' || desafioSt === 'done' || voltouHoje);
   // Relógio da volta ("volta em X min"): só roda enquanto o Soulmon está fora.
   const [agora, setAgora] = useState(() => Date.now());
   const returnAt = missao?.state?.returnAt ?? 0;
@@ -1284,7 +1349,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>
       )}
-      {!dissipada && !missao && !(feira && feira.resumo.state !== 'rest') && (
+      {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
           data-feira-rodada
@@ -1292,14 +1357,14 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           aria-disabled={ocupado || raid.hitToday ? true : undefined}
           aria-busy={ocupado ? true : undefined}
           aria-label={raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.aria.rodada')}
-          onClick={onRodada}
+          onClick={() => { requireAwake('hall.feira', onRodada); }}
           className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
         >
           <Icon name={ocupado ? 'sync' : raid.hitToday ? 'check_circle' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
-      {feira && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} />}
+      {feira && (feira.resumo.state === 'rest' || desafioAtivo) && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} feito={desafioFeito} />}
       {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
         const fora = isMissionAway(missao.state, agora);
@@ -1309,27 +1374,54 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora, min })}</p>;
         }
         // Voltou hoje: SÓ o que a vista já pode mostrar (sem número por pessoa). O ganho é o direito ao resgate da semana.
-        if (raid.hitToday) return (
+        if (voltouHoje) {
+          // O dia fechado (dono, 16/11/2026): desafio cumprido, ou o que a volta trouxe (mercador, Bits, nada) já visto. O mercador conta o
+          // que o jogador achou, o que o clã achou (só o agregado) e que amanhã tem mais — só isso.
+          const desafioAberto = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
+          const encerrado = !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAberto));
+          const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
+          return (
           <>
           <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
+            {fala ? (
+              <>
+                <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-npc-hoje>{fala.hoje}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-cla>{fala.cla}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-amanha>{fala.amanha}</p>
+              </>
+            ) : (
+              <>
+                <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
+                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
+              </>
+            )}
           </div>
-          {!(feira && feira.resumo.state !== 'rest') && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {voltaPendente && missao.onVerAchado && (
+            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+              <Icon name="search" size={20} />
+              {t('guild.missao.verAchado')}
+            </button>
+          )}
+          {!desafioAtivo && !voltaPendente && !fala && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           </>
-        );
+          );
+        }
+        // Passou da hora de voltar mas a volta ainda não foi registrada (app em segundo plano, sem rede, servidor ocupado):
+        // NUNCA oferecer "Mandar investigar" agora (era o bug) — ele já voltou, o registro é que espera.
+        if (missao.state) return <p className="sm2-stats-t" style={{ margin: 0 }} role="status" data-missao-registrando>{t('guild.missao.registrando')}</p>;
         // UM botão só: o desafio do mistério (FeiraMisterio) tem prioridade sobre "Investigar".
-        if (feira && feira.resumo.state !== 'rest') return null;
+        if (desafioAtivo) return null;
         return (
           <>
+            {desafioSt === 'escaped' && <p className="sm2-stats-t" role="status" style={{ margin: 0 }} data-feira-escapou>{t('guild.missao.escapou')}</p>}
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
             <button
               type="button"
               data-missao-mandar
               disabled={ocupado || !!missao.state}
               aria-disabled={ocupado || missao.state ? true : undefined}
-              onClick={missao.onSend}
+              onClick={() => { requireAwake('missao', missao.onSend); }}
               className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
             >
               <Icon name="search" size={20} />

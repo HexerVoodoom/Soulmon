@@ -23,7 +23,8 @@
 // glifos de interface, que ficam pelados). Ela envolve a criatura, não um ícone.
 // ---------------------------------------------------------------------------
 
-export type FrameOrigin = 'rank' | 'shop' | 'achievement' | 'event';
+
+export type FrameOrigin = 'basic' | 'rank' | 'shop' | 'achievement' | 'event';
 
 export interface FrameLook {
   /** Cor do anel (CSS). */
@@ -43,6 +44,8 @@ export interface AvatarFrame {
   origin: FrameOrigin;
   /** `rank`: o id da faixa (`tournamentTiers.ts`) que a libera. */
   tierId?: string;
+  /** Moldura EXCLUSIVA de elemento: só à venda para Soulmon desse elemento (`utils/elementExclusive.ts`). */
+  element?: string;
   /** `shop`: preço em Bits. */
   price?: number;
   /** `achievement`/`event`: como se consegue, em uma linha (o que a folha mostra quando está trancada). */
@@ -51,7 +54,12 @@ export interface AvatarFrame {
   look: FrameLook;
 }
 
+/** Id do frame BÁSICO (14/11/2026, pedido do dono): o preto simples que todo mundo tem. Não há mais "sem moldura". */
+export const BASIC_FRAME_ID = 'basico';
+
 export const FRAMES: readonly AvatarFrame[] = [
+  // ── básica: grátis, de todos, o padrão (só um anel preto, de CSS — sem arte) ──
+  { id: BASIC_FRAME_ID, namePt: 'Moldura básica', nameEn: 'Basic frame', origin: 'basic', look: { ring: '#000000', line: 'solid', width: 2 } },
   // ── rank: uma por faixa ──
   { id: 'rank-madeira', namePt: 'Moldura de Madeira', nameEn: 'Wood frame', origin: 'rank', tierId: 'madeira', look: { ring: '#8B6B4A', line: 'solid', width: 2 } },
   { id: 'rank-bronze', namePt: 'Moldura de Bronze', nameEn: 'Bronze frame', origin: 'rank', tierId: 'bronze', look: { ring: '#B0743A', line: 'solid', width: 3 } },
@@ -70,9 +78,22 @@ export const FRAMES: readonly AvatarFrame[] = [
   // ── evento ──
   { id: 'evento-lua-colheita', namePt: 'Lua da colheita', nameEn: 'Harvest moon', origin: 'event', howPt: 'Dada no evento sazonal de outono.', howEn: 'Given during the autumn seasonal event.', look: { ring: '#D9A05B', accent: '#FFE9C2', line: 'dotted', width: 3 } },
   { id: 'evento-primeira-season', namePt: 'Primeira season', nameEn: 'First season', origin: 'event', howPt: 'Dada a quem jogou a primeira season do Torneio.', howEn: 'Given to anyone who played the first Tournament season.', look: { ring: '#A98B6A', accent: '#F3E6D2', line: 'double', width: 2 } },
+  // ── loja (Bits): temas e elementos (04/11/2026). Só as com arte instalada; catálogo em `utils/cosmeticosNovos.ts`. Anel CSS de fallback = cor do tema. ──
+  // (as molduras de loja de tema/elemento entram no fim por `injetarMolduras`, chunk lazy `catalogosNovos.ts`, REGISTRO §498)
 ];
 
+const BASIC_FRAME = FRAMES[0];
+
 export const FRAME_IDS: ReadonlySet<string> = new Set(FRAMES.map(f => f.id));
+
+/** Molduras de loja (tema/elemento) vindas do chunk lazy: no fim da lista, como antes. Idempotente. */
+export function injetarMolduras(novas: readonly AvatarFrame[]): void {
+  for (const f of novas) {
+    if (FRAME_IDS.has(f.id)) continue;
+    (FRAMES as AvatarFrame[]).push(f);
+    (FRAME_IDS as Set<string>).add(f.id);
+  }
+}
 
 export function frameById(id: unknown): AvatarFrame | null {
   return typeof id === 'string' ? FRAMES.find(f => f.id === id) ?? null : null;
@@ -113,6 +134,7 @@ const POINT_TIER_ORDER = ['madeira', 'bronze', 'prata', 'ouro', 'platina', 'diam
 
 /** A moldura pode ser usada agora? Rank: faixa alcançada (ou lugar ocupado); o resto: está em `owned`. */
 export function frameAvailable(frame: AvatarFrame, ctx: FrameContext): boolean {
+  if (frame.origin === 'basic') return true;
   if (frame.origin === 'rank') {
     const tid = frame.tierId ?? '';
     if (ctx.seatIds.includes(tid)) return true;
@@ -124,12 +146,17 @@ export function frameAvailable(frame: AvatarFrame, ctx: FrameContext): boolean {
 }
 
 /**
- * A moldura a DESENHAR: a equipada se ainda estiver disponível; senão `null` (sem moldura) — um lugar de
- * Mestre perdido, ou um id que o catálogo não conhece mais, nunca quebra a tela nem esconde o avatar.
+ * A moldura a DESENHAR: a equipada se ainda estiver disponível; senão a BÁSICA — um lugar de
+ * Mestre perdido, `null`, "none" ou um id que o catálogo não conhece mais, nunca quebra a tela. O save não é migrado: o id antigo fica guardado.
  */
-export function resolveEquippedFrame(equipped: unknown, ctx: FrameContext): AvatarFrame | null {
+export function resolveEquippedFrame(equipped: unknown, ctx: FrameContext): AvatarFrame {
   const f = frameById(equipped);
-  return f && frameAvailable(f, ctx) ? f : null;
+  return f && frameAvailable(f, ctx) ? f : BASIC_FRAME;
+}
+
+/** A moldura a desenhar para QUALQUER id vindo de fora (perfil público, ranking, simulado): desconhecido, `null` ou "none" = a básica. */
+export function frameOrBasic(id: unknown): AvatarFrame {
+  return frameById(id) ?? BASIC_FRAME;
 }
 
 /** Quais molduras o jogador pode usar agora, na ordem do catálogo. */

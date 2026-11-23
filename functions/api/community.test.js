@@ -73,13 +73,29 @@ const ACOES_COM_ATOR = [
   { action: 'nickname', method: 'POST', body: { id: VITIMA, name: 'hackeado' } },
   { action: 'match', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'duelStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
+  { action: 'sparStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
+  { action: 'sparMatch', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
+  { action: 'sparBuyTicket', method: 'POST', body: { id: VITIMA } },
+  { action: 'sparOpponents', method: 'GET', params: { id: VITIMA } },
+  // §321: a busca de jogadores tem teto POR CONTA — só o dono do `id` pergunta (senão o teto seria de quem a pessoa disser ser).
+  { action: 'playerSearch', method: 'GET', params: { id: VITIMA, q: 'jo' } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
+  { action: 'friendAccept', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
+  { action: 'friendsState', method: 'GET', params: { id: VITIMA } },
+  { action: 'friendsSeen', method: 'POST', body: { id: VITIMA } },
   { action: 'trophies', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'gifts', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'forms', method: 'GET', params: { id: VITIMA, friend: ATOR } },
+  { action: 'friendSide', method: 'GET', params: { id: VITIMA, friend: ATOR } },
   { action: 'strayStatus', method: 'GET', params: { id: VITIMA } },
+  { action: 'seasonHistory', method: 'GET', params: { id: VITIMA } },
   { action: 'giftsAck', method: 'POST', body: { id: VITIMA, gids: ['g1'] } },
+  { action: 'mail', method: 'GET', params: { id: VITIMA } },
+  { action: 'mailAck', method: 'POST', body: { id: VITIMA, mids: ['m1'] } },
+  { action: 'mailRead', method: 'POST', body: { id: VITIMA, mids: ['m1'] } },
+  { action: 'mailClaim', method: 'POST', body: { id: VITIMA, all: true } },
+  { action: 'mailDelete', method: 'POST', body: { id: VITIMA, mids: ['m1'], force: true } },
   // Cooperativo (Fase 4.3). `coopLeave` entra aqui por ser DESTRUTIVO — sem
   // autorização, uma requisição expulsaria qualquer pessoa do grupo dela.
   { action: 'coop', method: 'GET', params: { id: VITIMA } },
@@ -184,9 +200,9 @@ describe('community — a lista de ações com ator está completa', () => {
 
     const declaradas = new Set(ACOES_COM_ATOR.map(a => a.action));
     // Ações públicas de leitura: não agem em nome de ninguém.
-    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays']); // strays (§213): pool anônimo, não lê id
+    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed (04/11/2026): feed global sem id; strays (§213): pool anônimo, não lê id
     // Protegida por chave de admin, não por dono.
-    const admin = new Set(['closeSeason']);
+    const admin = new Set(['closeSeason', 'backfillNicks', 'mailSend', 'friendsMigrate']);
 
     const todas = [...src.matchAll(/action === '([a-zA-Z]+)'/g)].map(m => m[1]);
     for (const a of new Set(todas)) {
@@ -281,12 +297,13 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
     expect(depois.friends).toEqual([]);
   });
 
-  it('com o pid indexado, a amizade funciona — e a resposta volta em pid', async () => {
+  it('com o pid indexado, o convite fica pendente (não vira amizade) — e a aceitação liga os dois lados, em pid', async () => {
     const pidVitima = PID_VITIMA;
     const env = { DIGIAPP_SAVES: fakeKV({
-      [`profile:${ATOR}`]: perfil(ATOR),
+      [`profile:${ATOR}`]: perfil(ATOR, { pid: PID_ATOR }),
       [`profile:${VITIMA}`]: perfil(VITIMA, { pid: pidVitima }),
       [`pid:${pidVitima}`]: VITIMA,
+      [`pid:${PID_ATOR}`]: ATOR,
     }) };
     const res = await onRequest({
       request: req('friends', { method: 'POST', body: { id: ATOR, friendId: pidVitima } }),
@@ -294,10 +311,20 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
     });
     const body = await res.json();
     expect(res.status).toBe(200);
-    expect(body.friends).toEqual([pidVitima]);
-    // internamente continua saveId — é o que permite escrever gifts:<saveId>
-    const depois = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`));
-    expect(depois.friends).toEqual([VITIMA]);
+    expect(body.status).toBe('pending');
+    expect(body.friends).toEqual([]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`)).friends).toEqual([]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${VITIMA}`)).friends).toEqual([]);
+    const ok = await onRequest({
+      request: req('friendAccept', { method: 'POST', body: { id: VITIMA, friendId: PID_ATOR } }),
+      env,
+    });
+    const r = await ok.json();
+    expect(ok.status).toBe(200);
+    expect(r.friends).toEqual([PID_ATOR]);
+    // internamente continua saveId — é o que permite escrever gifts:<saveId> — e agora é mútuo
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`)).friends).toEqual([VITIMA]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${VITIMA}`)).friends).toEqual([ATOR]);
   });
 });
 
@@ -372,8 +399,8 @@ describe('community — a FAIXA do Torneio nunca rebaixa (WP4.13 / achado E5)', 
         [`profile:${B}`]: perfil(B, { pvpEnabled: true, stage: 'rookie', pid: PID_B }),
         [`pid:${PID_B}`]: A === B ? '' : B,
         // Combate v3 (PR5): o duelo lê o SAVE de cada lado (e não mais o estágio do perfil público).
-        [A]: JSON.stringify({ evolutionStage: 'mega-power', perfectDays: 3 }),
-        [B]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3 }),
+        [A]: JSON.stringify({ evolutionStage: 'mega-power', perfectDays: 3, totalXP: 5000 }),
+        [B]: JSON.stringify({ evolutionStage: 'rookie', perfectDays: 3, totalXP: 5000 }),
       }),
       FIREBASE_PROJECT_ID: undefined, // sem auth: `denyUnlessOwner` não bloqueia
     };

@@ -92,10 +92,25 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
   it('inventário e loja sobrevivem (o que foi comprado com Bits)', () => {
     const s = montar();
     expect(s.foodInventory).toEqual({ '💗': 2, '👊': 1 });
-    expect(s.ownedFurniture).toEqual(['furn-sofa']);
+    // + o Cristal Fundador: conta existente (save legado com Soulmon) recebe o conjunto na 1ª carga (REGISTRO §507).
+    expect(s.ownedFurniture).toEqual(['furn-sofa', 'furn-cristal-fundador']);
     expect(s.equippedBackground).toBe('bg-matrix');
     // 'bg-room' é grátis e entra mesmo em save anterior à sua existência
     expect(s.ownedBackgrounds).toEqual(expect.arrayContaining(['bg-matrix', 'bg-ocean', 'bg-room']));
+  });
+
+  it('Prioridades (ICE): tarefa antiga sem `ice` segue válida; ice bom é mantido e ice quebrado vira "não classificada"', () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ ...SAVE_LEGADO, tasks: [
+      { id: 't1', name: 'Ler', category: 'study', emoji: '📖', completed: false },
+      { id: 't2', name: 'Boa', category: 'study', emoji: '📖', completed: false, ice: { tempo: 2, esforco: 1, recompensa: 5, urgencia: 4 } },
+      { id: 't3', name: 'Quebrada', category: 'study', emoji: '📖', completed: false, ice: { tempo: 9, esforco: 'x' } },
+    ] }));
+    const s = montar();
+    expect(s.tasks).toHaveLength(3);
+    expect(s.tasks[0].ice).toBeUndefined();
+    expect(s.tasks[1].ice).toEqual({ tempo: 2, esforco: 1, recompensa: 5, urgencia: 4 });
+    expect(s.tasks[2].ice).toBeUndefined();
+    expect(s.tasks[2].name).toBe('Quebrada');
   });
 
   it('tarefas, atividades e histórico sobrevivem', () => {

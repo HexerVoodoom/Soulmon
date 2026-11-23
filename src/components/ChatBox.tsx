@@ -1,7 +1,9 @@
 import { aiFetch } from '../utils/aiClient';
 import { HELPLINE_DIRECTORY_URL, helplineDirectoryLabel, helplineNumbers } from '../utils/supportLine';
 import { chatSafetyDecision } from '../utils/chatSafety';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChatPanel, CHAT_MSGS_VISIVEIS, type ChatModo, type ChatMsg } from './ChatPanel';
 import { CHAT_ERR, MIC_ERR, copiaErro, micErroPorStatus } from '../utils/chatErrorCopy';
 import { audioExtension } from '../utils/audioFile';
 import { fetchServerConfig, peekServerConfig } from '../utils/serverConfig';
@@ -42,6 +44,12 @@ interface ChatBoxProps {
   /** Resumo agregado do comportamento recente. Lido SÓ quando a pessoa pergunta
    *  como está indo (ou no feedback proativo opt-in) — nunca a cada mensagem. */
   getBehavior?: () => BehaviorSummary | Promise<BehaviorSummary>;
+  /** A pessoa MANDOU uma mensagem ao Soulmon (qualquer uma; sem olhar o conteúdo). Não dispara na resposta local da ponte nem sem rede. */
+  onUserMessage?: () => void;
+  /** Pedido de foco no campo (missão "Conte como você está se sentindo"): `Date.now()` do toque; só vale por 4 s (remontar a Home não refoca). */
+  focusRequest?: number;
+  /** Beta12/C2 — sprite equipado, mostrado no canto da tela cheia do chat. */
+  spriteSrc?: string;
 }
 
 /** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
@@ -49,6 +57,9 @@ const FEEDBACK_DAY_KEY = 'soulmon-chat-feedback-day';
 
 /** Sem conexão: o chat não grava a troca nem apaga o texto digitado. */
 class SemRede extends Error {}
+
+/** Qualquer superfície que se declara diálogo: ao entrar no documento, o painel do chat sai de cena. */
+const DIALOGO = '[role="dialog"],[role="alertdialog"],[aria-modal="true"]';
 
 export function ChatBox({
   petName,
@@ -61,9 +72,77 @@ export function ChatBox({
   onChatCreate,
   getBehavior,
   chatContext,
+  onUserMessage,
+  focusRequest,
+  spriteSrc,
   language = 'en-US',
 }: ChatBoxProps) {
   const [inputValue, setInputValue] = useState('');
+  /* Beta12 / C1+C2 — o painel (meia tela / tela cheia) e as mensagens VISÍVEIS.
+     Memória de sessão como o `history` logo abaixo: `useState`, nada no save nem
+     no `localStorage`. Fechar o painel (ou ir para a tela cheia e voltar) NÃO
+     apaga a conversa, porque o `ChatBox` segue montado no dock da Home. A tela
+     guarda até `CHAT_MSGS_VISIVEIS` (20); o servidor continua recebendo só os 3
+     turnos do `history`. */
+  const [modo, setModo] = useState<ChatModo>('barra');
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const msgIdRef = useRef(0);
+  const anotar = (de: ChatMsg['de'], texto: string): number => {
+    const id = ++msgIdRef.current;
+    setMsgs(prev => [...prev, { id, de, texto }].slice(-CHAT_MSGS_VISIVEIS));
+    return id;
+  };
+  /* A barra (campo + microfone + cartão de ação) mora num nó `host` que é MOVIDO
+     entre o dock da Home e o painel: o React mantém o estado e o <input> (o mesmo
+     elemento), então microfone, gravação e texto digitado sobrevivem à troca de
+     modo. Só o foco precisa ser devolvido depois do movimento. */
+  const [host] = useState<HTMLDivElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.className = 'sm3-chat-host';
+    return el;
+  });
+  const dockSlotRef = useRef<HTMLDivElement | null>(null);
+  const painelSlotRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    if (!host) return;
+    const alvo = modo === 'barra' ? dockSlotRef.current : painelSlotRef.current;
+    if (!alvo || host.parentNode === alvo) return;
+    const ativo = document.activeElement as HTMLElement | null;
+    const tinhaFoco = !!ativo && host.contains(ativo);
+    alvo.appendChild(host);
+    if (tinhaFoco && ativo) ativo.focus({ preventScroll: true });
+  }, [host, modo]);
+  const fecharChat = useCallback(() => {
+    const ativo = document.activeElement as HTMLElement | null;
+    if (ativo && host?.contains(ativo)) ativo.blur(); // some o teclado
+    setModo('barra');
+  }, [host]);
+  /* O painel é transitório: fecha ao tocar FORA dele, quando o foco vai para fora (outra aba, outro painel) e quando qualquer
+     diálogo/modal novo entra no documento. Escuta no documento (captura) e não cobre a tela com um backdrop: o painel de meia
+     tela deixa o resto visível, e um backdrop engoliria o toque da navegação (o toque que fecha também chega ao destino).
+     Nada aqui inertiza irmãos nem prende foco: só fecha, e o `useBackLayer` do painel segue cuidando do botão voltar. */
+  useEffect(() => {
+    if (modo === 'barra') return;
+    const dentro = (n: EventTarget | null) => n instanceof Element && (!!n.closest('.sm3-chatpanel') || !!host?.contains(n));
+    const fora = (e: Event) => { if (!dentro(e.target)) fecharChat(); };
+    const obs = typeof MutationObserver !== 'undefined' ? new MutationObserver(muts => {
+      for (const m of muts) {
+        for (const n of Array.from(m.addedNodes)) {
+          if (!(n instanceof Element) || n.closest('.sm3-chatpanel') || n.querySelector('.sm3-chatpanel')) continue;
+          if (n.matches(DIALOGO) || n.querySelector(DIALOGO)) { fecharChat(); return; }
+        }
+      }
+    }) : null;
+    obs?.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('pointerdown', fora, true);
+    document.addEventListener('focusin', fora, true);
+    return () => {
+      obs?.disconnect();
+      document.removeEventListener('pointerdown', fora, true);
+      document.removeEventListener('focusin', fora, true);
+    };
+  }, [modo, host, fecharChat]);
   /* WP3.1 — MEMÓRIA DE SESSÃO, e só de sessão.
      Sem isto o `getPetResponse` perguntava "E você?" e processava a resposta
      como se fosse a primeira frase da conversa — o pet perguntava e não
@@ -131,6 +210,19 @@ export function ChatBox({
   
   // Anti-autofill trick
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
+  const campoRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!focusRequest || Date.now() - focusRequest > 4000) return;
+    setIsInputReadOnly(false);
+    // A folha de Missões ainda está fechando: o foco espera ela soltar o foco dela.
+    const t = setTimeout(() => {
+      const el = campoRef.current;
+      if (!el) return;
+      try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* sem scroll suave: o foco basta */ }
+      el.focus({ preventScroll: true });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [focusRequest]);
   /* minimal-ui F2 — o TERMINAL: o `_` pisca colado no `>` e SOME quando a
      pessoa começa a escrever (foco ou texto no campo), como no mock aprovado. */
   const [focado, setFocado] = useState(false);
@@ -321,7 +413,7 @@ export function ChatBox({
       });
       if (!r.ok) return;
       const d = await r.json();
-      if (typeof d?.response === 'string' && d.response.trim()) onSendMessage(d.response);
+      if (typeof d?.response === 'string' && d.response.trim()) { anotar('pet', d.response); onSendMessage(d.response); }
     } catch { /* silencioso: é um extra */ }
   };
 
@@ -330,6 +422,7 @@ export function ChatBox({
 
     const userMessage = inputValue;
     setInputValue('');
+    const userMsgId = anotar('user', userMessage);
 
     /* WP3.9 (decisão D16) — A PONTE, antes de tudo.
        A checagem vem ANTES do `setIsLoading` e antes de qualquer rede: se a
@@ -338,6 +431,7 @@ export function ChatBox({
        A resposta é local, fixa, na voz do pet, sem alarme e sem push. */
     const safety = chatSafetyDecision(userMessage, language === 'pt-BR' ? 'pt-BR' : 'en-US');
     if (safety.kind === 'local') {
+      anotar('pet', safety.reply);
       onSendMessage(safety.reply);
       return;
     }
@@ -358,16 +452,22 @@ export function ChatBox({
 
       lembrar('user', userMessage);
       lembrar('assistant', response);
+      anotar('pet', response);
+      onUserMessage?.();
       onSendMessage(response);
     } catch (error) {
       if (error instanceof SemRede) {
         // Mensagem não saiu: devolve o texto ao campo e avisa por toast.
+        setMsgs(prev => prev.filter(m => m.id !== userMsgId));
         setInputValue(userMessage);
         toast.warning(copiaErro(CHAT_ERR.offline, isPt));
         return;
       }
       if (import.meta.env.DEV) console.error('Error sending message:', error);
-      onSendMessage(language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!');
+      onUserMessage?.();
+      const oops = language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!';
+      anotar('pet', oops);
+      onSendMessage(oops);
     } finally {
       setIsLoading(false);
     }
@@ -404,6 +504,12 @@ export function ChatBox({
       }
     } else {
       // Start recording
+      /* Sem motor de gravação na plataforma (WebView antigo, contexto não
+         seguro): avisar em vez de ficar "ativo e mudo". */
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        toast.error(copiaErro(MIC_ERR.noEngine, isPt));
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         // Desmontou enquanto a permissão estava aberta: ninguém vai parar isto.
@@ -465,22 +571,18 @@ export function ChatBox({
         micRef.current = mic;
         setMediaRecorder(recorder);
         setIsRecording(true);
+        toast.info(copiaErro(MIC_ERR.recording, isPt));
       } catch (error) {
-        // Silently handle microphone permission errors
-        if (error instanceof Error) {
-          if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
-            // User denied permission or no microphone available
-            onSendMessage(isPt
-              ? 'Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤'
-              : 'I could not reach the microphone. You can still type here 🎤');
-            return;
-          }
-        }
-        // Only log other unexpected errors
+        /* Antes isto virava uma "mensagem do usuário" no chat; agora é aviso.
+           NotAllowedError no Android também vem do WebView negando o pedido
+           quando falta MODIFY_AUDIO_SETTINGS no manifesto (Capacitor exige). */
+        const nome = error instanceof Error ? error.name : '';
         if (import.meta.env.DEV) console.warn('Microphone access issue:', error);
-        onSendMessage(isPt
-          ? 'Deu algo errado com o microfone 🎤'
-          : 'Something went wrong with the microphone 🎤');
+        toast.error(copiaErro(
+          nome === 'NotAllowedError' || nome === 'SecurityError' ? MIC_ERR.denied
+            : nome === 'NotFoundError' || nome === 'NotReadableError' ? MIC_ERR.noDevice
+            : MIC_ERR.noEngine,
+          isPt));
       }
     }
   };
@@ -524,9 +626,11 @@ export function ChatBox({
       if (transcribedText.trim()) {
         setInputValue(transcribedText);
       } else {
-        onSendMessage(isPt
+        const naoEntendi = isPt
           ? 'Não consegui entender o áudio 🤔'
-          : 'Could not understand the audio 🤔');
+          : 'Could not understand the audio 🤔';
+        anotar('pet', naoEntendi);
+        onSendMessage(naoEntendi);
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -556,7 +660,7 @@ export function ChatBox({
         ? (isPt ? 'Parar gravação' : 'Stop recording')
         : (isPt ? 'Gravar mensagem' : 'Record message');
 
-  return (
+  const barra = (
     /* MIGRADO para `--sm2-*` (`.sm2-chatbar` / `.sm2-chat-input` /
        `.sm2-chat-btn`, no fim do `index.css`).
 
@@ -571,7 +675,7 @@ export function ChatBox({
       className="sm2-chatbar sm3-chatbar"
       /* O foco mora na BARRA inteira (campo, botão e o link de apoio): sair do
          campo para tocar no link não pode esconder o link antes do toque. */
-      onFocus={() => setFocado(true)}
+      onFocus={() => { setFocado(true); setModo(m => (m === 'barra' ? 'meia' : m)); }}
       onPointerDown={() => { void garantirConfig(); }}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocado(false); }}
     >
@@ -594,6 +698,7 @@ export function ChatBox({
           <span className="sm3-term-cur" aria-hidden="true" data-terminal-cursor>_</span>
         )}
         <input
+          ref={campoRef}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -695,6 +800,30 @@ export function ChatBox({
           188 / findahelpline.com quando a mensagem pede ajuda, e o Refúgio
           (`refugio/SupportNote.tsx`) mantém a nota de apoio. */}
     </div>
+  );
+
+  /* Beta12/C1: tocar na barra abre o painel de meia tela. A barra em si vive no
+     `host` (portal): no dock quando fechado, dentro do painel quando aberto. */
+  return (
+    <>
+      <div ref={dockSlotRef} className="sm3-chat-dockslot" />
+      {host && createPortal(barra, host)}
+      {modo !== 'barra' && typeof document !== 'undefined' && createPortal(
+        <ChatPanel
+          modo={modo}
+          msgs={msgs}
+          petName={petName}
+          spriteSrc={spriteSrc}
+          isPt={isPt}
+          carregando={isLoading}
+          onFechar={fecharChat}
+          onMaximizar={() => setModo('cheia')}
+          onRestaurar={() => setModo('meia')}
+          slotRef={painelSlotRef}
+        />,
+        document.body,
+      )}
+    </>
   );
 }
 

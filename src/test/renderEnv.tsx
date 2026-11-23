@@ -178,6 +178,17 @@ export function installFakeStorage(): Storage {
   return storage;
 }
 
+/**
+ * Paga ANTES dos testes o custo que o 1º `renderWithCss` do arquivo pagaria dentro de um deles: ler e parsear o
+ * `index.css` inteiro no jsdom (~4 s medido no 1º caso de `CatalogBrowserModal.render`, com a máquina cheia). Chamar
+ * num `beforeAll(aquecerRender, 60_000)` tira esse custo único do teto do teste e deixa cada caso medir só o que afirma.
+ */
+export function aquecerRender(): void {
+  installDomGlobals();
+  installAppCss();
+  window.getComputedStyle(document.body).getPropertyValue('color');
+}
+
 /** Monta um componente com o `index.css` real aplicado. */
 export function renderWithCss(ui: ReactElement) {
   installDomGlobals();

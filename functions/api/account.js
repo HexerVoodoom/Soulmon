@@ -96,7 +96,7 @@
 //
 //   0. token · 1. `collect` · 2. LÁPIDE · 3. `friends[]` alheios (varredura —
 //   pode estourar; ainda reversível, e a lápide é desfeita se estourar) ·
-//   3b. grupo cooperativo · 4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
+//   3b. grupo cooperativo · 3c. faixa de evoluções · 4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
 //   `gifts:`, `pid:`, `profile:` · 8. **o save** · 9. token de confirmação.
 //
 // O save é o ÚLTIMO a cair: é o que a pessoa mais quer ver sumir, e é também
@@ -112,7 +112,7 @@
 
 import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
-  anonimizarClaims, comEntitlementLegivel, EntitlementIlegivelError } from './_entitlements.js';
+  anonimizarClaims, comEntitlementLegivel, EntitlementIlegivelError, comTravaDoEnt, ENT_LOCK_ESPERA_LONGA_MS } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
@@ -120,6 +120,8 @@ import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accoun
 import { rkKeyFor } from './_rankings.js';
 import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados, exportarFeiraDaPessoa } from './_coop.js';
 import { apagarPedido } from './_claDiretorio.js';
+import { nickFoldKeyDaChave } from './_profile.js';
+import { EVO_FEED_KEY, EVO_FEED_BLOB_TTL_S, readFeed, purgeFeedOf } from './_evoFeed.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -292,11 +294,12 @@ async function collectSprites(env, saveId) {
  * filtrada pelo saveId (mesmo método do `rank:`); `riftlayers` tem TTL de 70 dias, então 3 meses bastam.
  * @returns {Promise<{ keys: string[], ranking: {game:string,period:string,best:number}[] }>}
  */
-async function collectRankingKeys(env, saveId) {
+async function collectRankingKeys(env, saveId, leve = false) {
   const store = kvOrThrow(env);
   const keys = [];
   const ranking = [];
-  for (const k of (await listPrefix(env, 'rkme:')).filter(x => x.endsWith(`:${saveId}`))) {
+  // `leve` (delete-request): sem as varreduras GLOBAIS (rkme:/rift-*), ate 20 listagens cada; estouravam em 503.
+  if (!leve) for (const k of (await listPrefix(env, 'rkme:')).filter(x => x.endsWith(`:${saveId}`))) {
     const [, game, period] = k.split(':');
     const best = Number(await store.get(k));
     keys.push(k);
@@ -311,14 +314,20 @@ async function collectRankingKeys(env, saveId) {
     const rl = `riftlayers:${m}:${saveId}`;
     if ((await store.get(rl)) !== null) keys.push(rl);
   }
-  for (const prefix of ['rift-pending:', 'rift-paid:']) {
+  if (!leve) for (const prefix of ['rift-pending:', 'rift-paid:']) {
     for (const k of (await listPrefix(env, prefix)).filter(x => x.endsWith(`:${saveId}`))) keys.push(k);
   }
+  // Jornada do foco (§247): o registro ativo e os razões dos dias (TTL de 3 dias), por prefixo do próprio titular.
+  if ((await store.get(`fj:${saveId}`)) !== null) keys.push(`fj:${saveId}`);
+  for (const k of await listPrefix(env, `fjd:${saveId}:`)) keys.push(k);
   // Apelido: `nickof:<saveId>` aponta a chave `nick:`; ela só é apagada se AINDA for deste titular.
   const nickKey = await store.get(`nickof:${saveId}`);
   if (nickKey) {
     if (typeof nickKey === 'string' && nickKey.startsWith('nick:') && (await store.get(nickKey)) === saveId) keys.push(nickKey);
     keys.push(`nickof:${saveId}`);
+    // Busca de jogadores (§321): a chave DOBRADA tem o saveId no nome, então é sempre deste titular.
+    const dobrada = nickFoldKeyDaChave(nickKey, saveId);
+    if (dobrada) keys.push(dobrada);
   }
   return { keys, ranking };
 }
@@ -432,7 +441,9 @@ function steamLicenseKeysOf(ent) {
     .map(o => `${ORDER_PREFIX}${o}`);
 }
 
-async function collect(env, saveId) {
+/** `opts.leve`: inventario BARATO do `delete-request` (sem varrer rank:/rkme:/rift-* do servidor todo); o `delete-confirm` faz a completa. */
+async function collect(env, saveId, opts = {}) {
+  const leve = opts.leve === true;
   const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
 
@@ -444,6 +455,8 @@ async function collect(env, saveId) {
 
   let gifts = null;
   try { gifts = JSON.parse((await store.get(`gifts:${saveId}`)) || 'null'); } catch { gifts = null; }
+  let mail = null;
+  try { mail = JSON.parse((await store.get(`mail:${saveId}`)) || 'null'); } catch { mail = null; }
 
   // `readEntitlement` devolve um registro VAZIO quando não existe — o que é
   // certo para o jogo e errado para exportação. Exportar um entitlement que
@@ -459,7 +472,7 @@ async function collect(env, saveId) {
     }
   }
 
-  const rankKeys = (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
+  const rankKeys = leve ? [] : (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
   /** @type {Array<{ season: string, record: any }>} */
   const ranks = [];
   for (const k of rankKeys) {
@@ -474,7 +487,7 @@ async function collect(env, saveId) {
   const pidIndexed = (await store.get(`pid:${pid}`)) === saveId;
 
   const sprites = await collectSprites(env, saveId);
-  const rankingData = await collectRankingKeys(env, saveId);
+  const rankingData = await collectRankingKeys(env, saveId, leve);
 
   // Grupo cooperativo (se houver). `grupoDe` já limpa `coopOf:` órfão.
   let coopGroupId = null;
@@ -527,7 +540,7 @@ async function collect(env, saveId) {
   // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys, leve };
 }
 
 /**
@@ -583,6 +596,7 @@ async function handleExport(env, saveId) {
       [`profile:${saveId}`]: profile,
       [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
       [`gifts:${saveId}`]: c.gifts,
+      [`mail:${saveId}`]: c.mail,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement
         ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) }
         : null,
@@ -611,11 +625,13 @@ function plan(c, saveId) {
       c.profile ? `profile:${saveId}` : null,
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
+      c.mail ? `mail:${saveId}` : null,
       ...c.rankKeys,
       ...c.rankingData.keys,
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
+      ...(c.leve ? ['season ranking, minigame ranking and Endless Rift records (listed when you confirm)'] : []),
       'mentions of you in other players\' friend lists',
       'notification subscriptions (push:*/fcm:*) linked to your account',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : []),
@@ -637,7 +653,8 @@ function plan(c, saveId) {
 }
 
 async function handleDeleteRequest(env, saveId) {
-  const c = await collect(env, saveId);
+  // Inventario LEVE: pedir o token nao depende da varredura cara (prod: 503 apos ~15 s, 17/11/2026).
+  const c = await collect(env, saveId, { leve: true });
   const token = [...crypto.getRandomValues(new Uint8Array(16))]
     .map(b => b.toString(16).padStart(2, '0')).join('');
   await kvOrThrow(env).put(
@@ -728,6 +745,12 @@ async function handleDeleteConfirm(env, saveId, body) {
   await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId, { exclusao: true }); });
   await tentar('coopClaim (resgates da Guilda)', () => apagarClaims(env, saveId));
   await tentar('coopReq (pedido de entrada em clã, §203)', () => apagarPedido(env, saveId));
+  // 3c) Faixa de evoluções: o saveId, o apelido e a criatura moram no blob global. Só regrava se a pessoa está nele.
+  await tentar(EVO_FEED_KEY, async () => {
+    const feed = readFeed(await store.get(EVO_FEED_KEY));
+    const sem = purgeFeedOf(feed, saveId);
+    if (sem.length !== feed.length) await store.put(EVO_FEED_KEY, JSON.stringify(sem), { expirationTtl: EVO_FEED_BLOB_TTL_S });
+  });
 
   // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
   //    Reversível na prática: o aparelho se reinscreve na próxima abertura.
@@ -773,7 +796,8 @@ async function handleDeleteConfirm(env, saveId, body) {
     const COURTESY_PREFIX = 'courtesy:';
     const ehCortesia = (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).some(o => typeof o === 'string' && o.startsWith(COURTESY_PREFIX))
       && (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).some(o => o?.orderId?.startsWith?.(COURTESY_PREFIX) && !o.voided);
-    await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
+    // Sob a trava da conta (§381): um gasto/compra em voo não regrava o registro inteiro por cima do resíduo minimizado.
+    await tentar(`${ENT_PREFIX}${saveId}`, () => comTravaDoEnt(env, saveId, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       // REGISTRO §49 (dono, 14/10/2026): excluiu a conta, paga de novo. O direito
       // pago e o saldo NÃO sobrevivem (nem para quem volta com o mesmo e-mail);
       // o vínculo comprovante→conta sobrevive ANONIMIZADO em `order_claims`/`ord:`.
@@ -797,7 +821,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now(),
-    }), { expirationTtl: RETENTION_TTL_SECONDS }));
+    }), { expirationTtl: RETENTION_TTL_SECONDS }), { esperaMs: ENT_LOCK_ESPERA_LONGA_MS }));
     // ↑ O resíduo mínimo também tem prazo, e este é o único caso em que o prazo
     // corre até o fim de verdade: depois da exclusão nada mais escreve neste
     // registro, então nada mais o renova. Sem o TTL, o único artefato que
@@ -810,8 +834,17 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    pendente de uma conta apagada não pode mais ser pago (`grantRankPrize` também recusa por lápide).
   for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
+  if (c.mail) await tentar(`mail:${saveId}`, () => store.delete(`mail:${saveId}`));
+  // §243: convites, presentes do dia, histórico de presentes e marca da migração de amizades (convite alheio que cite esta conta some na leitura: o perfil não existe mais).
+  for (const k of [`freq:${saveId}`, `gsent:${saveId}`, `gnote:${saveId}`, `gmir:${saveId}`]) await tentar(k, () => store.delete(k));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
+
+  // 7c) Backups da guarda de regressao (`savebak:<saveId>:<ts>`, `_saveGuard.js`, 17/11/2026): copia INTEGRAL do save, TTL 30 dias.
+  //    Sem isto o conteudo da conta apagada sobrevivia 30 dias fora do inventario. Varre so o prefixo do titular.
+  await tentar(`savebak:${saveId}`, async () => {
+    for (const k of await listPrefix(env, `savebak:${saveId}:`)) await store.delete(k);
+  });
 
   // 8) O SAVE, por último. É o que a pessoa mais quer ver sumir — e é o que,
   //    apagado cedo, deixava o retry encontrar 404 com o token ainda válido.

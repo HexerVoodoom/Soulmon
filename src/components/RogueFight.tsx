@@ -6,15 +6,18 @@
  * Contrato com o `RogueDungeon`: `onResult(won)` é chamado UMA vez, só depois do jogador tocar em "Continuar" (ou sair da luta, o
  * que conta como derrota). A superfície NASCE MUDA: nenhum som novo aqui (os golpes tocam os sons que a `BattleStage` já tem).
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { sm2Button } from './form/FormKit';
-import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { dungeonFamily, dungeonFight, dungeonPlayerSide } from '../utils/dungeonFight';
 import { dungeonWaveOf } from '../utils/dungeonAway';
@@ -30,6 +33,8 @@ import type { Language } from '../utils/i18n';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { rogueFightSetup, type RogueRun } from '../utils/rogueDungeon';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 
 export interface RogueFightProps {
   language: Language;
@@ -62,7 +67,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const enemy = useMemo(() => {
-    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage);
+    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage, false);
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
   }, [setup, combatant.level, evolutionStage]);
   const seenKey = enemy?.stage;
@@ -78,12 +83,13 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const bg = DUNGEON_SCENES[(floor - 1) % DUNGEON_SCENES.length].bg;
 
   const [paused, setPaused] = useState(false);
-  const [speed, setSpeed] = useState<1 | 3>(1);
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const [end, setEnd] = useState<GroupResult | null>(null);
   const reportedRef = useRef(false);
   const reduced = useRef(prefersReducedMotion());
   const ctx = useGameStateOptional();
   const inv = ctx?.gameState.foodInventory;
+  const companheiro = companheiroDoEstado(ctx?.gameState); // string estável: não refaz a rodada a cada mudança do save
   /** 💗 Continuação após o Coraçãozinho (REGISTRO §191): n-ésima retomada + HP do inimigo na queda; `key` reinicia o relógio da cena. */
   const [cont, setCont] = useState<{ n: number; foeFrac: number; key: number } | null>(null);
   const fightKey = cont?.key ?? 1;
@@ -98,7 +104,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   }, [onResult, enemy.stage, isPt]);
 
   const round = useCallback((): GroupRound => {
-    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield }, setup.foe, setup.seed, true);
+    const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield, efeitoElemento: efeitoElementoPve(family, ident.especial.elemento, hx), companheiro }, setup.foe, setup.seed, true);
     return {
       player: f.player, foes: f.foes, seed: contRef.current ? reviveSeed(f.seed, contRef.current.n) : f.seed,
       startHp: contRef.current ? reviveStart(contRef.current.foeFrac).hp : setup.startHp, startEnergy: 0,
@@ -106,7 +112,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
       hitScale: f.hitScale,
       castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
     };
-  }, [setup, family]);
+  }, [setup, family, companheiro]);
 
   const scene = useCallback((): GroupScene => ({
     playerMaxHp: hpMax,
@@ -114,10 +120,13 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
     foeElement: () => foeEl,
     playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
-    foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+    playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+    foeImpact: (_f, sp) => meleeImpactOf({ element: foeEl, key: foeEl, name: enemy.name, forma: foeStrikeForm(foeEl, sp ? 'especial' : 'basica', seenKey), ...(sp ? {} : { formKey: seenKey }) }),
+    foeKind: (_f, sp) => foeStrikeForm(foeEl, sp ? 'especial' : 'basica', seenKey),
     labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
     personalTag: PERSONAL_TAG[lang][family],
     playerSpecialEscola: ident.especial.escola,
+    playerSpecialElemento: ident.especial.elemento,
   }), [hpMax, foeMax, ident, foeEl, isPt, lang, family]);
 
   const battle = useGroupBattle({
@@ -142,12 +151,13 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-rogue-fight style={{ display: 'contents' }} />
       <BattleStage
-        specialLabel={specialLabel(isPt, par?.especial)}
+        summon={summonsDoGrupo(battle.summon, companheiro)}
+        specialLabel={specialLabel(isPt, par?.especial, family)}
         foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
         isPt={isPt}
         scene={bg}
         me={{
-          key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
+          key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{
@@ -177,7 +187,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         onPauseChange={setPaused}
       >
         {oferta && (
-          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
             <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
               <p style={{ margin: 0 }}>{isPt ? 'Usar um Coraçãozinho para ele voltar com metade da vida e seguir a luta?' : 'Use a Little heart to bring him back with half his HP and keep fighting?'}</p>
@@ -189,16 +199,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
             </div>
           </div>
         )}
-        {!end && (
-          <button
-            type="button" data-rogue-speed={speed} onClick={() => setSpeed(s => (s === 1 ? 3 : 1))}
-            aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${speed === 1 ? 3 : 1}×.` : `Fast forward: ${speed}×. Tap to change to ${speed === 1 ? 3 : 1}×.`}
-            className="sm2-num"
-            style={{ position: 'absolute', right: 8, bottom: 8, zIndex: 5, pointerEvents: 'auto', background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', fontSize: 16, fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,.9)' }}
-          >
-            {speed}×
-          </button>
-        )}
+        {!end && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner attr="data-rogue-speed" />}
         {end && !oferta && (
           <div
             role="status" data-rogue-fight-end={won ? 'won' : 'lost'}

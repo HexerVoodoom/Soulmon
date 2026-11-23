@@ -1,3 +1,4 @@
+import type { MailGrant, MailItem } from './mensageiro';
 import type { DuelSide } from './combate/duel';
 import type { FightEvent } from './combate/fight';
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
@@ -6,9 +7,11 @@ import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
-  sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
+  sanitizeAchado, sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
   type FeiraEvento, type FeiraResumo, type FeiraAttack, type FeiraClaim, type FeiraTrail, type FeiraTrailDone, type FeiraSolution,
 } from './feira';
+import { sanitizeFeiraLoja, type FeiraLoja } from './feiraLoja';
+import { BUFF_PRECO, rememberClanBuffs, sanitizeBuffsAtivos, type BuffsAtivos } from './guildBuffs';
 export type { FeiraEvento, FeiraResumo, FeiraAttack, FeiraClaim, FeiraTrail, FeiraTrailDone, FeiraSolution };
 import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
@@ -85,6 +88,8 @@ export interface PublicProfileInput {
   publicHidden?: boolean;
   attrs?: { power: number; harmony: number; benevolence: number };
   tasksDone?: number;
+  /** Nome do especial escolhido (até 20, letras/números/espaço). `''` volta ao padrão; ausente o servidor herda. */
+  especialNome?: string;
 }
 
 /**
@@ -115,6 +120,13 @@ export interface ProfilePushResult {
   minBondLevel?: number;
   /** Outra conta já usa este apelido: o servidor manteve o anterior. */
   nameTaken?: boolean;
+  /** O nome do especial GRAVADO (`''` = padrão) e quando foi aceito; só vêm quando o corpo tinha o campo ou há nome. */
+  especialNome?: string;
+  especialNomeAt?: number;
+  /** Nome recusado (forma, contato ou palavrão): voltou ao padrão. */
+  especialNomeRejected?: boolean;
+  /** Troca recusada: só uma por semana (medida no servidor). */
+  especialNomeLimit?: boolean;
 }
 
 /** Reserva o apelido (único, sem diferenciar maiúsculas). Lança `Error('name taken')` quando outra conta já o usa. */
@@ -138,9 +150,23 @@ export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
+  especialNome?: string;
+  /** §321 (13/11/2026): nome do clã da pessoa, mostrado embaixo do nome (`ui/PlayerName`). Ausente = sem clã. */
+  guildName?: string;
 }
-export const listPlayers = (search = '') =>
-  call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+/** Vista mínima que a busca do "Convidar amigo" devolve (§351): só o que o convite precisa. */
+export type FriendLookupPlayer = Pick<DirectoryPlayer, 'id' | 'name' | 'stage'> & { spriteUrl?: string | null };
+/**
+ * Diretório (sem `friendOf`): só quem ligou o PvP, como sempre.
+ * Com `friendOf` (saveId de quem convida, §351, decisão do dono): a busca por apelido do "Convidar amigo" — acha qualquer
+ * jogador VISÍVEL, com PvP ligado ou desligado (a mesma régua das sugestões `names`), sem a própria conta. Exige busca.
+ */
+export function listPlayers(search?: string): Promise<{ players: DirectoryPlayer[] }>;
+export function listPlayers(search: string, opts: { friendOf: string }): Promise<{ players: FriendLookupPlayer[] }>;
+export function listPlayers(search = '', opts?: { friendOf: string }) {
+  if (opts?.friendOf) return call<{ players: FriendLookupPlayer[] }>('players', { params: { search, lookup: 'friend', id: opts.friendOf } });
+  return call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
+}
 
 export interface PlayerDetail extends DirectoryPlayer {
   friends: string[]; wins: number; losses: number;
@@ -153,7 +179,12 @@ export const getFriendForms = (saveId: string, friendPid: string) =>
   call<{ forms: { stage: string; spriteUrl: string | null; element: string | null; date: number }[] }>('forms', { params: { id: saveId, friend: friendPid } });
 
 /** Desgarrados de jogadores (§213): o pool anônimo do servidor (90+ dias sem entrar). Sanear com `sanitizeStrayPool`. */
+/** Treino com amigo: a ficha de luta REAL do amigo (o mesmo `DuelSide` que o duelo entrega ao oponente). Só entre amigos; 403/404 = sem ficha (o treino cai no lado comum). */
+export const getFriendSide = (saveId: string, friendPid: string) =>
+  call<{ side: DuelSide }>('friendSide', { params: { id: saveId, friend: friendPid } });
 export const getStrays = () => call<{ strays: unknown }>('strays');
+/** Faixa de evoluções (04/11/2026): o feed global curto (sem saveId). Sanear com `sanitizeEvoEvents`. */
+export const getEvoFeed = () => call<{ events: unknown }>('evoFeed');
 /** O Soulmon DESTA conta está desgarrado? Progresso da recuperação (2 dias completos seguidos). Só o dono lê. */
 export const getStrayStatus = (saveId: string) =>
   call<{ stray: boolean; progress: number; needed: number }>('strayStatus', { params: { id: saveId, off: String(-new Date().getTimezoneOffset() * 60_000) } });
@@ -163,6 +194,10 @@ export interface Opponent {
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
+  /** Nome do especial que o jogador escolheu (já filtrado no servidor); ausente = nome padrão. */
+  especialNome?: string;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
 }
 /** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
 export const getOpponents = (id: string, reroll = false) =>
@@ -180,10 +215,14 @@ export interface MatchResult {
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
   forfeit?: boolean;
-  /** PR13: quanto a vitória rendeu em pontos (0 em derrota/empate). O servidor reduz o ganho contra oponente bem abaixo do seu level e contra o mesmo oponente repetido no dia. */
+  /** PR13: quanto a vitória rendeu em pontos (0 em derrota/empate). Por RANK (pontos da temporada): mais contra quem está acima (até ~2x), menos contra quem está bem abaixo (piso 3), e menos contra o mesmo oponente repetido no dia. */
   gain?: number;
   /** PR13: fator (0..1) que o app aplica à Honra de VITÓRIA (1 = inteira). Derrota e empate: 1 e nada muda. Ausente (servidor antigo) = 1. */
   honorFactor?: number;
+  /** Por que a vitória rendeu mais/menos pontos de faixa: oponente acima no ranking (`rank-up`), bem abaixo (`rank-down`), mesmo oponente de novo no dia (`repeat`) ou `null` (normal). Só leitura. */
+  gainReason?: 'rank-up' | 'rank-down' | 'repeat' | null;
+  /** Pontos da FAIXA (contador que só soma) depois desta partida. Ausente em servidor antigo. */
+  lifetime?: number;
 }
 /** Abre o duelo: gasta a partida do dia e devolve a SEMENTE, sorteada no
  *  servidor só depois disso (o cliente nunca a vê antes de se comprometer), e a FICHA dos dois lados, derivada
@@ -218,9 +257,81 @@ export async function playMatchComRetry(
   }
 }
 
+// ── TREINO ("Sparring"), a 2a aba do Torneio (10/11/2026) ─────────────────────────────────────────────────────────
+// Luta contra outros jogadores que NÃO ranqueia; vitória rende 1–2 de Honra (o servidor decide e limita a 20/dia). O servidor sorteia
+// 5 por faixa de Vínculo e a lista muda a CADA pedido (refresh ilimitado). Contrato aditivo: servidor antigo responde erro e a aba some.
+/** Âncora do dia do jogador (o teto de Honra segue o dia DELE, não o UTC). */
+type SparTz = { zone?: string; offsetMs?: number };
+/**
+ * Com a âncora do jogo (`gameState.playerDayTz`, a MESMA dos demais tetos) o Treino manda ela; sem âncora (save que ainda não migrou)
+ * cai no aparelho como antes. O servidor ainda prende o fuso da conta (`fixarTzTreino`), então isto é só o primeiro valor.
+ */
+const diaDoJogador = (tz?: SparTz): { zone?: string; off: number } => {
+  if (tz && (tz.zone || Number.isFinite(tz.offsetMs))) {
+    const off = Number.isFinite(tz.offsetMs) ? (tz.offsetMs as number) : -new Date().getTimezoneOffset() * 60_000;
+    return { ...(tz.zone ? { zone: tz.zone } : {}), off };
+  }
+  let zone: string | undefined;
+  try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch { zone = undefined; }
+  return { ...(zone ? { zone } : {}), off: -new Date().getTimezoneOffset() * 60_000 };
+};
+export const getSparOpponents = (id: string, tz?: SparTz) =>
+  call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(tz); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
+export const startSpar = (id: string, opponentId: string, tz?: SparTz) =>
+  call<{ seed: number; me: DuelSide; opp: DuelSide; tickets?: unknown }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador(tz) } });
+/** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits só se vier `ok`. */
+export const buySparTicket = (id: string, tz?: SparTz, phase?: 'reserve' | 'confirm') =>
+  call<{ tickets: unknown; reserved?: boolean }>('sparBuyTicket', { method: 'POST', body: { id, ...(phase ? { phase } : {}), ...diaDoJogador(tz) } });
+/**
+ * A CONFIRMAÇÃO do ticket extra roda DEPOIS de o app já ter cobrado os 30 Bits: uma queda de rede ali perdia o ticket pago
+ * (QA rodada 2, R2-C1). A reserva vale 2 min no servidor, então repetir com recuo SÓ para falha de rede é seguro: a confirmação
+ * concede uma vez e apaga a reserva (a repetição depois de um sucesso cujo retorno se perdeu volta 409 `no reserve`, nunca concede 2x).
+ */
+export async function confirmSparTicketComRetry(id: string, tz?: SparTz, delays: number[] = MATCH_RETRY_DELAYS_MS): Promise<{ tickets: unknown; reserved?: boolean }> {
+  for (let i = 0; ; i++) {
+    try {
+      return await buySparTicket(id, tz, 'confirm');
+    } catch (err) {
+      if (!isFalhaDeRede(err) || i >= delays.length) throw err;
+      await new Promise(r => setTimeout(r, delays[i]));
+    }
+  }
+}
+export interface SparResult {
+  won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
+  myScore: number; oppScore: number;
+  /** Honra desta partida (0, 1 ou 2): decidida e limitada no servidor. Só o app a soma ao save. */
+  honor: number;
+  /** O teto do dia foi atingido: a vitória não rendeu (tudo de bom segue, só a Honra de hoje acabou). */
+  honorCapped?: boolean;
+  forfeit?: boolean;
+  /** A partida passou das 20 do ticket grátis: jogou, mas sem Honra (ticket extra). */
+  noHonorTicket?: boolean;
+  /** Estado dos tickets do dia depois desta partida (`sanitizeTreinoTickets`). */
+  tickets?: unknown;
+  opponent: MatchResult['opponent'];
+  duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
+  replayed?: boolean;
+}
+export const playSpar = (id: string, opponentId: string, taps: number[] = [], forfeit = false, seed?: number, tz?: SparTz) =>
+  call<SparResult>('sparMatch', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}), ...(typeof seed === 'number' ? { seed } : {}), ...diaDoJogador(tz) } });
+export async function playSparComRetry(id: string, opponentId: string, taps: number[], seed: number, delays: number[] = MATCH_RETRY_DELAYS_MS, tz?: SparTz): Promise<SparResult> {
+  for (let i = 0; ; i++) {
+    try {
+      return await playSpar(id, opponentId, taps, false, seed, tz);
+    } catch (err) {
+      if (!isFalhaDeRede(err) || i >= delays.length) throw err;
+      await new Promise(r => setTimeout(r, delays[i]));
+    }
+  }
+}
+
+
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
+  /** §321: nome do clã (ausente = sem clã). */
+  guildName?: string;
   points: number; wins: number; losses: number;
   /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
    *  `points` acima são da season e caem (derrota, ser sorteado, virada de
@@ -234,13 +345,52 @@ export const getRank = (season?: string, id?: string) =>
 export const getSeasonResult = (season: string) =>
   call<{ season: string; top3: RankRow[] }>('seasonResult', { params: { season } });
 
+/** Uma temporada ENCERRADA em que o jogador jogou: colocação final e pontos (servidor: `_seasonHist.js`). */
+export interface SeasonHistoryEntry { season: string; place: number; points: number }
+/** Histórico do PRÓPRIO jogador (só o dono lê). `last` = a temporada do mês anterior (`null` = não jogou ou o dado já venceu no KV); `best` = a melhor colocação. GM/admin: tudo vazio. */
+export interface SeasonHistory {
+  seasons: SeasonHistoryEntry[];
+  best: { season: string; place: number } | null;
+  last: SeasonHistoryEntry | null;
+  lastSeason: string;
+  /** GM/admin: fora de todo ranking do Torneio — a tela não mostra histórico (nem troféu antigo). */
+  excluded?: boolean;
+}
+export const getSeasonHistory = (id: string) => call<SeasonHistory>('seasonHistory', { params: { id } });
+
+/** §242: ENVIA um convite (a pessoa aceita). `status`: `pending` (aguardando) ou `friends` (convite cruzado, já são amigos). */
 export const addFriend = (id: string, friendId: string) =>
-  call<{ ok: true; friends: string[] }>('friends', { method: 'POST', body: { id, friendId } });
+  call<{ ok: true; status?: 'pending' | 'friends'; friends: string[] }>('friends', { method: 'POST', body: { id, friendId } });
+/** Aceita (ou, com `decline`, recusa) um convite RECEBIDO; `friendId` é o pid de quem convidou. */
+export const answerFriendInvite = (id: string, friendId: string, decline = false) =>
+  call<{ ok: true; status?: 'friends'; friends: string[] }>('friendAccept', { method: 'POST', body: { id, friendId, ...(decline ? { decline: true } : {}) } });
+export interface FriendsState {
+  friends: string[];
+  incoming: { id: string; name: string; /** §321: nome do clã de quem convidou (ausente = sem clã). */ guildName?: string; at: number }[];
+  outgoing: string[];
+  /** Pids de quem já recebeu presente DESTA conta hoje (o servidor é a autoridade). */
+  sentToday: string[];
+  notes: { name: string; bits: number; at: number; unseen: boolean }[];
+  unseen: number;
+  limit: number;
+  /** Teto de Bits que uma conta recebe de presentes por dia do jogador (o excedente não credita). */
+  dailyCap?: number;
+}
+/** O estado social de quem pergunta (só o dono lê): amigos, convites, presentes de hoje e o histórico de quem presenteou. */
+/** A âncora do dia do jogador vai ao servidor: o "1 presente por dia" e o teto de recebimento seguem o dia do JOGADOR, não o UTC. */
+const tzParams = (tz?: { zone?: string; offsetMs?: number }): Record<string, string> => ({
+  ...(tz?.zone ? { zone: tz.zone } : {}),
+  ...(typeof tz?.offsetMs === 'number' && Number.isFinite(tz.offsetMs) ? { off: String(tz.offsetMs) } : {}),
+});
+export const getFriendsState = (id: string, tz?: { zone?: string; offsetMs?: number }) =>
+  call<FriendsState>('friendsState', { params: { id, ...tzParams(tz) } });
+export const markFriendsSeen = (id: string) => call<{ ok: true }>('friendsSeen', { method: 'POST', body: { id } });
 export const removeFriend = (id: string, friendId: string) =>
   call<{ ok: true; friends: string[] }>('friends', { method: 'POST', body: { id, friendId, remove: true } });
 
-export const sendGift = (id: string, friendId: string) =>
-  call<{ ok: true }>('gift', { method: 'POST', body: { id, friendId } });
+/** `credited` = quantos Bits valeram de fato para quem recebeu (teto diário de recebimento); ausente em servidor antigo. */
+export const sendGift = (id: string, friendId: string, tz?: { zone?: string; offsetMs?: number }) =>
+  call<{ ok: true; credited?: number }>('gift', { method: 'POST', body: { id, friendId, ...(tz?.zone ? { zone: tz.zone } : {}), ...(typeof tz?.offsetMs === 'number' ? { off: tz.offsetMs } : {}) } });
 export interface GiftItem { from: string; bits: number; at: number; gid?: string }
 export const getGifts = (id: string, claim = false) =>
   call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, ...(claim ? { claim: '1' } : {}) } });
@@ -276,6 +426,16 @@ export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]
     },
   };
 }
+
+/** O Mensageiro (§241): a fila de cartas e a confirmação do que já está no save. */
+export const getMail = (id: string) => call<{ mail: MailItem[] }>('mail', { params: { id } });
+/** Caixa de cartas (§246). O servidor é quem decide o resgate: `granted` é só o que saiu AGORA (repetir devolve vazio). */
+export const markMailRead = (id: string, mids: string[]) => call<{ ok: true }>('mailRead', { method: 'POST', body: { id, mids } });
+export const claimMail = (id: string, target: string[] | 'all') =>
+  call<{ ok: true; granted: MailGrant[] }>('mailClaim', { method: 'POST', body: target === 'all' ? { id, all: true } : { id, mids: target } });
+/** `force` só com a confirmação do dono: carta com item pendente é recusada sem ele (`blocked`). */
+export const deleteMail = (id: string, target: string[] | 'read', force = false) =>
+  call<{ ok: true; removed: number; blocked: string[] }>('mailDelete', { method: 'POST', body: target === 'read' ? { id, scope: 'read' } : { id, mids: target, force } });
 
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });
@@ -381,7 +541,8 @@ export interface GuildCasa {
   bitsTotal: number | null;
   slots: Array<{ memberId: string; item: string; euMesmo: boolean }>;
   /** A Loja do clã (R5/A): itens JÁ do clã (ids do catálogo) e o saldo de Bits do clã. Campo aditivo: ausente = vazio. */
-  loja: { itens: string[]; saldo: number | null };
+  /** BUFFS DO CLÃ (10/11/2026; substituem a Loja): tesouro, preço e os buffs ativos do clã inteiro. `euPosso` = quem pergunta é o anfitrião. */
+  buffs: { saldo: number | null; preco: number; ativos: BuffsAtivos; euPosso: boolean };
   mine: {
     /** O item que EU pus na casa, ou `null`. */
     slot: string | null;
@@ -408,10 +569,10 @@ function sanitizeCasa(raw: unknown): GuildCasa | null {
     perto: x.perto === true && idx < CASA_STAGES.length - 1,
     bitsTotal: typeof x.bitsTotal === 'number' && Number.isFinite(x.bitsTotal) && x.bitsTotal >= 0 ? Math.floor(x.bitsTotal) : null,
     slots,
-    loja: (() => {
-      const l = (x.loja && typeof x.loja === 'object' ? x.loja : {}) as Record<string, unknown>;
-      const itens = [...new Set((Array.isArray(l.itens) ? l.itens : []).filter((v): v is string => typeof v === 'string' && /^loja-[a-z0-9-]{2,40}$/.test(v)))].slice(0, 20);
-      return { itens, saldo: typeof l.saldo === 'number' && Number.isFinite(l.saldo) && l.saldo >= 0 ? Math.floor(l.saldo) : null };
+    buffs: (() => {
+      const l = (x.buffs && typeof x.buffs === 'object' ? x.buffs : {}) as Record<string, unknown>;
+      const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null);
+      return { saldo: n(l.saldo), preco: n(l.preco) ?? BUFF_PRECO, ativos: sanitizeBuffsAtivos(l.ativos), euPosso: l.euPosso === true };
     })(),
     mine: { slot: itemOk(mine.slot) ? mine.slot : null, capReached: mine.capReached === true },
   };
@@ -483,6 +644,9 @@ const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.slice(
 export function sanitizeGuildView(raw: unknown): GuildView | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
+  const casa = sanitizeCasa(r.casa);
+  // Os buffs do clã valem fora da folha da Guilda (efeito local): guarda os da vista mais recente (cada um vence sozinho).
+  if (casa) rememberClanBuffs(casa.buffs.ativos);
   const list = Array.isArray(r.members) ? r.members : [];
   const declared = typeof r.size === 'number' && Number.isFinite(r.size) ? Math.floor(r.size) : 0;
   const size = Math.max(list.length, declared);
@@ -540,7 +704,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     gestureReceived: r.gestureReceived === true,
     raid: sanitizeRaid(r.raid),
     ...(feiraResumo ? { feira: feiraResumo } : {}),
-    casa: sanitizeCasa(r.casa),
+    casa,
   };
 }
 
@@ -644,9 +808,12 @@ export const createGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
 export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildJoin', { method: 'POST', body: { id, code, dayKey: dia(tz) } }).then(viewOf);
 
-// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga + pedido aprovado pelo anfitrião ──
-/** Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código. */
-export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number }
+// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga (e os cheios, §322) + pedido aprovado pelo anfitrião ──
+/**
+ * Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código.
+ * `full` (§322): o clã está cheio — aparece com o selo "Cheia" e sem botão de pedir.
+ */
+export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number; full: boolean }
 export interface GuildPending { dirId: string; name: string | null }
 export interface GuildDirectory { clans: GuildDirectoryClan[]; pending: GuildPending | null }
 /** Um pedido visto pelo anfitrião: id opaco por clã + o nome público de quem pediu. */
@@ -666,10 +833,12 @@ export function sanitizeGuildDirectory(raw: unknown): GuildDirectory {
     const x = c as Record<string, unknown>;
     const size = Math.floor(Number(x.size)), max = Math.floor(Number(x.max));
     if (typeof x.dirId !== 'string' || !OPACO.test(x.dirId) || typeof x.name !== 'string' || !x.name) return [];
-    if (!(size > 0) || !(max > 0) || size >= max) return [];
-    return [{ dirId: x.dirId, name: str(x.name, 40), size, max }];
+    if (!(size > 0) || !(max > 0) || size > max) return [];
+    // Cheio = o servidor disse `full` OU o tamanho chegou ao teto (nunca mostra "pedir" num clã sem vaga).
+    return [{ dirId: x.dirId, name: str(x.name, 40), size, max, full: x.full === true || size >= max }];
   }).slice(0, 50);
-  return { clans, pending: sanitizePending(r.pending) };
+  // §322: os com vaga primeiro (ordem estável: a do servidor dentro de cada grupo).
+  return { clans: [...clans.filter(c => !c.full), ...clans.filter(c => c.full)], pending: sanitizePending(r.pending) };
 }
 export function sanitizeJoinRequests(raw: unknown): GuildJoinRequest[] {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
@@ -725,6 +894,30 @@ export const guildGesture = (id: string, kind: GuildGesture, tz?: PlayerDayAncho
 export const leaveGuild = (id: string) =>
   guildCall<{ ok: true }>('guildLeave', { method: 'POST', body: { id } });
 
+/**
+ * Convidar alguém para o clã (§321, o "Convidar" do Salão): o servidor manda ao convidado uma carta do Papus com o nome e o
+ * código do clã. `to` é o pid público (da busca de jogadores). O resultado é um ESTADO da linha, não uma exceção:
+ * cada um tem a sua frase na folha de convite.
+ */
+export type GuildInviteResult = 'sent' | 'member' | 'inGuild' | 'full' | 'notFound' | 'rate' | 'offline' | 'login' | 'error';
+export async function inviteToGuild(id: string, to: string, tz?: PlayerDayAnchor): Promise<GuildInviteResult> {
+  try {
+    await guildCall<{ invited: true }>('guildInvite', { method: 'POST', body: { id, to, dayKey: dia(tz) } });
+    return 'sent';
+  } catch (e) {
+    if (!(e instanceof GuildError)) return 'error';
+    const erro = (e.raw && typeof e.raw === 'object' ? (e.raw as { error?: unknown }).error : '') ?? '';
+    if (e.kind === 'unavailable') return 'offline';
+    if (e.kind === 'login' || e.kind === 'deleted') return 'login';
+    if (e.kind === 'rateLimit') return 'rate';
+    if (e.kind === 'full') return 'full';
+    if (e.kind === 'alreadyIn') return 'inGuild';
+    if (erro === 'already member') return 'member';
+    if (erro === 'player not found') return 'notFound';
+    return 'error';
+  }
+}
+
 export const renameGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildRename', { method: 'POST', body: { id, name, dayKey: dia(tz) } }).then(viewOf);
 
@@ -745,8 +938,8 @@ export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
  * exatamente como antes.
  */
 export const hitGuildRaidEvento = (id: string, tz?: PlayerDayAnchor) =>
-  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
-    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento) }));
+  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown; feiraLoja?: unknown; achado?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento), feiraLoja: sanitizeFeiraLoja(r.feiraLoja), achado: sanitizeAchado(r.achado) }));
 
 // ── A FEIRA: O CHEFE E O DESAFIO (client; servidor em `functions/api/_feira.js`) ─────────────────────────────────────
 // Desligada no servidor = 404 `not available` em toda rota: aqui isso é "a Feira não existe" (`null`), nunca um erro.
@@ -788,14 +981,14 @@ export const claimGuildFeira = (id: string, k?: number, tz?: PlayerDayAnchor): P
     });
 
 /** Começa o Desafio de hoje: o servidor gera a instância e o relógio do piso de tempo. */
-export const startGuildFeiraTrail = (id: string, tz?: PlayerDayAnchor): Promise<FeiraTrail | null> =>
-  guildCall<{ trail?: unknown }>('guildFeiraTrailStart', { method: 'POST', body: { id, dayKey: dia(tz) } })
+export const startGuildFeiraTrail = (id: string, tz?: PlayerDayAnchor, k?: number): Promise<FeiraTrail | null> =>
+  guildCall<{ trail?: unknown }>('guildFeiraTrailStart', { method: 'POST', body: { id, dayKey: dia(tz), ...(k !== undefined ? { k } : {}) } })
     .then(r => sanitizeFeiraTrail(r.trail))
     .catch(e => { if (feiraAusente(e)) return null; throw e; });
 
 /** Entrega a solução. 400 (errada / rápida demais), 409 (já cumprido / não começou), 429 (limite do dia): `GuildError`. */
-export const doneGuildFeiraTrail = (id: string, solution: FeiraSolution, tz?: PlayerDayAnchor): Promise<FeiraTrailDone | null> =>
-  guildCall<unknown>('guildFeiraTrailDone', { method: 'POST', body: { id, dayKey: dia(tz), ...solution } })
+export const doneGuildFeiraTrail = (id: string, solution: FeiraSolution, tz?: PlayerDayAnchor, k?: number): Promise<FeiraTrailDone | null> =>
+  guildCall<unknown>('guildFeiraTrailDone', { method: 'POST', body: { id, dayKey: dia(tz), ...solution, ...(k !== undefined ? { k } : {}) } })
     .then(r => sanitizeFeiraTrailDone(r))
     .catch(e => { if (feiraAusente(e)) return null; throw e; });
 
@@ -807,12 +1000,14 @@ export const donateToGuild = (id: string, bits: number, tz?: PlayerDayAnchor) =>
   guildCall<{ accepted?: number; guild: unknown }>('guildDonate', { method: 'POST', body: { id, dayKey: dia(tz), bits } })
     .then(r => ({ accepted: typeof r.accepted === 'number' && r.accepted > 0 ? Math.floor(r.accepted) : 0, guild: viewOf(r) }));
 
+// LÁPIDE (10/11/2026): `buyGuildShopItem` (a Loja do clã) saiu; os Buffs do clã a substituem (`buyGuildBuff`).
+
 /**
- * Compra na LOJA do clã. Manda SÓ `itemId` + `opId` (nunca preço): o servidor decide preço e saldo, e repetir o
- * MESMO `opId` (reenvio após queda de rede) não cobra de novo. 409 = saldo curto / já é do clã (o chamador relê).
+ * Compra um BUFF do clã com o tesouro (só o anfitrião). Manda SÓ `buffId` + `opId` (nunca preço); repetir o MESMO `opId` não cobra de
+ * novo. 409 = saldo curto (o chamador relê); 403 = não é o anfitrião.
  */
-export const buyGuildShopItem = (id: string, itemId: string, opId: string, tz?: PlayerDayAnchor) =>
-  guildCall<{ repeated?: boolean; guild: unknown }>('guildShopBuy', { method: 'POST', body: { id, dayKey: dia(tz), itemId, opId } }).then(viewOf);
+export const buyGuildBuff = (id: string, buffId: string, opId: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ repeated?: boolean; guild: unknown }>('guildBuffBuy', { method: 'POST', body: { id, dayKey: dia(tz), buffId, opId } }).then(viewOf);
 
 /** Põe (ou tira, com `null`) o item do SEU slot na casa. Um item por pessoa. */
 export const setGuildSlot = (id: string, item: string | null, tz?: PlayerDayAnchor) =>
@@ -858,6 +1053,16 @@ export const seekGuildWar = (id: string, tz?: PlayerDayAnchor) =>
     state: (['small', 'already', 'waiting', 'done'] as const).find(x => x === r.state) ?? 'waiting',
     war: sanitizeWar(r.war),
   }));
+
+/** O replay da guerra de clã (22/11/2026): a semente e as duas fichas de cada confronto, como o servidor gravou. */
+export interface GuildWarReplay { enemy: string; duels: Array<{ seed: number; me: DuelSide; opp: DuelSide }> }
+export const getGuildWarReplay = (id: string): Promise<GuildWarReplay | null> =>
+  guildCall<{ replay?: unknown }>('guildWarReplay', { params: { id } }).then(r => {
+    const x = r.replay as { enemy?: unknown; duels?: unknown } | null | undefined;
+    if (!x || !Array.isArray(x.duels)) return null;
+    const duels = x.duels.filter((d): d is GuildWarReplay['duels'][number] => !!d && typeof d === 'object' && Number.isFinite((d as { seed?: unknown }).seed) && !!(d as { me?: unknown }).me && !!(d as { opp?: unknown }).opp).slice(0, 4);
+    return duels.length ? { enemy: typeof x.enemy === 'string' ? x.enemy.slice(0, 24) : '', duels } : null;
+  });
 
 /** O que há para colher: semanas com direito (`pending`), os cenários já liberados e a peça da maré. */
 export interface GuildRewards {
@@ -931,3 +1136,16 @@ export const claimGuildReward = (id: string, week: string, tz?: PlayerDayAnchor)
     if (!c) throw new GuildError('server', 200);
     return c;
   });
+
+// ── A FEIRA DE VERDADE (rara; servidor em `functions/api/_feiraLoja.js`) ───────────────────────────────────────────
+/** A loja de hoje (reabrir a folha). `null` = sem feira, Feira desligada ou servidor antigo. */
+export const getGuildFeiraLoja = (id: string, tz?: PlayerDayAnchor): Promise<FeiraLoja | null> =>
+  guildCall<{ loja?: unknown }>('guildFeiraLoja', { params: { id, dayKey: dia(tz) } })
+    .then(r => sanitizeFeiraLoja(r.loja))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
+
+/** Compra de um item do Mercado: o SERVIDOR confere a oferta, o limite de 1 e devolve o PREÇO; o cliente debita esse preço. */
+export const buyGuildFeiraLoja = (id: string, itemId: string, tz?: PlayerDayAnchor): Promise<{ price: number } | null> =>
+  guildCall<{ ok?: boolean; price?: unknown }>('guildFeiraLojaBuy', { method: 'POST', body: { id, dayKey: dia(tz), itemId } })
+    .then(r => (r.ok === true && typeof r.price === 'number' && Number.isFinite(r.price) && r.price >= 1 ? { price: Math.floor(r.price) } : null))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });

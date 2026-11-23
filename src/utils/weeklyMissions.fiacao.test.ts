@@ -15,7 +15,8 @@ import { weeklyMissionPool } from './weeklyMissions';
 // testa que a regra está PLUGADA — que é a coisa que os outros testes, por
 // construção, não conseguem ver.
 // ---------------------------------------------------------------------------
-const app = readFileSync('src/App.tsx', 'utf8');
+// `cook-dish` (15/11/2026) é contada no ponto único do prato cozinhado (`restaurant.ts › applyCook`), que o App só chama; o guard lê os dois.
+const app = readFileSync('src/App.tsx', 'utf8') + readFileSync('src/utils/restaurant.ts', 'utf8');
 // minimal-ui F5: as missões da semana moram no Torneio (Arena), aba Missões.
 const torneio = readFileSync('src/components/TournamentPage.tsx', 'utf8');
 
@@ -37,7 +38,9 @@ describe('as missões semanais estão plugadas', () => {
     // missão nova que alguém acrescenta ao pool sem ligar em lugar nenhum.
     const semGatilho = weeklyMissionPool()
       .map(m => m.id)
-      .filter(id => !app.includes(`contarMissao('${id}')`));
+      // `haunted-done`: o toque na Home conta por `countHauntedMission` (utils/taskCompletionPay.ts), a mesma regra do widget da Home.
+      .filter(id => !(id === 'haunted-done' && app.includes('countHauntedMission(prev, new Date())')))
+      .filter(id => !app.includes(`contarMissao('${id}')`) && !app.includes(`countWeeklyMission(prev, '${id}'`) && !app.includes(`countWeeklyMission(r.state, '${id}'`) && !app.includes(`countWeeklyMission(comprou, '${id}'`) && !app.includes(`countWeeklyMission(resgatou, '${id}'`) && !app.includes(`'${id}', new Date(now))`));
     expect(semGatilho).toEqual([]);
   });
 

@@ -1,5 +1,6 @@
 import { RankingPanel } from './RankingPanel';
 import type { GameChallenge } from '../utils/gameChallenge';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 
@@ -11,6 +12,7 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { bitsForLevel } from '../utils/minigameDifficulty';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { fxFrame } from '../utils/combatFx';
@@ -207,8 +209,10 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge, initialLevel }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge, initialLevel, onReplayRound }: {
   /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`): começa direto, sem os CTAs de dentro. */
+  /** Sessão de diversão (`utils/funSession.ts`): jogar de novo conta uma rodada. `false` = sem energia (o AreaView fecha o jogo). Ausente = sem custo. */
+  onReplayRound?: () => boolean;
   initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): vence ao atingir `goal` de score; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
@@ -219,7 +223,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
   demoCharacterId?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   /** Mission counter: reports the final score of each run. */
   onScore: (score: number) => void;
   onExit: () => void;
@@ -588,11 +592,12 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       // Game over
       const score = Math.floor(s.score);
-      const pts = Math.floor(score / 100);
+      const pts = bitsForLevel(Math.floor(score / 100), s.level);
       setFinalScore(score);
       setPrevBest(readNumber(STORAGE_KEYS.DINO_BEST, 0));
       setPlayedLevel(s.level === 2 ? 2 : 1);
-      setEarned(pts);
+      // O que a tela mostra é o que entrou: o funil devolve o creditado (teto diário), não o pedido.
+      setEarned(pts > 0 ? (onEarnPoints(pts) ?? pts) : 0);
       // C-6 (run `som-01`): `pts === 0` significa score ABAIXO de 100 — ou seja,
       // a primeira partida de quem esta aprendendo o minijogo recebia o som de
       // perder a forma. Fim de partida sem ponto e silencioso; o placar final
@@ -600,7 +605,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       // C-11 (decisão do dono, 30/09/2026): vencer um minijogo NÃO é concluir
       // uma tarefa — pela R-CAT a categoria vem do EVENTO, e `playTaskComplete`
       // é a categoria de conclusão. Fica mudo até existir a categoria arcade.
-      if (pts > 0) onEarnPoints(pts);
       if (s.level === 2) emitFeat('dinoNormalBest', score);
       onScore(score);
       setBest(prev => {
@@ -630,8 +634,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Avançado: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
-          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Advanced: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit (2 no Avançado). Avançado: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit (2 in Advanced). Advanced: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}
@@ -694,6 +698,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       )}
       {phase === 'over' && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="dino"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
           gameName={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
@@ -713,7 +718,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
           scene={DINO_SCENE.bg}
           playAgainLabel={isPt ? 'Correr de novo' : 'Run again'}
-          onPlayAgain={() => start(playedLevel)}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; start(playedLevel); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
           below={<RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />}

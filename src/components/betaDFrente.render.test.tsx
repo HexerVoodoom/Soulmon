@@ -23,13 +23,12 @@ import type { CreatureStage } from '../utils/oracle';
 afterEach(() => cleanup());
 
 describe('9.1 — Salão de Jogos', () => {
-  it('quatro cards (Soul Barrage é o 4º), com respiro de 16 e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
+  it('quatro cards (Soul Barrage é o 4º), em cartas ilustradas (GameCard; pedido do dono em 17/11/2026, que revoga a lista de 04/11) e sem o velociraptor nem a tesoura; cada título tem ícone', () => {
     const { container } = renderWithCss(<SalaoSheet language="pt-BR" onStart={() => {}} />);
     const cards = container.querySelectorAll('li');
     expect(cards).toHaveLength(4);
-    const lista = container.querySelector('ul') as HTMLElement;
-    expect(lista.style.gap).toContain('--sm2-space-4');
-    for (const li of cards) expect(li.querySelector('img[data-pixel-icon]')).not.toBeNull();
+    expect(container.querySelector('ul.sm-game-card-grid')).not.toBeNull();
+    for (const li of cards) expect(li.querySelector('img[data-pixel-icon], img[data-game-card-art]')).not.toBeNull();
   });
   it('o fonte não importa mais icon-game-dino nem icon-game-rps (e o Elemental Fusion mantém a gema)', () => {
     const src = readFileSync(join(__dirname, 'play/PlaySheets.tsx'), 'utf-8');
@@ -39,18 +38,20 @@ describe('9.1 — Salão de Jogos', () => {
 });
 
 describe('10.1 — ícones de categoria no Santuário', () => {
-  it('as 8 categorias têm arte (qualquer caixa) e a categoria inválida não quebra', () => {
-    expect(Object.keys(CATEGORY_ICON_ART).sort()).toEqual(Object.keys(CATEGORY_ICONS).sort());
-    expect(categoryIconArt('study')).toBe(CATEGORY_ICON_ART.Study);
-    expect(categoryIconArt('STUDY')).toBe(CATEGORY_ICON_ART.Study);
+  it('as categorias com arte (as 7 herdadas; as outras são slots a gerar, caem no glifo) aceitam qualquer caixa e a inválida não quebra', () => {
+    const comIcone = Object.keys(CATEGORY_ICONS);
+    for (const id of Object.keys(CATEGORY_ICON_ART)) expect(comIcone).toContain(id);
+    expect(Object.keys(CATEGORY_ICON_ART).length).toBeGreaterThanOrEqual(7);
+    expect(categoryIconArt('study')).toBe(CATEGORY_ICON_ART.aprendizado);
+    expect(categoryIconArt('STUDY')).toBe(CATEGORY_ICON_ART.aprendizado);
     expect(categoryIconArt('nada')).toBeUndefined();
     expect(categoryIconArt(undefined)).toBeUndefined();
   });
   it('as listas "O que você mais repete" e "Últimas conclusões" desenham a imagem da categoria, não o emoji', () => {
     const { container } = renderWithCss(
       <StatsPage
-        completedTasks={[{ id: 't1', name: 'Alongar', category: 'Health', emoji: '🧘', completedAt: new Date().toISOString() }]}
-        activityStats={{ a1: { name: 'Alongar', emoji: '🧘', category: 'Health', completionCount: 3 } }}
+        completedTasks={[{ id: 't1', name: 'Alongar', category: 'corpo', emoji: '🧘', completedAt: new Date().toISOString() }]}
+        activityStats={{ a1: { name: 'Alongar', emoji: '🧘', category: 'corpo', completionCount: 3 } }}
         language="pt-BR"
         totalXP={50}
       />,
@@ -75,7 +76,7 @@ describe('10.1 — ícones de categoria no Santuário', () => {
   });
 });
 
-describe('10.3 — Centro de Evolução: abas compactas', () => {
+describe('10.3 — Centro de Evolução: os três caminhos lado a lado (09/11/2026, substitui as abas compactas)', () => {
   const stage = (over: Partial<CreatureStage>): CreatureStage => ({
     stage: 'rookie', stageName: { pt: 'Rookie', en: 'Rookie' }, name: 'Fagul',
     description: { pt: 'x', en: 'x' }, imagePrompt: 'p', imagePromptFallback: 'pf', ...over,
@@ -84,52 +85,20 @@ describe('10.3 — Centro de Evolução: abas compactas', () => {
     currentStageId: 'rookie', currentBranch: 'harmony' as const,
     powerPoints: 4, harmonyPoints: 12, benevolencePoints: 7,
     evolutionPoints: 5, todayGauge: 0, gaugeGoal: 30,
-    stages: [stage({})], unlockedEvolutions: ['rookie'],
+    stages: [stage({}), ...(['poder', 'harmonia', 'benevolencia'] as const).map(b => stage({ stage: 'champion', branch: b, name: `C-${b}`, stageName: { pt: 'Champion', en: 'Champion' } }))],
+    unlockedEvolutions: ['rookie'],
   };
-  it('PT: tablist com as três abas, nome inteiro e número; a ativa é a do caminho atual; sem pílula (radio)', () => {
+  it('PT: Poder / Harmonia / Benevolência inteiros, com número, sem abas nem radio', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    const tablist = screen.getByRole('tablist', { name: 'Linha de evolução' });
-    expect(tablist.className).toContain('sm2-kit-tabs-compact');
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.querySelector('[data-tab-label]')!.textContent)).toEqual(['Poder', 'Harmonia', 'Benevolência']);
-    expect(tabs.map(t => t.querySelector('[data-tab-meta]')!.textContent)).toEqual(['4', '12', '7']);
-    expect(tabs.map(t => t.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
-    // nada de truncar: sem reticências nem overflow escondido no rótulo
-    for (const t of tabs) expect((t.querySelector('[data-tab-label]') as HTMLElement).style.textOverflow).toBe('');
+    const rot = (a: string) => screen.getByTestId(`sm-caminho-rotulo-${a}`).textContent;
+    expect([rot('power'), rot('harmony'), rot('benevolence')]).toEqual(['Poder4', 'Harmonia12', 'Benevolência7']);
   });
   it('EN: Power / Harmony / Benevolence inteiros', () => {
     renderWithCss(<EvolutionPath {...base} language="en-US" />);
-    expect(screen.getAllByRole('tab').map(t => t.querySelector('[data-tab-label]')!.textContent)).toEqual(['Power', 'Harmony', 'Benevolence']);
-  });
-  it('toque troca de aba', () => {
-    renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    fireEvent.click(screen.getByRole('tab', { name: /Benevolência/ }));
-    expect(screen.getByRole('tab', { name: /Benevolência/ }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: /Harmonia/ }).getAttribute('aria-selected')).toBe('false');
-  });
-  it('deslize para a esquerda avança, para a direita volta; gesto curto ou vertical não troca; nas pontas não passa', () => {
-    const { container } = renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    const area = container.querySelector('[data-branch-swipe]') as HTMLElement;
-    const sel = () => screen.getAllByRole('tab').findIndex(t => t.getAttribute('aria-selected') === 'true');
-    const deslizar = (dx: number, dy = 0) => {
-      fireEvent.pointerDown(area, { clientX: 200, clientY: 300 });
-      fireEvent.pointerUp(area, { clientX: 200 + dx, clientY: 300 + dy });
-    };
-    expect(sel()).toBe(1);
-    deslizar(-80);            // esquerda → próxima
-    expect(sel()).toBe(2);
-    deslizar(-80);            // já é a última
-    expect(sel()).toBe(2);
-    deslizar(30);             // curto demais
-    expect(sel()).toBe(2);
-    deslizar(80, 90);         // mais vertical que horizontal
-    expect(sel()).toBe(2);
-    deslizar(80);             // direita → anterior
-    expect(sel()).toBe(1);
-    deslizar(80);
-    deslizar(80);             // já é a primeira
-    expect(sel()).toBe(0);
+    const rot = (a: string) => screen.getByTestId(`sm-caminho-rotulo-${a}`).textContent;
+    expect([rot('power'), rot('harmony'), rot('benevolence')]).toEqual(['Power4', 'Harmony12', 'Benevolence7']);
   });
 });
 
@@ -166,5 +135,18 @@ describe('12 — humor', () => {
     renderWithCss(<DailyReportModal report={relatorio} onClose={() => {}} language="en-US" moodToday={5} onPickMood={() => {}} />);
     ateHoje();
     expect(document.querySelector('[data-mood-label]')!.textContent).toBe('Great');
+  });
+});
+
+describe('Salão: ganho no pergaminho, não abaixo da carta', () => {
+  it.each([['pt-BR', /por vitória/, /a cada 100 pts/, /por rodada/], ['en-US', /per win/, /per 100 pts/, /per round/]] as const)('%s', (lang, win, pts, round) => {
+    const { container } = renderWithCss(<SalaoSheet language={lang} onStart={() => {}} />);
+    const ganhos = [...container.querySelectorAll('[data-moldura-desc] [data-game-card-ganho]')].map(e => e.textContent ?? '');
+    expect(ganhos).toHaveLength(4);
+    expect(ganhos.some(t => win.test(t))).toBe(true);
+    expect(ganhos.filter(t => pts.test(t))).toHaveLength(2);
+    expect(ganhos.some(t => round.test(t))).toBe(true);
+    for (const b of container.querySelectorAll('[data-game-card-badges]')) expect(b.textContent).not.toMatch(win);
+    expect(container.querySelectorAll('[data-moldura-nome]')).toHaveLength(4);
   });
 });

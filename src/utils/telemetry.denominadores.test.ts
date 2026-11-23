@@ -94,7 +94,12 @@ describe('haunted_done / checkin_shown — fiação (WP0.13, WP0.14)', () => {
   it('`haunted_done` só sai quando a tarefa estava assombrada, e fora do updater', () => {
     const src = app();
     const emissoes = src.match(/track\('haunted_done'/g) ?? [];
-    expect(emissoes, 'um emissor, não vários').toHaveLength(1);
+    // Dois emissores: o toque na Home e a drenagem da fila do widget da Home (18/11/2026), que paga a
+    // mesma conclusão pela mesma regra. O do widget é gateado pelo `relief` que `applyTaskCompletion` mediu.
+    expect(emissoes, 'Home + widget, não mais').toHaveLength(2);
+    const w = src.lastIndexOf("track('haunted_done'");
+    expect(src.slice(w - 40, w)).toMatch(/if \(p\.relief\)/);
+    expect(src.slice(src.lastIndexOf('widgetFeedbackRef.current = paid =>', w), w)).toMatch(/for \(const p of paid\)/);
     const i = src.indexOf("track('haunted_done'");
     // A linha imediatamente anterior é o gate; o `relief` é calculado acima dela.
     const antes = src.slice(src.lastIndexOf('const relief', i), i);

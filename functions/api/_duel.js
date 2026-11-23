@@ -140,6 +140,12 @@ const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' ? (own(
 
 /** A lista FECHADA de elementos do app (20 base + 190 pares: `CLASS_ELEMENT_ORDER` + `DERIVED_ELEMENT_PAIRS`; travada por `fighterIdentity.parity.test.ts`). O elemento publicado em `fx` só sai se estiver aqui. */
 export const ELEMENTOS_FICHA = new Set([
+  // os 50 curados (§232)
+  'geiser', 'vulcao', 'deserto', 'relampago_seco', 'supernova', 'nevasca', 'permafrost', 'monsoes', 'peste_negra', 'coro_dos_afogados', 'ossario_vivo', 'jardim_eterno', 'aurora_boreal', 'duelista_temporal', 'pulso_cosmico', 'sabbat', 'hipnose', 'materia_escura', 'milagre', 'memoria', 'coral_celeste', 'via_lactea', 'delirio', 'cacador_de_almas', 'presagio', 'horizonte_de_eventos', 'lamina_do_juizo', 'bencao_marcial', 'arauto', 'farol', 'carniceiro', 'entropia_final', 'gladiador', 'punho_gravitico', 'avatar_elemental', 'titano_forjado', 'cataclismo', 'sopro_do_dragao', 'ragnarok', 'genesis', 'tempestade_perfeita', 'leviata', 'senhor_da_praga', 'sinfonia_do_caos', 'vontade_absoluta', 'arquiteto_da_realidade', 'ceifador_estelar', 'renascimento', 'juizo_final', 'cavaleiro_absoluto',
+  // curados novos e promovidos (emenda ao §232, 05/11/2026)
+  'clareira', 'alto_forno', 'bencao_feerica', 'floresta_ancestral', 'colosso_blindado', 'corte_feerica', 'pestilencia', 'maldicao', 'cyber',
+  // lote 5 (23/11/2026, P5)
+  'fantasma', 'morto_vivo', 'sangue', 'furia',
   'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
   'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
   'fogo_negro', 'chama_solar', 'fogo_infernal', 'chama_azul', 'fenix', 'fervor', 'pantano', 'gelo',
@@ -190,13 +196,21 @@ export const STARTER_ELEMENT = Object.freeze({ industrial: 'terra', nascente: 's
  * (`demoCharacterId`) ou o dominante do oráculo (`soulmonMeta.dominantElement`), da lista fechada. O corvo do administrador é neutro
  * (`{ neutro: true }`). Golpe básico E especial usam este; a ficha decide só a forma/escola. Derivado do SAVE no servidor.
  * @param {any} state
- * @returns {{ el: string | null, neutro: boolean }}
+ * §232: o elemento do ESTÁGIO gravado vem antes do de nascimento, e a poção (`potionElement`) entra antes dele, como no cliente.
+ * `base` = a base nº 1 do registro, só quando é o registro que decide: é ela que mede a vantagem.
+ * @returns {{ el: string | null, neutro: boolean, base?: string | null }}
  */
 export function petElementDeSave(state) {
   const meta = state && typeof state === 'object' ? state.soulmonMeta : null;
   if (meta && typeof meta === 'object' && meta.creature === 'corvo') return { el: null, neutro: true };
   const ini = typeof state?.demoCharacterId === 'string' && Object.hasOwn(STARTER_ELEMENT, state.demoCharacterId) ? STARTER_ELEMENT[state.demoCharacterId] : null;
-  return { el: ini ?? idElemento(meta && typeof meta === 'object' ? meta.dominantElement : null), neutro: false };
+  const pocao = idElemento(state?.potionElement);
+  if (pocao) return { el: pocao, neutro: false };
+  if (ini) return { el: ini, neutro: false };
+  const st = state?.elementoJornada?.estagios?.[fichaStageOf(state?.evolutionStage)];
+  const elReg = idElemento(st?.id), baseReg = idElemento(st?.base);
+  if (elReg && baseReg) return { el: elReg, neutro: false, base: baseReg };
+  return { el: idElemento(meta && typeof meta === 'object' ? meta.dominantElement : null), neutro: false };
 }
 
 /**
@@ -235,8 +249,15 @@ export function duelSide(save, opts = {}) {
   const family = hx.specialFamily ?? familyFicha;
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
+  // REGISTRO §332 (13/11/2026): o TIPO do ataque básico (o acabamento corte × splash) do oponente sai de um sorteio estável pela
+  // identidade SEM itens; só as Luvas trocam. `orig` = família e elementos antes de Coroa/Amuleto/Garra (só com algum deles
+  // equipado); `golpe` = o ataque das Luvas (lista fechada `HEX_STRIKES`). Os dois são SÓ visuais: nenhum cálculo do duelo os lê,
+  // e o cliente antigo os ignora (campo ausente = comportamento antigo).
+  const elBasicaOrig = pet.neutro ? null : (pet.el ?? elementoDoBasico(skills));
+  const elEspecialOrig = pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId));
+  const comItemDeIdentidade = Boolean(hx.specialFamily || hx.specialElement || hx.basicElement);
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : (pet.el ?? elementoDoBasico(skills))), elEspecial: hx.specialElement ?? (pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId))), ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}) } };
+  return { combatant, special: specialOf(family, hx.specialEffect), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, ...(hx.specialEffect ? { efeito: hx.specialEffect } : {}), lex, elBasica: hx.basicElement ?? elBasicaOrig, elEspecial: hx.specialElement ?? elEspecialOrig, ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}), ...(typeof state.simMagia === 'boolean' ? { magia: state.simMagia } : {}), ...(!hx.basicElement && pet.base ? { elVantagem: pet.base } : {}), ...(comItemDeIdentidade ? { orig: { familia: especial ? familyFicha : null, elBasica: elBasicaOrig, elEspecial: elEspecialOrig } } : {}), ...(hx.strike ? { golpe: hx.strike } : {}) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */
@@ -265,8 +286,8 @@ export function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
   // Vantagem elemental (dono, 27/10/2026): o golpe basico de cada lado contra o elemento do outro move +-1 golpe exibido. So a Guerra de Guildas passa `elementScale` 0,5; Torneio/Duelo ranqueado passa 0 (padrao) e luta sem elemento (REGISTRO 177).
   const { meCombatant, oppCombatant } = elementScale > 0 ? aplicarElementosDuelo(me, opp, elementScale) : { meCombatant: me.combatant, oppCombatant: opp.combatant };
   const g = fightSteps(
-    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
-    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
+    { combatant: meCombatant, special: me.special, dotResist: me.dotResist, invoca: me.invoca },
+    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist, invoca: opp.invoca },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];

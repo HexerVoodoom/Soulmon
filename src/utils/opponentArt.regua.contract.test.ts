@@ -44,6 +44,7 @@ function chamadas(src: string, nome: string): string[][] {
 const SEM_LINHA_PERMITIDO: Record<string, number> = {
   'components/guild/GuildSheet.tsx': 1, // `mySprite || getSpriteForStage('rookie')` — o próprio jogador, calculado UMA vez e reusado (card único do Bosque)
   'components/TournamentPage.tsx': 1, // previewSrc da moldura — o próprio jogador
+  'components/SettingsPage.tsx': 1, // imagem do card Home/Widget — o próprio jogador
   'components/perfil/ProfileEditor.tsx': 1, // previewSrc da moldura do perfil — o próprio jogador
 };
 const OPONENTE = /\b(opp|opponent|duel|rival|enemy|member|friend|player|result\.opponent|training\.npc)\b/i;

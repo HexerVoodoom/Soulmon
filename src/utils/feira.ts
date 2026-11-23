@@ -24,7 +24,7 @@ function pct(v: unknown): number {
   return Math.min(100, Math.max(0, n));
 }
 
-export const FEIRA_TRAIL_GAMES = ['picross', 'zip', 'patches', 'troca', 'eco'] as const;
+export const FEIRA_TRAIL_GAMES = ['picross', 'zip', 'selo', 'troca', 'eco', 'patches'] as const; // `patches` (Colcha) só p/ trilha já aberta; o servidor não sorteia mais
 export type FeiraTrailGame = (typeof FEIRA_TRAIL_GAMES)[number];
 
 /** O evento que a VOLTA da Missão encontra (ou que a folha relê). */
@@ -113,12 +113,33 @@ export function sanitizeFeiraAttack(raw: unknown): FeiraAttack | null {
  * O registro do servidor no formato que a `BossFightScreen` toca (`FightEvent`). Só apresentação: o dano já está fechado
  * no servidor. O HP do SEU bicho desce com os golpes do lado 1; o do chefe é só informativo (a barra do clã vem de `poolPct*`).
  */
+/** Ritmo de energia (pontos/s) depois do último especial, quando não há outro para mirar — o `ENERGY.perSecond` do núcleo. */
+const FEIRA_ENERGY_IDLE_PER_S = 2;
+
+/**
+ * A ENERGIA de exibição (0..`ENERGY_TRIGGER`=100) no instante `t` (dono, 04/11/2026: a luta da Feira mostra a barra de
+ * especial como a Arena/Duelo). O registro do servidor não traz energia, então ela é RECONSTRUÍDA a partir dos `cast`:
+ * sobe de 0 (`prev` = início ou último especial já soltado) até cheia exatamente no próximo especial (`next`); sem
+ * próximo, sobe no ritmo base. Só apresentação.
+ */
+export function feiraEnergyAt(prev: number, next: number | null, t: number): number {
+  if (next === null) return Math.min(100, Math.max(0, (t - prev) * FEIRA_ENERGY_IDLE_PER_S));
+  const span = next - prev;
+  return span <= 0 ? 100 : Math.min(100, Math.max(0, ((t - prev) / span) * 100));
+}
+
 export function mapFeiraLog(log: readonly FeiraLogEntry[]): FightEvent[] {
   const ordered = [...log].sort((x, y) => x.t - y.t);
   let me = 1;
   let foe = 1;
+  const casts: [number[], number[]] = [[], []];
+  for (const e of ordered) if (e.k === 'c') casts[e.s].push(e.t);
+  const used = [0, 0];
+  const prev = [0, 0];
+  const energyOf = (side: 0 | 1, t: number) => feiraEnergyAt(prev[side], casts[side][used[side]] ?? null, t);
   const out: FightEvent[] = [];
   for (const e of ordered) {
+    if (e.k === 'c') { prev[e.s] = e.t; used[e.s]++; } // o especial SOLTOU: a barra dele esvazia aqui
     const hit = e.k === 'a' || e.k === 't';
     if (hit && e.s === 1) me = Math.max(0, me - e.f);
     if (hit && e.s === 0) foe = Math.max(0, foe - e.f);
@@ -128,7 +149,7 @@ export function mapFeiraLog(log: readonly FeiraLogEntry[]): FightEvent[] {
       side: e.s,
       frac: hit ? e.f : 0,
       hp: [me, foe],
-      energy: [0, 0],
+      energy: [energyOf(0, e.t), energyOf(1, e.t)],
     });
   }
   return out;
@@ -167,6 +188,8 @@ export function sanitizeFeiraClaim(raw: unknown): FeiraClaim | null {
 export interface ZipInstance { size: number; numbers: number[] }
 export interface PatchClueIn { cell: number; area: number; shape: 'square' | 'tall' | 'wide' | 'any' }
 export interface PatchesInstance { size: number; clues: PatchClueIn[] }
+export interface SeloPanelIn { shape: number; count: number; dir: number; fill: number; marks: number }
+export interface SeloInstance { grid: SeloPanelIn[]; options: SeloPanelIn[] }
 export interface PicrossInstance { size: number; rows: number[][]; cols: number[][] }
 export interface TrocaCardIn { forma: 'young' | 'grown'; lugar: 'sky' | 'cave'; rule: 'forma' | 'lugar'; art: number }
 export interface TrocaInstance { deck: TrocaCardIn[] }
@@ -175,6 +198,7 @@ export interface EcoInstance { par: number }
 export type FeiraTrail =
   | { k: number; game: 'zip'; seed: number; puzzle: ZipInstance }
   | { k: number; game: 'patches'; seed: number; puzzle: PatchesInstance }
+  | { k: number; game: 'selo'; seed: number; puzzle: SeloInstance }
   | { k: number; game: 'picross'; seed: number; puzzle: PicrossInstance }
   | { k: number; game: 'troca'; seed: number; puzzle: TrocaInstance }
   | { k: number; game: 'eco'; seed: number; puzzle: EcoInstance };
@@ -202,6 +226,15 @@ export function sanitizeFeiraTrail(raw: unknown): FeiraTrail | null {
         return { cell: int(o.cell, 0, size * size - 1), area: int(o.area, 1, size * size), shape };
       });
       return clues.length > 0 ? { k, game: 'patches', seed, puzzle: { size, clues } } : null;
+    }
+    case 'selo': {
+      const panel = (c: unknown): SeloPanelIn => {
+        const o = obj(c) ?? {};
+        return { shape: int(o.shape, 0, 4), count: int(o.count, 1, 6), dir: int(o.dir, 0, 7), fill: int(o.fill, 0, 2), marks: int(o.marks, 1, 15) };
+      };
+      const grid = (Array.isArray(p.grid) ? p.grid.slice(0, 8) : []).map(panel);
+      const options = (Array.isArray(p.options) ? p.options.slice(0, 6) : []).map(panel);
+      return grid.length === 8 && options.length === 6 ? { k, game: 'selo', seed, puzzle: { grid, options } } : null;
     }
     case 'picross': {
       const size = int(p.size, 3, 10);
@@ -232,25 +265,35 @@ export function sanitizeFeiraTrail(raw: unknown): FeiraTrail | null {
 export type FeiraSolution =
   | { path: number[] }
   | { rects: Array<{ r: number; c: number; h: number; w: number }> }
+  | { choice: number }
   | { cells: number[][] }
   | { sides: Array<'left' | 'right'> }
   | { score: number };
 
 /** Tempo mínimo (ms) entre `start` e `done` por jogo — espelha `TRAIL_MIN_MS` do servidor. O cliente ESPERA este piso antes de enviar. */
-export const FEIRA_TRAIL_MIN_MS: Readonly<Record<FeiraTrailGame, number>> = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, troca: 10000, eco: 6000 });
+export const FEIRA_TRAIL_MIN_MS: Readonly<Record<FeiraTrailGame, number>> = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
 
-export interface FeiraTrailDone { reward: { emblems: number; sap: number }; receipt: string; evento: FeiraEvento | null }
+export interface FeiraTrailDone { reward: { emblems: number; sap: number; clanBits?: number }; receipt: string; evento: FeiraEvento | null }
 
 export function sanitizeFeiraTrailDone(raw: unknown): FeiraTrailDone | null {
   const r = obj(raw);
   if (!r || r.cleared !== true) return null;
   const w = obj(r.reward) ?? {};
   return {
-    reward: { emblems: int(w.emblems, 0, 20), sap: int(w.sap, 0, 100) },
+    reward: { emblems: int(w.emblems, 0, 20), sap: int(w.sap, 0, 100), clanBits: int(w.clanBits, 0, 100) },
     receipt: typeof r.receipt === 'string' ? r.receipt.slice(0, 80) : '',
     evento: sanitizeFeiraEvento(r.evento),
   };
 }
+
+/** O achado de último recurso da volta (Bits pessoais pequenos; o recibo é o do dia, creditado UMA vez). */
+export interface Achado { bits: number }
+export function sanitizeAchado(raw: unknown): Achado | null {
+  const r = obj(raw);
+  return r ? { bits: int(r.bits, 1, 50) } : null;
+}
+/** Quanto o desafio sintético da volta começa (o servidor usa `k` ≥ isto para o Desafio do Mercador). */
+export const DESAFIO_K0 = 500000;
 
 /** Chave do "já mostrei": o mesmo mistério no mesmo dia não reabre sozinho (marcada ao MOSTRAR). */
 export const feiraShownKey = (e: FeiraEvento, dayKey: string): string => `${e.k}:${e.kind}:${dayKey}`;

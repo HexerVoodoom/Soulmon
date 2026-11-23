@@ -4,7 +4,11 @@
  * abrir. O caminho até o reveal é o do ritual pago de verdade (ovo -> compra mockada -> Chocar -> geração real do
  * Oráculo); só a compra e o pedido do sprite são falsos.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding, type OnboardingCompleteData } from './SoulmonOnboarding';
@@ -70,12 +74,17 @@ async function ateOReveal(onComplete: (d: OnboardingCompleteData) => void) {
   }, { timeout: 60_000, interval: 50 });
   // o desenho chega depois do texto (a cerimônia de espera do reveal): deixa o pedido falso resolver
   await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-  await vi.waitFor(() => expect(falso.sprite).toHaveBeenCalled(), { timeout: 10_000 });
+  // Espera por ESTADO (o pedido do desenho saiu); o teto acompanha o da espera do reveal acima, não os 10 s que estouravam sob carga.
+  await vi.waitFor(() => expect(falso.sprite).toHaveBeenCalled(), { timeout: 60_000 });
   await act(async () => { await vi.advanceTimersByTimeAsync(100); });
   return batizado;
 }
 
-describe('D-110: o Soulmon se apresenta depois do batismo', () => {
+// Teto do CASO alinhado ao da espera que ele mesmo faz: `ateOReveal` espera POR ESTADO (o botão "Hatch <nome>") até 60 s,
+// mas o teto do runner era 15 s — a espera nunca podia usar o próprio orçamento e o caso morria como timeout opaco quando a
+// geração real do Oráculo (CPU pura, dezenas de imports dinâmicos já aquecidos no `beforeAll`) disputava núcleo com outras
+// sessões. A espera estoura primeiro (60 s) e diz o que não achou. Nenhum timer real novo; nada de componente tocado.
+describe('D-110: o Soulmon se apresenta depois do batismo', { timeout: 90_000 }, () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
     installFakeStorage();

@@ -21,7 +21,7 @@
  */
 
 import { levelCapFor, stageIndexOf } from '../types/progression';
-import { combatantAt, firstLevelOfStage, MAX_LEVEL, type StatWeights } from './combate/level';
+import { combatantAt, firstLevelOfStage, MAX_LEVEL, sanitizeStatFloor, type StatFloor, type StatWeights } from './combate/level';
 import type { Combatant } from './combate/curve';
 import type { AttrBonus } from './combate/bonus';
 
@@ -66,6 +66,8 @@ export interface SoulXPState {
   harmonyPoints?: number;
   benevolencePoints?: number;
   degeneratedByHP?: boolean;
+  /** Piso de atributo gravado ao evoluir (REGISTRO §229): lido por `sanitizeStatFloor`, nunca confiado cru. */
+  evoStatFloor?: unknown;
 }
 
 /** XP do estágio atual: o piso do estágio mais os dias perfeitos desde que ele começou. */
@@ -97,7 +99,20 @@ export function soulWeights(state: SoulXPState): StatWeights {
 
 /** Combatente do Soulmon de um estado (derivado; o bônus entra por `combate/bonus.ts`). */
 export function soulCombatant(state: SoulXPState, bonus: number | Partial<AttrBonus> = 0): Combatant {
-  return combatantAt(soulLevel(state), soulWeights(state), bonus);
+  return combatantAt(soulLevel(state), soulWeights(state), bonus, undefined, sanitizeStatFloor(state?.evoStatFloor));
+}
+
+/**
+ * "EVOLUIR NUNCA REDUZ" (REGISTRO §229): o piso que o `handleEvolve` grava. É o maior de cada atributo do Soulmon ANTES de evoluir
+ * (já com o piso anterior dentro), marcado com o índice do estágio de DESTINO. Só vale nesse estágio: a queda o torna inerte e uma nova
+ * evolução o reescreve a partir do valor derivado de então, então repetir degenerar/evoluir não acumula nada. "Trocar forma" (mesmo
+ * estágio) não passa por aqui. Destino que não sobe de estágio → `undefined` (apaga o piso).
+ */
+export function nextStatFloor(prev: SoulXPState, nextStage: string): StatFloor | undefined {
+  const s = stageIndexOf(nextStage);
+  if (s <= stageIndexOf(String(prev?.evolutionStage ?? 'rookie'))) return undefined;
+  const c = soulCombatant(prev);
+  return sanitizeStatFloor({ s, atk: c.atk, def: c.def, spd: c.spd });
 }
 
 // ── Texto do level (EN primeiro, PT-BR depois). Neutro: nada de perda. ──────

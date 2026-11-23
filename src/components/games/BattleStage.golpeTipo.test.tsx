@@ -164,3 +164,68 @@ describe('(D-86..D-90, 19/10/2026) o mapa evento → efeito da cena de combate',
     }
   });
 });
+
+describe('(6) corte × concussão (05/11/2026): só o acabamento do golpe corpo a corpo troca', () => {
+  const fx = (c: HTMLElement) => Array.from(c.querySelectorAll('[data-stage-fx]'));
+  const imgs = (c: HTMLElement) => fx(c).map(d => d.querySelector('img')?.getAttribute('src') ?? d.getAttribute('style') ?? '');
+  it('concussão: a mesma investida, SEM o corte e COM o splash do impacto; sem projétil; o som é o do corpo a corpo', () => {
+    vi.useFakeTimers();
+    const corte = render(<BattleStage {...base} action={{ ...acao('melee'), impacto: 'corte' }} />);
+    const comCorte = fx(corte.container).length;
+    cleanup(); vi.clearAllMocks();
+    const conc = render(<BattleStage {...base} action={{ ...acao('melee'), impacto: 'concussao' }} />);
+    const comConc = fx(conc.container).length;
+    expect(comConc).toBe(comCorte); // um efeito no alvo nos dois casos: o corte sai, o splash entra
+    expect(conc.container.querySelectorAll('[data-stage-fx="sm-bs-fly"]').length).toBe(0); // sem projétil
+    expect(imgs(conc.container)).not.toEqual(imgs(corte.container));
+    act(() => { vi.advanceTimersByTime(impactMs('melee', false) + 20); });
+    expect(som.playAttack).toHaveBeenCalledTimes(1);
+    expect(som.playAttackRanged).not.toHaveBeenCalled();
+  });
+  it('ausente = corte (nada muda para quem não passa o campo)', () => {
+    vi.useFakeTimers();
+    const a = render(<BattleStage {...base} action={acao('melee')} />);
+    const html = a.container.innerHTML;
+    cleanup();
+    const b = render(<BattleStage {...base} action={{ ...acao('melee'), impacto: 'corte' }} />);
+    expect(b.container.innerHTML).toBe(html);
+  });
+  it('movimento reduzido: sem corte nos dois (só o flash do impacto), igual', () => {
+    const mm = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
+    try {
+      const a = render(<BattleStage {...base} action={{ ...acao('melee'), impacto: 'corte' }} />);
+      const ha = a.container.innerHTML; cleanup();
+      const b = render(<BattleStage {...base} action={{ ...acao('melee'), impacto: 'concussao' }} />);
+      expect(b.container.innerHTML).toBe(ha);
+    } finally { window.matchMedia = mm; }
+  });
+});
+
+describe('ranged de CORTE (visual) e perspectiva do projétil', () => {
+  it('cut: a lâmina (slash) voa do conjurador com --s0 pequeno; sem splash; orb comum sobe ~10%', () => {
+    const { container, rerender } = render(<BattleStage {...base} action={{ ...acao('ranged'), cut: true }} />);
+    const fly = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(fly.className).toContain('sm-bs-persp');
+    expect(Number(fly.style.getPropertyValue('--s0'))).toBeLessThan(0.5);
+    expect(fly.style.getPropertyValue('--s1')).toBe('1');
+    expect(container.querySelector('[data-stage-fx="sm-bs-pop"]')).toBeNull();
+    rerender(<BattleStage {...base} action={{ ...acao('ranged'), id: 2 }} />);
+    const orb = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(orb.style.getPropertyValue('--s0')).toBe('1');
+    expect(orb.style.getPropertyValue('--s1')).toBe('1.1');
+  });
+  it('por elemento: ranged com impacto corte vira lâmina; concussão (ou cut:false) segue esfera', () => {
+    const { container } = render(<BattleStage {...base} action={{ ...acao('ranged'), impacto: 'corte' }} />);
+    expect(Number((container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement).style.getPropertyValue('--s0'))).toBeLessThan(0.5);
+    cleanup();
+    const c2 = render(<BattleStage {...base} action={{ ...acao('ranged'), impacto: 'corte', cut: false }} />);
+    expect((c2.container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement).style.getPropertyValue('--s0')).toBe('1');
+  });
+  it('inimigo → jogador: sai 1,1 e assenta em 1', () => {
+    const { container } = render(<BattleStage {...base} action={{ ...acao('ranged'), actor: 'foe' }} />);
+    const orb = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(orb.style.getPropertyValue('--s0')).toBe('1.1');
+    expect(orb.style.getPropertyValue('--s1')).toBe('1');
+  });
+});

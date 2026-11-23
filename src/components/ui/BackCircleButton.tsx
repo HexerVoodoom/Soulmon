@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import { useRef, type CSSProperties } from 'react';
+import { useBackDimmed } from '../../utils/modalDepth';
 import { NavGlyph } from './NavGlyphs';
 import { PixelIcon } from './PixelIcon';
 
@@ -25,9 +26,14 @@ export function BackCircleButton({ onClick, label, language, overScene = false, 
   style?: CSSProperties;
 } & Record<`data-${string}`, string | boolean | undefined>) {
   const name = label ?? (language === 'pt-BR' ? 'Voltar' : 'Back');
+  const ref = useRef<HTMLButtonElement>(null);
+  const dimmed = useBackDimmed(ref);
   return (
     <button
+      ref={ref}
       type="button"
+      disabled={dimmed}
+      data-modal-dimmed={dimmed ? '' : undefined}
       onClick={e => { e.stopPropagation(); onClick(); }}
       aria-label={name}
       title={name}

@@ -70,7 +70,7 @@ describe('o lote é contra `required`, e dispara na ELEGIBILIDADE (`faltam <= 0`
     expect(spriteBatch(input({ evolutionStage: 'ultimate-power', evolutionPoints: 60 }))?.occasion).toBe('C');
     const megaReady = input({
       evolutionStage: 'mega-power',
-      evolutionPoints: 60,
+      evolutionPoints: ULTRA_PATIENCE_POINTS,
       unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     });
     expect(spriteBatch(megaReady)).toEqual({ occasion: 'C', formIds: ['ultra'] });
@@ -103,21 +103,21 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
    * `evolutionPoints: 999` abaixo esperava `null` justamente porque a permanência
    * não valia nada — hoje ela vale, e a forma passa a ser gerável.
    */
-  it('mega sem as 3 megas E sem permanência não tem destino (estado DISTANTE)', () => {
-    const i = input({ evolutionStage: 'mega-power', evolutionPoints: 60, unlockedEvolutions: ['mega-power'] });
+  it('mega sem as 3 megas não tem destino, nem com a barra cheia (16/11/2026: o atalho de 1 mega acabou)', () => {
+    const i = input({ evolutionStage: 'mega-power', evolutionPoints: ULTRA_PATIENCE_POINTS, unlockedEvolutions: ['mega-power'] });
     expect(targetFormId(i)).toBeNull();
     expect(spriteBatch(i)).toBeNull();
-    // Logo abaixo do corte também não: o caminho abre no número, não perto dele.
-    expect(targetFormId({ ...i, evolutionPoints: ULTRA_PATIENCE_POINTS - 1 })).toBeNull();
+    expect(targetFormId({ ...i, evolutionPoints: 999 })).toBeNull();
   });
 
-  it('mega com PERMANÊNCIA alcança o ultra sem nunca ter degenerado', () => {
+  it('mega com as 3 megas e a barra cheia alcança o ultra', () => {
     const i = input({
       evolutionStage: 'mega-power',
       evolutionPoints: ULTRA_PATIENCE_POINTS,
-      unlockedEvolutions: ['mega-power'],
+      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     });
-    expect(targetFormId(i), 'o segundo caminho para o Ultra sumiu').toBe('ultra');
+    expect(targetFormId(i)).toBe('ultra');
+    expect(targetFormId({ ...i, evolutionPoints: ULTRA_PATIENCE_POINTS - 1 })).toBe('ultra');
   });
 
   it('ultra é topo da árvore: nunca gera nada', () => {
@@ -127,7 +127,7 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
 
 describe('o gatilho chaveia por `sprites[formId]` AUSENTE', () => {
   it('forma já desenhada não é regerada por gatilho automático', () => {
-    const lib = sprite(emptySpriteLibrary(), 'champion-power');
+    const lib = sprite(sprite(emptySpriteLibrary(), 'rookie'), 'champion-power'); // com a forma atual desenhada (senão vira recuperação 'R')
     expect(spriteBatch(input({ evolutionPoints: 29, library: lib }))).toBeNull();
     expect(spriteBatch(input({ evolutionPoints: 30, library: lib }))).toBeNull();
   });
@@ -176,7 +176,7 @@ describe('o lote cobre TODOS os líderes empatados (§4)', () => {
   it('empate triplo a caminho do ultra vira UM pedido, não três iguais', () => {
     const b = spriteBatch(input({
       evolutionStage: 'mega-power',
-      evolutionPoints: 60,
+      evolutionPoints: ULTRA_PATIENCE_POINTS,
       points: { power: 3, harmony: 3, benevolence: 3 },
       unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     }));
@@ -233,5 +233,20 @@ describe('o lote de nascimento (ocasião A)', () => {
     // só, então rookie pronto = lote vazio = `null`.
     const lib = sprite(emptySpriteLibrary(), 'rookie');
     expect(birthBatch(input({ library: lib }))).toBeNull();
+  });
+});
+
+describe('recuperação da forma atual sem arte (05/11/2026)', () => {
+  it('pede a forma atual quando ela ficou sem sprite e o acervo tem outra', async () => {
+    const { currentFormRecovery, spriteBatch } = await import('./spriteTrigger');
+    const { emptySpriteLibrary } = await import('./spriteLibrary');
+    const lib = { ...emptySpriteLibrary(), sprites: { rookie: { url: 'https://x.example/r.png', formId: 'rookie', at: 1 } } };
+    const input = { evolutionStage: 'champion-benevolence', currentBranch: 'benevolence', unlockedEvolutions: [], evolutionPoints: 0,
+      points: { power: 0, harmony: 0, benevolence: 0 }, library: lib, crystalFormId: null } as never;
+    expect(currentFormRecovery(input)).toEqual({ occasion: 'R', formIds: ['champion-benevolence'] });
+    expect(spriteBatch(input)).toEqual({ occasion: 'R', formIds: ['champion-benevolence'] });
+    const capped = { ...lib, failures: { 'champion-benevolence': { terminal: 'form-cap' } } };
+    expect(currentFormRecovery({ ...(input as object), library: capped } as never)).toBeNull();
+    expect(currentFormRecovery({ ...(input as object), library: emptySpriteLibrary() } as never)).toBeNull();
   });
 });

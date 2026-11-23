@@ -10,8 +10,8 @@ const vista = (casa: unknown) => ({
   presence: [], threadedToday: null, mine: {}, bosque: { stage: 'clareira', stageIndex: 1, perto: false, tide: { key: null, size: 'petala' }, ornaments: [] },
   gestures: [], gestureReceived: null, raid: null, casa,
 });
-const casaVista = (slot: string | null = null, capReached = false) => ({
-  nivel: 'haste', nivelIndex: 1, perto: true,
+const casaVista = (slot: string | null = null, capReached = false, buffs: unknown = { saldo: 0, preco: 7560, ativos: {}, euPosso: true }) => ({
+  nivel: 'haste', nivelIndex: 1, perto: true, bitsTotal: 240, buffs,
   slots: slot ? [{ memberId: 'a'.repeat(16), item: slot, euMesmo: true }] : [],
   mine: { slot, capReached },
 });
@@ -67,6 +67,63 @@ describe('a Casa da guilda no Salão', () => {
     const b = render(<GuildSheet {...base} casa={{ bits: 900, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
     await waitFor(() => expect(b.container.querySelector('[data-casa-teto]')).not.toBeNull());
     expect(b.container.querySelector('[data-casa-doar]')).toBeNull();
+  });
+
+  it('a doação usa o ÍCONE de Bits (BitsAmount) e só oferece 50 e 100', async () => {
+    mockServer(casaVista());
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-casa-doar="50"]')).not.toBeNull());
+    expect([...container.querySelectorAll('[data-casa-doar]')].map(b => b.getAttribute('data-casa-doar'))).toEqual(['50', '100']);
+    for (const b of container.querySelectorAll('[data-casa-doar]')) {
+      expect(b.querySelector('[data-bits-amount]')).not.toBeNull(); // o ícone de Bits do app
+      expect(b.querySelector('svg, img')).not.toBeNull();
+    }
+    expect(container.querySelector('[data-casa-bits-total] [data-bits-amount]')).not.toBeNull();
+  });
+
+  it('§373: o saldo inteiro doa: saldo alto = botões; saldo baixo = sem botão', async () => {
+    mockServer(casaVista());
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 900, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-casa-doar="100"]')).not.toBeNull());
+    expect((container.querySelector('[data-casa-doar="100"]') as HTMLButtonElement).disabled).toBe(false);
+    cleanup();
+    mockServer(casaVista());
+    const b = render(<GuildSheet {...base} casa={{ bits: 60, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(b.container.querySelector('[data-casa-doar="50"]')).not.toBeNull());
+    expect((b.container.querySelector('[data-casa-doar="100"]') as HTMLButtonElement).disabled).toBe(true);
+    expect((b.container.querySelector('[data-casa-doar="50"]') as HTMLButtonElement).disabled).toBe(false);
+    cleanup();
+    mockServer(casaVista());
+    const c = render(<GuildSheet {...base} casa={{ bits: 30, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(c.container.querySelector('[data-casa-sem-bits]')).not.toBeNull());
+  });
+
+  it('Buffs do clã: o anfitrião compra mandando só buffId+opId; sem saldo o botão descansa; a Loja não existe mais', async () => {
+    mockServer(casaVista(null, false, { saldo: 7560, preco: 7560, ativos: {}, euPosso: true }));
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 0, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-buff-comprar="gauge"]')).not.toBeNull());
+    expect(container.querySelector('[data-loja-itens]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-buff-comprar="gauge"]')!);
+    await waitFor(() => expect(calls.some(c => c.action === 'guildBuffBuy')).toBe(true));
+    const body = calls.find(c => c.action === 'guildBuffBuy')!.body;
+    expect(body.buffId).toBe('gauge');
+    expect(body.opId).toMatch(/^op-/);
+    expect(body.preco).toBeUndefined();
+    cleanup();
+    mockServer(casaVista(null, false, { saldo: 100, preco: 7560, ativos: {}, euPosso: true }));
+    const b = render(<GuildSheet {...base} casa={{ bits: 0, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(b.container.querySelector('[data-buff-comprar="gauge"]')).not.toBeNull());
+    expect((b.container.querySelector('[data-buff-comprar="gauge"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Buffs do clã: quem não é o anfitrião só vê o que está ativo (sem botão de compra)', async () => {
+    const ate = Date.now() + 3 * 86400000;
+    mockServer(casaVista(null, false, { saldo: 9000, preco: 7560, ativos: { drop: { desde: ate - 7 * 86400000, ate } }, euPosso: false }));
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 0, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-buff="drop"]')).not.toBeNull());
+    expect(container.querySelector('[data-buff="drop"][data-buff-ativo="true"]')).not.toBeNull();
+    expect(container.querySelector('[data-buff-comprar]')).toBeNull();
+    expect(container.querySelector('[data-buffs-so-anfitriao]')).not.toBeNull();
   });
 
   it('L5-D1: "Place an Item" está oculto no Clan Hall (nada de escolher item, nem porta da Praça)', async () => {

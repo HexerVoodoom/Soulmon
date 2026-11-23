@@ -68,6 +68,52 @@ describe('sem clã: procurar um clã', () => {
   });
 });
 
+describe('sem clã: clãs cheios na lista (§322)', () => {
+  const D3 = '3'.repeat(16), D4 = '4'.repeat(16);
+  // O servidor manda os cheios no fim, mas o cliente não confia na ordem: aqui vêm misturados.
+  const clans = [
+    { dirId: D3, name: 'Brasa Viva', size: 12, max: 12, full: true },
+    { dirId: D1, name: 'Bosque Alto', size: 3, max: 12 },
+    { dirId: D4, name: 'Tidewatch', size: 12, max: 12 },
+    { dirId: D2, name: 'Roda Lenta', size: 11, max: 12 },
+  ];
+  it('com vaga primeiro (com botão); cheios depois, com nome, "12 de 12" e o selo Cheia, SEM botão de pedir', async () => {
+    mockServer({ guild: () => ({ json: { guild: null } }), guildDirectory: () => ({ json: { clans, pending: null } }) });
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-guild-procurar-abrir]')).not.toBeNull());
+    fireEvent.click(container.querySelector('[data-guild-procurar-abrir]')!);
+    await waitFor(() => expect(container.querySelectorAll('[data-guild-cla]').length).toBe(4));
+    const ordem = [...container.querySelectorAll('[data-guild-cla]')].map(li => li.getAttribute('data-guild-cla'));
+    expect(ordem).toEqual([D1, D2, D3, D4]);
+    for (const d of [D1, D2]) {
+      const li = container.querySelector(`[data-guild-cla="${d}"]`)!;
+      expect(li.querySelector('[data-guild-pedir]')).not.toBeNull();
+      expect(li.querySelector('[data-guild-cheia]')).toBeNull();
+    }
+    // `size >= max` sem `full` (D4) também vira cheio: nunca há "pedir" num clã sem vaga.
+    for (const [d, nome] of [[D3, 'Brasa Viva'], [D4, 'Tidewatch']] as const) {
+      const li = container.querySelector(`[data-guild-cla="${d}"]`)!;
+      expect(li.textContent).toMatch(new RegExp(nome));
+      expect(li.textContent).toMatch(/12 de 12/);
+      expect(li.querySelector('[data-guild-cheia]')!.textContent).toBe('Cheia');
+      expect(li.querySelector('button')).toBeNull();
+    }
+    expect(container.textContent).toMatch(/Clãs cheios/);
+  });
+
+  it('só cheios: diz que nenhum tem lugar (dá para criar o seu) e ainda mostra os cheios; EN = "Full"', async () => {
+    mockServer({ guild: () => ({ json: { guild: null } }), guildDirectory: () => ({ json: { clans: clans.filter(c => c.size === 12), pending: null } }) });
+    const { container } = render(<GuildSheet {...base} language="en-US" />);
+    await waitFor(() => expect(container.querySelector('[data-guild-procurar-abrir]')).not.toBeNull());
+    fireEvent.click(container.querySelector('[data-guild-procurar-abrir]')!);
+    await waitFor(() => expect(container.querySelectorAll('[data-guild-cla-cheia]').length).toBe(2));
+    expect(container.textContent).toMatch(/No clan has room right now/);
+    expect(container.textContent).toMatch(/Full clans/);
+    expect([...container.querySelectorAll('[data-guild-cheia]')].map(x => x.textContent)).toEqual(['Full', 'Full']);
+    expect(container.querySelector('[data-guild-pedir]')).toBeNull();
+  });
+});
+
 describe('anfitrião: pedidos para entrar', () => {
   it('Recusar fica à esquerda e Aceitar à direita; aceitar manda approve:true e aplica a vista nova', async () => {
     let fila = [{ requestId: R1, name: 'Bia', at: 1 }];

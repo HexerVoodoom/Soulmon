@@ -33,7 +33,7 @@ interface Resultado { diasAteMaximo: number; maximoAoUltra: number; porPeca: num
 
 function simular(opts: { presenca: number; xpPorDia: number; focoPorMaterial?: number; teto?: number }): Resultado {
   const teto = opts.teto ?? 1000;
-  let st: ForgeGameState = { totalXP: 0, buildingQuests: { day: 'd0', visited: [], claimed: [], materials: {} } };
+  let st: ForgeGameState = { totalXP: 0, gamePoints: 1e9, buildingQuests: { day: 'd0', visited: [], claimed: [], materials: {} } };
   const predios = QUEST_BUILDINGS as readonly BuildingId[];
   const acumulado: Record<string, number> = {};
   let alvoDia = -1;

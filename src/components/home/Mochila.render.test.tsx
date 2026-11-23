@@ -82,14 +82,14 @@ function arrastar(item: HTMLElement, x: number, y: number) {
 describe('Mochila — usar arrastando até o pet', () => {
   it('SOLTAR SOBRE O PET usa o item, uma vez, pelo `onUse` (a regra é do App)', () => {
     const { onUse } = montar();
-    arrastar(screen.getByRole('button', { name: 'Maçã × 3' }), 150, 150);
+    arrastar(screen.getByRole('button', { name: 'Maçã.exe × 3' }), 150, 150);
     expect(onUse).toHaveBeenCalledTimes(1);
     expect(onUse).toHaveBeenCalledWith('🍎');
   });
 
   it('SOLTAR FORA do pet não usa nada', () => {
     const { onUse } = montar();
-    arrastar(screen.getByRole('button', { name: 'Maçã × 3' }), 320, 40);
+    arrastar(screen.getByRole('button', { name: 'Maçã.exe × 3' }), 320, 40);
     expect(onUse).not.toHaveBeenCalled();
   });
 
@@ -101,7 +101,7 @@ describe('Mochila — usar arrastando até o pet', () => {
 
   it('TOCAR sem arrastar não usa — só seleciona e mostra "Usar"', () => {
     const { onUse } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     // tremida de dedo abaixo do limiar ainda é toque
     fireEvent.pointerMove(document, { clientX: 10 + DRAG_THRESHOLD_PX - 2, clientY: 400 });
@@ -109,12 +109,12 @@ describe('Mochila — usar arrastando até o pet', () => {
     fireEvent.click(item);
     expect(onUse).not.toHaveBeenCalled();
     expect(item.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'Usar Maçã' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Usar Maçã.exe' })).toBeTruthy();
   });
 
   it('durante o arrasto a folha desce, o fantasma aparece e o pet acende quando o item está sobre ele', () => {
     const { container, onTargetChange } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     expect(container.ownerDocument.querySelector('.sm3-arrastando')).not.toBeNull();
@@ -128,7 +128,7 @@ describe('Mochila — usar arrastando até o pet', () => {
 
   it('pointercancel (o sistema tomou o gesto) nunca usa o item, mesmo sobre o pet', () => {
     const { onUse } = montar();
-    const item = screen.getByRole('button', { name: 'Maçã × 3' });
+    const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
     fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     act(() => { fireEvent.pointerCancel(document); });
@@ -139,8 +139,8 @@ describe('Mochila — usar arrastando até o pet', () => {
 describe('Mochila — a alternativa acessível', () => {
   it('FOCO no item (teclado) mostra "Usar", e "Usar" chama o mesmo `onUse`', () => {
     const { onUse } = montar();
-    act(() => { screen.getByRole('button', { name: 'Chip de Poder × 1' }).focus(); });
-    fireEvent.click(screen.getByRole('button', { name: 'Usar Chip de Poder' }));
+    act(() => { screen.getByRole('button', { name: 'Chip de Poder.exe × 1' }).focus(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Usar Chip de Poder.exe' }));
     expect(onUse).toHaveBeenCalledWith('👊');
   });
 
@@ -149,8 +149,8 @@ describe('Mochila — a alternativa acessível', () => {
     expect(screen.queryByText('Drag onto Bito to use')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'How to use an item' }));
     expect(screen.getByText('Drag onto Bito to use')).toBeTruthy();
-    act(() => { screen.getByRole('button', { name: 'Apple × 3' }).focus(); });
-    fireEvent.click(screen.getByRole('button', { name: 'Use Apple' }));
+    act(() => { screen.getByRole('button', { name: 'Apple.exe × 3' }).focus(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Use Apple.exe' }));
     expect(onUse).toHaveBeenCalledWith('🍎');
   });
 
@@ -205,7 +205,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
 
   it('lista TODOS os 16 materiais do catálogo, mesmo com ×0, com ícone, nome e quantidade', async () => {
     const { sec } = await abrirMateriais();
-    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(sec.querySelectorAll('[data-material]:not([data-material-extra])')).toHaveLength(16); // + os 3 recursos extras (Fragmento do Soulsmith, de Boss, Essências)
     // ícone: o PNG de `MaterialIcon` (carregado sob demanda) ou, enquanto não chega, o emoji do material
     const icone = within(sec).getByLabelText('Spark × 3').querySelector('.sm3-material-icone')!;
     expect(icone.querySelector('img') !== null || (icone.textContent ?? '').includes('✨')).toBe(true);
@@ -217,7 +217,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     montar({ language: 'en-US', foodInventory: { '🍎': 1 }, materials: {} });
     fireEvent.click(screen.getByRole('tab', { name: 'Materials' }));
     const sec = await secMateriais();
-    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(sec.querySelectorAll('[data-material]:not([data-material-extra])')).toHaveLength(16); // + os 3 recursos extras (Fragmento do Soulsmith, de Boss, Essências)
     expect(within(sec).getByLabelText('Spark × 0')).toBeTruthy();
     // os materiais NÃO moram mais na aba Especiais (C1): lá o vazio dos especiais aparece sem a seção
     fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
@@ -237,7 +237,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const pop = document.querySelector('[data-material-pop="moss"]')!;
-    expect(pop.textContent).toMatch(/Find more at/);
+    expect(pop.textContent).toMatch(/Found at Refuge, Focus expeditions/);
     expect(pop.textContent).not.toMatch(/corra|hurry|only|acaba/i);
     fireEvent.click(btn);
     expect(document.querySelector('[data-material-pop]')).toBeNull();
@@ -266,7 +266,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
     fireEvent.click(await screen.findByLabelText('Faísca × 0'));
     expect(document.querySelector('[data-material-go]')!.textContent).toBe('Ir lá');
-    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Você encontra mais em/);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/^Encontrado em .*Expedições do Foco$/);
   });
 
   it('demo: prédio social bloqueado não recebe o "Go there" e diz que não está disponível; os liberados seguem', async () => {
@@ -278,4 +278,56 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(within(sec).getByLabelText('Ore × 0')); // Masmorra — liberada
     expect(document.querySelector('[data-material-go]')).toBeTruthy();
   });
+  it('cabeçalho: Fechar (X redondo) e título no topo; o "i" no ornamento da moldura; Fechar tem alvo ≥44 e rótulo, e não existe "Voltar"', () => {
+    const onClose = vi.fn();
+    montar({ onClose });
+    const head = document.querySelector('.sm3-mochila-head') as HTMLElement;
+    const fechar = within(head).getByRole('button', { name: 'Fechar' });
+    expect(fechar.className).toContain('sm3-files-fechar'); // alvo 44×44 (index.css), sobre o disco esquerdo do topo
+    expect(head.querySelector('.sm3-mochila-titulo')!.textContent).toBe('Arquivos');
+    // modal Files (18/11/2026): o "i" é o ornamento da moldura (`ModalFrame info`), não um botão do cabeçalho.
+    const info = document.querySelector('[data-moldura-info]') as HTMLElement;
+    expect(within(info).getByLabelText('Como usar um item')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /voltar/i })).toBeNull();
+    fireEvent.click(fechar);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Mochila — materiais: para que serve e onde usar (10/11/2026)', () => {
+  const abrir = async (over: Partial<Parameters<typeof Mochila>[0]> = {}) => {
+    const lang = over.language ?? 'pt-BR';
+    montar({ language: lang, materials: { gear: 2 }, ...over });
+    fireEvent.click(screen.getByRole('tab', { name: lang === 'pt-BR' ? 'Materiais' : 'Materials' }));
+    await secMateriais();
+  };
+  it('um material com uso mostra o Soulsmith (principal e apoio) e o Restaurante, derivados do código', async () => {
+    await abrir();
+    fireEvent.click(document.querySelector('[data-material-btn="gear"]')!);
+    const usos = [...document.querySelectorAll('[data-material-use]')].map(e => e.textContent).join(' | ');
+    expect(usos).toMatch(/^Usar em Soulsmith/);
+  }, 60000);
+  it('material sem uso hoje diz isso (Cifra), em PT', async () => {
+    await abrir();
+    fireEvent.click(document.querySelector('[data-material-btn="cipher"]')!);
+    expect(document.querySelector('[data-material-no-use]')!.textContent).toBe('Ainda não tem uso: por enquanto só coleciona.');
+  }, 60000);
+  it('material sem uso hoje diz isso (Cipher), em EN', async () => {
+    await abrir({ language: 'en-US' });
+    fireEvent.click(document.querySelector('[data-material-btn="cipher"]')!);
+    expect(document.querySelector('[data-material-no-use]')!.textContent).toBe('No use yet: for now it is just collected.');
+  }, 60000);
+  it('os recursos extras aparecem com a quantidade: Fragmento do Soulsmith e Fragmento de Boss; as Essências NÃO ficam na Bolsa', async () => {
+    await abrir({ extras: { fragments: 7, bossShards: 2 } });
+    const q = (id: string) => document.querySelector(`[data-material="${id}"] small`)!.textContent;
+    expect(q('soulsmith-fragment')).toBe('×7');
+    expect(q('boss-shard')).toBe('×2');
+    expect(document.querySelector('[data-material="essences"]')).toBeNull();
+    fireEvent.click(document.querySelector('[data-material-btn="soulsmith-fragment"]')!);
+    expect(document.querySelector('[data-material-where]')!.textContent).toBe('Encontrado em Fenda (descer, marcos de profundidade, Rift Sem Fim)');
+    expect(document.querySelector('[data-material-use]')!.textContent).toBe('Usar em Soulsmith');
+    fireEvent.click(document.querySelector('[data-material-btn="boss-shard"]')!);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/^Encontrado em Elemental Fusion/);
+    expect(document.querySelector('[data-material-no-use]')).not.toBeNull();
+  }, 60000);
 });

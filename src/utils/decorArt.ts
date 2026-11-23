@@ -81,6 +81,27 @@ export const DECOR_ART: Record<string, string> = {
 };
 
 // Decorações novas que usam a arte de outra por ora (`artAliases.ts`): outro id, mesma imagem.
-for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
-  if (DECOR_ART[from]) DECOR_ART[id] = DECOR_ART[from];
+function aplicarAliasesDeDecor(): void {
+  for (const [id, from] of Object.entries(DECOR_ART_ALIASES)) {
+    if (DECOR_ART[from]) DECOR_ART[id] = DECOR_ART[from];
+  }
 }
+aplicarAliasesDeDecor();
+
+/**
+ * Arte das decorações de tema/elemento (04/11/2026, `assets/decor/<id>.webp`) e de Honra (14–15/11/2026, `assets/decor/hon-*.webp`):
+ * vivem num chunk lazy (REGISTRO §498) e entram aqui por `catalogosNovos.ts`; os aliases são refeitos depois.
+ */
+export function injetarArteDeDecor(...tabelas: ReadonlyArray<Readonly<Record<string, string>>>): void {
+  for (const t of tabelas) Object.assign(DECOR_ART, t);
+  aplicarAliasesDeDecor();
+}
+
+/**
+ * Camada de fogo animado em TIRA de quadros (a Fogueira tem a sua, em 2 camadas, no `PetStageDecor`). `src` = folha de `quadros` quadros
+ * quadrados lado a lado, sobreposta ao quadro da arte do suporte; o CSS (`sm-decor-chama`) a percorre em `steps(quadros - 1)`.
+ * Vazio na entrada: as peças entram por `injetarChamasDeDecor` (chunk lazy `catalogosNovos.ts`).
+ */
+export interface DecorChama { src: string; quadros: number }
+export const DECOR_CHAMA: Record<string, DecorChama> = {};
+export function injetarChamasDeDecor(t: Readonly<Record<string, DecorChama>>): void { Object.assign(DECOR_CHAMA, t); }

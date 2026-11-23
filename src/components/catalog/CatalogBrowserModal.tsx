@@ -9,6 +9,8 @@ import { categoryLabel } from '../../types/category-icons';
 import { CatalogMindNotice } from './CatalogMindNotice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import { LIFE_AREA_LABEL, LIFE_AREAS, type CatalogItem, type LifeArea } from '../../types/activityCatalog';
+import { catalogHabitCapNotice } from '../../utils/catalogChoice';
+import { UnlockNudge } from '../UnlockNudge';
 
 /**
  * F4 do `docs/PLANO-CATALOGO-ATIVIDADES.md` — o `CreateModal` "vira
@@ -34,6 +36,14 @@ interface CatalogBrowserModalProps {
   onCreateFromScratch: () => void;
   /** Atividades que a pessoa já tem: o item do catálogo que já está na lista não se adiciona de novo. */
   existingActivities?: ReadonlyArray<{ catalogId?: string | null }>;
+  /** §376: quantos hábitos de todo dia já ocupam a cota (`contaCotaDeHabitos`) e o teto (`activityCapFor`). Com a cota
+   *  cheia o item do catálogo (sempre hábito de todo dia) não cabe: o "Adicionar" fica desligado e o aviso explica. */
+  habitsCount?: number;
+  habitsCap?: number;
+  /** O teto que morde é o do modo grátis (mesma regra do `CreateModal`). */
+  capIsDemoBoundary?: boolean;
+  /** §385: conta grátis no limite — o mesmo `UnlockNudge` (motivo `task-limit`) do `CreateModal`. Nunca abre sozinho. */
+  onUnlock?: () => void;
 }
 
 /** A lupa (e o X que a fecha): ícone pelado num alvo de 44. */
@@ -55,9 +65,10 @@ export function dominantCategoryOfArea(area: LifeArea): ActivityCategory | null 
   return best;
 }
 
-export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities }: CatalogBrowserModalProps) {
+export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd, onCreateFromScratch, existingActivities, habitsCount = 0, habitsCap, capIsDemoBoundary = false, onUnlock }: CatalogBrowserModalProps) {
   const isPt = language === 'pt-BR';
   const jaTem = new Set((existingActivities ?? []).map(a => a?.catalogId).filter((x): x is string => typeof x === 'string' && !!x));
+  const avisoTeto = catalogHabitCapNotice(habitsCount, habitsCap, isPt, capIsDemoBoundary);
   const [area, setArea] = useState<LifeArea | 'todas'>('todas');
   const [query, setQuery] = useState('');
   const [pendingMindItem, setPendingMindItem] = useState<CatalogItem | null>(null);
@@ -77,6 +88,7 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
   }, [area, query, isPt]);
 
   const requestAdd = (item: CatalogItem) => {
+    if (avisoTeto) return;
     if (item.optInOnly) { setPendingMindItem(item); return; }
     onAdd(item);
   };
@@ -160,6 +172,14 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
             );
           })()}
 
+          {/* §385: o aviso do teto fica FIXO no topo ao rolar a lista (sticky no corpo rolável da folha). */}
+          {avisoTeto && (
+            <div data-catalog-cap-sticky style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--sm2-surface)', padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p role="status" data-catalog-cap style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{avisoTeto}</p>
+              {capIsDemoBoundary && onUnlock && <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />}
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {items.map((item) => (
               <div key={item.id} className="sm2-conta-card" style={{ padding: 10 }}>
@@ -173,8 +193,8 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
                     </span>
                   </span>
                   {/* Alvo de toque ≥ 44 (QA R7): o `sm` do kit já dá 44 de altura. */}
-                  <button type="button" disabled={jaTem.has(item.id)} onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', jaTem.has(item.id), 'sm'), padding: '0 12px' }}>
-                    {jaTem.has(item.id) ? (isPt ? 'Adicionado' : 'Added') : (isPt ? 'Adicionar' : 'Add')}
+                  <button type="button" disabled={jaTem.has(item.id) || !!avisoTeto} onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', jaTem.has(item.id) || !!avisoTeto, 'sm'), padding: '0 12px' }}>
+                    {jaTem.has(item.id) ? (isPt ? 'Adicionado' : 'Added') : avisoTeto ? (isPt ? 'Limite' : 'Limit') : (isPt ? 'Adicionar' : 'Add')}
                   </button>
                 </div>
                 <p style={{ ...sm2Hint, margin: '4px 0 0' }}>{isPt ? item.why.pt : item.why.en}</p>

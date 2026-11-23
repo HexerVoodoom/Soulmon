@@ -28,7 +28,7 @@ import { ENT_PREFIX } from './_entitlements.js';
 const SAVE = 'abcdefgh12345678';
 
 /** A lista fechada que o cliente sabe desenhar (`CATEGORY_ICONS`). */
-const CATEGORIAS = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+const CATEGORIAS = ['sono', 'corpo', 'mente', 'foco', 'aprendizado', 'relacoes', 'casa', 'financas', 'proposito', 'criatividade'];
 
 function fakeEnv() {
   const store = new Map([[ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid' })]]);
@@ -96,8 +96,8 @@ describe('🔴 a ENTRADA é minimizada antes de sair para o processador de fora 
     stubGroq('[]');
     await sugestoes({ goalText: 'foco', categories: ['Health', 'NaoExiste', 'Work', '<script>'] });
     const texto = promptEnviado();
-    expect(texto).toContain('Health');
-    expect(texto).toContain('Work');
+    expect(texto).toContain('corpo'); // 'Health' (id antigo) migra para o novo
+    expect(texto).toContain('foco'); // 'Work' idem
     expect(texto).not.toContain('NaoExiste');
     expect(texto).not.toContain('<script>');
   });
@@ -138,7 +138,7 @@ describe('sem objetivo E sem tag, nem chega a chamar a IA', () => {
 });
 
 describe('🔴 a SAÍDA do modelo vira TAREFA no save — e é sanitizada', () => {
-  it('categoria fora da lista vira `Wellness`, nunca o que o modelo inventou', async () => {
+  it('categoria fora da lista vira `mente`, nunca o que o modelo inventou', async () => {
     // O cliente resolve o ícone por `CATEGORY_ICONS[category]`. Uma categoria
     // inventada não tem ícone e a linha aparece quebrada no save do jogador.
     stubGroq(JSON.stringify([
@@ -148,7 +148,7 @@ describe('🔴 a SAÍDA do modelo vira TAREFA no save — e é sanitizada', () =
       { name: 'Beber água', category: '<script>' },
     ]));
     const s = await sugestoes({ goalText: 'saúde' });
-    expect(s.map(x => x.category)).toEqual(['Fitness', 'Wellness', 'Wellness', 'Wellness']);
+    expect(s.map(x => x.category)).toEqual(['corpo', 'mente', 'mente', 'mente']);
     for (const x of s) expect(CATEGORIAS).toContain(x.category);
   });
 
@@ -168,7 +168,7 @@ describe('🔴 a SAÍDA do modelo vira TAREFA no save — e é sanitizada', () =
       null,
       { name: 'Sobrevive', category: 'Work' },
     ]));
-    expect(await sugestoes({ goalText: 'foco' })).toEqual([{ name: 'Sobrevive', category: 'Work' }]);
+    expect(await sugestoes({ goalText: 'foco' })).toEqual([{ name: 'Sobrevive', category: 'foco' }]);
   });
 
   it('no máximo 6 sugestões chegam ao cliente, mesmo se o modelo mandar 50', async () => {
@@ -193,7 +193,7 @@ describe('🔴 a SAÍDA do modelo vira TAREFA no save — e é sanitizada', () =
     // O prompt pede "raw JSON array (no markdown fences)". Ele desobedece, e a
     // extração por regex existe justamente por isso.
     stubGroq('Claro! Aqui está:\n```json\n[{"name":"Correr","category":"Fitness"}]\n```\nEspero que ajude!');
-    expect(await sugestoes({ goalText: 'foco' })).toEqual([{ name: 'Correr', category: 'Fitness' }]);
+    expect(await sugestoes({ goalText: 'foco' })).toEqual([{ name: 'Correr', category: 'corpo' }]);
   });
 
   it('resposta 200 sem conteúdo nenhum vira lista vazia, e não erro', async () => {

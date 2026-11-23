@@ -10,10 +10,38 @@ import { SEQUENCIA_VELADO } from '../sequencia/cenas';
 beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); localStorage.clear(); });
 
+vi.mock('../../../utils/musica', () => ({ entrarNaSuperficie: vi.fn(() => vi.fn()) }));
+import * as musica from '../../../utils/musica';
+import { definirMusicaLigada } from '../../../utils/audioBus';
+
+describe('trilha da intro (nasce ligada por decisão do dono)', () => {
+  it('nasce ligada: pede a superfície ao montar; o botão desliga e religa e a saída limpa', () => {
+    definirMusicaLigada(true);
+    const sair = vi.fn();
+    vi.mocked(musica.entrarNaSuperficie).mockClear().mockReturnValue(sair);
+    const { unmount } = render(<IntroCinematica language="pt-BR" onDone={() => {}} />);
+    expect(musica.entrarNaSuperficie).toHaveBeenCalledWith('intro');
+    const b = screen.getByTestId('intro-som');
+    expect(b.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(b);
+    expect(sair).toHaveBeenCalledTimes(1);
+    expect(b.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(b);
+    expect(b.getAttribute('aria-pressed')).toBe('true');
+    unmount();
+    expect(sair).toHaveBeenCalledTimes(2);
+  });
+  it('interruptor global de música desligado: sem botão', () => {
+    definirMusicaLigada(false);
+    vi.mocked(musica.entrarNaSuperficie).mockClear();
+    render(<IntroCinematica language="en-US" onDone={() => {}} />);
+    expect(screen.queryByTestId('intro-som')).toBeNull();
+    expect(musica.entrarNaSuperficie).not.toHaveBeenCalled();
+  });
+});
+
 describe('intro pré-login', () => {
-  it('flag desligado: não toca; ligado: toca na 1ª abertura sem onboarding e só uma vez', () => {
-    expect(deveTocarIntro(false)).toBe(false);
-    localStorage.setItem('soulmon-onboarding-velado', '1');
+  it('toca sozinho na 1ª abertura de quem é novo, sem depender do flag do Velado, e só uma vez', () => {
     expect(deveTocarIntro(false)).toBe(true);
     expect(deveTocarIntro(true)).toBe(false);
     render(<IntroCinematica language="pt-BR" onDone={() => {}} />);
@@ -30,8 +58,39 @@ describe('intro pré-login', () => {
     act(() => { vi.advanceTimersByTime(PLANOS_INTRO[0].s * 1000); });
     expect(screen.getByTestId('intro-legenda').textContent).toBe(PLANOS_INTRO[1].en);
     for (let i = 1; i < 9; i++) act(() => { vi.advanceTimersByTime(PLANOS_INTRO[i].s * 1000); });
+    // depois do último plano entra o logo; sem o vídeo tocar (jsdom), o teto encerra
+    expect(onDone).not.toHaveBeenCalled();
+    expect(screen.getByTestId('intro-logo')).toBeTruthy();
+    expect(screen.queryByTestId('intro-legenda')).toBeNull();
+    act(() => { vi.advanceTimersByTime(11_500); });
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(introVista()).toBe(true);
+  });
+
+  it('v3.1: ~42,5 s de planos (sem o logo), nenhum plano passa de 5,5 s', () => {
+    const total = PLANOS_INTRO.reduce((a, p) => a + p.s, 0);
+    expect(total).toBeLessThanOrEqual(43);
+    expect(Math.max(...PLANOS_INTRO.map(p => p.s))).toBeLessThanOrEqual(5.5);
+  });
+
+  it('cada troca de plano tem a estática de sintonia', () => {
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} paineis={['a.webp', 'b.webp']} />);
+    expect(container.querySelector('[data-intro-sintonia]')).not.toBeNull();
+  });
+
+  it('painéis: um por plano, trocam junto com a legenda; sem vídeo', () => {
+    const paineis = PLANOS_INTRO.map((_, k) => `p${k + 1}.webp`);
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} paineis={paineis} />);
+    expect(container.querySelector('video')).toBeNull();
+    expect(screen.getByTestId('intro-painel').querySelector('img')?.getAttribute('src')).toBe('p1.webp');
+    act(() => { vi.advanceTimersByTime(PLANOS_INTRO[0].s * 1000); });
+    expect(screen.getByTestId('intro-painel').getAttribute('data-plano')).toBe('2');
+    expect(screen.getByTestId('intro-painel').querySelector('img')?.getAttribute('src')).toBe('p2.webp');
+  });
+
+  it('os painéis existem nos assets', () => {
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} />);
+    expect(container.querySelector('[data-testid="intro-painel"] img')?.getAttribute('src')).toBeTruthy();
   });
 
   it('Pular chama onDone na hora', () => {

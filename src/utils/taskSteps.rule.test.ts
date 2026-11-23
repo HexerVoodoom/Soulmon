@@ -40,8 +40,8 @@ describe('peso de uma tarefa com subitens (C)', () => {
 
   it('piso sugerido: a lista de 2 nasce pesando 2 = "pagar água" + "pagar luz" soltas', () => {
     expect(suggestedEffortForSteps(2)).toBe(2);
-    const lista = { id: 'l', category: 'Work', emoji: '🧾', name: 'Contas', completed: false, effort: suggestedEffortForSteps(2), steps: steps(2) };
-    const soltas = [1, 2].map(i => ({ id: `t${i}`, category: 'Work', emoji: '💧', name: `c${i}`, completed: false, effort: 1 as const }));
+    const lista = { id: 'l', category: 'foco', emoji: '🧾', name: 'Contas', completed: false, effort: suggestedEffortForSteps(2), steps: steps(2) };
+    const soltas = [1, 2].map(i => ({ id: `t${i}`, category: 'foco', emoji: '💧', name: `c${i}`, completed: false, effort: 1 as const }));
     const a = registeredForDay({ tasks: [lista], activities: [], completedTasks: [], evolutionStage: 'rookie' } as never, 1);
     const b = registeredForDay({ tasks: soltas, activities: [], completedTasks: [], evolutionStage: 'rookie' } as never, 1);
     expect(a).toBe(b);
@@ -64,7 +64,7 @@ describe('peso de uma tarefa com subitens (C)', () => {
   });
 
   it('o peso guardado na conclusão é o mesmo do cadastro (meta e feito na mesma unidade)', () => {
-    const task = { id: 'l', name: 'Contas', category: 'Work' as const, emoji: '🧾', effort: 3 as const, steps: steps(2, true) };
+    const task = { id: 'l', name: 'Contas', category: 'foco' as const, emoji: '🧾', effort: 3 as const, steps: steps(2, true) };
     const feito = completeTask(estado({ tasks: [task] }), 'l', AGORA)!;
     expect(feito.completedTasks[0].effort).toBe(effortOf(task));
   });
@@ -83,7 +83,7 @@ describe('subitens de tarefa', () => {
 
 describe('repetição: a cada N dias da conclusão', () => {
   it('a próxima nasce guardada, fora da meta, com subitens zerados', () => {
-    const task = { id: 'c', name: 'Contas', category: 'Work' as const, emoji: '🧾', effort: 2 as const, repeatEveryDays: 30, steps: steps(3, true) };
+    const task = { id: 'c', name: 'Contas', category: 'foco' as const, emoji: '🧾', effort: 2 as const, repeatEveryDays: 30, steps: steps(3, true) };
     const feito = completeTask(estado({ tasks: [task] }), 'c', AGORA)!;
     expect(feito.tasks).toHaveLength(1);
     const prox = feito.tasks[0];
@@ -107,13 +107,13 @@ describe('repetição: a cada N dias da conclusão', () => {
   });
 
   it('sem repeatEveryDays não nasce nada', () => {
-    const task = { id: 'c', name: 'n', category: 'Work' as const, emoji: '🧾' };
+    const task = { id: 'c', name: 'n', category: 'foco' as const, emoji: '🧾' };
     expect(completeTask(estado({ tasks: [task] }), 'c', AGORA)!.tasks).toHaveLength(0);
   });
 });
 
 describe('comida premium: o drop (D)', () => {
-  const cheia = (n: number) => ({ id: 'p', name: 'Plano', category: 'Study' as const, emoji: '📚', steps: steps(n, true) });
+  const cheia = (n: number) => ({ id: 'p', name: 'Plano', category: 'aprendizado' as const, emoji: '📚', steps: steps(n, true) });
 
   it('só com ≥3 subitens, todos feitos; guarda a chave da comida da categoria', () => {
     expect(MIN_STEPS_FOR_PREMIUM).toBe(3);
@@ -148,10 +148,10 @@ describe('comida premium: o drop (D)', () => {
 });
 
 describe('Work (B) e hábito semanal (A)', () => {
-  it('Work existe, soma 4 pontos como as demais e pende para Harmonia', () => {
+  it('Work existe, soma 3 pontos como as demais', () => {
     const sum = (c: keyof typeof CATEGORY_ATTRIBUTES) => Object.values(CATEGORY_ATTRIBUTES[c]).reduce((a, b) => a + b, 0);
-    for (const c of Object.keys(CATEGORY_ATTRIBUTES) as Array<keyof typeof CATEGORY_ATTRIBUTES>) expect(sum(c)).toBe(sum('Work'));
-    expect(CATEGORY_ATTRIBUTES.Work.harmony).toBeGreaterThan(CATEGORY_ATTRIBUTES.Work.power);
+    for (const c of Object.keys(CATEGORY_ATTRIBUTES) as Array<keyof typeof CATEGORY_ATTRIBUTES>) expect(sum(c)).toBe(sum('foco'));
+    expect(CATEGORY_ATTRIBUTES.foco.power).toBeGreaterThan(CATEGORY_ATTRIBUTES.foco.harmony);
   });
 
   it('weekChip: 3x/semana mostra N de 3; diário mostra N de 7; a cada N dias não tem semana', () => {

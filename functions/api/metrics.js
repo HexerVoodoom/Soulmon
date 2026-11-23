@@ -74,6 +74,7 @@
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { TIME_KINDS, TIME_REGISTRY, TIME_BAND_MID } from './_usageRegistry.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -141,6 +142,16 @@ export const EVENT_SCHEMA = {
   guild_stage: { level: { min: 1, max: 5 } },
   // Ritmo das refeições — ESPELHO de src/utils/telemetry.ts (há teste de paridade).
   meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } },
+  // Tempo de uso (09/11/2026, docs/PLANO-METRICAS.md) — ESPELHO de src/utils/telemetry.ts. `item` e indice de registro (_usageRegistry.js),
+  // `band` a faixa do TOTAL do dia (nunca segundos), `outcome` 0 vitoria · 1 derrota · 2 saiu.
+  time_spent: { kind: { min: 0, max: 2 }, item: { min: 0, max: 63 }, band: { min: 0, max: 11 } },
+  minigame_start: { item: { min: 0, max: 15 } },
+  minigame_end: { item: { min: 0, max: 15 }, outcome: { min: 0, max: 2 }, band: { min: 0, max: 11 } },
+  task_done: { kind: { min: 0, max: 1 } },
+  task_skipped: { kind: { min: 0, max: 1 } },
+  day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
+  session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
+  gate_login: { outcome: { min: 0, max: 7 } }, // ESPELHO de src/utils/telemetry.ts
 };
 
 /**
@@ -439,6 +450,9 @@ export function applyAggregate(agg, events) {
       bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? 'yes' : 'no'}`);
       bump(`reveal_seen.duration.${p.duration}`);
     }
+    if (record.e === 'gate_login' && p) {
+      bump(`gate_login.outcome_${p.outcome}`);
+    }
     if (record.e === 'checkin_commit' && p) {
       bump(`checkin_commit.focus_${p.focus_count}`);
     }
@@ -486,6 +500,42 @@ export function applyAggregate(agg, events) {
     if (record.e === 'activity_create') {
       const path = PATH_LABEL[p.path] ?? 'unknown';
       bump(`activity_create.${path}.${KIND_LABEL[p.kind] ?? 'unknown'}`);
+    }
+
+    /* TEMPO DE USO (docs/PLANO-METRICAS.md). Tudo derivado do indice/faixa que ja chega: sem dado novo no aparelho. */
+    if (record.e === 'time_spent' && p) {
+      const nome = TIME_REGISTRY[p.kind] && TIME_REGISTRY[p.kind][p.item];
+      if (nome) {
+        const base = `time.${TIME_KINDS[p.kind]}.${nome}`;
+        bump(`${base}.users`);
+        bump(`${base}.band_${p.band}`);
+        bump(`${base}.sec_est`, TIME_BAND_MID[p.band] || 0);
+      }
+    }
+    if ((record.e === 'minigame_start' || record.e === 'minigame_end') && p) {
+      const nome = TIME_REGISTRY[2][p.item];
+      if (nome) {
+        if (record.e === 'minigame_start') bump(`minigame.${nome}.start`);
+        else {
+          bump(`minigame.${nome}.end_${p.outcome}`);
+          bump(`minigame.${nome}.band_${p.band}`);
+          bump(`minigame.${nome}.sec_est`, TIME_BAND_MID[p.band] || 0);
+        }
+      }
+    }
+    if ((record.e === 'task_done' || record.e === 'task_skipped') && p) {
+      bump(`${record.e}.${KIND_LABEL[p.kind] ?? 'unknown'}`);
+    }
+    if (record.e === 'day_close' && p) {
+      bump('tasks_planned_sum', p.planned);
+      bump('tasks_done_sum', p.done);
+      // Por pessoa-dia, de 10 em 10 %: a FORMA da conclusao, nao so a media (dia sem nada planejado nao entra).
+      if (p.planned > 0) bump(`completion_bucket_${Math.min(10, Math.floor((Math.min(p.done, p.planned) / p.planned) * 10))}`);
+    }
+    if (record.e === 'session_end' && p) {
+      bump(`session.band_${p.band}`);
+      bump('session.sec_est', TIME_BAND_MID[p.band] || 0);
+      bump(`session.build_${p.build}`);
     }
 
     // A MÉTRICA-NORTE. O cliente já fechou a semana dele (ver `trackDayClosed`
@@ -787,9 +837,9 @@ export async function onRequest({ request, env }) {
     try {
       const current = await kvOrThrow(env).get(key, { type: 'json' }).catch(() => null);
       const next = applyAggregate(current, records);
-      // TTL de 2 anos: agregado sem dono é lixo com custo. Renovado a cada
+      // TTL de ~13 meses (decisao do dono, 09/11/2026; era 2 anos): agregado sem dono é lixo com custo. Renovado a cada
       // escrita, então um dia ativo nunca expira no meio da coleta.
-      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 400 });
       accepted += records.length;
     } catch (err) {
       console.warn('metrics: falha ao gravar agregado', { day, error: String(err?.name ?? err) });

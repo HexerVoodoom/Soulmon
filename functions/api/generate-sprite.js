@@ -57,7 +57,7 @@
 // para os dois provedores igualmente.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
+import { chromaKeyPng, chromaKeyPngChecked, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier, comEntitlementLegivel } from './_entitlements.js';
@@ -67,6 +67,10 @@ import { verifiedBetaFull } from './_betaFull.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
+import { recusaGeracaoBB, BB_BIRTH_ONLY_MESSAGE } from './_velado.js';
+
+/** Save maior que isto não é de quem está nascendo (o nascimento tem save pequeno): o BB é recusado sem parsear (CPU do worker). */
+const BB_SAVE_MAX_CHARS = 2_000_000;
 import { takeIpQuota } from './_ipHash.js';
 import { AI_REFUSAL_MESSAGES } from './_aiGuard.js';
 
@@ -115,6 +119,15 @@ const LOCK_RETRY_AFTER = 20;
 const MAX_BLOB_BYTES = 8 * 1024 * 1024;
 
 const cacheKey = (saveId, formId) => `${CACHE_PREFIX}${saveId}:${formId}`;
+/** Janela em que `forma@elemento` pedida logo depois de `forma` é a MESMA evolução (cliente anterior ao REGISTRO §404), não uma alternativa nova. */
+export const JANELA_FORMA_BASE_MS = 20 * 60 * 1000;
+function formaBaseRecente(bruto) {
+  if (!bruto) return null;
+  try {
+    const g = JSON.parse(bruto);
+    return g?.image && Number.isFinite(g.at) && Date.now() - g.at >= 0 && Date.now() - g.at < JANELA_FORMA_BASE_MS ? bruto : null;
+  } catch { return null; }
+}
 const lockKey = (saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`;
 
 /** Apagar o lock nunca pode derrubar a resposta: no pior caso ele expira em
@@ -169,7 +182,7 @@ async function guardarBlob(env, request, bytes, contentType) {
  * lançar cairia no `catch` que chama `release`, devolvendo uma cota que o
  * provedor já cobrou de verdade.
  */
-async function republicar(env, request, image) {
+export async function republicar(env, request, image) {
   const dataMatch = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
   if (dataMatch) {
     const [, contentType, b64] = dataMatch;
@@ -250,8 +263,8 @@ function refusalError(message) {
 // M14 (25/10/2026): criatura com verde (ou elemento planta) pede fundo MAGENTA #FF00FF no
 // prompt; `chromaKeyOfPrompt` lê a cor do próprio prompt e o recorte usa a certa. Por isso o corpo NÃO leva
 // `background`. `SPRITE_MODEL`: 'alpha' (padrão) | 'flare' | 'soul'.
-const HF_API = 'https://api.higgsfield.ai';
-const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
+export const HF_API = 'https://api.higgsfield.ai';
+export const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
 function hfCredentials(env) {
@@ -292,13 +305,15 @@ function bytesToDataUrl(bytes, mime) {
 }
 
 /** Baixa a imagem do provedor e devolve o PNG com fundo removido (data URL). */
+/** @param {string} url @param {'green'|'magenta'|'blue'} [key] */
 async function baixarEChavear(url, key = 'green') {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_IMAGE_BYTES) throw new Error('higgsfield: imagem grande demais');
   try {
-    return bytesToDataUrl(chromaKeyPng(buf, key), 'image/png');
+    const { png, quality } = chromaKeyPngChecked(buf, key);
+    return { image: bytesToDataUrl(png, 'image/png'), raw: buf, quality };
   } catch (err) {
     if (err instanceof BadChromaError) {
       console.error('generate-sprite:', err.message);
@@ -358,7 +373,8 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const model = spriteModel(env);
   if (model !== 'soul' && hfCredentials(env)) {
     try {
-      return { image: await generateHf(env, model, prompt, referenceImageUrls), keyed: true };
+      const g = await generateHf(env, model, prompt, referenceImageUrls);
+      return { image: g.image, raw: g.raw, keyed: true };
     } catch (err) {
       // Recusa de conteúdo sobe (troca o prompt); `bad-chroma` e outras falhas caem no
       // Soul se o par antigo existir (sem inventar regeração).
@@ -456,6 +472,7 @@ async function generateGemini(env, prompt) {
 }
 
 /** Chroma-key "se der" para Soul/Gemini: qualquer falha devolve a imagem original. */
+/** @param {string} image @param {'green'|'magenta'|'blue'} [key] */
 async function chaveioOpcional(image, key = 'green') {
   try {
     if (image.startsWith('data:image/png;base64,')) {
@@ -474,7 +491,7 @@ async function chaveioOpcional(image, key = 'green') {
 /** Roda os provedores na ordem (Higgsfield → Gemini) para UM texto de prompt.
  *  Devolve `{ image, provider, hfError }` ou lança — o erro carrega `refusal`
  *  quando o motivo foi política de conteúdo, que é o que decide a 2ª tentativa. */
-async function generateWithProviders(env, prompt, referenceImageUrls) {
+export async function generateWithProviders(env, prompt, referenceImageUrls) {
   let hfError = null;
   let hfRefusal = false;
 
@@ -484,7 +501,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
       // Soul (e Gemini abaixo) também recebem o prompt de fundo verde: tira o fundo se der,
       // senão entrega como veio (nunca derruba uma geração já paga).
       const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image, chromaKeyOfPrompt(prompt));
-      return { image, provider: 'higgsfield', hfError: null };
+      return { image, provider: 'higgsfield', hfError: null, ...(hf.raw ? { raw: hf.raw } : {}), ...(hf.quality ? { quality: hf.quality } : {}) };
     } catch (err) {
       hfError = err.message;
       hfRefusal = isRefusal(err);
@@ -554,6 +571,29 @@ export function referenciasSeguras(request, referenceImageUrls) {
  *  · `debited`   → ainda em andamento (202); se passou de `REGEN_STALE_MS` sem terminar, o Worker caiu: devolve o débito;
  *  · `refunded`  → 409 (o cliente usa um `opId` novo para tentar de novo).
  */
+/** Imagem CRUA do provedor (antes do chroma-key), por forma, com validade: é o que deixa o "Revisar meu Soulmon" re-recortar sem pagar
+ *  outra geração (`_spriteReview.js`). Melhor esforço: falhar aqui nunca derruba a resposta. A `out.raw` NÃO vai ao cliente (o `...out` da
+ *  resposta é montado sem ela: ver `responder`). Chave por conta+forma (a nova geração da mesma forma sobrescreve; outra forma não é tocada). */
+export const RAW_PREFIX = 'sprite:raw:';
+export const RAW_TTL_SECONDS = 30 * 24 * 60 * 60;
+async function guardarFonteBruta(env, saveId, formId, raw) {
+  if (!(raw instanceof Uint8Array) || raw.length === 0 || raw.length > MAX_BLOB_BYTES) return;
+  try {
+    await kvOrThrow(env).put(`${RAW_PREFIX}${saveId}:${formId}`, raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), { expirationTtl: RAW_TTL_SECONDS });
+  } catch (err) {
+    console.error('generate-sprite: falha ao guardar a fonte bruta', err?.message);
+  }
+}
+
+/** Prompt e referências do desenho, guardados no registro para o "Revisar meu Soulmon" poder regerar pelo mesmo caminho
+ *  (`_spriteReview.js`). Aditivo: registro antigo sem eles segue válido (a revisão cai em "precisa-manual"). Só o prompt que de fato gerou. */
+function guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls) {
+  const usado = out?.usedFallbackPrompt && typeof promptFallback === 'string' ? promptFallback : prompt;
+  if (typeof usado !== 'string' || !usado) return {};
+  const refs = out?.usedFallbackPrompt ? [] : (Array.isArray(referenceImageUrls) ? referenceImageUrls.slice(0, MAX_REFERENCE_URLS) : []);
+  return { prompt: usado, ...(refs.length ? { refs } : {}) };
+}
+
 async function respostaDeRegenRepetida(env, id, formId, opId, op) {
   if (op.s === 'done') {
     let guardada = null;
@@ -666,6 +706,24 @@ async function onRequestPostBruto({ request, env }) {
       }
     }
 
+    // BB PERSONALIZADO SÓ NO NASCIMENTO (REGISTRO §472, `_velado.js`): reroll do BB nunca; geração nova do BB só enquanto o save
+    // da nuvem não prova que o nascimento passou. Antes do dedupe de propósito: o cache do BB (já gerado) continua voltando abaixo.
+    if (formId === 'bb') {
+      let estado = null;
+      try {
+        const bruto = await kvOrThrow(env).get(id);
+        if (typeof bruto === 'string' && bruto.length > BB_SAVE_MAX_CHARS) {
+          return Response.json({ error: 'bb-birth-only', reason: 'bb-birth-only', ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS });
+        }
+        estado = typeof bruto === 'string' ? JSON.parse(bruto) : null;
+      } catch (err) {
+        console.error('generate-sprite: save ilegível para o BB, recusando', err?.message);
+        return Response.json({ error: 'ai-quota-unavailable' }, { status: 503, headers: CORS });
+      }
+      const recusa = recusaGeracaoBB(estado, { regenerar: corpo.regenerate === true || regenPago });
+      if (recusa) return Response.json({ error: recusa, reason: recusa, ...BB_BIRTH_ONLY_MESSAGE }, { status: 409, headers: CORS });
+    }
+
     if (typeof formId === 'string' && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
@@ -678,6 +736,9 @@ async function onRequestPostBruto({ request, env }) {
         // Cache gravado com o id de forma ANTIGO (antes de 29/09/2026): só leitura.
         const antigo = legacyFormIdOf(formId);
         if (!pronta && antigo && !regenerar) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
+        // Cliente antigo em cache (REGISTRO §404): depois de gerar `forma`, pedia `forma@elemento` na sequência — a 2ª imagem do dono. Se a forma-base
+        // acabou de ser desenhada, devolve ELA (zero IA, zero cota); o pedido legítimo de uma alternativa vem horas depois, de outra evolução.
+        if (!pronta && !regenerar && formId.includes('@')) pronta = formaBaseRecente(await kvOrThrow(env).get(cacheKey(id, formId.split('@')[0])));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.
@@ -768,7 +829,8 @@ async function onRequestPostBruto({ request, env }) {
      * tentativa e a refeitura pelo `promptFallback`) — dois blocos aqui seriam
      * a mesma regra em duas cópias, e uma delas esqueceria de cachear.
      */
-    const responder = async out => {
+    const responder = async outCru => {
+      const { raw: fonteBruta, ...out } = outCru; // a fonte crua nunca vai ao cliente
       let image = out.image;
       if (typeof image === 'string') {
         const republicada = await republicar(env, request, image);
@@ -781,10 +843,11 @@ async function onRequestPostBruto({ request, env }) {
         image = republicada;
       }
       if (typeof formId === 'string' && formId.length > 0) {
+        await guardarFonteBruta(env, id, formId, fonteBruta);
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(out.quality?.flag ? { recorteSuspeito: true, recorteQuality: out.quality } : {}), ...guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
           );
         } catch (err) {
           // Cache que não gravou custa uma regeração futura, não a resposta de

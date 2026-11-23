@@ -21,8 +21,8 @@ describe('detectCreateIntent — só pedido explícito cria atividade', () => {
   });
 
   it('cria com pedido explícito e usa o resto da frase como nome', () => {
-    expect(detectCreateIntent('add a habit to read 10 pages')).toEqual({ name: 'read 10 pages', category: 'Study' });
-    expect(detectCreateIntent('create a task called go to the gym')).toEqual({ name: 'go to the gym', category: 'Fitness' });
+    expect(detectCreateIntent('add a habit to read 10 pages')).toEqual({ name: 'read 10 pages', category: 'aprendizado' });
+    expect(detectCreateIntent('create a task called go to the gym')).toEqual({ name: 'go to the gym', category: 'corpo' });
   });
 
   it('pedido sem nome não inventa "New Activity"', () => {

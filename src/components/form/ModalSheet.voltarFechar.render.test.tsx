@@ -20,8 +20,10 @@ describe('ModalSheet — voltar/fechar e entrada', () => {
     renderWithCss(<ModalSheet open title="Folha" onClose={onClose} language="pt-BR"><p>x</p></ModalSheet>);
     const fechar = screen.getByRole('button', { name: 'Fechar' });
     expect(fechar.closest('[data-back-arrow]')).toBeTruthy();
+    // Moldura da etapa 3: o título é a placa do topo; o fechar fica à esquerda, no miolo logo abaixo dela.
     const titulo = screen.getByText('Folha');
-    expect(fechar.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(titulo.closest('[data-moldura-placa]')).toBeTruthy();
+    expect(fechar.closest('[data-moldura-conteudo]')).toBeTruthy();
     fireEvent.click(fechar);
     expect(onClose).toHaveBeenCalledOnce();
   });

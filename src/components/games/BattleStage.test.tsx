@@ -222,21 +222,23 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(srcsDe().some(s => /fx-agua-orb/.test(s))).toBe(true);
   });
 
-  it('ESCUDO: a defesa mostra o escudo LEVANTADO do elemento do DEFENSOR no lugar do impacto', () => {
+  it('ESCUDO: a defesa mostra o `defended` da folha de FX do elemento do DEFENSOR no lugar do impacto', () => {
     const action: StageAction = { id: 4, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'fogo' };
     render(<BattleStage {...baseProps} action={action} />);
     const srcs = srcsDe();
-    // Arte da rodada 2 (04/10/2026): `combate/escudo-<base>.png`; sem escudo (elemento sem arte) cai no `fx-*-defended`.
-    expect(srcs.some(s => /escudo-fogo/.test(s))).toBe(true);
+    // Pedido do dono (13/11/2026): o escudo do bloqueio é o `fx-<elemento>-defended`; `combate/escudo-*` só é a reserva.
+    expect(srcs.some(s => /fx-fogo-defended/.test(s))).toBe(true);
+    expect(srcs.some(s => /escudo-fogo/.test(s))).toBe(false);
     expect(srcs.some(s => /fx-agua-impact/.test(s))).toBe(false);
     // E o escudo defende: o seu Soulmon não treme.
     expect(document.querySelector('.sm-bs-hit')).toBeNull();
   });
 
-  it('ESCUDO do neutro usa a arte própria (05/10/2026); sem arte (id desconhecido) cai no flash `defended` do FX', () => {
+  it('ESCUDO do neutro usa o `defended` próprio; id desconhecido cai no `defended` do neutro (nunca o `escudo-*`)', () => {
     const neutro: StageAction = { id: 5, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro' };
     const { unmount } = render(<BattleStage {...baseProps} action={neutro} />);
-    expect(srcsDe().some(s => /escudo-neutro/.test(s))).toBe(true);
+    expect(srcsDe().some(s => /fx-neutro-defended/.test(s))).toBe(true);
+    expect(srcsDe().some(s => /escudo-/.test(s))).toBe(false);
     unmount();
     const semArte: StageAction = { id: 6, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro-sem-arte' };
     render(<BattleStage {...baseProps} action={semArte} />);
@@ -247,7 +249,7 @@ describe('BattleStage — o que a cena desenha', () => {
     const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="heresia" />);
     const camada = document.querySelector('[data-stage-scene]') as HTMLElement;
     expect(camada).not.toBeNull();
-    expect(camada.style.background).toMatch(/bg-luz\.png/);
+    expect(camada.style.background).toMatch(/heresia\.webp/);
     expect(camada.style.imageRendering).not.toBe('pixelated');
     expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
     unmount();

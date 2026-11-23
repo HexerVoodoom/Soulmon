@@ -490,8 +490,19 @@ e-mail, ele está lá."* Um absoluto que o produto não pode honrar vira, para q
 perdeu o save, a prova de que o mundo mentiu.) Não é clemência do desenho: é que
 nada, na §5.1, oferece um jeito de parar de ser diferença.
 
-⚠️ **Vocabulário, e aqui não há margem** (parecer de psicologia de 21/09/2026;
-§11; checklist §17 item 11):
+> ✅ **DECISÃO DO DONO, 23/11/2026 (revoga a lista abaixo, que fica só como histórico):**
+> *"pode usar Morte SEMPRE. não precisa ter esses pudores assim, é pra +18. não vamos
+> falar em coisas muito sensíveis como suicídio e abuso sexual, mas isso nem faz parte
+> do contexto, então pode afrouxar essas regras aí de termos vetados."*
+> **Vetados agora, em qualquer texto, prompt de arte ou voz:** suicídio, automutilação
+> e abuso sexual. Todo o resto do vocabulário de término (morrer, morte, matar,
+> partir, despedida, adeus etc.) está LIBERADO, sobre criatura e corpos de fenda. Os
+> itens 11 do checklist §17 e a coluna "Vetada" da §12 que dependem dessa lista ficam
+> sem efeito, exceto os três temas acima. O parecer de psicologia de 21/09/2026 foi
+> superado pela decisão do dono; o app é +18.
+
+⚠️ **[HISTÓRICO, superado em 23/11/2026] Vocabulário** (parecer de psicologia de
+21/09/2026; §11; checklist §17 item 11):
 
 - **Sobre a criatura, em qualquer voz — proibidos:** morrer, morte, matar,
   falecer, partir, despedida, adeus, descansar, "acabou", "não existe mais".
@@ -734,6 +745,23 @@ Regras de escrita das camadas: **nenhuma é assustadora por ser antiga**, nenhum
 é "mais perigosa" em voz de mundo (o risco é do jogo, não do lugar), e nenhuma
 guarda segredo sobre a pessoa. Fundo é **velho**, não maligno.
 
+### 7.4 Quem cuida dos lugares — Lilia, a musa do jardim (Grove)
+
+Adicionada em 13/11/2026 (dono, PR #879, REGISTRO §333: "mantenha o nome Lilia"). Escrita a partir do que o
+código já mostra; onde a bíblia e o código discordarem, vale o código.
+
+| | |
+|---|---|
+| **Nome** | **Lilia, a musa do jardim** (EN *Lilia, the garden muse*). É **Lilia**, nunca "Lila". Fonte: `'hall:grove'` em `src/utils/areaNpcVoice.ts`. |
+| **Onde mora** | No **Grove** (PT na UI: o Bosque, lote `hall.grove` da Cidadela). Ficha `novo:musa` em `src/data/npcFichas.ts`, e o lote `lote:hall:grove` aponta para ela. |
+| **O que ela é** | Uma criatura de forma Ultimate, ofício *verdejante*, elementos *seiva* e *jardim encantado*. Temperamento **acolhedor**. |
+| **O que ela cuida** | A planta do Bosque, que o clã faz crescer junto. Ela não cultiva por você: guarda o lugar e o ritmo dele. Aguar e defender só abrem depois da meta do dia (`src/utils/groveTend.ts`). Ela não pune: avisa quanto falta da SUA tarefa, em tom de convite, nunca de quem não veio. |
+| **A voz** | Curta, calma, no presente, e chama para perto: "O bosque cresce devagar. Vem ver." O tempo dela é o da planta. Sem pressa, sem número de urgência, sem elogio ao esforço. Quando a pessoa toca antes da hora, ela diz só o que falta ("Falta 1 tarefa para você poder cuidar do Bosque"), sem culpa. |
+| **Como o Soulmon fala dela** | Como de uma vizinha que vale visitar: "A gente poderia visitar a Lilia lá no Grove." (`src/utils/balaoDica.ts`). Aparece só quando a visita é verdadeira: meta cumprida e cuidado do dia por fazer. |
+
+Para escrever falas novas dela: o assunto é o jardim e o tempo das coisas que crescem. Nunca a cobrança, nunca a
+comparação com o resto do clã (a linha vermelha da Guilda vale para ela também).
+
 ---
 
 ## 8. Linha do tempo
@@ -867,6 +895,10 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 
 ## 12. Vocabulário canônico
 
+> **Renome (10/11/2026, dono):** a área antes chamada "Hall" é **Cidadela / Citadel** na UI. O id interno segue `hall` (save/cache). "Clan Hall / Salão do Clã" e "Game Hall / Salão de Jogos" são outros lugares e não mudaram. Ver `REGISTRO-DE-DECISOES.md` §278.
+
+> **23/11/2026 (dono):** a lista de vetos de MORTE/término e as colunas "Vetada" que dependem dela estão superadas; só suicídio, automutilação e abuso sexual são vetados. As tabelas "✅ Pode / ❌ Vetada" que citam adeus, despedida, morte e "morreu" (§11, §5.12) ficam como histórico.
+
 | PT | EN | Uso | Proibido em vez dele / por quê |
 |---|---|---|---|
 | **a Malha** ⚠️ | the Mesh | o lugar | "mundo digital" ⚠️ (fronteira de IP forte), "ciberespaço", "a rede", "o outro mundo", "portal" ⚠️ |
@@ -880,7 +912,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **inclinação** ⚠️ | leaning | a parte da ocasião que assenta fundo e decide o galho (§5.9) | "pontos de atributo" em voz de mundo, "XP", "stat" |
 | **sustentação** | hold | o que os corações medem (§5.4) | "vida", "HP", "saúde" em voz de mundo |
 | **reassentar** | to re-settle | dormir, o banho, recolher pesadelo, o corpo de fenda que volta à camada | "curar", "respawnar", "reviver" |
-| **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | "morte", "abate", "KO" — sempre, sem exceção |
+| **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | ~~"morte", "abate", "KO" — sempre, sem exceção~~ **liberado em 23/11/2026 (decisão do dono, §5.12)**; "término" segue como termo preferido em voz de mundo, mas "morte" pode ser usada |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
 | **Ruptura / Trama / Guarda** *(vocabulário de MUNDO, para lore — a UI diz Poder/Harmonia/Benevolência desde 29/09/2026; Ruptura=Poder, Trama=Harmonia, Guarda=Benevolência)* | Rupture / Braid / Ward | os três galhos, em texto de mundo | em EN prefira **Braid** a "Weave" em lore NOVO (*the Weave* é de D&D); o rótulo da UI não muda |
@@ -899,6 +931,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **linha** | line | as 9 linhagens | "espécie" é tolerável; "família" já tem sentido técnico |
 | **ofício** | craft | as 6 escolas | "classe" (já é termo técnico interno, não mostrado) |
 | **Glitchtama** | Glitchtama | o item | nome mantido por decisão do dono (21/09/2026, P5 fechada) |
+| **Arquivos / Files** · `<nome>.exe` | Files · `<name>.exe` | a pasta onde ficam os itens guardados (a antiga Mochila; só UI) e a forma de LISTAR comidas, pratos e chips dentro dela (decisão do dono, 16/11/2026) | "arquivo" **nunca** nomeia a criatura (ela é o **padrão**, §5.1 — ⚠️ acima); `.exe` só em nome de item **listado** (comida, prato, chip), nunca em voz de mundo, na fala da criatura ou nos itens especiais (coraçãozinho, Glitchtama, Faísca, poções); id e chave de save não mudam. Termo de **interface**, sem tom de cobrança (L2, L6) |
 | *(proposta P3)* **a Borda · o Enquadre · a Insônia ⚠️ · o Primeiro Chão · o Cobre Frio** | the Edge · the Frame · the Sleepless · the First Ground · the Cold Copper | as cinco camadas da fenda (§7.3) | nada decidido; não use em string enquanto P3 estiver aberta |
 
 Regra transversal: **nenhum nome de criatura leva sufixo fixo** (`-mon` e
@@ -1058,9 +1091,11 @@ todo texto derivado desta bíblia.
     pessoa deu? (O produto está ensinando tipologia — §6.)
 
 **Sobre morte e perda**
-11. Aparece morrer, morte, partir, adeus, despedida, "perder", "regrediu", "do
-    zero", "custa"? **E, sobre corpos de fenda:** matar, abater, eliminar,
-    "caiu"? (§5.12)
+11. **[Revisado em 23/11/2026, decisão do dono, §5.12]** Aparece suicídio,
+    automutilação ou abuso sexual? Só esses três são vetados. Morrer, morte,
+    matar, partir, adeus, despedida etc. estão liberados. (A lista antiga:
+    morrer, morte, partir, adeus, despedida, "perder", "regrediu", "do zero",
+    "custa", e sobre corpos de fenda matar, abater, eliminar, "caiu", está superada.)
 12. Dita em voz alta, olhando no olho de quem teve a pior semana do ano —
     constrange?
 

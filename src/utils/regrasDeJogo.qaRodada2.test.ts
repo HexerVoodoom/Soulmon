@@ -43,32 +43,21 @@ describe('#41/#60 — o 🌀 saiu do vitalício das conquistas', () => {
     attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
   });
 
-  it('dá +1 perfectDay e NÃO toca totalPerfectDays (a conquista dias-completos-30 deixa de ser farmável)', () => {
+  it('NÃO toca totalPerfectDays nem missionPerfectDays (10/11/2026: o 🌀 virou buff, não dá mais dia perfeito)', () => {
     const { state } = applySpecialItem(comGlitch(), GLITCHTAMA_EMOJI, day('2026-09-23T10:00'));
-    expect(state.perfectDays).toBe(4);
+    expect(state.perfectDays).toBe(3);
     expect(state.totalPerfectDays).toBe(7);     // intacto — é o que `achievements.ts` lê
-  });
-
-  it('mas SEGUE contando para a missão (missionPerfectDays), como a decisão manda', () => {
-    const { state } = applySpecialItem(comGlitch(), GLITCHTAMA_EMOJI, day('2026-09-23T10:00'));
-    expect(state.missionPerfectDays).toBe(8);
-  });
-
-  it('save anterior à decisão herda o vitalício antigo na missão — a missão nunca anda para trás', () => {
-    const antigo = comGlitch() as Partial<ReturnType<typeof comGlitch>>;
-    delete antigo.missionPerfectDays;           // save sem o campo novo
-    const { state } = applySpecialItem(antigo as ReturnType<typeof comGlitch>, GLITCHTAMA_EMOJI, day('2026-09-23T10:00'));
-    expect(state.missionPerfectDays).toBe(8);   // 7 herdados + 1
+    expect(state.missionPerfectDays).toBe(7);
   });
 
   it('o perfil G da simulação (90 runs, zero hábitos) não abre mais dias-completos-30', () => {
     let s = { ...comGlitch(), totalPerfectDays: 0, missionPerfectDays: 0, foodInventory: {} as Record<string, number> };
     for (let d = 0; d < 90; d++) {
-      s = { ...s, foodInventory: { [GLITCHTAMA_EMOJI]: 1 }, glitchtamaUse: undefined } as typeof s;
+      s = { ...s, foodInventory: { [GLITCHTAMA_EMOJI]: 1 }, glitchtamaUsadoEm: undefined } as typeof s;
       s = applySpecialItem(s, GLITCHTAMA_EMOJI, day('2026-01-01T10:00')).state;
     }
     expect(s.totalPerfectDays).toBe(0);         // ZERO dias completos reais
-    expect(s.missionPerfectDays).toBe(90);      // a missão continua vendo os 90
+    expect(s.missionPerfectDays).toBe(0);       // 10/11/2026: o 🌀 não soma nem na missão
   });
 });
 

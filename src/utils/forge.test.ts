@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  FORGE_PIECES, PIECE_BY_ID, LEVEL_PCT, PIECE_MAX_PCT, FORGE_MAX_LEVEL, FORGE_SCHEMA, OLD_LEVEL_TO_NEW, UPGRADE_COST, LEGACY_LEVEL, LEVEL_MIN_BOND, REDO_BITS, REDO_FRAGMENTS,
+  FORGE_PIECES, PIECE_BY_ID, LEVEL_PCT, PIECE_MAX_PCT, FORGE_MAX_LEVEL, FORGE_SCHEMA, OLD_LEVEL_TO_NEW, UPGRADE_COST, LEGACY_LEVEL, LEVEL_MIN_BOND, REDO_BITS, REDO_FRAGMENTS, UPGRADE_BITS_BASE, UPGRADE_BITS_FACTOR, upgradeBitsCost,
   sanitizeForge, pieceLevel, pieceBonus, ownedPieceBonus, PRIMARY_ATTR, ALT_ATTR, type ForgeChoice,
 } from './forge';
 import {
@@ -105,7 +105,7 @@ describe('migração sem confisco (peça comprada antes do Soulsmith)', () => {
     expect(LEGACY_LEVEL.map((l) => l * 0.001)).toEqual([0.005, 0.011, 0.015]);
   });
   it('aprimorar uma peça antiga parte do nível equivalente, com a opção A nos níveis anteriores', () => {
-    const prev: ForgeGameState = { equipment: eqOwn('eq-nucleo-t2'), totalXP: xpForLevel(8), buildingQuests: mats({ fang: 20, ore: 20 }) };
+    const prev: ForgeGameState = { gamePoints: 100000, equipment: eqOwn('eq-nucleo-t2'), totalXP: xpForLevel(8), buildingQuests: mats({ fang: 20, ore: 20 }) };
     const r = applyUpgrade(prev, 'eq-nucleo-t2', 'b');
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -176,7 +176,7 @@ describe('concessão por missão', () => {
 });
 
 describe('aprimorar', () => {
-  const base = (): ForgeGameState => applyForgeGrant({ totalXP: xpForLevel(6), buildingQuests: mats({ ore: 5, gear: 5 }) }, 'exploracao.fenda');
+  const base = (): ForgeGameState => applyForgeGrant({ gamePoints: 100000, totalXP: xpForLevel(6), buildingQuests: mats({ ore: 5, gear: 5 }) }, 'exploracao.fenda');
   it('debita os materiais, sobe o nível e guarda a escolha; o material nunca fica negativo', () => {
     const r = applyUpgrade(base(), 'eq-nucleo-t1', 'b');
     expect(r.ok).toBe(true);
@@ -230,8 +230,12 @@ describe('refazer a escolha', () => {
     expect(r.state.forge!.v).toBe(FORGE_SCHEMA);
     expect(r.state.buildingQuests!.materials.ore).toBe(3);
   });
-  it('Bit que veio de Crédito não paga (nunca paidLeft); sem Bits, recusa neutra', () => {
-    expect(redoRefusal(nivel3({ gamePoints: 1000, bitsOrigin: { day: 'd', free: 0, fromCredits: 900, paidLeft: 900 } }), 'eq-nucleo-t1', 2, 'a', 'bits')).toBe('not-earned');
+  it('§373: o Bit que veio de Crédito paga o refazer (gasto primeiro); sem Bits, recusa neutra', () => {
+    const credito = nivel3({ gamePoints: 1000, bitsOrigin: { day: 'd', free: 0, fromCredits: 900, paidLeft: 900 } });
+    expect(redoRefusal(credito, 'eq-nucleo-t1', 2, 'a', 'bits')).toBeUndefined();
+    const r = applyRedo(credito, 'eq-nucleo-t1', 2, 'a', 'bits');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.state.bitsOrigin!.paidLeft).toBe(900 - r.price);
     expect(redoRefusal(nivel3({ gamePoints: 10 }), 'eq-nucleo-t1', 2, 'a', 'bits')).toBe('no-funds');
   });
   it('com fragmentos; sem fragmentos recusa; repetir a mesma escolha é recusado (idempotente)', () => {
@@ -278,5 +282,50 @@ describe('fiação', () => {
     expect(src).toMatch(/talentPveAttrBonus\(picks, bondLevelFor\(xp \?\? 0\)\), equipment, forge\)/); // a Masmorra: talento por canal + equipamento, um teto
     const duel = readFileSync(`${process.cwd()}/functions/api/_duel.js`, 'utf8');
     expect(duel).toMatch(/equipAttrBonus\(state\.equipment, state\.forge\)/);
+  });
+});
+
+describe('💠 Bits do aprimoramento (REGISTRO §281)', () => {
+  const peca = (over: Partial<ForgeGameState> = {}): ForgeGameState => ({
+    ...applyForgeGrant({ totalXP: xpForLevel(12), buildingQuests: mats({ ore: 99, gear: 99 }) }, 'exploracao.fenda'), gamePoints: 1000, ...over,
+  });
+  it('curva do dono: round(20 × 1,25^(nível−1)), nível = o nível ATUAL da peça', () => {
+    expect([UPGRADE_BITS_BASE, UPGRADE_BITS_FACTOR]).toEqual([20, 1.25]);
+    expect(upgradeBitsCost(1)).toBe(20);
+    expect(upgradeBitsCost(5)).toBe(49);
+    expect(upgradeBitsCost(10)).toBe(149);
+    expect(upgradeBitsCost(14)).toBe(364);
+    for (let l = 1; l < 14; l++) expect(upgradeBitsCost(l + 1)).toBeGreaterThan(upgradeBitsCost(l));
+  });
+  it('aprimorar debita os Bits do nível atual além dos materiais', () => {
+    const r = applyUpgrade(peca(), 'eq-nucleo-t1', 'a');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.state.gamePoints).toBe(1000 - upgradeBitsCost(1));
+  });
+  it('percorrendo 1→15 o total debitado é a soma da curva', () => {
+    let s = peca({ gamePoints: 100000 });
+    for (let i = 0; i < FORGE_MAX_LEVEL - 1; i++) { const r = applyUpgrade(s, 'eq-nucleo-t1', 'a'); expect(r.ok).toBe(true); if (r.ok) s = r.state; }
+    const soma = Array.from({ length: FORGE_MAX_LEVEL - 1 }, (_, i) => upgradeBitsCost(i + 1)).reduce((a, b) => a + b, 0);
+    expect(100000 - (s.gamePoints ?? 0)).toBe(soma);
+  });
+  it('sem Bits: recusa suave (no-funds) e NADA é consumido (mesma referência)', () => {
+    const prev = peca({ gamePoints: 19 });
+    expect(upgradeRefusal(prev, 'eq-nucleo-t1')).toBe('no-funds');
+    const r = applyUpgrade(prev, 'eq-nucleo-t1', 'a');
+    expect(r).toEqual({ ok: false, reason: 'no-funds' });
+    expect(prev.buildingQuests!.materials.ore).toBe(99);
+    expect(prev.gamePoints).toBe(19);
+  });
+  it('§373: Bits vindos de Crédito pagam o aprimoramento (antes not-earned), gastos primeiro', () => {
+    const credito = peca({ gamePoints: 100, bitsOrigin: { day: 'd', free: 0, fromCredits: 90, paidLeft: 90 } });
+    expect(upgradeRefusal(credito, 'eq-nucleo-t1')).toBeUndefined();
+    const misto = peca({ gamePoints: 110, bitsOrigin: { day: 'd', free: 0, fromCredits: 90, paidLeft: 90 } });
+    const r = applyUpgrade(misto, 'eq-nucleo-t1', 'a');
+    expect(r.ok && r.state.bitsOrigin!.paidLeft).toBe(90 - upgradeBitsCost(1));
+  });
+  it('idempotente: o 2º toque no mesmo lote não cobra de novo', () => {
+    const r1 = applyUpgrade(peca({ gamePoints: 25, buildingQuests: mats({ ore: UPGRADE_COST[2][0] }) }), 'eq-nucleo-t1', 'a');
+    expect(r1.ok).toBe(true);
+    if (r1.ok) expect(applyUpgrade(r1.state, 'eq-nucleo-t1', 'a').ok).toBe(false);
   });
 });

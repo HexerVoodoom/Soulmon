@@ -3,11 +3,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOVOS_SOULMON, FORMAS_ALTAS_ART, novoSoulmonOfStage, novoPreferenceOfTier } from './novosSoulmon';
 import { NOVOS_DATA, FORMAS_ALTAS, pickNovo } from './novosSoulmonData';
+import { LEGADO_DATA } from './enemyRosterLegado.data';
 import { buildArenaRound, ARENA_ROUNDS } from './arena';
 import { buildDungeonWave, LADDER_TIERS } from './dungeon';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES } from './sprites';
-import { VISUAL_ELEMENTS, fxElementId, elementStrikeForm, dungeonEnemyElement, dungeonFoeSpecialLabel } from './combatFx';
+import { VISUAL_ELEMENTS, fxElementId, elementStrikeForm, dungeonEnemyElement, dungeonFoeSpecialLabel, familiaDoNomeInimigo } from './combatFx';
 import { mulberry32 } from './combate/rng';
+import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 
 const DIR = join(process.cwd(), 'src/assets/soulmon/novos');
 
@@ -74,17 +76,25 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
     for (let seed = 1; seed <= 20; seed++) {
       // M10: a forma de ARTE do slot é limitada pelo level (`enemyRoster.ts`); level 30 libera a escada inteira.
       const wave = buildDungeonWave(1 + seed % 4, 'mega', mulberry32(seed), 30);
-      const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
+      // Coerência estágio × HP (11/11/2026): a forma do slot sobe até a faixa do HP real do inimigo (teto Mega: não há arte de Ultra).
+      const slotForma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
+      const forma = wave.map((e, i) => { const m = maxFoeStage(slotForma[i], stageForFoeHp(e.foe.combatant.hp)); return (m === 'ultra' ? 'mega' : m) as 'rookie' | 'champion' | 'ultimate' | 'mega'; });
       wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage);
-        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-rookie|[a-z]+-(rookie|champion|ultimate))$/); return; } // rookie de elemento combinado (M10)
+        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-(rookie|champion|ultimate|mega)|[a-z]+-(rookie|champion|ultimate|mega))$/); return; } // combinado (M10; REGISTRO §437: formas de arte alta entram pela tabela)
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
         expect(e.name).toBe(n.name(forma[i]));
         expect(e.sprite).toBe(n.sprite(forma[i]));
         expect(dungeonEnemyElement(e)).toBe(n.element);
-        expect(dungeonFoeSpecialLabel(true, e, e.element, e.name)).toBe(n.especial.pt);
-        expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).toBe(n.especial.en);
+        // 16/11/2026 (REGISTRO §443): o nome da tabela da criatura vale só no dano direto; cura/escudo/buff/DoT/debuff levam o nome da FAMÍLIA
+        const familia = familiaDoNomeInimigo(e.foe.special);
+        if (!familia || familia === 'direct') {
+          expect(dungeonFoeSpecialLabel(true, e, e.element, e.name)).toBe(n.especial.pt);
+          expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).toBe(n.especial.en);
+        } else {
+          expect(dungeonFoeSpecialLabel(false, e, e.element, e.name)).not.toBe(n.especial.en);
+        }
       });
     }
   });
@@ -92,7 +102,8 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
   it('o valor (HP/poder) do encontro não mudou: só o sabor', () => {
     const a = buildDungeonWave(3, 'rookie', mulberry32(7));
     const b = buildDungeonWave(3, 'rookie', mulberry32(99));
-    expect(a.map(e => e.foe)).toEqual(b.map(e => e.foe));
+    // o TIPO do especial varia com a criatura (REGISTRO §290); o valor (HP/poder) e a existência do especial não
+    expect(a.map(e => ({ ...e.foe, special: !!e.foe.special }))).toEqual(b.map(e => ({ ...e.foe, special: !!e.foe.special })));
   });
 
   it('sem repetição: as criaturas novas da onda (6 slots) são todas diferentes', () => {
@@ -116,11 +127,13 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
       for (let r = 1; r <= ARENA_ROUNDS; r++) {
         const a = buildArenaRound(r, 1, mulberry32(seed + r), []);
         expect(buildArenaRound(r, 1, mulberry32(seed + r), [])).toEqual(a);
-        expect(new Set(a.map(e => e.creature)).size).toBe(a.length);
+        expect(new Set(a.map(e => e.creature ?? e.ramoKey)).size).toBe(a.length);
         for (const e of a) {
+          expect(e.ramoKey).toBeUndefined(); // §222: sem escada não há ramo
           const n = NOVOS_SOULMON.find(x => x.id === e.creature)!;
           expect(e.elements).toEqual([n.element]);
-          expect(e.form).toBe(e.cls === 'weak' ? 'rookie' : e.cls === 'medium' ? 'champion' : 'ultra'); // chefe: ultra > mega > ultimate
+          if (e.artFile) continue;
+          expect(e.form).toBe('rookie'); // §222: escada 0 = só Rookies
           expect(e.namePt).toBe(n.name(e.form!));
         }
       }
@@ -128,12 +141,12 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
   });
 });
 
-describe('arquivo de ramos e combinados (sem consumidor)', () => {
+describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterArt)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-  it('manifest bate com os PNGs (120 ramos + 261 combinados), 256² RGBA, sem órfão', () => {
+  it('manifest bate com os PNGs (120 ramos + 267 combinados), 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
     expect(m.branches).toHaveLength(120);
-    expect(m.combined).toHaveLength(261);
+    expect(m.combined).toHaveLength(267);
     const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
     const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
       ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
@@ -143,21 +156,35 @@ describe('arquivo de ramos e combinados (sem consumidor)', () => {
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
     }
   });
-  it('formas champion/ultimate/mega dos 50 curados (212-261): 150 PNGs 256² RGBA, 3 por id', () => {
-    const d = join(ARQ, 'combinados-formas');
+  it('legado (§445, 16/11): 15 PNGs 256² RGBA < 150 KB, um por (id, estágio) de LEGADO_DATA, sem órfão', () => {
+    const d = join(ARQ, 'legado');
     const fs = readdirSync(d);
-    expect(fs).toHaveLength(150);
+    const esperados = LEGADO_DATA.flatMap(([id]) => ['champion', 'ultimate', 'mega'].map(st => `${id}-${st}.png`));
+    expect(fs.sort()).toEqual(esperados.sort());
+    expect(fs).toHaveLength(15);
     for (const f of fs) {
       const b = readFileSync(join(d, f));
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
+      expect(b.length, f).toBeLessThan(150_000);
     }
   });
-  it('nenhum arquivo de src importa o arquivo (fica fora do bundle)', () => {
+  it('formas champion/ultimate/mega dos 50 curados (212-261) + 205 do pacote A (16/11): 355 PNGs 256² com alfa (RGBA, ou paleta com tRNS nos do pacote A)', () => {
+    const d = join(ARQ, 'combinados-formas');
+    const fs = readdirSync(d);
+    expect(fs).toHaveLength(150 + 205);
+    for (const f of fs) {
+      const b = readFileSync(join(d, f));
+      // 6 = RGBA; 3 = paleta de 256 cores (pacote A, 16/11/2026) e só vale com o bloco tRNS, que carrega o alfa
+      expect([b.readUInt32BE(16), b.readUInt32BE(20)], f).toEqual([256, 256]);
+      expect(b[25] === 6 || (b[25] === 3 && b.includes(Buffer.from('tRNS'))), f).toBe(true);
+    }
+  });
+  it('nenhum arquivo de src fora do enemyRosterArt importa o arquivo', () => {
     const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap(e =>
       e.isDirectory() ? (e.name === 'assets' ? [] : walk(join(d, e.name))) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : []);
     for (const f of walk(join(process.cwd(), 'src'))) {
       if (f.endsWith('novosSoulmon.test.ts')) continue;
-      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob só dos 138 combinados); os outros só citam o caminho em comentário
+      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob dos combinados e, §220, dos 120 ramos; `combinados-formas/` é lido por `FORMAS_ART`, 09/11/2026); os outros só citam o caminho em comentário
       expect(readFileSync(f, 'utf8'), f).not.toContain('novos-arquivo');
     }
   });

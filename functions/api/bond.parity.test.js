@@ -32,10 +32,10 @@ describe('a curva do Vínculo é a MESMA nos dois lados', () => {
     expect(noServidor(limiar) >= MIN_SERVIDOR).toBe(meetsPvpBond(limiar));
   });
 
-  it('lixo no save cai no mesmo lado nos dois (nível 1 / não libera)', () => {
+  it('lixo no save cai no mesmo lado nos dois (nível 1)', () => {
     for (const lixo of [null, undefined, NaN, -5, 'muito', {}, []]) {
       expect(noServidor(lixo)).toBe(1);
-      expect(meetsPvpBond(/** @type {number} */(lixo))).toBe(false);
+      expect(meetsPvpBond(/** @type {number} */(lixo))).toBe(MIN_APP <= 1); // PvP sem portão desde 12/11/2026
     }
   });
 });

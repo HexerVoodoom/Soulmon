@@ -335,3 +335,32 @@ describe('halo do check concluído = o do CheckRow do modal', () => {
     expect(css.slice(i, i + 300)).not.toMatch(/animation|transition/); // estático = ok em movimento reduzido
   });
 });
+describe('o ✓ do checkbox compartilhado aparece marcado (§312)', () => {
+  const visivel = (root: ParentNode) => {
+    const i = [...root.querySelectorAll('.sm2-icon')].find(e => e.textContent === 'check') as HTMLElement | undefined;
+    return !!i && !!i.querySelector('svg path') && i.className.includes('sm2-icon-primary');
+  };
+  it('RitualRow e StepRow marcados desenham o check turquesa; vazios não', async () => {
+    const { render } = await import('@testing-library/react');
+    const { StepRow } = await import('../StepRow');
+    cleanup();
+    const a = render(<ul><RitualRow kind="task" name="A" value={1} max={1} done onToggle={() => {}} language="pt-BR" /></ul>);
+    expect(visivel(a.container)).toBe(true);
+    a.unmount();
+    const b = render(<ul><RitualRow kind="task" name="A" value={0} max={1} onToggle={() => {}} language="pt-BR" /></ul>);
+    expect(visivel(b.container)).toBe(false);
+    b.unmount();
+    const c = render(<StepRow id="s" label="passo" completed onToggle={() => {}} />);
+    expect(visivel(c.container)).toBe(true);
+    c.unmount();
+  });
+  it('linha de escolha selecionada NÃO usa o fill turquesa (o check turquesa sumiria nele); a seleção vira borda', async () => {
+    const { pickRowStyle } = await import('./RitualPanel');
+    const { sm2Button } = await import('../form/FormKit');
+    const on = pickRowStyle(sm2Button('outline'), true);
+    expect(on.backgroundColor).not.toBe('var(--sm2-primary-fill)');
+    expect(on.backgroundColor).toBe('var(--sm2-surface)');
+    expect(on.border).toContain('var(--sm2-primary-ink)');
+    expect(pickRowStyle(sm2Button('outline'), false).border).not.toContain('primary-ink');
+  });
+});

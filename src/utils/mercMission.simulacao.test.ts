@@ -1,7 +1,7 @@
 /**
  * SIMULAÇÃO DE 30 DIAS (plano do onboarding velado §11: "antes de ligar a recompensa"):
  * os pontos de tipo da missão da Guilda dos Mercenários dominam os das tarefas normais?
- * Tarefas normais = 1 comida por tarefa (`feedFood`: `CATEGORY_ATTRIBUTES` da categoria, 4 pontos por comida).
+ * Tarefas normais = 1 comida por tarefa (`feedFood`: `CATEGORY_ATTRIBUTES` da categoria, 3 pontos por comida (§298)).
  */
 import { describe, it, expect } from 'vitest';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, type BranchType } from '../types/attributes';
@@ -40,8 +40,9 @@ describe('missão da Guilda dos Mercenários x tarefas normais, 30 dias', () => 
         const pctTotal = (100 * totM) / (totN + totM);
         const pior = Math.max(...TIPOS.map(k => (100 * merc[k]) / (normal[k] + merc[k])));
         linhas.push(`${tarefas} tarefas/dia, ${nome}: normais ${totN} pts, missão ${totM} pts (${pctTotal.toFixed(1)}% do total); pior tipo: ${pior.toFixed(1)}% vem da missão`);
-        // A missão nunca passa de ~1/3 do que o jogador ganha, mesmo concentrada num tipo só.
-        expect(pctTotal).toBeLessThan(35);
+        // A missão nunca passa de ~1/3 do que o jogador ganha, mesmo concentrada num tipo só (35% com 4 pts/tarefa).
+        // §298: tarefa passou a render 3 pts (P/H/B 10/10/10), então o mesmo limite de projeto vira ~42% (35% reescalado por 3/4).
+        expect(pctTotal).toBeLessThan(43);
         // Achado: concentrado num tipo só, a missão chega perto de metade dele; o teto abaixo é o limite aceito (ver plano §11).
         if (tarefas >= 4) expect(pior).toBeLessThan(60);
       });

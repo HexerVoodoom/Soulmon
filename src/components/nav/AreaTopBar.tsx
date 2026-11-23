@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import { useBackDimmed } from '../../utils/modalDepth';
 import { NavGlyph } from '../ui/NavGlyphs';
 import { PixelIcon } from '../ui/PixelIcon';
 import { CORNER_RING, CORNER_RING_TOP, CORNER_RING_SIDE, CORNER_RING_STYLE } from './cornerAnchor';
@@ -55,6 +57,8 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   };
+  const backRef = useRef<HTMLButtonElement>(null);
+  const dimmed = useBackDimmed(backRef);
   return (
     <div
       data-area-topbar
@@ -85,7 +89,10 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
           O espaço dele na linha é reservado pelo `<span>` vazio logo abaixo. */}
       <span aria-hidden="true" style={{ width: CORNER_RING, flex: `0 0 ${CORNER_RING}px`, height: CORNER_RING }} />
       <button
+        ref={backRef}
         type="button"
+        disabled={dimmed}
+        data-modal-dimmed={dimmed ? '' : undefined}
         onClick={onBack}
         aria-label={backLabel}
         title={backLabel}

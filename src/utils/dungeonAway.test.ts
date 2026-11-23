@@ -24,7 +24,7 @@ function away(over: Partial<DungeonAway> = {}, stage = 'ultimate'): DungeonAway 
   const c = soulCombatant({ evolutionStage: stage });
   return {
     since: T0, seed: SEED, layer: 1, slot: 0, hp: 1, en: 0, ms: false,
-    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage },
+    player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rc: 0, stage },
     ...over,
   };
 }
@@ -183,12 +183,13 @@ describe('applyDungeonAway — o avanço de quem ficou fora', () => {
     expect(Object.values(com.next.foodInventory).reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(com.report!.hearts);
   });
 
-  it('o marco da camada 5 rende UM Glitchtama por descida (e o registro lembra, para não pagar de novo)', () => {
+  it('o marco da camada 5 paga a recompensa da run UMA vez por descida (e o registro lembra); o Glitchtama é raro', () => {
     const s = estado({ energyPoints: 5000 }, away({ layer: 4, slot: 0 }));
     const { next, report } = applyDungeonAway(s, T0 + 8 * HORA);
     if (report!.toLayer >= 5 || report!.recordTo >= 5) {
-      expect(report!.glitchtama).toBe(1);
-      expect(next.foodInventory['🌀']).toBe(1);
+      // 05/11/2026: o 🌀 é raro (1%/marco, 1/semana); a recompensa da run segue 1× por descida. O relatório e o estoque concordam.
+      expect(report!.glitchtama).toBeLessThanOrEqual(1);
+      expect(next.foodInventory['🌀'] ?? 0).toBe(report!.glitchtama);
       expect(next.dungeonRunsCompleted).toBe(1);
       if (next.dungeonAway) expect(next.dungeonAway.ms).toBe(true);
     }
@@ -210,12 +211,12 @@ describe('applyDungeonAway — o avanço de quem ficou fora', () => {
     expect(b.next.gamePoints).toBe(a.next.gamePoints);
   });
 
-  it('o Vínculo baixo trava a descida no portão (sem alterar nada além disso)', () => {
+  it('o Vínculo baixo NÃO trava mais a descida (dono 12/11/2026: sem limite por level)', () => {
     const baixo = estado({ totalXP: 0, energyPoints: 5000 });
     expect(bondLevelFor(0)).toBeLessThan(5);
     const { report } = applyDungeonAway(baixo, T0 + 8 * HORA);
-    expect(['sealed', 'deep', null, 'hp', 'energy']).toContain(report!.ended);
-    expect(report!.toLayer).toBeLessThanOrEqual(5);
+    expect(['daily', 'deep', null, 'hp', 'energy']).toContain(report!.ended);
+    expect(report!.toLayer).toBeGreaterThan(5);
   });
 });
 

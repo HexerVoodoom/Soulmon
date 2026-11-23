@@ -12,9 +12,10 @@ describe('ModalInfo — o "i" mora na linha do título da moldura', () => {
         <ModalInfo language="pt-BR" label="Sobre a folha">texto</ModalInfo>
       </ModalSheet>,
     );
-    const slot = document.querySelector('[data-modal-info-slot]')!;
+    // Com a moldura da folha (etapa 3) o encaixe é o ornamento "i" do quadro (`data-moldura-info`); o título é a placa do mesmo quadro.
+    const slot = document.querySelector('[data-moldura-info]')!;
     expect(slot.querySelector('button[aria-label="Sobre a folha"]')).toBeTruthy();
-    expect(slot.parentElement!.textContent).toContain('Folha');
+    expect(slot.closest('[role="dialog"]')!.querySelector('[data-moldura-placa]')!.textContent).toContain('Folha');
   });
 
   it('fora de moldura, cai no lugar onde foi escrito', () => {

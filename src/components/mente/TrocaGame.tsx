@@ -68,8 +68,7 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
     overRef.current = true;
     setOver(true);
     const bits = trocaBits(final.correct);
-    setEarned(bits);
-    if (bits > 0) onEarnPoints(bits);
+    setEarned(bits > 0 ? (onEarnPoints(bits) ?? bits) : 0);
   }, [onEarnPoints]);
 
   // Relógio da sessão. Um intervalo só, limpo ao desmontar ou terminar.

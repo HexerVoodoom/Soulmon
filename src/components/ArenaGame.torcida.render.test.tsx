@@ -83,15 +83,21 @@ function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
 
-async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void } = {}) {
+/**
+ * Semente FIXA da run. Sem ela cada `entrar` sorteia uma (`newDefenseSeed`), e a semente decide a família do especial do chefe, as fases
+ * dos casts e a duração da luta: em algumas sementes a rodada 5 passava dos 30 s simulados do `ate` e o teste caía (flake do CI de
+ * 18/11/2026, "vitória: as 5 rodadas…", e irmãos desta suíte). Com a semente fixa a luta inteira é determinística.
+ */
+const SEED_FIXA = 104736;
+
+async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void } = {}) {
   renderWithCss(
     <ArenaGame
-      evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
-      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints}
+      seed={SEED_FIXA} evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
+      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd}
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-  fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena|Enter the Arena/i }));
   await avancar(10);
   if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS); // §202: ~1 s entre a carga do especial e o anel
 }
@@ -122,8 +128,8 @@ async function ate(cond: () => boolean, maxMs = 30_000) {
 }
 /** Vence a rodada atual (foes frágeis) e abre a próxima. */
 async function proximaRodada() {
-  expect(await ate(() => temBotao('Próxima rodada'))).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
+  expect(await ate(() => temBotao('Pronto pro combate'))).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: /Pronto pro combate/ }));
   await avancar(10);
 }
 
@@ -149,18 +155,6 @@ describe('Arena em grupo — a cena', () => {
     expect(screen.queryByText(/ataca sozinho/i)).toBeNull();
     expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
     expect(ratio()).toBe(0);
-  });
-
-  it('a explicação da intro mora atrás do "?" (InfoTip) e fala do grupo, do anel e da esquiva', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(screen.queryByText(/luta e se defende sozinho/i)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Como funciona o Duelo' }));
-    const texto = document.body.textContent ?? '';
-    expect(texto).toMatch(/barra de cheer/i);
-    expect(texto).toMatch(/anel/i);
-    expect(texto).toMatch(/deslize/i);
-    expect(texto).toMatch(/ao mesmo tempo/i);
   });
 
   it('o relógio é o do núcleo: nada chega antes do primeiro evento, e os números só aparecem no IMPACTO', async () => {
@@ -207,14 +201,6 @@ describe('Arena em grupo — a barra de cheer (a torcida)', () => {
     fireEvent.click(mascote());
     expect(ratio()).toBeGreaterThan(0);
     expect(document.querySelector('[data-cheer-bubble]')?.textContent).toBe('VAI!');
-  });
-
-  it('antes da luta (intro) o toque não vale nada', async () => {
-    renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    for (let i = 0; i < 10; i++) fireEvent.pointerDown(camada());
-    fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena/i }));
-    expect(ratio()).toBe(0);
   });
 });
 
@@ -308,8 +294,12 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
   it('derrota: a run acaba sem pontos, com texto neutro, e dá para tentar de novo', async () => {
     H.playerHp = 0.0001;
     const onEarn = vi.fn();
-    await entrar({ onEarnPoints: onEarn });
+    const onRunEnd = vi.fn();
+    await entrar({ onEarnPoints: onEarn, onRunEnd });
     expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
+    expect(onRunEnd).toHaveBeenCalledTimes(1); // derrota também re-sorteia o trio
+    expect(onRunEnd).toHaveBeenCalledWith('loss'); // §222: derrota segura a escada
+    expect(screen.queryByRole('button', { name: /Lutar de novo/ })).toBeNull();
     expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/Não custou nenhum coração, só a run/);
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
     expect(onEarn).not.toHaveBeenCalled();
@@ -351,10 +341,105 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     contagem.push(document.querySelectorAll('[data-stage-sprite="foe"]').length);
     expect(contagem).toEqual([1, 2, 1, 3, 1]);
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).not.toBeNull(); // o chefe
-    expect(await ate(() => temBotao('Terminar'))).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Terminar' }));
+    // Última rodada: sem modal nem tela intermediária — vai direto ao resultado.
+    expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+    expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
     expect(document.querySelector('[data-result-title]')!.textContent).toBe('Arena vencida');
-    expect(onEarn).toHaveBeenCalledWith(50);
+    expect(onEarn).toHaveBeenCalledWith(50, 0);
+    // Vitória não diz "Tentar de novo".
+    expect(screen.getByRole('button', { name: /Lutar de novo/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
+  });
+
+  describe('§384 — o último adversário dropa em dobro (⚰️ §372 "+1 Presa" revogado)', () => {
+    // O texto em EN e a conta estão travados em `utils/arenaUltimoAdversario.test.ts` (o ajudante `proximaRodada` daqui clica em PT).
+    const vencer = async () => {
+      H.foeHp = 0.01;
+      const onEarn = vi.fn(() => 50);
+      const onDefeated = vi.fn();
+      renderWithCss(
+        <ArenaGame seed={SEED_FIXA} evolutionStage="rookie" language="pt-BR" skills={skillsCom('combate_fisico')} onExit={() => {}} onEarnPoints={onEarn} onElementsDefeated={onDefeated} />,
+      );
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      await avancar(10);
+      if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS);
+      for (let r = 1; r <= 4; r++) await proximaRodada();
+      expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+      return { onEarn, onDefeated, ledger: document.querySelector('[data-result-ledger]')?.textContent ?? '' };
+    };
+    it('run vencida: a rodada final entrega o drop do chefe em dobro, e o "Ganhou" mostra ×2 e o mesmo total que foi aplicado', async () => {
+      const r = await vencer();
+      expect(r.onEarn).toHaveBeenCalledWith(50, 0); // os Bits não mudam
+      expect(r.onDefeated).toHaveBeenCalledTimes(5);
+      const final = r.onDefeated.mock.calls[4][1] as Array<{ id: string; qty: number }>;
+      expect(final.length).toBeGreaterThan(0);
+      for (const d of final) expect(d.qty % 2).toBe(0); // a rodada 5 é só o chefe: tudo dele veio ×2
+      expect(r.ledger).toMatch(/Último adversário: drop em dobro ×2/);
+      expect(r.ledger).not.toMatch(/Todos derrotados|Presa/);
+      // mostrado = aplicado: a soma das linhas de essência é a soma do que foi para o updater
+      const aplicado = r.onDefeated.mock.calls.flatMap(c => (c[1] ?? []) as Array<{ qty: number }>).reduce((s, d) => s + d.qty, 0);
+      const mostrado = [...document.querySelectorAll('[data-result-essence]')].reduce((s, el) => s + Number(el.textContent?.replace('×', '')), 0);
+      expect(mostrado).toBe(aplicado);
+    });
+    it('derrota: nenhuma linha ×2', async () => {
+      H.playerHp = 0.0001;
+      await entrar();
+      expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
+      expect(document.querySelector('[data-result-ledger]')?.textContent ?? '').not.toMatch(/×2|em dobro/);
+    });
+  });
+
+  describe('Bits mostrados = Bits creditados (teto diário de 150)', () => {
+    // O funil do App devolve o creditado; o ArenaGame mostra isso, não o pedido de 50.
+    const vencerCom = async (creditado: number) => {
+      H.foeHp = 0.01;
+      const onEarn = vi.fn(() => creditado);
+      await entrar({ onEarnPoints: onEarn });
+      for (let r = 1; r <= 4; r++) await proximaRodada();
+      expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+      expect(onEarn).toHaveBeenCalledWith(50, 0);
+      return document.querySelector('[data-result-ledger]')?.textContent ?? '';
+    };
+    it('teto gasto: pediu 50, creditou 0 -> nenhum Bit na tela', async () => {
+      const ledger = await vencerCom(0);
+      expect(ledger).not.toMatch(/50/);
+      expect(document.querySelector('[data-result-bits-pop]')).toBeNull();
+    });
+    it('teto parcial: pediu 50, creditou 20 -> mostra 20', async () => {
+      const ledger = await vencerCom(20);
+      expect(ledger).toMatch(/20/);
+      expect(ledger).not.toMatch(/50/);
+    });
+    it('sem teto: pediu 50, creditou 50 -> mostra 50', async () => {
+      expect(await vencerCom(50)).toMatch(/50/);
+    });
+  });
+
+  it('entre rodadas: MODAL com "+X HP recuperado" e o botão leva direto ao próximo round', async () => {
+    H.foeHp = 0.3;
+    await entrar();
+    expect(await ate(() => document.querySelector('[data-arena-cura-modal]') !== null)).toBe(true);
+    const modal = document.querySelector('[data-arena-cura-modal]')!.closest('[role="dialog"]')!;
+    expect(modal.textContent).toMatch(/Rodada 1 de \d vencida/);
+    expect(modal.textContent).toMatch(/Você recuperou \+\d+ de vida/);
+    expect(Number(/\+(\d+)/.exec(modal.textContent!)![1])).toBeGreaterThan(0);
+    expect(modal.querySelectorAll('[data-heart-fill]').length).toBe(3); // 3 corações enchendo
+    expect(document.querySelector('[data-stage-sprite="foe"]')).not.toBeNull(); // a luta continua na tela atrás do modal
+    fireEvent.click(screen.getByRole('button', { name: /Pronto pro combate/ }));
+    await avancar(10);
+    expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
+    expect(document.querySelectorAll('[data-stage-sprite="foe"]').length).toBe(2); // rodada 2 em luta
+  });
+
+  it('fim da run avisa onRunEnd UMA vez (vitória) — é o que re-sorteia o trio sem gastar reroll', async () => {
+    H.foeHp = 0.01;
+    const onRunEnd = vi.fn();
+    await entrar({ onRunEnd });
+    for (let r = 1; r <= 4; r++) await proximaRodada();
+    expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+    await avancar(100);
+    expect(onRunEnd).toHaveBeenCalledTimes(1);
+    expect(onRunEnd).toHaveBeenCalledWith('win'); // §222: só a vitória sobe a escada
   });
 });
 

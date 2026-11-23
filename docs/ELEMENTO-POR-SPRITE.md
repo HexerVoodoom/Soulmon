@@ -16,13 +16,14 @@ Decisão do dono (30/10/2026): **um sprite tem UM elemento e ele vale em todo lu
 - `GameStateContext.tsx`: o perfil público publica `petElementOf(gameState)` (antes só o dominante cru: iniciais e corvo ficavam sem elemento).
 - `match3Combat.ts`/`match3Pvp.ts`/`Match3Game.tsx`: inimigo do Elemental Fusion tem o elemento do sprite (roster, linha própria, oponente PvP).
 - `soulBarrage.ts`: filtro espaço por `elements[0]` (mesmo conjunto de antes).
-- Simulados: `element` = elemento do prompt (33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
+- Simulados (170 desde 05/11/2026; nos 120 novos o `element` é gravado antes de gerar a arte): `element` = o que a ARTE mostra (revisado em 09/11/2026: 55 dos 170 trocados em relação ao elemento do prompt, que nunca nomeia o elemento; lista em `SIM_ELEMENTO_REVISADO` e `docs/reviews/2026-11-09-simulados-elemento.md`; antes, 30/10, era o elemento do prompt, 33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
 
 ## Tabelas
 ### Corvo neutro (1): `mascote:corvo` = `neutro` — a ÚNICA criatura neutra (31/10/2026, REGISTRO §211; `RAVEN_ENTRY`, sai só pelo `withRaven`, 1/1000).
 ### Base (20): `novos/<elemento>-<estágio>.png` — prefixo do arquivo = elemento (NOVOS_DATA).
 ### Iniciais (5): industrial=terra, nascente=som, alento=ar, vida=vida, meteoro=fogo (`STARTER_ELEMENT`, pedido do dono).
 ### Inimigos da API (5): cinderkit=fogo, ashimp=fogo, tailhorn=terra, tidewark=agua, gloomhorn=sombra (escolha manual de `INIMIGOS_API_DATA`; nenhuma evidência contrária encontrada).
+### Ramos evoluídos (120, §220): `ramo:<elemento>/<ramo>` = pasta do arquivo = elemento da criatura (`RAMOS_INIMIGOS_DATA`).
 ### Linhas de `lines/` (4) — evidência: bio PT/EN em `PREMADE_CHARACTERS` (commit c11dc49d), não prompt Higgsfield
 | linha | elemento | evidência |
 |---|---|---|
@@ -73,7 +74,7 @@ Os prompts de `E:/Soulmon-assets/out/rodada3/poderosos/prompts.json` descrevem a
 | 006 | combinados/006-fogo_negro.png | fogo_negro | fogo+sombra |
 | 007 | combinados/007-chama_solar.png | chama_solar | fogo+luz |
 | 008 | combinados/008-fogo_infernal.png | fogo_infernal | fogo+vileza |
-| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte |
+| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte (arte do Champion azul, quebra-galho, §258) |
 | 010 | combinados/010-fenix.png | fenix | fogo+vida |
 | 011 | combinados/011-fervor.png | fervor | fogo+vigor |
 | 012 | combinados/012-pantano.png | pantano | agua+terra |
@@ -396,3 +397,7 @@ Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`
 | 243 | combinados/243-entropia_final.png | entropia_final | tempo+morte+gravidade |
 | 244 | combinados/244-gladiador.png | gladiador | marcial+vigor+som |
 | 245 | combinados/245-punho_gravitico.png | punho_gravitico | marcial+gravidade+vigor |
+
+## Elemento por estágio (§232, 05/11/2026)
+
+O pet do oráculo pode mudar de elemento a cada evolução (`elementoJornada`, dono `utils/elementoCombinado.ts`). Forma nova nasce com o elemento no prompt; forma já desenhada mantém a arte. Trocar forma entre formas do mesmo nível mantém o elemento, então uma forma antiga pode não refletir o combinado.

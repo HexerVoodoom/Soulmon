@@ -1,5 +1,110 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## FEITO — botões PvE e PvP do ranking (18/11/2026, pedido do dono)
+**Modal e botão do ranking (18/11/2026, mesma sessão):** `ui/btn-ranking{,-press,-off}.webp` (580×151) e `ui/ranking/ranking-{topo,base,lado-e,lado-d}.webp` (moldura em fatias de 720; topo 720×252, base 720×100, laterais 40×80). Uso: `RankingModal` + `BotaoEspecial variant="ranking"`. `ranking-botao-redondo.webp` NÃO é usado (decisão do dono). Fonte: `E:/Soulmon-assets/gerar-chatgpt/ranking/lote3/`.
+`ui/btn-pve{,-press,-off}.webp` (pedra com musgo, folhinha, diamante da alma) e `ui/btn-pvp{,-press,-off}.webp` (faixa vermelha, ouro envelhecido com espinhos), 580×~145, alfa real, ChatGPT (referência: `btn-especial*`). Uso: `BotaoEspecial variant="pve"|"pvp"`. Fonte/prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ranking/`.
+
+## FEITO — arte do modal FILES (18/11/2026, pedido do dono; só a arte)
+`ui/files/` (11 peças WebP alfa real, ChatGPT, ref3 cristal-chama): moldura em fatias (topo/base/laterais), cristal separado, abas normal/ativa, slot vazio/selecionado e disquete 3.5" normal/selecionado para comidas (rótulo creme liso para a arte da comida). Medidas e uso em `ui/files/LEIA-ME.md`. Falta o código do modal montar a moldura (outro agente).
+
+## FEITO — ícone dos Créditos: diamante turquesa (18/11/2026, pedido do dono; aguarda aprovação visual)
+`icones-ui/moeda-creditos.png` (256², alfa real, legível a 20 px) trocou o glifo `diamond` em todos os pontos de Créditos via `CreditIcon` (AccountSection, CreditsModal, Cambista/ShopShelf, MercadoSheets). Moeda premium = Créditos (comprada com dinheiro de verdade, vira Bits no Cambista). Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/`.
+
+## FEITO — título BOSS BATTLE e ícone do Fragmento de Boss (18/11/2026)
+`ui/boss-battle-title.png` (1024×275) e `ui/boss-battle-title-pt.png` "BATALHA DE BOSS" (1024×248): lettering de cristal vermelho/ferro no estilo do WIN, alfa real, ChatGPT. `items/boss-shard.png` (256², legível a 24 px), ligado em `itemArt.ts` (`BOSS_SHARD_KEY`, `BOSS_SHARD_ART`) para o `icon` da linha "Boss Shard ×1" do resultado do Match-3. Falta só o código do Match-3 consumir os arquivos. Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/`.
+
+## FEITO — botão ESPECIAL de compra (18/11/2026, pedido do dono)
+Placa dourada em pedra turquesa escura, 3 estados (`ui/btn-especial{,-press,-off}.webp`, 580×146, alfa real, sem texto), pintada no ChatGPT com a moldura de card e a placa de nome como referência. Fonte/prompt/tags em `E:/Soulmon-assets/elementos-faltantes/` (`botao-folha-2.png`, `prompts/botao-especial.txt`, `registro.jsonl`). Usada por `BotaoEspecial` em "Comprar 3 tickets" (Salão) e "Comprar convites" (Arena).
+
+## FEITO — fundos da Home refeitos com a identidade (14/11/2026, REGISTRO §377)
+
+Os 33 cenários do palco (32 `bg-{cerejeira,el,jardim,lava,mar-profundo,neve,ruinas}-*` + `bg-lakeside`) foram refeitos no ChatGPT (original como âncora de composição, chão igual, levemente pixelado) e ganharam malha digital discreta por pós-processo determinístico; aprovados pelo dono em 14/11/2026. Fontes e folhas de contato: `E:/Soulmon-assets/_lote-14-11/fundos-home/` (`contato-*.png`, `contato-malha.png`, `_malha-v3.json`). Fica laranja de propósito: chamas de forja/braseiro em `bg-el-industrial` e `bg-el-fogo` (só o cristal da alma é turquesa). Pendente do dono: `bg-cerejeira-bosque-de-cerejeiras` mostra lava/vulcão, não cerejeiras (nada renomeado).
+
+## PRIORIDADE ALTA — Pódio do ranking (pedido do dono, 13/11/2026: "o pódio do rank está muito feio", REGISTRO §326)
+
+O pódio dos placares dos jogos (`RankingPodium`) já tem a hierarquia nova em CSS e recebe a arte por **slots com troca automática**: basta cair o PNG com o nome exato em `src/assets/soulmon/ranking/` (resolvido por `import.meta.glob` em `index.ts`, `resolvePodiumArt`); sem arquivo, cada peça segue em CSS. Nenhum código a mexer. Gerar no ChatGPT, **uma peça por conversa**, alfa real na 1ª imagem (`gpt_image_2 --background transparent`, nunca chroma; no máximo 3 imagens por conversa). Categoria UI: identidade Soulmon **sutil** (um fio de cobre, circuito turquesa fino, UM cristal turquesa), **sem engrenagem e sem folhas/vinhas**. Pixel art igual aos ícones de item do app. Prompts completos (EN), anexos e passo de redução: `E:\Soulmon-assets\_podio\PROMPTS-CHATGPT.md`; anexos copiados em `E:\Soulmon-assets\_podio\referencias\`. O lugar vazio reaproveita o pedestal apagado em CSS (sem asset próprio).
+
+| id | arquivo | uso | gerar → final | anexos | prompt (resumo; o completo está no PROMPTS-CHATGPT.md) |
+|---|---|---|---|---|---|
+| `podio-1` | `src/assets/soulmon/ranking/podio-1.png` | pedestal do 1º (centro, o mais alto) | 1536×1024 → **360×240**, alfa | UI kit v1.2-b, `icon-trophy-gold`, `icon-attr-poder`, print do depois | `Podium pedestal block for FIRST PLACE, polished gold, darker gold plinth, thin copper pipe trim on the top edge, fine turquoise circuit lines converging to ONE small turquoise crystal on the front face, crisp pixel art like the attached trophy icons, flat empty top, full width on the bottom edge, no numbers/text, no gears, no leaves/vines, transparent, 3:2` |
+| `podio-2` | `.../ranking/podio-2.png` | pedestal do 2º (esquerda) | 1536×1024 → **288×180**, alfa | `podio-1` aprovado, `icon-trophy-silver` | `Same as the attached gold pedestal, in polished silver, lower (about 60% as tall as wide), same identity accents, no numbers/text, no gears, no leaves, transparent, 3:2` |
+| `podio-3` | `.../ranking/podio-3.png` | pedestal do 3º (direita, o mais baixo) | 1536×1024 → **288×144**, alfa | `podio-1` aprovado, `icon-trophy-bronze` | `Same as the attached gold pedestal, in reddish bronze, lowest (about half as tall as wide), same identity accents, no numbers/text, no gears, no leaves, transparent, 3:2` |
+| `medalha-1` | `.../ranking/medalha-1.png` | medalha do 1º (44 px na tela), com o numeral | 1024² → **128×128**, alfa | `icon-trophy-gold`, `icon-coin`, UI kit v1.2-b | `Round gold rank medal, big bold pixel numeral "1" (55% of the disc), copper rim with fine turquoise circuit ticks, ONE tiny turquoise crystal on top of the rim, pixel art like the trophy icons, no ribbon, no other text, no gears, no leaves, transparent, square 1:1` |
+| `medalha-2` | `.../ranking/medalha-2.png` | medalha do 2º (32 px) | 1024² → **128×128**, alfa | `medalha-1` aprovada, `icon-trophy-silver` | `Same as the attached medal in silver with numeral "2"` |
+| `medalha-3` | `.../ranking/medalha-3.png` | medalha do 3º (32 px) | 1024² → **128×128**, alfa | `medalha-1` aprovada, `icon-trophy-bronze` | `Same as the attached medal in reddish bronze with numeral "3"` |
+| `coroa-1` | `.../ranking/coroa-1.png` | coroa sobre o 1º (40×30 na tela; hoje é o glifo `emoji_events`) | 1024² → **128×96**, alfa | `icon-trophy-gold`, `medalha-1` | `Small gold crown, three rounded points, ONE turquoise crystal on the tall middle point, copper base band with fine turquoise circuit lines, pixel art like the gold trophy icon, no text, no gears, no leaves/laurel, transparent, square 1:1` |
+
+---
+
+## PRIORIDADE ALTA — ícones das categorias unificadas (pedido do dono, 11/11/2026, item F)
+
+As categorias de tarefa e de hábito agora são UMA lista de 10 (`src/types/categories.ts`). Só 7 delas herdam arte antiga (os `icon-cat-*.png` das 8 categorias de antes, desenhados para os significados de antes); **sono, casa e propósito não têm arte** e **criatividade** (que tem a arte herdada) entra aqui por pedido do dono, para ganhar a versão nova. A arte entra por **slots com troca automática**: basta cair `icon-cat-<id>.png` em `src/assets/soulmon/icons/categories/` (resolvido por `import.meta.glob` em `index.ts`; sem arquivo, vale a arte herdada e, sem ela, o glifo Material de `CATEGORY_ICON_NAME`). Nenhum código a mexer. Tamanho: **128×128**, RGBA, alfa real, igual aos ícones existentes. Gerar no ChatGPT (cota volta às 18:13): `gpt_image_2 --background transparent`, nunca chroma. Anexar como referência de estilo um dos `icon-cat-*.png` atuais. Categoria UI/ícone: identidade Soulmon só como UM motivo discreto (um cristal turquesa pequeno OU um fio de cobre), nunca entupir, sem engrenagem.
+
+| id | arquivo (slot) | uso | prompt (EN) |
+|---|---|---|---|
+| ✅ 13/11 `cat-sono` | `src/assets/soulmon/icons/categories/icon-cat-sono.png` | chip de categoria (Sono), Santuário do Vínculo, listas de atividades | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a crescent moon with two small stars, soft dark-teal and cream colors, one tiny turquoise crystal as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| ✅ 13/11 `cat-casa` | `.../icon-cat-casa.png` | idem (Casa) | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a small cozy house with a round door and a chimney, warm cream walls and a muted teal roof, one thin copper pipe along the chimney as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| ✅ 13/11 `cat-proposito` | `.../icon-cat-proposito.png` | idem (Propósito) | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a compass rose with a bright guiding star on the north point, cream and dark-teal tones, one tiny turquoise crystal at the center as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| ✅ 13/11 `cat-criatividade` | `.../icon-cat-criatividade.png` | idem (Criatividade) — substitui a arte herdada | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a paint palette with a small lightbulb-shaped spark rising from it, warm cream palette with a few muted color dabs, one small turquoise crystal as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+
+Opcional (sem urgência): refazer `corpo`, `mente`, `foco`, `aprendizado`, `relacoes` e `financas`, que hoje usam a arte de Fitness, Wellness, Discipline, Study, Social e Work. Mesmo formato e mesmo slot (`icon-cat-<id>.png`).
+## PRIORIDADE ALTA — salas de descanso (oásis), uma por cenário do Foco (pedido do dono, 12/11/2026)
+
+Ao atravessar a porta no fim do mapa, o Soulmon chega à sala de descanso do cenário (`RestRoom`, REGISTRO §301). A arte entra por **slots com troca automática**: basta cair `oasis-<cenário>.(webp|png)` em `src/assets/soulmon/jornada/` (resolvido por `import.meta.glob` em `src/components/play/journeyArt.ts`; sem arquivo, vale o fundo gerado em código com gradiente e lagoa). Tamanho do fundo da jornada: **1024×2048 (1:2), opaco**, a luz e o chão pensados para o Soulmon e o baú aparecerem por cima no meio/baixo da tela e o card do relógio no topo. Categoria CENÁRIO: identidade Soulmon só como acento sutil (1–2 cristais turquesa discretos), sem engrenagem. Gerar no ChatGPT; anexar como referência de estilo um dos blocos de cenário da jornada (`src/assets/focus-jornada/cenario-*.webp`).
+
+| id | arquivo | cenário | prompt (EN) |
+|---|---|---|---|
+| ✅ 13/11 `oasis-forest` | `src/assets/soulmon/jornada/oasis-forest.webp` | Floresta | `Vertical painted game background, a tranquil rest-room oasis: a calm forest clearing with a still spring-fed pond, soft mossy banks, ferns, a few glowing mushrooms, dappled green light through tall trees, fireflies. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+| ✅ 13/11 `oasis-shore` | `src/assets/soulmon/jornada/oasis-shore.webp` | Costa | `Vertical painted game background, a tranquil rest-room oasis: a sheltered tide-pool lagoon on a quiet shore, smooth warm rocks, shallow turquoise water, a few shells, a soft pastel sky at dusk. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+| ✅ 13/11 `oasis-cavern` | `src/assets/soulmon/jornada/oasis-cavern.webp` | Caverna | `Vertical painted game background, a tranquil rest-room oasis: a peaceful cave grotto with crystal-clear water in a still pool, smooth stone ledges, a few soft glowing crystals, gentle light rays falling from a skylight in the ceiling, cozy and calm. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+| ✅ 13/11 `oasis-garden` | `src/assets/soulmon/jornada/oasis-garden.webp` | Jardim | `Vertical painted game background, a tranquil rest-room oasis: a small hidden garden pond with water lilies, stepping stones, flowering shrubs, warm golden light, butterflies, a little wooden bench. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+| ✅ 13/11 `oasis-workshop` | `src/assets/soulmon/jornada/oasis-workshop.webp` | Oficina | `Vertical painted game background, a tranquil rest-room oasis: a quiet cozy workshop courtyard with a calm reflecting basin, warm hanging lanterns, shelves of tools put away for the night, a sleepy cat bed, soft amber light. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+| ✅ 13/11 `oasis-observatory` | `src/assets/soulmon/jornada/oasis-observatory.webp` | Observatório | `Vertical painted game background, a tranquil rest-room oasis: a serene observatory terrace with a mirror-still pool reflecting a starry sky, a small open dome in the background, soft blue and violet light. Painterly hand-painted style matching the Soulmon journey scene blocks, calm and gentle mood, empty open space in the middle-lower area for a creature to rest, no creatures, no characters, no text, no UI, no cog or gear. Scenery only: at most ONE or TWO small discreet turquoise crystal accents, no copper pipes or circuit lines. Opaque, full-bleed vertical composition, 1:2 aspect ratio (1024x2048).` |
+
+---
+
+## PRIORIDADE ALTA — ícones de MATERIAL em imagem (pedido do dono, 12/11/2026)
+
+O baú da sessão de foco (`FocusBag`, com tooltip e animação de itens) mostra hoje o **emoji** de cada material. A arte entra por **slots com troca automática**: basta cair `<id>.(webp|png)` em `src/assets/soulmon/icons/materiais/` (resolvido por `import.meta.glob` em `src/utils/materialIcons.ts`; sem arquivo, vale o emoji). Um por material existente (16, ids de `MATERIAL_BUILDING`). **128×128, alfa real, fundo transparente** (`gpt_image_2 --background transparent`, nunca chroma). Gerar no ChatGPT, categoria ITEM: no máximo UM motivo discreto de identidade Soulmon (`docs/REGRA-IDENTIDADE-SOULMON.md`). Anexar um ícone de item existente (ex.: um chip) como referência de estilo.
+
+| id | arquivo | nome | prompt (EN) |
+|---|---|---|---|
+| ✅ 13/11 `spark` | `src/assets/soulmon/icons/materiais/spark.webp` | Faísca | `Game item icon, a small bright four-point spark of electric yellow light, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `moss` | `src/assets/soulmon/icons/materiais/moss.webp` | Musgo | `Game item icon, a tuft of soft green moss with tiny curled fronds, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 15/11 `prism` refeito e instalado (REGISTRO §406; 13/11: o antigo era um pilar de cristal com tampas de cobre, não um prisma) | `src/assets/soulmon/icons/materiais/prism.webp` | Prisma | `Game item icon, a faceted triangular prism crystal catching a rainbow edge of light, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `pebble` | `src/assets/soulmon/icons/materiais/pebble.webp` | Seixo | `Game item icon, a smooth rounded river pebble, grey-blue with a pale vein, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `ore` | `src/assets/soulmon/icons/materiais/ore.webp` | Minério | `Game item icon, a rough chunk of ore rock with a seam of teal metal, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `ink` | `src/assets/soulmon/icons/materiais/ink.webp` | Tinta | `Game item icon, a small glass inkwell with a dark blue ink drop and a quill tip, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `gear` | `src/assets/soulmon/icons/materiais/gear.webp` | Engrenagem | `Game item icon, a small worn brass cog wheel (this is the ONE place a cog is allowed: it is the item itself), centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `fang` | `src/assets/soulmon/icons/materiais/fang.webp` | Presa | `Game item icon, a single curved cream-colored fang with a worn tip, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `laurel` | `src/assets/soulmon/icons/materiais/laurel.webp` | Louro | `Game item icon, a small laurel leaf sprig, two green leaves on a thin stem, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `ribbon` | `src/assets/soulmon/icons/materiais/ribbon.webp` | Fita | `Game item icon, a short knotted ribbon in warm coral red with a tail, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `essence` | `src/assets/soulmon/icons/materiais/essence.webp` | Essência | `Game item icon, a tiny glass vial of swirling pale teal essence, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `down` | `src/assets/soulmon/icons/materiais/down.webp` | Penugem | `Game item icon, a soft fluffy white feather tuft, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `cipher` | `src/assets/soulmon/icons/materiais/cipher.webp` | Cifra | `Game item icon, a small stone tablet engraved with three abstract glyphs, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `page` | `src/assets/soulmon/icons/materiais/page.webp` | Página | `Game item icon, a single parchment page with a curled corner and faint lines, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `keepsake` | `src/assets/soulmon/icons/materiais/keepsake.webp` | Lembrança | `Game item icon, a small gift-wrapped keepsake, kraft box tied with twine, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+| ✅ 13/11 `crest` | `src/assets/soulmon/icons/materiais/crest.webp` | Brasão | `Game item icon, a small shield crest with a simple bird silhouette, centered on a transparent background, soft dark outline, subtle highlights, hand-painted pixel-friendly style matching the other item icons of the game, at most one small discreet motif of a turquoise crystal or copper wire, no text, no decorative cog, square 1:1` |
+
+---
+
+
+## PRIORIDADE MÁXIMA — botões de renomear da Hexsmith (pedido do dono, 11/11/2026)
+
+Hoje a tela usa hexágonos GENERATIVOS em código (`src/components/hex/HexRenameButton.tsx`). A arte final entra por **slots com troca automática**: basta cair `btn-lapis.(webp|png)` e `btn-chama.(webp|png)` em `src/assets/soulmon/hexsmith/` (resolvido por `import.meta.glob` em `index.ts`; sem arquivo, vale o hexágono generativo). Gerar no ChatGPT (cota volta às 18h) e instalar por PR. Categoria UI: pode levar a identidade Soulmon; sem engrenagem.
+
+| id | arquivo | uso | formato | prompt (EN) |
+|---|---|---|---|---|
+| ✅ 11/11 `hexsmith-btn-lapis` | `src/assets/soulmon/hexsmith/btn-lapis.webp` | botão da Hexsmith: trocar o NOME do Soulmon (à direita da Coroa) | 256×256, alfa real, fundo transparente, mesmo tamanho dos 5 hexágonos | `A single hexagonal game-UI button, same style, colors, frame thickness and glow as the five port hexagons of the Hexsmith screen (dark teal inner hex, thick colored metallic rim in magenta-pink, small cyan diamond studs at the top and bottom vertices), a clean pencil icon inside (diagonal pencil with eraser, slightly worn silver and cream), pixel-crisp, transparent background, centered, no text, no gear, square 1:1` |
+| ✅ 11/11 `hexsmith-btn-chama` | `src/assets/soulmon/hexsmith/btn-chama.webp` | botão da Hexsmith: trocar o NOME do ESPECIAL | 256×256, alfa real, fundo transparente, mesmo tamanho dos 5 hexágonos | `A single hexagonal game-UI button, same style, colors, frame thickness and glow as the five port hexagons of the Hexsmith screen (dark teal inner hex, thick colored metallic rim in warm orange, small cyan diamond studs at the top and bottom vertices), a small flame icon inside (RECOLORIDA em 12/11/2026 para fogo TURQUESA: núcleo #7ff7ee, bordas #1fb5ad; a laranja ficou em E:Soulmon-assetshexsmith-btnsbtn-chama-laranja.png), pixel-crisp, transparent background, centered, no text, no gear, square 1:1` |
+
+Anexar como referência de estilo o print da tela da Hexsmith (os 5 hexágonos). Transparência real: `gpt_image_2 --background transparent`, nunca chroma.
+
+---
+
+> **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+> **Checklist de revisão de arte:** conferir pela CATEGORIA do asset, conforme `docs/REGRA-IDENTIDADE-SOULMON.md` (versão de 09/11/2026). Criatura/sprite, FX e ícone de elemento NÃO são reprovados por faltar turquesa, cristal, cobre ou circuito: ali o elemento e a espécie mandam.
+
 > **Data:** 15/09/2026 · **Base:** `INVENTARIO-ASSETS.md` (o que existe, medido) + as decisões do
 > dono D1–D9 (15/09). Este documento é a **fila de trabalho**: cada linha "falta" tem uso,
 > tela, formato, destino no repo, mapa que registra e o prompt pronto.
@@ -40,8 +145,9 @@ Retro pixel art background, 16-bit era, WIDE HORIZONTAL BANNER composition, abou
 ```
 
 **[SPRITE]** — peça recortada (ícone, emblema, FX, placeholder), gerada em FOLHA sobre branco
+> Paleta teal/cobre abaixo só para peça de UI e emblema da marca (`docs/REGRA-IDENTIDADE-SOULMON.md`). Criatura, FX de ataque/status, ícone de elemento e placeholder de criatura usam a cor do ELEMENTO/espécie e levam "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Item/poção/chip: no máximo UM motivo discreto.
 ```
-Pixel-art game sprite in the "SOUL MON" style: 16-bit dark fantasy tech-dungeon. Palette: deep teal #0E2E2E / #123232, neon cyan #6EFFFB, copper-bronze #C98B4B with darker #8A5A2B shading, electric blue #3E9EFF, near-black outline #061414. Chunky readable pixels, HARD aliased edges, 1px dark outline around every shape. STRICT: NO blur, NO soft glow, NO drop shadow, NO gradients, NO translucent aura, NO semi-transparent pixels. PURE SOLID WHITE BACKGROUND (#FFFFFF), nothing else behind the sprites. Each item is a CUT-OUT object floating alone on the white — no sky, no ground, no square tile, no frame. No watermark, no text, no letters, no numbers. Lay the items out in a neat grid with generous empty white gaps between them so they can be cut apart.
+Pixel-art game sprite in the "SOUL MON" style: 16-bit dark fantasy tech-dungeon. Palette (UI/brand pieces only; for creatures, FX and element icons use the ELEMENT colors instead and add: no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it): deep teal #0E2E2E / #123232, neon cyan #6EFFFB, copper-bronze #C98B4B with darker #8A5A2B shading, electric blue #3E9EFF, near-black outline #061414. Chunky readable pixels, HARD aliased edges, 1px dark outline around every shape. STRICT: NO blur, NO soft glow, NO drop shadow, NO gradients, NO translucent aura, NO semi-transparent pixels. PURE SOLID WHITE BACKGROUND (#FFFFFF), nothing else behind the sprites. Each item is a CUT-OUT object floating alone on the white — no sky, no ground, no square tile, no frame. No watermark, no text, no letters, no numbers. Lay the items out in a neat grid with generous empty white gaps between them so they can be cut apart.
 ```
 Recorte depois com `scripts-arte/_fatiar.mjs` (projeção de pixels; aborta se a contagem não bater).
 Para peça única que precise de alfa limpo, trocar o fundo por **verde chapado `#00FF00`** e
@@ -585,6 +691,8 @@ Higgsfield CLI `gpt_image_2_5` flare, `--background transparent`, `@char_sprite-
 O class-system passou de 17 para **20 bases** (Class-System `56546d9`, branch
 `feat/elementos-fada-industrial-planta`): +54 pares e 3 triplas curadas novas
 (**Pestilência** = planta+morte+vileza · **Maldição** = fada+sombra+vileza ·
+
+> **Atualização 10/11/2026 (regra de identidade v2):** FX de ataque (6 estados + aura-96) de `maldicao`, `fada`, `industrial` e `planta` e o ícone `el-maldicao` foram **refeitos e instalados** (arte em `E:Soulmon-assetsidentidade-refazer`). `el-industrial` também refeito e instalado (10/11/2026, fundo removido pelo editor do ChatGPT; alfa real verificado).
 **Cyber** = industrial+eletricidade+arcano). Nada abaixo foi gerado: **fila para quando
 houver créditos Higgsfield**. Regras de prompt: `PROMPTS-BETA3.md` §1 (receita de 23/09,
 transparência real, nada de steampunk — Industrial é *fábrica arcana*: pedra, cobre e
@@ -604,7 +712,7 @@ Vibe de cada base (para o bloco COLORS do prompt):
 | EL5 | Inimigos das triplas Pestilência, Maldição, Cyber | 3 | 1:1 transparente → `combinados/193-pestilencia.png`, `194-maldicao.png`, `195-cyber.png` | os pares-filhos (espinheiro/murcha · pesadelo_doce/encanto_traicoeiro · usina/artificio) |
 | EL6 | Sigilos das 3 bases no simulador do Class-System | 3 | gerado por `npm run sigilos` (procedural) — só conferir; sem crédito | — |
 | EL7 | Pixel-art dos 57 derivados novos no simulador | 57 | folha de ícones 32px → `Class-System/assets/icones-elementos/` + `npm run icones` | folha atual do simulador |
-| EL8 | FX de ataque por elemento (4 famílias) para fada/industrial/planta | 3×4 | mesmo formato das famílias de FX por elemento (`PROMPTS-BETA3.md` §2) | FX de `luz`, `terra`, `vida` |
+| EL8 | FX de ataque por elemento (4 famílias) para fada/industrial/planta | 3×4 | mesmo formato das famílias de FX por elemento (`PROMPTS-BETA3.md` §2) | FX de `luz`, `terra`, `vida` | **refeito pela regra v2 e instalado (10/11/2026)** |
 | EL9 | Pet-box/cenário temático (opcional) | 3 | 1200×648 opaco, bloco **[PET-BOX]** §1 | pet-box atuais |
 
 **Prédios e NPCs:** esta mudança não cria nenhum. Regra do dono (25/10/2026): todo Soulmon,
@@ -655,7 +763,7 @@ linhas de Soulmon por elemento (nova fila, não incluída aqui).
 |---|---|---|---|---|
 | Selo/medalha "novo recorde" | 1 | `src/assets/soulmon/icons/icon-record-seal.png` | PNG RGBA 1024x1024 (reduzir com *nearest* se preciso), fundo transparente | `items/item-heart.png`, `icons/icon-trophy-gold.png` (estilo) |
 
-Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, magical-nature mood (arcane, calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
+Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, Soulmon identity (dark deep-teal base in the Home tone, soul crystal with a flame inside, small copper pipes, circuit lines and tiny leafy branches joined by cable; calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
 
 Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). Enquanto não existe, o ResultScreen usa o troféu dourado (`icons/icon-trophy-gold.png`) como selo provisório.
 
@@ -762,3 +870,428 @@ NPC e prédio novos da Forja: a Hexsmith reescreve o "código hex" do Soulmon (e
 | `slot-coroa.png` … `slot-luvas.png` | ícone de cada tipo de HEX (coroa de shards, amuleto hex, garra com circuito, couraça com runa, manoplas), pixel art com contorno escuro, sem box |
 | `forjar.png` | martelo de cristal batendo num chip hex com faíscas |
 Prompts completos no transcrito da sessão de 01/11; o ChatGPT desktop já tem uma folha de 6 ícones gerada (conversa mais recente), falta baixar e fatiar por alfa.
+
+**Feira — cenário PRÓPRIO da luta (04/11/2026, dono: "o combate da feira precisa do seu próprio mapa"):** falta a arte.
+| Arquivo-alvo | O que é |
+|---|---|
+| `src/assets/soulmon/bg/feira-batalha.png` | fundo VERTICAL 9:16 (360×640 ou múltiplo) da luta contra o chefe da Feira: chão de praça da feira à noite, tendas e bandeirolas ao fundo, lanternas, névoa turquesa do mistério; topo livre para a barra do chefe, centro-baixo livre para o Soulmon; sem plataforma, sem personagem, sem texto (regra dos cenários de combate) |
+O slot já está ligado (`FEIRA_SCENE` em `src/utils/dungeonScenes.ts`, glob opcional): basta salvar o arquivo com esse nome. Até lá usa `bg/visor-feira.png` (horizontal, recortado em `cover`).
+
+
+**Cosméticos novos: temas e elementos (04/11/2026, dono: "mais variedade de cor, não tudo turquesa"):** 108 peças a gerar no ChatGPT (32 cenários, 32 molduras, 44 decorações). **Instalado em 11/11/2026: 32 cenários, 32 molduras e 24 decorações (88 de 108)** — `scripts/instalar-cosmeticos.mjs` converte de `E:/Soulmon-assets/cosmeticos/` e o catálogo `src/utils/cosmeticosNovos.ts` liga a peça sozinho quando o arquivo existe. **(18/11/2026: as 20 decorações já foram instaladas em `src/assets/decor/*.webp`, PR #950, §406; ficam só pendentes as linhas em `FEIRA_LOJA_CATALOGO` se a paridade pedir)** Eram as 20 que faltavam (as 4 do tema Ruínas e as 16 `furn-el-*` de eletricidade, arcano, sombra, luz, vileza, morte, vida, vigor, marcial, tempo, som, gravidade, espaço, fada, industrial e planta): gerar, salvar em `cosmeticos/decoracoes/`, rodar o script — e copiar as linhas novas (sem elemento) para `FEIRA_LOJA_CATALOGO` em `functions/api/_feiraLoja.js` (a paridade `feiraLoja.paridade.test.js` mostra quais). Slot: todas têm; nenhuma ficou 'gerada, aguardando slot'. Para revisão do dono (peças EDGE, tocam a borda/mancha ou o miolo da moldura foi aparado): molduras arcano, sombra, luz, vida, vigor, espaço, industrial, planta; decorações `furn-mar-profundo-concha-perolada`, `furn-mar-profundo-agua-viva-pendente`, `furn-jardim-vaso-suspenso`.
+- **Padrão:** o de 23/09 (`GUIA-CONSISTENCIA-2026-09-23.md`), arcano, natureza + magia, sem engrenagem/cartola/goggles/arreio (nada de steampunk), sem personagem. **Variedade de cor pedida pelo dono, dentro da regra máxima:** a paleta de cada linha pinta o assunto e suas luzes; turquesa escuro fica em sombra, pedra e cristal; a chama do cristal pode levar a cor do tema; cobre, circuito, cabo e folhinhas entram em pouca quantidade em toda peça.
+- **Transparência:** molduras e decorações com alfa real, nunca chroma. Cenário não tem alfa.
+- **Tamanho:** é a caixa-contrato de arte; o palco desenha a decoração maior (`DECOR_RENDER_SCALE`, `utils/petStage.ts`).
+- **Instalar:** decoração em `src/assets/decor/<id>.png` + item em `utils/shop.ts`; moldura em `assets/soulmon/molduras/<id>.png` + `FRAMES`; cenário em `utils/backgrounds.ts` + item `bg`. Coluna "Exclusivo" = preencher `element` no item (`utils/elementExclusive.ts`). Preço: faixas de `utils/decorPrices.ts`.
+
+| id | Tipo | Tema / elemento | Prompt visual | Alvo | Exclusivo |
+|---|---|---|---|---|---|
+| `bg-lava-caldeira-viva` | bg | Lava / vulcão | volcanic caldera at night, rivers of glowing lava between basalt columns, ash drifting, arcane runes smouldering on the rock; palette: ember orange, molten red and charcoal | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-lava-jardim-de-cinzas` | bg | Lava / vulcão | black-ash garden, ember-petal flowers growing from cooled lava, distant erupting peak, warm orange glow; palette: ember orange, molten red and charcoal | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-lava-basalto-rachado` | frame | Lava / vulcão | ring of cracked basalt with molten seams glowing through; palette: ember orange, molten red and charcoal | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-lava-coroa-de-brasas` | frame | Lava / vulcão | ring of curling ember vines with small sparks; palette: ember orange, molten red and charcoal | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `furn-lava-altar-de-magma` | furniture | Lava / vulcão | small basalt altar with a calm pool of magma and a floating rune; palette: ember orange, molten red and charcoal | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| `furn-lava-flor-de-brasa` | furniture | Lava / vulcão | ember-petal flower in a charred stone pot; palette: ember orange, molten red and charcoal | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| `furn-lava-chao-de-basalto` | furniture | Lava / vulcão | hexagonal basalt floor patch with faint lava seams, shallow perspective; palette: ember orange, molten red and charcoal | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| `furn-lava-estandarte-de-cinza` | furniture | Lava / vulcão | tattered ash-grey banner with a glowing flame sigil; palette: ember orange, molten red and charcoal | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-cerejeira-bosque-de-cerejeiras` | bg | Cerejeira | cherry blossom grove at dusk, petals drifting, mossy stone path, small glowing spirit lanterns; palette: soft pink, blossom white and warm wood brown | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-cerejeira-templo-das-petalas` | bg | Cerejeira | quiet mountain shrine under huge sakura, petal-covered steps, pale pink moon; palette: soft pink, blossom white and warm wood brown | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-cerejeira-galhos-em-flor` | frame | Cerejeira | ring of cherry branches in full bloom; palette: soft pink, blossom white and warm wood brown | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-cerejeira-petalas-em-espiral` | frame | Cerejeira | spiral of falling pink petals with a thin wooden hoop; palette: soft pink, blossom white and warm wood brown | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `furn-cerejeira-cerejeira-ana` | furniture | Cerejeira | tiny bonsai cherry tree with arcane pink glow on a stone base; palette: soft pink, blossom white and warm wood brown | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| `furn-cerejeira-lanterna-de-petalas` | furniture | Cerejeira | stone lantern with blossoms and soft pink light; palette: soft pink, blossom white and warm wood brown | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| `furn-cerejeira-tapete-de-petalas` | furniture | Cerejeira | scattered pink petals over moss, shallow perspective; palette: soft pink, blossom white and warm wood brown | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| `furn-cerejeira-galho-pendente` | furniture | Cerejeira | hanging blossom branch with a small paper charm; palette: soft pink, blossom white and warm wood brown | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-mar-profundo-fossa-abissal` | bg | Mar profundo | abyssal trench with bioluminescent coral, whale silhouette far away, drifting motes; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-mar-profundo-recife-de-luz` | bg | Mar profundo | coral reef cathedral lit by glowing anemones, sunbeams fading from above; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-mar-profundo-coral-e-concha` | frame | Mar profundo | ring of coral branches and pearly shells; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-mar-profundo-tentaculos-de-luz` | frame | Mar profundo | ring of soft bioluminescent kelp and jellyfish tendrils; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `furn-mar-profundo-anemona-gigante` | furniture | Mar profundo | giant glowing anemone on a rock; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| `furn-mar-profundo-concha-perolada` | furniture | Mar profundo | open shell holding a glowing pearl; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| `furn-mar-profundo-areia-abissal` | furniture | Mar profundo | dark seabed sand with tiny glowing specks, shallow perspective; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| `furn-mar-profundo-agua-viva-pendente` | furniture | Mar profundo | floating lantern jellyfish, tendrils hanging down; palette: deep indigo, abyssal violet-blue and bioluminescent magenta-green | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-neve-tundra-aurora` | bg | Neve | snowy tundra under a green-violet aurora, frozen pines, quiet stars; palette: ice white, pale periwinkle blue and silver | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-neve-lago-congelado` | bg | Neve | frozen lake ringed by snow-laden firs, ice crystals rising, pale moon; palette: ice white, pale periwinkle blue and silver | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-neve-geada-cristalina` | frame | Neve | ring of frost ferns and ice crystals; palette: ice white, pale periwinkle blue and silver | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-neve-coroa-de-pinheiro` | frame | Neve | ring of snowy pine sprigs and silver berries; palette: ice white, pale periwinkle blue and silver | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `furn-neve-pinheiro-nevado` | furniture | Neve | small snow-covered pine with faint arcane lights; palette: ice white, pale periwinkle blue and silver | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| `furn-neve-boneco-de-gelo` | furniture | Neve | little ice golem statue with calm eyes; palette: ice white, pale periwinkle blue and silver | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| `furn-neve-neve-fofa` | furniture | Neve | soft snow patch with faint footprints, shallow perspective; palette: ice white, pale periwinkle blue and silver | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| `furn-neve-pingentes-de-gelo` | furniture | Neve | row of hanging icicles with a glowing rune; palette: ice white, pale periwinkle blue and silver | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-jardim-campina-em-flor` | bg | Jardim florido | endless flower meadow at golden hour, butterflies of light, floating seeds; palette: saturated meadow green, sunny yellow, poppy red and violet | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-jardim-jardim-suspenso` | bg | Jardim florido | floating garden islands with waterfalls and overflowing flowers, soft pastel sky; palette: saturated meadow green, sunny yellow, poppy red and violet | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-jardim-guirlanda-silvestre` | frame | Jardim florido | ring of mixed wildflowers and leaves; palette: saturated meadow green, sunny yellow, poppy red and violet | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-jardim-hera-e-margaridas` | frame | Jardim florido | ring of ivy with daisies and tiny bees; palette: saturated meadow green, sunny yellow, poppy red and violet | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `furn-jardim-arco-de-flores` | furniture | Jardim florido | small rustic arch covered in climbing flowers; palette: saturated meadow green, sunny yellow, poppy red and violet | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| `furn-jardim-regador-encantado` | furniture | Jardim florido | mossy watering can overflowing with blossoms; palette: saturated meadow green, sunny yellow, poppy red and violet | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| `furn-jardim-canteiro-redondo` | furniture | Jardim florido | round flowerbed patch, shallow perspective; palette: saturated meadow green, sunny yellow, poppy red and violet | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| `furn-jardim-vaso-suspenso` | furniture | Jardim florido | hanging basket spilling colourful flowers; palette: saturated meadow green, sunny yellow, poppy red and violet | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-ruinas-cidade-engolida` | bg | Ruínas pós-apocalípticas | overgrown ruined city, collapsed towers wrapped in vines, hazy amber sky, nature reclaiming everything; palette: rust orange, faded olive, dust beige and toxic lime accent | 1200×648 (1,85:1), [PET-BOX] | não |
+| `bg-ruinas-metro-esquecido` | bg | Ruínas pós-apocalípticas | abandoned subway hall flooded and full of moss and glowing fungi, light through a broken ceiling; palette: rust orange, faded olive, dust beige and toxic lime accent | 1200×648 (1,85:1), [PET-BOX] | não |
+| `frame-ruinas-concreto-e-vergalhao` | frame | Ruínas pós-apocalípticas | ring of broken concrete and rusted rebar with moss; palette: rust orange, faded olive, dust beige and toxic lime accent | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| `frame-ruinas-sucata-florida` | frame | Ruínas pós-apocalípticas | ring of rusted scrap reclaimed by small flowers; palette: rust orange, faded olive, dust beige and toxic lime accent | 192×192 (1:1), abertura central 96 px vazia, alfa real | não |
+| ✅ 15/11 `furn-ruinas-carro-engolido` | furniture | Ruínas pós-apocalípticas | rusted small car overtaken by moss and flowers; palette: rust orange, faded olive, dust beige and toxic lime accent | 56×56 (1:1), `ground`, slot `floor-left` | não |
+| ✅ 15/11 `furn-ruinas-placa-torta` | furniture | Ruínas pós-apocalípticas | bent faded road sign with vines (no readable text); palette: rust orange, faded olive, dust beige and toxic lime accent | 48×52 (~1:1), `ground`, slot `floor-right` | não |
+| ✅ 15/11 `furn-ruinas-asfalto-rachado` | furniture | Ruínas pós-apocalípticas | cracked asphalt patch with grass in the cracks, shallow perspective; palette: rust orange, faded olive, dust beige and toxic lime accent | 104×16 (6,5:1), `ground-flat`, slot `rug` | não |
+| ✅ 15/11 `furn-ruinas-fiacao-com-musgo` | furniture | Ruínas pós-apocalípticas | hanging old cables draped with moss and small glowing fungi; palette: rust orange, faded olive, dust beige and toxic lime accent | 56×40 (1,4:1), `hang`, slot `wall` | não |
+| `bg-el-fogo` | bg | Elemento Fogo | forge of living flame in a stone hollow; palette: flame orange-red | 1200×648 (1,85:1), [PET-BOX] | **sim** (`fogo`) |
+| `frame-el-fogo` | frame | Elemento Fogo | ring of licking flames; palette: flame orange-red | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`fogo`) |
+| `furn-el-fogo` | furniture | Elemento Fogo | small eternal-flame brazier of carved stone; palette: flame orange-red | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`fogo`) |
+| `bg-el-agua` | bg | Elemento Água | waterfall grotto with rippling light; palette: clear aqua-blue | 1200×648 (1,85:1), [PET-BOX] | **sim** (`agua`) |
+| `frame-el-agua` | frame | Elemento Água | ring of flowing water drops; palette: clear aqua-blue | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`agua`) |
+| `furn-el-agua` | furniture | Elemento Água | stone basin with a floating water orb; palette: clear aqua-blue | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`agua`) |
+| `bg-el-terra` | bg | Elemento Terra | canyon of layered stone and giant roots; palette: ochre and earthy brown | 1200×648 (1,85:1), [PET-BOX] | **sim** (`terra`) |
+| `frame-el-terra` | frame | Elemento Terra | ring of rough stone and clay; palette: ochre and earthy brown | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`terra`) |
+| `furn-el-terra` | furniture | Elemento Terra | stack of balanced rune stones; palette: ochre and earthy brown | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`terra`) |
+| `bg-el-ar` | bg | Elemento Ar | peaks above the clouds with wind ribbons; palette: pale sky blue and white | 1200×648 (1,85:1), [PET-BOX] | **sim** (`ar`) |
+| `frame-el-ar` | frame | Elemento Ar | ring of swirling wind ribbons and feathers; palette: pale sky blue and white | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`ar`) |
+| `furn-el-ar` | furniture | Elemento Ar | small pinwheel of feathers on a stone post; palette: pale sky blue and white | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`ar`) |
+| `bg-el-eletricidade` | bg | Elemento Eletricidade | storm plateau with lightning between crystal spires; palette: vivid yellow and white-violet | 1200×648 (1,85:1), [PET-BOX] | **sim** (`eletricidade`) |
+| `frame-el-eletricidade` | frame | Elemento Eletricidade | ring of crackling yellow arcs; palette: vivid yellow and white-violet | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`eletricidade`) |
+| ✅ 15/11 `furn-el-eletricidade` | furniture | Elemento Eletricidade | crystal rod catching a tiny lightning bolt; palette: vivid yellow and white-violet | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`eletricidade`) |
+| `bg-el-arcano` | bg | Elemento Arcano | floating library of runes and orbiting glyphs; palette: royal violet and gold | 1200×648 (1,85:1), [PET-BOX] | **sim** (`arcano`) |
+| `frame-el-arcano` | frame | Elemento Arcano | ring of orbiting violet glyphs; palette: royal violet and gold | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`arcano`) |
+| ✅ 15/11 `furn-el-arcano` | furniture | Elemento Arcano | floating open grimoire with violet runes; palette: royal violet and gold | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`arcano`) |
+| `bg-el-sombra` | bg | Elemento Sombra | moonless forest of black trees with drifting shadow wisps; palette: ink black and cold grey-blue | 1200×648 (1,85:1), [PET-BOX] | **sim** (`sombra`) |
+| `frame-el-sombra` | frame | Elemento Sombra | ring of curling black smoke; palette: ink black and cold grey-blue | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`sombra`) |
+| ✅ 15/11 `furn-el-sombra` | furniture | Elemento Sombra | dark mirror on a stand, faint wisps; palette: ink black and cold grey-blue | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`sombra`) |
+| `bg-el-luz` | bg | Elemento Luz | sunlit marble sanctuary with shafts of golden light; palette: warm white-gold | 1200×648 (1,85:1), [PET-BOX] | **sim** (`luz`) |
+| `frame-el-luz` | frame | Elemento Luz | ring of golden rays; palette: warm white-gold | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`luz`) |
+| ✅ 15/11 `furn-el-luz` | furniture | Elemento Luz | small sun-orb on a marble pedestal; palette: warm white-gold | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`luz`) |
+| `bg-el-vileza` | bg | Elemento Vileza | poisoned marsh with thorny idols, no gore; palette: sickly green and dark magenta | 1200×648 (1,85:1), [PET-BOX] | **sim** (`vileza`) |
+| `frame-el-vileza` | frame | Elemento Vileza | ring of barbed thorns dripping venom; palette: sickly green and dark magenta | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`vileza`) |
+| ✅ 15/11 `furn-el-vileza` | furniture | Elemento Vileza | cracked goblet with bubbling green venom; palette: sickly green and dark magenta | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`vileza`) |
+| `bg-el-morte` | bg | Elemento Morte | quiet ossuary garden with pale flowers among old stones, no gore; palette: bone white and pale teal | 1200×648 (1,85:1), [PET-BOX] | **sim** (`morte`) |
+| `frame-el-morte` | frame | Elemento Morte | ring of bleached branches and pale moths; palette: bone white and pale teal | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`morte`) |
+| ✅ 15/11 `furn-el-morte` | furniture | Elemento Morte | weathered gravestone with a pale flower; palette: bone white and pale teal | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`morte`) |
+| `bg-el-vida` | bg | Elemento Vida | sacred spring where a great tree blooms; palette: fresh spring green and rose | 1200×648 (1,85:1), [PET-BOX] | **sim** (`vida`) |
+| `frame-el-vida` | frame | Elemento Vida | ring of budding leaves and small hearts of light; palette: fresh spring green and rose | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`vida`) |
+| ✅ 15/11 `furn-el-vida` | furniture | Elemento Vida | sprouting seed in a glowing cradle of roots; palette: fresh spring green and rose | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`vida`) |
+| `bg-el-vigor` | bg | Elemento Vigor | sunrise training ground on a mountain terrace; palette: crimson red and warm amber | 1200×648 (1,85:1), [PET-BOX] | **sim** (`vigor`) |
+| `frame-el-vigor` | frame | Elemento Vigor | ring of braided red cords and amber beads; palette: crimson red and warm amber | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`vigor`) |
+| ✅ 15/11 `furn-el-vigor` | furniture | Elemento Vigor | heavy stone training weight wrapped in red cord; palette: crimson red and warm amber | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`vigor`) |
+| `bg-el-marcial` | bg | Elemento Marcial | old dojo courtyard with weapon racks and fallen leaves; palette: steel grey and deep red | 1200×648 (1,85:1), [PET-BOX] | **sim** (`marcial`) |
+| `frame-el-marcial` | frame | Elemento Marcial | ring of crossed blades and cord; palette: steel grey and deep red | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`marcial`) |
+| ✅ 15/11 `furn-el-marcial` | furniture | Elemento Marcial | wooden training dummy with worn wraps; palette: steel grey and deep red | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`marcial`) |
+| `bg-el-tempo` | bg | Elemento Tempo | desert of floating sand and frozen moments under twin moons; palette: sand gold and midnight blue | 1200×648 (1,85:1), [PET-BOX] | **sim** (`tempo`) |
+| `frame-el-tempo` | frame | Elemento Tempo | ring of drifting sand and arcane sundial marks (no gears); palette: sand gold and midnight blue | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`tempo`) |
+| ✅ 15/11 `furn-el-tempo` | furniture | Elemento Tempo | small sundial of stone with flowing sand; palette: sand gold and midnight blue | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`tempo`) |
+| `bg-el-som` | bg | Elemento Som | valley of giant resonating crystal pipes and visible sound waves; palette: coral pink and teal | 1200×648 (1,85:1), [PET-BOX] | **sim** (`som`) |
+| `frame-el-som` | frame | Elemento Som | ring of concentric sound waves and notes; palette: coral pink and teal | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`som`) |
+| ✅ 15/11 `furn-el-som` | furniture | Elemento Som | crystal tuning bell on a stand; palette: coral pink and teal | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`som`) |
+| `bg-el-gravidade` | bg | Elemento Gravidade | field of levitating boulders bending around a dark sphere; palette: deep purple and graphite | 1200×648 (1,85:1), [PET-BOX] | **sim** (`gravidade`) |
+| `frame-el-gravidade` | frame | Elemento Gravidade | ring of orbiting tiny stones; palette: deep purple and graphite | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`gravidade`) |
+| ✅ 15/11 `furn-el-gravidade` | furniture | Elemento Gravidade | small floating boulder over a dark orb; palette: deep purple and graphite | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`gravidade`) |
+| `bg-el-espaco` | bg | Elemento Espaço | cosmic platform among nebulae and planets; palette: cosmic navy and nebula pink | 1200×648 (1,85:1), [PET-BOX] | **sim** (`espaco`) |
+| `frame-el-espaco` | frame | Elemento Espaço | ring of stars and thin orbit lines; palette: cosmic navy and nebula pink | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`espaco`) |
+| ✅ 15/11 `furn-el-espaco` | furniture | Elemento Espaço | miniature planet with a ring on a pedestal; palette: cosmic navy and nebula pink | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`espaco`) |
+| `bg-el-fada` | bg | Elemento Fada | fairy circle of glowing mushrooms in a twilight glade; palette: lilac, pink and sparkle silver | 1200×648 (1,85:1), [PET-BOX] | **sim** (`fada`) |
+| `frame-el-fada` | frame | Elemento Fada | ring of tiny wings, sparkles and flowers; palette: lilac, pink and sparkle silver | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`fada`) |
+| ✅ 15/11 `furn-el-fada` | furniture | Elemento Fada | little mushroom house with glowing window; palette: lilac, pink and sparkle silver | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`fada`) |
+| `bg-el-industrial` | bg | Elemento Industrial | ancient mossy foundry of copper conduits and crystal, nature growing back, no Victorian steampunk; palette: copper, soot grey and warm furnace orange | 1200×648 (1,85:1), [PET-BOX] | **sim** (`industrial`) |
+| `frame-el-industrial` | frame | Elemento Industrial | ring of aged copper plates with moss; palette: copper, soot grey and warm furnace orange | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`industrial`) |
+| ✅ 15/11 `furn-el-industrial` | furniture | Elemento Industrial | old copper automaton head overgrown with moss; palette: copper, soot grey and warm furnace orange | 56×56 (1:1), `ground`, slot `floor-left` | **sim** (`industrial`) |
+| `bg-el-planta` | bg | Elemento Planta | jungle canopy with giant leaves and shafts of green light; palette: leaf green and sap yellow | 1200×648 (1,85:1), [PET-BOX] | **sim** (`planta`) |
+| `frame-el-planta` | frame | Elemento Planta | ring of broad leaves and vines; palette: leaf green and sap yellow | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`planta`) |
+| ✅ 15/11 `furn-el-planta` | furniture | Elemento Planta | calm carnivorous plant in a clay pot; palette: leaf green and sap yellow | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`planta`) |
+
+## Barra do Especial da Chuva de Almas (pedido do dono, 04/11/2026)
+
+Slot opcional já ligado: `src/assets/soulmon/barrage/barra-especial.png` (resolvido por `import.meta.glob` em `assets/soulmon/barrage/index.ts`). Sem o arquivo, o botão Especial segue com a barra atual (gradiente CSS); com ele, a arte vira o fundo do botão por cima do preenchimento de carga.
+
+| Alvo | Tamanho | Alfa | Prompt |
+|---|---|---|---|
+| `src/assets/soulmon/barrage/barra-especial.png` | 192×96 (2:1), uma peça só; interior da barra vazado (translúcido) para o preenchimento de carga aparecer por baixo | real (`gpt_image_2 --background transparent`, nunca chroma) | `Pixel-art horizontal special-charge bar frame for a mobile shoot-em-up, 2:1. A slim dark-turquoise capsule with a hollow translucent inside; an ornate soul crystal with a small flame at the right end, thin copper rim and copper pipes along the top and bottom edges, fine circuit traces in turquoise glow, a few tiny leaves curling from the corners, everything joined by cables. No gears, no text, no background, no drop shadow. Real transparent alpha. Dark turquoise tone matching the app Home.` |
+
+Identidade: `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal da alma com chama, cobre, circuito, folhinhas, sem engrenagem).
+
+## Soulsmith (Vitra) — mapa de chakras (04/11/2026, dono)
+
+A tela do Soulsmith virou um mapa no esquema da Hexsmith (`components/forge/VitraMap.tsx`). Ocupa a tela cheia, de borda a borda (sem fallback em SVG); a arte entra sozinha por glob.
+
+| Arquivo-alvo (`src/assets/soulmon/vitra/`) | Formato | O que é |
+|---|---|---|
+| `vitra-mapa.png` | 852×1846 (proporção de celular, 852/1846), fundo OPACO (sem alfa), PNG indexado ≤ 400 KB | placa do mapa em TELA CHEIA: figura HUMANOIDE de vidro quente sendo soprado, ainda pastosa, no centro; PRETO no miolo, ganhando luz e cor para as bordas. Três anéis de chakra vazios na VERTICAL do eixo (medidos, 05/11): x 50%; y 29,25%, 41,5% e 53,5% da altura; diâmetro 18% da largura. Em telas de outra proporção a arte COBRE (corte centrado) e os chakras acompanham o recorte. Instalada (rodada v2, 05/11) |
+
+Os ícones dos equipamentos já existem (`equipArt`); o chakra só os emoldura em CSS.
+
+**Prompt completo (ChatGPT, anexar a arte da Home e `lote-forja-ferreiro.png` como referência):**
+`Portrait phone-proportion full-bleed illustration, 852x1846 (9:19.5), opaque background, painterly pixel-friendly fantasy game art in the Soulmon style. A humanoid figure made of HOT MOLTEN GLASS being blown, still pasty and soft, standing centered, arms slightly out from the body and legs apart, a thin copper blowpipe leaving its mouth and going up out of frame. The figure is BLACK at its centre (heart and torso almost pure black) and gains light and colour toward its edges: deep teal glow, then amber and ember orange rims, with a few tiny cyan bubbles trapped in the glass. The background is a dark closed turquoise-teal (the same tone as the app Home), fading from black behind the figure to a faint warm ember rim at the corners. Soul crystals with a small flame inside float in small quantity around the figure. Always present but sparse: copper pipes and tubing, thin digital circuit traces glowing faintly, and small branches of tiny leaves, everything connected by cables as if the plant were integrated with the machine. Leave three empty chakra rings stacked on the vertical centre axis (x 50%; y 29.25%, 41.5%, 53.5% of the height; ring diameter 18% of the width) with no objects on them. No gears, no steampunk, no text, no letters, no watermark, no frame, no extra characters.`
+
+**Checklist de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`, categoria "usar": mapa/hub) antes de instalar:** base turquesa escuro como a Home; cristais da alma com chama; canos de cobre, circuitos e folhinhas em pouca quantidade, tudo ligado por cabo; SEM engrenagem/steampunk; figura preta no centro e colorida nas bordas; três anéis na vertical, nas posições acima (50%; 29,25%, 41,5%, 53,5%). Sem esses elementos, REJEITAR e voltar ao gerador. Instalar: salvar como `vitra-mapa.png` e conferir os 3 chakras sobre os pontos livres (a tela usa o arquivo sozinha).
+
+---
+
+## Efeitos de combate por elemento (04/11/2026, REGISTRO §228)
+
+Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-loop-sheet`). Destino: `src/assets/soulmon/combate-v3/status/` (glifo 64×64, exibido a 22 px) e `fx/` (folha 3×2, 128 px por quadro, 384×256). Identidade obrigatória: `docs/REGRA-IDENTIDADE-SOULMON.md`. Prompts prontos: `D:\Soulmon\planos\efeitos-combate.md` §4.3. Transparência real, nunca chroma.
+
+| Arquivo | O que mostra | Uso | Situação |
+|---|---|---|---|
+| `st-queimadura.png` | chama no medalhão de cristal | DoT de fogo | falta (provisório: `♨`) |
+| `st-veneno.png` | gota tóxica | DoT de vileza | falta (provisório: `☣`) |
+| `st-maldicao.png` | caveira sombria, refazer no molde | maldição | refeito pela regra v2 (10/11/2026), instalado |
+| `st-velocidade.png` | botinha com asa | `spdBuff` de ar e lentidão | falta |
+| `st-silencio.png` | nota musical riscada | silêncio | falta |
+| `st-def-terra.png`, `st-def-agua.png` | escudo de pedra, escudo de água | defesa | falta (provisório: `st-escudo`) |
+| `st-atk-fisico.png`, `st-atk-magico.png` | punho de pedra, orbe de água | ataque | falta (provisório: `st-buff-atk`) |
+| `st-seta-sobe.png`, `st-seta-desce.png` | setas, camada animada em CSS | buff e debuff | falta |
+| `fx-queimadura-loop-sheet.png` | chama que sobe e queima, toca a cada golpe de quem queima | queimadura | falta |
+| `fx-veneno-loop-sheet.png` | gotas pingando | veneno | falta |
+| `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | refeito pela regra v2 (10/11/2026), instalado (loop-1..6 + sheet) |
+| `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
+| `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |
+| `st-peso`, `st-retardo`, `st-ferrugem`, `st-distorcao` (.png) | glifos de lentidão de Gravidade, Tempo, Industrial, Espaço | §236 | `st-peso` e `st-ferrugem` refeitos e instalados (13/11, §361); `st-retardo` ok (§331); `st-distorcao` segue no molde medalhão antigo (falta versão nova) |
+| `st-ofuscado`, `st-curto-circuito`, `st-atordoado`, `st-selado` (.png) | glifos de silêncio de Luz, Eletricidade, Marcial, Arcano | §236 | `st-selado` refeito e instalado (13/11, §361); os outros 3 seguem no molde medalhão antigo (falta versão nova) |
+| `st-seiva`, `st-po-de-fada`, `st-folego` (.png) | glifos de cura contínua de Planta, Fada, Vigor | §236 | `st-seiva` refeito e instalado (13/11, §361); `st-po-de-fada` e `st-folego` seguem no molde medalhão antigo (falta versão nova) |
+| `st-escudo-peso`, `st-blindagem`, `st-furia`, `st-postura`, `st-aceleracao`, `st-carga` (.png) | glifos de buff de família | §236 | falta (provisório: forma + texto) |
+
+## 23. Pratos do Restaurante — 12 desenhos (pedido do dono, 06/11/2026)
+
+**Status: INSTALADO em 09/11/2026 (§265), 128², alfa real.**
+
+Hoje os 12 pratos (`DISHES` em `src/utils/restaurant.ts`) aparecem como **emoji** (`Dish.icon`). A tela (`RestauranteSheet`) já lê `src/utils/dishArt.ts`, que descobre sozinho os PNG em `src/assets/soulmon/pratos/prato-<dishId>.png`: o arquivo caiu na pasta com o nome certo, assume sem editar código; sem arquivo, segue o emoji. Cardápio e regra: `docs/RESTAURANTE.md`.
+
+- **Destino:** `src/assets/soulmon/pratos/prato-<dishId>.png` (o `dishId` é o de `restaurant.ts`, sem acento).
+- **Tamanho:** gerar 1024×1024 com **alfa real** (ChatGPT desktop, molde NPC/item; `gpt_image_2_5 --variant flare --background transparent` se falhar; nunca chroma verde), instalar em **128×128** (exibido a 52 px no celular; pixel art, `imageRendering: pixelated`).
+- **Referência a anexar (obrigatória):** `src/assets/soulmon/items/food-salad.png` + `item-heart.png` (traço de item), e `src/assets/soulmon/npcs/npc-mercado-restaurante.png` (a Snapjaw). Sem referência o gerador inventa estilo.
+- **Identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`, revista em 09/11/2026):** prato é item, então no máximo UM motivo discreto (uma gema OU um fio de cobre), nunca cano + folha + cristal juntos; sem engrenagem/steampunk. Prato de Snapjaw puxa para o bosque (vinhas, folhas); prato do Caldo puxa para a panela de cobre e circuito.
+- **Conferência (`arte-conferente`):** alfa real (sem xadrez), prato legível a 52 px, centrado, sem texto, sem moldura/botão, cristal com chama visível.
+
+**Bloco de estilo (colar no início de cada prompt):**
+```
+Retro pixel art game item icon, 16-bit era, single dish centered, three-quarter top-down view, chunky visible pixels, flat colors with 3-step shading, clean dark outline. Palette: deep petrol turquoise base, aged copper accents, warm food colors only on the food itself. Soulmon identity: one small glowing soul-crystal with a flame inside, a few copper pipes or thin circuit traces, tiny leaf sprigs, everything connected by a thin cable, plant integrated with machine. No gears, no steampunk, no text, no frame, no border, no UI, no shadow plate. TRANSPARENT background with real alpha, square 1:1 composition, subject fills 80 percent of the canvas.
+```
+
+**Prompt de cada prato** = bloco de estilo + `The dish: <descrição>.`
+
+| Arquivo | Prato (chef) | Descrição para o prompt |
+|---|---|---|
+| `prato-salada-viva.png` | Salada Viva (Snapjaw) | a shallow turquoise-glazed bowl of crisp living leaves and curled vine tendrils, a tiny teal crystal with a soft flame inside nestled among the greens |
+| `prato-cha-de-orvalho.png` | Chá de Orvalho (Snapjaw) | a small round teapot-cup of dark teal ceramic with a dewdrop-shaped lid, a thin copper pipe curling off the spout, one glowing droplet crystal floating above the steam |
+| `prato-tigela-do-bosque.png` | Tigela do Bosque (Snapjaw) | a deep wooden-and-teal bowl of steaming rice and a red apple slice, a green sprout growing from the rim, a crystal with flame glowing at the bottom of the bowl |
+| `prato-espetinho-de-vinha.png` | Espetinho de Vinha (Snapjaw) | a skewer made of a twisted green vine threaded with seared meat chunks and leaves, a small turquoise crystal with flame as the top bead, a copper band at the handle |
+| `prato-sopa-de-raiz.png` | Sopa de Raiz (Snapjaw) | a rounded dark-teal bowl of root stew with visible roots, rice and meat, a thin copper pipe along the rim, one crystal with flame floating above the steam |
+| `prato-mordida-da-flor.png` | Mordida da Flor (Snapjaw) | a candy-and-fruit pastry shaped like a half-bitten blooming flower, petals in warm coral, leaf sprigs on the side, a tiny crystal with flame at the center of the bloom |
+| `prato-pao-de-faisca.png` | Pão de Faísca (Caldo) | a round golden loaf with a scored top on a small teal board, faint circuit traces glowing on the crust, a bright cyan spark and a small crystal with flame resting beside it |
+| `prato-ensopado-do-caldeirao.png` | Ensopado do Caldeirão (Caldo) | a small squat copper-rimmed cauldron of bubbling stew in dark teal, a coiled cable feeding it, a crystal with flame glowing under the surface, a leaf sprig on the lid |
+| `prato-torta-de-mel-lunar.png` | Torta de Mel Lunar (Caldo) | a round pie with a lattice crust and golden honey glaze shaped like a crescent moon, one slice cut out, a pale crystal with flame glowing in the cut, a leaf sprig on top |
+| `prato-caldo-de-brasa.png` | Caldo de Brasa (Caldo) | a ramen-style bowl of dark teal ceramic with glowing ember-orange broth, meat slices and rice, a copper chopstick rest with circuit etching, a crystal with flame beside the bowl |
+| `prato-pizza-de-ferro.png` | Pizza Casca de Ferro (Caldo) | a round pizza with a thick dark metallic-teal crust studded with ore flecks, melted toppings, one slice lifted with a copper-wire cheese string, a small crystal with flame set in the center |
+| `prato-pudim-de-nevoa.png` | Pudim de Névoa (Caldo) | a pale wobbling pudding with caramel drizzle on a teal plate, soft white mist curling around it like down feathers, a tiny crystal with flame inside the pudding glowing through |
+
+**Depois de instalar:** `dishArt.ts` assume sozinho; rodar `restaurant.test.ts` e conferir a tela a 360 px.
+
+## 24. Curados novos: Planta, Industrial e Fada (05/11/2026, `D:/Soulmon/planos/curados-novos.md`, emenda ao REGISTRO §232)
+
+Código pronto (nº 262-267, `elementosLote4.data.ts`), **sem arte**. Ícone e FX entram sozinhos por glob (`elementos/el-<id>.png`, `fx-ataque/fx-<id>-{orb,slash,impact,cast,aura,aura-96,defended}.png`); enquanto não existem, ícone e FX caem nos do 1º componente (`elementIcon`, `fxElementId`). O sprite do Soulmon cai no rookie da criatura base do elemento dominante (regra de criatura dos lotes 1-3). Prompts prontos no plano; a outra frente gera em `E:/Soulmon-assets/curados-novos/` (`el-<id>.png`, `fx-<id>-folha.png`, recorte da folha em 7 peças). Transparência com alfa real, nunca chroma. Depois de instalar: `node scripts/element-visual.py`, `node scripts/fx-facing.mjs` e `tools/instalar-cenarios-elemento.py` regeneram as tabelas `elementVisual.data.ts`, `fxFacingTable.ts` e `combatArtElementoMedias.data.ts`.
+
+| Id | Elemento | Soulmon | Ícone (96x96, 1:1) | FX (folha 3x2 → 7 peças) | Sprite rookie `novos-arquivo/combinados/` | Cenário `combate/elemento/<id>.png` | Formas `combinados-formas/` |
+|---|---|---|---|---|---|---|---|
+| `clareira` | Clareira Sagrada (planta, luz, vida) | Glaedryn | falta | falta | `262-clareira.png` feito | falta | falta (champion, ultimate, mega) |
+| `alto_forno` | Alto-Forno (industrial, fogo, terra) | Furnarok | falta | falta | `263-alto_forno.png` feito | falta | falta |
+| `bencao_feerica` | Bênção Feérica (fada, luz, vida) | Blessylle | falta | falta | `264-bencao_feerica.png` feito | falta | falta |
+| `floresta_ancestral` | Floresta Ancestral (planta, terra, tempo, arcano) | Eldrowan | falta | falta | `265-floresta_ancestral.png` feito | falta | falta |
+| `colosso_blindado` | Colosso Blindado (industrial, eletricidade, vigor, marcial) | Colossarm | falta | falta | `266-colosso_blindado.png` feito | falta | falta |
+| `corte_feerica` | Corte Feérica (fada, arcano, luz, som) | Faecourt | falta | falta | `267-corte_feerica.png` feito | falta | falta |
+
+Total pedido agora: 6 ícones + 6 folhas de FX. Fora deste pedido: 6 sprites rookie, 6 cenários e 18 formas dos novos, e formas e cenário dos 3 promovidos (Pestilência, Maldição, Cyber).
+
+**Promovidos (nº 205-207):** entram no catálogo curado, com arte já existente. **Refazer ícone e FX deles: decisão do dono, aprovada (05/11/2026)** (reprovações em `manifesto.csv` e regra de identidade de 04/11); paletas de Cyber e Maldição precisam mudar. Pendente de geração. Correção do §18: o EL5 acima saiu como `205-pestilencia.png`, `206-maldicao.png`, `207-cyber.png` (não 193 a 195).
+
+## 25. Cenas do Passeio — 8 panoramas horizontais (pedido do dono, 05/11/2026)
+
+**Status: INSTALADO em 09/11/2026 (§265), 8 WebP 1774×887.**
+
+**Contexto:** quando o jogador fez um Passeio, o resumo do dia abre uma CENA EM TELA CHEIA (`components/StrollScene.tsx`): o Soulmon dele no cenário da região visitada, um cartãozinho no topo com o que foi, "Espera… tem alguma coisa ali." → a câmera DESLIZA para o lado e mostra o Soulmon descoberto (um que ele nunca viu; entra no Drive) → OK → volta. Para deslizar, o cenário é um **PANORAMA horizontal**: o Soulmon do jogador na ESQUERDA, o descoberto na DIREITA, os dois pisando na mesma linha de chão. **Código pronto** (`utils/strollScene.ts`, `utils/strollDiscovery.ts`); **sem arte** — hoje a cena usa o postal da região espelhado lado a lado (piso, nunca quebra). Quando o arquivo cai com o nome-alvo, ele assume sozinho (glob).
+
+| Arquivo-alvo (`src/assets/soulmon/passeio-cenas/`) | Região | Postal de reserva hoje | Estado |
+|---|---|---|---|
+| `cena-campina.webp` | Campina (casa) | `bg-campina` | instalada (§265) |
+| `cena-floresta.webp` | Floresta | `bg-forest` | instalada (§265) |
+| `cena-oceano.webp` | Oceano | `bg-ocean` | instalada (§265) |
+| `cena-deserto.webp` | Deserto | `bg-desert` | instalada (§265) |
+| `cena-picos.webp` | Picos | `bg-cloudsea` | instalada (§265) |
+| `cena-pantano.webp` | Pântano | `bg-swamp` | instalada (§265) |
+| `cena-cavernas.webp` | Cavernas | `bg-cavernas` | instalada (§265) |
+| `cena-gelo.webp` | Gelo | `bg-snow` | instalada (§265) |
+
+- **Formato:** HORIZONTAL, proporção **2:1** (largura ÷ altura = `SCENE_RATIO` em `utils/strollScene.ts`). Gerar a **1792×896** (ou o maior 2:1 que a ferramenta der); instalar em **WebP**, ≤ 400 KB cada (o orçamento de bytes olha o `dist/`). Pode ser `.png` (o glob aceita os dois); sem alfa (é fundo cheio).
+- **Composição (o que a cena precisa, em % do panorama):** **linha de chão em 80% da altura** (`SCENE_GROUND_Y`) — os pés dos dois Soulmons caem ali; **espaço livre e plano** ao redor de **x = 25%** (jogador) e **x = 75%** (descoberto), ~30% de largura cada, sem rocha/árvore/objeto grande na frente deles; o **meio (45–55%)** é só passagem (pode ter o detalhe mais marcante da região). Céu/topo mais calmo: o cartãozinho de texto cobre os ~35% de cima à esquerda/direita na tela cheia. Sem texto, sem moldura, sem personagem.
+- **Pano de fundo contínuo:** a arte é uma cena só (não duas metades coladas); as bordas esquerda e direita não precisam emendar.
+- **Identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`, categoria "usar": cenas do Passeio/mapa; só vale para esta fila de cenas, não para criatura/FX/item):** turquesa ESCURO fechado como tom dominante, **cristais da alma com chama dentro** (quase sempre o elemento principal da região, 1 ou 2 grandes), e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. **Cada região é um ecossistema diferente, o core fica.** Sem engrenagem/steampunk. "Arcano, natureza + magia" sozinho não basta no prompt.
+- **Estilo (`docs/GUIA-CONSISTENCIA-2026-09-23.md`):** pixel art 16-bit nítido, sem pós-processo de pixelização (revogado), sombreado em 3 tons, contorno escuro limpo — o mesmo traço dos postais atuais (`src/assets/backgrounds/bg-*.png`); **anexar o postal da própria região como referência** para casar paleta e linguagem, pedindo "a wide panoramic continuation of this place".
+- **Bloco de estilo (colar no início de cada prompt):**
+```
+Wide horizontal 2:1 panoramic game background, detailed crisp 16-bit pixel art, crisp pixel edges with no anti-aliased blur, 3-step shading, clean dark outline. Palette: deep petrol turquoise as the dominant tone. A flat open ground line sits at exactly 80% of the image height with clear empty walkable space around 25% and 75% of the width (no large objects there). One or two large glowing soul crystals with a flame inside as the focal landmark, a little copper piping, faint digital circuit traces and small leaf sprigs, everything connected by cables, plant integrated with machine. No characters, no text, no frame, no gears, no steampunk.
+```
+- **Prompt de cada região** = bloco de estilo + `The place: <descrição>.`
+
+| Região | Descrição para o prompt |
+|---|---|
+| Campina | a low-grass open meadow under a wide sky, scattered wildflowers growing along copper cables, a soul crystal with flame half-grown from the soil in the middle distance, distant soft hills |
+| Floresta | a dense dark forest clearing, huge trunks wrapped in cables with leaf sprigs, glowing turquoise crystals with flame among the roots, a copper pipe snaking between trees, hanging vines |
+| Oceano | a calm shoreline at dusk, wet sand ground line, a crystal with flame rising from tide pools, copper pipes half-buried in the sand, soft turquoise waves and a far horizon |
+| Deserto | wide dunes under a big pale sky, crystals with flame jutting from the sand, buried copper pipes and cables crossing the ground, sparse leaf sprigs on a single hardy plant |
+| Picos | high rocky peaks above a sea of cloud, crystals with flame embedded in the cliff faces, copper cable bridges and pipes along the ledges, thin alpine leaf sprigs |
+| Pântano | a misty swamp of dark water and roots, crystals with flame glowing in the mud, copper pipes bubbling softly, cables draped over twisted trees, floating leaf sprigs |
+| Cavernas | a wide cave hall with a ceiling of crystals with flame, copper pipes along the walls, circuit traces glowing in the stone, small ferns near the floor |
+| Gelo | a frozen plain of ice and snow, huge ice-blue crystals with flame inside, frosted copper pipes and cables, tiny hardy leaf sprigs poking through the snow |
+
+- **Conferência (`arte-conferente`):** proporção 2:1 exata; chão em 80% (±2%) com espaço livre em 25% e 75%; sem alfa/xadrez assado; sem personagem nem texto; cristal com chama visível; turquesa escuro dominante; legível com o cartão de texto por cima.
+- **Geração:** ChatGPT primeiro (Higgsfield `gpt_image_2` é a reserva), uma imagem por região. Se a ferramenta não entregar 2:1, gerar o mais largo possível e recortar o centro para 2:1 mantendo o chão em 80%; nunca esticar. A cena usa `cover`.
+- **Revisão pelo método da squad de design (05/11/2026):** identidade, guia de 23/09, composição e legibilidade conferidas pela sessão do §242, sem despachar agentes de crítica. O prompt trocou "pixels grossos" pelo termo do guia. A crítica de cada peça gerada continua com `arte-conferente` e `design-critic`.
+- **Depois de instalar:** nenhuma linha de código muda (o glob `passeio-cenas/cena-*` assume). Conferir a cena numa tela de 390×844 e num celular deitado, subir `CACHE_VERSION` em `public/sw.js` e rodar `strollScene.test.ts`.
+
+## 26. Ícone da caixa de cartas na Home (pedido do dono, 06/11/2026, REGISTRO §246)
+
+**Status:** a gerar. O app já está pronto e usa o glifo `chat_bubble` (sem arte) até o arquivo existir.
+
+| Peça | Qtd | Destino | Formato | Referência a anexar |
+|---|---|---|---|---|
+| Ícone "carta" (caixa de cartas do Papus) | 1 | `src/assets/soulmon/icones-ui/carta-correio.png` | PNG RGBA, gerar em 1024x1024 e reduzir para **96x96** com *nearest* (o mesmo tamanho de `quest.png` / `quest-exclamacao.png`, os vizinhos do canto; exibido a 32 CSS px), fundo transparente | `icones-ui/mapa.png`, `icones-ui/quest-exclamacao.png` (linha, contorno e escala) |
+
+**Como liga:** `src/assets/soulmon/icones-ui/carta.ts` lê `./carta-correio.{png,webp}` por glob; soltar o arquivo na pasta basta (nenhuma linha de código muda). A bolinha vermelha de "carta nova" é desenhada pelo código, NUNCA na arte.
+
+Prompt (EN): "Create a single pixel-art game UI icon: a small sealed letter, an envelope seen from the front, slightly tilted, with the flap closed. Warm cream envelope body with a thin copper edge trim, and a round wax seal at the flap point shaped as a tiny teal soul crystal with a small flame inside. One short thin cyan circuit trace runs along the flap line and ends at the seal, and one tiny two-leaf sprig is tucked at a corner, joined to the seal by a hair-thin cable. Very simple readable silhouette that still reads clearly when shown at 32 pixels. 16-bit pixel art, crisp hard pixel edges with no anti-aliased blur, 3-step shading per material, clean dark deep-teal 1px outline, same line weight and scale as a handheld creature-collector UI icon set. Soulmon identity: dark deep-teal petrol base tone of the Home, soul crystal with a flame inside, a little copper, circuit line and leaf sprig, all joined by cable, calm look, NOT steampunk, no gears. Centered, about 80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters, numbers or red dot."
+
+- **Revisão pelo método da squad de design (06/11/2026):** conferido contra `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinha, tudo por cabo, sem engrenagem), contra o guia de 23/09 (pixel art nítida, 3 tons) e contra o ícone vizinho: silhueta única e simples para sobreviver a 32 px, sem ponto vermelho na arte (o selo de "nova" é código), mesma escala e contorno de `quest-exclamacao.png`. Sem texto na arte. A crítica da peça gerada continua com `arte-conferente` e `design-critic`.
+- **Geração:** ChatGPT primeiro (Higgsfield `gpt_image_2 --background transparent` é a reserva); alfa REAL, nunca chroma nem xadrez assado. Conferir com Pillow (`python -I`), prévia em #08191A (nunca magenta/verde), e olhar a 32 px sobre a cena da Home antes de instalar.
+- **Depois de instalar:** subir `CACHE_VERSION` em `public/sw.js` e rodar `src/assets/assets.contract.test.ts` e `src/components/nav/nav.render.test.tsx`.
+
+## 27. Jornada do foco: cenários, baús e chaves (pedido do dono, 08/11/2026, REGISTRO §247)
+
+> **Gate 08/11:** revisão formal em `docs/reviews/2026-11-08-arte-jornada.md`: 18 ajustar, 3 reprovar. Correções aplicadas nos prompts v2 (`D:/Soulmon/planos/focus-jornada.md` §6.5), que também incluem o baú abrindo, o brilho e a cena de chegada. Estilo: arte pintada (decisão do dono, 08/11). A geração aguarda o limite do ChatGPT.
+
+> **Não gerar antes da revisão formal da squad de design** (`.claude/skills/squad-design/`). Os prompts completos, com o prefixo de identidade, a regra de emenda vertical e o prefixo de objeto, estão em `D:/Soulmon/planos/focus-jornada.md` §6.3 e §6.4. Hoje o jogo usa arte provisória em SVG (`src/components/play/JourneyScreen.tsx`); trocar não muda regra.
+
+| # | Asset | Formato | Qtd | Destino | Estado |
+|---|---|---|---|---|---|
+| 27.1 | Bloco de cenário vertical (Floresta, Costa, Caverna, Jardim, Oficina, Observatório) | 1024×2048, opaco, emenda de 128 px em cima e embaixo | 6 | `src/assets/soulmon/jornada/bloco-<cena>.webp` | falta |
+| 27.2 | Baú comum + baú aberto (estado e 4 quadros de abertura) | 256×256, alfa real (`gpt_image_2 --background transparent`) | 2 | `src/assets/soulmon/jornada/` | falta |
+| 27.3 | Baú especial por chave (Bancada, Relâmpago, Quadrantes, Brejo, Elo, Pena) | 256×256, alfa real | 6 | idem | falta |
+| 27.4 | Chave por tipo | 128×128, alfa real | 6 | idem | falta |
+| 27.5 | Cena de chegada do fim do foco | 1024×1024 | 1 | idem | falta |
+| 27.6 | Miniaturas de cenário | recorte dos blocos 27.1 | 6 | idem | sem geração |
+
+Antes de gerar 27.3 e 27.4: definir os tokens `--sm2-key-*` com contraste AA nos dois temas (hoje são cores provisórias no componente).
+- **Lâmina própria para o ranged de CORTE** (combate): hoje o corte à distância reaproveita o `slash` do melee, escalado (nasce a 0,2× e cresce até o tamanho do corte). Se o dono quiser, gerar uma lâmina de projétil dedicada por elemento (mesma identidade Soulmon).
+
+## 28. Cenários próprios dos elementos compostos da masmorra (pedido do dono, 08/11/2026, REGISTRO §249)
+
+A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 → 4 componentes, depois volta ao começo) e o cenário da camada é o do elemento (`combatSceneBg`). Os **20 elementos base** têm cenário próprio (`combate/bg-<id>.png`). **Instalado em 10/11/2026:** os 20 `bg-<id>.png` foram substituídos pelos cenários aprovados pelo dono em `E:/Soulmon-assets/masmorra-cenarios-v2/<id>.png` (450×800, `tools/instalar-cenarios-masmorra-base.py`; registro.jsonl `M-<id>` = `uso:em-uso`); **Compostos instalados em 11/11/2026:** 151 cenários da mesma rodada (ChatGPT, 450×800 WebP q82, ~7,4 MB, `tools/instalar-cenarios-masmorra-compostos.py` → `combate/elemento/<id>.webp` + `combatArtElementoMedias2.data.ts`). Dos **249 compostos**, **244 têm** arte própria (93 antigos `.png` + 151 novos `.webp`) e **5 NÃO têm**: esses mostram, até a arte existir, o cenário do elemento base dominante (nada fica sem cenário). Nenhuma arte foi gerada neste PR. Fila (360×640, 9:16, câmera baixa GBA, sem plataforma, identidade Soulmon — cristais turquesa de chama de alma, circuito/fiação, plantas; ver `docs/PROMPTS-CENARIOS-COMBATE-2026-10-29.md`), destino `combate/elemento/<id>.png` (o redutor é `tools/instalar-cenarios-elemento.py`):
+
+- **Sem cenário próprio (5 ids; 11/11/2026):** floresta_ancestral, corte_feerica, pestilencia, maldicao, cyber (trios promovidos/lote 4; ainda no cenário do base dominante). Os outros 151 compostos foram INSTALADOS em 11/11/2026 (abaixo).
+
+## 29. Embaha (Chama Azul): rookie de verdade ainda pendente (bug do dono, 09/11/2026, REGISTRO §255 e §258)
+
+**Feito (09/11/2026, §258):** o PNG marrom de `combinados/009-chama_azul.png` foi SUBSTITUÍDO pela forma Champion azul de `paralelos/parchamaazul-champion.png` (256², alfa real). Chama Azul nunca mais mostra o urso de Vigor; o teste `dungeonElementos.arte.test.ts` guarda o hash do PNG antigo.
+**Feito (09/11/2026, REGISTRO §269):** rookie de verdade instalado em `009-chama_azul.png` e os 6 rookies do lote 4 (`262` a `267`) instalados; dívida do `dungeonElementos.arte.test.ts` zerada.
+~~**Falta:** um **rookie** de verdade para a Embaha (fogo+morte), mesma identidade Soulmon e chama azul (turquesa escuro/azulada), tamanho de rookie (menor e mais simples que o Champion), 256×256, alfa real (`gpt_image_2 --background transparent`), destino `src/assets/soulmon/novos-arquivo/combinados/009-chama_azul.png` (hoje esse slot usa a arte do Champion como quebra-galho: no rookie ela aparece "grande demais" para o estágio). Mesma dívida, sem urgência: 6 elementos do lote 4 sem PNG próprio (`clareira`, `floresta_ancestral`, `alto_forno`, `colosso_blindado`, `bencao_feerica`, `corte_feerica`) mostram o rookie do base (lista em `dungeonElementos.arte.test.ts`).~~
+
+## 30. Formas paralelas de Champion/Ultimate (09/11/2026, §258)
+
+**Feito:** 10 sprites 256² (5 elementos × Champion/Ultimate, derivados do lagarto-dragão de fogo) em `src/assets/soulmon/novos-arquivo/paralelos/`: `agua` (Aquarisk/Marevorn), `industrial` (Rivetisk/Ferrovorn), `chama_azul` (Cyanolisk/Azurvorn), `brinquedo` (Clockolisk/Springvorn), `raiz_profunda` (Rootolisk/Rhizovorn). Matrizes de ~905–970 px ficam em `E:/Soulmon-assets/site-formas/`.
+**Falta (opcional):** Mega dessas linhas; um Rookie próprio de `chama_azul`, `brinquedo` e `raiz_profunda` não é necessário (`brinquedo`/`raiz_profunda` já têm rookie combinado próprio; `chama_azul` está no §29).
+
+## Instalado em 09/11/2026 (REGISTRO §264)
+- Efeitos de combate por elemento (§228/§236): os 29 `st-*` e os 5 `fx-*-loop-sheet` da tabela acima estão instalados (a coluna "Situação" dessas linhas vale como **feito**). `st-seta-sobe/desce` e `stat-*` ficam na pasta sem ponto de chamada (camada CSS).
+- Curados novos: `el-<id>` e FX de ataque de clareira, alto_forno, bencao_feerica, floresta_ancestral, colosso_blindado, corte_feerica (novos) e pestilencia, maldicao, cyber (trocados) instalados.
+
+## Poções e chips de essência por elemento base (09/11/2026) — ✅ instalado
+Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{pocoes,chips}/`; instalados em 128². `items/pocao-<id>.png` (20) → Mochila/Cambista (`itemArt.ts`), oferta da Vesca, Laboratório; `hex/chip-<id>.png` (20) → Portas de elemento da Hexsmith. **Compostos curados (18/11/2026): ✅ instalado** — as 59 poções (`items/pocao-<id>.png`) e os 59 chips (`hex/chip-<id>.png`) dos curados (REGISTRO: `CURATED_ELEMENT_IDS` menos `neutro`), pintados no ChatGPT em folhas 5×4 (alfa real, 1ª imagem de cada conversa, ref = folhas das 20 bases), fatiadas por projeção, 256² origem em `E:/Soulmon-assets/pocoes-chips/{pocoes,chips}/` e 128² instalados; fonte, prompts e registro (`registro.jsonl` + `.meta.json`) em `E:/Soulmon-assets/elementos-faltantes/`. Decisão de identidade: mantida só a chama turquesa (rolha/canto) como UM motivo; saíram a folha e as vinhas de cobre das 20 bases. Sobra: poções/chips dos 190 derivados não curados (seguem com o ícone do elemento).
+
+## 31. Ticket dos minijogos do Salão (pedido do dono, 09/11/2026, REGISTRO §270) — ✅ feito (arte PROVISÓRIA)
+
+**Instalado em 09/11/2026:** ticket turquesa com cogumelo vermelho (inspirado no prédio dos minijogos; ChatGPT, UI, **aprovado provisório pelo dono em 09/11/2026**, troca o ticket amarelo com controle do #700, que fica arquivado). Original 1586×992 em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-inspirado-predio-cogumelo.png` (+ `.meta.json`). O bruto veio RGB com fundo preto; a operacional corrigiu na origem (RGBA, alfa por preenchimento de borda; bruto em `...-bruto-preto.png`). No jogo `src/assets/soulmon/hud/ticket-minigame.png` (512×308, alfa, legível a 28 px). **Dívida:** o alfa é recorte, não geração transparente: regerar com fundo transparente de verdade (ChatGPT) quando a arte deixar de ser provisória. Usado por `components/play/TicketFan.tsx`.
+
+## 32. Molduras do widget V-Pet por elemento (20 casos, pedido do dono, 09/11/2026)
+
+**Situação (corrigida em 18/11/2026): ✅ as 20 artes já estão instaladas em `drawable-nodpi/` (PR #780, versionCode 31); falta só ativar os SKUs `moldura_*` no Play com o APK novo (dono).** Texto antigo: falta toda a arte (0 de 20). A lógica está pronta e testada ponta a ponta: posse por evolução (`grantFrameOnEvolution`) ou compra (`moldura_<elemento>`, `_billing.js`) → `vpetFrame` em `SoulmonWidget.updateWidgetData` → pref `vpet_frame` → `WidgetRenderer.vpetCasingRes` procura o drawable `moldura_vpet_<elemento>` e, ausente, cai no casco padrão `vpet_moldura.png` (`WidgetVpet.pickCasing`). Hoje só existe o casco padrão, então a moldura comprada/liberada **não muda nada** na borda do widget. O `CHECKLIST-DONO.md` já manda deixar os SKUs `moldura_*` INATIVOS no Play Console até a arte entrar no APK.
+
+- **Arquivos (20):** `android/app/src/main/res/drawable-nodpi/moldura_vpet_<id>.png`, com `<id>` em: fogo, agua, terra, ar, eletricidade, arcano, sombra, luz, vileza, morte, vida, vigor, marcial, tempo, som, gravidade, espaco, fada, industrial, planta.
+- **Spec:** 576×384, alfa real (ChatGPT/`gpt_image_2` com fundo transparente, nunca chroma, nunca Higgsfield), **a MESMA abertura do visor LCD de `vpet_moldura.png`** (o sprite é desenhado por baixo/dentro dela; usar o casco padrão como referência anexa e pedir reprodução fiel da forma, trocando só material, cor e ornamento da borda ao tema do elemento). Pintado no padrão de 23/09. Identidade Soulmon só como acento discreto na borda (UI: pode ter um motivo, não entupir); sem engrenagem.
+- **Ordem sugerida:** primeiro um piloto (fogo) para o dono aprovar a linguagem, depois os 19 em lote; os 8 elementos mais comuns primeiro (fogo, agua, terra, ar, vida, luz, sombra, eletricidade).
+- **Prompt-base:** `Recreate this exact pixel-art handheld virtual-pet casing at 576x384, keeping the screen opening (the empty rectangular LCD window) pixel-for-pixel identical, but restyle only the shell material, colour and border ornaments for the element <ELEMENTO>: <motivo do elemento>. Real transparent background, no text, no gears.`
+- **Instalação:** copiar para `drawable-nodpi`, rodar a régua do widget (`widgetFrames.test.ts`), gerar APK novo e só então ativar os SKUs no Play Console. Tags no registro: `tipo:ui`, `origem:chatgpt`, `uso:widget-moldura`, `peca:moldura_vpet_<id>`.
+
+## Feira de verdade (10/11/2026): vendedores
+Nenhuma arte nova: todos reusam NPCs existentes. A `vitra` (#381) é a Vitra, a Soulsmith (`npc-industrial-espirito-forno-vidraceiro.png`). Pendente: nomes finais dos vendedores (hoje genéricos em `feiraLoja.ts`, exceto a Vitra).
+
+## 33. Cards do menu da Home: Home e Widget (pedido do dono, 11/11/2026) — INSTALADOS (2 de 2, 11/11/2026)
+
+> **Instalado:** `src/assets/soulmon/perfil-cards/card-home.webp` e `card-widget.webp` (400×304, WebP q88, ~20 KB cada; fonte `E:/Soulmon-assets/perfil-cards/`). O `card-widget` saiu como moldura decorativa com centro vazio (cristais/cobre/folhas nos cantos); usado assim.
+
+O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar o arquivo em `src/assets/soulmon/perfil-cards/` (`card-home.webp|png`, `card-widget.webp|png`); sem ele o card mostra o visual atual (sprite / prévia da moldura). Uso: fundo do palco do card, que fica ~100x76 px na tela, atrás do sprite ou da moldura do widget. UI: identidade Soulmon liberada (turquesa escuro, cristal com chama, cobre); sem engrenagem. Alfa real, nunca chroma, nunca Higgsfield (ChatGPT). Tags: `tipo:ui`, `origem:chatgpt`, `uso:card-perfil`.
+
+- **card-home** — 400x304 (proporção 100:76), fundo opaco. Prompt: `Painted 16-bit style card background, wide landscape 100:76. The cosy interior of a small turquoise-teal room seen straight on: a soft glowing dark-teal crystal with a small flame on a shelf, a copper pipe along the wall, a few small leaves and a cable running to a window, warm lamp light in the centre-bottom. Calm, uncluttered, mostly dark teal values with one warm glow. The centre must stay empty so a creature sprite can stand on it. No characters, no creatures, no text, no gears, no border.`
+- **card-widget** — 400x304 (proporção 100:76), fundo opaco. Prompt: `Painted 16-bit style card background, wide landscape 100:76. A dark teal tech-workshop bench top-down-ish: soft turquoise crystal glow, aged copper traces and thin circuit lines like cables running to the edges, tiny leaves, a faint rectangular glow in the middle as if a small handheld screen were resting there. Calm, uncluttered, dark teal and copper. The centre must stay quiet so a handheld frame image can sit on it. No characters, no creatures, no text, no gears, no border.`
+
+## Beta12 (frente A, widgets)
+
+- **Prévia do widget Companheiro** (`android/app/src/main/res/drawable-nodpi/widget_preview_companion.png`, hoje o `soulmon_widget_companion_info.xml` reusa `widget_preview_vpet` como placeholder): captura do widget 2x2 com a criatura grande em pé na frente da moldura. Sem rosto de pessoa; criatura: o que a regra de categoria mandar (sprite do jogador/inicial). Gerar pelo ChatGPT, nunca Higgsfield. Tags: `tipo:ui`, `origem:chatgpt`, `uso:widget-preview`.
+## Coroas da Hexsmith por família (pedido do dono, 13/11/2026, REGISTRO §323) — FEITO (7 de 7, instaladas em 13/11/2026, §359)
+
+**O que é:** um MODELO de coroa por família de especial (silhueta e material diferentes, não troca de cor), e a coroa sugere o efeito do especial. Hoje todas as famílias usam a coroa única `src/assets/soulmon/hex/slot-coroa.png` (96×96, RGBA, ouro com gemas turquesa e lascas flutuando).
+**Slot já ligado:** `resolveHexCrownArt` em `src/assets/soulmon/hex/index.ts` (glob `coroa-*.png`). Basta soltar `src/assets/soulmon/hex/coroa-<familia>.png` (ids de `SPECIAL_FAMILIES`); sem o arquivo, cai na `slot-coroa.png`. Nenhum código muda.
+**Spec comum:** pixel art no estilo da `slot-coroa.png` (anexar como referência de estilo em TODA conversa), vista 3/4 de frente um pouco de cima, mesma escala (a coroa ocupa ~85% do quadro), contorno escuro, luz de cima à esquerda, sem box/placa/fundo, **alfa real** (pedido no 1º prompt de cada conversa; ChatGPT só garante alfa na 1ª imagem — se a 2ª/3ª vier sem alfa, regerar essa coroa numa conversa NOVA, nunca chroma nem magenta). Final 96×96 (gerar 1024², recortar a bounding box, reescala *nearest*). Identidade (regra de ícone de item): no máximo UM motivo discreto (uma gema turquesa OU um detalhe de cobre); nunca engrenagem, nunca muitas folhas. Sem nome de personagem/franquia no prompt.
+**Conversas (máx. 3 imagens cada):** C1 = direct, atkBuff, spdBuff · C2 = heal, shield, defDebuff · C3 = dot.
+**Registro:** `registro.jsonl` + `meta.json` por imagem; tags `tipo:item`, `uso:hexsmith-coroa`, `familia:<id>`, `origem:chatgpt`.
+
+| Arquivo | Família (EN / PT) | Conceito (silhueta · material · dica do efeito) | Motivo Soulmon |
+|---|---|---|---|
+| `coroa-direct.png` | Direct strike / Golpe direto | coroa de guerra enxuta, pontas retas como lâminas, a do meio mais alta em ponta de lança · aço polido com filete dourado · faísca de impacto na ponta central | 1 gema turquesa na testa |
+| `coroa-dot.png` | Lingering damage / Dano contínuo | coroa de ferro negro cheia de espinhos tortos e farpas de alturas desiguais, ameaçadora, de rei-espectro · ferro forjado enferrujado · fios de veneno roxo-esverdeado escorrendo devagar das farpas e brasa fraca nas rachaduras | nenhum (o tema não comporta) |
+| `coroa-heal.png` | Healing / Cura | coroa macia e acolchoada, pontas arredondadas e fofas como almofada, costuras de estofado, pompons nas pontas · tecido creme e verde-menta · brilho verde suave e um pontinho de luz em forma de coração bordado | 1 botão-gema turquesa redondo |
+| `coroa-shield.png` | Shield / Escudo | coroa-muralha: ameias quadradas grossas como torre de castelo, faixa baixa e larga · placas de cobre e bronze rebitadas · pequeno brasão de escudo na frente e um arco hexagonal translúcido de barreira por cima | o cobre das placas |
+| `coroa-atkBuff.png` | Attack boost / Reforço de ataque | coroa em chamas para cima, pontas curvas como labaredas subindo · ouro avermelhado · rubi em forma de seta para cima no centro e fagulhas subindo | nenhum |
+| `coroa-defDebuff.png` | Armor break / Quebra de defesa | coroa pesada RACHADA de alto a baixo, uma ponta quebrada, lascas soltando · pedra-aço cinza · a rachadura brilha e as lascas caem para baixo | 1 gema turquesa rachada |
+| `coroa-spdBuff.png` | Speed boost / Reforço de velocidade | diadema leve e aerodinâmico com asas de pena-lâmina varridas para trás, sem pontas altas · prata e azul-céu · linhas de vento e rastro de movimento atrás | 1 gema turquesa pequena |
+
+**Prompt-base (colar no início de cada prompt):** `Pixel-art game item icon, in exactly the same pixel-art style, scale, outline weight, palette depth and 3/4 front view slightly from above as the attached crown icon (use it only as the STYLE reference, not as the design). Chunky crisp pixels, dark 1-2 pixel outline, soft light from the top left, the crown centered and filling about 85% of the frame, no text, no letters, no box, no frame, no panel, no ground shadow, no gears. Transparent background with real alpha (PNG with a true alpha channel, not a checkerboard, not a solid colour). Square 1:1.`
+
+**Prompts por coroa (cada um = prompt-base + este trecho):**
+- **direct (C1, 1ª):** `A lean war crown with straight blade-like points; the central point is taller and shaped like a spear tip, with a small white-yellow impact spark at its tip. Polished steel with a thin gold trim. One small turquoise gem on the front band, nothing else in turquoise. No copper pipes, no circuit lines, no leaves.`
+- **atkBuff (C1, 2ª):** `A crown whose points curve upward like rising flames, reddish gold metal, a ruby cut in the shape of an upward arrow in the centre of the band, a few small embers floating upward above it. No turquoise, no copper pipes, no circuit lines, no leaves.`
+- **spdBuff (C1, 3ª):** `A light, sleek, aerodynamic circlet with no tall points: two wings made of blade-like feathers swept backward from the sides, silver and sky blue, three thin wind streak lines trailing behind it to show speed. One small turquoise gem on the front. No copper pipes, no circuit lines, no leaves.`
+- **heal (C2, 1ª):** `A soft, padded, cushioned crown: plush quilted fabric band with visible upholstery stitches, rounded puffy points like little pillows, each topped with a small pompom, cream and mint green fabric, a gentle soft green glow and a tiny embroidered heart of light on the front. One round turquoise gem button in the centre. No metal spikes, no copper pipes, no circuit lines, no leaves.`
+- **shield (C2, 2ª):** `A crown shaped like a fortress wall: a low, wide band with thick square battlements like a castle tower, made of riveted copper and bronze plates, a small heater-shield crest on the front, and a faint translucent hexagonal barrier arc floating just above it. No turquoise, no circuit lines, no leaves, no gears.`
+- **defDebuff (C2, 3ª):** `A heavy grey stone-and-steel crown cracked from top to bottom, one point snapped off, small shards breaking away and falling downward, the crack glowing faintly. One small turquoise gem on the front, split in two by the crack. No copper pipes, no circuit lines, no leaves.`
+- **dot (C3, 1ª):** `A menacing dark wrought-iron crown covered in many crooked thorns, barbs and jagged spikes of uneven heights, like the crown of a sinister wraith king, rusted black iron with faint dull-red embers in the cracks, thin wisps of violet-green poison slowly dripping from the barbs. No turquoise, no copper pipes, no circuit lines, no leaves, no skulls.`
+
+**Instalação:** salvar em `E:/Soulmon-assets/hexsmith-coroas/` (original 1024²), conferir alfa real (`getextrema` do canal A com 0) e hash diferente entre as 3 da conversa, recortar e reduzir para 96×96 *nearest*, copiar para `src/assets/soulmon/hex/coroa-<familia>.png` e rodar `npx vitest run src/components/hex`.
+
+## Arena: Ultimate de 2 componentes (REGISTRO §403, 15/11/2026)
+
+Para o Ultimate da Arena chegar perto de 55% em elemento de 2 componentes falta sprite Ultimate de 2 componentes para os elementos de run: agua, ar, arcano, eletricidade, espaco, gravidade, luz, marcial, som, sombra, tempo, vida, vigor, vileza (14 de 20; fogo, morte, fada, industrial, planta e terra já têm 1). Mínimo: 1 por elemento, como `kind: 'forma'`/`'paralelo'` no roster; o sorteio já os usa sozinho quando entrarem.
+
+**Entregue em 15/11/2026 (REGISTRO §405):** os 14 sprites (um por elemento de run, par escolhido: agua=gelo, ar=tempestade, eletricidade=plasma, arcano=cristal, espaco=constelacao, gravidade=magnetar, luz=aurora, marcial=forja, som=trovao, sombra=crepusculo, tempo=cronomancia, vida=fenix, vigor=maestria, vileza=heresia) estão em `src/assets/soulmon/novos-arquivo/paralelos/par<par>-ultimate.png` e no roster como só-Ultimate (`utils/enemyRosterUltimates.ts`). Nomes EN de `nomes-propostos.md` aprovados pelo dono em 15/11/2026 (Rimeveil, Galemantle, Ionwyrm, Prismoth, Astracoil, Orbitrix, Auraveil, Anvilhorn, Resonyx, Vesperwing, Chronomane, Emberbloom, Acornarch, Heretorn); sem campo PT na tabela.
+
+## Honra: arte própria no lugar dos emojis (pedido do dono, 16/11/2026)
+
+Prioridade **baixa**. Os enfeites da Honra (`honraDecor`) mantêm por enquanto os emojis ⚒️ e 🔮; 🪓 e 🪄 não renderizam em Androids antigos (teste `emojiSuportado`), por isso não foram usados.
+
+- [ ] Gerar arte própria da Honra (machado) para substituir o emoji ⚒️ em `honraDecor`.
+- [ ] Gerar arte própria da Honra (cajado) para substituir o emoji 🔮 em `honraDecor`.
+
+- [ ] Versão APAGADA (autoral, ChatGPT, reprodução fiel) de lamp, lantern, campfire, lanterna de pétalas, altar de magma, flor de brasa; hoje o apagado é filtro CSS (§480). Fogueira: feito em §481 (sem fogo + fogo pixelfx). Cogumelos: arte atual = aceso; gerar versão apagada.
+- [ ] Quadros de animação da Ampulheta (areia caindo, grãos turquesa).
+
+## Linha Lightning: Transcendent (e talvez Apotheosis) novos (12/11/2026)
+O dono reprovou a linha `eletricidade-*` como exemplo: o meio da linha é uma cobra que não combina com o resto.
+- Gerar novo `eletricidade-ultimate.png` (Transcendent) e, se ainda destoar, novo `eletricidade-mega.png` (Apotheosis), coerentes com o `rookie`, o `champion` e o `ultra`.
+- Pipeline: sprites só pela API (Higgsfield alpha), nunca pelo ChatGPT. Passar antes pela squad de design. Sem cristal, cano ou folha da marca: o elemento manda.
+- Depois de aprovado: rodar `E:\Soulmon-marketing\instagram-posts\_make_posts_2.py` de novo (post `12-evolution-electric`, 22/11).
+
+## 34. Curados novos: lote 5, Fantasma, Morto-Vivo, Sangue e Fúria (23/11/2026, P5, REGISTRO §500)
+
+Código pronto (nº 268-271, `elementosLote5.data.ts`), **sem arte**. Hoje: ícone = o do 1º componente, sprite = rookie da criatura base do dominante, FX e cenário caem no dominante. Entram sozinhos por glob (`elementos/el-<id>.png`, `fx-ataque/fx-<id>-{orb,slash,impact,cast,aura,aura-96,defended}.png`, `novos-arquivo/combinados/<nº>-<id>.png`). Nomes dos Soulmon provisórios (aguardam o dono). Regra de identidade: para estes 4 NÃO usar cristal turquesa, cano de cobre, circuito nem folha de identidade; o ELEMENTO manda. Sem engrenagem.
+
+| Id | Elemento | Soulmon (provisório) | Ícone (96x96, 1:1) | FX (folha 3x2 → 7 peças) | Sprite rookie `novos-arquivo/combinados/` | Poção e chip de essência | Cenário `combate/elemento/<id>.png` | Formas `combinados-formas/` |
+|---|---|---|---|---|---|---|---|---|
+| `fantasma` | Fantasma/Ghost (morte, vida, tempo) | Spectrel | falta | falta | `268-fantasma.png` falta | falta | falta | falta (champion, ultimate) |
+| `morto_vivo` | Morto-Vivo/Undead (morte, vida, vileza) | Revenox | falta | falta | `269-morto_vivo.png` falta | falta | falta | falta (champion, ultimate) |
+| `sangue` | Sangue/Blood (vida, vileza, água) | Hemolisk | falta | falta | `270-sangue.png` falta | falta | falta | falta (champion, ultimate) |
+| `furia` | Fúria/Fury (fogo, vigor, vileza) | Furiosk | falta | falta | `271-furia.png` falta | falta | falta | falta (champion, ultimate) |
+
+Total pedido: 4 ícones, 4 folhas de FX, 4 sprites rookie, 4 poções + 4 chips, 4 cenários e 8 formas. Ao instalar cada peça, tire o id da dívida declarada nos testes (`SEM_ARTE_PROPRIA` em `dungeonElementos.arte.test.ts`, `SEM_POCAO_AINDA` em `potionArt.test.ts`, `SEM_FORMA_AINDA` em `enemyRoster.pacoteA.test.ts`) e rode `scripts/element-visual.py`, `element-paleta.py`, `element-silhueta.py`, `element-dominante.py` e `scripts/fx-facing.mjs` (os dados gerados `elementVisual/Paleta/Silhueta/Dominante.data.ts` e `fxFacingTable.ts` só ganham os 4 quando o ícone e o FX existirem).

@@ -7,28 +7,24 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { AreaScene } from './AreaScene';
 import { arenaLots } from '../../utils/areaSheetCopy';
-import { lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
+import { lotPintado } from '../../utils/areaLotGeometry';
 
 describe('AreaScene — Arena', () => {
-  it('tocar no miolo de cada prédio abre o lote certo; o miolo e o rótulo seguem a geometria do contrato', () => {
+  it('tocar em cada prédio pintado abre o lote certo; o alvo segue LOT_PINTADO e não há sprite', () => {
     const opened: string[] = [];
     const lots = arenaLots('pt-BR').map(l => ({ id: l.id, label: l.label, left: l.left, top: l.top, width: l.width, ariaLabel: l.ariaLabel, art: 'x.png', onOpen: () => { opened.push(l.id); } }));
     const r = render(<AreaScene areaId="arena" language="pt-BR" lots={lots} />);
     expect(lots.map(l => l.id).sort()).toEqual(['duelo', 'guerra', 'torneio']); // #186: a Fenda Sem Fim voltou para a Exploração);
     for (const l of lots) {
       const btn = r.container.querySelector(`[data-area-lot="${l.id}"]`) as HTMLElement;
-      const hit = btn.querySelector('[data-area-lot-hit]') as HTMLElement;
-      const b = lotHitBounds('arena', l.id);
-      expect(parseFloat(hit.style.left)).toBeCloseTo(b[0] * 100, 3);
-      expect(parseFloat(hit.style.width)).toBeCloseTo((b[2] - b[0]) * 100, 3);
-      const lab = btn.querySelector('[data-area-lot-label]') as HTMLElement;
-      expect(parseFloat(lab.style.left)).toBe(lotLabelOffset('arena', l.id)[0]);
-      expect(lab.getAttribute('style')).toContain(`${lotLabelOffset('arena', l.id)[1]}px - ${lotLabelLift('arena', l.id)}cqw`);
-      fireEvent.click(hit);
+      const b = lotPintado('arena', l.id)!;
+      expect(parseFloat(btn.style.left)).toBeCloseTo(b[0], 3);
+      expect(parseFloat(btn.style.width)).toBeCloseTo(b[2] - b[0], 3);
+      expect(btn.querySelector('[data-area-lot-art]')).toBeNull();
+      expect(btn.querySelector('[data-area-lot-label]')).toBeTruthy();
+      fireEvent.click(btn);
     }
     expect(opened).toEqual(lots.map(l => l.id));
-    const z = (id: string) => Number((r.container.querySelector(`[data-area-lot="${id}"]`) as HTMLElement).style.zIndex);
-    expect(z('duelo')).toBeGreaterThan(Math.max(z('torneio'), z('guerra'))); // a Arena livre fica na FRENTE
     vi.restoreAllMocks();
   });
 });

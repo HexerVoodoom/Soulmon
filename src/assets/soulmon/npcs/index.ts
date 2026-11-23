@@ -9,6 +9,8 @@
 import type { AreaId } from '../../../navigation';
 import type { FunctionNpcId, ExtraNpcId } from '../../../utils/areaNpcVoice';
 
+export { default as NPC_GUARDA_CHAVE_ART } from './npc-guarda-chave-bastiao.png';
+export { default as NPC_MENSAGEIRO_ART } from './npc-mensageiro-papus.png';
 import npcPerfilCorvo from './npc-perfil-corvo.png';
 import npcMercado from './npc-mercado.png';
 import npcArena from './npc-arena.png';
@@ -65,7 +67,7 @@ import npcHallGrove from './npc-n-musa.png'; // D-50 (19/10/2026): o NPC do Grov
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
 import npcForjaHexsmith from './npc-forja-hexsmith.png'; // 01/11/2026: a Hexsmith (reescreve o código hex com poções de elemento)
 import npcMercadoCambista from './npc-mercado-cambista.png'; // banco de assets #389 (escolha do dono, 30/10/2026), 768² a partir do original 2048² do banco
-import npcMercadoRestaurante from './npc-mercado-restaurante.png';
+import npcMercadoRestauranteSnapjaw from './npc-mercado-restaurante-snapjaw.png'; // 05/11/2026: a planta carnívora cozinheira (`dominios/planta/npcs`)
 /**
  * 🦎 O NPC do SOULSMITH — ÚNICO ponto de troca (07/10/2026). Escolha do dono: o espírito-do-forno vidraceiro
  * (`dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro`, a 'salamandra de vidro industrial').
@@ -92,7 +94,8 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:conquistas': npcMercadoConquistas, // Medra
   'forja:ferreiro': FERREIRO_NPC_ART,
   'mercado:cambista': npcMercadoCambista, // Farthing (30/10/2026): a criatura verde de tentáculos, chapéu vermelho, poções e balança (#389)
-  'mercado:restaurante': npcMercadoRestaurante, // Brickle, o caranguejo pedreiro (14/10/2026; restaurante em obra)
+  // 🍲 05/11/2026: o Restaurante ABRIU — o busto do lote é a Snapjaw (planta carnívora); quem cozinha no dia vem de `RESTAURANT_CHEF_ART`.
+  'mercado:restaurante': npcMercadoRestauranteSnapjaw,
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Tessaria (era Naia até 30/10/2026; 07/10/2026: trocou o Tuska)
   'arena:guerra': npcArenaGuerra, // Mirevesper: arte escolhida pelo dono em 18/10/2026 — ver docs/ARTE-MELHORIAS-FUTURAS.md
@@ -205,6 +208,7 @@ import npcNCozinheiro from './npc-n-cozinheiro.png';
 import npcNBesouro from './npc-n-besouro.png';
 import npcNLuaTronoSentada from './npc-n-luaTronoSentada.png';
 import npcNLuaTronoDePe from './npc-n-luaTronoDePe.png';
+import npcNSereiaPintora from './npc-n-sereiaPintora.png';
 
 /**
  * NPCs NOVOS (15/10/2026, leva `E:/novos npcs` — 17 PNG do Higgsfield, 15 instalados):
@@ -235,6 +239,7 @@ export const NOVO_NPC_ART: Record<NovoNpcId, string> = {
   besouro: npcNBesouro,
   luaTronoSentada: npcNLuaTronoSentada,
   luaTronoDePe: npcNLuaTronoDePe,
+  sereiaPintora: npcNSereiaPintora, // Maré (02/11/2026): corpo inteiro 726×1100, alfa binário, regerada com fundo transparente
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote
@@ -246,3 +251,12 @@ export function lotNpcArt(areaId: AreaId, lotId?: string | null): string {
   }
   return AREA_NPC_ART[areaId];
 }
+
+/**
+ * 🍲 Os dois chefs do Restaurante (05/11/2026, dono): a Snapjaw (planta carnívora, seg/qua/sex) e o Caldo (o cozinheirinho do
+ * caldeirão, ter/qui/sáb); no domingo os dois. Quem decide o dia é `utils/restaurant.ts › chefsOn`.
+ */
+export const RESTAURANT_CHEF_ART = {
+  snapjaw: npcMercadoRestauranteSnapjaw,
+  caldo: npcNCozinheiro,
+} as const;

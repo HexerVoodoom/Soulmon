@@ -1,9 +1,11 @@
 /** Tipos do espelho do núcleo de combate v3 no servidor (`_combate.js`; travado por `combate.parity.test.js`). */
 export interface Combatant { level: number; atk: number; def: number; spd: number; hp: number; bonus: number }
-export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff';
-export interface Special { family: SpecialFamily; power: number }
+export type SpecialFamily = 'direct' | 'dot' | 'heal' | 'shield' | 'atkBuff' | 'defDebuff' | 'spdBuff' | 'defBuff' | 'atkDebuff' | 'spdDebuff';
+export type SpecialEffect = 'hot' | 'slow' | 'silence';
+export interface EffectTune { silenceHits: number; silenceKeep: number; slowScale: number; slowKeep: number; hotScale: number }
+export interface Special { family: SpecialFamily; power: number; effect?: SpecialEffect; tune?: EffectTune }
 export interface StatWeights { atk: number; def: number; spd: number }
-export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number }
+export interface FightSide { combatant: Combatant; special: Special | null; dotResist?: number; invoca?: boolean }
 export interface CheerEvent { t: number; side: 0 | 1; scale?: number }
 export interface VarianceConfig { rho: number; sigma: number; floor: number }
 export interface FightOptions {
@@ -54,16 +56,31 @@ export declare function firstLevelOfStage(stage: number): number;
 export declare function stageBase(stage: number): number;
 export declare function autoHp(level: number): number;
 export declare function distributePoints(level: number, weights: StatWeights): StatWeights;
-export declare function combatantAt(level: number, weights: StatWeights, bonus?: number | Partial<AttrBonus>): Combatant;
+export interface StatFloor { s: number; atk: number; def: number; spd: number }
+export declare function combatantAt(level: number, weights: StatWeights, bonus?: number | Partial<AttrBonus>, floor?: StatFloor): Combatant;
+export declare function statMaxOfStage(s: number): number;
+export declare function sanitizeStatFloor(v: unknown): StatFloor | undefined;
 export declare const COMBAT_BONUS_CAP: number;
 export declare function combinedBonus(sources: { talent?: number; equipment?: number; commerce?: number; rebirth?: number }): number;
 export interface AttrBonus { atk: number; def: number; spd: number }
 export declare function combinedAttrBonus(sources: { talent?: Partial<AttrBonus>; equipment?: Partial<AttrBonus>; commerce?: Partial<AttrBonus>; rebirth?: Partial<AttrBonus> }): AttrBonus;
 export declare function toAttrBonus(b: number | Partial<AttrBonus> | undefined): AttrBonus;
 export declare const SPECIAL_BUDGET_HITS: number;
+/** §334: ticks de um DoT, contados em golpes do afetado. */
+export declare const DOT_TICKS: number;
+/** §327: espelho de `SHIELD_DIRECT_SPECIAL_ABSORB`/`SHIELD_ABSORB`/`shieldAbsorbPoints` de `combate/specials.ts`. */
+export declare const SHIELD_DIRECT_SPECIAL_ABSORB: number;
+export declare const SHIELD_DOT_TICK_ABSORB: number;
+export declare const SHIELD_ABSORB: Readonly<{ basic: number; direct: number; tick: number }>;
+export declare function shieldAbsorbPoints(sh: number, d: number, src: 'basic' | 'direct' | 'tick'): number;
 export declare const SPECIAL_FAMILIES: SpecialFamily[];
 export declare const SPECIAL_POWER: Record<SpecialFamily, number>;
-export declare function specialOf(family: unknown): Special;
+export declare const CROWN_ONLY_FAMILIES: SpecialFamily[];
+export declare const ALL_SPECIAL_FAMILIES: SpecialFamily[];
+export declare const EFFECT_TUNE_PVP: EffectTune;
+export declare const FAMILY_TUNE: { guardCut: number; weakCut: number; spdDebuffScale: number; dragStretch: number };
+export declare const EFFECT_FAMILY: Record<SpecialEffect, SpecialFamily>;
+export declare function specialOf(family: unknown, effect?: unknown): Special;
 export declare const ENERGY: { perDealt: number; perReceived: number; perSecond: number };
 export declare const ENERGY_TRIGGER: number;
 export declare const CHEER: { tapsFull: number; tapsCapPerBucket: number; bucketSeconds: number; energyPerDischarge: number; pvpEnergyPerDischarge: number };
@@ -89,3 +106,8 @@ export declare function fightSteps(a: FightSide, b: FightSide, opts: FightOption
 export declare function fight(a: FightSide, b: FightSide, opts: FightOptions): FightResult;
 export declare function soulWeights(state: unknown): StatWeights;
 export declare function soulCombatant(state: unknown, opts?: { maxLevel?: number; bonus?: number | Partial<AttrBonus> }): Combatant;
+export declare const COMPANHEIRO_TURNOS: number;
+export declare const COMPANHEIRO_EFEITO_FATOR: number;
+export declare const COMPANHEIRO_ATAQUE_FATOR: number;
+export declare function especialInvoca(sp: { family: SpecialFamily; effect?: string } | null | undefined): boolean;
+export declare function planoInvocacao(sp: { family: SpecialFamily; effect?: string; power: number } | null | undefined, scale: number): { papel: 'ataque' | 'misto'; escalaEfeito: number; ataqueE: number; turnosAtaque: number } | null;

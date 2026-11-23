@@ -1,27 +1,40 @@
 import { RankingPanel } from './RankingPanel';
+import { BotaoEspecial } from './ui/BotaoEspecial';
 import { ResultScreen } from './games/ResultScreen';
+import { essenceLedgerRows } from '../utils/resultEssences';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
-import { npcFoe, pickPvpOpponent, pvpElementsForSeed, tileElementName, type PvpFoe } from '../utils/match3Pvp';
+import { Match3Escolha } from './play/Match3Escolha';
+import type { M3Choice } from '../utils/match3Escolha';
+import { pickPvpOpponent, mixedElementsForSeed, pvpRewards, simulatedFoe, tileElementName, type PvpFoe } from '../utils/match3Pvp';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './mente/types';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameRoot, GameHeader, HpBars, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { Icon } from './ui/Icon';
 import { bitsStyle } from '../utils/currencies';
 import { usePrefersReducedMotion } from './ui/Viewport';
+import { SpriteFx } from './ui/SpriteFx';
+import { SCENE_BG } from '../utils/fxPackArt';
 import { elementIcon } from '../utils/elementIconArt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import {
   M3_COLS, M3_ROWS, M3_TILE_ELEMENTS, M3_TILE_NAMES, M3_POINTS_PER_BIT, M3_MAX_BITS,
-  match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
+  hasMoves, match3Bits, newRound, shuffleBoard, trySwap, type Board, type BoardRules, type Pos, type Rng, type Step, type Tile,
 } from '../utils/match3';
 import {
-  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element,
+  BOSS_CLOCK_MS, bossBoardRules, bossRuleInfo, bossTurn, bossTurnOpts, clockTick, drawBossRules, isBossMatch, newBossCombat, newBossTrack, passTurn, petrify, tideKind,
+  type BossRuleId, type BossTrack,
+} from '../utils/match3Boss';
+import {
+  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, mirarInimigo, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element, type M3Exchange,
 } from '../utils/match3Combat';
+import { tocarAlvo } from '../utils/combate/alvo';
+import { useMiraFlash } from './games/useMiraFlash';
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
@@ -29,12 +42,16 @@ import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { dexIdsOfFoe } from '../utils/elementDex';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { petScaleStyle } from '../utils/spriteScale';
+import { BossSplash } from './games/BossSplash';
+import { BOSS_SHARD_ART } from '../utils/itemArt';
+import { fusionBossMonster, bossBattleTitleArt, resultOpponentSrc } from '../utils/bossSplash';
+import { entrarNaSuperficie } from '../utils/musica';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
 
@@ -66,9 +83,11 @@ const T_CLEAR = 280;
 const T_FALL = 240;
 const HINT_MS = 2600;
 const CONFIRM_MS = 3000;
-/** A arte do inimigo 1→3 sobe de estágio: o último do time é o mais imponente. */
-const ENEMY_STAGES = ['rookie', 'champion', 'ultimate'] as const;
+/** A arte do inimigo 1→4 sobe de estágio (o modo desafio usa só os 3 primeiros): o último do time é o mais imponente. */
+const ENEMY_STAGES = ['rookie', 'champion', 'champion', 'ultimate'] as const;
 const ENEMY_SPRITE = 64;
+/** BOSS: o sprite do boss é maior que o de um inimigo comum. */
+const BOSS_SPRITE_SCALE = 1.5;
 /** D-102: os tempos do poder (aura → viagem → burst → número) estão em `utils/match3Powers.ts`; aqui só o tamanho da aura (como a do especial do `BattleStage`: 1,3× o sprite). */
 const AURA_SCALE = 1.3;
 const CAN_ANIMATE = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
@@ -91,8 +110,12 @@ const EL_ICON_ENEMY = 26;
 const LINES = Object.keys(OWN_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
-  /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): PvE (a rodada normal) ou PvP; pula o seletor de dentro. */
+  /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): 'pve' = AVENTURA (o nome interno ficou; REGISTRO §473) ou 'pvp'; pula o seletor de dentro. */
+  /** Sessão de diversão: 'De novo' conta uma rodada (também no PvP). `false` = sem energia. */
+  onReplayRound?: () => boolean;
   initialMode?: 'pve' | 'pvp';
+  /** §488: a opção escolhida na lista de 3 do Salão (`Match3Escolha`). Com ela a partida é a da escolha e o "De novo" volta à lista. */
+  initialChoice?: M3Choice;
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
   /** D-85: saldo de Bits e a via de gasto do app (`play.onSpendBits`, devolve `false` se não cobrou). Sem elas, não dá para comprar dica. */
@@ -102,6 +125,8 @@ export interface Match3Props extends EarningGameProps {
   petName?: string;
   /** Elemento do Soulmon do jogador (id do Oráculo); só é mostrado, não muda a regra. */
   petElement?: string;
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  petBase?: string;
   /** M10: level do jogador. Com ele, os inimigos vêm do roster (`enemyRoster.ts`, estágio limitado pelo level). Sem ele, linhas próprias. */
   playerLevel?: number;
   /** M10: inimigo do roster que entrou em cena (bestiário). */
@@ -110,18 +135,31 @@ export interface Match3Props extends EarningGameProps {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Onboarding (cena 4): avisa cada troca válida, com a pontuação que ela rendeu (0 = trocou sem formar linha). Só observa. */
   onMove?: (info: { scored: boolean; score: number }) => void;
+  /** BOSS (03/11/2026): venceu um boss → +1 Fragmento de Boss no save (`utils/bossShards.ts`). */
+  onBossShard?: () => void;
+  /** PVP (§473): a Honra da partida (3 na vitória, 1 na derrota; `pvpRewards`), pelo mesmo caminho da Honra do Torneio. Boss e Aventura nunca chamam. */
+  onEarnHonor?: (amount: number) => void;
+  /** BOSS só nasce quando o jogador tocou em jogar e ESCOLHEU Aventura ou PVP (a entrada decide); sem isso (tutorial, Masmorra) nunca. */
+  bossAllowed?: boolean;
 }
+
+/** BOSS da partida (`utils/match3Boss.ts`): a semente e as 3 regras sorteadas. `null` = partida comum. */
+interface BossRound { seed: number; rules: BossRuleId[] }
+const bossFor = (sd: number, challenge: unknown, allowed: boolean): BossRound | null => (allowed && !challenge && isBossMatch(sd) ? { seed: sd, rules: drawBossRules(sd) } : null);
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 
 /** O combate de uma rodada a partir da semente (o rng do tabuleiro NÃO é tocado: os dois têm fluxo próprio). */
-function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
-  // PVP: 6 elementos sorteados do pool inteiro (semente por partida) e UM inimigo; Normal: os 6 fixos e o time de 3, como sempre.
-  if (pvp) {
-    const elements = pvpElementsForSeed(sd);
-    return { combat: newPvpCombat(mulberry32(sd + 99), elements, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements };
-  }
-  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
+function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string, boss?: BossRound | null, challenge?: unknown, adventureElement?: string): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
+  // BOSS: UM inimigo com o HP do jogador, os 6 elementos fixos (vale na Aventura e no PvP).
+  if (boss) return { combat: newBossCombat(mulberry32(sd + 99), undefined, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
+  // PVP (§473): os 6 elementos básicos FIXOS e UM inimigo com o HP do jogador.
+  if (pvp) return { combat: newPvpCombat(mulberry32(sd + 99), M3_TILE_ELEMENTS, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
+  // Modo desafio do Calabouço: INTACTO (6 fixos, time de 3).
+  if (challenge) return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
+  // AVENTURA (§473): 6 elementos sorteados do pool inteiro (semente por partida) e o time de 4; §488: com a escolha, o time é do elemento escolhido.
+  const elements = mixedElementsForSeed(sd);
+  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement, { elements, ...(adventureElement ? { element: adventureElement } : {}) }), rng: mulberry32(sd ^ 0x5eed), elements };
 }
 
 /** M10: arte e nome de um inimigo do roster (`enemyRoster.ts`), ou `undefined` (combate sem level: linhas próprias, como antes). */
@@ -131,8 +169,38 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp: pvpProp, adventureElement, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, petBase, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard, onEarnHonor, bossAllowed = false }: Match3Props & { pvp?: PvpFoe; adventureElement?: string; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
+  const first = useMemo(() => {
+    const sd = seed ?? freshSeed();
+    const boss = bossFor(sd, challenge, bossAllowed);
+    return { sd, boss, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, boss, challenge, adventureElement) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed, demoCharacterId, playerLevel, pvpProp]);
+  const [boss, setBoss] = useState<BossRound | null>(first.boss);
+  /** Essências da rodada (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
+  const [essenciasRodada, setEssenciasRodada] = useState<EssenceDrop[]>([]);
+  const bossRef = useRef(boss);
+  bossRef.current = boss;
+  // no BOSS a partida é contra o boss, mesmo vindo do PvP: a tela não mostra o oponente
+  const pvp = boss ? undefined : pvpProp;
+  const bossShardRef = useRef(onBossShard);
+  bossShardRef.current = onBossShard;
+  const honorRef = useRef(onEarnHonor);
+  honorRef.current = onEarnHonor;
+  const [honorEarned, setHonorEarned] = useState(0);
+  const bossTrackRef = useRef<BossTrack>(newBossTrack());
+  const [bossIntro, setBossIntro] = useState(!!first.boss);
+  const bossIntroRef = useRef(bossIntro);
+  bossIntroRef.current = bossIntro;
+  const bossMonster = useMemo(() => (boss ? fusionBossMonster(boss.seed, language === 'pt-BR') : null), [boss, language]);
+  // música de chefe (superfície própria; hoje a faixa de combate, a `chefe-adrenalina` do dono é pendente)
+  useEffect(() => (boss ? entrarNaSuperficie('chefe-minigame') : undefined), [boss]);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [clock, setClock] = useState(BOSS_CLOCK_MS);
+  const boardRules: BoardRules = useMemo(() => (boss ? bossBoardRules(boss.rules) : {}), [boss]);
+  const boardRulesRef = useRef(boardRules);
+  boardRulesRef.current = boardRules;
   const pvpRef = useRef(pvp);
   pvpRef.current = pvp;
   const challengeRef = useRef(challenge);
@@ -143,23 +211,29 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
 
-  const first = useMemo(() => {
-    const sd = seed ?? freshSeed();
-    return { sd, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvp, petElement) };
-  }, [seed, demoCharacterId, playerLevel, pvp]);
   const [elements, setElements] = useState<readonly string[]>(first.battle.elements);
   const [board, setBoard] = useState<Board>(first.round.board);
   const boardRef = useRef(first.round.board);
   const rngRef = useRef<Rng>(first.round.rng);
   const [combat, setCombat] = useState<M3Combat>(first.battle.combat);
   const combatRef = useRef<M3Combat>(first.battle.combat);
+  /** ALVO POR TOQUE (03/11/2026, dono): o inimigo escolhido (`null` = o ativo, regra de sempre); vale a partir da PRÓXIMA jogada. */
+  const [alvo, setAlvo] = useState<number | null>(null);
+  const alvoRef = useRef<number | null>(null);
+  const [miraFlash, flashMira] = useMiraFlash();
+  const mirar = useCallback((i: number) => {
+    const next = tocarAlvo(combatRef.current.enemies.map(e => e.hp), alvoRef.current, i);
+    alvoRef.current = next;
+    setAlvo(next);
+    if (next === i) flashMira(i); // marcador só por 1 s após o toque
+  }, [flashMira]);
   // M10: os 3 inimigos do roster entram em cena juntos → bestiário (idempotente no App).
   useEffect(() => {
-    if (!onEnemySeen) return;
+    if (!onEnemySeen || pvp || boss) return;
     for (const e of combat.enemies) if (e.roster) onEnemySeen(e.roster);
   }, [combat.enemies, onEnemySeen]);
   // §213: desgarrado de JOGADOR por cima de um inimigo da Fenda (só arte/rótulo; nunca no PvP). Raro, determinístico pela semente.
-  const wildPlayers = useStrayPlayerEncounters(combat.enemies.map((_, i) => (pvp ? null : `m3|${first.sd}|${i}`)));
+  const wildPlayers = useStrayPlayerEncounters(combat.enemies.map((_, i) => (pvp || boss ? null : `m3|${first.sd}|${i}`)));
   const enemyRngRef = useRef<Rng>(first.battle.rng);
   const [sel, setSelState] = useState<Pos | null>(null);
   const selRef = useRef<Pos | null>(null);
@@ -220,18 +294,36 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     overRef.current = true;
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
       const ids = combatRef.current.enemies.flatMap(e => dexIdsOfFoe(rosterEntryOfKey(e.roster)));
-      if (ids.length > 0) elementsDefeatedRef.current(ids, combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d));
+      if (ids.length > 0) {
+        const drops = combatRef.current.enemies.flatMap(e => { const r = rosterEntryOfKey(e.roster); return essenceDropsOfFoe(r, r?.stage); });
+        elementsDefeatedRef.current(ids, drops);
+        setEssenciasRodada(drops);
+      }
     }
     if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }
+    // BOSS: sem Bits, sem recorde nem ranking; vencer = +1 Fragmento de Boss
+    if (bossRef.current) {
+      setEarned(0);
+      setOver(true);
+      if (combatRef.current.outcome === 'win') bossShardRef.current?.();
+      return;
+    }
     const final = combatScore(combatRef.current);
+    // PVP (§473): Bits e Honra da Arena/Torneio (`pvpRewards`), não mais o placar; os Bits seguem pelo funil único (tetos do dia). Sem recorde pessoal.
+    if (pvpRef.current) {
+      const r = pvpRewards(combatRef.current.outcome === 'win');
+      setEarned(r.bits > 0 ? (onEarnPoints(r.bits) ?? r.bits) : 0);
+      if (r.honor > 0) { setHonorEarned(r.honor); honorRef.current?.(r.honor); }
+      setOver(true);
+      return;
+    }
     const bits = match3Bits(final);
-    setEarned(bits);
+    // O que a tela mostra é o que entrou (teto diário): o funil devolve o creditado.
+    setEarned(bits > 0 ? (onEarnPoints(bits) ?? bits) : 0);
     const prevBest = readNumber(STORAGE_KEYS.MATCH3_BEST, 0);
     setHadBest(prevBest > 0);
-    // PVP: sem recorde nem ranking (decisão do dono, 26/10/2026) — só os Bits, pelo mesmo funil do Normal
-    if (!pvpRef.current && final > prevBest) { writeLocal(STORAGE_KEYS.MATCH3_BEST, String(final)); setBest(final); setNewBest(prevBest > 0); }
+    if (final > prevBest) { writeLocal(STORAGE_KEYS.MATCH3_BEST, String(final)); setBest(final); setNewBest(prevBest > 0); }
     setOver(true);
-    if (bits > 0) onEarnPoints(bits);
   }, [onEarnPoints]);
 
   const say = useCallback((pt: string, en: string) => setNote(isPt ? pt : en), [isPt]);
@@ -323,6 +415,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const flashExtra = useCallback(() => setExtraFlash(n => n + 1), []);
 
   const enemyNameAt = useCallback((c: M3Combat, idx: number = c.active): string => {
+    if (bossRef.current) return 'Boss';
     if (pvpRef.current) return isPt ? 'Oponente' : 'Opponent'; // nome de pessoa real nunca aparece
     const e = c.enemies[idx];
     const r = rosterOf(e);
@@ -354,58 +447,9 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     showTurnBanner(name, by);
   }, [wait, showTurnBanner]);
 
-  const onMoveRef = useRef(onMove);
-  onMoveRef.current = onMove;
-  const play = useCallback(async (a: Pos, d: Pos) => {
-    if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
-    const res = trySwap(boardRef.current, a, d, rngRef.current);
-    if (!res.ok) { setSel(null); return; }
-    onMoveRef.current?.({ scored: res.scored, score: res.score });
-    busyRef.current = true;
-    setBusy(true);
-    setSel(null);
-    openFxWindow();
-    clearHint();
-    setConfirmBuy(false);
-    say('', '');
-    const base = combatRef.current;
-    // a jogada VÁLIDA inteira (dano do jogador, rodada extra OU a vez do inimigo) é a conta pura; a tela só a mostra por partes
-    const ex = playTurn(base, res.steps, res.board, rngRef.current, streakRef.current);
-    setBoard(res.swapped);
-    await wait(T_SWAP);
-    let preview = await runSteps(res.steps, base, applyPlayerSteps, [a, d]);
-    if (!preview || !alive.current) return;
-    boardRef.current = res.board;
-    setBoard(res.board);
-    setChain(0);
-    if (res.reshuffled) {
-      setFresh(f => ({ id: f.id + 1, cells: new Set(Array.from({ length: M3_ROWS * M3_COLS }, (_, i) => i)) }));
-      say('Sem jogadas: embaralhei as peças para você.', 'No moves left: I shuffled the tiles for you.');
-    }
-    if (ex.extra) {
-      // D-84: 4+ = rodada extra — o inimigo não joga e o turno não é contado
-      streakRef.current += 1;
-      flashExtra();
-      combatRef.current = ex.state;
-      setCombat(ex.state);
-      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
-      busyRef.current = false;
-      setBusy(false);
-      return;
-    }
-    streakRef.current = 1;
-    // Se o jogador já encerrou a partida na sua jogada (venceu os 3 inimigos), fecha sem turno inimigo
-    if (ex.enemyMoves.length === 0) {
-      boardRef.current = ex.board;
-      setBoard(ex.board);
-      combatRef.current = ex.state;
-      setCombat(ex.state);
-      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
-      busyRef.current = false;
-      setBusy(false);
-      if (ex.state.outcome !== 'playing') finish();
-      return;
-    }
+  /** A vez do inimigo (ou do boss), animada: depois de uma jogada do jogador, ou quando o relógio do boss zera (regra 11). */
+  const runEnemy = useCallback(async (ex: M3Exchange, start: M3Combat, base: M3Combat, quiet: boolean) => {
+    let preview = start;
     // 1 segundo entre o turno do jogador e o turno do inimigo, com o banner "<nome do monstro> turn"
     const activeIdx = preview.active;
     const activeEnemy = preview.enemies[activeIdx];
@@ -441,18 +485,125 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
       if (i < ex.enemyMoves.length - 1) { flashExtra(); await wait(T_SWAP); }
     }
     if (!alive.current) return;
-    boardRef.current = ex.board;
-    setBoard(ex.board);
+    let fim = ex.board;
+    // BOSS, regra 10: o boss petrifica 3 peças no fim da vez dele (sem jogada possível = embaralha)
+    if (bossRef.current?.rules.includes('corrupted-stones') && ex.state.outcome === 'playing') {
+      fim = petrify(fim, enemyRngRef.current);
+      if (!hasMoves(fim)) fim = shuffleBoard(fim, enemyRngRef.current);
+    }
+    boardRef.current = fim;
+    setBoard(fim);
     combatRef.current = ex.state;
     setCombat(ex.state);
-    if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+    if (!quiet) setNote(turnNote(base.log.length, ex.state));
+    setClock(BOSS_CLOCK_MS);
     if (ex.state.outcome === 'playing') {
       void showTurnBannerLate(playerLabel, 'player'); // não bloqueia o input
     }
     busyRef.current = false;
     setBusy(false);
     if (ex.state.outcome !== 'playing') finish();
-  }, [clearHint, enemyNameAt, finish, flashExtra, openFxWindow, playerLabel, runSteps, say, setSel, showTurnBannerLate, turnNote, wait]);
+  }, [enemyNameAt, finish, flashExtra, playerLabel, runSteps, showTurnBannerLate, turnNote, wait]);
+
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
+  const play = useCallback(async (a: Pos, d: Pos) => {
+    if (busyRef.current || overRef.current || bossIntroRef.current || combatRef.current.outcome !== 'playing') return;
+    const res = trySwap(boardRef.current, a, d, rngRef.current, boardRulesRef.current);
+    if (!res.ok) { setSel(null); return; }
+    onMoveRef.current?.({ scored: res.scored, score: res.score });
+    busyRef.current = true;
+    setBusy(true);
+    setSel(null);
+    openFxWindow();
+    clearHint();
+    setConfirmBuy(false);
+    say('', '');
+    const base = alvoRef.current != null ? mirarInimigo(combatRef.current, alvoRef.current) : combatRef.current;
+    // BOSS: as regras de dano desta jogada (multiplicador por peça) e as de tabuleiro também na vez do boss
+    const bs = bossRef.current;
+    const bt = bs ? bossTurn(bs.rules, bossTrackRef.current, res.steps, base.turns, bs.seed) : null;
+    if (bt) bossTrackRef.current = bt.track;
+    const applyMine: typeof applyPlayerSteps = bt ? (st, sts) => applyPlayerSteps(st, sts, bt.mult) : applyPlayerSteps;
+    // a jogada VÁLIDA inteira (dano do jogador, rodada extra OU a vez do inimigo) é a conta pura; a tela só a mostra por partes
+    const ex = playTurn(base, res.steps, res.board, rngRef.current, streakRef.current, bs && bt ? bossTurnOpts(bs.rules, bt.mult) : {});
+    setBoard(res.swapped);
+    await wait(T_SWAP);
+    const preview = await runSteps(res.steps, base, applyMine, [a, d]);
+    if (!preview || !alive.current) return;
+    boardRef.current = res.board;
+    setBoard(res.board);
+    setChain(0);
+    if (res.reshuffled) {
+      setFresh(f => ({ id: f.id + 1, cells: new Set(Array.from({ length: M3_ROWS * M3_COLS }, (_, i) => i)) }));
+      say('Sem jogadas: embaralhei as peças para você.', 'No moves left: I shuffled the tiles for you.');
+    }
+    if (ex.extra) {
+      // D-84: 4+ = rodada extra — o inimigo não joga e o turno não é contado
+      streakRef.current += 1;
+      flashExtra();
+      setClock(BOSS_CLOCK_MS);
+      combatRef.current = ex.state;
+      setCombat(ex.state);
+      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+      busyRef.current = false;
+      setBusy(false);
+      return;
+    }
+    streakRef.current = 1;
+    // Se o jogador já encerrou a partida na sua jogada (venceu os 3 inimigos), fecha sem turno inimigo
+    if (ex.enemyMoves.length === 0) {
+      boardRef.current = ex.board;
+      setBoard(ex.board);
+      combatRef.current = ex.state;
+      setCombat(ex.state);
+      if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
+      setClock(BOSS_CLOCK_MS);
+      busyRef.current = false;
+      setBusy(false);
+      if (ex.state.outcome !== 'playing') finish();
+      return;
+    }
+    await runEnemy(ex, preview, base, !!res.reshuffled);
+  }, [clearHint, finish, flashExtra, openFxWindow, runEnemy, runSteps, say, setSel, turnNote, wait]);
+
+  /** BOSS, regra 11: o relógio zerou — o jogador perde a vez e o boss joga. */
+  const onClockOut = useCallback(async () => {
+    if (busyRef.current || overRef.current || !bossRef.current || combatRef.current.outcome !== 'playing') return;
+    busyRef.current = true;
+    setBusy(true);
+    setSel(null);
+    clearHint();
+    streakRef.current = 1;
+    say('O tempo acabou: você perdeu a vez.', 'Time ran out: you lost your turn.');
+    const base = combatRef.current;
+    const ex = passTurn(base, boardRef.current, rngRef.current, boardRulesRef.current);
+    if (ex.enemyMoves.length === 0) {
+      combatRef.current = ex.state;
+      setCombat(ex.state);
+      setClock(BOSS_CLOCK_MS);
+      busyRef.current = false;
+      setBusy(false);
+      if (ex.state.outcome !== 'playing') finish();
+      return;
+    }
+    await runEnemy(ex, base, base, true);
+  }, [clearHint, finish, runEnemy, say, setSel]);
+  const clockOn = !!boss?.rules.includes('short-clock') && !bossIntro && !over && !busy;
+  useEffect(() => {
+    if (!clockOn) return;
+    let last = Date.now();
+    // o relógio PARA com a aba escondida (clockTick)
+    const id = setInterval(() => {
+      const now = Date.now();
+      const dt = now - last;
+      last = now;
+      setClock(c => clockTick(c, dt, typeof document !== 'undefined' && document.visibilityState === 'hidden'));
+    }, 250);
+    return () => clearInterval(id);
+  }, [clockOn]);
+  useEffect(() => { if (clockOn && clock <= 0) void onClockOut(); }, [clockOn, clock, onClockOut]);
+
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
@@ -494,7 +645,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
   /** D-85: o botão de dica. Mostra a melhor jogada (a MESMA que a IA inimiga escolheria no tabuleiro do jogador); acabou o uso, compra com Bits (2 toques: pedir + confirmar). */
   const onHint = () => {
-    if (busyRef.current || overRef.current) return;
+    if (busyRef.current || overRef.current || bossIntroRef.current) return;
     const act = hintAction(hintsLeft, bits);
     if (act === 'blocked') return;
     if (act === 'buy' && !confirmBuy) {
@@ -518,22 +669,31 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   };
 
   const restart = () => {
-    // PVP: 'De novo' sorteia OUTRO oponente (decisão do dono, 26/10/2026) — volta à busca em vez de repetir o adversário.
-    if (pvp && onNewOpponent) { onNewOpponent(); return; }
+    // PVP: 'De novo' sorteia OUTRO oponente (decisão do dono, 26/10/2026) — volta à entrada do PVP em vez de repetir o adversário; lá o boss é decidido de novo (§473).
+    if (onNewOpponent) { onNewOpponent(); return; }
     timers.current.forEach(clearTimeout);
     timers.current.clear();
+    setEssenciasRodada([]);
     const sd = seed === undefined ? freshSeed() : seed + 1;
     const r = newRound(sd);
-    const c = combatFor(sd, demoCharacterId, playerLevel, pvp, petElement);
+    const nb = bossFor(sd, challenge, bossAllowed);
+    bossRef.current = nb;
+    setBoss(nb);
+    bossTrackRef.current = newBossTrack();
+    setBossIntro(!!nb);
+    setRulesOpen(false);
+    setClock(BOSS_CLOCK_MS);
+    const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, nb, challenge, adventureElement);
     setElements(c.elements);
     boardRef.current = r.board;
     rngRef.current = r.rng;
     combatRef.current = c.combat;
+    alvoRef.current = null; setAlvo(null);
     enemyRngRef.current = c.rng;
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setEnemyPick(null); setTurnBanner(null); setEnemyAura(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false); setHadBest(false);
+    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setEnemyPick(null); setTurnBanner(null); setEnemyAura(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setHonorEarned(0); setNewBest(false); setHadBest(false);
   };
 
   const score = combatScore(combat);
@@ -543,7 +703,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
   const cellLabel = (t: Tile, r: number, c: number) => {
     const nome = { pt: tileElementName(elements[t.k], true), en: tileElementName(elements[t.k], false) };
-    const esp = t.sp === 'row' ? (isPt ? ', limpa a linha' : ', clears the row') : t.sp === 'col' ? (isPt ? ', limpa a coluna' : ', clears the column') : '';
+    const extra = t.stone ? (isPt ? ', petrificada' : ', petrified') : t.wild ? (isPt ? ', quartzo coringa' : ', wildcard quartz') : '';
+    const esp = extra + (t.sp === 'both' ? (isPt ? ', limpa a linha e a coluna' : ', clears the row and the column') : t.sp === 'row' ? (isPt ? ', limpa a linha' : ', clears the row') : t.sp === 'col' ? (isPt ? ', limpa a coluna' : ', clears the column') : '');
     return isPt ? `${nome.pt}${esp}, linha ${r + 1}, coluna ${c + 1}` : `${nome.en}${esp}, row ${r + 1}, column ${c + 1}`;
   };
 
@@ -564,7 +725,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   }, []);
   const compact = viewportH < COMPACT_BELOW_H;
   const playerPx = compact ? PLAYER_SPRITE_COMPACT : PLAYER_SPRITE;
-  const enemyPx = compact ? ENEMY_SPRITE_COMPACT : ENEMY_SPRITE;
+  const enemyPx = Math.round((compact ? ENEMY_SPRITE_COMPACT : ENEMY_SPRITE) * (boss ? BOSS_SPRITE_SCALE : 1));
 
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = PET_SCALE_MINIGAME;
@@ -576,7 +737,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   <div
     role="grid"
     aria-label={isPt ? 'Tabuleiro do Elemental Fusion' : 'Elemental Fusion board'}
-    data-m3-elements={pvp ? elements.join(',') : undefined}
+    data-m3-elements={!boss && !challenge ? elements.join(',') : undefined}
     aria-rowcount={M3_ROWS}
     aria-colcount={M3_COLS}
     aria-busy={busy}
@@ -641,28 +802,31 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const arena = (
     <div data-m3-arena data-m3-compact={compact ? '' : undefined} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'stretch', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
       <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: playerPx + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
-        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
         {playerElIcon && (
           <img src={playerElIcon} alt="" draggable={false} width={EL_ICON_PLAYER} height={EL_ICON_PLAYER} data-m3-player-element={petElement} style={{ imageRendering: 'pixelated' }} />
         )}
         <ElementAdvantageBadge advantage={vantagemElemental} isPt={isPt} onScene={false} />
-        <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
+        <HpBars bars={[{ label: playerLabel, cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
       </div>
       {boardNode}
-      <div role="group" aria-label={pvp ? (isPt ? 'Oponente' : 'Opponent') : (isPt ? 'Time da fenda' : 'Rift team')} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end', alignSelf: 'flex-end' }}>
+      <div role="group" aria-label={boss ? 'Boss' : pvp ? (isPt ? 'Oponente' : 'Opponent') : (isPt ? 'Time da fenda' : 'Rift team')} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end', alignSelf: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
           const line = e.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[i];
           const ros = rosterOf(e);
           // PVP: arte do adversário (jogador real ou NPC) e o rótulo genérico — o nome do roster/da pessoa nunca aparece
           const wp = wildPlayers[i];
-          const src = pvp ? (pvp.sprite ?? ros?.src ?? '') : (wp?.spriteUrl ?? ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
-          const enemyName = pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wp ? wildFoeLabel('rookie', isPt) : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
+          const src = boss ? (bossMonster?.art || ros?.src || '') : pvp ? (pvp.sprite ?? '') : (wp?.spriteUrl ?? ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
+          const enemyName = boss ? 'Boss' : pvp ? `${isPt ? 'Jogador' : 'Player'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wp ? wildFoeLabel('rookie', isPt) : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);
           const nome = `${enemyName},${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
           const preAuraSrc = enemyAura && enemyAura.activeIndex === i ? fxFrame(enemyAura.element, 'aura') : undefined;
           const preAuraPx = Math.round(enemyPx * AURA_SCALE);
+          const podeMirar = !pvp && combat.enemies.length > 1 && combat.outcome === 'playing' && !down;
+          const mirado = podeMirar && alvo === i;
+          const marca = podeMirar && miraFlash === i; // marcador só por 1 s após o toque
           return (
             <div
               key={i}
@@ -671,11 +835,12 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
               data-m3-hp={e.hp}
               data-m3-element={e.element}
               data-m3-pvp-level={pvp ? pvp.level : undefined}
+              data-m3-foe-kind={boss ? 'boss' : pvp ? pvp.kind : undefined}
               aria-current={isActive ? 'true' : undefined}
               aria-label={nome}
               role="group"
               style={{
-                flex: 1, minWidth: 0, maxWidth: pvp ? 140 : 92, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '4px 2px', boxSizing: 'border-box',
+                flex: 1, minWidth: 0, maxWidth: pvp || boss ? 140 : 92, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '4px 2px', boxSizing: 'border-box',
                 border: `2px solid ${isActive ? 'var(--sm2-gold-ink)' : 'transparent'}`, borderRadius: 8,
               }}
             >
@@ -700,6 +865,23 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
                     <img src={preAuraSrc} alt="" draggable={false} style={{ width: '100%', height: '100%', imageRendering: 'pixelated', display: 'block' }} />
                   </span>
                 )}
+                {podeMirar && (
+                  <button
+                    type="button"
+                    data-m3-target={i}
+                    data-m3-target-on={mirado ? '1' : '0'}
+                    data-m3-target-ring={marca ? '1' : '0'}
+                    aria-pressed={mirado}
+                    aria-label={isPt ? `Mirar em ${enemyName}` : `Target ${enemyName}`}
+                    onClick={() => mirar(i)}
+                    style={{
+                      position: 'absolute', inset: 0, zIndex: 3, padding: 0, margin: 0, minWidth: 44, minHeight: 44, cursor: 'pointer',
+                      background: 'none', borderRadius: '50%', boxSizing: 'border-box',
+                      border: marca ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
+                      boxShadow: marca ? '0 0 10px var(--sm2-gold-fill)' : 'none',
+                    }}
+                  />
+                )}
                 <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ position: 'relative', zIndex: 1, width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
               </div>
               <HpBars bars={[{ label: enemyName, cur: e.hp, max: e.max, tone: 'gold' }]} />
@@ -711,7 +893,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   );
 
   return (
-    <GameRoot full>
+    <GameRoot full style={{ background: `linear-gradient(to top, rgba(3, 38, 44, .92) 0%, rgba(4, 52, 58, .6) 28%, transparent 55%), url(${SCENE_BG.fusion}) center/cover var(--sm2-bg)` }}>
       <GameHeader
         title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
         language={language}
@@ -719,10 +901,10 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
         info={(
           <>
             <span style={{ display: 'block' }}>{isPt ? 'Troque duas peças vizinhas para formar linhas de 3 ou mais iguais. Cada linha é um golpe do elemento da peça no inimigo da vez; o excesso de um golpe se perde.' : 'Swap two neighbouring tiles to line up 3 or more alike. Each line is a strike of the tile’s element on the current enemy; a strike’s excess is lost.'}</span>
-            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Depois de cada troca, o inimigo da vez também troca duas peças, e os combos dele tiram vida do seu Soulmon. A rodada acaba quando os três recuam ou sua vida zera. Perder não custa nada.' : 'After every swap the current enemy swaps two tiles too, and its combos take health from your Soulmon. The round ends when all three step back or your health hits zero. Losing costs nothing.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Depois de cada troca, o inimigo da vez também troca duas peças, e os combos dele tiram vida do seu Soulmon. A rodada acaba quando todos os inimigos recuam ou sua vida zera. Perder não custa nada.' : 'After every swap the current enemy swaps two tiles too, and its combos take health from your Soulmon. The round ends when all enemies step back or your health hits zero. Losing costs nothing.'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Uma linha de 4 deixa uma peça com setas (limpa a linha ou coluna inteira) e dá uma jogada extra. Vale para o inimigo também; no máximo 3 seguidas.' : 'A line of 4 leaves a tile with arrows (it clears its whole row or column) and gives an extra move. The enemy gets it too; at most 3 in a row.'}</span>
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque numa peça e depois numa vizinha, ou arraste. Teclado: setas e Enter. A dica mostra a melhor troca: 3 por rodada, mais com Bits.' : 'Tap a tile, then a neighbour, or swipe. Keyboard: arrows and Enter. The hint shows the best swap: 3 per round, more with Bits.'}</span>
-            {pvp && <span style={{ display: 'block', marginTop: 6 }} data-m3-pvp-help>{isPt ? 'PVP, 1 contra 1: um oponente de poder parecido com o seu e 6 elementos sorteados para esta partida. Mesmas recompensas do Normal; sem ranking.' : 'PVP, 1 vs 1: one opponent of power similar to yours and 6 elements drawn for this match. Same rewards as Normal; no ranking.'}</span>}
+            {pvp && <span style={{ display: 'block', marginTop: 6 }} data-m3-pvp-help>{isPt ? `PVP, 1 contra 1: outro jogador de poder parecido com o seu, os 6 elementos básicos e a mesma vida para os dois. Vitória rende ${pvpRewards(true).bits} Bits e ${pvpRewards(true).honor} de Honra; derrota rende ${pvpRewards(false).honor} de Honra. Tem ranking do mês.` : `PVP, 1 vs 1: another player of similar power, the 6 basic elements and the same health for both. A win earns ${pvpRewards(true).bits} Bits and ${pvpRewards(true).honor} Honor; a loss earns ${pvpRewards(false).honor} Honor. It has a monthly ranking.`}</span>}
             <span style={{ display: 'block', marginTop: 6 }}>{isPt ? `O placar é o dano causado menos o recebido, mais ${M3C_DEFEAT_BONUS} por inimigo que recuou. Cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit.` : `The score is damage dealt minus damage taken, plus ${M3C_DEFEAT_BONUS} per enemy that stepped back. Every ${M3_POINTS_PER_BIT} points becomes 1 Bit.`}</span>
           </>
         )}
@@ -746,6 +928,31 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
         <span className="sm2-sr-only" data-m3-sr>
           {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
         </span>
+        {boss && !over && (
+          <div data-m3-boss-bar role="group" aria-label={isPt ? 'Boss' : 'Boss'} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+            <span data-m3-boss-tag style={{ ...BOSS_CHIP, minHeight: 24, padding: '0 8px', fontWeight: 700, color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}>Boss</span>
+            <button type="button" data-m3-boss-rules-btn aria-haspopup="dialog" aria-expanded={rulesOpen} onClick={() => setRulesOpen(true)} style={{ ...BOSS_CHIP, cursor: 'pointer' }}>
+              <span>{isPt ? 'Regras' : 'Rules'}</span>
+              <Icon name="help" size={20} tone="ink" />
+            </button>
+            {boss.rules.includes('elemental-tide') && (() => {
+              const el = elements[tideKind(boss.seed, combat.turns)];
+              const ic = elementIcon(el);
+              return (
+                <span data-m3-tide={el} style={BOSS_CHIP}>
+                  {isPt ? 'Maré' : 'Tide'}
+                  {ic && <img src={ic} alt="" aria-hidden="true" draggable={false} width={20} height={20} style={{ imageRendering: 'pixelated' }} />}
+                  <span>{elementName(el, isPt)} ×2</span>
+                </span>
+              );
+            })()}
+            {boss.rules.includes('short-clock') && (
+              <span role="timer" data-m3-clock={Math.ceil(clock / 1000)} aria-label={isPt ? `${Math.ceil(clock / 1000)} segundos para jogar` : `${Math.ceil(clock / 1000)} seconds to move`} style={{ ...BOSS_CHIP, fontWeight: 700, color: clock <= 5000 ? 'var(--sm2-danger-ink)' : undefined }}>
+                <span className="sm2-num">{Math.ceil(clock / 1000)}s</span>
+              </span>
+            )}
+          </div>
+        )}
         {arena}
         {/* A vez anunciada ao leitor de tela (QA R6): a região viva fica sempre montada; o banner visual segue aria-hidden. */}
         <span role="status" className="sm2-sr-only" data-m3-turn-sr>{turnBanner?.text ?? ''}</span>
@@ -779,11 +986,16 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
       {over ? (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="match3"
           language={language}
-          outcome={newBest && !pvp ? 'record' : win ? 'win' : 'tired'}
+          outcome={newBest && !pvp && !boss ? 'record' : win ? 'win' : 'tired'}
           gameName={isPt ? 'Combina 3' : 'Match 3'}
-          title={win ? (isPt ? 'Rodada vencida' : 'Round cleared') : (isPt ? 'Fim da rodada' : 'Round over')}
-          line={pvp
+          title={boss ? (win ? (isPt ? 'Boss vencido' : 'Boss defeated') : (isPt ? 'O Boss resistiu' : 'The Boss held on')) : win ? (isPt ? 'Rodada vencida' : 'Round cleared') : (isPt ? 'Fim da rodada' : 'Round over')}
+          line={boss
+            ? (win
+              ? (isPt ? 'O Boss recuou. Você ganhou 1 Fragmento de Boss.' : 'The Boss stepped back. You earned 1 Boss Shard.')
+              : (isPt ? 'O Boss segurou esta luta. Nada foi cobrado.' : 'The Boss held this fight. Nothing was charged.'))
+            : pvp
             ? (win
               ? (isPt ? 'Seu oponente recuou. Boa luta.' : 'Your opponent stepped back. Good fight.')
               : (isPt ? 'Seu oponente segurou esta luta. Nada foi cobrado.' : 'Your opponent held this fight. Nothing was charged.'))
@@ -795,15 +1007,20 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           againAttrs={{ 'data-m3-again': true }}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: score }}
           recordNote={isPt ? 'Novo recorde' : 'New best'}
-          strip={pvp || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
-          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
-          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          strip={pvp || boss || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
+          ledger={boss
+            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1, icon: BOSS_SHARD_ART }] : []), ...essenceLedgerRows(essenciasRodada)]
+            : [{ key: 'bits', kind: 'bits' as const, value: earned }, ...(pvp && honorEarned > 0 ? [{ key: 'honor', kind: 'honor' as const, value: honorEarned }] : []), ...essenceLedgerRows(essenciasRodada)]}
+          emptyLedgerLine={boss ? (isPt ? 'Sem Fragmento de Boss desta vez.' : 'No Boss Shard this time.') : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           petSrc={playerSprite}
+          opponentSrc={resultOpponentSrc({ boss: bossMonster, pvp, stray: wildPlayers[0]?.spriteUrl, roster: rosterOf(combat.enemies[0])?.src })}
           playAgainLabel={isPt ? 'De novo' : 'Again'}
-          onPlayAgain={restart}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; restart(); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
-          below={!pvp ? <RankingPanel game="match3" saveId={rankSaveId} language={language} score={score} /> : undefined}
+          below={boss
+            ? <p data-m3-boss-no-rank style={{ ...sm2Hint, textAlign: 'center', margin: 0 }}>{isPt ? 'Partida de Boss não conta para o ranking nem para os Bits.' : 'Boss matches do not count for the ranking or Bits.'}</p>
+            : <RankingPanel game={pvp ? 'match3-pvp' : 'match3'} period="monthly" saveId={rankSaveId} language={language} score={score} />}
         />
       ) : (
         <>
@@ -814,9 +1031,46 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           </p>
         </>
       )}
+      {boss && (
+        <ModalSheet open={rulesOpen && !over && !bossIntro} title={isPt ? 'Regras do Boss' : 'Boss rules'} onClose={() => setRulesOpen(false)} language={language} placement="center">
+          <ol data-m3-boss-rules-modal style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {boss.rules.map(id => {
+              const l = isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en;
+              return (
+                <li key={id} data-m3-boss-rule={id} style={{ ...sm2Text, fontSize: 'var(--sm2-text-sm)' }}>
+                  <strong style={{ display: 'block' }}>{l.name}</strong>
+                  <span>{l.line}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </ModalSheet>
+      )}
+      {boss && bossIntro && !over && bossMonster && (
+        <BossSplash
+          monster={bossMonster.name}
+          art={bossMonster.art}
+          portrait={bossMonster.portrait}
+          kicker="Boss"
+          title={isPt ? 'Batalha de Boss' : 'Boss Battle'}
+          titleArt={bossBattleTitleArt(isPt)}
+          intro={isPt ? 'Esta luta tem 3 regras especiais. Não vale ranking nem Bits; vencer dá 1 Fragmento de Boss.' : 'This fight has 3 special rules. No ranking or Bits; winning gives 1 Boss Shard.'}
+          cards={boss.rules.map(id => ({ id, ...(isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en) }))}
+          okLabel="OK"
+          tapHint={isPt ? 'Toque em qualquer lugar para começar' : 'Tap anywhere to start'}
+          onDone={() => { setBossIntro(false); setClock(BOSS_CLOCK_MS); }}
+        />
+      )}
     </GameRoot>
   );
 }
+
+/** Um chip das regras do BOSS (barra acima da arena). */
+const BOSS_CHIP: CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 32, padding: '2px 10px', boxSizing: 'border-box',
+  borderRadius: 999, border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', color: 'inherit',
+  fontFamily: 'inherit', fontSize: 'var(--sm2-text-xs)', lineHeight: 1.2,
+};
 
 // ── o poder que sai do combo (D-100, D-102) ────────────────────────────────────────────────────────────────────────────
 
@@ -902,6 +1156,14 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   const ring: CSSProperties = { ...base, left: x1 - ringPx / 2, top: y1 - ringPx / 2, width: ringPx, height: ringPx, boxSizing: 'border-box', borderRadius: '50%', opacity: 0 };
   return (
     <>
+      {full && att && (
+        // Fusão elemental (F1, 02/11/2026): as peças se juntam, fundem e estouram no Soulmon que ataca; 6 quadros por steps(), uma vez.
+        <SpriteFx
+          sheet="fusao" size={Math.round(auraPx * 1.15)} ms={FX_AURA_MS} delayMs={Math.round(delay)} still="hide"
+          data-m3-fusion-fx=""
+          style={{ position: 'absolute', zIndex: 3, left: att.x - (auraPx * 1.15) / 2, top: att.y - (auraPx * 1.15) / 2 }}
+        />
+      )}
       {full && att && auraSrc && (
         <span
           aria-hidden="true"
@@ -975,8 +1237,9 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
   const st: CSSProperties = {
     ...sm2Text, position: 'relative', aspectRatio: '1 / 1', minWidth: 0, minHeight: 0, padding: 2, boxSizing: 'border-box', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: selected ? 'var(--sm2-primary-fill)' : enemyPick ? 'color-mix(in srgb, var(--sm2-danger-fill) 18%, var(--sm2-surface))' : 'var(--sm2-surface)',
-    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : enemyPick ? 'var(--sm2-danger-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : 'var(--sm2-line)'}`,
+    backgroundColor: selected ? 'var(--sm2-primary-fill)' : enemyPick ? 'color-mix(in srgb, var(--sm2-danger-fill) 18%, var(--sm2-surface))' : tile.stone ? 'var(--sm2-surface-2)' : tile.wild ? 'color-mix(in srgb, var(--sm2-primary-fill) 30%, var(--sm2-surface))' : 'var(--sm2-surface)',
+    filter: tile.stone ? 'grayscale(1) brightness(0.7)' : undefined,
+    border: `2px solid ${selected ? 'var(--sm2-primary-ink)' : enemyPick ? 'var(--sm2-danger-ink)' : hint ? 'var(--sm2-gold-ink)' : tile.sp ? 'var(--sm2-gold-ink)' : tile.wild ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)'}`,
     borderRadius: 8,
     boxShadow: enemyPick ? '0 0 0 3px var(--sm2-danger-ink)' : hint ? '0 0 0 3px var(--sm2-gold-fill)' : undefined,
     opacity: clearing ? 0 : 1,
@@ -995,6 +1258,8 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
       data-m3-cell={`${pos.r},${pos.c}`}
       data-m3-kind={tile.k}
       data-m3-special={tile.sp ?? ''}
+      data-m3-stone={tile.stone ? '1' : undefined}
+      data-m3-wild={tile.wild ? '1' : undefined}
       data-m3-selected={selected ? '1' : '0'}
       data-m3-hint={hint ? '1' : '0'}
       data-m3-enemy-pick={enemyPick ? '1' : '0'}
@@ -1007,7 +1272,9 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
       {tile.sp && (
         // a especial: setas na direção que limpa (a forma, não só a cor, diz o que ela faz)
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="55%" height="55%" style={{ position: 'absolute', pointerEvents: 'none', color: 'var(--sm2-gold-ink)', opacity: 0.95 }}>
-          {tile.sp === 'row'
+          {tile.sp === 'both'
+            ? <path d="M12 1 L16 6 H13.5 V10.5 H18 V8 L23 12 L18 16 V13.5 H13.5 V18 H16 L12 23 L8 18 H10.5 V13.5 H6 V16 L1 12 L6 8 V10.5 H10.5 V6 H8 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />
+            : tile.sp === 'row'
             ? <path d="M2 12 L8 7 V10 H16 V7 L22 12 L16 17 V14 H8 V17 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />
             : <path d="M12 2 L17 8 H14 V16 H17 L12 22 L7 16 H10 V8 H7 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />}
         </svg>
@@ -1016,69 +1283,108 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
   );
 });
 
-// ── as DUAS opções ao entrar: Normal ou PVP (pedido do dono, 26/10/2026) ──────────────────────────────────────────────────
+// ── as DUAS opções ao entrar: Aventura ou PVP (pedido do dono, 26/10/2026; renomeado e invertido em 17/11/2026, REGISTRO §473) ───────────────
 
-/** Quanto esperar a rota `opponents` antes de cair no NPC de reserva (a tela nunca fica presa esperando a rede). */
+/** Quanto esperar a rota `opponents` antes de cair no jogador simulado de reserva (a tela nunca fica presa esperando a rede). */
 const PVP_SEARCH_TIMEOUT_MS = 6000;
 
 /**
- * Entrada do jogo. Com `rankSaveId` (a conta do jogador) e sem `challenge`, o jogador escolhe: NORMAL (exatamente a rodada de sempre) ou
- * PVP (1 contra 1). Sem `rankSaveId` ou em modo desafio o Normal abre direto, como antes (os testes e o Calabouço não mudam).
+ * Entrada do jogo. Com `rankSaveId` (a conta do jogador) e sem `challenge`, o jogador escolhe: AVENTURA (o time de 4 com elementos misturados) ou
+ * PVP (1 contra 1, elementos básicos fixos). Sem `rankSaveId` ou em modo desafio a Aventura abre direto (o Calabouço não muda).
  * O PVP reaproveita a rota `opponents` do Torneio (`getOpponents`: o SERVIDOR sorteia perto da faixa, simulados inclusos); o cliente escolhe
- * o de level mais parecido (`pickPvpOpponent`) e, sem ninguém, cai num NPC do roster. Nome e ranking alheios nunca chegam aqui.
+ * o de level mais parecido (`pickPvpOpponent`) e, sem ninguém, cai num jogador simulado local. Nome e ranking alheios nunca chegam aqui.
  */
 export function Match3Game(props: Match3Props) {
   const { language, rankSaveId, challenge, onExit, initialMode } = props;
   const isPt = language === 'pt-BR';
-  const [mode, setMode] = useState<'pick' | 'normal' | 'pvp'>(initialMode ? (initialMode === 'pvp' && rankSaveId && !challenge ? 'pvp' : 'normal') : rankSaveId && !challenge ? 'pick' : 'normal');
-  if (mode === 'normal') return <Match3Round {...props} />;
+  const [mode, setMode] = useState<'pick' | 'adventure' | 'pvp'>(initialMode ? (initialMode === 'pvp' && !challenge ? 'pvp' : 'adventure') : rankSaveId && !challenge ? 'pick' : 'adventure');
+  // BOSS: só depois da escolha Aventura/PVP; a geração da partida é o sorteio (no PVP, antes da busca do oponente)
+  const bossAllowed = !!rankSaveId && !challenge;
+  if (props.initialChoice && !challenge) return <Match3ChoiceEntry {...props} initialChoice={props.initialChoice} />;
+  if (mode === 'adventure') return <Match3Round {...props} bossAllowed={bossAllowed} />;
   if (mode === 'pvp') return <Match3PvpEntry {...props} onBack={() => (initialMode ? onExit() : setMode('pick'))} />;
-  const choice: CSSProperties = { ...sm2Button('outline'), width: '100%', minHeight: 64, flexDirection: 'column', gap: 2, padding: '8px 12px' };
   return (
     <GameRoot full>
       <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
       <div role="group" aria-label={isPt ? 'Escolha o modo' : 'Choose a mode'} data-m3-modes style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 'none' }}>
-        <button type="button" onClick={() => setMode('normal')} data-m3-mode="normal" style={choice}>
-          <span style={phaseTitle}>{isPt ? 'Normal' : 'Normal'}</span>
-          <span style={phaseLine}>{isPt ? 'Enfrente o time da fenda (3 Soulmon).' : 'Face the rift team (3 Soulmon).'}</span>
-        </button>
-        <button type="button" onClick={() => setMode('pvp')} data-m3-mode="pvp" style={choice}>
-          <span style={phaseTitle}>PVP</span>
-          <span style={phaseLine}>{isPt ? '1 contra 1, poder parecido, 6 elementos sorteados.' : '1 vs 1, similar power, 6 drawn elements.'}</span>
-        </button>
+        <BotaoEspecial variant="pve" onClick={() => setMode('adventure')} data-m3-mode="adventure">{isPt ? 'Aventura' : 'Adventure'}</BotaoEspecial>
+        <span style={phaseLine}>{isPt ? 'Enfrente o time da fenda (4 Soulmon) com elementos misturados.' : 'Face the rift team (4 Soulmon) with mixed elements.'}</span>
+        <BotaoEspecial variant="pvp" onClick={() => setMode('pvp')} data-m3-mode="pvp">PVP</BotaoEspecial>
+        <span style={phaseLine}>{isPt ? '1 contra 1 com outro jogador, poder parecido, 6 elementos básicos.' : '1 vs 1 against another player, similar power, 6 basic elements.'}</span>
       </div>
     </GameRoot>
   );
 }
 
-/** Procura o adversário do PVP e abre a rodada. Falha, timeout ou lista vazia = NPC de reserva (nunca trava, nunca cobra). */
+/**
+ * Entrada do PVP: decide o BOSS primeiro (pela semente da partida, `bossFor`) e só então procura o adversário. Boss no PVP = partida SÓ contra o
+ * boss: não busca oponente, não mostra jogador, e segue a regra do boss (Fragmento na vitória; sem Bits, Honra nem ranking; §473).
+ * Falha, timeout ou lista vazia = jogador simulado de reserva (nunca trava, nunca cobra).
+ */
 function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
-  const { language, rankSaveId, playerLevel, onExit, onBack } = props;
+  const { language, rankSaveId, playerLevel, onExit, onBack, seed, challenge } = props;
   const isPt = language === 'pt-BR';
   const [foe, setFoe] = useState<PvpFoe | null>(null);
   const [run, setRun] = useState(0);
+  const sd = useMemo(() => (seed === undefined ? freshSeed() : seed + run), [seed, run]);
+  const boss = useMemo(() => bossFor(sd, challenge, true) !== null, [sd, challenge]);
   useEffect(() => {
+    if (boss) return undefined;
     let dead = false;
     const level = playerLevel ?? 1;
-    const reserva = () => {
-      const { foe: f, entry } = npcFoe(level, mulberry32(freshSeed()));
-      return { ...f, sprite: rosterSpriteOf(entry) };
+    // Reserva = jogador SIMULADO (kind 'player'): arte de Soulmon de jogador (stand-in estável), sem chave de roster (nada de bestiário nem monstro selvagem).
+    const reserva = (): PvpFoe => {
+      const rng = mulberry32(freshSeed());
+      const { foe: f } = simulatedFoe(level, rng);
+      const { roster: _roster, ...jogador } = f;
+      return { ...jogador, sprite: opponentSprite({ stage: level >= 40 ? 'champion' : 'rookie', id: `sim-${Math.floor(rng() * 1e9)}` }) };
     };
     const t = setTimeout(() => { if (!dead) { dead = true; setFoe(reserva()); } }, PVP_SEARCH_TIMEOUT_MS);
     const done = (f: PvpFoe) => { if (dead) return; dead = true; clearTimeout(t); setFoe(f); };
-    getOpponents(rankSaveId!)
+    if (!rankSaveId) { done(reserva()); return () => { dead = true; clearTimeout(t); }; }
+    getOpponents(rankSaveId)
       .then(r => {
         const o = pickPvpOpponent(r.opponents ?? [], level);
         done(o ? { kind: 'player', level: o.duel?.level ?? level, sprite: opponentSprite(o), ...(typeof o.element === 'string' ? { element: o.element } : {}) } : reserva());
       })
       .catch(() => done(reserva()));
     return () => { dead = true; clearTimeout(t); };
-  }, [rankSaveId, playerLevel, run]);
-  if (foe) return <Match3Round {...props} pvp={foe} onNewOpponent={() => { setFoe(null); setRun(r => r + 1); }} />;
+  }, [rankSaveId, playerLevel, sd, boss]);
+  const again = () => { setFoe(null); setRun(r => r + 1); };
+  if (boss) return <Match3Round key={sd} {...props} seed={sd} bossAllowed onNewOpponent={again} />;
+  if (foe) return <Match3Round key={sd} {...props} seed={sd} bossAllowed pvp={foe} onNewOpponent={again} />;
   return (
     <GameRoot full>
       <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} onBack={onBack} backLabel={isPt ? 'Voltar' : 'Back'} />
       <p role="status" data-m3-pvp-searching style={phaseLine}>{isPt ? 'Procurando um oponente…' : 'Finding an opponent…'}</p>
+    </GameRoot>
+  );
+}
+
+/**
+ * §488: a partida que veio da LISTA DE 3 (Aventura = elemento, PvP = jogador da rota `opponents`). O "De novo" (`onNewOpponent`) volta para a
+ * mesma lista dentro do jogo, com 3 opções novas — nunca inventa adversário (sem jogador simulado local, demo ou monstro no PvP).
+ */
+function Match3ChoiceEntry(props: Match3Props & { initialChoice: M3Choice }) {
+  const { language, rankSaveId, playerLevel, onExit, initialChoice } = props;
+  const isPt = language === 'pt-BR';
+  const [choice, setChoice] = useState<M3Choice | null>(initialChoice);
+  const [run, setRun] = useState(0);
+  const mode = initialChoice.mode;
+  if (choice) {
+    return (
+      <Match3Round
+        key={`${choice.seed}:${run}`} {...props} seed={choice.seed} bossAllowed
+        pvp={choice.mode === 'pvp' && !choice.boss ? choice.foe : undefined}
+        adventureElement={choice.mode === 'adventure' ? choice.element : undefined}
+        onNewOpponent={() => setChoice(null)}
+      />
+    );
+  }
+  return (
+    <GameRoot full>
+      <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
+      <Match3Escolha language={language} mode={mode} saveId={rankSaveId} playerLevel={playerLevel} onFight={c => { setChoice(c); setRun(r => r + 1); }} />
     </GameRoot>
   );
 }

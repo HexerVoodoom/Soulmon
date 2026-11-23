@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// MOTOR DOS 50 USUÁRIOS SIMULADOS (BACKLOG-BETA3 M11) — densidade populacional, sem custo de API.
+// MOTOR DOS 170 USUÁRIOS SIMULADOS (BACKLOG-BETA3 M11) — densidade populacional, sem custo de API.
 //
 // REGRAS DO DONO (não reverter):
 //   • parecem jogadores reais para quem joga. A flag `simulated: true` existe SÓ no servidor — no perfil KV
@@ -23,6 +23,14 @@
 // DETERMINISMO — PRNG semeado com hash(id do simulado + dia): o mesmo dia produz sempre o mesmo resultado.
 // O estado do simulado (level, estágio, Vínculo, scores) é função PURA de (perfil, dia).
 //
+// EVOLUÇÃO (dono, 05/11/2026): a régua é o gauge real (`FORM_REQUIREMENTS`, travado em teste), no caminho da permanência
+// para o Ultra, com pontos/dia = % da faixa × teto do estágio. Faixa FIXA no perfil: A 100%, B 70%, C 33%. Até o Ultra: 74/107/225 dias.
+// O simulado nunca cai de estágio (decisão do dono), e a ordem do dia começa num ponto derivado da data (sem isso,
+// em dia de pouco tráfego, o fim da lista nunca rodaria).
+//
+// PLACARES (dono, 05/11/2026): por jogo, só uma parte fixa dos simulados pontua (`PLACAR_SIMS_MAX`), deixando espaço a
+// jogadores reais. O Torneio (`rank:`) continua com todos, para manter o top 50 populado.
+//
 // O QUE O MOTOR ESCREVE (todo o resto do jogo lê pelos caminhos normais — não há `if (simulado)` espalhado):
 //   • `<id>` (o SAVE: só o que o duelo/Vínculo derivam — `evolutionStage`, `perfectDays`, `totalXP`, pontos), com
 //     `metadata.f` = 1ª gravação (o teto S1 do duelo: 1 level por dia de "conta");
@@ -32,6 +40,7 @@
 //   • scores de `_rankings.js` (`submitScore`), semanais e mensais por jogo.
 // ---------------------------------------------------------------------------
 
+import { foeFamilyOf } from './_foeFamilies.js';
 import { indexarPontos } from './_rankIndex.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
@@ -40,7 +49,8 @@ import { xpForLevel } from './_bond.js';
 import { fichaStageOf } from './_duel.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { RANKED_GAMES, TIER_CUTS, MAX_SCORE_BY_GAME, submitScore } from './_rankings.js';
-import { SIMULADOS, SIM_EPOCH } from './_simulados.data.js';
+import { SIMULADOS, SIM_EPOCH, SIM_ANCORA_DIA } from './_simulados.data.js';
+import { enfileirarForma, passoFormas } from './_simFormas.js';
 
 const DAY_MS = 86_400_000;
 /**
@@ -111,14 +121,63 @@ export function stageForLevel(level) {
   return 'ultra';
 }
 
-/** Level, estágio e Vínculo do simulado no dia (curva de progresso: `lv0 + floor(rate * dias)`). */
+/** Fração de tarefas por faixa fixa do perfil. */
+export const FAIXA_P = Object.freeze({ A: 1, B: 0.7, C: 0.33 });
+const ESTAGIOS = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
+/** Espelho de `FORM_REQUIREMENTS` (`src/types/progression.ts`; o servidor não importa de `src/`): meta diária e gauge. Mega = caminho da permanência. */
+export const GAUGE_SIM = Object.freeze({
+  rookie: { teto: 4, meta: 30 }, champion: { teto: 5, meta: 45 }, ultimate: { teto: 5, meta: 60 }, mega: { teto: 6, meta: 270 },
+});
+
+/** Level e estágio pela faixa: parte da âncora e avança, sem nunca regredir. Função pura. */
+export function progressoDoDia(p, day) {
+  const taxa = FAIXA_P[p.faixa];
+  let dias = Math.max(0, Math.floor((dayStart(day) - dayStart(SIM_ANCORA_DIA)) / DAY_MS));
+  let i = ESTAGIOS.indexOf(p.ancora.estagio);
+  let pontos = p.ancora.pontos;
+  while (i < 4) {
+    const { teto, meta } = GAUGE_SIM[ESTAGIOS[i]];
+    const faltam = Math.ceil(Math.max(0, meta - pontos) / (taxa * teto));
+    if (dias < faltam) {
+      const estagio = ESTAGIOS[i];
+      const atual = Math.min(meta, pontos + dias * taxa * teto);
+      const span = STAGE_FIRST_LEVEL[ESTAGIOS[i + 1]] - STAGE_FIRST_LEVEL[estagio];
+      return { level: Math.min(STAGE_FIRST_LEVEL[estagio] + span - 1, STAGE_FIRST_LEVEL[estagio] + Math.floor((atual / meta) * span)), stage: estagio };
+    }
+    dias -= faltam; pontos = 0; i++;
+  }
+  return { level: Math.min(MAX_LEVEL, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: 'ultra' };
+}
+
+/** Teto de SUBIDA dos simulados. 'ultra' = sem teto: seguem a curva por faixa (REGISTRO §282, revoga o teto Champion do §235, a pedido do dono: oponentes com estágio variado). O sprite é reaproveitado (`sim:sprite:<id>`); a geração de forma nova só roda com `SIMULADOS_FORMAS_ON`. Rollback: voltar a 'champion'. */
+export const SIM_FORMA_MAX = 'ultra';
+
+/** Level, estágio e Vínculo do simulado no dia. */
 export function estadoDoDia(p, day) {
-  const d = dayIndexOf(day);
-  const level = Math.min(MAX_LEVEL, p.lv0 + Math.floor(p.rate * d));
-  const stage = stageForLevel(level);
-  const bond = Math.max(5, p.bond0 + Math.floor(p.rate * d * 0.8));
+  const curva = progressoDoDia(p, day);
+  const teto = Math.max(ESTAGIOS.indexOf(SIM_FORMA_MAX), ESTAGIOS.indexOf(p.ancora.estagio));
+  const acima = ESTAGIOS.indexOf(curva.stage) > teto;
+  const stage = acima ? ESTAGIOS[teto] : curva.stage;
+  const level = acima ? STAGE_FIRST_LEVEL[ESTAGIOS[teto + 1]] - 1 : curva.level;
+  const bond = Math.max(5, p.bond0 + Math.floor((level - 1) * 0.8));
   const evolutionStage = stage === 'rookie' || stage === 'ultra' ? stage : `${stage}-${PATH_SUFFIX[p.line]}`;
   return { level, stage, bond, evolutionStage };
+}
+
+/**
+ * A ESCOLA do golpe do simulado (só a FORMA visual: corpo a corpo x à distância). Antes ele não tinha escola e o cliente caía na tabela do
+ * elemento (~85% à distância). Agora é um sorteio fixo por id: metade corpo a corpo (`combate_fisico`), metade à distância; com o acabamento
+ * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual (a família do especial vem de `foeFamilyOf`).
+ */
+export function escolaDoSimulado(id) {
+  return ['combate_fisico', 'combate_fisico', 'combate_fisico', 'longo_alcance', 'conjuracao', 'benca'][hash32(`forma|${id}`) % 6];
+}
+
+/** % dos simulados cujo golpe à distância é MAGIA (ranged + splash); o resto é Ranged Slash (corte). Dono, 11/11/2026. Só visual. Espelho: `RANGED_MAGIA_PCT` (`golpeImpacto.ts`). */
+export const SIM_MAGIA_PCT = 80;
+/** Este simulado conjura Magic (true) ou dispara Ranged Slash (false) quando o golpe dele é à distância. Sorteio fixo por id. */
+export function simulaMagia(id) {
+  return hash32(`magia|${id}`) % 100 < SIM_MAGIA_PCT;
 }
 
 /** O save mínimo que o duelo e o Vínculo derivam (`_soulXP.js`: level = f(evolutionStage, perfectDays)). */
@@ -136,9 +195,26 @@ export function saveDoSimulado(p, day) {
     demoCharacterId: artLineOrNull(p.artLine) ?? undefined,
     // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
     // O ELEMENTO DO SPRITE (= o do prompt com que a arte foi gerada): `petElementDeSave` lê daqui; vale para o básico E o especial.
+    simMagia: simulaMagia(p.id),
     soulmonMeta: { dominantElement: p.element },
-    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: { elementoDominante: { id: p.element } } },
+    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: {
+      elementoDominante: { id: p.element },
+      basica: { escolaId: escolaDoSimulado(p.id), elementoId: p.element },
+      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: foeFamilyOf(e.stage, `sim|${p.id}|${e.stage}`) },
+    } },
   };
+}
+
+/** Por jogo, quantos simulados pontuam: sobra lugar a jogadores reais no top 50 (`TOP_MAX`). */
+export const PLACAR_SIMS_MAX = 15;
+const eleitos = new Map();
+/** Os simulados que pontuam neste jogo: sorteio fixo por hash(jogo + id), independente da skill, para não ocupar só o topo. */
+export function eleitosDoJogo(game) {
+  if (!eleitos.has(game)) {
+    const ordem = SIMULADOS.filter((s) => s.prefs[game]).map((s) => ({ h: hash32(`placar|${game}|${s.id}`), id: s.id })).sort((a, b) => a.h - b.h);
+    eleitos.set(game, new Set(ordem.slice(0, PLACAR_SIMS_MAX).map((x) => x.id)));
+  }
+  return eleitos.get(game);
 }
 
 /** Hoje o simulado joga? (frequência) */
@@ -150,13 +226,14 @@ export function jogaHoje(p, day) {
  * Scores do dia: `[{ game, score }]` — só dos jogos que ele joga e se jogou hoje. Função pura de (perfil, dia).
  * Escala pelo corte mais alto de `TIER_CUTS` (`ceil`): habilidade e competitividade do jogo puxam para o topo,
  * o ruído do dia a dia (0,75–1,10) mantém o placar vivo. O Endless Rift (camada) fica em ~45% do teto da descida.
+ * Elemental Fusion: o placar gravado é o BRUTO; a exibição passa por `escalaFake` (`RANK_FAKE_TETO`, REGISTRO §473 adendo).
  */
 export function scoresDoDia(p, day) {
   if (!jogaHoje(p, day)) return [];
   const out = [];
   for (const [game, compRaw] of Object.entries(p.prefs)) {
     const comp = compRaw ?? 0;
-    if (!RANKED_GAMES.includes(game)) continue;
+    if (!RANKED_GAMES.includes(game) || !eleitosDoJogo(game).has(p.id)) continue;
     const rng = prngOf(`${p.id}|${day}|${game}`);
     if (rng() > 0.35 + comp * 0.6) continue; // nem todo dia ele joga todo jogo que gosta
     const cuts = TIER_CUTS[game];
@@ -200,6 +277,13 @@ export async function spriteVivoDoSimulado(env, saveId) {
   }
 }
 
+/** Um jogador viu este simulado: pede a arte da forma atual se faltar. No-op com `SIMULADOS_FORMAS_ON` desligada; nunca lança. */
+export async function formaVista(env, saveId, now = new Date()) {
+  if (!isSimuladoId(saveId)) return;
+  const p = SIMULADOS.find((s) => s.id === saveId);
+  if (p) await enfileirarForma(env, p.id, estadoDoDia(p, dayKeyOf(now)).evolutionStage, now);
+}
+
 /**
  * O nome do Soulmon de um simulado vem do dado ESTÁTICO (`SIMULADOS`), não do perfil em KV: renomear no
  * `_simulados.data.js` vale na hora para quem já tem perfil em produção, sem migração em lote (mesmo espírito de
@@ -218,16 +302,22 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   const spriteRaw = await store.get(spriteKeyOf(p.id)).catch(() => null);
   const spriteUrl = spriteUrlOrNull(spriteRaw);
   const e = estadoDoDia(p, day);
-  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.petName}`;
-  if (prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
+  // element/artLine entram na assinatura: revisar o elemento no dado (09/11/2026, docs/reviews/2026-11-09-simulados-elemento.md) reescreve save+perfil no próximo tique, sem migração em lote e sem mexer em id/apelido/pontos.
+  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.element}|${p.artLine}|${p.petName}`;
+  const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
+  // `createdAt` do simulado segue o dado (`daysPlaying`): perfil gravado com conta mais velha que o dado diz é corrigido uma vez.
+  const idadeCoerente = prev?.simulated !== true || prev.createdAt === criadoEm;
+  if (idadeCoerente && prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
     return { wrote: false, name: prev.name };
   }
   const name = prev?.simulated === true && prev.name ? prev.name : (await reservarApelido(env, p)) ?? p.nick;
   const pid = prev?.pid || pidDeterministico(p.id);
-  const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
   const lifetimeBase = Math.round(p.skill * p.skill * 1300 + e.level * 6);
   const peso = (alvo) => (p.line === alvo ? 40 + e.level * 6 : 10 + e.level * 2);
-  const unlocked = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'].filter((s) => STAGE_FIRST_LEVEL[s] <= e.level);
+  // ids reais com linha de arte (`champion-harmony`), não o estágio cru; ultra não tem ramo.
+  const unlocked = ['rookie', 'champion', 'ultimate', 'mega', 'ultra']
+    .filter((s) => STAGE_FIRST_LEVEL[s] <= e.level)
+    .map((s) => (s === 'rookie' || s === 'ultra' ? s : `${s}-${PATH_SUFFIX[p.line]}`));
   const perfil = {
     ...(prev || {}),
     id: p.id,
@@ -246,7 +336,7 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
     attrs: { power: peso('poder'), harmony: peso('harmonia'), benevolence: peso('benevolencia') },
     tasksDone: Math.round(e.level * 9 + p.daysPlaying * 0.4),
     friends: prev?.friends || [],
-    createdAt: prev?.createdAt || criadoEm,
+    createdAt: prev?.simulated === true ? criadoEm : prev?.createdAt || criadoEm,
     updatedAt: now.getTime(),
     // O duelo só soma (`settleMatch`): nunca recuar o que o Torneio já creditou.
     lifetimePoints: Math.max(Number(prev?.lifetimePoints) || 0, lifetimeBase),
@@ -260,17 +350,39 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   return { wrote: true, name };
 }
 
-/** Placar do Torneio da season corrente: só quando ausente (duelos reais passam a mexer nele). */
-async function garantirRankDaSeason(env, p, now) {
+/** Pontos-base do simulado na season: pelo PODER (level), não pela habilidade escondida (dono, 11/11/2026: quem está no topo do
+ *  ranking tem que ser o mais forte — o rank ordenava por `skill`, e o level vem de outra curva, então o topo lutava como fraco).
+ *  Cada level vale 10 e o desempate (0–4) nunca cruza dois levels: a ordem do rank = a ordem de poder. */
+export function pontosBaseDaSeason(p, level, season) {
+  const rng = prngOf(`${p.id}|${season}|rank`);
+  return Math.round(level * 10 + rng() * 4);
+}
+/** A fórmula antiga (por `skill`), só para migrar linhas já gravadas sem perder o que as partidas reais somaram/tiraram. */
+const pontosBaseAntigos = (p, season) => Math.round(p.skill * 380 + prngOf(`${p.id}|${season}|rank`)() * 60);
+
+/** Placar do Torneio da season corrente. Linha ausente = nasce por poder. Linha sem `simV: 2` (gravada pela fórmula por skill) é
+ *  MIGRADA uma vez: troca a base antiga pela nova e mantém a diferença (`points − base antiga`) que os duelos reais deixaram. */
+async function garantirRankDaSeason(env, p, now, level) {
   const store = kvOrThrow(env);
   const season = new Date(now).toISOString().slice(0, 7);
   const key = `rank:${season}:${p.id}`;
-  if (await store.get(key)) return;
+  const nova = pontosBaseDaSeason(p, level, season);
+  const atual = await store.get(key);
+  if (atual) {
+    let rec = null;
+    try { rec = JSON.parse(atual); } catch { /* linha ilegível: deixa como está */ }
+    if (!rec || typeof rec !== 'object' || rec.simV === 2) return;
+    const points = Math.max(0, nova + (Number(rec.points) || 0) - pontosBaseAntigos(p, season));
+    await store.put(key, JSON.stringify({ ...rec, points, simV: 2 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+    await indexarPontos(env, season, p.id, points);
+    return;
+  }
   const rng = prngOf(`${p.id}|${season}|rank`);
-  const points = Math.round(p.skill * 380 + rng() * 60);
+  rng(); // o 1º sorteio é o desempate dos pontos (mesma ordem de consumo de antes: jogos/vitórias seguem iguais)
+  const points = nova;
   const jogos = 3 + Math.floor(p.skill * 14 + rng() * 6);
   const wins = Math.round(jogos * (0.3 + p.skill * 0.5));
-  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0, simV: 2 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
   await indexarPontos(env, season, p.id, points); // índice ordenado da season (REGISTRO §23)
 }
 
@@ -291,7 +403,7 @@ async function escreverScores(env, p, day, now) {
 
 async function processarSimulado(env, p, day, now) {
   await upsertSimulado(env, p, day, now);
-  await garantirRankDaSeason(env, p, now);
+  await garantirRankDaSeason(env, p, now, estadoDoDia(p, day).level);
   await escreverScores(env, p, day, now);
 }
 
@@ -306,12 +418,17 @@ const randomToken = () => {
  * Sem `waitUntil` (testes, dev) cai no `await` para o comportamento continuar determinístico. Nunca lança.
  */
 export async function agendarSimuladosDia(context, now) {
-  const p = ensureSimuladosDia(context?.env, now);
+  let origin = '';
+  try { origin = new URL(context?.request?.url).origin; } catch { /* sem request (testes): segue sem referência de imagem */ }
+  const p = ensureSimuladosDia(context?.env, now).then((r) => passoFormas(context?.env, { now, origin }).then(() => r));
   if (typeof context?.waitUntil === 'function') { context.waitUntil(p); return; }
   await p;
 }
 
 // ── Orquestração preguiçosa ──────────────────────────────────────────────────
+/** Onde a lista começa neste dia. Sem rotação, dia de pouco tráfego nunca alcançaria os últimos perfis. */
+export const inicioDoDia = (day) => hash32(`inicio|${day}`) % SIMULADOS.length;
+
 /** WeakMap por store: o cache em memória não vaza entre ambientes (testes) nem entre namespaces. */
 const concluidos = new WeakMap();
 
@@ -346,7 +463,7 @@ export async function ensureSimuladosDia(env, now = new Date()) {
     let ops = 0;
     let feitos = 0;
     while (next < SIMULADOS.length && feitos < CHUNK) {
-      const p = SIMULADOS[next];
+      const p = SIMULADOS[(inicioDoDia(day) + next) % SIMULADOS.length];
       const custo = custoEstimado(p, day);
       if (feitos > 0 && ops + custo > OPS_BUDGET) break;
       try {

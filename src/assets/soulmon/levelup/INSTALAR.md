@@ -1,3 +1,5 @@
+> **05/11/2026:** o banner agora é o emblema BOND UP das folhas do dono (`bond-up-<en|pt>-<entrada|laco|fixo>.webp`), ligado por `bondUpArt` em `src/utils/levelUpArt.ts`; `levelup-banner*.png` saíram. Folhas, `recorte.py` e folhas de quadros em `E:/Soulmon-assets/bond-up/`. O texto abaixo vale só para burst e moldura.
+
 # Level up do Vínculo — arte OPCIONAL (pacote de geração)
 
 Nenhum PNG está nesta pasta **de propósito**: o `LevelUpOverlay` funciona sem eles (palavra em texto,

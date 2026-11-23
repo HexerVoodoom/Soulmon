@@ -30,3 +30,33 @@ describe('pickRankedOpponents — Torneio ranqueado', () => {
     expect(pickRankedOpponents(pool([1, 2]), NaN, seeded(1))).toHaveLength(2);
   });
 });
+
+describe('pickRankedOpponents — pontos da SEASON (o rank que muda a cada luta)', () => {
+  const sp = (pts) => pts.map((score, i) => ({ id: `s${i}`, score, lifetime: 500 }));
+  const p = sp([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]);
+  it('fica centrado perto do jogador e a lista ACOMPANHA quando ele sobe', () => {
+    for (let s = 1; s <= 100; s++) {
+      for (const o of pickRankedOpponents(p, { score: 20, lifetime: 500 }, seeded(s))) expect(Math.abs(o.score - 20)).toBeLessThanOrEqual(20);
+      for (const o of pickRankedOpponents(p, { score: 100, lifetime: 500 }, seeded(s))) expect(Math.abs(o.score - 100)).toBeLessThanOrEqual(20);
+    }
+  });
+  it('lifetime igual não prende a lista (antes media só por lifetime)', () => {
+    const baixo = new Set(pickRankedOpponents(p, { score: 0, lifetime: 500 }, seeded(7)).map(o => o.id));
+    const alto = new Set(pickRankedOpponents(p, { score: 120, lifetime: 500 }, seeded(7)).map(o => o.id));
+    expect([...baixo].some(id => alto.has(id))).toBe(false);
+  });
+});
+
+describe('Torneio ranqueado: vizinhos de rank com variedade', () => {
+  it('sorteia só entre os vizinhos mais próximos em pontos da temporada e varia entre pedidos', () => {
+    const pool = Array.from({ length: 40 }, (_, i) => ({ id: 'o' + i, score: i * 10, lifetime: 0 }));
+    const vistos = new Map();
+    for (let k = 0; k < 300; k++) {
+      for (const o of pickRankedOpponents(pool, { score: 200, lifetime: 0 }, Math.random)) {
+        expect(Math.abs(o.score - 200)).toBeLessThanOrEqual(RANKED_WINDOW * 10);
+        vistos.set(o.id, (vistos.get(o.id) ?? 0) + 1);
+      }
+    }
+    expect(vistos.size).toBeGreaterThanOrEqual(RANKED_WINDOW); // não é sempre o mesmo trio
+  });
+});

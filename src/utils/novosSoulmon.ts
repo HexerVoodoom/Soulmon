@@ -11,8 +11,9 @@ import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
-import { pickEnemy, type EnemyStage, type RosterEntry } from './enemyRoster';
-import { COMBINADOS_ART, INIMIGOS_API_ART } from './enemyRosterArt';
+import { pickEnemy, pickEnemyDoConjunto, maxEnemyStageForLevel, type EnemyStage, type RosterEntry } from './enemyRoster';
+import { estagioPorProfundidade } from './dificuldadeEstagio';
+import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
 export { FORMAS_ALTAS, novoDataOfStage, novoHasForm };
 import embritRookie from '../assets/soulmon/novos/fogo-rookie.png';
@@ -184,6 +185,9 @@ export const novoSoulmonOfStage = (stage: string | undefined | null): NovoSoulmo
 /** Sprite de uma entrada do roster (base ou combinado), ou `undefined` se a arte não existir. */
 export function rosterSpriteOf(e: RosterEntry): string | undefined {
   if (e.kind === 'mascote') return CORVO_NEUTRO_ART;
+  if (e.kind === 'ramo') return RAMOS_ART[e.artFile ?? ''];
+  if (e.kind === 'paralelo') return PARALELOS_ART[e.artFile ?? ''];
+  if (e.kind === 'forma') return FORMAS_ART[e.artFile ?? ''];
   return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : e.kind === 'api' ? INIMIGOS_API_ART[e.artFile ?? ''] : COMBINADOS_ART[e.artFile ?? ''];
 }
 
@@ -216,9 +220,30 @@ export function getDungeonEncounter(
   legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
   /** Level do jogador: o teto de estágio de ARTE do inimigo (`enemyRoster.ts`). Sem ele, tudo liberado (comportamento antigo). */
   level: number = Number.POSITIVE_INFINITY,
+  /** Masmorra temática: só criaturas deste elemento (`dungeonElementos.ts`). */
+  element?: string,
+  /** Coerência estágio × HP: forma MÍNIMA (só sobe a da escada, nunca desce). Ausente = a do slot. */
+  minStage?: EnemyStage,
+  /** Andar efetivo e level REAL do jogador (REGISTRO §437): a profundidade desloca o estágio do slot, preso ao teto do level. Ausentes = sem deslocamento. */
+  floor?: number,
+  playerLevel?: number,
+  /** Conjunto do Rift (REGISTRO §445): estágio FIXO, vale por cima dos degraus de profundidade e da regra do HP. Exige `element`. */
+  estagioDoConjunto?: EnemyStage,
 ): DungeonEncounter {
-  const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
-  const e = pickEnemy(level, rng, { stage: pref, used });
+  const conj = estagioDoConjunto && element ? pickEnemyDoConjunto(level, rng, { stage: estagioDoConjunto, element, used }) : undefined;
+  if (conj) return encontroDe(conj, tier, used, rng, legacy);
+  const slotStage = novoPreferenceOfTier(tier)[0] as EnemyStage;
+  const ordem: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
+  const fundo = floor !== undefined && playerLevel !== undefined ? estagioPorProfundidade(slotStage, floor, maxEnemyStageForLevel(playerLevel)) : slotStage;
+  const base = ordem.indexOf(fundo) > ordem.indexOf(slotStage) ? fundo : slotStage;
+  const pref = minStage && ordem.indexOf(minStage) > ordem.indexOf(base) ? minStage : base;
+  return encontroDe(pickEnemy(level, rng, { stage: pref, used, tabela: true, ...(element ? { element } : {}) }), tier, used, rng, legacy);
+}
+
+function encontroDe(
+  e: RosterEntry, tier: string, used: Set<string>, rng: () => number,
+  legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
+): DungeonEncounter {
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);

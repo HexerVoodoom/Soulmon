@@ -21,10 +21,10 @@ import { removeLocal } from './safeStorage';
 import { MAX_HP_BY_FORM } from '../types/progression';
 
 /** As atividades com que a demo nasce (a home não pode abrir vazia). Curtas, de cuidado, sem cobrança. */
-export const DEMO_ACTIVITIES: ReadonlyArray<{ name: { en: string; pt: string }; category: 'Wellness' | 'Health' | 'Discipline'; emoji: string }> = [
-  { name: { en: 'Drink a glass of water', pt: 'Beber um copo d’água' }, category: 'Health', emoji: '💧' },
-  { name: { en: 'Stretch for 5 minutes', pt: 'Alongar por 5 minutos' }, category: 'Wellness', emoji: '🧘' },
-  { name: { en: 'Tidy one small thing', pt: 'Arrumar uma coisa pequena' }, category: 'Discipline', emoji: '🧹' },
+export const DEMO_ACTIVITIES: ReadonlyArray<{ name: { en: string; pt: string }; category: 'mente' | 'corpo' | 'foco'; emoji: string }> = [
+  { name: { en: 'Drink a glass of water', pt: 'Beber um copo d’água' }, category: 'corpo', emoji: '💧' },
+  { name: { en: 'Stretch for 5 minutes', pt: 'Alongar por 5 minutos' }, category: 'mente', emoji: '🧘' },
+  { name: { en: 'Tidy one small thing', pt: 'Arrumar uma coisa pequena' }, category: 'foco', emoji: '🧹' },
 ];
 
 /** O `totalXP` da demo: o mínimo do nível `DEMO_BOND_LEVEL`. */

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
+  ActionRow, ModalSheet, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -8,6 +8,7 @@ import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readFlagOr, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { isVibrateOn, setVibrateOn } from '../utils/focoTimer';
 import { AccountSection } from './AccountSection';
+import { ReviewSoulmonRow, type ReviewRowState } from './ReviewSoulmonRow';
 import { SubscriptionSection } from './SubscriptionSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -18,6 +19,11 @@ import { useTheme } from '../contexts/ThemeContext';
 import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
 import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
+import { EditHomeScreen, type EditHomeProps } from './perfil/EditHomeScreen';
+import { PerfilCardTile } from './perfil/PerfilCardTile';
+import { WidgetFramePicker } from './WidgetFramePicker';
+import { getSpriteForStage } from '../utils/sprites';
+import { WIDGET_FRAME_LCD, widgetFramePreview, type WidgetFramePickerData } from '../utils/widgetFrames';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
@@ -26,6 +32,7 @@ import { requestOpenFrameShop } from '../utils/frameShopNav';
 import { SpritePoseRows } from './SpritePoseRows';
 import type { SpritePose } from '../utils/spritePose';
 import type { MealRhythmSettings } from '../utils/mealRhythm';
+import type { SoulmonVoiceMode } from '../utils/soulmonCharacter';
 
 
 /**
@@ -65,6 +72,8 @@ interface SettingsPageProps {
   onReplayWelcomeTour?: () => void;
   /** Glossário (HelpModal). */
   onOpenGlossary: () => void;
+  /** "Pedir revisão do meu Soulmon" (Ajuda): estado e toque do pedido da forma equipada. Sem ele a linha não existe. */
+  review?: ReviewRowState;
   /** Cartões de estudo do jogador (Revisão da Malha): ler/editar fora do Ateliê (decisão do dono 25/10). */
   onOpenStudyCards?: () => void;
   notificationsEnabled: boolean;
@@ -75,6 +84,9 @@ interface SettingsPageProps {
   /** Ritmo das refeições (`utils/mealRhythm.ts`). Sem o callback a linha não existe. */
   mealRhythm?: MealRhythmSettings;
   onChangeMealRhythm?: (next: MealRhythmSettings) => void;
+  /** Beta12 (B2): como o Soulmon se relaciona com o seu jeito (`complementar` é o padrão). Sem o callback a linha não existe. */
+  voiceMode?: SoulmonVoiceMode;
+  onChangeVoiceMode?: (next: SoulmonVoiceMode) => void;
   /** Pose do sprite (`utils/spritePose.ts`). A escrita é do `applySpritePose`, não de callback. */
   spritePose?: Partial<SpritePose>;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
@@ -95,10 +107,18 @@ interface SettingsPageProps {
   gm?: GmActions;
   /** Perfil (Tarefa C): foto + moldura. Sem isto o grupo "Perfil" não existe. */
   profile?: {
-    saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
+    /** Elemento do Soulmon (molduras exclusivas de elemento). */
+    petElement?: string;
+    saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; fundadorPremios?: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
-    petName?: string; onChangePetName?: (name: string) => void;
+    petName?: string;
+    /** Nome do especial (Editar perfil, só leitura: a troca é na Hexsmith). */
+    especial?: { nome: string };
+    /** Editar Home: sem isto a linha nao existe. */
+    editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'ownedBackgrounds' | 'onSave' | 'onOpenShop'>;
+    /** Moldura do widget V-Pet (`utils/widgetFrames.ts`): sem isto a linha não existe. */
+    widgetFrames?: WidgetFramePickerData;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -260,12 +280,15 @@ export function SettingsPage({
   onOpenGuide,
   onReplayWelcomeTour,
   onOpenGlossary,
+  review,
   onOpenStudyCards,
   notificationsEnabled,
   onToggleNotifications,
   generateCharacter,
   mealRhythm,
   onChangeMealRhythm,
+  voiceMode = 'complementar',
+  onChangeVoiceMode,
   spritePose,
   redeemed = false,
   showRedeemed = false,
@@ -284,6 +307,8 @@ export function SettingsPage({
   onReplayIntro,
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editHomeOpen, setEditHomeOpen] = useState(false);
+  const [widgetFramesOpen, setWidgetFramesOpen] = useState(false);
   const [musica, setMusica] = useState(() => musicaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
@@ -335,6 +360,8 @@ export function SettingsPage({
     if (!ok) restoreTimer.current = setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
+  const petImg = profile ? getSpriteForStage(profile.petStage) : '';
+
   return (
     <>
       <InstallPrompt language={language} />
@@ -342,16 +369,43 @@ export function SettingsPage({
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
         <GroupCard title={isPt ? 'Perfil' : 'Profile'}>
-          <button
-            type="button"
-            data-edit-profile
-            onClick={() => setProfileOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
-          >
-            <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={32} />
-            <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar perfil' : 'Edit profile'}</span>
-            <Icon name="chevron_right" size={24} tone="muted" />
-          </button>
+          {/* Soulmon PRÓPRIO (nunca oponente): piso por estágio, como no ProfileEditor. */}
+          <div data-profile-cards style={{ display: 'flex', gap: 8, alignItems: 'stretch', width: '100%' }}>
+            {([
+              { key: 'profile', attr: { 'data-edit-profile': true }, label: isPt ? 'Perfil' : 'Profile', on: () => setProfileOpen(true),
+                img: <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={56} /> },
+              ...(profile.editHome ? [{ key: 'home', attr: { 'data-edit-home-open': true }, label: 'Home', on: () => setEditHomeOpen(true),
+                img: <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> }] : []),
+              ...(profile.widgetFrames ? [{ key: 'widget', attr: { 'data-widget-frames-open': true }, label: 'Widget', on: () => setWidgetFramesOpen(true),
+                img: (() => {
+                  const url = widgetFramePreview(profile.widgetFrames!.selected || null);
+                  return url
+                    ? (
+                      <span style={{ position: 'relative', width: 84, height: 56 }}>
+                        <img src={petImg} alt="" style={{ position: 'absolute', objectFit: 'contain', imageRendering: 'pixelated', left: `${WIDGET_FRAME_LCD.left * 100}%`, top: `${WIDGET_FRAME_LCD.top * 100}%`, width: `${WIDGET_FRAME_LCD.width * 100}%`, height: `${WIDGET_FRAME_LCD.height * 100}%` }} />
+                        <img src={url} alt="" width={84} height={56} style={{ position: 'absolute', inset: 0, objectFit: 'contain' }} />
+                      </span>
+                    )
+                    : <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />;
+                })() }] : []),
+            ]).map(c => (
+              <PerfilCardTile key={c.key} cardKey={c.key} attr={c.attr} label={c.label} onClick={c.on}
+                ariaLabel={isPt ? `Editar ${c.label}` : `Edit ${c.label}`}>{c.img}</PerfilCardTile>
+            ))}
+          </div>
+          {profile.widgetFrames && (
+            <ModalSheet open={widgetFramesOpen} title={isPt ? 'Moldura do widget' : 'Widget frame'} onClose={() => setWidgetFramesOpen(false)} language={language}>
+              <WidgetFramePicker language={language} data={{ petSrc: petImg, ...profile.widgetFrames }} />
+            </ModalSheet>
+          )}
+          {profile.editHome && editHomeOpen && (
+            <EditHomeScreen
+              language={language}
+              {...profile.editHome}
+              onSave={(d, b) => { profile.editHome!.onSave(d, b); setEditHomeOpen(false); }}
+              onClose={() => setEditHomeOpen(false)}
+            />
+          )}
           <ProfileEditor
             open={profileOpen}
             onClose={() => setProfileOpen(false)}
@@ -361,13 +415,15 @@ export function SettingsPage({
             avatarId={profile.avatarId}
             equippedFrame={profile.equippedFrame}
             ownedFrames={profile.ownedFrames}
+            fundadorPremios={profile.fundadorPremios}
             petStage={profile.petStage}
+            petElement={profile.petElement}
             onChangeAvatar={profile.onChangeAvatar}
             onChangeFrame={profile.onChangeFrame}
             userName={profile.userName}
             onChangeName={profile.onChangeName}
             petName={profile.petName}
-            onChangePetName={profile.onChangePetName}
+            especialNome={profile.especial?.nome}
             onOpenFrameShop={requestOpenFrameShop}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />
@@ -478,8 +534,8 @@ export function SettingsPage({
               {onToggleShowInPublicList && (
                 <span data-data-help-text="public-list">
                   {isPt
-                    ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio. Desligado, você some da lista na hora e continua podendo jogar.'
-                    : 'Your nickname and Soulmon show to other Tournament players. Off, you leave the list right away and can still play.'}
+                    ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio e na faixa de evoluções. Desligado, você some da lista na hora, sai da faixa e continua podendo jogar.'
+                    : 'Your nickname and Soulmon show to other Tournament players and on the evolution banner. Off, you leave the list right away, leave the banner and can still play.'}
                 </span>
               )}
             </span>
@@ -502,7 +558,7 @@ export function SettingsPage({
           <SwitchRow
             checked={showInPublicList}
             onToggle={onToggleShowInPublicList}
-            label={isPt ? 'Aparecer na lista pública do Torneio' : 'Show me on the public Tournament list'}
+            label={isPt ? 'Aparecer na lista pública do Torneio e na faixa de evoluções' : 'Show me on the public Tournament list and the evolution banner'}
           />
         )}
       </Group>
@@ -604,6 +660,21 @@ export function SettingsPage({
           </div>
         </div>
         <SpritePoseRows language={language} pose={spritePose} />
+        {/* Beta12 (B2): COMPLEMENTAR (padrão) ou o mesmo jeito do jogador. O rótulo não diz o tipo de ninguém. */}
+        {onChangeVoiceMode && (
+          <div className="sm2-conta-rg">
+            <span className="sm2-conta-rg-lb" id="sm-conta-voice-lb">{t.settings.voiceMode}</span>
+            <div role="radiogroup" aria-labelledby="sm-conta-voice-lb" className="sm2-conta-rg-seg">
+              {([
+                { k: 'complementar' as const, l: t.settings.voiceModeComplementary },
+                { k: 'similar' as const, l: t.settings.voiceModeSimilar },
+              ]).map(o => (
+                <Segment key={o.k} tonal selected={voiceMode === o.k} onSelect={() => onChangeVoiceMode(o.k)} label={o.l} />
+              ))}
+            </div>
+            <span className="sm2-conta-rg-lb" style={{ display: 'block', marginTop: 4 }}>{t.settings.voiceModeHint}</span>
+          </div>
+        )}
         <div className="sm2-conta-rg">
           <span className="sm2-conta-rg-lb" id="sm-conta-lang-lb">{t.settings.language}</span>
           <div role="radiogroup" aria-labelledby="sm-conta-lang-lb" className="sm2-conta-rg-seg">
@@ -621,8 +692,8 @@ export function SettingsPage({
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
         {onOpenStudyCards && <ActionRow label={isPt ? 'Meus cartões de estudo' : 'My study cards'} onClick={onOpenStudyCards} />}
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
-        {onReplayStory && <ActionRow label={isPt ? 'Rever a história' : 'Replay the story'} onClick={onReplayStory} />}
-        {onReplayIntro && <ActionRow label={isPt ? 'Rever a introdução' : 'Replay the intro'} onClick={onReplayIntro} />}
+        {onReplayIntro && <ActionRow label={isPt ? 'Ver abertura' : 'Watch the opening'} onClick={onReplayIntro} />}
+        {onReplayStory && <ActionRow label={isPt ? 'Ver intro' : 'Watch the intro'} onClick={onReplayStory} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
         {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}
         {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a
@@ -648,6 +719,7 @@ export function SettingsPage({
             (design-critic B3, 21/09/2026; `FeedbackLink.tsx`). */}
         <FeedbackRow language={language} saveId={saveId} />
         <BugReportRow language={language} view="settings" />
+        <ReviewSoulmonRow language={language} review={review} />
         <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon {APP_VERSION}</p>
       </Group>
 

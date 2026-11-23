@@ -7,4 +7,30 @@
     <string name="widget_grove_copa">Copa</string>
     <string name="widget_grove_mata">Mata</string>
     <string name="widget_grove_bosque_antigo">Bosque antigo</string>
+    <!-- Widget F, redimensionavel (REGISTRO 221) -->
+    <string name="widget_adaptive_label">Soulmon (redimensionável)</string>
+    <string name="widget_adaptive_description">Redimensione: o quadrado mostra seu Soulmon; mais largo ou mais alto ganha uma frase</string>
+    <string name="widget_line_hungry">Tô com uma fominha, se você quiser.</string>
+    <string name="widget_line_poop">Um banhinho cairia super bem.</string>
+    <string name="widget_line_task">Quando der: %1$s</string>
+    <string name="widget_line_day_closed">Isso fecha a lista de hoje. Agora, sossego.</string>
+    <string name="widget_line_support">Aqui com você, um dia de cada vez.</string>
+    <!-- Widgets G (transparente) e H (V-Pet) -->
+    <string name="widget_clear_label">Soulmon</string>
+    <string name="widget_clear_description">Seu Soulmon direto no papel de parede, sem fundo</string>
+    <string name="widget_vpet_label">Cage</string>
+    <string name="widget_vpet_description">Seu Soulmon numa tela retrô; largo, ocupa mais espaço</string>
+    <string name="widget_companion_label">Companheiro</string>
+    <string name="widget_companion_description">Seu Soulmon GRANDE numa tela retrô; cabe em 2x2 ou 3x3</string>
+    <string name="widget_companion_content">Soulmon Companheiro</string>
+    <string name="widget_vpet_content">Soulmon V-Pet</string>
+    <string name="widget_name_count">%1$s · %2$s hoje</string>
+    <!-- Widget grande da Home (18/11/2026): Soulmon + tarefas de hoje. O check so marca; vale ao abrir o jogo (sem prometer ganho). -->
+    <string name="widget_home_label">Soulmon: hoje</string>
+    <string name="widget_home_description">Seu Soulmon e as tarefas de hoje; marque aqui e vale quando você abrir o jogo</string>
+    <string name="widget_home_empty_today">Nada sobrando na lista de hoje.</string>
+    <string name="widget_home_empty_stale">Abra o Soulmon para carregar a lista de hoje.</string>
+    <string name="widget_home_check_mark">Marcar %1$s como feita</string>
+    <string name="widget_home_check_done">%1$s: feita</string>
+    <string name="widget_home_check_steps">%1$s: abra o jogo para marcar as etapas</string>
 </resources>

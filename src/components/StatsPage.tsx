@@ -62,7 +62,7 @@ import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
 /* Combate v3 / PR7: a árvore de talentos (e a arte dela) só carrega quando a Estatística monta. */
-const TalentTreeCard = lazy(() => import('./TalentTreeCard'));
+const TalentTreeEntry = lazy(() => import('./TalentTreeEntry'));
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
 interface CompletedTask {
@@ -313,10 +313,11 @@ export function StatsPage({
         )}
       </section>
 
-      {/* ─────────────── Talentos do Vínculo (PR7) ─────────────── */}
+      {/* ─────────────── Talentos do Vínculo (PR7) ───────────────
+          04/11/2026 (dono): a árvore deixou de ser inline — o cartão mostra os pontos livres e abre a árvore em TELA CHEIA. */}
       {!hideMetrics && (
         <Suspense fallback={null}>
-          <TalentTreeCard language={language} />
+          <TalentTreeEntry language={language} />
         </Suspense>
       )}
 

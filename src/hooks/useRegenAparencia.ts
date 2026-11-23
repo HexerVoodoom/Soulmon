@@ -10,6 +10,7 @@
  * uma confirmação, e a trava `busy` impede dois ao mesmo tempo (um deles e o lote).
  */
 import { useCallback, useRef, useState } from 'react';
+import { baseFormOfKey } from '../utils/formasAlternativas';
 import { creatureFormId } from '../utils/oracle/base';
 import type { CreatureStage } from '../utils/oracle';
 import { requestSprite, SpriteGenError } from '../utils/spriteGen';
@@ -85,7 +86,7 @@ export function useRegenAparencia(args: UseRegenAparenciaArgs): RegenAparencia {
   const confirm = useCallback(() => {
     if (emVoo.current) return;
     const a = argsRef.current;
-    const stage = (a.stages ?? []).find(s => creatureFormId(s) === a.formId);
+    const stage = (a.stages ?? []).find(s => creatureFormId(s) === baseFormOfKey(a.formId));
     if (!stage) return;
     emVoo.current = true;
     setConfirming(false);

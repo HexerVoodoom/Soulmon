@@ -1,5 +1,8 @@
 # Perguntas para o dono — acumuladas na rodada autônoma (20/09/2026 →)
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > Regra do dono (20/09/2026): seguir a melhor sugestão sem travar; o que for decisão
 > só dele fica aqui e é perguntado no fim, quando não houver mais nada a fazer sem resposta.
 > Cada item traz a decisão PROVISÓRIA já aplicada (para nada ficar parado) e o que muda se ele disser outra coisa.
@@ -577,6 +580,8 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 
 ## Beta3 som
 
+- **Escuta das 2 faixas do Refúgio (04/11/2026) — sua, nenhum agente ouviu:** "Respiração subaquática" e "Concentração (Trataka)". Conferir volume relativo às outras trilhas, a volta (fade-out, 8 s de silêncio, fade-in de 3 s) e confirmar que foram geradas no plano Pro do Suno.
+
 - **Escuta final das 3 trilhas novas (S18, 26/10/2026) — sua, nenhum agente ouviu:** "Dungeon Theme" (lobby/fim/retorno do Endless Rift e todo o Calabouço), "Evolution Theme" (acompanha a cerimônia, junto do estalo antigo) e "Meditation Theme" (Respiração e Bolhas calmas). Conferir em fone e no alto-falante do celular: volume relativo ao tema/combate, loop sem estalo, e se a Evolution Theme (30 s) casa com a cerimônia (3 s + cartão). Conservador: as lutas da descida continuam no "Stone Hall Combat"; o estalo `playEvolve` continua.
 - **Procedência das 3 trilhas:** de qual gerador/plano vieram? `Attributions.md` registra só "fornecida pelo dono" e hash; nada de licença afirmada.
 
@@ -639,3 +644,32 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 O servidor passa a guardar, sem prazo e fora da exclusão de conta, a chave `freeGen:<saveId>` (hash do e-mail → URL do primeiro rookie gerado) e, opcionalmente, hashes de e-mails de teste. Para a política (NÃO alterada ainda), sugestão: "Guardamos, de forma irreversível (sem seu e-mail em claro), que sua conta já usou a geração gratuita e qual foi o desenho, para que recriar a conta devolva o mesmo Soulmon e não conceda outra geração gratuita. Isso permanece mesmo após excluir a conta." Aprova o texto (e o "para sempre", D6)?
 
 **RESPONDIDA (D28, 30/10/2026):** dono aprovou; política (PT/EN, `privacidade.html` 6d) declara hash do e-mail + URL da imagem, mantidos após a exclusão; `PRIVACY_VERSION` = 2026-10-30.
+
+## 04/11/2026 — Molduras do widget V-Pet: o que criar no Play Console
+
+O código está pronto e NÃO cria nada na Play. Enquanto o produto não existir lá, a moldura trancada mostra "Indisponível" (o preço vem da própria Play, nunca escrito no app). A moldura de cada elemento também vem SOZINHA quando o Soulmon evolui para ele.
+
+**Criar 20 produtos "Produtos no app" (gerenciados, NÃO consumíveis, status Ativo), um por elemento base.** Mesma configuração para todos; preço sugerido **R$ 4,90 (US$ 0,99)** cada, ajustável por país. ID exato (não dá para trocar depois), título sugerido "Moldura do widget: <Elemento>", descrição "Casco do widget V-Pet com o tema do elemento <Elemento>. Compra única, vale para sempre.":
+
+`moldura_fogo`, `moldura_agua`, `moldura_terra`, `moldura_ar`, `moldura_eletricidade`, `moldura_arcano`, `moldura_sombra`, `moldura_luz`, `moldura_vileza`, `moldura_morte`, `moldura_vida`, `moldura_vigor`, `moldura_marcial`, `moldura_tempo`, `moldura_som`, `moldura_gravidade`, `moldura_espaco`, `moldura_fada`, `moldura_industrial`, `moldura_planta`
+
+Decisões que ficaram com a recomendação do lead (responda só se discordar):
+1. Preço único de R$ 4,90 para os 20 (recomendado: sim). Alternativa: pacote com todas.
+2. Quem compra "sombra" e depois evolui para sombra não recebe reembolso (conforme você decidiu).
+3. Reembolso na Play tira a moldura comprada (a diária de conferência já existente); se o jogador a tinha usada, o widget volta ao casco padrão.
+4. Arte: `moldura_vpet_<elemento>.png` em `android/app/src/main/res/drawable-nodpi/` (576x384, MESMA abertura LCD do `vpet_moldura.png`; aceita também `.webp` com o mesmo nome). Peso: o casco atual tem 280 KB; 20 iguais somam ~5,6 MB no APK. Recomendo PNG de 8 bits com paleta (pngquant) ou WebP sem perdas. Prévia opcional no app: `src/assets/soulmon/widget-molduras/<elemento>.png|webp`.
+
+## 14/11/2026 — Hábito criado no meio do dia: entra na meta de hoje? (REGISTRO §371)
+
+O hábito novo agora aparece na lista "Hoje" na hora (bug corrigido). A meta do dia continua como sempre foi: ele pesa 1 na meta de hoje. Criar um hábito às 23h pode subir a meta (se ela estiver abaixo do requisito do estágio) e custar o "dia completo" ou coração.
+
+1. **(recomendada) A** — hábito criado hoje só conta na meta de hoje se for FEITO hoje; a partir de amanhã, regra normal. Nunca encarece o dia.
+2. **B** — manter como está (entra na meta de hoje desde a criação).
+
+## 15/11/2026 — 28/11: ligar o corte do orçamento de Bits? (REGISTRO §387, emenda de 15/11)
+
+O orçamento de crescimento de Bits do save está em MODO OBSERVAÇÃO desde 15/11 (só registra, nunca corta). Em 28/11/2026 leia os registros com `npx wrangler kv key list --binding SOULMON_SAVES --remote --prefix "bitsobs:"` (cada chave traz no metadata `excedente`, `saldo_antes`, `saldo_depois`, `creditos`).
+
+1. **(recomendada se a lista vier vazia ou só com contas explicadas, como GM e compensação) A**: ligar o corte (`BITS_ORCAMENTO_MODO = 'cortar'` + o código de corte, num PR próprio).
+2. **B**: seguir observando mais 2 semanas (contas honestas apareceram: subir R/teto ou somar a fonte que faltou antes de cortar).
+3. **C**: desligar a observação (reverter o PR).

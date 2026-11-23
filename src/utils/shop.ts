@@ -4,6 +4,7 @@ import type { SlotId, DecorFit } from './petStage';
 import { GUILD_COPY_CORE } from './guildCopyCore';
 import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
+import { DISH_SPECIAL_ITEMS } from './dishItems';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
@@ -52,6 +53,9 @@ export interface ShopItem {
   /** Só em kind:'furniture'. Em que tipo de cenário o item faz sentido. Um sofá
    *  numa planície de neve não é charme, é erro de composição. */
   fits?: DecorFit;
+  /** COSMÉTICO EXCLUSIVO DE ELEMENTO (`bg`/`furniture`): só aparece À VENDA para quem tem um
+   *  Soulmon deste elemento (base ou par que o contenha). Posse é permanente — ver `utils/elementExclusive.ts`. */
+  element?: string;
 }
 
 export const CHIP_BOOST = 3;   // type points (path weight only, no total/XP) granted when a chip is USED
@@ -66,42 +70,57 @@ export const TRIPLE_CHIP_EMOJI = '💠';
 export const TRIPLE_CHIP_PRICE = 2400;
 // D-96: preço dos chips +100% (180→360, maiores 420→840).
 export const CHIP_PRICE = 360;
+// Chips de REDUÇÃO (dono, 04/11/2026): espelho dos comuns — cada um TIRA ${CHIP_BOOST} pontos de UM tipo
+// (clamp em 0), mesmo preço, e têm limite PRÓPRIO por estágio (`REDUCE_CHIPS_PER_STAGE`), separado dos chips que somam.
+// Chave no inventário = emoji do chip comum + `REDUCE_CHIP_SUFFIX` (mesmo molde da comida premium ★):
+// a arte é a do chip comum e a Mochila desenha o "−" por cima (`data-reduce`).
+export const REDUCE_CHIP_SUFFIX = '➖';
+export const REDUCE_CHIP_BOOST = 6; // P3 7.1 (22/11/2026, dono): tira 6 pontos de UM caminho (era 3); limite por estágio e preço seguem
+export const REDUCE_CHIP_PRICE = 360;
 export const BIG_CHIP_PRICE = 840;
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
-// Inventory emojis for the consumable items that live in the Items folder.
+// Inventory emojis for the consumable items that live in Files (the Items folder, shown to the player as "Files").
 export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
+export const REDUCE_CHIP_EMOJI: Record<Attr, string> = {
+  power: CHIP_EMOJI.power + REDUCE_CHIP_SUFFIX,
+  harmony: CHIP_EMOJI.harmony + REDUCE_CHIP_SUFFIX,
+  benevolence: CHIP_EMOJI.benevolence + REDUCE_CHIP_SUFFIX,
+};
+export const isReduceChipKey = (key: string): boolean => key.endsWith(REDUCE_CHIP_SUFFIX) && key.length > REDUCE_CHIP_SUFFIX.length;
 /** ✨ Faísca de Alma (30/10/2026, corrigida pelo dono no mesmo dia): usada nos Arquivos, restaura a ENERGIA DA HOME (a que a comida regenera e a Masmorra gasta). */
 export const SPARK_ITEM_EMOJI = '✨';
 /** Energia da Home restaurada por 1 Faísca (como a comida premium antiga, +5; teto = máximo do estágio). */
 export const SPARK_HOME_ENERGY = 5;
 
-// Consumables that live in the Items folder alongside food, but behave
+// Consumables that live in Files (the Items folder, shown to the player as "Files") alongside food, but behave
 // differently when USED: chips only add attribute points (no energy), the
 // heart item only heals HP, and the Glitchtama grants a perfect day.
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset' | 'dish';
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
+  /** Chip de REDUÇÃO: os `boosts` são negativos, o clamp é em 0 e o limite por estágio é o próprio. */
+  reduce?: boolean;
   namePt: string;
   nameEn: string;
   descPt: string;
   descEn: string;
 }
 
-// 🌀 Glitchtama — dropped by completing all 5 dungeon floors. Using it grants
-// one perfect day (an evolution point), no questions asked.
+// 🌀 Glitchtama — rare drop at dungeon milestones (1% per 5 layers, max 1/week; `glitchtamaDrop.ts`). Using it grants
+// a +10% evolution-progress buff for 7 days (once a week; 10/11/2026) — it no longer fills the bar or grants a perfect day.
 export const GLITCHTAMA_EMOJI = '🌀';
 
 export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   [GLITCHTAMA_EMOJI]: {
     emoji: GLITCHTAMA_EMOJI, kind: 'glitchtama',
     namePt: 'Glitchtama', nameEn: 'Glitchtama',
-    descPt: 'Usar soma um dia de passos ao caminho da evolução', descEn: 'Use to add one day of steps to the evolution path',
+    descPt: 'Usar dá +10% de progressão de evolução por 7 dias (1 uso por semana)', descEn: 'Use for +10% evolution progress for 7 days (1 use per week)',
   },
   [CHIP_EMOJI.power]: {
     emoji: CHIP_EMOJI.power, kind: 'chip', attr: 'power',
@@ -148,6 +167,24 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Chip Triplo', nameEn: 'Triple Chip',
     descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`,
   },
+  [REDUCE_CHIP_EMOJI.power]: {
+    emoji: REDUCE_CHIP_EMOJI.power, kind: 'chip', attr: 'power', reduce: true,
+    boosts: { power: -REDUCE_CHIP_BOOST, harmony: 0, benevolence: 0 },
+    namePt: 'Chip Redutor de Poder', nameEn: 'Power Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Poder`, descEn: `−${REDUCE_CHIP_BOOST} Power`,
+  },
+  [REDUCE_CHIP_EMOJI.harmony]: {
+    emoji: REDUCE_CHIP_EMOJI.harmony, kind: 'chip', attr: 'harmony', reduce: true,
+    boosts: { power: 0, harmony: -REDUCE_CHIP_BOOST, benevolence: 0 },
+    namePt: 'Chip Redutor de Harmonia', nameEn: 'Harmony Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Harmonia`, descEn: `−${REDUCE_CHIP_BOOST} Harmony`,
+  },
+  [REDUCE_CHIP_EMOJI.benevolence]: {
+    emoji: REDUCE_CHIP_EMOJI.benevolence, kind: 'chip', attr: 'benevolence', reduce: true,
+    boosts: { power: 0, harmony: 0, benevolence: -REDUCE_CHIP_BOOST },
+    namePt: 'Chip Redutor de Benevolência', nameEn: 'Benevolence Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Benevolência`, descEn: `−${REDUCE_CHIP_BOOST} Benevolence`,
+  },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
@@ -169,6 +206,8 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   ...PREMIUM_SPECIAL_ITEMS,
   // Poção de Elemento (30/10/2026) — dono: `utils/elementPotion.ts`.
   ...POTION_SPECIAL_ITEMS,
+  // Prato do Restaurante (16/11/2026) — dono: `utils/dishItems.ts` (cozinhar guarda aqui; usar serve).
+  ...DISH_SPECIAL_ITEMS,
 };
 
 export function isSpecialItem(emoji: string): boolean {
@@ -176,7 +215,7 @@ export function isSpecialItem(emoji: string): boolean {
 }
 
 export const SHOP_ITEMS: ShopItem[] = [
-  // Attribute chips — bought here, then USED from the Items folder (they only
+  // Attribute chips — bought here, then USED from Files (they only
   // raise the attribute, no energy). They steer the evolution branch. Nomes
   // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.
@@ -200,11 +239,19 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`, price: BIG_CHIP_PRICE },
   // D-94 (19/10/2026): o Chip Prisma ('inútil') saiu da LOJA. Continua em `SPECIAL_ITEMS`
   // (catálogo de USO): quem já o tem na pastinha mantém e usa.
-  { id: 'chip-triple', kind: 'chip', icon: TRIPLE_CHIP_EMOJI,
-    namePt: 'Chip Triplo', nameEn: 'Triple Chip',
-    descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`, price: TRIPLE_CHIP_PRICE },
+  // 04/11/2026 (dono): o Chip Triplo SAIU DA LOJA. Continua em `SPECIAL_ITEMS`: quem já o tem na pastinha
+  // mantém e usa (mesma regra do Prisma, D-94). No lugar, os chips que REDUZEM um tipo:
+  { id: 'chip-reduce-power', kind: 'chip', icon: REDUCE_CHIP_EMOJI.power, attr: 'power',
+    namePt: 'Chip Redutor de Poder', nameEn: 'Power Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Poder`, descEn: `−${REDUCE_CHIP_BOOST} Power`, price: REDUCE_CHIP_PRICE },
+  { id: 'chip-reduce-harmony', kind: 'chip', icon: REDUCE_CHIP_EMOJI.harmony, attr: 'harmony',
+    namePt: 'Chip Redutor de Harmonia', nameEn: 'Harmony Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Harmonia`, descEn: `−${REDUCE_CHIP_BOOST} Harmony`, price: REDUCE_CHIP_PRICE },
+  { id: 'chip-reduce-benevolence', kind: 'chip', icon: REDUCE_CHIP_EMOJI.benevolence, attr: 'benevolence',
+    namePt: 'Chip Redutor de Benevolência', nameEn: 'Benevolence Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Benevolência`, descEn: `−${REDUCE_CHIP_BOOST} Benevolence`, price: REDUCE_CHIP_PRICE },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
-  // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
+  // Bits, e Créditos compram Bits (pacotes `BITS_PACKS`; na época era a troca livre 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
   // punição tira, só que por um caminho indireto. Indireto não é melhor: é o
   // mesmo, escondido.
@@ -224,46 +271,46 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'furn-sofa', kind: 'furniture', icon: '🛋️',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Sofá Pixel', nameEn: 'Pixel Sofa',
-    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 100 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 300 },
   { id: 'furn-chair', kind: 'furniture', icon: '🪑',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Poltrona', nameEn: 'Armchair',
-    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 360 },
   { id: 'furn-books', kind: 'furniture', icon: '📚',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Estante de Livros', nameEn: 'Bookshelf',
-    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 360 },
   { id: 'furn-lamp', kind: 'furniture', icon: '💡',
     slot: 'floor-right', fits: 'indoor',
     namePt: 'Luminária', nameEn: 'Lamp',
-    descPt: 'Ocupa o canto direito — só em cenários de interior', descEn: 'Takes the right corner — indoor scenes only', price: 100 },
+    descPt: 'Ocupa o canto direito — só em cenários de interior', descEn: 'Takes the right corner — indoor scenes only', price: 300 },
   { id: 'furn-rug', kind: 'furniture', icon: '🐾',
     slot: 'rug', fits: 'indoor',
     namePt: 'Tapete de Patinhas', nameEn: 'Paw Print Rug',
-    descPt: 'Fica no chão, no centro — o pet anda por cima', descEn: 'Lies on the floor, centered — the pet walks over it', price: 140 },
+    descPt: 'Fica no chão, no centro — o pet anda por cima', descEn: 'Lies on the floor, centered — the pet walks over it', price: 420 },
   // QUALQUER CENÁRIO
   { id: 'furn-plant', kind: 'furniture', icon: '🪴',
     slot: 'floor-right', fits: 'any',
     namePt: 'Vaso de Planta', nameEn: 'Potted Plant',
-    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 100 },
+    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 200 },
   { id: 'furn-picture', kind: 'furniture', icon: '🖼️',
     slot: 'wall', fits: 'any',
     namePt: 'Quadro do Soulmon', nameEn: 'Soulmon Portrait',
-    descPt: 'Pendurado acima do pet — em cenários que tenham onde pendurar', descEn: 'Hangs above the pet — in scenes with somewhere to hang it', price: 130 },
+    descPt: 'Pendurado acima do pet — em cenários que tenham onde pendurar', descEn: 'Hangs above the pet — in scenes with somewhere to hang it', price: 390 },
   // EXTERIORES — o pet passa a maior parte do tempo em cenários abertos, e até
   // aqui não havia UM elemento pensado para eles (só móvel de sala).
   { id: 'furn-campfire', kind: 'furniture', icon: '🔥',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Fogueira', nameEn: 'Campfire',
-    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 120 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 360 },
   { id: 'furn-tent', kind: 'furniture', icon: '⛺',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Barraca', nameEn: 'Tent',
-    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 140 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 420 },
   { id: 'furn-rock', kind: 'furniture', icon: '🪨',
     slot: 'floor-right', fits: 'outdoor',
     namePt: 'Pedra Musgosa', nameEn: 'Mossy Rock',
-    descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 100 },
+    descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 200 },
   // SEGUNDA LEVA (kit v1.2) — 19 peças com arte pixel de verdade
   // (utils/decorArt.ts). Ela existe por causa de um desequilíbrio medido: o
   // `rug` tinha UM item e ele era `indoor`, enquanto o pet passa a maior parte
@@ -272,71 +319,67 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'furn-grass', kind: 'furniture', icon: '🌿',
     slot: 'rug', fits: 'outdoor',
     namePt: 'Tufo de Grama', nameEn: 'Grass Patch',
-    descPt: 'Fica no chão, no centro — só em cenários abertos', descEn: 'Lies on the floor, centered — outdoor scenes only', price: 110 },
+    descPt: 'Fica no chão, no centro — só em cenários abertos', descEn: 'Lies on the floor, centered — outdoor scenes only', price: 220 },
   { id: 'furn-sand', kind: 'furniture', icon: '🏖️',
     slot: 'rug', fits: 'outdoor',
     namePt: 'Areia Batida', nameEn: 'Packed Sand',
-    descPt: 'Fica no chão, no centro — só em cenários abertos', descEn: 'Lies on the floor, centered — outdoor scenes only', price: 110 },
+    descPt: 'Fica no chão, no centro — só em cenários abertos', descEn: 'Lies on the floor, centered — outdoor scenes only', price: 220 },
   { id: 'furn-stone-tiles', kind: 'furniture', icon: '🧱',
     slot: 'rug', fits: 'any',
     namePt: 'Ladrilho de Pedra', nameEn: 'Stone Tiles',
-    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 130 },
+    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 260 },
   { id: 'furn-deck', kind: 'furniture', icon: '🪵',
     slot: 'rug', fits: 'any',
     namePt: 'Tábuas de Madeira', nameEn: 'Wooden Deck',
-    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 130 },
+    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 260 },
   { id: 'furn-circuit-mat', kind: 'furniture', icon: '🔌',
     slot: 'rug', fits: 'any',
     namePt: 'Tapete de Circuito', nameEn: 'Circuit Mat',
-    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 140 },
-  { id: 'furn-arcade-cab', kind: 'furniture', icon: '🕹️',
-    slot: 'floor-left', fits: 'indoor',
-    namePt: 'Fliperama de Canto', nameEn: 'Corner Arcade',
-    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 140 },
+    descPt: 'Fica no chão, no centro — combina com qualquer cenário', descEn: 'Lies on the floor, centered — fits any scene', price: 420 },
   { id: 'furn-cauldron', kind: 'furniture', icon: '⚗️',
     slot: 'floor-left', fits: 'any',
     namePt: 'Caldeirão Borbulhante', nameEn: 'Bubbling Cauldron',
-    descPt: 'Ocupa o canto esquerdo — combina com qualquer cenário', descEn: 'Takes the left corner — fits any scene', price: 130 },
+    descPt: 'Ocupa o canto esquerdo — combina com qualquer cenário', descEn: 'Takes the left corner — fits any scene', price: 650 },
   { id: 'furn-crystal', kind: 'furniture', icon: '💎',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Cristal Bruto', nameEn: 'Raw Crystal',
-    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 120 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 600 },
   { id: 'furn-well', kind: 'furniture', icon: '⛲',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Poço de Pedra', nameEn: 'Stone Well',
-    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 140 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 700 },
   { id: 'furn-lantern', kind: 'furniture', icon: '🏮',
     slot: 'floor-right', fits: 'any',
     namePt: 'Lanterna de Papel', nameEn: 'Paper Lantern',
-    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 110 },
+    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 330 },
   { id: 'furn-mushrooms', kind: 'furniture', icon: '🍄',
     slot: 'floor-right', fits: 'outdoor',
     namePt: 'Cogumelos Brilhantes', nameEn: 'Glowing Mushrooms',
-    descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 110 },
+    descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 330 },
   { id: 'furn-hourglass', kind: 'furniture', icon: '⏳',
     slot: 'floor-right', fits: 'any',
     namePt: 'Ampulheta', nameEn: 'Hourglass',
-    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 130 },
+    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 650 },
   { id: 'furn-food-bowl', kind: 'furniture', icon: '🥣',
     slot: 'floor-right', fits: 'any',
     namePt: 'Potinho de Comida', nameEn: 'Food Bowl',
-    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 100 },
+    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 200 },
   { id: 'furn-window', kind: 'furniture', icon: '🪟',
     slot: 'wall', fits: 'indoor',
     namePt: 'Janelinha', nameEn: 'Little Window',
-    descPt: 'Pendurado acima do pet — só em cenários de interior', descEn: 'Hangs above the pet — indoor scenes only', price: 120 },
+    descPt: 'Pendurado acima do pet — só em cenários de interior', descEn: 'Hangs above the pet — indoor scenes only', price: 360 },
   { id: 'furn-garland', kind: 'furniture', icon: '🎏',
     slot: 'wall', fits: 'any',
     namePt: 'Varal de Bandeirinhas', nameEn: 'Bunting Garland',
-    descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene', price: 100 },
+    descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene', price: 200 },
   { id: 'furn-wind-chime', kind: 'furniture', icon: '🎐',
     slot: 'wall', fits: 'any',
     namePt: 'Sino de Vento', nameEn: 'Wind Chime',
-    descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene', price: 110 },
+    descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene', price: 330 },
   { id: 'furn-clock', kind: 'furniture', icon: '🕰️',
     slot: 'wall', fits: 'indoor',
     namePt: 'Relógio de Parede', nameEn: 'Wall Clock',
-    descPt: 'Pendurado acima do pet — só em cenários de interior', descEn: 'Hangs above the pet — indoor scenes only', price: 130 },
+    descPt: 'Pendurado acima do pet — só em cenários de interior', descEn: 'Hangs above the pet — indoor scenes only', price: 390 },
   // Pet-box backgrounds — permanent, equippable (css in utils/backgrounds.ts)
   // bg-room is the FREE default option — pre-owned by everyone (see
   // GameStateContext.tsx), so it always shows "Equip" instead of a price.
@@ -345,166 +388,168 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: 'Grátis — sempre disponível', descEn: 'Free — always available', price: 0 },
   { id: 'bg-night',  kind: 'bg', icon: '🌌',
     namePt: 'Céu Noturno',  nameEn: 'Night Sky',
-    descPt: 'Cenário estrelado para o box do pet', descEn: 'Starry backdrop for the pet box', price: 150 },
+    descPt: 'Cenário estrelado para o box do pet', descEn: 'Starry backdrop for the pet box', price: 300 },
   { id: 'bg-desert', kind: 'bg', icon: '🏜️',
     namePt: 'Deserto Pixel', nameEn: 'Pixel Desert',
-    descPt: 'Pôr do sol pixelado no deserto', descEn: 'Pixel sunset in the desert', price: 150 },
+    descPt: 'Pôr do sol pixelado no deserto', descEn: 'Pixel sunset in the desert', price: 300 },
   { id: 'bg-matrix', kind: 'bg', icon: '🟩',
     namePt: 'Matriz Verde', nameEn: 'Green Matrix',
-    descPt: 'Grade digital verde estilo matrix', descEn: 'Matrix-style green digital grid', price: 150 },
+    descPt: 'Grade digital verde estilo matrix', descEn: 'Matrix-style green digital grid', price: 300 },
   { id: 'bg-forest', kind: 'bg', icon: '🌲',
     namePt: 'Floresta Nativa', nameEn: 'Old-Growth Forest',
-    descPt: 'A floresta onde toda jornada começa', descEn: 'The forest where every journey begins', price: 150 },
+    descPt: 'A floresta onde toda jornada começa', descEn: 'The forest where every journey begins', price: 300 },
   { id: 'bg-ocean', kind: 'bg', icon: '🐠',
     namePt: 'Fundo do Mar', nameEn: 'Deep Sea',
-    descPt: 'Profundezas azuis com bolhas subindo', descEn: 'Blue depths with rising bubbles', price: 150 },
+    descPt: 'Profundezas azuis com bolhas subindo', descEn: 'Blue depths with rising bubbles', price: 300 },
   { id: 'bg-gameboy', kind: 'bg', icon: '🕹️',
     namePt: 'LCD Retrô', nameEn: 'Retro LCD',
-    descPt: 'Tela verde monocromática de 1989', descEn: 'Monochrome green screen, 1989 style', price: 150 },
+    descPt: 'Tela verde monocromática de 1989', descEn: 'Monochrome green screen, 1989 style', price: 300 },
   { id: 'bg-snow', kind: 'bg', icon: '❄️',
     namePt: 'Terra Gelada', nameEn: 'Frostlands',
-    descPt: 'Planície congelada sob a neve', descEn: 'Frozen plains under falling snow', price: 180 },
+    descPt: 'Planície congelada sob a neve', descEn: 'Frozen plains under falling snow', price: 360 },
   { id: 'bg-lava', kind: 'bg', icon: '🌋',
     namePt: 'Montanha de Lava', nameEn: 'Lava Mountain',
-    descPt: 'Rocha escura e magma incandescente', descEn: 'Dark rock and glowing magma', price: 180 },
+    descPt: 'Rocha escura e magma incandescente', descEn: 'Dark rock and glowing magma', price: 360 },
   { id: 'bg-sakura', kind: 'bg', icon: '🌸',
     namePt: 'Cerejeira', nameEn: 'Cherry Blossom',
-    descPt: 'Pétalas cor-de-rosa ao vento', descEn: 'Pink petals drifting in the wind', price: 180 },
+    descPt: 'Pétalas cor-de-rosa ao vento', descEn: 'Pink petals drifting in the wind', price: 360 },
   { id: 'bg-toytown', kind: 'bg', icon: '🧸',
     namePt: 'Cidade dos Brinquedos', nameEn: 'Toy Town',
-    descPt: 'Blocos pastel de uma cidade de brinquedo', descEn: 'Pastel blocks of a toy town', price: 200 },
+    descPt: 'Blocos pastel de uma cidade de brinquedo', descEn: 'Pastel blocks of a toy town', price: 400 },
   { id: 'bg-synthwave', kind: 'bg', icon: '🌆',
     namePt: 'Synthwave', nameEn: 'Synthwave',
-    descPt: 'Sol neon e grade infinita anos 80', descEn: 'Neon sun over an endless 80s grid', price: 250 },
+    descPt: 'Sol neon e grade infinita anos 80', descEn: 'Neon sun over an endless 80s grid', price: 500 },
   // SEGUNDA LEVA (kit v1.2) — cenários PINTADOS, não gradiente. São os
   // primeiros com chão desenhado de verdade na linha do palco; a decoração
   // apoia neles sem truque.
   { id: 'bg-attic', kind: 'bg', icon: '🏚️',
     namePt: 'Sótão na Chuva', nameEn: 'Rainy Attic',
-    descPt: 'Madeira, cobre e chuva na janela redonda', descEn: 'Wood, copper and rain on the round window', price: 180 },
+    descPt: 'Madeira, cobre e chuva na janela redonda', descEn: 'Wood, copper and rain on the round window', price: 540 },
   { id: 'bg-arcade', kind: 'bg', icon: '👾',
     namePt: 'Sala de Fliperama', nameEn: 'Arcade Room',
-    descPt: 'Uma parede de gabinetes acesos no escuro', descEn: 'A wall of cabinets glowing in the dark', price: 180 },
+    descPt: 'Uma parede de gabinetes acesos no escuro', descEn: 'A wall of cabinets glowing in the dark', price: 540 },
   { id: 'bg-library', kind: 'bg', icon: '📖',
     namePt: 'Biblioteca Arcana', nameEn: 'Arcane Library',
-    descPt: 'Estantes de pedra e velas de chama fria', descEn: 'Stone shelves and cold-flame candles', price: 200 },
+    descPt: 'Estantes de pedra e velas de chama fria', descEn: 'Stone shelves and cold-flame candles', price: 600 },
   { id: 'bg-shrine', kind: 'bg', icon: '⛩️',
     namePt: 'Santuário de Pedra', nameEn: 'Stone Shrine',
-    descPt: 'Portal coberto de musgo e lanternas turquesa', descEn: 'A mossy gate and turquoise lanterns', price: 200 },
+    descPt: 'Portal coberto de musgo e lanternas turquesa', descEn: 'A mossy gate and turquoise lanterns', price: 600 },
   { id: 'bg-rooftop', kind: 'bg', icon: '🌃',
     namePt: 'Telhado da Cidade', nameEn: 'City Rooftop',
-    descPt: 'A cidade inteira acesa atrás do parapeito', descEn: 'The whole city lit up beyond the railing', price: 200 },
+    descPt: 'A cidade inteira acesa atrás do parapeito', descEn: 'The whole city lit up beyond the railing', price: 600 },
   { id: 'bg-cloudsea', kind: 'bg', icon: '☁️',
     namePt: 'Mar de Nuvens', nameEn: 'Sea of Clouds',
-    descPt: 'O cume acima de tudo, e nada além do céu', descEn: 'The summit above everything, and only sky beyond', price: 220 },
+    descPt: 'O cume acima de tudo, e nada além do céu', descEn: 'The summit above everything, and only sky beyond', price: 660 },
   { id: 'bg-observatory', kind: 'bg', icon: '🔭',
     namePt: 'Observatório', nameEn: 'Observatory',
-    descPt: 'A cúpula aberta e o mapa das estrelas', descEn: 'The open dome and the star chart', price: 220 },
+    descPt: 'A cúpula aberta e o mapa das estrelas', descEn: 'The open dome and the star chart', price: 660 },
   { id: 'bg-swamp', kind: 'bg', icon: '🍄',
     namePt: 'Pântano Fosforescente', nameEn: 'Glowing Swamp',
-    descPt: 'Raízes, esporos e cogumelos acesos na água parada', descEn: 'Roots, spores and lit mushrooms over still water', price: 220 },
+    descPt: 'Raízes, esporos e cogumelos acesos na água parada', descEn: 'Roots, spores and lit mushrooms over still water', price: 660 },
   // TERCEIRA LEVA (04/10/2026) — pintados, chão na linha do palco (74%).
   { id: 'bg-lakeside', kind: 'bg', icon: '🏞️',
     namePt: 'Beira do Lago', nameEn: 'Lakeside',
-    descPt: 'Juncos, lago parado e o sol se pondo atrás dos montes', descEn: 'Reeds, a still lake and the sun setting behind the hills', price: 160 },
+    descPt: 'Juncos, lago parado e o sol se pondo atrás dos montes', descEn: 'Reeds, a still lake and the sun setting behind the hills', price: 480 },
   { id: 'bg-crystal-grove', kind: 'bg', icon: '💎',
     namePt: 'Bosque de Cristal', nameEn: 'Crystal Grove',
-    descPt: 'Arcos de pedra, cristais e duas luas no vale', descEn: 'Stone arches, crystals and two moons over the valley', price: 200 },
+    descPt: 'Arcos de pedra, cristais e duas luas no vale', descEn: 'Stone arches, crystals and two moons over the valley', price: 600 },
   { id: 'bg-ember-cavern', kind: 'bg', icon: '🔥',
     namePt: 'Caverna das Brasas', nameEn: 'Ember Cavern',
-    descPt: 'Cascatas de brasa numa gruta de cristal', descEn: 'Ember falls inside a crystal grotto', price: 220 },
+    descPt: 'Cascatas de brasa numa gruta de cristal', descEn: 'Ember falls inside a crystal grotto', price: 660 },
   { id: 'bg-night-greenhouse', kind: 'bg', icon: '🌿',
     namePt: 'Estufa Noturna', nameEn: 'Night Greenhouse',
-    descPt: 'Colunas de vidro, samambaias e flores acesas', descEn: 'Glass pillars, ferns and glowing flowers', price: 200 },
+    descPt: 'Colunas de vidro, samambaias e flores acesas', descEn: 'Glass pillars, ferns and glowing flowers', price: 600 },
   { id: 'bg-cozy-loft', kind: 'bg', icon: '🪟',
     namePt: 'Sótão Aconchegante', nameEn: 'Cozy Loft',
-    descPt: 'Janela redonda, ervas secando e um tapete macio', descEn: 'A round window, drying herbs and a soft rug', price: 180 },
+    descPt: 'Janela redonda, ervas secando e um tapete macio', descEn: 'A round window, drying herbs and a soft rug', price: 540 },
   { id: 'bg-cloud-terrace', kind: 'bg', icon: '🌅',
     namePt: 'Terraço das Nuvens', nameEn: 'Cloud Terrace',
-    descPt: 'Um mirante sobre o mar de nuvens e ilhas no céu', descEn: 'A lookout over the cloud sea and floating isles', price: 240 },
+    descPt: 'Um mirante sobre o mar de nuvens e ilhas no céu', descEn: 'A lookout over the cloud sea and floating isles', price: 720 },
   // Mission-gated backdrops — visible from day one, locked behind achievements
   // (utils/missions.ts). Completing the mission unlocks the PURCHASE.
   { id: 'bg-mission-filecity', kind: 'bg', icon: '🏘️',
     namePt: 'Cidade do Arquivo', nameEn: 'Archive City',
-    descPt: 'A vila onde tudo começa', descEn: 'The village where it all begins', price: 300,
+    descPt: 'A vila onde tudo começa', descEn: 'The village where it all begins', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-champion' } },
   { id: 'bg-mission-infinity', kind: 'bg', icon: '🗻',
     namePt: 'Monte Infinito', nameEn: 'Mount Infinity',
-    descPt: 'O pico final sob as estrelas', descEn: 'The final peak under the stars', price: 300,
+    descPt: 'O pico final sob as estrelas', descEn: 'The final peak under the stars', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-mega' } },
   { id: 'bg-mission-coliseum', kind: 'bg', icon: '🏟️',
     namePt: 'Coliseu Digital', nameEn: 'Digital Coliseum',
-    descPt: 'Arena dourada dos gladiadores', descEn: 'Golden arena of gladiators', price: 300,
+    descPt: 'Arena dourada dos gladiadores', descEn: 'Golden arena of gladiators', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-kills-100' } },
   { id: 'bg-mission-abyss', kind: 'bg', icon: '🕳️',
     namePt: 'Abismo da Masmorra', nameEn: 'Dungeon Abyss',
-    descPt: 'O fundo vermelho da masmorra', descEn: 'The dungeon\'s crimson depths', price: 300,
+    descPt: 'O fundo vermelho da masmorra', descEn: 'The dungeon\'s crimson depths', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-runs-3' } },
   { id: 'bg-mission-dinoland', kind: 'bg', icon: '🦕',
     namePt: 'Vale dos Dinos', nameEn: 'Dino Valley',
-    descPt: 'Pôr do sol pré-histórico', descEn: 'Prehistoric sunset', price: 300,
+    descPt: 'Pôr do sol pré-histórico', descEn: 'Prehistoric sunset', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-dino-1000' } },
   { id: 'bg-mission-aurora', kind: 'bg', icon: '🌠',
     namePt: 'Aurora Digital', nameEn: 'Digital Aurora',
-    descPt: 'Luzes dançando no céu polar', descEn: 'Lights dancing in the polar sky', price: 300,
+    descPt: 'Luzes dançando no céu polar', descEn: 'Lights dancing in the polar sky', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-perfect-30' } },
   { id: 'bg-mission-chuva', kind: 'bg', icon: '🌧️',
     namePt: 'Chuva das Almas', nameEn: 'Soul Rain',
-    descPt: 'Chuva de luz sob as pedras antigas', descEn: 'Soft light rain over the ancient stones', price: 300,
+    descPt: 'Chuva de luz sob as pedras antigas', descEn: 'Soft light rain over the ancient stones', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-barrage-1000' } },
   { id: 'bg-mission-meada', kind: 'bg', icon: '🧵',
     namePt: 'Fio da Meada', nameEn: 'Thread Trail',
-    descPt: 'Trilhas de fios dourados entre as raízes', descEn: 'Golden threads winding through the roots', price: 300,
+    descPt: 'Trilhas de fios dourados entre as raízes', descEn: 'Golden threads winding through the roots', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-zip-10' } },
   { id: 'bg-mission-colcha', kind: 'bg', icon: '🧶',
-    namePt: 'Colcha de Retalhos', nameEn: 'Patchwork Quilt',
-    descPt: 'Retalhos de luz costurados no chão', descEn: 'Patches of light stitched into the ground', price: 300,
+    namePt: 'Selos de Luz', nameEn: 'Light Seals',
+    descPt: 'Selos de luz gravados no chão', descEn: 'Light seals etched into the ground', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-patches-10' } },
   { id: 'bg-mission-corrida', kind: 'bg', icon: '⚡',
     namePt: 'Pista da Corrida', nameEn: 'Obstacle Track',
-    descPt: 'Trilha veloz sob um céu de tempestade', descEn: 'A fast track under a stormy sky', price: 300,
+    descPt: 'Trilha veloz sob um céu de tempestade', descEn: 'A fast track under a stormy sky', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-dino-normal-500' } },
   { id: 'bg-mission-campo', kind: 'bg', icon: '💨',
     namePt: 'Campo de Força', nameEn: 'Force Field',
-    descPt: 'Obstáculos desfeitos sob um escudo de luz', descEn: 'Obstacles broken under a light shield', price: 300,
+    descPt: 'Obstáculos desfeitos sob um escudo de luz', descEn: 'Obstacles broken under a light shield', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-dino-dash-30' } },
   { id: 'bg-mission-mao', kind: 'bg', icon: '✂️',
     namePt: 'Mão de Mestre', nameEn: 'Steady Hand',
-    descPt: 'Mesa de pedra com marcas de vitória', descEn: 'Stone table marked with victories', price: 300,
+    descPt: 'Mesa de pedra com marcas de vitória', descEn: 'Stone table marked with victories', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-ppt-normal-5' } },
   { id: 'bg-mission-andares', kind: 'bg', icon: '🕯️',
     namePt: 'Primeiros Andares', nameEn: 'First Floors',
-    descPt: 'Escadas de pedra iluminadas por velas', descEn: 'Stone stairs lit by candles', price: 300,
+    descPt: 'Escadas de pedra iluminadas por velas', descEn: 'Stone stairs lit by candles', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rogue-floors-3' } },
   { id: 'bg-mission-fundo', kind: 'bg', icon: '🗝️',
     namePt: 'Fundo do Calabouço', nameEn: 'Deep Dungeon',
-    descPt: 'O coração escuro da masmorra', descEn: 'The dark heart of the dungeon', price: 300,
+    descPt: 'O coração escuro da masmorra', descEn: 'The dark heart of the dungeon', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rogue-floors-15' } },
   { id: 'bg-mission-habitante', kind: 'bg', icon: '🌀',
     namePt: 'Habitante da Fenda', nameEn: 'Rift Dweller',
-    descPt: 'Ruínas que se formam ao redor da fenda', descEn: 'Ruins forming around the rift', price: 300,
+    descPt: 'Ruínas que se formam ao redor da fenda', descEn: 'Ruins forming around the rift', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rift-runs-15' } },
   { id: 'bg-mission-guardiao', kind: 'bg', icon: '🛡️',
     namePt: 'Guardião da Fenda', nameEn: 'Rift Warden',
-    descPt: 'Portal guardado por pedras antigas', descEn: 'A portal guarded by ancient stones', price: 300,
+    descPt: 'Portal guardado por pedras antigas', descEn: 'A portal guarded by ancient stones', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rift-kills-500' } },
   { id: 'bg-mission-cliente', kind: 'bg', icon: '🏪',
     namePt: 'Cliente do Clã', nameEn: 'Clan Regular',
-    descPt: 'Banca de mercado sob lanternas', descEn: 'A market stall under lanterns', price: 300,
+    descPt: 'Banca de mercado sob lanternas', descEn: 'A market stall under lanterns', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-clan-shop-3' } },
   { id: 'bg-mission-traco', kind: 'bg', icon: '🎨',
     namePt: 'Outro Traço', nameEn: 'Another Stroke',
-    descPt: 'Ateliê de cores e pincéis', descEn: 'A studio of colors and brushes', price: 300,
+    descPt: 'Ateliê de cores e pincéis', descEn: 'A studio of colors and brushes', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-regen-1' } },
   { id: 'bg-mission-espaco', kind: 'bg', icon: '🧭',
     namePt: 'Espaço Preparado', nameEn: 'Space Ready',
-    descPt: 'Clareira organizada para o foco', descEn: 'A clearing set up for focus', price: 300,
+    descPt: 'Clareira organizada para o foco', descEn: 'A clearing set up for focus', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-focus-prepared-10' } },
   { id: 'bg-mission-ouro', kind: 'bg', icon: '🏅',
     namePt: 'Faixa de Ouro', nameEn: 'Gold Band',
-    descPt: 'Pódio dourado sob céu de fim de tarde', descEn: 'Golden podium under an evening sky', price: 300,
+    descPt: 'Pódio dourado sob céu de fim de tarde', descEn: 'Golden podium under an evening sky', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rank-gold' } },
 
+  // COSMÉTICOS NOVOS (temas e elementos, 04/11/2026): entram no fim desta lista por `injetarCatalogosNovos` (chunk lazy
+  // `catalogosNovos.ts`, orçamento de bytes, REGISTRO §498); catálogo em `utils/cosmeticosNovos.ts`.
 ];
 
 /**
@@ -568,6 +613,8 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
     namePt: 'Arena sob Holofotes', nameEn: 'Spotlight Arena',
     descPt: 'A luta principal da noite — e o pet é a atração', descEn: 'The main event of the night — and the pet is the draw',
     price: 70 },
+  // Decoração de Honra (armeiro na parede, estátuas, manequins, bigornas, chãos de arena…): catálogo gerado em
+  // `utils/honraDecor.ts`, só as peças com arte instalada; entra no fim desta lista por `injetarCatalogosNovos`. Preço pela escada 25/70/180/450.
 ];
 
 /**
@@ -601,8 +648,21 @@ export const GUILD_ITEMS: ShopItem[] = [
     unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
 ];
 
+/**
+ * PRÊMIOS DE RANKING (REGISTRO §482): o Fliperama de Canto saiu da loja e é o prêmio do 1º lugar nos rankings mensais de minigame, entregue
+ * por CARTA do Papus com o item de anexo (`functions/api/_arcadePrize.js`). Nunca comprável; equipável pela folha "da sua roda". Fica fora de
+ * `GUILD_ITEMS` (que é só a Concha da Maré, travado por `guildReward.contract.test.js`), mas segue o mesmo trilho via `isGuildReward`.
+ */
+export const RANK_ITEMS: ShopItem[] = [
+  { id: 'furn-arcade-cab', kind: 'furniture', icon: '🕹️',
+    slot: 'floor-left', fits: 'indoor',
+    namePt: 'Fliperama de Canto', nameEn: 'Corner Arcade',
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 0,
+    unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
+];
+
 /** É uma conquista da Guilda? Nunca comprável, venha de onde vier. */
-export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id);
+export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id) || RANK_ITEMS.some(g => g.id === item.id);
 
 /**
  * CONJUNTO COSMÉTICO DO TRIMESTRE da assinatura (`docs/ASSINATURA-SPEC.md`, D10).
@@ -650,4 +710,32 @@ export const SUBSCRIPTION_ITEMS: ShopItem[] = [
 /** É item da assinatura? Nunca comprável com moeda, venha de onde vier. */
 export const isSubscriptionReward = (item: Pick<ShopItem, 'id'>): boolean => SUBSCRIPTION_ITEMS.some(s => s.id === item.id);
 
-export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...SUBSCRIPTION_ITEMS];
+/**
+ * CONCESSÕES (Cristal Fundador, `utils/cristalFundador.ts`, chunk lazy): cosmético que NUNCA está à venda — fora de `SHOP_ITEMS` e de
+ * `TOURNAMENT_ITEMS`, sem preço e travado por uma `unlock` que não existe (como a Concha da Maré). Só entra aqui para o palco resolver o id.
+ * A entrega por progressão ainda não existe (aguarda o dono); posse = `ownedFurniture`, sem campo novo no save.
+ */
+export const CONCESSOES_ITEMS: ShopItem[] = [];
+
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS];
+
+/**
+ * Os cosméticos novos (`cosmeticosNovos.ts`) e a decoração de Honra (`honraDecor.ts`) moram num chunk lazy (REGISTRO §498): este é o
+ * ponto onde ELES entram no catálogo, no MESMO lugar de antes (fim de `SHOP_ITEMS` e de `TOURNAMENT_ITEMS`), mutando as listas
+ * e refazendo `ALL_SHOP_ITEMS` no lugar. Idempotente. O `main.tsx` espera a carga antes do 1º render (nenhum save é lido antes).
+ */
+export function injetarCatalogosNovos(novos: readonly ShopItem[], honra: readonly ShopItem[]): void {
+  const tem = new Set(ALL_SHOP_ITEMS.map(i => i.id));
+  SHOP_ITEMS.push(...novos.filter(i => !tem.has(i.id)));
+  TOURNAMENT_ITEMS.push(...honra.filter(i => !tem.has(i.id)));
+  ALL_SHOP_ITEMS.length = 0;
+  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS);
+}
+
+/** Entra o cosmético de concessão (nunca à venda) no catálogo resolvível. Idempotente. */
+export function injetarConcessoes(itens: readonly ShopItem[]): void {
+  const tem = new Set(ALL_SHOP_ITEMS.map(i => i.id));
+  CONCESSOES_ITEMS.push(...itens.filter(i => !tem.has(i.id)));
+  ALL_SHOP_ITEMS.length = 0;
+  ALL_SHOP_ITEMS.push(...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS, ...RANK_ITEMS, ...SUBSCRIPTION_ITEMS, ...CONCESSOES_ITEMS);
+}

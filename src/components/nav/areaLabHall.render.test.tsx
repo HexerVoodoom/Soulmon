@@ -93,7 +93,7 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
     const hall = bloco('hallContent');
     expect(hall).toContain('<LibraryPage');
     expect(hall).toContain('embedded');
-    expect(hall).toContain("onVisitPlayer={() => contarMissao('friend-visit')}");
+    expect(hall).toContain("onGiftSent={() => contarMissao('gift-sent')}");
   });
 
   it('a Lumi recebe no Hall, nos dois idiomas, sem prometer o que já existe como "em breve"', () => {

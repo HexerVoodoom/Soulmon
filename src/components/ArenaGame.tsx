@@ -29,22 +29,26 @@
  * VISOR 348×160 (`games/GameKit.tsx`). O erro `sem-motor` é `cloud_off` num `role=status` (é rede,
  * não medalha).
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { dexIdsOfFoe } from '../utils/elementDex';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel, foeSpecialLabel, familiaDoNomeInimigo } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
 import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
@@ -52,14 +56,18 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { RiftResultExtras } from './games/RiftResultExtras';
+import { essenceLedgerRows } from '../utils/resultEssences';
+import { arenaRoundDrops } from '../utils/arenaUltimoAdversario';
+import { ArenaCuraModal } from './games/ArenaCuraModal';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { novoSoulmonById, rosterSpriteOf } from '../utils/novosSoulmon';
-import { RAVEN_ENTRY } from '../utils/enemyRoster';
-import { COMBINADOS_ART } from '../utils/enemyRosterArt';
+import { RAVEN_ENTRY, rosterEntryOfKey } from '../utils/enemyRoster';
+import { COMBINADOS_ART, INIMIGOS_API_ART } from '../utils/enemyRosterArt';
 import {
   ARENA_ROUNDS,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -79,18 +87,21 @@ import {
   familyOfSkill,
   loadBestiaryPool,
   arenaFoeKey,
+  arenaFoeFormKey,
   type ArenaEnemy,
   type ArenaPlayerCfg,
   type BestiaryCreature,
 } from '../utils/arena';
 import { mulberry32 } from '../utils/combate/rng';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
-import { hpPoints } from '../utils/combate/fight';
+import { hpPoints, statExibido } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { RewardPreview } from './ui/RewardPreview';
-import { useTalentBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
+import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
@@ -111,21 +122,29 @@ export interface ArenaGameProps {
   skills?: Partial<Record<FichaStage, StageSkills>>;
   /** Elemento dominante do oráculo: só o FALLBACK da identidade quando o save não tem ficha (igual nas outras telas). */
   petElement?: string;
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  petBase?: string;
   /** Atributos de arena (`getArenaAttributes(ficha)`), quando conhecidos. */
   attrs?: { principal: string; secundario: string };
   /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
    *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
   seed?: number;
-  onEarnPoints?: (points: number) => void;
+  onEarnPoints?: (points: number, extraCap?: number) => number | void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
   onEnemySeen?: (enemyKey: string) => void;
+  /** A run TERMINOU (vitória, derrota ou empate): o chamador re-sorteia os `ARENA_CHOICES` cards de graça (`applyArenaRunEnd`). Uma vez por run. */
+  onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
+  /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
+  ladder?: number;
+  /** ⚔️ §458: pede 1 convite de Duelo ao começar a run (inclusive "Lutar de novo"). `false` = sem convite: a Arena volta para a folha, onde está a troca por energia. Ausente = sem convite (testes, Torneio). */
+  onBeginRun?: () => boolean;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onBeginRun, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -139,9 +158,16 @@ export function ArenaGame({
 
   const [pool, setPool] = useState<BestiaryCreature[] | null>(null);
   const [fase, setFase] = useState<Fase>('carregando');
+  const [bitsGanhos, setBitsGanhos] = useState(0);
+  /** Essências que a run rendeu (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
+  const [essenciasRun, setEssenciasRun] = useState<EssenceDrop[]>([]);
+  /** §384: o que o ÚLTIMO adversário entregou, já em dobro (vazio = run não vencida ou sem drop): a linha "×2" do "Ganhou". */
+  const [dobradoRun, setDobradoRun] = useState<EssenceDrop[]>([]);
   const [rodada, setRodada] = useState(1);
   const [inimigos, setInimigos] = useState<ArenaEnemy[]>([]);
   const [pontos, setPontos] = useState(0);
+  /** Quanto de HP (fração) o fôlego entre rodadas devolveu: o número do modal "+X HP". */
+  const [curaFrac, setCuraFrac] = useState(0);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausado, setPausado] = useState(false);
   const reduzido = useRef(prefersReducedMotion());
@@ -157,6 +183,10 @@ export function ArenaGame({
   const hpCarryRef = useRef(1);
   const energyCarryRef = useRef(0);
   const rodadaRef = useRef(1);
+  const ladderPropRef = useRef(ladder);
+  ladderPropRef.current = ladder;
+  /** A escada DESTA run: lida em `comecar`, nunca muda durante a luta. */
+  const runLadderRef = useRef(ladder);
   const inimigosRef = useRef<ArenaEnemy[]>([]);
 
   const par = skills?.[stage];
@@ -174,7 +204,7 @@ export function ArenaGame({
   const gs = ctx?.gameState;
   const estado = useMemo<SoulXPState>(
     () => (gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage }),
     [gs, evolutionStage],
   );
@@ -185,15 +215,29 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento, hx),
+    companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
-    elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? {} : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
-  }), [hx, petElement, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+    elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? (petBase ? { basica: petBase, especial: petBase } : {}) : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
+  }), [hx, petElement, petBase, estado, gs, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
   const hpMax = hpPoints(lado.combatant.hp);
+
+  /* Fim de run (04/11/2026, dono): avisa UMA vez por run, para os cards da Arena (`ARENA_CHOICES`, §370) serem sorteados de novo sem gastar reroll.
+     A chave é a semente da luta: a revanche (semente nova) é outra run. */
+  const runEndRef = useRef(onRunEnd);
+  runEndRef.current = onRunEnd;
+  const fimAvisadoRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (fase !== 'venceu' && fase !== 'perdeu' && fase !== 'empatou') return;
+    if (fimAvisadoRef.current === seedLuta) return;
+    fimAvisadoRef.current = seedLuta;
+    runEndRef.current?.(fase === 'venceu' ? 'win' : fase === 'perdeu' ? 'loss' : 'draw');
+  }, [fase, seedLuta]);
 
   /** Sprite por inimigo, sorteado UMA vez por rodada — sortear na pintura trocaria o bicho a cada re-render. */
   const [sprites, setSprites] = useState<string[]>([]);
@@ -211,27 +255,44 @@ export function ArenaGame({
 
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
-    const novos = arenaFoesOfSeed(runSeedRef.current, n); // a MESMA função do card da DueloSheet
+    const novos = arenaFoesOfSeed(runSeedRef.current, n, runLadderRef.current, jogadorRef.current.combatant.level); // a MESMA função do card da DueloSheet
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey || e.formaKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey || e.formaKey)!)!) : undefined) ?? (e.chefeUltra ? (INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] ?? novoSoulmonById(e.chefeUltra)?.sprite('ultra')) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);
 
+  const beginRunRef = useRef(onBeginRun);
+  beginRunRef.current = onBeginRun;
+  const exitRef = useRef(onExit);
+  exitRef.current = onExit;
   const comecar = useCallback(() => {
     if (!pool) return;
+    if (beginRunRef.current && !beginRunRef.current()) { exitRef.current(); return; } // sem convite: volta à folha (troca por energia)
     runSeedRef.current = chosenSeedRef.current ?? newDefenseSeed();
     chosenSeedRef.current = undefined;
+    runLadderRef.current = ladderPropRef.current;
     setSeedLuta(runSeedRef.current);
     hpCarryRef.current = 1;
     energyCarryRef.current = 0;
+    setEssenciasRun([]);
     setPontos(0);
     setRodada(1);
+    setBitsGanhos(0);
+    setDobradoRun([]);
     montarRodada(1, pool);
   }, [pool, montarRodada]);
+
+  /** Entrada direta: pool carregado = a run começa (uma vez; a semente/escada congelam em `comecar`, convite recusado volta à folha). */
+  const autoIniciouRef = useRef(false);
+  useEffect(() => {
+    if (fase !== 'intro' || !pool || autoIniciouRef.current) return;
+    autoIniciouRef.current = true;
+    comecar();
+  }, [fase, pool, comecar]);
 
   /** A rodada que o núcleo vai lutar: lê as refs no começo da luta (sempre o estado mais novo). */
   const rodadaDoNucleo = useCallback((): GroupRound => {
@@ -241,7 +302,7 @@ export function ArenaGame({
     const els = inimigosRef.current.map(e => e.elements);
     return {
       player: { ...arenaPlayerSide(p), startShield: r === 0 ? riftRef.current.startShield : 0 }, // só na 1ª rodada
-      foes: arenaFoeSides(p, r, els),
+      foes: arenaFoeSides(p, r, els, runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra), runSeedRef.current),
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
       startEnergy: energyCarryRef.current,
@@ -258,7 +319,7 @@ export function ArenaGame({
 
   const cena = useCallback((): GroupScene => {
     const p = jogadorRef.current;
-    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements));
+    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra), runSeedRef.current);
     return {
       playerMaxHp: hpPoints(arenaPlayerSide(p).combatant.hp),
       foeMaxHp: foes.map(f => hpPoints(f.combatant.hp)),
@@ -266,10 +327,13 @@ export function ArenaGame({
       foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.element ?? inimigosRef.current[i]?.elements[0]),
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
       playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
-      foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
+      playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+      foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; const el = e?.element ?? e?.elements[0]; const fk = e ? arenaFoeFormKey(e) : undefined; return meleeImpactOf({ element: el, key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null, forma: foeStrikeForm(el, sp ? 'especial' : 'basica', fk), ...(sp ? {} : { formKey: fk }) }); },
+      foeKind: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; return foeStrikeForm(e?.element ?? e?.elements[0], sp ? 'especial' : 'basica', e ? arenaFoeFormKey(e) : undefined); },
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
       // Vantagem elemental (30/10/2026, dono): sai JUNTO DO DANO no inimigo atingido — a mesma conta do combate (`elementAdvantage`).
       advantageTag: (foe: number, sp: boolean) => {
         const alvo = inimigosRef.current[foe];
@@ -282,13 +346,21 @@ export function ArenaGame({
   const aoFimDaRodada = useCallback((res: GroupResult) => {
     if (res.winner === 'player') {
       // Fôlego entre rodadas — a regra da simulação (`ROUND_CLEAR_HEAL`), e é ela que faz a run inteira ser possível.
-      hpCarryRef.current = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
+      const depois = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
+      setCuraFrac(Math.max(0, depois - Math.max(0, res.hpLeft)));
+      hpCarryRef.current = depois;
       energyCarryRef.current = res.energyLeft;
       // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete`. PR18 (pedido do dono, 06/10/2026): ganhou o som
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
-      if (ids.length > 0) elementsDefeatedRef.current?.(ids, inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d));
+      if (ids.length > 0) {
+        // §384: na última rodada, o último adversário dropa em dobro. O MESMO vetor vai para o updater e para o "Ganhou".
+        const { drops, dobrados } = arenaRoundDrops(inimigosRef.current.map(e => essenceDropsOfFoe(e, e.dropTier)), rodadaRef.current >= ARENA_ROUNDS);
+        elementsDefeatedRef.current?.(ids, drops);
+        if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
+        if (elementsDefeatedRef.current && dobrados.length > 0) setDobradoRun(dobrados);
+      }
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
     } else {
@@ -299,25 +371,31 @@ export function ArenaGame({
     }
   }, []);
 
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const batalha = useGroupBattle({
     // A luta só para quando `aoFimDaRodada` leva a fase embora: o último golpe zera os inimigos e o relógio
     // ainda precisa do `END_BEAT` para o fim aparecer (A3, rodada 7: não desligar por `vivos.length`).
     running: fase === 'luta',
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaRodada,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaRodada, speed,
   });
 
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      onEarnPoints?.(riftBitsWith(pontos, rift.riftBits));
+      setBitsGanhos(onEarnPoints?.(pontos, rift.riftBitsCap) ?? pontos); // o creditado (teto diário, com o extra da Agulha de bússola §393), não o pedido
       setFase('venceu');
       return;
     }
     const n = rodada + 1;
     setRodada(n);
     montarRodada(n, pool);
-  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
+  }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBitsCap]);
+
+  // Última rodada vencida: sem modal nem tela intermediária, fecha a run direto.
+  useEffect(() => {
+    if (fase === 'rodada-limpa' && rodada >= ARENA_ROUNDS) proximaRodada();
+  }, [fase, rodada, proximaRodada]);
 
   // §213: desgarrado de JOGADOR por cima de um inimigo da rodada (só arte/rótulo). Raro, determinístico por run+rodada+posição.
   const wildPlayers = useStrayPlayerEncounters(inimigos.map((_, i) => `arena|${runSeedRef.current}|${rodadaRef.current}|${i}`));
@@ -329,16 +407,19 @@ export function ArenaGame({
   /* A LUTA: tela cheia, profundidade de Game Boy, barra de HP e de energia nos pés, golpes com a arte do
      elemento. Enquanto o estado do relógio ainda é o da rodada anterior (`stateKey`), a cena pinta a rodada
      nova cheia — sem piscar os inimigos caídos da anterior. */
-  if (fase === 'luta') {
+  /* Entre rodadas (04/11/2026, dono): a luta fica CONGELADA na tela (o cenário da Arena não some) e o modal padrão
+     mostra a vida recuperada. A última rodada vencida não abre modal: vai direto ao fim da run (efeito acima). */
+  const entreRodadas = fase === 'rodada-limpa' && rodada < ARENA_ROUNDS;
+  if (fase === 'luta' || entreRodadas) {
     const pronto = batalha.stateKey === fightKey;
-    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements));
+    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current, inimigos.some(e => e.chefeUltra), runSeedRef.current);
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
     const foesHp = (i: number) => (pronto ? (batalha.foesHp[i] ?? 1) : 1);
-    const alvoIdx = Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
+    const alvoIdx = pronto ? batalha.target : Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
     return (
       <TorcidaLayer
         onTap={batalha.cheer}
-        active={!pausado && batalha.phase === 'idle'}
+        active={!entreRodadas && !pausado && batalha.phase === 'idle'}
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot
@@ -347,12 +428,13 @@ export function ArenaGame({
         onSwipe={batalha.swipe}
       >
         <BattleStage
+          summon={summonsDoGrupo(batalha.summon, jogador.companheiro)}
           scene={cenaDaRun.bg}
-          specialLabel={specialLabel(isPt, especial)}
-          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          specialLabel={specialLabel(isPt, especial, hexFamily(familyOfSkill(especial), hx))}
+          foeSpecialLabel={(f, i) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(foesLado[i ?? 0]?.special))}
           isPt={isPt}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             // o que se VÊ = a identidade (par incluso), SEMPRE — com ou sem ficha (o fallback é o elemento do oráculo, `petElement`). Antes, sem ficha
             // no estágio, caía em `atributos.principal` (o `vigor` padrão: o "marronzinho"). A vantagem segue em `elements` (base).
             element: fxElementId(ident.basico.elemento),
@@ -366,12 +448,14 @@ export function ArenaGame({
             return {
               key: i, sprite: wildPlayers[i]?.spriteUrl ?? sprites[i], stage: e.tier, name: nomeDe(e, i), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
               element: fxElementId(e.element ?? e.elements[0]), down: foesHp(i) <= 1e-9,
-              // só quem tem especial (o chefe) mostra a barra de energia
+              // só quem tem especial (o chefe e, §222, toda forma acima de Rookie) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,
               status: pronto ? batalha.status.foes[i] : undefined,
             };
           })}
           target={alvoIdx}
+          picked={pronto ? batalha.picked : null}
+          onPickFoe={batalha.pickTarget}
           action={pronto ? batalha.action : null}
           hit={pronto ? batalha.hits : []}
           charging={pronto && batalha.charging}
@@ -380,6 +464,7 @@ export function ArenaGame({
           dodge={pronto ? batalha.dodge : null}
           onDodge={batalha.swipe}
           petDodge={pronto ? batalha.petDodge : null}
+          fast={speed > 1}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
@@ -397,13 +482,18 @@ export function ArenaGame({
         >
           {/* Gancho de estado (sem texto): em que passo a luta está. */}
           <span hidden data-arena-fase={fase} />
+          {fase === 'luta' && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />}
         </BattleStage>
+        {entreRodadas && (
+          <ArenaCuraModal language={isPt ? 'pt-BR' : 'en-US'} antes={Math.max(0, hpCarryRef.current - curaFrac)} depois={hpCarryRef.current}
+            pontos={Math.round(curaFrac * hpMax)} rodada={rodada} totalRodadas={ARENA_ROUNDS} onNext={proximaRodada} />
+        )}
       </TorcidaLayer>
     );
   }
 
   return (
-    <GameRoot>
+    <GameRoot moldura={{ tela: 'arena-livre', title: isPt ? 'Arena livre' : 'Free Arena' }}>
       <TorcidaLayer onTap={batalha.cheer} active={false} isPt={isPt} style={{ flex: '1 0 auto' }}>
       <GameHeader
         run={false}
@@ -447,89 +537,18 @@ export function ArenaGame({
         </div>
       )}
 
+      {/* Sem tela de entrada (dono, 17/11/2026): o "Lutar" do card já inicia a run. Enquanto `comecar` roda (1 quadro), o visor segue como no "carregando". */}
       {fase === 'intro' && (
-        <>
-          <GameVisor height={80} scene={cenaDaRun.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-          </GameVisor>
-          {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
-            <StatTag label={isPt ? 'Poder' : 'Power'} value={jogador.combatant.atk} />
-            <StatTag label={isPt ? 'Essência' : 'Essence'} value={isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en} />
-          </div>
-
-          {/* A ficha do jogador é o que torna a Arena DELE. Sem ela, o texto
-              diz o porquê em vez de mostrar um par genérico sem explicação. */}
-          {basica && especial ? (
-            <>
-              <p style={phaseLine}>
-                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? basica.nome.pt : basica.nome.en}</b>
-                {' · '}{isPt ? 'a cada golpe' : 'every strike'}
-              </p>
-              <p style={phaseLine}>
-                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? especial.nome.pt : especial.nome.en}</b>
-                {' · '}{isPt ? 'com a energia cheia' : 'with full energy'}
-              </p>
-            </>
-          ) : (
-            <p style={phaseLine}>
-              {isPt
-                ? 'Sua ficha ainda não está neste aparelho, então você entra com um par genérico. Abra a página do seu Soulmon uma vez para lutar com as habilidades dele.'
-                : "Your sheet is not on this device yet, so you go in with a generic pair. Open your Soulmon's page once to fight with its own skills."}
-            </p>
-          )}
-
-          {/* A explicação mora atrás do "?" (InfoTip) — nenhum texto explicativo solto (04/10/2026). */}
-          <div style={{ display: 'flex', justifyContent: 'center' }} data-arena-torcida-legenda>
-            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funciona o Duelo' : 'How the Duel works'}>
-              <span style={{ display: 'block' }}>
-                {isPt
-                  ? 'Seu Soulmon luta e se defende sozinho, contra todos ao mesmo tempo. Toque na tela (ou no mascote) para encher a barra de cheer.'
-                  : 'Your Soulmon fights and defends on its own, against all the enemies at once. Tap the screen (or the mascot) to fill the cheer bar.'}
-              </span>
-              <span style={{ display: 'block', marginTop: 6 }}>
-                {isPt
-                  ? 'No especial, toque no anel na hora certa; para esquivar do inimigo, deslize o dedo para o lado.'
-                  : 'On its special, tap the ring at the right moment; to dodge the enemy’s, swipe sideways.'}
-              </span>
-            </InfoTip>
-          </div>
-          <p style={phaseLine}>
-            {isPt
-              ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. O elemento pesa no dano; perder custa a run, nunca os seus corações.`
-              : `${ARENA_ROUNDS} rounds back to back, each harder. Element weighs on damage; losing costs the run, never your hearts.`}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
-          <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-            {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
-          </button>
-        </>
-      )}
-
-      {fase === 'rodada-limpa' && (
-        <>
-          <GameVisor height={80} scene={cenaDaRun.bg}>
-            {/* §201 (dono, 30/10/2026): a bandeira branca saiu (o dono não gostou); o Soulmon fica centrado no visor. */}
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-          </GameVisor>
-          <p style={phaseTitle}>{isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}</p>
-          <p className="sm2-num" style={phaseLine}>
-            {isPt
-              ? `Você recuperou um pouco de vida. Total: ${pontos} Bits.`
-              : `You recovered some health. Total: ${pontos} Bits.`}
-          </p>
-          <button type="button" onClick={proximaRodada} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-            {rodada >= ARENA_ROUNDS
-              ? (isPt ? 'Terminar' : 'Finish')
-              : (isPt ? 'Próxima rodada' : 'Next round')}
-          </button>
-        </>
+        <GameVisor height={80} scene={cenaDaRun.bg}>
+          <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
+        </GameVisor>
       )}
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
       {(fase === 'venceu' || fase === 'perdeu' || fase === 'empatou') && (
+        <RiftResultExtras extraCap={rift.riftBitsCap}>
         <ResultScreen
+          playAgainIcon={lotIconName('arena', 'duelo')} playAgainArt={lotIconArt('arena', 'duelo')} dailyEvent="arena"
           language={language}
           outcome={fase === 'venceu' ? 'win' : fase === 'empatou' ? 'calm' : 'tired'}
           gameName="Arena"
@@ -544,15 +563,18 @@ export function ArenaGame({
               ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
               : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
           hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
-          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? bitsGanhos : 0 }, ...essenceLedgerRows(essenciasRun), ...(fase === 'venceu' && dobradoRun.length > 0 ? [{ key: 'arena-last-double', kind: 'text' as const, label: isPt ? 'Último adversário: drop em dobro ×2' : 'Last opponent: double drop ×2' }] : [])]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
+          opponentSrc={sprites[sprites.length - 1]}
           scene={cenaDaRun.bg}
-          playAgainLabel={isPt ? 'Tentar de novo' : 'Try again'}
+          /* Vitória não pode soar como derrota (dono, 04/11/2026): venceu = "Lutar de novo"; derrota/empate = "Tentar de novo". */
+          playAgainLabel={fase === 'venceu' ? (isPt ? 'Lutar de novo' : 'Battle again') : (isPt ? 'Tentar de novo' : 'Try again')}
           onPlayAgain={comecar}
           homeLabel={sair}
           onHome={onExit}
         />
+        </RiftResultExtras>
       )}
       </TorcidaLayer>
     </GameRoot>

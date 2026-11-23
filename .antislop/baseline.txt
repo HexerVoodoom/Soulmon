@@ -1,0 +1,16 @@
+comentario-narrador 5
+emoji-no-codigo 0
+implementacao-falsa 107
+todo-pendente 3
+erro-engolido 76
+fallback-silencioso 139
+escape-de-tipo 449
+log-de-depuracao 100
+segredo-literal 3
+sql-concatenado 0
+seguranca-desligada 14
+teste-pulado 6
+teste-tautologico 0
+prosa-inflada 79
+arquivo-gigante 90
+implementacao-paralela 0

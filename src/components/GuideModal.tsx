@@ -1,10 +1,13 @@
 import { useState, type ReactNode } from 'react';
-import { STROLL_MIN_MINUTES } from '../types/travessias';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
+import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_HOUR } from '../utils/arenaSorteio';
+import { ARENA_ROUNDS } from '../utils/arena';
+import { ARENA_ULTIMO_DROP_MULT } from '../utils/arenaUltimoAdversario';
 import type { Language } from '../utils/i18n';
-import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
+import { FORM_REQUIREMENTS, ULTRA_MEGA_IDS, ULTRA_PATIENCE_POINTS, getMaxEnergyForStage } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 import {
   HABIT_MILESTONES,
@@ -24,14 +27,14 @@ import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
-import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
+import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS, upgradeBitsCost } from '../utils/forge';
 import { HEX_COSTS } from '../utils/hexsmith';
 import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
-import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
+import { BITS_PACK_DAILY_CAP } from '../utils/currencies';
 import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../utils/hunger';
+import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
@@ -81,12 +84,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       body: (
         <>
           <p style={para}>
-            {L(
+            {emphasizeSoulFragment(L(
               // 🧬 11/10/2026 (decisão do dono): o critério de evolução é o
               // GAUGE (`utils/evolutionGauge.ts`), não mais o dia completo.
               'Cada forma tem uma barra de Fragmentos de Alma. Todo hábito ou tarefa concluída rende fragmentos (tarefas maiores, 1 a 3), até a meta diária do estágio.',
               'Each form has a Soul Fragment bar. Every habit or task you finish earns fragments (bigger tasks, 1 to 3), up to your stage’s daily goal.',
-            )}
+            ))}
           </p>
           <p style={para}>
             {L(
@@ -120,8 +123,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               ditos — com a permanência primeiro, que é a que não pede descer. */}
           <p style={para}>
             {L(
-              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos (aí bastam ${R.mega.gauge}). Nenhum é melhor, e nenhum pede que você degenere.`,
-              `The Ultra has two paths: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches (then ${R.mega.gauge} is enough). Neither is better, and neither asks you to degenerate.`,
+              `Para chegar ao Ultra, primeiro libere as ${ULTRA_MEGA_IDS.length} Megas (poder, harmonia e benevolência). Só depois disso a barra do Ultra começa a encher, e ela pede ${ULTRA_PATIENCE_POINTS} passos como mega.`,
+              `To reach the Ultra, first unlock all ${ULTRA_MEGA_IDS.length} Megas (power, harmony and benevolence). Only after that does the Ultra bar start filling, and it asks for ${ULTRA_PATIENCE_POINTS} steps as a mega.`,
             )}
           </p>
           {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra
@@ -160,7 +163,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           <p style={para}>
             {L(
               'Poção de elemento: no Centro de Evolução, gaste essências para preparar uma poção. Dê ao Soulmon pela pasta de itens e, na próxima evolução, ele carrega esse elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Outra poção substitui a que espera.',
-              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from the item folder and, at the next evolution, it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. Another potion replaces the one waiting.',
+              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from Files and, at the next evolution, it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. Another potion replaces the one waiting.',
             )}
           </p>
           <p style={para}>
@@ -221,8 +224,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto.`,
-              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving.`,
+              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto. Dormindo, tudo isso ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido (faminto continua parado).`,
+              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving. While asleep, all of that runs ×${SLEEP_ENERGY_REGEN_BONUS} faster (starving stays stopped).`,
             )}
           </p>
           <p style={para}>
@@ -277,8 +280,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar já conta como feito.`,
-              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting counts as done.`,
+              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar a torna a tarefa bônus do dia, que rende um ponto extra para a evolução.`,
+              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting makes it the day’s bonus task, worth one extra point toward evolution.`,
             )}
           </p>
           <p style={para}>
@@ -411,19 +414,19 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O passeio fica com o NPC da Exploração: é lá que você escolhe e conclui. Depois de pegar a missão, o Concluir abre em ' + STROLL_MIN_MINUTES + ' minutos.',
-              'The stroll stays with the NPC in Exploration: that is where you pick and finish it. Once you pick a mission, Done opens after ' + STROLL_MIN_MINUTES + ' minutes.',
+              'O passeio fica com o NPC da Exploração: é lá que você escolhe. Escolhida, a tarefa "Passeio" aparece na Home; faça o passeio e marque (na Home ou de volta no NPC) para ver a cena na hora.',
+              'The stroll stays with the NPC in Exploration: that is where you pick. Once picked, the "Stroll" task shows on Home; do the stroll and mark it (on Home or back at the NPC) to see the scene right away.',
             )}
           </p>
           <p style={para}>
             {L(
-              'No menu de Missões fica só a linha "Faça um passeio". Missões só apontam o que fazer: feita a ação, a linha fica pronta e você toca em Resgatar.',
-              'The Missions menu only keeps a "Take a stroll" line. Missions only point at what to do: once done, the line turns ready and you tap Claim.',
+              'No menu de Missões fica a linha "Passeio" com o nome do passeio que você escolheu. Marcar ali ou no NPC dá no mesmo: a cena e as recompensas vêm na hora, uma vez só.',
+              'The Missions menu keeps a "Stroll" line with the stroll you picked. Marking it there or at the NPC is the same: the scene and rewards come right away, once.',
             )}
           </p>
           <p style={para}>
             {L(
-              'Há dois acessos na Home: missões diárias e semanais. Quando você resgata, a névoa de uma região se abre no passeio da noite seguinte.',
+              'Há dois acessos na Home: missões diárias e semanais. Quando você conclui o passeio, a névoa de uma região se abre na hora.',
               'Home has two doors: daily and weekly missions. Once you claim, the mist over a region clears on the next night\'s stroll.',
             )}
           </p>
@@ -494,14 +497,20 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A descida para quando a energia ou o HP acabam. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h, até com o app fechado); descer de novo pede ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
-              `The descent stops when energy or HP runs out. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h, even app closed); descending again needs ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
+              `A descida não tem limite por dia nem teto de profundidade: ela para quando a energia ou o HP acabam, sem custo nenhum. A energia é o freio do Rift. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h, até com o app fechado); descer de novo pede ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
+              `The descent has no daily limit and no depth cap: it stops when energy or HP runs out, at no cost. Energy is the Rift's brake. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h, even app closed); descending again needs ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e o primeiro marco de cada descida rende o item 🌀 (veja Itens).`,
-              `Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns the 🌀 item (see Items).`,
+              `A próxima descida recomeça no andar onde você parou, no combate 1 dele: perder nunca faz voltar de andar, só reinicia os combates do andar atual (ex.: venceu os 6 combates do andar 1 de um elemento e caiu no andar 2? Volta ao combate 1 do andar 2). A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco, com 1% de chance de render o item 🌀, no máximo um por semana (veja Itens).`,
+              `The next descent resumes at the layer where you stopped, at its fight 1: losing never sends you back a layer, it only restarts the fights of the current layer (e.g. you cleared all 6 fights of an element's layer 1 and fell on layer 2? You go back to fight 1 of layer 2). Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone with a 1% chance to earn the 🌀 item, at most one a week (see Items).`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'A Masmorra desce em conjuntos de 2 camadas, cada um de um elemento: do elemento puro aos combinados, e quanto mais elementos, mais evoluídos os inimigos. A última luta do conjunto é um mini-boss. Quanto mais fundo, mais difícil; às vezes o Soulmon não passa, e faz parte do desafio.',
+              'The Dungeon goes down in sets of 2 layers, each of one element: from single elements to combined ones, and the more elements, the more evolved the foes. The last fight of a set is a mini-boss. The deeper, the harder; sometimes your Soulmon cannot get past, and that is part of the challenge.',
             )}
           </p>
           <p style={para}>
@@ -512,8 +521,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia.',
-              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day.',
+              `O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, 1 de ${ARENA_CHOICES} desafios, em ${ARENA_ROUNDS} rodadas, e o último adversário deixa ${ARENA_ULTIMO_DROP_MULT}× a essência dele; sortear ${ARENA_CHOICES} novos custa Bits depois de ${ARENA_REROLL_FREE_PER_HOUR} grátis por hora. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.`,
+              `The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, 1 of ${ARENA_CHOICES} challenges, over ${ARENA_ROUNDS} rounds, and the last opponent drops ${ARENA_ULTIMO_DROP_MULT}× its essence; drawing ${ARENA_CHOICES} new ones costs Bits after ${ARENA_REROLL_FREE_PER_HOUR} free an hour. The Tournament's Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.`,
             )}
           </p>
           <p style={para}>
@@ -536,8 +545,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond}. Lv N é o do seu Soulmon.`,
-              `The Arena and the Tournament open at Bond ${GATES.pvp.minBond}. Lv N is your Soulmon's.`,
+              `Só a Ranqueada do Torneio pede Vínculo ${GATES.ranqueada.minBond}; o resto é livre. Lv N é o do seu Soulmon.`,
+              `Only the Tournament's Ranked mode asks for Bond ${GATES.ranqueada.minBond}; everything else is open. Lv N is your Soulmon's.`,
             )}
           </p>
           <p style={para}>
@@ -554,20 +563,20 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
-              `At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
+              `Cada aprimoramento custa materiais e Bits (de ${upgradeBitsCost(1)} no começo, crescendo a cada nível). A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
+              `Each upgrade costs materials and Bits (from ${upgradeBitsCost(1)} at the start, growing each level). At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (alcance do básico, só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} poções do próprio elemento + ${HEX_COSTS.element.bits} Bits ganhos; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits ganhos; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits ganhos. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
-              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack reach, looks only). Element HEXes take ${HEX_COSTS.element.potions} potions of that element + ${HEX_COSTS.element.bits} earned Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} earned Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} earned Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
+              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (tipo do ataque básico: Magia, Corte à distância, Corte corpo a corpo ou Esmagamento; só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} ${HEX_COSTS.element.potions === 1 ? 'poção' : 'poções'} do próprio elemento + ${HEX_COSTS.element.fragments} fragmentos + ${HEX_COSTS.element.bits} Bits; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
+              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack type: Magic, Ranged Slash, Melee Slash or Melee Smash; looks only). Element HEXes take ${HEX_COSTS.element.potions} ${HEX_COSTS.element.potions === 1 ? 'potion' : 'potions'} of that element + ${HEX_COSTS.element.fragments} fragments + ${HEX_COSTS.element.bits} Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `As peças são partes da sua alma, aprimoradas: não há como tirar. Sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
-              `The pieces are parts of your soul, refined: nothing to take off. No draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
+              `As peças são partes da sua alma, aprimoradas: não há como tirar. Sem sorteio. Bits comprados com Créditos (até ${BITS_PACK_DAILY_CAP.toLocaleString('pt-BR')} Bits por dia em pacotes, no Cambista) também pagam o Soulsmith e a Hexsmith; o bônus de combate de todas as fontes juntas continua parando em ${Math.round(COMBAT_BONUS_CAP * 100)}%.`,
+              `The pieces are parts of your soul, refined: nothing to take off. No draws. Bits bought with Credits (up to ${BITS_PACK_DAILY_CAP.toLocaleString('en-US')} Bits a day in packs, at the Exchanger) also pay the Soulsmith and the Hexsmith; the combat bonus from all sources together still stops at ${Math.round(COMBAT_BONUS_CAP * 100)}%.`,
             )}
           </p>
           <p style={para}>

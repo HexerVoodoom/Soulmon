@@ -143,6 +143,6 @@ describe('EvolutionPath — jogador comum NÃO vê prévia de forma futura (só 
     expect(container.querySelector('[data-evo-meter]')).toBeNull();
     expect(container.querySelector('[data-lock-button]')).toBeNull();
     expect(container.textContent).not.toContain('???');
-    expect(container.querySelectorAll('article')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid^="sm-no-"]')).toHaveLength(1);
   });
 });

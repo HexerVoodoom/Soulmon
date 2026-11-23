@@ -1,5 +1,8 @@
 # HANDOFF — o eixo sonoro do Soulmon, para a sessão que vai executar
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
 > Escrito em 21/09/2026 pela sessão da Fase 2 (identidade). Serve para uma sessão NOVA
 > retomar a SQUAD-SOM sem redescobrir nada. Não decide nada de som: aponta o que já está
 > decidido, o que mudou desde então e o que ainda é do dono.

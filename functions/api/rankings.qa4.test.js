@@ -50,12 +50,12 @@ describe('lastro do Endless Rift ancorado no ponto de retomada (R1 CRÍTICO / R2
 
   it('quem retoma perto do recorde pontua pelo progresso novo (base = ponto de retomada, sem 409)', async () => {
     const k = kvx();
-    // recorde 262 no save: a descida do mês começa na camada 261 (marco de 5 em 5)
-    expect(riftStartLayer(262)).toBe(261);
+    // recorde 262 no save: a descida do mês começa na camada 263 (retorno de 2 em 2)
+    expect(riftStartLayer(262)).toBe(263);
     await bumpRiftLayers(k, ID, undefined, dd(0, 8), NOW, { recordAntes: 262, recordDepois: 268 });
     const l = await readRiftLastro(k, ID, NOW);
-    expect(l).toMatchObject({ base: 261, n: 8, rec: 268 });
-    expect(await readRiftLayers(k, ID, NOW)).toBe(261 + 8 - 1); // aceita até a camada 268
+    expect(l).toMatchObject({ base: 263, n: 8, rec: 268 });
+    expect(await readRiftLayers(k, ID, NOW)).toBe(263 + 8 - 1); // aceita até a camada 270
   });
 
   it('forjar o recorde do save na gravação seguinte NÃO eleva a âncora: o recorde do servidor só sobe o que as camadas provam', async () => {
@@ -81,22 +81,22 @@ describe('lastro do Endless Rift ancorado no ponto de retomada (R1 CRÍTICO / R2
     const E = { DIGIAPP_SAVES: k };
     await bumpRiftLayers(k, ID, undefined, dd(0, 10), Date.now(), { recordAntes: 262, recordDepois: 262 });
     const sub = score => rank({ request: new Request('https://x/api/rankings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ID, game: 'endless-rift', score }) }), env: E });
-    expect((await sub(271)).status).toBe(409); // 261 + 10 - 1 = 270
-    expect((await sub(270)).status).toBe(200);
-    expect((await readBoard(E, { game: 'endless-rift', period: 'monthly', saveId: ID })).top.map(r => r.score)).toEqual([270]);
+    expect((await sub(273)).status).toBe(409); // 263 + 10 - 1 = 272
+    expect((await sub(272)).status).toBe(200);
+    expect((await readBoard(E, { game: 'endless-rift', period: 'monthly', saveId: ID })).top.map(r => r.score)).toEqual([272]);
   });
 });
 
 describe('tetos de score por jogo (R1 MÉDIO) e jogos novos', () => {
   it('cada jogo de pontos tem teto próprio bem abaixo de 1e9', () => {
-    for (const g of ['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'soul-barrage', 'endless-rift', 'rogue-dungeon']) {
+    for (const g of ['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'match3-pvp', 'eco', 'soul-barrage', 'endless-rift', 'rogue-dungeon']) {
       expect(MAX_SCORE_BY_GAME[g], g).toBeLessThan(1_000_000);
       expect(cleanScore(MAX_SCORE_BY_GAME[g] + 1, g), g).toBeNull();
       expect(cleanScore(MAX_SCORE_BY_GAME[g], g), g).toBe(MAX_SCORE_BY_GAME[g]);
     }
   });
   it('Obstacle Run por nível; o id sem nível continua aceito (cliente antigo e recorde antigo)', () => {
-    expect(RANKED_GAMES).toEqual(expect.arrayContaining(['dino', 'dino-1', 'dino-2', 'zip', 'patches']));
+    expect(RANKED_GAMES).toEqual(expect.arrayContaining(['dino', 'dino-1', 'dino-2', 'zip', 'patches', 'match3', 'match3-pvp']));
   });
   it('tempo: faixa plausível [2 s, 30 min]', () => {
     expect(scoreIsPlausible('zip', 1999)).toBe(false);

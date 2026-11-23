@@ -1,4 +1,5 @@
 import { ModalSheet, sm2Hint } from './form/FormKit';
+import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { Language } from '../utils/i18n';
 import {
@@ -14,8 +15,10 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
+import { ARENA_ROUNDS } from '../utils/arena';
+import { ARENA_ULTIMO_DROP_MULT } from '../utils/arenaUltimoAdversario';
 import { DUNGEON_ENERGY_PER_LAYER } from '../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES } from '../utils/hunger';
+import { ENERGY_REGEN_MINUTES, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
@@ -73,20 +76,26 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving), resets daily. Dungeon fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
-    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto), zera todo dia. Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
+    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving; ×${SLEEP_ENERGY_REGEN_BONUS} faster while asleep), resets daily. Dungeon fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
+    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto; ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido dormindo), zera todo dia. Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
     icon: '🔗', en: 'Bond N / Lv N', pt: 'Vínculo N / Lv N',
-    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each gives a talent point. Lv N is your Soulmon's. The Arena opens at Bond ${GATES.pvp.minBond}.`,
-    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
+    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each gives a talent point. Lv N is your Soulmon's. Ranked opens at Bond ${GATES.ranqueada.minBond}.`,
+    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Ranqueada abre no Vínculo ${GATES.ranqueada.minBond}.`,
   },
   {
     // Vantagem elemental (dono, 27/10/2026): Arena, Combina 3 e Guerra usam o mesmo ±1 golpe exibido; selo "Super eficiente!" / "Pouco eficiente".
     icon: '⚔️', en: 'Element advantage', pt: 'Vantagem elemental',
     descEn: `Arena, Combine 3 and Guild War (half effect there; not Tournament Duels): a countering element lands one hit sooner ("Super effective!"); the reverse, one later. No element, no change.`,
     descPt: `Arena, Combina 3 e Guerra de Guildas (metade do efeito; não nos Duelos do Torneio): elemento que contra-ataca vale um golpe a menos ("Super eficiente!"); o inverso, um a mais. Sem elemento, nada muda.`,
+  },
+  {
+    // §384 (dono, 14/11/2026): o último adversário da Arena dropa em dobro (⚰️ §372 "+1 Presa"). Números das CONSTANTES.
+    icon: '🏟️', en: 'Arena essence', pt: 'Essência da Arena',
+    descEn: `Every opponent you defeat in the Arena leaves its element's essence; the last of the ${ARENA_ROUNDS} rounds drops ${ARENA_ULTIMO_DROP_MULT}×.`,
+    descPt: `Cada adversário derrotado na Arena deixa a essência do elemento dele; o último das ${ARENA_ROUNDS} rodadas deixa ${ARENA_ULTIMO_DROP_MULT}×.`,
   },
   {
     icon: '❗', en: 'Missions', pt: 'Missões',
@@ -100,8 +109,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in the Bond Sanctum, equipment at the Soulsmith in the Forge. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought.`,
-    descPt: `Talentos (três caminhos) ficam no Santuário do Vínculo; equipamento, no Soulsmith (na Forja). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteados nem comprados.`,
+    descEn: `Talents (three paths) live in the Bond Sanctum, equipment at the Soulsmith in the Forge. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, whether the Bits were earned or bought; never drawn.`,
+    descPt: `Talentos (três caminhos) ficam no Santuário do Vínculo; equipamento, no Soulsmith (na Forja). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, com Bits ganhos ou comprados; nunca sorteados.`,
   },
   {
     icon: '🍽️', en: 'Meal check-ins', pt: 'Convites das refeições',
@@ -152,13 +161,13 @@ const TERMS: Term[] = [
   },
   {
     icon: '🧪', en: 'Element potion', pt: 'Poção de elemento',
-    descEn: 'In the Laboratory, at the Evolution Center, spend element essences to brew a potion. Give it to your Soulmon from the item folder: at the next evolution it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. A new potion replaces the one waiting.',
+    descEn: 'In the Laboratory, at the Evolution Center, spend element essences to brew a potion. Give it to your Soulmon from Files: at the next evolution it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. A new potion replaces the one waiting.',
     descPt: 'No Laboratório, no Centro de Evolução, gaste essências de elementos para preparar uma poção. Dê ao Soulmon pela pasta de itens: na próxima evolução ele carrega esse elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Uma poção nova substitui a que estava esperando.',
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic Endless Rift descent. Using it adds one day of steps to the evolution path — one a day.',
-    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da Fenda. Usar soma um dia de passos ao caminho da evolução — um por dia.',
+    descEn: 'Very rare item: each milestone (every 5 layers) of an Endless Rift descent has a 1% chance to drop one, at most once a week. Using it gives +10% evolution progress for 7 days — once a week.',
+    descPt: 'Item muito raro: cada marco (a cada 5 camadas) de uma descida da Fenda tem 1% de chance de soltar um, no máximo uma vez por semana. Usar dá +10% de progressão de evolução por 7 dias — uma vez por semana.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
@@ -228,8 +237,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💠', en: 'Bits vs. 🎖️ Honor vs. 💎 Credits', pt: 'Bits vs. 🎖️ Honra vs. 💎 Créditos',
-    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament and buys cosmetics only. Credits are bought with real money.',
-    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio e compra só cosméticos. Créditos são comprados com dinheiro real.',
+    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament (ranked and sparring) and buys cosmetics only. Credits are bought with real money.',
+    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio (ranqueada e treino) e compra só cosméticos. Créditos são comprados com dinheiro real.',
   },
   {
     // DEMO LOCAL (`utils/demoMode.ts`): o nível vem da CONSTANTE.
@@ -253,6 +262,7 @@ function guildTerms(): Term[] {
     par('🌳', 'guild.help.fio.termo', 'guild.help.fio.def'),
     par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
     par('🌳', 'guild.help.casa.termo', 'guild.help.casa.def'),
+    par('🌳', 'guild.help.buffs.termo', 'guild.help.buffs.def'),
     par('🌳', 'guild.help.missao.termo', 'guild.help.missao.def'),
     par('🌳', 'guild.help.guerra.termo', 'guild.help.guerra.def'),
     par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),
@@ -287,8 +297,8 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
       <dl className="sm2-conta-gl">
         {TERMS.map(t => (
           <div key={t.en}>
-            <dt>{isPt ? t.pt : t.en}</dt>
-            <dd>{isPt ? t.descPt : t.descEn}</dd>
+            <dt>{emphasizeSoulFragment(isPt ? t.pt : t.en)}</dt>
+            <dd>{emphasizeSoulFragment(isPt ? t.descPt : t.descEn)}</dd>
           </div>
         ))}
       </dl>

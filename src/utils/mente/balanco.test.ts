@@ -14,6 +14,7 @@ import { M3C_DEFEAT_BONUS, M3C_ENEMY_HP, M3C_MAX_TURNS, chooseMove, combatScore,
 import { mulberry32 } from '../combate/rng';
 import { ZIP_MAX_BITS, zipBits } from './zip';
 import { PATCHES_MAX_BITS, patchesBits } from './patches';
+import { SELO_MAX_BITS, SELO_ROUND, seloBits } from './selo';
 
 /**
  * O BALANÇO DOS MINIJOGOS LEVES (30/09/2026, `docs/BALANCO-MINIJOGOS.md`).
@@ -153,13 +154,20 @@ const puzzles = (p: Perfil): Medida[] => LADOS.flatMap(l => [
   puzzleGrade('Colcha', p, l, patchesBits(l)),
 ]);
 
+// Selo Faltante (04/11/2026): 8 matrizes por rodada; típico ~18 s e ~79% de acerto (a escada mira isso); experiente ~11 s, 8/8.
+const SELO_SEG = { típico: 18, experiente: 11 } as const;
+const SELO_ACERTOS = { típico: Math.round(SELO_ROUND * 0.79), experiente: SELO_ROUND } as const;
+function selo(p: Perfil): Medida {
+  return medir('Selo Faltante', p, seloBits(SELO_ACERTOS[p.nome]), SELO_ROUND * SELO_SEG[p.nome] * 1000);
+}
+
 // Revisão: 1×/dia; ~15 s por cartão.
 function revisao(p: Perfil): Medida {
   return medir('Revisão da Malha', p, REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE * (p === TIPICO ? 15 : 9) * 1000);
 }
 
 const PERFIS = [TIPICO, EXPERIENTE];
-const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p), ...puzzles(p)]);
+const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p), selo(p), ...puzzles(p)]);
 
 /** A faixa de Bits/minuto do jogador TÍPICO nos jogos leves. */
 const FAIXA_TIPICA = { min: 2.5, max: 9 };
@@ -193,6 +201,7 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     expect(ecoBits(ECO_START_LENGTH + ECO_MAX_BITS)).toBe(ECO_MAX_BITS);
     expect(bolhas(EXPERIENTE).bits).toBe(BOLHAS_MAX_BITS);
     expect(trocaBits(TROCA_DECK_SIZE)).toBe(TROCA_MAX_BITS);
+    expect(seloBits(SELO_ROUND)).toBe(SELO_MAX_BITS);
     expect(picrossBits(10, true)).toBe(PICROSS_MAX_BITS);
     // Elemental Fusion (combate): o placar de uma partida PERFEITA (todo o HP do time + o bônus dos três) paga o que a conta diz e NUNCA passa do
     // teto — e o combate paga ≤ à regra antiga dos pontos (a mediana do típico/experiente fica em 3–4 Bits, como ficava com 20 movimentos).
@@ -238,17 +247,32 @@ function masmorraRunCompleta(nivel: number, estagio: string): number {
 }
 
 describe('jogos longos × teto diário de minijogo', () => {
-  it('uma run COMPLETA da Masmorra fica perto do teto (60%–120%), nunca 2–3× ele como antes do fator', () => {
-    expect(DUNGEON_BITS_FACTOR).toBe(0.4);
+  // §372 (dono, 14/11/2026): o fator caiu de 0,4 para 0,2 ("o teto de 150 está sendo atingido muito rápido"). Os 5 primeiros
+  // andares (a "run completa" de 30/09) ficam entre 30% e 60% do teto; com a descida idle e infinita, o teto chega mais tarde.
+  it('os 5 primeiros andares da Masmorra pagam 30%–60% do teto (×0,2; eram 60%–120% com ×0,4)', () => {
+    expect(DUNGEON_BITS_FACTOR).toBe(0.2);
     for (const [nivel, estagio] of [[1, 'rookie'], [3, 'champion-power'], [5, 'mega-power']] as const) {
       const run = masmorraRunCompleta(nivel, estagio);
-      expect(run, `nível ${nivel}`).toBeGreaterThanOrEqual(MINIGAME_BITS_PER_DAY * 0.6);
-      expect(run, `nível ${nivel}`).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY * 1.2);
+      expect(run, `nível ${nivel}`).toBeGreaterThanOrEqual(MINIGAME_BITS_PER_DAY * 0.3);
+      expect(run, `nível ${nivel}`).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY * 0.6);
     }
   });
 
-  it('o bônus de andar da Masmorra é 4/6/8/10/12', () => {
-    expect(Array.from({ length: MAX_FLOORS }, (_, i) => clearBonus(i + 1))).toEqual([4, 6, 8, 10, 12]);
+  it('o bônus de andar da Masmorra é 2/3/4/5/6 (era 4/6/8/10/12)', () => {
+    expect(Array.from({ length: MAX_FLOORS }, (_, i) => clearBonus(i + 1))).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it('cortar o ganho não muda o teto: só o tempo até chegar nele (a Masmorra precisa do DOBRO de andares para os mesmos Bits)', () => {
+    const andaresAteTeto = (nivel: number): number => {
+      let total = 0;
+      for (let f = 1; f <= 400; f++) {
+        total += buildDungeonWave(nivel + f - 1, 'rookie').reduce((s, e) => s + e.points, 0) + clearBonus(f);
+        if (total >= MINIGAME_BITS_PER_DAY) return f;
+      }
+      return Infinity;
+    };
+    expect(MINIGAME_BITS_PER_DAY).toBe(150);
+    expect(andaresAteTeto(1)).toBeGreaterThan(MAX_FLOORS);
   });
 
   it('uma run completa da Arena (dificuldade 1, a do jogo) paga no máximo metade do teto', () => {

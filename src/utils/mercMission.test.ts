@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ACTIVITY_CATALOG } from '../data/activityCatalog';
-import { MERC_ORDENS, MERC_TIPO, mercPool, sortearMerc, pontosMerc, escolherMerc, concluirMerc, mercDeHoje, ordemDaCategoria, sanitizeMercMission } from './mercMission';
+import { MERC_TAREFAS, MERC_TAREFAS_BY_ID, mercTarefaValida } from '../data/mercTarefas';
+import { MERC_ORDENS, MERC_TIPO, mercPool, sortearMerc, pontosMerc, escolherMerc, concluirMerc, mercDeHoje, sanitizeMercMission, tarefaDaMissao, renovarMercPendente } from './mercMission';
 
 const base = {
   evolutionStage: 'rookie', powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10,
@@ -9,13 +9,12 @@ const base = {
 const DIA = 'Fri Oct 30 2026';
 
 describe('Guilda dos Mercenários: regras M1–M5', () => {
-  it('M2: o pool de cada Ordem só tem evidência A/B, sem optInOnly, e cobre as 3 Ordens', () => {
+  it('M2: o pool de cada Ordem só tem tarefa de um dia válida (porteiro), com benefício PT/EN, e cobre as 3 Ordens', () => {
     for (const o of MERC_ORDENS) {
       const p = mercPool(o);
-      expect(p.length).toBeGreaterThan(2);
-      for (const i of p) { expect(['A', 'B']).toContain(i.evidence.level); expect(i.optInOnly).toBeFalsy(); expect(ordemDaCategoria(i.category)).toBe(o); }
+      expect(p.length).toBeGreaterThan(8);
+      for (const i of p) { expect(i.ordem).toBe(o); expect(mercTarefaValida(i)).toBe(true); expect(i.benefit.pt.length).toBeGreaterThan(10); expect(i.benefit.en.length).toBeGreaterThan(10); }
     }
-    expect(ACTIVITY_CATALOG.some(i => i.evidence.level === 'C')).toBeDefined();
   });
   it('sorteio determinístico por dia + Ordem (reabrir não troca) e varia entre dias', () => {
     for (const o of MERC_ORDENS) expect(sortearMerc(DIA, o)!.id).toBe(sortearMerc(DIA, o)!.id);
@@ -34,7 +33,7 @@ describe('Guilda dos Mercenários: regras M1–M5', () => {
   });
   it('M4: paga só pontos do tipo (3 ou 5), pelo caminho dos atributos, uma vez só', () => {
     const { state } = escolherMerc(base, 'filtrador', DIA);
-    const item = ACTIVITY_CATALOG.find(i => i.id === state.mercMission!.activityId)!;
+    const item = MERC_TAREFAS_BY_ID[state.mercMission!.activityId]!;
     const pts = pontosMerc(item);
     expect([3, 5]).toContain(pts);
     const f = concluirMerc(state, DIA);
@@ -45,9 +44,8 @@ describe('Guilda dos Mercenários: regras M1–M5', () => {
     expect(concluirMerc(f, DIA)).toBe(f);
     expect(MERC_TIPO.filtrador).toBe('benevolence');
   });
-  it('effort 1 = 3 pontos; 2–3 = 5', () => {
-    const lv = (e: 1 | 2 | 3) => ({ levels: [{ effort: e }] }) as unknown as Parameters<typeof pontosMerc>[0];
-    expect([pontosMerc(lv(1)), pontosMerc(lv(2)), pontosMerc(lv(3))]).toEqual([3, 5, 5]);
+  it('effort 1 = 3 pontos; 2 = 5', () => {
+    expect([pontosMerc({ effort: 1 }), pontosMerc({ effort: 2 })]).toEqual([3, 5]);
   });
   it('sem a missão de hoje não paga nada', () => {
     expect(concluirMerc(base, DIA)).toBe(base);
@@ -58,5 +56,23 @@ describe('Guilda dos Mercenários: regras M1–M5', () => {
     const { state } = escolherMerc(base, 'rompente', DIA);
     expect(sanitizeMercMission(state.mercMission)).toEqual(state.mercMission);
     expect(sanitizeMercMission({ day: DIA })).toBeUndefined();
+  });
+  it('proposta pendente antiga (id de hábito do catálogo geral) é descartada e sorteada de novo; a cumprida fica', () => {
+    const antiga = { day: DIA, ordem: 'rompente' as const, activityId: 'hidratacao-agua', done: false };
+    const novo = renovarMercPendente({ ...base, mercMission: antiga });
+    expect(novo.mercMission!.activityId).toBe(sortearMerc(DIA, 'rompente')!.id);
+    expect(tarefaDaMissao(antiga)).toBe(sortearMerc(DIA, 'rompente'));
+    expect(renovarMercPendente(novo)).toBe(novo);
+    const feita = { ...base, mercMission: { ...antiga, done: true } };
+    expect(renovarMercPendente(feita)).toBe(feita);
+    const outra = MERC_TAREFAS.find(t => t.ordem === 'tecelao')!;
+    expect(tarefaDaMissao({ ...antiga, activityId: outra.id })!.ordem).toBe('rompente');
+  });
+  it('concluir uma pendente antiga paga a tarefa nova uma vez só', () => {
+    const s = { ...base, mercMission: { day: DIA, ordem: 'filtrador' as const, activityId: 'qualquer-habito', done: false } };
+    const f = concluirMerc(s, DIA);
+    expect(f.mercMission!.done).toBe(true);
+    expect(f.mercMission!.activityId).toBe(sortearMerc(DIA, 'filtrador')!.id);
+    expect(f.benevolencePoints).toBe(10 + pontosMerc(sortearMerc(DIA, 'filtrador')!));
   });
 });

@@ -13,6 +13,8 @@
 > Em 07/09/2026 nenhum usuário tinha usado o app (`docs/STATUS.md`): tudo sobre "o usuário" foi escrito como `[hipótese]`.
 > ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; a telemetria passa a ter dado real, e as hipóteses `[hipótese]` deste doc podem ser confrontadas com ele. Ver CLAUDE.md › Compatibilidade.
 
+> Prompts de Suno para as trilhas que faltam (uma por minigame; Fenda e Calabouço distintos): `docs/som/PROMPTS-TRILHAS-FALTANTES.md`.
+
 ## 1. Onde o som mora
 
 | O quê | Arquivo |
@@ -42,7 +44,7 @@ há um teste (`footgun 9`) que reprova a cópia.
    público" é punido por qualquer som não solicitado, e o app tem de funcionar **100% mudo** —
    som nunca é o único canal de nada. A fronteira da D11 é o **pacote inteiro**: ela mora no
    chamador tanto quanto em `sounds.ts`.
-2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. Música é uma por vez — ⚠️ **emendado em 11/10/2026 (§10):** as duas preferências agora CONVIVEM, o diretor alterna por superfície com crossfade e nunca soam juntas.) *Porque* autoplay viola a D11 por
+2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. ⚠️ **02/11/2026, decisão do dono:** a trilha da intro "A Parede" também nasce LIGADA (respeita o interruptor global); o navegador só libera o áudio no 1º gesto, e o botão da intro desliga/religa. Música é uma por vez — ⚠️ **emendado em 11/10/2026 (§10):** as duas preferências agora CONVIVEM, o diretor alterna por superfície com crossfade e nunca soam juntas.) *Porque* autoplay viola a D11 por
    extensão: música contínua não é presença nem confirmação de ação.
 3. **S3 — ≤ −16 LUFS integrado e true peak ≤ −1 dBTP** (ITU-R BS.1770 / EBU R 128). *Porque* é o
    único alvo com norma citada; a alternativa em dBFS mistura régua de pico com régua de
@@ -239,10 +241,7 @@ Detalhe completo, com saídas coladas e proveniência de cada número:
 - **Gesto:** `armarTemaNoPrimeiroGesto()` (no `main.tsx`) só instala ouvintes (`pointerup`/`touchend`/`keydown`/`click`).
   Se o motor recusar o `play()`, rearma e o próximo gesto tenta — **nunca** autoplay cego. A intro é `muted` (guard em
   `IntroScreen.render.test.tsx`), então não há briga de áudio com o vídeo.
-- **Na intro (07/10/2026, decisão do dono):** o tema toca DURANTE a intro. Antes do vídeo, o `IntroScreen` mostra a tela de
-  abertura (pôster da marca + "Tap to start"/"Toque para começar"); o toque chama `iniciarTemaNoGesto()` no handler (D11 no
-  chamador, guard em `tema.test.ts`) e monta o vídeo `muted`. A tela é pulada se o jogador já interagiu
-  (`navigator.userActivation.hasBeenActive`), se o tema está desligado ou se o app está mudo. Sem ducking novo.
+- **Na intro (07/10/2026, decisão do dono; emendado em 11/11/2026, REGISTRO §292):** o tema toca DURANTE a intro, mas SEM tela dedicada: a tela "Tap to start" saiu e a intro (vídeo `muted` + "Carregando dados...") abre direto. O áudio é desbloqueado pelo ouvinte passivo único de `armarTemaNoPrimeiroGesto` (`main.tsx`): o 1º toque/tecla em QUALQUER lugar liga o tema; o toque que pula a intro também chama `iniciarTemaNoGesto()` no handler (D11 no chamador, guard em `tema.test.ts`). Sem ducking novo.
 - **Pausas:** `pausarTrilha`/`retomarTrilha` repassam os motivos (`sono`/`descanso`/`mudo`) ao tema; `document.hidden` pausa o
   elemento. O mudo global (`isMuted`) impede o início.
 - **Loudness:** o arquivo foi mestrado no ALVO DA TRILHA de `loudness.ts` (LUFS-S mediano medido com o filtro `ebur128` do
@@ -486,7 +485,7 @@ sono, descanso e mudo; guards de loudness e de manifesto; R-NOVA e D11.
 | `masmorra-mapa`: lobby, fim e retorno do Endless Rift (`DungeonGame`, fases `intro`/`ended`/`away`) e todo o Calabouço (`RogueDungeon`) | "Dungeon Theme" (`tema-masmorra`) | não |
 | `masmorra`: a descida (`fight`/`enemy-down`/`floor-clear`) | segue "Stone Hall Combat" | sim |
 | `evolucao`: `EvolutionCeremony` montada (cerimônia + cartão final) | "Evolution Theme" (`tema-evolucao`), por cima do estalo `playEvolve` | não |
-| `meditacao`: `RespiracaoGame` e `BolhasGame mode="calma"` | "Meditation Theme" (`tema-meditacao`) | não |
+| `meditacao`: `BolhasGame mode="calma"` (⚠️ 04/11/2026: a Respiração saiu para faixa própria, §17) | "Meditation Theme" (`tema-meditacao`) | não |
 
 Mesmo interruptor "Música" (§13), mesmo gesto (D11), crossfade de 1,2 s. R-NOVA (superfície nova nasce muda) foi revogada pelo dono SÓ para estas.
 
@@ -514,3 +513,20 @@ Fora do S6, fora do pré-cache; o `sw.js` já ignora `Range` em `/sounds/tema-`.
 **15.4 Loudness.** Offsets em `loudness.ts` medidos em Node no sinal nominal (a 48 kHz, medidor K-weighting de `src/test/lufsM.ts`): pop −39,1 → **+14,1 dB**, roll → **+10,91 dB**, land → **+6,49 dB**, alvo `arcade` (−25 LUFS-M); `sonsRecompensa.loudness.test.ts` re-mede e reprova se sair da tolerância ou passar do teto de true peak. **Guardas atualizados:** `sounds.contract.test.ts` (19 símbolos), `cortes.contract.test.ts` A-3 (único chamador: `hooks/useRewardReveal.ts`), `loudness.contract.test.ts` (categoria e offset).
 
 **15.5 Pendência.** NENHUM dos três sons foi ouvido por agente (gate humano S8): é medição de sinal, não escuta.
+
+## 16. Trilha da intro "A Parede" (01/11/2026)
+
+Faixa `parede` (`tema-parede.webm`/`.m4a`, mono, 274 563 / 296 035 B, fora do S6, fora do pré-cache), superfície `intro` em `musica.ts`. **Nasce DESLIGADA (S2):** o botão de som no canto superior esquerdo da `IntroCinematica` é o gesto (D11) e chama `entrarNaSuperficie('intro')`; sem o botão, silêncio. Se o interruptor global de Música estiver desligado o botão nem aparece. Medidas e procedência: `Attributions.md`. Escuta final: do dono.
+
+## 17. Faixas próprias do Refúgio: Respiração subaquática e Chama (04/11/2026)
+
+Pedido do dono: as superfícies `respiracao` (`RespiracaoGame`) e `chama` (`ChamaGame`) deixam a "Meditation Theme" e ganham faixa própria, do Suno dele. Mesmo interruptor "Música", gesto (D11), crossfade, sem o degrau de combate. "Meditation Theme" fica nas Bolhas calmas e na superfície `meditacao`.
+
+| Faixa | Original (LUFS-S / integrado / TP) | Ganho | WebM (LUFS-S / integrado / TP) | M4A (LUFS-S / integrado / TP) | Bytes WebM / M4A |
+|---|---|---|---|---|---|
+| Respiração subaquática (237,53 s) | −15,6 / −15,7 / −4,3 | −12,4 dB + fade-out 2 s | −28,0 / −28,1 / −16,8 | −28,0 / −28,1 / −16,5 | 2 158 415 / 1 957 519 |
+| Concentração (Trataka) (224,93 s) | −15,7 / −15,5 / −3,6 | −12,3 dB + fade-out 3 s | −28,0 / −27,8 / −16,0 | −28,0 / −27,9 / −14,8 | 1 918 090 / 1 854 223 |
+
+Medido com ffmpeg-static `ebur128`, depois do encode (a mesma régua dá −28,0 / −28,1 / −15,1 na `tema-meditacao.webm` instalada). Trim: respiracao 0; chama −0,3 dB, porque +12 dB de reprodução daria integrado −15,8, acima do teto S3. Encode: `libopus -b:a 64k -vbr on -application audio` e `aac -b:a 64k -movflags +faststart`, `-vn -map_metadata -1`, 48 kHz, estéreo. Cada formato ≤ 2,5 MiB, fora do S6 e do pré-cache.
+
+**Loop:** o player não faz loop sem emenda; recomeça o arquivo depois de `pausaEntreVoltasS` com fade-in. As duas: fade-out na masterização, 8 s de respiro, fade-in de 3 s, como a "Meditation Theme". Nenhum agente ouviu as faixas; a escuta é do dono. Procedência: `Attributions.md`.

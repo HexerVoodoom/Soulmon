@@ -77,6 +77,27 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
 
+      # google-services.json do com.soulmon (login com Google + FCM). NUNCA vai
+      # para o git: chega como secret GOOGLE_SERVICES_JSON (conteudo cru do
+      # arquivo), e escrito so dentro do runner, sem ecoar no log. Sem o secret,
+      # o build segue como antes (build.gradle nao aplica o plugin google-services
+      # e o login Google falha no APK). O build.gradle valida o conteudo: so aplica
+      # o plugin se houver client com package_name == applicationId.
+      - name: Write google-services.json from secret
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "Sem GOOGLE_SERVICES_JSON: build sem Firebase (login Google nao funciona no APK)."
+          else
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            if grep -q '"package_name": *"com.soulmon"' android/app/google-services.json; then
+              echo "google-services.json gravado (client com.soulmon presente)."
+            else
+              echo "::warning::GOOGLE_SERVICES_JSON nao tem client para com.soulmon; o plugin nao sera aplicado."
+            fi
+          fi
+
       - name: Install Capacitor CLI
         run: npm install -g @capacitor/cli
 
@@ -230,7 +251,7 @@ jobs:
       # a pena testar com a identidade do app na loja.
       - name: Wipe keystore from the runner
         if: always()
-        run: rm -f "$RUNNER_TEMP/soulmon-release.jks"
+        run: rm -f "$RUNNER_TEMP/soulmon-release.jks" android/app/google-services.json
 
   # ───────────────────────────────────────────────────────────────────────────
   # SMOKE DO APK — a ponte Capacitor↔web

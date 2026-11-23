@@ -17,6 +17,8 @@
 // rota responde 503 e **não concede nada**. Nunca conceder benefício sem
 // conseguir verificar de verdade.
 
+import { COUNTER_RING } from './_elementoBase.js';
+
 /** SKU da assinatura cosmética trimestral — id do produto de assinatura no Play Console. */
 export const SUBSCRIPTION_SKU = 'soulmon_cosmetic_quarterly';
 
@@ -35,6 +37,10 @@ export const PRODUCTS = {
   'soulmon.credits.60': { grantTier: null, grantCredits: 60, consumable: true },
   'soulmon.credits.150': { grantTier: null, grantCredits: 150, consumable: true },
   'soulmon.credits.400': { grantTier: null, grantCredits: 400, consumable: true },
+  // MOLDURAS DO WIDGET V-PET (dono, 04/11/2026): uma por elemento BASE, produto PERMANENTE (não consumível) da Play.
+  // Concede só `grantFrame` (cosmético): nada de tier, Créditos ou vantagem. Espelho: src/utils/widgetFrames.ts
+  // (`elementDex.parity`-style: widgetFrames.parity.test.js trava os ids).
+  ...Object.fromEntries(COUNTER_RING.map(el => [`moldura_${el}`, { grantTier: null, grantCredits: 0, consumable: false, grantFrame: el }])),
 };
 
 /**

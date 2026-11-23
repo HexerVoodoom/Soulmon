@@ -203,13 +203,13 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     // A folha é `lazy` (fora do chunk de entrada): na 1ª abertura o chunk chega assíncrono.
     expect(await screen.findByRole('dialog', { name: 'Arquivos' })).toBeTruthy();
     // PL-5 (21/09/2026): o nome acessível segue o idioma.
-    expect(screen.getByRole('button', { name: 'Maçã × 2' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Maçã.exe × 2' })).toBeTruthy();
   });
 
   it('PL-5: o nome do alimento na mochila é o MESMO da pastinha, por idioma (getFoodName)', async () => {
     const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Files' }));
-    expect(await screen.findByRole('button', { name: 'Apple × 2' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Apple.exe × 2' })).toBeTruthy();
     en.unmount();
   });
 
@@ -218,10 +218,10 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={onFeed} />);
     fireEvent.click(screen.getByRole('button', { name: 'Arquivos' }));
     // Tocar no item SÓ seleciona (decisão 3 do dono: item se usa arrastando).
-    fireEvent.click(await screen.findByRole('button', { name: 'Maçã × 2' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Maçã.exe × 2' }));
     expect(onFeed).not.toHaveBeenCalled();
     // A alternativa acessível: o botão "Usar" do item selecionado.
-    fireEvent.click(screen.getByRole('button', { name: 'Usar Maçã' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Usar Maçã.exe' }));
     expect(onFeed).toHaveBeenCalledWith('🍎');
     // e a folha fecha sozinha: usar é uma ação, não um menu preso
     expect(screen.queryByRole('dialog', { name: 'Arquivos' })).toBeNull();
@@ -234,10 +234,10 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     // Pelo NOME ACESSÍVEL do botão (a arte é <img>, utils/itemArt.ts).
     expect(within(folha).queryByRole('button', { name: /Coração|Heart/ })).toBeNull();
     expect(within(folha).queryByRole('button', { name: /Glitchtama/ })).toBeNull();
-    expect(within(folha).getByRole('button', { name: 'Maçã × 1' })).toBeTruthy();
+    expect(within(folha).getByRole('button', { name: 'Maçã.exe × 1' })).toBeTruthy();
     fireEvent.click(within(folha).getByRole('tab', { name: 'Especiais' }));
     expect(within(folha).getByRole('button', { name: /Glitchtama × 1/ })).toBeTruthy();
-    expect(within(folha).queryByRole('button', { name: 'Maçã × 1' })).toBeNull();
+    expect(within(folha).queryByRole('button', { name: 'Maçã.exe × 1' })).toBeNull();
   });
 
   it('ESTADO VAZIO: sem comida a mochila explica como conseguir, não some', async () => {
@@ -304,6 +304,6 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     fireEvent.click(hp);
     expect(screen.queryByRole('tooltip')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Energia/ }));
-    expect(screen.getByRole('tooltip').textContent).toMatch(/com o tempo/); // beta-2 3.5: a energia sobe com o TEMPO (comer enche a fome)
+    expect(screen.getByRole('tooltip').textContent).toMatch(/bem alimentado/); // beta-2 3.5: a energia sobe com o TEMPO (comer enche a fome)
   });
 });

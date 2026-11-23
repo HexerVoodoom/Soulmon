@@ -41,7 +41,7 @@ const q = (sel: string) => document.querySelector<HTMLButtonElement>(sel)!;
 const click = (el: Element) => act(() => { fireEvent.click(el); });
 const bq = (materials: Record<string, number>) => ({ day: 'Mon Oct 05 2026', visited: [], claimed: [], materials });
 const nivel1 = (extra: Record<string, unknown> = {}) => ({
-  totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
+  gamePoints: 100000, totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
   forge: { v: 2, levels: { 'eq-nucleo-t1': 1 }, picks: {} }, ...extra,
 });
 
@@ -85,6 +85,9 @@ describe('ForgeCard', () => {
     // Mesmo peso visual: as duas ocupam a mesma caixa; só a ESCOLHIDA ganha contorno.
     expect(opcoes[0].style.padding).toBe(opcoes[1].style.padding);
     expect(dlg.textContent).toMatch(/param em 5%/);
+    // O modal diz quanto a peça dá AGORA por atributo (05/11/2026) — e só isso, sem o comparativo "depois".
+    expect(dlg.querySelector('[data-forge-bonus-total]')!.textContent).toBe('Esta peça dá agora: +0,1% Ataque');
+    expect(dlg.textContent).not.toMatch(/Depois|After/);
     click(dlg.querySelector('[data-forge-option="b"] input')!);
     click(q('[data-forge-confirm]'));
     expect(document.querySelector('[data-forge-dialog]')).toBeNull();
@@ -106,7 +109,7 @@ describe('ForgeCard', () => {
     expect(document.querySelector('[data-equip-btn]')).toBeNull();
     const botoes = Array.from(peca('eq-nucleo-t1').querySelectorAll('button'));
     expect(botoes).toHaveLength(1);
-    expect(botoes[0].textContent).toBe('Upgrade');
+    expect(botoes[0].textContent).toMatch(/^Upgrade · 20/); // o preço em Bits aparece no botão (nível 1 = 20)
     expect(peca('eq-carapaca-t1').querySelector('button')).toBeNull();
     expect(peca('eq-carapaca-t1').textContent).not.toMatch(/Comes from/);
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);
@@ -167,12 +170,12 @@ describe('ForgeCard', () => {
     expect(peca('eq-nucleo-t1').querySelector('[data-forge-why]')!.textContent).toMatch(/Vínculo 2/);
   });
 
-  it('refazer a escolha com Bits GANHOS: confirma, troca A↔B, debita e os materiais ficam', () => {
+  it('refazer a escolha com Bits: confirma, troca A↔B, debita e os materiais ficam', () => {
     abrir(nivel1({ gamePoints: 1000, buildingQuests: bq({ ore: 1 }), forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     const dlg = document.querySelector('[data-forge-dialog="redo"]')!;
-    expect(dlg.textContent).toMatch(new RegExp(`${REDO_BITS} Bits ganhos`));
+    expect(dlg.textContent).toContain(`${REDO_BITS} Bits (ou`);
     expect(dlg.textContent).toMatch(/Escolha atual/);
     click(q('[data-forge-confirm]'));
     expect(estado().forge.picks['eq-nucleo-t1'] ?? ['a']).not.toContain('b');
@@ -180,13 +183,14 @@ describe('ForgeCard', () => {
     expect(estado().mats.ore).toBe(1);
   });
 
-  it('refazer com Bits que vieram de Crédito: o botão fica desabilitado e o texto explica sem culpa', () => {
+  it('§373: refazer com Bits que vieram de Crédito funciona (antes o botão travava) e o texto não fala mais em "Bits ganhos"', () => {
     abrir(nivel1({ gamePoints: 1000, bitsOrigin: { day: 'Mon Oct 05 2026', free: 0, fromCredits: 900, paidLeft: 900 }, forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
     click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
-    expect(q('[data-forge-confirm]').disabled).toBe(true);
-    expect(document.querySelector('[data-forge-redo-note]')!.textContent).toMatch(/servem para outras coisas/);
-    expect(estado().bits).toBe(1000);
+    expect(q('[data-forge-confirm]').disabled).toBe(false);
+    expect(document.querySelector('[data-forge-redo-note]')!.textContent).not.toMatch(/ganhos|outras coisas/);
+    click(q('[data-forge-confirm]'));
+    expect(estado().bits).toBe(1000 - REDO_BITS);
   });
 
   it('peça comprada antes do Soulsmith (sem registro) aparece no nível equivalente, sem perder nada', () => {

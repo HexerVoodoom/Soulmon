@@ -265,7 +265,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   'bg-lakeside': {
     // Margem de lago: céu e água abertos, nada onde pendurar.
     namePt: 'Beira do Lago', nameEn: 'Lakeside',
-    css: `url(${bgLakesideImg})`, baseColor: '#183430',
+    css: `url(${bgLakesideImg})`, baseColor: '#0e2724',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   'bg-crystal-grove': {
@@ -343,8 +343,8 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-colcha': {
-    namePt: 'Colcha de Retalhos',
-    nameEn: 'Patchwork Quilt',
+    namePt: 'Selos de Luz',
+    nameEn: 'Light Seals',
     css: `url(${bgMissionColchaImg})`, baseColor: '#144b45',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
@@ -463,9 +463,23 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
 };
 
 // Cenários novos que usam a pintura de outro por ora (`artAliases.ts`): outro id, outro nome, mesma arte.
-for (const [id, a] of Object.entries(BG_ART_ALIASES)) {
-  const src = PET_BACKGROUNDS[a.from];
-  if (src) PET_BACKGROUNDS[id] = { ...src, namePt: a.namePt, nameEn: a.nameEn };
+function aplicarAliasesDeCenario(): void {
+  for (const [id, a] of Object.entries(BG_ART_ALIASES)) {
+    const src = PET_BACKGROUNDS[a.from];
+    if (src) PET_BACKGROUNDS[id] = { ...src, namePt: a.namePt, nameEn: a.nameEn };
+  }
+}
+aplicarAliasesDeCenario();
+
+/**
+ * Cenários novos de tema/elemento (04/11/2026): pintura 1200×648 WebP, chão em 74% (o prompt pede a linha em 74%). Catálogo:
+ * `utils/cosmeticosNovos.ts`, que vive num chunk lazy (REGISTRO §498) e injeta aqui (`catalogosNovos.ts`). Refaz os aliases depois.
+ */
+export function injetarCenariosNovos(cenarios: ReadonlyArray<{ id: string; namePt: string; nameEn: string; css: string; baseColor: string | undefined }>): void {
+  for (const c of cenarios) {
+    PET_BACKGROUNDS[c.id] = { namePt: c.namePt, nameEn: c.nameEn, css: c.css, baseColor: c.baseColor, setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74 };
+  }
+  aplicarAliasesDeCenario();
 }
 
 /**

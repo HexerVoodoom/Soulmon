@@ -1,12 +1,12 @@
 /**
  * CALABOUÇO ROGUELIKE (beta3 M7, 25/10/2026) — lógica PURA (sem React/storage; `day` por parâmetro).
  *
- * Incursão do dia: 3 andares × 8 desafios = 24 tentativas. A cada passo o jogador escolhe 1 de 3 caminhos sorteados
+ * Incursão do dia: 3 andares × 5 desafios = 15 tentativas (§457; eram 3×8 = 24). A cada passo o jogador escolhe 1 de 3 caminhos sorteados
  * (semente = dia + passo, então recarregar não rerrola) entre combate / quebra-cabeça / minigame / ferramenta de
- * Exploração; combate é OBRIGATÓRIO a cada 3 passos e no último do andar. Vencido o desafio, escolhe 1 de 3 bônus
+ * Exploração; combate é OBRIGATÓRIO no 3º passo e no último do andar. Vencido o desafio, escolhe 1 de 3 bônus
  * (valem só na incursão). Perder um combate encerra o dia; errar um desafio que não é combate gasta o passo e segue.
  * Reset diário = o dia do jogador: outro dia = incursão nova, sem bônus.
- * Score do ranking = desafios vencidos + `ROGUE_FLOOR_BONUS` por andar concluído (máx. `ROGUE_MAX_SCORE`).
+ * Score do ranking = valor dos desafios vencidos (`rogueWinValue`) + `ROGUE_FLOOR_BONUS` por andar concluído (máx. `ROGUE_MAX_SCORE`).
  */
 import { dungeonFight, dungeonFightSeed } from './dungeonFight';
 import { dungeonFoe } from './dungeonBase';
@@ -17,7 +17,8 @@ import { mulberry32 } from './combate/rng';
 import type { Combatant } from './combate/curve';
 
 export * from './rogueDungeonSave';
-import { ROGUE_FOE_RAMP, ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
+import { hpAgora, msAteDescer } from './dungeonIdle';
+import { ROGUE_FOE_RAMP, ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, ROGUE_LATE_FROM, ROGUE_LEGACY_STEPS, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
 
 /** A incursão de HOJE: a guardada se for do mesmo dia, senão uma nova (sem bônus). */
 export const runForDay = (saved: RogueRun | undefined, day: string): RogueRun => (saved && saved.day === day ? saved : emptyRun(day));
@@ -25,14 +26,16 @@ export const runForDay = (saved: RogueRun | undefined, day: string): RogueRun =>
 export const isFinished = (r: RogueRun): boolean => r.over || r.step >= ROGUE_MAX_STEPS;
 export const floorOf = (step: number): number => Math.min(ROGUE_FLOORS, Math.floor(step / ROGUE_PER_FLOOR) + 1);
 export const stepInFloor = (step: number): number => step % ROGUE_PER_FLOOR;
-/** Combate obrigatório: 3º e 6º desafio do andar e o último (8º). */
+/** Combate obrigatório: 3º desafio do andar e o último (5º). */
 export const isForcedCombat = (step: number): boolean => { const k = stepInFloor(step); return (k + 1) % ROGUE_COMBAT_EVERY === 0 || k === ROGUE_PER_FLOOR - 1; };
 
 /** Andares concluídos = andares inteiros já passados (o passo conta, ganhando ou errando). */
 export const floorsCleared = (r: RogueRun): number => Math.floor(r.step / ROGUE_PER_FLOOR);
-export const rogueScore = (r: RogueRun): number => Math.min(ROGUE_MAX_SCORE, r.won + floorsCleared(r) * ROGUE_FLOOR_BONUS);
-/** Bits do fim do dia: 1 por desafio vencido (o teto diário de minigames do app é quem limita de verdade). */
-export const rogueBits = (r: RogueRun): number => r.won;
+/** Valor de N desafios vencidos na escala do prêmio antigo (24 desafios): 15 vitórias = 24, a mesma incursão completa de antes (§457). */
+export const rogueWinValue = (won: number): number => Math.round((won * ROGUE_LEGACY_STEPS) / ROGUE_MAX_STEPS);
+export const rogueScore = (r: RogueRun): number => Math.min(ROGUE_MAX_SCORE, rogueWinValue(r.won) + floorsCleared(r) * ROGUE_FLOOR_BONUS);
+/** Bits do fim do dia: `rogueWinValue` por incursão (o teto diário de minigames do app é quem limita de verdade; funil único `handleEarnGamePoints`). */
+export const rogueBits = (r: Pick<RogueRun, 'won'>): number => rogueWinValue(r.won);
 
 const hash = (s: string): number => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const seedOf = (day: string, step: number, salt: string): number => hash(`${day}|${step}|${salt}`);
@@ -61,8 +64,24 @@ export function applyBonus(r: RogueRun, kind: BonusKind): RogueRun {
   return next;
 }
 
-/** Resolve o passo: vitória abre a escolha de bônus; derrota de combate encerra o dia; erro fora de combate só gasta o passo. */
-export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLeft?: number): RogueRun {
+/** Vida da incursão agora, com a recuperação depois de uma derrota (mesmo ritmo da Fenda). */
+export const rogueHpNow = (r: RogueRun, now: number): number =>
+  (r.hpAt === undefined ? hpOf(r) : hpAgora({ dungeonHp: { frac: hpOf(r), at: r.hpAt } }, now));
+/** Milissegundos até poder lutar de novo (0 = pode). */
+export const rogueRestMs = (r: RogueRun, now: number): number =>
+  (r.hpAt === undefined ? 0 : msAteDescer({ dungeonHp: { frac: hpOf(r), at: r.hpAt } }, now));
+/** Grava a vida recuperada ao voltar à luta. Sem recuperação em curso → a mesma referência. */
+export function settleRest(r: RogueRun, now: number): RogueRun {
+  if (r.hpAt === undefined) return r;
+  const { hpAt: _a, ...rest } = r; void _a;
+  return { ...rest, hp: rogueHpNow(r, now) };
+}
+
+/**
+ * Resolve o passo: vitória abre a escolha de bônus; erro fora de combate só gasta o passo. Derrota de combate (dono, 05/11/2026, §239) NÃO encerra o
+ * dia nem gasta o passo: a vida cai ao piso e recupera com o tempo; recuperada, o mesmo combate volta, até o fim dos andares.
+ */
+export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLeft?: number, now: number = Date.now()): RogueRun {
   if (isFinished(r0) || r0.bonusPending) return r0;
   const { pending: _pendente, ...r } = r0; // resolver o passo encerra o desafio em curso
   void _pendente;
@@ -74,7 +93,7 @@ export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLe
     const hp = Math.max(0.01, Math.min(1, hpLeft));
     base = hp < 1 ? { ...rest, hp } : rest;
   }
-  if (!victory && kind === 'combat') return { ...base, step, over: true };
+  if (!victory && kind === 'combat') return { ...base, hp: 0.01, hpAt: now };
   if (!victory) return { ...base, step };
   return { ...base, step, won: r.won + 1, bonusPending: step < ROGUE_MAX_STEPS };
 }
@@ -106,7 +125,7 @@ export function foeRefFor(step: number): RogueFoeRef {
   const f = floorOf(step);
   const k = stepInFloor(step);
   const rampa = ROGUE_FOE_RAMP.flat + (ROGUE_FOE_RAMP.stepsPerFloor > 0 ? Math.floor(step / ROGUE_FOE_RAMP.stepsPerFloor) : 0);
-  return { floor: f + Math.floor(k / 4) + rampa, slot: Math.min(5, f - 1 + (k === ROGUE_PER_FLOOR - 1 ? 2 : k >= 4 ? 1 : 0)) };
+  return { floor: f + (k >= ROGUE_LATE_FROM ? 1 : 0) + rampa, slot: Math.min(5, f - 1 + (k === ROGUE_PER_FLOOR - 1 ? 2 : k >= ROGUE_LATE_FROM ? 1 : 0)) };
 }
 
 const RING_GRADES: readonly RingGrade[] = ['ruim', 'bom', 'otimo'];
@@ -145,11 +164,12 @@ export function simulateRogueCombat(
 // Cada caminho que não é combate sorteia (determinístico por dia+passo) um minigame real do app em "modo desafio"
 // (`challenge` do componente: meta curta, sem Bits/recorde/ranking do jogo; o que conta é o ranking do Calabouço).
 
-export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'eco' | 'barrage';
+/** `patches` (Colcha) saiu do sorteio em 04/11/2026; segue no tipo para incursões salvas antes disso. */
+export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'selo' | 'eco' | 'barrage';
 export type LightKind = Exclude<PathKind, 'combat'>;
-/** Pool por caminho: puzzle = Zip/Patches; minigame = Elemental Fusion/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
+/** Pool por caminho: puzzle = Zip/Selo Faltante; minigame = Elemental Fusion/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
 export const CHALLENGE_POOL: Record<LightKind, readonly ChallengeGame[]> = {
-  puzzle: ['zip', 'patches'],
+  puzzle: ['zip', 'selo'],
   minigame: ['match3', 'dino', 'rps', 'barrage'],
   explore: ['eco'],
 };

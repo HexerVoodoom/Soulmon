@@ -18,6 +18,7 @@
  * `AlignmentIcons` — identidade, não semáforo (D-S8: `ATTR_COLOR`/`ATTR_INK`
  * do sistema antigo saíram); "Close" em `outline` (D-S10).
  */
+import { PlayerName } from './ui/PlayerName';
 import { getStageBranch } from '../types/progression';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
@@ -60,7 +61,8 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
         className="sm2-lib-h2"
         style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}
       >
-        {player.name}
+        {/* §321: o clã embaixo do nome (o título continua sendo o nome; o clã é a linha calma de baixo). */}
+        <PlayerName name={player.name} guildName={player.guildName} isPt={isPt} />
       </h2>
 
       <div className="sm2-lib-hero">

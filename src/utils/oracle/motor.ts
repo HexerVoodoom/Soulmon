@@ -8,8 +8,10 @@
  * de código do chunk de entrada (`oracleBundleSplit.contract.test.ts` cobra).
  * Testes e scripts que precisam do corpo síncrono importam daqui.
  */
+import { escolherChaveDeMatiz } from '../../../functions/api/_chromaHue.js';
 import { SPRITE_FACING_PROMPT } from '../spritePose';
-import { isOnboardingVelado } from '../bbStage';
+import { bbNoNascimento } from '../bbStage';
+import { umMotivoDeTempo, motivoTempoPorSemente, motivosNoTexto, MOTIVO_TEMPO_EN, type MotivoTempo } from '../motivoTempo';
 import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
 import { REALM_MOTIFS, ROLE_METAMORPHS_EXTRA } from './formasReino';
 import type { OracleInputSync, OracleInputWithClass, FamiliasOraculo, ElementId, RoleId, AlignmentId, RealmId, LText, OracleInput, OracleOverrides, ScoreEntry, ArchetypeResult, CreatureStage, OracleResult, FamilySlot, FamilyResult, QuestionEffects, CaminhoRitual } from '../oracle';
@@ -374,14 +376,16 @@ function pickShape(
 /** Sorteia o MOTIVO (eixo separado da morfologia): pool do(s) elemento(s) do
  *  Soulmon + temas afins (vileza, morte, arcano…); nunca repete entre as
  *  evoluções da mesma criatura. */
-function pickMotif(rng: () => number, elements: ElementId[], used: Set<string>): LText {
+function pickMotif(rng: () => number, elements: ElementId[], used: Set<string>, tempo: MotivoTempo): LText {
+  // §324: o motivo de tempo da OUTRA família (ampulheta x relógio) nem entra no sorteio — a criatura tem um lado só.
+  const doLado = (x: LText) => motivosNoTexto(x.en).every(m => m === tempo);
   const pool: LText[] = [];
-  for (const e of elements) pool.push(...ELEMENT_MOTIFS[e]);
+  for (const e of elements) pool.push(...ELEMENT_MOTIFS[e].filter(doLado));
   for (const th of Object.values(THEME_MOTIFS)) {
-    if (th.elements.some(e => elements.includes(e))) pool.push(...th.motifs);
+    if (th.elements.some(e => elements.includes(e))) pool.push(...th.motifs.filter(doLado));
   }
   let cand = pool.filter(x => !used.has(x.en));
-  if (cand.length === 0) cand = Object.values(ELEMENT_MOTIFS).flat().filter(x => !used.has(x.en));
+  if (cand.length === 0) cand = Object.values(ELEMENT_MOTIFS).flat().filter(x => doLado(x) && !used.has(x.en));
   if (cand.length === 0) cand = pool;
   const m = pick(rng, cand);
   used.add(m.en);
@@ -933,11 +937,13 @@ export const ELEMENT_SECONDARY_HUE: Record<ElementId, string> = {
   sombra: 'deep violet', luz: 'pearl-white', planta: 'leaf-green', industrial: 'steel-gray',
 };
 
-const GREEN_WORDS = /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i;
-
-/** Cor do chroma: magenta quando a criatura tem verde (o recorte verde a comeria). */
-export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' {
-  return elements.includes('planta') || GREEN_WORDS.test(`${colorDesc} ${accent}`) ? 'magenta' : 'green';
+/**
+ * Cor do chroma por DISTÂNCIA DE MATIZ (`functions/api/_chromaHue.js`): a chave (verde/magenta/azul) mais longe, no círculo cromático,
+ * das cores da criatura. Planta conta como verde; sombra como violeta escuro (ignorado: escuro demais para o recorte comer).
+ */
+export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' | 'blue' {
+  const texto = `${colorDesc} ${accent}${elements.includes('planta') ? ' green' : ''}`;
+  return escolherChaveDeMatiz(texto).key;
 }
 
 // ---------------------------------------------------------------------------
@@ -1523,14 +1529,19 @@ export type SpritePromptArgs = {
   design?: string;
   /** 2 itens de `TYPE_LOOK` do alinhamento, já unidos ("a, b"). */
   looks?: string;
-  /** Cor do fundo chroma (padrão verde). 'magenta' quando a criatura tem verde. */
-  chroma?: 'green' | 'magenta';
+  /** Cor do fundo chroma (padrão verde). 'magenta' quando a criatura tem verde; 'blue' quando tem verde e magenta. */
+  chroma?: 'green' | 'magenta' | 'blue';
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 };
 
 /** Troca o pedido de fundo verde pelo magenta (criatura com verde). */
-function withChroma(text: string, chroma?: 'green' | 'magenta'): string {
+function withChroma(text: string, chroma?: 'green' | 'magenta' | 'blue'): string {
+  if (chroma === 'blue') {
+    return text
+      .replace('#00FF00 chroma-green', '#0000FF chroma-blue')
+      .replace('contains no green and no green fringe', 'contains no blue and no blue fringe');
+  }
   if (chroma !== 'magenta') return text;
   return text
     .replace('#00FF00 chroma-green', '#FF00FF chroma-magenta')
@@ -1738,7 +1749,7 @@ const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
     'POWER-attribute design language: apex-predator build, lean muscular stance ready to pounce, scratch-mark motifs, one deep crimson accent, wild untamed build',
     'POWER-attribute design language: gladiator bearing, broad armored frame, a chipped horn, burnt-orange war accent, veteran brawler build',
     'POWER-attribute design language: cunning trickster energy, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue build',
-    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, jagged lightning-shaped marks, one hot magenta accent, untamable build',
+    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, jagged lightning-shaped marks, one electric-blue accent, untamable build',
     'POWER-attribute design language: silent hunter poise, low crouched stance, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision build',
   ],
   harmonia: [
@@ -2338,7 +2349,19 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     ? Object.keys(MOTIVO_ELEMENTO_CLASSE)
       .sort((a, b) => (soul.oracle.classElements[b as keyof typeof soul.oracle.classElements] ?? 0) - (soul.oracle.classElements[a as keyof typeof soul.oracle.classElements] ?? 0))[0]
     : undefined;
-  const motivo = motivoId ? MOTIVO_ELEMENTO_CLASSE[motivoId] : undefined;
+  // Tempo (dono, 13/11/2026, REGISTRO §324): UM motivo por criatura, OU ampulheta OU relógio, pelo hash estável da criatura (+ salt do
+  // reroll). Vale para o motivo de classe e para TODA forma (pós-passe `umTempo` abaixo troca a outra família e põe a cláusula negativa).
+  const sementeTempo = `${inputKey}|${salt}`;
+  const motivoTempo = motivoTempoPorSemente(sementeTempo);
+  const motivoBruto = motivoId ? MOTIVO_ELEMENTO_CLASSE[motivoId] : undefined;
+  const motivo = motivoBruto && motivoId === 'tempo'
+    ? { ...motivoBruto, en: `a single small ${MOTIVO_TEMPO_EN[motivoTempo]} motif` }
+    : motivoBruto;
+  const umTempo = <P extends { imagePrompt: string; imagePromptFallback: string }>(p: P): P => ({
+    ...p,
+    imagePrompt: umMotivoDeTempo(p.imagePrompt, { preferido: motivoTempo, semente: sementeTempo, forcar: motivoId === 'tempo' }),
+    imagePromptFallback: umMotivoDeTempo(p.imagePromptFallback, { preferido: motivoTempo, semente: sementeTempo, forcar: motivoId === 'tempo' }),
+  });
   const family = pickFamilies(
     CREATURE_FAMILIES, rng, dominantElement, secondaryElement, dominantRealm,
     descText, bestiaryFamilyHint,
@@ -2572,8 +2595,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     }),
   });
 
-  // ----- BB exclusivo (Onboarding Velado D31): só com o interruptor ligado; não consome o `rng` -----
-  const bbPrompts = isOnboardingVelado()
+  // ----- BB exclusivo (Onboarding Velado D31): com o Início BB ou o interruptor ligado; não consome o `rng` -----
+  const bbPrompts = bbNoNascimento()
     ? composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: accentFor(dominantAlignment, colorDesc, dominantElement, goldTrim), chroma,
         ...visualFor(dominantAlignment),
@@ -2594,9 +2617,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
     const bAccent = accentFor(branch, colorDesc, dominantElement, goldTrim);
     const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes, speciesKin);
-    const champMotif = pickMotif(lookRng, petElements, usedMotifs);
-    const perfMotif = pickMotif(lookRng, petElements, usedMotifs);
-    const megaMotif = pickMotif(lookRng, petElements, usedMotifs);
+    const champMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
+    const perfMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
+    const megaMotif = pickMotif(lookRng, petElements, usedMotifs, motivoTempo);
     const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
     megaShapeByBranch[branch] = megaShape;
@@ -2704,8 +2727,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       bio,
       fusion: { a: { pt: fusionA.pt, en: fusionA.en }, b: { pt: fusionB.pt, en: fusionB.en } },
       family,
-      stages,
-      ...(bbPrompts ? { bbPrompts } : {}),
+      stages: stages.map(umTempo),
+      ...(bbPrompts ? { bbPrompts: umTempo(bbPrompts) } : {}),
     },
   };
 }

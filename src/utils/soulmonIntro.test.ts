@@ -5,13 +5,13 @@ import {
 import { PET_PASSIVES } from './passives';
 
 const PODER: SoulmonIntroInput = {
-  name: 'Lumi', element: 'agua', alignment: 'poder', petPassive: 'guloso', categories: ['Fitness', 'Fitness', 'Health'],
+  name: 'Lumi', element: 'agua', alignment: 'poder', petPassive: 'guloso', categories: ['corpo', 'corpo', 'corpo'],
 };
 const HARMONIA: SoulmonIntroInput = {
-  name: 'Lumi', element: 'planta', alignment: 'harmonia', petPassive: 'carinhoso', categories: ['Health'],
+  name: 'Lumi', element: 'planta', alignment: 'harmonia', petPassive: 'carinhoso', categories: ['mente'],
 };
 const BENEVOLENCIA: SoulmonIntroInput = {
-  name: 'Lumi', element: 'industrial', alignment: 'benevolencia', petPassive: 'sortudo', categories: ['Social'],
+  name: 'Lumi', element: 'industrial', alignment: 'benevolencia', petPassive: 'sortudo', categories: ['relacoes'],
 };
 const TODOS = [PODER, HARMONIA, BENEVOLENCIA];
 const emoji = /\p{Extended_Pictographic}/u;
@@ -107,12 +107,12 @@ describe('soulmonIntroLines: regras de forma', () => {
   });
 
   it('empate de categoria: vale a 1ª na ordem de FOOD_BY_CATEGORY (Fitness antes de Health)', () => {
-    const l = soulmonIntroLines({ ...PODER, categories: ['Health', 'Fitness'] }, 'en');
+    const l = soulmonIntroLines({ ...PODER, categories: ['corpo', 'corpo'] }, 'en');
     expect(l[2]).toContain('I really like protein.');
   });
 
   it('categoria mais frequente vence mesmo vindo depois', () => {
-    const l = soulmonIntroLines({ ...PODER, categories: ['Fitness', 'Social', 'Social'] }, 'pt');
+    const l = soulmonIntroLines({ ...PODER, categories: ['corpo', 'relacoes', 'relacoes'] }, 'pt');
     expect(l[2]).toContain('Gosto muito de pizza.');
   });
 

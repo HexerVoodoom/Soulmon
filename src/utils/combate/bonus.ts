@@ -14,12 +14,14 @@ export interface BonusSources {
   readonly equipment?: number;
   readonly commerce?: number;
   readonly rebirth?: number;
+  /** 🍲 The Restaurant dish (24 h, PvE only — `utils/restaurant.ts`). Same cap as everything else. */
+  readonly meal?: number;
 }
 
 /** Negative, NaN or infinite sources count as 0: dirty input never lowers or explodes the bonus. */
 export function combinedBonus(sources: BonusSources): number {
   let sum = 0;
-  for (const v of [sources.talent, sources.equipment, sources.commerce, sources.rebirth]) {
+  for (const v of [sources.talent, sources.equipment, sources.commerce, sources.rebirth, sources.meal]) {
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) sum += v;
   }
   return Math.min(sum, COMBAT_BONUS_CAP);
@@ -45,7 +47,7 @@ const clean = (v: unknown): number => (typeof v === 'number' && Number.isFinite(
 
 export function combinedAttrBonus(sources: AttrBonusSources): AttrBonus {
   const sum = { atk: 0, def: 0, spd: 0 };
-  for (const src of [sources.talent, sources.equipment, sources.commerce, sources.rebirth]) {
+  for (const src of [sources.talent, sources.equipment, sources.commerce, sources.rebirth, sources.meal]) {
     if (!src || typeof src !== 'object') continue;
     sum.atk += clean(src.atk);
     sum.def += clean(src.def);

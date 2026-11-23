@@ -52,11 +52,16 @@ export function sanitizeCheckIns(raw) {
 
 /** Espelho de `sanitizeArenaReroll` (`src/utils/arenaSorteio.ts`, 28/10/2026): rerolls da Arena livre no dia. @param {unknown} raw @returns {{day:string,count:number}|undefined} */
 export const ARENA_REROLL_MAX_COUNT = 999;
+const ISO_HOUR = /^\d{4}-\d{2}-\d{2}T\d{2}$/;
+/** A hora UTC ("AAAA-MM-DDTHH") de um instante: a janela dos 3 giros grátis (22/11/2026). */
+export const isoHourUtc = ms => new Date(ms).toISOString().slice(0, 13);
+/** @returns {{day:string,count:number,hour?:string,hcount?:number}|undefined} */
 export function sanitizeArenaReroll(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-  const r = /** @type {{day?:unknown,count?:unknown}} */ (raw);
+  const r = /** @type {{day?:unknown,count?:unknown,hour?:unknown,hcount?:unknown}} */ (raw);
   if (typeof r.day !== 'string' || !ISO_DAY.test(r.day) || typeof r.count !== 'number' || !Number.isFinite(r.count)) return undefined;
-  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))) };
+  const comHora = typeof r.hour === 'string' && ISO_HOUR.test(r.hour) && typeof r.hcount === 'number' && Number.isFinite(r.hcount);
+  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))), ...(comHora ? { hour: /** @type {string} */ (r.hour), hcount: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(/** @type {number} */ (r.hcount)))) } : {}) };
 }
 
 /**
@@ -101,7 +106,54 @@ export function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
  * @returns {{day:string,count:number}|undefined}
  */
 export function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
-  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
+  const limite = isoHourUtc(nowMs + 3_600_000); // a hora mais à frente aceita: a do servidor + 1
+  const hora = x => (x && x.hour !== undefined && x.hour <= limite ? x : undefined);
+  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => {
+    const ha = hora(a); const hb = hora(b);
+    // Hora: a MAIS NOVA vence; na mesma hora o MAIOR contador (apagar o save local não devolve giro grátis).
+    const h = ha && hb ? (ha.hour > hb.hour ? ha : hb.hour > ha.hour ? hb : (ha.hcount ?? 0) >= (hb.hcount ?? 0) ? ha : hb) : (ha ?? hb);
+    return { day: a.day, count: Math.max(a.count, b.count), ...(h ? { hour: h.hour, hcount: h.hcount } : {}) };
+  }, nowMs);
+}
+
+/** Espelho de `sanitizeArenaLadder` (`src/utils/arena.ts`, §222). @param {unknown} raw @returns {number} */
+export const ARENA_LADDER_MAX = 999;
+export function sanitizeArenaLadder(raw) {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return 0;
+  return Math.min(ARENA_LADDER_MAX, Math.max(0, Math.floor(raw)));
+}
+
+/**
+ * A escada da Arena só cresce: cliente antigo que omite o campo, ou save local apagado, não derruba o que já foi conquistado.
+ * Sem valor econômico (subir só torna a Arena mais difícil), então não há o que validar além da forma.
+ * @param {unknown} incoming @param {unknown} stored @returns {number}
+ */
+export function enforceArenaLadder(incoming, stored) {
+  return Math.max(sanitizeArenaLadder(incoming), sanitizeArenaLadder(stored));
+}
+
+/** Espelho de `sanitizeArenaSeason`/`arenaSeasonKey` (`src/utils/arena.ts`): temporada mensal da Arena, "AAAA-MM" em UTC (22/11/2026). @param {unknown} raw @returns {string|undefined} */
+export function sanitizeArenaSeason(raw) {
+  return typeof raw === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : undefined;
+}
+
+/**
+ * Escada + temporada: a temporada mais NOVA (até o mês do relógio do servidor) vence e leva a escada dela, que pode ter voltado a 0;
+ * na mesma temporada a escada só cresce (`enforceArenaLadder`). Temporada mais velha que a gravada ou no futuro do servidor é rejeitada.
+ * Sem temporada gravada (save legado) o que chega é a 1ª temporada: segue a regra de só crescer. Cliente que omite a temporada: vale a gravada.
+ * @param {{ladder?:unknown,season?:unknown}} incoming @param {{ladder?:unknown,season?:unknown}} stored @param {number} [nowMs]
+ * @returns {{ladder:number, season:string|undefined}}
+ */
+export function enforceArenaSeason(incoming, stored, nowMs = Date.now()) {
+  const cur = new Date(nowMs).toISOString().slice(0, 7);
+  const sIn = sanitizeArenaSeason(incoming?.season);
+  const sSt = sanitizeArenaSeason(stored?.season);
+  const inOk = sIn !== undefined && sIn <= cur ? sIn : undefined;
+  if (inOk !== undefined && (sSt === undefined || inOk > sSt)) {
+    // temporada nova: a escada que chega é a dela (pode ser 0). Se a gravada não tinha temporada, a escada ainda só cresce (a 1ª temporada é a de agora).
+    return { ladder: sSt === undefined ? enforceArenaLadder(incoming?.ladder, stored?.ladder) : sanitizeArenaLadder(incoming?.ladder), season: inOk };
+  }
+  return { ladder: enforceArenaLadder(incoming?.ladder, stored?.ladder), season: sSt ?? inOk };
 }
 
 // ---------------------------------------------------------------------------
@@ -130,10 +182,10 @@ const prevMonthOf = (nowMs) => { const d = new Date(nowMs); return new Date(Date
 
 /** Camadas COMEÇADAS por dia (do servidor) que o lastro aceita: energia é o limite real (1/camada, estágio máx. ~12/dia) — folga larga, mas finita. */
 export const RIFT_MAX_LAYERS_PER_DAY = 60;
-/** Espelho de `DUNGEON_MILESTONE_FLOOR` (`src/utils/dungeonIdle.ts`). */
-const MILESTONE_FLOOR = 5;
+/** Espelho de `DUNGEON_RETURN_EVERY` (`src/utils/dungeonIdle.ts`): ponto de retorno de 2 em 2 (REGISTRO §31, emenda 09/11/2026). */
+const RETURN_EVERY = 2;
 /** Onde a descida começa para um recorde (espelho de `startLayerFor`, sem o teto do Lv: ver cabeçalho). */
-export const riftStartLayer = (record) => 1 + MILESTONE_FLOOR * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / MILESTONE_FLOOR);
+export const riftStartLayer = (record) => 1 + RETURN_EVERY * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / RETURN_EVERY);
 
 /** Quantas camadas novas a gravacao trouxe: mesmo dia = diferenca; dia novo = o contador inteiro. Nunca negativo. */
 export function layersDelta(antes, depois) {

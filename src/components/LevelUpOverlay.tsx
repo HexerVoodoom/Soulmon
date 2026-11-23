@@ -1,5 +1,5 @@
 /**
- * LEVEL UP — o display de subir de Vínculo (pedido do dono, 11/10/2026).
+ * BOND UP (o componente guarda o nome antigo) — o display de subir de Vínculo (pedido do dono, 11/10/2026).
  *
  * Sobrepõe a tela, ESCURECE o fundo e só sai quando a pessoa TOCA: sem auto-dismiss, sem timer de
  * saída. É um intersticial — entra na fila do `App` (`const interstitial`, depois do marco do Bosque e
@@ -28,7 +28,7 @@ import { usePrefersReducedMotion } from './ui/Viewport';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { levelUpGains, type LevelUpEvent } from '../utils/levelUp';
 import { gateName } from '../utils/gates';
-import { levelUpArt, LEVELUP_CHEVRON } from '../utils/levelUpArt';
+import { bondUpArt, BOND_UP_ENTRADA_MS, BOND_UP_H, BOND_UP_W, levelUpArt, LEVELUP_CHEVRON } from '../utils/levelUpArt';
 import { barramentoAtual } from '../utils/audioBus';
 import { playLevelUp } from '../utils/sounds';
 import { bitsStyle } from '../utils/currencies';
@@ -63,8 +63,8 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
   const done = useRef(false);
   const [shown, setShown] = useState(reduced ? event.to : event.from);
   const [bannerOk, setBannerOk] = useState(true);
+  const [fase, setFase] = useState<'entrada' | 'laco'>('entrada');
   const gains = levelUpGains(event.from, event.to);
-  const bannerArt = levelUpArt('banner');
   const frameArt = levelUpArt('frame');
   const many = event.to - event.from > 1;
 
@@ -79,6 +79,14 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
     const t = setTimeout(() => { armed.current = true; }, ARM_MS);
     return () => clearTimeout(t);
   }, []);
+
+  // A entrada do emblema toca uma vez; o laço já vem carregado para a troca não piscar.
+  useEffect(() => {
+    if (reduced) return;
+    new Image().src = bondUpArt('laco', isPt);
+    const t = setTimeout(() => setFase('laco'), BOND_UP_ENTRADA_MS);
+    return () => clearTimeout(t);
+  }, [reduced, isPt]);
 
   // O SOM (D11 no chamador): aba visível + áudio já liberado por um gesto desta sessão.
   useEffect(() => {
@@ -106,11 +114,13 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
     return () => clearInterval(id);
   }, [reduced, event.from, event.to]);
 
+  /* LAYOUT (dono, 12/11/2026): coluna de altura cheia — o emblema BOND UP no TOPO, o pet ocupando a maior área no meio
+     (flex 1) e o LV + "Tap to continue" na BASE (zona do polegar). Safe-area em cima e embaixo. Só layout/estilo. */
   const wrap: CSSProperties = {
     position: 'fixed', inset: 0, zIndex: 300,
     background: LEVELUP_SCRIM,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 16, boxSizing: 'border-box',
+    display: 'flex', alignItems: 'stretch', justifyContent: 'center',
+    padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(12px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box',
     cursor: 'pointer', outline: 'none',
     WebkitTapHighlightColor: 'transparent',
     overflow: 'hidden',
@@ -131,39 +141,33 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
       onClick={finish}
       style={wrap}
     >
-      <div style={{ position: 'relative', width: '100%', maxWidth: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
+      <div data-lvup-column style={{ position: 'relative', width: '100%', maxWidth: 560, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
         <h2 id="lvup-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', margin: 0 }}>
           {isPt ? `Vínculo nível ${event.to}` : `Bond level ${event.to}`}
         </h2>
 
-        {/* O PALCO, sem caixa (7.2): a luz, o banner, o pet e o número ficam direto sobre o fundo escurecido. */}
-        <div
-          aria-hidden="true"
-          data-lvup-stage
-          style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', padding: '10px 12px' }}
-        >
-          {/* O GLOW DIFUSO: no lugar do sunburst rígido, um halo radial macio que respira (parado em movimento reduzido). */}
+        {/* TOPO: o EMBLEMA BOND UP (dono, 05/11/2026) com o GLOW TIFFANY em CSS atrás (sem borda dura; parado em movimento reduzido).
+            Sem a imagem, a palavra na voz do aparelho. */}
+        <div aria-hidden="true" data-lvup-top style={{ position: 'relative', flex: 'none', display: 'flex', justifyContent: 'center', padding: '4px 12px 0' }}>
           <div
-            data-lvup-glow
+            data-lvup-emblem-glow
             className={reduced ? undefined : 'sm-lvup-glow'}
             style={{
-              position: 'absolute', left: '50%', top: '50%', width: 420, height: 420, marginLeft: -210, marginTop: -210,
-              borderRadius: '50%', pointerEvents: 'none',
-              background: 'radial-gradient(closest-side, rgba(110,255,251,.34) 0%, rgba(110,255,251,.14) 42%, rgba(217,160,91,.07) 68%, rgba(217,160,91,0) 100%)',
-              filter: 'blur(10px)',
+              position: 'absolute', left: '-14%', right: '-14%', top: '-14%', bottom: '-14%', pointerEvents: 'none',
+              background: 'radial-gradient(closest-side, rgba(10,186,181,.5) 0%, rgba(10,186,181,.3) 45%, rgba(10,186,181,.1) 75%, rgba(10,186,181,0) 100%)',
+              filter: 'blur(14px)',
             }}
           />
-
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            {/* O BANNER: arte opcional; sem ela, a palavra na voz do aparelho. */}
-            {bannerArt && bannerOk ? (
+          <div style={{ position: 'relative' }}>
+            {bannerOk ? (
               <img
-                src={bannerArt}
+                src={bondUpArt(reduced ? 'fixo' : fase, isPt)}
                 alt=""
+                width={BOND_UP_W}
+                height={BOND_UP_H}
                 data-lvup-banner
                 onError={() => setBannerOk(false)}
-                className={reduced ? undefined : 'sm-lvup-banner'}
-                style={{ width: 256, height: 'auto', display: 'block' }}
+                style={{ width: 'min(96vw, 460px, 30vh)', maxWidth: 'none', height: 'auto', display: 'block', flex: 'none', imageRendering: 'pixelated' }}
               />
             ) : (
               <p
@@ -171,53 +175,46 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
                 className={reduced ? undefined : 'sm-lvup-banner'}
                 style={{ ...pixel, margin: 0, fontSize: 28, letterSpacing: '0.14em', color: GOLD, textShadow: '0 2px 0 #3a2410' }}
               >
-                LEVEL UP
+                {isPt ? 'VÍNCULO UP' : 'BOND UP'}
               </p>
             )}
-
-            {/* O pet em destaque (256² a 128 = 0,5×). */}
-            {spriteUrl && (
-              <img
-                src={spriteUrl}
-                alt=""
-                width={128}
-                height={128}
-                data-lvup-pet
-                className={reduced ? undefined : 'sm-lvup-pet'}
-                style={{ width: 128, height: 128, display: 'block' }}
-              />
-            )}
-
-            {/* O NÚMERO, grande, com a moldura opcional. */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 150, padding: '2px 18px' }}>
-              {frameArt && (
-                <img src={frameArt} alt="" data-lvup-frame style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }} />
-              )}
-              {/* O chevron triplo: a arte (96²) vai de borda a borda na vertical, então a caixa NÃO pode cortar — `overflow: visible`,
-                  respiro de 2 px em cima e embaixo e escala 0,5× exata (48), pixel a pixel. */}
-              <span data-lvup-chevron-box style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, overflow: 'visible' }}>
-                <img src={LEVELUP_CHEVRON} alt="" width={48} height={48} data-lvup-chevron style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated' }} />
-              </span>
-              <span style={{ ...pixel, fontSize: 16, letterSpacing: '0.16em', color: CYAN, alignSelf: 'center' }}>LV</span>
-              <span
-                data-lvup-number
-                className={reduced ? undefined : 'sm-lvup-num'}
-                style={{ ...pixel, fontSize: 64, lineHeight: 1, color: INK, textShadow: '0 0 12px rgba(110,255,251,.55), 0 3px 0 #061414' }}
-              >
-                {shown}
-              </span>
-            </div>
           </div>
         </div>
 
-        {many && (
-          <p data-lvup-range style={{ ...mono, margin: 0, fontSize: 14, color: CYAN }}>
-            Lv {event.from} → Lv {event.to}
-          </p>
-        )}
+        {/* MEIO: o pet na MAIOR área (flex 1), o glow difuso centrado NELE. O sprite (256²) escala proporcional
+            (`contain`, nunca corta nem deforma), com pixel nítido; teto de 512 px (2× inteiro) para não borrar. */}
+        <div
+          aria-hidden="true"
+          data-lvup-stage
+          style={{ position: 'relative', flex: '1 1 0%', minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+            <div
+              data-lvup-glow
+              className={reduced ? undefined : 'sm-lvup-glow'}
+              style={{
+                height: '130%', aspectRatio: '1 / 1', maxWidth: 'none', flex: 'none',
+                borderRadius: '50%',
+                background: 'radial-gradient(closest-side, rgba(110,255,251,.34) 0%, rgba(110,255,251,.14) 42%, rgba(217,160,91,.07) 68%, rgba(217,160,91,0) 100%)',
+                filter: 'blur(10px)',
+              }}
+            />
+          </div>
+          {spriteUrl && (
+            <img
+              src={spriteUrl}
+              alt=""
+              width={256}
+              height={256}
+              data-lvup-pet
+              className={reduced ? undefined : 'sm-lvup-pet'}
+              style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', maxWidth: 512, maxHeight: 512, objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
+            />
+          )}
+        </div>
 
         {/* O que veio com o nível (só o que NÃO é redundante). Descrição de presente: nunca "faltam N". */}
-        <div id="lvup-desc" data-lvup-gains style={{ display: 'grid', gap: 6, color: INK, fontSize: 14, fontWeight: 500 }}>
+        <div id="lvup-desc" data-lvup-gains style={{ flex: 'none', display: 'grid', gap: 6, color: INK, fontSize: 14, fontWeight: 500 }}>
           {gains.rewards.length > 0 && (
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
               {gains.rewards.map((r) => (
@@ -239,12 +236,38 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           )}
         </div>
 
+        {/* BASE: o NÚMERO (plaquinha de LV), com a moldura opcional. */}
+        <div aria-hidden="true" data-lvup-plate style={{ position: 'relative', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 150, minHeight: 68, padding: '2px 18px' }}>
+          {frameArt && (
+            <img src={frameArt} alt="" data-lvup-frame style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }} />
+          )}
+          {/* A seta (dono, 05/11/2026): maior e POR CIMA, na mesma posição, ultrapassando os limites da barrinha. A caixa reserva
+              o lugar no fluxo e a arte de 96² sai dela sem cortar (`overflow: visible`), em escala 1× exata. */}
+          <span data-lvup-chevron-box style={{ position: 'relative', zIndex: 2, flex: 'none', width: 64, height: 52, overflow: 'visible' }}>
+            <img src={LEVELUP_CHEVRON} alt="" width={96} height={96} data-lvup-chevron style={{ position: 'absolute', left: -26, top: -22, width: 96, height: 96, maxWidth: 'none', display: 'block', imageRendering: 'pixelated' }} />
+          </span>
+          <span style={{ ...pixel, fontSize: 16, letterSpacing: '0.16em', color: CYAN, alignSelf: 'center' }}>LV</span>
+          <span
+            data-lvup-number
+            className={reduced ? undefined : 'sm-lvup-num'}
+            style={{ ...pixel, fontSize: 48, lineHeight: 1, color: INK, textShadow: '0 0 12px rgba(110,255,251,.55), 0 3px 0 #061414' }}
+          >
+            {shown}
+          </span>
+        </div>
+
+        {many && (
+          <p data-lvup-range style={{ ...mono, flex: 'none', margin: 0, fontSize: 14, color: CYAN }}>
+            Lv {event.from} → Lv {event.to}
+          </p>
+        )}
+
         {/* A SAÍDA é o toque (a tela toda); o botão existe para teclado e leitor de tela. */}
         <button
           type="button"
           data-lvup-continue
           className={reduced ? undefined : 'sm-lvup-hint'}
-          style={{ background: 'none', border: 0, font: 'inherit', boxSizing: 'border-box', padding: '10px 16px', cursor: 'pointer', color: HINT_INK, fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+          style={{ flex: 'none', background: 'none', border: 0, font: 'inherit', boxSizing: 'border-box', padding: '10px 16px', cursor: 'pointer', color: HINT_INK, fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}
         >
           {isPt ? 'Toque para continuar' : 'Tap to continue'}
         </button>

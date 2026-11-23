@@ -65,7 +65,7 @@
 // queima dinheiro real, a dúvida nega.
 
 import { legacyFormIdOf } from './_branchLegacy.js';
-import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
+import { VALID_ID, readEntitlement, writeEntitlement, comTravaDoEnt } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER, ADMIN_SPRITE_MONTHLY_CAP } from './_admin.js';
@@ -98,7 +98,8 @@ export const AI_LIMITS = {
   // release/beta-1 (dono, 11/10): global 250 (cabe no Groq ~105 + Gemini ~250
   // gratuitos com folga) e `perMinute` 4 por conta (amortecedor de rajada: o Groq
   // gratuito é 30 RPM para a org inteira; memória do isolate, não exato).
-  chat: { perAccount: 15, perAccountByTier: { demo: 15, paid: 20 }, global: 250, perMinute: 4 },
+  // 12/11/2026 (dono, beta12 §F 3): 20 mensagens por dia no plano grátis (demo 15 → 20); passado o limite o servidor responde uma fala padrão do Soulmon (`chat.js`), não erro. O teto global (250) não muda.
+  chat: { perAccount: 15, perAccountByTier: { demo: 20, paid: 100 }, global: 250, perMinute: 4 },
   // Transcrição (voz → Groq Whisper, direto do Worker desde 19/10/2026): passava sem cota nenhuma (`abuso-e-custo` V4.5).
   transcribe: { perAccount: 10, global: 100, perMinute: 4 },
   suggest: { perAccount: 30, global: 3000 },
@@ -129,6 +130,18 @@ export const AI_LIMITS = {
 };
 
 const day = (now = new Date()) => now.toISOString().slice(0, 10);
+/**
+ * BUG-03 (QA beta12): o dia do limite do CHAT é o dia LOCAL do jogador, enviado pelo cliente (`X-Player-Day`, AAAA-MM-DD).
+ * Validado: só vale se existe um fuso real (UTC−12…UTC+14) em que `now` cai nesse dia, ou seja, o dia UTC ±1. Fora disso (ou
+ * malformado) volta ao dia UTC. Pior caso de quem forja: 3 chaves diárias distintas por dia UTC — o teto global (250) não muda.
+ */
+export function playerDayHint(request, now = new Date()) {
+  const raw = request?.headers?.get?.('x-player-day');
+  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const min = new Date(now.getTime() - 12 * 3_600_000).toISOString().slice(0, 10);
+  const max = new Date(now.getTime() + 14 * 3_600_000).toISOString().slice(0, 10);
+  return raw >= min && raw <= max && !Number.isNaN(Date.parse(`${raw}T00:00:00Z`)) ? raw : null;
+}
 /** Janela MENSAL — `2026-08`. A virada de mês troca a chave, e o contador
  *  antigo morre sozinho pelo TTL. Nada de "reset" a rodar em lugar nenhum. */
 const month = (now = new Date()) => now.toISOString().slice(0, 7);
@@ -227,7 +240,7 @@ function lifetimeUsed(ent, bucket) {
  * registro que só o servidor escreve, uma chave por requisição. Conjunto
  * fechado: o pior caso do dicionário são 11 entradas, para sempre.
  */
-export const VALID_FORM_ID = /^(?:bb|rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+export const VALID_FORM_ID = /^(?:bb|rookie|(?:ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))(?:@[a-z_]{2,24})?)$/; // `@<elemento>` = forma alternativa (05/11/2026, utils/formasAlternativas.ts)
 
 /** Tira a chave ANTIGA da forma: `formUsed` já somou o valor dela na nova. */
 function foldLegacyForm(aiForms, formId) {
@@ -337,7 +350,9 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     : `ai:${bucket}:@all:${today}`;
   const globalLimit = usesMonth ? limits.globalMonth : limits.global;
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
-  const accountKey = `ai:${bucket}:${saveId}:${today}`;
+  // Só o CHAT usa o dia local do jogador na cota por conta; o global e os demais baldes seguem em UTC.
+  const accountDay = bucket === 'chat' ? (playerDayHint(request, now) ?? today) : today;
+  const accountKey = `ai:${bucket}:${saveId}:${accountDay}`;
   // Imagem: além do mensal, um teto DIÁRIO global (`globalDay`).
   const dayKey = usesMonth && typeof limits.globalDay === 'number' ? `ai:${bucket}:@all:${today}` : null;
   // REGERAÇÃO PAGA (`_spriteRegen.js`, rodada 5): é um sorteio que o jogador PAGA em Créditos, com cota própria (1 por forma por mês).
@@ -421,10 +436,21 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     if (hasLifetime || hasFormCap) {
       // Os dois contadores vitalícios vivem no MESMO registro e vão numa
       // escrita só: dois `put` aqui abririam uma janela em que a conta debitou
-      // e a forma não (ou o contrário).
-      if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: usedLifetime + units };
-      if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: usedForm + units };
-      await writeEntitlement(env, saveId, ent);
+      // e a forma não (ou o contrário). Sob a trava da conta (§381) o registro é
+      // RELIDO e os dois tetos reconferidos: entre a primeira leitura e aqui outro
+      // escritor (gasto, compra, outra geração) pode ter gravado.
+      const recusa = await comTravaDoEnt(env, saveId, async () => {
+        const atual = await readEntitlement(env, saveId);
+        const vida = hasLifetime ? lifetimeUsed(atual, bucket) : 0;
+        const forma = hasFormCap ? formUsed(atual, formId) : 0;
+        if (hasLifetime && vida + units > capLifetime) return refuse(402, 'sprite-lifetime-cap');
+        if (hasFormCap && forma + units > capForm) return refuse(409, 'sprite-form-cap');
+        if (hasLifetime) atual.aiLifetime = { ...(atual.aiLifetime || {}), [bucket]: vida + units };
+        if (hasFormCap) atual.aiForms = { ...foldLegacyForm(atual.aiForms, formId), [formId]: forma + units };
+        await writeEntitlement(env, saveId, atual);
+        return null;
+      });
+      if (recusa) return recusa;
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
@@ -485,10 +511,12 @@ function makeRelease(env, ctx) {
       if (hasLifetime || hasFormCap) {
         // Mesma escrita única da reserva, pelo mesmo motivo: dois `put` abririam
         // a janela em que a conta devolveu e a forma não.
-        const ent = await readEntitlement(env, saveId);
-        if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
-        if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
-        await writeEntitlement(env, saveId, ent);
+        await comTravaDoEnt(env, saveId, async () => {
+          const ent = await readEntitlement(env, saveId);
+          if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
+          if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
+          await writeEntitlement(env, saveId, ent);
+        });
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });

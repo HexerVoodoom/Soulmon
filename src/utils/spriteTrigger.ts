@@ -35,13 +35,15 @@
 import { branchLeaders, type AttrPoints, type CareReading } from './carePattern';
 import { getNextEvolution } from './dailyReset';
 import { evolutionTarget, type Branch } from './evolutionTarget';
-import { gaugeGoalFor } from './evolutionGauge';
+import { gaugeGoalFor, gaugeTravadaPelasMegas } from './evolutionGauge';
 import { hasSprite, isAccountCapped, isFormCapped, type SpriteLibrary } from './spriteLibrary';
 
 /** `'B'` fica no tipo como LÁPIDE: nenhum caminho o produz desde o D-G8c. Ele
  *  segue aqui para que um save/telemetria antigo que o carregue não quebre a
  *  checagem exaustiva de quem consome o tipo. */
-export type SpriteOccasion = 'A' | 'B' | 'C';
+/** 'R' = RECUPERAÇÃO (05/11/2026): a forma ATUAL ficou sem arte própria (o cristal seguiu com a reserva — timeout, falha ou
+ *  "seguir sem a arte nova") e o visor estava emprestando o sprite da forma anterior. Adota na hora: não há rosto próprio a proteger. */
+export type SpriteOccasion = 'A' | 'B' | 'C' | 'R';
 
 export interface SpriteTriggerInput {
   evolutionStage: string;
@@ -59,6 +61,8 @@ export interface SpriteTriggerInput {
    * comportamento antigo (gera os líderes assim que a barra enche).
    */
   crystalFormId?: string | null;
+  /** A chave de acervo da forma ATUAL (forma alternativa equipada = `forma@elemento`). Ausente = `evolutionStage`. */
+  currentKey?: string;
 }
 
 export interface SpriteBatch {
@@ -72,7 +76,9 @@ export function pointsToEvolve(evolutionStage: string, evolutionPoints: number, 
   // 🧬 11/10/2026: pontos do GAUGE, não mais dias completos. A meta é de
   // `gaugeGoalFor` (dona). No topo (ultra) a meta é 0 e nada é gerado: o
   // `targetFormId` devolve null de qualquer jeito.
-  return gaugeGoalFor(evolutionStage, unlockedEvolutions) - (evolutionPoints ?? 0);
+  // 16/11/2026: mega com menos de 3 megas liberadas não tem próxima forma — nunca "pronto", mesmo com pontos guardados.
+  const faltam = gaugeGoalFor(evolutionStage, unlockedEvolutions) - (evolutionPoints ?? 0);
+  return gaugeTravadaPelasMegas(evolutionStage, unlockedEvolutions) ? Math.max(1, faltam) : faltam;
 }
 
 /** A forma-destino, pela fonte única. `null` quando não há para onde ir. */
@@ -105,7 +111,7 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
 
   if (faltam <= 0) {
     if (input.crystalFormId !== undefined) {
-      if (!input.crystalFormId) return null;
+      if (!input.crystalFormId) return currentFormRecovery(input);
       const ids = generatable(input, [input.crystalFormId]);
       return ids.length ? { occasion: 'C', formIds: ids } : null;
     }
@@ -118,7 +124,22 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
     return formIds.length ? { occasion: 'C', formIds } : null;
   }
 
-  return null;
+  return currentFormRecovery(input);
+}
+
+/**
+ * RECUPERAÇÃO da forma atual (05/11/2026, achado do dono: "evoluiu para a mesma forma"). Quando o cristal fecha sem a arte
+ * nova (fase `falhou` + "seguir", timeout de `CRYSTAL_STUCK_MS`), a evolução commita e a barra zera — e daí em diante
+ * nenhuma ocasião pedia a forma atual de novo: o visor ficava PARA SEMPRE no sprite da forma anterior
+ * (`getSpriteForStage` → `Object.values(ownSprites)[0]`). Aqui a forma atual sem sprite volta a ser pedida; o teto da
+ * forma (409) e da conta (402) continuam sendo a porta que fecha, e uma falha comum espera
+ * `SPRITE_REEVALUATE_AFTER_FAILURE_MS` no hook (nunca laço imediato). Acervo vazio é o `birthBatch`, não isto.
+ */
+export function currentFormRecovery(input: SpriteTriggerInput): SpriteBatch | null {
+  if (isAccountCapped(input.library)) return null;
+  if (Object.keys(input.library.sprites).length === 0) return null;
+  const ids = generatable(input, [input.currentKey ?? input.evolutionStage]);
+  return ids.length ? { occasion: 'R', formIds: ids } : null;
 }
 
 /**
@@ -133,7 +154,7 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
 function vesperForms(input: SpriteTriggerInput, target: string): string[] {
   const leaders = branchLeaders(input.points);
   if (leaders.length < 2) return [target];
-  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.evolutionPoints ?? 0));
+  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions));
   // `ultra` não tem galho: os três líderes resolvem para a MESMA forma. Dedup
   // aqui evita três pedidos idênticos ao servidor pela mesma imagem.
   const unique = Array.from(new Set(forms.filter(f => f !== input.evolutionStage)));

@@ -80,13 +80,13 @@ describe('🔴 o nome da área cabe no cartão do Mapa', () => {
     // zero") foi o que fez a primeira versão deste arquivo medir o vácuo.
     const pares = rotulos();
     expect(pares.map(p => p.pt)).toEqual(
-      ['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Hall'],
+      ['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Cidadela'],
     );
     expect(pares.map(p => p.en)).toEqual(
-      ['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Hall'],
+      ['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Citadel'],
     );
-    // Arena e Hall são iguais nos dois idiomas de propósito; os outros cinco
+    // Só a Arena é igual nos dois idiomas (a Cidadela/Citadel difere, 10/11/2026); os outros seis
     // diferem — senão o teto do inglês nunca seria medido.
-    expect(pares.filter(p => p.pt !== p.en).length).toBe(5);
+    expect(pares.filter(p => p.pt !== p.en).length).toBe(6);
   });
 });

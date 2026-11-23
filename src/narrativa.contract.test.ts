@@ -185,6 +185,9 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
   'Glitchtama': {
     proposta: 'P5 — rótulo do item. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
+      // 10/11/2026, pedido do dono: o Desfeito vende o item (EXCEÇÃO DE TESTE, flag em glitchtamaTeste.ts) — o botão leva o nome do item.
+      'src/components/nav/GuildaMapPage.tsx',
+      'src/utils/glitchtamaTeste.ts',
       'src/App.tsx',
       'src/components/nav/AreaView.tsx',
       'src/components/play/PlaySheets.tsx',
@@ -194,10 +197,15 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/components/NightmareBattle.tsx',
       'src/contexts/GameStateContext.tsx',
       'src/utils/dungeonBase.ts', // movido de dungeon.ts em 26/10/2026 (perf do bundle), mesmo uso — não é espalhamento
+      'src/utils/glitchtamaDrop.ts', // dono único do drop raro do item (pedido do dono, 05/11/2026, REGISTRO §226); módulo novo por pedido, não espalhamento
       'src/utils/gainArt.ts',
       'src/utils/itemArt.ts',
       'src/utils/shop.ts',
       'src/utils/specialItemUse.ts',
+      // 10/11/2026, decisão do dono (REGISTRO §276): o item vira buff semanal de +10% — dono único da regra, o crédito na virada e a linha de UI do buff.
+      'src/utils/glitchtamaBuff.ts',
+      'src/utils/dailyReset.ts',
+      'src/components/EvolutionPath.tsx',
     ],
   },
   'contraparte digital da alma': {
@@ -298,5 +306,18 @@ describe('régua da narrativa — a bíblia não apodrece', () => {
         'impede lore novo de virar cobrança; uma lei que só existe na referência ' +
         'não obriga ninguém.',
     ).toEqual([]);
+  });
+});
+
+describe('régua da narrativa — Files/Arquivos e `.exe` (16/11/2026)', () => {
+  it('a bíblia declara o termo canônico e a fronteira (só itens listados; nunca a criatura)', () => {
+    const texto = readFileSync(BIBLIA, 'utf8');
+    expect(texto).toContain('**Arquivos / Files**');
+    expect(texto).toContain('`<nome>.exe`');
+    expect(texto).toMatch(/nunca\*\* nomeia a criatura/);
+  });
+  it('a pasta de itens se chama Arquivos/Files na UI (Mochila.tsx), sem renomear o componente', () => {
+    const fonte = readFileSync(join(SRC, 'components', 'home', 'Mochila.tsx'), 'utf8');
+    expect(fonte).toContain("isPt ? 'Arquivos' : 'Files'");
   });
 });

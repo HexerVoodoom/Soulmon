@@ -1,7 +1,7 @@
 # Referência — `src/utils`
 
-> **Dono:** doc-redator-referencia · **Data:** 29/10/2026 (sincronização `f3acead1..15624b69b`, parcial: módulos novos e apagados) ; anterior: 11/10/2026 (delta `e71061b8..f3acead1`: exports de `dailyReset`, `careRules`, `taskTriage`, `habitRhythm`, `poopDrain`, `specialItemUse`, `sonsAssets`, `trilha`, `monetization`, `shop` reconferidos em nível de nome; entradas novas já existiam); anterior: 07/10/2026 (sincronização `e3d55bb8..e71061b8`, Combate v3 PR1–PR18, prédios, missões, avatar: exports novos (sons do combate, ficha, missionLive, dailyReset, cloudSave…), PR18 em combatFx); anterior: 01/10/2026 (delta `bcfe7ca6..e3d55bb8`, arte rodada 3, PRs #189–#197: entradas NOVAS `visorScenes.ts`, `dueloArt.ts`, `lineFullArt.ts`; exports reconferidos em `adventureArt.ts` (postais `trv-*`), `areaNpcVoice.ts` (`functionNpcVoice`, `extraNpcVoice`, falas do ROSTER), `areaSheetCopy.ts` (`top` 54%/78%), `backgrounds.ts` (arte pintada do Bosque, `bg-campina`/`bg-cavernas`), `currencies.ts` (Honra), `decorArt.ts` (Concha real), `dungeonScenes.ts` (5 cenas pintadas), `fairArt.ts` (tipo × estado, `fairFenomenoId`), `guildCopy.ts`, `missions.ts`, `playAreaLots.ts`, `soulProfile/essenceLabels.ts` (`essenceEn`, `COMBO_EN`)); anterior: 30/09/2026 (delta `3532ccf5..bcfe7ca6`: `consent.ts` › `TERMS_VERSION` = `2026-09-30`); anterior: 30/09/2026 (delta `cfe27cc7..3532ccf5`: `travessias.ts`/`travessiasSave.ts` (entradas do PR conferidas), `adventure.ts` (`adventureOfNight`, exceção à regra 4), `playAreaLots.ts` (lote `passeio`), `areaNpcVoice.ts` (`exploracao:passeio`)); anterior: 30/09/2026 (sincronização `8e6d0d9a..ae366480`: ids `harmony`, aviso do widget do corvo); anterior: 29/09/2026 (sincronização da Guilda completa, delta `38c3ccb5..b657a340`: `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts`, `guildCopyCore.ts` NOVOS; `guildCopy.ts`/`guildRules.ts` reescritos; exports reconferidos em `community.ts`, `shop.ts`, `shopBuy.ts`, `backgrounds.ts`, `decorArt.ts`, `storageKeys.ts`, `telemetry.ts`, `areaNpcVoice.ts`, `areaSheetCopy.ts`); anterior: delta `cf8a851d..38c3ccb5`: `backStack.ts` NOVO; exports reconferidos em `areaNpcVoice.ts` (`lotNpcVoice`), `areaSheetCopy.ts` (`laboratorioLots`/`hallLots`), `chatSafety.ts` (`crisisLineText`), `androidBack.ts`, `oracle.ts` (compensações por caminho, `FAMILIA_PESO`, `RITUAL_REALM_SCALE`), `rebirth.ts` (`herancaDoCiclo`), `bestiary/select.ts` (`GRUPO_PESO`)); anterior: 28/09/2026 (sincronização do delta `f465d266..cf8a851d`, PR #133: `oracle.ts` (`RITUAL_ELEMENT_SCALE`/`RITUAL_ALIGNMENT_SCALE` novos), `bestiary/select.ts` (`especieDe` novo), `axes.ts`, `ficha/buildSheet.ts`, `ritualAnswers.ts`, `pipeline.ts`); anterior: 28/09/2026 (sincronização do delta `25fd3c41..f465d266`, PR #131: `oracle.ts` `companionName`; `ficha/classTitle.ts` `dominantElement` opcional; `ficha/fromInput.ts` `FichaESkills.dominantElement`; `ficha/capture.ts` ganhou régua; `pipeline.ts`); anterior: 28/09/2026 (sincronização do delta `83a9aac6..25fd3c41`, PR #129: `soulProfile/axes.ts` — `ALIGNMENT_ELEMENT_AFFINITY`, o caminho passa a pesar sobre o elemento); anterior: 28/09/2026 (sincronização do delta `8110efc5..83a9aac6`, PR #127: `oracle.ts` — `OracleInput.bestiaryLineageNomes` (novo), `pickFamilies` ganhou `bestiaryFamilyHint`, ponte interna `bestiaryFamilyIds`; `bestiary/select.ts` — `scoreCreature` com os 4 bônus dobrados (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS` = 4/4/3/3) e ponte `humanoide`↔`biologia`; `pipeline.ts` — `generateOracleComplete` monta e repassa `bestiaryLineageNomes`); anterior: 27/09/2026 (sincronização do delta `8fbf6990..1d9e278d`: `soulProfile/bestiary/select.ts` — pool 630→**732** por conta dos arquétipos genéricos de fantasia, `scripts/bestiario-arquetipos-genericos.mjs` (NOVO, fora do inventário de `src/utils`, citado por vizinhança) — Gigante/Autômato/Espectro/Limo/Aberração/Morto-Vivo cobrindo as seis famílias que `REALM_TO_FAMILIAS` esperava e não tinham criatura; nasceu de um pedido do dono vetado por PI, decisão em `docs/REGISTRO-DE-DECISOES.md` §15; `pipeline.ts` régua atualizada para pool 732); anterior: 27/09/2026 (sincronização do delta `2336e4e7..8fbf6990`: `soulProfile/bestiary/select.ts` — pool 617→**630** por conta da ponte sintética de elementos, `scripts/bestiario-ponte-elementos.mjs` (NOVO, fora do inventário de `src/utils`, citado por vizinhança), e a curadoria de conteúdo `scripts/bestiario-curadoria.mjs`; régua atualizada para `curadoria.contract.test.ts`); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: `OracleInput.bestiaryInspiration.nome` e o D-B1 em `pipeline.ts`; `Incubation.notified` ⚰️; `bestiario-procedencia.mjs` registrado como exceção fora do inventário); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: a cobertura do cabeçalho RE-MEDIDA: 120/120 de 09/09 → **139/139** de 24/09 (o último a entrar foi `androidBack.ts`); anterior: 24/09/2026 (fechamento F6 da minimal-ui: entrada nova `src/navigation.ts`; `areaSheetCopy.ts` sem placeholder; "Chamado por" de `currencies`, `i18n`, `itemArt`, `shop`, `ficha/skills`, `ficha/types` sem `ActivitiesPage`/`BottomNav`/`ShopModal`/`ItemsWindow`); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: `oracleDraft.ts` (⚰️ `favoriteCreature`/`skipFavorite` fora de `OracleDraft`, versão NÃO bumpada), `soulProfile/axes.ts` (os três avisos de recalibragem), `ficha/buildSheet.ts` (`DOMINANT_SCHOOL_LEAD` + régua `escolaFidelidade.test.ts`), `ficha/classTitle.ts` (`melhorArquetipo` por identidade + régua `classeOcorrencia.test.ts`); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono): `currencies.ts` (`MINIGAME_BITS_PER_DAY`, `MinigameBitsCharge`/`MinigameBitsState`, `minigameBitsToday`, `remainingMinigameBits`, `creditMinigameBits` + por que o teto é em Bits/dia), `dailyReset.ts` (`podeEvoluirDepoisDaQueda`, `BITS_PER_COMPLETE_DAY`), `habitRhythm.ts` (`isWeekClosingDay`, `habitCountsForHeartsOn`), `missions.ts` (`missionPerfectDays` em `MissionState`), `entitlements.ts` (`resetSpriteLifetimeAfterRebirth`), `poopDrain.ts` (as três travas novas + os campos de `PoopDrainState`), `specialItemUse.ts` (o 🌀 escreve `missionPerfectDays`); `completionUndo.ts` já entrou em `cf6315e1`; anterior: 2ª sincronização do dia: delta `a6c1cd8a..592e2c14`, QA Rodada 2 — `cloudSave.ts` `checarContaExcluidaNoLogin`/`LeituraNuvem.excluidaEm`/`reconcileSaveId` `'excluida'`/`CONFLICT_BACKUP`, `community.ts` 410, `notifications.ts` `Authorization`, `playBilling.ts` `fecharNaPlay`, `telemetry.ts` fila sanitizada, `termsNotice.ts` `'both'`, `taskSuggestions.ts` `suggestTasksResult`, `trilha.ts` `MotivoDePausa`/`trilhaPausada`, `bond.ts`/`dailyReset.ts` `perfectDay` emitido, `petVoice.ts` 6 kinds, `chatSafety.ts` EN, `storageKeys.ts` `TERMS_NOTICE_SHOWN`))) · **Estado:** verificado em 29/10/2026 por doc-verificador (sincronização f3acead1..15624b69b, SÓ as entradas tocadas — novas `evoRecap`/`CompletionTag`/`EvoRecapModal`/`RewardPreview` e lápides `GuerraClaSheet`/`RestWindowCard`/`UndoToast`, conferidas símbolo a símbolo contra o fonte; papéis redator/verificador exercidos na mesma sessão; o restante do delta, ~100 módulos com exports alterados, NÃO foi reconferido); anterior: verificado em 27/09/2026 por doc-verificador (delta `2336e4e7..8fbf6990` — pool.json medido: 630 criaturas, 13 com `_ponte`, eletricidade/marcial/sombra 5/5/5, 84 `Variado` = 55 "Venenoso" de modificador ambíguo + 29 sem modificador geográfico; símbolos dos dois scripts por grep; âncoras conferidas; `curadoria.contract.test.ts` verde); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — `node scripts/docs-inventario.mjs` → 139 módulos em `src/utils`, e o `comm` do inventário contra os `### ` do doc não devolveu nenhum faltando; a entrada de `androidBack.ts` (que entrou com `7b4819e6`) conferida símbolo a símbolo); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367`, entradas alteradas: `areaNpcVoice`, `areaSheetCopy`, `mercadoCatalog`, `playAreaLots`, `missions`, `dailyReset`, `dungeon`, `rebirth`, `spriteTrigger`, `shop`, `backgrounds`, `decorArt` — exports conferidos contra `^export` de cada fonte, "Chamado por" contra `grep -rlE "from '[^']*/<módulo>'" src` (sem testes), `INCUBATION_MIN_MS` 30 min, `HEART_DROP_CHANCE` 0.05, Vesca no fonte; **corrigido aqui**: régua de `spriteTrigger` ganhou `spriteTrigger.esperaMinima.test.ts` e `spriteBirth.contract.test.ts`); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — cada símbolo citado conferido no fonte (`ANCHOR_BASE` 45, `ANCHOR_GAIN` 4.2, os dois fatores 0.55 de `vileza`, o ×40 e o −20 de `sombra`, `DOMINANT_SCHOOL_LEAD` 1.15 e o ramo `suporte` → `benca`/`maldicao`, `hashString(chave) % ordenada.length` com `localeCompare` por `id`) e as quatro réguas por `ls`; `readOracleDraft` não lê mais as duas chaves); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — a entrada de `buildSheet.ts` conferida contra o fonte (exports `ALLOC_FRACTION`/`ElementPlan`, 6º parâmetro `plano`) e as réguas contra os arquivos; **corrigido aqui**: a linha da régua dizia que o T-PISO "diverge de propósito" e hoje diz que ele REPROVOU (49,7 % contra a régua de ≥95 % da §10.2, não movida; `PISO_MEDIDO_ESTRITO`/`PISO_MEDIDO_NAO_DESASTRE` são piso de regressão)); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as entradas acima conferidas símbolo a símbolo contra o fonte; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — seções tocadas conferidas símbolo a símbolo contra o fonte: `accountData.ts` (`REVOKE_PUSH_TIMEOUT_MS`), `chatSafety.ts` (`normalizarParaLexico`), `cloudSave.ts` (`deleted`/`reagirContaExcluida`/`mensagemContaExcluida`), `consent.ts` (versões 2026-09-22), `notifications.ts` (`unregisterFromPushNotifications`), `storageKeys.ts` (`ACCOUNT_DELETED_NOTICE`), `telemetry.ts` (`invite`, `limparOrigemDaUrl`, `drainHiddenTelemetry`, `MAX_HIDDEN`), `termsNotice.ts` (`qualDocMudou`); anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — `accountData.ts`, `achievements.ts`, `emblemArt.ts`, `monetization.ts`, `notifications.ts`, `storageKeys.ts`, `termsNotice.ts`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só `consent.ts`, conferido por grep; anterior: delta `dc72579e..9875477b`); a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida; entradas de `audioBus.ts`, `loudness.ts`, `sonsAssets.ts`, `sounds.ts` e `trilha.ts` verificadas em 21/09/2026 por doc-verificador sobre `5ac3d351..8d318529` (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
-> **Estado:** verificado em 01/10/2026 por doc-redator-referencia (delta `bcfe7ca6..e3d55bb8`; sem verificador independente — exports conferidos contra `^export` de cada fonte, "Chamado por" de `visorScenes`/`dueloArt`/`lineFullArt` por `grep -rlE "from '[^']*/<módulo>'" src`, contagens de PNG por `find`); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `3532ccf5..bcfe7ca6`, só as passagens tocadas, conferidas contra o fonte em `bcfe7ca6` — `consent.ts` › `TERMS_VERSION`/`PRIVACY_VERSION`, `public/termos.html` §8 e "Last updated"/"Última atualização", `PERGUNTAS-DO-DONO.md` MIS-13..MIS-16, `REGISTRO-DE-DECISOES.md` §5.6; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `cfe27cc7..3532ccf5`, só as passagens tocadas, conferidas símbolo a símbolo contra o fonte em `3532ccf5` — `utils/travessias.ts`, `utils/travessiasSave.ts`, `types/travessias.ts`, `PasseioSheet.tsx`, `adventure.ts` › `adventureOfNight`, `playAreaLots.ts`, `CompanionHUD` › `walkingTo`, `GameStateContext` › `crossings`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — entradas alteradas conferidas símbolo a símbolo contra o fonte: `areaNpcVoice` (`LOT_NPC_VOICE` `jogos:mente`/`jogos:refugio`, nomes, `Tuska`), `subscribeAuthState`, `community.ts` (`Opponent.duel`, `MatchResult.duel`/`forfeit`, `startDuel`, `playMatch`), `dungeon.ts` (`DUNGEON_BITS_FACTOR`, `points`, `DEEP_START_BASE_COST`=16, régua), `playerDayIso`, `playAreaLots`, `STORAGE_KEYS` (52 por `grep -c`), `cityName`, `DUNGEON_LINE_NAMES`, `nameEn` de `backgrounds.ts`/`bond.ts`/`shop.ts`; listas `Chamado por` de `auth`/`community`/`playerDay` refeitas por `grep`; exports de `entitlementSync` completados); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes); anterior: verificado em 29/09/2026 por doc-verificador (delta `cf8a851d..38c3ccb5` — entradas tocadas conferidas símbolo a símbolo contra o fonte; anterior: delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — entrada de `axes.ts` conferida símbolo a símbolo); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — as três entradas conferidas símbolo a símbolo contra `src/utils/oracle.ts`, `src/utils/soulProfile/bestiary/select.ts` e `src/utils/soulProfile/pipeline.ts`: export/não-export de `bestiaryFamilyIds`/`BIOLOGIA_TO_FAMILY_IDS`/`FAMILIA_TO_FAMILY_IDS` checado no fonte antes de listar); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
+> **Dono:** doc-redator-referencia · **Data:** 09/11/2026 (sincronização `5229b1be..62f204e1b`, rascunho até o doc-verificador: entradas NOVAS `combate/duel.ts` e `criacaoEvolucaoArt.ts`; linhas **Sincronização 09/11/2026** nas entradas com export novo ou regra mudada — `arena.ts` (escada, formas paralelas), `combate/fight.ts` (`statExibido`/`hpExibidoPvp`), `combate/level.ts` (`StatFloor`), `dungeonIdle.ts` (`DUNGEON_RETURN_EVERY`), `combatArt.ts` (`combatSceneBgDaCamada`), `enemyRoster*.ts` (kinds `paralelo`/`forma`), `consent.ts` (`PRIVACY_VERSION` `2026-11-09`), `dungeonAway.ts` (poções), `storageKeys.ts`, entre outras; os ~45 módulos com mudança só interna NÃO foram reconferidos); anterior: 29/10/2026 (sincronização `f3acead1..15624b69b`, parcial: módulos novos e apagados) ; anterior: 11/10/2026 (delta `e71061b8..f3acead1`: exports de `dailyReset`, `careRules`, `taskTriage`, `habitRhythm`, `poopDrain`, `specialItemUse`, `sonsAssets`, `trilha`, `monetization`, `shop` reconferidos em nível de nome; entradas novas já existiam); anterior: 07/10/2026 (sincronização `e3d55bb8..e71061b8`, Combate v3 PR1–PR18, prédios, missões, avatar: exports novos (sons do combate, ficha, missionLive, dailyReset, cloudSave…), PR18 em combatFx); anterior: 01/10/2026 (delta `bcfe7ca6..e3d55bb8`, arte rodada 3, PRs #189–#197: entradas NOVAS `visorScenes.ts`, `dueloArt.ts`, `lineFullArt.ts`; exports reconferidos em `adventureArt.ts` (postais `trv-*`), `areaNpcVoice.ts` (`functionNpcVoice`, `extraNpcVoice`, falas do ROSTER), `areaSheetCopy.ts` (`top` 54%/78%), `backgrounds.ts` (arte pintada do Bosque, `bg-campina`/`bg-cavernas`), `currencies.ts` (Honra), `decorArt.ts` (Concha real), `dungeonScenes.ts` (5 cenas pintadas), `fairArt.ts` (tipo × estado, `fairFenomenoId`), `guildCopy.ts`, `missions.ts`, `playAreaLots.ts`, `soulProfile/essenceLabels.ts` (`essenceEn`, `COMBO_EN`)); anterior: 30/09/2026 (delta `3532ccf5..bcfe7ca6`: `consent.ts` › `TERMS_VERSION` = `2026-09-30`); anterior: 30/09/2026 (delta `cfe27cc7..3532ccf5`: `travessias.ts`/`travessiasSave.ts` (entradas do PR conferidas), `adventure.ts` (`adventureOfNight`, exceção à regra 4), `playAreaLots.ts` (lote `passeio`), `areaNpcVoice.ts` (`exploracao:passeio`)); anterior: 30/09/2026 (sincronização `8e6d0d9a..ae366480`: ids `harmony`, aviso do widget do corvo); anterior: 29/09/2026 (sincronização da Guilda completa, delta `38c3ccb5..b657a340`: `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts`, `guildCopyCore.ts` NOVOS; `guildCopy.ts`/`guildRules.ts` reescritos; exports reconferidos em `community.ts`, `shop.ts`, `shopBuy.ts`, `backgrounds.ts`, `decorArt.ts`, `storageKeys.ts`, `telemetry.ts`, `areaNpcVoice.ts`, `areaSheetCopy.ts`); anterior: delta `cf8a851d..38c3ccb5`: `backStack.ts` NOVO; exports reconferidos em `areaNpcVoice.ts` (`lotNpcVoice`), `areaSheetCopy.ts` (`laboratorioLots`/`hallLots`), `chatSafety.ts` (`crisisLineText`), `androidBack.ts`, `oracle.ts` (compensações por caminho, `FAMILIA_PESO`, `RITUAL_REALM_SCALE`), `rebirth.ts` (`herancaDoCiclo`), `bestiary/select.ts` (`GRUPO_PESO`)); anterior: 28/09/2026 (sincronização do delta `f465d266..cf8a851d`, PR #133: `oracle.ts` (`RITUAL_ELEMENT_SCALE`/`RITUAL_ALIGNMENT_SCALE` novos), `bestiary/select.ts` (`especieDe` novo), `axes.ts`, `ficha/buildSheet.ts`, `ritualAnswers.ts`, `pipeline.ts`); anterior: 28/09/2026 (sincronização do delta `25fd3c41..f465d266`, PR #131: `oracle.ts` `companionName`; `ficha/classTitle.ts` `dominantElement` opcional; `ficha/fromInput.ts` `FichaESkills.dominantElement`; `ficha/capture.ts` ganhou régua; `pipeline.ts`); anterior: 28/09/2026 (sincronização do delta `83a9aac6..25fd3c41`, PR #129: `soulProfile/axes.ts` — `ALIGNMENT_ELEMENT_AFFINITY`, o caminho passa a pesar sobre o elemento); anterior: 28/09/2026 (sincronização do delta `8110efc5..83a9aac6`, PR #127: `oracle.ts` — `OracleInput.bestiaryLineageNomes` (novo), `pickFamilies` ganhou `bestiaryFamilyHint`, ponte interna `bestiaryFamilyIds`; `bestiary/select.ts` — `scoreCreature` com os 4 bônus dobrados (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS` = 4/4/3/3) e ponte `humanoide`↔`biologia`; `pipeline.ts` — `generateOracleComplete` monta e repassa `bestiaryLineageNomes`); anterior: 27/09/2026 (sincronização do delta `8fbf6990..1d9e278d`: `soulProfile/bestiary/select.ts` — pool 630→**732** por conta dos arquétipos genéricos de fantasia, `scripts/bestiario-arquetipos-genericos.mjs` (NOVO, fora do inventário de `src/utils`, citado por vizinhança) — Gigante/Autômato/Espectro/Limo/Aberração/Morto-Vivo cobrindo as seis famílias que `REALM_TO_FAMILIAS` esperava e não tinham criatura; nasceu de um pedido do dono vetado por PI, decisão em `docs/REGISTRO-DE-DECISOES.md` §15; `pipeline.ts` régua atualizada para pool 732); anterior: 27/09/2026 (sincronização do delta `2336e4e7..8fbf6990`: `soulProfile/bestiary/select.ts` — pool 617→**630** por conta da ponte sintética de elementos, `scripts/bestiario-ponte-elementos.mjs` (NOVO, fora do inventário de `src/utils`, citado por vizinhança), e a curadoria de conteúdo `scripts/bestiario-curadoria.mjs`; régua atualizada para `curadoria.contract.test.ts`); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: `OracleInput.bestiaryInspiration.nome` e o D-B1 em `pipeline.ts`; `Incubation.notified` ⚰️; `bestiario-procedencia.mjs` registrado como exceção fora do inventário); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: a cobertura do cabeçalho RE-MEDIDA: 120/120 de 09/09 → **139/139** de 24/09 (o último a entrar foi `androidBack.ts`); anterior: 24/09/2026 (fechamento F6 da minimal-ui: entrada nova `src/navigation.ts`; `areaSheetCopy.ts` sem placeholder; "Chamado por" de `currencies`, `i18n`, `itemArt`, `shop`, `ficha/skills`, `ficha/types` sem `ActivitiesPage`/`BottomNav`/`ShopModal`/`ItemsWindow`); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: `oracleDraft.ts` (⚰️ `favoriteCreature`/`skipFavorite` fora de `OracleDraft`, versão NÃO bumpada), `soulProfile/axes.ts` (os três avisos de recalibragem), `ficha/buildSheet.ts` (`DOMINANT_SCHOOL_LEAD` + régua `escolaFidelidade.test.ts`), `ficha/classTitle.ts` (`melhorArquetipo` por identidade + régua `classeOcorrencia.test.ts`); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono): `currencies.ts` (`MINIGAME_BITS_PER_DAY`, `MinigameBitsCharge`/`MinigameBitsState`, `minigameBitsToday`, `remainingMinigameBits`, `creditMinigameBits` + por que o teto é em Bits/dia), `dailyReset.ts` (`podeEvoluirDepoisDaQueda`, `BITS_PER_COMPLETE_DAY`), `habitRhythm.ts` (`isWeekClosingDay`, `habitCountsForHeartsOn`), `missions.ts` (`missionPerfectDays` em `MissionState`), `entitlements.ts` (`resetSpriteLifetimeAfterRebirth`), `poopDrain.ts` (as três travas novas + os campos de `PoopDrainState`), `specialItemUse.ts` (o 🌀 escreve `missionPerfectDays`); `completionUndo.ts` já entrou em `cf6315e1`; anterior: 2ª sincronização do dia: delta `a6c1cd8a..592e2c14`, QA Rodada 2 — `cloudSave.ts` `checarContaExcluidaNoLogin`/`LeituraNuvem.excluidaEm`/`reconcileSaveId` `'excluida'`/`CONFLICT_BACKUP`, `community.ts` 410, `notifications.ts` `Authorization`, `playBilling.ts` `fecharNaPlay`, `telemetry.ts` fila sanitizada, `termsNotice.ts` `'both'`, `taskSuggestions.ts` `suggestTasksResult`, `trilha.ts` `MotivoDePausa`/`trilhaPausada`, `bond.ts`/`dailyReset.ts` `perfectDay` emitido, `petVoice.ts` 6 kinds, `chatSafety.ts` EN, `storageKeys.ts` `TERMS_NOTICE_SHOWN`))) · **Estado:** verificado em 29/10/2026 por doc-verificador (sincronização f3acead1..15624b69b, SÓ as entradas tocadas — novas `evoRecap`/`CompletionTag`/`EvoRecapModal`/`RewardPreview` e lápides `GuerraClaSheet`/`RestWindowCard`/`UndoToast`, conferidas símbolo a símbolo contra o fonte; papéis redator/verificador exercidos na mesma sessão; o restante do delta, ~100 módulos com exports alterados, NÃO foi reconferido); anterior: verificado em 27/09/2026 por doc-verificador (delta `2336e4e7..8fbf6990` — pool.json medido: 630 criaturas, 13 com `_ponte`, eletricidade/marcial/sombra 5/5/5, 84 `Variado` = 55 "Venenoso" de modificador ambíguo + 29 sem modificador geográfico; símbolos dos dois scripts por grep; âncoras conferidas; `curadoria.contract.test.ts` verde); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — `node scripts/docs-inventario.mjs` → 139 módulos em `src/utils`, e o `comm` do inventário contra os `### ` do doc não devolveu nenhum faltando; a entrada de `androidBack.ts` (que entrou com `7b4819e6`) conferida símbolo a símbolo); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367`, entradas alteradas: `areaNpcVoice`, `areaSheetCopy`, `mercadoCatalog`, `playAreaLots`, `missions`, `dailyReset`, `dungeon`, `rebirth`, `spriteTrigger`, `shop`, `backgrounds`, `decorArt` — exports conferidos contra `^export` de cada fonte, "Chamado por" contra `grep -rlE "from '[^']*/<módulo>'" src` (sem testes), `INCUBATION_MIN_MS` 30 min, `HEART_DROP_CHANCE` 0.05, Vesca no fonte; **corrigido aqui**: régua de `spriteTrigger` ganhou `spriteTrigger.esperaMinima.test.ts` e `spriteBirth.contract.test.ts`); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — cada símbolo citado conferido no fonte (`ANCHOR_BASE` 45, `ANCHOR_GAIN` 4.2, os dois fatores 0.55 de `vileza`, o ×40 e o −20 de `sombra`, `DOMINANT_SCHOOL_LEAD` 1.15 e o ramo `suporte` → `benca`/`maldicao`, `hashString(chave) % ordenada.length` com `localeCompare` por `id`) e as quatro réguas por `ls`; `readOracleDraft` não lê mais as duas chaves); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — a entrada de `buildSheet.ts` conferida contra o fonte (exports `ALLOC_FRACTION`/`ElementPlan`, 6º parâmetro `plano`) e as réguas contra os arquivos; **corrigido aqui**: a linha da régua dizia que o T-PISO "diverge de propósito" e hoje diz que ele REPROVOU (49,7 % contra a régua de ≥95 % da §10.2, não movida; `PISO_MEDIDO_ESTRITO`/`PISO_MEDIDO_NAO_DESASTRE` são piso de regressão)); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as entradas acima conferidas símbolo a símbolo contra o fonte; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — seções tocadas conferidas símbolo a símbolo contra o fonte: `accountData.ts` (`REVOKE_PUSH_TIMEOUT_MS`), `chatSafety.ts` (`normalizarParaLexico`), `cloudSave.ts` (`deleted`/`reagirContaExcluida`/`mensagemContaExcluida`), `consent.ts` (versões 2026-09-22), `notifications.ts` (`unregisterFromPushNotifications`), `storageKeys.ts` (`ACCOUNT_DELETED_NOTICE`), `telemetry.ts` (`invite`, `limparOrigemDaUrl`, `drainHiddenTelemetry`, `MAX_HIDDEN`), `termsNotice.ts` (`qualDocMudou`); anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — `accountData.ts`, `achievements.ts`, `emblemArt.ts`, `monetization.ts`, `notifications.ts`, `storageKeys.ts`, `termsNotice.ts`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só `consent.ts`, conferido por grep; anterior: delta `dc72579e..9875477b`); a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida; entradas de `audioBus.ts`, `loudness.ts`, `sonsAssets.ts`, `sounds.ts` e `trilha.ts` verificadas em 21/09/2026 por doc-verificador sobre `5ac3d351..8d318529` (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
+> **Estado:** verificado em 16/11/2026 por doc-verificador (escopo: as linhas Sincronização 16/11/2026 de `forge.ts`, `forgeActions.ts`, `forgeCopy.ts`, `spriteRegen.ts`, `guildLoja.ts` e a entrada nova `reviewSoulmon.ts`, contra `6b7773143`; sem correção); anterior: verificado em 09/11/2026 por doc-verificador (escopo: as entradas NOVAS e as linhas Sincronização 09/11/2026, símbolo por símbolo contra `62f204e1b`; os ~45 módulos com mudança só interna NÃO foram reconferidos); anterior: verificado em 02/11/2026 por doc-verificador (sincronizado até 5229b1be); anterior: verificado em 01/10/2026 por doc-redator-referencia (delta `bcfe7ca6..e3d55bb8`; sem verificador independente — exports conferidos contra `^export` de cada fonte, "Chamado por" de `visorScenes`/`dueloArt`/`lineFullArt` por `grep -rlE "from '[^']*/<módulo>'" src`, contagens de PNG por `find`); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `3532ccf5..bcfe7ca6`, só as passagens tocadas, conferidas contra o fonte em `bcfe7ca6` — `consent.ts` › `TERMS_VERSION`/`PRIVACY_VERSION`, `public/termos.html` §8 e "Last updated"/"Última atualização", `PERGUNTAS-DO-DONO.md` MIS-13..MIS-16, `REGISTRO-DE-DECISOES.md` §5.6; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `cfe27cc7..3532ccf5`, só as passagens tocadas, conferidas símbolo a símbolo contra o fonte em `3532ccf5` — `utils/travessias.ts`, `utils/travessiasSave.ts`, `types/travessias.ts`, `PasseioSheet.tsx`, `adventure.ts` › `adventureOfNight`, `playAreaLots.ts`, `CompanionHUD` › `walkingTo`, `GameStateContext` › `crossings`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — entradas alteradas conferidas símbolo a símbolo contra o fonte: `areaNpcVoice` (`LOT_NPC_VOICE` `jogos:mente`/`jogos:refugio`, nomes, `Tuska`), `subscribeAuthState`, `community.ts` (`Opponent.duel`, `MatchResult.duel`/`forfeit`, `startDuel`, `playMatch`), `dungeon.ts` (`DUNGEON_BITS_FACTOR`, `points`, `DEEP_START_BASE_COST`=16, régua), `playerDayIso`, `playAreaLots`, `STORAGE_KEYS` (52 por `grep -c`), `cityName`, `DUNGEON_LINE_NAMES`, `nameEn` de `backgrounds.ts`/`bond.ts`/`shop.ts`; listas `Chamado por` de `auth`/`community`/`playerDay` refeitas por `grep`; exports de `entitlementSync` completados); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes); anterior: verificado em 29/09/2026 por doc-verificador (delta `cf8a851d..38c3ccb5` — entradas tocadas conferidas símbolo a símbolo contra o fonte; anterior: delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — entrada de `axes.ts` conferida símbolo a símbolo); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — as três entradas conferidas símbolo a símbolo contra `src/utils/oracle.ts`, `src/utils/soulProfile/bestiary/select.ts` e `src/utils/soulProfile/pipeline.ts`: export/não-export de `bestiaryFamilyIds`/`BIOLOGIA_TO_FAMILY_IDS`/`FAMILIA_TO_FAMILY_IDS` checado no fonte antes de listar); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura) + os testes listados em **Régua** de cada módulo.
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -10,11 +10,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ## Índice por família
 
-**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
-**Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
-**Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
-**Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`arenaSorteio.ts`](#srcutilsarenasorteiots), [`arenaTema.ts`](#srcutilsarenatemats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
-**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`generateCharacterUses.ts`](#srcutilsgeneratecharacterusests), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/labels.ts`](#srcutilssoulprofileastrologylabelsts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/companheiro.ts`](#srcutilssoulprofilefichacompanheirots), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/comportamento.ts`](#srcutilssoulprofilefichacomportamentots), [`soulProfile/ficha/comportamentoSimulacao.ts`](#srcutilssoulprofilefichacomportamentosimulacaots), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/manifestacao.ts`](#srcutilssoulprofilefichamanifestacaots), [`soulProfile/ficha/manifestacaoSave.ts`](#srcutilssoulprofilefichamanifestacaosavets), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/elementoNome.ts`](#srcutilssoulprofilefichaelementonomets), [`soulProfile/ficha/nomeEspecial.ts`](#srcutilssoulprofilefichanomeespecialts), [`soulProfile/ficha/strikeForm.ts`](#srcutilssoulprofilefichastrikeformts), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/perfisSinteticos.ts`](#srcutilssoulprofileperfissinteticosts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
+**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`taskUncomplete.ts`](#srcutilstaskuncompletets), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`trocaLateral.ts`](#srcutilstrocalateralts), [`evolutionForecast.ts`](#srcutilsevolutionforecastts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
+**Tarefas e hábitos** — [`categoryExamples.ts`](#srcutilscategoryexamplests), [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
+**Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`cosmeticosNovos.ts`](#srcutilscosmeticosnovosts), [`cosmeticosNovosCores.ts`](#srcutilscosmeticosnovoscorests), [`honraDecor.ts`](#srcutilshonradecorts), [`cristalFundador.ts`](#srcutilscristalfundadorts), [`fundador.ts`](#srcutilsfundadorts), [`fundadorCatalogo.ts`](#srcutilsfundadorcatalogots), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
+**Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`arenaSorteio.ts`](#srcutilsarenasorteiots), [`arenaComponentes.ts`](#srcutilsarenacomponentests), [`arenaTema.ts`](#srcutilsarenatemats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
+**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`decorLuz.ts`](#srcutilsdecorluzts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`generateCharacterUses.ts`](#srcutilsgeneratecharacterusests), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/labels.ts`](#srcutilssoulprofileastrologylabelsts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/companheiro.ts`](#srcutilssoulprofilefichacompanheirots), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/comportamento.ts`](#srcutilssoulprofilefichacomportamentots), [`soulProfile/ficha/comportamentoSimulacao.ts`](#srcutilssoulprofilefichacomportamentosimulacaots), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/manifestacao.ts`](#srcutilssoulprofilefichamanifestacaots), [`soulProfile/ficha/manifestacaoSave.ts`](#srcutilssoulprofilefichamanifestacaosavets), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/elementoNome.ts`](#srcutilssoulprofilefichaelementonomets), [`soulProfile/ficha/nomeEspecial.ts`](#srcutilssoulprofilefichanomeespecialts), [`soulProfile/ficha/strikeForm.ts`](#srcutilssoulprofilefichastrikeformts), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/perfisSinteticos.ts`](#srcutilssoulprofileperfissinteticosts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteDoPerfil.ts`](#srcutilsspritedoperfilts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
 **Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`musica.ts`](#srcutilsmusicats), [`sfxCombate.ts`](#srcutilssfxcombatets), [`sfxCombateCarga.ts`](#srcutilssfxcombatecargats), [`sonsAssets.ts`](#srcutilssonsassetsts), [`sounds.ts`](#srcutilssoundsts), [`trilha.ts`](#srcutilstrilhats)
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
@@ -80,6 +80,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/ChatBox.tsx`, `src/components/CompanionHUD.tsx`, `src/utils/spriteGen.ts`, `src/utils/taskSuggestions.ts`
 **Régua:** nenhuma (`ls src/utils/aiClient*.test.ts` vazio).
 
+### `src/utils/amizadeErro.ts`
+**Dono de:** O texto da tela quando convidar um amigo falha (§346): teto, não achado, convites demais, lista cheia, sessão, rede; a genérica só para o desconhecido.
+**Exports:**
+- `function mensagemFalhaConvite(err: unknown, isPt: boolean): string` — Lê o `error` que `call` põe na mensagem do `Error` e devolve o que fazer. "Não existe" e "escondido" chegam iguais do servidor (`friend not found`) e continuam iguais aqui.
+**Chamado por:** `src/components/LibraryPage.tsx`
+**Régua:** `amizadeErro.test.ts`
+
 ### `src/utils/anniversary.ts`
 **Dono de:** Marca o dia em que a relação com a criatura faz um mês ou um ano, a partir de `bornAt` — módulo puro, `now` por parâmetro.
 **Exports:**
@@ -90,6 +97,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `anniversary.test.ts`
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/editHome.ts`
+**Dono de:** a lógica pura do "Editar Home" (04/11/2026): `editableSlots` (espaços que o cenário oferece), `decorOptionsForSlot` (peças possuídas que ocupam o espaço e servem no cenário), `ownedFittingCount`, `pickDecor` (sobre `applyDecorEquip`; `null` esvazia), `decorEqual`, tipo `DecorMap`.
+**Chamado por:** `components/perfil/EditHomeScreen.tsx`.
+**Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
+
 ### `src/utils/elementoDoOraculo.ts`
 **Dono de:** validar o id do oráculo (27/10/2026, REGISTRO §150 revisto): o alias `planta`→`vida` / `industrial`→`aco` foi APAGADO; planta e industrial passam como são (ícone, FX, cenário e criatura próprios).
 **Exports:**
@@ -99,19 +111,55 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/arena.ts`
 **Dono de:** o motor da Arena no **núcleo do Combate v3, em GRUPO (N × 1)** (PR3b, 06/10/2026, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.15–§2.17): o jogador é `soulCombatant(estado)` (level e ramo), o especial é `specialOf(família)` com a área da skill (`StageSkill.area`), os inimigos são RELATIVOS ao level dele (`arenaFoe`) e lutam ao mesmo tempo (`groupFightSteps`, `combate/group.ts`). O bestiário só dá o SABOR (nome gerado, elemento, sprite — nunca o `nome` do pool). Tudo puro e determinístico pela semente (um teste de fonte proíbe `Math.random` — `arena.semRandom.contract.test.ts`).
+**Sincronização 09/11/2026:** a ESCADA da Arena (REGISTRO §222; campo `arenaLadder` do save): `ARENA_LADDER_MAX` (999), `ARENA_LADDER_FIRST_STEP` (5 vitórias só com Rookies antes do 1º Champion), `ARENA_LADDER_WINS_PER_STEP` (3), `ARENA_LADDER_TOP_STEP` (2·`ARENA_ROUNDS`), `sanitizeArenaLadder`, `arenaLadderStep(ladder)` (degrau 0..10), `arenaLadderStage(ladder, round)` → `ArenaLadderStage` (`rookie`/`champion`/`ultimate`: a FORMA da rodada vem só da escada; a classe `weak/medium/boss` segue dando formato e pagamento), `nextArenaLadder(ladder, outcome)` (vitória +1; derrota e empate SEGURAM). Força: `ARENA_LADDER_BASE` (1) + `ARENA_LADDER_INC` (0,0025) por vitória até `ARENA_LADDER_STRENGTH_CAP` (32) em `arenaLadderStrength`, e `ARENA_STAGE_FLOOR` (rookie 1, champion 1,07, ultimate 1,08; piso de força da forma, §240, 05/11/2026: a rodada vale o maior entre a escada e o piso). `ARENA_PARALELO_CHANCE` (1/6, 09/11/2026): num inimigo Champion/Ultimate de run de elemento, chance de ser a FORMA PARALELA do elemento (kind `paralelo` do roster) quando existe. Régua: `arena.escada.test.ts`.
 **Exports:**
 - PR9b/PR17: `ESCOLA_FAMILY_PADRAO` (família de especial quando a escola não decide) · `familyOfSkill(skill)` (a família vem da skill gravada, não mais da escola) · `familyOfEscola`; tipos `ArenaEnemyClass`, `ArenaElements`, `ArenaPlayerCfg`, `ArenaKnobs`.
 - Elementos: `BASE_ELEMENT_LABELS_EN`, `elementLabel`, `COUNTERS`, `countersElement`, `elementAdvantage(atk, defs)` (−1 / 0 / 1: ±1 golpe exibido, `elementHits`), `getArenaAttributes(ficha)` (os dois elementos-base de defesa).
-- Inimigos: `ARENA_FOES` (weak 0,45/0,12 · medium 0,95/0,235 · boss 1,2/0,495 com especial `direct` de alvo único), `ARENA_ROUND_GROWTH` (hp 0,04 · power 0,13), `ARENA_ROUND_COMP` (1·2·1·3·1; a régua `combate/ruler.ts` lê ESTA composição), `ARENA_ROUNDS`, `ROUND_CLEAR_HEAL` (0,3), `arenaFoe(L, cls, r)`, `buildArenaRound(r, dificuldade, rng, pool)` (só o sabor + Bits; o inimigo é sorteado ESTRATIFICADO por elemento — primeiro o elemento, chance igual entre os do pool, depois a criatura dentro dele — desde o #232, 06/10/2026, porque o corpus de 7.386 criaturas tem `vida` em 18% e tirava ~9pp de vitória de quem usa vida/terra/gravidade), `loadBestiaryPool`, tipos `ArenaEnemy`, `BestiaryCreature`.
+- Inimigos: `ARENA_FOES` (weak 0,45/0,12 · medium 0,95/0,235 · boss 1,2/0,495 com especial `direct` de alvo único), `ARENA_ROUND_GROWTH` (hp 0,04 · power 0,142), `ARENA_ROUND_COMP` (1·2·1·3·1; a régua `combate/ruler.ts` lê ESTA composição), `ARENA_ROUNDS`, `ROUND_CLEAR_HEAL` (0,3), `arenaFoe(L, cls, r)`, `buildArenaRound(r, dificuldade, rng, pool)` (só o sabor + Bits; o inimigo é sorteado ESTRATIFICADO por elemento — primeiro o elemento, chance igual entre os do pool, depois a criatura dentro dele — desde o #232, 06/10/2026, porque o corpus de 7.386 criaturas tem `vida` em 18% e tirava ~9pp de vitória de quem usa vida/terra/gravidade), `loadBestiaryPool`, tipos `ArenaEnemy`, `BestiaryCreature`.
 - Jogador e rodada: `ROLE_SHAPE` (HP e golpe básico por escola básica; recalibrado no PR3b para ser neutro em vitória), `ESCOLA_FAMILY_PROVISORIO` + `familyOfEscola` (família do especial por escola, PROVISÓRIO até o PR9 — um teste reprova quando `StageSkill.familia` existir), `arenaPlayerSide`, `arenaPlayerHitScale`, `arenaFoeSides`/`arenaFoeWithElement` (o elemento move a vida do inimigo e o bônus dele em ±1 golpe), `arenaRoundSeed`, `arenaSpecialElementScale`, `arenaPlayerCastScale` (anel × `PVE_FAMILY_POWER.arena`), `arenaFoeCastScale` (1 − esquiva), `autoDefenseHitScale` (a defesa automática como `hitScale` do inimigo), `PERFECT_ACC`.
 - Simulação: `ArenaSkill` (`nenhuma`/`media`/`boa`), `ARENA_SKILL_ODDS`, `simulateArenaRunV3(cfg, seed, skill, areaEfficiency?)` (a run de 5 rodadas; `knobs` só para os RED dos gates), `ArenaRunConfig`, `ArenaRunResult`.
 - `arenaElementsFor(ficha, ident, attrs)` (elementos da vantagem: ficha, senão base dominante da identidade), `DEFAULT_ARENA_ATTRIBUTES`, `buildDefaultArenaSkills()` (o par genérico para saves sem ficha).
 **Saiu no PR3b:** `STAGE_BUDGET`, `getArenaPlayerStats`, `SPECIAL_EFFECTS`, `SPECIAL_CHARGE_TURNS`, `playerHitDamage`, `enemyHitDamage`, `ADVANTAGE_MULT`/`DISADVANTAGE_MULT`, `simulateArenaRun`, `simulateArenaRunEnergy`, `ARENA_HP_SCALE`, `ARENA_FOE_HP_EXTRA`, `ARENA_TORCIDA_MULT`, `arenaTorcidaTurn`, `arenaTurnIsSpecial`, `CLASS_SHAPE`, `ARENA_ENERGY_ENABLED`, `ARENA_TIMING_ATTACK_ENABLED`, `ARENA_AUTO_ACC`.
 **Régua:** `src/utils/arena.v3.test.ts` (duração por rodada, vitória por build/família/área/escola, área × único, habilidade ≤25pp, fora da régua ±25%, elemento, determinismo; cada gate com um RED), `arena.test.ts` (ficha, elementos, nomes, composição), `arena.alocacao.test.ts` (a alocação não compra vantagem), `arena.semRandom.contract.test.ts`.
+**Run de elemento base (30/10/2026, §199):** `ARENA_FUSED_FOE_CHANCE` (0,5; era 0,12 — a 2ª emenda do dono: "variados do elemento escolhido, não só o base") · `arenaFusedOf(el)` (os rookies combinados cuja composição inclui o elemento base) · `arenaFoeKey(e)` (a chave do bestiário `<id>-<estágio>` de um inimigo da Arena, ou `undefined` fora do roster; 31/10: a Arena não registrava). `BASE_ELEMENT_LABELS_EN`/`elementLabel` agora são re-exports de `./elementLabels`.
+
+### `src/utils/arenaUltimoAdversario.ts`
+**Dono de:** o bônus da Arena (dono, 14/11/2026, REGISTRO §384): na rodada final (`ARENA_ROUNDS`), o ÚLTIMO adversário dropa `ARENA_ULTIMO_DROP_MULT` (2)× a essência dele, em toda run vencida, sem teto diário próprio (o teto por elemento de `applyEssences` segue). ⚰️ Substitui `arenaClearBonus.ts`/`arenaClearBonusCopy.ts` (§372, +1 Presa 1×/dia), apagados.
+**Exports:** `ARENA_ULTIMO_DROP_MULT`, `arenaRoundDrops(porInimigo, ultimaRodada)` → `{ drops, dobrados }` (pura; `drops` é o vetor que vai para o updater e para o "Ganhou").
+**Chamado por:** `ArenaGame.tsx` (`aoFimDaRodada`), `DueloSheet.tsx`, `GuideModal.tsx`, `HelpModal.tsx`. **Régua:** `arenaUltimoAdversario.test.ts`, `ArenaGame.torcida.render.test.tsx` (§384), `arena/DueloSheet.estados.render.test.tsx`.
+
 ### `src/utils/arenaSorteio.ts`
-**Dono de:** o sorteio da Arena livre (28/10/2026, REGISTRO §180): `arenaFoesOfSeed(seed, rodada)` (os inimigos de uma rodada; chamada pelo card da `DueloSheet` e por `ArenaGame.montarRodada`, então card e luta nunca discordam), `arenaCards(diaIso, conta, rerolls)` (3 sementes determinísticas, elementos distintos entre os cards, no máximo 1 Desgarrado), a tabela do reroll e o cenário da run.
+**Dono de:** o sorteio da Arena livre (28/10/2026, REGISTRO §180): `arenaFoesOfSeed(seed, rodada)` (os inimigos de uma rodada; chamada pelo card da `DueloSheet` e por `ArenaGame.montarRodada`, então card e luta nunca discordam), `arenaCards(diaIso, conta, rerolls)` (`ARENA_CHOICES` = 4 sementes determinísticas desde 14/11/2026, §370; eram 3; por PREFIXO: as 3 primeiras são as de antes; elementos distintos entre os cards, no máximo 1 Desgarrado), a tabela do reroll e o cenário da run.
+**Sincronização 09/11/2026:** `applyArenaRunEnd(prev, dayIso, outcome = 'loss')` fecha uma run: soma 1 em `arenaRuns` (re-sorteia os `ARENA_CHOICES` cards (4 desde §370) sem tocar no contador do reroll) e aplica `nextArenaLadder` em `arenaLadder` (vitória soma 1 na escada, e a cada `ARENA_LADDER_WINS_PER_STEP` vitórias sobe um degrau; derrota/empate seguram). `arenaRunIsStray(seed, ladder = 0)` — a run MOSTRA o Desgarrado só depois que a escada leva a última rodada a Ultimate (`arenaLadderStage(ladder, ARENA_ROUNDS) === 'ultimate'`); antes, a semente vale como run comum (§222).
 **Exports:** `ARENA_REROLL_FREE_PER_DAY` (3), `ARENA_REROLL_PRICES` (15, 30, 45; depois 45 fixo), `arenaRerollCost`, `arenaRerollsFreeLeft`, `arenaRerollsToday`, `nextArenaReroll`, `sanitizeArenaReroll` (espelho no servidor), `applyArenaReroll` (pura; só Bits), `arenaCardElements`, `arenaSceneOfSeed` (uma das duas arenas do Torneio, fixa na run).
 **Chamado por:** `arena/DueloSheet.tsx`, `ArenaGame.tsx`, `App.tsx` (o `onReroll`), `GameStateContext` (`arenaReroll` no hydrate). **Régua:** `arenaSorteio.test.ts`, `ArenaGame.sorteio.render.test.tsx`, `functions/api/dayCounters.parity.test.js`.
+**Elemento da run (§199, 30/10/2026):** `ARENA_BASE_ELEMENTS` (os elementos BASE que têm criatura, ordenados) · `arenaRunElement(seed)` (o elemento BASE da run — o do card e de todo inimigo das 5 rodadas, salvo a chance `ARENA_FUSED_FOE_CHANCE` de um fundido que o contém; fundido não entra no sorteio). `arenaCardElements(seed)` agora devolve só `[arenaRunElement(seed)]` (antes derivava dos inimigos da 1ª rodada).
+
+### `src/utils/catalogosNovos.ts`
+
+**Dono de:** a injeção dos catálogos grandes de cosméticos (`cosmeticosNovos`, temas e elementos; `honraDecor`, decoração de Honra) na loja (`injetarCatalogosNovos` em `shop.ts`), nos cenários (`injetarCenariosNovos`), nas molduras (`injetarMolduras`), nos preços de decoração (`injetarPrecosDeDecor`) e na arte (`injetarArteDeDecor`), no MESMO lugar de antes (REGISTRO §500). Só existe para ser carregado por `import()` (fora do chunk de entrada). **Chamado por:** `catalogosNovosLoader.ts`, `vitest.setup.catalogos.ts`. **Régua:** `catalogosNovos.test.ts`, `cosmeticosNovos.test.ts`.
+
+### `src/utils/catalogosNovosLoader.ts`
+
+**Dono de:** `carregarCatalogosNovos()` (idempotente): o `import()` do chunk acima. O `main.tsx` espera a promessa antes do 1º render, então nenhum save é lido nem tela pintada sem o catálogo completo. Falha de rede = o app abre sem as peças novas, sem alterar save. **Régua:** `catalogosNovos.test.ts`.
+
+### `src/utils/arenaLadder.ts`
+**Dono de:** o valor da escada e a temporada mensal da Arena, FORA de `arena.ts` (orçamento de bytes, REGISTRO §497: o `GameStateContext` e o `App` são entrada e não podem arrastar o motor da Arena): `ARENA_LADDER_MAX`, `sanitizeArenaLadder`, `nextArenaLadder`, `arenaSeasonKey`, `sanitizeArenaSeason`, `arenaRollover`. `arena.ts` reexporta tudo.
+**Chamado por:** `GameStateContext` (hydrate), `App.tsx`, `arenaReroll.ts`, `arena.ts`. **Régua:** `arena.test.ts`, `functions/api/dayCounters.parity.test.js`.
+
+### `src/utils/arenaReroll.ts`
+**Dono de:** o reroll e o fim de run da Arena, a parte PURA e leve de `arenaSorteio.ts` (REGISTRO §497): preço e contador por hora/dia, `sanitizeArenaReroll`, `applyArenaReroll`, `applyArenaRunEnd`. `arenaSorteio.ts` reexporta tudo.
+**Chamado por:** `App.tsx`, `GameStateContext` (hydrate), `arenaSorteio.ts`. **Régua:** `arenaSorteio.test.ts`, `functions/api/dayCounters.parity.test.js`.
+
+### `src/utils/arenaCounters.ts`
+**Dono de:** o anel de vantagens entre os 20 elementos base (`COUNTERS`), fora de `arena.ts` (REGISTRO §497): `soulmonIntro.ts`, que é entrada, só precisa da tabela. `arena.ts` reexporta.
+**Chamado por:** `arena.ts`, `soulmonIntro.ts`. **Régua:** `arena.test.ts` (simetria 2-e-2).
+
+### `src/utils/arenaComponentes.ts`
+**Dono de:** quantos elementos tem o inimigo Ultimate/Mega da Arena (dono, 15/11/2026, REGISTRO §403): a tabela `ARENA_COMPONENT_WEIGHTS` (Ultimate: base 25 · 2 comp. 55 · 3 comp. 15 · 4 comp. 5; Mega 10/20/50/20; Rookie/Champion fora da tabela), o sorteio do tamanho e o relaxamento para o tamanho mais próximo com arte (empate: o maior). Puro, sem RNG próprio: `buildArenaRound` entrega UM número do `mulberry32` da run.
+**Exports:** `ARENA_COMPONENT_WEIGHTS`, `ARENA_COMPONENT_COUNTS`, `drawComponentCount(stage, u)`, `relaxComponentCount(want, available)`, `combinedPoolOf(stage, runElement)` (os `forma`/`paralelo` com arte que contêm o elemento da run, por nº de componentes), `entryComponents(entry)`, `planArenaComponents(stage, runElement, v, used)` → `{ want, got, entry? }`.
+**Chamado por:** `arena.ts` (`buildArenaRound`, só em run de elemento comum e não Desgarrada). **Régua:** `arenaComponentes.test.ts` (tabela ±1,5 pp, relaxamento, Rookie/Champion idênticos à main por hash, arte de todo candidato, taxa de vitória ±3 pp, isolamento).
+
 ### `src/utils/arenaTema.ts`
 **Dono de:** a tabela elemento → domínio de cenário (27/10/2026). A regra "a Arena é do tema do jogador" foi REVOGADA em 28/10/2026 (REGISTRO §180): nada na Arena chama este arquivo; fica sem uso, com os 17 domínios de arte instalados.
 **Exports:** `ARENA_DOMINIOS`, `DOMINIO_DO_ELEMENTO_BASE`, `arenaTemaElementos`, `dominioDoElemento`, `ARENA_CENARIOS_POR_DOMINIO`, `arenaVarianteDaRodada`.
@@ -385,6 +433,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `functions/api/saveId.parity.test.js`, `src/contexts/GameStateContext.tsx`, `src/utils/spriteGen.ts`, `src/App.tsx`
 **Régua:** `cloudSave.serializacao.test.ts` (fila por saveId + envio em dúvida, 21/10/2026), `cloudSave.errors.test.ts`, `cloudSave.reconcile.test.ts`, `cloudSave.test.ts`, `cloudSave.contaExcluida.test.ts` (desde `a6c1cd8a` — 410 limpa o local e desloga; GET de outro id não reage; idempotente; estendido em `592e2c14`: backup em `CONFLICT_BACKUP`, `deletedAt` na mensagem, `checarContaExcluidaNoLogin`, `reconcileSaveId` → `'excluida'`).
 **Regra de negócio:** O save na nuvem, identificado pelo hash do e-mail — mesmo e-mail, mesmo save. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Forja de HEX (§216):** `HexForgeOutcome` (`{ ok: true; already }` | `{ ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'server' }`; `already` = já era seu, nada cobrado) e `cloudHexForge(saveId, state, itemId)` — o servidor confere o saldo, debita e entrega numa escrita só (`POST /api/save?action=hexForge`, 402 = `saldo`, 409 = `conflict`); entra na MESMA fila dos POSTs do save (sobe o estado local antes) e, sem rede ou confirmação, o cliente NÃO forja localmente. Demo → `server`.
 
 ### `src/utils/collectionDates.ts`
 **Dono de:** Registra a data em que um item de coleção (forma, sonho, achado) foi obtido pela primeira vez.
@@ -395,6 +444,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/components/FormAlbum.tsx`
 **Régua:** `collectionDates.test.ts`
 **Regra de negócio:** Data de coleção de formas/sonhos/achados, para as vitrines de coleção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/demoEvolucao.ts`
+**Dono de:** O interruptor do MODO DEMO DE EVOLUÇÃO, só para gravar o vídeo de divulgação (13/11/2026, dono): com ele ligado, a barra de evolução enche assim que a última tarefa do dia é marcada, em vez de esperar a virada do dia. Não tem relação com a demo local (`demoMode.ts`).
+**Exports:**
+- `function demoEvolucaoAtiva(): boolean` — `true` só com o modo de build `demo` E `VITE_DEMO_EVOLUCAO=1` (`VITE_DEMO_EVOLUCAO=1 npx vite build --mode demo`). O release usa o modo `production`, então o corpo vira `false` em tempo de build e o resto é removido.
+**Chamado por:** `src/App.tsx`
+**Régua:** `demoEvolucao.test.ts` (desligado por padrão; liga só com a variável E o modo `demo`; desligado no release mesmo se a variável vazar; nada versionado — env, scripts, workflows — define a variável).
+**Avisos do arquivo:**
+- ⚠️ NUNCA chega ao usuário. Não criar `.env`, script ou workflow que defina `VITE_DEMO_EVOLUCAO` (a régua reprova).
 
 ### `src/utils/demoMode.ts`
 **Dono de:** O PREDICADO da demo local — `isDemoMode(state)` — e só ele (07/10/2026). Módulo FOLHA (sem imports): `bond.ts` e `cloudSave.ts` o importam, e um ciclo derrubaria os dois. Não é `accountTier: 'demo'` (o plano grátis, com conta): a demo local é um save que nunca sai do aparelho, aberto pelo botão DEMO da home.
@@ -424,11 +482,22 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** O predicado `isEmbedMode()` — "estou em `/embed`, embutido no portfólio do dono?" (11/10/2026). Módulo FOLHA. O critério é o caminho EXATO `/embed` (não `/embed/`, que não casa a regra de `public/_headers`), o mesmo que `public/sw.js` enxerga.
 **Exports:**
 - `EMBED_PATH` (= `/embed`) / `function isEmbedPath(pathname)` (puro, testável) / `function isEmbedMode()` (lê `window.location`, nunca lança).
-**Chamado por:** `src/App.tsx` (não pede permissão de notificação), `src/components/SoulmonOnboarding.tsx` (abre direto na escolha da DEMO, sem portão de login)
-**Régua:** `embedMode.test.ts`, `src/security/csp.test.ts` (o frame-ancestors só de `/embed`).
+- `function installEmbedNetworkGuard()` (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)) — só no embed, chamado no boot por `src/main.tsx` antes de qualquer provider: troca `window.fetch` para devolver 503 local a TODA chamada `/api/*` e `navigator.sendBeacon` para devolver `false`. Fora do embed devolve `false` e não instala nada. `EMBED_BLOCKED_API` (a regex) e `resetEmbedGuardForTest()`.
+**Chamado por:** `src/main.tsx` (o guard de rede), `src/App.tsx` (não pede permissão de notificação), `src/components/SoulmonOnboarding.tsx` (abre direto na escolha da DEMO, sem portão de login), `src/utils/telemetry.ts` (`isTelemetryEnabled` é `false` no embed), `src/utils/notifications.ts` (`subscribeToPush`/`registerForPushNotifications` não inscrevem no embed), `src/utils/embedGates.ts`.
+**Régua:** `embedMode.test.ts`, `embedPrivacy.test.ts` (no embed nenhuma chamada a métricas/crash/conta/save/push chega à rede; fora dele tudo como antes), `src/security/csp.test.ts` (o frame-ancestors só de `/embed`).
 **Avisos do arquivo:**
+- ⚠️ No embed NÃO há termo de consentimento e NADA é gravado como consentimento: a condição do dono para pular o termo foi que nenhum dado saia (telemetria, crash, conta/login, nuvem, push, dado de visitante). Quem mexer na telemetria não pode tratar "termo pulado" como "consentiu".
 - ⚠️ `/embed` tem cabeçalhos próprios (`! X-Frame-Options`, CSP re-declarada só com `frame-ancestors` do portfólio). O `sw.js` não intercepta essa navegação: um index.html em cache carregaria `DENY`.
 **Regra de negócio:** A demo local — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/embedGates.ts`
+**Dono de:** Os três portões de abertura que o embed pula (13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): o vídeo de marca (`IntroScreen`), a cinemática da 1ª abertura (`IntroCinematica`) e o termo de consentimento (`ConsentGate`). Funções puras com `embed` por parâmetro (padrão `isEmbedMode()`).
+**Exports:**
+- `mostraVideoDeMarca(embed?)` — `!embed`. / `tocaCinematicaInicial(onboardingCompleto, embed?)` — `!embed && deveTocarIntro(...)`. / `exigeTermo(consent, embed?)` — `!embed && !isConsentCurrent(consent)`.
+**Chamado por:** `src/App.tsx` (estado inicial de `showIntro` e `introCinePendente`, e o `if` do `ConsentGate`).
+**Régua:** `embedPrivacy.test.ts` (os dois modos).
+**Avisos do arquivo:**
+- ⚠️ Pular o termo não grava `consent`; o seletor de idioma da 1ª abertura já era pulado no embed antes (`App.tsx`/`SoulmonOnboarding.tsx`: inglês por `resolveLanguage`) e segue assim.
 
 ### `src/utils/dayKeyLabel.ts`
 **Dono de:** A data CURTA de um `dayKey` do jogador para as coleções — "12/09" em PT, "Sep 12" em EN. Nasceu como `dataCurta` no `AdventureDiary` e virou casa única quando o Dex ganhou "#NN · data" (canvas Pet, P2).
@@ -440,12 +509,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/community.ts`
 **Dono de:** Cliente das rotas de comunidade: perfil público, diretório, oponentes, ranking, amigos, presentes e a Guilda (ex-grupo coop).
+**Sincronização 09/11/2026:** novas chamadas ao servidor: `getEvoFeed()` (faixa de evoluções, 04/11/2026: feed global curto, sem `saveId`; sanear com `sanitizeEvoEvents` de `evoFeed.ts`), amigos (`getFriendsState(id, tz?)` → `FriendsState`, `answerFriendInvite(id, friendId, decline = false)`, `markFriendsSeen(id)`) e a CAIXA DE CARTAS do Mensageiro (§241/§246: `getMail(id)`, `markMailRead(id, mids)`, `claimMail(id, target)`, `deleteMail(id, target, force = false)` — `force` só com a confirmação do dono; carta com item pendente é recusada sem ele). O servidor decide o resgate: `granted` é só o que saiu AGORA.
 **Exports:**
 - `PublicProfileInput` (interface) — campos: `id`, `name`, `stage`, `petName`, `unlockedStages`, `pvpEnabled`, `attrs`, `tasksDone`.
 - `ProfilePushResult` (interface) — O que o servidor RESPONDE ao gravar o perfil — e não é só `ok`.
 - `pushProfile` — `(p: PublicProfileInput) => call<ProfilePushResult>('profile', { method: 'POST', body: p })`. **Desde `592e2c14` o `call` genérico trata 410:** `account-deleted` → `reagirContaExcluida({ excluidaEm: deletedAt })` (import de `./cloudSave`) e lança `Error('account-deleted')` — a R1 deixava o `pushProfile` recriar `profile:`/`pid:` 3 s depois da exclusão. E o `GameStateContext` só publica o perfil (`publicarPerfil`) DEPOIS de `cloudSaveComRetry` resolver ok.
 - `DirectoryPlayer` (interface) — O que o diretório devolve de OUTRA pessoa. `rankPoints` e `tasksDone` saíram em 06/09/2026 (WP4.11 / proibição #21): desempenho alheio não trafega, e o corte é no servidor justamente para que uma UI futura não consiga reintroduzi-lo por descuido.
-- `listPlayers` — `(search = '') => call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} })`
+- `listPlayers` — `(search = '', opts?: { friendOf: string })` — sem `opts`: o diretório (`players`, só PvP ligado). Com `{ friendOf: saveId }` (§351, decisão do dono): a busca do "Convidar amigo" (`players&lookup=friend&id=`), que acha qualquer jogador visível com PvP ligado ou desligado, sem a própria conta, e devolve só `FriendLookupPlayer`.
+- `FriendLookupPlayer` (type) — `{ id, name, stage, spriteUrl? }`: a vista mínima da busca do convite (§351).
 - `PlayerDetail` (interface) — campos: `friends`.
 - `getPlayer` — `(id: string) => call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } })`
 - `Opponent` (interface) — campos: `id`, `name`, `petName`, `stage` e `duel?: { level } | null` (duelo fantasma v3 de `functions/api/_duel.js` — só o level que o servidor diz que a pessoa luta; o que vinha aqui como `DuelStats`: `functions/api/_duel.js`; servidor antigo pode não mandar). O módulo passou a importar os tipos `DuelStats`/`DuelEvent` de `functions/api/_duel.js`.
@@ -469,10 +540,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - ⚠️ 200 com corpo que não é JSON é FALHA, não sucesso vazio — até 09/09/2026 `res.json().catch(() => ({}))` devolvia `{}` como se fosse resposta válida.
 **Régua (Guilda):** `src/utils/community.guild.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Regra de negócio:** Diretório de jogadores, oponentes, ranking, amigos, presentes e a Guilda. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §56 e §56-A.
+**Procurar clã (§203) e desgarrados de jogadores (§213):** `GuildDirectoryClan` (`dirId` OPACO de 16 hex, nome, `size`, `max`, `full` — §322: o servidor manda `full: true` nos cheios; o sanitizador também marca cheio quando `size >= max` e devolve os com vaga primeiro), `GuildPending`, `GuildDirectory` (`clans` + `pending`), `GuildJoinRequest` (`requestId` opaco, nome público, `at`) · `sanitizeGuildDirectory`, `sanitizeJoinRequests` · rotas `getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`, `setGuildRequestsOpen` (o anfitrião liga/desliga "Aceitar pedidos"; o clã expõe `requestsOpen`, padrão `true`). Falhas novas: `invalidClan` (404), `requestsClosed` (409), `requestPending` (409: um pedido por vez, em OUTRO clã). `getFriendForms(saveId, friendPid)` (formas que o Soulmon de um amigo já teve; 403 se não for amigo), `getStrays()` (pool anônimo de desgarrados — sanear com `sanitizeStrayPool`) e `getStrayStatus(saveId)` (`{ stray, progress, needed }`, só o dono lê).
 
 ### `src/utils/minigameDifficulty.ts`
 **Dono de:** o rótulo da dificuldade dos minijogos — Comum/Avançado (PT) e Common/Advanced (EN), dono 30/10/2026; os ids e valores de save (1/2) não mudaram.
-**Exports:** `MinigameLevel` (type `1 | 2`), `difficultyLabel(level, isPt)`.
+**Sincronização 09/11/2026:** `ADVANCED_BITS_FACTOR` (2): o modo Avançado paga ×2 Bits na Corrida e na Pedra·Papel·Tesoura (pedido do dono 03/11/2026); o teto diário de Bits dos minijogos continua valendo.
+**Sincronização 14/11/2026 (REGISTRO §372):** `ADVANCED_BITS_FACTOR` 2 → **1,5**; a conta é `bitsForLevel(base, level)` = `max(1, round(base × 1,5))` no nível 2 (base ≤ 0 continua 0; nível 1 intacto), usada pela Corrida, PPT (10 → 8 por partida) e Barragem; `advancedFactorLabel(isPt)` dá o "×1,5"/"×1.5" exibido. Régua: `minigameDifficulty.test.ts`.
+**Exports:** `MinigameLevel` (type `1 | 2`), `difficultyLabel(level, isPt)`, `ADVANCED_BITS_FACTOR` (1,5), `bitsForLevel`, `advancedFactorLabel`.
 
 ### `src/utils/mente/bolhas.ts`
 **Dono de:** Bolhas do Sonho (Ateliê da Mente / Refúgio, 30/09/2026): o go/no-go do modo `foco` (60 s, ~22% de fiapos escuros que se deixa passar) e o modo `calma` (sem fiapo, sem tempo, sem Bits); a escada de ritmo perto de 75–90% de acerto e o pagamento.
@@ -516,11 +590,69 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (fila de avisos da Home, `key: 'refugio'`), `src/contexts/GameStateContext.tsx` (load).
 **Régua:** `src/utils/refugio/convite.test.ts`, `src/components/filaDeAvisos.contract.test.ts`.
 
+### `src/utils/loginDiag.ts`
+**Dono de:** Diagnóstico visível do login (linha `data-login-diag` no portão e nos termos): versão, plataforma, resultado da restauração, HTTP do GET /api/save e 6 chars do saveId. Sem e-mail, token nem conteúdo do save.
+**Exports:**
+- `ResultadoRestauracao` (type) — `restaurada | sem-save | indeterminado | storage | nao-chamada`.
+- `function registrarStatusDaNuvem(status: number): void` — guarda o status do último `lerNuvem` (0 = falha de rede).
+- `function registrarRestauracao(r: ResultadoRestauracao, saveId?: string): void` — guarda o resultado e os 6 primeiros chars do saveId.
+- `function assinarDiagnostico(f: () => void): () => void` — ouvinte de mudança; devolve o cancelamento.
+- `function textoDiagnosticoLogin(): string` — texto único da linha.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/utils/cloudSave.ts`
+
+### `src/utils/lotIcons.ts`
+**Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
+**Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
+**Quem chama:** `components/nav/AreaScene.tsx`.
+### `src/utils/resultEssences.ts`
+**Dono de:** as essências na tela de resultado (04/11/2026, dono): junta os drops da partida por id e os entrega como linhas `kind: 'essence'` do livro "Ganhou" do `ResultScreen`. Puro; não credita nada (quem credita é `applyEssences`).
+**Exports:** `tallyEssences(drops)` · `essenceLedgerRows(drops)` · `essenceIconSrc(id)` · `essenceName` (reexport).
+**Quem chama:** `ArenaGame.tsx`, `Match3Game.tsx`, `DungeonGame.tsx`, `TournamentPage.tsx`, `guild/FeiraEventoSheet.tsx`, `games/ResultScreen.tsx`.
+**Régua:** `src/utils/resultEssences.test.ts`.
+### `src/utils/evoFeed.ts`
+**Dono de:** a faixa de evoluções no cliente (04/11/2026, dono): monta a frase "<jogador> acabou de evoluir <criatura> para o nível <forma> através da <alinhamento>" (PT/EN), sanea o feed do servidor e mantém a fila sem repetir. Puro.
+**Exports:** `EvoEvent` · `parseEvoStage` · `isEvoStep` · `sanitizeEvoEvents` · `evoKey` · `evoText` · `enqueueEvo`.
+**Quem chama:** `components/EvoBanner.tsx`.
+**Régua:** `src/utils/evoFeed.test.ts`.
+### `src/utils/lotIndicators.ts`
+**Dono de:** os indicadores "há o que gastar" sobre os prédios do mapa (04/11/2026, dono): Soulsmith com aprimoramento possível (`forgeReadySlots`) e Santuário do Vínculo com pontos de talento livres (`talentPointsFree`). Puro, só lê o save.
+**Exports:** `LotIndicatorId` · `forgeReadySlots(gs)` · `talentPointsFree(gs)` · `lotIndicators(gs)`.
+**Quem chama:** `nav/AreaView.tsx`, `ForgeCard.tsx`, `TalentTreeEntry.tsx`.
+**Régua:** `src/utils/lotIndicators.test.ts`.
+### `src/utils/lotMarks.ts`
+**Dono de:** as marcas sobre os prédios do mapa (04/11/2026, dono): `lotMissionMarks` leva o "!"/"?" a TODO prédio com missão (Passeio, Torneio pela semana, Conquistas, missões do dia por prédio, Caderno; "?" vence "!") e `lotCoins` liga a MOEDA de recurso (raio da energia amarelo) nos prédios com recurso disponível agora. Puro, `nowMs` por parâmetro.
+**Exports:** `DAILY_EVENT_BUILDING` · `lotMissionMarks(input)` · `LotCoinId` · `LOT_COIN_RULES` (lista tipada; hoje só o Refúgio: energia do dia não tomada e energia abaixo do máximo) · `lotCoins(state, nowMs)`.
+**Quem chama:** `App.tsx` (props `buildingMarks`/`buildingCoins` do `AreaView`).
+**Régua:** `src/utils/lotMarks.test.ts`, `src/components/nav/AreaView.marcasAcima.render.test.tsx`.
+### `src/utils/resultExtras.ts`
+**Dono de:** os extras da tela de resultado (03/11/2026, dono): a barra de Bits do dia (só com o teto em 100%) e a linha da missão do dia do jogo que acabou. Puro; o `App` monta e entrega pelo contexto.
+**Exports:** `buildResultExtras(state, day, bondLevel, isPt)` · tipos `ResultExtras`, `ResultMission`.
+**Quem chama:** `App.tsx` (Provider); lê `components/games/ResultScreen.tsx`.
+### `src/utils/coliseuScenes.ts`
+**Dono de:** o coliseu EXCLUSIVO do Torneio por faixa (03/11/2026, dono). Faixa sem arte cai na maior abaixo que tem; Mestre/Grão-Mestre usam o Diamante.
+**Exports:** `coliseuSceneFor(tierId)` · `coliseuTierOf(tierId)` · `COLISEU_TIERS`.
+**Quem chama:** `components/TournamentPage.tsx` (prop `scene` do `DuelScreen`).
+### `src/utils/refugio/energia.ts`
+**Dono de:** a energia do Refúgio (02/11/2026, pedido do dono): concluir UMA atividade (respiração inteira ou 30 bolhas calmas) devolve metade da energia máxima, 1× por dia do jogador somando as duas. Sem número nem aviso na tela.
+**Exports:** `REFUGIO_ENERGY_FRACTION` (0,5) · `REFUGIO_BUBBLES_TO_COMPLETE` (30) · `sanitizeRefugioEnergyDay` (leitura tolerante de `refugioEnergyDay`) · `refugioEnergyTaken` · `grantRefugioEnergy` (puro, idempotente; passa por `setEnergy`, que limita ao máximo).
+**Chamado por:** `src/App.tsx` (`onRefugioComplete`), `src/contexts/GameStateContext.tsx`, `src/components/mente/BolhasGame.tsx`. **Régua:** `src/utils/refugio/energia.test.ts`.
+
 ### `src/utils/refugio/respiracao.ts`
 **Dono de:** Respirar com o Soulmon (Refúgio, 30/09/2026): os ritmos (calma 4-0-6, quadrada 4-4-4-4), as durações de 1 a 3 min arredondadas para ciclos inteiros e a fase de um instante. Não mede nada e não tem pagamento.
 **Exports:** tipos `BreathPhase`, `BreathPattern`; `BREATH_PATTERNS`, `BREATH_DURATIONS_MIN`; `cycleMs`, `phaseAt`, `fillLevel`, `sessionMs`.
 **Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
 **Régua:** `src/utils/refugio/respiracao.test.ts`, `src/components/mente/revisaoRespiracao.render.test.tsx`.
+
+### `src/utils/refugio/chama.ts`
+**Dono de:** Chama (trataka, 04/11/2026): o roteiro da sessão de 3/5/10 min (chegada 20 s, ciclos de olhar 60 s + olhos fechados 40 s, repouso, fecho 10 s; a sobra de tempo vai para o repouso), a fase de um instante, a visibilidade da chama, os textos PT/EN e a regra do prêmio fixo 1×/dia só ao concluir.
+**Exports:** tipos `ChamaFase`, `ChamaSegmento`, `ChamaMomento`; `CHAMA_DURACOES_MIN`, `CHAMA_DURACAO_PADRAO`, `CHAMA_BITS`, constantes de fase; `ciclosPara`, `roteiro`, `sessaoMs`, `faseEm`, `chamaVisivel`, `premioDevido`, `diaLocal`, `textoFase`.
+**Chamado por:** `src/components/refugio/ChamaGame.tsx`.
+**Régua:** `src/utils/refugio/chama.test.ts`, `src/components/refugio/chama.render.test.tsx`.
+
+### `src/utils/refugio/sinoChama.ts`
+**Dono de:** o sino suave sintetizado e a vibração curta das trocas de fase da Chama; respeita `isMuted` e `isVibrateOn`.
+**Exports:** `tocarSinoChama`.
+**Chamado por:** `src/components/refugio/ChamaGame.tsx`.
 
 ### `src/utils/supportLine.ts`
 **Dono de:** os números e o link de apoio que o app mostra (CVV 188; 988; 116 123; findahelpline.com; `tel:188`) — um dono só desde 30/09/2026, porque duas cópias divergem e número errado em tela de crise pune quem pediu ajuda.
@@ -537,10 +669,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/consent.ts`
 **Dono de:** Idade mínima e versão dos termos/privacidade — o registro de consentimento gravado no save.
 **Exports:**
-- `isConsentCurrent(c)` — o aceite das DUAS versões atuais (termos e privacidade) dispensa a tela de termos; quem aceitou versão antiga volta a ver (A3, 02/10/2026).
+- `isConsentCurrent(c)` — o aceite das DUAS versões atuais (termos e privacidade) dispensa a tela de termos; quem aceitou versão ANTIGA, ou de formato desconhecido, volta a ver (A3, 02/10/2026). Desde 04/11/2026 a comparação é `versionCovers(aceita, atual)` (interna): datas `AAAA-MM-DD` comparam por ordem e aceite de versão IGUAL OU MAIS NOVA vale (antes era `===`, que tratava um app/servidor revertido como aceite vencido); formato desconhecido (`'desconhecida'`, vazio) nunca cobre.
 - `MIN_AGE_YEARS` — Idade mínima do Soulmon (D-06).
-- `TERMS_VERSION` — Versão dos documentos aceitos. Formato de data (AAAA-MM-DD) porque é o mesmo carimbo que aparece no "Última atualização" dos HTMLs — quem lê o save consegue achar o texto exato que foi aceito. Hoje `'2026-09-30'` (desde `bcfe7ca6`: Termos §8 ganhou "as Travessias são opcionais", MIS-15; quem já aceitou vê o aviso de atualização, sem bloqueio); ⚰️ `'2026-09-22'` até então.
-- `PRIVACY_VERSION` — `'2026-09-22'` (as duas constantes tinham esse valor desde `a6c1cd8a` — mudança material: a política passou a declarar os envios de texto ao Groq que o código já fazia, `customKeywords`/humor/nome da tarefa em Decompor/`soulGoal` pré-preenchido; ⚰️ `'2026-09-21'` valeu um dia; ⚰️ `'2026-08-25'` até `f9faf7a7`). Régua: `consent.versoes.contract.test.ts` compara com o carimbo dos HTMLs de `public/`.
+- `TERMS_VERSION` — Versão dos documentos aceitos. Formato de data (AAAA-MM-DD) porque é o mesmo carimbo que aparece no "Última atualização" dos HTMLs — quem lê o save consegue achar o texto exato que foi aceito. Hoje `'2026-10-26'` (Termos §5: "Gerar de novo" a aparência é um sorteio PAGO, REGISTRO §34b); ⚰️ `'2026-10-11'` (§4b assinatura cosmética), ⚰️ `'2026-09-30'` (§8 "as Travessias são opcionais", MIS-15) e ⚰️ `'2026-09-22'` até então.
+- `PRIVACY_VERSION` — hoje `'2026-11-09'` (§2/§6: passos pelo Health Connect — `READ_STEPS`, só o total do dia, só com opt-in; texto publicado ANTES do recurso chegar ao app, para o formulário de permissões do Google; REGISTRO §253); ⚰️ `'2026-11-04'` (faixa de evoluções, feedback), `'2026-10-30'`, `'2026-10-28'`, `'2026-10-26'`, `'2026-10-20'`, … (a lista completa vive no comentário da constante). Valia `'2026-09-22'` (as duas constantes tinham esse valor desde `a6c1cd8a` — mudança material: a política passou a declarar os envios de texto ao Groq que o código já fazia, `customKeywords`/humor/nome da tarefa em Decompor/`soulGoal` pré-preenchido; ⚰️ `'2026-09-21'` valeu um dia; ⚰️ `'2026-08-25'` até `f9faf7a7`). Régua: `consent.versoes.contract.test.ts` compara com o carimbo dos HTMLs de `public/`.
 - `ConsentRecord` (interface) — campos: `acceptedAt`, `termsVersion`, `privacyVersion`.
 - `function buildConsentRecord(now: Date = new Date()): ConsentRecord` — O registro a gravar no save quando a pessoa marca a caixa.
 - `function ageOn(birthDate: string, now: Date = new Date()): number | null` — Idade em anos completos na data `now`. `birthDate` no formato AAAA-MM-DD (o mesmo que o onboarding já monta). Data inválida devolve `null` — quem chama decide, e "não sei a idade" nunca vira "é menor".
@@ -550,6 +682,46 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/gateDraft.ts`, `src/utils/oracleDraft.ts`
 **Régua:** `consent.test.ts`
 **Regra de negócio:** Idade mínima e versão de termos aceitos, gravados no save. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/taskUncomplete.ts`
+**Dono de:** DESMARCAR uma tarefa já concluída (segurar na Home → "Desmarcar", dono 04/11/2026) estornando exatamente o que a conclusão rendeu, pelo recibo gravado em `CompletedTask.receipt`.
+**Exports:**
+- `TaskCompletionReceipt` (tipo) — comida (comum + alívio), premium e o dia/semana do teto dela, XP de Vínculo, dia do jogador, missão `haunted-done`, id da próxima ocorrência e a tarefa como estava.
+- `UncompleteState` / `UncompleteBlock` (tipos) — a fatia do save lida/escrita; os motivos de recusa `not-found`/`legacy`/`old`/`used`/`claimed`.
+- `function uncompleteBlock(state, id, completedAt, now?)` — por que NÃO dá para desmarcar (ou `null`).
+- `function uncompleteTask(state, id, completedAt, now?)` — desmarca e estorna (comida, premium + tetos, `totalXP`, missão, `activityStats`, histórico; a tarefa volta, a próxima ocorrência sai). Bloqueado = devolve o MESMO objeto. Pura, roda no updater.
+- `function uncompleteBlockText(b, isPt)` — o texto curto da opção desabilitada.
+**Chamado por:** `src/App.tsx` (recibo no `handleToggleTask`, `handleUncompleteTask`, menu do segurar).
+**Régua:** `src/utils/taskUncomplete.test.ts` (estorno, bloqueios, sem farm).
+**Avisos do arquivo:**
+- ⚠️ Nunca estorna pela metade: comida já usada, missão já resgatada, outro dia ou entrada sem recibo (anterior a esta versão) → recusa.
+- ⚠️ Campo novo concedido pela conclusão de tarefa entra no RECIBO e no estorno, senão desmarcar/marcar vira farm.
+
+### `src/utils/habitCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de HÁBITO (sem etapas), uma regra só para o toque na Home e para o `habit_done` do widget grande da Home (adendo ao REGISTRO §478, 18/11/2026). Footgun 9.
+**Exports:**
+- `function withHabitCompletion(prev, activityId, category, todayKey, bondDayKey)` — constância do mesmo dia (`completeHabit`, idempotente por dayKey), bônus de atributo por maturidade, Vínculo da conclusão e do marco 7/21/66. Saiu do `App.tsx` (o fechamento por etapas também usa).
+- `function applyHabitCompletion(prevRaw, activityId, now, today?)` — o updater do toque: `settlePendingRollover` primeiro, marca de hoje, estatística, comida da categoria, `activityLog`, `withHabitCompletion`. Já feito hoje ou inexistente = MESMA referência.
+- `ACTIVITY_LOG_CAP` (90).
+**Chamado por:** `src/App.tsx` (`handleToggleActivityCompletion`, fechamento por etapas), `src/utils/widgetEvents.ts` (`habit_done`).
+**Régua:** `src/utils/habitCompletionPay.test.ts` (paridade contra a cópia literal do updater anterior: comum, marco de 7, estatística prévia, feito ontem; fila: já feito no app, eid repetido, check de ontem, inexistente, com etapas, mesmo id de tarefa; ordem da lista); `src/utils/dailyReset.janelaMeiaNoite.test.ts` (a virada antes da escrita).
+**Avisos do arquivo:**
+- ⚠️ Hábito com ETAPAS fecha pelas etapas na Home; o widget o mostra sem check (`lock`) e a drenagem o ignora.
+- ⚠️ Efeitos (marco/cerimônia, selo dos passos, som, Desfazer) ficam no App.
+
+### `src/utils/taskCompletionPay.ts`
+**Dono de:** o PAGAMENTO da conclusão de tarefa avulsa, uma regra só para o toque na Home e para o check do widget grande da Home (decisão do dono, 18/11/2026). Footgun 9: a regra mora aqui, nunca copiada.
+**Exports:**
+- `function markTaskChecked(state, taskId)` — o check: a tarefa fica `completed: true` e continua na lista até o acerto.
+- `function grantReliefFood(state, category)` — bônus de alívio da tarefa ASSOMBRADA: +1 comida da categoria (`emoji` para a animação).
+- `function countHauntedMission(state, now)` — missão semanal `haunted-done` (o mesmo que `contarMissao('haunted-done')`, sem evento diário).
+- `function settleTaskCompletion(prev, task, relief, now)` — o acerto: `completeTask` (sai da lista, histórico, comida, premium) + XP de Vínculo pelo peso de esforço (`effortOf`) + recibo do "Desmarcar" (`TaskCompletionReceipt`). `paid: false` = nada a pagar (mesma referência).
+- `function applyTaskCompletion(state, taskId, now)` — o toque inteiro de uma vez (missão, check, alívio, acerto): é o que a drenagem da fila do widget usa. Tarefa ausente ou já marcada = no-op.
+**Chamado por:** `src/App.tsx` (`handleToggleTask`: as quatro primeiras, em dois tempos — clique e acerto 3 s depois).
+**Régua:** `src/utils/taskCompletionPay.test.ts` (paridade contra a cópia literal do `handleToggleTask` anterior: comum, assombrada, premium, repetição, esforço; idempotência; contrato no App.tsx); `src/utils/weeklyMissions.fiacao.test.ts` (o gatilho de `haunted-done`).
+**Avisos do arquivo:**
+- ⚠️ Puras: rodam dentro do updater (footgun 6). Som, toast, fala, refeição e gesto do 1º dia continuam no App.
+- ⚠️ Campo novo concedido pela conclusão entra no recibo (ver `taskUncomplete.ts`).
 
 ### `src/utils/completionUndo.ts`
 **Dono de:** A janela de 5 s para DESFAZER uma conclusão de hábito (decisão do dono #57, 22/09/2026) — o que a reversão devolve, e nada mais.
@@ -568,6 +740,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/currencies.ts`
 **Dono de:** Modelo das três moedas (Bits/Emblemas — rótulo exibido **Honra**/Honor desde 30/09/2026, decisão do dono, `REGISTRO-DE-DECISOES.md` §17 — /Créditos): cor, estilo visual e taxa de troca — nunca se misturam.
+**Sincronização 09/11/2026:** `minigameBitsGranted(already, amount)` — quanto de um pedido de `amount` Bits o teto do dia REALMENTE credita, dado o que já foi creditado hoje: regra única, usada por `creditMinigameBits` (para creditar) e pelo funil do `App.tsx` (para a tela de resultado mostrar o valor creditado).
 **Exports:**
 - `CurrencyId` (type) — `'bits' | 'emblems' | 'credits'`
 - `CurrencyMeta` (interface) — campos: `id`, `field`, `name`, `origin`.
@@ -577,8 +750,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `EMBLEM_COLOR` — Emblemas: dourado, com serifa — cara de medalha, não de dígito.
 - `emblemStyle` — `{ fontFamily: 'var(--sm2-font-serif)', color: EMBLEM_COLOR, fontWeight: 700, letterSpacing: '0.5px', fontVariantNumeric: 'tabular-nums', }`
 - `CREDIT_COLOR` — Créditos: roxo do sistema, sempre acompanhados do ícone Gem.
-- `CREDIT_TO_BITS` — Quantos Bits cada Crédito vira. Só nesta direção. A troca inversa (Bits → Créditos) NÃO existe de propósito: créditos são a moeda que libera gerar o pet próprio, e permitir farmá-los em minijogo anularia a única coisa que o dinheiro real compra com exclusividade.
-- `BITS_EXCHANGE` — Pacotes de troca oferecidos na loja.
+- `BITS_PACKS` — Os três pacotes de Bits do Cambista pagos em Créditos (§373): 200/200, 500/460, 1.000/800. Só nesta direção: a troca inversa (Bits → Créditos) NÃO existe de propósito. Espelho que vale: `functions/api/_bitsPacks.js`.
+- `BITS_PACK_DAILY_CAP` — 1.000 Bits por dia do jogador (§386) em pacotes, contados no servidor.
+- `bitsPackById`, `bitsPackDiscountPct` — busca por id e desconto derivado contra o pacote de 200.
+- ⚰️ `CREDIT_TO_BITS` (10) e `BITS_EXCHANGE` (1/2/4 Créditos) saíram em §373.
 - `EMBLEMS_PER_WIN` — Recompensa em Emblemas por partida de torneio.
 - `EMBLEMS_PER_LOSS` — tabela/dado de configuração (ver código; 2+ linhas).
 - `MINIGAME_BITS_PER_DAY` (const, **150**) — **novo em `cf6315e1`** (decisão do dono #61/#63, 22/09/2026). Quantos Bits os MINIJOGOS podem render num dia do jogador. A outra metade é `BITS_PER_COMPLETE_DAY` (`dailyReset.ts`, 100).
@@ -599,7 +774,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:**
 - `habitWeightOf(activity)` — peso de UM hábito na meta ponderada: 0 para item `optInOnly` do catálogo (protocolo de TCC, nunca custa coração), `HABIT_WEIGHT` (1) para o resto · `deveCelebrarDiaCompleto({ antes, agora, ultimoDia, hoje })` — a celebração do dia completo toca UMA vez, na transição falso→verdadeiro dentro da sessão (abrir o app com o dia já completo não celebra).
 - `GameState` (interface) — campos: `activities`, `tasks`, `healthPoints`, `maxHealthPoints`, `perfectDays`, `totalXP`, `powerPoints`, `harmonyPoints`, `benevolencePoints`, `evolutionStage`, `unlockedEvolutions`, `degeneratedByHP`, `currentBranch`, `lastDayWasPerfect`.
-- `function getNextEvolution( currentStage: string, branch: Attr, unlockedEvolutions: string[], perfectDays = 0): string` — A forma-destino da evolução manual: nível seguinte no `branch` dado, considerando `unlockedEvolutions` e os `perfectDays` acumulados (abre o caminho de permanência ao Ultra).
+- `function getNextEvolution( currentStage: string, branch: Attr, unlockedEvolutions: string[]): string` — A forma-destino da evolução manual: nível seguinte no `branch` dado; do mega só vai ao Ultra com as três megas em `unlockedEvolutions` (REGISTRO §461; o quarto parâmetro de pontos foi removido).
 - `function getPreviousForm(currentStage: string, branch: Attr = 'harmony'): string` — A forma anterior na escada, pelo nível atual e pelo branch.
 - `MAX_HEARTS_LOST_PER_DAY` — Teto de corações perdidos por virada de dia. A perda continua PROPORCIONAL ao que não foi cumprido; isto só impede que um único dia zerado leve o pet de cheio a degenerado de uma vez. Um dia ruim é um sinal, não uma sentença.
 - `ABSENCE_FORGIVENESS_DAYS` — A partir de quantos dias sem abrir o app a virada para de cobrar HP. Quem volta depois de sumir encontra o pet com saudade, não uma fatura.
@@ -633,6 +808,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `dailyReset.escudos.test.ts`, `dailyReset.test.ts`
 **Regra de negócio:** A virada do dia: perda de HP, meta do dia, degeneração e a rota de redenção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/decorPrices.ts`
+
+**O que faz:** tabela da decoração de Bits: preço antigo, faixa (×2/×3/×5) e motivo. O preço vivo mora em `utils/shop.ts`.
+
+**Régua:** `src/utils/decorPrices.test.ts`.
+
+### `src/utils/elementExclusive.ts`
+
+**O que faz:** `elementShopVisible` decide se um cosmético com `element` aparece à venda; `petHasElement` conta um elemento derivado como seus dois componentes. Item já possuído segue visível.
+
+**Régua:** `src/utils/decorPrices.test.ts`.
+
 ### `src/utils/decorRules.ts`
 **Dono de:** a regra REAL da decoração dita ao jogador (D2, 02/10/2026): limite de peças e por que uma peça não aparece no cenário atual.
 **Exports:** `DECOR_MAX_TOTAL`, `decorBlockReason(item, bg)`, `decorReasonText(reason, isPt)`, `decorRuleText(isPt)`, `DecorBlockReason`.
@@ -640,12 +827,60 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/decorRules.test.ts`, `src/components/mercado/MercadoConfirmar.render.test.tsx`.
 **Regra de negócio:** 1 peça por espaço do palco (`SLOT_ORDER`), até 5 ao mesmo tempo; equipar é livre, a restrição é de exibição (sem cenário, cenário `void`, espaço que o cenário não oferece, `fits` indoor/outdoor). Regras de composição de arte, não de economia; a alternativa que perdeu ("qualquer peça em qualquer fundo") está em `REGISTRO-DE-DECISOES.md` §19.
 
+### `src/utils/decorLuz.ts`
+**Dono de:** Quais peças de decoração emitem luz, onde fica o halo e se apagam (`luz`), acendem (`noite`) ou nunca apagam (`sempre`, Cristal Fundador) quando o pet dorme.
+**Exports:**
+- `DECOR_LUZ` — id da mobília → `{modo, tom, x, y, d}`.
+- `decorLuzAcesa(luz, dormindo)` — estado aceso/apagado; `sempre` devolve `true` acordado ou dormindo (nunca escurece, desenhado acima do véu da noite).
+**Chamado por:** `src/components/PetStageDecor.tsx`
+**Régua:** `src/utils/decorLuz.test.ts`.
+
 ### `src/utils/decorArt.ts`
 **Dono de:** Mapa id de mobília (loja) → URL da arte.
 **Exports:**
 - `DECOR_ART` — Chave = id do item em utils/shop.ts (kind: 'furniture'). ⚰️ O placeholder em SVG da Concha da Maré (`CONCHA_PLACEHOLDER`) saiu em 30/09/2026: `trophy-concha-mare` aponta para `assets/decor/trophy-concha-mare.png` (arte real da rodada 3, 92×100, slot `trophy`).
 **Chamado por:** `src/components/PetStageDecor.tsx`, `src/components/mercado/ShopShelf.tsx` (24/09/2026; ⚰️ `ShopModal.tsx` apagado em `ac631987`)
-**Régua:** nenhuma (`ls src/utils/decorArt*.test.ts` vazio).
+- `DECOR_CHAMA` / `injetarChamasDeDecor` — camada de fogo em tira de quadros sobre a arte do suporte (`{src, quadros}`; CSS `sm-decor-chama` em `steps(quadros - 1, jump-none)`, parada no quadro 1 em movimento reduzido). Vazio na entrada; preenchido pelo chunk lazy.
+**Régua:** nenhuma (`ls src/utils/decorArt*.test.ts` vazio); a camada de fogo tem `src/components/PetStageDecor.cristalFundador.render.test.tsx`.
+
+
+### `src/utils/cosmeticosNovos.ts`
+**Dono de:** o catálogo ÚNICO dos 108 cosméticos de tema e de elemento (11/11/2026; 32 cenários, 32 molduras, 44 decorações): nome PT/EN, ícone, preço, slot/ambiente, `element` (exclusivo de elemento). A peça só EXISTE no jogo quando o arquivo de arte existe (`assets/backgrounds/<id>.webp`, `assets/soulmon/molduras/<id>.png`, `assets/decor/<id>.webp`, descobertos por `import.meta.glob`); sem arte, nada aparece na loja nem nos mapas. Instalar mais peças = `node scripts/instalar-cosmeticos.mjs` (converte de `E:/Soulmon-assets/cosmeticos/`), sem editar código.
+**Exports:** `CosmeticoKind`, `CosmeticoNovo` (tipos) · `COSMETICOS_PLANEJADOS` (todas as 108) · `COSMETICOS_NOVOS` (só as com arte) · `ARTE_BG_NOVOS` · `ARTE_DECOR_NOVOS` · `DECOR_ART_SCALE` (caixa × 3, tapete × 2).
+**Chamado por:** `src/utils/shop.ts` (itens `bg`/`furniture`), `src/utils/frames.ts` (molduras de loja), `src/utils/backgrounds.ts` (`PET_BACKGROUNDS`), `src/utils/decorArt.ts` (`DECOR_ART`), `src/utils/decorPrices.ts` (`DECOR_PRICE_TABLE`).
+**Régua:** `src/utils/cosmeticosNovos.test.ts` (ids, preços, slots, arte 1:1), `src/utils/decorPrices.test.ts`, `src/assets/arteDono20261004.contract.test.ts`, `src/assets/artMaps.contract.test.ts`, `functions/api/feiraLoja.paridade.test.js`, `src/utils/avatar.test.ts` (paridade de `functions/api/_frames.js`).
+
+### `src/utils/cristalFundador.ts`
+**Dono de:** o Cristal Fundador / Founder Crystal (`furn-cristal-fundador`): cosmético de concessão, `kind: 'furniture'`, espaço `floor-right`, `fits: 'any'`, **nunca à venda** (fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS`, `price: 0`, `unlock` de missão inexistente; entra por `injetarConcessoes` em `shop.ts`). Sempre aceso (`decorLuz.ts`, modo `sempre`), com a arte `assets/decor/furn-cristal-fundador.png` (168×168) e o fogo turquesa `assets/decor-fx/furn-cristal-fundador-chama.png` (folha 5×168, ~140 ms/quadro). Sem campo nem chave nova no save. **A entrega por progressão (Fundo/Moldura/Retrato/Cristal) ainda não existe: aguarda decisão do dono.**
+**Chamado por:** `catalogosNovos.ts`. **Régua:** `src/components/PetStageDecor.cristalFundador.render.test.tsx`, `src/utils/decorLuz.test.ts`.
+
+### `src/utils/fundador.ts`
+**Dono de:** o Conjunto Fundador (REGISTRO §509): 4 prêmios por dias acumulados com ≥1 tarefa/atividade concluída (1 = Fundo `founder-fundo`, 2 = Moldura `founder-moldura`, 3 = Retrato `founder-retrato`, 5 = Cristal `furn-cristal-fundador`). Módulo PURO e leve (chunk de entrada): toda função devolve o MESMO objeto quando nada muda.
+**Exports:** `FUNDADOR_MARCOS` · `FUNDADOR_PREMIOS` · `FUNDADOR_*_ID` · `concederFundador` (carga: conta existente = `fundadorPremios` ausente + Soulmon criado recebe os 4; cura posse perdida) · `registrarDiaComTarefa` (soma 1 dia novo do jogador e entrega o marco; nunca usa o critério de conta existente) · `concederTodosFundador` (concedente dev do Painel de GM) · `temPremioFundador` · `sanitizeFundador*`.
+**Chamado por:** `GameStateContext.tsx` (`hydrateSave`, `freshGameState`), `taskCompletionPay.ts`, `habitCompletionPay.ts`, `App.tsx` (hábito de etapas e GM), `ProfileEditor.tsx` (retrato só para quem ganhou). Espelho no servidor: `functions/api/_fundador.js`.
+**Régua:** `src/utils/fundador.test.ts`, `functions/api/fundador.parity.test.js`, `functions/api/save.fundador.test.js`.
+
+### `src/utils/fundadorCatalogo.ts`
+**Dono de:** o catálogo visual do Conjunto Fundador em chunk lazy (entra por `catalogosNovos.ts`): `FUNDADOR_FUNDO` (item de concessão `kind: 'bg'`, nunca à venda) + cenário `founder-fundo` e `FUNDADOR_MOLDURA` (origem `event`). O cristal fica em `cristalFundador.ts`; o retrato em `assets/avatares`.
+**Chamado por:** `catalogosNovos.ts`. **Régua:** `src/assets/artMaps.contract.test.ts`, `src/assets/arteDono20261004.contract.test.ts`, `src/utils/avatar.test.ts` (paridade de ids).
+
+### `src/utils/honraDecor.ts`
+**Dono de:** o catálogo GERADO da decoração de Honra de combate (15/11/2026, REGISTRO §391 e §397; 83 planejadas, 83 com arte: 75 de bronze a mithril + 8 armas de cristal): armas de parede e estandartes no `wall`, estátuas e manequins no `floor-left`, bigornas e armas de chão no `floor-right`, pedestais no `trophy`, chãos de arena no `rug`. Id `hon-<categoria>-<peça>-<material>` = arquivo `assets/decor/<id>.webp` (a arte é a porta). Preço pela escada 25/70/180/450 (chão 40) e, acima do mithril, cristal turquesa 700 e irisdescente 1100 (`CRISTAL_PECAS` diz quais peças existem em cristal), moeda Honra, cosmético puro.
+**Exports:** `HonraDecor`, `MaterialHonra`, `MaterialMetal`, `MaterialCristal` (tipos) · `HONRA_PRECO` · `HONRA_PRECO_CRISTAL_TURQUESA` · `HONRA_PRECO_CRISTAL_IRISDESCENTE` · `HONRA_PRECO_TAPETE` · `MATERIAIS_HONRA` · `MATERIAIS_CRISTAL` · `HONRA_DECOR_PLANEJADA` · `HONRA_DECOR` (só as com arte) · `ARTE_DECOR_HONRA`.
+**Chamado por:** `src/utils/shop.ts` (`TOURNAMENT_ITEMS`), `src/utils/decorArt.ts` (`DECOR_ART`). Instalador: `tools/instalar-honra-decor.py`.
+**Régua:** `src/utils/honraDecor.test.ts`, `functions/api/feiraLoja.paridade.test.js` (ignora `hon-*`).
+
+### `src/utils/cosmeticosNovosCores.ts`
+**Dono de:** `COSMETICOS_NOVOS_CORES` — `baseColor` (média dos 32 px de baixo) de cada cenário novo. GERADO por `scripts/instalar-cosmeticos.mjs`; não editar à mão.
+**Exports:** `COSMETICOS_NOVOS_CORES`.
+**Chamado por:** `src/utils/cosmeticosNovos.ts`.
+**Régua:** `src/utils/cosmeticosNovos.test.ts`.
+
+### `src/utils/dishArt.ts`
+**Dono de:** Mapa id de prato do Restaurante → URL da arte (`assets/soulmon/pratos/prato-<dishId>.png`, descoberta por glob; sem PNG a tela cai no emoji de `Dish.icon`).
+**Exports:**
+- `DISH_ART` — dishId → URL, só dos pratos com arte instalada.
+- `dishArt` — resolve um dishId.
 
 ### `src/utils/attackFxArt.ts`
 **Dono de:** URL do sprite de FX de ataque por elemento (18 base + 136 derivados) + estado — 924 peças em `assets/soulmon/fx-ataque/`. Era `derivedAttackFxArt.ts` até 15/09/2026 (só derivados).
@@ -668,6 +903,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `unlockedAchievements(slice)` — função pura: quais conquistas estão abertas, na ordem canônica; `dias-completos-30` abre por `totalPerfectDays ≥ 30` **ou** por `conquistasHerdadas` conter o id. O `Slice` deixou de ler `completedTasks`/`activityLog` e passou a ler `conquistasHerdadas`.
 **Chamado por:** `App.tsx` (`unlockedAchievements(gameState)` alimenta a prop `achievements` do `PetPage`), `components/PetPage.tsx` (`ACHIEVEMENT_IDS`/`ACHIEVEMENT_LABELS`), `contexts/GameStateContext.tsx` (`ACHIEVEMENT_IDS`, `gatilhoAntigoTasks100`, tipo `AchievementId` — a migração); `utils/emblemArt.ts` importa o tipo `AchievementId`.
 **Régua:** `src/utils/achievements.test.ts` (cada gatilho, save vazio, as 9 com arte) e `src/contexts/GameStateContext.legacySave.test.tsx` (a herança única no load).
+**Pontos de Conquista (30/10/2026):** `ACHIEVEMENT_POINTS` (valor por conquista, por dificuldade; moeda NÃO gastável, só prestígio, sem ranking) · `ACHIEVEMENT_BITS` · `achievementPointsTotal(unlocked)` (DERIVADO das abertas, nunca persistido) · `sanitizeConquistasPagas(raw)` (lista fechada de ids, sem repetir; `undefined` se não for array) · `settleAchievements(unlocked, paid)` (o que pagar agora: `{ next, newly, bits }`; `paid` ausente = save anterior, semeia sem Bits retroativos; idempotente). Seis conquistas novas do dex (`dex-base-all`, `dex-fused-25/50/100/all`, `dex-all`) leem `defeatedElements` por `elementDex` (vencer composto libera só o composto). O ícone: `achievementPointsIcon.ts`.
 
 ### `src/utils/animArt.ts`
 **Dono de:** os spritesheets de FX quadro a quadro (`assets/soulmon/fx/anim-*.png`, N células de 64 px na horizontal).
@@ -680,6 +916,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `emblemArt(id)`, `EMBLEM_COUNT`, `emblemFor(tier)` — emblema do MARCO de hábito por tier (`sprout`→`habit-7`, `sapling`→`habit-21`, `tree`→`habit-66`; `seed` devolve `undefined`).
 **Chamado por:** `components/PetPage.tsx` (`emblemArt`, faixa de conquistas), `components/MilestoneCeremony.tsx` (`emblemFor`, no lugar do `tierIcon` emoji).
 **Régua:** `src/utils/achievements.test.ts` (as 9 têm arte). ⚰️ `tasks-100.png` → `dias-completos-30.png` em `42b07bec`, **mesma arte** (ainda desenha "100"; redesenhar é da `squad-arte`).
+
+### `src/utils/fxPackArt.ts`
+**Dono de:** as artes geradas em 02/11/2026 — fundos (`SCENE_BG`: fusion, torneioLobby, duelo, evolucao), títulos de resultado (`RESULT_BANNER`), placa 9-slice de prédio (`BUILDING_PLATE`) e as folhas de FX (`FX_SHEET`).
+**Exports:** `SCENE_BG`, `RESULT_BANNER`, `BUILDING_PLATE`, `FX_SHEET`, `ResultBannerKind`.
+**Chamado por:** `components/ui/SpriteFx.tsx`, `Match3Game.tsx`, `TournamentPage.tsx`, `EvolutionCeremony.tsx`, `nav/AreaScene.tsx`.
+**Régua:** `src/components/games/fxPack.render.test.tsx`.
 
 ### `src/utils/gainArt.ts`
 **Dono de:** peças estáticas de ganho (96²) e movimento (64²) da entrega 2, dentro do visor — `GAIN_ART` (perfectDay, levelup, chest, confetti, evolutionBurst, focusSeal, heal) e `MOVE_ART` (dustPuff, speedLines, jumpArc, landImpact, sleepZ, wakeStretch, poof).
@@ -726,6 +968,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
 **Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
 
+### `src/utils/combate/alvo.ts`
+**Dono de:** ALVO POR TOQUE (03/11/2026, dono): quem o jogador mira numa luta contra vários inimigos. O inimigo tocado vira o alvo a partir do PRÓXIMO golpe; se ele cai (ou a escolha é inválida), volta a regra automática de sempre (o 1º vivo). Sem escolha o resultado é idêntico ao de antes — não muda dano nem balanço.
+**Exports:**
+- `escolherAlvo(hp, preferido?)` — índice mirado: o preferido se válido e vivo; senão o 1º vivo; sem vivos, 0.
+- `tocarAlvo(hp, atual, tocado)` — a escolha depois de um toque (só com 2+ inimigos e o tocado vivo; senão mantém `atual`).
+**Chamado por:** `combate/group.ts` (`GroupOptions.target`), `components/games/useGroupBattle.ts` (`picked`/`target`/`pickTarget`, passados ao `BattleStage` por `ArenaGame` e `GroveRaidFight` via `onPickFoe`/`picked`), `match3Combat.ts` (`M3Combat.target`, `mirarInimigo`) e `Match3Game`.
+**Régua:** `src/utils/combate/alvo.test.ts`, `src/utils/match3Combat.alvo.test.ts`, `src/components/games/BattleStage.alvo.test.tsx` e o bloco ALVO POR TOQUE de `src/components/Match3Game.render.test.tsx`.
+
+### `src/utils/combate/alvoAliado.ts`
+**Dono de:** ALVO ALIADO (§327, 13/11/2026, dono): numa luta com aliados, escudo, cura (e cura contínua) e reforços de ataque/velocidade podem ir num ALIADO tocado; sem aliado mirado (ou o mirado caiu), vão em quem soltou, como sempre. As famílias ofensivas seguem no alvo inimigo. Uma mira por vez: tocar aliado apaga a do inimigo e vice-versa. **Nenhuma luta do app tem aliado hoje** (o núcleo de grupo é jogador × N inimigos; a Guerra de guilda são duelos 1v1 resolvidos no servidor): a regra e o efeito estão **prontos e testados, mas desligados: não estão ligados a nenhuma tela** (decisão do dono, 13/11/2026). Ligam quando existir um modo com aliados.
+**Exports:**
+- `ALLY_TARGET_FAMILIES` (`heal`, `shield`, `atkBuff`, `spdBuff`) · `aceitaAliado(family)`.
+- `Mira` (`{ inimigo, aliado }`), `MIRA_VAZIA` · `tocarAliado(mira, aliadosHp, tocado, family)` (liga só para família pessoal e aliado vivo; tocar de novo desliga) · `tocarInimigo(mira, inimigosHp, tocado)` (apaga a mira de aliado; a escolha do inimigo segue `tocarAlvo`) · `inimigoMirado(inimigosHp, mira)`.
+- `receptorPessoal(family, aliadosHp, aliado)` — índice do aliado que recebe ou `null` = o lançador.
+- `ReceptorPessoal` (interface) · `aplicarEspecialPessoal(rx, sp, scale, hitsOnRx, t0, iv)` — o efeito de `heal`/`shield`/`atkBuff`/`spdBuff` em qualquer receptor (o mesmo que o lançador recebia).
+**Chamado por:** `combate/group.ts` (o `cast` aplica as famílias pessoais por ela, com receptor = o próprio lançador; a cura contínua usa o mesmo receptor). UI: `components/games/AlvoAliadoMarca.tsx` (a marca de apoio: losango turquesa contínuo com "+", diferente da mira dourada tracejada do inimigo; ainda sem tela que a monte).
+**Régua:** `src/utils/combate/escudoAliado.test.ts`.
+
 ### `src/utils/combate/bonus.ts`
 **Dono de:** O teto único de bônus de dano do combate v3: `min(talento + equipamento + Comércio + Renascimento, 5%)`, não empilhável, vale no PvP (REGISTRO §24).
 **Exports:**
@@ -746,26 +1006,80 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `combate/level.ts`, `combate/fight.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gate 1: exemplos 10/9/11 do dono).
 
+### `src/utils/combate/duel.ts`
+**Dono de:** o duelo PvP do lado do CLIENTE (Combate v3, PR5, contexto §2.19): o servidor decide todo duelo (`functions/api/_duel.js` + `_combate.js`, travado a este núcleo por `functions/api/combate.parity.test.js`); este arquivo só ANIMA a mesma luta com a semente e os combatentes que o servidor mandou, e joga o treino local. O cliente NUNCA deriva o oponente: `me` e `opp` vêm de `duelStart`.
+**Exports:**
+- `DUEL_CHEER_BUCKETS` (= `⌈60 / CHEER.bucketSeconds⌉`, 20) · `sanitizeTaps(raw)` (toques sujos → `DUEL_CHEER_BUCKETS` inteiros em `[0, tapsCapPerBucket]`) · `bucketTapTimes(counts)` (cada balde conta no seu FIM, `(b + 1) · bucketSeconds`) · `duelCheerEvents(rawTaps, side = 0, scale = 1)` (a opção `cheer` de `fight()`).
+- `DuelSide` (`combatant`, `special`, `cheerScale?`, `startEnergy?`, `dotResist?`, `fx?`) · `DuelWinner` (`'me' | 'opp' | 'draw'`) · `DuelResult` (`events`, `fx` = contadores REAIS de status dos dois lados por evento, só a cena lê; `winner`, `hpMe`/`hpOpp` = fração de HP no PRIMEIRO nocaute, `timeMe`/`timeOpp`).
+- `duelElementAdvantage(atk, def)` — vantagem elemental do DUELO (dono 27/10/2026): elemento do golpe BÁSICO de `atk` contra o de `def`, pela base dominante (`baseDominanteDoElemento`); `+1`/`-1`/`0` (elemento ausente = neutro). Espelho de `vantagemElemental` em `functions/api/_elementoBase.js` (travado por `elementoBase.parity.test.js`); o selo da tela lê ESTA função, então nunca discorda da luta.
+- `simulatePvp({ me, opp, seed, taps?, elementScale? })` — a luta inteira, pura e determinística (a mesma que o servidor roda, `simulateDuel` de `_duel.js`): aplica a vantagem elemental no bônus de dano de quem ataca (`elVantagem` = a base nº 1 do Soulmon combinado, §232; a Couraça do Hexsmith troca o elemento que DEFENDE, `elDefesa`), roda `fightSteps` com `PVP_HP_SCALE` + a torcida + a energia inicial, e dobra os eventos em vencedor e placar.
+- `NPC_LEVEL_GAP` (0) · `NPC_ATK_HANDICAP` (0,055) · `npcCombatant(playerLevel)` (o espelho equilibrado do MESMO nível com handicap de ataque no `bonus`: curva plana, medido 60–71 % de vitória em todo nível amostrado) · `npcSide(playerLevel)` (especial `direct`).
+**Chamado por:** `src/components/DuelScreen.tsx`, `src/components/FriendTraining.tsx`, `src/components/TournamentPage.tsx`, `src/utils/community.ts`, `src/utils/tournamentNpcs.ts`.
+**Régua:** `src/utils/combate/duel.test.ts`, `functions/api/combate.parity.test.js`.
+**Avisos do arquivo:** o HP que a tela do duelo MOSTRA é `hpExibidoPvp` (HP base, `combate/fight.ts`), não o `hp × PVP_HP_SCALE` com que o motor luta.
+
+### `src/utils/criacaoEvolucaoArt.ts`
+**Dono de:** as artes da CRIAÇÃO (tela do ovo-cristal) e da EVOLUÇÃO (`EvolutionCeremony`) — leva de 03/11/2026, aprovada pelo dono. Só URLs de `src/assets/soulmon/criacao-evolucao/` (PNG com alfa real, exceto os fundos); folhas em tiras de quadros quadrados alinhados pela base. O fundo da evolução (`B-bg2`) SUBSTITUIU `bg/evolucao-bg.png` (= `SCENE_BG.evolucao`).
+**Exports:**
+- `Tira` (`{ src, frames }`) — uma tira de `frames` quadros iguais lado a lado.
+- `CRIACAO_ART` — `bg` (720×1280 opaco, altar no terço de baixo), `halo`, `crack` (3 níveis de rachadura), `crystalOpen` (a espera da geração depois do "Chocar"), `fxTouch` (4 quadros), `hatchLight`.
+- `EVOLUCAO_ART` — `bg` (santuário, altar a ≈ 61 % da altura), `build` (3 quadros), `cracks` (5), `flash`, `embers` (6), `card` (moldura do cartão final, antes/depois), `pedestal`, `shards` (8 cacos de 64²).
+**Chamado por:** `src/components/EvolutionCeremony.tsx`, `src/components/OnboardingOvo.tsx`, `src/components/SoulmonOnboarding.tsx`.
+**Régua:** nenhuma específica (a cerimônia é coberta pelos testes de `EvolutionCeremony`).
+
+### `src/utils/combate/fightTypes.ts`
+**Dono de:** os tipos públicos do simulador 1v1 (`FightSide`, `FightOptions`, `FightEvent`, `FightResult`, `FighterFx`, `FightFxPair`, `CheerEvent`, `FightWinner`), tirados de `fight.ts` na Hexsmith H2 (REGISTRO §464) para o arquivo do motor ficar abaixo de 500 linhas (catraca anti-slop). `fight.ts` os reexporta: quem importa de `./fight` não muda nada. `FighterFx` ganhou os contadores `nGuard`, `nWeak` (famílias só de Coroa), `nSil`, `nSlow` e `hot` (efeitos de Coroa), todos opcionais e só presentes quando o contador está ligado.
+**Chamado por:** `combate/fight.ts` (reexporta), `combate/group.ts` (via `fight.ts`).
+**Régua:** `src/utils/combate/hexsmith.motor.test.ts`.
+
 ### `src/utils/combate/fight.ts`
 **Dono de:** O simulador puro e determinístico de uma luta v3 (seed → resultado): janela normalizada por level (espelho equilibrado = 25 s), energia e especiais, sorte AR(1) por golpe, tempo "fantasma" dos dois lados e empate como resultado válido.
+**Sincronização 09/11/2026:** `STAT_DISPLAY_SCALE` (10) e `statExibido(v)` (= `Math.round(v · STAT_DISPLAY_SCALE)`): ataque, defesa e velocidade como a TELA mostra (atributos ×10; HP não multiplica) — só apresentação, a mecânica não muda (decisão do dono 09/11/2026, REGISTRO §252). `hpExibidoPvp(combatantHp)` (= `hpPoints(combatantHp)`): o HP EXIBIDO no duelo/PvP é o HP BASE, o mesmo número da Arena, e não o inflado por `PVP_HP_SCALE`; o motor segue lutando com `hp × PVP_HP_SCALE` (a luta dura o mesmo). Chamado por `ArenaGame.tsx`, `DuelScreen.tsx`, `evolutionStatsDelta.ts`.
 **Exports:**
 - `MIRROR_SECONDS` (const) — `25`. `HIT_UNIT_H0` (const) — `10`: o golpe normalizado vale ~1/10 do espelho de qualquer level (PR3a, §2.15 P1). `EPS`, `DRAW_EPS`.
 - `windowSeconds(level)`, `hitUnit(level)` (golpes da curva por golpe normalizado).
 - `FightSide` (`combatant`, `special`, `area?`), `FightOptions` (`seed`, `hpScale`, `variance`, `windowLevel`, `phases`, `unitH0` (`null` = golpe cru do PR1), `startHp`, `startEnergy`, `hitScale`, `cheer`, `stopAtFirstKo`), `CheerEvent`, `FightEvent` (`attack | cast | tick | ko`), `FightResult` (com `hpA/hpB/energyA/energyB`), `FightWinner` (`'A' | 'B' | 'draw'`).
 - `fightSteps(a, b, opts)` — o gerador: o `cast` pausa e recebe o multiplicador (anel/esquiva). `fight(a, b, opts)` — o driver que responde 1.
+- §334 (13/11/2026, dono): `DOT_TICKS` (const) = 3. O DoT fica no lutador que o RECEBE e tica no COMEÇO de cada golpe básico dele, antes do golpe (`tickOwnTurn`); a duração são os 3 próximos golpes do afetado (antes: 3 ticks num relógio, 0,25/0,5/0,75 do intervalo de quem lançou). Quem cai no tick não golpeia naquele turno. Lançar o especial também é turno (dono, 13/11/2026: "Sim, o especial também"): `tryCast` roda o `tickOwnTurn` antes do `cast` e quem cai nele não lança. O evento `tick` segue com o `side` de quem lançou, no mesmo instante da ação do afetado e logo antes dela. Espelho em `functions/api/_combate.js`.
 **Chamado por:** `combate/ruler.ts`, `combate/group.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
+**HP INTEIRO (30/10/2026, REGISTRO §192, espelhado em `functions/api/_combate.js`):** o núcleo ainda raciocina em frações 0..1, mas todo lutador tem `hpPoints(hp)` pontos inteiros e TODA mudança de vida é arredondada a eles: `HP_POINTS_PER_HP` (30) · `hpPoints(hp)` (= max(1, round(hp·30)); o máximo que as telas mostram) · `damagePoints(frac, pts)` (golpe que causa dano tira no mínimo 1 ponto; 0 se não causa) · `startPoints(frac, pts)` (início em pontos inteiros, ≥ 1; acima de 1 é permitido — o chefe da Feira). `FightEvent` carrega os pontos que saíram da BARRA; cura e escudo também são pontos inteiros; 0 ponto = nocaute na hora.
+
+### `src/utils/combate/mixAtaques.test.ts`
+**Dono de:** a régua do mix {à distância, corpo a corpo} × {corte, splash} dos inimigos (REGISTRO §282): as 4 combinações entre 18% e 32% no elenco da Masmorra/Fenda e nas 17 criaturas da Arena (`foeStrikeForm`, `FORMA_MELEE_PCT` em `combatFx.ts`). Só teste.
+
+### `src/utils/combate/golpeImpacto.ts`
+**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. **Ranged de inimigo/selvagem/simulado (REGISTRO §289):** com `forma: 'ranged'` em `EntradaImpacto`, `magiaOuCorte` sorteia 80% Magic (splash) e 20% Ranged Slash (`RANGED_MAGIA_PCT`); sem `forma` (jogador, Pesadelo) nada muda. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
+**Exports:**
+- `ImpactoMelee` — `'corte' | 'concussao'`.
+- `RANGED_MAGIA_PCT` (80), `magiaOuCorte(element, key)` — dos golpes à distância de inimigo/selvagem/simulado, % que é Magic (splash); só visual (REGISTRO §289).
+- `PESO_CORTE`, `PESO_CORTE_NEUTRO`, `pesoCorte(element)` — % de corte por elemento base (Ar 75, Terra 25); derivado = média; desconhecido = 50.
+- `PALAVRAS_CONCUSSAO`, `PALAVRAS_CORTE`, `impactoPorNome(name)` — palavra inteira, sem acento; as duas famílias ou nenhuma = `null`.
+- `hashEstavel(s)`, `meleeImpactOf({ element, key, name? })` — a decisão; `chaveDaIdentidade(identidade)` — a chave do PvP (ids fechados).
+**Chamado por:** `components/games/useGroupBattle.ts` (via `GroupScene.playerImpact`/`foeImpact`), `ArenaGame`, `DungeonGame`, `NightmareBattle`, `RogueFight`, `guild/GroveRaidFight`, `DuelScreen`, `guild/BossFightScreen`; vira `StageAction.impacto` em `games/BattleStage`.
+**Régua:** `src/utils/combate/golpeImpacto.test.ts` e o bloco (6) de `src/components/games/BattleStage.golpeTipo.test.tsx`.
+
+### `src/utils/combate/projetilEscala.ts`
+**Dono de:** escala do projétil por PERSPECTIVA (câmera baixa, jogador mais perto), só visual. Esfera comum 1,00→1,10 indo ao inimigo e 1,10→1,00 vindo; corte à distância 0,20→1,00 indo ao inimigo e 1,10→1,00 vindo. Decisão: REGISTRO «Combate: ataque à distância de CORTE».
+**Exports:**
+- `ProjectileKind` (`'orb' | 'cut'`), `ProjectileDir` (`'toFoe' | 'toMe'`), `PERSP_GROW`, `CUT_START`.
+- `projectileScaleRange(kind, dir)` — `{ from, to }`; vira `--s0`/`--s1` do keyframe `sm-bs-fly-persp`. `projectileScale(kind, dir, t)` — a mesma interpolação linear em JS.
+**Chamado por:** `components/games/BattleStage` (`ActionFx`, quando `StageAction.cut` ou projétil comum).
+**Régua:** `src/utils/combate/projetilEscala.test.ts` e o bloco «ranged de CORTE» de `src/components/games/BattleStage.golpeTipo.test.tsx`.
 
 ### `src/utils/combate/group.ts`
-**Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo.
+**Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo. §334 (13/11/2026): DoT e cura contínua ficam em quem os carrega (`dots`/`hots` no lutador) e tocam no COMEÇO de cada golpe dele (3 golpes); o repasse do DoT único acontece quando quem o carrega cai (`markDead`); o DoT em área sobre 2+ inimigos usa `AREA_DOT_EFFICIENCY`.
+**Sincronização 09/11/2026:** duas mecânicas novas no núcleo de GRUPO (só PvE): (1) ALVO POR TOQUE (03/11/2026) — a opção `target?: () => number | null` é lida a cada golpe/especial do jogador e escolhe o inimigo (`escolherAlvo`, `combate/alvo.ts`; morto ou inválido cai no 1º vivo; sem a opção nada muda); o especial single do jogador também vai no inimigo escolhido. (2) Efeitos do especial (§228) — `slow`, `silence` e `hot`, lidos de `Special.effect` com os botões `EFFECT_TUNE` (ou `Special.tune`); o estado dos lutadores ganhou `nSil`, `nSlow`, `nHot` (golpes de silêncio e de lentidão que faltam, pulsos de cura contínua; `hot` = 3 pulsos de E/3 em pontos inteiros, que param na morte de quem cura).
 **Exports:**
 - `GroupOptions`, `GroupEvent`, `GroupResult`, `GroupWinner` (`'player' | 'foes' | 'draw'`).
 - `foeSeed(seed, i)`, `groupFightSteps(player, foes, opts)` (gerador; o `cast` pausa), `groupFight(player, foes, opts, castMult?)`.
 **Chamado por:** `combate/ruler.ts` (`areaDelta`).
 **Régua:** `src/utils/combate/group.test.ts` (N=1 ≡ 1v1 em 300/300, área no 1v1, repasse do DoT, régua pareada).
+**HP inteiro e largada justa (30/10/2026):** a luta usa os mesmos pontos inteiros de `fight.ts` (`hpPoints`/`damagePoints`/`startPoints`; `pts` no estado de cada lutador). `GroupOptions.startFoesHp` (fração inicial de cada inimigo; a continuação após o Coraçãozinho segue de onde parou) e `GroupOptions.fairStart` (REGISTRO §195, opt-in — a Arena liga): nenhum inimigo abre ANTES do jogador; quem sorteou antes entra escalonado em `fase0 + FAIR_START_GAP·(1 + fase)`. `FAIR_START_GAP` (0,1 do intervalo). §196: o escudo de todos é capturado NO CAST (o tick repassado ao próximo respeita o escudo que ele tinha no cast) e os golpes de cada cast saem antes do próximo cast do mesmo instante (só a ORDEM dos eventos muda).
 
 ### `src/utils/combate/level.ts`
 **Dono de:** Level, pontos e HP do Soulmon no combate v3: tetos por estágio derivados de `FORM_REQUIREMENTS.cap` (6/13/21/30/40), 1 ponto por level em ATK/DEF/SPD com teto 45% e piso 15% por atributo, base `ceil(1,5^s)`, HP automático `10·1,5^s·(1+L/10)`.
+**Sincronização 09/11/2026:** `StatFloor` (`{ s, atk, def, spd }`) é o PISO DE ATRIBUTO DA EVOLUÇÃO (REGISTRO §229, campo `evoStatFloor` do save): ao evoluir, os pontos de alinhamento zeram e nos últimos 1–2 levels de Ultimate/Mega isso tirava 1 ponto de Defesa/Velocidade; o piso gravado na evolução impede que evoluir REDUZA um atributo de combate (`s` = estágio em que o piso vale; fora dele é inerte). `statMaxOfStage(s)` — o maior valor de UM atributo no estágio `s` (base + teto de pontos no último level). `sanitizeStatFloor(v)` — lê o piso do save (lixo vira `undefined`; inteiros, `s` em 1..4, cada valor limitado a `statMaxOfStage(s - 1)`: save adulterado nunca passa do que um jogador legítimo teria).
 **Exports:**
 - `STAGE_LEVEL_CAPS`, `MAX_LEVEL`, `MAX_SHARE`, `MIN_SHARE`, `SHARE_BOUNDS`, `HP_BASE`, `HP_LEVEL_DIVISOR`, `STAGE_FACTOR` (const).
 - `StatWeights`, `Points`, `ShareBounds` (interface); `ReferenceBuild` (type).
@@ -792,35 +1106,79 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** ninguém ainda (só a régua).
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5) e `group.test.ts` (AC7).
 
+### `src/utils/combate/elementEffects.ts`
+**Dono de:** a tabela `(família, elemento do especial) -> efeito` (REGISTRO §228). `direct` nunca tem efeito; derivado herda do primeiro componente com par na família.
+**Exports:**
+- `efeitoDoEspecial(family, elemento)`, `efeitoVisivel(family, elemento, mecanicaLigada?)`, `EFEITOS_COM_MECANICA` (const), tipo `EfeitoElemento`.
+- `comEfeitoDoElemento(sp, elemento, pesadelo?, masmorra?)` — §334: com `masmorra` a cura contínua leva `effectTuneMasmorra()` (`dungeonPlayerSide` liga fora do Pesadelo).
+**Régua:** `src/utils/combate/elementEffects.test.ts`.
+
+### `src/utils/combate/foeFamilies.ts`
+**Dono de:** o ESPECIAL DOS INIMIGOS (REGISTRO §290): sorteio determinístico por chave (FNV-1a) do tipo de especial de selvagens da Arena e do Endless Rift/Masmorra e dos simulados. Champion em diante: 50% dano direto e ~10% de cada outro (buff, DoT, cura, HoT, debuff); Rookie: 75% direto e ~5% de cada. O especial que o JOGADOR escolhe não passa aqui; o Pesadelo fica fora. HoT = `shield` + `effect: 'hot'` (só núcleo de grupo; no 1v1 vira `shield`). DoT e HoT dos inimigos levam `OVER_TIME_BONUS` (1,15). **Exports:** `FoeKind`, `FOE_MIX`, `foeHash`, `foeKindOf`, `foeSpecialOf`, `foeFamilyOf`. **Chamado por:** `arena.ts` (`arenaFoe`/`arenaFoeSides` com `mix`), `dungeon.ts` (`buildDungeonWave`). **Espelho:** `functions/api/_foeFamilies.js`. **Régua:** `src/utils/combate/foeFamilies.test.ts`.
+
+**Atualização 13/11/2026 (REGISTRO §325, aprovado pelo dono):** `SPECIAL_POWER` (1v1) com `dot` 1,15 e `spdBuff` 2; o PvE lê `SPECIAL_POWER_PVE`/`specialOfPve` (a tabela anterior, base do `PVE_FAMILY_POWER`); `PVE_FAMILY_POWER.arena.dot` 1,1. No PvE, `atkBuff`/`spdBuff`/`defDebuff` do inimigo também levam `OVER_TIME_BONUS` (×1,15 no `power`); o 1v1 (`pvp = true`) não muda. **Régua da regra do dono** (o que dura rende mais que o imediato, medido no motor real): `src/utils/combate/efeitosRegraTotal.test.ts`.
+
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
+**Sincronização 09/11/2026:** `SpecialEffect` (`'hot' | 'slow' | 'silence'`) e os botões `EFFECT_TUNE` (`silenceHits` 2, `silenceKeep` 1, `slowScale` 0,3, `slowKeep` 0,58, `hotScale` 1,05) / `EffectTune` / `EFFECT_TUNE_PESADELO` (Pesadelo com balanço próprio: `slowScale` 0,15, `slowKeep` 0,4) — as mecânicas novas do núcleo de GRUPO (só PvE; `fight.ts` ignora; REGISTRO §228). Só o gate `efeitosPve.medicao.test.ts` autoriza mudar os valores.
 **Exports:**
-- `SPECIAL_BUDGET_HITS` (const) — `3`. `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
+- `SPECIAL_BUDGET_HITS` (const) — `3`. `OVER_TIME_BONUS` (const) — `1.15`, usado só pelos inimigos (`foeFamilies.ts`). `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
 - `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
 - `specialOf(family)`.
+- §327 (13/11/2026): `SHIELD_DIRECT_SPECIAL_ABSORB` (const) = 0.5, `SHIELD_DOT_TICK_ABSORB` (const) = 0.5 e `SHIELD_ABSORB` (`basic` 1, `direct` 0,5, `tick` 0,5), `ShieldSource` (type), `shieldAbsorbPoints(sh, d, src)` — quanto o escudo absorve de cada fonte: o golpe básico inteiro, METADE do especial direto e METADE de cada tick de DoT (lançado antes ou depois do escudo); as duas frações arredondam para baixo, o escudo nunca come mais que a metade. Debuffs nunca passaram pelo escudo. Substitui o `shieldCap` do DoT (29/10). Espelho em `functions/api/_combate.js`.
+- §334 (13/11/2026): `AREA_DOT_EFFICIENCY` (const) = 1.25 — eficiência da área só do DoT e só sobre 2+ inimigos (o que sobra num inimigo que cai antes dos 3 golpes dele se perde na área; 1,25 traz a diferença área × único de −12,0pp para −3,2pp). `HOT_SCALE_MASMORRA` (const) = 1.02 e `effectTuneMasmorra()` — a cura contínua da Masmorra (e da Fenda/Raid, que usam o motor dela) com `hotScale` próprio; Arena e Pesadelo seguem 1,05. `PVE_FAMILY_POWER.pesadelo` — o vetor do Pesadelo (= o da Masmorra, `dot` 1,4), lido por `dungeonFight` com `pesadelo: true`; `arena.dot` = 1,11. `SPECIAL_POWER.dot` (1v1) = 1,14 (gate 5 do 1v1 com o tick também no especial).
 - PR3a: `AREA_FAMILIES` (`direct`, `dot`, `defDebuff`: as que miram o inimigo), `AREA_EFFICIENCY` (1: o núcleo NÃO usa a eficiência 0,9 do class-system), `PVE_FAMILY_POWER` (`arena`/`dungeon`), `CHEER`, `cheerEvents(taps, side)`, `RING_MULT_V3`, `DODGE_REDUCE_V3` (tabelas de habilidade do motor v3; o `energia.ts` ao vivo mantém as antigas até o PR3b).
 **Chamado por:** `combate/fight.ts`, `combate/group.ts`, `combate/ruler.ts`.
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5) e `combate.v11.test.ts`.
 
 ### `src/utils/combatFx.ts`
 **Dono de:** a ARTE e o RITMO das ações visuais da cena de combate (`games/BattleStage.tsx`, 02/10/2026, rodada 5/I10): qual figura de skill do elemento (`fx-<id>-<estado>`) entra em cada ação e quanto tempo dura. Não decide regra de jogo.
+**Sincronização 09/11/2026:** `GLIFOS_PENDENTES` — lista dos glifos de status citados (`st-queimadura`, `st-veneno`, `st-silencio`, `st-lentidao` e os 11 elementos de §236: `st-peso`, `st-retardo`, `st-ferrugem`, …) que ainda não têm arte (fila em `docs/ASSETS-A-GERAR.md`; gerar no ChatGPT, não no Higgsfield): o selo mostra forma + texto até a arte chegar.
+**§334 (13/11/2026):** `sceneTimeOf(events, i, leadS)` — o instante de CENA de um evento: o `tick` de DoT entra quando a ação do golpe ou do especial (`cast`) que vem logo depois dele (mesmo instante, o turno de quem carrega o DoT) começa; os outros eventos, no próprio instante. Usado por `DuelScreen` e `BossFightScreen`; o `useGroupBattle` aplica os ticks que abrem o grupo no começo da ação e mantém o número deles junto com o do golpe.
 **Exports:** `fxElementId(id)` (qualquer id → um que tem arte; `planta`→`vida`, `industrial`→`aco`, sem arte → `neutro`) · `fxFrame(elemento, estado)` · `visualElementFor(texto)` (elemento VISUAL determinístico do oponente do duelo — o servidor não publica elemento) · `strikeKindForSchool(escola)` (só `combate_fisico` investe) · `VISUAL_ELEMENTS` (os 17 base), `FX_FALLBACK_ELEMENT` · `STAGE_TIMING`, `impactMs`, `totalMs` (o dano chega no impacto; movimento reduzido = flash) · `DUEL_STEP_MS` (1700, o passo do duelo fantasma; era 900 e depois 1500), `PVE_STEP_MS` (1700, o passo de cada lado no PvE — 04/10/2026), `ARENA_STRIKE_MS` (2400; era 1500), `ARENA_DEFEND_MS` (1400; era 800) · `prefersReducedMotion()` · tipo `StageActionKind`.
 **Quem chama:** `games/BattleStage.tsx`, `ArenaGame`, `DuelScreen`, `TournamentPage` (`visualElementFor`).
 **Cena do especial (PR18):** `SPECIAL_INTRO_MS` (1000) e `introMs(kind)` (só `special` tem pausa de apresentação; não é regra, o motor não a vê).
-**FX de status (PR11, `combate-v3-01`):** `STATUS_FX` (efeito → glifo/loop/peça estática/forma em texto/nome EN+PT, 7 kinds: `buff`, `debuff`, `maldicao`, `dot`, `cura`, `hot`, `escudo`) · `FAMILY_STATUS` (`SpecialFamily` do núcleo → efeito e alvo; `direct` = nenhum; tipada em `Record<SpecialFamily, …>`, família nova sem linha não compila) · `UNREACHABLE_STATUS_FX` (`maldicao` e `hot`: prontos, inalcançáveis, Q-FX1/§2.13) · o quadro puro `emptyStatusBoard`/`castStatus`/`tickStatus`/`clearHolders`/`stageStatusOf`, e `duelStatusBoard(events, upTo, specials)` (a dobra pura dos eventos do duelo: replay e ressimulação dão o mesmo selo) (aplicar, gastar turnos, expirar) · `statusAriaLabel`/`statusLabel`/`statusShort`/`statusGlyphId`, `MAX_STATUS_CHIPS`. Só arte que já estava na `main`; sem arte, a forma e o texto do selo seguem.
+**FX de status (PR11, `combate-v3-01`):** `STATUS_FX` (efeito → glifo/loop/peça estática/forma em texto/nome EN+PT, 7 kinds: `buff`, `debuff`, `maldicao`, `dot`, `cura`, `hot`, `escudo`) · `FAMILY_STATUS` (`SpecialFamily` do núcleo → efeito e alvo; `direct` = nenhum; tipada em `Record<SpecialFamily, …>`, família nova sem linha não compila) · `UNREACHABLE_STATUS_FX` (`maldicao` e `hot`: prontos, inalcançáveis, Q-FX1/§2.13) · o quadro puro `emptyStatusBoard`/`castStatus`/`tickStatus`/`clearHolders`/`stageStatusOf`, e `duelStatusBoard(events, upTo, specials)` (a dobra pura dos eventos do duelo: replay e ressimulação dão o mesmo selo) (aplicar, gastar turnos, expirar) · `statusAriaLabel`/`statusLabel`/`statusShort`/`statusGlyphId`, `statusLoopId(kind, variant)` (a folha em loop por variante, como o glifo: `STATUS_FX[kind].loop` é um mapa `{ _: padrão, <variante>: folha }` ou `null`; §336) e `STATUS_LOOP_IDS` (as 13 folhas citadas), `STATUS_LOOP_CROP` (recorte de cada folha no marcador do canto, união dos 6 quadros com alfa > 24, remedido nas folhas novas de 13/11/2026), `MAX_STATUS_CHIPS` (selos por lutador e marcadores por canto do sprite) · `statusPolarity(kind)` (`buff` = cura/HoT/escudo/reforço, `debuff` = o resto; escolhe o canto do marcador do efeito) · `BoardEntry.since` (carimbo da ORDEM DE INÍCIO do efeito; renovar/recontar mantém; `stageStatusOf` entrega o mais antigo primeiro — REGISTRO §330). Só arte que já estava na `main`; sem arte, a forma e o texto do selo seguem.
 **Régua:** `src/utils/combatFx.test.ts` — inventário (17 base × 6 estados, 154 × 6 no glob), fallback no neutro, e o RITMO/calibração do duelo (modelo de tempo, 04/10/2026: ~35–45 s, o especial com 3 toques/s sai antes do que sairia sozinho, 50% → 72% → teto 82%).
+**Especial só em si:** `isSelfOnlySpecial(family)` — `true` quando `FAMILY_STATUS[family].target === 'self'` (a cena não anima golpe contra o inimigo; só o efeito no conjurador).
 
 ### `src/utils/feira.ts`
 **Dono de:** o lado CLIENTE da Feira do Chefe (`PLANO-FEIRA-CHEFE.md`; servidor em `functions/api/_feira.js`), puro: tipos e sanitizadores do `evento` (boss/trail/rest), do resumo da vista (`guild.feira`), do ataque, do resgate e da instância/solução da trilha (dado do servidor nunca é confiável; nada por membro tem onde caber); `mapFeiraLog` (log do servidor `a/c/t` → `FightEvent` da `BossFightScreen`, determinístico); `FEIRA_TRAIL_MIN_MS` (espelho do piso de tempo do servidor); `feiraShownKey`/`feiraEventoAbre` (a fila só abre o que tem o que fazer). INERTE: sem `evento` os sanitizadores devolvem `null`.
+**Sincronização 09/11/2026:** `feiraEnergyAt(prev, next, t)` — a ENERGIA de exibição (0..`ENERGY_TRIGGER` = 100) no instante `t`, RECONSTRUÍDA dos `cast` (o registro do servidor não traz energia): sobe de 0 até cheia exatamente no próximo especial (dono 04/11/2026: a luta da Feira mostra a barra de especial como Arena/Duelo). `SeloPanelIn`/`SeloInstance` — tipos da instância do desafio do selo (grade + opções).
 **Exports:** `sanitizeFeiraEvento`, `sanitizeFeiraResumo`, `sanitizeFeiraAttack`, `sanitizeFeiraClaim`, `sanitizeFeiraTrail`, `sanitizeFeiraTrailDone`, `mapFeiraLog`, `feiraEventoAbre`, `feiraShownKey`, `FEIRA_TRAIL_MIN_MS`, `FEIRA_TRAIL_GAMES` e os tipos `Feira*`.
 **Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/Feira*`.
 **Régua:** `src/utils/feira.test.ts`.
+**Virada do dia:** `nextPlayerDayStart(now, anchor)` — o próximo instante em que o dia do jogador vira (meia-noite na âncora do save; sem âncora, a do aparelho): a Missão/Chefe/Desafio são 1×/dia, então "quando volta a ter ação" é esta virada. Pura (`now` por parâmetro).
 
 ### `src/utils/feiraCopy.ts`
 **Dono de:** a copy da Feira do Chefe, `[en, pt]` (EN primeiro) no padrão de `guildCopy.ts`, mas FORA da tabela `GUILD_COPY` de propósito (essa veta "boss"/"chefe"/dígitos). Tom caloroso, sem cobrança; a régua própria está em `FeiraEventoSheet.render.test.tsx`.
 **Exports:** `feiraText(language, key, vars?)`, `FeiraKey`, `FEIRA_COPY`.
 **Chamado por:** `FeiraEventoSheet.tsx`, `FeiraTrailPlay.tsx`, `FeiraMisterio.tsx`.
 **Régua:** `FeiraEventoSheet.render.test.tsx` (bloco `copy`).
+
+### `src/utils/feiraDesafio.ts`
+**Dono de:** o desafio do DIA da Feira (dono, 04/11/2026): a volta da Missão grava `{ day, k, done }` em `STORAGE_KEYS.FEIRA_DESAFIO` (aparelho, nunca no save); `feiraDesafioStatus` diz `open`/`done` no mesmo dia do jogador e `escaped` em outro dia sem luta ("O inimigo apareceu, mas escapou").
+**Exports:** `feiraDesafioStatus`, `sanitizeFeiraDesafio`, `readFeiraDesafio`, `recordFeiraDesafio`, `markFeiraDesafioDone`, `FeiraDesafio`, `FeiraDesafioStatus`.
+**Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`), `FeiraEventoSheet.tsx` (lutou/cumpriu).
+**Régua:** `src/utils/feiraDesafio.test.ts`, `GuildSheet.feira.chefe.render.test.tsx`.
+
+### `src/utils/feiraVolta.ts`
+**Dono de:** o resultado da volta da Missão guardado até o jogador vê-lo (bug do dono, 12/11/2026: "mandei investigar, ele voltou, abri a Feira e apareceu investigar de novo"): a volta grava `{ day, seen, kind, ... }` em `STORAGE_KEYS.FEIRA_VOLTA` (aparelho, nunca no save); a sala mostra "Ver o que ele achou" até `seen` e só então libera "Mandar investigar" (a trava de 1 por dia segue do servidor).
+**Exports:** `sanitizeFeiraVolta`, `readFeiraVolta`, `feiraVoltaDoDia`, `feiraVoltaPendente`, `recordFeiraVolta`, `markFeiraVoltaSeen`, `FeiraVolta`.
+**Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`).
+**Régua:** `GuildSheet.feira.voltaPendente.render.test.tsx`, `saveCompat.contract.test.ts`.
+
+### `src/utils/funSession.ts`
+**Dono de:** a sessão dos minijogos de DIVERSÃO do Salão (dono, 04/11/2026): 1 energia da Home abre 3 rodadas (dino/ppt/match3/barrage) por 30 min; depois cobra de novo. Porta única pura `startFunRound` (sobre `setEnergy`); save `funSession` opcional.
+**Exports:** `startFunRound`, `funSessionStatus`, `funRoundRefusal`, `activeFunSession`, `sanitizeFunSession`, `isFunGame`, `formatMmSs`, `FUN_SESSION_COST`, `FUN_SESSION_ROUNDS`, `FUN_SESSION_MS`, `FUN_GAMES`.
+**Chamado por:** `App.tsx` (`play.funSession`), `AreaView.tsx` (`startSalao`), `PlaySheets.tsx` (`FunSessionLine`), `GameStateContext.tsx` (`hydrateSave`).
+**Régua:** `src/utils/funSession.test.ts`.
+
+### `src/utils/feiraNotificacao.ts`
+**Dono de:** o aviso local "Seu Soulmon voltou da investigação na feira" na hora da volta da Missão: APK = `SoulmonAlarm` (hora do dia), web = timer com permissão já concedida; só com o interruptor de notificações ligado; cancelado quando a volta é registrada.
+**Exports:** `scheduleFeiraVolta`, `cancelFeiraVolta`, `feiraVoltaCopy`, `hhmmOf`, `FEIRA_VOLTA_TAG`, `FeiraVoltaDeps`.
+**Chamado por:** `App.tsx` (efeito da Missão).
+**Régua:** `src/utils/feiraNotificacao.test.ts`.
 
 ### `src/utils/feiraCredit.ts`
 **Dono de:** o crédito da Feira no aparelho UMA vez por recibo (`creditFeiraOnce`): usa a memória de recibos de `guildClaimLocal` (a mesma do resgate semanal); `apply` roda fora de updater e o recibo só é gravado depois dele (se `apply` lançar, tenta de novo). Reabrir a folha ou receber o 409 `already claimed` (mesmo recibo) não credita de novo.
@@ -834,6 +1192,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Espelho:** `functions/api/_duel.js` (`elementoDoBasico`, `ELEMENTOS_FICHA`, `duelSide().fx.elBasica/elEspecial`), travado por `fighterIdentity.parity.test.ts`.
 **Quem chama:** `ArenaGame`, `DungeonGame`, `NightmareBattle`, `DuelScreen`, `TournamentPage`, `arena/DueloSheet`.
 **Régua:** `src/components/fighterIdentity.contract.test.tsx` (as telas, vermelho→verde), `src/utils/fighterIdentity.parity.test.ts`, `src/utils/fighterIdentity.owner.test.ts`.
+**Atualização 13/11/2026 (REGISTRO §332):** o TIPO do ataque básico (corte × splash) do OPONENTE no PvP não muda com Coroa/Amuleto/Garra; só as Luvas trocam. `FighterFx` ganha `orig` (família/elementos SEM esses itens, publicado pelo servidor só quando algum está equipado) e `golpe` (o ataque das Luvas, lista fechada `HEX_STRIKES`); os dois são só visuais e campo ausente = comportamento antigo. `fighterIdentityFromFx` aplica `golpe` (forma + acabamento do básico, espelho de `strikeParts`); novos exports `fighterIdentitySemItensFromFx(fx, fallback)` (a identidade do `orig`, base do sorteio) e `tipoDoBasicoPvp(id, semItens, elementoVisual)` (o que o `DuelScreen` desenha no básico, dos dois lados). Régua: `src/utils/fighterIdentity.pvpTipo.test.ts` (oponente com Coroa = sem Coroa; Luvas trocam; servidor == cliente; duelo idêntico com/sem os campos).
 
 ### `src/utils/combatV3Art.ts`
 **Dono de:** a carga SOB DEMANDA da arte do Combate v3 usada pelos FX de status e pelo círculo de cast (PR11): `import.meta.glob` sem `eager` sobre `assets/soulmon/combate-v3/status/st-*`, `fx/fx-*-loop-sheet`, `fx/fx-cast-circle` e as peças `fx/fx-heal`/`fx/fx-shield`. Nada entra no chunk de entrada; sem a peça (ou com falha de rede) devolve `undefined` e quem desenha cai no CSS.
@@ -853,18 +1212,45 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
+### `src/utils/soulmonOverrides.data.ts` (13/11/2026)
+**Dono de:** os DADOS da Tabela de Soulmons editada pelo dono (tipo de ataque por forma, flutua/flip, trocas de linha; REGISTRO §354), gerados da planilha do dono.
+**Exports:** a tabela de overrides consumida por `soulmonOverrides.ts`.
+**Chamado por:** `src/utils/soulmonOverrides.ts`.
+**Régua:** `src/utils/soulmonOverrides.test.ts`.
+
+### `src/utils/soulmonOverrides.ts`
+**Dono de:** os ajustes do dono POR FORMA vindos da Tabela de Soulmons (REGISTRO §333, 13/11/2026). Chave = chave do bestiário (`<id>-<estágio>`; ultra = `<id>-ultra`).
+**Exports:**
+- `AtaqueTipo` — `'ranged_corte' | 'ranged_splash' | 'melee_corte' | 'melee_splash'`; `ATAQUE_TIPO_MOTOR` — cada tipo em forma (`ranged`/`melee`) × acabamento (`corte`/`concussao`; splash = concussão).
+- `ATAQUE_TIPO_OVERRIDE`, `ataqueTipoOverride(formKey)` — o tipo do ataque BÁSICO do inimigo; `foeStrikeForm(el, 'basica', formKey)` (`combatFx.ts`) e `meleeImpactOf({ ..., formKey })` (`combate/golpeImpacto.ts`) leem primeiro e caem na regra derivada sem linha. O especial não muda.
+- `flutuaDe(formKey)`, `flipDe(formKey)`, `FLUTUA_ALTURA` (0,08 da altura) — bandeiras de sprite, padrão desligado (nenhuma ligada no export de 13/11).
+- `ELEMENTO_FORMA_OVERRIDE` — elemento trocado pelo dono; aplicado no `ENEMY_ROSTER` (troca `element` e componentes; golpes, arte e chave ficam). `PERSONALIDADE_OVERRIDE` — só rótulo.
+**Dados:** `soulmonOverrides.data.ts`, GERADO por `node scripts/gerar-soulmon-overrides.mjs <export.csv>` (aceita o formato posicional e o com cabeçalho `id,...,ataque_tipo,...,flutua,flip`).
+**Quem chama:** `combatFx.ts`, `combate/golpeImpacto.ts`, `enemyRoster.ts`; a chave vem de `arenaFoeFormKey` (Arena), `enemy.stage` (Masmorra, Fenda).
+**Régua:** `src/utils/soulmonOverrides.test.ts` (sem id velho, override vence, elementos válidos, linha do Salsolura intacta), `src/utils/soulmonOverrides.flags.test.ts`.
+
 ### `src/utils/spriteFeetTable.ts`
 **Dono de:** a tabela GERADA de onde fica o PÉ de cada sprite de criatura (`node scripts/sprite-feet.mjs` mede o último pixel opaco, alfa > 16, dos PNG de `lines/`, `bosses/`, `dino/` etc.; não editar à mão). Chave = nome do arquivo sem extensão; valor = base visível em milésimos da altura. Existe porque os PNG têm até ~25% de linhas transparentes embaixo e o layout ancorava a sombra pela caixa — o bicho flutuava acima dela.
 **Exports:** `SPRITE_FEET_TABLE`.
 **Quem chama:** só `utils/spriteScale.ts` (`knownBottomOf` / `groundDropPx`); a arte que chega por URL (sprite do jogador) é medida em runtime pelo canvas.
 **Régua:** `src/utils/spriteFeet.contract.test.ts` (remede os PNG e falha se algum sprite do roster ficar acima da tolerância).
 
-### `src/utils/combatArt.ts` · `src/utils/combatArtElementoMedias.data.ts`
+### `src/utils/combatArt.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
-**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
+**Sincronização 09/11/2026:** `combatSceneBgDaCamada(id, layer)` — o cenário de uma CAMADA da masmorra: o próprio do elemento; sem arte própria, o do elemento BASE que o compõe, girando pela camada (camada ímpar = 1º componente, par = 2º; antes era sempre o 1º). Chamado por `components/DungeonGame.tsx`.
+**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `combatGlowPair(id)` (`[brilho externo, brilho de trás]` = 1º e 2º componente do misto, ou a mesma cor no base) · `sceneBgDoElemento(id, urls, medias)` (núcleo puro do cenário próprio do fundido) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
 **Quem chama:** só `games/BattleStage.tsx` (chunk preguiçoso da luta — não importar do chunk de entrada). Regra do cenário: `BattleStage` recebe `sceneElement`; Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); Pesadelo e Masmorra não passam (cena fixa / cenário por andar). O escudo do DEFENSOR substitui o flash `defended` do FX no bloqueio (sem arte → `defended`).
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
-**Cenário próprio do elemento fundido (30/10/2026):** `combate/elemento/<id>.png` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
+**Cenário próprio do elemento fundido (30/10/2026; +151 compostos `.webp` 450×800 em 11/11/2026, `tools/instalar-cenarios-masmorra-compostos.py`, cores em `combatArtElementoMedias2.data.ts`):** `combate/elemento/<id>.{png,webp}` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
+**Mudou (30/10/2026):** ⚰️ `combatShadow` e as imagens `combate/sombra-clara.png`/`sombra-escura.png` (a plataforma sob os pés) saíram do módulo; a assinatura de cor do elemento vem de `elementVisual.data.ts` (CIELAB → hex com luminosidade mínima). `bg-` base próprio de `fada`, `industrial` e `planta` (o fallback de domínio só vale para save sem a arte).
+
+### `src/utils/combatArtElementoMedias2.data.ts`
+**Dono de:** a cor média dos 151 cenários compostos de 11/11/2026 (`ELEMENTO_BG_MEAN_V2`). GERADO por `tools/instalar-cenarios-masmorra-compostos.py`; `combatArt.ts` mescla com `ELEMENTO_BG_MEAN`.
+
+### `src/utils/combatArtElementoMedias.data.ts`
+**Dono de:** a cor MÉDIA (`#rrggbb`) do cenário próprio de cada elemento FUNDIDO, usada como fundo-base atrás do PNG. GERADO por `tools/instalar-cenarios-elemento.py` — não editar à mão.
+**Exports:** `ELEMENTO_BG_MEAN: Record<string, string>` (id do elemento fundido → cor média).
+**Chamado por:** `src/utils/combatArt.ts` (`sceneBgDoElemento`; sem entrada, o fundo cai em `#1c3a40`).
 
 ### `src/utils/energia.ts`
 **Dono de:** a ENERGIA e as mecânicas ativas do PvE (04/10/2026, REGISTRO §20.10). **O modelo:** cada lutador tem UMA barra de energia (0–`ENERGY_MAX` = 100) que enche por ataque DADO (+9), ataque SOFRIDO (+7) e, só o pet do jogador, pelo CHEER: a "barra de cheer" é o medidor de TOQUES (`CHEER_TAPS_FULL` = 24, lento) que, ao encher, despeja energia no pet e zera (o excedente fica). Energia cheia = o ESPECIAL no golpe seguinte. As constantes de energia são IMPORTADAS de `functions/api/_duel.js` (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito.
@@ -882,6 +1268,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Acréscimo de 11/10/2026:** `DUNGEON_AUTO_SKILL` (`media`), `autoRingGrade(fightSeed, n)`/`autoDodgeGrade(fightSeed, n)` — a nota do especial AUTOMÁTICO da Masmorra (sorteio com semente sobre as chances de `ARENA_SKILL_ODDS.media`; igual na tela, em qualquer velocidade e na conta fora do app).
 **Dono de:** a regra de UMA luta da Masmorra e do Pesadelo no núcleo v3 (PR4, contexto §2.18) — a MESMA que as telas jogam e que a simulação do balanço mede, para uma não divergir da outra: o jogador (`soulCombatant` com o HP do ofício, o especial da família da escola, alvo único), o inimigo (`dungeonFoe`), a defesa automática como `hitScale` do inimigo (0 na defesa perfeita, senão (1 − acc)/0,3), o contra-ataque do ofício no próximo básico, o anel (× `PVE_FAMILY_POWER.dungeon`) e a esquiva (`1 − DODGE_REDUCE`) como multiplicadores de cast.
+**Sincronização 09/11/2026:** `DungeonPlayerCfg.efeitoElemento` e `pesadelo` (§228): o especial do jogador passa por `comEfeitoDoElemento(specialOf(família), efeitoElemento, pesadelo)` (`combate/elementEffects.ts`) — só entram os efeitos de `EFEITOS_PVE_LIGADOS` (`combate/elementEffects.ts`; a medição `efeitosPve.medicao.test.ts` decide quais); no Pesadelo valem os botões `EFFECT_TUNE_PESADELO`.
 **Exports:** `dungeonFight(jogador, inimigo, semente)` → `{ player, foes, seed, hitScale, castScale }` · `dungeonPlayerSide`, `dungeonFightSeed`, `dungeonFamily` · `playSequence`, `ladderRefs`, `nightmareRefs`, `simulateDungeonRunV3`, `simulateNightmareV3`, `nightmareFight`, `NIGHTMARE_KNOBS`, `simulateNightmareScenario`, `SCENARIO_FULL`, `SCENARIO_NONE` (o motor dos gates de `dungeon.v3.test.ts`/`nightmares.v3.test.ts`; habilidade `nenhuma`/`media`/`boa` e torcida `nenhum`/`teto`) · tipos `DungeonPlayerCfg`, `DungeonFight`, `SequenceConfig`, `SequenceResult`, `DungeonRunResult`.
 **Quem chama:** `DungeonGame`, `NightmareBattle`, os testes v3.
 **Régua:** `src/utils/dungeon.v3.test.ts`, `src/utils/nightmares.v3.test.ts`, `src/utils/profissaoMasmorra.v3.test.ts`.
@@ -889,6 +1276,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/dungeon.ts`
 **02/10/2026 (E2):** `canBuyDeepStart(nível, bits, alcançado)` e `buyDeepStart(...)` só liberam até o nível já CUMPRIDO (`getDungeonReached`/`recordDungeonReached`, chave `DUNGEON_REACHED`, não reseta na semana; só concluir a descida grava) — não dá para pular pagando (`REGISTRO-DE-DECISOES` §20).
 > ⚠️ 30/09/2026: `DUNGEON_BITS_FACTOR` (0,4) — Bits por inimigo e o custo de começar mais fundo (`DEEP_START_BASE_COST` = 16) passam por ele (decisão do dono, `BALANCO-MINIJOGOS.md` §4).
+> ⚠️ 14/11/2026: `DUNGEON_BITS_FACTOR` **0,4 → 0,2** (dono, REGISTRO §372; `BALANCO-MINIJOGOS.md` §6): bônus de camada 2/3/4/5/6, os 5 primeiros andares ~70–84 Bits; o teto de 150 chega no 8º–9º andar.
 **Dono de:** a tabela de inimigos RELATIVA ao level do jogador (`DUNGEON_SLOTS`, `DUNGEON_FLOOR_GROWTH`, `dungeonFoe`; Combate v3, PR4), a montagem de onda e a progressão de dificuldade da Masmorra — sem gate de HP nem limite diário. A regra de UMA luta (jogador, defesa, anel, ofício) e a simulação do balanço vivem em `src/utils/dungeonFight.ts`.
 **Exports:**
 - `DungeonFoeKnobs` (tipo dos botões de `dungeonFoe`: `DUNGEON_SLOTS`, `DUNGEON_FLOOR_GROWTH`, `DUNGEON_MIN_HITS`).
@@ -899,7 +1287,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `EnemyTier` (type) — `'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega'`
 - `LADDER_TIERS` — `['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega']`
 - `HEART_DROP_CHANCE` (`0.05`) — chance de coraçãozinho por inimigo derrotado; exportada na minimal-ui F5 para a folha-porta da Masmorra (`play/PlaySheets.tsx`) dizer o que pode cair.
-- `DUNGEON_BITS_FACTOR` (`0.4`, desde `78146c6c`, 30/09/2026) — o FATOR DE BITS da Masmorra, decisão do dono (`docs/BALANCO-MINIJOGOS.md` §4): uma run completa pagava 327–417 Bits, 2–3× o teto diário de minijogo (`MINIGAME_BITS_PER_DAY`, 150); com 0,4 fica perto do teto. É UM número, aplicado nos DOIS lugares que pagam (Bits por inimigo em `buildDungeonWave` e o bônus de andar `clearBonus` da `DungeonGame`) e no custo de começar mais fundo (`DEEP_START_BASE_COST`), para a proporção ganhar/gastar não mudar. Régua: `utils/mente/balanco.test.ts`.
+- `DUNGEON_BITS_FACTOR` (`0.2` desde 14/11/2026, REGISTRO §372; era `0.4` desde `78146c6c`, 30/09/2026) — o FATOR DE BITS da Masmorra, decisão do dono (`docs/BALANCO-MINIJOGOS.md` §4): uma run completa pagava 327–417 Bits, 2–3× o teto diário de minijogo (`MINIGAME_BITS_PER_DAY`, 150); com 0,4 fica perto do teto. É UM número, aplicado nos DOIS lugares que pagam (Bits por inimigo em `buildDungeonWave` e o bônus de andar `clearBonus` da `DungeonGame`) e no custo de começar mais fundo (`DEEP_START_BASE_COST`), para a proporção ganhar/gastar não mudar. Régua: `utils/mente/balanco.test.ts`.
 - `function buildDungeonWave(level: number, petStage: string, rng?, playerLevel?): DungeonEnemy[]` — a onda de um andar (`level` = base semanal + andar − 1): uma criatura por tier, o sabor sorteado com o `rng` da run (`mulberry32(semente ^ andar)`, nunca `Math.random`; sem `rng` é determinístico pelo andar) e a força de `dungeonFoe(playerLevel, slot, level)`. `points` de cada inimigo = `max(1, round(base.points × ptsMult × DUNGEON_BITS_FACTOR))` (era `max(2, round(base.points × ptsMult))`).
 - `function getDungeonDifficulty(): number` — Base dungeon level (floor 1's difficulty). Resets to 1 each week.
 - `DEEP_START_BASE_COST` (`Math.round(40 × DUNGEON_BITS_FACTOR)` = 16; era 40 fixo) — WP4.5 — O SUMIDOURO RECORRENTE DE BITS: descer mais fundo. Até aqui os Bits só tinham compras ÚNICAS (decoração, cenários), então quem joga muito acumula uma moeda que não compra mais nada — e moeda que não compra nada deixa de ser recompensa.
@@ -919,6 +1307,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/dungeonIdle.ts`
 
 **Dono de:** a descida idle da Masmorra (08/10/2026) — constantes `DUNGEON_AUTO_FIGHT_MS` (4000), `DUNGEON_FIGHTS_PER_FLOOR` (6), `DUNGEON_MILESTONE_FLOOR` (5), `DUNGEON_HP_REGEN_FULL_HOURS` (4), `DUNGEON_MIN_HP_TO_ENTER_PCT` (25). **Exports:** `hpAgora(state, now)` (HP por timestamp, nunca > 1), `gravarHp`, `podeDescer`, `msAteDescer`, `posicaoDaLuta`, `formatarEspera`, `sanitizeDungeonHp`. Puro, sem imports. Régua: `dungeonIdle.test.ts`.
+**Sincronização 09/11/2026:** `DUNGEON_RETURN_EVERY` = 2 (era 5; o dono passou para 2 em 09/11/2026, REGISTRO §31 emenda): o PONTO DE RETORNO — `startLayerFor(record, cap)` recomeça a descida em `1 + DUNGEON_RETURN_EVERY · ⌊min(recorde, cap − 1) / DUNGEON_RETURN_EVERY⌋`, no máximo 1 camada abaixo do recorde. Desacoplado do marco de PRÊMIO (`DUNGEON_MILESTONE_FLOOR`/`isMilestoneLayer`), que segue em 5: economia igual.
 
 **Acréscimo de 11/10/2026 (REGISTRO §36):** `DUNGEON_SPEEDS` (1/2/3), `sanitizeDungeonSpeed`, `nextDungeonSpeed` · `DUNGEON_AWAY_MAX_HOURS`/`DUNGEON_AWAY_MAX_MS` (8 h) · `DungeonAway`/`DungeonAwayPlayer` (o registro `dungeonAway` do save), `sanitizeDungeonAway` (registro inteiro ou `undefined`), `soulmonNaMasmorra(state)` (o critério único de "ocupado").
 
@@ -941,10 +1330,27 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/dungeonAway.ts`
 
 **Dono de:** a conta PURA de quem ficou fora da masmorra (REGISTRO §36). **Exports:** `applyDungeonAway(estado, nowMs, { heartsLeft?, retire? })` → `{ next, report }` (rejoga a descida luta a luta pelo motor da tela, com o especial automático, até `DUNGEON_AWAY_MAX_MS`; idempotente; credita pelos funis de sempre), `settleDungeonAwayNow(base, setGameState, now, retire)` (a ponte com o `setGameState`, uma chamada por volta; guarda o teto de corações no aparelho fora do updater), `dungeonWaveOf(seed, camada, nível, estágio)` (a onda da camada, a MESMA da tela), `awayPlayerCfg`, `playAutoFight`, `fightWallMs`, `AWAY_CAST_PAUSE_MS` (2200), `AWAY_END_BEAT_MS` (900), `AwayReport`/`AwayEnd`. **Régua:** `dungeonAway.test.ts`. **Chamado por:** `DungeonGame` (ao entrar) e `App` (`retirarDaMasmorra`, import dinâmico).
+**Sincronização 09/11/2026:** a descida passa a ser TEMÁTICA e a usar poções deixadas (REGISTRO #638, 08/11/2026): `dungeonWaveOf(seed, layer, level, stage, tematica = true)` — cada camada é de UM elemento (`elementoDaCamada` de `dungeonElementos.ts`) e só tem criaturas dele; `tematica = false` é o sorteio comum (RogueFight). Quando o Soulmon cai e há poção no estoque (`dungeonPotions`, `gastarUmaDoEstoque`), ele usa uma sozinho — volta com 50 % do HP e o inimigo mantém o HP da queda, a MESMA continuação da tela (`reviveSeed`/`reviveStart` de `dungeonRevive.ts`); o estoque só é gasto se a luta inteira CABE no tempo, senão fica parado e nada se perde. `playAutoFight(cfg, enemy, runSeed, hp, en, cont?)` devolve também `foeFrac`; o relatório ganhou `potions?` (poções usadas sozinho; ausente em relatório antigo). `glitchtamaDraw`/`glitchtamaDropFor`/`aplicarDropDoMarco` (`glitchtamaDrop.ts`) entram no marco da descida.
 
 ### `src/utils/dungeonRewards.ts`
 
-**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário; moveu para `dungeonKill.ts` no §497), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (a recompensa da run no marco: Vínculo, `dungeonRunsCompleted`, fragmentos da run; o 🌀 saiu daqui em 05/11/2026 e mora em `utils/glitchtamaDrop.ts`: 1%/marco, 1/semana), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/dungeonKill.ts`
+
+**Dono de:** `applyEnemyDefeated` (abate + bestiário + elemento do dex + essência), separado de `dungeonRewards.ts` porque puxa o elenco de inimigos (`enemyRoster`, ~28 KB) (REGISTRO §497). O `App` o chama por `import()`; `dungeonAway.ts` (chunk preguiçoso) importa direto. **Régua:** `enemyRoster.test.ts`, `elementDex.test.ts`, `essences.test.ts`.
+
+### `src/utils/glitchtamaDrop.ts`
+
+**Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §227): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `aplicarDropDoMarco` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
+
+### `src/utils/dungeonElementos.ts`
+
+**Dono de:** a masmorra temática (REGISTRO §249): cada elemento ocupa 2 camadas; ordem base → 2 → 3 → 4 componentes, com volta ao começo. **Exports:** `ELEMENTOS_DA_MASMORRA`, `elementoDaCamada`, `componentesDoElemento`, `CAMADAS_POR_ELEMENTO`, `CAMADAS_DO_CICLO`. **Chamado por:** `dungeonAway.ts` (`dungeonWaveOf`), `DungeonGame`. **Régua:** `dungeonElementos.test.ts`.
+
+### `src/utils/dungeonPotions.ts`
+
+**Dono de:** as poções de cura que o jogador deixa com o Soulmon ao sair da masmorra (REGISTRO §249): estoque `dungeonPotions` no save, idempotente, devolvido quando a descida acaba. **Exports:** `HEAL_POTIONS`, `deixarPocoes`, `devolverPocoes`, `recolherPocoes`, `gastarUmaDoEstoque`, `pocoesDoJogador`, `healPotionsOwned`, `potionsTotal`, `sanitizeDungeonPotions`. **Chamado por:** `dungeonAway.ts`, `DungeonGame`, `GameStateContext`. **Régua:** `dungeonPotions.test.ts`.
 
 ### `src/utils/dungeonRevive.ts`
 
@@ -957,14 +1363,35 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/match3.ts`
 
 **Dono de:** a lógica pura do Elemental Fusion, o jogo de combinar peças do Salão (REGISTRO §36). **Exports:** `M3_COLS`/`M3_ROWS` (7×7), `M3_KINDS` (6), `M3_MOVES` (20), `M3_TILE_ELEMENTS` (`fogo`/`agua`/`terra`/`vida`/`ar`/`luz`, ícones de `utils/elementIconArt`), `findRuns`, `validMoves`/`hasMoves`, `newBoard`/`newRound(seed)`, `shuffleBoard`, `resolveBoard` (limpa, cai, preenche, cascata; peça especial de linha de 4+), `trySwap` (beta-2, 9.2: a troca entre vizinhas é LIVRE — vale pontue ou não, devolve `scored`; só `far`/`empty` são inválidas e não gastam movimento; a tela gasta 1 movimento por troca válida), `bestMove`, `chainMultiplier` (×1, ×1,5, ×2…), `match3Bits` (1 por `M3_POINTS_PER_BIT` = 250, teto `M3_MAX_BITS` = 8). Determinístico por semente (`mulberry32`; um teste trava `Math.random`). **Régua:** `match3.test.ts` e a linha "Elemental Fusion" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`, `PlaySheets`. ⚠️ Desde 18/10/2026 cada `Step` traz `kinds` (o tipo de cada peça de `cleared`, mesma ordem) — é daí que o combate tira o elemento do dano; `M3_MOVES` segue exportado mas a rodada **não** acaba mais por movimentos (ver `match3Combat.ts`).
+**Sincronização 09/11/2026:** `BoardRules` (regras de tabuleiro do BOSS, `match3Boss.ts`; todas opcionais — ausentes = o jogo de sempre) e `adjacentSpecials(b)` (as peças especiais encostadas umas nas outras, regra 6 do BOSS, sem repetir casa).
 
 ### `src/utils/elementVisual.data.ts`
 
-**Dono de:** a assinatura visual de cada ícone de elemento (`[L, a, b, opaco]`: cor dominante em CIELAB, média ponderada pelo alfa, sem contorno quase-preto nem quase-branco). É GERADO por `scripts/element-visual.py`; rode o script de novo quando entrar ícone novo (há teste que falha se faltar assinatura). Quem lê: `match3Pvp.ts › pickDistinctPvpElements`, que só aceita no PVP do Elemental Fusion ícones com ΔE (CIE76) ≥ `M3_PVP_MIN_DELTA_E` entre si. Régua: `utils/match3PvpDistintos.test.ts`.
+**Dono de:** a assinatura visual de cada ícone de elemento (`[L, a, b, opaco]`: cor dominante em CIELAB, média ponderada pelo alfa, sem contorno quase-preto nem quase-branco). É GERADO por `scripts/element-visual.py`; rode o script de novo quando entrar ícone novo (há teste que falha se faltar assinatura). Quem lê: `match3Cores.ts › m3DeltaE` (a leitura pela cor média; a pela dominante vem de `elementDominante.data.ts`). Régua: `utils/match3PvpDistintos.test.ts`.
+
+### `src/utils/elementDominante.data.ts`
+
+**Dono de:** a cor DOMINANTE `[L, a, b]` (CIELAB) de cada ícone de elemento (maior de 3 grupos k-means com croma ≥ 12; complementa a cor MÉDIA de `elementVisual.data.ts`). É GERADO por `scripts/element-dominante.py`; rode junto com `scripts/element-visual.py` quando entrar ícone novo (há teste que falha se as duas tabelas divergirem). Quem lê: `match3Cores.ts › m3DeltaE`. Régua: `utils/match3Cores.test.ts`.
+
+### `src/utils/elementPaleta.data.ts`
+
+**Dono de:** a PALETA de cada ícone de elemento: até 4 cores dominantes `[L, a, b, peso%]` (CIELAB, k-means de semente fixa). É GERADO por `scripts/element-paleta.py` (rode junto com os outros scripts de `element-*` quando entrar ícone novo). Quem lê: `match3Cores.ts › m3DeltaEPaleta`. Só entra pelo Match-3 (chunk preguiçoso). Régua: `utils/match3Cores.test.ts`.
+
+### `src/utils/elementSilhueta.data.ts`
+
+**Dono de:** a SILHUETA de cada ícone de elemento: máscara 16x16 (alfa >= 50%) em 64 dígitos hex. É GERADO por `scripts/element-silhueta.py`. Quem lê: `match3Cores.ts › m3Silhueta` (IoU). Só entra pelo Match-3. Régua: `utils/match3Cores.test.ts`.
+
+### `src/utils/match3Cores.ts`
+
+**Dono de:** quais ícones de elemento podem dividir o MESMO tabuleiro do Elemental Fusion PVP (REGISTRO §400, pedido do dono de 15/11/2026). **Exports:** `M3_MIN_DELTA_E` (24), `M3_DELTA_E_STEP` (2), `M3_PARES_PROIBIDOS`/`m3ParProibido(a, b)` (lista curada, simétrica, nunca relaxa), `m3DeltaE(a, b)` (o maior entre o CIEDE2000 da cor média e o da dominante; sem assinatura = `Infinity`), `ciede2000`, `pickM3Distinct(order, n, base)` (guloso sobre uma ordem já embaralhada; `base` = ΔE ou `Partial<M3Limiares>`; só os limiares medidos relaxam; devolve `{ elements, limiar, relaxado }`). REGISTRO §402 (3 rodadas a mais): `M3_MIN_DELTA_E_PALETA` (10) e `m3DeltaEPaleta`, `M3_MIN_DELTA_E_DALTONICO` (8) e `m3DeltaEDaltonico`/`simulaDaltonismo`, `M3_MAX_SILHUETA` (0,80) com `m3Silhueta`/`m3DeltaBrilho`/`m3SilhuetaConfunde`, `m3Conflito(a, b, limiares)` e `M3_LIMIARES`. Quem chama: `match3Pvp.ts › pickDistinctPvpElements`. O Normal (6 fixos) não usa. Régua: `utils/match3Cores.test.ts`, `utils/match3PvpDistintos.test.ts`.
 
 ### `src/utils/match3Pvp.ts`
 
 **Dono de:** o modo PVP (1 contra 1) do Elemental Fusion (pedido do dono, 26/10/2026), em funções PURAS. **Exports:** `pvpElementPool()` (todo ícone de elemento, base e misto, menos `neutro`), `pickPvpElements(rng, pool, n)`/`pvpElementsForSeed(seed)` (os 6 elementos do tabuleiro: sorteados por semente, distintos), `tileElementName(id, isPt)` (nome PT/EN de base ou misto), `pickPvpOpponent(cands, myLevel)` (entre os candidatos que a rota `opponents` do Torneio devolve — sorteio do servidor em `_rankedPick.js`, simulados inclusos —, o de level mais parecido), `npcFoe(level, rng)` (NPC do roster quando não há ninguém), `PvpFoe`. Nome de pessoa e ranking nunca saem daqui: só arte e level. Recompensa igual à do Normal (`match3Bits(combatScore)`). Régua: `utils/match3Pvp.test.ts`, `components/Match3Pvp.render.test.tsx`.
+
+### `src/utils/match3Escolha.ts`
+
+**Dono de:** a regra PURA da escolha de 3 do Elemental Fusion (REGISTRO §488). **Exports:** `M3_CHOICES` (3), `M3_REDRAWS_PER_VISIT` (1, grátis — a regra do Torneio ranqueado), `adventureElementPool()` (elementos do pool misturado que têm criatura no roster), `adventureChoices(screenSeed)` (3 elementos distintos + semente de partida por opção; o time de 4 cai daquele elemento via `newCombat(..., { element })`), `pvpChoices(screenSeed, opponents, myLevel, artOf)` (boss decidido antes = só a linha do boss; senão até 3 jogadores da rota, sem demo, sementes sem boss), `isDemoOpponent(o)`, tipos `M3Choice`/`M3AdventureChoice`/`M3PvpChoice`. Determinístico (`mulberry32`). Régua: `utils/match3Escolha.test.ts`.
 
 ### `src/utils/match3Powers.ts`
 
@@ -973,6 +1400,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 ### `src/utils/match3Combat.ts`
 
 **Dono de:** o Elemental Fusion como COMBATE (D-03…D-07, 18/10/2026), em funções PURAS e imutáveis. Combinar peças de um elemento causa dano daquele elemento ao inimigo ATIVO (um evento por elemento por passo da cascata, `M3C_DMG_PER_TILE` × `chainMultiplier`); a sobra de um golpe que zera o HP é descartada; o próximo assume; os 3 derrotados = vitória (um time só). Depois de cada jogada VÁLIDA (pontue ou não) o inimigo ativo faz UMA ação no Soulmon do jogador; HP 0 = derrota; `M3C_MAX_TURNS` (60) encerra como derrota sem custo. **Exports:** `newCombat(rng, lines, exclude)` (3 elementos e 3 linhas distintos, sorteados por `rng` de parâmetro), `applyPlayerSteps`, `enemyTurn(state, rng)`, `playTurn` (as duas, contando o turno), `combatScore` (dano causado − recebido + `M3C_DEFEAT_BONUS` por inimigo derrotado, ≥ 0) e as constantes de balanço (`M3C_PLAYER_HP` 330, `M3C_ENEMY_HP` 290/350/410). O placar é o ÚNICO insumo de `match3Bits` (mesmo teto `M3_MAX_BITS`; o combate paga ≤ à regra antiga dos pontos — o placar máximo de uma partida perfeita é 1350, ou 5 Bits). Partida típica: ~21 jogadas. Sem `Math.random`. **Régua:** `match3Combat.test.ts`, `Match3Game.render.test.tsx` e a linha "Elemental Fusion" de `mente/balanco.test.ts`. **Chamado por:** `Match3Game`.
+**Sincronização 09/11/2026:** `M3DamageMult` (`(k, chain) => número`, multiplicador do dano por passo da cascata), `M3TurnOpts` (`mult`, `rules: BoardRules`, `noExtra`) e `mirarInimigo(state, i)` — ALVO POR TOQUE: o toque no inimigo `i` vira o alvo dos PRÓXIMOS golpes do jogador (só com 2+ inimigos e ele de pé).
+
+### `src/utils/match3Boss.ts`
+
+**Dono de:** o BOSS raro do Elemental Fusion (03/11/2026): 3% das partidas normais (PvE/PvP, nunca o desafio do Calabouço) viram BOSS pela semente (`isBossMatch`). Um inimigo com o HP do jogador (`newBossCombat`, roster de estágio final) e 3 regras de `BOSS_RULES` (`drawBossRules`; 1×2 e 4×5 nunca juntas). Regras de tabuleiro viram `BoardRules` de `match3.ts` (`bossBoardRules`: cruz, especiais vizinhos, quartzo coringa, gravidade invertida); pedras = `petrify`; dano (mesmo elemento, inverso, sequência de diferentes, cascata crescente, maré) = `bossTurn` → multiplicador de `applyPlayerSteps`; especial sem vez extra = `noExtra` de `playTurn`; relógio = `clockTick`/`passTurn`. Sem `Math.random`. **Régua:** `match3Boss.test.ts`. **Chamado por:** `Match3Game`.
+
+### `src/utils/bossShards.ts`
+
+**Dono de:** o Fragmento de Boss (EN Boss Shard), moeda nova sem uso ainda: campo `bossShards` do save, `sanitizeBossShards` (leitura tolerante) e `addBossShards`. Espelho: `functions/api/_bossShards.js` (paridade em `bossShards.parity.test.js`). **Chamado por:** `GameStateContext` e `App`.
 
 ### `src/utils/gameStories.ts`
 
@@ -980,6 +1416,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonScenes.ts`
 **Dono de:** Cenários da Masmorra (os 5 andares clássicos, hoje **5 cenas pintadas** 1080×1920 desde 30/09/2026, rodada 3) e o sorteio de cenas por run.
+**Sincronização 09/11/2026:** `DUEL_SCENE` (cena própria do Duelo, 02/11/2026: "Clareira do Duelo"/`Duel Clearing`, `bg/duelo-bg`) e `FEIRA_SCENE` ("Feira"/`Fair`, fundo de batalha da Feira com queda para `visorFeira`).
 **Exports:**
 - `DungeonScene` (interface) — campos: `namePt`, `nameEn`, `bg`, `accent`.
 - `DUNGEON_SCENES` — os 5 andares clássicos, cada `bg` um shorthand `url(<png>) center/cover <cor-média>` (`assets/soulmon/bg/dungeon-classic-{retro,vhs,sol,crt,glitch}.png`; a cor final é a de reserva enquanto a imagem carrega): Jardim Flutuante, Terraço dos Dois Sóis, Observatório Partido, Lago-Espelho, Arquipélago Fraturado. ⚰️ Os cinco gradientes CSS antigos (Retro Pet, Fita VHS, Sol Neon, Terminal CRT, Vazio Glitch — dois eram magenta, fora do kit) foram trocados um a um; os nomes de arquivo `classic-*` mantêm os nomes velhos, o `name` mudou. A cena não é persistida (a run a sorteia em `useState` do `DungeonGame`), então não havia id a preservar.
@@ -1013,29 +1450,68 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/entitlements.ts`
 **Dono de:** Cliente do saldo real de Créditos/tier no servidor — gasto, recompensa de anúncio e verificação de compra.
+**Sincronização 09/11/2026:** `Entitlement.frames?` — molduras do widget V-Pet COMPRADAS (ids de elemento base; só o servidor escreve; ausente = nenhuma; cosmético, saneado por `sanitizeOwnedWidgetFrames` de `widgetFrames.ts`). Toda compra confirmada (nova, reconciliada ou restaurada) passa por `setPaidWidgetFramesFromEntitlement(ent)` para as molduras acompanharem o servidor.
 **Exports:**
 - `Entitlement` (interface) — campos: `tier`, `credits`, `adsLeft`, `adsEnabled`, `admin` (29/09/2026 — sempre booleano; só `=== true` conta).
 - `function sanitizeEntitlement(raw: unknown): Entitlement | null` — normaliza a resposta do `GET`; `admin` só é true com o literal `true`.
 - `function fetchEntitlement(): Promise<Entitlement | null>` — Lê o saldo real do servidor. Retorna null se não der (offline, sem saveId).
-- `function spendCredits( amount: number, reason: string, opId: string = newOpId()): Promise<Entitlement | null>` — Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o novo saldo — null significa recusado (sem saldo, offline) e o efeito não pode acontecer.
+- **Antislop P6 (14/11/2026, §378):** `spendCredits`, `buyEssence` e `buyBitsPack` aceitam `opId` OPCIONAL; sem ele o id do gesto vem de `utils/pendingOpId.ts` (conta + operação + item: `spend` `reason:amount`, `essence` `element:qty`, `bits` `packId`) e é REUSADO no toque seguinte até o servidor dar resposta definitiva (ok, ou 4xx fora de 408/425/429/`409 busy`). Resposta perdida + novo toque = um único débito. **Régua:** `src/utils/pendingOpId.antislop.test.ts`.
+- `function spendCredits(amount: number, reason: string, opIdExplicito?: string): Promise<Entitlement | null>` — Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o novo saldo — null significa recusado (sem saldo, offline) e o efeito não pode acontecer.
 - `function claimAdReward(): Promise<Entitlement | null>` — Credita a recompensa do anúncio (o teto diário é aplicado no servidor).
 - `function resetSpriteLifetimeAfterRebirth(): Promise<boolean>` — **novo em `cf6315e1`** (decisão do dono #62, 22/09/2026). Avisa o servidor que o RENASCIMENTO aconteceu, para ele zerar `ent:<saveId>.aiLifetime.sprite` (`POST /api/entitlements?action=rebirth-reset`). O contador mora no servidor porque o cliente é editável; a rota confere sozinha (lê `state.rebirth` do save do titular) e é idempotente (`rebirthSpriteResetAt`), então esta chamada **não carrega autoridade nenhuma — ela só avisa**. ⚠️ Devolve `false` em silêncio e **nunca pode bloquear o renascimento**: ele é uma vez só na vida do save, e perdê-lo por um 500 de rede seria trocar um teto de custo por dano irreversível ao jogador. Chamada com `void` no `handleRebirth` do `App.tsx`.
 - `function verifyPurchase(productId: string, purchaseToken: string): Promise<` — Manda um purchaseToken da Google Play para o servidor verificar. Só o servidor decide se a compra vale — aqui só repassamos e lemos o resultado.
 **Chamado por:** `src/App.tsx`, `src/components/AccountSection.tsx`, `src/components/CreditsModal.tsx`, `src/components/UnlockAccountModal.tsx`, `src/utils/playBilling.ts`
 **Régua:** nenhuma (`ls src/utils/entitlements*.test.ts` vazio).
 **Regra de negócio:** O servidor é a única autoridade sobre Créditos e tier de conta. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Cambista (§205):** `EssenceBuyResult` (`{ ok: true; ent; element; qty; price }` | `{ ok: false; reason }`) é o retorno de `buyEssence(element, qty, opId?)`.
 
 ### `src/utils/evolutionGauge.ts`
 **Dono de:** o GAUGE DE EVOLUÇÃO (decisão do dono, 11/10/2026) — o critério de evolução que substituiu `perfectDays`. Peso de esforço (hábito = 1, tarefa = effort 1–3), creditado na virada (`computeDailyReset`) com teto diário = `FORM_REQUIREMENTS[estágio].required`, nunca decresce por dia ruim, zera ao evoluir. Meta por estágio = `FORM_REQUIREMENTS[…].gauge` (30/45/60/60; no mega sem as três megas, `ULTRA_PATIENCE_POINTS` = 270). Migração de save: `perfectDays` → mesma fração da barra (arredonda para cima). A queda usa `degeneratedEvolutionPoints` (em `dailyReset.ts`).
-**Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `dayItemGaugeGain`, `gaugeView`, `GaugeView`.
+**Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `gaugeView`, `GaugeView`.
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
+
+### `src/utils/evolutionStatsDelta.ts`
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta nunca é negativo: o piso do REGISTRO §229 (`evoStatFloor`) impede a queda de 1 ponto de Defesa/Velocidade que o reset de §209 causava em Ultimate→Mega e Mega→Ultra.
+**Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
+**Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
+**Régua:** `src/utils/evolutionStatsDelta.test.ts`.
 
 ### `src/utils/evolutionCrystal.ts`
 **Dono de:** o CRISTAL da evolução (31/10/2026, REGISTRO §208) — puro. Barra a 100% → botão Evoluir → o toque grava `evolutionCrystal {v,from,to,branch,since}` no save (o destino é decidido NO toque) e só então o lote de sprite da forma-destino parte (`SpriteTriggerInput.crystalFormId`). Fases `gerando`/`falhou`/`pronto` (`crystalPhase`): pronto com a arte nova, sem geração possível ou no teto; falhou com falha gravada ou sem arte em `CRYSTAL_STUCK_MS` (10 min) → "Tentar de novo"/"Evoluir assim" (nunca prende). Bloqueia SÓ Masmorra (`exploracao.dungeon`), Fenda Sem Fim, Feira, Grove e Arena (`CRYSTAL_BLOCKED_LOTS`, aplicado no `AreaView`).
 **Exports:** `EvolutionCrystal` · `CrystalPhase` · `CRYSTAL_STUCK_MS` · `CRYSTAL_BLOCKED_LOTS` · `crystalBlocksLot` · `crystalRefusalText` · `sanitizeCrystal` · `activeCrystal` · `startCrystal` · `crystalPhase`.
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/components/nav/AreaView.tsx`.
 **Régua:** `src/utils/evolutionCrystal.test.ts`, `src/components/evolucaoCristal.render.test.tsx`.
+
+### `src/utils/formasAlternativas.ts`
+**Dono de:** as FORMAS ALTERNATIVAS (05/11/2026, dono) — puro. Cada forma (menos rookie/bb) guarda os elementos já desbloqueados (`formasAlt`, o 1º é a original) e qual está equipado (`formaAltEquipada`). A arte da alternativa mora no acervo na chave `forma@elemento` (aceita pelo servidor em `VALID_FORM_ID`); a forma desenhada antes desta lista existir pede arte nova na volta e fica como `original`. `spriteVisorOf` é a visão de EXIBIÇÃO do acervo (a alternativa equipada ocupa a chave da forma). Cosmético: não muda regra nenhuma.
+**Exports:** `FormasAlt` · `FormaAltEquipada` · `ALT_OCULTAS` · `ALT_ORIGINAL` · `formaTemAlternativas` · `sanitizeFormasAlt` · `sanitizeFormaAltEquipada` · `elementoDaForma` · `altSpriteKey` · `baseFormOfKey` · `registrarFormaAoEvoluir` · `equiparFormaAlt` · `spriteVisorOf` · `ocultasDaForma`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/components/EvolutionPath.tsx`, `src/components/evolution/FormasAlternativasSheet.tsx`.
+**Régua:** `src/utils/formasAlternativas.test.ts`.
+
+### `src/utils/formaSnapshot.ts`
+**Dono de:** a FOTO POR FORMA (09/11/2026, dono, REGISTRO §257) — pura. Ao sair de uma forma guarda poção, elemento do nível e skills do nível (`formaSnapshots`); ao entrar aplica a foto. Queda (manual ou por HP) volta ao elemento da forma em que cai; troca lateral e forma alternativa equipam elemento, ataque básico e especial. Forma sem foto (save antigo) só limpa a poção na queda.
+**Exports:** `FormaSnapshot` · `FormaSnapshots` · `FormaState` · `chaveDaForma` · `capturarForma` · `trocarFormaCompleta` · `aoDescerDeForma` · `sanitizeFormaSnapshots`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/dailyReset.ts`.
+**Régua:** `src/utils/formaSnapshot.test.ts`.
+
+### `src/utils/strollDiscovery.ts`
+**Dono de:** a DESCOBERTA do Passeio (05/11/2026, dono) — pura. Todo dia com Passeio o Soulmon topa com UM Soulmon do `ENEMY_ROSTER` que o jogador ainda não viu (`bestiary`); aleatório e determinístico por (`dayKey`, Drive atual), garantido enquanto restar algum. O Corvinho segue `RAVEN_SPAWN_CHANCE` (1/1000) e só vem fora disso se for o último que falta. Não grava nada: quem chama grava a chave em `bestiary` no OK.
+**Exports:** `strollDiscoveryOf`.
+**Chamado por:** `src/components/DailyReportModal.tsx`.
+**Régua:** `src/utils/strollDiscovery.test.ts`.
+
+### `src/utils/strollNow.ts`
+**Dono de:** a conta do "Concluir" do Passeio que PAGA NA HORA (REGISTRO §413): `applyStrollNow(prev, nowMs, isPt)` = `markDone` + `settleNight` (região guardada abre) + achado no diário + Soulmon avistado no Drive + `claimDay`/`sceneDay`; devolve `{ state, scene }` ou `null` (nada a fazer / já feito hoje). Pura e idempotente.
+**Exports:** `StrollNowScene` (tipo) · `StrollNowResult` · `applyStrollNow`.
+**Chamado por:** `src/App.tsx` (`concluirPasseio`, carregado sob demanda).
+**Régua:** `src/utils/strollNow.test.ts`.
+
+### `src/utils/strollScene.ts`
+**Dono de:** a arte e a geometria da CENA do Passeio (05/11/2026) — panorama horizontal 2:1 por região (`passeio-cenas/cena-<região>.(webp|png)`, glob), linha de chão em 80%, jogador em 25% e descoberto em 75%; sem a arte, o postal da região espelhado. `panOffsetPx` calcula o deslize preso às bordas. Fila de arte: `docs/ASSETS-A-GERAR.md` §25.
+**Exports:** `SCENE_RATIO` · `SCENE_GROUND_Y` · `SCENE_PLAYER_X` · `SCENE_FOUND_X` · `sceneArtOf` · `sceneFallbackCss` · `panOffsetPx`.
+**Chamado por:** `src/components/StrollScene.tsx`.
+**Régua:** `src/utils/strollScene.test.ts`.
 
 ### `src/utils/evoRecap.ts`
 **Dono de:** o recap da evolução (REGISTRO §190, 29/10/2026) — puro, sem React/storage/`Date`. O "ontem" sai do relatório da virada (`antes = evolutionPoints - gaugeGain`); o snapshot persistido (`STORAGE_KEYS.EVO_RECAP_SNAPSHOT`) só marca o que já foi mostrado. Devolve `null` se já visto, sem ganho, estágio final (meta ≤ 0) ou dado incoerente.
@@ -1057,6 +1533,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/EvolutionPath.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/soulFragment.test.ts` (vocabulário sem cobrança; save antigo vira fragmentos 1:1, idempotente; por esforço com teto).
 
+### `src/utils/bonusTask.ts`
+**Dono de:** a TAREFA BÔNUS (13/11/2026). Aceitar a oferta reduzida (never miss twice) NÃO conclui mais o hábito: ele vira a tarefa bônus do dia (`GameState.bonusTask = { day, activityId }`). Concluída no próprio dia, rende `BONUS_TASK_GAUGE_WEIGHT` (+1) Fragmento de Alma ACIMA do teto diário, somado na virada (`computeDailyReset`, junto do bônus da missão especial); a virada limpa o campo, então paga uma vez só. O servidor não valida `evolutionPoints`.
+**Exports:** `BonusTaskState` · `BonusTaskSave` · `BONUS_TASK_GAUGE_WEIGHT` · `bonusTaskList` · `sanitizeBonusTask` · `addBonusTask` · `bonusActivityIdsOf` · `isBonusActivity` · `bonusTaskGaugeBonus`. **18/11/2026 (REGISTRO §474):** `GameState.bonusTask` é uma LISTA (save antigo com objeto único vira lista de 1); várias bônus no mesmo dia, +1 por bônus concluído.
+**Chamado por:** `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx` (hidratação), `src/App.tsx` (aceite, linha bronze, prévia de fragmentos do toast, modal de apresentação).
+**Régua:** `src/utils/bonusTask.test.ts`.
+
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
 **Exports:**
@@ -1067,6 +1549,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/spriteTrigger.ts`
 **Régua:** `evolutionTarget.regression.test.ts`
 **Regra de negócio:** Fonte única do galho + forma-destino da evolução manual. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/trocaLateral.ts`
+**Dono de:** A troca lateral de forma (mesmo nível, outra forma já desbloqueada): grátis, só troca `evolutionStage` — sem encher HP nem mexer em pontos (05/11/2026).
+**Exports:**
+- `function canSwitchLaterally(input: { currentStageId; targetStageId; unlockedEvolutions? }): boolean` — alvo diferente, do mesmo nível, desbloqueado; rookie e ultra nunca.
+- `function applyLateralSwitch(prev, targetStageId)` — devolve `prev` com só `evolutionStage` trocado (ou o mesmo objeto se o alvo não vale).
+**Chamado por:** `src/App.tsx` (`handleSwitchForm`), `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
+
+### `src/utils/evolutionForecast.ts`
+**Dono de:** O nó "previsto" do grafo de evolução: sempre o nível seguinte ao atual (05/11/2026).
+**Exports:**
+- `function stageLevelIndex(stageId: string): number` — posição do nível (rookie 0 … ultra 4).
+- `function forecastNodeId(currentStageId: string, branchNodeIds: readonly string[]): string | null` — o nó do galho com nível = atual + 1.
+**Chamado por:** `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
 
 ### `src/utils/firstDay.ts`
 **Dono de:** Progresso dos três gestos do primeiro dia (esfregar, alimentar, concluir tarefa) do onboarding.
@@ -1138,9 +1638,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/groveLocal.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Avisos do arquivo:** falha de storage tem fallback em memória do módulo (marco e recibo não repetem na mesma execução).
 
+### `src/utils/pendingOpId.ts`
+**Dono de:** o `opId` PENDENTE dos gestos de Créditos (Antislop P6, 14/11/2026, REGISTRO §378). Guarda o id por conta + operação + item em memória e em `STORAGE_KEYS.PENDING_OP_IDS` (nunca no save; some no logout; vence em `PENDENTE_TTL_MS` = 24 h, a janela do `spend:`/`essbuy:` no servidor) até a resposta definitiva.
+**Exports:** `PENDENTE_TTL_MS`, `novoOpId`, `chaveDeOp(saveId, operacao, item)`, `opIdPendente(chave)`, `confirmarOpId(chave, opId)` (só limpa se ainda for o mesmo id), `respostaDefinitiva(status, reason?)`.
+**Chamado por:** `src/utils/entitlements.ts` (`abrirGesto`).
+**Régua:** `src/utils/pendingOpId.antislop.test.ts`.
+
 ### `src/utils/guildMission.ts`
 **Dono de:** a MISSÃO da guilda no aparelho (PR3): a ida do Solmon (`GuildMissionState`, `GUILD_MISSION_MINUTES` = 30), quando ele está fora da Home e quando é hora de voltar. A trava real (1 volta por dia do jogador) e o valor da rodada são do servidor (`guildRaidHit`).
-**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `isMissionDue`, `msUntilReturn`.
+**Exports:** `GUILD_MISSION_MINUTES`, `GuildMissionState`, `startGuildMission`, `normalizeGuildMission`, `isMissionAway`, `msUntilReturn`. ⚰️ `isMissionDue` (só o teste usava; removida no Antislop P6, 14/11/2026).
 **Chamado por:** `src/App.tsx` (`handleGuildMissionSend`, efeito da volta), `src/contexts/GameStateContext.tsx` (hidratação), `src/components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildMission.test.ts`, `src/components/CompanionHUD.missao.contract.test.ts`.
 
@@ -1211,6 +1717,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `GUILD_MAX_MEMBERS` (12) · `GUILD_PRESENCE_NOMINAL_MAX` (4) · `GUILD_NAME_MAX` (24) · `GUILD_CODE_LENGTH` (8) · `GUILD_CODE_FORBIDDEN` · `normalizeGuildCode(raw)` · `GROVE_STAGES`/`GroveStageId` (`clareira`, `ramagem`, `copa`, `mata`, `bosque-antigo`) · `GUILD_GESTURES`/`GuildGesture` (`aceno`, `luz`, `descanso`) · `TIDE_SIZES`/`TideSize` (`petala`, `corola`, `floracao`) · `RAID_EMBLEMS` (4) · `RAID_EMBLEMS_FLOOR` (2) · `RAID_TROPHY_EVERY` (4) · `RAID_TROPHY_ID` (`trophy-concha-mare`) · `GUILD_TIDE_WEEKS` (6) · `RAID_PHENOMENA`/`RaidPhenomenon` (`nevoa`, `mare`, `estatica`, `enxame`).
 **Chamado por:** `utils/guildCopy.ts`, `utils/groveStage.ts`, `utils/community.ts`, `components/guild/GuildSheet.tsx`.
 **Régua:** `src/utils/guildRules.parity.test.ts` (lê o fonte do servidor e reprova se divergir) e `src/utils/guildNoSave.contract.test.ts`.
+
+### `src/utils/categoryExamples.ts`
+**Dono de:** O exemplo do campo de nome por categoria (spec 3.2, 22/11/2026): `Exemplo: …` / `Example: …`, só como placeholder (campo vazio); a dica de sintaxe da captura rápida saiu.
+**Exports:**
+- `CATEGORY_EXAMPLES` — um exemplo PT/EN por `ActivityCategory` (10 categorias).
+- `function categoryExample(category, isPt): string` — com prefixo; categoria desconhecida cai no exemplo de `corpo`.
+**Chamado por:** `src/components/CreateModal.tsx`
+**Régua:** `categoryExamples.test.ts`
 
 ### `src/utils/habitCreate.ts`
 **Dono de:** O teto de hábitos ativos aplicado à CRIAÇÃO em lote, reconferido sobre o `prev` (achado X-6).
@@ -1308,6 +1822,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/home/FeedBubble.tsx`
 **Régua:** `src/components/home/FeedBubble.render.test.tsx` (com `eatStages` simulado).
 
+### `src/utils/potionArt.ts`
+**Dono de:** URL da arte da poção de Elemento (09/11/2026): `assets/soulmon/items/pocao-<id>.png` (128², alfa real) para os 20 elementos BASE.
+**Exports:**
+- `potionArt(elementId)` — URL ou `undefined` (composto sem poção própria: quem chama cai no ícone do elemento).
+**Chamado por:** `src/components/ElementPotionSheet.tsx`, `src/components/VescaPotionOffer.tsx` (arte instalada em #671).
+**Régua:** `src/utils/potionArt.test.ts`.
+
 ### `src/utils/itemArt.ts`
 **Dono de:** URL da arte de um item da pastinha, indexada pelo EMOJI (a chave real do inventário).
 **Exports:**
@@ -1316,6 +1837,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma (`ls src/utils/itemArt*.test.ts` vazio).
 **Avisos do arquivo:**
 - ⚠️ A CHAVE É O EMOJI, deliberado: `foodInventory` indexa por emoji (save antigo, widget Android e desktop leem assim) — trocar a chave quebraria save.
+
+### `src/utils/potionArt.ts`
+**Dono de:** URL da arte da poção de elemento (`items/pocao-<id>.png`, 20 bases), 09/11/2026.
+**Exports:** `potionArt(elementId)` — URL ou `undefined` (quem chama cai no ícone do elemento).
+**Chamado por:** `src/utils/itemArt.ts`, `src/components/VescaPotionOffer.tsx`, `src/components/ElementPotionSheet.tsx`.
+**Régua:** `src/utils/potionArt.test.ts`.
 
 ### `src/utils/librarySeen.ts`
 **Dono de:** a lista local de ids de jogadores já vistos na Biblioteca (`STORAGE_KEYS.LIBRARY_SEEN`), 28/10/2026. A Biblioteca (ao abrir a ficha) e o Torneio (ao enfrentar) marcam pelo MESMO caminho; o simulado é tratado como jogador real (o cliente nunca recebe a flag `simulated`).
@@ -1365,6 +1892,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `pushBackLayer(close)` — registra e devolve a função que tira da pilha; `closeTopBackLayer()` — fecha a do topo, `true` se havia uma; `hasBackLayer()`; `useBackLayer(active, close)` — hook: enquanto `active`, o voltar chama `close`.
 **Chamado por:** `src/App.tsx` e `src/utils/androidBack.ts` (`closeTopBackLayer`), `src/components/nav/AreaSheet.tsx` e `src/components/nav/AreaView.tsx` (`useBackLayer`).
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
+
+### `src/utils/modalDepth.ts`
+**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele. "Por cima" (hotfix §341, 13/11/2026) = não contém o botão E vem DEPOIS do modal do próprio botão na ordem do documento; o modal de BAIXO que abriu um portal (ex.: a `AreaSheet` do Salão sob a folha do Bosque, `GroveFolha`) não conta — antes contava e o único voltar da folha ficava `disabled`, prendendo o jogador.
+**Exports:** `modalsAbove(el?)`, `modalDepth()`, `useBackDimmed(ref)` — hook.
+**Chamado por:** `src/components/nav/AreaTopBar.tsx` e `src/components/ui/BackCircleButton.tsx`.
+**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento) e `src/components/guild/GroveFolha.voltar.render.test.tsx` (portal sobre a folha do Salão: voltar habilitado, fecha por toque e pelo voltar do sistema; o de baixo segue esmaecido).
 
 ### `src/utils/playAreaLots.ts`
 
@@ -1484,6 +2017,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/starterElements.ts`
 **Dono de:** o elemento base dos 5 iniciais (REGISTRO §75) — dados leves.
+**Sincronização 09/11/2026:** `PetElementState` (entrada: `demoCharacterId`, `potionElement`, `evolutionStage`, `elementoJornada`, `soulmonMeta`…) e `petBaseOf(state)` — a base nº 1 gravada para o estágio, que decide a vantagem elemental (§232); `undefined` quando o elemento não vem do registro (vale a base dominante de sempre).
 **Exports:** `STARTER_ELEMENT` (`industrial`→terra, `nascente`→som, `alento`→ar, `vida`→vida, `meteoro`→fogo), `STARTER_ALIGNMENT` (Poder/Harmonia/Benevolência), `starterElementOf(id)`, `petElementOf(state)` (o elemento de combate do pet: o do inicial, senão `soulmonMeta.dominantElement`; usado pelo `App` em Arena/Masmorra/Pesadelo/Torneio/aura).
 
 ### `src/utils/spriteElement.ts`
@@ -1517,6 +2051,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/components/CreditsModal.tsx`, `src/components/NewReadingModal.tsx`, `src/components/SoulmonOnboarding.batismo.render.test.tsx`, `src/components/SoulmonOnboarding.rascunho.render.test.tsx`, `src/components/SoulmonOnboarding.tsx`, `src/components/UnlockAccountModal.tsx`, `src/utils/habitCreate.ts`, `src/utils/priceLabel.ts`
 **Régua:** `monetization.fronteira.test.ts`
 **Regra de negócio:** O portão único (`canCreateActivity`) decide se uma atividade nova pode existir, por tier e teto do estágio. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Preço velado (Onboarding Velado):** `FULL_UNLOCK_PRICE_LABEL_VELADO` (`R$ 19,90`) e `FULL_UNLOCK_PRICE_LABEL_USD_VELADO` (`US$ 3.99`); com `ONBOARDING_VELADO` ligado, `FULL_UNLOCK_PRICE_LABEL` e `FULL_UNLOCK_PRICE_LABEL_USD` valem esses (senão `R$ 29,90` / `US$ 6.99`). Teste do preço do tester: `veladoTester.ts`.
 
 ### `src/utils/moodArt.ts`
 **Dono de:** a fronteira de troca da ARTE do humor (C6 da navegação do dono, 01/10/2026): id estável por valor (`rough`/`low`/`okay`/`good`/`great`) → URL da arte. Vazio até a frente de arte entregar; id sem arte cai no emoji de `mood.ts`.
@@ -1576,6 +2111,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/components/NightmareBattle.tsx`, `src/contexts/GameStateContext.hydrate.fuzz.test.tsx`, `src/contexts/GameStateContext.tsx`
 **Régua:** `nightmares.test.ts`
 **Regra de negócio:** Combate a pesadelos: 1 por noite registrada, cura no máximo meio coração. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Assinatura da noite:** `nightmareNightSignature(rest, key)` — string estável do que `nightmaresFor` lê da noite `key` (`key|onTime|sleptAt|wokeAt`, ou `key|-` sem noite); serve de dependência para memoizar a oferta (muda quando a noite chega/muda, não durante a luta).
 
 ### `src/utils/nightmareWake.ts`
 **Dono de:** QUANDO o pesadelo (ou o sonho bom) abre: o portão do acordar, a qualquer hora (REGISTRO §149). SE há pesadelo continua em `nightmares.ts`.
@@ -1589,6 +2125,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`
 **Régua:** `nightmareWake.test.ts`
 **Regra de negócio:** O pesadelo é a primeira coisa do dia, ao acordar o Soulmon, a qualquer hora. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/npcMissions.ts` (12/11/2026 — REGISTRO §314)
+**Dono de:** a tabela das MISSÕES DOS NPCs (`NPC_MISSIONS`, 26 entradas `n-*` — 25 no rodízio + a fixa `n-trilho`: NPC `area:lote`/`papus`/`nuri`, evento, alvo, prédio, material, nome e descrição PT/EN) e `NPCS_SEM_MISSAO` (quem não tem, com o motivo). A ordem é a do rodízio.
+**Exports:** `NpcMissionDef` (type; `fixa?`), `NPC_MISSIONS`, `NPC_MISSIONS_RODIZIO` (sem a fixa), `NPCS_POR_SEMANA` (2), `NPC_MISSION_IDS`, `NPCS_SEM_MISSAO`.
+**Chamado por:** `src/utils/dailyMissions.ts` (entram no catálogo; `npcsOfWeek`/`trilhoMission`/`npcMissionsOfDay` escolhem as de hoje).
+**Régua:** `src/utils/npcMissions.test.ts`, `functions/api/dailyMissions.parity.test.js`.
 
 ### `src/utils/notificationPermission.ts`
 **Dono de:** a decisão (PURA) de PEDIR a permissão de notificação (07/10/2026): cruza plataforma (APK × web), estado da permissão e gatilho (`first-open` × `toggle`) e devolve a ação — pedir o modal nativo, só registrar, orientar às configurações do sistema ou nada. Também lê/pede a permissão da plataforma (Capacitor `PushNotifications` no APK, `Notification` na web, que exige gesto) e abre as configurações de notificação do app. Quem pediu e foi negado nunca é cobrado de novo sozinho.
@@ -1700,6 +2242,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `oracle.test.ts`, `entradaEnxuta.contract.test.ts`
 **Regra de negócio:** código do caminho crítico importa DAQUI, nunca de `oracle.ts` — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/oracle/nome.ts`
+**Dono de:** `normalizeName` sozinho (remove acentos e tudo que não for A-Z), para que o caminho de entrada (`soulProfile/identity.ts`) não arraste o `oracle.ts` inteiro para o chunk de entrada. Criado em 05/11/2026.
+**Exports:**
+- `normalizeName(name)` — nome só com A–Z maiúsculo; `oracle.ts` reexporta.
+**Chamado por:** `src/utils/soulProfile/identity.ts`, `src/utils/oracle.ts` (reexporta).
+**Régua:** `entradaEnxuta.contract.test.ts`, `oracle.test.ts`
+**Regra de negócio:** código do caminho crítico importa DAQUI, nunca de `oracle.ts` — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/oracle/gerar.ts`
 **Dono de:** a entrada de PRODUÇÃO da geração do Oráculo.
 **Exports:**
@@ -1715,6 +2265,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/utils/oracle/gerar.ts` (por `import()`), `src/test/oracleSync.ts`, `scripts/npc-oraculo-prompts.mjs`.
 **Régua:** `oracle.test.ts`, `oracle.soulProfile.test.ts`, `spritePrompt.dono.contract.test.ts`, `entradaEnxuta.contract.test.ts`
 **Regra de negócio:** é o dono único do prompt de sprite e da cláusula anti-franquia; nunca importar estaticamente do chunk de entrada. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Forma BB:** `BB_LEVEL_BLOCK` — o bloco de prompt do estágio Baby ("a tiny newborn baby creature, very round and chubby…"), usado na geração da forma BB do Onboarding Velado.
 
 ### `src/utils/rebirthGate.ts`
 **Dono de:** SÓ a regra de elegibilidade do Renascimento, sem a ficha do class-system (que `rebirth.ts` puxa, ~28 KB).
@@ -1725,12 +2276,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `rebirth.test.ts`, `entradaEnxuta.contract.test.ts`
 **Regra de negócio:** o resto do Renascimento (`applyRebirth`, opções) carrega por `import()` ao renascer. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/catalogHabitMigrate.ts`
+**Dono de:** a migração do load (`hydrateSave`) que converte hábito do catálogo na agenda padrão de algum nível (3x/semana, dias úteis…) para todo dia (`migrateCatalogHabitDaily`, idempotente; não toca agenda editada nem atividade sem `catalogId`) e de `DAILY_SCHEDULE`.
+**Régua:** `CreateModal.habito.render.test.tsx`
+
 ### `src/utils/catalogChoice.ts`
 **Dono de:** a construção das `Activity` a partir dos itens do catálogo escolhidos.
 **Exports:**
-- `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda padrão do nível 1, `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
+- `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda TODO DIA (§295; antes a do nível 1, que mandava o item para as Tarefas), `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
+- `catalogHabitCapNotice(count, cap, isPt, isDemoBoundary?)` — §376: texto do aviso de cota de hábitos cheia no catálogo (ou `null` se ainda cabe). Não muda o teto.
+- `withoutExisting(items, existing)` — tira da escolha o que já está na lista (por `catalogId`).
 **Chamado por:** `src/App.tsx`, `src/components/catalog/CatalogOnboardingFlow.tsx`.
-**Régua:** `CatalogOnboardingFlow.render.test.tsx`
+**Régua:** `CatalogOnboardingFlow.render.test.tsx`, `CatalogBrowserModal.teto.render.test.tsx`
 **Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/oracle/formas.ts`
@@ -1815,6 +2372,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `function soulmonDisplayName( meta?: { baseName?: string; petName?: string } | null): string` — O nome que o Soulmon MOSTRA. O oráculo sempre devolve um `baseName` — ele é a criatura, não o apelido. Depois de gerado, a pessoa pode batizar o bicho (passo de cadastro do onboarding).
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`
 **Régua:** `petName.test.ts`
+**Nome nas notificações:** `notificationPetName(meta, stageName)` — o apelido atual (`soulmonDisplayName`), e o nome do estágio só quando não há nenhum (antes o App passava o nome da ESPÉCIE, então renomear nunca chegava ao texto agendado nem ao registro de push).
 
 ### `src/utils/petNeeds.ts`
 **Dono de:** Brincar, cansaço e 'o que o pet gostaria agora' — brincar é oferta, nunca obrigação.
@@ -1849,6 +2407,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/petStage.ts`
 **Dono de:** Geometria do palco do pet: linha do chão, espaços de decoração e caixa de renderização do sprite.
+**Sincronização 09/11/2026:** `DECOR_RENDER_SCALE` e `decorRenderBox(slot)` (04/11/2026, dono: "as decorações estão todas minúsculas"): a caixa de `DECOR_SLOTS` segue sendo o contrato de ARTE; o palco desenha a peça `DECOR_RENDER_SCALE[slot]` vezes maior (uniforme, `image-rendering: pixelated`); espaço de berço = 1×.
 **Exports:**
 - `GROUND_Y` — Linha do chão, em % da altura do palco. Os pés do pet caem exatamente aqui.
 - `STAGE_HEIGHT` — Altura do palco em px (CompanionHUD — área do pet).
@@ -1929,6 +2488,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ Resíduo do achado X-4 (commit 9e9f679f): o conserto anterior tornou `rubHealRecordFor` ordem-consciente, mas não resolve sozinho o caso de aparelhos em fusos diferentes — daí este módulo.
 **Regra de negócio:** O dia do jogador usa fuso FIXO gravado no save, nunca o do aparelho. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/playerSearch.ts` (13/11/2026, busca de jogadores — REGISTRO §321)
+**Dono de:** a BUSCA DE JOGADORES POR PREFIXO do lado do cliente — o convite do clã (`guild/GuildInviteSheet`) e o "Convidar" da aba Amigos (`LibraryPage`). Casa o COMEÇO do nome, em ordem, sem acento e sem caixa ("JOA" acha "João"). A busca de verdade é do servidor (`functions/api/community.js` › `action=playerSearch`, índice `nickf:` de `_profile.js`).
+**Exports:**
+- `PLAYER_SEARCH_MIN` (2), `PLAYER_SEARCH_MAX` (10), `PLAYER_SEARCH_DEBOUNCE_MS` (200) — espelhos das constantes do servidor (o mínimo também evita gastar chamada que o servidor recusaria).
+- `foldPlayerName(raw)` — nome → forma de busca (NFKD sem marcas, NFKC, sem controle, espaço colapsado, minúsculo). ESPELHO de `_profile.js` › `foldNome`, com teste de paridade.
+- `isSearchableQuery(q)` / `nameStartsWith(name, q)` — o mínimo (contado depois de dobrar) e o casamento por prefixo.
+- `PlayerSearchHit` (`id` = pid, `name`, `guildName?`, `stage`, `spriteUrl?`, `artLine?`) e `sanitizePlayerSearch(raw)` — a resposta vira lista segura: campo a mais (e-mail, saveId, aparelho…) não passa, e corta em 10.
+- `searchPlayers(saveId, q, signal?)` — o cliente HTTP (`GET /api/community?action=playerSearch`); termo curto devolve `[]` sem chamar; `PlayerSearchError` com `kind` `offline` | `rate` | `login` | `server`.
+**Chamado por:** `src/hooks/usePlayerSearch.ts`, `src/components/PlayerSearch.tsx`, `src/components/guild/GuildInviteSheet.tsx`, `src/components/LibraryPage.tsx`.
+**Régua:** `src/utils/playerSearch.test.ts` (paridade da dobra com o servidor, mínimo de 2, prefixo sem acento/caixa, saneamento sem campo privado e teto de 10); o servidor: `functions/api/community.playerSearch.test.js`.
 
 ### `src/utils/poopDrain.ts`
 **Dono de:** O dreno de coração por cocô não limpo — teto diário, pausa dormindo, banho zera.
@@ -2161,6 +2731,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/shop.ts`
 **Dono de:** O catálogo da loja: itens comuns, especiais e de torneio — `ALL_SHOP_ITEMS` é a fonte única para resolver um item por id.
+**Sincronização 09/11/2026:** chips de REDUÇÃO (dono 04/11/2026): `REDUCE_CHIP_SUFFIX` (`➖`), `REDUCE_CHIP_BOOST` (3), `REDUCE_CHIP_PRICE` (360), `REDUCE_CHIP_EMOJI` (por `Attr`), `isReduceChipKey(key)` — espelho dos comuns: cada um TIRA 3 pontos de UM tipo (clamp em 0), mesmo preço, limite PRÓPRIO por estágio (`REDUCE_CHIPS_PER_STAGE` em `specialItemUse.ts`). A chave no inventário = emoji do chip comum + sufixo.
 **Exports:**
 - `ShopItemKind` (type) — `'chip' | 'heart' | 'bg' | 'furniture' | 'emblem'`
 - `ShopCurrency` (type) — Moeda que compra o item. Ausente = Bits (o padrão da loja).
@@ -2182,6 +2753,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/components/home/Mochila.tsx`, `src/components/ItemsWindow.tsx`, `src/components/mercado/MercadoSheets.tsx`, `src/components/mercado/ShopShelf.tsx`, `src/components/PetStageDecor.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/mercadoCatalog.ts`, `src/utils/missions.ts`, `src/utils/shopBuy.ts`, `src/utils/specialItemUse.ts`
 **Régua:** `shopBuy.test.ts`
 **Regra de negócio:** O catálogo da loja — Bits compram tudo, exceto a aba Torneio (Emblemas), o Glitchtama e a Concha da Maré (nunca vendidos). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Faísca e Zerador (30–31/10/2026):** `SPARK_ITEM_EMOJI` (✨ Faísca de Alma, `kind: 'spark'`, usada nos Arquivos) e `SPARK_HOME_ENERGY` (5 de energia da HOME; teto = máximo do estágio). `ShopItem.kind` ganhou `'spark' | 'potion' | 'reset'`; o catálogo inclui o 🔄 Zerador de Pontos (dono: `betaResetGrant.ts`) e as Poções de Elemento (`...POTION_SPECIAL_ITEMS`, dono: `elementPotion.ts`).
 
 ### `src/utils/shopBuy.ts`
 **Dono de:** A COMPRA na loja aplicada ao `prev`, com recusa reconferida sobre o estado real (achado X-6).
@@ -2201,7 +2773,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** XP e level do Soulmon no combate v3 (PR2), DERIVADOS de `evolutionStage` + `perfectDays` (nada persistido; `fuzz2` segue em 103). XP por dia completo (66) + esforço contra a meta (34), nunca contagem (regra #16); 1 level por 100 XP; `soulLevel = min(levelFor(soulXP), levelCapFor(stage))`; degenerar baixa o level e recuperar devolve o mesmo; o dia perfeito de bônus (o 🌀) soma em `perfectDays` e portanto dá ponto. O texto do level que desceu é neutro (`soulLevelLine`, "Lv N").
 **Exports:**
 - `XP_PER_LEVEL`, `XP_COMPLETE_DAY_SHARE`, `XP_COMPLETE_DAY`, `XP_EFFORT_MAX`, `XP_FULL_DAY` (const); `DayFacts`, `SoulXPState` (interface).
-- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)`.
+- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)` (aplica o piso `evoStatFloor`, REGISTRO §229), `nextStatFloor(prev, nextStage)` (o piso que o `handleEvolve` grava: maior de cada atributo de antes, para o estágio de destino; `undefined` se o destino não sobe). `SoulXPState.evoStatFloor` entra cru e passa por `sanitizeStatFloor` (`combate/level.ts`).
 - `soulLevelLabel(level)`, `soulLevelLine(level, dropped, language)`.
 **Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
 **Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.
@@ -2804,6 +3376,7 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/sonsAssets.ts`
 ⚰️ 20/10/2026 (§136): removido `CAMADAS_DA_TRILHA`, `CamadaDaTrilha`, `TRILHA_BASE` e os dois arquivos `trilha-base`/`trilha-ritmo`; restam os 3 SFX. O texto abaixo que os descreve é histórico.
 **Dono de:** ⚠️ (19/10/2026, `SOM.md` §12) também o manifesto das músicas em streaming: `TEMA_DO_JOGO` ("Stone Hall Decay", arquivo novo) e `MUSICAS_DE_COMBATE = { combate, pesadelo }` ("Stone Hall Combat" e "Stone Hall Nightmare"; hash, bytes, formatos, nome). Saíram `dungeon`/`pvp` e a razão da Arena (`RAZAO_DA_ARENA`). O total de 258 248 bytes abaixo não conta as músicas. O manifesto dos 5 assets de áudio gerados por IA (S16, 21/09/2026: os 3 SFX `evolve`, `degenerate`, `task-complete` — o dono escolheu "o gerado nos 3", `73be1a2f` — e as 2 camadas da trilha, `trilha-base` e `trilha-ritmo`, `8a930657`) e a carga preguiçosa deles — `fetch` + `decodeAudioData` só depois do primeiro `play*` (S6: zero no bundle inicial), com `recortarSilencio` tirando o pré-rolo que o MediaRecorder do Chrome grava na cabeça. Total em disco: **258 248 bytes** (`ls -l public/sounds/`, 21/09/2026). Não declara alvo de loudness: o buffer toca a ganho 1 porque o mestre já saiu no alvo da categoria (footgun 9).
+**Sincronização 09/11/2026:** duas faixas novas do Refúgio, geradas pelo dono no Suno (04/11/2026, `docs/SOM.md` §17): `respiracao` ("Respiração subaquática", 237,53 s) e `chama` ("Concentração (Trataka)", 224,93 s), ambas com `fadeInS` 3 e `pausaEntreVoltasS` 8, em `/sounds/tema-respiracao.*` e `/sounds/tema-chama.*` (webm/opus + m4a, com `sha256` e `bytes`).
 **Exports:**
 - `interface AssetDeSom` — `url`, `sha256`, `bytes`, `categoria`, `duracaoS`, `origem`, `promptRef`, `geradoEm`.
 - `const ASSETS_DE_SOM` — os 3 SFX, por nome de `play*`: `playEvolve` (`/sounds/evolve.webm`, 7641 bytes, `duracaoS` 1.2, `marco`), `playDegenerate` (`/sounds/degenerate.webm`, 4498, 0.7, `degeneracao`), `playTaskComplete` (`/sounds/task-complete.webm`, 1570, 0.2, `conclusao`). ⚠️ `evolve.webm` saiu em `c703c8bc` ("Coloca o A" lido literalmente) e **voltou** em `73be1a2f` ("quero o gerado nos 3") — o estado vigente é o de três.
@@ -2860,6 +3433,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`, `src/utils/trilha.ts` (`isMuted`)
 **Régua:** `sounds.contract.test.ts`, `sounds.visorTune.test.ts`
 
+### `src/utils/keepAwake.ts`
+
+Tela acordada na jornada do Foco (REGISTRO §304). `useKeepAwake(active): boolean` pede `navigator.wakeLock.request('screen')` (ou o plugin Capacitor `KeepAwake`, se registrado), reaquisita no `visibilitychange`, solta ao desativar/desmontar e engole rejeição; devolve se há suporte. `keepAwakeSupported()`. Consumidor: `components/play/JourneyScreen.tsx`. **Régua:** `FocusTaskDock.render.test.tsx`.
+
 ### `src/utils/focoTimer.ts`
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
 **Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).
@@ -2867,20 +3444,31 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/focusOrigin.ts`
 **Dono de:** a ORIGEM do que a Focus Workshop lista (01/11/2026): `focusTasksFor` (tarefas abertas + concluídas hoje + hábitos do dia como `habit:<id>`, `kind: 'habit'`) e `focusCheckTarget` (o ✓ da Oficina conclui a tarefa, o hábito simples ou todas as etapas abertas do hábito com etapas, via `handleCompleteSteps` no App). Puro. **Régua:** `components/play/OficinaOrigem.sync.render.test.tsx`.
 
+### `src/utils/iceScore.ts`
+**Dono de:** a regra pura das **Prioridades** (modelo ICE adaptado, 12/11/2026, REGISTRO §313). `Ice { tempo, esforco, recompensa, urgencia }`, cada nota um inteiro de 1 a 5 (Tempo 1 rápido/5 demorado; Esforço 1 fácil/5 pesado; Recompensa 1 pouca/5 muita; Urgência 1 sem pressa/5 vence logo). **`iceScore(i) = (recompensa × urgência) ÷ (esforço × tempo)`**, decimal, de 0,04 a 25 (notas fora da faixa são presas em 1..5; nunca NaN). `sanitizeIce(raw)`: lixo/incompleto/fora de 1..5 → `undefined` (tarefa "não classificada"; é o que `hydrateTask` e `focusTasksFor` usam). `sortByIce(items)`: classificadas primeiro, maior pontuação primeiro; empate estável = maior urgência → maior recompensa → menor esforço → ordem de entrada (criação); as não classificadas ficam no FIM na ordem de entrada; não muta a entrada. `formatIceScore(score, isPt)`: vírgula em PT, ponto em EN. A pontuação NÃO é gravada no save (só as 4 notas em `Task.ice`). **Régua:** `iceScore.test.ts`.
+
 ### `src/utils/focoSessao.ts`
-**Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setQuadrant`/`setFrog`, `matrixOrder`, `buildPlan` (a lista organizada: dois minutos → sapo → quadrantes; "deixar de lado" sai), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
+**Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setFrog`, `iceOrder` (tarefas abertas classificadas por pontuação ICE; §313), `buildPlan` (a lista organizada: dois minutos → sapo → pontuação ICE; sem nota não entra sozinha; o item leva `score`). ⚰️ `setQuadrant`/`matrixOrder` e as etiquetas Fazer/Agendar/Delegar/Deixar de lado saíram em 12/11/2026; `SessionDraft.matrix` é LEGADO (lido, ignorado, nunca apagado), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
+**Hábitos no plano e botão que explica:** `PlanTask.kind?: 'habit'` (hábito de hoje que entrou na escolha; id `habit:<id>`, montado no App) e `PlanTag` ganhou `'habit'` (a leitura tolerante do plano aceita a tag). `missingToSave(d)` devolve o que falta para salvar (`'name'` | `'environment'` | `null`); `canSave` agora é `missingToSave(d) === null` (a folha diz o que falta e leva ao campo).
 
 ### `src/utils/focusExpedition.ts`
 **Dono de:** (+ `rollPlanLoot`/`FOCUS_PLAN_DAILY_CAP` = 2: concluir uma sessão rende 1 item, recibo `plan:<id>`, dentro do teto de 8) seis ambientes Pomodoro, quatro materiais possíveis por ambiente, sorteio de comida, chance progressiva do item extra e ledger diário (teto combinado de oito itens). `applyFocusLoot` é idempotente por evento, soma materiais ao estoque de `buildingQuests` e comidas ao inventário normal; `sanitizeFocusLoot` limita a forma do campo persistido. A paridade e o clamp do servidor ficam em `functions/api/_focusLoot.js`.
 
 ### `src/utils/dayWake.ts` (19/10/2026, REGISTRO §110)
 **Dono de:** ACORDAR O SOULMON (D-66/D-67), a regra PURA: `dayWakePending({ active, today, wokeDay, bornToday })` (1ª abertura de CADA dia, para todos: sem a marca de hoje o pet aparece dormindo na Home), `WAKE_BLOCKED_ACTIONS` (a lista EXATA do que o aviso segura: `WAKE_BLOCKED_PET` = alimentar, banho, carinho, brincar; `WAKE_BLOCKED_GAMES` = Masmorra + minijogos do Salão e do Ateliê da Mente; o Refúgio não), `WAKE_NEVER_BLOCKED` (concluir tarefa/hábito, navegar, criar…), `isBlockedUntilWake(action, pending)`, `didCompleteToday(save, now)` + `wakesByCompletion(pending, concluiuHoje)` (concluir QUALQUER tarefa/hábito acorda sozinho — lido do save, então vale também para widget e overlay de desktop) e `wakeWarning(isPt)` (aviso curto + atalho "Acordar", sem culpa/medo/cobrança). É estado de APRESENTAÇÃO: não toca `isSleeping` (dreno, cocô, janela de descanso), nem o save. A marca mora no aparelho (`STORAGE_KEYS.DAY_WOKE`).
-**Chamado por:** `src/App.tsx` (HUD desenha dormindo, `holdDayStart` da fila, `guardWake` nos 4 handlers de pet, `wakeGuard` do `AreaView`).
+**Chamado por:** `src/App.tsx` (HUD desenha dormindo, `holdDayStart` da fila, `guardWake` nos 4 handlers de pet). Desde §329 (13/11/2026) os JOGOS não usam mais o aviso curto: a pergunta "Quer acordá-lo?" (`utils/wakeToEnter.ts`) cobre o "Acordar" do dia e o sono real, e reusa `WAKE_BLOCKED_GAMES` como lista.
 **Régua:** `src/utils/dayWake.test.ts` (lista exata, os 3 caminhos de conclusão, K-20: dreno/cocô/noite sem registro intocados).
 **Regra de negócio:** `docs/REGISTRO-DE-DECISOES.md` §110. Nada cobra: acordar não custa nem paga; não acordar não pune.
 
+### `src/utils/wakeToEnter.ts` (13/11/2026, REGISTRO §329)
+**Dono de:** SOULMON DORMINDO NÃO VAI A ATIVIDADE, a regra PURA. "Dormindo" = `isAsleep({ isSleeping, dayWakePending })` (o sono real OU o "Acordar" do dia, o que a Home desenha). `SLEEP_BLOCKED_LOTS` (prédios cuja ENTRADA já é a atividade e perguntam na porta: só `exploracao.dungeon`), `SLEEP_ACTION_LOTS` (emenda do dono, 13/11: folhas com parte de leitura que entram livres e perguntam no botão de lutar/agir, checado no toque: `arena.duelo`, `arena.torneio`, `arena.guerra`, `exploracao.fenda`, `exploracao.passeio`, `forja.oficina`, `hall.feira`, `hall.grove`), `SLEEP_BLOCKED_GAMES` (= `WAKE_BLOCKED_GAMES` de `dayWake.ts`, sem cópia: Masmorra + minijogos do Salão e do Ateliê), `SLEEP_BLOCKED_ACTIONS` (`treino` com amigo, `missao` da guilda), `SLEEP_NEVER_BLOCKED` (Home, Mapa, lojas, Laboratório inteiro, Biblioteca, Forja de equipar/Caderno/Refúgio, folhas do Salão/Ateliê/Clã, Refúgio, tarefa/hábito, a Vesca e a Hexsmith; todo prédio de `BUILDING_GATES` está em EXATAMENTE uma das três listas de prédio). `needsWakeToEnter(entry, sinais)`, `entryNeedsSoulmon(entry)` (porta OU ação), `lotEntryAsks(entry)` (só a porta), `sleepBlocksLot(area, lote, sinais)` (tocar o prédio pergunta?) e `wakePromptCopy(isPt, realSleep)` (a pergunta do dono; a linha do efeito só no sono real: energia recarrega mais rápido dormindo e a borra não aparece; acordado, volta ao ritmo de sempre).
+**Chamado por:** `src/components/WakeToEnter.tsx` (provedor + pergunta), `src/components/nav/AreaView.tsx` (`lotEntryAsks` no `gated` e na folha inicial).
+**Régua:** `src/utils/wakeToEnter.test.ts`, `src/components/WakeToEnter.render.test.tsx`.
+**Regra de negócio:** `docs/REGISTRO-DE-DECISOES.md` §329. Não cria custo nem penalidade; só diz o que o sono real já faz.
+
 ### `src/utils/dayPlan.ts` (15/10/2026, REGISTRO §66)
-**Dono de:** a regra PURA de "reafirmar o dia": `DayPlan { day, offered[], picked[], confirmed }` (um objeto no save, `GameState.dayPlan`), `sanitizeDayPlan` (cliente; o servidor espelha em `functions/api/_dayPlan.js`, paridade em `functions/api/dayPlan.parity.test.js`), `dayPlanCandidates` (o que cabe perguntar: hábitos devidos hoje, agendadas que caem hoje e tarefas abertas de hoje, sem duplicar e sem o já feito), `dayPlanView`/`isHiddenByPlan` (esconde `offered − picked`; plano de outro dia esconde tudo de hoje), `hiddenOnDay` (a virada não julga o não marcado), `needsDayPlan`, `dayPlanInvite`, `migrateDayPlan` (save sem plano = hoje já reafirmado), `showDayPlan` ("visto" ao mostrar) e `confirmDayPlan`. Sem React, sem storage, sem `Date` implícito.
+**Dono de:** a regra PURA de "reafirmar o dia": `DayPlan { day, offered[], picked[], confirmed }` (um objeto no save, `GameState.dayPlan`), `sanitizeDayPlan` (cliente; o servidor espelha em `functions/api/_dayPlan.js`, paridade em `functions/api/dayPlan.parity.test.js`), `dayPlanCandidates` (o que cabe perguntar: hábitos devidos hoje, agendadas que caem hoje e tarefas abertas de hoje, sem duplicar e sem o já feito), `dayPlanView`/`isHiddenByPlan` (esconde `offered − picked`; plano de outro dia esconde tudo de hoje, menos o nascido hoje — `bornTodayIds`, §371), `hiddenOnDay` (a virada não julga o não marcado), `needsDayPlan`, `dayPlanInvite`, `migrateDayPlan` (save sem plano = hoje já reafirmado), `showDayPlan` ("visto" ao mostrar; o nascido hoje entra já marcado, §371) e `confirmDayPlan`. Sem React, sem storage, sem `Date` implícito.
+**Sincronização 09/11/2026:** "Comprometer-me com uma tarefa": `committedIds(plan, todayIso)` (ids comprometidos HOJE; plano de outro dia = ninguém), `uncommittedCandidates(plan, todayIso, candidates)` (só o que ainda NÃO foi comprometido hoje) e `addToDayPlan(prev, todayIso, ids)` (ACRESCENTA ao plano de hoje, unindo `picked`; nunca remove um já comprometido — `confirmDayPlan` substituiria).
 **Chamado por:** `src/App.tsx`, `src/components/DailyRituals.tsx`, `src/components/DayGoalsModal.tsx`, `src/utils/dailyReset.ts`, `src/contexts/GameStateContext.tsx`.
 **Régua:** `src/utils/dayPlan.test.ts`, `src/utils/dailyReset.dayPlan.test.ts`.
 
@@ -2891,7 +3479,7 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** a ponte da folha com o aparelho: reexporta `cadernoSave` e `sinaisDeSofrimento` (= `needsBridge` do chat, local, só para a linha de apoio). Separado para o `App` não puxar o léxico de crise ao chunk de entrada.
 
 ### `src/data/focoTecnicas.ts`
-**Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Eisenhower, o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).
+**Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Prioridades (ICE; era Eisenhower), o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).
 
 ### `src/utils/travessias.ts`
 **Dono de:** o Passeio e as Travessias (30/09/2026, `REGISTRO-DE-DECISOES.md` §5.6) — funções PURAS (sem React, sem `localStorage`, `dayKey` por parâmetro): regiões abertas e em névoa, a oferta (os 3 desafios do catálogo, sem sorteio), escolher/trocar entre os mesmos 3, "deixar pra lá", "Fiz" (vira `pending`, sem data, nunca expira), a noite que abre no máximo `REGIONS_OPENED_PER_DAY` região (`settleNight`, idempotente — mesma referência na 2ª chamada), o destino e o interruptor, e o achado da noite FUNDIDO (`passeioFindOfDay`: já guardado → ele; região que abriu → chegada; destino aberto ≠ casa → com `PASSEIO_REGION_FIND_CHANCE` um achado exclusivo não coletado; senão, e sempre em casa, exatamente `adventureOfDay`). Nenhum sistema do núcleo importa este módulo (contrato).
@@ -2943,8 +3531,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
 ### `src/utils/elementPotion.ts`
+**Sincronização 12/11/2026 (§311):** `PotionFilter`/`POTION_FILTERS` (all, can, enough, base, composite), `potionRecipe(id, essences, inventory)` (receita com TEM/PRECISA por essência e por poção-base; `canCraft`) e `potionListFor(essences, inventory, bases, filter, unlocked)` (lista completa, criáveis primeiro) — a lista da Vesca (`ElementPotionSheet`).
+**Sincronização 09/11/2026:** `POTION_MAX_COMPONENTS` (4: curados têm até 4 bases), `potionIngredients(elementId)` (a poção de CADA base componente, ids únicos; base = nada), `readVescaOffered()`/`writeVescaOffered(ids)` (elementos que a Vesca já ofereceu, por aparelho, para não repetir o modal) e o filtro por bases (E) — `selectedBases(selected)`, `compositionHasBases(comp, selected)`, `elementMatchesBases(id, selected)`: a composição contém TODAS as bases escolhidas; sem escolha passa tudo; composição desconhecida só passa sem escolha.
 
-Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
+Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §250), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
 
 ### `src/utils/betaResetGrant.ts`
 
@@ -2968,6 +3558,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** `taskSteps.rule.test.ts`, `subitens.render.test.tsx`
 ### `src/utils/musica.ts`
 **Dono de:** O DIRETOR DE MÚSICA (11/10/2026, `docs/SOM.md` §10): a tabela superfície → faixa e o apply com crossfade. ⚠️ (19/10/2026, `SOM.md` §12) a tabela agora é: casa = tema "Stone Hall Decay"; masmorra, arena, torneio e duelo = "Stone Hall Combat" (`'combate'`); pesadelo = "Stone Hall Nightmare" (`'pesadelo'`). O lobby do Torneio NÃO é combate: sem o −3 dB; as lutas têm −3 dB. ⚰️ "masmorra = loop", "dungeon theme", "pvp theme", a faixa derivada da Arena e o terror procedural saíram, sem fallback. ⚰️ O interruptor "Música de combate" e o fallback para o tema saíram (§129, 19/10/2026): o interruptor único "Música" cobre Home, combate e Pesadelo, e desligado = silêncio em todas. Não toca nada, não tem número de loudness: manda o `tema.ts` (motivo de pausa `cena`), o `musicaDeCombate.ts` e o `trilha.ts` (`pedirFaixa`).
+**Sincronização 09/11/2026:** `Superficie` ganhou `respiracao` e `chama` (faixa própria cada, 04/11/2026) e `chefe-minigame` (boss do Elemental Fusion e boss especial da Chuva de Almas: por ora usa a faixa `combate`, com o degrau de combate ligado; quando a `chefe-adrenalina` do dono chegar só a linha do mapa muda). As superfícies calmas `respiracao` e `chama` não têm o degrau de combate.
 **Exports:**
 - `Superficie = 'casa' | 'masmorra' | 'torneio' | 'duelo' | 'arena' | 'pesadelo'` (⚠️ 19/10/2026: `torneio` e `duelo` novos; `SUPERFICIE_EM_COMBATE` decide o −3 dB) (⚰️ 19/10/2026: `pesadelo` não é mais o terror procedural; toca "Stone Hall Nightmare") · `FaixaDeMusica = 'tema' | FaixaDaTrilha` (types) · `FAIXA_DE_COMBATE` — a tabela das faixas de combate.
 - `function escolherFaixa(s, musicaOn): FaixaDeMusica | null` — PURA (§129, 19/10/2026): ligada, Home = tema, combates = `'combate'`, Pesadelo = `'pesadelo'`; desligada = `null` (silêncio em todas). ⚰️ Antes: `(s, temaOn, combateOn)` com duas preferências.
@@ -2990,6 +3581,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** `src/utils/sonsAssets.contract.test.ts` (procedência dos arquivos; ⚰️ 19/10/2026: eram 4, hoje os 4 de combate/Pesadelo + os 2 do tema)
 
 > REMOVIDO em 19/10/2026 (`docs/SOM.md` §12, `REGISTRO-DE-DECISOES.md` §126): `trilhaArena.ts` (percussão da faixa derivada da Arena), `trilhaPesadelo.ts` e `trilhaPesadeloSintese.ts` (terror procedural do Pesadelo), com o encaixe `pesadelo-trilha.mp3`. Sem fallback. Arena e Pesadelo tocam faixas em streaming por `musicaDeCombate.ts`.
+**Pesadelo abre mudo? (01/11/2026):** `pausasQueCalam(f, ps?)` — quantas pausas calam a faixa `f`; o `descanso` (pelo relógio, 23h–07h) NÃO cala o `pesadelo` (que abre sozinho na 1ª abertura do dia, muitas vezes dentro da janela), mas `sono` e `mudo` calam. Se o navegador recusa o `play()`, o PRÓXIMO gesto (`pointerdown`/`touchend`/`keydown`/`click`, captura) tenta de novo.
 
 ### `src/utils/specialGate.ts`
 **Dono de:** A SERIALIZAÇÃO de tempo de cena dos especiais (11/10/2026, `docs/SOM.md` §10.6): "enquanto rola um especial, pare os ataques dos dois e retome depois; um de cada vez". Encenação pura — não importa o motor de combate e não muda nada do núcleo/servidor.
@@ -2999,6 +3591,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/specialItemUse.ts`
 **Dono de:** O USO de item especial (glitchtama, coraçãozinho, chip) aplicado ao `prev` — dono único, distinto de `careUpdaters.ts`.
+**Sincronização 09/11/2026:** `REDUCE_CHIPS_PER_STAGE` (3) e `reduceChipsUsedThisStage(state)` — limite PRÓPRIO dos chips de redução, que NÃO soma com o dos que aumentam (3 + 3 no mesmo estágio); registro `chipsReduceStage`, vale só para o estágio gravado nele (mesmo molde de `chipsStage`).
 **Exports:**
 - `SpecialRefusal` (type) — O USO de um item especial da pastinha — glitchtama, coraçãozinho, chip. ⚠️ Por que este arquivo existe, e por que NÃO é o `careUpdaters.ts`.
 - `CHIPS_PER_STAGE` (3), `ChipStageUse` (interface `{ stage, used }`, campo `chipsStage` do save), `chipsUsedThisStage(state)` — D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO, todos os tipos somados. Recusa `'stage-cap'` (o chip não é consumido); a contagem só vale para o `evolutionStage` gravado nela e é zerada ao evoluir, renascer e degenerar (`App.tsx`). Save antigo entra com 0 usados. REGISTRO §121.
@@ -3041,6 +3634,12 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `function generateAllSprites( stages: StagePrompt[], opts: SpriteGenOptions & { onProgress?: (done: number, total: number, key: string) => void } = {}): Promise<` — Gera as N formas em sequência (evita rajada de chamadas simultâneas ao backend), reportando progresso. Retorna o que conseguiu; erros por forma são acumulados sem abortar as demais.
 **Chamado por:** `src/components/OraclePage.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/utils/spriteRunner.ts`, `src/components/SoulmonOnboarding.tsx`
 **Régua:** `spriteGen.contract.test.ts`
+
+### `src/utils/spriteDoPerfil.ts`
+**Dono de:** qual sprite o perfil público publica (Torneio, Biblioteca, Bosque do Clã): a do estágio atual, senão a última já alcançada; nunca a primeira do acervo.
+**Exports:**
+- `function spriteDoPerfilUrl(lib: SpriteLibrary, evolutionStage: string, unlocked: readonly string[] | undefined): string | null` — URL da arte a publicar, ou `null` sem nenhuma alcançada.
+**Chamado por:** `src/contexts/GameStateContext.tsx`
 
 ### `src/utils/spriteLibrary.ts`
 **Dono de:** O ACERVO DE SPRITES do jogador — estado puro da geração incremental (`spec-geracao-incremental.md`, gate em PASS).
@@ -3107,6 +3706,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/spriteTrigger.ts`
 **Dono de:** O gatilho da geração incremental de sprite — função pura — e, desde WP4.29 (`8be8f9c5`, D-G8b/c/d, 22/09/2026), a INCUBAÇÃO: quando o jogador fica apto a evoluir, a forma seguinte começa a incubar e o gesto só libera depois de `INCUBATION_MIN_MS`. Duas ocasiões vivas: **A** (nascimento, **só `rookie`** — D-G5b; ⚠️ até 22/09/2026 era `rookie` + champion previsto) e **C** (incubação, `faltam <= 0`, todos os líderes empatados via `vesperForms`). ⚰️ A ocasião **B** (véspera, `faltam === 1`) não existe mais (D-G8c): a espera passou a ser o conteúdo; `'B'` fica no tipo só como lápide.
+**Sincronização 09/11/2026:** `currentFormRecovery(input)` — RECUPERAÇÃO da forma atual (05/11/2026): quando o cristal fecha sem a arte nova (fase `falhou` + "seguir", ou timeout de `CRYSTAL_STUCK_MS`) a evolução commita e a barra zera, e nenhuma ocasião pedia a forma atual de novo; devolve o `SpriteBatch` que a pede (ou `null`).
 **Exports:**
 - `SpriteOccasion` (type) — `'A' | 'B' | 'C'` (`'B'` é lápide: nenhum caminho o produz desde o D-G8c; fica para save/telemetria antigos não quebrarem checagem exaustiva)
 - `SpriteTriggerInput` (interface) — campos: `evolutionStage`, `currentBranch`, `unlockedEvolutions`, `perfectDays`, `points`, `reading`, `library`.
@@ -3136,6 +3736,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Chamado por:** `src/hooks/usePetScale.ts`, `src/App.tsx`, `src/components/games/BattleStage.tsx`, e as telas do jogador (`CompanionHUD`, `PetPage`, `DungeonGame`, `ArenaGame`, `NightmareBattle`, `DuelScreen`, `TournamentPage`, `Match3Game`, `DinoGame`, `GoodDream`, `mente/*`, `refugio/RespiracaoGame`).
 **Régua:** `src/utils/spriteScale.test.ts` (monotonia por estágio e por porte, raridade do rookie grande < 3%, "pequenininho até o mega", caixa visível, fiação nas 14 telas).
 **Avisos do arquivo:** só o DESENHO encolhe — hitbox do Dino, alvos de toque e linha do chão não mudam; retratos e cerimônias (`EvolutionCeremony`, `EvolutionPath`, `LevelUpOverlay`, `BirthCard`, `MemoriesCard`…) ficam fora de propósito. Alvo de estágio nunca se escreve à mão em tela.
+**Pé conhecido:** `knownBottomOf(url)` (pé visível 0..1 ou `null`: primeiro a tabela medida do PNG empacotado, `spriteFeetTable.ts`, síncrona; depois a medição de runtime; tenta o nome com e sem o hash de 8 caracteres do Vite) e `groundDropPx(url, scale, size)` (quantos px descer o sprite para o pé visível cair na borda de baixo da caixa, onde está a sombra; 0 enquanto o pé não é conhecido).
 
 ### `src/utils/sprites.ts`
 **Dono de:** O filtro de tonalidade do modo demo (WP1.12) e o resolvedor de sprite por estágio/linha.
@@ -3196,6 +3797,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/storageKeys.ts`
 **Dono de:** Todas as chaves de `localStorage` — o prefixo é `soulmon-` desde 07/09/2026 (era `digiapp-`).
+**Sincronização 09/11/2026:** a tabela `STORAGE_KEYS` tem 101 chaves medidas em 09/11/2026 por `grep -c "^  [A-Z_]*: '" src/utils/storageKeys.ts` (o regex não conta chave com dígito, como `BARRAGE_BEST_2`; com `[A-Z_0-9]*` são 103; 93 em `5229b1be`; o número de 30/09/2026 abaixo, 52, é histórico). Novas desde 02/11/2026: `BARRAGE_BEST_2` (recorde local do modo Avançado da Chuva de Almas; o Comum segue em `BARRAGE_BEST`), `EVO_SEEN_AT` (faixa de evoluções: `at` do último aviso do feed já mostrado neste aparelho), `MAIL_ANNOUNCED` (`mid` das cartas novas que o Papus já anunciou, CSV até 50; só o aviso, o resto mora no servidor — §246), `FEIRA_DESAFIO` (o desafio de hoje da volta da Missão, `{ day, k, done }`; só do aparelho; dono `utils/feiraDesafio.ts`), `FOCO_PLAN_DRAFT` (rascunho do planejamento da sessão), `FOCO_JOURNEY_KEYS` / `FOCO_JOURNEY_PREFS` (chaves em preparo e ritmo/cenário do quadro da Oficina, §247), `CHAMA_PAGO` (último dia em que a sessão da Chama pagou os Bits fixos) e `CHAMA_AVISO` (aviso de segurança da 1ª vez já visto).
 **Exports:**
 - `STORAGE_KEYS` — tabela/dado de configuração (ver código; 52 chaves medidas em 30/09/2026 por `grep -c "^  [A-Z_]*: '" src/utils/storageKeys.ts`, com `PICROSS_DAILY_PAID = 'soulmon-picross-daily-paid'` — o dia (ISO do jogador) em que o bônus do Picross do dia já foi pago NESTE aparelho, lido por `mente/picross` › `picrossBits`; antes, 51 chaves desde a Guilda: `GUILD_LAST_STAGE = 'soulmon-guild-last-stage'` — o que o aparelho já viu do Bosque, dono `groveLocal.ts` — e `GUILD_CLAIMED = 'soulmon-guild-claimed'` — recibos do resgate da Feira, dono `guildClaimLocal.ts`; as duas são chaves de CONVENIÊNCIA, nunca save. Contagem anterior: 49 chaves — `grep -c "^  [A-Z_]*: '" src/utils/storageKeys.ts`, 22/09/2026; 48 em `a6c1cd8a`). Últimas chaves: `TERMS_NOTICE_SEEN = 'soulmon-terms-notice-seen'` (desde `42b07bec`, decisão #24 — a marca do aviso de termos dispensado; fica no aparelho, não no save: é aviso lido, não consentimento), **`TERMS_NOTICE_SHOWN = 'soulmon-terms-notice-shown'`** (desde `592e2c14`, `02b-design-i18n-estados-r2` A3 — a `marcaAvisoTermos(...)` da versão cuja PRIMEIRA exibição já aconteceu; é o que faz o banner de termos entrar em posição 1 da fila de avisos da Home na primeira vez e depois voltar ao fim — `App.tsx` › `termsNoticePrimeiraVez`) e `ACCOUNT_DELETED_NOTICE = 'soulmon-account-deleted-notice'` (desde `a6c1cd8a` — a mensagem do portão depois de um 410 `account-deleted`, escrita por `cloudSave.ts` › `reagirContaExcluida`, lida e apagada uma vez pelo portão). A fila de telemetria em aba oculta (`soulmon-telemetry-hidden`, `telemetry.ts` › `K_HIDDEN`) **não** passa por aqui — como `K_QUEUE`, mora no próprio módulo.
 - `RECONCILE_KEYS` — Chaves da RECONCILIAÇÃO de `saveId` (`utils/cloudSave.ts`, B-R1). Moram numa tabela própria, e não dentro de `STORAGE_KEYS`, porque não são preferência nem estado de jogo: são o rastro forense de UMA migração de identidade.
@@ -3300,7 +3902,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `function buildBatch(id: string, events: TelemetryRecord[]): TelemetryBatch` — Monta o corpo do lote. Nada além de `v`, `id` e os registros já saneados.
 - `TelemetryConsentCopy` (interface) — campos: `title`, `sent`, `never`, `toggleLabel`, `footnote`.
 - `function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryConsentCopy` — O texto do opt-out. Regra do repositório: todo texto de UI nasce em inglês e o par PT-BR vem junto. Ele descreve o que o código faz — e o código é a allowlist logo acima.
-- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada.
+- `function isTelemetryEnabled(): boolean` — Ligada por padrão (opt-out), e é uma decisão consciente: só contador agregado sai daqui, e um opt-IN sobre uma amostra de 5% mediria o funil dos curiosos em vez do funil real — que é o mesmo defeito de não medir nada. **No `/embed` é SEMPRE `false`** (guard duro antes da preferência, 13/11/2026, [REGISTRO §360](../../REGISTRO-DE-DECISOES.md)): a demo do portfólio pula o termo, e termo pulado nunca conta como consentido.
 - `function setTelemetryEnabled(on: boolean): void` — Liga/desliga. Desligar APAGA a fila — deixar bytes esperando seria enganação.
 - `function telemetryId(): string` — Pseudônimo local. 32 hex de `crypto.getRandomValues` — NÃO derivado de e-mail, de saveId nem de nada do usuário, e por isso não religável à conta.
 - `function setTelemetryTier(tier: 'demo' | 'paid' | null | undefined): void` — Declara o TIER da conta. Chame uma vez, de um efeito sobre `gameState.accountTier` — e em nenhum outro lugar. Por que ambiente e não prop de call site: o tier é a mesma resposta para TODOS os eventos, vinda de uma fonte única (`gameState.accountTier`).
@@ -3334,8 +3936,13 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Chamado por:** `src/components/MorningCheckIn.tsx`
 **Régua:** `tinyOffer.test.ts`
 
+### `src/utils/seasonHistoryView.ts`
+**Dono de:** a vista do histórico de temporadas do Torneio (pílula "Última temporada" e modal, §246). Puro: `placeLabel` (1º / 1st·2nd·3rd), `seasonMonthLabel` (mês em UTC), `prevSeasonKey`, `buildSeasonHistoryView` (vista do `seasonHistory` do servidor só da janela de 120 dias, `dentroDaJanela`; troféus do save não entram; `excluded` de GM/admin zera tudo).
+**Chamado por:** `src/components/TournamentPage.tsx`
+
 ### `src/utils/tournamentSeason.ts`
 **Dono de:** A janela sexta–domingo da rodada semanal do Torneio — ritual, nunca tranca.
+**Sincronização 09/11/2026:** `seasonDaysLeft(now)` (dias até a temporada virar, contando hoje; a temporada é o mês em UTC) e `seasonDaysLabel(now, language)` ("Seven Days Remaining" / "One Day Remaining", dono 05/11/2026).
 **Exports:**
 - `ROUND_START_DAY` — Dia da semana em que a rodada começa (5 = sexta).
 - `ROUND_LENGTH_DAYS` — Quantos dias ela dura (sexta, sábado e domingo).
@@ -3354,6 +3961,8 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`, `seat`, `place` (o "#N" do ícone; só com `seat`).
 - `function getTierStanding(points: number, place?: number | null): TierStanding` — Faixa a partir dos pontos lifetime e, opcionalmente, da posição na season. Nunca lança.
 - `function resolveSeasonPlace(serverPlace: unknown, rankIndex: number): number | null` — a posição do servidor (`myPlace` de `action=rank&id=`) ou, em servidor antigo, o índice na lista pública (top 50) + 1.
+- `function faixaPontosTexto(standing: TierStanding, lifetime: number, isPt: boolean): string` — "Bronze: 80/300 · faltam 220" (pontos da FAIXA, não da temporada); na última faixa só os pontos.
+- `function motivoSemPontosTexto(reason: 'rank-up' | 'rank-down' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null` — motivo curto de uma vitória que rendeu 0 (ou menos que o cheio): oponente abaixo do nível / mesmo oponente hoje.
 **Chamado por:** `src/components/TournamentPage.tsx`
 **Régua:** `tournamentTiers.test.ts`
 **Regra de negócio:** As faixas de pontos nunca rebaixam o jogador ao acumular pontos; Mestre/Grão-Mestre são lugares da season. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
@@ -3366,7 +3975,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/frames.ts`
 **Dono de:** o catálogo de MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA pura, nunca vantagem. Origens: `rank` (uma por degrau da escada; Madeira…Diamante pela faixa lifetime, Mestre/Grão-Mestre só com o lugar ocupado), `shop` (Bits, `price`), `achievement`, `event`. Arte (04/10/2026): `FRAME_ART` (glob de `assets/soulmon/molduras/*.png`, o nome do arquivo é o id; as 14 têm arte), normalizada em `FRAME_ART_CANVAS` = 192 com abertura `FRAME_ART_OPENING` = 96; o `look` (anel CSS) fica de fallback.
-**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `resolveEquippedFrame` (equipada que deixou de valer → `null`, sem moldura) · `availableFrames` · `FRAME_ART` · `FRAME_ART_CANVAS` · `FRAME_ART_OPENING` · `frameArt`.
+**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `BASIC_FRAME_ID` · `frameOrBasic` · `resolveEquippedFrame` (equipada que deixou de valer, `null` ou "none" → o frame básico `basico`, nunca `null`) · `availableFrames` · `FRAME_ART` · `FRAME_ART_CANVAS` · `FRAME_ART_OPENING` · `frameArt`.
 **Chamado por:** `src/contexts/GameStateContext.tsx` (sanitiza `ownedFrames`/`equippedFrame` no load), `src/App.tsx` (`handleEquipFrame`), `src/components/TournamentPage.tsx`, `src/components/ui/AvatarFrame.tsx`.
 **Régua:** `src/assets/arteDono20261004.contract.test.ts` (arte 1:1, canvas, abertura vazia), `src/utils/frames.test.ts` (catálogo, cosmética, sanitização, paridade de formato/teto com `functions/api/save.js`), `functions/api/save.frames.test.js`.
 **Save:** `GameState.ownedFrames?: string[]` (`?? []`) e `GameState.equippedFrame?: string | null` (`?? null`) — ver 07-DADOS-E-SAVE.
@@ -3440,6 +4049,8 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/dailyMissions.ts`
 **Dono de:** O catálogo de MISSÕES DIÁRIAS dos outros recursos (minijogos, foco, cuidado...), sorteadas por dia do jogador e pagas em 1 material (REGISTRO §52).
+**Sincronização 09/11/2026:** `DailyEvent` (união dos eventos de missão) ganhou `selo` e `DailyMission` ganhou `retired?: true` (04/11/2026): a missão `d-selo` ("Complete uma rodada do Selo Faltante") substitui `d-patches` (a Colcha) no rodízio do Ateliê (`ROTA_MENTE` = `d-eco`, `d-zip`, `d-selo`); a Colcha fica no catálogo só para save antigo e nunca é sorteada — `dailyMissionPool()` e o resto do sorteio filtram `retired`.
+**Atualização 12/11/2026 (REGISTRO §314):** o catálogo ganhou as MISSÕES DOS NPCs (`utils/npcMissions.ts`, 24 entradas `n-*`, campos novos `npc`/`namePt`/`nameEn` em `DailyMission`); **Revisto no §318 (rodízio semanal):** `npcsOfWeek(day, bond)` devolve os 2 NPCs da semana (semana segunda–domingo, partida em `semana × 2`, só prédios abertos), `trilhoMission(bond)` a fixa do Trilho (evento novo `journal`) e `npcMissionsOfDay` as duas juntas, que `dailyMissionsFor` põe à frente (`DAILY_MISSION_COUNT` = 8); `npcOfDay` saiu. `App` conta `journal` ao salvar registro novo e a semanal `journal-days` no resgate de `n-trilho`. 12 eventos novos (`cenario`, `essencia`, `salao`, `compra`, `melhoria`, `mente`, `cla`, `prato`, `hex`, `feira`, `passeio`, `conquista`); `bumpDaily(s, day, event, qty = 1)` soma quantidade (30 essências) e `salao`/`mente` são AGREGADOS dos minijogos; `bumpDailyIn(prev, event, qty)` é o mesmo sobre o estado inteiro, chamado no ramo de sucesso dos utilitários donos de cada gesto (`applyEssences`, `applyUpgrade`, `forgeHexItem`/`applyServerHexForge`, `applyCook`, `applyFeiraLojaBuy`/`applyServerFeiraHex`) e dos handlers do `App` (compra do Mercado/moldura, conquista, missão do Clã, passeio). `visit:laboratorio.evolucao` saiu das primeiras vezes (a Vesca passa `n-vesca`: colete 30 essências). O Cambista (Farthing) NÃO passa missão (dono, 12/11/2026: `n-farthing` / evento `cambio` excluídos; consta em `NPCS_SEM_MISSAO`). Espelho do servidor: `functions/api/_dailyMissions.js` (paridade travada).
 **Exports:**
 - `DailyEvent` (type) — os 15 eventos reais que contam (`dino`, `ppt`, `match3`, `foco`, `masmorra`, `banho`...).
 - `DailyMission` (interface) — uma missão do catálogo (`id`, `event`, `target`...).
@@ -3456,7 +4067,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 ### `src/utils/weeklyMissions.ts`
 **Dono de:** As 3 missões SEMANAIS sorteadas deterministicamente, pagas em Emblemas.
 **Exports:**
-- `WeeklyMissionId` (type) — `| 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs' | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins' | 'dream-new' | 'evolve-view' | 'tournament-match' | 'friend-visit'`
+- `WeeklyMissionId` (type) — `| 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs' | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins' | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent' | 'journal-days' | 'focus-days'` (era `friend-visit`; `migrateWeeklyLegacy(p)` migra o save, §296)
 - `WeeklyMission` (interface) — campos: `id`, `target`, `emblems`, `descPt`, `descEn`.
 - `WEEKLY_MISSION_COUNT` — `3`
 - `function weeklyMissionsFor(weekKey: string): WeeklyMission[]` — As três missões da semana. DETERMINÍSTICO por semana: a mesma `weekKey` devolve sempre as mesmas três, em qualquer aparelho.
@@ -3582,10 +4193,17 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/personality.ts`
 **Dono de:** a personalidade do chat DERIVADA das forças/dificuldades do onboarding (G7, 01/10/2026).
-**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored)`, `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
+**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored, character?)` (beta12: o 3º argumento é o caráter do teste, que ajusta o tom e segue ao chat; o veto não muda), `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/personality.test.ts`.
 **Regra de negócio:** ansiedade/perfeccionismo/cansaço nunca recebem `challenging`; desafio só com disciplina/persistência; perfil vazio = `casual` + `supportive`. Lê `gameState.onboardingProfile`. Racional em `docs/PERSONALIDADE-DERIVADA.md`.
+
+### `src/utils/soulmonCharacter.ts`
+**Dono de:** o CARÁTER do Soulmon (beta12, B1/B2): Big Five do teste do onboarding → arquétipo de personalidade (complementar por dimensão, ou similar), com o veto de vulnerabilidade de `personality.ts`. Função pura; o jogador nunca vê o tipo, só ouve o jeito.
+**Exports:** `soulmonCharacterFor(input)`, `soulmonValue(dim, score, mode)`, `loadBigFive(answers)` (import dinâmico do `scoreProfile`), `sanitizeVoiceMode`, `isVulnerable`, `SOULMON_ARCHETYPES`, `NPC_ONLY_ARCHETYPES`, `ALL_ARCHETYPES`, `SAFE_ARCHETYPES`, `MIN_ANSWERS_FOR_CHARACTER`, `NEUTRAL_CHARACTER`, `DEFAULT_VOICE_MODE`, tipos `SoulmonVoiceMode`, `SoulmonCharacter`, `Archetype`, `VoiceArchetype`.
+**Chamado por:** `src/App.tsx`, `src/utils/petVoice.ts` (só tipo), `src/data/npcFichas.ts` (só tipo).
+**Régua:** `src/utils/soulmonCharacter.test.ts`, `src/utils/petVoice.carater.test.ts`, `src/utils/voiceModeSettings.contract.test.ts`.
+**Regra de negócio:** sem teste (menos de 10 respostas) = neutro; COMPLEMENTAR (padrão) = espelho por dimensão, exceto neuroticismo (nunca acima do neutro); SIMILAR = a mesma personalidade do jogador; ansiedade/perfeccionismo/cansaço restringem às vozes acolhedor/calmo/curioso/brincalhão nos dois modos. Mapa em `docs/design/PERSONALIDADE-BIG-FIVE.md`.
 
 ### `src/utils/notificationDefault.ts`
 **Dono de:** o padrão LIGADO da preferência de notificações (G6, 01/10/2026), condicionado à permissão do sistema.
@@ -3593,6 +4211,12 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/notificationDefault.test.ts`.
 **Regra de negócio:** escolha gravada manda; sem escolha, ligado só com permissão já concedida — nunca pede permissão na abertura.
+
+### `src/utils/stepsInvite.ts`
+**Dono de:** QUANDO aparece o convite curto dos passos (REGISTRO §283): só com contador no aparelho, `stepsConsent` ausente e onboarding concluído.
+**Exports:** `shouldShowStepsInvite({ available, consent, onboarded })`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/utils/stepsInvite.test.ts`.
 
 ### `src/utils/restSetup.ts`
 **Dono de:** quando aparece o convite do sono (G8): primeira abertura a partir do 2º dia de uso, uma vez só.
@@ -3616,10 +4240,13 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/areaLotGeometry.ts`
 **Dono de:** a caixa OPACA de cada sprite de lote e o alvo de toque derivado dela (H11/H12, 02/10/2026) — resolve o NPC que alternava: as caixas quadradas dos lotes se sobrepunham e o toque no pé de um prédio caía no vizinho.
+**Sincronização 09/11/2026:** os mapas recriados de 05/11/2026 trazem os prédios PINTADOS no fundo (9:20): `MAPA_ASPECT` (841/1870), `LOT_PINTADO` (caixa de toque em % da imagem por `<área>:<lote>`; lote na tabela não desenha sprite, o rótulo pousa na base da caixa), `lotPintado(areaId, lotId)`, `MAPA_MUNDO_PINTADO` (os distritos no mapa-mundo) e `MAPA_PALCO_STYLE` (palco com a mesma caixa do `cover` centrado, para a % da imagem cair no pixel certo; pede contêiner `size` no pai). Marcas "!"/"?"/moeda sobre o prédio (04/11/2026): `LOT_MARK_SIZE` (32), `LOT_MARK_GAP` (4), `LOT_MARK_MIN_TOP` (8), `LOT_MARK_DROP` + `lotMarkDrop(areaId, lotId)` (desce a fileira onde o espaço acima é o rótulo do vizinho: `forja:refugio`, `mercado:background`, `mercado:decoracao`), `lotMarkRects(areaId, lot, viewW, …)` (retângulos da fileira, esquerda → direita; espelha o `AreaScene`).
 **Exports:** `LotBounds`, `LOT_ART_BOUNDS`, `lotArtBounds(areaId, lotId)`, `LOT_LABEL_H`, `LOT_MIN_WIDTH_PX`, `Rect`, `lotHitRects(...)`.
 **Chamado por:** `src/components/nav/AreaScene.tsx`.
 **Régua:** `src/utils/areaLotGeometry.contract.test.ts` (mede o alfa dos PNG e reprova par de lotes cujos alvos se encostem), `src/components/nav/areaLotNpc.contract.test.tsx` (20 aberturas por lote, sempre o mesmo busto).
 **Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.
+
+**Delta 13/11/2026 (REGISTRO §319):** `EXPLORACAO_CHAVE_BOX` — a caixa (% da imagem, medida de `LOT_PINTADO`) da chave do Calabouço no mapa da Exploração.
 
 ### `src/utils/talents.ts`
 **Dono de:** a árvore de talentos do USUÁRIO (Combate v3 / PR7): o Vínculo é o level dele, 1 ponto por Vínculo (até `TALENT_POINTS_MAX` = 20), 3 caminhos (Duelo/PvP, Fenda/PvE, Comércio), árvore que nunca fecha. Persistido SÓ `talentPicks: string[]` (um id por grau; `fuzz2` sobe de 103 para 104). Vetor malformado é DESCARTADO inteiro, nunca corrigido; já o que só viola PRÉ-REQUISITO (Tarefa B, `requires`/`requiresAny`, grafo em `talentLayout.ts`) é PODADO por replay (cliente e servidor), devolvendo os pontos. O bônus de combate entra pelo canal único `combate/bonus.ts` (teto único de 5%); o Comércio só mexe em preço/moeda; respec SEMPRE pago em Bits. PR7b (§2.25): o canal de PvP é POR ATRIBUTO (`attr` ATK/DEF/SPD em `tal-pvp-01/02/03`; `talentAttrBonus`) com o MESMO teto de 5% na SOMA dos três (`combinedAttrBonus`); `tal-pvp-05` (Mão aberta, `cheerBoost`: +5% por grau no rendimento da torcida do Duelo, até `CHEER_SCALE_MAX`) e `tal-com-05` (Balança, `respecOne`: refazer UM ponto por vez, em Bits ganhos) foram REDESENHADOS dentro das linhas vermelhas e entram na árvore.
@@ -3630,6 +4257,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Dono de:** a tabela ÚNICA de portões do Vínculo (Arena/PvP, Torneio, andares altos da Masmorra, Renascimento). Nenhum outro arquivo compara `bondLevel >= N` (teste de grep em `gates.test.ts`). O Vínculo nunca é pago.
 **Exports:** `GATES`, `GateFeature`, `gateFor`, `masmorraFloorOpen`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateLine` (copy neutra, `copy.semFomo`), `gatesOpenedBetween` (portões que abrem ao ir de um Vínculo a outro — o display de level up) e `gateName`.
 **Régua:** `src/utils/gates.test.ts`, `functions/api/gates.parity.test.js`.
+**Onboarding Velado (D4):** `BB_EVOLVE_MIN_BOND` (2) e `bbEvolveGate(bondLevel)` (`{ open, minBond, bondLevel }`) — o Vínculo que habilita a cerimônia de evoluir de BB para rookie; mora aqui (dono único das comparações de Vínculo) mas FORA de `GATES` (não é portão de recurso, não entra em `gatesOpenedBetween`, sem espelho no servidor). Novo portão `forja.hexsmith` (`minBond: 2`, mesmo do Soulsmith; 01/11/2026).
 
 ### `src/utils/levelUp.ts`
 **Dono de:** a regra do display de LEVEL UP (11/10/2026), funções PURAS. O nível nunca vai ao save (`bondLevelFor(totalXP)`); o save guarda só `lastCelebratedLevel` (o último nível que a pessoa JÁ VIU). O evento é a diferença entre os dois — por isso sobrevive a fechar o app, e vários níveis de uma vez viram UM `{from,to}`. Save sem o campo recebe a linha de base (o nível de agora) em vez de celebrar o passado; demo não celebra.
@@ -3639,6 +4267,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/levelUpArt.ts`
 **Dono de:** a fronteira de troca da arte OPCIONAL do level up (`src/assets/soulmon/levelup/levelup-{banner,burst,frame}.png`, via `import.meta.glob` eager); sem o PNG devolve `undefined` e o overlay desenha tudo de forma procedural. Pacote de geração: `docs/ASSETS-A-GERAR.md` §16 e `src/assets/soulmon/levelup/INSTALAR.md`.
+**Sincronização 09/11/2026:** `bondUpArt(fase, isPt)` (`entrada`/`laco`/`fixo`), `BOND_UP_W` (342), `BOND_UP_H` (256), `BOND_UP_ENTRADA_MS` (1500: soma dos 15 quadros; depois entra o `laco`) — a animação de subida do Laço.
 **Exports:** `levelUpArt`, `LevelUpSlot`.
 
 ### `src/utils/lazyOverlay.tsx`
@@ -3660,14 +4289,22 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** bloco "PR7" de `src/copy.semFomo.contract.test.ts` e `src/utils/talents.test.ts` (todo nó tem texto).
 
 ### `src/utils/equipment.ts`
-**Dono de:** o EQUIPAMENTO do Soulmon (Combate v3 / PR8, decisões do dono §2.14 M3 e §2.26): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (9 itens), bônus PERCENTUAL, aquisição por Bits GANHOS ou fragmentos, SEM sorteio. O bônus entra pelo canal único de 5% (`combate/bonus.ts`: PvP por atributo em `combinedAttrBonus`, fenda como soma em `combinedBonus`). O Comércio só mexe em preço (`tal-com-01`; o desconto semanal `tal-com-07` saiu em 19/10/2026, REGISTRO §122), em ganho de moeda (fragmentos `tal-com-02`; Bits do dia completo `tal-com-06`, até +25%) e na capacidade da mochila (`tal-com-04`, PR12b). Persistido só `equipment: { owned, equipped, fragments }`; slot forjado é descartado peça a peça. Preços e percentuais são defaults da squad. Espelho no servidor: `functions/api/_equipment.js`.
+**Dono de:** o EQUIPAMENTO do Soulmon (Combate v3 / PR8, decisões do dono §2.14 M3 e §2.26): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (9 itens), bônus PERCENTUAL, aquisição por Bits (desde §373 também os vindos de Crédito) ou fragmentos, SEM sorteio. O bônus entra pelo canal único de 5% (`combate/bonus.ts`: PvP por atributo em `combinedAttrBonus`, fenda como soma em `combinedBonus`). O Comércio só mexe em preço (`tal-com-01`; o desconto semanal `tal-com-07` saiu em 19/10/2026, REGISTRO §122), em ganho de moeda (fragmentos `tal-com-02`; Bits do dia completo `tal-com-06`, até +25%) e na capacidade da mochila (`tal-com-04`, PR12b). Persistido só `equipment: { owned, equipped, fragments }`; slot forjado é descartado peça a peça. Preços e percentuais são defaults da squad. Espelho no servidor: `functions/api/_equipment.js`.
 **Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `dungeonAttrBonus`, `backpackCapacity`, `backpackUsed`, `backpackHasRoom`, `missionBitsGain`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
 **Régua:** `src/utils/equipment.test.ts`, `functions/api/equipment.parity.test.js`.
 
+### `src/utils/blockedAction.ts`
+**Dono de:** o TEXTO do aviso de ação bloqueada (09/11/2026): `explainBlocked(motivo, isPt)` é pura e devolve título, linhas (o que falta, com quantidade) e as fontes tocáveis. Tipos: `energia`, `recursos`, `missao`, `ticket`, `nivel`, `espera`, `limite`, `demo`, `outro`. A navegação vai por evento (`GO_TO_BUILDING_EVENT`, ouvido pelo `App` › `handleMaterialGoTo`).
+**Exports:** `BlockedKind`, `BlockedMissing`, `BlockedSource`, `BlockedReason`, `BlockedExplanation`, `explainBlocked`, `GO_TO_BUILDING_EVENT`, `requestGoToBuilding`.
+**Régua:** `src/components/ui/BlockedActionModal.render.test.tsx`.
+
 ### `src/utils/bitsOrigin.ts`
-**Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio do câmbio Crédito→Bits (`paidLeft`) e o câmbio do dia. Equipamento só enxerga o Bit GANHO (`earnedBits`); o gasto que não é equipamento gasta o Bit pago primeiro; o câmbio do dia cabe em 25% do ganho grátis do dia (piso de referência de 100). Regra de cliente: o servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
-**Exports:** `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `earnedBits`, `noteFreeBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendBitsPaidFirst`.
+**Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio de Crédito (`paidLeft`) e o que entrou no dia. ⚠️ §373 (14/11/2026): não gateia mais nada — `spendableBits` é o saldo inteiro; todo gasto consome o pago primeiro (`spendBitsPaidFirst`); o teto da troca é do servidor (`functions/api/_bitsPacks.js`). O servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
+**Exports:** `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `spendableBits`, `noteFreeBits`, `noteCreditBits`, `spendBitsPaidFirst`, `spendBitsIfCovered` (⚰️ §373: `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `earnedBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendEarnedBits`).
 **Régua:** `src/utils/equipment.test.ts` (blocos 4 e 6).
+
+### `src/utils/bitsPackCopy.ts` (14/11/2026, §373)
+**Dono de:** os textos DERIVADOS dos pacotes de Bits do Cambista: `bitsPackDiscountLabel` ("~8% off", a mesma etiqueta em PT/EN, de `bitsPackDiscountPct`), `bitsPackBrlEstimate` ("cerca de R$ X", só pt-BR, pelo Crédito mais barato de `CREDIT_PACKS`; o preço real é o da Play), `cheapestCreditBrl` e `bitsPackName` (Bolsinha/Bolsa/Baú · Pouch/Purse/Chest). Lido por `CreditExchange` (`components/mercado/ShopShelf.tsx`). **Régua:** `src/utils/currencies.test.ts`, `MercadoSheets.render.test.tsx`, `MercadoConfirmar.render.test.tsx`.
 
 ### `src/utils/equipArt.ts`
 **Dono de:** a arte do equipamento (PR8b), carregada SOB DEMANDA (`import.meta.glob` lazy) dos 13 ícones já instalados em `assets/soulmon/combate-v3/equip` (sem arte nova). Peça ausente = `null` e a tela cai no texto.
@@ -3689,6 +4326,8 @@ Missão do dia por prédio (fora do Mercado) + materiais. Funções PURAS: `forD
 ganhou a entrada opcional `buildings` e a saída `buildings`. Servidor: `functions/api/_buildingQuests.js`
 (`sanitizeBuildingQuests`, paridade em `buildingQuests.parity.test.js`).
 
+**12/11/2026 (REGISTRO §309):** `LISTED_QUEST_BUILDINGS` ficou VAZIA (o Caderno diário saiu das diárias; a semanal `journal-days` o substitui) e ganhou `RETIRED_LISTED_BUILDING` + `settleRetiredListed(s, day, bondLevel)` (migração: paga uma vez a tinta do Caderno pronto e sem resgate; idempotente). O prédio do Caderno paga a tinta na entrada como os demais.
+
 ## `src/utils/buildingQuestsCopy.ts` (07/10/2026)
 
 Nomes EN/PT, ícones (emoji pelado, nenhum igual aos de Bits/Emblemas/Créditos) e as redações do dia dos 16 materiais
@@ -3696,13 +4335,15 @@ Nomes EN/PT, ícones (emoji pelado, nenhum igual aos de Bits/Emblemas/Créditos)
 entrada; a regra e a tabela prédio→material (`MATERIAL_BUILDING`) moram em `buildingQuests.ts`.
 
 ## `src/utils/forge.ts` (07/10/2026)
-Folha pura do Soulsmith: `FORGE_PIECES` (peça → prédio → 2 materiais), `LEVEL_PCT`, `UPGRADE_COST`, `LEVEL_MIN_BOND`, `sanitizeForge`, `pieceLevel`/`pieceBonus`/`ownedPieceBonus` (bônus por atributo; quem soma e corta é `combinedAttrBonus`). Espelho: `functions/api/_forge.js`.
+Folha pura do Soulsmith (16/11/2026: `UPGRADE_BITS_BASE` 20, `UPGRADE_BITS_FACTOR` 1,25 e `upgradeBitsCost(nível atual)` = `round(20 × 1,25^(n−1))`, n limitado a 1..`FORGE_MAX_LEVEL`−1, único dono do preço em Bits do aprimoramento, §281; refazer escolha aceita Bits de Crédito, §373): `FORGE_PIECES` (peça → prédio → 2 materiais), `LEVEL_PCT`, `UPGRADE_COST`, `LEVEL_MIN_BOND`, `sanitizeForge`, `pieceLevel`/`pieceBonus`/`ownedPieceBonus` (bônus por atributo; quem soma e corta é `combinedAttrBonus`). Espelho: `functions/api/_forge.js`.
 
 ## `src/utils/forgeActions.ts` (07/10/2026)
 Updaters puros e idempotentes: `applyForgeGrant` (1º resgate da missão do prédio), `upgradeRefusal`/`applyUpgrade`, `redoRefusal`/`applyRedo`.
 
+**Sincronização 16/11/2026:** `applyUpgrade` cobra também `upgradeBitsCost(nível)` em Bits (recusa `no-funds` antes de qualquer débito) e conta a missão diária `melhoria` (`bumpDailyIn`, §314); `applyUpgrade` e `applyRedo` gastam por `spendBitsPaidFirst` (o pago primeiro; o Bit de Crédito também paga, §373). `ForgeRefusal` perdeu `not-earned`.
+
 ## `src/utils/forgeCopy.ts` (07/10/2026)
-Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
+Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização 16/11/2026: `not-earned` saiu (Bit vindo de Crédito paga, §373); `no-funds` e `no-materials` sem "sem pressa".
 
 ### `src/utils/firstTaskSuggestion.ts`
 **Dono de:** a PRIMEIRA TAREFA do onboarding (11/10/2026, REGISTRO §27) — sugestão pela 1ª área escolhida e o rascunho que sai do passo "Seu ponto de partida".
@@ -3734,6 +4375,19 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Chamado por:** `src/components/NotificationManager.tsx` (APK: alarme local por evento; PWA aberta: timer), `src/utils/notifications.ts` (tipo `ServerSkip`).
 **Régua:** `src/utils/petPushEvents.test.ts`, `workers/pushBudget.parity.test.js`.
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
+
+### `src/utils/feedbackClient.ts`
+**Dono de:** o envio do modal de feedback da Home a `POST /api/feedback`. Só tipo, texto e diagnóstico não pessoal (versão, build, plataforma, idioma); `Authorization` só quando há login (limite por conta no servidor).
+**Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
+### `src/utils/recargaPorChunk.ts`
+
+Chunk velho depois de deploy: `installChunkReloadHandlers` (chamado em `main.tsx`) escuta `vite:preloadError` e `unhandledrejection` de import dinâmico e faz UM `location.reload()` por sessão (`recarregarUmaVez`, guarda em `sessionStorage`; sem storage não recarrega). Exports: `ehErroDeChunk`, `recarregarUmaVez`, `installChunkReloadHandlers`, `CHAVE_RECARGA_CHUNK`. Teste: `recargaPorChunk.test.ts`.
+
+### `src/utils/erroDetalhes.ts`
+
+`detalhesDoErro(error)`: linha curta (mensagem + 2 linhas de stack, passadas por `scrub`, até 300 caracteres) + `v<versão> · <build>`, mostrada na tela do `ErrorBoundary` e no e-mail de feedback. `limparSwERecarregar()`: apaga os caches e desregistra os service workers (try/catch) e recarrega.
 
 ### `src/utils/crashReport.ts`
 **Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
@@ -3828,6 +4482,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/hunger.ts` (beta-2 3.4/3.5, 13/10/2026 — REGISTRO §40)
 **Dono de:** a FOME e o relógio de regeneração da ENERGIA. Funções puras, `now` em ms por parâmetro. A fome (0–100) desce por timestamp (`HUNGER_FULL_TO_EMPTY_HOURS` 14 h) e só sobe comendo (`HUNGER_PER_FOOD` 40; premium `HUNGER_PER_PREMIUM` 100, recusada a partir de `HUNGER_PREMIUM_REFUSE_AT` 80); a energia regenera 1 unidade a cada `ENERGY_REGEN_MINUTES` (60 desde 26/10/2026, era 120; REGISTRO §176) a 100% — bem alimentado (fome ≥ 60) 100%, mediano (≥ 20) 50%, faminto 0% (interrompida). O progresso até a próxima unidade (`energyClock.carry`, em ponto-ms inteiros) mora no save. **Exports:** `settleEnergy` (acerta até `now`; devolve a MESMA referência sem unidade nova), `setEnergy` (a porta ÚNICA para gastar/ganhar energia fora da regeneração: acerta, aplica e reposiciona o relógio), `eat` (acerta com a fome de ANTES e só então sobe a fome; nunca toca a energia), `energyStatus` (o que a Home mostra: energia, fome, faixa, velocidade, modo e `msToNext` projetado com a queda de faixa), `tickEnergy`/`tickTime` (o tick da Home: com o Soulmon na masmorra congela em `dungeonAway.since`, a conta de quem ficou fora regenera ao longo da linha do tempo), `hungerAt`, `tierOf`, `regenPoints`, `sanitizeHunger`, `sanitizeEnergyClock`, `formatEnergyEta`, as constantes. **Chamado por:** `careRules.feedFood`, `specialItemUse` (premium), `petNeeds.play`, `levelUp`, `dailyReset` (zera a energia SEM reiniciar o relógio), `dungeonIdle.spendLayer`, `checkIns`, `App.tsx` (acerto a cada 15 s), `hooks/useEnergyStatus`. **Régua:** `hunger.test.ts` (aceite: comer não dá energia, velocidade por faixa, timer = motor, fatiar o tempo não muda o total, exploits) e `hunger.balanco.test.ts` (a curva fome × energia contra o orçamento do REGISTRO §30). `msToFullEnergy(state, now)` — ms até a energia ENCHER (projeta a fome descendo; `0` cheia, `null` não enche sem comer): base do push "energia cheia" (§113).
+**Sincronização 09/11/2026:** buff de regeneração do prato do Restaurante: `RegenBoost` (`{ from, until, pct }`: `pct` a MAIS de velocidade entre `from` e `until`) e `regenBoostOf(s)` (só a FORMA; a validade é a janela). `hungryFrom(rec)` — o instante (ms) em que a fome fica abaixo de "bem alimentado" (`HUNGER_FED_MIN`), a mesma régua de `needsAttention`; `null` sem registro. O widget guarda o INSTANTE, não o nível, para acertar com o app fechado.
 
 ### `src/utils/checkIns.ts` (beta-2 4.1, 13/10/2026 — REGISTRO §40)
 **Dono de:** os três check-ins do dia (manhã/tarde/noite) sobre as janelas do ritmo das refeições. **Exports:** `CHECKIN_SLOTS`, `CHECKIN_REWARDS` (manhã = fome +30 · tarde = 10 Bits · noite = 10 de XP de Vínculo), `availableCheckIn`, `checkInWindows` (horário e estado de cada janela, para a folha `CheckInSheet`), `claimCheckIn` (recusa reconferida sobre o `prev`; devolve a MESMA referência), `currentSlot`, `claimedToday`, `checkInDayOf`, `sanitizeCheckIns`. Recompensa única por janela por DIA DO JOGADOR (fuso fixo do save); relógio que volta não reabre; sem sequência nem contador de perdidos; nenhuma leitura de desempenho. **Chamado por:** `App.tsx` (`resgatarCheckIn`), `MealInviteCard`. **Régua:** `checkIns.test.ts`; servidor: `functions/api/_dayCounters.js`.
@@ -3864,7 +4519,10 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/focusKey.ts` · `src/utils/focusDescent.ts` (beta3 F1)
 **Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `forja.oficina` (ex-`exploracao.oficina`, #187), N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
-**Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
+**Sincronização 09/11/2026:** a CHAVE DA DUNGEON (REGISTRO §239, 05/11/2026): `DungeonKeyState`, `hasDungeonKey(state, nowMs)`, `grantDungeonKey(prev, nowMs)` — concluir uma sessão na Oficina abre o Calabouço (`dungeonKeyDay`); **§299 (11/11/2026): vale 48 h (dia da conquista + o seguinte, `DUNGEON_KEY_VALID_HOURS`), 1 uso por dia; `dungeonKeyExpired` e `dungeonKeyLastDay` dizem se/até quando**; não acumula; idempotente (já tendo a de hoje, devolve a MESMA referência); quem já tinha incursão andando hoje (`step > 0`) não é trancado no meio.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`. **Régua:** `src/utils/focusKey.dungeon.test.ts`, `src/utils/focusKey.legacyStamp.test.ts`, `src/utils/focusKeyDescent.test.ts`, `src/utils/focusDescent.until.test.ts`.
+**Delta 13/11/2026 (REGISTRO §319):** `dungeonKeyExpiresAt(state, nowMs)` — instante em que a chave do Calabouço deixa de valer (meia-noite do jogador depois de `dungeonKeyLastDay`; trava legada = virada de hoje; sem chave = `null`). É o relógio do mapa da Exploração (`DungeonKeyBadge`).
+**Descida do foco (`focusDescent.ts`, 05–09/11/2026):** `FocusDescentRefusal` (`'busy' | 'no-hp' | 'no-energy'`), `focusDescentRefusal(state, nowMs)` (recusa se o Soulmon já está na masmorra ou há missão de clã em curso, se o HP está abaixo do mínimo ou se falta energia), `startFocusDescent(prev, nowMs, seed?, focusEndsAt?)` (paga a 1ª camada e grava `dungeonAway` com `until` = fim do timer; jogador = `soulCombatant` do save SEM bônus de talento, família `direct`; a camada inicial é `startLayerFor(recorde, teto)`, ou seja, de volta ao ponto de retorno de 2 em 2 camadas; recusa devolve a MESMA referência), `isFocusDescent(state)` (a descida em curso tem `until`; a manual nunca tem), `pauseFocusDescent(prev, nowMs)` (congela em `pausedAt`) e `resumeFocusDescent(prev, nowMs, focusEndsAt?)` (o tempo parado não conta: `since` anda junto; novo `until`).
 
 ### `src/utils/rpsLevel2.ts`
 **Dono de:** `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
@@ -3876,18 +4534,35 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `RIFT_GAME_ID = 'endless-rift'`, `RiftTier`/`RIFT_TIERS`, `RIFT_RANKING_FROM = 250`, `RiftMonth`/`RiftMonthState`, `riftMonthKey(nowMs)`, `sanitizeRiftMonth(raw)` (leitura tolerante).
 **Régua:** o prêmio em Créditos do top 3 é pago só pelo servidor (`functions/api/_riftPayout.js`).
 
+### `src/utils/estagioPorHp.ts`
+**Dono de:** a coerência estágio × HP do inimigo (11/11/2026, REGISTRO §284): a forma exibida de um inimigo sorteado nunca fica abaixo da faixa do HP que ele tem. Pisos em pontos de HP exibidos, tirados do `autoHp` por estágio (ponto médio entre o último level de um estágio e o primeiro do seguinte): champion ≈ 622, ultimate ≈ 1.327, mega ≈ 2.666, ultra ≈ 5.138.
+**Exports:** `FoeStage`, `FOE_STAGES`, `FOE_STAGE_HP_FLOORS`, `stageForFoeHp(coreHp)`, `maxFoeStage(a, b)`.
+**Chamado por:** `arena.ts` (`arenaStageForHp`, usado em `buildArenaRound` quando recebe o level do jogador; a Arena só tem arte até Ultimate). `dungeon.ts` (`buildDungeonWave`: a forma do slot sobe até a do HP, teto Mega por falta de arte de Ultra; REGISTRO §285). **Régua:** `estagioPorHp.test.ts`, `dungeon.estagioPorHp.test.ts`.
+
 ### `src/utils/enemyRoster.ts`
 **Dono de:** "quem pode aparecer como inimigo, em que estágio e a partir de que level" (M10): 17 criaturas base × rookie/champion/ultimate/mega + 138 rookies de elemento combinado. Dados puros, sem asset. O level do jogador só decide até que estágio de ARTE o slot mostra; a força continua do slot da escada.
-**Exports:** `EnemyStage`, `ENEMY_STAGES`, `ENEMY_STAGE_UNLOCK_LEVEL`, `RosterEntry`, `chaveBestiario(id, stage)`, `ENEMY_ROSTER`, `ENEMY_ROSTER_KEYS`, `rosterEntryOfKey(key)`, `pickEnemy`.
+**Sincronização 09/11/2026:** o roster ganhou os kinds `paralelo` (as 10 formas paralelas, 09/11/2026) e `forma` (as 150 formas champion/ultimate/mega dos combinados 212-261); ambos só saem quando o ELEMENTO é pedido (masmorra temática, Arena, Fenda) e ficam fora do sorteio geral. `SUFIXO_FORMA` (`aris`/`axion`/`alune`) e `nomeDaForma(rookie, stage)` (nome proposto: rookie sem a vogal final + sufixo; o dono pode vetar). `ramoFromRoll(u, n)` decide o ramo com os bits BAIXOS do mesmo número `u` que escolheu a criatura (Arena e Desgarrado, §221): a contagem de chamadas de `rng` não muda e card = luta segue valendo; `RAMO_CHANCE` = 1/3.
+**Exports:** `EnemyStage`, `ENEMY_STAGES`, `ENEMY_STAGE_UNLOCK_LEVEL`, `RosterEntry`, `chaveBestiario(id, stage)`, `ENEMY_ROSTER`, `ENEMY_ROSTER_KEYS`, `rosterEntryOfKey(key)`, `pickEnemy`, `RAVEN_ID`, `RAVEN_ENTRY`, `RAVEN_SPAWN_CHANCE`, `withRaven(rng, pick, raven)`, `RAMO_CHANCE`.
+**Ramos evoluídos (04/11/2026, REGISTRO §220):** `kind: 'ramo'`, 120 entradas (40 ramos × champion/ultimate/mega) no fim de `ENEMY_ROSTER`. `pickEnemy` dá `RAMO_CHANCE` (1/3) do estágio a eles, com 1 só `rng`; `opts.semRamos` e level infinito os tiram do sorteio.
+**Corvo neutro (31/10/2026, REGISTRO §206):** `RosterEntry.kind` ganhou `'mascote'`, e `element` passa a ser o id FUNDIDO nos combinados (slug da arte; `elements` guarda os dois componentes — a tabela de vantagem é só das bases). `RAVEN_ENTRY` (id `corvo`, "Corvinho", elemento `neutro`, forma única, `artFile: 'corvo-neutro'`) entra no fim de `ENEMY_ROSTER`, fora de todo pool comum: aparece só por `withRaven(rng, pick, raven)` com chance `RAVEN_SPAWN_CHANCE` = 1/1000 por sorteio de inimigo. Os combinados também vêm dos lotes curados (`elementosLote1/2/3.data.ts`, trios e 4 componentes: os 2 primeiros mandam nos golpes).
 
 ### `src/utils/enemyRosterArt.ts`
-**Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`).
+**Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`), `INIMIGOS_API_ART`, `RAMOS_ART` (chave `<elemento>/<ramo>-<estágio>`, §220).
+**Sincronização 09/11/2026:** `FORMAS_ART` (150 formas champion/ultimate/mega dos combinados 212-261, chave `NNN-slug-<estágio>`) e `PARALELOS_ART` (10 formas paralelas, chave `<id>-<estágio>`), de 09/11/2026, junto de `RAMOS_ART` (chave = `RosterEntry.artFile`).
+
+### `src/utils/enemyRosterUltimates.ts`
+**Dono de:** os 14 Ultimates de 2 componentes que existem só como Ultimate, sem Champion (dono, 15/11/2026, REGISTRO §405): a tabela única `ULTIMATES_2COMP_DATA` (`[id, par, componentes, elemento dos golpes, nome]`; trocar um nome é editar a última coluna).
+**Chamado por:** `enemyRoster.ts` (`buildUltimates2Comp`, `kind: 'paralelo'`, no fim do roster) e `spriteElement.ts` (`par:<id>`). **Régua:** `enemyRoster.test.ts` (14 só-Ultimate, arte, 2 componentes, nome único) e `arenaComponentes.test.ts` (20 elementos com pool de 2 componentes).
 
 ### `src/utils/enemyRosterData.ts`
 **Dono de:** os 138 rookies de elemento combinado como dados puros (gerado de `assets/soulmon/novos-arquivo/manifest.json`): `[número, slug, nome, elemento 1, elemento 2]`; o elemento de combate é o 1º. **Exports:** `COMBINADOS_DATA`.
+**Sincronização 09/11/2026:** `PARALELOS_DATA` (09/11/2026: a versão alternativa do Champion e do Ultimate da linha de fogo em 5 elementos; tupla `[id, elemento do sprite, componentes, elemento DOS GOLPES, champion, ultimate]`; só entram no sorteio quando o elemento é pedido) e `RAMOS_INIMIGOS_DATA` (os 40 ramos evoluídos como inimigos, §220).
 
 ### `src/utils/wildFoeLabel.ts`
 **Dono de:** o rótulo exibido de todo Soulmon sem dono (inimigo de masmorra/Fenda/Calabouço; NPC, Torneio, Arena e PVP ficam de fora): estágios menores = "Soulmon selvagem"/"Wild Soulmon"; ultimate/mega/ultra (e o chefe de andar) = "Soulmon desgarrado"/"Stray Soulmon". Decisão do dono, 27/10/2026: nenhum nome próprio na tela; id/arte/chave do bestiário não mudam. **Exports:** `WILD_FOE_STRONG_STAGES`, `wildFoeLabel(tier, isPt)` (aceita estágio puro ou chave `<id>-<estágio>`). No bestiário a célula vista mostra `#<nº da coleção>`.
+
+### `src/utils/enemyRosterData.ts` (RAMOS_INIMIGOS_DATA)
+**Dono de (acréscimo 04/11/2026, §220):** os 40 ramos evoluídos: `[id da criatura, elemento, ramo, nome champion, nome ultimate, nome mega]`. Nomes gerados, renomeáveis sem migração.
 
 ### `src/utils/enemyRosterData.ts` (INIMIGOS_API_DATA)
 **Dono de (acréscimo 27/10/2026):** os 5 inimigos da API "à parte" (poda de 27/10/2026: o dono manteve R10/R14/R12/R19/R42 do banco; não contam na distribuição por elemento e podem repetir elemento; `[id, estágio, nome interno, elemento, nº do banco]`; arte em `assets/soulmon/inimigos-api/<id>-<estágio>.png`, carregada por `INIMIGOS_API_ART` em `enemyRosterArt.ts`; `RosterEntry.kind === 'api'`). Roster total: 17×4 + 138 + 5 = 211.
@@ -3896,6 +4571,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a regra pura da Colcha (id `patches`, EN "Patchwork"): dividir a grade em retângulos, cada um com UMA pista (a área, às vezes a forma). O gerador particiona primeiro e põe as pistas depois, então todo puzzle tem solução; rng por parâmetro.
 **Exports:** `PATCHES_MAX_BITS = 10`, `PATCHES_MIN_SIZE = 4`, `PATCHES_MAX_SIZE = 8`, `PatchShape`, `Rect`, `PatchClue`, `patchesBits`, `patchesForLevel`, `placeRect`, `rectBetween`, `rectHas`, `validatePatches`, `seededRng`.
 **Chamado por:** `src/components/mente/PatchesGame.tsx`
+
+### `src/utils/mente/selo.ts`
+**Dono de:** a regra pura do Selo Faltante: gerador semeado de matrizes, 6 opções balanceadas, escada de 7 níveis e pagamento.
+**Exports:** `seloForLevel`, `seloStep`, `seloBits`, `seloRuleCount`, `samePanel`, constantes `SELO_*`.
+**Chamado por:** `src/components/mente/SeloGame.tsx`
 
 ### `src/utils/mente/zip.ts`
 **Dono de:** a regra pura da Trilha do Pet (id `zip`, EN "Pet Trail"): um caminho único que passa pelos números em ordem e preenche todas as casas. O gerador monta o caminho hamiltoniano primeiro; todo puzzle tem solução.
@@ -3908,8 +4588,9 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Chamado por:** `src/components/RankingPanel.tsx`
 
 ### `src/utils/rogueDungeon.ts`
-**Dono de:** a lógica pura do Calabouço roguelike (M7, prédio `exploracao.dungeon` (ex-`jogos.dungeon`, #187)): incursão do dia de 3 andares × 8 desafios; a cada passo 1 de 3 caminhos (combate/puzzle/minigame/exploração, semente = dia + passo), combate obrigatório a cada 3 passos e no fim do andar; bônus só valem na incursão; perder combate encerra o dia. Score = desafios vencidos + 3 por andar (máx. 33, espelho de `_rankings.js`).
-**Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
+**Dono de:** a lógica pura do Calabouço roguelike (M7, prédio `exploracao.dungeon` (ex-`jogos.dungeon`, #187)): incursão do dia de 3 andares × 5 desafios (15 passos; eram 3×8, REGISTRO §457); a cada passo 1 de 3 caminhos (combate/puzzle/minigame/exploração, semente = dia + passo), combate obrigatório a cada 3 passos e no fim do andar; bônus só valem na incursão; perder combate encerra o dia. Score = desafios vencidos + 3 por andar (máx. 33, espelho de `_rankings.js`).
+**Sincronização 09/11/2026:** recuperação depois de uma derrota (§239: a derrota NÃO encerra mais o dia): `rogueHpNow(r, now)` (vida agora, no mesmo ritmo da Fenda), `rogueRestMs(r, now)` (ms até poder lutar de novo; 0 = pode), `settleRest(r, now)` (grava a vida recuperada ao voltar à luta; sem recuperação em curso devolve a mesma referência).
+**Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `ROGUE_LATE_FROM`, `ROGUE_LEGACY_STEPS`, `ROGUE_SAVE_VERSION`, `rogueWinValue`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
 **Chamado por:** `src/components/RogueDungeon.tsx`
 
 ### `src/utils/groveRaid.ts`
@@ -3917,13 +4598,27 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `GROVE_RAID_FOES`, `groveRaidLineup`, `GroveRaidRound`, `groveRaidRound`, `simulateGroveRaid`, `groveRaidOutcome`.
 **Chamado por:** `src/components/guild/PlantioVisor.tsx`, `src/components/guild/GroveRaidFight.tsx`
 
-### `src/utils/temaInimigos.ts` · `src/utils/temaInimigosArt.ts`
-**Dono de:** `temaInimigos.ts` — os inimigos TEMÁTICOS em dados puros (§204): `GROVE_RAIDERS` (5 pragas do Bosque) e `BARRAGE_ROSTER` (6 criaturas de espaço da Soul Barrage renovada), cada uma com UM elemento (`spriteElement` › `tema:<id>`), forma e golpes próprios; `kind: 'api'`, fora do `ENEMY_ROSTER`. `temaInimigosArt.ts` — a arte por `import.meta.glob` de `assets/soulmon/inimigos-tema/<id>-<forma>.png`, com placeholder = base do mesmo elemento (`placeholderOf`, `temaSpriteOf`).
-**Exports:** `GROVE_RAIDERS_DATA`, `BARRAGE_ROSTER_DATA`, `GROVE_RAIDERS`, `BARRAGE_ROSTER`, `TEMA_INIMIGOS` · `TEMA_ART`, `placeholderOf`, `temaSpriteOf`.
+### `src/utils/temaInimigos.ts`
+**Dono de:** `temaInimigos.ts` — os inimigos TEMÁTICOS em dados puros (§204): `GROVE_RAIDERS` (5 pragas do Bosque) e `BARRAGE_ROSTER` (6 criaturas de espaço da Soul Barrage renovada), cada uma com UM elemento (`spriteElement` › `tema:<id>`), forma e golpes próprios; `kind: 'api'`, fora do `ENEMY_ROSTER`. A arte mora em `temaInimigosArt.ts` (entrada própria logo abaixo).
+**Exports:** `GROVE_RAIDERS_DATA`, `BARRAGE_ROSTER_DATA`, `GROVE_RAIDERS`, `BARRAGE_ROSTER`, `TEMA_INIMIGOS`.
 **Chamado por:** `src/utils/soulBarrage.ts`, `src/utils/spriteElement.ts`, `src/utils/groveRaid.ts`, `src/components/SoulBarrage.tsx`, `src/components/guild/PlantioVisor.tsx`
+
+### `src/utils/temaInimigosArt.ts`
+**Dono de:** a ARTE dos inimigos temáticos de `temaInimigos.ts`: entra SOZINHA quando o PNG cai em `assets/soulmon/inimigos-tema/<id>-<forma>.png` (256², fundo transparente, olhando para a direita), por `import.meta.glob`. Até lá o PLACEHOLDER é a criatura base do MESMO elemento (`novos/<elemento>-<forma>.png`; sem a forma, a rookie) — nunca o sprite de outro elemento (regra "um sprite = um elemento").
+**Exports:**
+- `TEMA_ART` — mapa nome-do-arquivo (sem `.png`) → URL do glob.
+- `function placeholderOf(e: Pick<RosterEntry, 'element' | 'stage'>): string | undefined` — a base do mesmo elemento na mesma forma (ou a rookie).
+- `function temaSpriteOf(e: RosterEntry): string | undefined` — o sprite de qualquer entrada do roster: `TEMA_ART[artFile]` para `kind: 'api'`, senão `rosterSpriteOf(e)`, senão `placeholderOf(e)`.
+**Chamado por:** `src/components/guild/GroveRaidFight.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/components/SoulBarrage.tsx`.
+
+### `src/utils/bossSplash.ts`
+**Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`, `bossBattleTitleArt` (título "BOSS BATTLE" por glob), `resultOpponentSrc` (arte do adversário no resultado do Fusion).
+**Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
 
 ### `src/utils/soulBarrage.ts`
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
+**Sincronização 09/11/2026:** BOSS e Especial (pedido do dono 03/11/2026): a cada `BOSS_EVERY` (600) pontos entra um `Boss` grande (`BOSS_BASE_HP` 60 + `BOSS_HP_STEP` 20 por boss, `BOSS_POINTS` 200, `BOSS_SIZE`/`BOSS_R`/`BOSS_Y`), com chefes ESPECIAIS a cada `SPECIAL_BOSS_EVERY` (3; `isSpecialBossIndex`, HP ×`SPECIAL_BOSS_HP_MULT` 4). Especial do jogador: `SPECIAL_COST` (100 de carga), `specialReady(s)`, `activateSpecial(s, kind)`, `specialKindOf(family)` → `BarrageSpecial` (`beam`/`shield`/`heal`/`overdrive`/`pulse`/`slow`; família ausente = tiro grande), com `BigShot`, `BIG_SHOT_R`/`BIG_SHOT_SPEED`, `BEAM_BOSS_FRACTION` (0,15 da vida máxima do boss), `PULSE_DAMAGE`, `SHIELD_SECONDS`, `OVERDRIVE_SECONDS`, `SLOW_SECONDS`, `MAX_LIVES` (5), `PLAYER_MIN_Y`. Toque: `isTap`, `registerTap` (duplo toque), `TapPoint`, `TAP_MAX_MS` (250), `TAP_MAX_MOVE` (14), `DOUBLE_TAP_MS` (350), `DOUBLE_TAP_DIST` (48).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.
 **Chamado por:** `src/components/SoulBarrage.tsx`
 
@@ -3933,20 +4628,27 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/dungeonBase.ts` · `src/utils/nightmareWave.ts` · `src/utils/rogueDungeonSave.ts` · `src/utils/soulProfile/ficha/elementoIds.ts` (beta3, perf do bundle)
 **Dono de:** as partes LEVES que saíram de módulos pesados para tirar o roster, o motor de combate e a tabela de elementos do JS de entrada (régua `src/deploy/orcamentoDeBytes.contract.test.ts`). `dungeonBase.ts` — regras e constantes da masmorra sem o roster (`dungeon.ts` ficou só com `buildDungeonWave`). `nightmareWave.ts` — `buildNightmareWave`, sorteada dentro do chunk lazy do pesadelo. `rogueDungeonSave.ts` — `sanitizeRogueRun`, o tipo `RogueRun` e as constantes do Calabouço, lidos pelo `GameStateContext` sem puxar o motor. `elementoIds.ts` — lista leve dos ids de elemento usada por `elementoDoOraculo`; idêntica a `DERIVED_ELEMENT_PAIRS` (régua `elementoIds.test.ts`).
+**Sincronização 09/11/2026:** `ROGUE_FOE_RAMP` (`{ stepsPerFloor: 1,75, flat: 2 }` desde §457; era `3,1 / 0`): escala do inimigo nas lutas SEGUIDAS do Calabouço (dono 28/10/2026) — +1 "andar de golpes" a cada `stepsPerFloor` passos da incursão; medida por `winrateModos.sim.test.ts`. `over` virou ⚰️ (§239: combate perdido não encerra mais o dia; só lê save antigo) e `RogueRun` ganhou `hp`/`hpAt` (vida da incursão: `hpOf`, recuperação em `rogueDungeon.ts` › `rogueHpNow`). Constantes: `ROGUE_FLOORS` (3), `ROGUE_PER_FLOOR` (8), `ROGUE_MAX_STEPS` (24), `ROGUE_COMBAT_EVERY` (3), `ROGUE_FLOOR_BONUS` (3), `ROGUE_MAX_SCORE` (33, espelho de `functions/api/_rankings.js`); `POWER_STEP` 0,06, `VIGOR_STEP` 0,1, `HEAL_SHIELD` 0,15. `elementoIds.ts`: `IDS_DOS_CURADOS` (os 59 curados de `ELEMENTOS_CURADOS`: 50 dos lotes 1–3, 6 do lote 4 e 3 promovidos; elementos de 3 e 4 componentes, REGISTRO §232), `IDS_DOS_PARES` e `elementoConhecidoLeve(id)` (o id está na lista fechada: bases + pares + curados), travados por `elementoIds.test.ts`.
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/rogueDungeon.ts`, `src/utils/dungeonFight.ts`, `src/utils/nightmares.ts`.
 
-## Rodada 5 da beta3 (26/10/2026) — Loja do Clã e "Gerar de novo"
+## Buffs do clã (10/11/2026) — substituem a Loja do Clã (REGISTRO §281)
 
-- `src/utils/guildLoja.ts` — espelho do catálogo da Loja do Clã (ids/preços em paridade com `functions/api/_lojaCla.js`), arte de `DECOR_ART`, copy EN+PT. REGISTRO §175.
+- `src/utils/guildBuffs.ts` — espelho do catálogo/preço/duração dos Buffs, estado lembrado (`rememberClanBuffs`, `clanBuffActive`, `CLAN_BUFFS`), copy EN+PT. Paridade com `functions/api/_buffsCla.js` em `guildBuffs.test.ts`.
+- `src/components/guild/GuildBuffs.tsx` — o painel (substitui `GuildLoja`). Efeitos: `evolutionGauge.aplicarBuffClaGauge`, `dungeonBase.heartDropChance`, `hunger.clanRegenBoost`/`regenPoints`; `bitsOrigin.spendBitsIfCovered` (doação do saldo; §373).
+
+## Rodada 5 da beta3 (26/10/2026) — Loja do Clã (ABOLIDA em 10/11/2026) e "Gerar de novo"
+
+- ⚰️ `src/utils/guildLoja.ts` — MORTO (e91c1f8bd, 10/11/2026, #779): a Loja do Clã saiu e os Buffs (`guildBuffs.ts`) a substituem; o arquivo e `functions/api/_lojaCla.js` não existem mais. Era o espelho do catálogo da Loja (REGISTRO §175).
 - `src/components/guild/GuildLoja.tsx` — vitrine da Loja dentro do Salão (`GuildSheet`); compra por `buyGuildShopItem` com `opId` por item, nunca manda preço.
 - `functions/api/_lojaCla.js` — catálogo do servidor, `comprarNaLoja` (idempotente por `opId`, saldo = bits da Casa − gasto), `normalizarLoja`; ação `guildShopBuy` em `guild.js`.
-- `src/utils/spriteRegen.ts` — regras de cliente do "Gerar de novo" (50 Créditos, 1 por forma por mês, só `paid`), espelho de `functions/api/_spriteRegen.js`. REGISTRO §34b.
+- `src/utils/spriteRegen.ts` (16/11/2026: o id da operação usa `newUuid` de `utils/uuid`, sem o fallback manual) — regras de cliente do "Gerar de novo" (50 Créditos, 1 por forma por mês, só `paid`), espelho de `functions/api/_spriteRegen.js`. REGISTRO §34b.
 - `src/hooks/useRegenAparencia.ts` — gesto de regen: confirmação, `CreditsModal` sem saldo, `opId` por gesto com 1 retry.
 - `src/components/perfil/RegenAparencia.tsx` — Laboratório › Perfil: atual ao lado da nova, "Manter a atual"/"Usar a nova".
 - `functions/api/_spriteRegen.js` — débito antes da IA e devolução idempotente no `finally` de `generate-sprite.js` (`ent.aiRegen`, `ent.regenOps`); kill-switch `SPRITE_REGEN_DISABLED`.
 
 ### `src/utils/mente/mindTutorials.ts` (beta3, tutorial dos jogos do Ateliê da Mente)
 **Dono de:** o "visto" do tutorial de primeira vez de cada jogo do Ateliê (Eco do Pet, Trilha do Pet/Zip, Colcha/Patches): `sanitizeMindGameTutorials` (aceita só `true` literal de chave conhecida; lixo vira `{}`) e `markMindGameTutorial` (idempotente). Campo do save: `mindGameTutorials` (`{ eco?, zip?, patches? }`), gravado AO MOSTRAR, com leitura tolerante em `hydrateSave`.
+**Sincronização 09/11/2026:** `MindTutorialGame` (`MindGameId | 'patches'`): a Colcha guarda os passos de tutorial dela para o Calabouço legado.
 **Chamado por:** `src/contexts/GameStateContext.tsx`, `src/App.tsx`, `src/components/nav/AreaView.tsx`. **Régua:** `src/components/mente/mindTutorial.render.test.tsx`.
 
 ### `src/utils/elementLabels.ts`
@@ -3955,18 +4657,24 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 
 ### `src/utils/elementDex.ts`
 **Dono de:** o dex de elementos (27/10/2026): o catálogo (20 base + 190 derivados), o id de elemento de um inimigo (`elementIdOfFoe`: composto libera só o composto, nunca as bases), `applyElementsDefeated` (idempotente) e `sanitizeDefeatedElements` (forma segura do campo `defeatedElements`, espelhada no servidor). Começa vazio para todos, sem retroativo. **Chamado por:** `dungeonRewards.ts`, `GameStateContext.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`, `ElementDex.tsx`. **Régua:** `elementDex.test.ts`, `functions/api/elementDex.parity.test.js`.
+**Sincronização 09/11/2026:** `ESSENCE_ELEMENT_IDS` (os 210 do catálogo + os 59 curados `ELEMENTOS_CURADOS`, sem o `neutro`), `isEssenceElement(id)` e `essenceComposition(id)` (bases distintas: base = ele mesmo; par = 2; curado = 3–4; `undefined` sem essência) — 08/11/2026, dono: curados "funcionam iguais aos equivalentes" (têm essência e poção). `ALL_ELEMENT_IDS` segue fixo em 210 (Forja Hex, arte de item, paridade da Loja).
+**Biblioteca (01/11/2026):** `ELEMENT_DEX_MAX` passa de 210 para **261** (inclui os curados de `elementosCurados.ts`); `LIBRARY_ELEMENT_IDS` (dex + curados) · `isLibraryElement(id)` · `dexIdsOfFoe(foe)` (os ids do dex que vencer este inimigo libera).
+(O catálogo da "Dono de" acima, 20 base + 190 derivados = 210, vale até 31/10/2026; a Biblioteca soma os curados e o teto é 261.)
 
 ### `src/utils/essenceShop.ts`
 **Dono de:** o preço EXIBIDO das essências no Cambista (30/10/2026, REGISTRO §205) — `ESSENCE_PACK_SIZES` (1 e 5), `essenceUnitPrice` (base 1, par 2, 3+ bases 3, pela `elementComposition`), `essencePackPrice` (5 = 10% off arredondado para baixo). Quem cobra é o servidor (`functions/api/_essenceShop.js`, paridade em `essenceShop.parity.test.js`); a chamada é `buyEssence` em `utils/entitlements.ts`.
 
 ### `src/utils/essences.ts`
 **Dono de:** as essências dos elementos (28/10/2026, REGISTRO §183): `GameState.essences` (`{elementId: qtd}`, só cresce, só coleta) e `essenceAway` (contador do dia da descida AUTOMÁTICA, teto `ESSENCE_AWAY_DAILY_CAP` = 30/dia; a luta ativa não tem teto). **Exports:** `essenceQtyOfStage` (rookie 1, champion 2, ultimate/mega 3), `essenceQtyOfBoss` (5..9), `essenceDropOfFoe`, `applyEssences`, `applyEssencesAway`, `sanitizeEssences`, `sanitizeEssenceAway`, `essenceName` (EN/PT). Espelhado em `functions/api/_essences.js` e `_dayCounters.js`.
+**Sincronização 09/11/2026:** `essenceDropsOfFoe(foe, stage)` — os drops de um inimigo (08/11/2026): a essência do elemento dele E, se o elemento do SPRITE for um curado, a do curado também (mesmo critério de `dexIdsOfFoe`).
+**Gasto de essências (30/10/2026, Poção de Elemento):** `ESSENCE_SPENT_MAX_PER_ELEMENT` (1 bilhão) · `sanitizeEssenceSpent(raw)` (`GameState.essenceSpent`: acumulado GASTO por elemento, só cresce; mesma forma de `essences`, teto próprio; espelho em `_essences.js`) · `spendEssences(prev, cost)` (tudo-ou-nada: `null` se qualquer custo passa do saldo; desconta do saldo e soma a `essenceSpent` — o servidor só deixa o saldo baixar pelo aumento de `essenceSpent`).
 
 ### `src/utils/elementDexMatchups.ts`
 **Dono de:** forte contra / fraco contra de um elemento do dex (`elementMatchups`), pelo anel de `arena.ts` e, para derivado, pela base dominante. Separado do `elementDex.ts` para o dex leve não puxar o `arena.ts` para o `App`. **Chamado por:** `ElementDex.tsx`. **Régua:** `elementDex.test.ts`.
 
 ### `src/utils/strayFoes.ts`
-**Dono de:** onde o Soulmon desgarrado aparece como OPONENTE (27/10/2026): a semente de run da Arena que vira Desgarrado (`isStraySeed`, 12%), os 3 cards com no máximo um (`arenaCardSeeds`) e o Desgarrado do dia que preenche o Torneio sem par (`strayForTournament`, estável por conta+dia). Determinístico, nunca `Math.random`. **Chamado por:** `DueloSheet.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`. **Régua:** `strayFoes.test.ts`.
+**Dono de:** onde o Soulmon desgarrado aparece como OPONENTE (27/10/2026): a semente de run da Arena que vira Desgarrado (`isStraySeed`, 12%), os `ARENA_CHOICES` cards com no máximo um (`arenaCardSeeds(draw, n)`, `n` obrigatório desde §370) e o Desgarrado do dia que preenche o Torneio sem par (`strayForTournament`, estável por conta+dia). Determinístico, nunca `Math.random`. **Chamado por:** `DueloSheet.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`. **Régua:** `strayFoes.test.ts`.
+**Sincronização 09/11/2026:** `STRAY_RAMOS` — os ramos evoluídos ULTIMATE/MEGA também podem ser o Desgarrado do Torneio (§221, 04/11/2026; champion fica de fora).
 
 ### `src/utils/rewardReveal.ts`
 **Dono de:** o cronograma PURO da revelação de recompensa (sem relógio, sem som, sem DOM): `rewardTimeline(steps)` devolve os eventos `pop`/`roll`/`tick`/`land` com o instante de cada um (ícones a cada ~250 ms, escadas a 200 ms, odômetro de 900 ms), `pitchStep` (o "pop" sobe um semitom por ícone, com teto), `odometerDigits` e `reelLoops`. Todo par de eventos sonoros fica FORA da janela de coincidência da R-EX (120 ms). **Chamado por:** `hooks/useRewardReveal.ts`, `components/ui/RewardPop.tsx`. **Régua:** `rewardReveal.test.ts`.
@@ -3980,6 +4688,11 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/bbStage.ts`
 **Dono de:** a forma BB, estágio ANTES do rookie (Onboarding Velado, REGISTRO §207): HP máx 6, sem requisito diário, evolui quando `bondLevelFor(totalXP) >= 2`, `bbRefusal` para torneio/duelo/guilda, `sanitizeStageId` e o interruptor `isOnboardingVelado`.
 
+**Delta 17/11/2026 (REGISTRO §472, Início BB):** `isInicioBB`/`setInicioBB` (ligado por padrão; `VITE_INICIO_BB=false` desliga no build) e `bbNoNascimento()` (Início BB OU o interruptor): `initialStageForNewSave` devolve `bb` para TODO save novo; o motor do oráculo monta `creature.bbPrompts` com `bbNoNascimento()`.
+
+### `src/utils/inicioBB.ts`
+**Dono de:** o começo novo (Início BB, REGISTRO §472, 17/11/2026): `nasceuBB` (o save tem `bb` em `unlockedEvolutions`, sem campo novo), `evolucaoPaga` (D8 para quem nasceu BB: BB → rookie grátis, rookie → champion pede conta paga; delega a `evolutionPaywalled`), `inicialNaoEvolui` (os 5 iniciais não evoluem, exceto o BB que vira um), `inicialDoBB` (o inicial do grátis, determinístico pela conta) e `elementoDoInicial` (filtra o sorteio do BB do pool), e o marcador POR APARELHO "ainda vai chocar" (`STORAGE_KEYS.BB_NASCIMENTO`: `sanitizeBBNascimento`, `lerBBNascimento`, `gravarBBNascimento`, `limparBBNascimento`, `aguardandoChocar`, `prontoParaChocar`) e `recusaGeracaoBB` (BB personalizado só no nascimento; espelho de `functions/api/_velado.js`, que `generate-sprite.js` aplica com 409 `bb-birth-only`). **Chamado por:** `App.tsx` (nascimento, pedido do BB depois de o jogo abrir, chocar em tela cheia, botão/convite de evoluir), `components/EvolutionPath.tsx`, `components/SoulmonOnboarding.tsx` (`inicialDoBB`). **Régua:** `inicioBB.test.ts`, `components/ChocarBB.render.test.tsx`, `components/SoulmonOnboarding.inicioBB.render.test.tsx`.
+
 ### `src/utils/bbNascimento.ts`
 **Dono de:** quem é o BB no NASCIMENTO (Onboarding Velado D30-D32): `deveGerarBBExclusivo` e `gerarBBExclusivo` — o pagante que JÁ ENTRA pagando gera o BB exclusivo pelo pipeline de sprite (formId `bb`, prompt do estágio bb em `creature.bbPrompts`), com espera `BB_EXCLUSIVO_ESPERA_MS` (12 s) e `null` em falha (cai no BB do pool, `data/bbPool.ts`). Free nunca gera; quem paga depois (`jaTemBB`) não gera BB. **Chamado por:** `App.tsx` (`obterBBExclusivo`) → `SoulmonOnboarding`. **Régua:** `bbNascimento.test.ts`, `bbNascimento.ligacao.test.ts`.
 
@@ -3990,7 +4703,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** `pedirFreeRookie`: POST `/api/free-rookie`, devolve a imagem do rookie grátis por e-mail ou `null` (o chamador usa o inicial pronto).
 
 ### `src/utils/mercMission.ts`
-**Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia, `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
+**Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia (tarefa de UM dia do catálogo próprio `src/data/mercTarefas.ts`, com benefício PT/EN; `tarefaDaMissao` e `renovarMercPendente` trocam a proposta pendente fora da regra, §245), `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
 
 ### `src/utils/mercMissionSave.ts`
 **Dono de:** os tipos de `mercMission` e o `sanitizeMercMission` sem o catálogo de atividades, para a entrada (`GameStateContext`) não puxar o `mercMission.ts` inteiro. Espelho: `functions/api/_mercMission.js`.
@@ -4004,12 +4717,23 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/elementosLote3.data.ts`
 **Dono de:** o lote 3 dos 50 elementos curados, no mesmo formato do lote 1.
 
+### `src/utils/elementosLote4.data.ts`
+**Dono de:** o lote 4 dos elementos curados (nº 262-267: Clareira Sagrada, Alto-Forno, Bênção Feérica, Floresta Ancestral, Colosso Blindado, Corte Feérica) e `CURADOS_PROMOVIDOS_DATA` (Pestilência, Maldição, Cyber, nº 205-207). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts`, `enemyRosterArt.ts`, `spriteElement.ts`.
+
+### `src/utils/elementosLote5.data.ts`
+**Dono de:** o lote 5 dos elementos curados (nº 268-271, P5, 23/11/2026, REGISTRO §500): 4 trios, `[número, id, nome PROVISÓRIO do Soulmon, dominante, comp. 2, comp. 3]`: `fantasma` (morte, vida, tempo), `morto_vivo` (morte, vida, vileza), `sangue` (vida, vileza, água), `furia` (fogo, vigor, vileza). O 1º componente é o dominante (golpes, arte de reserva, vantagem). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts` (`buildLote5`, no FIM do roster para não deslocar o #N do Bestiário), `enemyRosterArt.ts`, `spriteElement.ts`. Espelhos do servidor: `_duel.js`, `_elementoBase.js`, `_essenceShop.js`, `_elementDex.js`. **Régua:** `elementosLote5.test.ts`.
+
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
 
+### `src/utils/elementoCategoria.ts`
+**Dono de:** a categoria de um elemento na aba Elementos da Biblioteca (P5/24.3): `elementoCategoria(id)` = base (20) · ii (pares) · iii (curados de 3) · iv (curados de 4) · special (só o `neutro`; não existe elemento Nightmare no dex), `ELEMENTO_CATEGORIAS`, `ELEMENTO_CATEGORIA_ROTULO` (PT/EN). **Chamado por:** `ElementDex.tsx`. **Régua:** `ElementDex.drive.render.test.tsx`.
+
 ### `src/utils/elementosCurados.ts`
-**Dono de:** os 50 elementos curados (212–261, lotes 1–3) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
+**Dono de:** os 63 elementos curados (205–207 promovidos, 212–271, lotes 1–5) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
+**Sincronização 09/11/2026:** os curados passaram de 50 para 59 (os 50 dos lotes 1–3, os 6 do lote 4 de `elementosLote4.data.ts` — planta, industrial e fada — e os 3 trios promovidos 205–207: Pestilência, Maldição, Cyber; 05/11/2026, emenda ao §232). Os promovidos não geram roster (já existem). Nomes novos de cenário/elemento: `clareira`, `alto_forno`, `bencao_feerica`, `floresta_ancestral`, `colosso_blindado`, `corte_feerica`, `pestilencia`, `maldicao`, `cyber`.
+**Sincronização 23/11/2026 (P5, §500):** de 59 para 63, com os 4 trios do lote 5 (`fantasma`, `morto_vivo`, `sangue`, `furia`; ver `elementosLote5.data.ts`). `ELEMENT_DEX_MAX` 270 para 274 (cliente e servidor).
 
 ### `src/utils/libraryNew.ts`
 **Dono de:** o aviso de entrada nova na Biblioteca (01/11/2026): `GameState.libraryAck = {b,e,s}` (tamanhos de bestiary/defeatedElements/strayPlayersSeen na última abertura), o que é NEW (`libraryNewKeys`/`libraryNewCount`), a abertura que grava o visto (`ackLibrary`) e o texto exato do aviso. Save antigo nasce sem NEW retroativo. **Chamado por:** `App.tsx`, `LibraryPage.tsx`, `GameStateContext.tsx`. **Régua:** `libraryNew.test.ts`, `LibraryNewBadge.render.test.tsx`.
@@ -4020,8 +4744,240 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/strayPlayerEncounter.ts`
 **Dono de:** o desgarrado de JOGADOR nos encontros (REGISTRO §213 emenda): chance determinística de 1/40 por chave de encontro (`strayPlayerForEncounter`), o pool da sessão (`loadStrayPool`), o hook `useStrayPlayerEncounters` (arte/rótulo por cima do inimigo) e o receptor do "visto" registrado pelo App. Nunca no Torneio. **Chamado por:** `DungeonGame.tsx`, `RogueFight.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `App.tsx`. **Régua:** `strayPlayerEncounter.test.ts`.
 
-## `src/utils/hexsmith.ts` (01/11/2026)
-**Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = alcance só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
+### `src/utils/hexsmith.ts`
+**Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = tipo do ataque básico, só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `applyServerHexForge` (aplica no estado local a forja que o servidor confirmou, §216: a tela forja por `cloudSave.ts` › `cloudHexForge`, nunca localmente); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
+**Exports:** tipos `HexSlot` (`coroa`/`amuleto`/`garra`/`couraca`/`luvas`), `HexStrike` (`magic`/`ranged-slash`/`melee-slash`/`melee-smash`; legado `ranged`/`melee` migra por `migrateHexId`), `HexCost`, `HexsmithState` (`owned`, `equipped`), `HexForgeState`, `HexRefusal` (`invalid`/`owned`/`potions`/`bits`/`fragments`), `HexOverrides` · constantes `HEX_SLOTS`, `HEX_ELEMENT_SLOTS` (amuleto, garra, couraça), `HEX_STRIKES`, `HEX_COSTS` (elemento: 1 poção + 12 fragmentos + 1500 Bits; coroa: 2000 Bits + 20 fragmentos; luvas: 500 Bits + 5 fragmentos — números PADRÃO, o dono ajusta), `EMPTY_HEXSMITH`, `HEX_MAX_OWNED` (639) · `hexItemId`, `parseHexItem`, `isHexItem`, `hexValuesOf`, `hexCost`, `migrateHexId`, `strikeParts`, `sanitizeHexsmith`, `hexForgeRefusal` (a ordem é a da tela: poções, fragmentos, Bits), `forgeHexItem` (recusa = o MESMO objeto), `applyServerHexForge(prev, id, paid)`, `equipHexItem`, `unequipHexSlot`, `hexOverrides`, `hexFamily`, `hexArenaElements`, `hexIdentity`. Estado persistido: `GameState.hexsmith = { owned, equipped }`. O Bit que veio de Crédito não paga (`bitsOrigin.ts › earnedBits`). Não dá % de atributo (teto de 5% de `combate/bonus.ts` intocado). Módulo puro.
+**Chamado por:** `src/contexts/GameStateContext.tsx`, `src/hooks/useHexOverrides.ts`, `src/components/hex/HexsmithSheet.tsx`, `src/components/hex/HexSlotGlyph.tsx`, `src/components/ArenaGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/RogueFight.tsx`, `src/components/NightmareBattle.tsx`, `src/components/TournamentPage.tsx`, `src/components/guild/GroveRaidFight.tsx`, `src/components/GuideModal.tsx`, `src/utils/hexsmithCopy.ts`, `src/assets/soulmon/hex/index.ts`.
+**Atualização 13/11/2026 (REGISTRO §325):** `hexIdentity` FIXA o acabamento do básico (`impacto`, Magia/corte) que a identidade tinha sem itens: só as Luvas trocam o tipo do ataque; Coroa/Amuleto/Garra trocam família/elemento e mais nada (antes a troca mudava a `chaveDaIdentidade` e, com ela, o sorteio estável). Régua: `src/utils/hexsmith.tipoAtaque.test.ts`.
+**Régua:** `src/utils/hexsmith.test.ts`.
 
-## `src/utils/hexsmithCopy.ts` (01/11/2026)
+### `src/utils/hexsmithCopy.ts`
 **Dono de:** os textos EN/PT-BR da tela da Hexsmith (`components/hex/HexsmithSheet.tsx`): rótulos dos slots, código hex e motivos de recusa em tom de convite.
+**Exports:** `tx(par, isPt)` · `HEX_SLOT_COPY` (nome, porta, efeito e linha de cada slot) · `hexName(value, isPt)` (`HEX de X` / `X HEX`) · `HEX_FAMILY_COPY` · `HEX_STRIKE_COPY` · `hexRefusalText(r, isPt, el?)` (o motivo que desabilita "Forjar", em tom de convite: onde se consegue o que falta) · `HEX_UI` (rótulos da tela, incluindo as mensagens de forja offline/falha/sem saldo — "nada foi cobrado"). Regras e números vêm de `hexsmith.ts`; nada de literal de regra aqui.
+**Chamado por:** `src/components/hex/HexsmithSheet.tsx`.
+
+### `src/utils/soulProfile/ficha/especialNome.ts`
+**Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
+**Exports:** `comNomeDoEspecial(skills, nome)`.
+**Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).
+
+### `src/utils/widgetEvents.ts`
+**Dono de:** a DRENAGEM da fila do check do widget grande da Home (decisão do dono, 18/11/2026): o widget só marca e grava um evento nativo (`WidgetEventQueue.kt`); o app aplica cada `task_done` ao abrir ou voltar ao primeiro plano, pela regra do toque na Home (`applyTaskCompletion`, `taskCompletionPay.ts`).
+**Exports:**
+- `WidgetEvent` (tipo) — `{eid, kind, ref, dayKey?, ts?}` como vem do nativo. `task_done` paga por `applyTaskCompletion`; `habit_done` (adendo ao §478) por `applyHabitCompletion`, só se `dayKey` = hoje (`localIsoDay`), hábito existe e não tem etapas; outro `kind` é descartado (vai no ack sem aplicar).
+- `function sanitizeWidgetEvents(raw)` — filtra o que veio do plugin (eid em forma de UUID, `ref` até 200).
+- `function sanitizeApplied(raw)` · `WIDGET_APPLIED_CAP` (200) — o registro de `eid` já aplicados neste aparelho (`STORAGE_KEYS.WIDGET_EVENTS_APPLIED`).
+- `function applyWidgetEvents(state, events, applied, now)` — aplica em ordem de `ts`; devolve `handled` (tudo que vai no `ack`), `applied` (registro novo) e `paid` (o que pagou, para o feedback). Sem nada a pagar, a MESMA referência. Pura (updater).
+**Chamado por:** `src/App.tsx` (`drenarWidget`: 2,5 s depois do boot e 0,8 s depois de voltar ao primeiro plano; o `ack` só no efeito seguinte, depois de o provider gravar o save local).
+**Régua:** `src/plugins/widgetHomeFila.contract.test.ts` (paga igual ao toque, uma vez; reaplicar = no-op com e sem registro; já concluída/sumiu = ignora; APK sem o comando; fontes).
+**Avisos do arquivo:**
+- ⚠️ O widget NUNCA dá comida, XP nem Bits. A copy do widget não promete ganho na hora.
+- ⚠️ Nada de `pop`: `peek` → aplicar → gravar → `ack`. Reabrir no meio = reaplicar, e reaplicar é no-op.
+
+### `src/utils/widgetFrames.ts`
+
+**Dono de:** as molduras do widget V-Pet por elemento base: catálogo, posse (evolução ou compra real) e moldura equipada.
+
+**Chamado por:** `src/components/WidgetFramePicker.tsx`, `src/contexts/GameStateContext.tsx`.
+
+### `src/utils/elementoCombinado.ts`
+
+Dono da regra do elemento combinado por estágio (§232): tabela de chances, sorte fixa, escolha contendo a base nº 1, registro imutável e prompt das formas novas. **Régua:** `elementoCombinado.test.ts` e `elementoCombinado.balanco.test.ts` (±3pp por modo, com prova vermelha).
+
+### `src/utils/elementoDescritoresStore.ts`
+
+Ponteiro minúsculo da tabela de descritores de elemento (`elementoDescritores.data.ts`, ~50 KB) e do `_chromaHue.js`, que vivem atrás de `import()` fora do chunk de entrada (REGISTRO §497). `carregarDescritoresElemento()` (idempotente) é disparada no boot pelo `App`; a geração de sprite só liga com a tabela carregada. Nos testes o `setupFiles` (`vitest.setup.descritores.ts`) já a registra. **Régua:** `elementoCombinado.test.ts`, `elementoDescritores.test.ts`.
+
+### `src/utils/elementoJornada.ts`
+
+Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Espelho: `functions/api/_elementoJornada.js`.
+
+### `src/utils/restaurant.ts`
+**Dono de:** a regra do Restaurante do Mercado (05/11/2026, `docs/RESTAURANTE.md`) — `DISHES` (12 pratos), `chefsOn`/`menuOn`/`playerWeekday` (seg/qua/sex Snapjaw, ter/qui/sáb Caldo, domingo os dois), `cookRefusal`/`applyCook` (debita comidas, extra e Bits, enche a fome por `eat`, energia por `setEnergy` ou buff de 24 h), `DISHES_PER_DAY`. Régua: `restaurant.test.ts`.
+
+### `src/utils/restaurantState.ts`
+**Dono de:** o estado leve do Restaurante no save (`RestaurantState`, `sanitizeRestaurant`, `MEAL_BUFF_VALUE_CAP`, `activeMealBuff`, `mealAttrBonus` — o buff de combate entra pelo `combinedAttrBonus`). Lido pelo `GameStateContext` e pelo `useTalentBonus`.
+
+### `src/utils/restaurantCopy.ts`
+**Dono de:** os textos do Restaurante (EN + PT): `CHEF_VOICE`, `SUNDAY_LINE`, `effectText`, `refusalText`, `COMBAT_NOTE`. Só texto.
+
+### `src/utils/mensageiro.ts`
+
+Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), estado da caixa de cartas (nova, item pendente, lidas apagáveis, recuperação do que o servidor já entregou), totais do pop-up e o aviso do Papus. `MailKind` inclui `guild-invite` (§358) e `isGuildInvite` (carta com `guildCode`). Decisão: REGISTRO §241, §246, §288 e §358. **Régua:** `src/utils/mensageiro.test.ts`.
+Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), separação entre carta nova e carta só a confirmar, e a fala do Papus. Decisão: REGISTRO §241. **Régua:** `src/utils/mensageiro.test.ts`.
+
+### `src/utils/focusJourney.ts`
+
+Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por chave, tetos diários e a espinha da trilha. Decisão: REGISTRO §247. **Régua:** `focusJourney.test.ts`, `focusJourney.parity.test.ts`.
+
+### `src/utils/focusBoard.ts` · `src/utils/focusJourneyApi.ts`
+**Sincronização 09/11/2026:** cliente de `/api/focus-journey` (§247; o servidor é o relógio e o caixa). Tipos `ActiveJourney` (`sid`, `seed`, `mode`, `env`, `keys`, `day`, `startAt`, `pausedMs`, `pausedAt`, `pauses`) e `JourneyResponse` (`active`, `ledger`, `grants`, `dungeonKeyDay`, `now`, `error`); `journeyState(saveId, day)`, `journeyStart(saveId, { mode, env, keys, day })`, `journeyAction(saveId, 'pause' | 'resume' | 'claim' | 'end')`. Chamado por `components/play/FocusBoard.tsx` e `components/play/JourneyScreen.tsx`.
+
+O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.
+
+### `src/utils/treinoTickets.ts` (10/11/2026 — REGISTRO §280)
+
+Tickets do Treino (aba Sparring do Torneio): 20 partidas COM Honra grátis por dia do jogador (`TREINO_TICKET_MATCHES`) e ticket extra de 30 Bits (`TREINO_EXTRA_TICKET_BITS`) = +20 sem Honra, máx. 3/dia (`TREINO_EXTRA_TICKETS_MAX`). O contador mora no servidor; aqui ficam as constantes espelhadas, `sanitizeTreinoTickets`, `treinoBuyRefusal` (`max-extras`/`no-bits`) e `chargeTreinoTicket` (cobra do saldo, o pago primeiro, reconfere sobre o `prev`). Chamado por `App.tsx` e `TournamentPage`. Régua: `treinoTickets.test.ts` e `community.treino.tickets.test.js`.
+
+### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
+
+Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.
+
+### `src/utils/modalLayer.ts` (09/11/2026)
+
+Modal sempre acima do voltar da página. `syncModalFlag` liga/desliga `body[data-modal-open]` conforme exista `aria-modal`/`role=dialog` visível no DOM; `watchModalLayer` (montado no `App`) observa o DOM com um `MutationObserver` e chama o sync por frame. O CSS (`index.css`) esmaece e desativa os `.sm2-area-back` da PÁGINA enquanto o flag existe; o voltar dentro do próprio modal fica de fora. `Z_ABOVE_BACK` (60) é o piso de z-index dos overlays (o voltar é 45). Régua: `modalLayer.test.ts`.
+
+### `src/utils/usageTime.ts` (09/11/2026 — docs/PLANO-METRICAS.md)
+
+Tempo de uso por tela/feature/minigame, agregado e sem ID por pessoa: `setActive(kind, name)` acumula segundos do dia no aparelho (pausa em segundo plano), `flushUsageDays` manda um `time_spent` por par com a FAIXA do total quando o dia fecha, `trackMinigame` emite `minigame_start`/`minigame_end`, `installUsageTime` liga a pausa e a sessão (`session_end`). Opt-out apaga o acumulado (`K_USAGE`). Registros de nomes espelhados em `functions/api/_usageRegistry.js`.
+
+### `src/utils/appUpdate.ts`
+
+Decisao pura do modal de atualizacao (11/11/2026): `decideUpdate(installed, cfg)` -> `'block'` (< minVersionCode) | `'suggest'` (< recommendedVersionCode) | `'none'`; `parseAppConfig`, `parseInstalledBuild`. Dado ausente/invalido = `'none'` (fail-open). Regua: `appUpdate.test.ts`.
+
+### `src/utils/playReview.ts`
+
+Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `shouldAskReview` (so evolucao para cima, nunca depois de aceitar), `markAsked`, `markAccepted`, `storeUrl`. Estado em `STORAGE_KEYS.PLAY_REVIEW`.
+
+### `src/utils/glitchtamaTeste.ts`
+
+EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
+
+### `src/utils/glitchtamaBuff.ts` (10/11/2026 — REGISTRO §276)
+
+Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `glitchtamaUsadoEm` (`glitchtamaBuffAtivo`, `glitchtamaExpiraEm`, `glitchtamaDiasRestantes`; relógio que volta continua dentro da janela), saneamento do save (`sanitizeGlitchtamaUsadoEm`, `sanitizeGlitchtamaCarry`) e `aplicarBuffGlitchtama` (+10% sobre o ganho, fração no carry). Usado por `specialItemUse.ts` (recusa `weekly-cap`), `dailyReset.ts` (único ponto onde o +10% entra), `GameStateContext.tsx` (hidratação) e `App.tsx`/`EvolutionPath.tsx` (UI). Espelho no servidor: `functions/api/_glitchtama.js`.
+
+### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
+
+O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
+
+**Atualização 12/11/2026 (REGISTRO §308):** formato ENXUTO — `sources` é só a lista de lugares ("Encontrado em Caderno, Expedições do Foco" / "Found at …") e `uses` só os lugares de uso via `usePlacesOfMaterial` ("Usar em Soulsmith, Restaurante" / "Use …"); a Mochila põe os rótulos em negrito. As Essências saíram de `EXTRA_MATERIALS` (e `Mochila` não recebe mais `extras.essences`): moram só no Laboratório › Arquivo (`EssencesSection`).
+
+### `src/utils/formaEquip.ts` (10/11/2026)
+
+Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.
+
+### `src/utils/elementoTextos.data.ts` (23/11/2026, P5)
+**Dono de:** os textos dos 20 elementos BASE no modal do dex (descrição do elemento + parágrafo conceitual), em PT e EN, aprovados pelo dono em 23/11/2026 (`docs/TEXTOS-ELEMENTOS-ARCANOS-FINAL.md`). `TEXTOS_ELEMENTO_BASE` (id → `{pt, en}`) e `textoDoElementoBase(id, isPt)`. O arcano de cada texto é metadado só do doc e não aparece no app. Combinados, curados, neutro e os 4 do lote 5 não têm texto próprio (`undefined`). Só `ElementDex` importa (fora da entrada). Régua: `src/components/ElementDex.textos.render.test.tsx`.
+
+### `src/utils/elementoDescritores.data.ts` (10/11/2026)
+
+Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.
+
+### `src/utils/feiraLoja.ts`
+**Dono de:** o lado CLIENTE da Feira de verdade: tipos, `sanitizeFeiraLoja`, `feiraLojaAbre`, `feiraLojaShownKey`, compra local ao preço da oferta (`applyFeiraLojaBuy`) e entrega da Hexsmith (`applyServerFeiraHex`).
+**Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/FeiraLojaSheet.tsx`.
+
+### `src/utils/hexsmithRename.ts` (11/11/2026, §287)
+
+**Dono de:** a parte pura de RENOMEAR na Hexsmith. **Exports:** `HEX_RENAME_COST` (200 Bits), `HEX_RENAME_MAX` (20), `hexRenameClean`, `hexRenameRefusal` (`empty`/`invalid`/`same`/`bits`), `applyServerHexRename` (aplica o que o servidor confirmou; nunca saldo negativo). **Chamado por:** `components/hex/HexsmithSheet.tsx`, `HexRenameModal.tsx`. **Server:** `cloudHexRename` em `cloudSave.ts` → `POST /api/save?action=hexRename`.
+
+### `src/utils/focusJourneyCamera.ts` · `src/utils/focusSession.ts` · `src/utils/materialIcons.ts` · `src/utils/journeyItemInfo.ts` (12/11/2026 — REGISTRO §300)
+
+`journeyCamera({ petY, blocks, screenW, screenH, clockBottom, margin?, lookahead? })` devolve o `vbTop` do SVG da jornada: segue o bicho e garante o topo do sprite abaixo do card do relógio (`petTopPx` mede; `JOURNEY_TOP_PAD` é o teto extra). `focusSession.ts`: `FocusSessionState { taskId, taskName, collected, cycles }`, `loadFocusSession`/`saveFocusSession` (`soulmon-foco-session`, aparelho). `materialIconSrc(id)` resolve os slots `src/assets/soulmon/icons/materiais/<id>.(webp|png)`; `journeyItemInfo`, `mergeItems`, `totalQty` descrevem e somam itens. **Régua:** `focusJourneyCamera.test.ts`, `journeyItemInfo.test.ts`.
+
+### `src/utils/focusRest.ts` · `src/utils/focusNotify.ts` (12/11/2026 — REGISTRO §301)
+
+`focusRest.ts`: `REST_MIN` (`p25: 5`, `p50: 10`), `RestState { startedAt, mode, env, items, key }`, `restEndsAt/restLeftMs/restOver`, `restFromFocusEnd(focusEnd, delta, now, rest)` (o descanso nasce no FIM do foco, corrigido pelo relógio do servidor, nunca no futuro), `normalizeRest/loadRest/saveRest` (`soulmon-foco-rest`, aparelho, descarta > 12 h) e `alarmClock(at)` ("HH:mm" arredondado PARA CIMA). `focusJourney.ts` ganhou `focusEndAt(clock)` (nulo em pausa). `focusNotify.ts`: `scheduleFocusAlarm(kind, at, language)` / `cancelFocusAlarm(kind)` para `'focus-end'` («Hora do descanso») e `'rest-end'` («O descanso acabou»): alarme nativo `SoulmonAlarm` no APK, timer + `showNotification` na web (só em segundo plano e com permissão). **Régua:** `focusRest.test.ts`, `focusNotify.test.ts`.
+
+### `src/utils/atividadeEmCurso.ts`
+
+**`atividadeEmCurso` (12/11/2026, §306):** `atividadeEmCurso(sinais) → 'area' | 'masmorra' | 'foco' | 'modal' | null`, `estaOcioso`, `focoEmAndamento`, `ATIVIDADE_AREAS` (`arena`, `jogos`, `exploracao`). Puro; dono único do que conta como "atividade em curso".
+
+### `src/utils/balaoDourado.ts`
+
+**Balões dourados (beta12 §G, 12/11/2026):** `BALAO_TIPOS` (`grove`, `rift`, `achado`, na ordem de prioridade), `balaoKey(tipo, dia)` (`balaoDourado:<tipo>:<AAAA-MM-DD>`), `foiDispensado`, `dispensar(reg, tipo, dia)` (grava o dia e solta as chaves de outros dias; idempotente devolve o MESMO objeto), `sanitizeBalaoDourado`, `escolherBalao(presentes, reg, dia)` (um por vez), `balaoDouradoText` e `balaoDouradoAria` (PT-BR e EN, sem cobrança). O registro vive no save (`GameState.balaoDourado`). **Régua:** `balaoDourado.test.ts`, `CompanionHUD.balaoDourado.render.test.tsx`, `balaoDouradoETarefaLink.contract.test.ts`.
+
+### `src/utils/balaoDica.ts`
+
+**Balões de dica do Soulmon (§333, 13/11/2026):** falas de contexto que ensinam uma regra verdadeira. `DICA_TIPOS` na ordem de prioridade: `relaxar` (DOURADO, leva a `forja.refugio`), `fome` (comum), `cochilo` (comum), `lilia` (DOURADO, leva a `hall.grove`). `dicasPresentes(entrada)` decide as condições: energia baixa = `ENERGIA_BAIXA_FRACAO` (20 %) do máximo ou menos; `relaxar` = cansado E o Refúgio dá energia agora (prédio aberto + `!refugioEnergyTaken` + energia não cheia, a régua da moeda de `lotMarks.ts`); `cochilo` = cansado, Refúgio sem energia e NÃO faminto (faminto a regeneração é 0, e o bônus de sono multiplica 0); `fome` = abaixo de `HUNGER_FED_MIN`, com ou sem comida na pastinha (dono, 13/11: aparece mesmo de pastinha vazia; a entrada não tem mais `temComida`; a fala é a mesma nos dois casos porque não pede nada, só diz a fome e a regra verdadeira); `lilia` = meta do dia cumprida (`fioMetaCumprida`) + Grove aberto no Vínculo + `bosqueCuidavel` do servidor. `escolherDica(presentes, vistas, now, 'dourada'|'comum')`, `emCooldown` (`DICA_COOLDOWN_MS`: relaxar 6 h, fome 4 h, cochilo 6 h, lilia 8 h; relógio que voltou não prende), `marcarVista`, `sanitizeDicaVistas`, `dicaTexto`/`dicaAria` (PT-BR e EN), `DICA_DESTINO`, `DICA_DOURADA_VISIVEL_MS` (45 s: a dica dourada NÃO é persistente). O registro de aparições mora no aparelho (`STORAGE_KEYS.BALAO_DICAS_VISTAS`), não no save. **Régua:** `balaoDica.test.ts`, `useBalaoDica.test.tsx`, `CompanionHUD.dica.render.test.tsx`, `balaoDouradoETarefaLink.contract.test.ts` (bloco §333).
+
+### `src/utils/tarefaLink.ts`
+
+**Tarefas linkadas a recursos (beta12 §J, 12/11/2026):** `recursoDaAtividade` (via `catalogId` + `data/catalogResources.ts`), `gatilhoDoRecurso` (`steps` / `caderno` / `foco`), `atividadesParaAutoCheck(gatilho, args)` (hábito adotado, devido hoje, não feito, sem chave do dia; passos exigem permissão, registro de hoje e meta batida), `registrarAuto` / `jaFezAuto` / `chaveAuto` (`<AAAA-MM-DD>|<id>`, `GameState.tarefaAuto`), `progressoDePassos`, `passosLinha`, `irLaLabel`, `autoTagText` / `autoTagAria`. Passo nunca pontua sozinho: o check dá o que o toque manual dá. **Régua:** `tarefaLink.test.ts`, `catalogResources.contract.test.ts`, `DailyRituals.recurso.render.test.tsx`, `NoticeToast.taskTag.render.test.tsx`.
+### `src/utils/motivoTempo.ts` (13/11/2026)
+
+Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMotivoDeTempo` troca a outra família no prompt e põe a cláusula negativa `Time motif: …` (idempotente), `motivoTempoPorSemente` (hash estável), `motivosNoTexto`. A variante por elemento mora em `elementoCombinado.ts › motivoTempoDoElemento`. **Chamado por:** `src/utils/oracle/motor.ts`, `src/utils/elementoCombinado.ts`. **Régua:** `motivoTempo.test.ts`.
+
+### `src/utils/elementUnlockOnEvolve.ts`
+**Dono de:** `applyElementUnlockOnEvolve` (15/11/2026, §396): na evolução, o elemento efetivo da forma nova (`petElementOf`) passa por `applyElementsDefeated`. Idempotente; composto libera só o composto. **Chamado por:** `App.tsx › handleEvolve`. **Régua:** `elementUnlockOnEvolve.test.ts`.
+
+### `src/utils/elementoNovoModal.ts`
+**Dono de:** `elementosNovos` (o que ainda não foi avisado), `elementoRetroativo` (Soulmon atual com elemento fora do dex; no máximo 1), o gate de atividade `emAtividade` + `elementoNovoPodeAbrir(descobertoEmAtividade, view)` (a carta só abre no fim da atividade; §401), `componentesDoElemento` (receita do elemento para a fileira da carta), `todasVistas` (libera o OK), `ELEMENTO_NOVO_MAX_LOTE`, o texto EN/PT da carta (sem frase de poção) e `paginaDeTotal` ("1 de N").
+
+### `src/utils/dificuldadeEstagio.ts`
+**Dono de:** a regra de dificuldade por estágio (16/11/2026, REGISTRO §232 como peso do sorteio de inimigos): peças puras `sortearContagem`, `celulaMaisProxima`, `agruparPorContagem`, `escolherCelula`, `chancesDoEstagio`, `contagemDaEntrada` e a curva de profundidade (`PROFUNDIDADE_DEGRAUS`, `degrausDeProfundidade`, `estagioPorProfundidade`). O sorteio que junta tudo mora em `enemyRoster.ts` (`pickEnemy({ tabela: true })`). Tabela de chances: `CHANCES_POR_ESTAGIO` de `elementoCombinado.ts`. **Régua:** `dificuldadeEstagio*.test.ts`.
+
+### `src/utils/formasPacoteA.data.ts`
+**Dono de:** `FORMAS_PACOTE_A_DATA` (16/11/2026, REGISTRO §439): dados puros `[artFile do rookie, estágios novos]` das formas do pacote A (combinação de 2 elementos → champion, 3 → ultimate, 4 → mega). Arte em `assets/soulmon/novos-arquivo/combinados-formas/`. **Régua:** `novosSoulmon.test.ts`.
+
+### `src/utils/weeklyRetro.ts`
+**Dono de:** a regra da retrospectiva de segunda (16/11/2026, REGISTRO §431): semana anterior segunda a domingo, hábito mais difícil (`pickHardest`), bônus de retorno (`makeWeeklyBonus`, `isWeeklyBonusOn`, `weeklyBonusGaugeBonus`), qualidade da semana (`retroQuality`, `overallHabitRate`), forma por semana (`recordWeekStage`, `evolvedLastWeek`) e `needsWeeklyRetro`. Funções puras, todo tempo entra por parâmetro. **Régua:** `weeklyRetro*.test.ts`.
+
+### `src/utils/companheiroInvocado.ts`
+**Dono de:** a regra "quem tem companheiro em combate" e o cache por estágio `soulmonEvocacao` (16/11/2026, REGISTRO §442/§460). `eEvocador(estagio, { arquetipoId, escolaDominante })` (arquétipo em `ARQUETIPOS_EVOCACAO` OU escola dominante = Evocação), `companheiroDoEstagio`, `criaturaConhecida` (uma das 32 de `CRIATURAS_COMPANHEIRO`), `sanitizeEvocacao`/`migrarEvocacao` (o primeiro valor de cada estágio vence), e a ÚNICA porta das telas de luta: `companheiroAtivo(estagio, criaturaId, cache, hexsmith?, ligado?)` e `companheiroDoEstado(estado, ligado?)`.
+**Exports:** `COMPANHEIRO_INVOCADO` (flag única) · `ARQUETIPOS_EVOCACAO` · `ESCOLA_EVOCACAO` · `CRIATURAS_COMPANHEIRO` · tipos `EvocacaoDoEstagio`, `EvocacaoEstagio`, `EvocacaoPorEstagio`, `EstadoComCompanheiro`. **REGRA DA COROA (decisão do dono, 16/11/2026):** Coroa da Hexsmith equipada troca o especial pelo da Coroa e a invocação descansa (`companheiroAtivo` devolve `null`); desequipar devolve a invocação. A Hexsmith nunca liga/desliga o gatilho `eEvocador`; este módulo lê `hexsmith.ts › hexCrownEquipped` e a Hexsmith nunca importa este módulo (sem ciclo). Espelho: `functions/api/_companheiroInvocado.js`. **Régua:** `companheiroInvocado.test.ts`, `hexsmith.coroasEfeito.test.ts`, `functions/api/companheiroInvocado.parity.test.js`.
+
+### `src/utils/companheiroInvocadoLinhas.ts`
+**Dono de:** o gatilho do companheiro para quem não tem ficha (16/11/2026): simulados por escola derivada do elemento + linha (`PAPEL_POR_ELEMENTO`, `escolaDoSimulado`, `eEvocadorPorLinha`), NPCs chefes nomeados por lista explícita (`CHEFES_NOMEADOS_INVOCAM`, `eNpcInvocador`), a criatura fixa por `hash(id)` (`criaturaPorId`, `companheiroDoSimulado`, `companheiroDoNpc`) e `COMPANHEIROS_POR_COMBATENTE` (1 por combatente na Arena em grupo). Tudo atrás da flag de `companheiroInvocado.ts`. Simulado não tem Hexsmith: a regra da Coroa não o toca. **Régua:** `companheiroInvocado.test.ts`.
+
+### `src/utils/combate/companheiro.ts`
+**Dono de:** a regra pura do companheiro no `cast` de quem invoca (16/11/2026, REGISTRO §449): `COMPANHEIRO_TURNOS` (3), `COMPANHEIRO_EFEITO_FATOR` (0,8), `COMPANHEIRO_ATAQUE_FATOR` (0,25), `COMPANHEIRO_VALOR_MAXIMO` (1,1), `especialInvoca(sp)` (cura, `heal` ou `shield` com `effect: 'hot'`, não invoca), `planoInvocacao(sp, scale)` (papel `ataque` para `direct`/`dot`, `misto` para as de efeito) e `valorNominalInvocacao`. Tipos `PapelInvocacao`, `PlanoInvocacao`. Quem decide SE o lado invoca é `companheiroDoEstado` (Coroa equipada = não); esta regra só diz o que a invocação faz. Espelho: `functions/api/_combate.js › planoInvocacao` (`combate.parity.test.js`).
+
+### `src/utils/enemyRosterLegado.data.ts`
+**Dono de:** `LEGADO_DATA` (16/11/2026, REGISTRO §445): os 5 ramos legados (som, eletricidade, tempo, arcano, marcial) como linhas `[id, linha de origem, criatura hospedeira, elemento do hospedeiro, nome champion, nome ultimate, nome mega]`; dados puros, lidos por `enemyRoster.ts` (`buildRamos`) e `enemyRosterArt.ts` (arte em `legado/`).
+
+### `src/utils/riftSets.ts`
+**Dono de:** o mapa profundidade → conjunto do Rift infinito (16/11/2026, REGISTRO §445): `riftSetOfLayer`, `riftWavePlan`, `isMiniBossLayer`, `isMiniBossFight`, `RIFT_STAGE_BY_COUNT` (estágio dos comuns e do mini-boss por nº de elementos base), `RIFT_ULTRA_COUNT`, `RIFT_MINIBOSS_EXTRA_FLOORS`, `RIFT_MINIBOSS_SLOT`, `RIFT_SET_COUNT`; tipos `RiftCount`, `RiftSet`, `RiftWavePlan`. Puro; o servidor não monta onda, não há espelho.
+
+### `src/utils/soulProfile/ficha/evocacaoPorEstagio.ts`
+**Dono de:** a ponte ficha → cache `soulmonEvocacao` (16/11/2026): `escolaDominanteComEvocacao(ficha)` (argmax sobre todas as escolas, Evocação incluída; empate = ordem canônica) e `derivarEvocacao(fichaByStage, classTitles?)` (veredito `evocador` + arquétipo por estágio, via `eEvocador`). Pura. **Régua:** `evocacaoPorEstagio*.test.ts`.
+### `src/utils/companheiroCriatura.ts`
+**Dono de:** a criatura do companheiro de quem não tem save próprio (simulados e NPCs nomeados), sem arrastar o `CLASS_DATA` (16/11/2026, REGISTRO §444/§449): `AFINIDADES_CRIATURA` (recorte das 32 listas de afinidade; o teste `companheiroCriatura.test.ts` o confronta com `CLASS_DATA.criaturas`), `criaturaPorId` (`hash(id)` entre as de afinidade com o elemento; as 32 se nenhuma tem), `CHEFES_NOMEADOS_INVOCAM`, `eNpcInvocador`, `companheiroDoNpc`, `comCriaturaDoOponente`. As telas de luta (Torneio, Duelo) importam daqui em vez de `companheiroInvocadoLinhas.ts`.
+
+### `src/utils/demoButton.ts`
+**Dono de:** `DEMO_BUTTON_ENABLED`, o interruptor único do botão "DEMO — experimentar sem conta" do portão (`SoulmonOnboarding`, `data-demo-button`). `false` = botão oculto para todos; a lógica da demo (`demoMode.ts`, `demoStart.ts`, `handleStartDemo`) fica intacta. REGISTRO §446 (16/11/2026); o teste `SoulmonOnboarding.demoOff.render.test.tsx` trava o portão amarrado ao interruptor.
+
+### `src/utils/dishItems.ts`
+**Dono de:** o prato como item da pastinha (16/11/2026, REGISTRO §455): `DISH_PREFIX` (`dish:`), `dishKey`, `isDishKey`, `dishIdOfKey`, `DISH_SPECIAL_ITEMS` (uma entrada de `SPECIAL_ITEMS` por prato, kind `dish`; a arte vem de `itemArt.ts`) e `serveDish` (enche a fome e aplica o efeito do prato; chamada por `applySpecialItem`). Cozinhar só põe o prato aqui (`restaurant.ts › applyCook`); a Feira também guarda aqui (§465).
+
+### `src/utils/duelInvites.ts`
+**Dono de:** o convite de Duelo, a "ficha" da Arena livre (16/11/2026, REGISTRO §458): `DUEL_INVITE_MAX` (7), `DUEL_INVITE_INITIAL`, `DUEL_INVITE_PER_ENERGY` (5; `..._PAID` = 7 na conta paga), `DUEL_INVITE_ENERGY_COST`, `DUEL_INVITE_MIN_GAP_MS`, `sanitizeDuelInvites`, `duelInviteCount`, `duelInvitesPerEnergy`, `duelInviteExchangeRefusal`, `exchangeDuelInvites` (1 energia por convites), `spendDuelInvite` (ao começar a run). Espelho no servidor: `functions/api/_duelInvites.js`. **Régua:** `duelInvites*.test.ts` e `duelInvites.parity.test.js`.
+
+### `src/utils/elementoNeutro.ts`
+**Dono de:** `ELEMENTO_NEUTRO_ID` (`'neutro'`), o id do elemento Neutro (o do Corvo; REGISTRO §211). Folha sem imports: o dex, as essências e a poção leem daqui.
+
+### `src/utils/feiraNpcDia.ts`
+**Dono de:** a fala do mercador depois do desafio da Feira (16/11/2026, REGISTRO §466): `feiraNpcDia` (pura) conta o que o jogador achou hoje, o agregado do clã (`FeiraResumo`) e que amanhã tem mais; sem fala por aliado (o servidor não manda quem encontrou o quê, LV-G1). Tipo `FeiraNpcDia`.
+
+### `src/utils/neutroPotion.ts`
+**Dono de:** a receita e o progresso da poção do Neutro, a poção rara (16/11/2026, REGISTRO §452): `NEUTRO_POTION_COSTS` (para CADA um dos 20 elementos base, 100 essências ou 1 poção-base dele, mais 50 essências do Neutro; tudo-ou-nada; exige o Neutro conhecido), `neutroProgresso`, `neutroPlano`, `canAffordNeutroPotion`; tipos `NeutroBaseRow`, `NeutroProgresso`. Funções puras; o gasto real roda em `craftPotion` (`elementPotion.ts`) via `spendEssences`. **Régua:** `neutroPotion.test.ts`.
+
+### `src/utils/potionCosts.ts`
+**Dono de:** `POTION_COSTS` (elemento base 100 da própria essência; composto e Neutro 50) e `POTION_PREFIX`; folha sem imports lida por `elementPotion.ts`, `neutroPotion.ts`, a oferta da Vesca e o `App`.
+
+### `src/utils/restaurantMenu.ts`
+**Dono de:** o catálogo dos pratos do Restaurante (16/11/2026; folha-raiz sem import de runtime): tipos `ChefId`, `DishEffect`, `DishExtra`, `Dish`, `DISHES`, `dishById`, `isCombatEffect`, `ENERGY_DISH_PRICE_MULT`. Saiu de `restaurant.ts` (que reexporta tudo) para `dishItems.ts`/`shop.ts` não puxarem a cadeia dele.
+
+### `src/utils/riftMap.ts`
+**Dono de:** o plano do mapa de andares do Rift infinito (16/11/2026, REGISTRO §462): um nó por conjunto (`riftSets.ts`), o estado de cada nó (`riftNodeState`: visitado/atual/bloqueado), o caminho sinuoso determinístico (`riftSegmentBezier`, `riftSegmentPath`, `riftSegmentReached`), a janela visível (`riftMapWindow`, `riftVisibleRange`, `riftScrollTopFor`) e a regra de voltar ao nó (`riftRewindRefusal`, `rewindToSet`, `consumeResume`; `sanitizeResumeLayer`, `riftStartLayer`, `riftCurrentLayer`, `firstFloorOfSet`). Sem arte, relógio nem `Math.random`: a tela e os testes leem o mesmo plano.
+
+### `src/utils/riftMapCopy.ts`
+**Dono de:** os textos do mapa de andares do Rift (REGISTRO §462; tom calmo, nunca cobrança): `riftMapCopy(language)` e o tipo `RiftMapCopy` (título, voltar, rótulos de andar e aria dos nós).
+
+### `src/utils/reviewSoulmon.ts`
+**Dono de:** o cliente do "Pedir revisão do meu Soulmon" (Ajuda): fala só com `/api/review-soulmon` do próprio jogador (Bearer do save); o estado de cada pedido mora no servidor, por forma.
+**Exports:**
+- `REVIEW_POLL` / `reviewPollDelay(ageMs)` — checagem a cada 2 min nos primeiros 10 min, depois a cada 10 min; `null` aos 24 h (desiste).
+- `isActive(report, now)` — pedido ainda sem resposta (status ativo e < 24 h); `isReviewableSpriteUrl(url)` — só `/api/sprite-image?k=<32 hex>`.
+- `submitReview(snap, fetch, motivo?)` — POST com forma, URL do sprite e dados opcionais (`motivo`: `estilo`|`recorte`, campo aditivo); `continueReview`, `ackReview` — ações `continue` e `ack`; `fetchReviews` — GET dos reports (`null` se falhar).
+- `checkReviews(onApplyFix, fetch, now)` — UMA checagem: empurra o que está parado há > 60 s, aplica o conserto (`consertado` com `afterUrl`) via `onApplyFix`, confirma com `ack` e devolve `{reports, finished}`.
+**Chamado por:** `App.tsx`, `components/ReviewSoulmonRow.tsx`, `hooks/useReviewWatcher.ts`
+**Régua:** `reviewSoulmon.test.ts`
+
+## Sync 17/11/2026 (`6b7773143..65ba36dc7`, REGISTRO §467–§470)
+
+- `elementPotion.ts`: novo `VESCA_OFFER_ELEMENT_IDS` (só bases); `essenceThresholdCrossings` usa-o; saem `PotionFilter` e `POTION_FILTERS`; `potionListFor(essences, inventory, selected, unlocked?)` sem o parâmetro de filtro.
+- `companheiroInvocado.ts`: novos `NOMES_ARQUETIPO_EVOCACAO` e `tituloEEvocador(t)`; `GameState.soulmonClassTitles` lido quando falta o cache do estágio (só o positivo).
+- `hexsmithCopy.ts`: `HEX_CROWN_FAMILY_DESC: Record<SpecialFamily, Par>` cobre as 10 famílias.
+- `riftSets.ts`: novos `riftFloorName(elementName, part)` ("Fogo 1"/"Fogo 2") e `riftSetName(elementName, isPt)` ("Fogo 1 e 2"/"Fire 1 & 2"). `riftMapCopy.ts`: `askBody(label, setName)`; `nodeAria` com o nome do conjunto primeiro.

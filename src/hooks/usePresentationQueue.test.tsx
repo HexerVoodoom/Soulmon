@@ -171,7 +171,7 @@ function Jogo({ save0, device, log }: { save0: Save; device: Device; log: Presen
 }
 
 describe('cenário do dono: dia novo + level-up + prédio do mapa + compromisso das tarefas, tudo ao mesmo tempo', () => {
-  const inicial: Save = { totalXP: 100000, lastCelebratedLevel: 1, buildingIntrosSeen: seedBuildingIntrosSeen(1), checkInDone: false };
+  const inicial: Save = { totalXP: 100000, lastCelebratedLevel: 1, buildingIntrosSeen: [], checkInDone: false }; // sem limite por level (dono 12/11/2026): tudo abre no 1, então nada vem pré-marcado como visto
   const toca = (el: HTMLElement) => act(() => { el.click(); });
 
   it('a sequência é resumo do dia -> mapa -> compromisso -> level-up (celebração por último), sem sobreposição; reiniciar NÃO repete o que foi mostrado', () => {

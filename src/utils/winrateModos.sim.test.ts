@@ -16,7 +16,7 @@ import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { COMBAT_BONUS_CAP } from './combate/bonus';
 import { mulberry32 } from './combate/rng';
 import {
-  BONUS_KINDS, ROGUE_MAX_STEPS, applyBonus, emptyRun, isForcedCombat, pathsFor, resolveStep, simulateRogueCombat, floorOf,
+  BONUS_KINDS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, emptyRun, isForcedCombat, pathsFor, resolveStep, simulateRogueCombat, floorOf,
 } from './rogueDungeon';
 import type { RogueRun } from './rogueDungeon';
 
@@ -72,11 +72,12 @@ export function medirCalabouco(n = RUNS, pNaoCombate = 0.75) {
       else victory = rng() < pNaoCombate;
       void isForcedCombat;
       run = resolveStep(run, kind, victory, hpLeft);
+      if (run.hpAt !== undefined) run = { ...run, step: run.step + 1, over: true }; // §239: mede a incursão sem nenhuma derrota (a derrota agora espera e continua)
       if (run.bonusPending) run = applyBonus(run, BONUS_KINDS[Math.floor(rng() * BONUS_KINDS.length)]);
     }
     passos += run.step;
     if (!run.over) completos++;
-    for (let a = 1; a <= 3; a++) if (!run.over || run.step > a * 8) andarFim[a]++;
+    for (let a = 1; a <= 3; a++) if (!run.over || run.step > a * ROGUE_PER_FLOOR) andarFim[a]++;
   }
   return { completos: completos / n, andar1: andarFim[1] / n, andar2: andarFim[2] / n, passosMedios: passos / n };
 }
@@ -86,7 +87,7 @@ describe('taxa de vitória por modo (tabela)', () => {
     const m = medirMasmorra();
     const k = medirCalabouco();
     console.log(`[WINRATE] Masmorra/Fenda — P(limpar o andar f | chegou nele): ${m.porAndar.slice(1).map((x, i) => `a${i + 1} ${pct(x)}`).join(' · ')} | 3 andares ${pct(m.tres)} | 5 andares ${pct(m.cincoAndares)}`);
-    console.log(`[WINRATE] Calabouço — incursão completa ${pct(k.completos)} | passa andar 1 ${pct(k.andar1)} | andar 2 ${pct(k.andar2)} | passos médios ${k.passosMedios.toFixed(1)}/24`);
+    console.log(`[WINRATE] Calabouço — incursão completa ${pct(k.completos)} | passa andar 1 ${pct(k.andar1)} | andar 2 ${pct(k.andar2)} | passos médios ${k.passosMedios.toFixed(1)}/${ROGUE_MAX_STEPS}`);
     // Faixas da calibração de 28/10/2026 (meta do dono: ~60-70% nas sequências seguidas, início nunca impossível).
     // ANTES (growth.power 0.11, cura 0.25, sem rampa no Calabouço): Masmorra a1-a4 100% · a5 52,4% · a6 0,3% | Calabouço completa 100%.
     for (const a of [1, 2, 3]) expect(m.porAndar[a], `andar ${a}`).toBeGreaterThanOrEqual(0.97);

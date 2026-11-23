@@ -36,13 +36,27 @@ export function strayCuts({ data, width: w, height: h }: Raw): string[] {
   const solid = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) solid[i] = data[i * 4 + 3] > 24 ? 1 : 0;
   const R = 3;
-  const dil = new Uint8Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (solid[y * w + x]) {
-    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
-      const yy = y + dy; const xx = x + dx;
-      if (yy >= 0 && yy < h && xx >= 0 && xx < w && Math.abs(dy) + Math.abs(dx) <= R) dil[yy * w + xx] = 1;
-    }
+  // Dilatação em losango de raio R == distância L1 <= R até o pixel sólido mais próximo. Dois passes
+  // lineares (O(w*h)) no lugar de varrer a vizinhança de 25 células por pixel sólido: mesmo resultado
+  // (o retângulo é convexo, a distância L1 dentro dele é exata), ~10x menos CPU por peça — e são 1961.
+  const INF = 1 << 20;
+  const dist = new Int32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    let d = solid[i] ? 0 : INF;
+    if (x > 0 && dist[i - 1] + 1 < d) d = dist[i - 1] + 1;
+    if (y > 0 && dist[i - w] + 1 < d) d = dist[i - w] + 1;
+    dist[i] = d;
   }
+  for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+    const i = y * w + x;
+    let d = dist[i];
+    if (x < w - 1 && dist[i + 1] + 1 < d) d = dist[i + 1] + 1;
+    if (y < h - 1 && dist[i + w] + 1 < d) d = dist[i + w] + 1;
+    dist[i] = d;
+  }
+  const dil = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) dil[i] = dist[i] <= R ? 1 : 0;
   const lab = new Int32Array(w * h);
   const comps: number[][] = [];
   for (let i = 0; i < w * h; i++) {
@@ -101,7 +115,8 @@ async function analyse(file: string) {
   }
   const stray = /-defended\.png$/.test(file) ? [] : strayCuts({ data, width: w, height: h });
   // centro da caixa da arte (as pecas saem centradas em 128x128) e tamanho: peca vazia/parcial/torta
-  const area = Array.from({ length: w * h }, (_, i) => data[i * 4 + 3] > 24).filter(Boolean).length;
+  let area = 0;
+  for (let i = 0; i < w * h; i++) if (data[i * 4 + 3] > 24) area++;
   const off = maxX >= 0 ? Math.max(Math.abs((minX + maxX) / 2 - (w - 1) / 2), Math.abs((minY + maxY) / 2 - (h - 1) / 2)) : 99;
   const span = maxX >= 0 ? (Math.max(maxX - minX, maxY - minY) + 1) / w : 0;
   return { edge, flat, stray, area, off, span };
@@ -135,8 +150,14 @@ describe('fx-ataque: nenhuma peça cortada', () => {
     expect(files.length).toBeGreaterThan(1000);
     const bad: string[] = [];
     const stillPending: string[] = [];
-    for (const f of files) {
-      const { edge, flat, stray, area, off, span } = await analyse(f);
+    // O custo dominante é DECODIFICAR ~1900 PNGs (medido ~70 ms cada, em série = ~130 s sob carga). O sharp
+    // decodifica no threadpool do libuv, então lotes em paralelo cobrem a espera de I/O/decode sem mudar nada do
+    // que é medido; a análise em JS segue na ordem dos arquivos.
+    const LOTE = 16;
+    const medidos: Array<Awaited<ReturnType<typeof analyse>>> = [];
+    for (let i = 0; i < files.length; i += LOTE) medidos.push(...await Promise.all(files.slice(i, i + LOTE).map(analyse)));
+    for (const [k, f] of files.entries()) {
+      const { edge, flat, stray, area, off, span } = medidos[k];
       const torta = off > 7 || area < 500 || span < 0.7; // fora do centro, vazia ou parcial
       const cut = edge.length > 0 || (!FALSO_POSITIVO.has(f) && flat.length > 0 && !/-defended\.png$/.test(f)) || stray.length > 0 || torta;
       if (cut) { if (PENDENTE_DE_REGERAR.has(f)) stillPending.push(f); else bad.push(`${f} edge=${edge.join('')} flat=${flat.join('')} stray=${stray.join(',')} off=${off.toFixed(1)} area=${area} span=${span.toFixed(2)}`); }

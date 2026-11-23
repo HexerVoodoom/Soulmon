@@ -13,11 +13,12 @@
 // cycles, one rule.
 import { detectBetaClosed } from './betaClosed';
 import { authHeaders } from './auth';
+import { registrarRestauracao, registrarStatusDaNuvem } from './loginDiag';
 import { isDemoMode, type DemoCarrier } from './demoMode';
 import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal, writeFlag } from './safeStorage';
-import { preservarConflictBackup, saveTemProgresso } from './backupRing';
+import { preservarConflictBackup, saveTemProgresso, empurrarNoAnel } from './backupRing';
 import { resolveLanguage } from './i18n';
 import { lerRevisao, gravarRevisao, esquecerRevisao } from './saveRevision';
 
@@ -54,6 +55,7 @@ export type CloudSaveFailureKind =
   | 'stale'      // 412: pré-condição falhou; o cliente está atrasado
   | 'too-large'  // 413: o save passou do teto do servidor
   | 'deleted'    // 410 `account-deleted`: a conta foi excluída (tombstone de 30 d no servidor)
+  | 'regression' // 409 `{error:'regression'}`: o servidor recusou trocar um save COM progresso por um SEM progresso (guarda de 17/11/2026)
   | 'server'     // 5xx: o servidor caiu, o save continua válido
   | 'client';    // 4xx restante: o cliente mandou algo que o servidor recusa
 
@@ -84,6 +86,9 @@ export const CLOUD_SAVE_POLICY: Record<CloudSaveFailureKind, CloudSavePolicy> = 
   // recriaria o que a pessoa mandou apagar; o caminho é PARAR — limpar o save
   // local, deslogar e voltar ao portão (`reagirContaExcluida`). Sem retry.
   deleted: { retentavel: false, avisaJogador: true },
+  // 409 `regression`: reenviar o MESMO corpo dá o MESMO 409 e a nuvem tem progresso que este estado não tem. Sem retry, sem
+  // aviso (o jogador não tem o que fazer); o local fica como está e a leitura de boot/visível decide. Só log, sem conteúdo.
+  regression: { retentavel: false, avisaJogador: false },
   server: { retentavel: true, avisaJogador: false },
   client: { retentavel: false, avisaJogador: true },
 };
@@ -109,6 +114,14 @@ export interface CloudSaveFailure extends CloudSavePolicy {
   revision?: number;
 }
 export type CloudSaveOutcome = { ok: true } | CloudSaveFailure;
+
+/**
+ * Intenção EXPLÍCITA de regressão (`?allowRegression=`): só os gestos que legitimamente trocam um save com progresso por outro
+ * menor — restaurar backup (`restore`), renascimento (`rebirth`), reset/exclusão (`reset`). Sem isto o servidor responde
+ * 409 `regression` quando o novo estado não tem progresso ou tem totalXP < 50% do gravado.
+ */
+export type IntencaoRegressao = 'restore' | 'rebirth' | 'reset';
+export interface CloudSaveOpts { allowRegression?: IntencaoRegressao }
 
 /** DEMO LOCAL: o save fica só no aparelho. Recusa PARADA — não retentável, não avisa o jogador (não é falha, é a regra). */
 const RECUSA_DEMO: CloudSaveFailure = { ok: false, kind: 'client', status: 0, retentavel: false, avisaJogador: false };
@@ -206,7 +219,7 @@ export function __resetContaExcluida(): void { contaExcluidaTratada = false; }
  * aparelho confiando nisso e perdia tudo. Falhou = não carimba, e quem chama
  * recebe a CLASSE do erro (não mais um `false` mudo) para decidir.
  */
-export async function cloudSave(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
+export async function cloudSave(saveId: string, state: unknown, opts: CloudSaveOpts = {}): Promise<CloudSaveOutcome> {
   // DEMO LOCAL (`utils/demoMode.ts`): nada sai do aparelho — nem aqui, que é a porta de TODA gravação.
   if (ehDemo(state)) return RECUSA_DEMO;
   // ADR-004 (correção do gate): POSTs do mesmo `saveId` são SERIALIZADOS. Sem isso o efeito de
@@ -214,7 +227,7 @@ export async function cloudSave(saveId: string, state: unknown): Promise<CloudSa
   // 409 contra a escrita do PRÓPRIO aparelho e a reconciliação adotava a nuvem por cima de S2.
   // O próximo só lê a base (`lerRevisao`) e envia DEPOIS que o anterior terminou.
   const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
-  const minha = anterior.then(() => enviarSerializado(saveId, state));
+  const minha = anterior.then(() => enviarSerializado(saveId, state, opts));
   filaDePosts.set(saveId, minha);
   void minha.then(() => { if (filaDePosts.get(saveId) === minha) filaDePosts.delete(saveId); });
   return minha;
@@ -232,27 +245,28 @@ const enviosEmDuvida = new Map<string, number>();
 /** Só para teste: zera fila e dúvidas. */
 export function __resetEnviosEmDuvida(): void { filaDePosts.clear(); enviosEmDuvida.clear(); }
 
-async function enviarSerializado(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
+async function enviarSerializado(saveId: string, state: unknown, opts: CloudSaveOpts = {}): Promise<CloudSaveOutcome> {
   // ADR-004: com revisão conhecida DESTE saveId, o POST é condicional (`baseRevision`).
   // TRANSIÇÃO: cliente sem revisão gravada (primeiro POST depois da atualização, ou conta
   // adotada de servidor antigo) grava CEGO como sempre e, na resposta, passa a ter revisão.
   const base = lerRevisao(saveId);
   const duvida = enviosEmDuvida.get(saveId);
-  const r = await postar(saveId, state, base);
+  const r = await postar(saveId, state, base, opts);
   // Um 409 com `revision === base + 1` depois de um envio em dúvida COM ESSA base é, quase certamente,
   // a escrita do próprio aparelho cujo 200 se perdeu: adota a revisão e reenvia o mesmo corpo UMA vez.
   // RESIDUAL: se OUTRO aparelho escreveu exatamente essa revisão e o nosso envio de fato não chegou,
   // este reenvio sobrescreve como antes da ADR-004 (put cego) — só nesse caso raro.
   if (!r.ok && r.kind === 'conflict' && base !== null && duvida === base && r.revision === base + 1) {
     gravarRevisao(saveId, base + 1);
-    return postar(saveId, state, base + 1);
+    return postar(saveId, state, base + 1, opts);
   }
   return r;
 }
 
-async function postar(saveId: string, state: unknown, base: number | null): Promise<CloudSaveOutcome> {
+async function postar(saveId: string, state: unknown, base: number | null, opts: CloudSaveOpts = {}): Promise<CloudSaveOutcome> {
   try {
-    const res = await fetch(`/api/save?id=${saveId}`, {
+    const intencao = opts.allowRegression ? `&allowRegression=${opts.allowRegression}` : '';
+    const res = await fetch(`/api/save?id=${saveId}${intencao}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(base === null ? { state } : { state, baseRevision: base }),
@@ -260,14 +274,21 @@ async function postar(saveId: string, state: unknown, base: number | null): Prom
     enviosEmDuvida.delete(saveId); // o servidor respondeu: não há mais dúvida
     if (!res.ok) {
       let rev409: number | undefined;
+      let regressao = false;
       if (res.status === 409) {
-        try { rev409 = revisaoDoCorpo(await res.clone().json()); } catch { /* corpo ilegível */ }
+        try {
+          const corpo = await res.clone().json();
+          rev409 = revisaoDoCorpo(corpo);
+          regressao = (corpo as { error?: unknown } | null)?.error === 'regression';
+        } catch { /* corpo ilegível */ }
       }
       await detectBetaClosed(res);
       console.warn('cloudSave: servidor recusou o save', {
         status: res.status,
-        classe: classifyCloudSaveStatus(res.status),
+        classe: regressao ? 'regression' : classifyCloudSaveStatus(res.status),
       });
+      // 409 de regressão NÃO é conflito de revisão: não dispara reconciliação nem retry (ver CLOUD_SAVE_POLICY).
+      if (regressao) return { ok: false, kind: 'regression', status: 409, ...CLOUD_SAVE_POLICY.regression, ...(rev409 !== undefined ? { revision: rev409 } : {}) };
       return falha(res.status, rev409);
     }
     // Revisão nova (tolerante: corpo sem revision = não grava). Resposta atrasada não faz recuar.
@@ -287,6 +308,83 @@ async function postar(saveId: string, state: unknown, base: number | null): Prom
     if (base !== null) enviosEmDuvida.set(saveId, base);
     return falha(0);
   }
+}
+
+/** Resultado da forja de HEX no servidor (REGISTRO §216). `already` = já era seu (nada cobrado). */
+export type HexForgeOutcome =
+  | { ok: true; already: boolean }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'server' };
+
+/**
+ * FORJA DE HEX pelo SERVIDOR (REGISTRO §216): o servidor lê o save gravado, confere o saldo, debita e entrega o item numa escrita só.
+ * Entra na MESMA fila dos POSTs do save: primeiro sobe o estado local (o saldo que o jogador vê é o que o servidor confere), depois
+ * forja com a revisão resultante. Sem rede/sem confirmação = falha, e o cliente NÃO forja localmente.
+ */
+export async function cloudHexForge(saveId: string, state: unknown, itemId: string): Promise<HexForgeOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexForgeOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexForge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { itemId } : { itemId, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 409 ? 'conflict' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      return { ok: true, already: !!(data as { already?: unknown } | null)?.already };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
+}
+
+/** Resultado da compra de um item da Hexsmith na FEIRA DE VERDADE (`_feiraLoja.js`). `price` = o que o servidor cobrou (o da oferta). */
+export type HexFairOutcome =
+  | { ok: true; already: boolean; price: number }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'server' | 'gone' };
+
+/**
+ * ITEM DA HEXSMITH NA FEIRA DE VERDADE (10/11/2026): a posse de HEX é do servidor (§216), então o item com desconto também é pago e
+ * entregue por ele (`POST /api/save?action=hexFair`), contra a OFERTA que ele mesmo sorteou. Mesma fila e mesma disciplina de
+ * `cloudHexForge`: sobe o estado local, compra com a revisão resultante, sem rede = não compra (nada é debitado localmente).
+ */
+export async function cloudHexFair(saveId: string, state: unknown, itemId: string, dayKey: string): Promise<HexFairOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexFairOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexFair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { itemId, dayKey } : { itemId, dayKey, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 404 ? 'gone' : res.status === 409 ? 'conflict' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      const d = data as { already?: unknown; price?: unknown } | null;
+      return { ok: true, already: !!d?.already, price: typeof d?.price === 'number' && Number.isFinite(d.price) ? Math.max(0, Math.floor(d.price)) : 0 };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
 }
 
 // ---------------------------------------------------------------------------
@@ -419,6 +517,7 @@ export async function lerDeletedAt(res: Response): Promise<number | undefined> {
 export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
+    registrarStatusDaNuvem(res.status);
     if (res.status === 410) return { estado: 'excluida', excluidaEm: await lerDeletedAt(res) };
     if (!res.ok) { await detectBetaClosed(res); return { estado: 'indeterminado' }; }
     const data = await res.json();
@@ -426,6 +525,7 @@ export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
     const revision = revisaoDoCorpo(data);
     return { estado: 'encontrado', state: data.state, ...(revision !== undefined ? { revision } : {}) };
   } catch {
+    registrarStatusDaNuvem(0);
     return { estado: 'indeterminado' };
   }
 }
@@ -614,16 +714,20 @@ export type RestauracaoNoLogin = 'restaurada' | 'sem-save' | 'indeterminado' | '
  */
 export async function restaurarContaNoLogin(email: string): Promise<RestauracaoNoLogin> {
   const norm = email.trim().toLowerCase();
-  if (!norm) return 'sem-save';
+  if (!norm) { registrarRestauracao('sem-save'); return 'sem-save'; }
+  let resultado: RestauracaoNoLogin;
   try {
     const id = await emailToSaveId(norm);
+    registrarRestauracao('nao-chamada', id);
     const r = await lerNuvem(id);
-    if (r.estado === 'indeterminado' || r.estado === 'excluida') return 'indeterminado';
-    if (r.estado === 'vazio') return 'sem-save';
-    return adoptCloudSave(id, r.state, norm, { revision: r.revision }) === 'ok' ? 'restaurada' : 'storage';
+    if (r.estado === 'indeterminado' || r.estado === 'excluida') resultado = 'indeterminado';
+    else if (r.estado === 'vazio') resultado = 'sem-save';
+    else resultado = adoptCloudSave(id, r.state, norm, { revision: r.revision }) === 'ok' ? 'restaurada' : 'storage';
   } catch {
-    return 'indeterminado';
+    resultado = 'indeterminado';
   }
+  registrarRestauracao(resultado);
+  return resultado;
 }
 
 // ---------------------------------------------------------------------------
@@ -725,6 +829,19 @@ export async function reconcileSaveId(
 
   const anterior = atual ?? '';
 
+  // GUARDA DE REGRESSÃO (incidente 17/11/2026): a chave derivada tem um save SEM progresso e o local TEM → o LOCAL vence
+  // (identidade reapontada, sobe com a revisão da nuvem como base). Adotar o vazio apagava o progresso real. A cópia do
+  // local vai para o anel com o motivo, como nos outros caminhos que decidem por cima do que existia.
+  if (naNuvem.estado === 'encontrado' && !saveTemProgresso(naNuvem.state) && saveTemProgresso(estadoLocal)) {
+    empurrarNoAnel({ saveId: atual ?? '', salvoEm: new Date().toISOString(), motivo: 'nuvem-vazia-local-vence', state: estadoLocal });
+    if (!writeLocal(STORAGE_KEYS.SAVE_ID, derivado)) return { estado: 'storage', saveId: derivado };
+    writeLocal(STORAGE_KEYS.USER_EMAIL, norm);
+    writeLocal(RECONCILE_KEYS.PREVIOUS_SAVE_ID, atual ?? '', { silent: true });
+    gravarRevisao(derivado, naNuvem.revision ?? 0);
+    await cloudSaveComRetry(derivado, estadoLocal);
+    return { estado: 'migrado', saveId: derivado, anterior: atual ?? '' };
+  }
+
   if (naNuvem.estado === 'encontrado') {
     // Conflito. Guarda o local ANTES de qualquer troca — se o backup falhar,
     // não trocamos nada, porque a troca passaria a ser destrutiva de verdade.
@@ -758,4 +875,44 @@ export async function reconcileSaveId(
   // sob a identidade nova.
   await cloudSaveComRetry(derivado, estadoLocal);
   return { estado: 'migrado', saveId: derivado, anterior };
+}
+
+/** Resultado de renomear na Hexsmith. `nome` = o que o servidor gravou (já normalizado). */
+export type HexRenameOutcome =
+  | { ok: true; already: boolean; nome: string }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'rejected' | 'server' };
+
+/**
+ * RENOMEAR NA HEXSMITH (11/11/2026): o servidor valida o nome, debita `HEX_RENAME_COST` Bits e grava o nome numa escrita
+ * (`POST /api/save?action=hexRename`). Mesma fila e disciplina de `cloudHexForge`: sobe o estado, age com a revisão resultante,
+ * sem rede = não troca (nada é debitado localmente).
+ */
+export async function cloudHexRename(saveId: string, state: unknown, kind: 'pet' | 'especial', nome: string): Promise<HexRenameOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexRenameOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexRename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { kind, nome } : { kind, nome, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 409 ? 'conflict' : res.status === 400 ? 'rejected' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      const d = data as { already?: unknown; soulmonMeta?: { petName?: unknown }; especialNome?: unknown } | null;
+      const gravado = kind === 'pet' ? d?.soulmonMeta?.petName : d?.especialNome;
+      return { ok: true, already: !!d?.already, nome: typeof gravado === 'string' ? gravado : nome };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
 }

@@ -10,19 +10,22 @@
  * Chamada e crédito são injetáveis (`api`, `onCredit`) para teste; o crédito passa por `creditFeiraOnce` (idempotente por recibo).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { RewardPreview } from '../ui/RewardPreview';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
 import { BossCheerPrelude } from './BossCheerPrelude';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
+import { essenceIconSrc, essenceName, tallyEssences } from '../../utils/resultEssences';
 import { BOSS_ROSTER, bossArt, bossText } from '../../data/bossRoster';
 import {
   attackGuildFeira, claimGuildFeira, doneGuildFeiraTrail, getGuildFeira, startGuildFeiraTrail, GuildError,
 } from '../../utils/community';
-import { FEIRA_TRAIL_MIN_MS, mapFeiraLog, type FeiraAttack, type FeiraClaim, type FeiraEvento, type FeiraSolution, type FeiraTrail, type FeiraTrailDone } from '../../utils/feira';
+import { DESAFIO_K0, FEIRA_TRAIL_MIN_MS, mapFeiraLog, type FeiraAttack, type FeiraClaim, type FeiraEvento, type FeiraSolution, type FeiraTrail, type FeiraTrailDone } from '../../utils/feira';
 import { feiraText, type FeiraKey } from '../../utils/feiraCopy';
 import { creditFeiraOnce, type FeiraCredit } from '../../utils/feiraCredit';
+import { markFeiraDesafioDone } from '../../utils/feiraDesafio';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { Language } from '../../utils/i18n';
 
@@ -30,8 +33,8 @@ export interface FeiraApi {
   get: (id: string, tz?: PlayerDayAnchor) => Promise<FeiraEvento | null>;
   attack: (id: string, tz?: PlayerDayAnchor, taps?: number[]) => Promise<FeiraAttack | null>;
   claim: (id: string, k?: number, tz?: PlayerDayAnchor) => Promise<FeiraClaim | null>;
-  start: (id: string, tz?: PlayerDayAnchor) => Promise<FeiraTrail | null>;
-  done: (id: string, s: FeiraSolution, tz?: PlayerDayAnchor) => Promise<FeiraTrailDone | null>;
+  start: (id: string, tz?: PlayerDayAnchor, k?: number) => Promise<FeiraTrail | null>;
+  done: (id: string, s: FeiraSolution, tz?: PlayerDayAnchor, k?: number) => Promise<FeiraTrailDone | null>;
   sleep: (ms: number) => Promise<void>;
 }
 
@@ -71,7 +74,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
   const [attack, setAttack] = useState<FeiraAttack | null>(null);
   const [before, setBefore] = useState(100);
   const [trail, setTrail] = useState<FeiraTrail | null>(null);
-  const [doneRow, setDoneRow] = useState<{ emblems: number; sap: number } | null>(null);
+  const [doneRow, setDoneRow] = useState<{ emblems: number; sap: number; clanBits?: number } | null>(null);
   const [collected, setCollected] = useState<FeiraClaim['reward'] | null>(null);
   const startedAt = useRef(0);
   const alive = useRef(true);
@@ -104,6 +107,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       const a = taps && taps.some(n => n > 0) ? await api.attack(saveId, tz, taps) : await api.attack(saveId, tz);
       if (!alive.current) return;
       if (!a) { setPhase('home'); setNote('boss.gone'); return; }
+      markFeiraDesafioDone();
       setBefore(evento.bossHpPct);
       setAttack(a);
       setEvento(a.evento ?? { ...evento, bossHpPct: a.boss.bossHpPct, canAttack: false });
@@ -111,6 +115,8 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     } catch (e) {
       if (!alive.current) return;
       setPhase('home');
+      // O servidor diz que o golpe de hoje já saiu (ou que o chefe caiu): o desafio do dia está resolvido, e a sala não oferece atacar de novo.
+      if (e instanceof GuildError && (e.kind === 'dailyLimit' || e.status === 409)) markFeiraDesafioDone();
       if (e instanceof GuildError && e.kind === 'dailyLimit') setEvento({ ...evento, canAttack: false });
       setNote(bossNote(e));
     } finally { if (alive.current) setBusy(false); }
@@ -144,7 +150,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     if (busy || evento.kind !== 'trail') return;
     setBusy(true); setNote(null);
     try {
-      const tr = await api.start(saveId, tz);
+      const tr = await api.start(saveId, tz, ...(evento.k >= DESAFIO_K0 ? [evento.k] : []));
       if (!alive.current) return;
       if (!tr) { setNote('boss.gone'); return; }
       startedAt.current = Date.now();
@@ -166,10 +172,11 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       const restante = FEIRA_TRAIL_MIN_MS[trail.game] - (Date.now() - startedAt.current) + SAFETY_MS;
       if (restante > 0) await api.sleep(restante);
       if (!alive.current) return;
-      const r = await api.done(saveId, solution, tz);
+      const r = await api.done(saveId, solution, tz, ...(evento.k >= DESAFIO_K0 ? [evento.k] : []));
       if (!alive.current) return;
       if (!r) { setNote('boss.gone'); return; }
       credit({ receipt: r.receipt || `feira-trilha:${trail.k}:${new Date().toISOString().slice(0, 10)}`, emblems: r.reward.emblems, bits: 0, trophyId: null });
+      markFeiraDesafioDone();
       setDoneRow(r.reward);
       if (r.evento) setEvento(r.evento);
       else if (evento.kind === 'trail') setEvento({ ...evento, trail: { ...evento.trail, pending: false, cleared: true }, gate: null });
@@ -216,8 +223,10 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     const ledger: ResultLedgerRow[] = [];
     if (doneRow.emblems > 0) ledger.push({ key: 'emblems', kind: 'honor', value: doneRow.emblems });
     if (doneRow.sap > 0) ledger.push({ key: 'sap', kind: 'node', label: t('rest.sap'), node: <span className="sm2-num" data-result-sap style={{ fontWeight: 600 }}>+{doneRow.sap}</span> });
+    if ((doneRow.clanBits ?? 0) > 0) ledger.push({ key: 'clanBits', kind: 'node', label: t('trail.clanBits'), node: <span className="sm2-num" data-result-clan-bits style={{ fontWeight: 600 }}>+{doneRow.clanBits}</span> });
     return (
       <ResultScreen
+        playAgainIcon={lotIconName('hall', 'feira')} playAgainArt={lotIconArt('hall', 'feira')}
         language={language}
         outcome="win"
         gameName={t('trail.gameName')}
@@ -263,6 +272,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
               <div style={{ width: `${Math.round(evento.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
             </div>
             <p style={{ ...sm2Hint, margin: 0 }}>{evento.canAttack ? t('boss.shared') : t('boss.today')}</p>
+            {evento.canAttack && <p style={{ ...sm2Hint, margin: '4px 0 0' }} data-feira-mesmo-dia>{t('boss.sameDay')}</p>}
           </div>
         )}
         {phase === 'home' && evento.kind === 'trail' && (
@@ -282,6 +292,12 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
                 {collected.emblems > 0 && <li>{t('rest.emblems')} +{collected.emblems}</li>}
                 {collected.bits > 0 && <li>{t('rest.bits')} +{collected.bits}</li>}
                 {collected.sap > 0 && <li>{t('rest.sap')} +{collected.sap}</li>}
+                {tallyEssences((collected.essences ?? []).map(e => ({ id: e.id, qty: e.n }))).map(e => (
+                  <li key={e.id} data-feira-essence={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    {essenceIconSrc(e.id) && <img src={essenceIconSrc(e.id)} alt="" aria-hidden="true" width={20} height={20} style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />}
+                    {essenceName(e.id, isPt)} ×{e.qty}
+                  </li>
+                ))}
               </ul>
             )}
           </div>

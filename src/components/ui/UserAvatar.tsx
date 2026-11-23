@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { AvatarFrame } from './AvatarFrame';
-import { frameById } from '../../utils/frames';
+import { frameOrBasic } from '../../utils/frames';
 import { resolveAvatarId } from '../../utils/avatar';
 
 /** A imagem mora num mini-chunk (glob preguiçoso de `AvatarImg`): o bundle de entrada só paga este invólucro. */
@@ -20,14 +20,14 @@ export function UserAvatar({ avatarId, frameId, seed, size = 36, alt = '' }: {
   alt?: string;
 }) {
   const id = resolveAvatarId(avatarId, seed);
-  const frame = frameById(frameId);
+  const frame = frameOrBasic(frameId);
   return (
-    <AvatarFrame frame={frame} size={size}>
+    <AvatarFrame frame={frame} size={size} round>
       <span
         data-user-avatar={id}
         style={{
           display: 'block', width: size, height: size, borderRadius: '50%', overflow: 'hidden', flex: 'none',
-          background: 'var(--sm2-surface-2)', boxShadow: frame ? undefined : '0 0 0 1px var(--sm2-line)',
+          background: 'var(--sm2-surface-2)',
         }}
       >
         <Suspense fallback={null}><AvatarImg id={id} size={size} alt={alt} /></Suspense>

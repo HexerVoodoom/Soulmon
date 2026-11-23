@@ -35,6 +35,7 @@ import {
   type PlayBuff,
 } from '../utils/petNeeds';
 import type { Language } from '../utils/i18n';
+import { EnergyCost } from './ui/EnergyCost';
 import { PixelButton, PixelPanel, PixelTag } from './pixel/PixelKit';
 import { InfoTip } from './ui/InfoTip';
 
@@ -163,6 +164,7 @@ export function PlayCard({
         {canPlay ? (
           <PixelButton size="lg" variant="primary" onClick={onPlay}>
             {isPt ? 'Brincar' : 'Play'}
+            <EnergyCost amount={PLAY_ENERGY_COST} />
           </PixelButton>
         ) : (
           // Sem energia. Frase NEUTRA — sem alerta, sem cor de erro, sem

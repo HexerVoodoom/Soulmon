@@ -15,10 +15,10 @@ import { StatsPage } from './StatsPage';
 
 const base = {
   completedTasks: [
-    { id: 't1', name: 'Alongar', category: 'Health' as const, emoji: '🧘', completedAt: new Date(Date.now() - 3 * 3600_000).toISOString() },
+    { id: 't1', name: 'Alongar', category: 'corpo' as const, emoji: '🧘', completedAt: new Date(Date.now() - 3 * 3600_000).toISOString() },
   ],
   activityStats: {
-    'activity-1': { name: 'Alongar', emoji: '🧘', category: 'Health' as const, completionCount: 14 },
+    'activity-1': { name: 'Alongar', emoji: '🧘', category: 'corpo' as const, completionCount: 14 },
   },
   language: 'en-US' as const,
   totalXP: 320,

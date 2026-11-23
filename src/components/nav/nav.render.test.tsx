@@ -51,8 +51,8 @@ describe('MapPage', () => {
     const pt = nomes('pt-BR');
     expect(en.h1).toBe('Map');
     expect(pt.h1).toBe('Mapa');
-    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Hall']);
-    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Hall']);
+    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Citadel']);
+    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Cidadela']);
     // rótulo visível == nome acessível (aria-label do botão)
     expect(en.ariaOut).toEqual(en.out);
     expect(pt.ariaOut).toEqual(pt.out);
@@ -87,11 +87,11 @@ describe('MapPage', () => {
 
   it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
-    const bg = container.querySelector('[data-map-page] > img')!;
+    const bg = container.querySelector('[data-map-page] [data-map-bg]')!;
     expect(bg.getAttribute('aria-hidden')).toBe('true');
-    // cada área carrega arte própria (não é mais só um glifo do Material)
-    const arts = Array.from(container.querySelectorAll('[data-map-area] img'));
-    expect(arts.length).toBe(7);
+    // os distritos vêm pintados no fundo: cada um é só alvo de toque + rótulo, sem sprite por cima
+    expect(container.querySelectorAll('[data-map-area]').length).toBe(7);
+    expect(container.querySelectorAll('[data-map-area] img').length).toBe(0);
   });
 });
 

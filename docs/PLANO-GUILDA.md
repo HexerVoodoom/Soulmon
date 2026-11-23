@@ -500,6 +500,13 @@ você"/"faltou"/"saiu").
 
 ---
 
+## 13b. Buffs do clã e doação diária (10/11/2026, §281 do REGISTRO)
+
+- **Doação:** uma vez por dia do jogador, 50 ou 100 Bits (`CASA_DOACOES`), Bit ganho ou vindo de Crédito (desde 14/11/2026, §373: o servidor não gateia por origem; ⚰️ "só Bits ganhos"); o servidor decide e o cliente debita o `accepted`. O valor mostra o ícone de Bits.
+- **Tesouro do clã** = Bits doados (`bitsDaCasa`) − gasto em Buffs. A mesma doação rende seiva (10 Bits = 1 ponto) sem segunda contabilidade.
+- **Buffs** (substituem a Loja do clã): gauge +5% · Feira de verdade 8% → 12% · drop ×1,10 · energia +10%. Valem para o clã inteiro por 7 dias; recomprar estende; um de cada. Preço único `round(0,9 × 12 × 100 × 7) = 7560`. Compra: anfitrião, `buffId` + `opId`.
+- Linhas vermelhas intactas: nada por pessoa (a vista leva só o tesouro e os buffs do clã), nenhum Crédito, sem urgência na copy.
+
 ## 14. Fila de WPs
 
 > ⚠️ **29/09/2026 — status: EM EXECUÇÃO** (exceção do dono, ver §0.1). O ⛔ abaixo é o texto anterior. WPG-1 e WPG-2 (servidor) são a primeira fatia.

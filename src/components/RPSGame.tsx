@@ -1,5 +1,6 @@
 import { RankingPanel } from './RankingPanel';
-import { difficultyLabel } from '../utils/minigameDifficulty';
+import { difficultyLabel, bitsForLevel } from '../utils/minigameDifficulty';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useRef, useEffect } from 'react';
 import { RewardPreview } from './ui/RewardPreview';
@@ -11,6 +12,7 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { freshInventory, spendPiece, petPick, totalPieces } from '../utils/rpsLevel2';
 import type { RpsInventory } from '../utils/rpsLevel2';
 import { ResultScreen } from './games/ResultScreen';
+import { SCENE_BG } from '../utils/fxPackArt';
 import { GameRoot, GameHeader, GameVisor, phaseTitle, gameExitConfirm } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 
@@ -55,8 +57,10 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge, initialLevel }: {
+export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge, initialLevel, onReplayRound }: {
   /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`). */
+  /** Sessão de diversão: a revanche volta à escolha de nível e a rodada conta ao ESCOLHER (quem sai dali não gasta). `false` = sem energia. */
+  onReplayRound?: () => boolean;
   initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): nível 1 direto, vence com `goal` rodadas ganhas; sem Bits/ranking. */
   challenge?: GameChallenge;
@@ -67,12 +71,13 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
    *  comum dos minijogos. */
   demoCharacterId?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   /** A partida chegou ao fim (vitória OU derrota) — a missão do dia conta o jogo, não o resultado (REGISTRO §52). */
   onMatchEnd?: () => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const [earned, setEarned] = useState(0);
   const [playerWins, setPlayerWins] = useState(0);
   const [petWins, setPetWins] = useState(0);
   const [playerHand, setPlayerHand] = useState<Hand | null>(null);
@@ -124,7 +129,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         challenge.onResult(pw >= need);
       } else if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
         // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
-        onEarnPoints(MATCH_POINTS);
+        const pedido = bitsForLevel(MATCH_POINTS, level);
+        setEarned(onEarnPoints(pedido) ?? pedido);
         if (level === 2) emitFeat('pptNormalWins');
         onMatchEnd?.();
         setMatchOver('won');
@@ -180,7 +186,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
   };
 
   return (
-    <GameRoot>
+    <GameRoot full style={{ background: `linear-gradient(to top, rgba(3, 38, 44, .92) 0%, rgba(4, 52, 58, .55) 30%, transparent 58%), url(${SCENE_BG.duelo}) center/cover var(--sm2-bg)` }}>
       <GameHeader
         title={isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
@@ -193,10 +199,10 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         <>
         <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits', amount: MATCH_POINTS }]} /></div>
         <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, marginTop: 'auto', marginBottom: 'auto' }}>
-          <button type="button" data-rps-start={1} onClick={() => setLevel(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+          <button type="button" data-rps-start={1} onClick={() => { if (onReplayRound && !onReplayRound()) return; setLevel(1); }} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
             {difficultyLabel(1, isPt)}
           </button>
-          <button type="button" data-rps-start={2} onClick={() => setLevel(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+          <button type="button" data-rps-start={2} onClick={() => { if (onReplayRound && !onReplayRound()) return; setLevel(2); }} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
             {difficultyLabel(2, isPt)}
           </button>
         </div>
@@ -237,7 +243,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
           {/* O resultado da rodada / da partida — `role=status`. */}
           <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
             {matchOver === 'won'
-              ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={MATCH_POINTS} sign="+" /></>
+              ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={bitsForLevel(MATCH_POINTS, level)} sign="+" /></>
               : matchOver === 'lost'
                 ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
                 : matchOver === 'draw'
@@ -269,6 +275,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       )}
       {matchOver && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="ppt"
           language={language}
           outcome={matchOver === 'won' ? 'win' : matchOver === 'draw' ? 'calm' : 'tired'}
           gameName={isPt ? 'Pedra, Papel, Tesoura' : 'Rock Paper Scissors'}
@@ -279,7 +286,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
               ? (isPt ? 'Ninguém cedeu. Vocês estão no mesmo passo.' : 'Neither gave way. You are in step.')
               : (isPt ? 'Seu Soulmon levou esta. Nada foi cobrado.' : 'Your Soulmon took this one. Nothing was charged.')}
           hero={{ label: isPt ? 'Você × Soulmon' : 'You × Soulmon', value: `${playerWins} × ${petWins}` }}
-          ledger={[{ key: 'bits', kind: 'bits', value: matchOver === 'won' ? MATCH_POINTS : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: matchOver === 'won' ? earned : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           scene={`url(${rpsScene}) center/cover`}

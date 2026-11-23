@@ -22,8 +22,8 @@ describe('inventário da arte de skill por elemento (a base da cena de combate)'
     }
   });
 
-  it('o glob achou a arte inteira: 280 elementos × 6 estados', () => {
-    expect(ATTACK_FX_COUNT).toBe(280 * 6);
+  it('o glob achou a arte inteira: 286 elementos × 6 estados', () => {
+    expect(ATTACK_FX_COUNT).toBe(286 * 6);
   });
 
   it('id sem arte cai no neutro; planta/industrial têm arte própria (sem alias)', () => {
@@ -95,7 +95,9 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     expect(elementStrikeForm('fogo', 'basica')).toBe('ranged');
     expect(elementStrikeForm('fogo', 'especial')).toBe('melee');
     expect(elementStrikeForm('planta', 'basica')).toBe('melee'); // tabela própria, sem alias
-    expect(elementStrikeForm('elemento-que-nao-existe', 'especial')).toBe('ranged');
+    expect(elementStrikeForm(undefined, 'especial')).toBe('ranged');
+    // fora da tabela: sorteio estável por (elemento, papel), REGISTRO §282
+    expect(elementStrikeForm('elemento-que-nao-existe', 'especial')).toBe(elementStrikeForm('elemento-que-nao-existe', 'especial'));
   });
 
   it('R8: o rótulo do especial está centralizado (EN e PT)', () => {
@@ -107,6 +109,15 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     for (const k of ['melee', 'ranged', 'special'] as const) {
       expect(impactMs(k, true)).toBeLessThan(impactMs(k, false));
       expect(totalMs(k, true)).toBeLessThanOrEqual(STAGE_TIMING.reduced.total);
+    }
+  });
+});
+
+describe('escudo do bloqueio (13/11/2026): todo elemento resolve `defended` da folha de FX', () => {
+  it('base, derivados, curados, neutro e pesadelo têm `fxFrame(id, "defended")` com a arte do próprio elemento', async () => {
+    const { LIBRARY_ELEMENT_IDS } = await import('./elementDex');
+    for (const id of [...LIBRARY_ELEMENT_IDS, 'neutro', 'pesadelo']) {
+      expect(fxFrame(id, 'defended'), id).toBeTruthy();
     }
   });
 });

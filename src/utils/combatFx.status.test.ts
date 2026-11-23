@@ -9,10 +9,10 @@ import { resolve } from 'node:path';
 import {
   FAMILY_STATUS, MAX_STATUS_CHIPS, STATUS_FX, STATUS_FX_KINDS, UNREACHABLE_STATUS_FX,
   castStatus, clearHolders, emptyStatusBoard, stageStatusOf, statusAriaLabel, statusFxOfFamily, statusGlyphId, statusLabel,
-  statusShort, statusTurnsFor, tickStatus,
+  STATUS_LOOP_CROP, STATUS_LOOP_IDS, statusLoopId, statusShort, statusTurnsFor, tickStatus,
 } from './combatFx';
 import { COMBAT_V3_ART_IDS } from './combatV3Art';
-import { AREA_FAMILIES, SPECIAL_FAMILIES } from './combate/specials';
+import { AREA_FAMILIES, ALL_SPECIAL_FAMILIES, SPECIAL_FAMILIES } from './combate/specials';
 
 describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
   it('uma linha por kind, e cada linha traz glifo, forma, nome e texto curto EN + PT', () => {
@@ -50,10 +50,45 @@ describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
     for (const k of STATUS_FX_KINDS) {
       const d = STATUS_FX[k];
       for (const g of Object.values(d.glyph)) expect(ids.has(g), `glifo ${g}`).toBe(true);
-      if (d.loop) expect(ids.has(d.loop), `loop ${d.loop}`).toBe(true);
+      for (const l of Object.values(d.loop ?? {})) expect(ids.has(l), `loop ${l}`).toBe(true);
       if (d.still) expect(ids.has(d.still), `peça ${d.still}`).toBe(true);
     }
     expect(ids.has('fx-cast-circle')).toBe(true);
+  });
+
+  it('§336 cada efeito com loop toca a SUA folha: nenhum empresta a do buff/debuff genérico', () => {
+    // as 13 folhas novas (13/11/2026), uma por efeito/variante, todas instaladas e com recorte medido
+    expect([...STATUS_LOOP_IDS].sort()).toEqual([
+      'fx-buff-atk-loop-sheet', 'fx-buff-loop-sheet', 'fx-buff-spd-loop-sheet', 'fx-cura-loop-sheet', 'fx-debuff-def-loop-sheet',
+      'fx-debuff-loop-sheet', 'fx-dot-loop-sheet', 'fx-lento-loop-sheet', 'fx-maldicao-loop-sheet', 'fx-queimadura-loop-sheet',
+      'fx-regen-loop-sheet', 'fx-silencio-loop-sheet', 'fx-veneno-loop-sheet',
+    ]);
+    for (const id of STATUS_LOOP_IDS) {
+      expect(COMBAT_V3_ART_IDS, id).toContain(id);
+      expect(STATUS_LOOP_CROP[id], id).toBeDefined();
+    }
+    const casos: [Parameters<typeof statusLoopId>[0], Parameters<typeof statusLoopId>[1], string | null][] = [
+      ['veneno', undefined, 'fx-veneno-loop-sheet'], ['queimadura', undefined, 'fx-queimadura-loop-sheet'], ['dot', undefined, 'fx-dot-loop-sheet'],
+      ['maldicao', undefined, 'fx-maldicao-loop-sheet'], ['lento', undefined, 'fx-lento-loop-sheet'], ['lento', 'peso', 'fx-lento-loop-sheet'],
+      ['silencio', undefined, 'fx-silencio-loop-sheet'], ['debuff', 'def', 'fx-debuff-def-loop-sheet'], ['debuff', undefined, 'fx-debuff-loop-sheet'],
+      ['buff', 'atk', 'fx-buff-atk-loop-sheet'], ['buff', 'fisico', 'fx-buff-atk-loop-sheet'], ['buff', 'spd', 'fx-buff-spd-loop-sheet'],
+      ['buff', undefined, 'fx-buff-loop-sheet'], ['buff', 'postura', 'fx-buff-loop-sheet'], ['hot', undefined, 'fx-regen-loop-sheet'],
+      ['cura', undefined, 'fx-cura-loop-sheet'], ['escudo', undefined, null],
+    ];
+    for (const [k, v, esperado] of casos) expect(statusLoopId(k, v), `${k}/${v ?? '_'}`).toBe(esperado);
+    // lento, defesa em baixa, ataque/velocidade em alta e cura não pegam mais emprestado
+    expect(statusLoopId('lento')).not.toBe(statusLoopId('debuff'));
+    expect(statusLoopId('debuff', 'def')).not.toBe(statusLoopId('debuff'));
+    expect(statusLoopId('buff', 'atk')).not.toBe(statusLoopId('buff'));
+    expect(statusLoopId('buff', 'spd')).not.toBe(statusLoopId('buff'));
+  });
+
+  it('§336 os glifos instalados resolvem: todo id de glifo citado existe como arte', () => {
+    for (const k of STATUS_FX_KINDS) for (const [v, g] of Object.entries(STATUS_FX[k].glyph)) {
+      expect(statusGlyphId(k, v === '_' ? undefined : (v as Parameters<typeof statusGlyphId>[1])), `${k}/${v}`).toBe(g);
+      expect(COMBAT_V3_ART_IDS, g).toContain(g);
+    }
+    for (const g of ['st-seta-sobe', 'st-seta-desce']) expect(COMBAT_V3_ART_IDS).toContain(g);
   });
 
   it('a distinção do buff: ATK e SPD têm glifo e texto próprios', () => {
@@ -67,13 +102,13 @@ describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
 
 describe('FAMILY_STATUS — toda família do núcleo (PR1) mapeia, lida do módulo', () => {
   it('cada `SpecialFamily` tem linha (família nova sem mapeamento REPROVA aqui, e não compila)', () => {
-    for (const f of SPECIAL_FAMILIES) expect(f in FAMILY_STATUS, `família ${f} sem mapeamento`).toBe(true);
-    expect(Object.keys(FAMILY_STATUS).sort()).toEqual([...SPECIAL_FAMILIES].sort());
+    for (const f of ALL_SPECIAL_FAMILIES) expect(f in FAMILY_STATUS, `família ${f} sem mapeamento`).toBe(true);
+    expect(Object.keys(FAMILY_STATUS).sort()).toEqual([...ALL_SPECIAL_FAMILIES].sort());
   });
 
   it('o dano direto não deixa estado; todas as outras deixam um kind da tabela', () => {
     expect(FAMILY_STATUS.direct).toBeNull();
-    for (const f of SPECIAL_FAMILIES.filter(x => x !== 'direct')) {
+    for (const f of ALL_SPECIAL_FAMILIES.filter(x => x !== 'direct')) {
       const m = statusFxOfFamily(f);
       expect(m, f).not.toBeNull();
       expect(STATUS_FX_KINDS).toContain(m!.kind);
@@ -88,10 +123,14 @@ describe('FAMILY_STATUS — toda família do núcleo (PR1) mapeia, lida do módu
     expect(FAMILY_STATUS.shield).toMatchObject({ kind: 'escudo', target: 'self' });
     expect(FAMILY_STATUS.defDebuff).toMatchObject({ kind: 'debuff', variant: 'def', target: 'foe' });
     expect(FAMILY_STATUS.dot).toMatchObject({ kind: 'dot', target: 'foe' });
+    // Hexsmith H2: as 3 famílias só de Coroa, com os selos novos
+    expect(FAMILY_STATUS.defBuff).toMatchObject({ kind: 'buff', variant: 'def', target: 'self' });
+    expect(FAMILY_STATUS.atkDebuff).toMatchObject({ kind: 'debuff', variant: 'atk', target: 'foe' });
+    expect(FAMILY_STATUS.spdDebuff).toMatchObject({ kind: 'lento', variant: 'spd', target: 'foe' });
   });
 
   it('Q-FX1 (decisão §2.13, PR16): HoT segue PRONTO e INALCANÇÁVEL; a maldição só chega pela ESCOLA (nenhuma família sozinha)', () => {
-    expect([...UNREACHABLE_STATUS_FX]).toEqual(['hot']);
+    expect([...UNREACHABLE_STATUS_FX]).toEqual([]); // §225: cura contínua ligada em PvE
     expect(STATUS_FX.maldicao.loop).toBeTruthy(); // prontos de verdade (a arte existe)
     expect(STATUS_FX.hot.glyph._).toBeTruthy();
     for (const f of SPECIAL_FAMILIES) expect(['hot', 'maldicao']).not.toContain(FAMILY_STATUS[f]?.kind);

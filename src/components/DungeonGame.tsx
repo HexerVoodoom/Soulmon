@@ -1,5 +1,7 @@
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHexOverrides } from '../hooks/useHexOverrides';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
@@ -10,6 +12,11 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { ResultScreen } from './games/ResultScreen';
+import { RiftResultExtras } from './games/RiftResultExtras';
+import { EnergyCost } from './ui/EnergyCost';
+import { essenceLedgerRows } from '../utils/resultEssences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
+import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { RankingPanel } from './RankingPanel';
 import { applyRiftLayer, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
 import { submitScore as submitRankingScore } from '../utils/rankings';
@@ -21,22 +28,24 @@ import { clearBonus } from '../utils/dungeon';
 import {
   DUNGEON_AUTO_FIGHT_MS, DUNGEON_MILESTONE_FLOOR, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_HP_REGEN_FULL_HOURS,
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
-  DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, dungeonLayerCap, startLayerFor, isMilestoneLayer,
+  DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, layersToday, isMilestoneLayer,
   layersAffordable, spendLayer, layerRefusal, recordLayerCleared, sanitizeDepthRecord,
-  nextDungeonSpeed, sanitizeDungeonSpeed, DUNGEON_AWAY_MAX_HOURS, type DungeonSpeed, type DungeonAway, type DungeonAwayPlayer,
+  DUNGEON_AWAY_MAX_HOURS, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
+import { glitchtamaDraw, glitchtamaDropFor } from '../utils/glitchtamaDrop';
+import { consumeResume, markPortalsSeen, parkAtPortal, riftPortalRedirect, riftPortalsUnlocked, riftStartLayer } from '../utils/riftMap';
+import { riftMapCopy } from '../utils/riftMapCopy';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
 import { DropNotice } from './games/DropNotice';
 import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
 import { canOfferRevive, consumeOne, addOne, heartsOwned, reviveSeed, reviveStart, rollSparkDrop } from '../utils/dungeonRevive';
-import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
 import { settleEnergy } from '../utils/hunger';
 import { addFragments } from '../utils/equipment';
-import { MINIGAME_BITS_PER_DAY, minigameBitsToday, remainingMinigameBits } from '../utils/currencies';
+import { minigameBitsCap, minigameBitsToday, remainingMinigameBits } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
@@ -50,19 +59,28 @@ import { CHEER_TAPS_FULL } from '../utils/energia';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
+import { elementoDaCamada } from '../utils/dungeonElementos';
+import { isMiniBossFight, riftFloorName, riftSetOfLayer } from '../utils/riftSets';
+import { tileElementName } from '../utils/match3Pvp';
+import { DungeonPotionsModal } from './DungeonPotionsModal';
+import { deixarPocoes, devolverPocoes, pocoesDoJogador, potionsTotal, recolherPocoes, type PotionStock } from '../utils/dungeonPotions';
+import { combatSceneBgDaCamada } from '../utils/combatArt';
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
-import { useDungeonBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
-import { gateLine, masmorraFloorOpen } from '../utils/gates';
-import { bondLevelFor, XP_DUNGEON_FLOOR, XP_DUNGEON_RUN } from '../utils/bond';
+import { useDungeonBonus, useRiftTalents } from '../contexts/useTalentBonus';
+import { XP_DUNGEON_FLOOR, XP_DUNGEON_RUN } from '../utils/bond';
 import { RewardPreview } from './ui/RewardPreview';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
@@ -109,7 +127,8 @@ import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
-// decisão do dono que trouxe a run completa para perto do teto diário.
+// decisão do dono que trouxe a run completa para perto do teto diário; desde
+// 14/11/2026 o fator é 0,2 → 2/3/4/5/6 (REGISTRO §372).
 export { clearBonus };
 
 type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'ended' | 'away';
@@ -130,7 +149,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEnemySeen, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits, rankSaveId }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEnemySeen, onEarnPoints, onExit, onExitToMap, onOpenRiftMap, autoStart = false, bits = 0, onSpendBits, rankSaveId }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -153,8 +172,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
-  /** Completing all 5 floors grants a Glitchtama (added to Items). */
-  onGlitchtama: () => void;
+  /** Todo MARCO (camada 5, 10, …): `runReward` = a recompensa da run (1× por descida, no primeiro marco); `drop` = o 🌀 raro
+   *  (1%/marco, 1/semana — `utils/glitchtamaDrop.ts`) caiu. Só é chamado se uma das duas for verdadeira. */
+  onGlitchtama: (m: { runReward: boolean; drop: boolean }) => void;
   /** 🔗 #59b — um ANDAR limpo (os 6 inimigos da escada). O componente não
    *  expunha este momento: só `onEnemyDefeated`, `onEarnPoints` e
    *  `onGlitchtama` (a run inteira). Era por isso que o `BondEvent`
@@ -172,7 +192,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** Bestiário (31/10/2026): o inimigo ENCONTRADO entra na Biblioteca mesmo que o jogador perca (antes só o abate registrava). */
   onEnemySeen?: (enemyKey: string) => void;
   /** Grants Bits. */
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number, extraCap?: number) => number | void;
   /** WP4.5 — Bits em caixa, para a compra de profundidade. */
   bits?: number;
   /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
@@ -182,6 +202,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onExit: () => void;
   /** Sair DIRETO para o mapa (o ícone do mapa no lugar do X, 14/10/2026). Ausente (demo/testes) → `onExit`. */
   onExitToMap?: () => void;
+  /** PORTAIS (REGISTRO §471): a descida parou num portal que tem outro mais fundo liberado e manda o jogador para a tela do mapa. Ausente (demo/testes) → segue para o próximo andar. */
+  onOpenRiftMap?: () => void;
+  /** "Entrar no Rift" (pedido do dono, 16/11/2026): larga a descida sozinha, do ponto onde parou (`riftStartLayer`), sem o lobby nem 2º toque. Só com o piso de HP e a energia em dia; senão fica no lobby, que diz o porquê. */
+  autoStart?: boolean;
 }) {
   // Música (11/10/2026): na masmorra toca o "Stone Hall Combat" (se o interruptor "Música" está ligado; 19/10/2026). Abrir o jogo é o gesto do jogador.
 
@@ -199,35 +223,30 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const gs = ctx?.gameState;
   const estado = useMemo<SoulXPState>(
     () => (gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage }),
     [gs, evolutionStage],
   );
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
   const bonusTalento = useDungeonBonus(); // canal único de bônus (teto 5%): ATK/DEF/SPD (PR7 + PR12a)
   const rift = useRiftTalents(); // Tarefa B: cura entre andares, Bits e escudo de largada (fora do canal de 5%: não são % de combate)
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento, hx),
+    companheiro: companheiroDoEstado(gs), // PR 2: sempre `null` com a flag desligada
     jeito,
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [hx, estado, gs, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
   const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
 
   /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
-  const [speed, setSpeedState] = useState<DungeonSpeed>(() => sanitizeDungeonSpeed(readLocal(STORAGE_KEYS.DUNGEON_SPEED)));
-  const speedRef = useRef(speed);
-  speedRef.current = speed;
-  const cycleSpeed = () => {
-    const n = nextDungeonSpeed(speedRef.current);
-    speedRef.current = n;
-    setSpeedState(n);
-    writeLocal(STORAGE_KEYS.DUNGEON_SPEED, String(n));
-  };
+  const { speed, speedRef, cycle: cycleSpeed } = useBattleSpeed();
   /* 🎁 O modalzinho de DROP: fila (a lógica é de `utils/dungeonDrops.ts`; em 3× tudo vira um aviso só). */
   const [drops, setDrops] = useState<DropGroup[]>([]);
   const dropSeq = useRef(0);
@@ -239,6 +258,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
+  const phaseRef = useRef<Phase>('intro');
+  phaseRef.current = phase;
   const [rewardMsg, setRewardMsg] = useState('');
   /** Bits do último inimigo (D-62: vão ao `BitsAmount`, não a uma string). */
   const [rewardBits, setRewardBits] = useState(0);
@@ -271,9 +292,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /* Sem botão de Pausar (dono, 15/10/2026, REGISTRO §71): só a pausa de sistema (confirmação de sair aberta) segura a luta. */
   const pausado = pausadoConfirm;
   /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
-  const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep' | 'daily'>('hp');
+  const [endReason, setEndReason] = useState<'hp' | 'energy' | 'deep' | 'portal'>('hp');
   /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
-  const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0 });
+  const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0, essences: [] as EssenceDrop[] });
   const [resumo, setResumo] = useState(resumoRef.current);
   /** O marco do andar 5 já foi pago NESTA descida (idempotência: uma vez por descida). */
   const milestoneRef = useRef(false);
@@ -292,18 +313,19 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const ladderLen = LADDER_TIERS.length;
-  const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
+  // 08/11/2026: o cenário da camada é o do ELEMENTO dela (2 camadas por elemento, `dungeonElementos.ts`); o sorteio antigo fica só de reserva.
+  const sceneReserva = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
+  const scene = { ...sceneReserva, bg: combatSceneBgDaCamada(elementoDaCamada(floor), floor) ?? sceneReserva.bg };
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
-  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
   const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;
 
   const addPoints = (pts: number) => {
-    const ganhos = riftBitsWith(pts, rift.riftBits);
-    onEarnPoints(ganhos); // Bits ganhos: o talento soma por cima; o placar da run fica na base (o funil aplica o teto diário)
+    // Bits ganhos: a Agulha de bússola (`tal-pve-04`) eleva o TETO diário (§393), não o ganho; o funil aplica o teto
+    const creditado = onEarnPoints(pts, rift.riftBitsCap) ?? pts;
     runScoreRef.current += pts;
-    resumoRef.current.bits += ganhos;
+    resumoRef.current.bits += creditado; // o que entrou (teto diário), não o pedido
   };
 
   // Record the run score, then leave the dungeon.
@@ -313,9 +335,22 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   };
   /** O ícone do mapa (e o voltar do Android): sai da TELA direto para o mapa, sem confirmação. Sair ≠ abandonar: o registro `dungeonAway`
       (posição persistida) NÃO é tocado — a descida segue; quem retira o Soulmon é o "Retirar da masmorra" da Home / do cartão de volta. */
-  const exitToMap = () => {
+  const sairParaMapa = () => {
     recordDungeonScore(runScoreRef.current);
     (onExitToMap ?? onExit)();
+  };
+  /** 🧪 Com a descida viva e poções de cura no inventário, antes de sair pergunta quantas deixar com o Soulmon (08/11/2026). */
+  const [pocoesModal, setPocoesModal] = useState(false);
+  const exitToMap = () => {
+    const g = gsRef.current;
+    const emCurso = phaseRef.current === 'fight' || phaseRef.current === 'enemy-down' || phaseRef.current === 'floor-clear';
+    if (ctx && g?.dungeonAway && emCurso && potionsTotal(pocoesDoJogador(g)) > 0) { setPocoesModal(true); return; }
+    sairParaMapa();
+  };
+  const confirmarPocoes = (wanted: PotionStock) => {
+    ctx?.setGameState(prev => deixarPocoes(prev, wanted));
+    setPocoesModal(false);
+    sairParaMapa();
   };
   useBackLayer(true, exitToMap);
 
@@ -333,20 +368,34 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const waveOf = (layer: number) => dungeonWaveOf(runSeedRef.current, layer, nivelJogador, evolutionStage);
 
   /* 🔋 ENERGIA, TETO E RECORDE (REGISTRO §31). Sem provider (demo, testes) não há save: nada é cobrado nem fecha. */
-  const bond = gs ? bondLevelFor(gs.totalXP ?? 0) : 1;
-  const capCamadas = gs ? dungeonLayerCap(nivelJogador, bond) : Number.POSITIVE_INFINITY;
   const recorde = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   /** A energia de AGORA (a regeneração até o instante já acertada), não a do último tick. */
   const energia = gs ? settleEnergy(gs, agora).energyPoints ?? 0 : Number.POSITIVE_INFINITY;
   const energiaMax = getMaxEnergyForStage(evolutionStage);
-  /** 🚧 Por que a PRÓXIMA camada não pode começar (energia ou limite diário) — a UI só ESPELHA o que `spendLayer` decide no updater. */
+  /** 🚧 Por que a PRÓXIMA camada não pode começar (só a energia, sem limite por dia) — a UI só ESPELHA o que `spendLayer` decide no updater. */
   const recusaCamada = gs ? layerRefusal(gs, agora) : undefined;
   const temEnergia = !gs || recusaCamada !== 'no-energy';
-  const inicio = gs ? startLayerFor(recorde, capCamadas) : 1;
+  /** Andares já começados hoje (estatística do `dungeonDaily`, sem teto: o Rift é infinito e quem freia é a energia). */
+  const camadasHoje = gs ? layersToday(gs, agora) : 0;
+  const inicio = gs ? riftStartLayer(gs) : 1;
   /** O ESPELHO do save no instante do gasto: a tela decide por ele, mas quem manda é o updater (`spendLayer` reconfere energia e limite
       diário sobre o `prev`). Cada camada paga atualiza o espelho na hora, para dois toques no mesmo lote não passarem os dois. */
   const gsRef = useRef(gs);
   gsRef.current = gs;
+  /** O aviso de topo "Portal desbloqueado" (REGISTRO §471): nasce quando o recorde libera um portal que o save ainda não registrou como avisado (1× por portal). */
+  const [portalToast, setPortalToast] = useState(false);
+  const portaisLiberados = riftPortalsUnlocked(gs);
+  const portaisAvisados = gs?.riftPortalsSeen ?? 0;
+  useEffect(() => {
+    if (!ctx || portaisLiberados <= portaisAvisados) return;
+    ctx.setGameState(prev => markPortalsSeen(prev));
+    setPortalToast(true);
+  }, [ctx, portaisLiberados, portaisAvisados]);
+  useEffect(() => {
+    if (!portalToast) return;
+    const id = window.setTimeout(() => setPortalToast(false), 4500);
+    return () => window.clearTimeout(id);
+  }, [portalToast]);
   // a tela é a dona da conta da descida enquanto está montada: o retorno automático da Home espera (sem crédito duplicado)
   useEffect(() => marcarTelaMasmorra(), []);
   /** Começa UMA camada (energia + limite diário, pela porta única). Devolve se deu (sem provider, sempre). */
@@ -403,7 +452,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const c = j.combatant;
     return {
       level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus,
-      fam: j.family, prof: profissao ?? undefined, sh: rift.startShield ?? 0, hb: rift.healBoost ?? 0, rb: rift.riftBits ?? 0, stage: evolutionStage,
+      fam: j.family, prof: profissao ?? undefined, sh: rift.startShield ?? 0, hb: rift.healBoost ?? 0, rc: rift.riftBitsCap ?? 0, stage: evolutionStage,
     };
   };
   /** 🏠 GRAVA onde a descida está (camada, lugar na escada, HP, energia): é isso que faz sair da tela NÃO cancelar nada — e que
@@ -417,7 +466,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     ctx.setGameState(prev => ({ ...prev, dungeonAway: reg }));
   };
   /** A descida acabou (ou o jogador retirou o Soulmon): ele volta para casa. */
-  const limparAway = () => { ctx?.setGameState(prev => (prev.dungeonAway ? { ...prev, dungeonAway: undefined } : prev)); };
+  const limparAway = () => { ctx?.setGameState(prev => (prev.dungeonAway ? devolverPocoes({ ...prev, dungeonAway: undefined }) : prev)); };
   /** O estado de onde sai o HP de agora (sem provider — demo, testes —: cheio). */
   const hpState = { dungeonHp: gs?.dungeonHp };
 
@@ -425,10 +474,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const startRun = () => {
     const now = Date.now();
     if (!podeDescer(hpState, now)) return;
-    resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde };
+    resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde, essences: [] };
     riftPagoRef.current.clear();
     recordeRef.current = recorde;
     if (!pagarCamada()) return; // a 1ª camada também custa energia; sem ela o botão nem acende
+    if (gs?.dungeonResumeLayer !== undefined) ctx?.setGameState(prev => consumeResume(prev)); // a volta do mapa vale UMA descida
     const res = onEnter();
     runSeedRef.current = newDefenseSeed();
     setSeedLuta(runSeedRef.current);
@@ -464,6 +514,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     onEnemyDefeated(e.stage);
     addPoints(e.points);
     resumoRef.current.enemies += 1;
+    { const r = rosterEntryOfKey(e.stage); const d = essenceDropsOfFoe(r, r?.stage); if (d.length) resumoRef.current.essences = [...resumoRef.current.essences, ...d]; }
     if (ctx && rollSparkDrop()) { ctx.setGameState(prev => ({ ...prev, foodInventory: addOne(prev.foodInventory, SPARK_ITEM_EMOJI) })); noteDrop('spark', 1); }
     const caiuCoracao = onHeartDrop();
     if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
@@ -484,15 +535,18 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setRunScore(runScoreRef.current);
     resumoRef.current.layers += 1;
     registrarCamada(floor); // recorde + marcos de profundidade (fragmentos, 1× na vida)
-    if (isMilestoneLayer(floor) && !milestoneRef.current) {
-      milestoneRef.current = true; // idempotente: um Glitchtama por descida, no primeiro marco limpo
-      setMilestoneNow(true);
+    // 05/11/2026: o 🌀 é RARO (1% por marco, 1 por semana, sorteio semeado por descida e camada — a MESMA regra da descida fora do app, `glitchtamaDrop.ts`); a recompensa da
+    // run (Vínculo, fragmentos) segue 1× por descida, no primeiro marco. Marco sem drop é silencioso: nem aviso nem item.
+    const marco = isMilestoneLayer(floor);
+    const drop = marco && glitchtamaDropFor(gsRef.current ?? {}, floor, new Date(), glitchtamaDraw(runSeedRef.current, floor));
+    const runReward = marco && !milestoneRef.current;
+    if (runReward) milestoneRef.current = true; // idempotente: a recompensa da run sai uma vez por descida
+    if (drop) {
       resumoRef.current.glitchtama += 1;
       noteDrop('glitchtama', 1);
-      onGlitchtama();                             // marco → 🌀 Glitchtama (1 uso/dia: `specialItemUse.ts`)
-    } else {
-      setMilestoneNow(false);
     }
+    setMilestoneNow(drop);
+    if (runReward || drop) onGlitchtama({ runReward, drop }); // 🌀 (1 uso/dia: `specialItemUse.ts`)
     // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
     const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
     // VIDA INTEIRA (30/10/2026): a cura é em pontos inteiros e o texto mostra exatamente o que a barra subiu
@@ -502,19 +556,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setHpFrac(hpCarryRef.current);
     salvarHp(hpCarryRef.current);
     setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
-    // PR7: os andares ALTOS têm portão pelo Vínculo. Fechado, a descida termina aqui — sem cobrança.
-    if (!floorOpen(floor + 1)) { endDescent(gs && floor + 1 > capCamadas && masmorraFloorOpen(floor + 1, bond) ? 'deep' : 'sealed'); return; }
+    // Sem teto por Lv/Vínculo (16/11/2026): só o fim da escada (999) fecha a descida por profundidade.
+    if (floor + 1 > DUNGEON_MAX_LAYER) { endDescent('deep'); return; }
     // 🔋 A próxima camada custa energia: sem ela, a descida para aqui com uma frase calma (nunca cobrança).
-    if (!temEnergiaAgora()) { endDescent('energy'); return; }
+    const recusa = !ctx || !gsRef.current ? undefined : layerRefusal(gsRef.current, Date.now());
+    if (recusa) { endDescent('energy'); return; }
     gravarAway(floor, DUNGEON_FIGHTS_PER_FLOOR); // camada limpa; a de baixo ainda não foi paga
     setPhase('floor-clear');
   };
 
-  /** Sem provider (demo, testes) não há Vínculo para medir e nada fecha. */
-  const floorOpen = (f: number) => !gs || masmorraFloorOpen(f, bondLevelFor(gs.totalXP ?? 0)) && f <= capCamadas;
-  const temEnergiaAgora = () => !ctx || !gsRef.current || layerRefusal(gsRef.current, Date.now()) === undefined;
 
-  const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep' | 'daily') => {
+  const endDescent = (why: 'hp' | 'energy' | 'deep' | 'portal') => {
     // as faixas do mês foram pagas no estado (updater): entram no resumo aqui, uma vez
     for (const v of riftPagoRef.current.values()) { resumoRef.current.bits += v.bits; resumoRef.current.fragments += v.fragments; }
     riftPagoRef.current.clear();
@@ -556,10 +608,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
-      foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+      foeImpact: (_f, sp) => meleeImpactOf({ element: foeEl, key: e?.name ?? foeEl, name: e?.name, forma: foeStrikeForm(foeEl, sp ? 'especial' : 'basica', e?.stage), ...(sp ? {} : { formKey: e?.stage }) }),
+      foeKind: (_f, sp) => foeStrikeForm(foeEl, sp ? 'especial' : 'basica', e?.stage),
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
     };
   }, [ident, par, isPt, lang]);
 
@@ -630,8 +685,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       setRewardMsg('');
       setPhase('fight');
     } else if (phase === 'floor-clear') {
+      // PORTAL (REGISTRO §471): o andar limpo é de um portal (decidido ao AVANÇAR, não ao limpar: serve também ao andar que voltou limpo da conta de fora) e há outro mais fundo já liberado → em vez do próximo andar, o jogador vai ao MAPA, parado no nó do portal.
+      const portal = ctx && onOpenRiftMap ? riftPortalRedirect({ dungeonDepthRecord: recordeRef.current, riftPortalsSeen: gsRef.current?.riftPortalsSeen }, floor) : undefined;
+      if (portal !== undefined) {
+        endDescent('portal');
+        ctx?.setGameState(prev => parkAtPortal(prev, portal));
+        onOpenRiftMap?.();
+        return;
+      }
       const f = floor + 1;
-      if (!pagarCamada()) { endDescent('energy'); return; } // energia ou limite diário podem ter mudado entre o fim do andar e agora
+      if (!pagarCamada()) { endDescent('energy'); return; } // a energia pode ter mudado entre o fim do andar e agora
       const list = waveOf(f);
       setFloor(f);
       setEnemies(list);
@@ -666,7 +729,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O Soulmon sai da masmorra de vez (o botão "Retirar da masmorra"): o que rendeu até aqui já foi creditado; ele volta para casa. */
   const retirar = () => {
     recordDungeonScore(runScoreRef.current);
-    ctx?.setGameState(prev => ({ ...prev, dungeonAway: undefined, dungeonHp: gravarHp(hpCarryRef.current, Date.now()) }));
+    ctx?.setGameState(prev => devolverPocoes({ ...prev, dungeonAway: undefined, dungeonHp: gravarHp(hpCarryRef.current, Date.now()) }));
     onExit();
   };
   // 🏠 AO ENTRAR: se a descida seguiu sozinha enquanto o jogador estava fora, acerta a conta (UMA vez) e mostra o que rendeu.
@@ -677,9 +740,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const r = settleDungeonAwayNow(gs, ctx.setGameState, Date.now(), false);
     if (!r) return;
     const { report, away, hp } = r;
+    // As poções deixadas já foram usadas pela conta de fora; o que sobrou volta ao inventário (o jogador está na tela e decide de novo ao sair).
+    ctx.setGameState(prev => recolherPocoes(prev));
     resumoRef.current = {
       layers: report.layers, enemies: report.enemies, bits: report.bits, hearts: report.hearts, glitchtama: report.glitchtama,
-      fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo,
+      fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo, essences: [],
     };
     setResumo({ ...resumoRef.current });
     recordeRef.current = Math.max(recordeRef.current, report.recordTo);
@@ -687,7 +752,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       // a descida acabou sozinha (HP, energia, portão ou teto): o Soulmon já voltou para casa
       posicionar({ ...antes, layer: report.toLayer, slot: DUNGEON_FIGHTS_PER_FLOOR - 1 }, hp);
       setAwayReport(report);
-      setEndReason((report.ended === 'energy' || report.ended === 'sealed' || report.ended === 'deep' || report.ended === 'daily') ? report.ended : 'hp');
+      setEndReason((report.ended === 'energy' || report.ended === 'deep') ? report.ended : 'hp');
       setAgora(Date.now());
       setPhase('ended');
       return;
@@ -726,13 +791,26 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   useEffect(() => entrarNaSuperficie(emDescida ? 'masmorra' : 'masmorra-mapa'), [emDescida]);
 
   const inStage = enemies.length > 0 && phase !== 'intro';
-  const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;
+  const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= minigameBitsCap(rift.riftBitsCap);
   /** Quanto falta para o HP chegar ao piso de entrada (0 = já pode descer). */
   const espera = msAteDescer(hpState, agora);
+  // "Entrar no Rift" da folha: o lobby não é parada, é a descida que já começa. Uma vez só; quem já tem descida em andamento é restaurado pelo efeito de volta.
+  const autoStartedRef = useRef(false);
+  const startRunRef = useRef(startRun);
+  startRunRef.current = startRun;
+  const temDescidaAndando = !!ctx?.gameState.dungeonAway;
+  useEffect(() => {
+    if (!autoStart || autoStartedRef.current || phase !== 'intro' || temDescidaAndando) return;
+    if (espera > 0 || !temEnergia) return;
+    autoStartedRef.current = true;
+    startRunRef.current();
+  }, [autoStart, phase, espera, temEnergia, temDescidaAndando]);
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
-  /** O indicador único do HUD: "Camada 3 · luta 2 de 6" / "Layer 3 · fight 2 of 6". */
-  const hudLabel = isPt ? `Camada ${floor} · luta ${enemyIdx + 1} de ${ladderLen}` : `Layer ${floor} · fight ${enemyIdx + 1} of ${ladderLen}`;
+  /** O indicador único do HUD: "Camada 3 · luta 2 de 6 · Fogo 2" / "Layer 3 · fight 2 of 6 · Fire 2" (o andar do conjunto leva o sufixo 1 ou 2, pedido do dono 16/11/2026). Na última luta do conjunto (REGISTRO §445) acrescenta o rótulo calmo "mini-boss". */
+  const conjuntoNome = riftFloorName(tileElementName(riftSetOfLayer(floor).element, isPt), riftSetOfLayer(floor).part);
+  const miniBossTag = isMiniBossFight(floor, enemyIdx) ? ' · mini-boss' : '';
+  const hudLabel = isPt ? `Camada ${floor} · luta ${enemyIdx + 1} de ${ladderLen} · ${conjuntoNome}${miniBossTag}` : `Layer ${floor} · fight ${enemyIdx + 1} of ${ladderLen} · ${conjuntoNome}${miniBossTag}`;
 
   /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a energia
      segue visível entre os inimigos (a masmorra é contínua). */
@@ -751,28 +829,20 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         style={BATTLE_LAYER_STYLE}
         mascot
         belowMascot={!ended && phase !== 'away' ? (<>
-          <button
-            type="button"
-            data-dungeon-speed={speed}
-            onClick={cycleSpeed}
-            aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${nextDungeonSpeed(speed)}×.` : `Fast forward: ${speed}×. Tap to change to ${nextDungeonSpeed(speed)}×.`}
-            className="sm2-num"
-            style={{ pointerEvents: 'auto', background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', fontSize: 16, fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.8)', WebkitTextStroke: '0.5px rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
-          >
-            {speed}×
-          </button>
+          <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} attr="data-dungeon-speed" />
         </>) : undefined}
         cheerRatio={fighting && pronto ? battle.meter / CHEER_TAPS_FULL : 0}
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt, par?.especial)}
+          summon={summonsDoGrupo(battle.summon, jogador.companheiro)}
+          specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
           foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
           isPt={isPt}
           scene={scene.bg}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
@@ -866,15 +936,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
               <p style={phaseLine}>{rewardMsg}{rewardMsg ? ' · ' : ''}<BitsAmount value={clearBonus(floor)} sign="+" /></p>
-              {/* O MARCO do andar 5 (uma vez por descida). Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
+              {/* O MARCO (cada 5 camadas) SÓ aparece quando o 🌀 raro caiu (1%, 1/semana). Marco sem drop é silencioso. Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
                   (`EXCECOES` da régua). "Usar" é o verbo da mochila. Fato, nunca "você dominou a masmorra" (L12). */}
               {milestoneNow && (
                 <div data-dungeon-milestone>
-                  <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe fragmentos que ainda não assentaram.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought fragments that haven't settled yet.`}</p>
+                  <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe algo raro.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought something rare.`}</p>
                   <p style={phaseLine}>
                     {isPt
-                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (Arquivos)'
-                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Files)'}
+                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. Cai raramente, no máximo um por semana. (Arquivos)'
+                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. It drops rarely, at most one a week. (Files)'}
                   </p>
                   <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
                 </div>
@@ -886,7 +956,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             /* Fim de descida SEM vereditos: não é derrota nem cobrança, é o HP que acabou — e ele volta com o tempo.
                Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
                vocabulário da criatura que acaba) — o verbo é RECUPERAR. Tela padrão: `ResultScreen` (Proposta D). */
+            <RiftResultExtras extraCap={rift.riftBitsCap}>
             <ResultScreen
+              playAgainIcon={lotIconName('exploracao', 'dungeon')} playAgainArt={lotIconArt('exploracao', 'dungeon')} dailyEvent="masmorra"
               language={language}
               outcome={resumo.recordTo > resumo.recordFrom ? 'record' : endReason === 'hp' ? 'tired' : 'calm'}
               gameName={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
@@ -913,15 +985,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'item' as const, itemKind: 'heart' as const, label: rewardItemLabel('heart', isPt), amount: resumo.hearts }] : []),
                 ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (Arquivos)' : 'Glitchtama (Files)', amount: resumo.glitchtama }] : []),
                 ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, itemKind: 'fragments' as const, label: rewardItemLabel('fragments', isPt), amount: resumo.fragments }] : []),
+                ...essenceLedgerRows(resumo.essences),
               ]}
               emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
               petSrc={petSprite}
+              opponentSrc={wildPlayer?.spriteUrl ?? enemy?.sprite}
               scene={scene.bg}
               notes={(
                 <>
-                  {endReason === 'sealed' && gs && (
-                    <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
-                  )}
                   {endReason === 'energy' && (
                     <p style={phaseLine} data-dungeon-no-energy>
                       {isPt
@@ -932,8 +1003,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   {endReason === 'deep' && (
                     <p style={phaseLine} data-dungeon-deep>
                       {isPt
-                        ? `O Lv dele chega até a camada ${capCamadas}. O Lv cresce com os seus dias completos e a evolução.`
-                        : `His Lv reaches down to layer ${capCamadas}. Lv grows with your complete days and evolution.`}
+                        ? `Ele chegou à camada ${DUNGEON_MAX_LAYER}, o fundo da Fenda.`
+                        : `He reached layer ${DUNGEON_MAX_LAYER}, the bottom of the Rift.`}
                     </p>
                   )}
                   {awayReport && (
@@ -954,13 +1025,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               homeLabel={exitLabel}
               onHome={onExit}
             />
+            </RiftResultExtras>
           )}
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
+        {pocoesModal && gs && <DungeonPotionsModal owned={pocoesDoJogador(gs)} initial={gs.dungeonPotions ?? {}} language={language} onConfirm={confirmarPocoes} onClose={() => setPocoesModal(false)} />}
         {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
         {/* 💗 A queda: antes da derrota, "Usar Coraçãozinho". Esquerda = recusar (derrota normal), direita = confirmar (volta com 50% do HP). */}
         {reviveOffer && (
-          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
             <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
               <p style={{ margin: 0 }}>
@@ -979,7 +1052,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   }
 
   return (
-    <GameRoot>
+    <GameRoot moldura={{ tela: 'fenda', title: isPt ? 'Fenda' : 'Rift' }}>
+      {portalToast && (
+        <div role="status" data-rift-portal-toast onClick={() => setPortalToast(false)} style={{
+          position: 'fixed', zIndex: 150, left: '50%', transform: 'translateX(-50%)', top: 'calc(env(safe-area-inset-top, 0px) + 12px)', maxWidth: 'min(92vw, 420px)', minHeight: 44,
+          padding: '10px 16px', boxSizing: 'border-box', cursor: 'pointer', background: 'rgba(15,42,41,.96)', color: '#E9F5F2', border: '2px solid var(--sm2-gold-fill)', borderRadius: 16,
+          boxShadow: '0 6px 18px rgba(0,0,0,.45)', font: '500 14px/1.35 var(--sm2-font-text)', textAlign: 'center', display: 'flex', alignItems: 'center',
+        }}>{riftMapCopy(isPt).portalUnlockedToast}</div>
+      )}
       <GameHeader
         run={false}
         title={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
@@ -1050,13 +1130,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         {gs && (
           <p style={phaseLine} data-dungeon-plan className="sm2-num">
             {isPt
-              ? `Começa na camada ${inicio} · dá para ${layersAffordable(energia)} agora`
-              : `Starts at layer ${inicio} · enough for ${layersAffordable(energia)} now`}
+              ? `Começa na camada ${inicio} · dá para ${layersAffordable(energia)} agora · hoje: ${camadasHoje} ${camadasHoje === 1 ? 'andar' : 'andares'}`
+              : `Starts at layer ${inicio} · enough for ${layersAffordable(energia)} now · today: ${camadasHoje} ${camadasHoje === 1 ? 'floor' : 'floors'}`}
           </p>
         )}
         {gs && (
           <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[
-            { kind: 'bits', max: remainingMinigameBits(gs, playerDayKey(new Date(), gs.playerDayTz)) },
+            { kind: 'bits', max: remainingMinigameBits(gs, playerDayKey(new Date(), gs.playerDayTz), rift.riftBitsCap) },
             { kind: 'xp', max: XP_DUNGEON_FLOOR * 5 + XP_DUNGEON_RUN },
             { kind: 'item', item: 'heart' },
           ]} />
@@ -1064,6 +1144,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
+          <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
         </button>
         {/* Abaixo do piso: recuperação, não punição — sem culpa, sem coração, sem Bits. Verbo RECUPERAR (a bíblia veta "descansar" sobre a criatura). */}
         {espera > 0 && (

@@ -85,6 +85,7 @@ describe('MilestoneCeremony — a saída é do jogador', () => {
     const { container } = renderWithCss(<MilestoneCeremony {...base} onDone={onDone} />);
     const botoes = container.querySelectorAll('button');
     expect(botoes).toHaveLength(1);
+    expect(botoes[0].hasAttribute('data-cta-button')).toBe(true); // §364: celebração em tela cheia = CTA do site
     fireEvent.click(botoes[0]);
     expect(onDone).toHaveBeenCalledTimes(1);
   });

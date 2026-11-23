@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { ResultExtrasContext } from './ResultExtrasContext';
 import { ResultScreen, RESULT_FINAL_STEP, formatResultTime, type ResultScreenProps } from './ResultScreen';
 
 function reducedMotion(on: boolean) {
@@ -123,8 +124,60 @@ describe('ResultScreen', () => {
     expect(document.querySelector('[data-result-hero]')).toBeNull();
   });
 
+  it('teto gasto: livro vazio (0 creditado) não mostra Bits e a linha vazia não culpa a rodada', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 0 }], emptyLedgerLine: 'Rodada leve, sem Bits desta vez.' })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-bits-pop]')).toBeNull();
+    expect(document.querySelector('[data-result-empty]')!.textContent).toBe('Sem Bits desta vez.');
+    expect(document.querySelector('[data-result-bitscap]')).toBeTruthy();
+  });
+
+  it('teto parcial: o livro mostra o valor creditado recebido, sem recalcular', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 40 }] })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-ledger]')!.textContent).toMatch(/40/);
+    expect(document.querySelector('[data-result-ledger]')!.textContent).not.toMatch(/150/);
+  });
+
+  it('sem teto: a linha vazia original fica', () => {
+    const ex = { bitsToday: 10, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 0 }], emptyLedgerLine: 'Rodada leve, sem Bits desta vez.' })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-empty]')!.textContent).toBe('Rodada leve, sem Bits desta vez.');
+  });
+
   it('formatResultTime: m:ss.d', () => {
     expect(formatResultTime(42_130)).toBe('0:42.1');
     expect(formatResultTime(75_900)).toBe('1:15.9');
+  });
+
+  it('teto de Bits: cor/ícone dos Bits e texto visível com o máximo, longe do baú', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR' })} /></ResultExtrasContext.Provider>);
+    const cap = document.querySelector('[data-result-bitscap]') as HTMLElement;
+    expect(cap).toBeTruthy();
+    expect(cap.style.marginTop).toBe('16px');
+    expect(cap.querySelector('[data-result-bitscap-label]')!.textContent).toMatch(/Você já ganhou o máximo de hoje:\s*60/);
+    expect(cap.querySelector('[data-bits-amount]')).toBeTruthy();
+    expect(cap.querySelector('[role="progressbar"]')!.getAttribute('aria-label')).toBe('Bits de hoje: 60 de 60 (máximo)');
+  });
+});
+
+describe('ResultScreen: essências no livro "Ganhou"', () => {
+  it('mostra a essência ao lado dos Bits/XP, com ícone, nome e quantidade; qty 0 some', () => {
+    reducedMotion(true);
+    render(<ResultScreen {...base({ ledger: [
+      { key: 'bits', kind: 'bits', value: 12 }, { key: 'xp', kind: 'xp', value: 5 },
+      { key: 'essence-fogo', kind: 'essence', id: 'fogo', qty: 3 }, { key: 'essence-agua', kind: 'essence', id: 'agua', qty: 0 },
+    ] })} />);
+    const ledger = document.querySelector('[data-result-ledger]')!;
+    const ess = ledger.querySelector('[data-result-essence="fogo"]')!;
+    expect(ess.textContent).toBe('×3');
+    expect(ledger.querySelector('[data-result-essence-icon="fogo"]')).toBeTruthy();
+    expect(ledger.querySelector('[data-result-xp]')).toBeTruthy();
+    expect(ledger.querySelector('[data-result-essence="agua"]')).toBeNull();
+    expect(ledger.textContent).toMatch(/Fire Essence/);
+    const live = document.querySelector('[role="status"][data-result-live]')!;
+    act(() => { vi.advanceTimersByTime(160); });
+    expect(live.textContent).toMatch(/Fire Essence ×3/);
   });
 });

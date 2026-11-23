@@ -10,6 +10,10 @@ import { renderWithCss } from '../test/renderEnv';
 import { EvolutionPath } from './EvolutionPath';
 import type { CreatureStage } from '../utils/oracle';
 
+/** 13/11/2026: o termo "fragmento de alma" sai destacado (`SoulFragmentTerm`), então a frase se divide em nós: casa pelo texto inteiro. */
+const textoInteiro = (t: string) => (_: string, el: Element | null) => !!el && el.textContent === t && Array.from(el.children).every(c => c.textContent !== t);
+
+
 afterEach(() => cleanup());
 
 const stage = (over: Partial<CreatureStage>): CreatureStage => ({
@@ -32,13 +36,13 @@ describe('EvolutionPath — gauge', () => {
     expect(bar.getAttribute('aria-valuenow')).toBe('12');
     expect(document.querySelector('[data-evo-gauge-count]')?.textContent).toBe('12 / 30 · +3 from today join tomorrow');
     expect(document.querySelector('[data-evo-meter-today]')).toBeTruthy();
-    expect(screen.getByText('You have gathered 12 soul fragments on the way to the next form.')).toBeTruthy();
+    expect(screen.getByText(textoInteiro('You have gathered 12 soul fragments on the way to the next form.'))).toBeTruthy();
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/Soul Fragments.*nothing here goes back/);
   });
 
   it('PT: descreve o que já se juntou (sem "faltam") e o que desbloqueia', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    expect(screen.getByText('Você já juntou 12 fragmentos de alma a caminho da próxima forma.')).toBeTruthy();
+    expect(screen.getByText(textoInteiro('Você já juntou 12 fragmentos de alma a caminho da próxima forma.'))).toBeTruthy();
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/nada aqui volta atrás/);
   });
 

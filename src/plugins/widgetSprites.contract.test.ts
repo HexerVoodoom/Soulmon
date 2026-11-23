@@ -67,3 +67,35 @@ describe('widget Android: iniciais no lugar da árvore genérica (§138)', () =>
     expect(r.status).toBe(0);
   });
 });
+
+describe('widget Android: sprite PRÓPRIO do jogador (09/11/2026, fim do "Crato" de demonstração)', () => {
+  it('só https/data:image vai ao widget; corvo, asset do Vite e lixo vão vazios', async () => {
+    const { widgetOwnSpriteUrl } = await import('./SoulmonWidgetPlugin');
+    expect(widgetOwnSpriteUrl('https://images.higgs.ai/x.png', false)).toBe('https://images.higgs.ai/x.png');
+    expect(widgetOwnSpriteUrl('data:image/png;base64,AAAA', false)).toBe('data:image/png;base64,AAAA');
+    expect(widgetOwnSpriteUrl('https://images.higgs.ai/x.png', true)).toBe('');
+    expect(widgetOwnSpriteUrl('/assets/crato-abc.png', false)).toBe('');
+    // o sprite GERADO do jogador é caminho de raiz do nosso Worker: vira URL absoluta (era descartado: o widget nunca o recebia)
+    const k = 'a'.repeat(32);
+    expect(widgetOwnSpriteUrl(`/api/sprite-image?k=${k}`, false)).toBe(`https://soulmon.mateus-sprnd.workers.dev/api/sprite-image?k=${k}`);
+    expect(widgetOwnSpriteUrl('/api/sprite-image?k=curto', false)).toBe('');
+    expect(widgetOwnSpriteUrl('javascript:alert(1)', false)).toBe('');
+    expect(widgetOwnSpriteUrl(undefined, false)).toBe('');
+  });
+
+  it('o Kotlin repete a allowlist de hosts do app e o renderer usa o sprite próprio antes do inicial', () => {
+    const own = readFileSync('android/app/src/main/java/com/soulmon/widget/WidgetOwnSprite.kt', 'utf8');
+    for (const h of ['d8j0ntlcm91z4.cloudfront.net', 'images.higgs.ai', 'platform.higgsfield.ai']) expect(own).toContain(`"${h}"`);
+    expect(rend).toMatch(/WidgetOwnSprite\.load\(context, px\)/);
+  });
+
+  it('o widget "Soulmon" vai a 1x1: minResize 40dp e layout compacto sem texto', () => {
+    const info = readFileSync('android/app/src/main/res/xml/soulmon_widget_clear_info.xml', 'utf8');
+    expect(info).toMatch(/minResizeWidth="40dp"/);
+    expect(info).toMatch(/minResizeHeight="40dp"/);
+    expect(info).toMatch(/resizeMode="horizontal\|vertical"/);
+    const lay = readFileSync('android/app/src/main/res/layout/widget_soulmon_clear_compact.xml', 'utf8');
+    expect(lay).not.toMatch(/<TextView/);
+    expect(lay).toContain('@+id/widget_sprite');
+  });
+});

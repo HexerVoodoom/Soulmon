@@ -117,3 +117,13 @@ describe('apelido do perfil — a mesma régua', () => {
     expect(JSON.parse(e.DIGIAPP_SAVES.store.get(`profile:${ANA}`)).name).toBe('Ana Clara');
   });
 });
+
+// Regressão, QA da 2ª onda (05/11/2026): estes nomes eram ACEITOS e iam para a lista pública.
+describe('apelido: telefone sem formato e domínio disfarçado', () => {
+  it.each(['1199999999', '999998888', 'zap 1199999999', '①①⑨⑨⑨⑨⑨⑨⑨⑨', '11٩٩٩٩٩٩٩٩', 'foo . com', 'foo(dot)com', 'foo (ponto) br'])('recusa %s', (n) => {
+    expect(sanitizarNomeDeGuilda(n)).toBeNull();
+  });
+  it.each(['Wolf', 'Twilight', 'Dragão 2000', 'Lobo 1234', 'kaito88', 'mari.silva', 'Ana 1234567'])('não barra nome legítimo %s', (n) => {
+    expect(sanitizarNomeDeGuilda(n)).toBe(n);
+  });
+});

@@ -111,14 +111,14 @@ describe('o que o card NÃO diz', () => {
 describe('idioma', () => {
   it('fala os dois', () => {
     abrir();
-    expect(screen.getByText(/Da aventura de ontem/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
     expect(screen.getByText(ACHADO.textPt)).toBeTruthy();
     cleanup();
     renderWithCss(
       <DailyReportModal report={relatorio()} adventure={ACHADO} onClose={() => {}} language="en-US" />,
     );
     irParaAventura();
-    expect(screen.getByText(/From Yesterday's Adventure/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
     expect(screen.getByText(ACHADO.textEn)).toBeTruthy();
   });
 });

@@ -33,7 +33,7 @@ describe('spendCredits (cliente) — resposta perdida', () => {
       if (++n === 1) throw new TypeError('network lost');
       return ok(40);
     }));
-    const r = await spendCredits(10, 'exchange-bits');
+    const r = await spendCredits(10, 'reroll');
     expect(r?.credits).toBe(40);
     expect(corpos).toHaveLength(2);
     expect(corpos[1].opId).toBe(corpos[0].opId);

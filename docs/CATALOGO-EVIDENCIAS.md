@@ -116,3 +116,17 @@ na própria linha do catálogo, campo `evidence.note`).
 - **Tiimo** — foco em usuários neurodivergentes com linguagem visual simples;
   referência para manter o cartão do catálogo com "por que funciona" em 1
   linha, sem jargão.
+
+## Criatividade (categoria nova, 11/11/2026)
+
+Linha vermelha: sem promessa clínica, de saúde ou de foco; a copy fala em ideias e perspectiva. Vetos do catálogo mantidos (nada de dieta, jejum, peso, sono por duração, tratamento). ATENÇÃO: autores, ano, periódico e o achado central de cada estudo abaixo foram conferidos por busca em 11/11/2026 (resumos e bases, sem ler o texto completo); tamanhos de efeito NÃO foram conferidos e por isso não aparecem. Osborn 1953 é um livro clássico, não conferido por busca. Reconferir no texto original antes de qualquer uso fora do app (item sem fonte conferível sai).
+
+| Item | Nível | Referência | Achado |
+|---|---|---|---|
+| Caminhar sem fone | B | Oppezzo & Schwartz 2014, *J. Exp. Psychology: Learning, Memory, and Cognition* | Em 4 experimentos, caminhar elevou o pensamento divergente (usos alternativos) em relação a ficar sentado. Amostras pequenas: nível B. |
+| Escrita livre de manhã | C | Osborn 1953, *Applied Imagination* | Princípio de adiar o julgamento ao gerar ideias. **Sem estudo dedicado à escrita livre matinal** — entra como C por custo mínimo e facilidade; a copy não promete efeito (`evidence.note`). |
+| Dez minutos sem fazer nada | B | Baird et al. 2012, *Psychological Science*; Sio & Ormerod 2009, *Psychological Bulletin* | Pausa com tarefa leve favoreceu a incubação em tarefa de usos alternativos; a meta-análise de incubação aponta efeito maior com períodos de preparação mais longos e menor quando o intervalo é preenchido por tarefa muito exigente. |
+| Anotar 3 ideias | B | Scott, Leritz & Mumford 2004, *Creativity Research Journal* | Meta-análise: programas de treino de criatividade (em especial de pensamento divergente) elevam o desempenho nessas tarefas. Não é prova do efeito de "3 ideias/dia" isolado. |
+| Provar algo novo | B | Ritter et al. 2012, *J. Experimental Social Psychology* | Experiências diversificadas (fora do habitual) aumentaram a flexibilidade cognitiva em experimentos. |
+| Praticar um ofício manual | B | Conner, DeYoung & Silvia 2018, *The Journal of Positive Psychology* | Estudo de diário: atividade criativa no dia associada a mais afeto positivo e sensação de crescimento no dia seguinte. Observacional. |
+| Um objeto, cinco usos | B | Scott, Leritz & Mumford 2004 | Mesma base do treino de pensamento divergente (tarefa de usos alternativos). |

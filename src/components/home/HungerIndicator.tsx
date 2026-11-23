@@ -36,12 +36,15 @@ export function HungerIndicator({ tier, value, language, size = 20, style, onTap
   const isPt = language === 'pt-BR';
   const copy = isPt ? STATE_COPY[tier].pt : STATE_COPY[tier].en;
   const nivel = hungerDisplayLevel(tier, value);
-  const nome = isPt ? `Fome: ${copy}, nível ${nivel} de 3` : `Hunger: ${copy}, level ${nivel} of 3`;
+  // O número mostra o valor REAL em meios (03/11/2026, dono: uma comida = 1,5 de 3, não 2/3 arredondado pelo tier).
+  const meios = value === undefined ? nivel : Math.round(value) <= 0 ? 0 : Math.min(3, Math.max(1, Math.round((value * 6) / 100) / 2));
+  const txt = isPt ? String(meios).replace('.', ',') : String(meios);
+  const nome = isPt ? `Fome: ${copy}, nível ${txt} de 3` : `Hunger: ${copy}, level ${txt} of 3`;
   const corpo = (
     <>
       <img src={ART[tier]} alt="" width={size} height={size} draggable={false} aria-hidden="true" style={{ imageRendering: 'pixelated' }} />
       {/* nível N/3 em texto, mesmo esquema do numeral da energia/vida (`sm2-num` = tabular-nums) */}
-      <span className="sm2-num" data-hunger-level={nivel} aria-hidden="true">{nivel}/3</span>
+      <span className="sm2-num" data-hunger-level={nivel} aria-hidden="true">{txt}/3</span>
     </>
   );
   const dados = {

@@ -39,6 +39,7 @@
  * misturaria duas economias que a regra mantém separadas. O que não podia continuar duplicado era a
  * MECÂNICA, e essa agora tem dono: `utils/dungeonFight.ts` + `useGroupBattle` + `BattleStage`.
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -52,6 +53,7 @@ import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { CHEER_TAPS_FULL, type RingGrade } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
@@ -60,13 +62,17 @@ import { newDefenseSeed } from '../utils/autoDefesa';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { hpPoints } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
-import { dungeonFamily, nightmareFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
+import { useGameStateOptional } from '../contexts/GameStateContext';
+import { companheiroDoEstado } from '../utils/companheiroInvocado';
+import { summonsDoGrupo } from './games/SummonLayer';
+import { dungeonFamily, nightmareFight, NIGHTMARE_OPENING_WINDOW_S, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, pesadeloGolpe, specialLabel, foeSpecialLabel, familiaDoNomeInimigo } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { playDefeat, playVictory } from '../utils/sounds';
 import {
   EMPTY_TALLY,
@@ -142,16 +148,21 @@ export function NightmareBattle({
      Masmorra (`jeitoParaPve`). Antes o Pesadelo usava o `base.dmg` cru e ignorava o jeito: era uma divergência
      entre as duas telas, resolvida aqui — o Pesadelo aplica o jeito. Sem estado (testes), cai no estágio. */
   const estado = useMemo<SoulXPState>(() => soul ?? { evolutionStage: petStage }, [soul, petStage]);
+  const ctxGs = useGameStateOptional()?.gameState; // só o companheiro invocado (PR 2) lê daqui
   const bonusTalento = useTalentBonus('nightmare'); // canal único de bônus (teto 5%), PR7; `tal-pve-05` soma só aqui (Tarefa B)
   const rift = useRiftTalents();
   const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento, hx),
+    pesadelo: true,
+    companheiro: companheiroDoEstado(ctxGs), // PR 2: sempre `null` com a flag desligada
     jeito: jeitoDaProfissao(profissao),
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [hx, estado, ctxGs, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
@@ -182,7 +193,6 @@ export function NightmareBattle({
 
   const enemy = wave[idx];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
-  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const petEl = fxElementId(ident.basico.elemento);
   // O elemento do pesadelo é o PRÓPRIO (`pesadelo`, exclusivo da mecânica); sem arte instalada cai no FX procedural.
   const enemyEl = fxElementId(NIGHTMARE_ELEMENT);
@@ -237,6 +247,7 @@ export function NightmareBattle({
       player: f.player, foes: f.foes, seed: f.seed,
       startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
       hitScale: f.hitScale,
+      options: f.options, // §413: a janela de abertura (o Pesadelo ainda não ataca)
       castScale: ({ who, ring, dodge }) => {
         // a regra de vitória: cada especial do Soulmon lançado e se o anel acertou ao menos parcialmente
         if (who === 0) tallyRef.current = { ...tallyRef.current, casts: tallyRef.current.casts + 1, landed: tallyRef.current.landed + (specialLanded(ring as RingGrade | null) ? 1 : 0) };
@@ -255,10 +266,13 @@ export function NightmareBattle({
       playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
-      foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+      foeImpact: () => pesadeloGolpe(idxRef.current).impacto,
+      foeKind: () => pesadeloGolpe(idxRef.current).forma,
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
     };
   }, [ident, par, isPt, lang]);
 
@@ -278,11 +292,17 @@ export function NightmareBattle({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rarity, onWin, onLose]);
 
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const battle = useGroupBattle({
     running: open && phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true, speed,
   });
+  const [abertura, setAbertura] = useState(true); // §413: "dá tempo de torcer" dura a janela de abertura (relógio da cena ÷ velocidade); só UI, o núcleo já atrasa o inimigo
+  useEffect(() => {
+    setAbertura(true); if (!(open && phase === 'fight') || pausado) return undefined;
+    const id = setTimeout(() => setAbertura(false), (NIGHTMARE_OPENING_WINDOW_S * 1000) / Math.max(1, speed)); return () => clearTimeout(id);
+  }, [fightKey, open, phase, pausado, speed]);
   const batteryRef = useRef<typeof battle | null>(null);
   batteryRef.current = battle;
 
@@ -325,6 +345,7 @@ export function NightmareBattle({
     );
     const objectives = (
       <span style={{ display: 'inline-flex', gap: 10 }} role="status">
+        {abertura && chip(true, isPt ? 'Torça já!' : 'Cheer now!', 'opening')}
         {chip(cond.cheer, isPt ? 'Torcida' : 'Cheer', 'cheer')}
         {chip(cond.special, isPt ? `Especial ${t.landed}/${t.casts}` : `Special ${t.landed}/${t.casts}`, 'special')}
       </span>
@@ -341,12 +362,13 @@ export function NightmareBattle({
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt, par?.especial)}
-          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
+          summon={summonsDoGrupo(battle.summon, jogador.companheiro)}
+          specialLabel={specialLabel(isPt, par?.especial, hexFamily(dungeonFamily(par?.especial), hx))}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, familiaDoNomeInimigo(enemy?.foe.special))}
           isPt={isPt}
           scene={sceneBg}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: petStage, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             // o trecho da barra de especial que a torcida em andamento já encheu (só UI; o núcleo soma na descarga)
@@ -367,6 +389,7 @@ export function NightmareBattle({
           dodge={pronto ? battle.dodge : null}
           onDodge={battle.swipe}
           petDodge={pronto ? battle.petDodge : null}
+          fast={speed > 1}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
@@ -382,7 +405,9 @@ export function NightmareBattle({
             leave: isPt ? 'Sair' : 'Leave',
           }}
           onPauseChange={setPausado}
-        />
+        >
+          <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />
+        </BattleStage>
       </TorcidaLayer>
     );
   }

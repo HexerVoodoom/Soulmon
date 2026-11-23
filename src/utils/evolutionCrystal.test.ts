@@ -89,3 +89,13 @@ describe('cristal — o lote da próxima forma só parte NO cristal', () => {
     expect(spriteBatch({ ...input, crystalFormId: 'champion-harmony' })).toEqual({ occasion: 'C', formIds: ['champion-harmony'] });
   });
 });
+
+describe('chave congelada do cristal (REGISTRO §404)', () => {
+  it('sobrevive ao ciclo de save e só vale se for da PRÓPRIA forma-destino', () => {
+    const c = { ...startCrystal('rookie', 'champion-power', 'power', new Date(0)), key: 'champion-power@fogo' };
+    expect(sanitizeCrystal(JSON.parse(JSON.stringify(c)))?.key).toBe('champion-power@fogo');
+    expect(sanitizeCrystal({ ...c, key: 'champion-harmony' })?.key).toBeUndefined();
+    expect(sanitizeCrystal({ ...c, key: 'x@../../y' })?.key).toBeUndefined();
+    expect(sanitizeCrystal({ ...c, key: undefined })?.key).toBeUndefined();
+  });
+});

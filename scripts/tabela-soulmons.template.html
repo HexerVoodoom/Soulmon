@@ -1,0 +1,426 @@
+<title>Tabela de Soulmons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root {
+  --bg: #eef3f2; --surface: #ffffff; --surface2: #e2ecea; --ink: #0f2e2d; --muted: #4d6967; --line: #c3d4d1;
+  --teal: #0d5b5b; --teal-ink: #ffffff; --copper: #b3622f; --edit-bg: #fbeee2; --edit-line: #b3622f; --focus: #b3622f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1c1e; --surface: #11292b; --surface2: #173436; --ink: #e3f0ee; --muted: #93b1ae; --line: #25494b;
+    --teal: #2fb3ad; --teal-ink: #062022; --copper: #e0955d; --edit-bg: #3a2616; --edit-line: #e0955d; --focus: #e0955d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1c1e; --surface: #11292b; --surface2: #173436; --ink: #e3f0ee; --muted: #93b1ae; --line: #25494b;
+  --teal: #2fb3ad; --teal-ink: #062022; --copper: #e0955d; --edit-bg: #3a2616; --edit-line: #e0955d; --focus: #e0955d;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.app { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1500px; margin: 0 auto; }
+header.topo { padding: 16px 0 8px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+h1 { margin: 0 0 8px; font-size: 20px; color: var(--teal); }
+h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+.barra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.busca { flex: 1 1 200px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.btn { padding: 12px 16px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 8px; }
+.btn.primario { background: var(--teal); color: var(--teal-ink); border-color: var(--teal); font-weight: 600; }
+.btn.cobre { border-color: var(--copper); color: var(--copper); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.badge { background: var(--copper); color: #fff; border-radius: 999px; padding: 0 8px; font-size: 12px; min-width: 20px; text-align: center; }
+.resumo { color: var(--muted); font-size: 13px; padding: 8px 0 4px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0 8px; }
+.chip { border: 1px solid var(--teal); color: var(--teal); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+
+.tabela-wrap { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: auto; max-height: calc(100vh - 200px); }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; vertical-align: top; }
+th { position: sticky; top: 0; background: var(--surface2); z-index: 2; font-size: 13px; color: var(--muted); font-weight: 600; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface2); }
+tbody tr.novo-grupo td { border-top: 2px solid var(--teal); }
+tr.editado td { background: var(--edit-bg); }
+tr.editado td:first-child { box-shadow: inset 4px 0 0 var(--edit-line); }
+td .sub { color: var(--muted); font-size: 12px; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--surface2); font-size: 12px; margin: 1px 2px 1px 0; }
+.spr { display: block; width: auto; height: 56px; max-width: 100%; image-rendering: pixelated; object-fit: contain; }
+.spr-nada { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; max-width: 100%; background: #8a9795; color: #fff; font-weight: 700; border-radius: 6px; }
+.col-spr { width: 76px; }
+.cartao .topo-c { display: flex; gap: 10px; align-items: center; }
+.cartao .topo-c .txt { flex: 1; min-width: 0; }
+.col-nome { width: 19%; } .col-pers { width: 10%; } .col-elem { width: 9%; } .col-est { width: 8%; } .col-atk { width: 11%; } .col-esp { width: 10%; } .col-ctx { width: 21%; } .col-id { width: 12%; }
+tr.grupo td { background: var(--surface2); color: var(--teal); font-weight: 600; font-size: 13px; border-top: 2px solid var(--teal); cursor: default; padding: 6px 10px; }
+tr.grupo td span { color: var(--muted); font-weight: 400; }
+.cartao-grupo { margin: 14px 0 6px; padding: 6px 2px; color: var(--teal); font-weight: 600; font-size: 13px; border-top: 3px solid var(--teal); }
+.cartao-grupo span { color: var(--muted); font-weight: 400; }
+
+.cartoes { display: none; }
+.cartao { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+.cartao.editado { background: var(--edit-bg); border-color: var(--edit-line); border-left-width: 5px; }
+.cartao.novo-grupo { margin-top: 14px; border-top: 3px solid var(--teal); }
+.cartao h3 { margin: 0; font-size: 16px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.cartao h3 span { font-size: 12px; font-weight: 600; color: var(--teal); }
+.cartao .linha-id { color: var(--muted); font-size: 12px; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.cartao .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 13px; }
+.cartao .grade b { color: var(--muted); font-weight: 500; display: block; font-size: 11px; }
+
+.fundo { position: fixed; inset: 0; background: rgba(5, 20, 20, .55); z-index: 20; display: none; }
+.fundo.aberto { display: block; }
+.painel { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--surface); z-index: 21; display: none; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,.35); }
+.painel.aberto { display: flex; }
+.painel header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.painel header h2 { margin: 0; font-size: 18px; color: var(--teal); overflow-wrap: anywhere; }
+.painel .corpo { padding: 12px 16px; overflow-y: auto; flex: 1; }
+.painel footer { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; background: var(--surface); }
+.painel footer .btn { flex: 1 1 120px; justify-content: center; }
+fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; padding: 8px 12px 10px; min-width: 0; }
+legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; }
+.opcoes { display: flex; flex-wrap: wrap; gap: 6px; }
+.opcao { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; min-height: 40px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); cursor: pointer; user-select: none; }
+.opcao input { width: 18px; height: 18px; accent-color: var(--teal); margin: 0; }
+.opcao.on { border-color: var(--teal); background: var(--surface2); }
+.campo { margin-bottom: 12px; }
+.campo > label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.campo input[type=text], .campo select { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-height: 44px; font-size: 16px; }
+.campo .ro { padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.campo.mudou input[type=text], .campo.mudou select { border-color: var(--edit-line); background: var(--edit-bg); }
+.vazio { padding: 40px 16px; text-align: center; color: var(--muted); }
+
+@media (max-width: 600px) {
+  .tabela-wrap { display: none; }
+  .cartoes { display: block; padding-bottom: 40px; }
+  .painel { width: 100%; }
+  .btn { flex: 1 1 auto; justify-content: center; min-height: 48px; }
+  .busca { flex-basis: 100%; min-height: 48px; font-size: 16px; }
+  .opcao { min-height: 44px; }
+}
+
+.painel-csv { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; gap: 8px; padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.painel-csv[hidden] { display: none; }
+.painel-csv h2 { margin: 0; font-size: 18px; color: var(--teal); }
+.painel-csv p { margin: 0; color: var(--muted); font-size: 13px; }
+.painel-csv textarea { flex: 1; min-height: 0; width: 100%; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: none; }
+.painel-csv .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.painel-csv .msg { min-height: 18px; color: var(--copper); font-size: 13px; }
+</style>
+<div class="app">
+  <header class="topo">
+    <h1>Tabela de Soulmons <small id="gerado"></small></h1>
+    <div class="barra">
+      <input id="busca" class="busca" type="search" placeholder="Buscar por nome, apelido ou id (ex.: sim_0007)" aria-label="Buscar por nome">
+      <button id="btnFiltros" class="btn" type="button" aria-label="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Filtros <span id="nFiltros" class="badge" hidden>0</span>
+      </button>
+      <button id="btnSemEvo" class="btn" type="button">Sem evolução</button>
+      <button id="btnCsv" class="btn primario" type="button">Exportar CSV</button>
+      <button id="btnCsvEd" class="btn cobre" type="button">Exportar só editados</button>
+    </div>
+    <div id="resumo" class="resumo"></div>
+    <div id="chips" class="chips"></div>
+  </header>
+
+  <div class="tabela-wrap" id="tabelaWrap">
+    <table>
+      <thead><tr>
+        <th class="col-spr">Sprite</th><th class="col-nome">Nome</th><th class="col-pers">Personalidade</th><th class="col-elem">Elemento base</th><th class="col-est">Estágio</th>
+        <th class="col-atk">Tipo de ataque</th><th class="col-esp">Ataque especial</th><th class="col-ctx">Usado por</th><th class="col-id">Id</th>
+      </tr></thead>
+      <tbody id="corpo"></tbody>
+    </table>
+  </div>
+  <div class="cartoes" id="cartoes"></div>
+  <div id="vazio" class="vazio" hidden>Nenhuma forma com esses filtros.</div>
+</div>
+
+<div class="fundo" id="fundo"></div>
+
+<aside class="painel" id="painelFiltros" role="dialog" aria-modal="true" aria-label="Filtros">
+  <header><h2>Filtros</h2><button class="btn" id="fecharFiltros" type="button">Fechar</button></header>
+  <div class="corpo" id="corpoFiltros"></div>
+  <footer><button class="btn" id="limparFiltros" type="button">Limpar tudo</button><button class="btn primario" id="verResultados" type="button">Ver resultados</button></footer>
+</aside>
+
+<aside class="painel" id="painelEdicao" role="dialog" aria-modal="true" aria-label="Editar Soulmon">
+  <header><h2 id="tituloEdicao">Editar</h2><button class="btn" id="fecharEdicao" type="button">Fechar</button></header>
+  <div class="corpo" id="corpoEdicao"></div>
+  <footer><button class="btn" id="restaurar" type="button">Restaurar original</button><button class="btn primario" id="salvar" type="button">Salvar</button></footer>
+</aside>
+
+<script id="dados" type="application/json">__DADOS__</script>
+<section id="painelCsv" class="painel-csv" hidden aria-label="Exportar CSV">
+  <h2 id="csvTitulo">CSV</h2>
+  <p>Este visualizador não baixa arquivos. Toque em Copiar e cole o CSV na conversa.</p>
+  <textarea id="csvTexto" readonly spellcheck="false"></textarea>
+  <div id="csvMsg" class="msg" role="status"></div>
+  <div class="acoes"><button id="csvCopiar" class="btn primario" type="button">Copiar</button><button id="csvFechar" class="btn" type="button">Fechar</button></div>
+</section>
+<script>
+(function () {
+  'use strict';
+  var DADOS = JSON.parse(document.getElementById('dados').textContent);
+  var BASE = DADOS.linhas;
+  var CHAVE = 'tabela-soulmons-edicoes-v1';
+  var CAMPOS = ['nome', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto'];
+  var SPLIM = 6;
+
+  var ROT = {
+    estagio: { rookie: 'Rookie', champion: 'Champion', ultimate: 'Ultimate', mega: 'Mega', ultra: 'Ultra' },
+    ataque_tipo: { ranged_corte: 'Ranged · corte', ranged_splash: 'Ranged · splash (magia)', melee_corte: 'Melee · corte', melee_splash: 'Melee · splash', variavel_ficha: 'Variável (ficha)' },
+    especial_tipo: { direto: 'Direto', dot: 'DoT', cura: 'Cura', hot: 'HoT', buff: 'Buff', debuff: 'Debuff', variavel: 'Variável (sorteio)', escolha_jogador: 'Escolha do jogador' },
+    contexto: { simulado: 'Simulado', arena: 'Arena', rift: 'Rift / Masmorra', selvagem: 'Selvagem', jogador: 'Jogador', catalogo: 'Catálogo' },
+    personalidade: { poder: 'Poder', harmonia: 'Harmonia', benevolencia: 'Benevolência', absoluto: 'Absoluto', neutro: 'Neutro' },
+    evolucao: { evolui: 'Evolui (arte cadastrada)', so_rookie: 'Só Rookie (sem evolução)', gerada: 'Gerada pelo Oráculo (inicial)' }
+  };
+  function rot(campo, v) { return (ROT[campo] && ROT[campo][v]) || v; }
+  function distintos(campo) {
+    var m = {};
+    BASE.forEach(function (l) { var v = l[campo]; if (Array.isArray(v)) v.forEach(function (x) { m[x] = 1; }); else if (v) m[v] = 1; });
+    return Object.keys(m);
+  }
+  function ordenar(campo, arr) {
+    var ord = ROT[campo] ? Object.keys(ROT[campo]) : [];
+    return arr.slice().sort(function (a, b) { var i = ord.indexOf(a), j = ord.indexOf(b); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || a.localeCompare(b); });
+  }
+  var OPCOES = {
+    estagio: Object.keys(ROT.estagio),
+    personalidade: ordenar('personalidade', distintos('personalidade')),
+    elemento_base: ordenar('elemento_base', distintos('elemento_base')),
+    ataque_tipo: Object.keys(ROT.ataque_tipo),
+    especial_tipo: Object.keys(ROT.especial_tipo),
+    contexto: Object.keys(ROT.contexto),
+    evolucao: Object.keys(ROT.evolucao)
+  };
+  var COL_FILTRO = [['personalidade', 'Personalidade'], ['elemento_base', 'Elemento base'], ['estagio', 'Estágio'], ['ataque_tipo', 'Tipo de ataque'], ['especial_tipo', 'Ataque especial'], ['contexto', 'Contexto'], ['evolucao', 'Evolução']];
+
+  var edicoes = {};
+  try { edicoes = JSON.parse(localStorage.getItem(CHAVE) || '{}') || {}; } catch (e) { edicoes = {}; }
+  function gravar() { try { localStorage.setItem(CHAVE, JSON.stringify(edicoes)); } catch (e) { /* sem armazenamento: as edicoes vivem so nesta sessao */ } }
+  function valor(l, c) { var e = edicoes[l.id]; return e && Object.prototype.hasOwnProperty.call(e, c) ? e[c] : l[c]; }
+  function editado(l) { return !!edicoes[l.id] && Object.keys(edicoes[l.id]).length > 0; }
+
+  var filtros = {}; COL_FILTRO.forEach(function (c) { filtros[c[0]] = {}; });
+  var busca = '';
+  function nFiltrosAtivos() { var n = 0; COL_FILTRO.forEach(function (c) { n += Object.keys(filtros[c[0]]).length; }); return n; }
+  function passa(l) {
+    if (busca && (valor(l, 'nome') + ' ' + l.id + ' ' + valor(l, 'linha') + ' ' + (l.apelidos || []).join(' ') + ' ' + (l.usado_por || []).join(' ')).toLowerCase().indexOf(busca) < 0) return false;
+    for (var i = 0; i < COL_FILTRO.length; i++) {
+      var c = COL_FILTRO[i][0];
+      if (!Object.keys(filtros[c]).length) continue;
+      var v = valor(l, c), vs = Array.isArray(v) ? v : [v];
+      if (!vs.some(function (x) { return filtros[c][x]; })) return false;
+    }
+    return true;
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+  function tags(campo, v) { return (Array.isArray(v) ? v : [v]).map(function (x) { return '<span class="tag">' + esc(rot(campo, x)) + '</span>'; }).join(''); }
+
+  function usadoPor(l) {
+    var ctx = (valor(l, 'contexto') || []).filter(function (x) { return x !== 'simulado'; });
+    var sims = (l.usado_por || []).filter(function (x) { return /^sim_/.test(x); });
+    var h = tags('contexto', ctx);
+    if (sims.length) h += '<span class="tag">' + esc(rot('contexto', 'simulado')) + ' ×' + sims.length + '</span><div class="sub">' + esc(sims.slice(0, SPLIM).join(', ') + (sims.length > SPLIM ? ' +' + (sims.length - SPLIM) : '')) + '</div>';
+    return h;
+  }
+  var SPR = DADOS.sprites || [];
+  function spr(l) { return l.sp >= 0 && SPR[l.sp] ? '<img class="spr" loading="lazy" alt="" src="' + SPR[l.sp] + '">' : '<div class="spr-nada" title="sem sprite">?</div>'; }
+  var visiveis = [];
+  function render() {
+    visiveis = BASE.filter(passa);
+    var h = '', c = '', ant = null;
+    var cont = {}; BASE.forEach(function (l) { cont[l.linha] = (cont[l.linha] || 0) + 1; });
+    visiveis.forEach(function (l, i) {
+      var nova = l.linha !== ant; ant = l.linha;
+      if (nova) {
+        var nSim = l.linhagem_sims || 0;
+        var tit = '<b>' + esc(l.linhagem_nome || l.linha) + '</b> <span>· linhagem ' + esc(l.linha) + ' · ' + cont[l.linha] + ' forma' + (cont[l.linha] === 1 ? '' : 's') + (l.evolucao && l.evolucao !== 'evolui' ? ' · ' + esc(rot('evolucao', l.evolucao)) : '') + (nSim ? ' · ' + nSim + ' simulados' : '') + '</span>';
+        h += '<tr class="grupo"><td colspan="9">' + tit + '</td></tr>';
+        c += '<div class="cartao-grupo">' + tit + '</div>';
+      }
+      var ed = editado(l);
+      var sp = spr(l);
+      h += '<tr data-i="' + i + '" class="' + (ed ? 'editado' : '') + '">' +
+        '<td>' + sp + '</td><td><b>' + esc(valor(l, 'nome')) + '</b><div class="sub">' + esc(l.apelidos && l.apelidos.length ? 'apelidos: ' + l.apelidos.slice(0, 4).join(', ') + (l.apelidos.length > 4 ? ' +' + (l.apelidos.length - 4) : '') : '') + '</div></td>' +
+        '<td>' + tags('personalidade', valor(l, 'personalidade')) + '</td>' +
+        '<td>' + esc(valor(l, 'elemento_base')) + (l.elementos && l.elementos.length > 1 ? '<div class="sub">' + esc(l.elementos.join(' + ')) + '</div>' : '') + '</td>' +
+        '<td>' + esc(rot('estagio', valor(l, 'estagio'))) + '</td>' +
+        '<td>' + esc(rot('ataque_tipo', valor(l, 'ataque_tipo'))) + '</td>' +
+        '<td>' + esc(rot('especial_tipo', valor(l, 'especial_tipo'))) + '</td>' +
+        '<td>' + usadoPor(l) + '</td>' +
+        '<td class="sub">' + esc(l.id) + '</td></tr>';
+      c += '<div class="cartao ' + (ed ? 'editado' : '') + '" data-i="' + i + '">' +
+        '<div class="topo-c">' + sp + '<div class="txt"><h3>' + esc(valor(l, 'nome')) + '<span>' + esc(rot('estagio', valor(l, 'estagio'))) + '</span></h3>' +
+        '<div class="linha-id">' + esc(l.id) + '</div></div></div>' +
+        '<div class="grade">' +
+        '<div><b>Personalidade</b>' + esc(rot('personalidade', valor(l, 'personalidade'))) + '</div>' +
+        '<div><b>Elemento</b>' + esc(valor(l, 'elemento_base')) + '</div>' +
+        '<div><b>Ataque</b>' + esc(rot('ataque_tipo', valor(l, 'ataque_tipo'))) + '</div>' +
+        '<div><b>Especial</b>' + esc(rot('especial_tipo', valor(l, 'especial_tipo'))) + '</div>' +
+        '</div><div style="margin-top:6px">' + usadoPor(l) + '</div></div>';
+    });
+    document.getElementById('corpo').innerHTML = h;
+    document.getElementById('cartoes').innerHTML = c;
+    document.getElementById('vazio').hidden = visiveis.length > 0;
+    var nEd = BASE.filter(editado).length;
+    document.getElementById('resumo').textContent = visiveis.length + ' de ' + BASE.length + ' formas · ' + (DADOS.linhagens || 0) + ' linhagens · ' + (DADOS.simulados || 0) + ' simulados (referências) · ' + (DADOS.sem_sprite || 0) + ' sem sprite · ' + nEd + ' editado' + (nEd === 1 ? '' : 's');
+    var n = nFiltrosAtivos(), b = document.getElementById('nFiltros'); b.hidden = n === 0; b.textContent = n;
+    var chips = '';
+    COL_FILTRO.forEach(function (col) { Object.keys(filtros[col[0]]).forEach(function (v) { chips += '<button class="chip" type="button" data-c="' + col[0] + '" data-v="' + esc(v) + '">' + esc(rot(col[0], v)) + ' ✕</button>'; }); });
+    document.getElementById('chips').innerHTML = chips;
+  }
+
+  function aoClicarLista(ev) {
+    var el = ev.target.closest('[data-i]'); if (!el) return;
+    abrirEdicao(visiveis[+el.getAttribute('data-i')]);
+  }
+  document.getElementById('corpo').addEventListener('click', aoClicarLista);
+  document.getElementById('cartoes').addEventListener('click', aoClicarLista);
+  document.getElementById('chips').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.chip'); if (!b) return;
+    delete filtros[b.getAttribute('data-c')][b.getAttribute('data-v')]; render();
+  });
+  var tBusca = null;
+  document.getElementById('busca').addEventListener('input', function (ev) {
+    var v = ev.target.value.trim().toLowerCase(); clearTimeout(tBusca); tBusca = setTimeout(function () { busca = v; render(); }, 120);
+  });
+
+  var fundo = document.getElementById('fundo'), pF = document.getElementById('painelFiltros'), pE = document.getElementById('painelEdicao');
+  function fechar() { pF.classList.remove('aberto'); pE.classList.remove('aberto'); fundo.classList.remove('aberto'); }
+  function abrir(p) { fechar(); p.classList.add('aberto'); fundo.classList.add('aberto'); }
+  fundo.addEventListener('click', fechar);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fechar(); });
+  document.getElementById('fecharFiltros').addEventListener('click', fechar);
+  document.getElementById('fecharEdicao').addEventListener('click', fechar);
+  document.getElementById('verResultados').addEventListener('click', fechar);
+  document.getElementById('btnFiltros').addEventListener('click', function () { montarFiltros(); abrir(pF); });
+  document.getElementById('limparFiltros').addEventListener('click', function () { COL_FILTRO.forEach(function (c) { filtros[c[0]] = {}; }); render(); montarFiltros(); atualizaVer(); });
+  function atualizaVer() { document.getElementById('verResultados').textContent = 'Ver ' + visiveis.length + ' resultados'; }
+
+  function montarFiltros() {
+    var h = '';
+    COL_FILTRO.forEach(function (col) {
+      h += '<fieldset><legend>' + col[1] + '</legend><div class="opcoes">';
+      OPCOES[col[0]].forEach(function (v) {
+        var on = !!filtros[col[0]][v];
+        h += '<label class="opcao' + (on ? ' on' : '') + '"><input type="checkbox" data-c="' + col[0] + '" data-v="' + esc(v) + '"' + (on ? ' checked' : '') + '>' + esc(rot(col[0], v)) + '</label>';
+      });
+      h += '</div></fieldset>';
+    });
+    document.getElementById('corpoFiltros').innerHTML = h;
+    atualizaVer();
+  }
+  document.getElementById('corpoFiltros').addEventListener('change', function (ev) {
+    var i = ev.target; if (!i.matches('input[type=checkbox]')) return;
+    var c = i.getAttribute('data-c'), v = i.getAttribute('data-v');
+    if (i.checked) filtros[c][v] = true; else delete filtros[c][v];
+    i.parentNode.classList.toggle('on', i.checked);
+    render(); atualizaVer();
+  });
+
+  var atual = null;
+  function selectHtml(campo, val) {
+    var ops = OPCOES[campo].slice(); if (val && ops.indexOf(val) < 0) ops.unshift(val);
+    return '<select data-f="' + campo + '">' + ops.map(function (o) { return '<option value="' + esc(o) + '"' + (o === val ? ' selected' : '') + '>' + esc(rot(campo, o)) + '</option>'; }).join('') + '</select>';
+  }
+  function abrirEdicao(l) {
+    atual = l;
+    document.getElementById('tituloEdicao').textContent = valor(l, 'nome');
+    var h = '<div class="campo"><label>Id (fixo)</label><div class="ro">' + esc(l.id) + '</div></div>' +
+      '<div class="campo" data-k="nome"><label>Nome</label><input type="text" data-f="nome" value="' + esc(valor(l, 'nome')) + '"></div>' +
+      '<div class="campo" data-k="linha"><label>Linha de evolução</label><input type="text" data-f="linha" value="' + esc(valor(l, 'linha')) + '"></div>' +
+      '<div class="campo" data-k="estagio"><label>Estágio</label>' + selectHtml('estagio', valor(l, 'estagio')) + '</div>' +
+      '<div class="campo" data-k="personalidade"><label>Personalidade</label>' + selectHtml('personalidade', valor(l, 'personalidade')) + '</div>' +
+      '<div class="campo" data-k="elemento_base"><label>Elemento base</label>' + selectHtml('elemento_base', valor(l, 'elemento_base')) + '</div>' +
+      '<div class="campo" data-k="ataque_tipo"><label>Tipo de ataque</label>' + selectHtml('ataque_tipo', valor(l, 'ataque_tipo')) + '</div>' +
+      '<div class="campo" data-k="especial_tipo"><label>Ataque especial</label>' + selectHtml('especial_tipo', valor(l, 'especial_tipo')) + '</div>';
+    var ctx = valor(l, 'contexto');
+    h += '<div class="campo" data-k="contexto"><label>Contexto (marque todos que valem)</label><div class="opcoes">' + OPCOES.contexto.map(function (o) {
+      var on = ctx.indexOf(o) >= 0; return '<label class="opcao' + (on ? ' on' : '') + '"><input type="checkbox" data-ctx="' + o + '"' + (on ? ' checked' : '') + '>' + esc(rot('contexto', o)) + '</label>';
+    }).join('') + '</div></div>';
+    var extra = [];
+    if (l.elementos && l.elementos.length > 1) extra.push('Componentes do elemento: ' + l.elementos.join(' + '));
+    if (l.basico || l.especial_nome) extra.push('Golpes: ' + (l.basico || '-') + ' / ' + (l.especial_nome || '-'));
+    if (l.ataque_especial_forma) extra.push('Forma do ataque especial: ' + l.ataque_especial_forma);
+    if (l.especial_mix) extra.push('Sorteio do especial: ' + l.especial_mix);
+    if (l.apelidos && l.apelidos.length) extra.push('Apelidos (nomes dados por simulados): ' + l.apelidos.join(', '));
+    var simsL = (l.usado_por || []).filter(function (x) { return /^sim_/.test(x); });
+    if (simsL.length) extra.push('Simulados que usam esta forma (' + simsL.length + '): ' + simsL.join(', '));
+    extra.push('Linhagem: ' + (l.linhagem_nome || l.linha) + ' (' + l.linha + ') · ' + rot('evolucao', l.evolucao));
+    if (l.nota) extra.push('Nota: ' + l.nota);
+    extra.push('Derivado (calculado, pode estar errado): ' + (l.derivado.length ? l.derivado.join(', ') : 'nenhum'));
+    h += '<div class="campo"><label>Informações</label><div class="ro">' + extra.map(esc).join('<br>') + '</div></div>' +
+      '<div class="campo"><label>Fonte (arquivo/função)</label><div class="ro">' + esc(l.fonte) + '</div></div>';
+    document.getElementById('corpoEdicao').innerHTML = h;
+    marcarMudou();
+    abrir(pE);
+  }
+  function lerForm() {
+    var out = {};
+    document.querySelectorAll('#corpoEdicao [data-f]').forEach(function (el) { out[el.getAttribute('data-f')] = el.value.trim(); });
+    var ctx = []; document.querySelectorAll('#corpoEdicao [data-ctx]').forEach(function (el) { if (el.checked) ctx.push(el.getAttribute('data-ctx')); });
+    out.contexto = ctx; return out;
+  }
+  function igual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  function marcarMudou() {
+    if (!atual) return; var f = lerForm();
+    CAMPOS.forEach(function (c) { var k = document.querySelector('#corpoEdicao [data-k="' + c + '"]'); if (k) k.classList.toggle('mudou', !igual(f[c], atual[c])); });
+  }
+  document.getElementById('corpoEdicao').addEventListener('input', marcarMudou);
+  document.getElementById('corpoEdicao').addEventListener('change', function (ev) {
+    if (ev.target.matches('[data-ctx]')) ev.target.parentNode.classList.toggle('on', ev.target.checked);
+    marcarMudou();
+  });
+  document.getElementById('salvar').addEventListener('click', function () {
+    if (!atual) return; var f = lerForm(), diff = {};
+    CAMPOS.forEach(function (c) { if (!igual(f[c], atual[c])) diff[c] = f[c]; });
+    if (!f.nome) delete diff.nome;
+    if (Object.keys(diff).length) edicoes[atual.id] = diff; else delete edicoes[atual.id];
+    gravar(); fechar(); render();
+  });
+  document.getElementById('restaurar').addEventListener('click', function () {
+    if (!atual) return; delete edicoes[atual.id]; gravar(); fechar(); render();
+  });
+
+  var COLS_CSV = ['id', 'nome', 'apelidos', 'sprite', 'linha', 'linhagem_nome', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'usado_por', 'evolucao', 'editado', 'fonte'];
+  function cel(v) { var s = Array.isArray(v) ? v.join(';') : String(v == null ? '' : v); return /[",\r\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function exportar(soEditados) {
+    var rows = BASE.filter(function (l) { return !soEditados || editado(l); });
+    if (!rows.length) { mostrarCsv('Nenhuma linha editada ainda. Edite uma linha e volte aqui.', 'Só editados'); return; }
+    var linhas = [COLS_CSV.join(',')];
+    rows.forEach(function (l) {
+      linhas.push(COLS_CSV.map(function (c) { return cel(c === 'editado' ? (editado(l) ? 'sim' : 'nao') : (c === 'id' || c === 'fonte' || c === 'sprite' || c === 'apelidos' || c === 'usado_por' || c === 'linhagem_nome' || c === 'evolucao') ? l[c] : valor(l, c)); }).join(','));
+    });
+    mostrarCsv(linhas.join('\n'), soEditados ? 'CSV só editados (' + rows.length + ' linhas)' : 'CSV completo (' + rows.length + ' linhas)');
+  }
+  function mostrarCsv(texto, titulo) {
+    document.getElementById('csvTitulo').textContent = titulo;
+    var ta = document.getElementById('csvTexto'); ta.value = texto;
+    document.getElementById('csvMsg').textContent = '';
+    document.getElementById('painelCsv').hidden = false;
+    ta.scrollTop = 0;
+  }
+  document.getElementById('csvFechar').addEventListener('click', function () { document.getElementById('painelCsv').hidden = true; });
+  document.getElementById('csvCopiar').addEventListener('click', function () {
+    var ta = document.getElementById('csvTexto'), msg = document.getElementById('csvMsg');
+    function sel() { ta.focus(); ta.select(); msg.textContent = 'Selecionado: use Copiar do sistema.'; }
+    try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copiado.'; }, sel); } catch (e) { sel(); }
+  });
+  document.getElementById('btnSemEvo').addEventListener('click', function () {
+    var on = filtros.evolucao.so_rookie && filtros.evolucao.gerada && !filtros.evolucao.evolui;
+    filtros.evolucao = on ? {} : { so_rookie: true, gerada: true };
+    render();
+  });
+  document.getElementById('btnCsv').addEventListener('click', function () { exportar(false); });
+  document.getElementById('btnCsvEd').addEventListener('click', function () { exportar(true); });
+
+  document.getElementById('gerado').textContent = 'gerada em ' + String(DADOS.gerado_em).slice(0, 10);
+  render();
+})();
+</script>
+

@@ -6,6 +6,7 @@
 // cor. Medido (N=3000, todas as formas): ~59% dos prompts com amarelo/dourado.
 //
 // Decisão do dono: benevolência = rosado com dourado só como DETALHE; monocromático proibido.
+import { coresDoTexto } from '../../../functions/api/_chromaHue.js';
 import { describe, expect, it } from 'vitest';
 import { buildSoulProfile } from '../soulProfile/profile';
 import { CITIES } from '../soulProfile/cities';
@@ -99,12 +100,16 @@ describe('paleta do prompt de sprite — sem monocromático amarelo', () => {
 
   it('fundo: magenta quando a criatura tem verde, verde no resto, e o prompt traz a cor certa', () => {
     expect(chromaFor('cool blue and teal', 'red', ['agua'])).toBe('green');
-    expect(chromaFor('leafy green and lime', 'red', ['planta'])).toBe('magenta');
-    expect(chromaFor('earthy brown and ochre', 'cyan', ['terra', 'planta'])).toBe('magenta');
+    expect(chromaFor('leafy green and lime', 'red', ['planta'])).toBe('blue'); // verde + vermelho a 0 graus: azul a 120 vs magenta a 60 (distancia real)
+    expect(chromaFor('leafy green and hot pink', 'red', ['planta'])).toBe('blue'); // verde + magenta: nenhuma das duas recorta limpo
+    expect(chromaFor('earthy brown and ochre', 'cyan', ['terra', 'planta'])).toBe('magenta'); // inalterado
+    expect(chromaFor('royal purple and violet', 'plum', ['sombra'])).toBe('green'); // roxo fica entre azul e magenta
     for (const p of perfis) for (const f of p.formas) {
-      const verde = p.dom === 'planta' || p.sec === 'planta' || /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i.test(`${f.cor} ${f.acento}`);
-      if (verde) { expect(f.prompt).toContain('#FF00FF'); expect(f.prompt).not.toContain('#00FF00'); }
-      else { expect(f.prompt).toContain('#00FF00'); expect(f.prompt).not.toContain('#FF00FF'); }
+      const hex = { green: '#00FF00', magenta: '#FF00FF', blue: '#0000FF' };
+      const usados = Object.values(hex).filter(h => f.prompt.includes(h));
+      expect(usados).toHaveLength(1); // exatamente uma chave de fundo no prompt
+      const primeira = coresDoTexto(f.cor)[0];
+      if (primeira?.hue === 120) expect(usados[0]).not.toBe(hex.green); // verde dominante nunca fica sobre fundo verde
       expect(f.prompt).toContain('Do not copy any existing franchise character');
     }
   });

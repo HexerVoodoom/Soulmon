@@ -4,11 +4,14 @@
  * "+" — busca, abas por área, "por que funciona", e o escape hatch "Algo
  * que não está aqui?" que abre o fluxo legado (nunca removido).
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
-import { renderWithCss } from '../../test/renderEnv';
+import { aquecerRender, renderWithCss } from '../../test/renderEnv';
 import { CatalogBrowserModal } from './CatalogBrowserModal';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
+
+// O 1º `renderWithCss` parseava o index.css inteiro dentro do 1º caso (~4 s sob carga): paga aqui, num hook com teto próprio.
+beforeAll(aquecerRender, 60_000);
 
 describe('CatalogBrowserModal', () => {
   it('lista itens não-optInOnly e adiciona direto ao tocar "Adicionar"', () => {

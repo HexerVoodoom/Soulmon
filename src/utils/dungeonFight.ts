@@ -15,6 +15,7 @@
 //
 // Pure and deterministic given a seed: the draws come from `defenseRoll` and `mulberry32`, never `Math.random`.
 import { autoDefense, defenseRoll } from './autoDefesa';
+import { comEfeitoDoElemento } from './combate/elementEffects';
 import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfSkill, type ArenaSkill } from './arena';
 import { dungeonFoe, type DungeonFoeKnobs } from './dungeonBase';
 import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
@@ -26,7 +27,7 @@ import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/gr
 import type { AttrBonus } from './combate/bonus';
 import { combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
-import { PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
+import { PVE_FAMILY_POWER, specialOf, specialOfPve, type SpecialFamily } from './combate/specials';
 import type { EscolaId } from './soulProfile/ficha/types';
 
 export type DungeonSkill = ArenaSkill;
@@ -43,6 +44,12 @@ export interface DungeonPlayerCfg {
   dodge?: Readonly<Record<DodgeGrade, number>>;
   /** `tal-pve-07` (Tarefa B): opening shield, fraction of the player's HP. Absent = 0 (the gates' simulations never set it). */
   startShield?: number;
+  /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  efeitoElemento?: string;
+  /** §228: usa os botões próprios do Pesadelo. */
+  pesadelo?: boolean;
+  /** COMPANHEIRO INVOCADO (PR 2): a criatura do evocador (`companheiroDoEstado`); ausente/`null` = o especial roda como sempre. */
+  companheiro?: string | null;
 }
 
 /** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
@@ -54,9 +61,10 @@ const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO
 export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
-    special: specialOf(p.family),
+    special: comEfeitoDoElemento(specialOfPve(p.family), p.efeitoElemento, p.pesadelo, !p.pesadelo), // §334: fora do Pesadelo, a tune da Masmorra
     area: 'single',
     startShield: opening ? p.startShield : 0,
+    ...(p.companheiro ? { invoca: true } : {}),
   };
 }
 
@@ -80,7 +88,7 @@ export const dungeonFightSeed = (runSeed: number, floor: number, slot: number): 
  */
 export function dungeonFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, opening = true): DungeonFight {
   const j = jeitoOf(p);
-  const castMult = j.cast * PVE_FAMILY_POWER.dungeon[p.family];
+  const castMult = j.cast * PVE_FAMILY_POWER[p.pesadelo ? 'pesadelo' : 'dungeon'][p.family]; // §334: o Pesadelo tem o vetor próprio
   let pending = 0;
   return {
     player: dungeonPlayerSide(p, opening),
@@ -156,6 +164,8 @@ export interface SequenceConfig {
   /** Tarefa B: `tal-pve-07` (opening shield) and `tal-pve-03` (extra heal between floors). The gates never set them. */
   startShield?: number;
   healBoost?: number;
+  /** §228: ver `DungeonPlayerCfg.efeitoElemento`. */
+  efeitoElemento?: string;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
 }
@@ -180,7 +190,7 @@ export function playSequence(
 ): SequenceResult {
   const p: DungeonPlayerCfg = {
     combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito,
-    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge, startShield: cfg.startShield,
+    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge, startShield: cfg.startShield, efeitoElemento: cfg.efeitoElemento,
   };
   const odds = ARENA_SKILL_ODDS[skill];
   let hp = 1;
@@ -189,7 +199,7 @@ export function playSequence(
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
-    const f = dungeonFight(p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
+    const f = dungeonFight(ref.nightmare ? { ...p, pesadelo: true } : p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
     const rng = mulberry32((seed * 7919 + i) | 0);
     const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
@@ -263,7 +273,22 @@ export interface NightmareKnobs {
   /** Fraction of the nightmare's damage warded off per collected cheer discharge, and the cap. */
   guardPerCheer: number;
   guardMax: number;
+  /** Multiplier of the nightmare's own damage (applied before the cheer ward). 1 = no change. */
+  foeDamage: number;
 }
+
+/**
+ * §392 (dono, 15/11/2026: "todo mundo está reclamando"): o inimigo do Pesadelo causa 25% menos dano. Dono único do número;
+ * só o Pesadelo passa por `nightmareFight` — a Masmorra (`dungeonFight`/`playSequence`) e a Arena não leem esta constante.
+ */
+export const NIGHTMARE_FOE_DAMAGE_FACTOR = 0.75;
+
+/**
+ * §413 (dono, 16/11/2026): janela de 1,2 s no começo de cada luta do Pesadelo em que ele ainda não ataca; o jogador já pode torcer
+ * (a percepção de que dá tempo de torcer desde o início). Dono único do número; cliente (`NightmareBattle`) e simulação
+ * (`simulateNightmareScenario`) leem o mesmo valor pelo `options` do `nightmareFight`.
+ */
+export const NIGHTMARE_OPENING_WINDOW_S = 1.2;
 
 export const NIGHTMARE_KNOBS: NightmareKnobs = {
   basic: 0.4,
@@ -271,16 +296,18 @@ export const NIGHTMARE_KNOBS: NightmareKnobs = {
   ring: { ruim: 1.6, bom: 1.6, otimo: 2 },
   guardPerCheer: 0.24,
   guardMax: 0.72,
+  foeDamage: NIGHTMARE_FOE_DAMAGE_FACTOR,
 };
 
 /** One fight of the Nightmare: `dungeonFight` + the shadow rules above. `cheers()` = discharges collected so far. */
-export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight {
+export function nightmareFight(p: DungeonPlayerCfg, foe: FightSide, seed: number, cheers: () => number, k: NightmareKnobs = NIGHTMARE_KNOBS): DungeonFight & { options: { foeOpeningDelay: number; ataqueExtra: true } } {
   const f = dungeonFight({ ...p, ring: k.ring }, foe, seed, true);
   return {
     ...f,
+    options: { foeOpeningDelay: NIGHTMARE_OPENING_WINDOW_S, ataqueExtra: true },
     hitScale(who, n) {
       const s = f.hitScale(who, n);
-      return who === 0 ? s * k.basic : s * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
+      return who === 0 ? s * k.basic : s * k.foeDamage * (1 - Math.min(k.guardMax, k.guardPerCheer * cheers()));
     },
   };
 }
@@ -299,12 +326,13 @@ export const SCENARIO_NONE: NightmareScenario = { cheerEvery: null, ring: 'ruim'
 
 /** Plays the Nightmare of the tier `top` for a scenario; the foe is `nightmareFoe`. Deterministic by `seed`. */
 export function simulateNightmareScenario(cfg: SequenceConfig, top: number, seed: number, sc: NightmareScenario, k: NightmareKnobs = NIGHTMARE_KNOBS): { won: boolean; hpLeft: number; t: number } {
-  const p: DungeonPlayerCfg = { combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito };
+  // §334: `pesadelo` como o jogo passa (`NightmareBattle`): os botões e o vetor de família do Pesadelo
+  const p: DungeonPlayerCfg = { combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito, pesadelo: true };
   let drained = 0;
   let lastT = 0;
   const f = nightmareFight(p, nightmareFoe(cfg.level, top, cfg.knobs?.foe), dungeonFightSeed(seed, 1, top), () => drained, k);
   const g = groupFightSteps(f.player, f.foes, {
-    seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale,
+    seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale, ...f.options,
     cheerDrain: () => {
       if (sc.cheerEvery === null) return 0;
       const due = Math.floor(lastT / sc.cheerEvery);

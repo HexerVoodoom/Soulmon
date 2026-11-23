@@ -50,7 +50,7 @@ coluna "Quadro" do plano. Quadro final extra nos planos 3, 5, 7 e 8.
 
 | Arquivo | Origem |
 |---|---|
-| `intro-parede.mp4` | 9 clipes da intro concatenados (ffmpeg), sem legenda queimada |
+| ~~`intro-parede.mp4`~~ | substituído em 04/11/2026 por `painel-1..9.webp` (mural + CRT, animados em CSS) |
 | `video-fuga.mp4` | cena 3: o Desfeito persegue no escuro, glitch; quadros do lote A/B |
 | `video-resgate.mp4` | cena 8: o Velado da Mão lança a lanterna, clarão turquesa |
 

@@ -4,15 +4,8 @@ export interface AttributePoints {
   benevolence: number;
 }
 
-export type ActivityCategory = 
-  | 'Health' 
-  | 'Creativity' 
-  | 'Discipline' 
-  | 'Study' 
-  | 'Work' 
-  | 'Social' 
-  | 'Wellness' 
-  | 'Fitness';
+import type { ActivityCategory } from './categories';
+export type { ActivityCategory } from './categories';
 
 /** Alinhamento do oráculo → galho de evolução. Era um mapa LOCAL do
  *  `EvolutionPath`; virou compartilhado quando o `EvoTrail` da Home passou a
@@ -25,15 +18,32 @@ export const ALIGN_TO_ATTR: Record<'poder' | 'harmonia' | 'benevolencia', 'power
   benevolencia: 'benevolence',
 };
 
+/**
+ * Tipo ABSOLUTO (nome do dono, 12/11/2026): o estágio Ultra reúne os três tipos ao mesmo tempo, ou seja, é NEUTRO. Só rótulo/dado de
+ * exibição: NÃO é um `AlignmentId`/atributo (o motor já trata o Ultra sem branch: `creatureFormId` devolve 'ultra') e não entra em
+ * nenhuma conta de combate, vantagem ou balanceamento. REGISTRO §310.
+ */
+export const ABSOLUTE_TYPE = { id: 'absoluto', pt: 'Absoluto', en: 'Absolute' } as const;
+
+/**
+ * Pontos por atividade concluída em cada categoria (Poder/Harmonia/Benevolência).
+ * REGRA (11/11/2026, decisão do dono): toda categoria soma 3 e o conjunto é EXATAMENTE equilibrado
+ * (Poder 10 · Harmonia 10 · Benevolência 10, 10 categorias x 3 = 30). Corpo, foco, criatividade e propósito
+ * pendem a Poder (2); sono, mente e aprendizado a Harmonia (2); relações e casa a Benevolência (2); finanças 1/1/1.
+ * Nenhuma categoria passa de 2 em um tipo.
+ * Travado por `types/categories.contract.test.ts`.
+ */
 export const CATEGORY_ATTRIBUTES: Record<ActivityCategory, AttributePoints> = {
-  Health: { power: 1, harmony: 1, benevolence: 2 },
-  Creativity: { power: 3, harmony: 1, benevolence: 0 },
-  Discipline: { power: 0, harmony: 1, benevolence: 3 },
-  Study: { power: 0, harmony: 3, benevolence: 1 },
-  Work: { power: 1, harmony: 2, benevolence: 1 },
-  Social: { power: 1, harmony: 1, benevolence: 2 },
-  Wellness: { power: 1, harmony: 2, benevolence: 1 },
-  Fitness: { power: 2, harmony: 1, benevolence: 1 },
+  sono:         { power: 0, harmony: 2, benevolence: 1 },
+  corpo:        { power: 2, harmony: 1, benevolence: 0 },
+  mente:        { power: 0, harmony: 2, benevolence: 1 },
+  foco:         { power: 2, harmony: 0, benevolence: 1 },
+  aprendizado:  { power: 1, harmony: 2, benevolence: 0 },
+  relacoes:     { power: 0, harmony: 1, benevolence: 2 },
+  casa:         { power: 0, harmony: 1, benevolence: 2 },
+  financas:     { power: 1, harmony: 1, benevolence: 1 },
+  proposito:    { power: 2, harmony: 0, benevolence: 1 },
+  criatividade: { power: 2, harmony: 0, benevolence: 1 },
 };
 
 export const XP_THRESHOLDS = {
@@ -52,6 +62,27 @@ export const ATTR_COLOR: Record<BranchType, string> = {
   harmony: '#009ED8',    // Harmonia
   benevolence: '#E69600', // Benevolência
 };
+
+/**
+ * Cor do CAMINHO no ÍCONE DE ESTÁGIO (decisão do dono, 14/11/2026, REGISTRO §369): Poder verde, Harmonia azul,
+ * Benevolência amarelo, nos valores que o dono deu para o ícone (mais claros que `ATTR_COLOR`: tingem um pixel art
+ * de 16 px sobre a plaquinha translúcida). Só o `EstagioIcone` lê isto; rookie e ultra não têm caminho e ficam no
+ * neutro. Não é cor de TEXTO (o amarelo sobre fundo claro não passa contraste; por isso o ícone tingido leva contorno escuro).
+ */
+export const CAMINHO_COR: Record<BranchType, string> = {
+  power: '#4cd964',       // Poder, rgb(76, 217, 100)
+  harmony: '#4aa3ff',     // Harmonia, rgb(74, 163, 255)
+  benevolence: '#ffd23f', // Benevolência, rgb(255, 210, 63)
+};
+
+/**
+ * Cor do ícone de estágio de uma forma SEM caminho (rookie, ultra, tier de inimigo sem ramo, formas legadas) — branco quente/creme
+ * (REGISTRO §394, dono 15/11/2026). Dono único, ao lado de `CAMINHO_COR`: nenhum componente repete o hex.
+ */
+export const CAMINHO_SEM_COR = '#fff1d6'; // rgb(255, 241, 214)
+
+/** A cor do ícone de estágio para um caminho; `undefined`/`null` = forma sem caminho = creme. */
+export const corDoCaminho = (caminho: BranchType | null | undefined): string => (caminho ? CAMINHO_COR[caminho] : CAMINHO_SEM_COR);
 
 /**
  * NOME que o jogador vê — FONTE ÚNICA DA VERDADE, pelo mesmo motivo da cor.

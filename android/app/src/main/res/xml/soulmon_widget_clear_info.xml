@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Redimensionável de 1x1 (só a criatura) até maior (criatura + frase + nome). O layout
+     compacto entra abaixo de WidgetAdaptive.COMPACT_MIN_*; 1 célula de largura x 2+ de altura = layout VERTICAL (fala abaixo,
+     beta12 A2); teto de 4 células de altura = WidgetAdaptive.CLEAR_MAX_HEIGHT_DP (renderClear). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="90dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeHeight="250dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_soulmon_clear"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_clear_description"
+    android:previewImage="@drawable/widget_preview_clear" />

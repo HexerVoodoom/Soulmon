@@ -24,7 +24,7 @@ const base = {
 
 describe('D-24: a lojinha de Background tem as abas [Backgrounds, Frames], nessa ordem, e abre em Backgrounds', () => {
   it('a ordem declarada é Backgrounds primeiro', () => {
-    expect(STALL_KIND_ORDER).toEqual(['backgrounds', 'frames']);
+    expect(STALL_KIND_ORDER).toEqual(['backgrounds', 'frames', 'widget']); // 04/11/2026: 3ª aba, moldura do widget V-Pet
   });
   it('o menu renderiza Backgrounds à esquerda de Frames; a primeira vem selecionada', () => {
     renderWithCss(<MercadoStallSheet {...base} stall="background" />);
@@ -46,6 +46,25 @@ describe('D-24: a lojinha de Background tem as abas [Backgrounds, Frames], nessa
     expect(document.querySelector('[data-shop-shelf]')).toBeNull();
   });
 });
+
+describe('04/11/2026: aba Widget (moldura do widget V-Pet) na lojinha de Background', () => {
+  const widgetFrames = { owned: ['fogo'], selected: '', onSelect: () => {}, onBuy: async () => ({ ok: true as const }) };
+  it('sem os dados do widget a aba não existe', () => {
+    renderWithCss(<MercadoStallSheet {...base} stall="background" />);
+    const abas = within(screen.getByRole('tablist', { name: 'What Panora sells' })).getAllByRole('tab');
+    expect(abas.map(t => t.textContent?.trim())).toEqual(['Backgrounds', 'Frames']);
+  });
+  it('com os dados, é a 3ª aba, abre o seletor e some a moeda do jogo', () => {
+    renderWithCss(<MercadoStallSheet {...base} stall="background" widgetFrames={widgetFrames} />);
+    const abas = within(screen.getByRole('tablist', { name: 'What Panora sells' })).getAllByRole('tab');
+    expect(abas.map(t => t.textContent?.trim())).toEqual(['Backgrounds', 'Frames', 'Widget']);
+    fireEvent.click(abas[2]);
+    expect(document.querySelector('[data-widget-frame-picker]')).toBeTruthy();
+    expect(document.querySelector('[data-shop-shelf]')).toBeNull();
+    expect(document.querySelector('[data-widget-frame-item="fogo"] [data-widget-frame-use]')).toBeTruthy();
+  });
+});
+
 
 describe('REGISTRO §122: sem seção "For sale"/promoção nas lojinhas (a ordem volta ao normal: "Already yours" no topo)', () => {
   it.each([
@@ -145,14 +164,13 @@ describe('D-15: "Name" vira "Nickname" no editor de perfil, com botão Salvar e 
     expect(document.querySelector('label[for="sm-profile-name"]')!.textContent).toBe('Apelido');
   });
 
-  it('botão Salvar do apelido e campo + botão Salvar do nome do Soulmon salvam ao clicar', async () => {
+  it('botão Salvar do apelido salva ao clicar; o nome do Soulmon é só leitura (a troca é na Hexsmith)', async () => {
     const onChangeName = vi.fn();
-    const onChangePetName = vi.fn();
     renderWithCss(
       <ProfileEditor open onClose={() => {}} language="pt-BR" saveId={'a'.repeat(32)} avatarId={null} equippedFrame={null} ownedFrames={[]}
         petStage="rookie" onChangeAvatar={() => {}} onChangeFrame={() => {}}
         userName="Lia" onChangeName={onChangeName}
-        petName="Pyraka" onChangePetName={onChangePetName} />,
+        petName="Pyraka" />,
     );
     const nameInput = document.querySelector('#sm-profile-name') as HTMLInputElement;
     const saveNameBtn = document.querySelector('[data-save-user-name]') as HTMLButtonElement;
@@ -163,13 +181,8 @@ describe('D-15: "Name" vira "Nickname" no editor de perfil, com botão Salvar e 
     // o apelido reserva o nome no servidor antes de gravar (biblioteca: apelido único): grava assim que a reserva responde
     await waitFor(() => expect(onChangeName).toHaveBeenCalledWith('Mateus'));
 
-    const petInput = document.querySelector('#sm-profile-pet-name') as HTMLInputElement;
-    const savePetBtn = document.querySelector('[data-save-pet-name]') as HTMLButtonElement;
-    expect(document.querySelector('label[for="sm-profile-pet-name"]')!.textContent).toBe('Nome do Soulmon');
-    expect(savePetBtn.disabled).toBe(true);
-    fireEvent.change(petInput, { target: { value: '  Bito  ' } });
-    expect(savePetBtn.disabled).toBe(false);
-    fireEvent.click(savePetBtn);
-    expect(onChangePetName).toHaveBeenCalledWith('Bito');
+    expect(document.querySelector('#sm-profile-pet-name')).toBeNull();
+    expect(document.querySelector('[data-save-pet-name]')).toBeNull();
+    expect(document.querySelector('[data-profile-pet-name-valor]')!.textContent).toBe('Pyraka');
   });
 });

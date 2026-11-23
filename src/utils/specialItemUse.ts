@@ -1,8 +1,12 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
+import { dishIdOfKey, serveDish } from './dishItems';
+import { dishById } from './restaurantMenu';
+import type { RestaurantState } from './restaurantState';
+import { getNextEvolution } from './dailyReset';
 import { resetAlignmentPoints } from './betaResetGrant';
-import { dayItemGaugeGain } from './evolutionGauge';
-import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
+import { glitchtamaBuffAtivo } from './glitchtamaBuff';
+import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, maxEnergyOf, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import {
   PREMIUM_USES_PER_DAY, premiumUsedToday, premiumDroppedToday, premiumDroppedThisWeek,
@@ -45,7 +49,7 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'weekly-cap' | 'stage-cap' | 'nothing-to-reduce' | 'no-next-evolution';
 
 /**
  * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
@@ -76,45 +80,21 @@ export function chipsUsedThisStage(state: { evolutionStage?: string; chipsStage?
 }
 
 /**
- * Quantos 🌀 Glitchtama o jogador pode CONSUMIR por dia do jogador.
- *
- * ⚠️ Este teto não é economia, é a espinha da progressão — e ele foi
- * acrescentado depois de uma auditoria fazer a conta (06/09/2026).
- *
- * O Glitchtama dá +1 `perfectDays`, que é a moeda que a escada de evolução
- * consome. Rookie→mega custa 14 dias perfeitos e o Ultra custa mais
- * `ULTRA_PATIENCE_DAYS` (45): **59 no total**. A masmorra declara, por escrito,
- * que não tem limite diário nem gate de entrada, e concluir os 5 andares
- * sempre dropa um Glitchtama — então 59 runs seguidas compravam a escada
- * inteira, e elas cabem num fim de semana.
- *
- * O `progression.ts` justifica os 45 dias do Ultra assim: *"consistência ao
- * longo de semanas, que é o recurso que a pesquisa de v-pet aponta como o
- * único que não cresce indefinidamente"*. Sem este teto, ele crescia.
- *
- * O conserto é um teto por DIA, e não um limite de estoque nem um custo de
- * entrada, por três razões: (a) o item continua caindo e continua valendo —
- * ninguém perde nada do que já tem; (b) o recurso que a tese protege é TEMPO
- * DE CALENDÁRIO, e só um teto por dia converte o atalho de volta em dias; (c) a
- * masmorra segue sem cobrar coração, que é a linha vermelha de verdade.
- *
- * Um por dia significa que o Glitchtama, no melhor caso, DOBRA o ritmo de quem
- * já faz o dia perfeito — é generoso, e é finito.
+ * Chips de REDUÇÃO (dono, 04/11/2026): limite PRÓPRIO de 3 por estágio, que NÃO soma com o dos
+ * chips que aumentam — dá para usar 3 que somam e 3 que reduzem no mesmo estágio. Mesmo molde
+ * de `chipsStage` (registro `chipsReduceStage`, vale só para o estágio gravado nele).
  */
-export const GLITCHTAMA_PER_DAY = 1;
+export const REDUCE_CHIPS_PER_STAGE = 3;
+export function reduceChipsUsedThisStage(state: { evolutionStage?: string; chipsReduceStage?: ChipStageUse }): number {
+  const reg = state.chipsReduceStage;
+  return reg && reg.stage === (state.evolutionStage ?? 'rookie') ? Math.max(0, reg.used) : 0;
+}
 
 /**
- * O registro do teto, no SAVE (`glitchtamaUse`), nunca no localStorage.
- *
- * Mesmo motivo do `careCaps` e do `poopDrainCharge`: um teto que se fura
- * trocando de aparelho não é um teto. E o DIA aqui é o **dia do jogador**
- * (`playerDayKey` + `playerDayTz`), não o do aparelho — senão dois celulares em
- * fusos diferentes discordariam do nome do dia e o teto valeria duas vezes.
+ * 🌀 Glitchtama (design de 10/11/2026): 1 uso por SEMANA, que concede um buff de +10% nos pontos de progressão por 7 dias.
+ * Regra, cooldown e aplicação do buff em `utils/glitchtamaBuff.ts` + `dailyReset.ts`. O registro é um timestamp no SAVE
+ * (`glitchtamaUsadoEm`), nunca no localStorage — um teto que se fura trocando de aparelho não é um teto.
  */
-export interface GlitchtamaUse {
-  day: string;
-  used: number;
-}
 
 /** Fatia do GameState que o uso de item especial lê e escreve. */
 export interface SpecialItemState {
@@ -122,7 +102,7 @@ export interface SpecialItemState {
   maxHealthPoints: number;
   foodInventory: Record<string, number>;
   perfectDays: number;
-  /** 🧬 Gauge de evolução (`utils/evolutionGauge.ts`) — o 🌀 soma um dia de teto. */
+  /** 🧬 Gauge de evolução (`utils/evolutionGauge.ts`). */
   evolutionPoints?: number;
   totalPerfectDays?: number;
   /** Dias completos vitalícios PARA AS MISSÕES — real + 🌀 (decisão #41/#60). */
@@ -132,29 +112,29 @@ export interface SpecialItemState {
   benevolencePoints: number;
   totalXP: number;
   attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
-  glitchtamaUse?: GlitchtamaUse;
+  /** 🌀 Instante (ms) do último uso do Glitchtama: buff de +10% e cooldown de 7 dias a partir dele (`utils/glitchtamaBuff.ts`). */
+  glitchtamaUsadoEm?: number;
   /** Comida premium: fome/relógio da energia (`utils/hunger.ts`) + registro de tetos. A comida NÃO dá energia direto (REGISTRO §40). */
   energyPoints?: number;
   evolutionStage?: string;
+  /** Evoluções destravadas: o mega só mira o Ultra com as três megas (`canReachUltra`). */
+  unlockedEvolutions?: readonly string[];
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
   premiumFood?: PremiumRecord;
   /** Chips usados no estágio atual (D-97) — ver `CHIPS_PER_STAGE`. */
   chipsStage?: ChipStageUse;
+  /** Chips de REDUÇÃO usados no estágio atual — contador separado (`REDUCE_CHIPS_PER_STAGE`). */
+  chipsReduceStage?: ChipStageUse;
   /** 🧪 Elemento da poção dada ao Soulmon, pendente para a próxima evolução (`utils/elementPotion.ts`). */
   evolutionPotion?: string;
   playerDayTz?: PlayerDayAnchor;
+  /** 🍽️ Buff de prato (`restaurantState`): `serveDish` grava aqui ao usar um prato de combate/regeneração. */
+  restaurant?: RestaurantState;
 }
 
-/**
- * Quantos Glitchtama já foram usados HOJE. Dia diferente = zero — o registro
- * antigo não é apagado, é simplesmente ignorado, que é o que torna esta leitura
- * idempotente sob a virada.
- */
-export function glitchtamaUsedToday(state: SpecialItemState, now: Date): number {
-  const hoje = playerDayKey(now, state.playerDayTz);
-  const reg = state.glitchtamaUse;
-  return reg && reg.day === hoje ? reg.used : 0;
+function pointsOf(state: SpecialItemState, a: Attr): number {
+  return a === 'power' ? state.powerPoints : a === 'harmony' ? state.harmonyPoints : state.benevolencePoints;
 }
 
 /**
@@ -169,19 +149,29 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   const special = SPECIAL_ITEMS[emoji];
   if (!special) return undefined;
   if ((state.foodInventory[emoji] ?? 0) <= 0) return 'no-stock';
-  // O teto do Glitchtama recusa ANTES do decremento: o item volta para a
-  // pastinha intacto e vale amanhã. Recusar depois de consumir seria a família
+  // O cooldown semanal do Glitchtama recusa ANTES do decremento: o item volta para a
+  // pastinha intacto e vale quando a semana passar. Recusar depois de consumir seria a família
   // de bug do X-6 ao contrário — gastar para não receber nada.
   // Faísca de Alma: restaura a energia da Home; com ela cheia recusa e o item volta intacto.
   if (special.kind === 'spark' && settleEnergy({ ...state, energyPoints: state.energyPoints ?? 0 }, now.getTime()).energyPoints >= maxEnergyOf(state)) return 'already-full';
-  if (special.kind === 'glitchtama' && glitchtamaUsedToday(state, now) >= GLITCHTAMA_PER_DAY) return 'daily-cap';
+  if (special.kind === 'glitchtama' && glitchtamaBuffAtivo(state.glitchtamaUsadoEm, now.getTime())) return 'weekly-cap';
   // Comida premium: fome quase cheia recusa (o item volta, não se queima à toa), e há 1 uso por dia.
   if (special.kind === 'premium') {
     if (premiumUsedToday(state, now) >= PREMIUM_USES_PER_DAY) return 'daily-cap';
     if (hungerAt(state.hunger, now.getTime()) >= HUNGER_PREMIUM_REFUSE_AT) return 'already-full';
   }
   // D-97: limite de chips por estágio. Recusa ANTES do decremento: o chip volta intacto.
-  if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
+  if (special.kind === 'chip' && special.reduce) {
+    if (reduceChipsUsedThisStage(state) >= REDUCE_CHIPS_PER_STAGE) return 'stage-cap';
+    // Tipo já em 0: não há o que tirar — recusa e o chip volta intacto (não se queima à toa).
+    if (special.attr && pointsOf(state, special.attr) <= 0) return 'nothing-to-reduce';
+  } else if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
+  // Poção de Elemento só vale para a PRÓXIMA evolução: no ápice (sem destino) ela seria consumida à toa — recusa e o item volta intacto.
+  // O galho não muda se existe destino, então 'harmony' serve de neutro; a regra mora em `getNextEvolution`/`canReachUltra`.
+  if (special.kind === 'potion') {
+    const stage = state.evolutionStage ?? 'rookie';
+    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])]) === stage) return 'no-next-evolution';
+  }
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';
@@ -221,52 +211,11 @@ export function applySpecialItem<T extends SpecialItemState>(
   if (foodInventory[emoji] === 0) delete foodInventory[emoji];
 
   if (special.kind === 'glitchtama') {
-    // 🌀 Glitchtama: cai zerando as 5 salas da masmorra e vale 1 dia perfeito —
-    // isto é PONTO DE EVOLUÇÃO, não enfeite. `perfectDays` é o contador que a
-    // escada consome.
-    //
-    // ⚠️ DECISÃO DO DONO #41/#60 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
-    // *"🌀 Glitchtama **não conta** para conquistas: `totalPerfectDays` só por
-    // dia completo real (segue contando para a missão)"*.
-    //
-    // O que isto conserta (QA rodada 2, §2.6): o perfil G — zero hábitos, uma
-    // run de masmorra por dia — terminava 90 dias com `totalPerfectDays = 90`
-    // e **nenhum** dia completo de verdade, abrindo `perfect-day` e
-    // `dias-completos-30` sem nunca ter cumprido uma meta. `dias-completos-30`
-    // é justamente a conquista que substituiu `tasks-100` para deixar de
-    // premiar CONTAGEM (linha vermelha #16); um minijogo inflando o contador
-    // reabria o veto pela porta dos fundos.
-    //
-    // Por isso o 🌀 escreve agora `missionPerfectDays` — contador separado,
-    // lido SÓ por `utils/missions.ts` (`mission-perfect-30`), que a decisão
-    // manda continuar contando o item. `totalPerfectDays` volta a significar
-    // uma coisa só: dias completos REAIS, e é ele que `achievements.ts` e
-    // `seasons.ts` leem. Duas perguntas diferentes, dois contadores — em vez de
-    // um número com dois significados (footgun 9 ao contrário).
-    //
-    // `computeDailyReset` incrementa os DOIS num dia completo real, então a
-    // missão nunca anda para trás nem fica mais difícil do que era.
-    //
-    // O contador do teto é escrito no MESMO retorno que dá o ponto: um lote do
-    // React que aplicasse o ponto sem gravar o uso deixaria o próximo toque
-    // passar de novo, que é exatamente o furo do X-6.
-    return {
-      state: {
-        ...prev,
-        foodInventory,
-        perfectDays: prev.perfectDays + 1,
-        // 🧬 11/10/2026: o 🌀 empurra o GAUGE de evolução em um dia de teto do
-        // estágio (`dayItemGaugeGain`) — o mesmo que um dia de meta
-        // cumprida rende, e continua 1 por dia do jogador (teto acima).
-        evolutionPoints: (prev.evolutionPoints ?? 0) + dayItemGaugeGain(prev.evolutionStage ?? 'rookie'),
-        // #41/#60: o vitalício REAL não é tocado — só o da missão.
-        missionPerfectDays: (prev.missionPerfectDays ?? prev.totalPerfectDays ?? 0) + 1,
-        glitchtamaUse: {
-          day: playerDayKey(now, prev.playerDayTz),
-          used: glitchtamaUsedToday(prev, now) + 1,
-        },
-      },
-    };
+    // 🌀 Glitchtama (design de 10/11/2026): NÃO mexe em pontos, dias perfeitos nem barra — só liga o BUFF de +10% na progressão por 7 dias
+    // e grava o instante no MESMO retorno que consome o item (um lote do React com dois toques não passa duas vezes: a segunda
+    // passada já vê o buff e recusa). Antes: enchia a barra e dava +1 dia perfeito (revogado pelo dono). Quem credita o +10%
+    // é a virada (`dailyReset`), sobre o ganho de cada dia.
+    return { state: { ...prev, foodInventory, glitchtamaUsadoEm: now.getTime() } };
   }
 
   if (special.kind === 'premium') {
@@ -285,6 +234,14 @@ export function applySpecialItem<T extends SpecialItemState>(
         },
       },
     };
+  }
+
+  if (special.kind === 'dish') {
+    // 🍽️ Prato do Restaurante (16/11/2026): fome cheia + o efeito do prato, pela regra única `serveDish`. Prato desconhecido (id fora do
+    // cardápio) não chega aqui: `specialRefusal` já o trata como sem catálogo (`SPECIAL_ITEMS` só tem os do cardápio).
+    const d = dishById(dishIdOfKey(emoji) ?? '');
+    if (!d) return { state: prev };
+    return { state: { ...serveDish({ ...prev, energyPoints: prev.energyPoints ?? 0 }, d, now.getTime()), foodInventory } };
   }
 
   if (special.kind === 'spark') {
@@ -322,6 +279,25 @@ export function applySpecialItem<T extends SpecialItemState>(
   // largar o tipo do estado — e era exatamente disso que o updater inline vivia.
   const boost = (a: Attr) => special.boosts?.[a] ?? (special.attr === a ? CHIP_BOOST : 0);
   const since = prev.attributesSinceLastEvolution;
+  if (special.reduce) {
+    // Redução: clamp em 0 nos pontos totais e nos do estágio (nunca negativos).
+    const cut = (v: number | undefined, a: Attr) => Math.max(0, (v ?? 0) + boost(a));
+    return {
+      state: {
+        ...prev,
+        foodInventory,
+        chipsReduceStage: { stage: prev.evolutionStage ?? 'rookie', used: reduceChipsUsedThisStage(prev) + 1 },
+        powerPoints: cut(prev.powerPoints, 'power'),
+        harmonyPoints: cut(prev.harmonyPoints, 'harmony'),
+        benevolencePoints: cut(prev.benevolencePoints, 'benevolence'),
+        attributesSinceLastEvolution: {
+          power: cut(since?.power, 'power'),
+          harmony: cut(since?.harmony, 'harmony'),
+          benevolence: cut(since?.benevolence, 'benevolence'),
+        },
+      },
+    };
+  }
   return {
     state: {
       ...prev,

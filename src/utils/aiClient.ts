@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
 import { readLocal } from './safeStorage';
+import { playerDayIso } from './playerDay';
 
 // Único caminho do cliente para as rotas de IA que custam dinheiro
 // (`/api/chat`, `/api/suggest-tasks`, `/api/generate-sprite`).
@@ -18,7 +19,7 @@ export async function aiFetch(
 ): Promise<Response> {
   return fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    headers: { 'Content-Type': 'application/json', 'X-Player-Day': playerDayIso(new Date(), undefined), ...(await authHeaders()) },
     body: JSON.stringify({ ...body, id: readLocal(STORAGE_KEYS.SAVE_ID) }),
     signal: init.signal,
   });

@@ -11,7 +11,7 @@
 > dado pessoal". Cada linha abaixo aponta para o código que a sustenta, então dá
 > para reconferir em vez de acreditar.
 >
-> **Atualizado em:** 20/10/2026 (revisão contra o código: check-ins das refeições nascem ligados, contadores de cota de IA por conta em §2.5, informações de saúde passam a compartilhadas com o Groq em §2.6/§3, voz direto ao Groq sem Supabase) · antes: 11/10/2026 (run `beta-play-01`: §2.2 assinatura, §2.4b permissões do manifesto mesclado, §2.5b guilda/guerra/doação/refeições, §2.7 diagnóstico de falhas) · antes: 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
+> **Atualizado em:** 10/11/2026 (§2.4b/§2.6: passos pelo Health Connect, `READ_STEPS`, REGISTRO §283) · antes, 20/10/2026 (revisão contra o código: check-ins das refeições nascem ligados, contadores de cota de IA por conta em §2.5, informações de saúde passam a compartilhadas com o Groq em §2.6/§3, voz direto ao Groq sem Supabase) · antes: 11/10/2026 (run `beta-play-01`: §2.2 assinatura, §2.4b permissões do manifesto mesclado, §2.5b guilda/guerra/doação/refeições, §2.7 diagnóstico de falhas) · antes: 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
 > essa data — a fonte viva é `public/privacidade.html` e o inventário de eventos
 > em `functions/api/metrics.js`.
 
@@ -121,8 +121,11 @@ retenção ("não guardamos o áudio") e como revogar.
 > reconferido na `release/beta-1`). O manifesto-fonte (`android/app/src/main/AndroidManifest.xml`)
 > declara só as do app; o **manifesto mesclado** — o que a Play enxerga no AAB — inclui as das
 > bibliotecas (Play Billing, Firebase/FCM, Capacitor, plugins). A ficha tem de bater com o mesclado.
-> `SCHEDULE_EXACT_ALARM` foi **removida** em `fix/beta-prontidao` (#311): o lembrete usa alarme
-> inexato (`setAndAllowWhileIdle`), tolera alguns minutos de janela e não precisa de permissão restrita.
+> `SCHEDULE_EXACT_ALARM` foi removida em `fix/beta-prontidao` (#311) mas **voltou a ser declarada** no beta12
+> (item I): só o aviso de fim do Pomodoro (Foco) pede o minuto exato com o app fechado
+> (`SoulmonAlarmPlugin.scheduleExactAlarm`). Sem a permissão concedida pelo usuário ("Alarmes e lembretes") o app cai no
+> alarme inexato (`setAndAllowWhileIdle`); os demais lembretes seguem inexatos. **A ficha de permissões de alarme da
+> Play Console precisa declarar o uso (timer/Pomodoro).**
 >
 > Reconferir a cada AAB: `Select-String -Path android\app\build\intermediates\merged_manifests\release\AndroidManifest.xml -Pattern "uses-permission"`
 
@@ -131,7 +134,7 @@ retenção ("não guardamos o áudio") e como revogar.
 | `INTERNET` | app | Save na nuvem, login, chat (o app carrega do Worker) | Não (normal) | Não |
 | `ACCESS_NETWORK_STATE` | Firebase / Capacitor | Saber se há rede (tela de erro de rede) | Não (normal) | Não |
 | `POST_NOTIFICATIONS` | app | Lembretes | Sim — diálogo do sistema (Android 13+) | Não coleta por si; o token vai em "IDs" (§2.7) |
-| ~~`SCHEDULE_EXACT_ALARM`~~ | — | **Removida** (#311): lembrete por alarme inexato. Não declarar uso de alarme exato na Play Console | — | — |
+| `SCHEDULE_EXACT_ALARM` | app (`AndroidManifest.xml`) | Aviso de fim do Pomodoro do Foco no minuto certo; sem a permissão cai no alarme inexato | Sim — permissão restrita: declarar o uso (timer/Pomodoro) na ficha de alarmes da Play Console | Não |
 | `RECEIVE_BOOT_COMPLETED` | app | Reagendar lembretes após reiniciar | Não (normal) | Não |
 | `WAKE_LOCK` | Firebase Messaging / WorkManager | Manter o aparelho acordado o tempo de entregar uma notificação | Não (normal) | Não |
 | `FOREGROUND_SERVICE` | Capacitor / plugins | Serviço de curta duração de plugin (notificações / passos) | Não perigosa; Android 14 exige tipo de serviço declarado se for usado **[confirmar no merged qual serviço usa]** | Não |
@@ -139,7 +142,8 @@ retenção ("não guardamos o áudio") e como revogar.
 | `com.google.android.providers.gsf.permission.READ_GSERVICES` | Firebase / Play Services | Ler configuração dos Serviços do Google (FCM) | Não (normal) | Não |
 | `com.android.vending.BILLING` | Play Billing Library | Compras e assinatura no app | Não (normal) | "Histórico de compras" (§2.2) |
 | `com.soulmon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX | Receivers dinâmicos não exportados (proteção interna do app) | Interna (assinatura do pacote) | Não |
-| **`ACTIVITY_RECOGNITION`** | app | **Contador de passos** — ver 2.6 | **Perigosa; declarar e justificar** | Sim — "Informações de exercícios físicos" |
+| **`ACTIVITY_RECOGNITION`** | app | **Contador de passos** (reserva) — ver 2.6 | **Perigosa; declarar e justificar** | Sim — "Informações de exercícios físicos" |
+| **`android.permission.health.READ_STEPS`** | app (REGISTRO §283) | **Passos pelo Health Connect** — só leitura, só o total do dia, só com opt-in; ver 2.6 e `PASSOS-HEALTH-CONNECT-LANCAMENTO.md` | **Exige a declaração de permissões do Health Connect no Play Console** | Sim — "Informações de exercícios físicos" |
 | **`RECORD_AUDIO`** | app | **Recado falado no chat** — ver 2.4 | **Perigosa; declarar e justificar** | Sim — "Gravações de voz ou som" |
 
 > Se o manifesto ganhar uma permissão nova (ou uma biblioteca nova a trouxer), esta tabela
@@ -192,14 +196,18 @@ apelido, o nome da criatura e o **nome da guilda**; denúncia por e-mail de cont
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
-| **Informações de exercícios físicos** | ✅ **Sim** | ❌ Não | Funcionalidades do app | **Opcional** (o app roda inteiro sem a permissão) | `src/utils/steps.ts`, `GameState.steps` |
+| **Informações de exercícios físicos** (passos) | ✅ **Sim** (Health Connect `READ_STEPS` + contador do aparelho) | ❌ Não | Funcionalidades do app | **Opcional** (opt-in; o app roda inteiro sem a permissão) | `src/utils/steps.ts`, `src/plugins/SoulmonStepsPlugin.ts`, `GameState.steps` |
 | **Informações de saúde** | ✅ **Sim** (leitura conservadora — ver abaixo) | ✅ **Sim — Groq** (reserva Google Gemini), só pelo chat: o humor do dia em faixa (`moodToday`) e o humor médio do resumo (`moodAvg`), e o `soulGoal` se a pessoa pedir sugestões no tutorial com o campo pré-preenchido (corrigido em 20/10/2026; antes dizia "Não") | Funcionalidades do app | Opcional | `GameState.moodLog`, `soulGoal`, `soulStruggle`; envio: `functions/api/chat.js` › `CONTEXT_SCHEMA.moodToday`, `BEHAVIOR_SCALARS.moodAvg`; `suggest-tasks.js` |
 
-**Sobre os passos.** É o contador do próprio Android, **não é o Health
-Connect** — logo **não** exige conta de organização verificada nem política dedicada
-de Health Connect (a declaração simples de Apps de saúde do Console, porém, é exigida). O que sobe é só
-`{ dia, âncora, total }`, nunca uma linha do tempo de movimento. Se o revisor
-perguntar, é isso.
+**Sobre os passos (atualizado em 10/11/2026, REGISTRO §283).** A fonte preferida agora é o **Health Connect**
+(`android.permission.health.READ_STEPS`, só leitura, só o total do dia), pedido SÓ depois do convite curto do app
+(`stepsInvite`, depois do onboarding) ou do cartão de Configurações: opt-in. O contador do próprio Android
+(`ACTIVITY_RECOGNITION`, `@capgo/capacitor-pedometer`) segue como reserva para aparelho sem Health Connect. Isso EXIGE a
+**declaração de permissões do Health Connect no Play Console** (formulário próprio; roteiro em
+`PASSOS-HEALTH-CONNECT-LANCAMENTO.md`), além da declaração de Apps de saúde. O que sobe é só `{ dia, âncora, total }`
+dentro do save, nunca uma linha do tempo de movimento; não escrevemos no Health Connect, não lemos outro dado dele, não há
+leitura em segundo plano; o dado não vai a terceiros nem aos provedores de IA. A política (`privacidade.html` §2
+`#steps`/`#passos` e §6) já descreve isso (publicada no §253). Se o revisor perguntar, é isso.
 
 **Sobre "informações de saúde", e a decisão é sua.** Três campos justificam
 declarar sim:
@@ -267,6 +275,7 @@ lado certo para errar.
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
 - ~~Informações de saúde~~ → subiu para "Coletado e compartilhado" em 20/10/2026 (o humor vai ao Groq no chat — ver 2.6)
 - **IDs do dispositivo ou outros IDs** *(token FCM / endpoint Web Push — opcional; ver 2.7, decisão de 21/09/2026)*
+- **Outro conteúdo gerado pelo usuário** *(mensagem de feedback/sugestão/bug digitada no modal da Home e enviada só ao tocar em Enviar; `POST /api/feedback`; texto + tipo + versão/build/plataforma/idioma; **sem** `saveId`, e-mail, IP ou user agent; guardada 90 dias na KV `feedback:*` e encaminhada por e-mail à caixa de revisão por um serviço de envio de e-mail (Resend) — **compartilhada** com esse operador de e-mail, finalidade: comunicação com o desenvolvedor / suporte; política §6e, 04/11/2026)*
 - **Registros de falhas / Diagnóstico** *(crash reporting próprio, **não vinculado à conta**, não compartilhado — ver 2.7)*
 - **Histórico de compras** inclui a **assinatura trimestral** (token + vigência — ver 2.2)
 
@@ -372,9 +381,9 @@ suspensão nessa área.
 Gatilhos concretos para revisitar este arquivo:
 
 - entrar qualquer provedor novo de IA, análise ou crash (o crash reporting próprio de 11/10/2026 já está em 2.7; trocá-lo por Crashlytics/Sentry muda "compartilhado" para sim);
-- o contador de passos passar a usar **Health Connect** em vez do sensor do
-  aparelho — aí muda de categoria e passa a exigir conta verificada e política
-  dedicada;
+- ~~o contador de passos passar a usar **Health Connect**~~ — FEITO em 10/11/2026 (REGISTRO §283): a declaração de
+  permissões do Health Connect entra com o AAB beta11 (`PASSOS-HEALTH-CONNECT-LANCAMENTO.md`); agora o gatilho é ler
+  QUALQUER outro tipo de dado do Health Connect (sono, frequência cardíaca), escrever nele ou ler em segundo plano;
 - o modo cooperativo passar a mostrar mais do que "apareceu hoje";
 - `soulStruggle` passar a ir para alguma rota de IA, ou `soulGoal` sair por
   outro caminho além do pré-preenchimento do tutorial já declarado (§2.3,

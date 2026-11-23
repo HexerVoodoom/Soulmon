@@ -30,44 +30,44 @@ import type { ActivityCategory } from '../types/attributes';
  * curtos ("dorm", "corr") cobrem as conjugações sem uma lista de flexões.
  */
 const KEYWORDS: Array<{ category: ActivityCategory; words: readonly string[] }> = [
-  { category: 'Health', words: [
+  { category: 'corpo', words: [
     // 'durm' ao lado de 'dorm': em português o radical MUDA na conjugação
     // ("durmo", "durma"), e sem os dois "durmo mal" não casava com sono.
     'dorm', 'durm', 'acordar', 'sono', 'sleep', 'insonia', 'descans', 'rest', 'agua', 'water',
     'comer', 'aliment', 'eat', 'diet', 'saude', 'health', 'remedio', 'medic',
     'terapia', 'therapy', 'medit', 'respir', 'breath',
   ] },
-  { category: 'Fitness', words: [
+  { category: 'corpo', words: [
     'academia', 'gym', 'malhar', 'muscul', 'corr', 'run', 'caminh', 'walk',
     'exerc', 'workout', 'treino', 'train', 'bike', 'bicicleta', 'nata', 'swim',
     'alongam', 'stretch', 'yoga', 'peso', 'weight',
   ] },
-  { category: 'Study', words: [
+  { category: 'aprendizado', words: [
     'estud', 'study', 'prova', 'exam', 'faculdade', 'college', 'univers',
     'curso', 'course', 'ler', 'leitura', 'read', 'ingles', 'english', 'idioma',
     'language', 'concurso', 'aprend', 'learn', 'escola', 'school',
   ] },
-  { category: 'Work', words: [
+  { category: 'foco', words: [
     'trabalh', 'work', 'emprego', 'job', 'carreira', 'career', 'projeto',
     'project', 'cliente', 'client', 'freela', 'negocio', 'business',
     'produtiv', 'productiv', 'prazo', 'deadline', 'email', 'reuni', 'meeting',
   ] },
-  { category: 'Creativity', words: [
+  { category: 'criatividade', words: [
     'desenh', 'draw', 'pint', 'paint', 'escrev', 'writ', 'music', 'tocar',
     'play guitar', 'violao', 'guitar', 'foto', 'photo', 'criar', 'creat',
     'arte', 'art', 'compor', 'compose', 'video',
   ] },
-  { category: 'Social', words: [
+  { category: 'relacoes', words: [
     'amig', 'friend', 'familia', 'family', 'namor', 'partner', 'sozinh',
     'lonely', 'alone', 'social', 'conversar', 'talk', 'ligar para', 'call',
     'encontrar', 'meet', 'filhos', 'kids', 'mae', 'pai', 'mother', 'father',
   ] },
-  { category: 'Discipline', words: [
+  { category: 'foco', words: [
     'procrastin', 'foco', 'focus', 'distrai', 'distract', 'celular', 'phone',
     'rede social', 'social media', 'organiz', 'rotina', 'routine', 'disciplin',
     'habito', 'habit', 'atras', 'constan', 'consisten', 'preguic', 'lazy',
   ] },
-  { category: 'Wellness', words: [
+  { category: 'mente', words: [
     'ansied', 'anxi', 'estresse', 'stress', 'depress', 'burnout', 'calma',
     'calm', 'bem estar', 'wellbeing', 'wellness', 'autoestima', 'self',
     'gratid', 'gratitude', 'paz', 'peace', 'cuidar de mim', 'care for myself',

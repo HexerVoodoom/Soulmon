@@ -44,7 +44,7 @@ export function sanitizeClaReceipts(raw: unknown): string[] {
   return raw.filter((r): r is string => typeof r === 'string' && r.length > 0 && r.length <= 120).slice(-CLA_RECEIPTS_MAX);
 }
 
-const FOOD_EMOJI = FOOD_BY_CATEGORY.Study.emoji;
+const FOOD_EMOJI = FOOD_BY_CATEGORY.aprendizado.emoji;
 
 function creditOne<T extends ClaSaveSlice>(s: T, r: ClaReward, dayKey: string): T {
   switch (r.kind) {

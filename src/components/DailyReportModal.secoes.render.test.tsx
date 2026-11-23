@@ -216,18 +216,18 @@ describe('4.2 — os corações: tremor → quebra → coração preto', () => {
   });
 });
 
-describe('4.3 — From Yesterday’s Adventure, `New` dourado, vínculo com o Passeio de ontem', () => {
+describe('4.3 — sem título de aventura (P3 9.1), `New` dourado, vínculo com o Passeio de ontem', () => {
   const irAteAventura = () => { proximo(); };
 
   it('título EN/PT; a folha é independente e sem textos de tarefa', () => {
     abrir();
     irAteAventura();
-    expect(screen.getByText("From Yesterday's Adventure")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
     expect(document.body.textContent).not.toMatch(/From today's adventure|Front Today/i);
     cleanup();
     abrir({}, {}, 'pt-BR');
     irAteAventura();
-    expect(screen.getByText('Da aventura de ontem')).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Da aventura de ontem|From Yesterday.s Adventure/);
   });
 
   it('`New` só quando inédito, e com os tokens do dourado da paleta (nunca hex)', () => {
@@ -279,7 +279,7 @@ describe('P2 (beta-2) — a folha da aventura', () => {
     const x = document.querySelector('[data-area-sheet-close]') as HTMLElement;
     expect(folha.contains(x)).toBe(true);
     expect(document.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1); // sem o anel sobre a cena
-    expect(x.compareDocumentPosition(folha.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(folha.querySelector('[data-moldura-placa] h2')).not.toBeNull(); // o título mora na placa da moldura; o ✕ pousa por cima (z 4), à esquerda
     fireEvent.click(x);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

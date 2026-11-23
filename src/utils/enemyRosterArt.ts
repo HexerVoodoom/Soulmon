@@ -6,6 +6,8 @@
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
+import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
+import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
 
 const FILES = import.meta.glob('../assets/soulmon/novos-arquivo/combinados/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
@@ -34,6 +36,20 @@ for (const [num, slug, , dominante] of COMBINADOS_LOTE3_DATA) {
   if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
 }
 
+/** Lote 4 (planta/industrial/fada) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
+for (const [num, slug, , dominante] of COMBINADOS_LOTE4_DATA) {
+  const key = `${num}-${slug}`;
+  const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
+  if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
+}
+
+/** Lote 5 (fantasma, morto-vivo, sangue, fúria) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
+for (const [num, slug, , dominante] of COMBINADOS_LOTE5_DATA) {
+  const key = `${num}-${slug}`;
+  const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
+  if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
+}
+
 export const COMBINADOS_ART: Readonly<Record<string, string>> = COMBINADOS_PNG;
 
 const API_FILES = import.meta.glob('../assets/soulmon/inimigos-api/*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -41,4 +57,28 @@ const API_FILES = import.meta.glob('../assets/soulmon/inimigos-api/*.png', { eag
 /** ARTE dos 5 inimigos da API "à parte" (27/10/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
 export const INIMIGOS_API_ART: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(API_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, ''), url]),
+);
+
+const RAMOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/ramos/*/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+const LEGADO_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/legado/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE dos 120 sprites de ramo evoluído (REGISTRO §220; chave `<elemento>/<ramo>-<estágio>`) e dos 15 ramos legados (§445; chave `legado/<id>-<estágio>`), no mesmo mapa (`RosterEntry.artFile`). Só URL, e este módulo fica fora do chunk de entrada (chega por `novosSoulmon.ts`). */
+export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries([
+  ...Object.entries(RAMOS_FILES).map(([path, url]) => [path.slice(path.indexOf('/ramos/') + 7).replace(/\.png$/, ''), url] as const),
+  ...Object.entries(LEGADO_FILES).map(([path, url]) => [`legado/${path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, '')}`, url] as const),
+]);
+
+const PARALELOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/paralelos/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+const FORMAS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/combinados-formas/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE das 150 formas champion/ultimate/mega dos combinados 212-261 (09/11/2026). Chave = `NNN-slug-<estágio>` (`RosterEntry.artFile`). */
+export const FORMAS_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(FORMAS_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, ''), url]),
+);
+
+/** ARTE das 10 formas paralelas (09/11/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
+export const PARALELOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(PARALELOS_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/.png$/, ''), url]),
 );

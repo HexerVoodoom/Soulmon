@@ -23,7 +23,9 @@ import { hashString, mulberry32 } from './oracle/base';
 export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
-  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'friend-visit';
+  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'
+  | 'journal-days' | 'focus-days' | 'cook-dish' | 'buy-decor' | 'buy-backdrop'
+  | 'buy-item' | 'claim-achievement';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -50,8 +52,27 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'dream-new', target: 1, emblems: 4, descPt: 'Colecione um sonho novo', descEn: 'Collect a new dream' },
   { id: 'evolve-view', target: 1, emblems: 2, descPt: 'Visite a árvore de evolução', descEn: 'Visit the evolution tree' },
   { id: 'tournament-match', target: 2, emblems: 3, descPt: 'Dispute 2 partidas do Torneio', descEn: 'Play 2 Tournament matches' },
-  { id: 'friend-visit', target: 1, emblems: 2, descPt: 'Visite a criatura de alguém', descEn: 'Visit someone else’s creature' },
+  // 11/11/2026: "Visite a criatura de alguém" (id antigo `friend-visit`) virou ENVIAR UM PRESENTE; mesmo alvo e Emblemas, mesma posição (mesmo sorteio).
+  { id: 'journal-days', target: 3, emblems: 3, descPt: 'Faça o journal em 3 dias', descEn: 'Write in your journal on 3 days' },
+  { id: 'focus-days', target: 3, emblems: 3, descPt: 'Complete a Focus Workshop em 3 dias', descEn: 'Complete the Focus Workshop on 3 days' },
+  { id: 'gift-sent', target: 1, emblems: 2, descPt: 'Envie um presente a alguém', descEn: 'Send someone a gift' },
+  // 15/11/2026 (dono): "fazer um prato, qualquer prato" no Restaurante. Cuidado (alimentar o Soulmon), não contagem de tarefas. NO FIM do pool de propósito.
+  { id: 'cook-dish', target: 1, emblems: 3, descPt: 'Cozinhe um prato no Restaurante', descEn: 'Cook a dish at the Restaurant' },
+  // 16/11/2026 (dono): as missões da Lasca (Decoração) e da Panora (Background) saíram do rodízio diário e vieram para cá. NO FIM do pool.
+  { id: 'buy-decor', target: 2, emblems: 3, descPt: 'Compre 2 itens de decoração na lojinha de Decoração', descEn: 'Buy 2 decor pieces at the Decor stall' },
+  { id: 'buy-backdrop', target: 1, emblems: 3, descPt: 'Compre 1 cenário na lojinha de Background', descEn: 'Buy 1 backdrop at the Background stall' },
+  // 22/11/2026 (dono, REGISTRO §493): Lamela (Itens) e Medra (Conquistas) perderam a diária; o Mercado só tem semanais. NO FIM do pool.
+  { id: 'buy-item', target: 2, emblems: 3, descPt: 'Compre 2 itens na lojinha de Itens', descEn: 'Buy 2 items at the Items stall' },
+  { id: 'claim-achievement', target: 1, emblems: 3, descPt: 'Resgate 1 conquista na lojinha de Conquistas', descEn: 'Claim 1 achievement at the Achievements stall' },
 ];
+
+/**
+ * SEMPRE na lista da semana (dono, 11/11/2026): "fazer o journal" e "completar o Focus Workshop" NÃO são diárias; são 3× por semana, no máximo 1 por dia.
+ * As outras `WEEKLY_MISSION_COUNT` vêm do sorteio da semana, sem estas duas.
+ */
+export const WEEKLY_FIXED: readonly WeeklyMissionId[] = ['journal-days', 'focus-days'];
+/** Missões que contam no máximo 1× por dia do jogador. */
+export const WEEKLY_ONCE_PER_DAY: readonly WeeklyMissionId[] = ['journal-days', 'focus-days'];
 
 export const WEEKLY_MISSION_COUNT = 3;
 
@@ -66,8 +87,8 @@ export const WEEKLY_MISSION_COUNT = 3;
  */
 export function weeklyMissionsFor(weekKey: string): WeeklyMission[] {
   const rng = mulberry32(hashString(`weekly-missions:${weekKey}`));
-  const restantes = [...POOL];
-  const escolhidas: WeeklyMission[] = [];
+  const restantes = POOL.filter(m => !WEEKLY_FIXED.includes(m.id));
+  const escolhidas: WeeklyMission[] = WEEKLY_FIXED.map(id => POOL.find(m => m.id === id)!);
   for (let i = 0; i < WEEKLY_MISSION_COUNT && restantes.length; i += 1) {
     const idx = Math.floor(rng() * restantes.length);
     escolhidas.push(restantes.splice(idx, 1)[0]);
@@ -87,6 +108,8 @@ export interface WeeklyMissionProgress {
   counts: Partial<Record<WeeklyMissionId, number>>;
   /** Missões já pagas nesta semana — pagar duas vezes é bug de economia. */
   claimed: WeeklyMissionId[];
+  /** Último dia do jogador em que cada missão "1 por dia" contou (só `WEEKLY_ONCE_PER_DAY`). */
+  last?: Partial<Record<WeeklyMissionId, string>>;
 }
 
 export function emptyWeeklyProgress(week: string): WeeklyMissionProgress {
@@ -97,6 +120,13 @@ export function emptyWeeklyProgress(week: string): WeeklyMissionProgress {
 export function forWeek(p: WeeklyMissionProgress | undefined, week: string): WeeklyMissionProgress {
   if (p && p.week === week) return p;
   return emptyWeeklyProgress(week);
+}
+
+/** Soma 1 numa missão "1 por dia" SÓ se ela ainda não contou em `dia`; senão devolve o MESMO `p`. */
+export function bumpWeeklyDay(p: WeeklyMissionProgress, id: WeeklyMissionId, dia: string): WeeklyMissionProgress {
+  if (p.last?.[id] === dia) return p;
+  const b = bumpWeekly(p, id);
+  return { ...b, last: { ...(p.last ?? {}), [id]: dia } };
 }
 
 /** Soma 1 numa missão. PURA e sem teto — quem lê compara com o `target`. */
@@ -121,4 +151,19 @@ export function claimWeekly(
 ): { progress: WeeklyMissionProgress; emblems: number } {
   if (!isWeeklyDone(p, m) || p.claimed.includes(m.id)) return { progress: p, emblems: 0 };
   return { progress: { ...p, claimed: [...p.claimed, m.id] }, emblems: m.emblems };
+}
+
+/**
+ * Migração do save (11/11/2026): `friend-visit` virou `gift-sent`. O progresso e o resgate da semana corrente atravessam a troca
+ * (quem já tinha cumprido/resgatado a antiga não perde nem recebe de novo); sem a chave antiga devolve o MESMO objeto.
+ */
+export function migrateWeeklyLegacy(p: WeeklyMissionProgress): WeeklyMissionProgress {
+  const counts = p.counts as Record<string, number>;
+  const claimed = p.claimed as string[];
+  if (!('friend-visit' in counts) && !claimed.includes('friend-visit')) return p;
+  const { 'friend-visit': antigo, ...resto } = counts;
+  const novos: Record<string, number> = { ...resto };
+  if (typeof antigo === 'number' && antigo > (novos['gift-sent'] ?? 0)) novos['gift-sent'] = antigo;
+  const pagos = [...new Set(claimed.map(x => (x === 'friend-visit' ? 'gift-sent' : x)))] as WeeklyMissionProgress['claimed'];
+  return { ...p, counts: novos as WeeklyMissionProgress['counts'], claimed: pagos };
 }

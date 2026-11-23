@@ -21,7 +21,8 @@ describe('lotes 1-3 juntos (50 elementos, nº 212-261)', () => {
   });
   it('cada um registrado exatamente uma vez no roster, na arte e no mapa de elemento', () => {
     for (const [num, slug] of TODOS) {
-      expect(ENEMY_ROSTER.filter(e => e.id === `cmb${num}`), slug).toHaveLength(1);
+      expect(ENEMY_ROSTER.filter(e => e.id === `cmb${num}` && e.kind === 'combinado'), slug).toHaveLength(1);
+      expect(ENEMY_ROSTER.filter(e => e.id === `cmb${num}` && e.kind === 'forma'), slug).toHaveLength(3); // 09/11/2026: champion/ultimate/mega
       expect(COMBINADOS_ART[`${num}-${slug}`], slug).toBeTruthy();
       expect(SPRITE_ELEMENT[`cmb:${num}`], slug).toBe(slug);
     }

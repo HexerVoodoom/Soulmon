@@ -18,13 +18,16 @@ import { SCHOOL_STRIKE_FORM, type StrikeForm, type SkillRole } from './soulProfi
 import { elementStrikeForm, FX_FALLBACK_ELEMENT } from './combatFx';
 import { familyOfSkill } from './arena';
 import { elementoConhecido } from './soulProfile/ficha/elementoNome';
-import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
+import { isSpecialFamily, type SpecialFamily } from './combate/specials';
+import { chaveDaIdentidade, meleeImpactOf, type ImpactoMelee } from './combate/golpeImpacto';
 
 /** Um golpe do lutador: o elemento (id da ficha, usado também no jogo), a escola (`null` = sem ficha) e a forma. */
 export interface FighterStrike {
   elemento: string;
   escola: EscolaSkillId | null;
   forma: StrikeForm;
+  /** Só com Luvas da Hexsmith (acabamento visual do básico: corte ou splash); ausente = o sorteio estável por elemento. */
+  impacto?: 'corte' | 'concussao';
 }
 export interface FighterIdentity {
   basico: FighterStrike;
@@ -39,11 +42,26 @@ export interface FighterFx {
   /** Elemento do golpe básico e do especial (ids no formato fechado de elemento). */
   elBasica?: string | null;
   elEspecial?: string | null;
+  /** Só dos simulados (`sim_NNNN`): o golpe À DISTÂNCIA dele é Magic (`true`, splash) ou Ranged Slash (`false`, corte). Ausente = jogador real: sem mudança. */
+  magia?: boolean;
+  /** REGISTRO §332: família e elementos SEM Coroa/Amuleto/Garra (o servidor só publica com algum deles equipado). Base do TIPO do básico. Ausente = comportamento antigo. */
+  orig?: { familia?: string | null; elBasica?: string | null; elEspecial?: string | null } | null;
+  /** REGISTRO §332: o ataque das Luvas (`HEX_STRIKES`): o ÚNICO item que troca o tipo do básico. Ausente = sem Luvas. */
+  golpe?: string | null;
 }
+
+/** As Luvas (espelho de `strikeParts` de `hexsmith.ts`, sem importar o módulo; `fighterIdentity.pvpTipo.test.ts` compara). */
+const GOLPE_DAS_LUVAS: Readonly<Record<string, { forma: StrikeForm; impacto: 'corte' | 'concussao' }>> = {
+  magic: { forma: 'ranged', impacto: 'concussao' },
+  'ranged-slash': { forma: 'ranged', impacto: 'corte' },
+  'melee-slash': { forma: 'melee', impacto: 'corte' },
+  'melee-smash': { forma: 'melee', impacto: 'concussao' },
+};
+const golpeDasLuvas = (g: unknown) => (typeof g === 'string' && Object.prototype.hasOwnProperty.call(GOLPE_DAS_LUVAS, g) ? GOLPE_DAS_LUVAS[g] : undefined);
 
 const ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
 const elementoValido = (id: unknown): id is string => typeof id === 'string' && ELEMENTO_ID.test(id);
-const famValida = (f: unknown): SpecialFamily | null => (typeof f === 'string' && (SPECIAL_FAMILIES as readonly string[]).includes(f) ? (f as SpecialFamily) : null);
+const famValida = (f: unknown): SpecialFamily | null => (isSpecialFamily(f) ? f : null);
 
 function golpe(escola: unknown, elemento: string, role: SkillRole, formaDoElemento = false): FighterStrike {
   if (formaDoElemento && typeof escola === 'string') {
@@ -92,11 +110,38 @@ export function fighterIdentityFromFx(fx: Partial<FighterFx> | null | undefined,
   const elBasico = elementoConhecido(fx?.elBasica) ? fx.elBasica : sem;
   const elEspecial = elementoConhecido(fx?.elEspecial) ? fx.elEspecial : elBasico;
   const fam = famValida(fx?.familia);
+  const basico = golpe(fx?.basica, elBasico, 'basica');
+  const esp = golpe(fx?.especial, elEspecial, 'especial');
+  // Simulado: no golpe à distância o acabamento vem da flag do servidor (80% Magic). Corpo a corpo e jogador real ficam como estão.
+  const mag = typeof fx?.magia === 'boolean' ? (f: FighterStrike): FighterStrike => (f.forma === 'ranged' ? { ...f, impacto: fx!.magia ? 'concussao' : 'corte' } : f) : (f: FighterStrike) => f;
+  // §332: as Luvas do oponente (publicadas em `golpe`) trocam a forma e o acabamento do básico, igual a `hexIdentity` no aparelho dele.
+  const luvas = golpeDasLuvas(fx?.golpe);
   return {
-    basico: golpe(fx?.basica, elBasico, 'basica'),
+    basico: luvas ? { ...basico, forma: luvas.forma, impacto: luvas.impacto } : mag(basico),
     // sem escola do especial (save sem ficha) a família é a padrão de `familyOfSkill`; com ela, a publicada se for válida
-    especial: { ...golpe(fx?.especial, elEspecial, 'especial'), familia: fam ?? familyOfSkill({ escolaId: fx?.especial ?? undefined }) },
+    especial: { ...mag(esp), familia: fam ?? familyOfSkill({ escolaId: fx?.especial ?? undefined }) },
   };
+}
+
+/**
+ * REGISTRO §332: a identidade do lutador do `fx` como ela era SEM Coroa/Amuleto/Garra (o `orig` publicado; sem ele, a própria).
+ * É a BASE do sorteio estável do TIPO do básico (`chaveDaIdentidade` + `meleeImpactOf`): trocar esses itens não muda o tipo,
+ * como `hexIdentity` faz no aparelho do dono do Soulmon (§321/§325). Só visual: nada de dano lê isto.
+ */
+export function fighterIdentitySemItensFromFx(fx: Partial<FighterFx> | null | undefined, fallbackElement?: string | null): FighterIdentity {
+  // sem as Luvas também (`golpe`): quem as aplica é `fighterIdentityFromFx`, e `tipoDoBasicoPvp` as lê de lá
+  const o = fx?.orig;
+  if (!o || typeof o !== 'object') return fighterIdentityFromFx(fx ? { ...fx, golpe: null } : fx, fallbackElement);
+  return fighterIdentityFromFx({ ...fx, familia: o.familia ?? null, elBasica: o.elBasica ?? null, elEspecial: o.elEspecial ?? null, orig: null, golpe: null }, fallbackElement);
+}
+
+/**
+ * REGISTRO §332: o TIPO (acabamento corte × splash) do ataque BÁSICO no PvP. Luvas/simulado (`id.basico.impacto`) mandam; senão
+ * o sorteio estável da identidade SEM itens (`semItens`). `elementoVisual` = o mapeamento que a tela aplica ao elemento
+ * (`fxElementId` no Duelo). Só visual.
+ */
+export function tipoDoBasicoPvp(id: FighterIdentity, semItens: FighterIdentity, elementoVisual: (el: string) => string = el => el): ImpactoMelee {
+  return id.basico.impacto ?? meleeImpactOf({ element: elementoVisual(semItens.basico.elemento), key: chaveDaIdentidade(semItens) });
 }
 
 /** O `fx` do SEU lado (o treino local do Torneio): o mesmo formato que o servidor publica. */

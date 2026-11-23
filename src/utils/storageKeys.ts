@@ -15,6 +15,8 @@
 import { readLocal, writeLocal } from './safeStorage';
 
 export const STORAGE_KEYS = {
+  /** Pedido de avaliação na Play (aparelho): `{accepted?:true,lastAskedAt?:ms}`. Ver `utils/playReview.ts`. */
+  PLAY_REVIEW: 'soulmon-play-review',
   GAME_STATE: 'soulmon_state_v1',
   /** WP0.10 — dia do último dia ruim, para fechar `after_bad_day` NO APARELHO.
    *  Esta chave nunca é enviada: o que sai é uma FAIXA de distância, e é por
@@ -79,6 +81,8 @@ export const STORAGE_KEYS = {
   DUNGEON_BEST: 'soulmon-dungeon-best',
   DUNGEON_REACHED: 'soulmon-dungeon-reached',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
+  /** Últimos buffs do clã vistos (`utils/guildBuffs.ts`): só para o efeito local valer fora da folha da Guilda. Vence sozinho (`ate`). */
+  CLAN_BUFFS: 'soulmon-clan-buffs',
   /** Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). */
   DUNGEON_SPEED: 'soulmon-dungeon-speed',
   /** Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`). Preferência de tela do aparelho — não é progresso e não vai para a nuvem. */
@@ -88,10 +92,14 @@ export const STORAGE_KEYS = {
   DINO_BEST: 'soulmon-dino-best',
   /** Melhor pontuação do Soul Barrage (Salão de Jogos), no aparelho. */
   BARRAGE_BEST: 'soulmon-barrage-best',
+  /** Recorde local do modo Avançado da Chuva de Almas (o Comum segue em `BARRAGE_BEST`). */
+  BARRAGE_BEST_2: 'soulmon-barrage-best-2',
   /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na
    *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem
    *  busca; não é progresso, não pontua e não vai para a nuvem. */
   LIBRARY_SEEN: 'soulmon-library-seen',
+  /** Faixa de evoluções: `at` (relógio do servidor) do último aviso do feed já mostrado neste aparelho. */
+  EVO_SEEN_AT: 'soulmon-evo-seen-at',
   /** 31/10/2026 — formas já vistas de cada Soulmon de outro jogador (`{ [id]: SeenForm[] }`, ≤ 8 por criatura). Só no aparelho, como `LIBRARY_SEEN`. Dono: `utils/libraryForms.ts`. */
   LIBRARY_FORMS: 'soulmon-library-forms',
   /** Dia (ISO do jogador) em que o bônus do Picross do dia já foi pago neste aparelho. */
@@ -160,6 +168,11 @@ export const STORAGE_KEYS = {
   INTRO_CINEMATICA_VISTA: 'soulmon-intro-cinematica-vista',
   /** ONBOARDING_VELADO: a sequência narrativa (puzzle/tarefa/alimentar/duelo) já foi vista. */
   ONBOARDING_VELADO_VISTO: 'soulmon-onboarding-velado-visto',
+  /** INÍCIO BB (17/11/2026): o nascimento ainda espera o BB e o chocar em tela cheia. JSON `{ pago, prompts? }`; some depois de chocar
+   *  (`utils/inicioBB.ts`). Por aparelho de propósito: sem campo novo no save; outro aparelho só vê o BB já pronto. */
+  BB_NASCIMENTO: 'soulmon-bb-nascimento',
+  /** INÍCIO BB: o convite "para evoluir agora, assine" já abriu sozinho uma vez neste aparelho (rookie → champion, D8). */
+  PAYWALL_CHAMPION_VISTO: 'soulmon-paywall-champion-visto',
   /** Até quando o botão "Gerar personagem" (Configurações › Sua conta) fica em espera (ms epoch). */
   GENERATE_CHARACTER_UNTIL: 'soulmon-generate-character-until',
   /** Quantos dos usos do botão "Gerar Soulmon" (teste fechado, `utils/generateCharacterUses.ts`) já foram gastos neste aparelho. */
@@ -213,8 +226,14 @@ export const STORAGE_KEYS = {
    *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
    *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
   GUILD_CLAIMED: 'soulmon-guild-claimed',
+  /** Caixa de cartas (§246): os `mid` das cartas novas que o Papus JÁ anunciou neste aparelho (CSV, até 50). Só o aviso da fila; o resto mora no servidor. */
+  MAIL_ANNOUNCED: 'soulmon-mail-announced',
   /** Feira do Chefe: o último evento da volta que a fila JÁ mostrou (`<k>:<kind>:<dia>`), gravado ao MOSTRAR. */
   FEIRA_EVENTO_VISTO: 'soulmon-feira-evento-visto',
+  /** Feira (04/11/2026): o desafio que a volta da Missão trouxe HOJE (`{ day, k, done }`). Só do aparelho, nunca no
+   *  save — inimigo de um dia anterior não cumprido "escapou". Dono: `utils/feiraDesafio.ts`. */
+  FEIRA_DESAFIO: 'soulmon-feira-desafio',
+  FEIRA_VOLTA: 'soulmon-feira-volta',
   /** OFICINA DO FOCO (04/10/2026) — o timer em curso (modo, fase, `endAt` em timestamp). Só do
    *  aparelho, nunca no save. Dono: `utils/focoTimer.ts`. */
   FOCO_TIMER: 'soulmon-foco-timer',
@@ -225,9 +244,27 @@ export const STORAGE_KEYS = {
   FOCO_WORKSHOPS: 'soulmon-foco-workshops',
   /** Planejamento único ativo da Oficina do Foco; local ao aparelho, sem XP ou envio ao save. */
   FOCO_WORKSHOP_PLAN: 'soulmon-foco-workshop-plan',
+  /** Rascunho do planejamento da sessão: sobrevive a fechar a folha e a recarregar. */
+  FOCO_PLAN_DRAFT: 'soulmon-foco-plan-draft',
+  /** Chaves da sessão em preparo no quadro da Oficina (§247). */
+  FOCO_JOURNEY_KEYS: 'soulmon-foco-journey-keys',
+  /** Ritmo e cenário escolhidos por último no quadro da Oficina (§247). */
+  FOCO_JOURNEY_PREFS: 'soulmon-foco-journey-prefs',
+  /** A SESSÃO em andamento (§300): tarefa escolhida, o que o Soulmon achou e quantos focos já fecharam. Aparelho, não save. Dono: `utils/focusSession.ts`. */
+  FOCO_SESSION: 'soulmon-foco-session',
+  /** Antislop P6 (§378): `opId` dos gestos de Créditos (pacote de Bits, essência, reroll) cuja resposta o servidor ainda não
+   *  CONFIRMOU, por conta + operação + item, com a hora em que nasceu. Reusado no toque seguinte para não debitar duas vezes.
+   *  Fora do save de propósito (não é dado do jogador); some no logout (é da conta). Dono: `utils/pendingOpId.ts`. */
+  PENDING_OP_IDS: 'soulmon-pending-op-ids',
+  /** O DESCANSO em curso (§301): quando começou (timestamp), ritmo, cenário e o que o baú deu. Timestamps, não timers: o tempo segue com o app fechado. Aparelho. Dono: `utils/focusRest.ts`. */
+  FOCO_REST: 'soulmon-foco-rest',
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
    *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
   FOCO_VIBRATE: 'soulmon-foco-vibrate',
+  /** CHAMA (trataka, 04/11/2026): o último dia (`AAAA-MM-DD`) em que a sessão concluída pagou os Bits fixos. Aparelho. Dono: `components/refugio/ChamaGame.tsx`. */
+  CHAMA_PAGO: 'soulmon-chama-pago',
+  /** CHAMA: o aviso de segurança da 1ª vez já foi visto (`'1'`). Aparelho. */
+  CHAMA_AVISO: 'soulmon-chama-aviso',
   /** CADERNO — chave LEGADA (04/10/2026, 1ª versão: só no aparelho). O Caderno agora mora em
    *  `GameState.caderno` (save na nuvem do titular); esta chave só é LIDA para migrar as
    *  anotações antigas para o save uma vez e é apagada em seguida. Dono: `utils/cadernoLocal.ts`. */
@@ -236,6 +273,17 @@ export const STORAGE_KEYS = {
    *  já digitou a fala uma vez — dali em diante a fala aparece inteira. Conveniência por aparelho,
    *  fora do save. Dono: `components/nav/NpcSpeech.tsx`. */
   NPC_FALA_VISTA: 'soulmon-npc-fala-vista',
+  /** §333 (13/11/2026) — quando cada BALÃO DE DICA do Soulmon apareceu neste aparelho (`{relaxar?:ms,fome?:ms,cochilo?:ms,lilia?:ms}`),
+   *  para o cooldown por tipo. Conveniência de UI, fora do save; o logout apaga. Dono: `hooks/useBalaoDica.ts`. */
+  BALAO_DICAS_VISTAS: 'soulmon-balao-dicas-vistas',
+  /** §383 (14/11/2026) — quantas vezes cada BALÃO DOURADO de evento sumiu sem toque HOJE neste aparelho
+   *  (`{'balaoDourado:<tipo>:<dia>': n}`); no 2º, o App grava o `dispensar` do save. Fora do save; o logout apaga.
+   *  Congelada: nunca renomear. Dono: `utils/balaoDourado.ts` (`registrarIgnorado`). */
+  BALAO_DOURADO_IGNORADOS: 'soulmon-balao-dourado-ignorados',
+  /** 18/11/2026 — widget grande da Home: os últimos ~200 `eid` da fila do widget que este aparelho já APLICOU
+   *  (`string[]`). A fila é nativa e deste aparelho, então o registro também é; o pagamento já é idempotente pela
+   *  tarefa sair da lista, isto só cobre reabrir no meio do `ack`. Congelada: nunca renomear. Dono: `utils/widgetEvents.ts`. */
+  WIDGET_EVENTS_APPLIED: 'soulmon-widget-events-applied',
   /** L08-01 (20/10/2026) — QUARENTENA do save local que NÃO virou estado (JSON truncado, array/string, `hydrateSave`
    *  lançou, ou o local ficou atrás por cota cheia). Guarda `{formato, salvoEm, saveId, motivo, cru, cortado?}`
    *  ANTES de qualquer sobrescrita. SOBREVIVE ao logout (rastro forense, como `CONFLICT_BACKUP`). Dono: `saveQuarantine.ts`. */
@@ -249,6 +297,8 @@ export const STORAGE_KEYS = {
   /** L03-01 (21/10/2026) — gids dos presentes de amigos JÁ CREDITADOS neste aparelho (lista JSON, teto 200, FIFO).
    *  Impede recrédito quando o ack ao servidor se perde. É da CONTA: o logout apaga. Dono: `community.ts` (`resgatarPresentes`). */
   GIFTS_CREDITED: 'soulmon-gifts-credited-v1',
+  /** Drive em accordion (Biblioteca): ids dos níveis FECHADOS, JSON string[]. */
+  DRIVE_ACORDEAO_FECHADOS: 'soulmon-drive-fechados-v1',
 } as const;
 
 /**

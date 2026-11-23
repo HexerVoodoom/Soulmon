@@ -11,6 +11,7 @@ import { FEIRA_TRAIL_MIN_MS, type FeiraAttack, type FeiraClaim, type FeiraEvento
 import { resetClaimMemoryForTests } from '../../utils/guildClaimLocal';
 import { seededRng, startSequence } from '../../utils/mente/eco';
 import { feiraText, FEIRA_COPY } from '../../utils/feiraCopy';
+import { recordFeiraDesafio, readFeiraDesafio } from '../../utils/feiraDesafio';
 
 const mem = new Map<string, string>();
 const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); }, clear: () => mem.clear(), key: () => null, length: 0 };
@@ -58,6 +59,14 @@ describe('Chefe', () => {
     fireEvent.click(q('[data-feira-atacar]')!);
     await waitFor(() => expect(q('[data-feira-nota]')!.textContent).toBe(feiraText('en-US', 'boss.today')));
     expect(q('[data-feira-atacar]')).toBeNull();
+  });
+
+  it('o "já bateu hoje" do servidor FECHA o desafio do dia no aparelho (a sala não oferece atacar de novo)', async () => {
+    recordFeiraDesafio('2026-11-16', 0);
+    expect(readFeiraDesafio()?.done).toBe(false);
+    open(boss, mk({ attack: vi.fn(async () => { throw new GuildError('dailyLimit', 429); }) }));
+    fireEvent.click(q('[data-feira-atacar]')!);
+    await waitFor(() => expect(readFeiraDesafio()?.done).toBe(true));
   });
 
   it('chefe já caiu (409) e sem rede (unavailable): cada um com a sua frase, e dá para tentar de novo', async () => {
@@ -139,7 +148,7 @@ describe('Desafio', () => {
     expect(onCredit).toHaveBeenCalledWith({ receipt: 'tr-1', emblems: 1, bits: 0, trophyId: null });
   });
 
-  it('Colcha: dois toques por colcha; envia os retângulos', async () => {
+  it('Colcha (trilha antiga já aberta): dois toques por colcha; envia os retângulos', async () => {
     const clues = [0, 2, 8, 10].map(cell => ({ cell, area: 4, shape: 'square' }));
     const { api } = await iniciar(stub('patches', { size: 4, clues }));
     for (const [a, b] of [[0, 5], [2, 7], [8, 13], [10, 15]]) { fireEvent.click(q(`[data-patch-cell="${a}"]`)!); fireEvent.click(q(`[data-patch-cell="${b}"]`)!); }
@@ -148,6 +157,17 @@ describe('Desafio', () => {
     const sol = (api.done as ReturnType<typeof vi.fn>).mock.calls[0][1] as { rects: unknown[] };
     expect(sol.rects).toHaveLength(4);
     expect(sol.rects).toContainEqual({ r: 0, c: 0, h: 2, w: 2 });
+  });
+
+  it('Selo: escolhe uma opção e envia o índice; só habilita depois de escolher', async () => {
+    const painel = (n: number) => ({ shape: n % 5, count: 1 + (n % 6), dir: n % 8, fill: n % 3, marks: 1 + (n % 15) });
+    const { api } = await iniciar(stub('selo', { grid: Array.from({ length: 8 }, (_, i) => painel(i)), options: Array.from({ length: 6 }, (_, i) => painel(i + 3)) }));
+    expect((q('[data-trail-send]') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(q('[data-selo-option="4"]')!);
+    await enviar();
+    await waitFor(() => expect(api.done).toHaveBeenCalled());
+    expect((api.done as ReturnType<typeof vi.fn>).mock.calls[0][1]).toEqual({ choice: 4 });
+    expect((api.sleep as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBeGreaterThan(FEIRA_TRAIL_MIN_MS.selo - 1000);
   });
 
   it('Picross: pinta pelas pistas; envia as células (1/0)', async () => {

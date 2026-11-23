@@ -229,6 +229,7 @@ export function applyRebirth<T extends RebirthTarget>(
       powerPoints: 0,
       harmonyPoints: 0,
       benevolencePoints: 0,
+      evoStatFloor: undefined, // REGISTRO §229: o piso da evolução morre com o Soulmon
       rebirth: record,
       // ⚠️ **A incubação zera, e é a ÚNICA coisa além de estágio e atributos
       // que o Renascimento apaga** — por isso está aqui e não na lista do que

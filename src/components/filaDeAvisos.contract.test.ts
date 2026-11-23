@@ -29,6 +29,21 @@ describe('nada monta por cima da fila de intersticiais', () => {
     expect(app).toContain("{protectPrompt && interstitial === 'welcome' && (");
   });
 
+  it('o modal de atributos da evolução espera a cerimônia e só nasce da evolução para cima (handleEvolve)', () => {
+    expect(app).toContain('evoStats: evoStatsShown !== null && evolutionCeremony === null,');
+    expect(app).toContain("interstitial === 'evoStats' && evoStatsShown");
+    expect(app).toContain('pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved)');
+    // degeneração e "Trocar forma" não escrevem o ref
+    expect(app.split('pendingEvoStatsRef.current = {').length - 1).toBe(1);
+  });
+
+  it('o piso "evoluir nunca reduz" (REGISTRO §229) é gravado só pelo handleEvolve e lido por todo combatente do app', () => {
+    expect(app.split('evoStatFloor: nextStatFloor(prev, newEvolutionStage)').length - 1).toBe(1);
+    for (const f of ['components/ArenaGame.tsx', 'components/DungeonGame.tsx', 'components/guild/PlantioVisor.tsx', 'components/TournamentPage.tsx', 'utils/focusDescent.ts']) {
+      expect(readFileSync('src/' + f, 'utf8'), f).toContain('evoStatFloor');
+    }
+  });
+
   it('o modal de evolução espera a cerimônia terminar', () => {
     // 14/10/2026: o modal entra na fila central; "pronto" = evolução pendente E cerimônia fechada, "na tela" = a vez dele.
     expect(app).toContain('evolveTask: evolveModalStage !== null && evolutionCeremony === null,');
@@ -63,7 +78,7 @@ describe('o slot de avisos não tem cartão solto', () => {
     // que aparece todo dia. A condição aparece UMA vez — duas seriam duas
     // superfícies falando da mesma coisa, que é como se empilha aviso.
     expect(app.indexOf("key: 'hp',")).toBeLessThan(app.indexOf("key: 'incubacao',"));
-    expect(app.indexOf("key: 'incubacao',")).toBeLessThan(app.indexOf("key: 'semanal',"));
+    expect(app.indexOf("key: 'incubacao',")).toBeLessThan(app.indexOf("key: 'triagem',"));
     expect(app.match(/if \(incubandoAgora\) avisos\.push\(/g) ?? []).toHaveLength(1);
   });
 
@@ -74,11 +89,9 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect(falas).not.toMatch(/incuba/i);
   });
 
-  it('o relatório semanal vem ANTES da triagem', () => {
-    // `triageQueue` quase nunca está vazia para quem tem histórico, e o slot
-    // renderiza só o primeiro — com a ordem antiga, num domingo típico a única
-    // superfície reflexiva da semana já nascia colapsada atrás do "+N".
-    expect(app.indexOf("key: 'semanal',")).toBeLessThan(app.indexOf("key: 'triagem',"));
+  it('o cartão semanal de domingo saiu da fila (REGISTRO §432): a retrospectiva é o modal de segunda', () => {
+    expect(app).not.toContain("key: 'semanal',");
+    expect(app).not.toContain('WeeklyReportCard');
   });
 
   it("'termos' é o ÚLTIMO da fila (decisão #24: é o único aviso que não fala do dia da pessoa)", () => {
@@ -174,7 +187,7 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   const ordem = PRESENTATION_ORDER as readonly string[];
 
   it('a ordem declarada é (19/10/2026, D-64): TOUR → triagem → PESADELO → sonho → resumo do dia → PRÉDIO NOVO → metas → "HOJE" (reafirmar + check-in) → LEVEL UP → modal de evolução → MARCO → convite de nível → sono → ocioso', () => {
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'evoStats', 'elementoNovo', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'messenger', 'catalogLevelInvite', 'restSetup', 'stepsInvite', 'unlockToast', 'noticeToast', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in (celebração depois do início de dia) e ANTES dos convites (posições, não só presença)', () => {

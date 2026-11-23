@@ -53,3 +53,7 @@ medido nesta leva (as artes são verdes/vermelhas/azuis; nenhum roxo-magenta de 
 - Onde cada um aparece (lote, função, ou só catálogo)? Continua sendo o **NPC-1**.
 - Ossel e Tzali têm duas formas cada: usar as duas (ex.: forma humana no balcão, dragão no encontro) ou só uma?
 - Os 4 ids de tom `sombrio` (Rubra, Ossel x2, Corvino) estão fora de qualquer tela de cuidado de propósito: a narrativa pede que o jogador nunca leia ameaça.
+
+## Todo NPC novo nasce com ficha (beta12, B3)
+
+Todo NPC novo (lote, função, extra, novo, chefe, desafiante) precisa de uma **ficha** em `src/data/npcFichas.ts` ANTES de entrar num registro: arquétipo de personalidade, elemento(s) reais do class-system (combinados valem), estágio (maioria Ultimate/Mega, poucos Ultra) e classe do Oráculo cujas condições os elementos cumprem. A ficha é invisível ao jogador; só a FALA a expressa (direta e humana, sem "no seu tempo / se quiser / sem pressa"). O contrato `src/data/npcFichas.contract.test.tsx` FALHA se um NPC entrar num registro sem ficha. A tabela atual está em `docs/beta12/TABELA-NPCS.md`; o mapa de personalidade, em `docs/design/PERSONALIDADE-BIG-FIVE.md`.

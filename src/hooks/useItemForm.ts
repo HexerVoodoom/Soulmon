@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { ActivityCategory } from '../types/attributes';
 import {
   DEFAULT_EFFORT,
@@ -55,9 +56,7 @@ export function chaveDoItem(item: unknown): string {
   return typeof id === 'string' || typeof id === 'number' ? `id:${id}` : 'item';
 }
 
-const DEFAULT_CATEGORIES: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
-];
+const DEFAULT_CATEGORIES: ActivityCategory[] = [...ACTIVITY_CATEGORIES];
 
 export function useItemForm({ isOpen, initialData, defaultCategory = DEFAULT_CATEGORIES[0] }: UseItemFormProps) {
   const [name, setName] = useState('');

@@ -30,20 +30,23 @@
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
-import { fighterIdentity, fighterIdentityFromFx } from '../utils/fighterIdentity';
+import { fighterIdentity, fighterIdentityFromFx, fighterIdentitySemItensFromFx, tipoDoBasicoPvp } from '../utils/fighterIdentity';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
-import { ARENA_SCENE } from '../utils/dungeonScenes';
+import { summonsDoGrupo } from './games/SummonLayer';
+import { ResultBanner } from './ui/SpriteFx';
+import { DUEL_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
-  isSelfOnlySpecial,
+  isSelfOnlySpecial, sceneTimeOf,
 } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
-import { hpPoints, PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
+import { hpExibidoPvp, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
 
@@ -71,6 +74,8 @@ const END_BEAT_MS = 1100;
 type Phase = 'fight' | 'done';
 
 export interface DuelScreenProps {
+  /** CSS `background` da arena (o Torneio passa o coliseu da faixa, `utils/coliseuScenes.ts`). Ausente = a clareira do Duelo. */
+  scene?: string;
   /** A ficha do SEU lado e a do oponente, como o servidor mandou em `duelStart` (no treino, a local). */
   me: DuelSide;
   opp: DuelSide;
@@ -90,10 +95,17 @@ export interface DuelScreenProps {
   skills?: FichaSkills;
   /** Elemento do oponente (o servidor não o publica: o chamador dá um visual determinístico). */
   oppElement?: string;
+  /** Nome do especial que o OPONENTE escolheu (público, já filtrado no servidor); sem ele, o nome por regra. */
+  oppEspecialNome?: string;
   /** Fim da luta animada: os toques de cada BALDE vão para o servidor decidir. */
+  /** Só ASSISTE (replay da guerra de clã): a torcida não conta toque nenhum. */
+  observar?: boolean;
   onDone: (taps: number[]) => void;
   onClose: () => void;
 }
+
+/** Sem companheiro em cena no duelo: a MESMA referência vazia sempre. */
+const SEM_COMPANHEIRO_DUELO: readonly number[] = [];
 
 /** Especiais soltos no MESMO instante (o espelho) saem um de cada vez na exibição: ver `serializarEspeciais`. Só apresentação. */
 const emSerie = (r: DuelResult): DuelResult => {
@@ -101,11 +113,12 @@ const emSerie = (r: DuelResult): DuelResult => {
   return { ...r, events: v.events, fx: v.fx };
 };
 
-const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
+/** O HP base (o da Arena), não o inflado do PvP: ver `hpExibidoPvp`. O dano mostrado é fração × este máximo. */
+const maxHpOf = (s: DuelSide) => hpExibidoPvp(s.combatant.hp);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, onDone, onClose,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, oppEspecialNome, onDone, onClose, scene, observar = false,
 }: DuelScreenProps) {
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
@@ -115,6 +128,9 @@ export function DuelScreen({
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
   const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
+  // REGISTRO §332: o TIPO do básico sai da identidade SEM Coroa/Amuleto/Garra (o `fx.orig` do servidor); só as Luvas trocam.
+  const meSemItens = useMemo(() => (par ? meId : fighterIdentitySemItensFromFx(me.fx, petElement)), [par, meId, me.fx, petElement]);
+  const oppSemItens = useMemo(() => fighterIdentitySemItensFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
   const meEl = fxElementId(meId.basico.elemento);
   const oppEl = fxElementId(oppId.basico.elemento);
   /** O elemento do golpe do lado no papel dado (o básico é o principal; o especial, o dele). */
@@ -130,6 +146,8 @@ export function DuelScreen({
   const [golpes, setGolpes] = useState<StageHit[]>([]);
   /** Os efeitos de status de cada lado (PR11): dobra dos eventos já chegados, então o replay e a luta ressimulada dão o mesmo selo. */
   const [status, setStatus] = useState<{ me: StageStatus[]; opp: StageStatus[] }>({ me: [], opp: [] });
+  /** COMPANHEIRO INVOCADO (PR 2): turnos de ataque que o companheiro de cada lado ainda tem (o contador REAL do núcleo, `FighterFx.comp`); [0, 0] sem companheiro. */
+  const [companheiroTurnos, setCompanheiroTurnos] = useState<readonly number[]>(SEM_COMPANHEIRO_DUELO);
   /** A barra de cheer mostrada: os toques aceitos até agora, módulo `CHEER.tapsFull`. */
   const [barra, setBarra] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -197,28 +215,42 @@ export function DuelScreen({
     let portao: Portao | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
-      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
+      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, impacto: a.kind === 'special'
+        ? (!meu && oppId.especial.impacto) || meleeImpactOf({ element: elementoDe(meu ? 0 : 1, 'especial'), key: chaveDaIdentidade(meu ? meId : oppId) })
+        : tipoDoBasicoPvp(meu ? meId : oppId, meu ? meSemItens : oppSemItens, fxElementId), element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
     };
     const start = (e: FightEvent) => {
       const a = actionOf(e);
       if (a) fire(e, a);
     };
 
+    /** §334: os números dos ticks que abriram o turno de um lutador; o golpe dele no mesmo instante não os apaga. */
+    let ticksDoTurno: { t: number; hits: StageHit[] } = { t: -1, hits: [] };
     const apply = (e: FightEvent) => {
       setHpFrac({ me: clamp01(e.hp[0]), opp: clamp01(e.hp[1]) });
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
       const quadro = duelStatusBoard(
         sim.current.events, applied.current,
-        [{ ...me.special, escola: meId.especial.escola }, { ...opp.special, escola: oppId.especial.escola }],
+        [{ ...me.special, escola: meId.especial.escola, elemento: meId.especial.elemento }, { ...opp.special, escola: oppId.especial.escola, elemento: oppId.especial.elemento }],
         sim.current.fx,
       );
       setStatus({ me: stageStatusOf(quadro[0]), opp: stageStatusOf(quadro[1]) });
+      const fxAgora = sim.current.fx[Math.min(applied.current, sim.current.fx.length) - 1];
+      const turnos = fxAgora && ((fxAgora[0].comp ?? 0) > 0 || (fxAgora[1].comp ?? 0) > 0) ? [fxAgora[0].comp ?? 0, fxAgora[1].comp ?? 0] : SEM_COMPANHEIRO_DUELO;
+      setCompanheiroTurnos((prev) => (prev.length === turnos.length && prev.every((v, i) => v === turnos[i]) ? prev : turnos));
       if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
         const alvoMe = e.side === 1; // o lado 1 bate no MEU pet
         const value = Math.max(1, Math.round(e.frac * (alvoMe ? maxMe : maxOpp)));
-        setGolpes([{ id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) }]);
+        const golpe: StageHit = { id: ++seq.current, side: alvoMe ? 'me' : 'foe', foe: 0, value, big: !!specialHit.get(e) };
+        const junto = ticksDoTurno.t === e.t ? ticksDoTurno.hits : [];
+        if (e.kind === 'tick') ticksDoTurno = { t: e.t, hits: [...junto, golpe] };
+        else ticksDoTurno = { t: -1, hits: [] };
+        setGolpes([...junto, golpe]);
       }
     };
+    /** §334: quando o evento `i` entra em cena — o tick, no começo da ação do golpe que vem logo depois dele. */
+    const leadDe = (g: FightEvent) => { const a = actionOf(g); return a ? leadS(a.kind) : 0; };
+    const naCena = (i: number) => sceneTimeOf(sim.current.events, i, leadDe);
 
     /** Fecha o balde que acabou: a descarga que ele pagou entra na luta, e a luta é simulada de novo. */
     const fecharBalde = () => {
@@ -283,13 +315,13 @@ export function DuelScreen({
           break;
         }
         const lead = a ? leadS(a.kind) : 0;
-        if (e.t - lead > clock.current) break;
+        if ((e.kind === 'tick' ? naCena(started.current) : e.t - lead) > clock.current) break;
         start(e);
         started.current++;
       }
       // Um `cast` que ainda não passou pela barreira (o 2º especial do espelho) não se aplica: a cena dele vem antes.
       while (
-        applied.current < evs.length && evs[applied.current].t <= clock.current && !bloqueiaAplicar(portao, applied.current)
+        applied.current < evs.length && naCena(applied.current) <= clock.current && !bloqueiaAplicar(portao, applied.current)
         && !(evs[applied.current].kind === 'cast' && applied.current >= started.current)
       ) {
         const e = evs[applied.current];
@@ -312,17 +344,18 @@ export function DuelScreen({
   const cheering = phase === 'fight';
 
   return (
-    <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
+    <TorcidaLayer onTap={cheer} active={cheering && !pausado && !observar} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
-        scene={ARENA_SCENE.bg}
-        sceneElement={oppEl}
-        specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
-        foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
+        scene={scene ?? DUEL_SCENE.bg}
+        sceneElement={scene ? null : oppEl}
+        specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex, me.fx.efeito) : specialLabel(isPt))}
+        foeSpecialLabel={(f) => oppEspecialNome?.trim() || foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex, opp.fx?.efeito)}
         isPt={isPt}
-        me={{ key: 'me', sprite: petSprite, scale: petScale, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
+        me={{ key: 'me', sprite: petSprite, scale: petScale, stageIcon: petStage, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}
+        summon={summonsDoGrupo(companheiroTurnos, me.companheiro, [opp.companheiro])}
         title={isPt ? 'Duelo' : 'Duel'}
         closeLabel={isPt ? 'Sair do duelo' : 'Leave the duel'}
         onClose={() => { if (phase !== 'done') onClose(); }}
@@ -334,6 +367,12 @@ export function DuelScreen({
         onPauseChange={setPausado}
         status={fimDaLuta ? (isPt ? 'Conferindo o resultado…' : 'Checking the result…') : undefined}
       />
+      {/* Título do fim da luta (P1/P2/P3, 02/11/2026): lettering na arte; a palavra oficial do resultado segue sendo a do servidor (`status`). */}
+      {fimDaLuta && (
+        <div data-duel-banner style={{ position: 'fixed', left: 0, right: 0, top: '18%', zIndex: 130, pointerEvents: 'none' }}>
+          <ResultBanner kind={sim.current.winner === 'me' ? 'victory' : sim.current.winner === 'opp' ? 'defeat' : 'draw'} isPt={isPt} width={260} />
+        </div>
+      )}
     </TorcidaLayer>
   );
 }

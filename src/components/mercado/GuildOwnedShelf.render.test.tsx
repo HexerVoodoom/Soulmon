@@ -30,11 +30,11 @@ const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithC
 const secao = (kind: 'bg' | 'furniture') => document.querySelector(`[data-guild-owned="${kind}"]`) as HTMLElement | null;
 
 describe('cenários da roda voltam ao jogo com a arte nova (D-27/W5-L7; antes D-26/P10/S-9)', () => {
-  it('com cenários do Bosque na posse, o Background mostra a seção "From the grove" só com os que a pessoa tem', () => {
+  it('com cenários do Bosque na posse, o Background mostra a seção do Bosque (sem título) só com os que a pessoa tem', () => {
     abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-clareira', 'bg-guild-mata'] });
     const sec = secao('bg')!;
     expect(sec).toBeTruthy();
-    expect(sec.textContent).toContain(guildText('pt-BR', 'guild.cenarios.titulo'));
+    expect(sec.textContent).not.toContain(guildText('pt-BR', 'guild.cenarios.titulo'));
     expect(sec.textContent).toContain('Clareira');
     expect(sec.textContent).toContain('Mata');
     for (const nome of ['Ramagem', 'Copa', 'Bosque antigo']) expect(sec.textContent).not.toContain(nome);

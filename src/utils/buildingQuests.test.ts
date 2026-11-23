@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   MATERIAL_IDS, MATERIAL_CAP, QUEST_BUILDINGS, forDay, questStatus, visitBuilding, completeBuildingQuest, claimBuildingQuest,
-  buildingMarks, sanitizeBuildingQuests, stockOf, type BuildingQuestState,
+  buildingMarks, sanitizeBuildingQuests, stockOf, LISTED_QUEST_BUILDINGS, settleRetiredListed, type BuildingQuestState,
 } from './buildingQuests';
 import { MATERIALS, questText } from './buildingQuestsCopy';
 import { BUILDING_GATES, type BuildingId } from './gates';
@@ -35,11 +35,10 @@ describe('tabela prédio → material', () => {
 });
 
 describe('missão do dia', () => {
-  it('trancada pelo Vínculo; aberta vira disponível → pronta → resgatada', () => {
+  it('sem trancas por Vínculo (12/11/2026); disponível → pronta → resgatada', () => {
     // A Masmorra abre no Vínculo 1 desde 14/10/2026 (pedido do dono); a Oficina do Foco segue no 3.
     expect(questStatus(undefined, D1, 'exploracao.fenda', 1)).toBe('available');
-    expect(questStatus(undefined, D1, 'forja.oficina', 2)).toBe('locked');
-    expect(questStatus(undefined, D1, 'forja.oficina', 3)).toBe('available');
+    expect(questStatus(undefined, D1, 'forja.oficina', 1)).toBe('available'); // era trancada até o Vínculo 3
     const v = visitBuilding(undefined, D1, 'forja.oficina', 3);
     expect(questStatus(v, D1, 'forja.oficina', 3)).toBe('ready');
     const c = claimBuildingQuest(v, D1, 'forja.oficina', 3);
@@ -54,10 +53,10 @@ describe('missão do dia', () => {
     expect(b.paid).toBeNull();
     expect(b.state).toBe(a.state);
   });
-  it('sem entrar não resgata; Mercado e trancado não visitam', () => {
+  it('sem entrar não resgata; o Mercado não visita; sem tranca por Vínculo', () => {
     expect(claimBuildingQuest(undefined, D1, 'arena.duelo', MAXB).paid).toBeNull();
     expect(visitBuilding(undefined, D1, 'mercado.itens' as BuildingId, MAXB)).toBeUndefined();
-    expect(visitBuilding(undefined, D1, 'arena.duelo', 1)).toBeUndefined();
+    expect(visitBuilding(undefined, D1, 'arena.duelo', 1)).toBeDefined(); // abre no Vínculo 1 (dono 12/11/2026)
   });
   it('visitar de novo é no-op (mesma referência)', () => {
     const v = visitBuilding(undefined, D1, 'jogos.salao', 1)!;
@@ -86,10 +85,15 @@ describe('missão do dia', () => {
   });
 });
 
-describe('a missão só APONTA: a ação real conclui, entrar não (07/10/2026)', () => {
-  it('entrar no Caderno NÃO conclui; guardar um registro (completeBuildingQuest) deixa pronta; resgatar paga 1×', () => {
-    expect(visitBuilding(undefined, D1, 'forja.caderno', MAXB)).toBeUndefined();
-    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
+describe('nenhuma missão é LISTADA: o Caderno diário saiu (12/11/2026, REGISTRO §309)', () => {
+  it('LISTED_QUEST_BUILDINGS está vazia: o menu não lista prédio e nenhum acende marca', () => {
+    expect(LISTED_QUEST_BUILDINGS).toEqual([]);
+    expect(buildingMarks(undefined, D1, MAXB)).toEqual({});
+    expect(buildingMarks(visitBuilding(undefined, D1, 'forja.caderno', MAXB), D1, MAXB)).toEqual({});
+  });
+  it('o prédio do Caderno continua existindo e conta a presença como os demais; resgatar paga a tinta 1× por dia', () => {
+    expect(QUEST_BUILDINGS).toContain('forja.caderno');
+    const v = visitBuilding(undefined, D1, 'forja.caderno', MAXB);
     expect(questStatus(v, D1, 'forja.caderno', MAXB)).toBe('ready');
     expect(completeBuildingQuest(v, D1, 'forja.caderno', MAXB)).toBe(v); // idempotente no dia
     const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB);
@@ -98,36 +102,28 @@ describe('a missão só APONTA: a ação real conclui, entrar não (07/10/2026)'
     expect(completeBuildingQuest(c.state, D1, 'forja.caderno', MAXB)).toBe(c.state); // pago não reabre no dia
     expect(questStatus(c.state, D2, 'forja.caderno', MAXB)).toBe('available'); // dia novo
   });
-  it('o texto aponta, curto e imperativo, EN e PT', () => {
-    expect(questText(D1, 'forja.caderno', false)).toBe('Write an entry in your journal');
-    expect(questText(D1, 'forja.caderno', true)).toBe('Faça um registro no journaling');
-  });
-});
-
-describe('marcas', () => {
-  it('só a missão LISTADA no menu (Caderno) tem marca: ! disponível, ? pronta, nada depois de paga; Mercado nunca', () => {
-    expect(buildingMarks(undefined, D1, MAXB)['forja.caderno']).toBe('available');
-    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
-    expect(buildingMarks(v, D1, MAXB)['forja.caderno']).toBe('ready');
-    const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB).state;
-    expect(buildingMarks(c, D1, MAXB)['forja.caderno']).toBeUndefined();
-    expect(Object.keys(buildingMarks(undefined, D1, MAXB))).toEqual(['forja.caderno']);
+  it('migração: o Caderno pronto e sem resgate é pago uma vez; pago, de outro dia ou sem pendência não muda nada', () => {
+    const pronto = completeBuildingQuest({ day: D1, visited: [], claimed: [], materials: { ink: 4, ore: 2 } }, D1, 'forja.caderno', MAXB)!;
+    const pago = settleRetiredListed(pronto, D1, MAXB)!;
+    expect(pago.claimed).toContain('forja.caderno');
+    expect(stockOf(pago, 'ink')).toBe(5);
+    expect(stockOf(pago, 'ore')).toBe(2); // o resto do estoque passa intacto
+    expect(settleRetiredListed(pago, D1, MAXB)).toBe(pago); // 2ª passada = no-op
+    expect(settleRetiredListed(pronto, D2, MAXB)).toBe(pronto); // dia diferente: expirou como sempre expirou
+    const semPendencia: BuildingQuestState = { day: D1, visited: ['arena.duelo'], claimed: [], materials: {} };
+    expect(settleRetiredListed(semPendencia, D1, MAXB)).toBe(semPendencia);
+    expect(settleRetiredListed(undefined, D1, MAXB)).toBeUndefined();
   });
   it('visitar prédio não listado continua contando, mas não acende nada', () => {
     const v = visitBuilding(undefined, D1, 'arena.duelo', MAXB);
     expect(v?.visited).toContain('arena.duelo');
     expect(buildingMarks(v, D1, MAXB)['arena.duelo']).toBeUndefined();
   });
-  it('canto: a missão listada acende em dourado; sem nada a fazer nem a entregar, some', () => {
+  it('canto: sem missão listada nada acende, antes ou depois de visitar', () => {
     const base = { passeio: null, weekly: [], missionProgress: {}, ownedBackgrounds: [] };
-    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
-    const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB).state;
-    expect(questMarks({ ...base, buildings: buildingMarks(c, D1, MAXB) }).corner).toBeNull();
-    expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBe('available');
-    const m = questMarks({ ...base, buildings: buildingMarks(v, D1, MAXB) });
-    expect(m.corner).toBe('ready');
-    expect(m.cornerTone).toBe('gold');
-    expect(m.daily).toBe('ready');
+    const v = visitBuilding(undefined, D1, 'forja.caderno', MAXB);
+    expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBeNull();
+    expect(questMarks({ ...base, buildings: buildingMarks(v, D1, MAXB) }).corner).toBeNull();
   });
 });
 
@@ -149,8 +145,12 @@ describe('fiação', () => {
     const i = app.indexOf('const resgatarPredio');
     expect(app.slice(i, i + 1400)).toContain('claimBuildingQuest(prev.buildingQuests');
     expect(app).toContain('onVisitBuilding={visitarPredio}');
-    // o evento REAL do journaling: guardar um registro novo conclui, no mesmo updater do Caderno
+    // o journal conta SÓ na missão do Trilho (`n-trilho`; a semanal anda no resgate dela, REGISTRO §318): um registro novo, no mesmo updater do Caderno
     const j = app.indexOf('const handleCaderno');
-    expect(app.slice(j, j + 900)).toContain("completeBuildingQuest(prev.buildingQuests");
+    expect(app.slice(j, j + 1200)).toContain("bumpDailyIn(prev, 'journal')");
+    expect(app.slice(j, j + 1200)).not.toContain('countWeeklyMission');
+    const r = app.indexOf('const resgatarDiaria');
+    expect(app.slice(r, r + 1200)).toContain("id === 'n-trilho' ? countWeeklyMission(r.state, 'journal-days'");
+    expect(app.slice(j, j + 900)).not.toContain('completeBuildingQuest');
   });
 });

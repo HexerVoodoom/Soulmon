@@ -21,31 +21,41 @@
  * do Tab — nunca opacidade); `add` ciano, `paid` tinta, remover `muted`; o
  * `role=alert` é âmbar (`danger-ink` saiu); "Try again" em `outline`.
  */
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
+import { mensagemFalhaConvite } from '../utils/amizadeErro';
+import { listPlayers, getPlayer, getFriendForms, getFriendSide, addFriend, removeFriend, sendGift, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
+import type { FriendTrainerProps } from './FriendTraining';
+import type { DuelSide } from '../utils/combate/duel';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName } from './ElementDex';
-import { readAllForms, recordForms, sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
+import { sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
 import { CoopPanel } from './CoopPanel';
 import { BestiaryCollection } from './BestiaryCollection';
 import { NewBadge } from './LibraryNewBadge';
 import { libraryNewKeys, type LibraryAck } from '../utils/libraryNew';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
 import { ElementDex } from './ElementDex';
+import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
+import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
-import { readSeenIds, addSeenId } from '../utils/librarySeen';
-import { writeJson } from '../utils/safeStorage';
-import { STORAGE_KEYS } from '../utils/storageKeys';
+import { useLibraryMemory } from '../hooks/useLibraryMemory';
+import { usePlayerSearch } from '../hooks/usePlayerSearch';
+import { PlayerSearchResults } from './PlayerSearch';
+import { PlayerName } from './ui/PlayerName';
+import type { PlayerSearchHit } from '../utils/playerSearch';
+import { useRequireAwake } from './WakeToEnter';
+
+const FriendTraining = lazy(() => import('./FriendTraining').then(m => ({ default: m.FriendTraining })));
 
 
 interface LibraryPageProps {
@@ -84,13 +94,17 @@ interface LibraryPageProps {
   libraryAck?: LibraryAck;
   /** A Biblioteca (visão `directory`) abriu: grava o "visto" (`ackLibrary`). O selo desta visita já foi congelado. */
   onLibraryOpened?: () => void;
+  /** §242: o que o treino com amigo precisa do SEU Soulmon (estágio, arte, elemento, skills). Sem isto o ícone de combate não aparece. */
+  trainer?: FriendTrainerProps;
+  /** §242: há convite recebido ou presente novo (o "!" do prédio Amigos). Chamado a cada leitura do estado social. */
+  onSocialAlert?: (alert: boolean) => void;
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
 // utils/libraryNpcs.ts); isNpc/spriteUrl ficam undefined pros reais.
 type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string | null; unresolved?: boolean };
 
-const MAX_FRIENDS = 5;
+const MAX_FRIENDS = 20;
 
 /**
  * Linha de amigo que NAO resolveu (rede caiu, 502, perfil apagado no servidor).
@@ -153,12 +167,15 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements, strayPlayersSeen, libraryAck, onLibraryOpened }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements, strayPlayersSeen, libraryAck, onLibraryOpened, trainer, onSocialAlert }: LibraryPageProps) {
   // Selo NEW (01/11/2026): o que estava novo AO ABRIR fica marcado durante esta visita; a abertura grava o "visto".
   const [novos] = useState(() => libraryNewKeys({ bestiary, defeatedElements, strayPlayersSeen, libraryAck }));
   useEffect(() => { if (view === 'directory') onLibraryOpened?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
+  const [petBases, setPetBases] = useState<(string | null)[]>(emptySlots);
+  // Filtro por bases da aba Selvagens: um estado só para Selvagem + Desgarrado.
+  const [wildBases, setWildBases] = useState<(string | null)[]>(emptySlots);
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
   /** Erro de CARGA (rede/servidor). Separado de "lista vazia", de propósito. */
   const [loadError, setLoadError] = useState(false);
@@ -174,6 +191,27 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Aba que NÃO é a lista de jogadores: some busca, carregamento, vazio e a grade de encontrados. */
   const outroPainel = hallTabs && libTab !== 'found';
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
+  /** §242: estado social vindo do SERVIDOR (convites, presentes de hoje, histórico). `null` = ainda não chegou. */
+  const [social, setSocial] = useState<FriendsState | null>(null);
+  /** Modo "Remover amigos": só então a exclusão aparece nas linhas, e ainda pede DUAS confirmações. */
+  const [removeMode, setRemoveMode] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<{ p: LibraryEntry; step: 1 | 2 } | null>(null);
+  const [trainingWith, setTrainingWith] = useState<LibraryEntry | null>(null);
+  // Ficha real do amigo (especial/evocação) para o treino; `null` = não veio (sem rede, amigo bb, save grande): o treino usa o lado comum.
+  const [trainingSide, setTrainingSide] = useState<DuelSide | null>(null);
+  const startTraining = async (p: LibraryEntry) => {
+    let side: DuelSide | null = null;
+    try {
+      side = await Promise.race([
+        getFriendSide(saveId, p.id).then(r => r.side ?? null),
+        new Promise<null>(res => setTimeout(() => res(null), 2500)),
+      ]);
+    } catch { side = null; }
+    setTrainingSide(side);
+    setTrainingWith(p);
+  };
+  /** 💤 §329: treinar com um amigo leva o Soulmon; dormindo, pergunta antes (ver a lista segue livre). */
+  const requireAwake = useRequireAwake();
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
@@ -188,22 +226,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [addName, setAddName] = useState('');
   const [addBusy, setAddBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<string | null>(null);
-  /** Sugestões de nomes (do servidor) que começam com o que a pessoa digitou. */
-  const [sugestoes, setSugestoes] = useState<string[]>([]);
+  /** §321 (13/11/2026): busca enquanto digita no MESMO campo — começo do nome, sem acento e sem caixa, a partir de 2 letras,
+   *  pausa de 200 ms; cada sugestão traz o Soulmon, o nome com o clã embaixo e o "Convidar" de um toque. Fora da aba Amigos o
+   *  termo é vazio (nenhuma chamada). */
+  const busca = usePlayerSearch(saveId, tab === 'friends' ? addName : '');
   /** Pet aberto no painel simples da Biblioteca do Hall. */
   const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
-  const [seen, setSeen] = useState<string[]>(readSeenIds);
-  /** Formas já vistas de cada Soulmon (aparelho) — junta o que a Biblioteca vê agora com o que o servidor conta dos AMIGOS. */
-  const [formsMap, setFormsMap] = useState<Record<string, SeenForm[]>>(readAllForms);
+  /** Memória da Biblioteca (10/11/2026): vistos e formas vivem no save (fonte única, vai à nuvem); sem provider cai na chave local. */
+  const { seen, formsMap, markSeen, record: recordForms } = useLibraryMemory();
   const formaAtualDe = (p: LibraryEntry) => ({ stage: p.stage, spriteUrl: isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : null, element: p.element ?? null, date: Date.now() });
-  const markSeen = (id: string) => {
-    setSeen(prev => {
-      if (prev.includes(id)) return prev;
-      const next = [...addSeenId(prev, id)];
-      writeJson(STORAGE_KEYS.LIBRARY_SEEN, next);
-      return next;
-    });
-  };
 
   useEffect(() => {
     let vivo = true;
@@ -255,17 +286,6 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     return () => { vivo = false; };
   }, [friendsKey, reloadKey, isPt]);
 
-  useEffect(() => {
-    const q = addName.trim();
-    if (tab !== 'friends' || !q) { setSugestoes([]); return; }
-    let vivo = true;
-    const t = setTimeout(() => {
-      suggestNames(q)
-        .then(r => { if (vivo) setSugestoes((r.names ?? []).filter(n => n.toLowerCase().startsWith(q.toLowerCase()) && n.toLowerCase() !== q.toLowerCase()).slice(0, 8)); })
-        .catch(() => { if (vivo) setSugestoes([]); });
-    }, 250);
-    return () => { vivo = false; clearTimeout(t); };
-  }, [addName, tab]);
 
   /**
    * REGISTRO DE FORMAS (31/10/2026): todo Soulmon que a pessoa já viu (aberto aqui, enfrentado no Torneio ou amigo) tem a forma
@@ -277,28 +297,78 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     const todos = [...((players ?? []) as LibraryEntry[]), ...(friendPlayers ?? [])].filter(p => !p.isNpc && !p.unresolved && (seen.includes(p.id) || friends.includes(p.id)));
     if (todos.length === 0) return;
     for (const p of todos) recordForms(p.id, [formaAtualDe(p)]);
-    setFormsMap(readAllForms());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players, friendPlayers, vistosKey, friendsKey]);
   useEffect(() => {
     let vivo = true;
     friendsKey.split(',').filter(Boolean).forEach(pid => {
       getFriendForms(saveId, pid)
-        .then(r => { if (vivo && Array.isArray(r.forms)) { recordForms(pid, r.forms); setFormsMap(readAllForms()); } })
+        .then(r => { if (vivo && Array.isArray(r.forms)) recordForms(pid, r.forms); })
         .catch(() => { /* sem rede / 403: fica o que já foi visto */ });
     });
     return () => { vivo = false; };
   }, [friendsKey, saveId, reloadKey]);
+
+  /** Lê o estado social (só o dono). Falha de rede deixa o que já havia. */
+  useEffect(() => {
+    let vivo = true;
+    getFriendsState(saveId, playerDayTz)
+      .then(r => {
+        if (!vivo) return;
+        setSocial(r);
+        onSocialAlert?.(r.incoming.length > 0 || r.unseen > 0);
+        // §439: o servidor é a fonte da lista (aceite do outro lado, remoção do outro lado, perfil regravado). A lista local só
+        // mudava com a resposta de uma AÇÃO, então amizade ligada fora desta tela nunca chegava e uma antiga ficava de fantasma.
+        if (Array.isArray(r.friends) && (r.friends.length !== friends.length || r.friends.some(f => !friends.includes(f)))) onFriendsChange(r.friends);
+      })
+      .catch(() => { /* sem rede: segue sem convites */ });
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveId, reloadKey, friendsKey]);
+  /** Abriu a aba Amigos: o histórico de presentes passa a "visto" (os convites ficam até alguém decidir). */
+  useEffect(() => {
+    if (tab !== 'friends' || !social || social.unseen === 0) return;
+    const t = setTimeout(() => {
+      markFriendsSeen(saveId).catch(() => {});
+      onSocialAlert?.(social.incoming.length > 0);
+    }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, social]);
+
+  const answerInvite = async (inv: { id: string; name: string }, decline: boolean) => {
+    setBusyId(inv.id);
+    setActionError(null);
+    try {
+      const r = await answerFriendInvite(saveId, inv.id, decline);
+      onFriendsChange(r.friends);
+      setSocial(prev => {
+        if (!prev) return prev;
+        const incoming = prev.incoming.filter(i => i.id !== inv.id);
+        onSocialAlert?.(incoming.length > 0 || prev.unseen > 0);
+        return { ...prev, incoming, friends: r.friends };
+      });
+      setAddMsg(decline ? null : (isPt ? `${inv.name} agora é seu amigo.` : `${inv.name} is now your friend.`));
+    } catch {
+      setActionError(isPt ? 'Não deu para responder ao convite agora. Tente de novo.' : "Couldn't answer that invite right now. Try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const toggleFriend = async (p: DirectoryPlayer) => {
     setBusyId(p.id);
     setActionError(null);
     try {
       const isFriend = friends.includes(p.id);
-      const r = isFriend ? await removeFriend(saveId, p.id) : await addFriend(saveId, p.id);
+      const r: { friends: string[]; status?: 'pending' | 'friends' } = isFriend ? await removeFriend(saveId, p.id) : await addFriend(saveId, p.id);
       onFriendsChange(r.friends);
-    } catch {
-      setActionError(isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.");
+      if (!isFriend) setSocial(prev => (prev && r.status === 'pending' ? { ...prev, outgoing: [...prev.outgoing, p.id] } : prev));
+    } catch (err) {
+      const isFriend = friends.includes(p.id);
+      setActionError(isFriend
+        ? (isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.")
+        : mensagemFalhaConvite(err, isPt));
     } finally {
       setBusyId(null);
     }
@@ -309,10 +379,17 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     setBusyId(friendId);
     setActionError(null);
     try {
-      await sendGift(saveId, friendId);
+      const r = await sendGift(saveId, friendId, playerDayTz);
+      const valeu = typeof r?.credited === 'number' ? r.credited : 20;
       setGiftedToday(prev => new Set(prev).add(friendId));
       onGiftSent?.(friendId);
-      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
+      setSocial(prev => (prev ? { ...prev, sentToday: [...prev.sentToday, friendId] } : prev));
+      // A tela diz o valor REAL: o teto de 100 Bits/dia de quem recebe pode cortar o presente.
+      setAddMsg(valeu >= 20
+        ? (isPt ? '20 Bits enviados!' : 'Sent 20 Bits!')
+        : valeu > 0
+          ? (isPt ? `Presente enviado: ${valeu} de 20 Bits valeram (teto de 100 por dia).` : `Gift sent: ${valeu} of 20 Bits counted (100 a day cap).`)
+          : (isPt ? 'Presente enviado, mas essa pessoa já atingiu o teto de 100 Bits de hoje: 0 Bits valeram.' : 'Gift sent, but this person already hit today’s 100 Bits cap: 0 Bits counted.'));
     } catch {
       setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
     } finally {
@@ -323,6 +400,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Nome que a linha mostra: no Hall é o da CRIATURA (C6); fora dele, o do jogador. */
   const nomeDe = (p: LibraryEntry) => (seenOnly ? (p.petName || p.name) : p.name);
   const searchLower = search.trim().toLowerCase();
+  const filteringPets = selectedBases(petBases).length > 0;
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
   const directoryAll: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...(seenOnly ? LIBRARY_NPCS : npcMatches)];
   const onlySeen = seenOnly;
@@ -332,10 +410,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       // Sem busca: só os já vistos e os amigos (H17). COM busca: o diretório inteiro — senão jogador novo nunca aparece (QA R7).
       .filter(p => searchLower !== '' || seen.includes(p.id) || friends.includes(p.id))
       .filter(p => !searchLower || p.petName.toLowerCase().includes(searchLower) || p.name.toLowerCase().includes(searchLower))
+      // Filtro por bases do elemento (o mesmo do Cambista): Soulmon cujo elemento contém todas as bases escolhidas.
+      .filter(p => elementMatchesBases(p.element, petBases))
       .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), language, { sensitivity: 'base' }))
     : directoryAll;
 
-  /** C7: adiciona um amigo digitando o nome do jogador (o diretório devolve quem ligou a presença pública). */
+  /**
+   * C7: adiciona um amigo digitando o nome do jogador. §351 (13/11/2026, decisão do dono): a busca acha qualquer jogador
+   * VISÍVEL, com PvP ligado ou desligado — a mesma régua das sugestões (`names`); o servidor já tira a própria conta.
+   */
   const addByName = async () => {
     const q = addName.trim().toLowerCase();
     if (!q || addBusy) return;
@@ -344,7 +427,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     if (friends.length >= MAX_FRIENDS) { setAddMsg(isPt ? `Limite de ${MAX_FRIENDS} amigos.` : `Limit of ${MAX_FRIENDS} friends.`); return; }
     setAddBusy(true);
     try {
-      const r = await listPlayers(addName.trim());
+      const r = await listPlayers(addName.trim(), { friendOf: saveId });
       const todos = (r.players ?? []).filter(p => p.id !== saveId);
       const exatos = todos.filter(p => p.name.toLowerCase() === q);
       const cand = exatos.length > 0 ? exatos : todos.filter(p => p.name.toLowerCase().includes(q));
@@ -352,15 +435,67 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       if (cand.length > 1) { setAddMsg(isPt ? 'Há mais de uma pessoa assim. Digite o nome completo.' : 'More than one person matches. Type the full name.'); return; }
       const alvo = cand[0];
       if (friends.includes(alvo.id)) { setAddMsg(isPt ? `${alvo.name} já é seu amigo.` : `${alvo.name} is already your friend.`); return; }
+      if (social?.outgoing.includes(alvo.id)) { setAddMsg(isPt ? `Você já convidou ${alvo.name}.` : `You already invited ${alvo.name}.`); return; }
       const res = await addFriend(saveId, alvo.id);
       onFriendsChange(res.friends);
       setAddName('');
-      setAddMsg(isPt ? `${alvo.name} entrou nos seus amigos.` : `${alvo.name} is now your friend.`);
-    } catch {
-      setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
+      if (res.status === 'friends') setAddMsg(isPt ? `${alvo.name} agora é seu amigo.` : `${alvo.name} is now your friend.`);
+      else {
+        setSocial(prev => (prev ? { ...prev, outgoing: [...prev.outgoing, alvo.id] } : prev));
+        setAddMsg(isPt ? `Convite enviado para ${alvo.name}.` : `Invite sent to ${alvo.name}.`);
+      }
+    } catch (err) {
+      // §346: cada falha conhecida (teto, não achado, convites demais, sessão) diz o que fazer; a genérica fica só para o desconhecido.
+      setActionError(mensagemFalhaConvite(err, isPt));
     } finally {
       setAddBusy(false);
     }
+  };
+  /** §321: o "Convidar" de UM toque de uma sugestão da busca (o mesmo `addFriend` do botão da linha). */
+  const convidarSugestao = async (h: PlayerSearchHit) => {
+    if (busyId) return;
+    setAddMsg(null);
+    setActionError(null);
+    if (friends.length >= MAX_FRIENDS) { setAddMsg(isPt ? `Limite de ${MAX_FRIENDS} amigos.` : `Limit of ${MAX_FRIENDS} friends.`); return; }
+    setBusyId(h.id);
+    try {
+      const res = await addFriend(saveId, h.id);
+      onFriendsChange(res.friends);
+      if (res.status === 'friends') setAddMsg(isPt ? `${h.name} agora é seu amigo.` : `${h.name} is now your friend.`);
+      else {
+        setSocial(prev => (prev ? { ...prev, outgoing: [...prev.outgoing, h.id] } : prev));
+        setAddMsg(isPt ? `Convite enviado para ${h.name}.` : `Invite sent to ${h.name}.`);
+      }
+    } catch {
+      setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+  const acaoDaSugestao = (h: PlayerSearchHit) => {
+    const amigo = friends.includes(h.id);
+    const pendente = !amigo && !!social?.outgoing.includes(h.id);
+    const enviando = busyId === h.id;
+    const cheio = !amigo && !pendente && friends.length >= MAX_FRIENDS;
+    const ativo = !amigo && !pendente && !enviando && !cheio && busyId === null;
+    return (
+      <button
+        type="button"
+        data-friend-suggestion-invite={h.id}
+        disabled={!ativo}
+        aria-disabled={!ativo ? true : undefined}
+        aria-busy={enviando ? true : undefined}
+        aria-label={ativo ? (isPt ? `Convidar ${h.name} para ser amigo` : `Invite ${h.name} to be a friend`) : undefined}
+        onClick={() => void convidarSugestao(h)}
+        style={sm2Button(ativo ? 'primary' : 'outline', !ativo, 'sm')}
+      >
+        {amigo ? (isPt ? 'Já é amigo' : 'Already a friend')
+          : pendente ? (isPt ? 'Convite enviado' : 'Invite sent')
+            : enviando ? (isPt ? 'Enviando…' : 'Sending…')
+              : cheio ? (isPt ? `Limite de ${MAX_FRIENDS}` : `Limit of ${MAX_FRIENDS}`)
+                : (isPt ? 'Convidar' : 'Invite')}
+      </button>
+    );
   };
   // A aba do grupo não é uma lista de jogadores — tem fonte, estados e vazio
   // próprios. Por isso ela não entra em `list`: entrar faria o esqueleto e o
@@ -370,7 +505,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const carregando = list === null;
 
   const LIB_TABS = [
-    { key: 'found' as const, label: isPt ? 'Encontrados' : 'Encountered' },
+    { key: 'found' as const, label: isPt ? 'Outros jogadores' : 'Other players' },
     { key: 'wild' as const, label: isPt ? 'Selvagens' : 'Wild' },
     { key: 'element' as const, label: isPt ? 'Elemento' : 'Element' },
   ];
@@ -413,26 +548,55 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               value={addName}
               onChange={e => { setAddName(e.target.value); setAddMsg(null); }}
               placeholder={isPt ? 'Nome do amigo…' : "Friend's name…"}
-              aria-label={isPt ? 'Nome do amigo para adicionar' : 'Name of the friend to add'}
+              aria-label={isPt ? 'Nome da pessoa para convidar' : 'Name of the person to invite'}
               maxLength={40}
               style={{ paddingLeft: 44 }}
             />
           </div>
           <button type="submit" disabled={addBusy || !addName.trim()} style={{ ...sm2Button('primary', addBusy || !addName.trim(), 'sm'), flexShrink: 0 }}>
-            {isPt ? 'Adicionar' : 'Add'}
+            {isPt ? 'Convidar' : 'Invite'}
           </button>
         </form>
       )}
-      {tab === 'friends' && sugestoes.length > 0 && (
-        <ul data-friend-suggestions aria-label={isPt ? 'Sugestões de nomes' : 'Name suggestions'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {sugestoes.map(n => (
-            <li key={n}>
-              <button type="button" onClick={() => { setAddName(n); setAddMsg(null); setSugestoes([]); }} style={sm2Button('outline', false, 'sm')}>{n}</button>
-            </li>
-          ))}
-        </ul>
+      {tab === 'friends' && (
+        <div data-friend-suggestions style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <PlayerSearchResults query={addName} state={busca.state} retry={busca.retry} language={language} renderAction={acaoDaSugestao} quiet />
+        </div>
       )}
       {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
+
+      {/* ── Convites recebidos (§242): a amizade só nasce quando a pessoa aceita ── */}
+      {tab === 'friends' && social && social.incoming.length > 0 && (
+        <section data-friend-invites aria-label={isPt ? 'Convites de amizade' : 'Friend invites'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Convites' : 'Invites'}</h3>
+          {social.incoming.map(inv => (
+            <div key={inv.id} data-friend-invite={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, color: 'var(--sm2-ink)' }}><PlayerName name={inv.name} guildName={inv.guildName} isPt={isPt} /></span>
+              <button type="button" disabled={busyId === inv.id || friends.length >= MAX_FRIENDS} onClick={() => answerInvite(inv, false)} style={sm2Button('primary', busyId === inv.id || friends.length >= MAX_FRIENDS, 'sm')}>
+                {friends.length >= MAX_FRIENDS ? (isPt ? `Limite de ${MAX_FRIENDS}` : `Limit of ${MAX_FRIENDS}`) : (isPt ? 'Aceitar' : 'Accept')}
+              </button>
+              <button type="button" disabled={busyId === inv.id} onClick={() => answerInvite(inv, true)} style={sm2Button('outline', busyId === inv.id, 'sm')}>{isPt ? 'Recusar' : 'Decline'}</button>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* ── Presentes recebidos: a notícia e o histórico de quem deu (§242) ── */}
+      {tab === 'friends' && social && social.notes.length > 0 && (
+        <section data-friend-gifts aria-label={isPt ? 'Presentes recebidos' : 'Gifts received'} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Presentes' : 'Gifts'}</h3>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 132, overflowY: 'auto' }}>
+            {social.notes.slice(0, 10).map(n => (
+              <li key={n.at + ':' + n.name} data-gift-note={n.unseen ? 'new' : 'seen'} className="sm2-lib-s" style={{ color: n.unseen ? 'var(--sm2-primary-ink)' : undefined, fontWeight: n.unseen ? 600 : undefined }}>
+                {n.bits > 0
+                  ? (isPt ? `${n.name || 'Um amigo'} te deu ${n.bits} Bits` : `${n.name || 'A friend'} gave you ${n.bits} Bits`)
+                  : (isPt ? `${n.name || 'Um amigo'} te enviou um presente, mas o teto de ${social.dailyCap ?? 100} Bits do dia já tinha sido atingido (0 Bits)` : `${n.name || 'A friend'} sent you a gift, but the daily ${social.dailyCap ?? 100} Bits cap was already reached (0 Bits)`)}
+                {' · '}{new Date(n.at).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit' })}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {tab === 'directory' && !outroPainel && (
       <div style={{ position: 'relative' }}>
@@ -511,12 +675,11 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         <div role="tabpanel" id="sm2-libpanel" aria-labelledby={'sm2-libtab-' + libTab} data-library-panel={libTab}>
           {libTab === 'wild' && (
             <>
-              {/* 28/10/2026 (dono): Selvagem e Desgarrado moram na MESMA aba, em duas seções. */}
-              <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
-              <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} />
-              <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
-              {/* 01/11/2026 (dono): desgarrado de jogador (§213) junto, sem distinção. */}
-              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} />
+              <div style={{ margin: '0 0 12px' }} data-base-filter>
+                <ElementBaseSlots slots={wildBases} isPt={isPt} onChange={(i, v) => setWildBases(s => s.map((x, j) => (j === i ? v : x)))} />
+              </div>
+              {/* 09/11/2026 (dono, §254): UMA lista só, rookie → mega, com subtítulo por estágio; desgarrado de jogador (§213) junto, no fim. */}
+              <BestiaryCollection seen={bestiary} defeatedElements={defeatedElements} language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
             </>
           )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}
@@ -561,13 +724,21 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         </div>
       )}
 
+      {seenOnly && tab === 'directory' && !outroPainel && (
+        <div style={{ margin: '0 0 12px' }} data-base-filter>
+          <ElementBaseSlots slots={petBases} isPt={isPt} onChange={(i, v) => setPetBases(s => s.map((x, j) => (j === i ? v : x)))} />
+        </div>
+      )}
+
       {/* ── Vazio: UMA frase, sem ilustração, sem "0 friends" ── */}
       {list && list.length === 0 && tab !== 'coop' && !outroPainel && !(loadError && tab === 'directory') && (
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
-            ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
+            ? (isPt ? 'Você ainda não tem amigos. Convide alguém pelo nome acima.' : 'You have no friends yet. Invite someone by name above.')
             : onlySeen
-              ? (searchLower
+              ? (filteringPets
+                ? (isPt ? 'Nenhum Soulmon com essas bases.' : 'No Soulmon with these bases.')
+                : searchLower
                 ? (isPt ? 'Nenhum Soulmon com esse nome.' : 'No Soulmon has that name.')
                 : (isPt ? 'Os Soulmons que você abrir ficam guardados nesta lista. Para achar alguém novo, busque pelo nome.' : 'The Soulmons you open stay on this list. To find someone new, search by name.'))
               : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
@@ -603,7 +774,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         const formas: SeenForm[] = vistas.length > 0 ? vistas : (atual ? [atual] : []);
         const nome = selectedPet.petName || selectedPet.name;
         return (
-          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
+          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
             <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
               {nome}
             </h2>
@@ -668,10 +839,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 </MiniGlass>
                 <span className="sm2-lib-nm">
                   <span className="t">
-                    {nomeDe(p)}
-                    {isNpc && (
-                      <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span>
-                    )}
+                    {/* §321: o clã embaixo do nome do JOGADOR (no Hall a linha é o nome da criatura, e o clã fica no perfil). */}
+                    <PlayerName
+                      name={nomeDe(p)}
+                      suffix={isNpc ? <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span> : null}
+                      guildName={!seenOnly && !isNpc && !p.unresolved ? p.guildName : null}
+                      isPt={isPt}
+                    />
                   </span>
                   <span className="s sm2-num">
                     {p.unresolved
@@ -688,35 +862,51 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 </span>
               </button>
 
-              {!isNpc && isFriend && tab === 'friends' && (
+              {!isNpc && isFriend && tab === 'friends' && !p.unresolved && !removeMode && trainer && (
+                <RowAction
+                  icon="swords"
+                  tone="ink"
+                  label={isPt ? `Treinar com ${p.name}` : `Train with ${p.name}`}
+                  onClick={() => { requireAwake('treino', () => { void startTraining(p); }); }}
+                />
+              )}
+              {/* Presente: some pelo resto do dia depois de enviado (o servidor é quem sabe, `sentToday`). */}
+              {!isNpc && isFriend && tab === 'friends' && !removeMode && !gifted && !(social?.sentToday ?? []).includes(p.id) && (
                 <RowAction
                   icon="volunteer_activism"
                   tone="ink"
                   busy={busyId === p.id}
-                  disabled={!canGiftToday || gifted}
+                  disabled={!canGiftToday}
                   label={!canGiftToday
                     ? (isPt ? 'Termine as tarefas de hoje para presentear' : "Finish today's tasks to send a gift")
-                    : gifted
-                      ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
-                      : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
+                    : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
                   onClick={() => gift(p.id)}
-                  onInert={() => setAddMsg(!canGiftToday
-                    ? (isPt ? 'Para presentear, termine as tarefas de hoje (a mesma meta que libera o Bosque).' : "To send a gift, finish today's tasks (the same goal that unlocks the Grove).")
-                    : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
+                  onInert={() => setAddMsg(isPt ? 'Para presentear, termine as tarefas de hoje (a mesma meta que libera o Bosque).' : "To send a gift, finish today's tasks (the same goal that unlocks the Grove).")}
                 />
               )}
-              {!isNpc && (
+              {/* Remover só existe no modo "Remover amigos", com dupla confirmação. */}
+              {!isNpc && isFriend && removeMode && (
                 <RowAction
-                  icon={isFriend ? 'do_not_disturb_on' : 'add'}
-                  tone={isFriend ? 'muted' : 'primary'}
-                  fill={isFriend ? 0 : 1}
+                  icon="do_not_disturb_on"
+                  tone="muted"
+                  fill={0}
                   busy={busyId === p.id}
-                  disabled={!isFriend && friends.length >= MAX_FRIENDS}
-                  label={isFriend
-                    ? (isPt ? `Remover ${p.name} dos amigos` : `Remove ${p.name} from friends`)
+                  label={isPt ? `Remover ${p.name} dos amigos` : `Remove ${p.name} from friends`}
+                  onClick={() => setConfirmRemove({ p, step: 1 })}
+                />
+              )}
+              {!isNpc && !isFriend && (
+                <RowAction
+                  icon="add"
+                  tone="primary"
+                  fill={1}
+                  busy={busyId === p.id}
+                  disabled={friends.length >= MAX_FRIENDS || (social?.outgoing ?? []).includes(p.id)}
+                  label={(social?.outgoing ?? []).includes(p.id)
+                    ? (isPt ? `Convite enviado para ${p.name}` : `Invite sent to ${p.name}`)
                     : friends.length >= MAX_FRIENDS
                       ? (isPt ? `Limite de ${MAX_FRIENDS} amigos` : `Limit of ${MAX_FRIENDS} friends`)
-                      : (isPt ? `Adicionar ${p.name} como amigo` : `Add ${p.name} as a friend`)}
+                      : (isPt ? `Convidar ${p.name} para ser amigo` : `Invite ${p.name} to be a friend`)}
                   onClick={() => toggleFriend(p)}
                 />
               )}
@@ -724,6 +914,57 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
           );
         })}
       </div>
+
+      {/* Cantinho discreto: liga/desliga o modo de excluir. Texto pequeno, sem cor de alerta. */}
+      {tab === 'friends' && friends.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            data-remove-friends-toggle
+            aria-pressed={removeMode}
+            onClick={() => setRemoveMode(v => !v)}
+            className="sm2-lib-s"
+            style={{ background: 'none', border: 0, cursor: 'pointer', minHeight: 44, padding: '0 4px', textDecoration: 'underline' }}
+          >
+            {removeMode ? (isPt ? 'Concluir' : 'Done') : (isPt ? 'Remover amigos' : 'Remove friends')}
+          </button>
+        </div>
+      )}
+
+      {confirmRemove && (
+        <RitualDialog onClose={() => setConfirmRemove(null)} labelledBy="sm2-rm-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
+          <h2 id="sm2-rm-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
+            {confirmRemove.step === 1 ? (isPt ? `Remover ${confirmRemove.p.name}?` : `Remove ${confirmRemove.p.name}?`) : (isPt ? 'Tem certeza?' : 'Are you sure?')}
+          </h2>
+          <p className="sm2-lib-s" data-remove-step={confirmRemove.step} style={{ margin: '0 0 12px' }}>
+            {confirmRemove.step === 1
+              ? (isPt ? 'A amizade acaba para vocês dois.' : 'The friendship ends for both of you.')
+              : (isPt ? 'Para voltar, vocês precisam de um novo convite.' : 'To be friends again you need a new invite.')}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setConfirmRemove(null)} style={{ ...sm2Button('outline', false, 'sm'), flex: 1 }}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+            <button
+              type="button"
+              data-remove-confirm
+              onClick={async () => {
+                if (confirmRemove.step === 1) { setConfirmRemove({ p: confirmRemove.p, step: 2 }); return; }
+                const alvo = confirmRemove.p;
+                setConfirmRemove(null);
+                await toggleFriend(alvo);
+              }}
+              style={{ ...sm2Button('primary', false, 'sm'), flex: 1 }}
+            >
+              {confirmRemove.step === 1 ? (isPt ? 'Continuar' : 'Continue') : (isPt ? 'Remover' : 'Remove')}
+            </button>
+          </div>
+        </RitualDialog>
+      )}
+
+      {trainingWith && trainer && (
+        <Suspense fallback={null}>
+          <FriendTraining friend={trainingWith} friendSide={trainingSide} trainer={trainer} isPt={isPt} onClose={() => { setTrainingWith(null); setTrainingSide(null); }} />
+        </Suspense>
+      )}
 
       {selectedPlayer && (
         <PlayerDetailModal

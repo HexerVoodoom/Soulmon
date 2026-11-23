@@ -12,7 +12,11 @@
  * E pelo pedido seguinte do dono, no mesmo dia: as 6 do ritual e os 20 itens
  * do teste viraram parte OBRIGATÓRIA do onboarding, entre o nome e as metas.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, afterAll, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { setInicioBB } from '../utils/bbStage';
+// FLUXO LEGADO (ovo/guia/reveal no onboarding): só com o Início BB DESLIGADO. O fluxo novo: SoulmonOnboarding.inicioBB.render.test.tsx.
+beforeAll(() => setInicioBB(false));
+afterAll(() => setInicioBB(true));
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
@@ -148,7 +152,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.queryByText('Add tasks to list')).toBeNull();
   });
 
-  it('§81 Ovo: sem botões antes dos 5 toques; depois, "Meet your Soulmon" primário e "Lend me a guide Soulmon" outline; voltar pela seta', async () => {
+  it('§81 Ovo: sem botões antes dos 5 toques; depois, "Meet your Soulmon" primário e "Lend me a guide Soulmon" link; voltar pela seta', async () => {
     await atravessarPerguntasIniciais();
     expect(document.querySelector('[data-ovo-cristal]')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Meet your Soulmon' })).toBeNull();
@@ -157,8 +161,10 @@ describe('funil grátis — identidade do canvas', () => {
     tocarOvo(1);
     expect(variante(btn('Meet your Soulmon'))).toBe('primary');
     const guia = btn('Lend me a guide Soulmon');
-    expect(variante(guia)).toBe('outline');
-    expect(guia.style.color).toBe('var(--sm2-ink)');
+    // 03/11/2026 (dono): a compra segue primária ANTES do "Chocar"; o guia virou link discreto (sublinhado, alvo 44).
+    expect(guia.hasAttribute('data-ovo-link')).toBe(true);
+    expect(guia.style.textDecoration).toContain('underline');
+    expect(parseInt(guia.style.minHeight, 10)).toBeGreaterThanOrEqual(44);
     expect(screen.queryByText(/Start now/)).toBeNull();
     fireEvent.click(btn('Back'));
     // Faixa E: do ovo volta-se à última pergunta de nascimento (a cidade), não ao ponto de partida.

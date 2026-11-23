@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
-import { playerDayKey } from './playerDay';
+import { reduceChipsUsedThisStage, REDUCE_CHIPS_PER_STAGE } from './specialItemUse';
+import { REDUCE_CHIP_EMOJI, REDUCE_CHIP_BOOST, isReduceChipKey } from './shop';
+import { applySpecialItem, specialRefusal, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
+import { GLITCHTAMA_JANELA_MS } from './glitchtamaBuff';
 import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, TRIPLE_CHIP_EMOJI, TRIPLE_CHIP_BOOST, SPECIAL_ITEMS } from './shop';
 
 // Os três itens especiais tinham a regra dentro de updater inline no
@@ -30,19 +32,16 @@ function estado(over: Partial<SpecialItemState> = {}): SpecialItemState {
 const AGORA = new Date('2026-09-07T12:00:00Z');
 
 describe('glitchtama', () => {
-  /* ⚰️ 22/09/2026 — decisão do dono #41/#60: o 🌀 deixou de somar em
-     `totalPerfectDays` (o vitalício que `achievements.ts` lê) e passou a somar
-     em `missionPerfectDays` (o da missão `mission-perfect-30`, que a decisão
-     manda continuar contando o item). Este teste afirmava `totalPerfectDays`
-     8 — e era justamente esse número que deixava o perfil G abrir
-     `dias-completos-30` com ZERO dias completos (QA rodada 2, §2.6). */
-  it('vale exatamente 1 dia perfeito, soma no vitalicio da MISSAO e gasta 1 do inventario', () => {
-    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7 });
+  /* 10/11/2026 — novo design: o 🌀 NÃO dá mais dia perfeito nem enche a barra. Só liga o buff (+10% por 7 dias, 1 uso por semana). */
+  it('só liga o buff: grava o instante, gasta 1 do inventário e NÃO toca em dias perfeitos nem na barra', () => {
+    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7, evolutionPoints: 12 });
     const { state, refused } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(refused).toBeUndefined();
-    expect(state.perfectDays).toBe(4);
-    expect(state.totalPerfectDays).toBe(7);      // #41/#60: intacto
-    expect(state.missionPerfectDays).toBe(8);
+    expect(state.glitchtamaUsadoEm).toBe(AGORA.getTime());
+    expect(state.perfectDays).toBe(3);
+    expect(state.totalPerfectDays).toBe(7);
+    expect(state.missionPerfectDays).toBe(7);
+    expect(state.evolutionPoints).toBe(12);
     expect(state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
   });
 
@@ -59,16 +58,13 @@ describe('glitchtama', () => {
     expect(state.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
-  it('vitalicio ausente no save antigo comeca do zero, nao vira NaN', () => {
-    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
-    delete (prev as Partial<SpecialItemState>).totalPerfectDays;
-    delete (prev as Partial<SpecialItemState>).missionPerfectDays;
-    const { state } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
-    expect(state.missionPerfectDays).toBe(1);
-    expect(state.totalPerfectDays).toBeUndefined();   // #41/#60: não é tocado
+  it('save antigo sem o campo: pode usar (ninguém fica trancado por dado que não existe)', () => {
+    const antigo = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
+    expect(antigo.glitchtamaUsadoEm).toBeUndefined();
+    expect(applySpecialItem(antigo, GLITCHTAMA_EMOJI, AGORA).refused).toBeUndefined();
   });
 
-  it('sem estoque nao concede dia perfeito nenhum', () => {
+  it('sem estoque nao concede buff nenhum', () => {
     const prev = estado({ foodInventory: {}, perfectDays: 3 });
     const { state, refused } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(refused).toBe('no-stock');
@@ -220,56 +216,43 @@ describe('specialRefusal', () => {
 // compravam a escada inteira num fim de semana, contra a justificativa escrita
 // em `progression.ts` de que o recurso do Ultra "não cresce indefinidamente".
 // ---------------------------------------------------------------------------
-describe('teto diário do glitchtama', () => {
+describe('cooldown semanal do glitchtama', () => {
   const comDois = () => estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, playerDayTz: { offsetMs: -3 * 60 * 60 * 1000 } });
+  const usado = (aQuantoTempo: number) => ({ ...comDois(), glitchtamaUsadoEm: AGORA.getTime() - aQuantoTempo });
 
-  it('o primeiro do dia dá o ponto e grava o uso', () => {
-    const { state, refused } = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
-    expect(refused).toBeUndefined();
-    expect(state.perfectDays).toBe(1);
-    expect(state.glitchtamaUse?.used).toBe(1);
+  it('depois de usar, o segundo é recusado (weekly-cap) e NÃO consome o item', () => {
+    const a = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
+    expect(a.refused).toBeUndefined();
+    const prev = a.state;
+    const b = applySpecialItem(prev, GLITCHTAMA_EMOJI, new Date(AGORA.getTime() + 6 * 86_400_000));
+    expect(b.refused).toBe('weekly-cap');
+    expect(b.state).toBe(prev);
+    expect(b.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
   });
 
-  it('o SEGUNDO do mesmo dia é recusado — e não consome o item', () => {
-    const primeiro = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state;
-    const segundo = applySpecialItem(primeiro, GLITCHTAMA_EMOJI, AGORA);
-    expect(segundo.refused).toBe('daily-cap');
-    // A recusa é ANTES do decremento: o item volta para a pastinha e vale
-    // amanhã. Recusar depois de consumir seria o X-6 ao contrário.
-    expect(segundo.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
-    expect(segundo.state.perfectDays).toBe(1);
-    expect(segundo.state).toBe(primeiro);
+  it('exatamente 7 dias depois libera de novo (e grava o instante novo)', () => {
+    const r = applySpecialItem(usado(GLITCHTAMA_JANELA_MS), GLITCHTAMA_EMOJI, AGORA);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.glitchtamaUsadoEm).toBe(AGORA.getTime());
+    expect(applySpecialItem(usado(GLITCHTAMA_JANELA_MS - 1), GLITCHTAMA_EMOJI, AGORA).refused).toBe('weekly-cap');
   });
 
-  it('a virada do DIA DO JOGADOR devolve o direito', () => {
-    const primeiro = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state;
-    const amanha = new Date(AGORA.getTime() + 24 * 60 * 60 * 1000);
-    const segundo = applySpecialItem(primeiro, GLITCHTAMA_EMOJI, amanha);
-    expect(segundo.refused).toBeUndefined();
-    expect(segundo.state.perfectDays).toBe(2);
-    expect(segundo.state.glitchtamaUse?.used).toBe(1);
+  it('relógio que VOLTA não reabre o uso (now < usadoEm continua dentro do cooldown)', () => {
+    expect(applySpecialItem(usado(-3 * 86_400_000), GLITCHTAMA_EMOJI, AGORA).refused).toBe('weekly-cap');
   });
 
-  it('dois toques no MESMO lote do React não passam os dois (X-6)', () => {
-    // O contador é escrito no mesmo retorno que dá o ponto, então a segunda
-    // passada sobre o `prev` da primeira já enxerga o teto batido.
-    const prev = comDois();
-    const a = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
+  it('dois toques no MESMO lote do React: o segundo já enxerga o buff (X-6)', () => {
+    const a = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
     const b = applySpecialItem(a.state, GLITCHTAMA_EMOJI, AGORA);
-    expect(a.state.perfectDays + (b.state.perfectDays - a.state.perfectDays)).toBe(1);
+    expect(a.refused).toBeUndefined();
+    expect(b.refused).toBe('weekly-cap');
   });
 
-  it('save antigo sem o campo ganha o dia de hoje inteiro, nunca dívida', () => {
-    const antigo = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
-    expect(glitchtamaUsedToday(antigo, AGORA)).toBe(0);
-    expect(applySpecialItem(antigo, GLITCHTAMA_EMOJI, AGORA).refused).toBeUndefined();
-  });
-
-  it('o teto vale SÓ para o glitchtama — coraçãozinho e chip seguem livres', () => {
+  it('o cooldown vale SÓ para o glitchtama — coraçãozinho e chip seguem livres', () => {
     const st = estado({
       foodInventory: { [HEART_ITEM_EMOJI]: 2, [CHIP_EMOJI.power]: 2 },
       healthPoints: 1,
-      glitchtamaUse: { day: playerDayKey(AGORA, undefined), used: GLITCHTAMA_PER_DAY },
+      glitchtamaUsadoEm: AGORA.getTime(),
     });
     expect(applySpecialItem(st, HEART_ITEM_EMOJI, AGORA).refused).toBeUndefined();
     expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBeUndefined();
@@ -287,7 +270,9 @@ describe('chips maiores e prisma (D-12/D-13)', () => {
     expect(preco('chip-big-benevolence')).toBe(840);
     expect(SHOP_ITEMS.find(i => i.id === 'chip-prism')).toBeUndefined();
     expect(SHOP_ITEMS.some(i => i.icon === PRISM_CHIP_EMOJI)).toBe(false);
-    expect(preco('chip-triple')).toBe(2400);
+    // 04/11/2026: o Chip Triplo saiu da loja.
+    expect(SHOP_ITEMS.find(i => i.id === 'chip-triple')).toBeUndefined();
+    expect(SHOP_ITEMS.some(i => i.icon === TRIPLE_CHIP_EMOJI)).toBe(false);
   });
 
   it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
@@ -321,10 +306,9 @@ describe('D-94 prisma já possuído segue usável', () => {
   });
 });
 
-describe('D-95 chip triplo', () => {
-  it('da +9 em cada atributo e vem da loja com o emoji próprio', () => {
-    const it = SHOP_ITEMS.find(i => i.id === 'chip-triple')!;
-    expect(it.icon).toBe(TRIPLE_CHIP_EMOJI);
+describe('D-95 chip triplo (fora da loja desde 04/11/2026, quem tem segue usando)', () => {
+  it('o já possuído dá +9 em cada atributo', () => {
+    expect(SPECIAL_ITEMS[TRIPLE_CHIP_EMOJI]).toBeDefined();
     expect(TRIPLE_CHIP_BOOST).toBe(9);
     const { state } = applySpecialItem(estado({ foodInventory: { [TRIPLE_CHIP_EMOJI]: 1 } }), TRIPLE_CHIP_EMOJI, AGORA);
     expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([9, 9, 9]);
@@ -384,5 +368,90 @@ describe('D-97 limite de 3 chips por estágio', () => {
     expect(sanitizeChipsStage({ stage: 'rookie', used: 2.9 })).toEqual({ stage: 'rookie', used: 2 });
     const uma = sanitizeChipsStage({ stage: 'champion', used: 3 });
     expect(sanitizeChipsStage(uma)).toEqual(uma);
+  });
+});
+
+describe('chips de REDUÇÃO (04/11/2026)', () => {
+  it('a loja vende um redutor por tipo, ao preço do chip comum', () => {
+    for (const a of ['power', 'harmony', 'benevolence'] as const) {
+      const it = SHOP_ITEMS.find(i => i.id === `chip-reduce-${a}`)!;
+      expect(it.icon).toBe(REDUCE_CHIP_EMOJI[a]);
+      expect(it.price).toBe(360);
+      expect(isReduceChipKey(it.icon)).toBe(true);
+      expect(SPECIAL_ITEMS[it.icon].reduce).toBe(true);
+    }
+    expect(isReduceChipKey(CHIP_EMOJI.power)).toBe(false);
+  });
+  it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
+    'redutor de %s tira 6 só nele', (attr, pontos) => {
+      const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI[attr]]: 1 }, powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10,
+        attributesSinceLastEvolution: { power: 8, harmony: 8, benevolence: 8 }, totalXP: 70 });
+      const { state, refused } = applySpecialItem(prev, REDUCE_CHIP_EMOJI[attr], AGORA);
+      expect(refused).toBeUndefined();
+      expect(state[pontos]).toBe(10 - REDUCE_CHIP_BOOST);
+      expect(state.attributesSinceLastEvolution[attr]).toBe(8 - REDUCE_CHIP_BOOST);
+      expect(state.powerPoints + state.harmonyPoints + state.benevolencePoints).toBe(30 - REDUCE_CHIP_BOOST);
+      expect(state.totalXP).toBe(70);
+      expect(state.foodInventory[REDUCE_CHIP_EMOJI[attr]]).toBeUndefined();
+    });
+  it('clamp em 0 (total e do estágio)', () => {
+    const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI.power]: 1 }, powerPoints: 2,
+      attributesSinceLastEvolution: { power: 1, harmony: 0, benevolence: 0 } });
+    const { state } = applySpecialItem(prev, REDUCE_CHIP_EMOJI.power, AGORA);
+    expect(state.powerPoints).toBe(0);
+    expect(state.attributesSinceLastEvolution.power).toBe(0);
+  });
+  it('tipo já em 0: recusa sem consumir', () => {
+    const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI.harmony]: 1 }, harmonyPoints: 0 });
+    const r = applySpecialItem(prev, REDUCE_CHIP_EMOJI.harmony, AGORA);
+    expect(r.refused).toBe('nothing-to-reduce');
+    expect(r.state).toBe(prev);
+  });
+  it('limites independentes: 3 que somam + 3 que reduzem no mesmo estágio; o 4º de cada recusa', () => {
+    let st = estado({ foodInventory: { [CHIP_EMOJI.power]: 9, [REDUCE_CHIP_EMOJI.harmony]: 9 }, evolutionStage: 'rookie',
+      powerPoints: 0, harmonyPoints: 60 });
+    for (let i = 0; i < 3; i++) {
+      let r = applySpecialItem(st, CHIP_EMOJI.power, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
+      r = applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
+    }
+    expect(chipsUsedThisStage(st)).toBe(3);
+    expect(reduceChipsUsedThisStage(st)).toBe(REDUCE_CHIPS_PER_STAGE);
+    expect(st.powerPoints).toBe(9);
+    expect(st.harmonyPoints).toBe(60 - 3 * REDUCE_CHIP_BOOST);
+    expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBe('stage-cap');
+    expect(applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA).refused).toBe('stage-cap');
+    // redutor no teto não trava o que soma (e vice-versa)
+    const soReducao = { ...st, chipsStage: undefined };
+    expect(specialRefusal(soReducao, CHIP_EMOJI.power, AGORA)).toBeUndefined();
+    const soSoma = { ...st, chipsReduceStage: undefined };
+    expect(specialRefusal(soSoma, REDUCE_CHIP_EMOJI.harmony, AGORA)).toBeUndefined();
+    // evoluir zera os dois
+    const evoluiu = { ...st, evolutionStage: 'champion' };
+    expect(reduceChipsUsedThisStage(evoluiu)).toBe(0);
+  });
+  it('save antigo sem o campo: 0 redutores usados', () => {
+    expect(reduceChipsUsedThisStage(estado({}))).toBe(0);
+  });
+});
+
+describe('poção de elemento: só vale se há próxima evolução', () => {
+  const POCAO = 'potion:fogo';
+  it('no ápice (ultra, ou mega sem destino) recusa e NÃO consome o item', () => {
+    for (const evolutionStage of ['ultra', 'mega-power']) {
+      const prev = estado({ evolutionStage, foodInventory: { [POCAO]: 1 }, unlockedEvolutions: [], evolutionPoints: 0 });
+      expect(specialRefusal(prev, POCAO, AGORA)).toBe('no-next-evolution');
+      const r = applySpecialItem(prev, POCAO, AGORA);
+      expect(r.refused).toBe('no-next-evolution');
+      expect(r.state).toBe(prev);
+      expect(r.state.foodInventory[POCAO]).toBe(1);
+      expect(r.state.evolutionPotion).toBeUndefined();
+    }
+  });
+  it('estágio com próxima evolução segue funcionando (consome e grava a poção)', () => {
+    const prev = estado({ evolutionStage: 'champion-power', foodInventory: { [POCAO]: 1 } });
+    const r = applySpecialItem(prev, POCAO, AGORA);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.evolutionPotion).toBe('fogo');
+    expect(r.state.foodInventory[POCAO]).toBeUndefined();
   });
 });

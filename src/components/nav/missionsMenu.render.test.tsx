@@ -5,16 +5,23 @@
  * Antes eram dois acessos (`kind` daily/weekly) e dois ícones; o teste antigo de "Weekly" e de PT-BR falhava na main por assumir
  * essa estrutura e o rótulo antigo. Agora: as abas navegam e PRESERVAM estado, o ícone é um só e fica sempre (esmaecido sem pendência).
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet, type MissionsTab } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { claimStroll } from '../../utils/travessiasSave';
-import { completeBuildingQuest, claimBuildingQuest, type BuildingQuestState } from '../../utils/buildingQuests';
+import { visitBuilding, type BuildingQuestState } from '../../utils/buildingQuests';
 import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 
 afterEach(cleanup);
+
+// O 1º `render` da folha pagava, DENTRO do teto do teste, o import frio dos três painéis lazy (ShopShelf, MercadoSheets,
+// DailyMissionBoard — grafo grande, ~3x mais lento com a suíte inteira rodando). Paga aqui, num hook com teto próprio;
+// os casos passam a esperar só o ESTADO (o painel montado), e a espera deixa de ser o teto do runner.
+beforeAll(async () => {
+  await Promise.all([import('../mercado/ShopShelf'), import('../mercado/MercadoSheets'), import('./DailyMissionBoard')]);
+}, 120_000);
 
 const [m] = weeklyMissionsFor('2026-W41');
 const sheet = (language: 'en-US' | 'pt-BR', initialTab: MissionsTab = 'daily', state?: BuildingQuestState) => render(
@@ -31,17 +38,17 @@ const tab = (key: string) => document.querySelector<HTMLButtonElement>(`[role="t
 const panel = (key: string) => document.querySelector<HTMLElement>(`[data-missions-panel="${key}"]`);
 
 describe('MissionsSheet: uma folha, três abas', () => {
-  it('Daily abre primeiro: Hoje (passeio + journaling); semana e conquistas ainda não montadas', async () => {
+  it('Daily abre primeiro: Hoje (passeio; o Caderno diário saiu); semana e conquistas ainda não montadas', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest="forja.caderno"]')).not.toBeNull(), { timeout: 20000 });
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')).not.toBeNull(), { timeout: 20000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
-    expect(daily.querySelector('[data-building-quest="forja.caderno"]')!.textContent).toContain('Write an entry in your journal');
+    expect(daily.querySelector('[data-building-quest="forja.caderno"]')).toBeNull();
     expect(daily.querySelector('[data-stroll-line]')!.textContent).toContain('Take a stroll');
     expect(daily.querySelector('[data-travessias]')).toBeNull();
     expect(panel('weekly')).toBeNull();
     expect(panel('achievements')).toBeNull();
-    expect(document.querySelectorAll('[data-building-quest]').length).toBe(1);
+    expect(document.querySelectorAll('[data-building-quest]').length).toBe(0); // nenhum prédio é listado (12/11/2026)
     expect(document.body.textContent ?? '').not.toMatch(/Materials|Materiais|opens tomorrow|abre amanhã/i);
   });
 
@@ -57,8 +64,8 @@ describe('MissionsSheet: uma folha, três abas', () => {
 
   it('tocar na aba troca o painel; voltar preserva o que já estava (não remonta)', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
-    const quest = document.querySelector('[data-building-quest]')!;
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')).not.toBeNull(), { timeout: 20000 });
+    const quest = document.querySelector('[data-stroll-line]')!;
     fireEvent.click(tab('weekly'));
     await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('This week');
@@ -70,7 +77,7 @@ describe('MissionsSheet: uma folha, três abas', () => {
     expect(panel('weekly')!.hidden).toBe(true);
     fireEvent.click(tab('daily'));
     expect(panel('daily')!.hidden).toBe(false);
-    expect(document.querySelector('[data-building-quest]')).toBe(quest);
+    expect(document.querySelector('[data-stroll-line]')).toBe(quest);
   });
 
   it('deslizar para o lado troca de aba (e não passa do fim)', async () => {
@@ -112,44 +119,26 @@ describe('MissionsSheet: uma folha, três abas', () => {
     await waitFor(() => expect(document.querySelector('[data-missions-section="daily"]')).not.toBeNull());
     expect(document.querySelector('[data-missions-section="daily"]')!.getAttribute('aria-label')).toBe('Hoje');
     expect([...document.querySelectorAll('[role="tab"] [data-tab-label]')].map(t => t.textContent)).toEqual(['Diárias', 'Semanal', 'Conquistas']);
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')!.textContent).toContain('Faça um registro no journaling'));
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')!.textContent).toContain('Faça um passeio'));
     fireEvent.click(tab('weekly'));
     await waitFor(() => expect(document.querySelector('[data-missions-section="weekly"]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-missions-section="weekly"]')!.getAttribute('aria-label')).toBe('Esta semana');
   });
 });
 
-describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
+describe('o Caderno diário saiu das diárias (12/11/2026, REGISTRO §307)', () => {
   const D = '2026-10-07';
-  it('aponta: só o texto, sem botão', async () => {
-    sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
-    const li = document.querySelector('[data-building-quest]')!;
-    expect(li.getAttribute('data-status')).toBe('available');
-    expect(li.querySelector('button')).toBeNull();
-  });
-  it('pronta: "Claim" é a única ação; resgatada: discreta, sem botão', async () => {
-    const pronta = completeBuildingQuest(undefined, D, 'forja.caderno', 99);
-    const onClaim = vi.fn();
+  it('nem aponta, nem pronta, nem resgatada: a lista de prédios do menu é vazia, mesmo com o Caderno visitado', async () => {
+    const visitado = visitBuilding(undefined, D, 'forja.caderno', 99);
     const mk = (state: BuildingQuestState | undefined) => (
       <MissionsSheet open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
         todayKey={D} weekly={[]} onClaimWeekly={vi.fn()} missionProgress={{}} marks={{ daily: null, torneio: null, conquistas: null }}
-        buildings={{ state, day: D, bondLevel: 99, onClaim }} />
+        buildings={{ state, day: D, bondLevel: 99, onClaim: vi.fn() }} />
     );
-    const { rerender } = render(mk(pronta));
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
-    const li = document.querySelector('[data-building-quest]')!;
-    expect(li.getAttribute('data-status')).toBe('ready');
-    const btns = li.querySelectorAll('button');
-    expect(btns.length).toBe(1);
-    expect(btns[0].textContent).toBe('Claim');
-    fireEvent.click(btns[0]);
-    expect(onClaim).toHaveBeenCalledWith('forja.caderno');
-    rerender(mk(claimBuildingQuest(pronta, D, 'forja.caderno', 99).state));
-    const li2 = document.querySelector('[data-building-quest]')!;
-    expect(li2.getAttribute('data-status')).toBe('claimed');
-    expect(li2.querySelector('button')).toBeNull();
-    expect(li2.textContent).toContain('Claimed');
+    render(mk(visitado));
+    await waitFor(() => expect(document.querySelector('[data-stroll-line]')).not.toBeNull(), { timeout: 20000 });
+    expect(document.querySelector('[data-building-quest]')).toBeNull();
+    expect(document.body.textContent ?? '').not.toMatch(/journaling|Write an entry/);
   });
 });
 
@@ -260,24 +249,5 @@ describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)
     expect(daily.querySelector('[data-stroll-line] [data-mission-mark="available"]')).not.toBeNull();
     fireEvent.click(daily.querySelector('[data-stroll-go]')!);
     expect(onGoStroll).toHaveBeenCalledTimes(1);
-  });
-});
-
-// Dono, 11/10/2026: toda missão diária com lugar próprio NAVEGA até ele (como o Passeio).
-describe('missão do Caderno leva ao prédio', () => {
-  it('o texto da linha é um botão que chama onGo("forja.caderno"); resgatada, vira texto', async () => {
-    const onGo = vi.fn();
-    const base = { open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
-      weekly: [], onClaimWeekly: vi.fn(), missionProgress: {}, marks: { daily: 'available' as const, torneio: null, conquistas: null } };
-    render(<MissionsSheet {...base} buildings={{ state: undefined, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
-    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="forja.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 20000 });
-    fireEvent.click(go);
-    expect(onGo).toHaveBeenCalledWith('forja.caderno');
-    cleanup();
-    let st: BuildingQuestState | undefined = completeBuildingQuest(undefined, '2026-10-07', 'forja.caderno', 99);
-    st = claimBuildingQuest(st, '2026-10-07', 'forja.caderno', 99).state ?? st;
-    render(<MissionsSheet {...base} buildings={{ state: st, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
-    await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
-    expect(document.querySelector('[data-building-go]')).toBeNull();
   });
 });

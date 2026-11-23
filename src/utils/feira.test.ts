@@ -81,7 +81,12 @@ describe('sanitizadores', () => {
     expect(sanitizeFeiraTrail({ k: 0, game: 'zip', seed: 5, puzzle: { size: 5, numbers: [0] } })).toBeNull();
     expect(sanitizeFeiraTrail({ k: 0, game: 'jogo-x', seed: 5, puzzle: {} })).toBeNull();
     expect(sanitizeFeiraTrail({ k: 0, game: 'eco', seed: 5, puzzle: { par: 5 } })).toMatchObject({ puzzle: { par: 5 } });
-    expect(FEIRA_TRAIL_MIN_MS).toEqual({ picross: 8000, zip: 4000, patches: 4000, troca: 10000, eco: 6000 });
+    // Selo: 8 casas + 6 opções; instância truncada é recusada; a Colcha de uma trilha antiga ainda é lida.
+    const pn = { shape: 1, count: 2, dir: 3, fill: 1, marks: 5 };
+    expect(sanitizeFeiraTrail({ k: 0, game: 'selo', seed: 5, puzzle: { grid: Array(8).fill(pn), options: Array(6).fill(pn) } })?.game).toBe('selo');
+    expect(sanitizeFeiraTrail({ k: 0, game: 'selo', seed: 5, puzzle: { grid: Array(7).fill(pn), options: Array(6).fill(pn) } })).toBeNull();
+    expect(sanitizeFeiraTrail({ k: 0, game: 'patches', seed: 5, puzzle: { size: 4, clues: [{ cell: 0, area: 4, shape: 'square' }] } })?.game).toBe('patches');
+    expect(FEIRA_TRAIL_MIN_MS).toEqual({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
   });
 
   it('vista: `feira` só entra quando o servidor manda (desligada = vista idêntica à de hoje)', () => {
@@ -175,7 +180,7 @@ describe('wrappers de API', () => {
     expect((await startGuildFeiraTrail('save-12345'))!.game).toBe('zip');
     fetchMock.mockResolvedValue(resp(200, { cleared: true, reward: { emblems: 1, sap: 3 }, receipt: 'tr-1', evento: null }));
     const r = await doneGuildFeiraTrail('save-12345', { path: [0, 1] });
-    expect(r!.reward).toEqual({ emblems: 1, sap: 3 });
+    expect(r!.reward).toEqual({ emblems: 1, sap: 3, clanBits: 0 });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ id: 'save-12345', dayKey: dia(), path: [0, 1] });
     fetchMock.mockResolvedValue(resp(400, { error: 'wrong solution' }));
     const e = await doneGuildFeiraTrail('save-12345', { path: [0] }).catch(x => x as GuildError);
@@ -205,5 +210,20 @@ describe('crédito UMA vez por recibo', () => {
     const e = sanitizeFeiraEvento(bossEv)!;
     expect(feiraShownKey(e, '2026-10-28')).toBe('0:boss:2026-10-28');
     expect(feiraShownKey(e, '2026-10-29')).not.toBe(feiraShownKey(e, '2026-10-28'));
+  });
+});
+
+describe('mapFeiraLog — a energia do especial (reconstruída dos casts)', async () => {
+  const { mapFeiraLog, feiraEnergyAt } = await import('./feira');
+  it('sobe até cheia no especial e esvazia nele', () => {
+    const ev = mapFeiraLog([{ k: 'a', t: 2, s: 0, f: 0.1 }, { k: 'c', t: 4, s: 0, f: 0 }, { k: 'a', t: 4, s: 0, f: 0.2 }, { k: 'a', t: 6, s: 0, f: 0.1 }]);
+    expect(ev[0].energy[0]).toBeCloseTo(50);
+    expect(ev[1].energy[0]).toBe(0);
+    expect(ev[2].energy[0]).toBe(0);
+    expect(ev[3].energy[0]).toBeCloseTo(4);
+  });
+  it('sem próximo especial: ritmo base, teto 100', () => {
+    expect(feiraEnergyAt(0, null, 10)).toBe(20);
+    expect(feiraEnergyAt(0, null, 999)).toBe(100);
   });
 });

@@ -212,6 +212,9 @@ const PARES: Par[] = [
   ['danger sobre bg', '--sm2-danger-ink', '--sm2-bg', AA_TEXTO],
   ['btn-text sobre gold-fill', '--sm2-on-gold', '--sm2-gold-fill', AA_TEXTO],
   ['btn-text sobre danger-fill', '--sm2-on-danger', '--sm2-danger-fill', AA_TEXTO],
+  // Medalhas do pódio do ranking (§326): o número sobre o metal.
+  ['numeral sobre silver-fill', '--sm2-on-silver', '--sm2-silver-fill', AA_TEXTO],
+  ['numeral sobre bronze-fill', '--sm2-on-bronze', '--sm2-bronze-fill', AA_TEXTO],
   ['btn-text sobre primary-deep', '--sm2-on-primary', '--sm2-primary-deep', AA_TEXTO],
   // O visor é escuro nos DOIS temas — a tinta dele não é a da página.
   ['viewport-ink dentro do visor', '--sm2-viewport-ink', '--sm2-viewport-bg', AA_TEXTO],
@@ -227,6 +230,8 @@ const PARES: Par[] = [
   ['gold-fill sobre bg (UI)', '--sm2-gold-fill', '--sm2-bg', AA_UI],
   ['gold-fill sobre surface (UI)', '--sm2-gold-fill', '--sm2-surface', AA_UI],
   ['danger-fill sobre surface (UI)', '--sm2-danger-fill', '--sm2-surface', AA_UI],
+  // Chaves da jornada (§247): ícone e borda, 3:1 nas três superfícies.
+  ...(['bancada','relampago','quadrantes','brejo','elo','pena'] as const).flatMap(k => (['bg','surface','surface-2'] as const).map(f => [`chave ${k} sobre ${f} (UI)`, `--sm2-key-${k}`, `--sm2-${f}`, AA_UI] as Par)),
 ];
 
 for (const [nomeTema, tokens] of [

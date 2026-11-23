@@ -129,8 +129,136 @@ export function lotHitRects(
   const b = lotHitBounds(areaId, lot.id);
   const [ox, oy] = lotLabelOffset(areaId, lot.id);
   const art: Rect = { x0: x0 + b[0] * bw, y0: y0 + b[1] * bw, x1: x0 + b[2] * bw, y1: y0 + b[3] * bw };
-  const labelW = Math.min(bw, lot.label.length * 7.5 + 20);
+  const labelW = Math.min(bw, lot.label.length * 7.5 + 38);
   const lift = (lotLabelLift(areaId, lot.id) / 100) * bw;
   const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy - lift, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy - lift };
   return [art, label];
+}
+
+/** Proporção dos mapas recriados (05/11/2026, dono): os prédios vêm pintados NO fundo, em 9:20. */
+export const MAPA_ASPECT = 841 / 1870;
+
+/**
+ * Prédios PINTADOS no fundo (05/11/2026): caixa de toque em % da IMAGEM (esquerda, topo, direita, base), medida nos mapas aprovados.
+ * O lote que está aqui não desenha sprite; o rótulo pousa na base da caixa. Lote novo fora da tabela continua com o sprite por cima.
+ */
+export const LOT_PINTADO: Record<string, LotBounds> = {
+  'mercado:itens': [3, 14, 52, 33],
+  'mercado:conquistas': [55, 9, 98, 34],
+  'mercado:background': [3, 39, 40, 55],
+  'mercado:decoracao': [56, 40, 99, 57],
+  'mercado:cambista': [4, 60, 42, 76],
+  'mercado:restaurante': [55, 63, 96, 78],
+  'jogos:salao': [13, 13, 89, 41],
+  'jogos:mente': [10, 49, 50, 69],
+  'exploracao:passeio': [7, 7, 48, 24],
+  'exploracao:fenda': [57, 15, 95, 44],
+  'exploracao:dungeon': [2, 47, 45, 70],
+  'arena:guerra': [12, 5, 93, 30],
+  'arena:torneio': [0, 36, 50, 61],
+  'arena:duelo': [52, 39, 100, 65],
+  'forja:caderno': [7, 39, 40, 59],
+  'forja:hexsmith': [55, 11, 98, 28],
+  'forja:ferreiro': [2, 11, 50, 33],
+  'forja:refugio': [62, 43, 98, 60],
+  'forja:oficina': [26, 60, 76, 84],
+  'laboratorio:stats': [26, 16, 79, 36],
+  'laboratorio:biblioteca': [2, 39, 34, 63],
+  'laboratorio:evolucao': [50, 37, 99, 64],
+  'laboratorio:perfil': [17, 77, 83, 89],
+  'hall:feira': [1, 9, 48, 30],
+  'hall:grove': [51, 11, 99, 33],
+  'hall:guilda': [6, 45, 94, 73],
+};
+
+/**
+ * A chave do Calabouço no mapa da Exploração (13/11/2026, dono): a ponte entre o Passeio e o Calabouço, à esquerda da Fenda.
+ * Mesma medida de `LOT_PINTADO` (% da imagem: esquerda, topo, direita, base), lida no print do dono (720 px: x 90–310, y 630–720).
+ */
+export const EXPLORACAO_CHAVE_BOX: LotBounds = [12, 39.5, 43, 45];
+
+/** Os distritos pintados no mapa-mundo, com a mesma medida de `LOT_PINTADO`. */
+export const MAPA_MUNDO_PINTADO: Record<AreaId, LotBounds> = {
+mercado: [1, 10, 50, 26],
+jogos: [58, 12, 98, 27],
+exploracao: [0, 30, 34, 46],
+arena: [73, 30, 98, 44],
+forja: [3, 46, 38, 58],
+laboratorio: [29, 58, 63, 71],
+hall: [62, 47, 97, 58],
+};
+
+export function lotPintado(areaId: AreaId, lotId: string): LotBounds | undefined {
+  return LOT_PINTADO[`${areaId}:${lotId}`];
+}
+
+/** Palco do mapa: a mesma caixa do `cover` centrado do fundo, para a % da imagem cair no pixel certo em qualquer tela. Pede contêiner `size` no pai. */
+export const MAPA_PALCO_STYLE = {
+  position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+  width: `max(100cqw, calc(100cqh * ${MAPA_ASPECT}))`, aspectRatio: `${MAPA_ASPECT}`,
+  pointerEvents: 'none',
+} as const;
+
+/**
+ * Ajuste de simetria lateral do mapa-mundo (11/11/2026). A arte `bg-mapa.png` (821 px) tem os prédios de cima desbalanceados:
+ * o Mercado começa a 26 px da borda esquerda (3,2%) e o cogumelo dos Jogos passa da borda direita (0 px). Em vez de refazer a
+ * arte, o palco inteiro (imagem + alvos de toque) cresce `MAPA_AJUSTE_ESCALA` ancorado na borda DIREITA: a folga esquerda cai a
+ * ~2 px e a direita fica em 0, a mesma distância da margem nos dois lados (±1%).
+ */
+export const MAPA_ARTE_LARGURA = 821;
+export const MAPA_FOLGA_ESQ_PX = 26;
+export const MAPA_FOLGA_DIR_PX = 0;
+export const MAPA_AJUSTE_ESCALA = 1.03;
+/** Folgas (fração da largura da tela) depois do ajuste; negativa = sangra para fora da tela. */
+export function mapaFolgasAjustadas(): { esq: number; dir: number } {
+  const W = MAPA_ARTE_LARGURA;
+  const s = MAPA_AJUSTE_ESCALA;
+  return { esq: (W - (W - MAPA_FOLGA_ESQ_PX) * s) / W, dir: MAPA_FOLGA_DIR_PX / W };
+}
+
+/** Lado de uma marca sobre o prédio ("!", "?" ou a moeda de recurso), em px. */
+export const LOT_MARK_SIZE = 32;
+/** Folga entre a base das marcas e o TOPO desenhado do prédio, e entre duas marcas lado a lado, em px. */
+export const LOT_MARK_GAP = 4;
+/** Piso das marcas: um prédio colado no topo da cena (o arco do Passeio, a torre das Conquistas) não manda a marca para fora da tela; nele a marca desce até aqui e cobre um pedaço do topo da arte (o único caso de sobreposição). */
+export const LOT_MARK_MIN_TOP = 8;
+/**
+ * Quanto a fileira de marcas DESCE (px) nos lotes em que o espaço acima do prédio é o rótulo do vizinho: a marca pousa no topo da
+ * própria arte em vez de tapar o nome de outro prédio (QA 04/11/2026: a moeda do Refúgio cobria "Hexsmith"). O contrato reprova marca sobre rótulo alheio.
+ */
+export const LOT_MARK_DROP: Record<string, number> = {
+  'forja:refugio': LOT_MARK_SIZE + LOT_MARK_GAP,
+  'mercado:background': LOT_MARK_SIZE + LOT_MARK_GAP,
+  'mercado:decoracao': LOT_MARK_SIZE + LOT_MARK_GAP,
+};
+
+export function lotMarkDrop(areaId: AreaId, lotId: string): number {
+  return LOT_MARK_DROP[`${areaId}:${lotId}`] ?? 0;
+}
+
+/**
+ * As marcas ("!"/"?" e a moeda de recurso) ficam ACIMA do prédio (dono, 04/11/2026): a base da fileira pousa `LOT_MARK_GAP` px acima
+ * do topo desenhado da arte, centrada na arte; com duas, lado a lado, sem tocar. Nunca sai da tela por cima (`LOT_MARK_MIN_TOP`). Espelha o `AreaScene` (mesma conta em CSS).
+ * Devolve os retângulos na ordem da fileira (esquerda → direita).
+ */
+export function lotMarkRects(
+  areaId: AreaId,
+  lot: { id: string; left: string; top: string; width?: string; label: string },
+  viewW: number,
+  viewH: number,
+  count: number,
+): Rect[] {
+  const pct = (s: string) => parseFloat(s) / 100;
+  const bw = Math.max(pct(lot.width ?? '38%') * viewW, LOT_MIN_WIDTH_PX);
+  const total = bw + LOT_LABEL_H;
+  const x0 = pct(lot.left) * viewW - bw / 2;
+  const y0 = pct(lot.top) * viewH - 0.8 * total;
+  const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+  const cx = x0 + ((b[0] + b[2]) / 2) * bw;
+  const bottom = Math.max(y0 + b[1] * bw - LOT_MARK_GAP + lotMarkDrop(areaId, lot.id), LOT_MARK_MIN_TOP + LOT_MARK_SIZE);
+  const rowW = count * LOT_MARK_SIZE + Math.max(0, count - 1) * LOT_MARK_GAP;
+  return Array.from({ length: count }, (_, i): Rect => {
+    const left = cx - rowW / 2 + i * (LOT_MARK_SIZE + LOT_MARK_GAP);
+    return { x0: left, y0: bottom - LOT_MARK_SIZE, x1: left + LOT_MARK_SIZE, y1: bottom };
+  });
 }

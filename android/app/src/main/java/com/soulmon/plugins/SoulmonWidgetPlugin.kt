@@ -1,7 +1,16 @@
 package com.soulmon.plugins
 
 import android.content.Context
+import com.soulmon.widget.WidgetEventQueue
+import com.soulmon.widget.WidgetFrameStore
+import com.soulmon.widget.WidgetHomeTasks
+import com.soulmon.widget.WidgetFramesSync
+import com.soulmon.widget.WidgetFramesSyncWorker
+import com.soulmon.widget.WidgetOwnSprite
 import com.soulmon.widget.WidgetRenderer
+import com.soulmon.widget.WidgetVpet
+import com.getcapacitor.JSArray
+import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
@@ -92,11 +101,97 @@ class SoulmonWidgetPlugin : Plugin() {
         if (groveStage in GROVE_STAGE_IDS) editor.putString("grove_stage", groveStage) else editor.remove("grove_stage")
         editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))
 
+        /*
+         * REGISTRO §221 — the resizable widget. New keys only; absent = removed, and the
+         * renderer reads absence as "nothing to say" (see WidgetAdaptive.selectMessage).
+         *  · `hungry_at`: the INSTANT the creature gets hungry, so an hourly refresh with
+         *    the app closed still gets it right (hunger falls by timestamp).
+         *  · `next_task`, `day_ends_at`: the name is only valid until that device midnight.
+         */
+        val hungryAt = call.data.optLong("hungryAtMs", -1L)
+        if (hungryAt >= 0L) editor.putLong("hungry_at", hungryAt) else editor.remove("hungry_at")
+        // V-Pet icons (food in 3 states, energy bolt): the instant food falls below "fair" and the energy cap. Absent = removed.
+        val starvingAt = call.data.optLong("starvingAtMs", -1L)
+        if (starvingAt >= 0L) editor.putLong("starving_at", starvingAt) else editor.remove("starving_at")
+        val maxEnergy = call.data.optInt("maxEnergyPoints", -1)
+        if (maxEnergy >= 0) editor.putInt("max_energy_points", maxEnergy) else editor.remove("max_energy_points")
+        val nextTask = call.getString("nextTaskName")?.trim().orEmpty()
+        if (nextTask.isNotEmpty()) editor.putString("next_task", nextTask) else editor.remove("next_task")
+        val dayEndsAt = call.data.optLong("dayEndsAtMs", -1L)
+        if (dayEndsAt >= 0L) editor.putLong("day_ends_at", dayEndsAt) else editor.remove("day_ends_at")
+
+        /*
+         * 04/11/2026 — V-Pet casing chosen by the player: an id with the SHAPE of an id (`WidgetVpet.isFrameIdShape`; the 20 base elements are bundled
+         * in the APK, newer ones come from the web manifest); anything else REMOVES the key and the renderer draws the default casing.
+         */
+        // Beta12 (A1): a allowlist deixou de ser fechada. O id so precisa ter a FORMA de um id; quem decide a arte e o renderer
+        // (cache baixado > drawable embutido > padrao), entao id desconhecido cai no casco padrao sem quebrar nada.
+        val vpetFrame = call.getString("vpetFrame") ?: ""
+        if (WidgetVpet.isFrameIdShape(vpetFrame)) editor.putString("vpet_frame", vpetFrame) else editor.remove("vpet_frame")
+
+        // V-Pet: Z de sono (aceso = dormindo) e cenario equipado atras do pet. Chaves novas; ausente = acordado / sem fundo.
+        editor.putBoolean("pet_sleeping", call.data.optBoolean("petSleeping", false))
+        val vpetBg = call.getString("vpetBg") ?: ""
+        if (WidgetVpet.bgDrawableName(vpetBg) != null) editor.putString("vpet_bg", vpetBg) else editor.remove("vpet_bg")
+
+        // Widget grande da Home (18/11/2026): as tarefas de hoje (id, nome curto, feita). Chave NOVA, cortada e limpa aqui
+        // (`WidgetHomeTasks.sanitize`); ausente ou vazia = remove (o widget mostra o estado sem lista).
+        val tasks = WidgetHomeTasks.sanitize(WidgetHomeTasks.Json.parse(call.getString("tasksJson")))
+        if (tasks.isNotEmpty()) editor.putString("tasks_json", WidgetHomeTasks.Json.toJson(tasks)) else editor.remove("tasks_json")
+
         editor.apply()
 
-        // Push update to all active widget instances (all 3 variants)
+        // O sprite PRÓPRIO (gerado/equipado): baixa/guarda em segundo plano; vazio apaga e volta ao inicial.
+        // A allowlist de host/esquema vive em WidgetOwnSprite.Policy.
+        WidgetOwnSprite.sync(ctx, call.getString("petSpriteUrl"))
+        // Fome com o app fechado: agenda um redesenho para o instante `hungry_at` (e garante o periodico de 15 min).
+        val nowMs = System.currentTimeMillis()
+        com.soulmon.widget.WidgetRefreshWorker.scheduleHunger(ctx, listOf(hungryAt, starvingAt).filter { it > nowMs }.minOrNull())
+        com.soulmon.widget.WidgetRefreshWorker.schedule(ctx)
+        android.util.Log.d("SoulmonWidget", "updateWidgetData stage=${call.getString("currentStage")} sprite=${!call.getString("petSpriteUrl").isNullOrBlank()} hungryAt=$hungryAt poop=${call.data.optBoolean("hasPoop", false)}")
+
+        // Push update to all active widget instances (all variants)
         WidgetRenderer.updateAll(ctx)
 
+        // Moldura escolhida que ainda nao esta em disco (arte nova publicada so pela web): baixa agora, em segundo plano;
+        // enquanto isso o widget mostra a embutida/padrao e redesenha quando o arquivo chega.
+        if (WidgetVpet.isFrameIdShape(vpetFrame) && WidgetFrameStore.Disk.cachedFrame(ctx, vpetFrame) == null &&
+            WidgetVpet.frameDrawableName(vpetFrame) == null) {
+            WidgetFramesSync.syncAsync(ctx, true)
+        }
+
+        call.resolve()
+    }
+
+    /**
+     * Beta12 (A1): sincroniza o manifesto de molduras. Sem argumentos de proposito: a URL e constante nativa
+     * (`WidgetFrameStore.Policy`), a web nao consegue mandar URL. No maximo 1 sincronizacao por hora (o Worker diario
+     * ignora esse limite). Resolve de imediato; o download corre em segundo plano.
+     */
+    @PluginMethod
+    fun syncWidgetFrames(call: PluginCall) {
+        WidgetFramesSyncWorker.schedule(context)
+        WidgetFramesSync.syncAsync(context, false)
+        call.resolve()
+    }
+
+    /**
+     * Widget grande da Home: devolve a fila de checks SEM apagar (o app aplica, grava e so entao chama `ackWidgetEvents`).
+     * Nao existe em APK anterior: a web detecta pela rejeicao (`readWidgetEvents` devolve null).
+     */
+    @PluginMethod
+    fun peekWidgetEvents(call: PluginCall) {
+        val events = WidgetEventQueue.Store.read(context)
+        call.resolve(JSObject().put("events", JSArray(WidgetEventQueue.Store.toJson(events))))
+    }
+
+    /** Apaga da fila os `eid` ja aplicados e redesenha os widgets (o check otimista vira o estado real). */
+    @PluginMethod
+    fun ackWidgetEvents(call: PluginCall) {
+        val arr = call.getArray("eids") ?: JSArray()
+        val eids = (0 until arr.length()).mapNotNull { arr.optString(it, null) }.filter { it.isNotEmpty() }
+        WidgetEventQueue.Store.ack(context, eids)
+        WidgetRenderer.updateAll(context)
         call.resolve()
     }
 }

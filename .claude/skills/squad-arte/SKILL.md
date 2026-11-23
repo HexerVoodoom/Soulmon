@@ -3,6 +3,11 @@ name: squad-arte
 description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 3 agentes: arte-gerador (parametrizado por família — cenario, criatura, fx, emblema, marca, hud, predio, mapa, ui, npc; uma instância por família, em paralelo) + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
 ---
 
+> **REGRA FUNDAMENTAL (dono, 18/11/2026) — DÚVIDA SEMPRE EM MODAL:** toda dúvida, pergunta ou confirmação ao dono vai SOMENTE por modal (`AskUserQuestion`, ≤4 por chamada, opção recomendada primeiro, cada pergunta autocontida), nunca em texto corrido. Agente/sessão que não abre modal devolve a dúvida à sessão principal, que pergunta em modal; enquanto isso decide pela opção mais segura e registra. Ao briefar qualquer agente, repetir esta regra. Texto canônico: `CLAUDE.md` (topo).
+
+
+> **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+
 # SQUAD-ARTE — Orquestrador
 
 Você roteia, briefa e gateia. Não gera, não confere, não instala — cada coisa tem um agente.
@@ -31,6 +36,7 @@ Um só agente gera, `arte-gerador`, sempre com `familia=<x>` no briefing (a tabe
 ## Comandos
 - **`status`** — para cada família: tem / gerado-não-instalado / a gerar / bloqueado por decisão. Lê os dois docs; não varre disco (o inventário já varreu — se suspeitar que apodreceu, rode `inventario`).
 - **`fila`** — a lista C/B/F/M/H com prompt pronto, na ordem de valor (§10 do `ASSETS-A-GERAR`).
+- **`gerar criatura simulado <ids>`** — variante da família `criatura`: prompt do Oráculo real, cadeia até a forma atual, custo reportado antes de gerar, saída em `E:/Soulmon-assets/simulados-170/raw/` (`arte-gerador`, seção "Criatura de simulado"; REGISTRO §234). Sem régua de identidade.
 - **`gerar <familia> [ids]`** — despacha `arte-gerador` com `familia=<familia>`, os ids, a seção do doc, o bloco de estilo, a pasta de entrega `_gemini_out/<familia>-<AAAAMMDD>/`, e a regra "não toca em `src/`". Um agente por vez por família; gerações em folha quando as peças forem pequenas. Ao voltar, dispara `conferir` automaticamente.
 - **`conferir <leva>`** — `arte-conferente` roda o checklist mecânico e escreve `CONFERENCIA.md`. Reprovado volta ao `arte-gerador` (mesma família) com a referência anexada. Aprovado → checkpoint do dono com o recorte 200×200 (modal: "dá para dizer que é o Soulmon?").
 - **`instalar <leva>`** — só com `CONFERENCIA.md` aprovada e "sim" do dono. `arte-instalador` copia, mapeia, ajusta guard, sobe `CACHE_VERSION`, testa, commita por caminho, atualiza os 3 docs (`INVENTARIO`, `ASSETS-A-GERAR`, `BACKLOG-ARTE-GERAR`) e chama `/manter-docs auto`.

@@ -33,8 +33,8 @@ export function RefugeInviteCard({ language, onShown, onAccept, onDismiss }: {
       <p style={{ ...sm2Text, margin: '0 0 4px', fontWeight: 600 }}>{isPt ? 'Um respiro?' : 'A breather?'}</p>
       <p style={{ ...sm2Text, margin: '0 0 10px' }}>
         {isPt
-          ? 'Vou passar uns minutos no Refúgio, só respirando. Vem comigo, se quiser.'
-          : "I'm spending a few minutes in the Refuge, just breathing. Come with me if you want."}
+          ? 'Vou passar uns minutos no Refúgio, só respirando. Vem comigo.'
+          : "I'm spending a few minutes in the Refuge, just breathing. Come with me."}
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" data-refugio-convite-dispensar style={{ ...sm2Button('outline'), flex: 1 }} onClick={onDismiss}>

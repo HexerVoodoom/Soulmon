@@ -2,7 +2,7 @@ import { ENEMY_ROSTER } from './enemyRoster';
 import { describe, it, expect } from 'vitest';
 import {
   newBarrage, stepBarrage, phaseAt, stageOdds, pickWaveStage, STAGE_HP, BASE_Y, BARRAGE_ELEMENT, difficultyAt, barrageBits, FIELD_W, PLAYER_Y, START_LIVES,
-  PHASE_SECONDS, INVULN_SECONDS,
+  PHASE_SECONDS, INVULN_SECONDS, isTap, registerTap, DOUBLE_TAP_MS, DOUBLE_TAP_DIST,
 } from './soulBarrage';
 
 const seeded = (seed = 7) => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
@@ -121,5 +121,140 @@ describe('soulBarrage', () => {
     const ev = stepBarrage(s, 0.01, s.px, 1, rng);
     expect(ev.kills).toBe(1);
     expect(s.score).toBe(10);
+  });
+});
+
+import { BOSS_EVERY, BOSS_BASE_HP, BOSS_POINTS, activateSpecial, specialReady, specialKindOf, SPECIAL_COST, PLAYER_MIN_Y, FIELD_H as FH, MAX_LIVES } from './soulBarrage';
+
+describe('soulBarrage — modo Avançado (Y livre + Especial)', () => {
+  const foe = (s: ReturnType<typeof newBarrage>, x: number, y: number, hp = 6) => {
+    s.enemies.push({ x, y, vx: 0, vy: 0, hp, maxHp: hp, fireIn: 99, entry: ENEMY_ROSTER[0], stage: 'rookie', points: 10, t: 0, size: 60, r: 22 });
+  };
+  it('Y livre só no nível 2, dentro dos limites; nível 1 fica na base', () => {
+    const a = newBarrage(); const b = newBarrage();
+    for (let i = 0; i < 40; i++) { stepBarrage(a, 0.05, a.px, 2, seeded(1), 0); stepBarrage(b, 0.05, b.px, 1, seeded(1), 0); }
+    expect(a.py).toBe(PLAYER_MIN_Y);
+    expect(b.py).toBe(PLAYER_Y);
+    for (let i = 0; i < 80; i++) stepBarrage(a, 0.05, a.px, 2, seeded(1), 9999);
+    expect(a.py).toBeLessThanOrEqual(FH);
+  });
+  it('especial carrega com abates e só dispara cheio', () => {
+    const s = newBarrage();
+    expect(activateSpecial(s, 'beam')).toBe(false);
+    s.charge = SPECIAL_COST;
+    expect(specialReady(s)).toBe(true);
+    expect(activateSpecial(s, 'beam')).toBe(true);
+    expect(s.charge).toBe(0);
+  });
+  it('projétil grande: mata na hora o que está no caminho e apaga tiros inimigos; fora do caminho não faz nada', () => {
+    const s = newBarrage(); s.charge = SPECIAL_COST;
+    foe(s, s.px, 300, 11); foe(s, s.px + 120, 300, 11);
+    s.enemyShots.push({ x: s.px, y: 200, vx: 0, vy: 0 }, { x: s.px + 120, y: 200, vx: 0, vy: 0 });
+    activateSpecial(s, 'beam');
+    for (let i = 0; i < 12; i++) stepBarrage(s, 0.05, s.px, 2, seeded(4), s.py);
+    expect(s.enemies).toHaveLength(1);
+    expect(s.enemies[0].x).toBeGreaterThan(s.px + 60);
+    expect(s.enemyShots).toHaveLength(1);
+    expect(s.score).toBe(10);
+  });
+  it('boss: entra a cada BOSS_EVERY pontos, segura as levas, o projétil grande tira 15% e a morte paga', () => {
+    const s = newBarrage();
+    s.score = BOSS_EVERY; s.spawnIn = 0;
+    const ev = stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(ev.bossSpawned).toBe(true);
+    expect(s.boss?.maxHp).toBe(BOSS_BASE_HP);
+    for (let i = 0; i < 40; i++) stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(s.enemies).toHaveLength(0);
+    s.boss!.t = 0; s.charge = SPECIAL_COST;
+    activateSpecial(s, 'beam');
+    const hp0 = s.boss!.hp;
+    for (let i = 0; i < 14; i++) stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(hp0 - s.boss!.hp).toBeGreaterThanOrEqual(Math.ceil(BOSS_BASE_HP * 0.15));
+    s.boss!.hp = 1; const before = s.score;
+    s.shots.push({ x: s.boss!.x, y: s.boss!.y, vx: 0, vy: 0 });
+    const ev2 = stepBarrage(s, 0.001, s.px, 2, seeded(5), s.py);
+    expect(ev2.bossDefeated).toBe(true);
+    expect(s.score).toBeGreaterThanOrEqual(before + BOSS_POINTS);
+    expect(s.nextBossAt).toBe(BOSS_EVERY * 2);
+  });
+  it('escudo absorve um golpe sem tirar vida; cura respeita o teto; pulso limpa a tela; slow reduz a velocidade', () => {
+    const s = newBarrage(); s.charge = SPECIAL_COST; activateSpecial(s, 'shield');
+    s.enemyShots.push({ x: s.px, y: s.py, vx: 0, vy: 0 });
+    const ev = stepBarrage(s, 0.01, s.px, 2, seeded(2), s.py);
+    expect(ev.blocked).toBe(true); expect(s.lives).toBe(START_LIVES);
+    s.charge = SPECIAL_COST; s.lives = MAX_LIVES; activateSpecial(s, 'heal'); expect(s.lives).toBe(MAX_LIVES);
+    s.charge = SPECIAL_COST; s.enemyShots.push({ x: 5, y: 5, vx: 0, vy: 0 }); foe(s, 100, 50, 6); activateSpecial(s, 'pulse');
+    expect(s.enemyShots).toHaveLength(0); expect(s.enemies[0].hp).toBe(3);
+    const t = newBarrage(); t.charge = SPECIAL_COST; activateSpecial(t, 'slow'); foe(t, 100, 50); t.enemies[0].vy = 100;
+    stepBarrage(t, 0.05, t.px, 2, seeded(3), t.py);
+    expect(t.enemies[0].y).toBeCloseTo(52.5, 1);
+  });
+  it('família do especial → efeito', () => {
+    expect(['direct', 'dot', undefined].map(specialKindOf)).toEqual(['beam', 'beam', 'beam']);
+    expect(['shield', 'heal', 'atkBuff', 'defDebuff', 'spdBuff'].map(specialKindOf)).toEqual(['shield', 'heal', 'overdrive', 'pulse', 'slow']);
+  });
+});
+
+describe('double tap (Especial)', () => {
+  const at = (t: number, x = 100, y = 100) => ({ t, x, y });
+  it('apertar-e-soltar curto e parado é toque; arrasto ou demora não é', () => {
+    expect(isTap(at(0), at(120, 103, 102))).toBe(true);
+    expect(isTap(at(0), at(400))).toBe(false);
+    expect(isTap(at(0), at(100, 160, 100))).toBe(false);
+  });
+  it('dois toques juntos e rápidos = double; o par é consumido', () => {
+    const a = registerTap(null, at(1000));
+    expect(a.double).toBe(false);
+    const b = registerTap(a.last, at(1200, 110, 105));
+    expect(b.double).toBe(true);
+    expect(b.last).toBeNull();
+    expect(registerTap(b.last, at(1300)).double).toBe(false);
+  });
+  it('devagar demais ou longe demais não é double', () => {
+    expect(registerTap(at(1000), at(1000 + DOUBLE_TAP_MS + 1)).double).toBe(false);
+    expect(registerTap(at(1000), at(1100, 100 + DOUBLE_TAP_DIST + 1, 100)).double).toBe(false);
+  });
+});
+
+import { newBarrage as nb2, stepBarrage as step2, BOSS_EVERY as BE2, BOSS_BASE_HP as BBH2, BOSS_Y, FIELD_W as FW2, SPECIAL_BOSS_HP_MULT, isSpecialBossIndex } from './soulBarrage';
+
+describe('boss: comum parado no centro; especial anda, tem mais vida e mais balas', () => {
+  const spawn = (bosses: number) => {
+    const s = nb2(); s.bosses = bosses; s.nextBossAt = BE2; s.score = BE2; s.spawnIn = 0;
+    step2(s, 0.016, FW2 / 2, 1, () => 0.5);
+    return s;
+  };
+  const run = (bosses: number) => {
+    const s = spawn(bosses); const xs: number[] = []; let shots = 0;
+    for (let i = 0; i < 600; i++) {
+      s.lives = 99; s.boss!.hp = s.boss!.maxHp; s.invuln = 99;
+      const before = s.enemyShots.length;
+      step2(s, 0.016, FW2 / 2, 1, () => 0.5);
+      shots = Math.max(shots, s.enemyShots.length - Math.min(before, s.enemyShots.length));
+      xs.push(s.boss!.x);
+    }
+    return { s, xs, shots };
+  };
+  it('regra do especial: o 3º, 6º...', () => {
+    expect([0, 1, 2, 3, 4, 5].map(isSpecialBossIndex)).toEqual([false, false, true, false, false, true]);
+  });
+  it('boss comum fica parado e centralizado', () => {
+    const { xs, s } = run(0);
+    expect(s.boss!.special).toBe(false);
+    expect(new Set(xs).size).toBe(1);
+    expect(xs[0]).toBe(FW2 / 2);
+    expect(s.boss!.y).toBe(BOSS_Y);
+  });
+  it('boss especial se move na horizontal, com mais vida e mais balas por rajada', () => {
+    const c = run(0), e = run(2);
+    expect(e.s.boss!.special).toBe(true);
+    expect(Math.max(...e.xs) - Math.min(...e.xs)).toBeGreaterThan(100);
+    expect(e.s.boss!.maxHp).toBe((BBH2 + 20 * 2) * SPECIAL_BOSS_HP_MULT);
+    expect(e.s.boss!.maxHp).toBeGreaterThan(c.s.boss!.maxHp * 3);
+    expect(e.shots).toBeGreaterThan(c.shots);
+  });
+  it('spawn do especial sinaliza bossSpecial', () => {
+    const s = nb2(); s.bosses = 2; s.score = BE2; s.nextBossAt = BE2; s.spawnIn = 0;
+    expect(step2(s, 0.016, FW2 / 2, 1, () => 0.5).bossSpecial).toBe(true);
   });
 });

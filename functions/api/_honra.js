@@ -44,8 +44,52 @@ export function fatorPorRepeticao(vitoriasAntes) {
  */
 export function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
   const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
-  return { gain: Math.round(base * factor), factor };
+  // Piso por nivel: o corte de nivel sozinho nunca leva a 0; o teto do piso e o que a repeticao ja deixaria (rep 0 => 0).
+  const porRep = Math.round(base * fatorPorRepeticao(vitoriasAntes));
+  const gain = Math.max(Math.round(base * factor), Math.min(PONTOS_PISO_VITORIA, porRep));
+  return { gain, factor };
 }
 
 /** O maximo de pontos que UM par (mesmos dois levels, sem queda por level) rende por dia de vitorias: a soma da lista. */
 export const HONRA_TETO_DIA_POR_PAR = (base) => Math.round(HONRA_FATOR_POR_REPETICAO.reduce((s, f) => s + base * f, 0));
+
+/**
+ * PONTOS DE FAIXA/TEMPORADA POR RANK (decisao do dono, 11/11/2026).
+ *
+ * Os pontos do Torneio ranqueado dependem de ONDE o oponente esta em relacao a voce na temporada, nao do level:
+ *  - vencer quem esta ACIMA rende MAIS (ate ~2x a base); vencer quem esta bem ABAIXO rende MENOS (nunca abaixo do piso);
+ *  - a reducao por REPETICAO do mesmo oponente no dia continua (`fatorPorRepeticao`: 1 / 0,5 / 0,25 / 0).
+ * Medida de distancia = diferenca de PONTOS DA TEMPORADA (mais robusta que a posicao: nao precisa varrer o ranking e
+ * vale igual para simulados). Escala suave: mult = 1 + tanh(dif / PONTOS_RANK_ESCALA), em (0, 2), simetrica em 1.
+ * O corte por level (`fatorPorLevel`) SAIU dos pontos; continua valendo so para a HONRA (`ganhoDePontos`, `honorFactor`).
+ *
+ * Anti-abuso (conta nova de level 1 derrotada em massa): essa conta esta no fundo do rank (poucos pontos). Quem a
+ * farma sobe; a cada vitoria a diferenca (conta nova - fazendeiro) fica mais negativa e o ganho cai ate o piso
+ * (com ~300 pontos de vantagem o ganho ja e o piso). A repeticao diaria soma ao freio. Os dados de rank vem do
+ * SERVIDOR (pontos congelados em `duelStart`), nunca do corpo da requisicao.
+ */
+/** Piso de pontos de uma vitoria contra quem esta bem abaixo (desde que a repeticao do dia nao zere). */
+export const PONTOS_PISO_VITORIA = 3;
+/** Escala (em pontos de temporada) da curva suave: 200 pts de distancia = mult 1,76 ou 0,24. */
+export const PONTOS_RANK_ESCALA = 200;
+/** Teto do multiplicador (cerca do dobro da base). */
+export const PONTOS_RANK_MULT_MAX = 2;
+
+/** Multiplicador (0, 2) pela distancia de rank: positivo quando o oponente (perdedor) tem MAIS pontos que o vencedor. */
+export function multPorRank(pontosVencedor, pontosPerdedor) {
+  const a = Number(pontosVencedor), b = Number(pontosPerdedor);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 1;
+  return Math.min(PONTOS_RANK_MULT_MAX, 1 + Math.tanh((b - a) / PONTOS_RANK_ESCALA));
+}
+
+/**
+ * O ganho de pontos de faixa de uma vitoria, por rank.
+ * @returns {{ gain: number, mult: number, rep: number, reason: 'repeat' | 'rank-up' | 'rank-down' | null }}
+ */
+export function ganhoPorRank(base, pontosVencedor, pontosPerdedor, vitoriasAntes) {
+  const mult = multPorRank(pontosVencedor, pontosPerdedor);
+  const rep = fatorPorRepeticao(vitoriasAntes);
+  const gain = rep === 0 ? 0 : Math.max(Math.min(PONTOS_PISO_VITORIA, Math.round(base * rep)), Math.round(base * mult * rep));
+  const reason = rep < 1 ? 'repeat' : mult >= 1.1 ? 'rank-up' : mult <= 0.9 ? 'rank-down' : null;
+  return { gain, mult, rep, reason };
+}

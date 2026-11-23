@@ -16,7 +16,6 @@
 // (`DUNGEON_FIGHTS_PER_FLOOR` = `LADDER_TIERS.length`: a igualdade é travada em `dungeonIdle.test.ts`.)
 
 import { STAGE_LEVEL_CAPS } from '../types/progression';
-import { MASMORRA_ALTO_A_PARTIR_DO_ANDAR, masmorraFloorOpen } from './gates';
 import { setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 
@@ -28,6 +27,11 @@ export const DUNGEON_FIGHTS_PER_FLOOR = 6;
 
 /** O MARCO: limpar este andar (uma vez por descida) rende o item raro (o 🌀) e sobe a base semanal. Era o fim da run (`MAX_FLOORS` = 5). */
 export const DUNGEON_MILESTONE_FLOOR = 5;
+
+/** O PONTO DE RETORNO: a descida recomeça logo depois do último múltiplo deste já limpo (`startLayerFor`). Era 5 (o marco);
+ *  o dono passou para 2 em 09/11/2026 (REGISTRO §31, emenda), então a nova descida começa no máximo 1 camada abaixo do
+ *  recorde. Desacoplado do marco de prêmio (`DUNGEON_MILESTONE_FLOOR`/`isMilestoneLayer`), que segue em 5: economia igual. */
+export const DUNGEON_RETURN_EVERY = 2;
 
 /** Horas para o HP ir de ZERO a CHEIO, parado ou com o app fechado. O dono ajusta este número. */
 export const DUNGEON_HP_REGEN_FULL_HOURS = 4;
@@ -105,9 +109,10 @@ export function formatarEspera(ms: number, pt: boolean): string {
 //     CONFORTO (`comfortLayers`) — as camadas até ela lutam na dificuldade do andar 1; daí para baixo a
 //     dificuldade sobe como sempre subiu, e a parede medida (andar efetivo ~5–6) cai `comfortLayers(L)` camadas
 //     mais fundo. Quem fez tarefas e hábitos com constância tem Lv mais alto (dias completos + estágio), e por
-//     isso desce mais. O TETO declarado é `dungeonLayerCap` (zona + margem, e o portão do Vínculo de `gates.ts`).
-//  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último marco de
-//     `DUNGEON_MILESTONE_FLOOR` camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
+//     isso desce mais. NÃO há teto de profundidade por Lv nem por Vínculo (16/11/2026): quem limita a descida é só a energia (sem
+//     limite por dia, REGISTRO §451); a profundidade só escala a dificuldade.
+//  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último múltiplo de
+//     `DUNGEON_RETURN_EVERY` (2) camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
 //     (`DUNGEON_DEPTH_MARKS`) rende fragmentos do Soulsmith — material, nunca Bits e nunca equipamento sorteado.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -116,9 +121,6 @@ export const DUNGEON_ENERGY_PER_LAYER = 1;
 
 /** A camada mais funda que existe. */
 export const DUNGEON_MAX_LAYER = 999;
-
-/** Camadas além da zona de conforto que o teto do Lv deixa tentar: a parede medida cai em +3 a +4 (média 3,8, desde 28/10/2026; era +4 a +6); sobra 1 camada de folga. */
-export const DUNGEON_CAP_MARGIN = 5;
 
 /** O Lv mais alto do combate (ultra no topo): é nele que a zona de conforto chega à camada 999. */
 const TOP_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];
@@ -139,26 +141,16 @@ export function effectiveFloor(layer: number, level: number): number {
   return 1 + Math.max(0, Math.max(1, int(layer, 1)) - 1 - comfortLayers(level));
 }
 
-/**
- * O TETO de camadas do Lv (e do Vínculo): `min(999, zona + margem)`, e enquanto o portão `masmorraAlto` estiver
- * fechado, a última camada antes dele. É o que a tela promete: "com mais Lv, mais fundo".
- */
-export function dungeonLayerCap(level: number, bondLevel: number): number {
-  const byLevel = Math.min(DUNGEON_MAX_LAYER, comfortLayers(level) + DUNGEON_CAP_MARGIN);
-  return masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, bondLevel)
-    ? byLevel
-    : Math.min(byLevel, MASMORRA_ALTO_A_PARTIR_DO_ANDAR - 1);
-}
-
 /** Higieniza o recorde vindo do save/nuvem: inteiro em [0, 999]. */
 export function sanitizeDepthRecord(raw: unknown): number {
   return Math.min(DUNGEON_MAX_LAYER, Math.max(0, int(raw, 0)));
 }
 
-/** Onde a descida começa: logo depois do último marco (múltiplo de `DUNGEON_MILESTONE_FLOOR`) já limpo, sem passar do teto. */
-export function startLayerFor(record: number, cap: number): number {
+/** Onde a descida começa: logo DEPOIS do andar mais fundo já limpo (REGISTRO §477: a derrota nunca rebaixa o andar; só reinicia os combates dele, no combate 1).
+ *  Sem teto por Lv; `cap` opcional só limita. Sem campo novo no save: o recorde (que só sobe) é a fonte; recorde ≤ 0 = andar 1 (comportamento de sempre). */
+export function startLayerFor(record: number, cap: number = DUNGEON_MAX_LAYER): number {
   const lim = Math.min(sanitizeDepthRecord(record), Math.max(1, int(cap, 1)) - 1);
-  return 1 + DUNGEON_MILESTONE_FLOOR * Math.floor(Math.max(0, lim) / DUNGEON_MILESTONE_FLOOR);
+  return Math.min(DUNGEON_MAX_LAYER, Math.max(0, lim) + 1);
 }
 
 /** A camada `layer` é um marco da descida (o item 🌀 1× por descida, no primeiro)? */
@@ -176,24 +168,24 @@ export function layersAffordable(energy: unknown): number {
   return Math.max(0, Math.floor(int(energy) / DUNGEON_ENERGY_PER_LAYER));
 }
 
-// (`spendLayerEnergy` SAIU em 13/10/2026: gastava `energyPoints` à mão, sem acertar a regeneração nem o limite diário. A porta única é `spendLayer`, abaixo.)
+// (`spendLayerEnergy` SAIU em 13/10/2026: gastava `energyPoints` à mão, sem acertar a regeneração. A porta única é `spendLayer`, abaixo.)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 🚧 LIMITE DIÁRIO DE CAMADAS E CUSTO DE ENERGIA (beta-2 item 6.1 — REGISTRO §40).
+// 🚧 CUSTO DE ENERGIA POR CAMADA (beta-2 item 6.1 — REGISTRO §40; o limite diário do §441 foi revogado no §451).
 //
 // A porta ÚNICA para começar uma camada é `spendLayer`: ela é PURA, roda dentro do updater do `setGameState` (a tela) e dentro da
-// conta de quem ficou fora (`dungeonAway.ts`), e reconfere as DUAS condições sobre o `prev` — energia (já com a regeneração acertada
-// até `now`) e camadas do dia. Nenhuma tela decide sozinha: a UI só espelha o que o updater vai fazer (`layerRefusal`).
+// conta de quem ficou fora (`dungeonAway.ts`), e reconfere a condição sobre o `prev` — energia (já com a regeneração acertada
+// até `now`) — e conta a camada do dia (estatística). Nenhuma tela decide sozinha: a UI só espelha o que o updater vai fazer (`layerRefusal`).
 //
-//  · `DUNGEON_DAILY_LAYERS` camadas por DIA DO JOGADOR (fuso fixo do save), contadas ao COMEÇAR a camada (a mesma hora em que a
-//    energia é cobrada). Entrar e sair da tela, reabrir o app ou retirar o Soulmon NÃO devolvem camada: o contador mora no save.
-//  · Relógio que volta NÃO reabre o dia (vale o maior entre o dia do relógio e o do registro); relógio adiantado só vale até o
-//    servidor (`functions/api/_dungeonDaily.js`, monotônico no POST do save) ver o dia futuro.
-//  · Bater o limite NUNCA custa coração nem Bits: o botão não acende e a frase é calma. O que já foi limpo fica.
+//  · O contador `dungeonDaily` (camadas COMEÇADAS no dia do jogador) continua no save só como ESTATÍSTICA, sem teto. Entrar e sair da tela,
+//    reabrir o app ou retirar o Soulmon NÃO mudam nada: quem freia a descida é a ENERGIA (`DUNGEON_ENERGY_PER_LAYER` por camada).
+//  · Relógio que volta NÃO reabre o dia do contador (vale o maior entre o dia do relógio e o do registro; o servidor é monotônico).
+//  · Faltar energia NUNCA custa coração nem Bits: o botão não acende e a frase é calma. O que já foi limpo fica.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// beta3 F2: o LIMITE diário de camadas SAIU (pedido do dono, 25/10/2026) — só a energia limita. O contador `dungeonDaily` segue no save
-// (estatística e compatibilidade), mas nada o compara a um teto.
+// 16/11/2026 (REGISTRO §441) o dono pôs um LIMITE DIÁRIO de 30 lutas (5 andares) na descida; no MESMO dia (REGISTRO §451) ele o REVOGOU:
+// o Rift é o SUMIDOURO DE ENERGIA do jogo, então fica INFINITO (sem teto de profundidade e sem teto por dia) e a energia é o freio.
+// `DUNGEON_DAILY_FIGHTS`, `DUNGEON_DAILY_LAYERS`, `layersLeftToday` e a recusa 'daily-limit' saíram; `dungeonDaily` ficou (compat).
 
 /** O contador do dia, no SAVE (`dungeonDaily`). `day` é `playerDayIso` (AAAA-MM-DD, ordenável). */
 export interface DungeonDaily { day: string; layers: number }
@@ -223,11 +215,6 @@ export function layersToday(state: DungeonDailyState, nowMs: number): number {
   return rec && rec.day === dungeonDayOf(state, nowMs) ? rec.layers : 0;
 }
 
-/** Sem teto diário (beta3 F2): sempre infinito. Mantido só para quem ainda pergunta. */
-export function layersLeftToday(_state: DungeonDailyState, _nowMs: number): number {
-  return Number.POSITIVE_INFINITY;
-}
-
 export type LayerRefusal = 'no-energy';
 
 export interface LayerState extends DungeonDailyState {
@@ -237,7 +224,7 @@ export interface LayerState extends DungeonDailyState {
   energyClock?: EnergyClock;
 }
 
-/** Por que a próxima camada NÃO pode começar agora (energia de AGORA, com a regeneração acertada). `undefined` = pode. */
+/** Por que a próxima camada NÃO pode começar agora (só a energia de AGORA, com a regeneração acertada, importa). `undefined` = pode. */
 export function layerRefusal(state: LayerState, nowMs: number): LayerRefusal | undefined {
   if (!canPayLayer(settleEnergy(state, nowMs).energyPoints)) return 'no-energy';
   return undefined;
@@ -323,8 +310,8 @@ export interface DungeonAwayPlayer {
   fam: string;
   /** Id do ofício da ficha (ausente = jeito padrão). */
   prof?: string;
-  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `riftBits`: Bits a mais por ganho. */
-  sh: number; hb: number; rb: number;
+  /** `tal-pve-07`: escudo de largada; `tal-pve-03`: cura extra entre camadas; `rc`: Bits a mais no TETO diário da fenda (`tal-pve-04`, §393; antes `rb`, a fração por ganho, revogada). */
+  sh: number; hb: number; rc: number;
   /** Estágio de evolução (decide os sprites/chaves do bestiário dos inimigos). */
   stage: string;
 }
@@ -374,7 +361,7 @@ export function sanitizeDungeonAway(raw: unknown): DungeonAway | undefined {
     player: {
       level: Math.trunc(numIn(p.level, 1, 1, TOP_LEVEL)),
       atk: numIn(p.atk, 1, 0, 1e6), def: numIn(p.def, 1, 0, 1e6), spd: numIn(p.spd, 1, 0, 1e6), hp: numIn(p.hp, 1, 1, 1e7), bonus: numIn(p.bonus, 0, 0, 10),
-      fam: p.fam, prof, sh: numIn(p.sh, 0, 0, 1), hb: numIn(p.hb, 0, 0, 1), rb: numIn(p.rb, 0, 0, 10), stage: p.stage,
+      fam: p.fam, prof, sh: numIn(p.sh, 0, 0, 1), hb: numIn(p.hb, 0, 0, 1), rc: Math.trunc(numIn(p.rc, 0, 0, 30)), stage: p.stage,
     },
   };
 }

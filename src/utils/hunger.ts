@@ -27,6 +27,7 @@
 //  Todo caminho (camada da masmorra, brincar, Level Up, pesadelo, virada do dia) passa por `setEnergy`, que primeiro acerta a
 //  regeneração até `now` e depois reposiciona o relógio. Assim a regeneração nunca é contada em dobro nem perdida.
 import { getMaxEnergyForStage } from '../types/progression';
+import { BUFF_ENERGIA_PCT, clanBuffWindow } from './guildBuffs';
 
 // ── constantes (defaults propostos; o dono decide — REGISTRO §40) ─────────────────────────────────────────────────────
 
@@ -34,8 +35,8 @@ import { getMaxEnergyForStage } from '../types/progression';
 export const HUNGER_MAX = 100;
 /** Horas para a fome ir de CHEIA a ZERO, com o app aberto ou fechado. */
 export const HUNGER_FULL_TO_EMPTY_HOURS = 14;
-/** Fome devolvida por UMA comida comum (cada atividade concluída rende uma). */
-export const HUNGER_PER_FOOD = 40;
+/** Fome devolvida por UMA comida comum (cada atividade concluída rende uma; 50 = 1,5 de 3 níveis, pedido do dono 03/11/2026). */
+export const HUNGER_PER_FOOD = 50;
 /** Fome devolvida pela comida premium ★ (era +5 de energia). */
 export const HUNGER_PER_PREMIUM = 100;
 /** Com a fome neste nível ou acima a comida premium é RECUSADA (o item volta para a pastinha: não queimar à toa). */
@@ -48,8 +49,13 @@ export const HUNGER_FAIR_MIN = 20;
 export const REGEN_FED_PCT = 100;
 export const REGEN_FAIR_PCT = 50;
 export const REGEN_STARVING_PCT = 0;
+/**
+ * 💤 BÔNUS DE SONO (pedido do dono, REGISTRO §177): com o Soulmon DORMINDO a velocidade de regeneração é MULTIPLICADA por isto
+ * (fator da fome × 1,5; prato do Restaurante incluso). Faminto continua em 0% (0 × 1,5 = 0): a regra da fome não muda.
+ */
+export const SLEEP_ENERGY_REGEN_BONUS = 1.5;
 /** Minutos para regenerar UMA unidade de energia a 100%. */
-export const ENERGY_REGEN_MINUTES = 60;
+export const ENERGY_REGEN_MINUTES = 80;
 /** Unidade ANTIGA (120 min, até 26/10/2026): só o teto de sanidade do `carry` gravado — um save velho pode trazer até 2× a unidade nova. */
 const LEGACY_ENERGY_REGEN_MINUTES = 120;
 
@@ -68,7 +74,17 @@ export type HungerTier = 'fed' | 'fair' | 'starving';
 /** O que fica no save: nível medido e o instante da medida. */
 export interface HungerRecord { v: number; at: number }
 /** O relógio da energia no save: instante até onde a regeneração já foi contada e o progresso até a próxima unidade (ponto-ms). */
-export interface EnergyClock { at: number; carry: number }
+export interface EnergyClock {
+  at: number;
+  carry: number;
+  /** 💤 O Soulmon DORME desde `at`? É o estado que vale para o trecho `[at, agora)`: a regeneração offline usa o sono REGISTRADO aqui
+   *  (gravado por `setSleeping` no instante em que o estado de sono troca). Ausente = acordado (saves antigos não mudam). */
+  sleep?: boolean;
+}
+
+/** Relógio novo em `at` herdando o estado de sono do anterior (só grava `sleep` quando verdadeiro: save acordado fica idêntico). */
+const clockAt = (prev: EnergyClock | undefined, at: number, carry: number): EnergyClock =>
+  prev?.sleep ? { at, carry, sleep: true } : { at, carry };
 
 export interface HungerState {
   energyPoints: number;
@@ -77,6 +93,18 @@ export interface HungerState {
   energyClock?: EnergyClock;
   /** A descida idle em andamento (`utils/dungeonIdle.ts`): só o `since` importa aqui — ver `tickTime`. */
   dungeonAway?: { since: number } | null;
+  /** 🍲 O prato do Restaurante (`utils/restaurant.ts`): só o buff `regen` importa aqui — ver `regenBoostOf`. */
+  restaurant?: { buff?: { kind: string; value: number; from: number; until: number } };
+}
+
+/** Buff de regeneração (prato do Restaurante): `pct` a MAIS de velocidade entre `from` e `until`. */
+export interface RegenBoost { from: number; until: number; pct: number }
+
+/** O buff de regeneração gravado no estado (ou `undefined`). Só a FORMA; a validade é a janela `from..until`. */
+export function regenBoostOf(s: Pick<HungerState, 'restaurant'> | undefined): RegenBoost | undefined {
+  const b = s?.restaurant?.buff;
+  if (!b || b.kind !== 'regen' || !(b.value > 0) || !Number.isFinite(b.from) || !(b.until > b.from)) return undefined;
+  return { from: b.from, until: b.until, pct: b.value };
 }
 
 const fin = (n: unknown, d = 0): number => (typeof n === 'number' && Number.isFinite(n) ? n : d);
@@ -94,12 +122,12 @@ export function sanitizeHunger(raw: unknown): HungerRecord | undefined {
 /** Lixo → `undefined` (= o relógio nasce na próxima leitura, sem regeneração retroativa). */
 export function sanitizeEnergyClock(raw: unknown): EnergyClock | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-  const r = raw as { at?: unknown; carry?: unknown };
+  const r = raw as { at?: unknown; carry?: unknown; sleep?: unknown };
   if (typeof r.at !== 'number' || !Number.isFinite(r.at)) return undefined;
   // Tolerante: carry da unidade antiga (< 120 min) NÃO é cortado (cortar = perder progresso). `settleEnergy` converte o excedente em
   // unidades inteiras na 1ª leitura (idempotente: depois o carry fica < UNIT_POINTS). Só o lixo absurdo é limitado.
   const carry = Math.min(LEGACY_ENERGY_REGEN_MINUTES * MIN_MS * 100 - 1, Math.max(0, Math.floor(fin(r.carry, 0))));
-  return { at: Math.max(0, Math.floor(r.at)), carry };
+  return r.sleep === true ? { at: Math.max(0, Math.floor(r.at)), carry, sleep: true } : { at: Math.max(0, Math.floor(r.at)), carry };
 }
 
 // ── a fome ────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -109,6 +137,15 @@ export function hungerAt(rec: HungerRecord | undefined, t: number): number {
   if (!rec) return HUNGER_MAX;
   const elapsed = Math.max(0, t - rec.at);
   return Math.min(HUNGER_MAX, Math.max(0, rec.v - elapsed * DECAY_PER_MS));
+}
+
+/**
+ * O instante (ms) em que a fome fica abaixo de "bem alimentado" (`HUNGER_FED_MIN`), a mesma régua de `needsAttention`; `null` sem
+ * registro (fome cheia). O widget guarda o INSTANTE, e não o nível, para acertar com o app fechado sem copiar a taxa no Kotlin.
+ */
+export function hungryFrom(rec: HungerRecord | undefined): number | null {
+  if (!rec) return null;
+  return rec.v < HUNGER_FED_MIN ? rec.at : Math.ceil(rec.at + (rec.v - HUNGER_FED_MIN) / DECAY_PER_MS);
 }
 
 export function tierOf(v: number): HungerTier {
@@ -157,8 +194,36 @@ function crossing(rec: HungerRecord | undefined, level: number): number {
  * Ponto-ms de regeneração entre `a` e `b` (a < b) com a fome do registro `rec`. As duas fronteiras (fome = FED_MIN e = FAIR_MIN)
  * saem do REGISTRO; o resultado é aditivo em intervalos adjacentes (fatiar não muda a soma).
  */
-export function regenPoints(rec: HungerRecord | undefined, a: number, b: number): number {
+/**
+ * Buff do CLÃ "Descanso rápido" (10/11/2026): +`BUFF_ENERGIA_PCT`% na velocidade, só dentro da janela do buff, MULTIPLICANDO tudo
+ * (fome × prato × sono: 1,5 × 1,1 = 1,65 dormindo). `undefined` = sem buff. Quem chama passa o resultado para `regenPoints`/`msUntilPoints`.
+ */
+export function clanRegenBoost(): RegenBoost | undefined {
+  const w = clanBuffWindow('energia');
+  return w ? { from: w.desde, until: w.ate, pct: BUFF_ENERGIA_PCT } : undefined;
+}
+
+export function regenPoints(rec: HungerRecord | undefined, a: number, b: number, boost?: RegenBoost, sleeping = false, clan?: RegenBoost): number {
+  const base = regenPointsCore(rec, a, b, boost, sleeping);
+  if (!clan || !(clan.pct > 0) || !(b > a)) return base;
+  const x = Math.max(a, clan.from), y = Math.min(b, clan.until);
+  return y > x ? base + Math.floor((regenPointsCore(rec, x, y, boost, sleeping) * clan.pct) / 100) : base;
+}
+
+function regenPointsCore(rec: HungerRecord | undefined, a: number, b: number, boost?: RegenBoost, sleeping = false): number {
   if (!(b > a)) return 0;
+  // 💤 dormindo: MULTIPLICA a velocidade efetiva (fome × prato). Inteiro (floor): o erro é < 1 ponto-ms por trecho, sem deriva.
+  if (sleeping) return Math.floor(regenPointsCore(rec, a, b, boost) * SLEEP_ENERGY_REGEN_BONUS);
+  let extra = 0;
+  if (boost && boost.pct > 0) {
+    // o prato acelera a velocidade da faixa (100% → 125%…), só dentro da janela dele: aditivo como o resto (fatiar não muda a soma)
+    const x = Math.max(a, boost.from), y = Math.min(b, boost.until);
+    if (y > x) extra = Math.floor((regenPointsCore(rec, x, y) * boost.pct) / 100);
+  }
+  return extra + baseRegenPoints(rec, a, b);
+}
+
+function baseRegenPoints(rec: HungerRecord | undefined, a: number, b: number): number {
   const tFed = crossing(rec, HUNGER_FED_MIN);   // até aqui: bem alimentado (fome ≥ 60)
   const tFair = crossing(rec, HUNGER_FAIR_MIN); // até aqui: pelo menos mediano
   let pts = 0;
@@ -187,17 +252,36 @@ export function settleEnergy<T extends HungerState>(prev: T, now: number, materi
   // Cheia: nada a contar. O estado só muda de tempos em tempos (re-ancora o relógio): se o MÁXIMO subir (evoluir) com o relógio velho,
   // a regeneração não pode ser contada retroativamente desde a última vez que a energia estava cheia. Quem tira a energia do máximo
   // (`setEnergy`) recomeça o relógio na hora.
-  if (energy >= max) return now - clock.at >= FULL_REANCHOR_MS ? { ...prev, energyClock: { at: now, carry: 0 } } : prev;
+  if (energy >= max) return now - clock.at >= FULL_REANCHOR_MS ? { ...prev, energyClock: clockAt(clock, now, 0) } : prev;
   if (!(now > clock.at)) return prev; // relógio que voltou não regenera nem tira
-  const total = clock.carry + regenPoints(prev.hunger, clock.at, now);
+  const total = clock.carry + regenPoints(prev.hunger, clock.at, now, regenBoostOf(prev), !!clock.sleep, clanRegenBoost());
   const gained = Math.floor(total / UNIT_POINTS);
   // `materialize`: antes de a FOME mudar (comer) o progresso pendente tem de ser gravado com a fome de ANTES — senão o intervalo
   // passado seria reavaliado com a fome nova. Sem ele (tick) o estado fica estável e o total é o mesmo na leitura seguinte.
-  if (gained <= 0) return materialize ? { ...prev, energyClock: { at: now, carry: total } } : prev;
+  if (gained <= 0) return materialize ? { ...prev, energyClock: clockAt(clock, now, total) } : prev;
   const nextEnergy = Math.min(max, energy + gained);
-  if (nextEnergy >= max) return { ...prev, energyPoints: max, energyClock: { at: now, carry: 0 } };
+  if (nextEnergy >= max) return { ...prev, energyPoints: max, energyClock: clockAt(clock, now, 0) };
   // avança `at` só até onde as unidades inteiras foram contadas: o resto continua como progresso (carry) a partir de `now`
-  return { ...prev, energyPoints: nextEnergy, energyClock: { at: now, carry: total - gained * UNIT_POINTS } };
+  return { ...prev, energyPoints: nextEnergy, energyClock: clockAt(clock, now, total - gained * UNIT_POINTS) };
+}
+
+/**
+ * 💤 O ÚNICO ponto que registra a TROCA do estado de sono no relógio da energia (REGISTRO §177). Acerta a regeneração até `now`
+ * com o estado ANTERIOR (o trecho que acabou conta como estava), e só então grava o novo: o progresso é contado POR TRECHOS
+ * (dormindo × acordado) sem erro mesmo que a troca caia no meio de uma unidade. IDEMPOTENTE: mesmo estado = mesma referência.
+ * Limitação (documentada, nada inventado): se o app esteve FECHADO quando o sono trocou, o aparelho só percebe a troca ao abrir —
+ * o intervalo fechado conta com o estado REGISTRADO por último (não há histórico do que aconteceu com o app fechado).
+ * O sono "para acordar" do 1º dia (`dayWake`) é só APRESENTAÇÃO e não conta: só o `isSleeping` real chega aqui.
+ */
+export function setSleeping<T extends HungerState>(prev: T, now: number, sleeping: boolean): T {
+  if (!!prev.energyClock?.sleep === sleeping && prev.energyClock) return prev;
+  const t = tickTime(prev, now);
+  const s = settleEnergy(prev, t, true);
+  const c = s.energyClock ?? { at: t, carry: 0 };
+  if (!!c.sleep === sleeping) return s;
+  const { sleep: _drop, ...rest } = c;
+  void _drop;
+  return { ...s, energyClock: sleeping ? { ...rest, sleep: true } : rest };
 }
 
 /**
@@ -211,7 +295,7 @@ export function setEnergy<T extends HungerState>(prev: T, now: number, fn: (curr
   const next = Math.min(max, Math.max(0, Math.floor(fin(fn(cur, max), cur))));
   if (next === cur && s.energyClock) return s;
   const clock: EnergyClock = next >= max || cur >= max
-    ? { at: now, carry: 0 } // entrou ou saiu de "cheia": o relógio recomeça agora
+    ? clockAt(s.energyClock, now, 0) // entrou ou saiu de "cheia": o relógio recomeça agora (o estado de sono continua o mesmo)
     : (s.energyClock ?? { at: now, carry: 0 });
   return { ...s, energyPoints: next, energyClock: clock };
 }
@@ -257,8 +341,10 @@ export interface EnergyStatus {
   /** Fome 0..100 arredondada. */
   hunger: number;
   tier: HungerTier;
-  /** Velocidade efetiva AGORA, em % (0, 50 ou 100 nos defaults). */
+  /** Velocidade efetiva AGORA, em % (0, 50 ou 100 nos defaults; ×1,5 dormindo: 0, 75 ou 150). */
   speed: number;
+  /** 💤 O relógio está contando como DORMINDO (bônus `SLEEP_ENERGY_REGEN_BONUS` já incluso em `speed` e `msToNext`). */
+  sleeping: boolean;
   mode: EnergyMode;
   /** Ms até a PRÓXIMA unidade de energia, projetando a queda de tier da fome. `null` = cheia ou pausada (faminto). */
   msToNext: number | null;
@@ -281,19 +367,24 @@ export const hungerDisplayLevel = (tier: HungerTier, value?: number): 0 | 1 | 2 
  * Ms (a partir de `now`) até a regeneração acumular `needPoints`, projetando a fome descendo SEM nova refeição. `null` se nunca.
  * Segmentos: [agora, tFed) a 100%, [tFed, tFair) a 50%, depois 0.
  */
-function msUntilPoints(rec: HungerRecord | undefined, now: number, needPoints: number): number | null {
+function msUntilPoints(rec: HungerRecord | undefined, now: number, needPoints: number, boost?: RegenBoost, sleeping = false, clan = clanRegenBoost()): number | null {
   if (needPoints <= 0) return 0;
   const tFed = crossing(rec, HUNGER_FED_MIN);
   const tFair = crossing(rec, HUNGER_FAIR_MIN);
-  const segs: Array<[number, number, number]> = [
-    [now, Math.max(now, tFed), REGEN_FED_PCT],
-    [Math.max(now, tFed), Math.max(now, tFair), REGEN_FAIR_PCT],
-  ];
+  const cuts = [tFed, tFair, ...(boost ? [boost.from, boost.until] : []), ...(clan ? [clan.from, clan.until] : [])].filter(t => Number.isFinite(t) && t > now);
+  const points = [now, ...Array.from(new Set(cuts)).sort((x, y) => x - y), Infinity];
+  const pctAt = (t: number): number => {
+    const base = t < tFed ? REGEN_FED_PCT : t < tFair ? REGEN_FAIR_PCT : REGEN_STARVING_PCT;
+    const withBoost = boost && t >= boost.from && t < boost.until ? base * (1 + boost.pct / 100) : base;
+    const withSleep = sleeping ? withBoost * SLEEP_ENERGY_REGEN_BONUS : withBoost;
+    return clan && t >= clan.from && t < clan.until ? withSleep * (1 + clan.pct / 100) : withSleep;
+  };
   let left = needPoints;
-  for (const [a, b, pct] of segs) {
-    const len = b - a;
-    if (len <= 0 || pct <= 0) continue;
-    const cap = len * pct;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i], b = points[i + 1];
+    const pct = pctAt(a);
+    if (pct <= 0) continue;
+    const cap = (b - a) * pct;
     if (left <= cap) return Math.max(1, Math.ceil((a - now) + left / pct));
     left -= cap;
   }
@@ -311,16 +402,18 @@ export function energyStatus(state: HungerState, nowMs: number): EnergyStatus {
   const energy = Math.max(0, Math.floor(fin(s.energyPoints, 0)));
   const v = hungerAt(s.hunger, now);
   const tier = tierOf(v);
-  const speed = speedPct(tier);
+  const sleeping = !!s.energyClock?.sleep;
+  const speed = speedPct(tier) * (sleeping ? SLEEP_ENERGY_REGEN_BONUS : 1);
   const drop = tier === 'fed' ? crossing(s.hunger, HUNGER_FED_MIN) : tier === 'fair' ? crossing(s.hunger, HUNGER_FAIR_MIN) : Infinity;
   const msToHungerDrop = Number.isFinite(drop) ? Math.max(0, drop - now) : null;
-  const base = { energy, max, hunger: Math.round(v), tier, speed, msToHungerDrop };
+  const base = { energy, max, hunger: Math.round(v), tier, speed, sleeping, msToHungerDrop };
   if (energy >= max) return { ...base, mode: 'full', msToNext: null };
   if (speed <= 0) return { ...base, mode: 'paused', msToNext: null };
   // `settleEnergy` só grava quando uma unidade fecha: o que andou desde `clock.at` ainda é progresso pendente.
   const c = s.energyClock;
-  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now) : 0) : 0;
-  return { ...base, mode: speed >= 100 ? 'regen' : 'slow', msToNext: msUntilPoints(s.hunger, now, UNIT_POINTS - pending) };
+  const boost = regenBoostOf(s);
+  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now, boost, sleeping, clanRegenBoost()) : 0) : 0;
+  return { ...base, mode: speed >= 100 ? 'regen' : 'slow', msToNext: msUntilPoints(s.hunger, now, UNIT_POINTS - pending, boost, sleeping) };
 }
 
 /**
@@ -334,8 +427,10 @@ export function msToFullEnergy(state: HungerState, nowMs: number): number | null
   const energy = Math.max(0, Math.floor(fin(s.energyPoints, 0)));
   if (energy >= max) return 0;
   const c = s.energyClock;
-  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now) : 0) : 0;
-  return msUntilPoints(s.hunger, now, (max - energy) * UNIT_POINTS - pending);
+  const boost = regenBoostOf(s);
+  const sleeping = !!c?.sleep;
+  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now, boost, sleeping, clanRegenBoost()) : 0) : 0;
+  return msUntilPoints(s.hunger, now, (max - energy) * UNIT_POINTS - pending, boost, sleeping);
 }
 
 /** Texto curto do timer ("1 h 05 min" / "1h 05m", "42 min"), arredondado PARA CIMA em minutos. */

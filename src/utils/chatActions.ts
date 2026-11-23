@@ -11,10 +11,11 @@
  * Schema e paridade com o servidor: docs/CHAT-SOULMON.md.
  */
 import type { ActivityCategory } from '../types/attributes';
+import { LIFE_AREAS, normalizeCategory } from '../types/categories';
 import type { Effort, Schedule } from '../types/taskModel';
 import type { Activity, Task } from '../contexts/GameStateContext';
 
-export const CHAT_CATEGORIES: readonly ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+export const CHAT_CATEGORIES: readonly ActivityCategory[] = [...LIFE_AREAS];
 export const MAX_CHAT_ACTIONS = 2;
 export const MAX_CHAT_NAME = 60;
 
@@ -37,7 +38,8 @@ function name(v: unknown): string | null {
   const t = Array.from(v).map(ch => (badChar(ch) ? ' ' : ch)).join('').replace(/\s+/g, ' ').trim().slice(0, MAX_CHAT_NAME).trim();
   return t || null;
 }
-const cat = (v: unknown): ActivityCategory | null => (CHAT_CATEGORIES as readonly unknown[]).includes(v) ? (v as ActivityCategory) : null;
+/** Aceita o id atual E o antigo (`Health`…): o servidor de IA ainda fala o vocabulário velho — traduz aqui. */
+const cat = (v: unknown): ActivityCategory | null => normalizeCategory(v) ?? null;
 const isInt = (v: unknown, lo: number, hi: number): v is number => typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi;
 const time = (v: unknown): string | undefined => (typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : undefined);
 const date = (v: unknown): string | undefined => {

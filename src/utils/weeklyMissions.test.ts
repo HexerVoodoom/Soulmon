@@ -22,7 +22,7 @@ describe('weeklyMissions — o sorteio é da SEMANA, não da abertura', () => {
     const a = weeklyMissionsFor('2026-W37').map(m => m.id);
     const b = weeklyMissionsFor('2026-W37').map(m => m.id);
     expect(a).toEqual(b);
-    expect(a).toHaveLength(WEEKLY_MISSION_COUNT);
+    expect(a).toHaveLength(WEEKLY_MISSION_COUNT + 2); // + as duas fixas (journal, Focus Workshop)
   });
 
   it('semanas diferentes dão listas diferentes', () => {

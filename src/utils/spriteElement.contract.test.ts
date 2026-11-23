@@ -19,7 +19,7 @@ const ls = (d: string) => fs.readdirSync(path.join(ART, d)).filter(f => f.endsWi
 const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
 /** O elemento do PROMPT de cada simulado (campo `base` de prompts.json do lote; a paleta do prompt confere). Embutido: não lê E:. */
-const PROMPT_ELEMENT: Record<string, string> = {"sim_0001":"planta","sim_0002":"industrial","sim_0003":"luz","sim_0004":"luz","sim_0005":"agua","sim_0006":"luz","sim_0007":"planta","sim_0008":"industrial","sim_0009":"terra","sim_0010":"industrial","sim_0011":"luz","sim_0012":"fogo","sim_0013":"sombra","sim_0014":"terra","sim_0015":"ar","sim_0016":"industrial","sim_0017":"fogo","sim_0018":"ar","sim_0019":"terra","sim_0020":"fogo","sim_0021":"planta","sim_0022":"ar","sim_0023":"ar","sim_0024":"fogo","sim_0025":"fogo","sim_0026":"ar","sim_0027":"agua","sim_0028":"agua","sim_0029":"luz","sim_0030":"terra","sim_0031":"sombra","sim_0032":"sombra","sim_0033":"planta","sim_0034":"fogo","sim_0035":"industrial","sim_0036":"fogo","sim_0037":"sombra","sim_0038":"terra","sim_0039":"ar","sim_0040":"terra","sim_0041":"luz","sim_0042":"sombra","sim_0043":"terra","sim_0044":"industrial","sim_0045":"sombra","sim_0046":"planta","sim_0047":"sombra","sim_0048":"terra","sim_0049":"industrial","sim_0050":"luz"};
+const PROMPT_ELEMENT: Record<string, string> = {"sim_0001":"planta","sim_0002":"industrial","sim_0003":"luz","sim_0004":"luz","sim_0005":"agua","sim_0006":"luz","sim_0007":"planta","sim_0008":"industrial","sim_0009":"terra","sim_0010":"industrial","sim_0011":"luz","sim_0012":"fogo","sim_0013":"sombra","sim_0014":"terra","sim_0015":"ar","sim_0016":"industrial","sim_0017":"fogo","sim_0018":"ar","sim_0019":"terra","sim_0020":"fogo","sim_0021":"planta","sim_0022":"ar","sim_0023":"ar","sim_0024":"fogo","sim_0025":"fogo","sim_0026":"ar","sim_0027":"agua","sim_0028":"agua","sim_0029":"luz","sim_0030":"terra","sim_0031":"sombra","sim_0032":"sombra","sim_0033":"planta","sim_0034":"fogo","sim_0035":"industrial","sim_0036":"fogo","sim_0037":"sombra","sim_0038":"terra","sim_0039":"ar","sim_0040":"terra","sim_0041":"luz","sim_0042":"sombra","sim_0043":"terra","sim_0044":"industrial","sim_0045":"sombra","sim_0046":"planta","sim_0047":"sombra","sim_0048":"terra","sim_0049":"industrial","sim_0050":"luz","sim_0051":"agua","sim_0052":"luz","sim_0053":"agua","sim_0054":"sombra","sim_0055":"terra","sim_0056":"ar","sim_0057":"terra","sim_0058":"planta","sim_0059":"terra","sim_0060":"planta","sim_0061":"ar","sim_0062":"terra","sim_0063":"agua","sim_0064":"ar","sim_0065":"fogo","sim_0066":"fogo","sim_0067":"fogo","sim_0068":"planta","sim_0069":"luz","sim_0070":"sombra","sim_0071":"planta","sim_0072":"agua","sim_0073":"planta","sim_0074":"luz","sim_0075":"sombra","sim_0076":"agua","sim_0077":"ar","sim_0078":"fogo","sim_0079":"planta","sim_0080":"ar","sim_0081":"luz","sim_0082":"sombra","sim_0083":"industrial","sim_0084":"luz","sim_0085":"agua","sim_0086":"terra","sim_0087":"fogo","sim_0088":"sombra","sim_0089":"planta","sim_0090":"sombra","sim_0091":"fogo","sim_0092":"agua","sim_0093":"planta","sim_0094":"fogo","sim_0095":"fogo","sim_0096":"industrial","sim_0097":"ar","sim_0098":"industrial","sim_0099":"luz","sim_0100":"ar","sim_0101":"agua","sim_0102":"agua","sim_0103":"planta","sim_0104":"luz","sim_0105":"planta","sim_0106":"ar","sim_0107":"industrial","sim_0108":"sombra","sim_0109":"planta","sim_0110":"industrial","sim_0111":"fogo","sim_0112":"terra","sim_0113":"agua","sim_0114":"ar","sim_0115":"planta","sim_0116":"agua","sim_0117":"terra","sim_0118":"sombra","sim_0119":"luz","sim_0120":"ar","sim_0121":"ar","sim_0122":"luz","sim_0123":"ar","sim_0124":"agua","sim_0125":"fogo","sim_0126":"luz","sim_0127":"fogo","sim_0128":"industrial","sim_0129":"terra","sim_0130":"planta","sim_0131":"agua","sim_0132":"terra","sim_0133":"planta","sim_0134":"planta","sim_0135":"agua","sim_0136":"fogo","sim_0137":"sombra","sim_0138":"agua","sim_0139":"ar","sim_0140":"terra","sim_0141":"sombra","sim_0142":"luz","sim_0143":"industrial","sim_0144":"sombra","sim_0145":"planta","sim_0146":"ar","sim_0147":"industrial","sim_0148":"industrial","sim_0149":"terra","sim_0150":"sombra","sim_0151":"agua","sim_0152":"industrial","sim_0153":"industrial","sim_0154":"sombra","sim_0155":"industrial","sim_0156":"agua","sim_0157":"luz","sim_0158":"fogo","sim_0159":"fogo","sim_0160":"sombra","sim_0161":"terra","sim_0162":"industrial","sim_0163":"agua","sim_0164":"planta","sim_0165":"luz","sim_0166":"luz","sim_0167":"ar","sim_0168":"ar","sim_0169":"terra","sim_0170":"industrial"};
 const NOME_DIFERE = new Set(['fossil', 'melodia', 'orvalho', 'circulo_feerico', 'lamina_purpurina', 'brinquedo']);
 const ORACLE_IDS = ['agua', 'fogo', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial'];
 
@@ -30,11 +30,11 @@ describe('todo arquivo de criatura tem elemento', () => {
     for (const el of els) expect(SPRITE_ELEMENT['novo:' + el], el).toBe(el);
     expect(new Set(NOVOS_DATA.map(n => n.element))).toEqual(els);
   });
-  it('combinados/: elemento = id fundido do manifest, 261 de 261', () => {
+  it('combinados/: elemento = id fundido do manifest, 267 de 267', () => {
     const man = JSON.parse(fs.readFileSync(path.join(ART, 'novos-' + 'arquivo/manifest.json'), 'utf8')).combined as { n: number; file: string; combination: string; components: string[] }[];
     const files = ls('novos-' + 'arquivo/combinados');
-    expect(files.length).toBe(261);
-    expect(man.length).toBe(261);
+    expect(files.length).toBe(267);
+    expect(man.length).toBe(267);
     for (const m of man) {
       const num = String(m.n).padStart(3, '0');
       expect(files, num).toContain(m.file.replace('combinados/', ''));
@@ -49,6 +49,7 @@ describe('todo arquivo de criatura tem elemento', () => {
       expect(rosterEntryElement(e)).toBe(e.element);
       // componentes de 2 elementos batem com o manifest
       const m = man.find(x => String(x.n).padStart(3, '0') === e.artFile!.split('-')[0]);
+      if (!m && Number(e.artFile!.split('-')[0]) >= 262) continue; // lote 4 (05/11/2026): sprite próprio ainda não gerado, o roster usa o fallback da criatura base (`elementosLote4.test.ts`)
       expect(m, e.artFile).toBeDefined();
       expect([...e.elements]).toEqual(m!.components.slice(0, 2));
     }
@@ -76,14 +77,17 @@ describe('sem hash/sorteio de elemento para arte conhecida', () => {
   });
 });
 
-describe('simulados: elemento = o do prompt (embutido)', () => {
-  it('50 de 50, e o fallback de arte tem o MESMO elemento', async () => {
+describe('simulados: elemento = o que a arte mostra (revisão 09/11/2026) ou o do prompt (embutido)', () => {
+  it('170 de 170, e o fallback de arte tem o MESMO elemento', async () => {
     // @ts-ignore JS do servidor
-    const { SIMULADOS, ART_LINE_BY_ELEMENT } = await import('../../functions/api/_simulados.data.js');
-    expect(SIMULADOS.length).toBe(50);
+    const { SIMULADOS, ART_LINE_BY_ELEMENT, SIM_ELEMENTO_REVISADO } = await import('../../functions/api/_simulados.data.js');
+    expect(SIMULADOS.length).toBe(170);
     for (const s of SIMULADOS) {
       expect(ORACLE_IDS).toContain(PROMPT_ELEMENT[s.id]);
-      expect(s.element, s.id).toBe(PROMPT_ELEMENT[s.id]);
+      // 09/11/2026: o elemento segue o que a ARTE mostra (SIM_ELEMENTO_REVISADO); fora da revisão vale o do prompt.
+      const rev = SIM_ELEMENTO_REVISADO[s.id];
+      if (rev) expect(rev.de, s.id).toBe(PROMPT_ELEMENT[s.id]);
+      expect(s.element, s.id).toBe(rev ? rev.para : PROMPT_ELEMENT[s.id]);
       if (s.artLine) expect(STARTER_ELEMENT[s.artLine as keyof typeof STARTER_ELEMENT] ?? LINE_ELEMENT[s.artLine], s.id).toBe(s.element);
       expect(s.artLine, s.id).toBe(ART_LINE_BY_ELEMENT[s.element] ?? '');
     }

@@ -12,7 +12,7 @@
  * nada de texto livre, lugar, foto ou pessoa. A higienização descarta o que
  * não for isso.
  */
-import { CROSSINGS_EMPTY, HOME_REGION, LOG_MAX, MISSION_WINDOW_MS, STROLL_MIN_MS, type CrossingsState, type RegionId } from '../types/travessias';
+import { CROSSINGS_EMPTY, HOME_REGION, LOG_MAX, MISSION_WINDOW_MS, type CrossingsState, type RegionId } from '../types/travessias';
 import { dayKeyToIso } from './playerDay';
 
 /**
@@ -103,7 +103,7 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   return {
     opened, active, pending, destination, hidden: r.hidden === true,
     doneDay: asDayKey(r.doneDay), pickDay, pickAt, log: log.slice(-LOG_MAX), score, trip,
-    claimDay: asDayKey(r.claimDay),
+    claimDay: asDayKey(r.claimDay), sceneDay: asDayKey(r.sceneDay),
   };
 }
 
@@ -143,16 +143,6 @@ export function missionLive(c: CrossingsState, dayKey: string, now?: number): bo
  */
 export const crossingsTouchMap = (c: CrossingsState): boolean =>
   c.opened.length > 0 || c.pending.length > 0;
-
-/**
- * Quanto falta (ms) para o passeio poder ser concluído: a espera de `STROLL_MIN_MS` conta da ESCOLHA (`pickAt`). Vive AQUI e não em
- * `travessias.ts` de propósito: o `App` precisa dela na entrada, e `travessias.ts` carrega os catálogos de regiões/viagens
- * (importá-lo estaticamente custou ~37 KB no chunk de entrada). `travessias.ts` a reexporta para os demais chamadores.
- */
-export function strollWaitMs(s: CrossingsState, now?: number): number {
-  if (s.pickAt === null || now === undefined) return 0;
-  return Math.max(0, s.pickAt + STROLL_MIN_MS - now);
-}
 
 /**
  * A LINHA "Faça um passeio" do menu de Missões da Home (07/10/2026). O Passeio

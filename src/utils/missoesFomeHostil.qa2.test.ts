@@ -28,7 +28,7 @@ describe('QA2 missões e fome: entradas hostis', () => {
   });
   it('claim duas vezes paga uma', () => {
     for (const m of dailyMissionsFor('D', 99)) {
-      let s: any = { dailyMissions: bumpDaily(undefined, 'D', m.event) };
+      let s: any = { dailyMissions: bumpDaily(undefined, 'D', m.event, m.target) };
       const a = claimDaily(s, 'D', 99, m.id); const b = claimDaily(a.state, 'D', 99, m.id);
       expect(a.paid).not.toBeNull(); expect(b.paid).toBeNull();
     }

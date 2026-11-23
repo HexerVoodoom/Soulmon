@@ -34,6 +34,8 @@
 import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
+import { ChevronAcao } from '../ui/ChevronAcao';
+import { useLongPress } from '../../hooks/useLongPress';
 import { SM2_SHADOW_CARD, sm2Button, sm2Hint } from '../form/FormKit';
 
 /** A superfície do painel — a mesma do resto do sistema (FormKit). */
@@ -94,6 +96,15 @@ export function checkBoxStyle(
       ? '2px dashed var(--sm2-muted)'
       : '2px solid var(--sm2-check-fill)',
   };
+}
+
+/**
+ * Linha de ESCOLHA que leva a caixa do check (modal "Qual tarefa você vai fazer?", pickers). Selecionada NÃO enche o botão de
+ * `--sm2-primary-fill`: o check é `--sm2-primary-ink` (turquesa) e sumia sobre o fill turquesa do botão `primary`. Fica o botão
+ * `outline` (fundo de superfície) e a seleção vira borda turquesa de 2px, então o check turquesa tem contraste com o fundo.
+ */
+export function pickRowStyle(base: CSSProperties, checked: boolean): CSSProperties {
+  return checked ? { ...base, border: '2px solid var(--sm2-primary-ink)' } : base;
 }
 
 /** O check turquesa com o glow baixo: só existe marcado (nada de `opacity: 0`). */
@@ -212,6 +223,12 @@ export interface RitualRowProps {
   /** Linha secundária pequena, FORA do botão, alinhada ao texto (14/10/2026: só o prazo e o
    *  convite da assombrada, via `TaskMeta lean`). Some quando a linha está feita. */
   below?: ReactNode;
+  /** NA MESMA LINHA do nome, logo na frente (REGISTRO §413: o contador de passos do hábito de caminhar, em turquesa — antes ia embaixo).
+   *  Some com a linha feita, como o `below`. */
+  inline?: ReactNode;
+  /** AÇÃO da linha: uma SETA turquesa (`ChevronAcao`) no FIM da linha, à direita, sem texto (dono, 14/11/2026, REGISTRO §365: reverte o
+   *  "link na frente" de 13/11). O `label` vira o nome acessível. Some quando a linha está feita. */
+  action?: { label: string; onClick: () => void; kind?: string };
   /** Quantos filhos estão feitos (0 = nenhum) e quantos existem: alimenta o estado `mixed` do pai. */
   value: number;
   max: number;
@@ -225,6 +242,11 @@ export interface RitualRowProps {
    */
   haunted?: boolean;
   /**
+   * ⭐ TAREFA BÔNUS (13/11/2026, `utils/bonusTask.ts`): a MESMA linha e a mesma caixa; a ÚNICA diferença é o título no
+   * bronze do checkbox (`--sm2-check-fill`). Nenhum texto explicativo na linha (pedido do dono).
+   */
+  bonus?: boolean;
+  /**
    * Linha de HISTÓRICO (concluída hoje, já fora de `tasks`): editar é inerte
    * (`aria-disabled`), o checkbox é cheio e inerte. Ela existe para o
    * "feitos/total" contar o que foi feito (A4) — some na virada do dia.
@@ -235,6 +257,8 @@ export interface RitualRowProps {
   /** `View all`: a linha NÃO marca nada — sem checkbox, o toque inteiro abre a edição. */
   editOnly?: boolean;
   onEdit?: () => void;
+  /** Tocar e SEGURAR (~500 ms) ou menu de contexto (`useLongPress`): a ação secundária da linha. */
+  onLongPress?: () => void;
   /** Expansor das etapas, no lugar do checkbox. */
   expandable?: boolean;
   expanded?: boolean;
@@ -250,15 +274,17 @@ export interface RitualRowProps {
 }
 
 export function RitualRow({
-  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
-  onToggle, editOnly = false, onEdit, expandable = false, expanded = false, onExpand,
-  children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
+  kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, bonus = false, inert = false,
+  onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
+  children, language, toggleLabelPt, toggleLabelEn, flipKey, below, inline, action,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
+  const segurar = useLongPress(onLongPress);
   const isHaunted = haunted && !done;
   /* A tinta do título: uma só regra, por estado (D-A3). */
   const tinta = isHaunted
     ? 'var(--sm2-haunted)'
+    : bonus ? 'var(--sm2-check-fill)'
     : (done || dimmed) ? 'var(--sm2-muted)' : 'var(--sm2-ink)';
   /* PAI × FILHOS (beta-2, 2.2): linha com filhos NUNCA conclui direto. O
      checkbox à esquerda só REFLETE (marcado = todos feitos; `mixed` = alguns) e
@@ -269,10 +295,13 @@ export function RitualRow({
     ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
     : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'));
   const abrir = pai && !done && !expanded ? onExpand : undefined;
-  /* A1: o que o toque na linha faz. Pai: abre/fecha as etapas. Folha: marca (se puder). */
+  /* §382 (dono, 14/11/2026): linha com AÇÃO (hábito ligado a prédio) — tocar no NOME faz o mesmo que a seta (abre o prédio);
+     só o checkbox marca. Sem ação, a linha segue como antes. */
+  const irAoPredio = action && !done && !editOnly ? action.onClick : undefined;
+  /* A1: o que o toque na linha faz. Pai: abre/fecha as etapas. Folha: marca (se puder). Com ação: abre o prédio. */
   const acionar: (() => void) | undefined = editOnly
     ? onEdit
-    : pai ? onExpand : (done || dimmed || inert ? undefined : onToggle);
+    : irAoPredio ?? (pai ? onExpand : (done || dimmed || inert ? undefined : onToggle));
   const nomeSpan = (
     <span
       className="sm2-ritual-name"
@@ -286,16 +315,29 @@ export function RitualRow({
       {name}
     </span>
   );
+  /* O contador vem NA FRENTE do nome, na mesma linha, em turquesa (`primary-ink`); o nome é quem encolhe. */
+  const linhaDoNome = (corpo: ReactNode) => (inline && !done ? (
+    <span data-ritual-inline-row style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+      <span style={{ flex: '0 1 auto', minWidth: 0, display: 'flex' }}>{corpo}</span>
+      <span data-ritual-inline style={{ flex: 'none', whiteSpace: 'nowrap', fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-primary-ink)' }}>{inline}</span>
+    </span>
+  ) : corpo);
   return (
     <li
       data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
+      data-bonus={bonus ? 'true' : undefined}
       data-kind={kind}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
     >
-      <div className="sm2-ritual-row" style={{ gap: GAP }}>
+      <div
+        className="sm2-ritual-row"
+        data-long-press={onLongPress ? 'true' : undefined}
+        {...segurar}
+        style={{ gap: GAP, ...(onLongPress ? { WebkitTouchCallout: 'none', userSelect: 'none' } : {}) }}
+      >
         {/* O CHECKBOX BRONZE à ESQUERDA do nome (beta-2, 2.2). O selo do tipo
             (tarefa/hábito) saiu: a lista já se divide em `Tasks`/`Habits`, e o
             ícone repetia a informação. */}
@@ -331,13 +373,28 @@ export function RitualRow({
             >
               {nomeSpan}
             </button>
-          ) : nomeSpan}
+          ) : irAoPredio && action ? (
+            <button
+              type="button"
+              className="sm2-ritual-edit"
+              data-ritual-name-action={action.kind}
+              onClick={(e) => { e.stopPropagation(); irAoPredio(); }}
+              aria-label={`${name}: ${action.label}`}
+              style={{ cursor: 'pointer' }}
+            >
+              {nomeSpan}
+            </button>
+          ) : linhaDoNome(nomeSpan)}
           {subtitle && (
             <span className="sm2-ritual-sub" title={subtitle}>
               {subtitle}
             </span>
           )}
         </div>
+
+        {action && !done && (
+          <ChevronAcao data-ritual-action={action.kind} label={action.label} onClick={action.onClick} />
+        )}
 
         {expandable ? (
           <button

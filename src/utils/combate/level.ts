@@ -136,14 +136,46 @@ export function distributePoints(level: number, weights: StatWeights, bounds: Sh
  * itself, EXACTLY: the curve and the rhythm are linear in (1 + stat/K), so (1 + def'/K) = (1 + def/K)(1 + b) makes the
  * foe need (1 + b) times more hits, and the same on SPD makes the attacks (1 + b) times more frequent. The engine does not change.
  */
-export function combatantAt(level: number, weights: StatWeights, bonus: number | Partial<AttrBonus> = 0, bounds: ShareBounds = SHARE_BOUNDS): Combatant {
+export function combatantAt(level: number, weights: StatWeights, bonus: number | Partial<AttrBonus> = 0, bounds: ShareBounds = SHARE_BOUNDS, floor?: StatFloor): Combatant {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights, bounds);
-  if (typeof bonus === 'number') return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  // "Evoluir nunca reduz" (REGISTRO §229): o piso (do estágio certo) entra ANTES do bônus de PvP, que dobra em cima do valor final.
+  const f = floor && floor.s === stageOfLevel(L) ? floor : undefined;
+  const atk = Math.max(b + p.atk, f?.atk ?? 0), def0 = Math.max(b + p.def, f?.def ?? 0), spd0 = Math.max(b + p.spd, f?.spd ?? 0);
+  if (typeof bonus === 'number') return { level: L, atk, def: def0, spd: spd0, hp: autoHp(L), bonus };
   const ab = toAttrBonus(bonus);
   const fold = (v: number, x: number) => (x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v);
-  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
+  return { level: L, atk, def: fold(def0, ab.def), spd: fold(spd0, ab.spd), hp: autoHp(L), bonus: ab.atk };
+}
+
+/**
+ * PISO DE ATRIBUTO DA EVOLUÇÃO (REGISTRO §229). Ao evoluir, os pontos de alinhamento zeram (§209) e a distribuição volta ao
+ * equilíbrio; nos 1–2 últimos levels de Ultimate e Mega isso tirava 1 ponto de Defesa/Velocidade (nunca de Ataque).
+ * `s` = índice do estágio em que o piso vale; fora dele o piso é inerte (queda e re-evolução o reescrevem, nunca o somam).
+ */
+export interface StatFloor {
+  readonly s: number;
+  readonly atk: number;
+  readonly def: number;
+  readonly spd: number;
+}
+
+/** O maior valor que UM atributo pode ter no estágio `s` (base + teto de pontos no último level): o teto legítimo de um piso gravado no estágio seguinte. */
+export function statMaxOfStage(s: number): number {
+  const L = STAGE_LEVEL_CAPS[s];
+  return stageBase(s) + Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+}
+
+/** Lê um piso do save (lixo → `undefined`). Inteiros; `s` em 1..4; cada valor limitado a `statMaxOfStage(s - 1)`, então um save adulterado nunca passa do que um jogador legítimo teria. */
+export function sanitizeStatFloor(v: unknown): StatFloor | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  const s = o.s;
+  if (typeof s !== 'number' || !Number.isInteger(s) || s < 1 || s >= STAGE_LEVEL_CAPS.length) return undefined;
+  const max = statMaxOfStage(s - 1);
+  const c = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(max, Math.max(0, Math.floor(x))) : 0);
+  return { s, atk: c(o.atk), def: c(o.def), spd: c(o.spd) };
 }
 
 /** Levels sampled by the ruler: first, middle and last of every stage (15 levels). */

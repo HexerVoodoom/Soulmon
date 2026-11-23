@@ -11,8 +11,8 @@
 | Demais países | Conversão automática da Play (decidido pelo dono) |
 | Quando trocar | No dia em que `ONBOARDING_VELADO` for ligado (PERGUNTAS-DO-DONO, 30/10, item 1) |
 | Código | `FULL_UNLOCK_PRICE_LABEL(_USD)` já seguem D9 com o interruptor ligado; `publishedPrice.test.ts` trava o HTML |
-| Assinatura trimestral de cenários | [preço a definir pelo dono] (sem decisão nova neste plano) |
-| Pacotes de créditos | [preço a definir pelo dono] |
+| Assinatura trimestral de cenários | R$ 9,90 a cada 3 meses (`soulmon_cosmetic_quarterly`) — **CONFIRMADO pelo dono 01/11** |
+| Pacotes de créditos | 60 = R$ 4,90 · 150 = R$ 9,90 · 400 = R$ 19,90 (`CREDIT_PACKS`) — **CONFIRMADO pelo dono 01/11** |
 
 ## 2. Regras free / paid (para a descrição e o suporte)
 
@@ -54,7 +54,7 @@ O Oráculo vira um Velado ancião (D1) e há a Guilda de Mercenários com Velado
 
 ## 7. Lacunas abertas
 
-1. Assinatura trimestral e créditos: [preço a definir pelo dono].
+1. Assinatura trimestral e créditos: confirmados pelo dono em 01/11 (tabela da §1).
 2. Contagem de caracteres: ver §8.
 5. Termos §8 (IA/crise) e MIS-15 já constam em `termos.html`; não foram alterados no rascunho.
 

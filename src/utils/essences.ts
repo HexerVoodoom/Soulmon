@@ -6,15 +6,17 @@
  * Fenda já rendeu no dia do jogador — essa tem teto diário `ESSENCE_AWAY_DAILY_CAP`; a luta ativa NÃO tem teto).
  * A forma é espelhada no servidor (`functions/api/_essences.js`, `_dayCounters.js`; paridade em `essences.parity.test.js`).
  */
-import { BASE_ELEMENT_IDS, elementIdOfFoe, isDexElement } from './elementDex';
+import { BASE_ELEMENT_IDS, elementIdOfFoe, isEssenceElement } from './elementDex';
+import { ELEMENTO_NEUTRO_ID } from './elementoNeutro';
 import { NIGHTMARE_ELEMENT } from './nightmareElement';
 import { elementLabel } from './elementLabels';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
+import { bumpDailyIn } from './dailyMissions';
 
 /** Teto por elemento no save (sanidade, não regra de jogo). */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
-/** 210 do dex + `pesadelo`. */
-export const ESSENCE_MAX_KEYS = 211;
+/** 273 do catálogo (210 + 63 curados) + `pesadelo` + `neutro`. */
+export const ESSENCE_MAX_KEYS = 271;
 /** Teto diário da descida AUTOMÁTICA (jogador fora / relatório de volta). Constante ÚNICA (o servidor limita o contador a 999). */
 export const ESSENCE_AWAY_DAILY_CAP = 30;
 
@@ -26,6 +28,9 @@ export const essenceQtyOfBoss = (level: number): number => 5 + Math.floor(Math.m
 
 export interface EssenceDrop { id: string; qty: number }
 
+/** Quem deixa essência ao cair: os 273 do catálogo e o `neutro` do Corvo (o Pesadelo vem do próprio caminho dele). */
+export const ehEssenciaColetavel = (id: unknown): id is string => isEssenceElement(id) || id === ELEMENTO_NEUTRO_ID;
+
 /** Só a FORMA (a mesma do servidor): os chefes da Feira têm elemento próprio, fora dos 210 do dex, e dropam a essência dele. */
 const isEssenceId = (id: unknown): id is string => typeof id === 'string' && /^[a-z_]{2,24}$/.test(id);
 
@@ -35,7 +40,22 @@ export function essenceDropOfFoe(elements: readonly (string | undefined | null)[
   return id ? { id, qty: essenceQtyOfStage(stage) } : undefined;
 }
 
-/** Forma segura (espelho exato de `sanitizeEssences` do servidor): chaves `[a-z_]{2,24}`, valores inteiros 1..teto, no máx. 211 chaves. */
+/**
+ * Os drops de um inimigo (08/11/2026): a essência do elemento dele (como sempre) E, se o elemento do SPRITE for um curado, a do
+ * curado também ("equivalentes aos demais"). Mesmo critério de `dexIdsOfFoe`.
+ */
+export function essenceDropsOfFoe(foe: { elements?: readonly (string | undefined | null)[] | null; element?: string | null } | undefined | null, stage?: string | null): EssenceDrop[] {
+  if (!foe) return [];
+  const qty = essenceQtyOfStage(stage);
+  const ids = new Set<string>();
+  const a = elementIdOfFoe(foe.elements);
+  if (a) ids.add(a);
+  // 16/11/2026 (dono): o Neutro (o Corvo) também deixa essência, por isso `ehEssenciaColetavel` (ele continua FORA de `ESSENCE_ELEMENT_IDS`: sem preço no Cambista).
+  if (ehEssenciaColetavel(foe.element)) ids.add(foe.element);
+  return [...ids].map(id => ({ id, qty }));
+}
+
+/** Forma segura (espelho exato de `sanitizeEssences` do servidor): chaves `[a-z_]{2,24}`, valores inteiros 1..teto, no máx. 271 chaves. */
 export function sanitizeEssences(raw: unknown): Record<string, number> {
   const out: Record<string, number> = {};
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
@@ -82,24 +102,31 @@ type EssenceState = { essences?: Record<string, number>; essenceAway?: EssenceAw
 export function applyEssences<T extends EssenceState>(prev: T, drops: readonly (EssenceDrop | undefined)[]): T {
   const have = prev.essences ?? {};
   let next: Record<string, number> | null = null;
+  let ganhas = 0;
   for (const d of drops) {
     if (!d || !isEssenceId(d.id) || !(d.qty >= 1)) continue;
     next ??= { ...have };
     next[d.id] = Math.min(ESSENCE_MAX_PER_ELEMENT, (next[d.id] ?? 0) + Math.floor(d.qty));
+    ganhas += Math.floor(d.qty);
   }
-  return next ? { ...prev, essences: next } : prev;
+  // Missão da Vesca (12/11/2026, REGISTRO §314): "coletar 30 essências" conta tudo que ENTROU (drop, Cambista, chefe da Feira, Pesadelo).
+  return next ? bumpDailyIn({ ...prev, essences: next }, 'essencia', ganhas) : prev;
 }
 
 /** A versão da descida AUTOMÁTICA: corta o que passar do teto do dia (`dayKey` = dia do jogador) e conta o que entrou. */
-export function applyEssencesAway<T extends EssenceState>(prev: T, drop: EssenceDrop | undefined, dayKey: string): T {
-  if (!drop || !isEssenceId(drop.id) || !(drop.qty >= 1)) return prev;
-  const cur = sanitizeEssenceAway(prev.essenceAway);
-  const used = cur && cur.day === dayKey ? cur.count : 0;
-  const room = ESSENCE_AWAY_DAILY_CAP - used;
-  if (room <= 0) return prev;
-  const qty = Math.min(room, Math.floor(drop.qty));
-  const comDrop = applyEssences(prev, [{ id: drop.id, qty }]);
-  return { ...comDrop, essenceAway: { day: dayKey, count: used + qty } };
+export function applyEssencesAway<T extends EssenceState>(prev: T, dropOrDrops: EssenceDrop | readonly (EssenceDrop | undefined)[] | undefined, dayKey: string): T {
+  const drops = Array.isArray(dropOrDrops) ? dropOrDrops : [dropOrDrops as EssenceDrop | undefined];
+  let cur: T = prev;
+  for (const drop of drops) {
+    if (!drop || !isEssenceId(drop.id) || !(drop.qty >= 1)) continue;
+    const away = sanitizeEssenceAway(cur.essenceAway);
+    const used = away && away.day === dayKey ? away.count : 0;
+    const room = ESSENCE_AWAY_DAILY_CAP - used;
+    if (room <= 0) break;
+    const qty = Math.min(room, Math.floor(drop.qty));
+    cur = { ...applyEssences(cur, [{ id: drop.id, qty }]), essenceAway: { day: dayKey, count: used + qty } };
+  }
+  return cur;
 }
 
 /** Nome da essência (EN/PT): o do elemento; `pesadelo` tem o seu. */

@@ -33,8 +33,8 @@ import { LINE_FULL_ART, lineFullSprite } from '../utils/lineFullArt';
 import { DUELO_OPONENTE_ART, dueloOponenteArt } from '../utils/dueloArt';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { CHIP_EMOJI, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, ALL_SHOP_ITEMS } from '../utils/shop';
-import { ITEM_ART } from '../utils/itemArt';
+import { CHIP_EMOJI, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, REDUCE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, ALL_SHOP_ITEMS } from '../utils/shop';
+import { ITEM_ART, BOSS_SHARD_KEY } from '../utils/itemArt';
 import { DREAM_CATALOG } from '../utils/restWindow';
 import { DREAM_ART } from '../utils/dreamArt';
 import { ADVENTURE_CATALOG } from '../utils/adventure';
@@ -44,6 +44,7 @@ import { DECOR_ART } from '../utils/decorArt';
 import { elementIcon } from '../utils/elementIconArt';
 import { rogueBonusIcon, rogueBonusArtKeys, ROGUE_BONUS_ICON_KEY } from '../utils/rogueBonusArt';
 import { BONUS_KINDS } from '../utils/rogueDungeonSave';
+import { DISH_SPECIAL_ITEMS } from '../utils/dishItems';
 
 const SRC = path.resolve(process.cwd(), 'src');
 const ASSETS = path.join(SRC, 'assets');
@@ -119,7 +120,9 @@ describe('itens — comidas e especiais ↔ ITEM_ART', () => {
       ...Object.values(FOOD_BY_CATEGORY).map(f => f.emoji),
       ...Object.values(FOOD_BY_CATEGORY).map(f => premiumKey(f.emoji)), // comida premium (★) reusa a arte da base
       ...ALL_ELEMENT_IDS.map(potionKey), // Poção de Elemento: a arte é o ícone do elemento
-      ...Object.values(CHIP_EMOJI), ...Object.values(BIG_CHIP_EMOJI), PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, RESET_POINTS_EMOJI, // Zerador de Pontos do beta (betaResetGrant)
+      BOSS_SHARD_KEY, // Fragmento de Boss (moeda do save, não item de mochila): ícone da linha de resultado
+      ...Object.keys(DISH_SPECIAL_ITEMS), // prato do Restaurante (`dish:<id>`, §455): item da pastinha com arte própria
+      ...Object.values(CHIP_EMOJI), ...Object.values(BIG_CHIP_EMOJI), PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, ...Object.values(REDUCE_CHIP_EMOJI), HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, RESET_POINTS_EMOJI, // Zerador de Pontos do beta (betaResetGrant)
     ]);
     const orfaos = Object.keys(ITEM_ART).filter(k => !conhecidos.has(k));
     expect(orfaos).toEqual([]);

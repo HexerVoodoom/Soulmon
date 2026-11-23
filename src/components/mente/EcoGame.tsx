@@ -1,9 +1,11 @@
 import { RankingPanel } from '../RankingPanel';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import type { CSSProperties } from 'react';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sceneBackground } from '../../utils/fxPackArt';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { ResultScreen } from '../games/ResultScreen';
@@ -116,7 +118,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     // Uma vez por rodada, e só se houver o que pagar.
     if (bits > 0 && !paid.current) {
       paid.current = true;
-      onEarnPoints(bits);
+      setEarned(onEarnPoints(bits) ?? bits);
     }
   };
 
@@ -168,7 +170,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   if (tut.open) return <MindTutorialScreen game="eco" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
 
   return (
-    <GameRoot>
+    <GameRoot full style={{ background: sceneBackground('eco') }}>
       <GameHeader
         title={title}
         language={language}
@@ -280,6 +282,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
 
       {phase === 'done' && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'mente')} playAgainArt={lotIconArt('jogos', 'mente')} dailyEvent="eco"
           language={language}
           outcome="win"
           gameName={title}

@@ -61,6 +61,8 @@ import { readLocal, writeLocal, removeLocal, readJson, writeJson, readFlagState 
 // A ÚNICA chave do app (e não da telemetria) que este módulo lê. Ela é lida,
 // nunca escrita: quem manda no som é `utils/sounds.ts`; aqui só se mede.
 import { STORAGE_KEYS } from './storageKeys';
+// Módulo folha: o predicado do embed (a demo do portfólio não envia nada).
+import { isEmbedMode } from './embedMode';
 
 // ---------------------------------------------------------------------------
 // Contrato de eventos
@@ -129,6 +131,8 @@ export type TelemetryEvent =
   | 'dungeon_run'
   /** Subiu de nível de Vínculo (`level` 1..30). */
   | 'bond_level'
+  /** Portão de login: o que a pessoa FEZ ali (`outcome`, ver o schema). Sem e-mail, sem texto. */
+  | 'gate_login'
   // ---- som-01 (SQUAD-SOM) — ver `squad-alpha-runs/som-01/discovery/metrica-de-som.md` ----
   /** Fotografia DIÁRIA do estado de som, no mesmo fechamento do `day_active`.
    *  `muted` = a preferência gravada no aparelho; `music` = a trilha foi
@@ -158,7 +162,17 @@ export type TelemetryEvent =
    *  1 = almoço, 2 = jantar; `kind` = micro-ação que fechou (0 comida, 1 banho,
    *  2 carinho, 3 "oi"/tarefa). Responde UMA pergunta — o convite é atendido? —
    *  e nunca vira régua de cobrança: não há meta por janela. */
-  | 'meal_ritual';
+  | 'meal_ritual'
+  // ---- Tempo de uso (09/11/2026, docs/PLANO-METRICAS.md) — faixas e indices de registro, nunca segundos nem nomes ----
+  /** Total do DIA gasto numa tela/feature/minigame, em FAIXA (`utils/usageTime.ts`). Um por (kind,item) por dia. */
+  | 'time_spent'
+  | 'minigame_start'
+  | 'minigame_end'
+  | 'task_done'
+  | 'task_skipped'
+  /** Fechamento do dia: peso planejado e peso feito (mesma unidade do `day_active`). */
+  | 'day_close'
+  | 'session_end';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -247,6 +261,17 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   guild_stage: { level: { min: 1, max: 5 } },
   /* Ritmo das refeições — ESPELHO de `functions/api/metrics.js`. */
   meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } },
+  time_spent: { kind: { min: 0, max: 2 }, item: { min: 0, max: 63 }, band: { min: 0, max: 11 } },
+  minigame_start: { item: { min: 0, max: 15 } },
+  minigame_end: { item: { min: 0, max: 15 }, outcome: { min: 0, max: 2 }, band: { min: 0, max: 11 } },
+  task_done: { kind: { min: 0, max: 1 } },
+  task_skipped: { kind: { min: 0, max: 1 } },
+  day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
+  session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
+  // Portão de login (relatório de funil 13/11/2026): 42 chegaram ao portão e 16 passaram, e nada dizia por quê.
+  // `outcome` 0 = tocou em "Entrar com Google", 1 = entrou, 2 = fechou a janela, 3 = sem resposta (2 min), 4 = rede,
+  // 5 = configuração (domínio não autorizado, provedor desligado, popup bloqueado), 6 = outro erro. 7 = tocou em "DEMO".
+  gate_login: { outcome: { min: 0, max: 7 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -444,6 +469,12 @@ export function onboardingStepCode(step: number): number | null {
 
 /** Props aceitas. Note que NÃO existe campo de texto livre — de propósito. */
 export interface TelemetryProps {
+  /** Tempo de uso (docs/PLANO-METRICAS.md): `item` = índice no registro, `band` = faixa do total, `outcome` 0 vitória/1 derrota/2 saiu, `planned`/`done` = peso do dia, `build` = versão. */
+  item?: number;
+  band?: number;
+  planned?: number;
+  done?: number;
+  build?: number;
   /** `onboarding_step`: índice da tela alcançada (já como código, ver
    *  `onboardingStepCode`). */
   step?: number;
@@ -564,6 +595,8 @@ const K_SEEN = 'soulmon-telemetry-seen';
 const K_TIER = 'soulmon-telemetry-tier';
 /** Contagem da semana EM CURSO (ver `trackDayClosed`). Nunca sai daqui. */
 const K_WEEK = 'soulmon-telemetry-week';
+/** O acumulado de tempo de uso do aparelho (`utils/usageTime.ts`): apagado no opt-out, como a fila. */
+export const K_USAGE = 'soulmon-telemetry-usage';
 /** som-01 — o ÚLTIMO dia em que a trilha foi iniciada por gesto. Um dia, nunca
  *  uma série e nunca uma hora; **nunca é enviado** (mesmo desenho de
  *  `K_INSTALL_DAY`). Existe só para que o fechamento do dia — que acontece na
@@ -736,6 +769,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
     return {
       title: 'Estatísticas de uso',
       sent: [
+      'Quanto tempo você passa em cada tela, recurso e jogo, só como uma faixa do dia inteiro (por exemplo "de 1 a 2 minutos"), como os jogos terminam e quanto do esforço do dia você concluiu — nunca os segundos exatos, nunca o que são as suas tarefas.',
         'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou e por qual caminho (grátis ou completo), se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra (e por qual convite), e se comprou.',
         'Se você está no modo grátis ou no completo — só isso, sem nada da sua conta.',
         'Quando você cria uma atividade: se foi tarefa ou hábito e por qual tela — nunca o que ela é.',
@@ -753,13 +787,14 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
         'Seu e-mail, seu nome ou o nome do seu Soulmon.',
         'Sua localização, seus contatos ou qualquer identificador de aparelho.',
       ],
-      toggleLabel: 'Enviar estatísticas de uso',
+      toggleLabel: 'Compartilhar uso',
       footnote: 'Fica tudo em servidor nosso (Cloudflare) como um total por dia, somado a todo mundo — não existe uma linha do tempo sua. Nenhuma empresa de análise recebe nada. Se você desligar, o envio para de verdade e a fila que estiver aqui é apagada.',
     };
   }
   return {
     title: 'Usage stats',
     sent: [
+      'How long you spend on each screen, feature and game, only as a band for the whole day (for example "1 to 2 minutes"), plus how games end and how much of the effort planned for the day you completed — never exact seconds, never what your tasks are.',
       'Counters for app moments: first launch, which onboarding step you reached and which path you took (free or full), whether you picked a ready-made character, your first completion, whether you opened the purchase screen (and which invite brought you there), and whether you purchased.',
       'Whether you are on the free or the full mode — that alone, nothing else from your account.',
       'When you create an activity: whether it was a task or a habit, and from which screen — never what it is.',
@@ -777,7 +812,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
       'Your email, your name, or your Soulmon\'s name.',
       'Your location, your contacts, or any device identifier.',
     ],
-    toggleLabel: 'Send usage stats',
+    toggleLabel: 'Share usage',
     footnote: 'It lives on our own server (Cloudflare) as a daily total summed across everyone — there is no timeline of you. No analytics company receives anything. If you turn this off, sending really stops and whatever is queued here is deleted.',
   };
 }
@@ -793,6 +828,10 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
  * aceitável é o conjunto: sem conteúdo, sem identidade, e desligável de verdade.
  */
 export function isTelemetryEnabled(): boolean {
+  // EMBED (13/11/2026): a demo do portfólio pula o termo de consentimento, e a condição
+  // do dono foi NADA sair. Guard duro, antes da preferência: `track`, `flush`, crash e
+  // tempo de uso passam todos por aqui. Termo pulado NUNCA conta como consentido.
+  if (isEmbedMode()) return false;
   return readLocal(K_ENABLED) !== 'false';
 }
 
@@ -810,6 +849,7 @@ export function setTelemetryEnabled(on: boolean): void {
       // "desliguei e ele continuou contando meus dias" é uma frase que o opt-out
       // não pode deixar verdadeira.
       removeLocal(K_WEEK, { silent: true });
+      removeLocal(K_USAGE, { silent: true });
     }
   } catch {
     /* princípio 5 */
@@ -1432,6 +1472,7 @@ export function resetTelemetryForTest(): void {
   removeLocal(K_ENABLED, { silent: true });
   removeLocal(K_TIER, { silent: true });
   removeLocal(K_WEEK, { silent: true });
+  removeLocal(K_USAGE, { silent: true });
   if (flushTimer !== null) {
     try { clearTimeout(flushTimer); } catch { /* idem */ }
     flushTimer = null;

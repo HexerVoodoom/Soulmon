@@ -23,7 +23,7 @@ type Props = Parameters<typeof MercadoStallSheet>[0];
 const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithCss(<MercadoStallSheet {...base} {...props} />);
 
 describe('8.1 — descrição do chip: nome, efeito, valor', () => {
-  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip' && !i.id.startsWith('chip-big-') && i.id !== 'chip-triple');
+  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip' && !i.id.startsWith('chip-big-') && i.id !== 'chip-triple' && !i.id.startsWith('chip-reduce-'));
   it('os três chips: "+3 Poder/Harmonia/Benevolência" e "+3 Power/Harmony/Benevolence", sem parágrafo', () => {
     expect(chips).toHaveLength(3);
     expect(CHIP_BOOST).toBe(3);
@@ -52,14 +52,15 @@ describe('8.1 — descrição do chip: nome, efeito, valor', () => {
 });
 
 describe('8.2 — a miniatura abre a pré-visualização', () => {
-  it('folha do chip: a miniatura (alvo >= 44) abre a prévia ampliada; fechar volta à folha sem comprar', () => {
+  it('folha do chip: o banner abre a prévia ampliada; fechar volta à folha sem comprar', () => {
     const onBuy = vi.fn(() => true);
     abrir({ stall: 'itens', onBuy });
     fireEvent.click(document.querySelector('[data-shop-item="chip-power"]')!);
     const zoom = document.querySelector('[data-item-sheet="chip-power"] [data-item-zoom]') as HTMLElement;
     expect(zoom).not.toBeNull();
-    expect(parseInt(zoom.style.minHeight, 10)).toBeGreaterThanOrEqual(44);
-    expect(parseInt(zoom.style.minWidth, 10)).toBeGreaterThanOrEqual(44);
+    // o banner é a largura toda da folha (mesmo do cenário), muito acima do alvo de 44 px
+    expect(zoom.style.width).toBe('100%');
+    expect(zoom.style.aspectRatio.replace(/ /g, '')).toBe('96/52');
     fireEvent.click(zoom);
     const lb = document.querySelector('[data-item-lightbox]') as HTMLElement;
     expect(lb).not.toBeNull();

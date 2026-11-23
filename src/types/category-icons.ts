@@ -1,4 +1,5 @@
-import { ActivityCategory } from './attributes';
+import type { ActivityCategory } from './attributes';
+import { LIFE_AREA_LABEL, normalizeCategory } from './categories';
 /*
  * `CATEGORY_ICON_IMG` / `categoryIconImg` (os PNG pixel `icon-cat-*.png`)
  * SAÍRAM em 20/09/2026 (canvas Atividades, D-A7 / achado 3): ícone de
@@ -21,14 +22,16 @@ import { ActivityCategory } from './attributes';
  * desenham por aqui (D-A7).
  */
 export const CATEGORY_ICON_NAME: Record<ActivityCategory, string> = {
-  Health: 'favorite',
-  Creativity: 'palette',
-  Discipline: 'bolt',
-  Study: 'psychology',
-  Work: 'inventory_2',
-  Social: 'chat_bubble',
-  Wellness: 'spa',
-  Fitness: 'accessibility_new',
+  sono: 'bedtime',
+  corpo: 'accessibility_new',
+  mente: 'spa',
+  foco: 'bolt',
+  aprendizado: 'psychology',
+  relacoes: 'chat_bubble',
+  casa: 'home',
+  financas: 'inventory_2',
+  proposito: 'favorite',
+  criatividade: 'palette',
 };
 
 /**
@@ -38,36 +41,32 @@ export const CATEGORY_ICON_NAME: Record<ActivityCategory, string> = {
  * quem chama simplesmente não desenha ícone.
  */
 export function categoryIconName(category?: string): string | undefined {
-  if (!category) return undefined;
-  const key = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-  return CATEGORY_ICON_NAME[key as ActivityCategory];
+  const cat = normalizeCategory(category);
+  return cat ? CATEGORY_ICON_NAME[cat] : undefined;
 }
 
 // Mapeamento fixo de ícones por categoria
 export const CATEGORY_ICONS: Record<ActivityCategory, string> = {
-  Health: '🏥',
-  Creativity: '🎨',
-  Discipline: '⚡',
-  Study: '📚',
-  Work: '💼',
-  Social: '👥',
-  Wellness: '🧘',
-  Fitness: '💪',
+  sono: '🌙',
+  corpo: '💪',
+  mente: '🧘',
+  foco: '⚡',
+  aprendizado: '📚',
+  relacoes: '👥',
+  casa: '🏠',
+  financas: '💼',
+  proposito: '🧭',
+  criatividade: '🎨',
 };
 
 // Nome em PT-BR — a categoria em si (chave) é sempre em inglês internamente
 // (persistida no GameState), mas o app é sempre bilíngue na UI.
-export const CATEGORY_LABELS_PT: Record<ActivityCategory, string> = {
-  Health: 'Saúde',
-  Creativity: 'Criatividade',
-  Discipline: 'Disciplina',
-  Study: 'Estudos',
-  Work: 'Trabalho',
-  Social: 'Social',
-  Wellness: 'Bem-estar',
-  Fitness: 'Fitness',
-};
+export const CATEGORY_LABELS_PT: Record<ActivityCategory, string> = Object.fromEntries(
+  (Object.keys(LIFE_AREA_LABEL) as ActivityCategory[]).map(k => [k, LIFE_AREA_LABEL[k].pt]),
+) as Record<ActivityCategory, string>;
 
 export function categoryLabel(cat: ActivityCategory, isPt: boolean): string {
-  return isPt ? CATEGORY_LABELS_PT[cat] : cat;
+  const c = normalizeCategory(cat);
+  if (!c) return String(cat);
+  return isPt ? LIFE_AREA_LABEL[c].pt : LIFE_AREA_LABEL[c].en;
 }

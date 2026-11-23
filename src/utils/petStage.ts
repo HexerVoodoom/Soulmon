@@ -89,7 +89,7 @@ export const DECOR_SLOTS: Record<SlotId, DecorSlot> = {
   },
   // Peça grande: sofá, estante, fogueira, barraca.
   'floor-left': {
-    id: 'floor-left', x: 16, w: 56, h: 56, anchor: 'ground',
+    id: 'floor-left', x: 18, w: 56, h: 56, anchor: 'ground',
     namePt: 'Canto esquerdo', nameEn: 'Left corner',
   },
   // Vitrine de conquistas — mostra os troféus REAIS ganhos no Torneio.
@@ -112,6 +112,31 @@ export const DECOR_SLOTS: Record<SlotId, DecorSlot> = {
 };
 
 export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right', 'wall'];
+
+/**
+ * QUANTO A DECORAÇÃO CRESCE NO PALCO (04/11/2026, dono: "as decorações estão
+ * todas minúsculas, aumenta bastante"). A caixa de `DECOR_SLOTS` segue sendo o
+ * contrato de ARTE (proporção da peça, guard de grade em assets.contract); o
+ * palco desenha a peça `DECOR_RENDER_SCALE[slot]` vezes maior, uniforme e com
+ * `image-rendering: pixelated` (sem borrar). Alvo medido pelo dono em print de
+ * 720 px (1 px CSS ≈ 1,7 px ali): fliperama ≈ 230 px de altura, tapete visível
+ * ≈ 350 px de largura — os dois dão 2,5×. A vitrine fica em 1,75×: mora atrás
+ * do pet. `petStage.test` prova os alvos e que, a 390 px, as peças de chão não
+ * se tocam nem saem do palco. A base continua em GROUND_Y: só cresce para cima.
+ */
+export const DECOR_RENDER_SCALE: Record<SlotId, number> = {
+  rug: 2.5,
+  'floor-left': 2.5,
+  trophy: 1.75,
+  'floor-right': 2.5,
+  wall: 2.5,
+};
+
+/** A caixa em px que o palco desenha para o espaço (arte × escala). Espaço de berço: 1×. */
+export function decorRenderBox(slot: DecorSlot): { w: number; h: number } {
+  const k = (DECOR_RENDER_SCALE as Record<string, number>)[slot.id] ?? 1;
+  return { w: Math.round(slot.w * k), h: Math.round(slot.h * k) };
+}
 
 // ── Mobília base: o berço ────────────────────────────────────────────────────
 
@@ -218,19 +243,20 @@ export function slotBoxStyle(slot: DecorSlot): {
   marginLeft: number; marginTop: number;
 } {
   const topPct = slot.anchor === 'hang' ? (slot.y ?? 0) : GROUND_Y;
+  const { w, h } = decorRenderBox(slot);
   // 'ground' sobe a caixa inteira (base no chão); 'ground-flat' fica metade
   // acima e metade abaixo da linha, como um tapete em perspectiva; 'hang'
   // desce a partir do topo declarado.
-  const marginTop = slot.anchor === 'ground' ? -slot.h
-    : slot.anchor === 'ground-flat' ? -Math.round(slot.h / 2)
+  const marginTop = slot.anchor === 'ground' ? -h
+    : slot.anchor === 'ground-flat' ? -Math.round(h / 2)
     : 0;
   return {
     position: 'absolute',
     left: `${slot.x}%`,
     top: `${topPct}%`,
-    width: slot.w,
-    height: slot.h,
-    marginLeft: -Math.round(slot.w / 2),
+    width: w,
+    height: h,
+    marginLeft: -Math.round(w / 2),
     marginTop,
   };
 }

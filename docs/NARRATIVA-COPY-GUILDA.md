@@ -271,7 +271,11 @@
 | `guild.casa.perto` | A casa está perto de virar {estagio}. | The house is close to becoming {estagio}. | GuildSheet, binário `perto` (sem número) | LV-G1 |
 | `guild.casa.regra` | A roda cuida da casa junto: Bits trazidos, missões e guerras fazem a árvore crescer. Ela só cresce. | The circle tends the house together: Bits brought, missions and wars make the tree grow. It only grows. | atrás do "?" da sala | L10, L12 |
 | `guild.casa.doar.titulo` | Trazer Bits | Bring Bits | título do bloco de doação | L12 |
-| `guild.casa.doar.botao` | Trazer {bits} Bits | Bring {bits} Bits | botão de doação (número vem de `CASA_DOACOES`) | L12 |
+| `guild.casa.doar.botao` | Trazer | Bring | botão de doação; o valor (50 ou 100, de `CASA_DOACOES`) vai ao lado pelo `BitsAmount` (ícone de Bits) | L12; 10/11/2026 |
+| `guild.casa.bits.total` | Bits do clã | Clan Bits | rótulo do total do clã; o número vai pelo `BitsAmount` | W14b; 10/11/2026 |
+| `guild.buffs.ok` | O clã ganhou um Buff. | The clan has a new Buff. | anúncio depois de comprar um Buff do clã | 10/11/2026 |
+| `guild.help.buffs.termo` | Buffs do clã | Clan Buffs | HelpModal | 10/11/2026 |
+| `guild.help.buffs.def` | Os Bits que a roda traz, um grupo de cada vez e uma doação por pessoa por dia, enchem o tesouro do clã. Quem recebe a roda gasta o tesouro num Buff que vale para todos por uma semana: mais progresso de evolução, mais chance da Feira de verdade, mais achados na masmorra ou energia que volta mais rápido. Qualquer Bit do seu saldo pode ser doado. | The Bits the circle brings, one donation per person per day, fill the clan treasury. Whoever hosts the circle spends it on a Buff that works for everyone for a week: more evolution progress, a better chance of the real Fair, more finds in the dungeon, or energy that comes back faster. Any Bits in your balance can be donated. | HelpModal | 10/11/2026 |
 | `guild.casa.doar.ok` | A casa recebeu o que você trouxe. | The house received what you brought. | constatação depois de doar (o que o servidor aceitou) | L12 |
 | `guild.casa.doar.teto` | Por hoje, é o bastante. A casa agradece. | That’s enough for today. The house is grateful. | teto diário atingido (sem culpa) | LV-G7 |
 | `guild.casa.doar.semBits` | Você não tem Bits para trazer agora. | You have no Bits to bring right now. | carteira abaixo da menor doação | — |

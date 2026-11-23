@@ -275,11 +275,10 @@ describe('fiação (lê o FONTE, como os outros guards de call-site)', () => {
     expect(ler('src', 'components', 'IntroScreen.tsx')).toMatch(/<video[\s\S]*?\bmuted\b[\s\S]*?\/>/);
   });
 
-  it('a tela de abertura só chama o tema DENTRO do handler do toque (D11 no chamador, nunca em efeito)', () => {
+  it('a intro só chama o tema DENTRO do handler do toque que pula (D11 no chamador, nunca em efeito)', () => {
     const src = ler('src', 'components', 'IntroScreen.tsx');
-    expect(src.match(/iniciarTemaNoGesto\(\)/g)).toHaveLength(1);
-    expect(src).toMatch(/onStart=\{\(\) => \{ iniciarTemaNoGesto\(\);/);
     const semComentarios = src.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(semComentarios.match(/iniciarTemaNoGesto\(\)/g)).toHaveLength(1);
     expect(semComentarios).not.toMatch(/useEffect\([^)]*iniciarTemaNoGesto/);
   });
 });

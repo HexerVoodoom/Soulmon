@@ -2,7 +2,7 @@
 // Função PURA e determinística: sem IA, sem rede, sem efeito de jogo. Só fala.
 import type { ActivityCategory } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { COUNTERS } from './arena';
+import { COUNTERS } from './arenaCounters';
 import { elementoConhecido, elementoNomeDe, baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 import { elementoDoOraculo } from './elementoDoOraculo';
 

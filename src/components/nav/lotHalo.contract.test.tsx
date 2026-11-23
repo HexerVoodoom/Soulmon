@@ -26,9 +26,9 @@ const AREAS: Array<[AreaId, Array<{ id: string; label: string; left: string; top
 
 describe('halo preto padronizado em todos os prédios', () => {
   for (const trancado of [false, true]) {
-    it(`toda a arte de lote das 6 áreas leva o halo preto (${trancado ? 'trancado' : 'aberto'})`, () => {
+    it(`todo sprite de lote fora de LOT_PINTADO leva o halo preto (${trancado ? 'trancado' : 'aberto'})`, () => {
       for (const [area, lots, arts] of AREAS) {
-        const props: AreaLot[] = lots.map(l => ({ ...l, art: arts[l.id], onOpen: () => {}, ...(trancado ? { locked: { minBond: 2 } } : {}) }));
+        const props: AreaLot[] = lots.map(l => ({ ...l, id: `novo-${l.id}`, art: arts[l.id], onOpen: () => {}, ...(trancado ? { locked: { minBond: 2 } } : {}) }));
         const { container, unmount } = renderWithCss(<AreaScene areaId={area} language="pt-BR" lots={props} />);
         const imgs = Array.from(container.querySelectorAll<HTMLImageElement>('img[data-area-lot-art]'));
         expect(imgs.length, `${area}: lotes sem arte renderizada`).toBe(lots.length);
@@ -45,10 +45,10 @@ describe('halo preto padronizado em todos os prédios', () => {
     });
   }
 
-  it('o halo é UM ponto: lotHalo.ts; AreaScene e MapPage o usam e nenhuma string de drop-shadow de lote sobrou lá', () => {
+  it('o halo é UM ponto: lotHalo.ts; AreaScene o usa e nenhuma string de drop-shadow de lote sobrou lá', () => {
     expect(lotArtFilter()).toBe(LOT_HALO_BLACK);
     expect(lotArtFilter({ locked: true })).toBe(`grayscale(1) brightness(.72) ${LOT_HALO_BLACK}`);
-    for (const f of ['AreaScene.tsx', 'MapPage.tsx']) {
+    for (const f of ['AreaScene.tsx']) {
       const src = fs.readFileSync(path.resolve(__dirname, f), 'utf8');
       expect(src, f).toContain('lotArtFilter(');
       expect(src, `${f} voltou a montar o filtro à mão`).not.toMatch(/filter:[^\n]*grayscale\(1\)/);

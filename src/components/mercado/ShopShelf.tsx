@@ -1,10 +1,10 @@
 import { missionsInQueueOrder } from '../../utils/missionOrder';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
-import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { creditExchangeRoom } from '../../utils/bitsOrigin';
-import { playerDayKey } from '../../utils/playerDay';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { bitsStyle, emblemStyle, BITS_PACKS, BITS_PACK_DAILY_CAP, CREDIT_COLOR, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type BitsPack, type CurrencyId } from '../../utils/currencies';
+import { bitsPackLeftToday, subscribeBitsPackLeft } from '../../utils/entitlements';
+import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName, bitsPackBlockedLabel, bitsExchangeFailText, type BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { Icon } from '../ui/Icon';
+import { CreditIcon } from '../ui/CreditIcon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from '../ui/InfoTip';
@@ -17,6 +17,7 @@ import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
+import { isReduceChipKey } from '../../utils/shop';
 import { MISSIONS, isShopItemUnlocked } from '../../utils/missions';
 import { weeklyTarget } from '../../utils/missionTargets';
 import { MissionCard, MissionCardList, resolveGo, type MissionNav } from '../nav/MissionCard';
@@ -117,7 +118,7 @@ export function CurrencyBalance({ currency, value, language }: { currency: Curre
   if (currency === 'credits') {
     return (
       <p data-balance="credits" style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
         <span className="sm2-num">{value}</span>
         <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Créditos' : 'Credits'}</span>
       </p>
@@ -204,13 +205,15 @@ export interface ShopOwnership {
   /** A vitrine do trimestre da assinatura está aberta? (`utils/subscription.ts`.)
    *  Só a `SubscriptionShelf` lê isto — a prateleira de Bits nunca. */
   subscriptionActive?: boolean;
+  /** Elemento do Soulmon (`petElementOf`): filtra os cosméticos EXCLUSIVOS de elemento à venda. */
+  petElement?: string;
 }
 
 export interface ShopActions {
   /** Resgata (de graça) um item do trimestre da assinatura. Quem decide é o `App.tsx`. */
   onClaimSubscription?: (itemId: string) => boolean;
   /** A compra. Quem decide é o `handleShopBuy` do `App.tsx`; devolve false na recusa. */
-  onBuy: (itemId: string) => boolean;
+  onBuy: (itemId: string) => boolean | Promise<boolean>;
   /** C3: compra de moldura de avatar (aba Molduras da Panora). Ausente = a aba só mostra. */
   onBuyFrame?: (frameId: string) => boolean;
   onEquip: (id: string | null) => void;
@@ -224,7 +227,7 @@ export interface ShopActions {
  * recusa item de outra moeda (ele seria julgado contra o saldo errado).
  */
 export function ShopShelf({
-  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false,
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts, afterOwned, atEnd,
 }: {
   language: Language;
   items: ShopItem[];
@@ -237,6 +240,12 @@ export function ShopShelf({
   emptyHint?: string;
   /** A lojinha de Decoração já desenha a regra no topo da folha. */
   hideDecorRule?: boolean;
+  /** P3 7.2 (22/11/2026): peças do Bosque, logo abaixo de "Já são seus". */
+  afterOwned?: ReactNode;
+  /** P3 7.2: conjunto da assinatura, depois da lista à venda. */
+  atEnd?: ReactNode;
+  /** A FEIRA DE VERDADE (10/11/2026): preço cheio e % de desconto por id; os `items` já trazem o preço FINAL. Sem isto, nada muda. */
+  discounts?: Record<string, { was: number; pct: number }>;
 }) {
   const isPt = language === 'pt-BR';
   const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress, missionClaimed } = ownership;
@@ -272,10 +281,12 @@ export function ShopShelf({
   const confirmBuy = (item: ShopItem) => {
     const name = isPt ? item.namePt : item.nameEn;
     setConfirming(null);
-    const ok = actions.onBuy(item.id);
-    say(item.id, ok, ok
+    const done = (ok: boolean) => say(item.id, ok, ok
       ? (isPt ? `${name} comprado.` : `${name} purchased.`)
       : (isPt ? `Saldo insuficiente para ${name}.` : `Not enough to buy ${name}.`));
+    // `onBuy` pode ser assíncrono (a feira de verdade confere a oferta no servidor antes de debitar); a loja de sempre segue síncrona.
+    const r = actions.onBuy(item.id);
+    if (typeof r === 'boolean') done(r); else void r.then(done, () => done(false));
   };
 
   /** Missão que destrava o item + progresso, na LINHA do item. */
@@ -306,12 +317,16 @@ export function ShopShelf({
       );
     }
     const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
-    // Peça de CHÃO fica a 1× (textura; o vidro recorta), o resto a 0,5×.
-    const scale = item.slot === 'rug' ? 1 : 0.5;
+    // Peça de CHÃO fica a 1× (textura; o vidro recorta), o resto a 0,85× (era 0,5×: "minúsculas", dono 04/11/2026).
+    const scale = item.slot === 'rug' ? 1 : 0.85;
     return (
       <MiniGlass size={GLASS_ITEM} style={ring}>
         {png
-          ? <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />
+          ? (isReduceChipKey(item.icon)
+            ? <span className="sm3-item-arte sm2-shop-reduce" data-reduce style={{ position: 'absolute', inset: 0, width: 'auto', height: 'auto' }}>
+                <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />
+              </span>
+            : <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />)
           : <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>{item.icon}</span>}
         {veil}
       </MiniGlass>
@@ -399,6 +414,12 @@ export function ShopShelf({
           <span className="sm2-num" style={{ ...emblemNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', flex: 'none', color: affordable ? emblemNum.color : 'var(--sm2-muted)' }}>
             {item.price}<span style={unitStyle}>{isPt ? 'Honra' : 'Honor'}</span>
           </span>
+        ) : discounts?.[item.id] ? (
+          <span data-shop-discount={discounts[item.id].pct} style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flex: 'none' }}>
+            <span style={{ ...shopTagStyle, color: 'var(--sm2-primary-ink)' }}>{isPt ? `${discounts[item.id].pct}% a menos` : `${discounts[item.id].pct}% off`}</span>
+            <Bits value={item.price} dim={!affordable} />
+            <s className="sm2-num" style={{ ...sm2Hint, textDecorationThickness: 1 }} aria-label={isPt ? `era ${discounts[item.id].was}` : `was ${discounts[item.id].was}`}>{discounts[item.id].was}</s>
+          </span>
         ) : (
           <Bits value={item.price} dim={!affordable} />
         )}
@@ -422,9 +443,11 @@ export function ShopShelf({
                 {owned.map(renderItem)}
               </section>
             )}
+            {afterOwned}
             {forSale.length === 0
               ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
               : forSale.map(renderItem)}
+            {atEnd}
           </>
         )}
       <ShopItemSheet
@@ -555,8 +578,8 @@ export function PurchaseConfirmSheet({ open, language, question, balance, cost, 
  * saldo abre esta folhinha em vez de só avisar "saldo insuficiente". Ela diz,
  * em texto sóbrio (L10 da bíblia: a informação nunca é só ficção), DE ONDE
  * vem a moeda — e os números saem das constantes dos donos, nunca de texto à
- * mão: o teto diário dos minijogos (`MINIGAME_BITS_PER_DAY`), a troca de
- * Créditos (`CREDIT_TO_BITS`) e a Honra por partida (`EMBLEMS_PER_WIN`/`_LOSS`).
+ * mão: o teto diário dos minijogos (`MINIGAME_BITS_PER_DAY`), os pacotes de
+ * Bits do Cambista (`BITS_PACKS`, `BITS_PACK_DAILY_CAP`) e a Honra por partida (`EMBLEMS_PER_WIN`/`_LOSS`).
  * Sem "faltam N", sem contagem regressiva, sem urgência: é mapa, não cobrança.
  */
 export function HowToEarnSheet({ item, currency, language, onClose }: {
@@ -590,14 +613,14 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         {
           key: 'jogos', icon: 'casino',
           text: isPt
-            ? `Nos minijogos: a Fenda (Exploração), o Salão de Jogos e o Ateliê da Mente (Jogos) pagam Bits — até ${MINIGAME_BITS_PER_DAY} por dia, somando todos.`
-            : `In the minigames: the Endless Rift (Exploration), the Game Hall and the Mind Workshop (Games) pay Bits — up to ${MINIGAME_BITS_PER_DAY} a day, all together.`,
+            ? `Nos minijogos: a Fenda (Exploração), o Salão de Jogos e o Ateliê da Mente (Jogos) pagam Bits — até ${MINIGAME_BITS_PER_DAY} por dia, somando todos (e 75 por tipo de atividade).`
+            : `In the minigames: the Endless Rift (Exploration), the Game Hall and the Mind Workshop (Games) pay Bits — up to ${MINIGAME_BITS_PER_DAY} a day, all together (and 75 per kind of activity).`,
         },
         {
           key: 'creditos', icon: 'diamond',
           text: isPt
-            ? `Créditos viram Bits na lojinha de Itens, na aba Créditos: ${CREDIT_TO_BITS} Bits por Crédito.`
-            : `Credits turn into Bits in the Items stall, on the Credits tab: ${CREDIT_TO_BITS} Bits per Credit.`,
+            ? `Créditos viram Bits no Cambista: pacotes de ${BITS_PACKS.map(p => p.bits).join(', ')} Bits, até ${BITS_PACK_DAILY_CAP} Bits por dia.`
+            : `Credits turn into Bits at the Exchanger: packs of ${BITS_PACKS.map(p => p.bits).join(', ')} Bits, up to ${BITS_PACK_DAILY_CAP} Bits a day.`,
         },
       ];
   return (
@@ -611,7 +634,7 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ways.map(w => (
             <li key={w.key} data-how-to-earn-way={w.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />
+              {w.key === 'creditos' ? <CreditIcon size={24} /> : <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />}
               <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{w.text}</span>
             </li>
           ))}
@@ -624,76 +647,109 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
   );
 }
 
-/** A troca Créditos → Bits (a única coisa que Créditos fazem no Mercado).
+/** OS PACOTES DE BITS do Cambista (§373): três pacotes pagos em Créditos, com desconto progressivo, lado a lado.
+ *  O servidor decide o pacote, cobra e conta o teto de `BITS_PACK_DAILY_CAP` Bits/dia; a tela só oferece e confirma.
  *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
-export function CreditExchange({ language, credits, onExchangeCredits, say }: {
+/** P3 7.4 (22/11/2026): arte do pacote (Pouch/Purse/Chest) em `assets/soulmon/bits-packs/<id>.webp`; sem o arquivo, nada é desenhado (fallback = só texto). */
+const PACK_ART = import.meta.glob('../../assets/soulmon/bits-packs/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+export function CreditExchange({ language, credits, onExchangeCredits, onRecoverPending, onGetCredits, say }: {
   language: Language;
   credits: number;
-  /** Devolve false se o servidor recusar o gasto. */
-  onExchangeCredits: (credits: number) => Promise<boolean>;
+  /** Compra o pacote `packId` (id de `BITS_PACKS`). O resultado traz o motivo da recusa (§386); `false` = recusa já mostrada por quem chamou. */
+  onExchangeCredits: (packId: string) => Promise<boolean | BitsExchangeOutcome>;
+  /** §386 (A1): ao abrir, reenvia os pacotes pendentes (a rede caiu depois do débito e o botão pode nem estar ao alcance). */
+  onRecoverPending?: () => void;
+  /** §386 (A4c): abre a compra de Créditos que já existe no app (`CreditsModal`). Sem a prop, o atalho não aparece. */
+  onGetCredits?: () => void;
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const [exchanging, setExchanging] = useState<number | null>(null);
-  // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. A conta é do save (`bitsOrigin`); sem Provider (demo, testes) não há teto.
-  const ctx = useGameStateOptional();
-  const room = ctx ? creditExchangeRoom(ctx.gameState, playerDayKey(new Date(), ctx.gameState.playerDayTz)) : Infinity;
+  useEffect(() => { onRecoverPending?.(); }, [onRecoverPending]);
+  const [exchanging, setExchanging] = useState<string | null>(null);
+  // O que ainda cabe HOJE, como o servidor disse da última vez (`null` = não trocou hoje: o dia inteiro está livre).
+  const leftEcho = useSyncExternalStore(subscribeBitsPackLeft, bitsPackLeftToday, bitsPackLeftToday);
+  const left = leftEcho ?? BITS_PACK_DAILY_CAP;
   /** Pacote tocado — a troca gasta Créditos, então também espera o "Confirmar" (D1). */
-  const [pending, setPending] = useState<(typeof BITS_EXCHANGE)[number] | null>(null);
-  const doExchange = async (pack: (typeof BITS_EXCHANGE)[number]) => {
+  const [pending, setPending] = useState<BitsPack | null>(null);
+  const doExchange = async (pack: BitsPack) => {
     setPending(null);
-    setExchanging(pack.credits);
-    let ok = false;
-    try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
-    say(`exch-${pack.credits}`, ok, ok
-      ? <><Bits value={pack.bits} sign="+" />.</>
-      : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
+    setExchanging(pack.id);
+    let r: boolean | BitsExchangeOutcome = { ok: false, reason: 'network' };
+    try { r = await onExchangeCredits(pack.id); } finally { setExchanging(null); }
+    // UMA mensagem por resultado (§386 A4b): quem chama não toasta; `false` = a recusa já foi mostrada por ele (ex.: demo).
+    if (r === false) return;
+    if (r === true || r.ok) { say(`exch-${pack.id}`, true, <><Bits value={r === true ? pack.bits : r.bits} sign="+" />.</>); return; }
+    say(`exch-${pack.id}`, false, bitsExchangeFailText(r.reason, isPt));
   };
+  /** Algum pacote que cabe no dia está fora do saldo: o atalho para a compra de Créditos aparece (convite, sem pressa). */
+  const faltaSaldo = BITS_PACKS.some(p => p.bits <= left && credits < p.credits);
   return (
-    <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+    <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
         <span>
-          {isPt ? 'Trocar Créditos por Bits — você tem ' : 'Swap Credits for Bits — you have '}
+          {isPt ? 'Pacotes de Bits — você tem ' : 'Bits packs — you have '}
           <span className="sm2-num">{credits}</span>
+          {isPt ? ' Créditos' : ' Credits'}
         </span>
       </p>
-      {BITS_EXCHANGE.map(pack => {
-        const busy = exchanging === pack.credits;
-        const fits = pack.bits <= room;
-        const can = credits >= pack.credits && exchanging === null && fits;
-        return (
-          <button
-            key={pack.credits}
-            type="button"
-            disabled={!can}
-            aria-busy={busy || undefined}
-            aria-label={isPt ? `Trocar ${pack.credits} ${pack.credits === 1 ? 'Crédito' : 'Créditos'} por ${pack.bits} Bits` : `Swap ${pack.credits} ${pack.credits === 1 ? 'Credit' : 'Credits'} for ${pack.bits} Bits`}
-            onClick={() => setPending(pack)}
-            style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
-          >
-            {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}
-            <span>
-              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? (pack.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pack.credits === 1 ? ' Credit for ' : ' Credits for ')}
-            </span>
-            <BitsAmount value={pack.bits} size={20} dim={!can} style={{ fontSize: bitsNum.fontSize }} />
-          </button>
-        );
-      })}
-      {Number.isFinite(room) && (
-        <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
-          {isPt
-            ? `Hoje o câmbio cabe até ${room} Bits (um quarto do que você ganhou jogando). Amanhã a conta abre de novo. Bits de Crédito não compram equipamento.`
-            : `Today the exchange fits up to ${room} Bits (a quarter of what you earned by playing). The count opens again tomorrow. Bits from Credits do not buy equipment.`}
-        </p>
+      <div data-bits-packs style={{ display: 'grid', gridTemplateColumns: `repeat(${BITS_PACKS.length}, minmax(0, 1fr))`, gap: 6 }}>
+        {BITS_PACKS.map(pack => {
+          const busy = exchanging === pack.id;
+          const why = bitsPackBlockedLabel(pack, credits, left, isPt);
+          const can = why === null && exchanging === null;
+          const off = bitsPackDiscountLabel(pack);
+          const brl = isPt ? bitsPackBrlEstimate(pack) : null;
+          return (
+            <button
+              key={pack.id}
+              type="button"
+              data-bits-pack={pack.id}
+              disabled={!can}
+              aria-busy={busy || undefined}
+              aria-describedby={why ? `bits-pack-why-${pack.id}` : undefined}
+              aria-label={isPt
+                ? `${bitsPackName(pack, true)}: ${pack.bits} Bits por ${pack.credits} Créditos${off ? `, ${off}` : ''}`
+                : `${bitsPackName(pack, false)}: ${pack.bits} Bits for ${pack.credits} Credits${off ? `, ${off}` : ''}`}
+              onClick={() => setPending(pack)}
+              style={{ ...sm2Button('outline', !can), width: '100%', minWidth: 0, height: 'auto', padding: '8px 4px', flexDirection: 'column', gap: 4, whiteSpace: 'normal' }}
+            >
+              {PACK_ART[`../../assets/soulmon/bits-packs/${pack.id}.webp`] && (
+                <img data-bits-pack-art src={PACK_ART[`../../assets/soulmon/bits-packs/${pack.id}.webp`]} alt="" aria-hidden="true" width={56} height={56} draggable={false} style={{ width: 56, height: 56, objectFit: 'contain' }} />
+              )}
+              <span style={{ ...sm2Hint, margin: 0 }}>{bitsPackName(pack, isPt)}</span>
+              {/* a RECOMPENSA manda (grande); o preço fica abaixo dela, menor e apagado */}
+              {busy ? <Icon name="sync" size={ICON_INLINE} tone="muted" /> : <BitsAmount value={pack.bits} size={24} dim={!can} style={{ fontSize: bitsNum.fontSize }} />}
+              <span data-bits-pack-price style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
+                <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
+                <span className="sm2-num">{pack.credits}</span>
+              </span>
+              <span data-bits-pack-off style={{ ...sm2Hint, margin: 0, minHeight: '1.2em' }}>{off ?? ''}</span>
+              {brl && <span data-bits-pack-brl style={{ ...sm2Hint, margin: 0 }}>{brl}</span>}
+              {why && <span id={`bits-pack-why-${pack.id}`} data-bits-pack-why style={{ ...sm2Hint, margin: 0 }}>{why}</span>}
+            </button>
+          );
+        })}
+      </div>
+      {faltaSaldo && onGetCredits && (
+        <button type="button" data-get-credits onClick={onGetCredits} style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', gap: 6 }}>
+          <CreditIcon size={ICON_INLINE} style={{ flexShrink: 0 }} />
+          {isPt ? 'Comprar Créditos' : 'Get Credits'}
+        </button>
       )}
+      <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
+        {isPt
+          ? `Até ${BITS_PACK_DAILY_CAP} Bits por dia em pacotes. Hoje ainda cabem ${left} Bits. Os valores em reais são estimados; o preço real é o da Play.`
+          : `Up to ${BITS_PACK_DAILY_CAP} Bits a day in packs. ${left} Bits still fit today.`}
+      </p>
       <PurchaseConfirmSheet
         open={!!pending}
         language={language}
         question={pending
           ? <>
               {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pending.credits}</span>
-              {isPt ? (pending.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pending.credits === 1 ? ' Credit for ' : ' Credits for ')}<span className="sm2-num">{pending.bits}</span> Bits?
+              {isPt ? ' Créditos por ' : ' Credits for '}<span className="sm2-num">{pending.bits}</span> Bits?
             </>
           : null}
         balance={credits}

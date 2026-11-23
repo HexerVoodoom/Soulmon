@@ -173,6 +173,8 @@ async function onRequestPostBruto({ request, env }) {
     orderId: result.orderId,
     grantTier: result.product.grantTier,
     grantCredits: result.product.grantCredits,
+    // Moldura do widget (cosmético permanente): só o catálogo do servidor decide qual elemento.
+    grantFrame: result.product.grantFrame,
     // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
     provider,
     // Só o caminho da Steam devolve `productId` (verifySteamTxn); na Play quem

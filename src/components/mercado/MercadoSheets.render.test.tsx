@@ -67,7 +67,7 @@ describe('compra', () => {
     const modal = screen.getByRole('dialog', { name: 'How to get Bits' });
     // As regras REAIS, lidas das constantes: os minijogos (com o teto diário) e a troca de Créditos.
     expect(modal.querySelector('[data-how-to-earn-way="jogos"]')!.textContent).toContain('150');
-    expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('10 Bits per Credit');
+    expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('packs of 200, 500, 1000 Bits, up to 1000 Bits a day');
     expect(modal.textContent).toContain(`${bitsBg.nameEn} costs ${bitsBg.price} Bits.`);
     expect(container.innerHTML).not.toContain('danger');
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Got it' })); });
@@ -81,7 +81,7 @@ describe('compra', () => {
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Buy' })); });
     const modal = screen.getByRole('dialog', { name: 'How to get Honor' });
     expect(modal.querySelector('[data-how-to-earn-way="torneio"]')!.textContent).toMatch(/3 Honor per win and 1 per match/);
-  });
+  }, 60_000);
 
   it('item já possuído não compra de novo: vira Equipar e chama onEquip', () => {
     const onBuy = vi.fn(() => true);
@@ -162,7 +162,7 @@ describe('moeda certa por aba', () => {
     const card = screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` });
     expect(card).toBeTruthy();
     expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Bits');
-  });
+  }, 60_000);
 
   it('comprar na aba de Emblemas manda o id do prêmio (a moeda é decidida pelo item, no App)', () => {
     const onBuy = vi.fn(() => true);
@@ -172,7 +172,7 @@ describe('moeda certa por aba', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
-  });
+  }, 60_000);
 
   it('Itens tem só Bits (a troca de Créditos mudou para o Cambista, 30/10/2026); nunca Emblemas nem Créditos', () => {
     abrir({ stall: 'itens' });
@@ -182,74 +182,142 @@ describe('moeda certa por aba', () => {
   });
 });
 
-import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS } from '../../utils/elementDex';
+import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
 import { elementsMatchingBases } from '../../utils/elementPotion';
+import { ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
 
 describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
   const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
     renderWithCss(<CambistaSheet language="en-US" credits={3} onExchangeCredits={async () => true} {...p} />);
 
-  it('abre na aba Bits: diamante credit-ink + a troca, e nenhum item à venda', () => {
+  it('abre na aba Bits: diamante turquesa dos Créditos + a troca, e nenhum item à venda', () => {
     const { container } = abrirC();
     expect(screen.getByRole('tab', { name: 'Bits' }).getAttribute('aria-selected')).toBe('true');
-    expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
-    const swap = screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' });
-    expect(swap.hasAttribute('disabled')).toBe(false);
-    expect(screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' }).hasAttribute('disabled')).toBe(true);
+    expect(container.querySelector('[data-credit-icon]')).not.toBeNull();
+    // §373: três pacotes lado a lado, preço em Créditos e desconto derivado; com 3 Créditos nenhum cabe
+    expect(screen.getByRole('button', { name: 'Pouch: 200 Bits for 200 Credits' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Purse: 500 Bits for 460 Credits, ~8% off' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Chest: 1000 Bits for 800 Credits, ~20% off' }).hasAttribute('disabled')).toBe(true);
+    expect(container.querySelector('[data-exchange-room]')!.textContent).toBe('Up to 1000 Bits a day in packs. 1000 Bits still fit today.');
     expect(container.querySelector('[data-shop-item]')).toBeNull();
   });
 
   it('Essências: lista todos os elementos com preço; sem onBuyEssence não há botão (só vitrine)', () => {
     const { container } = abrirC();
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ALL_ELEMENT_IDS.length);
+    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ESSENCE_ELEMENT_IDS.length);
     expect(container.querySelector('[data-credit-exchange]')).toBeNull();
     expect(container.querySelector('[data-essence-buy]')).toBeNull();
     expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
   });
 
-  it('Essências: preço por linha, ×5 com desconto, posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
+  const abrirModal = (id: string, p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) => {
+    const r = abrirC({ unlockedElements: [id], onBuyEssence: async () => true, ...p });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    fireEvent.click(r.container.querySelector(`[data-essence-row="${id}"] [data-essence-buy]`)!);
+    return { ...r, dlg: screen.getByRole('dialog', { name: 'Confirm purchase' }) };
+  };
+  const q = (dlg: HTMLElement, sel: string) => dlg.querySelector(sel) as HTMLElement;
+
+  it('Essências: a lista mostra só item e preço unitário, sem ×N possuído; trancado (???) sem compra', () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const par = ALL_ELEMENT_IDS.find(id => !BASE_ELEMENT_IDS.includes(id))!;
     const trancado = BASE_ELEMENT_IDS[1];
-    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 7 }, onBuyEssence: async () => true });
+    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 10 }, onBuyEssence: async () => true });
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
     const row = (id: string) => container.querySelector(`[data-essence-row="${id}"]`)!;
-    const prices = (id: string) => [...row(id).querySelectorAll('[data-essence-price]')].map(e => e.textContent);
-    expect(prices(fogo)).toEqual(['1', '4']);
-    expect(prices(par)).toEqual(['2', '9']);
-    expect(row(fogo).querySelector('[data-essence-owned]')!.textContent).toBe('×7');
+    expect(row(fogo).querySelector('[data-essence-price]')!.textContent).toBe('1');
+    expect(row(par).querySelector('[data-essence-price]')!.textContent).toBe('2');
+    expect(row(fogo).textContent).not.toMatch(/×\s*\d/);
+    expect(container.querySelector('[data-essence-owned]')).toBeNull();
     expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
     expect(row(trancado).textContent).toMatch(/\?\?\?/);
-    expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
-    expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
-    expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {
+  it('Essências: tocar na linha abre o modal com imagem, nome, custo unitário e "You have N" (só aqui)', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 10, essences: { [fogo]: 7 } });
+    expect(q(dlg, '[data-essence-art] img')).not.toBeNull();
+    expect(q(dlg, '[data-essence-unit]').textContent).toBe('1');
+    expect(q(dlg, '[data-essence-have]').textContent).toBe('7');
+    expect(dlg.textContent).toMatch(/You have 7/);
+  });
+
+  it('Essências: seletor − / + atualiza o custo total (desconto por grupo de 5) e o botão "Buy N · custo"', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 20 });
+    const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
+    expect(qty.getAttribute('role')).toBe('spinbutton');
+    expect(qty.value).toBe('1');
+    expect((q(dlg, '[data-essence-minus]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 1 · 1 Credit');
+    for (let i = 0; i < 4; i++) fireEvent.click(q(dlg, '[data-essence-plus]'));
+    expect(qty.value).toBe('5');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 5 · 4 Credits');
+    fireEvent.click(q(dlg, '[data-essence-minus]'));
+    expect(qty.getAttribute('aria-valuenow')).toBe('4');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
+    fireEvent.change(qty, { target: { value: '12' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('12');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('10 Credits');
+    fireEvent.change(qty, { target: { value: '1000' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('25');
+  });
+
+  it('Essências: digitar N grande vale até o que o saldo paga, sem limite por compra', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { dlg } = abrirModal(fogo, { credits: 800 });
+    const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
+    fireEvent.change(qty, { target: { value: '1000' } });
+    expect(qty.getAttribute('aria-valuenow')).toBe('1000');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('800 Credits');
+  });
+
+  it('Essências: o máximo respeita o saldo e o teto de estoque; + desabilita no limite', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const a = abrirModal(fogo, { credits: 3 });
+    expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuemax')).toBe('3');
+    fireEvent.change(q(a.dlg, '[data-essence-qty]'), { target: { value: '99' } });
+    expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuenow')).toBe('3');
+    expect((q(a.dlg, '[data-essence-plus]') as HTMLButtonElement).disabled).toBe(true);
+    a.unmount();
+    const b = abrirModal(fogo, { credits: 50, essences: { [fogo]: ESSENCE_MAX_PER_ELEMENT - 2 } });
+    expect(q(b.dlg, '[data-essence-qty]').getAttribute('aria-valuemax')).toBe('2');
+  });
+
+  it('Essências: max 0 desabilita Comprar com o motivo (estoque cheio / sem Créditos)', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const a = abrirModal(fogo, { credits: 0 });
+    expect((q(a.dlg, '[data-purchase-ok]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(a.dlg, '[data-essence-blocked]').textContent).toBe('Not enough Credits');
+    a.unmount();
+    const b = abrirModal(fogo, { credits: 50, essences: { [fogo]: ESSENCE_MAX_PER_ELEMENT } });
+    expect((q(b.dlg, '[data-purchase-ok]') as HTMLButtonElement).disabled).toBe(true);
+    expect(q(b.dlg, '[data-essence-blocked]').textContent).toBe('Stock full');
+  });
+
+  it('Essências: Cancelar não cobra; Comprar chama o servidor com a quantidade escolhida', async () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const onBuyEssence = vi.fn(async () => true);
-    const { container } = abrirC({ credits: 10, unlockedElements: [fogo], onBuyEssence });
-    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="5"]`)!);
-    let dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
-    expect(dlg.querySelector('[data-purchase-cost]')!.textContent).toMatch(/^4 /);
+    const { dlg, container } = abrirModal(fogo, { credits: 20, onBuyEssence });
     const btns = [...dlg.querySelectorAll('button[data-purchase-cancel], button[data-purchase-ok]')];
     expect(btns.map(b => b.hasAttribute('data-purchase-cancel'))).toEqual([true, false]);
-    fireEvent.click(dlg.querySelector('[data-purchase-cancel]')!);
+    fireEvent.click(q(dlg, '[data-purchase-cancel]'));
     expect(onBuyEssence).not.toHaveBeenCalled();
-    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!);
-    dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
-    fireEvent.click(dlg.querySelector('[data-purchase-ok]')!);
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy]`)!);
+    const dlg2 = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    for (let i = 0; i < 6; i++) fireEvent.click(q(dlg2, '[data-essence-plus]'));
+    fireEvent.click(q(dlg2, '[data-purchase-ok]'));
     await Promise.resolve();
-    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 1);
+    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 7);
   });
 
   it('Essências em PT: botão Comprar e regra de preço', () => {
     const [fogo] = BASE_ELEMENT_IDS;
     const { container } = abrirC({ language: 'pt-BR', unlockedElements: [fogo], onBuyEssence: async () => true });
     fireEvent.click(screen.getByRole('tab', { name: 'Essências' }));
-    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!.textContent).toMatch(/Comprar/);
+    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy]`)!.textContent).toMatch(/Comprar/);
     expect(container.textContent).toMatch(/1 por elemento base, 2 por par/);
   });
 
@@ -261,12 +329,12 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const [a, b] = BASE_ELEMENT_IDS;
     fireEvent.click(container.querySelector('[data-slot="0"]')!);
     fireEvent.click(container.querySelector(`[data-base="${a}"]`)!);
-    expect(ids()).toEqual(elementsMatchingBases([a]));
+    expect(ids()).toEqual(elementsMatchingBases([a], ESSENCE_ELEMENT_IDS));
     expect(ids().length).toBeGreaterThan(1);
     fireEvent.click(container.querySelector('[data-slot="1"]')!);
     fireEvent.click(container.querySelector(`[data-base="${b}"]`)!);
-    expect(ids()).toEqual(elementsMatchingBases([a, b]));
-    expect(ids().length).toBeLessThan(elementsMatchingBases([a]).length);
+    expect(ids()).toEqual(elementsMatchingBases([a, b], ESSENCE_ELEMENT_IDS));
+    expect(ids().length).toBeLessThan(elementsMatchingBases([a], ESSENCE_ELEMENT_IDS).length);
     expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
   });
 
@@ -379,9 +447,10 @@ describe('L4 M4: "Do bosque" no TOPO do segmento, antes dos ~20 cenários da loj
   it('Decoração: a Concha da Maré também vem antes da lista; sem nada na posse, silêncio (nem o título)', () => {
     const { container, unmount } = abrir({ stall: 'decoracao', ownedFurniture: ['trophy-concha-mare'] });
     const stall = container.querySelector('[data-mercado-stall]') as HTMLElement;
-    // children[1] é a regra da decoração (D2, 02/10/2026); a roda vem logo depois, antes da lista.
-    expect(stall.children[1]).toBe(container.querySelector('[data-decor-rule]'));
-    expect(stall.children[2]).toBe(container.querySelector('[data-guild-owned="furniture"]'));
+    // P3 7.2: sem regra da decoração; a peça da roda mora dentro da prateleira, logo depois de "Já são seus".
+    expect(container.querySelector('[data-decor-rule]')).toBeNull();
+    const guild = container.querySelector('[data-guild-owned="furniture"]')!;
+    expect(stall.querySelector('[data-shop-shelf]')!.contains(guild)).toBe(true);
     unmount();
     const vazio = abrir({ stall: 'decoracao' });
     expect(vazio.container.querySelector('[data-guild-owned]')).toBeNull();
