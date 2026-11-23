@@ -573,6 +573,9 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `DungeonKeyBadge({ expiresAt, language })` (`expiresAt` = `dungeonKeyExpiresAt` do `App`, via `play.dungeonKeyExpiresAt`).
 **Chamado por:** `src/components/nav/AreaView.tsx` (prop `palco` da `AreaScene`). **Régua:** `src/components/nav/DungeonKeyBadge.render.test.tsx`.
 
+### `src/components/nav/acoVoltar.tsx` (23/11/2026, P5)
+**Dono de:** a pilha de handlers de Voltar da moldura de aço. `AreaSheet moldura="aco"` abre o `AcoVoltarProvider` (`useAcoVoltarPilha`); o `ModalSheet` com `onBack` e `closeSide="start"` publica o handler (`useAcoVoltarRegistro`) e deixa de desenhar a seta no corpo; o `FecharAco` mostra o Voltar do topo da pilha no medalhão ESQUERDO (`data-aco-voltar`) e o ✕ principal no DIREITO (`sm2-moldura-aco__fechar--dir`, ativo, fecha tudo). Handler em ref (lambda nova não re-renderiza). **Régua:** `src/components/hex/HexsmithVoltar.render.test.tsx` (360/375/412 px).
+
 ### `src/components/nav/AreaSheet.tsx`
 **Moldura de aço (18/11/2026):** prop `moldura?: 'padrao' | 'aco'`. `'aco'` (só o lote `forja.hexsmith`, ligado em `AreaView`) troca as peças do `ModalFrame` pela arte de `ui/hex-moldura/` (classe `sm2-moldura-modal--aco`), põe o `CristalChama` no encaixe do topo e o ✕ (só o glifo, `.sm2-moldura-aco__fechar`, `data-area-sheet-close`, na tela principal) no disco esquerdo; com tela interna aberta o disco esquerdo vira Voltar (`data-aco-voltar`, pilha em `nav/acoVoltar.tsx`) e o ✕ passa ao direito (`--dir`), ativo e fechando tudo. Régua: `AreaSheet.aco.render.test.tsx`.
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** props novas `npcArt2` (segundo busto: os dois chefs do Restaurante no domingo) e `npcOverlay` (peça na zona do NPC, entre o NPC e o balão: o leque de tickets do Salão).
