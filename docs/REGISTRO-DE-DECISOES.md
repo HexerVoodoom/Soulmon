@@ -6647,3 +6647,12 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Testes:** `vitest.setup.catalogos.ts` injeta tudo antes de cada arquivo de teste, então o código síncrono dos testes não muda.
 - **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA de 1.125.769 para 1.095.753 B (folga de 8.192 B sobre ele). CSS segue em 206.369. Nenhum teto mudou. Próximo corte: partir o `App.tsx`.
 - **Rollback:** reverter o commit; sem save/servidor.
+
+## §499 — Orçamento de bytes: o que não é do boot sai do `App.tsx` (23/11/2026, perf/app-split)
+
+- **Medida:** JS de entrada 1.095.753 B (após §498) para 1.062.299 B. Somando o §497 e o §498: 1.257.162 para 1.062.299 B (-195 KB) em relação ao build limpo de 22/11.
+- **Saiu da entrada (todos por `lazy()`/`import()`, sem mudar comportamento):** `PostponeNudgeSheet` (era uma função de 230 linhas dentro do `App.tsx`, só monta com a tarefa adiada aberta), `NotificationManager` (componente sem UI, só agenda lembretes; monta após o chunk), `ReviewResultModal` (só com resultado de revisão) e `RewardPreview` (só no toast de resgate, que sai assim que o chunk chega).
+- **Não feito e por quê:** o corpo do `App` (~170 KB) é UMA função com ~800 hooks e handlers por closure; ele não se parte em chunks sem antes extrair os handlers em módulos que recebem o estado, o que muda o caminho de render inteiro e merece PRs próprios (um domínio por vez: tarefas, loja, Arena, Masmorra). `CompanionHUD`, `DailyRituals` e `IntroScreen` ficam: são o 1º frame e lazy-los troca bytes por um piscar na abertura.
+- **Re-medida:** `DIVIDA_ATUAL['index.js']` ABAIXADA para o medido. Nenhum teto mudou.
+- **Rollback:** reverter o commit; sem save/servidor.
+

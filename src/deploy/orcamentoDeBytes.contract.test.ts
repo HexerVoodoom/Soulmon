@@ -226,7 +226,8 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // GATILHO (§380): ao passar de 1_150_000 B (≈1,1 MB) o próximo PR que crescer a entrada PAGA antes de re-medir — começar por
   // `elementoDescritores.data` (47 KB, hoje lido no `useMemo` síncrono de `stagesComElemento`) e partir o `App.tsx` (173 KB).
   // 23/11/2026 (REGISTRO §498, perf/catalogos-lazy): 1_125_769 -> 1_095_753 (-30,7 KB): cosmeticosNovos e honraDecor viraram chunk lazy. Linha ABAIXADA, nunca elevada.
-  'index.js': 1_095_753,
+  // 23/11/2026 (REGISTRO §499, perf/app-split): 1_095_753 -> 1_062_299 (-33,5 KB): PostponeNudgeSheet, NotificationManager, ReviewResultModal e RewardPreview saíram do App.tsx para chunks lazy. Linha ABAIXADA.
+  'index.js': 1_062_299,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

@@ -58,7 +58,7 @@ const CAMPOS_DECLARADOS: Record<string, Record<string, string[][]>> = {
  *  DECLARADOS na tela (hint), não cortados — decisão do dono pendente. */
 const CHAMADORES_SUGGEST: Record<string, string> = {
   'src/components/GameTutorialFlow.tsx': 'goalText.trim()',   // pré-preenchido com soulGoal
-  'src/App.tsx': 'task.name',                                  // PostponeNudgeSheet › runDecompose
+  'src/components/PostponeNudgeSheet.tsx': 'task.name',        // runDecompose (saiu do App.tsx no §499; a declaração na tela veio junto)
 };
 
 /** `getAIResponse` mora num lugar só. */

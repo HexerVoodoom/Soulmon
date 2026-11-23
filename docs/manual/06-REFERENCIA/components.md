@@ -1202,6 +1202,9 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'PetPage.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** mostra só formas já desbloqueadas, nunca as futuras (spoiler-guard); skills são determinísticas por identidade (mesmo `soulProfile` → mesmas skills), sem campo novo no save; save legado sem `soulProfile` simplesmente não mostra a seção de habilidades.
 
+### `src/components/PostponeNudgeSheet.tsx`
+**Dono de:** o sheet das três saídas da tarefa adiada (encolher, soltar, decompor com IA), movido do `App.tsx` para chunk lazy (REGISTRO §499): o `App` só o monta com `nudgeTaskId` aberto. **Chamado por:** `App.tsx` (lazy). **Régua:** `taskTriage.test.ts`, `DailyRituals.segurar.render.test.tsx`.
+
 ### `src/components/PetStageDecor.tsx`
 **Dono de:** desenha a decoração equipada do palco (móveis, cenário, vitrine de troféus) dentro da área do pet.
 **Props principais:** `PetStageDecorProps` — `equippedDecor: Partial<Record<SlotId,string>>`, `equippedBackground: string|null`, `trophies` (troféus reais de season), `language`.
