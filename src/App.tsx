@@ -277,7 +277,7 @@ import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/comp
 import { uncompleteTask, uncompleteBlock, uncompleteBlockText } from './utils/taskUncomplete';
 import { markTaskChecked, grantReliefFood, countHauntedMission, settleTaskCompletion } from './utils/taskCompletionPay';
 import { applyHabitCompletion, withHabitCompletion, ACTIVITY_LOG_CAP } from './utils/habitCompletionPay';
-import { registrarDiaComTarefa, concederTodosFundador } from './utils/fundador';
+import { registrarDiaComTarefa, concederTodosFundador, fundadorPendentes, marcarFundadorAvisados } from './utils/fundador';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, shouldAutoAdoptCorvo, spriteLineOf } from './utils/corvoPet';
@@ -613,6 +613,7 @@ const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({
 // do Dino são lotes da Exploração, o Pedra, papel e tesoura é lote de Jogos —
 // todos dentro do `AreaView` (ex-PR #118).
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
+const FundadorAvisoModal = lazy(() => import('./components/FundadorAvisoModal').then(m => ({ default: m.FundadorAvisoModal })));
 const WeeklyRetroModal = lazy(() => import('./components/WeeklyRetroModal').then(m => ({ default: m.WeeklyRetroModal })));
 const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then(m => ({ default: m.BalanceWeekModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
@@ -10679,6 +10680,25 @@ export default function App() {
               petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
               onClose={handleCloseWeeklyRetro}
             />
+          </Suspense>
+        );
+      })()}
+      {/* Aviso do Conjunto Fundador (PR 2/2): só na Home, depois do onboarding, sem a retrospectiva nem o intro de bônus na frente; fila = um popup por vez. */}
+      {(() => {
+        if (!hasCompletedOnboarding || showIntro || isDemoMode(gameState) || currentView !== 'home' || bonusIntroOpen) return null;
+        if (!retroFechada && needsWeeklyRetro(gameState, new Date())) return null;
+        const pend = fundadorPendentes(gameState);
+        if (pend.length === 0) return null;
+        const fechar = () => setGameState(prev => marcarFundadorAvisados(prev, pend));
+        return (
+          <Suspense fallback={null}>
+            <FundadorAvisoModal language={language} premios={pend} dias={gameState.fundadorDias ?? 0} onClose={fechar}
+              onEquip={(id) => {
+                if (id === 'founder-fundo') handleEquipBackground(id);
+                else if (id === 'founder-moldura') handleEquipFrame(id);
+                else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
+                fechar();
+              }} />
           </Suspense>
         );
       })()}

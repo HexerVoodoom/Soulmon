@@ -19,3 +19,15 @@ describe('Fundador — paridade cliente/servidor', () => {
     expect(AVATAR_IDS.has('founder-retrato')).toBe(true);
   });
 });
+
+describe('Fundador — fundadorAvisados no servidor', () => {
+  it('UNIÃO com o gravado (cliente antigo sem o campo não perde o estado) e ids lixo caem', async () => {
+    const { enforceFundador } = await import('./_fundador.js');
+    const a = enforceFundador({ fundadorPremios: ['founder-fundo'] }, { fundadorPremios: ['founder-fundo'], fundadorAvisados: ['founder-fundo', 'lixo'] });
+    expect(a.fundadorAvisados).toEqual(['founder-fundo']);
+    const b = enforceFundador({ fundadorAvisados: ['founder-retrato'] }, { fundadorAvisados: ['founder-fundo'] });
+    expect(b.fundadorAvisados).toEqual(['founder-fundo', 'founder-retrato']);
+    const c = enforceFundador({ x: 1 }, undefined);
+    expect('fundadorAvisados' in c).toBe(false);
+  });
+});

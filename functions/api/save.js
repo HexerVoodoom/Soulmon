@@ -620,7 +620,7 @@ async function onRequestBruto({ request, env }) {
     // Conjunto Fundador (23/11/2026, `_fundador.js`): dias nunca diminuem, ids de prêmio em UNIÃO com o gravado (cliente antigo pode regravar sem o campo).
     {
       const temGravado = typeof prev?.value === 'string' && prev.value.includes('"fundador');
-      if (temGravado || 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state) {
+      if (temGravado || 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state || 'fundadorAvisados' in state) {
         let gravado;
         if (temGravado) { try { gravado = JSON.parse(prev.value); } catch { gravado = undefined; } }
         enforceFundador(state, gravado);

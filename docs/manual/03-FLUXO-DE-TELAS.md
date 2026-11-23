@@ -2532,3 +2532,5 @@ Cobertura só no nível de existência de superfície e de ponto de entrada, por
 - **Hexsmith (§467).** Descrição PT/EN em todas as 10 Coroas; placa atrás da Coroa encaixada (CSS).
 
 - **Modal de resultado de forja (23/11/2026):** depois que o servidor confirma a forja de um HEX (e não é reentrega `already`), a Hexsmith abre `ForgeResultModal` (popup central, título inline, ✕ à direita) com arte, nome e efeito, e as ações «Equipar agora» / «Fechar»; erro ou recusa só mostram a mensagem. A «Criar poção» da Vesca (`ElementPotionSheet`) abre o mesmo modal para poção base ou composta, só com «Fechar», quando o craft é aceito.
+
+- **Aviso do Conjunto Fundador (23/11/2026, REGISTRO §511):** `FundadorAvisoModal` abre na Home (depois do onboarding, sem retrospectiva/intro de bônus na frente) quando há prêmio ganho e ainda não avisado: conta existente = um popup com os 4; marco novo = um popup com o item, "Ganho por constância: N dias.", "Equipar" (fundo/moldura/retrato) e "Fechar". Fechar/equipar grava `fundadorAvisados`.
