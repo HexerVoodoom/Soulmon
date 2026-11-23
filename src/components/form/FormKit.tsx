@@ -470,6 +470,7 @@ export function ModalSheet({
         aria-label={title}
         data-placement={placement}
         className={centered ? 'sm2-sheet-fade' : 'sm2-sheet-rise'}
+        {...(framed && centered ? { variante: 'cristal' } : null)}
         {...(framed ? { 'data-theme': 'dark', title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
         style={{
           ...(noMiolo
