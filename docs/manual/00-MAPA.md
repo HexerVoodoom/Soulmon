@@ -751,3 +751,16 @@ Para uma rodada completa da squad de documentação (medir → redigir → verif
 | [lore/VELADOS-ORDENS.md](../lore/VELADOS-ORDENS.md) | lore das ordens dos Velados | vivo | não |
 | [roteiro/INTRO-CINEMATICA.md](../roteiro/INTRO-CINEMATICA.md) | roteiro da cinemática "A Parede" | vivo | não |
 | [pesquisa/2026-11-04-jogo-cognitivo-e-chama.md](../pesquisa/2026-11-04-jogo-cognitivo-e-chama.md) | pesquisa do jogo cognitivo e do desenho da Chama (trataka) | pesquisa | não |
+| [site-beta/ASSETS-CHATGPT.md](../site-beta/ASSETS-CHATGPT.md) | site beta (landing do Soulmon): Assets do site a gerar no ChatGPT | registro | não |
+| [site-beta/BENCHMARK-VISUAL-JOGOS.md](../site-beta/BENCHMARK-VISUAL-JOGOS.md) | site beta (landing do Soulmon): Benchmark visual: sites oficiais de jogos (capturas de 2026-11-05) | registro | não |
+| [site-beta/BENCHMARK-VISUAL-MOBILE.md](../site-beta/BENCHMARK-VISUAL-MOBILE.md) | site beta (landing do Soulmon): Benchmark visual mobile — site de beta do Soulmon (2026-11-05) | registro | não |
+| [site-beta/BENCHMARK.md](../site-beta/BENCHMARK.md) | site beta (landing do Soulmon): Benchmark site de captação Soulmon (consulta 2026-11-05) | registro | não |
+| [site-beta/CAPAS-JOGOS-CHATGPT.md](../site-beta/CAPAS-JOGOS-CHATGPT.md) | site beta (landing do Soulmon): Capas dos jogos: lista e prompts para o ChatGPT | registro | não |
+| [site-beta/DEPLOY.md](../site-beta/DEPLOY.md) | site beta (landing do Soulmon): Publicar o site do beta: passo a passo | registro | não |
+| [site-beta/DESIGN-GUIDE.md](../site-beta/DESIGN-GUIDE.md) | site beta (landing do Soulmon): Design guide do site do beta do Soulmon (v1, 05/11/2026) | registro | não |
+| [site-beta/DESIGN-SYSTEM.md](../site-beta/DESIGN-SYSTEM.md) | site beta (landing do Soulmon): Design system do site do beta do Soulmon (v1, 05/11/2026) | registro | não |
+| [site-beta/FEATURE_TRUTH.md](../site-beta/FEATURE_TRUTH.md) | site beta (landing do Soulmon): FEATURE_TRUTH: o que o Soulmon realmente tem | registro | não |
+| [site-beta/PLANO-DESIGN.md](../site-beta/PLANO-DESIGN.md) | site beta (landing do Soulmon): Plano de design do site do Soulmon (v3, 05/11/2026) | registro | não |
+| [site-beta/PLANO.md](../site-beta/PLANO.md) | site beta (landing do Soulmon): Plano do site do beta do Soulmon (v2, 05/11/2026) | registro | não |
+| [site-beta/POLITICA-PRIVACIDADE.md](../site-beta/POLITICA-PRIVACIDADE.md) | site beta (landing do Soulmon): Política de privacidade do cadastro do beta (texto legível) | registro | não |
+| [site-beta/PROMPT-CRISTAL.md](../site-beta/PROMPT-CRISTAL.md) | site beta (landing do Soulmon): Prompt: cristal da alma com chama (site do beta) | registro | não |
