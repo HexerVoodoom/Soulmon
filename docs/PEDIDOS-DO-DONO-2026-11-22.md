@@ -55,6 +55,7 @@ Mapas código×spec (só leitura): scratchpad da sessão `mapa-spec-1/2/3.md`.
 - **Fonte dos 20 textos:** `docs/REFERENCIA-ARCANAS-PERSONA3.md` (só o texto descritivo entra).
 - **Item Cristal Fundador / Founder Crystal** (decorativo, `furn-cristal-fundador`): aprovado pelo dono, em qualquer cenário (`fits: any`), nunca à venda, sempre aceso (modo `sempre` em `decorLuz.ts`: nunca escurece nem apaga com o pet dormindo; halo turquesa depois do véu da noite) e com fogo turquesa animado em tira de 5 quadros. Código, arte final (168 e folha 5×168) e testes entram no PR `feat/cristal-fundador`. **Pendente:** a entrega por progressão (Fundo/Moldura/Retrato/Cristal) aguarda decisões do dono; hoje o item só existe para quem o receber por concessão futura.
 - **Dívida do dist paga** (#1125, #1128, #1131): folga de JS ~71 KB; partir o corpo do `App.tsx` fica no REGISTRO §499.
+- **Hexsmith: custo em poções 3 → 1** (pedido do dono, 23/11/2026): só o HEX de elemento (garra etc.); coroa/luvas, Bits e fragmentos não mudam; peças já forjadas não mudam. REGISTRO §502.
 
 ## Pacotes
 

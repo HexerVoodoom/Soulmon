@@ -83,7 +83,7 @@ export const HEX_STRIKE_LEGEND: Readonly<Record<HexStrike, Par>> = {
 export function hexRefusalText(r: HexRefusal, isPt: boolean, el?: string): string {
   switch (r) {
     case 'owned': return isPt ? 'Já está na sua coleção.' : 'Already in your collection.';
-    case 'potions': return isPt ? `Pede 3 poções de ${el ?? 'elemento'} — o Centro de Evolução, no Laboratório, as fabrica.` : `Takes 3 ${el ?? 'element'} potions — the Evolution Center in the Lab makes them.`;
+    case 'potions': return isPt ? `Pede 1 poção de ${el ?? 'elemento'} — o Centro de Evolução, no Laboratório, as fabrica.` : `Takes 1 ${el ?? 'element'} potion — the Evolution Center in the Lab makes them.`;
     case 'fragments': return isPt ? 'Pede mais fragmentos — a Masmorra os deixa a cada profundidade nova.' : 'Takes more fragments — the Dungeon leaves them at each new depth and run.';
     case 'bits': return isPt ? 'Ainda faltam Bits.' : 'Not enough Bits yet.';
     default: return isPt ? 'Este HEX não existe.' : 'This HEX does not exist.';
