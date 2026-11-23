@@ -136,8 +136,8 @@ describe('a feira de verdade: a oferta', () => {
 describe('a feira de verdade: gravação, limite de 1/item, expiração', () => {
   it('abrir é idempotente e grava a oferta: comprar um item (que vira "seu") não muda a lista', async () => {
     const e = env();
-    const dia = hojeUtc();
-    const conta = contaQueGanha(dia);
+    const dia = '2026-11-10'; // FIXO: a oferta depende do dia e um dia real (23/11/2026) saiu só com chips
+    const conta = contaCom(dia, i => i.kind !== 'chip');
     const a = await abrirFeiraLoja(e, conta, dia);
     const b = await abrirFeiraLoja(e, conta, dia);
     expect(b).toEqual(a);
