@@ -20,8 +20,14 @@ export type JourneyMode = keyof typeof JOURNEY_MODES;
 export const SPECIAL_CHANCE = 0.4;
 
 /** Tetos diários (D-6, dono 08/11/2026). */
-export const JOURNEY_ITEMS_DAILY_CAP = 16;
+export const JOURNEY_ITEMS_DAILY_CAP = 28;
 export const JOURNEY_ESSENCES_DAILY_CAP = 8;
+/** Teto de itens por sessão (dono, 22/11/2026): 1 item por baú, então = nº de baús. Essência tem teto próprio (diário). */
+export const JOURNEY_SESSION_ITEMS_CAP = { p25: 6, p50: 10 } as const;
+/** Essência por nº de elementos do cenário (1..4): chance no baú comum e qty no baú especial de essência (dono, 22/11/2026). */
+export const ESSENCE_BY_ELEMENTS: Record<1 | 2 | 3 | 4, { common: number; special: number }> = {
+  1: { common: 0.10, special: 1 }, 2: { common: 0.15, special: 1 }, 3: { common: 0.20, special: 2 }, 4: { common: 0.25, special: 2 },
+};
 export const JOURNEY_COMPLETIONS_REWARDED = 4;
 /** Focos extras por dia (depois dos 4 recompensados) que ainda dão um item simples (§302). */
 export const JOURNEY_EXTRA_COMPLETIONS = 3;
@@ -83,22 +89,24 @@ export function journeyProgress(c: JourneyClock, now: number): number {
 export type JourneyItem = { kind: 'material'; id: MaterialId; qty: number } | { kind: 'food'; id: string; qty: number } | { kind: 'essence'; id: string; qty: number };
 
 /** O que um baú dá. Especial sem a chave dá o comum (D-2). Determinístico pela seed e pelo índice. */
-export function chestLoot(seed: number, chest: JourneyChest, keys: readonly string[], env: FocusEnvironmentId): JourneyItem[] {
+export function chestLoot(seed: number, chest: JourneyChest, keys: readonly string[], env: FocusEnvironmentId, elems = 1): JourneyItem[] {
+  const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1)) as 1 | 2 | 3 | 4];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 0x9e3779b1)) >>> 0);
   const mats = FOCUS_ENVIRONMENTS.find(e => e.id === env)!.materials as readonly MaterialId[];
   const pick = <T,>(a: readonly T[]): T => a[Math.min(a.length - 1, Math.floor(rng() * a.length))];
   const mat = (): JourneyItem => ({ kind: 'material', id: pick(mats), qty: 1 });
   const food = (): JourneyItem => ({ kind: 'food', id: pick(JOURNEY_FOODS), qty: 1 });
   const ess = (qty: number): JourneyItem => ({ kind: 'essence', id: ENV_ELEMENT[env], qty });
-  const common = (): JourneyItem[] => [Math.floor(rng() * 5) < 4 ? mat() : food()];
+  const common = (): JourneyItem[] => (rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()]);
   if (chest.type === 'common' || !keys.includes(chest.type)) return common();
+  /* Baú especial paga 1 item raro (teto por sessão = 1 item/baú). */
   switch (chest.type) {
-    case 'bancada': return [food(), food()];
-    case 'relampago': return [mat(), mat()];
-    case 'quadrantes': { const a = mat(); let b = mat(); for (let i = 0; i < 4 && b.id === a.id; i++) b = mat(); return [a, b]; }
-    case 'brejo': return [ess(2)];
-    case 'elo': return [mat(), food()];
-    case 'pena': return [ess(1), mat()];
+    case 'bancada': return [food()];
+    case 'relampago': return [mat()];
+    case 'quadrantes': return [mat()];
+    case 'brejo': return [ess(tier.special)];
+    case 'elo': return [mat()];
+    case 'pena': return [mat()];
   }
 }
 
