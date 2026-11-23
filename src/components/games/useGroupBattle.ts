@@ -31,6 +31,8 @@ export const RAPIDO_RING_GRADE: RingGrade = 'bom';
 
 /** §202: a pausa entre o anúncio do especial (a carga) e o anel de tempo aparecer (ms). */
 export const RING_LEAD_MS = 1000;
+/** Pausa de apresentação depois do 2º golpe do companheiro no Pesadelo (só visual: o relógio da luta segue parado). */
+export const COMP_STRIKE_TAIL_MS = 250;
 import type { StageAction, StageHit } from './BattleStage';
 import {
   impactMs, introMs, specialTailMs, isSelfOnlySpecial, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
@@ -440,7 +442,11 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             // PR18: a cena do especial (nome + fundo escuro) vem antes do golpe; é só pausa de apresentação (nenhum `pull`
             // acontece nela, então a ordem e o resultado do motor não mudam).
             if (!(await wait(introMs('special') + impactMs('special', reduced())))) return;
-            if (batch.length) apply(batch, true, null);
+            // PESADELO (22/11/2026): o ataque extra do companheiro (`comp`) é o 2º golpe: sai DEPOIS do especial, em cena própria
+            const extra = batch.filter((e) => e.comp);
+            const main = batch.filter((e) => !e.comp);
+            if (main.length) apply(main, true, null);
+            else if (extra.length) { /* só o companheiro bate: o número dele sai na cena do 2º golpe */ }
             else if (scene.personalTag) showHits([{ id: ++seq.current, side: 'me', foe: 0, value: 0, tag: scene.personalTag }]);
             else setPetEnergy(ev.energy);
             // PR11: o efeito que a família do especial deixa — no foco único, ou em todos os vivos se a escola dele é em área
@@ -448,6 +454,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             // 11/10/2026: UM especial de cada vez — o efeito termina de aparecer ANTES de qualquer golpe (de qualquer lado)
             // começar; o relógio da luta segue parado (`wait` não o avança), então nada é pulado: só retomado depois.
             if (!(await wait(specialTailMs(reduced())))) return;
+            if (extra.length) {
+              const kindX: StageActionKind = scene.playerKind(false);
+              setAction({ id: ++seq.current, actor: 'me', foe: hitFoe(extra[extra.length - 1], foesNow), kind: kindX, impacto: scene.playerImpact?.(false), element: scene.playerElement(false) });
+              if (!(await wait(impactMs(kindX, reduced())))) return;
+              apply(extra, false, null);
+              if (!(await wait(COMP_STRIKE_TAIL_MS))) return;
+            }
             ev = pull();
             continue;
           }
