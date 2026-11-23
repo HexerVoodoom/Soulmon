@@ -7322,10 +7322,24 @@ button.sm2-hex-row {
 .sm2-especial[data-especial-variant="ranking"] { border-image-source: url('./assets/soulmon/ui/btn-ranking.webp'); }
 .sm2-especial[data-especial-variant="ranking"]:active:not(:disabled), .sm2-especial[data-especial-variant="ranking"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-ranking-press.webp'); }
 .sm2-especial[data-especial-variant="ranking"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-ranking-off.webp'); }
+.sm2-especial[data-especial-variant="rift"] { border-image-source: url('./assets/soulmon/ui/btn-rift.webp'); }
+.sm2-especial[data-especial-variant="rift"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-rift-press.webp'); }
+.sm2-especial[data-especial-variant="rift"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-rift-off.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"] { border-image-source: url('./assets/soulmon/ui/btn-rift-sec.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift-sec"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-rift-sec-press.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-rift-sec-off.webp'); }
 /* Texto dos botões de MODO/RANKING (pve/pvp/ranking, 18/11/2026, dono): o MESMO tamanho do CTA (`--sm2-text-lg`, 20 px) onde cabe; em tela estreita encolhe
    até `--sm2-text-md` (16 px) em vez de cortar, e o rótulo invade um pouco as pontas lisas da placa (margem negativa) para ocupar o espaço dela. */
-.sm2-especial[data-especial-variant="pve"], .sm2-especial[data-especial-variant="pvp"], .sm2-especial[data-especial-variant="ranking"] { font-size: clamp(var(--sm2-text-md), 4.8vw, var(--sm2-text-lg)); }
+.sm2-especial[data-especial-variant="pve"], .sm2-especial[data-especial-variant="pvp"], .sm2-especial[data-especial-variant="ranking"], .sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { font-size: clamp(var(--sm2-text-md), 4.8vw, var(--sm2-text-lg)); }
 .sm2-especial[data-especial-variant="pve"] .sm2-especial-label, .sm2-especial[data-especial-variant="pvp"] .sm2-especial-label, .sm2-especial[data-especial-variant="ranking"] .sm2-especial-label { margin: 0 -10px; }
+/* Botões da folha do Rift (P3, 23/11/2026): arte 1080x232, altura 72 px (escala 0,31). Enter: ponta 200 -> 62 px; Sec: ponta 150 -> 47 px. NÃO herdam 56/40 do base. */
+.sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { height: 72px; min-height: 48px; }
+.sm2-especial[data-especial-variant="rift"] { border-width: 0 62px; border-image-slice: 0 200 0 200 fill; border-image-width: 0 62px; color: #06231F; text-shadow: none; }
+.sm2-especial[data-especial-variant="rift-sec"] { border-width: 0 47px; border-image-slice: 0 150 0 150 fill; border-image-width: 0 47px; color: #F2FFFB; }
+.sm2-especial[data-especial-variant="rift"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift-sec"]:active:not(:disabled) { transform: translateY(2px); }
+.sm2-especial[data-especial-variant="rift"]:disabled { color: #8A9895; text-shadow: none; }
+.sm2-especial[data-especial-variant="rift"] [data-energy-cost] { color: #8A2F12; }
+.sm2-especial[data-especial-variant="rift"]:disabled [data-energy-cost] { color: #B5503A; }
 .sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;

@@ -189,11 +189,11 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
         </div>
       )}
       <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
-      <button type="button" data-masmorra-start onClick={onStart} style={cta}>
+      <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
-      </button>
-      {onMap && <button type="button" data-masmorra-map onClick={onMap} style={{ ...sm2Button('outline'), width: '100%' }}>{isPt ? 'Ver o mapa' : 'See the map'}</button>}
+      </BotaoEspecial>
+      {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
     </div>
   );
 }

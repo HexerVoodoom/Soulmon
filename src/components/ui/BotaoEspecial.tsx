@@ -14,9 +14,10 @@ export interface BotaoEspecialProps extends ButtonHTMLAttributes<HTMLButtonEleme
   /**
    * Arte do botão (18/11/2026, ranking): `dourado` (padrão, compras), `pve` (Aventura do Match-3 e Amistoso/Sparring do Torneio: pedra com musgo,
    * folhinha e diamante da alma) e `pvp` (PvP do Match-3 e Ranqueada do Torneio: faixa vermelha e ouro envelhecido com espinhos). Mesma estrutura
-   * 3-slice e 3 estados (`btn-pve{,-press,-off}.webp`, `btn-pvp{,-press,-off}.webp`).
+   * 3-slice e 3 estados (`btn-pve{,-press,-off}.webp`, `btn-pvp{,-press,-off}.webp`). `rift` (primário "Entrar no Rift", com `EnergyCost`) e `rift-sec`
+   * (secundário "Ver o mapa") da folha do Rift: `btn-rift{,-press,-off}.webp` e `btn-rift-sec{,-press,-off}.webp`.
    */
-  variant?: 'dourado' | 'pve' | 'pvp' | 'ranking';
+  variant?: 'dourado' | 'pve' | 'pvp' | 'ranking' | 'rift' | 'rift-sec';
 }
 
 export const BotaoEspecial = forwardRef<HTMLButtonElement, BotaoEspecialProps>(function BotaoEspecial(
