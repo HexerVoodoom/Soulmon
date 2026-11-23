@@ -6688,6 +6688,12 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Special = só Neutral:** não existe elemento Nightmare no dex (Pesadelo é modo de jogo). **Fora:** filtro "Novo" em Soulmons e ícone da criatura em outras telas (ficha, formas do pet).
 - **Rollback:** reverter o commit; nenhum dado de save mudou.
 
+## §506 — Soulsmith: modal com a Vitra e a Forja de Alma dentro, não tela cheia (23/11/2026, p5/soulforge-modal; número provisório, conferir colisão no merge)
+
+- **Decisão do dono (testando o #1130):** o lote `ferreiro` abre a `AreaSheet` COM a Vitra (retrato + fala) e a `ForgeCard` em lista (`view="list"`, a tela de upar) rola DENTRO da folha, como a Hexsmith. Sem a folha intermediária antiga e sem tela cheia (`forgeFull` removido); o ✕ é o único, o da folha. Moldura padrão (só a Hexsmith usa `aco`); a Forja não tem sub-telas com Voltar (o modal de upgrade/reforjar é próprio da `ForgeCard`).
+- **Por que lista e não mapa:** o mapa de chakras (`view="map"`) é uma cena de tela cheia com a própria Vitra e barra; dentro da folha duplicaria a Vitra e não cabe na altura. O mapa fica no código, sem uso.
+- **Rollback:** reverter o commit.
+
 ## §505 — Descritores dos 4 elementos do lote 5: elemento puro + Tarrasque bebê só no root do Hemolisk (23/11/2026, decisão do dono em modal)
 
 - **Decisão:** fantasma (Spectrel), morto-vivo (Revenox), sangue (Hemolisk) e fúria (Furiosk) deixam de herdar folhas, gemas, corações de luz e coroa de osso dos componentes; o descritor é só o tema do próprio elemento, cor própria, expressão calma, sem folha/cristal/cano da marca. `ELEMENTOS_PUROS_LOTE5` desliga o completamento por componente (`PISTA_CURTA_BASE`) para esses 4, e os testes de "uma palavra-chave por componente" os excluem de forma explícita (os outros 269 seguem travados).
