@@ -509,7 +509,11 @@ export function Mochila({
     <div
       className={`sm3-mochila-bg sm2-sheet-fade${arrastando ? ' sm3-arrastando' : ''}`}
       data-mochila
-      onClick={(e) => { if (e.target === e.currentTarget && !arrastando) onClose(); }}
+      onClick={(e) => {
+        // Soltar um arrasto sobre o véu gera um click nele: não é o jogador fechando.
+        if (engolirCliqueRef.current) { engolirCliqueRef.current = false; return; }
+        if (e.target === e.currentTarget && !arrastando) onClose();
+      }}
     >
       {/* MODAL FILES (18/11/2026): a moldura é a ARTE APROVADA (`assets/soulmon/ui/files/`) sobre o `ModalFrame` (que dá o "i" no ornamento e o miolo
           das sub-folhas); a composição segue a referência ref3. `MOLDURA_MODAL` desligado = a folha lisa de antes. */}

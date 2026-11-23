@@ -223,8 +223,8 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     // A alternativa acessível: o botão "Usar" do item selecionado.
     fireEvent.click(screen.getByRole('button', { name: 'Usar Maçã.exe' }));
     expect(onFeed).toHaveBeenCalledWith('🍎');
-    // e a folha fecha sozinha: usar é uma ação, não um menu preso
-    expect(screen.queryByRole('dialog', { name: 'Arquivos' })).toBeNull();
+    // e a folha NÃO fecha sozinha (pedido do dono, 22/11/2026): só o jogador fecha.
+    expect(screen.getByRole('dialog', { name: 'Arquivos' })).toBeTruthy();
   });
 
   it('consumível especial NÃO se mistura com a comida: coraçãozinho e Glitchtama moram em Especiais', async () => {

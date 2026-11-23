@@ -1094,7 +1094,8 @@ export const CompanionHUD = memo(function CompanionHUD({
      animação de comer e o "+1" voltam por `feedAnim`, só quando o App aceitou —
      recusa não anima. */
   const handleUseItem = useCallback((emoji: string) => {
-    setMochilaOpen(false);
+    // A Mochila NÃO fecha ao usar (pedido do dono 22/11/2026): o item usado só
+    // atualiza a contagem; quem fecha é o jogador (X, Esc ou toque no véu).
     setPetIsTarget(false);
     onFeed?.(emoji);
   }, [onFeed]);
