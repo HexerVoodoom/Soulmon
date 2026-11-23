@@ -201,3 +201,10 @@
   body:has(.fixo[data-vb-off]) .companheiro { bottom: calc(16px + env(safe-area-inset-bottom)); }
   body:has(.fixo[data-vb-off]) .vb-comp-x { bottom: calc(16px + 64px + env(safe-area-inset-bottom)); }
 }
+
+/* Cristal Fundador: base acesa + folha de 5 quadros da chama (~140 ms cada) na mesma posição; parado no quadro 1 com movimento reduzido. */
+.vb-cristal-anim { position: relative; display: block; width: 120px; height: 120px; }
+.vb-premio .vb-cristal-anim img { width: 100%; height: 100%; }
+.vb-chama { position: absolute; inset: 0; background: var(--chama) 0 0 / 500% 100% no-repeat; }
+@media (prefers-reduced-motion: no-preference) { .vb-chama { animation: vb-chama 700ms steps(5, jump-none) infinite; } }
+@keyframes vb-chama { to { background-position-x: 100%; } }

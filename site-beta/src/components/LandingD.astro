@@ -300,7 +300,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         <ul class="vb-premios-lista">
           {x.premios.itens.map(([id, nome, marco, tx]) => (
             <li class="vb-card vb-premio" data-premio={id}>
-              {premioArte(id) ? <img src={premioArte(id)!} width="160" height="160" alt="" loading="lazy" decoding="async" /> : <span class="vb-premio-vazio" aria-hidden="true"></span>}
+              {id === 'cristal' ? <span class="vb-cristal-anim" style={`--chama:url(${b('/premios/cristal-chama.webp')})`}><img src={b('/premios/cristal-base.webp')} width="160" height="160" alt="" loading="lazy" decoding="async" /><span class="vb-chama" aria-hidden="true"></span></span> : premioArte(id) ? <img src={premioArte(id)!} width="160" height="160" alt="" loading="lazy" decoding="async" /> : <span class="vb-premio-vazio" aria-hidden="true"></span>}
               <p class="vb-premio-marco">{marco}</p>
               <h3>{nome}</h3>
               <p>{tx}</p>
