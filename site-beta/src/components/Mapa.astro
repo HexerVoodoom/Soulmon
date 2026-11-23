@@ -1,0 +1,49 @@
+---
+// Cena cheia (DESIGN-SYSTEM §4.3). O mapa cobre a seção como object-fit: cover, mas numa caixa
+// com a proporção do arquivo: as criaturas (slot) pisam em pontos medidos em % do mapa, em qualquer tela.
+// Celular: retrato inteiro. Desktop (>= 1024): recorte paisagem medido (src/tools/preparar-v3.mjs).
+// Fora do hero, o mapa só é pedido depois do load e perto da tela (data-mapa-tarde, app.ts): nunca disputa o LCP.
+// Sem JS, o <noscript> entrega o mesmo <picture> com lazy nativo.
+import { b } from '../lib/base';
+interface Props {
+  id: string;            // mapa instalado: exploracao | laboratorio | jogos | hall | arena | guilda
+  desk: string;          // recorte desktop (public/mapa/<desk>.avif|webp)
+  aD: number;            // proporção do recorte desktop (largura / altura)
+  fx?: number; fy?: number;   // foco no celular (0..1)
+  dfx?: number; dfy?: number; // foco no desktop (0..1)
+  lcp?: boolean;         // hero: carrega já, só 480 no celular
+  soCrias?: boolean;     // camada só com as criaturas (sem o mapa), para ficar NA FRENTE do véu do texto
+}
+const { id, desk, aD, fx = 0.5, fy = 0.5, dfx = 0.5, dfy = 0.5, lcp = false, soCrias = false } = Astro.props;
+const aM = 821 / 1826; // todos os mapas instalados têm ~0,4497
+const mob = lcp ? `${b(`/mapa/${id}-480.avif`)} 480w` : `${b(`/mapa/${id}-480.avif`)} 480w, ${b(`/mapa/${id}-820.avif`)} 820w`;
+const mobW = lcp ? `${b(`/mapa/${id}-480.webp`)} 480w` : `${b(`/mapa/${id}-480.webp`)} 480w, ${b(`/mapa/${id}-820.webp`)} 820w`;
+const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+---
+<div class:list={['cena-fundo', { 'so-crias': soCrias }]} aria-hidden="true" style={`--a-m:${aM};--a-d:${aD};--fx-m:${fx};--fy-m:${fy};--fx-d:${dfx};--fy-d:${dfy}`}>
+  <div class="cena-arte" data-arte>
+    {soCrias ? null : lcp ? (
+      <picture class="cena-mapa">
+        <source media="(min-width: 1024px)" type="image/avif" srcset={b(`/mapa/${desk}.avif`)} />
+        <source media="(min-width: 1024px)" type="image/webp" srcset={b(`/mapa/${desk}.webp`)} />
+        <source type="image/avif" srcset={mob} sizes="100vw" />
+        <img src={b(`/mapa/${id}-480.webp`)} srcset={mobW} sizes="100vw" width="480" height="1067" alt="" loading="eager" decoding="async" />
+      </picture>
+    ) : (
+      <>
+        <picture class="cena-mapa" data-mapa-tarde>
+          <source media="(min-width: 1024px)" type="image/avif" data-srcset={b(`/mapa/${desk}.avif`)} />
+          <source media="(min-width: 1024px)" type="image/webp" data-srcset={b(`/mapa/${desk}.webp`)} />
+          <source type="image/avif" data-srcset={mob} sizes="100vw" />
+          <img src={vazio} data-src={b(`/mapa/${id}-480.webp`)} data-srcset={mobW} sizes="100vw" width="480" height="1067" alt="" decoding="async" />
+        </picture>
+        <noscript><picture class="cena-mapa">
+          <source media="(min-width: 1024px)" type="image/avif" srcset={b(`/mapa/${desk}.avif`)} />
+          <source type="image/avif" srcset={mob} sizes="100vw" />
+          <img src={b(`/mapa/${id}-480.webp`)} srcset={mobW} sizes="100vw" width="480" height="1067" alt="" loading="lazy" />
+        </picture></noscript>
+      </>
+    )}
+    <slot />
+  </div>
+</div>

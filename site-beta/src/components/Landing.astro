@@ -1,0 +1,513 @@
+---
+// Página do beta, v3 (docs/site-beta/PLANO-DESIGN.md): "cada rolagem é um lugar".
+// 0 barra superior · 1 hero (Exploração) · 2 o jogo na sua mão: aparelho real + demo (Laboratório) · 4 seu Soulmon (Jogos)
+// 5 o universo (Hall) · 6 o que você faz (Arena) · 7 trailer (slot, só com midia.trailer.ativo) · 8 como entrar (painel calmo)
+// 9 perguntas · 10 entre no beta (Guilda inteira). Ritmo: cena cheia x painel calmo, sem superfície clara.
+import Base from '../layouts/Base.astro';
+import '../styles/ramos.css';
+import { existsSync } from 'node:fs';
+import { b } from '../lib/base';
+import Mapa from './Mapa.astro';
+import Cria from './Cria.astro';
+import Aparelho from './Aparelho.astro';
+import midia from '../content/midia.json';
+import assets from '../content/assets.json';
+import universoDados from '../content/universo.json';
+import elenco from '../content/elenco.json';
+import fusoes from '../content/fusoes.json';
+import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
+interface Props { lang: Lang; variante?: 'b' }
+const { lang, variante } = Astro.props;
+const VB = variante === 'b'; // Versão B (dono, 09/11): sem sorteio e sem demo de scroll; companheiro que evolui rolando.
+const t = TEXTOS[lang];
+const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const j = t.jogo; const r = t.recursos; const mo = t.modal;
+type Video = { src: string; poster: string; posterAvif?: string; posterP?: string; posterPAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
+type Print = { id: string; src: string; gameplay: boolean };
+// Gameplay: só captura real (gameplay: true). O trailer é edição (rótulo Trailer); a cinemática de abertura ficou fora da v3.
+const loopRaw = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && v.src);
+const loop = loopRaw && { ...loopRaw, src: b(loopRaw.src), poster: b(loopRaw.poster), posterAvif: loopRaw.posterAvif && b(loopRaw.posterAvif), posterP: b(loopRaw.posterP!), posterPAvif: loopRaw.posterPAvif && b(loopRaw.posterPAvif) };
+const prints = (midia.prints[lang] as Print[]).filter((p) => p.gameplay === true && p.src);
+// Trailer: edição com telas reais, cartelas e arte aprovada ainda fora do jogo. Rótulo próprio, nunca gameplay.
+const trailerSlot = (midia as unknown as { trailer?: Record<string, { ativo?: boolean; src: string; poster: string; posterP: string; largura: number; altura: number }> }).trailer?.[lang];
+const capa = (trailerSlot as unknown as { capa: { desktop: string; celular: string } }).capa;
+const trailer = trailerSlot?.ativo ? { ...trailerSlot, src: b(trailerSlot.src), poster: b(trailerSlot.poster), posterP: b(trailerSlot.posterP) } : undefined; // só com ativo:true (trailer conferido quadro a quadro em 06/11)
+// Arte-chave do hero (decisão do dono, 06/11): quando existir, substitui mapa + elenco sem mudar layout.
+const heroArte = assets.heroArte as { desktop: string | null; celular: string | null; larguras?: { desktop: number[]; celular: number[] } };
+const hset = (base: string, ws: number[], ext: string) => ws.map((w) => `${b(base)}-${w}.${ext} ${w}w`).join(', ');
+const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
+const strings = {
+  share: f.shareTxt, copiado: f.copiado, falhaCopia: f.falhaCopia, erros: f.erros, enviando: f.enviando,
+  forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, nomes: c.nomes, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito,
+  cta: t.cta, ctaEspera: t.ctaEspera, vagasEspera: t.hero.vagasEspera, enviarEspera: f.enviarEspera, pausar: j.pausar, tocar: j.tocar,
+};
+const logo = b(assets.logo.src);
+const passos = [assets.passoCard1.src, assets.passoCard2.src, assets.passoCard3.src].map(b);
+const HABITA = universoDados.habitantes as Record<string, string>;
+const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa'];
+const ELS = Object.keys(u.els);
+// Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
+// Cards com o prédio do jogo no lugar do recorte do mapa (dono, 09/11): Forja = Forja de Alma (Hexsmith), Mercado = tenda da Feira.
+const PREDIO: Record<string, string> = { forja: '/site/card-forja-mapa.webp', hall: '/site/card-mercado-mapa.webp' };
+const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50], forja: [50, 50] };
+// Capas dos jogos: arte ilustrada 4:3 (public/jogos, src/tools/preparar-capas-jogos.mjs). Título e selo são HTML, nunca na arte.
+const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
+const capaSet = (id: string, ext: string) => `${capaJogo(id, 400)}.${ext} 400w, ${capaJogo(id, 800)}.${ext} 800w`;
+const MOSAICO = ['combina', 'arena', 'mente', 'ppt'];
+// Só o modal de Jogos mostra os cardzinhos (dono, 09/11); Arena, Exploração e os outros lugares ficam sem.
+const JOGOS_POR_LUGAR: Record<string, string[]> = { jogos: ['ppt', 'combina', 'barrage', 'mente', 'corrida'] };
+const Formas = c.formas;
+// Árvore inteira (dono, 09/11): os 3 caminhos de cada linha. O caminho principal usa o sprite da linha; os outros vêm de E:\Soulmon-assets\...\ramos (public/sprites/ramos).
+const CAMINHOS = ['poder', 'harmonia', 'benevolencia'];
+const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia', planta: 'harmonia', noturno: 'poder' };
+// Linha "Noturno" (corvinho roxo do dono, 09/11): entra sozinha quando os 5 sprites existirem em public/sprites/
+// (noturno-<forma>.webp e noturno-<forma>-128.webp; formas = c.formas). Caminhos paralelos opcionais em public/sprites/ramos/noturno-<caminho>-<forma>-128.webp;
+// sem eles, os outros caminhos aparecem em sombra. Com a linha pronta, ela vira a criatura da demo do scroll (no lugar do fogo).
+// Ordem invertida pelo dono (10/11) na linha Fada: Benevolência Champion<->Mega, Harmonia Ultimate<->Mega.
+const TROCA: Record<string, string> = { 'fada-benevolencia-champion': 'mega', 'fada-benevolencia-mega': 'champion', 'fada-harmonia-ultimate': 'mega', 'fada-harmonia-mega': 'ultimate' };
+const temSprite = (rel: string) => existsSync(`public${rel}`);
+const temForma = (lin: string, fm: string) => temSprite(`/sprites/${lin}-${fm}.webp`) && temSprite(`/sprites/${lin}-${fm}-128.webp`);
+// Árvore: entra com Champion..Ultra (o Rookie, se faltar, fica em sombra). Demo: só com as 5 formas.
+const NOTURNO = c.formas.slice(1).every((fm) => temForma('noturno', fm));
+const LINHAS_B = ['arcano','espaco','fada','fogo','morte','noturno','planta','sombra','vigor','vileza'];
+const LINHA_DEMO = c.formas.every((fm) => temForma('noturno', fm)) ? 'noturno' : 'fogo';
+const LINHAS = [['planta', s.linhas[0]], ['fada', s.linhas[1]], ['fogo', s.linhas[2]], ...(NOTURNO ? [['noturno', s.linhaNoturno]] : [])] as [string, string][];
+// Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
+// Linha Som fora do sorteio (dono, 09/11: era o "sapinho").
+const POOL = JSON.stringify(elenco.elegiveis.filter((x) => x.el && !x.el.split(',').includes('som')).map((x) => [x.id, x.el, x.forma]));
+const lugarDados = universoDados.lugares as Record<string, { npc: string; pt: string; en: string; habita: { pt: string; en: string } }>;
+const falas = JSON.stringify(Object.fromEntries(Object.entries(lugarDados).map(([k, v]) => [k, { fala: v[lang], habita: v.habita[lang], npc: b(v.npc) }])));
+const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
+const cen = (n: string) => `--cen-m:image-set(url(${b(`/dono/${n}-800.avif`)}) type("image/avif"), url(${b(`/dono/${n}-800.webp`)}) type("image/webp"));--cen-d:image-set(url(${b(`/dono/${n}-1400.avif`)}) type("image/avif"), url(${b(`/dono/${n}-1400.webp`)}) type("image/webp"))`;
+const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+// Trailer vertical (celular) entra sozinho quando public/video/trailer-<lang>-v.mp4 existir.
+const TRAILER_V = temSprite(`/video/trailer-${lang}-v.mp4`);
+// Idioma por bandeira (dono, 09/11): a bandeira é a do OUTRO idioma.
+const MAO_SVG = `<svg viewBox="-1 0 22 15" width="66" height="45" shape-rendering="crispEdges"><g fill="#101418"><rect x='8' y='2' width='11' height='5'/><rect x='2' y='3' width='10' height='11'/><rect x='9' y='5' width='5' height='4'/><rect x='9' y='7' width='5' height='4'/><rect x='9' y='9' width='4' height='4'/><rect x='4' y='1' width='6' height='4'/><rect x='-1' y='2' width='5' height='12'/></g><g fill="#fff"><rect x='9' y='3' width='9' height='3'/><rect x='3' y='4' width='8' height='9'/><rect x='10' y='6' width='3' height='2'/><rect x='10' y='8' width='3' height='2'/><rect x='10' y='10' width='2' height='2'/><rect x='5' y='2' width='4' height='2'/><rect x='0' y='3' width='3' height='10'/></g><g fill="#b8c4cc"><rect x='10' y='8' width='3' height='0.6'/><rect x='10' y='10' width='3' height='0.6'/><rect x='2' y='3' width='1' height='10'/><rect x='4' y='12' width='6' height='1'/></g></svg>`;
+const PASSO_HREF = ['https://groups.google.com/g/soulmon-testers', 'https://play.google.com/apps/testing/com.soulmon', 'https://play.google.com/store/apps/details?id=com.soulmon'];
+const IG = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>';
+const BANDEIRA_PT = '<svg class="bandeira" viewBox="0 0 28 20" width="34" height="24" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#009c3b"/><path d="M14 2.5 25.5 10 14 17.5 2.5 10Z" fill="#ffdf00"/><circle cx="14" cy="10" r="4.6" fill="#002776"/><path d="M9.6 9.1c3-.9 6.2-.5 8.8 1.2" stroke="#fff" stroke-width=".9" fill="none"/></svg>';
+const BANDEIRA_EN = '<svg class="bandeira" viewBox="0 0 60 40" width="34" height="24" aria-hidden="true"><clipPath id="bq"><rect width="60" height="40" rx="6"/></clipPath><g clip-path="url(#bq)"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg>';
+const PLAY = '<svg class="loja-ico" viewBox="0 0 24 26" width="28" height="30" aria-hidden="true"><path fill="#00d7fe" d="M1.2.6 13.4 12.9 1.2 25.2C.8 25 .5 24.5.5 23.9V2C.5 1.4.8.9 1.2.6Z"/><path fill="#00f076" d="M17.6 8.7 13.4 12.9 1.2.6c.4-.3 1-.3 1.6 0Z"/><path fill="#ff3a44" d="M17.6 17.1 2.8 25.3c-.6.3-1.2.3-1.6-.1l12.2-12.3Z"/><path fill="#ffd400" d="m17.6 8.7 4.6 2.6c1.3.7 1.3 2.2 0 2.9l-4.6 2.9-4.2-4.2Z"/></svg>';
+// Colete (dono, 09/11, rodada 3): 8 posições por caminho, 3 visíveis + slide. Reveladas primeiro, o resto em sombra com "?".
+const COLETE: Record<string, Record<string, [string, string][]>> = {
+  champion: { poder: [['/sprites/fogo-champion-128.webp', u.els.fogo], ['/sprites/colete/champion/agua.webp', t.colete.nomes.agua], ['/sprites/colete/champion/industrial.webp', t.colete.nomes.industrial]] },
+  ultimate: { poder: [['/sprites/colete/ultimate/chama_azul.webp', t.colete.nomes.chama_azul], ['/sprites/colete/ultimate/brinquedo.webp', t.colete.nomes.brinquedo], ['/sprites/colete/ultimate/raiz_profunda.webp', t.colete.nomes.raiz_profunda]] },
+};
+---
+<Base lang={lang} alternativa={VB ? t.outraHome + 'b/' : t.outraHome} aqui={VB ? t.home + 'b/' : t.home} canonico={t.home} versaoB={VB ? undefined : t.home + 'b/'} preload>
+  <a class="pular" href="#conteudo">{t.pular}</a>
+
+  <header class="topo" data-topo>
+    <a class="topo-logo" href="#topo" aria-label={t.logoTopo}><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-tarde-src={b('/marca/logo-160.webp')} width="160" height="120" alt="" /></a>
+    <a class="ig ig-topo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a>
+    <a class="idioma" href={VB ? t.outraHome + 'b/' : t.outraHome} hreflang={t.outraCod} lang={t.outraCod} aria-label={t.outraNome} title={t.outraNome}><Fragment set:html={lang === 'pt' ? BANDEIRA_EN : BANDEIRA_PT} /></a>
+  </header>
+
+  <!-- 1 · Hero: Exploração em tela cheia, elenco pisando no mapa -->
+  <section class="cena hero" id="topo" aria-labelledby="hero-h">
+    {heroArte.desktop && heroArte.celular ? (
+      <div class="cena-fundo hero-fundo" aria-hidden="true">
+        {/* Arte-chave (ilustração composta): redução suave, nunca pixelated. Só a variante da tela é pedida. */}
+        <picture class="hero-arte">
+          <source media="(min-width: 1024px)" type="image/avif" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'avif')} sizes="100vw" />
+          <source media="(min-width: 1024px)" type="image/webp" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'webp')} sizes="100vw" />
+          <source type="image/avif" srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'avif')} sizes="100vw" />
+          <img src={b(`${heroArte.celular}-780.webp`)} srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'webp')} sizes="100vw" width="941" height="1672" alt="" fetchpriority="low" decoding="async" />
+        </picture>
+      </div>
+    ) : (
+    <Mapa id="exploracao" desk="exploracao-d" aD={821 / 600} dfy={0.45} lcp>
+      {/* Uma escala por cena: 3x (192) no celular, 4x (256) no desktop. Pés em chão medido. */}
+      <Cria s="fogo-ultimate" t={192} td={256} x={66} y={66} dx={66} dy={86} prot ja />
+      <Cria s="agua-ultimate" t={192} td={256} x={24} y={62} dx={80} dy={66} flip fase={400} />
+      <Cria s="ar-champion" t={192} td={256} x={80} y={45} dx={91} dy={90} flip so="d" fase={1200} />
+    </Mapa>
+    )}
+    <div class="hero-corpo">
+      <div class="hero-texto veu-h">
+        <img class="hero-logo" src={logo} srcset={`${b('/site/logo-240.webp')} 240w, ${b('/site/logo-320.webp')} 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 156px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
+        <h1 id="hero-h">{t.h1}</h1>
+        <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
+      </div>
+
+    </div>
+  </section>
+
+  <main id="conteudo" tabindex="-1">
+    {VB && (
+    <section class="calmo meu-soulmon" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={t.vb.outro} data-falas={JSON.stringify(t.vb.falas)}>
+      <h2 id="meu-h">{t.vb.h2}</h2>
+      <div class="meu-palco">
+        <img class="sprite meu-sombra" data-meu-sombra src={b('/sprites/fogo-rookie.webp')} width="192" height="192" alt="" aria-hidden="true" loading="lazy" />
+        <img class="sprite" data-meu-img hidden width="192" height="192" alt="" />
+      </div>
+      <p class="meu-info" data-meu-info aria-live="polite"></p>
+      <button type="button" class="botao primario" data-meu-sortear>{t.vb.sortear}</button>
+    </section>
+    )}
+    <!-- 2 · O jogo na sua mão: aparelho com o loop real ao lado da demo (Laboratório, scroll no desktop) -->
+    {!VB && (
+    <section class="cena ciclo" id="ciclo" aria-labelledby="ciclo-h" data-linha-demo={LINHA_DEMO}>
+      <div class="ciclo-palco" data-palco>
+        <Mapa id="laboratorio" desk="laboratorio-d" aD={841 / 600} fy={0.4} dfy={0.5} />
+        <div class="ciclo-texto veu">
+          <h2 id="ciclo-h">{c.h2}</h2>
+        </div>
+        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto limpo />}
+        <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
+          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /><noscript><img class="sprite" src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /></noscript><span>{c.nomes[i]}</span></li>)}
+        </ol>
+        <div class="demo-cena" data-cena hidden>
+          <button type="button" class="demo-fechar" data-demo-fechar><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M6.4 4 4 6.4 9.6 12 4 17.6 6.4 20l5.6-5.6 5.6 5.6 2.4-2.4-5.6-5.6L20 6.4 17.6 4 12 9.6Z"/></svg>{c.fechar}</button>
+          <div class="cena-central">
+            {/* Nome da forma; ícone da forma em public/forma/ (enviado pelo dono, 09/11). */}
+            <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma data-forma="rookie"></span><span data-placa>{c.nomes[0]}</span></p>
+            <div class="disco-caixa">
+              <img class="disco" data-tarde-src={assets.disco.src ? b(assets.disco.src) : undefined} src={vazio} width="240" height="109" alt="" />
+              <img class="sprite" data-criatura data-tarde-src={b(`/sprites/${LINHA_DEMO}-rookie.webp`)} src={vazio} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
+              <span class="clarao" data-clarao></span>
+              <div class="cristal" aria-hidden="true">
+                <img data-c="apagado" src={vazio} data-tarde-src={b(assets.cristalApagado.src)} width="48" height="96" alt="" />
+                <img data-c="acendendo" src={vazio} data-tarde-src={b(assets.cristalAcendendo.src)} width="48" height="96" alt="" />
+                <img data-c="aceso" src={vazio} data-tarde-src={b(assets.cristalAceso.src)} width="48" height="96" alt="" />
+              </div>
+            </div>
+          </div>
+          <div class="lista-bloco" data-tarefas>
+          <div class="lista-jogo moldura">
+            <span class="maozinha" data-mao aria-hidden="true"><svg viewBox="-1 0 22 15" width="66" height="45" shape-rendering="crispEdges"><g fill="#101418"><rect x='8' y='2' width='11' height='5'/><rect x='2' y='3' width='10' height='11'/><rect x='9' y='5' width='5' height='4'/><rect x='9' y='7' width='5' height='4'/><rect x='9' y='9' width='4' height='4'/><rect x='4' y='1' width='6' height='4'/><rect x='-1' y='2' width='5' height='12'/></g><g fill="#fff"><rect x='9' y='3' width='9' height='3'/><rect x='3' y='4' width='8' height='9'/><rect x='10' y='6' width='3' height='2'/><rect x='10' y='8' width='3' height='2'/><rect x='10' y='10' width='2' height='2'/><rect x='5' y='2' width='4' height='2'/><rect x='0' y='3' width='3' height='10'/></g><g fill="#b8c4cc"><rect x='10' y='8' width='3' height='0.6'/><rect x='10' y='10' width='3' height='0.6'/><rect x='2' y='3' width='1' height='10'/><rect x='4' y='12' width='6' height='1'/></g></svg></span>
+            <p class="lista-cab"><span class="rot-hoje">{c.hoje}</span> <span class="rot-missao"><span data-missao aria-live="polite">0/{c.tarefas.length}</span></span></p>
+            <ul aria-label={c.tarefasRotulo}>
+              {c.tarefas.map((tx, i) => (
+                <li class="linha">
+                  <button type="button" class="check" role="checkbox" aria-checked="false" aria-label={tx} data-tarefa={i}>
+                    <span class="caixa" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="m9.5 16.2-4-4 1.6-1.6 2.4 2.4 7.4-7.4 1.6 1.6-9 9Z"/></svg></span>
+                  </button>
+                  <span class="linha-nome" aria-hidden="true">{tx}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          </div>
+          <div class="ciclo-fim" data-fim hidden>
+            <button type="button" class="link" data-recomecar>{c.recomecar}</button>
+            <a class="botao primario" href="#entrar" data-cta>{t.cta}</a>
+          </div>
+          <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
+          <p class="sr" aria-live="polite" data-anuncio></p>
+        </div>
+      </div>
+    </section>
+    )}
+
+    <!-- 4 · Seu Soulmon: Jogos; número grande, árvore e fichas -->
+    <section class="cena soul" id="seu-soulmon" aria-labelledby="soul-h">
+      <div class="soul-mosaico" aria-hidden="true" style={`--mosaico:image-set(url(${b('/site/mosaico-elementos.avif')}) type("image/avif"), url(${b('/site/mosaico-elementos.webp')}) type("image/webp"))`}></div>
+      <div class="soul-grade">
+        <div class="soul-texto veu">
+          <h2 id="soul-h">{s.h2}</h2>
+          <p class="frase">{s.frase}</p>
+          <p class="numero"><span class="num-g">{s.num}</span> <span class="num-tx">{s.numTx}</span></p>
+          <p class="numero"><span class="num-pre">{s.num2Pre}</span> <span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
+        </div>
+        {!VB && (
+        <div class="sorteio ficha-moldura" role="group" aria-label={s.sorteioRotulo} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento} data-nomes={JSON.stringify(c.nomes)} data-el-base={b('/el/')} data-fusoes={JSON.stringify(fusoes)} data-lang={lang}>
+          <div class="sorteio-palco">
+            <img class="sorteio-sombra sprite" data-sort-sombra aria-hidden="true" src={b('/sprites/agua-ultimate.webp')} width="256" height="256" alt="" loading="lazy" />
+            <img class="sprite" data-sort-img hidden width="256" height="256" alt="" decoding="async" />
+          </div>
+          {/* Duas linhas: elemento (ícone do elemento) e forma (ícone da forma: PROVISÓRIO até o anexo do dono). */}
+          <p class="sorteio-info" data-sort-info aria-live="polite">{s.sombra}</p>
+          <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
+        </div>
+        )}
+        <div class="arvore-bloco veu" data-trilho>
+          <h3>{s.arvoreH}</h3>
+          <div class="arvore-palco">
+          <button type="button" class="seta-linha esq" data-linha-ant aria-label={s.linhaAnt} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M15.5 3 6.5 12l9 9 2.1-2.1L10.7 12l6.9-6.9Z"/></svg></button>
+          {LINHAS.map(([lin, nomeLin]) => (
+          <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${nomeLin}`}>
+              {Formas.map((fm, i) => {
+                const tres = i > 0 && i < 4;
+                return (
+                  <>
+                    {i > 0 && <li class="arvore-lig" aria-hidden="true"><Fragment set:html={i === 1 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M150 0C150 22 50 18 50 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M150 0C150 22 250 18 250 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 150C22 150 18 46 40 46"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 150C22 150 18 254 40 254"/></svg>' : i === 4 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0C50 22 150 18 150 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0C250 22 150 18 150 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46C22 46 18 150 40 150"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254C22 254 18 150 40 150"/></svg>' : '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0V40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0V40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46H40"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254H40"/></svg>'} /></li>}
+                    {i === 1 && <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>}
+                    <li class:list={['arvore-linha', { tres }]}>
+                      <span class="arvore-rot">{c.nomes[i]}</span>
+                      <span class="arvore-nos">
+                        {tres
+                          ? CAMINHOS.map((cm, ci) => (
+                              cm === PRINCIPAL[lin] || temSprite(`/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)
+                                ? <button type="button" class="no revelado" data-ramo data-ramo-nome={`${nomeLin} · ${s.caminhos[ci]}`} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${TROCA[`${lin}-${cm}-${fm}`] ?? fm}-128c.webp` : `/sprites/ramos/${lin}-${cm}-${TROCA[`${lin}-${cm}-${fm}`] ?? fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></button>
+                                : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>
+                            ))
+                          : temSprite(`/sprites/${lin}-${fm}-128.webp`)
+                            ? <button type="button" class="no revelado" data-ramo data-ramo-nome={nomeLin} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></button>
+                            : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
+                      </span>
+                    </li>
+                  </>
+                );
+              })}
+            </ol>
+          ))}
+          <button type="button" class="seta-linha dir" data-linha-prox aria-label={s.linhaProx} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M8.5 3 6.4 5.1l6.9 6.9-6.9 6.9L8.5 21l9-9Z"/></svg></button>
+          </div>
+          <p class="sr">{s.caminhos.join(', ')}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4b · Colete todas as formas (pedido do dono, 09/11). variantes elementais do fogo (caminho Poder) em public/sprites/colete/;
+         -->
+    <section class="cena calmo colete" id="colete" aria-labelledby="colete-h">
+      <Mapa id="jogos" desk="jogos-d" aD={841 / 600} fy={0.5} dfy={0.5} />
+      <div class="colete-cab">
+        <h2 id="colete-h">{t.colete.h2}</h2>
+        <p class="frase">{t.colete.frase}</p>
+      </div>
+      {/* Colete (dono, 09/11, rodada 2): por forma (Champion, Ultimate), os 3 caminhos lado a lado, cartas do MESMO tamanho, sem destaque central.
+          Poder: as 5 variantes reais (E:\Soulmon-assets\site-formas\{champion,ultimate}). Harmonia e Benevolência: a forma de fogo do caminho
+          (public/sprites/ramos) + 5 elementos em sombra, PROVISÓRIO até existirem as variantes desses caminhos. */}
+      <div class="colete-abas" role="tablist" aria-label={t.colete.h2}>
+        {(['champion', 'ultimate'] as const).map((nv, k) => <button type="button" role="tab" class="colete-aba" data-colete-aba={nv} aria-selected={k === 0 ? 'true' : 'false'}><span class="ico-forma" data-forma={nv}></span>{c.nomes[k + 1]}</button>)}
+      </div>
+      <div class="colete-niveis">
+      {(['champion', 'ultimate'] as const).map((nv, k) => (
+        <div class="colete-nivel" data-colete-nivel={nv} data-ativo={k === 0 ? '1' : '0'}>
+          <h3 class="colete-rot"><span class="ico-forma" data-forma={nv}></span>{c.nomes[k + 1]}</h3>
+          {CAMINHOS.map((cm, ci) => {
+            const vistos = COLETE[nv][cm] ?? [[`/sprites/ramos/fogo-${cm}-${nv}-128.webp`, u.els.fogo]];
+            const sombra = vistos[0][0];
+            return (
+              <div class="colete-caminho" role="group" aria-label={`${c.nomes[k + 1]} · ${s.caminhos[ci]}`}>
+                <h4>{s.caminhos[ci]}</h4>
+                <button type="button" class="colete-seta" data-colete-seta="-1" aria-label={s.linhaAnt}>‹</button>
+                <ul class="colete-trilho" data-colete-trilho tabindex="0">
+                  {vistos.map(([src, nome]) => <li class="colete-item"><img class="sprite" src={b(src)} width="128" height="128" alt={`${nome}, ${s.caminhos[ci]}, ${c.nomes[k + 1]}`} loading="lazy" /><span>{nome}</span></li>)}
+                  {Array.from({ length: 8 - vistos.length }, () => <li class="colete-item falta"><img class="sprite" src={b(sombra)} width="128" height="128" alt={t.colete.falta} loading="lazy" /><b aria-hidden="true">?</b><span>?</span></li>)}
+                </ul>
+                <button type="button" class="colete-seta" data-colete-seta="1" aria-label={s.linhaProx}>›</button>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      </div>
+    </section>
+    <!-- 5 · O universo: Hall, abas pedidas pelo dono -->
+    <section class="cena universo" id="universo" aria-labelledby="universo-h">
+      <Mapa id="hall" desk="hall-d" aD={821 / 600} fy={0.55} dfy={0.5} />
+      <div class="universo-cab veu">
+        <h2 id="universo-h">{u.h2}</h2>
+        <p class="frase">{u.frase}</p>
+      </div>
+      <div class="universo-corpo">
+        <div class="painel" id="painel-0" data-painel>
+          <h3 class="painel-h">{u.abas[0]}</h3>
+          <ul class="grade areas">
+            {u.areas.map(([id, nome]) => (
+              <li class="area" style={`--fx:${FOCO[id][0] / 100};--fy:${FOCO[id][1] / 100}`}>
+                <button type="button" class="area-bt" data-lugar={id} aria-haspopup="dialog">
+                {PREDIO[id] ? <span class="area-arte predio"><img loading="lazy" decoding="async" src={b(PREDIO[id])} alt="" /></span> : <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>}
+                <span class="area-tx"><strong>{nome}</strong><span>{u.lugares[id]}</span></span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas} data-morador={u.morador}>
+      <img class="npc-modal-img" data-npc-img src={vazio} width="256" height="256" alt="" />
+      <h2 id="npc-h" data-npc-h></h2>
+      <p id="npc-p" class="npc-fala" data-npc-p></p>
+      {/* Minijogos de cada lugar (dono, 09/11): Jogos tem os jogos livres; Arena, a Arena; Exploração, o Endless Rift e a Masmorra. */}
+      {Object.entries(JOGOS_POR_LUGAR).map(([lugar, ids]) => (
+        <ul class="grade jogos lugar-jogos" data-jogos-de={lugar} hidden aria-label={u.jogosH}>
+          {ids.map((id) => (
+            <li class="celula capa-jogo">
+              <span class="capa-arte"><picture>
+                <source type="image/avif" srcset={capaSet(id, 'avif')} sizes="(min-width: 768px) 200px, 40vw" />
+                <img loading="lazy" decoding="async" src={`${capaJogo(id)}.webp`} srcset={capaSet(id, 'webp')} sizes="(min-width: 768px) 200px, 40vw" width="400" height="300" alt="" />
+              </picture></span>
+              <span class="capa-nome">{u.jogos.find(([j]) => j === id)?.[1]}</span>
+            </li>
+          ))}
+        </ul>
+      ))}
+      <button type="button" class="botao primario" data-npc-fechar>{u.fechar}</button>
+    </dialog>
+
+
+    <!-- 6 · O que você faz: Arena, 3 telas reais -->
+    {prints.length > 0 && (
+      <section class="cena recursos" id="recursos" aria-labelledby="recursos-h">
+        <div class="cen-fundo" data-arte aria-hidden="true" style={cen('cen-circuito')}></div>
+        <div class="recursos-cab veu">
+          <h2 id="recursos-h">{r.h2}</h2>
+          <p class="frase">{r.frase}</p>
+        </div>
+        <ul class="cartoes" tabindex="0" aria-label={r.h2}>
+          {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
+            <li class:list={['cartao', { 'cartao-combate': id === 'combate', 'cartao-grande': id !== 'jogos' }]}>
+              {id === 'jogos' ? (
+                <figure class="mosaico-jogos" role="img" aria-label={alt}>
+                  <p class="rotulo rot-arte">{t.rotulos.arte}</p>
+                  <div class="mosaico-grade" aria-hidden="true">
+                    {MOSAICO.map((m) => <picture><source type="image/avif" srcset={capaSet(m, 'avif')} sizes="120px" /><img loading="lazy" decoding="async" src={`${capaJogo(m)}.webp`} srcset={capaSet(m, 'webp')} sizes="120px" width="400" height="300" alt="" /></picture>)}
+                  </div>
+                </figure>
+              ) : (
+              <figure class="aparelho mini">
+                <div class="casca"><div class="tela">
+                  {id === 'combate' ? (
+                    <video class="combate-video" poster={b(`/video/combate-${lang}-poster.webp`)} muted loop playsinline autoplay preload="none" width="432" height="962" aria-label={alt}><source src={b(`/video/combate-${lang}.webm`)} type="video/webm" /><source src={b(`/video/combate-${lang}.mp4`)} type="video/mp4" /></video>
+                  ) : <picture>
+                    {id === 'rift' ? <source type="image/avif" srcset={b('/mapa/exploracao-820.avif')} /> : <source type="image/avif" srcset={printSrc(id, 'avif')} sizes="(min-width: 1024px) 220px, 200px" />}
+                    <img src={id === 'rift' ? b('/mapa/exploracao-820.webp') : b(`/print/${id}-${lang}-480.webp`)} srcset={id === 'rift' ? undefined : printSrc(id, 'webp')} sizes="(min-width: 1024px) 220px, 200px" width="1170" height="2532" alt={alt} loading="lazy" decoding="async" />
+                  </picture>}
+                </div></div>
+              </figure>
+              )}
+              <h3>{h}</h3>
+              <p>{p}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <!-- 7 · Trailer de 59 s: telas reais + cartelas + arte aprovada; rotulado Trailer, nunca Gameplay real -->
+    {trailer && (
+      <section class="cena calmo trailer" id="trailer" aria-labelledby="trailer-h">
+        <Mapa id="arena" desk="arena-d" aD={721 / 560} fy={0.5} dfy={0.5} />
+        <div class="trailer-texto">
+          <h2 id="trailer-h">{t.video.h2}</h2>
+          <p class="frase">{t.video.legenda}</p>
+        </div>
+        <figure class="trailer-fig">
+         <div class:list={['trailer-moldura', { 'tem-v': TRAILER_V }]}>
+            {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
+            <button type="button" class="trailer-capa" data-trailer-capa hidden>
+              {/* Capa = mapa principal do jogo (dono, 09/11). Paisagem no desktop, retrato no celular quando houver vídeo vertical. */}
+              <picture>
+                <source media={TRAILER_V ? '(min-width: 768px)' : 'all'} srcset={`${b('/video/trailer-mapa-d-640.webp')} 640w, ${b('/video/trailer-mapa-d-1280.webp')} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <img src={b('/video/trailer-mapa-m-480.webp')} srcset={`${b('/video/trailer-mapa-m-480.webp')} 480w, ${b('/video/trailer-mapa-m-720.webp')} 720w`} sizes="100vw" width="720" height="1280" alt="" loading="lazy" decoding="async" />
+              </picture>
+              <span class="sr">{j.tocar}: {t.video.alt}</span>
+              <span class="trailer-play" aria-hidden="true"><svg viewBox="0 0 16 16" width="40" height="40"><path fill="currentColor" d="M5 2v12l9-6z"/></svg></span>
+            </button>
+            {/* Um vídeo só, escolhido pela largura no toque: nada é baixado antes do play. */}
+            <video data-trailer data-h={b(`/video/trailer-${lang}-h.mp4`)} data-v={TRAILER_V ? b(`/video/trailer-${lang}-v.mp4`) : undefined} hidden controls playsinline preload="none" aria-label={t.video.alt}></video>
+            <noscript><video controls playsinline preload="none" poster={b('/video/trailer-mapa-d-1280.webp')} width="1280" height="720" aria-label={t.video.alt}><source src={b(`/video/trailer-${lang}-h.mp4`)} type="video/mp4" /></video></noscript>
+          </div>
+        </figure>
+      </section>
+    )}
+
+    <!-- 8 · Como entrar: painel calmo, passos na moldura de cobre da ficha -->
+    <section class="calmo entrar" id="entrar" aria-labelledby="entrar-h">
+      <div class="cen-fundo" aria-hidden="true" style={cen('cen-atelier')}></div>
+      <div class="entrar-cab">
+        <h2 id="entrar-h">{e.h2}</h2>
+        <p class="frase">{e.aviso}</p>
+      </div>
+      <ol class="passos" data-passos data-ativo="0">
+        {e.passos.map(([a, b], i) => (
+          <li class="passo" data-passo={i}>
+            <a class="passo-link" href={PASSO_HREF[i]} target="_blank" rel="noopener noreferrer" tabindex="-1" aria-hidden="true" data-clique={i === 0 ? '' : undefined}><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong>{a}</strong><span>{b}</span></span></a>
+            <a class="botao primario passo-btn" href={PASSO_HREF[i]} target="_blank" rel="noopener noreferrer" data-clique={i === 0 ? '' : undefined}><span class="sr">{i + 1}. </span>{a}</a>
+            {i === 0 && <span class="maozinha passo-mao" data-passo-mao aria-hidden="true"><Fragment set:html={MAO_SVG} /></span>}
+          </li>
+        ))}
+      </ol>
+      <ul class="ilhas" aria-hidden="true">{['arena-bosque', 'arena-salao', 'arena-lab'].map((n) => <li><picture><source type="image/avif" srcset={b(`/dono/${n}.avif`)} /><img src={b(`/dono/${n}.webp`)} width="360" height="237" alt="" loading="lazy" decoding="async" /></picture></li>)}</ul>
+    </section>
+
+   <!-- 9 · Perguntas -->
+    <section class="cena inscrever" id="inscrever" aria-labelledby="inscrever-h">
+      <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5} />
+      {/* Criaturas numa camada própria, NA FRENTE do véu escuro do texto (dono, 09/11); a planta desceu para sair de cima do formulário. */}
+      <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5} soCrias>
+        <Cria s="planta-ultra" t={88} td={128} x={86} y={99} dx={24} dy={47} />
+        <Cria s="agua-rookie" t={128} td={128} x={84} y={23} dx={73} dy={72} flip fase={500} />
+        <Cria s="vigor-rookie" t={128} td={128} x={16} y={23} dx={79} dy={56} flipD fase={900} />
+      </Mapa>
+      <div class="inscrever-caixa veu">
+        <button type="button" class="ovo" data-ovo aria-label={f.ovo}><img src={b('/site/ovo-cristal.webp')} width="160" height="160" alt="" loading="lazy" /><span class="ovo-brilho" aria-hidden="true"></span></button>
+        <h2 id="inscrever-h">{f.h2}</h2>
+        <a class="botao primario grande grupo-cta" href="#entrar" data-cta>{t.cta}</a>
+        <p class="grupo-nota">{f.grupo.nota}</p>
+      </div>
+    </section>
+
+    <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
+      <div class="cen-fundo" aria-hidden="true" style={cen('cen-ilhas')}></div>
+      <h2 id="faq-h">{t.faq.h2}</h2>
+      <div class="faq-lista">
+        {t.faq.itens.map(([q, a]) => (
+          <details>
+            <summary><img class="faq-seta" src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" />{q}</summary>
+            <p>{a}</p>
+          </details>
+        ))}
+      </div>
+      <p class="faq-priv"><a href={t.priv}>{t.faq.privLink}</a></p>
+    </section>
+
+    <!-- 10 · Entre no beta: a Guilda inteira, praça do cristal -->
+  </main>
+
+  <dialog class="entrar-modal" data-entrar-modal aria-labelledby="em-h" aria-modal="true">
+    <button type="button" class="em-x" data-em-fechar aria-label={mo.fechar} data-sa="modal-fechar"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
+    <p class="em-passo" data-em-contagem data-fmt={mo.passoDe}></p>
+    <h2 id="em-h" data-em-h tabindex="-1"></h2>
+    <p class="em-tx" data-em-tx></p>
+    {[mo.p1, mo.p2, mo.p3].map((p, i) => (
+      <div class="em-acoes" data-em-passo={i} hidden={i !== 0} data-h={p.h} data-tx={p.tx}>
+        <a class="botao primario" href={PASSO_HREF[i]} target="_blank" rel="noopener noreferrer" data-em-abrir data-clique={i === 0 ? '' : undefined} data-sa={`modal-passo${i + 1}-abrir`}>{p.abrir}</a>
+        {'ok' in p && <button type="button" class="botao contorno" data-em-ok data-sa={`modal-passo${i + 1}-ok`}>{p.ok}</button>}
+      </div>
+    ))}
+    <button type="button" class="link em-voltar" data-em-voltar hidden data-sa="modal-voltar">{mo.voltar}</button>
+  </dialog>
+  <dialog class="popup" data-popup aria-labelledby="popup-h" aria-describedby="popup-p">
+    <img class="popup-cristal" src={b(assets.cristalAceso.src)} width="48" height="96" alt="" loading="lazy" />
+    <h2 id="popup-h" data-popup-h>{f.okH}</h2>
+    <p id="popup-p" data-popup-p>{f.ok}</p>
+    <button type="button" class="botao primario" data-popup-share>{f.share}</button>
+    <p class="partilha-msg" aria-live="polite" data-popup-msg></p>
+    <button type="button" class="link" data-popup-fechar>{f.fechar}</button>
+  </dialog>
+
+  <footer class="rodape">
+    <img class="rodape-logo" src={b('/marca/logo-160.webp')} srcset={`${b('/marca/logo-160.webp')} 1x, ${b('/marca/logo-320.webp')} 2x`} width="64" height="48" alt="" loading="lazy" />
+    <p>{t.rodape.nota}</p>
+    <ul>
+      <li><a href={t.priv}>{t.rodape.priv}</a></li>
+      <li><a href={TERMOS} rel="noopener">{t.rodape.termos}</a></li>
+      <li><a href={`mailto:${CONTATO}`}>{t.rodape.contato}</a></li>
+      <li><a href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a></li>
+    </ul>
+    <p class="copy">{t.rodape.copy}</p>
+  </footer>
+
+  <button type="button" class="link pular-demo" data-pular-demo hidden>{c.pular}</button>
+  {VB && <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden><span class="comp-tx" data-comp-tx aria-live="polite"></span><span class="comp-x" role="button" tabindex="0" data-comp-x aria-label={c.fechar}>×</span></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>}
+  <div class="fixo" data-fixo><a class="ig ig-fixo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a><a class="botao primario fixo-cta" href="#entrar" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
+  <dialog class="ramo-modal" data-ramo-modal aria-label={s.ramoModal} data-estagio={s.estagio} data-els={JSON.stringify(u.els)} data-base={b('/el/')} data-nomes={JSON.stringify(c.nomes)}>
+    <button type="button" class="ramo-x" data-ramo-fechar aria-label={s.ramoFechar}><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
+    <div class="ramo-cont">
+      <img class="ramo-img" data-ramo-img width="128" height="128" alt="" />
+      <p class="ramo-nome" data-ramo-nome></p>
+      <p class="ramo-est" data-ramo-est></p>
+      <p class="ramo-el" data-ramo-elw><img data-ramo-elimg width="32" height="32" alt="" /><span data-ramo-elnome></span></p>
+    </div>
+  </dialog>
+  <script src="../scripts/app.ts"></script>
+  <script src="../scripts/ramos.ts"></script>
+  <script src="../scripts/modal-entrar.ts"></script>
+</Base>

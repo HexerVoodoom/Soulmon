@@ -1,0 +1,75 @@
+{
+  "_nota": "Falas dos NPCs do Universo. 1ª pessoa, até 35 palavras, só com o que existe (FEATURE_TRUTH.md e navigation.ts › areaHint). Sem promessa de saúde. 'habita' é a fala curta do Habitantes.",
+  "lugares": {
+    "exploracao": {
+      "npc": "/npc/exploracao.webp",
+      "pt": "Eu conheço todos os caminhos! Aqui você passeia com seu Soulmon e desce o Endless Rift, uma descida sem teto de camadas. É o lugar de sair, descobrir e voltar com histórias.",
+      "en": "I know every path! Here you stroll with your Soulmon and descend the Endless Rift, a descent with no floor limit. It's the place to head out, discover things and come back with stories.",
+      "habita": {
+        "pt": "Eu moro na Exploração. Passeios e o Endless Rift ficam logo ali.",
+        "en": "I live in Exploration. Strolls and the Endless Rift are right there."
+      }
+    },
+    "jogos": {
+      "npc": "/npc/jogos.webp",
+      "pt": "Aqui cuido dos jogos leves e divertidos: Combina 3, Soul Barrage, corrida, Pedra-papel-tesoura e o Mind Workshop. Dá para treinar o raciocínio brincando, e os minijogos rendem Bits.",
+      "en": "I look after the light, fun games here: Match 3, Soul Barrage, the runner, Rock-paper-scissors and the Mind Workshop. You can train your reasoning while playing, and minigames earn Bits.",
+      "habita": {
+        "pt": "Eu moro nos Jogos. Passe aqui para uma partida leve e divertida.",
+        "en": "I live in Games. Stop by for a light, fun round."
+      }
+    },
+    "arena": {
+      "npc": "/npc/arena.webp",
+      "pt": "Eu cuido da Arena: o Torneio e os duelos. É o lugar de testar seu Soulmon contra outros e comemorar cada vitória, sem pressa e no seu ritmo.",
+      "en": "I run the Arena: the Tournament and the duels. It's the place to test your Soulmon against others and celebrate every win, with no rush and at your own pace.",
+      "habita": {
+        "pt": "Eu moro na Arena. Venha assistir a um duelo ou entrar no Torneio.",
+        "en": "I live in the Arena. Come watch a duel or join the Tournament."
+      }
+    },
+    "hall": {
+      "npc": "/npc/lugar-hall.webp",
+      "pt": "Bem-vindo ao Mercado. Aqui você troca Bits por itens, chips e materiais com os vendedores. De vez em quando chega a Feira, com 8 vendedores e descontos de 10 a 50%, só com Bits.",
+      "en": "Welcome to the Market. Here you trade Bits for items, chips and materials with the vendors. Every now and then the Fair arrives, with 8 vendors and 10 to 50% off, Bits only.",
+      "habita": {
+        "pt": "Eu cuido das bancas do Mercado. Fique de olho na Feira.",
+        "en": "I look after the Market stalls. Keep an eye out for the Fair."
+      }
+    },
+    "guilda": {
+      "npc": "/npc/lugar-guilda.webp",
+      "pt": "Na Guilda, o clã tem uma casa e uma Missão em comum. Entre com amigos, cumpram juntos, e o esforço de cada um soma para todos. Sempre cabe mais um.",
+      "en": "In the Guild, your clan has a house and a shared Mission. Join with friends, work on it together, and everyone's effort adds up for all. There's always room for one more.",
+      "habita": {
+        "pt": "Eu moro na Guilda. A casa do clã e a Missão ficam aqui.",
+        "en": "I live in the Guild. The clan house and the Mission are here."
+      }
+    },
+    "laboratorio": {
+      "npc": "/npc/lugar-laboratorio.webp",
+      "pt": "No Laboratório, acompanho a evolução do seu Soulmon. Aqui ficam o Vínculo, o perfil dele e o Centro de Evolução. É onde você vê quanto ele mudou e decide quando evoluir.",
+      "en": "In the Laboratory, I follow your Soulmon's evolution. The Bond, its profile and the Evolution Center live here. It's where you see how much it has changed and decide when to evolve.",
+      "habita": {
+        "pt": "Eu moro no Laboratório. Vínculo, perfil e evolução ficam aqui.",
+        "en": "I live in the Laboratory. Bond, profile and evolution are here."
+      }
+    },
+    "forja": {
+      "npc": "/npc/lugar-forja.webp",
+      "pt": "Na Forja ficam ferramentas que ajudam a cumprir as tarefas mais difíceis. Pegue o que precisar e siga no seu ritmo.",
+      "en": "In the Forge you'll find tools that help you get the hardest tasks done. Take what you need and go at your own pace.",
+      "habita": {
+        "pt": "Eu moro na Forja, onde ficam as ferramentas para as tarefas difíceis.",
+        "en": "I live in the Forge, where the tools for the hardest tasks are."
+      }
+    }
+  },
+  "habitantes": {
+    "hall": "hall",
+    "jogos": "jogos",
+    "exploracao": "exploracao",
+    "laboratorio-biblioteca-glifa": "laboratorio",
+    "laboratorio-pet": "laboratorio"
+  }
+}

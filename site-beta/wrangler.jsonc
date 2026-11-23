@@ -1,0 +1,25 @@
+// jsonc de propósito: o wrangler procura wrangler.jsonc subindo as pastas antes de olhar .toml,
+// e com .toml aqui ele pegaria o wrangler.jsonc do app, na raiz do repo.
+{
+  "name": "soulmon",
+  "pages_build_output_dir": "dist",
+  "compatibility_date": "2025-09-01",
+  "vars": {
+    "LEVA_VAGAS": "50",
+    "LEVA_ESTADO": "abertas",
+    "TETO_DIA": "200",
+    "ORIGENS": "https://soulmon.pages.dev",
+    "TURNSTILE_HOST": "soulmon.pages.dev",
+    "POLITICA_VERSAO": "2026-11-v1"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "soulmon-beta",
+      // Banco criado em 08/11/2026 (conta do dono). O id não é segredo.
+      "database_id": "72a4c774-489a-4ab1-9d2d-bfed9aeff66e",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // Secrets (nunca aqui): TURNSTILE_SECRET, RESEND_API_KEY, HASH_SALT, NOTIFICAR_PARA
+}

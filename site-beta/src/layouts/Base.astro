@@ -1,0 +1,64 @@
+---
+import '../styles/tokens.css';
+import '../styles/site.css';
+import { TEXTOS, type Lang } from '../i18n/textos';
+import { b } from '../lib/base';
+import assets from '../content/assets.json';
+interface Props { lang: Lang; titulo?: string; desc?: string; alternativa: string; aqui: string; preload?: boolean; noindex?: boolean; canonico?: string; versaoB?: string }
+const { lang, titulo, desc, alternativa, aqui, preload = false, noindex = false, canonico, versaoB } = Astro.props;
+const t = TEXTOS[lang];
+const base = Astro.site!.origin;
+// Peças trocáveis viram variáveis CSS: trocar o manifesto não muda layout (src/content/assets.json).
+const vars = Object.entries(assets).flatMap(([k, v]) => {
+  if (k.startsWith('_') || typeof v === 'string' || !v.src) return [];
+  const m = v as { src: string; fatia?: string; borda?: string; borda3?: string };
+  return [`--a-${k}:url(${b(m.src)})`, ...(m.fatia ? [`--f-${k}:${m.fatia} fill`, `--b-${k}:${m.borda}`, ...(m.borda3 ? [`--b3-${k}:${m.borda3}`] : [])] : [])];
+}).join(';');
+const heroArte = (assets as unknown as { heroArte?: { celular: string | null; desktop: string | null; larguras: { celular: number[]; desktop: number[] } } }).heroArte;
+// Versão B (celular) aponta canonical e hreflang para a A: o mesmo endereço público.
+const eu = canonico ?? aqui; const outro = canonico ? t.outraHome : alternativa;
+const hrefPt = lang === 'pt' ? eu : outro;
+const hrefEn = lang === 'en' ? eu : outro;
+---
+<!doctype html>
+<html lang={t.html} style={vars}>
+<head>
+  <meta charset="utf-8" />
+  {versaoB && <script is:inline src={b('/rota.js')} data-b={versaoB}></script>}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{titulo ?? t.titulo}</title>
+  <meta name="description" content={desc ?? t.desc} />
+  <meta name="theme-color" content="#071413" />
+  {noindex ? <meta name="robots" content="noindex" /> : <>
+    <link rel="canonical" href={base + (canonico ?? aqui)} />
+    <link rel="alternate" hreflang="pt-BR" href={base + hrefPt} />
+    <link rel="alternate" hreflang="en" href={base + hrefEn} />
+    <link rel="alternate" hreflang="x-default" href={base + hrefEn} />
+  </>}
+  <link rel="icon" href={b('/favicon-192.png')} />
+  <meta property="og:title" content={titulo ?? t.titulo} />
+  <meta property="og:description" content={desc ?? t.desc} />
+  <meta property="og:image" content={base + b('/og-hero-v2.jpg')} />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={lang === 'pt' ? 'Soulmon: criaturas em ilhas flutuantes cobertas de folhas e cristais turquesa' : 'Soulmon: creatures on floating islands covered in leaves and turquoise crystals'} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={base + b('/og-hero-v2.jpg')} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={base + (canonico ?? aqui)} />
+  <link rel="preload" href={b('/fonts/cinzel-latin.woff2')} as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href={b('/fonts/rubik-latin.woff2')} as="font" type="font/woff2" crossorigin />
+  {/* LCP medido é a criatura protagonista (o mapa em tela cheia não entra como candidato): ela vem primeiro, o mapa logo atrás. */}
+  {/* Hero: arte-chave quando existir (só a variante da tela); senão a criatura protagonista. */}
+  {preload && heroArte?.celular ? <>
+    <link rel="preload" as="image" type="image/avif" fetchpriority="low" media="(max-width: 1023px)" imagesrcset={heroArte.larguras.celular.map((w: number) => `${b(heroArte.celular)}-${w}.avif ${w}w`).join(', ')} imagesizes="100vw" />
+    <link rel="preload" as="image" type="image/avif" fetchpriority="high" media="(min-width: 1024px)" imagesrcset={heroArte.larguras.desktop.map((w: number) => `${b(heroArte.desktop)}-${w}.avif ${w}w`).join(', ')} imagesizes="100vw" />
+  </> : preload && <link rel="preload" as="image" type="image/webp" fetchpriority="high" href={b('/sprites/fogo-ultimate.webp')} />}
+</head>
+<body>
+  <slot />
+  {/* Analytics anonimo, sem cookie (fonte: E:/Projetos/site-analytics). connect-src em edge/_headers libera o coletor. */}
+  <script is:inline src={b("/_a.js")} defer></script>
+</body>
+</html>

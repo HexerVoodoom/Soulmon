@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import { b } from '../lib/base';
+import { TEXTOS } from '../i18n/textos';
+const pt = TEXTOS.pt; const en = TEXTOS.en;
+---
+<Base lang="pt" alternativa={pt.outraHome} aqui={pt.home} titulo="404 | Soulmon" desc={pt.n404.p} noindex>
+  <div class="legal nada">
+    <div class="hero-barra">
+      <a href={pt.home} class="logo"><img src={b('/marca/logo-160.webp')} srcset={`${b('/marca/logo-160.webp')} 2x, ${b('/marca/logo-320.webp')} 4x`} width="80" height="60" alt={pt.logoAlt} /></a>
+    </div>
+    <main>
+      <section lang="pt-BR">
+        <h1>{pt.n404.h1}</h1>
+        <p>{pt.n404.p}</p>
+        <p><a class="botao" href={pt.home}>{pt.n404.volta}</a></p>
+      </section>
+      <section lang="en">
+        <h2>{en.n404.h1}</h2>
+        <p>{en.n404.p}</p>
+        <p><a class="botao" href={en.home}>{en.n404.volta}</a></p>
+      </section>
+    </main>
+  </div>
+</Base>

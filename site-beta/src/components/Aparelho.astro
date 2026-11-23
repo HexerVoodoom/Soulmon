@@ -1,0 +1,29 @@
+---
+// Aparelho com o loop real (gameplay). Poster em <img> (no hero só entra depois do load, para não competir com a arte do LCP; o resto da página o pede lazy); o mp4 só é pedido pelo JS (app.ts, loopReal)
+// depois do load, com o aparelho visível e as condições de autoplay. Sem JS: o <noscript> traz o vídeo com controles.
+interface Props { loop: { src: string; poster: string; posterAvif?: string; posterP: string; posterPAvif?: string; largura: number; altura: number }; rotulo?: string; alt: string; tocar: string; erro: string; abrir: string; classe?: string; auto: boolean; limpo?: boolean; lcp?: boolean; capa?: { avif: string; webp: string; src: string } }
+const { loop, rotulo, alt, tocar, erro, abrir, classe = '', auto, limpo = false, lcp = false, capa } = Astro.props;
+const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+const sizes = '(min-width: 1024px) 320px, 200px';
+---
+<figure class={`aparelho ${classe}`} data-loop data-auto={auto ? '1' : '0'}>
+  {rotulo && !limpo && <figcaption class="rotulo rot-gameplay">{rotulo}</figcaption>}
+  <div class="casca">
+    <div class="tela">
+      {capa
+        ? <picture><source type="image/avif" srcset={capa.avif} sizes={sizes} /><img src={capa.src} srcset={capa.webp} sizes={sizes} width={loop.largura} height={loop.altura} alt="" decoding="async" loading="lazy" /></picture>
+        : lcp || !auto
+        ? <img src={vazio} data-tarde-src={loop.posterP} srcset={undefined} width={loop.largura} height={loop.altura} alt="" decoding="async" />
+        : <picture>
+            {loop.posterAvif && <source type="image/avif" srcset={`${loop.posterPAvif} 360w, ${loop.posterAvif} 640w`} sizes={sizes} />}
+            <img src={loop.posterP} srcset={`${loop.posterP} 360w, ${loop.poster} 640w`} sizes={sizes} width={loop.largura} height={loop.altura} alt="" decoding="async" loading="lazy" />
+          </picture>}
+      <video data-video muted loop playsinline preload="none" width={loop.largura} height={loop.altura} aria-label={alt} data-src={loop.src}></video>
+      <noscript><video muted loop playsinline controls preload="none" poster={loop.poster} width={loop.largura} height={loop.altura} aria-label={alt}><source src={loop.src} type="video/mp4" /></video></noscript>
+      <p class="video-erro" data-video-erro hidden>{erro} <a href={loop.src}>{abrir}</a></p>
+    </div>
+    {!limpo && <button type="button" class="play" data-play hidden aria-label={tocar}>
+      <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path data-ico-play fill="currentColor" d="M4 2v12l10-6z"/><path data-ico-pausa hidden fill="currentColor" d="M3 2h4v12H3zm6 0h4v12H9z"/></svg>
+      </button>}
+  </div>
+</figure>

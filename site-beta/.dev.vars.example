@@ -1,0 +1,7 @@
+# Copie para .dev.vars (ignorado pelo git). Valores de teste oficiais do Turnstile.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+HASH_SALT=troque-por-um-valor-aleatorio-longo
+RESEND_API_KEY=
+NOTIFICAR_PARA=
+ORIGENS=http://localhost:8799
+TURNSTILE_HOST=example.com

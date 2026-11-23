@@ -1,0 +1,14 @@
+---
+// Criatura do elenco (decorativa, alt=""). Pés no ponto medido do mapa: --x/--y no celular, --dx/--dy no desktop,
+// em % da caixa do mapa (Mapa.astro). Tamanho sempre em escala inteira da grade de 64: 64, 128, 192, 256.
+// Carrega depois do load (data-tarde-src): o elenco nunca disputa o LCP.
+import { b } from '../lib/base';
+interface Props { s: string; t: number; td?: number; x: number; y: number; dx?: number; dy?: number; so?: 'm' | 'd'; flip?: boolean; flipD?: boolean; prot?: boolean; fase?: number; ja?: boolean }
+const { s, t, td = t, x, y, dx = x, dy = y, so, flip = false, flipD = false, prot = false, fase = 0, ja = false } = Astro.props;
+// ja: a protagonista do hero é candidata a LCP (192 a 256 px): carrega já, com prioridade, nunca depois do load.
+const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+---
+<span class:list={['cria', so && `so-${so}`, { flip, 'flip-d': flipD, prot }]} style={`--x:${x}%;--y:${y}%;--dx:${dx}%;--dy:${dy}%;--t:${t}px;--td:${td}px;--fase:${fase}ms`}>
+  {ja ? <img class="sprite" src={b(`/sprites/${s}.webp`)} width="256" height="256" alt="" fetchpriority="high" /> : <img class="sprite" data-tarde-src={b(`/sprites/${s}.webp`)} src={vazio} width="256" height="256" alt="" decoding="async" />}
+  {!ja && <noscript><img class="sprite" src={b(`/sprites/${s}.webp`)} width="256" height="256" alt="" loading="lazy" /></noscript>}
+</span>

@@ -1,0 +1,26 @@
+{
+  "name": "soulmon-site-beta",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "pages": "wrangler pages dev dist --port 8799 --persist-to .wrangler/state",
+    "preview": "npm run build && npm run pages",
+    "db:local": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state",
+    "test": "vitest run",
+    "exportar": "node scripts/exportar.mjs",
+    "limpar-antigos": "node scripts/limpar-antigos.mjs",
+    "remover": "node scripts/remover.mjs",
+    "proxima-leva": "node scripts/proxima-leva.mjs",
+    "comparar-beta": "node scripts/comparar-beta-emails.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "gsap": "^3.13.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

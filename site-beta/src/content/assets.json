@@ -1,0 +1,572 @@
+{
+  "_nota": "Manifesto único das peças de marca do site (ASSETS-CHATGPT.md). Rodar: node src/tools/preparar-site-assets.mjs. Peça em E:/Soulmon-marketing/site-assets/<gerado>.png entra sozinha como aguarda-revisao. Estados: final | aguarda-revisao | provisorio (SVG desenhado por script) | provisorio-css (sem arquivo; CSS só segura o lugar). Layout não muda na troca.",
+  "logo": {
+    "gerado": "logo-completo-alfa",
+    "estado": "aguarda-revisao",
+    "src": "/site/logo-480.webp",
+    "largura": 480,
+    "tamanho": [
+      480,
+      503
+    ]
+  },
+  "botao": {
+    "gerado": "botao-beta",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/dono/botao.webp",
+    "altura": 112,
+    "fatia": "62 74",
+    "borda": "28px 32px",
+    "tamanho": [
+      551,
+      180
+    ],
+    "borda3": "42px 48px",
+    "origem": "Pixel-Art Vine Button State Sprite Sheet",
+    "recorte": "estado Normal, versão curta; alfa real, 9-slice 62/74"
+  },
+  "disco": {
+    "gerado": "disco",
+    "estado": "aguarda-revisao",
+    "src": "/site/disco.webp",
+    "largura": 640,
+    "tamanho": [
+      240,
+      109
+    ],
+    "montadaAMao": "alfa limpo, sem halo"
+  },
+  "barraCorpo": {
+    "gerado": "barra-corpo",
+    "estado": "aguarda-revisao",
+    "src": "/dono/barra-trilho.webp",
+    "largura": 48,
+    "tamanho": [
+      61,
+      339
+    ],
+    "origem": "Pixel Art Scrollbar UI Asset Sheet",
+    "recorte": "trilho normal, máscara por luminância; 3-slice vertical"
+  },
+  "barraCheio": {
+    "gerado": "barra-corpo-cheio",
+    "estado": "aguarda-revisao",
+    "src": "/dono/barra-cheio.webp",
+    "largura": 48,
+    "tamanho": [
+      61,
+      339
+    ],
+    "origem": "Pixel Art Scrollbar UI Asset Sheet",
+    "recorte": "trilho aceso"
+  },
+  "barraCapa": {
+    "gerado": "barra-capa",
+    "estado": "aguarda-revisao",
+    "src": "/dono/barra-capa.webp",
+    "largura": 48,
+    "tamanho": [
+      106,
+      98
+    ],
+    "origem": "Pixel Art Scrollbar UI Asset Sheet",
+    "recorte": "botão-seta normal (cobre); a capa de baixo é o mesmo espelhado"
+  },
+  "passo1": {
+    "gerado": "passo-1",
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-1.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
+  },
+  "passo2": {
+    "gerado": "passo-2",
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-2.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
+  },
+  "passo3": {
+    "gerado": "passo-3",
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-3.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
+  },
+  "cristalApagado": {
+    "gerado": "cristal-apagado",
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-apagado.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "alfa trocado pela silhueta do aceso"
+  },
+  "cristalAcendendo": {
+    "gerado": "cristal-acendendo",
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-acendendo.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "alfa trocado pela silhueta do aceso"
+  },
+  "cristalAceso": {
+    "gerado": "cristal-aceso",
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-aceso.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "ilhas de brilho removidas"
+  },
+  "popup": {
+    "gerado": "popup-moldura",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/dono/popup.webp",
+    "altura": 128,
+    "fatia": "95",
+    "borda": "48px",
+    "tamanho": [
+      643,
+      471
+    ],
+    "origem": "Soulmon Alchemical Crystal Frame",
+    "recorte": "moldura inteira por máscara de forma (cobre, ciano, cipó); 9-slice 95 (cantos com cristal e cipó)"
+  },
+  "painel": {
+    "gerado": "painel-universo",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/dono/painel.webp",
+    "altura": 128,
+    "fatia": "60",
+    "borda": "20px",
+    "tamanho": [
+      466,
+      367
+    ],
+    "origem": "Copper-Teal Sci-Fi UI Sprite Sheet",
+    "recorte": "painel grande (cantos de cano), 9-slice 60"
+  },
+  "aba": {
+    "gerado": "aba",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/dono/aba.webp",
+    "altura": 64,
+    "fatia": "28 36",
+    "borda": "14px 18px",
+    "tamanho": [
+      285,
+      90
+    ],
+    "origem": "Copper-Teal Sci-Fi UI Sprite Sheet",
+    "recorte": "aba ATIVA (escura), 9-slice 28/36"
+  },
+  "celula": {
+    "gerado": "celula",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/site/celula.webp",
+    "altura": 64,
+    "fatia": "8",
+    "borda": "8px",
+    "tamanho": [
+      24,
+      24
+    ],
+    "montadaAMao": "perfil da borda do botão, placa plana"
+  },
+  "seta": {
+    "gerado": "seta",
+    "estado": "aguarda-revisao",
+    "src": "/site/seta.webp",
+    "largura": 48,
+    "tamanho": [
+      48,
+      31
+    ]
+  },
+  "barraNo": {
+    "gerado": "barra-capa",
+    "estado": "aguarda-revisao",
+    "src": "/dono/barra-no.webp",
+    "largura": 48,
+    "tamanho": [
+      69,
+      138
+    ],
+    "provisorio": "PROVISÓRIO: reuso da barraCapa como nó da barra lateral até existir o asset cristal-no (12x16, ASSETS-CHATGPT). Escala inteira da barra (1x/2x).",
+    "origem": "Pixel Art Scrollbar UI Asset Sheet",
+    "recorte": "polegar normal"
+  },
+  "_furos": {
+    "divisor": "montado à mão a partir de peças aprovadas (ver divisor); trocar quando o asset 96x12 3-slice existir",
+    "cristalNo": "sem peça: nó usa barraNo (provisório)"
+  },
+  "heroArte": {
+    "estado": "aguarda-aprovacao-do-dono",
+    "src": "/site/hero-desktop-1440.webp",
+    "desktop": "/site/hero-desktop",
+    "celular": "/site/hero-celular",
+    "larguras": {
+      "desktop": [
+        960,
+        1440,
+        1672
+      ],
+      "celular": [
+        480,
+        780,
+        840,
+        941
+      ]
+    },
+    "tamanho": {
+      "desktop": [
+        1672,
+        941
+      ],
+      "celular": [
+        941,
+        1672
+      ]
+    },
+    "origem": "E:/Soulmon-marketing/site-assets/hero-arte-{desktop,celular}.png (composição: E:/tmp/heroarte/compor.py); ilustração, redução suave (não pixelated)",
+    "nota": "Arte-chave do hero em saturação cheia, à esquerda do aparelho com o loop (nenhuma criatura atrás dele). Aguarda aprovação do dono.",
+    "elenco": "fogo-ultimate, gravidade-champion (pangolim; camaleão magenta e lima saiu), fada-ultra, terra-ultra, planta-ultimate, sombra-ultra",
+    "capaTrailer": "/video/trailer-capa-hall-{d,m}-*.avif|webp (mapa Hall da main, sem texto)"
+  },
+  "divisor": {
+    "estado": "aguarda-revisao",
+    "src": "/site/divisor.webp",
+    "srcCelular": "/site/divisor-336.webp",
+    "tamanho": [
+      480,
+      72
+    ],
+    "montadaAMao": "montada à mão, aguarda revisão: cristal-aceso (topo 48x72) + barra-corpo girada 90° como filete + barra-capa nas pontas, pixel a pixel, escala 1x"
+  },
+  "passoCard1": {
+    "gerado": "Pixel-Art Sci-Fi Triptych UI Panel",
+    "estado": "aguarda-revisao",
+    "src": "/dono/passo-card-1.webp",
+    "tamanho": [
+      420,
+      525
+    ],
+    "origem": "C:/Users/spera/Desktop/site/Pixel-Art Sci-Fi Triptych UI Panel.png (copiado em src/assets-dono)",
+    "recorte": "cartão 1 de 3, fatiado por coluna de alfa (src/tools/fatiar-dono.py), redução LANCZOS 420 px; texto real por cima"
+  },
+  "passoCard2": {
+    "gerado": "Pixel-Art Sci-Fi Triptych UI Panel",
+    "estado": "aguarda-revisao",
+    "src": "/dono/passo-card-2.webp",
+    "tamanho": [
+      420,
+      525
+    ],
+    "origem": "C:/Users/spera/Desktop/site/Pixel-Art Sci-Fi Triptych UI Panel.png (copiado em src/assets-dono)",
+    "recorte": "cartão 2 de 3, fatiado por coluna de alfa (src/tools/fatiar-dono.py), redução LANCZOS 420 px; texto real por cima"
+  },
+  "passoCard3": {
+    "gerado": "Pixel-Art Sci-Fi Triptych UI Panel",
+    "estado": "aguarda-revisao",
+    "src": "/dono/passo-card-3.webp",
+    "tamanho": [
+      420,
+      525
+    ],
+    "origem": "C:/Users/spera/Desktop/site/Pixel-Art Sci-Fi Triptych UI Panel.png (copiado em src/assets-dono)",
+    "recorte": "cartão 3 de 3, fatiado por coluna de alfa (src/tools/fatiar-dono.py), redução LANCZOS 420 px; texto real por cima"
+  },
+  "_donoFolhas": {
+    "usadas": {
+      "Pixel-Art Sci-Fi Triptych UI Panel": "3 cartões dos passos (passoCard1-3)",
+      "Pixel Art Scrollbar UI Asset Sheet": "trilho, capa e polegares da barra lateral",
+      "Pixel-Art Vine Button State Sprite Sheet": "botões 9-slice nos 4 estados",
+      "Copper-Teal Sci-Fi UI Sprite Sheet": "painéis (.painel/.moldura) e abas (3 estados)",
+      "Soulmon Água Profile UI Sheet": "moldura da ficha do sorteio (sem a lontra) e setas do seletor de linhas",
+      "Soulmon Alchemical Crystal Frame": "moldura do modal do Universo e do pop-up de inscrição",
+      "Pixel Evolution Tree_ Rookie to Ultra": "nó e conexões 1-3-3-3-1 da árvore",
+      "Moonlit Mossy Atelier Ruins": "fundo de Como entrar",
+      "Neon Soulmon Island Terraces": "fundo de Perguntas",
+      "Neon Circuit Crystal Arena": "fundo de O que você faz",
+      "Soulmon Elemental Arenas Grid": "3 ilhas (sem a de lava) em Como entrar, desktop"
+    },
+    "naoUsadas": {
+      "Neon Geometric Spiral Icon Set": "NÃO usada: arte com ruído/posterização forte; triângulo/círculo/Y não leem como Poder/Harmonia/Benevolência sem legenda",
+      "ChatGPT Image Nov 6, 2026, 09_17_59 PM": "VETADA: guerreiro com pistões e correntes, leitura steampunk"
+    },
+    "estado": "aguarda-revisao"
+  },
+  "botaoHover": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/botao-hover.webp",
+    "tamanho": [
+      551,
+      180
+    ],
+    "origem": "Pixel-Art Vine Button State Sprite Sheet",
+    "recorte": "estado Mouseover"
+  },
+  "botaoPress": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/botao-press.webp",
+    "tamanho": [
+      551,
+      180
+    ],
+    "origem": "Pixel-Art Vine Button State Sprite Sheet",
+    "recorte": "estado Mouse Down"
+  },
+  "botaoOff": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/botao-off.webp",
+    "tamanho": [
+      551,
+      180
+    ],
+    "origem": "Pixel-Art Vine Button State Sprite Sheet",
+    "recorte": "estado Inativa"
+  },
+  "abaSel": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/aba-sel.webp",
+    "tamanho": [
+      285,
+      90
+    ],
+    "origem": "Copper-Teal Sci-Fi UI Sprite Sheet",
+    "recorte": "aba SELECIONADA"
+  },
+  "abaHover": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/aba-hover.webp",
+    "tamanho": [
+      285,
+      90
+    ],
+    "origem": "Copper-Teal Sci-Fi UI Sprite Sheet",
+    "recorte": "aba MOUSE OVER"
+  },
+  "ficha": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/ficha.webp",
+    "tamanho": [
+      581,
+      410
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "só a moldura (cantos de 100 px, sem fill): a lontra e o texto da folha ficam fora; sprite e texto são reais"
+  },
+  "barraNoAceso": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/barra-no-aceso.webp",
+    "tamanho": [
+      76,
+      148
+    ],
+    "origem": "Pixel Art Scrollbar UI Asset Sheet",
+    "recorte": "polegar arrastando (aceso)"
+  },
+  "arvoreNo": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/arvore-no.webp",
+    "tamanho": [
+      192,
+      176
+    ],
+    "origem": "Pixel Evolution Tree_ Rookie to Ultra",
+    "recorte": "um nó de cobre; texto da placa (rótulo de estágio) apagado; conexões 1-3-3-3-1 redesenhadas em SVG"
+  },
+  "setaEsq": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-esq.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "setaDir": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-dir.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "setaEsqHover": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-esq-hover.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "setaDirHover": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-dir-hover.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "setaEsqOff": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-esq-off.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "setaDirOff": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/seta-dir-off.webp",
+    "tamanho": [
+      96,
+      64
+    ],
+    "origem": "Soulmon Água Profile UI Sheet",
+    "recorte": "seta da folha Água Profile (normal/hover/inativa)"
+  },
+  "cenAtelier": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/cen-atelier-1400.webp",
+    "tamanho": [
+      1400,
+      0
+    ],
+    "origem": "Moonlit Mossy Atelier Ruins",
+    "recorte": "cenário inteiro, 800 e 1400 px, AVIF+WebP; escurecido por véu no CSS"
+  },
+  "cenIlhas": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/cen-ilhas-1400.webp",
+    "tamanho": [
+      1400,
+      0
+    ],
+    "origem": "Neon Soulmon Island Terraces",
+    "recorte": "cenário inteiro, 800 e 1400 px, AVIF+WebP; escurecido por véu no CSS"
+  },
+  "cenCircuito": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/cen-circuito-1400.webp",
+    "tamanho": [
+      1400,
+      0
+    ],
+    "origem": "Neon Circuit Crystal Arena",
+    "recorte": "cenário inteiro, 800 e 1400 px, AVIF+WebP; escurecido por véu no CSS"
+  },
+  "arenaBosque": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/arena-bosque.webp",
+    "tamanho": [
+      360,
+      0
+    ],
+    "origem": "Soulmon Elemental Arenas Grid",
+    "recorte": "ilha fatiada da grade, alfa por flood fill do branco; a arena de lava/forja (roda e bigorna) ficou de fora"
+  },
+  "arenaSalao": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/arena-salao.webp",
+    "tamanho": [
+      360,
+      0
+    ],
+    "origem": "Soulmon Elemental Arenas Grid",
+    "recorte": "ilha fatiada da grade, alfa por flood fill do branco; a arena de lava/forja (roda e bigorna) ficou de fora"
+  },
+  "arenaLab": {
+    "estado": "aguarda-revisao",
+    "src": "/dono/arena-lab.webp",
+    "tamanho": [
+      360,
+      0
+    ],
+    "origem": "Soulmon Elemental Arenas Grid",
+    "recorte": "ilha fatiada da grade, alfa por flood fill do branco; a arena de lava/forja (roda e bigorna) ficou de fora"
+  },
+  "capasJogos": {
+    "estado": "aguarda-revisao",
+    "ids": [
+      "ppt",
+      "combina",
+      "mente",
+      "barrage",
+      "corrida",
+      "arena",
+      "rift",
+      "calabouco"
+    ],
+    "src": "/jogos/capa-ppt-400.webp",
+    "tamanho": [
+      400,
+      300
+    ],
+    "origem": "E:/Soulmon-marketing/site-assets/capas-jogos/capa-{id}.png (1600x1200), cenário do ChatGPT + sprites reais de soulmon/novos compostos por E:/tmp/heroarte/compor_capas.py; src/tools/preparar-capas-jogos.mjs",
+    "gameplay": false,
+    "elenco": {
+      "ppt": [
+        "morte-rookie",
+        "espaco-rookie"
+      ],
+      "combina": [
+        "planta-champion",
+        "terra-rookie",
+        "espaco-rookie",
+        "morte-rookie"
+      ],
+      "mente": [
+        "arcano-rookie"
+      ],
+      "barrage": [
+        "ar-rookie"
+      ],
+      "corrida": [
+        "vida-ultimate"
+      ],
+      "arena": [
+        "vigor-champion",
+        "gravidade-champion"
+      ],
+      "rift": [
+        "vida-champion"
+      ],
+      "calabouco": []
+    },
+    "nota": "Arte, nunca gameplay: sem selo Gameplay real. Título e selo Em construção (Calabouço) são HTML. Calabouço = só a porta, nenhum sprite.",
+    "padrao": "/jogos/capa-{id}-{400,800}.{avif,webp}"
+  }
+}
