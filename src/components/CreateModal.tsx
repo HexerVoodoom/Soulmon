@@ -327,10 +327,30 @@ export function AttributePointsRow({ attributes, isPt }: { attributes: Attribute
       {keys.map(a => {
         const AttrIcon = Icons[a];
         const label = isPt ? ATTR_LABEL[a].pt : ATTR_LABEL[a].en;
+        const value = attributes[a];
+        // Zero fica todo cinza (ícone, nome e número); positivo ganha a cor do
+        // atributo em negrito; o +2 (o atributo dominante) vira destaque em pílula.
+        const state = value <= 0 ? 'zero' : value >= 2 ? 'high' : 'low';
+        const tone = state === 'zero' ? 'var(--sm2-muted)' : ATTR_INK[a];
         return (
-          <span key={a} data-attr={a} style={{ color: ATTR_INK[a], fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <AttrIcon size={18} color={ATTR_INK[a]} />
-            {label}{' '}<span className="sm2-num">+{attributes[a]}</span>
+          <span
+            key={a}
+            data-attr={a}
+            data-points={state}
+            style={{
+              color: tone,
+              fontWeight: state === 'zero' ? 400 : 700,
+              opacity: state === 'zero' ? 0.75 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              ...(state === 'high'
+                ? { padding: '2px 8px', borderRadius: 999, boxShadow: `inset 0 0 0 1.5px ${ATTR_INK[a]}`, background: 'color-mix(in srgb, currentColor 14%, transparent)' }
+                : null),
+            }}
+          >
+            <AttrIcon size={18} color={tone} />
+            {label}{' '}<span className="sm2-num">+{value}</span>
           </span>
         );
       })}
