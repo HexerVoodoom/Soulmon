@@ -29,11 +29,11 @@ import { isStrayFoe } from './wildFoeLabel';
 
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 /** O roster sem os 15 ramos legados (§445) e os 4 rookies do lote 5 (P5), que vão no FIM de tudo: os testes de "no fim do roster" das levas anteriores contam a partir daqui. */
-const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -19);
+const ROSTER_SEM_LEGADO = ENEMY_ROSTER.slice(0, -27);
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) + 15 ramos legados (§445) + 4 rookies do lote 5 (P5, 23/11) = 897 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205 + 15 + 4);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 + 20 do elenco do Oráculo (10/11) + 14 Ultimates só-Ultimate de 2 componentes (15/11, §405) + 205 formas do pacote A (16/11) + 15 ramos legados (§445) + 4 rookies do lote 5 (P5, 23/11) + 8 formas do lote 5 (champion e ultimate, dono 23/11) = 905 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6 + 20 + 14 + 205 + 15 + 4 + 8);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });

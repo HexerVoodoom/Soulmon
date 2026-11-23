@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { NOVOS_SOULMON, FORMAS_ALTAS_ART, novoSoulmonOfStage, novoPreferenceOfTier } from './novosSoulmon';
 import { NOVOS_DATA, FORMAS_ALTAS, pickNovo } from './novosSoulmonData';
 import { LEGADO_DATA } from './enemyRosterLegado.data';
+import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
 import { buildArenaRound, ARENA_ROUNDS } from './arena';
 import { buildDungeonWave, LADDER_TIERS } from './dungeon';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES } from './sprites';
@@ -143,17 +144,18 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
 
 describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterArt)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-  it('manifest bate com os PNGs (120 ramos + 267 combinados), 256² RGBA, sem órfão', () => {
+  it('manifest bate com os PNGs (120 ramos + 267 combinados) + 4 rookies do lote 5 fora dele, 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
     expect(m.branches).toHaveLength(120);
     expect(m.combined).toHaveLength(267);
     const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
-    const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
+    const LOTE5 = new Set(COMBINADOS_LOTE5_DATA.map(([n, s]) => `${n}-${s}.png`)); // 268-271 (23/11/2026): rookie com arte própria, ainda fora do manifest
+    const reais = [...readdirSync(join(ARQ, 'combinados')).filter(f => !LOTE5.has(f)).map(f => `combinados/${f}`),
       ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
     expect(new Set(reais)).toEqual(listados);
-    for (const f of reais) {
+    for (const f of [...reais, ...[...LOTE5].map(x => `combinados/${x}`)]) {
       const b = readFileSync(join(ARQ, f));
-      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
+      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
     }
   });
   it('legado (§445, 16/11): 15 PNGs 256² RGBA < 150 KB, um por (id, estágio) de LEGADO_DATA, sem órfão', () => {
@@ -168,10 +170,10 @@ describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterAr
       expect(b.length, f).toBeLessThan(150_000);
     }
   });
-  it('formas champion/ultimate/mega dos 50 curados (212-261) + 205 do pacote A (16/11): 355 PNGs 256² com alfa (RGBA, ou paleta com tRNS nos do pacote A)', () => {
+  it('formas champion/ultimate/mega dos 50 curados (212-261) + 205 do pacote A (16/11) + 8 do lote 5 (23/11): 363 PNGs 256² com alfa (RGBA, ou paleta com tRNS nos do pacote A)', () => {
     const d = join(ARQ, 'combinados-formas');
     const fs = readdirSync(d);
-    expect(fs).toHaveLength(150 + 205);
+    expect(fs).toHaveLength(150 + 205 + 8);
     for (const f of fs) {
       const b = readFileSync(join(d, f));
       // 6 = RGBA; 3 = paleta de 256 cores (pacote A, 16/11/2026) e só vale com o bloco tRNS, que carrega o alfa

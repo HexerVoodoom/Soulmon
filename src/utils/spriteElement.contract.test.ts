@@ -33,7 +33,7 @@ describe('todo arquivo de criatura tem elemento', () => {
   it('combinados/: elemento = id fundido do manifest, 267 de 267', () => {
     const man = JSON.parse(fs.readFileSync(path.join(ART, 'novos-' + 'arquivo/manifest.json'), 'utf8')).combined as { n: number; file: string; combination: string; components: string[] }[];
     const files = ls('novos-' + 'arquivo/combinados');
-    expect(files.length).toBe(267);
+    expect(files.length).toBe(267 + 4); // + os 4 rookies do lote 5 (268-271, 23/11/2026), que ainda não estão no manifest nem têm ícone el-<id> (dívida de arte do P6 em docs/ASSETS-A-GERAR.md §34)
     expect(man.length).toBe(267);
     for (const m of man) {
       const num = String(m.n).padStart(3, '0');
