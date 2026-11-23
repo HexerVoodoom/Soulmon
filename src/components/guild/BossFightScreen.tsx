@@ -214,6 +214,8 @@ export function BossFightScreen(p: BossFightScreenProps) {
         language={p.language}
         kind="boss"
         outcome={defeated ? 'win' : 'calm'}
+        // TODO(P6): trocar por arte do selo FLED (ponto único: o chefe escapou; antes saía o DRAW genérico)
+        bannerText={defeated ? undefined : (isPt ? 'FUGIU' : 'FLED')}
         gameName={text.name}
         title={defeated ? (isPt ? 'O caminho abriu' : 'The way is open') : (isPt ? `${text.name} fugiu por ora` : `${text.name} fled, for now`)}
         line={isPt ? `Você causou ${p.myDamage} de dano.` : `You dealt ${p.myDamage} damage.`}

@@ -119,6 +119,8 @@ export interface ResultScreenProps {
   dailyEvent?: DailyEvent;
   /** Banner de arte que substitui o do desfecho (fim normal "Complete" da Chuva de Almas). */
   bannerKind?: ResultBannerKind;
+  /** Selo de TEXTO no lugar do banner de arte (ex.: chefe que fugiu: FLED/FUGIU). Placeholder até a arte do P6. */
+  bannerText?: string;
   /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
   visorOpponent?: ReactNode;
   /** `background` da cena do visor. */
@@ -373,7 +375,7 @@ export function ResultScreen(p: ResultScreenProps) {
             {!p.visorOpponent && p.petSrc && (
               <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className={p.opponentSrc && p.outcome === 'tired' ? 'sm-result-loser' : 'sm-result-pet-free'} style={{ width: p.opponentSrc ? 104 : 128, height: p.opponentSrc ? 104 : 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
             )}
-            <ResultBanner kind={p.bannerKind ?? bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />
+            {p.bannerText ? <span data-result-banner-text className="sm-result-seal-text" style={{ position: 'relative', zIndex: 1 }}>{p.bannerText}</span> : <ResultBanner kind={p.bannerKind ?? bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />}
             {!p.visorOpponent && p.opponentSrc && (
               <img src={p.opponentSrc} alt="" aria-hidden="true" draggable={false} data-result-opponent className={p.outcome === 'tired' ? 'sm-result-pet-free' : p.outcome === 'calm' ? undefined : 'sm-result-loser'} style={{ width: 104, height: 104, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginLeft: -30, flex: 'none' }} />
             )}

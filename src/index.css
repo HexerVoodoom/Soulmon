@@ -7601,6 +7601,10 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 .sm2-popup-fechar:active { background: rgba(201, 136, 74, .22); transform: scale(.96); }
 .sm2-popup-fechar:focus-visible { outline: 2px solid #e3c06a; outline-offset: 2px; }
+.sm2-area-sheet-inline .sm2-popup-fechar-linha { margin: 0 4px 0 0; }
+.sm2-area-sheet-inline .sm2-popup-titulo { padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); }
+/* P3: selo de texto PLACEHOLDER do resultado do chefe que fugiu (no lugar do DRAW). Trocar pela arte do selo FLED (P6). */
+.sm-result-seal-text { display: block; margin: 0 auto; text-align: center; font-family: var(--sm2-font-display, Georgia, serif); font-weight: 800; letter-spacing: .12em; font-size: var(--sm2-text-xl, 1.5rem); color: #e3c06a; text-shadow: 0 2px 0 rgba(0,0,0,.55); }
 .sm2-popup-titulo {
   margin: 4px 0 4px; padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); flex-shrink: 0; text-align: center; overflow-wrap: anywhere; text-wrap: balance;
   font-family: var(--sm2-font-display, Georgia, serif); font-size: var(--sm2-text-lg, 1.25rem); font-weight: 700; line-height: 1.2; color: #e3c06a;

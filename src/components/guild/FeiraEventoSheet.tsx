@@ -13,7 +13,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { RewardPreview } from '../ui/RewardPreview';
 import { InfoTip } from '../ui/InfoTip';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { AreaSheet } from '../nav/AreaSheet';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
 import { BossCheerPrelude } from './BossCheerPrelude';
@@ -259,7 +260,11 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
   }
 
   return (
-    <ModalSheet open placement="center" onClose={onClose} language={language} title={title} maxWidth={400} footer={footer}>
+    // P3: a folha do NPC da Feira (Fanfare, `hall:feira`), com título inline (sem placa); a fala do NPC é o aviso curto do evento.
+    <AreaSheet
+      open areaId="hall" lotId="feira" language={language} title={title} titulo="inline" closeLabel={t('sheet.close')} onClose={onClose} footer={footer}
+      npcVoice={{ name: 'Fanfare', line: t(evento.kind === 'boss' ? 'npc.boss' : evento.kind === 'trail' ? 'npc.trail' : 'npc.rest') }}
+    >
       <div data-feira-evento={evento.kind} data-feira-k={evento.k}>
         {phase === 'home' && evento.kind === 'boss' && (
           <div style={{ textAlign: 'center' }}>
@@ -305,7 +310,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
         {phase === 'trail' && trail && <FeiraTrailPlay language={language} trail={trail} onSubmit={s => void doSubmit(s)} busy={busy} />}
         {note && <p role="status" style={{ ...sm2Hint, textAlign: 'center', margin: '10px 0 0' }} data-feira-nota={note}>{t(note)}</p>}
       </div>
-    </ModalSheet>
+    </AreaSheet>
   );
 }
 
