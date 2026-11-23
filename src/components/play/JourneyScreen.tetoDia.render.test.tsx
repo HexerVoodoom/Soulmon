@@ -11,10 +11,10 @@ const ACTIVE = (): ActiveJourney => ({ sid: 's1', seed: 7, mode: 'p25', env: 'fo
 const base = { delta: 0, lastItems: null, onPause() {}, onResume() {}, onClaim() {}, onEnd() {}, onClose() {} };
 
 describe('journeyItemsCapReached', () => {
-  it('só no teto (16) ou acima; ledger ausente não conta', () => {
-    expect(JOURNEY_ITEMS_DAILY_CAP).toBe(16);
-    expect(journeyItemsCapReached({ ...emptyLedger('d'), items: 15 })).toBe(false);
-    expect(journeyItemsCapReached({ ...emptyLedger('d'), items: 16 })).toBe(true);
+  it('só no teto (28) ou acima; ledger ausente não conta', () => {
+    expect(JOURNEY_ITEMS_DAILY_CAP).toBe(28);
+    expect(journeyItemsCapReached({ ...emptyLedger('d'), items: 27 })).toBe(false);
+    expect(journeyItemsCapReached({ ...emptyLedger('d'), items: 28 })).toBe(true);
     expect(journeyItemsCapReached(null)).toBe(false);
   });
 });
