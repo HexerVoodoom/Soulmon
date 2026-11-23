@@ -4827,6 +4827,9 @@ O guia da aba Materiais da Mochila: para cada material de prédio, ONDE consegui
 
 Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.
 
+### `src/utils/elementoTextos.data.ts` (23/11/2026, P5)
+**Dono de:** os textos dos 20 elementos BASE no modal do dex (descrição do elemento + parágrafo conceitual), em PT e EN, aprovados pelo dono em 23/11/2026 (`docs/TEXTOS-ELEMENTOS-ARCANOS-FINAL.md`). `TEXTOS_ELEMENTO_BASE` (id → `{pt, en}`) e `textoDoElementoBase(id, isPt)`. O arcano de cada texto é metadado só do doc e não aparece no app. Combinados, curados, neutro e os 4 do lote 5 não têm texto próprio (`undefined`). Só `ElementDex` importa (fora da entrada). Régua: `src/components/ElementDex.textos.render.test.tsx`.
+
 ### `src/utils/elementoDescritores.data.ts` (10/11/2026)
 
 Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.
