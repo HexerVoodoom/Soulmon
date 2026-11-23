@@ -15,6 +15,8 @@
 import { readLocal, writeLocal } from './safeStorage';
 
 export const STORAGE_KEYS = {
+  /** Pré-download do onboarding: `{b: carimbo do build, m: 'essencial'|'tudo'}` (aparelho). Ver `utils/prefetchOnboarding.ts`. */
+  PREFETCH_ONBOARDING: 'soulmon-prefetch-onboarding',
   /** Pedido de avaliação na Play (aparelho): `{accepted?:true,lastAskedAt?:ms}`. Ver `utils/playReview.ts`. */
   PLAY_REVIEW: 'soulmon-play-review',
   GAME_STATE: 'soulmon_state_v1',

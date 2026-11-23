@@ -4376,6 +4376,12 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Régua:** `src/utils/petPushEvents.test.ts`, `workers/pushBudget.parity.test.js`.
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
 
+### `src/utils/prefetchOnboarding.ts`
+**Dono de:** o pré-download em segundo plano durante o onboarding (REGISTRO §510): escolhe o modo pela rede (Wi-Fi = tudo; resto = essencial), monta a fila a partir de `/prefetch-index.json` dentro do orçamento de quota e provoca os `fetch` (o SW guarda no `ASSET_CACHE`).
+**Exports:** `escolherModo`, `montarFila`, `orcamentoDe`, `iniciarPrefetchOnboarding(deps?)` (devolve `cancelar` com `.pronto`), `FRACAO_QUOTA`, `TETO_SEM_ESTIMATIVA`, `PARALELO`.
+**Chamado por:** `src/components/SoulmonOnboarding.tsx` (import dinâmico, só no modo onboarding).
+**Régua:** `src/utils/prefetchOnboarding.test.ts`, `src/deploy/prefetchIndex.contract.test.ts`, `tests/gerar-prefetch-index.test.ts`.
+
 ### `src/utils/feedbackClient.ts`
 **Dono de:** o envio do modal de feedback da Home a `POST /api/feedback`. Só tipo, texto e diagnóstico não pessoal (versão, build, plataforma, idioma); `Authorization` só quando há login (limite por conta no servidor).
 **Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
