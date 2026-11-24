@@ -4885,6 +4885,16 @@ html[data-ui="arte"] .sm2-kit-btn-lg.sm2-kit-btn-primary:not(.sm2-kit-btn-sm),
 html[data-ui="arte"] .sm2-kit-btn-lg.sm2-kit-btn-outline:not(.sm2-kit-btn-sm) { --sm2-btn-h: 56px; }
 html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):disabled,
 html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):disabled { color: rgb(255 255 255 / .72) !important; text-shadow: none; }
+/* Grupo B (fase 4): o VOLTAR (BackCircleButton, seta) ganha a arte do disco (`sm2-voltar`, aro de cobre liso, que já traz a seta; P6 #1270). A arte mora nestas duas variáveis: trocar
+   os url() se a arte mudar. O glifo fica no DOM (aria-label, foco) e só some da vista; o voltar de destino "mapa" não leva a arte. */
+html[data-ui="arte"] { --sm2-voltar-arte: url('./assets/soulmon/ui/sm2/sm2-voltar.webp'); --sm2-voltar-press: url('./assets/soulmon/ui/sm2/sm2-voltar-press.webp'); }
+html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] {
+  background: var(--sm2-voltar-arte) center / contain no-repeat !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"]:active:not(:disabled) { background-image: var(--sm2-voltar-press) !important; }
+html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] > * { opacity: 0; }
 /* Drop-down de categoria do CreateModal (dono, 24/11/2026). Campo + lista em fluxo; selecionado = `primary-fill` sólido com `on-primary`. */
 .sm2-cat-select__campo {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 12px; box-sizing: border-box; margin-top: 6px;
