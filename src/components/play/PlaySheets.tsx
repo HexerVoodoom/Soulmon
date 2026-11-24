@@ -157,7 +157,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { languag
   const [best] = useState(() => getDungeonBest());
   const currentLayer = riftCurrentLayer(gs);
   return (
-    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)' }}>
+    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)', minHeight: '100%' }}>
       <ModalInfo language={language} label="Drop rate">
         <b data-masmorra-drops-title style={{ display: 'block', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, marginBottom: 4 }}>Drop rate</b>
         <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
@@ -184,19 +184,22 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { languag
         <span className="sm2-num" style={{ ...boxValue, fontSize: 'var(--sm2-text-xl, 28px)', color: 'var(--sm2-primary-ink)' }}>{isPt ? `Camada ${currentLayer}` : `Layer ${currentLayer}`}</span>
         <p style={boxLabel}>{isPt ? 'camada atual' : 'current layer'}</p>
       </div>
-      {(deepest > 0 || best > 0) && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
-          {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
-        </div>
-      )}
-      {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
-      <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
-      {/* 24/11/2026 (dono): "Entrar no Rift" na BASE da folha, bem afastado do "Ver o mapa" (zona de toque segura); o ranking mora no rodapé do mapa. */}
-      <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart} style={{ marginTop: 'min(40px, 4dvh)' }}>
+      {/* 24/11/2026 (dono): "Entrar no Rift" é a ação principal, logo abaixo da camada atual. */}
+      <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </BotaoEspecial>
+      {/* BASE da folha, ancorada no rodapé e longe do resto (zona de toque segura): recordes, as 2 linhas de Bits (teto da atividade e total) e, por último, o "Ver o mapa". */}
+      <div data-masmorra-base style={{ marginTop: 'auto', paddingTop: 'min(32px, 3.5dvh)', display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)' }}>
+        {(deepest > 0 || best > 0) && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {deepest > 0 && <StatBox value={isPt ? `Camada ${deepest}` : `Layer ${deepest}`} label={isPt ? 'a mais funda até hoje' : 'deepest so far'} />}
+            {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
+          </div>
+        )}
+        <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
+        {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
+      </div>
     </div>
   );
 }

@@ -187,15 +187,19 @@ describe('Exploração — Zeph e a Masmorra', () => {
     // 24/11/2026 (dono): as linhas de Bits ficam na BASE (depois dos botões), com a masmorra (75) e o total (180)
     const dung = folha.querySelector('[data-rift-bits-dungeon]')!; const tot = folha.querySelector('[data-rift-bits-total]')!;
     expect(dung.textContent).toMatch(/^Bits da masmorra hoje: \d+ de 75$/); expect(tot.textContent).toMatch(/^Bits totais hoje: \d+ de 180$/);
-    expect(folha.querySelector('[data-masmorra-map]')!.compareDocumentPosition(dung) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dung.compareDocumentPosition(folha.querySelector('[data-masmorra-map]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // a linha da masmorra fica LOGO ACIMA do "Ver o mapa"
     // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
     // "Ver ranking": o mesmo botão do Torneio (BotaoEspecial ranking), no corpo da folha; sem CSS próprio
     expect(folha.querySelector('[data-masmorra-ranking]')).toBeNull();
-    // "Entrar no Rift" na BASE, depois do "Ver o mapa" e das linhas de Bits
-    expect(folha.querySelector('[data-masmorra-map]')!.compareDocumentPosition(folha.querySelector('[data-masmorra-start]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 24/11/2026 (dono): "Entrar no Rift" é a ação principal (antes do bloco da base); a BASE reúne recordes, Bits e, por último, o "Ver o mapa"
+    const base = folha.querySelector('[data-masmorra-base]')!;
+    expect(folha.querySelector('[data-masmorra-start]')!.compareDocumentPosition(base) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(base.contains(folha.querySelector('[data-masmorra-map]'))).toBe(true);
+    expect(base.contains(folha.querySelector('[data-rift-bits-total]'))).toBe(true);
+    expect(base.lastElementChild).toBe(folha.querySelector('[data-masmorra-map]'));
     expect(folha.querySelector('[data-area-sheet-head-start]')).toBeNull();
   });
 
