@@ -546,3 +546,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — estados do disco FECHAR (24/11/2026)
 `ui/sm2/sm2-fechar-press.webp` (245×239; mesma transformação de cor medida entre `sm2-voltar` e `sm2-voltar-press`) e `sm2-fechar-disabled.webp` (dessaturado/escurecido, sem brilho). Mostrados a 44×44 px (P7). Entram no mesmo diretório `ui/sm2/` já liberado no guard ZERO PNG.
+
+## P6 — barrinha do topo (aprovada 24/11/2026)
+`icones-ui/barrinha-slot-valor{,@2x}.webp` (66×28 / 132×56, 9-slice horizontal, caps 10, bordinha de bronze) e `barrinha-faixa-fundo{,@2x}.webp` (412×40 / 824×80, esticável), com `barrinha-geometria.json` (posições dos slots em 360/375/412). Sem consumidor: a P2 liga.
