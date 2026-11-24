@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
-import { useAcoVoltar, useAcoVoltarRegistro } from '../nav/acoVoltar';
 import { useId, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
@@ -450,10 +449,6 @@ export function ModalSheet({
   const noMiolo = !!area && !sobreTelas;
   // A moldura própria da folha só vale fora do miolo de outra moldura (no miolo ela já está dentro do quadro do modal pai).
   const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
-  // Dentro da moldura de AÇO o voltar mora no medalhão esquerdo da `AreaSheet` (nada de seta no corpo).
-  const acoVoltar = useAcoVoltar();
-  const viaMedalhao = !!acoVoltar && !!onBack && closeSide === 'start' && !sobreTelas && open;
-  useAcoVoltarRegistro(acoVoltar, onBack, viaMedalhao);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
   const inline = framed && centered && titulo === 'inline';
   if (!open) return null;
@@ -524,7 +519,7 @@ export function ModalSheet({
               </button>
             )}
           </div>
-        ) : closeSide === 'start' && !viaMedalhao ? (
+        ) : closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
           <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>

@@ -171,6 +171,20 @@ function unmarkInert(el: Element) {
   el.removeAttribute('data-sm2-inert');
 }
 
+/** Controles da MOLDURA que seguem vivos com uma tela interna aberta: o ✕ (medalhão) e o encaixe do "i" (24/11/2026, Hexsmith). */
+const VIVOS_DA_MOLDURA = '[data-aco-medalhao],[data-moldura-info]';
+
+/**
+ * Inertiza `el`, poupando os controles da moldura. Eles moram DENTRO de um irmão maior (o conteúdo da `AreaSheet`): um `inert` nesse
+ * irmão desligava o ✕ e o "i" (causa do "nenhum botão funciona" da Hexsmith). Então desce: o que contém um controle vivo é percorrido,
+ * o resto é inertizado inteiro.
+ */
+function markInertExceto(el: Element, marked: Element[]): void {
+  if (el.matches(VIVOS_DA_MOLDURA)) return;
+  if (!el.querySelector(VIVOS_DA_MOLDURA)) { markInert(el); marked.push(el); return; }
+  for (const filho of Array.from(el.children)) { if (!SKIP_TAGS.has(filho.tagName)) markInertExceto(filho, marked); }
+}
+
 /**
  * Marca como inerte tudo que NÃO é ancestral nem descendente de `node`.
  * Devolve a função que desfaz exatamente o que esta chamada fez.
@@ -188,11 +202,8 @@ function hideOthers(node: HTMLElement): () => void {
       // intocável sob a folha — o jogo "trava" até fechar o app. Quem está por cima não vira inerte por quem veio depois.
       // Mesma regra para o modal da retrospectiva semanal (`data-dialog-top`, z 240, portal no body): um aviso que monte DEPOIS dele
       // (ex.: introdução do bônus, fila de avisos) não pode inertizá-lo, senão o de cima fica sem scroll e com o CTA mudo (bug do aparelho, 16/11/2026).
-      // Medalhões da moldura de aço (Voltar à esquerda, ✕ à direita) ficam ativos com a tela interna aberta (23/11/2026).
-      if (sibling.matches('[data-aco-medalhao]')) continue;
       if (sibling.matches('[data-dialog-top]') || sibling.querySelector('[data-npc-sequence],[data-dialog-top]')) continue;
-      markInert(sibling);
-      marked.push(sibling);
+      markInertExceto(sibling, marked);
     }
     cur = parent;
   }

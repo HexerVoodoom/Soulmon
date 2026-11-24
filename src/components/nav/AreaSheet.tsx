@@ -16,7 +16,6 @@ import { CristalChama } from '../ui/CristalChama';
 import { Icon } from '../ui/Icon';
 import { useBackDimmed } from '../../utils/modalDepth';
 import { NavGlyph } from '../ui/NavGlyphs';
-import { AcoVoltarProvider, useAcoVoltarPilha } from './acoVoltar';
 
 /** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
 export const MOLDURA_MODAL = true;
@@ -86,7 +85,6 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   // Com a moldura, o `ModalFrame` é o dono do encaixe do "i" (sobre o ornamento da arte); sem ela, o encaixe da linha do título.
   const { slot, slotRef } = useModalInfoSlot();
-  const acoVoltar = useAcoVoltarPilha();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
   const frame = npcFrame ?? npcFrameFor(areaId, lotId);
@@ -212,7 +210,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           }}
         >
           {aco && <CristalChama />}
-          {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} voltar={acoVoltar.voltar} voltarLabel={language === 'pt-BR' ? 'Voltar' : 'Back'} />}
+          {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} />}
           {closeInSheet && !hideClose && !aco && (
             <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
@@ -252,9 +250,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: inline ? 0 : 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
             : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
-            <AcoVoltarProvider value={aco ? acoVoltar.ctx : null}>
-              {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
-            </AcoVoltarProvider>
+            {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
           </div>
           {footer && (
             <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
@@ -267,27 +263,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   );
 }
 
-/** Os medalhões da moldura de AÇO (SÓ o glifo, alvo transparente ≥ 44 px). Tela principal: ✕ no disco ESQUERDO (apagado se algo abrir por cima).
- *  Com TELA INTERNA aberta (`voltar`): Voltar no disco ESQUERDO e o ✕ no DIREITO, ativo, fechando o fluxo inteiro (decisão do dono, 23/11/2026). */
-function FecharAco({ label, onClose, voltar, voltarLabel }: { label: string; onClose: () => void; voltar: (() => void) | null; voltarLabel: string }) {
+/** O medalhão ✕ da moldura de AÇO (SÓ o glifo, alvo transparente ≥ 44 px). Fica SEMPRE no disco ESQUERDO e SEMPRE fecha a folha inteira (24/11/2026,
+ *  dono): telas internas (Porta da Hexsmith etc.) não o trocam por "voltar" nem o movem; o Voltar delas mora no corpo. Ele só esmaece se abrir um modal
+ *  de FORA desta folha (as telas internas moram dentro do `[data-area-sheet]` e não contam). */
+const dentroDaFolha = (el: Element | null): Element | null => el?.closest('[data-area-sheet]') ?? null;
+function FecharAco({ label, onClose }: { label: string; onClose: () => void }) {
   const ref = useRef<HTMLButtonElement>(null);
-  const dimmed = useBackDimmed(ref);
-  if (voltar) {
-    return (
-      <>
-        <button type="button" className="sm2-moldura-aco__fechar" data-aco-medalhao="" data-aco-voltar="" aria-label={voltarLabel} title={voltarLabel}
-          onClick={e => { e.stopPropagation(); voltar(); }}>
-          <NavGlyph name="arrow_back" size={24} tone="inherit" />
-        </button>
-        <button type="button" className="sm2-moldura-aco__fechar sm2-moldura-aco__fechar--dir" data-aco-medalhao="" data-area-sheet-close="" aria-label={label} title={label}
-          onClick={e => { e.stopPropagation(); onClose(); }}>
-          <Icon name="close" size={20} tone="inherit" />
-        </button>
-      </>
-    );
-  }
+  const dimmed = useBackDimmed(ref, dentroDaFolha);
   return (
-    <button ref={ref} type="button" className="sm2-moldura-aco__fechar" data-area-sheet-close="" aria-label={label} title={label}
+    <button ref={ref} type="button" className="sm2-moldura-aco__fechar" data-aco-medalhao="" data-area-sheet-close="" aria-label={label} title={label}
       disabled={dimmed} data-modal-dimmed={dimmed ? '' : undefined} onClick={e => { e.stopPropagation(); onClose(); }}>
       <Icon name="close" size={20} tone="inherit" />
     </button>

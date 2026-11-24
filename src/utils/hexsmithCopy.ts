@@ -108,7 +108,6 @@ export const HEX_UI = {
   unequippedMsg: p('unequipped', 'desequipado'),
   forge: p('Forge', 'Forjar'),
   catalog: p('Forge', 'Forja'),
-  filterHint: p('Filter by up to 3 base elements: only elements that contain all of them are listed. What you can forge comes first.', 'Filtre por até 3 elementos base: aparecem só os elementos que contêm todos eles. O que dá para forjar vem primeiro.'),
   balance: p('You have', 'Você tem'),
   potions: p('potions', 'poções'),
   colItem: p('Item', 'Item'),
