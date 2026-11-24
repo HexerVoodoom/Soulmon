@@ -120,6 +120,22 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
   );
 }
 
+/** As duas linhas de Bits do Rift, na base da folha (dono, 24/11/2026): o teto da Fenda (categoria 'explorar', 75) e o total do dia (180). */
+function RiftBitsHoje({ language, earned = 0, extraCap = 0 }: { language: Language; earned?: number; extraCap?: number }) {
+  const gs = useGameStateOptional()?.gameState;
+  const isPt = language === 'pt-BR';
+  const catCap = bitsCategoryCap(extraCap);
+  const cap = minigameBitsCap(extraCap);
+  const catN = gs ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), 'explorar')) : 0;
+  const total = Math.min(cap, Math.max(0, Math.floor(earned)));
+  return (
+    <p data-bits-hoje data-rift-bits-hoje style={{ ...note, margin: 0 }}>
+      <span data-rift-bits-dungeon className="sm2-num" style={{ display: 'block' }}>{isPt ? `Bits da masmorra hoje: ${catN} de ${catCap}` : `Dungeon Bits today: ${catN} of ${catCap}`}</span>
+      <span data-rift-bits-total className="sm2-num" style={{ display: 'block' }}>{isPt ? `Bits totais hoje: ${total} de ${cap}` : `Total Bits today: ${total} of ${cap}`}</span>
+    </p>
+  );
+}
+
 function StatBox({ value, label, valueStyle }: { value: ReactNode; label: string; valueStyle?: CSSProperties }) {
   return (
     <div style={box}>
@@ -188,12 +204,13 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
           {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
         </div>
       )}
-      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
       <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </BotaoEspecial>
       {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
+      {/* 24/11/2026 (dono): as linhas de Bits ficam na BASE da folha (a parte de cima é só botões e recordes). */}
+      <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );
 }

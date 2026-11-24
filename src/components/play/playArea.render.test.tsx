@@ -184,6 +184,10 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.querySelector('[data-masmorra-start]')!.getAttribute('data-especial-variant')).toBe('rift');
     expect(folha.querySelector('[data-masmorra-map]')!.getAttribute('data-especial-variant')).toBe('rift-sec');
     expect(folha.querySelector('[data-masmorra-start] [data-energy-cost]')).toBeTruthy();
+    // 24/11/2026 (dono): as linhas de Bits ficam na BASE (depois dos botões), com a masmorra (75) e o total (180)
+    const dung = folha.querySelector('[data-rift-bits-dungeon]')!; const tot = folha.querySelector('[data-rift-bits-total]')!;
+    expect(dung.textContent).toMatch(/^Bits da masmorra hoje: \d+ de 75$/); expect(tot.textContent).toMatch(/^Bits totais hoje: \d+ de 180$/);
+    expect(folha.querySelector('[data-masmorra-map]')!.compareDocumentPosition(dung) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
