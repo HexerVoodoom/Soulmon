@@ -1778,8 +1778,7 @@ html {
   100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px) * 1.15), calc(-50% + var(--ty, 0px) * 1.15)) scale(0.5); }
 }
 
-/* ==============================================
-   Soulmon Design System — moderno, minimalista, teal+cobre.
+/* =======================================   Soulmon Design System — moderno, minimalista, teal+cobre.
    Inspiração Duolingo: formas arredondadas, botões "chunky" com
    press-down 3D. Suporta tema claro e escuro via [data-theme] no
    <html> (ver src/contexts/ThemeContext.tsx) — o atributo é setado
