@@ -15,7 +15,11 @@ export const JOURNEY_COMPLETIONS_REWARDED = 4;
 export const JOURNEY_EXTRA_COMPLETIONS = 3;
 export const JOURNEY_MAX_PAUSES = 3;
 export const JOURNEY_MAX_PAUSED_MS = 30 * 60_000;
-export const ENV_ELEMENT = { forest: 'planta', shore: 'agua', cavern: 'terra', garden: 'fada', workshop: 'industrial', observatory: 'espaco' };
+export const ENV_ELEMENTS = {
+  forest: ['planta', 'vida', 'vigor', 'ar'], shore: ['agua', 'eletricidade', 'som'], cavern: ['terra', 'fogo', 'sombra', 'morte'],
+  garden: ['fada', 'luz', 'arcano'], workshop: ['industrial', 'marcial', 'vileza'], observatory: ['espaco', 'tempo', 'gravidade'],
+};
+const pickElement = (env, r) => { const a = ENV_ELEMENTS[env]; return a[Math.min(a.length - 1, Math.floor(r * a.length))]; };
 /** Espelho de `FOCUS_ENVIRONMENTS[].materials` (`src/utils/focusExpedition.ts`). */
 export const ENV_MATERIALS = {
   forest: ['moss', 'laurel', 'down', 'fang'], shore: ['pebble', 'prism', 'essence', 'keepsake'], cavern: ['ore', 'spark', 'cipher', 'crest'],
@@ -56,14 +60,14 @@ export function journeyProgress(c, now) {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 60_000));
 }
 
-export function chestLoot(seed, chest, keys, env, elems = 1) {
+export function chestLoot(seed, chest, keys, env, elems = ENV_ELEMENTS[env].length) {
   const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1))];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 0x9e3779b1)) >>> 0);
   const mats = ENV_MATERIALS[env];
   const pick = (a) => a[Math.min(a.length - 1, Math.floor(rng() * a.length))];
   const mat = () => ({ kind: 'material', id: pick(mats), qty: 1 });
   const food = () => ({ kind: 'food', id: pick(JOURNEY_FOODS), qty: 1 });
-  const ess = (qty) => ({ kind: 'essence', id: ENV_ELEMENT[env], qty });
+  const ess = (qty) => ({ kind: 'essence', id: pickElement(env, rng()), qty });
   const common = () => (rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()]);
   if (chest.type === 'common' || !keys.includes(chest.type)) return common();
   switch (chest.type) {
@@ -81,7 +85,7 @@ export function completionLoot(seed, nth, env) {
   if (nth === 1) return chestLoot(seed, { k: 999, at: 1, type: 'common' }, [], env);
   if (nth <= JOURNEY_COMPLETIONS_REWARDED) {
     const rng = mulberry((seed ^ 0xc0ffee) >>> 0);
-    return [{ kind: 'essence', id: ENV_ELEMENT[env], qty: 1 }, { kind: 'food', id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
+    return [{ kind: 'essence', id: pickElement(env, rng()), qty: 1 }, { kind: 'food', id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
   }
   /* Ciclos extras do Pomodoro (§302): do 5º ao 7º foco do dia, UM item simples (baú comum), sem Bits; depois disso nada. */
   if (nth <= JOURNEY_COMPLETIONS_REWARDED + JOURNEY_EXTRA_COMPLETIONS) return chestLoot(seed, { k: 998, at: 1, type: 'common' }, [], env);

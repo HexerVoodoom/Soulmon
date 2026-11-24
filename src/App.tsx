@@ -667,7 +667,6 @@ export default function App() {
   }, [setGameState]);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
-  const [potionOpen, setPotionOpen] = useState(false); // Poção de Elemento (Centro de Evolução)
   // Vesca oferece a poção quando a essência de um elemento BASE cruza o limiar (08/11/2026). Fila: um modal por vez; o 1º render só memoriza.
   const [vescaQueue, setVescaQueue] = useState<string[]>([]);
   const vescaPrevEssRef = useRef<Record<string, number> | undefined | null>(null);
@@ -2433,6 +2432,14 @@ export default function App() {
     toast(w.text, { id: 'wake-warning', action: { label: w.action, onClick: markDayAwake } });
     return true;
   }, [language, markDayAwake]);
+  const [retroFechada, setRetroFechada] = useState(false);
+  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
+  /* Aviso do Conjunto Fundador (item `fundador` da fila): pendentes = ganhos e ainda não avisados. Fechar grava SÓ o que estava na tela (idempotente, aditivo). */
+  const fundadorPend = fundadorPendentes(gameState);
+  const fundadorPodeAbrir = hasCompletedOnboarding && !showIntro && !isDemoMode(gameState) && currentView === 'home' && !bonusIntroOpen
+    && (retroFechada || !needsWeeklyRetro(gameState, new Date())) && fundadorPend.length > 0;
+  /** Um modal por prêmio, na ordem Fundo → Moldura → Retrato → Cristal: fechar grava SÓ o id da tela; o próximo abre em seguida (mesmo item da fila). */
+  const fecharFundadorAviso = useCallback((id: string) => setGameState(prev => marcarFundadorAvisados(prev, [id])), [setGameState]);
   const presentation = usePresentationQueue({
     // enquanto o Soulmon dorme à espera de ser acordado: nada do início de dia, celebração ou convite entra (a fila decide)
     holdDayStart: dayWakePending,
@@ -2452,6 +2459,8 @@ export default function App() {
       catalogOnboarding: !primeiroDiaAtivo && needsCatalogOnboarding(gameState as any),
       dayGoals: !primeiroDiaAtivo && dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
       checkIn: !primeiroDiaAtivo && Boolean(checkInPlanData),
+      // Aviso do Conjunto Fundador: UM item da fila (nunca por cima de outro modal). Só na Home, sem a retrospectiva na frente nem o intro de bônus.
+      fundador: fundadorPodeAbrir,
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
@@ -2537,6 +2546,7 @@ export default function App() {
         case 'noticeToast': setNoticeKey(null); break;
         case 'dayGoals': setDayGoalsOpen(false); break;
         case 'checkIn': handleCheckInSkip(); break;
+        case 'fundador': if (fundadorPend[0]) fecharFundadorAviso(fundadorPend[0]); break;
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'evoStats': setEvoStatsShown(null); break;
         case 'elementoNovo': setElemMostrados(null); break;
@@ -3123,7 +3133,6 @@ export default function App() {
     }));
   }, []);
   /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
-  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
 
   const handleToggleActivityCompletion = (activityId: string, opts?: { auto?: boolean }) => {
     const today = new Date().toDateString();
@@ -6700,7 +6709,6 @@ export default function App() {
       return lista === prev.stageByWeek ? prev : { ...prev, stageByWeek: lista };
     });
   }, [hasCompletedOnboarding, gameState.evolutionStage, setGameState]);
-  const [retroFechada, setRetroFechada] = useState(false);
   /** Fecha a retrospectiva: marca a segunda como vista e ativa o bônus de retorno da semana (se houver hábito mais difícil). */
   const handleCloseWeeklyRetro = useCallback(() => {
     const agora = new Date();
@@ -7943,22 +7951,23 @@ export default function App() {
                 soulGoal: gameState.soulGoal,
               }}
             /></Suspense>);
-  const potionContent = (
-    potionOpen ? <Suspense fallback={null}><ElementPotionSheet
-            open={potionOpen}
+  const potionContent = (onBack: () => void) => (
+    <Suspense fallback={null}><ElementPotionSheet
+            open
+            inline
             language={language}
             essences={gameState.essences}
             inventory={gameState.foodInventory}
             pending={gameState.evolutionPotion}
             unlocked={gameState.defeatedElements}
-            onBack={() => setPotionOpen(false)}
+            onBack={onBack}
             onCraft={(id) => {
               // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
               if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false;
               setGameState(prev => craftPotion(prev, id));
               return true;
             }}
-          /></Suspense> : null
+          /></Suspense>
   );
   const labContent = (
     <>
@@ -8230,6 +8239,7 @@ export default function App() {
                   forge: gameState.forge,
                 }}
                 especialNome={gameState.especialNome ?? ''}
+                carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               />
             </Suspense>
           )}
@@ -8876,7 +8886,6 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 potionContent={potionContent}
-                onOpenPotion={() => setPotionOpen(true)}
                 hallContent={hallContent}
                 guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
@@ -10669,25 +10678,18 @@ export default function App() {
           </Suspense>
         );
       })()}
-      {/* Aviso do Conjunto Fundador (PR 2/2): só na Home, depois do onboarding, sem a retrospectiva nem o intro de bônus na frente; fila = um popup por vez. */}
-      {(() => {
-        if (!hasCompletedOnboarding || showIntro || isDemoMode(gameState) || currentView !== 'home' || bonusIntroOpen) return null;
-        if (!retroFechada && needsWeeklyRetro(gameState, new Date())) return null;
-        const pend = fundadorPendentes(gameState);
-        if (pend.length === 0) return null;
-        const fechar = () => setGameState(prev => marcarFundadorAvisados(prev, pend));
-        return (
-          <Suspense fallback={null}>
-            <FundadorAvisoModal language={language} premios={pend} dias={gameState.fundadorDias ?? 0} onClose={fechar}
-              onEquip={(id) => {
-                if (id === 'founder-fundo') handleEquipBackground(id);
-                else if (id === 'founder-moldura') handleEquipFrame(id);
-                else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
-                fechar();
-              }} />
-          </Suspense>
-        );
-      })()}
+      {/* Aviso do Conjunto Fundador: item `fundador` da fila central (um modal por vez, nunca por cima de outro). */}
+      {interstitial === 'fundador' && fundadorPend.length > 0 && (
+        <PresentationSlot id="fundador" onFail={() => presentation.fail('fundador')} fallback={null}>
+          <FundadorAvisoModal key={fundadorPend[0]} language={language} premio={fundadorPend[0]} onClose={() => fecharFundadorAviso(fundadorPend[0])}
+            onEquip={(id) => {
+              if (id === 'founder-fundo') handleEquipBackground(id);
+              else if (id === 'founder-moldura') handleEquipFrame(id);
+              else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
+              fecharFundadorAviso(id);
+            }} />
+        </PresentationSlot>
+      )}
       {bonusIntroOpen && (
         <Suspense fallback={null}>
           <BonusTaskIntroModal

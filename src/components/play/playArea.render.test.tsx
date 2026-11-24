@@ -181,6 +181,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(3); // Ver ranking, Entrar no Rift, Ver o mapa
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
+    expect(folha.querySelector('[data-masmorra-start]')!.getAttribute('data-especial-variant')).toBe('rift');
+    expect(folha.querySelector('[data-masmorra-map]')!.getAttribute('data-especial-variant')).toBe('rift-sec');
+    expect(folha.querySelector('[data-masmorra-start] [data-energy-cost]')).toBeTruthy();
     // a nota "Pode cair" saiu do corpo; os itens só existem no tooltip do "i"
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();

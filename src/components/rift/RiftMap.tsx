@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Text } from '../form/FormKit';
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { ElementIcon, elName } from '../ElementBaseSlots';
 import {
   RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftPortalHere, riftPortalIsUnlocked, riftPortalLayer, riftPortalNodeIndex, riftPortalOfNode, riftTeleportRefusal, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
@@ -118,7 +119,7 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
   return (
     <div data-rift-map style={{ position: 'absolute', inset: 0, zIndex: 6000, display: 'flex', flexDirection: 'column', background: '#0e1c20', color: '#e6f4f1' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', minHeight: 52, background: 'rgba(8,18,20,.92)', borderBottom: '1px solid rgba(80,200,190,.25)' }}>
-        <button type="button" data-rift-map-close onClick={onClose} aria-label={t.back} style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 44, padding: '0 12px' }}>←</button>
+        <BackCircleButton data-rift-map-close onClick={onClose} label={t.back} />
         <h2 style={{ margin: 0, fontSize: 'var(--sm2-text-lg, 18px)', fontWeight: 700 }}>{t.title}</h2>
       </header>
       <style>{`[data-rift-node] button:focus-visible{outline:3px solid #fff;outline-offset:4px}@keyframes rift-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}@keyframes rift-glow{0%,100%{opacity:.75}50%{opacity:1}}@media (prefers-reduced-motion:no-preference){[data-rift-node][data-state="current"] button{animation:rift-pulse 2.4s ease-in-out infinite}[data-rift-portal-glow]{animation:rift-glow 1.8s ease-in-out infinite}}`}</style>

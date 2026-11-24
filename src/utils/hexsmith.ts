@@ -305,3 +305,23 @@ export function hexIdentity(id: FighterIdentity, hx: HexOverrides): FighterIdent
     especial: { ...id.especial, elemento: hx.specialElement ?? id.especial.elemento, familia: hx.specialFamily ?? id.especial.familia },
   };
 }
+
+/**
+ * ORDEM DOS INGREDIENTES (dono, 24/11/2026): o que tem o ELEMENTO relevante ao que se está fazendo sobe ao TOPO da lista. Vale só para POÇÃO e
+ * FRAGMENTO DA ALMA; BITS nunca entra na regra (nem sobe, nem ordena). Estável: dentro de cada grupo a ordem original se mantém.
+ */
+export interface IngredienteOrdenavel { tipo: 'pocao' | 'fragmento' | 'bits'; elemento?: string }
+
+/** O ingrediente é prioritário? Só poção/fragmento COM elemento, e esse elemento está entre os relevantes. */
+export function ingredienteRelevante(ing: IngredienteOrdenavel, relevantes: ReadonlySet<string>): boolean {
+  if (ing.tipo === 'bits') return false;
+  return ing.elemento !== undefined && relevantes.has(ing.elemento);
+}
+
+/** Partição estável: os itens para os quais `relevante` é verdadeiro vêm primeiro; a ordem relativa de cada grupo não muda. Não muta a entrada. */
+export function ordenarPorRelevancia<T>(itens: readonly T[], relevante: (item: T) => boolean): T[] {
+  const topo: T[] = [];
+  const resto: T[] = [];
+  for (const it of itens) (relevante(it) ? topo : resto).push(it);
+  return [...topo, ...resto];
+}

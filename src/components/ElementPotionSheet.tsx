@@ -4,7 +4,8 @@ import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
-import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, selectedBases, type PotionRecipe } from '../utils/elementPotion';
+import { ingredienteRelevante, ordenarPorRelevancia } from '../utils/hexsmith';
+import { elementComposition, isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, selectedBases, type PotionRecipe } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
 import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
@@ -30,11 +31,13 @@ export interface ElementPotionSheetProps {
   onCraft: (elementId: string) => void | boolean;
   /** Elementos desbloqueados na Biblioteca (`defeatedElements`). Bloqueado = "???" e não se cria. */
   unlocked?: readonly string[];
+  /** `true`: monta o conteúdo direto na folha do prédio (sem `ModalSheet` próprio) — o Centro de Evolução abre a poção no MESMO modal. */
+  inline?: boolean;
 }
 
 const PAGE = 30;
 
-export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
+export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked, inline = false }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const [shown, setShown] = useState(PAGE);
@@ -62,7 +65,6 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   const t = {
     title: isPt ? 'Criar poção' : 'Create potion',
     back: isPt ? 'Voltar' : 'Back',
-    hint: isPt ? 'Todas as poções. Filtre por elementos base: só entram as que contêm todos eles.' : 'Every potion. Filter by base elements: only potions that contain all of them are listed.',
     none: isPt ? 'Nenhuma poção com esse filtro.' : 'No potion matches this filter.',
     create: isPt ? 'Criar' : 'Create',
     more: isPt ? 'Mostrar mais' : 'Show more',
@@ -86,6 +88,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     : (big ? <Icon id={id} size={32} /> : <Icon id={id} size={24} />));
   const confirmDisabled = !sel || !canAffordPotion(essences, sel, inventory);
 
+  /** Elementos relevantes ao que se está criando: ele mesmo e as bases que o compõem. */
+  const relevantes = (id: string): ReadonlySet<string> => new Set([id, ...(elementComposition(id) ?? [])]);
   const row = (r: PotionRecipe) => {
     if (!isPotionUnlocked(r.id, unlocked)) {
       return (
@@ -114,7 +118,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
               <li data-ing-neutro-essence data-ok={n.neutro >= n.neutroNeed ? 'true' : 'false'}><Icon id={ELEMENTO_NEUTRO_ID} size={24} /><span style={{ flex: 1 }}>{essenceName(ELEMENTO_NEUTRO_ID, isPt)}</span><span className="sm2-num">{Math.min(n.neutro, n.neutroNeed)}/{n.neutroNeed}</span></li>
             </>
           ); })()}
-          {r.potions.map(p => (
+          {ordenarPorRelevancia(r.potions, p => ingredienteRelevante({ tipo: 'pocao', elemento: p.id }, relevantes(r.id))).map(p => (
             <li key={`p-${p.id}`} data-ing-potion={p.id} data-ok={p.have >= p.need ? 'true' : 'false'}>
               {art(p.id, false)}<span style={{ flex: 1 }}>{t.potionOf(p.id)}</span><span className="sm2-num">{p.have}/{p.need}</span>
             </li>
@@ -129,9 +133,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     );
   };
 
-  return (
-    <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
-      footer={sel ? (
+  const footerNode = sel ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {/* §316c (13/11/2026, dono): folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site). */}
           <button type="button" data-potion-confirm style={{ ...sm2Button('primary', confirmDisabled, 'md'), minWidth: 220 }} disabled={confirmDisabled}
@@ -139,14 +141,15 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </button>
         </div>
-      ) : undefined}>
+      ) : undefined;
+  const corpo = (
+    <>
       <div data-element-potion style={{ display: 'grid', gap: 12 }}>
         {pending && <p style={sm2Hint} data-potion-pending>{t.pending} <strong>{elName(pending, isPt)}</strong><br />{t.once}</p>}
         {done && <p role="status" style={sm2Text} data-potion-made>{t.made} ({elName(done, isPt)})</p>}
 
         {!sel && (
           <>
-            <p style={sm2Hint}>{t.hint}</p>
             <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
             {list.length === 0 ? (
               <p style={sm2Text} data-potion-none>{t.none}</p>
@@ -196,6 +199,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         <ForgeResultModal language={language} title={t.resultTitle} name={t.potionOf(result)} effect={t.resultEffect}
           art={art(result, true)} closeLabel={t.close} onClose={() => setResult(null)} />
       )}
+    </>
+  );
+  if (inline) return open ? <div data-element-potion-inline style={{ display: 'grid', gap: 12 }}>{!sel && <button type="button" data-potion-menu-back onClick={onBack} style={{ ...sm2Button('quiet'), justifySelf: 'start' }}>{t.back}</button>}{corpo}{footerNode}</div> : null;
+  return (
+    <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language} footer={footerNode}>
+      {corpo}
     </ModalSheet>
   );
 }

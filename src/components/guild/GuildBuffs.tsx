@@ -2,6 +2,7 @@ import type { GuildCasa } from '../../utils/community';
 import type { Language } from '../../utils/i18n';
 import { BUFF_IDS, BUFF_DIAS, buffText, type BuffId } from '../../utils/guildBuffs';
 import { BitsAmount } from '../ui/BitsAmount';
+import { InfoTip } from '../ui/InfoTip';
 
 import { sm2Button } from '../form/FormKit';
 /**
@@ -17,8 +18,11 @@ export function GuildBuffs({ casa, language, ocupado, now, onComprar }: {
   const quando = (ms: number) => new Date(ms).toLocaleDateString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short' });
   return (
     <section className="sm2-guild-sec" aria-label={buffText(language, 'titulo')} data-guild-room="buffs">
-      <h3 className="sm2-stats-lab">{buffText(language, 'titulo')}</h3>
-      <p className="sm2-lib-s" style={{ margin: 0 }}>{buffText(language, 'linha', { dias: BUFF_DIAS })}</p>
+      <div className="sm2-guild-secHd">
+        <h3 className="sm2-stats-lab">{buffText(language, 'titulo')}</h3>
+        {/* O texto explicativo sai da tela e vai para o "i". */}
+        <InfoTip language={language} label={language === 'pt-BR' ? 'Como os Buffs funcionam' : 'How Buffs work'} style={{ minHeight: 28 }}>{buffText(language, 'linha', { dias: BUFF_DIAS })}</InfoTip>
+      </div>
       {saldo !== null && (
         <p className="sm2-lib-s" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }} data-buffs-saldo>
           {buffText(language, 'saldo')} <BitsAmount value={saldo} size={16} />

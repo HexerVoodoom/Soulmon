@@ -38,14 +38,14 @@ describe('EvolutionPath — gauge', () => {
     expect(document.querySelector('[data-evo-meter-today]')).toBeTruthy();
     expect(screen.queryByText(textoInteiro('You have gathered 12 soul fragments on the way to the next form.'))).toBeNull();
     expect(document.querySelector('[data-evo-gauge-unlock]')).toBeNull();
-    fireEvent.click(document.querySelector('[data-evo-gauge-info]') as Element);
+    fireEvent.click(screen.getByRole('button', { name: 'About Soul Fragments' }));
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/Soul Fragments.*nothing here goes back/);
   });
 
   it('PT: sem a frase "Você já juntou"; o texto das frações vive atrás do "i"', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
     expect(screen.queryByText(textoInteiro('Você já juntou 12 fragmentos de alma a caminho da próxima forma.'))).toBeNull();
-    fireEvent.click(document.querySelector('[data-evo-gauge-info]') as Element);
+    fireEvent.click(screen.getByRole('button', { name: 'Sobre os Fragmentos de Alma' }));
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/nada aqui volta atrás/);
   });
 
@@ -54,5 +54,21 @@ describe('EvolutionPath — gauge', () => {
     expect(screen.getByText(/Tap your Soulmon to evolve/)).toBeTruthy();
     expect(document.querySelector('[data-soul-fragment-icon]')).toBeTruthy();
     expect(document.querySelector('[data-evo-gauge-unlock]')).toBeNull();
+  });
+
+  it('cadeado: só ícone ao lado do nome, aria-pressed; texto só quando trancado; sem texto fixo', () => {
+    const { rerender } = renderWithCss(<EvolutionPath {...base} language="pt-BR" onToggleEvolutionLock={() => {}} />);
+    const lock = document.querySelector('[data-lock-button]') as HTMLElement;
+    expect(lock.textContent?.trim()).toBe('lock_open');
+    expect(lock.getAttribute('aria-pressed')).toBe('false');
+    expect(lock.getAttribute('aria-label')).toBe('Segurar evolução');
+    expect(lock.closest('.sm2-evo-namerow')).toBeTruthy();
+    expect(document.querySelector('[data-evo-lock-status]')?.textContent).toBe('');
+    rerender(<EvolutionPath {...base} language="pt-BR" evolutionLocked onToggleEvolutionLock={() => {}} />);
+    const l2 = document.querySelector('[data-lock-button]') as HTMLElement;
+    expect(l2.getAttribute('aria-pressed')).toBe('true');
+    expect(l2.getAttribute('title')).toMatch(/não protege os corações/);
+    expect(document.querySelector('[data-evo-lock-status]')?.getAttribute('role')).toBe('status');
+    expect(document.querySelector('[data-evo-lock-status]')?.textContent).toMatch(/não protege os corações/);
   });
 });

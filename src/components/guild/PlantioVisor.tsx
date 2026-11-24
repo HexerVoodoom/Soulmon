@@ -12,7 +12,7 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import type { SoulXPState } from '../../utils/soulXP';
 import { soulCombatant } from '../../utils/soulXP';
@@ -37,6 +37,7 @@ import { ESTACAO_DA_ESPECIE, ESTACOES_BOSQUE, nivelDaArvore, nivelDoPlantio, reg
 import { SPRITES } from './GroveVisor';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
+import { FX_ART } from '../../utils/fxArt';
 import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { useClaBuilding, type ClaSalaProps, type ClaT } from './claUi';
 import { useRequireAwake } from '../WakeToEnter';
@@ -95,6 +96,27 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, l
   );
 }
 
+/** O EFEITINHO DE REGAR (dono, 23/11/2026): o MESMO do banho do Soulmon (gotas `FX_ART['💧']` + `@keyframes shower-drop`, ver
+ *  CompanionHUD), só que várias, espalhadas pela cena do Bosque, por `CHUVA_MS`. Movimento reduzido: as gotas ficam paradas. */
+export const CHUVA_MS = 1500;
+export const AVISO_MS = 2500;
+const GOTAS: ReadonlyArray<{ x: number; y: number; d: number }> = [
+  { x: 6, y: 6, d: 0 }, { x: 18, y: 22, d: 0.3 }, { x: 30, y: 4, d: 0.12 }, { x: 42, y: 20, d: 0.5 },
+  { x: 54, y: 6, d: 0.2 }, { x: 66, y: 24, d: 0.42 }, { x: 78, y: 8, d: 0.08 }, { x: 90, y: 20, d: 0.36 },
+  { x: 12, y: 40, d: 0.6 }, { x: 36, y: 38, d: 0.24 }, { x: 60, y: 42, d: 0.7 }, { x: 84, y: 38, d: 0.54 },
+];
+function ChuvaBosque({ reducedMotion }: { reducedMotion: boolean }) {
+  return (
+    <div className="sm2-grove-chuva" data-plantio-chuva data-reduced-motion={reducedMotion ? 'true' : undefined} aria-hidden="true">
+      {GOTAS.map((g, i) => (
+        <span key={i} className="sm2-grove-chuva-gota" data-plantio-gota style={{ left: `${g.x}%`, top: `${g.y}%`, '--d': `${g.d}s` } as CSSProperties}>
+          <img src={FX_ART['💧']} alt="" width={16} height={16} draggable={false} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const ACOES_OK: Record<PlantioAction, GuildKey> = {
   claPlantar: 'guild.plantio.ok.plantar', claRegar: 'guild.plantio.ok.regar',
   claProteger: 'guild.plantio.ok.proteger', claColher: 'guild.plantio.ok.colher', claSortear: 'guild.plantio.cuidar',
@@ -126,7 +148,16 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
      com ele dormindo, no toque. O plantio da estação é sozinho (efeito abaixo) e não pergunta. */
   const requireAwake = useRequireAwake();
 
+  /* O aviso "Volte amanhã" (toque no CTA já feito hoje) e a chuva de regar somem sozinhos. */
+  const [aviso, setAviso] = useState(false);
+  const [chuva, setChuva] = useState(false);
+  const timers = useRef<{ aviso?: ReturnType<typeof setTimeout>; chuva?: ReturnType<typeof setTimeout> }>({});
+  useEffect(() => () => { clearTimeout(timers.current.aviso); clearTimeout(timers.current.chuva); }, []);
+  const mostrarAviso = () => { setAviso(true); clearTimeout(timers.current.aviso); timers.current.aviso = setTimeout(() => setAviso(false), AVISO_MS); };
+  const iniciarChuva = () => { setChuva(true); clearTimeout(timers.current.chuva); timers.current.chuva = setTimeout(() => setChuva(false), CHUVA_MS); };
+
   const fazer = async (acao: PlantioAction) => {
+    if (acao === 'claRegar') iniciarChuva();
     const r = await agir(() => actPlantio(acao, saveId, tz));
     if (!r) return;
     if (r.plantio) setView(r.plantio);
@@ -181,7 +212,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
         <>
           {unico ? (
             <div style={{ position: 'relative' }}>
-              {unico.cena(<ArvoreNaCena stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} />)}
+              {unico.cena(<><ArvoreNaCena stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} />{chuva && <ChuvaBosque reducedMotion={reducedMotion} />}</>)}
               {/* Entrar: so o icone, sem caixa em volta (regra do app). */}
               <button type="button" data-guild-bosque-entrar onClick={unico.onEntrar} aria-label={t('guild.bosque.entrar')} className="sm2-grove-cena-entrar">
                 <Icon name="arrow_forward" size={32} />
@@ -240,8 +271,17 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                       </div>
                     )}
                     <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => { requireAwake('hall.grove', () => { void cuidar(); }); }} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
-                      <Icon name="eco" size={20} />{t(v.task === 'water' ? 'guild.plantio.regar' : v.task === 'protect' ? 'guild.plantio.proteger' : 'guild.plantio.cuidar')}
+                      <Icon name="eco" size={20} />{t(v.task === 'water' ? 'guild.plantio.regar' : v.task === 'protect' ? 'guild.plantio.defender' : 'guild.plantio.cuidar')}
                     </button>
+                    </>
+                  )}
+                  {/* Ação do dia já feita (ou nada a sortear): o CTA fica desabilitado e, no toque, um aviso curto some sozinho. */}
+                  {!defendendo && !(v.canDraw || v.task) && (
+                    <>
+                      {aviso && <p role="status" className="sm2-grove-aviso" data-plantio-volte-amanha>{t('guild.plantio.volteAmanha')}</p>}
+                      <button type="button" data-plantio-cuidar-feito aria-disabled="true" onClick={mostrarAviso} style={{ ...sm2Button('outline', true, 'sm'), width: '100%' }}>
+                        <Icon name="eco" size={20} />{t('guild.plantio.cuidar')}
+                      </button>
                     </>
                   )}
                 </>

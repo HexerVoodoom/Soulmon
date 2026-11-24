@@ -53,4 +53,11 @@ describe('BotaoEspecial (botão de compra, 18/11/2026)', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
     for (const v of ['pve', 'pvp']) for (const s of ['', '-press', '-off']) expect(css).toContain(`btn-${v}${s}.webp`);
   });
+  it('variant rift e rift-sec: atributo, rótulo e arte nos 3 estados', () => {
+    render(<><BotaoEspecial variant="rift">Enter</BotaoEspecial><BotaoEspecial variant="rift-sec">Map</BotaoEspecial></>);
+    expect(screen.getByRole('button', { name: 'Enter' }).getAttribute('data-especial-variant')).toBe('rift');
+    expect(screen.getByRole('button', { name: 'Map' }).getAttribute('data-especial-variant')).toBe('rift-sec');
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    for (const v of ['rift', 'rift-sec']) for (const s of ['', '-press', '-off']) expect(css).toContain(`btn-${v}${s}.webp`);
+  });
 });

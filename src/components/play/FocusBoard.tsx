@@ -12,7 +12,8 @@ import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import { FOCUS_ENVIRONMENTS, isFocusEnvironmentId, type FocusEnvironmentId } from '../../utils/focusExpedition';
-import { JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, journeyItemsCapReached, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
+import { ElementIcon, elName } from '../ElementBaseSlots';
+import { ENV_ELEMENTS, JOURNEY_KEYS, JOURNEY_MODES, KEY_OF_STEP, focusElapsed, focusEndAt, journeyItemsCapReached, type JourneyGrants, type JourneyItem, type JourneyKeyId, type JourneyMode } from '../../utils/focusJourney';
 import { keyEarned, loadBoardKeys, saveBoardKeys } from '../../utils/focusBoard';
 import { journeyAction, journeyStart, journeyState, type ActiveJourney, type JourneyResponse } from '../../utils/focusJourneyApi';
 import type { Ice } from '../../utils/iceScore';
@@ -286,6 +287,9 @@ function EnvModal({ isPt, current, onPick, onClose, locked = [] }: { isPt: boole
             const isLocked = locked.includes(e.id);
             return <button key={e.id} type="button" role="radio" aria-checked={current === e.id} disabled={isLocked} data-focus-env-option={e.id} onClick={() => onPick(e.id)} style={{ ...sm2Button(current === e.id ? 'primary' : 'outline', isLocked), minHeight: 48, justifyContent: 'flex-start', gap: 8 }}>
               <Icon name={e.icon} size={20} tone="inherit" /><span style={{ flex: 1, textAlign: 'left' }}>{isPt ? e.pt : e.en}</span>
+              <span data-focus-env-elements={e.id} aria-label={`${isPt ? 'Essências' : 'Essences'}: ${ENV_ELEMENTS[e.id].map(x => elName(x, isPt)).join(', ')}`} role="img" style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '45%' }}>
+                {ENV_ELEMENTS[e.id].map(x => <ElementIcon key={x} id={x} size={20} />)}
+              </span>
               {current === e.id && <Icon name="check" size={20} tone="inherit" />}
             </button>;
           })}

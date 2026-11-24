@@ -32,7 +32,7 @@ describe('jornada do foco (§247)', () => {
     const sem = chestLoot(7, chest, [], 'forest');
     expect(sem).toHaveLength(1);
     expect(sem[0].kind).not.toBe('essence');
-    expect(chestLoot(7, chest, ['brejo'], 'forest')).toEqual([{ kind: 'essence', id: 'planta', qty: 1 }]);
+    expect(chestLoot(7, chest, ['brejo'], 'forest', 1)).toEqual([{ kind: 'essence', id: expect.stringMatching(/^(planta|vida|vigor|ar)$/), qty: 1 }]);
     expect(chestLoot(7, chest, ['brejo'], 'forest')).toEqual(chestLoot(7, chest, ['brejo'], 'forest'));
   });
   it('material do baú é sempre do cenário', () => {

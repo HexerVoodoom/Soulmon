@@ -124,4 +124,17 @@ describe('SoulmonPerfil: elemento do oráculo normalizado (dono, 20/10/2026, REG
       expect(linha('en-US', dom(id)).txt).toContain(elementoNomeDe(id).en);
     });
   }
+
+  it('ritmo de cuidado (tarefa 23): aparece no Perfil só quando há leitura, PT e EN', () => {
+    const cp = { id: 'constante', namePt: 'Constante', nameEn: 'Steady', descPt: 'Todo dia um pouco.', descEn: 'A little every day.' } as never;
+    const pt = render(<SoulmonPerfil language="pt-BR" input={full} carePattern={cp} />);
+    expect(rows(pt.container)).toContain('ritmo');
+    expect(pt.container.textContent).toContain('Constante');
+    cleanup();
+    const en = render(<SoulmonPerfil language="en-US" input={full} carePattern={cp} />);
+    expect(en.container.textContent).toContain('Rhythm');
+    cleanup();
+    const sem = render(<SoulmonPerfil language="pt-BR" input={full} carePattern={null} />);
+    expect(rows(sem.container)).not.toContain('ritmo');
+  });
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { sm2Button } from './form/FormKit';
-import { RitualDialog } from './ritual/RitualKit';
+import { ModalSheet } from './form/FormKit';
+import { PEDRA_RUNAS_URL } from '../assets/soulmon/ui/moldura/fundos';
 import { elementIcon } from '../utils/elementIconArt';
 import { elementLabel } from '../utils/arena';
 import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
@@ -63,10 +64,7 @@ export function ElementModal({ id, unlocked, isPt, onClose }: { id: string; unlo
   const m = openId === 'neutro' ? { strong: [], weak: [] } : elementMatchups(curatedComponents(openId)?.[0] ?? openId);
   const texto = textoDoElementoBase(openId, isPt);
   return (
-    <RitualDialog onClose={onClose} labelledBy="sm2-dex-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
-      <h2 id="sm2-dex-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
-        {dexElementName(openId, isPt)}
-      </h2>
+    <ModalSheet open placement="center" title={dexElementName(openId, isPt)} onClose={onClose} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320} fundo={PEDRA_RUNAS_URL || undefined}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
         {elementIcon(openId) && <img src={elementIcon(openId)} alt="" aria-hidden="true" width={96} height={96} draggable={false} style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />}
         <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -81,6 +79,6 @@ export function ElementModal({ id, unlocked, isPt, onClose }: { id: string; unlo
           )}
         </div>
       </div>
-    </RitualDialog>
+    </ModalSheet>
   );
 }

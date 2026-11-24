@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
  * Spec do dono (16/11/2026, 16.2): o modal PRINCIPAL da Hexsmith mantém o ✕ (fecha tudo); toda tela INTERNA (Porta, renomear,
- * confirmação do renomear) tem Voltar que volta UM nível sem fechar o principal. 23/11/2026: o Voltar mora no medalhão ESQUERDO da moldura de aço (nunca no corpo) e o ✕ principal no DIREITO, ativo, fechando tudo.
+ * confirmação do renomear) tem Voltar que volta UM nível sem fechar o principal. 24/11/2026 (revoga o medalhão de 23/11): ✕ SEMPRE à esquerda e (i) SEMPRE à direita, nas mesmas posições do mapa e vivos
+ * (a tela interna inertizava o conteúdo da moldura, onde moram os medalhões); o Voltar mora no corpo da tela interna.
  * Montado como em produção: `AreaSheet moldura="aco"` (✕ do principal) com a `HexsmithSheet` dentro, em 360/375/412 px.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -57,51 +58,61 @@ for (const largura of [360, 375, 412]) {
   describe(`Hexsmith: Voltar nas telas internas a ${largura}px`, () => {
     beforeEach(() => { Object.defineProperty(window, 'innerWidth', { configurable: true, value: largura }); window.dispatchEvent(new Event('resize')); });
 
-    it('principal: UM ✕, que fecha tudo', async () => {
+    it('mapa: ✕ à ESQUERDA fecha tudo e o (i) à DIREITA abre a info', async () => {
       abrir();
-      const x = document.querySelectorAll('[data-area-sheet-close]');
+      const x = document.querySelectorAll<HTMLElement>('[data-area-sheet-close]');
       expect(x).toHaveLength(1);
+      expect(x[0].hasAttribute('data-aco-medalhao')).toBe(true);
+      const info = document.querySelector<HTMLElement>('[data-moldura-info] button');
+      expect(info).toBeTruthy();
+      await click(info!);
+      expect(document.querySelector('[data-hex-intro]')).toBeTruthy();
       await click(x[0]);
       expect(onClosePrincipal).toHaveBeenCalledTimes(1);
     });
 
     for (const t of TELAS) {
-      it(`${t.nome}: Voltar no medalhão ESQUERDO (não no corpo), ✕ no DIREITO ativo; Voltar volta um nível`, async () => {
+      it(`${t.nome}: ✕ (esquerda) e (i) (direita) NAS MESMAS posições, vivos; Voltar no corpo volta um nível`, async () => {
         abrir();
         await t.abre();
         expect(q(t.esperado)).toBeTruthy();
         const dlg = interno()!;
         expect(dlg).toBeTruthy();
-        // nenhuma seta no corpo nem controle de fechar dentro da tela interna
-        expect(document.querySelectorAll('[data-back-circle]')).toHaveLength(0);
-        expect(dlg.querySelectorAll('[data-aco-voltar]')).toHaveLength(0);
-        expect(fechaveis(dlg)).toHaveLength(0);
-        // Voltar: UM, no medalhão esquerdo da moldura
-        const voltar = document.querySelectorAll<HTMLElement>('[data-aco-voltar]');
-        expect(voltar).toHaveLength(1);
-        expect(voltar[0].closest('[data-area-sheet]')).toBeTruthy();
-        expect(dlg.contains(voltar[0])).toBe(false);
-        expect(voltar[0].getAttribute('aria-label')).toBe('Voltar');
-        expect(voltar[0].hasAttribute('disabled')).toBe(false);
-        // ✕ principal: UM, no medalhão direito, visível e ativo
+        // ✕: o mesmo medalhão esquerdo do mapa (sem variante direita), ativo, SEM inerte/aria-hidden herdado (causa do "nenhum botão funciona")
         const todos = document.querySelectorAll<HTMLElement>('[data-area-sheet-close]');
         expect(todos).toHaveLength(1);
-        expect(todos[0].classList.contains('sm2-moldura-aco__fechar--dir')).toBe(true);
-        expect(todos[0].hasAttribute('disabled')).toBe(false);
-        expect(todos[0].hasAttribute('data-modal-dimmed')).toBe(false);
-        expect(dlg.contains(todos[0])).toBe(false);
+        const fechar = todos[0];
+        expect(fechar.className).toBe('sm2-moldura-aco__fechar');
+        expect(fechar.hasAttribute('disabled')).toBe(false);
+        expect(fechar.hasAttribute('data-modal-dimmed')).toBe(false);
+        expect(fechar.closest('[data-sm2-inert],[inert],[aria-hidden="true"]')).toBeNull();
+        expect(dlg.contains(fechar)).toBe(false);
+        // (i): o mesmo encaixe direito, vivo, na Porta (as telas de renomear não registram info)
+        const infoSlot = document.querySelector<HTMLElement>('[data-moldura-info]')!;
+        expect(infoSlot.closest('[data-sm2-inert],[inert],[aria-hidden="true"]')).toBeNull();
+        if (t.esperado.includes('hex-panel')) {
+          const info = infoSlot.querySelector<HTMLElement>('button')!;
+          expect(info).toBeTruthy();
+          await click(info);
+          expect(document.querySelector('[data-hex-slot-info]')).toBeTruthy();
+          await click(info);
+        }
+        // Voltar: UM, no corpo da tela interna, rótulo "Voltar"; não há medalhão de voltar
+        expect(document.querySelectorAll('[data-aco-voltar]')).toHaveLength(0);
+        const voltar = dlg.querySelectorAll<HTMLElement>('[data-back-circle]');
+        expect(voltar).toHaveLength(1);
+        expect(voltar[0].getAttribute('aria-label')).toBe('Voltar');
         await click(voltar[0]);
         expect(document.querySelector(t.esperado)).toBeNull();
         expect(document.querySelector('[data-area-sheet]')).toBeTruthy();
         expect(q('[data-hex-map]')).toBeTruthy();
         expect(onClosePrincipal).not.toHaveBeenCalled();
-        expect(document.querySelector('[data-aco-voltar]')).toBeNull();
-        // de volta ao mapa, o ✕ principal fecha tudo
+        // de volta ao mapa, o MESMO ✕ fecha tudo
         await click(document.querySelector('[data-area-sheet-close]')!);
         expect(onClosePrincipal).toHaveBeenCalledTimes(1);
       });
 
-      it(`${t.nome}: o ✕ do medalhão direito fecha o fluxo inteiro`, async () => {
+      it(`${t.nome}: o ✕ fecha o fluxo inteiro`, async () => {
         abrir();
         await t.abre();
         await click(document.querySelector('[data-area-sheet-close]')!);
@@ -126,12 +137,11 @@ for (const largura of [360, 375, 412]) {
       await act(async () => { fireEvent.change(q('#hex-rename-input'), { target: { value: 'Brasa' } }); });
       await click(q('[data-hex-rename-go]'));
       expect(q('[data-hex-rename-confirm]')).toBeTruthy();
-      expect(document.querySelectorAll('[data-back-circle]')).toHaveLength(0);
-      expect(document.querySelectorAll('[data-aco-voltar]')).toHaveLength(1);
-      await click(q('[data-aco-voltar]'));
+      const voltar = () => Array.from(document.querySelectorAll<HTMLElement>('[data-back-circle]')).pop()!;
+      await click(voltar());
       expect(document.querySelector('[data-hex-rename-confirm]')).toBeNull();
       expect(q('[data-hex-rename-panel="pet"]')).toBeTruthy();
-      await click(q('[data-aco-voltar]'));
+      await click(voltar());
       expect(document.querySelector('[data-hex-rename-panel]')).toBeNull();
       expect(onClosePrincipal).not.toHaveBeenCalled();
     });

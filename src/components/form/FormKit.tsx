@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
-import { useAcoVoltar, useAcoVoltarRegistro } from '../nav/acoVoltar';
 import { useId, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
@@ -390,8 +389,10 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline',
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo,
 }: {
+  /** 24/11/2026: só no popup central com moldura. URL de UM tile só, grande (cover, sem repetir), em opacidade baixa atrás do conteúdo. */
+  fundo?: string;
   /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
    *  fechar redondo no canto superior DIREITO e o título logo abaixo, dentro do modal (até 2 linhas, sem truncar). Exceção documentada ao "fechar à esquerda"
    *  (`voltarFechar`): vale só para esta variante; com `onBack` volta a ser `'placa'`. */
@@ -436,6 +437,7 @@ export function ModalSheet({
   const isPt = language === 'pt-BR';
   const centered = placement === 'center';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  const tituloId = `${useId()}-titulo`;
   const fechaNoVeu = dismissOnBackdrop ?? closeSide === 'start';
   /* O toque tem de COMEÇAR e TERMINAR no véu: arrastar uma seleção de texto de dentro
      da folha para fora solta o clique no ancestral comum (o véu) e fecharia sem querer. */
@@ -447,10 +449,6 @@ export function ModalSheet({
   const noMiolo = !!area && !sobreTelas;
   // A moldura própria da folha só vale fora do miolo de outra moldura (no miolo ela já está dentro do quadro do modal pai).
   const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
-  // Dentro da moldura de AÇO o voltar mora no medalhão esquerdo da `AreaSheet` (nada de seta no corpo).
-  const acoVoltar = useAcoVoltar();
-  const viaMedalhao = !!acoVoltar && !!onBack && closeSide === 'start' && !sobreTelas && open;
-  useAcoVoltarRegistro(acoVoltar, onBack, viaMedalhao);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
   const inline = framed && centered && titulo === 'inline';
   if (!open) return null;
@@ -477,8 +475,9 @@ export function ModalSheet({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        {...(inline ? { 'aria-labelledby': tituloId } : { 'aria-label': title })}
         data-placement={placement}
+        {...(inline && fundo ? { fundo, fillOpacity: 0.12, 'data-fundo-unico': '' } : null)}
         className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : 'sm2-sheet-rise'}
         {...(framed && centered ? { variante: 'cristal' } : null)}
         {...(framed ? { 'data-theme': 'dark', title: inline ? undefined : title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
@@ -513,14 +512,14 @@ export function ModalSheet({
           /* 24/11/2026 (dono): SEM placa; título em TEXTO na MESMA linha do ✕ (glifo à direita). Com `onBack` a seta de voltar ocupa o lado esquerdo. */
           <div className="sm2-popup-cabeca" data-tem-info={info ? '' : undefined}>
             {onBack ? <BackArrow icon="arrow_back" onClick={onBack} language={language} style={{ margin: '0 0 0 -10px' }} /> : null}
-            <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
+            <h2 id={tituloId} className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
             {closeSide !== 'none' && !onBack && (
               <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
                 <Icon name="close" size={24} tone="inherit" />
               </button>
             )}
           </div>
-        ) : closeSide === 'start' && !viaMedalhao ? (
+        ) : closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
           <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>

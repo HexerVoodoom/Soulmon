@@ -61,7 +61,8 @@ describe('Cristal Fundador', () => {
     expect(f.getAttribute('data-quadros')).toBe('5');
     expect(f.style.backgroundSize).toBe('500% 100%');
     const css = readFileSync('src/index.css', 'utf8');
-    expect(css).toMatch(/\.sm-decor-chama\s*\{[^}]*steps\(4, jump-none\)/);
+    expect(css).toMatch(/\.sm-decor-chama\s*\{[^}]*steps\(5, jump-none\)/);
+    // posições 0/25/50/75/100%: cada quadro inteiro (com steps(4) caíam em 33%/67% e a chama saltava para os lados)
     const reduzido = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)', css.indexOf('MOVIMENTO REDUZIDO')));
     expect(reduzido.slice(0, reduzido.indexOf('}\n}'))).toMatch(/\.sm-decor-chama,[\s\S]*animation: none !important/);
   });

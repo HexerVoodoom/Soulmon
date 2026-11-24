@@ -33,7 +33,7 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import {
   HEX_ELEMENT_SLOTS, HEX_SLOTS, equipHexItem, applyServerHexForge, hexCost, hexForgeRefusal, hexItemId, hexOverrides, hexValuesOf, parseHexItem,
-  sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
+  sanitizeHexsmith, unequipHexSlot, ingredienteRelevante, ordenarPorRelevancia, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import { HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexCostHowTo, hexCostTipLabel, hexCrownValueCopy, hexCrownValueDesc, hexName, hexRefusalText, potionHowTo, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -288,10 +288,13 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
     const values = isEl
       ? elementsMatchingBases(bases).filter((v) => isPotionUnlocked(v, gs.defeatedElements))
       : hexValuesOf(slot);
-    return values
+    const ordenado = values
       .map((v) => hexItemId(slot, v))
       .filter((id) => !hx.owned.includes(id))
       .sort((a, b) => Number(!!hexForgeRefusal(gs, a)) - Number(!!hexForgeRefusal(gs, b)));
+    // 24/11/2026 (dono): o item cujo ELEMENTO o jogador já tem em POÇÃO sobe ao topo (Bits não entra na regra; ordem estável).
+    const comPocao = new Set(values.filter((v) => (gs.foodInventory?.[potionKey(v)] ?? 0) > 0));
+    return isEl ? ordenarPorRelevancia(ordenado, (id) => ingredienteRelevante({ tipo: 'pocao', elemento: parseHexItem(id)!.value }, comPocao)) : ordenado;
   }, [slot, isEl, bases, gs, hx.owned]);
 
   const sel = picked && catalog.includes(picked) ? picked : null;
@@ -301,6 +304,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
 
   return (
     <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].port, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} onBack={onClose} language={language as Language}
+      info={{ label: tx(HEX_SLOT_COPY[slot].port, isPt), content: <span data-hex-slot-info>{tx(HEX_SLOT_COPY[slot].desc, isPt)}</span> }}
       footer={sel ? (
         <div data-hex-forge-footer className="sm2-hex-footer">
           <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? refusalId : undefined}
@@ -364,7 +368,6 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
         </section>
 
         <section aria-label={tx(HEX_UI.catalog, isPt)} className="sm2-hex-group">
-          <h3 style={{ ...sm2Label, margin: 0 }}>{tx(HEX_UI.catalog, isPt)}</h3>
           <p data-hex-balance className="sm2-hex-balance">
             <span>{tx(HEX_UI.balance, isPt)}</span>
             <BitsAmount value={bits} size={ICON_INLINE} unit={tx(HEX_UI.bitsEarned, isPt)} />
@@ -372,7 +375,6 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
           </p>
           {isEl && (
             <>
-              <p style={sm2Hint}>{tx(HEX_UI.filterHint, isPt)}</p>
               <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, id) => { setBases((v) => v.map((x, j) => (j === i ? id : x))); setPicked(null); }} />
             </>
           )}

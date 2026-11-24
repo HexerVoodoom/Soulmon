@@ -2789,8 +2789,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm-decor-brasa { position: absolute; left: 42%; top: 66%; width: 16%; aspect-ratio: 2; border-radius: 50%; background: radial-gradient(closest-side, hsl(176 80% 50% / .5), transparent); opacity: 0; transition: opacity 1.2s ease; }
 .sm-decor-brasa[data-on] { opacity: .55; animation: sm-decor-brasa-pulso 4.5s ease-in-out infinite; }
 @keyframes sm-decor-brasa-pulso { 50% { opacity: .3; } }
-/* Fogo turquesa do Cristal Fundador: folha de N quadros lado a lado sobre a arte; `steps(N-1, jump-none)` mostra os N quadros (0%..100%). Reduzido = quadro 1. */
-.sm-decor-chama { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; animation: sm-decor-chama-quadros .7s steps(4, jump-none) infinite; }
+/* Fogo turquesa do Cristal Fundador: folha de N quadros lado a lado sobre a arte; `steps(N, jump-none)` mostra os N quadros em 0%, 25%, 50%, 75%, 100% (com N-1 os quadros caíam em frações de célula e a chama saltava para os lados; corrigido 24/11/2026). Reduzido = quadro 1. */
+.sm-decor-chama { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; animation: sm-decor-chama-quadros .7s steps(5, jump-none) infinite; }
 @keyframes sm-decor-chama-quadros { to { background-position: 100% 0; } }
 /* Tela do fliperama: 41×40 px da arte em (70,44). */
 .sm-decor-tela { position: absolute; left: 41.7%; top: 26.2%; width: 24.4%; height: 23.8%; image-rendering: pixelated; border-radius: 2px; opacity: .92; }
@@ -6205,8 +6205,6 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   &:focus-visible { outline: 2px solid var(--sm2-viewport-accent); outline-offset: -6px; }
   &:disabled { opacity: .45; cursor: default; }
 }
-/* Tela interna aberta: o ✕ muda para o disco DIREITO (centro em x 635 / y 90,5 do topo 720×164) e o Voltar ocupa o esquerdo. */
-.sm2-moldura-aco__fechar--dir { left: calc(var(--u) * 88.19); top: calc(var(--u) * 12.57); }
 /* CRISTAL-CHAMA reutilizável (`ui/CristalChama.tsx`): `--u` do pai; `--cristal-w`/`--cristal-top` em `u`. Brilho pulsante opcional (`data-pulsar`). */
 .sm2-cristal-chama {
   position: absolute; z-index: 3; left: 50%; top: calc(var(--u) * var(--cristal-top, -14)); width: calc(var(--u) * var(--cristal-w, 17)); height: auto;
@@ -6357,6 +6355,14 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-cena-slots img { display: block; image-rendering: pixelated; }
 .sm2-grove-cena-arvore { position: absolute; left: 50%; bottom: 22%; height: 62%; width: auto; transform: translateX(-50%); z-index: 2; pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .sm2-grove-cena-entrar { position: absolute; right: 4px; bottom: 4px; z-index: 5; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); }
+/* Bosque: CTA do dia já feito (inerte por FORMA: tracejado + tinta muted, focável) e o aviso "Volte amanhã" que some sozinho. */
+.sm2-grove-aviso { margin: 0; padding: 6px 12px; align-self: center; text-align: center; border-radius: var(--sm2-radius-md); background: var(--sm2-surface); border: 1px solid var(--sm2-line); color: var(--sm2-text); font-size: 14px; line-height: 1.3; }
+/* Chuva de regar: as gotas do banho (`shower-drop`) espalhadas na cena do Bosque; movimento reduzido = gotas paradas. */
+.sm2-grove-chuva { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.sm2-grove-chuva-gota { position: absolute; display: block; animation: shower-drop 1.1s linear var(--d, 0s) infinite; }
+.sm2-grove-chuva[data-reduced-motion="true"] .sm2-grove-chuva-gota { animation: none; opacity: 1; }
+/* A árvore do clã no Bosque: estágio da seiva (Fagulha .. Aurora), a linha e o "perto". */
+.sm2-grove-casa-arvore { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
    imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
@@ -7308,10 +7314,24 @@ button.sm2-hex-row {
 .sm2-especial[data-especial-variant="ranking"] { border-image-source: url('./assets/soulmon/ui/btn-ranking.webp'); }
 .sm2-especial[data-especial-variant="ranking"]:active:not(:disabled), .sm2-especial[data-especial-variant="ranking"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-ranking-press.webp'); }
 .sm2-especial[data-especial-variant="ranking"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-ranking-off.webp'); }
+.sm2-especial[data-especial-variant="rift"] { border-image-source: url('./assets/soulmon/ui/btn-rift.webp'); }
+.sm2-especial[data-especial-variant="rift"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-rift-press.webp'); }
+.sm2-especial[data-especial-variant="rift"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-rift-off.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"] { border-image-source: url('./assets/soulmon/ui/btn-rift-sec.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift-sec"][data-especial-state="pressed"]:not(:disabled) { border-image-source: url('./assets/soulmon/ui/btn-rift-sec-press.webp'); }
+.sm2-especial[data-especial-variant="rift-sec"]:disabled { border-image-source: url('./assets/soulmon/ui/btn-rift-sec-off.webp'); }
 /* Texto dos botões de MODO/RANKING (pve/pvp/ranking, 18/11/2026, dono): o MESMO tamanho do CTA (`--sm2-text-lg`, 20 px) onde cabe; em tela estreita encolhe
    até `--sm2-text-md` (16 px) em vez de cortar, e o rótulo invade um pouco as pontas lisas da placa (margem negativa) para ocupar o espaço dela. */
-.sm2-especial[data-especial-variant="pve"], .sm2-especial[data-especial-variant="pvp"], .sm2-especial[data-especial-variant="ranking"] { font-size: clamp(var(--sm2-text-md), 4.8vw, var(--sm2-text-lg)); }
+.sm2-especial[data-especial-variant="pve"], .sm2-especial[data-especial-variant="pvp"], .sm2-especial[data-especial-variant="ranking"], .sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { font-size: clamp(var(--sm2-text-md), 4.8vw, var(--sm2-text-lg)); }
 .sm2-especial[data-especial-variant="pve"] .sm2-especial-label, .sm2-especial[data-especial-variant="pvp"] .sm2-especial-label, .sm2-especial[data-especial-variant="ranking"] .sm2-especial-label { margin: 0 -10px; }
+/* Botões da folha do Rift (P3, 23/11/2026): arte 1080x232, altura 72 px (escala 0,31). Enter: ponta 200 -> 62 px; Sec: ponta 150 -> 47 px. NÃO herdam 56/40 do base. */
+.sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { height: 72px; min-height: 48px; }
+.sm2-especial[data-especial-variant="rift"] { border-width: 0 62px; border-image-slice: 0 200 0 200 fill; border-image-width: 0 62px; color: #06231F; text-shadow: none; }
+.sm2-especial[data-especial-variant="rift-sec"] { border-width: 0 47px; border-image-slice: 0 150 0 150 fill; border-image-width: 0 47px; color: #F2FFFB; }
+.sm2-especial[data-especial-variant="rift"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift-sec"]:active:not(:disabled) { transform: translateY(2px); }
+.sm2-especial[data-especial-variant="rift"]:disabled { color: #8A9895; text-shadow: none; }
+.sm2-especial[data-especial-variant="rift"] [data-energy-cost] { color: #8A2F12; }
+.sm2-especial[data-especial-variant="rift"]:disabled [data-energy-cost] { color: #B5503A; }
 .sm2-especial-label { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-3); text-align: center; }
 .sm2-cta[data-cta-filling="true"] .sm2-cta-label { text-shadow: 0 0 3px rgba(2, 20, 19, .95), 0 1px 2px rgba(2, 20, 19, .95); }
 .sm2-cta-fill { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: scaleX(0); transform-origin: left center;
@@ -7431,7 +7451,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
      (topo, base, laterais: z 2, centro vazado, sem toque) e o conteúdo rola por baixo dela; `--sm2-moldura-pad-*` é o respiro que quem rola usa
      para não ficar escondido sob as peças. */
   background: var(--sm2-viewport-bg, #0E2422); min-height: calc(var(--u) * 52);
-  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3.6);
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 4.8); /* P3/P7 23/11: ornamento (2.1u) + ~10px de respiro (4.8u) */
+  --sm2-moldura-pad-x-rodape: calc(var(--u) * 7.2 + 10px); /* cipo/folha dos cantos de baixo (7.2u) + 10px: o rodapé nunca fica sob o ornamento */
 }
 .sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
 .sm2-moldura-modal__fundo {
@@ -7542,10 +7563,15 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; width: 100%; aspect-ratio: 852 / 1250; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translateX(-50%); }
+/* Sem rolagem (24/11/2026): o contêiner mostra só a faixa 18%..75% da arte (chakras em 30..53%), com o palco puxado para cima em 18% da PRÓPRIA altura; chakras seguem em % do palco. */
+.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; aspect-ratio: 852 / 1052; border-radius: var(--sm2-radius-md, 12px); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translate(-50%, -18%); }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-pop { width: min(250px, calc(100% - 16px)); }
+[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; }
+/* Balão horizontal sobre o chakra: centrado no palco, largura relativa ao modal (cqw do palco), duas opções lado a lado. */
+.sm2-vit-pop[data-horizontal] { inline-size: calc(100cqw - 16px); max-inline-size: 30rem; }
+.sm2-vit-pop[data-horizontal] .sm2-vit-opts { grid-template-columns: 1fr 1fr; }
+.sm2-vit-pop[data-horizontal] .sm2-vit-card { padding: var(--sm2-space-2); gap: var(--sm2-space-1); }
 @keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 
 /* MOLDURA DE POPUP 'CRISTAL' (23/11/2026, arte do P6 aprovada pelo dono): popup central (`ModalSheet placement=center`) sem folha/cipó de prédio.
@@ -7555,13 +7581,14 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal {
   --sm2-cristal-canto: clamp(52px, calc(var(--u) * 17.5), 120px);
   --sm2-cristal-placa-h: clamp(40px, calc(var(--u) * 13), 64px);
-  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .5); --sm2-moldura-pad-t: 8px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .45);
+  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .5); --sm2-moldura-pad-t: 8px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .8);
   min-height: 0; border-radius: calc(var(--sm2-cristal-canto) * .4); background: var(--sm2-viewport-bg, #0E2422);
 }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__fundo,
 .sm2-moldura-modal--cristal .sm2-moldura-modal__lado,
 .sm2-moldura-modal--cristal .sm2-moldura-modal__topo,
 .sm2-moldura-modal--cristal .sm2-moldura-modal__base { display: none; }
+.sm2-moldura-modal--cristal[data-fundo-unico] .sm2-moldura-modal__fundo { display: block; background-size: cover; background-repeat: no-repeat; background-position: center; border-radius: inherit; }
 .sm2-moldura-modal--cristal::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-sizing: border-box;
   border: solid transparent; border-width: var(--sm2-cristal-canto);
@@ -7601,7 +7628,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal.sm2-moldura-modal--cristal.sm2-moldura-modal--titulo-inline { --sm2-moldura-pad-t: 0px; }
 .sm2-popup-cabeca {
   display: flex; align-items: center; flex-shrink: 0; gap: 4px;
-  margin: calc(var(--sm2-cristal-canto) * .3) calc(var(--sm2-cristal-canto) * .3) 0 calc(var(--sm2-moldura-pad-x) + 4px);
+  margin: calc(var(--sm2-cristal-canto) * .3) calc(var(--sm2-cristal-canto) * .3) 0 calc(var(--sm2-cristal-canto) * .85);
 }
 .sm2-popup-cabeca[data-tem-info] .sm2-popup-titulo { padding-right: 50px; }
 .sm2-popup-fechar {
@@ -7613,6 +7640,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-popup-fechar:focus-visible { outline: 2px solid #e3c06a; outline-offset: 2px; }
 .sm2-area-sheet-inline .sm2-popup-fechar-linha { margin: 0 4px 0 0; }
 .sm2-area-sheet-inline .sm2-popup-titulo { padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); }
+/* P7 23/11: no cristal o título inline não entra no canto (cristal/folha): respiro = canto + 10px dos dois lados. */
+.sm2-moldura-modal--cristal .sm2-popup-titulo { padding: 0 calc(var(--sm2-cristal-canto) + 10px); }
 /* P3: selo de texto PLACEHOLDER do resultado do chefe que fugiu (no lugar do DRAW). Trocar pela arte do selo FLED (P6). */
 .sm-result-seal-text { display: block; margin: 0 auto; text-align: center; font-family: var(--sm2-font-display, Georgia, serif); font-weight: 800; letter-spacing: .12em; font-size: var(--sm2-text-xl, 1.5rem); color: #e3c06a; text-shadow: 0 2px 0 rgba(0,0,0,.55); }
 .sm2-popup-titulo {
@@ -7678,3 +7707,28 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-variant-numeric: lining-nums tabular-nums;
   text-align: end;
 }
+/* NOVA TAREFA / NOVO HÁBITO — espaçamento (PR i). Escala única: seções a --sm2-space-4; rótulo↔controle e chips↔energias a --sm2-space-2/-3.
+   O corpo é o ÚNICO filho do rolável do `ModalSheet` (que traz o gap 18 próprio): o respiro do topo afasta o campo da barra de título e o de baixo
+   (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */
+.sm2-nova-corpo {
+  --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: var(--sm2-space-4);
+  padding-top: var(--sm2-space-5);
+  padding-bottom: calc(var(--sm2-nova-rodape) + var(--sm2-space-4));
+}
+.sm2-nova-form { display: flex; flex-direction: column; gap: var(--sm2-space-4); margin: 0; }
+.sm2-nova-cat { display: flex; flex-direction: column; gap: var(--sm2-space-2); }
+.sm2-nova-cat [data-testid="category-points"] { margin-top: var(--sm2-space-3); }
+
+/* Anel de ramo de evolução (tarefa 23) */
+.sm2-evo-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; inline-size: 36px; block-size: 36px; }
+.sm2-evo-ring-trilho { stroke: var(--sm2-line, rgba(127,127,127,.25)); }
+.sm2-evo-ring-arco { stroke: var(--sm2-ring-color, var(--sm2-primary-ink)); transition: stroke-dashoffset .4s ease; }
+.sm2-evo-ring-num { position: absolute; font-size: var(--sm2-text-xs); line-height: 1; color: var(--sm2-ink, inherit); }
+/* Centro de Evolução (P5): menu de 2 botões dentro da folha do prédio; nome da forma com o cadeado à direita; o desfazer do traço centrado sob a árvore. */
+.sm2-lab-choice { display: grid; gap: var(--sm2-space-2); padding-block: var(--sm2-space-2); }
+.sm2-lab-choice > button { inline-size: 100%; }
+.sm2-evo-namerow { position: relative; inline-size: 100%; display: flex; align-items: center; justify-content: center; padding-inline: 48px; box-sizing: border-box; }
+.sm2-evo-lock { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); min-inline-size: 44px; min-block-size: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; box-shadow: none; color: var(--sm2-ink-muted, var(--sm2-ink)); cursor: pointer; }
+.sm2-evo-lock[aria-pressed="true"] { color: var(--sm2-primary-ink); }
+.sm2-evo-revert { display: flex; justify-content: center; margin-block-start: var(--sm2-space-5); }
