@@ -178,6 +178,7 @@ function CloseX({ onClose, label, side, inOrder }: { onClose: () => void; label:
   return (
     <button
       type="button"
+      data-fechar
       onClick={onClose}
       aria-label={label}
       style={{

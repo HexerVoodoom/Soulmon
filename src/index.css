@@ -4895,6 +4895,25 @@ html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] {
 }
 html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"]:active:not(:disabled) { background-image: var(--sm2-voltar-press) !important; }
 html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] > * { opacity: 0; }
+/* Grupo C (fase 4): os botões de FECHAR ✕ (popup cristal/inline `.sm2-popup-fechar`, ✕ do `BackArrow icon="close"` `.sm2-ora-back`, ✕ de canto do ModalSheet/RitualDialog `[data-fechar]`) ganham o disco `sm2-fechar` (a arte já traz o ✕).
+   A arte atual mora nestas 3 variáveis: trocar quando a P6 entregar a versão sem gema. O glifo fica no DOM (aria-label) e só some da vista. NÃO vale para o ✕ de busca nem para o medalhão de aço. */
+html[data-ui="arte"] { --sm2-fechar-arte: url('./assets/soulmon/ui/sm2/sm2-fechar.webp'); --sm2-fechar-press: url('./assets/soulmon/ui/sm2/sm2-fechar-press.webp'); --sm2-fechar-off: url('./assets/soulmon/ui/sm2/sm2-fechar-disabled.webp'); }
+html[data-ui="arte"] .sm2-popup-fechar,
+html[data-ui="arte"] .sm2-ora-back,
+html[data-ui="arte"] [data-fechar] {
+  background: var(--sm2-fechar-arte) center / contain no-repeat !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+html[data-ui="arte"] .sm2-popup-fechar:active:not(:disabled),
+html[data-ui="arte"] .sm2-ora-back:active:not(:disabled),
+html[data-ui="arte"] [data-fechar]:active:not(:disabled) { background-image: var(--sm2-fechar-press) !important; }
+html[data-ui="arte"] .sm2-popup-fechar:disabled,
+html[data-ui="arte"] .sm2-ora-back:disabled,
+html[data-ui="arte"] [data-fechar]:disabled { background-image: var(--sm2-fechar-off) !important; }
+html[data-ui="arte"] .sm2-popup-fechar > *,
+html[data-ui="arte"] .sm2-ora-back > *,
+html[data-ui="arte"] [data-fechar] > * { opacity: 0; }
 /* Drop-down de categoria do CreateModal (dono, 24/11/2026). Campo + lista em fluxo; selecionado = `primary-fill` sólido com `on-primary`. */
 .sm2-cat-select__campo {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 12px; box-sizing: border-box; margin-top: 6px;
