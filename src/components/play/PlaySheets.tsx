@@ -161,7 +161,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
   const currentLayer = riftCurrentLayer(gs);
   const [rankOpen, setRankOpen] = useState(false);
   return (
-    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)' }}>
       {saveId && (
         <BotaoEspecial variant="ranking" data-masmorra-ranking aria-haspopup="dialog" onClick={() => setRankOpen(true)}>
           {isPt ? 'Ver ranking' : 'See ranking'}
@@ -194,7 +194,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
         </ul>
       </ModalInfo>
       {/* P3 9.3b (22/11/2026): a camada ATUAL (onde o "Entrar no Rift" retoma) em destaque; o recorde (a mais funda) fica abaixo, discreto. Arte própria da camada: fila de arte (slot com fallback). */}
-      <div data-masmorra-current-layer style={{ ...box, flex: 'none', borderColor: 'var(--sm2-primary)', alignItems: 'center', textAlign: 'center', padding: '14px 12px' }}>
+      <div data-masmorra-current-layer style={{ ...box, flex: 'none', borderColor: 'var(--sm2-primary)', alignItems: 'center', textAlign: 'center', padding: 'min(14px, 1.2dvh) 12px' }}>
         <span className="sm2-num" style={{ ...boxValue, fontSize: 'var(--sm2-text-xl, 28px)', color: 'var(--sm2-primary-ink)' }}>{isPt ? `Camada ${currentLayer}` : `Layer ${currentLayer}`}</span>
         <p style={boxLabel}>{isPt ? 'camada atual' : 'current layer'}</p>
       </div>
