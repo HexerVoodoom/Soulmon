@@ -6352,6 +6352,15 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-cena-slots img { display: block; image-rendering: pixelated; }
 .sm2-grove-cena-arvore { position: absolute; left: 50%; bottom: 22%; height: 62%; width: auto; transform: translateX(-50%); z-index: 2; pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .sm2-grove-cena-entrar { position: absolute; right: 4px; bottom: 4px; z-index: 5; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); }
+/* Bosque: CTA do dia já feito (inerte por FORMA: tracejado + tinta muted, focável) e o aviso "Volte amanhã" que some sozinho. */
+.sm2-grove-aviso { margin: 0; padding: 6px 12px; align-self: center; text-align: center; border-radius: var(--sm2-radius-md); background: var(--sm2-surface); border: 1px solid var(--sm2-line); color: var(--sm2-text); font-size: 14px; line-height: 1.3; }
+/* Chuva de regar: as gotas do banho (`shower-drop`) espalhadas na cena do Bosque; movimento reduzido = gotas paradas. */
+.sm2-grove-chuva { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+.sm2-grove-chuva-gota { position: absolute; display: block; animation: shower-drop 1.1s linear var(--d, 0s) infinite; }
+.sm2-grove-chuva[data-reduced-motion="true"] .sm2-grove-chuva-gota { animation: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .sm2-grove-chuva-gota { animation: none; opacity: 1; } }
+/* A árvore do clã no Bosque: estágio da seiva (Fagulha .. Aurora), a linha e o "perto". */
+.sm2-grove-casa-arvore { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
    imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
