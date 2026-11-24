@@ -7714,6 +7714,13 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */
 /* Textura de pedra do fundo da Nova tarefa/hábito: 6% (era 60%), pelo token `--sm2-moldura-fill-op` da moldura (24/11/2026, dono). */
 .sm2-moldura-sheet:has(.sm2-nova-corpo) { --sm2-moldura-fill-op: .06 !important; }
+/* ESCOLHEDOR Hábito/Tarefa (`CreateChoicePopup.tsx`): bottom sheet simples, ancorado na base, só tokens. */
+.sm2-escolhedor-veu { position: fixed; inset: 0; z-index: 120; background: rgba(4, 18, 20, .55); display: flex; align-items: flex-end; justify-content: center; }
+.sm2-escolhedor { box-sizing: border-box; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: var(--sm2-space-3) var(--sm2-space-4) calc(var(--sm2-space-4) + env(safe-area-inset-bottom, 0px)); background: var(--sm2-surface); border-radius: var(--sm2-radius-lg) var(--sm2-radius-lg) 0 0; color: var(--sm2-ink); }
+.sm2-escolhedor__alca { align-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--sm2-line); }
+.sm2-escolhedor__op { box-sizing: border-box; min-height: 52px; width: 100%; display: flex; align-items: center; gap: var(--sm2-space-3); padding: 0 var(--sm2-space-4); border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-md); background: var(--sm2-surface-2); color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); font-weight: 600; cursor: pointer; text-align: left; }
+.sm2-escolhedor__op:active { background: var(--sm2-primary-soft); }
+.sm2-escolhedor__op:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-nova-corpo {
   --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: var(--sm2-space-4);

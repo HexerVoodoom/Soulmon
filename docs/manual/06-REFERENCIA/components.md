@@ -748,10 +748,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** a Hexsmith auto-equipa o HEX só em Porta vazia (`applyServerHexForge`); "Equipar agora" é o que troca quando a Porta já tinha outro. A poção é criada no cliente (`craftPotion`), sem servidor: o "confirmado" é o `onCraft` devolver diferente de `false`.
 
 ### `src/components/CreateChoicePopup.tsx`
-**Dono de:** escolhedor Hábito/Tarefa do botão de criar (24/11/2026): popup pequeno, sem barra de título, moldura `cristal`, duas opções com ícone + rótulo.
+**Dono de:** escolhedor Hábito/Tarefa do botão de criar (24/11/2026): bottom sheet simples (sem moldura, só tokens), botões Nova tarefa / Novo hábito no topo.
 **Props principais:** `CreateChoicePopupProps` — `open`, `language`, `onClose`, `onPick('habit'|'task')`, `onCommit?` (3ª opção só quando o App passa).
 **Exports:** `CreateChoicePopup(props)`.
-**Estado/efeitos relevantes:** nenhum; Esc (via `useDialogA11y`), toque fora e ✕ fecham.
+**Estado/efeitos relevantes:** nenhum; Esc (via `useDialogA11y`) e toque no véu fecham.
 **Chamado por:** `src/App.tsx` (`createChoiceOpen`; hábito abre o catálogo, tarefa abre o `CreateModal`).
 **Régua:** `src/components/CreateChoicePopup.render.test.tsx`.
 

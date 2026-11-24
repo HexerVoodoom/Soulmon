@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup } from '@testing-library/react';
-import { installDomGlobals } from '../test/renderEnv';
+import { installDomGlobals, renderWithCss } from '../test/renderEnv';
 import { CreateChoicePopup } from './CreateChoicePopup';
 import { CategoryChips } from './CreateModal';
 import { categoryIconArt } from '../assets/soulmon/icons/categories';
@@ -10,30 +10,34 @@ import { ACTIVITY_CATEGORIES } from '../types/categories';
 installDomGlobals();
 afterEach(cleanup);
 
-describe('CreateChoicePopup', () => {
+describe('CreateChoicePopup (bottom sheet)', () => {
   for (const w of [360, 375, 412]) {
-    it(`${w}px: 2 opções, sem barra de título, escolhe o tipo certo`, () => {
+    it(`${w}px: sheet na base, botões no topo, sem moldura, tipo certo`, () => {
       (window as any).innerWidth = w;
       const onPick = vi.fn();
-      render(<CreateChoicePopup open language="pt-BR" onClose={() => {}} onPick={onPick} />);
+      renderWithCss(<CreateChoicePopup open language="pt-BR" onClose={() => {}} onPick={onPick} />);
+      const veu = document.querySelector('.sm2-escolhedor-veu') as HTMLElement;
+      expect(getComputedStyle(veu).alignItems).toBe('flex-end');
+      expect(document.querySelector('[data-moldura-modal]')).toBeNull();
+      expect(document.querySelector('.sm2-moldura-modal--cristal')).toBeNull();
+      const sheet = document.querySelector('.sm2-escolhedor')!;
+      const filhos = Array.from(sheet.children);
+      expect(filhos[1].getAttribute('data-create-choice')).toBe('task'); // primeiro depois da alça
       expect(document.querySelectorAll('[data-create-choice]').length).toBe(2);
-      expect(document.querySelector('[data-popup-titulo]')).toBeNull();
-      expect(document.querySelector('h2')).toBeNull();
+      expect(parseInt(getComputedStyle(document.querySelector('.sm2-escolhedor__op')!).minHeight)).toBeGreaterThanOrEqual(44);
       fireEvent.click(document.querySelector('[data-create-choice="task"]')!);
       fireEvent.click(document.querySelector('[data-create-choice="habit"]')!);
       expect(onPick.mock.calls).toEqual([['task'], ['habit']]);
     });
   }
-  it('fecha por Esc, fora e ✕; EN; 3ª opção só com onCommit', () => {
+  it('Esc e véu fecham; EN; 3ª opção só com onCommit', () => {
     const onClose = vi.fn();
     render(<CreateChoicePopup open language="en-US" onClose={onClose} onPick={() => {}} />);
-    expect(document.body.textContent).toContain('Habit');
+    expect(document.body.textContent).toContain('New habit');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.click(document.querySelector('[data-modal-backdrop]')!);
     expect(onClose).toHaveBeenCalledTimes(2);
-    fireEvent.click(document.querySelector('[data-create-choice-close]')!);
-    expect(onClose).toHaveBeenCalledTimes(3);
     cleanup();
     render(<CreateChoicePopup open language="pt-BR" onClose={() => {}} onPick={() => {}} onCommit={() => {}} />);
     expect(document.querySelectorAll('[data-create-choice]').length).toBe(3);

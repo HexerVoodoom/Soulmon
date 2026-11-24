@@ -25,11 +25,12 @@ describe('Comprometer-me com uma tarefa', () => {
     expect(v.hidden.has('c')).toBe(true);
     expect(v.hidden.has('b')).toBe(false);
   });
-  it('contrato: a 3ª opção do + existe no App, condicionada a haver não comprometido', () => {
+  it('contrato: a 3ª opção do + existe no escolhedor, condicionada no App, a haver não comprometido', () => {
     const app = readFileSync('src/App.tsx', 'utf-8');
-    expect(app).toMatch(/data-create-choice="commit"/);
-    expect(app).toMatch(/dayPlanActive && uncommittedNow\.length > 0/);
-    expect(app).toContain('Commit to a task');
-    expect(app).toContain('Comprometer-me com uma tarefa');
+    const comp = readFileSync('src/components/CreateChoicePopup.tsx', 'utf-8');
+    expect(comp).toMatch(/data-create-choice="commit"/);
+    expect(app).toMatch(/dayPlanActive && uncommittedNow.length > 0/);
+    expect(comp).toContain('Commit to a task');
+    expect(comp).toContain('Comprometer-me');
   });
 });
