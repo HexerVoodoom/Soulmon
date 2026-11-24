@@ -43,6 +43,7 @@ import { ElementDex } from './ElementDex';
 import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 import { Icon } from './ui/Icon';
+import { amigosPresente, amigosDueloAmistoso } from '../assets/soulmon/icones-ui';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
@@ -132,9 +133,11 @@ const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
  * Cor pela natureza da ação (D-S5): `add` ciano, `paid` tinta, remover `muted`.
  */
 function RowAction({
-  icon, label, onClick, disabled, busy, tone = 'ink', fill, onInert,
+  icon, art, label, onClick, disabled, busy, tone = 'ink', fill, onInert,
 }: {
   icon: string;
+  /** Arte pixel no lugar do glifo (ícone pelado 24; inerte/ocupado volta ao glifo `icon`). */
+  art?: string;
   label: string;
   onClick: () => void;
   disabled?: boolean;
@@ -156,13 +159,17 @@ function RowAction({
       title={label}
       className="sm2-lib-act"
     >
-      <Icon
-        name={busy ? 'sync' : icon}
-        size={24}
-        fill={inert ? 0 : fill}
-        tone={inert ? 'muted' : tone}
-        className={busy ? 'animate-spin' : undefined}
-      />
+      {art && !busy ? (
+        <img src={art} alt="" aria-hidden="true" width={24} height={24} draggable={false} data-lib-act-art style={{ width: 24, height: 24, imageRendering: 'pixelated', opacity: inert ? 0.4 : 1 }} />
+      ) : (
+        <Icon
+          name={busy ? 'sync' : icon}
+          size={24}
+          fill={inert ? 0 : fill}
+          tone={inert ? 'muted' : tone}
+          className={busy ? 'animate-spin' : undefined}
+        />
+      )}
     </button>
   );
 }
@@ -865,6 +872,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               {!isNpc && isFriend && tab === 'friends' && !p.unresolved && !removeMode && trainer && (
                 <RowAction
                   icon="swords"
+                  art={amigosDueloAmistoso}
                   tone="ink"
                   label={isPt ? `Treinar com ${p.name}` : `Train with ${p.name}`}
                   onClick={() => { requireAwake('treino', () => { void startTraining(p); }); }}
@@ -874,6 +882,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               {!isNpc && isFriend && tab === 'friends' && !removeMode && !gifted && !(social?.sentToday ?? []).includes(p.id) && (
                 <RowAction
                   icon="volunteer_activism"
+                  art={amigosPresente}
                   tone="ink"
                   busy={busyId === p.id}
                   disabled={!canGiftToday}

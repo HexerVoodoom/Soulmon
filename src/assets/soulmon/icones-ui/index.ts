@@ -156,6 +156,9 @@ export { default as perfilAtaqueCorpo } from './perfil-ataque-corpo.png';
 export { default as perfilAtaqueDistancia } from './perfil-ataque-distancia.png';
 
 // P1-09 (28/10/2026, aprovado pelo dono; ChatGPT, alfa binário em 128, 128²): glifos da pasta e da luz do display. Em uso desde 30/10/2026 nos botões Mochila e Dormir do CompanionHUD.
+// Lista de Amigos (pedido do dono, 24/11/2026): aperto de mãos = dar presente (20 Bits); bandeira = duelo amistoso (treino com amigo). 96², alfa real.
+export { default as amigosPresente } from './amigos-presente.png';
+export { default as amigosDueloAmistoso } from './amigos-duelo-amistoso.png';
 export { default as pastaGlifo } from './pasta.png';
 export { default as pastaAbertaGlifo } from './pasta-aberta.png';
 export { default as displayLuzAcesa } from './display-luz-acesa.png';
