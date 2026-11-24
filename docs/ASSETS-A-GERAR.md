@@ -1,5 +1,9 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## ESTADO 24/11/2026 — feito x falta (REGISTRO §524, §525, §528, §531)
+**Instalado (mergeado):** borda A do popup cristal e quinas geradas pelo dono (`popup-cristal-1024`, #1201 e #1208); fundo B do Fundador (#1207) e chama centrada (#1195); moldura do dono nos modais de NPC e prédio (`ui/moldura/npc-*.webp`, #1209); backgrounds, cenários de combate e cenários de caminho dos 4 elementos e botões `sm2` 9+12 peças (#1188). Os 7 ícones de criatividade e as cenas do Focus estão no #1215 (ABERTO em 24/11; só contam como instalados depois do merge).
+**Falta:** (1) topo sem placa para as folhas de baixo (`AreaSheet`/`SheetFrame`), que seguem com a placa desenhada na arte; (2) cenas do Focus refeitas em vista de cima (top-down) com mais tecnologia Soulmon (6 cenas); (3) FX de combate dos 4 elementos: o dono achou pixelado, a P6 confere peça a peça contra os do jogo e regenera só o pior; (4) ícones de hábitos (35 só emoji). Não confundir: os 12 sprites de Soulmon estão aprovados (#1158).
+
 ## FEITO — botões PvE e PvP do ranking (18/11/2026, pedido do dono)
 **Modal e botão do ranking (18/11/2026, mesma sessão):** `ui/btn-ranking{,-press,-off}.webp` (580×151) e `ui/ranking/ranking-{topo,base,lado-e,lado-d}.webp` (moldura em fatias de 720; topo 720×252, base 720×100, laterais 40×80). Uso: `RankingModal` + `BotaoEspecial variant="ranking"`. `ranking-botao-redondo.webp` NÃO é usado (decisão do dono). Fonte: `E:/Soulmon-assets/gerar-chatgpt/ranking/lote3/`.
 `ui/btn-pve{,-press,-off}.webp` (pedra com musgo, folhinha, diamante da alma) e `ui/btn-pvp{,-press,-off}.webp` (faixa vermelha, ouro envelhecido com espinhos), 580×~145, alfa real, ChatGPT (referência: `btn-especial*`). Uso: `BotaoEspecial variant="pve"|"pvp"`. Fonte/prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ranking/`.
