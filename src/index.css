@@ -7899,6 +7899,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   padding-top: var(--sm2-space-5);
   padding-bottom: calc(var(--sm2-nova-rodape) + var(--sm2-space-4));
 }
+/* Editar hábito/tarefa reusam o corpo; com "Excluir" o rodapé ganha uma linha (44 + gap 8). */
+.sm2-nova-corpo[data-edit-corpo="excluir"] { --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + 8px + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px)); }
 .sm2-nova-form { display: flex; flex-direction: column; gap: var(--sm2-space-4); margin: 0; }
 .sm2-nova-cat { display: flex; flex-direction: column; gap: var(--sm2-space-2); }
 .sm2-nova-cat [data-testid="category-points"] { margin-top: var(--sm2-space-3); }
