@@ -68,6 +68,7 @@ export function DungeonBusyModal({ open, acao, language, onRetire, onGo, onClose
       onClose={confirmando ? () => setConfirmando(false) : onClose}
       language={language}
       title={emMissao ? (isPt ? 'Ele está em missão' : 'He is on a mission') : (isPt ? 'Ele está na Fenda' : 'He is in the Rift')}
+      placement="center" titulo="inline"
       maxWidth={420}
       footer={
         irLa && !confirmando ? (

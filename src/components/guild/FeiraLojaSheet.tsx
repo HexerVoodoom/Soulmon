@@ -182,7 +182,7 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
 
   return (
     <>
-    <ModalSheet open placement="center" onClose={onClose} language={language} title={t('loja.title')} maxWidth={420} footer={footer}>
+    <ModalSheet open placement="center" titulo="inline" onClose={onClose} language={language} title={t('loja.title')} maxWidth={420} footer={footer}>
       <div data-feira-loja={loja.vendor} data-feira-loja-dia={loja.day} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src={VENDOR_ART[loja.vendor]} alt="" width={72} height={72} style={{ width: 72, height: 72, objectFit: 'contain', imageRendering: 'pixelated', flex: 'none' }} data-feira-loja-npc={loja.vendor} />

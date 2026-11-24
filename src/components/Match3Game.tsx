@@ -1032,7 +1032,7 @@ function Match3Round({ pvp: pvpProp, adventureElement, onReplayRound, language, 
         </>
       )}
       {boss && (
-        <ModalSheet open={rulesOpen && !over && !bossIntro} title={isPt ? 'Regras do Boss' : 'Boss rules'} onClose={() => setRulesOpen(false)} language={language} placement="center">
+        <ModalSheet open={rulesOpen && !over && !bossIntro} title={isPt ? 'Regras do Boss' : 'Boss rules'} onClose={() => setRulesOpen(false)} language={language} placement="center" titulo="inline">
           <ol data-m3-boss-rules-modal style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {boss.rules.map(id => {
               const l = isPt ? bossRuleInfo(id).pt : bossRuleInfo(id).en;
