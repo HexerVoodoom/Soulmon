@@ -7708,13 +7708,15 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    9-slice de UMA imagem (cantos 22% = 225/1024, lados lisos; cristais só em topo-esq e baixo-dir) + placa de título de bronze como peça separada (3 partes).
    `--sm2-cristal-canto` = canto renderizado (56px @320 → 120px @900, medido em `--u`). Pads: topo/base = pouco além do canto (o canto é arte, não conteúdo),
    laterais = metade do canto (o lado liso tem ~30% dele). Nada de `--sm2-moldura-pad-x` do padrão: este tem o próprio contrato.
-   25/11/2026 (pedido do dono): SÓ A LINHA TURQUESA, sem quinas/cristais/cobre/vinha. CSS puro (borda 2 px + brilho interno); sem quinas o canto vira um valor fixo (26 px).
+   25/11/2026 (pedido do dono): SÓ A LINHA TURQUESA, sem quinas/cristais/cobre/vinha. CSS puro (borda `--sm2-cristal-linha` = 4 px + brilho interno); sem quinas o canto vira um valor fixo (26 px).
    PARA VOLTAR À ARTE: `--sm2-cristal-canto: clamp(52px, calc(var(--u) * 17.5), 120px)`, `::after` com `border: solid transparent; border-width: var(--sm2-cristal-canto);
    border-image: url('./assets/soulmon/ui/moldura-cristal/popup-cristal-1024.webp') 225 / var(--sm2-cristal-canto) stretch`, e os multiplicadores antigos (pad-x .5, pad-b .8, cabeça .85, placa .12). Os arquivos de arte seguem no repo. */
 .sm2-moldura-modal--cristal {
-  --sm2-cristal-canto: 26px; --sm2-cristal-linha: 2px;
+  --sm2-cristal-canto: 26px;
+  --sm2-cristal-linha: 4px; /* TOKEN ÚNICO da espessura da linha (28/11/2026: 2 → 4 px, dono achou fina); tudo que depende dela abaixo deriva daqui */
+  --sm2-cristal-folga: calc(var(--sm2-cristal-linha) + 10px); /* linha + 10 px: o conteúdo (✕/(i) de 44 px, título, corpo) nunca chega perto dela */
   --sm2-cristal-placa-h: clamp(40px, calc(var(--u) * 13), 64px);
-  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .6); --sm2-moldura-pad-t: 12px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .6);
+  --sm2-moldura-pad-x: calc(var(--sm2-cristal-linha) + 12px); --sm2-moldura-pad-t: calc(var(--sm2-cristal-linha) + 8px); --sm2-moldura-pad-b: calc(var(--sm2-cristal-linha) + 12px);
   min-height: 0; border-radius: 16px; background: var(--sm2-viewport-bg, #0E2422);
 }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__fundo,
@@ -7725,7 +7727,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-sizing: border-box;
   border: var(--sm2-cristal-linha) solid var(--sm2-viewport-accent, #5FF3E0); border-radius: inherit;
-  box-shadow: inset 0 0 10px color-mix(in srgb, var(--sm2-viewport-accent, #5FF3E0) 32%, transparent);
+  box-shadow: inset 0 0 calc(var(--sm2-cristal-linha) * 4) color-mix(in srgb, var(--sm2-viewport-accent, #5FF3E0) 48%, transparent), 0 0 calc(var(--sm2-cristal-linha) * 3) color-mix(in srgb, var(--sm2-viewport-accent, #5FF3E0) 22%, transparent);
 }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__placa {
   left: 50%; width: auto; min-width: 52%; max-width: calc(100% - var(--sm2-cristal-canto) * 1.6); transform: translateX(-50%);
@@ -7748,11 +7750,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font: 700 .8125rem/1 Georgia, serif;
 }
 .sm2-moldura-modal--cristal { --sm2-cristal-placa-fim: calc(var(--sm2-cristal-canto) * .3 + var(--sm2-cristal-placa-h) + 2px); }
-.sm2-moldura-modal--cristal .sm2-modal-fechar-linha { margin: var(--sm2-cristal-placa-fim) 0 0 calc(var(--sm2-cristal-canto) * .3); }
+.sm2-moldura-modal--cristal .sm2-modal-fechar-linha { margin: var(--sm2-cristal-placa-fim) 0 0 var(--sm2-cristal-folga); }
 /* sem linha do ✕ (closeSide none): o corpo começa logo abaixo da placa */
 .sm2-moldura-modal--cristal:not(:has(.sm2-modal-fechar-linha)) { --sm2-moldura-pad-t: var(--sm2-cristal-placa-fim); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__placa { max-width: calc(100% - var(--sm2-cristal-canto) * 1.8); }
-.sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: calc(var(--sm2-cristal-canto) * .35); }
+.sm2-moldura-modal--cristal .sm2-moldura-modal__info { top: var(--sm2-cristal-placa-fim); right: var(--sm2-cristal-folga); }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__titulo { color: #1c0e05; }
 
 /* POPUP CENTRAL — VARIANTE `titulo="inline"` (23/11/2026, teste A/B pedido do dono): sem placa de bronze; fechar só o GLIFO ✕ (sem círculo, cobre, alvo ≥ 44 px) no canto superior direito
@@ -7761,7 +7763,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal.sm2-moldura-modal--cristal.sm2-moldura-modal--titulo-inline { --sm2-moldura-pad-t: 0px; }
 .sm2-popup-cabeca {
   display: flex; align-items: center; flex-shrink: 0; gap: 4px;
-  margin: calc(var(--sm2-cristal-canto) * .46) calc(var(--sm2-cristal-canto) * .46) 0 calc(var(--sm2-cristal-canto) * .6); /* topo/direita .46 = o alvo de 44 px do ✕ fica >= 10 px da linha */
+  margin: var(--sm2-cristal-folga) var(--sm2-cristal-folga) 0 calc(var(--sm2-cristal-linha) + 12px); /* topo/direita = linha + 10: o alvo de 44 px do ✕ fica >= 10 px da linha */
 }
 .sm2-popup-cabeca[data-tem-info] .sm2-popup-titulo { padding-right: 50px; }
 .sm2-popup-fechar {
@@ -7783,9 +7785,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 /* sem ✕ (closeSide none) o título ganha o mesmo respiro do topo, longe do bracket do canto */
 .sm2-moldura-modal--titulo-inline .sm2-popup-cabeca:not(:has(.sm2-popup-fechar)) { min-height: 44px; }
-.sm2-moldura-modal--titulo-inline .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .46 + 50px); top: calc(var(--sm2-cristal-canto) * .4 - 1px); width: 44px; height: 44px; }
+.sm2-moldura-modal--titulo-inline .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-folga) + 50px); top: calc(var(--sm2-cristal-folga) - 1px); width: 44px; height: 44px; }
 /* closeSide none (sem ✕): o (i) vai para o canto, sem o vão que o ✕ ocupava */
-.sm2-moldura-modal--titulo-inline:not(:has(.sm2-popup-fechar)) .sm2-moldura-modal__info { right: calc(var(--sm2-cristal-canto) * .46); }
+.sm2-moldura-modal--titulo-inline:not(:has(.sm2-popup-fechar)) .sm2-moldura-modal__info { right: var(--sm2-cristal-folga); }
 
 /* FOLHA DE BAIXO com moldura: a linha do ✕/voltar do `ModalSheet` ficava ABAIXO do topo da arte (z 2, 16,9u) e sumia sob cipó/cristal (bug do dono, 23/11: Perfil
    aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
