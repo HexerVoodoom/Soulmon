@@ -84,8 +84,8 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
       {/* Saldo das 3 moedas — canto INFERIOR direito (espelho do link da
           Home, no esquerdo). ⚠️ Morava no canto superior direito e a arte do
           "Jogos" pintava POR CIMA dele (fix1). As 3 pílulas são IGUAIS (QA 24/11/2026,
-          pílulas achatadas sobrepostas): ícone + valor, largura fixa, sem moldura (a
-          moldura nova vem do P6). Layout e largura em `.sm2-moeda*` no index.css. */}
+          pílulas achatadas sobrepostas): ícone + valor, largura fixa, moldura `chip-moeda`
+          de antes (a barra de cobre foi reprovada pelo dono). Layout e largura em `.sm2-moeda*` no index.css. */}
       <div
         data-map-currencies
         className="sm2-moeda-hud"
@@ -102,7 +102,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           autoCloseMs={4000}
           label={`${nBits} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`}
           className="sm2-moeda"
-          style={{ ...bitsStyle, minHeight: 32 }}
+          style={{ ...bitsStyle, minHeight: 34 }}
           trigger={<span data-map-chip className="sm2-moeda__in"><BitsIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nBits}</span></span>}
         >
           {isPt ? 'Bits: ganhe cumprindo o dia (tarefas e hábitos) e jogando minijogos, a Masmorra e a Arena. Gaste na loja.' : 'Bits: earn them by finishing your day (tasks and habits) and playing minigames, the Dungeon and the Arena. Spend them in the shop.'}
@@ -113,7 +113,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           autoCloseMs={4000}
           label={isPt ? `${nEmblems} de Honra — como conseguir` : `${nEmblems} Honor — how to earn`}
           className="sm2-moeda"
-          style={{ ...emblemStyle, minHeight: 32 }}
+          style={{ ...emblemStyle, minHeight: 34 }}
           trigger={<span data-map-chip className="sm2-moeda__in"><HonorIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nEmblems}</span></span>}
         >
           {isPt ? 'Honra: ganhe em combates do Torneio, no treino e em missões da semana. Gaste na aba Honra das lojinhas.' : 'Honor: earn it in Tournament fights, sparring and weekly missions. Spend it in the Honor tab of the shops.'}
@@ -124,7 +124,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           autoCloseMs={4000}
           label={isPt ? `${nCredits} Créditos — como conseguir` : `${nCredits} Credits — how to get`}
           className="sm2-moeda"
-          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, minHeight: 32 }}
+          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, minHeight: 34 }}
           trigger={<span data-map-chip className="sm2-moeda__in"><CreditIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nCredits}</span></span>}
         >
           {isPt ? 'Créditos: só por compra com dinheiro real. Servem para pacotes de Bits e para sortear de novo.' : 'Credits: only by purchase with real money. Use them for Bits packs and rerolls.'}
