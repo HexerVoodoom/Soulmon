@@ -10271,16 +10271,7 @@ export default function App() {
         <PresentationSlot id="dailyReport" onFail={() => presentation.fail('dailyReport')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DailyReportModal
           report={gameState.lastDayReport}
-          adventure={aventuraDaNoite}
-          adventureIsNew={aventuraInedita}
-          stroll={strollDaNoite}
-          /* REGISTRO §413: com a cena já rodada na hora do "Concluir" (`sceneDay`), a noite não a repete nem sorteia outro avistado. */
-          strollScene={strollDaNoite && trv && crossings.sceneDay !== dayKeyToIso(gameState.lastDayReport.date) ? {
-            regionId: strollDaNoite.regionId,
-            bgId: trv.regionById(strollDaNoite.regionId)?.bgId ?? null,
-            bestiary: gameState.bestiary,
-            onDiscover: handleStrollDiscover,
-          } : null}
+          /* 24/11/2026 (dono, P3): a aventura/Passeio NÃO abre mais no início do dia (sem `adventure`/`strollScene`); o Passeio só abre por ação do jogador (prédio/Home). */
           maxHearts={gameState.maxHealthPoints}
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}
