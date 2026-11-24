@@ -546,3 +546,10 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — estados do disco FECHAR (24/11/2026)
 `ui/sm2/sm2-fechar-press.webp` (245×239; mesma transformação de cor medida entre `sm2-voltar` e `sm2-voltar-press`) e `sm2-fechar-disabled.webp` (dessaturado/escurecido, sem brilho). Mostrados a 44×44 px (P7). Entram no mesmo diretório `ui/sm2/` já liberado no guard ZERO PNG.
+
+## P6 — lote 3 (24/11/2026, aprovado pelo dono)
+- **Decoração apagada (6)** `src/assets/decor-apagadas/{lamp,lantern,campfire,cerejeira-lanterna-de-petalas,lava-altar-de-magma,lava-flor-de-brasa}-apagada.png` (pasta própria: o guard de `decor/` reprova PNG sem item): mesma moldura/pé da peça acesa, sem luz (substituem o filtro de `decorLuz.ts`; sem consumidor ainda).
+- **Chips redutores (6 + variação B)** `items/item-chip-reduce-{power,harmony,benevolence}-{a,b}.png` (96², alfa real; sinal "−" no canto sup. esq. (A) ou inf. esq. (B); sem consumidor).
+- **Sortear de novo** `icones-ui/interacao/icon-sortear-de-novo.png` (96², sem consumidor; `DueloSheet` hoje só texto).
+- **Rift** `rift/rift-camada.png` (165×192, marcador de camada) e `rift/rift-portal.png` (331×420); sem consumidor.
+- Originais e folhas de contato: `E:\Soulmon-assets\p6-novos-lote3\`.
