@@ -12,7 +12,8 @@ describe('EvolutionRing', () => {
     const { getByTestId } = render(<EvolutionRing value={5} max={10} color="red" label="5 pontos" />);
     const el = getByTestId('sm-anel');
     expect(el.getAttribute('data-frac')).toBe('0.50');
-    expect(el.textContent).toContain('5 pontos');
+    expect(el.getAttribute('aria-label')).toBe('5 pontos');
+    expect(el.getAttribute('role')).toBe('img');
     expect(el.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
   });
   it('max 0 não quebra (anel vazio)', () => {
