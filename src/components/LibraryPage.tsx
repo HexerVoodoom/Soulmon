@@ -46,7 +46,7 @@ import { Icon } from './ui/Icon';
 import { amigosPresente, amigosDueloAmistoso } from '../assets/soulmon/icones-ui';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
-import { Field, sm2Button } from './form/FormKit';
+import { Field, ModalSheet, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
 import { useLibraryMemory } from '../hooks/useLibraryMemory';
@@ -592,7 +592,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       {tab === 'friends' && social && social.notes.length > 0 && (
         <section data-friend-gifts aria-label={isPt ? 'Presentes recebidos' : 'Gifts received'} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Presentes' : 'Gifts'}</h3>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 132, overflowY: 'auto' }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {social.notes.slice(0, 10).map(n => (
               <li key={n.at + ':' + n.name} data-gift-note={n.unseen ? 'new' : 'seen'} className="sm2-lib-s" style={{ color: n.unseen ? 'var(--sm2-primary-ink)' : undefined, fontWeight: n.unseen ? 600 : undefined }}>
                 {n.bits > 0
@@ -781,11 +781,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         const formas: SeenForm[] = vistas.length > 0 ? vistas : (atual ? [atual] : []);
         const nome = selectedPet.petName || selectedPet.name;
         return (
-          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
-            <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
-              {nome}
-            </h2>
-            <ul data-pet-forms aria-label={isPt ? 'Formas que você já viu' : 'Forms you have seen'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '55vh', overflowY: 'auto' }}>
+          <ModalSheet open placement="center" title={nome} onClose={() => setSelectedPet(null)} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320}>
+            <ul data-pet-forms aria-label={isPt ? 'Formas que você já viu' : 'Forms you have seen'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {formas.map(f => {
                 const atualAqui = isCurrentForm(f, atual);
                 const src = opponentSprite({ ...selectedPet, stage: f.stage, spriteUrl: f.spriteUrl });
@@ -810,7 +807,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
             <p className="sm2-lib-s" style={{ margin: '12px 0 0' }}>
               {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
             </p>
-          </RitualDialog>
+          </ModalSheet>
         );
       })()}
 

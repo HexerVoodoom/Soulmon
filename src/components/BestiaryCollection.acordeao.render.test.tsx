@@ -81,3 +81,21 @@ describe('BestiaryCollection — accordion e Boss', () => {
     expect(btn.closest('h3')).not.toBeNull();
   });
 });
+
+describe('BestiaryCollection — detalhe em popup central (padrão Drive)', () => {
+  it('abre popup com título inline (aria-labelledby), ✕ e Esc fecham, sem placa nem nome no corpo', () => {
+    const e = ENEMY_ROSTER[0];
+    const { container } = render(<BestiaryCollection seen={[e.key]} language="pt-BR" />);
+    fireEvent.click(container.querySelector(`[data-bestiary-open="${e.key}"]`)!);
+    const dlg = document.querySelector('[role="dialog"]') as HTMLElement;
+    const h = dlg.querySelector('[data-popup-titulo]') as HTMLElement;
+    expect(dlg.getAttribute('aria-labelledby')).toBe(h.id);
+    expect(h.textContent).toBe(e.name);
+    expect(dlg.querySelector(`[data-bestiary-detail="${e.key}"]`)!.textContent).not.toContain(e.name);
+    fireEvent.click(dlg.querySelector('.sm2-popup-fechar')!);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    fireEvent.click(container.querySelector(`[data-bestiary-open="${e.key}"]`)!);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
