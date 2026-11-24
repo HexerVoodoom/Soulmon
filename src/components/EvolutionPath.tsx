@@ -68,14 +68,14 @@ import { RitualDialog } from './ritual/RitualKit';
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
 import { EvoBar } from './evolution/EvoBar';
-import curvaEsqAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo.png';
-import curvaEsqAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo@2x.png';
-import curvaEsqInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo.png';
-import curvaEsqInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo@2x.png';
-import curvaDirAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo.png';
-import curvaDirAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo@2x.png';
-import curvaDirInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo.png';
-import curvaDirInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo@2x.png';
+import curvaEsqAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3.png';
+import curvaEsqAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3@2x.png';
+import curvaEsqInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3.png';
+import curvaEsqInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3@2x.png';
+import curvaDirAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3.png';
+import curvaDirAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3@2x.png';
+import curvaDirInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3.png';
+import curvaDirInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3@2x.png';
 import cadeadoAberto from '../assets/soulmon/evo/cadeado-B-aberto.png';
 import cadeadoFechado from '../assets/soulmon/evo/cadeado-B-fechado.png';
 import { InfoTip, ModalInfo } from './ui/InfoTip';
@@ -219,7 +219,7 @@ const CURVAS = {
   dir: { ativo: [curvaDirAtivo1x, curvaDirAtivo2x], inativo: [curvaDirInativo1x, curvaDirInativo2x] },
 } as const;
 
-/** Conectores da árvore: uma faixa 300×28 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
+/** Conectores da árvore: uma faixa 300×48 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
  *  O MEIO é a linha procedural de sempre (reta, cor do ramo). `split` sai do rookie; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). */
 function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
   const meio = ATTR_ORDER[1];
@@ -236,8 +236,8 @@ function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBra
           <img key={a} data-conector={estado} data-conector-ramo={a} src={x1} srcSet={`${x1} 1x, ${x2} 2x`} alt="" className="sm2-evo-conector" />
         );
       })}
-      <svg viewBox="0 0 300 28" preserveAspectRatio="none" data-conector="procedural" data-conector-ramo={meio} className="sm2-evo-conector">
-        <path d="M150 0L150 28" fill="none" stroke={ATTR_COLOR[meio]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
+      <svg viewBox="0 0 300 48" preserveAspectRatio="none" data-conector="procedural" data-conector-ramo={meio} className="sm2-evo-conector">
+        <path d="M150 0L150 48" fill="none" stroke={ATTR_COLOR[meio]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
       </svg>
     </div>
   );
@@ -1083,25 +1083,6 @@ export function EvolutionPath({
             {/* P7 (beta-2): a FAÍSCA estática da evolução pronta (X2: o quadro 4 do `anim-sparkle-pop`, parado no canto) SAIU — parada, a
                 dispersão lia como pixels SOLTOS à direita da criatura. A evolução pronta já tem as suas vozes (a placa, a barra cheia e a
                 frase "a próxima forma está tomando corpo"); o FX animado vive na Home. */}
-            {/* "ON HOLD" na língua do vidro (D-E5): a MESMA peça do "EVOLVE"
-                da Home (`.sm2-pxbtn` — Silkscreen 14 na moldura pixel a ½×
-                sobre placa `viewport-bg` 78%), aqui como placa, não botão:
-                o gesto é o visor inteiro, e o `aria-label` já diz "on hold". */}
-            {evolutionLocked && (
-              <span
-                aria-hidden="true"
-                data-onhold-plate
-                className="sm2-pxbtn"
-                style={{
-                  position: 'absolute', right: 8, top: 8, zIndex: 5,
-                  minHeight: 32, minWidth: 0, padding: '0 6px', cursor: 'inherit', pointerEvents: 'none',
-                  borderImageSource: `url(${HUD_ART.frame})`,
-                  borderImageSlice: HUD_ART.frameSlice,
-                }}
-              >
-                {isPt ? 'SEGURADA' : 'ON HOLD'}
-              </span>
-            )}
             {/* A varredura de 400 ms que acompanha o fade — o par que a spec
                 chama de "sintonia" (§2.1 e §2.3.1). Irmã do
                 `.sm2-viewport-glass`: `position:absolute` recortada pela tela e
@@ -1137,6 +1118,10 @@ export function EvolutionPath({
         >
           {formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
         </h2>
+          {/* "ON HOLD" ao lado do nome (mesma linha, junto do cadeado) — antes era uma placa por cima do sprite. */}
+          {evolutionLocked && (
+            <span aria-hidden="true" data-onhold-plate className="sm2-evo-segurada">{isPt ? 'SEGURADA' : 'ON HOLD'}</span>
+          )}
           {!naoEvolui && onToggleEvolutionLock && (
             <button
               type="button"

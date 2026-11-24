@@ -69,6 +69,9 @@ describe('EvolutionPath — gauge', () => {
     const l2 = document.querySelector('[data-lock-button]') as HTMLElement;
     expect(l2.getAttribute('aria-pressed')).toBe('true');
     expect(l2.querySelector('[data-lock-art]')?.getAttribute('data-lock-art')).toBe('fechado');
+    const placa = document.querySelector('[data-onhold-plate]') as HTMLElement;
+    expect(placa.closest('.sm2-evo-namerow')).toBeTruthy();
+    expect(placa.className).toContain('sm2-evo-segurada');
     expect(l2.getAttribute('title')).toMatch(/não protege os corações/);
     expect(document.querySelector('[data-evo-lock-status]')?.getAttribute('role')).toBe('status');
     expect(document.querySelector('[data-evo-lock-status]')?.textContent).toMatch(/não protege os corações/);

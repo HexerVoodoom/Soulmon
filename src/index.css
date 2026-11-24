@@ -7764,7 +7764,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Centro de Evolução (P5): menu de 2 botões dentro da folha do prédio; nome da forma com o cadeado à direita; o desfazer do traço centrado sob a árvore. */
 .sm2-lab-choice { display: grid; gap: var(--sm2-space-2); padding-block: var(--sm2-space-2); }
 .sm2-lab-choice > button { inline-size: 100%; }
-.sm2-evo-namerow { position: relative; inline-size: 100%; display: flex; align-items: center; justify-content: center; padding-inline: 48px; box-sizing: border-box; }
+.sm2-evo-namerow { flex-wrap: wrap; gap: var(--sm2-space-2); position: relative; inline-size: 100%; display: flex; align-items: center; justify-content: center; padding-inline: 48px; box-sizing: border-box; }
 .sm2-evo-lock { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); min-inline-size: 44px; min-block-size: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; box-shadow: none; color: var(--sm2-ink-muted, var(--sm2-ink)); cursor: pointer; }
 .sm2-evo-lock[aria-pressed="true"] { color: var(--sm2-primary-ink); }
 .sm2-evo-revert { display: flex; justify-content: center; margin-block-start: var(--sm2-space-5); }
@@ -7777,7 +7777,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
 [data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }
 /* Arte final do Evolution Center (P5 evo-assets): conectores A, nó A, cadeado B. */
-.sm2-evo-ligacao { position: relative; inline-size: 100%; aspect-ratio: 300 / 28; }
+.sm2-evo-ligacao { position: relative; inline-size: 100%; aspect-ratio: 300 / 48; margin-block: 0; }
 .sm2-evo-ligacao--join { transform: scaleY(-1); }
 .sm2-evo-conector { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: fill; overflow: visible; }
 .sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
@@ -7788,3 +7788,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-evo-barra { position: relative; inline-size: 100%; aspect-ratio: 480 / 128; margin-block: -5%; }
 .sm2-evo-barra__moldura { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; }
 .sm2-evo-barra__canal { position: absolute; inset-inline-start: 3.96%; inset-inline-end: 4.9%; inset-block-start: 45.3%; block-size: 8.6%; border-radius: 2px; overflow: visible; }
+
+.sm2-evo-segurada { display: inline-flex; align-items: center; min-block-size: 24px; padding-inline: var(--sm2-space-2); border-radius: 999px; background: var(--sm2-primary-soft); color: var(--sm2-primary-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; letter-spacing: .04em; }
+.sm2-evo-no-arte[data-node-art="locked"] .sm2-evo-no-matiz { opacity: .4; }
