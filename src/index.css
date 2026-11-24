@@ -5988,7 +5988,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   border-radius: 18px 18px 0 0;
   transition: transform .2s var(--sm2-ease);
 }
-/* Durante o ARRASTO a folha desce e o véu some — o pet tem de aparecer. */
+/* Durante o ARRASTO a folha desce e o véu some — o pet tem de aparecer. O arrasto só arma depois de um toque longo (Mochila.tsx),
+   então rolar a lista nunca recolhe (dono, 23/11/2026). */
 .sm3-arrastando { background: transparent; }
 .sm3-arrastando .sm3-mochila { transform: translateY(78%); }
 .sm3-mochila-alca { width: 40px; height: 4px; border-radius: 2px; background-color: var(--sm2-line); margin: 0 auto 10px; }
@@ -6044,8 +6045,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   font-size: var(--sm2-text-xs);
   font-weight: 600;
   cursor: grab;
-  /* O arrasto é do item: sem isto o toque vira rolagem da página. */
-  touch-action: none;
+  /* Rolar a lista com o dedo em cima do item tem de funcionar: só o toque LONGO arma o arrasto (Mochila.tsx). */
+  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
 }

@@ -25,7 +25,7 @@ describe('Files: arrasto igual nas 3 abas', () => {
     fireEvent.click(screen.getByRole('tab', { name: /Materials/i }));
     await waitFor(() => expect(document.querySelector('.sm3-material-btn')).not.toBeNull());
     const m = document.querySelector<HTMLElement>('.sm3-material-btn')!;
-    fireEvent.pointerDown(m, { clientX: 10, clientY: 400, button: 0 });
+    fireEvent.pointerDown(m, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     expect(document.querySelector('.sm3-arrastando')).not.toBeNull();
     expect(document.querySelector('.sm3-fantasma')).not.toBeNull();
@@ -54,7 +54,7 @@ describe('Files: abas iguais', () => {
     abrir();
     const estado = () => {
       const item = document.querySelector<HTMLElement>('.sm3-item')!;
-      fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
+      fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
       act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
       const c = document.querySelector('[data-mochila]')!.className;
       act(() => { fireEvent.pointerCancel(document); });

@@ -41,6 +41,8 @@ import type { BuildingId } from '../../utils/gates';
 /** Distância (px) que separa um TOQUE de um ARRASTO. Abaixo disto é toque, e
  *  toque nunca usa o item. */
 export const DRAG_THRESHOLD_PX = 8;
+/** Toque longo parado que arma o arrasto com o dedo (o resto é rolagem da lista). */
+export const LONG_PRESS_MS = 300;
 /** Folga (px) em volta do alvo do pet: o dedo cobre o item, e o alvo do
  *  carinho é do tamanho exato do sprite. */
 export const DROP_SLOP_PX = 12;
@@ -238,11 +240,25 @@ export function Mochila({
     const [x0, y0] = coords(e);
     arrastoRef.current = { emoji, x0, y0, ativo: false, sobre: false, inerte: !!inerte };
     engolirCliqueRef.current = false;
+    // Dedo (touch/pen): o arrasto só ARMA depois de um toque longo parado; mexer antes disso é rolar a lista (nativo, `touch-action: pan-y`).
+    // Mouse não rola por arrasto: arma na hora.
+    const comDedo = e.pointerType !== 'mouse';
+    let armado = !comDedo;
+    const timer = comDedo ? window.setTimeout(() => {
+      armado = true;
+      try { navigator.vibrate?.(15); } catch { /* sem vibração: tudo bem */ }
+    }, LONG_PRESS_MS) : 0;
+    const segurarRolagem = (ev: Event) => { if (armado && arrastoRef.current?.ativo && ev.cancelable) ev.preventDefault(); };
 
     const mover = (ev: Event) => {
       const a = arrastoRef.current;
       if (!a) return;
       const [x, y] = coords(ev as unknown as PointerEvent);
+      if (!armado) {
+        // Moveu antes de armar: é rolagem. Desiste do arrasto (o navegador assume e manda pointercancel).
+        if (Math.hypot(x - a.x0, y - a.y0) >= DRAG_THRESHOLD_PX) terminar(false);
+        return;
+      }
       if (!a.ativo) {
         if (Math.hypot(x - a.x0, y - a.y0) < DRAG_THRESHOLD_PX) return;
         a.ativo = true;
@@ -261,10 +277,13 @@ export function Mochila({
     const cancelar = () => terminar(false);
     limparRef.current?.();
     document.addEventListener('pointermove', mover, { passive: false });
+    document.addEventListener('touchmove', segurarRolagem, { passive: false });
     document.addEventListener('pointerup', soltar);
     document.addEventListener('pointercancel', cancelar);
     limparRef.current = () => {
+      window.clearTimeout(timer);
       document.removeEventListener('pointermove', mover);
+      document.removeEventListener('touchmove', segurarRolagem);
       document.removeEventListener('pointerup', soltar);
       document.removeEventListener('pointercancel', cancelar);
       limparRef.current = null;
@@ -509,7 +528,11 @@ export function Mochila({
     <div
       className={`sm3-mochila-bg sm2-sheet-fade${arrastando ? ' sm3-arrastando' : ''}`}
       data-mochila
-      onClick={(e) => { if (e.target === e.currentTarget && !arrastando) onClose(); }}
+      onClick={(e) => {
+        // Soltar um arrasto sobre o véu gera um click nele: não é o jogador fechando.
+        if (engolirCliqueRef.current) { engolirCliqueRef.current = false; return; }
+        if (e.target === e.currentTarget && !arrastando) onClose();
+      }}
     >
       {/* MODAL FILES (18/11/2026): a moldura é a ARTE APROVADA (`assets/soulmon/ui/files/`) sobre o `ModalFrame` (que dá o "i" no ornamento e o miolo
           das sub-folhas); a composição segue a referência ref3. `MOLDURA_MODAL` desligado = a folha lisa de antes. */}
