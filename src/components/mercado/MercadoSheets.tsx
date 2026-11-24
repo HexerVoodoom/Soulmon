@@ -590,6 +590,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ ...sm2Text, display: 'block', fontWeight: 600 }}>{nome}</span>
                   <span style={{ ...sm2Hint, display: 'block' }}>{efeito}{' · '}{isPt ? `até ${item.weeklyCap} por semana` : `up to ${item.weeklyCap} per week`}</span>
+                  {bloqueio && recoveryState && <span data-recovery-why style={{ ...sm2Hint, display: 'block' }}>{bloqueio === 'full' ? (isPt ? 'Já está cheio' : 'Already full') : (isPt ? 'Créditos insuficientes' : 'Not enough Credits')}</span>}
                 </span>
                 <button type="button" data-recovery-buy={kind} disabled={off} aria-disabled={off ? true : undefined} onClick={() => void doRecovery(kind)} style={{ ...sm2Button('primary', off), flexShrink: 0 }}>
                   <span className="sm2-num">{item.credits}</span>{' '}{isPt ? 'Créd.' : 'Credits'}
