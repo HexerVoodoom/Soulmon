@@ -37,7 +37,7 @@ describe('formas alternativas no Centro de Evolução', () => {
   it('a forma anterior abre "Degenerar para…" com as opções já liberadas, sem dica', () => {
     renderWithCss(<EvolutionPath {...props} formasAlt={{ 'champion-harmony': ['fogo', 'agua'] }} />);
     fireEvent.click(screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement);
-    expect(screen.getByText('Degenerar para…')).toBeTruthy();
+    expect(screen.getByTestId('sm-formas-alt').textContent).toContain('Degenerar para…');
     expect(screen.queryByTestId('sm-formas-alt-dica')).toBeNull();
     expect(screen.getByTestId('sm-forma-alt-agua')).toBeTruthy();
     expect(screen.getAllByTestId('sm-forma-alt-oculta')).toHaveLength(3);

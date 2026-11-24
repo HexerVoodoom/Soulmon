@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 /** Centro de Evolução como ÁRVORE (09/11/2026, dono): rookie no topo, 3 caminhos com rótulo no INÍCIO, convergem no ultra; ícone de estágio nos nós. */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
@@ -44,6 +46,12 @@ describe('árvore do Centro de Evolução', () => {
     expect(ids).toHaveLength(11);
     expect(screen.getByTestId('sm-arvore-ligacao-split')).toBeTruthy();
     expect(screen.getByTestId('sm-arvore-ligacao-join')).toBeTruthy();
+    // pontas: fio de cobre curvo (1 aceso = ramo atual, ou nenhum se o atual for o do meio; o resto apagado); meio: linha procedural
+    const split = screen.getByTestId('sm-arvore-ligacao-split');
+    expect(split.querySelectorAll('img[data-conector]').length).toBe(2);
+    expect(split.querySelectorAll('svg[data-conector="procedural"] path').length).toBe(1);
+    expect(split.querySelector('img')?.getAttribute('src')).toMatch(/curva-(esq|dir)/);
+    expect(screen.getByTestId('sm-arvore-ligacao-join').className).toContain('sm2-evo-ligacao--join');
   });
   it('em inglês: Power / Harmony / Benevolence', () => {
     renderWithCss(<EvolutionPath {...props} language="en-US" />);
@@ -54,6 +62,9 @@ describe('árvore do Centro de Evolução', () => {
     renderWithCss(<EvolutionPath {...props} />);
     expect(screen.getByTestId('sm-no-champion-power').querySelector('[data-estagio-icone="champion-power"]')).toBeTruthy();
     expect(screen.getByTestId('sm-no-mega-harmony').querySelector('[data-estagio-icone="mega-harmony"]')).toBeTruthy();
+    // nenhuma palavra de estágio nem BLOQUEADA/PREVISTA escrita no nó
+    const t = screen.getByTestId('sm-no-champion-power').textContent ?? '';
+    expect(t).not.toMatch(/Champion|Rookie|BLOQUEADA|LOCKED|FORECAST|PREVISTA/);
     expect(screen.getByTestId('sm-no-rookie').querySelector('[data-estagio-icone="rookie"]')).toBeTruthy();
     expect(screen.getByTestId('sm-no-ultra').querySelector('[data-estagio-icone="ultra"]')).toBeTruthy();
   });
@@ -66,8 +77,8 @@ describe('árvore do Centro de Evolução', () => {
   it('mesmo nível, outro galho: lista para equipar (não degenera)', () => {
     renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" onEquipFormaAlt={() => {}} />);
     fireEvent.click(botao('champion-power'));
-    expect(screen.getByText('Formas alternativas')).toBeTruthy();
-    expect(screen.queryByText('Degenerar para…')).toBeNull();
+    expect(screen.getByTestId('sm-formas-alt').textContent).toContain('Formas alternativas');
+    expect(screen.getByTestId('sm-formas-alt').textContent).not.toContain('Degenerar para…');
   });
   it('troca de galho no mesmo nível: o botão diz Trocar forma e a troca leva o elemento escolhido junto', () => {
     const chamadas: string[] = [];
@@ -85,4 +96,31 @@ describe('árvore do Centro de Evolução', () => {
     expect(screen.queryByText('Degenerar para…')).toBeNull();
     expect(within(screen.getByTestId('sm-formas-alt')).queryAllByRole('button', { name: /Equipar|Degenerar/ })).toHaveLength(0);
   });
+
+  it('glow da forma atual: Harmonia azul `#009ED8`; o ouro da Benevolência (`#F2C230`) é const própria do glow', () => {
+    renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" />);
+    const atual = screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement;
+    expect(atual.style.boxShadow.toLowerCase()).toMatch(/0, 158, 216|#009ed8/);
+    expect(readFileSync(resolve(__dirname, './EvolutionPath.tsx'), 'utf8')).toContain("benevolence: '#F2C230'");
+  });
+
+  it('nome longo: o texto trunca com reticências no próprio span (min-inline-size 0, overflow hidden, nowrap) e o nome completo fica no title', () => {
+    const longos = stages.map(st => (st.stage === 'champion' && st.branch === 'poder' ? { ...st, name: 'Aurelion-champion-prime' } : st));
+    renderWithCss(<EvolutionPath {...props} stages={longos} />);
+    const span = screen.getByTestId('sm-nome-no-champion-power');
+    expect(span.textContent).toBe('Aurelion-champion-prime');
+    expect(span.getAttribute('title')).toBe('Aurelion-champion-prime');
+    expect(span.style.overflow).toBe('hidden');
+    expect(span.style.textOverflow).toBe('ellipsis');
+    expect(span.style.whiteSpace).toBe('nowrap');
+    const p = span.parentElement as HTMLElement;
+    expect(p.style.overflow).toBe('hidden');
+    expect(p.style.maxWidth).toBe('100%');
+    expect(p.style.inlineSize).toBe('100%');
+    expect(p.style.minInlineSize).toMatch(/^0(px)?$/);
+    expect(p.style.justifyContent).toBe('safe center');
+    expect(p.style.display).toBe('flex');
+    expect((span.previousElementSibling as HTMLElement).style.flex).toMatch(/none|0 0 auto/);
+  });
 });
+

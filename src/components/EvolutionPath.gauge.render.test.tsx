@@ -59,7 +59,8 @@ describe('EvolutionPath — gauge', () => {
   it('cadeado: só ícone ao lado do nome, aria-pressed; texto só quando trancado; sem texto fixo', () => {
     const { rerender } = renderWithCss(<EvolutionPath {...base} language="pt-BR" onToggleEvolutionLock={() => {}} />);
     const lock = document.querySelector('[data-lock-button]') as HTMLElement;
-    expect(lock.textContent?.trim()).toBe('lock_open');
+    expect(lock.querySelector('[data-lock-art]')?.getAttribute('data-lock-art')).toBe('aberto');
+    expect(lock.querySelector('img')?.getAttribute('alt')).toBe('');
     expect(lock.getAttribute('aria-pressed')).toBe('false');
     expect(lock.getAttribute('aria-label')).toBe('Segurar evolução');
     expect(lock.closest('.sm2-evo-namerow')).toBeTruthy();
@@ -67,8 +68,20 @@ describe('EvolutionPath — gauge', () => {
     rerender(<EvolutionPath {...base} language="pt-BR" evolutionLocked onToggleEvolutionLock={() => {}} />);
     const l2 = document.querySelector('[data-lock-button]') as HTMLElement;
     expect(l2.getAttribute('aria-pressed')).toBe('true');
+    expect(l2.querySelector('[data-lock-art]')?.getAttribute('data-lock-art')).toBe('fechado');
+    const placa = document.querySelector('[data-onhold-plate]') as HTMLElement;
+    expect(placa.closest('.sm2-evo-namerow')).toBeTruthy();
+    expect(placa.className).toContain('sm2-evo-segurada');
     expect(l2.getAttribute('title')).toMatch(/não protege os corações/);
     expect(document.querySelector('[data-evo-lock-status]')?.getAttribute('role')).toBe('status');
     expect(document.querySelector('[data-evo-lock-status]')?.textContent).toMatch(/não protege os corações/);
   });
+
+  it('cabeçalho mostra o estágio por extenso sob o nome; os nós não escrevem estágio nem BLOQUEADA/PREVISTA', () => {
+    renderWithCss(<EvolutionPath {...base} language="en-US" />);
+    expect(document.querySelector('[data-evo-stage-name]')?.textContent).toBe('Rookie');
+    expect(screen.queryByText('LOCKED')).toBeNull();
+    expect(screen.queryByText('FORECAST')).toBeNull();
+  });
 });
+

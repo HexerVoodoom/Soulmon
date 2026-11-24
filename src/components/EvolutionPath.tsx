@@ -67,6 +67,17 @@ import { RitualDialog } from './ritual/RitualKit';
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
+import { EvoBar } from './evolution/EvoBar';
+import curvaEsqAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3.png';
+import curvaEsqAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3@2x.png';
+import curvaEsqInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3.png';
+import curvaEsqInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3@2x.png';
+import curvaDirAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3.png';
+import curvaDirAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3@2x.png';
+import curvaDirInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3.png';
+import curvaDirInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3@2x.png';
+import cadeadoAberto from '../assets/soulmon/evo/cadeado-B-aberto.png';
+import cadeadoFechado from '../assets/soulmon/evo/cadeado-B-fechado.png';
 import { InfoTip, ModalInfo } from './ui/InfoTip';
 import { playVisorTune } from '../utils/sounds';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -203,16 +214,35 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** Conectores da árvore (09/11/2026): as três cores dos caminhos saindo do rookie (`split`) e voltando ao ultra (`join`) — o mesmo desenho do site do beta. */
-function TreeLinks({ mode }: { mode: 'split' | 'join' }) {
-  const xs = [50, 150, 250];
-  const d = (x: number) => (mode === 'split' ? `M150 0C150 22 ${x} 18 ${x} 28` : `M${x} 0C${x} 22 150 18 150 28`);
+const CURVAS = {
+  esq: { ativo: [curvaEsqAtivo1x, curvaEsqAtivo2x], inativo: [curvaEsqInativo1x, curvaEsqInativo2x] },
+  dir: { ativo: [curvaDirAtivo1x, curvaDirAtivo2x], inativo: [curvaDirInativo1x, curvaDirInativo2x] },
+} as const;
+
+/** Conectores da árvore: uma faixa 300×48 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
+ *  O MEIO é a linha procedural de sempre (reta, cor do ramo). `split` sai do rookie; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). */
+/** Cor do GLOW da árvore (dono, 24/11/2026): só para esse uso — Benevolência é ouro de verdade; `ATTR_COLOR` (âmbar) segue valendo nos demais lugares. */
+const GLOW_COLOR: Record<Attr, string> = { power: ATTR_COLOR.power, harmony: ATTR_COLOR.harmony, benevolence: '#F2C230' };
+
+function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
+  const meio = ATTR_ORDER[1];
   return (
-    <svg viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true" data-testid={`sm-arvore-ligacao-${mode}`} style={{ display: 'block', width: '100%', height: 28, overflow: 'visible' }}>
-      {ATTR_ORDER.map((a, i) => (
-        <path key={a} d={d(xs[i])} fill="none" stroke={ATTR_COLOR[a]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
-      ))}
-    </svg>
+    <div
+      aria-hidden="true"
+      data-testid={`sm-arvore-ligacao-${mode}`}
+      className={mode === 'join' ? 'sm2-evo-ligacao sm2-evo-ligacao--join' : 'sm2-evo-ligacao'}
+    >
+      {([['esq', ATTR_ORDER[0]], ['dir', ATTR_ORDER[2]]] as const).map(([lado, a]) => {
+        const estado = a === currentBranch ? 'ativo' : 'inativo';
+        const [x1, x2] = CURVAS[lado][estado];
+        return (
+          <img key={a} data-conector={estado} data-conector-ramo={a} src={x1} srcSet={`${x1} 1x, ${x2} 2x`} alt="" className="sm2-evo-conector" />
+        );
+      })}
+      <svg viewBox="0 0 300 48" preserveAspectRatio="none" data-conector="procedural" data-conector-ramo={meio} className="sm2-evo-conector">
+        <path d="M150 0L150 48" fill="none" stroke={ATTR_COLOR[meio]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
+      </svg>
+    </div>
   );
 }
 
@@ -586,7 +616,7 @@ export function EvolutionPath({
       unseen: acervo.tunedUnseen.includes(stageId),
     });
 
-  const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0' };
+  const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0', color: 'var(--sm2-ink)', opacity: 0.85 };
 
   /* D1 (15/09/2026): o pago recebe o rookie gerado e as formas seguintes sob
      demanda. Enquanto uma forma está GERANDO o visor mostra o cristal apagado (rookie) ou
@@ -806,7 +836,7 @@ export function EvolutionPath({
         style={{
           fontFamily: 'var(--sm2-font-text)',
           fontSize: 'var(--sm2-text-xs)',
-          fontWeight: 600,
+          fontWeight: 700,
           letterSpacing: '.04em',
           lineHeight: 'var(--sm2-leading-body)',
           minHeight: 24,
@@ -815,8 +845,8 @@ export function EvolutionPath({
           boxSizing: 'border-box',
           display: 'inline-flex',
           alignItems: 'center',
-          backgroundColor: tone === 'current' ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-          color: tone === 'current' ? 'var(--sm2-primary-ink)' : tone === 'gold' ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)',
+          backgroundColor: tone === 'current' ? 'color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent)' : 'var(--sm2-surface-2)',
+          color: tone === 'current' ? 'var(--sm2-ink)' : tone === 'gold' ? 'var(--sm2-gold-ink)' : 'var(--sm2-ink)',
         }}
       >
         {texto}
@@ -826,17 +856,18 @@ export function EvolutionPath({
     return (
       <div
         key={stageId}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, inlineSize: '100%', maxInlineSize: '100%', boxSizing: 'border-box', textAlign: 'center' }}
         data-testid={`sm-no-${stageId}`}
         data-estagio={evolution.stage}
       >
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', marginBlockEnd: 'var(--sm2-space-3)' }}>
           <SoulNode
             visual={visual}
             sprite={arteDoNo}
             silhouette={hidden && Boolean(arteVerdadeira)}
             busy={estado === 'GERANDO'}
             ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
+            glowColor={(isCurrent || isForecast) && ramoAttr ? GLOW_COLOR[ramoAttr] : undefined}
             label={nodeLabel}
             title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
             onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : abrir}
@@ -845,20 +876,15 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere' }}>
-          {hidden ? '???' : evolution.name}
-        </p>
-        <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-          <EstagioIcone forma={stageId} size={16} />
-          {!hidden && <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>}
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-evo-nome-fs, var(--sm2-text-sm))', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', inlineSize: '100%', boxSizing: 'border-box', minInlineSize: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'safe center', gap: 4 }}>
+          <span style={{ flex: 'none', display: 'inline-flex' }}><EstagioIcone forma={stageId} size={16} /></span>
+          <span data-testid={`sm-nome-no-${stageId}`} title={hidden ? undefined : evolution.name} style={{ minInlineSize: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto' }}>{hidden ? '???' : evolution.name}</span>
         </p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
           {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
-          {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
           {/* X3: o cadeado do jogador é "ON HOLD", nunca "LOCKED" — a coleção trancada é outra coisa (BLOQUEADA). */}
           {isCurrent && evolutionLocked && tag(isPt ? 'SEGURADA' : 'ON HOLD')}
           {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
-          {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
         </div>
         {/* A espiada NÃO persiste (só a sessão), e o card diz isso. */}
         {isRevealed && !isReached && (
@@ -895,6 +921,7 @@ export function EvolutionPath({
             isPt={isPt}
             formId={fid}
             nomeDaForma={opcoes.evolution.name}
+            nomeDoEstagio={L(opcoes.evolution.stageName)}
             itens={itens}
             formasAlt={formasAlt}
             modo={opcoes.modo}
@@ -1056,25 +1083,6 @@ export function EvolutionPath({
             {/* P7 (beta-2): a FAÍSCA estática da evolução pronta (X2: o quadro 4 do `anim-sparkle-pop`, parado no canto) SAIU — parada, a
                 dispersão lia como pixels SOLTOS à direita da criatura. A evolução pronta já tem as suas vozes (a placa, a barra cheia e a
                 frase "a próxima forma está tomando corpo"); o FX animado vive na Home. */}
-            {/* "ON HOLD" na língua do vidro (D-E5): a MESMA peça do "EVOLVE"
-                da Home (`.sm2-pxbtn` — Silkscreen 14 na moldura pixel a ½×
-                sobre placa `viewport-bg` 78%), aqui como placa, não botão:
-                o gesto é o visor inteiro, e o `aria-label` já diz "on hold". */}
-            {evolutionLocked && (
-              <span
-                aria-hidden="true"
-                data-onhold-plate
-                className="sm2-pxbtn"
-                style={{
-                  position: 'absolute', right: 8, top: 8, zIndex: 5,
-                  minHeight: 32, minWidth: 0, padding: '0 6px', cursor: 'inherit', pointerEvents: 'none',
-                  borderImageSource: `url(${HUD_ART.frame})`,
-                  borderImageSlice: HUD_ART.frameSlice,
-                }}
-              >
-                {isPt ? 'SEGURADA' : 'ON HOLD'}
-              </span>
-            )}
             {/* A varredura de 400 ms que acompanha o fade — o par que a spec
                 chama de "sintonia" (§2.1 e §2.3.1). Irmã do
                 `.sm2-viewport-glass`: `position:absolute` recortada pela tela e
@@ -1110,6 +1118,10 @@ export function EvolutionPath({
         >
           {formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
         </h2>
+          {/* "ON HOLD" ao lado do nome (mesma linha, junto do cadeado) — antes era uma placa por cima do sprite. */}
+          {evolutionLocked && (
+            <span aria-hidden="true" data-onhold-plate className="sm2-evo-segurada">{isPt ? 'SEGURADA' : 'ON HOLD'}</span>
+          )}
           {!naoEvolui && onToggleEvolutionLock && (
             <button
               type="button"
@@ -1120,10 +1132,13 @@ export function EvolutionPath({
               aria-label={isPt ? 'Segurar evolução' : 'Evolution hold'}
               title={evolutionLocked ? textoSegurada : (isPt ? 'Segurar evolução' : 'Evolution hold')}
             >
-              <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+              <img src={evolutionLocked ? cadeadoFechado : cadeadoAberto} alt="" aria-hidden="true" data-lock-art={evolutionLocked ? 'fechado' : 'aberto'} width={28} height={28} className="sm2-evo-lock-img" />
             </button>
           )}
         </div>
+        {formaAtual && (
+          <p data-evo-stage-name style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{L(formaAtual.stageName)}</p>
+        )}
         <p role="status" style={soParaLeitor} data-evo-lock-status>{evolutionLocked ? textoSegurada : ''}</p>
 
         {/* OFFLINE (D9): a geração de sprite é a única superfície de rede
@@ -1159,26 +1174,24 @@ export function EvolutionPath({
           </div>
         )}
         {!naoEvolui && !ultraTravado && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-          <div
-            className="sm2-kit-meter"
+          <EvoBar
             data-evo-meter
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={gaugeGoal}
             aria-valuenow={Math.min(evolutionPoints, gaugeGoal)}
             aria-label={fragmentBarLabel(false, language)}
-            style={{ height: 12, position: 'relative', ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
           >
             {/* A prévia de hoje: mais clara, atrás do creditado. Entra na virada. */}
             {ratioComHoje > ratio && (
               <div
                 data-evo-meter-today
                 aria-hidden="true"
-                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.round(ratioComHoje * 100)}%`, background: 'var(--sm2-primary-soft)' }}
+                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.round(ratioComHoje * 100)}%`, background: 'var(--sm2-primary-soft)', borderRadius: 2 }}
               />
             )}
-            <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%`, position: 'relative' }} />
-          </div>
+            <div className="sm2-evo-recap-fill" data-evo-meter-fill style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${Math.round(ratio * 100)}%`, borderRadius: 2 }} />
+          </EvoBar>
           {gaugeGoal > 0 && (
             <p data-evo-gauge-count style={{ ...sm2Hint, margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
               <SoulFragmentIcon size={16} />
@@ -1377,8 +1390,8 @@ export function EvolutionPath({
             {rookie && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(rookie)}</div>}
             {!naoEvolui && !arvoreVazia && (
               <>
-                <TreeLinks mode="split" />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
+                <TreeLinks mode="split" currentBranch={currentBranch} />
+                <div className="sm2-evo-caminhos" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
                   {caminhos.map(({ attr, path }) => (
                     <div key={attr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} data-testid={`sm-caminho-${attr}`} role="group" aria-label={L(ATTR_LABEL[attr])}>
                       <p
@@ -1394,14 +1407,14 @@ export function EvolutionPath({
                       </p>
                       {path.map((evo, i) => (
                         <div key={creatureFormId(evo)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                          {i > 0 && <span aria-hidden="true" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: ATTR_COLOR[attr], opacity: 0.85, boxShadow: `0 0 4px ${ATTR_COLOR[attr]}` }} />}
+                          {i > 0 && <span aria-hidden="true" data-testid="sm-caminho-barra" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: GLOW_COLOR[attr], opacity: 1, boxShadow: `0 0 4px ${GLOW_COLOR[attr]}` }} />}
                           {renderEvolutionCard(evo)}
                         </div>
                       ))}
                     </div>
                   ))}
                 </div>
-                <TreeLinks mode="join" />
+                <TreeLinks mode="join" currentBranch={currentBranch} />
               </>
             )}
             {!naoEvolui && ultra && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(ultra)}</div>}
