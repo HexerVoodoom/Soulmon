@@ -66,7 +66,7 @@ export function SoulNode({
     background: 'transparent',
     cursor: onClick ? 'pointer' : undefined,
     borderRadius: '50%',
-    ...(glowColor ? { boxShadow: `0 0 12px 2px ${glowColor}` } : null),
+    ...(glowColor ? { boxShadow: `0 0 var(--sm2-evo-glow-blur, 12px) var(--sm2-evo-glow-spread, 2px) ${glowColor}` } : null),
   };
   const inset = (NODE_SIZE - NODE_GLASS) / 2;
 

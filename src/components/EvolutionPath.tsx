@@ -876,7 +876,7 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-evo-nome-fs, var(--sm2-text-sm))', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <EstagioIcone forma={stageId} size={16} />
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{hidden ? '???' : evolution.name}</span>
         </p>
@@ -1391,7 +1391,7 @@ export function EvolutionPath({
             {!naoEvolui && !arvoreVazia && (
               <>
                 <TreeLinks mode="split" currentBranch={currentBranch} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
+                <div className="sm2-evo-caminhos" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
                   {caminhos.map(({ attr, path }) => (
                     <div key={attr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} data-testid={`sm-caminho-${attr}`} role="group" aria-label={L(ATTR_LABEL[attr])}>
                       <p

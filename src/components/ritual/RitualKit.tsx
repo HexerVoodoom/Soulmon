@@ -119,7 +119,7 @@ export function RitualDialog({
           aria-labelledby={labelledBy}
           tabIndex={-1}
           data-theme="dark"
-          className={['sm2-moldura-ritual', className].filter(Boolean).join(' ')}
+          className={['sm2-moldura-ritual', title != null ? 'sm2-moldura-ritual--titulo' : '', className].filter(Boolean).join(' ')}
           style={{ outline: 'none', width: '100%', maxWidth, maxHeight: '90vh', ...style }}
         >
           {closeLabel && !closeLast && closeButton}

@@ -7496,6 +7496,15 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Diálogo centrado (`RitualDialog`): o miolo rola e carrega o respiro/gap que o cartão liso tinha. */
 .sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
 .sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
+.sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo { padding-top: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); scrollbar-gutter: stable; }
+.sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo > * { padding-right: calc(var(--u) * 2); }
+/* Árvore da evolução: colunas com respiro; em contêiner estreito a fonte, o glow e as legendas encolhem um passo. */
+.sm2-evo-caminhos { container-type: inline-size; column-gap: var(--sm2-space-2); }
+.sm2-evo-caminhos > * { min-inline-size: 0; padding-inline: var(--sm2-space-1); }
+@container (max-width: 380px) {
+  .sm2-evo-caminhos > * { --sm2-evo-nome-fs: var(--sm2-text-xs); --sm2-evo-glow-blur: 8px; --sm2-evo-glow-spread: 1px; --sm2-evo-hint-lh: 1.25; }
+}
+.sm2-evo-caminhos [data-testid^="sm-estado-"] { line-height: var(--sm2-evo-hint-lh, inherit); text-wrap: balance; }
 .sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
 /* MOLDURA FINAL DO DONO (24/11/2026, `AreaSheet` padrão): madeira com cipós e gemas, medalhão vazio à esquerda (✕), ornamento (i) à direita, placa teal.
    Mesmo método do painel (topo/base em `--u` com proporção da arte @720, lados repeat-y); medidas em u = 1% da largura = 7,2 px do arquivo.
