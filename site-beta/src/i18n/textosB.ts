@@ -7,7 +7,7 @@ import { CONTATO } from './textos';
 const pt = {
   titulo: 'Soulmon: acesso antecipado para Android',
   desc: 'Crie uma criatura nascida da sua personalidade, cumpra atividades da vida real e evolua seu Soulmon. Acesso antecipado para Android.',
-  cta: 'Quero acesso antecipado', ctaConvite: 'Quero acesso antecipado',
+  cta: 'Entrar no acesso antecipado', ctaConvite: 'Entrar no acesso antecipado',
   hero: {
     eyebrow: 'ACESSO ANTECIPADO · ANDROID',
     // Uma entrada por linha;   = espaço que não quebra. "ações reais" nunca se separa.

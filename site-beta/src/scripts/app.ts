@@ -181,6 +181,14 @@ function passoAPasso() {
 }
 
 // Clique no Google Group (dono, 12/11): conta por dia + UTM (allowlist), sem dado pessoal. Não atrasa nem bloqueia a navegação.
+// UTM da página segue nos links de saída do passo a passo (Google Group e Play); o servidor só conta o clique do grupo.
+function utmNosLinks() {
+  const u = utm(); const chaves = Object.keys(u) as ('source' | 'medium' | 'campaign')[]; if (!chaves.length) return;
+  for (const a of $$<HTMLAnchorElement>('a[href^="https://groups.google.com"], a[href^="https://play.google.com"]')) {
+    try { const url = new URL(a.href); for (const k of chaves) url.searchParams.set('utm_' + k, String(u[k])); a.href = url.toString(); } catch { /* link intacto */ }
+  }
+}
+
 function cliqueGrupo() {
   const links = $$('[data-clique]'); if (!links.length) return;
   const lang = document.documentElement.lang.startsWith('pt') ? 'pt-BR' : 'en';
@@ -608,7 +616,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); cliqueGrupo(); medicao(); passoAPasso(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); utmNosLinks(); cliqueGrupo(); medicao(); passoAPasso(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
