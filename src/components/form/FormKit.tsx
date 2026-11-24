@@ -577,12 +577,15 @@ export function ModalSheet({
         <div
           style={{
             overflowY: 'auto', ...(framed ? { flex: 1, minHeight: 0 } : null),
+            /* Moldura dono (folha de baixo): a rolagem COMEÇA abaixo da placa de título (`--sm2-moldura-pad-t`, como o `AreaSheet`), então o 1º campo
+               nunca fica atrás dela, nem rolando nem com o teclado aberto; o `padding-top` é só o respiro. */
+            ...(donoSheet ? { marginTop: 'var(--sm2-moldura-pad-t)' } : null),
             padding: framed && centered
               /* Popup central com moldura: o respiro vem dos tokens da moldura (texto não encosta na placa nem nas bordas). */
               ? 'calc(var(--sm2-moldura-pad-t) + 8px) calc(var(--sm2-moldura-pad-x) + 4px) 20px'
               : footer
-                ? '4px 18px 18px'
-                : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
+                ? `${donoSheet ? 8 : 4}px 18px 18px`
+                : `${donoSheet ? 8 : 4}px 18px calc(18px + env(safe-area-inset-bottom, 0px))`,
             display: 'flex', flexDirection: 'column', gap: 18,
           }}
         >
