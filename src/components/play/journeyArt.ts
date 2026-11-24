@@ -1,11 +1,11 @@
 /** Arte da jornada do foco (§247, §27 de docs/ASSETS-A-GERAR.md). Falta arte = fallback desenhado (SVG/ícone). */
 import type { JourneyKeyId } from '../../utils/focusJourney';
-import floresta from '../../assets/focus-jornada/cenario-floresta.webp';
-import costa from '../../assets/focus-jornada/cenario-costa.webp';
-import caverna from '../../assets/focus-jornada/cenario-caverna.webp';
-import jardim from '../../assets/focus-jornada/cenario-jardim.webp';
-import oficina from '../../assets/focus-jornada/cenario-oficina.webp';
-import observatorio from '../../assets/focus-jornada/cenario-observatorio.webp';
+import floresta from '../../assets/soulmon/jornada/bloco-floresta.webp';
+import costa from '../../assets/soulmon/jornada/bloco-costa.webp';
+import caverna from '../../assets/soulmon/jornada/bloco-caverna.webp';
+import jardim from '../../assets/soulmon/jornada/bloco-jardim.webp';
+import oficina from '../../assets/soulmon/jornada/bloco-oficina.webp';
+import observatorio from '../../assets/soulmon/jornada/bloco-observatorio.webp';
 import bauComum from '../../assets/focus-jornada/bau-comum.webp';
 import bauBancada from '../../assets/focus-jornada/bau-bancada.webp';
 import bauElo from '../../assets/focus-jornada/bau-elo.webp';
