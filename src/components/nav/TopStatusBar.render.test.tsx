@@ -73,6 +73,14 @@ describe('TopStatusBar: ordem, abreviação e rótulos', () => {
     expect(document.documentElement.style.getPropertyValue('--sm2-topbar-push')).toBe('');
   });
 
+  it('dicas de Bits, Honra e Créditos (PT)', () => {
+    const { container } = renderWithCss(<TopStatusBar data={dados} />);
+    const dica = (pref: string) => { fireEvent.click(container.querySelector(`[data-info-tip][aria-label^="${pref}"]`)!); const t = document.querySelector('[role="note"]')!.textContent ?? ''; fireEvent.pointerDown(document.body); return t; };
+    expect(dica('5.000 Bits')).toMatch(/minijogos/);
+    expect(dica('1.234 de Honra')).toMatch(/Torneio/);
+    expect(dica('99.999 Créditos')).toMatch(/dinheiro real/);
+  });
+
   it('sem prop e sem contexto não renderiza nada', () => {
     const { container } = renderWithCss(<TopStatusBar />);
     expect(container.querySelector('[data-topbar]')).toBeNull();
