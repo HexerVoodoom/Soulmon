@@ -125,12 +125,11 @@ const FORA_DO_ESCOPO_HOJE: readonly string[] = [
   ".sm2-moldura-card__lado--d => moldura/card-lado-d.webp",
   ".sm2-moldura-card__topo => moldura/card-topo.webp",
   ".sm2-moldura-card__base => moldura/card-base.webp",
-  ".sm2-moldura-modal--cristal::after => moldura-cristal/popup-cristal-1024.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa => moldura-cristal/placa-titulo-meio.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before => moldura-cristal/placa-titulo-esq.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after => moldura-cristal/placa-titulo-dir.webp",
 ];
-const TETO = 68;
+const TETO = 67;
 
 describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
   it('AUTOVERIFICAÇÃO: o parser enxerga regras de arte e distingue o escopo', () => {
