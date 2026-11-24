@@ -39,6 +39,26 @@ const open = (evento: FeiraEvento, api: FeiraApi, language: 'en-US' | 'pt-BR' = 
 };
 const q = (sel: string) => document.querySelector(sel) as HTMLElement | null;
 
+describe('Folha do NPC (Fanfare, título inline)', () => {
+  it.each([['en-US', 'A mystery on the path', 'Something showed up on the path while your Soulmon was out.', 'Attack'], ['pt-BR', 'Um mistério no caminho', 'Algo apareceu no caminho enquanto o seu Soulmon estava fora.', 'Atacar']] as const)('%s: NPC, título inline, sem as linhas explicativas, botão Attack', (lang, title, npcLine, atk) => {
+    open(boss, mk(), lang);
+    expect(q('[data-area-sheet-npc]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Fanfare');
+    expect(document.body.textContent).toContain(npcLine);
+    expect(q('[data-popup-titulo]')!.textContent).toBe(title);
+    expect(q('[data-area-sheet-close]')).not.toBeNull();
+    expect(q('.sm2-moldura-modal__titulo')).toBeNull();
+    expect(document.body.textContent).not.toContain(feiraText(lang, 'boss.today'));
+    expect(q('[data-feira-mesmo-dia]')).toBeNull();
+    expect(q('[data-feira-atacar]')!.textContent).toBe(atk);
+  });
+  it('sem canAttack: Close, sem Attack', () => {
+    open({ ...boss, canAttack: false }, mk());
+    expect(q('[data-feira-fechar]')).not.toBeNull();
+    expect(q('[data-feira-atacar]')).toBeNull();
+  });
+});
+
 describe('Chefe', () => {
   it('mostra o chefe e só o AGREGADO do clã; atacar abre a luta e o resultado com o dano do próprio golpe', async () => {
     const api = mk();
@@ -60,6 +80,7 @@ describe('Chefe', () => {
     fireEvent.click(q('[data-feira-atacar]')!);
     await waitFor(() => expect(q('[data-feira-nota]')!.textContent).toBe(feiraText('en-US', 'boss.today')));
     expect(q('[data-feira-atacar]')).toBeNull();
+    expect(q('[data-feira-fechar]')).not.toBeNull(); // sem canAttack o botão vira Close
   });
 
   it('o "já bateu hoje" do servidor FECHA o desafio do dia no aparelho (a sala não oferece atacar de novo)', async () => {

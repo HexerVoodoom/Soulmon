@@ -35,7 +35,7 @@ export const MOLDURA_MODAL = true;
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', titulo = 'placa', children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -73,6 +73,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Variante da moldura (só com `MOLDURA_MODAL`). `'aco'` (18/11/2026, decisão do dono: SÓ a Hexsmith) = a moldura de AÇO com runas
    *  (`assets/soulmon/ui/hex-moldura/`): o ✕ entra no disco ESQUERDO do topo, o "i" no direito, o título na placa central e o cristal-chama no encaixe. */
   moldura?: 'padrao' | 'aco';
+  /** 23/11/2026 (dono, P3 Passeio): `'inline'` = SEM placa de bronze: o ✕ (`.sm2-popup-fechar`) no canto superior DIREITO e o título logo abaixo, dentro da folha (mesma variante do
+   *  `ModalSheet titulo="inline"`). Só com `MOLDURA_MODAL` e sem `aco`; o padrão (`'placa'`) não muda. */
+  titulo?: 'placa' | 'inline';
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -88,6 +91,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   if (!open) return null;
   const frame = npcFrame ?? npcFrameFor(areaId, lotId);
   const aco = MOLDURA_MODAL && moldura === 'aco';
+  const inline = MOLDURA_MODAL && !aco && titulo === 'inline';
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -119,7 +123,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        {!closeInSheet && !hideClose && !aco && (
+        {!closeInSheet && !hideClose && !aco && !inline && (
           <BackCircleButton
             data-area-sheet-close=""
             onClick={() => onClose()}
@@ -179,9 +183,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 
         <SheetShell
           data-area-sheet
-          title={title}
+          title={inline ? undefined : title}
           fundo={fundoDoLote(areaId, lotId)}
-          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : 'sm2-sheet-rise'}
+          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : inline ? 'sm2-sheet-rise sm2-moldura-modal--titulo-inline sm2-area-sheet-inline' : 'sm2-sheet-rise'}
           data-moldura-variante={aco ? 'aco' : undefined}
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
@@ -231,9 +235,21 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               top: 0`) encostar no título sem vão — o conteúdo não aparece mais
               passando por trás numa faixa entre os dois. O respiro de cima é um
               espaçador que rola junto. */}
+          {inline && (
+            <div data-area-sheet-inline-head style={{ flexShrink: 0, marginTop: 'var(--sm2-moldura-pad-t)', position: 'relative', zIndex: 4 }}>
+              {!hideClose && (
+                <div className="sm2-popup-fechar-linha">
+                  <button type="button" className="sm2-popup-fechar" data-area-sheet-close="" onClick={e => { e.stopPropagation(); onClose(); }} aria-label={closeLabel} title={closeLabel}>
+                    <Icon name="close" size={24} tone="inherit" />
+                  </button>
+                </div>
+              )}
+              <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
+            </div>
+          )}
           <div data-area-sheet-body style={MOLDURA_MODAL
             // Com a moldura: o rolável começa sob a placa e vai até a borda de baixo — por baixo das peças —, com respiro (`--sm2-moldura-pad-*`) para o fim não ficar escondido.
-            ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
+            ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: inline ? 0 : 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
             : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
             <AcoVoltarProvider value={aco ? acoVoltar.ctx : null}>
