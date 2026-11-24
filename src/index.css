@@ -3100,7 +3100,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
      texto menor no app, nem legenda, nem rodapé de card. */
   /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px dentro da moldura `chip-moeda` (tampas de 16px). */
-  --sm2-moeda-w: 120px;
+  --sm2-moeda-w: 128px;
 
   --sm2-text-xs: 12px;
   --sm2-text-sm: 14px;
@@ -7673,24 +7673,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
 .sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
 
-/* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
-.sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }
-.sm2-forja-resultado-arte { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; }
-.sm2-forja-resultado-arte img { max-width: 100%; height: auto; object-fit: contain; }
-.sm2-forja-resultado-nome { font-size: var(--sm2-text-lg); color: var(--sm2-ink); overflow-wrap: anywhere; }
-.sm2-forja-resultado-efeito { margin: 0; color: var(--sm2-muted); overflow-wrap: anywhere; }
-.sm2-forja-resultado-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-2); }
-/* Aviso Sim/Não de encerrar a sessão (15.3): botões lado a lado, cabem em 360 px. */
-.sm2-encerrar-acoes { display: flex; justify-content: center; gap: var(--sm2-space-2); }
-.sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
-.sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
-
-/* Pílulas de moeda do HUD do mapa: as 3 IGUAIS (ícone + valor), mesma largura FIXA, sem encolher nem sobrepor (QA 24/11/2026). */
+/* Pílulas de moeda do HUD do mapa: as 3 IGUAIS (ícone + valor), mesma largura FIXA, sem encolher nem sobrepor (QA 24/11/2026). Gap VISUAL de 6px (4+2): o toque de 44 do botão (min-height 34 + margem negativa do `alvo44`) passa 2px para cada lado, então áreas vizinhas dividem 4px — aceito de propósito, são dicas de moeda, não ações destrutivas. */
 .sm2-moeda-hud {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--sm2-space-3);
+  gap: calc(var(--sm2-space-1) + var(--sm2-space-half));
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
 }
 .sm2-moeda {
@@ -7721,10 +7709,26 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   color: var(--sm2-viewport-ink);
 }
 .sm2-moeda__val {
+  box-sizing: border-box;
+  padding: 0 var(--sm2-space-1);
+  border: 1px solid var(--sm2-bronze-fill);
+  border-radius: var(--sm2-radius-sm);
   color: var(--sm2-viewport-ink);
   font-variant-numeric: lining-nums tabular-nums;
   text-align: end;
 }
+/* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
+.sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }
+.sm2-forja-resultado-arte { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; }
+.sm2-forja-resultado-arte img { max-width: 100%; height: auto; object-fit: contain; }
+.sm2-forja-resultado-nome { font-size: var(--sm2-text-lg); color: var(--sm2-ink); overflow-wrap: anywhere; }
+.sm2-forja-resultado-efeito { margin: 0; color: var(--sm2-muted); overflow-wrap: anywhere; }
+.sm2-forja-resultado-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-2); }
+/* Aviso Sim/Não de encerrar a sessão (15.3): botões lado a lado, cabem em 360 px. */
+.sm2-encerrar-acoes { display: flex; justify-content: center; gap: var(--sm2-space-2); }
+.sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
+.sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
+
 /* NOVA TAREFA / NOVO HÁBITO — espaçamento (PR i). Escala única: seções a --sm2-space-4; rótulo↔controle e chips↔energias a --sm2-space-2/-3.
    O corpo é o ÚNICO filho do rolável do `ModalSheet` (que traz o gap 18 próprio): o respiro do topo afasta o campo da barra de título e o de baixo
    (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */

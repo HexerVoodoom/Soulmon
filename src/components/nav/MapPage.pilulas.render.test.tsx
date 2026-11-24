@@ -4,6 +4,7 @@ import { cleanup } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MapPage } from './MapPage';
+import { alvo44 } from '../ui/InfoTip';
 import { aquecerRender, computed, renderWithCss } from '../../test/renderEnv';
 
 beforeAll(aquecerRender, 60_000);
@@ -34,7 +35,7 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
       }
       expect(new Set(pills.map(p => computed(p, 'width'))).size).toBe(1);
       const hud = container.querySelector('[data-map-currencies]') as HTMLElement;
-      expect(computed(hud, 'gap')).toBe('var(--sm2-space-3)');
+      expect(computed(hud, 'gap')).toBe('calc(var(--sm2-space-1) + var(--sm2-space-half))');
       expect(computed(hud, 'flex-direction')).toBe('column');
     });
   }
@@ -55,12 +56,27 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
     expect(miolo).toContain('color: var(--sm2-viewport-ink)');
     expect(css).not.toContain('--sm2-moeda-fundo');
     expect(css).not.toContain('barra-moeda');
-    expect(bloco('.sm2-moeda-hud')).toMatch(/gap:\s*var\(--sm2-space-3\)/);
+    expect(bloco('.sm2-moeda-hud')).toContain('gap: calc(var(--sm2-space-1) + var(--sm2-space-half))');
+    // filete de bronze na área do valor (token, sem cor solta)
+    expect(bloco('.sm2-moeda__val')).toContain('border: 1px solid var(--sm2-bronze-fill)');
     expect(bloco('.sm2-moeda__in')).toMatch(/gap:\s*var\(--sm2-space-1\)/);
-    expect(css).toMatch(/--sm2-moeda-w:\s*120px/);
+    expect(css).toMatch(/--sm2-moeda-w:\s*128px/);
     for (const s of ['.sm2-moeda', '.sm2-moeda-hud', '.sm2-moeda__in', '.sm2-moeda__val']) {
       expect(bloco(s)).not.toMatch(/all:\s*unset|#[0-9a-f]{3,8}\b/i);
     }
+  });
+
+  it('pílulas mais juntas (gap visual 6px) e área de toque >= 44 em cada uma (vizinhas dividem 4px)', () => {
+    const GAP = 6; // 4 (space-1) + 2 (space-half)
+    const VISUAL = 34; // min-height de .sm2-moeda__in = 6 + ícone 22 + 6
+    expect(bloco('.sm2-moeda__in')).toContain('min-height: 34px');
+    // o botão pede minHeight 34 ao InfoTip; o alvo44 devolve 44 de toque com margem negativa compensada
+    const hit = alvo44({ minHeight: VISUAL, minWidth: 128 });
+    expect(hit.minHeight).toBe(44);
+    expect(hit.margin).toBe('-5px -0px');
+    const sobra = 44 - (VISUAL + GAP);
+    expect(sobra).toBeGreaterThan(0);
+    expect(sobra).toBeLessThanOrEqual(4);
   });
 
   it('valor em EN usa vírgula de milhar e o rótulo acessível segue o idioma', () => {
