@@ -125,7 +125,7 @@ describe('TalentTree', () => {
     const conf = confirmBtn();
     const canc = document.querySelector('[data-talent-cancel]')!;
     expect(conf.hasAttribute('data-cta-button')).toBe(false);
-    expect((conf as HTMLElement).style.getPropertyValue('--sm2-btn')).toBe('primary');
+    expect((conf as HTMLElement).style.getPropertyValue('--sm2-btn')).toBe('disabled');
     expect((canc as HTMLElement).style.getPropertyValue('--sm2-btn')).toBe('quiet');
     expect(canc.compareDocumentPosition(conf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(conf.parentElement!.hasAttribute('data-cta-stack')).toBe(false);
