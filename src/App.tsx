@@ -6120,15 +6120,6 @@ export default function App() {
     return trv.strollSummary(gameState.crossings ?? CROSSINGS_EMPTY, dayKeyToIso(r.date) ?? r.date, language === 'pt-BR');
   }, [gameState.lastDayReport, gameState.crossings, trv, language]);
 
-  /** O achado de ontem também mora na folha do Passeio (REGISTRO §66) — o mesmo do resumo do dia, só enquanto é recente (≤ 2 dias). */
-  const passeioAchado = useMemo(() => {
-    const r = gameState.lastDayReport;
-    if (!r || !aventuraDaNoite) return null;
-    const t = new Date(r.date).getTime();
-    if (Number.isNaN(t) || Date.now() - t > 2 * 86_400_000) return null;
-    return { adventure: aventuraDaNoite, isNew: false, stroll: strollDaNoite };
-  }, [gameState.lastDayReport, aventuraDaNoite, strollDaNoite]);
-
   /** A animação dos corações começou: grava "já vista" no relatório (idempotente; o updater é puro — footgun 6). */
   const handleHeartsAnimSeen = useCallback(() => {
     setGameState(prev => {
@@ -8925,7 +8916,7 @@ export default function App() {
                    `hallContent`, montados antes do `return`). */
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
-                passeio={{ crossings, onChange: handleCrossings, seed: saveId, achado: passeioAchado, onDone: concluirPasseio, onPicked: () => setTarefaCriada(n => n + 1) }}
+                passeio={{ crossings, onChange: handleCrossings, seed: saveId, onDone: concluirPasseio, onPicked: () => setTarefaCriada(n => n + 1) }}
                 caderno={{ entries: gameState.caderno ?? [], onChange: handleCaderno }}
                 labTab={labTab}
                 onLabTab={setLabTab}
