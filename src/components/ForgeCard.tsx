@@ -88,7 +88,7 @@ function ForgeDialogShell({ mode, onClose, children }: { mode: string; onClose: 
  * soprado no centro, um equipamento por chakra e, ao tocar, o balão com as duas opções de aprimoramento. `view="list"` (padrão) é a lista de
  * cartões anterior, mantida como reserva e para os testes antigos; as regras e os motivos de recusa são os MESMOS nos dois.
  */
-export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list', onBack }: { language?: string; view?: 'list' | 'map'; onBack?: () => void }) {
+export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list', onBack, inline = false }: { language?: string; view?: 'list' | 'map'; onBack?: () => void; inline?: boolean }) {
   const ctx = useGameStateOptional();
   const [pop, setPop] = useState<string | null>(null);
   /** O material cujo "onde conseguir" está aberto no balão (toque no custo). */
@@ -459,9 +459,9 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     });
     return (
       <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
-        <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
-          <TelaMoldura tela="soulsmith-mapa" title="Soulsmith" />
-          <div className="sm2-vit-bar" data-vitra-bar>
+        <VitraMap inline={inline} chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
+          {!inline && <TelaMoldura tela="soulsmith-mapa" title="Soulsmith" />}
+          <div className="sm2-vit-bar" data-vitra-bar hidden={inline || undefined}>
             {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
             <p id="sm2-equip-title" className="sm2-stats-lab sm2-vit-title">Soulsmith</p>
           </div>

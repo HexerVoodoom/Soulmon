@@ -44,8 +44,12 @@ for (const largura of [360, 375, 412]) {
       expect(container.querySelector('[data-area-sheet-npc-line]')?.textContent ?? '').not.toBe(''); // a fala
       const corpo = container.querySelector<HTMLElement>('[data-area-sheet-body]')!;
       expect(corpo.contains(container.querySelector('[data-forge-card]'))).toBe(true);
-      expect(container.querySelector('[data-forge-view="map"]')).toBeNull(); // sem mapa/Vitra duplicada
-      expect(container.querySelector('[data-vitra-map]')).toBeNull();
+      // a ForgeCard ORIGINAL (mapa de chakras com a figura humanoide), embutida no corpo: sem tela cheia, sem moldura de tela, sem barra própria
+      expect(container.querySelector('[data-forge-view="map"]')).not.toBeNull();
+      expect(corpo.querySelector('[data-vitra-map][data-vitra-inline]')).not.toBeNull();
+      expect(container.querySelectorAll('[data-vitra-chakra]')).toHaveLength(3);
+      expect(container.querySelector('[data-vitra-bar][hidden]')).not.toBeNull();
+      expect(container.querySelector('.sm2-moldura-tela')).toBeNull();
       expect(container.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1);
       expect(getComputedStyle(corpo).overflowY).toMatch(/auto|scroll/);
       expect(screen.queryByText(/Ir para a Forja de Alma|Go to the Soul Forge|gear takes shape/i)).toBeNull();
