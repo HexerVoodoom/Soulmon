@@ -4378,7 +4378,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
 
 ### `src/utils/prefetchOnboarding.ts`
-**Dono de:** o pré-download em segundo plano durante o onboarding (REGISTRO §510): escolhe o modo pela rede (Wi-Fi = tudo; resto = essencial), monta a fila a partir de `/prefetch-index.json` dentro do orçamento de quota e provoca os `fetch` (o SW guarda no `ASSET_CACHE`).
+**Dono de:** o pré-download em segundo plano durante o onboarding (REGISTRO §514): escolhe o modo pela rede (Wi-Fi = tudo; resto = essencial), monta a fila a partir de `/prefetch-index.json` dentro do orçamento de quota e provoca os `fetch` (o SW guarda no `ASSET_CACHE`).
 **Exports:** `escolherModo`, `montarFila`, `orcamentoDe`, `iniciarPrefetchOnboarding(deps?)` (devolve `cancelar` com `.pronto`), `FRACAO_QUOTA`, `TETO_SEM_ESTIMATIVA`, `PARALELO`.
 **Chamado por:** `src/components/SoulmonOnboarding.tsx` (import dinâmico, só no modo onboarding).
 **Régua:** `src/utils/prefetchOnboarding.test.ts`, `src/deploy/prefetchIndex.contract.test.ts`, `tests/gerar-prefetch-index.test.ts`.
