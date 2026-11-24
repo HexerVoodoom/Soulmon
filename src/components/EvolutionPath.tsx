@@ -856,7 +856,7 @@ export function EvolutionPath({
     return (
       <div
         key={stageId}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, inlineSize: '100%', maxInlineSize: '100%', boxSizing: 'border-box', textAlign: 'center' }}
         data-testid={`sm-no-${stageId}`}
         data-estagio={evolution.stage}
       >

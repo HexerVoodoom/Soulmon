@@ -7497,7 +7497,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
 .sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
 .sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo { padding-top: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); scrollbar-gutter: stable; }
-.sm2-moldura-ritual--titulo [data-ritual-close-start] { position: absolute; z-index: 4; order: 0; top: calc(var(--u) * 6.4 - 22px); left: calc(var(--u) * 26); margin: 0 !important; }
+.sm2-moldura-ritual--titulo [data-ritual-close-start] { position: absolute; z-index: 4; order: 0; top: calc(var(--u) * 6.4 - 22px); left: calc(var(--u) * 26 - 6px); margin: 0 !important; }
 .sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo > *:not([data-ritual-close-start]) { padding-right: calc(var(--u) * 2); }
 /* Árvore da evolução: colunas com respiro; em contêiner estreito a fonte, o glow e as legendas encolhem um passo. */
 .sm2-evo-caminhos { container-type: inline-size; column-gap: var(--sm2-space-2); }
