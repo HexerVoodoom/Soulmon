@@ -16,6 +16,7 @@ import { CristalChama } from '../ui/CristalChama';
 import { Icon } from '../ui/Icon';
 import { useBackDimmed } from '../../utils/modalDepth';
 import { NavGlyph } from '../ui/NavGlyphs';
+import { TopStatusBar } from './TopStatusBar';
 
 /** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
 export const MOLDURA_MODAL = true;
@@ -149,7 +150,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             display: 'flex', alignItems: 'flex-end', gap: 8,
             // O busto sobe até `NPC_TOP_PAD_PX` (07/10/2026): o ✕ flutua sobre
             // o canto vazio da arte em vez de reservar uma faixa de 60px.
-            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px) 12px 0 12px`,
+            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px + var(--sm2-topbar-push, 0px)) 12px 0 12px`,
             boxSizing: 'border-box',
             overflow: 'hidden',
             pointerEvents: 'none',
@@ -260,6 +261,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             </div>
           )}
         </SheetShell>
+        {/* A barrinha do topo (P2, 24/11/2026): ADITIVA — mesmo componente do Mapa, valores pelo `TopStatusBarContext` (o `App` provê em volta do `AreaView`; fora dele ela não renderiza). Dentro do diálogo, por último: o foco inicial segue no fechar. */}
+        <TopStatusBar />
       </div>
     </div>
   );

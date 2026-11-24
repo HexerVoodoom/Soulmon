@@ -19,12 +19,12 @@ export const CORNER_RING = 44;
 export const CORNER_ICON_SCALE = 1.375;
 const CORNER_RING_INSET = (CORNER_BOX - CORNER_RING) / 2;
 
-/** `top` da caixa de toque de 56. */
-export const CORNER_BOX_TOP = 'calc(env(safe-area-inset-top, 0px) + 6px)';
+/** `top` da caixa de toque de 56. Soma `--sm2-topbar-push` (a altura da barrinha do topo quando ela está montada: Mapa e prédios; 0 nas demais telas). */
+export const CORNER_BOX_TOP = 'calc(env(safe-area-inset-top, 0px) + 6px + var(--sm2-topbar-push, 0px))';
 /** Lateral da caixa de toque de 56. */
 export const CORNER_SIDE = 'var(--sm2-space-3)';
 /** `top` do ANEL de 44 (= caixa + folga) — para quem desenha só o anel. */
-export const CORNER_RING_TOP = `calc(env(safe-area-inset-top, 0px) + ${6 + CORNER_RING_INSET}px)`;
+export const CORNER_RING_TOP = `calc(env(safe-area-inset-top, 0px) + ${6 + CORNER_RING_INSET}px + var(--sm2-topbar-push, 0px))`;
 /** Lateral do ANEL de 44. */
 export const CORNER_RING_SIDE = `calc(var(--sm2-space-3) + ${CORNER_RING_INSET}px)`;
 

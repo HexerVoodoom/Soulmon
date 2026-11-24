@@ -66,7 +66,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
       style={{
         visibility: covered ? 'hidden' : undefined,
         display: 'flex', alignItems: 'center', gap: 'var(--sm2-space-2)',
-        minHeight: 48, margin: overScene ? 'env(safe-area-inset-top, 0px) 0 var(--sm2-space-3)' : '0 0 var(--sm2-space-3)',
+        minHeight: 48, margin: overScene ? 'calc(env(safe-area-inset-top, 0px) + var(--sm2-topbar-push, 0px)) 0 var(--sm2-space-3)' : '0 0 var(--sm2-space-3)',
         ...(overScene ? { position: 'relative', zIndex: 2 } : null),
       }}
     >

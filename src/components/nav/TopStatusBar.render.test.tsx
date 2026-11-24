@@ -1,0 +1,147 @@
+// @vitest-environment jsdom
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { MapPage } from './MapPage';
+import { AreaSheet } from './AreaSheet';
+import { TopStatusBar, TopStatusBarContext, abreviar, type TopStatusBarData } from './TopStatusBar';
+import { aquecerRender, computed, renderWithCss } from '../../test/renderEnv';
+
+beforeAll(aquecerRender, 60_000);
+afterEach(() => { cleanup(); document.documentElement.style.removeProperty('--sm2-topbar-push'); });
+
+const css = readFileSync(join(__dirname, '../../index.css'), 'utf8');
+const bloco = (sel: string) => {
+  const ini = css.indexOf(`\n${sel} {`);
+  if (ini < 0) return '';
+  return css.slice(css.indexOf('{', ini) + 1, css.indexOf('}', ini));
+};
+const token = (nome: string) => Number(new RegExp(`${nome}:\\s*(\\d+)px`).exec(css)![1]);
+
+const dados: TopStatusBarData = { language: 'pt-BR', credits: 99999, emblems: 1234, bits: 5000, hearts: 12, energy: 6, maxEnergy: 6 };
+const slots = (c: HTMLElement) => Array.from(c.querySelectorAll('[data-topbar] [data-topbar-slot]')) as HTMLElement[];
+
+describe('TopStatusBar: ordem, abreviação e rótulos', () => {
+  it('5 slots na ordem do dono: Corações | Energia (esq.) e Créditos | Honra | Bits (dir.)', () => {
+    const { container } = renderWithCss(<TopStatusBar data={dados} />);
+    expect(slots(container).map(s => s.getAttribute('data-topbar-slot'))).toEqual(['coracoes', 'energia', 'credito', 'honra', 'bits']);
+    const [esq, dir] = Array.from(container.querySelectorAll('.sm2-topbar__grupo'));
+    expect(esq.querySelectorAll('[data-topbar-slot]')).toHaveLength(2);
+    expect(dir.querySelectorAll('[data-topbar-slot]')).toHaveLength(3);
+  });
+
+  it('valores: 99999 → 99k, 1234 → 1,2k (PT), Bits 5.000 inteiro, energia "6/6", corações 12', () => {
+    const { container } = renderWithCss(<TopStatusBar data={dados} />);
+    expect(slots(container).map(s => s.textContent)).toEqual(['12', '6/6', '99k', '1,2k', '5.000']);
+  });
+
+  it('abreviar: 99999 → 99k, 1234 → 1.2k (EN), 999 intacto, Bits só abreviam a partir de 10 mil', () => {
+    expect(abreviar(99999, 'en-US')).toBe('99k');
+    expect(abreviar(1234, 'en-US')).toBe('1.2k');
+    expect(abreviar(1000, 'en-US')).toBe('1k');
+    expect(abreviar(999, 'en-US')).toBe('999');
+    expect(abreviar(5000, 'pt-BR', 10000)).toBe('5.000');
+    expect(abreviar(12000, 'pt-BR', 10000)).toBe('12k');
+  });
+
+  it('aria-label por slot (PT e EN) e toque >= 44 de altura', () => {
+    const pt = renderWithCss(<TopStatusBar data={dados} />);
+    const nomes = Array.from(pt.container.querySelectorAll('[data-info-tip]')).map(b => b.getAttribute('aria-label'));
+    expect(nomes).toEqual(['Corações: 12', 'Energia: 6 de 6', '99.999 Créditos — como conseguir', '1.234 de Honra — como conseguir', '5.000 Bits — como conseguir']);
+    cleanup();
+    const en = renderWithCss(<TopStatusBar data={{ ...dados, language: 'en-US' }} />);
+    const names = Array.from(en.container.querySelectorAll('[data-info-tip]')).map(b => b.getAttribute('aria-label'));
+    expect(names).toEqual(['Hearts: 12', 'Energy: 6 of 6', '99,999 Credits — how to get', '1,234 Honor — how to earn', '5,000 Bits — how to earn']);
+    for (const b of Array.from(en.container.querySelectorAll('[data-info-tip]')) as HTMLElement[]) {
+      expect(Number.parseFloat(b.style.minHeight)).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  it('toque no slot abre a dica (nota) e a barra publica --sm2-topbar-push na raiz enquanto está montada', () => {
+    const { container, unmount } = renderWithCss(<TopStatusBar data={dados} />);
+    expect(document.documentElement.style.getPropertyValue('--sm2-topbar-push')).toBe('var(--sm2-topbar-h)');
+    fireEvent.click(container.querySelector('[data-info-tip][aria-label^="5.000 Bits"]')!);
+    expect(document.querySelector('[role="note"]')!.textContent).toMatch(/minijogos/);
+    unmount();
+    expect(document.documentElement.style.getPropertyValue('--sm2-topbar-push')).toBe('');
+  });
+
+  it('sem prop e sem contexto não renderiza nada', () => {
+    const { container } = renderWithCss(<TopStatusBar />);
+    expect(container.querySelector('[data-topbar]')).toBeNull();
+  });
+});
+
+describe('TopStatusBar: geometria nas larguras 360/375/412 (regras lidas do index.css)', () => {
+  const margem = token('--sm2-topbar-margem');
+  const gap = token('--sm2-topbar-gap');
+  const [sm, md, lg] = [token('--sm2-topbar-slot-sm'), token('--sm2-topbar-slot-md'), token('--sm2-topbar-slot-lg')];
+  const esq = sm + gap + md;
+  const dir = lg * 3 + gap * 2;
+  for (const [vw, folga] of [[360, 22], [375, 37], [412, 74]] as const) {
+    it(`${vw}px: cabe sem rolagem horizontal, sem sobreposição, folga central >= ${folga}`, () => {
+      expect(margem).toBe(8);
+      expect(gap).toBe(4);
+      expect(margem + esq + gap + dir + margem).toBeLessThanOrEqual(vw); // `gap` = vão mínimo entre os dois grupos
+      expect(vw - margem * 2 - esq - dir).toBeGreaterThanOrEqual(folga);
+      // posições da geometria da P6: Bits colado à direita (margem 8), Créditos 140 à esquerda dele
+      expect(vw - margem - lg).toBe({ 360: 286, 375: 301, 412: 338 }[vw]);
+      expect(vw - margem - dir).toBe({ 360: 146, 375: 161, 412: 198 }[vw]);
+    });
+  }
+
+  it('o DOM e o CSS: faixa fixa no topo, grupos nas pontas, slots de largura por token, sem rolagem', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 360, configurable: true });
+    const { container } = renderWithCss(<TopStatusBar data={dados} />);
+    const bar = container.querySelector('[data-topbar]') as HTMLElement;
+    expect(computed(bar, 'position')).toBe('fixed');
+    expect(computed(bar, 'top')).toBe('0px');
+    expect(computed(bar, 'justify-content')).toBe('space-between');
+    expect(computed(bar, 'overflow')).toBe('hidden');
+    const largura = (cls: string) => computed(container.querySelector(`.${cls}`)!, 'width');
+    expect(largura('sm2-topbar__slot--sm')).toBe('var(--sm2-topbar-slot-sm)');
+    expect(largura('sm2-topbar__slot--md')).toBe('var(--sm2-topbar-slot-md)');
+    expect(largura('sm2-topbar__slot--lg')).toBe('var(--sm2-topbar-slot-lg)');
+  });
+
+  it('regras: 9-slice horizontal de bronze, fundo da faixa, tokens, sem all:unset e sem cor solta', () => {
+    expect(bloco('.sm2-topbar__in')).toContain("barrinha-slot-bronze.png') 0 20 0 20 fill");
+    expect(bloco('.sm2-topbar')).toContain("barrinha-faixa-fundo.png')");
+    expect(bloco('.sm2-topbar')).toContain('env(safe-area-inset-top');
+    expect(bloco('.sm2-topbar__val')).toContain('lining-nums tabular-nums');
+    for (const s of ['.sm2-topbar', '.sm2-topbar__grupo', '.sm2-topbar__slot', '.sm2-topbar__in', '.sm2-topbar__val']) {
+      expect(bloco(s)).not.toMatch(/all:\s*unset|#[0-9a-f]{3,8}\b/i);
+    }
+    expect(css.indexOf('.sm2-topbar {')).toBeLessThan(css.indexOf('MODAL DE RESULTADO DE FORJA'));
+  });
+});
+
+describe('a barrinha no Mapa e nos prédios; as pílulas antigas saíram', () => {
+  it('Mapa: a barrinha aparece, com os 5 slots, e não há mais as 3 pílulas do canto inferior direito', () => {
+    const { container } = renderWithCss(<MapPage language="pt-BR" onOpenArea={() => {}} bits={5000} emblems={1234} credits={99999} hearts={3} energy={6} maxEnergy={6} />);
+    expect(container.querySelector('[data-map-page] [data-topbar]')).not.toBeNull();
+    expect(slots(container).map(s => s.textContent)).toEqual(['3', '6/6', '99k', '1,2k', '5.000']);
+    expect(container.querySelector('[data-map-currencies]')).toBeNull();
+    expect(container.querySelector('.sm2-moeda, .sm2-moeda-hud, [data-map-chip]')).toBeNull();
+    expect(css).not.toContain('.sm2-moeda');
+  });
+
+  const props = { areaId: 'mercado' as const, lotId: 'itens', language: 'pt-BR' as const, title: 'Itens', closeLabel: 'Fechar', open: true };
+
+  it('prédio: o AreaSheet traz a barrinha pelo contexto; sem contexto (Home) não traz', () => {
+    const com = renderWithCss(<TopStatusBarContext.Provider value={dados}><AreaSheet {...props} onClose={() => {}}><p>x</p></AreaSheet></TopStatusBarContext.Provider>);
+    expect(com.container.querySelector('[data-area-sheet-frame] [data-topbar]')).not.toBeNull();
+    expect(slots(com.container)).toHaveLength(5);
+    cleanup();
+    const sem = renderWithCss(<AreaSheet {...props} onClose={() => {}}><p>x</p></AreaSheet>);
+    expect(sem.container.querySelector('[data-topbar]')).toBeNull();
+  });
+
+  it('prédio: tocar na barrinha não fecha a folha (o toque não sobe ao backdrop)', () => {
+    let fechou = 0;
+    const { container } = renderWithCss(<TopStatusBarContext.Provider value={dados}><AreaSheet {...props} onClose={() => { fechou++; }}><p>x</p></AreaSheet></TopStatusBarContext.Provider>);
+    fireEvent.click(container.querySelector('[data-info-tip][aria-label^="5.000 Bits"]')!);
+    expect(fechou).toBe(0);
+  });
+});
