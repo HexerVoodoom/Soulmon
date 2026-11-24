@@ -7897,11 +7897,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Branch RETO em CSS: tronco desce do nome, traço horizontal do centro da 1ª ao centro da 3ª coluna, 3 descidas na cor do ramo. */
 .sm2-evo-lig__tronco, .sm2-evo-lig__barra, .sm2-evo-lig__descida { position: absolute; display: block; border-radius: 1px; }
 .sm2-evo-lig__tronco { inset-inline-start: calc(50% - var(--sm2-evo-fio) / 2); inline-size: var(--sm2-evo-fio); inset-block-start: 0; block-size: 50%; background: var(--sm2-muted); }
-.sm2-evo-lig__barra { inset-inline: calc(100% / 6); inset-block-start: calc(50% - var(--sm2-evo-fio) / 2); block-size: var(--sm2-evo-fio); background: linear-gradient(90deg, var(--sm2-evo-poder), var(--sm2-evo-harmonia) 50%, var(--sm2-evo-bene)); }
+.sm2-evo-lig__barra { inset-inline: calc(100% / 6 - var(--sm2-space-2) / 3); inset-block-start: calc(50% - var(--sm2-evo-fio) / 2); block-size: var(--sm2-evo-fio); background: linear-gradient(90deg, var(--sm2-evo-poder), var(--sm2-evo-harmonia) 50%, var(--sm2-evo-bene)); }
 .sm2-evo-lig__descida { inset-block-start: 50%; block-size: 50%; inline-size: var(--sm2-evo-fio); }
-.sm2-evo-lig__descida--esq { inset-inline-start: calc(100% / 6 - var(--sm2-evo-fio) / 2); }
+/* Centros reais das colunas: a grade `.sm2-evo-caminhos` tem column-gap var(--sm2-space-2), então o centro da 1ª é 1/6 − gap/3 e o da 3ª é 5/6 + gap/3. */
+.sm2-evo-lig__descida--esq { inset-inline-start: calc(100% / 6 - var(--sm2-space-2) / 3 - var(--sm2-evo-fio) / 2); }
 .sm2-evo-lig__descida--meio { inset-inline-start: calc(50% - var(--sm2-evo-fio) / 2); }
-.sm2-evo-lig__descida--dir { inset-inline-start: calc(100% * 5 / 6 - var(--sm2-evo-fio) / 2); }
+.sm2-evo-lig__descida--dir { inset-inline-start: calc(100% * 5 / 6 + var(--sm2-space-2) / 3 - var(--sm2-evo-fio) / 2); }
 .sm2-evo-lig__descida[data-conector="inativo"] { opacity: .7; }
 /* Tracinhos 2px na cor do ramo: valor→nó, nó→nome e entre nós. */
 .sm2-evo-tracinho { display: block; flex: none; inline-size: 2px; border-radius: 1px; background: var(--sm2-tracinho, var(--sm2-muted)); }
