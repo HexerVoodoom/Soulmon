@@ -9,30 +9,30 @@ import { FUNDADOR_PREMIOS, concederFundador, fundadorPendentes, marcarFundadorAv
 installDomGlobals();
 afterEach(cleanup);
 
-describe('FundadorAvisoModal', () => {
-  it('conta existente: UM popup com os 4, só Fechar', () => {
-    const onClose = vi.fn(); const onEquip = vi.fn();
-    render(<FundadorAvisoModal language="pt-BR" premios={[...FUNDADOR_PREMIOS]} dias={0} onClose={onClose} onEquip={onEquip} />);
-    expect(document.querySelectorAll('[data-fundador-aviso]').length).toBe(1);
-    expect(document.querySelectorAll('[data-fundador-arte]').length).toBe(4);
-    const txt = document.body.textContent ?? '';
-    for (const n of ['Fundo Fundador', 'Moldura Fundadora', 'Retrato Fundador', 'Cristal Fundador']) expect(txt).toContain(n);
-    expect(document.querySelector('[data-fundador-equip]')).toBeNull();
-    fireEvent.click(document.querySelector('[data-fundador-close]')!);
-    expect(onClose).toHaveBeenCalled();
-  });
-  it('marco novo (1 dia): fundo com frase, Equipar chama onEquip', () => {
-    const onEquip = vi.fn();
-    render(<FundadorAvisoModal language="en-US" premios={['founder-fundo']} dias={1} onClose={() => {}} onEquip={onEquip} />);
+describe('FundadorAvisoModal (um por prêmio)', () => {
+  const casos: Array<[string, string, string, number, boolean]> = [
+    ['founder-fundo', 'Fundo Fundador', 'Ganho por constância: 1 dia.', 1, true],
+    ['founder-moldura', 'Moldura Fundadora', 'Ganho por constância: 2 dias.', 2, true],
+    ['founder-retrato', 'Retrato Fundador', 'Ganho por constância: 3 dias.', 3, true],
+    ['furn-cristal-fundador', 'Cristal Fundador', 'Ganho por constância: 5 dias.', 5, false],
+  ];
+  for (const [id, nome, frase, , equipa] of casos) {
+    it(`${id}: arte, nome PT, frase e ${equipa ? 'Equipar + Fechar' : 'só Fechar'}`, () => {
+      const onClose = vi.fn(); const onEquip = vi.fn();
+      render(<FundadorAvisoModal language="pt-BR" premio={id} onClose={onClose} onEquip={onEquip} />);
+      expect(document.querySelectorAll('[data-fundador-arte]').length).toBe(1);
+      expect(document.body.textContent).toContain(nome);
+      expect(document.body.textContent).toContain(frase);
+      expect(!!document.querySelector('[data-fundador-equip]')).toBe(equipa);
+      if (equipa) { fireEvent.click(document.querySelector('[data-fundador-equip]')!); expect(onEquip).toHaveBeenCalledWith(id); }
+      fireEvent.click(document.querySelector('[data-fundador-close]')!);
+      expect(onClose).toHaveBeenCalled();
+    });
+  }
+  it('EN: nome e frase em inglês', () => {
+    render(<FundadorAvisoModal language="en-US" premio="founder-fundo" onClose={() => {}} onEquip={() => {}} />);
     expect(document.body.textContent).toContain('Founder Background');
     expect(document.body.textContent).toContain('Earned by consistency: 1 day.');
-    fireEvent.click(document.querySelector('[data-fundador-equip]')!);
-    expect(onEquip).toHaveBeenCalledWith('founder-fundo');
-  });
-  it('Cristal (5 dias): sem Equipar', () => {
-    render(<FundadorAvisoModal language="pt-BR" premios={['furn-cristal-fundador']} dias={5} onClose={() => {}} onEquip={() => {}} />);
-    expect(document.querySelector('[data-fundador-equip]')).toBeNull();
-    expect(document.body.textContent).toContain('Ganho por constância: 5 dias.');
   });
 });
 

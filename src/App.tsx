@@ -2439,7 +2439,8 @@ export default function App() {
   const fundadorPend = fundadorPendentes(gameState);
   const fundadorPodeAbrir = hasCompletedOnboarding && !showIntro && !isDemoMode(gameState) && currentView === 'home' && !bonusIntroOpen
     && (retroFechada || !needsWeeklyRetro(gameState, new Date())) && fundadorPend.length > 0;
-  const fecharFundadorAviso = useCallback(() => setGameState(prev => marcarFundadorAvisados(prev, fundadorPendentes(prev))), [setGameState]);
+  /** Um modal por prêmio, na ordem Fundo → Moldura → Retrato → Cristal: fechar grava SÓ o id da tela; o próximo abre em seguida (mesmo item da fila). */
+  const fecharFundadorAviso = useCallback((id: string) => setGameState(prev => marcarFundadorAvisados(prev, [id])), [setGameState]);
   const presentation = usePresentationQueue({
     // enquanto o Soulmon dorme à espera de ser acordado: nada do início de dia, celebração ou convite entra (a fila decide)
     holdDayStart: dayWakePending,
@@ -2546,7 +2547,7 @@ export default function App() {
         case 'noticeToast': setNoticeKey(null); break;
         case 'dayGoals': setDayGoalsOpen(false); break;
         case 'checkIn': handleCheckInSkip(); break;
-        case 'fundador': fecharFundadorAviso(); break;
+        case 'fundador': if (fundadorPend[0]) fecharFundadorAviso(fundadorPend[0]); break;
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'evoStats': setEvoStatsShown(null); break;
         case 'elementoNovo': setElemMostrados(null); break;
@@ -10680,12 +10681,12 @@ export default function App() {
       {/* Aviso do Conjunto Fundador: item `fundador` da fila central (um modal por vez, nunca por cima de outro). */}
       {interstitial === 'fundador' && fundadorPend.length > 0 && (
         <PresentationSlot id="fundador" onFail={() => presentation.fail('fundador')} fallback={null}>
-          <FundadorAvisoModal language={language} premios={fundadorPend} dias={gameState.fundadorDias ?? 0} onClose={fecharFundadorAviso}
+          <FundadorAvisoModal key={fundadorPend[0]} language={language} premio={fundadorPend[0]} onClose={() => fecharFundadorAviso(fundadorPend[0])}
             onEquip={(id) => {
               if (id === 'founder-fundo') handleEquipBackground(id);
               else if (id === 'founder-moldura') handleEquipFrame(id);
               else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
-              fecharFundadorAviso();
+              fecharFundadorAviso(id);
             }} />
         </PresentationSlot>
       )}
