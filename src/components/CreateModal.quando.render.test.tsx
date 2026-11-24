@@ -5,7 +5,7 @@ import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CreateModal } from './CreateModal';
 
-const abrir = (language: 'pt-BR' | 'en-US' = 'pt-BR', initialKind: 'habit' | 'task' = 'habit') => {
+const abrir = (language: 'pt-BR' | 'en-US' = 'pt-BR', initialKind: 'habit' | 'task' = 'task') => {
   const onSaveActivity = vi.fn();
   const onSaveTask = vi.fn();
   renderWithCss(
@@ -57,7 +57,16 @@ describe('Quando', () => {
     expect(onSaveTask).toHaveBeenCalledTimes(1);
   });
 
-  it('hábito salva os dias escolhidos', () => {
+  it('hábito NÃO tem Quando: sem quadrados, salva todo dia', () => {
+    const { onSaveActivity } = abrir('pt-BR', 'habit');
+    nome();
+    expect(quadrados()).toHaveLength(0);
+    expect(screen.queryByLabelText('Uma vez')).toBeNull();
+    fireEvent.click(salvar());
+    expect(onSaveActivity.mock.calls[0][0].weekDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it('tarefa com dias salva os dias escolhidos', () => {
     const { onSaveActivity } = abrir();
     nome();
     fireEvent.click(quadrados()[1]);

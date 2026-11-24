@@ -483,7 +483,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
   /** Sem dia marcado e sem "Uma vez" não há quando: Salvar fica bloqueado. */
-  const quandoInvalido = !isSingleExecution && !sched.isValid;
+  const quandoInvalido = kind === 'task' && !isSingleExecution && !sched.isValid;
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -504,16 +504,18 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         lastTouchedAt: nowIso,
       });
     } else {
-      if (!sched.isValid) {
+      // HÁBITO = todo dia, sem perguntar. Só a TAREFA lê o Quando (dias marcados).
+      const isHabit = kind === 'habit';
+      if (!isHabit && !sched.isValid) {
         return;
       }
-      const schedule: Schedule = sched.buildSchedule();
+      const schedule: Schedule = isHabit ? { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } : sched.buildSchedule();
       onSaveActivity({
         name,
         category,
         emoji: currentEmoji,
         steps,
-        weekDays: sched.buildWeekDays(),
+        weekDays: isHabit ? [0, 1, 2, 3, 4, 5, 6] : sched.buildWeekDays(),
         alarm: customAlarmTime ? { time: customAlarmTime } : undefined,
         schedule,
         anchor: kind === 'habit' ? sched.buildAnchor() : undefined,
@@ -691,6 +693,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
             {/* QUANDO — 7 quadrados Dom→Sáb (desmarcados na criação), "Marcar todos" ao lado
                 do título e "Uma vez" abaixo, que desliga os quadrados. */}
+            {kind === 'task' && (
             <div data-quando>
               <label style={{ ...sm2Label, marginBottom: 0 }}>{txt.frequency}</label>
               {/* Uma linha só de controles: Marcar todos + Uma vez lado a lado (quebra só se faltar espaço). */}
@@ -721,6 +724,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
               )}
               {quandoInvalido && <p data-quando-hint style={sm2Hint}>{txt.quandoHint}</p>}
             </div>
+            )}
 
             {kind === 'habit' && <HabitAnchorFields sched={sched} language={language} />}
 
@@ -768,11 +772,9 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
               onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
 
             <div>
-              {kind === 'habit' ? null : (
-                <label style={sm2Label} htmlFor="sm-create-alarm">
-                  {isSingleExecution ? txt.alarm : isPt ? 'Horário (opcional)' : 'Time (optional)'}
-                </label>
-              )}
+              <label style={sm2Label} htmlFor="sm-create-alarm">
+                {isSingleExecution ? txt.alarm : kind === 'habit' ? txt.frequency : isPt ? 'Horário (opcional)' : 'Time (optional)'}
+              </label>
               {isSingleExecution && hasDeadline && (
                 <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   {(['2h', '1h', '30min'] as const).map(preset => (
@@ -782,7 +784,6 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
                 </div>
               )}
               <Field id="sm-create-alarm" type="time" value={customAlarmTime}
-                aria-label={kind === 'habit' ? (isPt ? 'Horário (opcional)' : 'Time (optional)') : undefined}
                 onChange={(e) => handleCustomTimeChange(e.target.value)} />
             </div>
           </div>
