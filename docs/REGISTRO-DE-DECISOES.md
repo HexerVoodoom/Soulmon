@@ -6834,3 +6834,5 @@ Estado da `origin/main` ao reconciliar: o último § é o **§511** (Cristal Fun
 - **Números:** nenhum novo. A chance da essência no baú comum e a qty do baú Brejo vêm de `ESSENCE_BY_ELEMENTS` pelo nº de elementos do cenário (antes o padrão era 1 elemento: 10%; agora 20%/25%).
 - **Como:** `ENV_ELEMENT` (1 id) virou `ENV_ELEMENTS` (lista) em `utils/focusJourney.ts` e `functions/api/_focusJourney.js`; `chestLoot` e o prêmio de conclusão sorteiam com `rng()`.
 - **Alternativa descartada:** um elemento fixo por cenário (o que havia).
+
+- **§512 (balanço, decisão do dono 23/11/2026):** a chance de essência no baú comum segue o nº de elementos do cenário (`ESSENCE_BY_ELEMENTS`: 3 elementos = 20%, 4 = 25%); antes o servidor usava 10% (elems=1). Efeito medido: ~0,7 → ~1,76 essência por sessão sem chave; teto diário de 8 mantido. O dono mandou MANTER a tabela como aprovada (não reduzir).
