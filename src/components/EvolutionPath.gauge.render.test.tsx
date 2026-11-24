@@ -59,7 +59,8 @@ describe('EvolutionPath — gauge', () => {
   it('cadeado: só ícone ao lado do nome, aria-pressed; texto só quando trancado; sem texto fixo', () => {
     const { rerender } = renderWithCss(<EvolutionPath {...base} language="pt-BR" onToggleEvolutionLock={() => {}} />);
     const lock = document.querySelector('[data-lock-button]') as HTMLElement;
-    expect(lock.textContent?.trim()).toBe('lock_open');
+    expect(lock.querySelector('[data-lock-art]')?.getAttribute('data-lock-art')).toBe('aberto');
+    expect(lock.querySelector('img')?.getAttribute('alt')).toBe('');
     expect(lock.getAttribute('aria-pressed')).toBe('false');
     expect(lock.getAttribute('aria-label')).toBe('Segurar evolução');
     expect(lock.closest('.sm2-evo-namerow')).toBeTruthy();
@@ -67,6 +68,7 @@ describe('EvolutionPath — gauge', () => {
     rerender(<EvolutionPath {...base} language="pt-BR" evolutionLocked onToggleEvolutionLock={() => {}} />);
     const l2 = document.querySelector('[data-lock-button]') as HTMLElement;
     expect(l2.getAttribute('aria-pressed')).toBe('true');
+    expect(l2.querySelector('[data-lock-art]')?.getAttribute('data-lock-art')).toBe('fechado');
     expect(l2.getAttribute('title')).toMatch(/não protege os corações/);
     expect(document.querySelector('[data-evo-lock-status]')?.getAttribute('role')).toBe('status');
     expect(document.querySelector('[data-evo-lock-status]')?.textContent).toMatch(/não protege os corações/);

@@ -6950,7 +6950,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 
 /* Recap da evolucao (REGISTRO 190): a barra enche e brilha uma vez. prefers-reduced-motion zera as duracoes pela regra global. */
 .sm2-evo-recap-fill { transition: width 1.4s cubic-bezier(.22, 1, .36, 1); }
-/* 30/10/2026 (dono): preenchimento turquesa com glow EXTERNO e INTERNO, dentro da moldura de cobre (`evo/barra-moldura.png`). */
+/* 30/10/2026 (dono): preenchimento turquesa com glow EXTERNO e INTERNO, dentro da moldura de cobre (`evo/barra-evolucao-B.png`, canal x 19–456 / y 58–68 de 480×128). */
 .sm2-evo-recap-fill {
   background: linear-gradient(to bottom, #b8fff6 0%, #3ff0e0 32%, #12c2c0 70%, #0a8f95 100%);
   box-shadow: inset 0 1px 2px rgba(255,255,255,.75), inset 0 -2px 3px rgba(0,60,70,.55), 0 0 6px 1px rgba(63,240,224,.55);
@@ -7776,3 +7776,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-day-square:disabled { opacity: 0.4; cursor: default; }
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
 [data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }
+/* Arte final do Evolution Center (P5 evo-assets): conectores A, nó A, cadeado B. */
+.sm2-evo-conector { display: block; inline-size: 100%; block-size: auto; max-block-size: 28px; object-fit: contain; }
+.sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
+.sm2-evo-no-arte[data-busy="true"] { opacity: .75; }
+.sm2-evo-no-matiz { position: absolute; inset: 0; display: block; mix-blend-mode: color; opacity: .85; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; pointer-events: none; }

@@ -4,7 +4,8 @@ import type { Language } from '../utils/i18n';
 import type { EvoRecap } from '../utils/evoRecap';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { RitualDialog, ritualLabel } from './ritual/RitualKit';
-import barraMoldura from '../assets/soulmon/evo/barra-moldura.png';
+import barra1x from '../assets/soulmon/evo/barra-evolucao-B.png';
+import barra2x from '../assets/soulmon/evo/barra-evolucao-B@2x.png';
 import lanterna1 from '../assets/soulmon/evo/lanterna-1.png';
 import lanterna2 from '../assets/soulmon/evo/lanterna-2.png';
 import lanterna3 from '../assets/soulmon/evo/lanterna-3.png';
@@ -46,7 +47,7 @@ export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; l
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <img src={reduzMovimento() ? lanternaDaEvolucao(shown) : lanternaAnim} alt="" aria-hidden="true" data-evo-recap-icon width={64} height={64} style={{ imageRendering: 'pixelated', filter: 'drop-shadow(0 0 6px rgba(63,240,224,.55))' }} />
       </div>
-      {/* A barra (30/10/2026, dono): moldura de cobre em PNG (480×128, canal interno x 44–453, y 52–68) e o preenchimento turquesa
+      {/* A barra (30/10/2026, dono): barra B (480×128, @2x 960×256; canal interno MEDIDO no PNG: x 19–456, y 58–68 — 11 px, o desenho ocupa só y 51–76) e o preenchimento turquesa
           com glow dentro do canal. As porcentagens abaixo são as do canal medido na arte. */}
       <div
         role="progressbar"
@@ -55,16 +56,16 @@ export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; l
         aria-valuemax={100}
         aria-valuenow={recap.afterPct}
         data-evo-recap-track
-        style={{ position: 'relative', width: '100%', aspectRatio: '480 / 128', margin: '-14px 0' }}
+        style={{ position: 'relative', width: '100%', aspectRatio: '480 / 128', margin: '-24px 0' }}
       >
-        <img src={barraMoldura} alt="" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', imageRendering: 'pixelated', pointerEvents: 'none' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', left: '9.17%', right: '5.62%', top: '40.6%', height: '13.3%', borderRadius: 3, overflow: 'visible' }}>
+        <img src={barra1x} srcSet={`${barra1x} 1x, ${barra2x} 2x`} alt="" aria-hidden="true" data-evo-recap-moldura style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', left: '3.96%', right: '4.9%', top: '45.3%', height: '8.6%', borderRadius: 2, overflow: 'visible' }}>
           <div
             aria-hidden="true"
             data-evo-recap-fill
             data-filled={filled ? 'true' : 'false'}
             className={filled ? 'sm2-evo-recap-fill sm2-evo-recap-glow' : 'sm2-evo-recap-fill'}
-            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${shown}%`, borderRadius: 3 }}
+            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${shown}%`, borderRadius: 2 }}
           />
         </div>
       </div>

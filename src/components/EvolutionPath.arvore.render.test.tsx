@@ -44,6 +44,10 @@ describe('árvore do Centro de Evolução', () => {
     expect(ids).toHaveLength(11);
     expect(screen.getByTestId('sm-arvore-ligacao-split')).toBeTruthy();
     expect(screen.getByTestId('sm-arvore-ligacao-join')).toBeTruthy();
+    // fio de cobre: 3 trilhos por ligação, 1 aceso (ramo atual) e 2 apagados
+    const split = screen.getByTestId('sm-arvore-ligacao-split');
+    expect(split.querySelectorAll('[data-conector="ativo"]').length).toBe(1);
+    expect(split.querySelectorAll('[data-conector="inativo"]').length).toBe(2);
   });
   it('em inglês: Power / Harmony / Benevolence', () => {
     renderWithCss(<EvolutionPath {...props} language="en-US" />);

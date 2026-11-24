@@ -67,6 +67,12 @@ import { RitualDialog } from './ritual/RitualKit';
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
+import conectorAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-ativo.png';
+import conectorAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-ativo@2x.png';
+import conectorInativo1x from '../assets/soulmon/evo/conector-evolucao-A-inativo.png';
+import conectorInativo2x from '../assets/soulmon/evo/conector-evolucao-A-inativo@2x.png';
+import cadeadoAberto from '../assets/soulmon/evo/cadeado-B-aberto.png';
+import cadeadoFechado from '../assets/soulmon/evo/cadeado-B-fechado.png';
 import { InfoTip, ModalInfo } from './ui/InfoTip';
 import { playVisorTune } from '../utils/sounds';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -203,16 +209,29 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** Conectores da árvore (09/11/2026): as três cores dos caminhos saindo do rookie (`split`) e voltando ao ultra (`join`) — o mesmo desenho do site do beta. */
-function TreeLinks({ mode }: { mode: 'split' | 'join' }) {
-  const xs = [50, 150, 250];
-  const d = (x: number) => (mode === 'split' ? `M150 0C150 22 ${x} 18 ${x} 28` : `M${x} 0C${x} 22 150 18 150 28`);
+/** Conectores da árvore: o fio de cobre (arte A, dono) em 3 trilhos, um por ramo — aceso (`ativo`) no ramo atual, apagado (`inativo`) nos demais. `split` sai do rookie, `join` volta ao ultra. */
+function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
   return (
-    <svg viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true" data-testid={`sm-arvore-ligacao-${mode}`} style={{ display: 'block', width: '100%', height: 28, overflow: 'visible' }}>
-      {ATTR_ORDER.map((a, i) => (
-        <path key={a} d={d(xs[i])} fill="none" stroke={ATTR_COLOR[a]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
-      ))}
-    </svg>
+    <div
+      aria-hidden="true"
+      data-testid={`sm-arvore-ligacao-${mode}`}
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'center', blockSize: 28 }}
+    >
+      {ATTR_ORDER.map(a => {
+        const ativo = a === currentBranch;
+        return (
+          <img
+            key={a}
+            data-conector={ativo ? 'ativo' : 'inativo'}
+            data-conector-ramo={a}
+            src={ativo ? conectorAtivo1x : conectorInativo1x}
+            srcSet={ativo ? `${conectorAtivo1x} 1x, ${conectorAtivo2x} 2x` : `${conectorInativo1x} 1x, ${conectorInativo2x} 2x`}
+            alt=""
+            className="sm2-evo-conector"
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -1120,7 +1139,7 @@ export function EvolutionPath({
               aria-label={isPt ? 'Segurar evolução' : 'Evolution hold'}
               title={evolutionLocked ? textoSegurada : (isPt ? 'Segurar evolução' : 'Evolution hold')}
             >
-              <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+              <img src={evolutionLocked ? cadeadoFechado : cadeadoAberto} alt="" aria-hidden="true" data-lock-art={evolutionLocked ? 'fechado' : 'aberto'} width={28} height={28} className="sm2-evo-lock-img" />
             </button>
           )}
         </div>
@@ -1377,7 +1396,7 @@ export function EvolutionPath({
             {rookie && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(rookie)}</div>}
             {!naoEvolui && !arvoreVazia && (
               <>
-                <TreeLinks mode="split" />
+                <TreeLinks mode="split" currentBranch={currentBranch} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
                   {caminhos.map(({ attr, path }) => (
                     <div key={attr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} data-testid={`sm-caminho-${attr}`} role="group" aria-label={L(ATTR_LABEL[attr])}>
@@ -1401,7 +1420,7 @@ export function EvolutionPath({
                     </div>
                   ))}
                 </div>
-                <TreeLinks mode="join" />
+                <TreeLinks mode="join" currentBranch={currentBranch} />
               </>
             )}
             {!naoEvolui && ultra && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(ultra)}</div>}
