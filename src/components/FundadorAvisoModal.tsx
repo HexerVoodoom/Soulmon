@@ -8,7 +8,8 @@ import cristal from '../assets/decor/furn-cristal-fundador.png';
 
 /**
  * AVISO DO CONJUNTO FUNDADOR (decisão do dono 24/11/2026: UM MODAL PARA CADA PRÊMIO). Popup central (título inline, ✕ à direita) de UM prêmio:
- * arte grande + nome + "Ganho por constância: N dias." + "Equipar" (fundo/moldura/retrato; o Cristal só "Fechar") + "Fechar". Quem o monta
+ * arte grande + nome + "Ganho por constância: N dias." + "Equipar" (fundo/moldura/retrato; o Cristal não tem botão no rodapé). SEM botão "Fechar":
+ * só o ✕ do topo (decisão do dono 24/11/2026; Esc e toque fora também fecham, via ModalSheet). Quem o monta
  * (App, item `fundador` da fila) mostra um por vez, na ordem Fundo → Moldura → Retrato → Cristal, e grava só o id fechado.
  */
 const NOMES: Record<string, { pt: string; en: string }> = {
@@ -42,12 +43,11 @@ export function FundadorAvisoModal({ language, premio, onClose, onEquip }: Funda
   const fundo = premio === FUNDADOR_FUNDO_ID;
   return (
     <ModalSheet open placement="center" titulo="inline" title={pt ? 'Prêmio de Fundador' : 'Founder reward'} onClose={onClose} language={language} maxWidth={328}
-      footer={(
+      footer={equipavel ? (
         <div className="sm2-forja-resultado-acoes">
-          {equipavel && <button type="button" data-fundador-equip className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" onClick={() => onEquip(premio)}>{pt ? 'Equipar' : 'Equip'}</button>}
-          <button type="button" data-fundador-close className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline" onClick={onClose}>{pt ? 'Fechar' : 'Close'}</button>
+          <button type="button" data-fundador-equip className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" onClick={() => onEquip(premio)}>{pt ? 'Equipar' : 'Equip'}</button>
         </div>
-      )}>
+      ) : undefined}>
       <div data-fundador-aviso={premio} className="sm2-forja-resultado" role="status">
         <span className="sm2-forja-resultado-arte" aria-hidden="true">
           <img data-fundador-arte={premio} src={ARTES[premio]} alt="" draggable={false}
