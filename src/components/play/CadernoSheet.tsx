@@ -113,7 +113,8 @@ export function CadernoSheet({ language, todayKey, entries, onChange, formatoIni
         {CADERNO_CARDS.map(f => (
           <Segment key={f} selected={formato === f} onSelect={() => { setFormato(f); mudou(); }} label={isPt ? FORMATO[f].pt : FORMATO[f].en} />
         ))}
-        <div data-caderno-livre style={{ gridColumn: '1 / -1' }}>
+        {/* Free writing: botão do MESMO tamanho/estilo dos outros, de ponta a ponta do modal (o wrapper é flex para o Segment `flex:1` esticar; dono, 24/11/2026). */}
+        <div data-caderno-livre style={{ gridColumn: '1 / -1', display: 'flex' }}>
           <Segment selected={formato === 'livre'} onSelect={() => { setFormato('livre'); mudou(); }} label={isPt ? FORMATO.livre.pt : FORMATO.livre.en} />
         </div>
       </div>

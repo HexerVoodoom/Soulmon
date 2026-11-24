@@ -22,6 +22,12 @@ describe('Caderno: cinco campos', () => {
     expect(screen.getByText('O que importa hoje')).toBeTruthy();
     const livre = grupo.querySelector('[data-caderno-livre]') as HTMLElement;
     expect(livre.style.gridColumn).toBe('1 / -1');
+    // 24/11/2026: ponta a ponta do modal e com o MESMO estilo dos outros botões (o Segment estica pelo flex do wrapper)
+    expect(livre.style.display).toBe('flex');
+    const botoes = Array.from(grupo.querySelectorAll<HTMLElement>('button[role="radio"]'));
+    expect(botoes).toHaveLength(5);
+    expect(new Set(botoes.map(b => b.className)).size).toBe(1);
+    expect(livre.querySelector('button')!.style.minHeight).toBe(botoes[0].style.minHeight);
     expect(livre.textContent).toBe('Escrita livre');
   });
 
