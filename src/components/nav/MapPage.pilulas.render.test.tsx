@@ -47,15 +47,17 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
     expect(pill).toMatch(/flex:\s*0 0 auto/);
     expect(pill).not.toMatch(/flex:[^;]*var\(--sm2-moeda-w\)/);
     expect(pill).toMatch(/tabular-nums/);
-    // fundo translúcido do tema + raio por token (sem moldura nem borda)
+    // moldura `chip-moeda` em 9-slice (a de antes) no miolo, texto claro, altura 34 = 6 + ícone 22 + 6
     const miolo = bloco('.sm2-moeda__in');
-    expect(miolo).toContain('background: var(--sm2-moeda-fundo)');
-    expect(miolo).toContain('border-radius: var(--sm2-radius-md)');
-    expect(miolo).toContain('min-height: 32px');
-    expect(css).toContain('--sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent)');
+    expect(miolo).toContain("chip-moeda.png') 18 48 18 48 fill / 6px 16px 6px 16px stretch");
+    expect(miolo).toContain('border-width: 6px 16px');
+    expect(miolo).toContain('min-height: 34px');
+    expect(miolo).toContain('color: var(--sm2-viewport-ink)');
+    expect(css).not.toContain('--sm2-moeda-fundo');
+    expect(css).not.toContain('barra-moeda');
     expect(bloco('.sm2-moeda-hud')).toMatch(/gap:\s*var\(--sm2-space-3\)/);
     expect(bloco('.sm2-moeda__in')).toMatch(/gap:\s*var\(--sm2-space-1\)/);
-    expect(css).toMatch(/--sm2-moeda-w:\s*96px/);
+    expect(css).toMatch(/--sm2-moeda-w:\s*120px/);
     for (const s of ['.sm2-moeda', '.sm2-moeda-hud', '.sm2-moeda__in', '.sm2-moeda__val']) {
       expect(bloco(s)).not.toMatch(/all:\s*unset|#[0-9a-f]{3,8}\b/i);
     }
