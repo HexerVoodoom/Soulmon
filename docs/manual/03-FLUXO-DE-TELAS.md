@@ -1907,7 +1907,7 @@ Três blocos, com condições literais:
 
 ```jsx
 {currentView === 'settings' && (…SettingsPage…)}
-{currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (…StepsCard…)}
+{pane === 'settings' && shouldShowStepsSettingsEntry(stepsAvailable) && (…StepsCard…)}
 ```
 
 - **Painel de GM / GM panel** (29/09/2026): `GmPanel` (`src/components/GmPanel.tsx`) é um grupo extra das Configurações, **só desenhado para o administrador** (`useAdmin() === true`; o `App` só passa a prop `gm` a ele — para os demais o grupo não existe no DOM). Ações: dar saldo (Bits e Honra 999999), desbloquear tudo, adotar o Corvinho (só se ainda não é), encher cuidados, ir para uma das 11 formas, somar 1/7/30 dias completos. Aviso na tela: a mudança vai para a conta inteira (M-2, o save sobe à nuvem). Regra em [02 §60](02-REGRAS-DE-NEGOCIO.md#administrador-gm).
@@ -1990,9 +1990,9 @@ Três blocos, com condições literais:
   `backupRestore.test.ts`, `RestoreBackupSection.render.test.tsx`.
 - ⚰️ **`RestWindowCard` não existe mais** — `src/components/RestWindowCard.tsx` foi apagado no beta-2 (faixa B, `e4bbe9361`, 18/10/2026, REGISTRO §90) e o `App.tsx` não o monta. O que ele fazia mora em dois lugares: (1) o grupo **"Seu ritmo"/"Your rhythm"** da `SettingsPage` — os horários "Dorme"/"Acorda" (`TimeField`, gravam `AUTO_SLEEP_START`/`AUTO_SLEEP_END`; o `App` copia para `rest.window` no tique seguinte) e o interruptor "Lembrete de deitar" (`SLEEP_REMINDER_ENABLED`); o sono automático deixou de ter interruptor (D-25/D-26); (2) o intersticial `restSetup` (`RestSetupModal`, o convite do sono, uma vez só — §3.1), cuja única saída é "Confirmar" (`handleConfirmRestWindow`). **Proibido nesta tela**: score de
   0 a 100 e gráfico de estágios do sono.
-- **`StepsCard`**: **some por completo** sem sensor (PWA) e quando
-  `stepsConsent === 'declined'` — `'declined'` é definitivo, porque insistir
-  depois de um "não" é assédio. O consentimento vem **antes** do diálogo do
+- **`StepsCard`**: **some por completo** sem sensor (PWA); com sensor segue em Configurações
+  mesmo após `'declined'` (porta para mudar de ideia; o CONVITE é que não volta,
+  porque insistir depois de um "não" é assédio). O consentimento vem **antes** do diálogo do
   sistema.
 - ⚰️ **`SettingsModal`** (o painel rápido "Ajustes rápidos") **foi apagado em
   `4a8b8049`** (decisão do dono #37): `{settingsOpen && (…)}`, `settingsOpen`,
