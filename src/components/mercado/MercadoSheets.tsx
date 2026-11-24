@@ -589,7 +589,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
               <div key={kind} data-recovery-item={kind} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, border: '1px solid var(--sm2-line)', background: 'var(--sm2-surface-2)' }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ ...sm2Text, display: 'block', fontWeight: 600 }}>{nome}</span>
-                  <span style={{ ...sm2Hint, display: 'block' }}>{efeito}{' · '}{isPt ? '1 por semana' : '1 per week'}</span>
+                  <span style={{ ...sm2Hint, display: 'block' }}>{efeito}{' · '}{isPt ? `até ${item.weeklyCap} por semana` : `up to ${item.weeklyCap} per week`}</span>
                 </span>
                 <button type="button" data-recovery-buy={kind} disabled={off} aria-disabled={off ? true : undefined} onClick={() => void doRecovery(kind)} style={{ ...sm2Button('primary', off), flexShrink: 0 }}>
                   <span className="sm2-num">{item.credits}</span>{' '}{isPt ? 'Créd.' : 'Credits'}

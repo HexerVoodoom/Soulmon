@@ -16,19 +16,22 @@ describe('Exchanger: paridade e regras do servidor', () => {
     expect(SRV).toEqual(CLI);
     expect(CLI.energy.credits).toBe(150); expect(CLI.life.credits).toBe(150);
     expect(CLI.energy.restores).toBe(5); expect(CLI.life.restores).toBe(1);
-    expect(CLI.energy.weeklyCap).toBe(1); expect(CLI.life.weeklyCap).toBe(1);
+    expect(CLI.energy.weeklyCap).toBe(5); expect(CLI.life.weeklyCap).toBe(1); // energia: até 5 poções por semana (dono, 24/11/2026)
   });
-  it('compra debita o preço do servidor e conta 1 na semana; a 2ª na mesma semana é recusada sem debitar', async () => {
-    const t = mem(1000); const now = Date.UTC(2026, 10, 24, 12);
-    const a = await buyRecovery(t.env, ID, 'energy', 'op-energy-1', { nowMs: now });
-    expect(a).toMatchObject({ ok: true, kind: 'energy', restores: 5, price: 150, leftThisWeek: 0 });
-    expect(t.ent().credits).toBe(850);
-    const b = await buyRecovery(t.env, ID, 'energy', 'op-energy-2', { nowMs: now });
+  it('energia: 5 poções por semana (cada uma debita 150); a 6ª é recusada sem debitar; vida tem contador próprio de 1', async () => {
+    const t = mem(2000); const now = Date.UTC(2026, 10, 24, 12);
+    for (let i = 1; i <= 5; i++) {
+      const a = await buyRecovery(t.env, ID, 'energy', `op-energy-${i}`, { nowMs: now });
+      expect(a).toMatchObject({ ok: true, kind: 'energy', restores: 5, price: 150, leftThisWeek: 5 - i });
+    }
+    expect(t.ent().credits).toBe(2000 - 5 * 150);
+    const b = await buyRecovery(t.env, ID, 'energy', 'op-energy-6', { nowMs: now });
     expect(b).toMatchObject({ ok: false, status: 409, reason: 'weekly-cap' });
-    expect(t.ent().credits).toBe(850);
-    // vida tem o contador próprio
+    expect(t.ent().credits).toBe(1250);
+    // vida: 1 por semana, contador independente
     expect((await buyRecovery(t.env, ID, 'life', 'op-life-001', { nowMs: now })).ok).toBe(true);
-    expect(t.ent().credits).toBe(700);
+    expect((await buyRecovery(t.env, ID, 'life', 'op-life-002', { nowMs: now })).reason).toBe('weekly-cap');
+    expect(t.ent().credits).toBe(1100);
   });
   it('mesmo opId = mesma resposta, cobra uma vez só', async () => {
     const t = mem(1000); const now = Date.UTC(2026, 10, 24, 12);
@@ -41,10 +44,10 @@ describe('Exchanger: paridade e regras do servidor', () => {
     const t = mem(1000);
     const dom = Date.UTC(2026, 10, 29, 23, 0); // domingo 29/11 (semana ISO de 23/11)
     const seg = Date.UTC(2026, 10, 30, 1, 0);  // segunda 30/11 (nova semana)
-    expect((await buyRecovery(t.env, ID, 'energy', 'op-a-000001', { nowMs: dom })).ok).toBe(true);
-    expect((await buyRecovery(t.env, ID, 'energy', 'op-b-000001', { nowMs: dom })).reason).toBe('weekly-cap');
-    expect((await buyRecovery(t.env, ID, 'energy', 'op-c-000001', { nowMs: seg })).ok).toBe(true);
-    expect(recoveryBoughtThisWeek(t.ent(), 'energy', seg)).toBe(1);
+    expect((await buyRecovery(t.env, ID, 'life', 'op-a-000001', { nowMs: dom })).ok).toBe(true);
+    expect((await buyRecovery(t.env, ID, 'life', 'op-b-000001', { nowMs: dom })).reason).toBe('weekly-cap');
+    expect((await buyRecovery(t.env, ID, 'life', 'op-c-000001', { nowMs: seg })).ok).toBe(true);
+    expect(recoveryBoughtThisWeek(t.ent(), 'life', seg)).toBe(1);
   });
   it('saldo insuficiente = 402 sem debitar; item/opId inválidos = 400', async () => {
     const t = mem(100); const now = Date.UTC(2026, 10, 24, 12);

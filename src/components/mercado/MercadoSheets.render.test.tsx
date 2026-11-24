@@ -339,7 +339,7 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
   });
 
-  it('Outros (24/11/2026): Recuperar energia/vida, 150 Créditos cada, 1 por semana; "cheio" e saldo bloqueiam; teto semanal vem do servidor', async () => {
+  it('Outros (24/11/2026): Recuperar energia/vida, 150 Créditos cada, energia até 5 por semana e vida 1; "cheio" e saldo bloqueiam; teto semanal vem do servidor', async () => {
     const buy = vi.fn(async () => ({ ok: false, reason: 'weekly-cap' }));
     const st = { energy: 2, maxEnergy: 10, hp: 1, maxHp: 3 };
     const { container } = abrirC({ language: 'pt-BR', credits: 300, onBuyRecovery: buy, recoveryState: st });

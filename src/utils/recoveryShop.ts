@@ -6,7 +6,7 @@
  */
 export type RecoveryKind = 'energy' | 'life';
 export const RECOVERY_ITEMS: Record<RecoveryKind, { credits: number; weeklyCap: number; restores: number }> = {
-  energy: { credits: 150, weeklyCap: 1, restores: 5 },
+  energy: { credits: 150, weeklyCap: 5, restores: 5 },
   life: { credits: 150, weeklyCap: 1, restores: 1 },
 };
 

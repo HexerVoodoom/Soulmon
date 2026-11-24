@@ -7,7 +7,7 @@
  *    O cliente manda só o `kind`; qualquer número do corpo é ignorado.
  *  · Preço: 150 Créditos cada = R$ 9,90 no pacote padrão de 150 Créditos (`CREDIT_PACKS`), o equivalente a ~R$ 10,00 pedido pelo dono
  *    (a conta: R$ 10,00 ÷ (R$ 9,90 ÷ 150) = 151,5 → 150).
- *  · Energia = a poção que devolve 5 de energia, 1 por semana; vida = +1 coração, 1 por semana (mesmo preço).
+ *  · Energia = a poção que devolve 5 de energia, ATÉ 5 POR SEMANA (25 de energia/semana; dono, 24/11/2026); vida = +1 coração, 1 por semana (mesmo preço).
  *  · SEMANA: a ISO do app (`semanaDe`, segunda a domingo, em UTC, a mesma chave das missões de Coop); o contador vira sozinho na
  *    segunda, sem job. Mora no PRÓPRIO `ent:<saveId>` (`ent.recov = { w, energy, life }`), na MESMA escrita do débito.
  *  · "Cheio" (energia/coração no máximo) é checado no CLIENTE (o servidor não lê o save por forma opaca): o app nem oferece a compra.
@@ -19,7 +19,7 @@ import { semanaDe } from './_coop.js';
 
 /** Itens à venda. Espelho de `src/utils/recoveryShop.ts`. */
 export const RECOVERY_ITEMS = {
-  energy: { credits: 150, weeklyCap: 1, restores: 5 },
+  energy: { credits: 150, weeklyCap: 5, restores: 5 },
   life: { credits: 150, weeklyCap: 1, restores: 1 },
 };
 const OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
