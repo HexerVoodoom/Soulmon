@@ -6827,3 +6827,10 @@ Estado da `origin/main` ao reconciliar: o último § é o **§511** (Cristal Fun
 - **Quando aparece:** só na Home, com onboarding concluído, sem intro, fora do demo, sem a retrospectiva semanal nem o intro de bônus na frente. Dois ou mais pendentes viram um único popup (não uma fila de popups). Funciona sem rede (o estado é local).
 - **Alternativa que perdeu:** um popup por prêmio para a conta existente (4 toques seguidos); descartada pelo pedido do dono de UM popup. **Falsifica:** recarregar repetindo o popup, ou o servidor apagando `fundadorAvisados` de um cliente antigo (`FundadorAvisoModal.render.test.tsx`, `fundador.parity.test.js`).
 - **Rollback:** reverter o commit; código antigo ignora o campo.
+
+## §512 — Essência da jornada: 20 elementos nos 6 cenários, sorteio uniforme (23/11/2026, proposta aprovada pelo dono (A, sorteio uniforme); número provisório, conferir colisão no merge)
+
+- **Regra:** cada cenário do foco rende essência de 3 ou 4 elementos base (floresta 4, litoral 3, caverna 4, jardim 3, oficina 3, observatório 3), cada um dos 20 em um só cenário. O baú sorteia o elemento com chance igual, pela seed do baú, igual no cliente e no servidor.
+- **Números:** nenhum novo. A chance da essência no baú comum e a qty do baú Brejo vêm de `ESSENCE_BY_ELEMENTS` pelo nº de elementos do cenário (antes o padrão era 1 elemento: 10%; agora 20%/25%).
+- **Como:** `ENV_ELEMENT` (1 id) virou `ENV_ELEMENTS` (lista) em `utils/focusJourney.ts` e `functions/api/_focusJourney.js`; `chestLoot` e o prêmio de conclusão sorteiam com `rng()`.
+- **Alternativa descartada:** um elemento fixo por cenário (o que havia).

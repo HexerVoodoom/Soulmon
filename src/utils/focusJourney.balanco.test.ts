@@ -29,9 +29,9 @@ describe('balanço da jornada (§247)', () => {
   it.skipIf(!process.env.JORNADA_MEDIR)('tabela', () => {
     for (const [n, m] of Object.entries({ sem1, com1, sem2, com2, com4 })) console.log(`MED ${n} itens=${m.itens.toFixed(2)} ess=${m.ess.toFixed(2)}`);
   });
-  it('uma sessão sem chave rende ~6,3 itens + ~0,7 essência (6 baús + a conclusão; 10% dos baús comuns viram essência com 1 elemento)', () => {
+  it('uma sessão sem chave rende ~5,2 itens + ~1,8 essência (6 baús + a conclusão; 25% dos baús comuns da floresta, de 4 elementos, viram essência: §512)', () => {
     expect(sem1.itens + sem1.ess).toBeCloseTo(7, 1);
-    expect(sem1.ess).toBeCloseTo(0.7, 1);
+    expect(sem1.ess).toBeCloseTo(1.76, 1);
   });
   it('teto por sessão: itens (fora essência) de uma sessão nunca passam de 1 por baú (6 no p25, 10 no p50)', () => {
     for (const mode of ['p25', 'p50'] as const) for (let s = 0; s < 500; s++) {
@@ -45,7 +45,7 @@ describe('balanço da jornada (§247)', () => {
     expect(taxa(2)).toBeCloseTo(0.15, 1);
     expect(taxa(3)).toBeCloseTo(0.20, 1);
     expect(taxa(4)).toBeCloseTo(0.25, 1);
-    expect(chestLoot(3, { k: 0, at: 0.1, type: 'brejo' }, ['brejo'], 'forest', 3)).toEqual([{ kind: 'essence', id: 'planta', qty: 2 }]);
+    expect(chestLoot(3, { k: 0, at: 0.1, type: 'brejo' }, ['brejo'], 'forest', 3)).toEqual([{ kind: 'essence', id: expect.stringMatching(/^(planta|vida|vigor|ar)$/), qty: 2 }]);
   });
   it('as chaves rendem mais, sem passar dos tetos do dia', () => {
     /* Opção A (22/11/2026): especial paga 1 item raro, então as chaves mudam a qualidade, não a contagem. */
