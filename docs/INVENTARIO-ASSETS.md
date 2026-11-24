@@ -523,3 +523,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — moldura cristal: borda A (24/11/2026)
 `ui/moldura-cristal/popup-cristal-1024.webp` substituída (mesmas dimensões 1024², `border-image-slice` 225): as 4 quinas ficam idênticas e os lados longos viram a faixa turquesa lisa fina (20 px nativos), sem fio de bronze (escolha do dono, 24/11). A tubulação de cobre das quinas esmaece organicamente depois do colar. Original/guarda: `E:\Soulmon-assets\p6-popup-cristal\final\popup-cristal-1024.png`; nova: `...\propostas-v2\popup-cristal-A-final-1024.png`.
+
+## P6 — fundo do Fundador refeito (24/11/2026)
+`backgrounds/founder-fundo.webp` (mesma chave/nome, 1200×648, 76 KB) substituído pelo fundo novo B do dono (parede de pedra rachada, tubos de cobre, frisos, circuitos turquesa acesos e cristais; inspirado nos painéis da intro): recorte PAISAGEM da arte vertical aprovada, com o topo do chão a ~74% da caixa (GROUND_Y) — o consumidor (`fundadorCatalogo.ts` cenário `center bottom / cover` e o thumbnail 200×120 do `FundadorAvisoModal`) fica igual. Versão VERTICAL 720×1440 e a variante A (sem luz) alinhada ficam em `E:\Soulmon-assets\p6-founder-bg\` (sem consumidor ainda).
