@@ -55,3 +55,19 @@ describe('ElementPotionSheet: lista completa', () => {
     if (p) { expect(p.essences[0].need).toBe(50); expect(p.canCraft).toBe(true); }
   });
 });
+
+describe('ElementPotionSheet: favoritas', () => {
+  it('estrela alterna aria-pressed e leva a poção ao topo; persiste', () => {
+    try { localStorage.removeItem('soulmon:potionFavorites'); } catch { /* */ }
+    render(<ElementPotionSheet {...base} essences={{}} unlocked={['fogo', 'agua']} onCraft={() => {}} />);
+    const ids = () => [...document.querySelectorAll('[data-potion-item]')].map(e => e.getAttribute('data-potion-item'));
+    const antes = ids();
+    const alvo = antes[antes.length - 1]!;
+    const btn = () => document.querySelector(`[data-potion-fav="${alvo}"]`) as HTMLButtonElement;
+    expect(btn().getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(btn());
+    expect(btn().getAttribute('aria-pressed')).toBe('true');
+    expect(ids()[0]).toBe(alvo);
+    expect(localStorage.getItem('soulmon:potionFavorites')).toContain(alvo);
+  });
+});
